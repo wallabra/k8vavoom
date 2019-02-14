@@ -602,6 +602,7 @@ private:
   vuint8 *LightVis;
   vuint8 *LightBspVis;
   vuint32 CurrLightColour;
+  TArray<VEntity *> mobjAffected; // built in `ResetMobjsLightCount()`
 
 protected:
   void RefilterStaticLights ();
@@ -643,7 +644,7 @@ protected:
                            TVec &Pos, float Radius, vuint32 Colour, bool LimitLights);
 
   // things
-  void ResetMobjsLightCount ();
+  void ResetMobjsLightCount (bool first); // if `first` is true, build array of affected entities
   void RenderThingAmbient (VEntity*);
   void RenderMobjsAmbient ();
   void RenderThingTextures (VEntity*);

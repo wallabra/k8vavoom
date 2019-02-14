@@ -134,14 +134,14 @@ void VAdvancedRenderLevel::RenderThingAmbient (VEntity *mobj) {
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsAmbient () {
   if (!r_draw_mobjs || !r_models) return;
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
+  for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+    if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
     // skip things in subsectors that are not visible
-    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    RenderThingAmbient(*Ent);
+    RenderThingAmbient(*ent);
   }
 }
 
@@ -200,14 +200,14 @@ void VAdvancedRenderLevel::RenderThingTextures (VEntity *mobj) {
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsTextures () {
   if (!r_draw_mobjs || !r_models) return;
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
+  for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+    if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
     // skip things in subsectors that are not visible
-    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    RenderThingTextures(*Ent);
+    RenderThingTextures(*ent);
   }
 }
 
@@ -217,15 +217,15 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
 //  VAdvancedRenderLevel::IsTouchedByLight
 //
 //==========================================================================
-bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *Ent, bool Count) {
-  const TVec Delta = Ent->Origin-CurrLightPos;
-  const float Dist = Ent->Radius+CurrLightRadius;
+bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent, bool Count) {
+  const TVec Delta = ent->Origin-CurrLightPos;
+  const float Dist = ent->Radius+CurrLightRadius;
   if (Delta.x > Dist || Delta.y > Dist) return false;
   if (Delta.z < -CurrLightRadius) return false;
-  if (Delta.z > CurrLightRadius+Ent->Height) return false;
+  if (Delta.z > CurrLightRadius+ent->Height) return false;
   //Delta.z = 0;
   if (Delta.Length2DSquared() > Dist*Dist) return false;
-  if (Count) Ent->NumTouchingLights += 1;
+  if (Count) ent->NumTouchingLights += 1;
   return true;
 }
 
@@ -282,15 +282,36 @@ void VAdvancedRenderLevel::RenderThingLight (VEntity *mobj) {
 //  VAdvancedRenderLevel::ResetMobjsLightCount
 //
 //==========================================================================
-void VAdvancedRenderLevel::ResetMobjsLightCount () {
-  if (!r_draw_mobjs || !r_models) return;
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (Ent->NumTouchingLights == 0) continue; // no need to do anything
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
-    if (!IsTouchedByLight(*Ent, false)) continue;
-    Ent->NumTouchingLights = 0;
+void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
+  if (!r_draw_mobjs || !r_models) {
+    mobjAffected.reset();
+    return;
+  }
+  if (first) {
+    mobjAffected.reset();
+    //int count = 0;
+    for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+      //++count;
+      if (ent->NumTouchingLights == 0) continue; // no need to do anything
+      if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+      if (!ent->State) continue;
+      if (!IsTouchedByLight(*ent, false)) continue;
+      ent->NumTouchingLights = 0;
+      mobjAffected.append(*ent);
+    }
+    //GCon->Logf("reset filter: %d/%d", mobjAffected.length(), count);
+  } else {
+    int count = mobjAffected.length();
+    if (!count) return;
+    VEntity **entp = mobjAffected.ptr();
+    for (; count--; ++entp) {
+      VEntity *ent = *entp;
+      if (ent->NumTouchingLights == 0) continue; // no need to do anything
+      if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+      if (!ent->State) continue;
+      if (!IsTouchedByLight(ent, false)) continue;
+      ent->NumTouchingLights = 0;
+    }
   }
 }
 
@@ -299,21 +320,40 @@ void VAdvancedRenderLevel::ResetMobjsLightCount () {
 //
 //  VAdvancedRenderLevel::RenderMobjsLight
 //
+//  can use `mobjAffected`
+//
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsLight () {
   if (!r_draw_mobjs || !r_models || !r_model_light) return;
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (Ent->NumTouchingLights > r_max_model_lights) continue; // limit maximum lights for this Entity
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
+#if 0
+  for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+    if (ent->NumTouchingLights > r_max_model_lights) continue; // limit maximum lights for this Entity
+    if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
     // skip things in subsectors that are not visible
-    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    if (!IsTouchedByLight(*Ent, true)) continue;
-    RenderThingLight(*Ent);
+    if (!IsTouchedByLight(*ent, true)) continue;
+    RenderThingLight(*ent);
   }
+#else
+  int count = mobjAffected.length();
+  if (!count) return;
+  VEntity **entp = mobjAffected.ptr();
+  for (; count--; ++entp) {
+    VEntity *ent = *entp;
+    if (ent->NumTouchingLights > r_max_model_lights) continue; // limit maximum lights for this Entity
+    if (ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
+    if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!IsTouchedByLight(ent, true)) continue;
+    RenderThingLight(ent);
+  }
+#endif
 }
 
 
@@ -365,20 +405,38 @@ void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
 //
 //  VAdvancedRenderLevel::RenderMobjsShadow
 //
+//  can use `mobjAffected`
+//
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsShadow () {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (Ent->NumTouchingLights > r_max_model_shadows) continue; // limit maximum shadows for this Entity
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
+#if 0
+  for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+    if (ent->NumTouchingLights > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
     // skip things in subsectors that are not visible
-    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(LightVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    if (!IsTouchedByLight(*Ent, true)) continue;
-    RenderThingShadow(*Ent);
+    if (!IsTouchedByLight(*ent, true)) continue;
+    RenderThingShadow(*ent);
   }
+#else
+  int count = mobjAffected.length();
+  if (!count) return;
+  VEntity **entp = mobjAffected.ptr();
+  for (; count--; ++entp) {
+    VEntity *ent = *entp;
+    if (ent->NumTouchingLights > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
+    if (!(LightVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!IsTouchedByLight(ent, true)) continue;
+    RenderThingShadow(ent);
+  }
+#endif
 }
 
 
@@ -437,13 +495,13 @@ void VAdvancedRenderLevel::RenderThingFog (VEntity *mobj) {
 void VAdvancedRenderLevel::RenderMobjsFog () {
   if (!r_draw_mobjs || !r_models) return;
 
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!Ent->State) continue;
+  for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+    if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!ent->State) continue;
     // skip things in subsectors that are not visible
-    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    RenderThingFog(*Ent);
+    RenderThingFog(*ent);
   }
 }

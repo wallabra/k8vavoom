@@ -791,6 +791,14 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
+  bool doShadows = true;
+  if (!Level->NeedProperLightTraceAt(Pos, Radius)) {
+    //GCon->Log("some light doesn't need shadows");
+    //return;
+    Colour = 0xff0000U;
+    doShadows = false;
+  }
+
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
   memset(LightVis, 0, VisSize);
@@ -804,7 +812,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   }
   if (!HaveIntersect) return;
 
-  ResetMobjsLightCount();
+  ResetMobjsLightCount(true);
 
   // do shadow volumes
   Drawer->BeginLightShadowVolumes();
@@ -814,7 +822,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   RenderMobjsShadow();
   Drawer->EndLightShadowVolumes();
 
-  ResetMobjsLightCount();
+  ResetMobjsLightCount(false);
 
   // k8: the question is: why we are rendering surfaces instead
   //     of simply render a light circle? shadow volumes should
