@@ -133,9 +133,9 @@ final void A_Look () {
   } else if (SightSound) {
     if (bBoss) {
       // full volume
-      PlaySound(SightSound, CHAN_VOICE, 1.0, ATTN_NONE);
+      PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT, 1.0, ATTN_NONE);
     } else {
-      PlaySound(SightSound, CHAN_VOICE);
+      PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT);
     }
   }
 
@@ -294,9 +294,9 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   } else if (SightSound && !(flags&Entity::LOF_NOSEESOUND)) {
     if (flags&Entity::LOF_FULLVOLSEESOUND) {
       // full volume
-      PlaySound(SightSound, CHAN_VOICE, 1.0, ATTN_NONE);
+      PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT, 1.0, ATTN_NONE);
     } else {
-      PlaySound(SightSound, CHAN_VOICE);
+      PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT);
     }
   }
 
@@ -325,7 +325,7 @@ final void A_TurretLook () {
     Target = targ;
     if (bAmbush && !CanSee(Target)) return;
     // go into chase state
-    if (SightSound) PlaySound(SightSound, CHAN_VOICE);
+    if (SightSound) PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT);
     LastHeard = none;
     Threshold = 10;
     SetState(SeeState);

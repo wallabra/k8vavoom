@@ -32,6 +32,8 @@ enum {
   CHAN_WEAPON,
   CHAN_ITEM,
   CHAN_BODY,
+  // special channel for sight sound, so it won't be muted by attack and other sounds
+  CHAN_SIGHT = 42,
 };
 
 enum {
