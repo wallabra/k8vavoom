@@ -1,8 +1,7 @@
 $dest basepak.pk3
 
 // sounds
-//misc/secret.flac @CMAKE_CURRENT_SOURCE_DIR@/misc/secret.flac
-sounds/dssecret.flac @CMAKE_CURRENT_SOURCE_DIR@/sounds/dssecret.flac
+sounds/dssecret.opus @CMAKE_CURRENT_SOURCE_DIR@/sounds/dssecret.opus
 
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 
