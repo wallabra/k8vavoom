@@ -58,6 +58,8 @@ VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.56", "How c
 
 extern VCvarB r_dynamic_clip_more;
 
+static VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // code
@@ -795,7 +797,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   if (!Level->NeedProperLightTraceAt(Pos, Radius)) {
     //GCon->Log("some light doesn't need shadows");
     //return;
-    Colour = 0xff0000U;
+    if (dbg_adv_light_notrace_mark) Colour = 0xffff0000U;
     doShadows = false;
   }
 
@@ -813,13 +815,14 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   if (!HaveIntersect) return;
 
   ResetMobjsLightCount(true);
-
   // do shadow volumes
   Drawer->BeginLightShadowVolumes();
   LightClip.ClearClipNodes(CurrLightPos, Level);
-  RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
-  Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
-  RenderMobjsShadow();
+  if (doShadows) {
+    RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
+    Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
+    RenderMobjsShadow();
+  }
   Drawer->EndLightShadowVolumes();
 
   ResetMobjsLightCount(false);
