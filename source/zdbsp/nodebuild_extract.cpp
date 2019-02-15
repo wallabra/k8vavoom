@@ -562,6 +562,7 @@ void FNodeBuilder::AddSegToShortBBox (short bbox[4], const FPrivSeg *seg)
 
 void FNodeBuilder::DumpNodes(MapNodeEx *outNodes, int nodeCount)
 {
+/*
   for (unsigned int i = 0; i < Nodes.Size(); ++i)
   {
     printf("Node %d:  Splitter[%08x,%08x] [%08x,%08x]\n", i,
@@ -578,6 +579,7 @@ void FNodeBuilder::DumpNodes(MapNodeEx *outNodes, int nodeCount)
       }
     }
   }
+*/
 }
 
 } // namespace

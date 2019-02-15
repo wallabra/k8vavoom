@@ -61,13 +61,16 @@ VCvarI nodes_builder("nodes_builder", "1", "Which internal node builder to use (
 //
 //==========================================================================
 void VLevel::BuildNodes () {
+#ifdef CLIENT
   R_LdrMsgShowSecondary("BUILDING NODES...");
   R_PBarReset();
+#endif
   if (nodes_builder == 0) {
     BuildNodesAJ(); // for now
   } else {
     BuildNodesZD(); // for now
   }
+#ifdef CLIENT
   R_PBarUpdate("BSP", 42, 42, true); // final update
-  //abort();
+#endif
 }

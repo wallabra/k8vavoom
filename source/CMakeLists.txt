@@ -441,6 +441,10 @@ set(SERVER_COMMON_SOURCES
   pr_cmds.cpp
   pr_exec.cpp
   ${TEXTURELIB_SOURCES}
+  ntvalueioex.h
+  ntvalueioex.cpp
+  qs_data.h
+  qs_data.cpp
   render/r_data.cpp
   sound/snd_data.cpp
   scripts.cpp

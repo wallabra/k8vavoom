@@ -480,11 +480,13 @@ void Host_Frame () {
 
       // update user interface
       GRoot->TickWidgets(host_frametime);
+#endif
     }
 
     // collect all garbage
     VObject::CollectGarbage();
 
+#ifdef CLIENT
     // update video
     if (show_time) time1 = Sys_Time();
     SCR_Update();

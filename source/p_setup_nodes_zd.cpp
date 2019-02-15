@@ -271,11 +271,13 @@ static void CopyNodeZD (int NodeIndex, const ZDBSP::MapNodeEx &SrcNode, node_t *
 //==========================================================================
 void ZDProgress (int curr, int total) {
   //GCon->Logf("BSP: %d/%d", curr, total);
+#ifdef CLIENT
   if (total <= 0) {
     R_PBarUpdate("BSP", 42, 42, true); // final update
   } else {
     R_PBarUpdate("BSP", curr, total);
   }
+#endif
 }
 
 
@@ -510,7 +512,7 @@ void VLevel::BuildNodesZD () {
       destseg->side = zseg.side;
 
       if (zseg.linedef != ZDBSP::NO_INDEX) {
-        if ((int)zseg.linedef < 0 || (int)zseg.linedef >= NumLines) Sys_Error("ZDBSP: invalid seg #%d linedef (%d), max is %d", i, zseg.linedef, NumLines-1);
+        if ((int)zseg.linedef < 0 || (int)zseg.linedef >= NumLines) Sys_Error("ZDBSP: invalid seg #%d linedef (%d), max is %d", i, (int)zseg.linedef, NumLines-1);
         destseg->linedef = &Lines[zseg.linedef];
       }
 

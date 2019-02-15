@@ -319,7 +319,9 @@ static void pvsStartThreads (const PVSInfo &anfo) {
     bool done = pvsPBarDone;
     if (done && !wasProgress) break; // don't spam with progress messages
     //pvsDrawPBar(pvsPBarCur, pvsPBarMax);
+#ifdef CLIENT
     R_PBarUpdate("PVS", pvsPBarCur, pvsPBarMax);
+#endif
     wasProgress = true;
     if (done) break;
   }
@@ -358,8 +360,10 @@ void VLevel::BuildPVS () {
   }
 
   GCon->Logf("building PVS...");
+#ifdef CLIENT
   R_LdrMsgShowSecondary("BUILDING PVS...");
   R_PBarReset();
+#endif
 
   PVSInfo nfo;
   memset((void *)&nfo, 0, sizeof(nfo));
@@ -644,7 +648,9 @@ void VLevel::BasePortalVis (void *pvsinfo) {
     p->visbits = p->mightsee;
     //p->status = stat_done;
 
+#ifdef CLIENT
     R_PBarUpdate("PVS", i, nfo->numportals);
+#endif
   }
   //Owner.DisplayBaseVisProgress(numportals, numportals);
   delete[] nfo->portalsee;
