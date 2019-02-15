@@ -195,6 +195,12 @@ menudef ControlsMain {
   header "Other Actions";
 
   option bind {
+    title = "Automap";
+    button = ona;
+    command = "toggle_automap";
+  }
+
+  option bind {
     title = "Chat";
     button = ona;
     command = "ChatMode";

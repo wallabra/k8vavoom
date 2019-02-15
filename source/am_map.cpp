@@ -31,6 +31,10 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
+#ifdef CLIENT
+# include "neoui/neoui.h"
+#endif
+
 
 // player radius for movement checking
 #define PLAYERRADIUS   (16.0f)
@@ -53,14 +57,14 @@
 #define AMSTR_MARKEDSPOT    "Marked Spot"
 #define AMSTR_MARKSCLEARED  "All Marks Cleared"
 
-#define AM_STARTKEY      K_TAB
+//#define AM_STARTKEY      K_TAB
 #define AM_PANUPKEY      K_UPARROW
 #define AM_PANDOWNKEY    K_DOWNARROW
 #define AM_PANLEFTKEY    K_LEFTARROW
 #define AM_PANRIGHTKEY   K_RIGHTARROW
 #define AM_ZOOMINKEY     '='
 #define AM_ZOOMOUTKEY    '-'
-#define AM_ENDKEY        K_TAB
+//#define AM_ENDKEY        K_TAB
 #define AM_GOBIGKEY      '0'
 #define AM_FOLLOWKEY     'h'
 #define AM_GRIDKEY       'g'
@@ -122,8 +126,9 @@ struct mline_t {
 
 
 int automapactive = 0;
-
+static VCvarB am_active("am_active", false, "Is automap active?", 0);
 extern VCvarI screen_size;
+
 
 /*
 #define AM_W  (640)
@@ -145,16 +150,16 @@ static inline int getAMHeight () {
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
 
 // automap colours
-static vuint32  WallColour;
-static vuint32  TSWallColour;
-static vuint32  FDWallColour;
-static vuint32  CDWallColour;
-static vuint32  EXWallColour;
-static vuint32  SecretWallColour;
-static vuint32  PowerWallColour;
-static vuint32  GridColour;
-static vuint32  ThingColour;
-static vuint32  PlayerColour;
+static vuint32 WallColour;
+static vuint32 TSWallColour;
+static vuint32 FDWallColour;
+static vuint32 CDWallColour;
+static vuint32 EXWallColour;
+static vuint32 SecretWallColour;
+static vuint32 PowerWallColour;
+static vuint32 GridColour;
+static vuint32 ThingColour;
+static vuint32 PlayerColour;
 
 static VCvarS am_colour_wall("am_colour_wall", "d0 b0 85", "Automap color: walls.", CVAR_Archive);
 static VCvarS am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: ts-walls.", CVAR_Archive);
@@ -611,6 +616,7 @@ static void AM_LevelInit () {
 void AM_Stop () {
   automapactive = 0;
   stopped = true;
+  am_active = false;
 }
 
 
@@ -620,13 +626,13 @@ void AM_Stop () {
 //
 //==========================================================================
 static void AM_Start () {
-  if (!stopped) AM_Stop();
+  //if (!stopped) AM_Stop();
   stopped = false;
   if (lastmap != GClLevel->MapName) {
     AM_LevelInit();
     lastmap = GClLevel->MapName;
   }
-  AM_initVariables();
+  AM_initVariables(); // this sets `automapactive`
   AM_loadPics();
   if (amWholeScale < 0) {
     amWholeScale = (am_default_whole ? 1 : 0);
@@ -637,6 +643,19 @@ static void AM_Start () {
   }
   mtof_zoommul = 1.0f;
   ftom_zoommul = 1.0f;
+  am_active = true;
+}
+
+
+//==========================================================================
+//
+//  AM_Check
+//
+//==========================================================================
+static void AM_Check () {
+  if (am_active != !!automapactive) {
+    if (am_active) AM_Start(); else AM_Stop();
+  }
 }
 
 
@@ -648,14 +667,10 @@ static void AM_Start () {
 //
 //==========================================================================
 bool AM_Responder (event_t *ev) {
+  AM_Check();
+  if (!automapactive) return false;
   bool rc = false;
-
-  if (!automapactive) {
-    if (ev->type == ev_keydown && ev->data1 == AM_STARTKEY) {
-      if (automapactive) AM_Stop(); else AM_Start();
-      rc = true;
-    }
-  } else if (ev->type == ev_keydown) {
+  if (ev->type == ev_keydown) {
     rc = true;
     switch (ev->data1) {
       case AM_PANRIGHTKEY: // pan right
@@ -682,9 +697,11 @@ bool AM_Responder (event_t *ev) {
           ftom_zoommul = M_ZOOMOUT;
         }
         break;
+      /*
       case AM_ENDKEY:
         AM_Stop();
         break;
+      */
       case AM_GOBIGKEY:
         mtof_zoommul = 1.0f;
         ftom_zoommul = 1.0f;
@@ -1479,4 +1496,17 @@ void AM_Drawer () {
 
 COMMAND(Iddt) {
   am_cheating = (am_cheating+1)%3;
+}
+
+
+COMMAND(toggle_automap) {
+  if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
+    return;
+  }
+#ifdef CLIENT
+  if (MN_Active() || C_Active() || NUI_IsPaused()) {
+    return;
+  }
+#endif
+  am_active = !am_active;
 }
