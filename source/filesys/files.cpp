@@ -1485,7 +1485,7 @@ void FL_Init () {
   }
 
   if (!customMode.disableGoreMod) {
-    if (game_release_mode || isChex) {
+    if (/*game_release_mode ||*/ isChex) {
       if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
     } else {
       if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
