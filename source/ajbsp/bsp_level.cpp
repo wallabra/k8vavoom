@@ -19,6 +19,7 @@
 //------------------------------------------------------------------------
 
 #include "main.h"
+#include "../../libs/core/timsort.h"
 
 namespace ajbsp
 {
@@ -260,7 +261,8 @@ static void CreateBlockmap(void)
 }
 
 
-static int BlockCompare(const void *p1, const void *p2)
+extern "C" {
+static int BlockCompare(const void *p1, const void *p2, void *udata)
 {
 	int blk_num1 = ((const u16_t *) p1)[0];
 	int blk_num2 = ((const u16_t *) p2)[0];
@@ -286,6 +288,7 @@ static int BlockCompare(const void *p1, const void *p2)
 
 	return memcmp(A+BK_FIRST, B+BK_FIRST, A[BK_NUM] * sizeof(u16_t));
 }
+}
 
 
 static void CompressBlockmap(void)
@@ -306,7 +309,8 @@ static void CompressBlockmap(void)
 	for (i=0 ; i < block_count ; i++)
 		block_dups[i] = i;
 
-	qsort(block_dups, block_count, sizeof(u16_t), BlockCompare);
+	//qsort(block_dups, block_count, sizeof(u16_t), BlockCompare);
+	timsort_r(block_dups, block_count, sizeof(u16_t), &BlockCompare, nullptr);
 
 	// scan duplicate array and build up offset array
 
@@ -336,7 +340,7 @@ static void CompressBlockmap(void)
 		// will update the current offset value.
 
 		if (i+1 < block_count &&
-				BlockCompare(block_dups + i, block_dups + i+1) == 0)
+				BlockCompare(block_dups + i, block_dups + i+1, nullptr) == 0)
 		{
 			block_ptrs[blk_num] = cur_offset;
 			block_dups[i] = DUMMY_DUP;
@@ -814,7 +818,7 @@ const char *lev_current_name;
 short lev_current_idx;
 short lev_current_start;
 
-bool lev_doing_hexen;
+//bool lev_doing_hexen;
 
 bool lev_force_v5;
 bool lev_force_xnod;
@@ -1009,7 +1013,8 @@ static inline int VanillaSegAngle(const seg_t *seg)
 }
 */
 
-static int SegCompare(const void *p1, const void *p2)
+extern "C" {
+static int SegCompare(const void *p1, const void *p2, void *udata)
 {
 	const seg_t *A = ((const seg_t **) p1)[0];
 	const seg_t *B = ((const seg_t **) p2)[0];
@@ -1021,6 +1026,7 @@ static int SegCompare(const void *p1, const void *p2)
 		ajbsp_BugError("Seg %p never reached a subsector !\n", B);
 
 	return (A->index - B->index);
+}
 }
 
 
@@ -1083,7 +1089,8 @@ void CheckLimits()
 void SortSegs()
 {
 	// sort segs into ascending index
-	qsort(segs, num_segs, sizeof(seg_t *), SegCompare);
+	//qsort(segs, num_segs, sizeof(seg_t *), SegCompare);
+	timsort_r(segs, num_segs, sizeof(seg_t *), &SegCompare, nullptr);
 }
 
 

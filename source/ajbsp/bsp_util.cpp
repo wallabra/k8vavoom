@@ -19,6 +19,7 @@
 //------------------------------------------------------------------------
 
 #include "main.h"
+#include "../../libs/core/timsort.h"
 
 
 namespace ajbsp
@@ -479,8 +480,8 @@ void DetectPolyobjSectors(void)
 
 
 /* ----- analysis routines ----------------------------- */
-
-static int VertexCompare(const void *p1, const void *p2)
+extern "C" {
+static int VertexCompare(const void *p1, const void *p2, void *udata)
 {
 	int vert1 = ((const u16_t *) p1)[0];
 	int vert2 = ((const u16_t *) p2)[0];
@@ -507,6 +508,7 @@ static int VertexCompare(const void *p1, const void *p2)
 
 	return 0;
 }
+}
 
 
 void DetectOverlappingVertices(void)
@@ -518,13 +520,14 @@ void DetectOverlappingVertices(void)
 	for (i=0 ; i < num_vertices ; i++)
 		array[i] = i;
 
-	qsort(array, num_vertices, sizeof(u16_t), VertexCompare);
+	//qsort(array, num_vertices, sizeof(u16_t), VertexCompare);
+	timsort_r(array, num_vertices, sizeof(u16_t), &VertexCompare, nullptr);
 
 	// now mark them off
 	for (i=0 ; i < num_vertices - 1 ; i++)
 	{
 		// duplicate ?
-		if (VertexCompare(array + i, array + i+1) == 0)
+		if (VertexCompare(array + i, array + i+1, nullptr) == 0)
 		{
 			vertex_t *A = lev_vertices[array[i]];
 			vertex_t *B = lev_vertices[array[i+1]];
@@ -601,7 +604,9 @@ static inline int LineVertexLowest(const linedef_t *L)
 			 (int)L->start->y <  (int)L->end->y)) ? 0 : 1;
 }
 
-static int LineStartCompare(const void *p1, const void *p2)
+
+extern "C" {
+static int LineStartCompare(const void *p1, const void *p2, void *udata)
 {
 	int line1 = ((const int *) p1)[0];
 	int line2 = ((const int *) p2)[0];
@@ -634,6 +639,7 @@ static int LineStartCompare(const void *p1, const void *p2)
 	if (C->y > D->y) return 1;
 
 	return 0;
+}
 }
 
 static int LineEndCompare(const void *p1, const void *p2)
@@ -687,7 +693,8 @@ void DetectOverlappingLines(void)
 	for (i=0 ; i < num_linedefs ; i++)
 		array[i] = i;
 
-	qsort(array, num_linedefs, sizeof(int), LineStartCompare);
+	//qsort(array, num_linedefs, sizeof(int), LineStartCompare);
+	timsort_r(array, num_linedefs, sizeof(int), &LineStartCompare, nullptr);
 
 	for (i=0 ; i < num_linedefs - 1 ; i++)
 	{
@@ -695,7 +702,7 @@ void DetectOverlappingLines(void)
 
 		for (j = i+1 ; j < num_linedefs ; j++)
 		{
-			if (LineStartCompare(array + i, array + j) != 0)
+			if (LineStartCompare(array + i, array + j, nullptr) != 0)
 				break;
 
 			if (LineEndCompare(array + i, array + j) == 0)

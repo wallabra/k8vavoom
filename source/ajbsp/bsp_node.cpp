@@ -157,7 +157,7 @@ static inline int BoxOnLineSide(superblock_t *box, seg_t *part)
 static intersection_t *quick_alloc_cuts = NULL;
 
 
-static intersection_t *NewIntersection(void)
+static inline intersection_t *NewIntersection(void)
 {
 	intersection_t *cut;
 
@@ -190,7 +190,7 @@ void FreeQuickAllocCuts(void)
 //
 // Fill in the fields 'angle', 'len', 'pdx', 'pdy', etc...
 //
-void RecomputeSeg(seg_t *seg)
+void inline RecomputeSeg(seg_t *seg)
 {
 	seg->psx = seg->start->x;
 	seg->psy = seg->start->y;
