@@ -151,7 +151,7 @@ static bool setresolutionneeded = false;
 static int setwidth;
 static int setheight;
 
-static VCvarF menu_darkening("menu_darkening", "0.5", "Screen darkening for active menus.", CVAR_Archive);
+static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
 
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);

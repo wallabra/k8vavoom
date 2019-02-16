@@ -125,7 +125,7 @@ int skyflatnum; // sky mapping
 // switches
 TArray<TSwitch *>  Switches;
 
-VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive);
+VCvarB r_hirestex("r_hirestex", false, "Allow high-resolution texture replacements?", CVAR_Archive);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
 static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);

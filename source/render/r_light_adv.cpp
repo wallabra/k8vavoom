@@ -54,7 +54,7 @@ VCvarI r_max_shadows("r_max_shadows", "64", "Maximum shadows.", CVAR_Archive);
 VCvarI r_hashlight_static_div("r_hashlight_static_div", "8", "Divisor for static light spatial hashing.", CVAR_Archive);
 VCvarI r_hashlight_dynamic_div("r_hashlight_dynamic_div", "8", "Divisor for dynamic light spatial hashing.", CVAR_Archive);
 
-VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.56", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
+VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
 
 extern VCvarB r_dynamic_clip_more;
 

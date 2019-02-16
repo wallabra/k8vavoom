@@ -56,7 +56,7 @@ enum {
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
 VCvarB r_models("r_models", true, "Allow models?", CVAR_Archive);
-VCvarB r_view_models("r_view_models", true, "View models?", CVAR_Archive);
+VCvarB r_view_models("r_view_models", false, "View models?", CVAR_Archive);
 VCvarB r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
 VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
 VCvarB r_sort_sprites("r_sort_sprites", false, "Sprite sorting.", CVAR_Archive);
@@ -64,7 +64,7 @@ VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with spri
 VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
 VCvarB r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
-VCvarF r_transsouls("r_transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
+VCvarF r_transsouls("r_transsouls", "1", "Translucent Lost Souls?", CVAR_Archive);
 VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
