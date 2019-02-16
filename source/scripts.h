@@ -80,6 +80,7 @@ public:
   bool AtEnd ();
   bool GetString ();
   void ExpectString ();
+  void ExpectLoneChar (); // in `String`
   void ExpectName8 ();
   void ExpectName8Warn (); // this sets both `Name` and `Name8`, with warning
   void ExpectName8Def (VName def);

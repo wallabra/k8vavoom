@@ -69,6 +69,7 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(AtEnd)
   DECLARE_FUNCTION(GetString)
   DECLARE_FUNCTION(ExpectString)
+  DECLARE_FUNCTION(ExpectLoneChar)
   DECLARE_FUNCTION(Check)
   DECLARE_FUNCTION(CheckStartsWith)
   DECLARE_FUNCTION(Expect)
@@ -616,6 +617,26 @@ void VScriptParser::SkipLine () {
 //==========================================================================
 void VScriptParser::ExpectString () {
   if (!GetString()) Error("Missing string.");
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::ExpectLoneChar
+//
+//==========================================================================
+void VScriptParser::ExpectLoneChar () {
+  UnGet();
+  char ch = PeekOrSkipChar(true); // skip
+  if (ch && ScriptPtr < ScriptEndPtr) {
+    vuint8 nch = *(const vuint8 *)ScriptPtr;
+    if (nch > ' ' && nch == '/' && ScriptEndPtr-ScriptPtr > 1) {
+      if (ScriptPtr[1] != '/' && ScriptPtr[1] != '*' && ScriptPtr[1] != '+') ch = 0;
+    }
+  }
+  if (!ch) Error("Missing char.");
+  String.clear();
+  String += ch;
 }
 
 
@@ -1306,6 +1327,12 @@ IMPLEMENT_FUNCTION(VScriptsParser, GetString) {
   P_GET_SELF;
   Self->CheckInterface();
   RET_BOOL(Self->Int->GetString());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, ExpectLoneChar) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  Self->Int->ExpectLoneChar();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectString) {
