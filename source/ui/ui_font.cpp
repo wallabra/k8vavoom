@@ -380,7 +380,7 @@ void VFont::ParseFontDefs () {
           FontType = 2;
         } else {
           CHECK_TYPE(1);
-          sc.ExpectString();
+          sc.ExpectLoneChar();
           const char *CPtr = *sc.String;
           int CharIdx = VStr::GetChar(CPtr);
           sc.ExpectString();
