@@ -29,3 +29,7 @@ class PointLightPulse : DynamicLight __mobjinfo__(9801);
 defaultproperties {
   LightType = DLTYPE_Pulse;
 }
+
+
+//TODO
+class PointLightPulseAdditive : PointLightPulse __mobjinfo__(9811);

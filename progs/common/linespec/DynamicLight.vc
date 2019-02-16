@@ -156,6 +156,7 @@ override void ClientTick (float DeltaTime) {
         if (LightTime >= PulseCycle) LightTime = 0.0;
         float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
         Intensity = float(Args[3])+Frac*float(Args[4]-Args[3]);
+        //print("PULSE: %s (%s)", Frac, Intensity);
       }
       break;
     case DLTYPE_Flicker:

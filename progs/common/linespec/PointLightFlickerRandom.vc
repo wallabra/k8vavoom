@@ -31,4 +31,6 @@ defaultproperties {
 }
 
 
-class PointLightFlickerRandomAttenuated : PointLightFlickerRandom  __mobjinfo__(9834);
+//TODO
+class PointLightFlickerAdditive : PointLightFlickerRandom __mobjinfo__(9812);
+class PointLightFlickerRandomAttenuated : PointLightFlickerRandom __mobjinfo__(9834);
