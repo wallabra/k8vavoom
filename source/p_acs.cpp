@@ -2753,6 +2753,23 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0;
 
 
+    case ACSF_SetLineActivation:
+      if (argCount > 1) {
+        int searcher = -1;
+        line_t *line = XLevel->FindLine(args[0], &searcher);
+        if (line) line->SpacFlags = args[2];
+      }
+      return 0;
+
+    case ACSF_GetLineActivation:
+      if (argCount > 0) {
+        int searcher = -1;
+        line_t *line = XLevel->FindLine(args[0], &searcher);
+        if (line) return line->SpacFlags;
+      }
+      return 0;
+
+
     case ACSF_SetCVar:
       if (argCount >= 2) {
         VName name = GetName(args[0]);
@@ -4165,7 +4182,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int searcher = -1;
         for (line_t *line = XLevel->FindLine(sp[-7], &searcher);
-          line != nullptr; line = XLevel->FindLine(sp[-7], &searcher))
+             line != nullptr; line = XLevel->FindLine(sp[-7], &searcher))
         {
           line->special = sp[-6];
           line->arg1 = sp[-5];

@@ -99,8 +99,8 @@
   ACS_EXTFUNC(CheckFont)
   ACS_EXTFUNC(DropItem)
   ACS_EXTFUNC(CheckFlag) // implemented
-  ACS_EXTFUNC(SetLineActivation)
-  ACS_EXTFUNC(GetLineActivation)
+  ACS_EXTFUNC(SetLineActivation) // implemented
+  ACS_EXTFUNC(GetLineActivation) // implemented
   ACS_EXTFUNC(GetActorPowerupTics)
   ACS_EXTFUNC(ChangeActorAngle) // implemented
   ACS_EXTFUNC(ChangeActorPitch) // 80; implemented
