@@ -31,6 +31,7 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
     linespec/portals/*.vc
     linespec/powerup/*.vc
     linespec/raven/*.vc
+    linespec/secaction/*.vc
     linespec/strife/*.vc
     linespec/weapon/*.vc
     ${OUTDIR}/engine.dat)
