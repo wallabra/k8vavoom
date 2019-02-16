@@ -717,49 +717,55 @@ COMMAND(UnbindAll) {
 //
 //==========================================================================
 static void bindCommon (const TArray<VStr> &Args, bool ParsingKeyConf) {
-  int c = Args.length();
+  const int argc = Args.length();
 
-  if (c != 2 && c != 3 && c != 4 && c != 5) {
+  if (argc != 2 && argc != 3 && argc != 4 && argc != 5) {
     GCon->Logf("%s [strife|nostrife|all] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
     return;
   }
 
   int strifeFlag = 0;
-  int stidx = 0;
+  int stidx = 1;
 
-       if (Args[1].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; --c; }
-  else if (Args[1].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; --c; }
-  else if (Args[1].ICmp("all") == 0) { strifeFlag = 0; ++stidx; --c; }
+       if (Args[stidx].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; }
+  else if (Args[stidx].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; }
+  else if (Args[stidx].ICmp("all") == 0) { strifeFlag = 0; ++stidx; }
 
-  if (c < 2) {
-    GCon->Logf("%s [strife|nostrife] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
+  int alen = argc-stidx;
+
+  if (alen < 1) {
+    GCon->Logf("%s [strife|nostrife|all] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
     return;
   }
 
-  if (Args[stidx+1].length() == 0) return;
+  VStr kname = Args[stidx];
 
-  int b = GInput->KeyNumForName(Args[stidx+1]);
+  if (kname.length() == 0) {
+    GCon->Logf("%s: key name?", *Args[0]);
+    return;
+  }
+
+  int b = GInput->KeyNumForName(kname);
   if (b == -1) {
-    GCon->Logf(NAME_Error, "\"%s\" isn't a valid key", *Args[stidx+1].quote());
+    GCon->Logf(NAME_Error, "\"%s\" isn't a valid key", *kname.quote());
     return;
   }
 
-  if (c == 2) {
+  if (alen == 1) {
     VStr Down, Up;
     GInput->GetBinding(b, Down, Up);
     if (Down.IsNotEmpty() || Up.IsNotEmpty()) {
       if (Up.IsNotEmpty()) {
-        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[stidx+1].quote(), *Down.quote(), *Up.quote());
+        GCon->Logf("%s \"%s\" \"%s\" \"%s\"", *Args[0], *kname.quote(), *Down.quote(), *Up.quote());
       } else {
-        GCon->Logf("\"%s\" = \"%s\"", *Args[stidx+1].quote(), *Down.quote());
+        GCon->Logf("%s \"%s\" \"%s\" \"\"", *Args[0], *kname.quote(), *Down.quote());
       }
     } else {
-      GCon->Logf("\"%s\" is not bound", *Args[stidx+1].quote());
+      GCon->Logf("\"%s\" is not bound", *kname.quote());
     }
-    return;
+  } else {
+    GInput->SetBinding(b, Args[stidx+1], (alen > 2 ? Args[stidx+2] : VStr()), !ParsingKeyConf, strifeFlag);
   }
-
-  GInput->SetBinding(b, Args[stidx+2], (c > 3 ? Args[stidx+3] : VStr()), !ParsingKeyConf, strifeFlag);
 }
 
 
