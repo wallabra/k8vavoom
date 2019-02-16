@@ -229,6 +229,10 @@
     <flag name="DontSeekInvisible" property="bDontSeekInvisible" />
     <flag name="StepMissile" property="bStepMissile" />
     <flag name="Randomize" property="bRandomise" />
+    <flag name="HitTarget" property="bHitTarget" />
+    <flag name="HitMaster" property="bHitMaster" />
+    <flag name="HitTracer" property="bHitTracer" />
+    <flag name="HitOwner" property="bHitOwner" />
     <!-- Bouncing -->
     <flag name="BounceOnWalls" property="bBounceWalls" />
     <flag name="BounceOnFloors" property="bBounceFloors" />

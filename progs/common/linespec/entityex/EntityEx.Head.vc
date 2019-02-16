@@ -359,6 +359,11 @@ bool bCrashed; // means a monster that has crash state hasn't crashed and can ex
 bool bStickToFloor;
 bool bStickToCeiling;
 
+bool bHitTarget;
+bool bHitMaster;
+bool bHitTracer;
+bool bHitOwner;
+
 // params
 float Speed;
 float FastSpeed;

@@ -560,7 +560,26 @@ final void NightmareRespawn () {
 
 //==========================================================================
 //
+//  ProcessHitFlags
+//
+//  returns `false` if hit something
+//
+//==========================================================================
+final bool ProcessHitFlags (EntityEx Other, bool res) {
+  if (res) return res; // `true` means "continue, no hit"
+  if (!Other || Other == self || !bMissile) return res; //k8: only for missiles?
+  if (bHitTarget) Target = Other;
+  if (bHitMaster) Master = Other;
+  if (bHitTracer) Tracer = Other;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  Touch
+//
+//  returns `false` if hit something
 //
 //==========================================================================
 override bool Touch (Entity InOther) {
@@ -570,19 +589,19 @@ override bool Touch (Entity InOther) {
 
   // for Korax Arena
   if (Other.IsTouched(self)) {
-    return (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors);
+    return ProcessHitFlags(Other, !Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors);
   }
 
   //k8: missile should hit shootable object even if it is non-solid
   if (bMissile) {
-    if (!(Other.bSolid || Other.bShootable) && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return true;
+    if (!(Other.bSolid || Other.bShootable) && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return ProcessHitFlags(Other, true);
   } else {
-    if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return true;
+    if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return ProcessHitFlags(Other, true);
   }
 
-  if (bThruActors || Other.bThruActors) return true;
+  if (bThruActors || Other.bThruActors) return ProcessHitFlags(Other, true);
 
-  if (bThruSpecies && (Other.GetSpecies() == GetSpecies())) return true;
+  if (bThruSpecies && (Other.GetSpecies() == GetSpecies())) return ProcessHitFlags(Other, true);
 
   // touchy object is alive, toucher is solid
   if (Other.bTouchy && bSolid && Other.Health > 0 &&
@@ -602,7 +621,7 @@ override bool Touch (Entity InOther) {
     bArmed = false; // Disarm
     Other.SpawnExploBloodAtHead(Other.Health, self);
     Other.Damage(none, none, Other.Health); // kill object
-    return true;
+    return ProcessHitFlags(Other, true);
   }
 
   // Check for bBumpSpecial
@@ -619,7 +638,7 @@ override bool Touch (Entity InOther) {
   }*/
 
   // check for skulls slamming into things
-  if (bSkullFly) return Slam(Other);
+  if (bSkullFly) return ProcessHitFlags(Other, Slam(Other));
 
   // check for blasted thing running into another
   if (bBlasted && Other.bShootable) {
@@ -634,31 +653,31 @@ override bool Touch (Entity InOther) {
         SpawnExploBloodAtHead(damage>>2, Other);
         Damage(Other, Other, damage>>2);
       }
-      return false;
+      return ProcessHitFlags(Other, false);
     }
   }
 
   // missiles can hit other things
   if (bMissile) {
     // check for a non-shootable mobj
-    if (Other.bNonShootable) return true;
+    if (Other.bNonShootable) return ProcessHitFlags(Other, true);
     // check for passing through a ghost
-    if (Other.bGhost && bThruGhost) return true;
+    if (Other.bGhost && bThruGhost) return ProcessHitFlags(Other, true);
 
-    if (bMThruSpecies && Target && (Target.GetSpecies() == GetSpecies())) return true;
+    if (bMThruSpecies && Target && (Target.GetSpecies() == GetSpecies())) return ProcessHitFlags(Other, true);
 
     if ((BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) && MissileDamage == 0) {
-      return (Target == Other || !Other.bSolid);
+      return ProcessHitFlags(Other, (Target == Other || !Other.bSolid));
     }
 
     switch (SpecialMissileHit(Other)) {
-      case 0: return false;
-      case 1: return true;
+      case 0: return ProcessHitFlags(Other, false);
+      case 1: return ProcessHitFlags(Other, true);
     }
 
     if (Target) {
       // don't hit same species as originator
-      if (Other == Target) return true; // don't missile self
+      if (!bHitOwner && Other == Target) return ProcessHitFlags(Other, true); // don't missile self
       // let players missile other players
       if (!Target.bIsPlayer && !Other.bIsPlayer) {
         int Inf = Target.GetInfighting();
@@ -666,20 +685,20 @@ override bool Touch (Entity InOther) {
           // monsters can't hurt each other, but make exception
           // depending on friendliness and hate status
           if (Target.bShootable) {
-            if (!Other.bMonster) return false;
+            if (!Other.bMonster) return ProcessHitFlags(Other, false);
             // hostile monsters can always hurt each other
             if (!Other.IsHostile(Target)) {
               // the same if the shooter hates the target
-              if (!Other.TID || Target.TIDToHate != Other.TID) return false;
+              if (!Other.TID || Target.TIDToHate != Other.TID) return ProcessHitFlags(Other, false);
             }
           }
         } else if (Inf == 0) {
           //print("TOUCH: self=%n; other=%n; inf=%d", GetClassName(Class), GetClassName(Other.Class), Inf);
-          if (Other.IsFriend(Target)) return false; // don't hurt friends
+          if (Other.IsFriend(Target)) return ProcessHitFlags(Other, false); // don't hurt friends
           //print("  not friends");
           if (Other.TIDToHate && Other.TIDToHate == Target.TIDToHate) {
             // don't hurt monsters that hate the same thing as you do
-            return false;
+            return ProcessHitFlags(Other, false);
           }
           //print("  hates");
           //print("  species: target is '%n', other is '%n'", Target.GetSpecies(), Other.GetSpecies());
@@ -688,7 +707,7 @@ override bool Touch (Entity InOther) {
             // don't hurt same species, but only if the target isn't one's hostile
             if (!Other.IsHostile(Target)) {
               // allow hurting monsters the shooter hates
-              if (Other.TID == 0 || Target.TIDToHate != Other.TID) return false;
+              if (Other.TID == 0 || Target.TIDToHate != Other.TID) return ProcessHitFlags(Other, false);
             }
           }
           //print("  different species");
@@ -696,10 +715,10 @@ override bool Touch (Entity InOther) {
       }
     }
 
-    if (!Other.bShootable) return !Other.bSolid; // didn't do any damage
+    if (!Other.bShootable) return ProcessHitFlags(Other, !Other.bSolid); // didn't do any damage
 
     // don't hit spectres with non-sigil weapons
-    if (Other.bSpectral && !bSpectral) return true;
+    if (Other.bSpectral && !bSpectral) return ProcessHitFlags(Other, true);
 
     if (bRip && !Other.bDontRip) {
       if (!bNoBossRip || !Other.bBoss) {
@@ -717,8 +736,7 @@ override bool Touch (Entity InOther) {
           Other.Velocity.y += Velocity.y/4.0;
         }
       }
-      //WHAT A FUCK IS THIS???????      numspechit = 0;
-      return true;
+      return ProcessHitFlags(Other, true);
     }
 
     // damage / explode
@@ -736,7 +754,7 @@ override bool Touch (Entity InOther) {
       Other.Damage(self, Target, damage, DamageType);
     }
     // don't traverse any more
-    return false;
+    return ProcessHitFlags(Other, false);
   }
 
   if (Other.bPushable && !bCannotPush) {
@@ -757,7 +775,7 @@ override bool Touch (Entity InOther) {
     if (solid && (!Other || Other.IsDestroyed())) solid = false; // k8: it is no more
   }
 
-  return !solid;
+  return ProcessHitFlags(Other, !solid);
 }
 
 
