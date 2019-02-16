@@ -99,8 +99,34 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   }
 
   if (!isPlr) {
+    static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
+    static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
+    //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
+    static TPlane lastViewPlane;
+    // if the light is behind a view, drop it if it is further than light radius
+    if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 512*512)) {
+      if (lastOrg.x != cl->ViewOrg.x ||
+          lastOrg.y != cl->ViewOrg.y ||
+          lastOrg.z != cl->ViewOrg.z ||
+          lastAngles.pitch != cl->ViewAngles.pitch ||
+          /*lastAngles.roll != cl->ViewAngles.roll ||*/
+          lastAngles.yaw != cl->ViewAngles.yaw)
+      {
+        lastOrg = cl->ViewOrg;
+        lastAngles = cl->ViewAngles;
+        TVec lastForward;
+        AngleVector(lastAngles, lastForward);
+        lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
+        //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
+        //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
+      }
+      if (lastViewPlane.PointOnSide(lorg)) {
+        //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
+        return nullptr;
+      }
+    }
     // don't add too far-away lights
-    if (lengthSquared(cl->ViewOrg-lorg) >= r_lights_radius*r_lights_radius) return nullptr;
+    if (bestdist/*lengthSquared(cl->ViewOrg-lorg)*/ >= r_lights_radius*r_lights_radius) return nullptr;
     if (r_dynamic_clip && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
