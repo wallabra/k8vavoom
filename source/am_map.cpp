@@ -833,6 +833,7 @@ static void AM_doFollowPlayer () {
 //
 //==========================================================================
 void AM_Ticker () {
+  AM_Check();
   if (!automapactive) return;
 
   if (am_follow_player) AM_doFollowPlayer();
@@ -1460,6 +1461,7 @@ static void AM_CheckVariables () {
 //
 //==========================================================================
 void AM_Drawer () {
+  AM_Check();
   if (!automapactive) return;
 
   if (am_overlay) {
