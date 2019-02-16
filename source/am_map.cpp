@@ -1482,6 +1482,7 @@ void AM_Drawer () {
   DrawWorldTimer();
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vbottom);
+  T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
   T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
   if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
