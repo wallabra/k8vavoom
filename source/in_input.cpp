@@ -450,6 +450,7 @@ void VInput::ProcessEvents () {
       //VStr kb;
       //if (isAllowed(ev.data1&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.data1&0xff] : KeyBindingsUp[ev.data1&0xff]);
       VStr kb = getBinding((ev.type == ev_keydown), ev.data1&0xff);
+      //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.data1&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
       if (kb.IsNotEmpty()) {
         if (kb[0] == '+' || kb[0] == '-') {
           // button commands add keynum as a parm
