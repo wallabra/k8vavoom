@@ -29,7 +29,7 @@
 //**
 //**************************************************************************
 namespace ajbsp {
-  extern bool lev_doing_hexen;
+  //extern bool lev_doing_hexen;
   extern int num_old_vert;
   extern int num_new_vert;
   extern int num_complete_seg;
@@ -605,7 +605,7 @@ void VLevel::BuildNodesAJ () {
   ajbsp::cur_info = &nb_info;
 
   //lev_doing_normal = false;
-  ajbsp::lev_doing_hexen = !!(LevelFlags&LF_Extended);
+  //!bool lev_doing_hexen = !!(LevelFlags&(LF_Extended|LF_TextMap));
 
   ajbsp::num_vertices = 0;
   ajbsp::num_linedefs = 0;
@@ -629,8 +629,7 @@ void VLevel::BuildNodesAJ () {
   UploadThings(this);
 
   // other data initialisation
-  // always prune vertices at end of lump, otherwise all the
-  // unused vertices from seg splits would keep accumulating.
+  // no need to prune vertices, 'cause our vertex uploader will upload only used vertices
   //ajbsp::PruneVerticesAtEnd();
   GCon->Logf("AJBSP: copied %d original vertexes out of %d", ajbsp::num_vertices, NumVertexes);
   GCon->Logf("AJBSP: building nodes (%s mode)", (nodes_fast_mode ? "fast" : "normal"));
@@ -640,7 +639,8 @@ void VLevel::BuildNodesAJ () {
 
   ajbsp::CalculateWallTips();
 
-  if (ajbsp::lev_doing_hexen) ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
+  //k8: always try polyobjects, why not?
+  /*if (lev_doing_hexen)*/ ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
 
   //if (cur_info->window_fx) ajbsp::DetectWindowEffects();
   ajbsp::InitBlockmap();
