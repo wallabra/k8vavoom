@@ -110,6 +110,11 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   const bool hasPVS = Level->HasPVS();
 
+  static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
+  static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
+  //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
+  static TPlane lastViewPlane;
+
   if (!FixedLight && r_static_lights) {
 #ifdef RADVLIGHT_GRID_OPTIMIZER
     static TMapNC<vuint32, int> slmhash;
@@ -119,37 +124,62 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
     if (!staticLightsFiltered) RefilterStaticLights();
 
-    for (int i = 0; i < Lights.Num(); i++) {
+    light_t *stlight = Lights.ptr();
+    for (int i = Lights.length(); i--; ++stlight) {
       //if (!Lights[i].radius) continue;
-      if (!Lights[i].active) continue;
+      if (!stlight->active) continue;
 
       // don't do lights that are too far away
-      Delta = Lights[i].origin-vieworg;
+      Delta = stlight->origin-vieworg;
+
+      // if the light is behind a view, drop it if it is further than light radius
+      if (Delta.lengthSquared() >= stlight->radius*stlight->radius) {
+        if (lastOrg.x != cl->ViewOrg.x ||
+            lastOrg.y != cl->ViewOrg.y ||
+            lastOrg.z != cl->ViewOrg.z ||
+            lastAngles.pitch != cl->ViewAngles.pitch ||
+            /*lastAngles.roll != cl->ViewAngles.roll ||*/
+            lastAngles.yaw != cl->ViewAngles.yaw)
+        {
+          lastOrg = cl->ViewOrg;
+          lastAngles = cl->ViewAngles;
+          TVec lastForward;
+          AngleVector(lastAngles, lastForward);
+          lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
+          //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
+          //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
+        }
+        if (lastViewPlane.PointOnSide(stlight->origin)) {
+          //GCon->Logf("  ST-DROPPED; radius=%f; dist=%f", stlight->radius, Delta.length());
+          continue;
+        }
+      }
+
+      // don't add too far-away lights
       Delta.z = 0;
       const float dlenSq = Delta.length2DSquared();
-
       if (dlenSq > rlightraduisSq) continue;
 
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
       if (hasPVS) {
-        subsector_t *sub = Level->PointInSubsector(Lights[i].origin);
+        subsector_t *sub = Level->PointInSubsector(stlight->origin);
         const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-        if (!(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
+        if (!(dyn_facevis[stlight->leafnum>>3]&(1<<(stlight->leafnum&7)))) continue;
       }
 
       if (dlenSq > rlightraduisSightSq) {
         // check some more rays
-        if (!RadiusCastRay(Lights[i].origin, vieworg, Lights[i].radius, /*true*/r_dynamic_clip_more)) continue;
+        if (!RadiusCastRay(stlight->origin, vieworg, stlight->radius, /*true*/r_dynamic_clip_more)) continue;
       }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
       // don't render too much lights around one point
       if (statdiv > 0) {
-        vuint32 cc = ((((vuint32)Lights[i].origin.x)/(vuint32)statdiv)&0xffffu)|(((((vuint32)Lights[i].origin.y)/(vuint32)statdiv)&0xffffu)<<16);
+        vuint32 cc = ((((vuint32)stlight->origin.x)/(vuint32)statdiv)&0xffffu)|(((((vuint32)stlight->origin.y)/(vuint32)statdiv)&0xffffu)<<16);
         int *np = slmhash.get(cc);
         if (np) {
           // replace by light with greater radius
-          if (Lights[*np].radius < Lights[i].radius) {
+          if (Lights[*np].radius < stlight->radius) {
             *np = i;
           }
         } else {
@@ -158,7 +188,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       } else
 #endif
       {
-        RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
+        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
       }
     }
 
@@ -166,7 +196,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     if (statdiv > 0) {
       for (auto it = slmhash.first(); bool(it); ++it) {
         int i = it.getValue();
-        RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
+        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
       }
     }
 #endif
@@ -182,12 +212,35 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 #endif
 
     dlight_t *l = DLights;
-
-    for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
+    for (int i = MAX_DLIGHTS; i--; ++l) {
       if (!l->radius || l->die < Level->Time) continue;
 
       // don't do lights that are too far away
       Delta = l->origin-vieworg;
+
+      // if the light is behind a view, drop it if it is further than light radius
+      if (Delta.lengthSquared() >= l->radius*l->radius) {
+        if (lastOrg.x != cl->ViewOrg.x ||
+            lastOrg.y != cl->ViewOrg.y ||
+            lastOrg.z != cl->ViewOrg.z ||
+            lastAngles.pitch != cl->ViewAngles.pitch ||
+            /*lastAngles.roll != cl->ViewAngles.roll ||*/
+            lastAngles.yaw != cl->ViewAngles.yaw)
+        {
+          lastOrg = cl->ViewOrg;
+          lastAngles = cl->ViewAngles;
+          TVec lastForward;
+          AngleVector(lastAngles, lastForward);
+          lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
+          //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
+          //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
+        }
+        if (lastViewPlane.PointOnSide(l->origin)) {
+          //GCon->Logf("  ST-DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
+          continue;
+        }
+      }
+
       Delta.z = 0;
       const float dlenSq = Delta.length2DSquared();
 

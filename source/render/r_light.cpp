@@ -99,12 +99,12 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   }
 
   if (!isPlr) {
-    static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
-    static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
-    //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
-    static TPlane lastViewPlane;
     // if the light is behind a view, drop it if it is further than light radius
     if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 512*512)) {
+      static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
+      static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
+      //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
+      static TPlane lastViewPlane;
       if (lastOrg.x != cl->ViewOrg.x ||
           lastOrg.y != cl->ViewOrg.y ||
           lastOrg.z != cl->ViewOrg.z ||
