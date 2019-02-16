@@ -876,8 +876,10 @@ sector_t *NewSector(void)
 thing_t *NewThing(void)
 	ALLIGATOR(thing_t, lev_things, num_things)
 
-seg_t *NewSeg(void)
+seg_t *NewSeg(void) {
+	++cur_info->totalsegs;
 	ALLIGATOR(seg_t, segs, num_segs)
+}
 
 subsec_t *NewSubsec(void)
 	ALLIGATOR(subsec_t, subsecs, num_subsecs)

@@ -53,6 +53,8 @@ public:
 
 	// the GUI can set this to tell the node builder to stop
 	bool cancelled;
+	int donesegs;
+	int totalsegs;
 
 	// from here on, various bits of internal state
 	int total_failed_maps;
@@ -76,6 +78,8 @@ public:
 		force_compress(false),
 
 		cancelled(false),
+		donesegs(0),
+		totalsegs(0),
 
 		total_failed_maps(0),
 		total_warnings(0),
@@ -717,7 +721,7 @@ void FreeQuickAllocCuts(void);
 // line.  Returns -1 if box is on left side, +1 if box is on right
 // size, or 0 if the line intersects the box.
 //
-int BoxOnLineSide(superblock_t *box, seg_t *part);
+//int BoxOnLineSide(superblock_t *box, seg_t *part);
 
 // add the seg to the given list
 void AddSegToSuper(superblock_t *block, seg_t *seg);

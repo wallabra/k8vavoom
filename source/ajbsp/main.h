@@ -105,6 +105,8 @@ extern void ajbsp_PrintMsg(const char *fmt, ...) __attribute__((format(printf,1,
 extern void ajbsp_PrintVerbose(const char *fmt, ...) __attribute__((format(printf,1,2)));
 extern void ajbsp_PrintDetail(const char *fmt, ...) __attribute__((format(printf,1,2)));
 
+extern void ajbsp_Progress(int curr, int total);
+
 extern void ajbsp_DebugPrintf(const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 extern void ajbsp_PrintMapName(const char *name);

@@ -85,6 +85,75 @@ static inline int RoundPOW2(int x)
 }
 
 
+//
+// Returns -1 for left, +1 for right, or 0 for intersect.
+//
+static inline int PointOnLineSide(seg_t *part, double x, double y)
+{
+	double perp = UtilPerpDist(part, x, y);
+
+	if (fabs(perp) <= DIST_EPSILON)
+		return 0;
+
+	return (perp < 0) ? -1 : +1;
+}
+
+
+// check the relationship between the given box and the partition
+// line.  Returns -1 if box is on left side, +1 if box is on right
+// size, or 0 if the line intersects the box.
+//
+static inline int BoxOnLineSide(superblock_t *box, seg_t *part)
+{
+	double x1 = (double)box->x1 - IFFY_LEN * 1.5;
+	double y1 = (double)box->y1 - IFFY_LEN * 1.5;
+	double x2 = (double)box->x2 + IFFY_LEN * 1.5;
+	double y2 = (double)box->y2 + IFFY_LEN * 1.5;
+
+	int p1, p2;
+
+	// handle simple cases (vertical & horizontal lines)
+	if (part->pdx == 0)
+	{
+		p1 = (x1 > part->psx) ? +1 : -1;
+		p2 = (x2 > part->psx) ? +1 : -1;
+
+		if (part->pdy < 0)
+		{
+			p1 = -p1;
+			p2 = -p2;
+		}
+	}
+	else if (part->pdy == 0)
+	{
+		p1 = (y1 < part->psy) ? +1 : -1;
+		p2 = (y2 < part->psy) ? +1 : -1;
+
+		if (part->pdx < 0)
+		{
+			p1 = -p1;
+			p2 = -p2;
+		}
+	}
+	// now handle the cases of positive and negative slope
+	else if (part->pdx * part->pdy > 0)
+	{
+		p1 = PointOnLineSide(part, x1, y2);
+		p2 = PointOnLineSide(part, x2, y1);
+	}
+	else  // NEGATIVE
+	{
+		p1 = PointOnLineSide(part, x1, y1);
+		p2 = PointOnLineSide(part, x2, y2);
+	}
+
+	if (p1 == p2)
+		return p1;
+
+	return 0;
+}
+
+
 static intersection_t *quick_alloc_cuts = NULL;
 
 
@@ -1201,71 +1270,6 @@ void AddMinisegs(seg_t *part,
 static superblock_t *quick_alloc_supers = NULL;
 
 
-//
-// Returns -1 for left, +1 for right, or 0 for intersect.
-//
-static int PointOnLineSide(seg_t *part, double x, double y)
-{
-	double perp = UtilPerpDist(part, x, y);
-
-	if (fabs(perp) <= DIST_EPSILON)
-		return 0;
-
-	return (perp < 0) ? -1 : +1;
-}
-
-
-int BoxOnLineSide(superblock_t *box, seg_t *part)
-{
-	double x1 = (double)box->x1 - IFFY_LEN * 1.5;
-	double y1 = (double)box->y1 - IFFY_LEN * 1.5;
-	double x2 = (double)box->x2 + IFFY_LEN * 1.5;
-	double y2 = (double)box->y2 + IFFY_LEN * 1.5;
-
-	int p1, p2;
-
-	// handle simple cases (vertical & horizontal lines)
-	if (part->pdx == 0)
-	{
-		p1 = (x1 > part->psx) ? +1 : -1;
-		p2 = (x2 > part->psx) ? +1 : -1;
-
-		if (part->pdy < 0)
-		{
-			p1 = -p1;
-			p2 = -p2;
-		}
-	}
-	else if (part->pdy == 0)
-	{
-		p1 = (y1 < part->psy) ? +1 : -1;
-		p2 = (y2 < part->psy) ? +1 : -1;
-
-		if (part->pdx < 0)
-		{
-			p1 = -p1;
-			p2 = -p2;
-		}
-	}
-	// now handle the cases of positive and negative slope
-	else if (part->pdx * part->pdy > 0)
-	{
-		p1 = PointOnLineSide(part, x1, y2);
-		p2 = PointOnLineSide(part, x2, y1);
-	}
-	else  // NEGATIVE
-	{
-		p1 = PointOnLineSide(part, x1, y1);
-		p2 = PointOnLineSide(part, x2, y2);
-	}
-
-	if (p1 == p2)
-		return p1;
-
-	return 0;
-}
-
-
 /* ----- super block routines ------------------------------------ */
 
 static superblock_t *NewSuperBlock(void)
@@ -1508,6 +1512,7 @@ superblock_t *CreateSegs(void)
 
 	// step through linedefs and get side numbers
 
+	cur_info->donesegs = cur_info->totalsegs = 0;
 	for (i=0 ; i < num_linedefs ; i++)
 	{
 		linedef_t *line = LookupLinedef(i);
@@ -1584,6 +1589,7 @@ static void DetermineMiddle(subsec_t *sub)
 		mid_y += seg->start->y + seg->end->y;
 
 		total += 2;
+		++cur_info->donesegs;
 	}
 
 	sub->mid_x = mid_x / total;
@@ -1846,6 +1852,7 @@ static void CreateSubsecWorker(subsec_t *sub, superblock_t *block)
 		seg->block = NULL;
 
 		sub->seg_list = seg;
+		//++cur_info->donesegs;
 	}
 
 	// recursively handle sub-blocks
@@ -1970,6 +1977,7 @@ build_result_e BuildNodes(superblock_t *seg_list,
 #   endif
 
 		*S = CreateSubsec(seg_list);
+		ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
 
 		return BUILD_OK;
 	}
@@ -2064,6 +2072,7 @@ build_result_e BuildNodes(superblock_t *seg_list,
 	ajbsp_DebugPrintf("Build: DONE\n");
 # endif
 
+	//ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
 	return ret;
 }
 

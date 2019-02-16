@@ -174,6 +174,23 @@ void ajbsp_PrintMapName (const char *name) {
 
 //==========================================================================
 //
+//  ajbsp_Progress
+//
+//==========================================================================
+void ajbsp_Progress (int curr, int total) {
+  //GCon->Logf("AJBSP: %d/%d", curr, total);
+#ifdef CLIENT
+  if (total <= 0) {
+    R_PBarUpdate("BSP", 42, 42, true); // final update
+  } else {
+    R_PBarUpdate("BSP", curr, total);
+  }
+#endif
+}
+
+
+//==========================================================================
+//
 //  UploadSectors
 //
 //==========================================================================
@@ -641,6 +658,7 @@ void VLevel::BuildNodesAJ () {
     ajbsp::ClockwiseBspTree();
     ajbsp::CheckLimits();
     ajbsp::SortSegs();
+    ajbsp_Progress(-1, -1);
 
     GCon->Logf("AJBSP: built with %d nodes, %d subsectors, %d segs, %d vertexes", ajbsp::num_nodes, ajbsp::num_subsecs, ajbsp::num_segs, ajbsp::num_vertices);
     if (root_node && root_node->r.node && root_node->l.node) GCon->Logf("AJBSP: heights of subtrees: %d/%d", ajbsp::ComputeBspHeight(root_node->r.node), ajbsp::ComputeBspHeight(root_node->l.node));
