@@ -496,7 +496,7 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 
 //==========================================================================
 //
-//  SV_PointInRegions
+//  SV_PointInRegion
 //
 //==========================================================================
 sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p) {
