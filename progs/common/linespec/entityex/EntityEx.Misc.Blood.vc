@@ -27,25 +27,6 @@
 //  BLOOD UTILITIES
 //**************************************************************************
 
-
-//==========================================================================
-//
-//  SetBloodArgs
-//
-//  pass some info to spawned blood actor, so decorate/vc can use 'em.
-//  should be called on blood entity
-//
-//  Tracer, Target: bleeding Entity (can be none)
-//  Args[0]: damage (can be 0)
-//
-//==========================================================================
-final void SetBloodArgs (EntityEx master, optional int damage) {
-  self.Tracer = master;
-  self.Target = master;
-  self.Args[0] = damage;
-}
-
-
 //==========================================================================
 //
 // GetBloodSmearDecalName
@@ -110,6 +91,146 @@ final name GetBloodSplatDecalName () {
 
 //==========================================================================
 //
+//  k8GetBloodClassName
+//
+//==========================================================================
+final static name k8GetBloodClassName (name newblood, name oldblood) {
+  if (FindClass(newblood)) {
+    //print("GB: new=%s; old=%s; res=%s", newblood, oldblood, newblood);
+    return newblood;
+  }
+  //print("GB: new=%s; old=%s; res=%s", newblood, oldblood, oldblood);
+  return oldblood;
+}
+
+
+//==========================================================================
+//
+//  SetBloodArgs
+//
+//  pass some info to spawned blood actor, so decorate/vc can use 'em.
+//  should be called on blood entity
+//
+//  Tracer, Target: bleeding Entity (can be none)
+//  Args[0]: damage (can be 0)
+//
+//==========================================================================
+final void SetBloodArgs (EntityEx master, optional int damage) {
+  self.Tracer = master;
+  self.Target = master;
+  self.Args[0] = damage;
+}
+
+
+//==========================================================================
+//
+//  BloodSetZClamped
+//
+//  set spos.z to spos.z+delta, but not higher than ceiling
+//  delta will be clamped to [0..)
+//
+//==========================================================================
+final void BloodAddZClamped (ref TVec spos, float delta) {
+  if (!delta) return;
+  auto sec = XLevel.PointInSector(spos);
+  auto reg = PointInRegion(sec, spos);
+  if (reg) {
+    if (delta > 0) {
+      // positive delta
+      spos.z = fmin(spos.z+delta, reg.ceiling.minz-1);
+    } else {
+      // negative delta
+      spos.z = fmax(spos.z+delta, reg.floor.maxz+1);
+    }
+    //print("spz=%s; cmz=%s", spos.z, reg.ceiling.minz);
+  } else {
+    spos.z += delta;
+  }
+}
+
+
+//==========================================================================
+//
+//  SpawnHeadBloodSpray
+//
+//  this will be called on XDeath
+//
+//==========================================================================
+void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawnBloodPool) {
+  bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
+  if (!doSpray) return;
+
+  name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
+  name poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool', '');
+  //print("bloodtype: %C/%C", self.BloodType, GetClassReplacee(self.BloodType));
+
+  if (self.BloodType) {
+    name brname = GetClassName(GetClassReplacee(self.BloodType));
+    //print("brname=%s", brname);
+    if (brname == 'BloodGreen') {
+      bloodClassName = 'BloodGreen';
+      bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Green', bloodClassName);
+      //mistClassName = 'K8Gore_BloodmistSmallGreen';
+      poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Green', poolClassName);
+    } else if (brname == 'BloodBlue') {
+      bloodClassName = 'BloodBlue';
+      bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Blue', bloodClassName);
+      //mistClassName = 'K8Gore_BloodmistSmallBlue';
+      poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Blue', poolClassName);
+    }
+  }
+
+  //writeln("  bloodclass: ", bloodClassName);
+
+  class!Actor bloodClass = class!Actor(FindClass(bloodClassName));
+  if (bloodClass) bloodClass = class!Actor(GetClassReplacement(bloodClass));
+
+  if (bloodClass) {
+    //print("BLOOD CLASS: %C (blcn=%s)", bloodClass, bloodClassName);
+    int bcc = int(GetCvarF('k8HSHeadKillBloodCount'));
+    if (bcc > 0) {
+      bcc += int(Random()*7-3); // -3..3
+      if (bcc < 3) bcc = 3;
+      if (bcc > 32) bcc = 32;
+    }
+
+    if (!specified_notDead) notDead = (damage < Health);
+
+    if (bcc > 0 && !spawnBloodPool && notDead) bcc = max(1, bcc-bcc/3);
+
+    float hgt = Height;
+    if (hgt < 1 || (bMonster && bCorpse)) hgt = default.Height;
+
+    TVec spos;
+    foreach (; 0..bcc) {
+      spos.x = Origin.x+((Random()*51-25)/10.0);
+      spos.y = Origin.y+((Random()*51-25)/10.0);
+      spos.z = Origin.z;
+      float zmax = hgt+((Random()*29-14)/10.0);
+      BloodAddZClamped(spos, zmax);
+      EntityEx bld = EntityEx(Level.Spawn(bloodClass, spos)); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+      if (bld) {
+        bld.SetBloodArgs(self, damage);
+        bld.Velocity = Velocity;
+      }
+    }
+  }
+
+  if (spawnBloodPool && GetCvarB('k8HSHeadKillBloodPool')) {
+    //poolClassName = 'SmallBloodPool';
+    class!Actor poolClass = class!Actor(FindClass(poolClassName));
+    if (poolClass) poolClass = class!Actor(GetClassReplacement(bloodClass));
+    if (poolClass) {
+      //print("***SPAWNING BLOOD POOL: '%C'", poolClass);
+      EntityEx bld = EntityEx(Level.Spawn(poolClass, Origin));
+      if (bld) bld.SetBloodArgs(self, damage);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  TraceSplat
 //
 //  trace line to the wall, so we can spawn decal on it.
@@ -130,7 +251,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
   if (specified_zofs) {
-    shootOrigin.z += zofs;
+    //shootOrigin.z += zofs;
+    BloodAddZClamped(shootOrigin, zofs);
   } else {
     //shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
   }
@@ -327,7 +449,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 //  SpawnBlood
 //
 //==========================================================================
-final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
+final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional float zofs) {
   EntityEx A;
   int i, c;
 
@@ -347,7 +469,9 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
     TraceBleed(damage, goup, av.yaw, av.pitch, false);
   }
 
-  Org.z += (Random()-Random())*4.0;
+  //Org.z += (Random()-Random())*4.0;
+  if (!specified_zofs) zofs = (Random()-Random())*4.0;
+  BloodAddZClamped(Org, zofs);
   damage = (damage > 255 ? 255 : damage);
   c = P_Random()>>1;
   for (i = 0; i < MAXPLAYERS; ++i) {
@@ -401,8 +525,8 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
 //==========================================================================
 final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
   TVec goup = Origin;
-  if (Radius > 0) goup.z += Radius+4+Random()*4;
-  SpawnBlood(goup, damage, shootOrg!optional);
+  float zofs = (Radius > 0 ? Radius+4+Random()*4 : 0);
+  SpawnBlood(goup, damage, shootOrg!optional, zofs);
 }
 
 
@@ -531,7 +655,8 @@ final void SpawnRipperBlood () {
   TVec org;
   org.x = Origin.x+(Random()-Random())*16.0;
   org.y = Origin.y+(Random()-Random())*16.0;
-  org.z = Origin.z+(Random()-Random())*16.0;
+  org.z = Origin.z;
+  BloodAddZClamped(org, (Random()-Random())*16.0);
 
   EntityEx th = Spawn(BloodType, org);
   if (!th) return;
