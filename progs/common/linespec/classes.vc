@@ -227,6 +227,7 @@ enum {
 #include "secaction/SecActEyesBelowC.vc"
 #include "secaction/SecActEyesAboveC.vc"
 #include "secaction/SecActHitFakeFloor.vc"
+#include "secaction/SecActMusChanger.vc"
 
 #include "FlashFader.vc"
 
