@@ -1237,15 +1237,18 @@ load_again:
 
 struct VectorInfo {
   float xy[2];
-  int aidx;
-  int lidx; // linedef index
+  unsigned aidx;
+  unsigned lidx; // linedef index
   VectorInfo *next;
 
-  inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
-  inline bool operator != (const VectorInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
+  //inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
+  //inline bool operator != (const VectorInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
+
+  inline bool operator == (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
+  inline bool operator != (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
 };
 
-inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
 
 
 //==========================================================================
@@ -1259,33 +1262,36 @@ void VLevel::BuildDecalsVVList () {
   if (NumLines < 1) return; // just in case
 
   // build hashes and lists
-  TMapNC<VectorInfo, int> vmap; // in tarray
+  TMapNC<VectorInfo, unsigned> vmap; // value: index in in tarray
   TArray<VectorInfo> va;
   va.SetLength(NumLines*2);
   line_t *ld = Lines;
-  for (int i = 0; i < NumLines; ++i, ++ld) {
+  for (unsigned i = 0; i < (unsigned)NumLines; ++i, ++ld) {
     ld->decalMark = 0;
     ld->v1linesCount = ld->v2linesCount = 0;
     ld->v1lines = ld->v2lines = nullptr;
-    for (int vn = 0; vn < 2; ++vn) {
-      VectorInfo *vi = &va[i*2+vn];
+    for (unsigned vn = 0; vn < 2; ++vn) {
+      const unsigned aidx = i*2+vn;
+      VectorInfo *vi = &va[aidx];
       const TVec *vertex = (vn == 0 ? ld->v1 : ld->v2);
       vi->xy[0] = vertex->x;
       vi->xy[1] = vertex->y;
-      vi->aidx = i*2+vn;
+      vi->aidx = aidx;
       vi->lidx = i;
       vi->next = nullptr;
       auto vaidxp = vmap.find(*vi);
       if (vaidxp) {
+        check(*vaidxp != vi->aidx);
         VectorInfo *cv = &va[*vaidxp];
         while (cv->next) {
+          check(cv->aidx < aidx);
           if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(0)!");
           cv = cv->next;
         }
         if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(1)!");
         cv->next = vi;
       } else {
-        vmap.put(*vi, i*2+vn);
+        vmap.put(*vi, vi->aidx);
       }
     }
   }
@@ -1295,15 +1301,31 @@ void VLevel::BuildDecalsVVList () {
 
   // fill linedef lists
   ld = Lines;
-  for (int i = 0; i < NumLines; ++i, ++ld) {
-    for (int vn = 0; vn < 2; ++vn) {
-      int count = 0;
+  for (unsigned i = 0; i < (unsigned)NumLines; ++i, ++ld) {
+    for (unsigned vn = 0; vn < 2; ++vn) {
+      unsigned count = 0;
       memset(wkhit, 0, NumLines*sizeof(wkhit[0]));
       wkhit[i] = 1;
+      /*
       for (int curvn = 0; curvn < 2; ++curvn) {
         VectorInfo *vi = &va[i*2+curvn];
         auto vaidxp = vmap.find(*vi);
-        if (!vaidxp) continue; //Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
+        if (!vaidxp) Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
+        VectorInfo *cv = &va[*vaidxp];
+        while (cv) {
+          if (!wkhit[cv->lidx]) {
+            if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(2)!");
+            wkhit[cv->lidx] = 1;
+            wklist[count++] = Lines+cv->lidx;
+          }
+          cv = cv->next;
+        }
+      }
+      */
+      {
+        VectorInfo *vi = &va[i*2+vn];
+        auto vaidxp = vmap.find(*vi);
+        if (!vaidxp) Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
         VectorInfo *cv = &va[*vaidxp];
         while (cv) {
           if (!wkhit[cv->lidx]) {
