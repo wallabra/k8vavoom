@@ -32,6 +32,7 @@
 #include "render/r_local.h" // for decals
 
 //#define VAVOOM_DECALS_DEBUG
+//#define VAVOOM_DECALS_DEBUG_X2
 
 extern VCvarB r_decals_enabled;
 
@@ -1211,11 +1212,13 @@ static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t 
 //
 //==========================================================================
 void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
-  if (tex < 0 || tex >= GTextureManager.GetNumTextures()) return;
-
   // don't process linedef twice
   if (li->decalMark == decanimuid) return;
   li->decalMark = decanimuid;
+
+  if (!GTextureManager[tex]) return;
+
+  //GCon->Logf("decal '%s' at linedef %d", *GTextureManager[tex]->Name, (int)(ptrdiff_t)(li-Lines));
 
   picinfo_t tinf;
   GTextureManager.GetTextureInfo(tex, &tinf);
@@ -1244,8 +1247,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   lv2.z = 0;
   float linelen = Length(lv2-lv1);
 
-#ifdef VAVOOM_DECALS_DEBUG
-  fprintf(stderr, "***PutDecalAtLine***: segdist=%f; prevdir=%d; sidenum=%d; linelen=%f\n", segdist, prevdir, sidenum, linelen);
+#if defined(VAVOOM_DECALS_DEBUG) || defined(VAVOOM_DECALS_DEBUG_X2)
+  GCon->Logf("***PutDecalAtLine***: lidx=%d; segdist=%f; prevdir=%d; sidenum=%d; linelen=%f", (int)(ptrdiff_t)(li-Lines), segdist, prevdir, sidenum, linelen);
 #endif
 
   float segd0, segd1;
@@ -1254,16 +1257,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
     segd0 = segdist+linelen;
     segd1 = segd0+tw;
     segdist = (segd0+segd1)*0.5f;
-#ifdef VAVOOM_DECALS_DEBUG
-    fprintf(stderr, "** left spread; segdist=%f; segd0=%f; segd1=%f\n", segdist, segd0, segd1);
+#if defined(VAVOOM_DECALS_DEBUG) || defined(VAVOOM_DECALS_DEBUG_X2)
+    GCon->Logf("** left spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
 #endif
   } else if (prevdir > 0) {
     if (segdist <= 0) return; // just in case
     segd1 = segdist;
     segd0 = segd1-tw;
     segdist = (segd0+segd1)*0.5f;
-#ifdef VAVOOM_DECALS_DEBUG
-    fprintf(stderr, "** right spread; segdist=%f; segd0=%f; segd1=%f\n", segdist, segd0, segd1);
+#if defined(VAVOOM_DECALS_DEBUG) || defined(VAVOOM_DECALS_DEBUG_X2)
+    GCon->Logf("** right spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
 #endif
   } else {
     segd0 = segdist-tw2;
@@ -1272,9 +1275,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 
   // find segs for this decal (there may be several segs)
   for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
-    // don't spawn decals at sliding linedefs
+    if (!seg->linedef) continue; // ignore minisegs
+
     //if (seg->linedef) fprintf(stderr, "ldef(%p): special=%d\n", seg->linedef, seg->linedef->special);
-    if (seg->linedef && (seg->linedef->flags&ML_NODECAL) != 0) continue;
+    if ((seg->linedef->flags&ML_NODECAL) != 0) continue;
 
     if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) {
@@ -1283,8 +1287,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       }
       bool slideWithFloor = false;
       bool slideWithCeiling = false;
-#ifdef VAVOOM_DECALS_DEBUG
-      fprintf(stderr, "  ** found seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
+#if defined(VAVOOM_DECALS_DEBUG) || defined(VAVOOM_DECALS_DEBUG_X2)
+      GCon->Logf("  ** found seg: (segd=%f:%f; seg=%f:%f)", segd0, segd1, seg->offset, seg->offset+seg->length);
 #endif
       int dcmaxcount = r_decal_onetype_max;
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
@@ -1307,20 +1311,34 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
               //!GCon->Logf("sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; bsec.floorZ=%f; bsec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, bsec->floor.TexZ, bsec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
 
               if (sb->BottomTexture > 0 && bsec->floor.TexZ > sec->floor.TexZ) {
-                // raises from a floor
                 botHit = !(hiz <= sec->floor.TexZ || loz >= bsec->floor.TexZ);
                 if (botHit) { if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true; /*!GCon->Logf("  BOTTOM HIT! slide=%d", (slideWithFloor ? 1 : 0));*/ }
               } else {
               }
 
               if (sb->TopTexture > 0 && bsec->ceiling.TexZ < sec->ceiling.TexZ) {
-                // raises from a floor
                 topHit = !(hiz <= bsec->ceiling.TexZ || loz >= sec->ceiling.TexZ);
                 if (topHit) { if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true; /*!GCon->Logf("  TOP HIT! slide=%d", (slideWithCeiling ? 1 : 0));*/ }
               } else {
               }
 
-              if (!botHit && !topHit) { /*!GCon->Logf("  *** in air");*/ continue; }
+              if (!botHit && !topHit) {
+                //!GCon->Logf("  *** in air");
+                if (sb->MidTexture <= 0) {
+                  /*
+                  line_t *xl = &Lines[289];
+                  GCon->Log("************");
+                  GCon->Logf("v1lines: %d", xl->v1linesCount);
+                  for (int f = 0; f < xl->v1linesCount; ++f) GCon->Logf("  %d: %d", f, (int)(ptrdiff_t)(xl->v1lines[f]-Lines));
+                  GCon->Logf("v2lines: %d", xl->v2linesCount);
+                  for (int f = 0; f < xl->v2linesCount; ++f) GCon->Logf("  %d: %d", f, (int)(ptrdiff_t)(xl->v2lines[f]-Lines));
+                  */
+                  continue;
+                }
+#if defined(VAVOOM_DECALS_DEBUG) || defined(VAVOOM_DECALS_DEBUG_X2)
+                GCon->Logf("  *** 2sided %d", (int)(ptrdiff_t)(li-Lines));
+#endif
+              }
             } else {
               // no other side
               //!GCon->Logf("::: sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
@@ -1440,7 +1458,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   segd0 = segdist-txofs;
   segd1 = segd0+tw;
 #ifdef VAVOOM_DECALS_DEBUG
-  fprintf(stderr, "1: segd0=%f; segd1=%f; linelen=%f; prevdir=%d; pos=%f; tw=%f; tw2=%f\n", segd0, segd1, linelen, prevdir, segdist, tw, tw2);
+  GCon->Logf("1: segd0=%f; segd1=%f; linelen=%f; prevdir=%d; pos=%f; tw=%f; tw2=%f", segd0, segd1, linelen, prevdir, segdist, tw, tw2);
 #endif
   if ((segd0 < 0 && prevdir <= 0) || (segd1 > linelen && prevdir >= 0)) {
     for (int vn = 0; vn < 2; ++vn) {
@@ -1455,13 +1473,13 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           //FIXME! should this (both parts) take `sidenum` into account, and use segd1?
           if (spline->frontsector && sv2 == lv1) {
 #ifdef VAVOOM_DECALS_DEBUG
-            fprintf(stderr, "  pdn: found v2->v1 (f) segd0=%f; segd1=%f\n", segd0, segd1);
+            GCon->Logf("  pdn: found v2->v1 (f) segd0=%f; segd1=%f", segd0, segd1);
 #endif
             PutDecalAtLine(tex, orgz, segd0-txofs, dec, spline->frontsector, spline, -1, flips);
           }
           if (spline->backsector && sv1 == lv1) {
 #ifdef VAVOOM_DECALS_DEBUG
-            fprintf(stderr, "  pdn: found v2->v1 (b) segd0=%f; segd1=%f\n", segd0, segd1);
+            GCon->Logf("  pdn: found v2->v1 (b) segd0=%f; segd1=%f", segd0, segd1);
 #endif
             PutDecalAtLine(tex, orgz, segd0-txofs, dec, spline->backsector, spline, -1, flips);
           }
@@ -1470,19 +1488,19 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           if (spline->frontsector && sv1 == lv2) {
             //FIXME! should this take `sidenum` into account, and use segd1?
 #ifdef VAVOOM_DECALS_DEBUG
-            fprintf(stderr, "  pdp(0): found v1->v2 (f) segd0=%f; segd1=%f; newsegdist=%f\n", segd0, segd1, segd1-linelen-txofs);
+            GCon->Logf("  pdp(0): found v1->v2 (f) segd0=%f; segd1=%f; newsegdist=%f", segd0, segd1, segd1-linelen-txofs);
 #endif
             PutDecalAtLine(tex, orgz, segd1-linelen-txofs, dec, spline->frontsector, spline, 1, flips);
           }
           if (spline->backsector && sv2 == lv2) {
             if (sidenum == 0) {
 #ifdef VAVOOM_DECALS_DEBUG
-              fprintf(stderr, "  pdp(0): found v1->v2 (b) segd0=%f; segd1=%f; newsegdist=%f\n", segd0, segd1, linelen-(segdist-txofs));
+              GCon->Logf("  pdp(0): found v1->v2 (b) segd0=%f; segd1=%f; newsegdist=%f", segd0, segd1, linelen-(segdist-txofs));
 #endif
               PutDecalAtLine(tex, orgz, /*segd1-linelen*/linelen-(segdist-txofs), dec, spline->backsector, spline, 1, flips);
             } else {
 #ifdef VAVOOM_DECALS_DEBUG
-              fprintf(stderr, "  pdp(1): found v1->v2 (b) segd0=%f; segd1=%f; newsegdist=%f\n", segd0, segd1, segd1-linelen-txofs);
+              GCon->Logf("  pdp(1): found v1->v2 (b) segd0=%f; segd1=%f; newsegdist=%f", segd0, segd1, segd1-linelen-txofs);
 #endif
               PutDecalAtLine(tex, orgz, segd1-linelen-txofs, dec, spline->backsector, spline, 1, flips);
             }

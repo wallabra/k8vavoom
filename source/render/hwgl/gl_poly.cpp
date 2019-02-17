@@ -43,6 +43,9 @@ static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_sur
 
 static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0/*CVAR_Archive*/);
 
+static VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
+static VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 vuint32 glWDPolyTotal = 0;
@@ -1238,6 +1241,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
 
   bool zbufferWriteDisabled = false;
+  bool decalsInited = false;
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
@@ -1248,9 +1252,17 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       zbufferWriteDisabled = true;
       glDepthMask(GL_FALSE);
     }
+    if (r_decals_enabled && r_decals_wall_alpha && surf->dcseg && surf->dcseg->decals) {
+      RenderShaderDecalsStart();
+      decalsInited = true;
+    }
   } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
     Alpha = 1.0f;
+    if (r_decals_enabled && r_decals_wall_masked && surf->dcseg && surf->dcseg->decals) {
+      RenderShaderDecalsStart();
+      decalsInited = true;
+    }
   }
 
   if (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount) {
@@ -1275,6 +1287,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       ((surf->Light>>8)&255)*lev/255.0f,
       (surf->Light&255)*lev/255.0f, Alpha);
   }
+
   if (surf->Fade) {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfMaskedFogColourLoc,
@@ -1288,6 +1301,10 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
+  bool doDecals = decalsInited && tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
+
+  // fill stencil buffer for decals
+  if (doDecals) RenderPrepareShaderDecals(surf);
 
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
@@ -1297,6 +1314,18 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     glVertex(surf->verts[i]);
   }
   glEnd();
+
+  // draw decals
+  if (doDecals) {
+    if (RenderFinishShaderDecals(surf, false, false, nullptr, tex->ColourMap)) {
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      //p_glUseProgramObjectARB(SurfSimpleProgram);
+      //return true;
+    }
+  }
+
+  if (decalsInited) RenderShaderDecalsEnd();
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     glDisable(GL_BLEND);

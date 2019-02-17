@@ -253,14 +253,13 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
         doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
       }
       //if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha())
-      if (doRenderSurf)
-      {
+      if (doRenderSurf) {
         //GCon->Logf("  SURF!");
         surfs->Light = (lLev<<24)|LightParams->LightColour;
         surfs->Fade = Fade;
         surfs->dlightframe = r_sub->dlightframe;
         surfs->dlightbits = r_sub->dlightbits;
-        surfs->dcseg = nullptr;
+        surfs->dcseg = nullptr; // sky cannot have decals anyway
         DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
           0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
           false, 0, 0, TVec(), 0, TVec(), TVec(), TVec());
@@ -288,7 +287,8 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
         QueueWorldSurface(seg, surfs);
       }
     } else {
-      surfs->dcseg = nullptr;
+      //surfs->dcseg = nullptr;
+      surfs->dcseg = seg; // allow decals on masked polys
       DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
         0, texinfo->Alpha, texinfo->Additive, 0, false, 0, 0,
         TVec(), 0, TVec(), TVec(), TVec());
