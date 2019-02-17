@@ -84,7 +84,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   float coeff = r_light_filter_dynamic_coeff;
   if (coeff <= 0.1f) coeff = 0.1f; else if (coeff > 1) coeff = 1;
 
-  float radsq = (radius < 1 ? 32*32 : radius*radius*coeff);
+  float radsq = (radius < 1 ? 64*64 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
 
   // if this is player's dlight, never drop it
@@ -100,33 +100,18 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   if (!isPlr) {
     // if the light is behind a view, drop it if it is further than light radius
-    if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 512*512)) {
-      static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
-      static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
-      //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
-      static TPlane lastViewPlane;
-      if (lastOrg.x != cl->ViewOrg.x ||
-          lastOrg.y != cl->ViewOrg.y ||
-          lastOrg.z != cl->ViewOrg.z ||
-          lastAngles.pitch != cl->ViewAngles.pitch ||
-          /*lastAngles.roll != cl->ViewAngles.roll ||*/
-          lastAngles.yaw != cl->ViewAngles.yaw)
-      {
-        lastOrg = cl->ViewOrg;
-        lastAngles = cl->ViewAngles;
-        TVec lastForward;
-        AngleVector(lastAngles, lastForward);
-        lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
-        //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
-        //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
-      }
-      if (lastViewPlane.PointOnSide(lorg)) {
+    if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 64*64)) {
+      static TFrustum frustum;
+      frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius*r_lights_radius);
+      if (!frustum.checkSphere(lorg, (radius > 0 ? radius : 64))) {
         //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
         return nullptr;
       }
+    } else {
+      // don't add too far-away lights
+      // this checked above
+      //!if (bestdist/*lengthSquared(cl->ViewOrg-lorg)*/ >= r_lights_radius*r_lights_radius) return nullptr;
     }
-    // don't add too far-away lights
-    if (bestdist/*lengthSquared(cl->ViewOrg-lorg)*/ >= r_lights_radius*r_lights_radius) return nullptr;
     if (r_dynamic_clip && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
@@ -141,6 +126,16 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         return nullptr;
       }
     }
+  } else {
+    // test
+    /*
+    static TFrustum frustum1;
+    frustum1.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, 128);
+    if (!frustum1.checkSphere(lorg, 64)) {
+      //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
+      return nullptr;
+    }
+    */
   }
 
   // look for any free slot (or free one if necessary)
