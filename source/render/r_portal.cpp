@@ -128,6 +128,7 @@ void VPortal::Draw (bool UseStencil) {
   int SavedExtraLight = RLev->ExtraLight;
   int SavedFixedLight = RLev->FixedLight;
   vuint8 *SavedBspVis = RLev->BspVis;
+  vuint8 *SavedBspVisThing = RLev->BspVisThing;
   auto savedTraspFirst = RLev->traspFirst;
   auto savedTraspUsed = RLev->traspUsed;
   bool SavedMirrorClip = MirrorClip;
@@ -143,10 +144,14 @@ void VPortal::Draw (bool UseStencil) {
     // this has to be done only for portals that do rendering of view
 
     // notify allocator about minimal node size
-    VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize);
+    VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize*2);
     // allocate new bsp vis
-    RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize);
-    if (RLev->VisSize) memset(RLev->BspVis, 0, RLev->VisSize);
+    RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize*2);
+    RLev->BspVisThing = RLev->BspVis+RLev->VisSize;
+    if (RLev->VisSize) {
+      memset(RLev->BspVis, 0, RLev->VisSize);
+      memset(RLev->BspVisThing, 0, RLev->VisSize);
+    }
     //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
     // allocate new transsprites list
@@ -167,7 +172,7 @@ void VPortal::Draw (bool UseStencil) {
   RLev->FixedLight = SavedFixedLight;
   if (restoreVis) {
     RLev->BspVis = SavedBspVis;
-    if (RLev->VisSize) memcpy(RLev->BspVisThing, RLev->BspVis, RLev->VisSize);
+    RLev->BspVisThing = SavedBspVisThing;
     RLev->traspFirst = savedTraspFirst;
     RLev->traspUsed = savedTraspUsed;
   }

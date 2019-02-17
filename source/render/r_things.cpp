@@ -75,7 +75,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
-static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", false, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
+VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", false, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 
 //==========================================================================
@@ -495,7 +495,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   if (!r_draw_mobjs) return;
 
-  // clear sector flag array
+#if 0
   if (r_draw_adjacent_subsector_things) {
     //int zzcount = 0;
     for (unsigned sidx = 0; sidx < (unsigned)Level->NumSubsectors; ++sidx) {
@@ -518,6 +518,7 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
     }
     //if (zzcount) GCon->Logf("additional thing subsectors: %d", zzcount);
   }
+#endif
 
   // render things
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {

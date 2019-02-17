@@ -56,6 +56,7 @@ VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", fals
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
+extern VCvarB r_draw_adjacent_subsector_things;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -672,6 +673,21 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
+
+  // mark adjacent subsectors
+  if (r_draw_adjacent_subsector_things) {
+    int sgcount = Sub->numlines;
+    if (sgcount) {
+      const seg_t *seg = &Level->Segs[Sub->firstline];
+      for (; sgcount--; ++seg) {
+        if (seg->linedef && !(seg->linedef->flags&ML_TWOSIDED)) continue; // don't go through solid walls
+        const seg_t *pseg = seg->partner;
+        if (!pseg || !pseg->front_sub) continue;
+        unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
+        BspVisThing[psidx>>3] |= 1U<<(psidx&7);
+      }
+    }
+  }
 
   RenderSubRegion(Sub->regions);
 
