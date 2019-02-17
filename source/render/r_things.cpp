@@ -958,12 +958,16 @@ void VRenderLevelShared::DrawPlayerSprites () {
 //
 //==========================================================================
 void VRenderLevelShared::DrawCrosshair () {
-  guard(VRenderLevelShared::DrawCrosshair);
+  static int prevCH = -666;
   int ch = (int)crosshair;
   if (ch > 0 && ch < 10 && crosshair_alpha > 0.0f) {
-    int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", ch), VName::AddLower8), TEXTYPE_Pic);
+    static int handle = -1;
+    if (handle <= 0 || prevCH != ch) {
+      prevCH = ch;
+      handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", ch), VName::AddLower8), TEXTYPE_Pic);
+    }
     if (handle > 0) {
-      if (crosshair_alpha < 0.0f) crosshair_alpha = 0.0f;
+      //if (crosshair_alpha < 0.0f) crosshair_alpha = 0.0f;
       if (crosshair_alpha > 1.0f) crosshair_alpha = 1.0f;
       int cy = (screenblocks < 11 ? (VirtualHeight-sb_height)/2 : VirtualHeight/2);
       cy += r_crosshair_yofs;
@@ -973,7 +977,6 @@ void VRenderLevelShared::DrawCrosshair () {
       gl_pic_filtering = oldflt;
     }
   }
-  unguard;
 }
 
 
