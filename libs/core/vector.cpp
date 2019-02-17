@@ -214,14 +214,14 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
 //
 //==========================================================================
-void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane) {
+void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
   if (!isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
       !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw))
   {
     clear();
     return;
   }
-  valid = true; // anyway
+  planeCount = 4; // anyway
   origin = aorg;
   angles = aangles;
   // create direction vectors
@@ -240,11 +240,20 @@ void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aang
   if (createbackplane) {
     planes[4].SetPointDir3D(aorg, vforward);
     planes[4].clipflag = 1U<<4;
+    ++planeCount;
   } else {
     planes[4].clipflag = 0;
   }
+  // create far plane
+  if (farplanez > 0) {
+    planes[5].SetPointDir3D(aorg+vforward*farplanez, -vforward);
+    planes[5].clipflag = 1U<<5;
+    ++planeCount;
+  } else {
+    planes[5].clipflag = 0;
+  }
   // setup indicies for box checking
-  for (unsigned i = 0; i < 5; ++i) {
+  for (unsigned i = 0; i < 6; ++i) {
     if (!planes[i].clipflag) continue;
     unsigned *pindex = bindex[i];
     for (unsigned j = 0; j < 3; ++j) {
@@ -275,34 +284,48 @@ void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aang
 //
 //==========================================================================
 bool TFrustum::checkBox (const float *bbox) const {
-  if (!valid) return true;
-  unsigned failed = 5;
-  for (unsigned i = 0; i < 5; ++i) {
-    if (!planes[i].clipflag) { --failed; continue; } // don't need to clip against it
-    //if (planes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+  if (!planeCount) return true;
+  for (unsigned i = 0; i < 6; ++i) {
+    if (!planes[i].clipflag) continue; // don't need to clip against it
 
-    // generate accept and reject points
+    // generate reject point
     const unsigned *pindex = bindex[i];
 
-    TVec rejectpt;
-    rejectpt[0] = bbox[pindex[0]];
-    rejectpt[1] = bbox[pindex[1]];
-    rejectpt[2] = bbox[pindex[2]];
-
-    if (planes[i].PointOnSide(rejectpt)) continue; // on a back side (or on a plane)
-    --failed;
+    TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
+    if (planes[i].PointOnSide(rejectpt)) {
+      // on a back side (or on a plane)
+      return false;
+    }
 
     /*
+    // generate accept point
     TVec acceptpt;
     acceptpt[0] = bbox[pindex[3+0]];
     acceptpt[1] = bbox[pindex[3+1]];
     acceptpt[2] = bbox[pindex[3+2]];
 
     // we can reset clipflag bit here if accept point is on a good side
-    if (!planes[i].PointOnSide(acceptpt)) return true;
+    if (!planes[i].PointOnSide(acceptpt)) {}
     */
   }
-  return (failed == 0);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkPoint
+//
+//  returns `false` is sphere is out of frustum (or frustum is not valid)
+//
+//==========================================================================
+bool TFrustum::checkPoint (const TVec &point) const {
+  if (!planeCount) return true;
+  for (unsigned i = 0; i < 6; ++i) {
+    if (!planes[i].clipflag)  continue; // don't need to clip against it
+    if (planes[i].PointOnSide(point)) return false; // viewer is in back side or on plane
+  }
+  return true;
 }
 
 
@@ -314,12 +337,14 @@ bool TFrustum::checkBox (const float *bbox) const {
 //
 //==========================================================================
 bool TFrustum::checkSphere (const TVec &center, float radius) const {
-  if (!valid || radius <= 0) return true;
-  unsigned failed = 5;
-  for (unsigned i = 0; i < 5; ++i) {
-    if (!planes[i].clipflag) { --failed; continue; } // don't need to clip against it
-    if (planes[i].SphereOnSide(center, radius)) continue; // on a back side (or on a plane)
-    --failed;
+  if (!planeCount) return true;
+  if (radius <= 0) return checkPoint(center);
+  for (unsigned i = 0; i < 6; ++i) {
+    if (!planes[i].clipflag) continue; // don't need to clip against it
+    if (planes[i].SphereOnSide(center, radius)) {
+      // on a back side (or on a plane)
+      return false;
+    }
   }
-  return (failed == 0);
+  return true;
 }

@@ -271,12 +271,12 @@ public:
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
   inline int SphereOnSide (const TVec &center, float radius) const {
-    return (DotProduct(center, normal) >= -radius);
+    return (DotProduct(center, normal)-dist < -radius);
   }
 
   // returns side 0 (front), 1 (back), or 2 (collides)
   inline int SphereOnSide2 (const TVec &center, float radius) const {
-    const float dist = DotProduct(center, normal);
+    const float dist = DotProduct(center, normal)-dist;
     return (dist < -radius ? 1 : dist > radius ? 0 : 2);
   }
 
@@ -301,21 +301,24 @@ class TFrustum {
 public:
   // [0] is left, [1] is right, [2] is top, [3] is bottom
   // [4] is back (if `clipflag` is set)
-  TClipPlane planes[5];
-  bool valid;
+  // [5] is forward (if `clipflag` is set)
+  TClipPlane planes[6];
+  unsigned planeCount; // total number of valid planes
   TVec origin;
   TAVec angles;
   TVec vforward, vright, vup;
-  unsigned bindex[5][3];
+  unsigned bindex[6][3];
 
 public:
-  TFrustum () : valid(false) { planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = 0; }
+  TFrustum () : planeCount(0) {}
 
-  inline void clear () { valid = false; planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = 0; }
+  inline bool isValid () const { return (planeCount > 0); }
+
+  inline void clear () { planeCount = 0; }
 
   inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
     return
-      !valid ||
+      !planeCount ||
       origin.x != aorg.x ||
       origin.y != aorg.y ||
       origin.z != aorg.z ||
@@ -324,12 +327,12 @@ public:
       aangles.yaw != angles.yaw;
   }
 
-  inline void update (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true) {
-    if (needUpdate(aorg, aangles)) setup(clip_base, aorg, aangles, createbackplane);
+  inline void update (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
+    if (needUpdate(aorg, aangles)) setup(clip_base, aorg, aangles, createbackplane, farplanez);
   }
 
   // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
-  void setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true);
+  void setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
 
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:
@@ -340,6 +343,9 @@ public:
   //   [4] is maxy
   //   [5] is maxz
   bool checkBox (const float *bbox) const;
+
+  // returns `false` is point is out of frustum (or frustum is not valid)
+  bool checkPoint (const TVec &point) const;
 
   // returns `false` is sphere is out of frustum (or frustum is not valid)
   bool checkSphere (const TVec &center, float radius) const;
