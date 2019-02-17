@@ -72,14 +72,14 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
 //
 //==========================================================================
 dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid) {
-  guard(VRenderLevelShared::AllocDlight);
-
   dlight_t *dlowner = nullptr;
   dlight_t *dldying = nullptr;
   dlight_t *dlreplace = nullptr;
   dlight_t *dlbestdist = nullptr;
+
+  if (radius <= 0) radius = 0; else if (radius < 2) return nullptr; // ignore too small lights
+
   float bestdist = lengthSquared(lorg-cl->ViewOrg);
-  if (radius < 0) radius = 0;
 
   float coeff = r_light_filter_dynamic_coeff;
   if (coeff <= 0.1f) coeff = 0.1f; else if (coeff > 1) coeff = 1;
@@ -230,8 +230,6 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (!dlowner && dl->Owner) dlowners.put((vuint64)(dl->Owner), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   return dl;
-
-  unguard;
 }
 
 
@@ -241,17 +239,34 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 //
 //==========================================================================
 void VRenderLevelShared::DecayLights (float time) {
-  guard(VRenderLevelShared::DecayLights);
+  TFrustum frustum;
+  int frustumState = 0; // <0: don't check; >1: inited
+  if (!cl) frustumState = -1;
   dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
     if (dl->radius <= 0.0f || dl->die < Level->Time) continue;
     dl->radius -= time*dl->decay;
-    if (dl->radius <= 0.0f) {
+    // remove small lights too
+    if (dl->radius < 2.0f) {
       dl->radius = 0;
       dl->flags = 0;
+    } else {
+      // check if light is out of frustum, and remove it if it is invisible
+      if (frustumState == 0) {
+        TClipBase cb(refdef.fovx, refdef.fovy);
+        if (cb.isValid()) {
+          frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius*r_lights_radius);
+          frustumState = (frustum.isValid() ? 1 : -1);
+        } else {
+          frustumState = -1;
+        }
+      }
+      if (frustumState > 0 && !frustum.checkSphere(dl->origin, dl->radius)) {
+        dl->radius = 0;
+        dl->flags = 0;
+      }
     }
   }
-  unguard;
 }
 
 
