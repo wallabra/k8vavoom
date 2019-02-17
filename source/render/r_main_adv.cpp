@@ -110,10 +110,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   const bool hasPVS = Level->HasPVS();
 
-  static TVec lastOrg = TVec(-999999.0f, -999999.0f, -999999.0f);
-  static TAVec lastAngles = TAVec(-999999.0f, -999999.0f, -999999.0f);
-  //static TVec lastForward = TVec(-999999.0f, -999999.0f, -999999.0f);
-  static TPlane lastViewPlane;
+  static TFrustum frustum;
 
   if (!FixedLight && r_static_lights) {
 #ifdef RADVLIGHT_GRID_OPTIMIZER
@@ -134,31 +131,20 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= stlight->radius*stlight->radius) {
-        if (lastOrg.x != cl->ViewOrg.x ||
-            lastOrg.y != cl->ViewOrg.y ||
-            lastOrg.z != cl->ViewOrg.z ||
-            lastAngles.pitch != cl->ViewAngles.pitch ||
-            /*lastAngles.roll != cl->ViewAngles.roll ||*/
-            lastAngles.yaw != cl->ViewAngles.yaw)
-        {
-          lastOrg = cl->ViewOrg;
-          lastAngles = cl->ViewAngles;
-          TVec lastForward;
-          AngleVector(lastAngles, lastForward);
-          //lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
-          lastViewPlane.SetPointDir3D(lastOrg, lastForward);
-          //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
-        }
-        if (lastViewPlane.PointOnSide(stlight->origin)) {
-          //GCon->Logf("  ST-DROPPED; radius=%f; dist=%f", stlight->radius, Delta.length());
+        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, rlightraduisSq);
+        if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
+          // out of frustum
           continue;
         }
+      } else {
+        // already did above
+        /*
+        // don't add too far-away lights
+        Delta.z = 0;
+        const float dlenSq = Delta.length2DSquared();
+        if (dlenSq > rlightraduisSq) continue;
+        */
       }
-
-      // don't add too far-away lights
-      Delta.z = 0;
-      const float dlenSq = Delta.length2DSquared();
-      if (dlenSq > rlightraduisSq) continue;
 
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
       if (hasPVS) {
@@ -167,7 +153,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         if (!(dyn_facevis[stlight->leafnum>>3]&(1<<(stlight->leafnum&7)))) continue;
       }
 
-      if (dlenSq > rlightraduisSightSq) {
+      if (/*dlenSq*/Delta.length2DSquared() > rlightraduisSightSq) {
         // check some more rays
         if (!RadiusCastRay(stlight->origin, vieworg, stlight->radius, /*true*/r_dynamic_clip_more)) continue;
       }
@@ -220,31 +206,19 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= l->radius*l->radius) {
-        if (lastOrg.x != cl->ViewOrg.x ||
-            lastOrg.y != cl->ViewOrg.y ||
-            lastOrg.z != cl->ViewOrg.z ||
-            lastAngles.pitch != cl->ViewAngles.pitch ||
-            /*lastAngles.roll != cl->ViewAngles.roll ||*/
-            lastAngles.yaw != cl->ViewAngles.yaw)
-        {
-          lastOrg = cl->ViewOrg;
-          lastAngles = cl->ViewAngles;
-          TVec lastForward;
-          AngleVector(lastAngles, lastForward);
-          lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
-          //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
-          //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
-        }
-        if (lastViewPlane.PointOnSide(l->origin)) {
-          //GCon->Logf("  ST-DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
+        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, rlightraduisSq);
+        if (!frustum.checkSphere(l->origin, l->radius)) {
+          // out of frustum
           continue;
         }
+      } else {
+        // already done above
+        /*
+        Delta.z = 0;
+        const float dlenSq = Delta.length2DSquared();
+        if (dlenSq > rlightraduisSq) continue;
+        */
       }
-
-      Delta.z = 0;
-      const float dlenSq = Delta.length2DSquared();
-
-      if (dlenSq > rlightraduisSq) continue;
 
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
       if (hasPVS) {
@@ -254,7 +228,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
 
-      if (dlenSq > rlightraduisSightSq) {
+      if (/*dlenSq*/Delta.length2DSquared() > rlightraduisSightSq) {
         // check some more rays
         if (!RadiusCastRay(l->origin, vieworg, l->radius, /*true*/r_dynamic_clip_more)) continue;
       }
