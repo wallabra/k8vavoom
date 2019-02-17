@@ -694,7 +694,7 @@ extern VCvarB r_darken;
 extern VCvarB r_dynamic;
 extern VCvarB r_static_lights;
 
-extern TVec clip_base[4];
+extern TClipBase clip_base;
 extern refdef_t refdef;
 
 extern VCvarI aspect_ratio;
