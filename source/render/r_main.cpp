@@ -110,7 +110,7 @@ VCvarF fov("fov", "90", "Field of vision.");
 // [1] is right
 // [2] is top
 // [3] is bottom
-static TVec clip_base[4];
+TVec clip_base[4];
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
@@ -709,21 +709,55 @@ void R_DrawViewBorder () {
 //
 //==========================================================================
 void VRenderLevelShared::TransformFrustum () {
-  guard(VRenderLevelShared::TransformFrustum);
-  for (int i = 0; i < 4; ++i) {
-    TVec &v = clip_base[i];
+  for (unsigned i = 0; i < 4; ++i) {
+    const TVec &v = clip_base[i];
     TVec v2;
 
     v2.x = v.y*viewright.x+v.z*viewup.x+v.x*viewforward.x;
     v2.y = v.y*viewright.y+v.z*viewup.y+v.x*viewforward.y;
     v2.z = v.y*viewright.z+v.z*viewup.z+v.x*viewforward.z;
 
-    view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
+    //view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
+    view_clipplanes[i].SetPointDir3D(vieworg, v2);
 
     //view_clipplanes[i].next = (i == 3 ? nullptr : &view_clipplanes[i+1]);
     view_clipplanes[i].clipflag = 1U<<i;
   }
-  unguard;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::TransformFrustumTo
+//
+//  create frustum planes for current FOV (set in `SetupFrame()` or `SetupCameraFrame()`)
+//  [0] is left, [1] is right, [2] is top, [3] is bottom
+//  [4] is back (if `createbackplane` is true)
+//
+//==========================================================================
+void VRenderLevelShared::TransformFrustumTo (TClipPlane *frustum,
+                                             const TVec &org, const TAVec &angles,
+                                             bool createbackplane)
+{
+  // create direction vectors
+  TVec vforward, vright, vup;
+  AngleVectors(angles, vforward, vright, vup);
+  // create side planes
+  for (unsigned i = 0; i < 4; ++i) {
+    const TVec &v = clip_base[i];
+    const TVec v2(
+      v.y*vright.x+v.z*vup.x+v.x*vforward.x,
+      v.y*vright.y+v.z*vup.y+v.x*vforward.y,
+      v.y*vright.z+v.z*vup.z+v.x*vforward.z);
+    //frustum[i].Set(v2, DotProduct(org, v2));
+    frustum[i].SetPointDir3D(org, v2);
+    frustum[i].clipflag = 1U<<i;
+  }
+  // create back plane
+  if (createbackplane) {
+    frustum[4].SetPointDir3D(org, vforward);
+    frustum[4].clipflag = 1U<<4;
+  }
 }
 
 

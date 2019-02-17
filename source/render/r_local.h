@@ -395,6 +395,9 @@ protected:
 
   // general
   void ExecuteSetViewSize ();
+  // create frustum planes for current FOV (set in `SetupFrame()` or `SetupCameraFrame()`)
+  // [0] is left, [1] is right, [2] is top, [3] is bottom, [4] is back (if `createbackplane` is true)
+  void TransformFrustumTo (TClipPlane *frustum, const TVec &org, const TAVec &angles, bool createbackplane);
   void TransformFrustum ();
   void SetupFrame ();
   void SetupCameraFrame (VEntity*, VTexture*, int, refdef_t*);
@@ -691,6 +694,7 @@ extern VCvarB r_darken;
 extern VCvarB r_dynamic;
 extern VCvarB r_static_lights;
 
+extern TVec clip_base[4];
 extern refdef_t refdef;
 
 extern VCvarI aspect_ratio;
