@@ -149,16 +149,16 @@ override void ClientTick (float deltaTime) {
       break;
   }
 
-  particle_t *p = Level.NewParticle();
+  float An = Random()*360.0;
+  float Out = Radius*Random();
 
+  TVec porg;
+  porg.x = Origin.x+Out*cos(An);
+  porg.y = Origin.y+Out*sin(An);
+  porg.z = Origin.z+Height+1.0;
+
+  particle_t *p = Level.NewParticle(porg);
   if (p) {
-    float An = Random()*360.0;
-    float Out = Radius*Random();
-
-    p->org.x = Origin.x+Out*cos(An);
-    p->org.y = Origin.y+Out*sin(An);
-    p->org.z = Origin.z+Height+1.0;
-
     if (P_Random() < 30) {
       p->Size = 1.0;
       p->colour = EffectColour2;

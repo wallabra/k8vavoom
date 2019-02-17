@@ -45,7 +45,7 @@ public:
   virtual void DecayLights (float) = 0;
   virtual void RemoveOwnedLight (VThinker *Owner) = 0;
 
-  virtual particle_t *NewParticle () = 0;
+  virtual particle_t *NewParticle (const TVec &porg) = 0;
 };
 
 

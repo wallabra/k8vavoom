@@ -492,7 +492,7 @@ protected:
   bool RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced);
 
 public:
-  virtual particle_t *NewParticle () override;
+  virtual particle_t *NewParticle (const TVec &porg) override;
 
   virtual void RenderPlayerView () override;
 

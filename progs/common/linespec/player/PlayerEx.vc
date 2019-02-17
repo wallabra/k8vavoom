@@ -1456,8 +1456,12 @@ void ClientExplosion (int colour, float rad, TVec org) {
 //
 //==========================================================================
 void ClientParticleExplosion (int colour, float rad, TVec org) {
-  foreach (auto i; 0..1024) {
-    particle_t *p = Level.NewParticle();
+  TVec porg;
+  foreach (auto i; 0..512/*1024*/) {
+    porg.x = org.x+((Random()*32.0)-16.0);
+    porg.y = org.y+((Random()*32.0)-16.0);
+    porg.z = org.z+((Random()*32.0)-16.0);
+    particle_t *p = Level.NewParticle(porg);
     if (!p) break;
     p->die = Level.XLevel.Time+5.0;
     p->colour = LineSpecialGameInfo.default.ramp1[0];
@@ -1468,9 +1472,6 @@ void ClientParticleExplosion (int colour, float rad, TVec org) {
     } else {
       p->type = LineSpecialLevelInfo::pt_explode2;
     }
-    p->org.x = org.x+((Random()*32.0)-16.0);
-    p->org.y = org.y+((Random()*32.0)-16.0);
-    p->org.z = org.z+((Random()*32.0)-16.0);
     p->vel.x = (Random()*512.0)-256.0;
     p->vel.y = (Random()*512.0)-256.0;
     p->vel.z = (Random()*512.0)-256.0;
@@ -1495,19 +1496,20 @@ void ClientParticleExplosion (int colour, float rad, TVec org) {
 //
 //==========================================================================
 void ClientSparkParticles (int Count, TVec Org, float Angle) {
+  TVec porg;
   foreach (auto i; 0..Count) {
-    particle_t *p = Level.NewParticle();
+    float an = Angle+Random()*45.0;
+    porg.x = Org.x+(Random ()*15.0)*cos(an);
+    porg.y = Org.y+(Random ()*15.0)*sin(an);
+    porg.z = Org.z-Random ()*4.0;
+
+    particle_t *p = Level.NewParticle(porg);
     if (!p) break;
 
     p->type = LineSpecialLevelInfo::pt_spark;
     p->Size = 0.5;
     p->colour = Random() < 0.5 ? RGBA(255, 120, 0, 255) : RGBA(255, 170, 0, 255);
     p->die = Level.XLevel.Time+10.0/35.0;
-
-    float an = Angle+Random()*45.0;
-    p->org.x = Org.x+(Random ()*15.0)*cos(an);
-    p->org.y = Org.y+(Random ()*15.0)*sin(an);
-    p->org.z = Org.z-Random ()*4.0;
 
     p->vel.x = (Random()-0.5)*2.0;
     p->vel.y = (Random()-0.5)*2.0;
@@ -1832,8 +1834,8 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
   if (!Col2) Col2 = RGBA(0, 0, 255, 255);
 
   TVec Diff;
-  float Offs;
-  for (Offs = 0.0; Offs < Len; Offs += 3.0) {
+  TVec porg;
+  for (float Offs = 0.0; Offs < Len; Offs += 3.0) {
     if (MaxDiff > 0.0) {
       int Rnd = P_Random();
       if (Rnd&1) {
@@ -1850,14 +1852,13 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
       }
     }
 
-    particle_t *p = Level.NewParticle();
+    porg = From+Dir*Offs+Diff;
+    particle_t *p = Level.NewParticle(porg);
     if (!p) break;
-
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
     p->colour = Col1;
     p->die = Level.XLevel.Time+1.0;
-    p->org = From+Dir*Offs+Diff;
     p->vel.x = (Random()-0.5)*2.0;
     p->vel.y = (Random()-0.5)*2.0;
     p->vel.z = (Random()-0.5)*2.0;
@@ -1869,13 +1870,13 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
     TVec Up;
     AngleVectors(Ang, out Forward, out Right, out Up);
 
-    p = Level.NewParticle();
+    porg = From+Dir*Offs+Up*3.0;
+    p = Level.NewParticle(porg);
     if (!p) break;
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
     p->colour = Col2;
     p->die = Level.XLevel.Time+1.0;
-    p->org = From+Dir*Offs+Up*3.0;
     p->vel = Up;
     p->accel = vector(0.0, 0.0, 0.0);
   }

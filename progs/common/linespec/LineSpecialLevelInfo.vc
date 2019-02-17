@@ -7079,10 +7079,17 @@ override void ParticleEffect (int count, int type1, int type2, TVec origin, floa
     if ((colour>>>24) < 1) return; // nothing to do
   }
 
-  foreach (auto i; 0..count) {
-    particle_t *p = Level.NewParticle();
-    if (!p) return;
+  TVec porg = origin;
 
+  foreach (auto i; 0..count) {
+    // no random origin
+    if (ornd) {
+      porg.x = origin.x+((Random()*ornd)-ornd/2.0);
+      porg.y = origin.y+((Random()*ornd)-ornd/2.0);
+      porg.z = origin.z+((Random()*ornd)-ornd/2.0);
+    }
+
+    //TODO
     if (type1 == pt_fading) {
       return;
       /*
@@ -7101,6 +7108,9 @@ override void ParticleEffect (int count, int type1, int type2, TVec origin, floa
       */
     }
 
+    particle_t *p = Level.NewParticle(porg);
+    if (!p) return;
+
     p.die = Level.XLevel.Time+duration*Random();
     p.colour = colour;
     p.Size = 1.0;
@@ -7111,15 +7121,6 @@ override void ParticleEffect (int count, int type1, int type2, TVec origin, floa
       p.type = (i&1 ? type1 : type2);
     } else {
       p.type = type1;
-    }
-
-    // no random origin
-    if (!ornd) {
-      p.org = origin;
-    } else {
-      p.org.x = origin.x+((Random()*ornd)-ornd/2.0);
-      p.org.y = origin.y+((Random()*ornd)-ornd/2.0);
-      p.org.z = origin.z+((Random()*ornd)-ornd/2.0);
     }
 
     // no random velocity

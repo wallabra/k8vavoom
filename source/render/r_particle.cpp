@@ -33,6 +33,7 @@
 
 
 VCvarB r_draw_particles("r_draw_particles", true, "Draw particles?", CVAR_Archive);
+static VCvarF r_particle_max_distance("r_particle_max_distance", "3072", "Max distance for alive particles.", CVAR_Archive);
 
 
 //==========================================================================
@@ -76,10 +77,23 @@ void VRenderLevelShared::ClearParticles () {
 //  VRenderLevelShared::NewParticle
 //
 //==========================================================================
-particle_t *VRenderLevelShared::NewParticle () {
-  guard(VRenderLevelShared::NewParticle);
+particle_t *VRenderLevelShared::NewParticle (const TVec &porg) {
   if (!FreeParticles) return nullptr; // no free particles
   if (!r_draw_particles) return nullptr; // save some resources
+
+  // check distance and frustum
+  //TODO: camera views can view far away from client
+  if (cl && r_particle_max_distance > 0) {
+    const float maxdistSq = r_particle_max_distance*r_particle_max_distance;
+    if (lengthSquared(porg-cl->ViewOrg) >= maxdistSq) return nullptr;
+    static TFrustum frustum;
+    if (frustum.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
+      TClipBase cb(refdef.fovx, refdef.fovy);
+      if (cb.isValid()) frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true/*, r_particle_max_distance*/);
+    }
+    if (frustum.isValid() && !frustum.checkPoint(porg)) return nullptr;
+  }
+
   // remove from list of free particles
   particle_t *p = FreeParticles;
   FreeParticles = p->next;
@@ -88,8 +102,8 @@ particle_t *VRenderLevelShared::NewParticle () {
   // add to active particles
   p->next = ActiveParticles;
   ActiveParticles = p;
+  p->org = porg;
   return p;
-  unguard;
 }
 
 
