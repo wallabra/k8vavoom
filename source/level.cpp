@@ -1300,31 +1300,80 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         float loz = hiz-tinf.height*dec->scaleY;
         {
           side_t *sb = &Sides[li->sidenum[sidenum]];
+
+          // check if decal is allowed on this side
           if (sb->MidTexture == skyflatnum) continue; // never on the sky
-          if (sb->MidTexture == skyflatnum) continue; // never on the sky
-          if (sb->TopTexture <= 0 && sb->BottomTexture <= 0 && sb->MidTexture <= 0) { /*!GCon->Logf("  *** no textures at all (sidenum=%d)", sidenum);*/ continue; }
-          if (sb->MidTexture <= 0) {
+          /*
+          bool allowTopTex = (sb->TopTexture > 0 && sb->TopTexture != skyflatnum);
+          bool allowMidTex = (sb->MidTexture > 0 && sb->MidTexture != skyflatnum);
+          bool allowBotTex = (sb->BottomTexture > 0 && sb->BottomTexture != skyflatnum);
+          if (allowTopTex) {
+            VTexture *xtx = GTextureManager(sb->TopTexture);
+            allowTopTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+          }
+          if (allowMidTex) {
+            VTexture *xtx = GTextureManager(sb->MidTexture);
+            allowMidTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+          }
+          if (allowBotTex) {
+            VTexture *xtx = GTextureManager(sb->BottomTexture);
+            allowBotTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+          }
+          if (!allowTopTex && !allowMidTex && !allowBotTex) continue;
+          */
+
+          /* nope
+          if (!allowMidTex && loz > sec->floor.TexZ && hiz < sec->ceiling.TexZ) {
+            // fully inside midtex (probably)
+            GCon->Logf("NOMT; loz=%f; hiz=%f; ftz=%f; ctz=%f", loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ);
+            GCon->Logf("      floor=(%f,%f); ceiling=(%f,%f)", sec->floor.minz, sec->floor.maxz, sec->ceiling.minz, sec->ceiling.maxz);
+            continue;
+          }
+          */
+          /*
+          if (!allowTopTex && loz >= sec->ceiling.TexZ) continue;
+          if (!allowBotTex && hiz <= sec->floor.TexZ) continue;
+          */
+
+          //if (sb->TopTexture <= 0 && sb->BottomTexture <= 0 && sb->MidTexture <= 0) { /*!GCon->Logf("  *** no textures at all (sidenum=%d)", sidenum);*/ continue; }
+          if (sb->MidTexture <= 0 || GTextureManager(sb->MidTexture)->Type == TEXTYPE_Null) {
+            bool allowTopTex = (sb->TopTexture > 0 && sb->TopTexture != skyflatnum);
+            bool allowBotTex = (sb->BottomTexture > 0 && sb->BottomTexture != skyflatnum);
+            if (allowTopTex) {
+              VTexture *xtx = GTextureManager(sb->TopTexture);
+              allowTopTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+            }
+            if (allowBotTex) {
+              VTexture *xtx = GTextureManager(sb->BottomTexture);
+              allowBotTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+            }
+            if (!allowTopTex && /*!allowMidTex &&*/ !allowBotTex) continue;
+
             if ((li->flags&ML_TWOSIDED) != 0 && li->sidenum[1-sidenum] >= 0) {
               // has other side
               sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
               bool botHit = false, topHit = false;
               //!GCon->Logf("sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; bsec.floorZ=%f; bsec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, bsec->floor.TexZ, bsec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
 
-              if (sb->BottomTexture > 0 && bsec->floor.TexZ > sec->floor.TexZ) {
+              if (allowBotTex && bsec->floor.TexZ > sec->floor.TexZ) {
                 botHit = !(hiz <= sec->floor.TexZ || loz >= bsec->floor.TexZ);
-                if (botHit) { if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true; /*!GCon->Logf("  BOTTOM HIT! slide=%d", (slideWithFloor ? 1 : 0));*/ }
-              } else {
+                if (botHit) {
+                  if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
+                  /*!GCon->Logf("  BOTTOM HIT! slide=%d", (slideWithFloor ? 1 : 0));*/
+                }
               }
 
-              if (sb->TopTexture > 0 && bsec->ceiling.TexZ < sec->ceiling.TexZ) {
+              if (allowTopTex && bsec->ceiling.TexZ < sec->ceiling.TexZ) {
                 topHit = !(hiz <= bsec->ceiling.TexZ || loz >= sec->ceiling.TexZ);
-                if (topHit) { if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true; /*!GCon->Logf("  TOP HIT! slide=%d", (slideWithCeiling ? 1 : 0));*/ }
-              } else {
+                if (topHit) {
+                  if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+                  /*!GCon->Logf("  TOP HIT! slide=%d", (slideWithCeiling ? 1 : 0));*/
+                }
               }
 
               if (!botHit && !topHit) {
                 //!GCon->Logf("  *** in air");
-                if (sb->MidTexture <= 0) {
+                /*if (!allowMidTex)*/ {
                   /*
                   line_t *xl = &Lines[289];
                   GCon->Log("************");
@@ -1342,13 +1391,38 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
             } else {
               // no other side
               //!GCon->Logf("::: sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
-              if (loz >= sec->floor.TexZ && hiz <= sec->ceiling.TexZ) { /*!GCon->Logf("  *** in air, and no middle texture");*/ continue; }
-              if (sb->TopTexture <= 0 && hiz >= sec->ceiling.TexZ) { /*!GCon->Logf("  *** higher than ceiling, and no top texture");*/ continue; }
-              if (sb->BottomTexture <= 0 && loz <= sec->floor.TexZ) { /*!GCon->Logf("  *** lower than floor, and no bottom texture");*/ continue; }
+              /*
+              if (!allowMidTex && loz > sec->floor.TexZ && hiz < sec->ceiling.TexZ) continue;
+              if (!allowTopTex && loz >= sec->ceiling.TexZ) continue;
+              if (!allowBotTex && hiz <= sec->floor.TexZ) continue;
+              */
+              /*
+              if (loz > sec->floor.TexZ && hiz < sec->ceiling.TexZ) {
+                / *!GCon->Logf("  *** in air, and no middle texture");* /
+                if (sb->MidTexture <= 0) continue;
+                VTexture *xtx = GTextureManager(sb->MidTexture);
+                if (!xtx || xtx->Type == TEXTYPE_Null || xtx->noDecals) continue;
+              }
+              if (hiz >= sec->ceiling.TexZ) {
+                / *!GCon->Logf("  *** higher than ceiling, and no top texture");* /
+                VTexture *xtx = GTextureManager(sb->TopTexture);
+                if (!xtx || xtx->Type == TEXTYPE_Null || xtx->noDecals) continue;
+              }
+              if (loz <= sec->floor.TexZ) {
+                / *!GCon->Logf("  *** lower than floor, and no bottom texture");* /
+                VTexture *xtx = GTextureManager(sb->BottomTexture);
+                if (!xtx || xtx->Type == TEXTYPE_Null || xtx->noDecals) continue;
+              }
+              */
             }
           } else {
                  if ((li->flags&ML_DONTPEGBOTTOM) != 0) slideWithFloor = true;
             else if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+            /*
+            if (!allowMidTex && loz > sec->floor.TexZ && hiz < sec->ceiling.TexZ) continue;
+            if (!allowTopTex && loz >= sec->ceiling.TexZ) continue;
+            if (!allowBotTex && hiz <= sec->floor.TexZ) continue;
+            */
           }
         }
       }
