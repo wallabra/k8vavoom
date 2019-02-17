@@ -89,8 +89,6 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
   bool useSprOrigin, const TVec &sprOrigin)
 {
-  guard(VRenderLevelShared::DrawTranslucentPoly);
-
   check(count >= 0);
   if (count == 0 || Alpha < 0.0002f) return;
 
@@ -143,8 +141,6 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   spr.light = light;
   spr.Fade = Fade;
   spr.prio = priority;
-
-  unguard;
 }
 
 
@@ -154,8 +150,6 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
 //
 //==========================================================================
 void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
-  guard(VRenderLevelShared::RenderTranslucentAliasModel);
-
   // make room
   if (traspUsed == traspSize) {
     if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
@@ -177,8 +171,6 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.TimeFrac = TimeFrac;
   spr.lump = -1; // has no sense
   spr.prio = 0; // normal priority
-
-  unguard;
 }
 
 
@@ -188,7 +180,6 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
 //
 //==========================================================================
 void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive) {
-  guard(VRenderLevelShared::RenderSprite);
   int spr_type = thing->SpriteType;
 
   TVec sprorigin = thing->Origin;
@@ -394,7 +385,6 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]));
   }
-  unguard;
 }
 
 
@@ -406,7 +396,6 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
 {
-  guard(VRenderLevelShared::RenderAliasModel);
   if (!r_models) return false;
 
   float TimeFrac = 0;
@@ -423,7 +412,6 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   } else {
     return DrawEntityModel(mobj, light, Fade, 1.0f, false, TimeFrac, Pass);
   }
-  unguard;
 }
 
 
@@ -433,7 +421,6 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
 //
 //==========================================================================
 void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
-  guard(VRenderLevelShared::RenderThing);
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
   //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
@@ -544,7 +531,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
     RenderSprite(mobj, light, Fade, Alpha, Additive);
   }
-  unguard;
 }
 
 
@@ -554,7 +540,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
-  guard(VRenderLevelShared::RenderMobjs);
   if (!r_draw_mobjs) return;
   // clear sector flag array
   if (r_draw_all_sector_things) {
@@ -570,7 +555,6 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
     RenderThing(*Ent, Pass);
   }
-  unguard;
 }
 
 
@@ -686,8 +670,6 @@ extern "C" {
 //
 //==========================================================================
 void VRenderLevelShared::DrawTranslucentPolys () {
-  guard(VRenderLevelShared::DrawTranslucentPolys);
-
   if (traspUsed <= traspFirst) return; // nothing to do
 
   // sort 'em
@@ -755,8 +737,6 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 
   // reset list
   traspUsed = traspFirst;
-
-  unguard;
 }
 
 
@@ -768,7 +748,6 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo mfi,
   float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
 {
-  guard(VRenderLevelShared::RenderPSprite);
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
   int lump;
@@ -858,7 +837,6 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
     0, ColourMap, light, Fade, -viewforward,
     DotProduct(dv[0], -viewforward), saxis, taxis, texorg);
-  unguard;
 }
 
 
@@ -872,7 +850,6 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
                                           vuint32 Fade, float Alpha, bool Additive)
 {
-  guard(VRenderLevelShared::RenderViewModel);
   if (!r_view_models) return false;
 
   TVec origin = vieworg+(VSt->SX-1.0f)*viewright/8.0f-(VSt->SY-32.0f)*viewup/6.0f;
@@ -890,7 +867,6 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
     nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, Interpolate,
     RPASS_Normal);
-  unguard;
 }
 
 
@@ -900,7 +876,6 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
 //
 //==========================================================================
 void VRenderLevelShared::DrawPlayerSprites () {
-  guard(VRenderLevelShared::DrawPlayerSprites);
   if (!r_draw_psprites || r_chasecam) return;
 
   int RendStyle = STYLE_Normal;
@@ -948,7 +923,6 @@ void VRenderLevelShared::DrawPlayerSprites () {
       RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);
     }
   }
-  unguard;
 }
 
 
@@ -988,7 +962,6 @@ void VRenderLevelShared::DrawCrosshair () {
 void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
                         int TranslStart, int TranslEnd, int Colour)
 {
-  guard(R_DrawSpritePatch);
   bool flip;
   int lump;
 
@@ -1010,5 +983,4 @@ void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
   y2 *= fScaleY;
 
   Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), nullptr), flip);
-  unguard;
 }
