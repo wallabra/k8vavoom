@@ -167,6 +167,7 @@ void VPortal::Draw (bool UseStencil) {
   RLev->FixedLight = SavedFixedLight;
   if (restoreVis) {
     RLev->BspVis = SavedBspVis;
+    if (RLev->VisSize) memcpy(RLev->BspVisThing, RLev->BspVis, RLev->VisSize);
     RLev->traspFirst = savedTraspFirst;
     RLev->traspUsed = savedTraspUsed;
   }

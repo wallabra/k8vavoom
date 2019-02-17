@@ -140,7 +140,7 @@ void VAdvancedRenderLevel::RenderMobjsAmbient () {
     if (!ent->State) continue;
     // skip things in subsectors that are not visible
     const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingAmbient(*ent);
   }
 }
@@ -206,7 +206,7 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
     if (!ent->State) continue;
     // skip things in subsectors that are not visible
     const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingTextures(*ent);
   }
 }
@@ -501,7 +501,7 @@ void VAdvancedRenderLevel::RenderMobjsFog () {
     if (!ent->State) continue;
     // skip things in subsectors that are not visible
     const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingFog(*ent);
   }
 }

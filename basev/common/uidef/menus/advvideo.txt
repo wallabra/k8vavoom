@@ -28,7 +28,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Better Thing Rendering";
-    cvar = r_draw_all_sector_things;
+    cvar = r_draw_adjacent_subsector_things;
     help =
       "Render all things from a visible sector."
       "This can slow down rendering a little, but fixes some cases where"

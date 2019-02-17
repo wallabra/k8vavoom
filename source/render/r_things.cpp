@@ -75,7 +75,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
-static VCvarB r_draw_all_sector_things("r_draw_all_sector_things", false, "Draw all things in sector (can fix disappearing things)?", CVAR_Archive);
+static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", false, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 
 //==========================================================================
@@ -433,55 +433,8 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   // skip things in subsectors that are not visible
   //TODO: for advanced renderer, we may need to render things several times, so
   //      it is good place to cache them for the given frame
-  const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
-  if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) {
-    if (!r_draw_all_sector_things) return;
-    const sector_t *msec = mobj->Sector;
-    const int snum = (int)(ptrdiff_t)(msec-Level->Sectors);
-    int sv = thseclist[snum];
-    if (sv == 0) {
-      bool found = false;
-      /*
-      for (const subsector_t *ss = msec->subsectors; ss; ss = ss->seclink) {
-        const int sidx2 = (int)(ptrdiff_t)(ss-Level->Subsectors);
-        if (BspVis[sidx2>>3]&(1<<(sidx2&7))) {
-          // i found her!
-          found = true;
-          break;
-        }
-      }
-      */
-      if (true /*!found*/) {
-        // invisible
-        // try neighbour sectors
-        for (int f = 0; f < msec->linecount; ++f) {
-          const line_t *ln = msec->lines[f];
-          if (ln->flags&ML_TWOSIDED) {
-            const sector_t *osec = (ln->frontsector == msec ? ln->backsector : ln->frontsector);
-            const int sn2 = (int)(ptrdiff_t)(osec-Level->Sectors);
-            if (thseclist[sn2] == 2) {
-              // i found her!
-              found = true;
-              break;
-            }
-          }
-        }
-        if (!found) { thseclist[snum] = 1; return; }
-        // mark neighbour sectors (why not?)
-        for (int f = 0; f < msec->linecount; ++f) {
-          const line_t *ln = msec->lines[f];
-          if (ln->flags&ML_TWOSIDED) {
-            const sector_t *osec = (ln->frontsector == msec ? ln->backsector : ln->frontsector);
-            const int sn2 = (int)(ptrdiff_t)(osec-Level->Sectors);
-            if (thseclist[sn2] == 0) thseclist[sn2] = 2;
-          }
-        }
-      }
-      thseclist[snum] = 2; // visible
-    } else {
-      if (sv < 2) return;
-    }
-  }
+  const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+  if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
 
   float Alpha = mobj->Alpha;
   bool Additive = false;
@@ -541,16 +494,31 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 //==========================================================================
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   if (!r_draw_mobjs) return;
+
   // clear sector flag array
-  if (r_draw_all_sector_things) {
-    if (thseclist.length() < Level->NumSectors) thseclist.setLength(Level->NumSectors);
-    memset(thseclist.ptr(), 0, Level->NumSectors);
-    for (int sidx = 0; sidx < Level->NumSubsectors; ++sidx) {
-      if (BspVis[sidx>>3]&(1<<(sidx&7))) {
-        thseclist[(int)(ptrdiff_t)(Level->Subsectors[sidx].sector-Level->Sectors)] = 2;
+  if (r_draw_adjacent_subsector_things) {
+    //int zzcount = 0;
+    for (unsigned sidx = 0; sidx < (unsigned)Level->NumSubsectors; ++sidx) {
+      if ((sidx&7) == 0) BspVisThing[sidx>>3] |= BspVis[sidx>>3];
+      if (BspVis[sidx>>3]&(1U<<(sidx&7))) {
+        subsector_t *sub = &Level->Subsectors[sidx];
+        int sgcount = sub->numlines;
+        if (sgcount) {
+          seg_t *seg = &Level->Segs[sub->firstline];
+          for (; sgcount--; ++seg) {
+            if (seg->linedef && !(seg->linedef->flags&ML_TWOSIDED)) continue; // don't go through solid walls
+            seg_t *pseg = seg->partner;
+            if (!pseg || !pseg->front_sub) continue;
+            unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
+            //if (!(BspVisThing[psidx>>3]&(1U<<(psidx&7)))) ++zzcount;
+            BspVisThing[psidx>>3] |= 1U<<(psidx&7);
+          }
+        }
       }
     }
+    //if (zzcount) GCon->Logf("additional thing subsectors: %d", zzcount);
   }
+
   // render things
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
     RenderThing(*Ent, Pass);
@@ -935,10 +903,11 @@ void VRenderLevelShared::DrawCrosshair () {
   static int prevCH = -666;
   int ch = (int)crosshair;
   if (ch > 0 && ch < 10 && crosshair_alpha > 0.0f) {
-    static int handle = -1;
-    if (handle <= 0 || prevCH != ch) {
+    static int handle = 0;
+    if (!handle || prevCH != ch) {
       prevCH = ch;
       handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", ch), VName::AddLower8), TEXTYPE_Pic);
+      if (handle < 0) handle = 0;
     }
     if (handle > 0) {
       //if (crosshair_alpha < 0.0f) crosshair_alpha = 0.0f;
@@ -969,6 +938,7 @@ void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
   flip = sprframe->flip[rot];
   lump = sprframe->lump[rot];
   VTexture *Tex = GTextureManager[lump];
+  if (!Tex) return; // just in case
 
   Tex->GetWidth();
 

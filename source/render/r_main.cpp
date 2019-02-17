@@ -411,6 +411,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , PortalLevel(0)
   , VisSize(0)
   , BspVis(nullptr)
+  , BspVisThing(nullptr)
   , r_viewleaf(nullptr)
   , r_oldviewleaf(nullptr)
   , old_fov(90.0f)
@@ -455,6 +456,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   VisSize = (Level->NumSubsectors+7)>>3;
   BspVis = new vuint8[VisSize];
+  BspVisThing = new vuint8[VisSize];
 
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
@@ -538,6 +540,8 @@ VRenderLevelShared::~VRenderLevelShared () {
   Particles = nullptr;
   delete[] BspVis;
   BspVis = nullptr;
+  delete[] BspVisThing;
+  BspVisThing = nullptr;
 
   for (int i = 0; i < SideSkies.Num(); ++i) {
     delete SideSkies[i];

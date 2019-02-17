@@ -670,7 +670,8 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!ViewClip.ClipCheckSubsector(Sub, false)) return;
 
-  BspVis[num>>3] |= 1<<(num&7);
+  BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
+  BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
 
   RenderSubRegion(Sub->regions);
 
@@ -770,6 +771,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
     if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
     memset(BspVis, 0, VisSize);
+    memset(BspVisThing, 0, VisSize);
     if (PortalLevel == 0) {
       if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
     }

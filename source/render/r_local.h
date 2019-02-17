@@ -310,6 +310,7 @@ protected:
   int PortalLevel;
   int VisSize;
   vuint8 *BspVis;
+  vuint8 *BspVisThing; // for things, why not
 
   subsector_t *r_viewleaf;
   subsector_t *r_oldviewleaf;
@@ -375,9 +376,6 @@ protected:
   subsector_t *lastDLightViewSub;
 
   bool showCreateWorldSurfProgress;
-
-  // used in thing renderer, when we are asked to do "better thing rendering"
-  TArray<vuint8> thseclist; // for all sectors: 0 is not checked, 1 is invisible, 2 is visible
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
