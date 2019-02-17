@@ -145,8 +145,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
           lastAngles = cl->ViewAngles;
           TVec lastForward;
           AngleVector(lastAngles, lastForward);
-          lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
-          //lastViewPlane.SetPointDirXY(lastOrg, lastForward);
+          //lastViewPlane.Set(lastForward, DotProduct(lastOrg, lastForward));
+          lastViewPlane.SetPointDir3D(lastOrg, lastForward);
           //GCon->Logf("new plane! (%f,%f,%f):%f (%f)", lastViewPlane.normal.x, lastViewPlane.normal.y, lastViewPlane.normal.z, lastViewPlane.dist, lastViewPlane.normal.length());
         }
         if (lastViewPlane.PointOnSide(stlight->origin)) {
