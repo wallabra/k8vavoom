@@ -56,8 +56,6 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
   memset(blockbuf, 0, sizeof(blockbuf));
 
   FlushCaches();
-
-  memset(DLights, 0, sizeof(DLights));
 }
 
 

@@ -48,13 +48,23 @@ extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 
 
+#define RL_CLEAR_DLIGHT(_dl)  do { \
+  (_dl)->radius = 0; \
+  (_dl)->flags = 0; \
+  if ((_dl)->Owner) { \
+    dlowners.del((vuint64)(_dl)->Owner); \
+    (_dl)->Owner = nullptr; \
+  } \
+} while (0)
+
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::AddStaticLight
 //
 //==========================================================================
 void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint32 colour) {
-  guard(VRenderLevelShared::AddStaticLight);
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
@@ -62,7 +72,6 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
   L.colour = colour;
   L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
-  unguard;
 }
 
 
@@ -86,6 +95,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   float radsq = (radius < 1 ? 64*64 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
+  const float radsqhalf = radsq*0.25;
 
   // if this is player's dlight, never drop it
   bool isPlr = false;
@@ -143,12 +153,6 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // first try to find owned light to replace
   if (Owner) {
-    /*
-    dl = DLights;
-    for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-      if (dl->Owner == Owner) { dlowner = dl; break; }
-    }
-    */
     auto idxp = dlowners.find((vuint64)Owner);
     if (idxp) {
       if (DLights[*idxp].Owner == Owner) {
@@ -163,20 +167,11 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (!dlowner) {
     dl = DLights;
     for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-      // replace dlight of the same owner
-      // (but keep looping, 'cause we may want to drop this light altogether)
-      /*
-      if (!dlowner && Owner && dl->Owner == Owner) {
-        dlowner = dl;
-        if (isPlr) break;
-        continue;
-      }
-      */
-      // remove dead lights
+      // remove dead lights (why not?)
       if (dl->die < Level->Time) dl->radius = 0;
       // unused light?
-      if (dl->radius <= 0) {
-        dl->flags = 0;
+      if (dl->radius < 2.0f) {
+        RL_CLEAR_DLIGHT(dl);
         if (!dldying) dldying = dl;
         continue;
       }
@@ -190,12 +185,12 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       }
       // check if we already have dynamic light around new origin
       if (!isPlr) {
-        float dd = lengthSquared(dl->origin-lorg);
+        const float dd = lengthSquared(dl->origin-lorg);
         if (dd <= 6*6) {
           if (radius > 0 && dl->radius >= radius) return nullptr;
           dlreplace = dl;
           break; // stop searching, we have a perfect candidate
-        } else if (dd < radsq) {
+        } else if (dd < radsqhalf) {
           // if existing light radius is greater than new radius, drop new light, 'cause
           // we have too much lights around one point (prolly due to several things at one place)
           if (radius > 0 && dl->radius >= radius) return nullptr;
@@ -217,7 +212,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  if (dl->Owner != Owner) dlowners.del((vuint64)(dl->Owner));
+  if (dl->Owner && dl->Owner != Owner) dlowners.del((vuint64)(dl->Owner));
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
@@ -232,15 +227,6 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   return dl;
 }
 
-
-#define RL_CLEAR_DLIGHT(_dl)  do { \
-  (_dl)->radius = 0; \
-  (_dl)->flags = 0; \
-  if ((_dl)->Owner) { \
-    dlowners.del((vuint64)(_dl)->Owner); \
-    (_dl)->Owner = nullptr; \
-  } \
-} while (0)
 
 //==========================================================================
 //
@@ -279,7 +265,6 @@ void VRenderLevelShared::DecayLights (float time) {
   }
 }
 
-#undef RL_CLEAR_DLIGHT
 
 
 //==========================================================================
@@ -319,3 +304,6 @@ void VRenderLevelShared::FreeSurfCache (surfcache_t *) {
 bool VRenderLevelShared::CacheSurface (surface_t *) {
   return false;
 }
+
+
+#undef RL_CLEAR_DLIGHT

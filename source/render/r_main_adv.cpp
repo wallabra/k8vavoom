@@ -54,8 +54,6 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
   mIsAdvancedRenderer = true;
   showCreateWorldSurfProgress = false; // just in case
 
-  memset(DLights, 0, sizeof(DLights));
-
   LightVis = new vuint8[VisSize];
   LightBspVis = new vuint8[VisSize];
   unguard;
