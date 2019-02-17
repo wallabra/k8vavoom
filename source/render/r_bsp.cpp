@@ -683,7 +683,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
         if (seg->linedef && !(seg->linedef->flags&ML_TWOSIDED)) continue; // don't go through solid walls
         const seg_t *pseg = seg->partner;
         if (!pseg || !pseg->front_sub) continue;
-        unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
+        const unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
         BspVisThing[psidx>>3] |= 1U<<(psidx&7);
       }
     }
