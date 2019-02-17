@@ -441,6 +441,7 @@ public:
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;
   virtual void EndFogPass () override;
+  virtual void FinishMaskedDecals () override;
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
   virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
@@ -506,6 +507,7 @@ public:
 private:
   vuint8 decalStcVal;
   bool decalUsedStencil;
+  bool maskedDecalsStarted;
 
   void RenderShaderDecalsStart ();
   void RenderShaderDecalsEnd ();

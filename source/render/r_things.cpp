@@ -77,6 +77,10 @@ static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
 VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", false, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
+extern VCvarB r_decals_enabled;
+extern VCvarB r_decals_wall_masked;
+extern VCvarB r_decals_wall_alpha;
+
 
 //==========================================================================
 //
@@ -655,10 +659,12 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     trans_sprite_t &spr = trans_sprites[f];
     if (spr.type == 2) {
       // alias model
+      if (r_decals_enabled) Drawer->FinishMaskedDecals();
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
     } else if (spr.type) {
       // sprite
+      if (r_decals_enabled) Drawer->FinishMaskedDecals();
       if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
         lastpdist = spr.pdist;
         if (!firstSprite) {
@@ -702,6 +708,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   }
 #undef MAX_POFS
 
+  if (r_decals_enabled) Drawer->FinishMaskedDecals();
   if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
 
   // reset list

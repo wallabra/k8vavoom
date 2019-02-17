@@ -43,8 +43,8 @@ static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_sur
 
 static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0/*CVAR_Archive*/);
 
-static VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
-static VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
+VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
+VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1226,6 +1226,19 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 
 //==========================================================================
 //
+//  VOpenGLDrawer::FinishMaskedDecals
+//
+//==========================================================================
+void VOpenGLDrawer::FinishMaskedDecals () {
+  if (maskedDecalsStarted) {
+    maskedDecalsStarted = false;
+    RenderShaderDecalsEnd();
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawMaskedPolygon
 //
 //==========================================================================
@@ -1241,7 +1254,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
 
   bool zbufferWriteDisabled = false;
-  bool decalsInited = false;
+  bool decalsAllowed = false;
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
@@ -1253,15 +1266,21 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       glDepthMask(GL_FALSE);
     }
     if (r_decals_enabled && r_decals_wall_alpha && surf->dcseg && surf->dcseg->decals) {
-      RenderShaderDecalsStart();
-      decalsInited = true;
+      if (!maskedDecalsStarted) {
+        maskedDecalsStarted = true;
+        RenderShaderDecalsStart();
+      }
+      decalsAllowed = true;
     }
   } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->dcseg && surf->dcseg->decals) {
-      RenderShaderDecalsStart();
-      decalsInited = true;
+      if (!maskedDecalsStarted) {
+        maskedDecalsStarted = true;
+        RenderShaderDecalsStart();
+      }
+      decalsAllowed = true;
     }
   }
 
@@ -1301,7 +1320,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
-  bool doDecals = decalsInited && tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
+  bool doDecals = decalsAllowed && tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -1325,7 +1344,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (decalsInited) RenderShaderDecalsEnd();
+  //if (decalsInited) RenderShaderDecalsEnd();
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     glDisable(GL_BLEND);

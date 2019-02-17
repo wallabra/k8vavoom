@@ -180,6 +180,9 @@ public:
   virtual void FlushOneTexture (VTexture *) = 0; // unload one texture
   virtual void FlushTextures () = 0; // unload all textures
 
+  // masked/translucent polygon decals
+  virtual void FinishMaskedDecals () = 0;
+
   // polygon drawing
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;

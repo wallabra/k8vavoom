@@ -93,6 +93,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   readBackTempBuf = nullptr;
   readBackTempBufSize = 0;
+
+  decalUsedStencil = false;
+  maskedDecalsStarted = false;
 }
 
 
