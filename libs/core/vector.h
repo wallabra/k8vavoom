@@ -215,6 +215,33 @@ public:
 #endif
   }
 
+  // initialises "full" plane from point and direction
+  // `dir` must be normalized, both vectors must be valid
+  inline void SetPointDir3D (const TVec &point, const TVec &dir) {
+    normal = dir;
+    dist = DotProduct(point, normal);
+  }
+
+  // initialises "full" plane from point and direction
+  inline void SetPointDir3DSafe (const TVec &point, const TVec &dir) {
+    if (!isFiniteF(dir.x) || !isFiniteF(dir.y) || !isFiniteF(dir.z) ||
+        !isFiniteF(point.x) || !isFiniteF(point.y) || !isFiniteF(point.z))
+    {
+      //k8: what to do here?!
+      normal = TVec(0, 0, 1);
+      dist = 1;
+    } else {
+      normal = dir.normalisedSafe();
+      if (normal.x || normal.y || normal.z) {
+        dist = DotProduct(point, normal);
+      } else {
+        //k8: what to do here?!
+        normal = TVec(0, 0, 1);
+        dist = 1;
+      }
+    }
+  }
+
   // initialises vertical plane from 2 points
   inline void Set2Points (const TVec &v1, const TVec &v2) {
     SetPointDirXY(v1, v2-v1);
