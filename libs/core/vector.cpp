@@ -210,29 +210,46 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 
 //==========================================================================
 //
+//  TClipBase::setupFromFOVs
+//
+//==========================================================================
+void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
+  if (afovx == 0.0f || afovy == 0.0f || !isFiniteF(afovx) || !isFiniteF(afovy)) {
+    clear();
+  } else {
+    fovx = afovx;
+    fovy = afovy;
+    clipbase[0] = Normalise(TVec(1.0f, 1.0f/afovx, 0.0f)); // left side clip
+    clipbase[1] = Normalise(TVec(1.0f, -1.0f/afovx, 0.0f)); // right side clip
+    clipbase[2] = Normalise(TVec(1.0f, 0.0f, -1.0f/afovy)); // top side clip
+    clipbase[3] = Normalise(TVec(1.0f, 0.0f, 1.0f/afovy)); // bottom side clip
+  }
+}
+
+
+//==========================================================================
+//
 //  TClipBase::setupViewport
 //
 //==========================================================================
 void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixelAspect) {
-  if (awidth < 1 || aheight < 1 || afov <= 0.01 || apixelAspect <= 0) {
+  if (awidth < 1 || aheight < 1 || afov <= 0.01f || apixelAspect <= 0) {
     clear();
     return;
   }
 
   // store initial args
+  /*
   width = awidth;
   height = aheight;
   fov = afov;
   pixelAspect = apixelAspect;
+  */
 
   // create clipbase
-  fovx = tan(DEG2RAD(afov)/2.0f);
-  fovy = fovx*aheight/awidth/apixelAspect;
-
-  clipbase[0] = Normalise(TVec(1.0f, 1.0f/fovx, 0.0f)); // left side clip
-  clipbase[1] = Normalise(TVec(1.0f, -1.0f/fovx, 0.0f)); // right side clip
-  clipbase[2] = Normalise(TVec(1.0f, 0.0f, -1.0f/fovy)); // top side clip
-  clipbase[3] = Normalise(TVec(1.0f, 0.0f, 1.0f/fovy)); // bottom side clip
+  const float afovx = tan(DEG2RAD(afov)/2.0f);
+  const float afovy = afovx*aheight/awidth/apixelAspect;
+  setupFromFOVs(afovx, afovy);
 }
 
 

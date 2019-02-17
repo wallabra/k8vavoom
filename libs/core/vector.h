@@ -307,20 +307,25 @@ public:
   TVec clipbase[4];
   float fovx, fovy;
   // initial
+  /*
   int width;
   int height;
   float fov;
   float pixelAspect;
+  */
 
 public:
-  TClipBase () : fovx(0), fovy(0), width(0), height(0), fov(0), pixelAspect(0) {}
+  TClipBase () : fovx(0), fovy(0) {}
   TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) { setupViewport(awidth, aheight, afov, apixelAspect); }
+  TClipBase (const float afovx, const float afovy) { setupFromFOVs(afovx, afovy); }
 
-  inline bool isValid () const { return (width > 0); }
+  inline bool isValid () const { return (fovx != 0.0f); }
 
-  inline void clear () { fovx = fovy = fov = pixelAspect = 0; width = height = 0; }
+  inline void clear () { fovx = fovy = 0; }
 
   const TVec &operator [] (size_t idx) const { return clipbase[idx]; }
+
+  void setupFromFOVs (const float afovx, const float afovy);
 
   void setupViewport (int awidth, int aheight, float afov, float apixelAspect=1.0f);
 };
