@@ -297,6 +297,36 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class TClipBase {
+public:
+  // calculated
+  // [0] is left
+  // [1] is right
+  // [2] is top
+  // [3] is bottom
+  TVec clipbase[4];
+  float fovx, fovy;
+  // initial
+  int width;
+  int height;
+  float fov;
+  float pixelAspect;
+
+public:
+  TClipBase () : fovx(0), fovy(0), width(0), height(0), fov(0), pixelAspect(0) {}
+  TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) { setupViewport(awidth, aheight, afov, apixelAspect); }
+
+  inline bool isValid () const { return (width > 0); }
+
+  inline void clear () { fovx = fovy = fov = pixelAspect = 0; width = height = 0; }
+
+  const TVec &operator [] (size_t idx) const { return clipbase[idx]; }
+
+  void setupViewport (int awidth, int aheight, float afov, float apixelAspect=1.0f);
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class TFrustum {
 public:
   // [0] is left, [1] is right, [2] is top, [3] is bottom
@@ -327,12 +357,12 @@ public:
       aangles.yaw != angles.yaw;
   }
 
-  inline void update (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
-    if (needUpdate(aorg, aangles)) setup(clip_base, aorg, aangles, createbackplane, farplanez);
+  inline void update (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
+    if (needUpdate(aorg, aangles)) setup(clipbase, aorg, aangles, createbackplane, farplanez);
   }
 
   // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
-  void setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
+  void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
 
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:

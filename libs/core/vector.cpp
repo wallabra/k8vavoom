@@ -207,6 +207,36 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 }
 
 
+
+//==========================================================================
+//
+//  TClipBase::setupViewport
+//
+//==========================================================================
+void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixelAspect) {
+  if (awidth < 1 || aheight < 1 || afov <= 0.01 || apixelAspect <= 0) {
+    clear();
+    return;
+  }
+
+  // store initial args
+  width = awidth;
+  height = aheight;
+  fov = afov;
+  pixelAspect = apixelAspect;
+
+  // create clipbase
+  fovx = tan(DEG2RAD(afov)/2.0f);
+  fovy = fovx*aheight/awidth/apixelAspect;
+
+  clipbase[0] = Normalise(TVec(1.0f, 1.0f/fovx, 0.0f)); // left side clip
+  clipbase[1] = Normalise(TVec(1.0f, -1.0f/fovx, 0.0f)); // right side clip
+  clipbase[2] = Normalise(TVec(1.0f, 0.0f, -1.0f/fovy)); // top side clip
+  clipbase[3] = Normalise(TVec(1.0f, 0.0f, 1.0f/fovy)); // bottom side clip
+}
+
+
+
 //==========================================================================
 //
 //  TFrustum::setup
@@ -214,8 +244,9 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
 //
 //==========================================================================
-void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
-  if (!isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
+void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
+  if (!clipbase.isValid() ||
+      !isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
       !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw))
   {
     clear();
@@ -228,7 +259,7 @@ void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aang
   AngleVectors(aangles, vforward, vright, vup);
   // create side planes
   for (unsigned i = 0; i < 4; ++i) {
-    const TVec &v = clip_base[i];
+    const TVec &v = clipbase.clipbase[i];
     const TVec v2(
       v.y*vright.x+v.z*vup.x+v.x*vforward.x,
       v.y*vright.y+v.z*vup.y+v.x*vforward.y,
