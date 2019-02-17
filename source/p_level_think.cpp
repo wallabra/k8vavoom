@@ -143,12 +143,12 @@ void VLevel::AddThinker (VThinker *Th) {
 //
 //==========================================================================
 void VLevel::RemoveThinker (VThinker *Th) {
-  guard(VLevel::RemoveThinker);
-  // notify that thinker is being removed from level
-  Th->RemovedFromLevel();
-  if (Th == ThinkerHead) ThinkerHead = Th->Next; else Th->Prev->Next = Th->Next;
-  if (Th == ThinkerTail) ThinkerTail = Th->Prev; else Th->Next->Prev = Th->Prev;
-  unguard;
+  if (Th) {
+    // notify that thinker is being removed from level
+    Th->RemovedFromLevel();
+    if (Th == ThinkerHead) ThinkerHead = Th->Next; else Th->Prev->Next = Th->Next;
+    if (Th == ThinkerTail) ThinkerTail = Th->Prev; else Th->Next->Prev = Th->Prev;
+  }
 }
 
 

@@ -50,7 +50,7 @@ extern VCvarF r_lights_radius_sight_check;
 
 //==========================================================================
 //
-// VRenderLevelShared::AddStaticLight
+//  VRenderLevelShared::AddStaticLight
 //
 //==========================================================================
 void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint32 colour) {
@@ -68,7 +68,7 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
 
 //==========================================================================
 //
-// VRenderLevelShared::AllocDlight
+//  VRenderLevelShared::AllocDlight
 //
 //==========================================================================
 dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid) {
@@ -233,9 +233,18 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 }
 
 
+#define RL_CLEAR_DLIGHT(_dl)  do { \
+  (_dl)->radius = 0; \
+  (_dl)->flags = 0; \
+  if ((_dl)->Owner) { \
+    dlowners.del((vuint64)(_dl)->Owner); \
+    (_dl)->Owner = nullptr; \
+  } \
+} while (0)
+
 //==========================================================================
 //
-// VRenderLevelShared::DecayLights
+//  VRenderLevelShared::DecayLights
 //
 //==========================================================================
 void VRenderLevelShared::DecayLights (float time) {
@@ -244,12 +253,14 @@ void VRenderLevelShared::DecayLights (float time) {
   if (!cl) frustumState = -1;
   dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-    if (dl->radius <= 0.0f || dl->die < Level->Time) continue;
+    if (dl->radius <= 0.0f || dl->die < Level->Time) {
+      RL_CLEAR_DLIGHT(dl);
+      continue;
+    }
     dl->radius -= time*dl->decay;
     // remove small lights too
     if (dl->radius < 2.0f) {
-      dl->radius = 0;
-      dl->flags = 0;
+      RL_CLEAR_DLIGHT(dl);
     } else {
       // check if light is out of frustum, and remove it if it is invisible
       if (frustumState == 0) {
@@ -262,28 +273,49 @@ void VRenderLevelShared::DecayLights (float time) {
         }
       }
       if (frustumState > 0 && !frustum.checkSphere(dl->origin, dl->radius)) {
-        dl->radius = 0;
-        dl->flags = 0;
+        RL_CLEAR_DLIGHT(dl);
       }
     }
+  }
+}
+
+#undef RL_CLEAR_DLIGHT
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RemoveOwnedLight
+//
+//==========================================================================
+void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
+  if (!Owner) return;
+  auto idxp = dlowners.find((vuint64)Owner);
+  if (idxp) {
+    dlight_t *dl = &DLights[*idxp];
+    if (dl->Owner == Owner) {
+      dl->radius = 0;
+      dl->flags = 0;
+      dl->Owner = nullptr;
+    }
+    dlowners.del((vuint64)Owner);
   }
 }
 
 
 //==========================================================================
 //
-// VRenderLevelShared::FreeSurfCache
+//  VRenderLevelShared::FreeSurfCache
 //
 //==========================================================================
-void VRenderLevelShared::FreeSurfCache (surfcache_t*) {
+void VRenderLevelShared::FreeSurfCache (surfcache_t *) {
 }
 
 
 //==========================================================================
 //
-// VRenderLevelShared::CacheSurface
+//  VRenderLevelShared::CacheSurface
 //
 //==========================================================================
-bool VRenderLevelShared::CacheSurface (surface_t*) {
+bool VRenderLevelShared::CacheSurface (surface_t *) {
   return false;
 }

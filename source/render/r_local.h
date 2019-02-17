@@ -502,6 +502,7 @@ public:
   virtual void AddStaticLight (const TVec&, float, vuint32) override;
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
   virtual void DecayLights (float) override;
+  virtual void RemoveOwnedLight (VThinker *Owner) override;
 
 public: // k8: so i don't have to fuck with friends
   struct PPNode {

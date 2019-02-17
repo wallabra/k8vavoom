@@ -124,7 +124,7 @@ void CL_Shutdown () {
 //==========================================================================
 void CL_DecayLights () {
   guard(CL_DecayLights);
-  if (GClLevel) GClLevel->RenderData->DecayLights(host_frametime);
+  if (GClLevel && GClLevel->RenderData) GClLevel->RenderData->DecayLights(host_frametime);
   unguard;
 }
 

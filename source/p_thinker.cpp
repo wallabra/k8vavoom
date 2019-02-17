@@ -111,6 +111,7 @@ void VThinker::AddedToLevel () {
 //
 //==========================================================================
 void VThinker::RemovedFromLevel () {
+  if (XLevel && XLevel->RenderData) XLevel->RenderData->RemoveOwnedLight(this);
 }
 
 
