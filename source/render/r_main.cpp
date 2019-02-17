@@ -105,7 +105,12 @@ bool set_resolutioon_needed = true;
 // angles in the SCREENWIDTH wide window
 VCvarF fov("fov", "90", "Field of vision.");
 
-TVec clip_base[4];
+// base planes to create fov-based frustum
+// [0] is left
+// [1] is right
+// [2] is top
+// [3] is bottom
+static TVec clip_base[4];
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
@@ -715,8 +720,8 @@ void VRenderLevelShared::TransformFrustum () {
 
     view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
 
-    view_clipplanes[i].next = (i == 3 ? nullptr : &view_clipplanes[i+1]);
-    view_clipplanes[i].clipflag = 1<<i;
+    //view_clipplanes[i].next = (i == 3 ? nullptr : &view_clipplanes[i+1]);
+    view_clipplanes[i].clipflag = 1U<<i;
   }
   unguard;
 }
@@ -745,6 +750,8 @@ void VRenderLevelShared::SetupFrame () {
     viewangles.pitch = -viewangles.pitch;
   }
   AngleVectors(viewangles, viewforward, viewright, viewup);
+
+  for (int f = 0; f < 5; ++f) view_clipplanes[f].clipflag = 0; // why not?
 
   if (r_chasecam && cl->MO == cl->Camera) {
     vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;

@@ -56,17 +56,6 @@ enum {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class TClipPlane : public TPlane {
-public:
-  TClipPlane *next;
-
-  int clipflag;
-  TVec enter;
-  TVec exit;
-  int entered;
-  int exited;
-};
-
 struct texinfo_t {
   TVec saxis;
   float soffs;

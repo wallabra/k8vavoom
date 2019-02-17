@@ -250,5 +250,11 @@ public:
 };
 
 
+class TClipPlane : public TPlane {
+public:
+  unsigned clipflag;
+};
+
+
 void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal);
 void PerpendicularVector (TVec &dst, const TVec &src); // assumes "src" is normalised

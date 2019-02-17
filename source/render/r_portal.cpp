@@ -132,7 +132,7 @@ void VPortal::Draw (bool UseStencil) {
   auto savedTraspUsed = RLev->traspUsed;
   bool SavedMirrorClip = MirrorClip;
   TClipPlane SavedClip = view_clipplanes[4];
-  TClipPlane *SavedClipLink = view_clipplanes[3].next;
+  //TClipPlane *SavedClipLink = view_clipplanes[3].next;
 
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
@@ -172,7 +172,7 @@ void VPortal::Draw (bool UseStencil) {
   }
   MirrorClip = SavedMirrorClip;
   view_clipplanes[4] = SavedClip;
-  view_clipplanes[3].next = SavedClipLink;
+  //view_clipplanes[3].next = SavedClipLink;
   RLev->TransformFrustum();
   Drawer->SetupViewOrg();
 
@@ -418,9 +418,9 @@ void VMirrorPortal::DrawContents () {
 
   view_clipplanes[4].normal = Plane->normal;
   view_clipplanes[4].dist = Plane->dist;
-  view_clipplanes[3].next = &view_clipplanes[4];
-  view_clipplanes[4].next = nullptr;
-  view_clipplanes[4].clipflag = 0x10;
+  //view_clipplanes[3].next = &view_clipplanes[4];
+  //view_clipplanes[4].next = nullptr;
+  view_clipplanes[4].clipflag = 0x10U;
 
   int *pindex = RLev->FrustumIndexes[4];
   for (int j = 0; j < 3; ++j) {

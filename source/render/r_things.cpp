@@ -42,6 +42,8 @@ extern VCvarB gl_pic_filtering;
 extern VCvarF fov;
 extern VCvarB r_chasecam;
 
+extern refdef_t refdef;
+
 
 enum {
   SPR_VP_PARALLEL_UPRIGHT, // 0 (default)
@@ -757,9 +759,6 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   unguard;
 }
 
-
-extern TVec clip_base[4];
-extern refdef_t refdef;
 
 //==========================================================================
 //

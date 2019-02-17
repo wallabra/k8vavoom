@@ -689,14 +689,14 @@ void VRenderLevelShared::RenderSubsector (int num) {
 // recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, int AClipflags) {
+void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags) {
   guard(VRenderLevelShared::RenderBSPNode);
   if (ViewClip.ClipIsFull()) return;
-  int clipflags = AClipflags;
+  unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
   if (clipflags) {
     for (int i = 0; i < 5; ++i) {
-      if (!(clipflags & view_clipplanes[i].clipflag)) continue; // don't need to clip against it
+      if (!(clipflags&view_clipplanes[i].clipflag)) continue; // don't need to clip against it
       if (view_clipplanes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
       // generate accept and reject points
