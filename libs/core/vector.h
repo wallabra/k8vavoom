@@ -315,12 +315,17 @@ public:
 
   inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
     return
+      !valid ||
       origin.x != aorg.x ||
       origin.y != aorg.y ||
       origin.z != aorg.z ||
       aangles.pitch != angles.pitch ||
       aangles.roll != angles.roll ||
       aangles.yaw != angles.yaw;
+  }
+
+  inline void update (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane=true) {
+    if (needUpdate(aorg, aangles)) setup(clip_base, aorg, aangles, createbackplane);
   }
 
   // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
