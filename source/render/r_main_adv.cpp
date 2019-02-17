@@ -103,7 +103,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   CurrLightsNumber = 0;
   CurrShadowsNumber = 0;
 
-  const float rlightraduisSq = r_lights_radius*r_lights_radius;
+  //const float rlightraduisSq = r_lights_radius*r_lights_radius;
   const float rlightraduisSightSq = r_lights_radius_sight_check*r_lights_radius_sight_check;
 
   const bool hasPVS = Level->HasPVS();
@@ -129,7 +129,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= stlight->radius*stlight->radius) {
-        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, rlightraduisSq);
+        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
         if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
           // out of frustum
           continue;
@@ -204,7 +204,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= l->radius*l->radius) {
-        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, rlightraduisSq);
+        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
         if (!frustum.checkSphere(l->origin, l->radius)) {
           // out of frustum
           continue;
