@@ -205,3 +205,121 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
   // normalise the result
   dst = NormaliseSafe(dst);
 }
+
+
+//==========================================================================
+//
+//  TFrustum::setup
+//
+//  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
+//
+//==========================================================================
+void TFrustum::setup (const TVec *clip_base, const TVec &aorg, const TAVec &aangles, bool createbackplane) {
+  if (!isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
+      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw))
+  {
+    clear();
+    return;
+  }
+  valid = true; // anyway
+  origin = aorg;
+  angles = aangles;
+  // create direction vectors
+  AngleVectors(aangles, vforward, vright, vup);
+  // create side planes
+  for (unsigned i = 0; i < 4; ++i) {
+    const TVec &v = clip_base[i];
+    const TVec v2(
+      v.y*vright.x+v.z*vup.x+v.x*vforward.x,
+      v.y*vright.y+v.z*vup.y+v.x*vforward.y,
+      v.y*vright.z+v.z*vup.z+v.x*vforward.z);
+    planes[i].SetPointDir3D(aorg, v2);
+    planes[i].clipflag = 1U<<i;
+  }
+  // create back plane
+  if (createbackplane) {
+    planes[4].SetPointDir3D(aorg, vforward);
+    planes[4].clipflag = 1U<<4;
+  } else {
+    planes[4].clipflag = 0;
+  }
+  // setup indicies for box checking
+  for (unsigned i = 0; i < 5; ++i) {
+    if (!planes[i].clipflag) continue;
+    unsigned *pindex = bindex[i];
+    for (unsigned j = 0; j < 3; ++j) {
+      if (planes[i].normal[j] < 0) {
+        pindex[j] = j;
+        pindex[j+3] = j+3;
+      } else {
+        pindex[j] = j+3;
+        pindex[j+3] = j;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkBox
+//
+//  returns `false` is box is out of frustum (or frustum is not valid)
+//  bbox:
+//    [0] is minx
+//    [1] is miny
+//    [2] is minz
+//    [3] is maxx
+//    [4] is maxy
+//    [5] is maxz
+//
+//==========================================================================
+bool TFrustum::checkBox (const float *bbox) const {
+  if (!valid) return true;
+  unsigned failed = 5;
+  for (unsigned i = 0; i < 5; ++i) {
+    if (!planes[i].clipflag) { --failed; continue; } // don't need to clip against it
+    //if (planes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+
+    // generate accept and reject points
+    const unsigned *pindex = bindex[i];
+
+    TVec rejectpt;
+    rejectpt[0] = bbox[pindex[0]];
+    rejectpt[1] = bbox[pindex[1]];
+    rejectpt[2] = bbox[pindex[2]];
+
+    if (planes[i].PointOnSide(rejectpt)) continue; // on a back side (or on a plane)
+    --failed;
+
+    /*
+    TVec acceptpt;
+    acceptpt[0] = bbox[pindex[3+0]];
+    acceptpt[1] = bbox[pindex[3+1]];
+    acceptpt[2] = bbox[pindex[3+2]];
+
+    // we can reset clipflag bit here if accept point is on a good side
+    if (!planes[i].PointOnSide(acceptpt)) return true;
+    */
+  }
+  return (failed == 0);
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkSphere
+//
+//  returns `false` is sphere is out of frustum (or frustum is not valid)
+//
+//==========================================================================
+bool TFrustum::checkSphere (const TVec &center, float radius) const {
+  if (!valid || radius <= 0) return true;
+  unsigned failed = 5;
+  for (unsigned i = 0; i < 5; ++i) {
+    if (!planes[i].clipflag) { --failed; continue; } // don't need to clip against it
+    if (planes[i].SphereOnSide(center, radius)) continue; // on a back side (or on a plane)
+    --failed;
+  }
+  return (failed == 0);
+}
