@@ -85,13 +85,16 @@ particle_t *VRenderLevelShared::NewParticle (const TVec &porg) {
   //TODO: camera views can view far away from client
   if (cl && r_particle_max_distance > 0) {
     const float maxdistSq = r_particle_max_distance*r_particle_max_distance;
-    if (lengthSquared(porg-cl->ViewOrg) >= maxdistSq) return nullptr;
-    static TFrustum frustum;
-    if (frustum.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
-      TClipBase cb(refdef.fovx, refdef.fovy);
-      if (cb.isValid()) frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true/*, r_particle_max_distance*/);
+    const float distSq = lengthSquared(porg-cl->ViewOrg);
+    if (distSq >= maxdistSq) return nullptr;
+    if (distSq >= maxdistSq*0.25) {
+      static TFrustum frustum;
+      if (frustum.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
+        TClipBase cb(refdef.fovx, refdef.fovy);
+        if (cb.isValid()) frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true/*, r_particle_max_distance*/);
+      }
+      if (frustum.isValid() && !frustum.checkPoint(porg)) return nullptr;
     }
-    if (frustum.isValid() && !frustum.checkPoint(porg)) return nullptr;
   }
 
   // remove from list of free particles
