@@ -186,6 +186,9 @@ class VLevel : public VGameObject {
     LF_ForceAllowSeveralPObjInSubsector = 0x0020,
     LF_ForceNoTexturePrecache           = 0x0040,
     LF_ForceNoPrecalcStaticLights       = 0x0080,
+    LF_ForceNoDeepwaterFix              = 0x0100,
+    LF_ForceNoFloorFloodfillFix         = 0x0200,
+    LF_ForceNoCeilingFloodfillFix       = 0x0400,
   };
   vuint32 LevelFlags;
 

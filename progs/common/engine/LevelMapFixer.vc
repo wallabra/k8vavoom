@@ -448,4 +448,13 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: Decade detected and fixed");
     return;
   }
+
+  // Grove
+  if (MapHashMD5 == "076a4ff1c79459308886560338743eab") {
+    bForceNoDeepwaterFix = true;
+    //bForceNoFloorFloodfillFix = true;
+    //bForceNoCeilingFloodfillFix = true;
+    printwarn("MAPFIX: Grove detected and fixed");
+    return;
+  }
 }

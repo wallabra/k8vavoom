@@ -73,6 +73,9 @@ native transient bool bForceRebuildNodes;
 native transient bool bForceAllowSeveralPObjInSubsector;
 native transient bool bForceNoTexturePrecache;
 native transient bool bForceNoPrecalcStaticLights;
+native transient bool bForceNoDeepwaterFix;
+native transient bool bForceNoFloorFloodfillFix;
+native transient bool bForceNoCeilingFloodfillFix;
 // not in C++
 native transient bool bConvertSectorLightsToStatic;
 

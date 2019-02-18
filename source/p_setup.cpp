@@ -3795,7 +3795,13 @@ void VLevel::FixDeepWaters () {
     sec->othersecCeiling = nullptr;
   }
 
-  if (deepwater_hacks) FixSelfRefDeepWater();
+  if (deepwater_hacks && !(LevelFlags&LF_ForceNoDeepwaterFix)) FixSelfRefDeepWater();
+
+  bool oldFixFloor = deepwater_hacks_floor;
+  bool oldFixCeiling = deepwater_hacks_ceiling;
+
+  if (LevelFlags&LF_ForceNoFloorFloodfillFix) deepwater_hacks_floor = false;
+  if (LevelFlags&LF_ForceNoCeilingFloodfillFix) deepwater_hacks_ceiling = false;
 
   if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
     // fix "floor holes"
@@ -3826,6 +3832,9 @@ void VLevel::FixDeepWaters () {
       //sec->SectorFlags = (fsecFloor ? SF_FakeFloorOnly : 0)|(fsecCeiling ? SF_FakeCeilingOnly : 0);
     }
   }
+
+  deepwater_hacks_floor = oldFixFloor;
+  deepwater_hacks_ceiling = oldFixCeiling;
 }
 
 
