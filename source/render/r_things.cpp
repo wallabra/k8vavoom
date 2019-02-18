@@ -75,7 +75,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
-VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", false, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
+VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
