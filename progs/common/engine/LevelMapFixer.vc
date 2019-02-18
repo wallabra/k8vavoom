@@ -457,4 +457,13 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: Grove detected and fixed");
     return;
   }
+
+  // Grove alt
+  if (MapHashMD5 == "b5733f760836dfc2e7c9745f80f90e79") {
+    bForceNoDeepwaterFix = true;
+    //bForceNoFloorFloodfillFix = true;
+    //bForceNoCeilingFloodfillFix = true;
+    printwarn("MAPFIX: Grove Alt detected and fixed");
+    return;
+  }
 }
