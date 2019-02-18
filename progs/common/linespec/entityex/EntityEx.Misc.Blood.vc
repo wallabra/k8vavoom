@@ -239,16 +239,22 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 //  `dir` must be normalized.
 //  (not anymore) if zofs is not given, use default entity vertical offset.
 //
+//  if `DecalName` is given, spawn decals
+//
 //==========================================================================
-final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs) {
-  TVec dst;
+final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
+                       optional name DecalName)
+{
   intercept_t *in;
-  TVec lineStart;
   TVec lineEnd;
-  TVec shootOrigin;
   TVec outHitPoint;
+  trsplat_t temptr;
+  int side;
+  sector_t *sec;
+  TVec hit_point, real_hit_point;
+  line_t *li;
 
-  shootOrigin = org;
+  TVec shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
   if (specified_zofs) {
     //shootOrigin.z += zofs;
@@ -257,26 +263,19 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
     //shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
   }
 
-  dst = shootOrigin+distance*dir;
+  TVec dst = shootOrigin+distance*dir;
 
-  if (tr) {
-    tr->org = org;
-    tr->hit = dst;
-    tr->line = nullptr;
-    tr->sec = nullptr;
-    tr->didhit = false;
-    tr->mobj = none;
-  }
+  if (!tr) tr = &temptr;
+  tr->org = org;
+  tr->hit = dst;
+  tr->line = nullptr;
+  tr->sec = nullptr;
+  tr->didhit = false;
+  tr->mobj = none;
 
-  lineStart = shootOrigin;
+  TVec lineStart = shootOrigin;
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
-    TVec hit_point, real_hit_point;
-    line_t *li;
-
     if (in->bIsALine) {
-      int side;
-      sector_t *sec;
-
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
       if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
@@ -292,7 +291,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       // check for shooting floor or ceiling
       if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
         // process floor and ceiling here
-        if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
+        tr->hit = outHitPoint;
+        tr->didhit = true;
         return false;
       }
 
@@ -308,7 +308,12 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
+            if (DecalName) {
+              SpawnDecal(hit_point, DecalName, side, li);
+              break; // shot continues, why not?
+            } else {
+              if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) break; // shot continues
+            }
           }
           open = open->next;
         }
@@ -319,7 +324,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
             hit_point.z > opentop)
         {
           // it's a sky hack wall
-          if (tr) { tr->hit = hit_point; tr->didhit = true; }
+          tr->hit = hit_point;
+          tr->didhit = true;
           return false;
         }
       }
@@ -327,18 +333,18 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       outHitPoint = hit_point;
 
       if (li->special == LNSPEC_LineHorizon) {
-        if (tr) tr->hit = hit_point;
+        tr->hit = hit_point;
         return false; // don't spawn decals on sky
       }
 
       // Hit line
-      if (tr) {
-        tr->hit = hit_point;
-        tr->line = li;
-        tr->sec = sec;
-        tr->side = side;
-        tr->didhit = true;
-      }
+      tr->hit = hit_point;
+      tr->line = li;
+      tr->sec = sec;
+      tr->side = side;
+      tr->didhit = true;
+
+      if (DecalName) SpawnDecal(hit_point, DecalName, side, li);
 
       // don't go any farther
       return true;
@@ -348,7 +354,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   lineEnd = dst;
   if (!ShootCheckPlanes(XLevel.PointInSector(dst), line:default, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
     // process floor and ceiling here
-    if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
+    tr->hit = outHitPoint;
+    tr->didhit = true;
   }
 
   return false;
@@ -436,10 +443,13 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
     if (isSmallDamage && !radiusDamage) continue;
 
+    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType);
+    /*
     if (TraceSplat(pos, vdir, 172.0, &tr, 0)) {
       //print("*** spawning blood decal '%s'!", bloodType);
       SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
     }
+    */
   }
 }
 
