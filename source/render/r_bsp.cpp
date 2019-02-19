@@ -618,7 +618,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
 
   d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
   if (region->next && d <= 0.0f) {
-    if (!ViewClip.ClipCheckRegion(region->next, r_sub, false)) return;
+    if (!ViewClip.ClipCheckRegion(region->next, r_sub)) return;
     RenderSubRegion(region->next);
   }
 
@@ -648,7 +648,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   RenderSecSurface(region->ceil, r_region->ceiling->SkyBox);
 
   if (region->next && d > 0.0f) {
-    if (!ViewClip.ClipCheckRegion(region->next, r_sub, false)) return;
+    if (!ViewClip.ClipCheckRegion(region->next, r_sub)) return;
     RenderSubRegion(region->next);
   }
   unguard;
@@ -669,7 +669,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!ViewClip.ClipCheckSubsector(Sub, false)) return;
+  if (!ViewClip.ClipCheckSubsector(Sub)) return;
 
   BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
@@ -693,7 +693,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  ViewClip.ClipAddSubsectorSegs(Sub, false, MirrorClipSegs ? &view_clipplanes[4] : nullptr);
+  ViewClip.ClipAddSubsectorSegs(Sub, (MirrorClipSegs ? &view_clipplanes[4] : nullptr));
   unguard;
 }
 
@@ -738,7 +738,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     }
   }
 
-  if (!ViewClip.ClipIsBBoxVisible(bbox, false)) return;
+  if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
     RenderSubsector(0);
@@ -758,7 +758,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
 
     // possibly divide back space (away from the viewer)
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1], false)) return;
+    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
 
     RenderBSPNode(bsp->children[side^1], bsp->bbox[side^1], clipflags);
     return;

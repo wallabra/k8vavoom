@@ -492,15 +492,15 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   guard(VNetConnection::SetUpPvsNode);
   VLevel *Level = Context->GetLevel();
   if (Clipper.ClipIsFull()) return;
-  if (!Clipper.ClipIsBBoxVisible(BBox, false)) return;
+  if (!Clipper.ClipIsBBoxVisible(BBox)) return;
 
   if (BspNum == -1) {
     int SubNum = 0;
     subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
-    if (!Clipper.ClipCheckSubsector(Sub, false)) return;
-    Clipper.ClipAddSubsectorSegs(Sub, false);
+    if (!Clipper.ClipCheckSubsector(Sub)) return;
+    Clipper.ClipAddSubsectorSegs(Sub);
     UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
     return;
   }
@@ -513,7 +513,7 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     // recursively divide front space
     SetUpPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
     // possibly divide back space
-    if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1], false)) return;
+    if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1])) return;
     SetUpPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
     return;
   }
@@ -522,8 +522,8 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   subsector_t *Sub = &Level->Subsectors[SubNum];
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
   if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
-  if (!Clipper.ClipCheckSubsector(Sub, false)) return;
-  Clipper.ClipAddSubsectorSegs(Sub, false);
+  if (!Clipper.ClipCheckSubsector(Sub)) return;
+  Clipper.ClipAddSubsectorSegs(Sub);
   UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
   unguard;
 }

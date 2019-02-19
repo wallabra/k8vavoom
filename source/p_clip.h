@@ -81,15 +81,26 @@ public:
     return Ret;
   }
 
-  bool ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0) const;
-  bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0) const;
-  bool ClipCheckSubsector (const subsector_t *sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0) const;
+  bool ClipIsBBoxVisible (const float *BBox) const;
+  bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
+  bool ClipCheckSubsector (const subsector_t *sub) const;
+#ifdef CLIENT
+  bool ClipLightIsBBoxVisible (const float *BBox, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  bool ClipLightCheckSubsector (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
+#endif
 
-  void ClipAddSubsectorSegs (const subsector_t *sub, bool shadowslight, const TPlane *Mirror=nullptr, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
+  void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
+#ifdef CLIENT
+  void ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror=nullptr);
+#endif
 
   bool ClipCheckLine (const line_t *ldef) const;
   void ClipAddLine (const line_t *ldef);
 
 private:
-  void CheckAddClipSeg (const seg_t *line, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror);
+#ifdef CLIENT
+  void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
+#endif
 };

@@ -91,7 +91,7 @@ void VAdvancedRenderLevel::UpdateSubsector (int num, float *bbox) {
 
   if (!r_surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!ViewClip.ClipCheckSubsector(r_surf_sub, false)) return;
+  if (!ViewClip.ClipCheckSubsector(r_surf_sub)) return;
 
   bbox[2] = r_surf_sub->sector->floor.minz;
   if (IsSky(&r_surf_sub->sector->ceiling)) {
@@ -102,7 +102,7 @@ void VAdvancedRenderLevel::UpdateSubsector (int num, float *bbox) {
 
   UpdateSubRegion(r_surf_sub->regions, true);
 
-  ViewClip.ClipAddSubsectorSegs(r_surf_sub, false);
+  ViewClip.ClipAddSubsectorSegs(r_surf_sub);
   unguard;
 }
 
@@ -116,7 +116,7 @@ void VAdvancedRenderLevel::UpdateBSPNode (int bspnum, float *bbox) {
   guard(VAdvancedRenderLevel::UpdateBSPNode);
   if (ViewClip.ClipIsFull()) return;
 
-  if (!ViewClip.ClipIsBBoxVisible(bbox, false)) return;
+  if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
     UpdateSubsector(0, bbox);
@@ -133,7 +133,7 @@ void VAdvancedRenderLevel::UpdateBSPNode (int bspnum, float *bbox) {
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
     bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1], false)) return;
+    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
     UpdateBSPNode(bsp->children[side^1], bsp->bbox[side^1]);
     return;
   }

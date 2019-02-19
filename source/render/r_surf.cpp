@@ -1466,7 +1466,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region, bool ClipSegs) {
 
   if (region->next) {
     if (ClipSegs) {
-      if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub, false)) return;
+      if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub)) return;
     }
     UpdateSubRegion(region->next, ClipSegs);
   }
