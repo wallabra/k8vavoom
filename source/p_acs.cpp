@@ -2963,7 +2963,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         ang.roll = 0;
         TVec dir(0, 0, 0);
         AngleVector(ang, dir);
-        dir = NormaliseSafe(dir);
+        //dir = NormaliseSafe(dir);
+        //dir.normaliseInPlace();
         VEntity *hit = src->eventPickActor(
           false, TVec(0, 0, 0), // origin
           dir, float(args[3])/65536.0f,
@@ -3003,7 +3004,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         ang.roll = 0;
         TVec dir(0, 0, 0);
         AngleVector(ang, dir);
-        dir = NormaliseSafe(dir);
+        //dir = NormaliseSafe(dir);
+        //dir.normaliseInPlace();
         // dir, range, damage,
         // pufftype, damagetype,
         // flags, pufftid

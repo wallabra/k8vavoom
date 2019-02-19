@@ -345,7 +345,9 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist < 0) continue; // light doesn't reach
 
-    TVec incoming = NormaliseSafe(light->origin-(*spt));
+    TVec incoming = light->origin-(*spt);
+    incoming.normaliseInPlace();
+    if (!incoming.isValid()) continue;
     float angle = DotProduct(incoming, surf->plane->normal);
 
     angle = 0.5f+0.5f*angle;

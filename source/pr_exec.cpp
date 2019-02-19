@@ -2706,9 +2706,13 @@ func_loop:
           case OPC_Builtin_VecNormalize:
             {
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
-              v.normaliseInPlace();
-              // normalizing zero vector should produce zero, not nan/inf
-              if (!v.isValid()) v = TVec(0, 0, 0);
+              if (!v.isValid() || v.isZero()) {
+                v = TVec(0, 0, 0);
+              } else {
+                v.normaliseInPlace();
+                // normalizing zero vector should produce zero, not nan/inf
+                if (!v.isValid()) v = TVec(0, 0, 0);
+              }
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
@@ -2717,9 +2721,13 @@ func_loop:
           case OPC_Builtin_VecNormalize2D:
             {
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
-              v = normalise2D(v);
-              // normalizing zero vector should produce zero, not nan/inf
-              if (!v.isValid()) v = TVec(0, 0, 0);
+              if (!v.isValid() || v.isZero2D()) {
+                v = TVec(0, 0, 0);
+              } else {
+                v.normalise2DInPlace();
+                // normalizing zero vector should produce zero, not nan/inf
+                if (!v.isValid()) v = TVec(0, 0, 0);
+              }
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
