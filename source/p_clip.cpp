@@ -920,7 +920,13 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
     if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
-    if (!IsSegAClosedSomething(Level, seg)) return;
+    if (!IsSegAClosedSomething(Level, seg)) {
+      // here we can check if midtex is in frustum; if it doesn't,
+      // we can add this seg to clipper.
+      // this way, we can clip alot of things when renderer looks at
+      // floor/ceiling, and we can clip away too high/low windows.
+      return;
+    }
   }
 
   AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));

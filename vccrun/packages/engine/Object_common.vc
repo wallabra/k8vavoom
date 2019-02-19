@@ -381,11 +381,16 @@ native static final float atan (float slope) [builtin ATan]; // arctangent
 native static final float atan2 (float y, float x) [builtin ATan2]; // arctangent
 native static final float sqrt (float x) [builtin Sqrt]; // square root
 native static final float length (const TVec vec) [builtin VecLength]; // vector length
+native static final float lengthSquared (const TVec vec) [builtin VecLengthSquared]; // vector length
 alias Length = length;
+alias LengthSquared = lengthSquared;
 // vector length without z component
 native static final float length2D (const TVec vec) [builtin VecLength2D];
+native static final float length2DSquared (const TVec vec) [builtin VecLength2DSquared];
 alias Length2D = length2D;
 alias length2d = length2D;
+alias Length2DSquared = length2DSquared;
+alias length2dSquared = length2DSquared;
 // normalises vector
 native static final TVec normalise (const TVec vec) [builtin VecNormalize];
 alias Normalise = normalise;

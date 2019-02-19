@@ -2156,10 +2156,24 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       if (!isFiniteF(fv)) fv = 0;
       e = new VFloatLiteral(fv, Loc);
       break;
+    case OPC_Builtin_VecLengthSquared:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      fv = v0.lengthSquared();
+      if (!isFiniteF(fv)) fv = 0;
+      e = new VFloatLiteral(fv, Loc);
+      break;
     case OPC_Builtin_VecLength2D:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
       v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       fv = v0.length2D();
+      if (!isFiniteF(fv)) fv = 0;
+      e = new VFloatLiteral(fv, Loc);
+      break;
+    case OPC_Builtin_VecLength2DSquared:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      fv = v0.length2DSquared();
       if (!isFiniteF(fv)) fv = 0;
       e = new VFloatLiteral(fv, Loc);
       break;
