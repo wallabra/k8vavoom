@@ -103,7 +103,7 @@ void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int
   if (l) {
     Xmag = int(l->v2->x-l->v1->x);
     Ymag = int(l->v2->y-l->v1->y);
-    Magnitude = int(Length(vector(float(Xmag), float(Ymag), 0.0)));
+    Magnitude = int(Length2D(vector(float(Xmag), float(Ymag))));
   } else {
     // [RH] allow setting magnitude and angle with parameters
     ChangeValues(magnitude, angle);
@@ -202,7 +202,7 @@ override void Tick (float DeltaTime) {
       if (EntityEx(thing).bWindThrust && thing.bColideWithWorld) {
         sx = X;
         sy = Y;
-        dist = Length(vector(thing.Origin.x-sx, thing.Origin.y-sy, 0.0));
+        dist = Length2D(vector(thing.Origin.x-sx, thing.Origin.y-sy));
         speed = float(Magnitude-(int(dist)>>1))/(2.0*PUSH_FACTOR);
 
         // If speed <= 0, you're outside the effective radius. You also have

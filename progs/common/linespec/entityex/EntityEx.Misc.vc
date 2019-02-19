@@ -122,8 +122,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       continue;
     }
 
-    float dist = Length(Other.GetCentre()-GetCentre())-Other.Radius;
-    if (dist < 0.0) dist = 0.0;
+    float dist = fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius);
 
     if (dist >= BombDistance) continue; // out of range
 
@@ -155,7 +154,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin-Origin;
         Dir.z = 0.0;
-        if (Length(Dir) < 0.001) {
+        if (Length2D(Dir) < 0.001) {
           // zero length. In this case Doom would use angle 0
           Dir = vector(1.0, 0.0, 0.0);
         }
