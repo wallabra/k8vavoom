@@ -328,6 +328,13 @@ public:
   void setupFromFOVs (const float afovx, const float afovy);
 
   void setupViewport (int awidth, int aheight, float afov, float apixelAspect=1.0f);
+
+  // WARNING! no checks!
+  static inline void CalcFovXY (float *outfovx, float *outfovy, const int width, const int height, const float fov, const float pixelAspect=1.0f) {
+    const float fovx = tan(DEG2RAD(fov)/2.0f);
+    if (outfovx) *outfovx = fovx;
+    if (outfovy) *outfovy = fovx*height/width/pixelAspect;
+  }
 };
 
 
