@@ -26,6 +26,8 @@
 //**************************************************************************
 #include "gamedefs.h"
 
+#define VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VViewClipper::VClipNode {
@@ -66,6 +68,7 @@ static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clip
 //==========================================================================
 static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
   // clip sectors that are behind rendered segs
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
   const TVec r1 = Origin-v1;
   const TVec r2 = Origin-v2;
   const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
@@ -84,6 +87,7 @@ static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec
     else if (D2 > 0.0f && D1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
   }
   */
+#endif
 
   return true;
 }
@@ -466,14 +470,18 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
   check(!ClipHead);
 
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
-  if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) return; // looking up or down, can see behind
+  if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) {
+    // looking up or down, can see behind
+    Frustum.clear();
+    return;
+  }
 
   TVec Pts[4];
   TVec TransPts[4];
-  Pts[0] = TVec(1, fovx, fovy);
-  Pts[1] = TVec(1, fovx, -fovy);
-  Pts[2] = TVec(1, -fovx, fovy);
-  Pts[3] = TVec(1, -fovx, -fovy);
+  Pts[0] = TVec(1.0f, fovx, fovy);
+  Pts[1] = TVec(1.0f, fovx, -fovy);
+  Pts[2] = TVec(1.0f, -fovx, fovy);
+  Pts[3] = TVec(1.0f, -fovx, -fovy);
   TVec clipforward = Normalise(TVec(viewforward.x, viewforward.y, 0.0f));
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
@@ -514,6 +522,16 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     ClipHead->Next = ClipTail;
     ClipTail->Prev = ClipHead;
     ClipTail->Next = nullptr;
+  }
+
+  if (!viewright.z) {
+    // no view roll, create frustum
+    Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
+    // also, remove left and right planes, regular clipper will take care of that
+    Frustum.planes[TFrustum::Left].invalidate();
+    Frustum.planes[TFrustum::Right].invalidate();
+  } else {
+    Frustum.clear();
   }
 }
 
@@ -775,16 +793,14 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   for (auto count = sub->numlines-1; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
-
     if (!ds->seg->linedef) {
       // miniseg
-      if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) continue;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    } else {
+      // clip sectors that are behind rendered segs
+      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
-
-    // clip sectors that are behind rendered segs
-    if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
 }
@@ -803,16 +819,14 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
   for (int count = sub->numlines; count--; ++seg) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-
     if (!seg->linedef) {
       // miniseg
-      if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) continue;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    } else {
+      // clip sectors that are behind rendered segs
+      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
-
-    // clip sectors that are behind rendered segs
-    if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
 }
@@ -860,16 +874,14 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsec
   for (auto count = sub->numlines-1; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
-
     if (!ds->seg->linedef) {
       // miniseg
-      if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) continue;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    } else {
+      // clip sectors that are behind rendered segs
+      if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
-
-    // clip sectors that are behind rendered segs
-    if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
-
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
 }
@@ -889,16 +901,14 @@ bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, const TVec &
   for (int count = sub->numlines; count--; ++seg) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-
     if (!seg->linedef) {
       // miniseg
-      if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) continue;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    } else {
+      // clip sectors that are behind rendered segs
+      if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
+      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
-
-    // clip sectors that are behind rendered segs
-    if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
-
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
 }

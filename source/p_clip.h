@@ -53,6 +53,7 @@ private:
   VClipNode *ClipTail;
   TVec Origin;
   VLevel *Level;
+  TFrustum Frustum; // why not?
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
