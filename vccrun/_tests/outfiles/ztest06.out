@@ -3,5 +3,5 @@ Main ctor!
 hello! defval=42; vector=(1,2,3)
 vector c=(1,2,3)
 BOO!
-cos(90)=-0.017452406
+cos(91)=-0.017452352
 cls is 'Main'

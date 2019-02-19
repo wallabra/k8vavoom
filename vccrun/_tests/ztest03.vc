@@ -19,7 +19,7 @@ int val;
 final static void main () {
   print("hello!");
   boo();
-  print("cos(90)=%f", cos(91.0));
+  print("cos(91)=%f", cos(91.0));
 }
 
 

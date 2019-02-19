@@ -27,7 +27,7 @@ final static void main () {
   auto c = n;
   print("vector c=%v", c);
   boo();
-  print("cos(90)=%f", cos(0d91));
+  print("cos(91)=%f", cos(0d91));
   classTest(Main);
 }
 

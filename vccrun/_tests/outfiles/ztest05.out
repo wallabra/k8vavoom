@@ -3,4 +3,4 @@ Main ctor!
 hello! defval=42; vector=(1,2,0)
 vector c=(1,2,0)
 BOO!
-cos(90)=-0.017452406
+cos(91)=-0.017452352

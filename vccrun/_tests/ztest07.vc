@@ -29,7 +29,7 @@ final static void main () {
   print("vector c=%v", c);
   boo();
   int dg = 0d91;
-  print("cos(90)=%f", cos(dg));
+  print("cos(91)=%f", cos(dg));
   classTest(Main);
 }
 
