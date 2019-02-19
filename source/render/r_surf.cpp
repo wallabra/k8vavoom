@@ -830,6 +830,9 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
   if (!seg->linedef) return; // miniseg
 
   if (ShouldClip) {
+/*
+    k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
     // clip sectors that are behind rendered segs
     TVec v1 = *seg->v1;
     TVec v2 = *seg->v2;
@@ -843,6 +846,8 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
     else if (D2 > 0.0f && D1 < 0.0f) v1 += (v1-v2)*D2/(D2-D1);
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
+*/
+    if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(*seg->v2), ViewClip.PointToClipAngle(*seg->v1))) return;
   }
 
   side_t *sidedef = seg->sidedef;

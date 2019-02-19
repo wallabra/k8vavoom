@@ -386,6 +386,9 @@ void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
   const float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
   if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
 
+/*
+    k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
   // clip sectors that are behind rendered segs
   TVec v1 = *line->v1;
   TVec v2 = *line->v2;
@@ -399,6 +402,8 @@ void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
   else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
+*/
+  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(*line->v2), LightClip.PointToClipAngle(*line->v1))) return;
 
   //line_t *linedef = line->linedef;
   //side_t *sidedef = line->sidedef;
@@ -605,6 +610,9 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
   const float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
   if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
 
+/*
+    k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
   // clip sectors that are behind rendered segs
   TVec v1 = *line->v1;
   TVec v2 = *line->v2;
@@ -618,6 +626,8 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
   else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
+*/
+  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(*line->v2), LightClip.PointToClipAngle(*line->v1))) return;
 
   if (!line->backsector) {
     // single sided line
