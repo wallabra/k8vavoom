@@ -293,6 +293,8 @@ public:
 class TClipPlane : public TPlane {
 public:
   unsigned clipflag;
+
+  inline void invalidate () { clipflag = 0; }
 };
 
 
@@ -341,6 +343,16 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class TFrustum {
 public:
+  enum {
+    Left = 0,
+    Right = 1,
+    Top = 2,
+    Bottom = 3,
+    Back = 4,
+    Forward = 5,
+  };
+
+public:
   // [0] is left, [1] is right, [2] is top, [3] is bottom
   // [4] is back (if `clipflag` is set)
   // [5] is forward (if `clipflag` is set)
@@ -375,6 +387,8 @@ public:
 
   // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
   void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
+
+  void setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
 
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:

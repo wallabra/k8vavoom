@@ -293,7 +293,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
     planes[4].clipflag = 0;
   }
   // create far plane
-  if (farplanez > 0) {
+  if (isFiniteF(farplanez) && farplanez > 0) {
     planes[5].SetPointDir3D(aorg+vforward*farplanez, -vforward);
     planes[5].clipflag = 1U<<5;
     ++planeCount;
@@ -314,6 +314,22 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
       }
     }
   }
+}
+
+
+//==========================================================================
+//
+//  TFrustum::setupFromFOVs
+//
+//==========================================================================
+void TFrustum::setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
+  if (!isFiniteF(afovx) || !isFiniteF(afovy) ||
+      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw)) {
+    clear();
+    return;
+  }
+  TClipBase cb(afovx, afovy);
+  setup(cb, aorg, aangles, createbackplane, farplanez);
 }
 
 
