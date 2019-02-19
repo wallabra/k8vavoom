@@ -541,7 +541,7 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
 
   if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (plane.MirrorAlpha < 1.0f && MirrorLevel < r_maxmirrors && r_allow_mirrors) {
+  if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.MirrorAlpha < 1.0f) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(&plane)) {

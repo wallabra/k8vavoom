@@ -26,7 +26,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 
-#define VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
+//#define VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -61,6 +61,7 @@ static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clip
 */
 
 
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
 //==========================================================================
 //
 //  CheckAndClipVerts
@@ -68,13 +69,31 @@ static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clip
 //==========================================================================
 static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
   // clip sectors that are behind rendered segs
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
   const TVec r1 = Origin-v1;
   const TVec r2 = Origin-v2;
-  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-  if (D1 < 0.0f) {
-    const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-    if (D2 < 0.0f) return false;
+  // here, z is almost always zero
+  if (!r1.z && !r2.z) {
+    // with zero z case, crossproduct becomes (0,0,magnitude)
+    // then Length(v) is (0,0,sqrt(magnitude*magnitude)) -> (0,0,magnitude)
+    // then Normalise(v) is (0,0,magnitude/magnitude) -> (0,0,1) or (0,0,-1)
+    // that is, it effectively calculates a sign of 2d cross product
+    // then, DotProduct(v, org) does: (0*org.x+0*org.y+msign*org.z) -> msign*org.z
+    float msign1 = CrossProduct2D(r1, r2);
+    if (msign1 < 0.0f) msign1 = -1.0f; else if (msign1 > 0.0f) msign1 = 0.0f;
+    const float D1 = msign1*Origin.z;
+    if (D1 < 0.0f) {
+      float msign2 = CrossProduct2D(r2, r1);
+      if (msign2 < 0.0f) msign2 = -1.0f; else if (msign2 > 0.0f) msign2 = 0.0f;
+      const float D2 = msign2*Origin.z;
+      if (D2 < 0.0f) return false;
+    }
+    //k8: do nothing at all here?
+  } else {
+    const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin); // distance to plane
+    if (D1 < 0.0f) {
+      const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin); // distance to plane
+      if (D2 < 0.0f) return false;
+    }
   }
 
   //if (D1 < 0.0f && D2 < 0.0f) return false;
@@ -87,7 +106,6 @@ static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec
     else if (D2 > 0.0f && D1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
   }
   */
-#endif
 
   return true;
 }
@@ -101,6 +119,7 @@ static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec
 static inline bool CheckVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
   return CheckAndClipVerts(v1, v2, Origin);
 }
+#endif
 
 
 #ifdef CLIENT
@@ -109,31 +128,41 @@ static inline bool CheckVerts (const TVec &v1, const TVec &v2, const TVec &Origi
 //  CheckAndClipVertsWithLight
 //
 //==========================================================================
-static inline bool CheckAndClipVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, float CurrLightRadius) {
-  // clip sectors that are behind rendered segs
-  const TVec r1 = Origin-v1;
-  const TVec r2 = Origin-v2;
-  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-  const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-  if (D1 > r_lights_radius && D2 > r_lights_radius) return false;
-
+static inline bool CheckAndClipVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, const float CurrLightRadius) {
+  // check if light touches a seg
   const TVec rLight1 = CurrLightPos-v1;
   const TVec rLight2 = CurrLightPos-v2;
   const float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
   const float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
-
-  const TVec rView1 = Origin-v1-CurrLightPos;
-  const TVec rView2 = Origin-v2-CurrLightPos;
-  const float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
-  const float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
-
-  if (D1 < 0.0f && D2 < 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) return false;
-
   if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
       (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
   {
     return false;
   }
+
+  const TVec r1 = Origin-v1;
+  const TVec r2 = Origin-v2;
+  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
+  if (D1 >= 0.0f) {
+    if (D1 > r_lights_radius) return false;
+    const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+    if (D2 > r_lights_radius) return false;
+  } else {
+    const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+    if (D2 < 0.0f) {
+      //k8: wtf is this?
+      //const TVec rView1 = Origin-v1-CurrLightPos;
+      //const TVec rView2 = Origin-v2-CurrLightPos;
+      const TVec rView1 = r1-CurrLightPos;
+      const TVec rView2 = r2-CurrLightPos;
+      const float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
+      if (DView1 < -CurrLightRadius) {
+        const float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
+        if (DView2 < -CurrLightRadius) return false;
+      }
+    }
+  }
+
 
   /*k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -152,7 +181,7 @@ static inline bool CheckAndClipVertsWithLight (const TVec &v1, const TVec &v2, c
 //  CheckVertsWithLight
 //
 //==========================================================================
-static inline bool CheckVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, float CurrLightRadius) {
+static inline bool CheckVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, const float CurrLightRadius) {
   return CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius);
 }
 #endif
@@ -773,8 +802,10 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox) const {
   TVec v1, v2;
   CreateBBVerts(v1, v2, BBox, Origin);
 
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
   // clip sectors that are behind rendered segs
   if (!CheckAndClipVerts(v1, v2, Origin)) return false;
+#endif
 
   return IsRangeVisible(PointToClipAngle(v1), PointToClipAngle(v2));
 }
@@ -793,6 +824,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   for (auto count = sub->numlines-1; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!ds->seg->linedef) {
       // miniseg
       if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
@@ -801,6 +833,9 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
       if (!CheckAndClipVerts(v1, v2, Origin)) return false;
       if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
+#else
+    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+#endif
   }
   return false;
 }
@@ -819,6 +854,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
   for (int count = sub->numlines; count--; ++seg) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!seg->linedef) {
       // miniseg
       if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
@@ -827,6 +863,9 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
       if (!CheckAndClipVerts(v1, v2, Origin)) return false;
       if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     }
+#else
+    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+#endif
   }
   return false;
 }
@@ -1056,7 +1095,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
     }
   }
 #endif
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
   if (!CheckVerts(v1, v2, Origin)) return;
+#endif
 
   if (Mirror) {
     // clip seg with mirror plane
@@ -1111,44 +1152,4 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
       }
     }
   }
-}
-
-
-//==========================================================================
-//
-//  VViewClipper::ClipCheckLine
-//
-//==========================================================================
-bool VViewClipper::ClipCheckLine (const line_t *ldef) const {
-  if (!ldef) return false;
-  const TVec &v1 = *ldef->v1;
-  const TVec &v2 = *ldef->v2;
-
-  if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-  if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VViewClipper::ClipAddLine
-//
-//==========================================================================
-void VViewClipper::ClipAddLine (const line_t *ldef) {
-  if (!ldef) return; // miniseg
-  if (ldef->PointOnSide(Origin)) return; // viewer is in back side or on plane
-
-  const TVec &v1 = *ldef->v1;
-  const TVec &v2 = *ldef->v2;
-
-  if (!CheckVerts(v1, v2, Origin)) return;
-
-  // for 2-sided line, determine if it can be skipped
-  if (ldef->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
-    if (ldef->alpha < 1.0f) return; // skip translucent walls
-    //if (!IsSegAClosedSomething(Level, seg)) return;
-  }
-
-  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
 }

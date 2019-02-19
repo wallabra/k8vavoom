@@ -96,9 +96,6 @@ public:
   void ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror=nullptr);
 #endif
 
-  bool ClipCheckLine (const line_t *ldef) const;
-  void ClipAddLine (const line_t *ldef);
-
 private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror);
 #ifdef CLIENT
