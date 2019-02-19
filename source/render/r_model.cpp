@@ -1267,7 +1267,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   rd.y = 0;
   rd.width = ScreenWidth;
   rd.height = ScreenHeight;
-  rd.fovx = tan(DEG2RAD(90)/2.0f);
+  rd.fovx = tan(DEG2RADF(90)/2.0f);
   rd.fovy = rd.fovx*3.0f/4.0f;
   rd.drawworld = false;
   rd.DrawCamera = false;

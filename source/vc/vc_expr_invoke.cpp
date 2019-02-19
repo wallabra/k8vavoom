@@ -2111,11 +2111,11 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       break;
     case OPC_Builtin_DegToRad:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
-      e = new VFloatLiteral(DEG2RAD(Args[0]->GetFloatConst()), Loc);
+      e = new VFloatLiteral(DEG2RADF(Args[0]->GetFloatConst()), Loc);
       break;
     case OPC_Builtin_RadToDeg:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
-      e = new VFloatLiteral(RAD2DEG(Args[0]->GetFloatConst()), Loc);
+      e = new VFloatLiteral(RAD2DEGF(Args[0]->GetFloatConst()), Loc);
       break;
     case OPC_Builtin_Sin:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
@@ -2135,15 +2135,15 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       break;
     case OPC_Builtin_ACos:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
-      e = new VFloatLiteral(acos(Args[0]->GetFloatConst()), Loc);
+      e = new VFloatLiteral(macos(Args[0]->GetFloatConst()), Loc);
       break;
     case OPC_Builtin_ATan:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
-      e = new VFloatLiteral(RAD2DEG(atan(Args[0]->GetFloatConst())), Loc);
+      e = new VFloatLiteral(RAD2DEGF(atanf(Args[0]->GetFloatConst())), Loc);
       break;
     case OPC_Builtin_Sqrt:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
-      e = new VFloatLiteral(sqrt(Args[0]->GetFloatConst()), Loc);
+      e = new VFloatLiteral(sqrtf(Args[0]->GetFloatConst()), Loc);
       break;
     case OPC_Builtin_ATan2:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Float, TYPE_Float})) return this;

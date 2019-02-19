@@ -54,12 +54,12 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
   double bestx = x, besty = y;
 
   for (int f = 0; f < sec->linecount; ++f) {
-    line_t *check = sec->lines[f];
-    vertex_t *v1 = check->v1;
-    vertex_t *v2 = check->v2;
+    const line_t *check = sec->lines[f];
+    const vertex_t *v1 = check->v1;
+    const vertex_t *v2 = check->v2;
     double a = v2->x-v1->x;
     double b = v2->y-v1->y;
-    double den = a*a+b*b;
+    const double den = a*a+b*b;
     double ix, iy, dist;
 
     if (fabs(den) <= 0.01) {
