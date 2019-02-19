@@ -141,7 +141,7 @@ static __attribute__((unused)) inline int ToPowerOf2 (int val) {
 static __attribute__((unused)) inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
-  while (angle < 0.0) angle += 360.0f;
+  while (angle < 0.0f) angle += 360.0f;
   while (angle >= 360.0f) angle -= 360.0f;
 #else
   angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
@@ -163,12 +163,38 @@ static __attribute__((unused)) inline float AngleMod180 (float angle) {
 }
 
 
+static __attribute__((unused)) inline double AngleModD (double angle) {
+#if 1
+  angle = fmod(angle, 360.0);
+  while (angle < 0.0) angle += 360.0;
+  while (angle >= 360.0) angle -= 360.0;
+#else
+  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
+#endif
+  return angle;
+}
+
+static __attribute__((unused)) inline double AngleMod180D (double angle) {
+#if 1
+  angle = fmod(angle, 360.0);
+  while (angle < -180.0) angle += 360.0;
+  while (angle >= 180.0) angle -= 360.0;
+#else
+  angle += 180;
+  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
+  angle -= 180;
+#endif
+  return angle;
+}
+
+
 static __attribute__((unused)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
 static __attribute__((unused)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
 static __attribute__((unused)) inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
 static __attribute__((unused)) inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
 static __attribute__((unused)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
 static __attribute__((unused)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
+static __attribute__((unused)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
