@@ -24,7 +24,27 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#define VAVOOM_CLIPPER_USE_FLOAT
+
+#ifdef VAVOOM_CLIPPER_USE_FLOAT
+# define  VVC_matan  matan
+# define  VVC_AngleMod  AngleMod
+# define  VVC_AngleMod180  AngleMod180
+#else
+# define  VVC_matan  matand
+# define  VVC_AngleMod  AngleModD
+# define  VVC_AngleMod180  AngleMod180D
+#endif
+
+
 class VViewClipper {
+public:
+#ifdef VAVOOM_CLIPPER_USE_FLOAT
+  typedef float VFloat;
+#else
+  typedef double VFloat;
+#endif
+
 private:
   struct VClipNode;
 
@@ -36,9 +56,9 @@ private:
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
-  void DoAddClipRange (float From, float To);
+  void DoAddClipRange (VFloat From, VFloat To);
 
-  bool DoIsRangeVisible (float From, float To) const;
+  bool DoIsRangeVisible (const VFloat From, const VFloat To) const;
 
 public:
   VViewClipper ();
@@ -47,15 +67,19 @@ public:
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
   void ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
                               const TVec &viewright, const TVec &viewup,
-                              float fovx, float fovy);
+                              const float fovx, const float fovy);
 
   void ClipToRanges (const VViewClipper &Range);
-  void AddClipRange (float From, float To);
+  void AddClipRange (const VFloat From, const VFloat To);
 
-  bool IsRangeVisible (float From, float To) const;
+  bool IsRangeVisible (const VFloat From, const VFloat To) const;
   bool ClipIsFull () const;
 
-  inline float PointToClipAngle (const TVec &Pt) const { float Ret = matan(Pt.y-Origin.y, Pt.x-Origin.x); if (Ret < 0.0f) Ret += 360.0f; return Ret; }
+  inline VFloat PointToClipAngle (const TVec &Pt) const {
+    VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
+    if (Ret < (VFloat)0) Ret += (VFloat)360;
+    return Ret;
+  }
 
   bool ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0) const;

@@ -29,8 +29,8 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VViewClipper::VClipNode {
-  float From;
-  float To;
+  VFloat From;
+  VFloat To;
   VClipNode *Prev;
   VClipNode *Next;
 };
@@ -458,7 +458,7 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
 //==========================================================================
 void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
                                           const TVec &viewright, const TVec &viewup,
-                                          float fovx, float fovy)
+                                          const float fovx, const float fovy)
 {
   check(!ClipHead);
 
@@ -472,25 +472,26 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
   Pts[2] = TVec(1, -fovx, fovy);
   Pts[3] = TVec(1, -fovx, -fovy);
   TVec clipforward = Normalise(TVec(viewforward.x, viewforward.y, 0.0f));
-  float d1 = 0;
-  float d2 = 0;
+  VFloat d1 = (VFloat)0;
+  VFloat d2 = (VFloat)0;
 
   for (int i = 0; i < 4; ++i) {
-    TransPts[i].x = Pts[i].y*viewright.x+Pts[i].z*viewup.x+Pts[i].x*viewforward.x;
-    TransPts[i].y = Pts[i].y*viewright.y+Pts[i].z*viewup.y+Pts[i].x*viewforward.y;
-    TransPts[i].z = Pts[i].y*viewright.z+Pts[i].z*viewup.z+Pts[i].x*viewforward.z;
+    TransPts[i].x = TVEC_SUM3(Pts[i].y*viewright.x, Pts[i].z*viewup.x, Pts[i].x*viewforward.x);
+    TransPts[i].y = TVEC_SUM3(Pts[i].y*viewright.y, Pts[i].z*viewup.y, Pts[i].x*viewforward.y);
+    TransPts[i].z = TVEC_SUM3(Pts[i].y*viewright.z, Pts[i].z*viewup.z, Pts[i].x*viewforward.z);
 
-    if (DotProduct(TransPts[i], clipforward) <= 0) return; // player can see behind
+    if (DotProduct(TransPts[i], clipforward) <= 0.0f) return; // player can see behind
 
-    float a = matan(TransPts[i].y, TransPts[i].x);
-    if (a < 0.0f) a += 360.0f;
+    VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
+    if (a < (VFloat)0) a += (VFloat)360;
+    VFloat d = VVC_AngleMod180(a-viewangles.yaw);
 
-    float d = AngleMod180(a-viewangles.yaw);
     if (d1 > d) d1 = d;
     if (d2 < d) d2 = d;
   }
-  float a1 = AngleMod(viewangles.yaw+d1);
-  float a2 = AngleMod(viewangles.yaw+d2);
+
+  VFloat a1 = VVC_AngleMod(viewangles.yaw+d1);
+  VFloat a2 = VVC_AngleMod(viewangles.yaw+d2);
 
   if (a1 > a2) {
     ClipHead = NewClipNode();
@@ -501,11 +502,11 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     ClipHead->Next = nullptr;
   } else {
     ClipHead = NewClipNode();
-    ClipHead->From = 0.0f;
+    ClipHead->From = 0;
     ClipHead->To = a1;
     ClipTail = NewClipNode();
     ClipTail->From = a2;
-    ClipTail->To = 360.0f;
+    ClipTail->To = (VFloat)360;
     ClipHead->Prev = nullptr;
     ClipHead->Next = ClipTail;
     ClipTail->Prev = ClipHead;
@@ -524,7 +525,7 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 
   if (!Range.ClipHead) {
     // no ranges, everything is clipped away
-    //DoAddClipRange(0.0f, 360.0f);
+    //DoAddClipRange((VFloat)0, (VFloat)360);
     // remove free clip nodes
     VClipNode *Node = FreeClipNodes;
     while (Node) {
@@ -543,16 +544,16 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
     // add new clip node
     ClipHead = NewClipNode();
     ClipTail = ClipHead;
-    ClipHead->From = 0.0f;
-    ClipHead->To = 360.0f;
+    ClipHead->From = (VFloat)0;
+    ClipHead->To = (VFloat)360;
     ClipHead->Prev = nullptr;
     ClipHead->Next = nullptr;
     return;
   }
 
   // add head and tail ranges
-  if (Range.ClipHead->From > 0.0f) DoAddClipRange(0.0f, Range.ClipHead->From);
-  if (Range.ClipTail->To < 360.0f) DoAddClipRange(Range.ClipTail->To, 360.0f);
+  if (Range.ClipHead->From > (VFloat)0) DoAddClipRange((VFloat)0, Range.ClipHead->From);
+  if (Range.ClipTail->To < (VFloat)360) DoAddClipRange(Range.ClipTail->To, (VFloat)360);
 
   // add middle ranges
   for (VClipNode *N = Range.ClipHead; N->Next; N = N->Next) DoAddClipRange(N->To, N->Next->From);
@@ -564,10 +565,10 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 //  VViewClipper::DoAddClipRange
 //
 //==========================================================================
-void VViewClipper::DoAddClipRange (float From, float To) {
-  if (From < 0.0f) From = 0.0f; else if (From >= 360.0f) From = 360.0f;
-  if (To < 0.0f) To = 0.0f; else if (To >= 360.0f) To = 360.0f;
-  check(From <= To || (From > To && To == 360.0f));
+void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
+  if (From < (VFloat)(VFloat)0) From = (VFloat)0; else if (From >= (VFloat)360) From = (VFloat)360;
+  if (To < (VFloat)0) To = (VFloat)0; else if (To >= (VFloat)360) To = (VFloat)360;
+  //check(From <= To || (From > To && To == (VFloat)360));
 
   if (!ClipHead) {
     ClipHead = NewClipNode();
@@ -630,10 +631,10 @@ void VViewClipper::DoAddClipRange (float From, float To) {
 //  VViewClipper::AddClipRange
 //
 //==========================================================================
-void VViewClipper::AddClipRange (float From, float To) {
+void VViewClipper::AddClipRange (const VFloat From, const VFloat To) {
   if (From > To) {
-    DoAddClipRange(0.0f, To);
-    DoAddClipRange(From, 360.0f);
+    DoAddClipRange((VFloat)0, To);
+    DoAddClipRange(From, (VFloat)360);
   } else {
     DoAddClipRange(From, To);
   }
@@ -645,7 +646,7 @@ void VViewClipper::AddClipRange (float From, float To) {
 //  VViewClipper::DoIsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::DoIsRangeVisible (float From, float To) const {
+bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
   for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
@@ -659,7 +660,7 @@ bool VViewClipper::DoIsRangeVisible (float From, float To) const {
 //
 //==========================================================================
 bool VViewClipper::ClipIsFull () const {
-  return (ClipHead && ClipHead->From == 0.0f && ClipHead->To == 360.0f);
+  return (ClipHead && ClipHead->From == (VFloat)0 && ClipHead->To == (VFloat)360);
 }
 
 
@@ -668,8 +669,8 @@ bool VViewClipper::ClipIsFull () const {
 //  VViewClipper::IsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::IsRangeVisible (float From, float To) const {
-  if (From > To) return (DoIsRangeVisible(0.0f, To) || DoIsRangeVisible(From, 360.0f));
+bool VViewClipper::IsRangeVisible (const VFloat From, const VFloat To) const {
+  if (From > To) return (DoIsRangeVisible((VFloat)0, To) || DoIsRangeVisible(From, (VFloat)360));
   return DoIsRangeVisible(From, To);
 }
 
