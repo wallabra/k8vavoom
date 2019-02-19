@@ -871,6 +871,123 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
 }
 
 
+//==========================================================================
+//
+//  VViewClipper::CheckAddClipSeg
+//
+//==========================================================================
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
+  const line_t *ldef = seg->linedef;
+  if (!ldef) return; // miniseg
+  if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
+
+  if (clip_skip_slopes_1side) {
+    // do not clip with slopes, if it has no midsec
+    if ((ldef->flags&ML_TWOSIDED) == 0) {
+      int fcpic, ffpic;
+      TPlane ffplane, fcplane;
+      CopyHeight(ldef->frontsector, &ffplane, &fcplane, &ffpic, &fcpic);
+      // only apply this to sectors without slopes
+      if (ffplane.normal.z != 1.0f || fcplane.normal.z != -1.0f) return;
+    }
+  }
+
+  const TVec &v1 = *seg->v1;
+  const TVec &v2 = *seg->v2;
+
+#if 0
+  // only apply this to sectors without slopes
+  // k8: originally, slopes were checked only for polyobjects; wtf?!
+  if (true /*seg->frontsector->floor.normal.z == 1.0f && seg->frontsector->ceiling.normal.z == -1.0f*/) {
+    TVec r1 = Origin-v1;
+    TVec r2 = Origin-v2;
+    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
+    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+
+    if (shadowslight) {
+      TVec rLight1 = CurrLightPos-v1;
+      TVec rLight2 = CurrLightPos-v2;
+      float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
+      float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
+
+      TVec rView1 = Origin-v1-CurrLightPos;
+      TVec rView2 = Origin-v2-CurrLightPos;
+      float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
+      float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
+
+      if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) return;
+      if (D1 > r_lights_radius && D2 > r_lights_radius) return;
+
+      if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
+          (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
+      {
+        return;
+      }
+    } else {
+      if (D1 <= 0.0f && D2 <= 0.0f) return;
+    }
+  }
+#endif
+#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
+  if (!CheckVerts(v1, v2, Origin)) return;
+#endif
+
+  if (Mirror) {
+    // clip seg with mirror plane
+    const float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
+    if (Dist1 <= 0.0f) {
+      const float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
+      if (Dist2 <= 0.0f) return;
+    }
+
+    //if (Dist1 <= 0.0f && Dist2 <= 0.0f) return;
+
+    // and clip it while we are here
+    // k8: really?
+    /*
+         if (Dist1 > 0.0f && Dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
+    else if (Dist2 > 0.0f && Dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
+    */
+  }
+
+  // for 2-sided line, determine if it can be skipped
+  if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
+    if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
+    if (!IsSegAClosedSomething(Level, seg)) return;
+  }
+
+  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipAddSubsectorSegs
+//
+//==========================================================================
+void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror) {
+  if (!clip_enabled) return;
+
+  bool doPoly = (sub->poly && clip_with_polyobj);
+
+  const seg_t *seg = &Level->Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
+    CheckAddClipSeg(seg, Mirror);
+    if (doPoly && !IsGoodSegForPoly(Level, seg)) doPoly = false;
+  }
+
+  if (doPoly) {
+    seg_t **polySeg = sub->poly->segs;
+    for (int count = sub->poly->numsegs; count--; ++polySeg) {
+      seg = *polySeg;
+      if (IsGoodSegForPoly(Level, seg)) {
+        CheckAddClipSeg(seg, nullptr);
+      }
+    }
+  }
+}
+
+
 #ifdef CLIENT
 //==========================================================================
 //
@@ -1036,120 +1153,3 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec
   }
 }
 #endif
-
-
-//==========================================================================
-//
-//  VViewClipper::CheckAddClipSeg
-//
-//==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
-  const line_t *ldef = seg->linedef;
-  if (!ldef) return; // miniseg
-  if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
-
-  if (clip_skip_slopes_1side) {
-    // do not clip with slopes, if it has no midsec
-    if ((ldef->flags&ML_TWOSIDED) == 0) {
-      int fcpic, ffpic;
-      TPlane ffplane, fcplane;
-      CopyHeight(ldef->frontsector, &ffplane, &fcplane, &ffpic, &fcpic);
-      // only apply this to sectors without slopes
-      if (ffplane.normal.z != 1.0f || fcplane.normal.z != -1.0f) return;
-    }
-  }
-
-  const TVec &v1 = *seg->v1;
-  const TVec &v2 = *seg->v2;
-
-#if 0
-  // only apply this to sectors without slopes
-  // k8: originally, slopes were checked only for polyobjects; wtf?!
-  if (true /*seg->frontsector->floor.normal.z == 1.0f && seg->frontsector->ceiling.normal.z == -1.0f*/) {
-    TVec r1 = Origin-v1;
-    TVec r2 = Origin-v2;
-    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-
-    if (shadowslight) {
-      TVec rLight1 = CurrLightPos-v1;
-      TVec rLight2 = CurrLightPos-v2;
-      float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
-      float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
-
-      TVec rView1 = Origin-v1-CurrLightPos;
-      TVec rView2 = Origin-v2-CurrLightPos;
-      float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
-      float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
-
-      if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) return;
-      if (D1 > r_lights_radius && D2 > r_lights_radius) return;
-
-      if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
-          (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
-      {
-        return;
-      }
-    } else {
-      if (D1 <= 0.0f && D2 <= 0.0f) return;
-    }
-  }
-#endif
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-  if (!CheckVerts(v1, v2, Origin)) return;
-#endif
-
-  if (Mirror) {
-    // clip seg with mirror plane
-    const float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
-    if (Dist1 <= 0.0f) {
-      const float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
-      if (Dist2 <= 0.0f) return;
-    }
-
-    //if (Dist1 <= 0.0f && Dist2 <= 0.0f) return;
-
-    // and clip it while we are here
-    // k8: really?
-    /*
-         if (Dist1 > 0.0f && Dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
-    else if (Dist2 > 0.0f && Dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
-    */
-  }
-
-  // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
-    if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
-    if (!IsSegAClosedSomething(Level, seg)) return;
-  }
-
-  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
-}
-
-
-//==========================================================================
-//
-//  VViewClipper::ClipAddSubsectorSegs
-//
-//==========================================================================
-void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror) {
-  if (!clip_enabled) return;
-
-  bool doPoly = (sub->poly && clip_with_polyobj);
-
-  const seg_t *seg = &Level->Segs[sub->firstline];
-  for (int count = sub->numlines; count--; ++seg) {
-    CheckAddClipSeg(seg, Mirror);
-    if (doPoly && !IsGoodSegForPoly(Level, seg)) doPoly = false;
-  }
-
-  if (doPoly) {
-    seg_t **polySeg = sub->poly->segs;
-    for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      seg = *polySeg;
-      if (IsGoodSegForPoly(Level, seg)) {
-        CheckAddClipSeg(seg, nullptr);
-      }
-    }
-  }
-}
