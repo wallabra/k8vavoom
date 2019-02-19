@@ -2687,7 +2687,7 @@ func_loop:
           case OPC_Builtin_Cos: sp[-1].f = mcos(sp[-1].f); break;
           case OPC_Builtin_Tan: sp[-1].f = mtan(sp[-1].f); break;
           case OPC_Builtin_ASin: sp[-1].f = masin(sp[-1].f); break;
-          case OPC_Builtin_ACos: sp[-1].f = acos(sp[-1].f); break;
+          case OPC_Builtin_ACos: sp[-1].f = macos(sp[-1].f); break;
           case OPC_Builtin_ATan: sp[-1].f = RAD2DEG(atan(sp[-1].f)); break;
           case OPC_Builtin_Sqrt: sp[-1].f = sqrtf(sp[-1].f); break;
           case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
