@@ -679,16 +679,6 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   clip_base.setupViewport(refdef.width, refdef.height, fov, PixelAspect);
   refdef.fovx = clip_base.fovx;
   refdef.fovy = clip_base.fovy;
-  /*
-  refdef.fovx = tan(DEG2RAD(fov)/2.0f);
-  refdef.fovy = refdef.fovx*refdef.height/refdef.width/PixelAspect;
-
-  clip_base[0] = Normalise(TVec(1, 1.0f/refdef.fovx, 0)); // left side clip
-  clip_base[1] = Normalise(TVec(1, -1.0f/refdef.fovx, 0)); // right side clip
-  clip_base[2] = Normalise(TVec(1, 0, -1.0f/refdef.fovy)); // top side clip
-  clip_base[3] = Normalise(TVec(1, 0, 1.0f/refdef.fovy)); // bottom side clip
-  */
-
   refdef.drawworld = true;
   unguard;
 }
@@ -845,16 +835,6 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   clip_base.setupViewport(rd->width, rd->height, FOV, PixelAspect);
   rd->fovx = clip_base.fovx;
   rd->fovy = clip_base.fovy;
-  /*
-  rd->fovx = tan(DEG2RAD(FOV)/2);
-  rd->fovy = rd->fovx*rd->height/rd->width/PixelAspect;
-
-  clip_base[0] = Normalise(TVec(1, 1.0f/rd->fovx, 0)); // left side clip
-  clip_base[1] = Normalise(TVec(1, -1.0f/rd->fovx, 0)); // right side clip
-  clip_base[2] = Normalise(TVec(1, 0, -1.0f/rd->fovy)); // top side clip
-  clip_base[3] = Normalise(TVec(1, 0, 1.0f/rd->fovy)); // bottom side clip
-  */
-
   rd->drawworld = true;
 
   ViewEnt = Camera;

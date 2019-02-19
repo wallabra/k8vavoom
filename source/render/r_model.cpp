@@ -1232,6 +1232,8 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
 //
 //  R_DrawModelFrame
 //
+//  used only in UI, for model selector
+//
 //==========================================================================
 void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   int Frame, int NextFrame,
@@ -1331,8 +1333,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   rd.y = 0;
   rd.width = ScreenWidth;
   rd.height = ScreenHeight;
-  rd.fovx = tan(DEG2RAD(90)/2.0f);
-  rd.fovy = rd.fovx*rd.height/rd.width/PixelAspect;
+  TClipBase::CalcFovXY(&rd.fovx, &rd.fovy, rd.width, rd.height, 90.0f, PixelAspect);
   rd.drawworld = false;
   rd.DrawCamera = false;
 
