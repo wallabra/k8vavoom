@@ -33,9 +33,9 @@
 //
 //==========================================================================
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
-  const double ay = DEG2RAD(angles.yaw);
-  const double ap = DEG2RAD(angles.pitch);
-  const double ar = DEG2RAD(angles.roll);
+  const double ay = DEG2RADD(angles.yaw);
+  const double ap = DEG2RADD(angles.pitch);
+  const double ar = DEG2RADD(angles.roll);
 
   const double sy = sin(ay);
   const double cy = cos(ay);
@@ -186,14 +186,14 @@ void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) {
 void PerpendicularVector (TVec &dst, const TVec &src) {
   int pos;
   int i;
-  float minelem = 1.0F;
+  float minelem = 1.0f;
   TVec tempvec;
 
   // find the smallest magnitude axially aligned vector
   for (pos = 0, i = 0; i < 3; ++i) {
-    if (fabs(src[i]) < minelem) {
+    if (fabsf(src[i]) < minelem) {
       pos = i;
-      minelem = fabs(src[i]);
+      minelem = fabsf(src[i]);
     }
   }
   tempvec[0] = tempvec[1] = tempvec[2] = 0.0f;
@@ -247,7 +247,7 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
   */
 
   // create clipbase
-  const float afovx = tan(DEG2RAD(afov)/2.0f);
+  const float afovx = tanf(DEG2RADF(afov)/2.0f);
   const float afovy = afovx*aheight/awidth/apixelAspect;
   setupFromFOVs(afovx, afovy);
 }
@@ -278,9 +278,9 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   for (unsigned i = 0; i < 4; ++i) {
     const TVec &v = clipbase.clipbase[i];
     const TVec v2(
-      v.y*vright.x+v.z*vup.x+v.x*vforward.x,
-      v.y*vright.y+v.z*vup.y+v.x*vforward.y,
-      v.y*vright.z+v.z*vup.z+v.x*vforward.z);
+      TVEC_SUM3(v.y*vright.x, v.z*vup.x, v.x*vforward.x),
+      TVEC_SUM3(v.y*vright.y, v.z*vup.y, v.x*vforward.y),
+      TVEC_SUM3(v.y*vright.z, v.z*vup.z, v.x*vforward.z));
     planes[i].SetPointDir3D(aorg, v2);
     planes[i].clipflag = 1U<<i;
   }

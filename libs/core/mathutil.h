@@ -107,8 +107,11 @@ enum {
 //#define _RAD2DEG  (57.2957795130823209)
 #define _RAD2DEG  (0x1.ca5dc1a63c1f8p+5)
 
-#define DEG2RAD(a)  ((a)*_DEG2RAD)
-#define RAD2DEG(a)  ((a)*_RAD2DEG)
+#define DEG2RADD(a)  ((double)(a)*(double)_DEG2RAD)
+#define RAD2DEGD(a)  ((double)(a)*(double)_RAD2DEG)
+
+#define DEG2RADF(a)  ((float)(a)*(float)_DEG2RAD)
+#define RAD2DEGF(a)  ((float)(a)*(float)_RAD2DEG)
 
 
 //int mlog2 (int val);
@@ -160,12 +163,12 @@ static __attribute__((unused)) inline float AngleMod180 (float angle) {
 }
 
 
-static __attribute__((unused)) inline float msin (const float angle) { return sinf(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float mcos (const float angle) { return cosf(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float mtan (const float angle) { return tanf(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float masin (const float x) { return RAD2DEG(asinf(x)); }
-static __attribute__((unused)) inline float macos (const float x) { return RAD2DEG(acosf(x)); }
-static __attribute__((unused)) inline float matan (const float y, const float x) { return RAD2DEG(atan2f(y, x)); }
+static __attribute__((unused)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
+static __attribute__((unused)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
+static __attribute__((unused)) inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
+static __attribute__((unused)) inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
+static __attribute__((unused)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
+static __attribute__((unused)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
