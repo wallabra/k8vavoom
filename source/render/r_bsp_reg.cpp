@@ -44,8 +44,6 @@ extern int light_reset_surface_cache; // in r_light_reg.cpp
 //
 //==========================================================================
 void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
-  guard(VRenderLevel::QueueWorldSurface);
-
   if (surf->lmapflags&Lightmap_Required) {
     surf->lmapflags &= ~Lightmap_Required;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
@@ -62,7 +60,6 @@ void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
   }
 
   QueueSimpleSurf(seg, surf);
-  unguard;
 }
 
 
@@ -80,8 +77,6 @@ extern vuint32 gf_dynlights_traced;
 
 
 void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  guard(VRenderLevel::RenderWorld);
-
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 
@@ -110,6 +105,4 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   }
 
   if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
-
-  unguard;
 }

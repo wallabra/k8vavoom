@@ -71,10 +71,9 @@ static int oldPortalDepth = -666;
 //
 //==========================================================================
 void VRenderLevelShared::SetUpFrustumIndexes () {
-  guard(VRenderLevelShared::SetUpFrustumIndexes);
-  for (int i = 0; i < 4; ++i) {
-    int *pindex = FrustumIndexes[i];
-    for (int j = 0; j < 3; ++j) {
+  for (unsigned i = 0; i < 4; ++i) {
+    unsigned *pindex = FrustumIndexes[i];
+    for (unsigned j = 0; j < 3; ++j) {
       if (view_clipplanes[i].normal[j] < 0) {
         pindex[j] = j;
         pindex[j+3] = j+3;
@@ -84,7 +83,6 @@ void VRenderLevelShared::SetUpFrustumIndexes () {
       }
     }
   }
-  unguard;
 }
 
 
@@ -94,7 +92,6 @@ void VRenderLevelShared::SetUpFrustumIndexes () {
 //
 //==========================================================================
 void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
-  guard(VRenderLevelShared::QueueSimpleSurf);
   surf->dcseg = seg;
   if (SimpleSurfsTail) {
     SimpleSurfsTail->DrawNext = surf;
@@ -104,7 +101,6 @@ void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
     SimpleSurfsTail = surf;
   }
   surf->DrawNext = nullptr;
-  unguard;
 }
 
 
@@ -114,7 +110,6 @@ void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
-  guard(VRenderLevelShared::QueueSkyPortal);
   surf->dcseg = nullptr;
   if (SkyPortalsTail) {
     SkyPortalsTail->DrawNext = surf;
@@ -124,7 +119,6 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
     SkyPortalsTail = surf;
   }
   surf->DrawNext = nullptr;
-  unguard;
 }
 
 
@@ -134,7 +128,6 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
-  guard(VRenderLevelShared::QueueHorizonPortal);
   surf->dcseg = nullptr;
   if (HorizonPortalsTail) {
     HorizonPortalsTail->DrawNext = surf;
@@ -144,7 +137,6 @@ void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
     HorizonPortalsTail = surf;
   }
   surf->DrawNext = nullptr;
-  unguard;
 }
 
 
@@ -157,7 +149,6 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
   VEntity *SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
   bool CheckSkyBoxAlways)
 {
-  guard(VRenderLevelShared::DrawSurfaces);
   surface_t *surfs = InSurfs;
   if (!surfs) return;
 
@@ -296,7 +287,6 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
     }
     surfs = surfs->next;
   } while (surfs);
-  unguard;
 }
 
 
@@ -306,7 +296,6 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
 //
 //==========================================================================
 void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
-  guard(VRenderLevelShared::RenderHorizon);
   seg_t *Seg = dseg->seg;
 
   if (!dseg->HorizonTop) {
@@ -402,7 +391,6 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -412,9 +400,7 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
-  guard(VRenderLevelShared::RenderMirror);
   seg_t *Seg = dseg->seg;
-
   if (MirrorLevel < r_maxmirrors && r_allow_mirrors) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
@@ -438,7 +424,6 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
       r_region->ceiling->SkyBox, -1, Seg->sidedef->Light,
       !!(Seg->sidedef->Flags & SDF_ABSLIGHT), false);
   }
-  unguard;
 }
 
 
@@ -450,7 +435,6 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
-  guard(VRenderLevelShared::RenderLine);
   seg_t *line = dseg->seg;
 
   if (!line->linedef) return; // miniseg
@@ -462,6 +446,9 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     if (view_clipplanes[4].PointOnSide(*line->v1) && view_clipplanes[4].PointOnSide(*line->v2)) return; // behind mirror
   }
 
+/*
+    k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
   if (line->backsector) {
     // just apply this to sectors without slopes
     if (line->frontsector->floor.normal.z == 1.0f && line->backsector->floor.normal.z == 1.0f &&
@@ -496,6 +483,8 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
   }
+*/
+  if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(*line->v2), ViewClip.PointToClipAngle(*line->v1))) return;
 
   line_t *linedef = line->linedef;
   side_t *sidedef = line->sidedef;
@@ -537,7 +526,6 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
         -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
   }
-  unguard;
 }
 
 
@@ -547,7 +535,6 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
-  guard(VRenderLevelShared::RenderSecSurface);
   sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic) return;
@@ -597,7 +584,6 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
   }
 
   DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.LightSourceSector, 0, false, true);
-  unguard;
 }
 
 
@@ -610,13 +596,7 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
 //
 //==========================================================================
 void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
-  guard(VRenderLevelShared::RenderSubRegion);
-  int count;
-  int polyCount;
-  seg_t **polySeg;
-  float d;
-
-  d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
+  const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
   if (region->next && d <= 0.0f) {
     if (!ViewClip.ClipCheckRegion(region->next, r_sub)) return;
     RenderSubRegion(region->next);
@@ -629,15 +609,15 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
 
   if (r_sub->poly) {
     // render the polyobj in the subsector first
-    polyCount = r_sub->poly->numsegs;
-    polySeg = r_sub->poly->segs;
+    int polyCount = r_sub->poly->numsegs;
+    seg_t **polySeg = r_sub->poly->segs;
     while (polyCount--) {
       RenderLine((*polySeg)->drawsegs);
       ++polySeg;
     }
   }
 
-  count = r_sub->numlines;
+  int count = r_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
     RenderLine(ds);
@@ -651,7 +631,6 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
     if (!ViewClip.ClipCheckRegion(region->next, r_sub)) return;
     RenderSubRegion(region->next);
   }
-  unguard;
 }
 
 
@@ -661,7 +640,6 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderSubsector (int num) {
-  guard(VRenderLevelShared::RenderSubsector);
   subsector_t *Sub = &Level->Subsectors[num];
   r_sub = Sub;
 
@@ -694,7 +672,6 @@ void VRenderLevelShared::RenderSubsector (int num) {
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
   ViewClip.ClipAddSubsectorSegs(Sub, (MirrorClipSegs ? &view_clipplanes[4] : nullptr));
-  unguard;
 }
 
 
@@ -707,7 +684,6 @@ void VRenderLevelShared::RenderSubsector (int num) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags) {
-  guard(VRenderLevelShared::RenderBSPNode);
   if (ViewClip.ClipIsFull()) return;
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
@@ -717,7 +693,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       if (view_clipplanes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
       // generate accept and reject points
-      int *pindex = FrustumIndexes[i];
+      const unsigned *pindex = FrustumIndexes[i];
 
       TVec rejectpt;
 
@@ -765,7 +741,6 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   }
 
   RenderSubsector(bspnum&(~NF_SUBSECTOR));
-  unguard;
 }
 
 
@@ -775,7 +750,6 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 //
 //==========================================================================
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
-  guard(VRenderLevelShared::RenderBspWorld);
   static const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   // if we hit a cache overflow, render everything again, to avoid partial frames
@@ -797,7 +771,6 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 31 : 15));
 
     if (PortalLevel == 0) {
-      guard(VRenderLevelShared::RenderBspWorld::Best sky);
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
       VPortal *BestSky = nullptr;
       int BestSkyIndex = -1;
@@ -815,9 +788,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
         Portals.RemoveIndex(BestSkyIndex);
         PortalLevel = 0;
       }
-      unguard;
 
-      guard(VRenderLevelShared::RenderBspWorld::World surfaces);
       //fprintf(stderr, "WSL=%d\n", WorldSurfs.Num());
       const int wslen = WorldSurfs.Num();
       for (int i = 0; i < wslen; ++i) {
@@ -839,10 +810,8 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       }
       //WorldSurfs.Clear();
       WorldSurfs.resetNoDtor();
-      unguard;
     }
   } while (light_reset_surface_cache);
-  unguard;
 }
 
 
@@ -852,8 +821,6 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
-  guard(VRenderLevelShared::RenderPortals);
-
   if (PortalLevel == 0) {
     if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != r_max_portal_depth ||
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
@@ -900,5 +867,4 @@ void VRenderLevelShared::RenderPortals () {
 
   --PortalLevel;
   if (PortalLevel == 0) Portals.Clear();
-  unguard;
 }

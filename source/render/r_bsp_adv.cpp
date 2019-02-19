@@ -38,9 +38,7 @@
 //
 //==========================================================================
 void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
-  guard(VAdvancedRenderLevel::QueueWorldSurface);
   QueueSimpleSurf(seg, surf);
-  unguard;
 }
 
 
@@ -50,9 +48,7 @@ void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  guard(VAdvancedRenderLevel::RenderWorld);
   RenderBspWorld(rd, Range);
   Drawer->DrawWorldAmbientPass();
   RenderPortals();
-  unguard;
 }

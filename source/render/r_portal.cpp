@@ -428,8 +428,8 @@ void VMirrorPortal::DrawContents () {
   //view_clipplanes[4].next = nullptr;
   view_clipplanes[4].clipflag = 0x10U;
 
-  int *pindex = RLev->FrustumIndexes[4];
-  for (int j = 0; j < 3; ++j) {
+  unsigned *pindex = RLev->FrustumIndexes[4];
+  for (unsigned j = 0; j < 3; ++j) {
     if (view_clipplanes[4].normal[j] < 0) {
       pindex[j] = j;
       pindex[j+3] = j+3;

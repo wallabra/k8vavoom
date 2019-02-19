@@ -305,7 +305,7 @@ protected:
 
   VEntity *ViewEnt;
 
-  int FrustumIndexes[5][6];
+  unsigned FrustumIndexes[5][6];
   int MirrorLevel;
   int PortalLevel;
   int VisSize;
