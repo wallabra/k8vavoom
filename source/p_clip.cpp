@@ -895,39 +895,6 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
 
-#if 0
-  // only apply this to sectors without slopes
-  // k8: originally, slopes were checked only for polyobjects; wtf?!
-  if (true /*seg->frontsector->floor.normal.z == 1.0f && seg->frontsector->ceiling.normal.z == -1.0f*/) {
-    TVec r1 = Origin-v1;
-    TVec r2 = Origin-v2;
-    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-
-    if (shadowslight) {
-      TVec rLight1 = CurrLightPos-v1;
-      TVec rLight2 = CurrLightPos-v2;
-      float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
-      float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
-
-      TVec rView1 = Origin-v1-CurrLightPos;
-      TVec rView2 = Origin-v2-CurrLightPos;
-      float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
-      float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
-
-      if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) return;
-      if (D1 > r_lights_radius && D2 > r_lights_radius) return;
-
-      if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
-          (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
-      {
-        return;
-      }
-    } else {
-      if (D1 <= 0.0f && D2 <= 0.0f) return;
-    }
-  }
-#endif
 #ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
   if (!CheckVerts(v1, v2, Origin)) return;
 #endif
