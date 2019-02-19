@@ -1901,7 +1901,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FloatToBool)
-        sp[-1].i = (sp[-1].f == 0 ? 0 : 1);
+        sp[-1].i = (sp[-1].f != 0 && isFiniteF(sp[-1].f));
         ++ip;
         PR_VM_BREAK;
 
