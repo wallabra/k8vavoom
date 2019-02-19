@@ -136,18 +136,18 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   // copy sample data
   DataSize /= BlockAlign;
   if (WavBits == 8) {
-    byte *pSrc = (byte *)WavData;
-    byte *pDst = (byte *)Sfx.data;
+    vuint8 *pSrc = (vuint8 *)WavData;
+    vuint8 *pDst = (vuint8 *)Sfx.data;
     for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
       // mix it
       int v = 0;
       for (int f = 0; f < WavChannels; ++f) v += (int)pSrc[f];
       v /= WavChannels;
       if (v < -128) v = -128; else if (v > 127) v = 127;
-      *pDst++ = (byte)v;
+      *pDst++ = (vuint8)v;
     }
   } else {
-    byte *pSrc = (byte *)WavData;
+    vuint8 *pSrc = (vuint8 *)WavData;
     short *pDst = (short *)Sfx.data;
     for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
       // mix it
@@ -208,14 +208,14 @@ VWavAudioCodec::~VWavAudioCodec () {
 //==========================================================================
 int VWavAudioCodec::Decode (short *Data, int NumSamples) {
   int CurSample = 0;
-  byte Buf[1024];
+  vuint8 Buf[1024];
   while (SamplesLeft && CurSample < NumSamples) {
     int ReadSamples = 1024/BlockAlign;
     if (ReadSamples > NumSamples-CurSample) ReadSamples = NumSamples-CurSample;
     if (ReadSamples > SamplesLeft) ReadSamples = SamplesLeft;
     Strm->Serialise(Buf, ReadSamples*BlockAlign);
     for (int i = 0; i < 2; ++i) {
-      byte *pSrc = Buf;
+      vuint8 *pSrc = Buf;
       if (i && WavChannels > 1) pSrc += WavBits/8;
       short *pDst = Data+CurSample*2+i;
       if (WavBits == 8) {
