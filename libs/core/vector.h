@@ -47,6 +47,8 @@ public:
   inline float &operator [] (int i) { return (&x)[i]; }
 
   inline bool isValid () const { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
+  inline bool isZero () const { return (x == 0.0f && y == 0.0f && z == 0.0f); }
+  inline bool isZero2D () const { return (x == 0.0f && y == 0.0f); }
 
   inline TVec &operator += (const TVec &v) { x += v.x; y += v.y; z += v.z; return *this; }
   inline TVec &operator -= (const TVec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
@@ -66,6 +68,12 @@ public:
   inline TVec operator + (void) const { return *this; }
   inline TVec operator - (void) const { return TVec(-x, -y, -z); }
 
+  //inline float invlength () const { return 1.0f/sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
+  //inline float invlength2D () const { return 1.0f/sqrtf(TVEC_SUM2(x*x, y*y)); }
+
+  inline float invlength () const { return fastInvSqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
+  inline float invlength2D () const { return fastInvSqrtf(TVEC_SUM2(x*x, y*y)); }
+
   inline float Length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
   inline float length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
 
@@ -78,15 +86,16 @@ public:
   inline float Length2DSquared () const { return TVEC_SUM2(x*x, y*y); }
   inline float length2DSquared () const { return TVEC_SUM2(x*x, y*y); }
 
-  inline void normaliseInPlace () { const float invlen = 1.0f/length(); x *= invlen; y *= invlen; z *= invlen; }
+  inline void normaliseInPlace () { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
+  inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; }
 
-  inline TVec Normalised () const { const float invlen = 1.0f/length(); return TVec(x*invlen, y*invlen, z*invlen); }
-  inline TVec normalised () const { const float invlen = 1.0f/length(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline TVec Normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline TVec normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
 
-  inline TVec NormalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
-  inline TVec normalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
+  //inline TVec NormalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
+  //inline TVec normalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
 
-  inline TVec normalised2D () const { const float invlen = 1.0f/length2D(); return TVec(x*invlen, y*invlen, z); }
+  inline TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
 
   inline float dot (const TVec &v2) const { return TVEC_SUM3(x*v2.x, y*v2.y, z*v2.z); }
   inline float dot2D (const TVec &v2) const { return TVEC_SUM2(x*v2.x, y*v2.y); }
@@ -99,9 +108,9 @@ public:
 
 class TAVec {
 public:
-  float pitch;
-  float yaw;
-  float roll;
+  float pitch; // up/down
+  float yaw; // left/right
+  float roll; // around screen center
 
   TAVec () {}
   //nope;TAVec () : pitch(0.0f), yaw(0.0f), roll(0.0f) {}
@@ -125,36 +134,36 @@ static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) {
 static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
 static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
 
-static __attribute__((unused)) inline float Length (const TVec &v) { return sqrtf(TVEC_SUM3(v.x*v.x, v.y*v.y, v.z*v.z)); }
-static __attribute__((unused)) inline float length (const TVec &v) { return sqrtf(TVEC_SUM3(v.x*v.x, v.y*v.y, v.z*v.z)); }
-static __attribute__((unused)) inline float Length2D (const TVec &v) { return sqrtf(TVEC_SUM2(v.x*v.x, v.y*v.y)); }
-static __attribute__((unused)) inline float length2D (const TVec &v) { return sqrtf(TVEC_SUM2(v.x*v.x, v.y*v.y)); }
+static __attribute__((unused)) inline float Length (const TVec &v) { return v.length(); }
+static __attribute__((unused)) inline float length (const TVec &v) { return v.length(); }
+static __attribute__((unused)) inline float Length2D (const TVec &v) { return v.length2D(); }
+static __attribute__((unused)) inline float length2D (const TVec &v) { return v.length2D(); }
 
-static __attribute__((unused)) inline float LengthSquared (const TVec &v) { return TVEC_SUM3(v.x*v.x, v.y*v.y, v.z*v.z); }
-static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return TVEC_SUM3(v.x*v.x, v.y*v.y, v.z*v.z); }
-static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return TVEC_SUM2(v.x*v.x, v.y*v.y); }
-static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return TVEC_SUM2(v.x*v.x, v.y*v.y); }
+static __attribute__((unused)) inline float LengthSquared (const TVec &v) { return v.lengthSquared(); }
+static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return v.lengthSquared(); }
+static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return v.length2DSquared(); }
+static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return v.length2DSquared(); }
 
-static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v/v.Length(); }
-static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v/v.Length(); }
+static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v.normalised(); }
+static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v.normalised(); }
 
-static __attribute__((unused)) inline TVec NormaliseSafe (const TVec &v) { const float invlen = 1.0f/v.length(); return (isFiniteF(invlen) ? v*invlen : TVec(0, 0, 0)); }
-static __attribute__((unused)) inline TVec normaliseSafe (const TVec &v) { const float invlen = 1.0f/v.length(); return (isFiniteF(invlen) ? v*invlen : TVec(0, 0, 0)); }
+//static __attribute__((unused)) inline TVec NormaliseSafe (const TVec &v) { return v.normalisedSafe(); }
+//static __attribute__((unused)) inline TVec normaliseSafe (const TVec &v) { return v.normalisedSafe(); }
 
-static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { const float invlen = 1.0f/v.length2D(); return TVec(v.x*invlen, v.y*invlen, v.z); }
+static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { return v.normalised2D(); }
 
-static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return TVEC_SUM3(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z); }
-static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return TVEC_SUM3(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z); }
+static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
+static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
 
-static __attribute__((unused)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return TVEC_SUM2(v1.x*v2.x, v1.y*v2.y); }
-static __attribute__((unused)) inline float dot2D (const TVec &v1, const TVec &v2) { return TVEC_SUM2(v1.x*v2.x, v1.y*v2.y); }
+static __attribute__((unused)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
+static __attribute__((unused)) inline float dot2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
 
-static __attribute__((unused)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return TVec(TVEC_SUM2(v1.y*v2.z, -(v1.z*v2.y)), TVEC_SUM2(v1.z*v2.x, -(v1.x*v2.z)), TVEC_SUM2(v1.x*v2.y, -(v1.y*v2.x))); }
-static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2) { return TVec(TVEC_SUM2(v1.y*v2.z, -(v1.z*v2.y)), TVEC_SUM2(v1.z*v2.x, -(v1.x*v2.z)), TVEC_SUM2(v1.x*v2.y, -(v1.y*v2.x))); }
+static __attribute__((unused)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
+static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
 
 // returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
-static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return TVEC_SUM2((v1.x*v2.y), -(v1.y*v2.x)); }
-static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return TVEC_SUM2((v1.x*v2.y), -(v1.y*v2.x)); }
+static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
+static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
 
 static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
 
@@ -224,15 +233,13 @@ public:
 
   // initialises "full" plane from point and direction
   inline void SetPointDir3DSafe (const TVec &point, const TVec &dir) {
-    if (!isFiniteF(dir.x) || !isFiniteF(dir.y) || !isFiniteF(dir.z) ||
-        !isFiniteF(point.x) || !isFiniteF(point.y) || !isFiniteF(point.z))
-    {
+    if (!dir.isValid() || !point.isValid() || dir.isZero()) {
       //k8: what to do here?!
       normal = TVec(0, 0, 1);
       dist = 1;
     } else {
-      normal = dir.normalisedSafe();
-      if (normal.x || normal.y || normal.z) {
+      normal = dir.normalised();
+      if (normal.isValid() && !normal.isZero()) {
         dist = DotProduct(point, normal);
       } else {
         //k8: what to do here?!
@@ -409,5 +416,13 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal);
+// returns `false` on error (and zero `dst`)
+static __attribute__((unused)) inline bool ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) {
+  const float inv_denom = 1.0f/DotProduct(normal, normal);
+  if (!isFiniteF(inv_denom)) { dst = TVec(0, 0, 0); return false; } //k8: what to do here?
+  const float d = DotProduct(normal, p)*inv_denom;
+  dst = p-d*(normal*inv_denom);
+  return true;
+}
+
 void PerpendicularVector (TVec &dst, const TVec &src); // assumes "src" is normalised

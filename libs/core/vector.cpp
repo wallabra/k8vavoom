@@ -89,6 +89,7 @@ void AngleVector (const TAVec &angles, TVec &forward) {
 //
 //==========================================================================
 void VectorAngles (const TVec &vec, TAVec &angles) {
+#if 0
   const double fx = vec.x;
   const double fy = vec.y;
 #ifdef USE_NEUMAIER_KAHAN
@@ -96,7 +97,14 @@ void VectorAngles (const TVec &vec, TAVec &angles) {
 #else /* USE_NEUMAIER_KAHAN */
   const double len2d = sqrt(fx*fx+fy*fy);
 #endif /* USE_NEUMAIER_KAHAN */
-  if (fabs(len2d) < 0.00001) {
+  if (fabs(len2d) < 0.00001)
+#else
+  const float fx = vec.x;
+  const float fy = vec.y;
+  const float len2d = sqrtf(TVEC_SUM2(fx*fx, fy*fy));
+  if (fabsf(len2d) < 0.0001f)
+#endif
+  {
     angles.pitch = (vec.z > 0 ? 90 : 270);
     angles.yaw = 0;
   } else {
@@ -126,6 +134,7 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
     return;
   }
   */
+#if 0
   const double fx = forward.x;
   const double fy = forward.y;
 #ifdef USE_NEUMAIER_KAHAN
@@ -133,7 +142,14 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 #else /* USE_NEUMAIER_KAHAN */
   const double len2d = sqrt(fx*fx+fy*fy);
 #endif /* USE_NEUMAIER_KAHAN */
-  if (fabs(len2d) < 0.00001) {
+  if (fabs(len2d) < 0.00001)
+#else
+  const float fx = forward.x;
+  const float fy = forward.y;
+  const float len2d = sqrtf(TVEC_SUM2(fx*fx, fy*fy));
+  if (fabsf(len2d) < 0.0001f)
+#endif
+  {
     angles.yaw = 0;
     if (forward.z > 0) {
       angles.pitch = 90;
@@ -143,9 +159,9 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
       angles.roll = matan(-up.y, up.x);
     }
   } else {
-    angles.pitch = matan(-forward.z, len2d);
-    angles.yaw = matan(forward.y, forward.x);
-    angles.roll = matan(-right.z/len2d, up.z/len2d);
+    angles.pitch = matan(-forward.z, len2d); // up/down
+    angles.yaw = matan(forward.y, forward.x); // left/right
+    angles.roll = (right.z || up.z ? matan(-right.z/len2d, up.z/len2d) : 0);
   }
 }
 
@@ -160,19 +176,6 @@ TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle
   VRotMatrix M(Axis, Angle);
   return Vector*M;
   unguard;
-}
-
-
-//==========================================================================
-//
-//  ProjectPointOnPlane
-//
-//==========================================================================
-void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) {
-  const float inv_denom = 1.0f/DotProduct(normal, normal);
-  if (!isFiniteF(inv_denom)) { dst = TVec(0, 0, 0); return; } //k8: what to do here?
-  const float d = DotProduct(normal, p)*inv_denom;
-  dst = p-d*(normal*inv_denom);
 }
 
 
@@ -200,10 +203,11 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
   tempvec[pos] = 1.0f;
 
   // project the point onto the plane defined by src
-  ProjectPointOnPlane(dst, tempvec, src);
-
-  // normalise the result
-  dst = NormaliseSafe(dst);
+  if (ProjectPointOnPlane(dst, tempvec, src)) {
+    // normalise the result
+    //dst = NormaliseSafe(dst);
+    dst.normaliseInPlace();
+  }
 }
 
 

@@ -75,6 +75,26 @@ static __attribute__((unused)) inline float smoothstepPerlin (const float edge0,
 }
 
 
+extern "C" {
+//k8: this is UB in shitplusplus, but i really can't care less
+static __attribute__((unused)) inline float fastInvSqrtf (const float n) {
+  union { float f; vuint32 i; } ufi;
+  const float ndiv2 = n*0.5f;
+  ufi.f = n;
+  //ufi.i = 0x5f3759dfu-(ufi.i>>1);
+  // initial guess
+  ufi.i = 0x5f375a86u-(ufi.i>>1); // Chris Lomont says that this is more accurate constant
+  // one step of newton algorithm; can be repeated to increase accuracy
+  ufi.f = ufi.f*(1.5f-(ndiv2*ufi.f*ufi.f));
+#if 0 /* k8: meh, i don't care; ~0.0175 as error margin is ok for us */
+  // perform one more step; it doesn't really takes much time, but gives alot better accuracy
+  ufi.f = ufi.f*(1.5f-(ndiv2*ufi.f*ufi.f));
+#endif
+  return ufi.f;
+}
+}
+
+
 #undef MIN
 #undef MAX
 #undef MID
