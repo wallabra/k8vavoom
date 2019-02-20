@@ -113,7 +113,7 @@ private:
   Bytef ReadBuffer[UNZ_BUFSIZE]; // internal buffer for compressed data
   z_stream stream; // zlib stream structure for inflate
   lzma_stream lzmastream;
-  lzma_options_lzma lzmaopts;
+  lzma_options_lzma *lzmaopts;
   lzma_filter filters[2];
   bool usezlib;
 
@@ -506,6 +506,7 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
   , fname(afname)
   , Info(aInfo)
   , Error(InError)
+  , lzmaopts(nullptr)
   , wholeBuf(nullptr)
   , wholeSize(-2)
   , currpos(0)
@@ -638,6 +639,8 @@ bool VZipFileReader::Close () {
     stream_initialised = false;
   }
 
+  if (lzmaopts) { free(lzmaopts); lzmaopts = nullptr; }
+
   return !bError;
 }
 
@@ -712,9 +715,11 @@ bool VZipFileReader::LzmaRestart () {
   fprintf(stderr, "LZMA: %u bytes in header, pksize=%d, unpksize=%d\n", (unsigned)(FileStream->Tell()-pos_in_zipfile), (int)Info.packedsize, (int)Info.filesize);
 #endif
 
-  lzma_lzma_preset(&lzmaopts, 9|LZMA_PRESET_EXTREME);
+  //lzma_lzma_preset(&lzmaopts, 9|LZMA_PRESET_EXTREME);
+  if (lzmaopts) { free(lzmaopts); lzmaopts = nullptr; }
   filters[0].id = LZMA_FILTER_LZMA1;
-  filters[0].options = &lzmaopts;
+  //filters[0].options = &lzmaopts;
+  filters[0].options = nullptr;
   filters[1].id = LZMA_VLI_UNKNOWN;
 
   vuint32 prpsize;
@@ -730,10 +735,12 @@ bool VZipFileReader::LzmaRestart () {
   }
 
   if (lzma_properties_decode(&filters[0], nullptr, lzmaprhdr, prpsize) != LZMA_OK) {
+    lzmaopts = (lzma_options_lzma *)filters[0].options;
     bError = true;
     Error->Logf("Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
+  lzmaopts = (lzma_options_lzma *)filters[0].options;
 
   if (lzma_raw_decoder(&lzmastream, &filters[0]) != LZMA_OK) {
     bError = true;
