@@ -799,15 +799,15 @@ void VRenderLevelShared::UpdateTextureOffset (segpart_t *sp, float TextureOffset
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
-void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
+void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
   segpart_t *sp;
   TVec wv[4];
 
   if (!seg->linedef) return; // miniseg
 
-  if (ShouldClip) {
-/*
+  if (true /*ShouldClip*/) {
+    /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
     // clip sectors that are behind rendered segs
@@ -823,7 +823,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
     else if (D2 > 0.0f && D1 < 0.0f) v1 += (v1-v2)*D2/(D2-D1);
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
-*/
+    */
     if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
   }
 
@@ -1408,7 +1408,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //  VRenderLevelShared::UpdateSubRegion
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSubRegion (subregion_t *region, bool ClipSegs) {
+void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/) {
   r_floor = region->floorplane;
   r_ceiling = region->ceilplane;
   if (r_surf_sub->sector->fakefloors) {
@@ -1419,7 +1419,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region, bool ClipSegs) {
   int count = r_surf_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    UpdateDrawSeg(ds, ClipSegs);
+    UpdateDrawSeg(ds/*, ClipSegs*/);
     ++ds;
   }
 
@@ -1431,16 +1431,16 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region, bool ClipSegs) {
     int polyCount = r_surf_sub->poly->numsegs;
     seg_t **polySeg = r_surf_sub->poly->segs;
     while (polyCount--) {
-      UpdateDrawSeg((*polySeg)->drawsegs, ClipSegs);
+      UpdateDrawSeg((*polySeg)->drawsegs/*, ClipSegs*/);
       ++polySeg;
     }
   }
 
   if (region->next) {
-    if (ClipSegs) {
+    if (true /*ClipSegs*/) {
       if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub)) return;
     }
-    UpdateSubRegion(region->next, ClipSegs);
+    UpdateSubRegion(region->next/*, ClipSegs*/);
   }
 }
 

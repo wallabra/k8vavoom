@@ -383,6 +383,10 @@ protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
 
+  void UpdateRowOffset (segpart_t *sp, float RowOffset);
+  void UpdateTextureOffset (segpart_t *sp, float TextureOffset);
+  void UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/);
+  void UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/);
   void UpdateSubsector (int num, float *bbox);
   void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
@@ -448,11 +452,7 @@ protected:
   surface_t *CreateWSurfs (TVec*, texinfo_t*, seg_t*, subsector_t*);
   int CountSegParts (seg_t*);
   void CreateSegParts (drawseg_t*, seg_t*);
-  void UpdateRowOffset (segpart_t*, float);
-  void UpdateTextureOffset (segpart_t*, float);
-  void UpdateDrawSeg (drawseg_t*, bool);
   void CreateWorldSurfaces ();
-  void UpdateSubRegion (subregion_t*, bool);
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);
   void UpdateDeepWater (sector_t*);

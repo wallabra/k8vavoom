@@ -53,7 +53,7 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
     bbox[5] = r_surf_sub->sector->ceiling.maxz;
   }
 
-  UpdateSubRegion(r_surf_sub->regions, true);
+  UpdateSubRegion(r_surf_sub->regions/*, ClipSegs:true*/);
 
   ViewClip.ClipAddSubsectorSegs(r_surf_sub);
 }
@@ -76,6 +76,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
 
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
+    // nope, this is a normal node
     node_t *bsp = &Level->Nodes[bspnum];
 
     if (updateWorldCheckVisFrame && bsp->VisFrame != r_visframecount) return;
@@ -88,10 +89,10 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
     if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
     UpdateBSPNode(bsp->children[side^1], bsp->bbox[side^1]);
-    return;
+  } else {
+    // leaf node (subsector)
+    UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
   }
-
-  UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
 }
 
 
