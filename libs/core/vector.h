@@ -301,7 +301,7 @@ class TClipPlane : public TPlane {
 public:
   unsigned clipflag;
 
-  inline bool isVaild () const { return !!clipflag; }
+  inline bool isValid () const { return !!clipflag; }
   inline void invalidate () { clipflag = 0; }
 };
 

@@ -285,7 +285,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
       TVEC_SUM3(v.y*vright.x, v.z*vup.x, v.x*vforward.x),
       TVEC_SUM3(v.y*vright.y, v.z*vup.y, v.x*vforward.y),
       TVEC_SUM3(v.y*vright.z, v.z*vup.z, v.x*vforward.z));
-    planes[i].SetPointDir3D(aorg, v2);
+    planes[i].SetPointDir3D(aorg, v2.normalised());
     planes[i].clipflag = 1U<<i;
   }
   // create back plane
