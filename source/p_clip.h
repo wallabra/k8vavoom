@@ -53,7 +53,9 @@ private:
   VClipNode *ClipTail;
   TVec Origin;
   VLevel *Level;
-  TFrustum Frustum; // why not?
+  //TFrustum Frustum; // why not?
+  TClipPlane FrustumTop;
+  TClipPlane FrustumBottom;
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
@@ -61,25 +63,42 @@ private:
 
   bool DoIsRangeVisible (const VFloat From, const VFloat To) const;
 
+  bool IsRangeVisible (const VFloat From, const VFloat To) const;
+
+  void AddClipRange (const VFloat From, const VFloat To);
+
+  inline VFloat PointToClipAngle (const TVec &Pt) const {
+    VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
+    if (Ret < (VFloat)0) Ret += (VFloat)360;
+    return Ret;
+  }
+
 public:
   VViewClipper ();
   ~VViewClipper ();
+
+  inline VLevel *GetLevel () { return Level; }
+  inline VLevel *GetLevel () const { return Level; }
+
+  inline const TVec &GetOrigin () const { return Origin; }
+  inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
+  inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
   void ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
                               const TVec &viewright, const TVec &viewup,
                               const float fovx, const float fovy);
 
-  void ClipToRanges (const VViewClipper &Range);
-  void AddClipRange (const VFloat From, const VFloat To);
-
-  bool IsRangeVisible (const VFloat From, const VFloat To) const;
   bool ClipIsFull () const;
 
-  inline VFloat PointToClipAngle (const TVec &Pt) const {
-    VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
-    if (Ret < (VFloat)0) Ret += (VFloat)360;
-    return Ret;
+  inline bool IsRangeVisible (const TVec &vfrom, const TVec &vto) const {
+    return IsRangeVisible(PointToClipAngle(vfrom), PointToClipAngle(vto));
+  }
+
+  void ClipToRanges (const VViewClipper &Range);
+
+  inline void AddClipRange (const TVec &vfrom, const TVec &vto) {
+    AddClipRange(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
   bool ClipIsBBoxVisible (const float *BBox) const;

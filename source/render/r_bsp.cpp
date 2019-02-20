@@ -484,7 +484,7 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
   }
 */
-  if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(*line->v2), ViewClip.PointToClipAngle(*line->v1))) return;
+  if (!ViewClip.IsRangeVisible(*line->v2, *line->v1)) return;
 
   line_t *linedef = line->linedef;
   side_t *sidedef = line->sidedef;

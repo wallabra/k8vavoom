@@ -42,12 +42,14 @@ struct VViewClipper::VClipNode {
 #ifdef CLIENT
 extern VCvarF r_lights_radius;
 #endif
-static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
-static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
-static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
-static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?"/*, CVAR_Archive*/);
+static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
+static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
+static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
+static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 
-static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?"/*, CVAR_Archive*/);
+static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
+
+static VCvarB clip_height("clip_height", false, "Clip with top and bottom frustum?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -254,7 +256,7 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
 //  IsSlopedSeg
 //
 //==========================================================================
-static inline bool IsGoodSegForPoly (VLevel *Level, const seg_t *seg) {
+static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg) {
   const line_t *ldef = seg->linedef;
   if (!ldef) return false;
 
@@ -297,7 +299,7 @@ static inline bool IsGoodSegForPoly (VLevel *Level, const seg_t *seg) {
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
+static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t *seg) {
   if (!clip_platforms) return false;
 
   const line_t *ldef = seg->linedef;
@@ -312,8 +314,8 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       return true;
   }
 
-  auto fsec = ldef->frontsector;
-  auto bsec = ldef->backsector;
+  const sector_t *fsec = ldef->frontsector;
+  const sector_t *bsec = ldef->backsector;
 
   if (fsec == bsec) return false; // self-referenced sector
 
@@ -395,6 +397,49 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
         return true;
       }
       */
+
+      if (!clip_height) return false;
+      // here we can check if midtex is in frustum; if it doesn't,
+      // we can add this seg to clipper.
+      // this way, we can clip alot of things when renderer looks at
+      // floor/ceiling, and we can clip away too high/low windows.
+      const TClipPlane &FrustumTop = clip.GetFrustumTop();
+      const TClipPlane &FrustumBot = clip.GetFrustumBottom();
+      if (FrustumTop.isValid() || FrustumBot.isValid()) {
+        float fz1, fz2;
+        float cz1, cz2;
+        if (seg->side == 0) {
+          fz1 = backfz1;
+          fz2 = backfz2;
+          cz1 = backcz1;
+          cz2 = backcz2;
+        } else {
+          fz1 = frontfz1;
+          fz2 = frontfz2;
+          cz1 = frontcz1;
+          cz2 = frontcz2;
+        }
+        // check if floor is higher than frustum top
+        if (FrustumTop.isValid()) {
+          if (FrustumTop.PointOnSide(TVec(vv1.x, vv1.y, fz1)) &&
+              FrustumTop.PointOnSide(TVec(vv2.x, vv2.y, fz2)))
+          {
+            // floor is higher than frustum top, so this seg can be used to clip geometry
+            //fprintf(stderr, "FLOOR!\n");
+            return true;
+          }
+        }
+        // check if ceiling is lower than frustum bottom
+        if (FrustumBot.isValid()) {
+          if (!FrustumBot.PointOnSide(TVec(vv1.x, vv1.y, cz1)) &&
+              !FrustumBot.PointOnSide(TVec(vv2.x, vv2.y, cz2)))
+          {
+            // ceiling is lower than frustum bottom, so this seg can be used to clip geometry
+            //fprintf(stderr, "CEILING!\n");
+            return true;
+          }
+        }
+      }
     }
   } else {
     // sloped
@@ -484,6 +529,8 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
   ClipTail = nullptr;
   Origin = AOrigin;
   Level = ALevel;
+  FrustumTop.invalidate();
+  FrustumBottom.invalidate();
 }
 
 
@@ -498,10 +545,36 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
 {
   check(!ClipHead);
 
+  if (!viewright.z) {
+    // no view roll, create frustum
+    /*
+    Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
+    // also, remove left and right planes, regular clipper will take care of that
+    Frustum.planes[TFrustum::Left].invalidate();
+    Frustum.planes[TFrustum::Right].invalidate();
+    */
+    const TVec cbtop = Normalise(TVec(1.0f, 0.0f, -1.0f/fovy)); // top side clip
+    const TVec cbbot = Normalise(TVec(1.0f, 0.0f, 1.0f/fovy)); // bottom side clip
+    const TVec vtop(
+      TVEC_SUM3(0, cbtop.z*viewup.x, viewforward.x),
+      TVEC_SUM3(0, cbtop.z*viewup.y, viewforward.y),
+      TVEC_SUM3(0, cbtop.z*viewup.z, viewforward.z));
+    FrustumTop.SetPointDir3D(Origin, vtop.normalised());
+    FrustumTop.clipflag = 1;
+    const TVec vbot(
+      TVEC_SUM3(0, cbbot.z*viewup.x, viewforward.x),
+      TVEC_SUM3(0, cbbot.z*viewup.y, viewforward.y),
+      TVEC_SUM3(0, cbbot.z*viewup.z, viewforward.z));
+    FrustumBottom.SetPointDir3D(Origin, vbot.normalised());
+    FrustumBottom.clipflag = 1;
+  } else {
+    FrustumTop.invalidate();
+    FrustumBottom.invalidate();
+  }
+
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
   if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) {
     // looking up or down, can see behind
-    Frustum.clear();
     return;
   }
 
@@ -551,16 +624,6 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     ClipHead->Next = ClipTail;
     ClipTail->Prev = ClipHead;
     ClipTail->Next = nullptr;
-  }
-
-  if (!viewright.z) {
-    // no view roll, create frustum
-    Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
-    // also, remove left and right planes, regular clipper will take care of that
-    Frustum.planes[TFrustum::Left].invalidate();
-    Frustum.planes[TFrustum::Right].invalidate();
-  } else {
-    Frustum.clear();
   }
 }
 
@@ -807,7 +870,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox) const {
   if (!CheckAndClipVerts(v1, v2, Origin)) return false;
 #endif
 
-  return IsRangeVisible(PointToClipAngle(v1), PointToClipAngle(v2));
+  return IsRangeVisible(v1, v2);
 }
 
 
@@ -827,14 +890,14 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 #ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!ds->seg->linedef) {
       // miniseg
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     } else {
       // clip sectors that are behind rendered segs
       if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     }
 #else
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    if (IsRangeVisible(v2, v1)) return true;
 #endif
   }
   return false;
@@ -857,14 +920,14 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
 #ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!seg->linedef) {
       // miniseg
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     } else {
       // clip sectors that are behind rendered segs
       if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     }
 #else
-    if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+    if (IsRangeVisible(v2, v1)) return true;
 #endif
   }
   return false;
@@ -918,18 +981,12 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
   }
 
   // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
-    if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
-    if (!IsSegAClosedSomething(Level, seg)) {
-      // here we can check if midtex is in frustum; if it doesn't,
-      // we can add this seg to clipper.
-      // this way, we can clip alot of things when renderer looks at
-      // floor/ceiling, and we can clip away too high/low windows.
-      return;
-    }
+  if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
+    if (ldef->alpha < 1.0f) return; // skip translucent walls
+    if (!IsSegAClosedSomething(*this, seg)) return;
   }
 
-  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
+  AddClipRange(v2, v1);
 }
 
 
@@ -946,14 +1003,14 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     CheckAddClipSeg(seg, Mirror);
-    if (doPoly && !IsGoodSegForPoly(Level, seg)) doPoly = false;
+    if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
   }
 
   if (doPoly) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       seg = *polySeg;
-      if (IsGoodSegForPoly(Level, seg)) {
+      if (IsGoodSegForPoly(*this, seg)) {
         CheckAddClipSeg(seg, nullptr);
       }
     }
@@ -985,7 +1042,7 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float *BBox, const TVec &CurrLi
   // clip sectors that are behind rendered segs
   if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
 
-  return IsRangeVisible(PointToClipAngle(v1), PointToClipAngle(v2));
+  return IsRangeVisible(v1, v2);
 }
 
 
@@ -1005,11 +1062,11 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsec
     const TVec &v2 = *ds->seg->v2;
     if (!ds->seg->linedef) {
       // miniseg
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     } else {
       // clip sectors that are behind rendered segs
       if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     }
   }
   return false;
@@ -1032,11 +1089,11 @@ bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, const TVec &
     const TVec &v2 = *seg->v2;
     if (!seg->linedef) {
       // miniseg
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     } else {
       // clip sectors that are behind rendered segs
       if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
-      if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+      if (IsRangeVisible(v2, v1)) return true;
     }
   }
   return false;
@@ -1089,12 +1146,12 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
   }
 
   // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
-    if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
-    if (!IsSegAClosedSomething(Level, seg)) return;
+  if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
+    if (ldef->alpha < 1.0f) return; // skip translucent walls
+    if (!IsSegAClosedSomething(*this, seg)) return;
   }
 
-  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
+  AddClipRange(v2, v1);
 }
 
 
@@ -1112,14 +1169,14 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     CheckLightAddClipSeg(seg, CurrLightPos, CurrLightRadius, Mirror);
-    if (doPoly && !IsGoodSegForPoly(Level, seg)) doPoly = false;
+    if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
   }
 
   if (doPoly) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       seg = *polySeg;
-      if (IsGoodSegForPoly(Level, seg)) {
+      if (IsGoodSegForPoly(*this, seg)) {
         CheckLightAddClipSeg(seg, CurrLightPos, CurrLightRadius, nullptr);
       }
     }

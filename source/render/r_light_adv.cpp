@@ -403,7 +403,7 @@ void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 */
-  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(*line->v2), LightClip.PointToClipAngle(*line->v1))) return;
+  if (!LightClip.IsRangeVisible(*line->v2, *line->v1)) return;
 
   //line_t *linedef = line->linedef;
   //side_t *sidedef = line->sidedef;
@@ -627,7 +627,7 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 */
-  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(*line->v2), LightClip.PointToClipAngle(*line->v1))) return;
+  if (!LightClip.IsRangeVisible(*line->v2, *line->v1)) return;
 
   if (!line->backsector) {
     // single sided line

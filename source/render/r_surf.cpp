@@ -847,7 +847,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
 */
-    if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(*seg->v2), ViewClip.PointToClipAngle(*seg->v1))) return;
+    if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
   }
 
   side_t *sidedef = seg->sidedef;

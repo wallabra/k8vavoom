@@ -210,12 +210,19 @@ void VPortal::SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum) {
       seg_t *Seg = (seg_t *)Surfs[i]->plane;
       check(Seg >= RLev->Level->Segs);
       check(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
+      /*
       float a1 = Range.PointToClipAngle(*Seg->v2);
       float a2 = Range.PointToClipAngle(*Seg->v1);
       if (Revert) {
         Range.AddClipRange(a2, a1);
       } else {
         Range.AddClipRange(a1, a2);
+      }
+      */
+      if (Revert) {
+        Range.AddClipRange(*Seg->v1, *Seg->v2);
+      } else {
+        Range.AddClipRange(*Seg->v2, *Seg->v1);
       }
     } else {
       // subsector
@@ -234,9 +241,12 @@ void VPortal::SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum) {
         TPlane P;
         P.SetPointDirXY(v1, Dir);
         if ((DotProduct(vieworg, P.normal)-P.dist < 0.01f) != Revert) continue; // view origin is on the back side
+        /*
         float a1 = Range.PointToClipAngle(v2);
         float a2 = Range.PointToClipAngle(v1);
         Range.AddClipRange(a1, a2);
+        */
+        Range.AddClipRange(v2, v1);
       }
     }
   }
