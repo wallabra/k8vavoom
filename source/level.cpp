@@ -931,6 +931,7 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
 //
 //==========================================================================
 int VLevel::FindSectorFromTag (int tag, int start) {
+  if (tag == 0 || NumSectors < 1) return -1; //k8: just in case
   for (int i = start < 0 ? Sectors[(vuint32)tag%(vuint32)NumSectors].HashFirst : Sectors[start].HashNext;
        i >= 0;
        i = Sectors[i].HashNext)
@@ -947,13 +948,15 @@ int VLevel::FindSectorFromTag (int tag, int start) {
 //
 //==========================================================================
 line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
-  for (int i = *searchPosition < 0 ? Lines[(vuint32)lineTag%(vuint32)NumLines].HashFirst : Lines[*searchPosition].HashNext;
-       i >= 0;
-       i = Lines[i].HashNext)
-  {
-    if (Lines[i].LineTag == lineTag) {
-      *searchPosition = i;
-      return &Lines[i];
+  if (NumLines > 0) {
+    for (int i = *searchPosition < 0 ? Lines[(vuint32)lineTag%(vuint32)NumLines].HashFirst : Lines[*searchPosition].HashNext;
+         i >= 0;
+         i = Lines[i].HashNext)
+    {
+      if (Lines[i].LineTag == lineTag) {
+        *searchPosition = i;
+        return &Lines[i];
+      }
     }
   }
   *searchPosition = -1;
@@ -975,8 +978,8 @@ void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) 
     GCon->Logf(NAME_Warning, "UNIMPLEMENTED: setting sector link: controltag=%d; tag=%d; surface=%d; movetype=%d", controltag, tag, surface, movetype);
     return;
   }
-  for (int csi = FindSectorFromTag(controltag, -1); csi >= 0; csi = FindSectorFromTag(controltag, csi)) {
-    for (int lsi = FindSectorFromTag(tag, -1); lsi >= 0; lsi = FindSectorFromTag(tag, lsi)) {
+  for (int csi = FindSectorFromTag(controltag); csi >= 0; csi = FindSectorFromTag(controltag, csi)) {
+    for (int lsi = FindSectorFromTag(tag); lsi >= 0; lsi = FindSectorFromTag(tag, lsi)) {
       if (lsi == csi) continue;
       if (csi < sectorlinkStart.length()) {
         int f = sectorlinkStart[csi];
@@ -2140,7 +2143,7 @@ IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
 }
 
 IMPLEMENT_FUNCTION(VLevel, FindSectorFromTag) {
-  P_GET_INT(start);
+  P_GET_INT_OPT(start, -1);
   P_GET_INT(tag);
   P_GET_SELF;
   RET_INT(Self->FindSectorFromTag(tag, start));

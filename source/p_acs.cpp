@@ -405,7 +405,7 @@ private:
 
   inline VEntity *EntityFromTID (int TID, VEntity *Default) { return (!TID ? Default : Level->FindMobjFromTID(TID, nullptr)); }
 
-  int FindSectorFromTag (int, int);
+  int FindSectorFromTag (int tag, int start=-1);
 
   void BroadcastCentrePrint (const char *s) {
     if (destroyed) return; // just in case
@@ -3871,7 +3871,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ChangeFloor)
       {
         int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
-        for (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
+        for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
           XLevel->Sectors[Idx].floor.pic = Flat;
         }
         sp -= 2;
@@ -3884,7 +3884,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
         int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
+        for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].floor.pic = Flat;
         }
       }
@@ -3893,7 +3893,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ChangeCeiling)
       {
         int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
-        for (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
+        for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
           XLevel->Sectors[Idx].ceiling.pic = Flat;
         }
         sp -= 2;
@@ -3906,7 +3906,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
         int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
+        for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].ceiling.pic = Flat;
         }
       }
@@ -5543,7 +5543,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GetSectorFloorZ)
       {
-        int SNum = FindSectorFromTag(sp[-3], -1);
+        int SNum = FindSectorFromTag(sp[-3]);
         sp[-3] = SNum >= 0 ? vint32(XLevel->Sectors[SNum].floor.
           GetPointZ(sp[-2], sp[-1]) * 0x10000) : 0;
         sp -= 2;
@@ -5552,7 +5552,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GetSectorCeilingZ)
       {
-        int SNum = FindSectorFromTag(sp[-3], -1);
+        int SNum = FindSectorFromTag(sp[-3]);
         sp[-3] = SNum >= 0 ? vint32(XLevel->Sectors[SNum].ceiling.
           GetPointZ(sp[-2], sp[-1]) * 0x10000) : 0;
         sp -= 2;
@@ -5755,7 +5755,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GetSectorLightLevel)
       {
-        int SNum = FindSectorFromTag(sp[-1], -1);
+        int SNum = FindSectorFromTag(sp[-1]);
         sp[-1] = SNum >= 0 ? XLevel->Sectors[SNum].params.lightlevel : 0;
       }
       ACSVM_BREAK;
@@ -6680,15 +6680,14 @@ LblFuncStop:
 //  RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
 //==========================================================================
-
-int VAcs::FindSectorFromTag(int tag, int start)
-{
-  guard(VAcs::FindSectorFromTag);
+int VAcs::FindSectorFromTag (int tag, int start) {
+  /*
   for (int i = start + 1; i < XLevel->NumSectors; i++)
     if (XLevel->Sectors[i].tag == tag)
       return i;
   return -1;
-  unguard;
+  */
+  return XLevel->FindSectorFromTag(tag, start);
 }
 
 

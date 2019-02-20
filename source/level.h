@@ -315,6 +315,10 @@ class VLevel : public VGameObject {
   // if other bits are equal to csTouchCount
   vuint32 *csTouched;
 
+  // sectors with fake floors/ceilings, so world updater can skip iterating over all of them
+  TArray<vint32> FakeFCSectors;
+  TArray<vint32> TaggedSectors;
+
 private:
   bool ChangeSectorInternal (sector_t *sector, int crunch);
 
@@ -500,7 +504,7 @@ public:
   msecnode_t *DelSecnode (msecnode_t *);
   void DelSectorList ();
 
-  int FindSectorFromTag (int, int);
+  int FindSectorFromTag (int tag, int start=-1);
   line_t *FindLine (int, int *);
   void SectorSetLink (int controltag, int tag, int surface, int movetype);
 
@@ -568,6 +572,7 @@ private:
   void BasePortalVis (void *pvsinfo);
   void HashSectors ();
   void HashLines ();
+  void BuildSectorLists ();
 
   // post-loading routines
   void GroupLines () const;

@@ -113,11 +113,22 @@ void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Ra
   if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
 
   // update fake sectors
+  /*
   for (int i = 0; i < Level->NumSectors; ++i) {
     sector_t *sec = &Level->Sectors[i];
          if (sec->deepref) UpdateDeepWater(sec);
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
     else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
+  }
+  */
+  {
+    const vint32 *fksip = Level->FakeFCSectors.ptr();
+    for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
+      sector_t *sec = &Level->Sectors[*fksip];
+           if (sec->deepref) UpdateDeepWater(sec);
+      else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
+      else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
+    }
   }
 
   UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output

@@ -1172,6 +1172,8 @@ load_again:
   // it will set `othersec` for sectors too
   FixDeepWaters();
 
+  // this must be called after deepwater fixes
+  BuildSectorLists();
 
   // calculate xxHash32 of various map parts
 
@@ -3401,15 +3403,61 @@ void VLevel::CreateRepBase () {
 //==========================================================================
 void VLevel::HashSectors () {
   guard(VLevel::HashSectors);
-  // clear hash
-  for (int i = 0; i < NumSectors; ++i) Sectors[i].HashFirst = -1;
+  // clear hash; count number of sectors with fake something
+  for (int i = 0; i < NumSectors; ++i) Sectors[i].HashFirst = Sectors[i].HashNext = -1;
   // create hash: process sectors in backward order so that they get processed in original order
   for (int i = NumSectors-1; i >= 0; --i) {
-    vuint32 HashIndex = (vuint32)Sectors[i].tag%(vuint32)NumSectors;
-    Sectors[i].HashNext = Sectors[HashIndex].HashFirst;
-    Sectors[HashIndex].HashFirst = i;
+    if (Sectors[i].tag) {
+      vuint32 HashIndex = (vuint32)Sectors[i].tag%(vuint32)NumSectors;
+      Sectors[i].HashNext = Sectors[HashIndex].HashFirst;
+      Sectors[HashIndex].HashFirst = i;
+    }
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VLevel::BuildSectorLists
+//
+//==========================================================================
+void VLevel::BuildSectorLists () {
+  // count number of fake and tagged sectors
+  int fcount = 0, tcount = 0;
+  const int scount = NumSectors;
+
+  TArray<int> interesting;
+  int intrcount = 0;
+  interesting.setLength(scount);
+
+  const sector_t *sec = Sectors;
+  for (int i = 0; i < scount; ++i, ++sec) {
+    bool intr = false;
+    // tagged?
+    if (sec->tag) { ++tcount; intr = true; }
+    // with fakes?
+         if (sec->deepref) { ++fcount; intr = true; }
+    else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) { ++fcount; intr = true; }
+    else if (sec->othersecFloor || sec->othersecCeiling) { ++fcount; intr = true; }
+    // register "interesting" sector
+    if (intr) interesting[intrcount++] = i;
+  }
+
+  FakeFCSectors.setLength(fcount);
+  TaggedSectors.setLength(tcount);
+  fcount = tcount = 0;
+
+  for (int i = 0; i < interesting.length(); ++i) {
+    int idx = interesting[i];
+    sec = &Sectors[idx];
+    // tagged?
+    if (sec->tag) TaggedSectors[tcount++] = idx;
+    // with fakes?
+         if (sec->deepref) FakeFCSectors[fcount++] = idx;
+    else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) FakeFCSectors[fcount++] = idx;
+    else if (sec->othersecFloor || sec->othersecCeiling) FakeFCSectors[fcount++] = idx;
+  }
 }
 
 
@@ -3823,7 +3871,7 @@ void VLevel::FixDeepWaters () {
       sec->othersecFloor = fsecFloor;
       sec->othersecCeiling = fsecCeiling;
       // allocate fakefloor data (engine require it to complete setup)
-      sec->fakefloors = new fakefloor_t;
+      if (!sec->fakefloors) sec->fakefloors = new fakefloor_t;
       fakefloor_t *ff = sec->fakefloors;
       memset((void *)ff, 0, sizeof(fakefloor_t));
       ff->floorplane = (fsecFloor ? fsecFloor : sec)->floor;

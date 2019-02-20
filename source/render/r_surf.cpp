@@ -1498,6 +1498,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
 
   // replace sector being drawn with a copy to be hacked
   fakefloor_t *ff = sec->fakefloors;
+  if (!ff) return; //k8:just in case
   ff->floorplane = sec->floor;
   ff->ceilplane = sec->ceiling;
   ff->params = sec->params;
@@ -1739,6 +1740,7 @@ void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
 
   // replace sector being drawn with a copy to be hacked
   fakefloor_t *ff = sec->fakefloors;
+  if (!ff) return; //k8:just in case
   ff->floorplane = sec->floor;
   ff->ceilplane = sec->ceiling;
   ff->params = sec->params;
@@ -1790,7 +1792,7 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *Sec) {
     if (HeightSec->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
   }
 
-  Sec->fakefloors = new fakefloor_t;
+  if (!Sec->fakefloors) Sec->fakefloors = new fakefloor_t;
   memset((void *)Sec->fakefloors, 0, sizeof(fakefloor_t));
   Sec->fakefloors->floorplane = Sec->floor;
   Sec->fakefloors->ceilplane = Sec->ceiling;

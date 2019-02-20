@@ -170,6 +170,9 @@ native transient array!(/*VLevelScriptThinker*/void *) scriptThinkers;
 native transient private int csTouchCount;
 native transient private int *csTouched; // for ChangeSector; Z_Malloc'ed, NumSectors elements
 
+native transient private array!int FakeFCSectors;
+native transient private array!int TaggedSectors;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // natives
@@ -194,7 +197,7 @@ native final void SetCeilingLightSector (sector_t *Sector, sector_t *SrcSector);
 native final void SetHeightSector (sector_t *Sector, sector_t *SrcSector, int Flags);
 
 // return next sector # that line tag refers to
-native final int FindSectorFromTag (int tag, int start);
+native final int FindSectorFromTag (int tag, optional int start);
 native final line_t *FindLine (int lineTag, int *searchPosition);
 
 // support for linked sectors
