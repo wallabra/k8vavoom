@@ -3444,12 +3444,14 @@ void VLevel::BuildSectorLists () {
     if (intr) interesting[intrcount++] = i;
   }
 
+  GCon->Logf("%d tagged sectors, %d sectors with fakes, %d total sectors", tcount, fcount, scount);
+
   FakeFCSectors.setLength(fcount);
   TaggedSectors.setLength(tcount);
   fcount = tcount = 0;
 
-  for (int i = 0; i < interesting.length(); ++i) {
-    int idx = interesting[i];
+  for (int i = 0; i < intrcount; ++i) {
+    const int idx = interesting[i];
     sec = &Sectors[idx];
     // tagged?
     if (sec->tag) TaggedSectors[tcount++] = idx;
