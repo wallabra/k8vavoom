@@ -384,7 +384,8 @@ void VZipStreamReader::Serialise (void* buf, int len) {
 
   //if (currpos < nextpos) fprintf(stderr, "+++ SKIPPING <%s>: currpos=%d; nextpos=%d; toskip=%d\n", *GetName(), currpos, nextpos, nextpos-currpos);
   if (currpos < nextpos) {
-    int bsz = bsz;
+    int bsz = nextpos-currpos;
+    check(bsz > 0);
     if (bsz > 65536) bsz = 65536;
     check(!wholeBuf);
     wholeBuf = (vuint8 *)Z_Malloc(bsz);
