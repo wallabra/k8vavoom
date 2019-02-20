@@ -2430,6 +2430,7 @@ void VInvocation::Emit (VEmitContext &ec) {
                 xlv = xlv->Resolve(ec);
                 if (!xlv) FatalError("VC: internal compiler error (13496)");
                 xlv->Emit(ec);
+                delete xlv;
               }
             }
           }
