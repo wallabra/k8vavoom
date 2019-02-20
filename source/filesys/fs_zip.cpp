@@ -261,6 +261,8 @@ void VZipFile::OpenArchive (VStream *fstream) {
   //files = new VPakFileInfo[NumFiles];
 
   bool canHasPrefix = true;
+  if (PakFileName.ExtractFileExtension().ICmp("pk3") == 0) canHasPrefix = false; // do not remove prefixes in pk3
+  //GCon->Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);
 
   // set the current file of the zipfile to the first file
   vuint32 pos_in_central_dir = offset_central_dir;
@@ -347,6 +349,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
       }
       if (canHasPrefix) {
         // remove prefix
+        //GCon->Logf("*** ARK: <%s>:<%s> pfx=<%s>", *PakFileName, *PakFileName.ExtractFileExtension(), *xpfx);
         for (int i = 0; i < pakdir.files.length(); ++i) {
           pakdir.files[i].fileName = VStr(pakdir.files[i].fileName, sli+1, pakdir.files[i].fileName.length()-sli-1);
           //printf("new: <%s>\n", *Files[i].Name);
