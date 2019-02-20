@@ -51,6 +51,7 @@ static segpart_t *pspart;
 static VCvarB dbg_kdizd_water("dbg_kdizd_water", false, "KDIZD water hacks?", CVAR_Archive);
 extern VCvarB w_update_clip_bsp;
 extern VCvarB w_update_clip_region;
+extern VCvarB w_update_in_renderer;
 
 
 //**************************************************************************
@@ -1439,7 +1440,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/
   }
 
   if (region->next) {
-    if (w_update_clip_region /*ClipSegs*/) {
+    if (w_update_clip_region && !w_update_in_renderer /*ClipSegs*/) {
       if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub)) return;
     }
     UpdateSubRegion(region->next/*, ClipSegs*/);

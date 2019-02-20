@@ -379,6 +379,9 @@ protected:
 
   bool updateWorldCheckVisFrame; // `true` for regular, `false` for advanced
 
+  // mark all updated subsectors with this; increment on each new frame
+  vint32 updateWorldFrame;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();

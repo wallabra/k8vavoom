@@ -603,6 +603,7 @@ struct subsector_t {
   node_t *parent;
   vint32 VisFrame;
   vint32 SkyVisFrame;
+  vint32 updateWorldFrame;
 
   sector_t *deepref; // for deepwater
 

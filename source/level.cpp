@@ -179,6 +179,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
   line_t *li;
   side_t *si;
 
+  // reset subsector update frame
+  if (Strm.IsLoading()) {
+    for (unsigned f = 0; f < (unsigned)NumSubsectors; ++f) Subsectors[f].updateWorldFrame = 0;
+  }
+
   // write/check various numbers, so we won't load invalid save accidentally
   // this is not the best or most reliable way to check it, but it is better
   // than nothing...

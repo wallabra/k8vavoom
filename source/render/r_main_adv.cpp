@@ -38,6 +38,7 @@
 extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 extern VCvarB r_dynamic_clip_more;
+extern VCvarB w_update_in_renderer;
 
 
 //==========================================================================

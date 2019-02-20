@@ -34,6 +34,7 @@
 
 VCvarB w_update_clip_bsp("w_update_clip_bsp", true, "Perform BSP clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
 VCvarB w_update_clip_region("w_update_clip_region", true, "Perform region clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
+VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector updates in renderer?", CVAR_PreInit/*|CVAR_Archive*/);
 
 
 //==========================================================================
@@ -43,8 +44,10 @@ VCvarB w_update_clip_region("w_update_clip_region", true, "Perform region clippi
 //==========================================================================
 void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   r_surf_sub = &Level->Subsectors[num];
+  if (r_surf_sub->updateWorldFrame == updateWorldFrame) return;
+  r_surf_sub->updateWorldFrame = updateWorldFrame;
 
-  if (updateWorldCheckVisFrame && r_surf_sub->VisFrame != r_visframecount) return;
+  if (updateWorldCheckVisFrame && Level->HasPVS() && r_surf_sub->VisFrame != r_visframecount) return;
 
   if (!r_surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -83,7 +86,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
     // nope, this is a normal node
     node_t *bsp = &Level->Nodes[bspnum];
 
-    if (updateWorldCheckVisFrame && bsp->VisFrame != r_visframecount) return;
+    if (updateWorldCheckVisFrame && Level->HasPVS() && bsp->VisFrame != r_visframecount) return;
 
     // decide which side the view point is on
     int side = bsp->PointOnSide(vieworg);
@@ -108,10 +111,6 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
 void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Range) {
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
-  ViewClip.ClearClipNodes(vieworg, Level);
-  ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
-  if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
-
   // update fake sectors
   /*
   for (int i = 0; i < Level->NumSectors; ++i) {
@@ -131,5 +130,11 @@ void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Ra
     }
   }
 
-  UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output
+  if (!w_update_in_renderer) {
+    ViewClip.ClearClipNodes(vieworg, Level);
+    ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+    if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
+
+    UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output
+  }
 }

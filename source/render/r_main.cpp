@@ -437,6 +437,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , cacheframecount(0)
   , showCreateWorldSurfProgress(false)
   , updateWorldCheckVisFrame(false)
+  , updateWorldFrame(0)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 
@@ -883,6 +884,8 @@ void VRenderLevelShared::MarkLeaves () {
     }
   } else {
     // eh, we have no PVS, so just mark it all
+    // we won't check for visframe ever if level has no PVS, so do nothing here
+    /*
     subsector_t *sub = &Level->Subsectors[0];
     for (int i = Level->NumSubsectors-1; i >= 0; --i, ++sub) {
       sub->VisFrame = r_visframecount;
@@ -893,6 +896,7 @@ void VRenderLevelShared::MarkLeaves () {
         node = node->parent;
       }
     }
+    */
   }
 }
 
@@ -920,6 +924,13 @@ void VRenderLevelShared::RenderPlayerView () {
 
   int renderattempts = 2;
   bool didIt = false;
+
+  if (updateWorldFrame == 0x7fffffff) {
+    for (unsigned f = 0; f < (unsigned)Level->NumSubsectors; ++f) Level->Subsectors[f].updateWorldFrame = 0;
+    updateWorldFrame = 1;
+  } else {
+    ++updateWorldFrame;
+  }
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);

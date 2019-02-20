@@ -57,6 +57,7 @@ VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", fals
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
 extern VCvarB r_draw_adjacent_subsector_things;
+extern VCvarB w_update_in_renderer;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -643,7 +644,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
   subsector_t *Sub = &Level->Subsectors[num];
   r_sub = Sub;
 
-  if (Sub->VisFrame != r_visframecount) return;
+  if (Level->HasPVS() && Sub->VisFrame != r_visframecount) return;
 
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -664,6 +665,18 @@ void VRenderLevelShared::RenderSubsector (int num) {
         const unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
         BspVisThing[psidx>>3] |= 1U<<(psidx&7);
       }
+    }
+  }
+
+  // update world
+  if (w_update_in_renderer && Sub->updateWorldFrame != updateWorldFrame) {
+    Sub->updateWorldFrame = updateWorldFrame;
+    if (!updateWorldCheckVisFrame || !Level->HasPVS() || Sub->VisFrame == r_visframecount) {
+      //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
+      auto oldrss = r_surf_sub;
+      r_surf_sub = Sub;
+      UpdateSubRegion(Sub->regions/*, ClipSegs:true*/);
+      r_surf_sub = oldrss;
     }
   }
 
@@ -725,7 +738,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   if ((bspnum&NF_SUBSECTOR) == 0) {
     node_t *bsp = &Level->Nodes[bspnum];
 
-    if (bsp->VisFrame != r_visframecount) return;
+    if (Level->HasPVS() && bsp->VisFrame != r_visframecount) return;
 
     // decide which side the view point is on
     int side = bsp->PointOnSide(vieworg);
