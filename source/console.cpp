@@ -698,17 +698,18 @@ static void ConSerialise (const char *str, EName Event, bool asConLog) {
   if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
   }
+  const char *nls = (asConLog ? "" : "\n");
   if (asConLog) DoPrint(str);
   if (VStr::MustBeSanitized(str)) {
     VStr rc = VStr(str).RemoveColours();
-    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), *rc);
+    if (logfout) fprintf(logfout, "%s: %s%s", VName::SafeString(Event), *rc, nls);
 #ifndef _WIN32
-    printf("%s: %s\n", VName::SafeString(Event), *rc);
+    printf("%s: %s%s", VName::SafeString(Event), *rc, nls);
 #endif
   } else {
-    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), str);
+    if (logfout) fprintf(logfout, "%s: %s%s", VName::SafeString(Event), str, nls);
 #ifndef _WIN32
-    printf("%s: %s\n", VName::SafeString(Event), str);
+    printf("%s: %s%s", VName::SafeString(Event), str, nls);
 #endif
   }
   if (!asConLog) {
