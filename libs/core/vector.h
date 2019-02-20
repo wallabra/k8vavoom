@@ -213,7 +213,7 @@ public:
     }
     dist = DotProduct(point, normal);
 #else
-    normal = Normalise(TVec(dir.y, -dir.x, 0));
+    normal = TVec(dir.y, -dir.x, 0).normalised();
     if (!isFiniteF(dir.x) || !isFiniteF(dir.y) || !isFiniteF(dir.z)) {
       //k8: what to do here?!
       normal = TVec(0, 0, 1);
@@ -254,6 +254,14 @@ public:
     SetPointDirXY(v1, v2-v1);
   }
 
+  // WARNING! do not call this repeatedly, or on normalized plane!
+  //          due to floating math inexactness, you will accumulate errors.
+  inline void Normalise () {
+    const float mag = normal.invlength();
+    normal *= mag;
+    dist *= mag;
+  }
+
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
   inline float GetPointZ (float x, float y) const {
@@ -264,15 +272,21 @@ public:
     return GetPointZ(v.x, v.y);
   }
 
-  // returns side 0 (front) or 1 (back)
+  // returns side 0 (front) or 1 (back, or on plane)
   inline int PointOnSide (const TVec &point) const {
     return (DotProduct(point, normal)-dist <= 0);
+  }
+
+  // returns side 0 (front, or on plane) or 1 (back)
+  // "fri" means "front inclusive"
+  inline int PointOnSideFri (const TVec &point) const {
+    return (DotProduct(point, normal)-dist < 0);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
   inline int PointOnSide2 (const TVec &point) const {
     const float dot = DotProduct(point, normal)-dist;
-    return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
+    return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
 
   // returns side 0 (front), 1 (back)
@@ -291,7 +305,8 @@ public:
   // plane must be normalized
   inline float Distance (const TVec &p) const {
     //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
-    return TVEC_SUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
+    //return TVEC_SUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
+    return DotProduct(p, normal)-dist;
   }
 };
 
