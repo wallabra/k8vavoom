@@ -398,45 +398,46 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
       }
       */
 
-      if (!clip_height) return false;
-      // here we can check if midtex is in frustum; if it doesn't,
-      // we can add this seg to clipper.
-      // this way, we can clip alot of things when renderer looks at
-      // floor/ceiling, and we can clip away too high/low windows.
-      const TClipPlane &FrustumTop = clip.GetFrustumTop();
-      const TClipPlane &FrustumBot = clip.GetFrustumBottom();
-      if (FrustumTop.isValid() || FrustumBot.isValid()) {
-        float fz1, fz2;
-        float cz1, cz2;
-        if (seg->side == 0) {
-          fz1 = backfz1;
-          fz2 = backfz2;
-          cz1 = backcz1;
-          cz2 = backcz2;
-        } else {
-          fz1 = frontfz1;
-          fz2 = frontfz2;
-          cz1 = frontcz1;
-          cz2 = frontcz2;
-        }
-        // check if floor is higher than frustum top
-        if (FrustumTop.isValid()) {
-          if (FrustumTop.PointOnSide(TVec(vv1.x, vv1.y, fz1)) &&
-              FrustumTop.PointOnSide(TVec(vv2.x, vv2.y, fz2)))
-          {
-            // floor is higher than frustum top, so this seg can be used to clip geometry
-            //fprintf(stderr, "FLOOR!\n");
-            return true;
+      if (clip_height) {
+        // here we can check if midtex is in frustum; if it doesn't,
+        // we can add this seg to clipper.
+        // this way, we can clip alot of things when renderer looks at
+        // floor/ceiling, and we can clip away too high/low windows.
+        const TClipPlane &FrustumTop = clip.GetFrustumTop();
+        const TClipPlane &FrustumBot = clip.GetFrustumBottom();
+        if (FrustumTop.isValid() || FrustumBot.isValid()) {
+          float fz1, fz2;
+          float cz1, cz2;
+          if (seg->side == 0) {
+            fz1 = backfz1;
+            fz2 = backfz2;
+            cz1 = backcz1;
+            cz2 = backcz2;
+          } else {
+            fz1 = frontfz1;
+            fz2 = frontfz2;
+            cz1 = frontcz1;
+            cz2 = frontcz2;
           }
-        }
-        // check if ceiling is lower than frustum bottom
-        if (FrustumBot.isValid()) {
-          if (!FrustumBot.PointOnSide(TVec(vv1.x, vv1.y, cz1)) &&
-              !FrustumBot.PointOnSide(TVec(vv2.x, vv2.y, cz2)))
-          {
-            // ceiling is lower than frustum bottom, so this seg can be used to clip geometry
-            //fprintf(stderr, "CEILING!\n");
-            return true;
+          // check if floor is higher than frustum top
+          if (FrustumTop.isValid()) {
+            if (FrustumTop.PointOnSide(TVec(vv1.x, vv1.y, fz1)) &&
+                FrustumTop.PointOnSide(TVec(vv2.x, vv2.y, fz2)))
+            {
+              // floor is higher than frustum top, so this seg can be used to clip geometry
+              //fprintf(stderr, "FLOOR!\n");
+              return true;
+            }
+          }
+          // check if ceiling is lower than frustum bottom
+          if (FrustumBot.isValid()) {
+            if (FrustumBot.PointOnSide(TVec(vv1.x, vv1.y, cz1)) &&
+                FrustumBot.PointOnSide(TVec(vv2.x, vv2.y, cz2)))
+            {
+              // ceiling is lower than frustum bottom, so this seg can be used to clip geometry
+              //fprintf(stderr, "CEILING!\n");
+              return true;
+            }
           }
         }
       }
