@@ -95,6 +95,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   if (!r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
+  BuildVisibleObjectsList();
+
   RenderMobjsAmbient();
 
   Drawer->BeginShadowVolumesPass();

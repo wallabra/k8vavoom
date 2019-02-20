@@ -382,6 +382,11 @@ protected:
   // mark all updated subsectors with this; increment on each new frame
   vint32 updateWorldFrame;
 
+  TArray<VEntity *> visibleObjects;
+  //TMapNC<VEntity *, bool> visibleObjects;
+  //VEntity **visibleObjects;
+  //unsigned visibleObjectsCount;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -403,6 +408,9 @@ protected:
   virtual void QueueWorldSurface (seg_t*, surface_t*) = 0;
   virtual void FreeSurfCache (surfcache_t*);
   virtual bool CacheSurface (surface_t*);
+
+  // this should be called after `RenderWorld()`
+  void BuildVisibleObjectsList ();
 
   // general
   void ExecuteSetViewSize ();

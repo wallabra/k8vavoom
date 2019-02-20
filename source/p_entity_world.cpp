@@ -197,7 +197,7 @@ void VEntity::CreateSecNodeList () {
         // killough 3/27/98, 4/4/98:
         // use sidedefs instead of 2s flag to determine two-sidedness
 
-        if (ld->backsector) {
+        if (ld->backsector && ld->backsector != ld->frontsector) {
           XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
         }
       }

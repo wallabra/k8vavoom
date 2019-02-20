@@ -94,8 +94,13 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("RenderWorld: %f", stt);
 
+
   stt = -Sys_Time();
-  if (!r_reg_disable_things) RenderMobjs(RPASS_Normal);
+  if (!r_reg_disable_things) {
+    //k8: no need to build list here, as things only processed once
+    //BuildVisibleObjectsList();
+    RenderMobjs(RPASS_Normal);
+  }
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("RenderMobjs: %f", stt);
 

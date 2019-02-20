@@ -427,18 +427,23 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
 void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
-  //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
-  if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) return;
-  if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
+  if (Pass == RPASS_Normal) {
+    //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) return;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
+  }
 
   int RendStyle = mobj->RenderStyle;
-  if (RendStyle == STYLE_None) return;
 
-  // skip things in subsectors that are not visible
-  //TODO: for advanced renderer, we may need to render things several times, so
-  //      it is good place to cache them for the given frame
-  const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
-  if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
+  if (Pass == RPASS_Normal) {
+    if (RendStyle == STYLE_None) return;
+
+    // skip things in subsectors that are not visible
+    //TODO: for advanced renderer, we may need to render things several times, so
+    //      it is good place to cache them for the given frame
+    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
+  }
 
   float Alpha = mobj->Alpha;
   bool Additive = false;
@@ -524,9 +529,66 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   }
 #endif
 
-  // render things
+  // "normal" pass has no object list
+  if (Pass == RPASS_Normal) {
+    // render things
+    for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+      RenderThing(*Ent, RPASS_Normal);
+    }
+  } else {
+    // we have a list here
+    VEntity **ent = visibleObjects.ptr();
+    for (int count = visibleObjects.length(); count--; ++ent) {
+      RenderThing(*ent, Pass);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::BuildVisibleObjectsList
+//
+//  this should be called after `RenderWorld()`
+//
+//==========================================================================
+void VRenderLevelShared::BuildVisibleObjectsList () {
+  visibleObjects.reset();
+
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    RenderThing(*Ent, Pass);
+    VEntity *mobj = *Ent;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+
+    int RendStyle = mobj->RenderStyle;
+    if (RendStyle == STYLE_None) continue;
+
+    // skip things in subsectors that are not visible
+    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+
+    float Alpha = mobj->Alpha;
+
+    if (RendStyle == STYLE_SoulTrans) {
+      RendStyle = STYLE_Translucent;
+      Alpha = r_transsouls;
+    } else if (RendStyle == STYLE_OptFuzzy) {
+      RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
+    } else if (RendStyle == STYLE_Normal) {
+      Alpha = 1.0f;
+    }
+    if (RendStyle == STYLE_Fuzzy) Alpha = FUZZY_ALPHA;
+
+    if (Alpha <= 0.0002f) continue; // no reason to render it, it is invisible
+
+    visibleObjects.append(mobj);
+  }
+
+  // shrink list
+  if (visibleObjects.capacity() > 16384) {
+    if (visibleObjects.capacity()*2 >= visibleObjects.length()) {
+      visibleObjects.setLength(visibleObjects.length(), true); // resize
+    }
   }
 }
 
