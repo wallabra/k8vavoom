@@ -245,7 +245,7 @@ static vuint32 LookupColourName (const VStr &Name) {
 
     if (!cmap.find(VName("ivory"))) Sys_Error("!!! IVORY");
 
-    delete Buf;
+    delete[] Buf;
   }
 
   // normalize color name
