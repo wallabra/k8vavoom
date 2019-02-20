@@ -200,7 +200,7 @@ void VPortal::SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum) {
   guard(VPortal::SetUpRanges);
   Range.ClearClipNodes(vieworg, RLev->Level);
   if (SetFrustum) {
-    Range.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, refdef.fovx, refdef.fovy);
+    Range.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, refdef.fovx, refdef.fovy);
     //GCon->Logf("SURFS: %d", Surfs.Num());
     //return;
   }

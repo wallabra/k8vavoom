@@ -537,16 +537,19 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
 
 //==========================================================================
 //
-//  VViewClipper::ClipInitFrustrumRange
+//  VViewClipper::ClipResetFrustumPlanes
 //
 //==========================================================================
-void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
-                                          const TVec &viewright, const TVec &viewup,
+void VViewClipper::ClipResetFrustumPlanes () {
+  FrustumTop.invalidate();
+  FrustumBottom.invalidate();
+}
+
+
+void VViewClipper::ClipInitFrustumPlanes (const TVec &viewforward, const TVec &viewright, const TVec &viewup,
                                           const float fovx, const float fovy)
 {
-  check(!ClipHead);
-
-  if (!viewright.z) {
+  if (!viewright.z && isFiniteF(fovy) && fovy != 0) {
     // no view roll, create frustum
     /*
     Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
@@ -572,6 +575,33 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     FrustumTop.invalidate();
     FrustumBottom.invalidate();
   }
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipInitFrustumPlanes
+//
+//==========================================================================
+void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const float fovx, const float fovy) {
+  TVec f, r, u;
+  AngleVectors(viewangles, f, r, u);
+  ClipInitFrustumPlanes(f, r, u, fovx, fovy);
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipInitFrustumRange
+//
+//==========================================================================
+void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &viewforward,
+                                         const TVec &viewright, const TVec &viewup,
+                                         const float fovx, const float fovy)
+{
+  check(!ClipHead);
+
+  ClipInitFrustumPlanes(viewforward, viewright, viewup, fovx, fovy);
 
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
   if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) {
@@ -626,6 +656,18 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     ClipTail->Prev = ClipHead;
     ClipTail->Next = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipInitFrustumRange
+//
+//==========================================================================
+void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy) {
+  TVec f, r, u;
+  AngleVectors(viewangles, f, r, u);
+  ClipInitFrustumRange(viewangles, f, r, u, fovx, fovy);
 }
 
 

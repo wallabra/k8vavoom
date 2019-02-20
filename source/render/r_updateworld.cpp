@@ -32,6 +32,10 @@
 #include "r_local.h"
 
 
+VCvarB w_update_clip_bsp("w_update_clip_bsp", true, "Perform BSP clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
+VCvarB w_update_clip_region("w_update_clip_region", true, "Perform region clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::UpdateSubsector
@@ -44,7 +48,7 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
 
   if (!r_surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!ViewClip.ClipCheckSubsector(r_surf_sub)) return;
+  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(r_surf_sub)) return;
 
   bbox[2] = r_surf_sub->sector->floor.minz;
   if (IsSky(&r_surf_sub->sector->ceiling)) {
@@ -67,7 +71,7 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
 void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
   if (ViewClip.ClipIsFull()) return;
 
-  if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
+  if (w_update_clip_bsp && !ViewClip.ClipIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
     UpdateSubsector(0, bbox);
@@ -87,7 +91,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
     bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
+    if (w_update_clip_bsp && !ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
     UpdateBSPNode(bsp->children[side^1], bsp->bbox[side^1]);
   } else {
     // leaf node (subsector)
@@ -105,7 +109,7 @@ void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Ra
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   ViewClip.ClearClipNodes(vieworg, Level);
-  ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+  ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
   if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
 
   // update fake sectors

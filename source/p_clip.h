@@ -84,10 +84,26 @@ public:
   inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
   inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
+
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
-  void ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
-                              const TVec &viewright, const TVec &viewup,
+
+
+  void ClipResetFrustumPlanes (); // call this after setting up frustum to disable height clipping
+
+  // this is for the case when you already have direction vectors, to speed up things a little
+  void ClipInitFrustumPlanes (const TVec &viewforward, const TVec &viewright, const TVec &viewup,
                               const float fovx, const float fovy);
+
+  void ClipInitFrustumPlanes (const TAVec &viewangles, const float fovx, const float fovy);
+
+  // call this only on empty clipper (i.e. either new, or after calling `ClearClipNodes()`)
+  // this is for the case when you already have direction vectors, to speed up things a little
+  void ClipInitFrustumRange (const TAVec &viewangles, const TVec &viewforward,
+                             const TVec &viewright, const TVec &viewup,
+                             const float fovx, const float fovy);
+
+  void ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy);
+
 
   bool ClipIsFull () const;
 

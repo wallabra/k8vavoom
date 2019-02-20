@@ -49,6 +49,8 @@ static segpart_t *pspart;
 
 
 static VCvarB dbg_kdizd_water("dbg_kdizd_water", false, "KDIZD water hacks?", CVAR_Archive);
+extern VCvarB w_update_clip_bsp;
+extern VCvarB w_update_clip_region;
 
 
 //**************************************************************************
@@ -806,7 +808,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
 
   if (!seg->linedef) return; // miniseg
 
-  if (true /*ShouldClip*/) {
+  if (w_update_clip_region /*ShouldClip*/) {
     /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -1437,7 +1439,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/
   }
 
   if (region->next) {
-    if (true /*ClipSegs*/) {
+    if (w_update_clip_region /*ClipSegs*/) {
       if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub)) return;
     }
     UpdateSubRegion(region->next/*, ClipSegs*/);

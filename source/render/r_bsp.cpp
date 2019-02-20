@@ -758,7 +758,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 
     SetUpFrustumIndexes();
     ViewClip.ClearClipNodes(vieworg, Level);
-    ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+    ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
     if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
     memset(BspVis, 0, VisSize);
     memset(BspVisThing, 0, VisSize);
