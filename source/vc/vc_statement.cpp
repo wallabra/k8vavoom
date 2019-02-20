@@ -1807,6 +1807,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
       ivDone = edone->Resolve(ec);
       if (!ivDone) return false;
     } else {
+      delete edone;
       ivDone = nullptr;
     }
   }

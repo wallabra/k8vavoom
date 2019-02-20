@@ -703,8 +703,10 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
    */
 
   // create `XLevel.StateCall` access expression
-  VExpression *xlvl = new VSingleName("XLevel", Loc);
-  xstc = new VDotField(xlvl->SyntaxCopy(), "StateCall", Loc);
+  {
+    VExpression *xlvl = new VSingleName("XLevel", Loc);
+    xstc = new VDotField(xlvl, "StateCall", Loc);
+  }
   // XLevel.StateCall->Result
   VExpression *xres = new VPointerField(xstc->SyntaxCopy(), "Result", Loc);
   // XLevel.StateCall->Result = false
