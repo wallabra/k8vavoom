@@ -384,7 +384,7 @@ public:
   TVec origin;
   TAVec angles;
   TVec vforward, vright, vup;
-  unsigned bindex[6][3];
+  unsigned bindex[6][6];
 
 public:
   TFrustum () : planeCount(0) {}
