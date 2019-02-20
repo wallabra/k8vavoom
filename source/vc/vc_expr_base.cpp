@@ -24,8 +24,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//#define VCC_DEBUG_COMPILER_LEAKS
-//#define VCC_DEBUG_COMPILER_LEAKS_CHECKS
+#ifndef IN_VCC
+//# define VCC_DEBUG_COMPILER_LEAKS
+//# define VCC_DEBUG_COMPILER_LEAKS_CHECKS
+#endif
 
 #include "vc_local.h"
 
@@ -81,13 +83,13 @@ static void DumpAllocs () {
 
 
 void VExpression::ReportLeaks () {
-  fprintf(stderr, "================================= LEAKS =================================\n");
+  GLog.WriteLine("================================= LEAKS =================================");
   for (MemInfo *mi = allocInfoHead; mi; mi = mi->next) {
-    fprintf(stderr, "address: %p\n", mi->ptr);
+    GLog.WriteLine("address: %p", mi->ptr);
     auto e = (VExpression *)mi->ptr;
-    fprintf(stderr, "  type: %s (loc: %s:%d)\n", *shitppTypeNameObj(*e), *e->Loc.GetSource(), e->Loc.GetLine());
+    GLog.WriteLine("  type: %s (loc: %s:%d)", *shitppTypeNameObj(*e), *e->Loc.GetSource(), e->Loc.GetLine());
   }
-  fprintf(stderr, "---\n");
+  GLog.WriteLine("---");
 }
 
 

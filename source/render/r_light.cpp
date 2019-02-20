@@ -266,7 +266,6 @@ void VRenderLevelShared::DecayLights (float time) {
 }
 
 
-
 //==========================================================================
 //
 //  VRenderLevelShared::RemoveOwnedLight
