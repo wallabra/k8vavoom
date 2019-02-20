@@ -285,6 +285,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
     VStr fn = getArchiveName().ExtractFileBaseName();
     doReports =
       fn != "doom.wad" &&
+      fn != "doomu.wad" &&
       fn != "doom2.wad" &&
       fn != "tnt.wad" &&
       fn != "plutonia.wad" &&
