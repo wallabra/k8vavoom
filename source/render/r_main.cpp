@@ -436,6 +436,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , AllocatedSegParts(nullptr)
   , cacheframecount(0)
   , showCreateWorldSurfProgress(false)
+  , updateWorldCheckVisFrame(false)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 

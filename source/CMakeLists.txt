@@ -127,6 +127,7 @@ set(RENDERBASE_SOURCES
   render/r_surf_reg.cpp
   render/r_things.cpp
   render/r_things_adv.cpp
+  render/r_updateworld.cpp
 )
 
 #---------------------------------------

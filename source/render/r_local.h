@@ -377,9 +377,15 @@ protected:
 
   bool showCreateWorldSurfProgress;
 
+  bool updateWorldCheckVisFrame; // `true` for regular, `false` for advanced
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
+
+  void UpdateSubsector (int num, float *bbox);
+  void UpdateBSPNode (int bspnum, float *bbox);
+  void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
 
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
   virtual void PushDlights () = 0;
@@ -560,10 +566,6 @@ protected:
   virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*) override;
   virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*) override;
 
-  void UpdateSubsector (int, float*);
-  void UpdateBSPNode (int, float*);
-  void UpdateWorld (const refdef_t*, const VViewClipper*);
-
   // light methods
   static void CalcMinMaxs (surface_t *surf);
   float CastRay (const TVec &p1, const TVec &p2, float squaredist);
@@ -616,9 +618,6 @@ protected:
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
   virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*) override;
   virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*) override;
-  void UpdateSubsector (int, float*);
-  void UpdateBSPNode (int, float*);
-  void UpdateWorld (const refdef_t*, const VViewClipper*);
 
   // light methods
   virtual void PushDlights () override;
