@@ -378,6 +378,7 @@ static bool SightTraverse (SightTraceInfo &Trace, const intercept_t *in) {
   line_t *li = in->line;
   int s1 = li->PointOnSide2(Trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? li->frontsector : li->backsector);
+  //sector_t *front = (li->PointOnSideFri(Trace.Start) ? li->frontsector : li->backsector);
   TVec hit_point = Trace.Start+in->frac*Trace.Delta;
   Trace.LineEnd = hit_point;
   if (!SightCheckPlanes(Trace, front)) return false;
