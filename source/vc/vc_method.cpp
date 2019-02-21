@@ -568,15 +568,9 @@ void VMethod::PostLoad () {
   if (builtinOpc < 0 && !NativeFunc && (Flags&FUNC_Native) != 0) {
     // default builtin
     NativeFunc = PF_Fixme;
-#if defined(VCC_STANDALONE_EXECUTOR)
     // don't abort with error, because it will be done, when this
     // function will be called (if it will be called)
-    fprintf(stderr, "*** WARNING: Builtin `%s` not found!\n", *GetFullName());
-#elif defined(CLIENT) && defined(SERVER)
-    // don't abort with error, because it will be done, when this
-    // function will be called (if it will be called)
-    GCon->Logf(NAME_Dev, "WARNING: Builtin `%s` not found!", *GetFullName());
-#endif
+    GLog.Logf(NAME_Dev, "WARNING: Builtin `%s` not found!", *GetFullName());
   }
 #endif
 

@@ -52,7 +52,7 @@ static TMapNC<vint32, vint32> GMobj2Arr; // key: doomedidx, value: index in GMob
 static TMapNC<vint32, vint32> GSId2Arr; // key: doomedidx, value: index in GScriptIds
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 struct XXMInfo {
   int idx;
   mobjinfo_t nfo;
@@ -220,8 +220,8 @@ VClass::~VClass () {
     if (Prev) {
       Prev->LinkNext = LinkNext;
     } else {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      GCon->Log(NAME_Dev, "VClass Unlink: Class not in list");
+#if !defined(IN_VCC)
+      GLog.Log(NAME_Dev, "VClass Unlink: Class not in list");
 #endif
     }
   }
@@ -1134,8 +1134,8 @@ bool VClass::Define () {
         ParentClass->DefinedAsDependency = true;
         if (!xdres) return false;
       }
-#if !defined(IN_VCC)
-      if (developer) GCon->Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+      if (developer) GLog.Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
 #endif
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
@@ -1308,7 +1308,7 @@ bool VClass::DecorateDefine () {
 //
 //==========================================================================
 void VClass::StaticDumpMObjInfo () {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
   guard(VClass::StaticDumpMObjInfo);
   TArray<XXMInfo> list;
   for (int f = 0; f < GMobjInfos.length(); ++f) {
@@ -1317,18 +1317,18 @@ void VClass::StaticDumpMObjInfo () {
     xn.nfo = GMobjInfos[f];
   }
   timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
-  GCon->Log("=== DOOMED ===");
+  GLog.Log("=== DOOMED ===");
   for (int f = 0; f < list.length(); ++f) {
     mobjinfo_t *nfo = &list[f].nfo;
-    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+    GLog.Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
-  GCon->Log(" ------");
+  GLog.Log(" ------");
   for (auto it = GMobj2Arr.first(); it; ++it) {
-    GCon->Logf("  ..[DOOMED:%d]..", it.getKey());
+    GLog.Logf("  ..[DOOMED:%d]..", it.getKey());
     int link = it.getValue();
     while (link != -1) {
       mobjinfo_t *nfo = &GMobjInfos[link];
-      GCon->Logf("    #%5d: %5d: '%s'; flags:0x%02x; filter:0x%04x", link, nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+      GLog.Logf("    #%5d: %5d: '%s'; flags:0x%02x; filter:0x%04x", link, nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
       link = nfo->nextidx;
     }
   }
@@ -1343,7 +1343,7 @@ void VClass::StaticDumpMObjInfo () {
 //
 //==========================================================================
 void VClass::StaticDumpScriptIds () {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
   guard(VClass::StaticDumpScriptIds);
   TArray<XXMInfo> list;
   for (int f = 0; f < GScriptIds.length(); ++f) {
@@ -1352,10 +1352,10 @@ void VClass::StaticDumpScriptIds () {
     xn.nfo = GScriptIds[f];
   }
   timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
-  GCon->Logf("=== SCRIPTID ===");
+  GLog.Logf("=== SCRIPTID ===");
   for (int f = 0; f < list.length(); ++f) {
     mobjinfo_t *nfo = &list[f].nfo;
-    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+    GLog.Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
   unguard;
 #endif
@@ -2322,20 +2322,20 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   guard(VClass::CopyObject);
   // copy parent class fields
   if (GetSuperClass()) {
-    //GCon->Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')...", GetName(), GetSuperClass()->GetName());
+    //GLog.Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')...", GetName(), GetSuperClass()->GetName());
     GetSuperClass()->CopyObject(Src, Dst);
   }
   // copy fields
-  //GCon->Logf(NAME_Dev, "COPYING fields of `%s`...", GetName());
+  //GLog.Logf(NAME_Dev, "COPYING fields of `%s`...", GetName());
   for (VField *F = Fields; F; F = F->Next) {
     if (F->Flags&FIELD_Internal) {
       //fprintf(stderr, "skipping field '%s' of `%s`... (ofs=%d, type=%s)\n", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
       continue;
     }
-    //GCon->Logf(NAME_Dev, "  COPYING field '%s' of `%s`... (ofs=%d, type=%s)", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
+    //GLog.Logf(NAME_Dev, "  COPYING field '%s' of `%s`... (ofs=%d, type=%s)", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
     VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
   }
-  //GCon->Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
+  //GLog.Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
   unguardf(("(%s)", GetName()));
 }
 

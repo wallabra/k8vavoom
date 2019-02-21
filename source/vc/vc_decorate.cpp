@@ -198,7 +198,7 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
 
   if (doOldRepl) {
     if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
-      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      GLog.Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
       return;
     }
     // old Vavoom method
@@ -206,27 +206,27 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
     newcls->Replacee = oldcls;
   } else {
     if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
-      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      GLog.Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
       return;
     }
     VClass *repl = oldcls->GetReplacement();
     if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(repl)) {
-      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      GLog.Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
       return;
     }
     check(repl);
     auto orpp = currFileRepls.find(oldcls);
     if (orpp) {
-      //GCon->Logf("*** duplicate replacement of '%s' with '%s' (current is '%s')", *oldcls->GetFullName(), *newcls->GetFullName(), *repl->GetFullName());
-      GCon->Logf(NAME_Warning, "DECORATE error: already replaced class '%s' replaced again with '%s' (current replacement is '%s')", oldcls->GetName(), newcls->GetName(), repl->GetName());
-      GCon->Logf(NAME_Warning, "  current replacement is at %s", *repl->Loc.toStringNoCol());
-      GCon->Logf(NAME_Warning, "  new replacement is at %s", *newcls->Loc.toStringNoCol());
-      GCon->Log(NAME_Warning, "  PLEASE, FIX THE CODE!");
+      //GLog.Logf("*** duplicate replacement of '%s' with '%s' (current is '%s')", *oldcls->GetFullName(), *newcls->GetFullName(), *repl->GetFullName());
+      GLog.Logf(NAME_Warning, "DECORATE error: already replaced class '%s' replaced again with '%s' (current replacement is '%s')", oldcls->GetName(), newcls->GetName(), repl->GetName());
+      GLog.Logf(NAME_Warning, "  current replacement is at %s", *repl->Loc.toStringNoCol());
+      GLog.Logf(NAME_Warning, "  new replacement is at %s", *newcls->Loc.toStringNoCol());
+      GLog.Log(NAME_Warning, "  PLEASE, FIX THE CODE!");
       repl = oldcls;
     } else {
       // first occurence
       //VClass *repl = oldcls->GetReplacement();
-      //GCon->Logf("*** first replacement of '%s' with '%s' (wanted '%s')", *repl->GetFullName(), *newcls->GetFullName(), *oldcls->GetFullName());
+      //GLog.Logf("*** first replacement of '%s' with '%s' (wanted '%s')", *repl->GetFullName(), *newcls->GetFullName(), *oldcls->GetFullName());
       currFileRepls.put(oldcls, true);
     }
     if (repl != newcls) {
@@ -986,7 +986,7 @@ static void ParseActionDef (VScriptParser *sc, VClass *Class) {
     //k8: engine is capable of calling non-void methods, why
     //sc->Error(va("State action %s doesn't return void", *sc->String));
   }
-  //GCon->Logf("***: <%s> -> <%s>", *sc->String, *sc->String.ToLower());
+  //GLog.Logf("***: <%s> -> <%s>", *sc->String, *sc->String.ToLower());
   VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
   A.Name = *sc->String.ToLower();
   A.Method = M;
@@ -1014,7 +1014,7 @@ static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
   VMethod *M = Class->FindMethod(va("decorate_%s", *oldname));
   if (!M) M = Class->FindMethod(*oldname);
   if (!M) sc->Error(va("Method `%s` not found in class `%s`", *oldname, Class->GetName()));
-  //GCon->Logf("***ALIAS: <%s> -> <%s>", *newname, *oldname);
+  //GLog.Logf("***ALIAS: <%s> -> <%s>", *newname, *oldname);
   VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
   A.Name = *newname.ToLower();
   A.Method = M;
@@ -1084,7 +1084,7 @@ static void ParseEnum (VScriptParser *sc) {
   guard(ParseEnum);
 
   sc->SetCMode(true);
-  //GCon->Logf("Enum");
+  //GLog.Logf("Enum");
   if (!sc->Check("{")) {
     sc->ExpectIdentifier();
     sc->Expect("{");
@@ -1152,7 +1152,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -1167,7 +1167,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     sc->Error(va("Unknown flag \"%s\"", *FlagName));
     return false;
   }
-  GCon->Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
+  GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
   return true;
   unguard;
 }
@@ -1669,7 +1669,7 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
     sc->Expect(";");
   }
 
-  //if (uvars.length()) for (int f = 0; f < uvars.length(); ++f) GCon->Logf("DC: <%s>", *uvars[f]);
+  //if (uvars.length()) for (int f = 0; f < uvars.length(); ++f) GLog.Logf("DC: <%s>", *uvars[f]);
 }
 
 
@@ -1709,7 +1709,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   VClass *DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
   if (DupCheck != nullptr && DupCheck->MemberType == MEMBER_Class) {
-    GCon->Logf(NAME_Warning, "%s: Redeclared class `%s` (old at %s)", *cstloc.toStringNoCol(), *NameStr, *DupCheck->Loc.toStringNoCol());
+    GLog.Logf(NAME_Warning, "%s: Redeclared class `%s` (old at %s)", *cstloc.toStringNoCol(), *NameStr, *DupCheck->Loc.toStringNoCol());
   }
 
   if (ColonPos < 0) {
@@ -1767,7 +1767,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   TArray<VDecorateUserVarDef> uvars;
   {
-    //GCon->Logf("*: '%s'", *NameStr);
+    //GLog.Logf("*: '%s'", *NameStr);
     auto sc2 = sc->clone();
     ScanActorDefForUserVars(sc2, uvars);
     delete sc2;
@@ -1907,7 +1907,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -1919,7 +1919,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               //sc->SetCMode(oldcm);
-              if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -1933,7 +1933,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_FloatUnsupported:
             //FIXME
             sc->ExpectFloatWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
@@ -1986,7 +1986,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
@@ -1996,7 +1996,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             sc->ExpectNumberWithSign();
             P.Field->SetInt(DefObj, sc->Number);
             if (sc->Check(",")) {
-              GCon->Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              GLog.Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               for (;;) {
                 sc->ExpectNumberWithSign();
                 if (!sc->Check(",")) break;
@@ -2009,9 +2009,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             sc->ExpectString();
             /*
             if (!sc->String.toLowerCase().StartsWith("power")) {
-              GCon->Logf("*** POWERUP TYPE(0): <%s>", *sc->String);
+              GLog.Logf("*** POWERUP TYPE(0): <%s>", *sc->String);
             } else {
-              GCon->Logf("*** POWERUP TYPE(1): <%s>", *(P.CPrefix+sc->String));
+              GLog.Logf("*** POWERUP TYPE(1): <%s>", *(P.CPrefix+sc->String));
             }
             AddClassFixup(Class, P.Field, sc->String.StartsWith("Power") || sc->String.StartsWith("power") ?
                 sc->String : P.CPrefix+sc->String, ClassFixups);
@@ -2040,7 +2040,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             } else {
               sc->ExpectString();
               if (sc->String.length() != 0) sc->Error("'spawnid' should be a number!");
-              GCon->Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
+              GLog.Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
               SpawnNum = 0;
             }
             break;
@@ -2161,10 +2161,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
               else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
               else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
-              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Translucent; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Fuzzy; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Translucent; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Fuzzy; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
             }
@@ -2178,7 +2178,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_BloodColour:
             {
               vuint32 Col;
-              //GCon->Logf("********** <%s>", *sc->String);
+              //GLog.Logf("********** <%s>", *sc->String);
               if (sc->CheckNumber()) {
                 int r = MID(0, sc->Number, 255);
                 sc->Check(",");
@@ -2189,7 +2189,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 int b = MID(0, sc->Number, 255);
                 Col = 0xff000000|(r<<16)|(g<<8)|b;
               } else {
-                //GCon->Logf("********** <%s>", *sc->String);
+                //GLog.Logf("********** <%s>", *sc->String);
                 sc->ExpectString();
                 if (sc->String.length()) {
                   Col = M_ParseColour(sc->String);
@@ -2504,7 +2504,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               sc->ExpectNumber();
               int sidx = sc->Number;
               if (!VWeaponSlotFixups::isValidSlot(sidx)) {
-                GCon->Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
+                GLog.Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
                 while (sc->Check(",")) sc->ExpectString();
               } else {
                 VWeaponSlotFixups &wst = allocWeaponSlotsFor(newWSlots, Class);
@@ -2540,7 +2540,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_SkipLineUnsupported:
             {
-              if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               sc->SkipLine();
             }
             break;
@@ -2555,7 +2555,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
-      GCon->Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
+      GLog.Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
     sc->SkipLine();
   }
@@ -2578,7 +2578,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   if (DoomEdNum > 0) {
     /*mobjinfo_t *nfo =*/ VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any), Class);
     //if (nfo) nfo->Class = Class;
-    //GCon->Logf("DECORATE: DoomEdNum #%d assigned to '%s'", DoomEdNum, *Class->GetFullName());
+    //GLog.Logf("DECORATE: DoomEdNum #%d assigned to '%s'", DoomEdNum, *Class->GetFullName());
     //VMemberBase::StaticDumpMObjInfo();
   }
 
@@ -2595,7 +2595,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       Class->Replacee = ReplaceeClass;
     } else {
       VClass *repl = ReplaceeClass->GetReplacement();
-      if (developer && repl != ReplaceeClass) GCon->Logf(NAME_Dev, "class `%s` replaces `%s` (original requiest is `%s`)", Class->GetName(), repl->GetName(), ReplaceeClass->GetName());
+      if (developer && repl != ReplaceeClass) GLog.Logf(NAME_Dev, "class `%s` replaces `%s` (original requiest is `%s`)", Class->GetName(), repl->GetName(), ReplaceeClass->GetName());
       repl->Replacement = Class;
       Class->Replacee = repl;
     }
@@ -2901,7 +2901,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       if (decorate_fail_on_unknown) {
         Sys_Error("Unknown property '%s'", *sc->String);
       } else {
-        GCon->Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
+        GLog.Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
       }
       sc->SkipLine();
       continue;
@@ -3020,7 +3020,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 //
 //==========================================================================
 static void ParseDamageType (VScriptParser *sc) {
-  GCon->Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
+  GLog.Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
   sc->SkipBracketed();
 }
 
@@ -3034,7 +3034,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
   guard(ParseDecorate);
   while (!sc->AtEnd()) {
     if (sc->Check("#region") || sc->Check("#endregion")) {
-      //GCon->Logf(NAME_Warning, "REGION: crossed=%d", (sc->Crossed ? 1 : 0));
+      //GLog.Logf(NAME_Warning, "REGION: crossed=%d", (sc->Crossed ? 1 : 0));
       sc->SkipLine();
       continue;
     }
@@ -3121,14 +3121,14 @@ void ReadLineSpecialInfos () {
 /*
 static void dumpFieldDefs (VClass *cls) {
   if (!cls || !cls->Fields) return;
-  GCon->Logf("=== CLASS:%s ===", cls->GetName());
+  GLog.Logf("=== CLASS:%s ===", cls->GetName());
   for (VField *fi = cls->Fields; fi; fi = fi->Next) {
     if (fi->Type.Type == TYPE_Int) {
-      GCon->Logf("  %s: %d v=%d", fi->GetName(), fi->Ofs, *(vint32 *)(cls->Defaults+fi->Ofs));
+      GLog.Logf("  %s: %d v=%d", fi->GetName(), fi->Ofs, *(vint32 *)(cls->Defaults+fi->Ofs));
     } else if (fi->Type.Type == TYPE_Float) {
-      GCon->Logf("  %s: %d v=%f", fi->GetName(), fi->Ofs, *(float *)(cls->Defaults+fi->Ofs));
+      GLog.Logf("  %s: %d v=%f", fi->GetName(), fi->Ofs, *(float *)(cls->Defaults+fi->Ofs));
     } else {
-      GCon->Logf("  %s: %d", fi->GetName(), fi->Ofs);
+      GLog.Logf("  %s: %d", fi->GetName(), fi->Ofs);
     }
   }
 }
@@ -3151,7 +3151,7 @@ void ProcessDecorateScripts () {
   if (!disableBloodReplaces && fsys_DisableBloodReplacement) disableBloodReplaces = true;
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
-    GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
+    GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
     VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), Strm);
@@ -3171,7 +3171,7 @@ void ProcessDecorateScripts () {
       VStr fname = VStr(GArgs[fp]);
       if (Sys_FileExists(fname)) {
         VStream *Strm = FL_OpenSysFileRead(fname);
-        GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
+        GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
         check(Strm);
         VScriptParser *sc = new VScriptParser(fname, Strm);
         while (sc->GetString()) {
@@ -3197,9 +3197,9 @@ void ProcessDecorateScripts () {
     }
   }
 
-  GCon->Logf(NAME_Init, "Parsing DECORATE definition files");
+  GLog.Logf(NAME_Init, "Parsing DECORATE definition files");
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
-    //GCon->Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
+    //GLog.Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
     VXmlDocument *Doc = new VXmlDocument();
@@ -3209,7 +3209,7 @@ void ProcessDecorateScripts () {
     delete Doc;
   }
 
-  GCon->Logf(NAME_Init, "Processing DECORATE scripts");
+  GLog.Logf(NAME_Init, "Processing DECORATE scripts");
 
   DecPkg = new VPackage(NAME_decorate);
 
@@ -3243,10 +3243,10 @@ void ProcessDecorateScripts () {
   TArray<VWeaponSlotFixups> newWSlots;
   int lastDecoFile = -1;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    //GCon->Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
+    //GLog.Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
-      GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
+      GLog.Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
       if (lastDecoFile != W_LumpFile(Lump)) {
         lastDecoFile = W_LumpFile(Lump);
         ResetReplacementBase();
@@ -3264,17 +3264,17 @@ void ProcessDecorateScripts () {
   // make sure all import classes were defined
   if (VMemberBase::GDecorateClassImports.Num()) {
     for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
-      GCon->Logf(NAME_Warning, "Undefined DECORATE class `%s`", VMemberBase::GDecorateClassImports[i]->GetName());
+      GLog.Logf(NAME_Warning, "Undefined DECORATE class `%s`", VMemberBase::GDecorateClassImports[i]->GetName());
     }
     Sys_Error("Not all DECORATE class imports were defined");
   }
 
-  GCon->Logf(NAME_Init, "Post-procesing");
+  GLog.Logf(NAME_Init, "Post-procesing");
   //VMemberBase::StaticDumpMObjInfo();
 
   /*k8: not yet
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Defining Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+    if (GArgs.CheckParm("-debug_decorate")) GLog.Logf("Defining Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
     if (!DecPkg->ParsedClasses[i]->DecorateDefine()) Sys_Error("DECORATE ERROR: cannot define class '%s'", *DecPkg->ParsedClasses[i]->GetFullName());
   }
   */
@@ -3285,7 +3285,7 @@ void ProcessDecorateScripts () {
     VClassFixup &CF = ClassFixups[i];
     if (!CF.ReqParent) Sys_Error("Invalid decorate class fixup (no parent); class is '%s', offset is %d, name is '%s'", (CF.Class ? *CF.Class->GetFullName() : "None"), CF.Offset, *CF.Name);
     check(CF.ReqParent);
-    //GCon->Logf("*** FIXUP (class='%s'; name='%s'; ofs=%d)", CF.Class->GetName(), *CF.Name, CF.Offset);
+    //GLog.Logf("*** FIXUP (class='%s'; name='%s'; ofs=%d)", CF.Class->GetName(), *CF.Name, CF.Offset);
     if (CF.Name.length() == 0 || CF.Name.ICmp("None") == 0) {
       *(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
     } else {
@@ -3299,7 +3299,7 @@ void ProcessDecorateScripts () {
           if (!powerfixReported.find(pwfix)) {
             powerfixReported.put(pwfix, true);
             if (GArgs.CheckParm("-Wdecorate-powerup-rename") || GArgs.CheckParm("-Wall")) {
-              GCon->Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
+              GLog.Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
             }
           }
         }
@@ -3308,14 +3308,14 @@ void ProcessDecorateScripts () {
       if (!C) {
         if (dbg_show_missing_classes || CF.PowerPrefix.length() != 0) {
           if (CF.PowerPrefix.length() != 0) {
-            GCon->Logf(NAME_Warning, "DECORATE: No such powerup class `%s`", *CF.Name);
+            GLog.Logf(NAME_Warning, "DECORATE: No such powerup class `%s`", *CF.Name);
           } else {
-            GCon->Logf(NAME_Warning, "DECORATE: No such class `%s`", *CF.Name);
+            GLog.Logf(NAME_Warning, "DECORATE: No such class `%s`", *CF.Name);
           }
         }
         //*(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
       } else if (!C->IsChildOf(CF.ReqParent)) {
-        GCon->Logf(NAME_Warning, "DECORATE: Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
+        GLog.Logf(NAME_Warning, "DECORATE: Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
       } else {
         *(VClass **)(CF.Class->Defaults+CF.Offset) = C;
       }
@@ -3329,8 +3329,8 @@ void ProcessDecorateScripts () {
       VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
       VClass *C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) { if (dbg_show_missing_classes) GCon->Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
-      else if (!C->IsChildOf(ActorClass)) GCon->Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
+           if (!C) { if (dbg_show_missing_classes) GLog.Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
+      else if (!C->IsChildOf(ActorClass)) GLog.Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
       else DI.Type = C;
     }
   }
@@ -3346,7 +3346,7 @@ void ProcessDecorateScripts () {
       VClass *pawnBase = pawn;
       while (pawnBase && VStr::Cmp(pawnBase->GetName(), "PlayerPawn") != 0) pawnBase = pawnBase->GetSuperClass();
       if (!pawnBase) {
-        GCon->Logf(NAME_Warning, "`%s` is not a player pawn class, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
+        GLog.Logf(NAME_Warning, "`%s` is not a player pawn class, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
         continue;
       }
       VField *fldList = pawn->FindFieldChecked(VName("weaponSlotClasses"));
@@ -3362,12 +3362,12 @@ void ProcessDecorateScripts () {
             VStr lcn = VStr(*cn).toLowerCase();
             wc = VClass::FindClassLowerCase(*lcn);
             if (!wc) {
-              GCon->Logf(NAME_Warning, "unknown weapon class '%s'", *cn);
+              GLog.Logf(NAME_Warning, "unknown weapon class '%s'", *cn);
             } else if (!wc->IsChildOf(wpnbase)) {
-              GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn);
+              GLog.Logf(NAME_Warning, "class '%s' is not a weapon", *cn);
               wc = nullptr;
             } else {
-              if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: class '%s', slot #%d, weapon #%d set to '%s'", pawn->GetName(), sidx, widx, *wc->GetFullName());
+              if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GLog.Logf(NAME_Init, "DECORATE: class '%s', slot #%d, weapon #%d set to '%s'", pawn->GetName(), sidx, widx, *wc->GetFullName());
             }
           }
           wsarr[widx] = wc;
@@ -3378,14 +3378,14 @@ void ProcessDecorateScripts () {
 
   // emit code
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Emiting Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+    if (GArgs.CheckParm("-debug_decorate")) GLog.Logf("Emiting Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     DecPkg->ParsedClasses[i]->DecorateEmit();
   }
 
   // compile and set up for execution
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Compiling Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+    if (GArgs.CheckParm("-debug_decorate")) GLog.Logf("Compiling Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     DecPkg->ParsedClasses[i]->DecoratePostLoad();
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
@@ -3432,7 +3432,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
   }
 
   //if (VStr::ICmp(*FlagName, "noblockmap") == 0) return false; // cannot change it
-  //GCon->Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
+  //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
   //return false;
 
   for (int j = 0; j < FlagList.Num(); ++j) {
@@ -3442,12 +3442,12 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];
       if (FlagName == F.Name) {
-        //GCon->Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
+        //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
         UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
         bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
@@ -3467,7 +3467,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       }
     }
   }
-  GCon->Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
+  GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
   unguard;
 }
@@ -3498,7 +3498,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: return F.Field->GetBool(this);
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
           case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
@@ -3509,7 +3509,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       }
     }
   }
-  GCon->Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
+  GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
   unguard;
 }
@@ -3541,11 +3541,11 @@ static const char *comatoze (vuint32 n) {
 //==========================================================================
 void CompilerReportMemory () {
   if (GArgs.CheckParm("-compiler") != 0 || GArgs.CheckParm("-c") != 0) {
-    //GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
-    GCon->Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
-    GCon->Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
+    //GLog.Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
+    GLog.Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
+    GLog.Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
     if (VExpression::CurrMemoryUsed != 0) {
-      GCon->Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
+      GLog.Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
       VExpression::ReportLeaks();
     }
   }

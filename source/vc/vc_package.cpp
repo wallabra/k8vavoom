@@ -794,7 +794,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
   if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
-        GCon->Logf("WARNING! package `engine` has hidden class `%s` (this is harmless)", *Cls->Name);
+        GLog.Logf(NAME_Warning, "package `engine` has hidden class `%s` (this is harmless)", *Cls->Name);
         Cls->PostLoad();
         Cls->CreateDefaults();
         Cls->Outer = this;

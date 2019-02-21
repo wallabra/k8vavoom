@@ -171,9 +171,9 @@ static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...)
   char *res = vavarg(fmt, ap);
   va_end(ap);
   if (!dehFileName.isEmpty()) {
-    GCon->Logf(NAME_Warning, "%s:%d: %s", *dehFileName, dehCurrLine, res);
+    GLog.Logf(NAME_Warning, "%s:%d: %s", *dehFileName, dehCurrLine, res);
   } else {
-    GCon->Logf(NAME_Warning, "DEHACKED: %s", res);
+    GLog.Logf(NAME_Warning, "DEHACKED: %s", res);
   }
 }
 
@@ -1102,7 +1102,7 @@ static void ReadPars (int) {
     TArray<VStr> cmda;
     VStr line = VStr(String);
     line.splitOnBlanks(cmda);
-    //GCon->Logf(":::<%s>\n=== len: %d", *line, cmda.length()); for (int f = 0; f < cmda.length(); ++f) GCon->Logf("  %d: <%s>", f, *cmda[f]);
+    //GLog.Logf(":::<%s>\n=== len: %d", *line, cmda.length()); for (int f = 0; f < cmda.length(); ++f) GLog.Logf("  %d: <%s>", f, *cmda[f]);
     if (cmda.length() < 1) return;
     if (cmda[0].ICmp("par") != 0) return;
     if (cmda.length() < 3 || cmda.length() > 4) {
@@ -1603,14 +1603,14 @@ void ProcessDehackedFiles () {
   // parse dehacked patches
   if (LumpNum >= 0) {
     dehFileName = W_FullLumpName(LumpNum);
-    GCon->Logf(NAME_Init, "Processing dehacked patch lump: %s", *dehFileName);
+    GLog.Logf(NAME_Init, "Processing dehacked patch lump: %s", *dehFileName);
     LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
   }
   if (p) {
     while (++p != GArgs.Count() && GArgs[p][0] != '-') {
-      GCon->Logf(NAME_Init, "Processing dehacked patch '%s'", GArgs[p]);
+      GLog.Logf(NAME_Init, "Processing dehacked patch '%s'", GArgs[p]);
       VStream *AStrm = FL_OpenSysFileRead(GArgs[p]);
-      if (!AStrm) { GCon->Logf(NAME_Init, "No dehacked file '%s'", GArgs[p]); continue; }
+      if (!AStrm) { GLog.Logf(NAME_Init, "No dehacked file '%s'", GArgs[p]); continue; }
       dehFileName = GArgs[p];
       LoadDehackedFile(AStrm);
     }

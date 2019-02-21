@@ -79,8 +79,8 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
   va_start(argPtr, text);
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf(NAME_Warning, "%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+#if !defined(IN_VCC)
+  GLog.Logf(NAME_Warning, "%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #else
   fprintf(stderr, "%s: warning: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #endif
@@ -103,8 +103,8 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   va_start(argPtr, text);
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf(NAME_Error, "%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+#if !defined(IN_VCC)
+  GLog.Logf(NAME_Error, "%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #else
   fprintf(stderr, "%s: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #endif

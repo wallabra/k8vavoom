@@ -526,7 +526,7 @@ static VExpression *ParseExpressionPriority7 (VScriptParser *sc) {
       VExpression *op2 = ParseExpressionPriority6(sc);
       op1 = new VBinary(VBinary::NotEquals, op1, op2, l);
     } else if (sc->Check("=")) {
-      GCon->Logf(NAME_Warning, "%s: hey, dumbhead, use `==` for comparisons!", *sc->GetLoc().toStringNoCol());
+      GLog.Logf(NAME_Warning, "%s: hey, dumbhead, use `==` for comparisons!", *sc->GetLoc().toStringNoCol());
       VExpression *op2 = ParseExpressionPriority6(sc);
       op1 = new VBinary(VBinary::NotEquals, op1, op2, l);
     } else {
@@ -711,7 +711,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       sc->Expect("=");
     } else if (sc->Check("=")) {
       dest = new VDecorateSingleName(FuncName, stloc);
-      //GCon->Logf("ASS to '%s'...", *FuncName);
+      //GLog.Logf("ASS to '%s'...", *FuncName);
     }
     if (dest) {
       // we're supporting assign to array element or simple names
@@ -738,7 +738,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
 
     VExpression *callExpr = nullptr;
     if (!Func) {
-      //GCon->Logf("ERROR000: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+      //GLog.Logf("ERROR000: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
       //return nullptr;
       callExpr = new VDecorateInvocation(VName(*FuncName/*, VName::AddLower*/), stloc, NumArgs, Args);
     } else {
@@ -964,7 +964,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
       Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
       //fprintf(stderr, "<%s>\n", *FuncNameLower);
       if (!Func) {
-        GCon->Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+        GLog.Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
         // if function is not found, it means something is wrong
         // in that case we need to free argument expressions
         for (int i = 0; i < NumArgs; ++i) {

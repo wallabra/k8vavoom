@@ -154,12 +154,12 @@ void VMemberBase::PutToNameHash (VMemberBase *self) {
 //
 //==========================================================================
 void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensitive) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("=== CASE-%sSENSITIVE NAME MAP ===", (caseSensitive ? "" : "IN"));
+#if !defined(IN_VCC)
+  GLog.Logf("=== CASE-%sSENSITIVE NAME MAP ===", (caseSensitive ? "" : "IN"));
   for (auto it = map.first(); it; ++it) {
-    GCon->Logf(" --- <%s>", *it.getKey());
+    GLog.Logf(" --- <%s>", *it.getKey());
     for (VMemberBase *m = it.getValue(); m; m = (caseSensitive ? m->HashNext : m->HashNextLC)) {
-      GCon->Logf("  <%s> : <%s>", *m->Name, *m->GetFullName());
+      GLog.Logf("  <%s> : <%s>", *m->Name, *m->GetFullName());
     }
   }
 #endif
@@ -172,7 +172,7 @@ void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensi
 //
 //==========================================================================
 void VMemberBase::DumpNameMaps () {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
   if (!GArgs.CheckParm("-dev-dump-name-tables")) return;
   DumpNameMap(gMembersMap, true);
   DumpNameMap(gMembersMapLC, false);
