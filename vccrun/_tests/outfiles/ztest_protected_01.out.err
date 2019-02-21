@@ -1,2 +1,2 @@
-ztest_protected_01.vc:18: Field `n` is protected
+Error: ztest_protected_01.vc:18: Field `n` is protected
 FATAL: Confused by previous errors, bailing out

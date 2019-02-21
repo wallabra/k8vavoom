@@ -1,2 +1,2 @@
-ztest_constparam_01.vc:15: Cannot assign to read-only destination
+Error: ztest_constparam_01.vc:15: Cannot assign to read-only destination
 FATAL: Confused by previous errors, bailing out

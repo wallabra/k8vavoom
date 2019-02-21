@@ -524,6 +524,9 @@ static int checkArg (VMethod *mmain) {
 int main (int argc, char **argv) {
   VFuncRes ret((int)0);
 
+  GLogErrorToStderr = true;
+  GLogWarningToStderr = true;
+
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
   PR_WriterCB = &vmWriter;

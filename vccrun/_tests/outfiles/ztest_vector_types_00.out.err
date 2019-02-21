@@ -1,2 +1,2 @@
-ztest_vector_types_00.vc:35: vector types `TVec` and `TAVec` are not compatible
+Error: ztest_vector_types_00.vc:35: vector types `TVec` and `TAVec` are not compatible
 FATAL: Confused by previous errors, bailing out
