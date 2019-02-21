@@ -1144,6 +1144,8 @@ final Weapon BestWeapon (optional class!Ammo AmmoType) {
     // must be a weapon
     Weapon Wpn = Weapon(Item);
     if (!Wpn) continue;
+    // never ever select rocket lanucher
+    if (Wpn.bBotProjectile) continue;
     // check if best one is better that this one
     if (Best && Wpn.SelectionOrder > Best.SelectionOrder) continue;
     // possibly limit to specific ammo type
