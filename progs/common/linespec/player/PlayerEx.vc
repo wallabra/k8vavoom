@@ -138,6 +138,9 @@ float FOV; // current Field Of Vision
 float DesiredFOV; // desired Field Of Vision
 
 bool /*[checkpoint]*/ k8ElvenGifted; // always set to `true` in checkpoints
+transient float k8BossesDetected = 666; // seconds; <0: waiting; 0: show message; >0: detected
+transient float k8ElvenGiftMessageTime = 666; // seconds; <0: waiting; 0: show message; >0: detected
+
 
 // Health Accumulator
 // if you want to show HA info in UI, replicate those vars
@@ -2373,6 +2376,63 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
       EntityEx(MO).Health = Health;
     }
   }
+
+  if (GetCvarB('k8ElvenGift')) {
+    k8BossesDetected = -0.5;
+  } else {
+    k8BossesDetected = 666;
+  }
+}
+
+
+//===========================================================================
+//
+//  PerformBossDetection
+//
+//  this is virtual, so mods can override it
+//
+//===========================================================================
+void PerformBossDetection () {
+  if (!MO) return;
+  // detect bosses
+  Actor act;
+  bool hasCybbie = false, hasMind = false;
+  foreach MO.AllThinkers(Actor, out act) {
+    class!Actor ec = class!Actor(act.Class);
+    while (ec) {
+      switch (GetClassName(ec)) {
+        case 'Cyberdemon': hasCybbie = true; break;
+        case 'SpiderMastermind': hasMind = true; break;
+      }
+      ec = class!Actor(GetClassParent(ec));
+    }
+    if (hasCybbie && hasMind) break; // just in case
+  }
+  string msg;
+       if (hasCybbie && hasMind) msg = "Cyberdemon and Mastermind detected!";
+  else if (hasCybbie) msg = "Cyberdemon detected!";
+  else if (hasMind) msg = "Mastermind detected!";
+  if (msg) {
+    print("\c[Red]*** %s ***", msg);
+    ClientHudMessage(msg, 'smallfont', HUDMsgType.FadeInOut|HUDMsgFlag.ColorString/*|HUDMsgFlag.Log*/, 123669, CR_UNDEFINED, "Green",
+      0.5, 0.5, 0, 0,
+      2.5, 0.5, 1.0);
+  }
+}
+
+
+//===========================================================================
+//
+//  ShowElvenGiftMessage
+//
+//  this is virtual, so mods can override it
+//
+//===========================================================================
+void ShowElvenGiftMessage () {
+  if (!MO) return;
+  ClientHudMessage("ELVEN GIFT", 'smallfont', HUDMsgType.FadeInOut, 123666, CR_ORANGE, "",
+    0.5, 0.45, 0, 0,
+    2.0, 0.4, 0.8);
 }
 
 
@@ -2385,14 +2445,15 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 //===========================================================================
 void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
   //print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
+  k8ElvenGiftMessageTime = 666;
   if (GetCvarB('k8ElvenGift')) {
     if (!Voodoo && !k8ElvenGifted) {
       k8ElvenGifted = true; // gifts should be given only once
-      if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
-      if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
-      ClientHudMessage("ELVEN GIFT", 'smallfont', HUDMsgType.FadeOut, 123666, CR_ORANGE, "",
-        0.5, 0.45, 0, 0,
-        2.0, 1.0, 0.0);
+      bool showMessage = false;
+      if (AddElvenGift('Shotgun')) { showMessage = true; AddElvenGift('ShellBox'); }
+      if (AddElvenGift('BDW_Rifle')) { showMessage = true; foreach (; 0..9) AddElvenGift('Clip'); }
+      print("\c[Green]%s", "Elven Gifts!");
+      if (showMessage) k8ElvenGiftMessageTime = -0.3;
     }
     // oops; change weapon, as voodoo doll was spawned
     if (Voodoo && k8ElvenGifted) {
@@ -2409,31 +2470,6 @@ void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
           }
         }
       }
-    }
-
-    // detect bosses
-    Actor act;
-    bool hasCybbie = false, hasMind = false;
-    foreach MO.AllThinkers(Actor, out act) {
-      class!Actor ec = class!Actor(act.Class);
-      while (ec) {
-        switch (GetClassName(ec)) {
-          case 'Cyberdemon': hasCybbie = true; break;
-          case 'SpiderMastermind': hasMind = true; break;
-        }
-        ec = class!Actor(GetClassParent(ec));
-      }
-      if (hasCybbie && hasMind) break; // just in case
-    }
-    string msg;
-         if (hasCybbie && hasMind) msg = "Cyberdemon and Mastermind detected!";
-    else if (hasCybbie) msg = "Cyberdemon detected!";
-    else if (hasMind) msg = "Mastermind detected!";
-    if (msg) {
-      print("\c[Red]*** %s ***", msg);
-      ClientHudMessage(msg, 'smallfont', HUDMsgType.FadeOut/*|HUDMsgFlag.Log*/, 123669, CR_UNDEFINED, "",
-        0.5, 0.5, 0, 0,
-        2.5, 1.0, 0.0);
     }
   }
 }
@@ -3091,6 +3127,22 @@ override void PlayerTick (float deltaTime) {
   if (PlayerState == PST_DEAD) {
     DeathPlayerTick(deltaTime);
     return;
+  }
+
+  if (k8ElvenGiftMessageTime <= 0) {
+    k8ElvenGiftMessageTime += deltaTime;
+    if (k8ElvenGiftMessageTime >= 0) {
+      k8ElvenGiftMessageTime = 666;
+      ShowElvenGiftMessage();
+    }
+  }
+
+  if (k8BossesDetected <= 0) {
+    k8BossesDetected += deltaTime;
+    if (k8BossesDetected >= 0) {
+      k8BossesDetected = 666;
+      PerformBossDetection();
+    }
   }
 
   // copy view angles
