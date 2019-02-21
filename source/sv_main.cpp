@@ -520,7 +520,7 @@ void SV_Ticker () {
     }
   }
 
-  if (sv_loading) {
+  if (sv_loading || sv.intermission) {
     GGameInfo->frametime = host_frametime;
     SV_RunClients();
   } else {
