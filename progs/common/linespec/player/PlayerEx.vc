@@ -2031,6 +2031,8 @@ override void SpawnClient () {
 
   // destroy all things touching players
   Actor(MO).TeleportMove(MO.Origin);
+
+  k8BossesDetected = (GetCvarB('k8ElvenGift') ? -0.5 : 666);
 }
 
 
@@ -2377,11 +2379,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     }
   }
 
-  if (GetCvarB('k8ElvenGift')) {
-    k8BossesDetected = -0.5;
-  } else {
-    k8BossesDetected = 666;
-  }
+  k8BossesDetected = (GetCvarB('k8ElvenGift') ? -0.5 : 666);
 }
 
 
