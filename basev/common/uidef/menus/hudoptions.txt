@@ -107,6 +107,16 @@ menudef HUDOptions {
   header "Service Messages";
 
   option bool {
+    title = "Playing Timer";
+    cvar = draw_world_timer;
+  }
+
+  option bool {
+    title = "'PAUSE' text";
+    cvar = draw_pause;
+  }
+
+  option bool {
     title = "FPS Counter";
     cvar = draw_fps;
   }
