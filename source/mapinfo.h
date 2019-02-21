@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 
+//WARNING! must be the same as level flags!
 enum {
   MAPINFOF_DoubleSky                 = 0x00000001, // parallax sky: sky2 behind sky1
   MAPINFOF_Lightning                 = 0x00000002, // use of lightning on the level flashes from sky1 to sky2
@@ -75,6 +76,11 @@ enum {
   MAPINFOF2_CompatInvisibility       = 0x00002000,
   MAPINFOF2_LaxMonsterActivation     = 0x00004000,
   MAPINFOF2_HaveMonsterActivation    = 0x00008000,
+
+  MAPINFOF2_NoCrouch                 = 0x00080000,
+  MAPINFOF2_ResetHealth              = 0x00100000,
+  MAPINFOF2_ResetInventory           = 0x00200000,
+  MAPINFOF2_ResetItems               = 0x00400000,
 };
 
 struct VMapSpecialAction {

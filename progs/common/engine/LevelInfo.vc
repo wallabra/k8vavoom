@@ -112,6 +112,10 @@ bool bHaveMonsterActivation;
 bool bClusterHub;
 readonly bool bBegunPlay;
 bool bFrozen;
+bool bNoCrouch;
+bool bResetHealth;
+bool bResetInventory;
+bool bResetItems;
 
 int TotalKills;
 int TotalItems;

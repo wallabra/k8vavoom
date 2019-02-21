@@ -82,9 +82,24 @@ menudef GameplayOptions {
   }
 
   option bool {
+    title = "Shots go through crosshair";
+    cvar = gm_fix_attack_offset;
+    help = "Raise shooting point a little, so hitscan shots will go through your crosshair.";
+  }
+
+
+  header "Override disables";
+
+  option bool {
     title = "Ignore 'nojump'";
     cvar = sv_ignore_nojump;
     help = "Ignore 'NOJUMP' MAPINFO option.";
+  }
+
+  option bool {
+    title = "Ignore 'nocrouch'";
+    cvar = sv_ignore_nocrouch;
+    help = "Ignore 'NOCROUCH' MAPINFO option.";
   }
 
   option bool {
@@ -94,9 +109,54 @@ menudef GameplayOptions {
   }
 
   option bool {
-    title = "Shots go through crosshair";
-    cvar = gm_fix_attack_offset;
-    help = "Raise shooting point a little, so hitscan shots will go through your crosshair.";
+    title = "Ignore 'resethealth'";
+    cvar = sv_ignore_reset_health;
+    help = "Ignore 'RESETHEALTH' MAPINFO option.";
+  }
+
+  option bool {
+    title = "Ignore 'resetinventory'";
+    cvar = sv_ignore_reset_inventory;
+    help = "Ignore 'RESETINVENTORY' MAPINFO option.";
+  }
+
+  option bool {
+    title = "Ignore 'resetitems'";
+    cvar = sv_ignore_reset_items;
+    help = "Ignore 'RESETITEMS' MAPINFO option.";
+  }
+
+
+  header "Self-imposed constraints";
+
+  option bool {
+    title = "Start new map with pistol";
+    cvar = sv_force_pistol_start;
+    help = "Force 'pistol start' (but don't reset health).";
+  }
+
+  option bool {
+    title = "Start new map with default health";
+    cvar = sv_force_health_reset;
+    help = "Force default health on new map (but don't reset weapons).";
+  }
+
+  option bool {
+    title = "Disable Jumping";
+    cvar = cl_disable_jump;
+    help = "Disable jumping.";
+  }
+
+  option bool {
+    title = "Disable Crouching";
+    cvar = cl_disable_crouch;
+    help = "Disable crouching.";
+  }
+
+  option bool {
+    title = "Disable Freelook";
+    cvar = cl_disable_mlook;
+    help = "Disable mouse freelook.";
   }
 
 
