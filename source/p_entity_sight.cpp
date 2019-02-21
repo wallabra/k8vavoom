@@ -53,6 +53,7 @@
 
 
 static VCvarB compat_better_sight("compat_better_sight", true, "Check more points in LOS calculations?", CVAR_Archive);
+static VCvarB dbg_disable_cansee("dbg_disable_cansee", false, "Disable CanSee processing (for debug)?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -418,6 +419,8 @@ bool VEntity::CanSee (VEntity *Other) {
 #else
   sight_trace_t Trace;
 #endif
+
+  if (dbg_disable_cansee) return false;
 
   if (!Other) return false;
   if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;

@@ -56,6 +56,7 @@ struct SavedVObjectPtr {
 
 
 static VCvarB _decorate_dont_warn_about_invalid_labels("_decorate_dont_warn_about_invalid_labels", false, "Don't do this!", CVAR_Archive|CVAR_PreInit);
+static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Disable states processing (for debug)?", CVAR_PreInit);
 
 
 //==========================================================================
@@ -305,6 +306,7 @@ void VEntity::SetInitialState (VState *InState) {
 bool VEntity::AdvanceState (float deltaTime) {
   guard(VEntity::AdvanceState);
   if (deltaTime <= 0.0f) return true;
+  if (dbg_disable_state_advance) return true;
   if (State && StateTime != -1.0f) {
     StateTime -= deltaTime;
     // you can cycle through multiple states in a tic

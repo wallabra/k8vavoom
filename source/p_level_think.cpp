@@ -31,6 +31,8 @@ extern VCvarB r_decals_enabled;
 
 VCvarB dbg_world_think_vm_time("dbg_world_think_vm_time", false, "Show time taken by VM thinkers (for debug)?", CVAR_Archive);
 VCvarB dbg_world_think_decal_time("dbg_world_think_decal_time", false, "Show time taken by decal thinkers (for debug)?", CVAR_Archive);
+VCvarB dbg_vm_disable_thinkers("dbg_vm_disable_thinkers", false, "Disable VM thinkers (for debug)?", CVAR_PreInit);
+VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updating specials (for debug)?", CVAR_PreInit);
 
 double worldThinkTimeVM = -1;
 double worldThinkTimeDecal = -1;
@@ -279,7 +281,14 @@ void VLevel::TickWorld (float DeltaTime) {
     VThinker *c = Th;
     Th = c->Next;
     if (!(c->GetFlags()&_OF_DelayedDestroy)) {
-      c->Tick(DeltaTime);
+      if (dbg_vm_disable_thinkers) {
+        if (c->IsA(VEntity::StaticClass())) {
+          VEntity *e = (VEntity *)c;
+          if (e->EntityFlags&VEntity::EF_IsPlayer) c->Tick(DeltaTime);
+        }
+      } else {
+        c->Tick(DeltaTime);
+      }
     }
     if (c->GetFlags()&_OF_DelayedDestroy) {
       RemoveThinker(c);
@@ -293,8 +302,10 @@ void VLevel::TickWorld (float DeltaTime) {
   RunScriptThinkers(DeltaTime);
 
 
-  // don't update specials if the level is frozen
-  if (!(LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) LevelInfo->eventUpdateSpecials();
+  if (!dbg_vm_disable_specials) {
+    // don't update specials if the level is frozen
+    if (!(LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) LevelInfo->eventUpdateSpecials();
+  }
 
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (LevelInfo->Game->Players[i] && (LevelInfo->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned) != 0) {
