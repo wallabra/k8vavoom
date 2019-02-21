@@ -29,6 +29,13 @@
 #include "sv_local.h"
 #include "cl_local.h"
 
+/*
+double FrameTime = 1.0f/35.0f;
+// round a little bit up to prevent "slow motion"
+*(vuint64 *)&FrameTime += 1;
+*/
+const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+
 
 static void G_DoReborn (int playernum);
 static void G_DoCompleted ();
@@ -468,14 +475,7 @@ int main () {
 //==========================================================================
 void SV_Ticker () {
   guard(SV_Ticker);
-  float saved_frametime;
-  int exec_times;
-  /*
-  double FrameTime = 1.0f/35.0f;
-  // round a little bit up to prevent "slow motion"
-  *(vuint64 *)&FrameTime += 1;
-  */
-  const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+  //double saved_frametime;
 
   if (GGameInfo->NetMode >= NM_DedicatedServer &&
       (!LastMasterUpdate || host_time-LastMasterUpdate > master_heartbeat_time))
@@ -484,72 +484,92 @@ void SV_Ticker () {
     LastMasterUpdate = host_time;
   }
 
-  saved_frametime = host_frametime;
-  exec_times = 1;
+  if (host_frametime <= 0) return;
+
+  //saved_frametime = host_frametime;
+
+  if (host_frametime < 0.004) {
+    host_framefrac += host_frametime;
+    return;
+  }
+
+  int scap = host_max_skip_frames;
+  if (scap < 3) scap = 3;
+
+  //exec_times = 1;
   if (!real_time) {
     // rounded a little bit up to prevent "slow motion"
     host_frametime = FrameTime; //0.02857142857142857142857142857143; //1.0 / 35.0;
-  } else if (split_frame) {
-    while (host_frametime/exec_times > FrameTime) { //0.02857142857142857142857142857143) { //1.0 / 35.0
-      ++exec_times;
-    }
-  }
-
-  GGameInfo->frametime = host_frametime;
-  SV_RunClients();
-
-  if (sv_loading) return;
-
-  // do main actions
-  if (!sv.intermission) {
-    if (exec_times > 1) {
+  } else if (split_frame && host_frametime > FrameTime) {
+    double i;
+    /*double frc =*/ (void)modf(host_frametime/FrameTime, &i);
+    //GCon->Logf("*** ft=%f; frt=%f; int=%f; frc=%f", host_frametime, FrameTime, i, frc);
+    if (i < 1) { GCon->Logf(NAME_Error, "WTF?! i must be at least one, but it is %f", i); i = 1; }
+    int exec_times = (i > 0x1fffffff ? 0x1fffffff : (int)i);
+    {
       static int showExecTimes = -1;
-      int scap = host_max_skip_frames;
-      if (scap < 3) scap = 3;
       if (showExecTimes < 0) showExecTimes = (GArgs.CheckParm("-show-exec-times") ? 1 : 0);
       if (showExecTimes) {
         if (exec_times <= scap) GCon->Logf("exec_times=%d", exec_times); else GCon->Logf("exec_times=%d (capped to %d)", exec_times, scap);
       }
-      if (exec_times > scap) exec_times = scap;
     }
-    if (exec_times > 1) host_frametime /= exec_times;
+    // cap
+    if (exec_times > scap) {
+      exec_times = scap;
+      host_frametime = FrameTime*exec_times;
+    }
+  }
+
+  if (sv_loading) {
     GGameInfo->frametime = host_frametime;
-    for (int i = 0; i < exec_times && !completed; ++i) {
-      if (!GGameInfo->IsPaused()) {
-        // level timer
-        /*
-        if (TimerGame) {
-          if (!--TimerGame) {
-            LeavePosition = 0;
-            completed = true;
-          }
-        }
-        */
-        if (i) {
-          // if we're doing additional frames, apply some normal frame logic
-          VObject::CollectGarbage();
-          // advance player states, so weapons won't slow down on frame skip
-          if (dbg_skipframe_player_tick) {
-            SV_RunClients(true); // have to make a full run, for demos/network (k8: is it really necessary?)
-          }
-        }
-        GLevel->TickWorld(host_frametime);
-        // level timer
-        if (TimerGame && TimerGame >= GLevel->TicTime) {
-          TimerGame = 0;
-          LeavePosition = 0;
-          completed = true;
-        }
-        if (sv.intermission) break;
+    SV_RunClients();
+  } else {
+    double saved_frametime = host_frametime;
+    bool frameSkipped = false;
+    bool wasPaused = false;
+    // do main actions
+    while (!sv.intermission && !completed && host_frametime >= 0.004) {
+      double oldft = host_frametime;
+      if (split_frame && host_frametime > FrameTime) host_frametime = (double)(float)(1.0f/35.0f);
+      if (frameSkipped) VObject::CollectGarbage();
+      GGameInfo->frametime = (split_frame && host_frametime > FrameTime ? (float)(1.0f/35.0f) : (float)host_frametime);
+      host_frametime = GGameInfo->frametime;
+      if (GGameInfo->IsPaused()) {
+        // no need to do anything more if the game is paused
+        if (!frameSkipped) SV_RunClients();
+        wasPaused = true;
+        break;
+      }
+      // advance player states, so weapons won't slow down on frame skip
+      if (!frameSkipped || dbg_skipframe_player_tick) {
+        SV_RunClients(frameSkipped); // have to make a full run, for demos/network (k8: is it really necessary?)
+      }
+      GLevel->TickWorld(host_frametime);
+      //GCon->Logf("%d: ft=%f; ftleft=%f; Time=%f; tics=%d", (int)frameSkipped, host_frametime, oldft-GGameInfo->frametime, GLevel->Time, (int)GLevel->TicTime);
+      // level timer
+      if (TimerGame && TimerGame >= GLevel->TicTime) {
+        TimerGame = 0;
+        LeavePosition = 0;
+        completed = true;
+      }
+      host_frametime = oldft-GGameInfo->frametime; // next step
+      frameSkipped = true;
+    }
+    if (completed) G_DoCompleted();
+    // remember fractional frame time
+    if (wasPaused) {
+      host_frametime = saved_frametime;
+    } else {
+      if (!sv.intermission && !completed && host_frametime > 0 && host_frametime < 0.004) {
+        host_framefrac += host_frametime;
+        host_frametime = saved_frametime-host_frametime;
       } else {
-        if (i) VObject::CollectGarbage();
+        host_frametime = saved_frametime;
       }
     }
   }
 
-  if (completed) G_DoCompleted();
-
-  host_frametime = saved_frametime;
+  //host_frametime = saved_frametime;
   unguard;
 }
 
@@ -954,9 +974,8 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   Host_ResetSkipFrames();
 
   if (GGameInfo->NetMode != NM_TitleMap && GGameInfo->NetMode != NM_Standalone) {
-    const double frmtime = 1.0/35.0; //host_frametime;
-    GLevel->TickWorld(frmtime);
-    GLevel->TickWorld(frmtime);
+    GLevel->TickWorld(FrameTime);
+    GLevel->TickWorld(FrameTime);
     // start open scripts
     GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
   }

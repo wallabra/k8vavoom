@@ -60,8 +60,9 @@ VCvarB developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/
 VCvarB developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #endif
 
-int host_frametics = 0;
+int host_frametics = 0; // used only in non-realtime mode
 double host_frametime = 0;
+double host_framefrac = 0; // unused frame time left from previous `SV_Ticker()` in realtime mode
 double host_time = 0;
 double realtime = 0;
 double oldrealtime = 0;
@@ -314,6 +315,7 @@ void Host_ResetSkipFrames () {
   last_time = Sys_Time();
   host_frametics = 0;
   host_frametime = 0;
+  host_framefrac = 0;
   //GCon->Logf("*** Host_ResetSkipFrames; ctime=%f", last_time);
 }
 
@@ -332,9 +334,9 @@ static bool FilterTime () {
 
   //GCon->Logf("*** FilterTime; lasttime=%f; ctime=%f; time=%f", last_time, curr_time, time);
 
-  last_time = curr_time;
+  if (time < 0.004) return false;
 
-  if (time == 0) return false;
+  last_time = curr_time;
   realtime += time;
 
   const double timeDelta = realtime-oldrealtime;
@@ -352,7 +354,8 @@ static bool FilterTime () {
     if (timeDelta < 1.0/35.0) return false; // framerate is too high
   }
 
-  host_frametime = realtime-oldrealtime;
+  host_frametime = realtime-oldrealtime+host_framefrac;
+  host_framefrac = 0;
 
   int ticlimit = host_max_skip_frames;
   if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;

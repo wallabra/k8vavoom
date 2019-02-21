@@ -44,6 +44,7 @@ extern bool host_request_exit;
 
 extern int host_frametics;
 extern double host_frametime;
+extern double host_framefrac;
 extern double host_time;
 extern double realtime;
 extern int host_framecount;
