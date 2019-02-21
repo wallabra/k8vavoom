@@ -57,6 +57,7 @@ private:
   bool inWrite;
 
 public:
+  void doWriteStr (EName Type, const char *s);
   void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL);
 
 public:
@@ -73,6 +74,12 @@ public:
 
   void DWrite (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
   void DWriteLine (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+
+  void Logf (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+  void Logf (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+
+  void Log (EName Type, const char *s);
+  void Log (const char *s);
 };
 
 

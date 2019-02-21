@@ -101,6 +101,26 @@ void VLog::RemoveListener (VLogListener *lst) {
 //  VLog::doWrite
 //
 //==========================================================================
+void VLog::doWriteStr (EName Type, const char *s) {
+  if (!s || !s[0]) return;
+  if (!Listeners) return;
+
+  inWrite = true;
+  for (Listener *ls = Listeners; ls; ls = ls->next) {
+    try {
+      ls->ls->Serialise(s, Type);
+    } catch (...) {
+    }
+  }
+  inWrite = false;
+}
+
+
+//==========================================================================
+//
+//  VLog::doWrite
+//
+//==========================================================================
 void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
   if (!Listeners) return;
 
@@ -110,44 +130,101 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
   // initial allocation
   if (!logbufsize) abort(); // the thing that should not be
 
-  va_list apcopy;
+  int size;
 
-  va_copy(apcopy, ap);
-  int size = vsnprintf(logbuf, (size_t)(logbufsize-2), fmt, apcopy);
-  va_end(apcopy);
+  if (fmt[0]) {
+    va_list apcopy;
 
-  if (size < 0) return; // oops
-
-  if (size >= logbufsize-4) {
-    // not enough room, try again
-    if (size > 0x1fffff-4) size = 0x1fffff-4;
-    size = ((size+4)|0x1fff)+1;
-    char *newlogbuf = (char *)realloc(logbuf, (size_t)logbufsize);
-    if (!newlogbuf) {
-      //FIXME
-      fprintf(stderr, "FATAL: out of memory for log buffer (new=%d; old=%d)!\n", size, logbufsize);
-    } else {
-      //fprintf(stderr, "VLOG(%p): realloc log buffer! (old=%d; new=%d)\n", (void *)this, logbufsize, size);
-      logbuf = newlogbuf;
-      logbufsize = size;
-    }
     va_copy(apcopy, ap);
-    size = vsnprintf(logbuf, (size_t)(logbufsize-4), fmt, apcopy);
+    size = vsnprintf(logbuf, (size_t)(logbufsize-2), fmt, apcopy);
     va_end(apcopy);
-    if (size < 0) return;
-    if (size >= logbufsize) size = (int)strlen(logbuf);
+
+    if (size < 0) return; // oops
+
+    if (size >= logbufsize-4) {
+      // not enough room, try again
+      if (size > 0x1fffff-4) size = 0x1fffff-4;
+      size = ((size+4)|0x1fff)+1;
+      char *newlogbuf = (char *)realloc(logbuf, (size_t)size);
+      if (!newlogbuf) {
+        //FIXME
+        fprintf(stderr, "FATAL: out of memory for log buffer (new=%d; old=%d)!\n", size, logbufsize);
+      } else {
+        //fprintf(stderr, "VLOG(%p): realloc log buffer! (old=%d; new=%d)\n", (void *)this, logbufsize, size);
+        logbuf = newlogbuf;
+        logbufsize = size;
+      }
+      va_copy(apcopy, ap);
+      size = vsnprintf(logbuf, (size_t)(logbufsize-4), fmt, apcopy);
+      va_end(apcopy);
+      if (size < 0) return;
+      if (size >= logbufsize) size = (int)strlen(logbuf);
+    }
+  } else {
+    if (logbufsize < 4) {
+      logbufsize = 0x1fff+1;
+      logbuf = (char *)realloc(logbuf, (size_t)logbufsize);
+      if (!logbuf) {
+        //FIXME
+        fprintf(stderr, "FATAL: out of memory for log buffer (new=%d)!\n", logbufsize);
+        abort();
+      }
+    }
+    logbuf[0] = 0;
+    size = 0;
   }
 
   if (addEOL) { logbuf[size] = '\n'; logbuf[size+1] = 0; }
 
-  inWrite = true;
-  for (Listener *ls = Listeners; ls; ls = ls->next) {
-    try {
-      ls->ls->Serialise(logbuf, Type);
-    } catch (...) {
-    }
-  }
-  inWrite = false;
+  doWriteStr(Type, logbuf);
+}
+
+
+//==========================================================================
+//
+//  VLog::Logf
+//
+//==========================================================================
+__attribute__((format(printf, 3, 4))) void VLog::Logf (EName Type, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  doWrite(Type, fmt, ap, true);
+  va_end(ap);
+}
+
+
+//==========================================================================
+//
+//  VLog::Logf
+//
+//==========================================================================
+__attribute__((format(printf, 2, 3))) void VLog::Logf (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  doWrite(NAME_Log, fmt, ap, true);
+  va_end(ap);
+}
+
+
+//==========================================================================
+//
+//  VLog::Log
+//
+//==========================================================================
+void VLog::Log (EName Type, const char *s) {
+  doWriteStr(Type, s);
+  doWriteStr(Type, "\n");
+}
+
+
+//==========================================================================
+//
+//  VLog::Log
+//
+//==========================================================================
+void VLog::Log (const char *s) {
+  doWriteStr(NAME_Log, s);
+  doWriteStr(NAME_Log, "\n");
 }
 
 
@@ -245,6 +322,50 @@ public:
     GLog.AddListener(this);
   }
 
+  static void printStr (const char *s, size_t len) {
+    if (!s) return;
+    while (len) {
+      const char *esc = s;
+      size_t left = len;
+      while (left) {
+        vuint8 ch = *(const vuint8 *)esc;
+        if (ch == 127) break;
+        if (ch == TEXT_COLOUR_ESCAPE) break;
+        if (ch < ' ') {
+          if (ch != '\r' && ch != '\n' && ch != '\t' && ch != 8) break;
+        }
+        ++esc;
+        --left;
+      }
+      if (!left) {
+        fwrite(s, len, 1, stdout);
+        return;
+      }
+      if (left < len) {
+        fwrite(s, len-left, 1, stdout);
+        len -= left;
+        s = esc;
+      }
+      check(len > 0);
+      ++s;
+      --len;
+      if (s[-1] != TEXT_COLOUR_ESCAPE) continue;
+      if (len == 0) break;
+      if (*s == '[') {
+        while (len > 0 && *s != ']') { --len; ++s; }
+        if (len && *s == ']') { --len; ++s; }
+      } else {
+        ++s;
+        --len;
+      }
+    }
+  }
+
+  static void printStr (const char *s) {
+    if (!s || !s[0]) return;
+    printStr(s, strlen(s));
+  }
+
   virtual void Serialise (const char *Text, EName Event) override {
     //fprintf(stderr, "%s: <%s>\n", *VName(Event), *VStr(Text).quote());
     while (*Text) {
@@ -256,9 +377,12 @@ public:
       if (Text[0] == '\r' && Text[1] == '\n') ++Text;
       if (Text[0] == '\n' || Text[0] == '\r') {
         if (wasNL) {
-          if (Event != NAME_Log) {
-            fputs(*VName(Event), stdout);
-            fputc(':', stdout);
+#if defined(IN_WADCHECK)
+          if (Event != NAME_Log)
+#endif
+          {
+            printStr(*VName(Event));
+            printStr(":");
           }
         }
         fputc('\n', stdout);
@@ -270,26 +394,32 @@ public:
         const char *eol1 = strchr(Text, '\r');
         if (!eol0 && !eol1) {
           if (wasNL) {
-            if (Event != NAME_Log) {
-              fputs(*VName(Event), stdout);
-              fputs(": ", stdout);
+#if defined(IN_WADCHECK)
+            if (Event != NAME_Log)
+#endif
+            {
+              printStr(*VName(Event));
+              printStr(": ");
             }
             wasNL = false;
           }
-          fputs(Text, stdout);
+          printStr(Text);
           return;
         }
         const char *eol = (eol0 && eol1 ? (eol0 < eol1 ? eol0 : eol1) : eol0 ? eol0 : eol1);
         check(eol != Text);
         // ends with eol
         if (wasNL) {
-          if (Event != NAME_Log) {
-            fputs(*VName(Event), stdout);
-            fputs(": ", stdout);
+#if defined(IN_WADCHECK)
+          if (Event != NAME_Log)
+#endif
+          {
+            printStr(*VName(Event));
+            printStr(": ");
           }
           wasNL = false;
         }
-        fwrite(Text, (size_t)(ptrdiff_t)(eol-Text), 1, stdout);
+        printStr(Text, (size_t)(ptrdiff_t)(eol-Text));
         Text = eol;
       }
     }
