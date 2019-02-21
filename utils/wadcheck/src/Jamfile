@@ -1,7 +1,6 @@
 SubDir TOP src ;
 
 Main wadcheck :
-  logger.cpp
   main_wadcheck.cpp
 ;
 LinkLibraries wadcheck :
