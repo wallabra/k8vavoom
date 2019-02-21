@@ -2449,7 +2449,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       // write sector line numbers
       strm << sec->linecount;
       for (int lnum = 0; lnum < sec->linecount; ++lnum) {
-        vint32 lidx = (vint32)(ptrdiff_t)(sec->lines[f]-Lines);
+        vint32 lidx = (sec->lines[lnum] ? (vint32)(ptrdiff_t)(sec->lines[lnum]-Lines) : -1);
         strm << lidx;
       }
       // height sector
