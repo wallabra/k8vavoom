@@ -2371,9 +2371,9 @@ void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
       k8ElvenGifted = true; // gifts should be given only once
       if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
       if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
-      ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
+      ClientHudMessage("ELVEN GIFT", 'smallfont', HUDMsgType.FadeOut, 123666, CR_ORANGE, "",
         0.5, 0.45, 0, 0,
-        2.5, 0.0, 0.0);
+        2.0, 1.0, 0.0);
     }
     // oops; change weapon, as voodoo doll was spawned
     if (Voodoo && k8ElvenGifted) {
@@ -2390,11 +2390,31 @@ void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
           }
         }
       }
-      /*
-      ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
-        0.5, 0.45, 0, 0,
-        2.5, 0.0, 0.0);
-      */
+    }
+
+    // detect bosses
+    Actor act;
+    bool hasCybbie = false, hasMind = false;
+    foreach MO.AllThinkers(Actor, out act) {
+      class!Actor ec = class!Actor(act.Class);
+      while (ec) {
+        switch (GetClassName(ec)) {
+          case 'Cyberdemon': hasCybbie = true; break;
+          case 'SpiderMastermind': hasMind = true; break;
+        }
+        ec = class!Actor(GetClassParent(ec));
+      }
+      if (hasCybbie && hasMind) break; // just in case
+    }
+    string msg;
+         if (hasCybbie && hasMind) msg = "Cyberdemon and Mastermind detected!";
+    else if (hasCybbie) msg = "Cyberdemon detected!";
+    else if (hasMind) msg = "Mastermind detected!";
+    if (msg) {
+      print("\c[Red]*** %s ***", msg);
+      ClientHudMessage(msg, 'smallfont', HUDMsgType.FadeOut/*|HUDMsgFlag.Log*/, 123669, CR_UNDEFINED, "",
+        0.5, 0.5, 0, 0,
+        2.5, 1.0, 0.0);
     }
   }
 }

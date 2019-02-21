@@ -88,6 +88,31 @@ enum {
 };
 alias vcenter = vcentre;
 
+enum {
+  HUDMSG_PLAIN,
+  HUDMSG_FADEOUT,
+  HUDMSG_TYPEON,
+  HUDMSG_FADEINOUT,
+  // flags
+  HUDMSG_LOG          = 0x80000000,
+  HUDMSG_COLOURSTRING = 0x40000000,
+  HUDMSG_COLORSTRING  = 0x40000000,
+}
+
+enum HUDMsgType {
+  Plain,
+  FadeOut,
+  TypeOn,
+  FadeInOut,
+}
+
+// flags
+enum HUDMsgFlag {
+  Log          = 0x80000000,
+  ColourString = 0x40000000,
+  ColorString  = 0x40000000,
+}
+
 // text colours
 enum {
   CR_UNDEFINED = -1,

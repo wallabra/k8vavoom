@@ -41,16 +41,6 @@ float CentreTime;
 
 Widget HudMsgWin;
 
-enum {
-  HUDMSG_PLAIN,
-  HUDMSG_FADEOUT,
-  HUDMSG_TYPEON,
-  HUDMSG_FADEINOUT
-}
-
-const int HUDMSG_LOG          = 0x80000000;
-const int HUDMSG_COLOURSTRING = 0x40000000;
-
 bool lastWasFullscreen;
 
 
