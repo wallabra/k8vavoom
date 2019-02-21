@@ -152,7 +152,8 @@ static int setwidth;
 static int setheight;
 
 static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for active menus.", CVAR_Archive);
-static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
+static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?", CVAR_Archive);
+static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", CVAR_Archive);
 
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
@@ -535,6 +536,7 @@ void SCR_Update () {
         }
         if (automapactive) AM_Drawer();
         if (GGameInfo->NetMode != NM_TitleMap) {
+          if (!automapactive && draw_world_timer) AM_DrawWorldTimer();
           CT_Drawer();
           SB_Drawer();
         }

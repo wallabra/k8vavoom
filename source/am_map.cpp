@@ -1259,10 +1259,10 @@ static void AM_drawMarks () {
 
 //===========================================================================
 //
-//  DrawWorldTimer
+//  AM_DrawWorldTimer
 //
 //===========================================================================
-static void DrawWorldTimer () {
+void AM_DrawWorldTimer () {
   int days;
   int hours;
   int minutes;
@@ -1271,9 +1271,11 @@ static void DrawWorldTimer () {
   char timeBuffer[64];
   char dayBuffer[20];
 
-  worldTimer = (int)cl->WorldTimer;
+  if (!cl) return;
 
-  if (!worldTimer) return;
+  worldTimer = (int)cl->WorldTimer;
+  if (worldTimer < 0) worldTimer = 0;
+  //if (!worldTimer) return;
 
   days = worldTimer/86400;
   worldTimer -= days*86400;
@@ -1297,6 +1299,22 @@ static void DrawWorldTimer () {
     T_DrawText(560, 18, dayBuffer, CR_UNTRANSLATED);
     if (days >= 5) T_DrawText(550, 28, "YOU FREAK!!!", CR_UNTRANSLATED);
   }
+
+  /*
+  worldTimer = (int)GLevel->Time;
+  days = worldTimer/86400;
+  worldTimer -= days*86400;
+  hours = worldTimer/3600;
+  worldTimer -= hours*3600;
+  minutes = worldTimer/60;
+  worldTimer -= minutes*60;
+  seconds = worldTimer;
+
+  T_SetFont(SmallFont);
+  T_SetAlign(hleft, vtop);
+  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d", hours, minutes, seconds);
+  T_DrawText(560, 8+10, timeBuffer, CR_UNTRANSLATED);
+  */
 }
 
 
@@ -1479,7 +1497,7 @@ void AM_Drawer () {
   AM_drawPlayers();
   if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
   Drawer->EndAutomap();
-  DrawWorldTimer();
+  AM_DrawWorldTimer();
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vbottom);
   T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);

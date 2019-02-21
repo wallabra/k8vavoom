@@ -29,6 +29,7 @@ void AM_Init ();
 bool AM_Responder (event_t *ev);
 void AM_Ticker ();
 void AM_Drawer ();
+void AM_DrawWorldTimer ();
 // called to force the automap to quit if the level is completed while it is up
 void AM_Stop ();
 
