@@ -46,6 +46,8 @@ static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?",
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
+VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
@@ -398,7 +400,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
       }
       */
 
-      if (clip_height) {
+      if (clip_height && clip_frustum) {
         // here we can check if midtex is in frustum; if it doesn't,
         // we can add this seg to clipper.
         // this way, we can clip alot of things when renderer looks at
@@ -549,7 +551,7 @@ void VViewClipper::ClipResetFrustumPlanes () {
 void VViewClipper::ClipInitFrustumPlanes (const TVec &viewforward, const TVec &viewright, const TVec &viewup,
                                           const float fovx, const float fovy)
 {
-  if (!viewright.z && isFiniteF(fovy) && fovy != 0) {
+  if (clip_frustum && !viewright.z && isFiniteF(fovy) && fovy != 0) {
     // no view roll, create frustum
     /*
     Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
@@ -572,8 +574,7 @@ void VViewClipper::ClipInitFrustumPlanes (const TVec &viewforward, const TVec &v
     FrustumBottom.SetPointDir3D(Origin, vbot.normalised());
     FrustumBottom.clipflag = 1;
   } else {
-    FrustumTop.invalidate();
-    FrustumBottom.invalidate();
+    ClipResetFrustumPlanes();
   }
 }
 
@@ -608,6 +609,8 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     // looking up or down, can see behind
     return;
   }
+
+  if (!clip_frustum) return;
 
   TVec Pts[4];
   TVec TransPts[4];

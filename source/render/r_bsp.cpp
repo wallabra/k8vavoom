@@ -58,6 +58,8 @@ extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
 extern VCvarB r_draw_adjacent_subsector_things;
 extern VCvarB w_update_in_renderer;
+extern VCvarB clip_frustum;
+extern VCvarB clip_frustum_bsp;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -442,7 +444,7 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 
   if (line->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (MirrorClipSegs) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_bsp) {
     // clip away segs that are behind mirror
     if (view_clipplanes[4].PointOnSide(*line->v1) && view_clipplanes[4].PointOnSide(*line->v2)) return; // behind mirror
   }
@@ -700,7 +702,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   if (ViewClip.ClipIsFull()) return;
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
-  if (clipflags) {
+  if (clipflags && clip_frustum && clip_frustum_bsp) {
     for (int i = 0; i < 5; ++i) {
       if (!(clipflags&view_clipplanes[i].clipflag)) continue; // don't need to clip against it
       if (view_clipplanes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
@@ -778,7 +780,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     if (PortalLevel == 0) {
       if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
     }
-    MirrorClipSegs = MirrorClip && !view_clipplanes[4].normal.z;
+    MirrorClipSegs = (MirrorClip && !view_clipplanes[4].normal.z);
 
     // head node is the last node output
     RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 31 : 15));
