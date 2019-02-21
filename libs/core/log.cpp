@@ -32,6 +32,11 @@ VLog GLog;
 bool GLogTTYLog = true;
 bool GLogErrorToStderr = false;
 bool GLogWarningToStderr = false;
+#if defined(IN_WADCHECK)
+bool GLogSkipLogTypeName = true;
+#else
+bool GLogSkipLogTypeName = false;
+#endif
 
 VLog::Listener *VLog::Listeners = nullptr;
 
@@ -389,10 +394,7 @@ public:
       if (Text[0] == '\n' || Text[0] == '\r') {
         if (wasNL) {
           lastEvent = Event;
-#if defined(IN_WADCHECK)
-          if (Event != NAME_Log)
-#endif
-          {
+          if (Event != NAME_Log || !GLogSkipLogTypeName) {
             printStr(*VName(Event), outfile());
             printStr(":", outfile());
           }
@@ -405,10 +407,7 @@ public:
         const char *eol1 = strchr(Text, '\r');
         if (!eol0 && !eol1) {
           if (wasNL) {
-#if defined(IN_WADCHECK)
-            if (Event != NAME_Log)
-#endif
-            {
+            if (Event != NAME_Log || !GLogSkipLogTypeName) {
               printStr(*VName(Event), outfile());
               printStr(": ", outfile());
             }
@@ -421,10 +420,7 @@ public:
         check(eol != Text);
         // ends with eol
         if (wasNL) {
-#if defined(IN_WADCHECK)
-          if (Event != NAME_Log)
-#endif
-          {
+          if (Event != NAME_Log || !GLogSkipLogTypeName) {
             printStr(*VName(Event), outfile());
             printStr(": ", outfile());
           }

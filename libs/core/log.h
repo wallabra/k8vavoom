@@ -88,5 +88,6 @@ public:
 // FIXME: implement proper singleton
 extern VLog GLog;
 extern bool GLogTTYLog; // true
+extern bool GLogSkipLogTypeName; // false
 extern bool GLogErrorToStderr; // false
 extern bool GLogWarningToStderr; // false
