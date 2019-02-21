@@ -152,6 +152,13 @@ void Host_Init () {
   VCvar::Init();
   VCommand::Init();
 
+  /*
+  GLog.Logf(NAME_Init, "%s", "************");
+  GLog.Log(NAME_Warning, "+************+");
+  GLog.Log(NAME_Error, ":************:");
+  GLog.Log("<************>");
+  */
+
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Log(NAME_Init, "      (k8)VaVoom Game Engine, started by Janis Legzdinsh");
   GCon->Log(NAME_Init, "also starring Francisco Ortega, and others (k8:drop me a note!)");

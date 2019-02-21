@@ -689,32 +689,32 @@ static void DoPrint (const char *buf) {
 //
 //  ConSerialise
 //
+//  tty output is done by standard logger
+//
 //==========================================================================
-static void ConSerialise (const char *str, EName Event, bool asConLog) {
+static void ConSerialise (const char *str, EName Event, bool fromGLog) {
   //dprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
+  if (!fromGLog) { GLog.WriteLine(Event, "%s", str); return; }
   if (!str) str = "";
   //HACK! if string starts with "Sys_Error:", print it, and close log file
   if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
   }
-  const char *nls = (asConLog ? "" : "\n");
-  if (asConLog) DoPrint(str);
-  if (VStr::MustBeSanitized(str)) {
-    VStr rc = VStr(str).RemoveColours();
-    if (logfout) fprintf(logfout, "%s: %s%s", VName::SafeString(Event), *rc, nls);
-#ifndef _WIN32
-    printf("%s: %s%s", VName::SafeString(Event), *rc, nls);
-#endif
-  } else {
-    if (logfout) fprintf(logfout, "%s: %s%s", VName::SafeString(Event), str, nls);
-#ifndef _WIN32
-    printf("%s: %s%s", VName::SafeString(Event), str, nls);
-#endif
+  if (Event == NAME_Warning) {
+    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "X");
+    cpPrintCurrColor();
+  } else if (Event == NAME_Error) {
+    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "T"); //R T
+    cpPrintCurrColor();
+  } else if (Event == NAME_Init) {
+    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "C");
+    cpPrintCurrColor();
   }
-  if (!asConLog) {
-    DoPrint(str);
-    DoPrint("\n");
+  DoPrint(str);
+  if (logfout) {
+    VStr rc = VStr(str).RemoveColours();
+    fprintf(logfout, "%s: %s", VName::SafeString(Event), *rc);
   }
 }
 
