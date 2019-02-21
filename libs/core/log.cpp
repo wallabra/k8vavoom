@@ -29,6 +29,9 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 VLog GLog;
+bool GLogTTYLog = true;
+bool GLogErrorToStderr = false;
+bool GLogWarningToStderr = false;
 
 VLog::Listener *VLog::Listeners = nullptr;
 
@@ -322,8 +325,15 @@ public:
     GLog.AddListener(this);
   }
 
-  static void printStr (const char *s, size_t len) {
-    if (!s) return;
+  FILE *outfile () const {
+    if (!GLogTTYLog) return nullptr;
+    if (lastEvent == NAME_Error && GLogErrorToStderr) return stderr;
+    if (lastEvent == NAME_Warning && GLogWarningToStderr) return stderr;
+    return stdout;
+  }
+
+  static void printStr (const char *s, size_t len, FILE *fo) {
+    if (!s || !fo) return;
     while (len) {
       const char *esc = s;
       size_t left = len;
@@ -338,11 +348,11 @@ public:
         --left;
       }
       if (!left) {
-        fwrite(s, len, 1, stdout);
+        fwrite(s, len, 1, fo);
         return;
       }
       if (left < len) {
-        fwrite(s, len-left, 1, stdout);
+        fwrite(s, len-left, 1, fo);
         len -= left;
         s = esc;
       }
@@ -361,34 +371,35 @@ public:
     }
   }
 
-  static void printStr (const char *s) {
+  static void printStr (const char *s, FILE *fo) {
     if (!s || !s[0]) return;
-    printStr(s, strlen(s));
+    printStr(s, strlen(s), fo);
   }
 
   virtual void Serialise (const char *Text, EName Event) override {
+    if (!GLogTTYLog) return;
     //fprintf(stderr, "%s: <%s>\n", *VName(Event), *VStr(Text).quote());
     while (*Text) {
       if (lastEvent != Event) {
-        if (!wasNL) fputc('\n', stdout);
+        if (!wasNL) fputc('\n', outfile());
         wasNL = true;
         lastEvent = Event;
       }
       if (Text[0] == '\r' && Text[1] == '\n') ++Text;
       if (Text[0] == '\n' || Text[0] == '\r') {
         if (wasNL) {
+          lastEvent = Event;
 #if defined(IN_WADCHECK)
           if (Event != NAME_Log)
 #endif
           {
-            printStr(*VName(Event));
-            printStr(":");
+            printStr(*VName(Event), outfile());
+            printStr(":", outfile());
           }
         }
-        fputc('\n', stdout);
+        fputc('\n', outfile());
         ++Text;
         wasNL = true;
-        lastEvent = Event;
       } else {
         const char *eol0 = strchr(Text, '\n');
         const char *eol1 = strchr(Text, '\r');
@@ -398,12 +409,12 @@ public:
             if (Event != NAME_Log)
 #endif
             {
-              printStr(*VName(Event));
-              printStr(": ");
+              printStr(*VName(Event), outfile());
+              printStr(": ", outfile());
             }
             wasNL = false;
           }
-          printStr(Text);
+          printStr(Text, outfile());
           return;
         }
         const char *eol = (eol0 && eol1 ? (eol0 < eol1 ? eol0 : eol1) : eol0 ? eol0 : eol1);
@@ -414,12 +425,12 @@ public:
           if (Event != NAME_Log)
 #endif
           {
-            printStr(*VName(Event));
-            printStr(": ");
+            printStr(*VName(Event), outfile());
+            printStr(": ", outfile());
           }
           wasNL = false;
         }
-        printStr(Text, (size_t)(ptrdiff_t)(eol-Text));
+        printStr(Text, (size_t)(ptrdiff_t)(eol-Text), outfile());
         Text = eol;
       }
     }
