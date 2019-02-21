@@ -2258,6 +2258,8 @@ static void WriteTexture (VStream &strm, VTextureID v) {
     strm << len;
     char cc = '-';
     strm.Serialise(&cc, 1);
+    vuint8 ttype = TEXTYPE_Null;
+    strm << ttype;
     return;
   }
   if (v.id == 0) {
@@ -2639,8 +2641,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       // parent node
       vint32 nnum = (sub->parent ? (vint32)(ptrdiff_t)(sub->parent-Nodes) : -1);
       strm << nnum;
-      strm << sub->VisFrame;
-      strm << sub->SkyVisFrame;
+      //strm << sub->VisFrame;
+      //strm << sub->SkyVisFrame;
       // regions
       vint32 regcount = 0;
       for (subregion_t *sreg = sub->regions; sreg; sreg = sreg->next) ++regcount;
@@ -2697,8 +2699,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       strm << node->children[1];
       vint32 nnum = (node->parent ? (vint32)(ptrdiff_t)(node->parent-Nodes) : -1);
       strm << nnum;
-      strm << node->VisFrame;
-      strm << node->SkyVisFrame;
+      //strm << node->VisFrame;
+      //strm << node->SkyVisFrame;
     }
   }
 
