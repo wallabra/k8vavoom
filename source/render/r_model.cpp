@@ -1078,14 +1078,7 @@ bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const T
 {
   if (clsName == NAME_None) return false;
 
-#if 0
-  VClassModelScript *Cls = nullptr;
-  for (int i = 0; i < ClassModels.Num(); ++i) {
-    if (ClassModels[i]->Name == /*State->Outer->Name*/clsName) Cls = ClassModels[i];
-  }
-#else
   VClassModelScript *Cls = FindClassModelByName(clsName);
-#endif
   if (!Cls) return false;
 
   int FIdx = FindFrame(*Cls, /*State->getMFI()*/Frame, Inter);
@@ -1153,14 +1146,7 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
     if (!Mdl) return false;
     return FindFrame(*Mdl->DefaultClass, Ent->getMFI(), Inter) != -1;
   } else {
-#if 0
-    VClassModelScript *Cls = nullptr;
-    for (int i = 0; i < ClassModels.Num(); ++i) {
-      if (ClassModels[i]->Name == Ent->State->Outer->Name) Cls = ClassModels[i];
-    }
-#else
     VClassModelScript *Cls = FindClassModelByName(Ent->State->Outer->Name);
-#endif
     if (!Cls) return false;
     return (FindFrame(*Cls, Ent->getMFI(), Inter) != -1);
   }
@@ -1239,14 +1225,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
                             const TVec &Origin, float Angle)
 {
   bool Interpolate = true;
-#if 0
-  VClassModelScript *Cls = nullptr;
-  for (int i = 0; i < ClassModels.Num(); ++i) {
-    if (ClassModels[i]->Name == State->Outer->Name) Cls = ClassModels[i];
-  }
-#else
   VClassModelScript *Cls = FindClassModelByName(State->Outer->Name);
-#endif
   if (!Cls) return false;
   if (!State) return false;
   int FIdx = FindFrame(*Cls, State->getMFI(), Inter);
