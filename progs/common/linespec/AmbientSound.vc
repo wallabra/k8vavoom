@@ -136,3 +136,10 @@ defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
 }
+
+
+class AmbientSoundNoGravity : AmbientSound __mobjinfo__(14067);
+
+defaultproperties {
+  bNoGravity = true;
+}
