@@ -67,6 +67,10 @@ public:
   static bool optDeprecatedLaxOverride; // true: don't require `override` on overriden methods
   static bool optDeprecatedLaxStates; // true: ignore missing states in state resolver
 
+protected:
+  vuint32 mMemberId; // never zero, monotonically increasing
+  static vuint32 lastUsedMemberId; // monotonically increasing
+
 public:
   // internal variables
   vuint8 MemberType;
@@ -103,6 +107,8 @@ public:
   virtual ~VMemberBase ();
 
   virtual void CompilerShutdown ();
+
+  inline vuint32 GetMemberId () const { return mMemberId; }
 
   // for each name
   // WARNING! don't add/remove ANY named members from callback!
@@ -166,4 +172,4 @@ private:
   static TArray<VStr> definelist;
 };
 
-inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? hashU32((vuint32)(M->MemberIndex+1)) : 0); }
+inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? hashU32(M->GetMemberId()) : 0); }

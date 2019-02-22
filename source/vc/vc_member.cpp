@@ -30,6 +30,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 bool VMemberBase::optDeprecatedLaxOverride = false;
 bool VMemberBase::optDeprecatedLaxStates = false;
+vuint32 VMemberBase::lastUsedMemberId = 0; // monotonically increasing
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -72,6 +73,9 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
   , HashNext(nullptr)
   , HashNextLC(nullptr)
 {
+  if (lastUsedMemberId == 0xffffffffu) Sys_Error("too many VC members");
+  mMemberId = ++lastUsedMemberId;
+  check(mMemberId != 0);
   if (GObjInitialised) {
     MemberIndex = GMembers.Append(this);
     /*
