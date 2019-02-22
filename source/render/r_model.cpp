@@ -177,7 +177,6 @@ static VClassModelScript *FindClassModelByName (VName clsName) {
 //
 //==========================================================================
 void R_InitModels () {
-  guard(R_InitModels);
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
     VCheckedStream Strm(lumpstream);
@@ -190,7 +189,6 @@ void R_InitModels () {
     for (VXmlNode *N = Doc->Root.FindChild("include"); N; N = N->FindNext()) Mod_FindName(N->GetAttribute("file"));
     delete Doc;
   }
-  unguard;
 }
 
 
@@ -200,7 +198,6 @@ void R_InitModels () {
 //
 //==========================================================================
 void R_FreeModels () {
-  guard(R_FreeModels);
   for (int i = 0; i < mod_known.Num(); ++i) {
     delete mod_known[i];
     mod_known[i] = nullptr;
@@ -219,7 +216,6 @@ void R_FreeModels () {
     ClassModels[i] = nullptr;
   }
   ClassModels.Clear();
-  unguard;
 }
 
 
@@ -229,7 +225,6 @@ void R_FreeModels () {
 //
 //==========================================================================
 static VMeshModel *Mod_FindMeshModel (const VStr &name) {
-  guard(Mod_FindMeshModel);
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models
@@ -243,7 +238,6 @@ static VMeshModel *Mod_FindMeshModel (const VStr &name) {
   GMeshModels.Append(mod);
 
   return mod;
-  unguard;
 }
 
 
@@ -253,7 +247,6 @@ static VMeshModel *Mod_FindMeshModel (const VStr &name) {
 //
 //==========================================================================
 static void ParseModelScript (VModel *Mdl, VStream &Strm) {
-  guard(ParseModelScript);
   // parse xml file
   VXmlDocument *Doc = new VXmlDocument();
   Doc->Parse(Strm, Mdl->Name);
@@ -480,7 +473,6 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
   // we don't need the xml file anymore
   delete Doc;
-  unguard;
 }
 
 
@@ -490,7 +482,6 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 //
 //==========================================================================
 VModel *Mod_FindName (const VStr &name) {
-  guard(Mod_FindName);
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models
@@ -510,7 +501,6 @@ VModel *Mod_FindName (const VStr &name) {
   delete Strm;
 
   return mod;
-  unguard;
 }
 
 
@@ -521,7 +511,6 @@ VModel *Mod_FindName (const VStr &name) {
 //==========================================================================
 //static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int OrigVert1, int Vert2, int OrigVert2, int Tri)
 static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
-  guard(AddEdge);
   // check for a match
   // compare original vertex indices since texture coordinates are not important here
   for (int i = 0; i < Edges.Num(); ++i) {
@@ -542,7 +531,6 @@ static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   //e.OrigVert2 = OrigVert2;
   e.Tri1 = Tri;
   e.Tri2 = -1;
-  unguard;
 }
 
 
@@ -552,7 +540,6 @@ static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
 //
 //==========================================================================
 static void Mod_SwapAliasModel (VMeshModel *mod) {
-  guard(Mod_SwapAliasModel);
   mmdl_t *pmodel;
   mstvert_t *pstverts;
   mtriangle_t *ptri;
@@ -726,7 +713,6 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
   for (int i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*VStr(pskindesc[i].name).ToLower());
-  unguard;
 }
 
 
@@ -738,7 +724,6 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
 //
 //==========================================================================
 static mmdl_t *Mod_Extradata (VMeshModel *mod) {
-  guard(Mod_Extradata);
   if (mod->Data) return mod->Data;
 
   // load the file
@@ -759,7 +744,6 @@ static mmdl_t *Mod_Extradata (VMeshModel *mod) {
   Mod_SwapAliasModel(mod);
 
   return mod->Data;
-  unguard;
 }
 
 
@@ -769,7 +753,6 @@ static mmdl_t *Mod_Extradata (VMeshModel *mod) {
 //
 //==========================================================================
 static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int InFrame) {
-  guard(PositionModel);
   mmdl_t *pmdl = (mmdl_t *)Mod_Extradata(wpmodel);
   int frame = InFrame;
   if (frame >= pmdl->numframes || frame < 0) frame = 0;
@@ -790,7 +773,6 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
   VectorAngles(p[1]-p[0], wangles);
   Angles.yaw = AngleMod(Angles.yaw+wangles.yaw);
   Angles.pitch = AngleMod(Angles.pitch+wangles.pitch);
-  unguard;
 }
 
 
@@ -800,7 +782,6 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
 //
 //==========================================================================
 static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
-  guard(FindFrame);
   int Ret = -1;
   int frameAny = -1;
   for (int i = 0; i < Cls.Frames.Num(); ++i) {
@@ -823,7 +804,6 @@ static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &
   }
   if (Ret == -1 && frameAny >= 0) return frameAny;
   return Ret;
-  unguard;
 }
 
 
@@ -833,7 +813,6 @@ static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &
 //
 //==========================================================================
 static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
-  guard(FindNextFrame);
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   if (FIdx < Cls.Frames.Num()-1) {
     const VScriptedModelFrame &frm = Cls.Frames[FIdx+1];
@@ -849,7 +828,6 @@ static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasMo
   }
   InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
   return FindFrame(Cls, Frame, 0);
-  unguard;
 }
 
 
@@ -864,7 +842,6 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
   vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
   bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isAdvanced)
 {
-  guard(DrawModel);
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
   VScriptModel &ScMdl = Cls.Model->Models[FDef.ModelIndex];
@@ -1056,7 +1033,6 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         break;
     }
   }
-  unguard;
 }
 
 
@@ -1072,7 +1048,6 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
-  guard(VRenderLevelShared::DrawAliasModel);
   int FIdx = FindFrame(*Mdl->DefaultClass, Frame, Inter);
   if (FIdx == -1) return false;
   float InterpFrac;
@@ -1086,7 +1061,6 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
     Pass, IsAdvancedRenderer());
   return true;
-  unguard;
 }
 
 
@@ -1102,7 +1076,6 @@ bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const T
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
-  guard(VRenderLevelShared::DrawAliasModel);
   if (clsName == NAME_None) return false;
 
 #if 0
@@ -1129,7 +1102,6 @@ bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const T
     ColourMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
     InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsAdvancedRenderer());
   return true;
-  unguard;
 }
 
 
@@ -1141,7 +1113,6 @@ bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const T
 bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 Fade,
   float Alpha, bool Additive, float Inter, ERenderPass Pass)
 {
-  guard(VRenderLevelShared::DrawEntityModel);
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
   //VState *DispState = Ent->State; //FIXME: skipframes
   // check if we want to interpolate model frames
@@ -1166,7 +1137,6 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
       Alpha, Additive, false, Inter, Interpolate, Pass);
   }
-  unguard;
 }
 
 
@@ -1176,7 +1146,6 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
 //
 //==========================================================================
 bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
-  guard(VRenderLevelShared::CheckAliasModelFrame);
   if (!Ent->State) return false;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
     if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) return false;
@@ -1195,7 +1164,6 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
     if (!Cls) return false;
     return (FindFrame(*Cls, Ent->getMFI(), Inter) != -1);
   }
-  unguard;
 }
 
 
@@ -1213,7 +1181,6 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   int TranslEnd, int Colour, float Inter)
 {
   //FIXME!
-  guard(R_DrawModelFrame);
   /*
   bool Interpolate = true;
   int FIdx = FindFrame(*Model->DefaultClass, Frame, Inter);
@@ -1258,7 +1225,6 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
 
   Drawer->EndView();
   */
-  unguard;
 }
 
 
