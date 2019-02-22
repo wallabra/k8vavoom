@@ -41,6 +41,7 @@ struct VViewClipper::VClipNode {
 // ////////////////////////////////////////////////////////////////////////// //
 #ifdef CLIENT
 extern VCvarF r_lights_radius;
+extern VCvarF fov;
 #endif
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
@@ -610,31 +611,44 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     return;
   }
 
-  if (!clip_frustum) return;
-
-  TVec Pts[4];
-  TVec TransPts[4];
-  Pts[0] = TVec(1.0f, fovx, fovy);
-  Pts[1] = TVec(1.0f, fovx, -fovy);
-  Pts[2] = TVec(1.0f, -fovx, fovy);
-  Pts[3] = TVec(1.0f, -fovx, -fovy);
-  TVec clipforward = Normalise(TVec(viewforward.x, viewforward.y, 0.0f));
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
 
-  for (int i = 0; i < 4; ++i) {
-    TransPts[i].x = TVEC_SUM3(Pts[i].y*viewright.x, Pts[i].z*viewup.x, Pts[i].x*viewforward.x);
-    TransPts[i].y = TVEC_SUM3(Pts[i].y*viewright.y, Pts[i].z*viewup.y, Pts[i].x*viewforward.y);
-    TransPts[i].z = TVEC_SUM3(Pts[i].y*viewright.z, Pts[i].z*viewup.z, Pts[i].x*viewforward.z);
+  if (!clip_frustum) {
+    // just cut everything at back
+/*
+#ifdef CLIENT
+    d1 = -(fov/2.0f)-30;
+    d2 = fov/2.0f+30;
+#else
+    d1 = -90;
+    d2 = 90;
+#endif
+*/
+    return;
+  } else {
+    TVec Pts[4];
+    TVec TransPts[4];
+    Pts[0] = TVec(1.0f, fovx, fovy);
+    Pts[1] = TVec(1.0f, fovx, -fovy);
+    Pts[2] = TVec(1.0f, -fovx, fovy);
+    Pts[3] = TVec(1.0f, -fovx, -fovy);
+    TVec clipforward = Normalise(TVec(viewforward.x, viewforward.y, 0.0f));
 
-    if (DotProduct(TransPts[i], clipforward) <= 0.0f) return; // player can see behind
+    for (int i = 0; i < 4; ++i) {
+      TransPts[i].x = TVEC_SUM3(Pts[i].y*viewright.x, Pts[i].z*viewup.x, Pts[i].x*viewforward.x);
+      TransPts[i].y = TVEC_SUM3(Pts[i].y*viewright.y, Pts[i].z*viewup.y, Pts[i].x*viewforward.y);
+      TransPts[i].z = TVEC_SUM3(Pts[i].y*viewright.z, Pts[i].z*viewup.z, Pts[i].x*viewforward.z);
 
-    VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
-    if (a < (VFloat)0) a += (VFloat)360;
-    VFloat d = VVC_AngleMod180(a-viewangles.yaw);
+      if (DotProduct(TransPts[i], clipforward) <= 0.0f) return; // player can see behind
 
-    if (d1 > d) d1 = d;
-    if (d2 < d) d2 = d;
+      VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
+      if (a < (VFloat)0) a += (VFloat)360;
+      VFloat d = VVC_AngleMod180(a-viewangles.yaw);
+
+      if (d1 > d) d1 = d;
+      if (d2 < d) d2 = d;
+    }
   }
 
   VFloat a1 = VVC_AngleMod(viewangles.yaw+d1);
