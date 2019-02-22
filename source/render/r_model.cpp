@@ -28,7 +28,7 @@
 #include "r_local.h"
 
 
-#define SMOOTHSTEP(x) ((x) * (x) * (3.0f - 2.0f * (x)))
+#define SMOOTHSTEP(x) ((x)*(x)*(3.0f-2.0f*(x)))
 
 
 enum { NUMVERTEXNORMALS = 162 };
@@ -45,35 +45,6 @@ static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias mod
 static int parseHexRGB (const VStr &str) {
   vuint32 ppc = M_ParseColour(str);
   return (ppc&0xffffff);
-/*
-  int clr[3];
-  clr[0] = clr[1] = clr[2] = 0;
-  int pos = 0;
-  for (int f = 0; f < 3; ++f) {
-    while (pos < str.Length() && str[pos] <= ' ') ++pos;
-    int n = 0;
-    int digCount = 0;
-    for (int dnum = 0; ; ++dnum) {
-      if (pos >= str.Length()) {
-        if (dnum == 0) return -1;
-        break;
-      }
-      char ch = str[pos++];
-      if ((vuint8)ch <= ' ') break;
-      int d = VStr::digitInBase(ch, 16);
-      if (d < 0) return -1; // alas
-      n = n*16+d;
-      ++digCount;
-    }
-    if (digCount == 1) n = n*16+n;
-    if (n < 0) n = 0; else if (n > 255) n = 255;
-    clr[f] = n;
-  }
-  while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
-  if (pos < str.Length()) return -1;
-  //fprintf(stderr, "str=<%s>; r=%d; g=%d; b=%d\n", *str, clr[0], clr[1], clr[2]);
-  return (clr[0]<<16)|(clr[1]<<8)|clr[2];
-*/
 }
 
 
@@ -602,7 +573,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   if (pmodel->numstverts <= 0) Sys_Error("model %s has no texture vertices", *mod->Name);
   if (pmodel->numstverts > MAXALIASSTVERTS) Sys_Error("model %s has too many texture vertices", *mod->Name);
   if (pmodel->numtris <= 0) Sys_Error("model %s has no triangles", *mod->Name);
-  if (pmodel->skinwidth & 0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
+  if (pmodel->skinwidth&0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
   if (pmodel->numskins < 1) Sys_Error("Mod_LoadAliasModel: Invalid # of skins: %d\n", pmodel->numskins);
   if (pmodel->numframes < 1) Sys_Error("Mod_LoadAliasModel: Invalid # of frames: %d\n", pmodel->numframes);
 
