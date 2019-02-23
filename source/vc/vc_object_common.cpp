@@ -1072,6 +1072,14 @@ IMPLEMENT_FUNCTION(VObject, GetCvarHelp) {
   RET_STR(VStr(VCvar::GetHelp(*name)));
 }
 
+IMPLEMENT_FUNCTION(VObject, CvarUnlatchAll) {
+#if !defined(VCC_STANDALONE_EXECUTOR)
+  if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
+    VCvar::Unlatch();
+  }
+#endif
+}
+
 
 // native static final bool SetNamePutElement (name setName, name value);
 IMPLEMENT_FUNCTION(VObject, SetNamePutElement) {

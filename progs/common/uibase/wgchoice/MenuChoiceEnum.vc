@@ -31,11 +31,6 @@ struct EnumValue {
   float value;
 }
 
-//int TextColour = CR_WHITE;
-int TextColour = CR_RED;
-int TextColourFocus = CR_YELLOW;
-int ValueColour = CR_TAN;
-int ValueColourFocus = CR_YELLOW;
 string Text;
 bool bLeftAlign;
 
@@ -80,6 +75,7 @@ void SetSessionCvar (name Name, optional float defval) {
   cvarSession = Name;
   if (Name) defval = getSavedFloat(Name, defval);
   if (SetNewValue(defval)) Value = defval;
+  FixLatchedColor();
 }
 
 

@@ -26,8 +26,6 @@
 //**************************************************************************
 class MenuCrosshairChoice : MenuChoice;
 
-int TextColour = CR_RED;
-int TextColourFocus = CR_YELLOW;
 string Text;
 bool bLeftAlign;
 name cvar;
@@ -178,4 +176,7 @@ defaultproperties {
   Width = 360;
   Height = 14;
   cvarSession = '';
+
+  TextColour = CR_RED;
+  TextColourFocus = CR_YELLOW;
 }

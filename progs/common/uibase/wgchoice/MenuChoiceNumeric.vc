@@ -27,10 +27,6 @@
 class MenuChoiceNumeric : MenuChoice;
 
 //int TextColour = CR_WHITE;
-int TextColour = CR_RED;
-int TextColourFocus = CR_YELLOW;
-int ValueColour = CR_DARKGREEN; //CR_RED;
-int ValueColourFocus = CR_GREEN; //CR_YELLOW;
 string Text;
 
 float Value;
@@ -64,6 +60,7 @@ void SetSessionCvar (name Name, optional float defval) {
   cvarSession = Name;
   if (Name) defval = fclamp(getSavedFloat(Name, defval), MinValue, MaxValue);
   if (SetNewValue(defval)) Value = defval;
+  FixLatchedColor();
 }
 
 
@@ -192,4 +189,9 @@ defaultproperties {
   ValueDelta = 1.0;
   MinValue = 0.0;
   MaxValue = 1.0;
+
+  TextColour = CR_RED;
+  TextColourFocus = CR_YELLOW;
+  ValueColour = CR_DARKGREEN; //CR_RED;
+  ValueColourFocus = CR_GREEN; //CR_YELLOW;
 }

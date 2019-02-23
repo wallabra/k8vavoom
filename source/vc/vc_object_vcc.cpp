@@ -82,6 +82,9 @@ IMPLEMENT_FUNCTION(VObject, GetCvarHelp) {
   RET_STR(VStr());
 }
 
+IMPLEMENT_FUNCTION(VObject, CvarUnlatchAll) {
+}
+
 
 //**************************************************************************
 //

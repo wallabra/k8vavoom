@@ -681,6 +681,7 @@ native static final string GetCvarS (name Name); // read string value
 native static final void SetCvarS (name Name, string value); // set cvar string value
 native static final bool GetCvarB (name Name); // read boolean value
 native static final void SetCvarB (name Name, bool value); // set cvar boolean value
+native static final void CvarUnlatchAll (); // NOOP in network game (so can be called safely)
 
 
 // ////////////////////////////////////////////////////////////////////////// //

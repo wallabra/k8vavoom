@@ -32,6 +32,11 @@ int CursorXOffsHR; // for right-aligned text
 name cvarSession; // if not empty, value will be saved in it, and read back on creation
 string customHelpText;
 
+int TextColour = CR_RED;
+int TextColourFocus = CR_YELLOW;
+int ValueColour = CR_TAN;
+int ValueColourFocus = CR_YELLOW;
+
 
 //==========================================================================
 //
@@ -47,6 +52,22 @@ string getHelp () {
 
 //==========================================================================
 //
+//  FixLatchedColor
+//
+//==========================================================================
+void FixLatchedColor () {
+  if (!cvarSession) return;
+  int cf = CvarGetFlags(cvarSession);
+  if (cf == -1 || !(cf&CVAR_LATCH)) return;
+  if (TextColour != default.TextColour) return;
+  if (TextColourFocus != default.TextColourFocus) return;
+  TextColour = CR_SAPPHIRE;
+  TextColourFocus = CR_ICE;
+}
+
+
+//==========================================================================
+//
 //  setSavedInt
 //
 //==========================================================================
@@ -55,6 +76,8 @@ final static void setSavedInt (name Name, int val) {
     CreateCvar(Name, va("%d", val), "___saved_menu__value___", 0);
   } else {
     SetCvar(Name, val);
+    int cf = CvarGetFlags(Name);
+    if (cf > 0 && (cf&CVAR_LATCH)) CvarUnlatchAll();
   }
 }
 
@@ -80,6 +103,8 @@ final static void setSavedFloat (name Name, float val) {
     CreateCvar(Name, va("%f", val), "___saved_menu__value___", 0);
   } else {
     SetCvarF(Name, val);
+    int cf = CvarGetFlags(Name);
+    if (cf > 0 && (cf&CVAR_LATCH)) CvarUnlatchAll();
   }
 }
 

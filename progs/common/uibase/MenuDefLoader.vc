@@ -585,8 +585,8 @@ class MenuDefOptionBool : MenuDefOptionBase;
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextNormalColor = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextFocusedColor = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
