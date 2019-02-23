@@ -58,8 +58,16 @@ final void renderSkullDashInfo () {
         CR_TAN, CR_RED);
     }
 
-    DrawText(convertX(432), 8+2*10, va("Tokens Remaining:\c+%8d\c-", getInvCount(SkullTokenCounter)),
-      CR_TAN, CR_GREEN);
+    int tc = getInvCount(SkullTokenCounter);
+    int suffc = cl.Level.World.GetACSGlobalInt(21);
+    string ss;
+    if (tc > 99 || suffc > 99) {
+      ss = va(" %d (%d)", tc, suffc);
+      if (ss.length > 8) ss = va("%d(%d)", tc, suffc);
+    } else {
+      ss = va(" %d (%d)", tc, suffc);
+    }
+    DrawText(convertX(432), 8+2*10, va("Tokens Remaining:\c+%s\c-", ss), CR_TAN, CR_GREEN);
   }
 
   // score
