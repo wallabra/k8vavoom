@@ -1,0 +1,93 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class StatusBarScreenSkullDash : replaces(StatusBarScreen);
+
+final int convertX (int xpos) { return xpos*GetVirtualWidth()/640; }
+final int convertY (int ypos) { return ypos*GetVirtualHeight()/480; }
+
+
+final int getInvCount (class!Inventory type) {
+  auto inv = type(EntityEx(cl.MO).FindInventory(type));
+  return (inv ? inv.Amount : 0);
+}
+
+
+final void renderSkullDashInfo () {
+  // time remaining
+  SetFont('confont');
+  SetTextAlign(hleft, vtop);
+
+  bool ingame = !!(MinutesCounter(EntityEx(cl.MO).FindInventory(MinutesCounter)));
+  if (!ingame && getInvCount(Seconds1Counter)+getInvCount(Seconds2Counter)+getInvCount(Tics1Counter)+getInvCount(Tics2Counter)) ingame = true;
+
+  ShadeRect(convertX(428), 4, 300, 48, 0.6);
+
+  //print("LEVEL: %s (%n)", cl.Level.LevelName, cl.MO.XLevel.MapName);
+  DrawText(convertX(432), 8+0*10, va("%s", cl.Level.LevelName), CR_DARKGREEN);
+
+  if (ingame) {
+    if (GetCvarB('k8SkullDash_ShowTics')) {
+      DrawText(convertX(432), 8+1*10, va("Time   Remaining:\c+%2d:%02d:%02d\c-",
+        getInvCount(MinutesCounter), getInvCount(Seconds1Counter)*10+getInvCount(Seconds2Counter), getInvCount(Tics1Counter)*10+getInvCount(Tics2Counter)),
+        CR_TAN, CR_RED);
+    } else {
+      DrawText(convertX(432), 8+1*10, va("Time   Remaining:   \c+%2d:%02d\c-",
+        getInvCount(MinutesCounter), getInvCount(Seconds1Counter)*10+getInvCount(Seconds2Counter)),
+        CR_TAN, CR_RED);
+    }
+
+    DrawText(convertX(432), 8+2*10, va("Tokens Remaining:\c+%8d\c-", getInvCount(SkullTokenCounter)),
+      CR_TAN, CR_GREEN);
+  }
+
+  // score
+  DrawText(convertX(432), 8+3*10, cl.Level.World.GetACSGlobalStr(cl.Level.XLevel.Acs, 37), CR_TAN);
+  SetTextAlign(hright, vtop);
+  DrawText(convertX(633), 8+3*10, cl.Level.World.GetACSGlobalStr(cl.Level.XLevel.Acs, 27), CR_TAN);
+}
+
+
+//==========================================================================
+//
+//  SB_DrawMainBarPost
+//
+//==========================================================================
+override void SB_DrawMainBarPost (bool inAutomap) {
+  ::SB_DrawMainBarPost(inAutomap);
+  if (!cl || !cl.MO) return;
+  renderSkullDashInfo();
+}
+
+
+//==========================================================================
+//
+//  SB_DrawFullscreenStats
+//
+//==========================================================================
+override void SB_DrawFullscreenStats () {
+  ::SB_DrawFullscreenStats();
+  if (!cl || !cl.MO) return;
+  renderSkullDashInfo();
+}

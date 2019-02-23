@@ -1,0 +1,18 @@
+menudef K8SkullDashMenu {
+  title = "K8 SkullDash Options";
+
+  option bool {
+    title = "Show timer tics";
+    cvar = k8SkullDash_ShowTics;
+    help = "If turned on, timer will show intra-second tics.";
+  }
+}
+
+
+// advanced video options menu
+menudef OptionsMenu extend {
+  option submenu {
+    title = "K8 SkullDash Options";
+    submenu = K8SkullDashMenu;
+  }
+}
