@@ -308,7 +308,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (DecalName) {
+            if (DecalName && li.alpha >= 0.6) {
               SpawnDecal(hit_point, DecalName, side, li);
               break; // shot continues, why not?
             } else {
