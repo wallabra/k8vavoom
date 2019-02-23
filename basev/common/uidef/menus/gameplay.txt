@@ -31,11 +31,25 @@ menudef GameplayOptions {
 
   option bool {
     title = "Pushable barrels";
-    cvar = sv_pushablebarrels;
+    cvar = sv_pushable_barrels;
     help =
       "Can barrels be pushed?"
       "Don't worry, this option is latched (I should explain this)."
       "Requires game/map restart.";
+  }
+
+  option bool {
+    title = "Respawn barrels";
+    cvar = sv_barrel_respawn;
+    help = "Respawn barrels in network game?";
+  }
+
+  option bool {
+    title = "Decorations block projectiles";
+    cvar = sv_decoration_block_projectiles;
+    help =
+      "Should decoration objects block projectiles?"
+      "Set to 'OFF' to get vanilla expirience.";
   }
 
   option bool {

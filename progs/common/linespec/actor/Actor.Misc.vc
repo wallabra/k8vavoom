@@ -364,7 +364,7 @@ final void A_BarrelDestroy () {
   // k8: no, Janis, this method should destroy object
   //bRespawnItems = !!GetCvar('deathmatch');
   //bWeaponsStay = netgame && !GetCvar('deathmatch');
-  if (Level.Game.netgame && Level.Game.deathmatch && GetCvarB('sv_barrelrespawn')) {
+  if (Level.Game.netgame && Level.Game.deathmatch && GetCvarB('sv_barrel_respawn')) {
     //print("*** BARREL HIDDEN!");
     RenderStyle = STYLE_None;
     bSolid = false;

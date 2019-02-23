@@ -94,8 +94,9 @@ static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo)
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?");
 VCvarI Skill("Skill", "3", "Skill level.");
 static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_barrelrespawn("sv_barrelrespawn", false, "Respawn barrels in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_pushablebarrels("sv_pushablebarrels", true, "Pusheable barrels?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", true, "Should decoration things block projectiles?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive|CVAR_PreInit);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive|CVAR_PreInit);

@@ -625,7 +625,8 @@ override bool Touch (Entity InOther) {
 
   // Check for bBumpSpecial
   // By default, only players can activate things by bumping into them
-/*  if (bBumpSpecial && (Other.bIsPlayer
+  /*
+  if (bBumpSpecial && (Other.bIsPlayer
     || ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
     || ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
     ) && (level.maptime > LastBump)) // Leave the bumper enough time to go away
@@ -634,7 +635,8 @@ override bool Touch (Entity InOther) {
     {
       LastBump = level.maptime + TICRATE;
     }
-  }*/
+  }
+  */
 
   // check for skulls slamming into things
   if (bSkullFly) return ProcessHitFlags(Other, Slam(Other));
@@ -672,6 +674,11 @@ override bool Touch (Entity InOther) {
     switch (SpecialMissileHit(Other)) {
       case 0: return ProcessHitFlags(Other, false);
       case 1: return ProcessHitFlags(Other, true);
+    }
+
+    if (!GetCvarB('sv_decoration_block_projectiles')) {
+      //print("!!! bMonster=%B; bShootable=%B", Other.bMonster, Other.bShootable);
+      if (!Other.bMonster && !Other.bShootable) return ProcessHitFlags(Other, true);
     }
 
     if (Target) {
