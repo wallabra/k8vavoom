@@ -293,6 +293,27 @@ static vuint32 LookupColourName (const VStr &Name) {
       return clr|0xff000000U;
     }
     return 0;
+  } else if (dpos == 6) {
+    bool valid = true;
+    vuint32 clr = 0;
+    for (int f = 0; f < 6; ++f) {
+      int d = VStr::digitInBase(tmpbuf[f], 16);
+      if (d < 0) { valid = false; break; }
+      clr = (clr<<4)|(d&0x0f);
+    }
+    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+    if (valid) return clr|0xff000000U;
+  } else if (dpos == 3) {
+    bool valid = true;
+    vuint32 clr = 0;
+    for (int f = 1; f < 4; ++f) {
+      int d = VStr::digitInBase(tmpbuf[f], 16);
+      if (d < 0) { valid = false; break; }
+      clr = (clr<<4)|(d&0x0f);
+      clr = (clr<<4)|(d&0x0f);
+    }
+    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+    if (valid) return clr|0xff000000U;
   }
 
   VName cnx = VName(tmpbuf, VName::Find);
@@ -377,7 +398,7 @@ vuint32 M_ParseColour (const VStr &Name) {
       // skip whitespace and quotes
       while (*s && (*s <= ' ' || *s == '"' || *s == '\'')) ++s;
       if (!s[0] || VStr::digitInBase(s[0], 16) < 0) {
-        GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+        GCon->Logf(NAME_Warning, "Invalid color <%s> (0)", *Name);
         return 0xff000000U; // black
       }
       // parse hex
@@ -387,7 +408,7 @@ vuint32 M_ParseColour (const VStr &Name) {
         if (s[0] <= ' ') break;
         int d = VStr::digitInBase(s[0], 16);
         if (d < 0) {
-          GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+          GCon->Logf(NAME_Warning, "Invalid color <%s> (1)", *Name);
           return 0xff000000U; // black
         }
         n = n*16+d;
@@ -399,7 +420,7 @@ vuint32 M_ParseColour (const VStr &Name) {
       if (digCount == 1) n = (n<<4)|n;
       Col[i] = n;
     }
-    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s> (2)", *Name);
     //GCon->Logf("*** COLOR <%s> is 0x%08x", *Name, 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]));
   }
   return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);
