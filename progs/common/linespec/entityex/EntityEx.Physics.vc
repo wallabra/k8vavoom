@@ -995,8 +995,8 @@ final void FallingDamage () {
 
   if (Level.bFallingDamage) {
     // Hexen style falling damage
-    if (mom <= 23.0 * 35.0) return; // not fast enough
-    if (mom >= 63.0 * 35.0) {
+    if (mom <= 23.0*35.0) return; // not fast enough
+    if (mom >= 63.0*35.0) {
       damage = 10000; // automatic death
     } else {
       dist = mom/35.0*16.0/23.0;
@@ -1184,8 +1184,6 @@ override void HandleFloorclip () {
 //
 //==========================================================================
 override void ApplyFriction () {
-  float dot;
-
   if (bMissile || bSkullFly) return; // no friction for missiles ever
 
   if (Origin.z > FloorZ && !bOnMobj && WaterLevel < 2 && !bFly && !bFallingFriction) {
@@ -1197,10 +1195,9 @@ override void ApplyFriction () {
 
   // clip velocity
   if (Origin.z <= FloorZ) {
-    dot = DotProduct(Velocity, Floor->normal);
+    float dot = DotProduct(Velocity, Floor->normal);
     if (dot < 0.0) {
-      TVec Vel;
-      Vel = dot * Floor->normal;
+      TVec Vel = dot*Floor->normal;
       Velocity.x -= Vel.x;
       Velocity.y -= Vel.y;
     }
