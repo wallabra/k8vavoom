@@ -199,6 +199,9 @@ void VFileDirectory::clear () {
 void VFileDirectory::buildLumpNames () {
   if (files.length() > 65520) Sys_Error("Archive \"%s\" contains too many files", *getArchiveName());
 
+  // index of the last overlong lump in `files`; -1 means "removed, and don't register anymore"
+  TMap<VName, int> overlongLumps;
+
   for (int i = 0; i < files.length(); ++i) {
     VPakFileInfo &fi = files[i];
     fi.fileName = fi.fileName.toLowerCase(); // just in case
@@ -265,8 +268,41 @@ void VFileDirectory::buildLumpNames () {
       //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
       //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 
+
       // final lump name
-      if (lumpName.length() != 0) fi.lumpName = VName(*lumpName, VName::AddLower8);
+      if (lumpName.length() != 0) {
+        fi.lumpName = VName(*lumpName, VName::AddLower8);
+        // overlong checks
+        if (lumpName.length() > 8) {
+          // new overlong lump
+          auto lip = overlongLumps.find(fi.lumpName);
+          if (lip) {
+            // already seen
+            if (*lip == -1) {
+              // don't register
+              fi.lumpName = NAME_None;
+            } else {
+              // insert into list
+              overlongLumps.put(fi.lumpName, i);
+            }
+          } else {
+            // remember first overlong lump
+            overlongLumps.put(fi.lumpName, i);
+          }
+        } else if (lumpName.length() == 8) {
+          // exact match, remove all previous overlong lumps (if there are any)
+          auto lip = overlongLumps.find(fi.lumpName);
+          if (lip && *lip >= 0) {
+            for (int xidx = *lip; xidx >= 0; --xidx) {
+              if (files[xidx].lumpName == fi.lumpName) {
+                if (!fsys_no_dup_reports) GCon->Logf(NAME_Init, "removing overlong lump <%s> (%s)", *fi.lumpName, *files[xidx].fileName);
+                files[xidx].lumpName = NAME_None;
+              }
+            }
+          }
+          overlongLumps.put(fi.lumpName, -1); // mark as found
+        }
+      }
     }
   }
 }
@@ -330,9 +366,11 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         check(files[*lsidp].nextLump == -1);
         files[*lsidp].nextLump = f; // link to previous one
         *lsidp = f; // update index
-        if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
-          GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-          GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+        if (doReports) {
+          if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
+            GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+            GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+          }
         }
       }
     }
