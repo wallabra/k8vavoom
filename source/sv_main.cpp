@@ -41,8 +41,8 @@ static void G_DoReborn (int playernum);
 static void G_DoCompleted ();
 
 
-static VCvarB dbg_skipframe_player_tick("dbg_skipframe_player_tick", true, "Run player ticks on skipped frames?", 0);
-static VCvarB dbg_skipframe_player_keep_moving("dbg_skipframe_player_keep_moving", false, "Keep moving on skipped player frames (this is wrong)?", 0);
+static VCvarB dbg_skipframe_player_tick("dbg_skipframe_player_tick", true, "Run player ticks on skipped frames?", CVAR_PreInit);
+static VCvarB dbg_skipframe_player_block_move("dbg_skipframe_player_block_move", false, "Keep moving on skipped player frames (this is wrong)?", CVAR_PreInit);
 
 VCvarB real_time("real_time", true, "Run server in real time?");
 
@@ -382,8 +382,9 @@ static void CheckForSkip () {
 //
 //==========================================================================
 static void SV_RunPlayerTick (VBasePlayer *Player, bool skipFrame) {
-  Player->ForwardMove = (!skipFrame || dbg_skipframe_player_keep_moving ? Player->ClientForwardMove : 0);
-  Player->SideMove = (!skipFrame || dbg_skipframe_player_keep_moving ? Player->ClientSideMove : 0);
+  Player->ForwardMove = (skipFrame && dbg_skipframe_player_block_move ? 0 : Player->ClientForwardMove);
+  Player->SideMove = (skipFrame && dbg_skipframe_player_block_move ? 0 : Player->ClientSideMove);
+  //if (Player->ForwardMove) GCon->Logf("ffm: %f (%d)", Player->ClientForwardMove, (int)skipFrame);
   // don't move faster than maxmove
        if (Player->ForwardMove > sv_maxmove) Player->ForwardMove = sv_maxmove;
   else if (Player->ForwardMove < -sv_maxmove) Player->ForwardMove = -sv_maxmove;
