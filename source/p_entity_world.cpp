@@ -1420,7 +1420,11 @@ void VEntity::SlideMove (float StepVelScale) {
     if (BestSlideFrac <= 0.0f) return;
 
     // clip the moves
-    Velocity = ClipVelocity(Velocity*BestSlideFrac, BestSlideLine->normal, 1.0f);
+    // k8: don't multiply z, 'cause it makes jumping against a wall unpredictably hard
+    Velocity.x *= BestSlideFrac;
+    Velocity.y *= BestSlideFrac;
+    Velocity = ClipVelocity(Velocity, BestSlideLine->normal, 1.0f);
+    //Velocity = ClipVelocity(Velocity*BestSlideFrac, BestSlideLine->normal, 1.0f);
     XMove = Velocity.x*StepVelScale;
     YMove = Velocity.y*StepVelScale;
   } while (!TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y+YMove, Origin.z), true));
