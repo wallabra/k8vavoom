@@ -5179,6 +5179,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_TagString)
       //sp[-1] |= ActiveObject->GetLibraryID();
+      //GCon->Logf("PCD_TagString: <%s> (0x%08x)", *ActiveObject->GetString(sp[-1]).quote(), (unsigned)sp[-1]);
       sp[-1] = ActiveObject->Level->PutNewString(ActiveObject->GetString(sp[-1]));
       ACSVM_BREAK;
 
