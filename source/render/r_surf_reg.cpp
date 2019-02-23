@@ -104,11 +104,13 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
     int bmaxs = (int)ceil(maxs/16);
     surfs->texturemins[0] = bmins*16;
     surfs->extents[0] = (bmaxs-bmins)*16;
+    /*
     if (surfs->extents[0] > 256) {
       //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
       GCon->Logf("Bad extents (0): %d", (int)surfs->extents[0]);
       surfs->extents[0] = 256;
     }
+    */
 
     mins = 99999.0f;
     maxs = -99999.0f;
@@ -121,11 +123,13 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
     bmaxs = (int)ceil(maxs/16);
     surfs->texturemins[1] = bmins*16;
     surfs->extents[1] = (bmaxs-bmins)*16;
+    /*
     if (surfs->extents[1] > 256) {
       //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
       GCon->Logf("Bad extents (1): %d", (int)surfs->extents[1]);
       surfs->extents[1] = 256;
     }
+    */
 
     //GCon->Logf("***INITSURF***");
     surfs->subsector = sub;
