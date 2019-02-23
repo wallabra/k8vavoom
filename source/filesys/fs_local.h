@@ -58,6 +58,7 @@ public:
   virtual void Close () = 0;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) = 0;
   virtual int CheckNumForFileName (const VStr &Name) = 0;
+  virtual int FindACSObject (const VStr &fname) = 0;
   virtual void ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) = 0;
   virtual int LumpLength (int LumpNum) = 0;
   virtual VName LumpName (int LumpNum) = 0;
@@ -209,6 +210,7 @@ public:
   //virtual VStream *OpenFileRead (const VStr &fname) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int CheckNumForFileName (const VStr &fname) override;
+  virtual int FindACSObject (const VStr &fname) override;
   virtual void ReadFromLump (int, void *, int, int) override;
   virtual int LumpLength (int) override;
   virtual VName LumpName (int) override;

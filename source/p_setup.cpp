@@ -2817,13 +2817,17 @@ void VLevel::LoadLoadACS (int lacsLump, int XMapLump) {
   while (!sc->AtEnd()) {
     //sc->ExpectName8();
     //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
-    sc->ExpectName();
+    //sc->ExpectName();
+    sc->ExpectString();
+    int AcsLump = W_FindACSObjectInFile(sc->String, W_LumpFile(lacsLump));
+    /*
     int AcsLump = W_CheckNumForNameInFile(sc->Name, W_LumpFile(lacsLump), WADNS_ACSLibrary);
     if (AcsLump < 0 && VStr::length(*sc->Name) > 8) {
       VName n8 = VName(*sc->Name, VName::AddLower8);
       AcsLump = W_CheckNumForNameInFile(n8, W_LumpFile(lacsLump), WADNS_ACSLibrary);
       if (AcsLump >= 0) GCon->Logf(NAME_Dev, "ACS: '%s' found as '%s'", *sc->Name, *n8);
     }
+    */
     if (AcsLump >= 0) {
       //GCon->Logf(NAME_Dev, "ACS: loading script from '%s'", *W_FullLumpName(AcsLump));
       GCon->Logf("  loading ACS script from '%s'", *W_FullLumpName(AcsLump));

@@ -200,7 +200,7 @@ void VFileDirectory::buildLumpNames () {
   if (files.length() > 65520) Sys_Error("Archive \"%s\" contains too many files", *getArchiveName());
 
   // index of the last overlong lump in `files`; -1 means "removed, and don't register anymore"
-  TMap<VName, int> overlongLumps;
+  //TMap<VName, int> overlongLumps;
 
   for (int i = 0; i < files.length(); ++i) {
     VPakFileInfo &fi = files[i];
@@ -268,11 +268,11 @@ void VFileDirectory::buildLumpNames () {
       //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
       //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 
-
       // final lump name
       if (lumpName.length() != 0) {
         fi.lumpName = VName(*lumpName, VName::AddLower8);
         // overlong checks
+        /*
         if (lumpName.length() > 8) {
           // new overlong lump
           auto lip = overlongLumps.find(fi.lumpName);
@@ -302,6 +302,7 @@ void VFileDirectory::buildLumpNames () {
           }
           overlongLumps.put(fi.lumpName, -1); // mark as found
         }
+        */
       }
     }
   }
@@ -604,6 +605,35 @@ int VPakFileBase::CheckNumForName (VName lumpName, EWadNamespace NS, bool wantFi
 //==========================================================================
 int VPakFileBase::CheckNumForFileName (const VStr &fileName) {
   return pakdir.findFile(fileName);
+}
+
+
+//==========================================================================
+//
+//  VPakFileBase::FindACSObject
+//
+//==========================================================================
+int VPakFileBase::FindACSObject (const VStr &fname) {
+  VStr afn = fname.ExtractFileBaseName();
+  if (afn.ExtractFileExtension().ICmp("o") == 0) afn = afn.StripExtension();
+  if (afn.length() == 0) return -1;
+  VName ln = VName(*afn, VName::AddLower8);
+  int rough = -1;
+  int prevlen = -1;
+  const int count = pakdir.files.length();
+  for (int f = 0; f < count; ++f) {
+    const VPakFileInfo &fi = pakdir.files[f];
+    if (fi.lumpNamespace != WADNS_ACSLibrary) continue;
+    if (fi.lumpName != ln) continue;
+    if (fi.filesize < 2) continue; // why not?
+    const VStr fn = fi.fileName.ExtractFileBaseName().StripExtension();
+    if (fn.ICmp(afn) == 0) return f; // exact match
+    if (rough < 0 || (fn.length() >= afn.length() && prevlen > fn.length())) {
+      rough = f;
+      prevlen = fn.length();
+    }
+  }
+  return rough;
 }
 
 
