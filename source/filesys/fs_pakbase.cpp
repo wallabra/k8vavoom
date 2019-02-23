@@ -436,7 +436,7 @@ bool VFileDirectory::lumpExists (VName lname, vint32 ns) {
 
 //==========================================================================
 //
-//  VFileDirectory::findFirstFile
+//  VFileDirectory::findFile
 //
 //==========================================================================
 int VFileDirectory::findFile (VStr fname) {
@@ -666,4 +666,37 @@ void VPakFileBase::ListPk3Files (TArray<VStr> &list) {
     hits.put(fi.fileName, true);
     list.Append(fi.fileName);
   }
+}
+
+
+//==========================================================================
+//
+//  VPakFileBase::CalculateMD5
+//
+//==========================================================================
+VStr VPakFileBase::CalculateMD5 (int lumpidx) {
+  if (lumpidx < 0 || lumpidx >= pakdir.files.length()) return VStr::EmptyString;
+  VStream *strm = CreateLumpReaderNum(lumpidx);
+  if (!strm) return VStr::EmptyString;
+  MD5Context md5ctx;
+  md5ctx.Init();
+  enum { BufSize = 65536 };
+  vuint8 *buf = new vuint8[BufSize];
+  auto left = strm->TotalSize();
+  while (left > 0) {
+    int rd = (left > BufSize ? BufSize : left);
+    strm->Serialise(buf, rd);
+    if (strm->IsError()) {
+      delete[] buf;
+      delete strm;
+      return VStr::EmptyString;
+    }
+    left -= rd;
+    md5ctx.Update(buf, (unsigned)rd);
+  }
+  delete[] buf;
+  delete strm;
+  vuint8 md5digest[MD5Context::DIGEST_SIZE];
+  md5ctx.Final(md5digest);
+  return VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
 }

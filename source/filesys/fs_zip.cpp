@@ -260,8 +260,9 @@ void VZipFile::OpenArchive (VStream *fstream) {
 
   //files = new VPakFileInfo[NumFiles];
 
+  bool isPK3 = (PakFileName.ExtractFileExtension().ICmp("pk3") == 0);
   bool canHasPrefix = true;
-  if (PakFileName.ExtractFileExtension().ICmp("pk3") == 0) canHasPrefix = false; // do not remove prefixes in pk3
+  if (isPK3) canHasPrefix = false; // do not remove prefixes in pk3
   //GCon->Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);
 
   // set the current file of the zipfile to the first file
@@ -360,6 +361,19 @@ void VZipFile::OpenArchive (VStream *fstream) {
 
   pakdir.buildLumpNames();
   pakdir.buildNameMaps();
+
+  // detect SkullDash EE
+  if (isPK3) {
+    int tmidx = pakdir.findFile("maps/titlemap.wad");
+    //GCon->Logf("***%s: tmidx=%d", *PakFileName, tmidx);
+    if (tmidx >= 0 && pakdir.files[tmidx].filesize == 286046) {
+      //GCon->Logf("*** TITLEMAP: %s", *CalculateMD5(tmidx));
+      // check md5
+      if (CalculateMD5(tmidx) == "def4f5e00c60727aeb3a25d1982cfcf1") {
+        fsys_detected_mod = AD_SKULLDASHEE;
+      }
+    }
+  }
 }
 
 

@@ -220,6 +220,8 @@ public:
   void ListWadFiles (TArray<VStr> &list);
   void ListPk3Files (TArray<VStr> &list);
 
+  VStr CalculateMD5 (int lumpidx);
+
   virtual VStr GetPrefix () override { return PakFileName; }
 };
 
@@ -348,6 +350,14 @@ extern TArray<VSearchPath *> SearchPaths;
 
 extern bool fsys_report_added_paks;
 extern bool fsys_no_dup_reports;
+
+// autodetected wad/pk3
+enum {
+  AD_NONE,
+  AD_SKULLDASHEE,
+};
+
+extern int fsys_detected_mod;
 
 
 #endif
