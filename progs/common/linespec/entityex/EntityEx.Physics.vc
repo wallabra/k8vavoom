@@ -78,9 +78,7 @@ final void ClampNormalVelocity () {
     Velocity = vector(0, 0, 0);
   } else {
     // why not?
-    Velocity.x = fclamp(Velocity.x, -MAXMOVE, MAXMOVE);
-    Velocity.y = fclamp(Velocity.y, -MAXMOVE, MAXMOVE);
-    Velocity.z = fclamp(Velocity.z, -MAXMOVE, MAXMOVE);
+    Velocity = vclamp(Velocity, -MAXMOVE, MAXMOVE);
   }
   Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
 }
@@ -478,8 +476,10 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
     }
   }
 
-  if (bIsPlayer && bFly && !(Origin.z <= FloorZ) /*&& (XLevel.TicTime&2)*/) {
-    Origin.z += sin(90.0*35.0/20.0*AngleMod360(XLevel.Time));
+  if (bIsPlayer && bFly && Origin.z > FloorZ /*&& (XLevel.TicTime&2)*/) {
+    //FIXME: this is time-dependent, rewrite!
+    //Origin.z += sin(90.0*35.0/20.0*AngleMod360(int(XLevel.Time)))/2.0;
+    Origin.z = PlayerEx(Player).CalcFlyZ(Origin.z);
   }
 
   // clip movement

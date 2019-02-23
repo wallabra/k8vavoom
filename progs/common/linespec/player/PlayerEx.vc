@@ -190,6 +190,19 @@ override bool IsCheckpointPossible () {
 
 //==========================================================================
 //
+//  CalcFlyZ
+//
+//  TODO: this is time-dependent; fix it!
+//
+//==========================================================================
+float CalcFlyZ (float currz) {
+  currz += sin(90.0*35.0/20.0*AngleMod360(WorldTimer))/2.0;
+  return currz;
+}
+
+
+//==========================================================================
+//
 //  QS_Save
 //
 //==========================================================================
@@ -481,11 +494,7 @@ final void MovePlayer (float deltaTime) {
   }
 
   if ((Buttons&BT_JUMP) && onground && !JumpTime) {
-    if (Cheats&CF_HIGHJUMP) {
-      MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*2.0)*1.1;
-    } else {
-      MO.Velocity.z = PlayerPawn(MO).JumpVelZ*1.1;
-    }
+    MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*(Cheats&CF_HIGHJUMP ? 2.0 : 1.0))*1.1;
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
   }
@@ -3173,9 +3182,7 @@ override void PlayerTick (float deltaTime) {
   // copy view angles
   if (MO == Camera) MO.Angles = ViewAngles;
 
-  if (JumpTime) {
-    JumpTime = fmax(0.0, JumpTime-deltaTime);
-  }
+  if (JumpTime) JumpTime = fmax(0.0, JumpTime-deltaTime);
 
   if (MorphTime) PlayerPawn(MO).MorphPlayerThink();
 

@@ -1314,10 +1314,7 @@ override void Tick (float deltaTime) {
     }
   }
 
-  if (JumpTime) {
-    JumpTime -= deltaTime;
-    if (JumpTime <= 0.0) JumpTime = 0.0;
-  }
+  if (JumpTime) JumpTime = fmax(0, JumpTime-deltaTime);
 
   if (!Physics(deltaTime)) return;
 
@@ -2923,15 +2920,15 @@ override void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
       float delta = Target.Origin.z+Height/2.0-Ret.z;
       if (delta < 0.0 && dist < -(delta*3.0)) {
         Ret.z -= FloatSpeed*DeltaTime;
-      } else if (delta > 0.0 && dist < (delta*3.0)) {
+      } else if (delta > 0.0 && dist < delta*3.0) {
         Ret.z += FloatSpeed*DeltaTime;
       }
     }
   }
-  if (bIsPlayer && bFly && !(Ret.z <= FloorZ) && (XLevel.TicTime&2)) {
-    //FIXME: k8 i made this time-dependent, rewrite!
-    //       for now, i restored jerky movement
-    Ret.z += sin(90.0*35.0/20.0*AngleMod360(XLevel.Time));
+  if (bIsPlayer && bFly && Ret.z > FloorZ /*&& (XLevel.TicTime&2)*/) {
+    //FIXME: this is time-dependent, rewrite!
+    //Ret.z += sin(90.0*35.0/20.0*AngleMod360(int(XLevel.TicTime)))/2.0;
+    Ret.z = PlayerEx(Player).CalcFlyZ(Ret.z);
   }
 }
 

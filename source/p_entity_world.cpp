@@ -1337,6 +1337,8 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
 //  Find the first line hit, move flush to it, and slide along it.
 //  This is a kludgy mess.
 //
+//  k8: TODO: switch to beveled BSP!
+//
 //==========================================================================
 void VEntity::SlideMove (float StepVelScale) {
   guard(VEntity::SlideMove);
@@ -1521,16 +1523,12 @@ void VEntity::UpdateVelocity () {
     if (WaterLevel < 2) {
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
     } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {
-      float startvelz, sinkspeed;
-
       // water gravity
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0f*host_frametime;
-      startvelz = Velocity.z;
-
-      if (EntityFlags&EF_Corpse) sinkspeed = -WATER_SINK_SPEED/3.0f; else sinkspeed = -WATER_SINK_SPEED;
-
+      float startvelz = Velocity.z;
+      float sinkspeed = -WATER_SINK_SPEED/(EntityFlags&EF_Corpse ? 3.0f : 1.0f);
       if (Velocity.z < sinkspeed) {
-        if (startvelz < sinkspeed) Velocity.z = startvelz; else Velocity.z = sinkspeed;
+        Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
       } else {
         Velocity.z = startvelz+(Velocity.z-startvelz)*WATER_SINK_FACTOR;
       }
