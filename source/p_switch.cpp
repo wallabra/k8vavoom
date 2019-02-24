@@ -49,9 +49,9 @@ enum EBWhere {
 };
 
 
-class VButton : public VThinker {
-  DECLARE_CLASS(VButton, VThinker, 0)
-  NO_DEFAULT_CONSTRUCTOR(VButton)
+class VThinkButton : public VThinker {
+  DECLARE_CLASS(VThinkButton, VThinker, 0)
+  NO_DEFAULT_CONSTRUCTOR(VThinkButton)
 
   vint32 Side;
   vuint8 Where;
@@ -59,15 +59,15 @@ class VButton : public VThinker {
   vint32 Frame;
   float Timer;
   VName DefaultSound;
-  bool UseAgain;
+  vuint8 UseAgain; // boolean
 
-  virtual void SerialiseOther (VStream&) override;
+  //virtual void SerialiseOther (VStream&) override;
   virtual void Tick (float) override;
   bool AdvanceFrame ();
 };
 
 
-IMPLEMENT_CLASS(V, Button)
+IMPLEMENT_CLASS(V, ThinkButton)
 
 
 //==========================================================================
@@ -79,7 +79,6 @@ IMPLEMENT_CLASS(V, Button)
 //
 //==========================================================================
 bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultSound, bool &Quest) {
-  guard(VLevelInfo::ChangeSwitchTexture);
   int texTop = XLevel->Sides[sidenum].TopTexture;
   int texMid = XLevel->Sides[sidenum].MidTexture;
   int texBot = XLevel->Sides[sidenum].BottomTexture;
@@ -116,7 +115,6 @@ bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultS
   }
   Quest = false;
   return false;
-  unguard;
 }
 
 
@@ -129,9 +127,8 @@ bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultS
 //
 //==========================================================================
 bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName DefaultSound, bool UseAgain) {
-  guard(VLevelInfo::StartButton);
   // see if button is already pressed
-  for (TThinkerIterator<VButton> Btn(XLevel); Btn; ++Btn) {
+  for (TThinkerIterator<VThinkButton> Btn(XLevel); Btn; ++Btn) {
     if (Btn->Side == sidenum) {
       // force advancing to the next frame
       Btn->Timer = 0.001f;
@@ -139,26 +136,25 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
     }
   }
 
-  VButton *But = (VButton*)XLevel->SpawnThinker(VButton::StaticClass());
+  VThinkButton *But = (VThinkButton *)XLevel->SpawnThinker(VThinkButton::StaticClass());
   But->Side = sidenum;
   But->Where = w;
   But->SwitchDef = SwitchDef;
   But->Frame = -1;
   But->DefaultSound = DefaultSound;
-  But->UseAgain = UseAgain;
+  But->UseAgain = (UseAgain ? 1 : 0);
   But->AdvanceFrame();
   return true;
-  unguard;
 }
 
 
 //==========================================================================
 //
-//  VButton::SerialiseOther
+//  VThinkButton::SerialiseOther
 //
 //==========================================================================
-void VButton::SerialiseOther (VStream &Strm) {
-  guard(VButton::Serialise);
+/*
+void VThinkButton::SerialiseOther (VStream &Strm) {
   Super::SerialiseOther(Strm);
   vuint8 xver = 0;
   Strm << xver;
@@ -167,17 +163,15 @@ void VButton::SerialiseOther (VStream &Strm) {
     << STRM_INDEX(SwitchDef)
     << STRM_INDEX(Frame)
     << Timer;
-  unguard;
 }
-
+*/
 
 //==========================================================================
 //
-//  VButton::Tick
+//  VThinkButton::Tick
 //
 //==========================================================================
-void VButton::Tick (float DeltaTime) {
-  guard(VButton::Tick);
+void VThinkButton::Tick (float DeltaTime) {
   if (DeltaTime <= 0.0f) return;
   // do buttons
   Timer -= DeltaTime;
@@ -190,7 +184,7 @@ void VButton::Tick (float DeltaTime) {
       Level->SectorStartSound(XLevel->Sides[Side].Sector,
         Def->Sound ? Def->Sound :
         GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
-      UseAgain = false;
+      UseAgain = 0;
     }
 
     bool KillMe = AdvanceFrame();
@@ -204,17 +198,15 @@ void VButton::Tick (float DeltaTime) {
     }
     if (KillMe) DestroyThinker();
   }
-  unguard;
 }
 
 
 //==========================================================================
 //
-//  VButton::AdvanceFrame
+//  VThinkButton::AdvanceFrame
 //
 //==========================================================================
-bool VButton::AdvanceFrame () {
-  guard(VButton::AdvanceFrame);
+bool VThinkButton::AdvanceFrame () {
   ++Frame;
   bool Ret = false;
   TSwitch *Def = Switches[SwitchDef];
@@ -232,5 +224,4 @@ bool VButton::AdvanceFrame () {
     }
   }
   return Ret;
-  unguard;
 }

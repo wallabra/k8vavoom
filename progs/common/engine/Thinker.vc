@@ -181,13 +181,12 @@ transient private name Font;
 //  Hidden Button class
 //
 //==========================================================================
-/+
-class Button : Thinker native abstract;
-transient private int Side;
-transient private ubyte Where;
-transient private int SwitchDef;
-transient private int Frame;
-transient private float Timer;
-transient private name DefaultSound;
-transient private /*bool*/int UseAgain;
-+/
+class ThinkButton : Thinker native;
+readonly int Side;
+readonly ubyte Where;
+readonly int SwitchDef;
+readonly int Frame;
+readonly float Timer;
+// these two weren't saved, why?
+readonly name DefaultSound;
+readonly ubyte UseAgain;
