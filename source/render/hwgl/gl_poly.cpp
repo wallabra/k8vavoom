@@ -1390,7 +1390,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (noDepthChange) {
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, /*getAlphaThreshold()*/0.3f);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
