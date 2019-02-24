@@ -52,7 +52,7 @@ extern VCvarF r_lights_radius_sight_check;
   (_dl)->radius = 0; \
   (_dl)->flags = 0; \
   if ((_dl)->Owner) { \
-    dlowners.del((vuint64)(_dl)->Owner); \
+    dlowners.del((_dl)->Owner->GetUniqueId()); \
     (_dl)->Owner = nullptr; \
   } \
 } while (0)
@@ -153,13 +153,10 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // first try to find owned light to replace
   if (Owner) {
-    auto idxp = dlowners.find((vuint64)Owner);
+    auto idxp = dlowners.find(Owner->GetUniqueId());
     if (idxp) {
-      if (DLights[*idxp].Owner == Owner) {
-        dlowner = &DLights[*idxp];
-      } else {
-        dlowners.del((vuint64)Owner);
-      }
+      dlowner = &DLights[*idxp];
+      check(dlowner->Owner == Owner);
     }
   }
 
@@ -212,7 +209,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  if (dl->Owner && dl->Owner != Owner) dlowners.del((vuint64)(dl->Owner));
+  if (dl->Owner && dl->Owner != Owner) dlowners.del(dl->Owner->GetUniqueId());
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
@@ -222,7 +219,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->type = DLTYPE_Point;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
-  if (!dlowner && dl->Owner) dlowners.put((vuint64)(dl->Owner), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+  if (!dlowner && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   return dl;
 }
@@ -273,15 +270,14 @@ void VRenderLevelShared::DecayLights (float time) {
 //==========================================================================
 void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
   if (!Owner) return;
-  auto idxp = dlowners.find((vuint64)Owner);
+  auto idxp = dlowners.find(Owner->GetUniqueId());
   if (idxp) {
     dlight_t *dl = &DLights[*idxp];
-    if (dl->Owner == Owner) {
-      dl->radius = 0;
-      dl->flags = 0;
-      dl->Owner = nullptr;
-    }
-    dlowners.del((vuint64)Owner);
+    check(dl->Owner == Owner);
+    dl->radius = 0;
+    dl->flags = 0;
+    dl->Owner = nullptr;
+    dlowners.del(Owner->GetUniqueId());
   }
 }
 

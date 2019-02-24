@@ -361,7 +361,7 @@ protected:
   TArray<light_t> Lights;
   dlight_t DLights[MAX_DLIGHTS];
   DLightInfo dlinfo[MAX_DLIGHTS];
-  TMapNC<vuint64, vuint32> dlowners; // key: pointer; value: index
+  TMapNC<vuint32, vuint32> dlowners; // key: object id; value: index in `DLights`
 
   // only regular renderer needs this
   vuint32 cacheframecount;
