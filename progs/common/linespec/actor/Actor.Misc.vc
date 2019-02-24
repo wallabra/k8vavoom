@@ -617,7 +617,7 @@ final void A_LayToFloorWithYaw (float yaw) {
   //print("floor normal: %v", norm);
   if (norm.x == 0 && norm.y == 0) {
     /*
-    norm.z = -norm.z;
+    //norm.z = -norm.z;
     VectorAngles(norm, Angles);
     print("  angles: %v", Angles);
     */
@@ -671,6 +671,73 @@ final void A_LayToCeilingWithYaw (float yaw) {
     VectorAngles(norm, Angles);
     //print("floor normal: %v; angles: %v", norm, Angles);
     Angles.pitch = AngleMod360(Angles.pitch+90);
+    // alas
+    //Angles.yaw = yaw;
+  }
+  Origin.z = tmtrace.CeilingZ-Height;
+}
+
+
+//==========================================================================
+//
+//  A_LayToFloorWithYawSprite
+//
+//==========================================================================
+final void A_LayToFloorWithYawSprite (float yaw) {
+  tmtrace_t tmtrace;
+  GetFloorAndCeiling(out tmtrace);
+  if (!tmtrace.Floor) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 90;
+    return;
+  }
+  TVec norm = tmtrace.Floor.normal;
+
+  //print("floor normal: %v", norm);
+  if (norm.x == 0 && norm.y == 0) {
+    VectorAngles(norm, Angles);
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    //Angles.pitch = 0;
+  } else {
+    VectorAngles(norm, Angles);
+    //print("floor normal: %v; angles: %v", norm, Angles);
+    Angles.pitch = AngleMod360(Angles.pitch);
+    // alas
+    //Angles.yaw = yaw;
+  }
+  Origin.z = tmtrace.FloorZ;
+}
+
+
+//==========================================================================
+//
+//  A_LayToCeilingWithYawSprite
+//
+//==========================================================================
+final void A_LayToCeilingWithYawSprite (float yaw) {
+  tmtrace_t tmtrace;
+  GetFloorAndCeiling(out tmtrace);
+  if (!tmtrace.Ceiling) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 270;
+    return;
+  }
+  TVec norm = tmtrace.Ceiling.normal;
+
+  //print("ceiling normal: %v", norm);
+  if (norm.x == 0 && norm.y == 0) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 90+180;
+    //VectorAngles(norm, Angles);
+    //print("   angles: %s", Angles);
+  } else {
+    VectorAngles(norm, Angles);
+    //print("ceiling normal: %v; angles: %v", norm, Angles);
+    Angles.pitch = AngleMod360(Angles.pitch);
     // alas
     //Angles.yaw = yaw;
   }

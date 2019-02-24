@@ -49,7 +49,10 @@ enum {
   // and sprright parallel to the viewplane and then rotated in that
   // plane around the centre according to the sprite entity's roll
   // angle. So sprforward stays the same, but sprright and sprup rotate
-  SPR_VP_PARALLEL_UPRIGHT_ORIENTED
+  SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
+  //
+  SPR_ORIENTED_UPOFS, // 6 (offset slightly up -- for floor splats)
+  SPR_ORIENTED_DOWNOFS, // 7 (offset slightly down -- for ceiling splats)
 };
 
 // frame flags:

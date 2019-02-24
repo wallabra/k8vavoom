@@ -308,6 +308,8 @@
     <flag name="StickToFloor" property="bStickToFloor" />
     <flag name="StickToCeiling" property="bStickToCeiling" />
     <flag name="KillOnUnarchive" property="bKillOnUnarchive" />
+    <flag_byte name="OrientedUpOfs" property="SpriteType" true_value="6" false_value="0" />
+    <flag_byte name="OrientedDownOfs" property="SpriteType" true_value="7" false_value="0" />
     <!-- SkullTag Specific flags (useless) -->
     <flag_unsupported name="ScorePillar" />
     <flag_unsupported name="AllowClientSpawn" />
