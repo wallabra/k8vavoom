@@ -14,6 +14,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
     models/gore/*
     models/blood/*
     progs/k8gore/*
+    sprites/gore/*
   )
 add_custom_target(gore_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3)
 

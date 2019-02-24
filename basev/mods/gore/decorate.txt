@@ -338,7 +338,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -350,8 +350,10 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
   Scale 0.5
@@ -361,8 +363,8 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -555,12 +557,16 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool")
@@ -576,12 +582,12 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -747,7 +753,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -757,22 +763,25 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplat
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -827,20 +836,23 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplat
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -853,7 +865,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
@@ -1236,7 +1248,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -1248,8 +1260,10 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
   Mass 99999
@@ -1260,8 +1274,8 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -1450,12 +1464,16 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient")
@@ -1471,12 +1489,12 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -1643,7 +1661,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -1653,22 +1671,25 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplatTransient
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -1723,20 +1744,23 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -1749,7 +1773,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
@@ -2137,7 +2161,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -2149,8 +2173,10 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
   Scale 0.5
@@ -2160,8 +2186,8 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -2354,12 +2380,16 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolGreen")
@@ -2375,12 +2405,12 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -2546,7 +2576,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -2556,22 +2586,25 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplatGreen
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -2626,20 +2659,23 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatGreen
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -2652,7 +2688,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
@@ -3035,7 +3071,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -3047,8 +3083,10 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
   Mass 99999
@@ -3059,8 +3097,8 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -3249,12 +3287,16 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient_Green")
@@ -3270,12 +3312,12 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -3442,7 +3484,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -3452,22 +3494,25 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Green
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -3522,20 +3567,23 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient_Green
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -3548,7 +3596,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
@@ -3936,7 +3984,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -3948,8 +3996,10 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
   Scale 0.5
@@ -3959,8 +4009,8 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -4153,12 +4203,16 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolBlue")
@@ -4174,12 +4228,12 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -4345,7 +4399,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -4355,22 +4409,25 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplatBlue
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -4425,20 +4482,23 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatBlue
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -4451,7 +4511,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
@@ -4834,7 +4894,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -4846,8 +4906,10 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
-  //Renderstyle Translucent
+  //!Renderstyle Translucent
+  //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
   Mass 99999
@@ -4858,8 +4920,8 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
@@ -5048,12 +5110,16 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
+  +OrientedDownOfs
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
-      "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      //"####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
+      Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient_Blue")
@@ -5069,12 +5135,12 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
       "####" "################################################################################" 2
 
     DoFadeOut:
-      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+      //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
     ModelFriendly:
-      "####" "#" 0 A_LayToCeilingWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToCeilingWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_k8MoveBy(0, 0, -18)
       "####" "#" 0 A_SetScaleXExt(Random(5, 8)/10.0)
       "####" "#" 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
@@ -5241,7 +5307,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +NOTARGET
@@ -5251,22 +5317,25 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Blue
   DamageFactor "TeleportRemover", 100.0
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_CheckFloor("SpawnNormally")
       Goto Splash
 
     SpawnNormally:
-      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       TNT1 A 0
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
@@ -5321,20 +5390,23 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
-  +FORCEXYBILLBOARD
+  //+FORCEXYBILLBOARD
   +MOVEWITHSECTOR
   +FLOORCLIP
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
+  +OrientedUpOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient_Blue
+  //!Renderstyle Translucent
+  //!Alpha 0.99
 
   States {
     Spawn:
       BPDL A 0
-      BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
+      //BPDL A 0 A_JumpIfCVarFalse("r_models", "Die") // no models -- die immediately
       BPDL A 0 A_Jump(256, "Pool1", "Pool2")
 
     Pool1:
@@ -5347,7 +5419,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
     MainProcessor:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
-      "####" "#" 0 A_LayToFloorWithYaw(Random(0, 360))
+      "####" "#" 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //"####" "#" 0 A_SetRollExt(0)
       //"####" "#" 0 A_SetYawExt(Random(0, 360))
       //"####" "#" 0 A_SetPitchExt(0)
