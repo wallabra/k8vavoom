@@ -361,7 +361,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -593,7 +593,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -824,7 +824,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -903,7 +903,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplat$(Color)

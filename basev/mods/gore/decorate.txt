@@ -350,7 +350,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -557,7 +557,7 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -763,7 +763,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -842,7 +842,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplat
@@ -1260,7 +1260,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -1464,7 +1464,7 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -1671,7 +1671,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -1750,7 +1750,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient
@@ -2173,7 +2173,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -2380,7 +2380,7 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -2586,7 +2586,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -2665,7 +2665,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatGreen
@@ -3083,7 +3083,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -3287,7 +3287,7 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -3494,7 +3494,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -3573,7 +3573,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient_Green
@@ -3996,7 +3996,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -4203,7 +4203,7 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -4409,7 +4409,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -4488,7 +4488,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatBlue
@@ -4906,7 +4906,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   -NoLiftDrop
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -5110,7 +5110,7 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +DontSplash
   +NOBLOCKMAP
   +NoInteraction
-  +OrientedDownOfs
+  +OrientedOfs
   //!Renderstyle Translucent
   //!Alpha 0.99
 
@@ -5317,7 +5317,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   -SOLID
   +THRUACTORS
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   //Alpha 0.9
   Scale 0.25
@@ -5396,7 +5396,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +MISSILE
   -DONTSPLASH
   +NOBLOCKMAP
-  +OrientedUpOfs
+  +OrientedOfs
   //+NoInteraction
   Scale 1.0
   Decal K8GoreBloodSplatTransient_Blue
