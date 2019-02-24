@@ -172,7 +172,13 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up);
 void AngleVector (const TAVec &angles, TVec &forward);
 void VectorAngles (const TVec &vec, TAVec &angles);
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles);
-TVec RotateVectorAroundVector (const TVec &, const TVec &, float);
+TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle);
+
+static __attribute__((unused)) inline void AngleVectorPitch (const float pitch, TVec &forward) {
+  forward.x = mcos(pitch);
+  forward.y = 0;
+  forward.z = -msin(pitch);
+}
 
 
 //==========================================================================

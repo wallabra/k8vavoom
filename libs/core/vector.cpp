@@ -171,11 +171,9 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 //  RotateVectorAroundVector
 //
 //==========================================================================
-TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) {
-  guard(RotateVectorAroundVector);
+TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, const float Angle) {
   VRotMatrix M(Axis, Angle);
   return Vector*M;
-  unguard;
 }
 
 
