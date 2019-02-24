@@ -190,7 +190,7 @@ public:
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex, float Alpha,
                                   bool Additive, VTextureTranslation *Translation, int CMap,
                                   vuint32 light, vuint32 Fade, const TVec &normal, float pdist, const TVec &saxis,
-                                  const TVec &taxis, const TVec &texorg) = 0;
+                                  const TVec &taxis, const TVec &texorg, bool noDepthChange) = 0;
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const TVec &Offset,
                                const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
                                VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,

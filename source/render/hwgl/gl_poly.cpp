@@ -1368,7 +1368,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                        VTextureTranslation *Translation, int CMap,
                                        vuint32 light, vuint32 Fade,
                                        const TVec &sprnormal, float sprpdist,
-                                       const TVec &saxis, const TVec &taxis, const TVec &texorg)
+                                       const TVec &saxis, const TVec &taxis, const TVec &texorg,
+                                       bool noDepthChange)
 {
   guard(VOpenGLDrawer::DrawSpritePolygon);
   if (!Tex) return; // just in case
@@ -1376,6 +1377,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   TVec texpt(0, 0, 0);
 
   SetSpriteLump(Tex, Translation, CMap, true);
+  //SetupTextureFiltering(noDepthChange ? 3 : sprite_filter);
+  //SetupTextureFiltering(noDepthChange ? model_filter : sprite_filter);
   SetupTextureFiltering(sprite_filter);
 
   p_glUseProgramObjectARB(SurfMaskedProgram);
@@ -1384,7 +1387,12 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   bool zbufferWriteDisabled = false;
 
-  if (blend_sprites || Additive || Alpha < 1.0f) {
+  if (noDepthChange) {
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -1397,6 +1405,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
     Alpha = 1.0f;
   }
+
 
   p_glUniform4fARB(SurfMaskedLightLoc,
     ((light >> 16) & 255) / 255.0f,
@@ -1466,7 +1475,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   }
 #endif
 
-  if (blend_sprites || Additive || Alpha < 1.0f) {
+  if (noDepthChange) {
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  } else if (blend_sprites || Additive || Alpha < 1.0f) {
     glDisable(GL_BLEND);
     if (zbufferWriteDisabled) glDepthMask(GL_TRUE); // re-enable z-buffer
   }

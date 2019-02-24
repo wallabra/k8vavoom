@@ -38,16 +38,6 @@
 #include "sv_local.h"
 
 
-enum {
-  SPR_VP_PARALLEL_UPRIGHT,
-  SPR_FACING_UPRIGHT,
-  SPR_VP_PARALLEL,
-  SPR_ORIENTED,
-  SPR_VP_PARALLEL_ORIENTED,
-  SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
-};
-
-
 extern VCvarB r_chasecam;
 extern VCvarB r_draw_mobjs;
 extern VCvarB r_draw_psprites;

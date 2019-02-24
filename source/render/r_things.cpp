@@ -52,6 +52,8 @@ enum {
   SPR_ORIENTED, // 3
   SPR_VP_PARALLEL_ORIENTED, // 4 (xy billboard)
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED, // 5
+  SPR_ORIENTED_UPOFS, // 6 (offset slightly up -- for floor splats)
+  SPR_ORIENTED_DOWNOFS, // 7 (offset slightly down -- for ceiling splats)
 };
 
 
@@ -91,7 +93,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
   bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin)
+  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, bool noDepthChange)
 {
   check(count >= 0);
   if (count == 0 || Alpha < 0.0002f) return;
@@ -143,6 +145,8 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   spr.translation = translation;
   spr.type = (isSprite ? 1 : 0);
   spr.light = light;
+  spr.objid = objid;
+  spr.noDepthChange = noDepthChange;
   spr.Fade = Fade;
   spr.prio = priority;
 }
@@ -174,7 +178,9 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.type = 2;
   spr.TimeFrac = TimeFrac;
   spr.lump = -1; // has no sense
+  spr.objid = (mobj ? mobj->GetUniqueId() : 0);
   spr.prio = 0; // normal priority
+  spr.noDepthChange = false;
 }
 
 
@@ -202,6 +208,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   TVec tvec(0, 0, 0);
   float sr;
   float cr;
+  bool noDepthChange = false;
+  //spr_type = SPR_ORIENTED;
 
   switch (spr_type) {
     case SPR_VP_PARALLEL_UPRIGHT:
@@ -247,8 +255,12 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       break;
 
     case SPR_ORIENTED:
+    case SPR_ORIENTED_UPOFS: // 6 (offset slightly up -- for floor splats)
+    case SPR_ORIENTED_DOWNOFS: // 7 (offset slightly down -- for ceiling splats)
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->Angles, sprforward, sprright, sprup);
+           if (spr_type == SPR_ORIENTED_UPOFS) { sprorigin.z += 0.01; noDepthChange = true; }
+      else if (spr_type == SPR_ORIENTED_DOWNOFS) { sprorigin.z -= 0.01; noDepthChange = true; }
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -368,6 +380,16 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[2] = sprorigin+end+topdelta;
   sv[3] = sprorigin+end+botdelta;
 
+  //FIXME: k8: i don't know why yet, but it doesn't work with sorting
+  if (noDepthChange) {
+    Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
+      Additive, GetTranslation(thing->Translation), ColourMap, light,
+      Fade, -sprforward, DotProduct(sprorigin, -sprforward),
+      (flip ? -sprright : sprright)/thing->ScaleX,
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), noDepthChange);
+    return;
+  }
+
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
     if (thing) {
@@ -381,13 +403,13 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
       DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
-      ,true, /*sprorigin*/thing->Origin);
+      , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), noDepthChange);
   } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]));
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), noDepthChange);
   }
 }
 
@@ -687,6 +709,9 @@ extern "C" {
     if (ta->prio < tb->prio) return 1; // a has lower priority, it should come last (a > b)
     if (ta->prio > tb->prio) return -1; // a has higher priority, it should come first (a < b)
 
+    if (ta->objid < tb->objid) return -1;
+    if (ta->objid > tb->objid) return 1;
+
     // sort sprites by lump number, why not
     if (ta->type == 1) {
       if (ta->lump < tb->lump) return -1;
@@ -754,10 +779,11 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       //glDepthFunc(((VOpenGLDrawer *)Drawer)->CanUseRevZ() ? GL_GREATER : GL_LESS);
       glDepthFunc(GL_GREATER);
       */
+      //if (spr.noDepthChange) GCon->Logf("!!! %u", spr.objid);
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
                                 ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-                                spr.saxis, spr.taxis, spr.texorg);
+                                spr.saxis, spr.taxis, spr.texorg, spr.noDepthChange);
       /*
       glDepthFunc(odf);
       */
@@ -874,7 +900,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
     0, ColourMap, light, Fade, -viewforward,
-    DotProduct(dv[0], -viewforward), saxis, taxis, texorg);
+    DotProduct(dv[0], -viewforward), saxis, taxis, texorg, false);
 }
 
 
