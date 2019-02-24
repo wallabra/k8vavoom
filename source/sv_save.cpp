@@ -714,7 +714,7 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
     if (size < 0 || size > 65536) break;
 
     if (id == SAVE_EXTDATA_ID_DATEVAL && size == (vint32)sizeof(*tv)) {
-      Strm->Serialize(&tv, sizeof(tv));
+      Strm->Serialize(tv, sizeof(tv));
       //fprintf(stderr, "  found TV[%s] (%s)\n", *TimeVal2Str(tv), (Strm->IsError() ? "ERROR" : "OK"));
       return !Strm->IsError();
     }
@@ -1115,9 +1115,11 @@ static int SV_FindAutosaveSlot () {
       break;
     }
     if (!bestslot || tv < besttv) {
-      //fprintf(stderr, "AUTOSAVE: better slot #%d found [%s] : [%s]!\n", slot, *TimeVal2Str(&tv), (bestslot ? *TimeVal2Str(&besttv) : ""));
+      //GCon->Logf("AUTOSAVE: better slot #%d found [%s] : old id #%d [%s]!", slot, *TimeVal2Str(&tv), -bestslot, (bestslot ? *TimeVal2Str(&besttv) : ""));
       bestslot = -slot;
       besttv = tv;
+    } else {
+      //GCon->Logf("AUTOSAVE: skipped slot #%d [%s] (%d,%d,%d)!", slot, *TimeVal2Str(&tv), tv.secshi, tv.secs, tv.usecs);
     }
   }
   return bestslot;
