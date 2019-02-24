@@ -646,7 +646,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
   if (!tmtrace.Ceiling) {
     Angles.roll = 0;
     Angles.yaw = yaw;
-    Angles.pitch = 0;
+    Angles.pitch = 180+90;
     return;
   }
   TVec norm = tmtrace.Ceiling.normal;
@@ -665,7 +665,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
   if (norm.x == 0 && norm.y == 0) {
     Angles.roll = 0;
     Angles.yaw = yaw;
-    Angles.pitch = 180;
+    Angles.pitch = 180+90;
     //print("   angles: %s", Angles);
   } else {
     VectorAngles(norm, Angles);
@@ -696,15 +696,17 @@ final void A_LayToFloorWithYawSprite (float yaw) {
 
   //print("floor normal: %v", norm);
   if (norm.x == 0 && norm.y == 0) {
-    VectorAngles(norm, Angles);
+    //VectorAngles(norm, Angles);
     Angles.roll = 0;
     Angles.yaw = yaw;
-    //Angles.pitch = 0;
+    Angles.pitch = 90;
   } else {
+    //norm = vector(0, 0, 1);
     VectorAngles(norm, Angles);
-    //print("floor normal: %v; angles: %v", norm, Angles);
-    Angles.pitch = AngleMod360(Angles.pitch);
+    Angles.pitch = AngleMod360(Angles.pitch+180);
+    //print("  floor normal: %v; angles: %v", norm, Angles);
     // alas
+    //RotateVectorAroundVector
     //Angles.yaw = yaw;
   }
   Origin.z = tmtrace.FloorZ;
@@ -736,8 +738,8 @@ final void A_LayToCeilingWithYawSprite (float yaw) {
     //print("   angles: %s", Angles);
   } else {
     VectorAngles(norm, Angles);
+    Angles.pitch = AngleMod360(Angles.pitch+180);
     //print("ceiling normal: %v; angles: %v", norm, Angles);
-    Angles.pitch = AngleMod360(Angles.pitch);
     // alas
     //Angles.yaw = yaw;
   }

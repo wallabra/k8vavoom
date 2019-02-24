@@ -51,8 +51,7 @@ enum {
   // angle. So sprforward stays the same, but sprright and sprup rotate
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
   //
-  SPR_ORIENTED_UPOFS, // 6 (offset slightly up -- for floor splats)
-  SPR_ORIENTED_DOWNOFS, // 7 (offset slightly down -- for ceiling splats)
+  SPR_ORIENTED_OFS, // 6 (offset slightly by pitch -- for floor/ceiling splats)
 };
 
 // frame flags:

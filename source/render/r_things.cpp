@@ -52,8 +52,7 @@ enum {
   SPR_ORIENTED, // 3
   SPR_VP_PARALLEL_ORIENTED, // 4 (xy billboard)
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED, // 5
-  SPR_ORIENTED_UPOFS, // 6 (offset slightly up -- for floor splats)
-  SPR_ORIENTED_DOWNOFS, // 7 (offset slightly down -- for ceiling splats)
+  SPR_ORIENTED_OFS, // 6 (offset slightly by pitch -- for floor/ceiling splats)
 };
 
 
@@ -255,12 +254,33 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       break;
 
     case SPR_ORIENTED:
-    case SPR_ORIENTED_UPOFS: // 6 (offset slightly up -- for floor splats)
-    case SPR_ORIENTED_DOWNOFS: // 7 (offset slightly down -- for ceiling splats)
+    case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->Angles, sprforward, sprright, sprup);
-           if (spr_type == SPR_ORIENTED_UPOFS) { sprorigin.z += 0.01; noDepthChange = true; }
-      else if (spr_type == SPR_ORIENTED_DOWNOFS) { sprorigin.z -= 0.01; noDepthChange = true; }
+      if (spr_type != SPR_ORIENTED) {
+        const float pitch = thing->Angles.pitch;
+        if (pitch == 90.0f) {
+          // floor
+          sprorigin.z += 0.001f;
+        } else if (pitch == 180.0f) {
+          // ceiling
+          sprorigin.z -= 0.001f;
+        } else {
+          // slope
+          TVec vofs;
+          AngleVectorPitch(thing->Angles.pitch, vofs);
+          //GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
+          sprorigin -= vofs*0.005f;
+        }
+        /*
+        {
+          TVec vofs;
+          AngleVectorPitch(pitch, vofs);
+          GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
+        }
+        */
+        noDepthChange = true;
+      }
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
