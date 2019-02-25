@@ -738,7 +738,29 @@ load_again:
   } else {
     xmaplumpnum = lumpnum;
   }
-  if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
+  if (lumpnum < 0) Host_Error("Map \"%s\" not found", *MapName);
+
+  // some idiots embeds wads into wads
+  if (!AuxiliaryMap && lumpnum >= 0 && W_LumpLength(lumpnum) > 128 && W_LumpLength(lumpnum) < 1024*1024) {
+    VStream *lstrm = W_CreateLumpReaderNum(lumpnum);
+    if (lstrm) {
+      char sign[4];
+      lstrm->Serialise(sign, 4);
+      if (!lstrm->IsError() && memcmp(sign, "PWAD", 4) == 0) {
+        lstrm->Seek(0);
+        xmaplumpnum = lumpnum;
+        lumpnum = W_AddAuxiliaryStream(lstrm, WAuxFileType::Wad);
+        if (lumpnum >= 0) {
+          MapLumpName = W_LumpName(lumpnum);
+          AuxiliaryMap = true;
+        } else {
+          Host_Error("cannot open pwad for \"%s\"", *MapName);
+        }
+      } else {
+        delete lstrm;
+      }
+    }
+  }
 
   //FIXME: reload saved background screen from FBO
   R_LdrMsgReset();
