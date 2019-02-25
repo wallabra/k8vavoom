@@ -307,6 +307,12 @@ public:
     return (dist < -radius ? 1 : dist > radius ? 0 : 2);
   }
 
+  // returns `true` if point is behind the plane
+  // "th" means "with threshold"
+  inline bool PointOnBackTh (const TVec &point) const {
+    return (DotProduct(point, normal)-dist < -0.1f);
+  }
+
   // distance from point to plane
   // plane must be normalized
   inline float Distance (const TVec &p) const {
