@@ -324,6 +324,8 @@ public:
 
   inline bool isValid () const { return !!clipflag; }
   inline void invalidate () { clipflag = 0; }
+
+  inline TClipPlane &operator = (const TPlane &p) { normal = p.normal; dist = p.dist; return *this; }
 };
 
 
@@ -418,6 +420,11 @@ public:
   void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
 
   void setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
+
+  // automatically called by `setup*()`
+  void setupBoxIndicies ();
+
+  void setupBoxIndiciesForPlane (unsigned pidx);
 
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:

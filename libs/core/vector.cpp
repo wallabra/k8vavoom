@@ -221,10 +221,12 @@ void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
   } else {
     fovx = afovx;
     fovy = afovy;
-    clipbase[0] = Normalise(TVec(1.0f, 1.0f/afovx, 0.0f)); // left side clip
-    clipbase[1] = Normalise(TVec(1.0f, -1.0f/afovx, 0.0f)); // right side clip
-    clipbase[2] = Normalise(TVec(1.0f, 0.0f, -1.0f/afovy)); // top side clip
-    clipbase[3] = Normalise(TVec(1.0f, 0.0f, 1.0f/afovy)); // bottom side clip
+    const float invfovx = 1.0f/afovx;
+    const float invfovy = 1.0f/afovy;
+    clipbase[0] = Normalise(TVec(invfovx, 0.0f, 1.0f)); // left side clip
+    clipbase[1] = Normalise(TVec(-invfovx, 0.0f, 1.0f)); // right side clip
+    clipbase[2] = Normalise(TVec(0.0f, -invfovy, 1.0f)); // top side clip
+    clipbase[3] = Normalise(TVec(0.0f, invfovy, 1.0f)); // bottom side clip
   }
 }
 
@@ -258,6 +260,51 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
 
 //==========================================================================
 //
+//  TFrustum::setupBoxIndicies
+//
+//  setup indicies for box checking
+//
+//==========================================================================
+void TFrustum::setupBoxIndicies () {
+  for (unsigned i = 0; i < 6; ++i) {
+    if (!planes[i].clipflag) continue;
+    unsigned *pindex = bindex[i];
+    for (unsigned j = 0; j < 3; ++j) {
+      if (planes[i].normal[j] < 0) {
+        pindex[j] = j;
+        pindex[j+3] = j+3;
+      } else {
+        pindex[j] = j+3;
+        pindex[j+3] = j;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  TFrustum::setupBoxIndicies
+//
+//==========================================================================
+void TFrustum::setupBoxIndiciesForPlane (unsigned pidx) {
+  if (pidx < 6 && planes[pidx].clipflag) {
+    unsigned *pindex = bindex[pidx];
+    for (unsigned j = 0; j < 3; ++j) {
+      if (planes[pidx].normal[j] < 0) {
+        pindex[j] = j;
+        pindex[j+3] = j+3;
+      } else {
+        pindex[j] = j+3;
+        pindex[j+3] = j;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  TFrustum::setup
 //
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
@@ -279,10 +326,11 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   // create side planes
   for (unsigned i = 0; i < 4; ++i) {
     const TVec &v = clipbase.clipbase[i];
+    // v.z is always 1.0f
     const TVec v2(
-      TVEC_SUM3(v.y*vright.x, v.z*vup.x, v.x*vforward.x),
-      TVEC_SUM3(v.y*vright.y, v.z*vup.y, v.x*vforward.y),
-      TVEC_SUM3(v.y*vright.z, v.z*vup.z, v.x*vforward.z));
+      TVEC_SUM3(v.x*vright.x, v.y*vup.x, /*v.z* */vforward.x),
+      TVEC_SUM3(v.x*vright.y, v.y*vup.y, /*v.z* */vforward.y),
+      TVEC_SUM3(v.x*vright.z, v.y*vup.z, /*v.z* */vforward.z));
     planes[i].SetPointDir3D(aorg, v2.normalised());
     planes[i].clipflag = 1U<<i;
   }
@@ -302,20 +350,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   } else {
     planes[5].clipflag = 0;
   }
-  // setup indicies for box checking
-  for (unsigned i = 0; i < 6; ++i) {
-    if (!planes[i].clipflag) continue;
-    unsigned *pindex = bindex[i];
-    for (unsigned j = 0; j < 3; ++j) {
-      if (planes[i].normal[j] < 0) {
-        pindex[j] = j;
-        pindex[j+3] = j+3;
-      } else {
-        pindex[j] = j+3;
-        pindex[j+3] = j;
-      }
-    }
-  }
+  setupBoxIndicies();
 }
 
 
