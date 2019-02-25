@@ -408,7 +408,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         // floor/ceiling, and we can clip away too high/low windows.
         const TClipPlane &FrustumTop = clip.GetFrustumTop();
         const TClipPlane &FrustumBot = clip.GetFrustumBottom();
-        if (FrustumTop.isValid() || FrustumBot.isValid()) {
+        if (FrustumTop.isValid() && FrustumBot.isValid()) {
           float fz1, fz2;
           float cz1, cz2;
           if (seg->side == 0) {
@@ -422,25 +422,15 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
             cz1 = frontcz1;
             cz2 = frontcz2;
           }
-          // check if floor is higher than frustum top
-          if (FrustumTop.isValid()) {
-            if (FrustumTop.PointOnSide(TVec(vv1.x, vv1.y, fz1)) &&
-                FrustumTop.PointOnSide(TVec(vv2.x, vv2.y, fz2)))
-            {
-              // floor is higher than frustum top, so this seg can be used to clip geometry
-              //fprintf(stderr, "FLOOR!\n");
-              return true;
-            }
-          }
-          // check if ceiling is lower than frustum bottom
-          if (FrustumBot.isValid()) {
-            if (FrustumBot.PointOnSide(TVec(vv1.x, vv1.y, cz1)) &&
-                FrustumBot.PointOnSide(TVec(vv2.x, vv2.y, cz2)))
-            {
-              // ceiling is lower than frustum bottom, so this seg can be used to clip geometry
-              //fprintf(stderr, "CEILING!\n");
-              return true;
-            }
+          if (FrustumTop.PointOnBackTh(TVec(vv1.x, vv1.y, fz1)) &&
+              FrustumTop.PointOnBackTh(TVec(vv2.x, vv2.y, fz2)) &&
+              FrustumBot.PointOnBackTh(TVec(vv1.x, vv1.y, cz1)) &&
+              FrustumBot.PointOnBackTh(TVec(vv2.x, vv2.y, cz2)))
+          {
+            // floor is higher than frustum top, so this seg can be used to clip geometry
+            //fprintf(stderr, "FLOOR! fz=(%f,%f)\n", fz1, fz2);
+            //fprintf(stderr, "CEILING! cz=(%f,%f)\n", cz1, cz2);
+            return true;
           }
         }
       }
@@ -533,8 +523,7 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
   ClipTail = nullptr;
   Origin = AOrigin;
   Level = ALevel;
-  FrustumTop.invalidate();
-  FrustumBottom.invalidate();
+  ClipResetFrustumPlanes();
 }
 
 
@@ -560,18 +549,19 @@ void VViewClipper::ClipInitFrustumPlanes (const TVec &viewforward, const TVec &v
     Frustum.planes[TFrustum::Left].invalidate();
     Frustum.planes[TFrustum::Right].invalidate();
     */
-    const TVec cbtop = Normalise(TVec(1.0f, 0.0f, -1.0f/fovy)); // top side clip
-    const TVec cbbot = Normalise(TVec(1.0f, 0.0f, 1.0f/fovy)); // bottom side clip
+    const float invfovy = 1.0f/fovy;
+    const TVec cbtop = Normalise(TVec(0.0f, -invfovy, 1.0f)); // top side clip
+    const TVec cbbot = Normalise(TVec(0.0f, invfovy, 1.0f)); // bottom side clip
     const TVec vtop(
-      TVEC_SUM3(0, cbtop.z*viewup.x, viewforward.x),
-      TVEC_SUM3(0, cbtop.z*viewup.y, viewforward.y),
-      TVEC_SUM3(0, cbtop.z*viewup.z, viewforward.z));
+      TVEC_SUM3(0, cbtop.y*viewup.x, viewforward.x),
+      TVEC_SUM3(0, cbtop.y*viewup.y, viewforward.y),
+      TVEC_SUM3(0, cbtop.y*viewup.z, viewforward.z));
     FrustumTop.SetPointDir3D(Origin, vtop.normalised());
     FrustumTop.clipflag = 1;
     const TVec vbot(
-      TVEC_SUM3(0, cbbot.z*viewup.x, viewforward.x),
-      TVEC_SUM3(0, cbbot.z*viewup.y, viewforward.y),
-      TVEC_SUM3(0, cbbot.z*viewup.z, viewforward.z));
+      TVEC_SUM3(0, cbbot.y*viewup.x, viewforward.x),
+      TVEC_SUM3(0, cbbot.y*viewup.y, viewforward.y),
+      TVEC_SUM3(0, cbbot.y*viewup.z, viewforward.z));
     FrustumBottom.SetPointDir3D(Origin, vbot.normalised());
     FrustumBottom.clipflag = 1;
   } else {
