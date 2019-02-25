@@ -119,9 +119,9 @@ public:
 
   static VName CreateWithIndex (int i) {
     if (Initialised) {
-      check(i >= 0 && i < GetAutoNameCounter());
-    } else {
       check(i >= 0 && i < (int)NamesCount);
+    } else {
+      check(i >= 0 && i < GetAutoNameCounter());
     }
     VName res;
     res.Index = i;
