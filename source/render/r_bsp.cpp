@@ -70,27 +70,6 @@ static int oldPortalDepth = -666;
 
 //==========================================================================
 //
-//  VRenderLevelShared::SetUpFrustumIndexes
-//
-//==========================================================================
-void VRenderLevelShared::SetUpFrustumIndexes () {
-  for (unsigned i = 0; i < 4; ++i) {
-    unsigned *pindex = FrustumIndexes[i];
-    for (unsigned j = 0; j < 3; ++j) {
-      if (view_clipplanes[i].normal[j] < 0) {
-        pindex[j] = j;
-        pindex[j+3] = j+3;
-      } else {
-        pindex[j] = j+3;
-        pindex[j+3] = j;
-      }
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::QueueSimpleSurf
 //
 //==========================================================================
@@ -444,9 +423,9 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 
   if (line->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (MirrorClipSegs && clip_frustum && clip_frustum_bsp) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror
-    if (view_clipplanes[4].PointOnSide(*line->v1) && view_clipplanes[4].PointOnSide(*line->v2)) return; // behind mirror
+    if (view_frustum.planes[5].PointOnSide(*line->v1) && view_frustum.planes[5].PointOnSide(*line->v2)) return; // behind mirror
   }
 
 /*
@@ -686,7 +665,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  ViewClip.ClipAddSubsectorSegs(Sub, (MirrorClipSegs ? &view_clipplanes[4] : nullptr));
+  ViewClip.ClipAddSubsectorSegs(Sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
 }
 
 
@@ -703,29 +682,19 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
   if (clipflags && clip_frustum && clip_frustum_bsp) {
-    for (int i = 0; i < 5; ++i) {
-      if (!(clipflags&view_clipplanes[i].clipflag)) continue; // don't need to clip against it
-      if (view_clipplanes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    for (int i = 0; i < 6; ++i) {
+      if (!(clipflags&view_frustum.planes[i].clipflag)) continue; // don't need to clip against it
+      if (view_frustum.planes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
       // generate accept and reject points
-      const unsigned *pindex = FrustumIndexes[i];
+      const unsigned *pindex = view_frustum.bindex[i];
 
-      TVec rejectpt;
-
-      rejectpt[0] = bbox[pindex[0]];
-      rejectpt[1] = bbox[pindex[1]];
-      rejectpt[2] = bbox[pindex[2]];
-
-      if (view_clipplanes[i].PointOnSide(rejectpt)) continue;
-
-      TVec acceptpt;
-
-      acceptpt[0] = bbox[pindex[3+0]];
-      acceptpt[1] = bbox[pindex[3+1]];
-      acceptpt[2] = bbox[pindex[3+2]];
+      TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
+      if (view_frustum.planes[i].PointOnSide(rejectpt)) continue;
 
       // is node entirely on screen?
-      if (!view_clipplanes[i].PointOnSide(acceptpt)) clipflags ^= view_clipplanes[i].clipflag; // yes
+      TVec acceptpt(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]);
+      if (!view_frustum.planes[i].PointOnSide(acceptpt)) clipflags ^= view_frustum.planes[i].clipflag; // yes
     }
   }
 
@@ -771,7 +740,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   do {
     if (light_reset_surface_cache) return;
 
-    SetUpFrustumIndexes();
+    //view_frustum.setupBoxIndicies(); // done automatically
     ViewClip.ClearClipNodes(vieworg, Level);
     ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
     if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
@@ -780,10 +749,10 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     if (PortalLevel == 0) {
       if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
     }
-    MirrorClipSegs = (MirrorClip && !view_clipplanes[4].normal.z);
+    MirrorClipSegs = (MirrorClip && !view_frustum.planes[5].normal.z);
 
     // head node is the last node output
-    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 31 : 15));
+    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
 
     if (PortalLevel == 0) {
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer

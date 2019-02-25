@@ -1198,8 +1198,8 @@ void VOpenGLDrawer::SetupViewOrg () {
   if (MirrorClip) {
     glEnable(GL_CLIP_PLANE0);
     const GLdouble eq[4] = {
-      view_clipplanes[4].normal.x, view_clipplanes[4].normal.y, view_clipplanes[4].normal.z,
-      -view_clipplanes[4].dist
+      view_frustum.planes[4].normal.x, view_frustum.planes[4].normal.y, view_frustum.planes[4].normal.z,
+      -view_frustum.planes[4].dist
     };
     glClipPlane(GL_CLIP_PLANE0, eq);
   } else {

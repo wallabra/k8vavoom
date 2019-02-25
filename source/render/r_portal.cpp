@@ -132,8 +132,7 @@ void VPortal::Draw (bool UseStencil) {
   auto savedTraspFirst = RLev->traspFirst;
   auto savedTraspUsed = RLev->traspUsed;
   bool SavedMirrorClip = MirrorClip;
-  TClipPlane SavedClip = view_clipplanes[4];
-  //TClipPlane *SavedClipLink = view_clipplanes[3].next;
+  TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
 
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
@@ -177,9 +176,8 @@ void VPortal::Draw (bool UseStencil) {
     RLev->traspUsed = savedTraspUsed;
   }
   MirrorClip = SavedMirrorClip;
-  view_clipplanes[4] = SavedClip;
-  //view_clipplanes[3].next = SavedClipLink;
   RLev->TransformFrustum();
+  view_frustum.planes[5] = SavedClip; // restore far/mirror plane
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
@@ -432,24 +430,14 @@ void VMirrorPortal::DrawContents () {
   VViewClipper Range;
   SetUpRanges(Range, true, false);
 
-  view_clipplanes[4].normal = Plane->normal;
-  view_clipplanes[4].dist = Plane->dist;
-  //view_clipplanes[3].next = &view_clipplanes[4];
-  //view_clipplanes[4].next = nullptr;
-  view_clipplanes[4].clipflag = 0x10U;
-
-  unsigned *pindex = RLev->FrustumIndexes[4];
-  for (unsigned j = 0; j < 3; ++j) {
-    if (view_clipplanes[4].normal[j] < 0) {
-      pindex[j] = j;
-      pindex[j+3] = j+3;
-    } else {
-      pindex[j] = j+3;
-      pindex[j+3] = j;
-    }
-  }
+  // use "far plane" (it is unused by default)
+  view_frustum.planes[5] = *Plane;
+  view_frustum.planes[5].clipflag = 0x20U;
+  view_frustum.setupBoxIndiciesForPlane(5);
 
   RLev->RenderScene(&refdef, &Range);
+
+  view_frustum.planes[5].invalidate(); //k8: why not?
 
   --RLev->MirrorLevel;
   MirrorFlip = RLev->MirrorLevel&1;

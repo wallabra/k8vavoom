@@ -307,7 +307,7 @@ protected:
 
   VEntity *ViewEnt;
 
-  unsigned FrustumIndexes[5][6];
+  //unsigned FrustumIndexes[5][6];
   int MirrorLevel;
   int PortalLevel;
   int VisSize;
@@ -416,9 +416,6 @@ protected:
 
   // general
   void ExecuteSetViewSize ();
-  // create frustum planes for current FOV (set in `SetupFrame()` or `SetupCameraFrame()`)
-  // [0] is left, [1] is right, [2] is top, [3] is bottom, [4] is back (if `createbackplane` is true)
-  void TransformFrustumTo (TClipPlane *frustum, const TVec &org, const TAVec &angles, bool createbackplane);
   void TransformFrustum ();
   void SetupFrame ();
   void SetupCameraFrame (VEntity*, VTexture*, int, refdef_t*);
@@ -440,7 +437,6 @@ protected:
   void AnimateSky (float);
 
   // world BSP rendering
-  void SetUpFrustumIndexes ();
   void QueueSimpleSurf (seg_t*, surface_t*);
   void QueueSkyPortal (surface_t*);
   void QueueHorizonPortal (surface_t*);

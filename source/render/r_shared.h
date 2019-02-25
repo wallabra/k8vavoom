@@ -216,7 +216,7 @@ extern VCvarF r_fade_factor;
 
 extern VCvarF r_sky_bright_factor;
 
-extern TClipPlane view_clipplanes[5];
+extern TFrustum view_frustum;
 
 extern bool MirrorFlip;
 extern bool MirrorClip;
