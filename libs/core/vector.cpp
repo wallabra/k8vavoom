@@ -310,10 +310,16 @@ void TFrustum::setupBoxIndiciesForPlane (unsigned pidx) {
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
 //
 //==========================================================================
-void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
-  if (!clipbase.isValid() ||
+void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles,
+                      const TVec &aforward, const TVec &aright, const TVec &aup,
+                      bool createbackplane, const float farplanez)
+{
+  if (!clipbase.isValid()/* ||
       !isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
-      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw))
+      !isFiniteF(aforward.x) || !isFiniteF(aforward.y) || !isFiniteF(aforward.z) ||
+      !isFiniteF(aright.x) || !isFiniteF(aright.y) || !isFiniteF(aright.z) ||
+      !isFiniteF(aup.x) || !isFiniteF(aup.y) || !isFiniteF(aup.z) ||
+      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw)*/)
   {
     clear();
     return;
@@ -322,15 +328,18 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   origin = aorg;
   angles = aangles;
   // create direction vectors
-  AngleVectors(aangles, vforward, vright, vup);
+  //AngleVectors(aangles, vforward, vright, vup);
+  vforward = aforward;
+  vright = aright;
+  vup = aup;
   // create side planes
   for (unsigned i = 0; i < 4; ++i) {
     const TVec &v = clipbase.clipbase[i];
     // v.z is always 1.0f
     const TVec v2(
-      TVEC_SUM3(v.x*vright.x, v.y*vup.x, /*v.z* */vforward.x),
-      TVEC_SUM3(v.x*vright.y, v.y*vup.y, /*v.z* */vforward.y),
-      TVEC_SUM3(v.x*vright.z, v.y*vup.z, /*v.z* */vforward.z));
+      TVEC_SUM3(v.x*aright.x, v.y*aup.x, /*v.z* */aforward.x),
+      TVEC_SUM3(v.x*aright.y, v.y*aup.y, /*v.z* */aforward.y),
+      TVEC_SUM3(v.x*aright.z, v.y*aup.z, /*v.z* */aforward.z));
     planes[i].SetPointDir3D(aorg, v2.normalised());
     planes[i].clipflag = 1U<<i;
   }
@@ -344,7 +353,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   }
   // create far plane
   if (isFiniteF(farplanez) && farplanez > 0) {
-    planes[5].SetPointDir3D(aorg+vforward*farplanez, -vforward);
+    planes[5].SetPointDir3D(aorg+aforward*farplanez, -aforward);
     planes[5].clipflag = 1U<<5;
     ++planeCount;
   } else {

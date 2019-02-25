@@ -709,7 +709,7 @@ void R_DrawViewBorder () {
 //==========================================================================
 void VRenderLevelShared::TransformFrustum () {
   //view_frustum.setup(clip_base, vieworg, viewangles, false/*no back plane*/, -1.0f/*no forward plane*/);
-  view_frustum.setup(clip_base, vieworg, viewangles, true/*create back plane*/, -1.0f/*no forward plane*/);
+  view_frustum.setup(clip_base, vieworg, viewangles, viewforward, viewright, viewup, true/*create back plane*/, -1.0f/*no forward plane*/);
 }
 
 

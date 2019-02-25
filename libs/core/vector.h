@@ -416,8 +416,19 @@ public:
     if (needUpdate(aorg, aangles)) setup(clipbase, aorg, aangles, createbackplane, farplanez);
   }
 
+  // for speed; direction vectors should correspond to angles
   // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
-  void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
+  void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles,
+              const TVec &aforward, const TVec &aright, const TVec &aup,
+              bool createbackplane=true, const float farplanez=0.0f);
+
+  // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
+  inline void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
+    // create direction vectors
+    TVec f, r, u;
+    AngleVectors(aangles, f, r, u);
+    setup(clipbase, aorg, aangles, f, r, u, createbackplane, farplanez);
+  }
 
   void setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
 
