@@ -176,7 +176,7 @@ int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 //==========================================================================
 void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   guard(VNetConnection::ReceivedPacket);
-  if (Packet.ReadInt(256) != NETPACKET_DATA) return;
+  if (Packet.ReadInt(/*256*/) != NETPACKET_DATA) return;
   ++Driver->packetsReceived;
 
   NeedsUpdate = true;
@@ -229,21 +229,21 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       VMessageIn Msg;
 
       // read message header
-      Msg.ChanIndex = Packet.ReadInt(MAX_CHANNELS);
+      Msg.ChanIndex = Packet.ReadInt(/*MAX_CHANNELS*/);
       Msg.bReliable = Packet.ReadBit();
       Msg.bOpen = Packet.ReadBit();
       Msg.bClose = Packet.ReadBit();
       Msg.Sequence = 0;
       Msg.ChanType = 0;
       if (Msg.bReliable) Packet << Msg.Sequence;
-      if (Msg.bOpen) Msg.ChanType = Packet.ReadInt(CHANNEL_MAX);
+      if (Msg.bOpen) Msg.ChanType = Packet.ReadInt(/*CHANNEL_MAX*/);
       if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet is missing message header");
         break;
       }
 
       // read data
-      int Length = Packet.ReadInt(MAX_MSGLEN*8);
+      int Length = Packet.ReadInt(/*MAX_MSGLEN*8*/);
       Msg.SetData(Packet, Length);
       if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet is missing message data");
@@ -308,13 +308,13 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
   PrepareOut(MAX_MESSAGE_HEADER_BITS+Msg.GetNumBits());
 
   Out.WriteBit(false);
-  Out.WriteInt(Msg.ChanIndex, MAX_CHANNELS);
+  Out.WriteInt(Msg.ChanIndex/*, MAX_CHANNELS*/);
   Out.WriteBit(Msg.bReliable);
   Out.WriteBit(Msg.bOpen);
   Out.WriteBit(Msg.bClose);
   if (Msg.bReliable) Out << Msg.Sequence;
-  if (Msg.bOpen) Out.WriteInt(Msg.ChanType, CHANNEL_MAX);
-  Out.WriteInt(Msg.GetNumBits(), MAX_MSGLEN*8);
+  if (Msg.bOpen) Out.WriteInt(Msg.ChanType/*, CHANNEL_MAX*/);
+  Out.WriteInt(Msg.GetNumBits()/*, MAX_MSGLEN*8*/);
   Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
 
   Msg.Time = Driver->NetTime;
@@ -348,7 +348,7 @@ void VNetConnection::PrepareOut (int Length) {
   // send current packet if new message doesn't fit
   if (Out.GetNumBits()+Length+MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
   if (Out.GetNumBits() == 0) {
-    Out.WriteInt(NETPACKET_DATA, 256);
+    Out.WriteInt(NETPACKET_DATA/*, 256*/);
     Out << UnreliableSendSequence;
   }
   unguard;

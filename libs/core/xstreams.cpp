@@ -676,6 +676,7 @@ VBitStreamWriter::VBitStreamWriter (vint32 AMax)
   : Max(AMax)
   , Pos(0)
 {
+  bLoading = false;
   Data.SetNum((AMax+7)>>3);
   memset(Data.Ptr(), 0, (Max+7)>>3);
 }
@@ -698,6 +699,7 @@ void VBitStreamWriter::Serialise (void *data, int length) {
 //==========================================================================
 void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   if (!Length) return;
+  check(Length > 0);
 
   if (Pos+Length > Max) {
     bError = true;
@@ -756,23 +758,8 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
 //  VBitStreamWriter::SerialiseInt
 //
 //==========================================================================
-void VBitStreamWriter::SerialiseInt (vuint32 &Value, vuint32 Max) {
-  WriteInt(Value, Max);
-}
-
-
-//==========================================================================
-//
-//  VBitStreamWriter::WriteBit
-//
-//==========================================================================
-void VBitStreamWriter::WriteBit (bool Bit) {
-  if (Pos+1 > Max) {
-    bError = true;
-    return;
-  }
-  if (Bit) Data[Pos>>3] |= 1<<(Pos&7);
-  ++Pos;
+void VBitStreamWriter::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
+  WriteInt(Value/*, Max*/);
 }
 
 
@@ -781,8 +768,9 @@ void VBitStreamWriter::WriteBit (bool Bit) {
 //  VBitStreamWriter::WriteInt
 //
 //==========================================================================
-void VBitStreamWriter::WriteInt (vuint32 Val, vuint32 Maximum) {
-  checkSlow(Val < Maximum);
+void VBitStreamWriter::WriteInt (vuint32 Val/*, vuint32 Maximum*/) {
+  //checkSlow(Val < Maximum);
+#if 0
   // with maximum of 1 the only possible value is 0
   if (Maximum <= 1) return;
 
@@ -800,6 +788,24 @@ void VBitStreamWriter::WriteInt (vuint32 Val, vuint32 Maximum) {
     if (Val&Mask) Data[Pos>>3] |= 1<<(Pos&7);
     ++Pos;
   }
+#else
+  // sign bit
+  if (Val&0x80000000u) {
+    WriteBit(true);
+    Val ^= 0xffffffffu;
+  } else {
+    WriteBit(false);
+  }
+  // bytes
+  while (Val) {
+    WriteBit(true);
+    for (int cnt = 4; cnt > 0; --cnt) {
+      WriteBit(!!(Val&0x01));
+      Val >>= 1;
+    }
+  }
+  WriteBit(false); // stop bit
+#endif
 }
 
 
@@ -886,25 +892,8 @@ void VBitStreamReader::SerialiseBits (void *Dst, int Length) {
 //  VBitStreamReader::SerialiseInt
 //
 //==========================================================================
-void VBitStreamReader::SerialiseInt (vuint32 &Value, vuint32 Max) {
-  Value = ReadInt(Max);
-}
-
-
-//==========================================================================
-//
-//  VBitStreamReader::ReadBit
-//
-//==========================================================================
-bool VBitStreamReader::ReadBit () {
-  if (Pos+1 > Num) {
-    bError = true;
-    return false;
-  }
-
-  bool Ret = !!(Data[Pos>>3]&(1<<(Pos&7)));
-  ++Pos;
-  return Ret;
+void VBitStreamReader::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
+  Value = ReadInt(/*Max*/);
 }
 
 
@@ -913,7 +902,8 @@ bool VBitStreamReader::ReadBit () {
 //  VBitStreamReader::ReadInt
 //
 //==========================================================================
-vuint32 VBitStreamReader::ReadInt (vuint32 Maximum) {
+vuint32 VBitStreamReader::ReadInt (/*vuint32 Maximum*/) {
+#if 0
   // with maximum of 1 the only possible value is 0
   if (Maximum <= 1) return 0;
 
@@ -930,6 +920,20 @@ vuint32 VBitStreamReader::ReadInt (vuint32 Maximum) {
     ++Pos;
   }
   return Val;
+#else
+  bool sign = ReadBit();
+  vuint32 Val = 0, Mask = 1;
+  // bytes
+  while (ReadBit()) {
+    for (int cnt = 4; cnt > 0; --cnt) {
+      check(Mask);
+      if (ReadBit()) Val |= Mask;
+      Mask <<= 1;
+    }
+  }
+  if (sign) Val ^= 0xffffffffu;
+  return Val;
+#endif
 }
 
 
@@ -1253,13 +1257,13 @@ void VPartialStreamRO::SerialiseBits (void *Data, int Length) {
 }
 
 
-void VPartialStreamRO::SerialiseInt (vuint32 &Value, vuint32 Max) {
+void VPartialStreamRO::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
   if (!checkValidity()) return;
   {
     MyThreadLocker locker(lockptr);
     srcStream->Seek(srccurpos);
     if (srcStream->IsError()) { bError = true; return; }
-    srcStream->SerialiseInt(Value, Max);
+    srcStream->SerialiseInt(Value/*, Max*/);
     int cpos = srcStream->Tell();
     if (srcStream->IsError()) { bError = true; return; }
     if (cpos < stpos) { srccurpos = stpos; bError = true; return; }

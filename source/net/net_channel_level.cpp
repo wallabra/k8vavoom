@@ -118,11 +118,12 @@ void VLevelChannel::SendNewLevel () {
   guardSlow(NewLevel);
   VMessageOut Msg(this);
   Msg.bReliable = true;
-  Msg.WriteInt(CMD_NewLevel, CMD_MAX);
+  Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
   VStr MapName = *Level->MapName;
+  check(!Msg.IsLoading());
   Msg << svs.serverinfo << MapName;
-  Msg.WriteInt(svs.max_clients, MAXPLAYERS+1);
-  Msg.WriteInt(deathmatch, 256);
+  Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
+  Msg.WriteInt(deathmatch/*, 256*/);
   SendMessage(&Msg);
   unguardSlow;
 
@@ -133,7 +134,7 @@ void VLevelChannel::SendNewLevel () {
   guardSlow(PreRender);
   VMessageOut Msg(this);
   Msg.bReliable = true;
-  Msg.WriteInt(CMD_PreRender, CMD_MAX);
+  Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
   SendMessage(&Msg);
   unguardSlow;
   unguard;
@@ -157,8 +158,8 @@ void VLevelChannel::Update () {
     rep_line_t *RepLine = &Lines[i];
     if (Line->alpha == RepLine->alpha) continue;
 
-    Msg.WriteInt(CMD_Line, CMD_MAX);
-    Msg.WriteInt(i, Level->NumLines);
+    Msg.WriteInt(CMD_Line/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, Level->NumLines*/);
     Msg.WriteBit(Line->alpha != RepLine->alpha);
     if (Line->alpha != RepLine->alpha) {
       Msg << Line->alpha;
@@ -187,21 +188,21 @@ void VLevelChannel::Update () {
       continue;
     }
 
-    Msg.WriteInt(CMD_Side, CMD_MAX);
-    Msg.WriteInt(i, Level->NumSides);
+    Msg.WriteInt(CMD_Side/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, Level->NumSides*/);
     Msg.WriteBit(Side->TopTexture != RepSide->TopTexture);
     if (Side->TopTexture != RepSide->TopTexture) {
-      Msg.WriteInt(Side->TopTexture, MAX_VUINT16);
+      Msg.WriteInt(Side->TopTexture/*, MAX_VUINT16*/);
       RepSide->TopTexture = Side->TopTexture;
     }
     Msg.WriteBit(Side->BottomTexture != RepSide->BottomTexture);
     if (Side->BottomTexture != RepSide->BottomTexture) {
-      Msg.WriteInt(Side->BottomTexture, MAX_VUINT16);
+      Msg.WriteInt(Side->BottomTexture/*, MAX_VUINT16*/);
       RepSide->BottomTexture = Side->BottomTexture;
     }
     Msg.WriteBit(Side->MidTexture != RepSide->MidTexture);
     if (Side->MidTexture != RepSide->MidTexture) {
-      Msg.WriteInt(Side->MidTexture, MAX_VUINT16);
+      Msg.WriteInt(Side->MidTexture/*, MAX_VUINT16*/);
       RepSide->MidTexture = Side->MidTexture;
     }
     Msg.WriteBit(Side->TopTextureOffset != RepSide->TopTextureOffset);
@@ -236,7 +237,7 @@ void VLevelChannel::Update () {
     }
     Msg.WriteBit(Side->Flags != RepSide->Flags);
     if (Side->Flags != RepSide->Flags) {
-      Msg.WriteInt(Side->Flags, 0x000f);
+      Msg.WriteInt(Side->Flags/*, 0x000f*/);
       RepSide->Flags = Side->Flags;
     }
     Msg.WriteBit(Side->Light != RepSide->Light);
@@ -293,12 +294,12 @@ void VLevelChannel::Update () {
       continue;
     }
 
-    Msg.WriteInt(CMD_Sector, CMD_MAX);
-    Msg.WriteInt(i, Level->NumSectors);
+    Msg.WriteInt(CMD_Sector/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, Level->NumSectors*/);
     Msg.WriteBit(RepSec->floor_pic != Sec->floor.pic);
-    if (RepSec->floor_pic != Sec->floor.pic) Msg.WriteInt(Sec->floor.pic, MAX_VUINT16);
+    if (RepSec->floor_pic != Sec->floor.pic) Msg.WriteInt(Sec->floor.pic/*, MAX_VUINT16*/);
     Msg.WriteBit(RepSec->ceil_pic != Sec->ceiling.pic);
-    if (RepSec->ceil_pic != Sec->ceiling.pic) Msg.WriteInt(Sec->ceiling.pic, MAX_VUINT16);
+    if (RepSec->ceil_pic != Sec->ceiling.pic) Msg.WriteInt(Sec->ceiling.pic/*, MAX_VUINT16*/);
     Msg.WriteBit(FloorChanged);
     if (FloorChanged) {
       Msg.WriteBit(RepSec->floor_dist != Sec->floor.dist);
@@ -307,19 +308,19 @@ void VLevelChannel::Update () {
         Msg << Sec->floor.TexZ;
       }
       Msg.WriteBit(mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs));
-      if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) Msg.WriteInt(mround(Sec->floor.xoffs)&63, 64);
+      if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) Msg.WriteInt(mround(Sec->floor.xoffs)&63/*, 64*/);
       Msg.WriteBit(mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs));
-      if (mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs)) Msg.WriteInt(mround(Sec->floor.yoffs)&63, 64);
+      if (mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs)) Msg.WriteInt(mround(Sec->floor.yoffs)&63/*, 64*/);
       Msg.WriteBit(RepSec->floor_XScale != Sec->floor.XScale);
       if (RepSec->floor_XScale != Sec->floor.XScale) Msg << Sec->floor.XScale;
       Msg.WriteBit(RepSec->floor_YScale != Sec->floor.YScale);
       if (RepSec->floor_YScale != Sec->floor.YScale) Msg << Sec->floor.YScale;
       Msg.WriteBit(mround(RepSec->floor_Angle) != mround(Sec->floor.Angle));
-      if (mround(RepSec->floor_Angle) != mround(Sec->floor.Angle)) Msg.WriteInt((int)AngleMod(Sec->floor.Angle), 360);
+      if (mround(RepSec->floor_Angle) != mround(Sec->floor.Angle)) Msg.WriteInt((int)AngleMod(Sec->floor.Angle)/*, 360*/);
       Msg.WriteBit(mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle));
-      if (mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->floor.BaseAngle), 360);
+      if (mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->floor.BaseAngle)/*, 360*/);
       Msg.WriteBit(mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs));
-      if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) Msg.WriteInt(mround(Sec->floor.BaseYOffs)&63, 64);
+      if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) Msg.WriteInt(mround(Sec->floor.BaseYOffs)&63/*, 64*/);
       Msg.WriteBit(RepSec->floor_SkyBox != FloorSkyBox);
       if (RepSec->floor_SkyBox != FloorSkyBox) Msg << FloorSkyBox;
     }
@@ -331,28 +332,28 @@ void VLevelChannel::Update () {
         Msg << Sec->ceiling.TexZ;
       }
       Msg.WriteBit(mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs));
-      if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) Msg.WriteInt(mround(Sec->ceiling.xoffs)&63, 64);
+      if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) Msg.WriteInt(mround(Sec->ceiling.xoffs)&63/*, 64*/);
       Msg.WriteBit(mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs));
-      if (mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs)) Msg.WriteInt(mround(Sec->ceiling.yoffs)&63, 64);
+      if (mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs)) Msg.WriteInt(mround(Sec->ceiling.yoffs)&63/*, 64*/);
       Msg.WriteBit(RepSec->ceil_XScale != Sec->ceiling.XScale);
       if (RepSec->ceil_XScale != Sec->ceiling.XScale) Msg << Sec->ceiling.XScale;
       Msg.WriteBit(RepSec->ceil_YScale != Sec->ceiling.YScale);
       if (RepSec->ceil_YScale != Sec->ceiling.YScale) Msg << Sec->ceiling.YScale;
       Msg.WriteBit(mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle));
-      if (mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle)) Msg.WriteInt((int)AngleMod(Sec->ceiling.Angle), 360);
+      if (mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle)) Msg.WriteInt((int)AngleMod(Sec->ceiling.Angle)/*, 360*/);
       Msg.WriteBit(mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle));
-      if (mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->ceiling.BaseAngle), 360);
+      if (mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->ceiling.BaseAngle)/*, 360*/);
       Msg.WriteBit(mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs));
-      if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) Msg.WriteInt(mround(Sec->ceiling.BaseYOffs)&63, 64);
+      if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) Msg.WriteInt(mround(Sec->ceiling.BaseYOffs)&63/*, 64*/);
       Msg.WriteBit(RepSec->ceil_SkyBox != CeilSkyBox);
       if (RepSec->ceil_SkyBox != CeilSkyBox) Msg << CeilSkyBox;
     }
     Msg.WriteBit(LightChanged);
-    if (LightChanged) Msg.WriteInt(Sec->params.lightlevel>>2, 256);
+    if (LightChanged) Msg.WriteInt(Sec->params.lightlevel>>2/*, 256*/);
     Msg.WriteBit(FadeChanged);
     if (FadeChanged) Msg << Sec->params.Fade;
     Msg.WriteBit(SkyChanged);
-    if (SkyChanged) Msg.WriteInt(Sec->Sky, MAX_VUINT16);
+    if (SkyChanged) Msg.WriteInt(Sec->Sky/*, MAX_VUINT16*/);
     Msg.WriteBit(MirrorChanged);
     if (MirrorChanged) {
       Msg << Sec->floor.MirrorAlpha;
@@ -397,8 +398,8 @@ void VLevelChannel::Update () {
       continue;
     }
 
-    Msg.WriteInt(CMD_PolyObj, CMD_MAX);
-    Msg.WriteInt(i, Level->NumPolyObjs);
+    Msg.WriteInt(CMD_PolyObj/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, Level->NumPolyObjs*/);
     Msg.WriteBit(RepPo->startSpot.x != Po->startSpot.x);
     if (RepPo->startSpot.x != Po->startSpot.x) Msg << Po->startSpot.x;
     Msg.WriteBit(RepPo->startSpot.y != Po->startSpot.y);
@@ -426,11 +427,11 @@ void VLevelChannel::Update () {
     if (CamEnt == RepCam.Camera && Cam.TexNum == RepCam.TexNum && Cam.FOV == RepCam.FOV) continue;
 
     // send message
-    Msg.WriteInt(CMD_CamTex, CMD_MAX);
-    Msg.WriteInt(i, 0xff);
+    Msg.WriteInt(CMD_CamTex/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, 0xff*/);
     Connection->ObjMap->SerialiseObject(Msg, *(VObject**)&CamEnt);
-    Msg.WriteInt(Cam.TexNum, 0xffff);
-    Msg.WriteInt(Cam.FOV, 360);
+    Msg.WriteInt(Cam.TexNum/*, 0xffff*/);
+    Msg.WriteInt(Cam.FOV/*, 360*/);
 
     // update replication info
     RepCam.Camera = CamEnt;
@@ -456,13 +457,13 @@ void VLevelChannel::Update () {
     if (Eq) continue;
 
     // send message
-    Msg.WriteInt(CMD_LevelTrans, CMD_MAX);
-    Msg.WriteInt(i, MAX_LEVEL_TRANSLATIONS);
-    Msg.WriteInt(Tr->Commands.Num(), 0xff);
+    Msg.WriteInt(CMD_LevelTrans/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, MAX_LEVEL_TRANSLATIONS*/);
+    Msg.WriteInt(Tr->Commands.Num()/*, 0xff*/);
     Rep.SetNum(Tr->Commands.Num());
     for (int j = 0; j < Tr->Commands.Num(); ++j) {
       VTextureTranslation::VTransCmd &C = Tr->Commands[j];
-      Msg.WriteInt(C.Type, 2);
+      Msg.WriteInt(C.Type/*, 2*/);
            if (C.Type == 0) Msg << C.Start << C.End << C.R1 << C.R2;
       else if (C.Type == 1) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
       Rep[j] = C;
@@ -479,10 +480,10 @@ void VLevelChannel::Update () {
     if (Tr->TranslStart == Rep.TranslStart && Tr->TranslEnd == Rep.TranslEnd && Tr->Colour == Rep.Colour) continue;
 
     // send message
-    Msg.WriteInt(CMD_BodyQueueTrans, CMD_MAX);
-    Msg.WriteInt(i, MAX_BODY_QUEUE_TRANSLATIONS);
+    Msg.WriteInt(CMD_BodyQueueTrans/*, CMD_MAX*/);
+    Msg.WriteInt(i/*, MAX_BODY_QUEUE_TRANSLATIONS*/);
     Msg << Tr->TranslStart << Tr->TranslEnd;
-    Msg.WriteInt(Tr->Colour, 0x00ffffff);
+    Msg.WriteInt(Tr->Colour/*, 0x00ffffff*/);
     Rep.TranslStart = Tr->TranslStart;
     Rep.TranslEnd = Tr->TranslEnd;
     Rep.Colour = Tr->Colour;
@@ -504,7 +505,7 @@ void VLevelChannel::SendStaticLights () {
     rep_light_t &L = Level->StaticLights[i];
     VMessageOut Msg(this);
     Msg.bReliable = true;
-    Msg.WriteInt(CMD_StaticLight, CMD_MAX);
+    Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
     Msg << L.Origin << L.Radius << L.Colour;
     SendMessage(&Msg);
   }
@@ -520,43 +521,43 @@ void VLevelChannel::SendStaticLights () {
 void VLevelChannel::ParsePacket (VMessageIn &Msg) {
   guard(VLevelChannel::ParsePacket);
   while (!Msg.AtEnd()) {
-    int Cmd = Msg.ReadInt(CMD_MAX);
+    int Cmd = Msg.ReadInt(/*CMD_MAX*/);
     switch (Cmd) {
       case CMD_Side:
         {
-          side_t *Side = &Level->Sides[Msg.ReadInt(Level->NumSides)];
-          if (Msg.ReadBit()) Side->TopTexture = Msg.ReadInt(MAX_VUINT16);
-          if (Msg.ReadBit()) Side->BottomTexture = Msg.ReadInt(MAX_VUINT16);
-          if (Msg.ReadBit()) Side->MidTexture = Msg.ReadInt(MAX_VUINT16);
+          side_t *Side = &Level->Sides[Msg.ReadInt(/*Level->NumSides*/)];
+          if (Msg.ReadBit()) Side->TopTexture = Msg.ReadInt(/*MAX_VUINT16*/);
+          if (Msg.ReadBit()) Side->BottomTexture = Msg.ReadInt(/*MAX_VUINT16*/);
+          if (Msg.ReadBit()) Side->MidTexture = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) Msg << Side->TopTextureOffset;
           if (Msg.ReadBit()) Msg << Side->BotTextureOffset;
           if (Msg.ReadBit()) Msg << Side->MidTextureOffset;
           if (Msg.ReadBit()) Msg << Side->TopRowOffset;
           if (Msg.ReadBit()) Msg << Side->BotRowOffset;
           if (Msg.ReadBit()) Msg << Side->MidRowOffset;
-          if (Msg.ReadBit()) Side->Flags = Msg.ReadInt(0x000f);
+          if (Msg.ReadBit()) Side->Flags = Msg.ReadInt(/*0x000f*/);
           if (Msg.ReadBit()) Msg << Side->Light;
         }
         break;
       case CMD_Sector:
         {
-          sector_t *Sec = &Level->Sectors[Msg.ReadInt(Level->NumSectors)];
+          sector_t *Sec = &Level->Sectors[Msg.ReadInt(/*Level->NumSectors*/)];
           float PrevFloorDist = Sec->floor.dist;
           float PrevCeilDist = Sec->ceiling.dist;
-          if (Msg.ReadBit()) Sec->floor.pic = Msg.ReadInt(MAX_VUINT16);
-          if (Msg.ReadBit()) Sec->ceiling.pic = Msg.ReadInt(MAX_VUINT16);
+          if (Msg.ReadBit()) Sec->floor.pic = Msg.ReadInt(/*MAX_VUINT16*/);
+          if (Msg.ReadBit()) Sec->ceiling.pic = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) {
             if (Msg.ReadBit()) {
               Msg << Sec->floor.dist;
               Msg << Sec->floor.TexZ;
             }
-            if (Msg.ReadBit()) Sec->floor.xoffs = Msg.ReadInt(64);
-            if (Msg.ReadBit()) Sec->floor.yoffs = Msg.ReadInt(64);
+            if (Msg.ReadBit()) Sec->floor.xoffs = Msg.ReadInt(/*64*/);
+            if (Msg.ReadBit()) Sec->floor.yoffs = Msg.ReadInt(/*64*/);
             if (Msg.ReadBit()) Msg << Sec->floor.XScale;
             if (Msg.ReadBit()) Msg << Sec->floor.YScale;
-            if (Msg.ReadBit()) Sec->floor.Angle = Msg.ReadInt(360);
-            if (Msg.ReadBit()) Sec->floor.BaseAngle = Msg.ReadInt(360);
-            if (Msg.ReadBit()) Sec->floor.BaseYOffs = Msg.ReadInt(64);
+            if (Msg.ReadBit()) Sec->floor.Angle = Msg.ReadInt(/*360*/);
+            if (Msg.ReadBit()) Sec->floor.BaseAngle = Msg.ReadInt(/*360*/);
+            if (Msg.ReadBit()) Sec->floor.BaseYOffs = Msg.ReadInt(/*64*/);
             if (Msg.ReadBit()) Msg << Sec->floor.SkyBox;
           }
           if (Msg.ReadBit()) {
@@ -564,18 +565,18 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
               Msg << Sec->ceiling.dist;
               Msg << Sec->ceiling.TexZ;
             }
-            if (Msg.ReadBit()) Sec->ceiling.xoffs = Msg.ReadInt(64);
-            if (Msg.ReadBit()) Sec->ceiling.yoffs = Msg.ReadInt(64);
+            if (Msg.ReadBit()) Sec->ceiling.xoffs = Msg.ReadInt(/*64*/);
+            if (Msg.ReadBit()) Sec->ceiling.yoffs = Msg.ReadInt(/*64*/);
             if (Msg.ReadBit()) Msg << Sec->ceiling.XScale;
             if (Msg.ReadBit()) Msg << Sec->ceiling.YScale;
-            if (Msg.ReadBit()) Sec->ceiling.Angle = Msg.ReadInt(360);
-            if (Msg.ReadBit()) Sec->ceiling.BaseAngle = Msg.ReadInt(360);
-            if (Msg.ReadBit()) Sec->ceiling.BaseYOffs = Msg.ReadInt(64);
+            if (Msg.ReadBit()) Sec->ceiling.Angle = Msg.ReadInt(/*360*/);
+            if (Msg.ReadBit()) Sec->ceiling.BaseAngle = Msg.ReadInt(/*360*/);
+            if (Msg.ReadBit()) Sec->ceiling.BaseYOffs = Msg.ReadInt(/*64*/);
             if (Msg.ReadBit()) Msg << Sec->ceiling.SkyBox;
           }
-          if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadInt(256)<<2;
+          if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadInt(/*256*/)<<2;
           if (Msg.ReadBit()) Msg << Sec->params.Fade;
-          if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt(MAX_VUINT16);
+          if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) {
             Msg << Sec->floor.MirrorAlpha;
             Msg << Sec->ceiling.MirrorAlpha;
@@ -585,7 +586,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_PolyObj:
         {
-          polyobj_t *Po = &Level->PolyObjs[Msg.ReadInt(Level->NumPolyObjs)];
+          polyobj_t *Po = &Level->PolyObjs[Msg.ReadInt(/*Level->NumPolyObjs*/)];
           TVec Pos = Po->startSpot;
           if (Msg.ReadBit()) Msg << Pos.x;
           if (Msg.ReadBit()) Msg << Pos.y;
@@ -625,7 +626,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_Line:
         {
-          line_t *Line = &Level->Lines[Msg.ReadInt(Level->NumLines)];
+          line_t *Line = &Level->Lines[Msg.ReadInt(/*Level->NumLines*/)];
           if (Msg.ReadBit()) {
             Msg << Line->alpha;
             if (Msg.ReadBit()) {
@@ -638,7 +639,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_CamTex:
         {
-          int i = Msg.ReadInt(0xff);
+          int i = Msg.ReadInt(/*0xff*/);
           while (Level->CameraTextures.Num() <= i) {
             VCameraTextureInfo &C = Level->CameraTextures.Alloc();
             C.Camera = nullptr;
@@ -647,13 +648,13 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           }
           VCameraTextureInfo &Cam = Level->CameraTextures[i];
           Connection->ObjMap->SerialiseObject(Msg, *(VObject **)&Cam.Camera);
-          Cam.TexNum = Msg.ReadInt(0xffff);
-          Cam.FOV = Msg.ReadInt(360);
+          Cam.TexNum = Msg.ReadInt(/*0xffff*/);
+          Cam.FOV = Msg.ReadInt(/*360*/);
         }
         break;
       case CMD_LevelTrans:
         {
-          int i = Msg.ReadInt(MAX_LEVEL_TRANSLATIONS);
+          int i = Msg.ReadInt(/*MAX_LEVEL_TRANSLATIONS*/);
           while (Level->Translations.Num() <= i) Level->Translations.Append(nullptr);
           VTextureTranslation *Tr = Level->Translations[i];
           if (!Tr) {
@@ -661,9 +662,9 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
             Level->Translations[i] = Tr;
           }
           Tr->Clear();
-          int Count = Msg.ReadInt(0xff);
+          int Count = Msg.ReadInt(/*0xff*/);
           for (int j = 0; j < Count; ++j) {
-            vuint8 Type = Msg.ReadInt(2);
+            vuint8 Type = Msg.ReadInt(/*2*/);
             if (Type == 0) {
               vuint8 Start;
               vuint8 End;
@@ -688,7 +689,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_BodyQueueTrans:
         {
-          int i = Msg.ReadInt(MAX_BODY_QUEUE_TRANSLATIONS);
+          int i = Msg.ReadInt(/*MAX_BODY_QUEUE_TRANSLATIONS*/);
           while (Level->BodyQueueTrans.Num() <= i) Level->BodyQueueTrans.Append(nullptr);
           VTextureTranslation *Tr = Level->BodyQueueTrans[i];
           if (!Tr) {
@@ -699,7 +700,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           vuint8 TrStart;
           vuint8 TrEnd;
           Msg << TrStart << TrEnd;
-          vint32 Col = Msg.ReadInt(0x00ffffff);
+          vint32 Col = Msg.ReadInt(/*0x00ffffff*/);
           Tr->BuildPlayerTrans(TrStart, TrEnd, Col);
         }
         break;

@@ -274,9 +274,9 @@ void VCheckedStream::SerialiseBits (void *Data, int Length) {
 }
 
 
-void VCheckedStream::SerialiseInt (vuint32 &Value, vuint32 Max) {
+void VCheckedStream::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
   checkValidity();
-  srcStream->SerialiseInt(Value, Max);
+  srcStream->SerialiseInt(Value/*, Max*/);
   checkError();
 }
 

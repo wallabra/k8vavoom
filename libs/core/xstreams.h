@@ -158,12 +158,32 @@ public:
   VBitStreamWriter (vint32);
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
-  void WriteBit (bool);
-  void WriteInt (vuint32, vuint32);
+  virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
+  void WriteInt (vuint32/*, vuint32*/);
   inline vuint8 *GetData () { return Data.Ptr(); }
   inline int GetNumBits () const { return Pos; }
   inline int GetNumBytes () const { return (Pos+7)>>3; }
+
+  inline void WriteBit (bool Bit) {
+    if (Pos+1 > Max) {
+      bError = true;
+      return;
+    }
+    if (Bit) Data[Pos>>3] |= 1<<(Pos&7);
+    ++Pos;
+  }
+
+  static inline int CalcIntBits (vuint32 Val) {
+    int res = 1; // sign bit
+    if (Val&0x80000000u) Val ^= 0xffffffffu;
+    vuint32 mask = 0x0f;
+    while (Val) {
+      res += 5; // continute bit, 4 data bits
+      Val &= ~mask;
+      mask <<= 4;
+    }
+    return res+1; // and stop bit
+  }
 };
 
 
@@ -178,14 +198,25 @@ public:
   void SetData (VBitStreamReader&, int);
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
-  bool ReadBit ();
-  vuint32 ReadInt (vuint32);
+  virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
+  vuint32 ReadInt (/*vuint32*/);
   virtual bool AtEnd () override;
   inline vuint8 *GetData () { return Data.Ptr(); }
   inline int GetNumBits () const { return Num; }
   inline int GetNumBytes () const { return (Num+7)>>3; }
   inline int GetPosBits () const { return Pos; }
+
+  inline bool ReadBit () {
+    if (Pos+1 > Num) {
+      bError = true;
+      return false;
+    }
+    bool Ret = !!(Data[Pos>>3]&(1<<(Pos&7)));
+    ++Pos;
+    return Ret;
+  }
+
+  static inline int CalcIntBits (vuint32 n) { return VBitStreamWriter::CalcIntBits(n); }
 };
 
 
@@ -244,7 +275,7 @@ public:
   virtual bool IsError () const override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
+  virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
 
   virtual void Seek (int) override;
   virtual int Tell () override;

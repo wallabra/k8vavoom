@@ -412,8 +412,8 @@ void CL_ParseServerInfo (VMessageIn &msg) {
   msg << TmpStr;
   VName MapName = *TmpStr;
 
-  GClGame->maxclients = msg.ReadInt(MAXPLAYERS + 1);
-  GClGame->deathmatch = msg.ReadInt(256);
+  GClGame->maxclients = msg.ReadInt(/*MAXPLAYERS + 1*/);
+  GClGame->deathmatch = msg.ReadInt(/*256*/);
 
   const mapInfo_t &LInfo = P_GetMapInfo(MapName);
   GCon->Log("---------------------------------------");

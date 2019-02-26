@@ -131,14 +131,14 @@ void VPlayerChannel::Update () {
       int InnerSize = IntType.GetSize();
       for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         if (VField::IdenticalValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType)) continue;
-        Msg.WriteInt(F->NetIndex, Plr->GetClass()->NumNetFields);
-        Msg.WriteInt(i, F->Type.GetArrayDim());
+        Msg.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
+        Msg.WriteInt(i/*, F->Type.GetArrayDim()*/);
         if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs+i*InnerSize, IntType)) {
           VField::CopyFieldValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType);
         }
       }
     } else {
-      Msg.WriteInt(F->NetIndex, Plr->GetClass()->NumNetFields);
+      Msg.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
       if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs, F->Type)) {
         VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
       }
@@ -158,7 +158,7 @@ void VPlayerChannel::Update () {
 void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
   guard(VPlayerChannel::ParsePacket);
   while (!Msg.AtEnd()) {
-    int FldIdx = Msg.ReadInt(Plr->GetClass()->NumNetFields);
+    int FldIdx = Msg.ReadInt(/*Plr->GetClass()->NumNetFields*/);
     VField *F = nullptr;
     for (VField *CF = Plr->GetClass()->NetFields; CF; CF = CF->NextNetField) {
       if (CF->NetIndex == FldIdx) {
@@ -168,7 +168,7 @@ void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
     }
     if (F) {
       if (F->Type.Type == TYPE_Array) {
-        int Idx = Msg.ReadInt(F->Type.GetArrayDim());
+        int Idx = Msg.ReadInt(/*F->Type.GetArrayDim()*/);
         VFieldType IntType = F->Type;
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs+Idx*IntType.GetSize(), IntType);

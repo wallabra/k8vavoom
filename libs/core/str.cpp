@@ -201,7 +201,8 @@ VStream &VStr::Serialise (VStream &Strm) {
       resize(len);
       makeMutable();
       Strm.Serialise(dataptr, len+1); // eat last byte which should be zero...
-      dataptr[len] = 0; // ...and force zero
+      check(dataptr[len] == 0);
+      //dataptr[len] = 0; // ...and force zero
     } else {
       clear();
       // zero byte is always there

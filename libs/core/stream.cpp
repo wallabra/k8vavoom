@@ -242,7 +242,7 @@ void VStream::SerialiseBits (void *Data, int Length) {
 //  VStream::SerialiseInt
 //
 //==========================================================================
-void VStream::SerialiseInt (vuint32 &Value, vuint32) {
+void VStream::SerialiseInt (vuint32 &Value/*, vuint32*/) {
   *this << Value;
 }
 

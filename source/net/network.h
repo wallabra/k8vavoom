@@ -169,6 +169,9 @@ public:
   virtual void Tick ();
   void SendRpc (VMethod *, VObject *);
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
+
+  int CountInMessages () const;
+  int CountOutMessages () const;
 };
 
 
@@ -254,8 +257,16 @@ public:
 // a channel for sending object map at startup
 class VObjectMapChannel : public VChannel {
 private:
-  int CurrName;
-  int CurrClass;
+  vint32 CurrName;
+  vint32 CurrClass;
+  vint32 LastNameCount;
+  vint32 LastClassCount;
+
+protected:
+  // `Msg.bOpen` must be valid
+  void WriteCounters (VMessageOut &Msg);
+  // `Msg.bOpen` must be valid
+  void ReadCounters (VMessageIn &Msg);
 
 public:
   VObjectMapChannel (VNetConnection *, vint32, vuint8 = true);

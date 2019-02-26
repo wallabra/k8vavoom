@@ -792,7 +792,7 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data
           *(vuint32 *)Data &= ~Type.BitMask;
         }
       } else {
-        vuint8 Val = (vuint8)!!((*(vuint32 *)Data)&Type.BitMask);
+        vuint8 Val = ((*(vuint32 *)Data)&Type.BitMask ? 1 : 0);
         Strm.SerialiseBits(&Val, 1);
       }
       break;

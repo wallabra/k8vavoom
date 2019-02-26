@@ -76,6 +76,30 @@ VChannel::~VChannel () {
 
 //==========================================================================
 //
+//  VChannel::CountInMessages
+//
+//==========================================================================
+int VChannel::CountInMessages () const {
+  int res = 0;
+  for (VMessageIn *M = InMsg; M; M = M->Next) ++res;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VChannel::CountOutMessages
+//
+//==========================================================================
+int VChannel::CountOutMessages () const {
+  int res = 0;
+  for (VMessageOut *M = OutMsg; M; M = M->Next) ++res;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VChannel::ReceivedRawMessage
 //
 //==========================================================================
@@ -137,6 +161,7 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
   VMessageOut *Msg = AMsg;
   if (Msg->IsError()) {
     GCon->Logf(NAME_DevNet, "Overflowed message");
+    //abort();
     return;
   }
   if (Msg->bReliable) {
@@ -231,7 +256,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   VMessageOut Msg(this);
   Msg.bReliable = !!(Func->Flags&FUNC_NetReliable);
 
-  Msg.WriteInt(Func->NetIndex, Owner->GetClass()->NumNetFields);
+  Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
 
   // serialise arguments
   guard(VChannel::SendRpc::SerialiseArguments);

@@ -57,7 +57,7 @@ void VNetObjectsMap::SetUpClassLookup () {
   NameLookup.SetNum(VName::GetNumNames());
   for (int i = 0; i < VName::GetNumNames(); ++i) {
     NameMap[i] = i;
-    NameLookup[i] = *(VName *)&i;
+    NameLookup[i] = VName::CreateWithIndex(i);
   }
 
   ClassLookup.Clear();
@@ -101,16 +101,32 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
   guard(VNetObjectsMap::SerialiseName);
   if (Strm.IsLoading()) {
     vuint32 NameIndex;
-    Strm.SerialiseInt(NameIndex, NameLookup.Num()+1);
-    if ((vint32)NameIndex == NameLookup.Num()) {
+    Strm.SerialiseInt(NameIndex/*, NameLookup.Num()+1*/);
+    if ((vint32)NameIndex >= NameLookup.Num()) {
       Name = NAME_None;
     } else {
       Name = NameLookup[NameIndex];
     }
     return true;
   } else {
+    const int namecount = VName::GetNumNames();
+    check(namecount > 0 && namecount < 1024*1024);
+    // update tables
+    /*
+    if (NameMap.length() < namecount) {
+      const int oldcount = NameMap.length();
+      GCon->Logf(NAME_Warning, "*** got %d new names", namecount-NameMap.length());
+      check(NameMap.length() == NameLookup.length());
+      NameMap.SetNum(namecount);
+      NameLookup.SetNum(namecount);
+      for (int i = oldcount; i < namecount; ++i) {
+        NameMap[i] = i;
+        NameLookup[i] = VName::CreateWithIndex(i);
+      }
+    }
+    */
     vuint32 NameIndex = (Name.GetIndex() < NameMap.Num() ? NameMap[Name.GetIndex()] : NameLookup.Num());
-    Strm.SerialiseInt(NameIndex, NameLookup.Num()+1);
+    Strm.SerialiseInt(NameIndex/*, NameLookup.Num()+1*/);
     return ((vint32)NameIndex != NameLookup.Num());
   }
   unguard;
@@ -131,7 +147,7 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
     if (IsThinker) {
       // it's a thinker that has an open channel
       vuint32 Index;
-      Strm.SerialiseInt(Index, MAX_CHANNELS);
+      Strm.SerialiseInt(Index/*, MAX_CHANNELS*/);
       VChannel *Chan = Connection->Channels[Index];
       if (Chan && Chan->Type == CHANNEL_Thinker && !Chan->Closing) {
         Obj = ((VThinkerChannel *)Chan)->Thinker;
@@ -140,7 +156,7 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
     return true;
   } else {
     VThinker *Thinker = Cast<VThinker>(Obj);
-    vuint8 IsThinker = !!Thinker;
+    vuint8 IsThinker = (Thinker ? 1 : 0);
     Strm.SerialiseBits(&IsThinker, 1);
     if (Thinker) {
       // it's a thinker. if it has an open channel we can use it's
@@ -152,7 +168,7 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
         Index = Chan->Index;
         Ret = (Chan->OpenAcked ? true : false);
       }
-      Strm.SerialiseInt(Index, MAX_CHANNELS);
+      Strm.SerialiseInt(Index/*, MAX_CHANNELS*/);
       return Ret;
     }
     return !Obj;
@@ -170,7 +186,8 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
   guard(VNetObjectsMap::SerialiseClass);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
-    Strm.SerialiseInt(ClassId, ClassLookup.Num());
+    Strm.SerialiseInt(ClassId/*, ClassLookup.Num()*/);
+    //GCon->Logf("classid=%u (%d)", ClassId, ClassLookup.Num());
     if (ClassId) {
       Class = ClassLookup[ClassId];
     } else {
@@ -179,10 +196,10 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
   } else {
     if (Class) {
       vuint32 *ClassId = ClassMap.Find(Class);
-      Strm.SerialiseInt(*ClassId, ClassLookup.Num());
+      Strm.SerialiseInt(*ClassId/*, ClassLookup.Num()*/);
     } else {
       vuint32 NoClass = 0;
-      Strm.SerialiseInt(NoClass, ClassLookup.Num());
+      Strm.SerialiseInt(NoClass/*, ClassLookup.Num()*/);
     }
   }
   return true;
@@ -199,10 +216,10 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
   guard(VNetObjectsMap::SerialiseState);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
-    Strm.SerialiseInt(ClassId, ClassLookup.Num());
+    Strm.SerialiseInt(ClassId/*, ClassLookup.Num()*/);
     if (ClassId) {
       vuint32 StateId;
-      Strm.SerialiseInt(StateId, ClassLookup[ClassId]->StatesLookup.Num());
+      Strm.SerialiseInt(StateId/*, ClassLookup[ClassId]->StatesLookup.Num()*/);
       State = ClassLookup[ClassId]->StatesLookup[StateId];
     } else {
       State = nullptr;
@@ -212,11 +229,11 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
       vuint32 *ClassId = ClassMap.Find((VClass*)State->Outer);
       vuint32 StateId = State->NetId;
       checkSlow(ClassId);
-      Strm.SerialiseInt(*ClassId, ClassLookup.Num());
-      Strm.SerialiseInt(StateId, ((VClass *)State->Outer)->StatesLookup.Num());
+      Strm.SerialiseInt(*ClassId/*, ClassLookup.Num()*/);
+      Strm.SerialiseInt(StateId/*, ((VClass *)State->Outer)->StatesLookup.Num()*/);
     } else {
       vuint32 NoClass = 0;
-      Strm.SerialiseInt(NoClass, ClassLookup.Num());
+      Strm.SerialiseInt(NoClass/*, ClassLookup.Num()*/);
     }
   }
   return true;
