@@ -141,5 +141,8 @@ private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror, bool doCheckFrustum=true);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
+  // light radius should be valid
+  int CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  //bool CheckSegLight (const seg_t *seg, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
 };

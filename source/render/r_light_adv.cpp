@@ -541,17 +541,15 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool Li
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
-      // light is completely on front side.
+      // light is completely on front side
       RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights ? true : false);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
       RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights ? true : false);
     } else {
       int side = bsp->PointOnSide(CurrLightPos);
-
       // recursively divide front space
       RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], false);
-
       // always divide back space for shadows
       RenderShadowBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
     }
@@ -608,7 +606,7 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
   if (!line->linedef) return; // miniseg
 
   const float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
-  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
+  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
@@ -767,10 +765,8 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool Lim
       RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights ? true : false);
     } else {
       int side = bsp->PointOnSide(CurrLightPos);
-
       // recursively divide front space
       RenderLightBSPNode(bsp->children[side], bsp->bbox[side], false);
-
       // possibly divide back space
       if (!LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) {
         if (LimitLights) ++CurrLightsNumber;
