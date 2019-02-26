@@ -54,6 +54,7 @@ VCvarB clip_frustum_sub("clip_frustum_sub", true, "Clip subsectors with frustum?
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
 static VCvarB clip_height("clip_height", true, "Clip with top and bottom frustum?", CVAR_PreInit);
+static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -439,8 +440,10 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         hasBotTex || // a seg without bottom texture isn't an elevator/plat
         hasMidTex) // a seg without mid texture isn't a polyobj door
     {
-      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
-      if (midSolid) return true;
+      if (clip_midsolid) {
+        const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+        if (midSolid) return true;
+      }
 
       const TVec vv1 = *ldef->v1;
       const TVec vv2 = *ldef->v2;
