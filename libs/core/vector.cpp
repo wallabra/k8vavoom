@@ -301,6 +301,25 @@ bool TClipPlane::checkBox (const float *bbox) const {
 }
 
 
+//==========================================================================
+//
+//  TClipPlane::checkBoxEx
+//
+//  0: completely outside; >0: completely inside; <0: partially inside
+//
+//==========================================================================
+int TClipPlane::checkBoxEx (const float *bbox) const {
+  if (!clipflag) return 1; // don't need to clip against it
+  // generate reject point
+  TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
+  if (!PointOnSide(rejectpt)) return 0; // completely outside
+  // generate accept point
+  TVec acceptpt(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]);
+  // we can reset clipflag bit here if accept point is on a good side
+  return (!PointOnSide(acceptpt) ? 1 : -1);
+}
+
+
 
 //==========================================================================
 //
@@ -429,19 +448,46 @@ bool TFrustum::checkBox (const float *bbox) const {
       // on a back side (or on a plane)
       return false;
     }
-
-    /*
-    // generate accept point
-    TVec acceptpt;
-    acceptpt[0] = bbox[pindex[3+0]];
-    acceptpt[1] = bbox[pindex[3+1]];
-    acceptpt[2] = bbox[pindex[3+2]];
-
-    // we can reset clipflag bit here if accept point is on a good side
-    if (!planes[i].PointOnSide(acceptpt)) {}
-    */
   }
   return true;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkBoxEx
+//
+//  0: completely outside; >0: completely inside; <0: partially inside
+//
+//==========================================================================
+int TFrustum::checkBoxEx (const float *bbox) const {
+  if (!planeCount) return 1; // completely inside
+  vuint8 cflag = 0x3f;
+  for (unsigned i = 0; i < 6; ++i) {
+    if (!planes[i].clipflag) {
+      // don't need to clip against it (also, consider it completely inside)
+      cflag ^= 1u<<i;
+      continue;
+    }
+
+    // generate reject point
+    const unsigned *pindex = bindex[i];
+
+    TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
+    if (planes[i].PointOnSide(rejectpt)) {
+      // on a back side (or on a plane)
+      return 0; // completely outsize
+    }
+
+    // generate accept point
+    TVec acceptpt(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]);
+    // we can reset clipflag bit here if accept point is on a good side
+    if (!planes[i].PointOnSide(acceptpt)) {
+      cflag ^= 1u<<i;
+    }
+  }
+
+  return (cflag ? -1 : 1);
 }
 
 

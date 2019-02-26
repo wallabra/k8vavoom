@@ -342,6 +342,9 @@ public:
 
   // returns `false` is box is on the back of the plane (or clipflag is 0)
   bool checkBox (const float *bbox) const;
+
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  int checkBoxEx (const float *bbox) const;
 };
 
 
@@ -462,6 +465,9 @@ public:
   //   [4] is maxy
   //   [5] is maxz
   bool checkBox (const float *bbox) const;
+
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  int checkBoxEx (const float *bbox) const;
 
   // returns `false` is point is out of frustum (or frustum is not valid)
   bool checkPoint (const TVec &point) const;
