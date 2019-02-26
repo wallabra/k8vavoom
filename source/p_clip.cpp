@@ -439,6 +439,9 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         hasBotTex || // a seg without bottom texture isn't an elevator/plat
         hasMidTex) // a seg without mid texture isn't a polyobj door
     {
+      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+      if (midSolid) return true;
+
       const TVec vv1 = *ldef->v1;
       const TVec vv2 = *ldef->v2;
 
@@ -506,37 +509,8 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         // we can add this seg to clipper.
         // this way, we can clip alot of things when camera looks at
         // floor/ceiling, and we can clip away too high/low windows.
-        //const TClipPlane &FrustumTop = clip.GetFrustumTop();
-        //const TClipPlane &FrustumBot = clip.GetFrustumBottom();
         const TFrustum &Frustum = clip.GetFrustum();
-        if (/*FrustumTop.isValid() && FrustumBot.isValid()*/ Frustum.isValid()) {
-          /*
-          const int lidx = (int)(ptrdiff_t)(ldef-clip.GetLevel()->Lines);
-          if (lidx == / *126* / 132) {
-            GCon->Logf("--- SEG SIDE: %d; front floor:(%f,%f); front ceil:(%f,%f); back floor:(%f,%f); back ceil:(%f,%f)",
-              seg->side, frontfz1, frontfz2, frontcz1, frontcz2, backfz1, backfz2, backcz1, backcz2);
-            GCon->Logf("SEG SIDE: %d; ftop: floorpt0=%d; floorpt1=%d; ceilpt0=%d; ceilpt1=%d", seg->side,
-              FrustumTop.PointOnBackTh(TVec(vv1.x, vv1.y, frontfz1)),
-              FrustumTop.PointOnBackTh(TVec(vv2.x, vv2.y, frontfz2)),
-              FrustumTop.PointOnBackTh(TVec(vv1.x, vv1.y, frontcz1)),
-              FrustumTop.PointOnBackTh(TVec(vv2.x, vv2.y, frontcz2)));
-            GCon->Logf("SEG SIDE: %d; fbot: floorpt0=%d; floorpt1=%d; ceilpt0=%d; ceilpt1=%d", seg->side,
-              FrustumBot.PointOnBackTh(TVec(vv1.x, vv1.y, frontfz1)),
-              FrustumBot.PointOnBackTh(TVec(vv2.x, vv2.y, frontfz2)),
-              FrustumBot.PointOnBackTh(TVec(vv1.x, vv1.y, frontcz1)),
-              FrustumBot.PointOnBackTh(TVec(vv2.x, vv2.y, frontcz2)));
-            GCon->Logf("SEG SIDE: %d; btop: floorpt0=%d; floorpt1=%d; ceilpt0=%d; ceilpt1=%d", seg->side,
-              FrustumTop.PointOnBackTh(TVec(vv1.x, vv1.y, backfz1)),
-              FrustumTop.PointOnBackTh(TVec(vv2.x, vv2.y, backfz2)),
-              FrustumTop.PointOnBackTh(TVec(vv1.x, vv1.y, backcz1)),
-              FrustumTop.PointOnBackTh(TVec(vv2.x, vv2.y, backcz2)));
-            GCon->Logf("SEG SIDE: %d; bbot: floorpt0=%d; floorpt1=%d; ceilpt0=%d; ceilpt1=%d", seg->side,
-              FrustumBot.PointOnBackTh(TVec(vv1.x, vv1.y, backfz1)),
-              FrustumBot.PointOnBackTh(TVec(vv2.x, vv2.y, backfz2)),
-              FrustumBot.PointOnBackTh(TVec(vv1.x, vv1.y, backcz1)),
-              FrustumBot.PointOnBackTh(TVec(vv2.x, vv2.y, backcz2)));
-          }
-          */
+        if (Frustum.isValid()) {
           // create bounding box for linked subsector
           const subsector_t *bss = seg->partner->front_sub;
           float bbox[6];
@@ -606,6 +580,8 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
         }
       }
+      // still unsure; check if midtex is transparent
+      //if (midSolid) return true; // texture is not transparent, block
     }
   } else {
     // sloped
@@ -705,8 +681,6 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
 //
 //==========================================================================
 void VViewClipper::ClipResetFrustumPlanes () {
-  //FrustumTop.invalidate();
-  //FrustumBottom.invalidate();
   Frustum.clear();
 }
 
@@ -716,30 +690,6 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
 {
   if (clip_frustum && !viewright.z && isFiniteF(fovy) && fovy != 0 && isFiniteF(fovx) && fovx != 0) {
     // no view roll, create frustum
-    /*
-    Frustum.setupFromFOVs(fovx, fovy, Origin, viewangles, false); // no need to create back plane
-    // also, remove left and right planes, regular clipper will take care of that
-    Frustum.planes[TFrustum::Left].invalidate();
-    Frustum.planes[TFrustum::Right].invalidate();
-    */
-    /*
-    const TVec vtop = TVec(
-      TVEC_SUM3(0, -viewup.x/fovy, viewforward.x),
-      TVEC_SUM3(0, -viewup.y/fovy, viewforward.y),
-      TVEC_SUM3(0, -viewup.z/fovy, viewforward.z));
-    // top side clip
-    FrustumTop.SetPointDir3D(Origin, vtop.normalised());
-    FrustumTop.clipflag = 0x04u;
-    FrustumTop.setupBoxIndicies();
-    // bottom side clip
-    const TVec vbot = TVec(
-      TVEC_SUM3(0, viewup.x/fovy, viewforward.x),
-      TVEC_SUM3(0, viewup.y/fovy, viewforward.y),
-      TVEC_SUM3(0, viewup.z/fovy, viewforward.z));
-    FrustumBottom.SetPointDir3D(Origin, vbot.normalised());
-    FrustumBottom.clipflag = 0x08u;
-    FrustumBottom.setupBoxIndicies();
-    */
     TClipBase cb(fovx, fovy);
     Frustum.setup(cb, Origin, viewangles, viewforward, viewright, viewup, true); // create back plane
   } else {
