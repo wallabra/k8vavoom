@@ -485,12 +485,21 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
               }
               toffs *= MTex->TScale;
               toffs += seg->sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
-              /*
-              GCon->Logf("  TScale:%f; MidRowOffset=%f; toffs=%f; mheight=%f", MTex->TScale, seg->sidedef->MidRowOffset, toffs, mheight);
-              GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
-              GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
-              */
-              if (toffs >= sec->ceiling.minz && toffs-mheight <= sec->floor.maxz) return true; // fully covered
+              //GCon->Logf("  TScale:%f; MidRowOffset=%f; toffs=%f; mheight=%f", MTex->TScale, seg->sidedef->MidRowOffset, toffs, mheight);
+              //GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
+              float floorz, ceilz;
+              if (sec == fsec) {
+                floorz = MIN(frontfz1, frontfz2);
+                ceilz = MAX(frontcz1, frontcz2);
+                //GCon->Logf("  Xsec: %f : %f", MIN(frontfz1, frontfz2), MAX(frontcz1, frontcz2));
+              } else {
+                floorz = MIN(backfz1, backfz2);
+                ceilz = MAX(backcz1, backcz2);
+                //GCon->Logf("  Xsec: %f : %f", MIN(backfz1, backfz2), MAX(backcz1, backcz2));
+              }
+              //GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
+              //if (toffs >= sec->ceiling.minz && toffs-mheight <= sec->floor.maxz) return true; // fully covered
+              if (toffs >= ceilz && toffs-mheight <= floorz) return true; // fully covered
             }
             /*
             float ttop, tbot;
