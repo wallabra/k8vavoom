@@ -117,6 +117,8 @@ public:
   TAVec (float APitch, float AYaw, float ARoll) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
 
   inline bool isValid () const { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
+  inline bool isZero () const { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
+  inline bool isZeroNoRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
 
   friend VStream &operator << (VStream &Strm, TAVec &v) {
     return Strm << v.pitch << v.yaw << v.roll;
@@ -198,6 +200,7 @@ enum {
 };
 
 
+// Ax+By+Cz=D (ABC is normal, D is distance)
 class TPlane {
 public:
   TVec normal;
@@ -219,13 +222,14 @@ public:
     }
     dist = DotProduct(point, normal);
 #else
-    normal = TVec(dir.y, -dir.x, 0).normalised();
-    if (!isFiniteF(dir.x) || !isFiniteF(dir.y) || !isFiniteF(dir.z)) {
+    normal = TVec(dir.y, -dir.x, 0);
+    normal.normaliseInPlace();
+    if (normal.isValid() && !normal.isZero()) {
+      dist = DotProduct(point, normal);
+    } else {
       //k8: what to do here?!
       normal = TVec(0, 0, 1);
       dist = 1;
-    } else {
-      dist = DotProduct(point, normal);
     }
 #endif
   }

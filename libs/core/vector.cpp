@@ -314,12 +314,8 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
                       const TVec &aforward, const TVec &aright, const TVec &aup,
                       bool createbackplane, const float farplanez)
 {
-  if (!clipbase.isValid()/* ||
-      !isFiniteF(aorg.x) || !isFiniteF(aorg.y) || !isFiniteF(aorg.z) ||
-      !isFiniteF(aforward.x) || !isFiniteF(aforward.y) || !isFiniteF(aforward.z) ||
-      !isFiniteF(aright.x) || !isFiniteF(aright.y) || !isFiniteF(aright.z) ||
-      !isFiniteF(aup.x) || !isFiniteF(aup.y) || !isFiniteF(aup.z) ||
-      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw)*/)
+  if (!clipbase.isValid() || !aangles.isValid() || !aorg.isValid() ||
+      !aforward.isValid() || !aright.isValid() || !aup.isValid())
   {
     clear();
     return;
@@ -369,8 +365,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
 //
 //==========================================================================
 void TFrustum::setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
-  if (!isFiniteF(afovx) || !isFiniteF(afovy) ||
-      !isFiniteF(aangles.pitch) || !isFiniteF(aangles.roll) || !isFiniteF(aangles.yaw)) {
+  if (!isFiniteF(afovx) || !isFiniteF(afovy) || !aangles.isValid()) {
     clear();
     return;
   }
