@@ -53,9 +53,9 @@ private:
   VClipNode *ClipTail;
   TVec Origin;
   VLevel *Level;
-  //TFrustum Frustum; // why not?
-  TClipPlane FrustumTop;
-  TClipPlane FrustumBottom;
+  TFrustum Frustum; // why not?
+  //TClipPlane FrustumTop;
+  //TClipPlane FrustumBottom;
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
@@ -81,9 +81,13 @@ public:
   inline VLevel *GetLevel () const { return Level; }
 
   inline const TVec &GetOrigin () const { return Origin; }
-  inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
-  inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
+  inline const TFrustum &GetFrustum () const { return Frustum; }
+  //inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
+  //inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
+  bool CheckSubsectorFrustum (const subsector_t *sub) const;
+  bool CheckSegFrustum (const seg_t *seg) const;
+  bool CheckPartnerSegFrustum (const seg_t *seg) const;
 
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
 
@@ -91,7 +95,7 @@ public:
   void ClipResetFrustumPlanes (); // call this after setting up frustum to disable height clipping
 
   // this is for the case when you already have direction vectors, to speed up things a little
-  void ClipInitFrustumPlanes (const TVec &viewforward, const TVec &viewright, const TVec &viewup,
+  void ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &viewforward, const TVec &viewright, const TVec &viewup,
                               const float fovx, const float fovy);
 
   void ClipInitFrustumPlanes (const TAVec &viewangles, const float fovx, const float fovy);
@@ -132,7 +136,7 @@ public:
 #endif
 
 private:
-  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror, bool doCheckFrustum=true);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
 #endif
