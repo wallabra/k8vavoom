@@ -305,6 +305,10 @@ public:
     return (DotProduct(center, normal)-dist < -radius);
   }
 
+  inline bool SphereTouches (const TVec &center, float radius) const {
+    return (fabsf(DotProduct(center, normal)-dist) < radius);
+  }
+
   // returns side 0 (front), 1 (back), or 2 (collides)
   inline int SphereOnSide2 (const TVec &center, float radius) const {
     const float dist = DotProduct(center, normal)-dist;
