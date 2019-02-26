@@ -627,6 +627,8 @@ enum {
 // BSP node
 struct node_t : public TPlane {
   // bounding box for each child
+  // [0] is min, [1] is max
+  // (x,y,z) triples (min and max)
   float bbox[2][6];
 
   // if NF_SUBSECTOR its a subsector

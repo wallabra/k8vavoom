@@ -619,16 +619,17 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   } else {
     TVec Pts[4];
     TVec TransPts[4];
-    Pts[0] = TVec(1.0f, fovx, fovy);
-    Pts[1] = TVec(1.0f, fovx, -fovy);
-    Pts[2] = TVec(1.0f, -fovx, fovy);
-    Pts[3] = TVec(1.0f, -fovx, -fovy);
-    TVec clipforward = Normalise(TVec(viewforward.x, viewforward.y, 0.0f));
+    Pts[0] = TVec(fovx, fovy, 1.0f);
+    Pts[1] = TVec(fovx, -fovy, 1.0f);
+    Pts[2] = TVec(-fovx, fovy, 1.0f);
+    Pts[3] = TVec(-fovx, -fovy, 1.0f);
+    TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
+    clipforward.normaliseInPlace();
 
     for (int i = 0; i < 4; ++i) {
-      TransPts[i].x = TVEC_SUM3(Pts[i].y*viewright.x, Pts[i].z*viewup.x, Pts[i].x*viewforward.x);
-      TransPts[i].y = TVEC_SUM3(Pts[i].y*viewright.y, Pts[i].z*viewup.y, Pts[i].x*viewforward.y);
-      TransPts[i].z = TVEC_SUM3(Pts[i].y*viewright.z, Pts[i].z*viewup.z, Pts[i].x*viewforward.z);
+      TransPts[i].x = TVEC_SUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
+      TransPts[i].y = TVEC_SUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
+      TransPts[i].z = TVEC_SUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
 
       if (DotProduct(TransPts[i], clipforward) <= 0.0f) return; // player can see behind
 
