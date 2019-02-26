@@ -56,8 +56,8 @@ enum {
 };
 
 
-VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
-VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
+VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
+VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_models("r_models", true, "Allow models?", CVAR_Archive);
 VCvarB r_view_models("r_view_models", false, "View models?", CVAR_Archive);
 VCvarB r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
