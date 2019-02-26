@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
+#include "sv_local.h"
 
 //#define VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
 
@@ -440,11 +441,6 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         hasBotTex || // a seg without bottom texture isn't an elevator/plat
         hasMidTex) // a seg without mid texture isn't a polyobj door
     {
-      if (clip_midsolid) {
-        const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
-        if (midSolid) return true;
-      }
-
       const TVec vv1 = *ldef->v1;
       const TVec vv2 = *ldef->v2;
 
@@ -461,6 +457,65 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
       const float backfz1 = bfplane.GetPointZ(vv1);
       const float backfz2 = bfplane.GetPointZ(vv2);
       //check(backfz1 == backfz2);
+
+      if (clip_midsolid && hasMidTex) {
+        const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+        if (midSolid) {
+          const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
+          //const sector_t *secb = (seg->side ? ldef->backsector : ldef->frontsector);
+          // check if we have only one region
+          if (!sec->botregion->next) {
+            VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
+            // here we should check if midtex covers the whole height, as it is not tiled vertically
+            {
+              const float mheight = MTex->GetScaledHeight();
+              float toffs;
+              if (ldef->flags&ML_DONTPEGBOTTOM) {
+                // bottom of texture at bottom
+                toffs = sec->floor.TexZ+mheight;
+                //GCon->Logf("000");
+              } else if (ldef->flags&ML_DONTPEGTOP) {
+                // top of texture at top of top region
+                toffs = sec->topregion->ceiling->TexZ;
+                //GCon->Logf("001");
+              } else {
+                // top of texture at top
+                toffs = sec->ceiling.TexZ;
+                //GCon->Logf("002");
+              }
+              toffs *= MTex->TScale;
+              toffs += seg->sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
+              /*
+              GCon->Logf("  TScale:%f; MidRowOffset=%f; toffs=%f; mheight=%f", MTex->TScale, seg->sidedef->MidRowOffset, toffs, mheight);
+              GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
+              GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
+              */
+              if (toffs >= sec->ceiling.minz && toffs-mheight <= sec->floor.maxz) return true; // fully covered
+            }
+            /*
+            float ttop, tbot;
+            if (P_GetMidTexturePosition(ldef, seg->side, &ttop, &tbot)) {
+              float minz, maxz;
+              if (seg->side) {
+                minz = MAX(backfz1, backfz2);
+                maxz = MIN(backcz1, backcz2);
+              } else {
+                minz = MAX(frontfz1, frontfz2);
+                maxz = MIN(frontcz1, frontcz2);
+              }
+              / *
+              GCon->Logf("side:%d, tbot=%f; ttop=%f; minz=%f; maxz=%f (ffloor:%f,%f; fceiling:%f,%f) (bfloor:%f,%f; bceiling:%f,%f)",
+                seg->side,
+                tbot, ttop, minz, maxz,
+                frontfz1, frontfz2, frontcz1, frontcz2,
+                backfz1, backfz2, backcz1, backcz2);
+              * /
+              if (tbot <= minz && ttop >= maxz) return true;
+            }
+            */
+          }
+        }
+      }
 
       // taken from Zandronum
       // now check for closed sectors
