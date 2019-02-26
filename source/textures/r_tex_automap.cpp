@@ -34,10 +34,8 @@
 //
 //==========================================================================
 VTexture *VAutopageTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VAutopageTexture::Create);
   if (Strm.TotalSize() < 320) return nullptr;
   return new VAutopageTexture(LumpNum);
-  unguard;
 }
 
 
@@ -63,12 +61,10 @@ VAutopageTexture::VAutopageTexture (int ALumpNum)
 //
 //==========================================================================
 VAutopageTexture::~VAutopageTexture () {
-  //guard(VAutopageTexture::~VAutopageTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -78,9 +74,9 @@ VAutopageTexture::~VAutopageTexture () {
 //
 //==========================================================================
 vuint8 *VAutopageTexture::GetPixels () {
-  guard(VAutopageTexture::GetPixels);
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   // read data
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
@@ -94,7 +90,6 @@ vuint8 *VAutopageTexture::GetPixels () {
   }
 
   return Pixels;
-  unguard;
 }
 
 
@@ -104,10 +99,8 @@ vuint8 *VAutopageTexture::GetPixels () {
 //
 //==========================================================================
 void VAutopageTexture::Unload () {
-  guard(VAutopageTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }

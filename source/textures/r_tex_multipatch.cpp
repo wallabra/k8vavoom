@@ -442,6 +442,7 @@ void VMultiPatchTexture::SetFrontSkyLayer () {
 vuint8 *VMultiPatchTexture::GetPixels () {
   // if already got pixels, then just return them.
   if (Pixels) return Pixels;
+  transparent = false;
 
   static int dumpPng = -1;
   if (dumpPng < 0) dumpPng = (GArgs.CheckParm("-dump-multipatch-textures") ? 1 : 0);
@@ -598,6 +599,20 @@ vuint8 *VMultiPatchTexture::GetPixels () {
             }
           }
         }
+      }
+    }
+  }
+
+  if (Width > 0 && Height > 0) {
+    if (Format == TEXFMT_8) {
+      const vuint8 *s = Pixels;
+      for (int count = Width*Height; count--; ++s) {
+        if (s[0] == 0) { transparent = true; break; }
+      }
+    } else {
+      const rgba_t *s = (const rgba_t *)Pixels;
+      for (int count = Width*Height; count--; ++s) {
+        if (s->a != 255) { transparent = true; break; }
       }
     }
   }

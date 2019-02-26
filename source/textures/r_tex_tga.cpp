@@ -138,6 +138,7 @@ VTgaTexture::~VTgaTexture () {
 vuint8 *VTgaTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   // load texture
   int count;
@@ -394,7 +395,15 @@ vuint8 *VTgaTexture::GetPixels () {
   }
 
   // for 8-bit textures remap colour 0
-  if (mFormat == TEXFMT_8Pal) FixupPalette(Palette);
+  if (mFormat == TEXFMT_8Pal) {
+    FixupPalette(Palette);
+    if (Width > 0 && Height > 0) {
+      const vuint8 *s = Pixels;
+      for (int cnt = Width*Height; cnt--; ++s) {
+        if (s[0] == 0) { transparent = true; break; }
+      }
+    }
+  }
   ConvertPixelsToShaded();
   return Pixels;
 }

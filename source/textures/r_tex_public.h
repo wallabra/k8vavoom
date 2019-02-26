@@ -157,8 +157,10 @@ public:
 class VTexture {
 public:
   int Type;
+
 protected:
   int mFormat; // never use this directly!
+
 public:
   VName Name;
   int Width;
@@ -180,6 +182,7 @@ public:
   bool animNoDecals;
   bool animated; // used to select "no decals" flag
   bool needFBO;
+  bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
 
   GLuint mFBO;
   GLuint mFBOColorTid;
@@ -254,14 +257,16 @@ public:
   int GetWidth () const { return Width; }
   int GetHeight () const { return Height; }
 
-  int GetScaledWidth () const { return (int)(Width / SScale); }
-  int GetScaledHeight () const { return (int)(Height / TScale); }
+  int GetScaledWidth () const { return (int)(Width/SScale); }
+  int GetScaledHeight () const { return (int)(Height/TScale); }
 
-  int GetScaledSOffset () const { return (int)(SOffset / SScale); }
-  int GetScaledTOffset () const { return (int)(TOffset / TScale); }
+  int GetScaledSOffset () const { return (int)(SOffset/SScale); }
+  int GetScaledTOffset () const { return (int)(TOffset/TScale); }
 
   // get texture pixel; will call `GetPixels()`
   rgba_t getPixel (int x, int y);
+
+  virtual bool isTransparent ();
 
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();

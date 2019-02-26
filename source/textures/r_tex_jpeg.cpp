@@ -127,7 +127,7 @@ VJpegTexture::~VJpegTexture () {
 }
 
 
-#ifdef CLIENT
+//#ifdef CLIENT
 //==========================================================================
 //
 //  my_init_source
@@ -216,7 +216,7 @@ static void my_output_message (j_common_ptr cinfo) {
   cinfo->err->format_message(cinfo, Msg);
   GCon->Log(Msg);
 }
-#endif
+//#endif
 
 
 //==========================================================================
@@ -225,9 +225,10 @@ static void my_output_message (j_common_ptr cinfo) {
 //
 //==========================================================================
 vuint8 *VJpegTexture::GetPixels () {
-#ifdef CLIENT
+//#ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   mFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
@@ -339,10 +340,12 @@ vuint8 *VJpegTexture::GetPixels () {
   ConvertPixelsToShaded();
   return Pixels;
 
+/*
 #else
   Sys_Error("ReadPixels on dedicated server");
   return nullptr;
 #endif
+*/
 }
 
 

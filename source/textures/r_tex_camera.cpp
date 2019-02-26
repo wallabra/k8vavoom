@@ -55,12 +55,10 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
 //
 //==========================================================================
 VCameraTexture::~VCameraTexture () {
-  //guard(VCameraTexture::~VCameraTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -70,13 +68,11 @@ VCameraTexture::~VCameraTexture () {
 //
 //==========================================================================
 bool VCameraTexture::CheckModified () {
-  guard(VCameraTexture::CheckModified);
   if (bUpdated) {
     bUpdated = false;
     return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -86,8 +82,8 @@ bool VCameraTexture::CheckModified () {
 //
 //==========================================================================
 vuint8 *VCameraTexture::GetPixels () {
-  guard(VCameraTexture::GetPixels);
   bNeedsUpdate = true;
+  transparent = false; // anyway
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 
@@ -113,7 +109,6 @@ vuint8 *VCameraTexture::GetPixels () {
   }
 
   return Pixels;
-  unguard;
 }
 
 
@@ -123,12 +118,10 @@ vuint8 *VCameraTexture::GetPixels () {
 //
 //==========================================================================
 void VCameraTexture::Unload () {
-  guard(VCameraTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }
 
 
@@ -139,14 +132,12 @@ void VCameraTexture::Unload () {
 //
 //==========================================================================
 void VCameraTexture::CopyImage () {
-  guard(VCameraTexture::CopyImage);
   if (!Pixels) Pixels = new vuint8[Width*Height*4];
   Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
   bNeedsUpdate = false;
   bUpdated = true;
   Pixels8BitValid = false;
   Pixels8BitAValid = false;
-  unguard;
 }
 #endif
 

@@ -63,7 +63,6 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
 //
 //==========================================================================
 VWarpTexture::~VWarpTexture () {
-  //guard(VWarpTexture::~VWarpTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -88,7 +87,6 @@ VWarpTexture::~VWarpTexture () {
     delete[] YSin2;
     YSin2 = nullptr;
   }
-  //unguard;
 }
 
 
@@ -98,9 +96,7 @@ VWarpTexture::~VWarpTexture () {
 //
 //==========================================================================
 void VWarpTexture::SetFrontSkyLayer () {
-  guardSlow(VWarpTexture::SetFrontSkyLayer);
   SrcTex->SetFrontSkyLayer();
-  unguardSlow;
 }
 
 
@@ -120,8 +116,8 @@ bool VWarpTexture::CheckModified () {
 //
 //==========================================================================
 vuint8 *VWarpTexture::GetPixels () {
-  guard(VWarpTexture::GetPixels);
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
+  transparent = false;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = SrcTex->Format;
@@ -148,21 +144,21 @@ vuint8 *VWarpTexture::GetPixels () {
     vuint8 *Dst = Pixels;
     for (int y = 0; y < Height; ++y) {
       for (int x = 0; x < Width; ++x) {
-        *Dst++ = SrcPixels[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
+        if (!(*Dst++ = SrcPixels[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width])) transparent = true;
       }
     }
   } else {
     if (!Pixels) Pixels = new vuint8[Width*Height*4];
     vuint32 *Dst = (vuint32*)Pixels;
     for (int y = 0; y < Height; ++y) {
-      for (int x = 0; x < Width; ++x) {
-        *Dst++ = ((vuint32*)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
+      for (int x = 0; x < Width; ++x, ++Dst) {
+        *Dst = ((vuint32 *)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
+        if (((*Dst)&0xff000000u) != 0xff000000u) transparent = true;
       }
     }
   }
 
   return Pixels;
-  unguard;
 }
 
 
@@ -172,9 +168,7 @@ vuint8 *VWarpTexture::GetPixels () {
 //
 //==========================================================================
 rgba_t *VWarpTexture::GetPalette () {
-  guard(VWarpTexture::GetPalette);
   return SrcTex->GetPalette();
-  unguard;
 }
 
 
@@ -184,7 +178,6 @@ rgba_t *VWarpTexture::GetPalette () {
 //
 //==========================================================================
 VTexture *VWarpTexture::GetHighResolutionTexture () {
-  guard(VWarpTexture::GetHighResolutionTexture);
   if (!r_hirestex) return nullptr;
   // if high resolution texture is already created, then just return it
   if (HiResTexture) return HiResTexture;
@@ -200,7 +193,6 @@ VTexture *VWarpTexture::GetHighResolutionTexture () {
   NewTex->WarpYScale = NewTex->GetHeight()/GetHeight();
   HiResTexture = NewTex;
   return HiResTexture;
-  unguard;
 }
 
 
@@ -210,13 +202,11 @@ VTexture *VWarpTexture::GetHighResolutionTexture () {
 //
 //==========================================================================
 void VWarpTexture::Unload () {
-  guard(VWarpTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
   SrcTex->Unload();
-  unguard;
 }
 
 
@@ -238,7 +228,6 @@ VWarp2Texture::VWarp2Texture (VTexture *ASrcTex, float aspeed)
 //
 //==========================================================================
 vuint8 *VWarp2Texture::GetPixels () {
-  guard(VWarp2Texture::GetPixels);
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
@@ -285,5 +274,4 @@ vuint8 *VWarp2Texture::GetPixels () {
   }
 
   return Pixels;
-  unguard;
 }

@@ -90,6 +90,7 @@ VImgzTexture::~VImgzTexture () {
 vuint8 *VImgzTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   VCheckedStream Strm(lumpstream);
@@ -137,6 +138,13 @@ vuint8 *VImgzTexture::GetPixels () {
           }
         }
       }
+    }
+  }
+
+  if (Width > 0 && Height > 0) {
+    const vuint8 *s = Pixels;
+    for (int count = Width*Height; count--; ++s) {
+      if (s[0] == 0) { transparent = true; break; }
     }
   }
 

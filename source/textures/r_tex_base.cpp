@@ -79,7 +79,6 @@ typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 //
 //==========================================================================
 VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
-  guard(VTexture::CreateTexture);
   static const struct {
     VTexCreateFunc  Create;
     int Type;
@@ -113,7 +112,6 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -144,6 +142,7 @@ VTexture::VTexture ()
   , animNoDecals(false)
   , animated(false)
   , needFBO(false)
+  , transparent(false)
   , mFBO(0)
   , mFBOColorTid(0)
   , mFBODepthStencilTid(0)
@@ -176,6 +175,17 @@ VTexture::~VTexture () {
 
 //==========================================================================
 //
+//  VTexture::isTransparent
+//
+//==========================================================================
+bool VTexture::isTransparent () {
+  if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+  return transparent;
+}
+
+
+//==========================================================================
+//
 //  VTexture::SetFrontSkyLayer
 //
 //==========================================================================
@@ -200,10 +210,10 @@ bool VTexture::CheckModified () {
 //
 //==========================================================================
 vuint8 *VTexture::GetPixels8 () {
-  guard(VTexture::GetPixels8);
   // if already have converted version, then just return it
   if (Pixels8Bit && Pixels8BitValid) return Pixels8Bit;
   vuint8 *pixdata = GetPixels();
+  transparent = false;
   if (Format == TEXFMT_8Pal) {
     // remap to game palette
     int NumPixels = Width*Height;
@@ -215,7 +225,11 @@ vuint8 *VTexture::GetPixels8 () {
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
     const vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
-    for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) *pDst = Remap[*pSrc];
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
+      const vuint8 pv = *pSrc;
+      transparent = transparent || !pv;
+      *pDst = Remap[pv];
+    }
     Pixels8BitValid = true;
     return Pixels8Bit;
   } else if (Format == TEXFMT_RGBA) {
@@ -226,6 +240,7 @@ vuint8 *VTexture::GetPixels8 () {
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       if (pSrc->a < 128) {
         *pDst = 0;
+        transparent = true;
       } else {
         *pDst = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       }
@@ -235,7 +250,6 @@ vuint8 *VTexture::GetPixels8 () {
   }
   check(Format == TEXFMT_8);
   return pixdata;
-  unguard;
 }
 
 
@@ -256,6 +270,7 @@ pala_t *VTexture::GetPixels8A () {
   int NumPixels = Width*Height;
   if (!Pixels8BitA) Pixels8BitA = new pala_t[NumPixels];
   pala_t *pDst = Pixels8BitA;
+  transparent = false;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     check(Format == mFormat);
@@ -278,8 +293,10 @@ pala_t *VTexture::GetPixels8A () {
     }
     const vuint8 *pSrc = (const vuint8 *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
-      pDst->idx = remap[*pSrc];
-      pDst->a = (*pSrc ? 255 : 0);
+      const vuint8 pv = *pSrc;
+      pDst->idx = remap[pv];
+      pDst->a = (pv ? 255 : 0);
+      transparent = transparent || !pv;
     }
   } else if (Format == TEXFMT_RGBA) {
     //GCon->Logf("*** remapping 32-bit '%s' to 8A... (%dx%d)", *Name, Width, Height);
@@ -287,6 +304,7 @@ pala_t *VTexture::GetPixels8A () {
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       pDst->a = pSrc->a;
+      transparent = transparent || (pSrc->a != 255);
     }
   } else {
     Sys_Error("invalid texture format in `VTexture::GetPixels8A()`");
@@ -303,9 +321,7 @@ pala_t *VTexture::GetPixels8A () {
 //
 //==========================================================================
 rgba_t *VTexture::GetPalette () {
-  guardSlow(VTexture::GetPalette);
   return r_palette;
-  unguardSlow;
 }
 
 
@@ -318,7 +334,6 @@ rgba_t *VTexture::GetPalette () {
 //
 //==========================================================================
 VTexture *VTexture::GetHighResolutionTexture() {
-  guard(VTexture::GetHighResolutionTexture);
 #ifdef CLIENT
   if (!r_hirestex) return nullptr;
   // if high resolution texture is already created, then just return it
@@ -347,7 +362,6 @@ VTexture *VTexture::GetHighResolutionTexture() {
 #endif
   // no hi-res texture found
   return nullptr;
-  unguard;
 }
 
 
@@ -389,14 +403,12 @@ void VTexture::FixupPalette (rgba_t *Palette) {
 //
 //==========================================================================
 VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, int CMap) {
-  guard(VTexture::FindDriverTrans);
   for (int i = 0; i < DriverTranslated.Num(); ++i) {
     if (DriverTranslated[i].Trans == TransTab && DriverTranslated[i].ColourMap == CMap) {
       return &DriverTranslated[i];
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -486,14 +498,12 @@ void VTexture::PremultiplyRGBA (void *dest, const void *src, int w, int h) {
 //==========================================================================
 void VTexture::AdjustGamma (rgba_t *data, int size) {
 #ifdef CLIENT
-  guard(VTexture::AdjustGamma);
   const vuint8 *gt = getGammaTable(usegamma); //gammatable[usegamma];
   for (int i = 0; i < size; ++i) {
     data[i].r = gt[data[i].r];
     data[i].g = gt[data[i].g];
     data[i].b = gt[data[i].b];
   }
-  unguard;
 #endif
 }
 
@@ -581,7 +591,6 @@ void VTexture::SmoothEdges (vuint8 *buffer, int w, int h) {
 //
 //==========================================================================
 void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain, int widthout, int heightout, vuint8 *dataout, int sampling_type) {
-  guard(VTexture::ResampleTexture);
   int i, j, k;
   float sx, sy;
 
@@ -679,7 +688,6 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
       }
     }
   }
-  unguard;
 }
 
 
@@ -692,7 +700,6 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
 //
 //==========================================================================
 void VTexture::MipMap (int width, int height, vuint8 *InIn) {
-  guard(VTexture::MipMap);
   vuint8 *in = InIn;
   int i, j;
   vuint8 *out = in;
@@ -720,7 +727,6 @@ void VTexture::MipMap (int width, int height, vuint8 *InIn) {
       out[3] = vuint8((in[3]+in[7]+in[width+3]+in[width+7])>>2);
     }
   }
-  unguard;
 }
 
 
@@ -991,7 +997,6 @@ void VTexture::WriteToPNG (VStream *strm) {
   if (!strm) return;
   (void)GetPixels();
   ConvertPixelsToRGBA();
-
   if (!M_CreatePNG(strm, (const vuint8 *)GetPixels(), /*pal*/nullptr, SS_RGBA, Width, Height, Width*4, 1.0f)) {
     GCon->Log(NAME_Error, "Error writing png");
   }
@@ -1016,6 +1021,7 @@ VDummyTexture::VDummyTexture () {
 //
 //==========================================================================
 vuint8 *VDummyTexture::GetPixels () {
+  transparent = false;
   return nullptr;
 }
 

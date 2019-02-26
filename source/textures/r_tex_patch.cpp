@@ -102,6 +102,7 @@ VPatchTexture::~VPatchTexture () {
 //==========================================================================
 vuint8 *VPatchTexture::GetPixels () {
   if (Pixels) return Pixels; // if already got pixels, then just return them
+  transparent = false;
 
   // open stream
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
@@ -117,6 +118,7 @@ vuint8 *VPatchTexture::GetPixels () {
     Pixels = new vuint8[1];
     Pixels[0] = 0;
     ConvertPixelsToShaded();
+    transparent = true;
     return Pixels;
   }
 
@@ -227,6 +229,12 @@ vuint8 *VPatchTexture::GetPixels () {
   }
   */
 
+  if (Width > 0 && Height > 0) {
+    const vuint8 *s = Pixels;
+    for (int count = Width*Height; count--; ++s) {
+      if (s[0] == 0) { transparent = true; break; }
+    }
+  }
 
   ConvertPixelsToShaded();
   return Pixels;

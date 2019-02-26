@@ -140,9 +140,10 @@ VPngTexture::~VPngTexture () {
 //
 //==========================================================================
 vuint8 *VPngTexture::GetPixels () {
-#ifdef CLIENT
+//#ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   // open stream
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
@@ -170,6 +171,7 @@ vuint8 *VPngTexture::GetPixels () {
       *dest++ = clr.g;
       *dest++ = clr.b;
       *dest++ = clr.a;
+      transparent = transparent || (clr.a != 255);
     }
   }
 
@@ -180,11 +182,12 @@ vuint8 *VPngTexture::GetPixels () {
 
   ConvertPixelsToShaded();
   return Pixels;
-
+/*
 #else
   Sys_Error("GetPixels on dedicated server");
   return nullptr;
 #endif
+*/
 }
 
 

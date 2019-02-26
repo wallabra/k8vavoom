@@ -115,6 +115,7 @@ VRawPicTexture::~VRawPicTexture () {
 vuint8 *VRawPicTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
+  transparent = false;
 
   Pixels = new vuint8[64000];
 
