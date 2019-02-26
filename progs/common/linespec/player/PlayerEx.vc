@@ -2405,22 +2405,29 @@ void PerformBossDetection () {
   if (!MO) return;
   // detect bosses
   Actor act;
-  bool hasCybbie = false, hasMind = false;
+  int cybbieCount = 0, mindCount = 0;
   foreach MO.AllThinkers(Actor, out act) {
     class!Actor ec = class!Actor(act.Class);
     while (ec) {
       switch (GetClassName(ec)) {
-        case 'Cyberdemon': hasCybbie = true; break;
-        case 'SpiderMastermind': hasMind = true; break;
+        case 'Cyberdemon': ++cybbieCount; break;
+        case 'SpiderMastermind': ++mindCount; break;
       }
       ec = class!Actor(GetClassParent(ec));
     }
-    if (hasCybbie && hasMind) break; // just in case
+    //if (hasCybbie && hasMind) break; // just in case
   }
   string msg;
-       if (hasCybbie && hasMind) msg = "Cyberdemon and Mastermind detected!";
-  else if (hasCybbie) msg = "Cyberdemon detected!";
-  else if (hasMind) msg = "Mastermind detected!";
+  if (cybbieCount && mindCount) {
+    if (cybbieCount > 1 && mindCount > 1) msg = va("%d Cyberdemons and %d Masterminds detected!", cybbieCount, mindCount);
+    else if (cybbieCount > 1) msg = va("%d Cyberdemons and Mastermind detected!", cybbieCount);
+    else if (mindCount > 1) msg = va("Cyberdemon and %d Masterminds detected!", mindCount);
+    else msg = "Cyberdemon and Mastermind detected!";
+  }
+  else if (cybbieCount > 1) msg = va("%d Cyberdemons detected!", cybbieCount);
+  else if (cybbieCount) msg = "Cyberdemon detected!";
+  else if (mindCount > 1) msg = va("%d Masterminds detected!");
+  else if (mindCount) msg = "Mastermind detected!";
   if (msg) {
     print("\c[Red]*** %s ***", msg);
     ClientHudMessage(msg, 'smallfont', HUDMsgType.FadeInOut|HUDMsgFlag.ColorString/*|HUDMsgFlag.Log*/, 123669, CR_UNDEFINED, "Green",
