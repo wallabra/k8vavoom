@@ -312,16 +312,7 @@ bool TClipPlane::checkBox (const float *bbox) const {
 void TFrustum::setupBoxIndicies () {
   for (unsigned i = 0; i < 6; ++i) {
     if (!planes[i].clipflag) continue;
-    unsigned *pindex = bindex[i];
-    for (unsigned j = 0; j < 3; ++j) {
-      if (planes[i].normal[j] < 0) {
-        pindex[j] = j;
-        pindex[j+3] = j+3;
-      } else {
-        pindex[j] = j+3;
-        pindex[j+3] = j;
-      }
-    }
+    setupBoxIndiciesForPlane(i);
   }
 }
 
@@ -333,16 +324,9 @@ void TFrustum::setupBoxIndicies () {
 //==========================================================================
 void TFrustum::setupBoxIndiciesForPlane (unsigned pidx) {
   if (pidx < 6 && planes[pidx].clipflag) {
-    unsigned *pindex = bindex[pidx];
-    for (unsigned j = 0; j < 3; ++j) {
-      if (planes[pidx].normal[j] < 0) {
-        pindex[j] = j;
-        pindex[j+3] = j+3;
-      } else {
-        pindex[j] = j+3;
-        pindex[j+3] = j;
-      }
-    }
+    planes[pidx].setupBoxIndicies();
+    static_assert(sizeof(bindex[pidx]) == sizeof(planes[pidx].pindex), "ooops!");
+    memcpy(bindex[pidx], planes[pidx].pindex, sizeof(planes[pidx].pindex));
   }
 }
 
