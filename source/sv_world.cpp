@@ -174,10 +174,12 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
   //FIXME: use sector regions instead?
   //       wtf are sector regions at all?!
 
+  const float mheight = MTex->GetScaledHeight();
+
   float toffs;
   if (linedef->flags&ML_DONTPEGBOTTOM) {
     // bottom of texture at bottom
-    toffs = sec->floor.TexZ+MTex->GetScaledHeight();
+    toffs = sec->floor.TexZ+mheight;
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
     toffs = sec->topregion->ceiling->TexZ;
@@ -189,7 +191,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
   toffs += sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
 
   if (ptextop) *ptextop = toffs;
-  if (ptexbot) *ptexbot = toffs-MTex->GetScaledHeight();
+  if (ptexbot) *ptexbot = toffs-mheight;
 
   /*
   float totalscale = fabsf(sidedef->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
