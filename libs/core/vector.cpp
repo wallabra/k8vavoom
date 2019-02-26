@@ -260,6 +260,50 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
 
 //==========================================================================
 //
+//  TClipPlane::setupBoxIndicies
+//
+//  setup indicies for box checking
+//
+//==========================================================================
+void TClipPlane::setupBoxIndicies () {
+  if (!clipflag) return;
+  for (unsigned j = 0; j < 3; ++j) {
+    if (normal[j] < 0) {
+      pindex[j] = j;
+      pindex[j+3] = j+3;
+    } else {
+      pindex[j] = j+3;
+      pindex[j+3] = j;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  TClipPlane::checkBox
+//
+//  returns `false` is box is on the back of the plane (or clipflag is 0)
+//  bbox:
+//    [0] is minx
+//    [1] is miny
+//    [2] is minz
+//    [3] is maxx
+//    [4] is maxy
+//    [5] is maxz
+//
+//==========================================================================
+bool TClipPlane::checkBox (const float *bbox) const {
+  if (!clipflag) return true; // don't need to clip against it
+  // generate reject point
+  TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
+  return !PointOnSide(rejectpt);
+}
+
+
+
+//==========================================================================
+//
 //  TFrustum::setupBoxIndicies
 //
 //  setup indicies for box checking

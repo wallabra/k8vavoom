@@ -331,11 +331,17 @@ public:
 class TClipPlane : public TPlane {
 public:
   unsigned clipflag;
+  unsigned pindex[6];
 
   inline bool isValid () const { return !!clipflag; }
   inline void invalidate () { clipflag = 0; }
 
   inline TClipPlane &operator = (const TPlane &p) { normal = p.normal; dist = p.dist; return *this; }
+
+  void setupBoxIndicies ();
+
+  // returns `false` is box is on the back of the plane (or clipflag is 0)
+  bool checkBox (const float *bbox) const;
 };
 
 
