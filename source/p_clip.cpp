@@ -305,19 +305,58 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 //  check to see if the sphere overlaps the AABB
 //
 //==========================================================================
-static __attribute__((unused)) inline bool CheckSphereVsAABB (const float *bbox, const TVec lorg, const float radius) {
+static __attribute__((unused)) inline bool CheckSphereVsAABB (const float *bbox, const TVec &lorg, const float radius) {
   float d = 0;
   // find the square of the distance from the sphere to the box
+  /*
   for (unsigned i = 0; i < 3; ++i) {
+    const float li = lorg[i];
     // first check is min, second check is max
-    if (lorg[i] < bbox[i]) {
-      const float s = lorg[i]-bbox[i];
+    if (li < bbox[i]) {
+      const float s = li-bbox[i];
       d += s*s;
-    } else if (lorg[i] > bbox[i+3]) {
-      const float s = lorg[i]-bbox[i+3];
+    } else if (li > bbox[i+3]) {
+      const float s = li-bbox[i+3];
       d += s*s;
     }
   }
+  */
+  {
+    const float li = lorg.x;
+    // first check is min, second check is max
+    if (li < bbox[0]) {
+      const float s = li-bbox[0];
+      d += s*s;
+    } else if (li > bbox[0+3]) {
+      const float s = li-bbox[0+3];
+      d += s*s;
+    }
+  }
+
+  {
+    const float li = lorg.y;
+    // first check is min, second check is max
+    if (li < bbox[1]) {
+      const float s = li-bbox[1];
+      d += s*s;
+    } else if (li > bbox[1+3]) {
+      const float s = li-bbox[1+3];
+      d += s*s;
+    }
+  }
+
+  {
+    const float li = lorg.z;
+    // first check is min, second check is max
+    if (li < bbox[2]) {
+      const float s = li-bbox[2];
+      d += s*s;
+    } else if (li > bbox[2+3]) {
+      const float s = li-bbox[2+3];
+      d += s*s;
+    }
+  }
+
   return (d < radius*radius); // or <= if you want exact touching
 }
 
@@ -329,18 +368,25 @@ static __attribute__((unused)) inline bool CheckSphereVsAABB (const float *bbox,
 //  check to see if the sphere overlaps the AABB
 //
 //==========================================================================
-static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float *bbox, const TVec lorg, const float radius) {
+static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float *bbox, const TVec &lorg, const float radius) {
   float d = 0;
   // find the square of the distance from the sphere to the box
-  for (unsigned i = 0; i < 2; ++i) {
-    // first check is min, second check is max
-    if (lorg[i] < bbox[i]) {
-      const float s = lorg[i]-bbox[i];
-      d += s*s;
-    } else if (lorg[i] > bbox[i+3]) {
-      const float s = lorg[i]-bbox[i+3];
-      d += s*s;
-    }
+  // first check is min, second check is max
+  const float li0 = lorg.x;
+  if (li0 < bbox[0]) {
+    const float s = li0-bbox[0];
+    d += s*s;
+  } else if (li0 > bbox[0+3]) {
+    const float s = li0-bbox[0+3];
+    d += s*s;
+  }
+  const float li1 = lorg.y;
+  if (li1 < bbox[1]) {
+    const float s = li1-bbox[1];
+    d += s*s;
+  } else if (li1 > bbox[1+3]) {
+    const float s = li1-bbox[1+3];
+    d += s*s;
   }
   return (d < radius*radius); // or <= if you want exact touching
 }
