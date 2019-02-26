@@ -1003,6 +1003,9 @@ struct subsector_t {
 
   sector_t *deepref;
 
+  //k8: i love bounding boxes! (this one doesn't store z, though)
+  float[4] bbox;
+
   int dlightbits;
   int dlightframe;
 

@@ -607,6 +607,9 @@ struct subsector_t {
 
   sector_t *deepref; // for deepwater
 
+  //k8: i love bounding boxes! (this one doesn't store z, though)
+  float bbox[4];
+
   vuint32 dlightbits; // bitmask of active dynamic lights
   vint32 dlightframe; // `dlightbits` validity counter
   subregion_t *regions;

@@ -2051,7 +2051,22 @@ void VLevel::PostLoadSubsectors () {
         break;
       }
     }
-    for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
+    // calculate bounding box
+    ss->bbox[0] = ss->bbox[1] = 999999.0f;
+    ss->bbox[2] = ss->bbox[3] = -999999.0f;
+    for (int j = 0; j < ss->numlines; j++) {
+      seg[j].front_sub = ss;
+      // min
+      ss->bbox[0] = MIN(ss->bbox[0], seg[j].v1->x);
+      ss->bbox[0] = MIN(ss->bbox[0], seg[j].v2->x);
+      ss->bbox[1] = MIN(ss->bbox[1], seg[j].v1->y);
+      ss->bbox[1] = MIN(ss->bbox[1], seg[j].v2->y);
+      // max
+      ss->bbox[2] = MAX(ss->bbox[2], seg[j].v1->x);
+      ss->bbox[2] = MAX(ss->bbox[2], seg[j].v2->x);
+      ss->bbox[3] = MAX(ss->bbox[3], seg[j].v1->y);
+      ss->bbox[3] = MAX(ss->bbox[3], seg[j].v2->y);
+    }
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   for (int f = 0; f < NumSegs; ++f) {
