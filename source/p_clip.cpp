@@ -444,6 +444,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           // create bounding box for linked subsector
           const subsector_t *bss = seg->partner->front_sub;
           float bbox[6];
+          /*
           // min
           bbox[0] = bss->bbox[0];
           bbox[1] = bss->bbox[1];
@@ -452,6 +453,19 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           bbox[3] = bss->bbox[2];
           bbox[4] = bss->bbox[3];
           bbox[5] = bss->sector->ceiling.maxz;
+          */
+          const sector_t *bssec = bss->sector;
+          // exact
+          const TVec sv1 = *seg->v1;
+          const TVec sv2 = *seg->v2;
+          // min
+          bbox[0] = MIN(sv1.x, sv2.x);
+          bbox[1] = MIN(sv1.y, sv2.y);
+          bbox[2] = MIN(bssec->floor.GetPointZ(sv1), bssec->floor.GetPointZ(sv2));
+          // max
+          bbox[3] = MAX(sv1.x, sv2.x);
+          bbox[4] = MAX(sv1.y, sv2.y);
+          bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
           // debug
           /*
           const int lidx = (int)(ptrdiff_t)(ldef-clip.GetLevel()->Lines);
@@ -983,14 +997,20 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 #ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!ds->seg->linedef) {
       // miniseg
-      if (IsRangeVisible(v2, v1)) return true;
+      if (IsRangeVisible(v2, v1)) {
+        if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
+      }
     } else {
       // clip sectors that are behind rendered segs
       if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-      if (IsRangeVisible(v2, v1)) return true;
+      if (IsRangeVisible(v2, v1)) {
+        if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
+      }
     }
 #else
-    if (IsRangeVisible(v2, v1)) return true;
+    if (IsRangeVisible(v2, v1)) {
+      if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
+    }
 #endif
   }
   return false;
@@ -1002,7 +1022,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //  VViewClipper::CheckSubsectorFrustum
 //
 //==========================================================================
-bool VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
+int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   if (!sub || !Frustum.isValid()) return true;
   float bbox[6];
   // min
@@ -1013,6 +1033,42 @@ bool VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   bbox[3] = sub->bbox[2];
   bbox[4] = sub->bbox[3];
   bbox[5] = sub->sector->ceiling.maxz;
+
+  /*
+  if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
+      bbox[1] <= Origin.y && bbox[4] >= Origin.y &&
+      bbox[2] <= Origin.z && bbox[5] >= Origin.z)
+  {
+    // viewer is inside the box
+    return 1;
+  }
+  */
+
+  // check
+  return Frustum.checkBoxEx(bbox);
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::CheckSegFrustum
+//
+//==========================================================================
+bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
+  if (!seg || !seg->front_sub || !Frustum.isValid()) return true;
+  //return CheckSubsectorFrustum(seg->front_sub);
+  const TVec sv1 = *seg->v1;
+  const TVec sv2 = *seg->v2;
+  const sector_t *bssec = seg->front_sub->sector;
+  float bbox[6];
+  // min
+  bbox[0] = MIN(sv1.x, sv2.x);
+  bbox[1] = MIN(sv1.y, sv2.y);
+  bbox[2] = MIN(bssec->floor.GetPointZ(sv1), bssec->floor.GetPointZ(sv2));
+  // max
+  bbox[3] = MAX(sv1.x, sv2.x);
+  bbox[4] = MAX(sv1.y, sv2.y);
+  bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
 
   if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
       bbox[1] <= Origin.y && bbox[4] >= Origin.y &&
@@ -1029,23 +1085,13 @@ bool VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
 
 //==========================================================================
 //
-//  VViewClipper::CheckSegFrustum
-//
-//==========================================================================
-bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
-  if (!seg || !Frustum.isValid()) return true;
-  return CheckSubsectorFrustum(seg->front_sub);
-}
-
-
-//==========================================================================
-//
 //  VViewClipper::CheckPartnerSegFrustum
 //
 //==========================================================================
 bool VViewClipper::CheckPartnerSegFrustum (const seg_t *seg) const {
   if (!seg || !seg->partner || !seg->partner->front_sub || !Frustum.isValid()) return true;
-  return CheckSubsectorFrustum(seg->partner->front_sub);
+  //return CheckSubsectorFrustum(seg->partner->front_sub);
+  return CheckSegFrustum(seg->partner);
 }
 
 
@@ -1103,7 +1149,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
 
-  if (!doCheckFrustum || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
+  if (Mirror || !doCheckFrustum || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
 #ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
     if (!CheckVerts(v1, v2, Origin)) return;
 #endif
@@ -1149,22 +1195,37 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 
   const seg_t *seg = &Level->Segs[sub->firstline];
 
-  if (clip_frustum && clip_frustum_sub && !CheckSubsectorFrustum(sub)) {
-    // completely out of frustum
+  // `-1` means "slower checks"
+  const int ssFrustum = (!Mirror && clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
+
+  if (ssFrustum >= 0 && !Mirror) {
+    //if (ssFrustum > 0) GCon->Logf("FULLY INSIDE: subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));
+    // completely out of frustum, or completely in frustum
     for (int count = sub->numlines; count--; ++seg) {
+      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
       const line_t *ldef = seg->linedef;
       if (!ldef) continue; // miniseg
       if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane
+      if (ssFrustum) {
+        // completely inside
+        //CheckAddClipSeg(seg, Mirror, false); // no need to do frustum checks
+        // for 2-sided line, determine if it can be skipped
+        if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
+          if (ldef->alpha < 1.0f) continue; // skip translucent walls
+          if (!IsSegAClosedSomething(*this, seg)) continue;
+        }
+      } else {
+        // completely outside
+      }
       const TVec &v1 = *seg->v1;
       const TVec &v2 = *seg->v2;
       AddClipRange(v2, v1);
-      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
     }
   } else {
     // do slower checks
     for (int count = sub->numlines; count--; ++seg) {
-      CheckAddClipSeg(seg, Mirror, false); // no need to do frustum checks
       if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
+      CheckAddClipSeg(seg, Mirror, true); // do frustum checks
     }
   }
 

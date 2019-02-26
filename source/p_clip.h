@@ -85,7 +85,9 @@ public:
   //inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
   //inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
-  bool CheckSubsectorFrustum (const subsector_t *sub) const;
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  int CheckSubsectorFrustum (const subsector_t *sub) const;
+
   bool CheckSegFrustum (const seg_t *seg) const;
   bool CheckPartnerSegFrustum (const seg_t *seg) const;
 
