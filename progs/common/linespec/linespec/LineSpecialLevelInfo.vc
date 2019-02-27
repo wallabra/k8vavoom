@@ -6560,12 +6560,6 @@ override void SpawnMapThing (mthing_t *mthing) {
 
   if (mthing->type <= 0) return;
 
-  // zdoom music changers
-  if (mthing->type >= 14101 && mthing->type <= 14165) {
-    Spawn(SecMusicChangerBase, default, default, mthing, false);
-    return;
-  }
-
   //if (mthing.tid == 54 || mthing.tid == 43) writeln("*** TREE! ***");
   //writeln("SPAWN MAP THING: ", mthing.tid, "; type=", mthing.type);
 
@@ -6626,6 +6620,12 @@ override void SpawnMapThing (mthing_t *mthing) {
     } else {
       XLevel.PointInSector(vector(mthing->x, mthing->y, 0.0))->seqType = SeqType;
     }
+    return;
+  }
+
+  // zdoom music changers
+  if (mthing->type >= 14101 && mthing->type <= 14165) {
+    Spawn(SecMusicChangerBase, default, default, mthing, false);
     return;
   }
 
