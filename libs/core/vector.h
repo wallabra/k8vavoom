@@ -200,7 +200,7 @@ enum {
 };
 
 
-// Ax+By+Cz=D (ABC is normal, D is distance)
+// Ax+By+Cz=D (ABC is normal, D is distance); i.e. "general form" (with negative D)
 class TPlane {
 public:
   TVec normal;
@@ -235,20 +235,20 @@ public:
   }
 
   // initialises "full" plane from point and direction
-  // `dir` must be normalized, both vectors must be valid
-  inline void SetPointDir3D (const TVec &point, const TVec &dir) {
-    normal = dir;
+  // `norm` must be normalized, both vectors must be valid
+  inline void SetPointNormal3D (const TVec &point, const TVec &norm) {
+    normal = norm;
     dist = DotProduct(point, normal);
   }
 
   // initialises "full" plane from point and direction
-  inline void SetPointDir3DSafe (const TVec &point, const TVec &dir) {
-    if (!dir.isValid() || !point.isValid() || dir.isZero()) {
+  inline void SetPointNormal3DSafe (const TVec &point, const TVec &norm) {
+    if (!norm.isValid() || !point.isValid() || norm.isZero()) {
       //k8: what to do here?!
       normal = TVec(0, 0, 1);
       dist = 1;
     } else {
-      normal = dir.normalised();
+      normal = norm.normalised();
       if (normal.isValid() && !normal.isZero()) {
         dist = DotProduct(point, normal);
       } else {
@@ -418,11 +418,11 @@ public:
   unsigned bindex[6][6];
 
 public:
-  TFrustum () : planeCount(0) {}
+  TFrustum () : planeCount(0) { clear(); }
 
   inline bool isValid () const { return (planeCount > 0); }
 
-  inline void clear () { planeCount = 0; }
+  inline void clear () { planeCount = 0; planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = planes[5].clipflag = 0; }
 
   inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
     return
@@ -469,6 +469,8 @@ public:
   //   [4] is maxy
   //   [5] is maxz
   bool checkBox (const float *bbox) const;
+
+  enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int checkBoxEx (const float *bbox) const;

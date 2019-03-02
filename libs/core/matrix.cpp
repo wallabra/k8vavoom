@@ -276,3 +276,81 @@ TVec VMatrix4::Transform2 (const TVec &V) const {
   Out.z = VMAT_XSUM_4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
   return Out;
 }
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumLeft
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumLeft (TPlane &plane) const {
+  plane.normal.x = m[0][3]+m[0][0];
+  plane.normal.y = m[1][3]+m[1][0];
+  plane.normal.z = m[2][3]+m[2][0];
+  plane.dist = m[3][3]+m[3][0];
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumRight
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumRight (TPlane &plane) const {
+  plane.normal.x = m[0][3]-m[0][0];
+  plane.normal.y = m[1][3]-m[1][0];
+  plane.normal.z = m[2][3]-m[2][0];
+  plane.dist = m[3][3]-m[3][0];
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumTop
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumTop (TPlane &plane) const {
+  plane.normal.x = m[0][3]-m[0][1];
+  plane.normal.y = m[1][3]-m[1][1];
+  plane.normal.z = m[2][3]-m[2][1];
+  plane.dist = m[3][3]-m[3][1];
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumBottom
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumBottom (TPlane &plane) const {
+  plane.normal.x = m[0][3]+m[0][1];
+  plane.normal.y = m[1][3]+m[1][1];
+  plane.normal.z = m[2][3]+m[2][1];
+  plane.dist = m[3][3]+m[3][1];
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumFar
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumFar (TPlane &plane) const {
+  plane.normal.x = m[0][3]-m[0][2];
+  plane.normal.y = m[1][3]-m[1][2];
+  plane.normal.z = m[2][3]-m[2][2];
+  plane.dist = m[3][3]-m[3][2];
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumNear
+//
+//==========================================================================
+void VMatrix4::ExtractFrustumNear (TPlane &plane) const {
+  plane.normal.x = m[0][3]+m[0][2];
+  plane.normal.y = m[1][3]+m[1][2];
+  plane.normal.z = m[2][3]+m[2][2];
+  plane.dist = m[3][3]+m[3][2];
+}

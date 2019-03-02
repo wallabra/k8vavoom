@@ -51,6 +51,13 @@ public:
   inline const float *operator [] (int i) const { return m[i]; }
 
   friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
+
+  void ExtractFrustumLeft (TPlane &plane) const;
+  void ExtractFrustumRight (TPlane &plane) const;
+  void ExtractFrustumTop (TPlane &plane) const;
+  void ExtractFrustumBottom (TPlane &plane) const;
+  void ExtractFrustumFar (TPlane &plane) const;
+  void ExtractFrustumNear (TPlane &plane) const;
 };
 
 
