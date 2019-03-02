@@ -68,11 +68,11 @@ public:
   inline TVec operator + (void) const { return *this; }
   inline TVec operator - (void) const { return TVec(-x, -y, -z); }
 
-  //inline float invlength () const { return 1.0f/sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
-  //inline float invlength2D () const { return 1.0f/sqrtf(TVEC_SUM2(x*x, y*y)); }
+  inline float invlength () const { return 1.0f/sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
+  inline float invlength2D () const { return 1.0f/sqrtf(TVEC_SUM2(x*x, y*y)); }
 
-  inline float invlength () const { return fastInvSqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
-  inline float invlength2D () const { return fastInvSqrtf(TVEC_SUM2(x*x, y*y)); }
+  //inline float invlength () const { return fastInvSqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
+  //inline float invlength2D () const { return fastInvSqrtf(TVEC_SUM2(x*x, y*y)); }
 
   inline float Length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
   inline float length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
@@ -303,6 +303,12 @@ public:
   // if at least some part of the sphere is on a front side, it means "front"
   inline int SphereOnSide (const TVec &center, float radius) const {
     return (DotProduct(center, normal)-dist < -radius);
+  }
+
+  // returns side 0 (front), 1 (back)
+  // if at least some part of the sphere is on a front side, it means "front"
+  inline int SphereOnBackTh (const TVec &center, float radius) const {
+    return (DotProduct(center, normal)-dist < -(radius+0.1f));
   }
 
   inline bool SphereTouches (const TVec &center, float radius) const {

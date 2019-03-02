@@ -223,10 +223,10 @@ void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
     fovy = afovy;
     const float invfovx = 1.0f/afovx;
     const float invfovy = 1.0f/afovy;
-    clipbase[0] = TVec(invfovx, 0.0f, 1.0f).normalised(); // left side clip
-    clipbase[1] = TVec(-invfovx, 0.0f, 1.0f).normalised(); // right side clip
-    clipbase[2] = TVec(0.0f, -invfovy, 1.0f).normalised(); // top side clip
-    clipbase[3] = TVec(0.0f, invfovy, 1.0f).normalised(); // bottom side clip
+    clipbase[0] = TVec(invfovx, 0.0f, 1.0f)/*.normalised()*/; // left side clip
+    clipbase[1] = TVec(-invfovx, 0.0f, 1.0f)/*.normalised()*/; // right side clip
+    clipbase[2] = TVec(0.0f, -invfovy, 1.0f)/*.normalised()*/; // top side clip
+    clipbase[3] = TVec(0.0f, invfovy, 1.0f)/*.normalised()*/; // bottom side clip
   }
 }
 
@@ -296,7 +296,7 @@ void TClipPlane::setupBoxIndicies () {
 bool TClipPlane::checkBox (const float *bbox) const {
   if (!clipflag) return true; // don't need to clip against it
   // check reject point
-  return !PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
+  return !PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
 }
 
 
@@ -310,9 +310,9 @@ bool TClipPlane::checkBox (const float *bbox) const {
 int TClipPlane::checkBoxEx (const float *bbox) const {
   if (!clipflag) return 1; // don't need to clip against it
   // check reject point
-  if (!PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return 0; // completely outside
+  if (PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return TFrustum::OUTSIDE; // completely outside
   // check accept point
-  return (!PointOnSide(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]])) ? 1 : -1);
+  return (PointOnBackTh(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]])) ? TFrustum::PARTIALLY : TFrustum::INSIDE);
 }
 
 
@@ -439,7 +439,7 @@ bool TFrustum::checkBox (const float *bbox) const {
   for (unsigned i = planeCount; i--; ++cp, pindex += 6) {
     if (!cp->clipflag) continue; // don't need to clip against it
     // check reject point
-    if (cp->PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
+    if (cp->PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
       // on a back side (or on a plane)
       return false;
     }
@@ -464,13 +464,13 @@ int TFrustum::checkBoxEx (const float *bbox) const {
   for (unsigned i = planeCount; i--; ++cp, pindex += 6) {
     if (!cp->clipflag) continue; // don't need to clip against it
     // check reject point
-    if (cp->PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
+    if (cp->PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
       // on a back side (or on a plane)
       return OUTSIDE;
     }
     if (res == INSIDE) {
       // check accept point
-      if (cp->PointOnSide(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]))) res = PARTIALLY;
+      if (cp->PointOnBackTh(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]))) res = PARTIALLY;
     }
   }
   return res;
@@ -489,7 +489,7 @@ bool TFrustum::checkPoint (const TVec &point) const {
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!cp->clipflag)  continue; // don't need to clip against it
-    if (cp->PointOnSide(point)) return false; // viewer is in back side or on plane
+    if (cp->PointOnBackTh(point)) return false; // viewer is in back side or on plane
   }
   return true;
 }
@@ -508,7 +508,7 @@ bool TFrustum::checkSphere (const TVec &center, float radius) const {
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!cp->clipflag) continue; // don't need to clip against it
-    if (cp->SphereOnSide(center, radius)) {
+    if (cp->SphereOnBackTh(center, radius)) {
       // on a back side (or on a plane)
       return false;
     }
