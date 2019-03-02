@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-//#define VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VViewClipper::VClipNode {
@@ -67,134 +65,6 @@ static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CV
     return false;
   }
 */
-
-
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-//==========================================================================
-//
-//  CheckAndClipVerts
-//
-//==========================================================================
-static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
-  // clip sectors that are behind rendered segs
-  const TVec r1 = Origin-v1;
-  const TVec r2 = Origin-v2;
-  // here, z is almost always zero
-  if (!r1.z && !r2.z) {
-    // with zero z case, crossproduct becomes (0,0,magnitude)
-    // then Length(v) is (0,0,sqrt(magnitude*magnitude)) -> (0,0,magnitude)
-    // then Normalise(v) is (0,0,magnitude/magnitude) -> (0,0,1) or (0,0,-1)
-    // that is, it effectively calculates a sign of 2d cross product
-    // then, DotProduct(v, org) does: (0*org.x+0*org.y+msign*org.z) -> msign*org.z
-    float msign1 = CrossProduct2D(r1, r2);
-    if (msign1 < 0.0f) msign1 = -1.0f; else if (msign1 > 0.0f) msign1 = 0.0f;
-    const float D1 = msign1*Origin.z;
-    if (D1 < 0.0f) {
-      float msign2 = CrossProduct2D(r2, r1);
-      if (msign2 < 0.0f) msign2 = -1.0f; else if (msign2 > 0.0f) msign2 = 0.0f;
-      const float D2 = msign2*Origin.z;
-      if (D2 < 0.0f) return false;
-    }
-    //k8: do nothing at all here?
-  } else {
-    const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin); // distance to plane
-    if (D1 < 0.0f) {
-      const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin); // distance to plane
-      if (D2 < 0.0f) return false;
-    }
-  }
-
-  //if (D1 < 0.0f && D2 < 0.0f) return false;
-
-  /*k8: i don't know what Janis wanted to accomplish with this, but it actually
-        makes clipping WORSE due to limited precision
-  if (doClipVerts) {
-    // there might be a better method of doing this, but this one works for now...
-         if (D1 > 0.0f && D2 <= 0.0f) v2 += (v2-v1)*D1/(D1-D2);
-    else if (D2 > 0.0f && D1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
-  }
-  */
-
-  return true;
-}
-
-
-//==========================================================================
-//
-//  CheckVerts
-//
-//==========================================================================
-static inline bool CheckVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
-  return CheckAndClipVerts(v1, v2, Origin);
-}
-#endif
-
-
-#if 0
-#ifdef CLIENT
-//==========================================================================
-//
-//  CheckAndClipVertsWithLight
-//
-//==========================================================================
-static inline bool CheckAndClipVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, const float CurrLightRadius) {
-  // check if light touches a seg
-  const TVec rLight1 = CurrLightPos-v1;
-  const TVec rLight2 = CurrLightPos-v2;
-  const float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
-  const float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
-  if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
-      (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
-  {
-    return false;
-  }
-
-  const TVec r1 = Origin-v1;
-  const TVec r2 = Origin-v2;
-  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-  if (D1 >= 0.0f) {
-    if (D1 > r_lights_radius) return false;
-    const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-    if (D2 > r_lights_radius) return false;
-  } else {
-    const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
-    if (D2 < 0.0f) {
-      //k8: wtf is this?
-      //const TVec rView1 = Origin-v1-CurrLightPos;
-      //const TVec rView2 = Origin-v2-CurrLightPos;
-      const TVec rView1 = r1-CurrLightPos;
-      const TVec rView2 = r2-CurrLightPos;
-      const float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
-      if (DView1 < -CurrLightRadius) {
-        const float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
-        if (DView2 < -CurrLightRadius) return false;
-      }
-    }
-  }
-
-
-  /*k8: i don't know what Janis wanted to accomplish with this, but it actually
-        makes clipping WORSE due to limited precision
-  if (doClipVerts) {
-    // there might be a better method of doing this, but this one works for now...
-         if (DLight1 > 0.0f && DLight2 <= 0.0f) v2 += (v2-v1)*D1/(D1-D2);
-    else if (DLight2 > 0.0f && DLight1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
-  }
-  */
-  return true;
-}
-
-
-//==========================================================================
-//
-//  CheckVertsWithLight
-//
-//==========================================================================
-static inline bool CheckVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, const float CurrLightRadius) {
-  return CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius);
-}
-#endif
-#endif
 
 
 //==========================================================================
@@ -758,10 +628,11 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
   if (clip_frustum && !viewright.z && isFiniteF(fovy) && fovy != 0 && isFiniteF(fovx) && fovx != 0) {
     // no view roll, create frustum
     TClipBase cb(fovx, fovy);
-    Frustum.setup(cb, Origin, viewangles, viewforward, viewright, viewup, true); // create back plane
+    Frustum.setup(cb, Origin, viewangles, viewforward, viewright, viewup, true); // create back plane, no far plane, offset back plane a little
   } else {
     ClipResetFrustumPlanes();
   }
+  //ClipResetFrustumPlanes();
 }
 
 
@@ -796,45 +667,36 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     return;
   }
 
+  if (!clip_frustum) return;
+
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
 
-  if (!clip_frustum) {
-    // just cut everything at back
-/*
-#ifdef CLIENT
-    d1 = -(fov/2.0f)-30;
-    d2 = fov/2.0f+30;
-#else
-    d1 = -90;
-    d2 = 90;
-#endif
-*/
-    return;
-  } else {
-    TVec Pts[4];
-    TVec TransPts[4];
-    Pts[0] = TVec(fovx, fovy, 1.0f);
-    Pts[1] = TVec(fovx, -fovy, 1.0f);
-    Pts[2] = TVec(-fovx, fovy, 1.0f);
-    Pts[3] = TVec(-fovx, -fovy, 1.0f);
-    TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
-    clipforward.normaliseInPlace();
+  TVec Pts[4];
+  TVec TransPts[4];
+  Pts[0] = TVec(fovx, fovy, 1.0f);
+  Pts[1] = TVec(fovx, -fovy, 1.0f);
+  Pts[2] = TVec(-fovx, fovy, 1.0f);
+  Pts[3] = TVec(-fovx, -fovy, 1.0f);
+  TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
+  clipforward.normaliseInPlace();
 
-    for (int i = 0; i < 4; ++i) {
-      TransPts[i].x = TVEC_SUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
-      TransPts[i].y = TVEC_SUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
-      TransPts[i].z = TVEC_SUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
+  for (unsigned i = 0; i < 4; ++i) {
+    TransPts[i].x = TVEC_SUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
+    TransPts[i].y = TVEC_SUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
+    TransPts[i].z = TVEC_SUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
 
-      if (DotProduct(TransPts[i], clipforward) <= 0.0f) return; // player can see behind
-
-      VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
-      if (a < (VFloat)0) a += (VFloat)360;
-      VFloat d = VVC_AngleMod180(a-viewangles.yaw);
-
-      if (d1 > d) d1 = d;
-      if (d2 < d) d2 = d;
+    if (DotProduct(TransPts[i], clipforward) <= 0.0f) {
+      // player can see behind, use back frustum plane to clip
+      return;
     }
+
+    VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
+    if (a < (VFloat)0) a += (VFloat)360;
+    VFloat d = VVC_AngleMod180(a-viewangles.yaw);
+
+    if (d1 > d) d1 = d;
+    if (d2 < d) d2 = d;
   }
 
   VFloat a1 = VVC_AngleMod(viewangles.yaw+d1);
@@ -1110,12 +972,6 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox) const {
 
   TVec v1, v2;
   CreateBBVerts(v1, v2, BBox, Origin);
-
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-  // clip sectors that are behind rendered segs
-  if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-#endif
-
   return IsRangeVisible(v1, v2);
 }
 
@@ -1133,24 +989,11 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   for (auto count = sub->numlines-1; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-    if (!ds->seg->linedef) {
-      // miniseg
-      if (IsRangeVisible(v2, v1)) {
-        if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
-      }
-    } else {
-      // clip sectors that are behind rendered segs
-      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-      if (IsRangeVisible(v2, v1)) {
-        if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
-      }
-    }
-#else
     if (IsRangeVisible(v2, v1)) {
-      if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) return true;
+      if (!clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) {
+        return true;
+      }
     }
-#endif
   }
   return false;
 }
@@ -1209,6 +1052,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   bbox[4] = MAX(sv1.y, sv2.y);
   bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
 
+  /*
   if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
       bbox[1] <= Origin.y && bbox[4] >= Origin.y &&
       bbox[2] <= Origin.z && bbox[5] >= Origin.z)
@@ -1216,8 +1060,8 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
     // viewer is inside the box
     return true;
   }
+  */
 
-  // check
   return Frustum.checkBox(bbox);
 }
 
@@ -1234,37 +1078,6 @@ bool VViewClipper::CheckPartnerSegFrustum (const seg_t *seg) const {
 }
 
 
-#ifdef CLIENT
-//==========================================================================
-//
-//  VViewClipper::CheckSubsectorLight
-//
-//==========================================================================
-int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const {
-  if (!sub) return 0;
-  float bbox[6];
-  // min
-  bbox[0] = sub->bbox[0];
-  bbox[1] = sub->bbox[1];
-  bbox[2] = sub->sector->floor.minz;
-  // max
-  bbox[3] = sub->bbox[2];
-  bbox[4] = sub->bbox[3];
-  bbox[5] = sub->sector->ceiling.maxz;
-
-  if (bbox[0] <= CurrLightPos.x && bbox[3] >= CurrLightPos.x &&
-      bbox[1] <= CurrLightPos.y && bbox[4] >= CurrLightPos.y &&
-      bbox[2] <= CurrLightPos.z && bbox[5] >= CurrLightPos.z)
-  {
-    // inside the box
-    return 1;
-  }
-
-  return (CheckSphereVsAABB(bbox, CurrLightPos, CurrLightRadius) ? -1 : 0);
-}
-#endif
-
-
 //==========================================================================
 //
 //  VViewClipper::ClipCheckSubsector
@@ -1278,18 +1091,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
   for (int count = sub->numlines; count--; ++seg) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-    if (!seg->linedef) {
-      // miniseg
-      if (IsRangeVisible(v2, v1)) return true;
-    } else {
-      // clip sectors that are behind rendered segs
-      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
-      if (IsRangeVisible(v2, v1)) return true;
-    }
-#else
     if (IsRangeVisible(v2, v1)) return true;
-#endif
   }
   return false;
 }
@@ -1320,10 +1122,6 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   const TVec &v2 = *seg->v2;
 
   if (Mirror || !doCheckFrustum || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
-#ifdef VAVOOM_CLIPPER_DO_VERTEX_BACKCHECK
-    if (!CheckVerts(v1, v2, Origin)) return;
-#endif
-
     if (Mirror) {
       // clip seg with mirror plane
       const float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
@@ -1366,7 +1164,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
   const seg_t *seg = &Level->Segs[sub->firstline];
 
   // `-1` means "slower checks"
-  const int ssFrustum = (!Mirror && clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
+  const int ssFrustum = -1; //(!Mirror && clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
 
   if (ssFrustum >= 0 && !Mirror) {
     //if (ssFrustum > 0) GCon->Logf("FULLY INSIDE: subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));
@@ -1412,6 +1210,35 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 
 
 #ifdef CLIENT
+//==========================================================================
+//
+//  VViewClipper::CheckSubsectorLight
+//
+//==========================================================================
+int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const {
+  if (!sub) return 0;
+  float bbox[6];
+  // min
+  bbox[0] = sub->bbox[0];
+  bbox[1] = sub->bbox[1];
+  bbox[2] = sub->sector->floor.minz;
+  // max
+  bbox[3] = sub->bbox[2];
+  bbox[4] = sub->bbox[3];
+  bbox[5] = sub->sector->ceiling.maxz;
+
+  if (bbox[0] <= CurrLightPos.x && bbox[3] >= CurrLightPos.x &&
+      bbox[1] <= CurrLightPos.y && bbox[4] >= CurrLightPos.y &&
+      bbox[2] <= CurrLightPos.z && bbox[5] >= CurrLightPos.z)
+  {
+    // inside the box
+    return 1;
+  }
+
+  return (CheckSphereVsAABB(bbox, CurrLightPos, CurrLightRadius) ? -1 : 0);
+}
+
+
 //==========================================================================
 //
 //  VViewClipper::ClipLightIsBBoxVisible
