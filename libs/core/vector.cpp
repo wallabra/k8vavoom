@@ -386,7 +386,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   if (createbackplane) {
     planes[4].SetPointNormal3D(aorg, vforward);
     planes[4].clipflag = 1U<<4;
-    ++planeCount;
+    planeCount = 5;
   } else {
     planes[4].clipflag = 0;
   }
@@ -394,7 +394,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   if (isFiniteF(farplanez) && farplanez > 0) {
     planes[5].SetPointNormal3D(aorg+aforward*farplanez, -aforward);
     planes[5].clipflag = 1U<<5;
-    ++planeCount;
+    planeCount = 6;
   } else {
     planes[5].clipflag = 0;
   }
@@ -434,9 +434,10 @@ void TFrustum::setupFromFOVs (const float afovx, const float afovy, const TVec &
 bool TFrustum::checkBox (const float *bbox) const {
   if (!planeCount) return true;
   const TClipPlane *cp = &planes[0];
-  for (unsigned i = planeCount; i--; ++cp) {
+  const unsigned *pindex = &bindex[0][0];
+  static_assert(sizeof(bindex[0]) == sizeof(unsigned)*6, "oops");
+  for (unsigned i = planeCount; i--; ++cp, pindex += 6) {
     if (!cp->clipflag) continue; // don't need to clip against it
-    const unsigned *pindex = bindex[i];
     // check reject point
     if (cp->PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
       // on a back side (or on a plane)
@@ -458,9 +459,10 @@ int TFrustum::checkBoxEx (const float *bbox) const {
   if (!planeCount) return INSIDE;
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
-  for (unsigned i = planeCount; i--; ++cp) {
+  const unsigned *pindex = &bindex[0][0];
+  static_assert(sizeof(bindex[0]) == sizeof(unsigned)*6, "oops");
+  for (unsigned i = planeCount; i--; ++cp, pindex += 6) {
     if (!cp->clipflag) continue; // don't need to clip against it
-    const unsigned *pindex = bindex[i];
     // check reject point
     if (cp->PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
       // on a back side (or on a plane)
