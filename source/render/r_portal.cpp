@@ -132,7 +132,8 @@ void VPortal::Draw (bool UseStencil) {
   auto savedTraspFirst = RLev->traspFirst;
   auto savedTraspUsed = RLev->traspUsed;
   bool SavedMirrorClip = MirrorClip;
-  TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
+  const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
+  const unsigned planeCount = view_frustum.planeCount;
 
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
@@ -178,6 +179,7 @@ void VPortal::Draw (bool UseStencil) {
   MirrorClip = SavedMirrorClip;
   RLev->TransformFrustum();
   view_frustum.planes[5] = SavedClip; // restore far/mirror plane
+  view_frustum.planeCount = planeCount;
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
@@ -431,13 +433,17 @@ void VMirrorPortal::DrawContents () {
   SetUpRanges(Range, true, false);
 
   // use "far plane" (it is unused by default)
+  const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
   view_frustum.planes[5] = *Plane;
   view_frustum.planes[5].clipflag = 0x20U;
   view_frustum.setupBoxIndiciesForPlane(5);
+  const unsigned planeCount = view_frustum.planeCount;
+  view_frustum.planeCount = 6;
 
   RLev->RenderScene(&refdef, &Range);
 
-  view_frustum.planes[5].invalidate(); //k8: why not?
+  view_frustum.planes[5] = SavedClip;
+  view_frustum.planeCount = planeCount;
 
   --RLev->MirrorLevel;
   MirrorFlip = RLev->MirrorLevel&1;

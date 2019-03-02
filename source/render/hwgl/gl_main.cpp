@@ -1195,11 +1195,11 @@ void VOpenGLDrawer::SetupViewOrg () {
   glRotatef(-viewangles.yaw, 0, 0, 1);
   glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
 
-  if (MirrorClip) {
+  if (MirrorClip && view_frustum.planes[5].isValid()) {
     glEnable(GL_CLIP_PLANE0);
     const GLdouble eq[4] = {
-      view_frustum.planes[4].normal.x, view_frustum.planes[4].normal.y, view_frustum.planes[4].normal.z,
-      -view_frustum.planes[4].dist
+      view_frustum.planes[5].normal.x, view_frustum.planes[5].normal.y, view_frustum.planes[5].normal.z,
+      -view_frustum.planes[5].dist
     };
     glClipPlane(GL_CLIP_PLANE0, eq);
   } else {
