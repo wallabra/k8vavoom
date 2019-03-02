@@ -104,7 +104,7 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
   guard(VNetObjectsMap::SerialiseName);
   if (Strm.IsLoading()) {
     vuint32 NameIndex;
-    Strm.SerialiseInt(NameIndex, NameLookup.length()+1);
+    Strm.SerialiseInt(NameIndex/*, NameLookup.length()+1*/);
     if ((vint32)NameIndex == NameLookup.length()) {
       Name = NAME_None;
     } else {
@@ -113,7 +113,7 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
     return true;
   } else {
     vuint32 NameIndex = (Name.GetIndex() < NameMap.length() ? NameMap[Name.GetIndex()] : NameLookup.length());
-    Strm.SerialiseInt(NameIndex, NameLookup.length()+1);
+    Strm.SerialiseInt(NameIndex/*, NameLookup.length()+1*/);
     return ((vint32)NameIndex != NameLookup.length());
   }
   unguard;
@@ -178,7 +178,7 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
   guard(VNetObjectsMap::SerialiseClass);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
-    Strm.SerialiseInt(ClassId, ClassLookup.length());
+    Strm.SerialiseInt(ClassId/*, ClassLookup.length()*/);
     if (ClassId) {
       Class = ClassLookup[ClassId];
     } else {
@@ -187,10 +187,10 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
   } else {
     if (Class) {
       vuint32 *ClassId = ClassMap.Find(Class);
-      Strm.SerialiseInt(*ClassId, ClassLookup.length());
+      Strm.SerialiseInt(*ClassId/*, ClassLookup.length()*/);
     } else {
       vuint32 NoClass = 0;
-      Strm.SerialiseInt(NoClass, ClassLookup.length());
+      Strm.SerialiseInt(NoClass/*, ClassLookup.length()*/);
     }
   }
   return true;
@@ -207,10 +207,10 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
   guard(VNetObjectsMap::SerialiseState);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
-    Strm.SerialiseInt(ClassId, ClassLookup.length());
+    Strm.SerialiseInt(ClassId/*, ClassLookup.length()*/);
     if (ClassId) {
       vuint32 StateId;
-      Strm.SerialiseInt(StateId, ClassLookup[ClassId]->StatesLookup.length());
+      Strm.SerialiseInt(StateId/*, ClassLookup[ClassId]->StatesLookup.length()*/);
       State = ClassLookup[ClassId]->StatesLookup[StateId];
     } else {
       State = nullptr;
@@ -220,11 +220,11 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
       vuint32 *ClassId = ClassMap.Find((VClass*)State->Outer);
       vuint32 StateId = State->NetId;
       checkSlow(ClassId);
-      Strm.SerialiseInt(*ClassId, ClassLookup.length());
-      Strm.SerialiseInt(StateId, ((VClass *)State->Outer)->StatesLookup.length());
+      Strm.SerialiseInt(*ClassId/*, ClassLookup.length()*/);
+      Strm.SerialiseInt(StateId/*, ((VClass *)State->Outer)->StatesLookup.length()*/);
     } else {
       vuint32 NoClass = 0;
-      Strm.SerialiseInt(NoClass, ClassLookup.length());
+      Strm.SerialiseInt(NoClass/*, ClassLookup.length()*/);
     }
   }
   return true;
