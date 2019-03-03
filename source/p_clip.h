@@ -87,9 +87,7 @@ public:
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int CheckSubsectorFrustum (const subsector_t *sub) const;
-
   bool CheckSegFrustum (const seg_t *seg) const;
-  bool CheckPartnerSegFrustum (const seg_t *seg) const;
 
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
 
@@ -123,11 +121,11 @@ public:
     AddClipRange(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
-  bool ClipIsBBoxVisible (const float *BBox) const;
+  bool ClipIsBBoxVisible (const float BBox[6]) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
   bool ClipCheckSubsector (const subsector_t *sub) const;
 #ifdef CLIENT
-  bool ClipLightIsBBoxVisible (const float *BBox, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;
   bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
   bool ClipLightCheckSubsector (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
@@ -138,7 +136,7 @@ public:
 #endif
 
 private:
-  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror, bool doCheckFrustum=true);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
   // light radius should be valid
