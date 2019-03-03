@@ -1072,6 +1072,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
     if (IsRangeVisible(v2, v1)) {
+      if (ds->seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) {
         return true;
       }
@@ -1110,10 +1111,32 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
 
 //==========================================================================
 //
+//  MirrorCheck
+//
+//==========================================================================
+static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec &v2) {
+  if (Mirror) {
+    // clip seg with mirror plane
+    if (Mirror->PointOnSide(v1) && Mirror->PointOnSide(v2)) return false;
+    // and clip it while we are here
+    //const float dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
+    //const float dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
+    // k8: really?
+    /*
+         if (dist1 > 0.0f && dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
+    else if (dist2 > 0.0f && dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
+    */
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool skipSphereCheck) {
   const line_t *ldef = seg->linedef;
   if (!ldef) return; // miniseg cannot clip anything
   if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane?
@@ -1132,25 +1155,8 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
 
-  if (Mirror || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
-    if (Mirror) {
-      // clip seg with mirror plane
-      const float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
-      if (Dist1 <= 0.0f) {
-        const float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
-        if (Dist2 <= 0.0f) return;
-      }
-
-      //if (Dist1 <= 0.0f && Dist2 <= 0.0f) return;
-
-      // and clip it while we are here
-      // k8: really?
-      /*
-           if (Dist1 > 0.0f && Dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
-      else if (Dist2 > 0.0f && Dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
-      */
-    }
-
+  if (Mirror || skipSphereCheck || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
+    if (!MirrorCheck(Mirror, v1, v2)) return;
     // for 2-sided line, determine if it can be skipped
     if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
       if (ldef->alpha < 1.0f) return; // skip translucent walls
@@ -1172,38 +1178,13 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 
   bool doPoly = (sub->poly && clip_with_polyobj);
 
-  const seg_t *seg = &Level->Segs[sub->firstline];
-
   // `-1` means "slower checks"
-  const int ssFrustum = (!Mirror && clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
+  const int ssFrustum = (clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
 
-  if (ssFrustum >= 0 /*&& !Mirror*/) {
-    //if (ssFrustum > 0) GCon->Logf("FULLY INSIDE: subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));
-    // completely out of frustum, or completely in frustum
-    for (int count = sub->numlines; count--; ++seg) {
-      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-      const line_t *ldef = seg->linedef;
-      if (!ldef || seg->PointOnSide(Origin)) continue;
-      if (ssFrustum) {
-        // completely inside
-        // for 2-sided line, determine if it can be skipped
-        if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
-          if (ldef->alpha < 1.0f) continue; // skip translucent walls
-          if (!IsSegAClosedSomething(*this, seg)) continue;
-        }
-      } else {
-        // completely outside
-      }
-      const TVec &v1 = *seg->v1;
-      const TVec &v2 = *seg->v2;
-      AddClipRange(v2, v1);
-    }
-  } else {
-    // do slower checks
-    for (int count = sub->numlines; count--; ++seg) {
-      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-      CheckAddClipSeg(seg, Mirror); // do frustum checks
-    }
+  const seg_t *seg = &Level->Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
+    if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
+    CheckAddClipSeg(seg, Mirror, (ssFrustum > 0));
   }
 
   if (doPoly) {

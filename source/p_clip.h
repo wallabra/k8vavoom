@@ -136,7 +136,7 @@ public:
 #endif
 
 private:
-  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool skipSphereCheck=false);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror, bool skipSphereCheck=false);
   // light radius should be valid
