@@ -250,6 +250,13 @@ protected:
   friend class VSectorStackPortal;
   friend class VMirrorPortal;
 
+  struct BSPVisInfo {
+    //enum { UNKNOWN = -1, INVISIBLE = 0, VISIBLE = 1, };
+    vuint32 framecount; // data validity checking
+    //float radius;
+    //vuint8 vis;
+  };
+
 public:
   enum {
     MAX_PARTICLES = 2048, // default max # of particles at one time
@@ -388,6 +395,14 @@ protected:
   //TMapNC<VEntity *, bool> visibleObjects;
   //VEntity **visibleObjects;
   //unsigned visibleObjectsCount;
+
+  BSPVisInfo *bspVisRadius;
+  vuint32 bspVisRadiusFrame;
+
+protected:
+  void NewBSPVisibilityFrame ();
+  bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
+  bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
 protected:
   VRenderLevelShared (VLevel *ALevel);

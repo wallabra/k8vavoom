@@ -438,6 +438,8 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , showCreateWorldSurfProgress(false)
   , updateWorldCheckVisFrame(false)
   , updateWorldFrame(0)
+  , bspVisRadius(nullptr)
+  , bspVisRadiusFrame(0)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 
@@ -486,6 +488,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 //
 //==========================================================================
 VRenderLevelShared::~VRenderLevelShared () {
+  delete[] bspVisRadius;
+  bspVisRadius = nullptr;
+
   // free fake floor data
   for (int i = 0; i < Level->NumSectors; ++i) {
     if (Level->Sectors[i].fakefloors) {

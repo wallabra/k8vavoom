@@ -32,8 +32,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-//#define RADVLIGHT_GRID_OPTIMIZER
-
 
 extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
@@ -77,6 +75,132 @@ VAdvancedRenderLevel::~VAdvancedRenderLevel () {
 
 //==========================================================================
 //
+//  VRenderLevelShared::NewBSPVisibilityFrame
+//
+//==========================================================================
+void VRenderLevelShared::NewBSPVisibilityFrame () {
+  if (bspVisRadius) {
+    if (++bspVisRadiusFrame == 0) {
+      bspVisRadiusFrame = 1;
+      memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
+    }
+  } else {
+    bspVisRadiusFrame = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  isCircleTouchingLine
+//
+//==========================================================================
+static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq, const TVec &v0, const TVec &v1) {
+  const TVec s0qp = corg-v0;
+  if (s0qp.length2DSquared() <= radiusSq) return true;
+  if ((corg-v1).length2DSquared() <= radiusSq) return true;
+  const TVec s0s1 = v1-v0;
+  const float a = s0s1.dot2D(s0s1);
+  if (!a) return false; // if you haven't zero-length segments omit this, as it would save you 1 _mm_comineq_ss() instruction and 1 memory fetch
+  const float b = s0s1.dot2D(s0qp);
+  const float t = b/a; // length of projection of s0qp onto s0s1
+  if (t >= 0.0f && t <= 1.0f) {
+    const float c = s0qp.dot2D(s0qp);
+    const float r2 = c-a*t*t;
+    //print("a=%s; t=%s; r2=%s; rsq=%s", a, t, r2, radiusSq);
+    return (r2 <= radiusSq); // true if collides
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CheckBSPVisibilitySub
+//
+//==========================================================================
+bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub) {
+  const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
+  // rendered means "visible"
+  if (BspVis[csubidx>>3]&(1<<(csubidx&7))) return true;
+  // if we came into already visited subsector, abort flooding (and return failure)
+  if (bspVisRadius[csubidx].framecount == bspVisRadiusFrame) return false;
+  // recurse into neighbour subsectors
+  bspVisRadius[csubidx].framecount = bspVisRadiusFrame; // mark as visited
+  if (currsub->numlines == 0) return false;
+  const seg_t *seg = &Level->Segs[currsub->firstline];
+  for (int count = currsub->numlines; count--; ++seg) {
+    // skip non-portals
+    const line_t *ldef = seg->linedef;
+    if (ldef) {
+      // not a miniseg; check if linedef is passable
+      if (!(ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX))) continue; // solid line
+    } // minisegs are portals
+    // we should have partner seg
+    if (!seg->partner || seg->partner == seg || seg->partner->front_sub == currsub) continue;
+    // check if this seg is touching our sphere
+    if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
+    // ok, it is touching, recurse
+    if (CheckBSPVisibilitySub(org, radiusSq, seg->partner->front_sub)) {
+      //GCon->Logf("RECURSE HIT!");
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CheckBSPVisibility
+//
+//==========================================================================
+bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub) {
+  if (!Level) return false; // just in case
+  if (!sub) {
+    sub = Level->PointInSubsector(org);
+    if (!sub) return false;
+  }
+  const unsigned subidx = (unsigned)(ptrdiff_t)(sub-Level->Subsectors);
+  // check potential visibility
+  /*
+  if (hasPVS) {
+    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const unsigned leafnum = Level->PointInSubsector(l->origin)-Level->Subsectors;
+    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+  }
+  */
+/*
+  // already checked?
+  if (bspVisRadius[subidx].framecount == bspVisRadiusFrame) {
+    if (bspVisRadius[subidx].radius <= radius) return !!bspVisRadius[subidx].vis;
+  }
+  // mark as "checked"
+  bspVisRadius[subidx].framecount = bspVisRadiusFrame;
+  bspVisRadius[subidx].radius = radius;
+  // rendered means "visible"
+  if (BspVis[subidx>>3]&(1<<(subidx&7))) {
+    bspVisRadius[subidx].radius = 1e12; // big!
+    bspVisRadius[subidx].vis = BSPVisInfo::VISIBLE;
+    return true;
+  }
+*/
+  // rendered means "visible"
+  if (BspVis[subidx>>3]&(1<<(subidx&7))) return true;
+
+  // use floodfill to determine (rough) potential visibility
+  NewBSPVisibilityFrame();
+  if (!bspVisRadius) {
+    bspVisRadiusFrame = 1;
+    bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
+    memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
+  }
+  return CheckBSPVisibilitySub(org, radius*radius, sub);
+}
+
+
+//==========================================================================
+//
 //  VAdvancedRenderLevel::RenderScene
 //
 //==========================================================================
@@ -107,47 +231,47 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   CurrLightsNumber = 0;
   CurrShadowsNumber = 0;
 
-  //const float rlightraduisSq = r_lights_radius*r_lights_radius;
-  const float rlightraduisSightSq = r_lights_radius_sight_check*r_lights_radius_sight_check;
-
-  const bool hasPVS = Level->HasPVS();
+  const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
+  //const float rlightraduisSightSq = (r_lights_radius_sight_check < 1 ? 0 : r_lights_radius_sight_check*r_lights_radius_sight_check);
+  //const bool hasPVS = Level->HasPVS();
 
   static TFrustum frustum;
+  static TFrustumParam fp;
+
+  TPlane backPlane;
+  backPlane.SetPointNormal3D(vieworg, viewforward);
+
 
   if (!FixedLight && r_static_lights) {
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-    static TMapNC<vuint32, int> slmhash;
-    int statdiv = r_hashlight_static_div;
-    if (statdiv > 0) slmhash.reset();
-#endif
-
     if (!staticLightsFiltered) RefilterStaticLights();
 
     light_t *stlight = Lights.ptr();
     for (int i = Lights.length(); i--; ++stlight) {
       //if (!Lights[i].radius) continue;
-      if (!stlight->active) continue;
+      if (!stlight->active || stlight->radius < 8) continue;
 
       // don't do lights that are too far away
       Delta = stlight->origin-vieworg;
+      const float distSq = Delta.lengthSquared();
 
       // if the light is behind a view, drop it if it is further than light radius
-      if (Delta.lengthSquared() >= stlight->radius*stlight->radius) {
-        frustum.setup(clip_base, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
+      if (distSq >= stlight->radius*stlight->radius) {
+        if (distSq > rlightraduisSq || backPlane.PointOnBackTh(stlight->origin)) continue; // too far away
+        if (fp.needUpdate(vieworg, viewangles)) {
+          fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+          frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+        }
         if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
           // out of frustum
           continue;
         }
-      } else {
-        // already did above
-        /*
-        // don't add too far-away lights
-        Delta.z = 0;
-        const float dlenSq = Delta.length2DSquared();
-        if (dlenSq > rlightraduisSq) continue;
-        */
       }
 
+      if (!CheckBSPVisibility(stlight->origin, stlight->radius)) {
+        //GCon->Logf("STATIC DROP: visibility check");
+        continue;
+      }
+      /*
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
       if (hasPVS) {
         subsector_t *sub = Level->PointInSubsector(stlight->origin);
@@ -155,120 +279,55 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         if (!(dyn_facevis[stlight->leafnum>>3]&(1<<(stlight->leafnum&7)))) continue;
       }
 
-      if (/*dlenSq*/Delta.length2DSquared() > rlightraduisSightSq) {
-        // check some more rays
-        if (!RadiusCastRay(stlight->origin, vieworg, stlight->radius, /*true*/r_dynamic_clip_more)) continue;
-      }
-
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-      // don't render too much lights around one point
-      if (statdiv > 0) {
-        vuint32 cc = ((((vuint32)stlight->origin.x)/(vuint32)statdiv)&0xffffu)|(((((vuint32)stlight->origin.y)/(vuint32)statdiv)&0xffffu)<<16);
-        int *np = slmhash.get(cc);
-        if (np) {
-          // replace by light with greater radius
-          if (Lights[*np].radius < stlight->radius) {
-            *np = i;
-          }
-        } else {
-          slmhash.put(cc, i);
+      if (rlightraduisSightSq) {
+        if (/ *dlenSq* /Delta.length2DSquared() > rlightraduisSightSq) {
+          // check some more rays
+          if (!RadiusCastRay(stlight->origin, vieworg, stlight->radius, / *true* /r_dynamic_clip_more)) continue;
         }
-      } else
-#endif
-      {
-        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
       }
-    }
+      */
 
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-    if (statdiv > 0) {
-      for (auto it = slmhash.first(); bool(it); ++it) {
-        int i = it.getValue();
-        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
-      }
+      RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
     }
-#endif
   }
 
   if (!FixedLight && r_dynamic) {
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-    static TMapNC<vuint32, dlight_t *> dlmhash;
-    int dyndiv = r_hashlight_dynamic_div;
-    if (dyndiv > 0) dlmhash.reset();
-    int lcount = 0;
-    //fprintf(stderr, "=====\n");
-#endif
-
     dlight_t *l = DLights;
     for (int i = MAX_DLIGHTS; i--; ++l) {
-      if (!l->radius || l->die < Level->Time) continue;
+      if (l->radius < 8 || l->die < Level->Time) continue;
 
       // don't do lights that are too far away
       Delta = l->origin-vieworg;
+      const float distSq = Delta.lengthSquared();
 
       // if the light is behind a view, drop it if it is further than light radius
-      if (Delta.lengthSquared() >= l->radius*l->radius) {
-        frustum.setup(clip_base, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
+      if (distSq >= l->radius*l->radius) {
+        if (distSq > rlightraduisSq || backPlane.PointOnBackTh(l->origin)) continue; // too far away
+        if (fp.needUpdate(vieworg, viewangles)) {
+          fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+          frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+        }
         if (!frustum.checkSphere(l->origin, l->radius)) {
           // out of frustum
           continue;
         }
-      } else {
-        // already done above
-        /*
-        Delta.z = 0;
-        const float dlenSq = Delta.length2DSquared();
-        if (dlenSq > rlightraduisSq) continue;
-        */
       }
 
-      // check potential visibility (this should be moved to sight check for precise pvs, but...)
-      if (hasPVS) {
-        subsector_t *sub = Level->PointInSubsector(l->origin);
-        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-        int leafnum = Level->PointInSubsector(l->origin)-Level->Subsectors;
-        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      if (!CheckBSPVisibility(l->origin, l->radius)) {
+        //GCon->Logf("DYNAMIC DROP: visibility check");
+        continue;
       }
-
-      if (/*dlenSq*/Delta.length2DSquared() > rlightraduisSightSq) {
-        // check some more rays
-        if (!RadiusCastRay(l->origin, vieworg, l->radius, /*true*/r_dynamic_clip_more)) continue;
-      }
-
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-      // don't render too much lights around one point
-      if (dyndiv > 0) {
-        vuint32 cc = ((((vuint32)l->origin.x)/(vuint32)dyndiv)&0xffffu)|(((((vuint32)l->origin.y)/(vuint32)dyndiv)&0xffffu)<<16);
-        dlight_t **hl = dlmhash.get(cc);
-        if (hl) {
-          // replace by light with greater radius
-          if ((*hl)->radius < l->radius) {
-            *hl = l;
-            //fprintf(stderr, "  replaced (%f,%f,%f,%f) with (%f,%f,%f,%f)\n", (*hl)->origin.x, (*hl)->origin.y, (*hl)->origin.z, (*hl)->radius, l->origin.x, l->origin.y, l->origin.z, l->radius);
-          } else {
-            //fprintf(stderr, "  dropped (%f,%f,%f,%f)\n", l->origin.x, l->origin.y, l->origin.z, l->radius);
-          }
-        } else {
-          dlmhash.put(cc, l);
-          ++lcount;
+      /*
+      if (rlightraduisSightSq) {
+        if (/ *dlenSq* /Delta.length2DSquared() > rlightraduisSightSq) {
+          // check some more rays
+          if (!RadiusCastRay(l->origin, vieworg, l->radius, / *true* /r_dynamic_clip_more)) continue;
         }
-      } else
-#endif
-      {
-        RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
       }
-    }
+      */
 
-#ifdef RADVLIGHT_GRID_OPTIMIZER
-    if (dyndiv > 0) {
-      for (auto it = dlmhash.first(); bool(it); ++it) {
-        dlight_t *dlt = it.getValue();
-        RenderLightShadows(RD, Range, dlt->origin, dlt->radius, dlt->colour, true);
-        --lcount;
-      }
-      if (lcount != 0) Sys_Error("unbalanced dlights");
+      RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
     }
-#endif
   }
 
   Drawer->DrawWorldTexturesPass();
