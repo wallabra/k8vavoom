@@ -98,11 +98,7 @@ VMatrix4 operator * (const VMatrix4 &in1, const VMatrix4 &in2) {
   VMatrix4 out;
   for (unsigned i = 0; i < 4; ++i) {
     for (unsigned j = 0; j < 4; ++j) {
-#ifdef USE_NEUMAIER_KAHAN
-      out[i][j] = neumsum4(in1[i][0]*in2[0][j], in1[i][1]*in2[1][j], in1[i][2]*in2[2][j], in1[i][3]*in2[3][j]);
-#else /* USE_NEUMAIER_KAHAN */
-      out[i][j] = in1[i][0]*in2[0][j]+in1[i][1]*in2[1][j]+in1[i][2]*in2[2][j]+in1[i][3]*in2[3][j];
-#endif /* USE_NEUMAIER_KAHAN */
+      out[i][j] = VSUM4(in1[i][0]*in2[0][j], in1[i][1]*in2[1][j], in1[i][2]*in2[2][j], in1[i][3]*in2[3][j]);
     }
   }
   return out;
@@ -119,16 +115,10 @@ inline static float MINOR (const VMatrix4 &m,
   const size_t c0, const size_t c1, const size_t c2)
 {
   return
-#ifdef USE_NEUMAIER_KAHAN
-    neumsum3(
-      m[r0][c0]*neumsum2(m[r1][c1]*m[r2][c2], -(m[r2][c1]*m[r1][c2])),
-      -(m[r0][c1]*neumsum2(m[r1][c0]*m[r2][c2], -(m[r2][c0]*m[r1][c2]))),
-      m[r0][c2]*neumsum2(m[r1][c0]*m[r2][c1], -(m[r2][c0]*m[r1][c1])))
-#else /* USE_NEUMAIER_KAHAN */
-    m[r0][c0]*(m[r1][c1]*m[r2][c2]-m[r2][c1]*m[r1][c2])-
-    m[r0][c1]*(m[r1][c0]*m[r2][c2]-m[r2][c0]*m[r1][c2])+
-    m[r0][c2]*(m[r1][c0]*m[r2][c1]-m[r2][c0]*m[r1][c1]);
-#endif /* USE_NEUMAIER_KAHAN */
+    VSUM3(
+        m[r0][c0]*VSUM2(m[r1][c1]*m[r2][c2], -(m[r2][c1]*m[r1][c2])),
+      -(m[r0][c1]*VSUM2(m[r1][c0]*m[r2][c2], -(m[r2][c0]*m[r1][c2]))),
+        m[r0][c2]*VSUM2(m[r1][c0]*m[r2][c1], -(m[r2][c0]*m[r1][c1])));
   ;
 }
 
@@ -140,30 +130,13 @@ inline static float MINOR (const VMatrix4 &m,
 //==========================================================================
 float VMatrix4::Determinant () const {
   return
-#ifdef USE_NEUMAIER_KAHAN
-    neumsum4(
+    VSUM4(
       m[0][0]*MINOR(*this, 1, 2, 3, 1, 2, 3),
-      -(m[0][1]*MINOR(*this, 1, 2, 3, 0, 2, 3)),
+    -(m[0][1]*MINOR(*this, 1, 2, 3, 0, 2, 3)),
       m[0][2]*MINOR(*this, 1, 2, 3, 0, 1, 3),
-      -(m[0][3]*MINOR(*this, 1, 2, 3, 0, 1, 2)))
-#else /* USE_NEUMAIER_KAHAN */
-    m[0][0]*MINOR(*this, 1, 2, 3, 1, 2, 3)-
-    m[0][1]*MINOR(*this, 1, 2, 3, 0, 2, 3)+
-    m[0][2]*MINOR(*this, 1, 2, 3, 0, 1, 3)-
-    m[0][3]*MINOR(*this, 1, 2, 3, 0, 1, 2)
-#endif /* USE_NEUMAIER_KAHAN */
+    -(m[0][3]*MINOR(*this, 1, 2, 3, 0, 1, 2)))
   ;
 }
-
-#ifdef USE_NEUMAIER_KAHAN
-# define VMAT_XSUM_2(value0,value1)  neumsum2(value0, value1)
-# define VMAT_XSUM_3(value0,value1,value2)  neumsum3(value0, value1, value2)
-# define VMAT_XSUM_4(value0,value1,value2,value3)  neumsum4(value0, value1, value2, value3)
-#else /* USE_NEUMAIER_KAHAN */
-# define VMAT_XSUM_2(value0,value1)  ((value0)+(value1))
-# define VMAT_XSUM_3(value0,value1,value2)  ((value0)+(value1)+(value2))
-# define VMAT_XSUM_4(value0,value1,value2,value3)  ((value0)+(value1)+(value2)+(value3))
-#endif /* USE_NEUMAIER_KAHAN */
 
 
 //==========================================================================
@@ -177,19 +150,19 @@ VMatrix4 VMatrix4::Inverse () const {
   const float m20 = m[2][0], m21 = m[2][1], m22 = m[2][2], m23 = m[2][3];
   const float m30 = m[3][0], m31 = m[3][1], m32 = m[3][2], m33 = m[3][3];
 
-  float v0 = VMAT_XSUM_2(m20*m31, -(m21*m30));
-  float v1 = VMAT_XSUM_2(m20*m32, -(m22*m30));
-  float v2 = VMAT_XSUM_2(m20*m33, -(m23*m30));
-  float v3 = VMAT_XSUM_2(m21*m32, -(m22*m31));
-  float v4 = VMAT_XSUM_2(m21*m33, -(m23*m31));
-  float v5 = VMAT_XSUM_2(m22*m33, -(m23*m32));
+  float v0 = VSUM2(m20*m31, -(m21*m30));
+  float v1 = VSUM2(m20*m32, -(m22*m30));
+  float v2 = VSUM2(m20*m33, -(m23*m30));
+  float v3 = VSUM2(m21*m32, -(m22*m31));
+  float v4 = VSUM2(m21*m33, -(m23*m31));
+  float v5 = VSUM2(m22*m33, -(m23*m32));
 
-  const float t00 = +VMAT_XSUM_3(v5*m11, -(v4*m12), v3*m13);
-  const float t10 = -VMAT_XSUM_3(v5*m10, -(v2*m12), v1*m13);
-  const float t20 = +VMAT_XSUM_3(v4*m10, -(v2*m11), v0*m13);
-  const float t30 = -VMAT_XSUM_3(v3*m10, -(v1*m11), v0*m12);
+  const float t00 = +VSUM3(v5*m11, -(v4*m12), v3*m13);
+  const float t10 = -VSUM3(v5*m10, -(v2*m12), v1*m13);
+  const float t20 = +VSUM3(v4*m10, -(v2*m11), v0*m13);
+  const float t30 = -VSUM3(v3*m10, -(v1*m11), v0*m12);
 
-  float invDet = 1.0f/VMAT_XSUM_4(t00*m00, t10*m01, t20*m02, t30*m03);
+  float invDet = 1.0f/VSUM4(t00*m00, t10*m01, t20*m02, t30*m03);
   if (!isFiniteF(invDet)) invDet = 0.0f;
 
   const float d00 = t00*invDet;
@@ -197,34 +170,34 @@ VMatrix4 VMatrix4::Inverse () const {
   const float d20 = t20*invDet;
   const float d30 = t30*invDet;
 
-  const float d01 = -VMAT_XSUM_3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d11 = +VMAT_XSUM_3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d21 = -VMAT_XSUM_3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d31 = +VMAT_XSUM_3(v3*m00, -(v1*m01), v0*m02)*invDet;
+  const float d01 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d11 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d21 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d31 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
 
-  v0 = VMAT_XSUM_2(m10*m31, -(m11*m30));
-  v1 = VMAT_XSUM_2(m10*m32, -(m12*m30));
-  v2 = VMAT_XSUM_2(m10*m33, -(m13*m30));
-  v3 = VMAT_XSUM_2(m11*m32, -(m12*m31));
-  v4 = VMAT_XSUM_2(m11*m33, -(m13*m31));
-  v5 = VMAT_XSUM_2(m12*m33, -(m13*m32));
+  v0 = VSUM2(m10*m31, -(m11*m30));
+  v1 = VSUM2(m10*m32, -(m12*m30));
+  v2 = VSUM2(m10*m33, -(m13*m30));
+  v3 = VSUM2(m11*m32, -(m12*m31));
+  v4 = VSUM2(m11*m33, -(m13*m31));
+  v5 = VSUM2(m12*m33, -(m13*m32));
 
-  const float d02 = +VMAT_XSUM_3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d12 = -VMAT_XSUM_3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d22 = +VMAT_XSUM_3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d32 = -VMAT_XSUM_3(v3*m00, -(v1*m01), v0*m02)*invDet;
+  const float d02 = +VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d12 = -VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d22 = +VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d32 = -VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
 
-  v0 = VMAT_XSUM_2(m21*m10, -(m20*m11));
-  v1 = VMAT_XSUM_2(m22*m10, -(m20*m12));
-  v2 = VMAT_XSUM_2(m23*m10, -(m20*m13));
-  v3 = VMAT_XSUM_2(m22*m11, -(m21*m12));
-  v4 = VMAT_XSUM_2(m23*m11, -(m21*m13));
-  v5 = VMAT_XSUM_2(m23*m12, -(m22*m13));
+  v0 = VSUM2(m21*m10, -(m20*m11));
+  v1 = VSUM2(m22*m10, -(m20*m12));
+  v2 = VSUM2(m23*m10, -(m20*m13));
+  v3 = VSUM2(m22*m11, -(m21*m12));
+  v4 = VSUM2(m23*m11, -(m21*m13));
+  v5 = VSUM2(m23*m12, -(m22*m13));
 
-  const float d03 = -VMAT_XSUM_3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d13 = +VMAT_XSUM_3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d23 = -VMAT_XSUM_3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d33 = +VMAT_XSUM_3(v3*m00, -(v1*m01), v0*m02)*invDet;
+  const float d03 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d13 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d23 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d33 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
 
   return VMatrix4(
     d00, d01, d02, d03,
@@ -257,9 +230,9 @@ VMatrix4 VMatrix4::Transpose () const {
 //==========================================================================
 TVec VMatrix4::Transform (const TVec &V) const {
   TVec Out;
-  Out.x = VMAT_XSUM_4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]);
-  Out.y = VMAT_XSUM_4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]);
-  Out.z = VMAT_XSUM_4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]);
+  Out.x = VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]);
+  Out.y = VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]);
+  Out.z = VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]);
   return Out;
 }
 
@@ -271,9 +244,9 @@ TVec VMatrix4::Transform (const TVec &V) const {
 //==========================================================================
 TVec VMatrix4::Transform2 (const TVec &V) const {
   TVec Out;
-  Out.x = VMAT_XSUM_4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]);
-  Out.y = VMAT_XSUM_4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]);
-  Out.z = VMAT_XSUM_4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
+  Out.x = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]);
+  Out.y = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]);
+  Out.z = VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
   return Out;
 }
 
@@ -284,10 +257,10 @@ TVec VMatrix4::Transform2 (const TVec &V) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumLeft (TPlane &plane) const {
-  plane.normal.x = m[0][3]+m[0][0];
-  plane.normal.y = m[1][3]+m[1][0];
-  plane.normal.z = m[2][3]+m[2][0];
-  plane.dist = m[3][3]+m[3][0];
+  plane.normal.x = VSUM2(m[0][3], m[0][0]);
+  plane.normal.y = VSUM2(m[1][3], m[1][0]);
+  plane.normal.z = VSUM2(m[2][3], m[2][0]);
+  plane.dist = VSUM2(m[3][3], m[3][0]);
 }
 
 
@@ -297,10 +270,10 @@ void VMatrix4::ExtractFrustumLeft (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumRight (TPlane &plane) const {
-  plane.normal.x = m[0][3]-m[0][0];
-  plane.normal.y = m[1][3]-m[1][0];
-  plane.normal.z = m[2][3]-m[2][0];
-  plane.dist = m[3][3]-m[3][0];
+  plane.normal.x = VSUM2(m[0][3], -m[0][0]);
+  plane.normal.y = VSUM2(m[1][3], -m[1][0]);
+  plane.normal.z = VSUM2(m[2][3], -m[2][0]);
+  plane.dist = VSUM2(m[3][3], -m[3][0]);
 }
 
 
@@ -310,10 +283,10 @@ void VMatrix4::ExtractFrustumRight (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumTop (TPlane &plane) const {
-  plane.normal.x = m[0][3]-m[0][1];
-  plane.normal.y = m[1][3]-m[1][1];
-  plane.normal.z = m[2][3]-m[2][1];
-  plane.dist = m[3][3]-m[3][1];
+  plane.normal.x = VSUM2(m[0][3], -m[0][1]);
+  plane.normal.y = VSUM2(m[1][3], -m[1][1]);
+  plane.normal.z = VSUM2(m[2][3], -m[2][1]);
+  plane.dist = VSUM2(m[3][3], -m[3][1]);
 }
 
 
@@ -323,10 +296,10 @@ void VMatrix4::ExtractFrustumTop (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumBottom (TPlane &plane) const {
-  plane.normal.x = m[0][3]+m[0][1];
-  plane.normal.y = m[1][3]+m[1][1];
-  plane.normal.z = m[2][3]+m[2][1];
-  plane.dist = m[3][3]+m[3][1];
+  plane.normal.x = VSUM2(m[0][3], m[0][1]);
+  plane.normal.y = VSUM2(m[1][3], m[1][1]);
+  plane.normal.z = VSUM2(m[2][3], m[2][1]);
+  plane.dist = VSUM2(m[3][3], m[3][1]);
 }
 
 
@@ -336,10 +309,10 @@ void VMatrix4::ExtractFrustumBottom (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumFar (TPlane &plane) const {
-  plane.normal.x = m[0][3]-m[0][2];
-  plane.normal.y = m[1][3]-m[1][2];
-  plane.normal.z = m[2][3]-m[2][2];
-  plane.dist = m[3][3]-m[3][2];
+  plane.normal.x = VSUM2(m[0][3], -m[0][2]);
+  plane.normal.y = VSUM2(m[1][3], -m[1][2]);
+  plane.normal.z = VSUM2(m[2][3], -m[2][2]);
+  plane.dist = VSUM2(m[3][3], -m[3][2]);
 }
 
 
@@ -349,8 +322,8 @@ void VMatrix4::ExtractFrustumFar (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumNear (TPlane &plane) const {
-  plane.normal.x = m[0][3]+m[0][2];
-  plane.normal.y = m[1][3]+m[1][2];
-  plane.normal.z = m[2][3]+m[2][2];
-  plane.dist = m[3][3]+m[3][2];
+  plane.normal.x = VSUM2(m[0][3], m[0][2]);
+  plane.normal.y = VSUM2(m[1][3], m[1][2]);
+  plane.normal.z = VSUM2(m[2][3], m[2][2]);
+  plane.dist = VSUM2(m[3][3], m[3][2]);
 }

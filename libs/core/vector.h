@@ -24,14 +24,27 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifdef USE_NEUMAIER_KAHAN
-# define TVEC_SUM2(value0,value1)  neumsum2(value0, value1)
-# define TVEC_SUM3(value0,value1,value2)  neumsum3(value0, value1, value2)
-#else
-# define TVEC_SUM2(value0,value1)  ((value0)+(value1))
-# define TVEC_SUM3(value0,value1,value2)  ((value0)+(value1)+(value2))
-#endif
+class TAVec {
+public:
+  float pitch; // up/down
+  float yaw; // left/right
+  float roll; // around screen center
 
+  TAVec () {}
+  //nope;TAVec () : pitch(0.0f), yaw(0.0f), roll(0.0f) {}
+  TAVec (float APitch, float AYaw, float ARoll) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
+
+  inline bool isValid () const { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
+  inline bool isZero () const { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
+  inline bool isZeroNoRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
+
+  friend VStream &operator << (VStream &Strm, TAVec &v) {
+    return Strm << v.pitch << v.yaw << v.roll;
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class TVec {
 public:
   float x;
@@ -68,23 +81,25 @@ public:
   inline TVec operator + (void) const { return *this; }
   inline TVec operator - (void) const { return TVec(-x, -y, -z); }
 
-  inline float invlength () const { return 1.0f/sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
-  inline float invlength2D () const { return 1.0f/sqrtf(TVEC_SUM2(x*x, y*y)); }
+#ifdef USE_FAST_INVSQRT
+  inline float invlength () const { return fastInvSqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline float invlength2D () const { return fastInvSqrtf(VSUM2(x*x, y*y)); }
+#else
+  inline float invlength () const { return 1.0f/sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline float invlength2D () const { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
+#endif
 
-  //inline float invlength () const { return fastInvSqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
-  //inline float invlength2D () const { return fastInvSqrtf(TVEC_SUM2(x*x, y*y)); }
+  inline float Length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline float length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
 
-  inline float Length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
-  inline float length () const { return sqrtf(TVEC_SUM3(x*x, y*y, z*z)); }
+  inline float Length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
+  inline float length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
 
-  inline float Length2D () const { return sqrtf(TVEC_SUM2(x*x, y*y)); }
-  inline float length2D () const { return sqrtf(TVEC_SUM2(x*x, y*y)); }
+  inline float LengthSquared () const { return VSUM3(x*x, y*y, z*z); }
+  inline float lengthSquared () const { return VSUM3(x*x, y*y, z*z); }
 
-  inline float LengthSquared () const { return TVEC_SUM3(x*x, y*y, z*z); }
-  inline float lengthSquared () const { return TVEC_SUM3(x*x, y*y, z*z); }
-
-  inline float Length2DSquared () const { return TVEC_SUM2(x*x, y*y); }
-  inline float length2DSquared () const { return TVEC_SUM2(x*x, y*y); }
+  inline float Length2DSquared () const { return VSUM2(x*x, y*y); }
+  inline float length2DSquared () const { return VSUM2(x*x, y*y); }
 
   inline void normaliseInPlace () { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
   inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; }
@@ -92,42 +107,26 @@ public:
   inline TVec Normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
   inline TVec normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
 
-  //inline TVec NormalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
-  //inline TVec normalisedSafe () const { const float invlen = 1.0f/length(); return (isFiniteF(invlen) ? TVec(x*invlen, y*invlen, z*invlen) : TVec(0, 0, 0)); }
-
+  inline TVec Normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
   inline TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
 
-  inline float dot (const TVec &v2) const { return TVEC_SUM3(x*v2.x, y*v2.y, z*v2.z); }
-  inline float dot2D (const TVec &v2) const { return TVEC_SUM2(x*v2.x, y*v2.y); }
+  inline float Dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
+  inline float dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
 
-  inline TVec cross (const TVec &v2) const { return TVec(TVEC_SUM2(y*v2.z, -(z*v2.y)), TVEC_SUM2(z*v2.x, -(x*v2.z)), TVEC_SUM2(x*v2.y, -(y*v2.x))); }
-  // cross-product (z, as x and y are effectively zero in 2d)
-  inline float cross2D (const TVec &v2) const { return TVEC_SUM2(x*v2.y, -(y*v2.x)); }
+  inline float Dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
+  inline float dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
+
+  inline TVec Cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+  inline TVec cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+
+  // 2d cross product (z, as x and y are effectively zero in 2d)
+  inline float Cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
+  inline float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
 };
 
 
-class TAVec {
-public:
-  float pitch; // up/down
-  float yaw; // left/right
-  float roll; // around screen center
-
-  TAVec () {}
-  //nope;TAVec () : pitch(0.0f), yaw(0.0f), roll(0.0f) {}
-  TAVec (float APitch, float AYaw, float ARoll) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
-
-  inline bool isValid () const { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
-  inline bool isZero () const { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
-  inline bool isZeroNoRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
-
-  friend VStream &operator << (VStream &Strm, TAVec &v) {
-    return Strm << v.pitch << v.yaw << v.roll;
-  }
-};
-
-
-static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(TVEC_SUM2(v1.x, v2.x), TVEC_SUM2(v1.y, v2.y), TVEC_SUM2(v1.z, v2.z)); }
-static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(TVEC_SUM2(v1.x, -(v2.x)), TVEC_SUM2(v1.y, -(v2.y)), TVEC_SUM2(v1.z, -(v2.z))); }
+static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
+static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(VSUM2(v1.x, -(v2.x)), VSUM2(v1.y, -(v2.y)), VSUM2(v1.z, -(v2.z))); }
 
 static __attribute__((unused)) inline TVec operator * (const TVec &v, float s) { return TVec(s*v.x, s*v.y, s*v.z); }
 static __attribute__((unused)) inline TVec operator * (float s, const TVec &v) { return TVec(s*v.x, s*v.y, s*v.z); }
@@ -183,28 +182,15 @@ static __attribute__((unused)) inline void AngleVectorPitch (const float pitch, 
 }
 
 
-//==========================================================================
-//
-//                PLANES
-//
-//==========================================================================
-
-enum {
-  PLANE_X,
-  PLANE_Y,
-  PLANE_Z,
-  PLANE_NEG_X,
-  PLANE_NEG_Y,
-  PLANE_NEG_Z,
-  PLANE_ANY,
-};
-
-
+// ////////////////////////////////////////////////////////////////////////// //
 // Ax+By+Cz=D (ABC is normal, D is distance); i.e. "general form" (with negative D)
 class TPlane {
 public:
   TVec normal;
   float dist;
+
+  inline bool isValid () const { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
+  inline bool isVertical () const { return (normal.z == 0.0f); }
 
   inline void Set (const TVec &Anormal, float Adist) {
     normal = Anormal;
@@ -213,15 +199,6 @@ public:
 
   // initialises vertical plane from point and direction
   inline void SetPointDirXY (const TVec &point, const TVec &dir) {
-#if 0
-    if (dir.x != 0 || dir.y != 0) {
-      normal = Normalise(TVec(dir.y, -dir.x, 0));
-    } else {
-      //k8: what to do here?!
-      normal = TVec(0, 0, 1);
-    }
-    dist = DotProduct(point, normal);
-#else
     normal = TVec(dir.y, -dir.x, 0);
     normal.normaliseInPlace();
     if (normal.isValid() && !normal.isZero()) {
@@ -231,7 +208,6 @@ public:
       normal = TVec(0, 0, 1);
       dist = 1;
     }
-#endif
   }
 
   // initialises "full" plane from point and direction
@@ -243,11 +219,7 @@ public:
 
   // initialises "full" plane from point and direction
   inline void SetPointNormal3DSafe (const TVec &point, const TVec &norm) {
-    if (!norm.isValid() || !point.isValid() || norm.isZero()) {
-      //k8: what to do here?!
-      normal = TVec(0, 0, 1);
-      dist = 1;
-    } else {
+    if (norm.isValid() && point.isValid() && !norm.isZero()) {
       normal = norm.normalised();
       if (normal.isValid() && !normal.isZero()) {
         dist = DotProduct(point, normal);
@@ -256,6 +228,10 @@ public:
         normal = TVec(0, 0, 1);
         dist = 1;
       }
+    } else {
+      //k8: what to do here?!
+      normal = TVec(0, 0, 1);
+      dist = 1;
     }
   }
 
@@ -275,7 +251,7 @@ public:
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
   inline float GetPointZ (float x, float y) const {
-    return (TVEC_SUM3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
+    return (VSUM3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
   }
 
   inline float GetPointZ (const TVec &v) const {
@@ -331,7 +307,7 @@ public:
   // plane must be normalized
   inline float Distance (const TVec &p) const {
     //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
-    //return TVEC_SUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
+    //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
     return DotProduct(p, normal)-dist;
   }
 };

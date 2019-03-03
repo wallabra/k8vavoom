@@ -70,44 +70,24 @@ public:
     const float c = mcos(Angle);
     const float t = 1.0f-c;
 
-#ifdef USE_NEUMAIER_KAHAN
-    m[0][0] = neumsum2(t*Axis.x*Axis.x, c);
-    m[0][1] = neumsum2(t*Axis.x*Axis.y, -(s*Axis.z));
-    m[0][2] = neumsum2(t*Axis.x*Axis.z, s*Axis.y);
+    m[0][0] = VSUM2(t*Axis.x*Axis.x, c);
+    m[0][1] = VSUM2(t*Axis.x*Axis.y, -(s*Axis.z));
+    m[0][2] = VSUM2(t*Axis.x*Axis.z, s*Axis.y);
 
-    m[1][0] = neumsum2(t*Axis.y*Axis.x, s*Axis.z);
-    m[1][1] = neumsum2(t*Axis.y*Axis.y, c);
-    m[1][2] = neumsum2(t*Axis.y*Axis.z, -(s*Axis.x));
+    m[1][0] = VSUM2(t*Axis.y*Axis.x, s*Axis.z);
+    m[1][1] = VSUM2(t*Axis.y*Axis.y, c);
+    m[1][2] = VSUM2(t*Axis.y*Axis.z, -(s*Axis.x));
 
-    m[2][0] = neumsum2(t*Axis.z*Axis.x, -(s*Axis.y));
-    m[2][1] = neumsum2(t*Axis.z*Axis.y, s*Axis.x);
-    m[2][2] = neumsum2(t*Axis.z*Axis.z, c);
-#else /* USE_NEUMAIER_KAHAN */
-    m[0][0] = t*Axis.x*Axis.x+c;
-    m[0][1] = t*Axis.x*Axis.y-s*Axis.z;
-    m[0][2] = t*Axis.x*Axis.z+s*Axis.y;
-
-    m[1][0] = t*Axis.y*Axis.x+s*Axis.z;
-    m[1][1] = t*Axis.y*Axis.y+c;
-    m[1][2] = t*Axis.y*Axis.z-s*Axis.x;
-
-    m[2][0] = t*Axis.z*Axis.x-s*Axis.y;
-    m[2][1] = t*Axis.z*Axis.y+s*Axis.x;
-    m[2][2] = t*Axis.z*Axis.z+c;
-#endif /* USE_NEUMAIER_KAHAN */
+    m[2][0] = VSUM2(t*Axis.z*Axis.x, -(s*Axis.y));
+    m[2][1] = VSUM2(t*Axis.z*Axis.y, s*Axis.x);
+    m[2][2] = VSUM2(t*Axis.z*Axis.z, c);
   }
 
   friend inline TVec operator * (const TVec &v, const VRotMatrix &m) {
     return TVec(
-#ifdef USE_NEUMAIER_KAHAN
-      neumsum3(m.m[0][0]*v.x, m.m[0][1]*v.y, m.m[0][2]*v.z),
-      neumsum3(m.m[1][0]*v.x, m.m[1][1]*v.y, m.m[1][2]*v.z),
-      neumsum3(m.m[2][0]*v.x, m.m[2][1]*v.y, m.m[2][2]*v.z)
-#else /* USE_NEUMAIER_KAHAN */
-      m.m[0][0]*v.x+m.m[0][1]*v.y+m.m[0][2]*v.z,
-      m.m[1][0]*v.x+m.m[1][1]*v.y+m.m[1][2]*v.z,
-      m.m[2][0]*v.x+m.m[2][1]*v.y+m.m[2][2]*v.z
-#endif /* USE_NEUMAIER_KAHAN */
+      VSUM3(m.m[0][0]*v.x, m.m[0][1]*v.y, m.m[0][2]*v.z),
+      VSUM3(m.m[1][0]*v.x, m.m[1][1]*v.y, m.m[1][2]*v.z),
+      VSUM3(m.m[2][0]*v.x, m.m[2][1]*v.y, m.m[2][2]*v.z)
     );
   }
 };

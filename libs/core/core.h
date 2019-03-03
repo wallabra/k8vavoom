@@ -27,6 +27,10 @@
 #ifndef VAVOOM_CORE_HEADER
 #define VAVOOM_CORE_HEADER
 
+#define USE_NEUMAIER_KAHAN
+#define USE_FAST_INVSQRT
+
+
 // C headers
 #include <cstdio>
 #include <cstdlib>
@@ -41,7 +45,20 @@
 # include <climits>
 #endif
 
-#define USE_NEUMAIER_KAHAN
+
+#ifdef USE_NEUMAIER_KAHAN
+# define VSUM2(value0,value1)                 (neumsum2((value0), (value1)))
+# define VSUM3(value0,value1,value2)          (neumsum3((value0), (value1), (value2)))
+# define VSUM4(value0,value1,value2,value3)   (neumsum4((value0), (value1), (value2), (value3)))
+# define VSUM2D(value0,value1)                (neumsum2d((value0), (value1)))
+# define VSUM3D(value0,value1,value2)         (neumsum3d((value0), (value1), (value2)))
+#else
+# define VSUM2(value0,value1)                 ((value0)+(value1))
+# define VSUM3(value0,value1,value2)          ((value0)+(value1)+(value2))
+# define VSUM4(value0,value1,value2,value3)   ((value0)+(value1)+(value2)+(value3))
+# define VSUM2D(value0,value1)                ((value0)+(value1))
+# define VSUM3D(value0,value1,value2)         ((value0)+(value1)+(value2))
+#endif
 
 
 #include "mythreadlite.h"

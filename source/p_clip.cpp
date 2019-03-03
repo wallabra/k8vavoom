@@ -629,6 +629,14 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
     // no view roll, create frustum
     TClipBase cb(fovx, fovy);
     Frustum.setup(cb, Origin, viewangles, viewforward, viewright, viewup, true); // create back plane, no far plane
+    /*
+    Frustum.planes[TFrustum::Left].invalidate();
+    Frustum.planes[TFrustum::Right].invalidate();
+    Frustum.planes[TFrustum::Top].invalidate();
+    Frustum.planes[TFrustum::Bottom].invalidate();
+    Frustum.planes[TFrustum::Back].invalidate();
+    Frustum.planes[TFrustum::Forward].invalidate();
+    */
   } else {
     ClipResetFrustumPlanes();
   }
@@ -682,9 +690,9 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   clipforward.normaliseInPlace();
 
   for (unsigned i = 0; i < 4; ++i) {
-    TransPts[i].x = TVEC_SUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
-    TransPts[i].y = TVEC_SUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
-    TransPts[i].z = TVEC_SUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
+    TransPts[i].x = VSUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
+    TransPts[i].y = VSUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
+    TransPts[i].z = VSUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
 
     if (DotProduct(TransPts[i], clipforward) <= 0.0f) {
       // player can see behind, use back frustum plane to clip

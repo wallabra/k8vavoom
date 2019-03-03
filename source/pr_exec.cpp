@@ -2693,25 +2693,25 @@ func_loop:
           case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
           case OPC_Builtin_VecLength:
             if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
-            sp[-3].f = sqrtf(TVEC_SUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
+            sp[-3].f = sqrtf(VSUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
             sp -= 2;
             if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length is INF/NAN"); }
             break;
           case OPC_Builtin_VecLengthSquared:
             if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
-            sp[-3].f = TVEC_SUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
+            sp[-3].f = VSUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
             sp -= 2;
             if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length is INF/NAN"); }
             break;
           case OPC_Builtin_VecLength2D:
             if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
-            sp[-3].f = sqrtf(TVEC_SUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
+            sp[-3].f = sqrtf(VSUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
             sp -= 2;
             if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length2D is INF/NAN"); }
             break;
           case OPC_Builtin_VecLength2DSquared:
             if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
-            sp[-3].f = TVEC_SUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
+            sp[-3].f = VSUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
             sp -= 2;
             if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length2D is INF/NAN"); }
             break;

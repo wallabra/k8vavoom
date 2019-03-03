@@ -33,6 +33,7 @@
 //
 //==========================================================================
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
+#if 0
   const double ay = DEG2RADD(angles.yaw);
   const double ap = DEG2RADD(angles.pitch);
   const double ar = DEG2RADD(angles.roll);
@@ -43,25 +44,27 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
   const double cp = cos(ap);
   const double sr = sin(ar);
   const double cr = cos(ar);
+#else
+  const float ay = DEG2RADF(angles.yaw);
+  const float ap = DEG2RADF(angles.pitch);
+  const float ar = DEG2RADF(angles.roll);
+
+  const float sy = sinf(ay);
+  const float cy = cosf(ay);
+  const float sp = sinf(ap);
+  const float cp = cosf(ap);
+  const float sr = sinf(ar);
+  const float cr = cosf(ar);
+#endif
 
   forward.x = cp*cy;
   forward.y = cp*sy;
   forward.z = -sp;
-#ifdef USE_NEUMAIER_KAHAN
-  right.x = neumsum2(-sr*sp*cy, cr*sy);
-  right.y = neumsum2(-sr*sp*sy, -(cr*cy));
-#else /* USE_NEUMAIER_KAHAN */
-  right.x = -sr*sp*cy+cr*sy;
-  right.y = -sr*sp*sy-cr*cy;
-#endif /* USE_NEUMAIER_KAHAN */
+  right.x = VSUM2(-sr*sp*cy, cr*sy);
+  right.y = VSUM2(-sr*sp*sy, -(cr*cy));
   right.z = -sr*cp;
-#ifdef USE_NEUMAIER_KAHAN
-  up.x = neumsum2(cr*sp*cy, sr*sy);
-  up.y = neumsum2(cr*sp*sy, -(sr*cy));
-#else /* USE_NEUMAIER_KAHAN */
-  up.x = cr*sp*cy+sr*sy;
-  up.y = cr*sp*sy-sr*cy;
-#endif /* USE_NEUMAIER_KAHAN */
+  up.x = VSUM2(cr*sp*cy, sr*sy);
+  up.y = VSUM2(cr*sp*sy, -(sr*cy));
   up.z = cr*cp;
 }
 
@@ -72,10 +75,13 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
 //
 //==========================================================================
 void AngleVector (const TAVec &angles, TVec &forward) {
-  const float sy = msin(angles.yaw);
-  const float cy = mcos(angles.yaw);
-  const float sp = msin(angles.pitch);
-  const float cp = mcos(angles.pitch);
+  const float ay = DEG2RADF(angles.yaw);
+  const float ap = DEG2RADF(angles.pitch);
+
+  const float sy = sinf(ay);
+  const float cy = cosf(ay);
+  const float sp = sinf(ap);
+  const float cp = cosf(ap);
 
   forward.x = cp*cy;
   forward.y = cp*sy;
@@ -89,27 +95,15 @@ void AngleVector (const TAVec &angles, TVec &forward) {
 //
 //==========================================================================
 void VectorAngles (const TVec &vec, TAVec &angles) {
-#if 0
-  const double fx = vec.x;
-  const double fy = vec.y;
-#ifdef USE_NEUMAIER_KAHAN
-  const double len2d = sqrt(neumsum2D(fx*fx, fy*fy));
-#else /* USE_NEUMAIER_KAHAN */
-  const double len2d = sqrt(fx*fx+fy*fy);
-#endif /* USE_NEUMAIER_KAHAN */
-  if (fabs(len2d) < 0.00001)
-#else
   const float fx = vec.x;
   const float fy = vec.y;
-  const float len2d = sqrtf(TVEC_SUM2(fx*fx, fy*fy));
-  if (fabsf(len2d) < 0.0001f)
-#endif
-  {
+  const float len2d = VSUM2(fx*fx, fy*fy);
+  if (len2d < 0.0001f) {
     angles.pitch = (vec.z > 0 ? 90 : 270);
     angles.yaw = 0;
   } else {
-    angles.pitch = -matan(vec.z, len2d);
-    angles.yaw = matan(vec.y, vec.x);
+    angles.pitch = -matan(vec.z, sqrtf(len2d));
+    angles.yaw = matan(fy, fx);
   }
   angles.roll = 0;
 }
@@ -121,35 +115,10 @@ void VectorAngles (const TVec &vec, TAVec &angles) {
 //
 //==========================================================================
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) {
-  /*
-  if (fabsf(forward.x) < 0.00001 && fabsf(forward.y) < 0.00001) {
-    angles.yaw = 0;
-    if (forward.z > 0) {
-      angles.pitch = 90;
-      angles.roll = matan(-up.y, -up.x);
-    } else {
-      angles.pitch = 270;
-      angles.roll = matan(-up.y, up.x);
-    }
-    return;
-  }
-  */
-#if 0
-  const double fx = forward.x;
-  const double fy = forward.y;
-#ifdef USE_NEUMAIER_KAHAN
-  const double len2d = sqrt(neumsum2D(fx*fx, fy*fy));
-#else /* USE_NEUMAIER_KAHAN */
-  const double len2d = sqrt(fx*fx+fy*fy);
-#endif /* USE_NEUMAIER_KAHAN */
-  if (fabs(len2d) < 0.00001)
-#else
   const float fx = forward.x;
   const float fy = forward.y;
-  const float len2d = sqrtf(TVEC_SUM2(fx*fx, fy*fy));
-  if (fabsf(len2d) < 0.0001f)
-#endif
-  {
+  float len2d = VSUM2(fx*fx, fy*fy);
+  if (len2d < 0.0001f) {
     angles.yaw = 0;
     if (forward.z > 0) {
       angles.pitch = 90;
@@ -159,8 +128,9 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
       angles.roll = matan(-up.y, up.x);
     }
   } else {
+    len2d = sqrtf(len2d);
     angles.pitch = matan(-forward.z, len2d); // up/down
-    angles.yaw = matan(forward.y, forward.x); // left/right
+    angles.yaw = matan(fy, fx); // left/right
     angles.roll = (right.z || up.z ? matan(-right.z/len2d, up.z/len2d) : 0);
   }
 }
@@ -223,10 +193,10 @@ void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
     fovy = afovy;
     const float invfovx = 1.0f/afovx;
     const float invfovy = 1.0f/afovy;
-    clipbase[0] = TVec(invfovx, 0.0f, 1.0f)/*.normalised()*/; // left side clip
-    clipbase[1] = TVec(-invfovx, 0.0f, 1.0f)/*.normalised()*/; // right side clip
-    clipbase[2] = TVec(0.0f, -invfovy, 1.0f)/*.normalised()*/; // top side clip
-    clipbase[3] = TVec(0.0f, invfovy, 1.0f)/*.normalised()*/; // bottom side clip
+    clipbase[0] = TVec(invfovx, 0.0f, 1.0f); // left side clip
+    clipbase[1] = TVec(-invfovx, 0.0f, 1.0f); // right side clip
+    clipbase[2] = TVec(0.0f, -invfovy, 1.0f); // top side clip
+    clipbase[3] = TVec(0.0f, invfovy, 1.0f); // bottom side clip
   }
 }
 
@@ -376,9 +346,9 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
     const TVec &v = clipbase.clipbase[i];
     // v.z is always 1.0f
     const TVec v2(
-      TVEC_SUM3(v.x*aright.x, v.y*aup.x, /*v.z* */aforward.x),
-      TVEC_SUM3(v.x*aright.y, v.y*aup.y, /*v.z* */aforward.y),
-      TVEC_SUM3(v.x*aright.z, v.y*aup.z, /*v.z* */aforward.z));
+      VSUM3(v.x*aright.x, v.y*aup.x, /*v.z* */aforward.x),
+      VSUM3(v.x*aright.y, v.y*aup.y, /*v.z* */aforward.y),
+      VSUM3(v.x*aright.z, v.y*aup.z, /*v.z* */aforward.z));
     planes[i].SetPointNormal3D(aorg, v2.normalised());
     planes[i].clipflag = 1U<<i;
   }
