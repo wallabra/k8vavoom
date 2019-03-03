@@ -732,6 +732,7 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector
 #include "render/r_local.h"
 
 static inline bool isCircleTouchingLine (const TVec &corg, const float radius, const TVec &v0, const TVec &v1) {
+/*
   const float x1 = v0.x-corg.x;
   const float x2 = v1.x-corg.x;
   const float y1 = v0.y-corg.y;
@@ -741,6 +742,23 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radius, c
   const float dr_squared = dx*dx+dy*dy;
   const float D = x1*y2-x2*y1;
   return (radius*radius*dr_squared > D*D);
+*/
+  const float radSq = radius*radius;
+  const TVec s0qp = corg-v0;
+  if (s0qp.length2DSquared() <= radSq) return true;
+  if ((corg-v1).length2DSquared() <= radSq) return true;
+  const TVec s0s1 = v1-v0;
+  const float a = s0s1.dot2D(s0s1);
+  if (!a) return false; // if you haven't zero-length segments omit this, as it would save you 1 _mm_comineq_ss() instruction and 1 memory fetch
+  const float b = s0s1.dot2D(s0qp);
+  const float t = b/a; // length of projection of s0qp onto s0s1
+  if (t >= 0 && t <= 1) {
+    const float c = s0qp.dot2D(s0qp);
+    const float r2 = c-a*t*t;
+    //print("a=%s; t=%s; r2=%s; rsq=%s", a, t, r2, radiusSq);
+    return (r2 <= radSq); // true if collides
+  }
+  return false;
 }
 
 
