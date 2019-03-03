@@ -133,7 +133,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= stlight->radius*stlight->radius) {
-        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
+        frustum.setup(clip_base, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
         if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
           // out of frustum
           continue;
@@ -208,7 +208,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (Delta.lengthSquared() >= l->radius*l->radius) {
-        frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
+        frustum.setup(clip_base, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
         if (!frustum.checkSphere(l->origin, l->radius)) {
           // out of frustum
           continue;

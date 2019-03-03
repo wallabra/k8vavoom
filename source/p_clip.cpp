@@ -628,7 +628,8 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
   if (clip_frustum && !viewright.z && isFiniteF(fovy) && fovy != 0 && isFiniteF(fovx) && fovx != 0) {
     // no view roll, create frustum
     TClipBase cb(fovx, fovy);
-    Frustum.setup(cb, Origin, viewangles, viewforward, viewright, viewup, true); // create back plane, no far plane
+    TFrustumParam fp(Origin, viewangles, viewforward, viewright, viewup);
+    Frustum.setup(cb, fp, true); // create back plane, no far plane
     /*
     Frustum.planes[TFrustum::Left].invalidate();
     Frustum.planes[TFrustum::Right].invalidate();

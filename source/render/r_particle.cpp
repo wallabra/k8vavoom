@@ -89,9 +89,11 @@ particle_t *VRenderLevelShared::NewParticle (const TVec &porg) {
     if (distSq >= maxdistSq) return nullptr;
     if (distSq >= maxdistSq*0.25) {
       static TFrustum frustum;
-      if (frustum.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
+      static TFrustumParam fp;
+      if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
+        fp.setup(cl->ViewOrg, cl->ViewAngles);
         TClipBase cb(refdef.fovx, refdef.fovy);
-        if (cb.isValid()) frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true/*, r_particle_max_distance*/);
+        if (cb.isValid()) frustum.setup(cb, fp, true/*, r_particle_max_distance*/);
       }
       if (frustum.isValid() && !frustum.checkPoint(porg)) return nullptr;
     }

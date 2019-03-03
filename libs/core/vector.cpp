@@ -211,18 +211,24 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
     clear();
     return;
   }
+  float afovx, afovy;
+  CalcFovXY(&afovx, &afovy, awidth, aheight, afov, apixelAspect);
+  setupFromFOVs(afovx, afovy);
+}
 
-  // store initial args
-  /*
-  width = awidth;
-  height = aheight;
-  fov = afov;
-  pixelAspect = apixelAspect;
-  */
 
-  // create clipbase
-  const float afovx = tanf(DEG2RADF(afov)/2.0f);
-  const float afovy = afovx*aheight/awidth/apixelAspect;
+//==========================================================================
+//
+//  TClipBase::setupViewport
+//
+//==========================================================================
+void TClipBase::setupViewport (const TClipParam &cp) {
+  if (!cp.isValid()) {
+    clear();
+    return;
+  }
+  float afovx, afovy;
+  CalcFovXY(&afovx, &afovy, cp);
   setupFromFOVs(afovx, afovy);
 }
 
@@ -323,38 +329,24 @@ void TFrustum::setupBoxIndiciesForPlane (unsigned pidx) {
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
 //
 //==========================================================================
-void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles,
-                      const TVec &aforward, const TVec &aright, const TVec &aup,
-                      bool createbackplane, const float farplanez)
-{
-  if (!clipbase.isValid() || !aangles.isValid() || !aorg.isValid() ||
-      !aforward.isValid() || !aright.isValid() || !aup.isValid())
-  {
-    clear();
-    return;
-  }
+void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane, const float farplanez) {
+  clear();
+  if (!clipbase.isValid() || !fp.isValid()) return;
   planeCount = 4; // anyway
-  origin = aorg;
-  angles = aangles;
-  // create direction vectors
-  //AngleVectors(aangles, vforward, vright, vup);
-  vforward = aforward;
-  vright = aright;
-  vup = aup;
   // create side planes
   for (unsigned i = 0; i < 4; ++i) {
     const TVec &v = clipbase.clipbase[i];
     // v.z is always 1.0f
     const TVec v2(
-      VSUM3(v.x*aright.x, v.y*aup.x, /*v.z* */aforward.x),
-      VSUM3(v.x*aright.y, v.y*aup.y, /*v.z* */aforward.y),
-      VSUM3(v.x*aright.z, v.y*aup.z, /*v.z* */aforward.z));
-    planes[i].SetPointNormal3D(aorg, v2.normalised());
+      VSUM3(v.x*fp.vright.x, v.y*fp.vup.x, /*v.z* */fp.vforward.x),
+      VSUM3(v.x*fp.vright.y, v.y*fp.vup.y, /*v.z* */fp.vforward.y),
+      VSUM3(v.x*fp.vright.z, v.y*fp.vup.z, /*v.z* */fp.vforward.z));
+    planes[i].SetPointNormal3D(fp.origin, v2.normalised());
     planes[i].clipflag = 1U<<i;
   }
   // create back plane
   if (createbackplane) {
-    planes[4].SetPointNormal3D(aorg, vforward);
+    planes[4].SetPointNormal3D(fp.origin, fp.vforward);
     planes[4].clipflag = 1U<<4;
     planeCount = 5;
   } else {
@@ -362,28 +354,13 @@ void TFrustum::setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &
   }
   // create far plane
   if (isFiniteF(farplanez) && farplanez > 0) {
-    planes[5].SetPointNormal3D(aorg+aforward*farplanez, -aforward);
+    planes[5].SetPointNormal3D(fp.origin+fp.vforward*farplanez, -fp.vforward);
     planes[5].clipflag = 1U<<5;
     planeCount = 6;
   } else {
     planes[5].clipflag = 0;
   }
   setupBoxIndicies();
-}
-
-
-//==========================================================================
-//
-//  TFrustum::setupFromFOVs
-//
-//==========================================================================
-void TFrustum::setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane, const float farplanez) {
-  if (!isFiniteF(afovx) || !isFiniteF(afovy) || !aangles.isValid()) {
-    clear();
-    return;
-  }
-  TClipBase cb(afovx, afovy);
-  setup(cb, aorg, aangles, createbackplane, farplanez);
 }
 
 
@@ -472,7 +449,7 @@ bool TFrustum::checkPoint (const TVec &point) const {
 //  returns `false` is sphere is out of frustum (or frustum is not valid)
 //
 //==========================================================================
-bool TFrustum::checkSphere (const TVec &center, float radius) const {
+bool TFrustum::checkSphere (const TVec &center, const float radius) const {
   if (!planeCount) return true;
   if (radius <= 0) return checkPoint(center);
   const TClipPlane *cp = &planes[0];

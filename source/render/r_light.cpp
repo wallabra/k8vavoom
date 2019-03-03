@@ -112,7 +112,11 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     // if the light is behind a view, drop it if it is further than light radius
     if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 64*64)) {
       static TFrustum frustum;
-      frustum.update(clip_base, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
+      static TFrustumParam fp;
+      if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
+        fp.setup(cl->ViewOrg, cl->ViewAngles);
+        frustum.setup(clip_base, fp, true, r_lights_radius);
+      }
       if (!frustum.checkSphere(lorg, (radius > 0 ? radius : 64))) {
         //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
         return nullptr;
@@ -249,7 +253,7 @@ void VRenderLevelShared::DecayLights (float time) {
       if (frustumState == 0) {
         TClipBase cb(refdef.fovx, refdef.fovy);
         if (cb.isValid()) {
-          frustum.setup(cb, cl->ViewOrg, cl->ViewAngles, true, r_lights_radius);
+          frustum.setup(cb, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
           frustumState = (frustum.isValid() ? 1 : -1);
         } else {
           frustumState = -1;

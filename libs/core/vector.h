@@ -44,6 +44,10 @@ public:
 };
 
 
+static __attribute__((unused)) inline bool operator == (const TAVec &v1, const TAVec &v2) { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
+static __attribute__((unused)) inline bool operator != (const TAVec &v1, const TAVec &v2) { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class TVec {
 public:
@@ -147,9 +151,6 @@ static __attribute__((unused)) inline float length2DSquared (const TVec &v) { re
 
 static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v.normalised(); }
 static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v.normalised(); }
-
-//static __attribute__((unused)) inline TVec NormaliseSafe (const TVec &v) { return v.normalisedSafe(); }
-//static __attribute__((unused)) inline TVec normaliseSafe (const TVec &v) { return v.normalisedSafe(); }
 
 static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { return v.normalised2D(); }
 
@@ -322,7 +323,12 @@ public:
   inline bool isValid () const { return !!clipflag; }
   inline void invalidate () { clipflag = 0; }
 
-  inline TClipPlane &operator = (const TPlane &p) { normal = p.normal; dist = p.dist; return *this; }
+  inline TClipPlane &operator = (const TPlane &p) {
+    normal = p.normal;
+    dist = p.dist;
+    if (normal.isValid()) setupBoxIndicies(); // why not?
+    return *this;
+  }
 
   void setupBoxIndicies ();
 
@@ -331,6 +337,87 @@ public:
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int checkBoxEx (const float *bbox) const;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class TClipParam {
+public:
+  int width;
+  int height;
+  float fov;
+  float pixelAspect;
+
+public:
+  TClipParam (ENoInit) {}
+  TClipParam () : width(0), height(0), fov(0.0f), pixelAspect(1.0f) {}
+  TClipParam (int awidth, int aheight, float afov, float apixelAspect=1.0f) : width(awidth), height(aheight), fov(afov), pixelAspect(apixelAspect) {}
+
+  inline bool isValid () const { return (width > 0 && height > 0 && isFiniteF(fov) && fov > 0.0f && isFiniteF(pixelAspect) && pixelAspect > 0.0f); }
+
+  inline bool operator == (const TClipParam &b) const {
+    if (!isValid() || !b.isValid()) return false; // never equal
+    return (width == b.width && height == b.height && fov == b.fov && pixelAspect == b.pixelAspect);
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class TFrustumParam {
+public:
+  TVec origin;
+  TAVec angles;
+  TVec vforward, vright, vup;
+
+public:
+  TFrustumParam (ENoInit) {}
+  TFrustumParam () : origin(0, 0, 0), angles(0, 0, 0), vforward(0, 0, 0), vright(0, 0, 0), vup(0, 0, 0) {}
+  TFrustumParam (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) : origin(aorigin), angles(aangles), vforward(vf), vright(vr), vup(vu) {}
+  TFrustumParam (const TVec &aorigin, const TAVec &aangles) : origin(aorigin), angles(aangles) {
+    if (aangles.isValid()) {
+      AngleVectors(aangles, vforward, vright, vup);
+    } else {
+      vforward = TVec(0, 0, 0);
+      vright = TVec(0, 0, 0);
+      vup = TVec(0, 0, 0);
+    }
+  }
+
+  inline bool isValid () const {
+    return
+      origin.isValid() && angles.isValid() && vforward.isValid() && vright.isValid() && vup.isValid() &&
+      !vforward.isZero() && !vright.isZero() && !vright.isZero();
+  }
+
+  inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
+    if (!isValid()) return true;
+    return (aorg != origin || aangles != angles);
+  }
+
+  inline bool operator == (const TFrustumParam &b) const {
+    if (!isValid() || !b.isValid()) return false; // never equal
+    return (origin == b.origin && angles == b.angles && vforward == b.vforward && vright == b.vright && vup == b.vup);
+  }
+
+  inline void setup (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) {
+    origin = aorigin;
+    angles = aangles;
+    vforward = vf;
+    vright = vr;
+    vup = vu;
+  }
+
+  inline void setup (const TVec &aorigin, const TAVec &aangles) {
+    origin = aorigin;
+    angles = aangles;
+    if (aangles.isValid()) {
+      AngleVectors(aangles, vforward, vright, vup);
+    } else {
+      vforward = TVec(0, 0, 0);
+      vright = TVec(0, 0, 0);
+      vup = TVec(0, 0, 0);
+    }
+  }
 };
 
 
@@ -344,18 +431,13 @@ public:
   // [3] is bottom
   TVec clipbase[4];
   float fovx, fovy;
-  // initial
-  /*
-  int width;
-  int height;
-  float fov;
-  float pixelAspect;
-  */
 
 public:
+  TClipBase (ENoInit) {}
   TClipBase () : fovx(0), fovy(0) {}
   TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) { setupViewport(awidth, aheight, afov, apixelAspect); }
   TClipBase (const float afovx, const float afovy) { setupFromFOVs(afovx, afovy); }
+  TClipBase (const TClipParam &cp) { setupViewport(cp); }
 
   inline bool isValid () const { return (fovx != 0.0f); }
 
@@ -365,6 +447,7 @@ public:
 
   void setupFromFOVs (const float afovx, const float afovy);
 
+  void setupViewport (const TClipParam &cp);
   void setupViewport (int awidth, int aheight, float afov, float apixelAspect=1.0f);
 
   // WARNING! no checks!
@@ -372,6 +455,12 @@ public:
     const float fovx = tanf(DEG2RADF(fov)/2.0f);
     if (outfovx) *outfovx = fovx;
     if (outfovy) *outfovy = fovx*height/width/pixelAspect;
+  }
+
+  static inline void CalcFovXY (float *outfovx, float *outfovy, const TClipParam &cp) {
+    const float fovx = tanf(DEG2RADF(cp.fov)/2.0f);
+    if (outfovx) *outfovx = fovx;
+    if (outfovy) *outfovy = fovx*cp.height/cp.width/cp.pixelAspect;
   }
 };
 
@@ -386,6 +475,8 @@ public:
     Bottom = 3,
     Back = 4,
     Forward = 5,
+    Near = Back,
+    Far = Forward,
   };
 
 public:
@@ -394,48 +485,21 @@ public:
   // [5] is forward (if `clipflag` is set)
   TClipPlane planes[6];
   unsigned planeCount; // total number of valid planes
-  TVec origin;
-  TAVec angles;
-  TVec vforward, vright, vup;
   unsigned bindex[6][6];
 
 public:
+  TFrustum (ENoInit) {}
   TFrustum () : planeCount(0) { clear(); }
+  TFrustum (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) : planeCount(0) {
+    setup(clipbase, fp, createbackplane, farplanez);
+  }
 
   inline bool isValid () const { return (planeCount > 0); }
 
   inline void clear () { planeCount = 0; planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = planes[5].clipflag = 0; }
 
-  inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
-    return
-      !planeCount ||
-      origin.x != aorg.x ||
-      origin.y != aorg.y ||
-      origin.z != aorg.z ||
-      aangles.pitch != angles.pitch ||
-      aangles.roll != angles.roll ||
-      aangles.yaw != angles.yaw;
-  }
-
-  inline void update (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
-    if (needUpdate(aorg, aangles)) setup(clipbase, aorg, aangles, createbackplane, farplanez);
-  }
-
   // for speed; direction vectors should correspond to angles
-  // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
-  void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles,
-              const TVec &aforward, const TVec &aright, const TVec &aup,
-              bool createbackplane=true, const float farplanez=0.0f);
-
-  // `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
-  inline void setup (const TClipBase &clipbase, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f) {
-    // create direction vectors
-    TVec f, r, u;
-    AngleVectors(aangles, f, r, u);
-    setup(clipbase, aorg, aangles, f, r, u, createbackplane, farplanez);
-  }
-
-  void setupFromFOVs (const float afovx, const float afovy, const TVec &aorg, const TAVec &aangles, bool createbackplane=true, const float farplanez=0.0f);
+  void setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f);
 
   // automatically called by `setup*()`
   void setupBoxIndicies ();
@@ -450,18 +514,18 @@ public:
   //   [3] is maxx
   //   [4] is maxy
   //   [5] is maxz
-  bool checkBox (const float *bbox) const;
+  bool checkBox (const float bbox[6]) const;
 
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxEx (const float *bbox) const;
+  int checkBoxEx (const float bbox[6]) const;
 
   // returns `false` is point is out of frustum (or frustum is not valid)
   bool checkPoint (const TVec &point) const;
 
   // returns `false` is sphere is out of frustum (or frustum is not valid)
-  bool checkSphere (const TVec &center, float radius) const;
+  bool checkSphere (const TVec &center, const float radius) const;
 };
 
 
