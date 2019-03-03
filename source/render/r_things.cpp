@@ -261,16 +261,16 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
         const float pitch = thing->Angles.pitch;
         if (pitch == 90.0f) {
           // floor
-          sprorigin.z += 0.001f;
+          sprorigin.z += 0.01f;
         } else if (pitch == 180.0f) {
           // ceiling
-          sprorigin.z -= 0.001f;
+          sprorigin.z -= 0.01f;
         } else {
           // slope
           TVec vofs;
           AngleVectorPitch(thing->Angles.pitch, vofs);
           //GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
-          sprorigin -= vofs*0.005f;
+          sprorigin -= vofs*0.01f;
         }
         /*
         {
