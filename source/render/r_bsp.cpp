@@ -688,7 +688,11 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
       if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
       // check reject point
-      if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) continue;
+      if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
+        // completely outside of any plane means "invisible"
+        //continue;
+        return;
+      }
       // is node entirely on screen?
       if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
         // yes, don't check this plane
