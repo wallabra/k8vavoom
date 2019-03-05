@@ -649,6 +649,12 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
     Frustum.planes[TFrustum::Back].invalidate();
     Frustum.planes[TFrustum::Forward].invalidate();
     */
+    // sanity check
+    const TClipPlane *cp = &Frustum.planes[0];
+    for (unsigned i = 0; i < 6; ++i, ++cp) {
+      if (!cp->clipflag) continue; // don't need to clip against it
+      if (cp->PointOnSide(Origin+viewforward)) GCon->Logf("invalid frustum plane #%u", i); // viewer is in back side or on plane (k8: why check this?)
+    }
   } else {
     ClipResetFrustumPlanes();
   }
