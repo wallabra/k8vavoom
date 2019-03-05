@@ -501,6 +501,12 @@ public:
 
   virtual void CopyToSecondaryFBO () override;
 
+  virtual void GetProjectionMatrix (VMatrix4 &mat) override;
+  virtual void GetModelMatrix (VMatrix4 &mat) override;
+
+  virtual void SetupLightScissor (const TVec &org, const float radius) override;
+  virtual void ResetScissor () override;
+
   static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
   //virtual void GetRealWindowSize (int *rw, int *rh) override;

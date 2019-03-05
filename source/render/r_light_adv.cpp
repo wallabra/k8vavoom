@@ -60,6 +60,9 @@ extern VCvarB r_dynamic_clip_more;
 
 static VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
+static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_PreInit);
+static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // code
@@ -793,14 +796,28 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool Lim
 void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
                                                TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
 {
+  if (Radius < 2.0f) return;
+
   CurrLightPos = Pos;
   CurrLightRadius = Radius;
   CurrLightColour = Colour;
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
+  // k8: create light bbox (actually, it does nothing interesting)
+  /*
+  dummy_bbox[0] = Pos.x-Radius;
+  dummy_bbox[1] = Pos.y-Radius;
+  dummy_bbox[2] = Pos.z-Radius;
+
+  dummy_bbox[3] = Pos.x+Radius;
+  dummy_bbox[4] = Pos.y+Radius;
+  dummy_bbox[5] = Pos.z+Radius;
+  */
+
   bool doShadows = true;
-  if (!Level->NeedProperLightTraceAt(Pos, Radius)) {
+
+  if (r_advlight_opt_trace && !Level->NeedProperLightTraceAt(Pos, Radius)) {
     //GCon->Log("some light doesn't need shadows");
     //return;
     if (dbg_adv_light_notrace_mark) Colour = 0xffff0000U;
@@ -819,6 +836,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     if (LightBspVis[i]) HaveIntersect = true;
   }
   if (!HaveIntersect) return;
+
+  // setup light scissor rectangle
+  if (r_advlight_opt_scissor) Drawer->SetupLightScissor(Pos, Radius);
 
   ResetMobjsLightCount(true);
   // do shadow volumes
@@ -844,4 +864,6 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
   RenderMobjsLight();
+
+  if (r_advlight_opt_scissor) Drawer->ResetScissor();
 }

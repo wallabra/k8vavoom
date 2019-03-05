@@ -272,6 +272,12 @@ public:
 
   // copy current FBO to secondary FBO
   virtual void CopyToSecondaryFBO () = 0;
+
+  virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
+  virtual void GetModelMatrix (VMatrix4 &mat) = 0;
+
+  virtual void SetupLightScissor (const TVec &org, const float radius) = 0;
+  virtual void ResetScissor () = 0;
 };
 
 

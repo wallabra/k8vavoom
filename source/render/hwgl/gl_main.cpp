@@ -1108,6 +1108,161 @@ void VOpenGLDrawer::EndDirectUpdate () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::GetProjectionMatrix
+//
+//==========================================================================
+void VOpenGLDrawer::GetProjectionMatrix (VMatrix4 &mat) {
+  glGetFloatv(GL_PROJECTION_MATRIX, mat[0]);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetModelMatrix
+//
+//==========================================================================
+void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
+  glGetFloatv(GL_MODELVIEW_MATRIX, mat[0]);
+}
+
+
+//==========================================================================
+//
+//  glhProjectf
+//
+//==========================================================================
+static bool glhProjectf (float objx, float objy, float objz, const float *modelview, const float *projection, const int *viewport, float *windowCoordinate) {
+  // Transformation vectors
+  float fTempo[8];
+  // Modelview transform
+  fTempo[0] = modelview[0]*objx+modelview[4]*objy+modelview[8]*objz+modelview[12]; // w is always 1
+  fTempo[1] = modelview[1]*objx+modelview[5]*objy+modelview[9]*objz+modelview[13];
+  fTempo[2] = modelview[2]*objx+modelview[6]*objy+modelview[10]*objz+modelview[14];
+  fTempo[3] = modelview[3]*objx+modelview[7]*objy+modelview[11]*objz+modelview[15];
+  // projection transform, the final row of projection matrix is always [0 0 -1 0] so we optimize for that
+  fTempo[4] = projection[0]*fTempo[0]+projection[4]*fTempo[1]+projection[8]*fTempo[2]+projection[12]*fTempo[3];
+  fTempo[5] = projection[1]*fTempo[0]+projection[5]*fTempo[1]+projection[9]*fTempo[2]+projection[13]*fTempo[3];
+  fTempo[6] = projection[2]*fTempo[0]+projection[6]*fTempo[1]+projection[10]*fTempo[2]+projection[14]*fTempo[3];
+  fTempo[7] = -fTempo[2];
+  // the result normalizes between -1 and 1
+  if (fTempo[7] == 0.0f) return false; // the w value
+  fTempo[7] = 1.0f/fTempo[7];
+  // Perspective division
+  fTempo[4] *= fTempo[7];
+  fTempo[5] *= fTempo[7];
+  fTempo[6] *= fTempo[7];
+  // window coordinates
+  // map x, y to range 0-1
+  windowCoordinate[0] = (fTempo[4]*0.5+0.5)*viewport[2]+viewport[0];
+  windowCoordinate[1] = (fTempo[5]*0.5+0.5)*viewport[3]+viewport[1];
+  // This is only correct when glDepthRange(0.0, 1.0)
+  //windowCoordinate[2]=(1.0+fTempo[6])*0.5;// Between 0 and 1
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetupLightScissor
+//
+//==========================================================================
+void VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius) {
+  VMatrix4 pmat, mmat;
+  glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
+  glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
+  const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
+
+  /*
+  {
+    //TVec torg = mmat.Transform2(org);
+    //TVec porg = pmat.Transform2(torg);
+    //GCon->Logf("org=(%f,%f,%f); radius=%f; torg=(%f,%f,%f); porg=(%f,%f,%f)", org.x, org.y, org.z, radius, torg.x, torg.y, torg.z, porg.x, porg.y, porg.z);
+    float wc[2];
+    if (!glhProjectf(org.x, org.y, org.z, mmat[0], pmat[0], viewport, wc)) return;
+    //GCon->Logf("org=(%f,%f,%f); radius=%f; wc=(%f,%f)", org.x, org.y, org.z, radius, wc[0], wc[1]);
+  }
+  */
+
+  // create light bbox
+  float bbox[6];
+  bbox[0] = org.x-radius;
+  bbox[1] = org.y-radius;
+  bbox[2] = org.z-radius;
+
+  bbox[3] = org.x+radius;
+  bbox[4] = org.y+radius;
+  bbox[5] = org.z+radius;
+
+  // create 8 bbox points
+  TVec bbp[8];
+  bbp[0] = TVec(bbox[0], bbox[1], bbox[2]);
+  bbp[1] = TVec(bbox[3], bbox[1], bbox[2]);
+  bbp[2] = TVec(bbox[0], bbox[4], bbox[2]);
+  bbp[3] = TVec(bbox[3], bbox[4], bbox[2]);
+  bbp[4] = TVec(bbox[0], bbox[1], bbox[5]);
+  bbp[5] = TVec(bbox[3], bbox[1], bbox[5]);
+  bbp[6] = TVec(bbox[0], bbox[4], bbox[5]);
+  bbp[7] = TVec(bbox[3], bbox[4], bbox[5]);
+
+  float minx = ScreenWidth, miny = ScreenHeight;
+  float maxx = -ScreenWidth, maxy = -ScreenHeight;
+  // transform points, get min and max
+  for (unsigned f = 0; f < 8; ++f) {
+    float wc[2];
+    if (!glhProjectf(bbp[f].x, bbp[f].y, bbp[f].z, mmat[0], pmat[0], viewport, wc)) {
+      glScissor(0, 0, 0, 0);
+      return;
+    }
+    //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
+    minx = MIN(minx, wc[0]);
+    miny = MIN(miny, wc[1]);
+    maxx = MAX(maxx, wc[0]);
+    maxy = MAX(maxy, wc[1]);
+    /*
+    TVec tv = mmat.Transform(bbp[f]);
+    TVec prbb = pmat.Transform2(tv);
+    minx = MIN(minx, prbb.x);
+    miny = MIN(miny, prbb.y);
+    maxx = MAX(maxx, prbb.x);
+    maxy = MAX(maxy, prbb.y);
+    */
+  }
+
+  //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
+  if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
+    glScissor(0, 0, 0, 0);
+    return;
+  }
+
+  minx = MID(0, minx, ScreenWidth);
+  miny = MID(0, miny, ScreenHeight);
+  maxx = MID(0, maxx, ScreenWidth);
+  maxy = MID(0, maxy, ScreenHeight);
+  if (maxx < minx || maxy < miny) {
+    glScissor(0, 0, 0, 0);
+    return;
+  }
+
+  //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
+  glScissor(minx, miny, maxx-minx+1, maxy-miny+1);
+
+  //GCon->Logf("org=(%f,%f,%f); radius=%f; bbox=(%f,%f,%f)-(%f,%f,%f)", org.x, org.y, org.z, radius, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
+  //GCon->Logf("  trbbox=(%f,%f,%f)-(%f,%f,%f); prbbox=(%f,%f,%f)-(%f,%f,%f)", trbb[0].x, trbb[0].y, trbb[0].z, trbb[1].x, trbb[1].y, trbb[1].z, prbb[0].x, prbb[0].y, prbb[0].z, prbb[1].x, prbb[1].y, prbb[1].z);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ResetScissor
+//
+//==========================================================================
+void VOpenGLDrawer::ResetScissor () {
+  glScissor(0, 0, ScreenWidth, ScreenHeight);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetupView
 //
 //==========================================================================
