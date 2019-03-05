@@ -396,6 +396,8 @@ bool TFrustum::checkBox (const float bbox[6]) const {
 //  TFrustum::checkBoxEx
 //
 //  0: completely outside; >0: completely inside; <0: partially inside
+//  note that this won't work for big boxes: we need to do more checks, see
+//  http://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
 //
 //==========================================================================
 int TFrustum::checkBoxEx (const float bbox[6]) const {
@@ -407,6 +409,7 @@ int TFrustum::checkBoxEx (const float bbox[6]) const {
     // check reject point
     if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
       // on a back side (or on a plane)
+      check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
       return OUTSIDE;
     }
     if (res == INSIDE) {
@@ -441,6 +444,8 @@ bool TFrustum::checkPoint (const TVec &point) const {
 //  TFrustum::checkSphere
 //
 //  returns `false` is sphere is out of frustum (or frustum is not valid)
+//  note that this can give us false positives, see
+//  https://stackoverflow.com/questions/37512308/
 //
 //==========================================================================
 bool TFrustum::checkSphere (const TVec &center, const float radius) const {
@@ -468,7 +473,11 @@ bool TFrustum::checkBoxBack (const float bbox[6]) const {
   const TClipPlane *cp = &planes[Near];
   if (!cp->clipflag) return true; // don't need to clip against it
   // check reject point
-  return !cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]));
+  if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
+    check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
+    return false;
+  }
+  return true;
 }
 
 
@@ -484,6 +493,7 @@ int TFrustum::checkBoxExBack (const float bbox[6]) const {
   // check reject point
   if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
     // on a back side (or on a plane)
+    check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
     return OUTSIDE;
   }
   // check accept point
@@ -513,9 +523,5 @@ bool TFrustum::checkSphereBack (const TVec &center, const float radius) const {
   if (planeCount < 5) return true;
   const TClipPlane *cp = &planes[Near];
   if (!cp->clipflag) return true; // don't need to clip against it
-  if (radius <= 0) {
-    return !cp->PointOnBackTh(center);
-  } else {
-    return !cp->SphereOnBackTh(center, radius);
-  }
+  return !(radius > 0 ? cp->SphereOnBackTh(center, radius) : cp->PointOnBackTh(center));
 }

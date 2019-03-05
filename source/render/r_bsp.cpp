@@ -691,7 +691,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       // check reject point
       if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
         // completely outside of any plane means "invisible"
-        //continue;
+        check(cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
         return;
       }
       // is node entirely on screen?
