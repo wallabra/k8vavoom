@@ -121,7 +121,7 @@ public:
     AddClipRange(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
-  bool ClipIsBBoxVisible (const float BBox[6]) const;
+  bool ClipIsBBoxVisible (const float BBox[6], bool checkFrustum=false) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
   bool ClipCheckSubsector (const subsector_t *sub) const;
 #ifdef CLIENT

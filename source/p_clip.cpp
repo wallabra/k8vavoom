@@ -1080,10 +1080,10 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
 //  VViewClipper::ClipIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
+bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) const {
   if (!clip_enabled || !clip_bsp) return true;
   //k8: most bboxes has non-sensical z, so skip frustum checks
-  if (clip_frustum && clip_frustum_sub && Frustum.isValid()) {
+  if (checkFrustum && clip_frustum && clip_frustum_sub && Frustum.isValid()) {
     if (clip_frustum_only_back) {
       if (!Frustum.checkBoxBack(BBox)) return false;
     } else {
