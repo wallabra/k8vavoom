@@ -485,7 +485,6 @@ public:
   // [5] is forward (if `clipflag` is set)
   TClipPlane planes[6];
   unsigned planeCount; // total number of valid planes
-  unsigned bindex[6][6];
 
 public:
   TFrustum (ENoInit) {}

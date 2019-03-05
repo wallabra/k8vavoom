@@ -674,27 +674,26 @@ void VRenderLevelShared::RenderSubsector (int num) {
 //  VRenderLevelShared::RenderBSPNode
 //
 //  Renders all subsectors below a given node, traversing subtree
-// recursively. Just call with BSP root.
+//  recursively. Just call with BSP root.
 //
 //==========================================================================
 void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags) {
   if (ViewClip.ClipIsFull()) return;
+
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
   if (clipflags && clip_frustum && clip_frustum_bsp) {
-    for (int i = 0; i < 6; ++i) {
-      if (!(clipflags&view_frustum.planes[i].clipflag)) continue; // don't need to clip against it
-      if (view_frustum.planes[i].PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-
-      // generate accept and reject points
-      const unsigned *pindex = view_frustum.bindex[i];
-
-      TVec rejectpt(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]);
-      if (view_frustum.planes[i].PointOnSide(rejectpt)) continue;
-
+    const TClipPlane *cp = &view_frustum.planes[0];
+    for (unsigned i = 0; i < 6; ++i, ++cp) {
+      if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
+      if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
+      // check reject point
+      if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) continue;
       // is node entirely on screen?
-      TVec acceptpt(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]);
-      if (!view_frustum.planes[i].PointOnSide(acceptpt)) clipflags ^= view_frustum.planes[i].clipflag; // yes
+      if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
+        // yes, don't check this plane
+        clipflags ^= view_frustum.planes[i].clipflag;
+      }
     }
   }
 
