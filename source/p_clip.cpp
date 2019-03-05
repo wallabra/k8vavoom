@@ -55,7 +55,7 @@ static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some 
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_sub("clip_frustum_sub", FRUSTUM_SUB_CVAR_VALUE, "Clip subsectors with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_only_back("clip_frustum_only_back", !FRUSTUM_SUB_CVAR_VALUE, "Clip geometry only with back frustum plane?", CVAR_PreInit);
+VCvarB clip_frustum_only_back("clip_frustum_only_back", true, "Clip geometry only with back frustum plane?", CVAR_PreInit);
 static VCvarB clip_frustum_add_clipped("clip_frustum_add_clipped", true, "Add frustum-clipped geometry to clipped ranges?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
@@ -1012,11 +1012,7 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   */
 
   // check
-  if (clip_frustum_only_back) {
-    return Frustum.checkBoxExBack(bbox);
-  } else {
-    return Frustum.checkBoxEx(bbox);
-  }
+  return (clip_frustum_only_back ? Frustum.checkBoxExBack(bbox) : Frustum.checkBoxEx(bbox));
 }
 
 
@@ -1075,11 +1071,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   }
   */
 
-  if (clip_frustum_only_back) {
-    return Frustum.checkBoxBack(bbox);
-  } else {
-    return Frustum.checkBox(bbox);
-  }
+  return (clip_frustum_only_back ? Frustum.checkBoxBack(bbox) : Frustum.checkBox(bbox));
 }
 
 
