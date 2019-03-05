@@ -58,12 +58,12 @@ ControlMode VTimidityAudioCodec::MyControlMode = {
 };
 
 #if defined(_WIN32)
-static VCvarS s_timidity_patches("snd_timidity_patches", "\\TIMIDITY", "Path to timidity patches.", CVAR_Archive);
+static VCvarS s_timidity_patches("snd_timidity_patches", "\\TIMIDITY", "Path to timidity patches.", CVAR_Archive|CVAR_PreInit);
 #else
-static VCvarS s_timidity_patches("snd_timidity_patches", "/usr/share/timidity", "Path to timidity patches.", CVAR_Archive);
+static VCvarS s_timidity_patches("snd_timidity_patches", "/usr/share/timidity", "Path to timidity patches.", CVAR_Archive|CVAR_PreInit);
 #endif
-static VCvarS s_timidity_sf2_file("snd_timidity_sf2_file", "", "Some timidity crap.", CVAR_Archive);
-static VCvarI s_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive);
+static VCvarS s_timidity_sf2_file("snd_timidity_sf2_file", "", "Some timidity crap.", CVAR_Archive|CVAR_PreInit);
+static VCvarI s_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive|CVAR_PreInit);
 
 static VStr lastSF2Used = VStr();
 
@@ -140,11 +140,15 @@ void VTimidityAudioCodec::Restart () {
 //==========================================================================
 int VTimidityAudioCodec::ctl_msg (int type, int verbosity_level, const char *fmt, ...) {
   guard(VTimidityAudioCodec::ctl_msg);
+  if (s_timidity_verbosity < 0) return 0;
   char Buf[1024];
   va_list ap;
   if ((type == CMSG_TEXT || type == CMSG_INFO || type == CMSG_WARNING) && s_timidity_verbosity < verbosity_level) return 0;
   va_start(ap, fmt);
   vsnprintf(Buf, sizeof(Buf), fmt, ap);
+  size_t slen = strlen(Buf);
+  while (slen > 0 && (Buf[slen-1] == '\r' || Buf[slen-1] == '\n')) --slen;
+  Buf[slen] = 0;
   GCon->Log(Buf);
   va_end(ap);
   return 0;
