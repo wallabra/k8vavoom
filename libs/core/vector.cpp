@@ -435,7 +435,7 @@ bool TFrustum::checkPoint (const TVec &point) const {
   if (!planeCount) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
-    if (!cp->clipflag)  continue; // don't need to clip against it
+    if (!cp->clipflag) continue; // don't need to clip against it
     if (cp->PointOnBackTh(point)) return false; // viewer is in back side or on plane
   }
   return true;
@@ -461,4 +461,70 @@ bool TFrustum::checkSphere (const TVec &center, const float radius) const {
     }
   }
   return true;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkBoxBack
+//
+//==========================================================================
+bool TFrustum::checkBoxBack (const float *bbox) const {
+  if (planeCount < 5) return true;
+  const TClipPlane *cp = &planes[Near];
+  const unsigned *pindex = &bindex[Near][0];
+  if (!cp->clipflag) return true; // don't need to clip against it
+  // check reject point
+  return !cp->PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkBoxExBack
+//
+//==========================================================================
+int TFrustum::checkBoxExBack (const float *bbox) const {
+  if (planeCount < 5) return INSIDE;
+  const TClipPlane *cp = &planes[Near];
+  const unsigned *pindex = &bindex[Near][0];
+  if (!cp->clipflag) return true; // don't need to clip against it
+  // check reject point
+  if (cp->PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) {
+    // on a back side (or on a plane)
+    return OUTSIDE;
+  }
+  // check accept point
+  if (cp->PointOnBackTh(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]]))) return PARTIALLY;
+  return INSIDE;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkPointBack
+//
+//==========================================================================
+bool TFrustum::checkPointBack (const TVec &point) const {
+  if (planeCount < 5) return true;
+  const TClipPlane *cp = &planes[Near];
+  if (!cp->clipflag) return true; // don't need to clip against it
+  return !cp->PointOnBackTh(point);
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkSphereBack
+//
+//==========================================================================
+bool TFrustum::checkSphereBack (const TVec &center, const float radius) const {
+  if (planeCount < 5) return true;
+  const TClipPlane *cp = &planes[Near];
+  if (!cp->clipflag) return true; // don't need to clip against it
+  if (radius <= 0) {
+    return !cp->PointOnBackTh(center);
+  } else {
+    return !cp->SphereOnBackTh(center, radius);
+  }
 }

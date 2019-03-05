@@ -526,6 +526,18 @@ public:
 
   // returns `false` is sphere is out of frustum (or frustum is not valid)
   bool checkSphere (const TVec &center, const float radius) const;
+
+
+  bool checkBoxBack (const float bbox[6]) const;
+
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  int checkBoxExBack (const float bbox[6]) const;
+
+  // returns `false` is point is out of frustum (or frustum is not valid)
+  bool checkPointBack (const TVec &point) const;
+
+  // returns `false` is sphere is out of frustum (or frustum is not valid)
+  bool checkSphereBack (const TVec &center, const float radius) const;
 };
 
 
