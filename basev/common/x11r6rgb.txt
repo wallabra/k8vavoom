@@ -751,3 +751,12 @@
 139   0   0   DarkRed
 144 238 144   light green
 144 238 144   LightGreen
+
+! some more colors from ketmar
+ 80  80  96   Indigo
+143   0   0   Deep Red
+143   0   0   DeepRed
+255 175  63   Bright Brown
+255 175  63   BrightBrown
+207 223 144   Bleached Bone
+207 223 144   BleachedBone
