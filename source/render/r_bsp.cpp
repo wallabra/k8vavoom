@@ -686,7 +686,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     const TClipPlane *cp = &view_frustum.planes[0];
     for (unsigned i = 0; i < 6; ++i, ++cp) {
       if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
-      if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
+      //k8: this check is always true, because view origin is outside of frustum (oops)
+      //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
       // check reject point
       if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
         // completely outside of any plane means "invisible"
