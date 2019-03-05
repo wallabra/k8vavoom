@@ -251,7 +251,7 @@ VStr VFilesDir::LumpFileName (int LumpNum) {
 //  VFilesDir::IterateNS
 //
 //==========================================================================
-int VFilesDir::IterateNS (int Start, EWadNamespace NS) {
+int VFilesDir::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
   /*
   if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
   if (InNS != WADNS_Global) return -1;

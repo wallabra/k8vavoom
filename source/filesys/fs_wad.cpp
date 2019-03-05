@@ -408,9 +408,9 @@ int VWadFile::CheckNumForName (VName LumpName, EWadNamespace NS, bool wantFirst)
 //  VWadFile::IterateNS
 //
 //==========================================================================
-int VWadFile::IterateNS (int Start, EWadNamespace NS) {
+int VWadFile::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
   if (NS > WADNS_ZipSpecial) NS = WADNS_Global;
-  return VPakFileBase::IterateNS(Start, NS);
+  return VPakFileBase::IterateNS(Start, NS, allowEmptyName8);
 }
 
 

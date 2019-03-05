@@ -79,26 +79,6 @@ static const char *moreresdirs[] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// information about a file in the zipfile
-/*
-struct VPakFileInfo {
-  VStr fileName; // name of the file
-  vuint16 flag; // general purpose bit flag
-  vuint16 compression; // compression method
-  vuint32 crc32; // crc-32
-  vuint32 packedsize; // compressed size
-  vuint32 filesize; // uncompressed size
-  vuint16 filenamesize; // filename length
-  vuint32 pakdataofs; // relative offset of local header
-  // for WAD-like access
-  VName lumpName;
-  vint32 lumpNamespace;
-  int nextLump; // next lump with the same name
-};
-*/
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 class VZipFileReader : public VStream {
 private:
   //enum { UNZ_BUFSIZE = 16384 };

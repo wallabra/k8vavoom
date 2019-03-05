@@ -573,7 +573,23 @@ VStr W_FullLumpName (int lump) {
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
-  return w->GetPrefix()+":"+*(w->LumpFileName(lumpindex));
+  return w->GetPrefix()+":"+(w->LumpFileName(lumpindex));
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  W_RealLumpName
+//
+//==========================================================================
+VStr W_RealLumpName (int lump) {
+  guard(W_RealLumpName);
+  if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr();
+  VSearchPath *w = GET_LUMP_FILE(lump);
+  int lumpindex = LUMP_INDEX(lump);
+  //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
+  return w->LumpFileName(lumpindex);
   unguard;
 }
 
@@ -814,19 +830,31 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
   if (fileid < 0 || fileid >= SearchPaths.length()) return VStr();
   int found = 0xffff;
   bool doom1 = false;
-  for (int lump = SearchPaths[fileid]->IterateNS(0, WADNS_Global); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, WADNS_Global)) {
+  char doom1ch = 'e';
+  VStr longname;
+  for (int lump = SearchPaths[fileid]->IterateNS(0, (EWadNamespace)-1/*WADNS_Global*/, true); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, (EWadNamespace)-1/*WADNS_Global*/, true)) {
+    const char *name;
     VName ln = SearchPaths[fileid]->LumpName(lump);
-    if (ln == NAME_None) continue;
-    const char *name = *ln;
+    if (ln != NAME_None) {
+      name = *ln;
+    } else {
+      longname = SearchPaths[fileid]->LumpFileName(lump);
+      if (longname.isEmpty()) continue;
+      if (!longname.startsWithNoCase("maps/")) continue;
+      longname = longname.StripExtension().toLowerCase();
+      name = *longname+5;
+      if (strchr(name, '/')) continue;
+    }
     //GCon->Logf("*** <%s>", name);
-    // doom1
-    if (name[0] == 'e' && name[1] && name[2] == 'm' && name[3] && !name[4]) {
+    // doom1 (or kdizd)
+    if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
       int e = VStr::digitInBase(name[1], 10);
       int m = VStr::digitInBase(name[3], 10);
       if (e < 0 || m < 0) continue;
-      if (e >= 1 && e <= 4 && m >= 1 && m <= 9) {
+      if (e >= 1 && e <= 5 && m >= 1 && m <= 9) {
         int n = e*10+m;
         if (!doom1 || n < found) {
+          doom1ch = name[0];
           doom1 = true;
           found = n;
           if (mapnum) *mapnum = n;
@@ -850,7 +878,7 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
     }
   }
   if (found < 0xffff) {
-    if (doom1) return VStr(va("e%dm%d", found/10, found%10));
+    if (doom1) return VStr(va("%c%dm%d", doom1ch, found/10, found%10));
     return VStr(va("map%02d", found));
   }
   return VStr();

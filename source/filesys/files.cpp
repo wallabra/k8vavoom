@@ -1059,12 +1059,14 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
         fsys_no_dup_reports = true;
         W_CloseAuxiliary();
         for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
+        //GCon->Log("**********************************");
         VStr mname = W_FindMapInAuxuliaries(nullptr);
         W_CloseAuxiliary();
         fsys_no_dup_reports = oldReport;
         if (!mname.isEmpty()) {
+          //GCon->Logf("MNAME: <%s>", *mname);
           // found map, find DooM or DooM II game definition
-          VStr gamename = (mname[0] == 'e' ? "doom" : "doom2");
+          VStr gamename = (mname[0] == 'm' ? "doom2" : "doom");
           for (int gi = 0; gi < games.length(); ++gi) {
             version_t &G = games[gi];
             if (G.param.Cmp(gamename) == 0) {

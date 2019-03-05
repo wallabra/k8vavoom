@@ -529,10 +529,10 @@ int VFileDirectory::findLastLump (VName lname, vint32 ns) {
 //  VFileDirectory::nextLump
 //
 //==========================================================================
-int VFileDirectory::nextLump (vint32 curridx, vint32 ns) {
+int VFileDirectory::nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8) {
   if (curridx < 0) curridx = 0;
   for (; curridx < files.length(); ++curridx) {
-    if (files[curridx].lumpName == NAME_None) continue;
+    if (!allowEmptyName8 && files[curridx].lumpName == NAME_None) continue;
     if (ns < 0 || files[curridx].lumpNamespace == ns) return curridx;
   }
   return -1;
@@ -690,8 +690,8 @@ VStr VPakFileBase::LumpFileName (int Lump) {
 //  VPakFileBase::IterateNS
 //
 //==========================================================================
-int VPakFileBase::IterateNS (int Start, EWadNamespace NS) {
-  return pakdir.nextLump(Start, NS);
+int VPakFileBase::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
+  return pakdir.nextLump(Start, NS, allowEmptyName8);
 }
 
 

@@ -87,6 +87,7 @@ int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts);
 int W_LumpLength (int lump);
 VName W_LumpName (int lump);
 VStr W_FullLumpName (int lump);
+VStr W_RealLumpName (int lump); // without pak prefix
 VStr W_FullPakNameForLump (int lump);
 VStr W_FullPakNameByFile (int fidx); // pass result of `W_LumpFile()`
 int W_LumpFile (int lump);

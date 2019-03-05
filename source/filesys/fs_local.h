@@ -63,7 +63,7 @@ public:
   virtual int LumpLength (int LumpNum) = 0;
   virtual VName LumpName (int LumpNum) = 0;
   virtual VStr LumpFileName (int LumpNum) = 0;
-  virtual int IterateNS (int Start, EWadNamespace NS) = 0;
+  virtual int IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8=false) = 0;
   virtual VStream *CreateLumpReaderNum (int LumpNum) = 0;
   virtual void RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) = 0;
   virtual VStr GetPrefix () = 0; // for logging
@@ -98,7 +98,7 @@ public:
   virtual int LumpLength (int) override;
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
+  virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
   virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
   virtual VStr GetPrefix () override { return path; }
 };
@@ -186,7 +186,7 @@ public:
   int findFirstLump (VName lname, vint32 ns);
   int findLastLump (VName lname, vint32 ns);
 
-  int nextLump (vint32 curridx, vint32 ns);
+  int nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8=false);
 };
 
 
@@ -215,7 +215,7 @@ public:
   virtual int LumpLength (int) override;
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
+  virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
   //virtual VStream *CreateLumpReaderNum (int) override;
   virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
 
@@ -264,7 +264,7 @@ public:
   //virtual int LumpLength (int) override;
   //virtual VName LumpName (int) override;
   //virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
+  virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
   //virtual bool FileExists (const VStr &) override;
   virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
   //virtual VStr GetPrefix () override { return Name; }
