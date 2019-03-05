@@ -42,6 +42,11 @@ struct VViewClipper::VClipNode {
 extern VCvarF r_lights_radius;
 extern VCvarF fov;
 #endif
+#ifdef VAVOOM_K8_DEVELOPER
+# define FRUSTUM_SUB_CVAR_VALUE  true
+#else
+# define FRUSTUM_SUB_CVAR_VALUE  false
+#endif
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
@@ -49,7 +54,9 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_sub("clip_frustum_sub", true, "Clip subsectors with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_sub("clip_frustum_sub", FRUSTUM_SUB_CVAR_VALUE, "Clip subsectors with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_only_back("clip_frustum_only_back", !FRUSTUM_SUB_CVAR_VALUE, "Clip geometry only with back frustum plane?", CVAR_PreInit);
+static VCvarB clip_frustum_add_clipped("clip_frustum_add_clipped", true, "Add frustum-clipped geometry to clipped ranges?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
@@ -277,8 +284,11 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
 
   const line_t *ldef = seg->linedef;
 
-  if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
-  if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
+  if (ldef->alpha < 1.0f) return false; // skip translucent walls
+  //k8: this was checked by caller
+  //if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
+  //k8: this was checked by caller
+  //if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
 
   // mirrors and horizons always block the view
   switch (ldef->special) {
@@ -574,9 +584,9 @@ VViewClipper::~VViewClipper () {
 //
 //==========================================================================
 VViewClipper::VClipNode *VViewClipper::NewClipNode () {
-  VClipNode *Ret = FreeClipNodes;
-  if (Ret) FreeClipNodes = Ret->Next; else Ret = new VClipNode();
-  return Ret;
+  VClipNode *res = FreeClipNodes;
+  if (res) FreeClipNodes = res->Next; else res = new VClipNode();
+  return res;
 }
 
 
@@ -757,6 +767,7 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
   if (!Range.ClipHead) {
     // no ranges, everything is clipped away
     //DoAddClipRange((VFloat)0, (VFloat)360);
+    /*
     // remove free clip nodes
     VClipNode *Node = FreeClipNodes;
     while (Node) {
@@ -772,6 +783,13 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
       delete Node;
       Node = Next;
     }
+    */
+    // remove used clip nodes
+    if (ClipHead) {
+      ClipTail->Next = FreeClipNodes;
+      FreeClipNodes = ClipHead;
+    }
+    ClipHead = ClipTail = nullptr;
     // add new clip node
     ClipHead = NewClipNode();
     ClipTail = ClipHead;
@@ -912,53 +930,54 @@ bool VViewClipper::IsRangeVisible (const VFloat From, const VFloat To) const {
 //
 //==========================================================================
 inline static void CreateBBVerts (TVec &v1, TVec &v2, const float BBox[6], const TVec &origin) {
+  enum { MIN_X, MIN_Y, MIN_Z, MAX_X, MAX_Y, MAX_Z };
   //v1 = TVec(0, 0, 0);
   //v2 = TVec(0, 0, 0);
-  if (BBox[0] > origin.x) {
-    if (BBox[1] > origin.y) {
-      v1.x = BBox[3];
-      v1.y = BBox[1];
-      v2.x = BBox[0];
-      v2.y = BBox[4];
-    } else if (BBox[4] < origin.y) {
-      v1.x = BBox[0];
-      v1.y = BBox[1];
-      v2.x = BBox[3];
-      v2.y = BBox[4];
+  if (BBox[MIN_X] > origin.x) {
+    if (BBox[MIN_Y] > origin.y) {
+      v1.x = BBox[MAX_X];
+      v1.y = BBox[MIN_Y];
+      v2.x = BBox[MIN_X];
+      v2.y = BBox[MAX_Y];
+    } else if (BBox[MAX_Y] < origin.y) {
+      v1.x = BBox[MIN_X];
+      v1.y = BBox[MIN_Y];
+      v2.x = BBox[MAX_X];
+      v2.y = BBox[MAX_Y];
     } else {
-      v1.x = BBox[0];
-      v1.y = BBox[1];
-      v2.x = BBox[0];
-      v2.y = BBox[4];
+      v1.x = BBox[MIN_X];
+      v1.y = BBox[MIN_Y];
+      v2.x = BBox[MIN_X];
+      v2.y = BBox[MAX_Y];
     }
-  } else if (BBox[3] < origin.x) {
-    if (BBox[1] > origin.y) {
-      v1.x = BBox[3];
-      v1.y = BBox[4];
-      v2.x = BBox[0];
-      v2.y = BBox[1];
-    } else if (BBox[4] < origin.y) {
-      v1.x = BBox[0];
-      v1.y = BBox[4];
-      v2.x = BBox[3];
-      v2.y = BBox[1];
+  } else if (BBox[MAX_X] < origin.x) {
+    if (BBox[MIN_Y] > origin.y) {
+      v1.x = BBox[MAX_X];
+      v1.y = BBox[MAX_Y];
+      v2.x = BBox[MIN_X];
+      v2.y = BBox[MIN_Y];
+    } else if (BBox[MAX_Y] < origin.y) {
+      v1.x = BBox[MIN_X];
+      v1.y = BBox[MAX_Y];
+      v2.x = BBox[MAX_X];
+      v2.y = BBox[MIN_Y];
     } else {
-      v1.x = BBox[3];
-      v1.y = BBox[4];
-      v2.x = BBox[3];
-      v2.y = BBox[1];
+      v1.x = BBox[MAX_X];
+      v1.y = BBox[MAX_Y];
+      v2.x = BBox[MAX_X];
+      v2.y = BBox[MIN_Y];
     }
   } else {
-    if (BBox[1] > origin.y) {
-      v1.x = BBox[3];
-      v1.y = BBox[1];
-      v2.x = BBox[0];
-      v2.y = BBox[1];
+    if (BBox[MIN_Y] > origin.y) {
+      v1.x = BBox[MAX_X];
+      v1.y = BBox[MIN_Y];
+      v2.x = BBox[MIN_X];
+      v2.y = BBox[MIN_Y];
     } else {
-      v1.x = BBox[0];
-      v1.y = BBox[4];
-      v2.x = BBox[3];
-      v2.y = BBox[4];
+      v1.x = BBox[MIN_X];
+      v1.y = BBox[MAX_Y];
+      v2.x = BBox[MAX_X];
+      v2.y = BBox[MAX_Y];
     }
   }
   v1.z = v2.z = 0;
@@ -993,7 +1012,11 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   */
 
   // check
-  return Frustum.checkBoxEx(bbox);
+  if (clip_frustum_only_back) {
+    return Frustum.checkBoxExBack(bbox);
+  } else {
+    return Frustum.checkBoxEx(bbox);
+  }
 }
 
 
@@ -1009,6 +1032,29 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   const TVec sv2 = *seg->v2;
   const sector_t *bssec = seg->front_sub->sector;
   float bbox[6];
+  if (sv1.x < sv2.x) {
+    bbox[0] = sv1.x;
+    bbox[3] = sv2.x;
+  } else {
+    bbox[0] = sv2.x;
+    bbox[3] = sv1.x;
+  }
+  if (sv1.y < sv2.y) {
+    bbox[1] = sv1.y;
+    bbox[4] = sv2.y;
+  } else {
+    bbox[1] = sv2.y;
+    bbox[4] = sv1.y;
+  }
+  // floor
+  const float fz1 = bssec->floor.GetPointZ(sv1);
+  const float fz2 = bssec->floor.GetPointZ(sv2);
+  bbox[2] = MIN(fz1, fz2);
+  // ceiling
+  const float cz1 = bssec->ceiling.GetPointZ(sv1);
+  const float cz2 = bssec->ceiling.GetPointZ(sv2);
+  bbox[5] = MAX(cz1, cz2);
+  /*
   // min
   bbox[0] = MIN(sv1.x, sv2.x);
   bbox[1] = MIN(sv1.y, sv2.y);
@@ -1017,6 +1063,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   bbox[3] = MAX(sv1.x, sv2.x);
   bbox[4] = MAX(sv1.y, sv2.y);
   bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
+  */
 
   /*
   if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
@@ -1028,7 +1075,11 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   }
   */
 
-  return Frustum.checkBox(bbox);
+  if (clip_frustum_only_back) {
+    return Frustum.checkBoxBack(bbox);
+  } else {
+    return Frustum.checkBox(bbox);
+  }
 }
 
 
@@ -1040,7 +1091,13 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
 bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
   if (!clip_enabled || !clip_bsp) return true;
   //k8: most bboxes has non-sensical z, so skip frustum checks
-  //if (clip_frustum && clip_frustum_sub && Frustum.isValid() && !Frustum.checkBox(BBox)) return false;
+  if (clip_frustum && clip_frustum_sub && Frustum.isValid()) {
+    if (clip_frustum_only_back) {
+      if (!Frustum.checkBoxBack(BBox)) return false;
+    } else {
+      if (!Frustum.checkBox(BBox)) return false;
+    }
+  }
   if (!ClipHead) return true; // no clip nodes yet
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
       BBox[1] <= Origin.y && BBox[4] >= Origin.y)
@@ -1062,7 +1119,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
 bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const {
   if (!clip_enabled || !clip_subregion) return true;
   int sfres = 1;
-  if (clip_frustum && clip_frustum_sub && Frustum.isValid()) {
+  if (clip_frustum && clip_frustum_sub /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
     if (!sfres) return false;
   }
@@ -1090,7 +1147,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
   if (!clip_enabled) return true;
   int sfres = 1;
-  if (clip_frustum && clip_frustum_sub && Frustum.isValid()) {
+  if (clip_frustum && clip_frustum_sub /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
     if (!sfres) return false;
   }
@@ -1100,6 +1157,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
     if (IsRangeVisible(v2, v1)) {
+      if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
         return true;
       }
@@ -1142,7 +1200,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane?
 
   if (clip_skip_slopes_1side) {
-    // do not clip with slopes, if it has no midsec
+    // do not clip with slopes, if it has no midtex
     if ((ldef->flags&ML_TWOSIDED) == 0) {
       int fcpic, ffpic;
       TPlane ffplane, fcplane;
@@ -1155,13 +1213,16 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
 
-  if (Mirror || skipSphereCheck || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
-    if (!MirrorCheck(Mirror, v1, v2)) return;
-    // for 2-sided line, determine if it can be skipped
-    if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
-      if (ldef->alpha < 1.0f) return; // skip translucent walls
-      if (!IsSegAClosedSomething(*this, seg)) return;
-    }
+  if (!MirrorCheck(Mirror, v1, v2)) return;
+
+  if (!skipSphereCheck && clip_frustum && clip_frustum_sub && !CheckSegFrustum(seg)) {
+    if (clip_frustum_add_clipped) AddClipRange(v2, v1); //k8: not sure
+    return;
+  }
+
+  // for 2-sided line, determine if it can be skipped
+  if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
+    if (!IsSegAClosedSomething(*this, seg)) return;
   }
 
   AddClipRange(v2, v1);
@@ -1181,16 +1242,29 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
   // `-1` means "slower checks"
   const int ssFrustum = (clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
 
-  const seg_t *seg = &Level->Segs[sub->firstline];
-  for (int count = sub->numlines; count--; ++seg) {
-    if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-    CheckAddClipSeg(seg, Mirror, (ssFrustum > 0));
+  if (ssFrustum) {
+    const seg_t *seg = &Level->Segs[sub->firstline];
+    for (int count = sub->numlines; count--; ++seg) {
+      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
+      CheckAddClipSeg(seg, Mirror, (ssFrustum > 0));
+    }
+  } else {
+    // completely outside
+    //if (!doPoly) return;
+    const seg_t *seg = &Level->Segs[sub->firstline];
+    for (int count = sub->numlines; count--; ++seg) {
+      if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
+      const TVec &v1 = *seg->v1;
+      const TVec &v2 = *seg->v2;
+      if (!MirrorCheck(Mirror, v1, v2)) continue;
+      if (clip_frustum_add_clipped) AddClipRange(v2, v1); //k8: not sure
+    }
   }
 
   if (doPoly) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      seg = *polySeg;
+      const seg_t *seg = *polySeg;
       if (IsGoodSegForPoly(*this, seg)) {
         CheckAddClipSeg(seg, Mirror);
       }
@@ -1314,7 +1388,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
   if (!skipSphereCheck && !seg->SphereTouches(CurrLightPos, CurrLightRadius)) return;
 
   if (clip_skip_slopes_1side) {
-    // do not clip with slopes, if it has no midsec
+    // do not clip with slopes, if it has no midtex
     if ((ldef->flags&ML_TWOSIDED) == 0) {
       int fcpic, ffpic;
       TPlane ffplane, fcplane;
@@ -1327,27 +1401,10 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
 
-  if (Mirror) {
-    // clip seg with mirror plane
-    const float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
-    if (Dist1 <= 0.0f) {
-      const float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
-      if (Dist2 <= 0.0f) return;
-    }
-
-    //if (Dist1 <= 0.0f && Dist2 <= 0.0f) return;
-
-    // and clip it while we are here
-    // k8: really?
-    /*
-         if (Dist1 > 0.0f && Dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
-    else if (Dist2 > 0.0f && Dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
-    */
-  }
+  if (!MirrorCheck(Mirror, v1, v2)) return;
 
   // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
-    if (ldef->alpha < 1.0f) return; // skip translucent walls
+  if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
     if (!IsSegAClosedSomething(*this, seg, &CurrLightPos, &CurrLightRadius)) return;
   }
 
