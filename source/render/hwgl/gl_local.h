@@ -747,10 +747,13 @@ protected:
   GLint SurfModelViewOrigin;
   GLint SurfModelAllowTransparency;
 
-  GLhandleARB SurfPartProgram;
-  GLint SurfPartTexCoordLoc;
-  GLint SurfPartLightValLoc;
-  GLint SurfPartSmoothParticleLoc;
+  GLhandleARB SurfPartSqProgram;
+  GLint SurfPartSqTexCoordLoc;
+  GLint SurfPartSqLightValLoc;
+  GLhandleARB SurfPartSmProgram;
+  GLint SurfPartSmTexCoordLoc;
+  GLint SurfPartSmLightValLoc;
+  //GLint SurfPartSmoothParticleLoc;
 
   GLhandleARB ShadowsAmbientProgram;
   GLint ShadowsAmbientLightLoc;

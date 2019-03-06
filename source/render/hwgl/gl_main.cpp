@@ -772,11 +772,17 @@ void VOpenGLDrawer::InitResolution () {
   SurfModelAllowTransparency = p_glGetUniformLocationARB(SurfModelProgram, "AllowTransparency");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_part.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_part.fs");
-  SurfPartProgram = CreateProgram(VertexShader, FragmentShader);
-  SurfPartTexCoordLoc = p_glGetAttribLocationARB(SurfPartProgram, "TexCoord");
-  SurfPartLightValLoc = p_glGetAttribLocationARB(SurfPartProgram, "LightVal");
-  SurfPartSmoothParticleLoc = p_glGetUniformLocationARB(SurfPartProgram, "SmoothParticle");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_part_sq.fs");
+  SurfPartSqProgram = CreateProgram(VertexShader, FragmentShader);
+  SurfPartSqTexCoordLoc = p_glGetAttribLocationARB(SurfPartSqProgram, "TexCoord");
+  SurfPartSqLightValLoc = p_glGetAttribLocationARB(SurfPartSqProgram, "LightVal");
+  //SurfPartSqSmoothParticleLoc = p_glGetUniformLocationARB(SurfPartSqProgram, "SmoothParticle");
+
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_part_sm.fs");
+  SurfPartSmProgram = CreateProgram(VertexShader, FragmentShader);
+  SurfPartSmTexCoordLoc = p_glGetAttribLocationARB(SurfPartSmProgram, "TexCoord");
+  SurfPartSmLightValLoc = p_glGetAttribLocationARB(SurfPartSmProgram, "LightVal");
+  //SurfPartSmSmoothParticleLoc = p_glGetUniformLocationARB(SurfPartSmProgram, "SmoothParticle");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_ambient.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_ambient.fs");

@@ -1551,8 +1551,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 void VOpenGLDrawer::StartParticles () {
   guard(VOpenGLDrawer::StartParticles);
   glEnable(GL_BLEND);
-  p_glUseProgramObjectARB(SurfPartProgram);
-  p_glUniform1iARB(SurfPartSmoothParticleLoc, gl_smooth_particles);
+  p_glUseProgramObjectARB(gl_smooth_particles ? SurfPartSmProgram : SurfPartSqProgram);
+  //p_glUniform1iARB(SurfPartSmoothParticleLoc, gl_smooth_particles);
   glBegin(GL_QUADS);
   unguard;
 }
@@ -1565,21 +1565,29 @@ void VOpenGLDrawer::StartParticles () {
 //==========================================================================
 void VOpenGLDrawer::DrawParticle (particle_t *p) {
   guard(VOpenGLDrawer::DrawParticle);
-  float r = ((p->colour >> 16) & 255) / 255.0f;
-  float g = ((p->colour >> 8) & 255) / 255.0f;
-  float b = (p->colour & 255) / 255.0f;
-  float a = ((p->colour >> 24) & 255) / 255.0f;
-  p_glVertexAttrib4fARB(SurfPartLightValLoc, r, g, b, a);
-  p_glVertexAttrib2fARB(SurfPartTexCoordLoc, -1, -1);
+  GLint lvLoc, tcLoc;
+  if (gl_smooth_particles) {
+    lvLoc = SurfPartSmLightValLoc;
+    tcLoc = SurfPartSmTexCoordLoc;
+  } else {
+    lvLoc = SurfPartSqLightValLoc;
+    tcLoc = SurfPartSqTexCoordLoc;
+  }
+  const float r = ((p->colour >> 16) & 255) / 255.0f;
+  const float g = ((p->colour >> 8) & 255) / 255.0f;
+  const float b = (p->colour & 255) / 255.0f;
+  const float a = ((p->colour >> 24) & 255) / 255.0f;
+  p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
+  p_glVertexAttrib2fARB(tcLoc, -1, -1);
   glVertex(p->org - viewright * p->Size + viewup * p->Size);
-  p_glVertexAttrib4fARB(SurfPartLightValLoc, r, g, b, a);
-  p_glVertexAttrib2fARB(SurfPartTexCoordLoc, 1, -1);
+  p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
+  p_glVertexAttrib2fARB(tcLoc, 1, -1);
   glVertex(p->org + viewright * p->Size + viewup * p->Size);
-  p_glVertexAttrib4fARB(SurfPartLightValLoc, r, g, b, a);
-  p_glVertexAttrib2fARB(SurfPartTexCoordLoc, 1, 1);
+  p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
+  p_glVertexAttrib2fARB(tcLoc, 1, 1);
   glVertex(p->org + viewright * p->Size - viewup * p->Size);
-  p_glVertexAttrib4fARB(SurfPartLightValLoc, r, g, b, a);
-  p_glVertexAttrib2fARB(SurfPartTexCoordLoc, -1, 1);
+  p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
+  p_glVertexAttrib2fARB(tcLoc, -1, 1);
   glVertex(p->org - viewright * p->Size - viewup * p->Size);
   unguard;
 }
