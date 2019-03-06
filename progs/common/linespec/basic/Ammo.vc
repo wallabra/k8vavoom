@@ -51,13 +51,30 @@ final class!Ammo GetParentAmmo () {
 //==========================================================================
 final int k8GetAmmoKingMax () {
   if (!GetCvarB('k8AmmoKing')) return MaxAmount;
-  int max = 666;
-  if (GetClassName(Class) == 'BDW_RifleClip' || GetClassName(Class) == 'BDW_ShotgunShell' ||
-      GetClassName(GetClassReplacee(Class)) == 'Clip' || GetClassName(GetClassReplacee(Class)) == 'Shell')
-  {
-    if (GetCvarB('k8HSEnabled')) max = 444; // headshots ARE powerful!
+  int amax = 666;
+  bool isSpecial = false;
+  switch (GetClassName(Class)) {
+    case 'BDW_RifleClip':
+    case 'BDW_ShotgunShell':
+      isSpecial = true;
+      break;
+    // loaded ammo
+    case 'BDW_RifleAmmo':
+    case 'BDW_ShotgunAmmo':
+      return Amount;
   }
-  return max;
+  if (!isSpecial) {
+    switch (GetClassName(GetClassReplacee(Class))) {
+      case 'Clip':
+      case 'Shell':
+        isSpecial = true;
+        break;
+    }
+  }
+  if (isSpecial) {
+    if (GetCvarB('k8HSEnabled')) amax = 444; // headshots ARE powerful!
+  }
+  return max(amax, MaxAmount);
 }
 
 
@@ -68,7 +85,9 @@ final int k8GetAmmoKingMax () {
 //==========================================================================
 override bool HandlePickup (Inventory Item) {
   if (Item.Class == Class || (Ammo(Item) && Ammo(Item).GetParentAmmo() == Class)) {
-    if (Amount == /*MaxAmount*/k8GetAmmoKingMax()) return true; // we're full
+    int amax = k8GetAmmoKingMax();
+    int oldammo = Amount;
+    if (oldammo >= amax) return true; // we're full
 
     int ReceiveAmount = Item.Amount;
     if (!Item.bIgnoreSkill) {
@@ -76,10 +95,10 @@ override bool HandlePickup (Inventory Item) {
       ReceiveAmount = int(float(ReceiveAmount)*Level.World.SkillAmmoFactor);
     }
 
-    int oldammo = Amount;
 
-    Amount += ReceiveAmount;
-    if (Amount > /*MaxAmount*/k8GetAmmoKingMax()) Amount = /*MaxAmount*/k8GetAmmoKingMax();
+    //Amount += ReceiveAmount;
+    //if (Amount > /*MaxAmount*/k8GetAmmoKingMax()) Amount = /*MaxAmount*/k8GetAmmoKingMax();
+    Amount = min(amax, oldammo+ReceiveAmount);
 
     // if non zero ammo, don't change up weapons, player was lower on purpose
     if (oldammo <= 0 && Owner.Player) PlayerEx(Owner.Player).GotAmmo(self);
