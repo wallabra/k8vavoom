@@ -27,7 +27,7 @@
 #include "gamedefs.h"
 #include "r_tex.h"
 
-#ifdef CLIENT
+//#ifdef CLIENT
 extern "C"
 {
 #ifdef VAVOOM_USE_LIBJPG
@@ -36,16 +36,16 @@ extern "C"
 # include "../../libs/jpeg/jpeglib.h"
 #endif
 }
-#endif
+//#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#ifdef CLIENT
+//#ifdef CLIENT
 struct VJpegClientData {
   VStream *Strm;
   JOCTET Buffer[4096];
 };
-#endif
+//#endif
 
 static VCvarI jpeg_quality("jpeg_quality", "80", "Jpeg screenshot quality.", CVAR_Archive);
 
