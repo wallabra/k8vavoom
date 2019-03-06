@@ -92,56 +92,81 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surfs->plane = plane;
     }
 
-    float mins = 99999.0f;
-    float maxs = -99999.0f;
-    for (int i = 0; i < surfs->count; ++i) {
-      float dot = DotProduct(surfs->verts[i], texinfo->saxis)+texinfo->soffs;
-      if (dot < mins) mins = dot;
-      if (dot > maxs) maxs = dot;
-    }
-
-    int bmins = (int)floor(mins/16);
-    int bmaxs = (int)ceil(maxs/16);
-    surfs->texturemins[0] = bmins*16;
-    surfs->extents[0] = (bmaxs-bmins)*16;
-    /*
-    if (surfs->extents[0] > 256) {
-      //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
-      GCon->Logf("Bad extents (0): %d", (int)surfs->extents[0]);
-      surfs->extents[0] = 256;
-    }
-    */
-
-    mins = 99999.0f;
-    maxs = -99999.0f;
-    for (int i = 0; i < surfs->count; ++i) {
-      float dot = DotProduct(surfs->verts[i], texinfo->taxis)+texinfo->toffs;
-      if (dot < mins) mins = dot;
-      if (dot > maxs) maxs = dot;
-    }
-    bmins = (int)floor(mins/16);
-    bmaxs = (int)ceil(maxs/16);
-    surfs->texturemins[1] = bmins*16;
-    surfs->extents[1] = (bmaxs-bmins)*16;
-    /*
-    if (surfs->extents[1] > 256) {
-      //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
-      GCon->Logf("Bad extents (1): %d", (int)surfs->extents[1]);
-      surfs->extents[1] = 256;
-    }
-    */
-
-    //GCon->Logf("***INITSURF***");
-    surfs->subsector = sub;
-    if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
-      surfs->lmapflags |= Lightmap_Required;
-      //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
-      //LightFace(surfs, sub);
-    } else {
+    if (surfs->count == 0) {
+      GCon->Logf(NAME_Warning, "empty surface at subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));
+      //Sys_Error("invalid surface");
+      surfs->texturemins[0] = 16;
+      surfs->extents[0] = 16;
+      surfs->texturemins[1] = 16;
+      surfs->extents[1] = 16;
+      surfs->subsector = sub;
       surfs->lmapflags &= ~Lightmap_Required; // just in case
-      LightFace(surfs, sub);
+    } else {
+      float mins = 99999.0f;
+      float maxs = -99999.0f;
+      for (unsigned i = 0; i < (unsigned)surfs->count; ++i) {
+        float dot = DotProduct(surfs->verts[i], texinfo->saxis)+texinfo->soffs;
+        if (dot < mins) mins = dot;
+        if (dot > maxs) maxs = dot;
+      }
+
+      int bmins = (int)floor(mins/16);
+      int bmaxs = (int)ceil(maxs/16);
+      surfs->texturemins[0] = bmins*16;
+      surfs->extents[0] = (bmaxs-bmins)*16;
+      /*
+      if (surfs->extents[0] > 256) {
+        //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
+        GCon->Logf("Bad extents (0): %d", (int)surfs->extents[0]);
+        surfs->extents[0] = 256;
+      }
+      */
+      /*
+      if (surfs->extents[0] < 1) {
+        //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
+        GCon->Logf("Bad extents (0): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[0], mins, bmins, maxs, bmaxs);
+        surfs->extents[0] = 256;
+      }
+      */
+
+      mins = 99999.0f;
+      maxs = -99999.0f;
+      for (unsigned i = 0; i < (unsigned)surfs->count; ++i) {
+        float dot = DotProduct(surfs->verts[i], texinfo->taxis)+texinfo->toffs;
+        if (dot < mins) mins = dot;
+        if (dot > maxs) maxs = dot;
+      }
+      bmins = (int)floor(mins/16);
+      bmaxs = (int)ceil(maxs/16);
+      surfs->texturemins[1] = bmins*16;
+      surfs->extents[1] = (bmaxs-bmins)*16;
+      /*
+      if (surfs->extents[1] > 256) {
+        //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
+        GCon->Logf("Bad extents (1): %d", (int)surfs->extents[1]);
+        surfs->extents[1] = 256;
+      }
+      */
+      /*
+      if (surfs->extents[1] < 1) {
+        //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
+        GCon->Logf("Bad extents (1): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[1], mins, bmins, maxs, bmaxs);
+        surfs->extents[1] = 256;
+      }
+      */
+
+      //GCon->Logf("***INITSURF***");
+      surfs->subsector = sub;
+      if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
+        surfs->lmapflags |= Lightmap_Required;
+        //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
+        //LightFace(surfs, sub);
+      } else {
+        surfs->lmapflags &= ~Lightmap_Required; // just in case
+        LightFace(surfs, sub);
+      }
+      //LightFace(surfs, sub);
     }
-    //LightFace(surfs, sub);
 
     surfs = surfs->next;
   }
@@ -169,6 +194,17 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   float mins = 99999.0f;
   float maxs = -99999.0f;
 
+  if (f->count == 0) {
+    //GCon->Logf(NAME_Warning, "empty surface at subsector #%d (0)", (int)(ptrdiff_t)(f->subsector-Level->Subsectors));
+    return f; // just in case
+  }
+
+  if (f->count < 2) {
+    //Sys_Error("surface with less than three (%d) vertices)", f->count);
+    GCon->Logf("surface with less than two (%d) vertices (divface)", f->count);
+    return f;
+  }
+
   for (int i = 0; i < f->count; ++i) {
     if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
       GCon->Logf("ERROR: invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
@@ -186,8 +222,6 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
-
-  ++c_subdivides;
 
   TPlane plane;
 
@@ -302,6 +336,16 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   fprintf(stderr, "=== 2 ===\n"); for (int ff = 0; ff < count2; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts2[ff].x, verts2[ff].y, verts2[ff].z);
   */
 
+  if (count1 == 0 || count2 == 0) {
+    //GCon->Logf(NAME_Warning, "empty surface at subsector");
+    //GCon->Logf("f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)", f->count, count1, count2, axis.x, axis.y, axis.z);
+    // no subdivide found
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
+    return f;
+  }
+
+  ++c_subdivides;
+
   surface_t *next = f->next;
   Z_Free(f);
 
@@ -329,6 +373,18 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis) {
   guard(VRenderLevel::SubdivideSeg);
   surface_t *surf = InSurf;
+
+  if (surf->count == 0) {
+    //GCon->Logf(NAME_Warning, "empty surface at subsector #%d (0)", (int)(ptrdiff_t)(f->subsector-Level->Subsectors));
+    return surf; // just in case
+  }
+
+  if (surf->count < 2) {
+    //Sys_Error("surface with less than three (%d) vertices)", surf->count);
+    GCon->Logf("surface with less than two (%d) vertices (divseg)", surf->count);
+    return surf;
+  }
+
   float mins = 99999.0f;
   float maxs = -99999.0f;
 
@@ -350,8 +406,6 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
     return surf;
   }
 
-  ++c_seg_div;
-
   TPlane plane;
 
   plane.normal = axis;
@@ -365,8 +419,15 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
     PlaneFront = 1,
   };
 
-  float dots[MAXWVERTS+1];
-  int sides[MAXWVERTS+1];
+  spvReserve(surf->count*2+2); //k8: `f->count+1` is enough, but...
+
+  float *dots = spvPoolDots;
+  int *sides = spvPoolSides;
+  TVec *verts1 = spvPoolV1;
+  TVec *verts2 = spvPoolV2;
+
+  //float dots[MAXWVERTS+1];
+  //int sides[MAXWVERTS+1];
 
   for (int i = 0; i < surf->count; ++i) {
     const float dot = DotProduct(surf->verts[i], plane.normal)-plane.dist;
@@ -378,8 +439,8 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   dots[surf->count] = dots[0];
   sides[surf->count] = sides[0];
 
-  TVec verts1[MAXWVERTS];
-  TVec verts2[MAXWVERTS];
+  //TVec verts1[MAXWVERTS];
+  //TVec verts2[MAXWVERTS];
   int count1 = 0;
   int count2 = 0;
   TVec mid(0, 0, 0);
@@ -464,6 +525,13 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   }
 #endif
 
+  if (count1 == 0 || count2 == 0) {
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
+    return surf;
+  }
+
+  ++c_seg_div;
+
   surf->count = count2;
   memcpy(surf->verts, verts2, count2*sizeof(TVec));
 
@@ -473,10 +541,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis);
-  if (nextaxis)
-  {
-    surf = SubdivideSeg(surf, *nextaxis, nullptr);
-  }
+  if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
   return surf;
   unguard;
 }
@@ -495,8 +560,8 @@ void VRenderLevel::PreRender () {
 
   CreateWorldSurfaces();
 
-  GCon->Logf(NAME_Dev, "%d subdivides", c_subdivides);
-  GCon->Logf(NAME_Dev, "%d seg subdivides", c_seg_div);
-  GCon->Logf(NAME_Dev, "%dk light mem", light_mem/1024);
+  GCon->Logf(/*NAME_Dev,*/ "%d subdivides", c_subdivides);
+  GCon->Logf(/*NAME_Dev,*/ "%d seg subdivides", c_seg_div);
+  GCon->Logf(/*NAME_Dev,*/ "%dk light mem", light_mem/1024);
   unguard;
 }
