@@ -190,7 +190,7 @@ override bool Activate (EntityEx Activator) {
     PrevNode = StartPrevNode;
     if (CurrNode != none) {
       NewNode();
-      SetOrigin(CurrNode.Origin);
+      SetOrigin(CurrNode.Origin, properFloorCheck:false);
       Time = 0.0;
       HoldTime = 0.0;
       bJustStepped = true;

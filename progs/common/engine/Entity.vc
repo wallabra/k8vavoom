@@ -391,7 +391,10 @@ native final void UpdateVelocity ();
 native final Entity CheckOnmobj ();
 
 // always call this before changing x and y coordinates (z can be changed freely)
-native final void LinkToWorld ();
+// i.e. first unlink, then change coords, then link again
+// by default, `LinkToWorld` checks only entity Origin.
+// if you want to do a proper check, call it with `properFloorCheck:true`.
+native final void LinkToWorld (optional bool properFloorCheck);
 native final void UnlinkFromWorld ();
 
 native final bool CanSee (Entity Other);
@@ -789,11 +792,11 @@ void CalcFakeZMovement(out TVec Ret, float DeltaTime)
 //
 //==========================================================================
 
-final void SetOrigin(TVec NewOrigin)
+final void SetOrigin(TVec NewOrigin, optional bool properFloorCheck)
 {
   UnlinkFromWorld();
   Origin = NewOrigin;
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:properFloorCheck!optional);
 }
 
 //==========================================================================

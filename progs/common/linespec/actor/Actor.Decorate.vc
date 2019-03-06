@@ -808,7 +808,7 @@ final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) 
   Origin.x += dx;
   Origin.y += dy;
   Origin.z += dz;
-  if (dx || dy) LinkToWorld();
+  if (dx || dy) LinkToWorld(properFloorCheck:true);
 }
 
 
@@ -824,7 +824,7 @@ final void A_k8MoveTo (optional float nx, optional float ny, optional float nz) 
   if (specified_nx) Origin.x = nx;
   if (specified_ny) Origin.y = ny;
   if (specified_nz) Origin.z = nz;
-  if (specified_nx || specified_ny) LinkToWorld();
+  if (specified_nx || specified_ny) LinkToWorld(properFloorCheck:true);
 }
 
 

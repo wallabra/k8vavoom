@@ -106,7 +106,7 @@ bool Physics (float DeltaTime) {
       TVec vel = Velocity*DeltaTime;
       Origin += vel;
       // link it back
-      LinkToWorld();
+      LinkToWorld(properFloorCheck:false);
       if (bStickToFloor || bStickToCeiling) {
         tmtrace_t tmtrace;
         GetFloorAndCeiling(out tmtrace);

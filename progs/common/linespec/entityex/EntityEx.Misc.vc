@@ -50,7 +50,7 @@ final void SetOrigin2 (TVec origin) {
   Origin = origin;
 
   // set subsector and/or block links
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:true);
 
   //k8: why nointeraction is not processed?
   /*if (!bNoInteraction)*/ {
@@ -218,7 +218,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
   // so link the thing into its new position
   UnlinkFromWorld();
   Origin = org;
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:true);
   if (org.z == ONFLOORZ) Origin.z = FloorZ;
 
   return true;
@@ -295,7 +295,7 @@ override bool MoveThing (TVec Pos, bool Fog) {
 
   UnlinkFromWorld();
   Origin = Pos;
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:true); //k8: really?
   if (TestLocation()) {
     if (Fog) {
       Spawn(TeleportFog, Pos+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
@@ -305,7 +305,7 @@ override bool MoveThing (TVec Pos, bool Fog) {
   } else {
     UnlinkFromWorld();
     Origin = OldOrg;
-    LinkToWorld();
+    LinkToWorld(properFloorCheck:true);
     return false;
   }
 }
@@ -323,7 +323,7 @@ final bool TestLocation () {
   if (!bColideWithThings && !bColideWithWorld) return true;
   if (CheckPosition(Origin)) {
     // XY is ok, now check Z
-    if ((Origin.z < FloorZ) || (Origin.z+Height > CeilingZ)) {
+    if (Origin.z < FloorZ || Origin.z+Height > CeilingZ) {
       // bad Z
       return false;
     }
@@ -389,7 +389,7 @@ int FaceActor (EntityEx target, out float delta) {
 //  the lowest value and false will be returned.
 //
 //==========================================================================
-final bool HeightClip () {
+final bool HeightClip (bool skipTriggers) {
   tmtrace_t tmtrace;
   float OldZ = Origin.z;
   bool onfloor = (Origin.z == FloorZ);
@@ -428,10 +428,18 @@ final bool HeightClip () {
   CheckRelPosition(&tmtrace, Origin);
   // what about stranding a monster partially off an edge?
 
+  if (skipTriggers && bIsPlayer) {
+    print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
+  }
+
   Floor = tmtrace.Floor;
   Ceiling = tmtrace.Ceiling;
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
+
+  if (skipTriggers && bIsPlayer) {
+    print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
+  }
 
   if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector)) {
     // walking monsters rise and fall with the floor
@@ -459,15 +467,17 @@ final bool HeightClip () {
     }
   }
 
-  CheckFakeFloorTriggers(OldZ);
+  if (!skipTriggers) {
+    CheckFakeFloorTriggers(OldZ);
 
-  if (CeilingZ-FloorZ < Height) {
-    if (bIceCorpse && bSolid) {
-      Actor(self).A_FreezeDeathChunks();
-      return true;
-    } else {
-      // doesn't fit, stop
-      return false;
+    if (CeilingZ-FloorZ < Height) {
+      if (bIceCorpse && bSolid) {
+        Actor(self).A_FreezeDeathChunks();
+        return true;
+      } else {
+        // doesn't fit, stop
+        return false;
+      }
     }
   }
 
@@ -1037,7 +1047,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>", mthing.type, Origin, mthing.x, mthing.y);
     //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>, height=%f", mthing.type, Origin, mthing.x, mthing.y, Height);
 
-    LinkToWorld();
+    LinkToWorld(properFloorCheck:true);
 
     SetTID(mthing->tid);
     Special = mthing->special;
@@ -1366,9 +1376,10 @@ override bool SectorChanged (int CrushChange) {
     // only fix positions for monsters (and don't touch corpses too)
     if (!bMonster && !bIsPlayer) return true;
     if (!bSolid || bCorpse) return true;
+    return HeightClip(skipTriggers:true);
   }
 
-  if (HeightClip()) return true;
+  if (HeightClip(skipTriggers:false)) return true;
 
   // crunch bodies to giblets
   if (bCorpse && !bDontGib && Health <= 0) {

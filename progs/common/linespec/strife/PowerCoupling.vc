@@ -60,7 +60,7 @@ override void Died(EntityEx source, EntityEx inflictor)
   if (LastHeard != source)
   {
     //  Temporarely link it to the world, since we need sector
-    LinkToWorld();
+    LinkToWorld(properFloorCheck:false);
     LineSpecialLevelInfo(Level).NoiseAlert(source, self);
     UnlinkFromWorld();
   }

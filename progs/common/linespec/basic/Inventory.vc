@@ -215,7 +215,7 @@ final void BecomePickup () {
   UnlinkFromWorld();
   bNoSector = false;
   bNoBlockmap = false;
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:true);
   bSpecial = default.bSpecial;
   SetState(IdleState);
 }

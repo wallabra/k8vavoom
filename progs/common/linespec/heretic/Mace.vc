@@ -55,7 +55,7 @@ override bool DoRespawn()
 
     UnlinkFromWorld();
     Origin = Spot.Origin;
-    LinkToWorld();
+    LinkToWorld(properFloorCheck:true);
   }
   return true;
 }

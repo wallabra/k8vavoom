@@ -90,11 +90,11 @@ override int UnmorphActor (Entity Activator, int Force) {
   if (!mo.TestLocation() && !Force) {
     // didn't fit
     mo.Destroy();
-    LinkToWorld();
+    LinkToWorld(properFloorCheck:true);
     UnmorphTime = XLevel.Time+5.0; // next try in 5 seconds
     return false;
   }
-  LinkToWorld();
+  LinkToWorld(properFloorCheck:true);
   SetTID(0);
   mo.Angles.yaw = oldAngle;
   mo.Special = oldSpecial;

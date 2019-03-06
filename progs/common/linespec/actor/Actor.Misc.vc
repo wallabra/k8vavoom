@@ -148,7 +148,7 @@ final void A_Respawn (optional int Flags) {
   Org.x = SpawnPoint.x;
   Org.y = SpawnPoint.y;
   Org.z = GetPlanePointZ(ref XLevel.PointInSector(Org)->floor, Org);
-  SetOrigin(Org);
+  SetOrigin(Org, properFloorCheck:true);
   bSolid = true;
   Height = default.Height;
   if (Flags&4) {

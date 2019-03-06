@@ -49,7 +49,7 @@ static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when en
 
 static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/load?", CVAR_Archive);
 
-static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
+//static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
 static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive", false, "Ignore 'Kill On Unarchive' flag when loading a game?", CVAR_PreInit/*|CVAR_Archive*/);
 
 static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing\b  0x20: dump checkpoints", CVAR_PreInit|CVAR_Archive);
@@ -1246,6 +1246,12 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   for (TThinkerIterator<VThinker> Th(GLevel); Th; ++Th) {
     // players will be skipped by `Saver`
     Saver->RegisterObject(*Th);
+    /*
+    if ((*Th)->IsA(VEntity::StaticClass())) {
+      VEntity *e = (VEntity *)(*Th);
+      if (e->EntityFlags&VEntity::EF_IsPlayer) GCon->Logf("PLRSAV: FloorZ=%f; CeilingZ=%f; Floor=%p; Ceiling=%p", e->FloorZ, e->CeilingZ, e->Floor, e->Ceiling);
+    }
+    */
   }
 
   // write exported object names
@@ -1346,7 +1352,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
       GLevelInfo->Game = GGameInfo;
       GLevelInfo->World = GGameInfo->WorldInfo;
       GLevel->LevelInfo = GLevelInfo;
-    } else if (/*loader_recalc_z &&*/ Obj->IsA(VEntity::StaticClass())) {
+    } else if (Obj->IsA(VEntity::StaticClass())) {
       VEntity *e = (VEntity *)Obj;
       if (!hasSomethingToRemove && (e->EntityFlags&VEntity::EF_KillOnUnarchive) != 0) hasSomethingToRemove = true;
       elist.append(e);
@@ -1382,8 +1388,26 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   // load collected VAcs objects contents
   for (vint32 f = 0; f < Loader->AcsExports.length(); ++f) Loader->AcsExports[f]->Serialise(*Loader);
 
-  // this will fix thinker positions
-  if (loader_recalc_z) for (int i = 0; i < elist.length(); ++i) elist[i]->callSectorChanged(-666);
+  // this will fix thinker positions (`LinkToWorld()` should do it for us now)
+  /*
+  if (loader_recalc_z) {
+    // simple linking to world won't work here, due to the way world linking works.
+    // `VEntity::LinkToWorld()` thinks that object has no size, and it sets floor/ceiling info
+    // according to this. but entities actually have size! so entity "ass" can stuck in a ledge,
+    // while entity center is slighly off it. boom! now it is glitched and immobile.
+    // the proper fix will be to change `VEntity::LinkToWorld()` to call simplified
+    // `VEntity::CheckRelPosition()` instead of doing point checks.
+    for (int i = 0; i < elist.length(); ++i) {
+      //elist[i]->callSectorChanged(-666);
+      // as we aren't storing floor and ceiling info, relink entities (this will update all the necessary info)
+      if (elist[i]->EntityFlags&VEntity::EF_IsPlayer) GCon->Logf("PLROLD: FloorZ=%f; CeilingZ=%f; Floor=%p; Ceiling=%p", elist[i]->FloorZ, elist[i]->CeilingZ, elist[i]->Floor, elist[i]->Ceiling);
+      elist[i]->UnlinkFromWorld();
+      elist[i]->LinkToWorld(true);
+      if (elist[i]->EntityFlags&VEntity::EF_IsPlayer) GCon->Logf("PLRNEW: FloorZ=%f; CeilingZ=%f; Floor=%p; Ceiling=%p", elist[i]->FloorZ, elist[i]->CeilingZ, elist[i]->Floor, elist[i]->Ceiling);
+    }
+  }
+  */
+
   // remove unnecessary entities
   if (hasSomethingToRemove && !loader_ignore_kill_on_unarchive) {
     for (int i = 0; i < elist.length(); ++i) if (elist[i]->EntityFlags&VEntity::EF_KillOnUnarchive) elist[i]->DestroyThinker();

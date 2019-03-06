@@ -4653,40 +4653,27 @@ final bool EV_ThingHate(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return true;
 }
 
+
 //===========================================================================
 //
 //  EV_ThingMove
 //
 //===========================================================================
-
-final bool EV_ThingMove(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
-  if (Arg1)
-  {
-    A = EntityEx(FindMobjFromTID(Arg1, none));
-  }
-
+final bool EV_ThingMove (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  if (Arg1) A = EntityEx(FindMobjFromTID(Arg1, none));
   EntityEx Dest = EntityEx(FindMobjFromTID(Arg2, none));
 
-  if (A && Dest)
-  {
+  if (A && Dest) {
     TVec OldOrg = A.Origin;
-    A.SetOrigin(Dest.Origin);
-    if (A.TestLocation())
-    {
-      if (Arg3)
-      {
-        Spawn(TeleportFog, OldOrg+vector(0.0, 0.0,
-          LineSpecialGameInfo(Game).TeleFogHeight));
-        Spawn(TeleportFog, A.Origin+vector(0.0, 0.0,
-          LineSpecialGameInfo(Game).TeleFogHeight));
+    A.SetOrigin(Dest.Origin, properFloorCheck:true);
+    if (A.TestLocation()) {
+      if (Arg3) {
+        Spawn(TeleportFog, OldOrg+vector(0.0, 0.0, LineSpecialGameInfo(Game).TeleFogHeight));
+        Spawn(TeleportFog, A.Origin+vector(0.0, 0.0, LineSpecialGameInfo(Game).TeleFogHeight));
       }
       return true;
-    }
-    else
-    {
-      A.SetOrigin(OldOrg);
+    } else {
+      A.SetOrigin(OldOrg, properFloorCheck:true);
       return false;
     }
   }

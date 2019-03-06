@@ -146,7 +146,7 @@ override bool Deactivate (EntityEx Activator) {
     Tracer.bNoGravity = bSavedNoGravity;
     Tracer.UnlinkFromWorld();
     Tracer.bNoBlockmap = bSavedNoBlockmap;
-    Tracer.LinkToWorld();
+    Tracer.LinkToWorld(properFloorCheck:Tracer.bMonster);
     Tracer.bDormant = bSavedDormant;
   }
   return true;

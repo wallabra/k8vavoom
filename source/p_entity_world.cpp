@@ -296,29 +296,99 @@ void VEntity::UnlinkFromWorld () {
 //  Sets thing->subsector properly
 //
 //==========================================================================
-void VEntity::LinkToWorld () {
-  guard(VEntity::LinkToWorld);
-  subsector_t *ss;
-  sec_region_t *reg;
-  sec_region_t *r;
-
+void VEntity::LinkToWorld (bool properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
 
   // link into subsector
-  ss = XLevel->PointInSubsector(Origin);
-  reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+Height);
+  subsector_t *ss = XLevel->PointInSubsector(Origin);
   SubSector = ss;
   Sector = ss->sector;
 
-  r = reg;
-  while (r->floor->flags && r->prev) r = r->prev;
-  Floor = r->floor;
-  FloorZ = r->floor->GetPointZ(Origin);
+  if (!EntityFlags&EF_IsPlayer) {
+    if (properFloorCheck) {
+      if (Radius < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
+        properFloorCheck = false;
+      }
+    }
+  } else {
+    properFloorCheck = true;
+  }
 
-  r = reg;
-  while (r->ceiling->flags && r->next) r = r->next;
-  Ceiling = r->ceiling;
-  CeilingZ = r->ceiling->GetPointZ(Origin);
+  if (properFloorCheck) {
+    //FIXME: this is copypasta from `CheckRelPos()`; factor it out
+    tmtrace_t tmtrace;
+    memset((void *)&tmtrace, 0, sizeof(tmtrace));
+    subsector_t *newsubsec = ss;
+    const TVec Pos = Origin;
+
+    tmtrace.End = Pos;
+
+    tmtrace.BBox[BOXTOP] = Pos.y+Radius;
+    tmtrace.BBox[BOXBOTTOM] = Pos.y-Radius;
+    tmtrace.BBox[BOXRIGHT] = Pos.x+Radius;
+    tmtrace.BBox[BOXLEFT] = Pos.x-Radius;
+
+    // the base floor / ceiling is from the subsector that contains the point
+    // any contacted lines the step closer together will adjust them
+    if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
+      sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 1.0f));
+      sec_region_t *reg = gap;
+      while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
+      tmtrace.Floor = reg->floor;
+      tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+      tmtrace.DropOffZ = tmtrace.FloorZ;
+      reg = gap;
+      while (reg->next && reg->ceiling->flags&SPF_NOBLOCKING) reg = reg->next;
+      tmtrace.Ceiling = reg->ceiling;
+      tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+    } else {
+      sec_region_t *reg = newsubsec->sector->botregion;
+      tmtrace.Floor = reg->floor;
+      tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+      tmtrace.DropOffZ = tmtrace.FloorZ;
+      tmtrace.Ceiling = reg->ceiling;
+      tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+    }
+
+    // check lines
+    XLevel->IncrementValidCount();
+
+    //tmtrace.FloorZ = tmtrace.DropOffZ;
+
+    int xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
+    int xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    int yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    int yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
+
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
+        line_t *ld;
+        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
+          // we don't care about any blocking line info...
+          (void)CheckRelLine(tmtrace, ld, true); // ...and we don't want to process any specials
+        }
+      }
+    }
+
+    Floor = tmtrace.Floor;
+    FloorZ = tmtrace.FloorZ;
+    Ceiling = tmtrace.Ceiling;
+    CeilingZ = tmtrace.CeilingZ;
+    //if (Origin.z < FloorZ) Origin.z = FloorZ; // just in case
+  } else {
+    // simplified check
+    sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 1.0f));
+
+    sec_region_t *r = reg;
+    while (r->floor->flags && r->prev) r = r->prev;
+    Floor = r->floor;
+    FloorZ = r->floor->GetPointZ(Origin);
+
+    r = reg;
+    while (r->ceiling->flags && r->next) r = r->next;
+    Ceiling = r->ceiling;
+    CeilingZ = r->ceiling->GetPointZ(Origin);
+  }
 
   // link into sector
   if (!(EntityFlags&EF_NoSector)) {
@@ -367,7 +437,6 @@ void VEntity::LinkToWorld () {
       BlockMapNext = BlockMapPrev = nullptr;
     }
   }
-  unguard;
 }
 
 
@@ -405,7 +474,7 @@ bool VEntity::CheckWater () {
       }
     }
   }
-  return WaterLevel > 1;
+  return (WaterLevel > 1);
   unguard;
 }
 
@@ -670,7 +739,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   // the base floor / ceiling is from the subsector that contains the point
   // any contacted lines the step closer together will adjust them
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height ? 1.0f : Height));
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 1.0f));
     sec_region_t *reg = gap;
     while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
     tmtrace.Floor = reg->floor;
@@ -885,8 +954,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
 //  Adjusts tmtrace.FloorZ and tmtrace.CeilingZ as lines are contacted
 //
 //==========================================================================
-bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
-  guardSlow(VEntity::CheckRelLine);
+bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
+  // check line bounding box for early out
   if (tmtrace.BBox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
       tmtrace.BBox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
       tmtrace.BBox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
@@ -907,7 +976,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
 
   if (!ld->backsector) {
     // one sided line
-    BlockedByLine(ld);
+    if (!skipSpecials) BlockedByLine(ld);
     // mark the line as blocking line
     tmtrace.BlockingLine = tmtrace.AnyBlockingLine = ld;
     return false;
@@ -916,49 +985,43 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
   if (!(ld->flags&ML_RAILING)) {
     if (ld->flags&ML_BLOCKEVERYTHING) {
       // explicitly blocking everything
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000000\n");
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_Missile) && (ld->flags&ML_BLOCKPROJECTILE)) {
       // blocks projectile
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000000\n");
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_CheckLineBlocking) && (ld->flags&ML_BLOCKING)) {
       // explicitly blocking everything
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000001\n");
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_CheckLineBlockMonsters) && (ld->flags&ML_BLOCKMONSTERS)) {
       // block monsters only
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000002\n");
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_IsPlayer) && (ld->flags&ML_BLOCKPLAYERS)) {
       // block players only
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000003\n");
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_Float) && (ld->flags&ML_BLOCK_FLOATERS)) {
       // block floaters only
-      BlockedByLine(ld);
+      if (!skipSpecials) BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
-      //printf("*** 000004\n");
       return false;
     }
   }
@@ -990,11 +1053,9 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
   }
 
   // if contacted a special line, add it to the list
-  if (ld->special) tmtrace.SpecHit.Append(ld);
+  if (!skipSpecials && ld->special) tmtrace.SpecHit.Append(ld);
 
-  //printf("*** PASS!\n");
   return true;
-  unguardSlow;
 }
 
 
@@ -1998,8 +2059,9 @@ IMPLEMENT_FUNCTION(VEntity, CheckOnmobj) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, LinkToWorld) {
+  P_GET_BOOL_OPT(properFloorCheck, false);
   P_GET_SELF;
-  Self->LinkToWorld();
+  Self->LinkToWorld(properFloorCheck);
 }
 
 IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld) {
