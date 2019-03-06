@@ -554,24 +554,32 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
 //  Sets a slope so a near miss is at aproximately the height of the
 //  intended target
 //
+//  note that it is impossible to disable autoaim for monsters
+//
 //===========================================================================
 final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
                     optional bool noAutoaim, optional bool noVertAutoAim,
-                    optional bool isRocket) {
+                    optional bool isRocket)
+{
   TAVec ang;
   TVec dir;
   EntityEx LineTarget;
+  bool aaim;
 
-  bool aaim = (bIsPlayer && PlayerEx(Player).bAutoAim);
-  if (specified_noAutoaim) {
-    //print("AIM<%C>: noaa=%s", self, (noAutoaim ? "tan" : "ona"));
-    if (noAutoaim) aaim = false;
+  if (bIsPlayer) {
+    aaim = PlayerEx(Player).bAutoAim;
+    if (aaim && specified_noAutoaim) {
+      //print("AIM<%C>: noaa=%s", self, (noAutoaim ? "tan" : "ona"));
+      if (noAutoaim) aaim = false;
+    }
+  } else {
+    aaim = true; // monsters should always autoaim
   }
 
   // see which target is to be aimed at
   ang = Angles;
   if (specified_yaw) ang.yaw = yaw;
-  if (bIsPlayer && /*!PlayerEx(Player).bAutoAim*/!aaim) {
+  if (!aaim) {
     //ang.pitch = AngleMod360(ang.pitch-4);
     AngleVector(ang, out dir);
     OutDir = dir;
@@ -579,14 +587,14 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
 
   // try to aim at a target
   // this is done even when autoaim is off so that we get a LineTarget that is needed for seeker missiles
-  LineTarget = AimLineAttack(dir, ang, distance, isRocket:isRocket!optional);
+  LineTarget = AimLineAttack(out dir, ang, distance, isRocket:isRocket!optional);
   if (!LineTarget) {
     auto origYaw = ang.yaw;
     ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
-    LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
     if (!LineTarget) {
       ang.yaw = AngleMod360(ang.yaw-45.0/4.0);
-      LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
+      LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
       if (!LineTarget) {
         //ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
         ang.yaw = origYaw;
@@ -595,7 +603,7 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
     }
   }
 
-  if (!bIsPlayer || aaim/*PlayerEx(Player).bAutoAim*/) OutDir = dir;
+  if (aaim) OutDir = dir;
 
   return LineTarget;
 }
@@ -616,13 +624,13 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
     // try to the left
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw+float(i)*AngleInc);
-    LineTarget = AimLineAttack(OutDir, angles, Range, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out OutDir, angles, Range, isRocket:isRocket!optional);
     if (LineTarget) return LineTarget;
 
     // try to the right
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw-float(i)*AngleInc);
-    LineTarget = AimLineAttack(OutDir, angles, Range, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out OutDir, angles, Range, isRocket:isRocket!optional);
     if (LineTarget) return LineTarget;
   }
 
