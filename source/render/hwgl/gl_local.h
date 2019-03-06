@@ -868,7 +868,7 @@ protected:
   static VCvarB blend_sprites;
   static VCvarB ext_anisotropy;
   static VCvarF maxdist;
-  static VCvarB model_lighting;
+  //static VCvarB model_lighting;
   static VCvarB specular_highlights;
   static VCvarI multisampling_sample;
   static VCvarB gl_smooth_particles;

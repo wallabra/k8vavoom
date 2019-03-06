@@ -115,10 +115,12 @@ menudef AdvVideoOptions {
     cvar = r_model_light;
   }
 
+  /* k8: this doesn't work with shaders; need to be restored later
   option bool {
-    title = "Model Sector Lightning";
+    title = "Model Vertex Lightning";
     cvar = gl_model_lighting;
   }
+  */
 
   option bool {
     title = "Model Shadows";
