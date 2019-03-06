@@ -42,6 +42,7 @@ override bool HandlePickup (Inventory Item) {
       // only direct descendants
       if (GetClassParent(AmmoItem.Class) != Ammo) continue;
       Ammo ait = Ammo(AmmoItem); // should always succeed
+      if (ait.k8IsLoadedAmmo()) continue;
       int amax = ait.k8GetAmmoKingMax();
       int oldammo = AmmoItem.Amount;
       //print("ammo=%C (%C); max=%d (%d) (now: %d)", AmmoItem, ait, amax, AmmoItem.MaxAmount, oldammo);
@@ -81,12 +82,14 @@ override Inventory CreateCopy (EntityEx Toucher) {
     Ammo AmmoItem = Ammo(Toucher.FindInventory(Cls));
     if (!AmmoItem) {
       AmmoItem = Spawn(Cls, default, default, default, false);
+      if (AmmoItem.k8IsLoadedAmmo()) {
+        delete AmmoItem;
+        continue;
+      }
       AmmoItem.AttachToOwner(Toucher);
       AmmoItem.Amount = 0;
     }
-    Ammo ait = Ammo(AmmoItem); // should always succeed
-    if (!ait) continue; // just in case
-    int amax = ait.k8GetAmmoKingMax();
+    int amax = AmmoItem.k8GetAmmoKingMax();
     int oldammo = AmmoItem.Amount;
     if (AmmoItem.MaxAmount < AmmoItem.BackpackMaxAmount) AmmoItem.MaxAmount = AmmoItem.BackpackMaxAmount;
     if (oldammo >= amax) continue;

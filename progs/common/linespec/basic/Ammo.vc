@@ -46,10 +46,25 @@ final class!Ammo GetParentAmmo () {
 
 //==========================================================================
 //
-// k8GetAmmoKingMax
+//  k8IsLoadedAmmo
 //
 //==========================================================================
-final int k8GetAmmoKingMax () {
+bool k8IsLoadedAmmo () {
+  switch (GetClassName(Class)) {
+    case 'BDW_RifleAmmo':
+    case 'BDW_ShotgunAmmo':
+      return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  k8GetAmmoKingMax
+//
+//==========================================================================
+int k8GetAmmoKingMax () {
   if (!GetCvarB('k8AmmoKing')) return MaxAmount;
   int amax = 666;
   bool isSpecial = false;
@@ -61,7 +76,7 @@ final int k8GetAmmoKingMax () {
     // loaded ammo
     case 'BDW_RifleAmmo':
     case 'BDW_ShotgunAmmo':
-      return Amount;
+      return MaxAmount;
   }
   if (!isSpecial) {
     switch (GetClassName(GetClassReplacee(Class))) {
