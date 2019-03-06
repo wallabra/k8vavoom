@@ -299,6 +299,8 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis) {
+  if (surf->count < 3) return; // wtf?!
+
   // check potential visibility
   if (facevis) {
     if (!(facevis[light->leafnum>>3]&(1<<(light->leafnum&7)))) return;
@@ -373,6 +375,8 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
 //
 //==========================================================================
 void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
+  if (surf->count < 3) return; // wtf?!
+
   float total;
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
@@ -602,6 +606,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     int ds, dt;
     for (surface_t *surf = reg->floor->surfs; surf; surf = surf->next) {
       if (surf->lightmap == nullptr) continue;
+      if (surf->count < 3) continue; // wtf?!
       if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
 
       ds = s-surf->texturemins[0];
@@ -700,6 +705,8 @@ this way, when level geometry changed, we can re-trace static lights too.
 //
 //==========================================================================
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
+  if (surf->count < 3) return; // wtf?!
+
   //float mids = 0, midt = 0;
   //TVec facemid = TVec(0,0,0);
   bool pointsCalced = false;
@@ -853,6 +860,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
+  if (surf->count < 3) return; // wtf?!
 
   is_coloured = false;
   r_light_add = false;
@@ -1182,6 +1190,8 @@ void VRenderLevel::FreeSurfCache (surfcache_t *block) {
 //
 //==========================================================================
 bool VRenderLevel::CacheSurface (surface_t *surface) {
+  if (surface->count < 3) return false; // wtf?!
+
   int bnum;
 
   // see if the cache holds appropriate data
@@ -1200,6 +1210,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   // determine shape of surface
   int smax = (surface->extents[0]>>4)+1;
   int tmax = (surface->extents[1]>>4)+1;
+  check(smax > 0);
+  check(tmax > 0);
 
   // allocate memory if needed
   // if a texture just animated, don't reallocate it
@@ -1223,6 +1235,9 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   BuildLightMap(surface/*, 0*/);
   bnum = cache->blocknum;
   block_changed[bnum] = true;
+
+  check(cache->t >= 0);
+  check(cache->s >= 0);
 
   for (int j = 0; j < tmax; ++j) {
     for (int i = 0; i < smax; ++i) {
