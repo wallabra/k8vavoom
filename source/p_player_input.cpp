@@ -42,6 +42,10 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
+#ifdef CLIENT
+# include "cl_local.h"
+# include "neoui/neoui.h"
+#endif
 
 
 extern VCvarB sv_ignore_nomlook;
@@ -328,6 +332,14 @@ COMMAND(Impulse) {
 //==========================================================================
 COMMAND(ToggleAlwaysRun) {
   guard(COMMAND ToggleAlwaysRun);
+#ifdef CLIENT
+  if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
+    return;
+  }
+  if (MN_Active() || C_Active() || NUI_IsPaused()) {
+    return;
+  }
+#endif
   allways_run = !allways_run;
 #ifdef CLIENT
   if (cl) {
