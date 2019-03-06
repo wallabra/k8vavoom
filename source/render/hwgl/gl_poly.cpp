@@ -389,11 +389,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   texinfo_t *textr = surf->texinfo;
 
-  //return false;
-
   if (textureChanged) {
     SetTexture(textr->Tex, textr->ColourMap);
     ++glWDTextureChangesTotal;
+  }
+
+  if (surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render simple surface with %d vertices", surf->count);
+    return false;
   }
 
   p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &textr->saxis.x);
@@ -447,6 +450,8 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 //
 //  VOpenGLDrawer::RenderLMapSurface
 //
+//  returns `true` if we need to re-setup texture
+//
 //==========================================================================
 bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache) {
   texinfo_t *tex = surf->texinfo;
@@ -454,6 +459,11 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   if (textureChanged) {
     SetTexture(tex->Tex, tex->ColourMap);
     ++glWDTextureChangesTotal;
+  }
+
+  if (surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render lmap surface with %d vertices", surf->count);
+    return false;
   }
 
   p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &tex->saxis.x);
@@ -557,6 +567,10 @@ void VOpenGLDrawer::WorldDrawing () {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     for (surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext) {
       if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (surf->count < 3) {
+        if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
+        continue;
+      }
       glBegin(GL_POLYGON);
       for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
@@ -694,6 +708,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     for (surface_t *surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext) {
       if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (surf->count < 3) {
+        if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
+        continue;
+      }
       glBegin(GL_POLYGON);
       for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
@@ -705,6 +723,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
   for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
     if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (surf->count < 3) {
+      if (developer) GCon->Logf(NAME_Dev, "trying to render simple ambient surface with %d vertices", surf->count);
+      continue;
+    }
 
     texinfo_t *tex = surf->texinfo;
     SetTexture(tex->Tex, tex->ColourMap);
@@ -803,7 +825,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
   guard(VOpenGLDrawer::RenderSurfaceShadowVolume);
-  if (surf->count < 1) return; // just in case
+  if (surf->count < 3) return; // just in case
   if (surf->plane->PointOnSide(vieworg) && LightCanCross) return; // viewer is in back side or on plane
   float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
   if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
@@ -891,6 +913,11 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
   guard(VOpenGLDrawer::DrawSurfaceLight);
 
   if (Surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (Surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", Surf->count);
+    return;
+  }
+
   float dist = DotProduct(LightPos, Surf->plane->normal) - Surf->plane->dist;
   if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
@@ -986,6 +1013,11 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
     if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (surf->count < 3) {
+      if (developer) GCon->Logf(NAME_Dev, "trying to render texture surface with %d vertices", surf->count);
+      continue;
+    }
+
     // this is for advanced renderer only
     texinfo_t *tex = surf->texinfo;
     SetTexture(tex->Tex, tex->ColourMap);
@@ -1036,6 +1068,10 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
     if (!surf->Fade) continue;
     if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (surf->count < 3) {
+      if (developer) GCon->Logf(NAME_Dev, "trying to render fog surface with %d vertices", surf->count);
+      continue;
+    }
 
     p_glUniform4fARB(ShadowsFogFogColourLoc,
       ((surf->Fade >> 16) & 255) / 255.0f,
@@ -1075,6 +1111,12 @@ void VOpenGLDrawer::EndFogPass () {
 //==========================================================================
 void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
   guard(VOpenGLDrawer::DoHorizonPolygon);
+
+  if (Surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render horizon surface with %d vertices", Surf->count);
+    return;
+  }
+
   float Dist = 4096.0f;
   TVec v[4];
   if (Surf->HorizonPlane->normal.z > 0.0f) {
@@ -1165,6 +1207,11 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
   guard(VOpenGLDrawer::DrawSkyPolygon);
   int sidx[4];
 
+  if (surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render sky surface with %d vertices", surf->count);
+    return;
+  }
+
   SetFade(surf->Fade);
   sidx[0] = 0;
   sidx[1] = 1;
@@ -1245,6 +1292,10 @@ void VOpenGLDrawer::FinishMaskedDecals () {
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
   guard(VOpenGLDrawer::DrawMaskedPolygon);
   if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render masked surface with %d vertices", surf->count);
+    return;
+  }
 
   texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
@@ -1620,6 +1671,10 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
   guard(VOpenGLDrawer::DrawPortalArea);
   for (int i = 0; i < Portal->Surfs.Num(); ++i) {
     const surface_t *Surf = Portal->Surfs[i];
+    if (Surf->count < 3) {
+      if (developer) GCon->Logf(NAME_Dev, "trying to render portal surface with %d vertices", Surf->count);
+      continue;
+    }
     glBegin(GL_POLYGON);
     for (int j = 0; j < Surf->count; ++j) glVertex(Surf->verts[j]);
     glEnd();
