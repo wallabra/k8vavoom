@@ -2362,6 +2362,20 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
 
 //==========================================================================
 //
+//  NormHudTime
+//
+//==========================================================================
+static inline float NormHudTime (float t, float DelayTime) {
+  if (t <= 0.0f) return 0.0f;
+  int tics = (int)(t*35.0f);
+  if (tics < 1) return 1.0f/35.0f;
+  return tics/35.0f+(DelayTime > 0.0f ? DelayTime : 0.0f);
+  //return t;
+}
+
+
+//==========================================================================
+//
 //  VAcs::CallFunction
 //
 //==========================================================================
@@ -3325,12 +3339,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   }
 
   if (DelayTime) {
-    //GCon->Logf("DELAY: DelayTime=%f; DeltaTime=%f; time=%f; tictime=%f", DelayTime*1000, DeltaTime*1000, (double)XLevel->Time, (double)XLevel->TicTime);
+    /*
+    if (info->Number == 2603) {
+      GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
+      GCon->Logf("  DELAY: DelayTime=%f; DeltaTime=%f; time=%f; tictime=%f", DelayTime*1000, DeltaTime*1000, (double)XLevel->Time, (double)XLevel->TicTime);
+    }
+    */
     DelayTime -= DeltaTime;
     if (DelayTime > 0) {
       doRunItVT = false;
     } else {
-      DelayTime = 0;
+      //DelayTime = 0;
     }
   }
 
@@ -3339,6 +3358,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   } else {
     if (!doRunItVT) return 1;
   }
+  if (DelayTime > 0) DelayTime = 0; else if (DelayTime < -1.0f/35.0f) DelayTime = -1.0f/35.0f;
 
   //fprintf(stderr, "VAcs::RunScript:002: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //  Shortcuts
@@ -3803,7 +3823,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Delay)
-      DelayTime = float(sp[-1])/35.0f;
+      DelayTime += float(sp[-1])/35.0f;
+      /*
+      if (info->Number == 2603) {
+        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
+        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
+      }
+      */
       DelayActivationTick = XLevel->TicTime+sp[-1];
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       sp--;
@@ -3811,7 +3837,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_DelayDirect)
-      DelayTime = float(READ_INT32(ip))/35.0f;
+      DelayTime += float(READ_INT32(ip))/35.0f;
+      /*
+      if (info->Number == 2603) {
+        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
+        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
+      }
+      */
       DelayActivationTick = XLevel->TicTime+READ_INT32(ip);
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip += 4;
@@ -4563,7 +4595,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         float HoldTime = (float)optstart[-1]/float(0x10000);
         float Time1 = 0;
         float Time2 = 0;
-        switch (Type&0xffff) {
+        switch (Type&0xff) {
+          case HUDMSG_PLAIN:
+            if (HoldTime < 1.0f/35.0f) HoldTime = 0; // gozzo does this
+            break;
           case HUDMSG_FADEOUT:
             Time1 = (optstart < sp ? (float)optstart[0]/float(0x10000) : 0.5f);
             break;
@@ -4576,10 +4611,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
             break;
         }
-
-        if (HoldTime < 0) HoldTime = 0; //else if (HoldTime > 0) HoldTime += 1.0f/35.0f*2; // just in case
-        if (Time1 < 0) Time1 = 0; //else if (Time1 > 0) Time1 += 1.0f/35.0f*2; // just in case
-        if (Time2 < 0) Time2 = 0; //else if (Time2 > 0) Time2 += 1.0f/35.0f*2; // just in case
+        // normalize timings
+        HoldTime = NormHudTime(HoldTime, DelayTime);
+        Time1 = NormHudTime(Time1, DelayTime);
+        Time2 = NormHudTime(Time2, DelayTime);
+        /*
+        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
+        GCon->Logf("  HUDMSG(id=%d): ht=%f (0x%04x); t1=%f; t2=%f; msg=%s", Id, HoldTime, optstart[-1], Time1, Time2, *PrintStr.quote());
+        */
 
         if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {
           Activator->Player->eventClientHudMessage(PrintStr, Font,
@@ -4648,7 +4687,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DelayDirectB)
-      DelayTime = float(*ip)/35.0f;
+      DelayTime += float(*ip)/35.0f;
+      /*
+      if (info->Number == 2603) {
+        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
+        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
+      }
+      */
       DelayActivationTick = XLevel->TicTime+(*ip);
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip++;
