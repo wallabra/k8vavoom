@@ -77,6 +77,20 @@ static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CV
 
 //==========================================================================
 //
+//  FixBBoxZ
+//
+//==========================================================================
+static inline void FixBBoxZ (float bbox[6]) {
+  if (bbox[2] > bbox[5]) {
+    const float tmp = bbox[2];
+    bbox[2] = bbox[5];
+    bbox[5] = tmp;
+  }
+}
+
+
+//==========================================================================
+//
 //  CopyPlaneIfValid
 //
 //==========================================================================
@@ -484,6 +498,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           bbox[3] = MAX(sv1.x, sv2.x);
           bbox[4] = MAX(sv1.y, sv2.y);
           bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
+          FixBBoxZ(bbox);
           // debug
           /*
           const int lidx = (int)(ptrdiff_t)(ldef-clip.GetLevel()->Lines);
@@ -517,6 +532,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           bbox[3] = MAX(sv1.x, sv2.x);
           bbox[4] = MAX(sv1.y, sv2.y);
           bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
+          FixBBoxZ(bbox);
           // inside?
           if (bbox[0] <= lorg->x && bbox[3] >= lorg->x &&
               bbox[1] <= lorg->y && bbox[4] >= lorg->y &&
@@ -902,9 +918,23 @@ void VViewClipper::AddClipRange (const VFloat From, const VFloat To) {
 //
 //==========================================================================
 bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
+#if 0
   for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
+#else
+  // walk from two sides, this may be slightly faster
+  const VClipNode *s = ClipHead;
+  if (!s) return true;
+  const VClipNode *e = ClipTail;
+  if (s == e) return !(From >= s->From && To <= s->To);
+  for (;;) {
+    if (From >= s->From && To <= s->To) return false;
+    if ((s = s->Next) == e) break;
+    if (From >= e->From && To <= e->To) return false;
+    if ((e = e->Prev) == s) break;
+  }
+#endif
   return true;
 }
 
@@ -1006,6 +1036,7 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   bbox[3] = sub->bbox[2];
   bbox[4] = sub->bbox[3];
   bbox[5] = sub->sector->ceiling.maxz;
+  FixBBoxZ(bbox);
 
   /*
   if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
@@ -1056,6 +1087,8 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   const float cz1 = bssec->ceiling.GetPointZ(sv1);
   const float cz2 = bssec->ceiling.GetPointZ(sv2);
   bbox[5] = MAX(cz1, cz2);
+  FixBBoxZ(bbox);
+
   /*
   // min
   bbox[0] = MIN(sv1.x, sv2.x);
@@ -1088,7 +1121,13 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
 //==========================================================================
 bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) const {
   if (!clip_enabled || !clip_bsp) return true;
-  //k8: most bboxes has non-sensical z, so skip frustum checks
+  //k8: most BSP bboxes has non-sensical z, so no z checks
+  if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
+      BBox[1] <= Origin.y && BBox[4] >= Origin.y)
+  {
+    // viewer is inside the box
+    return true;
+  }
   if (checkFrustum && clip_frustum && clip_frustum_sub && Frustum.isValid()) {
     if (clip_frustum_only_back) {
       if (!Frustum.checkBoxBack(BBox)) return false;
@@ -1097,12 +1136,6 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) co
     }
   }
   if (!ClipHead) return true; // no clip nodes yet
-  if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
-      BBox[1] <= Origin.y && BBox[4] >= Origin.y)
-  {
-    // viewer is inside the box
-    return true;
-  }
   TVec v1, v2;
   CreateBBVerts(v1, v2, BBox, Origin);
   return IsRangeVisible(v1, v2);
@@ -1288,6 +1321,7 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrL
   bbox[3] = sub->bbox[2];
   bbox[4] = sub->bbox[3];
   bbox[5] = sub->sector->ceiling.maxz;
+  FixBBoxZ(bbox);
 
   if (bbox[0] <= CurrLightPos.x && bbox[3] >= CurrLightPos.x &&
       bbox[1] <= CurrLightPos.y && bbox[4] >= CurrLightPos.y &&
@@ -1308,18 +1342,20 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrL
 //==========================================================================
 bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const {
   //if (!clip_enabled || !clip_bsp) return true;
-  if (!ClipHead) return true; // no clip nodes yet
   if (CurrLightRadius < 2) return false;
 
+  //k8: most BSP bboxes has non-sensical z, so no z checks
   if (BBox[0] <= CurrLightPos.x && BBox[3] >= CurrLightPos.x &&
-      BBox[1] <= CurrLightPos.y && BBox[4] >= CurrLightPos.y &&
-      BBox[2] <= CurrLightPos.z && BBox[5] >= CurrLightPos.z)
+      BBox[1] <= CurrLightPos.y && BBox[4] >= CurrLightPos.y /*&&
+      BBox[2] <= CurrLightPos.z && BBox[5] >= CurrLightPos.z*/)
   {
     // viewer is inside the box
     return true;
   }
 
   if (!CheckSphereVsAABBIgnoreZ(BBox, CurrLightPos, CurrLightRadius)) return false;
+
+  if (!ClipHead) return true; // no clip nodes yet
 
   TVec v1, v2;
   CreateBBVerts(v1, v2, BBox, CurrLightPos);
