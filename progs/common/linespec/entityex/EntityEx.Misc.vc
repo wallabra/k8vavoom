@@ -44,36 +44,42 @@ override void Destroyed () {
 //  SetOrigin2
 //
 //==========================================================================
-final void SetOrigin2 (TVec origin) {
+final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional float moreHeight) {
   UnlinkFromWorld();
 
   Origin = origin;
 
+       if (bIsPlayer) properFloorCheck = true;
+  else if (!specified_properFloorCheck && bMonster) properFloorCheck = true;
+
+  if (properFloorCheck) {
+    if (origin.z == ONFLOORZ || origin.z == ONCEILINGZ) {
+      properFloorCheck = false;
+    }
+  }
+
   // set subsector and/or block links
-  LinkToWorld(properFloorCheck:true);
+  LinkToWorld(properFloorCheck:properFloorCheck);
 
-  //k8: why nointeraction is not processed?
-  /*if (!bNoInteraction)*/ {
-         if (origin.z == ONFLOORZ) Origin.z = FloorZ;
-    else if (origin.z == ONCEILINGZ) Origin.z = CeilingZ-Height;
-    else if (origin.z == FLOATRANDZ) {
-      float space = CeilingZ-Height-FloorZ;
-      if (space > 48.0) {
-        space -= 40.0;
-        Origin.z = space*Random()+FloorZ+40.0;
-      } else {
-        Origin.z = FloorZ;
-      }
-    } else if (bFloatBob) {
-      Origin.z = FloorZ+Origin.z; // artifact z passed in as height
-    }
-
-    VTerrainInfo *TInfo = GetFloorType();
-    if (bFloorClip && TInfo->bLiquid && Origin.z == FloorZ) {
-      FloorClip = TInfo->FootClip;
+       if (origin.z == ONFLOORZ) Origin.z = FloorZ+moreHeight;
+  else if (origin.z == ONCEILINGZ) Origin.z = CeilingZ-Height-moreHeight;
+  else if (origin.z == FLOATRANDZ) {
+    float space = CeilingZ-Height-FloorZ;
+    if (space > 48.0) {
+      space -= 40.0;
+      Origin.z = space*Random()+FloorZ+40.0;
     } else {
-      FloorClip = 0.0;
+      Origin.z = FloorZ;
     }
+  } else if (bFloatBob) {
+    Origin.z = FloorZ+Origin.z; // artifact z passed in as height
+  }
+
+  VTerrainInfo *TInfo = GetFloorType();
+  if (bFloorClip && TInfo->bLiquid && Origin.z == FloorZ) {
+    FloorClip = TInfo->FootClip;
+  } else {
+    FloorClip = 0.0;
   }
 }
 
@@ -1040,14 +1046,27 @@ override void OnMapSpawn (mthing_t *mthing) {
     else if (bFloatBob) z = mthing->height;
     else z = ONFLOORZ;
 
-    SetOrigin2(vector(x, y, z));
-         if (z == ONFLOORZ) Origin.z += mthing->height;
-    else if (z == ONCEILINGZ) Origin.z -= mthing->height;
+    /*
+    if (mthing.height > 0 && mthing.height != Height) {
+      print("%C: thing id %s; old height is %s; new height is %s", Class, mthing.type, Height, mthing.height);
+      Height = mthing.height;
+    }
+    */
+
+    SetOrigin2(vector(x, y, z), moreHeight:mthing.height);
+    /*
+    if (mthing->height) {
+      //print("thing id %s; height=%s", mthing.type, mthing.height);
+           if (z == ONFLOORZ) Origin.z += mthing->height;
+      else if (z == ONCEILINGZ) Origin.z -= mthing->height;
+    }
+    */
 
     //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>", mthing.type, Origin, mthing.x, mthing.y);
     //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>, height=%f", mthing.type, Origin, mthing.x, mthing.y, Height);
 
-    LinkToWorld(properFloorCheck:true);
+    // no need to to this, it is already linked in `SetOrigin2()`
+    //LinkToWorld(properFloorCheck:(bMonster || bIsPlayer));
 
     SetTID(mthing->tid);
     Special = mthing->special;

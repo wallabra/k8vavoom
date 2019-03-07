@@ -228,7 +228,7 @@ EntityEx DropInventory (Inventory SrcItem) {
   Dir = Normalise(Dir);
   Inventory Item = SrcItem.CreateTossable();
   if (Item) {
-    Item.SetOrigin2(Origin+vector(0.0, 0.0, 32.0)+Dir*(Radius+32.0));
+    Item.SetOrigin2(Origin+vector(0.0, 0.0, 32.0)+Dir*(Radius+32.0), properFloorCheck:true);
     Item.Angles.yaw = Angles.yaw;
     Item.Velocity = Dir*128.0;
   }

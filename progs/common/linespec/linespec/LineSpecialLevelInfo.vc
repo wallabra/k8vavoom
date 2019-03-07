@@ -4049,7 +4049,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     if (newAct.bFloatBob)
     {
       newAct.Origin.z = A.Origin.z-A.FloorZ;
-      newAct.SetOrigin2(newAct.Origin);
+      newAct.SetOrigin2(newAct.Origin, properFloorCheck:false);
     }
     if (!newAct.TestLocation())
     {
