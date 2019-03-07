@@ -304,7 +304,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
   SubSector = ss;
   Sector = ss->sector;
 
-  if (!EntityFlags&EF_IsPlayer) {
+  if (!(EntityFlags&EF_IsPlayer)) {
     if (properFloorCheck) {
       if (Radius < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
         properFloorCheck = false;

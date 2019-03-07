@@ -1955,7 +1955,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   for (int i = 0; i < TravelObjs.Num(); ++i) {
     GLevel->AddThinker(TravelObjs[i]);
     VEntity *Ent = Cast<VEntity>(TravelObjs[i]);
-    if (Ent) Ent->LinkToWorld();
+    if (Ent) Ent->LinkToWorld(true);
   }
 
   Host_ResetSkipFrames();

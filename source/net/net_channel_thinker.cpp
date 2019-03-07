@@ -278,7 +278,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
     Sys_Error("Bad net field %d", FldIdx);
   }
-  if (Ent) Ent->LinkToWorld();
+  if (Ent) Ent->LinkToWorld(true);
   unguard;
 }
 

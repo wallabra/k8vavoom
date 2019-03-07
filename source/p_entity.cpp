@@ -98,7 +98,7 @@ void VEntity::SerialiseOther (VStream &Strm) {
   if (Strm.IsLoading()) {
     if (EntityFlags&EF_IsPlayer) Player->MO = this;
     SubSector = nullptr; // must mark as not linked
-    LinkToWorld();
+    LinkToWorld(true);
   }
   unguard;
 }

@@ -3462,7 +3462,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
             break;
           default: didset = false;
         }
-        LinkToWorld(); // ...and link back again
+        LinkToWorld(true); // ...and link back again
         return didset;
       }
     }
