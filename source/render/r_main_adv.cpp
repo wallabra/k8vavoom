@@ -37,6 +37,44 @@ extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 extern VCvarB r_dynamic_clip_more;
 extern VCvarB w_update_in_renderer;
+extern VCvarI r_max_lights;
+
+static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visible static lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort visible dynamic lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
+
+
+struct StLightInfo {
+  VRenderLevelShared::light_t *stlight; // light
+  float distSq; // distance
+};
+
+struct DynLightInfo {
+  dlight_t *l; // light
+  float distSq; // distance
+};
+
+
+extern "C" {
+  static int stLightCompare (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    const StLightInfo *a = (const StLightInfo *)aa;
+    const StLightInfo *b = (const StLightInfo *)bb;
+    //TODO: consider radius too?
+    if (a->distSq < b->distSq) return -1;
+    if (a->distSq > b->distSq) return 1;
+    return 0;
+  }
+
+  static int dynLightCompare (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    const DynLightInfo *a = (const DynLightInfo *)aa;
+    const DynLightInfo *b = (const DynLightInfo *)bb;
+    //TODO: consider radius too?
+    if (a->distSq < b->distSq) return -1;
+    if (a->distSq > b->distSq) return 1;
+    return 0;
+  }
+}
 
 
 //==========================================================================
@@ -242,8 +280,13 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   backPlane.SetPointNormal3D(vieworg, viewforward);
 
 
-  if (!FixedLight && r_static_lights) {
+  if (!FixedLight && r_static_lights && r_max_lights != 0) {
     if (!staticLightsFiltered) RefilterStaticLights();
+
+    // sort lights by distance to player, so faraway lights won't disable nearby ones
+    static TArray<StLightInfo> visstatlights;
+    if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
+    unsigned visstatlightCount = 0;
 
     light_t *stlight = Lights.ptr();
     for (int i = Lights.length(); i--; ++stlight) {
@@ -287,11 +330,29 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       }
       */
 
-      RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
+      if (r_advlight_sort_static) {
+        StLightInfo &sli = visstatlights[visstatlightCount++];
+        sli.stlight = stlight;
+        sli.distSq = distSq;
+      } else {
+        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
+      }
+    }
+
+    // sort lights, so nearby ones will be rendered first
+    if (visstatlightCount > 0) {
+      timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
+      for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
+        RenderLightShadows(RD, Range, sli->stlight->origin, sli->stlight->radius, sli->stlight->colour, true);
+      }
     }
   }
 
   if (!FixedLight && r_dynamic) {
+    static TArray<DynLightInfo> visdynlights;
+    if (visdynlights.length() < Lights.length()) visdynlights.setLength(Lights.length());
+    unsigned visdynlightCount = 0;
+
     dlight_t *l = DLights;
     for (int i = MAX_DLIGHTS; i--; ++l) {
       if (l->radius < 8 || l->die < Level->Time) continue;
@@ -326,7 +387,21 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       }
       */
 
-      RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
+      if (r_advlight_sort_dynamic) {
+        DynLightInfo &dli = visdynlights[visdynlightCount++];
+        dli.l = l;
+        dli.distSq = distSq;
+      } else {
+        RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
+      }
+    }
+
+    // sort lights, so nearby ones will be rendered first
+    if (visdynlightCount > 0) {
+      timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+      for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
+        RenderLightShadows(RD, Range, dli->l->origin, dli->l->radius, dli->l->colour, true);
+      }
     }
   }
 

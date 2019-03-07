@@ -541,7 +541,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool Li
 
   if (bspnum == -1) {
     RenderShadowSubsector(0);
-    if (LimitLights) CurrShadowsNumber += 1;
+    if (LimitLights) ++CurrShadowsNumber;
     return;
   }
 
@@ -565,13 +565,12 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool Li
       RenderShadowBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
     }
 
-    if (LimitLights) CurrShadowsNumber += 1;
+    //if (LimitLights) CurrShadowsNumber += 1;
     return;
   }
 
   RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
-
-  //if (LimitLights) CurrShadowsNumber += 1;
+  if (LimitLights) ++CurrShadowsNumber;
 }
 
 
@@ -782,19 +781,18 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool Lim
       RenderLightBSPNode(bsp->children[side], bsp->bbox[side], false);
       // possibly divide back space
       if (!LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) {
-        if (LimitLights) ++CurrLightsNumber;
+        //if (LimitLights) ++CurrLightsNumber;
         return;
       }
       RenderLightBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
     }
 
-    if (LimitLights) ++CurrLightsNumber;
+    //if (LimitLights) ++CurrLightsNumber;
     return;
   }
 
   RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
-
-  //if (LimitLights) ++CurrLightsNumber;
+  if (LimitLights) ++CurrLightsNumber;
 }
 
 
