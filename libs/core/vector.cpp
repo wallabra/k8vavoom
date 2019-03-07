@@ -26,6 +26,7 @@
 //**************************************************************************
 #include "core.h"
 
+#define FRUSTUM_BBOX_CHECKS
 
 //==========================================================================
 //
@@ -271,6 +272,11 @@ void TClipPlane::setupBoxIndicies () {
 //==========================================================================
 bool TClipPlane::checkBox (const float bbox[6]) const {
   if (!clipflag) return true; // don't need to clip against it
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   // check reject point
   return !PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
 }
@@ -285,6 +291,11 @@ bool TClipPlane::checkBox (const float bbox[6]) const {
 //==========================================================================
 int TClipPlane::checkBoxEx (const float bbox[6]) const {
   if (!clipflag) return 1; // don't need to clip against it
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   // check reject point
   if (PointOnBackTh(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return TFrustum::OUTSIDE; // completely outside
   // check accept point
@@ -378,6 +389,11 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
 //==========================================================================
 bool TFrustum::checkBox (const float bbox[6]) const {
   if (!planeCount) return true;
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!cp->clipflag) continue; // don't need to clip against it
@@ -402,6 +418,11 @@ bool TFrustum::checkBox (const float bbox[6]) const {
 //==========================================================================
 int TFrustum::checkBoxEx (const float bbox[6]) const {
   if (!planeCount) return INSIDE;
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -472,6 +493,11 @@ bool TFrustum::checkBoxBack (const float bbox[6]) const {
   if (planeCount < 5) return true;
   const TClipPlane *cp = &planes[Near];
   if (!cp->clipflag) return true; // don't need to clip against it
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   // check reject point
   if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
     check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
@@ -490,10 +516,25 @@ int TFrustum::checkBoxExBack (const float bbox[6]) const {
   if (planeCount < 5) return INSIDE;
   const TClipPlane *cp = &planes[Near];
   if (!cp->clipflag) return true; // don't need to clip against it
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
   // check reject point
   if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
     // on a back side (or on a plane)
-    check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
+    if (!cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
+      GLog.Logf("plane:(%f,%f,%f) : %f (%d,%d,%d)-(%d,%d,%d); bbox:(%f,%f,%f)-(%f,%f,%f) (%f : %f)",
+        cp->normal.x, cp->normal.y, cp->normal.z, cp->dist,
+        cp->pindex[0], cp->pindex[1], cp->pindex[2],
+        cp->pindex[3], cp->pindex[4], cp->pindex[5],
+        bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5],
+        DotProduct(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]), cp->normal)-cp->dist,
+        DotProduct(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]), cp->normal)-cp->dist);
+      abort();
+    }
+    //check(cp->PointOnBackTh(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
     return OUTSIDE;
   }
   // check accept point
