@@ -180,7 +180,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
     // check angles to see if the thing can be aimed at
     hit_point = shootOrigin+(distance*in->frac)*dir;
 
-    if (!CalcProperThingHit(hit_point, th, shootOrigin, dir, distance)) continue;
+    if (!CalcProperThingHit(ref hit_point, th, shootOrigin, dir, distance)) continue;
     //print("  thing: %C (over:%B; under:%B; tz=(%f,%f); hpz=%f)", th, (th.Origin.z+th.Height < hit_point.z), (th.Origin.z > hit_point.z), th.Origin.z, th.Origin.z+th.Height, hit_point.z);
 
     if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
@@ -402,7 +402,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
     } else if (in->Thing && !in->Thing.IsA('DoomPlayer')) {
       // thing
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if (!CalcProperThingHit(hit_point, in->Thing, shootOrigin, dir, distance)) continue;
+      if (!CalcProperThingHit(ref hit_point, in->Thing, shootOrigin, dir, distance)) continue;
       if (hit_point.z >= in->Thing.Origin.z && hit_point.z < in->Thing.Origin.z+in->Thing.Height) {
         tr->hit = hit_point;
         tr->mobj = in->Thing;
@@ -861,7 +861,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     // check angles to see if the thing can be aimed at
     hit_point = shootOrigin+(distance*in->frac)*dir;
 
-    if (!CalcProperThingHit(hit_point, th, shootOrigin, dir, distance)) continue;
+    if (!CalcProperThingHit(ref hit_point, th, shootOrigin, dir, distance)) continue;
     //print("  thing: %C (over:%B; under:%B; tz=(%f,%f); hpz=%f)", th, (th.Origin.z+th.Height < hit_point.z), (th.Origin.z > hit_point.z), th.Origin.z, th.Origin.z+th.Height, hit_point.z);
 
     if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
