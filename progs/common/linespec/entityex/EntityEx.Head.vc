@@ -672,7 +672,7 @@ final EntityEx decoRearrangePtrGetPtr (int aptr, EntityEx defval,
 //  A_RearrangePointers
 //
 //===========================================================================
-final void A_RearrangePointers (int aptrtarget, int aptrmaster, int aptrtracer, optional int flags) {
+final void A_RearrangePointers (int aptrtarget, optional int aptrmaster, optional int aptrtracer, optional int flags) {
   EntityEx oldTarget = Target;
   EntityEx oldMaster = Master;
   EntityEx oldTracer = Tracer;
@@ -680,10 +680,14 @@ final void A_RearrangePointers (int aptrtarget, int aptrmaster, int aptrtracer, 
   Target = decoRearrangePtrGetPtr(aptrtarget, oldTarget, oldTarget, oldMaster, oldTracer);
   if (!(flags&PTROP_UNSAFETARGET)) VerifyTargetChain();
 
-  Master = decoRearrangePtrGetPtr(aptrmaster, oldMaster, oldTarget, oldMaster, oldTracer);
-  if (!(flags&PTROP_UNSAFEMASTER)) VerifyMasterChain();
+  if (specified_aptrmaster) {
+    Master = decoRearrangePtrGetPtr(aptrmaster, oldMaster, oldTarget, oldMaster, oldTracer);
+    if (!(flags&PTROP_UNSAFEMASTER)) VerifyMasterChain();
+  }
 
-  Tracer = decoRearrangePtrGetPtr(aptrtracer, oldTracer, oldTarget, oldMaster, oldTracer);
+  if (specified_aptrtracer) {
+    Tracer = decoRearrangePtrGetPtr(aptrtracer, oldTracer, oldTarget, oldMaster, oldTracer);
+  }
 }
 
 
