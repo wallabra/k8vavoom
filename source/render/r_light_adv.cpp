@@ -48,7 +48,7 @@ VCvarF r_lights_radius_sight_check("r_lights_radius_sight_check", "1024", "Maxim
 VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
 VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
 VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
-VCvarI r_max_shadows("r_max_shadows", "64", "Maximum shadows.", CVAR_Archive);
+VCvarI r_max_shadows("r_max_shadows", "128", "Maximum shadows.", CVAR_Archive);
 
 // not used anymore (was used in grid optimiser)
 VCvarI r_hashlight_static_div("r_hashlight_static_div", "8", "Divisor for static light spatial hashing.", CVAR_Archive);
