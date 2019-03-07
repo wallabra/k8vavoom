@@ -294,6 +294,12 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
 }
 
 
+#define UPDATE_LIGHTVIS(ssindex)  do { \
+  LightVis[(unsigned)(ssindex)>>3] |= 1<<((unsigned)(ssindex)&7); \
+  if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) HasLightIntersection = true; \
+} while (0)
+
+
 //==========================================================================
 //
 //  VAdvancedRenderLevel::BuildLightVis
@@ -305,13 +311,14 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
   if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
 
   if (bspnum == -1) {
-    int SubNum = 0;
-    subsector_t *Sub = &Level->Subsectors[SubNum];
+    const unsigned SubNum = 0;
+    const subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
     if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
 
-    LightVis[SubNum>>3] |= 1<<(SubNum&7);
+    //LightVis[SubNum>>3] |= 1<<(SubNum&7);
+    UPDATE_LIGHTVIS(SubNum);
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
     return;
   }
@@ -326,7 +333,7 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
       // light is completely on front side
       BuildLightVis(bsp->children[0], bsp->bbox[0]);
     } else if (dist < -CurrLightRadius) {
-      // light is completely on back side.
+      // light is completely on back side
       BuildLightVis(bsp->children[1], bsp->bbox[1]);
     } else {
       int side = bsp->PointOnSide(CurrLightPos);
@@ -342,13 +349,14 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
     return;
   }
 
-  int SubNum = bspnum&(~NF_SUBSECTOR);
-  subsector_t *Sub = &Level->Subsectors[SubNum];
+  const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
+  const subsector_t *Sub = &Level->Subsectors[SubNum];
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
   if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
 
-  LightVis[SubNum>>3] |= 1<<(SubNum&7);
+  //LightVis[SubNum>>3] |= 1<<(SubNum&7);
+  UPDATE_LIGHTVIS(SubNum);
   LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
 }
 
@@ -525,7 +533,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool LimitLights) {
-  if (LimitLights && CurrShadowsNumber > r_max_shadows) return;
+  if (LimitLights && r_max_shadows >= 0 && CurrShadowsNumber > r_max_shadows) return;
 
   if (LightClip.ClipIsFull()) return;
 
@@ -721,7 +729,9 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
+  // `LightBspVis` is already an intersection, no need to check `BspVis` here
+  //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
+  if (!(LightBspVis[(unsigned)num>>3]&(1<<((unsigned)num&7)))) return;
 
   if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
 
@@ -742,7 +752,7 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool LimitLights) {
-  if (LimitLights && CurrLightsNumber > r_max_lights) return;
+  if (LimitLights && r_max_lights >= 0 && CurrLightsNumber > r_max_lights) return;
 
   if (LightClip.ClipIsFull()) return;
 
@@ -827,15 +837,20 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
   memset(LightVis, 0, VisSize);
+  memset(LightBspVis, 0, VisSize);
+  HasLightIntersection = false;
   BuildLightVis(Level->NumNodes-1, dummy_bbox);
+  if (!HasLightIntersection) return;
 
   // create combined light and view visibility
+  /*
   bool HaveIntersect = false;
   for (int i = 0; i < VisSize; ++i) {
     LightBspVis[i] = BspVis[i]&LightVis[i];
     if (LightBspVis[i]) HaveIntersect = true;
   }
   if (!HaveIntersect) return;
+  */
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) Drawer->SetupLightScissor(Pos, Radius);

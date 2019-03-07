@@ -632,6 +632,7 @@ private:
   vuint8 *LightBspVis;
   vuint32 CurrLightColour;
   TArray<VEntity *> mobjAffected; // built in `ResetMobjsLightCount()`
+  bool HasLightIntersection; // set by `BuildLightVis()`
 
 protected:
   void RefilterStaticLights ();
