@@ -81,10 +81,12 @@ static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CV
 //
 //==========================================================================
 static inline void FixBBoxZ (float bbox[6]) {
-  if (bbox[2] > bbox[5]) {
+  check(isFiniteF(bbox[2]));
+  check(isFiniteF(bbox[3+2]));
+  if (bbox[2] > bbox[3+2]) {
     const float tmp = bbox[2];
-    bbox[2] = bbox[5];
-    bbox[5] = tmp;
+    bbox[2] = bbox[3+2];
+    bbox[3+2] = tmp;
   }
 }
 
