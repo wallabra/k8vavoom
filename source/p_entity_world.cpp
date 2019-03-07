@@ -36,6 +36,11 @@
 #define WATER_SINK_SPEED   (0.5f)
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct cptrace_t {
   TVec Pos;
   float bbox[4];
@@ -314,6 +319,8 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     properFloorCheck = true;
   }
 
+  if (!gm_smart_z) properFloorCheck = false;
+
   if (properFloorCheck) {
     //FIXME: this is copypasta from `CheckRelPos()`; factor it out
     tmtrace_t tmtrace;
@@ -359,6 +366,10 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     int xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
     int yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
     int yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
+
+    //float lastFZ, lastCZ;
+    //sec_plane_t *lastFloor = nullptr;
+    //sec_plane_t *lastCeiling = nullptr;
 
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
@@ -1027,22 +1038,27 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   }
 
   // set openrange, opentop, openbottom
+  const float hgt = (Height > 0 ? Height : 1.0f);
   TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
-  open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+Height);
+  open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
 
   if (open) {
     // adjust floor / ceiling heights
     if (!(open->ceiling->flags&SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ) {
-      tmtrace.Ceiling = open->ceiling;
-      tmtrace.CeilingZ = open->top;
-      tmtrace.CeilingLine = ld;
+      if (!skipSpecials || open->top+hgt >= Origin.z+hgt) {
+        tmtrace.Ceiling = open->ceiling;
+        tmtrace.CeilingZ = open->top;
+        tmtrace.CeilingLine = ld;
+      }
     }
 
     if (!(open->floor->flags&SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ) {
-      tmtrace.Floor = open->floor;
-      tmtrace.FloorZ = open->bottom;
-      tmtrace.FloorLine = ld;
+      if (!skipSpecials || open->bottom <= Origin.z) {
+        tmtrace.Floor = open->floor;
+        tmtrace.FloorZ = open->bottom;
+        tmtrace.FloorLine = ld;
+      }
     }
 
     if (open->lowfloor < tmtrace.DropOffZ) tmtrace.DropOffZ = open->lowfloor;
