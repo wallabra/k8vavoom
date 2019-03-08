@@ -550,7 +550,7 @@ IMPLEMENT_FUNCTION(VObject, SectorClosestPoint) {
 
 //==========================================================================
 //
-//  PF_LineOpenings
+//  LineOpenings
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, LineOpenings) {
@@ -563,7 +563,7 @@ IMPLEMENT_FUNCTION(VObject, LineOpenings) {
 
 //==========================================================================
 //
-//  PF_P_BoxOnLineSide
+//  P_BoxOnLineSide
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, P_BoxOnLineSide) {
@@ -590,7 +590,7 @@ IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
 
 //==========================================================================
 //
-//  PF_FindThingGap
+//  FindThingGap
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, FindThingGap) {
@@ -604,7 +604,7 @@ IMPLEMENT_FUNCTION(VObject, FindThingGap) {
 
 //==========================================================================
 //
-//  PF_FindOpening
+//  FindOpening
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, FindOpening) {
@@ -617,7 +617,7 @@ IMPLEMENT_FUNCTION(VObject, FindOpening) {
 
 //==========================================================================
 //
-//  PF_PointInRegion
+//  PointInRegion
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, PointInRegion) {
@@ -635,7 +635,7 @@ IMPLEMENT_FUNCTION(VObject, PointInRegion) {
 
 //==========================================================================
 //
-//  PF_GetSoundPlayingInfo
+//  GetSoundPlayingInfo
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, GetSoundPlayingInfo) {
@@ -653,7 +653,7 @@ IMPLEMENT_FUNCTION(VObject, GetSoundPlayingInfo) {
 
 //==========================================================================
 //
-//  PF_GetSoundID
+//  GetSoundID
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, GetSoundID) {
@@ -664,7 +664,7 @@ IMPLEMENT_FUNCTION(VObject, GetSoundID) {
 
 //==========================================================================
 //
-//  PF_StopAllSounds
+//  StopAllSounds
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, StopAllSounds) {
@@ -676,7 +676,7 @@ IMPLEMENT_FUNCTION(VObject, StopAllSounds) {
 
 //==========================================================================
 //
-//  PF_SetSeqTrans
+//  SetSeqTrans
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, SetSeqTrans) {
@@ -689,7 +689,7 @@ IMPLEMENT_FUNCTION(VObject, SetSeqTrans) {
 
 //==========================================================================
 //
-//  PF_GetSeqTrans
+//  GetSeqTrans
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, GetSeqTrans) {
@@ -701,7 +701,7 @@ IMPLEMENT_FUNCTION(VObject, GetSeqTrans) {
 
 //==========================================================================
 //
-//  PF_GetSeqTrans
+//  GetSeqTrans
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, GetSeqSlot) {
@@ -712,7 +712,7 @@ IMPLEMENT_FUNCTION(VObject, GetSeqSlot) {
 
 //==========================================================================
 //
-//  PF_P_GetThingFloorType
+//  P_GetThingFloorType
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, TerrainType) {
@@ -723,7 +723,7 @@ IMPLEMENT_FUNCTION(VObject, TerrainType) {
 
 //==========================================================================
 //
-//  PF_SB_Start
+//  SB_Start
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, SB_Start) {
@@ -735,7 +735,7 @@ IMPLEMENT_FUNCTION(VObject, SB_Start) {
 
 //==========================================================================
 //
-//  PF_FindClassFromEditorId
+//  FindClassFromEditorId
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, FindClassFromEditorId) {
@@ -747,7 +747,7 @@ IMPLEMENT_FUNCTION(VObject, FindClassFromEditorId) {
 
 //==========================================================================
 //
-//  PF_FindClassFromScriptId
+//  FindClassFromScriptId
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, FindClassFromScriptId) {
@@ -864,7 +864,7 @@ IMPLEMENT_FUNCTION(VObject, LoadTextLump) {
 
 //==========================================================================
 //
-//  PF_SetVirtualScreen
+//  SetVirtualScreen
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, SetVirtualScreen) {
@@ -879,9 +879,10 @@ IMPLEMENT_FUNCTION(VObject, GetVirtualHeight) { RET_INT(VirtualHeight); }
 IMPLEMENT_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(ScreenWidth); }
 IMPLEMENT_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
 
+
 //==========================================================================
 //
-//  PF_R_RegisterPic
+//  R_RegisterPic
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_RegisterPic) {
@@ -892,7 +893,7 @@ IMPLEMENT_FUNCTION(VObject, R_RegisterPic) {
 
 //==========================================================================
 //
-//  PF_R_RegisterPicPal
+//  R_RegisterPicPal
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_RegisterPicPal) {
@@ -904,7 +905,18 @@ IMPLEMENT_FUNCTION(VObject, R_RegisterPicPal) {
 
 //==========================================================================
 //
-//  PF_R_GetPicInfo
+//  R_RegisterPicPath
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_RegisterPicPath) {
+  P_GET_NAME(path);
+  RET_INT(GTextureManager.AddFileTextureChecked(path, TEXTYPE_Pic));
+}
+
+
+//==========================================================================
+//
+//  R_GetPicInfo
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_GetPicInfo) {
@@ -916,7 +928,7 @@ IMPLEMENT_FUNCTION(VObject, R_GetPicInfo) {
 
 //==========================================================================
 //
-//  PF_R_DrawPic
+//  R_DrawPic
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawPic) {
@@ -930,7 +942,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPic) {
 
 //==========================================================================
 //
-//  PF_R_DrawPicFloat
+//  R_DrawPicFloat
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
@@ -944,7 +956,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
 
 //==========================================================================
 //
-//  PF_R_InstallSprite
+//  R_InstallSprite
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_InstallSprite) {
@@ -956,7 +968,7 @@ IMPLEMENT_FUNCTION(VObject, R_InstallSprite) {
 
 //==========================================================================
 //
-//  PF_R_DrawSpritePatch
+//  R_DrawSpritePatch
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawSpritePatch) {
@@ -974,7 +986,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawSpritePatch) {
 
 //==========================================================================
 //
-//  PF_InstallModel
+//  InstallModel
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, InstallModel) {
@@ -989,7 +1001,7 @@ IMPLEMENT_FUNCTION(VObject, InstallModel) {
 
 //==========================================================================
 //
-//  PF_R_DrawModelFrame
+//  R_DrawModelFrame
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawModelFrame) {
@@ -1008,7 +1020,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawModelFrame) {
 
 //==========================================================================
 //
-//  PF_R_FillRect
+//  R_FillRect
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_FillRect) {
@@ -1023,7 +1035,7 @@ IMPLEMENT_FUNCTION(VObject, R_FillRect) {
 
 //==========================================================================
 //
-//  PF_R_GetAspectRatio
+//  R_GetAspectRatio
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
@@ -1039,7 +1051,7 @@ IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
 
 //==========================================================================
 //
-//  PF_LocalSound
+//  LocalSound
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, LocalSound) {
@@ -1050,7 +1062,7 @@ IMPLEMENT_FUNCTION(VObject, LocalSound) {
 
 //==========================================================================
 //
-//  PF_IsLocalSoundPlaying
+//  IsLocalSoundPlaying
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, IsLocalSoundPlaying) {
@@ -1061,7 +1073,7 @@ IMPLEMENT_FUNCTION(VObject, IsLocalSoundPlaying) {
 
 //==========================================================================
 //
-//  PF_StopLocalSounds
+//  StopLocalSounds
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, StopLocalSounds) {

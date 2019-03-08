@@ -394,6 +394,8 @@ native static final int GetRealScreenHeight ();
 native static final int R_RegisterPic (name Name);
 // registers a graphic with custom palette, returns handle
 native static final int R_RegisterPicPal (name Name, name palname);
+// registers a graphic with a full path, returns handle
+native static final int R_RegisterPicPath (name path);
 // retrieves pic info
 native static final void R_GetPicInfo (int handle, picinfo_t *info);
 // draws a pic
