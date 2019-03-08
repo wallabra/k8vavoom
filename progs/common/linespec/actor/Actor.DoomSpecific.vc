@@ -140,7 +140,8 @@ final void A_BFGSpray () {
 //
 //===========================================================================
 final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
-                                optional int NumRays, optional int DamageAmount)
+                                optional int NumRays, optional int DamageAmount,
+                                optional float fov, optional float Distance)
 {
   TVec Dir;
 
@@ -148,14 +149,19 @@ final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
   if (NumRays <= 0) NumRays = 40;
   if (DamageAmount <= 0) DamageAmount = 15;
 
+  if (!specified_fov || fov <= 0) fov = 90;
+  if (Distance <= 0) Distance = 1024;
+  float fovd2 = fov/2.0;
+
   // offset angles from its attack angle
   foreach (auto i; 0..NumRays) {
     TAVec aimAng = Angles;
-    aimAng.yaw = AngleMod360(aimAng.yaw-45.0+90.0/float(NumRays)*float(i));
+    //aimAng.yaw = AngleMod360(aimAng.yaw-45.0+90.0/float(NumRays)*float(i));
+    aimAng.yaw = AngleMod360(aimAng.yaw-fovd2+fov/float(NumRays)*float(i));
 
     // target is the originator (player)
     //  of the missile
-    EntityEx AimTarget = Target.AimLineAttack(out Dir, aimAng, 16.0*64.0);
+    EntityEx AimTarget = Target.AimLineAttack(out Dir, aimAng, /*16.0*64.0*/Distance);
     if (!AimTarget) continue;
 
     EntityEx spray = Spawn(FlashType, AimTarget.Origin+vector(0.0, 0.0, AimTarget.Height/4.0));
