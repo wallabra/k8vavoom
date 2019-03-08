@@ -126,4 +126,15 @@ menudef AdvRenderOptions {
       "This can speedup rendering (lightmapped too),"
       "so better leave this 'ON'.";
   }
+
+  option bool {
+    title = "Use Scissoring";
+    cvar = r_advlight_opt_scissor;
+    help =
+      "Limit screen update area by light box projection."
+      "This creates small glitches at screen edges sometimes,"
+      "but speedups stenciled lighting by 10-30 FPS."
+      "Turn this 'OFF' if you see uncast shadows at screen edges,"
+      "but only if you have really fast GPU.";
+  }
 }
