@@ -214,7 +214,7 @@ protected:
   bool Pixels8BitAValid;
   int shadeColor;
 
-protected:
+public:
   static void checkerFill8 (vuint8 *dest, int width, int height);
   static void checkerFillRGB (vuint8 *dest, int width, int height);
   static void checkerFillRGBA (vuint8 *dest, int width, int height);
@@ -222,6 +222,7 @@ protected:
   // `dest` points at column, `x` is used only to build checker
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
 
+protected:
   // this should be called after `Pixels` were converted to RGBA
   void shadePixelsRGBA (int shadeColor);
   void stencilPixelsRGBA (int shadeColor);

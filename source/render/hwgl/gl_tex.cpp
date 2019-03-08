@@ -330,32 +330,48 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 
   // try to load high resolution version
   VTexture *SrcTex = Tex->GetHighResolutionTexture();
-  if (!SrcTex) SrcTex = Tex;
-
-  // upload data
-  if (Translation && CMap) {
-    // both colormap and translation
-    rgba_t tmppal[256];
-    const vuint8 *TrTab = Translation->GetTable();
-    const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
-    for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
-    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
-  } else if (Translation) {
-    // only translation
-    //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-    //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
-    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
-  } else if (CMap) {
-    // only colormap
-    //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
+  if (!SrcTex) {
+    SrcTex = Tex;
+    //GCon->Logf("VOpenGLDrawer::GenerateTexture(%d): %s", Tex->Type, *Tex->Name);
   } else {
-    // normal uploading
-    vuint8 *block = SrcTex->GetPixels();
-    if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
-      UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
+    //GCon->Logf("VOpenGLDrawer::GenerateTexture(%d): %s (lo: %s)", Tex->Type, *SrcTex->Name, *Tex->Name);
+  }
+
+  if (SrcTex->Type == TEXTYPE_Null) {
+    // fuckin' idiots
+    GCon->Logf(NAME_Warning, "somwthing is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
+    check(SrcTex->GetWidth() > 0);
+    check(SrcTex->GetHeight() > 0);
+    rgba_t *dummy = (rgba_t *)Z_Calloc(SrcTex->GetWidth()*SrcTex->GetHeight()*sizeof(rgba_t));
+    //VTexture::checkerFillRGBA((vuint8 *)dummy, SrcTex->GetWidth(), SrcTex->GetHeight());
+    UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), dummy);
+    Z_Free(dummy);
+  } else {
+    // upload data
+    if (Translation && CMap) {
+      // both colormap and translation
+      rgba_t tmppal[256];
+      const vuint8 *TrTab = Translation->GetTable();
+      const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
+      for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
+    } else if (Translation) {
+      // only translation
+      //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+      //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
+    } else if (CMap) {
+      // only colormap
+      //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
     } else {
-      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block);
+      // normal uploading
+      vuint8 *block = SrcTex->GetPixels();
+      if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
+        UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
+      } else {
+        UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block);
+      }
     }
   }
 
