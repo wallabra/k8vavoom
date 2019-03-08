@@ -1625,15 +1625,20 @@ static bool SV_SaveCheckpoint () {
 //
 //  SV_LoadMap
 //
+//  returns `true` if checkpoint was loaded
+//
 //==========================================================================
-static void SV_LoadMap (VName MapName) {
-  guard(SV_LoadMap);
-
+static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
   bool isCheckpoint = (BaseSlot.Maps.length() == 0);
+  if (isCheckpoint && !allowCheckpoints) {
+    Host_Error("Trying to load checkpoint in hub game!");
+  }
 #ifdef CLIENT
   if (isCheckpoint && svs.max_clients != 1) {
     Host_Error("Checkpoints aren't supported in networked games!");
   }
+  // if we are loading a checkpoint, simulate normal map start
+  if (isCheckpoint) sv_loading = false;
 #else
   // standalone server
   if (isCheckpoint) {
@@ -1646,19 +1651,8 @@ static void SV_LoadMap (VName MapName) {
 
 #ifdef CLIENT
   if (isCheckpoint) {
-    /*if (GGameInfo->NetMode == NM_TitleMap ||
-        GGameInfo->NetMode == NM_Standalone ||
-        GGameInfo->NetMode == NM_ListenServer)*/
-    {
-      bool oldLoading = sv_loading;
-      sv_loading = false;
-      CL_SetUpLocalPlayer();
-      //CL_SetUpStandaloneClient();
-      sv_loading = oldLoading;
-    }
-
-    // launch waiting scripts (guarantees to not be a deathmatch)
-    /*if (!deathmatch)*/ GLevel->Acs->CheckAcsStore();
+    sv_loading = false; // just in case
+    CL_SetUpLocalPlayer();
 
     Host_ResetSkipFrames();
 
@@ -1734,7 +1728,7 @@ static void SV_LoadMap (VName MapName) {
     if (rwe) plr->eventSetReadyWeapon(rwe);
 
     Host_ResetSkipFrames();
-    return;
+    return true;
   }
 #endif
 
@@ -1783,7 +1777,8 @@ static void SV_LoadMap (VName MapName) {
   SV_SendServerInfoToClients();
 
   Host_ResetSkipFrames();
-  unguard;
+
+  return false;
 }
 
 
@@ -1834,7 +1829,6 @@ void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
 //
 //==========================================================================
 void SV_LoadGame (int slot) {
-  guard(SV_LoadGame);
   SV_ShutdownGame();
 
   if (!BaseSlot.LoadSlot(slot)) return;
@@ -1842,17 +1836,14 @@ void SV_LoadGame (int slot) {
   sv_loading = true;
 
   // load the current map
-  SV_LoadMap(BaseSlot.CurrentMap);
-  Host_ResetSkipFrames();
-
+  if (!SV_LoadMap(BaseSlot.CurrentMap)) {
+    // not a checkpoint
 #ifdef CLIENT
-  if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
+    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
-
-  // launch waiting scripts
-  if (!deathmatch) GLevel->Acs->CheckAcsStore();
-
-  unguard;
+    // launch waiting scripts
+    if (!deathmatch) GLevel->Acs->CheckAcsStore();
+  }
 }
 
 
@@ -1945,7 +1936,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   sv_map_travel = true;
   if (!deathmatch && BaseSlot.FindMap(mapname)) {
     // unarchive map
-    SV_LoadMap(mapname);
+    SV_LoadMap(mapname, false); // don't allow checkpoints
   } else {
     // new map
     SV_SpawnServer(*mapname, true/*spawn thinkers*/);
