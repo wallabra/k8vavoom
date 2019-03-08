@@ -145,4 +145,25 @@ menudef HUDOptions {
       "Right" = 1,
     }
   }
+
+
+  header "Health Bar";
+
+  option bool {
+    title = "Active";
+    cvar = k8HealthBar;
+  }
+
+  option bool {
+    title = "Only Monsters";
+    cvar = k8HealthBarOnlyMonsters;
+  }
+
+  option slider {
+    title = "Opacity";
+    cvar = k8HealthBarAlpha;
+    min = 0;
+    max = 1;
+    step = 0.1;
+  }
 }
