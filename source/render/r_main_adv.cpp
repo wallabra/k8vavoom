@@ -34,7 +34,6 @@
 
 
 extern VCvarF r_lights_radius;
-extern VCvarF r_lights_radius_sight_check;
 extern VCvarB r_dynamic_clip_more;
 extern VCvarB w_update_in_renderer;
 extern VCvarI r_max_lights;
@@ -44,6 +43,8 @@ static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort vis
 static VCvarB r_advlight_flood_check("r_advlight_flood_check", true, "Check light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB dbg_adv_show_light_count("dbg_adv_show_light_count", false, "Show number of rendered lights?", CVAR_PreInit);
+static VCvarB dbg_adv_show_light_seg_info("dbg_adv_show_light_seg_info", false, "Show totals of rendered light/shadow segments?", CVAR_PreInit);
+
 static VCvarI dbg_adv_force_static_lights_radius("dbg_adv_force_static_lights_radius", "0", "Force static light radius.", CVAR_PreInit);
 static VCvarI dbg_adv_force_dynamic_lights_radius("dbg_adv_force_dynamic_lights_radius", "0", "Force dynamic light radius.", CVAR_PreInit);
 
@@ -273,9 +274,10 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   CurrLightsNumber = 0;
   CurrShadowsNumber = 0;
+  AllLightsNumber = 0;
+  AllShadowsNumber = 0;
 
   const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
-  //const float rlightraduisSightSq = (r_lights_radius_sight_check < 1 ? 0 : r_lights_radius_sight_check*r_lights_radius_sight_check);
   //const bool hasPVS = Level->HasPVS();
 
   static TFrustum frustum;
@@ -356,7 +358,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   int rlStatic = LightsRendered;
 
-  if (!FixedLight && r_dynamic) {
+  if (!FixedLight && r_dynamic && r_max_lights != 0) {
     static TArray<DynLightInfo> visdynlights;
     if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
     unsigned visdynlightCount = 0;
@@ -415,6 +417,10 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   if (dbg_adv_show_light_count) {
     GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, rlStatic, LightsRendered-rlStatic);
+  }
+
+  if (dbg_adv_show_light_seg_info) {
+    GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
   }
 
   Drawer->DrawWorldTexturesPass();

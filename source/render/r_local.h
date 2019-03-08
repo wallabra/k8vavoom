@@ -378,6 +378,8 @@ protected:
   float CurrLightRadius;
   int CurrLightsNumber;
   int CurrShadowsNumber;
+  int AllLightsNumber;
+  int AllShadowsNumber;
 
   // used in `AllocDlight()` to save one call to `PointInSubsector()`
   // reset in `RenderPlayerView()`

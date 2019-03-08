@@ -45,7 +45,6 @@ VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How 
 VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
 extern VCvarF r_lights_radius;
-extern VCvarF r_lights_radius_sight_check;
 
 
 #define RL_CLEAR_DLIGHT(_dl)  do { \

@@ -43,16 +43,14 @@ extern VCvarB r_dynamic_clip_more;
 static subsector_t *r_sub;
 static sec_region_t *r_region;
 
-VCvarF r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_Archive);
-VCvarF r_lights_radius_sight_check("r_lights_radius_sight_check", "1024", "Maximum light radius.", CVAR_Archive);
 VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
 VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
-VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
-VCvarI r_max_shadows("r_max_shadows", "128", "Maximum shadows.", CVAR_Archive);
 
-// not used anymore (was used in grid optimiser)
-VCvarI r_hashlight_static_div("r_hashlight_static_div", "8", "Divisor for static light spatial hashing.", CVAR_Archive);
-VCvarI r_hashlight_dynamic_div("r_hashlight_dynamic_div", "8", "Divisor for dynamic light spatial hashing.", CVAR_Archive);
+VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
+static VCvarI r_max_light_segs_all("r_max_light_segs_all", "-1", "Maximum light segments for all lights.", CVAR_Archive);
+static VCvarI r_max_light_segs_one("r_max_light_segs_one", "-1", "Maximum light segments for one light.", CVAR_Archive);
+static VCvarI r_max_shadow_segs_all("r_max_shadow_segs_all", "128", "Maximum shadow segments for all lights.", CVAR_Archive);
+static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shadow segments for one light.", CVAR_Archive);
 
 VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
 
@@ -534,7 +532,10 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool LimitLights) {
-  if (LimitLights && r_max_shadows >= 0 && CurrShadowsNumber > r_max_shadows) return;
+  if (LimitLights) {
+    if (r_max_shadow_segs_all >= 0 && AllShadowsNumber > r_max_shadow_segs_all) return;
+    if (r_max_shadow_segs_one >= 0 && CurrShadowsNumber > r_max_shadow_segs_one) return;
+  }
 
   if (LightClip.ClipIsFull()) return;
 
@@ -542,7 +543,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool Li
 
   if (bspnum == -1) {
     RenderShadowSubsector(0);
-    if (LimitLights) ++CurrShadowsNumber;
+    if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
     return;
   }
 
@@ -554,24 +555,21 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool Li
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights ? true : false);
+      RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights ? true : false);
+      RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
       int side = bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
-      RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], false);
+      RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // always divide back space for shadows
-      RenderShadowBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
+      RenderShadowBSPNode(bsp->children[side^1], bsp->bbox[side^1], LimitLights);
     }
-
-    //if (LimitLights) CurrShadowsNumber += 1;
-    return;
+  } else {
+    RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
+    if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
   }
-
-  RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
-  if (LimitLights) ++CurrShadowsNumber;
 }
 
 
@@ -752,7 +750,10 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool LimitLights) {
-  if (LimitLights && r_max_lights >= 0 && CurrLightsNumber > r_max_lights) return;
+  if (LimitLights) {
+     if (r_max_light_segs_all >= 0 && AllLightsNumber > r_max_light_segs_all) return;
+     if (r_max_light_segs_one >= 0 && CurrLightsNumber > r_max_light_segs_one) return;
+  }
 
   if (LightClip.ClipIsFull()) return;
 
@@ -760,7 +761,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool Lim
 
   if (bspnum == -1) {
     RenderLightSubsector(0);
-    if (LimitLights) ++CurrLightsNumber;
+    if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
     return;
   }
 
@@ -772,28 +773,23 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool Lim
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights ? true : false);
+      RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights ? true : false);
+      RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
       int side = bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
-      RenderLightBSPNode(bsp->children[side], bsp->bbox[side], false);
+      RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // possibly divide back space
-      if (!LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) {
-        //if (LimitLights) ++CurrLightsNumber;
-        return;
+      if (LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) {
+        RenderLightBSPNode(bsp->children[side^1], bsp->bbox[side^1], LimitLights);
       }
-      RenderLightBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
     }
-
-    //if (LimitLights) ++CurrLightsNumber;
-    return;
+  } else {
+    RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
+    if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
   }
-
-  RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
-  if (LimitLights) ++CurrLightsNumber;
 }
 
 
@@ -823,6 +819,8 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   dummy_bbox[4] = Pos.y+Radius;
   dummy_bbox[5] = Pos.z+Radius;
   */
+
+  if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
 
   bool doShadows = true;
 
@@ -854,6 +852,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   ++LightsRendered;
 
+  CurrShadowsNumber = 0;
+  CurrLightsNumber = 0;
+
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) Drawer->SetupLightScissor(Pos, Radius);
 
@@ -861,7 +862,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   // do shadow volumes
   Drawer->BeginLightShadowVolumes();
   LightClip.ClearClipNodes(CurrLightPos, Level);
-  if (doShadows) {
+  if (doShadows && r_max_shadow_segs_all) {
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow();

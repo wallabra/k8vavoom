@@ -77,14 +77,11 @@ VCvarB r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
 VCvarF r_fade_factor("r_fade_factor", "7", "Fade actor lights?", CVAR_Archive);
 VCvarF r_sky_bright_factor("r_sky_bright_factor", "1", "Skybright actor factor.", CVAR_Archive);
 
-static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
+VCvarF r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_Archive);
+//static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
 
 static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
 
-extern VCvarF r_lights_radius;
-extern VCvarF r_lights_radius_sight_check;
-extern VCvarI r_hashlight_static_div;
-extern VCvarI r_hashlight_dynamic_div;
 extern VCvarB r_dynamic_clip_more;
 
 VDrawer *Drawer;
