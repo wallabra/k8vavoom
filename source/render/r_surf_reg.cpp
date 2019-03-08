@@ -205,10 +205,11 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     return f;
   }
 
+  // this can happen for wall without texture
   if (!axis.isValid() || axis.isZero()) {
     GCon->Logf(NAME_Warning, "ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
     if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
-    f->count = 0; // ignore this surface
+    //f->count = 0; // ignore this surface
     return f;
   }
 
@@ -392,10 +393,11 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
     return surf;
   }
 
+  // this can happen for wall without texture
   if (!axis.isValid() || axis.isZero()) {
     GCon->Logf(NAME_Warning, "ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
     if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
-    surf->count = 0; // ignore this surface
+    //surf->count = 0; // ignore this surface
     return surf;
   }
 
