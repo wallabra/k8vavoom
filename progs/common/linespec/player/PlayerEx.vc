@@ -2432,7 +2432,7 @@ void PerformBossDetection () {
   }
   else if (cybbieCount > 1) msg = va("%d Cyberdemons detected!", cybbieCount);
   else if (cybbieCount) msg = "Cyberdemon detected!";
-  else if (mindCount > 1) msg = va("%d Masterminds detected!");
+  else if (mindCount > 1) msg = va("%d Masterminds detected!", mindCount);
   else if (mindCount) msg = "Mastermind detected!";
   if (msg) {
     print("\c[Red]*** %s ***", msg);
