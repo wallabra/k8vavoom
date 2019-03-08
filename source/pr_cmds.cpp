@@ -956,6 +956,74 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
 
 //==========================================================================
 //
+//  R_DrawPicPart
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_DrawPicPart) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(handle);
+  P_GET_FLOAT(phgt);
+  P_GET_FLOAT(pwdt);
+  P_GET_INT(y);
+  P_GET_INT(x);
+  R_DrawPicPart(x, y, pwdt, phgt, handle, alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicFloatPart
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPart) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(handle);
+  P_GET_FLOAT(phgt);
+  P_GET_FLOAT(pwdt);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  R_DrawPicFloatPart(x, y, pwdt, phgt, handle, alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicPartEx
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_DrawPicPartEx) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(handle);
+  P_GET_FLOAT(ty1);
+  P_GET_FLOAT(tx1);
+  P_GET_FLOAT(ty0);
+  P_GET_FLOAT(tx0);
+  P_GET_INT(y);
+  P_GET_INT(x);
+  R_DrawPicPartEx(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicFloatPartEx
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPartEx) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(handle);
+  P_GET_FLOAT(ty1);
+  P_GET_FLOAT(tx1);
+  P_GET_FLOAT(ty0);
+  P_GET_FLOAT(tx0);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  R_DrawPicFloatPartEx(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+}
+
+
+//==========================================================================
+//
 //  R_InstallSprite
 //
 //==========================================================================

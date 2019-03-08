@@ -74,6 +74,11 @@ void R_InitSprites ();
 //  2D graphics
 void R_DrawPic (int x, int y, int handle, float Aplha=1.0f);
 void R_DrawPicFloat (float x, float y, int handle, float Aplha=1.0f);
+// wdt and hgt are in [0..1] range
+void R_DrawPicPart (int x, int y, float pwdt, float phgt, int handle, float Aplha=1.0f);
+void R_DrawPicFloatPart (float x, float y, float pwdt, float phgt, int handle, float Aplha=1.0f);
+void R_DrawPicPartEx (int x, int y, float tx0, float ty0, float tx1, float ty1, int handle, float Aplha=1.0f);
+void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float Aplha=1.0f);
 
 float R_GetAspectRatio ();
 

@@ -1,0 +1,80 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+
+
+//==========================================================================
+//
+//  HealthBarInit
+//
+//==========================================================================
+void HealthBarInit () {
+}
+
+
+//==========================================================================
+//
+//  HealthBarDeinit
+//
+//==========================================================================
+void HealthBarDeinit () {
+}
+
+
+//==========================================================================
+//
+//  HealthBarProcessor
+//
+//==========================================================================
+void HealthBarProcessor () {
+  if (/*hbarPicBack < 0 ||*/ !MO) return;
+  if (!GetCvarB('k8HealthBar')) return;
+  EntityEx mo = EntityEx(MO);
+  if (!mo) return;
+  // find actor
+  TVec dir;
+  AngleVector(mo.Angles, out dir);
+  EntityEx ee = EntityEx(mo.PickActor(org:default, dir:dir, distance:8192, actorMask:MF_SHOOTABLE, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
+  if (!ee) return;
+
+  string ename = ee.StrifeName;
+  if (!ename) ename = string(GetClassName(ee.Class));
+  if (!ename) return; // oops
+
+  int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.default.Health));
+  int health = max(0, int(ee.Health));
+  int prc = 100*health/maxHealth;
+  string msg = va("%d%% (%d/%d)\n%s", prc, health, maxHealth, ename);
+
+  int color = CR_WHITE;
+       if (prc < 10) color = CR_RED;
+  else if (prc < 50) color = CR_YELLOW;
+
+  ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Colour:color, ColourName:"", x:320.0, y:32.0,
+    HudWidth:640, HudHeight:512,
+    HoldTime:2.0/35.0,
+    Time1:health, Time2:maxHealth);
+}

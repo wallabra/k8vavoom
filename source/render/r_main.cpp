@@ -970,7 +970,6 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 //
 //==========================================================================
 vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
-  guard(VRenderLevelShared::GetFade);
   if (r_fog_test) return 0xff000000|(int(255*r_fog_r)<<16)|(int(255*r_fog_g)<<8)|int(255*r_fog_b);
   if (Reg->params->Fade) return Reg->params->Fade;
   if (Level->LevelInfo->OutsideFog && Reg->ceiling->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
@@ -978,7 +977,6 @@ vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
   if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
   if (r_fade_light) return FADE_LIGHT; // simulate light fading using dark fog
   return 0;
-  unguard;
 }
 
 
@@ -988,13 +986,12 @@ vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
 //
 //==========================================================================
 void R_DrawPic (int x, int y, int handle, float Alpha) {
-  guard(R_DrawPic);
   if (handle < 0) return;
   VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
   x -= Tex->GetScaledSOffset();
   y -= Tex->GetScaledTOffset();
   Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
-  unguard;
 }
 
 
@@ -1004,13 +1001,77 @@ void R_DrawPic (int x, int y, int handle, float Alpha) {
 //
 //==========================================================================
 void R_DrawPicFloat (float x, float y, int handle, float Alpha) {
-  guard(R_DrawPicFloat);
   if (handle < 0) return;
   VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
   x -= Tex->GetScaledSOffset();
   y -= Tex->GetScaledTOffset();
   Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
-  unguard;
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicPart
+//
+//==========================================================================
+void R_DrawPicPart (int x, int y, float pwdt, float phgt, int handle, float Alpha) {
+  R_DrawPicFloatPart(x, y, pwdt, phgt, handle, Alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicFloatPart
+//
+//==========================================================================
+void R_DrawPicFloatPart (float x, float y, float pwdt, float phgt, int handle, float Alpha) {
+  if (handle < 0 || pwdt <= 0.0f || phgt <= 0.0f || !isFiniteF(pwdt) || !isFiniteF(phgt)) return;
+  VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  //Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()*pwdt), fScaleY*(y+Tex->GetScaledHeight()*phgt), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
+  Drawer->DrawPic(
+    fScaleX*x, fScaleY*y,
+    fScaleX*(x+Tex->GetScaledWidth()*pwdt),
+    fScaleY*(y+Tex->GetScaledHeight()*phgt),
+    0, 0, Tex->GetWidth()*pwdt, Tex->GetHeight()*phgt,
+    Tex, nullptr, Alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicPartEx
+//
+//==========================================================================
+void R_DrawPicPartEx (int x, int y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha) {
+  R_DrawPicFloatPartEx(x, y, tx0, ty0, tx1, ty1, handle, Alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicFloatPartEx
+//
+//==========================================================================
+void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha) {
+  float pwdt = (tx1-tx0);
+  float phgt = (ty1-ty0);
+  if (handle < 0 || pwdt <= 0.0f || phgt <= 0.0f) return;
+  VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  //Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()*pwdt), fScaleY*(y+Tex->GetScaledHeight()*phgt), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
+  Drawer->DrawPic(
+    fScaleX*(x+Tex->GetScaledWidth()*tx0),
+    fScaleY*(y+Tex->GetScaledHeight()*ty0),
+    fScaleX*(x+Tex->GetScaledWidth()*tx1),
+    fScaleY*(y+Tex->GetScaledHeight()*ty1),
+    Tex->GetWidth()*tx0, Tex->GetHeight()*ty0, Tex->GetWidth()*tx1, Tex->GetHeight()*ty1,
+    Tex, nullptr, Alpha);
 }
 
 
