@@ -38,15 +38,6 @@ struct VViewClipper::VClipNode {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#ifdef CLIENT
-extern VCvarF r_lights_radius;
-extern VCvarF fov;
-#endif
-#ifdef VAVOOM_K8_DEVELOPER
-# define FRUSTUM_SUB_CVAR_VALUE  true
-#else
-# define FRUSTUM_SUB_CVAR_VALUE  false
-#endif
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
@@ -54,7 +45,7 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_sub("clip_frustum_sub", FRUSTUM_SUB_CVAR_VALUE, "Clip subsectors with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_sub("clip_frustum_sub", true, "Clip subsectors with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_only_back("clip_frustum_only_back", true, "Clip geometry only with back frustum plane?", CVAR_PreInit);
 static VCvarB clip_frustum_add_clipped("clip_frustum_add_clipped", true, "Add frustum-clipped geometry to clipped ranges?", CVAR_PreInit);
 
