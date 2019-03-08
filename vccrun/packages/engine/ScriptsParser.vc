@@ -48,6 +48,7 @@ native void SetEscape (bool On);
 native bool AtEnd ();
 native bool GetString ();
 native void ExpectLoneChar ();
+native int ExpectColor ();
 native void ExpectString ();
 native bool Check (string Text);
 native bool CheckStartsWith (string Text);

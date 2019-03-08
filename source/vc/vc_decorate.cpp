@@ -2177,26 +2177,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_BloodColour:
             {
-              vuint32 Col;
-              //GLog.Logf("********** <%s>", *sc->String);
-              if (sc->CheckNumber()) {
-                int r = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int g = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int b = MID(0, sc->Number, 255);
-                Col = 0xff000000|(r<<16)|(g<<8)|b;
-              } else {
-                //GLog.Logf("********** <%s>", *sc->String);
-                sc->ExpectString();
-                if (sc->String.length()) {
-                  Col = M_ParseColour(sc->String);
-                } else {
-                  Col = 0xff000000;
-                }
-              }
+              vuint32 Col = sc->ExpectColor();
               P.Field->SetInt(DefObj, Col);
               P.Field2->SetInt(DefObj, R_GetBloodTranslation(Col));
             }
@@ -2210,22 +2191,8 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             AddClassFixup(Class, "AxeBloodType", sc->String, ClassFixups);
             break;
           case PROP_StencilColour:
-            //FIXME
             {
-              vuint32 Col;
-              if (sc->CheckNumber()) {
-                int r = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int g = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int b = MID(0, sc->Number, 255);
-                Col = 0xff000000|(r<<16)|(g<<8)|b;
-              } else {
-                sc->ExpectString();
-                Col = M_ParseColour(sc->String);
-              }
+              vuint32 Col = sc->ExpectColor();
               P.Field->SetInt(DefObj, Col);
             }
             break;
@@ -2372,23 +2339,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, 0x00123458);
             else if (sc->Check("GreenMap")) P.Field->SetInt(DefObj, 0x00123459);
             else {
-              int a, r, g, b;
-              if (sc->CheckNumber()) {
-                r = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                g = MID(0, sc->Number, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                b = MID(0, sc->Number, 255);
-              } else {
-                vuint32 Col;
-                sc->ExpectString();
-                Col = M_ParseColour(sc->String);
-                r = (Col>>16)&255;
-                g = (Col>>8)&255;
-                b = Col&255;
-              }
+              vuint32 Col = sc->ExpectColor();
+              int r = (Col>>16)&255;
+              int g = (Col>>8)&255;
+              int b = Col&255;
+              int a;
               sc->Check(",");
               // alpha may be missing
               if (!sc->Crossed) {
@@ -2409,26 +2364,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             P.Field2->SetInt(DefObj, sc->Number);
             break;
           case PROP_DamageScreenColour:
+            //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
             {
-              // first number is ignored. Is it a bug?
-              int Col;
-              if (sc->CheckNumber()) {
-                sc->ExpectNumber();
-                int r = MID(sc->Number, 0, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int g = MID(sc->Number, 0, 255);
-                sc->Check(",");
-                sc->ExpectNumber();
-                int b = MID(sc->Number, 0, 255);
-                Col = 0xff000000|(r<<16)|(g<<8)|b;
-              } else {
-                sc->ExpectString();
-                Col = M_ParseColour(sc->String);
-                while (sc->Check(",")) {
-                  sc->ExpectFloat();
-                }
-              }
+              vuint32 Col = sc->ExpectColor();
+              while (sc->Check(",")) sc->ExpectFloat();
               P.Field->SetInt(DefObj, Col);
             }
             break;

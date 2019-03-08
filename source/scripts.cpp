@@ -68,6 +68,7 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(SetEscape)
   DECLARE_FUNCTION(AtEnd)
   DECLARE_FUNCTION(GetString)
+  DECLARE_FUNCTION(ExpectColor)
   DECLARE_FUNCTION(ExpectString)
   DECLARE_FUNCTION(ExpectLoneChar)
   DECLARE_FUNCTION(Check)
@@ -747,6 +748,35 @@ void VScriptParser::ExpectName () {
 
 //==========================================================================
 //
+//  ExpectName
+//
+//  returns parsed color, either in string form, or r,g,b triplet
+//
+//==========================================================================
+vuint32 VScriptParser::ExpectColor () {
+  if (!GetString()) Error("color expected");
+  // hack to allow numbers like "008000"
+  if (QuotedString) {
+    //GCon->Logf("COLOR: <%s> (0x%08x)", *String, M_ParseColour(String));
+    return M_ParseColour(String)|0xff000000u;
+  }
+  // should be r,g,b triplet
+  UnGet();
+  ExpectNumber();
+  int r = clampToByte(Number);
+  Check(",");
+  ExpectNumber();
+  int g = clampToByte(Number);
+  Check(",");
+  ExpectNumber();
+  int b = clampToByte(Number);
+  //GCon->Logf("COLOR: rgb(%d,%d,%d)", r, g, b);
+  return 0xff000000u|(r<<16)|(g<<8)|b;
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::Check
 //
 //==========================================================================
@@ -1333,6 +1363,12 @@ IMPLEMENT_FUNCTION(VScriptsParser, ExpectLoneChar) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->ExpectLoneChar();
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, ExpectColor) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_INT(Self->Int->ExpectColor());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectString) {

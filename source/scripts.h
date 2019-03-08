@@ -79,6 +79,7 @@ public:
   inline void SetEscape (bool val) { Escape = val; }
   bool AtEnd ();
   bool GetString ();
+  vuint32 ExpectColor (); // returns parsed color, either in string form, or r,g,b triplet
   void ExpectString ();
   void ExpectLoneChar (); // in `String`
   void ExpectName8 ();
