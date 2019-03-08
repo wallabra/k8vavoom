@@ -231,7 +231,7 @@ public:
   virtual bool SupportsAdvancedRendering () = 0;
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
-  virtual void BeginLightShadowVolumes () = 0;
+  virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) = 0;
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) = 0;
   virtual void BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
@@ -276,7 +276,7 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
 
-  virtual void SetupLightScissor (const TVec &org, const float radius) = 0;
+  virtual bool SetupLightScissor (const TVec &org, const float radius, int scoord[4]) = 0;
   virtual void ResetScissor () = 0;
 };
 

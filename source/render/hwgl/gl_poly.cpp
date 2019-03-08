@@ -37,11 +37,13 @@ static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't tou
 static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
 static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!", 0);
 
-static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive);
+static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", 0);
 
 static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0/*CVAR_Archive*/);
+
+static VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad to clear stencil buffer instead of 'glClear'?", CVAR_Archive|CVAR_PreInit);
 
 VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
 VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
@@ -773,12 +775,66 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //==========================================================================
 static int swcount = 0;
 
-void VOpenGLDrawer::BeginLightShadowVolumes () {
+void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) {
   guard(VOpenGLDrawer::BeginLightShadowVolumes);
+  glDisable(GL_TEXTURE_2D);
   // set up for shadow volume rendering
-  glClear(GL_STENCIL_BUFFER_BIT);
+  if (hasScissor) {
+    if (gl_use_stencil_quad_clear) {
+      //GLog.Logf("SCISSOR CLEAR: (%d,%d)-(%d,%d)", scoords[0], scoords[1], scoords[2], scoords[3]);
+      //GLint oldStencilTest;
+      //glGetIntegerv(GL_STENCIL_TEST, &oldStencilTest);
+      GLint glmatmode;
+      glGetIntegerv(GL_MATRIX_MODE, &glmatmode);
+      GLint oldDepthTest;
+      glGetIntegerv(GL_DEPTH_TEST, &oldDepthTest);
+      GLint oldDepthMask;
+      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+
+      //glDisable(GL_STENCIL_TEST);
+      glEnable(GL_SCISSOR_TEST);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
+      glDisable(GL_BLEND);
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+      glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+      glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+      //glMatrixMode(GL_TEXTURE); glPushMatrix();
+      //glMatrixMode(GL_COLOR); glPushMatrix();
+
+      p_glUseProgramObjectARB(0);
+      glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+      glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+
+      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glBegin(GL_QUADS);
+        glVertex2i(0, 0);
+        glVertex2i(ScreenWidth, 0);
+        glVertex2i(ScreenWidth, ScreenHeight);
+        glVertex2i(0, ScreenHeight);
+      glEnd();
+      //glBindTexture(GL_TEXTURE_2D, 0);
+
+      //glDisable(GL_STENCIL_TEST);
+      //if (oldStencilTest) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+      glMatrixMode(GL_PROJECTION); glPopMatrix();
+      glMatrixMode(GL_MODELVIEW); glPopMatrix();
+      glMatrixMode(glmatmode);
+      glDepthMask(oldDepthMask);
+      if (oldDepthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+    } else {
+      glEnable(GL_SCISSOR_TEST);
+      glClear(GL_STENCIL_BUFFER_BIT);
+    }
+  } else {
+    glDisable(GL_SCISSOR_TEST);
+    glClear(GL_STENCIL_BUFFER_BIT);
+  }
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-  glEnable(GL_POLYGON_OFFSET_FILL);
+  //!glEnable(GL_POLYGON_OFFSET_FILL);
 
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
@@ -814,6 +870,8 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
   if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
   RestoreDepthFunc();
   glPolygonOffset(0.0f, 0.0f);
+  glDisable(GL_SCISSOR_TEST);
+  glEnable(GL_TEXTURE_2D);
   unguard;
 }
 
@@ -882,7 +940,7 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
   //glDepthFunc(GL_LEQUAL);
   RestoreDepthFunc();
 
-  glDisable(GL_POLYGON_OFFSET_FILL);
+  //!glDisable(GL_POLYGON_OFFSET_FILL);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   glStencilFunc(GL_EQUAL, 0x0, 0xff);

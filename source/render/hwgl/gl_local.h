@@ -433,7 +433,7 @@ public:
   virtual void WorldDrawing () override;
   virtual void DrawWorldAmbientPass () override;
   virtual void BeginShadowVolumesPass () override;
-  virtual void BeginLightShadowVolumes () override;
+  virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) override;
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (surface_t *, TVec &, float, bool) override;
   virtual void BeginLightPass (TVec &, float, vuint32) override;
@@ -504,7 +504,7 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;
 
-  virtual void SetupLightScissor (const TVec &org, const float radius) override;
+  virtual bool SetupLightScissor (const TVec &org, const float radius, int scoord[4]) override;
   virtual void ResetScissor () override;
 
   static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }

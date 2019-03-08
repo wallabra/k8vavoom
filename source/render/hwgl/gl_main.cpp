@@ -1172,7 +1172,7 @@ static bool glhProjectf (float objx, float objy, float objz, const float *modelv
 //  VOpenGLDrawer::SetupLightScissor
 //
 //==========================================================================
-void VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius) {
+bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int scoord[4]) {
   VMatrix4 pmat, mmat;
   glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
   glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
@@ -1216,8 +1216,9 @@ void VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius) {
   for (unsigned f = 0; f < 8; ++f) {
     float wc[2];
     if (!glhProjectf(bbp[f].x, bbp[f].y, bbp[f].z, mmat[0], pmat[0], viewport, wc)) {
+      if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       glScissor(0, 0, 0, 0);
-      return;
+      return false;
     }
     //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
     minx = MIN(minx, wc[0]);
@@ -1236,8 +1237,9 @@ void VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius) {
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
+    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return;
+    return false;
   }
 
   minx = MID(0, minx, ScreenWidth);
@@ -1245,15 +1247,23 @@ void VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius) {
   maxx = MID(0, maxx, ScreenWidth);
   maxy = MID(0, maxy, ScreenHeight);
   if (maxx < minx || maxy < miny) {
+    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return;
+    return false;
   }
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   glScissor(minx, miny, maxx-minx+1, maxy-miny+1);
+  if (scoord) {
+    scoord[0] = minx;
+    scoord[1] = miny;
+    scoord[2] = maxx;
+    scoord[3] = maxy;
+  }
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; bbox=(%f,%f,%f)-(%f,%f,%f)", org.x, org.y, org.z, radius, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
   //GCon->Logf("  trbbox=(%f,%f,%f)-(%f,%f,%f); prbbox=(%f,%f,%f)-(%f,%f,%f)", trbb[0].x, trbb[0].y, trbb[0].z, trbb[1].x, trbb[1].y, trbb[1].z, prbb[0].x, prbb[0].y, prbb[0].z, prbb[1].x, prbb[1].y, prbb[1].z);
+  return true;
 }
 
 
