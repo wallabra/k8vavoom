@@ -51,7 +51,7 @@ void VAdvancedRenderLevel::InitSurfs (surface_t *surfs, texinfo_t *texinfo, TPla
 //  VAdvancedRenderLevel::SubdivideFace
 //
 //==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideFace(surface_t *f, const TVec&, const TVec *) {
+surface_t *VAdvancedRenderLevel::SubdivideFace (surface_t *f, const TVec&, const TVec *, subsector_t *) {
   // advanced renderer can draw whole surface
   return f;
 }
@@ -62,7 +62,7 @@ surface_t *VAdvancedRenderLevel::SubdivideFace(surface_t *f, const TVec&, const 
 //  VAdvancedRenderLevel::SubdivideSeg
 //
 //==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideSeg(surface_t *surf, const TVec &, const TVec *) {
+surface_t *VAdvancedRenderLevel::SubdivideSeg (surface_t *surf, const TVec &, const TVec *, seg_t *, subsector_t *) {
   // advanced renderer can draw whole surface
   return surf;
 }

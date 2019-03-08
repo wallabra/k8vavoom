@@ -203,7 +203,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane
     surf->texinfo = &ssurf->texinfo;
     surf->plane = splane;
   } else {
-    ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
+    ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
     InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
   }
 
@@ -227,7 +227,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
       ssurf->secplane = RealPlane;
       plane = RealPlane;
       if (!ssurf->surfs->extents[0]) {
-        ssurf->surfs = SubdivideFace(ssurf->surfs, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
+        ssurf->surfs = SubdivideFace(ssurf->surfs, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
         InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
       }
     } else if (plane->pic != skyflatnum && RealPlane->pic == skyflatnum) {
@@ -283,7 +283,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
         dst = v;
         dst.z = plane->GetPointZ(dst);
       }
-      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
+      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
     }
   } else if (FASI(ssurf->texinfo.soffs) != FASI(plane->xoffs) ||
@@ -374,7 +374,7 @@ surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t
     return surf;
   }
 
-  surf = SubdivideSeg(surf, texinfo->saxis, &texinfo->taxis);
+  surf = SubdivideSeg(surf, texinfo->saxis, &texinfo->taxis, seg, sub);
   InitSurfs(surf, texinfo, seg, sub);
   return surf;
 }

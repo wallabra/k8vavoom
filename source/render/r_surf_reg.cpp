@@ -117,14 +117,14 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       /*
       if (surfs->extents[0] > 256) {
         //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
-        GCon->Logf("Bad extents (0): %d", (int)surfs->extents[0]);
+        GCon->Logf(NAME_Warning, "Bad extents (0): %d", (int)surfs->extents[0]);
         surfs->extents[0] = 256;
       }
       */
       /*
       if (surfs->extents[0] < 1) {
         //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
-        GCon->Logf("Bad extents (0): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[0], mins, bmins, maxs, bmaxs);
+        GCon->Logf(NAME_Warning, "Bad extents (0): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[0], mins, bmins, maxs, bmaxs);
         surfs->extents[0] = 256;
       }
       */
@@ -143,14 +143,14 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       /*
       if (surfs->extents[1] > 256) {
         //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
-        GCon->Logf("Bad extents (1): %d", (int)surfs->extents[1]);
+        GCon->Logf(NAME_Warning, "Bad extents (1): %d", (int)surfs->extents[1]);
         surfs->extents[1] = 256;
       }
       */
       /*
       if (surfs->extents[1] < 1) {
         //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
-        GCon->Logf("Bad extents (1): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[1], mins, bmins, maxs, bmaxs);
+        GCon->Logf(NAME_Warning, "Bad extents (1): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[1], mins, bmins, maxs, bmaxs);
         surfs->extents[1] = 256;
       }
       */
@@ -188,7 +188,7 @@ static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, con
 //  VRenderLevel::SubdivideFace
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
+surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis, subsector_t *sub) {
   guard(VRenderLevel::SubdivideFace);
   surface_t *f = InF;
   float mins = 99999.0f;
@@ -201,20 +201,21 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 
   if (f->count < 2) {
     //Sys_Error("surface with less than three (%d) vertices)", f->count);
-    GCon->Logf("surface with less than two (%d) vertices (divface)", f->count);
+    GCon->Logf(NAME_Warning, "surface with less than two (%d) vertices (divface) (sub=%d; sector=%d)", f->count, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
     return f;
   }
 
   if (!axis.isValid() || axis.isZero()) {
-    GCon->Logf("ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG!", axis.x, axis.y, axis.z);
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
+    GCon->Logf(NAME_Warning, "ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
+    f->count = 0; // ignore this surface
     return f;
   }
 
   for (int i = 0; i < f->count; ++i) {
     if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
-      GCon->Logf("ERROR(SF): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
-        i, f->verts[i].x, f->verts[i].y, f->verts[i].z, axis.x, axis.y, axis.z);
+      GCon->Logf(NAME_Warning, "ERROR(SF): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG! (sub=%d; sector=%d)",
+        i, f->verts[i].x, f->verts[i].y, f->verts[i].z, axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
       if (!isFiniteF(f->verts[i].x)) f->verts[i].x = 0;
       if (!isFiniteF(f->verts[i].y)) f->verts[i].y = 0;
       if (!isFiniteF(f->verts[i].z)) f->verts[i].z = 0;
@@ -225,7 +226,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   }
 
   if (maxs-mins <= subdivide_size) {
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
     return f;
   }
 
@@ -346,7 +347,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     //GCon->Logf(NAME_Warning, "empty surface at subsector");
     //GCon->Logf("f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)", f->count, count1, count2, axis.x, axis.y, axis.z);
     // no subdivide found
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
     return f;
   }
 
@@ -364,8 +365,8 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   memcpy(front->verts, verts1, count1*sizeof(TVec));
 
   front->next = next;
-  back->next = SubdivideFace(front, axis, nextaxis);
-  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr);
+  back->next = SubdivideFace(front, axis, nextaxis, sub);
+  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr, sub);
   return back;
   unguard;
 }
@@ -376,7 +377,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 //  VRenderLevel::SubdivideSeg
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis) {
+surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg, subsector_t *sub) {
   guard(VRenderLevel::SubdivideSeg);
   surface_t *surf = InSurf;
 
@@ -387,13 +388,14 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 
   if (surf->count < 2) {
     //Sys_Error("surface with less than three (%d) vertices)", surf->count);
-    GCon->Logf("surface with less than two (%d) vertices (divseg)", surf->count);
+    GCon->Logf(NAME_Warning, "surface with less than two (%d) vertices (divseg) (sub=%d; sector=%d)", surf->count, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
     return surf;
   }
 
   if (!axis.isValid() || axis.isZero()) {
-    GCon->Logf("ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG!", axis.x, axis.y, axis.z);
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
+    GCon->Logf(NAME_Warning, "ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
+    surf->count = 0; // ignore this surface
     return surf;
   }
 
@@ -402,8 +404,8 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 
   for (int i = 0; i < surf->count; ++i) {
     if (!isFiniteF(surf->verts[i].x) || !isFiniteF(surf->verts[i].y) || !isFiniteF(surf->verts[i].z)) {
-      GCon->Logf("ERROR(SS): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
-        i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, axis.x, axis.y, axis.z);
+      GCon->Logf(NAME_Warning, "ERROR(SS): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG! (sub=%d; sector=%d)",
+        i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
       if (!isFiniteF(surf->verts[i].x)) surf->verts[i].x = 0;
       if (!isFiniteF(surf->verts[i].y)) surf->verts[i].y = 0;
       if (!isFiniteF(surf->verts[i].z)) surf->verts[i].z = 0;
@@ -414,7 +416,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   }
 
   if (maxs-mins <= subdivide_size) {
-    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr);
+    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
     return surf;
   }
 
@@ -538,7 +540,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 #endif
 
   if (count1 < 3 || count2 < 3) {
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
     return surf;
   }
 
@@ -552,8 +554,8 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   memcpy(news->verts, verts1, count1*sizeof(TVec));
 
   news->next = surf->next;
-  surf->next = SubdivideSeg(news, axis, nextaxis);
-  if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
+  surf->next = SubdivideSeg(news, axis, nextaxis, seg, sub);
+  if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
   return surf;
   unguard;
 }
