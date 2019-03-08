@@ -3218,7 +3218,7 @@ override void PlayerTick (float deltaTime) {
 
   CalcHeight(deltaTime);
 
-  if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+  if (MO.Sector && (MO.Sector->special || MO.Sector->Damage)) PlayerInSpecialSector(deltaTime);
 
   PlayerOnSpecialFlat(Actor(MO).GetFloorType());
   PlayerInContents(deltaTime);
