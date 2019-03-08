@@ -268,7 +268,7 @@ void SV_ReadMove ();
 void Draw_TeleportIcon ();
 
 void SV_DropClient (VBasePlayer *Player, bool crash);
-void SV_SpawnServer (const char *, bool, bool);
+void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap=false);
 void SV_SendServerInfoToClients ();
 
 

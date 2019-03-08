@@ -1642,7 +1642,7 @@ static void SV_LoadMap (VName MapName) {
 #endif
 
   // load a base level (spawn thinkers if this is checkpoint save)
-  SV_SpawnServer(*MapName, isCheckpoint, false);
+  SV_SpawnServer(*MapName, isCheckpoint/*spawn thinkers*/);
 
 #ifdef CLIENT
   if (isCheckpoint) {
@@ -1948,7 +1948,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     SV_LoadMap(mapname);
   } else {
     // new map
-    SV_SpawnServer(*mapname, true, false);
+    SV_SpawnServer(*mapname, true/*spawn thinkers*/);
   }
 
   // add traveling thinkers to the new level

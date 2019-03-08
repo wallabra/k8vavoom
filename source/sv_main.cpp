@@ -1143,7 +1143,7 @@ COMMAND(Restart) {
   //if (!SV_LoadQuicksaveSlot())
   {
     // reload the level from scratch
-    SV_SpawnServer(*GLevel->MapName, true, false);
+    SV_SpawnServer(*GLevel->MapName, true/*spawn thinkers*/);
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
   }
 }
@@ -1316,7 +1316,7 @@ COMMAND(Map) {
        if ((int)Skill < 0) Skill = 0;
   else if ((int)Skill >= P_GetNumSkills()) Skill = P_GetNumSkills()-1;
 
-  SV_SpawnServer(*mapname, true, false);
+  SV_SpawnServer(*mapname, true/*spawn thinkers*/);
 
   if (mapLoaded == LMT_Unknown) {
     if (GLevel->MapName == "e1m1") {
@@ -1370,7 +1370,7 @@ bool Host_StartTitleMap () {
   RebornPosition = 0;
   GGameInfo->RebornPosition = RebornPosition;
 
-  SV_SpawnServer("titlemap", true, true);
+  SV_SpawnServer("titlemap", true/*spawn thinkers*/, true/*titlemap*/);
 #ifdef CLIENT
   CL_SetUpLocalPlayer();
 #endif
