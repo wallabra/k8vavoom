@@ -129,7 +129,7 @@ override void Init () {
   CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
   CreateCvar('k8HitscanAutoAim', "0", "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1
   CreateCvar('monster_dropoff', "1", "Should monsters move away from dropoffs?", CVAR_ARCHIVE); // prevrel was 0
-  // This one is only used in Hexen for now, but it could come in handy for other games if needed
+  // this one is only used in Hexen for now, but it could come in handy for other games if needed
   CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
   CreateCvar('wpn_autoswitch', (IsReleaseMode ? "1" : "0"), "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
@@ -203,6 +203,10 @@ override void Init () {
   CreateCvar('hud_scale_messages', "1", "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
 
   CreateCvar('ldr_fix_slope_cracks', "1", "Try to fix empty cracks near sloped floors?", CVAR_ARCHIVE);
+
+  CreateCvar('k8HealthBar', "0", "Allow healthbar?", CVAR_ARCHIVE);
+  CreateCvar('k8HealthBarAlpha', "0.6", "Healthbar opacity.", CVAR_ARCHIVE);
+  CreateCvar('k8HealthBarOnlyMonsters', "1", "Ignore non-monsters?.", CVAR_ARCHIVE);
 
   ::Init(); // parse cvarinfo and such
 }

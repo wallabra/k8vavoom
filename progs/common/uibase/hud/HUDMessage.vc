@@ -52,11 +52,33 @@ bool isTextFont;
 
 // true if text lines should be centred
 bool bCentreX;
+bool isHealthBar;
 
 float HoldTime;
 float Time;
 
 /*ClientGameShared*/ClientGameBase ClGame;
+
+float hbarCurr, hbarMax; // health
+
+int hbarPicBack = -1;
+int hbarPicFill = -1;
+int hbarPicBorder = -1;
+
+
+//==========================================================================
+//
+//  HBarLoadGfx
+//
+//==========================================================================
+void HBarLoadGfx () {
+  hbarPicBack = R_RegisterPicPath('graphics/healthbar/hbarbot.png');
+  hbarPicFill = R_RegisterPicPath('graphics/healthbar/hbartop.png');
+  hbarPicBorder = R_RegisterPicPath('graphics/healthbar/hbarbrd.png');
+  if (hbarPicBack < 0 || hbarPicFill < 0 || hbarPicBorder < 0) {
+    hbarPicBack = -666;
+  }
+}
 
 
 //==========================================================================
@@ -85,8 +107,11 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 {
   Time = 0;
 
+  // health bar: Time1 is current health, Time2 is max health, Message is name
+
   //print("HUDMSG(%d): font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AId, AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
-  ticStart = (ClGame && ClGame.GLevel ? ClGame.GLevel.TicTime+1 : 0); // schedule to next tic
+  //ticStart = (ClGame && ClGame.GLevel ? ClGame.GLevel.TicTime+1 : 0); // schedule to next tic (k8: no more)
+  ticStart = 0;
 
   Id = AId;
   MsgFont = AFont;
@@ -96,14 +121,27 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   HoldTime = fclamp(HoldTime, 0, 100000); // 0 MEANS ALOT HERE!
   //if (HoldTime > 0) HoldTime += 0.5/35.0;
 
-  if (GetCvarB('hud_scale_messages')) {
-    string fontnamestr = string(AFont);
-    isTextFont =
-      (stricmp(fontnamestr, "confont") == 0) ||
-      (stricmp(fontnamestr, "smallfont") == 0) ||
-      (stricmp(fontnamestr, "smallfont2") == 0) ||
-      (stricmp(fontnamestr, "bigfont") == 0);
+  if (AFont == 'HEALTHBAR') {
+    MsgFont = 'smallfont';
+    HBarLoadGfx();
+    isHealthBar = true;
+    hbarCurr = fmax(0, Time1);
+    hbarMax = fmax(1, Time2);
+    bCentreX = true;
+    MsgAlpha = fclamp(GetCvarF('k8HealthBarAlpha'), 0, 1);
+  } else {
+    isHealthBar = false;
   }
+
+  if (GetCvarB('hud_scale_messages')) {
+    isTextFont =
+      (nameicmp(AFont, 'confont') == 0) ||
+      (nameicmp(AFont, 'smallfont') == 0) ||
+      (nameicmp(AFont, 'smallfont2') == 0) ||
+      (nameicmp(AFont, 'bigfont') == 0);
+  }
+  if (isHealthBar) isTextFont = false;
+
   // check for spaces
   /*
   if (isTextFont) {
@@ -306,6 +344,24 @@ override void OnDraw () {
       case 2: y -= MsgHeight; break;
     }
 
+  }
+
+  if (isHealthBar && hbarPicBack > 0) {
+    // hbarPicBorder: 320x16
+    // hbarPicBack: 316x10
+    // hbarPicFill: 316x10
+    int picX = (Width-320)/2;
+    /*
+    R_DrawPic(picX, y, hbarPicBorder);
+    R_DrawPic(picX, y, hbarPicBack);
+    R_DrawPicPart(picX, y, fclamp(hbarCurr/hbarMax, 0, 1), 1, hbarPicFill);
+    */
+    float used = fclamp(hbarCurr/hbarMax, 0, 1);
+    //used = 0.3;
+    R_DrawPic(picX, y, hbarPicBorder, MsgAlpha);
+    if (used > 0) R_DrawPicPart(picX, y, used, 1, hbarPicFill, MsgAlpha);
+    if (used < 1) R_DrawPicPartEx(picX, y, used, 0, 1, 1, hbarPicBack, MsgAlpha);
+    y += 16;
   }
 
   foreach (auto i; 0..MsgLines.length) {

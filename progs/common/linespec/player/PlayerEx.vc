@@ -170,6 +170,9 @@ replication {
 }
 
 
+#include "healthbar.vc"
+
+
 //==========================================================================
 //
 //  IsCheckpointPossible
@@ -2044,6 +2047,8 @@ override void SpawnClient () {
   Actor(MO).TeleportMove(MO.Origin);
 
   k8BossesDetected = (GetCvarB('k8ElvenGift') ? -0.5 : 666);
+
+  HealthBarInit();
 }
 
 
@@ -2114,6 +2119,7 @@ override void DisconnectClient () {
   }
   Level.bprint("%s left the game", PlayerName);
   MO.PlaySound('misc/chat', CHAN_AUTO, 1.0, ATTN_NONE);
+  HealthBarDeinit();
 }
 
 
@@ -3104,7 +3110,9 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //
 //==========================================================================
 override void PlayerTick (float deltaTime) {
-  if (bIsBot) {
+  bool isBot = bIsBot;
+
+  if (isBot) {
     if (!Level.bFrozen && !(Cheats&CF_TIMEFREEZE)) BotTick(deltaTime);
   }
 
@@ -3306,6 +3314,8 @@ override void PlayerTick (float deltaTime) {
     }
     SetFOV(int(FOV));
   }
+
+  if (!isBot) HealthBarProcessor();
 }
 
 

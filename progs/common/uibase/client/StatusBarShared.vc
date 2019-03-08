@@ -57,6 +57,10 @@ override void OnCreate () {
   HudMsgWin.Width = Width;
   HudMsgWin.Height = Height;
   lastWasFullscreen = false;
+  // load healthbar graphics
+  R_RegisterPicPath('graphics/healthbar/hbarbot.png');
+  R_RegisterPicPath('graphics/healthbar/hbartop.png');
+  R_RegisterPicPath('graphics/healthbar/hbarbrd.png');
 }
 
 
@@ -260,16 +264,23 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
 {
   Widget Probe;
   HUDMessage Msg;
+  bool isHealthBar = false;
 
   class!HUDMessage hudClass = none;
 
-  switch (Type&0xffff) {
-    default: case HUDMSG_PLAIN: hudClass = HUDMessage; break;
-    case HUDMSG_FADEOUT: hudClass = HUDMessageFadeOut; break;
-    case HUDMSG_TYPEON: hudClass = HUDMessageTypeOnFadeOut; break;
-    case HUDMSG_FADEINOUT: hudClass = HUDMessageFadeInOut; break;
+  if (Font == 'HEALTHBAR') {
+    if (!Id || Id == 0xffffffff) return; // orphaned
+    hudClass = HUDMessage;
+    isHealthBar = true;
+    Type = HUDMSG_PLAIN; // just in case
+  } else {
+    switch (Type&0xff) {
+      default: case HUDMSG_PLAIN: hudClass = HUDMessage; break;
+      case HUDMSG_FADEOUT: hudClass = HUDMessageFadeOut; break;
+      case HUDMSG_TYPEON: hudClass = HUDMessageTypeOnFadeOut; break;
+      case HUDMSG_FADEINOUT: hudClass = HUDMessageFadeInOut; break;
+    }
   }
-
 
   // log to console if needed.
   if (Type&HUDMSG_LOG) {
@@ -314,6 +325,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   }
 
   Msg.ClGame = ClGame;
+
   Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location

@@ -25,6 +25,8 @@
 //**
 //**************************************************************************
 
+int nextTicTimeCheck;
+
 
 //==========================================================================
 //
@@ -51,14 +53,24 @@ void HealthBarDeinit () {
 //==========================================================================
 void HealthBarProcessor () {
   if (/*hbarPicBack < 0 ||*/ !MO) return;
-  if (!GetCvarB('k8HealthBar')) return;
+
   EntityEx mo = EntityEx(MO);
   if (!mo) return;
+
+  int ttime = mo.XLevel.TicTime;
+  if (ttime < nextTicTimeCheck) return;
+  nextTicTimeCheck = ttime+1;
+
+  if (!GetCvarB('k8HealthBar')) return;
+  if (GetCvarF('k8HealthBarAlpha') < 0.01) return;
+
   // find actor
   TVec dir;
   AngleVector(mo.Angles, out dir);
   EntityEx ee = EntityEx(mo.PickActor(org:default, dir:dir, distance:8192, actorMask:MF_SHOOTABLE, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
   if (!ee) return;
+
+  if (!ee.bMonster && GetCvarB('k8HealthBarOnlyMonsters')) return;
 
   string ename = ee.StrifeName;
   if (!ename) ename = string(GetClassName(ee.Class));
@@ -70,8 +82,8 @@ void HealthBarProcessor () {
   string msg = va("%d%% (%d/%d)\n%s", prc, health, maxHealth, ename);
 
   int color = CR_WHITE;
-       if (prc < 10) color = CR_RED;
-  else if (prc < 50) color = CR_YELLOW;
+       if (prc <= 20) color = CR_RED;
+  else if (prc <= 50) color = CR_YELLOW;
 
   ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Colour:color, ColourName:"", x:320.0, y:32.0,
     HudWidth:640, HudHeight:512,
