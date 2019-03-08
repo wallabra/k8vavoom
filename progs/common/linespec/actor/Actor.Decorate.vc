@@ -560,7 +560,7 @@ final void A_RemoveChildren (optional bool all, optional int flags, optional str
   A_RC_KillList.clear(); // clear, but don't reallocate
   Actor th;
   foreach AllThinkers(Actor, th) {
-    if (th && a_removechildren_checkIfChildShouldBeRemoved(th, all, flags, filter, species)) A_RC_KillList[$] = th;
+    if (th && th.SpawnParent == self && a_removechildren_checkIfChildShouldBeRemoved(th, all, flags, filter, species)) A_RC_KillList[$] = th;
   }
   foreach (auto idx; 0..A_RC_KillList.length) {
     th = A_RC_KillList[idx];
