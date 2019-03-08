@@ -77,22 +77,6 @@ static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CV
 
 //==========================================================================
 //
-//  FixBBoxZ
-//
-//==========================================================================
-static inline void FixBBoxZ (float bbox[6]) {
-  check(isFiniteF(bbox[2]));
-  check(isFiniteF(bbox[3+2]));
-  if (bbox[2] > bbox[3+2]) {
-    const float tmp = bbox[2];
-    bbox[2] = bbox[3+2];
-    bbox[3+2] = tmp;
-  }
-}
-
-
-//==========================================================================
-//
 //  CopyPlaneIfValid
 //
 //==========================================================================
@@ -191,100 +175,6 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
   }
 
   return true;
-}
-
-
-//==========================================================================
-//
-//  CheckSphereVsAABB
-//
-//  check to see if the sphere overlaps the AABB
-//
-//==========================================================================
-static __attribute__((unused)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) {
-  float d = 0;
-  // find the square of the distance from the sphere to the box
-  /*
-  for (unsigned i = 0; i < 3; ++i) {
-    const float li = lorg[i];
-    // first check is min, second check is max
-    if (li < bbox[i]) {
-      const float s = li-bbox[i];
-      d += s*s;
-    } else if (li > bbox[i+3]) {
-      const float s = li-bbox[i+3];
-      d += s*s;
-    }
-  }
-  */
-  {
-    const float li = lorg.x;
-    // first check is min, second check is max
-    if (li < bbox[0]) {
-      const float s = li-bbox[0];
-      d += s*s;
-    } else if (li > bbox[0+3]) {
-      const float s = li-bbox[0+3];
-      d += s*s;
-    }
-  }
-
-  {
-    const float li = lorg.y;
-    // first check is min, second check is max
-    if (li < bbox[1]) {
-      const float s = li-bbox[1];
-      d += s*s;
-    } else if (li > bbox[1+3]) {
-      const float s = li-bbox[1+3];
-      d += s*s;
-    }
-  }
-
-  {
-    const float li = lorg.z;
-    // first check is min, second check is max
-    if (li < bbox[2]) {
-      const float s = li-bbox[2];
-      d += s*s;
-    } else if (li > bbox[2+3]) {
-      const float s = li-bbox[2+3];
-      d += s*s;
-    }
-  }
-
-  return (d < radius*radius); // or <= if you want exact touching
-}
-
-
-//==========================================================================
-//
-//  CheckSphereVsAABBIgnoreZ
-//
-//  check to see if the sphere overlaps the AABB
-//
-//==========================================================================
-static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) {
-  float d = 0;
-  // find the square of the distance from the sphere to the box
-  // first check is min, second check is max
-  const float li0 = lorg.x;
-  if (li0 < bbox[0]) {
-    const float s = li0-bbox[0];
-    d += s*s;
-  } else if (li0 > bbox[0+3]) {
-    const float s = li0-bbox[0+3];
-    d += s*s;
-  }
-  const float li1 = lorg.y;
-  if (li1 < bbox[1]) {
-    const float s = li1-bbox[1];
-    d += s*s;
-  } else if (li1 > bbox[1+3]) {
-    const float s = li1-bbox[1+3];
-    d += s*s;
-  }
-  return (d < radius*radius); // or <= if you want exact touching
 }
 
 
@@ -1325,6 +1215,7 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrL
   bbox[5] = sub->sector->ceiling.maxz;
   FixBBoxZ(bbox);
 
+  /*
   if (bbox[0] <= CurrLightPos.x && bbox[3] >= CurrLightPos.x &&
       bbox[1] <= CurrLightPos.y && bbox[4] >= CurrLightPos.y &&
       bbox[2] <= CurrLightPos.z && bbox[5] >= CurrLightPos.z)
@@ -1332,6 +1223,7 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrL
     // inside the box
     return 1;
   }
+  */
 
   return (CheckSphereVsAABB(bbox, CurrLightPos, CurrLightRadius) ? -1 : 0);
 }

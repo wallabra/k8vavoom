@@ -26,23 +26,43 @@
 //**************************************************************************
 class TAVec {
 public:
+  /*
+  union {
+    float angles[3];
+    struct {
+    };
+  };
+  */
   float pitch; // up/down
   float yaw; // left/right
   float roll; // around screen center
 
   TAVec () {}
+  TAVec (ENoInit) {}
   //nope;TAVec () : pitch(0.0f), yaw(0.0f), roll(0.0f) {}
-  TAVec (float APitch, float AYaw, float ARoll) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
+  TAVec (float APitch, float AYaw, float ARoll=0.0f) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
 
   inline bool isValid () const { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
   inline bool isZero () const { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
-  inline bool isZeroNoRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
+  inline bool isZeroSkipRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
+
+  /*
+  inline TAVec &operator = (const TAVec &b) {
+    //if (angles != b.angles) memcpy(angles, b.angles, sizeof(angles));
+    angles[0] = b.angles[0];
+    angles[1] = b.angles[1];
+    angles[2] = b.angles[2];
+    return *this;
+  }
+  */
 
   friend VStream &operator << (VStream &Strm, TAVec &v) {
     return Strm << v.pitch << v.yaw << v.roll;
   }
 };
 
+static_assert(__builtin_offsetof(TAVec, yaw) == __builtin_offsetof(TAVec, pitch)+sizeof(float), "TAVec layout fail (0)");
+static_assert(__builtin_offsetof(TAVec, roll) == __builtin_offsetof(TAVec, yaw)+sizeof(float), "TAVec layout fail (1)");
 
 static __attribute__((unused)) inline bool operator == (const TAVec &v1, const TAVec &v2) { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
 static __attribute__((unused)) inline bool operator != (const TAVec &v1, const TAVec &v2) { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
@@ -51,17 +71,34 @@ static __attribute__((unused)) inline bool operator != (const TAVec &v1, const T
 // ////////////////////////////////////////////////////////////////////////// //
 class TVec {
 public:
-  float x;
-  float y;
-  float z;
+  /*
+  union {
+    float coords[3];
+    struct {
+      float x, y, z;
+    };
+  };
+  */
+  float x, y, z;
 
   TVec () {}
+  TVec (ENoInit) {}
   //nope;TVec () : x(0.0f), y(0.0f), z(0.0f) {}
   TVec (float Ax, float Ay, float Az=0.0f) : x(Ax), y(Ay), z(Az) {}
   TVec (const float f[3]) { x = f[0]; y = f[1]; z = f[2]; }
 
-  inline const float &operator [] (int i) const { return (&x)[i]; }
-  inline float &operator [] (int i) { return (&x)[i]; }
+  /*
+  inline TVec &operator = (const TVec &b) {
+    //if (coords != b.coords) memcpy(coords, b.coords, sizeof(coords));
+    coords[0] = b.coords[0];
+    coords[1] = b.coords[1];
+    coords[2] = b.coords[2];
+    return *this;
+  }
+  */
+
+  inline const float &operator [] (size_t i) const { check(i < 3); return (&x)[i]; }
+  inline float &operator [] (size_t i) { check(i < 3); return (&x)[i]; }
 
   inline bool isValid () const { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
   inline bool isZero () const { return (x == 0.0f && y == 0.0f && z == 0.0f); }
@@ -128,6 +165,9 @@ public:
   inline float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
 };
 
+static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
+static_assert(__builtin_offsetof(TVec, z) == __builtin_offsetof(TVec, y)+sizeof(float), "TVec layout fail (1)");
+
 
 static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
 static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(VSUM2(v1.x, -(v2.x)), VSUM2(v1.y, -(v2.y)), VSUM2(v1.z, -(v2.z))); }
@@ -189,6 +229,10 @@ class TPlane {
 public:
   TVec normal;
   float dist;
+
+public:
+  //TPlane () : TVec(1, 0, 0), dist(0) {}
+  //TPlane (ENoInit) {}
 
   inline bool isValid () const { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
   inline bool isVertical () const { return (normal.z == 0.0f); }
@@ -320,6 +364,10 @@ public:
   unsigned clipflag;
   unsigned pindex[6];
 
+public:
+  //TClipPlane () : TPlane(E_NoInit) { clipflag = 0; }
+  //TClipPlane (ENoInit) : TPlane(E_NoInit) {}
+
   inline bool isValid () const { return !!clipflag; }
   inline void invalidate () { clipflag = 0; }
 
@@ -349,7 +397,7 @@ public:
   float pixelAspect;
 
 public:
-  TClipParam (ENoInit) {}
+  //TClipParam (ENoInit) {}
   TClipParam () : width(0), height(0), fov(0.0f), pixelAspect(1.0f) {}
   TClipParam (int awidth, int aheight, float afov, float apixelAspect=1.0f) : width(awidth), height(aheight), fov(afov), pixelAspect(apixelAspect) {}
 
@@ -370,7 +418,7 @@ public:
   TVec vforward, vright, vup;
 
 public:
-  TFrustumParam (ENoInit) {}
+  //TFrustumParam (ENoInit) {}
   TFrustumParam () : origin(0, 0, 0), angles(0, 0, 0), vforward(0, 0, 0), vright(0, 0, 0), vup(0, 0, 0) {}
   TFrustumParam (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) : origin(aorigin), angles(aangles), vforward(vf), vright(vr), vup(vu) {}
   TFrustumParam (const TVec &aorigin, const TAVec &aangles) : origin(aorigin), angles(aangles) {
@@ -433,7 +481,7 @@ public:
   float fovx, fovy;
 
 public:
-  TClipBase (ENoInit) {}
+  //TClipBase (ENoInit) {}
   TClipBase () : fovx(0), fovy(0) {}
   TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) { setupViewport(awidth, aheight, afov, apixelAspect); }
   TClipBase (const float afovx, const float afovy) { setupFromFOVs(afovx, afovy); }
@@ -443,7 +491,7 @@ public:
 
   inline void clear () { fovx = fovy = 0; }
 
-  const TVec &operator [] (size_t idx) const { return clipbase[idx]; }
+  const TVec &operator [] (size_t idx) const { check(idx < 4); return clipbase[idx]; }
 
   void setupFromFOVs (const float afovx, const float afovy);
 
@@ -487,7 +535,7 @@ public:
   unsigned planeCount; // total number of valid planes
 
 public:
-  TFrustum (ENoInit) {}
+  //TFrustum (ENoInit) {}
   TFrustum () : planeCount(0) { clear(); }
   TFrustum (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) : planeCount(0) {
     setup(clipbase, fp, createbackplane, farplanez);
@@ -551,3 +599,70 @@ static __attribute__((unused)) inline bool ProjectPointOnPlane (TVec &dst, const
 }
 
 void PerpendicularVector (TVec &dst, const TVec &src); // assumes "src" is normalised
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// sometimes subsector bbox has invalid z; this fixes it
+static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) {
+  check(isFiniteF(bbox[2]));
+  check(isFiniteF(bbox[3+2]));
+  if (bbox[2] > bbox[3+2]) {
+    const float tmp = bbox[2];
+    bbox[2] = bbox[3+2];
+    bbox[3+2] = tmp;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// check to see if the sphere overlaps the AABB
+static __attribute__((unused)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) {
+  float d = 0;
+  // find the square of the distance from the sphere to the box
+  /*
+  for (unsigned i = 0; i < 3; ++i) {
+    const float li = lorg[i];
+    // first check is min, second check is max
+    if (li < bbox[i]) {
+      const float s = li-bbox[i];
+      d += s*s;
+    } else if (li > bbox[i+3]) {
+      const float s = li-bbox[i+3];
+      d += s*s;
+    }
+  }
+  */
+  float s;
+  const float *li = &lorg[0];
+
+  s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+  ++li;
+  ++bbox;
+  s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+  ++li;
+  ++bbox;
+  s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+
+  return (d < radius*radius); // or <= if you want exact touching
+}
+
+
+// check to see if the sphere overlaps the AABB (ignore z coords)
+static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) {
+  float d = 0, s;
+  // find the square of the distance from the sphere to the box
+  // first check is min, second check is max
+  const float *li = &lorg[0];
+
+  s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+  ++li;
+  ++bbox;
+  s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+
+  return (d < radius*radius); // or <= if you want exact touching
+}
