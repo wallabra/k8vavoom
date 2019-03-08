@@ -205,9 +205,15 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     return f;
   }
 
+  if (!axis.isValid() || axis.isZero()) {
+    GCon->Logf("ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG!", axis.x, axis.y, axis.z);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
+    return f;
+  }
+
   for (int i = 0; i < f->count; ++i) {
     if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
-      GCon->Logf("ERROR: invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
+      GCon->Logf("ERROR(SF): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
         i, f->verts[i].x, f->verts[i].y, f->verts[i].z, axis.x, axis.y, axis.z);
       if (!isFiniteF(f->verts[i].x)) f->verts[i].x = 0;
       if (!isFiniteF(f->verts[i].y)) f->verts[i].y = 0;
@@ -336,7 +342,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   fprintf(stderr, "=== 2 ===\n"); for (int ff = 0; ff < count2; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts2[ff].x, verts2[ff].y, verts2[ff].z);
   */
 
-  if (count1 == 0 || count2 == 0) {
+  if (count1 < 3 || count2 < 3) {
     //GCon->Logf(NAME_Warning, "empty surface at subsector");
     //GCon->Logf("f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)", f->count, count1, count2, axis.x, axis.y, axis.z);
     // no subdivide found
@@ -385,12 +391,18 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
     return surf;
   }
 
+  if (!axis.isValid() || axis.isZero()) {
+    GCon->Logf("ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG!", axis.x, axis.y, axis.z);
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
+    return surf;
+  }
+
   float mins = 99999.0f;
   float maxs = -99999.0f;
 
   for (int i = 0; i < surf->count; ++i) {
     if (!isFiniteF(surf->verts[i].x) || !isFiniteF(surf->verts[i].y) || !isFiniteF(surf->verts[i].z)) {
-      GCon->Logf("ERROR: invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
+      GCon->Logf("ERROR(SS): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
         i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, axis.x, axis.y, axis.z);
       if (!isFiniteF(surf->verts[i].x)) surf->verts[i].x = 0;
       if (!isFiniteF(surf->verts[i].y)) surf->verts[i].y = 0;
@@ -525,7 +537,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   }
 #endif
 
-  if (count1 == 0 || count2 == 0) {
+  if (count1 < 3 || count2 < 3) {
     if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr);
     return surf;
   }
