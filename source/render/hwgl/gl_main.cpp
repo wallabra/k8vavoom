@@ -1171,12 +1171,25 @@ static bool glhProjectf (float objx, float objy, float objz, const float *modelv
 //
 //  VOpenGLDrawer::SetupLightScissor
 //
+//  returns 0 if scissor has no sense;
+//  -1 if scissor is empty, and
+//   1 if scissor is set
+//
 //==========================================================================
-bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int scoord[4]) {
+int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[4]) {
   VMatrix4 pmat, mmat;
   glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
   glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
   const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
+
+  glEnable(GL_SCISSOR_TEST);
+
+  radius -= 6;
+  if (radius < 2) {
+    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    glScissor(0, 0, 0, 0);
+    return -1;
+  }
 
   /*
   {
@@ -1190,6 +1203,7 @@ bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int 
   */
 
   // create light bbox
+  // usually, light completely fades away at edges, so we can safely shrink our scissor box
   float bbox[6];
   bbox[0] = org.x-radius;
   bbox[1] = org.y-radius;
@@ -1218,38 +1232,50 @@ bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int 
     if (!glhProjectf(bbp[f].x, bbp[f].y, bbp[f].z, mmat[0], pmat[0], viewport, wc)) {
       if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       glScissor(0, 0, 0, 0);
-      return false;
+      return -1;
     }
     //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
     minx = MIN(minx, wc[0]);
     miny = MIN(miny, wc[1]);
     maxx = MAX(maxx, wc[0]);
     maxy = MAX(maxy, wc[1]);
-    /*
-    TVec tv = mmat.Transform(bbp[f]);
-    TVec prbb = pmat.Transform2(tv);
-    minx = MIN(minx, prbb.x);
-    miny = MIN(miny, prbb.y);
-    maxx = MAX(maxx, prbb.x);
-    maxy = MAX(maxy, prbb.y);
-    */
   }
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return false;
+    return -1;
   }
+
+  /*
+  minx -= 32;
+  miny -= 32;
+  maxx += 32;
+  maxy += 32;
+  */
 
   minx = MID(0, minx, ScreenWidth);
   miny = MID(0, miny, ScreenHeight);
   maxx = MID(0, maxx, ScreenWidth);
   maxy = MID(0, maxy, ScreenHeight);
-  if (maxx < minx || maxy < miny) {
+
+  // usually, light completely fades away at edges, so we can safely shrink our scissor box
+  // even such small shrinking can win one-two FPS on light-heavy scenes
+  // use screen size to decide how much we can shrink
+  /*
+  int hshrink = (ScreenWidth <= 800 ? 8 : 16);
+  int vshrink = (ScreenHeight <= 600 ? 8 : 16);
+  minx += hshrink;
+  miny += vshrink;
+  maxx -= hshrink;
+  maxy -= vshrink;
+  */
+
+  if (maxx <= minx || maxy <= miny) {
     if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return false;
+    return -1;
   }
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
@@ -1263,7 +1289,7 @@ bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int 
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; bbox=(%f,%f,%f)-(%f,%f,%f)", org.x, org.y, org.z, radius, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
   //GCon->Logf("  trbbox=(%f,%f,%f)-(%f,%f,%f); prbbox=(%f,%f,%f)-(%f,%f,%f)", trbb[0].x, trbb[0].y, trbb[0].z, trbb[1].x, trbb[1].y, trbb[1].z, prbb[0].x, prbb[0].y, prbb[0].z, prbb[1].x, prbb[1].y, prbb[1].z);
-  return true;
+  return 1;
 }
 
 
@@ -1274,6 +1300,7 @@ bool VOpenGLDrawer::SetupLightScissor (const TVec &org, const float radius, int 
 //==========================================================================
 void VOpenGLDrawer::ResetScissor () {
   glScissor(0, 0, ScreenWidth, ScreenHeight);
+  glDisable(GL_SCISSOR_TEST);
 }
 
 

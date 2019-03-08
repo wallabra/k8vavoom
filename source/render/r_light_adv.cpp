@@ -855,17 +855,19 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   CurrShadowsNumber = 0;
   CurrLightsNumber = 0;
 
-  bool hasScissor = false;
+  // 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
+  int hasScissor = 1;
   int scoord[4];
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
     hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord);
+    if (hasScissor <= 0) return; // something is VERY wrong (0), or scissor is empty (-1)
   }
 
   ResetMobjsLightCount(true);
   // do shadow volumes
-  Drawer->BeginLightShadowVolumes(hasScissor, scoord);
+  Drawer->BeginLightShadowVolumes(/*hasScissor*/true, scoord);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   if (doShadows && r_max_shadow_segs_all) {
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
@@ -888,5 +890,5 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
   RenderMobjsLight();
 
-  if (hasScissor) Drawer->ResetScissor();
+  /*if (hasScissor)*/ Drawer->ResetScissor();
 }

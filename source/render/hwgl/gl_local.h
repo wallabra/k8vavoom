@@ -504,7 +504,7 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;
 
-  virtual bool SetupLightScissor (const TVec &org, const float radius, int scoord[4]) override;
+  virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4]) override;
   virtual void ResetScissor () override;
 
   static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }

@@ -276,7 +276,8 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
 
-  virtual bool SetupLightScissor (const TVec &org, const float radius, int scoord[4]) = 0;
+  // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
+  virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4]) = 0;
   virtual void ResetScissor () = 0;
 };
 
