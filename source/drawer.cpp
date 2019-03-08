@@ -182,10 +182,10 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
     static int left = -1, right = -1, mid = -1, fill = -1;
     if (!texturesLoaded) {
       texturesLoaded = true;
-      left = GTextureManager.AddFileTextureChecked("graphics/progbar/left.png", TEXTYPE_Pic);
-      if (left > 0) right = GTextureManager.AddFileTextureChecked("graphics/progbar/right.png", TEXTYPE_Pic);
-      if (right > 0) mid = GTextureManager.AddFileTextureChecked("graphics/progbar/middle.png", TEXTYPE_Pic);
-      if (mid > 0) fill = GTextureManager.AddFileTextureChecked("graphics/progbar/marker.png", TEXTYPE_Pic);
+      left = GTextureManager.AddFileTextureChecked("graphics/progbar/progbar_left.png", TEXTYPE_Pic);
+      if (left > 0) right = GTextureManager.AddFileTextureChecked("graphics/progbar/progbar_right.png", TEXTYPE_Pic);
+      if (right > 0) mid = GTextureManager.AddFileTextureChecked("graphics/progbar/progbar_middle.png", TEXTYPE_Pic);
+      if (mid > 0) fill = GTextureManager.AddFileTextureChecked("graphics/progbar/progbar_marker.png", TEXTYPE_Pic);
     }
     // which kind of progress bar to draw?
     if (left > 0) {
