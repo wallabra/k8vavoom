@@ -34,6 +34,7 @@ int nextTicTimeCheck;
 //
 //==========================================================================
 void HealthBarInit () {
+  nextTicTimeCheck = 0;
 }
 
 
@@ -43,6 +44,7 @@ void HealthBarInit () {
 //
 //==========================================================================
 void HealthBarDeinit () {
+  nextTicTimeCheck = 0;
 }
 
 
@@ -58,11 +60,12 @@ void HealthBarProcessor () {
   if (!mo) return;
 
   int ttime = mo.XLevel.TicTime;
-  if (ttime < nextTicTimeCheck) return;
-  nextTicTimeCheck = ttime+1;
+  int diff = nextTicTimeCheck-ttime;
+  if (diff > 0 && diff < 8) return;
+  nextTicTimeCheck = ttime+6;
 
   if (!GetCvarB('k8HealthBar')) return;
-  if (GetCvarF('k8HealthBarAlpha') < 0.01) return;
+  if (GetCvarF('k8HealthBarAlpha') <= 0) return;
 
   // find actor
   TVec dir;
@@ -82,11 +85,14 @@ void HealthBarProcessor () {
   string msg = va("%d%% (%d/%d)\n%s", prc, health, maxHealth, ename);
 
   int color = CR_WHITE;
-       if (prc <= 20) color = CR_RED;
-  else if (prc <= 50) color = CR_YELLOW;
+       if (prc < 30) color = CR_RED;
+  else if (prc < 50) color = CR_YELLOW;
+  else if (prc < 80) color = CR_GOLD;
+  else if (prc < 100) color = CR_GREEN;
+  else color = CR_WHITE;
 
   ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Colour:color, ColourName:"", x:320.0, y:32.0,
     HudWidth:640, HudHeight:512,
-    HoldTime:2.0/35.0,
+    HoldTime:7.0/35.0,
     Time1:health, Time2:maxHealth);
 }

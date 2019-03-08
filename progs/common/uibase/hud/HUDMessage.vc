@@ -129,6 +129,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
     hbarMax = fmax(1, Time2);
     bCentreX = true;
     MsgAlpha = fclamp(GetCvarF('k8HealthBarAlpha'), 0, 1);
+    HoldTime = 0.25;
   } else {
     isHealthBar = false;
   }
@@ -394,9 +395,20 @@ void DrawLine (int LineIdx, int x, int y, string Text) {
 override void Tick (float DeltaTime) {
   if (!IsActive) return; // do not tick when game is paused
   if (HoldTime && Time > HoldTime) {
-    //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
-    MarkDead(); //Destroy();
-    return;
+    if (isHealthBar) {
+      while (MsgAlpha > 0 && Time > HoldTime) {
+        MsgAlpha -= 0.05;
+        HoldTime += 0.05;
+      }
+      if (MsgAlpha <= 0) {
+        MarkDead();
+        return;
+      }
+    } else {
+      //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
+      MarkDead(); //Destroy();
+      return;
+    }
   }
   // moved here, so messages won't blink
   Time += DeltaTime;
