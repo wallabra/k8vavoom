@@ -756,13 +756,17 @@ void VScriptParser::ExpectName () {
 vuint32 VScriptParser::ExpectColor () {
   if (!GetString()) Error("color expected");
   // hack to allow numbers like "008000"
-  if (QuotedString) {
+  if (QuotedString || String.length() > 3) {
     //GCon->Logf("COLOR: <%s> (0x%08x)", *String, M_ParseColour(String));
     return M_ParseColour(String)|0xff000000u;
   }
   // should be r,g,b triplet
   UnGet();
-  ExpectNumber();
+  //ExpectNumber();
+  if (!CheckNumber()) {
+    //GCon->Logf("COLOR: <%s> (0x%08x)", *String, M_ParseColour(String));
+    return M_ParseColour(String)|0xff000000u;
+  }
   int r = clampToByte(Number);
   Check(",");
   ExpectNumber();
