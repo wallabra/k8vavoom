@@ -426,6 +426,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
           FixBBoxZ(bbox);
           // inside?
+          /*
           if (bbox[0] <= lorg->x && bbox[3] >= lorg->x &&
               bbox[1] <= lorg->y && bbox[4] >= lorg->y &&
               bbox[2] <= lorg->z && bbox[5] >= lorg->z)
@@ -433,6 +434,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
             // inside the box, cannot block
             return false;
           }
+          */
           if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
         }
       }
@@ -1238,14 +1240,15 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6], const TVec &Curr
   //if (!clip_enabled || !clip_bsp) return true;
   if (CurrLightRadius < 2) return false;
 
+  /*
   //k8: most BSP bboxes has non-sensical z, so no z checks
   if (BBox[0] <= CurrLightPos.x && BBox[3] >= CurrLightPos.x &&
-      BBox[1] <= CurrLightPos.y && BBox[4] >= CurrLightPos.y /*&&
-      BBox[2] <= CurrLightPos.z && BBox[5] >= CurrLightPos.z*/)
+      BBox[1] <= CurrLightPos.y && BBox[4] >= CurrLightPos.y)
   {
     // viewer is inside the box
     return true;
   }
+  */
 
   if (!CheckSphereVsAABBIgnoreZ(BBox, CurrLightPos, CurrLightRadius)) return false;
 
