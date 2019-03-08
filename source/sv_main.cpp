@@ -175,8 +175,6 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
 //
 //==========================================================================
 void SV_Init () {
-  guard(SV_Init);
-
   svs.max_clients = 1;
 
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
@@ -214,8 +212,6 @@ void SV_Init () {
 
   VMemberBase::StaticCompilerShutdown();
   CompilerReportMemory();
-
-  unguard;
 }
 
 
@@ -235,7 +231,6 @@ void P_InitThinkers () {
 //
 //==========================================================================
 void SV_Shutdown () {
-  guard(SV_Shutdown);
   if (GGameInfo) {
     SV_ShutdownGame();
     GGameInfo->ConditionalDestroy();
@@ -254,7 +249,6 @@ void SV_Shutdown () {
 
   delete ServerNetContext;
   ServerNetContext = nullptr;
-  unguard;
 }
 
 
@@ -264,7 +258,6 @@ void SV_Shutdown () {
 //
 //==========================================================================
 void SV_Clear () {
-  guard(SV_Clear);
   if (GLevel) {
     GLevel->ConditionalDestroy();
     GLevel = nullptr;
@@ -275,7 +268,6 @@ void SV_Clear () {
   // make sure all sounds are stopped
   GAudio->StopAllSound();
 #endif
-  unguard;
 }
 
 
@@ -285,7 +277,6 @@ void SV_Clear () {
 //
 //==========================================================================
 void SV_SendClientMessages () {
-  guard(SV_SendClientMessages);
   // update player replication infos
   for (int i = 0; i < svs.max_clients; ++i) {
     VBasePlayer *Player = GGameInfo->Players[i];
@@ -318,7 +309,6 @@ void SV_SendClientMessages () {
     }
     GDemoRecordingContext->Tick();
   }
-  unguard;
 }
 
 
@@ -429,7 +419,6 @@ static void SV_RunPlayerTick (VBasePlayer *Player, bool skipFrame) {
 //
 //==========================================================================
 static void SV_RunClients (bool skipFrame=false) {
-  guard(SV_RunClients);
   // get commands
   for (int i = 0; i < MAXPLAYERS; ++i) {
     VBasePlayer *Player = GGameInfo->Players[i];
@@ -459,7 +448,6 @@ static void SV_RunClients (bool skipFrame=false) {
     CheckForSkip();
     ++sv.intertime;
   }
-  unguard;
 }
 
 
@@ -491,7 +479,6 @@ int main () {
 //
 //==========================================================================
 void SV_Ticker () {
-  guard(SV_Ticker);
   //double saved_frametime;
 
   if (GGameInfo->NetMode >= NM_DedicatedServer &&
@@ -587,7 +574,6 @@ void SV_Ticker () {
   }
 
   //host_frametime = saved_frametime;
-  unguard;
 }
 
 
@@ -597,7 +583,6 @@ void SV_Ticker () {
 //
 //==========================================================================
 static VName CheckRedirects (VName Map) {
-  guard(CheckRedirects);
   const mapInfo_t &Info = P_GetMapInfo(Map);
   if (Info.RedirectType == NAME_None || Info.RedirectMap == NAME_None) return Map; // no redirect for this map
   // check all players
@@ -608,7 +593,6 @@ static VName CheckRedirects (VName Map) {
   }
   // none of the players have required item, no redirect
   return Map;
-  unguard;
 }
 
 
@@ -667,8 +651,6 @@ static void G_DoCompleted () {
 //
 //==========================================================================
 COMMAND(TestFinale) {
-  guard(COMMAND TestFinale);
-
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -686,7 +668,6 @@ COMMAND(TestFinale) {
   }
 
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
-  unguard;
 }
 
 
@@ -698,8 +679,6 @@ COMMAND(TestFinale) {
 //
 //==========================================================================
 COMMAND(TeleportNewMap) {
-  guard(COMMAND TeleportNewMap);
-
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -736,7 +715,6 @@ COMMAND(TeleportNewMap) {
   mapteleport_flags = 0;
   mapteleport_skill = -1;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
-  unguard;
 }
 
 
@@ -748,8 +726,6 @@ COMMAND(TeleportNewMap) {
 //
 //==========================================================================
 COMMAND(TeleportNewMapEx) {
-  guard(COMMAND TeleportNewMap);
-
   if (Args.length() < 2) return;
 
   if (Source == SRC_Command) {
@@ -790,7 +766,6 @@ COMMAND(TeleportNewMapEx) {
   mapteleport_flags = flags;
   mapteleport_skill = -1;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
-  unguard;
 }
 
 
@@ -820,7 +795,6 @@ static void G_DoReborn (int playernum) {
 //
 //==========================================================================
 int NET_SendToAll (int blocktime) {
-  guard(NET_SendToAll);
   double start;
   int count = 0;
   bool state1[MAXPLAYERS];
@@ -870,7 +844,6 @@ int NET_SendToAll (int blocktime) {
   }
 
   return count;
-  unguard;
 }
 
 
@@ -880,14 +853,12 @@ int NET_SendToAll (int blocktime) {
 //
 //==========================================================================
 void SV_SendServerInfoToClients () {
-  guard(SV_SendServerInfoToClients);
   for (int i = 0; i < svs.max_clients; ++i) {
     VBasePlayer *Player = GGameInfo->Players[i];
     if (!Player) continue;
     Player->Level = GLevelInfo;
     if (Player->Net) Player->Net->SendServerInfo();
   }
-  unguard;
 }
 
 
@@ -897,8 +868,6 @@ void SV_SendServerInfoToClients () {
 //
 //==========================================================================
 void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
-  guard(SV_SpawnServer);
-
   GCon->Log("===============================================");
   GCon->Logf("Spawning server with \"%s\"", mapname);
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
@@ -998,7 +967,6 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   }
 
   GCon->Log(NAME_Dev, "Server spawned");
-  unguard;
 }
 
 
@@ -1008,7 +976,6 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
 //
 //==========================================================================
 COMMAND(PreSpawn) {
-  guard(COMMAND PreSpawn);
   if (Source == SRC_Command) {
     GCon->Log("PreSpawn is not valid from console");
     return;
@@ -1022,7 +989,6 @@ COMMAND(PreSpawn) {
       Chan->Update();
     }
   }
-  unguard;
 }
 
 
@@ -1032,13 +998,11 @@ COMMAND(PreSpawn) {
 //
 //==========================================================================
 COMMAND(Client_Spawn) {
-  guard(COMMAND Client_Spawn);
   if (Source == SRC_Command) {
     GCon->Log("Client_Spawn is not valid from console");
     return;
   }
   Player->SpawnClient();
-  unguard;
 }
 
 
@@ -1048,7 +1012,6 @@ COMMAND(Client_Spawn) {
 //
 //==========================================================================
 void SV_DropClient (VBasePlayer *Player, bool crash) {
-  guard(SV_DropClient);
   if (!crash) {
     if (GLevel && GLevel->Acs) {
       GLevel->Acs->StartTypedACScripts(SCRIPT_Disconnect, SV_GetPlayerNum(Player), 0, 0, nullptr, true, false);
@@ -1066,7 +1029,6 @@ void SV_DropClient (VBasePlayer *Player, bool crash) {
 
   --svs.num_connected;
   Player->UserInfo = VStr();
-  unguard;
 }
 
 
@@ -1079,7 +1041,6 @@ void SV_DropClient (VBasePlayer *Player, bool crash) {
 //
 //==========================================================================
 void SV_ShutdownGame () {
-  guard(SV_ShutdownGame);
   if (GGameInfo->NetMode == NM_None) return;
 
 #ifdef CLIENT
@@ -1167,7 +1128,6 @@ void SV_ShutdownGame () {
   SV_InitBaseSlot();
 
   GGameInfo->NetMode = NM_None;
-  unguard;
 }
 
 
@@ -1178,7 +1138,6 @@ void SV_ShutdownGame () {
 //
 //==========================================================================
 COMMAND(Restart) {
-  guard(COMMAND Restart);
   //fprintf(stderr, "*****RESTART!\n");
   if (GGameInfo->NetMode != NM_Standalone) return;
   //if (!SV_LoadQuicksaveSlot())
@@ -1187,7 +1146,6 @@ COMMAND(Restart) {
     SV_SpawnServer(*GLevel->MapName, true, false);
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
   }
-  unguard;
 }
 #endif
 
@@ -1198,7 +1156,6 @@ COMMAND(Restart) {
 //
 //==========================================================================
 COMMAND(Pause) {
-  guard(COMMAND Pause);
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -1210,7 +1167,6 @@ COMMAND(Pause) {
       GGameInfo->Players[i]->eventClientPause(!!(GGameInfo->Flags & VGameInfo::GIF_Paused));
     }
   }
-  unguard;
 }
 
 
@@ -1220,7 +1176,6 @@ COMMAND(Pause) {
 //
 //==========================================================================
 COMMAND(Stats) {
-  guard(COMMAND Stats);
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -1228,7 +1183,6 @@ COMMAND(Stats) {
   Player->Printf("Kills: %d of %d", Player->KillCount, GLevelInfo->TotalKills);
   Player->Printf("Items: %d of %d", Player->ItemCount, GLevelInfo->TotalItems);
   Player->Printf("Secrets: %d of %d", Player->SecretCount, GLevelInfo->TotalSecret);
-  unguard;
 }
 
 
@@ -1242,7 +1196,6 @@ COMMAND(Stats) {
 //
 //==========================================================================
 void SV_ConnectClient (VBasePlayer *player) {
-  guard(SV_ConnectClient);
   if (player->Net) {
     GCon->Logf(NAME_Dev, "Client %s connected", *player->Net->GetAddress());
     ServerNetContext->ClientConnections.Append(player->Net);
@@ -1266,7 +1219,6 @@ void SV_ConnectClient (VBasePlayer *player) {
   player->PlayerReplicationInfo = (VPlayerReplicationInfo *)GLevel->SpawnThinker(GGameInfo->PlayerReplicationInfoClass);
   player->PlayerReplicationInfo->Player = player;
   player->PlayerReplicationInfo->PlayerNum = SV_GetPlayerNum(player);
-  unguard;
 }
 
 
@@ -1276,7 +1228,6 @@ void SV_ConnectClient (VBasePlayer *player) {
 //
 //==========================================================================
 void SV_CheckForNewClients () {
-  guard(SV_CheckForNewClients);
   VSocketPublic *sock;
   int i;
 
@@ -1297,7 +1248,6 @@ void SV_CheckForNewClients () {
     SV_ConnectClient(Player);
     ++svs.num_connected;
   }
-  unguard;
 }
 
 
@@ -1307,7 +1257,6 @@ void SV_CheckForNewClients () {
 //
 //==========================================================================
 void SV_ConnectBot (const char *name) {
-  guard(SV_ConnectBot);
   int i;
 
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) {
@@ -1331,7 +1280,6 @@ void SV_ConnectBot (const char *name) {
   ++svs.num_connected;
   Player->SetUserInfo(Player->UserInfo);
   Player->SpawnClient();
-  unguard;
 }
 
 
@@ -1351,7 +1299,6 @@ COMMAND(AddBot) {
 //
 //==========================================================================
 COMMAND(Map) {
-  guard(COMMAND Map);
   VStr mapname;
 
   if (Args.Num() != 2) {
@@ -1394,7 +1341,6 @@ COMMAND(Map) {
 #ifdef CLIENT
   if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
-  unguard;
 }
 
 
@@ -1404,7 +1350,6 @@ COMMAND(Map) {
 //
 //==========================================================================
 bool Host_StartTitleMap () {
-  guard(Host_StartTitleMap);
   static bool loadingTitlemap = false;
 
   if (GArgs.CheckParm("-notitlemap") != 0) return false;
@@ -1431,7 +1376,6 @@ bool Host_StartTitleMap () {
 #endif
   loadingTitlemap = false;
   return true;
-  unguard;
 }
 
 
@@ -1441,8 +1385,6 @@ bool Host_StartTitleMap () {
 //
 //==========================================================================
 COMMAND(MaxPlayers) {
-  guard(COMMAND MaxPlayers);
-
   if (Args.Num() != 2) {
     GCon->Logf("maxplayers is %d", svs.max_clients);
     return;
@@ -1474,7 +1416,6 @@ COMMAND(MaxPlayers) {
     DeathMatch = 2;
     NoMonsters = 1;
   }
-  unguard;
 }
 
 
@@ -1484,7 +1425,6 @@ COMMAND(MaxPlayers) {
 //
 //==========================================================================
 void ServerFrame (int realtics) {
-  guard(ServerFrame);
   SV_CheckForNewClients();
 
   if (real_time) {
@@ -1497,7 +1437,6 @@ void ServerFrame (int realtics) {
   if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
 
   SV_SendClientMessages();
-  unguard;
 }
 
 
@@ -1507,7 +1446,6 @@ void ServerFrame (int realtics) {
 //
 //==========================================================================
 VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
-  guard(SV_FindClassFromEditorId);
   /*
   for (int i = VClass::GMobjInfos.length()-1; i >= 0; --i) {
     if ((!VClass::GMobjInfos[i].GameFilter ||
@@ -1522,7 +1460,6 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
   //GCon->Logf("SV_FindClassFromEditorId: Id=%d; filter=0x%04x; class=<%s>", Id, GameFilter, (nfo && nfo->Class ? *nfo->Class->GetFullName() : "<oops>"));
   if (nfo) return nfo->Class;
   return nullptr;
-  unguard;
 }
 
 
@@ -1532,7 +1469,6 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
 //
 //==========================================================================
 VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
-  guard(SV_FindClassFromScriptId);
   /*
   for (int i = VClass::GScriptIds.length()-1; i >= 0; --i) {
     if ((!VClass::GScriptIds[i].GameFilter ||
@@ -1546,7 +1482,6 @@ VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
   mobjinfo_t *nfo = VClass::FindScriptId(Id, GameFilter);
   if (nfo) return nfo->Class;
   return nullptr;
-  unguard;
 }
 
 
@@ -1556,7 +1491,6 @@ VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
 //
 //==========================================================================
 COMMAND(Say) {
-  guard(COMMAND Say);
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -1571,7 +1505,6 @@ COMMAND(Say) {
   }
   GLevelInfo->BroadcastPrint(*Text);
   GLevelInfo->StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID("misc/chat"), 0, 1.0f, 0, false);
-  unguard;
 }
 
 
