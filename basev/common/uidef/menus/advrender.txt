@@ -51,4 +51,79 @@ menudef AdvRenderOptions {
       "turn mirrors off, or turn this off."
       "-1 means 'infinite portal depth'.";
   }
+
+
+  header "Stencil Shadows Options";
+
+  option numeric {
+    title = "Maximum Lights";
+    cvar = r_max_lights;
+    step = 1;
+    min = -1;
+    max = 256;
+    help =
+      "Maximum allowed light sources (-1 means unlimited)."
+      "This is hard limit for light sources in one frame.";
+  }
+
+  option numeric {
+    title = "Maximum Total Lit Subsectors";
+    cvar = r_max_light_segs_all;
+    step = 1;
+    min = -1;
+    max = 1024;
+    help =
+      "Maximum allowed lit surfaces (-1 means unlimited)."
+      "This limits total number of rendered light surfaces."
+      "There is little reason to limit this, as it is usually"
+      "has very low performance hit.";
+  }
+
+  option numeric {
+    title = "Maximum Single Lit Subsectors";
+    cvar = r_max_light_segs_one;
+    step = 1;
+    min = -1;
+    max = 1024;
+    help =
+      "Maximum allowed lit surfaces for one light (-1 means unlimited)."
+      "This limits number of rendered light surfaces per one light."
+      "There is little reason to limit this, as it is usually"
+      "has very low performance hit.";
+  }
+
+  option numeric {
+    title = "Maximum Total Shadow Volumes";
+    cvar = r_max_shadow_segs_all;
+    step = 1;
+    min = -1;
+    max = 1024;
+    help =
+      "Maximum allowed shadow volumes (-1 means unlimited)."
+      "This limits total number of rendered shadow volumes."
+      "This is what causes most slowdowns. Decrease this to"
+      "make rendering faster (but with less proper shadows)."
+      "Note that nearby static lights are rendered first,"
+      "so even with low numbers this will look somewhat good.";
+  }
+
+  option numeric {
+    title = "Maximum Single Shadow Volumes";
+    cvar = r_max_shadow_segs_one;
+    step = 1;
+    min = -1;
+    max = 1024;
+    help =
+      "Maximum allowed shadow volumes for one light (-1 means unlimited)."
+      "There is little reason to change this.";
+  }
+
+  option bool {
+    title = "Shadow Check";
+    cvar = r_advlight_opt_trace;
+    help =
+      "Check if dynamic light can cast shadow."
+      "This can speedup rendering (lightmapped too),"
+      "so better leave this 'ON'.";
+  }
 }
