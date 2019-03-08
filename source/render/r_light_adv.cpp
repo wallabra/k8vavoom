@@ -60,8 +60,9 @@ extern VCvarB r_dynamic_clip_more;
 
 static VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
-static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_PreInit);
-static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_PreInit);
+static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_separate_vis("r_advlight_opt_separate_vis", false, "Calculate light and render vis intersection as separate step?", CVAR_Archive|CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -835,20 +836,23 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
   memset(LightVis, 0, VisSize);
-  memset(LightBspVis, 0, VisSize);
+  if (!r_advlight_opt_separate_vis) memset(LightBspVis, 0, VisSize);
   HasLightIntersection = false;
   BuildLightVis(Level->NumNodes-1, dummy_bbox);
-  if (!HasLightIntersection) return;
+  if (!r_advlight_opt_separate_vis && !HasLightIntersection) return;
 
   // create combined light and view visibility
-  /*
-  bool HaveIntersect = false;
-  for (int i = 0; i < VisSize; ++i) {
-    LightBspVis[i] = BspVis[i]&LightVis[i];
-    if (LightBspVis[i]) HaveIntersect = true;
+  if (r_advlight_opt_separate_vis) {
+    //memset(LightBspVis, 0, VisSize);
+    bool HaveIntersect = false;
+    for (int i = 0; i < VisSize; ++i) {
+      LightBspVis[i] = BspVis[i]&LightVis[i];
+      if (LightBspVis[i]) HaveIntersect = true;
+    }
+    if (!HaveIntersect) return;
   }
-  if (!HaveIntersect) return;
-  */
+
+  ++LightsRendered;
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) Drawer->SetupLightScissor(Pos, Radius);

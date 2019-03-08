@@ -41,6 +41,11 @@ extern VCvarI r_max_lights;
 
 static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visible static lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort visible dynamic lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_flood_check("r_advlight_flood_check", true, "Check light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
+
+static VCvarB dbg_adv_show_light_count("dbg_adv_show_light_count", false, "Show number of rendered lights?", CVAR_PreInit);
+static VCvarI dbg_adv_force_static_lights_radius("dbg_adv_force_static_lights_radius", "0", "Force static light radius.", CVAR_PreInit);
+static VCvarI dbg_adv_force_dynamic_lights_radius("dbg_adv_force_dynamic_lights_radius", "0", "Force dynamic light radius.", CVAR_PreInit);
 
 
 struct StLightInfo {
@@ -279,6 +284,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   TPlane backPlane;
   backPlane.SetPointNormal3D(vieworg, viewforward);
 
+  LightsRendered = 0;
 
   if (!FixedLight && r_static_lights && r_max_lights != 0) {
     if (!staticLightsFiltered) RefilterStaticLights();
@@ -310,7 +316,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         }
       }
 
-      if (!CheckBSPVisibility(stlight->origin, stlight->radius)) {
+      if (r_advlight_flood_check && !CheckBSPVisibility(stlight->origin, stlight->radius)) {
         //GCon->Logf("STATIC DROP: visibility check");
         continue;
       }
@@ -335,7 +341,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         sli.stlight = stlight;
         sli.distSq = distSq;
       } else {
-        RenderLightShadows(RD, Range, stlight->origin, stlight->radius, stlight->colour, true);
+        RenderLightShadows(RD, Range, stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : stlight->radius), stlight->colour, true);
       }
     }
 
@@ -343,10 +349,12 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     if (visstatlightCount > 0) {
       timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
       for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
-        RenderLightShadows(RD, Range, sli->stlight->origin, sli->stlight->radius, sli->stlight->colour, true);
+        RenderLightShadows(RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), sli->stlight->colour, true);
       }
     }
   }
+
+  int rlStatic = LightsRendered;
 
   if (!FixedLight && r_dynamic) {
     static TArray<DynLightInfo> visdynlights;
@@ -374,7 +382,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         }
       }
 
-      if (!CheckBSPVisibility(l->origin, l->radius)) {
+      if (r_advlight_flood_check && !CheckBSPVisibility(l->origin, l->radius)) {
         //GCon->Logf("DYNAMIC DROP: visibility check");
         continue;
       }
@@ -392,7 +400,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         dli.l = l;
         dli.distSq = distSq;
       } else {
-        RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
+        RenderLightShadows(RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->colour, true);
       }
     }
 
@@ -400,9 +408,13 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     if (visdynlightCount > 0) {
       timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
       for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
-        RenderLightShadows(RD, Range, dli->l->origin, dli->l->radius, dli->l->colour, true);
+        RenderLightShadows(RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->colour, true);
       }
     }
+  }
+
+  if (dbg_adv_show_light_count) {
+    GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, rlStatic, LightsRendered-rlStatic);
   }
 
   Drawer->DrawWorldTexturesPass();
