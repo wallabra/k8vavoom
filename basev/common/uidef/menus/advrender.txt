@@ -144,6 +144,19 @@ menudef AdvRenderOptions {
       "but only if you have really fast GPU.";
   }
 
+  option bool {
+    title = "Better masked wall lighting";
+    cvar = r_adv_masked_wall_vertex_light;
+    help =
+      "Estimate lighting of masked wall using its vertices?"
+      "Currently, masked (two-sided) walls are not affected by"
+      "dynamic lighting. Until this is fixed, you can use this"
+      "option to estimate lighting in such cases."
+      "Note that this can slow down rendering for maps with alot"
+      "of two-sided walls (this includes things like emulated"
+      "grass, etc.).";
+  }
+
 
   header "DEBUG Stencil Shadows Options";
 
