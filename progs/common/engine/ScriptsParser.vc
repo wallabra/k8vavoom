@@ -48,7 +48,9 @@ native void SetEscape (bool On);
 native bool AtEnd ();
 native bool GetString ();
 native void ExpectLoneChar ();
+#ifndef VCC_STANDALONE_EXECUTOR
 native int ExpectColor ();
+#endif
 native void ExpectString ();
 native bool Check (string Text);
 native bool CheckStartsWith (string Text);

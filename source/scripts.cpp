@@ -68,7 +68,9 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(SetEscape)
   DECLARE_FUNCTION(AtEnd)
   DECLARE_FUNCTION(GetString)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   DECLARE_FUNCTION(ExpectColor)
+#endif
   DECLARE_FUNCTION(ExpectString)
   DECLARE_FUNCTION(ExpectLoneChar)
   DECLARE_FUNCTION(Check)
@@ -746,6 +748,7 @@ void VScriptParser::ExpectName () {
 }
 
 
+#if !defined(VCC_STANDALONE_EXECUTOR)
 //==========================================================================
 //
 //  ExpectName
@@ -780,6 +783,7 @@ vuint32 VScriptParser::ExpectColor () {
   //GCon->Logf("COLOR: rgb(%d,%d,%d)", r, g, b);
   return 0xff000000u|(r<<16)|(g<<8)|b;
 }
+#endif
 
 
 //==========================================================================
@@ -1372,11 +1376,13 @@ IMPLEMENT_FUNCTION(VScriptsParser, ExpectLoneChar) {
   Self->Int->ExpectLoneChar();
 }
 
+#if !defined(VCC_STANDALONE_EXECUTOR)
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectColor) {
   P_GET_SELF;
   Self->CheckInterface();
   RET_INT(Self->Int->ExpectColor());
 }
+#endif
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectString) {
   P_GET_SELF;
