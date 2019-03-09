@@ -29,7 +29,7 @@ void main () {
   vec4 FinalColour_1 = TexColour;
 
   // do fog before premultiply, otherwise it is wrong
-  $include "common_fog.fs"
+  $include "common/fog.fs"
 
   // convert to premultiplied
   FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;

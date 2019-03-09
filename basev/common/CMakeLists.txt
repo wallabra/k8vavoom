@@ -216,6 +216,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
     glshaders/*.fs
     glshaders/*.vs
+    glshaders/common/*.fs
+    glshaders/common/*.vs
   )
 add_custom_target(common_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
 

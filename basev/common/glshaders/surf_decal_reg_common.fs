@@ -47,7 +47,7 @@ void main () {
   FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
 #endif
 
-  $include "common_fog.fs"
+  $include "common/fog.fs"
 
   // convert to premultiplied
   FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;

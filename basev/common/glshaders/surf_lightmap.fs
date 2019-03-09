@@ -12,8 +12,7 @@ uniform float FogDensity;
 uniform float FogStart;
 uniform float FogEnd;
 
-varying vec2 TextureCoordinate;
-varying vec2 LightmapCoordinate;
+$include "common/texlmap_vars.fs"
 
 
 void main () {
@@ -25,7 +24,7 @@ void main () {
   TexColour *= texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
 
   vec4 FinalColour_1 = TexColour;
-  $include "common_fog.fs"
+  $include "common/fog.fs"
 
   gl_FragColor = FinalColour_1;
 }

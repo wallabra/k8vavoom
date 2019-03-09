@@ -11,7 +11,7 @@ uniform float FogDensity;
 uniform float FogStart;
 uniform float FogEnd;
 
-varying vec2 TextureCoordinate;
+$include "common/texture_vars.fs"
 
 
 void main () {
@@ -23,7 +23,7 @@ void main () {
   TexColour *= Light;
 
   vec4 FinalColour_1 = TexColour;
-  $include "common_fog.fs"
+  $include "common/fog.fs"
 
   gl_FragColor = FinalColour_1;
 }
