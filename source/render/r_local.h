@@ -307,6 +307,7 @@ public:
 protected:
   struct DLightInfo {
     int needTrace; // <0: no; >1: yes; 0: don't know
+    int leafnum; // -1: unknown yet
   };
 
 protected:
@@ -418,9 +419,14 @@ protected:
   void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
 
+  // yes, non-virtual
+  // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)
+  void MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum);
+
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
-  virtual void PushDlights () = 0;
-  virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0;
+  virtual void PushDlights ();
+  virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
+
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
   virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*, subsector_t *) = 0;
   virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*, seg_t *, subsector_t *) = 0;
@@ -600,9 +606,8 @@ protected:
   void CalcPoints (surface_t *surf);
   void SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis);
   void LightFace (surface_t *surf, subsector_t *leaf);
-  void MarkLights (dlight_t *light, vuint32 bit, int bspnum);
   void AddDynamicLights (surface_t *surf);
-  virtual void PushDlights () override;
+  //virtual void PushDlights () override;
 
   void FlushCaches ();
   void FlushOldCaches ();
@@ -649,7 +654,7 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*, seg_t *, subsector_t *) override;
 
   // light methods
-  virtual void PushDlights () override;
+  //virtual void PushDlights () override;
   vuint32 LightPointAmbient (const TVec &p, VEntity *mobj);
 
   // world BSP rendering

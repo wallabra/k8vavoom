@@ -140,16 +140,6 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::PushDlights
-//
-//==========================================================================
-void VAdvancedRenderLevel::PushDlights () {
-  r_dlightframecount = 1;
-}
-
-
-//==========================================================================
-//
 //  VAdvancedRenderLevel::LightPoint
 //
 //==========================================================================
@@ -183,49 +173,51 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     lb = (SecLightColour&255)*l/255.0f;
   }
 
+  const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
+
   // add static lights
   if (r_static_lights) {
     if (!staticLightsFiltered) RefilterStaticLights();
-    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    const bool hasPVS = Level->HasPVS();
-    for (int i = 0; i < Lights.Num(); i++) {
-      //if (!Lights[i].radius) continue;
-      if (!Lights[i].active) continue;
-
+    const light_t *stl = Lights.Ptr();
+    for (int i = Lights.length(); i--; ++stl) {
+      //if (!stl->radius) continue;
+      if (!stl->active) continue;
       // check potential visibility
-      if (hasPVS && !(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
-
-      const float add = Lights[i].radius-Length(p-Lights[i].origin);
-      if (add > 0) {
+      if (dyn_facevis && !(dyn_facevis[stl->leafnum>>3]&(1<<(stl->leafnum&7)))) continue;
+      const float distSq = (p-stl->origin).lengthSquared();
+      if (distSq >= stl->radius*stl->radius) continue; // too far away
+      const float add = stl->radius-sqrtf(distSq);
+      if (add > 8) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, Lights[i].origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(p, stl->origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
-        lr += add*((Lights[i].colour>>16)&255)/255.0f;
-        lg += add*((Lights[i].colour>>8)&255)/255.0f;
-        lb += add*(Lights[i].colour&255)/255.0f;
+        lr += add*((stl->colour>>16)&255)/255.0f;
+        lg += add*((stl->colour>>8)&255)/255.0f;
+        lb += add*(stl->colour&255)/255.0f;
       }
     }
   }
 
   // add dynamic lights
-  if (r_dynamic) {
-    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    const bool hasPVS = Level->HasPVS();
-    for (int i = 0; i < MAX_DLIGHTS; i++) {
-      const dlight_t &dl = DLights[i];
-      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
-
-      if (!dl.radius || dl.die < Level->Time) continue;
-
+  if (r_dynamic && sub->dlightframe == r_dlightframecount) {
+    for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
+      if (!(sub->dlightbits&(1U<<i))) continue;
       // check potential visibility
-      if (r_dynamic_clip && hasPVS) {
-        int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+      if (dyn_facevis) {
+        //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+        const int leafnum = dlinfo[i].leafnum;
+        check(leafnum >= 0);
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
-
-      float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
-      if (add > 0) {
+      const dlight_t &dl = DLights[i];
+      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
+      //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
+      const float distSq = (p-dl.origin).lengthSquared();
+      if (distSq >= dl.radius*dl.radius) continue; // too far away
+      float add = (dl.radius-dl.minlight)-sqrtf(distSq);
+      if (add > 8) {
+        // check potential visibility
         if (r_dynamic_clip) {
           if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
@@ -238,12 +230,19 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     }
   }
 
+  /*
   if (l > 255) l = 255; else if (l < 0) l = 0;
   if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
   if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
   if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
-
   return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
+  */
+
+  return
+    (((vuint32)clampToByte((int)l))<<24)|
+    (((vuint32)clampToByte((int)lr))<<16)|
+    (((vuint32)clampToByte((int)lg))<<8)|
+    ((vuint32)clampToByte((int)lb));
 }
 
 

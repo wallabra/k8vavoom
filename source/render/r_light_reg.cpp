@@ -504,65 +504,6 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VRenderLevel::MarkLights
-//
-//==========================================================================
-void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
-  if (bspnum&NF_SUBSECTOR) {
-    int num;
-
-    if (bspnum == -1) {
-      num = 0;
-    } else {
-      num = bspnum&(~NF_SUBSECTOR);
-    }
-    subsector_t *ss = &Level->Subsectors[num];
-
-    if (r_dynamic_clip && Level->HasPVS()) {
-      const vuint8 *dyn_facevis = Level->LeafPVS(ss);
-      int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
-      // check potential visibility
-      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) return;
-    }
-
-    if (ss->dlightframe != r_dlightframecount) {
-      ss->dlightbits = 0;
-      ss->dlightframe = r_dlightframecount;
-    }
-    ss->dlightbits |= bit;
-  } else {
-    node_t *node = &Level->Nodes[bspnum];
-    float dist = DotProduct(light->origin, node->normal)-node->dist;
-    if (dist > -light->radius+light->minlight) MarkLights(light, bit, node->children[0]);
-    if (dist < light->radius-light->minlight) MarkLights(light, bit, node->children[1]);
-  }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevel::PushDlights
-//
-//==========================================================================
-void VRenderLevel::PushDlights () {
-  //???:if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
-  ++r_dlightframecount;
-
-  if (!r_dynamic) return;
-
-  dlight_t *l = DLights;
-  for (int i = 0; i < MAX_DLIGHTS; ++i, ++l) {
-    if (l->radius < 1.0f || l->die < Level->Time) {
-      dlinfo[i].needTrace = 0;
-      continue;
-    }
-    MarkLights(l, 1U<<i, Level->NumNodes-1);
-    dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
-  }
-}
-
 
 //==========================================================================
 //
@@ -632,23 +573,24 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   }
 
   // add dynamic lights
-  if (sub->dlightframe == r_dlightframecount) {
-    const bool hasPVS = Level->HasPVS();
-    for (int i = 0; i < MAX_DLIGHTS; ++i) {
-      if (!(sub->dlightbits&(1<<i))) continue;
+  if (r_dynamic && sub->dlightframe == r_dlightframecount) {
+    const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
+    for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
+      if (!(sub->dlightbits&(1U<<i))) continue;
+      // check potential visibility
+      if (dyn_facevis) {
+        //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+        const int leafnum = dlinfo[i].leafnum;
+        check(leafnum >= 0);
+        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      }
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
-      float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
-      if (add > 0) {
-        //fprintf(stderr, "add=%f\n", add);
-        // 6 is arbitrary; add correlates with light radius
-        if (r_dynamic_clip && add > 6) {
-          if (hasPVS) {
-            const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-            int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
-            // check potential visibility
-            if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-          }
+      const float distSq = (p-dl.origin).lengthSquared();
+      if (distSq >= dl.radius*dl.radius) continue; // too far away
+      float add = (dl.radius-dl.minlight)-sqrtf(distSq);
+      if (add > 8) {
+        if (r_dynamic_clip) {
           if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
@@ -665,6 +607,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
   if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
   if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
+  return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
   */
 
   return
@@ -746,7 +689,9 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (hasPVS && r_dynamic_clip) {
       subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+      //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+      int leafnum = dlinfo[lnum].leafnum;
+      check(leafnum >= 0);
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }

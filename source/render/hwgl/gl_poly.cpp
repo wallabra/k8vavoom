@@ -1393,7 +1393,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount) {
+  if (surf->lightmap != nullptr || (!RendLev->IsAdvancedRenderer() && surf->dlightframe == RendLev->r_dlightframecount)) {
     RendLev->BuildLightMap(surf);
     int w = (surf->extents[0]>>4)+1;
     int h = (surf->extents[1]>>4)+1;

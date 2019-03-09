@@ -119,7 +119,9 @@ public:
   surface_t *HorizonPortalsTail;
 
   int PortalDepth;
+  int r_dlightframecount;
 
+public:
   virtual void BuildLightMap (surface_t *) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }

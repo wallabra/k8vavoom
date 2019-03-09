@@ -440,6 +440,8 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 
+  r_dlightframecount = 0;
+
   memset(light_block, 0, sizeof(light_block));
   memset(block_changed, 0, sizeof(block_changed));
   memset(light_chain, 0, sizeof(light_chain));

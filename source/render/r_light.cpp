@@ -29,10 +29,6 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int r_dlightframecount = 0;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_darken("r_darken", true, "Darken level to better match original DooM?", CVAR_Archive);
 VCvarI r_ambient("r_ambient", "0", "Minimal ambient light.", CVAR_Archive);
 VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
@@ -71,6 +67,65 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
   L.colour = colour;
   L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::MarkLights
+//
+//==========================================================================
+void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum) {
+  if (bspnum&NF_SUBSECTOR) {
+    const int num = (bspnum != -1 ? bspnum&(~NF_SUBSECTOR) : 0);
+    subsector_t *ss = &Level->Subsectors[num];
+
+    if (r_dynamic_clip && Level->HasPVS()) {
+      const vuint8 *dyn_facevis = Level->LeafPVS(ss);
+      //int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
+      // check potential visibility
+      if (!(dyn_facevis[lleafnum>>3]&(1<<(lleafnum&7)))) return;
+    }
+
+    if (ss->dlightframe != r_dlightframecount) {
+      ss->dlightbits = 0;
+      ss->dlightframe = r_dlightframecount;
+    }
+    ss->dlightbits |= bit;
+  } else {
+    node_t *node = &Level->Nodes[bspnum];
+    const float dist = DotProduct(light->origin, node->normal)-node->dist;
+    if (dist > -light->radius+light->minlight) MarkLights(light, bit, node->children[0], lleafnum);
+    if (dist < light->radius-light->minlight) MarkLights(light, bit, node->children[1], lleafnum);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::PushDlights
+//
+//==========================================================================
+void VRenderLevelShared::PushDlights () {
+  //???:if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
+  if ((++r_dlightframecount) == 0x7fffffff) {
+    r_dlightframecount = 1;
+    for (unsigned idx = 0; idx < (unsigned)Level->NumSubsectors; ++idx) Level->Subsectors[idx].dlightframe = 0;
+  }
+
+  if (!r_dynamic) return;
+
+  dlight_t *l = DLights;
+  for (int i = 0; i < MAX_DLIGHTS; ++i, ++l) {
+    if (l->radius < 1.0f || l->die < Level->Time) {
+      dlinfo[i].needTrace = 0;
+      dlinfo[i].leafnum = -1;
+      continue;
+    }
+    dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
+    dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
+    MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
+  }
 }
 
 
