@@ -131,10 +131,10 @@ int superatoi (const char *s) {
 
 //==========================================================================
 //
-//  LookupColourName
+//  M_LookupColourName
 //
 //==========================================================================
-static vuint32 LookupColourName (const VStr &Name) {
+vuint32 M_LookupColourName (const VStr &Name) {
   static TMapNC<VName, vuint32> cmap; // names are lowercased
   static bool loaded = false;
   char tmpbuf[64];
@@ -361,7 +361,7 @@ int ParseHex (const char *Str) {
 //==========================================================================
 vuint32 M_ParseColour (const VStr &Name) {
   if (!Name.Length()) return 0xff000000U;
-  vuint32 res = LookupColourName(Name);
+  vuint32 res = M_LookupColourName(Name);
   if (res) return res;
   vuint8 Col[3];
   if (Name[0] == '#') {

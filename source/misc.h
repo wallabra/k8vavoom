@@ -52,6 +52,7 @@ extern FOutputDevice *GLogHostError;
 int superatoi (const char *s);
 
 int ParseHex (const char *Str);
+vuint32 M_LookupColourName (const VStr &Name); // returns 0 if not found (otherwise high bit is set)
 vuint32 M_ParseColour (const VStr &Name);
 
 void M_RgbToHsv (vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);
