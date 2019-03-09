@@ -31,6 +31,8 @@ extern VCvarB r_decals_enabled;
 extern VCvarI r_ambient;
 extern VCvarB r_allow_ambient;
 
+static VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
+
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
@@ -89,8 +91,9 @@ static int surfCmp (const void *a, const void *b, void *udata) {
 static inline float getSurfLightLevel (const surface_t *surf) {
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
-  slins = MAX(slins, r_ambient);
-  if (slins > 255) slins = 255;
+  if (slins < r_ambient) slins = clampToByte(r_ambient);
+  //slins = MAX(slins, r_ambient);
+  //if (slins > 255) slins = 255;
   return float(slins)/255.0f;
 }
 
@@ -1358,6 +1361,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
 
+  if (!gl_dbg_adv_render_textures_surface && RendLev->IsAdvancedRenderer()) return;
+
   p_glUseProgramObjectARB(SurfMaskedProgram);
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
@@ -1409,11 +1414,47 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     double iscale = 1.0f/(size*255*256);
     p_glUniform4fARB(SurfMaskedLightLoc, r*iscale, g*iscale, b*iscale, Alpha);
   } else {
-    const float lev = getSurfLightLevel(surf);
-    p_glUniform4fARB(SurfMaskedLightLoc,
-      ((surf->Light>>16)&255)*lev/255.0f,
-      ((surf->Light>>8)&255)*lev/255.0f,
-      (surf->Light&255)*lev/255.0f, Alpha);
+    if (r_adv_masked_wall_vertex_light && RendLev->IsAdvancedRenderer()) {
+      // collect vertex lighting
+      //FIXME: this should be rendered in ambient pass instead
+      //       also, we can subdivide surfaces for two-sided walls for
+      //       better estimations
+      int w = (surf->extents[0]>>4)+1;
+      int h = (surf->extents[1]>>4)+1;
+      float radius = MIN(w, h);
+      if (radius < 0.0f) radius = 0.0f;
+      int r = 0, g = 0, b = 0;
+      // sector light
+      if (r_allow_ambient) {
+        int slins = (surf->Light>>24)&0xff;
+        if (slins < r_ambient) slins = clampToByte(r_ambient);
+        int lr = (surf->Light>>16)&255;
+        int lg = (surf->Light>>8)&255;
+        int lb = surf->Light&255;
+        lr = lr*slins/255;
+        lg = lg*slins/255;
+        lb = lb*slins/255;
+        if (r < lr) r = lr;
+        if (g < lg) g = lg;
+        if (b < lb) b = lb;
+      }
+      for (int i = 0; i < surf->count; ++i) {
+        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius);
+        int lr = (lt0>>16)&255;
+        int lg = (lt0>>8)&255;
+        int lb = lt0&255;
+        if (r < lr) r = lr;
+        if (g < lg) g = lg;
+        if (b < lb) b = lb;
+      }
+      p_glUniform4fARB(SurfMaskedLightLoc, r/255.0f, g/255.0f, b/255.0f, Alpha);
+    } else {
+      const float lev = getSurfLightLevel(surf);
+      p_glUniform4fARB(SurfMaskedLightLoc,
+        ((surf->Light>>16)&255)*lev/255.0f,
+        ((surf->Light>>8)&255)*lev/255.0f,
+        (surf->Light&255)*lev/255.0f, Alpha);
+    }
   }
 
   if (surf->Fade) {
@@ -1437,8 +1478,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
     p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
-      (DotProduct(surf->verts[i], tex->saxis) + tex->soffs) * tex_iw,
-      (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
+      (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
+      (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
     glVertex(surf->verts[i]);
   }
   glEnd();

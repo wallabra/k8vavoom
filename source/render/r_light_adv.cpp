@@ -143,7 +143,7 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 //  VAdvancedRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
+vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;
@@ -152,7 +152,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   subregion_t *reg = sub->regions;
   if (reg) {
     while (reg->next) {
-      float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+      const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
       if (d >= 0.0f) break;
       reg = reg->next;
     }
@@ -189,7 +189,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       const float add = stl->radius-sqrtf(distSq);
       if (add > 8) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, stl->origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
         lr += add*((stl->colour>>16)&255)/255.0f;
@@ -219,7 +219,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       if (add > 8) {
         // check potential visibility
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
@@ -251,7 +251,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
 //  VAdvancedRenderLevel::LightPointAmbient
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, VEntity *mobj) {
+vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   subsector_t *sub = Level->PointInSubsector(p);

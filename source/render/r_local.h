@@ -425,7 +425,7 @@ protected:
 
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
   virtual void PushDlights ();
-  virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
+  //virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
 
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
   virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*, subsector_t *) = 0;
@@ -626,7 +626,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 
@@ -655,7 +655,8 @@ protected:
 
   // light methods
   //virtual void PushDlights () override;
-  vuint32 LightPointAmbient (const TVec &p, VEntity *mobj);
+  // `radius` is used for... nothing yet
+  vuint32 LightPointAmbient (const TVec &p, float radius);
 
   // world BSP rendering
   virtual void QueueWorldSurface (seg_t*, surface_t*) override;
@@ -698,7 +699,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 

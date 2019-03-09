@@ -520,7 +520,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
              (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
     light = 0xffffffff;
   } else {
-    light = LightPoint(mobj->Origin, mobj);
+    light = LightPoint(mobj->Origin, mobj->Radius);
   }
 
   //FIXME: fake "solid color" with colored light for now
@@ -994,7 +994,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     vuint32 light;
          if (RendStyle == STYLE_Fuzzy) light = 0;
     else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) light = 0xffffffff;
-    else light = LightPoint(vieworg, cl->MO);
+    else light = LightPoint(vieworg, cl->MO->Radius);
 
     //FIXME: fake "solid color" with colored light for now
     if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {

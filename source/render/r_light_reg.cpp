@@ -510,7 +510,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //  VRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
+vuint32 VRenderLevel::LightPoint (const TVec &p, float radius) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;
@@ -519,7 +519,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
 
   if (reg) {
     while (reg->next) {
-      float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+      const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
       if (d >= 0.0f) break;
       reg = reg->next;
     }
@@ -591,7 +591,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       float add = (dl.radius-dl.minlight)-sqrtf(distSq);
       if (add > 8) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;

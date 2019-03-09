@@ -124,6 +124,12 @@ public:
 public:
   virtual void BuildLightMap (surface_t *) = 0;
 
+  // defined only after `PushDlights()`
+  // public, because it is used in advrender to determine rough
+  // lightness of masked surfaces
+  // `radius` is used for visibility raycasts
+  virtual vuint32 LightPoint (const TVec &p, /*VEntity *mobj*/float raduis) = 0;
+
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 };
 
