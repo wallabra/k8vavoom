@@ -212,8 +212,10 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/strife/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/weapon/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
-    ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.fs
-    ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
+    #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.fs
+    #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
+    glshaders/*.fs
+    glshaders/*.vs
   )
 add_custom_target(common_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
 
