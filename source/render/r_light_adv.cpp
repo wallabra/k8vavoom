@@ -49,7 +49,8 @@ VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.",
 VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
 static VCvarI r_max_light_segs_all("r_max_light_segs_all", "-1", "Maximum light segments for all lights.", CVAR_Archive);
 static VCvarI r_max_light_segs_one("r_max_light_segs_one", "-1", "Maximum light segments for one light.", CVAR_Archive);
-static VCvarI r_max_shadow_segs_all("r_max_shadow_segs_all", "128", "Maximum shadow segments for all lights.", CVAR_Archive);
+// was 128, but with scissored light, there is no sense to limit it anymore
+static VCvarI r_max_shadow_segs_all("r_max_shadow_segs_all", "-1", "Maximum shadow segments for all lights.", CVAR_Archive);
 static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shadow segments for one light.", CVAR_Archive);
 
 VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
