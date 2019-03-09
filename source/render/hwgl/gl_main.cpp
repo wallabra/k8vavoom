@@ -1137,32 +1137,16 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //  glhProjectf
 //
 //==========================================================================
-static inline bool glhProjectf (const TVec &point, const float *modelview, const float *projection, const int *viewport, float *windowCoordinate) {
-  // Transformation vectors
-  float fTempo[8];
-  // Modelview transform
-  fTempo[0] = modelview[0]*point.x+modelview[4]*point.y+modelview[8]*point.z+modelview[12]; // w is always 1
-  fTempo[1] = modelview[1]*point.x+modelview[5]*point.y+modelview[9]*point.z+modelview[13];
-  fTempo[2] = modelview[2]*point.x+modelview[6]*point.y+modelview[10]*point.z+modelview[14];
-  fTempo[3] = modelview[3]*point.x+modelview[7]*point.y+modelview[11]*point.z+modelview[15];
-  // projection transform, the final row of projection matrix is always [0 0 -1 0] so we optimize for that
-  fTempo[4] = projection[0]*fTempo[0]+projection[4]*fTempo[1]+projection[8]*fTempo[2]+projection[12]*fTempo[3];
-  fTempo[5] = projection[1]*fTempo[0]+projection[5]*fTempo[1]+projection[9]*fTempo[2]+projection[13]*fTempo[3];
-  fTempo[6] = projection[2]*fTempo[0]+projection[6]*fTempo[1]+projection[10]*fTempo[2]+projection[14]*fTempo[3];
-  fTempo[7] = -fTempo[2];
-  // the result normalizes between -1 and 1
-  if (fTempo[7] == 0.0f) return false; // the w value
-  fTempo[7] = 1.0f/fTempo[7];
-  // Perspective division
-  fTempo[4] *= fTempo[7];
-  fTempo[5] *= fTempo[7];
-  //fTempo[6] *= fTempo[7];
-  // window coordinates
-  // map x, y to range 0-1
-  windowCoordinate[0] = (fTempo[4]*0.5+0.5)*viewport[2]+viewport[0];
-  windowCoordinate[1] = (fTempo[5]*0.5+0.5)*viewport[3]+viewport[1];
-  // This is only correct when glDepthRange(0.0, 1.0)
-  //windowCoordinate[2]=(1.0+fTempo[6])*0.5;// Between 0 and 1
+static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, const VMatrix4 &projection, const int *viewport, float *windowCoordinate) {
+  TVec inworld = point;
+  const float iww = modelview.Transform2InPlace(inworld);
+  if (inworld.z == 0.0f) return false; // the w value
+  TVec proj = projection.Transform2(inworld, iww);
+  const float pjw = -1.0f/inworld.z;
+  proj.x *= pjw;
+  proj.y *= pjw;
+  windowCoordinate[0] = (proj.x*0.5f+0.5f)*viewport[2]+viewport[0];
+  windowCoordinate[1] = (proj.y*0.5f+0.5f)*viewport[3]+viewport[1];
   return true;
 }
 
