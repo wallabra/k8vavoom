@@ -21,7 +21,8 @@ void main () {
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard; // for steamlined masked textures
-  TexColour *= texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
+  TexColour *= texture2D(LightMap, LightmapCoordinate);
+  TexColour += texture2D(SpecularMap, LightmapCoordinate);
 
   vec4 FinalColour_1 = TexColour;
   $include "common/fog.fs"

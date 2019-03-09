@@ -18,7 +18,7 @@ void main () {
   //vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
   //if (TexColour.a < 0.01) discard;
 
-  vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard; // for steamlined textures
   TexColour *= Light;
 
