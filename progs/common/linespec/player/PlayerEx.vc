@@ -2472,8 +2472,8 @@ void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
     if (!Voodoo && !k8ElvenGifted) {
       k8ElvenGifted = true; // gifts should be given only once
       bool showMessage = false;
-      if (AddElvenGift('Shotgun')) { showMessage = true; AddElvenGift('ShellBox'); RemovePistol(); }
-      if (AddElvenGift('BDW_Rifle')) { showMessage = true; foreach (; 0..9) AddElvenGift('Clip'); }
+      if (AddElvenGift('Shotgun')) { showMessage = true; AddElvenGift('ShellBox'); }
+      if (AddElvenGift('BDW_Rifle')) { showMessage = true; foreach (; 0..9) AddElvenGift('Clip'); if (ShouldRemovePistol()) RemovePistol(); }
       print("\c[Green]%s", "Elven Gifts!");
       if (showMessage) k8ElvenGiftMessageTime = -0.3;
     }
@@ -2529,6 +2529,30 @@ final bool AddElvenGift (name Klass) {
   } else {
     return false;
   }
+}
+
+
+//===========================================================================
+//
+//  ShouldRemovePistol
+//
+//  this is virtual, so mods can override it
+//
+//===========================================================================
+bool ShouldRemovePistol () {
+  Inventory inv = EntityEx(MO).Inventory;
+  while (inv) {
+    Weapon Wpn = Weapon(inv);
+    inv = inv.Inventory;
+    if (Wpn) {
+      class!Weapon wc = class!Weapon(Wpn.Class);
+      while (wc) {
+        if (GetClassName(wc) == 'BDW_Rifle') return true;
+        wc = class!Weapon(GetClassParent(wc));
+      }
+    }
+  }
+  return false;
 }
 
 
