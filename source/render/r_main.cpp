@@ -818,41 +818,115 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 //
 //==========================================================================
 void VRenderLevelShared::MarkLeaves () {
+  // no need to do anything if we are still in the same subsector
   if (r_oldviewleaf == r_viewleaf) return;
 
-  ++r_visframecount;
   r_oldviewleaf = r_viewleaf;
+  if (!Level->HasPVS()) return;
 
-  if (Level->HasPVS()) {
-    const vuint8 *vis = Level->LeafPVS(r_viewleaf);
-    subsector_t *sub = &Level->Subsectors[0];
-    for (int i = 0; i < Level->NumSubsectors; ++i, ++sub) {
+  if ((++r_visframecount) == 0x7fffffff) {
+    r_visframecount = 1;
+    for (unsigned nidx = 0; nidx < (unsigned)Level->NumNodes; ++nidx) {
+      Level->Nodes[nidx].VisFrame = 0;
+    }
+    for (unsigned nidx = 0; nidx < (unsigned)Level->NumSubsectors; ++nidx) {
+      Level->Subsectors[nidx].VisFrame = 0;
+    }
+  }
+  const int currvisframe = r_visframecount;
+
+  const vuint8 *vis = Level->LeafPVS(r_viewleaf);
+  subsector_t *sub = &Level->Subsectors[0];
+
+#if 0
+  {
+    const unsigned ssleft = (unsigned)Level->NumSubsectors;
+    for (unsigned i = 0; i < ssleft; ++i, ++sub) {
       if (vis[i>>3]&(1<<(i&7))) {
-        sub->VisFrame = r_visframecount;
+        sub->VisFrame = currvisframe;
         node_t *node = sub->parent;
         while (node) {
-          if (node->VisFrame == r_visframecount) break;
-          node->VisFrame = r_visframecount;
+          if (node->VisFrame == currvisframe) break;
+          node->VisFrame = currvisframe;
           node = node->parent;
         }
       }
     }
-  } else {
-    // eh, we have no PVS, so just mark it all
-    // we won't check for visframe ever if level has no PVS, so do nothing here
+  }
+#else
+  {
+    unsigned ssleft = (unsigned)Level->NumSubsectors;
+    if (!ssleft) return; // just in case
+    // process by 8 subsectors
+    while (ssleft >= 8) {
+      ssleft -= 8;
+      vuint8 cvb = *vis++;
+      if (!cvb) {
+        // everything is invisible, skip 8 subsectors
+        sub += 8;
+      } else {
+        // something is visible
+        for (unsigned bc = 8; bc--; cvb >>= 1, ++sub) {
+          if (cvb&1) {
+            sub->VisFrame = currvisframe;
+            node_t *node = sub->parent;
+            while (node && node->VisFrame != currvisframe) {
+              node->VisFrame = currvisframe;
+              node = node->parent;
+            }
+          }
+        }
+      }
+    }
+    // process last byte
+    if (ssleft) {
+      vuint8 cvb = *vis;
+      if (cvb) {
+        while (ssleft--) {
+          if (cvb&1) {
+            sub->VisFrame = currvisframe;
+            node_t *node = sub->parent;
+            while (node && node->VisFrame != currvisframe) {
+              node->VisFrame = currvisframe;
+              node = node->parent;
+            }
+          }
+          if ((cvb >>= 1) == 0) break;
+          ++sub;
+        }
+      }
+    }
     /*
-    subsector_t *sub = &Level->Subsectors[0];
-    for (int i = Level->NumSubsectors-1; i >= 0; --i, ++sub) {
-      sub->VisFrame = r_visframecount;
-      node_t *node = sub->parent;
-      while (node) {
-        if (node->VisFrame == r_visframecount) break;
-        node->VisFrame = r_visframecount;
-        node = node->parent;
+    for (unsigned i = 0; i < ssleft; ++i, ++sub) {
+      if (vis[i>>3]&(1<<(i&7))) {
+        sub->VisFrame = currvisframe;
+        node_t *node = sub->parent;
+        while (node) {
+          if (node->VisFrame == currvisframe) break;
+          node->VisFrame = currvisframe;
+          node = node->parent;
+        }
       }
     }
     */
   }
+  /*
+  else {
+    // eh, we have no PVS, so just mark it all
+    // we won't check for visframe ever if level has no PVS, so do nothing here
+    subsector_t *sub = &Level->Subsectors[0];
+    for (int i = Level->NumSubsectors-1; i >= 0; --i, ++sub) {
+      sub->VisFrame = currvisframe;
+      node_t *node = sub->parent;
+      while (node) {
+        if (node->VisFrame == currvisframe) break;
+        node->VisFrame = currvisframe;
+        node = node->parent;
+      }
+    }
+  }
+  */
+#endif
 }
 
 
