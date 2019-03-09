@@ -616,7 +616,7 @@ void VOpenGLDrawer::InitResolution () {
   DrawSimpleTextureLoc = p_glGetUniformLocationARB(DrawSimpleProgram, "Texture");
   DrawSimpleAlphaLoc = p_glGetUniformLocationARB(DrawSimpleProgram, "Alpha");
 
-  //  Reuses vertex shader.
+  // reuses vertex shader
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_shadow.fs");
   DrawShadowProgram = CreateProgram(VertexShader, FragmentShader);
   DrawShadowTextureLoc = p_glGetUniformLocationARB(DrawShadowProgram, "Texture");
@@ -788,12 +788,13 @@ void VOpenGLDrawer::InitResolution () {
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_ambient.fs");
   ShadowsAmbientProgram = CreateProgram(VertexShader, FragmentShader);
   ShadowsAmbientLightLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "Light");
-  ShadowsAmbientSAxisLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "SAxis");
-  ShadowsAmbientTAxisLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TAxis");
-  ShadowsAmbientSOffsLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "SOffs");
-  ShadowsAmbientTOffsLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TOffs");
-  ShadowsAmbientTexIWLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TexIW");
-  ShadowsAmbientTexIHLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TexIH");
+  ShadowsAmbientSAxisLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "SAxis");
+  ShadowsAmbientTAxisLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "TAxis");
+  ShadowsAmbientSOffsLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "SOffs");
+  ShadowsAmbientTOffsLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "TOffs");
+  ShadowsAmbientTexIWLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "TexIW");
+  ShadowsAmbientTexIHLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "TexIH");
+  //ShadowsAmbientTexCoordLoc = p_glGetAttribLocationARB(ShadowsAmbientProgram, "TexCoord");
   ShadowsAmbientTextureLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "Texture");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_light.vs");
@@ -804,13 +805,13 @@ void VOpenGLDrawer::InitResolution () {
   ShadowsLightLightColourLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "LightColour");
   ShadowsLightSurfNormalLoc = p_glGetAttribLocationARB(ShadowsLightProgram, "SurfNormal");
   ShadowsLightSurfDistLoc = p_glGetAttribLocationARB(ShadowsLightProgram, "SurfDist");
-  ShadowsLightSAxisLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "SAxis");
-  ShadowsLightTAxisLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TAxis");
-  ShadowsLightSOffsLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "SOffs");
-  ShadowsLightTOffsLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TOffs");
-  ShadowsLightTexIWLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TexIW");
-  ShadowsLightTexIHLoc = p_glGetUniformLocationARB(SurfSimpleProgram, "TexIH");
-  ShadowsLightTextureLoc = p_glGetUniformLocationARB(ShadowsAmbientProgram, "Texture");
+  ShadowsLightSAxisLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "SAxis");
+  ShadowsLightTAxisLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "TAxis");
+  ShadowsLightSOffsLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "SOffs");
+  ShadowsLightTOffsLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "TOffs");
+  ShadowsLightTexIWLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "TexIW");
+  ShadowsLightTexIHLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "TexIH");
+  ShadowsLightTextureLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "Texture");
   ShadowsLightAlphaLoc = p_glGetUniformLocationARB(ShadowsLightProgram, "InAlpha");
   ShadowsLightViewOrigin = p_glGetUniformLocationARB(ShadowsLightProgram, "ViewOrigin");
 

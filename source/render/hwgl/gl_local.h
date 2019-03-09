@@ -763,6 +763,7 @@ protected:
   GLint ShadowsAmbientTOffsLoc;
   GLint ShadowsAmbientTexIWLoc;
   GLint ShadowsAmbientTexIHLoc;
+  //GLint ShadowsAmbientTexCoordLoc;
   GLint ShadowsAmbientTextureLoc;
 
   GLhandleARB ShadowsLightProgram;

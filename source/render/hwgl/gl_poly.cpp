@@ -741,6 +741,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     p_glUniform3fvARB(ShadowsAmbientTAxisLoc, 1, &tex->taxis.x);
     p_glUniform1fARB(ShadowsAmbientTOffsLoc, tex->toffs);
     p_glUniform1fARB(ShadowsAmbientTexIHLoc, tex_ih);
+    /*
+    p_glVertexAttrib2fARB(ShadowsAmbientTexCoordLoc,
+      (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
+      (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+    */
 
     const float lev = getSurfLightLevel(surf);
     p_glUniform4fARB(ShadowsAmbientLightLoc,
@@ -982,15 +987,15 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
   float dist = DotProduct(LightPos, Surf->plane->normal) - Surf->plane->dist;
   if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
-  p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
+  p_glUniform1iARB(ShadowsLightTextureLoc, 0);
   texinfo_t *tex = Surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
-  p_glUniform3fvARB(ShadowsAmbientSAxisLoc, 1, &tex->saxis.x);
-  p_glUniform1fARB(ShadowsAmbientSOffsLoc, tex->soffs);
-  p_glUniform1fARB(ShadowsAmbientTexIWLoc, tex_iw);
-  p_glUniform3fvARB(ShadowsAmbientTAxisLoc, 1, &tex->taxis.x);
-  p_glUniform1fARB(ShadowsAmbientTOffsLoc, tex->toffs);
-  p_glUniform1fARB(ShadowsAmbientTexIHLoc, tex_ih);
+  p_glUniform3fvARB(ShadowsLightSAxisLoc, 1, &tex->saxis.x);
+  p_glUniform1fARB(ShadowsLightSOffsLoc, tex->soffs);
+  p_glUniform1fARB(ShadowsLightTexIWLoc, tex_iw);
+  p_glUniform3fvARB(ShadowsLightTAxisLoc, 1, &tex->taxis.x);
+  p_glUniform1fARB(ShadowsLightTOffsLoc, tex->toffs);
+  p_glUniform1fARB(ShadowsLightTexIHLoc, tex_ih);
   p_glVertexAttrib3fvARB(ShadowsLightSurfNormalLoc, &Surf->plane->normal.x);
   p_glVertexAttrib1fvARB(ShadowsLightSurfDistLoc, &Surf->plane->dist);
   p_glUniform3fARB(ShadowsLightViewOrigin, vieworg.x, vieworg.y, vieworg.z);
