@@ -42,8 +42,90 @@ public:
   float Determinant () const;
   VMatrix4 Inverse () const;
   VMatrix4 Transpose () const;
-  TVec Transform (const TVec &V) const;
-  TVec Transform2 (const TVec &V) const;
+
+  inline TVec Transform (const TVec &V) const {
+    TVec Out;
+    Out.x = VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]);
+    Out.y = VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]);
+    Out.z = VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]);
+    return Out;
+  }
+
+  inline TVec Transform (const TVec &V, const float w) const {
+    TVec Out;
+    Out.x = VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]*w);
+    Out.y = VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]*w);
+    Out.z = VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]*w);
+    return Out;
+  }
+
+  // this can be used to transform with OpenGL model/projection matrices
+  inline TVec Transform2 (const TVec &V) const {
+    TVec Out;
+    Out.x = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]);
+    Out.y = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]);
+    Out.z = VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
+    return Out;
+  }
+
+  // this can be used to transform with OpenGL model/projection matrices
+  inline TVec Transform2 (const TVec &V, const float w) const {
+    TVec Out;
+    Out.x = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]*w);
+    Out.y = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]*w);
+    Out.z = VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]*w);
+    return Out;
+  }
+
+  // returns `w`
+  inline float TransformInPlace (TVec &V) const {
+    const float newx = VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]);
+    const float newy = VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]);
+    const float newz = VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]);
+    const float neww = VSUM4(m[3][0]*V.x, m[3][1]*V.y, m[3][2]*V.z, m[3][3]);
+    V.x = newx;
+    V.y = newy;
+    V.z = newz;
+    return neww;
+  }
+
+  // returns `w`
+  inline float TransformInPlace (TVec &V, float w) const {
+    const float newx = VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]*w);
+    const float newy = VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]*w);
+    const float newz = VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]*w);
+    const float neww = VSUM4(m[3][0]*V.x, m[3][1]*V.y, m[3][2]*V.z, m[3][3]*w);
+    V.x = newx;
+    V.y = newy;
+    V.z = newz;
+    return neww;
+  }
+
+  // returns `w`
+  // this can be used to transform with OpenGL model/projection matrices
+  inline float Transform2InPlace (TVec &V) const {
+    const float newx = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]);
+    const float newy = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]);
+    const float newz = VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
+    const float neww = VSUM4(m[0][3]*V.x, m[1][3]*V.y, m[2][3]*V.z, m[3][3]);
+    V.x = newx;
+    V.y = newy;
+    V.z = newz;
+    return neww;
+  }
+
+  // returns `w`
+  // this can be used to transform with OpenGL model/projection matrices
+  inline float Transform2InPlace (TVec &V, const float w) const {
+    const float newx = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]*w);
+    const float newy = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]*w);
+    const float newz = VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]*w);
+    const float neww = VSUM4(m[0][3]*V.x, m[1][3]*V.y, m[2][3]*V.z, m[3][3]*w);
+    V.x = newx;
+    V.y = newy;
+    V.z = newz;
+    return neww;
+  }
 
   inline VMatrix4 &operator = (const VMatrix4 &m2) { if (&m2 != this) memcpy(m, m2.m, sizeof(m)); return *this; }
 
