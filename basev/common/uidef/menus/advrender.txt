@@ -2,6 +2,9 @@
 menudef AdvRenderOptions {
   Title = "ADVANCED RENDER OPTIONS";
 
+
+  header "Render Portals Options";
+
   option bool {
     title = "Allow horizons";
     cvar = r_allow_horizons;
@@ -50,6 +53,19 @@ menudef AdvRenderOptions {
       "this is probably due portals. Try to decrease this, or"
       "turn mirrors off, or turn this off."
       "-1 means 'infinite portal depth'.";
+  }
+
+
+  header "Both Renderers Options";
+
+  option bool {
+    title = "Steamline Masked Walls";
+    cvar = r_steamline_masked_walls;
+    help =
+      "Render masked (two-sided, non-translucent) walls with normal pipeline."
+      "This can cause rendering glitches if such walls has translucency"
+      "(i.e. not strictly transparent/opaque pixels), but lighting will be"
+      "much better (for both lightmapped and stenciled renderers).";
   }
 
 
@@ -153,8 +169,9 @@ menudef AdvRenderOptions {
       "dynamic lighting. Until this is fixed, you can use this"
       "option to estimate lighting in such cases."
       "Note that this can slow down rendering for maps with alot"
-      "of two-sided walls (this includes things like emulated"
-      "grass, etc.).";
+      "of two-sided walls (this includes things like emulated grass, etc.)."
+      "Please note that this doesn't matter if 'Steamline Masked Walls'"
+      "is turned on.";
   }
 
 

@@ -15,8 +15,12 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
+  //vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
+  //if (TexColour.a < 0.01) discard;
+
   vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
-  if (TexColour.a < 0.01) discard;
+  if (TexColour.a < 0.01) discard; // for steamlined textures
+  TexColour *= Light;
 
   vec4 FinalColour_1 = TexColour;
   $include "common_fog.fs"

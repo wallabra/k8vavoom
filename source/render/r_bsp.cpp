@@ -48,6 +48,8 @@ static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rend
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
 
+static VCvarB r_steamline_masked_walls("r_steamline_masked_walls", true, "Render masked (two-sided) walls as normal ones.", CVAR_Archive);
+
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
@@ -251,7 +253,7 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
     surfs->dlightframe = r_sub->dlightframe;
     surfs->dlightbits = r_sub->dlightbits;
 
-    if (texinfo->Alpha > 1.0f) {
+    if (texinfo->Alpha > 1.0f || (r_steamline_masked_walls && texinfo->Alpha >= 1.0f)) {
       if (PortalLevel == 0) {
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = surfs;

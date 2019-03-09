@@ -17,8 +17,12 @@ varying vec2 LightmapCoordinate;
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate)*texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
-  if (TexColour.a < 0.01) discard;
+  //vec4 TexColour = texture2D(Texture, TextureCoordinate)*texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
+  //if (TexColour.a < 0.01) discard;
+
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.a < 0.01) discard; // for steamlined masked textures
+  TexColour *= texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
 
   vec4 FinalColour_1 = TexColour;
   $include "common_fog.fs"
