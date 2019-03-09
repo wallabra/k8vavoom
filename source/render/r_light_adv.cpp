@@ -855,16 +855,28 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   CurrShadowsNumber = 0;
   CurrLightsNumber = 0;
 
-  // 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
+  //  0 if scissor is empty
+  // -1 if scissor has no sense (should not be used)
+  //  1 if scissor is set
   int hasScissor = 1;
   int scoord[4];
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
     hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord);
-    if (hasScissor <= 0) return; // something is VERY wrong (0), or scissor is empty (-1)
-    if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth-1 && scoord[3] == ScreenHeight-1) {
+    if (hasScissor <= 0) {
+      // something is VERY wrong (0), or scissor is empty (-1)
+      Drawer->ResetScissor();
+      if (!hasScissor) return; // undefined scissor
+      //return;
       hasScissor = 0;
+      scoord[0] = scoord[1] = 0;
+      scoord[2] = ScreenWidth;
+      scoord[3] = ScreenHeight;
+    } else {
+      if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth && scoord[3] == ScreenHeight) {
+        hasScissor = 0;
+      }
     }
   }
 

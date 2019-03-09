@@ -1140,7 +1140,7 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, const VMatrix4 &projection, const int *viewport, float *windowCoordinate) {
   TVec inworld = point;
   const float iww = modelview.Transform2InPlace(inworld);
-  if (inworld.z == 0.0f) return false; // the w value
+  if (inworld.z >= 0.0f) return false; // the w value
   TVec proj = projection.Transform2(inworld, iww);
   const float pjw = -1.0f/inworld.z;
   proj.x *= pjw;
@@ -1155,8 +1155,9 @@ static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, co
 //
 //  VOpenGLDrawer::SetupLightScissor
 //
-//  returns 0 if scissor has no sense;
-//  -1 if scissor is empty, and
+//  returns:
+//   0 if scissor is empty
+//  -1 if scissor has no sense (should not be used)
 //   1 if scissor is set
 //
 //==========================================================================
@@ -1177,7 +1178,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   if (radius < 2) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return -1;
+    return 0;
   }
 
   /*
@@ -1233,18 +1234,18 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return -1;
+    return 0;
   }
 
-  if (minx < 0) minx = 0; else if (minx > ScreenWidth-1) minx = ScreenWidth-1;
-  if (miny < 0) miny = 0; else if (miny > ScreenHeight-1) miny = ScreenHeight-1;
-  if (maxx < 0) maxx = 0; else if (maxx > ScreenWidth-1) maxx = ScreenWidth-1;
-  if (maxy < 0) maxy = 0; else if (maxy > ScreenHeight-1) maxy = ScreenHeight-1;
+  if (minx < 0) minx = 0; else if (minx > ScreenWidth) minx = ScreenWidth;
+  if (miny < 0) miny = 0; else if (miny > ScreenHeight) miny = ScreenHeight;
+  if (maxx < 0) maxx = 0; else if (maxx > ScreenWidth) maxx = ScreenWidth;
+  if (maxy < 0) maxy = 0; else if (maxy > ScreenHeight) maxy = ScreenHeight;
 
   if (maxx <= minx || maxy <= miny) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
-    return -1;
+    return 0;
   }
 
   glScissor(minx, miny, maxx-minx+1, maxy-miny+1);
