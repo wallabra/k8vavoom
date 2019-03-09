@@ -863,6 +863,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   if (r_advlight_opt_scissor) {
     hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord);
     if (hasScissor <= 0) return; // something is VERY wrong (0), or scissor is empty (-1)
+    if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth-1 && scoord[3] == ScreenHeight-1) {
+      hasScissor = 0;
+    }
   }
 
   ResetMobjsLightCount(true);

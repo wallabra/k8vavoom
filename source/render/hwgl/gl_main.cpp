@@ -1137,14 +1137,14 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //  glhProjectf
 //
 //==========================================================================
-static bool glhProjectf (float objx, float objy, float objz, const float *modelview, const float *projection, const int *viewport, float *windowCoordinate) {
+static inline bool glhProjectf (const TVec &point, const float *modelview, const float *projection, const int *viewport, float *windowCoordinate) {
   // Transformation vectors
   float fTempo[8];
   // Modelview transform
-  fTempo[0] = modelview[0]*objx+modelview[4]*objy+modelview[8]*objz+modelview[12]; // w is always 1
-  fTempo[1] = modelview[1]*objx+modelview[5]*objy+modelview[9]*objz+modelview[13];
-  fTempo[2] = modelview[2]*objx+modelview[6]*objy+modelview[10]*objz+modelview[14];
-  fTempo[3] = modelview[3]*objx+modelview[7]*objy+modelview[11]*objz+modelview[15];
+  fTempo[0] = modelview[0]*point.x+modelview[4]*point.y+modelview[8]*point.z+modelview[12]; // w is always 1
+  fTempo[1] = modelview[1]*point.x+modelview[5]*point.y+modelview[9]*point.z+modelview[13];
+  fTempo[2] = modelview[2]*point.x+modelview[6]*point.y+modelview[10]*point.z+modelview[14];
+  fTempo[3] = modelview[3]*point.x+modelview[7]*point.y+modelview[11]*point.z+modelview[15];
   // projection transform, the final row of projection matrix is always [0 0 -1 0] so we optimize for that
   fTempo[4] = projection[0]*fTempo[0]+projection[4]*fTempo[1]+projection[8]*fTempo[2]+projection[12]*fTempo[3];
   fTempo[5] = projection[1]*fTempo[0]+projection[5]*fTempo[1]+projection[9]*fTempo[2]+projection[13]*fTempo[3];
@@ -1156,7 +1156,7 @@ static bool glhProjectf (float objx, float objy, float objz, const float *modelv
   // Perspective division
   fTempo[4] *= fTempo[7];
   fTempo[5] *= fTempo[7];
-  fTempo[6] *= fTempo[7];
+  //fTempo[6] *= fTempo[7];
   // window coordinates
   // map x, y to range 0-1
   windowCoordinate[0] = (fTempo[4]*0.5+0.5)*viewport[2]+viewport[0];
@@ -1177,16 +1177,21 @@ static bool glhProjectf (float objx, float objy, float objz, const float *modelv
 //
 //==========================================================================
 int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[4]) {
+  int tmpscoord[4];
   VMatrix4 pmat, mmat;
   glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
   glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
   const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
 
+  if (!scoord) scoord = tmpscoord;
+
   glEnable(GL_SCISSOR_TEST);
 
+  // usually, light completely fades away at edges, so we can safely shrink our scissor box
+  // even such small shrinking can win one-two FPS on light-heavy scenes
   radius -= 6;
   if (radius < 2) {
-    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
     return -1;
   }
@@ -1203,89 +1208,72 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   */
 
   // create light bbox
-  // usually, light completely fades away at edges, so we can safely shrink our scissor box
   float bbox[6];
-  bbox[0] = org.x-radius;
-  bbox[1] = org.y-radius;
-  bbox[2] = org.z-radius;
+  bbox[0+0] = org.x-radius;
+  bbox[0+1] = org.y-radius;
+  bbox[0+2] = org.z-radius;
 
-  bbox[3] = org.x+radius;
-  bbox[4] = org.y+radius;
-  bbox[5] = org.z+radius;
+  bbox[3+0] = org.x+radius;
+  bbox[3+1] = org.y+radius;
+  bbox[3+2] = org.z+radius;
 
   // create 8 bbox points
   TVec bbp[8];
-  bbp[0] = TVec(bbox[0], bbox[1], bbox[2]);
-  bbp[1] = TVec(bbox[3], bbox[1], bbox[2]);
-  bbp[2] = TVec(bbox[0], bbox[4], bbox[2]);
-  bbp[3] = TVec(bbox[3], bbox[4], bbox[2]);
-  bbp[4] = TVec(bbox[0], bbox[1], bbox[5]);
-  bbp[5] = TVec(bbox[3], bbox[1], bbox[5]);
-  bbp[6] = TVec(bbox[0], bbox[4], bbox[5]);
-  bbp[7] = TVec(bbox[3], bbox[4], bbox[5]);
+  bbp[0] = TVec(bbox[0+0], bbox[0+1], bbox[0+2]);
+  bbp[1] = TVec(bbox[3+0], bbox[0+1], bbox[0+2]);
+  bbp[2] = TVec(bbox[0+0], bbox[3+1], bbox[0+2]);
+  bbp[3] = TVec(bbox[3+0], bbox[3+1], bbox[0+2]);
+  bbp[4] = TVec(bbox[0+0], bbox[0+1], bbox[3+2]);
+  bbp[5] = TVec(bbox[3+0], bbox[0+1], bbox[3+2]);
+  bbp[6] = TVec(bbox[0+0], bbox[3+1], bbox[3+2]);
+  bbp[7] = TVec(bbox[3+0], bbox[3+1], bbox[3+2]);
 
-  float minx = ScreenWidth, miny = ScreenHeight;
-  float maxx = -ScreenWidth, maxy = -ScreenHeight;
+  float minx = ScreenWidth*4, miny = ScreenHeight*4;
+  float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
   // transform points, get min and max
   for (unsigned f = 0; f < 8; ++f) {
     float wc[2];
-    if (!glhProjectf(bbp[f].x, bbp[f].y, bbp[f].z, mmat[0], pmat[0], viewport, wc)) {
-      if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    if (!glhProjectf(bbp[f], mmat[0], pmat[0], viewport, wc)) {
+      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       glScissor(0, 0, 0, 0);
       return -1;
     }
     //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
-    minx = MIN(minx, wc[0]);
-    miny = MIN(miny, wc[1]);
-    maxx = MAX(maxx, wc[0]);
-    maxy = MAX(maxy, wc[1]);
+    if (minx > wc[0]) minx = wc[0];
+    if (miny > wc[1]) miny = wc[1];
+    if (maxx < wc[0]) maxx = wc[0];
+    if (maxy < wc[1]) maxy = wc[1];
   }
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
-    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
     return -1;
   }
 
-  /*
-  minx -= 32;
-  miny -= 32;
-  maxx += 32;
-  maxy += 32;
-  */
-
-  minx = MID(0, minx, ScreenWidth);
-  miny = MID(0, miny, ScreenHeight);
-  maxx = MID(0, maxx, ScreenWidth);
-  maxy = MID(0, maxy, ScreenHeight);
-
-  // usually, light completely fades away at edges, so we can safely shrink our scissor box
-  // even such small shrinking can win one-two FPS on light-heavy scenes
-  // use screen size to decide how much we can shrink
-  /*
-  int hshrink = (ScreenWidth <= 800 ? 8 : 16);
-  int vshrink = (ScreenHeight <= 600 ? 8 : 16);
-  minx += hshrink;
-  miny += vshrink;
-  maxx -= hshrink;
-  maxy -= vshrink;
-  */
+  if (minx < 0) minx = 0; else if (minx > ScreenWidth-1) minx = ScreenWidth-1;
+  if (miny < 0) miny = 0; else if (miny > ScreenHeight-1) miny = ScreenHeight-1;
+  if (maxx < 0) maxx = 0; else if (maxx > ScreenWidth-1) maxx = ScreenWidth-1;
+  if (maxy < 0) maxy = 0; else if (maxy > ScreenHeight-1) maxy = ScreenHeight-1;
 
   if (maxx <= minx || maxy <= miny) {
-    if (scoord) scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
     return -1;
   }
 
-  //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   glScissor(minx, miny, maxx-minx+1, maxy-miny+1);
-  if (scoord) {
-    scoord[0] = minx;
-    scoord[1] = miny;
-    scoord[2] = maxx;
-    scoord[3] = maxy;
+  scoord[0] = minx;
+  scoord[1] = miny;
+  scoord[2] = maxx;
+  scoord[3] = maxy;
+  /*
+  if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth-1 && scoord[3] == ScreenHeight-1) {
+  } else {
+    GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
   }
+  */
 
   //GCon->Logf("org=(%f,%f,%f); radius=%f; bbox=(%f,%f,%f)-(%f,%f,%f)", org.x, org.y, org.z, radius, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
   //GCon->Logf("  trbbox=(%f,%f,%f)-(%f,%f,%f); prbbox=(%f,%f,%f)-(%f,%f,%f)", trbb[0].x, trbb[0].y, trbb[0].z, trbb[1].x, trbb[1].y, trbb[1].z, prbb[0].x, prbb[0].y, prbb[0].z, prbb[1].x, prbb[1].y, prbb[1].z);
