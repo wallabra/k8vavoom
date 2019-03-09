@@ -406,7 +406,70 @@ typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VOpenGLDrawer : public VDrawer {
+public:
+  // many shaders require common variables
+  // instead of doing copypasta, we'll use the following classes
+  class VGLShaderCommonLocs {
+  public:
+    VOpenGLDrawer *owner;
+    // compiled vertex program
+    GLhandleARB prog;
+    // texture variable locations
+    GLint locSAxis;
+    GLint locTAxis;
+    GLint locSOffs;
+    GLint locTOffs;
+    GLint locTexIW;
+    GLint locTexIH;
+    GLint locTexture;
+    // lightmap variable locations
+    GLint locTexMinS;
+    GLint locTexMinT;
+    GLint locCacheS;
+    GLint locCacheT;
+    GLint locLightMap;
+    // fog variable locations
+    GLint locFogEnabled;
+    GLint locFogType;
+    GLint locFogColour;
+    GLint locFogDensity;
+    GLint locFogStart;
+    GLint locFogEnd;
+
+  public:
+    VGLShaderCommonLocs () : owner(nullptr), prog(0) {}
+
+    // call this first!
+    void setupProg (VOpenGLDrawer *aowner, GLhandleARB aprog);
+
+    void setupTexture (); // setup texture variables
+    void setupLMap (); // setup lightmap variables
+    void setupLMapOnly (); // setup lightmap variables for shader without texture params (decals)
+    void setupFog (); // setup fog variables
+
+    void storeTexture (GLint tid);
+
+    // `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
+    void storeTextureParams (const texinfo_t *textr);
+
+    // `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
+    void storeTextureLMapParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache);
+
+    void storeLMap (GLint tid);
+    void storeLMapParams (const surface_t *surf, const surfcache_t *cache); // call `storeTextureParams()` first!
+    void storeLMapOnlyParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache);
+
+    void storeFogType ();
+    void storeFogFade (vuint32 Fade, float Alpha);
+  };
+
+  /*
+    GLint locSpecularMap;
+  */
+
 public:
   // VDrawer interface
   VOpenGLDrawer ();
@@ -641,24 +704,30 @@ protected:
   GLint SurfDecalNoLMapTextureLoc;
   GLint SurfDecalNoLMapSplatAlphaLoc;
   GLint SurfDecalNoLMapLightLoc;
+  VGLShaderCommonLocs SurfDecalNoLMapLocs; // only fog
+  /*
   GLint SurfDecalNoLMapFogEnabledLoc;
   GLint SurfDecalNoLMapFogTypeLoc;
   GLint SurfDecalNoLMapFogColourLoc;
   GLint SurfDecalNoLMapFogDensityLoc;
   GLint SurfDecalNoLMapFogStartLoc;
   GLint SurfDecalNoLMapFogEndLoc;
+  */
 
   GLhandleARB SurfDecalProgram;
   GLint SurfDecalTextureLoc;
   GLint SurfDecalSplatAlphaLoc;
   GLint SurfDecalLightLoc;
+  VGLShaderCommonLocs SurfDecalLocs; // fog, texture and lightmap
+  /*
   GLint SurfDecalFogEnabledLoc;
   GLint SurfDecalFogTypeLoc;
   GLint SurfDecalFogColourLoc;
   GLint SurfDecalFogDensityLoc;
   GLint SurfDecalFogStartLoc;
   GLint SurfDecalFogEndLoc;
-
+  */
+  /*
   GLint SurfDecalSAxisLoc;
   GLint SurfDecalTAxisLoc;
   GLint SurfDecalSOffsLoc;
@@ -668,9 +737,12 @@ protected:
   GLint SurfDecalCacheSLoc;
   GLint SurfDecalCacheTLoc;
   GLint SurfDecalLightMapLoc;
+  */
   GLint SurfDecalSpecularMapLoc;
 
   GLhandleARB SurfSimpleProgram;
+  VGLShaderCommonLocs SurfSimpleLocs; // fog, texture
+  /*
   GLint SurfSimpleSAxisLoc;
   GLint SurfSimpleTAxisLoc;
   GLint SurfSimpleSOffsLoc;
@@ -678,15 +750,20 @@ protected:
   GLint SurfSimpleTexIWLoc;
   GLint SurfSimpleTexIHLoc;
   GLint SurfSimpleTextureLoc;
+  */
   GLint SurfSimpleLightLoc;
+  /*
   GLint SurfSimpleFogEnabledLoc;
   GLint SurfSimpleFogTypeLoc;
   GLint SurfSimpleFogColourLoc;
   GLint SurfSimpleFogDensityLoc;
   GLint SurfSimpleFogStartLoc;
   GLint SurfSimpleFogEndLoc;
+  */
 
   GLhandleARB SurfLightmapProgram;
+  VGLShaderCommonLocs SurfLightmapLocs; // fog, texture, and lightmap
+  /*
   GLint SurfLightmapSAxisLoc;
   GLint SurfLightmapTAxisLoc;
   GLint SurfLightmapSOffsLoc;
@@ -699,13 +776,16 @@ protected:
   GLint SurfLightmapCacheTLoc;
   GLint SurfLightmapTextureLoc;
   GLint SurfLightmapLightMapLoc;
+  */
   GLint SurfLightmapSpecularMapLoc;
+  /*
   GLint SurfLightmapFogEnabledLoc;
   GLint SurfLightmapFogTypeLoc;
   GLint SurfLightmapFogColourLoc;
   GLint SurfLightmapFogDensityLoc;
   GLint SurfLightmapFogStartLoc;
   GLint SurfLightmapFogEndLoc;
+  */
 
   GLhandleARB SurfSkyProgram;
   GLint SurfSkyTextureLoc;
@@ -756,7 +836,9 @@ protected:
   //GLint SurfPartSmoothParticleLoc;
 
   GLhandleARB ShadowsAmbientProgram;
+  VGLShaderCommonLocs ShadowsAmbientLocs; // texture
   GLint ShadowsAmbientLightLoc;
+  /*
   GLint ShadowsAmbientSAxisLoc;
   GLint ShadowsAmbientTAxisLoc;
   GLint ShadowsAmbientSOffsLoc;
@@ -765,6 +847,7 @@ protected:
   GLint ShadowsAmbientTexIHLoc;
   //GLint ShadowsAmbientTexCoordLoc;
   GLint ShadowsAmbientTextureLoc;
+  */
 
   GLhandleARB ShadowsLightProgram;
   GLint ShadowsLightLightPosLoc;
@@ -772,6 +855,8 @@ protected:
   GLint ShadowsLightLightColourLoc;
   GLint ShadowsLightSurfNormalLoc;
   GLint ShadowsLightSurfDistLoc;
+  VGLShaderCommonLocs ShadowsLightLocs; // texture
+  /*
   GLint ShadowsLightSAxisLoc;
   GLint ShadowsLightTAxisLoc;
   GLint ShadowsLightSOffsLoc;
@@ -779,6 +864,7 @@ protected:
   GLint ShadowsLightTexIWLoc;
   GLint ShadowsLightTexIHLoc;
   GLint ShadowsLightTextureLoc;
+  */
   GLint ShadowsLightAlphaLoc;
   GLint ShadowsLightViewOrigin;
 
