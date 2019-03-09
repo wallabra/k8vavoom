@@ -55,6 +55,12 @@ menudef AdvRenderOptions {
 
   header "Stencil Shadows Options";
 
+  option bool {
+    title = "Allow Static Lighting";
+    cvar = r_static_lights;
+    help = "Process static lights?";
+  }
+
   option numeric {
     title = "Maximum Lights";
     cvar = r_max_lights;
@@ -136,5 +142,24 @@ menudef AdvRenderOptions {
       "but speedups stenciled lighting by 10-30 FPS."
       "Turn this 'OFF' if you see uncast shadows at screen edges,"
       "but only if you have really fast GPU.";
+  }
+
+
+  header "DEBUG Stencil Shadows Options";
+
+  option bool {
+    title = "Use quad-clear for stencil";
+    cvar = gl_use_stencil_quad_clear;
+    help =
+      "Clear stencil buffer with rendered quad instead of 'glClear()'?"
+      "On most (if not all) GPUS it is faster to use 'glClear()`,"
+      "but you can check if this will give you any speedup.";
+  }
+
+  option bool {
+    title = "Render Surface Textures";
+    textColor = BRICK;
+    cvar = gl_dbg_adv_render_textures_surface;
+    help = "Turn this off to see ambient lighting without textures.";
   }
 }
