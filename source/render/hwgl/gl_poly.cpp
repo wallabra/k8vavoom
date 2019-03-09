@@ -553,7 +553,6 @@ void VOpenGLDrawer::UpdateAndUploadSurfaceTexture (surface_t *surf) {
 //
 //==========================================================================
 void VOpenGLDrawer::WorldDrawing () {
-  guard(VOpenGLDrawer::WorldDrawing);
   surfcache_t *cache;
   surface_t *surf;
   texinfo_t *prevTR;
@@ -683,8 +682,6 @@ void VOpenGLDrawer::WorldDrawing () {
   }
 
   RenderShaderDecalsEnd();
-
-  unguard;
 }
 
 
@@ -698,8 +695,6 @@ void VOpenGLDrawer::WorldDrawing () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldAmbientPass () {
-  guard(VOpenGLDrawer::DrawWorldAmbientPass);
-
   // first draw horizons
   if (RendLev->HorizonPortalsHead) {
     for (surface_t *surf = RendLev->HorizonPortalsHead; surf; surf = surf->DrawNext) {
@@ -757,8 +752,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
   }
-
-  unguard;
 }
 
 
@@ -768,11 +761,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::BeginShadowVolumesPass () {
-  guard(VOpenGLDrawer::BeginShadowVolumesPass);
   // set up for shadow volume rendering
   glEnable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE);
-  unguard;
 }
 
 
@@ -784,7 +775,6 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 static int swcount = 0;
 
 void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) {
-  guard(VOpenGLDrawer::BeginLightShadowVolumes);
   glDisable(GL_TEXTURE_2D);
   // set up for shadow volume rendering
   if (hasScissor) {
@@ -864,7 +854,6 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
 
   p_glUseProgramObjectARB(SurfZBufProgram);
   swcount = 0;
-  unguard;
 }
 
 
@@ -874,13 +863,11 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
 //
 //==========================================================================
 void VOpenGLDrawer::EndLightShadowVolumes () {
-  guard(VOpenGLDrawer::EndLightShadowVolumes);
   if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
   RestoreDepthFunc();
   glPolygonOffset(0.0f, 0.0f);
   glDisable(GL_SCISSOR_TEST);
   glEnable(GL_TEXTURE_2D);
-  unguard;
 }
 
 
@@ -890,7 +877,6 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
-  guard(VOpenGLDrawer::RenderSurfaceShadowVolume);
   if (surf->count < 3) return; // just in case
   if (surf->plane->PointOnSide(vieworg) && LightCanCross) return; // viewer is in back side or on plane
   float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
@@ -933,8 +919,6 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
   glVertex(surf->verts[0]);
   glVertex(v[0]);
   glEnd();
-
-  unguard;
 }
 
 
@@ -944,7 +928,6 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
-  guard(VOpenGLDrawer::BeginLightPass);
   //glDepthFunc(GL_LEQUAL);
   RestoreDepthFunc();
 
@@ -964,7 +947,6 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
     ((Colour>>16)&255)/255.0f,
     ((Colour>>8)&255)/255.0f,
     (Colour&255)/255.0f);
-  unguard;
 }
 
 
@@ -976,8 +958,6 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) {
-  guard(VOpenGLDrawer::DrawSurfaceLight);
-
   if (Surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (Surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", Surf->count);
@@ -1003,8 +983,6 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
   glBegin(GL_POLYGON);
   for (int i = 0; i < Surf->count; ++i) glVertex(Surf->verts[i]);
   glEnd();
-
-  unguard;
 }
 
 
@@ -1016,7 +994,6 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldTexturesPass () {
-  guard(VOpenGLDrawer::DrawWorldTexturesPass);
   // stop stenciling now
   glDisable(GL_STENCIL_TEST);
 
@@ -1112,8 +1089,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   }
 
   RenderShaderDecalsEnd();
-
-  unguard;
 }
 
 
@@ -1123,7 +1098,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldFogPass () {
-  guard(VOpenGLDrawer::DrawWorldFogPass);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1151,7 +1125,6 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
   }
-  unguard;
 }
 
 
@@ -1161,12 +1134,9 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::EndFogPass () {
-  guard(VOpenGLDrawer::EndFogPass);
   glDisable(GL_BLEND);
-
   // back to normal z-buffering
   glDepthMask(GL_TRUE);
-  unguard;
 }
 
 
@@ -1176,8 +1146,6 @@ void VOpenGLDrawer::EndFogPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
-  guard(VOpenGLDrawer::DoHorizonPolygon);
-
   if (Surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render horizon surface with %d vertices", Surf->count);
     return;
@@ -1257,8 +1225,6 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
   for (int i = 0; i < Surf->count; ++i) glVertex(Surf->verts[i]);
   glEnd();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-  unguard;
 }
 
 
@@ -1270,7 +1236,6 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
 void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                     float offs1, VTexture *Texture2, float offs2, int CMap)
 {
-  guard(VOpenGLDrawer::DrawSkyPolygon);
   int sidx[4];
 
   if (surf->count < 3) {
@@ -1332,8 +1297,6 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     glEnd();
   }
-
-  unguard;
 }
 
 
@@ -1356,7 +1319,6 @@ void VOpenGLDrawer::FinishMaskedDecals () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
-  guard(VOpenGLDrawer::DrawMaskedPolygon);
   if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render masked surface with %d vertices", surf->count);
@@ -1509,9 +1471,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
-
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1526,7 +1487,6 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                        const TVec &saxis, const TVec &taxis, const TVec &texorg,
                                        bool noDepthChange)
 {
-  guard(VOpenGLDrawer::DrawSpritePolygon);
   if (!Tex) return; // just in case
 
   TVec texpt(0, 0, 0);
@@ -1642,8 +1602,6 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
-
-  unguard;
 }
 
 
@@ -1653,12 +1611,10 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 //
 //==========================================================================
 void VOpenGLDrawer::StartParticles () {
-  guard(VOpenGLDrawer::StartParticles);
   glEnable(GL_BLEND);
   p_glUseProgramObjectARB(gl_smooth_particles ? SurfPartSmProgram : SurfPartSqProgram);
   //p_glUniform1iARB(SurfPartSmoothParticleLoc, gl_smooth_particles);
   glBegin(GL_QUADS);
-  unguard;
 }
 
 
@@ -1668,7 +1624,6 @@ void VOpenGLDrawer::StartParticles () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawParticle (particle_t *p) {
-  guard(VOpenGLDrawer::DrawParticle);
   GLint lvLoc, tcLoc;
   if (gl_smooth_particles) {
     lvLoc = SurfPartSmLightValLoc;
@@ -1693,7 +1648,6 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, -1, 1);
   glVertex(p->org - viewright * p->Size - viewup * p->Size);
-  unguard;
 }
 
 
@@ -1703,10 +1657,8 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
 //
 //==========================================================================
 void VOpenGLDrawer::EndParticles () {
-  guard(VOpenGLDrawer::EndParticles);
   glEnd();
   glDisable(GL_BLEND);
-  unguard;
 }
 
 
@@ -1716,7 +1668,6 @@ void VOpenGLDrawer::EndParticles () {
 //
 //==========================================================================
 bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
-  guard(VOpenGLDrawer::StartPortal);
   if (UseStencil) {
     if (/*!Portal->stackedSector*/true) {
       // doesn't work for now
@@ -1770,7 +1721,6 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     }
   }
   return true;
-  unguard;
 }
 
 
@@ -1780,7 +1730,6 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
-  guard(VOpenGLDrawer::DrawPortalArea);
   for (int i = 0; i < Portal->Surfs.Num(); ++i) {
     const surface_t *Surf = Portal->Surfs[i];
     if (Surf->count < 3) {
@@ -1791,7 +1740,6 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
     for (int j = 0; j < Surf->count; ++j) glVertex(Surf->verts[j]);
     glEnd();
   }
-  unguard;
 }
 
 
@@ -1801,8 +1749,6 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
 //
 //==========================================================================
 void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
-  guard(VOpenGLDrawer::EndPortal);
-
   p_glUseProgramObjectARB(SurfZBufProgram);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glDisable(GL_TEXTURE_2D);
@@ -1868,6 +1814,4 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
 
   glEnable(GL_TEXTURE_2D);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-  unguard;
 }
