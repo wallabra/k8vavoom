@@ -949,33 +949,28 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
 
   TVec *v = poolVec;
 
-  const TVec *sverts = surf->verts;
-  const unsigned svcount = (unsigned)surf->count;
-  TVec *vdest = v;
 
-  for (unsigned i = svcount; i--; ++sverts, ++vdest) {
-    *vdest = ((*sverts)-LightPos).normalised()*M_INFINITY+LightPos;
+  for (int i = 0; i < surf->count; ++i) {
+    v[i] = Normalise(surf->verts[i]-LightPos);
+    v[i] *= M_INFINITY;
+    v[i] += LightPos;
   }
 
   glBegin(GL_POLYGON);
-    vdest = v+svcount-1;
-    for (unsigned i = svcount; i--; --vdest) glVertex(*vdest);
+  for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
   glEnd();
 
   glBegin(GL_POLYGON);
-    sverts = surf->verts;
-    for (unsigned i = svcount; i--; ++sverts) glVertex(*sverts);
+  for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
 
   glBegin(GL_TRIANGLE_STRIP);
-    sverts = surf->verts;
-    vdest = v;
-    for (unsigned i = svcount; i--; ++sverts, ++vdest) {
-      glVertex(*sverts);
-      glVertex(*vdest);
-    }
-    glVertex(surf->verts[0]);
-    glVertex(v[0]);
+  for (int i = 0; i < surf->count; ++i) {
+    glVertex(surf->verts[i]);
+    glVertex(v[i]);
+  }
+  glVertex(surf->verts[0]);
+  glVertex(v[0]);
   glEnd();
 }
 
