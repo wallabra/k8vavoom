@@ -338,7 +338,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     // the base floor / ceiling is from the subsector that contains the point
     // any contacted lines the step closer together will adjust them
     if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-      sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 1.0f));
+      sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
       sec_region_t *reg = gap;
       while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
       tmtrace.Floor = reg->floor;
@@ -388,7 +388,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     //if (Origin.z < FloorZ) Origin.z = FloorZ; // just in case
   } else {
     // simplified check
-    sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 1.0f));
+    sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 0.0f));
 
     sec_region_t *r = reg;
     while (r->floor->flags && r->prev) r = r->prev;
@@ -750,7 +750,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   // the base floor / ceiling is from the subsector that contains the point
   // any contacted lines the step closer together will adjust them
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 1.0f));
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
     sec_region_t *reg = gap;
     while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
     tmtrace.Floor = reg->floor;
@@ -1038,7 +1038,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   }
 
   // set openrange, opentop, openbottom
-  const float hgt = (Height > 0 ? Height : 1.0f);
+  const float hgt = (Height > 0 ? Height : 0.0f);
   TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
   open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
