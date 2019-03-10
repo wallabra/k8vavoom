@@ -33,7 +33,6 @@ extern VCvarB r_allow_ambient;
 
 static VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
 
-static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
 static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
@@ -817,8 +816,6 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //  VOpenGLDrawer::BeginLightShadowVolumes
 //
 //==========================================================================
-static int swcount = 0;
-
 void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) {
   glDisable(GL_TEXTURE_2D);
   // set up for shadow volume rendering
@@ -898,7 +895,6 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
   p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
 
   p_glUseProgramObjectARB(SurfZBufProgram);
-  swcount = 0;
 }
 
 
@@ -908,7 +904,6 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
 //
 //==========================================================================
 void VOpenGLDrawer::EndLightShadowVolumes () {
-  if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
   RestoreDepthFunc();
   glPolygonOffset(0.0f, 0.0f);
   glDisable(GL_SCISSOR_TEST);
@@ -954,7 +949,6 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
 
   TVec *v = poolVec;
 
-  swcount += surf->count*4;
 
   for (int i = 0; i < surf->count; ++i) {
     v[i] = Normalise(surf->verts[i]-LightPos);
