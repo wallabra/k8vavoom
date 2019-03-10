@@ -737,7 +737,10 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
   if (labels.length() == 0) {
     ParseWarning(Loc, "this `A_Jump` is never taken");
   } else if (labels.length() == 1 && prob->IsIntConst() && prob->GetIntConst() > 255) {
-    ParseWarning(Loc, "this `A_Jump` is uncoditional; this is probably a bug (replace it with `Goto` if it isn't)");
+    //k8: this is not a bug; usually, this is used to dynamically dispatch control
+    //    to a label that can be defined in subclass, for example.
+    //    note that `Goto` cannod do that.
+    //ParseWarning(Loc, "this `A_Jump` is uncoditional; this is probably a bug (replace it with `Goto` if it isn't)");
   }
 
   Type.Type = TYPE_Void;
