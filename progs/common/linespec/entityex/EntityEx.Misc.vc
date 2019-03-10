@@ -61,6 +61,8 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
   // set subsector and/or block links
   LinkToWorld(properFloorCheck:properFloorCheck);
 
+  auto oldz = Origin.z;
+
        if (origin.z == ONFLOORZ) Origin.z = FloorZ+moreHeight;
   else if (origin.z == ONCEILINGZ) Origin.z = CeilingZ-Height-moreHeight;
   else if (origin.z == FLOATRANDZ) {
@@ -73,6 +75,19 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
     }
   } else if (bFloatBob) {
     Origin.z = FloorZ+Origin.z; // artifact z passed in as height
+  }
+
+  // relink when z changes, to calculate new floor and ceiling heights,
+  // otherwise physics will drop it down to the main floor, and will
+  // break 3d positioning
+  if (Origin.z != oldz) {
+    // use internal height adjuster if we have to do proper checks
+    // this is not actually faster, but more logical
+    if (properFloorCheck) {
+      HeightClip(skipTriggers:true, skipObjects:false);
+    } else {
+      LinkToWorld(properFloorCheck:false);
+    }
   }
 
   VTerrainInfo *TInfo = GetFloorType();
@@ -395,7 +410,7 @@ int FaceActor (EntityEx target, out float delta) {
 //  the lowest value and false will be returned.
 //
 //==========================================================================
-final bool HeightClip (bool skipTriggers) {
+final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   tmtrace_t tmtrace;
   float OldZ = Origin.z;
   bool onfloor = (Origin.z == FloorZ);
@@ -434,18 +449,14 @@ final bool HeightClip (bool skipTriggers) {
   CheckRelPosition(&tmtrace, Origin);
   // what about stranding a monster partially off an edge?
 
-  if (skipTriggers && bIsPlayer) {
-    print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
-  }
+  //if (skipTriggers && bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
 
   Floor = tmtrace.Floor;
   Ceiling = tmtrace.Ceiling;
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 
-  if (skipTriggers && bIsPlayer) {
-    print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
-  }
+  //if (skipTriggers && bIsPlayer) print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
 
   if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector)) {
     // walking monsters rise and fall with the floor
@@ -1395,10 +1406,10 @@ override bool SectorChanged (int CrushChange) {
     // only fix positions for monsters (and don't touch corpses too)
     if (!bMonster && !bIsPlayer) return true;
     if (!bSolid || bCorpse) return true;
-    return HeightClip(skipTriggers:true);
+    return HeightClip(skipTriggers:true, skipObjects:true);
   }
 
-  if (HeightClip(skipTriggers:false)) return true;
+  if (HeightClip()) return true;
 
   // crunch bodies to giblets
   if (bCorpse && !bDontGib && Health <= 0) {
