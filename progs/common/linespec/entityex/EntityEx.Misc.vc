@@ -59,7 +59,8 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
   }
 
   // set subsector and/or block links
-  LinkToWorld(properFloorCheck:properFloorCheck);
+  // first, do it without proper check, to get the floorz we want
+  LinkToWorld(properFloorCheck:false);
 
   auto oldz = Origin.z;
 
@@ -80,14 +81,17 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
   // relink when z changes, to calculate new floor and ceiling heights,
   // otherwise physics will drop it down to the main floor, and will
   // break 3d positioning
-  if (Origin.z != oldz) {
+  if (Origin.z != oldz || properFloorCheck) {
     // use internal height adjuster if we have to do proper checks
     // this is not actually faster, but more logical
+    /*
     if (properFloorCheck) {
       HeightClip(skipTriggers:true, skipObjects:false);
     } else {
       LinkToWorld(properFloorCheck:false);
     }
+    */
+    LinkToWorld(properFloorCheck:properFloorCheck);
   }
 
   VTerrainInfo *TInfo = GetFloorType();
