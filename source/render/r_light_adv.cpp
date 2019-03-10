@@ -882,7 +882,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   ResetMobjsLightCount(true);
   // do shadow volumes
-  Drawer->BeginLightShadowVolumes(/*hasScissor*/true, scoord);
+  Drawer->BeginLightShadowVolumes(hasScissor, scoord);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   if (doShadows && r_max_shadow_segs_all) {
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
