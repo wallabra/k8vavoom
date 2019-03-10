@@ -920,18 +920,32 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //
 //  VOpenGLDrawer::RenderSurfaceShadowVolume
 //
+//  `LightCanCross` means that light can span over this surface
+//  light can span over two-sided midtex, for example, but not over
+//  one-sided wall
+//
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
   if (surf->count < 3) return; // just in case
-  if (surf->plane->PointOnSide(vieworg) && LightCanCross) return; // viewer is in back side or on plane
-  float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
-  if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
+  // don't render translucent surfaces
+  // they should not end up here, but...
+  const texinfo_t *tex = surf->texinfo;
+  if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
+  if (tex->Alpha < 1.0f) return;
+
+  if (LightCanCross && surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+
+  const float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
+  // k8: use `<=` and `>=` for radius checks, 'cause why not?
+  //     light completely fades away at that distance
+  //if ((!LightCanCross && dist <= 0.0f) || dist <= -Radius || dist >= Radius) return; // light is too far away
+  // do simpler check first
+  if (dist >= Radius || dist <= (LightCanCross ? -Radius : 0.0f)) return; // light is too far away
+
+  //FIXME: move this to drawer class
   static TVec *poolVec = nullptr;
   static int poolVecSize = 0;
-
-  //TArray<TVec> v;
-  //v.SetNum(surf->count);
 
   if (poolVecSize < surf->count) {
     poolVecSize = (surf->count|0xfff)+1;
