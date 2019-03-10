@@ -920,7 +920,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //  one-sided wall
 //
 //==========================================================================
-void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
+void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, bool LightCanCross) {
   if (surf->count < 3) return; // just in case
 
   // don't render translucent surfaces
@@ -929,6 +929,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
   if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
   if (tex->Alpha < 1.0f) return;
 
+  // k8: if we won't filter this out, we'll get z-fighting on two-sided walls (see E1M1 exit).
+  //     for now, i cannot grasp this logic (oh boy, my head is going to crack!)
   if (LightCanCross && surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
   const float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
