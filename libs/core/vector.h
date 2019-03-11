@@ -527,6 +527,17 @@ public:
     Far = Forward,
   };
 
+  enum {
+    LeftBit = 1U<<Left,
+    RightBit = 1U<<Right,
+    TopBit = 1U<<Top,
+    BottomBit = 1U<<Bottom,
+    BackBit = 1U<<Back,
+    ForwardBit = 1U<<Forward,
+    NearBit = BackBit,
+    FarBit = ForwardBit,
+  };
+
 public:
   // [0] is left, [1] is right, [2] is top, [3] is bottom
   // [4] is back (if `clipflag` is set)
@@ -561,30 +572,30 @@ public:
   //   [3] is maxx
   //   [4] is maxy
   //   [5] is maxz
-  bool checkBox (const float bbox[6]) const;
+  bool checkBox (const float bbox[6], const unsigned mask=~0u) const;
 
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxEx (const float bbox[6]) const;
+  int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const;
 
   // returns `false` is point is out of frustum (or frustum is not valid)
-  bool checkPoint (const TVec &point) const;
+  bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
 
   // returns `false` is sphere is out of frustum (or frustum is not valid)
-  bool checkSphere (const TVec &center, const float radius) const;
+  bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
 
 
-  bool checkBoxBack (const float bbox[6]) const;
+  bool checkBoxBack (const float bbox[6], const unsigned mask=~0u) const;
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxExBack (const float bbox[6]) const;
+  int checkBoxExBack (const float bbox[6], const unsigned mask=~0u) const;
 
   // returns `false` is point is out of frustum (or frustum is not valid)
-  bool checkPointBack (const TVec &point) const;
+  bool checkPointBack (const TVec &point, const unsigned mask=~0u) const;
 
   // returns `false` is sphere is out of frustum (or frustum is not valid)
-  bool checkSphereBack (const TVec &center, const float radius) const;
+  bool checkSphereBack (const TVec &center, const float radius, const unsigned mask=~0u) const;
 };
 
 

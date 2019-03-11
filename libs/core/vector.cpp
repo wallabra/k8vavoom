@@ -387,7 +387,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
 //    [5] is maxz
 //
 //==========================================================================
-bool TFrustum::checkBox (const float bbox[6]) const {
+bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
   if (!planeCount) return true;
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
@@ -396,7 +396,7 @@ bool TFrustum::checkBox (const float bbox[6]) const {
 #endif
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
-    if (!cp->clipflag) continue; // don't need to clip against it
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
     // check reject point
     if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
       // on a back side (or on a plane)
@@ -416,7 +416,7 @@ bool TFrustum::checkBox (const float bbox[6]) const {
 //  http://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
 //
 //==========================================================================
-int TFrustum::checkBoxEx (const float bbox[6]) const {
+int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const {
   if (!planeCount) return INSIDE;
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
@@ -426,7 +426,7 @@ int TFrustum::checkBoxEx (const float bbox[6]) const {
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
-    if (!cp->clipflag) continue; // don't need to clip against it
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
     // check reject point
     if (cp->PointOnBackTh(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
       // on a back side (or on a plane)
@@ -449,11 +449,11 @@ int TFrustum::checkBoxEx (const float bbox[6]) const {
 //  returns `false` is sphere is out of frustum (or frustum is not valid)
 //
 //==========================================================================
-bool TFrustum::checkPoint (const TVec &point) const {
+bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const {
   if (!planeCount) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
-    if (!cp->clipflag) continue; // don't need to clip against it
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
     if (cp->PointOnBackTh(point)) return false; // viewer is in back side or on plane
   }
   return true;
@@ -469,12 +469,12 @@ bool TFrustum::checkPoint (const TVec &point) const {
 //  https://stackoverflow.com/questions/37512308/
 //
 //==========================================================================
-bool TFrustum::checkSphere (const TVec &center, const float radius) const {
+bool TFrustum::checkSphere (const TVec &center, const float radius, const unsigned mask) const {
   if (!planeCount) return true;
   if (radius <= 0) return checkPoint(center);
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
-    if (!cp->clipflag) continue; // don't need to clip against it
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
     if (cp->SphereOnBackTh(center, radius)) {
       // on a back side (or on a plane)
       return false;
@@ -489,10 +489,10 @@ bool TFrustum::checkSphere (const TVec &center, const float radius) const {
 //  TFrustum::checkBoxBack
 //
 //==========================================================================
-bool TFrustum::checkBoxBack (const float bbox[6]) const {
+bool TFrustum::checkBoxBack (const float bbox[6], const unsigned mask) const {
   if (planeCount < 5) return true;
   const TClipPlane *cp = &planes[Near];
-  if (!cp->clipflag) return true; // don't need to clip against it
+  if (!(cp->clipflag&mask)) return true; // don't need to clip against it
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
   check(bbox[1] <= bbox[3+1]);
@@ -512,10 +512,10 @@ bool TFrustum::checkBoxBack (const float bbox[6]) const {
 //  TFrustum::checkBoxExBack
 //
 //==========================================================================
-int TFrustum::checkBoxExBack (const float bbox[6]) const {
+int TFrustum::checkBoxExBack (const float bbox[6], const unsigned mask) const {
   if (planeCount < 5) return INSIDE;
   const TClipPlane *cp = &planes[Near];
-  if (!cp->clipflag) return true; // don't need to clip against it
+  if (!(cp->clipflag&mask)) return true; // don't need to clip against it
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
   check(bbox[1] <= bbox[3+1]);
@@ -547,10 +547,10 @@ int TFrustum::checkBoxExBack (const float bbox[6]) const {
 //  TFrustum::checkPointBack
 //
 //==========================================================================
-bool TFrustum::checkPointBack (const TVec &point) const {
+bool TFrustum::checkPointBack (const TVec &point, const unsigned mask) const {
   if (planeCount < 5) return true;
   const TClipPlane *cp = &planes[Near];
-  if (!cp->clipflag) return true; // don't need to clip against it
+  if (!(cp->clipflag&mask)) return true; // don't need to clip against it
   return !cp->PointOnBackTh(point);
 }
 
@@ -560,9 +560,9 @@ bool TFrustum::checkPointBack (const TVec &point) const {
 //  TFrustum::checkSphereBack
 //
 //==========================================================================
-bool TFrustum::checkSphereBack (const TVec &center, const float radius) const {
+bool TFrustum::checkSphereBack (const TVec &center, const float radius, const unsigned mask) const {
   if (planeCount < 5) return true;
   const TClipPlane *cp = &planes[Near];
-  if (!cp->clipflag) return true; // don't need to clip against it
+  if (!(cp->clipflag&mask)) return true; // don't need to clip against it
   return !(radius > 0 ? cp->SphereOnBackTh(center, radius) : cp->PointOnBackTh(center));
 }
