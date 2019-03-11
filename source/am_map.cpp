@@ -1154,13 +1154,15 @@ static void AM_drawWalls () {
       line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
       if (!(line.flags&ML_MAPPED)) {
         line.flags |= ML_MAPPED;
+        bool seenMapped = false;
         for (const seg_t *seg = line.firstseg; seg; seg = seg->lsnext) {
           if (!(seg->flags&SF_MAPPED)) {
             line.flags &= ~ML_MAPPED;
             break;
           }
+          seenMapped = true;
         }
-        if (!(line.flags&ML_MAPPED)) line.exFlags |= ML_EX_PARTIALLY_MAPPED;
+        if (seenMapped && !(line.flags&ML_MAPPED)) line.exFlags |= ML_EX_PARTIALLY_MAPPED;
       }
     }
 

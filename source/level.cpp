@@ -370,9 +370,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("arg5"), li->arg5);
         vio.io(VName("LineTag"), li->LineTag);
         vio.io(VName("alpha"), li->alpha);
-        // for now, mark partially mapped lines as fully mapped
-        if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
-          li->flags |= ML_MAPPED;
+        if (Strm.IsLoading()) {
+          // for now, mark partially mapped lines as fully mapped
+          if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
+            li->flags |= ML_MAPPED;
+          }
           li->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
         }
       }
@@ -427,6 +429,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
       }
       vio.io(VName("SpecialData"), PolyObjs[i].SpecialData);
     }
+  }
+
+  // clear seen segs on loading
+  if (Strm.IsLoading()) {
+    for (i = 0; i < NumSegs; ++i) Segs[i].flags &= ~SF_MAPPED;
   }
 
   // static lights
