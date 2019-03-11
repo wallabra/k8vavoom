@@ -419,6 +419,9 @@ protected:
   void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
 
+  void UpdateSubsectorBBox (int num, float *bbox);
+  void RecalcWorldBBoxes (int bspnum, float *bbox);
+
   // yes, non-virtual
   // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)
   void MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum);
@@ -662,20 +665,20 @@ protected:
   virtual void QueueWorldSurface (seg_t*, surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
-  void BuildLightVis (int bspnum, float *bbox);
+  void BuildLightVis (int bspnum, const float *bbox);
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, bool LightCanCross);
   void RenderShadowLine (drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderShadowSubRegion (subregion_t *region);
   void RenderShadowSubsector (int num);
-  void RenderShadowBSPNode (int bspnum, float *bbox, bool LimitLights);
+  void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                           VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross);
   void RenderLightLine (drawseg_t *dseg);
   void RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderLightSubRegion (subregion_t *region);
   void RenderLightSubsector (int num);
-  void RenderLightBSPNode (int bspnum, float *bbox, bool LimitLights);
+  void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
                            TVec &Pos, float Radius, vuint32 Colour, bool LimitLights);
 

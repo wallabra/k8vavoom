@@ -304,7 +304,7 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
 //  VAdvancedRenderLevel::BuildLightVis
 //
 //==========================================================================
-void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
+void VAdvancedRenderLevel::BuildLightVis (int bspnum, const float *bbox) {
   if (LightClip.ClipIsFull()) return;
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
@@ -313,9 +313,7 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
     const unsigned SubNum = 0;
     const subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-
     if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
-
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
     UPDATE_LIGHTVIS(SubNum);
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
@@ -324,7 +322,7 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
 
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
-    node_t *bsp = &Level->Nodes[bspnum];
+    const node_t *bsp = &Level->Nodes[bspnum];
 
     // decide which side the view point is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
@@ -335,28 +333,24 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, float *bbox) {
       // light is completely on back side
       BuildLightVis(bsp->children[1], bsp->bbox[1]);
     } else {
-      int side = bsp->PointOnSide(CurrLightPos);
-
+      unsigned side = (unsigned)bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
       BuildLightVis(bsp->children[side], bsp->bbox[side]);
-
       // possibly divide back space
-      if (!LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) return;
-
-      BuildLightVis(bsp->children[side^1], bsp->bbox[side^1]);
+      side ^= 1;
+      if (LightClip.ClipLightIsBBoxVisible(bsp->bbox[side], CurrLightPos, CurrLightRadius)) {
+        BuildLightVis(bsp->children[side], bsp->bbox[side]);
+      }
     }
-    return;
+  } else {
+    const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
+    const subsector_t *Sub = &Level->Subsectors[SubNum];
+    if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
+    //LightVis[SubNum>>3] |= 1<<(SubNum&7);
+    UPDATE_LIGHTVIS(SubNum);
+    LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
   }
-
-  const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
-  const subsector_t *Sub = &Level->Subsectors[SubNum];
-  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-
-  if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
-
-  //LightVis[SubNum>>3] |= 1<<(SubNum&7);
-  UPDATE_LIGHTVIS(SubNum);
-  LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
 }
 
 
@@ -389,19 +383,20 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
-  seg_t *line = dseg->seg;
-  if (!line->linedef) return; // miniseg
+  seg_t *seg = dseg->seg;
+  if (!seg->linedef) return; // miniseg
 
   // note: we don't want to filter out shadows that are behind
-  const float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
-  if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
+  const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+  //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
+  if (fabsf(dist) >= CurrLightRadius) return;
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
   // clip sectors that are behind rendered segs
-  TVec v1 = *line->v1;
-  TVec v2 = *line->v2;
+  TVec v1 = *seg->v1;
+  TVec v2 = *seg->v2;
   const TVec r1 = CurrLightPos-v1;
   const TVec r2 = CurrLightPos-v2;
   const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), CurrLightPos);
@@ -413,12 +408,12 @@ void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 */
-  if (!LightClip.IsRangeVisible(*line->v2, *line->v1)) return;
+  if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-  //line_t *linedef = line->linedef;
-  //side_t *sidedef = line->sidedef;
+  //line_t *linedef = seg->linedef;
+  //side_t *sidedef = seg->sidedef;
 
-  if (!line->backsector) {
+  if (!seg->backsector) {
     // single sided line
     DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, false);
     DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, false);
@@ -442,13 +437,14 @@ void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
-  sec_plane_t &plane = *ssurf->secplane;
+  const sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic) return;
 
   // note: we don't want to filter out shadows that are behind
   const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
-  if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
+  //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
+  if (fabsf(dist) >= CurrLightRadius) return;
 
   DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, true, false);
 }
@@ -531,7 +527,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, float *bbox, bool LimitLights) {
+void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights) {
   if (LimitLights) {
     if (r_max_shadow_segs_all >= 0 && AllShadowsNumber > r_max_shadow_segs_all) return;
     if (r_max_shadow_segs_one >= 0 && CurrShadowsNumber > r_max_shadow_segs_one) return;
@@ -610,19 +606,20 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
-  seg_t *line = dseg->seg;
+  const seg_t *seg = dseg->seg;
 
-  if (!line->linedef) return; // miniseg
+  if (!seg->linedef) return; // miniseg
 
-  const float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
-  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
+  const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+  //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
+  if (fabsf(dist) >= CurrLightRadius) return;
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
   // clip sectors that are behind rendered segs
-  TVec v1 = *line->v1;
-  TVec v2 = *line->v2;
+  TVec v1 = *seg->v1;
+  TVec v2 = *seg->v2;
   TVec r1 = CurrLightPos-v1;
   TVec r2 = CurrLightPos-v2;
   float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), CurrLightPos);
@@ -634,9 +631,9 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 */
-  if (!LightClip.IsRangeVisible(*line->v2, *line->v1)) return;
+  if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-  if (!line->backsector) {
+  if (!seg->backsector) {
     // single sided line
     DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, r_region->ceiling->SkyBox, false, false);
     DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, r_region->ceiling->SkyBox, false, false);
@@ -660,12 +657,13 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
-  sec_plane_t &plane = *ssurf->secplane;
+  const sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic) return;
 
   const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
-  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
+  //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
+  if (fabsf(dist) >= CurrLightRadius) return;
 
   DrawLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, false);
 }
@@ -749,7 +747,7 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool LimitLights) {
+void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights) {
   if (LimitLights) {
      if (r_max_light_segs_all >= 0 && AllLightsNumber > r_max_light_segs_all) return;
      if (r_max_light_segs_one >= 0 && CurrLightsNumber > r_max_light_segs_one) return;
