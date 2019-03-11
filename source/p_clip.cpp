@@ -591,7 +591,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
   if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) {
     // looking up or down, can see behind
-    return;
+    //return;
   }
 
   if (!clip_frustum) return;
@@ -606,7 +606,9 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   Pts[2] = TVec(-fovx, fovy, 1.0f);
   Pts[3] = TVec(-fovx, -fovy, 1.0f);
   TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
-  clipforward.normaliseInPlace();
+  //k8: i don't think that we need to normalize it
+  //clipforward.normaliseInPlace();
+  //unsigned canBehind = 0;
 
   for (unsigned i = 0; i < 4; ++i) {
     TransPts[i].x = VSUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
@@ -615,6 +617,9 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
 
     if (DotProduct(TransPts[i], clipforward) <= 0.0f) {
       // player can see behind, use back frustum plane to clip
+      //GCon->Logf("can see behind; i=%u", i);
+      //++canBehind;
+      //continue;
       return;
     }
 
@@ -626,8 +631,12 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     if (d2 < d) d2 = d;
   }
 
+  //if (canBehind == 4) return;
+
   VFloat a1 = VVC_AngleMod(viewangles.yaw+d1);
   VFloat a2 = VVC_AngleMod(viewangles.yaw+d2);
+
+  // /*if (canBehind)*/ GCon->Logf("d1=%f; d2=%f; a1=%f; a2=%f", d1, d2, a1, a2);
 
   if (a1 > a2) {
     ClipHead = NewClipNode();
