@@ -1082,32 +1082,45 @@ static void AM_drawGrid (vuint32 colour) {
 //==========================================================================
 static vuint32 AM_getLineColor (const line_t &line, bool *cheatOnly) {
   *cheatOnly = false;
+  // locked door
   if (line.special == LNSPEC_DoorLockedRaise && GetLockDef(line.arg4) && GetLockDef(line.arg4)->MapColour) {
     return GetLockDef(line.arg4)->MapColour;
   }
+  // locked ACS special
   if ((line.special == LNSPEC_ACSLockedExecute || line.special == LNSPEC_ACSLockedExecuteDoor) &&
       GetLockDef(line.arg5) && GetLockDef(line.arg5)->MapColour)
   {
     return GetLockDef(line.arg5)->MapColour;
   }
-  if (!line.backsector) return (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed ? PowerWallColour : WallColour);
-  if (line.flags&ML_SECRET) {
-    // secret door
-    return (am_cheating ? SecretWallColour : (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed ? PowerWallColour : WallColour));
+  // unseen automap walls
+  if (!am_cheating && !(line.flags&ML_MAPPED) && !(line.exFlags&ML_EX_PARTIALLY_MAPPED) &&
+      (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed))
+  {
+    return PowerWallColour;
   }
+  // normal wall
+  if (!line.backsector) {
+    return WallColour;
+  }
+  // secret door
+  if (line.flags&ML_SECRET) {
+    return (am_cheating ? SecretWallColour : WallColour);
+  }
+  // floor level change
   if (line.backsector->floor.minz != line.frontsector->floor.minz) {
-    // floor level change
     return FDWallColour;
   }
+  // ceiling level change
   if (line.backsector->ceiling.maxz != line.frontsector->ceiling.maxz) {
-    // ceiling level change
     return CDWallColour;
-  } else if (line.backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
-             line.frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
+  }
+  // show extra floors
+  if (line.backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
+      line.frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
   {
-    // show extra floors
     return EXWallColour;
   }
+  // something other
   *cheatOnly = true;
   return TSWallColour;
 }
@@ -1122,7 +1135,6 @@ static vuint32 AM_getLineColor (const line_t &line, bool *cheatOnly) {
 //
 //==========================================================================
 static void AM_drawWalls () {
-  //static mline_t l;
   for (int i = 0; i < GClLevel->NumLines; ++i) {
     line_t &line = GClLevel->Lines[i];
 
@@ -1136,7 +1148,6 @@ static void AM_drawWalls () {
     bool cheatOnly = false;
     vuint32 clr = AM_getLineColor(line, &cheatOnly);
     if (cheatOnly && !am_cheating) continue; //FIXME: should we draw this lines if automap powerup is active?
-
 
     // check if we need to re-evaluate line visibility, and do it
     if (line.exFlags&ML_EX_CHECK_MAPPED) {
