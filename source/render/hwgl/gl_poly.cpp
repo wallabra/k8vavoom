@@ -1015,6 +1015,8 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
     ((Colour>>16)&255)/255.0f,
     ((Colour>>8)&255)/255.0f,
     (Colour&255)/255.0f);
+
+  //glDisable(GL_STENCIL_TEST);
 }
 
 
@@ -1032,7 +1034,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
     return;
   }
 
-  float dist = DotProduct(LightPos, Surf->plane->normal) - Surf->plane->dist;
+  float dist = DotProduct(LightPos, Surf->plane->normal)-Surf->plane->dist;
   if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
   texinfo_t *tex = Surf->texinfo;
@@ -1187,12 +1189,12 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     }
 
     p_glUniform4fARB(ShadowsFogFogColourLoc,
-      ((surf->Fade >> 16) & 255) / 255.0f,
-      ((surf->Fade >> 8) & 255) / 255.0f,
-      (surf->Fade & 255) / 255.0f, 1.0f);
+      ((surf->Fade>>16)&255)/255.0f,
+      ((surf->Fade>>8)&255)/255.0f,
+      (surf->Fade&255)/255.0f, 1.0f);
     p_glUniform1fARB(ShadowsFogFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density);
     p_glUniform1fARB(ShadowsFogFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-    p_glUniform1fARB(ShadowsFogFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end);
+    p_glUniform1fARB(ShadowsFogFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
 
     glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
@@ -1231,8 +1233,8 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
     v[3] = Surf->verts[3];
     TVec HDir = -Surf->plane->normal;
 
-    TVec Dir1 = Normalise(vieworg - Surf->verts[1]);
-    TVec Dir2 = Normalise(vieworg - Surf->verts[2]);
+    TVec Dir1 = Normalise(vieworg-Surf->verts[1]);
+    TVec Dir2 = Normalise(vieworg-Surf->verts[2]);
     float Mul1 = 1.0f/DotProduct(HDir, Dir1);
     v[1] = Surf->verts[1]+Dir1*Mul1*Dist;
     float Mul2 = 1.0f/DotProduct(HDir, Dir2);
@@ -1357,11 +1359,11 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) {
       p_glVertexAttrib2fARB(SurfDSkyTexCoordLoc,
-        (DotProduct(surf->verts[sidx[i]], tex->saxis) + tex->soffs - offs1) * tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
+        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       p_glVertexAttrib2fARB(SurfDSkyTexCoord2Loc,
-        (DotProduct(surf->verts[sidx[i]], tex->saxis) + tex->soffs - offs2) * tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
+        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs2)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       glVertex(surf->verts[i]);
     }
     glEnd();
@@ -1375,8 +1377,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) {
       p_glVertexAttrib2fARB(SurfSkyTexCoordLoc,
-        (DotProduct(surf->verts[sidx[i]], tex->saxis) + tex->soffs - offs1) * tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
+        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       glVertex(surf->verts[i]);
     }
     glEnd();
@@ -1516,7 +1518,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       (surf->Fade&255)/255.0f, Alpha);
     p_glUniform1fARB(SurfMaskedFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density);
     p_glUniform1fARB(SurfMaskedFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-    p_glUniform1fARB(SurfMaskedFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end);
+    p_glUniform1fARB(SurfMaskedFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
   } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
@@ -1607,18 +1609,18 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
 
   p_glUniform4fARB(SurfMaskedLightLoc,
-    ((light >> 16) & 255) / 255.0f,
-    ((light >> 8) & 255) / 255.0f,
-    (light & 255) / 255.0f, Alpha);
+    ((light>>16)&255)/255.0f,
+    ((light>>8)&255)/255.0f,
+    (light&255)/255.0f, Alpha);
   if (Fade) {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfMaskedFogColourLoc,
-      ((Fade >> 16) & 255) / 255.0f,
-      ((Fade >> 8) & 255) / 255.0f,
-      (Fade & 255) / 255.0f, Alpha);
+      ((Fade>>16)&255)/255.0f,
+      ((Fade>>8)&255)/255.0f,
+      (Fade&255)/255.0f, Alpha);
     p_glUniform1fARB(SurfMaskedFogDensityLoc, Fade == FADE_LIGHT ? 0.3f : r_fog_density);
     p_glUniform1fARB(SurfMaskedFogStartLoc, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-    p_glUniform1fARB(SurfMaskedFogEndLoc, Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end);
+    p_glUniform1fARB(SurfMaskedFogEndLoc, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
   } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
@@ -1716,22 +1718,22 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
     lvLoc = SurfPartSqLightValLoc;
     tcLoc = SurfPartSqTexCoordLoc;
   }
-  const float r = ((p->colour >> 16) & 255) / 255.0f;
-  const float g = ((p->colour >> 8) & 255) / 255.0f;
-  const float b = (p->colour & 255) / 255.0f;
-  const float a = ((p->colour >> 24) & 255) / 255.0f;
+  const float r = ((p->colour>>16)&255)/255.0f;
+  const float g = ((p->colour>>8)&255)/255.0f;
+  const float b = (p->colour&255)/255.0f;
+  const float a = ((p->colour>>24)&255)/255.0f;
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, -1, -1);
-  glVertex(p->org - viewright * p->Size + viewup * p->Size);
+  glVertex(p->org-viewright*p->Size+viewup*p->Size);
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, 1, -1);
-  glVertex(p->org + viewright * p->Size + viewup * p->Size);
+  glVertex(p->org+viewright*p->Size+viewup*p->Size);
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, 1, 1);
-  glVertex(p->org + viewright * p->Size - viewup * p->Size);
+  glVertex(p->org+viewright*p->Size-viewup*p->Size);
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, -1, 1);
-  glVertex(p->org - viewright * p->Size - viewup * p->Size);
+  glVertex(p->org-viewright*p->Size-viewup*p->Size);
 }
 
 
