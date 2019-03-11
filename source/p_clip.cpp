@@ -44,14 +44,18 @@ static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizati
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_bsp("clip_frustum_bsp", false, "Clip BSP geometry with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_sub("clip_frustum_sub", false, "Clip subsectors with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_bbox("clip_frustum_bbox", false, "Clip BSP bounding boxes with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bbox("clip_frustum_bbox", true, "Clip BSP bounding boxes with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_region("clip_frustum_region", false, "Clip drawing regions with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_seg("clip_frustum_seg", false, "Clip segs with frustum?", CVAR_PreInit);
+//VCvarB clip_frustum_seg("clip_frustum_seg", false, "Clip segs with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_seg_2s("clip_frustum_seg_2s", false, "Clip 2-sided segs with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_seg_backface("clip_frustum_seg_backface", false, "Add backface-looking segs to clipper?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit, "Which frustum planes we should check?", CVAR_PreInit);
+//VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "19", "Which frustum planes we should check?", CVAR_PreInit);
 VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "255", "Which frustum planes we should check?", CVAR_PreInit);
 static VCvarB clip_frustum_add_clipped("clip_frustum_add_clipped", true, "Add frustum-clipped geometry to clipped ranges?", CVAR_PreInit);
+static VCvarB clip_frustum_add_clipped_sub("clip_frustum_add_clipped_sub", true, "Add frustum-clipped subsector to clipped ranges?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
@@ -899,8 +903,8 @@ inline static void CreateBBVerts (TVec &v1, TVec &v2, const float BBox[6], const
 //  VViewClipper::CheckSubsectorFrustum
 //
 //==========================================================================
-int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
-  if (!sub || !Frustum.isValid()) return 1;
+int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask) const {
+  if (!sub || !Frustum.isValid() || !mask) return 1;
   float bbox[6];
   // min
   bbox[0] = sub->bbox[0];
@@ -923,7 +927,7 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   */
 
   // check
-  return Frustum.checkBoxEx(bbox, clip_frustum_check_mask);
+  return Frustum.checkBoxEx(bbox, clip_frustum_check_mask&mask);
 }
 
 
@@ -932,8 +936,8 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
 //  VViewClipper::CheckSegFrustum
 //
 //==========================================================================
-bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
-  if (!seg || !seg->front_sub || !Frustum.isValid()) return true;
+bool VViewClipper::CheckSegFrustum (const seg_t *seg, const unsigned mask) const {
+  if (!seg || !seg->front_sub || !Frustum.isValid() || !mask) return true;
   //return CheckSubsectorFrustum(seg->front_sub);
   const TVec sv1 = *seg->v1;
   const TVec sv2 = *seg->v2;
@@ -984,7 +988,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   }
   */
 
-  return Frustum.checkBox(bbox, clip_frustum_check_mask);
+  return Frustum.checkBox(bbox, clip_frustum_check_mask&mask);
 }
 
 
@@ -1029,9 +1033,9 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   for (auto count = sub->numlines; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
+    if (ds->seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
     if (IsRangeVisible(v2, v1)) {
-      if (ds->seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
-      if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(ds->seg)) {
+      if (sfres > 0 || !clip_frustum || !clip_frustum_sub || !clip_frustum_region || CheckSegFrustum(ds->seg)) {
         return true;
       }
     }
@@ -1045,20 +1049,35 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //  VViewClipper::ClipCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) const {
+bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped) {
   if (!clip_enabled) return true;
   int sfres = 1;
   if (clip_frustum && clip_frustum_sub /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
-    if (!sfres) return false;
+    if (!sfres) {
+      if (addFrustumClipped && clip_frustum_add_clipped_sub) {
+        const seg_t *sg = &Level->Segs[sub->firstline];
+        for (int count = sub->numlines; count--; ++sg) {
+          const TVec &v1 = *sg->v1;
+          const TVec &v2 = *sg->v2;
+          if (sg->PointOnSide(Origin)) {
+            // viewer is in back side or on plane?
+            AddClipRange(v1, v2);
+          } else {
+            AddClipRange(v2, v1);
+          }
+        }
+      }
+      return false;
+    }
   }
   if (!ClipHead && sfres > 0) return true; // no clip nodes yet
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
+    if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
     if (IsRangeVisible(v2, v1)) {
-      if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
         return true;
       }
@@ -1098,7 +1117,22 @@ static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec
 void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool skipSphereCheck) {
   const line_t *ldef = seg->linedef;
   if (!ldef) return; // miniseg cannot clip anything
-  if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane?
+
+  const TVec &v1 = *seg->v1;
+  const TVec &v2 = *seg->v2;
+
+  // viewer is in back side or on plane?
+  if (seg->PointOnSide(Origin)) {
+    // if it is out of view frustum, still clip with it
+    if (!skipSphereCheck && clip_frustum && clip_frustum_seg_backface &&
+        //seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED &&
+        !CheckSegFrustum(seg, TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit))
+    {
+      AddClipRange(v1, v2);
+      //GCon->Logf("get lost, silly line #%d!", (int)(ptrdiff_t)(ldef-Level->Lines));
+    }
+    return;
+  }
 
   if (clip_skip_slopes_1side) {
     // do not clip with slopes, if it has no midtex
@@ -1111,19 +1145,25 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     }
   }
 
-  const TVec &v1 = *seg->v1;
-  const TVec &v2 = *seg->v2;
-
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
+  /*
   if (!skipSphereCheck && clip_frustum && clip_frustum_seg && !CheckSegFrustum(seg)) {
     if (clip_frustum_add_clipped) AddClipRange(v2, v1); //k8: not sure
     return;
   }
+  */
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-    if (!IsSegAClosedSomething(*this, seg)) return;
+    if (!IsSegAClosedSomething(*this, seg)) {
+      // it can still be culled by frustum
+      // if it is, clip with it
+      if (skipSphereCheck || !clip_frustum || !clip_frustum_seg_2s || CheckSegFrustum(seg)) {
+        return;
+      }
+      //GCon->Logf("get lost, line #%d!", (int)(ptrdiff_t)(ldef-Level->Lines));
+    }
   }
 
   AddClipRange(v2, v1);
@@ -1202,7 +1242,23 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub, const TVec &CurrL
   }
   */
 
-  return (CheckSphereVsAABB(bbox, CurrLightPos, CurrLightRadius) ? -1 : 0);
+  if (!CheckSphereVsAABB(bbox, CurrLightPos, CurrLightRadius)) return 0;
+
+  // check if all box vertices are inside a sphere
+  // early exit if sphere is smaller than bbox
+  if (CurrLightRadius < bbox[3+0]-bbox[0]) return -1;
+  if (CurrLightRadius < bbox[3+1]-bbox[1]) return -1;
+  if (CurrLightRadius < bbox[3+2]-bbox[2]) return -1;
+
+  const float xradSq = CurrLightRadius*CurrLightRadius;
+
+  for (unsigned bidx = 0; bidx < 8; ++bidx) {
+    TVec bv = TVec(bbox[BBoxVertexIndex[bidx][0]]-CurrLightPos.x, BBoxVertexIndex[bidx][1]-CurrLightPos.y, BBoxVertexIndex[bidx][2]-CurrLightPos.z);
+    if (bv.lengthSquared() > xradSq) return -1; // partially inside
+  }
+
+  // fully inside
+  return 1;
 }
 
 
@@ -1244,13 +1300,21 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6], const TVec &Curr
 bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const {
   //if (!ClipHead) return true; // no clip nodes yet
   if (CurrLightRadius < 2) return false;
-  if (!CheckSubsectorLight(sub, CurrLightPos, CurrLightRadius)) return false;
+  const int slight = CheckSubsectorLight(sub, CurrLightPos, CurrLightRadius);
+  if (!slight) return false;
   const drawseg_t *ds = region->lines;
   for (auto count = sub->numlines; count--; ++ds) {
-    if (!ds->seg->SphereTouches(CurrLightPos, CurrLightRadius)) continue;
+    if (slight < 0) {
+      if (!ds->seg->SphereTouches(CurrLightPos, CurrLightRadius)) continue;
+    }
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
-    if (IsRangeVisible(v2, v1)) return true;
+    if (ds->seg->PointOnSide(Origin)) {
+      // viewer is in back side or on plane
+      //if (IsRangeVisible(v1, v2)) return true;
+    } else {
+      if (IsRangeVisible(v2, v1)) return true;
+    }
   }
   return false;
 }
@@ -1273,7 +1337,11 @@ bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, const TVec &
     }
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-    if (IsRangeVisible(v2, v1)) return true;
+    if (seg->PointOnSide(Origin)) {
+      //if (IsRangeVisible(v1, v2)) return true;
+    } else {
+      if (IsRangeVisible(v2, v1)) return true;
+    }
   }
   return false;
 }

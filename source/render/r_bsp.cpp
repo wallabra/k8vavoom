@@ -471,6 +471,9 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 */
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
+  // k8: this drops some segs that may leak without proper frustum culling
+  if (!ViewClip.CheckSegFrustum(seg)) return;
+
   //FIXME this marks all lines
   // mark the segment as visible for auto map
   //linedef->flags |= ML_MAPPED;
@@ -636,7 +639,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!ViewClip.ClipCheckSubsector(Sub)) return;
+  if (!ViewClip.ClipCheckSubsector(Sub, true)) return;
 
   BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);

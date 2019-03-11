@@ -86,8 +86,8 @@ public:
   //inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int CheckSubsectorFrustum (const subsector_t *sub) const;
-  bool CheckSegFrustum (const seg_t *seg) const;
+  int CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask=~0u) const;
+  bool CheckSegFrustum (const seg_t *seg, const unsigned mask=~0u) const;
 
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
 
@@ -123,7 +123,7 @@ public:
 
   bool ClipIsBBoxVisible (const float BBox[6], bool checkFrustum=false) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
-  bool ClipCheckSubsector (const subsector_t *sub) const;
+  bool ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped=false);
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;
   bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
