@@ -809,7 +809,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
 
   if (!seg->linedef) return; // miniseg
 
-  if (w_update_clip_region /*ShouldClip*/) {
+  if (w_update_clip_region /*ShouldClip*/ && !seg->PointOnSide(vieworg)) {
     /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -1173,8 +1173,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
         wv[2].x = wv[3].x = seg->v2->x;
         wv[2].y = wv[3].y = seg->v2->y;
 
-        if (linedef->flags&ML_WRAP_MIDTEX)
-        {
+        if (linedef->flags&ML_WRAP_MIDTEX) {
           wv[0].z = MAX(midbotz1, z_org-texh);
           wv[1].z = MIN(midtopz1, z_org);
           wv[2].z = MIN(midtopz2, z_org);
