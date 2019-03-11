@@ -727,10 +727,9 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
 
     RenderBSPNode(bsp->children[side^1], bsp->bbox[side^1], clipflags);
-    return;
+  } else {
+    RenderSubsector(bspnum&(~NF_SUBSECTOR));
   }
-
-  RenderSubsector(bspnum&(~NF_SUBSECTOR));
 }
 
 
