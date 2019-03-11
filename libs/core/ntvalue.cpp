@@ -454,7 +454,7 @@ VNTValue VNTValueReader::readValue (VName vname, vuint8 vtype) {
       return res;
     }
   }
-  setError();
+  //setError(); // nope, this is not an error
   return VNTValue(); // oops
 }
 
