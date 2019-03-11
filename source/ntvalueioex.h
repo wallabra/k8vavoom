@@ -35,6 +35,8 @@ public:
   VNTValueIOEx (VStream *astrm);
 
   // fuck you, shitplusplus!
+  virtual void iodef (VName vname, vint32 &v, vint32 defval) override { VNTValueIO::iodef(vname, v, defval); }
+
   virtual void io (VName vname, vint32 &v) override { VNTValueIO::io(vname, v); }
   virtual void io (VName vname, vuint32 &v) override { VNTValueIO::io(vname, v); }
   virtual void io (VName vname, float &v) override { VNTValueIO::io(vname, v); }

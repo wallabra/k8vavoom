@@ -464,9 +464,10 @@ VNTValue VNTValueReader::readValue (VName vname, vuint8 vtype) {
 //  VNTValueReader::readInt
 //
 //==========================================================================
-vint32 VNTValueReader::readInt (VName vname) {
-  if (bError) return 0;
+vint32 VNTValueReader::readInt (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Int);
+  if (notfound) *notfound = !res;
   return (res ? res.getInt() : 0);
 }
 
@@ -476,9 +477,10 @@ vint32 VNTValueReader::readInt (VName vname) {
 //  VNTValueReader::readFloat
 //
 //==========================================================================
-float VNTValueReader::readFloat (VName vname) {
-  if (bError) return 0;
+float VNTValueReader::readFloat (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Float);
+  if (notfound) *notfound = !res;
   return (res ? res.getFloat() : 0.0f);
 }
 
@@ -488,9 +490,10 @@ float VNTValueReader::readFloat (VName vname) {
 //  VNTValueReader::readVec
 //
 //==========================================================================
-TVec VNTValueReader::readVec (VName vname) {
-  if (bError) return 0;
+TVec VNTValueReader::readVec (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Vec);
+  if (notfound) *notfound = !res;
   return (res ? res.getVec() : TVec(0, 0, 0));
 }
 
@@ -500,9 +503,10 @@ TVec VNTValueReader::readVec (VName vname) {
 //  VNTValueReader::readName
 //
 //==========================================================================
-VName VNTValueReader::readName (VName vname) {
-  if (bError) return 0;
+VName VNTValueReader::readName (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Name);
+  if (notfound) *notfound = !res;
   return (res ? res.getVName() : NAME_None);
 }
 
@@ -512,9 +516,10 @@ VName VNTValueReader::readName (VName vname) {
 //  VNTValueReader::readStr
 //
 //==========================================================================
-VStr VNTValueReader::readStr (VName vname) {
-  if (bError) return 0;
+VStr VNTValueReader::readStr (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Str);
+  if (notfound) *notfound = !res;
   return (res ? res.getStr() : VStr::EmptyString);
 }
 
@@ -524,9 +529,10 @@ VStr VNTValueReader::readStr (VName vname) {
 //  VNTValueReader::readClass
 //
 //==========================================================================
-VClass *VNTValueReader::readClass (VName vname) {
-  if (bError) return 0;
+VClass *VNTValueReader::readClass (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Class);
+  if (notfound) *notfound = !res;
   return (res ? res.getClass() : nullptr);
 }
 
@@ -536,9 +542,10 @@ VClass *VNTValueReader::readClass (VName vname) {
 //  VNTValueReader::readObj
 //
 //==========================================================================
-VObject *VNTValueReader::readObj (VName vname) {
-  if (bError) return 0;
+VObject *VNTValueReader::readObj (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_Obj);
+  if (notfound) *notfound = !res;
   return (res ? res.getObj() : nullptr);
 }
 
@@ -548,9 +555,10 @@ VObject *VNTValueReader::readObj (VName vname) {
 //  VNTValueReader::readXObj
 //
 //==========================================================================
-VSerialisable *VNTValueReader::readXObj (VName vname) {
-  if (bError) return 0;
+VSerialisable *VNTValueReader::readXObj (VName vname, bool *notfound) {
+  if (bError) { if (notfound) *notfound = true; return 0; }
   VNTValue res = readValue(vname, VNTValue::T_XObj);
+  if (notfound) *notfound = !res;
   return (res ? res.getXObj() : nullptr);
 }
 
@@ -705,6 +713,23 @@ void VNTValueIO::io (VName vname, vint32 &v) {
   if (bError) return;
   if (rd) {
     v = rd->readInt(vname);
+  } else {
+    if (wr->putValue(VNTValue(vname, v))) bError = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VNTValueIO::io
+//
+//==========================================================================
+void VNTValueIO::iodef (VName vname, vint32 &v, vint32 defval) {
+  if (bError) { v = defval; return; }
+  if (rd) {
+    bool notfound = false;
+    v = rd->readInt(vname, &notfound);
+    if (notfound) v = defval;
   } else {
     if (wr->putValue(VNTValue(vname, v))) bError = true;
   }

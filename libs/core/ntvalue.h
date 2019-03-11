@@ -236,14 +236,14 @@ public:
   // returns invalid VNTValue if not found
   VNTValue readValue (VName vname, vuint8 vtype=VNTValue::T_Invalid);
 
-  vint32 readInt (VName vname);
-  float readFloat (VName vname);
-  TVec readVec (VName vname);
-  VName readName (VName vname);
-  VStr readStr (VName vname);
-  VClass *readClass (VName vname);
-  VObject *readObj (VName vname);
-  VSerialisable *readXObj (VName vname);
+  vint32 readInt (VName vname, bool *notfound=nullptr);
+  float readFloat (VName vname, bool *notfound=nullptr);
+  TVec readVec (VName vname, bool *notfound=nullptr);
+  VName readName (VName vname, bool *notfound=nullptr);
+  VStr readStr (VName vname, bool *notfound=nullptr);
+  VClass *readClass (VName vname, bool *notfound=nullptr);
+  VObject *readObj (VName vname, bool *notfound=nullptr);
+  VSerialisable *readXObj (VName vname, bool *notfound=nullptr);
 };
 
 
@@ -285,6 +285,8 @@ public:
 
   bool IsError ();
   inline bool IsLoading () const { return !!rd; }
+
+  virtual void iodef (VName vname, vint32 &v, vint32 defval);
 
   virtual void io (VName vname, vint32 &v);
   virtual void io (VName vname, vuint32 &v);
