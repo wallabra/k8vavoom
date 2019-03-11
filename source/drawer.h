@@ -232,7 +232,7 @@ public:
 
   // automap
   virtual void StartAutomap () = 0;
-  virtual void DrawLine (int x1, int y1, vuint32 c1, int x2, int y2, vuint32 c2) = 0;
+  virtual void DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) = 0;
   virtual void EndAutomap () = 0;
 
   // advanced drawing

@@ -35,6 +35,9 @@
 # include "neoui/neoui.h"
 #endif
 
+// there is no need to do this anymore: OpenGL will do it for us
+//#define AM_DO_CLIPPING
+
 
 // player radius for movement checking
 #define PLAYERRADIUS   (16.0f)
@@ -84,11 +87,14 @@
 #define AM_NUMMARKPOINTS  (10)
 
 // translates between frame-buffer and map distances
-#define FTOM(x)  ((float)(x)*scale_ftom)
-#define MTOF(x)  ((int)((x)*scale_mtof))
+#define FTOM(x)   ((float)(x)*scale_ftom)
+#define MTOF(x)   ((int)((x)*scale_mtof))
+#define MTOFF(x)  ((x)*scale_mtof)
 // translates between frame-buffer and map coordinates
-#define CXMTOF(x)  (MTOF((x)-m_x)-f_x)
-#define CYMTOF(y)  (f_h-MTOF((y)-m_y)+f_y)
+#define CXMTOF(x)   (MTOF((x)-m_x)-f_x)
+#define CYMTOF(y)   (f_h-MTOF((y)-m_y)+f_y)
+#define CXMTOFF(x)  (MTOFF((x)-m_x)-f_x)
+#define CYMTOFF(y)  (f_h-MTOFF((y)-m_y)+f_y)
 
 // the following is crap
 #define LINE_NEVERSEE  ML_DONTDRAW
@@ -888,6 +894,7 @@ static void AM_clearFB () {
 }
 
 
+#ifdef AM_DO_CLIPPING
 //==========================================================================
 //
 //  AM_clipMline
@@ -995,6 +1002,7 @@ static bool AM_clipMline (mline_t *ml, fline_t *fl) {
 static void AM_drawFline (fline_t *fl, vuint32 colour) {
   Drawer->DrawLine(fl->a.x, fl->a.y, colour, fl->b.x, fl->b.y, colour);
 }
+#endif
 
 
 //==========================================================================
@@ -1005,8 +1013,12 @@ static void AM_drawFline (fline_t *fl, vuint32 colour) {
 //
 //==========================================================================
 static void AM_drawMline (mline_t *ml, vuint32 colour) {
-  static fline_t fl;
+#ifdef AM_DO_CLIPPING
+  fline_t fl;
   if (AM_clipMline(ml, &fl)) AM_drawFline(&fl, colour); // draws it on frame buffer using fb coords
+#else
+  Drawer->DrawLine(CXMTOFF(ml->a.x), CYMTOFF(ml->a.y), colour, CXMTOFF(ml->b.x), CYMTOFF(ml->b.y), colour);
+#endif
 }
 
 
