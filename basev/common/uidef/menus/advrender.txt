@@ -153,11 +153,9 @@ menudef AdvRenderOptions {
     title = "Use Scissoring";
     cvar = r_advlight_opt_scissor;
     help =
-      "Limit screen update area by light box projection."
-      "This creates small glitches at screen edges sometimes,"
-      "but speedups stenciled lighting by 10-30 FPS."
-      "Turn this 'OFF' if you see uncast shadows at screen edges,"
-      "but only if you have really fast GPU.";
+      "Limit light screen update area by light box projection."
+      "There is no reason to turn this off, ever. But if you"
+      "want to enjoy a slideshow, you can do it.";
   }
 
   option bool {
@@ -170,7 +168,7 @@ menudef AdvRenderOptions {
       "option to estimate lighting in such cases."
       "Note that this can slow down rendering for maps with alot"
       "of two-sided walls (this includes things like emulated grass, etc.)."
-      "Please note that this doesn't matter if 'Steamline Masked Walls'"
+      "Please note that this doesn't mater if 'Steamline Masked Walls'"
       "is turned on.";
   }
 
