@@ -1442,6 +1442,15 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (!scoord) scoord = tmpscoord;
 
+/*TODO:
+    transform light origin into world coordinates
+    build bounding cube in world coordinates (clamping z)
+    use bounding cube vertices to do projection
+    this way we can still use scissoring for lights behind our back
+    also, we can use only 1-3 planes of a cube (but this doesn't look worthy,
+    at the worst case we'll drop only one vertex)
+*/
+
   glEnable(GL_SCISSOR_TEST);
 
   // usually, light completely fades away at edges, so we can safely shrink our scissor box
@@ -1449,20 +1458,9 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   radius -= 6;
   if (radius < 2) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    glScissor(0, 0, 0, 0);
+    //glScissor(0, 0, 0, 0);
     return 0;
   }
-
-  /*
-  {
-    //TVec torg = mmat.Transform2(org);
-    //TVec porg = pmat.Transform2(torg);
-    //GCon->Logf("org=(%f,%f,%f); radius=%f; torg=(%f,%f,%f); porg=(%f,%f,%f)", org.x, org.y, org.z, radius, torg.x, torg.y, torg.z, porg.x, porg.y, porg.z);
-    float wc[2];
-    if (!glhProjectf(org.x, org.y, org.z, mmat[0], pmat[0], viewport, wc)) return;
-    //GCon->Logf("org=(%f,%f,%f); radius=%f; wc=(%f,%f)", org.x, org.y, org.z, radius, wc[0], wc[1]);
-  }
-  */
 
   // create light bbox
   float bbox[6];
@@ -1485,6 +1483,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   bbp[6] = TVec(bbox[0+0], bbox[3+1], bbox[3+2]);
   bbp[7] = TVec(bbox[3+0], bbox[3+1], bbox[3+2]);
 
+  //unsigned badCount = 0;
   float minx = ScreenWidth*4, miny = ScreenHeight*4;
   float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
   // transform points, get min and max
@@ -1492,8 +1491,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     float wc[2];
     if (!glhProjectf(bbp[f], mmat[0], pmat[0], viewport, wc)) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-      glScissor(0, 0, 0, 0);
+      //glScissor(0, 0, 0, 0);
       return -1;
+      //++badCount;
+      //continue;
     }
     //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
     if (minx > wc[0]) minx = wc[0];
@@ -1502,7 +1503,16 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     if (maxy < wc[1]) maxy = wc[1];
   }
 
-  //GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
+  /*
+  if (badCount == 8) {
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    //glScissor(0, 0, 0, 0);
+    GCon->Logf("completely away, wtf?!");
+    return 0;
+  }
+  if (badCount) GCon->Logf("bc=%u; org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", badCount, org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
+  */
+
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
@@ -1516,7 +1526,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (maxx <= minx || maxy <= miny) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    glScissor(0, 0, 0, 0);
+    //glScissor(0, 0, 0, 0);
     return 0;
   }
 
