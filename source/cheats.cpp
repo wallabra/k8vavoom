@@ -236,5 +236,9 @@ COMMAND(my_clear_automap) {
     line_t &line = GClLevel->Lines[i];
     line.flags &= ~ML_MAPPED;
   }
+  for (int i = 0; i < GClLevel->NumSegs; ++i) {
+    seg_t &seg = GClLevel->Segs[i];
+    seg.flags &= ~SF_MAPPED;
+  }
   GCon->Logf("automap cleared");
 }

@@ -662,9 +662,9 @@ struct line_t : TPlane {
   // precalculated v2-v1 for side checking
   TVec dir;
 
-  // animation related
   int flags;
   int SpacFlags;
+  int exFlags;
 
   // visual appearance: SideDefs
   // sidenum[1] will be -1 if one sided
@@ -945,6 +945,8 @@ struct seg_t : TPlane {
 
   // side of line (for light calculations: 0 or 1)
   int side;
+
+  int flags; // SF_xxx
 
   native transient drawseg_t *drawsegs;
   native transient void/*decal_t*/ *decals;

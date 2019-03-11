@@ -148,6 +148,7 @@ static inline int getAMHeight () {
 
 
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
+static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
 
 // automap colours
 static vuint32 WallColour;
@@ -1076,6 +1077,44 @@ static void AM_drawGrid (vuint32 colour) {
 
 //==========================================================================
 //
+//  AM_getLineColor
+//
+//==========================================================================
+static vuint32 AM_getLineColor (const line_t &line, bool *cheatOnly) {
+  *cheatOnly = false;
+  if (line.special == LNSPEC_DoorLockedRaise && GetLockDef(line.arg4) && GetLockDef(line.arg4)->MapColour) {
+    return GetLockDef(line.arg4)->MapColour;
+  }
+  if ((line.special == LNSPEC_ACSLockedExecute || line.special == LNSPEC_ACSLockedExecuteDoor) &&
+      GetLockDef(line.arg5) && GetLockDef(line.arg5)->MapColour)
+  {
+    return GetLockDef(line.arg5)->MapColour;
+  }
+  if (!line.backsector) return (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed ? PowerWallColour : WallColour);
+  if (line.flags&ML_SECRET) {
+    // secret door
+    return (am_cheating ? SecretWallColour : (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed ? PowerWallColour : WallColour));
+  }
+  if (line.backsector->floor.minz != line.frontsector->floor.minz) {
+    // floor level change
+    return FDWallColour;
+  }
+  if (line.backsector->ceiling.maxz != line.frontsector->ceiling.maxz) {
+    // ceiling level change
+    return CDWallColour;
+  } else if (line.backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
+             line.frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
+  {
+    // show extra floors
+    return EXWallColour;
+  }
+  *cheatOnly = true;
+  return TSWallColour;
+}
+
+
+//==========================================================================
+//
 //  AM_drawWalls
 //
 //  Determines visible lines, draws them.
@@ -1083,49 +1122,70 @@ static void AM_drawGrid (vuint32 colour) {
 //
 //==========================================================================
 static void AM_drawWalls () {
-  static mline_t l;
+  //static mline_t l;
   for (int i = 0; i < GClLevel->NumLines; ++i) {
     line_t &line = GClLevel->Lines[i];
-    l.a.x = line.v1->x;
-    l.a.y = line.v1->y;
-    l.b.x = line.v2->x;
-    l.b.y = line.v2->y;
 
-    if (am_rotate) {
-      AM_rotatePoint(&l.a.x, &l.a.y);
-      AM_rotatePoint(&l.b.x, &l.b.y);
+    if (!am_cheating) {
+      if (line.flags&LINE_NEVERSEE) continue;
+      if (!(line.flags&ML_MAPPED) && !(line.exFlags&ML_EX_PARTIALLY_MAPPED)) {
+        if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
+      }
     }
 
-    if (am_cheating || (line.flags&ML_MAPPED)) {
-      if ((line.flags&LINE_NEVERSEE) && !am_cheating) continue;
-      if (line.special == LNSPEC_DoorLockedRaise &&
-          GetLockDef(line.arg4) && GetLockDef(line.arg4)->MapColour)
-      {
-        AM_drawMline(&l, GetLockDef(line.arg4)->MapColour);
-      } else if ((line.special == LNSPEC_ACSLockedExecute ||
-                  line.special == LNSPEC_ACSLockedExecuteDoor) &&
-                 GetLockDef(line.arg5) && GetLockDef(line.arg5)->MapColour)
-      {
-        AM_drawMline(&l, GetLockDef(line.arg5)->MapColour);
-      } else if (!line.backsector) {
-        AM_drawMline(&l, WallColour);
-      } else if (line.flags&ML_SECRET) {
-        // secret door
-        AM_drawMline(&l, (am_cheating ? SecretWallColour : WallColour));
-      } else if (line.backsector->floor.minz != line.frontsector->floor.minz) {
-        AM_drawMline(&l, FDWallColour); // floor level change
-      } else if (line.backsector->ceiling.maxz != line.frontsector->ceiling.maxz) {
-        AM_drawMline(&l, CDWallColour); // ceiling level change
-      } else if (line.backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
-                 line.frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
-      {
-        AM_drawMline(&l, EXWallColour); // show extra floors
-      } else if (am_cheating) {
-        AM_drawMline(&l, TSWallColour);
+    bool cheatOnly = false;
+    vuint32 clr = AM_getLineColor(line, &cheatOnly);
+    if (cheatOnly && !am_cheating) continue; //FIXME: should we draw this lines if automap powerup is active?
+
+
+    // check if we need to re-evaluate line visibility, and do it
+    if (line.exFlags&ML_EX_CHECK_MAPPED) {
+      line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+      if (!(line.flags&ML_MAPPED)) {
+        line.flags |= ML_MAPPED;
+        for (const seg_t *seg = line.firstseg; seg; seg = seg->lsnext) {
+          if (!(seg->flags&SF_MAPPED)) {
+            line.flags &= ~ML_MAPPED;
+            break;
+          }
+        }
+        if (!(line.flags&ML_MAPPED)) line.exFlags |= ML_EX_PARTIALLY_MAPPED;
       }
-    } else if (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed) {
-      if (!(line.flags&LINE_NEVERSEE)) {
-        AM_drawMline(&l, PowerWallColour);
+    }
+
+    if (line.flags&ML_MAPPED) line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+
+    // fully mapped or automap revealed?
+    if (am_full_lines || (line.flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
+      mline_t l;
+      l.a.x = line.v1->x;
+      l.a.y = line.v1->y;
+      l.b.x = line.v2->x;
+      l.b.y = line.v2->y;
+
+      if (am_rotate) {
+        AM_rotatePoint(&l.a.x, &l.a.y);
+        AM_rotatePoint(&l.b.x, &l.b.y);
+      }
+
+      AM_drawMline(&l, clr);
+    } else {
+      // render segments
+      for (const seg_t *seg = line.firstseg; seg; seg = seg->lsnext) {
+        if (!(seg->flags&SF_MAPPED)) continue;
+
+        mline_t l;
+        l.a.x = seg->v1->x;
+        l.a.y = seg->v1->y;
+        l.b.x = seg->v2->x;
+        l.b.y = seg->v2->y;
+
+        if (am_rotate) {
+          AM_rotatePoint(&l.a.x, &l.a.y);
+          AM_rotatePoint(&l.b.x, &l.b.y);
+        }
+
+        AM_drawMline(&l, clr);
       }
     }
   }

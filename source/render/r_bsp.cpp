@@ -419,28 +419,29 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
 //
 //==========================================================================
 void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
-  seg_t *line = dseg->seg;
+  seg_t *seg = dseg->seg;
+  line_t *linedef = seg->linedef;
 
-  if (!line->linedef) return; // miniseg
+  if (!linedef) return; // miniseg
 
-  if (line->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (seg->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
   if (MirrorClipSegs && clip_frustum && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror
-    if (view_frustum.planes[5].PointOnSide(*line->v1) && view_frustum.planes[5].PointOnSide(*line->v2)) return; // behind mirror
+    if (view_frustum.planes[5].PointOnSide(*seg->v1) && view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
   }
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
-  if (line->backsector) {
+  if (seg->backsector) {
     // just apply this to sectors without slopes
-    if (line->frontsector->floor.normal.z == 1.0f && line->backsector->floor.normal.z == 1.0f &&
-        line->frontsector->ceiling.normal.z == -1.0f && line->backsector->ceiling.normal.z == -1.0f)
+    if (seg->frontsector->floor.normal.z == 1.0f && seg->backsector->floor.normal.z == 1.0f &&
+        seg->frontsector->ceiling.normal.z == -1.0f && seg->backsector->ceiling.normal.z == -1.0f)
     {
       // clip sectors that are behind rendered segs
-      TVec v1 = *line->v1;
-      TVec v2 = *line->v2;
+      TVec v1 = *seg->v1;
+      TVec v2 = *seg->v2;
       TVec r1 = vieworg-v1;
       TVec r2 = vieworg-v2;
       float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
@@ -454,8 +455,8 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     }
   } else {
     // clip sectors that are behind rendered segs
-    TVec v1 = *line->v1;
-    TVec v2 = *line->v2;
+    TVec v1 = *seg->v1;
+    TVec v2 = *seg->v2;
     TVec r1 = vieworg-v1;
     TVec r2 = vieworg-v2;
     float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
@@ -468,23 +469,27 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
   }
 */
-  if (!ViewClip.IsRangeVisible(*line->v2, *line->v1)) return;
-
-  line_t *linedef = line->linedef;
-  side_t *sidedef = line->sidedef;
+  if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
   //FIXME this marks all lines
   // mark the segment as visible for auto map
-  linedef->flags |= ML_MAPPED;
+  //linedef->flags |= ML_MAPPED;
+  if (!(linedef->flags&ML_MAPPED)) {
+    // this line is at least partially mapped; let automap drawer do the rest
+    linedef->exFlags |= ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED;
+  }
+  seg->flags |= SF_MAPPED;
 
-  if (!line->backsector) {
+  side_t *sidedef = seg->sidedef;
+
+  if (!seg->backsector) {
     // single sided line
-    if (line->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
+    if (seg->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
       RenderHorizon(dseg);
-    } else if (line->linedef->special == LNSPEC_LineMirror) {
+    } else if (seg->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(dseg);
     } else {
-      DrawSurfaces(line, dseg->mid->surfs, &dseg->mid->texinfo,
+      DrawSurfaces(seg, dseg->mid->surfs, &dseg->mid->texinfo,
         r_region->ceiling->SkyBox, -1, sidedef->Light,
         !!(sidedef->Flags & SDF_ABSLIGHT), false);
     }
@@ -493,20 +498,20 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
       !!(sidedef->Flags & SDF_ABSLIGHT), false);
   } else {
     // two sided line
-    DrawSurfaces(line, dseg->top->surfs, &dseg->top->texinfo,
+    DrawSurfaces(seg, dseg->top->surfs, &dseg->top->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
     DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(line, dseg->bot->surfs, &dseg->bot->texinfo,
+    DrawSurfaces(seg, dseg->bot->surfs, &dseg->bot->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(line, dseg->mid->surfs, &dseg->mid->texinfo,
+    DrawSurfaces(seg, dseg->mid->surfs, &dseg->mid->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawSurfaces(line, sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
+      DrawSurfaces(seg, sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
         -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
   }

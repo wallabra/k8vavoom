@@ -176,9 +176,22 @@ enum {
   ML_KEEPDATA            = 0x20000000, // keep FloorData or CeilingData after activating them
                                        // used to simulate original Heretic behaviour
   ML_NODECAL             = 0x40000000, // don't spawn decals on this linedef
+};
 
+enum {
   ML_SPAC_SHIFT = 10,
   ML_SPAC_MASK = 0x00001c00,
+};
+
+// extra flags
+enum {
+  ML_EX_PARTIALLY_MAPPED = 0x00000001, // some segs are visible, but not all
+  ML_EX_CHECK_MAPPED     = 0x00000002, // check if all segs are mapped (done in automap drawer
+};
+
+// seg flags
+enum {
+  SF_MAPPED = 0x00000001, // some segs are visible, but not all
 };
 
 // Special activation types
@@ -206,9 +219,9 @@ struct line_t : public TPlane {
   // precalculated v2-v1 for side checking
   TVec dir;
 
-  // animation related
   vint32 flags;
   vint32 SpacFlags;
+  vint32 exFlags; //ML_EX_xxx
 
   // visual appearance: SideDefs
   // sidenum[1] will be -1 if one sided
@@ -559,6 +572,8 @@ struct seg_t : public TPlane {
 
   // side of line (for light calculations: 0 or 1)
   vint32 side;
+
+  vint32 flags; // SF_xxx
 
   drawseg_t *drawsegs;
   decal_t *decals;

@@ -361,6 +361,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
         VNTValueIOEx vio(&Strm);
         vio.io(VName("flags"), li->flags);
         vio.io(VName("SpacFlags"), li->SpacFlags);
+        vio.iodef(VName("exFlags"), li->exFlags, 0);
         vio.io(VName("special"), li->special);
         vio.io(VName("arg1"), li->arg1);
         vio.io(VName("arg2"), li->arg2);
@@ -369,6 +370,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("arg5"), li->arg5);
         vio.io(VName("LineTag"), li->LineTag);
         vio.io(VName("alpha"), li->alpha);
+        // for now, mark partially mapped lines as fully mapped
+        if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
+          li->flags |= ML_MAPPED;
+          li->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+        }
       }
 
       for (int j = 0; j < 2; ++j) {
