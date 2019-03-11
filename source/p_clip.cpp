@@ -44,9 +44,13 @@ static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizati
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_sub("clip_frustum_sub", true, "Clip subsectors with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_only_back("clip_frustum_only_back", true, "Clip geometry only with back frustum plane?", CVAR_PreInit);
+VCvarB clip_frustum_bsp("clip_frustum_bsp", false, "Clip BSP geometry with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_sub("clip_frustum_sub", false, "Clip subsectors with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bbox("clip_frustum_bbox", false, "Clip BSP bounding boxes with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_region("clip_frustum_region", false, "Clip drawing regions with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_seg("clip_frustum_seg", false, "Clip segs with frustum?", CVAR_PreInit);
+//VCvarI clip_frustum_check_mask("clip_frustum_check_mask", TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit, "Which frustum planes we should check?", CVAR_PreInit);
+VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "255", "Which frustum planes we should check?", CVAR_PreInit);
 static VCvarB clip_frustum_add_clipped("clip_frustum_add_clipped", true, "Add frustum-clipped geometry to clipped ranges?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
@@ -346,7 +350,7 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
       }
       */
 
-      if (clip_height && clip_frustum &&
+      if (clip_height && /*clip_frustum &&*/
           seg->partner && seg->partner != seg &&
           seg->partner->front_sub && seg->partner->front_sub != seg->front_sub)
       {
@@ -355,33 +359,28 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         // this way, we can clip alot of things when camera looks at
         // floor/ceiling, and we can clip away too high/low windows.
         const TFrustum &Frustum = clip.GetFrustum();
-        if (Frustum.isValid()) {
+        const bool lcheck = (lorg && ldef->SphereTouches(*lorg, *lrad));
+        if (Frustum.isValid() || lcheck) {
           // create bounding box for linked subsector
           const subsector_t *bss = seg->partner->front_sub;
-          float bbox[6];
-          /*
-          // min
-          bbox[0] = bss->bbox[0];
-          bbox[1] = bss->bbox[1];
-          bbox[2] = bss->sector->floor.minz;
-          // max
-          bbox[3] = bss->bbox[2];
-          bbox[4] = bss->bbox[3];
-          bbox[5] = bss->sector->ceiling.maxz;
-          */
           const sector_t *bssec = bss->sector;
-          // exact
           const TVec sv1 = *seg->v1;
           const TVec sv2 = *seg->v2;
+          float bbox[6];
+          const float bfz1 = bssec->floor.GetPointZ(sv1);
+          const float bfz2 = bssec->floor.GetPointZ(sv2);
+          const float bcz1 = bssec->ceiling.GetPointZ(sv1);
+          const float bcz2 = bssec->ceiling.GetPointZ(sv2);
           // min
           bbox[0] = MIN(sv1.x, sv2.x);
           bbox[1] = MIN(sv1.y, sv2.y);
-          bbox[2] = MIN(bssec->floor.GetPointZ(sv1), bssec->floor.GetPointZ(sv2));
+          bbox[2] = MIN(bfz1, bfz2);
           // max
           bbox[3] = MAX(sv1.x, sv2.x);
           bbox[4] = MAX(sv1.y, sv2.y);
-          bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
+          bbox[5] = MAX(bcz1, bcz2);
           FixBBoxZ(bbox);
+
           // debug
           /*
           const int lidx = (int)(ptrdiff_t)(ldef-clip.GetLevel()->Lines);
@@ -393,40 +392,19 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
             }
           }
           */
-          // check
-          if (!Frustum.checkBox(bbox)) {
-            // out of frustum
-            return true;
+
+          if (Frustum.isValid()) {
+            // check (only top, bottom, and back)
+            if (!Frustum.checkBox(bbox, TFrustum::TopBit|TFrustum::BottomBit|TFrustum::BackBit)) {
+              // out of frustum
+              return true;
+            }
           }
-        }
-        // check if light can see midtex
-        if (lorg && ldef->SphereTouches(*lorg, *lrad)) {
-          // create bounding box for linked subsector
-          const subsector_t *bss = seg->partner->front_sub;
-          const sector_t *bssec = bss->sector;
-          const TVec sv1 = *seg->v1;
-          const TVec sv2 = *seg->v2;
-          float bbox[6];
-          // min
-          bbox[0] = MIN(sv1.x, sv2.x);
-          bbox[1] = MIN(sv1.y, sv2.y);
-          bbox[2] = MIN(bssec->floor.GetPointZ(sv1), bssec->floor.GetPointZ(sv2));
-          // max
-          bbox[3] = MAX(sv1.x, sv2.x);
-          bbox[4] = MAX(sv1.y, sv2.y);
-          bbox[5] = MAX(bssec->ceiling.GetPointZ(sv1), bssec->ceiling.GetPointZ(sv2));
-          FixBBoxZ(bbox);
-          // inside?
-          /*
-          if (bbox[0] <= lorg->x && bbox[3] >= lorg->x &&
-              bbox[1] <= lorg->y && bbox[4] >= lorg->y &&
-              bbox[2] <= lorg->z && bbox[5] >= lorg->z)
-          {
-            // inside the box, cannot block
-            return false;
+
+          // check if light can see midtex
+          if (lcheck) {
+            if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
           }
-          */
-          if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
         }
       }
       // still unsure; check if midtex is transparent
@@ -550,12 +528,14 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
     Frustum.planes[TFrustum::Back].invalidate();
     Frustum.planes[TFrustum::Forward].invalidate();
     */
+    /*
     // sanity check
     const TClipPlane *cp = &Frustum.planes[0];
     for (unsigned i = 0; i < 6; ++i, ++cp) {
       if (!cp->clipflag) continue; // don't need to clip against it
       if (cp->PointOnSide(Origin+viewforward)) GCon->Logf("invalid frustum plane #%u", i); // viewer is in back side or on plane (k8: why check this?)
     }
+    */
   } else {
     ClipResetFrustumPlanes();
   }
@@ -943,7 +923,7 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub) const {
   */
 
   // check
-  return (clip_frustum_only_back ? Frustum.checkBoxExBack(bbox) : Frustum.checkBoxEx(bbox));
+  return Frustum.checkBoxEx(bbox, clip_frustum_check_mask);
 }
 
 
@@ -1004,7 +984,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg) const {
   }
   */
 
-  return (clip_frustum_only_back ? Frustum.checkBoxBack(bbox) : Frustum.checkBox(bbox));
+  return Frustum.checkBox(bbox, clip_frustum_check_mask);
 }
 
 
@@ -1022,12 +1002,8 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) co
     // viewer is inside the box
     return true;
   }
-  if (checkFrustum && clip_frustum && clip_frustum_sub && Frustum.isValid()) {
-    if (clip_frustum_only_back) {
-      if (!Frustum.checkBoxBack(BBox)) return false;
-    } else {
-      if (!Frustum.checkBox(BBox)) return false;
-    }
+  if (checkFrustum && clip_frustum && clip_frustum_bbox && Frustum.isValid()) {
+    if (!Frustum.checkBox(BBox, clip_frustum_check_mask)) return false;
   }
   if (!ClipHead) return true; // no clip nodes yet
   TVec v1, v2;
@@ -1044,7 +1020,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) co
 bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const {
   if (!clip_enabled || !clip_subregion) return true;
   int sfres = 1;
-  if (clip_frustum && clip_frustum_sub /*&& Frustum.isValid()*/) {
+  if (clip_frustum && clip_frustum_region /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
     if (!sfres) return false;
   }
@@ -1140,7 +1116,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
-  if (!skipSphereCheck && clip_frustum && clip_frustum_sub && !CheckSegFrustum(seg)) {
+  if (!skipSphereCheck && clip_frustum && clip_frustum_seg && !CheckSegFrustum(seg)) {
     if (clip_frustum_add_clipped) AddClipRange(v2, v1); //k8: not sure
     return;
   }
@@ -1164,14 +1140,13 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 
   bool doPoly = (sub->poly && clip_with_polyobj);
 
-  // `-1` means "slower checks"
-  const int ssFrustum = (clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : -1);
+  const int ssFrustum = (clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : TFrustum::PARTIALLY);
 
-  if (ssFrustum) {
+  if (ssFrustum != TFrustum::OUTSIDE) {
     const seg_t *seg = &Level->Segs[sub->firstline];
     for (int count = sub->numlines; count--; ++seg) {
       if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-      CheckAddClipSeg(seg, Mirror, (ssFrustum > 0));
+      CheckAddClipSeg(seg, Mirror, (ssFrustum == TFrustum::INSIDE));
     }
   } else {
     // completely outside
