@@ -421,7 +421,10 @@ native static final void R_DrawModelFrame (TVec origin, float angle,
 // draws a coloured rectangle
 native static final void R_FillRect (int x, int y, int w, int h, int colour);
 
+// returns current aspect ratio
 native static final float R_GetAspectRatio ();
+// check if advrender can be used (for use in menu system only!)
+native static final bool R_SupportsAdvancedRendering ();
 
 native static final int R_GetBloodTranslation (int color);
 

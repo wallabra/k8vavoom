@@ -374,24 +374,21 @@ void R_Init () {
 //
 //==========================================================================
 void R_Start (VLevel *ALevel) {
-  guard(R_Start);
-  switch (r_level_renderer) {
-    case 1:
-      ALevel->RenderData = new VRenderLevel(ALevel);
-      break;
-    case 2:
-      ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
-      break;
-    default:
-      if (Drawer->SupportsAdvancedRendering()) {
-        //ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
-        GCon->Logf("Your GPU supports Advanced Renderer, but it is slow and unfinished, so i won't use it.");
-      }
-      r_level_renderer = 1; // so it will be saved on exit
-      ALevel->RenderData = new VRenderLevel(ALevel);
-      break;
+  if (r_level_renderer > 1 && !Drawer->SupportsAdvancedRendering()) {
+    GCon->Logf(NAME_Warning, "Your GPU doesn't support Advanced Renderer, so I will switch to regular one.");
+    r_level_renderer = 1;
+  } else if (r_level_renderer <= 0) {
+    if (Drawer->SupportsAdvancedRendering()) {
+      GCon->Logf(NAME_Warning, "Your GPU supports Advanced Renderer, but it is slow and unfinished, so i won't use it.");
+    }
+    //r_level_renderer = 1;
   }
-  unguard;
+  // now create renderer
+  if (r_level_renderer <= 1) {
+    ALevel->RenderData = new VRenderLevel(ALevel);
+  } else {
+    ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+  }
 }
 
 

@@ -30,18 +30,13 @@ menudef VideoOptions {
 
   header "Renderer";
 
-  option enum {
+  option render {
     title = "Level renderer";
     cvar = r_level_renderer;
     help =
       "Lightmapped renderer is faster, and produces nice soft light."
       "Stencil lighting produces DooM3-like sharp volumetric light."
       "You have to restart level/game (or load save) to activate new renderer.";
-    list {
-      "Select automatically",
-      "Lighmapped (recommended)",
-      "Stencil (experimental)"
-    }
   }
 
   option bool {

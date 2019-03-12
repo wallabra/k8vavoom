@@ -1097,7 +1097,7 @@ IMPLEMENT_FUNCTION(VObject, R_FillRect) {
   P_GET_INT(width);
   P_GET_INT(y);
   P_GET_INT(x);
-  Drawer->FillRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, coulor);
+  if (Drawer) Drawer->FillRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, coulor);
 }
 
 
@@ -1108,6 +1108,21 @@ IMPLEMENT_FUNCTION(VObject, R_FillRect) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
   RET_FLOAT(R_GetAspectRatio());
+}
+
+
+//==========================================================================
+//
+//  R_SupportsAdvancedRendering
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_SupportsAdvancedRendering) {
+  if (Drawer) {
+    RET_BOOL(Drawer->SupportsAdvancedRendering());
+  } else {
+    // be conservative
+    RET_BOOL(false);
+  }
 }
 
 

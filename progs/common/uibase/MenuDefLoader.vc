@@ -327,6 +327,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("console")) res = SpawnObject(MenuDefOptionConsole);
   else if (par.Check("crosshair")) res = SpawnObject(MenuDefOptionCrosshair);
   else if (par.Check("bind")) res = SpawnObject(MenuDefOptionBind);
+  else if (par.Check("render")) res = SpawnObject(MenuDefOptionRenderType);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -629,6 +630,31 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   foreach (ref auto s; list) opt.AddItem(s.caption, s.value);
+  if (cvar) opt.SetSessionCvar(cvar);
+  return opt;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionRenderType : MenuDefOptionBase;
+
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+  return false;
+}
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  // if we have only one renderer available, there's no need to choose anything
+  if (!R_SupportsAdvancedRendering()) return none;
+  auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
+  opt.Text = title;
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  opt.AddItem("Select automatically", 0);
+  opt.AddItem("Lightmapped (recommended)", 1);
+  opt.AddItem("Stencil (experimental)", 2);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
