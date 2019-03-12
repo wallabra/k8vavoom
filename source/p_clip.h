@@ -46,7 +46,13 @@ public:
 #endif
 
 private:
-  struct VClipNode;
+  //struct VClipNode;
+  struct VClipNode {
+    VFloat From;
+    VFloat To;
+    VClipNode *Prev;
+    VClipNode *Next;
+  };
 
   VClipNode *FreeClipNodes;
   VClipNode *ClipHead;
@@ -109,7 +115,13 @@ public:
   void ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy);
 
 
-  bool ClipIsFull () const;
+  inline bool ClipIsFull () const {
+    return (ClipHead && ClipHead->From == (VFloat)0 && ClipHead->To == (VFloat)360);
+  }
+
+  inline bool ClipIsEmpty () const {
+    return (!ClipHead);
+  }
 
   inline bool IsRangeVisible (const TVec &vfrom, const TVec &vto) const {
     return IsRangeVisible(PointToClipAngle(vfrom), PointToClipAngle(vto));
@@ -138,7 +150,8 @@ public:
 private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool skipSphereCheck=false);
 #ifdef CLIENT
-  void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror, bool skipSphereCheck=false);
+  // returns `true` if clip is full
+  bool CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror, bool skipSphereCheck=false);
   // light radius should be valid
   int CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
   //bool CheckSegLight (const seg_t *seg, const TVec &CurrLightPos, const float CurrLightRadius) const;
