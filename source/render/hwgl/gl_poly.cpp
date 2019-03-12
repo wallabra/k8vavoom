@@ -1577,7 +1577,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                        vuint32 light, vuint32 Fade,
                                        const TVec &sprnormal, float sprpdist,
                                        const TVec &saxis, const TVec &taxis, const TVec &texorg,
-                                       bool noDepthChange)
+                                       int hangup)
 {
   if (!Tex) return; // just in case
 
@@ -1594,11 +1594,14 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   bool zbufferWriteDisabled = false;
 
-  if (noDepthChange) {
+  if (hangup) {
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, /*getAlphaThreshold()*/0.3f);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
+    glPolygonOffset(updir, updir);
+    glEnable(GL_POLYGON_OFFSET_FILL);
   } else if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     glEnable(GL_BLEND);
@@ -1682,10 +1685,12 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   }
 #endif
 
-  if (noDepthChange) {
+  if (hangup) {
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
     if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glPolygonOffset(0.0f, 0.0f);
+    glDisable(GL_POLYGON_OFFSET_FILL);
   } else if (blend_sprites || Additive || Alpha < 1.0f) {
     glDisable(GL_BLEND);
     if (zbufferWriteDisabled) glDepthMask(GL_TRUE); // re-enable z-buffer

@@ -513,7 +513,7 @@ public:
                                   vuint32 light, vuint32 Fade,
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg,
-                                  bool noDepthChange) override;
+                                  int hangup) override;
   virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, vuint32,
     vuint32, float, bool, bool, float, bool, bool, bool, bool) override;

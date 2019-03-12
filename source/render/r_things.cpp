@@ -92,7 +92,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
   bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, bool noDepthChange)
+  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, int hangup)
 {
   check(count >= 0);
   if (count == 0 || Alpha < 0.0002f) return;
@@ -145,7 +145,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   spr.type = (isSprite ? 1 : 0);
   spr.light = light;
   spr.objid = objid;
-  spr.noDepthChange = noDepthChange;
+  spr.hangup = hangup;
   spr.Fade = Fade;
   spr.prio = priority;
 }
@@ -179,7 +179,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.lump = -1; // has no sense
   spr.objid = (mobj ? mobj->GetUniqueId() : 0);
   spr.prio = 0; // normal priority
-  spr.noDepthChange = false;
+  spr.hangup = 0;
 }
 
 
@@ -207,7 +207,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   TVec tvec(0, 0, 0);
   float sr;
   float cr;
-  bool noDepthChange = false;
+  int hangup = 0;
   //spr_type = SPR_ORIENTED;
 
   switch (spr_type) {
@@ -258,6 +258,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->Angles, sprforward, sprright, sprup);
       if (spr_type != SPR_ORIENTED) {
+        /*
         const float pitch = thing->Angles.pitch;
         if (pitch == 90.0f) {
           // floor
@@ -272,6 +273,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
           //GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
           sprorigin -= vofs*0.01f;
         }
+        */
         /*
         {
           TVec vofs;
@@ -279,7 +281,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
           GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
         }
         */
-        noDepthChange = true;
+        hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
       }
       break;
 
@@ -401,14 +403,16 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[3] = sprorigin+end+botdelta;
 
   //FIXME: k8: i don't know why yet, but it doesn't work with sorting
-  if (noDepthChange) {
+  /*
+  if (hangup) {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), noDepthChange);
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
     return;
   }
+  */
 
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
@@ -423,13 +427,13 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
       DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
-      , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), noDepthChange);
+      , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
   } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), noDepthChange);
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
   }
 }
 
@@ -803,7 +807,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
                                 ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-                                spr.saxis, spr.taxis, spr.texorg, spr.noDepthChange);
+                                spr.saxis, spr.taxis, spr.texorg, spr.hangup);
       /*
       glDepthFunc(odf);
       */

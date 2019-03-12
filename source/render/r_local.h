@@ -286,7 +286,7 @@ public:
     int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
     float dist; // for soriting
     vuint32 objid; // for entities
-    bool noDepthChange;
+    int hangup;
     vuint32 light;
     vuint32 Fade;
   };
@@ -514,7 +514,7 @@ protected:
                             bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
                             const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
-                            bool noDepthChange=false);
+                            int hangup=0);
   void RenderSprite (VEntity*, vuint32, vuint32, float, bool);
   void RenderTranslucentAliasModel (VEntity*, vuint32, vuint32, float, bool, float);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);
