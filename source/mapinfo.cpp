@@ -657,11 +657,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("fade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-      info->Fade = M_ParseColour(sc->String);
+      info->Fade = M_ParseColour(*sc->String);
     } else if (sc->Check("outsidefog")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-      info->OutsideFog = M_ParseColour(sc->String);
+      info->OutsideFog = M_ParseColour(*sc->String);
     } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
       //sc->ExpectName8();

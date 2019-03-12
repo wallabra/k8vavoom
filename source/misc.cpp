@@ -134,10 +134,12 @@ int superatoi (const char *s) {
 //  M_LookupColourName
 //
 //==========================================================================
-vuint32 M_LookupColourName (const VStr &Name) {
+vuint32 M_LookupColourName (const char *Name) {
   static TMapNC<VName, vuint32> cmap; // names are lowercased
   static bool loaded = false;
   char tmpbuf[64];
+
+  if (!Name || !Name[0]) return 0;
 
   if (!loaded) {
     loaded = true;
@@ -250,7 +252,7 @@ vuint32 M_LookupColourName (const VStr &Name) {
 
   // normalize color name
   size_t dpos = 0;
-  for (const vuint8 *s = (const vuint8 *)(*Name); *s; ++s) {
+  for (const vuint8 *s = (const vuint8 *)Name; *s; ++s) {
     vuint8 ch = *s;
     if (ch == '"' || ch == '\'') continue; // why not?
     if (ch <= ' ') {
@@ -279,7 +281,7 @@ vuint32 M_LookupColourName (const VStr &Name) {
         if (d < 0) return 0;
         clr = (clr<<4)|(d&0x0f);
       }
-      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, Name, clr);
       return clr|0xff000000U;
     } else if (dpos == 4) {
       vuint32 clr = 0;
@@ -289,7 +291,7 @@ vuint32 M_LookupColourName (const VStr &Name) {
         clr = (clr<<4)|(d&0x0f);
         clr = (clr<<4)|(d&0x0f);
       }
-      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, Name, clr);
       return clr|0xff000000U;
     }
     return 0;
@@ -301,7 +303,7 @@ vuint32 M_LookupColourName (const VStr &Name) {
       if (d < 0) { valid = false; break; }
       clr = (clr<<4)|(d&0x0f);
     }
-    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, Name, clr);
     if (valid) return clr|0xff000000U;
   } else if (dpos == 3) {
     bool valid = true;
@@ -312,7 +314,7 @@ vuint32 M_LookupColourName (const VStr &Name) {
       clr = (clr<<4)|(d&0x0f);
       clr = (clr<<4)|(d&0x0f);
     }
-    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+    //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, Name, clr);
     if (valid) return clr|0xff000000U;
   }
 
@@ -322,12 +324,12 @@ vuint32 M_LookupColourName (const VStr &Name) {
   auto cpp = cmap.find(tmpbuf);
   /*
   if (cpp) {
-    GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", *Name, tmpbuf, *cpp);
+    GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", Name, tmpbuf, *cpp);
   } else {
-    GCon->Logf("*** NOT FOUND COLOR <%s> : <%s>", *Name, tmpbuf);
+    GCon->Logf("*** NOT FOUND COLOR <%s> : <%s>", Name, tmpbuf);
   }
   */
-  //if (cpp) GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", *Name, tmpbuf, *cpp);
+  //if (cpp) GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", Name, tmpbuf, *cpp);
   return (cpp ? *cpp : 0);
 }
 
@@ -359,14 +361,15 @@ int ParseHex (const char *Str) {
 //  M_ParseColour
 //
 //==========================================================================
-vuint32 M_ParseColour (const VStr &Name) {
-  if (!Name.Length()) return 0xff000000U;
+vuint32 M_ParseColour (const char *Name) {
+  if (!Name || !Name[0]) return 0xff000000U;
   vuint32 res = M_LookupColourName(Name);
   if (res) return res;
   vuint8 Col[3];
   if (Name[0] == '#') {
+    const size_t nlen = strlen(Name);
     // looks like an HTML-style colur
-    if (Name.Length() == 7) {
+    if (nlen == 7) {
       // #rrggbb format colour
       for (int i = 0; i < 3; ++i) {
         char Val[3];
@@ -375,7 +378,7 @@ vuint32 M_ParseColour (const VStr &Name) {
         Val[2] = 0;
         Col[i] = ParseHex(Val);
       }
-    } else if (Name.Length() == 4) {
+    } else if (nlen == 4) {
       // #rgb format colour
       for (int i = 0; i < 3; ++i) {
         char Val[3];
@@ -393,12 +396,12 @@ vuint32 M_ParseColour (const VStr &Name) {
   } else {
     bool warnColor = false;
     // treat like space separated hex values
-    const vuint8 *s = (const vuint8 *)(*Name);
+    const vuint8 *s = (const vuint8 *)Name;
     for (int i = 0; i < 3; ++i) {
       // skip whitespace and quotes
       while (*s && (*s <= ' ' || *s == '"' || *s == '\'')) ++s;
       if (!s[0] || VStr::digitInBase(s[0], 16) < 0) {
-        GCon->Logf(NAME_Warning, "Invalid color <%s> (0)", *Name);
+        GCon->Logf(NAME_Warning, "Invalid color <%s> (0)", Name);
         return 0xff000000U; // black
       }
       // parse hex
@@ -408,7 +411,7 @@ vuint32 M_ParseColour (const VStr &Name) {
         if (s[0] <= ' ') break;
         int d = VStr::digitInBase(s[0], 16);
         if (d < 0) {
-          GCon->Logf(NAME_Warning, "Invalid color <%s> (1)", *Name);
+          GCon->Logf(NAME_Warning, "Invalid color <%s> (1)", Name);
           return 0xff000000U; // black
         }
         n = n*16+d;
@@ -420,7 +423,7 @@ vuint32 M_ParseColour (const VStr &Name) {
       if (digCount == 1) n = (n<<4)|n;
       Col[i] = n;
     }
-    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s> (2)", *Name);
+    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s> (2)", Name);
     //GCon->Logf("*** COLOR <%s> is 0x%08x", *Name, 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]));
   }
   return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);

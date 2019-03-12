@@ -335,7 +335,8 @@ void VBasePlayer::ReadFromUserInfo () {
   guard(VBasePlayer::ReadFromUserInfo);
   if (!sv_loading) BaseClass = atoi(*Info_ValueForKey(UserInfo, "class"));
   PlayerName = Info_ValueForKey(UserInfo, "name");
-  Colour = M_ParseColour(Info_ValueForKey(UserInfo, "colour"));
+  VStr val = Info_ValueForKey(UserInfo, "colour");
+  Colour = M_ParseColour(*val);
   eventUserinfoChanged();
   unguard;
 }

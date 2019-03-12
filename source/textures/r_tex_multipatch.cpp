@@ -326,7 +326,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 
               if (!sc->CheckNumber()) {
                 sc->ExpectString();
-                vuint32 Col = M_ParseColour(sc->String);
+                vuint32 Col = M_ParseColour(*sc->String);
                 P.Blend.r = (Col>>16)&0xff;
                 P.Blend.g = (Col>>8)&0xff;
                 P.Blend.b = Col&0xff;

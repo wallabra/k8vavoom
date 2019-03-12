@@ -74,7 +74,7 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 
 // ////////////////////////////////////////////////////////////////////////// //
 static bool parseHexRGB (const VStr &str, int *clr) {
-  vuint32 ppc = M_ParseColour(str);
+  vuint32 ppc = M_ParseColour(*str);
   if (clr) *clr = ppc&0xffffff;
   return true;
 }

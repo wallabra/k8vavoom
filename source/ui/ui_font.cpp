@@ -217,7 +217,7 @@ void VFont::ParseTextColours () {
           TDef.LumTo = -1;
         } else if (sc.Check("Flat:")) {
           sc.ExpectString();
-          vuint32 C = M_ParseColour(sc.String);
+          vuint32 C = M_ParseColour(*sc.String);
           Col.FlatColour.r = (C >> 16) & 255;
           Col.FlatColour.g = (C >> 8) & 255;
           Col.FlatColour.b = C & 255;
@@ -225,7 +225,7 @@ void VFont::ParseTextColours () {
         } else {
           // from colour
           sc.ExpectString();
-          vuint32 C = M_ParseColour(sc.String);
+          vuint32 C = M_ParseColour(*sc.String);
           TDef.From.r = (C >> 16) & 255;
           TDef.From.g = (C >> 8) & 255;
           TDef.From.b = C & 255;
@@ -233,7 +233,7 @@ void VFont::ParseTextColours () {
 
           // to colour
           sc.ExpectString();
-          C = M_ParseColour(sc.String);
+          C = M_ParseColour(*sc.String);
           TDef.To.r = (C >> 16) & 255;
           TDef.To.g = (C >> 8) & 255;
           TDef.To.b = C & 255;

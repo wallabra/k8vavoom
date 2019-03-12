@@ -200,7 +200,7 @@ IMPLEMENT_FUNCTION(VObject, GetLockDef) {
 
 IMPLEMENT_FUNCTION(VObject, ParseColour) {
   P_GET_STR(Name);
-  RET_INT(M_ParseColour(Name));
+  RET_INT(M_ParseColour(*Name));
 }
 
 IMPLEMENT_FUNCTION(VObject, TextColourString) {

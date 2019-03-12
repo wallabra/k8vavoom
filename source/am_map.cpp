@@ -135,6 +135,8 @@ int automapactive = 0;
 static VCvarB am_active("am_active", false, "Is automap active?", 0);
 extern VCvarI screen_size;
 
+VCvarB am_always_update("am_always_update", true, "Update non-overlay automap?", CVAR_Archive);
+
 
 /*
 #define AM_W  (640)
@@ -186,6 +188,7 @@ static VCvarB am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archi
 static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CVAR_Archive);
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
+static VCvarI am_show_secrets("am_show_secrets", "0", "Show secret walls on automap!", CVAR_Cheat);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
@@ -663,6 +666,7 @@ static void AM_Check () {
   if (am_active != !!automapactive) {
     if (am_active) AM_Start(); else AM_Stop();
   }
+  if (automapactive) automapactive = (am_overlay ? -1 : 1);
 }
 
 
@@ -804,7 +808,7 @@ static void AM_rotate (float *x, float *y, float a) {
 void AM_rotatePoint (float *x, float *y) {
   *x -= FTOM(MTOF(cl->ViewOrg.x));
   *y -= FTOM(MTOF(cl->ViewOrg.y));
-  AM_rotate (x, y, 90.0f-cl->ViewAngles.yaw);
+  AM_rotate(x, y, 90.0f-cl->ViewAngles.yaw);
   *x += FTOM(MTOF(cl->ViewOrg.x));
   *y += FTOM(MTOF(cl->ViewOrg.y));
 }
@@ -884,11 +888,15 @@ static void AM_clearFB () {
   }
 
   // blit the automap background to the screen
-  if (automapactive > 0 && mappic > 0 && am_show_parchment) {
-    for (int y = mapystart-mapheight; y < getAMHeight(); y += mapheight) {
-      for (int x = mapxstart-getAMWidth(); x < getAMWidth(); x += 320) {
-        R_DrawPic(x, y, mappic);
+  if (automapactive > 0) {
+    if (mappic > 0 && am_show_parchment) {
+      for (int y = mapystart-mapheight; y < getAMHeight(); y += mapheight) {
+        for (int x = mapxstart-getAMWidth(); x < getAMWidth(); x += 320) {
+          R_DrawPic(x, y, mappic);
+        }
       }
+    } else {
+      Drawer->FillRect(0, 0, ScreenWidth, ScreenHeight, 0);
     }
   }
 }
@@ -1092,43 +1100,43 @@ static void AM_drawGrid (vuint32 colour) {
 //  AM_getLineColor
 //
 //==========================================================================
-static vuint32 AM_getLineColor (const line_t &line, bool *cheatOnly) {
+static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
   *cheatOnly = false;
   // locked door
-  if (line.special == LNSPEC_DoorLockedRaise && GetLockDef(line.arg4) && GetLockDef(line.arg4)->MapColour) {
-    return GetLockDef(line.arg4)->MapColour;
+  if (line->special == LNSPEC_DoorLockedRaise && GetLockDef(line->arg4) && GetLockDef(line->arg4)->MapColour) {
+    return GetLockDef(line->arg4)->MapColour;
   }
   // locked ACS special
-  if ((line.special == LNSPEC_ACSLockedExecute || line.special == LNSPEC_ACSLockedExecuteDoor) &&
-      GetLockDef(line.arg5) && GetLockDef(line.arg5)->MapColour)
+  if ((line->special == LNSPEC_ACSLockedExecute || line->special == LNSPEC_ACSLockedExecuteDoor) &&
+      GetLockDef(line->arg5) && GetLockDef(line->arg5)->MapColour)
   {
-    return GetLockDef(line.arg5)->MapColour;
+    return GetLockDef(line->arg5)->MapColour;
   }
   // unseen automap walls
-  if (!am_cheating && !(line.flags&ML_MAPPED) && !(line.exFlags&ML_EX_PARTIALLY_MAPPED) &&
+  if (!am_cheating && !(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED) &&
       (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed))
   {
     return PowerWallColour;
   }
   // normal wall
-  if (!line.backsector) {
+  if (!line->backsector) {
     return WallColour;
   }
   // secret door
-  if (line.flags&ML_SECRET) {
-    return (am_cheating ? SecretWallColour : WallColour);
+  if (line->flags&ML_SECRET) {
+    return (am_cheating || am_show_secrets ? SecretWallColour : WallColour);
   }
   // floor level change
-  if (line.backsector->floor.minz != line.frontsector->floor.minz) {
+  if (line->backsector->floor.minz != line->frontsector->floor.minz) {
     return FDWallColour;
   }
   // ceiling level change
-  if (line.backsector->ceiling.maxz != line.frontsector->ceiling.maxz) {
+  if (line->backsector->ceiling.maxz != line->frontsector->ceiling.maxz) {
     return CDWallColour;
   }
   // show extra floors
-  if (line.backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
-      line.frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
+  if (line->backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
+      line->frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
   {
     return EXWallColour;
   }
@@ -1147,12 +1155,11 @@ static vuint32 AM_getLineColor (const line_t &line, bool *cheatOnly) {
 //
 //==========================================================================
 static void AM_drawWalls () {
-  for (int i = 0; i < GClLevel->NumLines; ++i) {
-    line_t &line = GClLevel->Lines[i];
-
+  line_t *line = &GClLevel->Lines[0];
+  for (unsigned i = GClLevel->NumLines; i--; ++line) {
     if (!am_cheating) {
-      if (line.flags&LINE_NEVERSEE) continue;
-      if (!(line.flags&ML_MAPPED) && !(line.exFlags&ML_EX_PARTIALLY_MAPPED)) {
+      if (line->flags&LINE_NEVERSEE) continue;
+      if (!(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED)) {
         if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
       }
     }
@@ -1162,31 +1169,31 @@ static void AM_drawWalls () {
     if (cheatOnly && !am_cheating) continue; //FIXME: should we draw this lines if automap powerup is active?
 
     // check if we need to re-evaluate line visibility, and do it
-    if (line.exFlags&ML_EX_CHECK_MAPPED) {
-      line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
-      if (!(line.flags&ML_MAPPED)) {
-        line.flags |= ML_MAPPED;
+    if (line->exFlags&ML_EX_CHECK_MAPPED) {
+      line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+      if (!(line->flags&ML_MAPPED)) {
+        line->flags |= ML_MAPPED;
         bool seenMapped = false;
-        for (const seg_t *seg = line.firstseg; seg; seg = seg->lsnext) {
+        for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
           if (!(seg->flags&SF_MAPPED)) {
-            line.flags &= ~ML_MAPPED;
+            line->flags &= ~ML_MAPPED;
             break;
           }
           seenMapped = true;
         }
-        if (seenMapped && !(line.flags&ML_MAPPED)) line.exFlags |= ML_EX_PARTIALLY_MAPPED;
+        if (seenMapped && !(line->flags&ML_MAPPED)) line->exFlags |= ML_EX_PARTIALLY_MAPPED;
       }
     }
 
-    if (line.flags&ML_MAPPED) line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+    if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
 
     // fully mapped or automap revealed?
-    if (am_full_lines || (line.flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
+    if (am_full_lines || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
       mline_t l;
-      l.a.x = line.v1->x;
-      l.a.y = line.v1->y;
-      l.b.x = line.v2->x;
-      l.b.y = line.v2->y;
+      l.a.x = line->v1->x;
+      l.a.y = line->v1->y;
+      l.b.x = line->v2->x;
+      l.b.y = line->v2->y;
 
       if (am_rotate) {
         AM_rotatePoint(&l.a.x, &l.a.y);
@@ -1196,7 +1203,7 @@ static void AM_drawWalls () {
       AM_drawMline(&l, clr);
     } else {
       // render segments
-      for (const seg_t *seg = line.firstseg; seg; seg = seg->lsnext) {
+      for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
         if (!(seg->flags&SF_MAPPED)) continue;
 
         mline_t l;
@@ -1501,10 +1508,11 @@ static void AM_DrawLevelStats () {
 //
 //==========================================================================
 static vuint32 StringToColour (const char *str) {
+/*
   int r, g, b;
   char *p;
 
-  vuint32 alpha = (int)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255);
+  vuint32 alpha = clampToByte((int)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255));
   alpha <<= 24;
   //const vuint32 alpha = 0xff000000U;
 
@@ -1512,6 +1520,10 @@ static vuint32 StringToColour (const char *str) {
   g = strtol(p, &p, 16)&0xff;
   b = strtol(p, &p, 16)&0xff;
   return alpha|(r<<16)|(g<<8)|b;
+  */
+  vuint32 clr = M_ParseColour(str)&0xffffffu;
+  clr |= ((vuint32)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255))<<24;
+  return clr;
 }
 
 

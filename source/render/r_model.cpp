@@ -43,7 +43,7 @@ static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias mod
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
 static int parseHexRGB (const VStr &str) {
-  vuint32 ppc = M_ParseColour(str);
+  vuint32 ppc = M_ParseColour(*str);
   return (ppc&0xffffff);
 }
 

@@ -34,3 +34,4 @@ void AM_DrawWorldTimer ();
 void AM_Stop ();
 
 extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay
+extern VCvarB am_always_update;

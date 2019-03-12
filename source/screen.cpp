@@ -530,7 +530,8 @@ void SCR_Update () {
   if (cl && cls.signon && cl->MO) {
     switch (GClGame->intermission) {
       case 0:
-        if (automapactive <= 0) {
+        //k8: always render level, so automap will be updated in all cases
+        if (automapactive <= 0 || am_always_update) {
           R_RenderPlayerView();
           Drawer->Setup2D(); // restore 2D projection
         }
