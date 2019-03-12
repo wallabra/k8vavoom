@@ -592,7 +592,6 @@ private:
   bool RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache);
 
   void RestoreDepthFunc ();
-  //inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
   inline bool CanUseRevZ () const { return useReverseZ; }
 
 private:
@@ -961,7 +960,6 @@ protected:
   static VCvarB gl_smooth_particles;
   static VCvarB gl_dump_vendor;
   static VCvarB gl_dump_extensions;
-  static VCvarB gl_dbg_adv_reverse_z;
 
   //  extensions
   bool CheckExtension(const char*);
