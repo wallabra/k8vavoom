@@ -334,7 +334,6 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 //
 //==========================================================================
 void VOpenGLDrawer::RestoreDepthFunc () {
-  // advanced renderer doesn't support reverse z yet
   glDepthFunc(!CanUseRevZ() ? GL_LEQUAL : GL_GEQUAL);
 }
 
