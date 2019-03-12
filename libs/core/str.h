@@ -566,6 +566,12 @@ public:
     return false;
   }
 
+  static inline __attribute__((pure)) bool isAlphaAscii (char ch) {
+    return
+      (ch >= 'A' && ch <= 'Z') ||
+      (ch >= 'a' && ch <= 'z');
+  }
+
   // returns length of the following utf-8 sequence from its first char, or -1 for invalid first char
   static inline __attribute__((pure)) int utf8CodeLen (char ch) {
     if ((vuint8)ch < 0x80) return 1;
