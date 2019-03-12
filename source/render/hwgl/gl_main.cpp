@@ -39,6 +39,8 @@ VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVA
 static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_dbg_force_reverse_z("gl_dbg_force_reverse_z", false, "Force-enable reverse z when fp depth buffer is not available.", CVAR_PreInit);
+static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, "Ignore GPU blacklist, and don't turn off features?", CVAR_PreInit);
+static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
 
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite interpolation mode.", CVAR_Archive);
@@ -60,6 +62,33 @@ VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump avai
 VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less than this will not be drawn).", CVAR_Archive);
 
 static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
+
+
+//==========================================================================
+//
+//  CheckVendorString
+//
+//  both strings should be lower-cased
+//  `vs` is what we got from OpenGL
+//  `fuckedName` is what we are looking for
+//
+//==========================================================================
+static bool CheckVendorString (VStr vs, const char *fuckedName) {
+  if (vs.length() == 0) return false;
+  if (!fuckedName || !fuckedName[0]) return false;
+  const int fnlen = (int)strlen(fuckedName);
+  //GCon->Logf(NAME_Init, "VENDOR: <%s>", *vs);
+  while (vs.length()) {
+    auto idx = vs.indexOf(fuckedName);
+    if (idx < 0) break;
+    bool startok = (idx == 0 || !VStr::isAlphaAscii(vs[idx-1]));
+    bool endok = (idx+fnlen >= vs.length() || !VStr::isAlphaAscii(vs[idx+fnlen]));
+    if (startok && endok) return true;
+    vs.chopLeft(idx+fnlen);
+    //GCon->Logf(NAME_Init, "  XXX: <%s>", *vs);
+  }
+  return false;
+}
 
 
 //==========================================================================
@@ -401,7 +430,7 @@ void VOpenGLDrawer::InitResolution () {
   if (gl_dump_vendor) {
     GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
     GCon->Logf(NAME_Init, "GL_RENDERER: %s", glGetString(GL_RENDERER));
-    GCon->Logf(NAME_Init, "GL_VERSION: %s", glGetString (GL_VERSION));
+    GCon->Logf(NAME_Init, "GL_VERSION: %s", glGetString(GL_VERSION));
   }
 
   if (gl_dump_extensions) {
@@ -409,6 +438,26 @@ void VOpenGLDrawer::InitResolution () {
     TArray<VStr> Exts;
     VStr((char *)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
+  }
+
+  bool isShittyGPU = false;
+  {
+    const char *vcstr = (const char *)glGetString(GL_VENDOR);
+    VStr vs = VStr(vcstr).toLowerCase();
+    isShittyGPU = CheckVendorString(vs, "intel");
+    if (isShittyGPU) {
+      GCon->Log(NAME_Init, "Sorry, but your GPU seems to be in my glitchy list; turning off some advanced features");
+      GCon->Logf(NAME_Init, "GPU Vendor: %s", vcstr);
+      if (gl_dbg_ignore_gpu_blacklist) {
+        GCon->Log(NAME_Init, "User command is to ignore blacklist; I shall obey!");
+        isShittyGPU = false;
+      }
+    }
+  }
+
+  if (!isShittyGPU && gl_dbg_force_gpu_blacklisting) {
+    GCon->Log(NAME_Init, "User command is to blacklist GPU; I shall obey!");
+    isShittyGPU = true;
   }
 
   // check the maximum texture size
@@ -425,18 +474,24 @@ void VOpenGLDrawer::InitResolution () {
   glGetIntegerv(GL_MAJOR_VERSION, &major);
   glGetIntegerv(GL_MINOR_VERSION, &minor);
   GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
-  if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
-    //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-    p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
-    if (p_glClipControl) {
-      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
-      useReverseZ = true;
-      if (gl_disable_reverse_z) {
-        GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
-        useReverseZ = false;
+  if (!isShittyGPU) {
+    // normal GPUs
+    if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
+      //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+      p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
+      if (p_glClipControl) {
+        GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
+        useReverseZ = true;
+        if (gl_disable_reverse_z) {
+          GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
+          useReverseZ = false;
+        }
       }
+    } else {
+      p_glClipControl = nullptr;
     }
   } else {
+    GCon->Logf(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
     p_glClipControl = nullptr;
   }
 
@@ -746,9 +801,15 @@ void VOpenGLDrawer::InitResolution () {
   glBindTexture(GL_TEXTURE_2D, mainFBODepthStencilTid);
 
   GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
+
   if (major >= 3 && gl_enable_floating_zbuffer) {
-    depthStencilFormat = GL_DEPTH32F_STENCIL8;
-    GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
+    if (isShittyGPU) {
+      GCon->Logf(NAME_Init, "OpenGL: fp depth buffer is turned off for your GPU");
+      useReverseZ = false; // just in case
+    } else {
+      depthStencilFormat = GL_DEPTH32F_STENCIL8;
+      GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
+    }
   } else {
     if (useReverseZ) {
       if (gl_dbg_force_reverse_z) {

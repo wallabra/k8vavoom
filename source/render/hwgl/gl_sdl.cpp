@@ -139,12 +139,12 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
     if (r_vsync_adaptive && !skipAdaptiveVSync) {
       if (SDL_GL_SetSwapInterval(-1) == -1) {
         if (!firstTime) {
-          GCon->Log("OpenGL: adaptive vsync failed, falling back to normal vsync");
+          GCon->Log(NAME_Init, "OpenGL: adaptive vsync failed, falling back to normal vsync");
           skipAdaptiveVSync = true;
         }
         SDL_GL_SetSwapInterval(1);
       } else {
-        GCon->Log("OpenGL: using adaptive vsync");
+        GCon->Log(NAME_Init, "OpenGL: using adaptive vsync");
       }
     } else {
       SDL_GL_SetSwapInterval(1);
