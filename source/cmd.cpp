@@ -657,7 +657,19 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
 
   // Cvar
   if (FL_HasPreInit(Args[0])) return;
-  if (VCvar::Command(Args)) return;
+  // this hack allows to set cheating variables from command line or autoexec
+  {
+    bool oldCheating = VCvar::GetCheating();
+    VBasePlayer *plr = findPlayer();
+    if (!plr) VCvar::SetCheating(VCvar::GetBool("sv_cheats"));
+    //GCon->Logf("sv_cheats: %d; plr is %shere", (int)VCvar::GetBool("sv_cheats"), (plr ? "" : "not "));
+    bool doneCvar = VCvar::Command(Args);
+    if (!plr) VCvar::SetCheating(oldCheating);
+    if (doneCvar) {
+      if (!plr) VCvar::Unlatch();
+      return;
+    }
+  }
 
   // command defined with ALIAS
   for (VAlias *a = Alias; a; a = a->Next) {

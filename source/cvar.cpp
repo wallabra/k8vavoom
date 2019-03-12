@@ -337,6 +337,21 @@ void VCvar::SetCheating (bool new_state) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+bool VCvar::GetCheating () {
+  return Cheating;
+  /*
+  if (!Cheating) {
+    for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+      for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+        if (cvar->Flags&CVAR_Cheat) cvar->DoSet(cvar->DefaultString);
+      }
+    }
+  }
+  */
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VCvar::CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
   if (var_name == NAME_None) return;
   VCvar *cvar = FindVariable(*var_name);

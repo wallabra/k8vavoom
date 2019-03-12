@@ -107,6 +107,7 @@ public:
 
   static void Unlatch ();
   static void SetCheating (bool);
+  static bool GetCheating ();
 
   static VCvar *FindVariable (const char *name);
 
