@@ -647,8 +647,6 @@ protected:
   GLint maxTexSize;
   bool texturesGenerated;
 
-  GLuint particle_texture;
-
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
 
@@ -660,6 +658,7 @@ protected:
   //GLenum mipfilter;
   GLenum ClampToEdge;
   GLfloat max_anisotropy; // 1.0: off
+  bool anisotropyExists;
 
   //GLenum spr_maxfilter;
   //GLenum spr_mipfilter;

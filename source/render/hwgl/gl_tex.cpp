@@ -49,36 +49,9 @@ static const vuint8 ptex[8][8] = {
 //
 //==========================================================================
 void VOpenGLDrawer::GenerateTextures () {
-  guard(VOpenGLDrawer::GenerateTextures);
-  rgba_t pbuf[8][8];
-
   glGenTextures(NUM_BLOCK_SURFS, lmap_id);
   glGenTextures(NUM_BLOCK_SURFS, addmap_id);
-  glGenTextures(1, &particle_texture);
-
-  for (int j = 0; j < 8; ++j) {
-    for (int i = 0; i < 8; ++i) {
-      pbuf[j][i].r = 255;
-      pbuf[j][i].g = 255;
-      pbuf[j][i].b = 255;
-      pbuf[j][i].a = vuint8(ptex[j][i]*255);
-    }
-  }
-  VTexture::PremultiplyRGBAInPlace((vuint8 *)pbuf, 8, 8);
-  VTexture::SmoothEdges((vuint8 *)pbuf, 8, 8);
-
-  glBindTexture(GL_TEXTURE_2D, particle_texture);
-  // set up texture anisotropic filtering
-  if (max_anisotropy > 1.0f) {
-    //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(max_anisotropy));
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
-      (GLfloat)(gl_texture_filter_anisotropic < 1 ? 1.0f : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
-    );
-  }
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbuf);
-
   texturesGenerated = true;
-  unguard;
 }
 
 
@@ -116,7 +89,6 @@ void VOpenGLDrawer::DeleteTextures () {
     FlushTextures();
     glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
     glDeleteTextures(NUM_BLOCK_SURFS, addmap_id);
-    glDeleteTextures(1, &particle_texture);
     texturesGenerated = false;
   }
 
@@ -288,7 +260,7 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (max_anisotropy > 1.0f) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
 
   unguard;
 }

@@ -374,7 +374,8 @@ void VOpenGLDrawer::RestoreDepthFunc () {
 //==========================================================================
 void VOpenGLDrawer::SetupTextureFiltering (int level) {
   // for anisotropy, we require trilinear filtering
-  if (max_anisotropy > 1) {
+  if (anisotropyExists) {
+    /*
     if (gl_texture_filter_anisotropic > 1) {
       // turn on trilinear filtering
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -386,7 +387,13 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
       return;
     }
     // we have anisotropy, but it is turned off
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1); // 1 is minimum, i.e. "off"
+    //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1); // 1 is minimum, i.e. "off"
+    */
+    // but newer OpenGL versions allows anisotropy filtering even for "nearest" mode,
+    // so setup it in any case
+    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
+      (gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
+    );
   }
   int mipfilter, maxfilter;
   // setup filtering
@@ -522,13 +529,14 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   // anisotropy extension
-  max_anisotropy = 1.0;
+  max_anisotropy = 1.0f;
   if (ext_anisotropy && CheckExtension("GL_EXT_texture_filter_anisotropic")) {
     glGetFloatv(GLenum(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT), &max_anisotropy);
     if (max_anisotropy < 1) max_anisotropy = 1;
-    GCon->Logf(NAME_Init, "Max anisotropy %g", (double)max_anisotropy);
+    GCon->Logf(NAME_Init, "Max anisotropy: %g", (double)max_anisotropy);
   }
   gl_max_anisotropy = (int)max_anisotropy;
+  anisotropyExists = (gl_max_anisotropy > 1);
 
   // clamp to edge extension
   if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp")) {

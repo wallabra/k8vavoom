@@ -73,7 +73,7 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (max_anisotropy > 1.0f) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
   */
   p_glUseProgramObjectARB(DrawShadowProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
