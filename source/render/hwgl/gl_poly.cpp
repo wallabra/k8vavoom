@@ -41,8 +41,9 @@ static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!
 static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", CVAR_PreInit);
-// this makes shadows glitch for some reason (investigate!)
+// this makes shadows glitch for some reason with fp z-buffer (investigate!)
 static VCvarB gl_dbg_adv_render_offset_shadow_volume("gl_dbg_adv_render_offset_shadow_volume", false, "Offset shadow volumes?", CVAR_PreInit);
+static VCvarB gl_dbg_adv_render_never_offset_shadow_volume("gl_dbg_adv_render_never_offset_shadow_volume", false, "Never offseting shadow volumes?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0/*CVAR_Archive*/);
 
@@ -885,18 +886,22 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
   if (!CanUseRevZ()) {
     // normal
     //k8: this seems to be unnecessary
-    if (gl_dbg_adv_render_offset_shadow_volume) {
-      glPolygonOffset(1.0f, 10.0f);
-      glEnable(GL_POLYGON_OFFSET_FILL);
+    if (!gl_dbg_adv_render_never_offset_shadow_volume) {
+      if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer) {
+        glPolygonOffset(1.0f, 10.0f);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+      }
     }
     glDepthFunc(GL_LESS);
     //glDepthFunc(GL_LEQUAL);
   } else {
     // reversed
     //k8: this seems to be unnecessary
-    if (gl_dbg_adv_render_offset_shadow_volume) {
-      glPolygonOffset(-1.0f, -10.0f);
-      glEnable(GL_POLYGON_OFFSET_FILL);
+    if (!gl_dbg_adv_render_never_offset_shadow_volume) {
+      if (gl_dbg_adv_render_offset_shadow_volume) {
+        glPolygonOffset(-1.0f, -10.0f);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+      }
     }
     glDepthFunc(GL_GREATER);
     //glDepthFunc(GL_GEQUAL);
@@ -915,7 +920,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
 //==========================================================================
 void VOpenGLDrawer::EndLightShadowVolumes () {
   RestoreDepthFunc();
-  if (gl_dbg_adv_render_offset_shadow_volume) {
+  // meh, just turn if off each time
+  /*if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer)*/ {
     glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(0.0f, 0.0f);
   }

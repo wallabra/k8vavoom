@@ -660,6 +660,8 @@ protected:
   GLfloat max_anisotropy; // 1.0: off
   bool anisotropyExists;
 
+  bool usingFPZBuffer;
+
   //GLenum spr_maxfilter;
   //GLenum spr_mipfilter;
 
