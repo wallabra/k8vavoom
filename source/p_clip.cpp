@@ -1298,23 +1298,25 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6], const TVec &Curr
 //
 //==========================================================================
 bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const {
-  //if (!ClipHead) return true; // no clip nodes yet
   if (CurrLightRadius < 2) return false;
   const int slight = CheckSubsectorLight(sub, CurrLightPos, CurrLightRadius);
   if (!slight) return false;
+  if (slight > 0 && !ClipHead) return true; // no clip nodes yet
   const drawseg_t *ds = region->lines;
   for (auto count = sub->numlines; count--; ++ds) {
     if (slight < 0) {
       if (!ds->seg->SphereTouches(CurrLightPos, CurrLightRadius)) continue;
     }
-    const TVec &v1 = *ds->seg->v1;
-    const TVec &v2 = *ds->seg->v2;
+    // we have to check even "invisible" segs here, 'cause we need them all
+    const TVec *v1, *v2;
     if (ds->seg->PointOnSide(Origin)) {
-      // viewer is in back side or on plane
-      //if (IsRangeVisible(v1, v2)) return true;
+      v1 = ds->seg->v2;
+      v2 = ds->seg->v1;
     } else {
-      if (IsRangeVisible(v2, v1)) return true;
+      v1 = ds->seg->v1;
+      v2 = ds->seg->v2;
     }
+    if (IsRangeVisible(*v2, *v1)) return true;
   }
   return false;
 }
@@ -1326,22 +1328,25 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsec
 //
 //==========================================================================
 bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const {
-  //if (!ClipHead) return true; // no clip nodes yet
   if (CurrLightRadius < 2) return false;
   const int slight = CheckSubsectorLight(sub, CurrLightPos, CurrLightRadius);
   if (!slight) return false;
+  if (slight > 0 && !ClipHead) return true; // no clip nodes yet
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     if (slight < 0) {
       if (!seg->SphereTouches(CurrLightPos, CurrLightRadius)) continue;
     }
-    const TVec &v1 = *seg->v1;
-    const TVec &v2 = *seg->v2;
+    // we have to check even "invisible" segs here, 'cause we need them all
+    const TVec *v1, *v2;
     if (seg->PointOnSide(Origin)) {
-      //if (IsRangeVisible(v1, v2)) return true;
+      v1 = seg->v2;
+      v2 = seg->v1;
     } else {
-      if (IsRangeVisible(v2, v1)) return true;
+      v1 = seg->v1;
+      v2 = seg->v2;
     }
+    if (IsRangeVisible(*v2, *v1)) return true;
   }
   return false;
 }
@@ -1358,7 +1363,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
   // no need to check light radius, it is already done
   const line_t *ldef = seg->linedef;
   if (!ldef) return; // miniseg should not clip
-  if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
+  //if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane (see below)
   if (!skipSphereCheck && !seg->SphereTouches(CurrLightPos, CurrLightRadius)) return;
 
   if (clip_skip_slopes_1side) {
@@ -1372,17 +1377,29 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
     }
   }
 
+  //k8: i am not sure here, but as we are rendering all sides for shadow volumes,
+  //    we can clip with more walls here
+  const TVec *v1, *v2;
+  if (seg->PointOnSide(Origin)) {
+    v1 = seg->v2;
+    v2 = seg->v1;
+  } else {
+    v1 = seg->v1;
+    v2 = seg->v2;
+  }
+  /*
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
+  */
 
-  if (!MirrorCheck(Mirror, v1, v2)) return;
+  if (!MirrorCheck(Mirror, *v1, *v2)) return;
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
     if (!IsSegAClosedSomething(*this, seg, &CurrLightPos, &CurrLightRadius)) return;
   }
 
-  AddClipRange(v2, v1);
+  AddClipRange(*v2, *v1);
 }
 
 
@@ -1402,6 +1419,12 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec
     for (int count = sub->numlines; count--; ++seg) {
       if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
       CheckLightAddClipSeg(seg, CurrLightPos, CurrLightRadius, Mirror, (segcheck > 0));
+    }
+  } else if (doPoly) {
+    // outside
+    const seg_t *seg = &Level->Segs[sub->firstline];
+    for (int count = sub->numlines; count--; ++seg) {
+      if (doPoly && !IsGoodSegForPoly(*this, seg)) return;
     }
   }
 
