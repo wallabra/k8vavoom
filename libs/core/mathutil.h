@@ -50,6 +50,12 @@ static __attribute__((unused)) inline bool isInfF (const float v) {
 }
 #endif
 
+// this turns all nan/inf values into positive zero
+static __attribute__((unused)) inline void killInfNaNF (float &f) {
+  vint32 fi = *(vint32 *)&f;
+  fi &= (((fi>>23)&0xff)-0xff)>>31;
+}
+
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
