@@ -987,6 +987,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) co
     // viewer is inside the box
     return true;
   }
+  if (ClipIsFull()) return false;
   if (checkFrustum && clip_frustum && clip_frustum_bbox && Frustum.isValid()) {
     if (!Frustum.checkBox(BBox, clip_frustum_check_mask)) return false;
   }
@@ -1004,6 +1005,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) co
 //==========================================================================
 bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const {
   if (!clip_enabled || !clip_subregion) return true;
+  if (ClipIsFull()) return false;
   int sfres = 1;
   if (clip_frustum && clip_frustum_region /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
@@ -1032,6 +1034,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //==========================================================================
 bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped) {
   if (!clip_enabled) return true;
+  if (ClipIsFull()) return false;
   int sfres = 1;
   if (clip_frustum && clip_frustum_sub /*&& Frustum.isValid()*/) {
     sfres = CheckSubsectorFrustum(sub);
@@ -1055,10 +1058,26 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumCl
   if (ClipIsEmpty() && sfres > 0) return true; // no clip nodes yet
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
+    /*
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
     if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
     if (IsRangeVisible(v2, v1)) {
+      if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
+        return true;
+      }
+    }
+    */
+    //k8: i am not sure here, but why don't check both sides?
+    const TVec *v1, *v2;
+    if (seg->PointOnSide(Origin)) {
+      v1 = seg->v2;
+      v2 = seg->v1;
+    } else {
+      v1 = seg->v1;
+      v2 = seg->v2;
+    }
+    if (IsRangeVisible(*v2, *v1)) {
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
         return true;
       }
@@ -1111,6 +1130,13 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     {
       AddClipRange(v1, v2);
       //GCon->Logf("get lost, silly line #%d!", (int)(ptrdiff_t)(ldef-Level->Lines));
+      return;
+    }
+    // if this is two-sided line, clip with it too
+    if (seg->backsector && seg->backsector != seg->frontsector &&
+        (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED)
+    {
+      if (IsSegAClosedSomething(*this, seg)) AddClipRange(v1, v2);
     }
     return;
   }
@@ -1158,6 +1184,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 //==========================================================================
 void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror) {
   if (!clip_enabled) return;
+  if (ClipIsFull()) return;
 
   bool doPoly = (sub->poly && clip_with_polyobj);
 
