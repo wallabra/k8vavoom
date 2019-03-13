@@ -716,7 +716,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq,
     {
       float distSq = DotProduct(org, seg->normal)-seg->dist;
       distSq *= distSq;
-      if (distSq < radiusSq) continue;
+      if (distSq >= radiusSq) continue;
     }
     // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
