@@ -90,17 +90,11 @@ extern "C" {
 //==========================================================================
 VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
-  , LightVis(nullptr)
 {
-  guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
   NeedsInfiniteFarClip = true;
   mIsAdvancedRenderer = true;
   showCreateWorldSurfProgress = false; // just in case
   updateWorldCheckVisFrame = false; // we don't want it
-
-  LightVis = new vuint8[VisSize];
-  LightBspVis = new vuint8[VisSize];
-  unguard;
 }
 
 
@@ -110,136 +104,6 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
 //
 //==========================================================================
 VAdvancedRenderLevel::~VAdvancedRenderLevel () {
-  delete[] LightVis;
-  LightVis = nullptr;
-  delete[] LightBspVis;
-  LightBspVis = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::NewBSPVisibilityFrame
-//
-//==========================================================================
-void VRenderLevelShared::NewBSPVisibilityFrame () {
-  if (bspVisRadius) {
-    if (++bspVisRadiusFrame == 0) {
-      bspVisRadiusFrame = 1;
-      memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
-    }
-  } else {
-    bspVisRadiusFrame = 0;
-  }
-}
-
-
-//==========================================================================
-//
-//  isCircleTouchingLine
-//
-//==========================================================================
-static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq, const TVec &v0, const TVec &v1) {
-  const TVec s0qp = corg-v0;
-  if (s0qp.length2DSquared() <= radiusSq) return true;
-  if ((corg-v1).length2DSquared() <= radiusSq) return true;
-  const TVec s0s1 = v1-v0;
-  const float a = s0s1.dot2D(s0s1);
-  if (!a) return false; // if you haven't zero-length segments omit this, as it would save you 1 _mm_comineq_ss() instruction and 1 memory fetch
-  const float b = s0s1.dot2D(s0qp);
-  const float t = b/a; // length of projection of s0qp onto s0s1
-  if (t >= 0.0f && t <= 1.0f) {
-    const float c = s0qp.dot2D(s0qp);
-    const float r2 = c-a*t*t;
-    //print("a=%s; t=%s; r2=%s; rsq=%s", a, t, r2, radiusSq);
-    return (r2 <= radiusSq); // true if collides
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::CheckBSPVisibilitySub
-//
-//==========================================================================
-bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub) {
-  const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
-  // rendered means "visible"
-  if (BspVis[csubidx>>3]&(1<<(csubidx&7))) return true;
-  // if we came into already visited subsector, abort flooding (and return failure)
-  if (bspVisRadius[csubidx].framecount == bspVisRadiusFrame) return false;
-  // recurse into neighbour subsectors
-  bspVisRadius[csubidx].framecount = bspVisRadiusFrame; // mark as visited
-  if (currsub->numlines == 0) return false;
-  const seg_t *seg = &Level->Segs[currsub->firstline];
-  for (int count = currsub->numlines; count--; ++seg) {
-    // skip non-portals
-    const line_t *ldef = seg->linedef;
-    if (ldef) {
-      // not a miniseg; check if linedef is passable
-      if (!(ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX))) continue; // solid line
-    } // minisegs are portals
-    // we should have partner seg
-    if (!seg->partner || seg->partner == seg || seg->partner->front_sub == currsub) continue;
-    // check if this seg is touching our sphere
-    if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
-    // ok, it is touching, recurse
-    if (CheckBSPVisibilitySub(org, radiusSq, seg->partner->front_sub)) {
-      //GCon->Logf("RECURSE HIT!");
-      return true;
-    }
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::CheckBSPVisibility
-//
-//==========================================================================
-bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub) {
-  if (!Level) return false; // just in case
-  if (!sub) {
-    sub = Level->PointInSubsector(org);
-    if (!sub) return false;
-  }
-  const unsigned subidx = (unsigned)(ptrdiff_t)(sub-Level->Subsectors);
-  // check potential visibility
-  /*
-  if (hasPVS) {
-    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    const unsigned leafnum = Level->PointInSubsector(l->origin)-Level->Subsectors;
-    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-  }
-  */
-/*
-  // already checked?
-  if (bspVisRadius[subidx].framecount == bspVisRadiusFrame) {
-    if (bspVisRadius[subidx].radius <= radius) return !!bspVisRadius[subidx].vis;
-  }
-  // mark as "checked"
-  bspVisRadius[subidx].framecount = bspVisRadiusFrame;
-  bspVisRadius[subidx].radius = radius;
-  // rendered means "visible"
-  if (BspVis[subidx>>3]&(1<<(subidx&7))) {
-    bspVisRadius[subidx].radius = 1e12; // big!
-    bspVisRadius[subidx].vis = BSPVisInfo::VISIBLE;
-    return true;
-  }
-*/
-  // rendered means "visible"
-  if (BspVis[subidx>>3]&(1<<(subidx&7))) return true;
-
-  // use floodfill to determine (rough) potential visibility
-  NewBSPVisibilityFrame();
-  if (!bspVisRadius) {
-    bspVisRadiusFrame = 1;
-    bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
-    memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
-  }
-  return CheckBSPVisibilitySub(org, radius*radius, sub);
 }
 
 
@@ -384,10 +248,12 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         }
       }
 
+      /*
       if (r_advlight_flood_check && !CheckBSPVisibility(l->origin, l->radius)) {
         //GCon->Logf("DYNAMIC DROP: visibility check");
         continue;
       }
+      */
       /*
       if (rlightraduisSightSq) {
         if (/ *dlenSq* /Delta.length2DSquared() > rlightraduisSightSq) {

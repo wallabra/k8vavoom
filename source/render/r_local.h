@@ -402,6 +402,16 @@ protected:
   BSPVisInfo *bspVisRadius;
   vuint32 bspVisRadiusFrame;
 
+  VViewClipper LightClip;
+  vuint8 *LightVis;
+  vuint8 *LightBspVis;
+  bool HasLightIntersection; // set by `BuildLightVis()`
+
+  bool doShadows; // true: don't do more checks
+  bool seen1SWall;
+  bool seen2SWall;
+  bool hasAnyLitSurfaces;
+
 protected:
   void NewBSPVisibilityFrame ();
   bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
@@ -421,6 +431,16 @@ protected:
 
   void UpdateSubsectorBBox (int num, float *bbox);
   void RecalcWorldBBoxes (int bspnum, float *bbox);
+
+  // this two is using to check if light can cast any shadow (and if it is visible at all)
+  // note that this should be called with filled `BspVis`
+  // if we will use this for dynamic lights, they will have one-frame latency
+  void CheckLightSubsector (const subsector_t *sub);
+  void BuildLightVis (int bspnum, const float *bbox);
+  // main entry point for lightvis calculation
+  // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
+  // returns `false` if the light is invisible
+  bool CalcLightVis (const TVec &org, const float radius);
 
   // yes, non-virtual
   // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)
@@ -643,12 +663,8 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VAdvancedRenderLevel : public VRenderLevelShared {
 private:
-  VViewClipper LightClip;
-  vuint8 *LightVis;
-  vuint8 *LightBspVis;
   vuint32 CurrLightColour;
   TArray<VEntity *> mobjAffected; // built in `ResetMobjsLightCount()`
-  bool HasLightIntersection; // set by `BuildLightVis()`
   int LightsRendered;
 
 protected:
@@ -671,8 +687,6 @@ protected:
   virtual void QueueWorldSurface (seg_t*, surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
-  void AddClipSubsector (const subsector_t *sub);
-  void BuildLightVis (int bspnum, const float *bbox);
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, bool LightCanCross);
   void RenderShadowLine (drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
