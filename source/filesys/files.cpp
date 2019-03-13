@@ -794,8 +794,6 @@ void AddAutoloadRC (const VStr &aubasedir) {
 //
 //==========================================================================
 static void AddGameDir (const VStr &basedir, const VStr &dir) {
-  guard(AddGameDir);
-
   VStr bdx = basedir;
   if (bdx.length() == 0) bdx = "./";
   bdx = bdx+"/"+dir;
@@ -874,7 +872,6 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   VFilesDir *info = new VFilesDir(bdx);
   SearchPaths.Append(info);
   */
-  unguard;
 }
 
 
@@ -884,11 +881,9 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 //
 //==========================================================================
 static void AddGameDir (const VStr &dir) {
-  guard(AddGameDir);
   AddGameDir(fl_basedir, dir);
   if (fl_savedir.IsNotEmpty()) AddGameDir(fl_savedir, dir);
   fl_gamedir = dir;
-  unguard;
 }
 
 
@@ -941,9 +936,7 @@ static VStr FindMainWad (const VStr &MainWad) {
 //
 //==========================================================================
 static void SetupGameDir (const VStr &dirname) {
-  guard(SetupGameDir);
   AddGameDir(dirname);
-  unguard;
 }
 
 
@@ -953,7 +946,6 @@ static void SetupGameDir (const VStr &dirname) {
 //
 //==========================================================================
 static void ParseBase (const VStr &name, const VStr &mainiwad) {
-  guard(ParseBase);
   TArray<version_t> games;
   int selectedGame = -1;
   VStr UseName;
@@ -1145,7 +1137,6 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   for (int f = 0; f < gmi.BaseDirs.length(); ++f) AddGameDir(gmi.BaseDirs[f]);
 
   SetupGameDir(gmi.GameDir);
-  unguard;
 }
 
 
@@ -1155,7 +1146,6 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
 //
 //==========================================================================
 static void RenameSprites () {
-  guard(RenameSprites);
   VStream *Strm = FL_OpenFileRead("sprite_rename.txt");
   if (!Strm) return;
 
@@ -1203,7 +1193,6 @@ static void RenameSprites () {
     if (RenameAll || i == IWadIndex) SearchPaths[i]->RenameSprites(Renames, LumpRenames);
     SearchPaths[i]->RenameSprites(AlwaysRenames, AlwaysLumpRenames);
   }
-  unguard;
 }
 
 
@@ -1262,7 +1251,6 @@ void FL_InitOptions () {
 //
 //==========================================================================
 void FL_Init () {
-  guard(FL_Init);
   const char *p;
   VStr mainIWad = VStr();
   int wmap1 = -1, wmap2 = -1; // warp
@@ -1583,8 +1571,6 @@ void FL_Init () {
   } else if (doStartMap && fsys_warp_cmd.isEmpty() && mapinfoFound) {
     fsys_warp_cmd = "__k8_run_first_map";
   }
-
-  unguard;
 }
 
 
@@ -1594,7 +1580,6 @@ void FL_Init () {
 //
 //==========================================================================
 void FL_Shutdown () {
-  guard(FL_Shutdown);
   for (int i = 0; i < SearchPaths.length(); ++i) {
     delete SearchPaths[i];
     SearchPaths[i] = nullptr;
@@ -1605,7 +1590,6 @@ void FL_Shutdown () {
   fl_gamedir.Clean();
   wadfiles.Clear();
   IWadDirs.Clear();
-  unguard;
 }
 
 
@@ -1615,12 +1599,10 @@ void FL_Shutdown () {
 //
 //==========================================================================
 bool FL_FileExists (const VStr &fname) {
-  guard(FL_FileExists);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     if (SearchPaths[i]->FileExists(fname)) return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -1630,7 +1612,6 @@ bool FL_FileExists (const VStr &fname) {
 //
 //==========================================================================
 void FL_CreatePath (const VStr &Path) {
-  guard(FL_CreatePath);
   TArray<VStr> spp;
   Path.SplitPath(spp);
   if (spp.length() == 0 || (spp.length() == 1 && spp[0] == "/")) return;
@@ -1656,7 +1637,6 @@ void FL_CreatePath (const VStr &Path) {
     }
   }
   */
-  unguard;
 }
 
 
@@ -1666,13 +1646,11 @@ void FL_CreatePath (const VStr &Path) {
 //
 //==========================================================================
 VStream *FL_OpenFileRead (const VStr &Name) {
-  guard(FL_OpenFileRead);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
     if (Strm) return Strm;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -1682,11 +1660,9 @@ VStream *FL_OpenFileRead (const VStr &Name) {
 //
 //==========================================================================
 VStream *FL_OpenSysFileRead (const VStr &Name) {
-  guard(FL_OpenSysFileRead);
   FILE *File = fopen(*Name, "rb");
   if (!File) return nullptr;
   return new VStreamFileReader(File, GCon, Name);
-  unguard;
 }
 
 
@@ -1703,15 +1679,11 @@ protected:
 
 public:
   VStreamFileWriter (FILE *InFile, FOutputDevice *InError, const VStr &afname) : File(InFile), Error(InError), fname(afname) {
-    guard(VStreamFileWriter::VStreamFileReader);
     bLoading = false;
-    unguard;
   }
 
   virtual ~VStreamFileWriter () override {
-    //guard(VStreamFileWriter::~VStreamFileWriter);
     if (File) Close();
-    //unguard;
   }
 
   virtual const VStr &GetName () const override { return fname; }
@@ -1771,7 +1743,6 @@ public:
 //
 //==========================================================================
 VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
-  guard(FL_OpenFileWrite);
   VStr tmpName;
   if (isFullName) {
     tmpName = Name;
@@ -1786,7 +1757,6 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
   FILE *File = fopen(*tmpName, "wb");
   if (!File) return nullptr;
   return new VStreamFileWriter(File, GCon, tmpName);
-  unguard;
 }
 
 
@@ -1832,15 +1802,13 @@ VStream *FL_OpenSysFileWrite (const VStr &Name) {
 //  VStreamFileReader
 //
 //==========================================================================
-VStreamFileReader::VStreamFileReader(FILE *InFile, FOutputDevice *InError, const VStr &afname)
+VStreamFileReader::VStreamFileReader (FILE *InFile, FOutputDevice *InError, const VStr &afname)
   : File(InFile)
   , Error(InError)
   , fname(afname)
 {
-  guard(VStreamFileReader::VStreamFileReader);
   fseek(File, 0, SEEK_SET);
   bLoading = true;
-  unguard;
 }
 
 

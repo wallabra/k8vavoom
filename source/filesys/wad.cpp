@@ -57,7 +57,6 @@ static TMap<VStr, int> fullNameTexLumpChecked;
 //
 //==========================================================================
 void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
-  guard(W_AddFile);
   int wadtime;
 
   wadtime = Sys_FileTime(FileName);
@@ -98,7 +97,6 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
     }
   }
 #endif
-  unguard;
 }
 
 
@@ -108,7 +106,6 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
 //
 //==========================================================================
 void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName, VStream *GwaStrm) {
-  guard(W_AddFileFromZip);
   // add WAD file
   wadfiles.Append(WadName);
   VWadFile *Wad = new VWadFile;
@@ -126,7 +123,6 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
     SearchPaths.Append(new VWadFile);
   }
 #endif
-  unguard;
 }
 
 
@@ -147,7 +143,6 @@ int W_StartAuxiliary () {
 //
 //==========================================================================
 int W_OpenAuxiliary (const VStr &FileName) {
-  guard(W_OpenAuxiliary);
   W_CloseAuxiliary();
   AuxiliaryIndex = SearchPaths.length();
 #ifdef VAVOOM_USE_GWA
@@ -165,7 +160,6 @@ int W_OpenAuxiliary (const VStr &FileName) {
   wadfiles.setLength(olen);
 #endif
   return MAKE_HANDLE(AuxiliaryIndex, 0);
-  unguard;
 }
 
 
@@ -176,7 +170,6 @@ int W_OpenAuxiliary (const VStr &FileName) {
 //==========================================================================
 /*
 int W_AddAuxiliary (const VStr &FileName) {
-  guard(W_AddAuxiliary);
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
   int residx = SearchPaths.length();
   VStream *Strm = FL_OpenFileRead(FileName);
@@ -188,7 +181,6 @@ int W_AddAuxiliary (const VStr &FileName) {
   W_AddFileFromZip(FileName, Strm);
   wadfiles.setLength(olen);
   return MAKE_HANDLE(residx, 0);
-  unguard;
 }
 */
 
@@ -274,7 +266,6 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
 //
 //==========================================================================
 void W_CloseAuxiliary () {
-  guard(W_CloseAuxiliary);
   if (AuxiliaryIndex) {
     // close all additional files
     for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) SearchPaths[f]->Close();
@@ -285,7 +276,6 @@ void W_CloseAuxiliary () {
     SearchPaths.setLength(AuxiliaryIndex);
     AuxiliaryIndex = 0;
   }
-  unguard;
 }
 
 
@@ -297,8 +287,6 @@ void W_CloseAuxiliary () {
 //
 //==========================================================================
 int W_CheckNumForName (VName Name, EWadNamespace NS) {
-  guard(W_CheckNumForName);
-
   if (Name == NAME_None) return -1;
 
   for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
@@ -317,7 +305,6 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 
   // not found
   return -1;
-  unguard;
 }
 
 
@@ -344,12 +331,10 @@ int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
 //
 //==========================================================================
 int W_GetNumForName (VName Name, EWadNamespace NS) {
-  guard(W_GetNumForName);
   check(Name != NAME_None);
   int i = W_CheckNumForName(Name, NS);
   if (i == -1) Sys_Error("W_GetNumForName: \"%s\" not found!", *Name);
   return i;
-  unguard;
 }
 
 
@@ -361,13 +346,11 @@ int W_GetNumForName (VName Name, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
-  guard(W_CheckNumForNameInFile);
   if (File < 0 || File >= SearchPaths.length()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS);
   if (i >= 0) return MAKE_HANDLE(File, i);
   // not found
   return -1;
-  unguard;
 }
 
 
@@ -379,13 +362,11 @@ int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
-  guard(W_CheckNumForNameInFile);
   if (File < 0 || File >= SearchPaths.length()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS, true);
   if (i >= 0) return MAKE_HANDLE(File, i);
   // not found
   return -1;
-  unguard;
 }
 
 
@@ -397,14 +378,12 @@ int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForFileName (const VStr &Name) {
-  guard(W_CheckNumForFileName);
   for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForFileName(Name);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
   // not found
   return -1;
-  unguard;
 }
 
 
@@ -488,8 +467,6 @@ static int tryWithExtension (VStr name, const char *ext) {
 //
 //==========================================================================
 int W_CheckNumForTextureFileName (const VStr &Name) {
-  guard(W_CheckNumForTextureFileName);
-
   VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());
   auto ip = fullNameTexLumpChecked.find(loname);
   if (ip) return *ip;
@@ -510,7 +487,6 @@ int W_CheckNumForTextureFileName (const VStr &Name) {
 
   fullNameTexLumpChecked.put(loname, -1);
   return -1;
-  unguard;
 }
 
 
@@ -522,11 +498,9 @@ int W_CheckNumForTextureFileName (const VStr &Name) {
 //
 //==========================================================================
 int W_GetNumForFileName (const VStr &Name) {
-  guard(W_GetNumForFileName);
   int i = W_CheckNumForFileName(Name);
   if (i == -1) Sys_Error("W_GetNumForFileName: %s not found!", *Name);
   return i;
-  unguard;
 }
 
 
@@ -538,12 +512,10 @@ int W_GetNumForFileName (const VStr &Name) {
 //
 //==========================================================================
 int W_LumpLength (int lump) {
-  guard(W_LumpLength);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_LumpLength: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpLength(lumpindex);
-  unguard;
 }
 
 
@@ -553,12 +525,10 @@ int W_LumpLength (int lump) {
 //
 //==========================================================================
 VName W_LumpName (int lump) {
-  guard(W_LumpName);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return NAME_None;
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpName(lumpindex);
-  unguard;
 }
 
 
@@ -568,13 +538,11 @@ VName W_LumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullLumpName (int lump) {
-  guard(W_FullLumpName);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
   return w->GetPrefix()+":"+(w->LumpFileName(lumpindex));
-  unguard;
 }
 
 
@@ -584,13 +552,11 @@ VStr W_FullLumpName (int lump) {
 //
 //==========================================================================
 VStr W_RealLumpName (int lump) {
-  guard(W_RealLumpName);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr();
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
   return w->LumpFileName(lumpindex);
-  unguard;
 }
 
 
@@ -600,11 +566,9 @@ VStr W_RealLumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameForLump (int lump) {
-  guard(W_FullPakNameForLump);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   return w->GetPrefix();
-  unguard;
 }
 
 
@@ -614,11 +578,9 @@ VStr W_FullPakNameForLump (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameByFile (int fidx) {
-  guard(W_FullPakNameByFile);
   if (fidx < 0 || fidx >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = SearchPaths[fidx];
   return w->GetPrefix();
-  unguard;
 }
 
 
@@ -640,11 +602,9 @@ int W_LumpFile (int lump) {
 //
 //==========================================================================
 void W_ReadFromLump (int lump, void *dest, int pos, int size) {
-  guard(W_ReadFromLump);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_ReadFromLump: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   w->ReadFromLump(LUMP_INDEX(lump), dest, pos, size);
-  unguard;
 }
 
 
@@ -654,10 +614,8 @@ void W_ReadFromLump (int lump, void *dest, int pos, int size) {
 //
 //==========================================================================
 VStream *W_CreateLumpReaderNum (int lump) {
-  guard(W_CreateLumpReaderNum);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_CreateLumpReaderNum: %i >= num_wad_files", FILE_INDEX(lump));
   return GET_LUMP_FILE(lump)->CreateLumpReaderNum(LUMP_INDEX(lump));
-  unguard;
 }
 
 
@@ -667,9 +625,7 @@ VStream *W_CreateLumpReaderNum (int lump) {
 //
 //==========================================================================
 VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
-  guard(W_CreateLumpReaderName);
   return W_CreateLumpReaderNum(W_GetNumForName(Name, NS));
-  unguard;
 }
 
 
@@ -691,7 +647,6 @@ int W_StartIterationFromLumpFile (int File) {
 //
 //==========================================================================
 int W_IterateNS (int Prev, EWadNamespace NS) {
-  guard(W_IterateNS);
   if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
@@ -700,7 +655,6 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
-  unguard;
 }
 
 
@@ -710,7 +664,6 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
-  guard(W_IterateFile);
   //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, SearchPaths.length(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < SearchPaths.length(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);
@@ -718,7 +671,6 @@ int W_IterateFile (int Prev, const VStr &Name) {
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
-  unguard;
 }
 
 
@@ -728,7 +680,6 @@ int W_IterateFile (int Prev, const VStr &Name) {
 //
 //==========================================================================
 int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
-  guard(W_FindLumpByFileNameWithExts);
   int Found = -1;
   for (const char **Ext = Exts; *Ext; ++Ext) {
     VStr Check = BaseName+"."+(*Ext);
@@ -739,7 +690,6 @@ int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
     Found = Lump;
   }
   return Found;
-  unguard;
 }
 
 
@@ -749,7 +699,6 @@ int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
 //
 //==========================================================================
 VStr W_LoadTextLump (VName name) {
-  guard(W_LoadTextLump);
   VStream *Strm = W_CreateLumpReaderName(name);
   if (!Strm) {
     GCon->Logf(NAME_Warning, "cannot load text lump '%s'", *name);
@@ -773,7 +722,6 @@ VStr W_LoadTextLump (VName name) {
     Ret = Ret.Latin1ToUtf8();
   }
   return Ret;
-  unguard;
 }
 
 
@@ -800,13 +748,11 @@ void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
 //
 //==========================================================================
 void W_Shutdown () {
-  guard(W_Shutdown);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     delete SearchPaths[i];
     SearchPaths[i] = nullptr;
   }
   SearchPaths.Clear();
-  unguard;
 }
 
 

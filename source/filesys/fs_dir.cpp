@@ -108,9 +108,7 @@ int VFilesDir::findFileCI (VStr fname) {
 //
 //==========================================================================
 int VFilesDir::CheckNumForFileName (const VStr &Name) {
-  guard(VFilesDir::CheckNumForFileName);
   return findFileCI(Name);
-  unguard;
 }
 
 
@@ -120,9 +118,7 @@ int VFilesDir::CheckNumForFileName (const VStr &Name) {
 //
 //==========================================================================
 bool VFilesDir::FileExists (const VStr &Name) {
-  guard(VFilesDir::FileExists);
   return (findFileCI(Name) >= 0);
-  unguard;
 }
 
 
@@ -132,7 +128,6 @@ bool VFilesDir::FileExists (const VStr &Name) {
 //
 //==========================================================================
 VStream *VFilesDir::OpenFileRead (const VStr &Name) {
-  guard(FL_OpenFileRead);
   VStr storedName = Name;
   int fidx = findFileCI(storedName);
   if (fidx == -1) return nullptr;
@@ -141,7 +136,6 @@ VStream *VFilesDir::OpenFileRead (const VStr &Name) {
   if (!File) return nullptr;
   //fprintf(stderr, "***DISK: <%s:%s>\n", *GetPrefix(), *Name);
   return new VStreamFileReader(File, GCon, tmpName);
-  unguard;
 }
 
 
@@ -151,7 +145,6 @@ VStream *VFilesDir::OpenFileRead (const VStr &Name) {
 //
 //==========================================================================
 void VFilesDir::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
-  guard(VFilesDir::ReadFromLump);
   check(LumpNum >= 0);
   check(LumpNum < cachedFiles.length());
   VStream *Strm = CreateLumpReaderNum(LumpNum);
@@ -159,7 +152,6 @@ void VFilesDir::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
   delete Strm;
-  unguard;
 }
 
 
@@ -169,7 +161,6 @@ void VFilesDir::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
 //
 //==========================================================================
 int VFilesDir::LumpLength (int LumpNum) {
-  guard(VFilesDir::LumpLength);
   check(LumpNum >= 0);
   check(LumpNum < cachedFiles.length());
   VStream *Strm = CreateLumpReaderNum(LumpNum);
@@ -177,7 +168,6 @@ int VFilesDir::LumpLength (int LumpNum) {
   int Ret = Strm->TotalSize();
   delete Strm;
   return Ret;
-  unguard;
 }
 
 
@@ -187,13 +177,11 @@ int VFilesDir::LumpLength (int LumpNum) {
 //
 //==========================================================================
 VStream *VFilesDir::CreateLumpReaderNum (int LumpNum) {
-  guard(VFilesDir::CreateLumpReaderNum);
   check(LumpNum >= 0);
   check(LumpNum < cachedFiles.length());
   VStream *Strm = OpenFileRead(cachedFiles[LumpNum]);
   check(Strm);
   return Strm;
-  unguard;
 }
 
 
