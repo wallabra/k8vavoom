@@ -35,6 +35,7 @@ static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizati
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_init_range("clip_frustum_init_range", true, "Init clipper range with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bsp("clip_frustum_bsp", false, "Clip BSP geometry with frustum?", CVAR_PreInit); // sometimes this glitches
 VCvarB clip_frustum_sub("clip_frustum_sub", false, "Clip subsectors with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bbox("clip_frustum_bbox", true, "Clip BSP bounding boxes with frustum?", CVAR_PreInit);
@@ -574,6 +575,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   }
 
   if (!clip_frustum) return;
+  if (!clip_frustum_init_range) return;
 
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
