@@ -91,27 +91,27 @@ void VRenderLevelShared::RecalcWorldBBoxes (int bspnum, float *bbox) {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
-  r_surf_sub = &Level->Subsectors[num];
-  if (r_surf_sub->updateWorldFrame == updateWorldFrame) return;
-  r_surf_sub->updateWorldFrame = updateWorldFrame;
+  subsector_t *surf_sub = &Level->Subsectors[num];
+  if (surf_sub->updateWorldFrame == updateWorldFrame) return;
+  surf_sub->updateWorldFrame = updateWorldFrame;
 
-  if (updateWorldCheckVisFrame && Level->HasPVS() && r_surf_sub->VisFrame != r_visframecount) return;
+  if (updateWorldCheckVisFrame && Level->HasPVS() && surf_sub->VisFrame != r_visframecount) return;
 
-  if (!r_surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
+  if (!surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(r_surf_sub)) return;
+  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(surf_sub)) return;
 
-  bbox[2] = r_surf_sub->sector->floor.minz;
-  if (IsSky(&r_surf_sub->sector->ceiling)) {
+  bbox[2] = surf_sub->sector->floor.minz;
+  if (IsSky(&surf_sub->sector->ceiling)) {
     bbox[5] = skyheight;
   } else {
-    bbox[5] = r_surf_sub->sector->ceiling.maxz;
+    bbox[5] = surf_sub->sector->ceiling.maxz;
   }
   FixBBoxZ(bbox);
 
-  UpdateSubRegion(r_surf_sub->regions/*, ClipSegs:true*/);
+  UpdateSubRegion(surf_sub->regions/*, ClipSegs:true*/);
 
-  ViewClip.ClipAddSubsectorSegs(r_surf_sub);
+  ViewClip.ClipAddSubsectorSegs(surf_sub);
 }
 
 
