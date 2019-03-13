@@ -82,8 +82,6 @@ static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry
 
 // ////////////////////////////////////////////////////////////////////////// //
 VName::VName (const char *Name, ENameFindType FindType) {
-  guard(VName::VName);
-
   Index = NAME_None;
   // make sure name is valid
   if (!Name || !Name[0]) return;
@@ -146,8 +144,6 @@ VName::VName (const char *Name, ENameFindType FindType) {
     Index = AppendNameEntry(e);
     htbl[HashIndex] = Names[Index];
   }
-
-  unguard;
 }
 
 
@@ -189,7 +185,6 @@ const char *VName::SafeString (EName N) {
 
 
 void VName::StaticInit () {
-  guard(VName::StaticInit);
   if (!Initialised) {
     memset((void *)HashTable, 0, sizeof(HashTable));
     memset((void *)HashTableSpc, 0, sizeof(HashTableSpc));
@@ -210,7 +205,6 @@ void VName::StaticInit () {
     // we are now initialised
     Initialised = true;
   }
-  unguard;
 }
 
 
@@ -252,10 +246,8 @@ VNameAutoIniter vNameAutoIniter;
 
 /*k8: there is no reason to do this
 void VName::StaticExit () {
-  guard(VName::StaticExit);
   for (int i = NUM_HARDCODED_NAMES; i < Names.Num(); ++i) Z_Free(Names[i]);
   Names.Clear();
   Initialised = false;
-  unguard;
 }
 */

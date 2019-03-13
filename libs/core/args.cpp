@@ -95,7 +95,6 @@ static char *xstrdup (const char *s) {
 //
 //==========================================================================
 void VArgs::Init (int argc, char **argv, const char *filearg) {
-  guard(VArgs::Init);
   // save args
   if (argc < 0) argc = 0; else if (argc > MAXARGVS) argc = MAXARGVS;
   Argc = argc;
@@ -113,7 +112,6 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
 #endif
   FindResponseFile();
   InsertFileArg(filearg);
-  unguard;
 }
 
 
@@ -335,14 +333,12 @@ void VArgs::FindResponseFile () {
 //
 //==========================================================================
 int VArgs::CheckParm (const char *check, bool takeFirst) const {
-  guard(VArgs::CheckParm);
   if (takeFirst) {
     for (int i = 1; i < Argc; ++i) if (!VStr::ICmp(check, Argv[i])) return i;
   } else {
     for (int i = Argc-1; i > 0; --i) if (!VStr::ICmp(check, Argv[i])) return i;
   }
   return 0;
-  unguard;
 }
 
 
@@ -352,11 +348,9 @@ int VArgs::CheckParm (const char *check, bool takeFirst) const {
 //
 //==========================================================================
 const char *VArgs::CheckValue (const char *check, bool takeFirst) const {
-  guard(VArgs::CheckValue);
   int a = CheckParm(check, takeFirst);
   if (a && a < Argc-1 && Argv[a+1][0] != '-' && Argv[a+1][0] != '+') return Argv[a+1];
   return nullptr;
-  unguard;
 }
 
 

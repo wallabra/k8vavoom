@@ -50,7 +50,6 @@ VXmlNode::VXmlNode()
 
 VXmlNode::~VXmlNode()
 {
-  //guard(VXmlNode::~VXmlNode);
   while (FirstChild)
   {
     VXmlNode *Temp = FirstChild;
@@ -58,7 +57,6 @@ VXmlNode::~VXmlNode()
     delete Temp;
     Temp = nullptr;
   }
-  //unguard;
 }
 
 //==========================================================================
@@ -69,12 +67,10 @@ VXmlNode::~VXmlNode()
 
 VXmlNode *VXmlNode::FindChild(const char *AName) const
 {
-  guard(VXmlNode::FindChild);
   for (VXmlNode *N = FirstChild; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
   return nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -85,12 +81,10 @@ VXmlNode *VXmlNode::FindChild(const char *AName) const
 
 VXmlNode *VXmlNode::FindChild(const VStr &AName) const
 {
-  guard(VXmlNode::FindChild);
   for (VXmlNode *N = FirstChild; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
   return nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -101,12 +95,10 @@ VXmlNode *VXmlNode::FindChild(const VStr &AName) const
 
 VXmlNode *VXmlNode::GetChild(const char *AName) const
 {
-  guard(VXmlNode::GetChild);
   VXmlNode *N = FindChild(AName);
   if (!N)
     Sys_Error("XML node %s not found", AName);
   return N;
-  unguard;
 }
 
 //==========================================================================
@@ -117,12 +109,10 @@ VXmlNode *VXmlNode::GetChild(const char *AName) const
 
 VXmlNode *VXmlNode::GetChild(const VStr &AName) const
 {
-  guard(VXmlNode::GetChild);
   VXmlNode *N = FindChild(AName);
   if (!N)
     Sys_Error("XML node %s not found", *AName);
   return N;
-  unguard;
 }
 
 //==========================================================================
@@ -133,12 +123,10 @@ VXmlNode *VXmlNode::GetChild(const VStr &AName) const
 
 VXmlNode *VXmlNode::FindNext(const char *AName) const
 {
-  guard(VXmlNode::FindNext);
   for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
   return nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -149,12 +137,10 @@ VXmlNode *VXmlNode::FindNext(const char *AName) const
 
 VXmlNode *VXmlNode::FindNext(const VStr &AName) const
 {
-  guard(VXmlNode::FindNext);
   for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
   return nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -165,12 +151,10 @@ VXmlNode *VXmlNode::FindNext(const VStr &AName) const
 
 VXmlNode *VXmlNode::FindNext() const
 {
-  guard(VXmlNode::FindNext);
   for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == Name)
       return N;
   return nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -181,12 +165,10 @@ VXmlNode *VXmlNode::FindNext() const
 
 bool VXmlNode::HasAttribute(const char *AttrName) const
 {
-  guard(VXmlNode::HasAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
     if (Attributes[i].Name == AttrName)
       return true;
   return false;
-  unguard;
 }
 
 //==========================================================================
@@ -197,12 +179,10 @@ bool VXmlNode::HasAttribute(const char *AttrName) const
 
 bool VXmlNode::HasAttribute(const VStr &AttrName) const
 {
-  guard(VXmlNode::HasAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
     if (Attributes[i].Name == AttrName)
       return true;
   return false;
-  unguard;
 }
 
 //==========================================================================
@@ -213,14 +193,12 @@ bool VXmlNode::HasAttribute(const VStr &AttrName) const
 
 VStr VXmlNode::GetAttribute(const char *AttrName, bool Required) const
 {
-  guard(VXmlNode::GetAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
     if (Attributes[i].Name == AttrName)
       return Attributes[i].Value;
   if (Required)
     Sys_Error("XML attribute %s not found", AttrName);
   return VStr();
-  unguard;
 }
 
 //==========================================================================
@@ -231,14 +209,12 @@ VStr VXmlNode::GetAttribute(const char *AttrName, bool Required) const
 
 VStr VXmlNode::GetAttribute(const VStr &AttrName, bool Required) const
 {
-  guard(VXmlNode::GetAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
     if (Attributes[i].Name == AttrName)
       return Attributes[i].Value;
   if (Required)
     Sys_Error("XML attribute %s not found", *AttrName);
   return VStr();
-  unguard;
 }
 
 //==========================================================================
@@ -249,7 +225,6 @@ VStr VXmlNode::GetAttribute(const VStr &AttrName, bool Required) const
 
 void VXmlDocument::Parse(VStream &Strm, VStr AName)
 {
-  guard(VXmlDocument::Parse);
   Name = AName;
 
   Buf = new char[Strm.TotalSize() + 1];
@@ -348,7 +323,6 @@ void VXmlDocument::Parse(VStream &Strm, VStr AName)
 
   delete[] Buf;
   Buf = nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -359,12 +333,10 @@ void VXmlDocument::Parse(VStream &Strm, VStr AName)
 
 void VXmlDocument::SkipWhitespace()
 {
-  guard(VXmlDocument::SkipWhitespace);
   while (Buf[CurPos] > 0 && Buf[CurPos] <= ' ')
   {
     CurPos++;
   }
-  unguard;
 }
 
 //==========================================================================
@@ -375,7 +347,6 @@ void VXmlDocument::SkipWhitespace()
 
 bool VXmlDocument::SkipComment()
 {
-  guard(VXmlDocument::SkipComment);
   if (Buf[CurPos] == '<' && Buf[CurPos + 1] == '!' &&
     Buf[CurPos + 2] == '-' && Buf[CurPos + 3] == '-')
   {
@@ -394,7 +365,6 @@ bool VXmlDocument::SkipComment()
     return true;
   }
   return false;
-  unguard;
 }
 
 //==========================================================================
@@ -405,9 +375,7 @@ bool VXmlDocument::SkipComment()
 
 void VXmlDocument::Error(const char *Msg)
 {
-  guard(VXmlDocument::Error);
   Sys_Error("%s: %s", *Name, Msg);
-  unguard;
 }
 
 //==========================================================================
@@ -418,7 +386,6 @@ void VXmlDocument::Error(const char *Msg)
 
 VStr VXmlDocument::ParseName()
 {
-  guard(VXmlDocument::ParseName);
   VStr Ret;
   char c = Buf[CurPos];
   if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-' || c == ':'))
@@ -435,7 +402,6 @@ VStr VXmlDocument::ParseName()
   while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == ':' || c == '.');
 
   return Ret;
-  unguard;
 }
 
 //==========================================================================
@@ -446,7 +412,6 @@ VStr VXmlDocument::ParseName()
 
 VStr VXmlDocument::ParseAttrValue(char EndChar)
 {
-  guard(VXmlDocument::ParseAttrValue);
   VStr Ret;
   while (CurPos < EndPos && Buf[CurPos] != EndChar)
   {
@@ -461,7 +426,6 @@ VStr VXmlDocument::ParseAttrValue(char EndChar)
   }
   CurPos++;
   return HandleReferences(Ret);
-  unguard;
 }
 
 //==========================================================================
@@ -472,7 +436,6 @@ VStr VXmlDocument::ParseAttrValue(char EndChar)
 
 bool VXmlDocument::ParseAttribute(VStr &AttrName, VStr &AttrValue)
 {
-  guard(VXmlDocument::ParseAttribute);
   AttrName = ParseName();
   if (AttrName.IsEmpty())
   {
@@ -499,7 +462,6 @@ bool VXmlDocument::ParseAttribute(VStr &AttrName, VStr &AttrValue)
     Error("Unquoted attribute value");
   }
   return true;
-  unguard;
 }
 
 //==========================================================================
@@ -510,7 +472,6 @@ bool VXmlDocument::ParseAttribute(VStr &AttrName, VStr &AttrValue)
 
 void VXmlDocument::ParseNode(VXmlNode *Node)
 {
-  guard(VXmlDocument::ParseNode);
   if (Buf[CurPos] != '<')
   {
     Error("Bad tag start");
@@ -622,7 +583,6 @@ void VXmlDocument::ParseNode(VXmlNode *Node)
   {
     Error("Tag is not closed");
   }
-  unguard;
 }
 
 //==========================================================================
@@ -633,7 +593,6 @@ void VXmlDocument::ParseNode(VXmlNode *Node)
 
 VStr VXmlDocument::HandleReferences(const VStr &AStr)
 {
-  guard(VXmlDocument::HandleReferences);
   VStr Ret = AStr;
   for (int i = 0; i < int(Ret.Length()); i++)
   {
@@ -696,5 +655,4 @@ VStr VXmlDocument::HandleReferences(const VStr &AStr)
     }
   }
   return Ret;
-  unguard;
 }

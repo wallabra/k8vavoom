@@ -385,15 +385,13 @@ void VStream::SerialisePointer (void *&Ptr, const VFieldType &ptrtype) {
 //
 //==========================================================================
 void VStream::SerialiseLittleEndian (void *Val, int Len) {
-  guard(VStream::SerialiseLittleEndian);
 #ifdef VAVOOM_BIG_ENDIAN
-    // swap byte order
-    for (int i = Len-1; i >= 0; --i) Serialise(((vuint8 *)Val)+i, 1);
+  // swap byte order
+  for (int i = Len-1; i >= 0; --i) Serialise(((vuint8 *)Val)+i, 1);
 #else
-    // already in correct byte order
-    Serialise(Val, Len);
+  // already in correct byte order
+  Serialise(Val, Len);
 #endif
-  unguard;
 }
 
 
@@ -403,15 +401,13 @@ void VStream::SerialiseLittleEndian (void *Val, int Len) {
 //
 //==========================================================================
 void VStream::SerialiseBigEndian (void *Val, int Len) {
-  guard(VStream::SerialiseBigEndian);
 #ifdef VAVOOM_LITTLE_ENDIAN
-    // swap byte order
-    for (int i = Len - 1; i >= 0; i--) Serialise(((vuint8 *)Val)+i, 1);
+  // swap byte order
+  for (int i = Len - 1; i >= 0; i--) Serialise(((vuint8 *)Val)+i, 1);
 #else
-    // already in correct byte order
-    Serialise(Val, Len);
+  // already in correct byte order
+  Serialise(Val, Len);
 #endif
-  unguard;
 }
 
 

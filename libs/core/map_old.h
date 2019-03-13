@@ -41,7 +41,6 @@ protected:
   vint32 HashSize;
 
   void Rehash () {
-    guardSlow(TMap::Rehash);
     checkSlow(HashSize >= 16);
     if (HashTable) {
       delete[] HashTable;
@@ -54,51 +53,39 @@ protected:
       Pairs[i].HashNext = HashTable[Hash];
       HashTable[Hash] = i;
     }
-    unguardSlow;
   }
 
   void Relax () {
-    guardSlow(TMap::Relax);
     while (HashSize > Pairs.Num()+16) HashSize >>= 1;
     Rehash();
-    unguardSlow;
   }
 
 public:
   TMap () : HashTable(nullptr), HashSize(16) {
-    guardSlow(TMap::TMap);
     Rehash();
-    unguardSlow;
   }
 
   TMap (TMap &Other) : Pairs(Other.Pairs), HashTable(nullptr), HashSize(Other.HashSize) {
-    guardSlow(TMap::TMap);
     Rehash();
-    unguardSlow;
   }
 
   ~TMap () {
-    guardSlow(TMap::~TMap);
     if (HashTable) {
       delete[] HashTable;
       HashTable = nullptr;
     }
     HashTable = nullptr;
     HashSize = 0;
-    unguardSlow;
   }
 
   TMap &operator = (const TMap &Other) {
-    guardSlow(TMap::operator=);
     Pairs = Other.Pairs;
     HashSize = Other.HashSize;
     Rehash();
     return *this;
-    unguardSlow;
   }
 
   void Set (const TK &Key, const TV &Value) {
-    guardSlow(TMap::Set);
     int HashIndex = GetTypeHash(Key) & (HashSize - 1);
     for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
       if (Pairs[i].Key == Key) {
@@ -115,14 +102,12 @@ public:
       HashSize <<= 1;
       Rehash();
     }
-    unguardSlow;
   }
   inline void set (const TK &Key, const TV &Value) { Set(Key, Value); }
   inline void put (const TK &Key, const TV &Value) { Set(Key, Value); }
 
   //FIXME: this is dog slow!
   bool Remove (const TK &Key) {
-    guardSlow(TMap::Remove);
     bool Removed = false;
     int HashIndex = GetTypeHash(Key)&(HashSize-1);
     for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
@@ -134,7 +119,6 @@ public:
     }
     if (Removed) Relax();
     return Removed;
-    unguardSlow;
   }
   inline bool remove (const TK &Key) { return Remove(Key); }
 
@@ -148,36 +132,30 @@ public:
 
   //WARNING! returned pointer will be invalidated by any map mutation
   TV *Find (const TK &Key) {
-    guardSlow(TMap::Find);
     int HashIndex = GetTypeHash(Key)&(HashSize-1);
     for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
       if (Pairs[i].Key == Key) return &Pairs[i].Value;
     }
     return nullptr;
-    unguardSlow;
   }
   inline TV *find (const TK &Key) { return Find(Key); }
 
   //WARNING! returned pointer will be invalidated by any map mutation
   const TV *Find (const TK &Key) const {
-    guardSlow(TMap::Find);
     int HashIndex = GetTypeHash(Key)&(HashSize-1);
     for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
       if (Pairs[i].Key == Key) return &Pairs[i].Value;
     }
     return nullptr;
-    unguardSlow;
   }
   inline const TV *find (const TK &Key) const { return Find(Key); }
 
   const TV FindPtr (const TK &Key) const {
-    guardSlow(TMap::Find);
     int HashIndex = GetTypeHash(Key)&(HashSize-1);
     for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
       if (Pairs[i].Key == Key) return Pairs[i].Value;
     }
     return nullptr;
-    unguardSlow;
   }
   inline const TV *findptr (const TK &Key) const { return FindPtr(Key); }
 

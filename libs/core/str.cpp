@@ -481,7 +481,6 @@ bool VStr::fnameEqu1251CI (const char *s) const {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VStr VStr::mid (int start, int len) const {
-  guard(VStr::mid);
   int mylen = length();
   if (mylen == 0) return VStr();
   if (len <= 0 || start >= mylen) return VStr();
@@ -495,7 +494,6 @@ VStr VStr::mid (int start, int len) const {
   }
   if (start == 0 && len == mylen) return VStr(*this);
   return VStr(getData()+start, len);
-  unguard;
 }
 
 
@@ -531,7 +529,6 @@ void VStr::chopRight (int len) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VStr::makeImmutable () {
-  guard(VStr::makeImmutable);
   if (!dataptr) return; // nothing to do
   /*
   if (store()->rc >= 0 && store()->rc < 0xffff) {
@@ -539,12 +536,10 @@ void VStr::makeImmutable () {
   }
   */
   store()->rc = -0x0fffffff; // any negative means "immutable"
-  unguard;
 }
 
 
 void VStr::makeMutable () {
-  guard(VStr::makeMutable);
   if (!dataptr || store()->rc == 1) return; // nothing to do
   // allocate new string
   Store *oldstore = store();
@@ -563,13 +558,10 @@ void VStr::makeMutable () {
 #ifdef VAVOOM_TEST_VSTR
   fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, dataptr, newdata->rc);
 #endif
-  unguard;
 }
 
 
 void VStr::resize (int newlen) {
-  guard(VStr::resize);
-
   // free string?
   if (newlen <= 0) {
     decref();
@@ -677,13 +669,10 @@ void VStr::resize (int newlen) {
 
   // some functions expects this
   dataptr[newlen] = 0;
-
-  unguard;
 }
 
 
 void VStr::setContent (const char *s, int len) {
-  guard(VStr::setContent);
   if (s && s[0]) {
     if (len < 0) len = (int)strlen(s);
     size_t newsz = len+64;
@@ -704,83 +693,66 @@ void VStr::setContent (const char *s, int len) {
   } else {
     clear();
   }
-  unguard;
 }
 
 
 bool VStr::StartsWith (const char *s) const {
-  guard(VStr::StartsWith);
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
   return (memcmp(getData(), s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::StartsWith (const VStr &s) const {
-  guard(VStr::StartsWith);
   int l = s.length();
   if (l > length()) return false;
   return (memcmp(getData(), *s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::EndsWith (const char *s) const {
-  guard(VStr::EndsWith);
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
   return (memcmp(getData()+length()-l, s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::EndsWith (const VStr &s) const {
-  guard(VStr::EndsWith);
   int l = s.length();
   if (l > length()) return false;
   return (memcmp(getData()+length()-l, *s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::startsWithNoCase (const char *s) const {
-  guard(VStr::StartsWith);
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
   return (NICmp(getData(), s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::startsWithNoCase (const VStr &s) const {
-  guard(VStr::StartsWith);
   int l = s.length();
   if (l > length()) return false;
   return (NICmp(getData(), *s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::endsWithNoCase (const char *s) const {
-  guard(VStr::EndsWith);
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
   return (NICmp(getData()+length()-l, s, l) == 0);
-  unguard;
 }
 
 
 bool VStr::endsWithNoCase (const VStr &s) const {
-  guard(VStr::EndsWith);
   int l = s.length();
   if (l > length()) return false;
   return (NICmp(getData()+length()-l, *s, l) == 0);
-  unguard;
 }
 
 
@@ -825,7 +797,6 @@ bool VStr::endsWithNoCase (const char *str, const char *part) {
 
 
 VStr VStr::ToLower () const {
-  guard(VStr::ToLower);
   if (!dataptr) return VStr();
   bool hasWork = false;
   int l = length();
@@ -839,12 +810,10 @@ VStr VStr::ToLower () const {
   } else {
     return VStr(*this);
   }
-  unguard;
 }
 
 
 VStr VStr::ToUpper () const {
-  guard(VStr::ToUpper);
   const char *data = getData();
   if (!data) return VStr();
   bool hasWork = false;
@@ -858,12 +827,10 @@ VStr VStr::ToUpper () const {
   } else {
     return VStr(*this);
   }
-  unguard;
 }
 
 
 int VStr::IndexOf (char c) const {
-  guard(VStr::IndexOf);
   const char *data = getData();
   if (data && length()) {
     const char *pos = (const char *)memchr(data, c, length());
@@ -871,12 +838,10 @@ int VStr::IndexOf (char c) const {
   } else {
     return -1;
   }
-  unguard;
 }
 
 
 int VStr::IndexOf (const char *s) const {
-  guard(VStr::IndexOf);
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
@@ -884,12 +849,10 @@ int VStr::IndexOf (const char *s) const {
   const char *data = getData();
   for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
-  unguard;
 }
 
 
 int VStr::IndexOf (const VStr &s) const {
-  guard(VStr::IndexOf);
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
@@ -897,12 +860,10 @@ int VStr::IndexOf (const VStr &s) const {
   const char *data = getData();
   for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, *s, sl) == 0) return i;
   return -1;
-  unguard;
 }
 
 
 int VStr::LastIndexOf (char c) const {
-  guard(VStr::LastIndexOf);
   const char *data = getData();
   if (data && length()) {
 #if !defined(WIN32) && !defined(NO_MEMRCHR)
@@ -916,12 +877,10 @@ int VStr::LastIndexOf (char c) const {
   } else {
     return -1;
   }
-  unguard;
 }
 
 
 int VStr::LastIndexOf (const char *s) const {
-  guard(VStr::LastIndexOf);
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
@@ -929,12 +888,10 @@ int VStr::LastIndexOf (const char *s) const {
   const char *data = getData();
   for (int i = l-sl; i >= 0; --i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
-  unguard;
 }
 
 
 int VStr::LastIndexOf (const VStr &s) const {
-  guard(VStr::LastIndexOf);
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
@@ -942,12 +899,10 @@ int VStr::LastIndexOf (const VStr &s) const {
   const char *data = getData();
   for (int i = l-sl; i >= 0; --i) if (NCmp(data + i, *s, sl) == 0) return i;
   return -1;
-  unguard;
 }
 
 
 VStr VStr::Replace (const char *Search, const char *Replacement) const {
-  guard(VStr::Replace);
   if (length() == 0) return VStr(); // nothing to replace in an empty string
 
   size_t SLen = Length(Search);
@@ -974,12 +929,10 @@ VStr VStr::Replace (const char *Search, const char *Replacement) const {
   }
 
   return res;
-  unguard;
 }
 
 
 VStr VStr::Replace (const VStr &Search, const VStr &Replacement) const {
-  guard(VStr::Replace);
   if (length() == 0) return VStr(); // nothing to replace in an empty string
 
   size_t SLen = Search.length();
@@ -1006,7 +959,6 @@ VStr VStr::Replace (const VStr &Search, const VStr &Replacement) const {
   }
 
   return res;
-  unguard;
 }
 
 
@@ -1023,7 +975,6 @@ VStr VStr::Utf8Substring (int start, int len) const {
 
 
 void VStr::Split (char c, TArray<VStr> &A) const {
-  guard(VStr::Split);
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1035,12 +986,10 @@ void VStr::Split (char c, TArray<VStr> &A) const {
       start = i+1;
     }
   }
-  unguard;
 }
 
 
 void VStr::Split (const char *chars, TArray<VStr> &A) const {
-  guard(VStr::Split);
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1059,12 +1008,10 @@ void VStr::Split (const char *chars, TArray<VStr> &A) const {
       start = i+1;
     }
   }
-  unguard;
 }
 
 
 void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
-  guard(VStr::SplitOnBlanks);
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1086,14 +1033,11 @@ void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
     }
     A.append(VStr(*this, start, pos-start));
   }
-  unguard;
 }
 
 
 // split string to path components; first component can be '/', others has no slashes
 void VStr::SplitPath (TArray<VStr>& arr) const {
-  guard(VStr::SplitPath);
-
   arr.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1125,13 +1069,10 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
     pos = epos+1;
   }
 #endif
-
-  unguard;
 }
 
 
 bool VStr::IsValidUtf8 () const {
-  guard(VStr::IsValidUtf8);
   const char *data = getData();
   if (!data) return true;
   for (const char *c = data; *c;) {
@@ -1151,22 +1092,18 @@ bool VStr::IsValidUtf8 () const {
     }
   }
   return true;
-  unguard;
 }
 
 
 VStr VStr::Latin1ToUtf8 () const {
-  guard(VStr::Latin1ToUtf8);
   const char *data = getData();
   VStr res;
   for (int i = 0; i < length(); ++i) res += FromChar((vuint8)data[i]);
   return res;
-  unguard;
 }
 
 
 VStr VStr::EvalEscapeSequences () const {
-  guard(VStr::EvalEscapeSequences);
   VStr res;
   const char *c = getData();
   if (!c || !c[0]) return res;
@@ -1219,7 +1156,6 @@ VStr VStr::EvalEscapeSequences () const {
     }
   }
   return res;
-  unguard;
 }
 
 
@@ -1250,7 +1186,6 @@ bool VStr::MustBeSanitized (const char *str) {
 
 
 VStr VStr::RemoveColours () const {
-  guard(VStr::RemoveColours);
   const char *data = getData();
   if (!data) return VStr();
   const int oldlen = (int)length();
@@ -1301,12 +1236,10 @@ VStr VStr::RemoveColours () const {
     }
   }
   return res;
-  unguard;
 }
 
 
 VStr VStr::ExtractFilePath () const {
-  guard(FL_ExtractFilePath);
   const char *src = getData()+length();
 #if !defined(_WIN32)
   while (src != getData() && src[-1] != '/') --src;
@@ -1314,12 +1247,10 @@ VStr VStr::ExtractFilePath () const {
   while (src != getData() && src[-1] != '/' && src[-1] != '\\') --src;
 #endif
   return VStr(*this, 0, src-getData());
-  unguard;
 }
 
 
 VStr VStr::ExtractFileName() const {
-  guard(VStr:ExtractFileName);
   const char *data = getData();
   const char *src = data+length();
 #if !defined(_WIN32)
@@ -1328,12 +1259,10 @@ VStr VStr::ExtractFileName() const {
   while (src != data && src[-1] != '/' && src[-1] != '\\') --src;
 #endif
   return VStr(src);
-  unguard;
 }
 
 
 VStr VStr::ExtractFileBase () const {
-  guard(VStr::ExtractFileBase);
   int i = int(length());
 
   if (i == 0) return VStr();
@@ -1354,12 +1283,10 @@ VStr VStr::ExtractFileBase () const {
     ++i;
   }
   return VStr(*this, start, length);
-  unguard;
 }
 
 
 VStr VStr::ExtractFileBaseName () const {
-  guard(VStr::ExtractFileBaseName);
   int i = int(length());
 
   if (i == 0) return VStr();
@@ -1373,12 +1300,10 @@ VStr VStr::ExtractFileBaseName () const {
 #endif
 
   return VStr(*this, i, length()-i);
-  unguard;
 }
 
 
 VStr VStr::ExtractFileExtension () const {
-  guard(VStr::ExtractFileExtension);
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1392,12 +1317,10 @@ VStr VStr::ExtractFileExtension () const {
     --src;
   }
   return VStr();
-  unguard;
 }
 
 
 VStr VStr::StripExtension () const {
-  guard(VStr::StripExtension);
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1411,12 +1334,10 @@ VStr VStr::StripExtension () const {
     --src;
   }
   return VStr(*this);
-  unguard;
 }
 
 
 VStr VStr::DefaultPath (const VStr &basepath) const {
-  guard(VStr::DefaultPath);
   const char *data = getData();
 #if !defined(_WIN32)
   if (data && data[0] == '/') return *this; // absolute path location
@@ -1426,13 +1347,11 @@ VStr VStr::DefaultPath (const VStr &basepath) const {
   if (data && data[1] == ':' && (data[2] == '/' || data[2] == '\\')) return *this; // absolute path location
 #endif
   return basepath+(*this);
-  unguard;
 }
 
 
 // if path doesn't have a .EXT, append extension (extension should include the leading dot)
 VStr VStr::DefaultExtension (const VStr &extension) const {
-  guard(VStr::DefaultExtension);
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1446,12 +1365,10 @@ VStr VStr::DefaultExtension (const VStr &extension) const {
     --src;
   }
   return VStr(*this)+extension;
-  unguard;
 }
 
 
 VStr VStr::FixFileSlashes () const {
-  guard(VStr::FixFileSlashes);
   const char *data = getData();
   bool hasWork = false;
   for (const char *c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
@@ -1463,7 +1380,6 @@ VStr VStr::FixFileSlashes () const {
   } else {
     return VStr(*this);
   }
-  unguard;
 }
 
 
@@ -1481,17 +1397,14 @@ bool VStr::IsAbsolutePath () const {
 
 
 int VStr::Utf8Length (const char *s, int len) {
-  guard(VStr::Utf8Length);
   if (len < 0) len = (s && s[0] ? (int)strlen(s) : 0);
   int count = 0;
   while (len-- > 0) if (((*s++)&0xc0) != 0x80) ++count;
   return count;
-  unguard;
 }
 
 
 size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
-  guard(VStr::ByteLengthForUtf8);
   if (s) {
     size_t count = 0;
     const char *c;
@@ -1506,12 +1419,10 @@ size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
   } else {
     return 0;
   }
-  unguard;
 }
 
 
 int VStr::GetChar (const char *&s) {
-  guard(VStr::GetChar);
   if ((vuint8)*s < 128) return *s++;
   int cnt, val;
   if ((*s&0xe0) == 0xc0) {
@@ -1540,12 +1451,10 @@ int VStr::GetChar (const char *&s) {
   } while (--cnt);
 
   return val;
-  unguard;
 }
 
 
 VStr VStr::FromChar (int c) {
-  guard(VStr::FromChar);
   char res[8];
   if (c < 0x80) {
     res[0] = c;
@@ -1567,7 +1476,6 @@ VStr VStr::FromChar (int c) {
     res[4] = 0;
   }
   return res;
-  unguard;
 }
 
 

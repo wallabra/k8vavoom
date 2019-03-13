@@ -105,7 +105,7 @@ protected:
 
 /* #if defined(_DEBUG) || !DO_GUARD */
 
-
+/*
 #if !DO_GUARD
 # define guard(name)    {
 # define unguard        }
@@ -136,6 +136,7 @@ protected:
 # define unguardSlow        }
 # define unguardfSlow(msg)  }
 #endif
+*/
 
 
 void Host_CoreDump (const char *fmt, ...) __attribute__((format(printf, 1, 2)));
