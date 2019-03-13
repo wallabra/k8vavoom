@@ -39,12 +39,10 @@ VRootWidget *GRoot;
 //
 //==========================================================================
 void VRootWidget::Init () {
-  guard(VRootWidget::Init);
   Super::Init(nullptr);
   SetSize(640, 480);
 
   MouseCursorPic = GTextureManager.AddPatch("mc_arrow", TEXTYPE_Pic, true); // silent
-  unguard;
 }
 
 
@@ -54,11 +52,9 @@ void VRootWidget::Init () {
 //
 //==========================================================================
 void VRootWidget::DrawWidgets () {
-  guard(VRootWidget::DrawWidgets)
   cleanupWidgets();
   DrawTree();
   if (RootFlags&RWF_MouseEnabled) DrawPic(MouseX-16, MouseY-16, MouseCursorPic);
-  unguard;
 }
 
 
@@ -85,12 +81,10 @@ void VRootWidget::RefreshScale () {
 //
 //==========================================================================
 void VRootWidget::TickWidgets (float DeltaTime) {
-  guard(VRootWidget::TickWidgets);
   if (GetFlags()&_OF_Destroyed) return;
   cleanupWidgets();
   if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) RefreshScale();
   TickTree(DeltaTime);
-  unguard;
 }
 
 
@@ -100,7 +94,6 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 //
 //==========================================================================
 bool VRootWidget::Responder (event_t *Event) {
-  guard(VRootWidget::Responder);
   if (GetFlags()&_OF_Destroyed) return false;
 
   if (RootFlags&RWF_MouseEnabled) {
@@ -137,7 +130,6 @@ bool VRootWidget::Responder (event_t *Event) {
     }
   }
   return false;
-  unguard;
 }
 
 
@@ -147,14 +139,12 @@ bool VRootWidget::Responder (event_t *Event) {
 //
 //==========================================================================
 void VRootWidget::SetMouse (bool MouseOn) {
-  guard(VRootWidget::SetMouse);
   if (MouseOn) {
     RootFlags |= RWF_MouseEnabled;
   } else {
     RootFlags &= ~RWF_MouseEnabled;
   }
   if (!MouseOn && GInput) GInput->RegrabMouse();
-  unguard;
 }
 
 
@@ -164,8 +154,6 @@ void VRootWidget::SetMouse (bool MouseOn) {
 //
 //==========================================================================
 void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
-  guard(VRootWidget::MouseMoveEvent);
-
   if (GetFlags()&_OF_Destroyed) return;
 
   // remember old mouse coordinates
@@ -205,7 +193,6 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
     OldFocus->OnMouseLeave();
     NewFocus->OnMouseEnter();
   }
-  unguard;
 }
 
 
@@ -215,8 +202,6 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
 //
 //==========================================================================
 bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
-  guard(VRootWidget::MouseButtonEvent);
-
   if (GetFlags()&_OF_Destroyed) return false;
 
   // find widget under mouse
@@ -255,7 +240,6 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
     }
   }
   return false;
-  unguard;
 }
 
 
@@ -265,11 +249,9 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
 //
 //==========================================================================
 void VRootWidget::StaticInit () {
-  guard(VRootWidget::StaticInit);
   GRoot = SpawnWithReplace<VRootWidget>();
   GRoot->Init();
   GClGame->GRoot = GRoot;
-  unguard;
 }
 
 

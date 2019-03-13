@@ -58,11 +58,9 @@ IMPLEMENT_CLASS(V, ActorDisplayWindow);
 //
 //==========================================================================
 void VActorDisplayWindow::SetState (VState *AState) {
-  guard(VActorDisplayWindow::SetState);
   CastState = AState;
   StateTime = CastState->Time;
   NextState = CastState->NextState;
-  unguard;
 }
 
 
@@ -72,7 +70,6 @@ void VActorDisplayWindow::SetState (VState *AState) {
 //
 //==========================================================================
 void VActorDisplayWindow::OnDraw () {
-  guard(VActorDisplayWindow::OnDraw);
   // draw the current frame in the middle of the screen
   float TimeFrac = 0.0;
   if (StateTime > 0.0) {
@@ -88,7 +85,6 @@ void VActorDisplayWindow::OnDraw () {
     //SCR_SetVirtualScreen(640, 480);
     SCR_SetVirtualScreen(ow, oh);
   }
-  unguard;
 }
 
 

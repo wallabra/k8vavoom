@@ -123,7 +123,6 @@ static TArray<VColTransMap> TextColourLookup;
 //
 //==========================================================================
 void VFont::StaticInit () {
-  guard(VFont::StaticInit);
   ParseTextColours();
 
   // initialise standard fonts
@@ -149,7 +148,6 @@ void VFont::StaticInit () {
 
   // load custom fonts
   ParseFontDefs();
-  unguard;
 }
 
 
@@ -159,7 +157,6 @@ void VFont::StaticInit () {
 //
 //==========================================================================
 void VFont::StaticShutdown () {
-  guard(VFont::StaticShutdown);
   VFont *F = Fonts;
   while (F) {
     VFont *Next = F->Next;
@@ -169,7 +166,6 @@ void VFont::StaticShutdown () {
   Fonts = nullptr;
   TextColours.Clear();
   TextColourLookup.Clear();
-  unguard;
 }
 
 
@@ -179,7 +175,6 @@ void VFont::StaticShutdown () {
 //
 //==========================================================================
 void VFont::ParseTextColours () {
-  guard(VFont::ParseTextColours);
   TArray<VTextColourDef> TempDefs;
   TArray<VColTransMap> TempColours;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
@@ -317,7 +312,6 @@ void VFont::ParseTextColours () {
 
   // make sure all built-in colours are defined
   check(TextColours.Num() >= NUM_TEXT_COLOURS);
-  unguard;
 }
 
 
@@ -330,7 +324,6 @@ void VFont::ParseFontDefs () {
 #define CHECK_TYPE(Id) if (FontType == Id) \
   sc.Error(va("Invalid combination of properties in font '%s'", *FontName))
 
-  guard(VFont::ParseFontDefs);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_fontdefs) continue;
     VScriptParser sc(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
@@ -403,8 +396,6 @@ void VFont::ParseFontDefs () {
       }
     }
   }
-  unguard;
-
 #undef CHECK_TYPE
 }
 
@@ -415,10 +406,8 @@ void VFont::ParseFontDefs () {
 //
 //==========================================================================
 VFont *VFont::FindFont (VName AName) {
-  guard(VFont::FindFont);
   for (VFont *F = Fonts; F; F = F->Next) if (F->Name == AName) return F;
   return nullptr;
-  unguard;
 }
 
 
@@ -428,7 +417,6 @@ VFont *VFont::FindFont (VName AName) {
 //
 //==========================================================================
 VFont *VFont::GetFont (VName AName, VName LumpName) {
-  guard(VFont::GetFont);
   VFont *F = FindFont(AName);
   if (F) return F;
 
@@ -453,7 +441,6 @@ VFont *VFont::GetFont (VName AName, VName LumpName) {
   if (TexNum > 0) return new VSingleTextureFont(AName, TexNum);
 
   return nullptr;
-  unguard;
 }
 
 
@@ -472,8 +459,6 @@ VFont::VFont () {
 //
 //==========================================================================
 VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int StartIndex) {
-  guard(VFont::VFont);
-
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
   FirstChar = -1;
   LastChar = -1;
@@ -568,7 +553,6 @@ VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int Star
       GTextureManager.AddTexture(Chars[i].Textures[j]);
     }
   }
-  unguard;
 }
 
 
@@ -598,7 +582,6 @@ VFont::~VFont () {
 //
 //==========================================================================
 void VFont::BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool ConsoleTrans, bool Rescale) {
-  guard(VFont::BuildTranslations);
   // calculate luminosity for all colours and find minimal and maximal values for used colours
   float Luminosity[256];
   float MinLum = 1000000.0f;
@@ -646,7 +629,6 @@ void VFont::BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool Consol
       pOut[i].a = 255;
     }
   }
-  unguard;
 }
 
 
@@ -673,7 +655,6 @@ int VFont::FindChar (int Chr) const {
 //
 //==========================================================================
 VTexture *VFont::GetChar (int Chr, int *pWidth, int Colour) const {
-  guard(VFont::GetChar);
   int Idx = FindChar(Chr);
   if (Idx < 0) {
     // try upper-case letter
@@ -691,7 +672,6 @@ VTexture *VFont::GetChar (int Chr, int *pWidth, int Colour) const {
     Chars[Idx].BaseTex;
   *pWidth = Tex->GetScaledWidth();
   return Tex;
-  unguard;
 }
 
 
@@ -701,7 +681,6 @@ VTexture *VFont::GetChar (int Chr, int *pWidth, int Colour) const {
 //
 //==========================================================================
 int VFont::GetCharWidth (int Chr) const {
-  guard(VFont::GetCharWidth);
   int Idx = FindChar(Chr);
   if (Idx < 0) {
     // try upper-case letter
@@ -710,7 +689,6 @@ int VFont::GetCharWidth (int Chr) const {
     if (Idx < 0) return SpaceWidth;
   }
   return Chars[Idx].BaseTex->GetScaledWidth();
-  unguard;
 }
 
 
@@ -720,11 +698,9 @@ int VFont::GetCharWidth (int Chr) const {
 //
 //==========================================================================
 void VFont::MarkUsedColours (VTexture *Tex, bool *Used) {
-  guard(VFont::MarkUsedColours);
   const vuint8 *Pixels = Tex->GetPixels8();
   int Count = Tex->GetWidth()*Tex->GetHeight();
   for (int i = 0; i < Count; ++i) Used[Pixels[i]] = true;
-  unguard;
 }
 
 
@@ -737,7 +713,6 @@ void VFont::MarkUsedColours (VTexture *Tex, bool *Used) {
 //
 //==========================================================================
 int VFont::ParseColourEscape (const char *&pColour, int NormalColour, int BoldColour) {
-  guard(VFont::ParseColourEscape);
   const char *Chr = pColour;
   int Col = *Chr++;
 
@@ -759,7 +734,6 @@ int VFont::ParseColourEscape (const char *&pColour, int NormalColour, int BoldCo
   // set pointer after the colour definition
   pColour = Chr;
   return Col;
-  unguard;
 }
 
 
@@ -769,12 +743,10 @@ int VFont::ParseColourEscape (const char *&pColour, int NormalColour, int BoldCo
 //
 //==========================================================================
 int VFont::FindTextColour (VName Name) {
-  guard(VFont::FindTextColour);
   for (int i = 0; i < TextColourLookup.Num(); ++i) {
     if (TextColourLookup[i].Name == Name) return TextColourLookup[i].Index;
   }
   return CR_UNTRANSLATED;
-  unguard;
 }
 
 
@@ -784,7 +756,6 @@ int VFont::FindTextColour (VName Name) {
 //
 //==========================================================================
 int VFont::StringWidth (const VStr &String) const {
-  guard(VFont::StringWidth);
   int w = 0;
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::GetChar(SPtr);
@@ -796,7 +767,6 @@ int VFont::StringWidth (const VStr &String) const {
     w += GetCharWidth(c)+GetKerning();
   }
   return w;
-  unguard;
 }
 
 
@@ -806,7 +776,6 @@ int VFont::StringWidth (const VStr &String) const {
 //
 //==========================================================================
 int VFont::TextWidth (const VStr &String) const {
-  guard(VFont::TextWidth);
   const int len = String.length();
   if (len == 0) return 0;
   int res = 0, pos = 0, start = 0;
@@ -821,7 +790,6 @@ int VFont::TextWidth (const VStr &String) const {
     }
   }
   return res;
-  unguard;
 }
 
 
@@ -831,7 +799,6 @@ int VFont::TextWidth (const VStr &String) const {
 //
 //==========================================================================
 int VFont::TextHeight (const VStr &String) const {
-  guard(VFont::TextHeight);
   int h = FontHeight;
   const int len = String.length();
   if (len > 0) {
@@ -839,7 +806,6 @@ int VFont::TextHeight (const VStr &String) const {
     for (int f = len; f > 0; --f, ++s) if (*s == '\n') h += FontHeight;
   }
   return h;
-  unguard;
 }
 
 
@@ -849,7 +815,6 @@ int VFont::TextHeight (const VStr &String) const {
 //
 //==========================================================================
 int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) const {
-  guard(VFont::SplitText);
   Lines.Clear();
   const char *Start = *Text;
   bool WordStart = true;
@@ -914,7 +879,6 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
   }
 
   return Lines.Num()*FontHeight;
-  unguard;
 }
 
 
@@ -924,7 +888,6 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
 //
 //==========================================================================
 VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight) const {
-  guard(VFont::SplitTextWithNewlines);
   TArray<VSplitLine> Lines;
   SplitText(Text, Lines, MaxWidth, trimRight);
   VStr Ret;
@@ -933,7 +896,6 @@ VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRigh
     Ret += Lines[i].Text;
   }
   return Ret;
-  unguard;
 }
 
 
@@ -945,7 +907,6 @@ VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRigh
 //
 //==========================================================================
 VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const TArray<VName>& CharLumps, const bool *NoTranslate) {
-  guard(VSpecialFont::VSpecialFont);
   Name = AName;
   Next = Fonts;
   Fonts = this;
@@ -1018,7 +979,6 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
       GTextureManager.AddTexture(Chars[i].Textures[j]);
     }
   }
-  unguard;
 }
 
 
@@ -1030,7 +990,6 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
 //
 //==========================================================================
 VFon1Font::VFon1Font (VName AName, int LumpNum) {
-  guard(VFon1Font::VFon1Font);
   Name = AName;
   Next = Fonts;
   Fonts = this;
@@ -1097,8 +1056,6 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
     } while (Count > 0);
     if (Count < 0) Sys_Error("Overflow decompressing a character %d", i);
   }
-
-  unguard;
 }
 
 
@@ -1120,7 +1077,6 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
 //
 //==========================================================================
 VFon2Font::VFon2Font (VName AName, int LumpNum) {
-  guard(VFon2Font::VFon2Font);
   Name = AName;
   Next = Fonts;
   Fonts = this;
@@ -1211,7 +1167,6 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
   }
 
   delete[] Widths;
-  unguard;
 }
 
 
@@ -1223,7 +1178,6 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
 //
 //==========================================================================
 VSingleTextureFont::VSingleTextureFont (VName AName, int TexNum) {
-  guard(VSingleTextureFont::VSingleTextureFont);
   Name = AName;
   Next = Fonts;
   Fonts = this;
@@ -1243,7 +1197,6 @@ VSingleTextureFont::VSingleTextureFont (VName AName, int TexNum) {
   FChar.TexNum = TexNum;
   FChar.BaseTex = Tex;
   FChar.Textures = nullptr;
-  unguard;
 }
 
 
@@ -1293,10 +1246,8 @@ VFontChar::~VFontChar () {
 //
 //==========================================================================
 vuint8 *VFontChar::GetPixels () {
-  guard(VFontChar::GetPixels);
   shadeColor = -1; //FIXME
   return BaseTex->GetPixels8();
-  unguard;
 }
 
 
@@ -1306,9 +1257,7 @@ vuint8 *VFontChar::GetPixels () {
 //
 //==========================================================================
 rgba_t *VFontChar::GetPalette () {
-  guard(VFontChar::GetPalette);
   return Palette;
-  unguard;
 }
 
 
@@ -1318,9 +1267,7 @@ rgba_t *VFontChar::GetPalette () {
 //
 //==========================================================================
 void VFontChar::Unload () {
-  guard(VFontChar::Unload);
   BaseTex->Unload();
-  unguard;
 }
 
 
@@ -1330,14 +1277,12 @@ void VFontChar::Unload () {
 //
 //==========================================================================
 VTexture *VFontChar::GetHighResolutionTexture () {
-  guard(VFontChar::GetHighResolutionTexture);
   if (!r_hirestex) return nullptr;
   if (!HiResTexture) {
     VTexture *Tex = BaseTex->GetHighResolutionTexture();
     if (Tex) HiResTexture = new VFontChar(Tex, Palette);
   }
   return HiResTexture;
-  unguard;
 }
 
 
@@ -1386,7 +1331,6 @@ VFontChar2::~VFontChar2 () {
 //
 //==========================================================================
 vuint8 *VFontChar2::GetPixels () {
-  guard(VFontChar2::GetPixels);
   if (Pixels) return Pixels;
   shadeColor = -1; //FIXME
 
@@ -1417,7 +1361,6 @@ vuint8 *VFontChar2::GetPixels () {
   } while (Count > 0);
 
   return Pixels;
-  unguard;
 }
 
 
@@ -1427,9 +1370,7 @@ vuint8 *VFontChar2::GetPixels () {
 //
 //==========================================================================
 rgba_t *VFontChar2::GetPalette () {
-  guard(VFontChar2::GetPalette);
   return Palette;
-  unguard;
 }
 
 
@@ -1439,10 +1380,8 @@ rgba_t *VFontChar2::GetPalette () {
 //
 //==========================================================================
 void VFontChar2::Unload () {
-  guard(VFontChar2::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }
