@@ -1188,7 +1188,7 @@ static void AM_drawWalls () {
     if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
 
     // fully mapped or automap revealed?
-    if (am_full_lines || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
+    if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
       mline_t l;
       l.a.x = line->v1->x;
       l.a.y = line->v1->y;
@@ -1317,6 +1317,64 @@ static void AM_drawThings (vuint32 colour) {
     }
 
     AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, colour, x, y);
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_drawOneLight
+//
+//==========================================================================
+static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
+  if (!lt.active || lt.radius < 1) return;
+  float x = lt.origin.x;
+  float y = lt.origin.y;
+  if (am_rotate) AM_rotatePoint(&x, &y);
+  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y-2), lt.colour, CXMTOFF(x+2), CYMTOFF(y-2), lt.colour);
+  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y-2), lt.colour, CXMTOFF(x+2), CYMTOFF(y+2), lt.colour);
+  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y+2), lt.colour, CXMTOFF(x-2), CYMTOFF(y+2), lt.colour);
+  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y+2), lt.colour, CXMTOFF(x-2), CYMTOFF(y-2), lt.colour);
+  // draw circle
+  float px = 0, py = 0;
+  for (float angle = 0; angle <= 360; angle += 10) {
+    float x0 = x+msin(angle)*lt.radius;
+    float y0 = y-mcos(angle)*lt.radius;
+    if (angle) {
+      Drawer->DrawLine(CXMTOFF(px), CYMTOFF(py), lt.colour, CXMTOFF(x0), CYMTOFF(y0), lt.colour);
+    }
+    px = x0;
+    py = y0;
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_drawStaticLights
+//
+//==========================================================================
+static void AM_drawStaticLights (vuint32 colour) {
+  if (!GClLevel->RenderData) return;
+  int count = GClLevel->RenderData->GetStaticLightCount();
+  for (int f = 0; f < count; ++f) {
+    auto lt = GClLevel->RenderData->GetStaticLight(f);
+    AM_drawOneLight(lt);
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_drawDynamicLights
+//
+//==========================================================================
+static void AM_drawDynamicLights (vuint32 colour) {
+  if (!GClLevel->RenderData) return;
+  int count = GClLevel->RenderData->GetDynamicLightCount();
+  for (int f = 0; f < count; ++f) {
+    auto lt = GClLevel->RenderData->GetDynamicLight(f);
+    AM_drawOneLight(lt);
   }
 }
 
@@ -1593,6 +1651,9 @@ void AM_Drawer () {
   AM_drawWalls();
   AM_drawPlayers();
   if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
+  if (am_cheating == 3) AM_drawStaticLights(ThingColour);
+  if (am_cheating == 4) AM_drawDynamicLights(ThingColour);
+  if (am_cheating == 5) { AM_drawStaticLights(ThingColour); AM_drawDynamicLights(ThingColour); }
   Drawer->EndAutomap();
   AM_DrawWorldTimer();
   T_SetFont(SmallFont);

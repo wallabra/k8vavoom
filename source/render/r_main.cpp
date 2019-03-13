@@ -568,6 +568,56 @@ VRenderLevelShared::~VRenderLevelShared () {
 
 //==========================================================================
 //
+//  VRenderLevelShared::GetStaticLightCount
+//
+//==========================================================================
+int VRenderLevelShared::GetStaticLightCount () const {
+  return Lights.length();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetStaticLight
+//
+//==========================================================================
+VRenderLevelPublic::LightInfo VRenderLevelShared::GetStaticLight (int idx) const {
+  LightInfo res;
+  res.origin = Lights[idx].origin;
+  res.radius = Lights[idx].radius;
+  res.colour = Lights[idx].colour;
+  res.active = Lights[idx].active;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetDynamicLightCount
+//
+//==========================================================================
+int VRenderLevelShared::GetDynamicLightCount () const {
+  return MAX_DLIGHTS;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetDynamicLight
+//
+//==========================================================================
+VRenderLevelPublic::LightInfo VRenderLevelShared::GetDynamicLight (int idx) const {
+  LightInfo res;
+  res.origin = DLights[idx].origin;
+  res.radius = DLights[idx].radius;
+  res.colour = DLights[idx].colour;
+  res.active = (res.radius > 0);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::RadiusCastRay
 //
 //==========================================================================

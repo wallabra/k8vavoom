@@ -534,6 +534,12 @@ protected:
 public:
   virtual particle_t *NewParticle (const TVec &porg) override;
 
+  virtual int GetStaticLightCount () const override;
+  virtual LightInfo GetStaticLight (int idx) const override;
+
+  virtual int GetDynamicLightCount () const override;
+  virtual LightInfo GetDynamicLight (int idx) const override;
+
   virtual void RenderPlayerView () override;
 
   virtual void SegMoved (seg_t *) override;

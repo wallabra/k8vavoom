@@ -34,6 +34,14 @@ public:
   bool staticLightsFiltered;
 
 public:
+  struct LightInfo {
+    TVec origin;
+    float radius;
+    vuint32 colour;
+    bool active;
+  };
+
+public:
   VRenderLevelPublic () : staticLightsFiltered(false) {}
   virtual void PreRender () = 0;
   virtual void SegMoved (seg_t *) = 0;
@@ -46,6 +54,12 @@ public:
   virtual void RemoveOwnedLight (VThinker *Owner) = 0;
 
   virtual particle_t *NewParticle (const TVec &porg) = 0;
+
+  virtual int GetStaticLightCount () const = 0;
+  virtual LightInfo GetStaticLight (int idx) const = 0;
+
+  virtual int GetDynamicLightCount () const = 0;
+  virtual LightInfo GetDynamicLight (int idx) const = 0;
 };
 
 
