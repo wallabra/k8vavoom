@@ -108,7 +108,6 @@ IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC");
 //
 //==========================================================================
 void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
-  guard(VFlacSampleLoader::Load);
   // check if it's a flac file
   Stream.Seek(0);
   char Hdr[4];
@@ -137,7 +136,6 @@ void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
   Sfx.DataSize = Strm->DataSize;
   Sfx.Data = Strm->Data;
   delete Strm;
-  unguard;
 }
 
 
@@ -153,10 +151,8 @@ VFlacSampleLoader::FStream::FStream (VStream &InStream)
   , Data(0)
   , DataSize(0)
 {
-  guard(VFlacSampleLoader::FStream::FStream);
   Strm.Seek(0);
   BytesLeft = Strm.TotalSize();
-  unguard;
 }
 
 
@@ -208,7 +204,6 @@ VFlacSampleLoader::FStream::FStream (VStream &InStream)
 //
 //==========================================================================
 void VFlacSampleLoader::FStream::metadata_callback (const ::FLAC__StreamMetadata *metadata) {
-  guard(VFlacSampleLoader::FStream::metadata_callback);
   if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO) {
     if (metadata->data.stream_info.bits_per_sample != 8 &&
         metadata->data.stream_info.bits_per_sample != 16)
@@ -220,7 +215,6 @@ void VFlacSampleLoader::FStream::metadata_callback (const ::FLAC__StreamMetadata
     SampleRate = metadata->data.stream_info.sample_rate;
     SampleBits = metadata->data.stream_info.bits_per_sample;
   }
-  unguard;
 }
 
 
@@ -262,7 +256,6 @@ VFlacAudioCodec::~VFlacAudioCodec () {
 //
 //==========================================================================
 int VFlacAudioCodec::Decode(short *Data, int NumSamples) {
-  guard(VFlacAudioCodec::Decode);
   Stream->StrmBuf = Data;
   Stream->StrmSize = NumSamples;
 
@@ -281,7 +274,6 @@ int VFlacAudioCodec::Decode(short *Data, int NumSamples) {
     if (!Stream->process_single()) break;
   }
   return NumSamples - Stream->StrmSize;
-  unguard;
 }
 
 
@@ -291,9 +283,7 @@ int VFlacAudioCodec::Decode(short *Data, int NumSamples) {
 //
 //==========================================================================
 bool VFlacAudioCodec::Finished () {
-  guard(VFlacAudioCodec::Finished);
   return (Stream->get_state() == FLAC__STREAM_DECODER_END_OF_STREAM);
-  unguard;
 }
 
 
@@ -303,11 +293,9 @@ bool VFlacAudioCodec::Finished () {
 //
 //==========================================================================
 void VFlacAudioCodec::Restart () {
-  guard(VFlacAudioCodec::Restart);
   Stream->Strm->Seek(0);
   Stream->BytesLeft = Stream->Strm->TotalSize();
   Stream->reset();
-  unguard;
 }
 
 
@@ -327,12 +315,10 @@ VFlacAudioCodec::FStream::FStream (VStream *InStream)
   , StrmBuf(0)
   , StrmSize(0)
 {
-  guard(VFlacAudioCodec::FStream::FStream);
   Strm->Seek(0);
   BytesLeft = Strm->TotalSize();
   init();
   process_until_end_of_metadata();
-  unguard;
 }
 
 
@@ -358,7 +344,6 @@ VFlacAudioCodec::FStream::~FStream () {
 //
 //==========================================================================
 void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t Offs, size_t Len) {
-  guard(VFlacAudioCodec::FStream::StrmWrite);
   for (int i = 0; i < 2; ++i) {
     const FLAC__int32 *pSrc = Buf[NumChannels == 1 ? 0 : i]+Offs;
     short *pDst = StrmBuf+i;
@@ -370,7 +355,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
   }
   StrmBuf += Len * 2;
   StrmSize -= Len;
-  unguard;
 }
 
 
@@ -380,7 +364,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
 //
 //==========================================================================
 ::FLAC__StreamDecoderReadStatus VFlacAudioCodec::FStream::read_callback (FLAC__byte buffer[], size_t *bytes) {
-  guard(VFlacAudioCodec::FStream::read_callback);
   if (*bytes > 0) {
     if (!BytesLeft) return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
     if (*bytes > BytesLeft) *bytes = BytesLeft;
@@ -390,7 +373,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
   } else {
     return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
   }
-  unguard;
 }
 
 
@@ -400,7 +382,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
 //
 //==========================================================================
 ::FLAC__StreamDecoderWriteStatus VFlacAudioCodec::FStream::write_callback (const ::FLAC__Frame *frame, const FLAC__int32 *const buffer[]) {
-  guard(VFlacAudioCodec::FStream::write_callback);
   size_t blockSize = frame->header.blocksize;
   size_t blockGrab = 0;
   size_t blockOfs;
@@ -421,7 +402,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
   }
 
   return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
-  unguard;
 }
 
 
@@ -431,7 +411,6 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
 //
 //==========================================================================
 void VFlacAudioCodec::FStream::metadata_callback (const ::FLAC__StreamMetadata *metadata) {
-  guard(VFlacAudioCodec::FStream::metadata_callback);
   if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO && PoolSize == 0) {
     if (metadata->data.stream_info.bits_per_sample != 8 &&
         metadata->data.stream_info.bits_per_sample != 16)
@@ -447,7 +426,6 @@ void VFlacAudioCodec::FStream::metadata_callback (const ::FLAC__StreamMetadata *
     SamplePool[0] = (FLAC__int32 *)Z_Malloc(sizeof(FLAC__int32)*PoolSize*NumChannels);
     SamplePool[1] = SamplePool[0]+PoolSize;
   }
-  unguard;
 }
 
 
@@ -466,7 +444,6 @@ void VFlacAudioCodec::FStream::error_callback (::FLAC__StreamDecoderErrorStatus)
 //
 //==========================================================================
 VAudioCodec *VFlacAudioCodec::Create (VStream *InStream) {
-  guard(VFlacAudioCodec::Create);
   // check if it's a FLAC file
   InStream->Seek(0);
   char Hdr[4];
@@ -480,5 +457,4 @@ VAudioCodec *VFlacAudioCodec::Create (VStream *InStream) {
     return nullptr;
   }
   return new VFlacAudioCodec(Strm);
-  unguard;
 }

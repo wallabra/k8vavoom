@@ -136,7 +136,6 @@ VSoundManager::VSoundManager ()
 //
 //==========================================================================
 VSoundManager::~VSoundManager () {
-  //guard(VSoundManager::~VSoundManager);
   for (int i = 0; i < S_sfx.Num(); ++i) {
     if (S_sfx[i].Data) {
       Z_Free(S_sfx[i].Data);
@@ -174,7 +173,6 @@ VSoundManager::~VSoundManager () {
     R = Next;
   }
 #endif
-  //unguard;
 }
 
 
@@ -186,7 +184,6 @@ VSoundManager::~VSoundManager () {
 //
 //==========================================================================
 void VSoundManager::Init () {
-  guard(VSoundManager::Init);
   int Lump;
 
   // sound 0 is empty sound
@@ -228,7 +225,6 @@ void VSoundManager::Init () {
     }
   }
 #endif
-  unguard;
 }
 
 
@@ -238,7 +234,6 @@ void VSoundManager::Init () {
 //
 //==========================================================================
 void VSoundManager::ParseSndinfo (VScriptParser *sc) {
-  guard(VSoundManager::ParseSndinfo);
   TArray<int> list;
 
   while (!sc->AtEnd()) {
@@ -485,7 +480,6 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
     }
   }
   delete sc;
-  unguard;
 }
 
 
@@ -495,7 +489,6 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
 //
 //==========================================================================
 int VSoundManager::AddSoundLump (VName TagName, int Lump) {
-  guard(VSoundManager::AddSoundLump);
   sfxinfo_t S;
   memset((void *)&S, 0, sizeof(S));
   S.TagName = TagName;
@@ -509,7 +502,6 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   S.LumpNum = Lump;
   S.Link = -1;
   return S_sfx.Append(S);
-  unguard;
 }
 
 
@@ -519,7 +511,6 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
 //
 //==========================================================================
 int VSoundManager::AddSound (VName TagName, int Lump) {
-  guard(VSoundManager::AddSound);
   int id = FindSound(TagName);
 
   if (id > 0) {
@@ -548,7 +539,6 @@ int VSoundManager::AddSound (VName TagName, int Lump) {
   }
 
   return id;
-  unguard;
 }
 
 
@@ -558,10 +548,8 @@ int VSoundManager::AddSound (VName TagName, int Lump) {
 //
 //==========================================================================
 int VSoundManager::FindSound (VName TagName) {
-  guard(VSoundManager::FindSound);
   for (int i = 0; i < S_sfx.Num(); ++i) if (!VStr::ICmp(*S_sfx[i].TagName, *TagName)) return i;
   return 0;
-  unguard;
 }
 
 
@@ -571,10 +559,8 @@ int VSoundManager::FindSound (VName TagName) {
 //
 //==========================================================================
 int VSoundManager::FindOrAddSound (VName TagName) {
-  guard(VSoundManager::FindOrAddSound);
   int id = FindSound(TagName);
   return (id ? id : AddSoundLump(TagName, -1));
-  unguard;
 }
 
 
@@ -587,7 +573,6 @@ int VSoundManager::FindOrAddSound (VName TagName) {
 //
 //==========================================================================
 void VSoundManager::ParsePlayerSoundCommon (VScriptParser *sc, int &PClass, int &Gender, int &RefId) {
-  guard(VSoundManager::ParsePlayerSoundCommon);
   sc->ExpectString();
   PClass = AddPlayerClass(*sc->String);
   sc->ExpectString();
@@ -602,7 +587,6 @@ void VSoundManager::ParsePlayerSoundCommon (VScriptParser *sc, int &PClass, int 
     sc->Error(va("'%s' has not been reserved for a player sound", *sc->String));
   }
   sc->ExpectString();
-  unguard;
 }
 
 
@@ -612,10 +596,8 @@ void VSoundManager::ParsePlayerSoundCommon (VScriptParser *sc, int &PClass, int 
 //
 //==========================================================================
 int VSoundManager::AddPlayerClass (VName CName) {
-  guard(VSoundManager::AddPlayerClass);
   int idx = FindPlayerClass(CName);
   return (idx == -1 ? PlayerClasses.Append(CName) : idx);
-  unguard;
 }
 
 
@@ -625,10 +607,8 @@ int VSoundManager::AddPlayerClass (VName CName) {
 //
 //==========================================================================
 int VSoundManager::FindPlayerClass (VName CName) {
-  guard(VSoundManager::FindPlayerClass);
   for (int i = 0; i < PlayerClasses.Num(); ++i) if (PlayerClasses[i] == CName) return i;
   return -1;
-  unguard;
 }
 
 
@@ -638,10 +618,8 @@ int VSoundManager::FindPlayerClass (VName CName) {
 //
 //==========================================================================
 int VSoundManager::AddPlayerGender (VName GName) {
-  guard(VSoundManager::AddPlayerGender);
   int idx = FindPlayerGender(GName);
   return (idx == -1 ? PlayerGenders.Append(GName) : idx);
-  unguard;
 }
 
 
@@ -651,10 +629,8 @@ int VSoundManager::AddPlayerGender (VName GName) {
 //
 //==========================================================================
 int VSoundManager::FindPlayerGender (VName GName) {
-  guard(VSoundManager::FindPlayerGender);
   for (int i = 0; i < PlayerGenders.Num(); ++i) if (PlayerGenders[i] == GName) return i;
   return -1;
-  unguard;
 }
 
 
@@ -664,7 +640,6 @@ int VSoundManager::FindPlayerGender (VName GName) {
 //
 //==========================================================================
 int VSoundManager::FindPlayerSound (int PClass, int Gender, int RefId) {
-  guard(VSoundManager::FindPlayerSound);
   for (int i = 0; i < PlayerSounds.Num(); ++i) {
     if (PlayerSounds[i].ClassId == PClass &&
         PlayerSounds[i].GenderId == Gender &&
@@ -674,7 +649,6 @@ int VSoundManager::FindPlayerSound (int PClass, int Gender, int RefId) {
     }
   }
   return 0;
-  unguard;
 }
 
 
@@ -684,7 +658,6 @@ int VSoundManager::FindPlayerSound (int PClass, int Gender, int RefId) {
 //
 //==========================================================================
 int VSoundManager::LookupPlayerSound (int ClassId, int GenderId, int RefId) {
-  guard(VSoundManager::LookupPlayerSound);
   int Id = FindPlayerSound(ClassId, GenderId, RefId);
   if (Id == 0 || (S_sfx[Id].LumpNum == -1 && S_sfx[Id].Link == -1)) {
     // this sound is unavailable
@@ -692,7 +665,6 @@ int VSoundManager::LookupPlayerSound (int ClassId, int GenderId, int RefId) {
     if (ClassId) return LookupPlayerSound(0, GenderId, RefId); // try the default class
   }
   return Id;
-  unguard;
 }
 
 
@@ -703,7 +675,6 @@ int VSoundManager::LookupPlayerSound (int ClassId, int GenderId, int RefId) {
 //==========================================================================
 int VSoundManager::GetSoundID (VName Name) {
   /*
-  guard(VSoundManager::GetSoundID);
   for (int i = 0; i < S_sfx.Num(); i++)
   {
     if (!VStr::ICmp(*S_sfx[i].TagName, *Name))
@@ -713,7 +684,6 @@ int VSoundManager::GetSoundID (VName Name) {
   }
   GCon->Logf("WARNING! Can't find sound %s", *Name);
   return 0;
-  unguard;
   */
   if (Name == NAME_None) return 0;
   return GetSoundID(*Name);
@@ -726,7 +696,6 @@ int VSoundManager::GetSoundID (VName Name) {
 //
 //==========================================================================
 int VSoundManager::GetSoundID (const char *name) {
-  guard(VSoundManager::GetSoundID);
   if (!name || !name[0] || VStr::ICmp(name, "None") == 0 || VStr::ICmp(name, "Null") == 0 || VStr::ICmp(name, "nil") == 0) return 0;
   for (int i = 0; i < S_sfx.Num(); ++i) {
     if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
@@ -765,7 +734,6 @@ int VSoundManager::GetSoundID (const char *name) {
   }
 
   return 0;
-  unguard;
 }
 
 
@@ -775,9 +743,7 @@ int VSoundManager::GetSoundID (const char *name) {
 //
 //==========================================================================
 int VSoundManager::ResolveSound (int InSoundId) {
-  guard(VSoundManager::ResolveSound);
   return ResolveSound(0, 0, InSoundId);
-  unguard;
 }
 
 
@@ -787,14 +753,12 @@ int VSoundManager::ResolveSound (int InSoundId) {
 //
 //==========================================================================
 int VSoundManager::ResolveEntitySound (VName ClassName, VName GenderName, VName SoundName) {
-  guard(VSoundManager::ResolveEntitySound);
   int ClassId = FindPlayerClass(ClassName);
   if (ClassId == -1) ClassId = 0;
   int GenderId = FindPlayerGender(GenderName);
   if (GenderId == -1) GenderId = 0;
   int SoundId = GetSoundID(SoundName);
   return ResolveSound(ClassId, GenderId, SoundId);
-  unguard;
 }
 
 
@@ -804,7 +768,6 @@ int VSoundManager::ResolveEntitySound (VName ClassName, VName GenderName, VName 
 //
 //==========================================================================
 int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
-  guard(VSoundManager::ResolveSound);
   int sound_id = InSoundId;
   while (sound_id >= 0 && sound_id < S_sfx.length() && S_sfx[sound_id].Link != -1) {
          if (S_sfx[sound_id].bPlayerReserve) sound_id = LookupPlayerSound(ClassID, GenderID, sound_id);
@@ -817,7 +780,6 @@ int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
     return InSoundId;
   }
   return sound_id;
-  unguard;
 }
 
 
@@ -827,7 +789,6 @@ int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
 //
 //==========================================================================
 bool VSoundManager::IsSoundPresent (VName ClassName, VName GenderName, VName SoundName) {
-  guard(VSoundManager::IsSoundPresent);
   int SoundId = FindSound(SoundName);
   if (!SoundId) return false;
   int ClassId = FindPlayerClass(ClassName);
@@ -835,7 +796,6 @@ bool VSoundManager::IsSoundPresent (VName ClassName, VName GenderName, VName Sou
   int GenderId = FindPlayerGender(GenderName);
   if (GenderId == -1) GenderId = 0;
   return ResolveSound(ClassId, GenderId, SoundId) > 0;
-  unguard;
 }
 
 
@@ -845,7 +805,6 @@ bool VSoundManager::IsSoundPresent (VName ClassName, VName GenderName, VName Sou
 //
 //==========================================================================
 bool VSoundManager::LoadSound (int sound_id) {
-  guard(VSoundManager::LoadSound);
   static const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
   if (!S_sfx[sound_id].Data) {
     int Lump = S_sfx[sound_id].LumpNum;
@@ -876,7 +835,6 @@ bool VSoundManager::LoadSound (int sound_id) {
   }
   ++S_sfx[sound_id].UseCount;
   return true;
-  unguard;
 }
 
 
@@ -886,14 +844,12 @@ bool VSoundManager::LoadSound (int sound_id) {
 //
 //==========================================================================
 void VSoundManager::DoneWithLump (int sound_id) {
-  guard(VSoundManager::DoneWithLump);
   sfxinfo_t &sfx = S_sfx[sound_id];
   if (!sfx.Data || !sfx.UseCount) Sys_Error("Empty lump");
   --sfx.UseCount;
   if (sfx.UseCount) return; // still used
   Z_Free(sfx.Data);
   sfx.Data = nullptr;
-  unguard;
 }
 
 
@@ -903,10 +859,8 @@ void VSoundManager::DoneWithLump (int sound_id) {
 //
 //==========================================================================
 float VSoundManager::GetMusicVolume (VName SongName) {
-  guard(VSoundManager::GetMusicVolume);
   for (int i = 0; i < MusicVolumes.Num(); ++i) if (MusicVolumes[i].SongName == SongName) return MusicVolumes[i].Volume;
   return 1.0f;
-  unguard;
 }
 
 
@@ -916,10 +870,8 @@ float VSoundManager::GetMusicVolume (VName SongName) {
 //
 //==========================================================================
 FAmbientSound *VSoundManager::GetAmbientSound (int Idx) {
-  guardSlow(VSoundManager::GetAmbientSound);
   if (Idx < 0 || Idx >= NUM_AMBIENT_SOUNDS) return nullptr;
   return AmbientSounds[Idx];
-  unguardSlow;
 }
 
 
@@ -929,7 +881,6 @@ FAmbientSound *VSoundManager::GetAmbientSound (int Idx) {
 //
 //==========================================================================
 void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
-  guard(VSoundManager::ParseSequenceScript);
   TArray<vint32> TempData;
   bool inSequence = false;
   int SeqId = 0;
@@ -1115,7 +1066,6 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
     }
   }
   delete sc;
-  unguard;
 }
 
 
@@ -1125,17 +1075,13 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
 //
 //==========================================================================
 void VSoundManager::AssignSeqTranslations (VScriptParser *sc, int SeqId, seqtype_t SeqType) {
-  guard(VSoundManager::AssignSeqTranslations);
   sc->Crossed = false;
-
   while (sc->GetString() && !sc->Crossed) {
     char *Stopper;
     int Num = strtol(*sc->String, &Stopper, 0);
     if (*Stopper == 0) SeqTrans[(Num & 63) + SeqType * 64] = SeqId;
   }
-
   sc->UnGet();
-  unguard;
 }
 
 
@@ -1145,10 +1091,8 @@ void VSoundManager::AssignSeqTranslations (VScriptParser *sc, int SeqId, seqtype
 //
 //==========================================================================
 void VSoundManager::SetSeqTrans (VName Name, int Num, int SeqType) {
-  guard(VSoundManager::SetSeqTrans);
   int Idx = FindSequence(Name);
   if (Idx != -1) SeqTrans[(Num & 63) + SeqType * 64] = Idx;
-  unguard;
 }
 
 
@@ -1158,11 +1102,9 @@ void VSoundManager::SetSeqTrans (VName Name, int Num, int SeqType) {
 //
 //==========================================================================
 VName VSoundManager::GetSeqTrans (int Num, int SeqType) {
-  guard(VSoundManager::GetSeqTrans);
   if (Num < 0) Num = 0; // if not assigned, use 0 as default
   if (SeqTrans[(Num & 63) + SeqType * 64] < 0) return NAME_None;
   return SeqInfo[SeqTrans[(Num & 63) + SeqType * 64]].Name;
-  unguard;
 }
 
 
@@ -1172,11 +1114,9 @@ VName VSoundManager::GetSeqTrans (int Num, int SeqType) {
 //
 //==========================================================================
 VName VSoundManager::GetSeqSlot (VName Name) {
-  guard(VSoundManager::GetSeqSlot);
   int Idx = FindSequence(Name);
   if (Idx != -1) return SeqInfo[Idx].Slot;
   return NAME_None;
-  unguard;
 }
 
 
@@ -1186,10 +1126,8 @@ VName VSoundManager::GetSeqSlot (VName Name) {
 //
 //==========================================================================
 int VSoundManager::FindSequence (VName Name) {
-  guard(VSoundManager::FindSequence);
   for (int i = 0; i < SeqInfo.Num(); ++i) if (SeqInfo[i].Name == Name) return i;
   return -1;
-  unguard;
 }
 
 
@@ -1199,7 +1137,6 @@ int VSoundManager::FindSequence (VName Name) {
 //
 //==========================================================================
 void VSoundManager::GetSoundLumpNames (TArray<FReplacedString> &List) {
-  guard(VSoundManager::GetSoundLumpNames);
   for (int i = 1; i < S_sfx.Num(); ++i) {
     if (S_sfx[i].LumpNum < 0) continue;
     const char *LName = *W_LumpName(S_sfx[i].LumpNum);
@@ -1210,7 +1147,6 @@ void VSoundManager::GetSoundLumpNames (TArray<FReplacedString> &List) {
       R.Old = LName + 2;
     }
   }
-  unguard;
 }
 
 
@@ -1220,12 +1156,10 @@ void VSoundManager::GetSoundLumpNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void VSoundManager::ReplaceSoundLumpNames (TArray<FReplacedString> &List) {
-  guard(VSoundManager::ReplaceSoundLumpNames);
   for (int i = 0; i < List.Num(); ++i) {
     if (!List[i].Replaced) continue;
     S_sfx[List[i].Index].LumpNum = W_CheckNumForName(VName(*(VStr("ds")+List[i].New), VName::AddLower));
   }
-  unguard;
 }
 
 
@@ -1236,7 +1170,6 @@ void VSoundManager::ReplaceSoundLumpNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
-  guard(VRawSampleLoader::Load);
   // read header and see if it's a valid raw sample
   vuint16 Unknown;
   vuint16 SampleRate;
@@ -1251,6 +1184,5 @@ void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   Sfx.DataSize = DataSize;
   Sfx.Data = Z_Malloc(Sfx.DataSize);
   Strm.Serialise(Sfx.Data, Sfx.DataSize);
-  unguard;
 }
 #endif

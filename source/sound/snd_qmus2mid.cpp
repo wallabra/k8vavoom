@@ -60,14 +60,12 @@ const vuint8 VQMus2Mid::MidiTempo[] = { 0x00, 0xff, 0x51, 0x03, 0x09, 0xa3, 0x1a
 //
 //==========================================================================
 int VQMus2Mid::FirstChannelAvailable () {
-  guard(VQMus2Mid::FirstChannelAvailable);
   int old15 = Mus2MidChannel[15];
   int max = -1;
   Mus2MidChannel[15] = -1;
   for (int i = 0; i < 16; ++i) if (Mus2MidChannel[i] > max) max = Mus2MidChannel[i];
   Mus2MidChannel[15] = old15;
   return (max == 8 ? 10 : max + 1);
-  unguard;
 }
 
 
@@ -77,9 +75,7 @@ int VQMus2Mid::FirstChannelAvailable () {
 //
 //==========================================================================
 void VQMus2Mid::TWriteByte (int MIDItrack, vuint8 data) {
-  guard(VQMus2Mid::TWriteByte);
   Tracks[MIDItrack].Data.Append(data);
-  unguard;
 }
 
 
@@ -89,9 +85,7 @@ void VQMus2Mid::TWriteByte (int MIDItrack, vuint8 data) {
 //
 //==========================================================================
 void VQMus2Mid::TWriteBuf (int MIDItrack, const vuint8 *buf, int size) {
-  guard(VQMus2Mid::TWriteBuf);
   for (int i = 0; i < size; ++i) TWriteByte(MIDItrack, buf[i]);
-  unguard;
 }
 
 
@@ -101,7 +95,6 @@ void VQMus2Mid::TWriteBuf (int MIDItrack, const vuint8 *buf, int size) {
 //
 //==========================================================================
 void VQMus2Mid::TWriteVarLen (int tracknum, vuint32 value) {
-  guard(VQMus2Mid::TWriteVarLen);
   vuint32 buffer = value & 0x7f;
   while ((value >>= 7)) {
     buffer <<= 8;
@@ -112,7 +105,6 @@ void VQMus2Mid::TWriteVarLen (int tracknum, vuint32 value) {
     TWriteByte(tracknum, buffer);
     if (buffer&0x80) buffer >>= 8; else break;
   }
-  unguard;
 }
 
 
@@ -122,7 +114,6 @@ void VQMus2Mid::TWriteVarLen (int tracknum, vuint32 value) {
 //
 //==========================================================================
 vuint32 VQMus2Mid::ReadTime (VStream &Strm) {
-  guard(VQMus2Mid::ReadTime);
   vuint32 time = 0;
   vuint8 data;
   if (Strm.AtEnd()) return 0;
@@ -131,7 +122,6 @@ vuint32 VQMus2Mid::ReadTime (VStream &Strm) {
     time = (time<<7)+(data&0x7F);
   } while (!Strm.AtEnd() && (data&0x80));
   return time;
-  unguard;
 }
 
 
@@ -141,7 +131,6 @@ vuint32 VQMus2Mid::ReadTime (VStream &Strm) {
 //
 //==========================================================================
 bool VQMus2Mid::Convert (VStream &Strm) {
-  guard(VQMus2Mid::Convert);
   vuint8 et;
   int MUSchannel;
   int MIDIchannel;
@@ -290,7 +279,6 @@ bool VQMus2Mid::Convert (VStream &Strm) {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -300,7 +288,6 @@ bool VQMus2Mid::Convert (VStream &Strm) {
 //
 //==========================================================================
 void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
-  guard(VQMus2Mid::WriteMIDIFile);
   // header
   char HdrId[4] = { 'M', 'T', 'h', 'd' };
   vuint32 HdrSize = 6;
@@ -325,7 +312,6 @@ void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
     // data
     Strm.Serialise(Tracks[i].Data.Ptr(), Tracks[i].Data.Num());
   }
-  unguard;
 }
 
 
@@ -335,8 +321,6 @@ void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
 //
 //==========================================================================
 int VQMus2Mid::Run (VStream &InStrm, VStream &OutStrm) {
-  guard(VQMus2Mid::Run);
   if (Convert(InStrm)) WriteMIDIFile(OutStrm);
   return OutStrm.TotalSize();
-  unguard;
 }

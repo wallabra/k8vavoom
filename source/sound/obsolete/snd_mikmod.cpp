@@ -157,11 +157,9 @@ VMikModAudioCodec::VMikModAudioCodec(MODULE *InModule)
 
 VMikModAudioCodec::~VMikModAudioCodec()
 {
-  //guard(VMikModAudioCodec::~VMikModAudioCodec);
   Player_Stop();
   Player_Free(Module);
   MikMod_Exit();
-  //unguard;
 }
 
 //==========================================================================
@@ -172,9 +170,7 @@ VMikModAudioCodec::~VMikModAudioCodec()
 
 int VMikModAudioCodec::Decode(short *Data, int NumSamples)
 {
-  guard(VMikModAudioCodec::Decode);
   return VC_WriteBytes((SBYTE*)Data, NumSamples * 4) / 4;
-  unguard;
 }
 
 //==========================================================================
@@ -196,9 +192,7 @@ bool VMikModAudioCodec::Finished()
 
 void VMikModAudioCodec::Restart()
 {
-  guard(VMikModAudioCodec::Restart);
   Player_SetPosition(0);
-  unguard;
 }
 
 //==========================================================================
@@ -230,10 +224,8 @@ void VMikModAudioCodec::Drv_Update()
 
 BOOL VMikModAudioCodec::Drv_Reset()
 {
-  guard(VMikModAudioCodec::Drv_Reset);
   VC_Exit();
   return VC_Init();
-  unguard;
 }
 
 //==========================================================================
@@ -244,7 +236,6 @@ BOOL VMikModAudioCodec::Drv_Reset()
 
 BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
 {
-  guard(VMikModAudioCodec::ArchiveReader_Seek);
   VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   int NewPos = 0;
   switch (whence)
@@ -265,7 +256,6 @@ BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
   }
   Strm->Seek(NewPos);
   return !Strm->IsError();
-  unguard;
 }
 
 //==========================================================================
@@ -276,10 +266,8 @@ BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
 
 long VMikModAudioCodec::ArchiveReader_Tell(MREADER *rd)
 {
-  guard(VMikModAudioCodec::ArchiveReader_Tell);
   VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   return Strm->Tell();
-  unguard;
 }
 
 //==========================================================================
@@ -290,7 +278,6 @@ long VMikModAudioCodec::ArchiveReader_Tell(MREADER *rd)
 
 BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t length)
 {
-  guard(VMikModAudioCodec::ArchiveReader_Read);
   VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   if (Strm->Tell() + (int)length > Strm->TotalSize())
   {
@@ -299,7 +286,6 @@ BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t lengt
   }
   Strm->Serialise(dest, length);
   return !Strm->IsError();
-  unguard;
 }
 
 //==========================================================================
@@ -310,7 +296,6 @@ BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t lengt
 
 int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
 {
-  guard(VMikModAudioCodec::ArchiveReader_Get);
   VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   if (Strm->AtEnd())
   {
@@ -323,7 +308,6 @@ int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
     *Strm << c;
     return c;
   }
-  unguard;
 }
 
 //==========================================================================
@@ -334,9 +318,7 @@ int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
 
 BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER *rd)
 {
-  guard(VMikModAudioCodec::ArchiveReader_Eof);
   return ((FMikModArchiveReader*)rd)->AtEof;
-  unguard;
 }
 
 //==========================================================================
@@ -347,7 +329,6 @@ BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER *rd)
 
 VAudioCodec *VMikModAudioCodec::Create(VStream *InStrm)
 {
-  guard(VMikModAudioCodec::Create);
   if (snd_mod_player != 0)
   {
     return nullptr;
@@ -452,5 +433,4 @@ VAudioCodec *VMikModAudioCodec::Create(VStream *InStrm)
   //  Start playback.
   Player_Start(module);
   return new VMikModAudioCodec(module);
-  unguard;
 }

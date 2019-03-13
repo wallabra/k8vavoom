@@ -350,7 +350,6 @@ static void DoBool(VScriptParser *sc, int &Flags, int Mask)
 
 void VSoundManager::ParseReverbs(VScriptParser *sc)
 {
-  guard(VSoundManager::ParseReverbs);
   if (!Environments)
   {
     Environments = &Off;
@@ -765,7 +764,6 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 //==========================================================================
@@ -776,12 +774,10 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
 
 VReverbInfo *VSoundManager::FindEnvironment(int Id)
 {
-  guard(VSoundManager::FindEnvironment);
   VReverbInfo *Check = Environments;
   while (Check->Next && Check->Next->Id <= Id)
   {
     Check = Check->Next;
   }
   return Check;
-  unguard;
 }

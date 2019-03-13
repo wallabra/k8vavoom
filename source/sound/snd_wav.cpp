@@ -100,7 +100,6 @@ IMPLEMENT_AUDIO_CODEC(VWavAudioCodec, "Wav");
 
 static int FindRiffChunk(VStream &Strm, const char *ID)
 {
-  guard(VWavAudioCodec::FindChunk);
   Strm.Seek(12);
   if (Strm.IsError()) return -1;
   int EndPos = Strm.TotalSize();
@@ -124,7 +123,6 @@ static int FindRiffChunk(VStream &Strm, const char *ID)
     if (Strm.IsError()) return -1;
   }
   return -1;
-  unguard;
 }
 
 //==========================================================================
@@ -135,7 +133,6 @@ static int FindRiffChunk(VStream &Strm, const char *ID)
 
 void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
 {
-  guard(VWaveSampleLoader::Load);
   //  Check header to see if it's a wave file.
   char Header[12];
   Strm.Seek(0);
@@ -211,8 +208,6 @@ void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
     }
   }
   Z_Free(WavData);
-
-  unguard;
 }
 
 //==========================================================================
@@ -225,7 +220,6 @@ VWavAudioCodec::VWavAudioCodec(VStream *InStrm)
 : Strm(InStrm)
 , SamplesLeft(-1)
 {
-  guard(VWavAudioCodec::VWavAudioCodec);
   int FmtSize = FindRiffChunk(*Strm, "fmt ");
   if (FmtSize < 16)
   {
@@ -254,7 +248,6 @@ VWavAudioCodec::VWavAudioCodec(VStream *InStrm)
     return;
   }
   SamplesLeft /= BlockAlign;
-  unguard;
 }
 
 //==========================================================================
@@ -265,14 +258,12 @@ VWavAudioCodec::VWavAudioCodec(VStream *InStrm)
 
 VWavAudioCodec::~VWavAudioCodec()
 {
-  //guard(VWavAudioCodec::~VWavAudioCodec);
   if (SamplesLeft != -1)
   {
     Strm->Close();
     delete Strm;
     Strm = nullptr;
   }
-  //unguard;
 }
 
 //==========================================================================
@@ -283,7 +274,6 @@ VWavAudioCodec::~VWavAudioCodec()
 
 int VWavAudioCodec::Decode(short *Data, int NumSamples)
 {
-  guard(VWavAudioCodec::Decode);
   int CurSample = 0;
   vuint8 Buf[1024];
   while (SamplesLeft && CurSample < NumSamples)
@@ -310,7 +300,6 @@ int VWavAudioCodec::Decode(short *Data, int NumSamples)
     CurSample += ReadSamples;
   }
   return CurSample;
-  unguard;
 }
 
 //==========================================================================
@@ -332,9 +321,7 @@ bool VWavAudioCodec::Finished()
 
 void VWavAudioCodec::Restart()
 {
-  guard(VWavAudioCodec::Restart);
   SamplesLeft = FindRiffChunk(*Strm, "data") / BlockAlign;
-  unguard;
 }
 
 //==========================================================================
@@ -345,7 +332,6 @@ void VWavAudioCodec::Restart()
 
 VAudioCodec *VWavAudioCodec::Create(VStream *InStrm)
 {
-  guard(VWavAudioCodec::Create);
   char Header[12];
   InStrm->Seek(0);
   InStrm->Serialise(Header, 12);
@@ -362,5 +348,4 @@ VAudioCodec *VWavAudioCodec::Create(VStream *InStrm)
     Codec = nullptr;
   }
   return nullptr;
-  unguard;
 }

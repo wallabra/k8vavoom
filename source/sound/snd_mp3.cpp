@@ -95,7 +95,6 @@ VMp3AudioCodec::VMp3AudioCodec(VStream *AStrm, bool AFreeStream)
 , FreeStream(AFreeStream)
 , Initialised(false)
 {
-  guard(VMp3AudioCodec::VMp3AudioCodec);
   //  Seek file to the begining
   BytesLeft = Strm->TotalSize();
   Strm->Seek(0);
@@ -104,7 +103,6 @@ VMp3AudioCodec::VMp3AudioCodec(VStream *AStrm, bool AFreeStream)
   mad_stream_init(&Stream);
   mad_frame_init(&Frame);
   mad_synth_init(&Synth);
-  unguard;
 }
 
 //==========================================================================
@@ -115,7 +113,6 @@ VMp3AudioCodec::VMp3AudioCodec(VStream *AStrm, bool AFreeStream)
 
 VMp3AudioCodec::~VMp3AudioCodec()
 {
-  //guard(VMp3AudioCodec::~VMp3AudioCodec);
   if (Initialised)
   {
     //  Close file only if decoder has been initialised succesfully.
@@ -130,7 +127,6 @@ VMp3AudioCodec::~VMp3AudioCodec()
   mad_synth_finish(&Synth);
   mad_frame_finish(&Frame);
   mad_stream_finish(&Stream);
-  //unguard;
 }
 
 //==========================================================================
@@ -141,8 +137,6 @@ VMp3AudioCodec::~VMp3AudioCodec()
 
 bool VMp3AudioCodec::Init()
 {
-  guard(VMp3AudioCodec::Init);
-
   //  Check for ID3v2 header.
   vuint8 Id3Hdr[10];
   int SavedPos = Strm->Tell();
@@ -182,7 +176,6 @@ bool VMp3AudioCodec::Init()
   SampleRate = Frame.header.samplerate;
   Initialised = true;
   return true;
-  unguard;
 }
 
 //==========================================================================
@@ -193,7 +186,6 @@ bool VMp3AudioCodec::Init()
 
 int VMp3AudioCodec::Decode(short *Data, int NumSamples)
 {
-  guard(VMp3AudioCodec::Decode);
   int CurSample = 0;
   do
   {
@@ -262,7 +254,6 @@ int VMp3AudioCodec::Decode(short *Data, int NumSamples)
     HaveFrame = true;
   } while(1);
   return CurSample;
-  unguard;
 }
 
 //==========================================================================
@@ -273,7 +264,6 @@ int VMp3AudioCodec::Decode(short *Data, int NumSamples)
 
 int VMp3AudioCodec::ReadData()
 {
-  guard(VMp3AudioCodec::ReadData);
   int     ReadSize;
   int     Remaining;
   vuint8 *ReadStart;
@@ -313,7 +303,6 @@ int VMp3AudioCodec::ReadData()
   mad_stream_buffer(&Stream, InputBuffer, ReadSize + Remaining);
   Stream.error = MAD_ERROR_NONE;
   return ReadSize + Remaining;
-  unguard;
 }
 
 //==========================================================================
@@ -324,10 +313,8 @@ int VMp3AudioCodec::ReadData()
 
 bool VMp3AudioCodec::Finished()
 {
-  guard(VMp3AudioCodec::Finished);
   //  We are done if there's no more data and last frame has been decoded.
   return !BytesLeft && !HaveFrame;
-  unguard;
 }
 
 //==========================================================================
@@ -338,11 +325,9 @@ bool VMp3AudioCodec::Finished()
 
 void VMp3AudioCodec::Restart()
 {
-  guard(VMp3AudioCodec::Restart);
   //  Seek to the beginning of the file.
   Strm->Seek(0);
   BytesLeft = Strm->TotalSize();
-  unguard;
 }
 
 //==========================================================================
@@ -353,7 +338,6 @@ void VMp3AudioCodec::Restart()
 
 VAudioCodec *VMp3AudioCodec::Create(VStream *InStrm)
 {
-  guard(VMp3AudioCodec::Create);
   VMp3AudioCodec *Codec = new VMp3AudioCodec(InStrm, true);
   if (!Codec->Init())
   {
@@ -362,7 +346,6 @@ VAudioCodec *VMp3AudioCodec::Create(VStream *InStrm)
     return nullptr;
   }
   return Codec;
-  unguard;
 }
 
 //==========================================================================
@@ -373,7 +356,6 @@ VAudioCodec *VMp3AudioCodec::Create(VStream *InStrm)
 
 void VMp3SampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
 {
-  guard(VMp3SampleLoader::Load);
   VMp3AudioCodec *Codec = new VMp3AudioCodec(&Stream, false);
   if (!Codec->Init()) {
     //Codec->Cleanup();
@@ -381,5 +363,4 @@ void VMp3SampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
-  unguard;
 }

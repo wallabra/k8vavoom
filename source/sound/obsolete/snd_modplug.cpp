@@ -95,9 +95,7 @@ VModPlugAudioCodec::VModPlugAudioCodec(ModPlugFile *InFile)
 
 VModPlugAudioCodec::~VModPlugAudioCodec()
 {
-  //guard(VModPlugAudioCodec::~VModPlugAudioCodec);
   ModPlug_Unload(file);
-  //unguard;
 }
 
 //==========================================================================
@@ -108,7 +106,6 @@ VModPlugAudioCodec::~VModPlugAudioCodec()
 
 int VModPlugAudioCodec::Decode(short *Data, int NumSamples)
 {
-  guard(VModPlugAudioCodec::Decode);
   int count = ModPlug_Read(file, Data, NumSamples * 4);
   if (count < NumSamples * 4)
   {
@@ -116,7 +113,6 @@ int VModPlugAudioCodec::Decode(short *Data, int NumSamples)
     playing = false;
   }
   return count/4;
-  unguard;
 }
 
 //==========================================================================
@@ -127,9 +123,7 @@ int VModPlugAudioCodec::Decode(short *Data, int NumSamples)
 
 bool VModPlugAudioCodec::Finished()
 {
-  guard(VModPlugAudioCodec::Finished);
   return !playing;
-  unguard;
 }
 
 //==========================================================================
@@ -140,10 +134,8 @@ bool VModPlugAudioCodec::Finished()
 
 void VModPlugAudioCodec::Restart()
 {
-  guard(VModPlugAudioCodec::Restart);
   ModPlug_Seek(file, 0);
   playing = true;
-  unguard;
 }
 
 //==========================================================================
@@ -154,7 +146,6 @@ void VModPlugAudioCodec::Restart()
 
 VAudioCodec *VModPlugAudioCodec::Create(VStream *InStrm)
 {
-  guard(VModPlugAudioCodec::Create);
   if (snd_mod_player != 1)
   {
     return nullptr;
@@ -278,5 +269,4 @@ VAudioCodec *VModPlugAudioCodec::Create(VStream *InStrm)
   InStrm = nullptr;
 
   return new VModPlugAudioCodec(file);
-  unguard;
 }

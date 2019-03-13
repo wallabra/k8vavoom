@@ -76,10 +76,8 @@ static VStr lastSF2Used = VStr();
 VTimidityAudioCodec::VTimidityAudioCodec(MidiSong *InSong)
   : Song(InSong)
 {
-  guard(VTimidityAudioCodec::VTimidityAudioCodec);
   Timidity_SetVolume(Song, 100);
   Timidity_Start(Song);
-  unguard;
 }
 
 
@@ -103,9 +101,7 @@ VTimidityAudioCodec::~VTimidityAudioCodec () {
 //
 //==========================================================================
 int VTimidityAudioCodec::Decode (short *Data, int NumSamples) {
-  guard(VTimidityAudioCodec::Decode);
   return Timidity_PlaySome(Song, Data, NumSamples);
-  unguard;
 }
 
 
@@ -115,9 +111,7 @@ int VTimidityAudioCodec::Decode (short *Data, int NumSamples) {
 //
 //==========================================================================
 bool VTimidityAudioCodec::Finished () {
-  guard(VTimidityAudioCodec::Finished);
   return !Timidity_Active(Song);
-  unguard;
 }
 
 
@@ -127,9 +121,7 @@ bool VTimidityAudioCodec::Finished () {
 //
 //==========================================================================
 void VTimidityAudioCodec::Restart () {
-  guard(VTimidityAudioCodec::Restart);
   Timidity_Start(Song);
-  unguard;
 }
 
 
@@ -139,7 +131,6 @@ void VTimidityAudioCodec::Restart () {
 //
 //==========================================================================
 int VTimidityAudioCodec::ctl_msg (int type, int verbosity_level, const char *fmt, ...) {
-  guard(VTimidityAudioCodec::ctl_msg);
   if (s_timidity_verbosity < 0) return 0;
   char Buf[1024];
   va_list ap;
@@ -152,7 +143,6 @@ int VTimidityAudioCodec::ctl_msg (int type, int verbosity_level, const char *fmt
   GCon->Log(Buf);
   va_end(ap);
   return 0;
-  unguard;
 }
 
 
@@ -162,7 +152,6 @@ int VTimidityAudioCodec::ctl_msg (int type, int verbosity_level, const char *fmt
 //
 //==========================================================================
 VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
-  guard(VTimidityAudioCodec::Create);
   if (snd_mid_player != 0) return nullptr;
   // check if it's a MIDI file
   char Header[4];
@@ -254,5 +243,4 @@ VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
 
   // create codec
   return new VTimidityAudioCodec(Song);
-  unguard;
 }
