@@ -124,8 +124,8 @@ void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
 //  VRenderLevelShared::DrawSurfaces
 //
 //==========================================================================
-void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t *texinfo,
-  VEntity *SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
+void VRenderLevelShared::DrawSurfaces (sec_region_t *secregion, seg_t *seg, surface_t *InSurfs,
+  texinfo_t *texinfo, VEntity *SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
   bool CheckSkyBoxAlways)
 {
   surface_t *surfs = InSurfs;
@@ -133,12 +133,12 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
 
   if (texinfo->Tex->Type == TEXTYPE_Null) return;
 
-  sec_params_t *LightParams = (LightSourceSector == -1 ? r_region->params : &Level->Sectors[LightSourceSector].params);
+  sec_params_t *LightParams = (LightSourceSector == -1 ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
   lLev = MID(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
-  vuint32 Fade = GetFade(r_region);
+  vuint32 Fade = GetFade(secregion);
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
   bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
@@ -274,8 +274,8 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
 //  VRenderLevelShared::RenderHorizon
 //
 //==========================================================================
-void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
-  seg_t *Seg = dseg->seg;
+void VRenderLevelShared::RenderHorizon (sec_region_t *secregion, drawseg_t *dseg) {
+  seg_t *seg = dseg->seg;
 
   if (!dseg->HorizonTop) {
     dseg->HorizonTop = (surface_t *)Z_Malloc(HORIZON_SURF_SIZE);
@@ -285,8 +285,8 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
   }
 
   // horizon is not supported in sectors with slopes, so just use TexZ
-  float TopZ = r_region->ceiling->TexZ;
-  float BotZ = r_region->floor->TexZ;
+  float TopZ = secregion->ceiling->TexZ;
+  float BotZ = secregion->floor->TexZ;
   float HorizonZ = vieworg.z;
 
   // handle top part
@@ -296,10 +296,10 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     // calculate light and fade
     sec_params_t *LightParams = Ceil->secplane->LightSourceSector != -1 ?
       &Level->Sectors[Ceil->secplane->LightSourceSector].params :
-      r_region->params;
+      secregion->params;
     int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
     if (r_darken) lLev = light_remap[lLev];
-    vuint32 Fade = GetFade(r_region);
+    vuint32 Fade = GetFade(secregion);
 
     surface_t *Surf = dseg->HorizonTop;
     Surf->plane = dseg->seg;
@@ -309,14 +309,14 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     Surf->Fade = Fade;
     Surf->count = 4;
     TVec *svs = &Surf->verts[0];
-    svs[0] = *Seg->v1; svs[0].z = MAX(BotZ, HorizonZ);
-    svs[1] = *Seg->v1; svs[1].z = TopZ;
-    svs[2] = *Seg->v2; svs[2].z = TopZ;
-    svs[3] = *Seg->v2; svs[3].z = MAX(BotZ, HorizonZ);
+    svs[0] = *seg->v1; svs[0].z = MAX(BotZ, HorizonZ);
+    svs[1] = *seg->v1; svs[1].z = TopZ;
+    svs[2] = *seg->v2; svs[2].z = TopZ;
+    svs[3] = *seg->v2; svs[3].z = MAX(BotZ, HorizonZ);
     if (Ceil->secplane->pic == skyflatnum) {
       // if it's a sky, render it as a regular sky surface
-      DrawSurfaces(nullptr, Surf, &Ceil->texinfo, r_region->ceiling->SkyBox, -1,
-        Seg->sidedef->Light, !!(Seg->sidedef->Flags & SDF_ABSLIGHT),
+      DrawSurfaces(secregion, nullptr, Surf, &Ceil->texinfo, secregion->ceiling->SkyBox, -1,
+        seg->sidedef->Light, !!(seg->sidedef->Flags & SDF_ABSLIGHT),
         false);
     } else {
       if (PortalLevel == 0) {
@@ -337,10 +337,10 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     // calculate light and fade
     sec_params_t *LightParams = Floor->secplane->LightSourceSector != -1 ?
       &Level->Sectors[Floor->secplane->LightSourceSector].params :
-      r_region->params;
+      secregion->params;
     int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
     if (r_darken) lLev = light_remap[lLev];
-    vuint32 Fade = GetFade(r_region);
+    vuint32 Fade = GetFade(secregion);
 
     surface_t *Surf = dseg->HorizonBot;
     Surf->plane = dseg->seg;
@@ -350,14 +350,14 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     Surf->Fade = Fade;
     Surf->count = 4;
     TVec *svs = &Surf->verts[0];
-    svs[0] = *Seg->v1; svs[0].z = BotZ;
-    svs[1] = *Seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
-    svs[2] = *Seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
-    svs[3] = *Seg->v2; svs[3].z = BotZ;
+    svs[0] = *seg->v1; svs[0].z = BotZ;
+    svs[1] = *seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
+    svs[2] = *seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
+    svs[3] = *seg->v2; svs[3].z = BotZ;
     if (Floor->secplane->pic == skyflatnum) {
       // if it's a sky, render it as a regular sky surface
-      DrawSurfaces(nullptr, Surf, &Floor->texinfo, r_region->floor->SkyBox, -1,
-        Seg->sidedef->Light, !!(Seg->sidedef->Flags & SDF_ABSLIGHT),
+      DrawSurfaces(secregion, nullptr, Surf, &Floor->texinfo, secregion->floor->SkyBox, -1,
+        seg->sidedef->Light, !!(seg->sidedef->Flags & SDF_ABSLIGHT),
         false);
     } else {
       if (PortalLevel == 0) {
@@ -378,18 +378,18 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
 //  VRenderLevelShared::RenderMirror
 //
 //==========================================================================
-void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
-  seg_t *Seg = dseg->seg;
+void VRenderLevelShared::RenderMirror (sec_region_t *secregion, drawseg_t *dseg) {
+  seg_t *seg = dseg->seg;
   if (MirrorLevel < r_maxmirrors && r_allow_mirrors) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
-      if (Portals[i] && Portals[i]->MatchMirror(Seg)) {
+      if (Portals[i] && Portals[i]->MatchMirror(seg)) {
         Portal = Portals[i];
         break;
       }
     }
     if (!Portal) {
-      Portal = new VMirrorPortal(this, Seg);
+      Portal = new VMirrorPortal(this, seg);
       Portals.Append(Portal);
     }
 
@@ -399,9 +399,9 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
       surfs = surfs->next;
     } while (surfs);
   } else {
-    DrawSurfaces(Seg, dseg->mid->surfs, &dseg->mid->texinfo,
-      r_region->ceiling->SkyBox, -1, Seg->sidedef->Light,
-      !!(Seg->sidedef->Flags & SDF_ABSLIGHT), false);
+    DrawSurfaces(secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+      secregion->ceiling->SkyBox, -1, seg->sidedef->Light,
+      !!(seg->sidedef->Flags & SDF_ABSLIGHT), false);
   }
 }
 
@@ -413,7 +413,7 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
+void VRenderLevelShared::RenderLine (sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   line_t *linedef = seg->linedef;
 
@@ -483,33 +483,33 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
   if (!seg->backsector) {
     // single sided line
     if (seg->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
-      RenderHorizon(dseg);
+      RenderHorizon(secregion, dseg);
     } else if (seg->linedef->special == LNSPEC_LineMirror) {
-      RenderMirror(dseg);
+      RenderMirror(secregion, dseg);
     } else {
-      DrawSurfaces(seg, dseg->mid->surfs, &dseg->mid->texinfo,
-        r_region->ceiling->SkyBox, -1, sidedef->Light,
+      DrawSurfaces(secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+        secregion->ceiling->SkyBox, -1, sidedef->Light,
         !!(sidedef->Flags & SDF_ABSLIGHT), false);
     }
-    DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
-      r_region->ceiling->SkyBox, -1, sidedef->Light,
+    DrawSurfaces(secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
+      secregion->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags & SDF_ABSLIGHT), false);
   } else {
     // two sided line
-    DrawSurfaces(seg, dseg->top->surfs, &dseg->top->texinfo,
-      r_region->ceiling->SkyBox, -1, sidedef->Light,
+    DrawSurfaces(secregion, seg, dseg->top->surfs, &dseg->top->texinfo,
+      secregion->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
-      r_region->ceiling->SkyBox, -1, sidedef->Light,
+    DrawSurfaces(secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
+      secregion->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(seg, dseg->bot->surfs, &dseg->bot->texinfo,
-      r_region->ceiling->SkyBox, -1, sidedef->Light,
+    DrawSurfaces(secregion, seg, dseg->bot->surfs, &dseg->bot->texinfo,
+      secregion->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(seg, dseg->mid->surfs, &dseg->mid->texinfo,
-      r_region->ceiling->SkyBox, -1, sidedef->Light,
+    DrawSurfaces(secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+      secregion->ceiling->SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawSurfaces(seg, sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
+      DrawSurfaces(secregion, seg, sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox,
         -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
   }
@@ -521,7 +521,7 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 //  VRenderLevelShared::RenderSecSurface
 //
 //==========================================================================
-void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
+void VRenderLevelShared::RenderSecSurface (sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox) {
   sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic) return;
@@ -557,20 +557,20 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
       if (ssurf->texinfo.Alpha >= 1.0f) {
         //GCon->Logf("MALPHA=%f", plane.MirrorAlpha);
         // darken it a little to simulate mirror
-        sec_params_t *oldRegionLightParams = r_region->params;
+        sec_params_t *oldRegionLightParams = secregion->params;
         sec_params_t newLight = (plane.LightSourceSector >= 0 ? Level->Sectors[plane.LightSourceSector].params : *oldRegionLightParams);
         newLight.lightlevel = (int)((float)newLight.lightlevel*plane.MirrorAlpha);
-        r_region->params = &newLight;
-        // take light from `r_region->params`
-        DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, -1, 0, false, true);
+        secregion->params = &newLight;
+        // take light from `secregion->params`
+        DrawSurfaces(secregion, nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, -1, 0, false, true);
         // and resore rregion
-        r_region->params = oldRegionLightParams;
+        secregion->params = oldRegionLightParams;
         return;
       }
     }
   }
 
-  DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.LightSourceSector, 0, false, true);
+  DrawSurfaces(secregion, nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.LightSourceSector, 0, false, true);
 }
 
 
@@ -592,14 +592,14 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   check(r_sub->sector != nullptr);
 
   r_subregion = region;
-  r_region = region->secregion;
+  sec_region_t *secregion = region->secregion;
 
   if (r_sub->poly) {
     // render the polyobj in the subsector first
     int polyCount = r_sub->poly->numsegs;
     seg_t **polySeg = r_sub->poly->segs;
     while (polyCount--) {
-      RenderLine((*polySeg)->drawsegs);
+      RenderLine(secregion, (*polySeg)->drawsegs);
       ++polySeg;
     }
   }
@@ -607,12 +607,12 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   int count = r_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    RenderLine(ds);
+    RenderLine(secregion, ds);
     ++ds;
   }
 
-  RenderSecSurface(region->floor, r_region->floor->SkyBox);
-  RenderSecSurface(region->ceil, r_region->ceiling->SkyBox);
+  RenderSecSurface(secregion, region->floor, secregion->floor->SkyBox);
+  RenderSecSurface(secregion, region->ceil, secregion->ceiling->SkyBox);
 
   if (region->next && d > 0.0f) {
     if (!ViewClip.ClipCheckRegion(region->next, r_sub)) return;

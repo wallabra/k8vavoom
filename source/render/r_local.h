@@ -419,7 +419,7 @@ protected:
   // k8: it was a bunch of globals; i will eventually got rid of this
   subsector_t *r_sub;
   subregion_t *r_subregion;
-  sec_region_t *r_region;
+  //sec_region_t *r_region;
   bool MirrorClipSegs;
 
 protected:
@@ -493,16 +493,18 @@ protected:
   void AnimateSky (float);
 
   // world BSP rendering
-  void QueueSimpleSurf (seg_t*, surface_t*);
-  void QueueSkyPortal (surface_t*);
-  void QueueHorizonPortal (surface_t*);
-  void DrawSurfaces (seg_t*, surface_t*, texinfo_t*, VEntity*, int, int, bool, bool);
-  void RenderHorizon (drawseg_t*);
-  void RenderMirror (drawseg_t*);
-  void RenderLine (drawseg_t*);
-  void RenderSecSurface (sec_surface_t*, VEntity*);
-  void RenderSubRegion (subregion_t*);
-  void RenderSubsector (int);
+  void QueueSimpleSurf (seg_t *seg, surface_t *surf);
+  void QueueSkyPortal (surface_t *surf);
+  void QueueHorizonPortal (surface_t *surf);
+  void DrawSurfaces (sec_region_t *secregion, seg_t *seg, surface_t *InSurfs, texinfo_t *texinfo,
+                     VEntity *SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
+                     bool CheckSkyBoxAlways);
+  void RenderHorizon (sec_region_t *secregion, drawseg_t *dseg);
+  void RenderMirror (sec_region_t *secregion, drawseg_t *dseg);
+  void RenderLine (sec_region_t *secregion, drawseg_t *dseg);
+  void RenderSecSurface (sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
+  void RenderSubRegion (subregion_t *region);
+  void RenderSubsector (int num);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();
