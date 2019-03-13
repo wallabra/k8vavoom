@@ -385,9 +385,16 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
     const line_t *ldef = seg->linedef;
     if (!ldef) continue; // minisegs are boring
     if ((ldef->flags&ML_TWOSIDED) == 0) {
-      // one-sided wall: note only those that is facing the light,
-      // 'cause those are the only walls that can create shadows
-      if (!seen1SWall && !seg->PointOnSide(CurrLightPos)) {
+      // one-sided wall: if it is not facing light, it can create a shadow
+      if (seg->PointOnSide(CurrLightPos)) {
+        // oops
+        if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+          doShadows = true;
+          return;
+        }
+      }
+      // if it is facing light, note it
+      if (!seen1SWall) {
         if (!LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) continue;
         hasAnyLitSurfaces = true;
         seen1SWall = true;
@@ -403,14 +410,20 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
       // do partner subsector check
       // we should have partner seg
       if (!seg->partner || seg->partner == seg || seg->partner->front_sub == sub) {
-        if (!hasAnyLitSurfaces && !seg->PointOnSide(CurrLightPos)) {
-          hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius);
+        // dunno
+        if (seg->PointOnSide(CurrLightPos)) {
+          // oops
+          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+            doShadows = true;
+            return;
+          }
+        } else {
+          if (!hasAnyLitSurfaces) hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius);
         }
         continue;
       }
       // this check is wrong due to... what?!
       // somehow, some lights are visible when they shouldn't be
-      /*
       unsigned snum = (unsigned)(ptrdiff_t)(seg->partner->front_sub-Level->Subsectors);
       if (!(BspVis[snum>>3]&(1u<<(snum&7)))) {
         // we cannot see anything behind this wall, so don't bother
@@ -422,14 +435,19 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
           continue;
         }
       }
-      */
       // check if we can touch midtex
       const sector_t *fsec = seg->frontsector;
       if (CurrLightPos.z+CurrLightRadius <= fsec->botregion->floor->minz ||
           CurrLightPos.z-CurrLightRadius >= fsec->topregion->ceiling->maxz)
       {
         // cannot possibly touch midtex, consider this wall solid
-        if (!seen1SWall && !seg->PointOnSide(CurrLightPos)) {
+        if (seg->PointOnSide(CurrLightPos)) {
+          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+            // oops
+            doShadows = true;
+            return;
+          }
+        } else if (!seen1SWall) {
           if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
             hasAnyLitSurfaces = true;
             seen1SWall = true;
