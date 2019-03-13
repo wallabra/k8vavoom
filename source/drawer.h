@@ -146,6 +146,7 @@ public:
 
 protected:
   bool mInitialized;
+  bool isShittyGPU;
 
   static TArray<void (*) (int phase)> cbInitDeinit;
 

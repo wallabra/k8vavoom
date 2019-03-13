@@ -62,6 +62,7 @@ VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump avai
 VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less than this will not be drawn).", CVAR_Archive);
 
 static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
+static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
 
 
 //==========================================================================
@@ -340,6 +341,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   decalUsedStencil = false;
   maskedDecalsStarted = false;
+  isShittyGPU = true; // let's play safe
 }
 
 
@@ -447,7 +449,7 @@ void VOpenGLDrawer::InitResolution () {
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
-  bool isShittyGPU = false;
+  isShittyGPU = false;
   {
     const char *vcstr = (const char *)glGetString(GL_VENDOR);
     VStr vs = VStr(vcstr).toLowerCase();
@@ -466,6 +468,8 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Log(NAME_Init, "User command is to blacklist GPU; I shall obey!");
     isShittyGPU = true;
   }
+
+  gl_is_shitty_gpu = isShittyGPU;
 
   // check the maximum texture size
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
