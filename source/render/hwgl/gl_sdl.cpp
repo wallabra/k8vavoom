@@ -167,7 +167,6 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
 //
 //==========================================================================
 bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
-  guard(VSdlOpenGLDrawer::SetResolution);
   int Width = AWidth;
   int Height = AHeight;
   if (Width < 320 || Height < 200) {
@@ -237,7 +236,6 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   callICB(VCB_InitVideo);
 
   return true;
-  unguard;
 }
 
 
@@ -247,9 +245,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 //
 //==========================================================================
 void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
-  guard(VSdlOpenGLDrawer::GetExtFuncPtr);
   return SDL_GL_GetProcAddress(name);
-  unguard;
 }
 
 
@@ -261,11 +257,9 @@ void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
 //
 //==========================================================================
 void VSdlOpenGLDrawer::Update () {
-  guard(VSdlOpenGLDrawer::Update);
   if (mInitialized && hw_window && hw_glctx) callICB(VCB_FinishUpdate);
   FinishUpdate();
   if (hw_window) SDL_GL_SwapWindow(hw_window);
-  unguard;
 }
 
 
@@ -277,7 +271,6 @@ void VSdlOpenGLDrawer::Update () {
 //
 //==========================================================================
 void VSdlOpenGLDrawer::Shutdown() {
-  guard(VSdlOpenGLDrawer::Shutdown);
   if (hw_glctx && mInitialized) callICB(VCB_DeinitVideo);
   DeleteTextures();
   if (hw_glctx) {
@@ -291,5 +284,4 @@ void VSdlOpenGLDrawer::Shutdown() {
   }
   mInitialized = false;
   if (want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
-  unguard;
 }

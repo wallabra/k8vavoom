@@ -67,7 +67,6 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
 //
 //==========================================================================
 void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  guard(VRenderLevel::RenderScene);
   r_viewleaf = Level->PointInSubsector(vieworg);
 
   TransformFrustum();
@@ -107,5 +106,4 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   DrawParticles();
 
   DrawTranslucentPolys();
-  unguard;
 }

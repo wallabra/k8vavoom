@@ -107,7 +107,6 @@ static void AliasSetUpNormalTransform (const TAVec &angles, const TVec &Scale, V
 //
 //==========================================================================
 void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
-  guard(VOpenGLDrawer::UploadModel);
   if (Mdl->Uploaded) return;
 
   // create buffer
@@ -136,7 +135,6 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
   Mdl->Uploaded = true;
   UploadedModels.Append(Mdl);
-  unguard;
 }
 
 
@@ -146,14 +144,12 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
 //
 //==========================================================================
 void VOpenGLDrawer::UnloadModels () {
-  guard(VOpenGLDrawer::UnloadModels);
   for (int i = 0; i < UploadedModels.length(); ++i) {
     p_glDeleteBuffersARB(1, &UploadedModels[i]->VertsBuffer);
     p_glDeleteBuffersARB(1, &UploadedModels[i]->IndexBuffer);
     UploadedModels[i]->Uploaded = false;
   }
   UploadedModels.Clear();
-  unguard;
 }
 
 
@@ -170,7 +166,6 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
                                     bool is_view_model, float Inter, bool Interpolate,
                                     bool ForceDepthUse, bool AllowTransparency, bool onlyDepth)
 {
-  guard(VOpenGLDrawer::DrawAliasModel);
   if (is_view_model) {
     // hack the depth range to prevent view model from poking into walls
     if (CanUseRevZ()) glDepthRange(0.7f, 1.0f); else glDepthRange(0.0f, 0.3f);
@@ -286,7 +281,6 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     glEnable(GL_BLEND);
   }
   */
-  unguard;
 }
 
 
@@ -302,7 +296,6 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
                                            float Inter, bool Interpolate,
                                            bool ForceDepth, bool AllowTransparency)
 {
-  guard(VOpenGLDrawer::DrawAliasModelAmbient);
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -372,7 +365,6 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);
-  unguard;
 }
 
 
@@ -388,7 +380,6 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
                                             float Alpha, float Inter,
                                             bool Interpolate, bool ForceDepth, bool AllowTransparency)
 {
-  guard(VOpenGLDrawer::DrawAliasModelTextures);
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -490,7 +481,6 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   //glAlphaFunc(GL_GREATER, getAlphaThreshold());
   //glDisable(GL_ALPHA_TEST);
   //glEnable(GL_BLEND); // it is already enabled
-  unguard;
 }
 
 
@@ -500,13 +490,11 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
 //
 //==========================================================================
 void VOpenGLDrawer::BeginModelsLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
-  guard(VOpenGLDrawer::BeginModelsLightPass);
   p_glUseProgramObjectARB(ShadowsModelLightProgram);
   p_glUniform1iARB(ShadowsModelLightTextureLoc, 0);
   p_glUniform3fARB(ShadowsModelLightLightPosLoc, LightPos.x, LightPos.y, LightPos.z);
   p_glUniform1fARB(ShadowsModelLightLightRadiusLoc, Radius);
   p_glUniform3fARB(ShadowsModelLightLightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-  unguard;
 }
 
 
@@ -521,7 +509,6 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
                                          VTexture *Skin, float Alpha, float Inter,
                                          bool Interpolate, bool AllowTransparency)
 {
-  guard(VOpenGLDrawer::DrawAliasModelLight);
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -573,7 +560,6 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   p_glDisableVertexAttribArrayARB(ShadowsModelLightVert2NormalLoc);
   p_glDisableVertexAttribArrayARB(ShadowsModelLightTexCoordLoc);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-  unguard;
 }
 
 
@@ -583,10 +569,8 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 //
 //==========================================================================
 void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
-  guard(VOpenGLDrawer::BeginModelsShadowsPass);
   p_glUseProgramObjectARB(ShadowsModelShadowProgram);
   p_glUniform3fARB(ShadowsModelShadowLightPosLoc, LightPos.x, LightPos.y, LightPos.z);
-  unguard;
 }
 
 
@@ -600,7 +584,6 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
                                           VMeshModel *Mdl, int frame, int nextframe,
                                           float Inter, bool Interpolate, const TVec &LightPos, float LightRadius)
 {
-  guard(VOpenGLDrawer::DrawAliasModelShadow);
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -690,7 +673,6 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glDisableVertexAttribArrayARB(0);
   p_glDisableVertexAttribArrayARB(ShadowsModelShadowVert2Loc);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-  unguard;
 }
 
 
@@ -705,7 +687,6 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
                                        VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                        bool Interpolate, bool AllowTransparency)
 {
-  guard(VOpenGLDrawer::DrawAliasModelFog);
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -755,5 +736,4 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);
-  unguard;
 }

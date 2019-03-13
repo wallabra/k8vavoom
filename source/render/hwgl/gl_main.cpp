@@ -432,8 +432,6 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 //
 //==========================================================================
 void VOpenGLDrawer::InitResolution () {
-  guard(VOpenGLDrawer::InitResolution);
-
   GCon->Logf(NAME_Init, "Setting up new resolution: %dx%d", ScreenWidth, ScreenHeight);
 
   if (gl_dump_vendor) {
@@ -1291,8 +1289,6 @@ void VOpenGLDrawer::InitResolution () {
   mInitialized = true;
 
   callICB(VCB_InitResolution);
-
-  unguard;
 }
 
 
@@ -1302,13 +1298,11 @@ void VOpenGLDrawer::InitResolution () {
 //
 //==========================================================================
 bool VOpenGLDrawer::CheckExtension (const char *ext) {
-  guard(VOpenGLDrawer::CheckExtension);
   if (!ext || !ext[0]) return false;
   TArray<VStr> Exts;
   VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
   for (int i = 0; i < Exts.Num(); ++i) if (Exts[i] == ext) return true;
   return false;
-  unguard;
 }
 
 
@@ -1328,7 +1322,6 @@ bool VOpenGLDrawer::SupportsAdvancedRendering () {
 //
 //==========================================================================
 void VOpenGLDrawer::Setup2D () {
-  guard(VOpenGLDrawer::Setup2D);
   glViewport(0, 0, ScreenWidth, ScreenHeight);
 
   glMatrixMode(GL_PROJECTION);
@@ -1344,7 +1337,6 @@ void VOpenGLDrawer::Setup2D () {
   glDisable(GL_CULL_FACE);
   glDisable(GL_BLEND);
   if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
-  unguard;
 }
 
 
@@ -1354,7 +1346,6 @@ void VOpenGLDrawer::Setup2D () {
 //
 //==========================================================================
 void VOpenGLDrawer::StartUpdate (bool allowClear) {
-  guard(VOpenGLDrawer::StartUpdate);
   //glFinish();
 
   VRenderLevelShared::ResetPortalPool();
@@ -1375,7 +1366,6 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
   }
 
   Setup2D();
-  unguard;
 }
 
 
@@ -1470,11 +1460,9 @@ void VOpenGLDrawer::FinishUpdate () {
 //==========================================================================
 /*
 void VOpenGLDrawer::BeginDirectUpdate () {
-  guard(VOpenGLDrawer::BeginDirectUpdate);
   glFinish();
   glDrawBuffer(GL_FRONT);
   if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  unguard;
 }
 */
 
@@ -1486,10 +1474,8 @@ void VOpenGLDrawer::BeginDirectUpdate () {
 //==========================================================================
 /*
 void VOpenGLDrawer::EndDirectUpdate () {
-  guard(VOpenGLDrawer::EndDirectUpdate);
   glDrawBuffer(GL_BACK);
   if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-  unguard;
 }
 */
 
@@ -1675,7 +1661,6 @@ void VOpenGLDrawer::ResetScissor () {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
-  guard(VOpenGLDrawer::SetupView);
   RendLev = ARLev;
 
   if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth) {
@@ -1732,8 +1717,6 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) {
     glEnable(GL_DEPTH_CLAMP);
   }
-
-  unguard;
 }
 
 
@@ -1743,7 +1726,6 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupViewOrg () {
-  guard(VOpenGLDrawer::SetupViewOrg);
   glLoadIdentity();
   glRotatef(-90, 1, 0, 0);
   glRotatef(90, 0, 0, 1);
@@ -1779,7 +1761,6 @@ void VOpenGLDrawer::SetupViewOrg () {
     RendLev->HorizonPortalsHead = nullptr;
     RendLev->HorizonPortalsTail = nullptr;
   }
-  unguard;
 }
 
 
@@ -1789,7 +1770,6 @@ void VOpenGLDrawer::SetupViewOrg () {
 //
 //==========================================================================
 void VOpenGLDrawer::EndView () {
-  guard(VOpenGLDrawer::EndView);
   Setup2D();
 
   if (cl && cl->CShift) {
@@ -1810,7 +1790,6 @@ void VOpenGLDrawer::EndView () {
 
     glDisable(GL_BLEND);
   }
-  unguard;
 }
 
 
@@ -1820,7 +1799,6 @@ void VOpenGLDrawer::EndView () {
 //
 //==========================================================================
 void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
-  guard(VOpenGLDrawer::ReadScreen);
   if (mainFBO == 0) {
     void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
     glReadBuffer(GL_FRONT);
@@ -1839,7 +1817,6 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
     *bot2top = true;
     return dst;
   }
-  unguard;
 }
 
 
@@ -1849,8 +1826,6 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 //
 //==========================================================================
 void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
-  guard(VOpenGLDrawer::ReadBackScreen);
-
   if (Width < 1 || Height < 1) return;
   //check(Width > 0);
   //check(Height > 0);
@@ -1900,7 +1875,6 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
     }
     //delete[] temp;
   }
-  unguard;
 }
 
 
@@ -1910,7 +1884,6 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetFade (vuint32 NewFade) {
-  guard(VOpenGLDrawer::SetFade);
   if ((vuint32)CurrentFade == NewFade) return;
 
   if (NewFade) {
@@ -1938,7 +1911,6 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
     glDisable(GL_FOG);
   }
   CurrentFade = NewFade;
-  unguard;
 }
 
 
@@ -2159,7 +2131,6 @@ static VStr getDirectiveArg (const VStr &s) {
 //
 //==========================================================================
 GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
-  guard(VOpenGLDrawer::LoadShader);
   // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
   if (!Shader) Sys_Error("Failed to create shader object");
@@ -2244,7 +2215,6 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
     Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
   }
   return Shader;
-  unguard;
 }
 
 
@@ -2254,7 +2224,6 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
 //
 //==========================================================================
 GLhandleARB VOpenGLDrawer::CreateProgram (GLhandleARB VertexShader, GLhandleARB FragmentShader) {
-  guard(VOpenGLDrawer::CreateProgram);
   // create program object
   GLhandleARB Program = p_glCreateProgramObjectARB();
   if (!Program) Sys_Error("Failed to create program object");
@@ -2278,5 +2247,4 @@ GLhandleARB VOpenGLDrawer::CreateProgram (GLhandleARB VertexShader, GLhandleARB 
     Sys_Error("Failed to link program %s", LogText);
   }
   return Program;
-  unguard;
 }

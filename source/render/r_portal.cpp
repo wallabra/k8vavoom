@@ -110,8 +110,6 @@ bool VPortal::MatchMirror (TPlane *) const {
 //
 //==========================================================================
 void VPortal::Draw (bool UseStencil) {
-  guard(VPortal::Draw);
-
   if (!Drawer->StartPortal(this, UseStencil)) {
     // all portal polygons are clipped away
     //GCon->Logf("portal is clipped away");
@@ -186,8 +184,6 @@ void VPortal::Draw (bool UseStencil) {
 
   // restore ppol
   VRenderLevelShared::RestorePortalPool(&pmark);
-
-  unguard;
 }
 
 
@@ -197,7 +193,6 @@ void VPortal::Draw (bool UseStencil) {
 //
 //==========================================================================
 void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum) {
-  guard(VPortal::SetUpRanges);
   Range.ClearClipNodes(vieworg, RLev->Level);
   if (SetFrustum) {
     Range.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, refdef.fovx, refdef.fovy);
@@ -250,7 +245,6 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
       }
     }
   }
-  unguard;
 }
 
 
@@ -290,7 +284,6 @@ bool VSkyPortal::MatchSky (VSky *ASky) const {
 //
 //==========================================================================
 void VSkyPortal::DrawContents () {
-  guard(VSkyPortal::DrawContents);
   vieworg = TVec(0, 0, 0);
   RLev->TransformFrustum();
   Drawer->SetupViewOrg();
@@ -298,7 +291,6 @@ void VSkyPortal::DrawContents () {
   Sky->Draw(RLev->ColourMap);
 
   Drawer->WorldDrawing();
-  unguard;
 }
 
 
@@ -328,7 +320,6 @@ bool VSkyBoxPortal::MatchSkyBox (VEntity *AEnt) const {
 //
 //==========================================================================
 void VSkyBoxPortal::DrawContents () {
-  guard(VSkyBoxPortal::DrawContents);
   // set view origin to be sky view origin
   RLev->ViewEnt = Viewport;
   vieworg = Viewport->Origin;
@@ -346,7 +337,6 @@ void VSkyBoxPortal::DrawContents () {
   RLev->RenderScene(&rd, nullptr);
 
   Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
-  unguard;
 }
 
 
@@ -366,7 +356,6 @@ bool VSectorStackPortal::MatchSkyBox (VEntity *AEnt) const {
 //
 //==========================================================================
 void VSectorStackPortal::DrawContents () {
-  guard(VSectorStackPortal::DrawContents);
   VViewClipper Range;
   refdef_t rd = RLev->refdef;
   VPortal::SetUpRanges(rd, Range, false, true); //k8: after moving viewport?
@@ -393,7 +382,6 @@ void VSectorStackPortal::DrawContents () {
   RLev->RenderScene(&rd, &Range);
 
   Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
-  unguard;
 }
 
 
@@ -413,7 +401,6 @@ bool VMirrorPortal::MatchMirror (TPlane *APlane) const {
 //
 //==========================================================================
 void VMirrorPortal::DrawContents () {
-  guard(VMirrorPortal::DrawContents);
   RLev->ViewEnt = nullptr;
 
   ++RLev->MirrorLevel;
@@ -450,5 +437,4 @@ void VMirrorPortal::DrawContents () {
 
   --RLev->MirrorLevel;
   MirrorFlip = RLev->MirrorLevel&1;
-  unguard;
 }

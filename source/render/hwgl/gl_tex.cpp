@@ -61,9 +61,7 @@ void VOpenGLDrawer::GenerateTextures () {
 //
 //==========================================================================
 void VOpenGLDrawer::FlushTextures () {
-  guard(VOpenGLDrawer::FlushTextures);
   for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) DeleteTexture(GTextureManager[i]);
-  unguard;
 }
 
 
@@ -84,7 +82,6 @@ void VOpenGLDrawer::FlushOneTexture (VTexture *tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::DeleteTextures () {
-  guard(VOpenGLDrawer::DeleteTextures);
   if (texturesGenerated) {
     FlushTextures();
     glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
@@ -99,7 +96,6 @@ void VOpenGLDrawer::DeleteTextures () {
   CreatedShaderObjects.Clear();
 
   UnloadModels();
-  unguard;
 }
 
 
@@ -109,7 +105,6 @@ void VOpenGLDrawer::DeleteTextures () {
 //
 //==========================================================================
 void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
-  guard(VOpenGLDrawer::FlushTexture);
   if (!Tex) return;
   if (Tex->DriverHandle) {
     if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
@@ -125,7 +120,6 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
   }
   Tex->DriverTranslated.resetNoDtor();
-  unguard;
 }
 
 
@@ -135,7 +129,6 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
-  guard(VOpenGLDrawer::DeleteTexture);
   if (!Tex) return;
   if (Tex->DriverHandle) {
     if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
@@ -150,7 +143,6 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
   }
   Tex->DriverTranslated.Clear();
-  unguard;
 }
 
 
@@ -160,10 +152,8 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
-  guard(VOpenGLDrawer::PrecacheTexture);
   if (!Tex) return;
   SetTexture(Tex, 0);
-  unguard;
 }
 
 
@@ -173,7 +163,6 @@ void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
-  guard(VOpenGLDrawer::SetTexture);
   if (!Tex) Sys_Error("cannot set null texture");
   SetSpriteLump(Tex, nullptr, CMap, false);
   SetupTextureFiltering(texture_filter);
@@ -189,7 +178,6 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
     glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
   }
   */
-  unguard;
 }
 
 
@@ -199,7 +187,6 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture) {
-  guard(VOpenGLDrawer::SetSpriteLump);
   if (mInitialized) {
     if (Tex->CheckModified()) FlushTexture(Tex);
     if (Translation || CMap) {
@@ -236,7 +223,6 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
   tex_h = Tex->GetHeight();
   tex_iw = 1.0f/tex_w;
   tex_ih = 1.0f/tex_h;
-  unguard;
 }
 
 
@@ -246,7 +232,6 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
 //
 //==========================================================================
 void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
-  guard(VOpenGLDrawer::SetPic);
   /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
   if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
@@ -261,8 +246,6 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
   if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
-
-  unguard;
 }
 
 
@@ -272,8 +255,6 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
 //
 //==========================================================================
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
-  guard(VOpenGLDrawer::SetPicModel);
-
   SetSpriteLump(Tex, Trans, CMap, false);
   SetupTextureFiltering(model_filter);
   /*
@@ -284,8 +265,6 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
   }
   */
-
-  unguard;
 }
 
 
@@ -295,8 +274,6 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //
 //==========================================================================
 void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture) {
-  guard(VOpenGLDrawer::GenerateTexture);
-
   if (!*pHandle) glGenTextures(1, pHandle);
   glBindTexture(GL_TEXTURE_2D, *pHandle);
 
@@ -361,7 +338,6 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     }
   }
   // other parameters will be set by a caller
-  unguard;
 }
 
 
@@ -431,8 +407,6 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
 //
 //==========================================================================
 void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
-  guard(VOpenGLDrawer::UploadTexture);
-
   if (width < 1 || height < 1) Sys_Error("WARNING: fucked texture (w=%d; h=%d)", width, height);
   if (!data) Sys_Error("WARNING: fucked texture (w=%d; h=%d, no data)", width, height);
 
@@ -479,6 +453,4 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
 
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
-  unguard;
 }

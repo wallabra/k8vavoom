@@ -42,7 +42,6 @@ static VCvarF r_particle_max_distance("r_particle_max_distance", "3072", "Max di
 //
 //==========================================================================
 void VRenderLevelShared::InitParticles () {
-  guard(VRenderLevelShared::InitParticles);
   const char *p = GArgs.CheckValue("-particles");
 
   if (p) {
@@ -53,7 +52,6 @@ void VRenderLevelShared::InitParticles () {
   }
 
   Particles = new particle_t[NumParticles];
-  unguard;
 }
 
 
@@ -63,12 +61,10 @@ void VRenderLevelShared::InitParticles () {
 //
 //==========================================================================
 void VRenderLevelShared::ClearParticles () {
-  guard(VRenderLevelShared::ClearParticles);
   FreeParticles = &Particles[0];
   ActiveParticles = nullptr;
   for (int i = 0; i < NumParticles; ++i) Particles[i].next = &Particles[i+1];
   Particles[NumParticles-1].next = nullptr;
-  unguard;
 }
 
 
@@ -118,7 +114,6 @@ particle_t *VRenderLevelShared::NewParticle (const TVec &porg) {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateParticles (float frametime) {
-  guard(VRenderLevelShared::UpdateParticles);
   particle_t *p, *kill;
 
   if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
@@ -155,7 +150,6 @@ void VRenderLevelShared::UpdateParticles (float frametime) {
     p->org += (p->vel*frametime);
     Level->LevelInfo->eventUpdateParticle(p, frametime);
   }
-  unguard;
 }
 
 
@@ -165,7 +159,6 @@ void VRenderLevelShared::UpdateParticles (float frametime) {
 //
 //==========================================================================
 void VRenderLevelShared::DrawParticles () {
-  guard(VRenderLevelShared::DrawParticles);
   if (!r_draw_particles) return;
   Drawer->StartParticles();
   for (particle_t *p = ActiveParticles; p; p = p->next) {
@@ -180,5 +173,4 @@ void VRenderLevelShared::DrawParticles () {
     }
   }
   Drawer->EndParticles();
-  unguard;
 }

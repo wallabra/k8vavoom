@@ -113,7 +113,6 @@ VAdvancedRenderLevel::~VAdvancedRenderLevel () {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  guard(VAdvancedRenderLevel::RenderScene);
   if (!Drawer->SupportsAdvancedRendering()) Host_Error("Advanced rendering not supported by graphics card");
 
   r_viewleaf = Level->PointInSubsector(vieworg);
@@ -301,5 +300,4 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   DrawParticles();
 
   DrawTranslucentPolys();
-  unguard;
 }

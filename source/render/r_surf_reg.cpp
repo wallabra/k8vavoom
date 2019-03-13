@@ -77,7 +77,6 @@ static inline void spvReserve (int size) {
 //
 //==========================================================================
 void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
-  guard(VRenderLevel::InitSurfs);
   surface_t *surfs = ASurfs;
   //float dot, mins, maxs;
   //int bmins, bmaxs;
@@ -168,7 +167,6 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
 
     surfs = surfs->next;
   }
-  unguard;
 }
 
 
@@ -187,7 +185,6 @@ static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, con
 //
 //==========================================================================
 surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis, subsector_t *sub) {
-  guard(VRenderLevel::SubdivideFace);
   surface_t *f = InF;
   float mins = 99999.0f;
   float maxs = -99999.0f;
@@ -367,7 +364,6 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   back->next = SubdivideFace(front, axis, nextaxis, sub);
   if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr, sub);
   return back;
-  unguard;
 }
 
 
@@ -377,7 +373,6 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 //
 //==========================================================================
 surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg, subsector_t *sub) {
-  guard(VRenderLevel::SubdivideSeg);
   surface_t *surf = InSurf;
 
   if (surf->count == 0) {
@@ -557,7 +552,6 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   surf->next = SubdivideSeg(news, axis, nextaxis, seg, sub);
   if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
   return surf;
-  unguard;
 }
 
 
@@ -567,7 +561,6 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 //
 //==========================================================================
 void VRenderLevel::PreRender () {
-  guard(VRenderLevel::PreRender);
   c_subdivides = 0;
   c_seg_div = 0;
   light_mem = 0;
@@ -577,5 +570,4 @@ void VRenderLevel::PreRender () {
   GCon->Logf(/*NAME_Dev,*/ "%d subdivides", c_subdivides);
   GCon->Logf(/*NAME_Dev,*/ "%d seg subdivides", c_seg_div);
   GCon->Logf(/*NAME_Dev,*/ "%dk light mem", light_mem/1024);
-  unguard;
 }

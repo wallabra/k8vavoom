@@ -34,13 +34,11 @@
 //
 //==========================================================================
 void VAdvancedRenderLevel::InitSurfs (surface_t *surfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
-  guard(VAdvancedRenderLevel::InitSurfs);
   // it's always one surface
   if (surfs && plane) {
     surfs->texinfo = texinfo;
     surfs->plane = plane;
   }
-  unguard;
 }
 
 
@@ -72,7 +70,5 @@ surface_t *VAdvancedRenderLevel::SubdivideSeg (surface_t *surf, const TVec &, co
 //
 //==========================================================================
 void VAdvancedRenderLevel::PreRender () {
-  guard(VAdvancedRenderLevel::PreRender);
   CreateWorldSurfaces();
-  unguard;
 }

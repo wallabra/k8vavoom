@@ -79,7 +79,6 @@ static VCvarB   r_skyboxes("r_skyboxes", true, "Allow skyboxes?", CVAR_Archive);
 
 static void ParseSkyBoxesScript(VScriptParser *sc)
 {
-  guard(ParseSkyBoxesScript);
   while (!sc->AtEnd())
   {
     skyboxinfo_t &info = skyboxinfo.Alloc();
@@ -101,7 +100,6 @@ static void ParseSkyBoxesScript(VScriptParser *sc)
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 
@@ -164,7 +162,6 @@ VName R_HasNamedSkybox (const VStr &aname) {
 
 void R_InitSkyBoxes()
 {
-  guard(R_InitSkyBoxes);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
     Lump = W_IterateNS(Lump, WADNS_Global))
   {
@@ -182,7 +179,6 @@ void R_InitSkyBoxes()
       FL_OpenFileRead("scripts/skyboxes.txt")));
   }
   */
-  unguard;
 }
 
 
@@ -195,7 +191,6 @@ void R_InitSkyBoxes()
 
 static int CheckSkyboxNumForName(VName Name)
 {
-  guard(CheckSkyboxNumForName);
   for (int num = skyboxinfo.Num() - 1; num >= 0; num--)
   {
     if (skyboxinfo[num].Name == Name)
@@ -204,7 +199,6 @@ static int CheckSkyboxNumForName(VName Name)
     }
   }
   return -1;
-  unguard;
 }
 
 //==========================================================================
@@ -215,9 +209,7 @@ static int CheckSkyboxNumForName(VName Name)
 
 void R_FreeSkyboxData()
 {
-  guard(R_FreeSkyboxData);
   skyboxinfo.Clear();
-  unguard;
 }
 
 
@@ -230,7 +222,6 @@ void R_FreeSkyboxData()
 void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   float Sky2ScrollDelta, bool DoubleSky, bool ForceNoSkyStretch, bool Flip)
 {
-  guard(VSky::InitOldSky);
   memset((void *)sky, 0, sizeof(sky));
   bIsSkyBox = false;
 
@@ -365,7 +356,6 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   //  Precache textures
   Drawer->PrecacheTexture(GTextureManager[Sky1Texture]);
   Drawer->PrecacheTexture(GTextureManager[Sky2Texture]);
-  unguard;
 }
 
 //==========================================================================
@@ -376,7 +366,6 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 
 void VSky::InitSkyBox(VName Name1, VName Name2)
 {
-  guard(VSky::InitSkyBox);
   int num = CheckSkyboxNumForName(Name1);
   if (num == -1)
   {
@@ -483,7 +472,6 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
     sky[j].texinfo.toffs *= STex->GetHeight() / 256.0f;
   }
   bIsSkyBox = true;
-  unguard;
 }
 
 //==========================================================================
@@ -496,7 +484,6 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   float Sky2ScrollDelta, bool DoubleSky, bool ForceNoSkyStretch,
   bool Flip, bool Lightning)
 {
-  guard(VSky::Init);
   int Num1 = -1;
   int Num2 = -1;
   VName Name1(NAME_None);
@@ -524,7 +511,6 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   }
   SideTex = Sky1Texture;
   SideFlip = Flip;
-  unguard;
 }
 
 //==========================================================================
@@ -535,7 +521,6 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 
 void VSky::Draw(int ColourMap)
 {
-  guard(VSky::Draw);
   for (int i = 0; i < NumSkySurfs; i++)
   {
     Drawer->DrawSkyPolygon(&sky[i].surf, bIsSkyBox,
@@ -543,7 +528,6 @@ void VSky::Draw(int ColourMap)
       GTextureManager(sky[i].texture2), sky[i].columnOffset2,
       ColourMap);
   }
-  unguard;
 }
 
 //==========================================================================
@@ -556,7 +540,6 @@ void VSky::Draw(int ColourMap)
 
 void VRenderLevelShared::InitSky()
 {
-  guard(VRenderLevelShared::InitSky);
   if (CurrentSky1Texture == Level->LevelInfo->Sky1Texture &&
     CurrentSky2Texture == Level->LevelInfo->Sky2Texture &&
     CurrentDoubleSky == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky) &&
@@ -581,7 +564,6 @@ void VRenderLevelShared::InitSky()
       !!(Level->LevelInfo->LevelInfoFlags &
       VLevelInfo::LIF_ForceNoSkyStretch), true, CurrentLightning);
   }
-  unguard;
 }
 
 //==========================================================================
@@ -592,7 +574,6 @@ void VRenderLevelShared::InitSky()
 
 void VRenderLevelShared::AnimateSky(float frametime)
 {
-  guard(VRenderLevelShared::AnimateSky);
   InitSky();
 
   if (!(Level->LevelInfo->LevelInfoFlags2 & VLevelInfo::LIF2_Frozen))
@@ -604,7 +585,6 @@ void VRenderLevelShared::AnimateSky(float frametime)
       BaseSky.sky[i].columnOffset2 += BaseSky.sky[i].scrollDelta2 * frametime;
     }
   }
-  unguard;
 }
 #endif
 

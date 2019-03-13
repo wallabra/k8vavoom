@@ -343,7 +343,6 @@ FDrawerDesc::FDrawerDesc (int Type, const char *AName, const char *ADescription,
 //
 //==========================================================================
 void R_Init () {
-  guard(R_Init);
   R_InitSkyBoxes();
   R_InitModels();
   // create light remapping table
@@ -358,7 +357,6 @@ void R_Init () {
     if (n > 255) n = 255; else if (n < 0) n = 0;
     light_remap[i] = clampToByte(n);
   }
-  unguard;
 }
 
 
@@ -1179,10 +1177,8 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
 //
 //==========================================================================
 void R_SetViewSize (int blocks) {
-  guard(R_SetViewSize);
   if (blocks > 2) screen_size = blocks;
   set_resolutioon_needed = true;
-  unguard;
 }
 
 
@@ -1214,7 +1210,6 @@ COMMAND(SizeUp) {
 //
 //==========================================================================
 void VRenderLevelShared::ExecuteSetViewSize () {
-  guard(VRenderLevelShared::ExecuteSetViewSize);
   set_resolutioon_needed = false;
        if (screen_size < 3) screen_size = 3;
   else if (screen_size > 11) screen_size = 11;
@@ -1248,7 +1243,6 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   refdef.fovx = clip_base.fovx;
   refdef.fovy = clip_base.fovy;
   refdef.drawworld = true;
-  unguard;
 }
 
 
@@ -1258,13 +1252,11 @@ void VRenderLevelShared::ExecuteSetViewSize () {
 //
 //==========================================================================
 void R_DrawViewBorder () {
-  guard(R_DrawViewBorder);
   if (GGameInfo->NetMode == NM_TitleMap) {
     GClGame->eventDrawViewBorder(VirtualWidth/2-screenblocks*32, (VirtualHeight-screenblocks*480/10)/2, screenblocks*64, screenblocks*VirtualHeight/10);
   } else {
     GClGame->eventDrawViewBorder(VirtualWidth/2-screenblocks*32, (VirtualHeight-sb_height-screenblocks*(VirtualHeight-sb_height)/10)/2, screenblocks*64, screenblocks*(VirtualHeight-sb_height)/10);
   }
-  unguard;
 }
 
 
@@ -1285,7 +1277,6 @@ void VRenderLevelShared::TransformFrustum () {
 //
 //==========================================================================
 void VRenderLevelShared::SetupFrame () {
-  guard(VRenderLevelShared::SetupFrame);
   // change the view size if needed
   if (screen_size != screenblocks || !screenblocks ||
       set_resolutioon_needed || old_fov != fov ||
@@ -1335,7 +1326,6 @@ void VRenderLevelShared::SetupFrame () {
   Drawer->SetupView(this, &refdef);
   ++cacheframecount;
   PortalDepth = 0;
-  unguard;
 }
 
 
@@ -1345,7 +1335,6 @@ void VRenderLevelShared::SetupFrame () {
 //
 //==========================================================================
 void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int FOV, refdef_t *rd) {
-  guard(VRenderLevelShared::SetupCameraFrame);
   rd->width = Tex->GetWidth();
   rd->height = Tex->GetHeight();
   rd->y = 0;
@@ -1372,7 +1361,6 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   cacheframecount++;
   PortalDepth = 0;
   set_resolutioon_needed = true;
-  unguard;
 }
 
 
@@ -1491,9 +1479,7 @@ void VRenderLevelShared::MarkLeaves () {
 //
 //==========================================================================
 void R_RenderPlayerView () {
-  guard(R_RenderPlayerView);
   GClLevel->RenderData->RenderPlayerView();
-  unguard;
 }
 
 
@@ -1503,7 +1489,6 @@ void R_RenderPlayerView () {
 //
 //==========================================================================
 void VRenderLevelShared::RenderPlayerView () {
-  guard(VRenderLevelShared::RenderPlayerView);
   if (!Level->LevelInfo) return;
 
   int renderattempts = 2;
@@ -1562,7 +1547,6 @@ again:
 
   // draw crosshair
   if (cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawCrosshair();
-  unguard;
 }
 
 
@@ -1572,7 +1556,6 @@ again:
 //
 //==========================================================================
 void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV) {
-  guard(VRenderLevelShared::UpdateCameraTexture);
   if (!Camera) return;
 
   if (!GTextureManager[TexNum]->bIsCameraTexture) return;
@@ -1590,7 +1573,6 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   Drawer->EndView();
 
   Tex->CopyImage();
-  unguard;
 }
 
 
@@ -1713,8 +1695,6 @@ void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, fl
 //
 //==========================================================================
 void VRenderLevelShared::PrecacheLevel () {
-  guard(VRenderLevelShared::PrecacheLevel);
-
   if (cls.demoplayback) return;
 
   TArray<bool> texturepresent;
@@ -1746,8 +1726,6 @@ void VRenderLevelShared::PrecacheLevel () {
     }
   }
   R_PBarUpdate("Textures", maxtex, maxtex, true); // final update
-
-  unguard;
 }
 
 
@@ -1757,9 +1735,7 @@ void VRenderLevelShared::PrecacheLevel () {
 //
 //==========================================================================
 VTextureTranslation *VRenderLevelShared::GetTranslation (int TransNum) {
-  guard(VRenderLevelShared::GetTranslation);
   return R_GetCachedTranslation(TransNum, Level);
-  unguard;
 }
 
 
@@ -1769,7 +1745,6 @@ VTextureTranslation *VRenderLevelShared::GetTranslation (int TransNum) {
 //
 //==========================================================================
 void VRenderLevelShared::BuildPlayerTranslations () {
-  guard(VRenderLevelShared::BuildPlayerTranslations);
   for (TThinkerIterator<VPlayerReplicationInfo> It(Level); It; ++It) {
     if (It->PlayerNum < 0 || It->PlayerNum >= MAXPLAYERS) continue; // should not happen
     if (!It->TranslStart || !It->TranslEnd) continue;
@@ -1787,7 +1762,6 @@ void VRenderLevelShared::BuildPlayerTranslations () {
 
     Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Colour);
   }
-  unguard;
 }
 
 
@@ -1797,7 +1771,6 @@ void VRenderLevelShared::BuildPlayerTranslations () {
 //
 //==========================================================================
 int R_SetMenuPlayerTrans (int Start, int End, int Col) {
-  guard(R_SetMenuPlayerTrans);
   if (!Start || !End) return 0;
 
   VTextureTranslation *Tr = PlayerTranslations[MAXPLAYERS];
@@ -1815,7 +1788,6 @@ int R_SetMenuPlayerTrans (int Start, int End, int Col) {
 
   Tr->BuildPlayerTrans(Start, End, Col);
   return (TRANSL_Player<<TRANSL_TYPE_SHIFT)+MAXPLAYERS;
-  unguard;
 }
 
 
@@ -1825,7 +1797,6 @@ int R_SetMenuPlayerTrans (int Start, int End, int Col) {
 //
 //==========================================================================
 VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
-  guard(R_GetCachedTranslation);
   int Type = TransNum>>TRANSL_TYPE_SHIFT;
   int Index = TransNum&((1<<TRANSL_TYPE_SHIFT)-1);
   VTextureTranslation *Tr = nullptr;
@@ -1875,7 +1846,6 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
   *Copy = *Tr;
   CachedTranslations.Append(Copy);
   return Copy;
-  unguard;
 }
 
 
@@ -1887,7 +1857,6 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
 //
 //==========================================================================
 COMMAND(TimeRefresh) {
-  guard(COMMAND TimeRefresh);
   double start, stop, time, RenderTime, UpdateTime;
   float startangle;
 
@@ -1945,7 +1914,6 @@ COMMAND(TimeRefresh) {
   GCon->Logf("Render peak free calls: %d", renderPeakFree);
 
   cl->ViewAngles.yaw = startangle;
-  unguard;
 }
 
 
@@ -1955,7 +1923,6 @@ COMMAND(TimeRefresh) {
 //
 //==========================================================================
 void V_Init () {
-  guard(V_Init);
   int DIdx = -1;
   for (int i = 0; i < DRAWER_MAX; ++i) {
     if (!DrawerList[i]) continue;
@@ -1969,7 +1936,6 @@ void V_Init () {
   // create drawer
   Drawer = DrawerList[DIdx]->Creator();
   Drawer->Init();
-  unguard;
 }
 
 
@@ -1979,7 +1945,6 @@ void V_Init () {
 //
 //==========================================================================
 void V_Shutdown () {
-  guard(V_Shutdown);
   if (Drawer) {
     Drawer->Shutdown();
     delete Drawer;
@@ -1998,5 +1963,4 @@ void V_Shutdown () {
   }
   CachedTranslations.Clear();
   R_FreeSkyboxData();
-  unguard;
 }
