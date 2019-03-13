@@ -185,7 +185,6 @@ VNetwork::~VNetwork () {
 //
 //==========================================================================
 void VNetwork::Init () {
-  guard(VNetwork::Init);
   const char *p = GArgs.CheckValue("-port");
   if (p) DefaultHostPort = atoi(p);
   HostPort = DefaultHostPort;
@@ -207,7 +206,6 @@ void VNetwork::Init () {
   }
 
   if (*MyIpAddress) GCon->Logf(NAME_DevNet, "TCP/IP address %s", MyIpAddress);
-  unguard;
 }
 
 
@@ -217,7 +215,6 @@ void VNetwork::Init () {
 //
 //==========================================================================
 void VNetwork::Shutdown () {
-  guard(VNetwork::Shutdown);
   SetNetTime();
 
   while (ActiveSockets) {
@@ -232,7 +229,6 @@ void VNetwork::Shutdown () {
       Drivers[i]->initialised = false;
     }
   }
-  unguard;
 }
 
 
@@ -242,10 +238,8 @@ void VNetwork::Shutdown () {
 //
 //==========================================================================
 double VNetwork::SetNetTime () {
-  guard(VNetwork::SetNetTime);
   NetTime = Sys_Time();
   return NetTime;
-  unguard;
 }
 
 
@@ -255,14 +249,12 @@ double VNetwork::SetNetTime () {
 //
 //==========================================================================
 void VNetwork::Poll () {
-  guard(VNetwork::Poll);
   SetNetTime();
   for (VNetPollProcedure *pp = PollProcedureList; pp; pp = pp->next) {
     if (pp->nextTime > NetTime) break;
     PollProcedureList = pp->next;
     pp->procedure(pp->arg);
   }
-  unguard;
 }
 
 
@@ -272,7 +264,6 @@ void VNetwork::Poll () {
 //
 //==========================================================================
 void VNetwork::SchedulePollProcedure (VNetPollProcedure *proc, double timeOffset) {
-  guard(VNetwork::SchedulePollProcedure);
   VNetPollProcedure *pp, *prev;
 
   proc->nextTime = Sys_Time()+timeOffset;
@@ -288,7 +279,6 @@ void VNetwork::SchedulePollProcedure (VNetPollProcedure *proc, double timeOffset
     proc->next = pp;
     prev->next = proc;
   }
-  unguard;
 }
 
 
@@ -298,7 +288,6 @@ void VNetwork::SchedulePollProcedure (VNetPollProcedure *proc, double timeOffset
 //
 //==========================================================================
 void VNetwork::Slist () {
-  guard(VNetwork::Slist);
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
@@ -314,7 +303,6 @@ void VNetwork::Slist () {
   SchedulePollProcedure(&SlistPollProcedure, 0.1);
 
   HostCacheCount = 0;
-  unguard;
 }
 
 
@@ -344,7 +332,6 @@ void VNetwork::Slist_Poll (void *Arg) {
 //
 //==========================================================================
 void VNetwork::Slist_Send () {
-  guard(VNetwork::Slist_Send);
   for (int i = 0; i < NumDrivers; ++i) {
     if (!SlistLocal && i == 0) continue;
     if (Drivers[i]->initialised == false) continue;
@@ -352,7 +339,6 @@ void VNetwork::Slist_Send () {
   }
 
   if ((Sys_Time()-SlistStartTime) < 0.5) SchedulePollProcedure(&SlistSendProcedure, 0.75);
-  unguard;
 }
 
 
@@ -362,7 +348,6 @@ void VNetwork::Slist_Send () {
 //
 //==========================================================================
 void VNetwork::Slist_Poll () {
-  guard(VNetwork::Slist_Poll);
   for (int i = 0; i < NumDrivers; ++i) {
     if (!SlistLocal && i == 0) continue;
     if (Drivers[i]->initialised == false) continue;
@@ -381,7 +366,6 @@ void VNetwork::Slist_Poll () {
   SlistSilent = false;
   SlistLocal = true;
   SlistSorted = false;
-  unguard;
 }
 
 
@@ -391,7 +375,6 @@ void VNetwork::Slist_Poll () {
 //
 //==========================================================================
 void VNetwork::MasterList () {
-  guard(VNetwork::MasterList);
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
@@ -407,7 +390,6 @@ void VNetwork::MasterList () {
   SchedulePollProcedure(&MasterListPollProcedure, 0.1);
 
   HostCacheCount = 0;
-  unguard;
 }
 
 
@@ -437,14 +419,12 @@ void VNetwork::MasterList_Poll (void *Arg) {
 //
 //==========================================================================
 void VNetwork::MasterList_Send () {
-  guard(VNetwork::MasterList_Send);
   for (int i = 0; i < NumDrivers; ++i) {
     if (Drivers[i]->initialised == false) continue;
     Drivers[i]->QueryMaster(true);
   }
 
   if ((Sys_Time()-SlistStartTime) < 0.5) SchedulePollProcedure(&MasterListSendProcedure, 0.75);
-  unguard;
 }
 
 
@@ -454,8 +434,6 @@ void VNetwork::MasterList_Send () {
 //
 //==========================================================================
 void VNetwork::MasterList_Poll () {
-  guard(VNetwork::MasterList_Poll);
-
   // check for reply from master server
   bool GotList = false;
   for (int i = 0; i < NumDrivers; ++i) {
@@ -491,7 +469,6 @@ void VNetwork::MasterList_Poll () {
   SlistSilent = false;
   SlistLocal = true;
   SlistSorted = false;
-  unguard;
 }
 
 
@@ -546,7 +523,6 @@ void VNetwork::PrintSlistTrailer () {
 //
 //==========================================================================
 void VNetwork::StartSearch (bool Master) {
-  guard(VNetwork::StartSearch);
   SlistSilent = true;
   SlistLocal = false;
   if (Master) {
@@ -554,7 +530,6 @@ void VNetwork::StartSearch (bool Master) {
   } else {
     Slist();
   }
-  unguard;
 }
 
 
@@ -564,7 +539,6 @@ void VNetwork::StartSearch (bool Master) {
 //
 //==========================================================================
 slist_t *VNetwork::GetSlist () {
-  guard(VNetwork::GetSlist);
   if (!SlistSorted) {
     if (HostCacheCount > 1) {
       vuint8 temp[sizeof(hostcache_t)];
@@ -591,7 +565,6 @@ slist_t *VNetwork::GetSlist () {
   slist.Cache = HostCache;
   slist.ReturnReason = ReturnReason;
   return &slist;
-  unguard;
 }
 
 
@@ -601,8 +574,6 @@ slist_t *VNetwork::GetSlist () {
 //
 //==========================================================================
 VSocketPublic *VNetwork::Connect (const char *InHost) {
-  guard(VNetwork::Connect);
-
   VStr host = InHost;
   VSocket *ret;
   int numdrivers = NumDrivers;
@@ -663,7 +634,6 @@ JustDoIt:
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -673,7 +643,6 @@ JustDoIt:
 //
 //==========================================================================
 VSocketPublic *VNetwork::CheckNewConnections () {
-  guard(VNetwork::CheckNewConnections);
   SetNetTime();
 
   for (int i = 0; i < NumDrivers; ++i) {
@@ -684,7 +653,6 @@ VSocketPublic *VNetwork::CheckNewConnections () {
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -694,13 +662,11 @@ VSocketPublic *VNetwork::CheckNewConnections () {
 //
 //==========================================================================
 void VNetwork::UpdateMaster () {
-  guard(VNetwork::UpdateMaster);
   SetNetTime();
   for (int i = 0; i < NumDrivers; ++i) {
     if (!Drivers[i]->initialised) continue;
     Drivers[i]->UpdateMaster();
   }
-  unguard;
 }
 
 
@@ -710,13 +676,11 @@ void VNetwork::UpdateMaster () {
 //
 //==========================================================================
 void VNetwork::QuitMaster () {
-  guard(VNetwork::QuitMaster);
   SetNetTime();
   for (int i = 0; i < NumDrivers; ++i) {
     if (!Drivers[i]->initialised) continue;
     Drivers[i]->QuitMaster();
   }
-  unguard;
 }
 
 
@@ -790,15 +754,13 @@ VNetLanDriver::VNetLanDriver (int Level, const char *AName)
 }
 
 
-#if defined(CLIENT) && defined(SERVER) // I think like this
-
+#if defined(CLIENT) && defined(SERVER) /* I think like this */
 //==========================================================================
 //
 //  COMMAND Listen
 //
 //==========================================================================
 COMMAND(Listen) {
-  guard(COMMAND Listen);
   VNetwork *Net = (VNetwork *)GNet;
   if (Args.Num() != 2) {
     GCon->Logf("\"listen\" is \"%d\"", Net->Listening ? 1 : 0);
@@ -809,9 +771,7 @@ COMMAND(Listen) {
     if (VNetwork::Drivers[i]->initialised == false) continue;
     VNetwork::Drivers[i]->Listen(Net->Listening);
   }
-  unguard;
 }
-
 #endif
 
 
@@ -821,7 +781,6 @@ COMMAND(Listen) {
 //
 //==========================================================================
 COMMAND(Port) {
-  guard(COMMAND Port);
   int n;
 
   VNetwork *Net = (VNetwork *)GNet;
@@ -844,7 +803,6 @@ COMMAND(Port) {
     GCmdBuf << "listen 0\n";
     GCmdBuf << "listen 1\n";
   }
-  unguard;
 }
 
 
@@ -854,9 +812,7 @@ COMMAND(Port) {
 //
 //==========================================================================
 COMMAND(Slist) {
-  guard(COMMAND Slist);
   ((VNetwork *)GNet)->Slist();
-  unguard;
 }
 
 
@@ -866,7 +822,5 @@ COMMAND(Slist) {
 //
 //==========================================================================
 COMMAND(MasterList) {
-  guard(COMMAND MasterList);
   ((VNetwork *)GNet)->MasterList();
-  unguard;
 }

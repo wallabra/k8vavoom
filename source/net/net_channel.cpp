@@ -104,7 +104,6 @@ int VChannel::CountOutMessages () const {
 //
 //==========================================================================
 void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
-  guard(VChannel::ReceivedRawMessage);
   // drop outdated messages
   if (Msg.bReliable && Msg.Sequence < Connection->InSequence[Index]) {
     ++Connection->Driver->receivedDuplicateCount;
@@ -147,7 +146,6 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
     OldMsg = nullptr;
     if (Closed) return;
   }
-  unguard;
 }
 
 
@@ -157,7 +155,6 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
 //
 //==========================================================================
 void VChannel::SendMessage (VMessageOut *AMsg) {
-  guard(VChannel::SendMessage);
   VMessageOut *Msg = AMsg;
   if (Msg->IsError()) {
     GCon->Logf(NAME_DevNet, "Overflowed message");
@@ -178,7 +175,6 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
   }
 
   Connection->SendRawMessage(*Msg);
-  unguard;
 }
 
 
@@ -188,7 +184,6 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
 //
 //==========================================================================
 void VChannel::ReceivedAck () {
-  guard(VChannel::ReceivedAck);
   // clean up messages that have been ACK-ed
   // only the first ones are deleted so that close message doesn't
   // get handled while there's still messages that are not ACK-ed
@@ -203,7 +198,6 @@ void VChannel::ReceivedAck () {
 
   // if we received ACK for close message then delete this channel
   if (CloseAcked) delete this;
-  unguard;
 }
 
 
@@ -213,7 +207,6 @@ void VChannel::ReceivedAck () {
 //
 //==========================================================================
 void VChannel::Close () {
-  guard(VChannel::Close);
   if (Closing) return; // already in closing state
 
   // send close message
@@ -224,7 +217,6 @@ void VChannel::Close () {
 
   // enter closing state
   Closing = true;
-  unguard;
 }
 
 
@@ -234,7 +226,6 @@ void VChannel::Close () {
 //
 //==========================================================================
 void VChannel::Tick () {
-  guard(VChannel::Tick);
   // resend timed out messages
   for (VMessageOut *Msg = OutMsg; Msg; Msg = Msg->Next) {
     if (!Msg->bReceivedAck && Connection->Driver->NetTime-Msg->Time > 1.0) {
@@ -242,7 +233,6 @@ void VChannel::Tick () {
       ++Connection->Driver->packetsReSent;
     }
   }
-  unguard;
 }
 
 
@@ -252,14 +242,12 @@ void VChannel::Tick () {
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
-  guard(VChannel::SendRpc);
   VMessageOut Msg(this);
   Msg.bReliable = !!(Func->Flags&FUNC_NetReliable);
 
   Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
 
   // serialise arguments
-  guard(VChannel::SendRpc::SerialiseArguments);
   VStack *Param = pr_stackPtr-Func->ParamsSize+1; // skip self
   for (int i = 0; i < Func->NumParams; ++i) {
     switch (Func->ParamTypes[i].Type) {
@@ -300,11 +288,9 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
       ++Param;
     }
   }
-  unguard;
 
   // send it
   SendMessage(&Msg);
-  unguard;
 }
 
 
@@ -314,7 +300,6 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
 //
 //==========================================================================
 bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
-  guard(VChannel::ReadRpc);
   VMethod *Func = nullptr;
   for (VMethod *CM = Owner->GetClass()->NetMethods; CM; CM = CM->NextNetMethod) {
     if (CM->NetIndex == FldIdx) {
@@ -371,5 +356,4 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
   // execute it
   VObject::ExecuteFunction(Func);
   return true;
-  unguard;
 }

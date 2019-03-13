@@ -89,7 +89,6 @@ VDemoPlaybackNetConnection::~VDemoPlaybackNetConnection () {
 //
 //==========================================================================
 int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
-  guard(VDemoPlaybackNetConnection::GetRawPacket);
   // decide if it is time to grab the next message
   if (Owner->MO) { // always grab until fully connected
     if (bTimeDemo) {
@@ -130,7 +129,6 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
   */
 
   return 1;
-  unguard;
 }
 
 
@@ -164,7 +162,6 @@ VDemoRecordingNetConnection::VDemoRecordingNetConnection (VSocketPublic *Sock, V
 //
 //==========================================================================
 int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
-  guard(VDemoRecordingNetConnection::GetRawPacket);
   int r = VNetConnection::GetRawPacket(Data);
   if (r == 1 && cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
@@ -177,7 +174,6 @@ int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     cls.demofile->Flush();
   }
   return r;
-  unguard;
 }
 
 
@@ -207,7 +203,6 @@ int VDemoRecordingSocket::GetMessage (TArray<vuint8> &) {
 //
 //==========================================================================
 int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
-  guard(VDemoRecordingSocket::SendMessage);
   if (cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
     float Time = (GClLevel ? GClLevel->Time : 0.0);
@@ -223,7 +218,6 @@ int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
     cls.demofile->Flush();
   }
   return 1;
-  unguard;
 }
 
 #endif

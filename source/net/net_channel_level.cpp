@@ -77,7 +77,6 @@ VLevelChannel::~VLevelChannel () {
 //
 //==========================================================================
 void VLevelChannel::SetLevel (VLevel *ALevel) {
-  guard(VLevelChannel::SetLevel);
   if (Level) {
     delete[] Lines;
     delete[] Sides;
@@ -104,7 +103,6 @@ void VLevelChannel::SetLevel (VLevel *ALevel) {
     PolyObjs = new rep_polyobj_t[Level->NumPolyObjs];
     memcpy(PolyObjs, Level->BasePolyObjs, sizeof(rep_polyobj_t)*Level->NumPolyObjs);
   }
-  unguard;
 }
 
 
@@ -114,30 +112,26 @@ void VLevelChannel::SetLevel (VLevel *ALevel) {
 //
 //==========================================================================
 void VLevelChannel::SendNewLevel () {
-  guard(VLevelChannel::SendNewLevel);
-  guardSlow(NewLevel);
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
-  Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
-  VStr MapName = *Level->MapName;
-  check(!Msg.IsLoading());
-  Msg << svs.serverinfo << MapName;
-  Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
-  Msg.WriteInt(deathmatch/*, 256*/);
-  SendMessage(&Msg);
-  unguardSlow;
+  {
+    VMessageOut Msg(this);
+    Msg.bReliable = true;
+    Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
+    VStr MapName = *Level->MapName;
+    check(!Msg.IsLoading());
+    Msg << svs.serverinfo << MapName;
+    Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
+    Msg.WriteInt(deathmatch/*, 256*/);
+    SendMessage(&Msg);
+  }
 
-  guardSlow(StaticLights);
   SendStaticLights();
-  unguardSlow;
 
-  guardSlow(PreRender);
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
-  Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
-  SendMessage(&Msg);
-  unguardSlow;
-  unguard;
+  {
+    VMessageOut Msg(this);
+    Msg.bReliable = true;
+    Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
+    SendMessage(&Msg);
+  }
 }
 
 
@@ -147,7 +141,6 @@ void VLevelChannel::SendNewLevel () {
 //
 //==========================================================================
 void VLevelChannel::Update () {
-  guard(VLevelChannel::Update);
   VMessageOut Msg(this);
   Msg.bReliable = true;
 
@@ -490,7 +483,6 @@ void VLevelChannel::Update () {
   }
 
   if (Msg.GetNumBits()) SendMessage(&Msg);
-  unguard;
 }
 
 
@@ -500,7 +492,6 @@ void VLevelChannel::Update () {
 //
 //==========================================================================
 void VLevelChannel::SendStaticLights () {
-  guard(VLevelChannel::SendStaticLights);
   for (int i = 0; i < Level->NumStaticLights; ++i) {
     rep_light_t &L = Level->StaticLights[i];
     VMessageOut Msg(this);
@@ -509,7 +500,6 @@ void VLevelChannel::SendStaticLights () {
     Msg << L.Origin << L.Radius << L.Colour;
     SendMessage(&Msg);
   }
-  unguard;
 }
 
 
@@ -519,7 +509,6 @@ void VLevelChannel::SendStaticLights () {
 //
 //==========================================================================
 void VLevelChannel::ParsePacket (VMessageIn &Msg) {
-  guard(VLevelChannel::ParsePacket);
   while (!Msg.AtEnd()) {
     int Cmd = Msg.ReadInt(/*CMD_MAX*/);
     switch (Cmd) {
@@ -708,5 +697,4 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         Sys_Error("Invalid level update command %d", Cmd);
     }
   }
-  unguard;
 }

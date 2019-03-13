@@ -122,7 +122,6 @@ void VLoopbackDriver::Listen (bool) {
 //
 //==========================================================================
 void VLoopbackDriver::SearchForHosts (bool, bool ForMaster) {
-  guard(VLoopbackDriver::SearchForHosts);
 #ifdef SERVER
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client || ForMaster) return;
   Net->HostCacheCount = 1;
@@ -136,7 +135,6 @@ void VLoopbackDriver::SearchForHosts (bool, bool ForMaster) {
   Net->HostCache[0].MaxUsers = svs.max_clients;
   Net->HostCache[0].CName = "local";
 #endif
-  unguard;
 }
 
 
@@ -146,7 +144,6 @@ void VLoopbackDriver::SearchForHosts (bool, bool ForMaster) {
 //
 //==========================================================================
 VSocket *VLoopbackDriver::Connect (const char *host) {
-  guard(VLoopbackDriver::Connect);
   if (VStr::Cmp(host, "local") != 0) return nullptr;
 
   localconnectpending = true;
@@ -165,7 +162,6 @@ VSocket *VLoopbackDriver::Connect (const char *host) {
   loop_server->OtherSock = loop_client;
 
   return loop_client;
-  unguard;
 }
 
 
@@ -175,11 +171,9 @@ VSocket *VLoopbackDriver::Connect (const char *host) {
 //
 //==========================================================================
 VSocket *VLoopbackDriver::CheckNewConnections () {
-  guard(VLoopbackDriver::CheckNewConnections);
   if (!localconnectpending) return nullptr;
   localconnectpending = false;
   return loop_server;
-  unguard;
 }
 
 
@@ -266,12 +260,10 @@ VLoopbackSocket::~VLoopbackSocket () {
 //
 //==========================================================================
 int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
-  guard(VLoopbackSocket::GetMessage);
   if (!LoopbackMessages.Num()) return 0;
   Data = LoopbackMessages[0].Data;
   LoopbackMessages.RemoveIndex(0);
   return 1;
-  unguard;
 }
 
 
@@ -285,13 +277,11 @@ int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
 //
 //==========================================================================
 int VLoopbackSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
-  guard(VLoopbackSocket::SendMessage);
   if (!OtherSock) return -1;
   VLoopbackMessage &Msg = OtherSock->LoopbackMessages.Alloc();
   Msg.Data.SetNum(Length);
   memcpy(Msg.Data.Ptr(), Data, Length);
   return 1;
-  unguard;
 }
 
 

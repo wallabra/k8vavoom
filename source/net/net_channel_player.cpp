@@ -59,7 +59,6 @@ VPlayerChannel::~VPlayerChannel () {
 //
 //==========================================================================
 void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
-  guard(VPlayerChannel::SetPlayer);
   if (Plr) {
     if (OldData) {
       for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
@@ -86,7 +85,6 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
     FieldCondValues = new vuint8[Plr->GetClass()->NumNetFields];
     NewObj = true;
   }
-  unguard;
 }
 
 
@@ -96,7 +94,6 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
 //
 //==========================================================================
 void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values) {
-  guard(VPlayerChannel::EvalCondValues);
   if (Class->GetSuperClass()) EvalCondValues(Obj, Class->GetSuperClass(), Values);
   for (int i = 0; i < Class->RepInfos.Num(); ++i) {
     P_PASS_REF(Obj);
@@ -106,7 +103,6 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
       Values[((VField *)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;
     }
   }
-  unguard;
 }
 
 
@@ -116,7 +112,6 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 //
 //==========================================================================
 void VPlayerChannel::Update () {
-  guard(VPlayerChannel::Update);
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
   VMessageOut Msg(this);
@@ -146,7 +141,6 @@ void VPlayerChannel::Update () {
   }
 
   if (Msg.GetNumBits()) SendMessage(&Msg);
-  unguard;
 }
 
 
@@ -156,7 +150,6 @@ void VPlayerChannel::Update () {
 //
 //==========================================================================
 void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
-  guard(VPlayerChannel::ParsePacket);
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(/*Plr->GetClass()->NumNetFields*/);
     VField *F = nullptr;
@@ -182,5 +175,4 @@ void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
 
     Sys_Error("Bad net field %d", FldIdx);
   }
-  unguard;
 }

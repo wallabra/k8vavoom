@@ -173,7 +173,6 @@ VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
 //
 //==========================================================================
 int VDatagramDriver::Init () {
-  guard(Datagram_Init);
   if (GArgs.CheckParm("-nolan")) return -1;
 
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
@@ -185,7 +184,6 @@ int VDatagramDriver::Init () {
   }
 
   return 0;
-  unguard;
 }
 
 
@@ -195,11 +193,9 @@ int VDatagramDriver::Init () {
 //
 //==========================================================================
 void VDatagramDriver::Listen (bool state) {
-  guard(VDatagramDriver::Listen);
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (VNetworkLocal::LanDrivers[i]->initialised) VNetworkLocal::LanDrivers[i]->Listen(state);
   }
-  unguard;
 }
 
 
@@ -209,7 +205,6 @@ void VDatagramDriver::Listen (bool state) {
 //
 //==========================================================================
 void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMaster) {
-  guard(VDatagramDriver::SearchForHosts);
   sockaddr_t myaddr;
   sockaddr_t readaddr;
   int len;
@@ -296,7 +291,6 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
       }
     }
   }
-  unguard;
 }
 
 
@@ -306,12 +300,10 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
 //
 //==========================================================================
 void VDatagramDriver::SearchForHosts (bool xmit, bool ForMaster) {
-  guard(Datagram_SearchForHosts);
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (Net->HostCacheCount == HOSTCACHESIZE) break;
     if (VNetworkLocal::LanDrivers[i]->initialised) SearchForHosts(VNetworkLocal::LanDrivers[i], xmit, ForMaster);
   }
-  unguard;
 }
 
 
@@ -321,7 +313,6 @@ void VDatagramDriver::SearchForHosts (bool xmit, bool ForMaster) {
 //
 //==========================================================================
 VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
-  guard(VDatagramDriver::Connect);
 #ifdef CLIENT
   sockaddr_t sendaddr;
   sockaddr_t readaddr;
@@ -464,7 +455,6 @@ ErrorReturn:
   //}
 #endif
   return nullptr;
-  unguard;
 }
 
 
@@ -474,7 +464,6 @@ ErrorReturn:
 //
 //==========================================================================
 VSocket *VDatagramDriver::Connect (const char *host) {
-  guard(Datagram_Connect);
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (VNetworkLocal::LanDrivers[i]->initialised) {
       VSocket *ret = Connect(VNetworkLocal::LanDrivers[i], host);
@@ -482,7 +471,6 @@ VSocket *VDatagramDriver::Connect (const char *host) {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -492,7 +480,6 @@ VSocket *VDatagramDriver::Connect (const char *host) {
 //
 //==========================================================================
 VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
-  guard(VDatagramDriver::CheckNewConnections);
 #ifdef SERVER
   sockaddr_t clientaddr;
   sockaddr_t newaddr;
@@ -641,7 +628,6 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 #else
   return nullptr;
 #endif
-  unguard;
 }
 
 
@@ -651,7 +637,6 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 //
 //==========================================================================
 VSocket *VDatagramDriver::CheckNewConnections () {
-  guard(VDatagramDriver::CheckNewConnections);
   for (int i = 0; i < Net->NumLanDrivers; ++i) {
     if (Net->LanDrivers[i]->initialised) {
       VSocket *ret = CheckNewConnections(Net->LanDrivers[i]);
@@ -659,7 +644,6 @@ VSocket *VDatagramDriver::CheckNewConnections () {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -669,7 +653,6 @@ VSocket *VDatagramDriver::CheckNewConnections () {
 //
 //==========================================================================
 void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
-  guard(VDatagramDriver::UpdateMaster);
   sockaddr_t sendaddr;
 
   // see if we can resolve the host name
@@ -690,7 +673,6 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   TmpByte = NET_PROTOCOL_VERSION;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
-  unguard;
 }
 
 
@@ -700,12 +682,10 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
 //
 //==========================================================================
 void VDatagramDriver::UpdateMaster () {
-  guard(VDatagramDriver::UpdateMaster);
   if (!UseMaster) return;
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (VNetworkLocal::LanDrivers[i]->initialised) UpdateMaster(VNetworkLocal::LanDrivers[i]);
   }
-  unguard;
 }
 
 
@@ -715,7 +695,6 @@ void VDatagramDriver::UpdateMaster () {
 //
 //==========================================================================
 void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
-  guard(VDatagramDriver::QuitMaster);
   sockaddr_t sendaddr;
 
   // see if we can resolve the host name
@@ -734,7 +713,6 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   vuint8 TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
-  unguard;
 }
 
 
@@ -744,12 +722,10 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
 //
 //==========================================================================
 void VDatagramDriver::QuitMaster () {
-  guard(VDatagramDriver::QuitMaster);
   if (!UseMaster) return;
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (VNetworkLocal::LanDrivers[i]->initialised) QuitMaster(VNetworkLocal::LanDrivers[i]);
   }
-  unguard;
 }
 
 
@@ -759,7 +735,6 @@ void VDatagramDriver::QuitMaster () {
 //
 //==========================================================================
 bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
-  guard(VDatagramDriver::QueryMaster);
   sockaddr_t myaddr;
   sockaddr_t readaddr;
   sockaddr_t tmpaddr;
@@ -834,7 +809,6 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     //return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -844,7 +818,6 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
 //
 //==========================================================================
 bool VDatagramDriver::QueryMaster (bool xmit) {
-  guard(VDatagramDriver::QueryMaster);
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (Net->HostCacheCount == HOSTCACHESIZE) break;
     if (VNetworkLocal::LanDrivers[i]->initialised) {
@@ -852,7 +825,6 @@ bool VDatagramDriver::QueryMaster (bool xmit) {
     }
   }
   return false;
-  unguard;
 }
 
 
@@ -862,14 +834,12 @@ bool VDatagramDriver::QueryMaster (bool xmit) {
 //
 //==========================================================================
 void VDatagramDriver::EndQueryMaster () {
-  guard(VDatagramDriver::EndQueryMaster);
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     if (VNetworkLocal::LanDrivers[i]->initialised && VNetworkLocal::LanDrivers[i]->MasterQuerySocket > 0) {
       VNetworkLocal::LanDrivers[i]->CloseSocket(VNetworkLocal::LanDrivers[i]->MasterQuerySocket);
       VNetworkLocal::LanDrivers[i]->MasterQuerySocket = -1;
     }
   }
-  unguard;
 }
 
 
@@ -879,7 +849,6 @@ void VDatagramDriver::EndQueryMaster () {
 //
 //==========================================================================
 void VDatagramDriver::Shutdown () {
-  guard(VDatagramDriver::Shutdown);
   // shutdown the lan drivers
   for (int i = 0; i < Net->NumLanDrivers; ++i) {
     if (Net->LanDrivers[i]->initialised) {
@@ -887,7 +856,6 @@ void VDatagramDriver::Shutdown () {
       Net->LanDrivers[i]->initialised = false;
     }
   }
-  unguard;
 }
 
 
@@ -913,7 +881,6 @@ VDatagramSocket::~VDatagramSocket () {
 //
 //==========================================================================
 int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
-  guard(VDatagramSocket::GetMessage);
   vuint32 length;
   sockaddr_t readaddr;
   int ret = 0;
@@ -945,7 +912,6 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
   }
 
   return ret;
-  unguard;
 }
 
 
@@ -959,12 +925,10 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
 //
 //==========================================================================
 int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
-  guard(VDatagramSocket::SendMessage);
   checkSlow(Length > 0);
   checkSlow(Length <= MAX_MSGLEN);
   if (Invalid) return -1;
   return (LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1);
-  unguard;
 }
 
 
@@ -994,7 +958,6 @@ static void PrintStats (VSocket *) {
 //
 //==========================================================================
 COMMAND(NetStats) {
-  guard(COMMAND NetStats);
   VSocket *s;
 
   VNetworkLocal *Net = (VNetworkLocal*)GNet;
@@ -1018,5 +981,4 @@ COMMAND(NetStats) {
     if (s == nullptr) return;
     PrintStats(s);
   }
-  unguard;
 }

@@ -45,7 +45,6 @@ VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vu
 //
 //==========================================================================
 void VControlChannel::ParsePacket (VMessageIn &msg) {
-  guard(VControlChannel::ParsePacket);
   while (!msg.AtEnd()) {
     VStr Cmd;
     msg << Cmd;
@@ -56,5 +55,4 @@ void VControlChannel::ParsePacket (VMessageIn &msg) {
       VCommand::ExecuteString(Cmd, VCommand::SRC_Client, Connection->Owner);
     }
   }
-  unguard;
 }

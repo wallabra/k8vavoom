@@ -69,7 +69,6 @@ VThinkerChannel::~VThinkerChannel () {
 //
 //==========================================================================
 void VThinkerChannel::SetThinker (VThinker *AThinker) {
-  guard(VThinkerChannel::SetThinker);
   if (Thinker) {
     Connection->ThinkerChannels.Remove(Thinker);
     if (OldData) {
@@ -101,7 +100,6 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
     NewObj = true;
     Connection->ThinkerChannels.Set(Thinker, this);
   }
-  unguard;
 }
 
 
@@ -111,7 +109,6 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
 //
 //==========================================================================
 void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values) {
-  guard(VThinkerChannel::EvalCondValues);
   if (Class->GetSuperClass()) EvalCondValues(Obj, Class->GetSuperClass(), Values);
   for (int i = 0; i < Class->RepInfos.Num(); ++i) {
     P_PASS_REF(Obj);
@@ -121,7 +118,6 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
       Values[((VField *)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;
     }
   }
-  unguard;
 }
 
 
@@ -131,7 +127,6 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
 //
 //==========================================================================
 void VThinkerChannel::Update () {
-  guard(VThinkerChannel::Update);
   if (Closing) return;
 
   VEntity *Ent = Cast<VEntity>(Thinker);
@@ -221,7 +216,6 @@ void VThinkerChannel::Update () {
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;
   Thinker->ThinkerFlags &= ~VThinker::TF_NetOwner;
-  unguard;
 }
 
 
@@ -231,7 +225,6 @@ void VThinkerChannel::Update () {
 //
 //==========================================================================
 void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
-  guard(VThinkerChannel::ParsePacket);
   if (Msg.bOpen) {
     VClass *C;
     Connection->ObjMap->SerialiseClass(Msg, C);
@@ -279,7 +272,6 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     Sys_Error("Bad net field %d", FldIdx);
   }
   if (Ent) Ent->LinkToWorld(true);
-  unguard;
 }
 
 
@@ -289,8 +281,6 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 //
 //==========================================================================
 void VThinkerChannel::Close () {
-  guard(VThinkerChannel::Close);
   VChannel::Close();
   SetThinker(nullptr);
-  unguard;
 }

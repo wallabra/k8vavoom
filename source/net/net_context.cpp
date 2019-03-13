@@ -59,7 +59,6 @@ VNetContext::~VNetContext () {
 //
 //==========================================================================
 void VNetContext::ThinkerDestroyed (VThinker *Th) {
-  guard(VNetContext::ThinkerDestroyed);
   //GCon->Logf("NET:%p: destroyed thinker with class `%s`", Th, Th->GetClass()->GetName());
   if (ServerConnection) {
     VThinkerChannel *Chan = ServerConnection->ThinkerChannels.FindPtr(Th);
@@ -70,7 +69,6 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
       if (Chan) Chan->Close();
     }
   }
-  unguard;
 }
 
 
@@ -80,7 +78,6 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
 //
 //==========================================================================
 void VNetContext::Tick () {
-  guard(VNetContext::Tick);
   for (int i = 0; i < ClientConnections.Num(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     // don't update level if the player isn't totally in the game yet
@@ -92,5 +89,4 @@ void VNetContext::Tick () {
     Conn->Tick();
     if (Conn->State == NETCON_Closed) SV_DropClient(Conn->Owner, true);
   }
-  unguard;
 }

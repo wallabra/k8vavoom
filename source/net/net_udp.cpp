@@ -111,7 +111,6 @@ VUdpDriver::VUdpDriver ()
 //
 //==========================================================================
 int VUdpDriver::Init () {
-  guard(VUdpDriver::Init);
   char buff[MAXHOSTNAMELEN];
 
   if (GArgs.CheckParm("-noudp")) return -1;
@@ -213,7 +212,6 @@ int VUdpDriver::Init () {
   Net->IpAvailable = true;
 
   return net_controlsocket;
-  unguard;
 }
 
 
@@ -223,13 +221,11 @@ int VUdpDriver::Init () {
 //
 //==========================================================================
 void VUdpDriver::Shutdown () {
-  guard(VUdpDriver::Shutdown);
   Listen(false);
   CloseSocket(net_controlsocket);
 #ifdef WIN32
   if (--winsock_initialised == 0) WSACleanup();
 #endif
-  unguard;
 }
 
 
@@ -240,7 +236,6 @@ void VUdpDriver::Shutdown () {
 //
 //==========================================================================
 BOOL PASCAL FAR VUdpDriver::BlockingHook () {
-  guard(VWinSockDriver::BlockingHook);
   MSG msg;
   BOOL ret;
 
@@ -260,7 +255,6 @@ BOOL PASCAL FAR VUdpDriver::BlockingHook () {
 
   // TRUE if we got a message
   return ret;
-  unguard;
 }
 
 
@@ -270,7 +264,6 @@ BOOL PASCAL FAR VUdpDriver::BlockingHook () {
 //
 //==========================================================================
 void VUdpDriver::GetLocalAddress () {
-  guard(VWinSockDriver::GetLocalAddress);
   hostent *local;
   char buff[MAXHOSTNAMELEN];
   vuint32 addr;
@@ -289,7 +282,6 @@ void VUdpDriver::GetLocalAddress () {
 
   addr = ntohl(myAddr);
   snprintf(Net->MyIpAddress, sizeof(Net->MyIpAddress), "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
-  unguard;
 }
 #endif
 
@@ -300,7 +292,6 @@ void VUdpDriver::GetLocalAddress () {
 //
 //==========================================================================
 void VUdpDriver::Listen (bool state) {
-  guard(VUdpDriver::Listen);
   if (state) {
     // enable listening
     if (net_acceptsocket == -1) {
@@ -314,7 +305,6 @@ void VUdpDriver::Listen (bool state) {
       net_acceptsocket = -1;
     }
   }
-  unguard;
 }
 
 
@@ -324,7 +314,6 @@ void VUdpDriver::Listen (bool state) {
 //
 //==========================================================================
 int VUdpDriver::OpenSocket (int port) {
-  guard(UDP_OpenSocket);
   int newsocket;
   sockaddr_in address;
 
@@ -353,7 +342,6 @@ int VUdpDriver::OpenSocket (int port) {
 
   Sys_Error("Unable to bind to %s", AddrToString((sockaddr_t *)&address));
   return -1;
-  unguard;
 }
 
 
@@ -363,10 +351,8 @@ int VUdpDriver::OpenSocket (int port) {
 //
 //==========================================================================
 int VUdpDriver::CloseSocket (int socket) {
-  guard(VUdpDriver::CloseSocket);
   if (socket == net_broadcastsocket) net_broadcastsocket = 0;
   return closesocket(socket);
-  unguard;
 }
 
 
@@ -386,14 +372,12 @@ int VUdpDriver::Connect (int, sockaddr_t *) {
 //
 //==========================================================================
 int VUdpDriver::CheckNewConnections () {
-  guard(VUdpDriver::CheckNewConnections);
   char buf[4096];
   if (net_acceptsocket == -1) return -1;
   if (recvfrom(net_acceptsocket, buf, sizeof(buf), MSG_PEEK, nullptr, nullptr) >= 0) {
     return net_acceptsocket;
   }
   return -1;
-  unguard;
 }
 
 
@@ -403,7 +387,6 @@ int VUdpDriver::CheckNewConnections () {
 //
 //==========================================================================
 int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
-  guard(VUdpDriver::Read);
   socklen_t addrlen = sizeof(sockaddr_t);
   int ret = recvfrom(socket, (char *)buf, len, 0, (sockaddr *)addr, &addrlen);
   if (ret == -1) {
@@ -415,7 +398,6 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 #endif
   }
   return ret;
-  unguard;
 }
 
 
@@ -425,7 +407,6 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
-  guard(VUdpDriver::Write);
   int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
   if (ret == -1) {
 #ifdef WIN32
@@ -435,7 +416,6 @@ int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr)
 #endif
   }
   return ret;
-  unguard;
 }
 
 
@@ -445,7 +425,6 @@ int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr)
 //
 //==========================================================================
 int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
-  guard(VUdpDriver::Broadcast);
   int i = 1;
   if (socket != net_broadcastsocket) {
     if (net_broadcastsocket != 0) Sys_Error("Attempted to use multiple broadcasts sockets\n");
@@ -460,7 +439,6 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
     net_broadcastsocket = socket;
   }
   return Write(socket, buf, len, &broadcastaddr);
-  unguard;
 }
 
 
@@ -470,14 +448,12 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
 //
 //==========================================================================
 char *VUdpDriver::AddrToString (sockaddr_t *addr) {
-  guard(VUdpDriver::AddrToString);
   static char buffer[32];
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
   snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d:%d", (haddr>>24)&0xff,
     (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff,
     ntohs(((sockaddr_in *)addr)->sin_port));
   return buffer;
-  unguard;
 }
 
 
@@ -487,7 +463,6 @@ char *VUdpDriver::AddrToString (sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::StringToAddr (const char *string, sockaddr_t *addr) {
-  guard(VUdpDriver::StringToAddr);
   int ha1, ha2, ha3, ha4, hp;
   int ipaddr;
 
@@ -498,7 +473,6 @@ int VUdpDriver::StringToAddr (const char *string, sockaddr_t *addr) {
   ((sockaddr_in *)addr)->sin_addr.s_addr = htonl(ipaddr);
   ((sockaddr_in *)addr)->sin_port = htons((vuint16)hp);
   return 0;
-  unguard;
 }
 
 
@@ -508,7 +482,6 @@ int VUdpDriver::StringToAddr (const char *string, sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
-  guard(VUdpDriver::GetSocketAddr);
   socklen_t addrlen = sizeof(sockaddr_t);
   vuint32 a;
 
@@ -518,7 +491,6 @@ int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
   if (a == 0 || a == inet_addr("127.0.0.1")) ((sockaddr_in *)addr)->sin_addr.s_addr = myAddr;
 
   return 0;
-  unguard;
 }
 
 
@@ -528,11 +500,9 @@ int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
 //
 //==========================================================================
 VStr VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
-  guard(VUdpDriver::GetNameFromAddr);
   hostent *hostentry = gethostbyaddr((char*)&((sockaddr_in*)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
   if (hostentry) return (char *)hostentry->h_name;
   return AddrToString(addr);
-  unguard;
 }
 
 
@@ -545,7 +515,6 @@ VStr VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int DefaultPort) {
-  guard(VUdpDriver::PartialIPAddress);
   char buff[256];
   char *b;
   int addr;
@@ -582,7 +551,6 @@ int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int Defa
   ((sockaddr_in *)hostaddr)->sin_addr.s_addr = (myAddr&htonl(mask))|htonl(addr);
 
   return 0;
-  unguard;
 }
 
 
@@ -594,7 +562,6 @@ int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int Defa
 //
 //==========================================================================
 int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int DefaultPort) {
-  guard(VUdpDriver::GetAddrFromName);
   hostent *hostentry;
 
   if (name[0] >= '0' && name[0] <= '9') return PartialIPAddress(name, addr, DefaultPort);
@@ -607,7 +574,6 @@ int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int Default
   ((sockaddr_in *)addr)->sin_addr.s_addr = *(int*)hostentry->h_addr_list[0];
 
   return 0;
-  unguard;
 }
 
 
@@ -617,12 +583,10 @@ int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int Default
 //
 //==========================================================================
 int VUdpDriver::AddrCompare (const sockaddr_t *addr1, const sockaddr_t *addr2) {
-  guard(VUdpDriver::AddrCompare);
   if (addr1->sa_family != addr2->sa_family) return -1;
   if (((const sockaddr_in *)addr1)->sin_addr.s_addr != ((const sockaddr_in *)addr2)->sin_addr.s_addr) return -1;
   if (((const sockaddr_in *)addr1)->sin_port != ((const sockaddr_in *)addr2)->sin_port) return 1;
   return 0;
-  unguard;
 }
 
 
@@ -632,9 +596,7 @@ int VUdpDriver::AddrCompare (const sockaddr_t *addr1, const sockaddr_t *addr2) {
 //
 //==========================================================================
 int VUdpDriver::GetSocketPort (const sockaddr_t *addr) {
-  guard(VUdpDriver::GetSocketPort);
   return ntohs(((const sockaddr_in *)addr)->sin_port);
-  unguard;
 }
 
 
@@ -644,8 +606,6 @@ int VUdpDriver::GetSocketPort (const sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::SetSocketPort (sockaddr_t *addr, int port) {
-  guard(VUdpDriver::SetSocketPort);
   ((sockaddr_in *)addr)->sin_port = htons(port);
   return 0;
-  unguard;
 }
