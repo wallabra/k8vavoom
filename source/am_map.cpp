@@ -169,26 +169,31 @@ static vuint32 PowerWallColour;
 static vuint32 GridColour;
 static vuint32 ThingColour;
 static vuint32 PlayerColour;
+static vuint32 MinisegColour;
 
-static VCvarS am_colour_wall("am_colour_wall", "d0 b0 85", "Automap color: walls.", CVAR_Archive);
-static VCvarS am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: ts-walls.", CVAR_Archive);
-static VCvarS am_colour_fdwall("am_colour_fdwall", "a0 6c 40", "Automap color: fd-walls.", CVAR_Archive);
-static VCvarS am_colour_cdwall("am_colour_cdwall", "94 94 ac", "Automap color: cd-walls.", CVAR_Archive);
-static VCvarS am_colour_exwall("am_colour_exwall", "7b 4b 27", "Automap color: ex-walls.", CVAR_Archive);
+static VCvarS am_colour_wall("am_colour_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
+static VCvarS am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: same-height two-sided walls.", CVAR_Archive);
+static VCvarS am_colour_fdwall("am_colour_fdwall", "a0 6c 40", "Automap color: floor level change.", CVAR_Archive);
+static VCvarS am_colour_cdwall("am_colour_cdwall", "94 94 ac", "Automap color: ceiling level change.", CVAR_Archive);
+static VCvarS am_colour_exwall("am_colour_exwall", "7b 4b 27", "Automap color: walls with extra floors.", CVAR_Archive);
 static VCvarS am_colour_secretwall("am_colour_secretwall", "ff 7f 00", "Automap color: secret walls.", CVAR_Archive);
 //static VCvarS am_colour_power("am_colour_power", "7d 83 79", "Automap color: autorevealed walls.", CVAR_Archive);
 static VCvarS am_colour_power("am_colour_power", "2f 4f 9f", "Automap color: autorevealed walls.", CVAR_Archive);
 static VCvarS am_colour_grid("am_colour_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
 static VCvarS am_colour_thing("am_colour_thing", "cf 4f 00", "Automap color: thing.", CVAR_Archive);
 static VCvarS am_colour_player("am_colour_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
+static VCvarS am_colour_miniseg("am_colour_miniseg", "7f 00 7f", "Automap color: minisegs.", CVAR_Archive);
 
 static VCvarI am_player_arrow("am_player_arrow", 0, "Type of player arrow.", CVAR_Archive);
-static VCvarB am_follow_player("am_follow_player", true, "Should automap follow player?", CVAR_Archive); // specifies whether to follow the player around
+static VCvarB am_follow_player("am_follow_player", true, "Should automap follow player?", CVAR_Archive);
 static VCvarB am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archive);
 static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CVAR_Archive);
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
-static VCvarI am_show_secrets("am_show_secrets", "0", "Show secret walls on automap!", CVAR_Cheat);
+static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", CVAR_Cheat);
+static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", CVAR_Cheat);
+static VCvarB am_show_static_lights("am_show_static_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
+static VCvarB am_show_dynamic_lights("am_show_dynamic_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
@@ -1151,7 +1156,6 @@ static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
 //  AM_drawWalls
 //
 //  Determines visible lines, draws them.
-//  This is LineDef based, not LineSeg based.
 //
 //==========================================================================
 static void AM_drawWalls () {
@@ -1220,6 +1224,32 @@ static void AM_drawWalls () {
         AM_drawMline(&l, clr);
       }
     }
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_DrawMinisegs
+//
+//==========================================================================
+static void AM_DrawMinisegs () {
+  const seg_t *seg = &GClLevel->Segs[0];
+  for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
+    if (seg->linedef) continue; // not a miniseg
+
+    mline_t l;
+    l.a.x = seg->v1->x;
+    l.a.y = seg->v1->y;
+    l.b.x = seg->v2->x;
+    l.b.y = seg->v2->y;
+
+    if (am_rotate) {
+      AM_rotatePoint(&l.a.x, &l.a.y);
+      AM_rotatePoint(&l.b.x, &l.b.y);
+    }
+
+    AM_drawMline(&l, MinisegColour);
   }
 }
 
@@ -1625,6 +1655,7 @@ static void AM_CheckVariables () {
   GridColour = StringToColour(am_colour_grid);
   ThingColour = StringToColour(am_colour_thing);
   PlayerColour = StringToColour(am_colour_player);
+  MinisegColour = StringToColour(am_colour_miniseg);
 }
 
 
@@ -1651,9 +1682,9 @@ void AM_Drawer () {
   AM_drawWalls();
   AM_drawPlayers();
   if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
-  if (am_cheating == 3) AM_drawStaticLights(ThingColour);
-  if (am_cheating == 4) AM_drawDynamicLights(ThingColour);
-  if (am_cheating == 5) { AM_drawStaticLights(ThingColour); AM_drawDynamicLights(ThingColour); }
+  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColour);
+  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColour);
+  if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
   Drawer->EndAutomap();
   AM_DrawWorldTimer();
   T_SetFont(SmallFont);
