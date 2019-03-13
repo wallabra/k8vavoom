@@ -417,6 +417,7 @@ protected:
 
   // renderer info; put here to avoid passing it around
   // k8: it was a bunch of globals; i will eventually got rid of this
+  subsector_t *r_surf_sub;
   bool MirrorClipSegs;
 
 protected:
@@ -774,8 +775,6 @@ extern int NumTranslationTables;
 extern VTextureTranslation IceTranslation;
 extern TArray<VTextureTranslation *> DecorateTranslations;
 extern TArray<VTextureTranslation *> BloodTranslations;
-
-extern subsector_t *r_surf_sub;
 
 
 //==========================================================================

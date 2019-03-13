@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-extern subsector_t *r_surf_sub;
-
 
 //==========================================================================
 //
