@@ -274,7 +274,7 @@ void VRenderLevelShared::DrawSurfaces (sec_region_t *secregion, seg_t *seg, surf
 //  VRenderLevelShared::RenderHorizon
 //
 //==========================================================================
-void VRenderLevelShared::RenderHorizon (sec_region_t *secregion, drawseg_t *dseg) {
+void VRenderLevelShared::RenderHorizon (sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
 
   if (!dseg->HorizonTop) {
@@ -291,7 +291,7 @@ void VRenderLevelShared::RenderHorizon (sec_region_t *secregion, drawseg_t *dseg
 
   // handle top part
   if (TopZ > HorizonZ) {
-    sec_surface_t *Ceil = r_subregion->ceil;
+    sec_surface_t *Ceil = subregion->ceil;
 
     // calculate light and fade
     sec_params_t *LightParams = Ceil->secplane->LightSourceSector != -1 ?
@@ -332,7 +332,7 @@ void VRenderLevelShared::RenderHorizon (sec_region_t *secregion, drawseg_t *dseg
 
   // handle bottom part
   if (BotZ < HorizonZ) {
-    sec_surface_t *Floor = r_subregion->floor;
+    sec_surface_t *Floor = subregion->floor;
 
     // calculate light and fade
     sec_params_t *LightParams = Floor->secplane->LightSourceSector != -1 ?
@@ -413,7 +413,7 @@ void VRenderLevelShared::RenderMirror (sec_region_t *secregion, drawseg_t *dseg)
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VRenderLevelShared::RenderLine (sec_region_t *secregion, drawseg_t *dseg) {
+void VRenderLevelShared::RenderLine (sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   line_t *linedef = seg->linedef;
 
@@ -483,7 +483,7 @@ void VRenderLevelShared::RenderLine (sec_region_t *secregion, drawseg_t *dseg) {
   if (!seg->backsector) {
     // single sided line
     if (seg->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
-      RenderHorizon(secregion, dseg);
+      RenderHorizon(secregion, subregion, dseg);
     } else if (seg->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(secregion, dseg);
     } else {
@@ -591,7 +591,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
 
   check(r_sub->sector != nullptr);
 
-  r_subregion = region;
+  subregion_t *subregion = region;
   sec_region_t *secregion = region->secregion;
 
   if (r_sub->poly) {
@@ -599,7 +599,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
     int polyCount = r_sub->poly->numsegs;
     seg_t **polySeg = r_sub->poly->segs;
     while (polyCount--) {
-      RenderLine(secregion, (*polySeg)->drawsegs);
+      RenderLine(secregion, subregion, (*polySeg)->drawsegs);
       ++polySeg;
     }
   }
@@ -607,7 +607,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   int count = r_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    RenderLine(secregion, ds);
+    RenderLine(secregion, subregion, ds);
     ++ds;
   }
 

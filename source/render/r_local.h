@@ -418,8 +418,6 @@ protected:
   // renderer info; put here to avoid passing it around
   // k8: it was a bunch of globals; i will eventually got rid of this
   subsector_t *r_sub;
-  subregion_t *r_subregion;
-  //sec_region_t *r_region;
   bool MirrorClipSegs;
 
 protected:
@@ -496,12 +494,14 @@ protected:
   void QueueSimpleSurf (seg_t *seg, surface_t *surf);
   void QueueSkyPortal (surface_t *surf);
   void QueueHorizonPortal (surface_t *surf);
+
   void DrawSurfaces (sec_region_t *secregion, seg_t *seg, surface_t *InSurfs, texinfo_t *texinfo,
                      VEntity *SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
                      bool CheckSkyBoxAlways);
-  void RenderHorizon (sec_region_t *secregion, drawseg_t *dseg);
+
+  void RenderHorizon (sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderMirror (sec_region_t *secregion, drawseg_t *dseg);
-  void RenderLine (sec_region_t *secregion, drawseg_t *dseg);
+  void RenderLine (sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderSecSurface (sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderSubRegion (subregion_t *region);
   void RenderSubsector (int num);
