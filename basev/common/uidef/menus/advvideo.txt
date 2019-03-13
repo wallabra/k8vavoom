@@ -111,6 +111,19 @@ menudef AdvVideoOptions {
   }
 
   option bool {
+    title = "Better DynLight Visibility Check";
+    cvar = r_dynamic_light_better_vis_check;
+    help =
+      "Perform BSP visibility check before trying to add dynamic light."
+      "This may, or may not make things better for you."
+      "Note that you cannot have more than 32 dynamic lights in one frame,"
+      "so the engine has to decide somehow which dynlighs can be dropped."
+      "There are some heuristics for this, and visibility check can help."
+      "Another drawback of this feature that checker is using visibility"
+      "info from the previous frame, not from the current one.";
+  }
+
+  option bool {
     title = "Model Dynamic lighting";
     cvar = r_model_light;
   }
@@ -122,10 +135,12 @@ menudef AdvVideoOptions {
   }
   */
 
+  /* k8: this is broken; need to be restored later
   option bool {
     title = "Model Shadows";
     cvar = r_model_shadows;
   }
+  */
 
 
   header "Other Lightmap Lighting";
