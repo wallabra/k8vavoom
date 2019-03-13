@@ -384,9 +384,11 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
   for (int count = sub->numlines; count--; ++seg) {
     const line_t *ldef = seg->linedef;
     if (!ldef) continue; // minisegs are boring
+    const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+    if (fabsf(dist) >= CurrLightRadius) continue; // totally uninteresting
     if ((ldef->flags&ML_TWOSIDED) == 0) {
       // one-sided wall: if it is not facing light, it can create a shadow
-      if (seg->PointOnSide(CurrLightPos)) {
+      if (dist <= 0) {
         // oops
         if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
           doShadows = true;
@@ -411,7 +413,7 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
       // we should have partner seg
       if (!seg->partner || seg->partner == seg || seg->partner->front_sub == sub) {
         // dunno
-        if (seg->PointOnSide(CurrLightPos)) {
+        if (dist <= 0) {
           // oops
           if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
             doShadows = true;
@@ -441,7 +443,7 @@ void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
           CurrLightPos.z-CurrLightRadius >= fsec->topregion->ceiling->maxz)
       {
         // cannot possibly touch midtex, consider this wall solid
-        if (seg->PointOnSide(CurrLightPos)) {
+        if (dist <= 0) {
           if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
             // oops
             doShadows = true;
