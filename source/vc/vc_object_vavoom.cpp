@@ -25,9 +25,6 @@
 //**
 //**************************************************************************
 #include "../drawer.h"
-#ifdef CLIENT
-extern refdef_t refdef;
-#endif
 
 
 //**************************************************************************
@@ -262,14 +259,4 @@ IMPLEMENT_FUNCTION(VObject, W_CheckNumForNameInFile) {
   P_GET_INT(File);
   P_GET_NAME(Name);
   RET_INT(W_CheckNumForNameInFile(Name, File, EWadNamespace(ns)));
-}
-
-// native static final void GetCurrRefDef (out refdef_t rd);
-IMPLEMENT_FUNCTION(VObject, GetCurrRefDef) {
-  P_GET_PTR(refdef_t, rd);
-#ifdef CLIENT
-  if (rd) *rd = refdef;
-#else
-  if (rd) memset(rd, 0, sizeof(refdef_t));
-#endif
 }

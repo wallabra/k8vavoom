@@ -64,15 +64,6 @@ struct particle_t {
 };
 
 
-struct refdef_t {
-  int x, y;
-  int width, height;
-  float fovx, fovy;
-  bool drawworld;
-  bool DrawCamera;
-};
-
-
 struct surfcache_t {
   // position in light surface
   int s, t;

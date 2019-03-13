@@ -52,8 +52,6 @@ TAVec viewangles(0, 0, 0);
 
 TFrustum view_frustum;
 
-int r_visframecount = 0;
-
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
 VCvarF r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
 VCvarF r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
@@ -87,8 +85,6 @@ extern VCvarB r_dynamic_clip_more;
 
 VDrawer *Drawer;
 
-refdef_t refdef;
-
 float PixelAspect;
 
 bool MirrorFlip = false;
@@ -102,9 +98,6 @@ bool set_resolutioon_needed = true;
 
 // angles in the SCREENWIDTH wide window
 VCvarF fov("fov", "90", "Field of vision.");
-
-// base planes to create fov-based frustum
-TClipBase clip_base;
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
@@ -437,6 +430,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , bspVisRadiusFrame(0)
 {
   r_dlightframecount = 0;
+  r_visframecount = 0;
 
   memset(light_block, 0, sizeof(light_block));
   memset(block_changed, 0, sizeof(block_changed));
@@ -479,6 +473,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   if (r_precache_textures_override != 0) {
     if (r_precache_textures || r_precache_textures_override > 0) PrecacheLevel();
   }
+
+  ResetVisFrameCount();
+  ResetDLightFrameCount();
 }
 
 
@@ -569,6 +566,36 @@ VRenderLevelShared::~VRenderLevelShared () {
   traspUsed = 0;
   traspSize = 0;
   traspFirst = 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ResetVisFrameCount
+//
+//==========================================================================
+void VRenderLevelShared::ResetVisFrameCount () {
+  r_visframecount = 1;
+  for (unsigned nidx = 0; nidx < (unsigned)Level->NumNodes; ++nidx) {
+    Level->Nodes[nidx].VisFrame = 0;
+  }
+  for (unsigned nidx = 0; nidx < (unsigned)Level->NumSubsectors; ++nidx) {
+    Level->Subsectors[nidx].VisFrame = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ResetDLightFrameCount
+//
+//==========================================================================
+void VRenderLevelShared::ResetDLightFrameCount () {
+  r_dlightframecount = 1;
+  for (unsigned idx = 0; idx < (unsigned)Level->NumSubsectors; ++idx) {
+    Level->Subsectors[idx].dlightframe = 0;
+    Level->Subsectors[idx].dlightbits = 0;
+  }
 }
 
 
@@ -1361,16 +1388,7 @@ void VRenderLevelShared::MarkLeaves () {
   r_oldviewleaf = r_viewleaf;
   if (!Level->HasPVS()) return;
 
-  if ((++r_visframecount) == 0x7fffffff) {
-    r_visframecount = 1;
-    for (unsigned nidx = 0; nidx < (unsigned)Level->NumNodes; ++nidx) {
-      Level->Nodes[nidx].VisFrame = 0;
-    }
-    for (unsigned nidx = 0; nidx < (unsigned)Level->NumSubsectors; ++nidx) {
-      Level->Subsectors[nidx].VisFrame = 0;
-    }
-  }
-  const int currvisframe = r_visframecount;
+  const int currvisframe = IncVisFrameCount();
 
   const vuint8 *vis = Level->LeafPVS(r_viewleaf);
   subsector_t *sub = &Level->Subsectors[0];

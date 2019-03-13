@@ -196,7 +196,7 @@ void VPortal::Draw (bool UseStencil) {
 //  VPortal::SetUpRanges
 //
 //==========================================================================
-void VPortal::SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum) {
+void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum) {
   guard(VPortal::SetUpRanges);
   Range.ClearClipNodes(vieworg, RLev->Level);
   if (SetFrustum) {
@@ -342,7 +342,8 @@ void VSkyBoxPortal::DrawContents () {
   // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;
 
-  RLev->RenderScene(&refdef, nullptr);
+  refdef_t rd = RLev->refdef;
+  RLev->RenderScene(&rd, nullptr);
 
   Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
   unguard;
@@ -367,7 +368,8 @@ bool VSectorStackPortal::MatchSkyBox (VEntity *AEnt) const {
 void VSectorStackPortal::DrawContents () {
   guard(VSectorStackPortal::DrawContents);
   VViewClipper Range;
-  VPortal::SetUpRanges(Range, false, true); //k8: after moving viewport?
+  refdef_t rd = RLev->refdef;
+  VPortal::SetUpRanges(rd, Range, false, true); //k8: after moving viewport?
 
   RLev->ViewEnt = Viewport;
   VEntity *Mate = Viewport->eventSkyBoxGetMate();
@@ -388,7 +390,7 @@ void VSectorStackPortal::DrawContents () {
   //glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 
-  RLev->RenderScene(&refdef, &Range);
+  RLev->RenderScene(&rd, &Range);
 
   Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
   unguard;
@@ -429,8 +431,9 @@ void VMirrorPortal::DrawContents () {
   viewup -= 2*Dist*Plane->normal;
   VectorsAngles(viewforward, (MirrorFlip ? -viewright : viewright), viewup, viewangles);
 
+  refdef_t rd = RLev->refdef;
   VViewClipper Range;
-  SetUpRanges(Range, true, false);
+  SetUpRanges(rd, Range, true, false);
 
   // use "far plane" (it is unused by default)
   const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
@@ -440,7 +443,7 @@ void VMirrorPortal::DrawContents () {
   const unsigned planeCount = view_frustum.planeCount;
   view_frustum.planeCount = 6;
 
-  RLev->RenderScene(&refdef, &Range);
+  RLev->RenderScene(&rd, &Range);
 
   view_frustum.planes[5] = SavedClip;
   view_frustum.planeCount = planeCount;

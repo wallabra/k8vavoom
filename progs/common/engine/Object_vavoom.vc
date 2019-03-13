@@ -546,6 +546,7 @@ native static final int W_CheckNumForNameInFile (name Name, int File, optional E
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 struct refdef_t {
   int x, y;
   int width, height;
@@ -556,3 +557,4 @@ struct refdef_t {
 
 
 native static final void GetCurrRefDef (out refdef_t rd);
+*/

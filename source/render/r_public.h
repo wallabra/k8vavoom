@@ -29,9 +29,23 @@ struct dlight_t;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct refdef_t {
+  int x, y;
+  int width, height;
+  float fovx, fovy;
+  bool drawworld;
+  bool DrawCamera;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VRenderLevelPublic : public VInterface {
-public:
+public: //k8: i am too lazy to write accessor methods
   bool staticLightsFiltered;
+
+  // base planes to create fov-based frustum
+  TClipBase clip_base;
+  refdef_t refdef;
 
 public:
   struct LightInfo {

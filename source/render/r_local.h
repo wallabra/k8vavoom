@@ -422,10 +422,24 @@ protected:
   // used in `CreateWorldSurfaces()` and friends
   segpart_t *pspart;
 
+  int r_visframecount;
+
 protected:
   void NewBSPVisibilityFrame ();
   bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
   bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
+
+  void ResetVisFrameCount ();
+  inline int IncVisFrameCount () {
+    if ((++r_visframecount) == 0x7fffffff) ResetVisFrameCount();
+    return r_visframecount;
+  }
+
+  void ResetDLightFrameCount ();
+  inline int IncDLightFrameCount () {
+    if ((++r_dlightframecount) == 0x7fffffff) ResetDLightFrameCount();
+    return r_dlightframecount;
+  }
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
@@ -759,15 +773,11 @@ extern spritedef_t sprites[MAX_SPRITE_MODELS];
 
 // r_main
 extern int screenblocks;
-extern int r_visframecount;
 
 extern vuint8 light_remap[256];
 extern VCvarB r_darken;
 extern VCvarB r_dynamic;
 extern VCvarB r_static_lights;
-
-extern TClipBase clip_base;
-extern refdef_t refdef;
 
 extern VCvarI aspect_ratio;
 extern VCvarB r_interpolate_frames;

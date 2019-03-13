@@ -40,7 +40,6 @@ enum {
 };
 
 
-extern refdef_t refdef;
 extern VCvarI screen_size;
 
 int sb_height = 32;
@@ -95,9 +94,10 @@ bool SB_Responder (event_t *) {
 void SB_Drawer () {
   // update widget visibility
   if (automapactive > 0 && screen_size == 11) return;
+  if (!GClLevel) return;
   GClGame->eventStatusBarDrawer(automapactive > 0 && screen_size < 11 ?
       SB_VIEW_AUTOMAP :
-      refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
+      GClLevel->RenderData->refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
 }
 
 
