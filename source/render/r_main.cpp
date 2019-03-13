@@ -657,7 +657,7 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
     const float c = s0qp.dot2D(s0qp);
     const float r2 = c-a*t*t;
     //print("a=%s; t=%s; r2=%s; rsq=%s", a, t, r2, radiusSq);
-    return (r2 <= radiusSq); // true if collides
+    return (r2 < radiusSq); // true if collides
   }
   return false;
 }
@@ -688,6 +688,12 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq,
     // we should have partner seg
     if (!seg->partner || seg->partner == seg || seg->partner->front_sub == currsub) continue;
     // check if this seg is touching our sphere
+    {
+      float distSq = DotProduct(org, seg->normal)-seg->dist;
+      distSq *= distSq;
+      if (distSq < radiusSq) continue;
+    }
+    // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
     // ok, it is touching, recurse
     if (CheckBSPVisibilitySub(org, radiusSq, seg->partner->front_sub)) {

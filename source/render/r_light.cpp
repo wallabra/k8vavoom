@@ -40,6 +40,8 @@ VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Arc
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
 VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
+static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
+
 extern VCvarF r_lights_radius;
 
 
@@ -187,7 +189,13 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       // don't add too far-away lights
       // this checked above
       //!if (bestdist/*lengthSquared(cl->ViewOrg-lorg)*/ >= r_lights_radius*r_lights_radius) return nullptr;
+      //const float rsqx = r_lights_radius+radius;
+      //if (bestdist >= rsqx*rsqx) return nullptr;
     }
+
+    int leafnum = -1;
+
+    // pvs check
     if (r_dynamic_clip && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
@@ -195,10 +203,19 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         lastDLightViewSub = sub = Level->PointInSubsector(cl->ViewOrg);
       }
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
+      leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
         //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
+        return nullptr;
+      }
+    }
+
+    // floodfill visibility check
+    if (!IsAdvancedRenderer() && r_dynamic_light_better_vis_check && radius > 0) {
+      if (leafnum < 0) leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
+      if (!CheckBSPVisibility(lorg, radius, &Level->Subsectors[leafnum])) {
+        //GCon->Logf("DYNAMIC DROP: visibility check");
         return nullptr;
       }
     }
