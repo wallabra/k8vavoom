@@ -440,11 +440,9 @@ VStream *VZipFile::OpenFileRead (const VStr &fname) {
 //
 //==========================================================================
 VStream *VZipFile::CreateLumpReaderNum (int Lump) {
-  guard(VZipFile::CreateLumpReaderNum);
   check(Lump >= 0);
   check(Lump < pakdir.files.length());
   return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
-  unguard;
 }
 
 
@@ -465,7 +463,6 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
   , wholeSize(-2)
   , currpos(0)
 {
-  guard(VZipFileReader::VZipFileReader);
   // open the file in the zip
   usezlib = true;
 
@@ -528,7 +525,6 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
   lzmastream.avail_in = 0;
   bLoading = true;
   //Error->Logf("***LOADING '%s'", *fname);
-  unguard;
 }
 
 
@@ -716,7 +712,6 @@ bool VZipFileReader::LzmaRestart () {
 //
 //==========================================================================
 bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint32 byte_before_the_zipfile) {
-  guard(VZipFileReader::CheckCurrentFileCoherencyHeader);
   vuint32 Magic, DateTime, Crc, ComprSize, UncomprSize;
   vuint16 Version, Flags, ComprMethod, FileNameSize, ExtraFieldSize;
 
@@ -780,7 +775,6 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
   *piSizeVar += FileNameSize+ExtraFieldSize;
 
   return true;
-  unguard;
 }
 
 
@@ -991,7 +985,6 @@ void VZipFileReader::cacheAllData () {
 //
 //==========================================================================
 void VZipFileReader::Seek (int InPos) {
-  guard(VZipFileReader::Seek);
   check(InPos >= 0);
   check(InPos <= (int)Info.filesize);
 
@@ -1070,7 +1063,6 @@ void VZipFileReader::Seek (int InPos) {
     }
     if (wholeBuf) { Z_Free(wholeBuf); wholeBuf = nullptr; }
   }
-  unguard;
 }
 
 

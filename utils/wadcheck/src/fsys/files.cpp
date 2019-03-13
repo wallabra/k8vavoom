@@ -78,13 +78,11 @@ static void AddPakDir (const VStr &dirname) {
 //
 //==========================================================================
 VStream *FL_OpenFileRead (const VStr &Name) {
-  guard(FL_OpenFileRead);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
     if (Strm) return Strm;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -94,11 +92,9 @@ VStream *FL_OpenFileRead (const VStr &Name) {
 //
 //==========================================================================
 VStream *FL_OpenSysFileRead (const VStr &Name) {
-  guard(FL_OpenSysFileRead);
   FILE *File = fopen(*Name, "rb");
   if (!File) return nullptr;
   return new VStreamFileReader(File, Name);
-  unguard;
 }
 
 
@@ -115,15 +111,11 @@ protected:
 
 public:
   VStreamFileWriter (FILE *InFile, const VStr &afname) : File(InFile), fname(afname) {
-    guard(VStreamFileWriter::VStreamFileReader);
     bLoading = false;
-    unguard;
   }
 
   virtual ~VStreamFileWriter () override {
-    //guard(VStreamFileWriter::~VStreamFileWriter);
     if (File) Close();
-    //unguard;
   }
 
   virtual const VStr &GetName () const override { return fname; }
@@ -183,13 +175,11 @@ public:
 //
 //==========================================================================
 VStream *FL_OpenFileWrite (const VStr &Name) {
-  guard(FL_OpenFileWrite);
   VStr tmpName = Name;
   //FL_CreatePath(tmpName.ExtractFilePath());
   FILE *File = fopen(*tmpName, "wb");
   if (!File) return nullptr;
   return new VStreamFileWriter(File, tmpName);
-  unguard;
 }
 
 
@@ -213,10 +203,8 @@ VStreamFileReader::VStreamFileReader(FILE *InFile, const VStr &afname)
   //, Error(InError)
   , fname(afname)
 {
-  guard(VStreamFileReader::VStreamFileReader);
   fseek(File, 0, SEEK_SET);
   bLoading = true;
-  unguard;
 }
 
 
@@ -397,12 +385,10 @@ int W_AddFile (const VStr &FileName) {
 //
 //==========================================================================
 int W_LumpLength (int lump) {
-  guard(W_LumpLength);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_LumpLength: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpLength(lumpindex);
-  unguard;
 }
 
 
@@ -412,12 +398,10 @@ int W_LumpLength (int lump) {
 //
 //==========================================================================
 VName W_LumpName (int lump) {
-  guard(W_LumpName);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return NAME_None;
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpName(lumpindex);
-  unguard;
 }
 
 
@@ -427,13 +411,11 @@ VName W_LumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullLumpName (int lump) {
-  guard(W_FullLumpName);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
   return w->GetPrefix()+":"+*(w->LumpFileName(lumpindex));
-  unguard;
 }
 
 
@@ -443,11 +425,9 @@ VStr W_FullLumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameForLump (int lump) {
-  guard(W_FullPakNameForLump);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   return w->GetPrefix();
-  unguard;
 }
 
 
@@ -457,11 +437,9 @@ VStr W_FullPakNameForLump (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameByFile (int fidx) {
-  guard(W_FullPakNameByFile);
   if (fidx < 0 || fidx >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = SearchPaths[fidx];
   return w->GetPrefix();
-  unguard;
 }
 
 
@@ -483,11 +461,9 @@ int W_LumpFile (int lump) {
 //
 //==========================================================================
 void W_ReadFromLump (int lump, void *dest, int pos, int size) {
-  guard(W_ReadFromLump);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_ReadFromLump: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   w->ReadFromLump(LUMP_INDEX(lump), dest, pos, size);
-  unguard;
 }
 
 
@@ -497,10 +473,8 @@ void W_ReadFromLump (int lump, void *dest, int pos, int size) {
 //
 //==========================================================================
 VStream *W_CreateLumpReaderNum (int lump) {
-  guard(W_CreateLumpReaderNum);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_CreateLumpReaderNum: %i >= num_wad_files", FILE_INDEX(lump));
   return GET_LUMP_FILE(lump)->CreateLumpReaderNum(LUMP_INDEX(lump));
-  unguard;
 }
 
 
@@ -522,7 +496,6 @@ int W_StartIterationFromLumpFile (int File) {
 //
 //==========================================================================
 int W_IterateNS (int Prev, EWadNamespace NS) {
-  guard(W_IterateNS);
   if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
@@ -532,7 +505,6 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
-  unguard;
 }
 
 
@@ -542,7 +514,6 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
-  guard(W_IterateFile);
   //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, SearchPaths.length(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < SearchPaths.length(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);
@@ -550,7 +521,6 @@ int W_IterateFile (int Prev, const VStr &Name) {
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
-  unguard;
 }
 
 

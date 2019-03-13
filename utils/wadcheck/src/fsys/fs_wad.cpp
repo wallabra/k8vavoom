@@ -87,7 +87,6 @@ VWadFile::~VWadFile () {
 //
 //==========================================================================
 void VWadFile::Open (const VStr &FileName, VStream *InStream) {
-  guard(VWadFile::Open);
   wadinfo_t header;
   //lumpinfo_t *lump_p;
   int length;
@@ -168,7 +167,6 @@ void VWadFile::Open (const VStr &FileName, VStream *InStream) {
   pakdir.buildNameMaps();
 
   GLog.WriteLine("added '%s' (%d lumps)", *PakFileName, pakdir.lumpmap.length());
-  unguard;
 }
 
 
@@ -178,7 +176,6 @@ void VWadFile::Open (const VStr &FileName, VStream *InStream) {
 //
 //==========================================================================
 void VWadFile::OpenSingleLump (const VStr &FileName) {
-  guard(VWadFile::OpenSingleLump);
   // open the file and add to directory
   Stream = FL_OpenSysFileRead(FileName);
   if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
@@ -209,7 +206,6 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
   LumpInfo->Size = Stream->TotalSize();
   LumpInfo->Namespace = WADNS_Global;
   */
-  unguard;
 }
 
 
@@ -219,7 +215,6 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
 //
 //==========================================================================
 void VWadFile::Close () {
-  guard(VWadFile::Close);
   /*
   if (LumpInfo) {
     delete[] LumpInfo;
@@ -239,7 +234,6 @@ void VWadFile::Close () {
     mythread_mutex_destroy(&rdlock);
     lockInited = false;
   }
-  unguard;
 }
 
 
@@ -249,7 +243,6 @@ void VWadFile::Close () {
 //
 //==========================================================================
 void VWadFile::InitNamespaces () {
-  guard(VWadFile::InitNamespaces);
   InitNamespace(WADNS_Sprites, NAME_s_start, NAME_s_end, NAME_ss_start, NAME_ss_end);
   InitNamespace(WADNS_Flats, NAME_f_start, NAME_f_end, NAME_ff_start, NAME_ff_end);
   InitNamespace(WADNS_ColourMaps, NAME_c_start, NAME_c_end, NAME_cc_start, NAME_cc_end);
@@ -257,7 +250,6 @@ void VWadFile::InitNamespaces () {
   InitNamespace(WADNS_NewTextures, NAME_tx_start, NAME_tx_end);
   InitNamespace(WADNS_Voices, NAME_v_start, NAME_v_end, NAME_vv_start, NAME_vv_end);
   InitNamespace(WADNS_HiResTextures, NAME_hi_start, NAME_hi_end);
-  unguard;
 }
 
 
@@ -267,7 +259,6 @@ void VWadFile::InitNamespaces () {
 //
 //==========================================================================
 void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart, VName AltEnd) {
-  guard(VWadFile::InitNamespace);
   bool InNS = false;
   for (int i = 0; i < pakdir.files.length(); ++i) {
     VPakFileInfo &fi = pakdir.files[i];
@@ -287,7 +278,6 @@ void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName Al
       }
     }
   }
-  unguard;
 }
 
 
@@ -297,7 +287,6 @@ void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName Al
 //
 //==========================================================================
 VStream *VWadFile::CreateLumpReaderNum (int lump) {
-  guard(VWadFile::CreateLumpReaderNum);
   check((vuint32)lump < (vuint32)pakdir.files.length());
   //lumpinfo_t &l = LumpInfo[lump];
   const VPakFileInfo &fi = pakdir.files[lump];
@@ -323,7 +312,6 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   //GCon->Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
   //Z_Free(ptr);
   return S;
-  unguard;
 }
 
 
@@ -375,7 +363,6 @@ int VWadFile::IterateNS (int Start, EWadNamespace NS) {
 //
 //==========================================================================
 void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
-  guard(VWadFile::ReadFromLump);
   check(size >= 0);
   check(pos >= 0);
   if ((vuint32)lump >= (vuint32)pakdir.files.length()) Sys_Error("VWadFile::ReadFromLump: %i >= numlumps", lump);
@@ -391,5 +378,4 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
     Stream->Serialise(dest, size);
     check(!Stream->IsError());
   }
-  unguard;
 }
