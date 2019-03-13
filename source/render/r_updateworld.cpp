@@ -109,7 +109,7 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   }
   FixBBoxZ(bbox);
 
-  UpdateSubRegion(surf_sub->regions/*, ClipSegs:true*/);
+  UpdateSubRegion(surf_sub, surf_sub->regions/*, ClipSegs:true*/);
 
   ViewClip.ClipAddSubsectorSegs(surf_sub);
 }

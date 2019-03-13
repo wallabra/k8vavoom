@@ -659,10 +659,10 @@ void VRenderLevelShared::RenderSubsector (int num) {
     sub->updateWorldFrame = updateWorldFrame;
     if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == r_visframecount) {
       //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
-      auto oldrss = r_surf_sub;
-      r_surf_sub = sub;
-      UpdateSubRegion(sub->regions/*, ClipSegs:true*/);
-      r_surf_sub = oldrss;
+      //auto oldrss = r_surf_sub;
+      //r_surf_sub = sub;
+      UpdateSubRegion(sub, sub->regions/*, ClipSegs:true*/);
+      //r_surf_sub = oldrss;
     }
   }
 

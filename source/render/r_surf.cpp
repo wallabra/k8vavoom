@@ -41,7 +41,6 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-subsector_t *r_surf_sub;
 static sec_plane_t *r_floor;
 static sec_plane_t *r_ceiling;
 
@@ -403,7 +402,7 @@ int VRenderLevelShared::CountSegParts (seg_t *seg) {
 //  VRenderLevelShared::CreateSegParts
 //
 //==========================================================================
-void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
+void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg) {
   TVec wv[4];
   segpart_t *sp;
 
@@ -776,7 +775,7 @@ void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
 //  VRenderLevelShared::UpdateRowOffset
 //
 //==========================================================================
-void VRenderLevelShared::UpdateRowOffset (segpart_t *sp, float RowOffset) {
+void VRenderLevelShared::UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset) {
   sp->texinfo.toffs += (RowOffset-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
   sp->RowOffset = RowOffset;
   FlushSurfCaches(sp->surfs);
@@ -789,7 +788,7 @@ void VRenderLevelShared::UpdateRowOffset (segpart_t *sp, float RowOffset) {
 //  VRenderLevelShared::UpdateTextureOffset
 //
 //==========================================================================
-void VRenderLevelShared::UpdateTextureOffset (segpart_t *sp, float TextureOffset) {
+void VRenderLevelShared::UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset) {
   sp->texinfo.soffs += (TextureOffset-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
   sp->TextureOffset = TextureOffset;
   FlushSurfCaches(sp->surfs);
@@ -802,7 +801,7 @@ void VRenderLevelShared::UpdateTextureOffset (segpart_t *sp, float TextureOffset
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
-void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
+void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
   segpart_t *sp;
   TVec wv[4];
@@ -884,14 +883,14 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
     } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
       sp->texinfo.Tex = MTex;
       sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-      UpdateRowOffset(sp, sidedef->MidRowOffset);
+      UpdateRowOffset(r_surf_sub, sp, sidedef->MidRowOffset);
     } else {
       sp->texinfo.Tex = MTex;
       sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
     }
 
     if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-      UpdateTextureOffset(sp, sidedef->MidTextureOffset);
+      UpdateTextureOffset(r_surf_sub, sp, sidedef->MidTextureOffset);
     }
 
     sp = dseg->topsky;
@@ -989,14 +988,14 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
     } else if (FASI(sp->RowOffset) != FASI(sidedef->TopRowOffset)) {
       sp->texinfo.Tex = TTex;
       sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
-      UpdateRowOffset(sp, sidedef->TopRowOffset);
+      UpdateRowOffset(r_surf_sub, sp, sidedef->TopRowOffset);
     } else {
       sp->texinfo.Tex = TTex;
       sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
     }
 
     if (FASI(sp->TextureOffset) != FASI(sidedef->TopTextureOffset)) {
-      UpdateTextureOffset(sp, sidedef->TopTextureOffset);
+      UpdateTextureOffset(r_surf_sub, sp, sidedef->TopTextureOffset);
     }
 
     // sky above top
@@ -1086,11 +1085,11 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
       sp->backBotDist = back_floor->dist;
       sp->RowOffset = sidedef->BotRowOffset;
     } else if (FASI(sp->RowOffset) != FASI(sidedef->BotRowOffset)) {
-      UpdateRowOffset(sp, sidedef->BotRowOffset);
+      UpdateRowOffset(r_surf_sub, sp, sidedef->BotRowOffset);
     }
 
     if (FASI(sp->TextureOffset) != FASI(sidedef->BotTextureOffset)) {
-      UpdateTextureOffset(sp, sidedef->BotTextureOffset);
+      UpdateTextureOffset(r_surf_sub, sp, sidedef->BotTextureOffset);
     }
 
     // masked MidTexture
@@ -1212,7 +1211,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
     }
 
     if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-      UpdateTextureOffset(sp, sidedef->MidTextureOffset);
+      UpdateTextureOffset(r_surf_sub, sp, sidedef->MidTextureOffset);
     }
 
     sec_region_t *reg;
@@ -1264,11 +1263,11 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/) {
         spp->backBotDist = extrabot->dist;
         spp->RowOffset = sidedef->MidRowOffset;
       } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
-        UpdateRowOffset(spp, sidedef->MidRowOffset);
+        UpdateRowOffset(r_surf_sub, spp, sidedef->MidRowOffset);
       }
 
       if (FASI(spp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-        UpdateTextureOffset(spp, sidedef->MidTextureOffset);
+        UpdateTextureOffset(r_surf_sub, spp, sidedef->MidTextureOffset);
       }
       spp = spp->next;
     }
@@ -1360,7 +1359,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     //if (!(i&63)) CL_KeepaliveMessage(); // this is done in progressbar code
     sub = &Level->Subsectors[i];
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
-    r_surf_sub = sub;
+    subsector_t *r_surf_sub = sub;
     for (reg = sub->sector->botregion; reg; reg = reg->next) {
       r_floor = reg->floor;
       r_ceiling = reg->ceiling;
@@ -1380,14 +1379,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
       sreg->lines = pds;
       pds += sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(&sreg->lines[j], &Level->Segs[sub->firstline+j]);
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(r_surf_sub, &sreg->lines[j], &Level->Segs[sub->firstline+j]);
       if (sub->poly) {
         // polyobj
         int j = sub->numlines;
         int polyCount = sub->poly->numsegs;
         seg_t **polySeg = sub->poly->segs;
         while (polyCount--) {
-          CreateSegParts(&sreg->lines[j], *polySeg);
+          CreateSegParts(r_surf_sub, &sreg->lines[j], *polySeg);
           ++polySeg;
           ++j;
         }
@@ -1410,7 +1409,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //  VRenderLevelShared::UpdateSubRegion
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/) {
+void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region/*, bool ClipSegs*/) {
   r_floor = region->floorplane;
   r_ceiling = region->ceilplane;
   if (r_surf_sub->sector->fakefloors) {
@@ -1421,7 +1420,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/
   int count = r_surf_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    UpdateDrawSeg(ds/*, ClipSegs*/);
+    UpdateDrawSeg(r_surf_sub, ds/*, ClipSegs*/);
     ++ds;
   }
 
@@ -1433,7 +1432,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/
     int polyCount = r_surf_sub->poly->numsegs;
     seg_t **polySeg = r_surf_sub->poly->segs;
     while (polyCount--) {
-      UpdateDrawSeg((*polySeg)->drawsegs/*, ClipSegs*/);
+      UpdateDrawSeg(r_surf_sub, (*polySeg)->drawsegs/*, ClipSegs*/);
       ++polySeg;
     }
   }
@@ -1442,7 +1441,7 @@ void VRenderLevelShared::UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/
     if (w_update_clip_region && !w_update_in_renderer /*ClipSegs*/) {
       if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub)) return;
     }
-    UpdateSubRegion(region->next/*, ClipSegs*/);
+    UpdateSubRegion(r_surf_sub, region->next/*, ClipSegs*/);
   }
 }
 

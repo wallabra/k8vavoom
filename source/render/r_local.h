@@ -417,7 +417,6 @@ protected:
 
   // renderer info; put here to avoid passing it around
   // k8: it was a bunch of globals; i will eventually got rid of this
-  subsector_t *r_surf_sub;
   bool MirrorClipSegs;
 
 protected:
@@ -429,10 +428,10 @@ protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
 
-  void UpdateRowOffset (segpart_t *sp, float RowOffset);
-  void UpdateTextureOffset (segpart_t *sp, float TextureOffset);
-  void UpdateDrawSeg (drawseg_t *dseg/*, bool ShouldClip*/);
-  void UpdateSubRegion (subregion_t *region/*, bool ClipSegs*/);
+  void UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset);
+  void UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset);
+  void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg/*, bool ShouldClip*/);
+  void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region/*, bool ClipSegs*/);
   void UpdateSubsector (int num, float *bbox);
   void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
@@ -518,7 +517,7 @@ protected:
   void FreeWSurfs (surface_t*);
   surface_t *CreateWSurfs (TVec*, texinfo_t*, seg_t*, subsector_t*);
   int CountSegParts (seg_t*);
-  void CreateSegParts (drawseg_t*, seg_t*);
+  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t*, seg_t*);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);
