@@ -397,7 +397,6 @@ void VObject::StaticExit () {
 //
 //==========================================================================
 VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
-  guard(VObject::StaticSpawnObject);
   check(AClass);
 
   VObject *Obj = nullptr;
@@ -448,7 +447,6 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
   // we're done
   return Obj;
-  unguardf(("%s", AClass ? AClass->GetName() : "nullptr"));
 }
 
 
@@ -458,7 +456,6 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 //
 //==========================================================================
 void VObject::Register () {
-  guard(VObject::Register);
   UniqueId = ++gLastUsedUniqueId;
   if (gLastUsedUniqueId == 0) gLastUsedUniqueId = 1;
   if (gObjAvailable.length()) {
@@ -494,7 +491,6 @@ void VObject::Register () {
   if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 #endif
   ++gcLastStats.alive;
-  unguard;
 }
 
 
@@ -559,9 +555,7 @@ void VObject::Destroy () {
 //
 //==========================================================================
 void VObject::ClearReferences () {
-  guard(VObject::ClearReferences);
   GetClass()->CleanObject(this);
-  unguard;
 }
 
 
@@ -575,8 +569,6 @@ void VObject::CollectGarbage (
 bool destroyDelayed
 #endif
 ) {
-  guard(VObject::CollectGarbage);
-
   if (GInGarbageCollection) return; // recursive calls are not allowed
   //check(GObjInitialised);
 
@@ -899,7 +891,6 @@ bool destroyDelayed
 #endif
 
   GInGarbageCollection = false;
-  unguard;
 }
 
 

@@ -184,7 +184,6 @@ static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...)
 //
 //==========================================================================
 static bool GetLine () {
-  guard(GetLine);
   do {
     ++dehCurrLine;
 
@@ -246,7 +245,6 @@ static bool GetLine () {
 
   strEOL = false;
   return true;
-  unguard;
 }
 
 
@@ -273,7 +271,6 @@ static VStr GetToken () {
 //
 //==========================================================================
 static bool ParseParam () {
-  guard(ParseParam);
   char *val;
 
   if (!GetLine()) return false;
@@ -291,7 +288,6 @@ static bool ParseParam () {
   } while (val >= String && *(vuint8 *)val <= ' ');
 
   return true;
-  unguard;
 }
 
 
@@ -301,11 +297,9 @@ static bool ParseParam () {
 //
 //==========================================================================
 static int GetClassFieldInt (VClass *Class, const char *FieldName) {
-  guard(GetClassFieldInt);
   VField *F = Class->FindFieldChecked(FieldName);
   int *Ptr = (int *)(Class->Defaults+F->Ofs);
   return *Ptr;
-  unguard;
 }
 
 
@@ -315,11 +309,9 @@ static int GetClassFieldInt (VClass *Class, const char *FieldName) {
 //
 //==========================================================================
 static VClass *GetClassFieldClass (VClass *Class, const char *FieldName) {
-  guard(GetClassFieldClass);
   VField *F = Class->FindFieldChecked(FieldName);
   VClass **Ptr = (VClass **)(Class->Defaults+F->Ofs);
   return *Ptr;
-  unguard;
 }
 
 
@@ -329,11 +321,9 @@ static VClass *GetClassFieldClass (VClass *Class, const char *FieldName) {
 //
 //==========================================================================
 static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, int Idx=0) {
-  guard(SetClassFieldInt);
   VField *F = Class->FindFieldChecked(FieldName);
   vint32 *Ptr = (vint32 *)(Class->Defaults+F->Ofs);
   Ptr[Idx] = Value;
-  unguard;
 }
 
 
@@ -343,11 +333,9 @@ static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, i
 //
 //==========================================================================
 static void SetClassFieldByte (VClass *Class, const char *FieldName, vuint8 Value) {
-  guard(SetClassFieldByte);
   VField *F = Class->FindFieldChecked(FieldName);
   vuint8 *Ptr = Class->Defaults+F->Ofs;
   *Ptr = Value;
-  unguard;
 }
 
 
@@ -357,11 +345,9 @@ static void SetClassFieldByte (VClass *Class, const char *FieldName, vuint8 Valu
 //
 //==========================================================================
 static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
-  guard(SetClassFieldFloat);
   VField *F = Class->FindFieldChecked(FieldName);
   float *Ptr = (float *)(Class->Defaults+F->Ofs);
   *Ptr = Value;
-  unguard;
 }
 
 
@@ -371,11 +357,9 @@ static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Valu
 //
 //==========================================================================
 static void SetClassFieldName (VClass *Class, const char *FieldName, VName Value) {
-  guard(SetClassFieldName);
   VField *F = Class->FindFieldChecked(FieldName);
   VName *Ptr = (VName *)(Class->Defaults+F->Ofs);
   *Ptr = Value;
-  unguard;
 }
 
 
@@ -385,11 +369,9 @@ static void SetClassFieldName (VClass *Class, const char *FieldName, VName Value
 //
 //==========================================================================
 static void SetClassFieldClass (VClass *Class, const char *FieldName, VClass *Value) {
-  guard(SetClassFieldClass);
   VField *F = Class->FindFieldChecked(FieldName);
   VClass **Ptr = (VClass **)(Class->Defaults+F->Ofs);
   *Ptr = Value;
-  unguard;
 }
 
 
@@ -399,7 +381,6 @@ static void SetClassFieldClass (VClass *Class, const char *FieldName, VClass *Va
 //
 //==========================================================================
 static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) {
-  guard(SetClassFieldBool);
   VField *F = Class->FindFieldChecked(FieldName);
   vuint32 *Ptr = (vuint32 *)(Class->Defaults+F->Ofs);
   if (Value) {
@@ -407,7 +388,6 @@ static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) 
   } else {
     *Ptr &= ~F->Type.BitMask;
   }
-  unguard;
 }
 
 
@@ -417,7 +397,6 @@ static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) 
 //
 //==========================================================================
 static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
-  guard(ParseFlags);
   if (FlagName.Length() == 0) return;
   if (FlagName[0] >= '0' && FlagName[0] <= '9') {
     // clear flags that were not used by Doom engine as well as SLIDE flag which desn't exist anymore
@@ -433,7 +412,6 @@ static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
     }
   }
   Warning("Unknown flag '%s'", *FlagName);
-  unguard;
 }
 
 
@@ -443,7 +421,6 @@ static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
 //
 //==========================================================================
 static int ParseRenderStyle () {
-  guard(ParseRenderStyle);
   int RenderStyle = STYLE_Normal;
        if (!VStr::ICmp(ValueString, "STYLE_None")) RenderStyle = STYLE_None;
   else if (!VStr::ICmp(ValueString, "STYLE_Normal")) RenderStyle = STYLE_Normal;
@@ -454,7 +431,6 @@ static int ParseRenderStyle () {
   else if (!VStr::ICmp(ValueString, "STYLE_Add")) RenderStyle = STYLE_Add;
   else Warning("Bad render style '%s'", ValueString);
   return RenderStyle;
-  unguard;
 }
 
 
@@ -464,13 +440,11 @@ static int ParseRenderStyle () {
 //
 //==========================================================================
 static void DoThingState (VClass *Ent, const char *StateLabel) {
-  guard(DoThingState);
   if (value < 0 || value >= States.Num()) {
     Warning("Bad state '%d' for thing '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
   } else {
     Ent->SetStateLabel(StateLabel, States[value]);
   }
-  unguard;
 }
 
 
@@ -493,7 +467,6 @@ static void DoThingSound (VClass *Ent, const char *FieldName) {
 //
 //==========================================================================
 static void ReadThing (int num) {
-  guard(ReadThing);
   if (num < 1 || num > EntClasses.Num()) {
     Warning("Invalid thing num %d", num);
     while (ParseParam()) {}
@@ -699,7 +672,6 @@ static void ReadThing (int num) {
     }
     ((VEntity *)Ent->Defaults)->Height = VanillaThingHeights[num-1];
   }
-  unguard;
 }
 
 
@@ -709,7 +681,6 @@ static void ReadThing (int num) {
 //
 //==========================================================================
 static void ReadSound (int) {
-  guard(ReadSound);
   while (ParseParam()) {
          if (!VStr::ICmp(String, "Offset"));     // lump name offset - can't handle
     else if (!VStr::ICmp(String, "Zero/One"));   // singularity - removed
@@ -722,7 +693,6 @@ static void ReadSound (int) {
     else if (!VStr::ICmp(String, "Neg. One 2")); // link volume - removed
     else Warning("Invalid sound param '%s'", String);
   }
-  unguard;
 }
 
 
@@ -732,7 +702,6 @@ static void ReadSound (int) {
 //
 //==========================================================================
 static void ReadState (int num) {
-  guard(ReadState);
   // check index
   if (num >= States.Num() || num < 0) {
     Warning("Invalid state num %d", num);
@@ -778,7 +747,6 @@ static void ReadState (int num) {
       Warning("Invalid state param '%s'", String);
     }
   }
-  unguard;
 }
 
 
@@ -788,12 +756,10 @@ static void ReadState (int num) {
 //
 //==========================================================================
 static void ReadSpriteName (int) {
-  guard(ReadSpriteName);
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Offset")) {} // can't handle
     else Warning("Invalid sprite name param '%s'", String);
   }
-  unguard;
 }
 
 
@@ -803,7 +769,6 @@ static void ReadSpriteName (int) {
 //
 //==========================================================================
 static void ReadAmmo (int num) {
-  guard(ReadAmmo);
   // check index
   if (num >= AmmoClasses.Num() || num < 0) {
     Warning("Invalid ammo num %d", num);
@@ -840,7 +805,6 @@ static void ReadAmmo (int num) {
     if (GetClassFieldClass(C, "AmmoType1") == Ammo) SetClassFieldInt(C, "AmmoGive1", GetClassFieldInt(Ammo, "Amount")*2);
     if (GetClassFieldClass(C, "AmmoType2") == Ammo) SetClassFieldInt(C, "AmmoGive2", GetClassFieldInt(Ammo, "Amount")*2);
   }
-  unguard;
 }
 
 
@@ -850,13 +814,11 @@ static void ReadAmmo (int num) {
 //
 //==========================================================================
 static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
-  guard(DoWeaponState);
   if (value < 0 || value >= States.Num()) {
     Warning("Invalid weapon state %d for weapon '%s'", value, (Weapon ? Weapon->GetName() : "<undefined>"));
   } else {
     Weapon->SetStateLabel(StateLabel, States[value]);
   }
-  unguard;
 }
 
 
@@ -866,7 +828,6 @@ static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
 //
 //==========================================================================
 static void ReadWeapon (int num) {
-  guard(ReadWeapon);
   // check index
   if (num < 0 || num >= WeaponClasses.Num()) {
     Warning("Invalid weapon num %d", num);
@@ -902,7 +863,6 @@ static void ReadWeapon (int num) {
       Warning("Invalid weapon param '%s' for weapon '%s'", String, (Weapon ? Weapon->GetName() : "<undefined>"));
     }
   }
-  unguard;
 }
 
 
@@ -912,7 +872,6 @@ static void ReadWeapon (int num) {
 //
 //==========================================================================
 static void ReadPointer (int num) {
-  guard(ReadPointer);
   if (num < 0 || num >= CodePtrStates.Num()) {
     Warning("Invalid pointer");
     while (ParseParam()) {}
@@ -930,7 +889,6 @@ static void ReadPointer (int num) {
       Warning("Invalid pointer param '%s'", String);
     }
   }
-  unguard;
 }
 
 
@@ -940,7 +898,6 @@ static void ReadPointer (int num) {
 //
 //==========================================================================
 static void ReadCodePtr (int) {
-  guard(ReadCodePtr);
   while (ParseParam()) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
       int Index = atoi(String+5);
@@ -965,7 +922,6 @@ static void ReadCodePtr (int) {
       Warning("Invalid code pointer param '%s'", String);
     }
   }
-  unguard;
 }
 
 
@@ -975,10 +931,8 @@ static void ReadCodePtr (int) {
 //
 //==========================================================================
 static void ReadCheats (int) {
-  guard(ReadCheats);
   // old cheat handling is removed
   while (ParseParam()) {}
-  unguard;
 }
 
 
@@ -988,7 +942,6 @@ static void ReadCheats (int) {
 //
 //==========================================================================
 static void DoPowerupColour (const char *ClassName) {
-  guard(DoPowerupColour);
   VClass *Power = VClass::FindClass(ClassName);
   if (!Power) {
     Warning("Can't find powerup class '%s'", ClassName);
@@ -1006,7 +959,6 @@ static void DoPowerupColour (const char *ClassName) {
   b = MID(0, b, 255);
   a = MID(0.0f, a, 1.0f);
   SetClassFieldInt(Power, "BlendColour", (r<<16)|(g<<8)|b|int(a*255)<<24);
-  unguard;
 }
 
 
@@ -1016,7 +968,6 @@ static void DoPowerupColour (const char *ClassName) {
 //
 //==========================================================================
 static void ReadMisc (int) {
-  guard(ReadMisc);
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Initial Health")) {
       SetClassFieldInt(GameInfoClass, "INITIAL_HEALTH", value);
@@ -1083,7 +1034,6 @@ static void ReadMisc (int) {
   // 0xdd means "enable infighting"
        if (Infighting == 0xdd) Infighting = 1;
   else if (Infighting != -1) Infighting = 0;
-  unguard;
 }
 
 
@@ -1093,7 +1043,6 @@ static void ReadMisc (int) {
 //
 //==========================================================================
 static void ReadPars (int) {
-  guard(ReadPars);
   while (GetLine()) {
     if (strchr(String, '=')) {
       Warning("Unknown key in Pars section (%s)", String);
@@ -1128,7 +1077,6 @@ static void ReadPars (int) {
       P_SetParTime(MapName, nums[2]);
     }
   }
-  unguard;
 }
 
 
@@ -1138,7 +1086,6 @@ static void ReadPars (int) {
 //
 //==========================================================================
 static void FindString (const char *oldStr, const char *newStr) {
-  guard(FindString);
   // sounds
   bool SoundFound = false;
   for (int i = 0; i < SfxNames.Num(); ++i) {
@@ -1179,7 +1126,6 @@ static void FindString (const char *oldStr, const char *newStr) {
   }
 
   Warning("Not found old \"%s\" new \"%s\"", oldStr, newStr);
-  unguard;
 }
 
 
@@ -1189,7 +1135,6 @@ static void FindString (const char *oldStr, const char *newStr) {
 //
 //==========================================================================
 static void ReadText (int oldSize) {
-  guard(ReadText);
   char *lenPtr;
   int newSize;
   char *oldStr;
@@ -1227,7 +1172,6 @@ static void ReadText (int oldSize) {
   delete[] newStr;
 
   GetLine();
-  unguard;
 }
 
 
@@ -1237,7 +1181,6 @@ static void ReadText (int oldSize) {
 //
 //==========================================================================
 static VStr ReplaceSpecialChars (VStr &In) {
-  guard(ReplaceSpecialChars);
   VStr Ret;
   const char *pStr = *In;
   while (*pStr) {
@@ -1296,7 +1239,6 @@ static VStr ReplaceSpecialChars (VStr &In) {
     }
   }
   return Ret;
-  unguard;
 }
 
 
@@ -1306,7 +1248,6 @@ static VStr ReplaceSpecialChars (VStr &In) {
 //
 //==========================================================================
 static void ReadStrings (int) {
-  guard(ReadStrings);
   while (ParseParam()) {
     VName Id = *VStr(String).ToLower();
     VStr Val;
@@ -1332,7 +1273,6 @@ static void ReadStrings (int) {
     Val = ReplaceSpecialChars(Val);
     GLanguage.ReplaceString(Id, Val);
   }
-  unguard;
 }
 
 
@@ -1342,7 +1282,6 @@ static void ReadStrings (int) {
 //
 //==========================================================================
 static void LoadDehackedFile (VStream *Strm) {
-  guard(LoadDehackedFile);
   dehCurrLine = 0;
   Patch = new char[Strm->TotalSize()+1];
   Strm->Serialise(Patch, Strm->TotalSize());
@@ -1425,7 +1364,6 @@ static void LoadDehackedFile (VStream *Strm) {
   }
   delete[] Patch;
   Patch = nullptr;
-  unguard;
 }
 
 
@@ -1435,7 +1373,6 @@ static void LoadDehackedFile (VStream *Strm) {
 //
 //==========================================================================
 void ProcessDehackedFiles () {
-  guard(ProcessDehackedFiles);
   int p = GArgs.CheckParm("-deh");
   int LumpNum = W_CheckNumForName("dehacked");
   if (!p && LumpNum < 0) return;
@@ -1645,5 +1582,4 @@ void ProcessDehackedFiles () {
   SpriteNames.Clear();
   delete EngStrings;
   EngStrings = nullptr;
-  unguard;
 }

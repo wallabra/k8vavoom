@@ -195,7 +195,6 @@ void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
-  guard(VDecorateInvocation::DoResolve);
   //if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
   if (ec.SelfClass) {
     //FIXME: sanitize this!
@@ -233,7 +232,6 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   }
   delete this;
   return nullptr;
-  unguard;
 }
 
 
@@ -503,7 +501,6 @@ void VDecorateSingleName::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
-  guard(VDecorateSingleName::DoResolve);
   VName CheckName = va("decorate_%s", *Name.ToLower());
   if (ec.SelfClass) {
     // prefixed constant
@@ -553,7 +550,6 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
-  unguard;
 }
 
 

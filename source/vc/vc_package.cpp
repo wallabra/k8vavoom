@@ -390,7 +390,6 @@ void VPackage::CompilerShutdown () {
 //
 //==========================================================================
 void VPackage::Serialise (VStream &Strm) {
-  guard(VPackage::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -410,7 +409,6 @@ void VPackage::Serialise (VStream &Strm) {
       Strm << ename;
     }
   }
-  unguard;
 }
 
 
@@ -433,7 +431,6 @@ vuint32 VPackage::StringHashFunc (const char *str) {
 //
 //==========================================================================
 int VPackage::FindString (const char *str) {
-  guard(VPackage::FindString);
   if (!str || !str[0]) return 0;
 
   vuint32 hash = StringHashFunc(str);
@@ -471,7 +468,6 @@ int VPackage::FindString (const char *str) {
   SI.Next = StringLookup[hash];
   StringLookup[hash] = StringInfo.length()-1;
   return SI.Offs;
-  unguard;
 }
 
 
@@ -532,11 +528,9 @@ bool VPackage::AddKnownEnum (VName EnumName) {
 //
 //==========================================================================
 VConstant *VPackage::FindConstant (VName Name, VName EnumName) {
-  guard(VPackage::FindConstant);
   VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, EnumName);
   if (m) return (VConstant *)m;
   return nullptr;
-  unguard;
 }
 
 
@@ -546,14 +540,12 @@ VConstant *VPackage::FindConstant (VName Name, VName EnumName) {
 //
 //==========================================================================
 VClass *VPackage::FindDecorateImportClass (VName AName) const {
-  guard(VPackage::FindDecorateImportClass);
   for (int i = 0; i < ParsedDecorateImportClasses.Num(); ++i) {
     if (ParsedDecorateImportClasses[i]->Name == AName) {
       return ParsedDecorateImportClasses[i];
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -563,8 +555,6 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 //
 //==========================================================================
 void VPackage::Emit () {
-  guard(VPackage::Emit);
-
   dprintf("Importing packages\n");
   for (int i = 0; i < PackagesToLoad.Num(); ++i) {
     dprintf("  importing package '%s'...\n", *PackagesToLoad[i].Name);
@@ -616,8 +606,6 @@ void VPackage::Emit () {
   }
 
   if (vcErrorCount) BailOut();
-
-  unguard;
 }
 
 
@@ -628,7 +616,6 @@ void VPackage::Emit () {
 //
 //==========================================================================
 void VPackage::WriteObject (const VStr &name) {
-  guard(VPackage::WriteObject);
   FILE *f;
   dprograms_t progs;
 
@@ -743,7 +730,6 @@ void VPackage::WriteObject (const VStr &name) {
 #endif
 
   fclose(f);
-  unguard;
 }
 #endif // IN_VCC
 
@@ -756,8 +742,6 @@ void VPackage::WriteObject (const VStr &name) {
 //
 //==========================================================================
 void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation l) {
-  guard(VPackage::LoadSourceObject);
-
   if (!Strm) return;
 
   VLexer Lex;
@@ -803,8 +787,6 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
   }
 # endif
 #endif
-
-  unguard;
 }
 
 
@@ -817,8 +799,6 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
 //
 //==========================================================================
 void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l) {
-  guard(VPackage::LoadBinaryObject);
-
   if (!Strm) return;
 
   VProgsReader *Reader = new VProgsReader(Strm);
@@ -977,8 +957,6 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   //k8: fuck you, shitplusplus: no finally
   //this->Reader = nullptr;
   delete Reader;
-
-  unguard;
 }
 #endif
 
@@ -1000,8 +978,6 @@ static const char *pkgImportFiles[] = {
 
 
 void VPackage::LoadObject (TLocation l) {
-  guard(VPackage::LoadObject);
-
 #if defined(IN_VCC)
   dprintf("Loading package %s\n", *Name);
 
@@ -1074,8 +1050,6 @@ void VPackage::LoadObject (TLocation l) {
   //LoadBinaryObject(Strm, mainVC, l);
 
 #endif
-
-  unguard;
 }
 
 

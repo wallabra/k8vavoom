@@ -97,7 +97,6 @@ void VField::CompilerShutdown () {
 //
 //==========================================================================
 void VField::Serialise (VStream &Strm) {
-  guard(VField::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -106,7 +105,6 @@ void VField::Serialise (VStream &Strm) {
     << Func
     << STRM_INDEX(Flags)
     << ReplCond;
-  unguard;
 }
 
 
@@ -151,7 +149,6 @@ bool VField::Define () {
 //
 //==========================================================================
 void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &Type) {
-  guardSlow(VField::CopyFieldValue);
   if (Src == Dst) return; // nothing to do
   switch (Type.Type) {
     case TYPE_Int: *(vint32 *)Dst = *(const vint32 *)Src; break;
@@ -203,7 +200,6 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
       }
       break;
   }
-  unguardSlow;
 }
 
 
@@ -289,7 +285,6 @@ void VField::SkipSerialisedValue (VStream &Strm) {
 //
 //==========================================================================
 void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type) {
-  guard(VField::SerialiseFieldValue);
   vuint8 tp = Type.Type;
   Strm << tp;
   if (Strm.IsLoading()) {
@@ -549,7 +544,6 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
     default:
       Host_Error("I/O Error: unknown data type");
   }
-  unguard;
 }
 
 
@@ -583,7 +577,6 @@ bool VField::NeedToCleanField (const VFieldType &Type) {
 //
 //==========================================================================
 bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
-  guard(CleanField);
   VFieldType IntType;
   int InnerSize;
   bool res = false;
@@ -634,7 +627,6 @@ bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
       break;
   }
   return res;
-  unguard;
 }
 
 
@@ -654,7 +646,6 @@ bool VField::NeedToDestructField (const VFieldType &atype) {
 //
 //==========================================================================
 void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
-  guard(DestructField);
   //if (zeroIt) fprintf(stderr, "***ZERO<%s>: %d\n", *Type.GetName(), (int)NeedDtor(Type));
   if (zeroIt && !NeedDtor(Type)) {
     //fprintf(stderr, "   ZEROED (%d)!\n", Type.GetSize());
@@ -700,7 +691,6 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
       }
       break;
   }
-  unguard;
 }
 
 
@@ -710,7 +700,6 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
 //
 //==========================================================================
 bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFieldType &Type) {
-  guard(VField::IdenticalValue);
   if (Val1 == Val2) return true; // nothing to do
   VFieldType IntType;
   int InnerSize;
@@ -763,7 +752,6 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
   }
   Sys_Error("Bad field type");
   return false;
-  unguard;
 }
 #endif
 
@@ -775,7 +763,6 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
 //
 //==========================================================================
 bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data, const VFieldType &Type) {
-  guard(VField::NetSerialiseValue);
   VFieldType IntType;
   int InnerSize;
   bool Ret = true;
@@ -853,6 +840,5 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data
       Sys_Error("Replication of field type %d is not supported", Type.Type);
   }
   return Ret;
-  unguard;
 }
 #endif

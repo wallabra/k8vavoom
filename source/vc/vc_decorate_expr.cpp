@@ -247,7 +247,6 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VStr Name, TLocation Loc
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
-  guard(ParseExpressionPriority0);
   TLocation l = sc->GetLoc();
 
   // check for quoted strings first, since these could also have numbers...
@@ -321,7 +320,6 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -331,7 +329,6 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority1 (VScriptParser *sc) {
-  guard(ParseExpressionPriority1);
   VExpression *op = ParseExpressionPriority0(sc);
   //TLocation l = sc->GetLoc();
   if (!op) return nullptr;
@@ -351,7 +348,6 @@ static VExpression *ParseExpressionPriority1 (VScriptParser *sc) {
     }
   } while (!done);
   return op;
-  unguard;
 }
 
 
@@ -361,7 +357,6 @@ static VExpression *ParseExpressionPriority1 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority2 (VScriptParser *sc) {
-  guard(ParseExpressionPriority2);
   VExpression *op;
   TLocation l = sc->GetLoc();
 
@@ -386,7 +381,6 @@ static VExpression *ParseExpressionPriority2 (VScriptParser *sc) {
   }
 
   return ParseExpressionPriority1(sc);
-  unguard;
 }
 
 
@@ -396,7 +390,6 @@ static VExpression *ParseExpressionPriority2 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority3 (VScriptParser *sc) {
-  guard(ParseExpressionPriority3);
   VExpression *op1 = ParseExpressionPriority2(sc);
   if (!op1) return nullptr;
   bool done = false;
@@ -416,7 +409,6 @@ static VExpression *ParseExpressionPriority3 (VScriptParser *sc) {
     }
   } while (!done);
   return op1;
-  unguard;
 }
 
 
@@ -426,7 +418,6 @@ static VExpression *ParseExpressionPriority3 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority4 (VScriptParser *sc) {
-  guard(ParseExpressionPriority4);
   VExpression *op1 = ParseExpressionPriority3(sc);
   if (!op1) return nullptr;
   bool done = false;
@@ -443,7 +434,6 @@ static VExpression *ParseExpressionPriority4 (VScriptParser *sc) {
     }
   } while (!done);
   return op1;
-  unguard;
 }
 
 
@@ -453,7 +443,6 @@ static VExpression *ParseExpressionPriority4 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority5 (VScriptParser *sc) {
-  guard(ParseExpressionPriority5);
   VExpression *op1 = ParseExpressionPriority4(sc);
   if (!op1) return nullptr;
   bool done = false;
@@ -470,7 +459,6 @@ static VExpression *ParseExpressionPriority5 (VScriptParser *sc) {
     }
   } while (!done);
   return op1;
-  unguard;
 }
 
 
@@ -480,7 +468,6 @@ static VExpression *ParseExpressionPriority5 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority6 (VScriptParser *sc) {
-  guard(ParseExpressionPriority6);
   VExpression *op1 = ParseExpressionPriority5(sc);
   if (!op1) return nullptr;
   bool done = false;
@@ -503,7 +490,6 @@ static VExpression *ParseExpressionPriority6 (VScriptParser *sc) {
     }
   } while (!done);
   return op1;
-  unguard;
 }
 
 
@@ -513,7 +499,6 @@ static VExpression *ParseExpressionPriority6 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority7 (VScriptParser *sc) {
-  guard(ParseExpressionPriority7);
   VExpression *op1 = ParseExpressionPriority6(sc);
   if (!op1) return nullptr;
   bool done = false;
@@ -534,7 +519,6 @@ static VExpression *ParseExpressionPriority7 (VScriptParser *sc) {
     }
   } while (!done);
   return op1;
-  unguard;
 }
 
 
@@ -544,7 +528,6 @@ static VExpression *ParseExpressionPriority7 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority8 (VScriptParser *sc) {
-  guard(ParseExpressionPriority8);
   VExpression *op1 = ParseExpressionPriority7(sc);
   if (!op1) return nullptr;
   TLocation l = sc->GetLoc();
@@ -554,7 +537,6 @@ static VExpression *ParseExpressionPriority8 (VScriptParser *sc) {
     l = sc->GetLoc();
   }
   return op1;
-  unguard;
 }
 
 
@@ -564,7 +546,6 @@ static VExpression *ParseExpressionPriority8 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority9 (VScriptParser *sc) {
-  guard(ParseExpressionPriority9);
   VExpression *op1 = ParseExpressionPriority8(sc);
   if (!op1) return nullptr;
   TLocation l = sc->GetLoc();
@@ -574,7 +555,6 @@ static VExpression *ParseExpressionPriority9 (VScriptParser *sc) {
     l = sc->GetLoc();
   }
   return op1;
-  unguard;
 }
 
 
@@ -584,7 +564,6 @@ static VExpression *ParseExpressionPriority9 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority10 (VScriptParser *sc) {
-  guard(ParseExpressionPriority10);
   VExpression *op1 = ParseExpressionPriority9(sc);
   if (!op1) return nullptr;
   TLocation l = sc->GetLoc();
@@ -594,7 +573,6 @@ static VExpression *ParseExpressionPriority10 (VScriptParser *sc) {
     l = sc->GetLoc();
   }
   return op1;
-  unguard;
 }
 
 
@@ -604,7 +582,6 @@ static VExpression *ParseExpressionPriority10 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority11 (VScriptParser *sc) {
-  guard(ParseExpressionPriority11);
   VExpression *op1 = ParseExpressionPriority10(sc);
   if (!op1) return nullptr;
   TLocation l = sc->GetLoc();
@@ -614,7 +591,6 @@ static VExpression *ParseExpressionPriority11 (VScriptParser *sc) {
     l = sc->GetLoc();
   }
   return op1;
-  unguard;
 }
 
 
@@ -624,7 +600,6 @@ static VExpression *ParseExpressionPriority11 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority12 (VScriptParser *sc) {
-  guard(ParseExpressionPriority12);
   VExpression *op1 = ParseExpressionPriority11(sc);
   if (!op1) return nullptr;
   TLocation l = sc->GetLoc();
@@ -634,7 +609,6 @@ static VExpression *ParseExpressionPriority12 (VScriptParser *sc) {
     l = sc->GetLoc();
   }
   return op1;
-  unguard;
 }
 
 
@@ -644,7 +618,6 @@ static VExpression *ParseExpressionPriority12 (VScriptParser *sc) {
 //
 //==========================================================================
 static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class) {
-  guard(ParseExpressionPriority13);
   VClass *olddc = decoClass;
   decoClass = Class;
   VExpression *op = ParseExpressionPriority12(sc);
@@ -664,7 +637,6 @@ static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class)
   }
   decoClass = olddc;
   return op;
-  unguard;
 }
 
 
@@ -674,9 +646,7 @@ static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class)
 //
 //==========================================================================
 static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
-  guard(ParseExpression);
   return ParseExpressionPriority13(sc, Class);
-  unguard;
 }
 
 

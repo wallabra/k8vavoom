@@ -431,8 +431,6 @@ void VSuperInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
-  guard(VSuperInvocation::DoResolve);
-
   if (ec.SelfClass && ec.SelfClass->ParentClass) {
     VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
     if (Func) {
@@ -459,7 +457,6 @@ VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
   ParseError(Loc, "No such method `%s`", *Name);
   delete this;
   return nullptr;
-  unguard;
 }
 
 
@@ -469,9 +466,7 @@ VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VSuperInvocation::Emit (VEmitContext &) {
-  guard(VSuperInvocation::Emit);
   ParseError(Loc, "Should not happen (VSuperInvocation)");
-  unguard;
 }
 
 
@@ -1904,8 +1899,6 @@ bool VInvocation::RebuildArgs () {
 //
 //==========================================================================
 VExpression *VInvocation::DoResolve (VEmitContext &ec) {
-  guard(VInvocation::DoResolve);
-
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
   if (DelegateLocal >= 0) {
@@ -2012,7 +2005,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (Func->builtinOpc >= 0) return OptimizeBuiltin(ec);
 
   return this;
-  unguard;
 }
 
 
@@ -2303,8 +2295,6 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
 //
 //==========================================================================
 void VInvocation::Emit (VEmitContext &ec) {
-  guard(VInvocation::Emit);
-
   if (SelfExpr) SelfExpr->Emit(ec);
 
   bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
@@ -2475,7 +2465,6 @@ void VInvocation::Emit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }
-  unguard;
 }
 
 
@@ -2578,8 +2567,6 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
 //
 //==========================================================================
 void VInvocation::CheckParams (VEmitContext &ec) {
-  guard(VInvocation::CheckParams);
-
   // determine parameter count
   int argsize = 0;
   int requiredParams = Func->NumParams;
@@ -2702,8 +2689,6 @@ void VInvocation::CheckParams (VEmitContext &ec) {
     int argc = NumArgs-requiredParams;
     Args[NumArgs++] = new VIntLiteral(argc, Loc);
   }
-
-  unguard;
 }
 
 
@@ -2713,8 +2698,6 @@ void VInvocation::CheckParams (VEmitContext &ec) {
 //
 //==========================================================================
 void VInvocation::CheckDecorateParams (VEmitContext &ec) {
-  guard(VInvocation::CheckDecorateParams);
-
   int maxParams;
   int requiredParams = Func->NumParams;
   if (Func->Flags&FUNC_VarArgs) {
@@ -2767,8 +2750,6 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       }
     }
   }
-
-  unguard;
 }
 
 
@@ -2877,8 +2858,6 @@ void VInvokeWrite::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
-  guard(VInvokeWrite::DoResolve);
-
   // resolve arguments
   bool ArgsOk = true;
   for (int i = 0; i < NumArgs; ++i) {
@@ -2928,7 +2907,6 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
   Type = VFieldType(TYPE_Void);
 
   return this;
-  unguard;
 }
 
 
@@ -2938,7 +2916,6 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VInvokeWrite::Emit (VEmitContext &ec) {
-  guard(VInvokeWrite::Emit);
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) continue;
     Args[i]->Emit(ec);
@@ -2946,7 +2923,6 @@ void VInvokeWrite::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_DoWriteOne, Args[i]->Type, Loc);
   }
   if (isWriteln) ec.AddStatement(OPC_DoWriteFlush, Loc);
-  unguard;
 }
 
 

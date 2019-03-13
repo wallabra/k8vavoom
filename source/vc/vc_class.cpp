@@ -132,12 +132,10 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , AliasFrameNum(0)
   , KnownEnums()
 {
-  guard(VClass::VClass);
   LinkNext = GClasses;
   GClasses = this;
   ClassGameObjName = NAME_None;
   //HashLowerCased();
-  unguard;
 }
 
 
@@ -179,11 +177,9 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , AliasFrameNum(0)
   , KnownEnums()
 {
-  guard(native VClass::VClass);
   LinkNext = GClasses;
   GClasses = this;
   ClassGameObjName = NAME_None;
-  unguard;
 }
 
 
@@ -322,7 +318,6 @@ bool VClass::AddKnownEnum (VName EnumName) {
 //
 //==========================================================================
 VClass *VClass::FindClass (const char *AName) {
-  guard(VClass::FindClass);
   if (!AName || !AName[0]) return nullptr;
   VName TempName(AName, VName::Find);
   if (TempName == NAME_None) return nullptr; // no such name, no chance to find a class
@@ -333,7 +328,6 @@ VClass *VClass::FindClass (const char *AName) {
   }
   return nullptr;
   */
-  unguard;
 }
 
 
@@ -343,7 +337,6 @@ VClass *VClass::FindClass (const char *AName) {
 //
 //==========================================================================
 VClass *VClass::FindClassLowerCase (VName AName) {
-  guard(VClass::FindClassLowerCase);
   if (AName == NAME_None) return nullptr;
   /*
   int HashIndex = GetTypeHash(AName)&(LOWER_CASE_HASH_SIZE-1);
@@ -353,7 +346,6 @@ VClass *VClass::FindClassLowerCase (VName AName) {
   return nullptr;
   */
   return (VClass *)VMemberBase::ForEachNamedCI(AName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
-  unguard;
 }
 
 
@@ -363,7 +355,6 @@ VClass *VClass::FindClassLowerCase (VName AName) {
 //
 //==========================================================================
 VClass *VClass::FindClassNoCase (const char *AName) {
-  guard(VClass::FindClassNoCase);
   if (!AName || !AName[0]) return nullptr;
   /*
   for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
@@ -372,7 +363,6 @@ VClass *VClass::FindClassNoCase (const char *AName) {
   return nullptr;
   */
   return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
-  unguard;
 }
 
 
@@ -382,13 +372,11 @@ VClass *VClass::FindClassNoCase (const char *AName) {
 //
 //==========================================================================
 int VClass::FindSprite (VName Name, bool Append) {
-  guard(VClass::FindSprite);
   for (int i = 0; i < GSpriteNames.Num(); ++i) {
     if (GSpriteNames[i] == Name) return i;
   }
   if (!Append) return -1;
   return GSpriteNames.Append(Name);
-  unguard;
 }
 
 
@@ -398,14 +386,12 @@ int VClass::FindSprite (VName Name, bool Append) {
 //
 //==========================================================================
 void VClass::GetSpriteNames (TArray<FReplacedString> &List) {
-  guard(VClass::GetSpriteNames);
   for (int i = 0; i < GSpriteNames.Num(); ++i) {
     FReplacedString &R = List.Alloc();
     R.Index = i;
     R.Replaced = false;
     R.Old = VStr(*GSpriteNames[i]).ToUpper();
   }
-  unguard;
 }
 
 
@@ -415,7 +401,6 @@ void VClass::GetSpriteNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
-  guard(VClass::ReplaceSpriteNames);
   for (int i = 0; i < List.Num(); ++i) {
     if (!List[i].Replaced) continue;
     GSpriteNames[List[i].Index] = *List[i].New.ToLower();
@@ -427,7 +412,6 @@ void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
       S->SpriteName = GSpriteNames[S->SpriteIndex];
     }
   }
-  unguard;
 }
 
 
@@ -437,12 +421,10 @@ void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void VClass::StaticReinitStatesLookup () {
-  guard(VClass::StaticReinitStatesLookup);
   // clear states lookup tables
   for (VClass *C = GClasses; C; C = C->LinkNext) C->StatesLookup.Clear();
   // now init states lookup tables again
   for (VClass *C = GClasses; C; C = C->LinkNext) C->InitStatesLookup();
-  unguard;
 }
 
 
@@ -452,7 +434,6 @@ void VClass::StaticReinitStatesLookup () {
 //
 //==========================================================================
 void VClass::Serialise (VStream &Strm) {
-  guard(VClass::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -534,7 +515,6 @@ void VClass::Serialise (VStream &Strm) {
     }
   }
   // done
-  unguard;
 }
 
 
@@ -544,7 +524,6 @@ void VClass::Serialise (VStream &Strm) {
 //
 //==========================================================================
 void VClass::Shutdown () {
-  guard(VClass::Shutdown);
   if (ClassVTable) {
     delete[] ClassVTable;
     ClassVTable = nullptr;
@@ -568,7 +547,6 @@ void VClass::Shutdown () {
   DecorateStateActions.Clear();
   SpriteEffects.Clear();
   ClassGameObjName = NAME_None;
-  unguard;
 }
 
 
@@ -578,9 +556,7 @@ void VClass::Shutdown () {
 //
 //==========================================================================
 void VClass::AddConstant (VConstant *c) {
-  guard(VClass::AddConstant);
   Constants.Append(c);
-  unguard;
 }
 
 
@@ -590,7 +566,6 @@ void VClass::AddConstant (VConstant *c) {
 //
 //==========================================================================
 void VClass::AddField (VField *f) {
-  guard(VClass::AddField);
   if (!Fields) {
     Fields = f;
   } else {
@@ -599,7 +574,6 @@ void VClass::AddField (VField *f) {
     Prev->Next = f;
   }
   f->Next = nullptr;
-  unguard;
 }
 
 
@@ -609,9 +583,7 @@ void VClass::AddField (VField *f) {
 //
 //==========================================================================
 void VClass::AddProperty (VProperty *p) {
-  guard(VClass::AddProperty);
   Properties.Append(p);
-  unguard;
 }
 
 
@@ -621,7 +593,6 @@ void VClass::AddProperty (VProperty *p) {
 //
 //==========================================================================
 void VClass::AddState (VState *s) {
-  guard(VClass::AddState);
   if (!States) {
     States = s;
   } else {
@@ -630,7 +601,6 @@ void VClass::AddState (VState *s) {
     Prev->Next = s;
   }
   s->Next = nullptr;
-  unguard;
 }
 
 
@@ -640,9 +610,7 @@ void VClass::AddState (VState *s) {
 //
 //==========================================================================
 void VClass::AddMethod (VMethod *m) {
-  guard(VClass::AddMethod);
   Methods.Append(m);
-  unguard;
 }
 
 
@@ -652,14 +620,12 @@ void VClass::AddMethod (VMethod *m) {
 //
 //==========================================================================
 VConstant *VClass::FindConstant (VName Name, VName EnumName) {
-  guard(VClass::FindConstant);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
   VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, EnumName);
   if (m) return (VConstant *)m;
   if (ParentClass) return ParentClass->FindConstant(Name, EnumName);
   return nullptr;
-  unguard;
 }
 
 
@@ -669,13 +635,11 @@ VConstant *VClass::FindConstant (VName Name, VName EnumName) {
 //
 //==========================================================================
 VField *VClass::FindField (VName Name, bool bRecursive) {
-  guard(VClass::FindField);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
   for (VField *F = Fields; F; F = F->Next) if (Name == F->Name) return F;
   if (bRecursive && ParentClass) return ParentClass->FindField(Name, bRecursive);
   return nullptr;
-  unguard;
 }
 
 
@@ -685,7 +649,6 @@ VField *VClass::FindField (VName Name, bool bRecursive) {
 //
 //==========================================================================
 VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
-  guard(VClass::FindField);
   if (Name == NAME_None) return nullptr;
   for (VClass *cls = this; cls; cls = cls->ParentClass) {
     VField *F = cls->FindField(Name, false); // non-recursive search
@@ -696,7 +659,6 @@ VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -706,11 +668,9 @@ VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
 //
 //==========================================================================
 VField *VClass::FindFieldChecked (VName AName) {
-  guard(VClass::FindFieldChecked);
   VField *F = FindField(AName);
   if (!F) Sys_Error("Field %s not found", *AName);
   return F;
-  unguard;
 }
 
 
@@ -720,14 +680,12 @@ VField *VClass::FindFieldChecked (VName AName) {
 //
 //==========================================================================
 VProperty *VClass::FindProperty (VName Name) {
-  guard(VClass::FindProperty);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
   VProperty *P = (VProperty*)StaticFindMember(Name, this, MEMBER_Property);
   if (P) return P;
   if (ParentClass) return ParentClass->FindProperty(Name);
   return nullptr;
-  unguard;
 }
 
 
@@ -737,14 +695,12 @@ VProperty *VClass::FindProperty (VName Name) {
 //
 //==========================================================================
 VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
-  guard(VClass::FindMethod);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) return M;
   if (bRecursive && ParentClass) return ParentClass->FindMethod(Name, bRecursive);
   return nullptr;
-  unguard;
 }
 
 
@@ -755,14 +711,12 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
 //==========================================================================
 /*
 VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
-  guard(VClass::FindMethodNoCase);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name, true); // nocase
   VMethod *M = (VMethod *)StaticFindMemberNoCase(Name, this, MEMBER_Method);
   if (M) return M;
   if (bRecursive && ParentClass) return ParentClass->FindMethodNoCase(Name, bRecursive);
   return nullptr;
-  unguard;
 }
 */
 
@@ -773,7 +727,6 @@ VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
 //
 //==========================================================================
 VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation *loc) {
-  guard(VClass::FindAccessibleMethod);
   if (Name == NAME_None) return nullptr;
   //if (self && !loc && self->Name == "Test1") abort();
   Name = ResolveAlias(Name);
@@ -800,7 +753,6 @@ VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation
     }
   }
   return (ParentClass ? ParentClass->FindAccessibleMethod(Name, self, loc) : nullptr);
-  unguard;
 }
 
 
@@ -810,11 +762,9 @@ VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation
 //
 //==========================================================================
 VMethod *VClass::FindMethodChecked (VName AName) {
-  guard(VClass::FindMethodChecked);
   VMethod *func = FindMethod(AName);
   if (!func) Sys_Error("Function %s not found", *AName);
   return func;
-  unguard;
 }
 
 
@@ -839,7 +789,6 @@ int VClass::GetMethodIndex (VName AName) {
 //
 //==========================================================================
 VState *VClass::FindState (VName AName) {
-  guard(VClass::FindState);
   if (AName == NAME_None) return nullptr;
   if (VStr::ICmp(*AName, "none") == 0) return nullptr;
   for (VState *s = States; s; s = s->Next) {
@@ -848,7 +797,6 @@ VState *VClass::FindState (VName AName) {
   if (ParentClass) return ParentClass->FindState(AName);
   if (VStr::ICmp(*AName, "null") == 0) return nullptr;
   return nullptr;
-  unguard;
 }
 
 
@@ -858,7 +806,6 @@ VState *VClass::FindState (VName AName) {
 //
 //==========================================================================
 VState *VClass::FindStateChecked (VName AName) {
-  guard(VClass::FindStateChecked);
   if (AName == NAME_None) return nullptr;
   VState *s = FindState(AName);
   if (!s) {
@@ -867,7 +814,6 @@ VState *VClass::FindStateChecked (VName AName) {
     Sys_Error("State `%s` not found", *AName);
   }
   return s;
-  unguard;
 }
 
 
@@ -877,8 +823,6 @@ VState *VClass::FindStateChecked (VName AName) {
 //
 //==========================================================================
 VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
-  guard(VClass::FindStateLabel);
-
   if (AName == NAME_None || VStr::ICmp(*AName, "None") == 0 || VStr::ICmp(*AName, "Null") == 0) return nullptr;
 
   if (SubLabel == NAME_None) {
@@ -917,7 +861,6 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
 
   //if (AName == VName("Missile")) fprintf(stderr, "ERROR: '%s' state for '%s' not found! (parentclass=%s)\n", *AName, *GetFullName(), (ParentClass ? *ParentClass->GetFullName() : "<none>"));
   return nullptr;
-  unguard;
 }
 
 
@@ -927,7 +870,6 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
 //
 //==========================================================================
 VStateLabel *VClass::FindStateLabel (TArray<VName> &Names, bool Exact) {
-  guard(VClass::FindStateLabel);
   if (Names.length() > 0 && (VStr::ICmp(*Names[0], "None") == 0 || VStr::ICmp(*Names[0], "Null") == 0)) return nullptr;
   TArray<VStateLabel> *List = &StateLabels;
   VStateLabel *Best = nullptr;
@@ -949,7 +891,6 @@ VStateLabel *VClass::FindStateLabel (TArray<VName> &Names, bool Exact) {
     }
   }
   return Best;
-  unguard;
 }
 
 
@@ -960,7 +901,6 @@ VStateLabel *VClass::FindStateLabel (TArray<VName> &Names, bool Exact) {
 //==========================================================================
 /*
 VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Exact) {
-  guard(VClass::FindStateLabelChecked);
   if (AName == NAME_None || VStr::ICmp(*AName, "None") == 0 || VStr::ICmp(*AName, "Null") == 0) return nullptr;
   VStateLabel *Lbl = FindStateLabel(AName, SubLabel, Exact);
   if (!Lbl) {
@@ -973,7 +913,6 @@ VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Ex
     Sys_Error("State %s not found", *FullName);
   }
   return Lbl;
-  unguard;
 }
 */
 
@@ -985,7 +924,6 @@ VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Ex
 //==========================================================================
 /*
 VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
-  guard(VClass::FindStateLabelChecked);
   VStateLabel *Lbl = FindStateLabel(Names, Exact);
   if (!Lbl) {
     VStr FullName = *Names[0];
@@ -996,7 +934,6 @@ VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
     Sys_Error("State %s not found", *FullName);
   }
   return Lbl;
-  unguard;
 }
 */
 
@@ -1007,13 +944,11 @@ VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
 //
 //==========================================================================
 VDecorateStateAction *VClass::FindDecorateStateAction (VName ActName) {
-  guard(VClass::FindDecorateStateAction);
   for (int i = 0; i < DecorateStateActions.Num(); ++i) {
     if (DecorateStateActions[i].Name == ActName) return &DecorateStateActions[i];
   }
   if (ParentClass) return ParentClass->FindDecorateStateAction(ActName);
   return nullptr;
-  unguard;
 }
 
 
@@ -1023,12 +958,10 @@ VDecorateStateAction *VClass::FindDecorateStateAction (VName ActName) {
 //
 //==========================================================================
 VName VClass::FindDecorateStateFieldTrans (VName dcname) {
-  guard(VClass::FindDecorateStateFieldTrans);
   auto vp = DecorateStateFieldTrans.find(dcname);
   if (vp) return *vp;
   if (ParentClass) return ParentClass->FindDecorateStateFieldTrans(dcname);
   return NAME_None;
-  unguard;
 }
 
 
@@ -1054,8 +987,6 @@ bool VClass::isNonVirtualMethod (VName Name) {
 //
 //==========================================================================
 bool VClass::Define () {
-  guard(VClass::Define);
-
   // check for duplicates
   /*
   int HashIndex = Name.GetIndex()&4095;
@@ -1181,7 +1112,6 @@ bool VClass::Define () {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -1251,7 +1181,6 @@ bool VClass::DefineRepInfos () {
 //
 //==========================================================================
 bool VClass::DefineMembers () {
-  guard(VClass::DefineMembers);
   bool Ret = true;
 
   // moved to `Define()`
@@ -1277,7 +1206,6 @@ bool VClass::DefineMembers () {
   if (!DefineRepInfos()) Ret = false;
 
   return Ret;
-  unguard;
 }
 
 
@@ -1287,7 +1215,6 @@ bool VClass::DefineMembers () {
 //
 //==========================================================================
 bool VClass::DecorateDefine () {
-  guard(VClass::DecorateDefine);
   bool Ret = true;
   VField *PrevBool = nullptr;
   for (VField *fi = Fields; fi; fi = fi->Next) {
@@ -1298,7 +1225,6 @@ bool VClass::DecorateDefine () {
     PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
   return Ret;
-  unguard;
 }
 
 
@@ -1309,7 +1235,6 @@ bool VClass::DecorateDefine () {
 //==========================================================================
 void VClass::StaticDumpMObjInfo () {
 #if !defined(IN_VCC)
-  guard(VClass::StaticDumpMObjInfo);
   TArray<XXMInfo> list;
   for (int f = 0; f < GMobjInfos.length(); ++f) {
     XXMInfo &xn = list.alloc();
@@ -1332,7 +1257,6 @@ void VClass::StaticDumpMObjInfo () {
       link = nfo->nextidx;
     }
   }
-  unguard;
 #endif
 }
 
@@ -1344,7 +1268,6 @@ void VClass::StaticDumpMObjInfo () {
 //==========================================================================
 void VClass::StaticDumpScriptIds () {
 #if !defined(IN_VCC)
-  guard(VClass::StaticDumpScriptIds);
   TArray<XXMInfo> list;
   for (int f = 0; f < GScriptIds.length(); ++f) {
     XXMInfo &xn = list.alloc();
@@ -1357,7 +1280,6 @@ void VClass::StaticDumpScriptIds () {
     mobjinfo_t *nfo = &list[f].nfo;
     GLog.Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
-  unguard;
 #endif
 }
 
@@ -1593,7 +1515,6 @@ void VClass::RemoveMObjIdByClass (VClass *cls, int GameFilter) {
 //
 //==========================================================================
 void VClass::Emit () {
-  guard(VClass::Emit);
   int GameFilter = 0;
   if (GameExpr) {
     VEmitContext ec(this);
@@ -1666,7 +1587,6 @@ void VClass::Emit () {
   for (int ri = 0; ri < RepInfos.Num(); ++ri) RepInfos[ri].Cond->Emit();
 
   DefaultProperties->Emit();
-  unguard;
 }
 
 
@@ -1676,10 +1596,8 @@ void VClass::Emit () {
 //
 //==========================================================================
 void VClass::DecorateEmit () {
-  guard(VClass::DecorateEmit);
   // emit method code
   for (int i = 0; i < Methods.Num(); ++i) Methods[i]->Emit();
-  unguard;
 }
 
 
@@ -1689,7 +1607,6 @@ void VClass::DecorateEmit () {
 //
 //==========================================================================
 void VClass::EmitStateLabels () {
-  guard(VClass::EmitStateLabels);
   if (ParentClass && (ClassFlags&CLASS_SkipSuperStateLabels) == 0) {
     StateLabels = ParentClass->StateLabels;
   }
@@ -1715,7 +1632,6 @@ void VClass::EmitStateLabels () {
       SetStateLabel(Names, Lbl.State);
     }
   }
-  unguard;
 }
 
 
@@ -1779,7 +1695,6 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
 //
 //==========================================================================
 void VClass::SetStateLabel (VName AName, VState *State) {
-  guard(VClass::SetStateLabel);
   for (int i = 0; i < StateLabels.Num(); ++i) {
     if (VStr::ICmp(*StateLabels[i].Name, *AName) == 0) {
       StateLabels[i].State = State;
@@ -1789,7 +1704,6 @@ void VClass::SetStateLabel (VName AName, VState *State) {
   VStateLabel &L = StateLabels.Alloc();
   L.Name = AName;
   L.State = State;
-  unguard;
 }
 
 
@@ -1799,7 +1713,6 @@ void VClass::SetStateLabel (VName AName, VState *State) {
 //
 //==========================================================================
 void VClass::SetStateLabel (const TArray<VName> &Names, VState *State) {
-  guard(VClass::SetStateLabel);
   if (!Names.Num()) return;
   TArray<VStateLabel> *List = &StateLabels;
   VStateLabel *Lbl = nullptr;
@@ -1821,7 +1734,6 @@ void VClass::SetStateLabel (const TArray<VName> &Names, VState *State) {
     //if ((*Names[0])[0] == '_') fprintf(stderr, "*** <%s> is <%s>\n", *Names[0], State->GetName());
     Lbl->State = State;
   }
-  unguard;
 }
 
 
@@ -1876,7 +1788,6 @@ void VClass::PostLoad () {
 //
 //==========================================================================
 void VClass::DecoratePostLoad () {
-  guard(VClass::DecoratePostLoad);
   // compile
   for (int i = 0; i < Methods.Num(); ++i) Methods[i]->PostLoad();
   for (VState *S = States; S; S = S->Next) S->PostLoad();
@@ -1902,7 +1813,6 @@ void VClass::DecoratePostLoad () {
 
   // recreate virtual table
   CreateVTable();
-  unguard;
 }
 
 
@@ -1912,7 +1822,6 @@ void VClass::DecoratePostLoad () {
 //
 //==========================================================================
 void VClass::CalcFieldOffsets () {
-  guard(VClass::CalcFieldOffsets);
   // skip this for C++ only classes
   if (!Outer && (ObjectFlags&CLASSOF_Native) != 0) {
     ClassNumMethods = (ParentClass ? ParentClass->ClassNumMethods : 0);
@@ -1977,7 +1886,6 @@ void VClass::CalcFieldOffsets () {
   if ((ObjectFlags&CLASSOF_Native) != 0 && ClassSize != PrevSize) {
     Sys_Error("Bad class size for class `%s`: C++: %d, VavoomC: %d", GetName(), PrevSize, ClassSize);
   }
-  unguard;
 }
 
 
@@ -1987,7 +1895,6 @@ void VClass::CalcFieldOffsets () {
 //
 //==========================================================================
 void VClass::InitNetFields () {
-  guard(VClass::InitNetFields);
   if (ParentClass) {
     NetFields = ParentClass->NetFields;
     NetMethods = ParentClass->NetMethods;
@@ -2014,7 +1921,6 @@ void VClass::InitNetFields () {
     M->NextNetMethod = NetMethods;
     NetMethods = M;
   }
-  unguard;
 }
 
 
@@ -2024,7 +1930,6 @@ void VClass::InitNetFields () {
 //
 //==========================================================================
 void VClass::InitReferences () {
-  guard(VClass::InitReferences);
   ReferenceFields = nullptr;
   if (GetSuperClass()) ReferenceFields = GetSuperClass()->ReferenceFields;
   for (VField *F = Fields; F; F = F->Next) {
@@ -2079,7 +1984,6 @@ void VClass::InitReferences () {
         break;
     }
   }
-  unguard;
 }
 
 
@@ -2089,7 +1993,6 @@ void VClass::InitReferences () {
 //
 //==========================================================================
 void VClass::InitDestructorFields () {
-  guard(VClass::InitDestructorFields);
   DestructorFields = nullptr;
   if (GetSuperClass()) DestructorFields = GetSuperClass()->DestructorFields;
   for (VField *F = Fields; F; F = F->Next) {
@@ -2127,7 +2030,6 @@ void VClass::InitDestructorFields () {
         break;
     }
   }
-  unguard;
 }
 
 
@@ -2137,7 +2039,6 @@ void VClass::InitDestructorFields () {
 //
 //==========================================================================
 void VClass::CreateVTable () {
-  guard(VClass::CreateVTable);
   if (!ClassVTable) ClassVTable = new VMethod*[ClassNumMethods];
   if (ParentClass) memcpy(ClassVTable, ParentClass->ClassVTable, ParentClass->ClassNumMethods*sizeof(VMethod *));
   for (int i = 0; i < Methods.Num(); ++i) {
@@ -2146,7 +2047,6 @@ void VClass::CreateVTable () {
     ClassVTable[M->VTableIndex] = M;
   }
   CreateMethodMap();
-  unguard;
 }
 
 
@@ -2233,7 +2133,6 @@ VMethod *VClass::FindConCommandMethod (const VStr &name, bool exact) {
 //
 //==========================================================================
 void VClass::InitStatesLookup () {
-  guard(VClass::InitStatesLookup);
   // this is also called from dehacked parser, so we must do this check
   if (StatesLookup.Num()) return;
   // create states lookup table
@@ -2247,7 +2146,6 @@ void VClass::InitStatesLookup () {
     S->NetId = StatesLookup.Num();
     StatesLookup.Append(S);
   }
-  unguard;
 }
 
 
@@ -2258,7 +2156,6 @@ void VClass::InitStatesLookup () {
 //
 //==========================================================================
 void VClass::CreateDefaults () {
-  guard(VClass::CreateDefaults);
   if (Defaults) return;
 
   if (ParentClass && !ParentClass->Defaults) ParentClass->CreateDefaults();
@@ -2309,7 +2206,6 @@ void VClass::CreateDefaults () {
     P_PASS_REF((VObject *)Defaults);
     VObject::ExecuteFunction(DefaultProperties);
   }
-  unguard;
 }
 
 
@@ -2319,7 +2215,6 @@ void VClass::CreateDefaults () {
 //
 //==========================================================================
 void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
-  guard(VClass::CopyObject);
   // copy parent class fields
   if (GetSuperClass()) {
     //GLog.Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')...", GetName(), GetSuperClass()->GetName());
@@ -2336,7 +2231,6 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
     VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
   }
   //GLog.Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
-  unguardf(("(%s)", GetName()));
 }
 
 
@@ -2346,11 +2240,9 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
 //
 //==========================================================================
 void VClass::CleanObject (VObject *Obj) {
-  guard(VClass::CleanObject);
   if (Obj) {
     for (VField *F = ReferenceFields; F; F = F->NextReference) VField::CleanField((vuint8 *)Obj+F->Ofs, F->Type);
   }
-  unguardf(("(%s)", GetName()));
 }
 
 
@@ -2360,11 +2252,9 @@ void VClass::CleanObject (VObject *Obj) {
 //
 //==========================================================================
 void VClass::DestructObject (VObject *Obj) {
-  guard(VClass::DestructObject);
   if (Obj) {
     for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField((vuint8 *)Obj+F->Ofs, F->Type);
   }
-  unguardf(("(%s)", GetName()));
 }
 
 
@@ -2374,7 +2264,6 @@ void VClass::DestructObject (VObject *Obj) {
 //
 //==========================================================================
 VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDecorateUserVarDef> &uvlist, const TLocation &ALoc) {
-  guard(VClass::CreateDerivedClass);
   VClass *NewClass = nullptr;
   for (int i = 0; i < GDecorateClassImports.Num(); ++i) {
     if (GDecorateClassImports[i]->Name == AName) {
@@ -2472,7 +2361,6 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
   */
 
   return NewClass;
-  unguard;
 }
 #endif //!defined(IN_VCC)
 
@@ -2483,7 +2371,6 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
 //
 //==========================================================================
 VClass *VClass::GetReplacement () {
-  guard(VClass::GetReplacement);
   check(this);
   if (!Replacement) return this;
   // avoid looping recursion by temporarely nullptr-ing the field
@@ -2492,7 +2379,6 @@ VClass *VClass::GetReplacement () {
   VClass *Ret = Temp->GetReplacement();
   Replacement = Temp;
   return Ret;
-  unguardf(("(%s)", ((VClass*)this)->GetName()));
 }
 
 
@@ -2502,7 +2388,6 @@ VClass *VClass::GetReplacement () {
 //
 //==========================================================================
 VClass *VClass::GetReplacee () {
-  guard(VClass::GetReplacee);
   if (!Replacee) return this;
   // avoid looping recursion by temporarely nullptr-ing the field
   VClass *Temp = Replacee;
@@ -2510,7 +2395,6 @@ VClass *VClass::GetReplacee () {
   VClass *Ret = Temp->GetReplacee();
   Replacee = Temp;
   return Ret;
-  unguard;
 }
 
 
@@ -2542,12 +2426,10 @@ bool VClass::SetReplacement (VClass *cls) {
 //==========================================================================
 /*
 void VClass::HashLowerCased () {
-  guard(VClass::HashLowerCased);
   LowerCaseName = *VStr(*Name).ToLower();
   int HashIndex = GetTypeHash(LowerCaseName)&(LOWER_CASE_HASH_SIZE-1);
   LowerCaseHashNext = GLowerCaseHashTable[HashIndex];
   GLowerCaseHashTable[HashIndex] = this;
-  unguard;
 }
 */
 

@@ -265,10 +265,8 @@ VMemberBase *VMemberBase::ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m
 //
 //==========================================================================
 VStr VMemberBase::GetFullName () const {
-  guardSlow(VMemberBase::GetFullName);
   if (Outer) return Outer->GetFullName()+"."+Name;
   return VStr(Name);
-  unguardSlow;
 }
 
 
@@ -278,11 +276,9 @@ VStr VMemberBase::GetFullName () const {
 //
 //==========================================================================
 VPackage *VMemberBase::GetPackage () const {
-  guard(VMemberBase::GetPackage);
   for (const VMemberBase *p = this; p; p = p->Outer) if (p->MemberType == MEMBER_Package) return (VPackage *)p;
   Sys_Error("Member object %s not in a package", *GetFullName());
   return nullptr;
-  unguard;
 }
 
 
@@ -292,10 +288,8 @@ VPackage *VMemberBase::GetPackage () const {
 //
 //==========================================================================
 bool VMemberBase::IsIn (VMemberBase *SomeOuter) const {
-  guardSlow(VMemberBase::IsIn);
   for (const VMemberBase *Tst = Outer; Tst; Tst = Tst->Outer) if (Tst == SomeOuter) return true;
   return !SomeOuter;
-  unguardSlow;
 }
 
 
@@ -335,7 +329,6 @@ void VMemberBase::Shutdown () {
 //
 //==========================================================================
 void VMemberBase::StaticInit () {
-  guard(VMemberBase::StaticInit);
   check(!GObjInitialised);
   check(!GObjShuttingDown);
   // add native classes to the list
@@ -356,7 +349,6 @@ void VMemberBase::StaticInit () {
   VClass::GSpriteNames.Append("----");
 
   GObjInitialised = true;
-  unguard;
 }
 
 
@@ -422,14 +414,12 @@ void VMemberBase::StaticAddPackagePath (const char *Path) {
 //
 //==========================================================================
 VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
-  guard(VMemberBase::StaticLoadPackage);
   // check if already loaded
   for (int i = 0; i < GLoadedPackages.Num(); ++i) if (GLoadedPackages[i]->Name == AName) return GLoadedPackages[i];
   VPackage *Pkg = new VPackage(AName);
   GLoadedPackages.Append(Pkg);
   Pkg->LoadObject(l);
   return Pkg;
-  unguard;
 }
 
 
@@ -439,7 +429,6 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
 //
 //==========================================================================
 VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName/*, bool caseSensitive*/) {
-  guard(VMemberBase::StaticFindMember);
   //VName realName = AName;
   if (AType == MEMBER_Const && EnumName != NAME_None) {
     // rewrite name
@@ -502,7 +491,6 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -556,7 +544,6 @@ void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, const VStr &pref
 //
 //==========================================================================
 VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
-  guard(VMemberBase::StaticFindType);
   if (Name == NAME_None) return VFieldType(TYPE_Unknown);
 
   // enum in a class
@@ -599,7 +586,6 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 #endif
 
   return VFieldType(TYPE_Unknown);
-  unguard;
 }
 
 
@@ -609,7 +595,6 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 //
 //==========================================================================
 VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
-  guard(VMemberBase::StaticFindClass);
   if (AName == NAME_None) return nullptr;
   //VMemberBase *m = StaticFindMember(AName, ANY_PACKAGE, MEMBER_Class, NAME_None, caseSensitive);
   //if (m) return (VClass *)m;
@@ -640,7 +625,6 @@ VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -651,11 +635,9 @@ VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
 //==========================================================================
 /*
 VClass *VMemberBase::StaticFindClassNoCase (VName AName) {
-  guard(VMemberBase::StaticFindClassNoCase);
   VMemberBase *m = StaticFindMemberNoCase(AName, ANY_PACKAGE, MEMBER_Class);
   if (m) return (VClass *)m;
   return nullptr;
-  unguard;
 }
 */
 
@@ -667,7 +649,6 @@ VClass *VMemberBase::StaticFindClassNoCase (VName AName) {
 //
 //==========================================================================
 VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
-  guard(VMemberBase::StaticFindMObj);
   if (pkgname != NAME_None) {
     VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
     if (!pkg) return nullptr;
@@ -682,7 +663,6 @@ VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -693,14 +673,12 @@ VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
 //==========================================================================
 mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id) {
   if (id == 0) return nullptr;
-  guard(VMemberBase::StaticFindMObjInfo);
   int len = VClass::GMobjInfos.length();
   for (int f = 0; f < len; ++f) {
     mobjinfo_t *nfo = &VClass::GMobjInfos[f];
     if (nfo->DoomEdNum == id) return nfo;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -710,7 +688,6 @@ mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id) {
 //
 //==========================================================================
 VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
-  guard(VMemberBase::StaticFindMObj);
   if (pkgname != NAME_None) {
     VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
     if (!pkg) return nullptr;
@@ -725,7 +702,6 @@ VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
     }
   }
   return nullptr;
-  unguard;
 }
 */
 
@@ -736,7 +712,6 @@ VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
 //
 //==========================================================================
 VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
-  guard(VMemberBase::StaticFindClassByGameObjName);
   if (aname == NAME_None) return nullptr;
   VMemberBase *pkg = nullptr;
   if (pkgname != NAME_None) {
@@ -757,7 +732,6 @@ VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
     }
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -767,7 +741,6 @@ VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
 //
 //==========================================================================
 void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts, bool appendToParts) {
-  guard(VMemberBase::StaticSplitStateLabel);
   TArray<VStr> StrParts;
   LabelName.Split(".", StrParts);
   if (!appendToParts) Parts.Clear();
@@ -793,7 +766,6 @@ void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &P
   for (int i = 1; i < StrParts.Num(); ++i) {
     if (StrParts[i].length()) Parts.Append(*StrParts[i]);
   }
-  unguard;
 }
 
 

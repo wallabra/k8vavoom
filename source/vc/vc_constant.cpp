@@ -88,7 +88,6 @@ void VConstant::CompilerShutdown () {
 //
 //==========================================================================
 void VConstant::Serialise (VStream &Strm) {
-  guard(VConstant::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -98,7 +97,6 @@ void VConstant::Serialise (VStream &Strm) {
     case TYPE_Name: Strm << *(VName *)&Value; break;
     default: Strm << STRM_INDEX(Value); break;
   }
-  unguard;
 }
 
 
@@ -108,8 +106,6 @@ void VConstant::Serialise (VStream &Strm) {
 //
 //==========================================================================
 bool VConstant::Define () {
-  guard(VConstant::Define);
-
   if (alreadyDefined) return true;
   alreadyDefined = true;
 
@@ -164,7 +160,6 @@ bool VConstant::Define () {
       return false;
   }
   return true;
-  unguard;
 }
 
 

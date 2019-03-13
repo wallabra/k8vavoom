@@ -149,7 +149,6 @@ void VFieldType::WriteTypeMem (vuint8 *&ptr) const {
 //
 //==========================================================================
 VStream &operator << (VStream &Strm, VFieldType &T) {
-  guard(operator VStream << VFieldType);
   Strm << T.Type;
   vuint8 RealType = T.Type;
   if (RealType == TYPE_Array) {
@@ -175,7 +174,6 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   else if (RealType == TYPE_Delegate) Strm << T.Function;
   else if (RealType == TYPE_Bool) Strm << T.BitMask;
   return Strm;
-  unguard;
 }
 
 
@@ -185,7 +183,6 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
 //
 //==========================================================================
 bool VFieldType::Equals (const VFieldType &Other) const {
-  guardSlow(VFieldType::Equals);
   if (Type != Other.Type ||
       InnerType != Other.InnerType ||
       ArrayInnerType != Other.ArrayInnerType ||
@@ -199,7 +196,6 @@ bool VFieldType::Equals (const VFieldType &Other) const {
     return false;
   }
   return true;
-  unguardSlow;
 }
 
 
@@ -228,8 +224,6 @@ bool VFieldType::IsCompatiblePointerRelaxed (const VFieldType &other) const {
 //
 //==========================================================================
 VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &vtype, const TLocation &loc) {
-  guard(VFieldType::MakeDictType);
-
   // check for valid key type
   switch (ktype.Type) {
     case TYPE_Int:
@@ -264,7 +258,6 @@ VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &
   }
 
   return res;
-  unguard;
 }
 
 
@@ -274,7 +267,6 @@ VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &
 //
 //==========================================================================
 VFieldType VFieldType::MakePointerType () const {
-  guard(VFieldType::MakePointerType);
   VFieldType pointer = *this;
   if (pointer.Type == TYPE_Pointer) {
     ++pointer.PtrLevel;
@@ -284,7 +276,6 @@ VFieldType VFieldType::MakePointerType () const {
     pointer.PtrLevel = 1;
   }
   return pointer;
-  unguard;
 }
 
 
@@ -294,7 +285,6 @@ VFieldType VFieldType::MakePointerType () const {
 //
 //==========================================================================
 VFieldType VFieldType::GetPointerInnerType () const {
-  guard(VFieldType::GetPointerInnerType);
   if (Type != TYPE_Pointer) {
     FatalError("Not a pointer type");
     return *this;
@@ -306,7 +296,6 @@ VFieldType VFieldType::GetPointerInnerType () const {
     ret.InnerType = TYPE_Void;
   }
   return ret;
-  unguard;
 }
 
 
@@ -316,7 +305,6 @@ VFieldType VFieldType::GetPointerInnerType () const {
 //
 //==========================================================================
 VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
-  guard(VFieldType::MakeArrayType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional arrays");
   if (elcount < 0) ParseError(l, "Can't have arrays with negative size");
   VFieldType array = *this;
@@ -324,7 +312,6 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   array.Type = TYPE_Array;
   array.ArrayDimInternal = elcount;
   return array;
-  unguard;
 }
 
 
@@ -334,7 +321,6 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
 //
 //==========================================================================
 VFieldType VFieldType::MakeArray2DType (int d0, int d1, const TLocation &l) const {
-  guard(VFieldType::MakeArray2DType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional 2d arrays");
   if (d0 < 0 || d1 < 0) ParseError(l, "Can't have 2d arrays with negative size");
   if (d0 <= 0 || d1 <= 0) ParseError(l, "Can't have 2d arrays with zero size");
@@ -344,7 +330,6 @@ VFieldType VFieldType::MakeArray2DType (int d0, int d1, const TLocation &l) cons
   array.Type = TYPE_Array;
   array.ArrayDimInternal = (d0|(d1<<16))|0x80000000;
   return array;
-  unguard;
 }
 
 
@@ -354,13 +339,11 @@ VFieldType VFieldType::MakeArray2DType (int d0, int d1, const TLocation &l) cons
 //
 //==========================================================================
 VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
-  guard(VFieldType::MakeDynamicArrayType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_DynamicArray;
   return array;
-  unguard;
 }
 
 
@@ -370,13 +353,11 @@ VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
 //
 //==========================================================================
 VFieldType VFieldType::MakeSliceType (const TLocation &l) const {
-  guard(VFieldType::MakeSliceType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional slices or slices of arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_SliceArray;
   return array;
-  unguard;
 }
 
 
@@ -386,7 +367,6 @@ VFieldType VFieldType::MakeSliceType (const TLocation &l) const {
 //
 //==========================================================================
 VFieldType VFieldType::GetArrayInnerType () const {
-  guard(VFieldType::GetArrayInnerType);
   if (Type != TYPE_Array && Type != TYPE_DynamicArray && Type != TYPE_SliceArray) {
     FatalError("Not an array type");
     return *this;
@@ -396,7 +376,6 @@ VFieldType VFieldType::GetArrayInnerType () const {
   ret.ArrayInnerType = TYPE_Void;
   ret.ArrayDimInternal = 0;
   return ret;
-  unguard;
 }
 
 
@@ -406,7 +385,6 @@ VFieldType VFieldType::GetArrayInnerType () const {
 //
 //==========================================================================
 VFieldType VFieldType::GetDictKeyType () const {
-  guard(VFieldType::GetDictKeyType);
   if (Type != TYPE_Dictionary) {
     FatalError("Not a dictionary type");
     return *this;
@@ -432,7 +410,6 @@ VFieldType VFieldType::GetDictKeyType () const {
       break;
   }
   return ret;
-  unguard;
 }
 
 
@@ -442,7 +419,6 @@ VFieldType VFieldType::GetDictKeyType () const {
 //
 //==========================================================================
 VFieldType VFieldType::GetDictValueType () const {
-  guard(VFieldType::GetDictValueType);
   if (Type != TYPE_Dictionary) {
     FatalError("Not a dictionary type");
     return *this;
@@ -453,7 +429,6 @@ VFieldType VFieldType::GetDictValueType () const {
   ret.ValueInnerType = TYPE_Void;
   ret.KClass = nullptr;
   return ret;
-  unguard;
 }
 
 
@@ -463,7 +438,6 @@ VFieldType VFieldType::GetDictValueType () const {
 //
 //==========================================================================
 int VFieldType::GetStackSize () const {
-  guard(VFieldType::GetStackSize);
   switch (Type) {
     case TYPE_Int: return 4;
     case TYPE_Byte: return 4;
@@ -484,7 +458,6 @@ int VFieldType::GetStackSize () const {
     case TYPE_Dictionary: return 4; // VScriptDict is just a pointer to the underlying implementation class
   }
   return 0;
-  unguard;
 }
 
 
@@ -494,7 +467,6 @@ int VFieldType::GetStackSize () const {
 //
 //==========================================================================
 int VFieldType::GetSize () const {
-  guard(VFieldType::GetSize);
   switch (Type) {
     case TYPE_Int: return sizeof(vint32);
     case TYPE_Byte: return sizeof(vuint8);
@@ -515,7 +487,6 @@ int VFieldType::GetSize () const {
     case TYPE_Dictionary: return sizeof(VScriptDict);
   }
   return 0;
-  unguard;
 }
 
 
@@ -525,7 +496,6 @@ int VFieldType::GetSize () const {
 //
 //==========================================================================
 int VFieldType::GetAlignment () const {
-  guard(VFieldType::GetAlignment);
   switch (Type) {
     case TYPE_Int: return sizeof(vint32);
     case TYPE_Byte: return sizeof(vuint8);
@@ -546,7 +516,6 @@ int VFieldType::GetAlignment () const {
     case TYPE_Dictionary: return sizeof(void *);
   }
   return 0;
-  unguard;
 }
 
 
@@ -558,7 +527,6 @@ int VFieldType::GetAlignment () const {
 //
 //==========================================================================
 bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
-  guardSlow(VFieldType::CheckPassable);
   if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate && Type != TYPE_SliceArray) {
     if (raiseError) ParseError(l, "Type `%s` is not passable", *GetName());
     return false;
@@ -568,7 +536,6 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
     return false;
   }
   return true;
-  unguardSlow;
 }
 
 
@@ -580,7 +547,6 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
 //
 //==========================================================================
 bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
-  guardSlow(VFieldType::CheckReturnable);
   if (GetStackSize() != 4 && Type != TYPE_Vector) {
     if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
     return false;
@@ -590,7 +556,6 @@ bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
     return false;
   }
   return true;
-  unguardSlow;
 }
 
 
@@ -605,7 +570,6 @@ bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
 //
 //==========================================================================
 bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &Other, bool raiseError) const {
-  guard(VFieldType::CheckMatch);
   if (!asRef) {
     if (!CheckPassable(l, raiseError)) return false;
     if (!Other.CheckPassable(l, raiseError)) return false;
@@ -710,7 +674,6 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
   }
 
   return false;
-  unguard;
 }
 
 
@@ -720,7 +683,6 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
 //
 //==========================================================================
 VStr VFieldType::GetName () const {
-  guard(VFieldType::GetName);
   VStr Ret;
   switch (Type) {
     case TYPE_Void: return "void";
@@ -758,7 +720,6 @@ VStr VFieldType::GetName () const {
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);
   }
-  unguard;
 }
 
 
@@ -910,7 +871,6 @@ VScriptArray::VScriptArray (const TArray<VStr> &xarr) {
 //
 //==========================================================================
 void VScriptArray::Clear (const VFieldType &Type) {
-  guard(VScriptArray::Clear);
   if (ArrData) {
     Flatten();
     // don't waste time destructing types without dtors
@@ -925,7 +885,6 @@ void VScriptArray::Clear (const VFieldType &Type) {
   ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
-  unguard;
 }
 
 
@@ -935,7 +894,6 @@ void VScriptArray::Clear (const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::Reset (const VFieldType &Type) {
-  guard(VScriptArray::Reset);
   if (ArrData) {
     Flatten();
     // don't waste time destructing types without dtors
@@ -947,7 +905,6 @@ void VScriptArray::Reset (const VFieldType &Type) {
   }
   //fprintf(stderr, "VScriptArray::Reset: oldnum=%d; oldsize=%d\n", ArrNum, ArrSize);
   ArrNum = 0;
-  unguard;
 }
 
 
@@ -957,7 +914,6 @@ void VScriptArray::Reset (const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
-  guard(VScriptArray::Resize);
   check(NewSize >= 0);
 
   if (NewSize <= 0) { Clear(Type); return; }
@@ -1029,8 +985,6 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
     }
   }
 #endif
-
-  unguard;
 }
 
 
@@ -1056,7 +1010,6 @@ void VScriptArray::SetSize2D (int dim1, int dim2, const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
-  guard(VScriptArray::SetNum);
   check(NewNum >= 0);
   Flatten(); // flatten 2d array
   if (!doShrink && NewNum == 0) {
@@ -1087,7 +1040,6 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   }
   if (ArrSize < NewNum) FatalError("VC: internal error in (VScriptArray::SetNum)");
   ArrNum = NewNum;
-  unguard;
 }
 
 
@@ -1097,13 +1049,11 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
 //
 //==========================================================================
 void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
-  guard(VScriptArray::SetNumMinus);
   Flatten(); // flatten 2d array
   if (NewNum <= 0) return;
   if (NewNum > ArrNum) NewNum = ArrNum;
   NewNum = ArrNum-NewNum;
   SetNum(NewNum, Type, false);
-  unguard;
 }
 
 
@@ -1113,13 +1063,11 @@ void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
-  guard(VScriptArray::SetNumPlus);
   Flatten(); // flatten 2d array
   if (NewNum <= 0) return;
   if (ArrNum >= 0x3fffffff || 0x3fffffff-ArrNum < NewNum) FatalError("out of memory for dynarray");
   NewNum += ArrNum;
   SetNum(NewNum, Type, false);
-  unguard;
 }
 
 
@@ -1129,7 +1077,6 @@ void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
-  guard(VScriptArray::Insert);
   Flatten(); // flatten 2d array
   //check(ArrData != nullptr);
   check(Index >= 0);
@@ -1151,7 +1098,6 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
     if (Index < oldnum) memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
   }
   memset(ArrData+Index*InnerSize, 0, Count*InnerSize);
-  unguard;
 }
 
 
@@ -1161,7 +1107,6 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
-  guard(VScriptArray::Remove);
   Flatten(); // flatten 2d array
   //check(ArrData != nullptr);
   check(Index >= 0);
@@ -1189,7 +1134,6 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
     // now resize it, but don't shrink (this will clear unused values too)
     SetNum(oldnum-Count, Type, false);
   }
-  unguard;
 }
 
 

@@ -100,7 +100,6 @@ VName VStruct::ResolveAlias (VName aname) {
 //
 //==========================================================================
 void VStruct::Serialise (VStream &Strm) {
-  guard(VStruct::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -135,7 +134,6 @@ void VStruct::Serialise (VStream &Strm) {
     cacheNeedCleanup = -1;
 #endif
   }
-  unguard;
 }
 
 
@@ -145,7 +143,6 @@ void VStruct::Serialise (VStream &Strm) {
 //
 //==========================================================================
 void VStruct::AddField (VField *f) {
-  guard(VStruct::AddField);
   for (VField *Check = Fields; Check; Check = Check->Next) {
     if (f->Name == Check->Name) {
       ParseError(f->Loc, "Redeclared field");
@@ -166,7 +163,6 @@ void VStruct::AddField (VField *f) {
 #if !defined(IN_VCC)
   cacheNeedCleanup = -1;
 #endif
-  unguard;
 }
 
 
@@ -176,13 +172,11 @@ void VStruct::AddField (VField *f) {
 //
 //==========================================================================
 VField *VStruct::FindField (VName FieldName) {
-  guard(VStruct::FindField);
   if (FieldName == NAME_None) return nullptr;
   FieldName = ResolveAlias(FieldName);
   for (VField *fi = Fields; fi; fi = fi->Next) if (fi->Name == FieldName) return fi;
   if (ParentStruct) return ParentStruct->FindField(FieldName);
   return nullptr;
-  unguard;
 }
 
 
@@ -192,14 +186,12 @@ VField *VStruct::FindField (VName FieldName) {
 //
 //==========================================================================
 bool VStruct::NeedsDestructor () {
-  guard(VStruct::NeedsDestructor);
   if (cacheNeedDTor >= 0) return (cacheNeedDTor != 0);
   cacheNeedDTor = 1;
   for (VField *F = Fields; F; F = F->Next) if (F->NeedsDestructor()) return true;
   if (ParentStruct && ParentStruct->NeedsDestructor()) return true;
   cacheNeedDTor = 0;
   return false;
-  unguard;
 }
 
 
@@ -209,7 +201,6 @@ bool VStruct::NeedsDestructor () {
 //
 //==========================================================================
 bool VStruct::Define () {
-  guard(VStruct::Define);
   if (ParentStructName != NAME_None) {
     VFieldType type = StaticFindType((Outer->MemberType == MEMBER_Class ? (VClass *)Outer : nullptr), ParentStructName);
     if (type.Type != TYPE_Struct) {
@@ -226,7 +217,6 @@ bool VStruct::Define () {
 
   Defined = true;
   return true;
-  unguard;
 }
 
 
@@ -236,7 +226,6 @@ bool VStruct::Define () {
 //
 //==========================================================================
 bool VStruct::DefineMembers () {
-  guard(VStruct::DefineMembers);
   bool Ret = true;
 
   // define fields
@@ -271,7 +260,6 @@ bool VStruct::DefineMembers () {
 
   StackSize = (size+3)/4;
   return Ret;
-  unguard;
 }
 
 
@@ -295,7 +283,6 @@ bool VStruct::IsA (const VStruct *s) const {
 //
 //==========================================================================
 void VStruct::PostLoad () {
-  guard(VStruct::PostLoad);
   if (PostLoaded) return; // already done
 
   // make sure parent struct has been set up
@@ -311,7 +298,6 @@ void VStruct::PostLoad () {
   InitDestructorFields();
 
   PostLoaded = true;
-  unguard;
 }
 
 
@@ -321,7 +307,6 @@ void VStruct::PostLoad () {
 //
 //==========================================================================
 void VStruct::CalcFieldOffsets () {
-  guard(VStruct::CalcFieldOffsets);
   int size = (ParentStruct ? ParentStruct->Size : 0);
   Alignment = (ParentStruct ? ParentStruct->Alignment : 0);
   VField *PrevField = nullptr;
@@ -352,7 +337,6 @@ void VStruct::CalcFieldOffsets () {
     PrevField = fi;
   }
   Size = (size+Alignment-1)&~(Alignment-1);
-  unguard;
 }
 
 
@@ -362,7 +346,6 @@ void VStruct::CalcFieldOffsets () {
 //
 //==========================================================================
 void VStruct::InitReferences () {
-  guard(VStruct::InitReferences);
   // invalidate caches (just in case)
   cacheNeedDTor = -1;
 #if !defined(IN_VCC)
@@ -422,7 +405,6 @@ void VStruct::InitReferences () {
         break;
     }
   }
-  unguard;
 }
 
 
@@ -432,7 +414,6 @@ void VStruct::InitReferences () {
 //
 //==========================================================================
 void VStruct::InitDestructorFields () {
-  guard(VStruct::InitDestructorFields);
   // invalidate caches (just in case)
   cacheNeedDTor = -1;
 #if !defined(IN_VCC)
@@ -483,19 +464,16 @@ void VStruct::InitDestructorFields () {
         break;
     }
   }
-  unguard;
 }
 
 
 #if !defined(IN_VCC)
-
 //==========================================================================
 //
 //  VStruct::CopyObject
 //
 //==========================================================================
 void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
-  guard(VStruct::CopyObject);
   // copy parent struct's fields
   if (ParentStruct) ParentStruct->CopyObject(Src, Dst);
   // copy fields
@@ -503,7 +481,6 @@ void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
     if (F->Flags&FIELD_Internal) continue;
     VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
   }
-  unguardf(("(%s)", *Name));
 }
 
 
@@ -620,13 +597,11 @@ bool VStruct::NeedToCleanObject () {
 //
 //==========================================================================
 bool VStruct::CleanObject (vuint8 *Data) {
-  guard(VStruct::CleanObject);
   bool res = false;
   for (VField *F = ReferenceFields; F; F = F->NextReference) {
     if (VField::CleanField(Data+F->Ofs, F->Type)) res = true;
   }
   return res;
-  unguardf(("(%s)", *Name));
 }
 
 
@@ -636,9 +611,7 @@ bool VStruct::CleanObject (vuint8 *Data) {
 //
 //==========================================================================
 void VStruct::DestructObject (vuint8 *Data) {
-  guard(VStruct::DestructObject);
   for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField(Data+F->Ofs, F->Type);
-  unguardf(("(%s)", *Name));
 }
 
 
@@ -658,7 +631,6 @@ void VStruct::ZeroObject (vuint8 *Data) {
 //
 //==========================================================================
 bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
-  guard(VStruct::IdenticalObject);
   // compare parent struct's fields
   if (ParentStruct) {
     if (!ParentStruct->IdenticalObject(Val1, Val2)) return false;
@@ -668,7 +640,6 @@ bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
     if (!VField::IdenticalValue(Val1+F->Ofs, Val2+F->Ofs, F->Type)) return false;
   }
   return true;
-  unguardf(("(%s)", *Name));
 }
 #endif //!defined(IN_VCC)
 
@@ -680,7 +651,6 @@ bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
 //
 //==========================================================================
 bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data) {
-  guard(VStruct::NetSerialiseObject);
   bool Ret = true;
   // serialise parent struct's fields
   if (ParentStruct) Ret = ParentStruct->NetSerialiseObject(Strm, Map, Data);
@@ -689,7 +659,6 @@ bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMap *Map, vuint8 *Da
     if (!VField::NetSerialiseValue(Strm, Map, Data+F->Ofs, F->Type)) Ret = false;
   }
   return Ret;
-  unguardf(("(%s)", *Name));
 }
 #endif
 

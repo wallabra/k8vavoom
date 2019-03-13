@@ -80,7 +80,6 @@ VState::~VState () {
 //
 //==========================================================================
 void VState::Serialise (VStream &Strm) {
-  guard(VState::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -108,7 +107,6 @@ void VState::Serialise (VStream &Strm) {
     LightInited = false;
     LightDef = nullptr;
   }
-  unguard;
 }
 
 
@@ -118,10 +116,8 @@ void VState::Serialise (VStream &Strm) {
 //
 //==========================================================================
 void VState::PostLoad () {
-  guard(VState::PostLoad);
   SpriteIndex = (SpriteName != NAME_None ? VClass::FindSprite(SpriteName) : 1);
   NetNext = Next;
-  unguard;
 }
 
 
@@ -131,11 +127,9 @@ void VState::PostLoad () {
 //
 //==========================================================================
 bool VState::Define () {
-  guard(VState::Define);
   bool Ret = true;
   if (Function && !Function->Define()) Ret = false;
   return Ret;
-  unguard;
 }
 
 
@@ -145,7 +139,6 @@ bool VState::Define () {
 //
 //==========================================================================
 void VState::Emit () {
-  guard(VState::Emit);
   VEmitContext ec(this);
   if (GotoLabel != NAME_None) {
     //fprintf(stderr, "state `%s` label resolve: %s\n", *GetFullName(), *GotoLabel);
@@ -168,7 +161,6 @@ void VState::Emit () {
       }
     }
   }
-  unguard;
 }
 
 
@@ -178,7 +170,6 @@ void VState::Emit () {
 //
 //==========================================================================
 bool VState::IsInRange (VState *Start, VState *End, int MaxDepth) {
-  guard(VState::IsInRange);
   int Depth = 0;
   VState *check = Start;
   do {
@@ -187,7 +178,6 @@ bool VState::IsInRange (VState *Start, VState *End, int MaxDepth) {
     ++Depth;
   } while (Depth < MaxDepth && check != End);
   return false;
-  unguard;
 }
 
 
@@ -197,12 +187,10 @@ bool VState::IsInRange (VState *Start, VState *End, int MaxDepth) {
 //
 //==========================================================================
 bool VState::IsInSequence (VState *Start) {
-  guard(VState::IsInRange);
   for (VState *check = Start; check; check = (check->Next == check->NextState ? check->Next : nullptr)) {
     if (check == this) return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -212,7 +200,6 @@ bool VState::IsInSequence (VState *Start) {
 //
 //==========================================================================
 VState *VState::GetPlus (int Offset, bool IgnoreJump) {
-  guard(VState::GetPlus);
   check(Offset >= 0);
   VState *S = this;
   int Count = Offset;
@@ -221,5 +208,4 @@ VState *VState::GetPlus (int Offset, bool IgnoreJump) {
     S = S->Next;
   }
   return S;
-  unguard;
 }

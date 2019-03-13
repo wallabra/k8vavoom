@@ -51,7 +51,6 @@ void VParser::ErrorFieldTypeExpected () {
 //
 //==========================================================================
 int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
-  guard(VParser::ParseArgList);
   int count = 0;
   if (!Lex.Check(TK_RParen)) {
     do {
@@ -108,7 +107,6 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
     Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
   }
   return count;
-  unguard;
 }
 
 
@@ -118,11 +116,9 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
 //
 //==========================================================================
 VExpression *VParser::ParseDotMethodCall (VExpression *SelfExpr, VName MethodName, const TLocation &Loc) {
-  guard(VParser::ParseDotMethodCall);
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = ParseArgList(Loc, Args);
   return new VDotInvocation(SelfExpr, MethodName, Loc, NumArgs, Args);
-  unguard;
 }
 
 
@@ -132,11 +128,9 @@ VExpression *VParser::ParseDotMethodCall (VExpression *SelfExpr, VName MethodNam
 //
 //==========================================================================
 VExpression *VParser::ParseBaseMethodCall (VName Name, const TLocation &Loc) {
-  guard(VParser::ParseBaseMethodCall);
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = ParseArgList(Loc, Args);
   return new VSuperInvocation(Name, NumArgs, Args, Loc);
-  unguard;
 }
 
 
@@ -146,11 +140,9 @@ VExpression *VParser::ParseBaseMethodCall (VName Name, const TLocation &Loc) {
 //
 //==========================================================================
 VExpression *VParser::ParseMethodCallOrCast (VName Name, const TLocation &Loc) {
-  guard(VParser::ParseMethodCallOrCast);
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = ParseArgList(Loc, Args);
   return new VCastOrInvocation(Name, Loc, NumArgs, Args);
-  unguard;
 }
 
 
@@ -177,7 +169,6 @@ VLocalDecl *VParser::CreateUnnamedLocal (VFieldType type, const TLocation &loc) 
 //
 //==========================================================================
 VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
-  guard(VParser::ParseLocalVar);
   VLocalDecl *Decl = new VLocalDecl(Lex.Location);
   bool isFirstVar = true;
   bool wasNewArray = false;
@@ -274,7 +265,6 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
   delete TypeExpr;
   TypeExpr = nullptr;
   return Decl;
-  unguard;
 }
 
 
@@ -286,7 +276,6 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority0 () {
-  guard(VParser::ParseExpressionPriority0);
   bool bLocals = CheckForLocal;
   CheckForLocal = false;
   TLocation l = Lex.Location;
@@ -475,7 +464,6 @@ VExpression *VParser::ParseExpressionPriority0 () {
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -487,7 +475,6 @@ VExpression *VParser::ParseExpressionPriority0 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority1 () {
-  guard(VParser::ParseExpressionPriority1);
   VExpression *op = ParseExpressionPriority0();
   if (!op) return nullptr;
   for (;;) {
@@ -536,7 +523,6 @@ VExpression *VParser::ParseExpressionPriority1 () {
     }
   }
   return op;
-  unguard;
 }
 
 
@@ -550,7 +536,6 @@ VExpression *VParser::ParseExpressionPriority1 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority2 () {
-  guard(VParser::ParseExpressionPriority2);
   VExpression *op;
   TLocation l = Lex.Location;
 
@@ -572,7 +557,6 @@ VExpression *VParser::ParseExpressionPriority2 () {
   if (Lex.Check(TK_Dec)) return new VUnaryMutator(VUnaryMutator::PostDec, op, l);
 
   return op;
-  unguard;
 }
 
 
@@ -584,7 +568,6 @@ VExpression *VParser::ParseExpressionPriority2 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority3 () {
-  guard(VParser::ParseExpressionPriority3);
   VExpression *op1 = ParseExpressionPriority2();
   if (!op1) return nullptr;
   for (;;) {
@@ -603,7 +586,6 @@ VExpression *VParser::ParseExpressionPriority3 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -615,7 +597,6 @@ VExpression *VParser::ParseExpressionPriority3 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority4 () {
-  guard(VParser::ParseExpressionPriority4);
   VExpression *op1 = ParseExpressionPriority3();
   if (!op1) return nullptr;
   for (;;) {
@@ -634,7 +615,6 @@ VExpression *VParser::ParseExpressionPriority4 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -646,7 +626,6 @@ VExpression *VParser::ParseExpressionPriority4 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority5 () {
-  guard(VParser::ParseExpressionPriority5);
   VExpression *op1 = ParseExpressionPriority4();
   if (!op1) return nullptr;
   for (;;) {
@@ -665,7 +644,6 @@ VExpression *VParser::ParseExpressionPriority5 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -677,7 +655,6 @@ VExpression *VParser::ParseExpressionPriority5 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority5_1 () {
-  guard(VParser::ParseExpressionPriority5_1);
   VExpression *op1 = ParseExpressionPriority5();
   if (!op1) return nullptr;
   for (;;) {
@@ -695,7 +672,6 @@ VExpression *VParser::ParseExpressionPriority5_1 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -707,7 +683,6 @@ VExpression *VParser::ParseExpressionPriority5_1 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority6 () {
-  guard(VParser::ParseExpressionPriority6);
   VExpression *op1 = ParseExpressionPriority5_1();
   if (!op1) return nullptr;
   for (;;) {
@@ -729,7 +704,6 @@ VExpression *VParser::ParseExpressionPriority6 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -741,7 +715,6 @@ VExpression *VParser::ParseExpressionPriority6 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority7 () {
-  guard(VParser::ParseExpressionPriority7);
   VExpression *op1 = ParseExpressionPriority6();
   if (!op1) return nullptr;
   for (;;) {
@@ -757,7 +730,6 @@ VExpression *VParser::ParseExpressionPriority7 () {
     }
   }
   return op1;
-  unguard;
 }
 
 
@@ -769,7 +741,6 @@ VExpression *VParser::ParseExpressionPriority7 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority8 () {
-  guard(VParser::ParseExpressionPriority8);
   VExpression *op1 = ParseExpressionPriority7();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -779,7 +750,6 @@ VExpression *VParser::ParseExpressionPriority8 () {
     l = Lex.Location;
   }
   return op1;
-  unguard;
 }
 
 
@@ -791,7 +761,6 @@ VExpression *VParser::ParseExpressionPriority8 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority9 () {
-  guard(VParser::ParseExpressionPriority9);
   VExpression *op1 = ParseExpressionPriority8();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -801,7 +770,6 @@ VExpression *VParser::ParseExpressionPriority9 () {
     l = Lex.Location;
   }
   return op1;
-  unguard;
 }
 
 
@@ -813,7 +781,6 @@ VExpression *VParser::ParseExpressionPriority9 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority10 () {
-  guard(VParser::ParseExpressionPriority10);
   VExpression *op1 = ParseExpressionPriority9();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -823,7 +790,6 @@ VExpression *VParser::ParseExpressionPriority10 () {
     l = Lex.Location;
   }
   return op1;
-  unguard;
 }
 
 
@@ -835,7 +801,6 @@ VExpression *VParser::ParseExpressionPriority10 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority11 () {
-  guard(VParser::ParseExpressionPriority11);
   VExpression *op1 = ParseExpressionPriority10();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -845,7 +810,6 @@ VExpression *VParser::ParseExpressionPriority11 () {
     l = Lex.Location;
   }
   return op1;
-  unguard;
 }
 
 
@@ -857,7 +821,6 @@ VExpression *VParser::ParseExpressionPriority11 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority12 () {
-  guard(VParser::ParseExpressionPriority12);
   VExpression *op1 = ParseExpressionPriority11();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -867,7 +830,6 @@ VExpression *VParser::ParseExpressionPriority12 () {
     l = Lex.Location;
   }
   return op1;
-  unguard;
 }
 
 
@@ -879,7 +841,6 @@ VExpression *VParser::ParseExpressionPriority12 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority13 () {
-  guard(VParser::ParseExpressionPriority13);
   VExpression *op = ParseExpressionPriority12();
   if (!op) return nullptr;
   TLocation l = Lex.Location;
@@ -896,7 +857,6 @@ VExpression *VParser::ParseExpressionPriority13 () {
     }
   }
   return op;
-  unguard;
 }
 
 
@@ -908,7 +868,6 @@ VExpression *VParser::ParseExpressionPriority13 () {
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
-  guard(VParser::ParseExpressionPriority14);
   VExpression *op1 = ParseExpressionPriority13();
   if (!op1) return nullptr;
   TLocation l = Lex.Location;
@@ -932,7 +891,6 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
   op1 = new VAssignment(oper, op1, op2, l);
   if (!allowAssign) ParseError(l, "assignment is not allowed here");
   return op1;
-  unguard;
 }
 
 
@@ -944,11 +902,9 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
 //
 //==========================================================================
 VExpression *VParser::ParseExpression (bool allowAssign) {
-  guard(VParser::ParseExpression);
   CheckForLocal = false;
   if (!allowAssign && Lex.Token == TK_LParen) allowAssign = true;
   return ParseExpressionPriority14(allowAssign);
-  unguard;
 }
 
 
@@ -1261,7 +1217,6 @@ VStatement *VParser::ParseForeach () {
 //
 //==========================================================================
 VStatement *VParser::ParseStatement () {
-  guard(VParser::ParseStatement);
   TLocation l = Lex.Location;
   switch(Lex.Token) {
     case TK_EOF:
@@ -1494,7 +1449,6 @@ VStatement *VParser::ParseStatement () {
         return new VExpressionStatement(new VDropResult(Expr));
       }
   }
-  unguard;
 }
 
 
@@ -1504,7 +1458,6 @@ VStatement *VParser::ParseStatement () {
 //
 //==========================================================================
 VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
-  guard(VParser::ParseCompoundStatement);
   // empty statement?
   if (Lex.Token == TK_RBrace) {
     Lex.NextToken();
@@ -1560,7 +1513,6 @@ VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
   lastCompoundStart = savedLCS;
   inCompound = savedIC;
   return Comp;
-  unguard;
 }
 
 
@@ -1572,7 +1524,6 @@ VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
 //
 //==========================================================================
 VExpression *VParser::ParsePrimitiveType () {
-  guard(VParser::ParsePrimitiveType);
   TLocation l = Lex.Location;
   switch (Lex.Token) {
     case TK_Void: Lex.NextToken(); return new VTypeExprSimple(TYPE_Void, l);
@@ -1679,7 +1630,6 @@ VExpression *VParser::ParsePrimitiveType () {
     default:
       return nullptr;
   }
-  unguard;
 }
 
 
@@ -1689,7 +1639,6 @@ VExpression *VParser::ParsePrimitiveType () {
 //
 //==========================================================================
 VExpression *VParser::ParseType (bool allowDelegates) {
-  guard(VParser::ParseType);
   auto stloc = Lex.Location;
   auto Type = ParsePrimitiveType();
   if (!Type) return nullptr; // either error, or not a type
@@ -1749,7 +1698,6 @@ VExpression *VParser::ParseType (bool allowDelegates) {
   }
 
   return Type;
-  unguard;
 }
 
 
@@ -1761,7 +1709,6 @@ VExpression *VParser::ParseType (bool allowDelegates) {
 //
 //==========================================================================
 VExpression *VParser::ParseTypePtrs (VExpression *type) {
-  guard(VParser::ParseTypePtrs);
   if (!type) return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_Asterisk)) {
@@ -1770,7 +1717,6 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
     l = Lex.Location;
   }
   return type;
-  unguard;
 }
 
 
@@ -1782,9 +1728,7 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
 //
 //==========================================================================
 VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
-  guard(VParser::ParseTypePtrs);
   return ParseTypePtrs(ParseType(allowDelegates));
-  unguard;
 }
 
 
@@ -1796,7 +1740,6 @@ VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
 void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation &MethodLoc,
                               VClass *InClass, vint32 Modifiers, bool Iterator)
 {
-  guard(VParser::ParseMethodDef);
   if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
 
   VMethod *Func = new VMethod(MName, InClass, MethodLoc);
@@ -1918,7 +1861,6 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     Func->Statement = ParseCompoundStatement(stloc);
     currFunc = oldcf;
   }
-  unguard;
 }
 
 
@@ -1928,7 +1870,6 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 //
 //==========================================================================
 void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
-  guard(VParser::ParseDelegate);
   VMethod *Func = new VMethod(NAME_None, Delegate, Delegate->Loc);
   Func->ReturnTypeExpr = RetType;
   Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
@@ -1954,7 +1895,6 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   Delegate->Func = Func;
   Delegate->Type = VFieldType(TYPE_Delegate);
   Delegate->Type.Function = Func;
-  unguard;
 }
 
 
@@ -1964,8 +1904,6 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
 //
 //==========================================================================
 VExpression *VParser::ParseLambda () {
-  guard(VParser::ParseLambda);
-
   TLocation stl = Lex.Location;
 
   if (!currFunc) { ParseError(stl, "Lambda outside of method"); return new VNullLiteral(stl); }
@@ -2022,7 +1960,6 @@ VExpression *VParser::ParseLambda () {
   }
 
   return new VDelegateVal(new VSelf(stl), Func, stl);
-  unguard;
 }
 
 
@@ -2032,7 +1969,6 @@ VExpression *VParser::ParseLambda () {
 //
 //==========================================================================
 void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats) {
-  guard(VParser::ParseDefaultProperties);
   VMethod *Func = new VMethod(NAME_None, InClass, Lex.Location);
   Func->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
   Func->ReturnType = VFieldType(TYPE_Void);
@@ -2053,7 +1989,6 @@ void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcoun
     Func->Statement = new VCompound(Lex.Location);
     for (int f = 0; f < defcount; ++f) ((VCompound *)Func->Statement)->Statements.Append(stats[f]);
   }
-  unguard;
 }
 
 
@@ -2063,8 +1998,6 @@ void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcoun
 //
 //==========================================================================
 void VParser::ParseStruct (VClass *InClass, bool IsVector) {
-  guard(VParser::ParseStruct);
-
   bool globalRO = Lex.Check(TK_ReadOnly);
 
   VName Name = Lex.Name;
@@ -2226,7 +2159,6 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
   } else {
     Package->ParsedStructs.Append(Struct);
   }
-  unguard;
 }
 
 
@@ -2236,7 +2168,6 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
 //
 //==========================================================================
 VName VParser::ParseStateString () {
-  guard(VParser::ParseStateString);
   VStr StateStr;
 
   if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral) {
@@ -2267,7 +2198,6 @@ VName VParser::ParseStateString () {
   }
 
   return *StateStr;
-  unguard;
 }
 
 
@@ -2277,7 +2207,6 @@ VName VParser::ParseStateString () {
 //
 //==========================================================================
 void VParser::ParseStates (VClass *InClass) {
-  guard(VParser::ParseStates);
   if (Lex.Token == TK_Identifier && VStr::ICmp(*Lex.Name, "d2df") == 0) {
     Lex.NextToken();
     ParseStatesNewStyle(InClass);
@@ -2625,8 +2554,6 @@ void VParser::ParseStates (VClass *InClass) {
   // make sure all state labels have corresponding states
   if (NewLabelsStart != InClass->StateLabelDefs.Num()) ParseError(Lex.Location, "State label at the end of state block");
   if (PrevState) ParseError(Lex.Location, "State block not ended");
-
-  unguard;
 }
 
 
@@ -2636,8 +2563,6 @@ void VParser::ParseStates (VClass *InClass) {
 //
 //==========================================================================
 void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
-  guard(VParser::ParseStatesNewStyle);
-
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
 
   int stateIdx = 0;
@@ -3147,8 +3072,6 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
   // make sure all state labels have corresponding states
   if (newLabelsStart != inClass->StateLabelDefs.Num()) ParseError(Lex.Location, "State label at the end of state block");
   if (prevState) ParseError(Lex.Location, "State block not ended");
-
-  unguard;
 }
 
 
@@ -3158,8 +3081,6 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
 //
 //==========================================================================
 void VParser::ParseStatesNewStyle (VClass *inClass) {
-  guard(VParser::ParseStatesNewStyle);
-
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
 
   int stateIdx = 0;
@@ -3662,8 +3583,6 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
   // make sure all state labels have corresponding states
   if (newLabelsStart != inClass->StateLabelDefs.Num()) ParseError(Lex.Location, "State label at the end of state block");
   if (prevState) ParseError(Lex.Location, "State block not ended");
-
-  unguard;
 }
 
 
@@ -3673,7 +3592,6 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
 //
 //==========================================================================
 void VParser::ParseReplication (VClass *Class) {
-  guard(VParser::ParseReplication);
   Lex.Expect(TK_LBrace);
   while (!Lex.Check(TK_RBrace)) {
     VRepInfo &RI = Class->RepInfos.Alloc();
@@ -3709,7 +3627,6 @@ void VParser::ParseReplication (VClass *Class) {
     } while (Lex.Check(TK_Comma));
     Lex.Expect(TK_Semicolon);
   }
-  unguard;
 }
 
 
@@ -3719,8 +3636,6 @@ void VParser::ParseReplication (VClass *Class) {
 //
 //==========================================================================
 void VParser::ParseClass () {
-  guard(VParser::ParseClass);
-
   //fprintf(stderr, "***:%s: <%s>\n", *Lex.Location.toStringNoCol(), *Lex.Name);
 
   VName ClassName = Lex.Name;
@@ -4348,7 +4263,6 @@ void VParser::ParseClass () {
   currClass = oldcc;
 
   Package->ParsedClasses.Append(Class);
-  unguard;
 }
 
 
@@ -4358,7 +4272,6 @@ void VParser::ParseClass () {
 //
 //==========================================================================
 void VParser::Parse () {
-  guard(VParser::Parse);
   dprintf("Parsing\n");
   anonLocalCount = 0;
   inCompound = false;
@@ -4457,5 +4370,4 @@ void VParser::Parse () {
       }
   }
   if (vcErrorCount) BailOut();
-  unguard;
 }

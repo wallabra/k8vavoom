@@ -440,7 +440,6 @@ static bool thisIsBasePak = false;
 //
 //==========================================================================
 static void ParseDecorateDef (VXmlDocument &Doc) {
-  guard(ParseDecorateDef);
   for (VXmlNode *N = Doc.Root.FindChild("class"); N; N = N->FindNext()) {
     VStr ClassName = N->GetAttribute("name");
     VFlagList &Lst = FlagList.Alloc();
@@ -647,7 +646,6 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -657,10 +655,8 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
 //
 //==========================================================================
 static float GetClassFieldFloat (VClass *Class, VName FieldName) {
-  guard(GetClassFieldFloat);
   VField *F = Class->FindFieldChecked(FieldName);
   return F->GetFloat((VObject*)Class->Defaults);
-  unguard;
 }
 
 
@@ -669,11 +665,9 @@ static float GetClassFieldFloat (VClass *Class, VName FieldName) {
 //  GetClassFieldVec
 //
 //==========================================================================
-__attribute__((unused)) static TVec GetClassFieldVec (VClass *Class, VName FieldName) {
-  guard(GetClassFieldVec);
+static __attribute__((unused)) TVec GetClassFieldVec (VClass *Class, VName FieldName) {
   VField *F = Class->FindFieldChecked(FieldName);
   return F->GetVec((VObject*)Class->Defaults);
-  unguard;
 }
 
 
@@ -683,10 +677,8 @@ __attribute__((unused)) static TVec GetClassFieldVec (VClass *Class, VName Field
 //
 //==========================================================================
 static TArray<VDropItemInfo> &GetClassDropItems (VClass *Class) {
-  guard(GetClassDropItems);
   VField *F = Class->FindFieldChecked("DropItemList");
   return *(TArray<VDropItemInfo>*)F->GetFieldPtr((VObject*)Class->Defaults);
-  unguard;
 }
 
 
@@ -696,10 +688,8 @@ static TArray<VDropItemInfo> &GetClassDropItems (VClass *Class) {
 //
 //==========================================================================
 static TArray<VDamageFactor> &GetClassDamageFactors (VClass *Class) {
-  guard(GetClassDamageFactors);
   VField *F = Class->FindFieldChecked("DamageFactors");
   return *(TArray<VDamageFactor>*)F->GetFieldPtr((VObject *)Class->Defaults);
-  unguard;
 }
 
 
@@ -709,10 +699,8 @@ static TArray<VDamageFactor> &GetClassDamageFactors (VClass *Class) {
 //
 //==========================================================================
 static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
-  guard(GetClassPainChances);
   VField *F = Class->FindFieldChecked("PainChances");
   return *(TArray<VPainChanceInfo>*)F->GetFieldPtr((VObject*)Class->Defaults);
-  unguard;
 }
 
 
@@ -722,10 +710,8 @@ static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
 //
 //==========================================================================
 static void SetClassFieldInt (VClass *Class, VName FieldName, int Value, int Idx=0) {
-  guard(SetClassFieldInt);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetInt((VObject*)Class->Defaults, Value, Idx);
-  unguard;
 }
 
 
@@ -735,10 +721,8 @@ static void SetClassFieldInt (VClass *Class, VName FieldName, int Value, int Idx
 //
 //==========================================================================
 static void SetClassFieldByte (VClass *Class, VName FieldName, vuint8 Value) {
-  guard(SetClassFieldByte);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetByte((VObject*)Class->Defaults, Value);
-  unguard;
 }
 
 
@@ -748,10 +732,8 @@ static void SetClassFieldByte (VClass *Class, VName FieldName, vuint8 Value) {
 //
 //==========================================================================
 static void SetClassFieldFloat (VClass *Class, VName FieldName, float Value, int Idx=0) {
-  guard(SetClassFieldFloat);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetFloat((VObject*)Class->Defaults, Value, Idx);
-  unguard;
 }
 
 
@@ -761,10 +743,8 @@ static void SetClassFieldFloat (VClass *Class, VName FieldName, float Value, int
 //
 //==========================================================================
 static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
-  guard(SetClassFieldBool);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetBool((VObject*)Class->Defaults, Value);
-  unguard;
 }
 
 
@@ -774,10 +754,8 @@ static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
 //
 //==========================================================================
 static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
-  guard(SetClassFieldName);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetName((VObject*)Class->Defaults, Value);
-  unguard;
 }
 
 
@@ -787,10 +765,8 @@ static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
 //
 //==========================================================================
 static void SetClassFieldStr (VClass *Class, VName FieldName, const VStr &Value) {
-  guard(SetClassFieldStr);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetStr((VObject*)Class->Defaults, Value);
-  unguard;
 }
 
 
@@ -799,11 +775,9 @@ static void SetClassFieldStr (VClass *Class, VName FieldName, const VStr &Value)
 //  SetClassFieldVec
 //
 //==========================================================================
-__attribute__((unused)) static void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
-  guard(SetClassFieldVec);
+static __attribute__((unused)) void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetVec((VObject*)Class->Defaults, Value);
-  unguard;
 }
 
 
@@ -812,11 +786,9 @@ __attribute__((unused)) static void SetClassFieldVec (VClass *Class, VName Field
 //  SetFieldByte
 //
 //==========================================================================
-__attribute__((unused)) static void SetFieldByte (VObject *Obj, VName FieldName, vuint8 Value) {
-  guard(SetFieldByte);
+static __attribute__((unused)) void SetFieldByte (VObject *Obj, VName FieldName, vuint8 Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetByte(Obj, Value);
-  unguard;
 }
 
 
@@ -825,11 +797,9 @@ __attribute__((unused)) static void SetFieldByte (VObject *Obj, VName FieldName,
 //  SetFieldFloat
 //
 //==========================================================================
-__attribute__((unused)) static void SetFieldFloat (VObject *Obj, VName FieldName, float Value, int Idx=0) {
-  guard(SetFieldFloat);
+static __attribute__((unused)) void SetFieldFloat (VObject *Obj, VName FieldName, float Value, int Idx=0) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetFloat(Obj, Value, Idx);
-  unguard;
 }
 
 
@@ -838,11 +808,9 @@ __attribute__((unused)) static void SetFieldFloat (VObject *Obj, VName FieldName
 //  SetFieldBool
 //
 //==========================================================================
-__attribute__((unused)) static void SetFieldBool (VObject *Obj, VName FieldName, int Value) {
-  guard(SetFieldBool);
+static __attribute__((unused)) void SetFieldBool (VObject *Obj, VName FieldName, int Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetBool(Obj, Value);
-  unguard;
 }
 
 
@@ -851,11 +819,9 @@ __attribute__((unused)) static void SetFieldBool (VObject *Obj, VName FieldName,
 //  SetFieldName
 //
 //==========================================================================
-__attribute__((unused)) static void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
-  guard(SetFieldName);
+static __attribute__((unused)) void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetName(Obj, Value);
-  unguard;
 }
 
 
@@ -864,11 +830,9 @@ __attribute__((unused)) static void SetFieldName (VObject *Obj, VName FieldName,
 //  SetFieldClass
 //
 //==========================================================================
-__attribute__((unused)) static void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
-  guard(SetFieldClass);
+static __attribute__((unused)) void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetClass(Obj, Value);
-  unguard;
 }
 
 
@@ -878,7 +842,6 @@ __attribute__((unused)) static void SetFieldClass (VObject *Obj, VName FieldName
 //
 //==========================================================================
 static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
-  guard(AddClassFixup);
   VField *F = Class->FindFieldChecked(FieldName);
   //fprintf(stderr, "AddClassFixup0: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *FieldName, *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
@@ -887,7 +850,6 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
   CF.ReqParent = F->Type.Class;
   CF.Class = Class;
   CF.PowerPrefix = powerpfx;
-  unguard;
 }
 
 
@@ -897,7 +859,6 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
 //
 //==========================================================================
 static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
-  guard(AddClassFixup);
   //fprintf(stderr, "AddClassFixup1: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *Field->GetFullName(), *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
   CF.Offset = Field->Ofs;
@@ -905,7 +866,6 @@ static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, 
   CF.ReqParent = Field->Type.Class;
   CF.Class = Class;
   CF.PowerPrefix = powerpfx;
-  unguard;
 }
 
 
@@ -919,8 +879,6 @@ static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, 
 //
 //==========================================================================
 static void ParseConst (VScriptParser *sc) {
-  guard(ParseConst);
-
   bool isInt = false;
 
   sc->SetCMode(true);
@@ -963,8 +921,6 @@ static void ParseConst (VScriptParser *sc) {
   }
   sc->Expect(";");
   sc->SetCMode(false);
-
-  unguard;
 }
 
 
@@ -974,7 +930,6 @@ static void ParseConst (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseActionDef (VScriptParser *sc, VClass *Class) {
-  guard(ParseActionDef);
   // parse definition
   sc->Expect("native");
   // find the method: first try with decorate_ prefix, then without
@@ -994,7 +949,6 @@ static void ParseActionDef (VScriptParser *sc, VClass *Class) {
   sc->Expect("(");
   while (!sc->Check(")")) sc->ExpectString();
   sc->Expect(";");
-  unguard;
 }
 
 
@@ -1004,7 +958,6 @@ static void ParseActionDef (VScriptParser *sc, VClass *Class) {
 //
 //==========================================================================
 static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
-  guard(ParseActionAlias);
   // parse alias
   sc->ExpectIdentifier();
   VStr newname = sc->String;
@@ -1019,7 +972,6 @@ static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
   A.Name = *newname.ToLower();
   A.Method = M;
   sc->Expect(";");
-  unguard;
 }
 
 
@@ -1029,7 +981,6 @@ static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
 //
 //==========================================================================
 static void ParseFieldAlias (VScriptParser *sc, VClass *Class) {
-  guard(ParseActionAlias);
   // parse alias
   sc->ExpectIdentifier();
   VStr newname = sc->String;
@@ -1043,7 +994,6 @@ static void ParseFieldAlias (VScriptParser *sc, VClass *Class) {
   }
   Class->DecorateStateFieldTrans.put(VName(*newname.toLowerCase()), VName(*oldname));
   sc->Expect(";");
-  unguard;
 }
 
 
@@ -1053,7 +1003,6 @@ static void ParseFieldAlias (VScriptParser *sc, VClass *Class) {
 //
 //==========================================================================
 static void ParseClass (VScriptParser *sc) {
-  guard(ParseClass);
   sc->SetCMode(true);
   // get class name and find the class
   sc->ExpectString();
@@ -1071,7 +1020,6 @@ static void ParseClass (VScriptParser *sc) {
     else sc->Error(va("Unknown class property '%s'", *sc->String));
   }
   sc->SetCMode(false);
-  unguard;
 }
 
 
@@ -1081,8 +1029,6 @@ static void ParseClass (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseEnum (VScriptParser *sc) {
-  guard(ParseEnum);
-
   sc->SetCMode(true);
   //GLog.Logf("Enum");
   if (!sc->Check("{")) {
@@ -1120,7 +1066,6 @@ static void ParseEnum (VScriptParser *sc) {
   }
   sc->Check(";");
   sc->SetCMode(false);
-  unguard;
 }
 
 
@@ -1130,7 +1075,6 @@ static void ParseEnum (VScriptParser *sc) {
 //
 //==========================================================================
 static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VClassFixup> &ClassFixups) {
-  guard(ParseFlag);
   auto floc = sc->GetLoc(); // for warnings
   // get full name of the flag
   sc->ExpectIdentifier();
@@ -1169,7 +1113,6 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
   }
   GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
   return true;
-  unguard;
 }
 
 
@@ -1179,7 +1122,6 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
 //
 //==========================================================================
 static VStr ParseStateString (VScriptParser *sc) {
-  guard(ParseStateString);
   VStr StateStr;
 
   if (!sc->CheckQuotedString()) sc->ExpectIdentifier();
@@ -1198,7 +1140,6 @@ static VStr ParseStateString (VScriptParser *sc) {
   }
 
   return StateStr;
-  unguard;
 }
 
 
@@ -1208,7 +1149,6 @@ static VStr ParseStateString (VScriptParser *sc) {
 //
 //==========================================================================
 static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &States) {
-  guard(ParseStates);
   VState *PrevState = nullptr; // previous state in current execution chain
   VState *LastState = nullptr; // last defined state (`nullptr` right after new label)
   VState *LoopStart = nullptr; // state with last defined label (used to resolve `loop`)
@@ -1551,7 +1491,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   // re-enable escape sequences
   sc->SetEscape(true);
   return true;
-  unguard;
 }
 
 
@@ -1563,7 +1502,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 //
 //==========================================================================
 static void ParseParentState (VScriptParser *sc, VClass *Class, const char *LblName) {
-  guard(ParseParentState);
   TLocation TmpLoc = sc->GetLoc();
   VState *State = nullptr;
   // if there's a string token on next line, it gets eaten: is this a bug?
@@ -1600,7 +1538,6 @@ static void ParseParentState (VScriptParser *sc, VClass *Class, const char *LblN
   Lbl.Loc = TmpLoc;
   Lbl.Name = LblName;
   Lbl.State = State;
-  unguard;
 }
 
 
@@ -1679,8 +1616,6 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 //
 //==========================================================================
 static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
-  guard(ParseActor);
-
   // actor options
   bool optionalActor = false;
   auto cstloc = sc->GetLoc();
@@ -2540,7 +2475,6 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     }
   }
   */
-  unguard;
 }
 
 
@@ -2550,7 +2484,6 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 //
 //==========================================================================
 static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VClass *Class) {
-  guard(ParseOldDecStates);
   TArray<VStr> Tokens;
   sc->String.Split(",\t\r\n", Tokens);
   for (int TokIdx = 0; TokIdx < Tokens.Num(); ++TokIdx) {
@@ -2583,7 +2516,6 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
       ++pFrame;
     }
   }
-  unguard;
 }
 
 
@@ -2593,7 +2525,6 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
 //
 //==========================================================================
 static void ParseOldDecoration (VScriptParser *sc, int Type) {
-  guard(ParseOldDecoration);
   // get name of the class
   sc->ExpectString();
   VName ClassName = *sc->String;
@@ -2949,7 +2880,6 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     Names.Append("Ice");
     Class->SetStateLabel(Names, Lbl ? Lbl->State : nullptr);
   }
-  unguard;
 }
 
 
@@ -2970,7 +2900,6 @@ static void ParseDamageType (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
-  guard(ParseDecorate);
   while (!sc->AtEnd()) {
     if (sc->Check("#region") || sc->Check("#endregion")) {
       //GLog.Logf(NAME_Warning, "REGION: crossed=%d", (sc->Crossed ? 1 : 0));
@@ -3030,7 +2959,6 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 
@@ -3040,7 +2968,6 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
 //
 //==========================================================================
 void ReadLineSpecialInfos () {
-  guard(ReadLineSpecialInfos);
   VStream *Strm = FL_OpenFileRead("line_specials.txt");
   check(Strm);
   VScriptParser *sc = new VScriptParser("line_specials.txt", Strm);
@@ -3053,7 +2980,6 @@ void ReadLineSpecialInfos () {
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 
@@ -3080,8 +3006,6 @@ static void dumpFieldDefs (VClass *cls) {
 //
 //==========================================================================
 void ProcessDecorateScripts () {
-  guard(ProcessDecorateScripts);
-
        if (GArgs.CheckParm("-disable-blood-replaces")) disableBloodReplaces = true;
   else if (GArgs.CheckParm("-disable-blood-replacement")) disableBloodReplaces = true;
   else if (GArgs.CheckParm("-no-blood-replaces")) disableBloodReplaces = true;
@@ -3336,7 +3260,6 @@ void ProcessDecorateScripts () {
   VClass::StaticReinitStatesLookup();
 
   //!TLocation::ClearSourceFiles();
-  unguard;
 }
 
 
@@ -3346,10 +3269,8 @@ void ProcessDecorateScripts () {
 //
 //==========================================================================
 void ShutdownDecorate () {
-  guard(ShutdownDecorate);
   FlagList.Clear();
   LineSpecialInfos.Clear();
-  unguard;
 }
 
 
@@ -3359,7 +3280,6 @@ void ShutdownDecorate () {
 //
 //==========================================================================
 bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
-  guard(VEntity::SetDecorateFlag);
   VName FlagName;
   VName ClassFilter(NAME_None);
   int DotPos = Flag.IndexOf('.');
@@ -3408,7 +3328,6 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
   }
   GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
-  unguard;
 }
 
 
@@ -3418,7 +3337,6 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
 //
 //==========================================================================
 bool VEntity::GetDecorateFlag (const VStr &Flag) {
-  guard(VEntity::GetDecorateFlag);
   VName FlagName;
   VName ClassFilter(NAME_None);
   int DotPos = Flag.IndexOf('.');
@@ -3450,7 +3368,6 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
   }
   GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
-  unguard;
 }
 
 

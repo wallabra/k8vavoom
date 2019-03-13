@@ -76,12 +76,10 @@ void VProperty::CompilerShutdown () {
 //
 //==========================================================================
 void VProperty::Serialise (VStream &Strm) {
-  guard(VProperty::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
   Strm << Type << GetFunc << SetFunc << DefaultField << ReadField << WriteField << Flags;
-  unguard;
 }
 
 

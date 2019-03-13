@@ -112,10 +112,8 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //
 //==========================================================================
 VMethod::~VMethod() {
-  //guard(VMethod::~VMethod);
   delete ReturnTypeExpr; ReturnTypeExpr = nullptr;
   delete Statement; Statement = nullptr;
-  //unguard;
 }
 
 
@@ -138,7 +136,6 @@ void VMethod::CompilerShutdown () {
 //
 //==========================================================================
 void VMethod::Serialise (VStream &Strm) {
-  guard(VMethod::Serialise);
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -157,7 +154,6 @@ void VMethod::Serialise (VStream &Strm) {
     Strm << ParamTypes[i] << ParamFlags[i] << Params[i].Name;
   }
   Strm << ReplCond << Instructions;
-  unguard;
 }
 
 
@@ -167,7 +163,6 @@ void VMethod::Serialise (VStream &Strm) {
 //
 //==========================================================================
 bool VMethod::Define () {
-  guard(VMethod::Define);
   bool Ret = true;
 
   if (Flags&FUNC_Static) {
@@ -312,7 +307,6 @@ bool VMethod::Define () {
   }
 
   return Ret;
-  unguard;
 }
 
 
@@ -322,7 +316,6 @@ bool VMethod::Define () {
 //
 //==========================================================================
 void VMethod::Emit () {
-  guard(VMethod::Emit);
   if (Flags&FUNC_Native) {
     if (Statement) ParseError(Loc, "Native methods can't have a body");
     return;
@@ -417,8 +410,6 @@ void VMethod::Emit () {
   Statement = nullptr;
   */
   //fprintf(stderr, "*** EMIT001: <%s> (%s); ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *GetFullName(), *Loc.toStringNoCol(), ParamsSize, NumLocals, NumParams);
-
-  unguard;
 }
 
 
@@ -446,7 +437,6 @@ int VMethod::FindArgByName (VName aname) const {
 //
 //==========================================================================
 void VMethod::DumpAsm () {
-  guard(VMethod::DumpAsm);
   VMemberBase *PM = Outer;
   while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
   VPackage *Package = (VPackage *)PM;
@@ -538,7 +528,6 @@ void VMethod::DumpAsm () {
     }
     dprintf("\n");
   }
-  unguard;
 }
 
 
@@ -548,7 +537,6 @@ void VMethod::DumpAsm () {
 //
 //==========================================================================
 void VMethod::PostLoad () {
-  guard(VMethod::PostLoad);
   //k8: it should be called only once, but let's play safe here
   if (mPostLoaded) return;
 
@@ -579,7 +567,6 @@ void VMethod::PostLoad () {
   CompileCode();
 
   mPostLoaded = true;
-  unguard;
 }
 
 
@@ -609,7 +596,6 @@ void VMethod::WriteType (const VFieldType &tp) {
 
 
 void VMethod::CompileCode () {
-  guard(VMethod::CompileCode);
   Statements.Clear();
   if (!Instructions.Num()) return;
 
@@ -745,7 +731,6 @@ void VMethod::CompileCode () {
   // we don't need instructions anymore
   Instructions.Clear();
   Statements.condense();
-  unguard;
 }
 
 
@@ -755,7 +740,6 @@ void VMethod::CompileCode () {
 //
 //==========================================================================
 void VMethod::OptimizeInstructions () {
-  guard(VMethod::OptimizeInstructions);
   VMCOptimizer opt(this, Instructions);
   opt.optimizeAll();
   if (vcErrorCount == 0) {
@@ -765,7 +749,6 @@ void VMethod::OptimizeInstructions () {
     opt.shortenInstructions();
   }
   opt.finish(); // this will copy result back to `Instructions`
-  unguard;
 }
 
 
@@ -793,7 +776,6 @@ TLocation VMethod::FindPCLocation (const vuint8 *pc) {
 //==========================================================================
 void VMethod::CleanupParams () const {
 #if !defined(IN_VCC)
-  guard(VMethod::CleanupParams);
   VStack *Param = pr_stackPtr-ParamsSize+(Flags&FUNC_Static ? 0 : 1); // skip self too
   for (int i = 0; i < NumParams; ++i) {
     switch (ParamTypes[i].Type) {
@@ -852,7 +834,6 @@ void VMethod::CleanupParams () const {
     default:
       Sys_Error("Bad return value type `%s`", *ReturnType.GetName());
   }
-  unguard;
 #endif
 }
 
