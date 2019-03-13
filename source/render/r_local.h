@@ -665,6 +665,7 @@ protected:
   virtual void QueueWorldSurface (seg_t*, surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
+  void AddClipSubsector (const subsector_t *sub);
   void BuildLightVis (int bspnum, const float *bbox);
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, bool LightCanCross);
   void RenderShadowLine (drawseg_t *dseg);

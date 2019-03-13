@@ -298,6 +298,206 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
   if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) HasLightIntersection = true; \
 } while (0)
 
+/*
+  this also checks if we need to do shadow volume rendering.
+  the idea is like in `VLevel::NeedProperLightTraceAt()`, only
+  we know (almost) exact sectors light can touch, so we can
+  do our checks here.
+
+  checks:
+    if sector has more than one region, check if light is crossing
+    at least one. if it is, mark this light as shadowing.
+
+    one-sided walls are not interesting: they're blocking everything.
+    previous region check will make sure that those walls are really blocking.
+    but note the fact that we seen such wall.
+
+    if we have a two-sided wall, check if we can see its backsector
+    (we have this info in BspVis). if not, don't bother with this wall anymore.
+    this is safe, as we won't see shadows in that area anyway.
+
+    now, we have a two-sided wall that is interesting. check if light can touch
+    midtex of this wall. if there is no midtex contact, count this wall as
+    one-sided.
+
+    ok, now we have a contact with midtex. if we've seen some one-sided wall,
+    assume that this light can cast a shadow (corner, for example), and
+    mark this light as shadowing.
+
+    last, check if we have elevation change between sectors. if it is there,
+    mark this light as shadowing.
+*/
+
+// i'll move these to renderer class later
+static bool doShadows; // true: don't do more checks
+static bool seen1SWall;
+static bool seen2SWall;
+static bool hasAnyLitSurfaces;
+
+
+//==========================================================================
+//
+//  IsTouchingSectorRegion
+//
+//==========================================================================
+static bool IsTouchingSectorRegion (const sector_t *sector, const TVec &point, const float radius) {
+  for (const sec_region_t *gap = sector->botregion; gap; gap = gap->next) {
+    // assume that additive floor/ceiling is translucent, and doesn't block
+    //FIXME: this is not true now, shadow volume renderer should be fixed
+    if (!(gap->floor->flags&SPF_ADDITIVE)) {
+      // check if we are crossing the floor
+      if (gap->floor->SphereTouches(point, radius)) return true;
+    }
+    if (!(gap->ceiling->flags&SPF_ADDITIVE)) {
+      // check if we are crossing the floor
+      if (gap->ceiling->SphereTouches(point, radius)) return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::AddClipSubsector
+//
+//==========================================================================
+void VAdvancedRenderLevel::AddClipSubsector (const subsector_t *sub) {
+  //LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
+  if (doShadows) return; // already determined
+
+  // check sector regions, if there are more than one
+  if (sub->sector->botregion->next) {
+    if (IsTouchingSectorRegion(sub->sector, CurrLightPos, CurrLightRadius)) {
+      // oops
+      doShadows = true;
+      return;
+    }
+  } else if (!hasAnyLitSurfaces) {
+    hasAnyLitSurfaces = IsTouchingSectorRegion(sub->sector, CurrLightPos, CurrLightRadius);
+  }
+
+  //FIXME: while our BSP renderer is not precise, we have to skip some cheks
+
+  // check walls
+  const seg_t *seg = &Level->Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
+    const line_t *ldef = seg->linedef;
+    if (!ldef) continue; // minisegs are boring
+    if ((ldef->flags&ML_TWOSIDED) == 0) {
+      // one-sided wall: note only those that is facing the light,
+      // 'cause those are the only walls that can create shadows
+      if (!seen1SWall && !seg->PointOnSide(CurrLightPos)) {
+        if (!LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) continue;
+        hasAnyLitSurfaces = true;
+        seen1SWall = true;
+        if (seen1SWall && seen2SWall) {
+          // oops
+          doShadows = true;
+          return;
+        }
+      }
+    } else {
+      // two-sided wall: check if we can see backsector
+      if (seg->frontsector == seg->backsector) continue; // deep water; don't know what to do with it yet
+      // do partner subsector check
+      // we should have partner seg
+      if (!seg->partner || seg->partner == seg || seg->partner->front_sub == sub) {
+        if (!hasAnyLitSurfaces && !seg->PointOnSide(CurrLightPos)) {
+          hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius);
+        }
+        continue;
+      }
+      // this check is wrong due to... what?!
+      // somehow, some lights are visible when they shouldn't be
+      /*
+      unsigned snum = (unsigned)(ptrdiff_t)(seg->partner->front_sub-Level->Subsectors);
+      if (!(BspVis[snum>>3]&(1u<<(snum&7)))) {
+        // we cannot see anything behind this wall, so don't bother
+        // don't mark it as solid too, it doesn't matter
+        //FIXME: this causes some glitches, so check if we can see current sector
+        //snum = (unsigned)(ptrdiff_t)(sub-Level->Subsectors);
+        //if (!(BspVis[snum>>3]&(1u<<(snum&7))))
+        {
+          continue;
+        }
+      }
+      */
+      // check if we can touch midtex
+      const sector_t *fsec = seg->frontsector;
+      if (CurrLightPos.z+CurrLightRadius <= fsec->botregion->floor->minz ||
+          CurrLightPos.z-CurrLightRadius >= fsec->topregion->ceiling->maxz)
+      {
+        // cannot possibly touch midtex, consider this wall solid
+        if (!seen1SWall && !seg->PointOnSide(CurrLightPos)) {
+          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+            hasAnyLitSurfaces = true;
+            seen1SWall = true;
+          }
+        }
+        continue;
+      }
+      if (!LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) continue;
+      hasAnyLitSurfaces = true;
+      //GCon->Logf("MIDTOUCH! seen1SWall=%d", (int)seen1SWall);
+      // if we've seen some one-sided wall, assume shadowing
+      if (seen1SWall) {
+        doShadows = true;
+        return;
+      }
+      const sector_t *bsec = seg->backsector;
+      const sec_region_t *fbotr = fsec->botregion;
+      const sec_region_t *bbotr = bsec->botregion;
+      // if we have elevation change, and the light is
+      // touching any of current region floor/ceiling,
+      // or any of back sector floor/ceiling
+      // first, elevation change
+      if (!fbotr->next && !bbotr->next) {
+        // two sectors with one region each, check for change
+        // floor
+        if (fbotr->floor->minz != bbotr->floor->minz ||
+            fbotr->floor->minz != bbotr->floor->maxz ||
+            fbotr->floor->maxz != bbotr->floor->minz ||
+            fbotr->floor->maxz != bbotr->floor->maxz)
+        {
+          // floor elevation changed, check if we're touching any floor
+          if (fbotr->floor->SphereTouches(CurrLightPos, CurrLightRadius) ||
+              bbotr->floor->SphereTouches(CurrLightPos, CurrLightRadius))
+          {
+            // oops
+            doShadows = true;
+            return;
+          }
+        }
+        // ceiling
+        if (fbotr->ceiling->minz != bbotr->ceiling->minz ||
+            fbotr->ceiling->minz != bbotr->ceiling->maxz ||
+            fbotr->ceiling->maxz != bbotr->ceiling->minz ||
+            fbotr->ceiling->maxz != bbotr->ceiling->maxz)
+        {
+          // ceiling elevation changed, check if we're touching any ceiling
+          if (fbotr->ceiling->SphereTouches(CurrLightPos, CurrLightRadius) ||
+              bbotr->ceiling->SphereTouches(CurrLightPos, CurrLightRadius))
+          {
+            // oops
+            doShadows = true;
+            return;
+          }
+        }
+      } else {
+        // sectors with multiple regions assumed "changed"
+        if (IsTouchingSectorRegion(fsec, CurrLightPos, CurrLightRadius) ||
+            IsTouchingSectorRegion(bsec, CurrLightPos, CurrLightRadius))
+        {
+          // oops
+          doShadows = true;
+          return;
+        }
+      }
+    }
+  }
+}
+
 
 //==========================================================================
 //
@@ -313,9 +513,13 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, const float *bbox) {
     const unsigned SubNum = 0;
     const subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
+      LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+      return;
+    }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
     UPDATE_LIGHTVIS(SubNum);
+    AddClipSubsector(Sub);
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
     return;
   }
@@ -323,32 +527,34 @@ void VAdvancedRenderLevel::BuildLightVis (int bspnum, const float *bbox) {
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
     const node_t *bsp = &Level->Nodes[bspnum];
-
     // decide which side the view point is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      BuildLightVis(bsp->children[0], bsp->bbox[0]);
+      return BuildLightVis(bsp->children[0], bsp->bbox[0]);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      BuildLightVis(bsp->children[1], bsp->bbox[1]);
+      return BuildLightVis(bsp->children[1], bsp->bbox[1]);
     } else {
-      unsigned side = (unsigned)bsp->PointOnSide(CurrLightPos);
+      //unsigned side = (unsigned)bsp->PointOnSide(CurrLightPos);
+      unsigned side = (unsigned)(dist <= 0); //(unsigned)bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
       BuildLightVis(bsp->children[side], bsp->bbox[side]);
       // possibly divide back space
       side ^= 1;
-      if (LightClip.ClipLightIsBBoxVisible(bsp->bbox[side], CurrLightPos, CurrLightRadius)) {
-        BuildLightVis(bsp->children[side], bsp->bbox[side]);
-      }
+      return BuildLightVis(bsp->children[side], bsp->bbox[side]);
     }
   } else {
     const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
     const subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
+      LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+      return;
+    }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
     UPDATE_LIGHTVIS(SubNum);
+    AddClipSubsector(Sub);
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
   }
 }
@@ -820,6 +1026,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
 
+  /*
   bool doShadows = true;
 
   if (r_advlight_opt_trace && !Level->NeedProperLightTraceAt(Pos, Radius)) {
@@ -828,6 +1035,11 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     if (dbg_adv_light_notrace_mark) Colour = 0xffff0000U;
     doShadows = false;
   }
+  */
+  doShadows = (Radius < 12.0f); // arbitrary; set "do shadows" flag to skip checks
+  seen1SWall = false;
+  seen2SWall = false;
+  hasAnyLitSurfaces = false;
 
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
@@ -836,6 +1048,11 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   HasLightIntersection = false;
   BuildLightVis(Level->NumNodes-1, dummy_bbox);
   if (!r_advlight_opt_separate_vis && !HasLightIntersection) return;
+  if (Radius < 12.0f) {
+    doShadows = false;
+  } else {
+    if (!doShadows && !hasAnyLitSurfaces) return;
+  }
 
   // create combined light and view visibility
   if (r_advlight_opt_separate_vis) {
@@ -846,6 +1063,11 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
       if (LightBspVis[i]) HaveIntersect = true;
     }
     if (!HaveIntersect) return;
+  }
+
+  if (!doShadows && dbg_adv_light_notrace_mark) {
+    //Colour = 0xffff0000U;
+    Colour = 0xffff00ffU; // purple; it should be very noticeable
   }
 
   ++LightsRendered;
