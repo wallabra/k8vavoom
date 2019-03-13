@@ -40,9 +40,6 @@ extern VCvarB r_dynamic_clip_more;
 // private data definitions
 // ////////////////////////////////////////////////////////////////////////// //
 
-static subsector_t *r_sub;
-static sec_region_t *r_region;
-
 VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
 VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
 
@@ -321,7 +318,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowLine (drawseg_t *dseg) {
+void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
 
@@ -397,39 +394,35 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowSubRegion (subregion_t *region) {
+void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, r_sub, CurrLightPos, CurrLightRadius)) return;
-    RenderShadowSubRegion(region->next);
+    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    RenderShadowSubRegion(sub, region->next);
   }
 
-  r_region = region->secregion;
+  sec_region_t *curreg = region->secregion;
 
-  if (r_sub->poly) {
+  if (sub->poly) {
     // render the polyobj in the subsector first
-    int polyCount = r_sub->poly->numsegs;
-    seg_t **polySeg = r_sub->poly->segs;
-    while (polyCount--) {
-      RenderShadowLine((*polySeg)->drawsegs);
-      ++polySeg;
+    seg_t **polySeg = sub->poly->segs;
+    for (int count = sub->poly->numsegs; count--; ++polySeg) {
+      RenderShadowLine(curreg, (*polySeg)->drawsegs);
     }
   }
 
-  int count = r_sub->numlines;
   drawseg_t *ds = region->lines;
-  while (count--) {
-    RenderShadowLine(ds);
-    ++ds;
+  for (int count = sub->numlines; count--; ++ds) {
+    RenderShadowLine(curreg, ds);
   }
 
-  RenderShadowSecSurface(region->floor, r_region->floor->SkyBox);
-  RenderShadowSecSurface(region->ceil, r_region->ceiling->SkyBox);
+  RenderShadowSecSurface(region->floor, curreg->floor->SkyBox);
+  RenderShadowSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
   if (region->next && dist > CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, r_sub, CurrLightPos, CurrLightRadius)) return;
-    RenderShadowSubRegion(region->next);
+    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    RenderShadowSubRegion(sub, region->next);
   }
 }
 
@@ -441,7 +434,6 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subregion_t *region) {
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
   subsector_t *Sub = &Level->Subsectors[num];
-  r_sub = Sub;
 
   // don't do this check for shadows
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
@@ -450,7 +442,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
   if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
 
-  RenderShadowSubRegion(Sub->regions);
+  RenderShadowSubRegion(Sub, Sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
@@ -544,7 +536,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
+void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
@@ -574,17 +566,17 @@ void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
 
   if (!seg->backsector) {
     // single sided line
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, r_region->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, false);
   } else {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, r_region->ceiling->SkyBox, false, true);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, r_region->ceiling->SkyBox, false, true);
+    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, true);
+    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, true);
 
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox, false, false);
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, false);
     }
   }
 }
@@ -616,39 +608,37 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightSubRegion (subregion_t *region) {
+void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region) {
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, r_sub, CurrLightPos, CurrLightRadius)) return;
-    RenderLightSubRegion(region->next);
+    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    RenderLightSubRegion(sub, region->next);
   }
 
-  r_region = region->secregion;
+  sec_region_t *curreg = region->secregion;
 
-  if (r_sub->poly) {
+  if (sub->poly) {
     // render the polyobj in the subsector first
-    int polyCount = r_sub->poly->numsegs;
-    seg_t **polySeg = r_sub->poly->segs;
-    while (polyCount--) {
-      RenderLightLine((*polySeg)->drawsegs);
-      ++polySeg;
+    seg_t **polySeg = sub->poly->segs;
+    for (int count = sub->poly->numsegs; count--; ++polySeg) {
+      RenderLightLine(curreg, (*polySeg)->drawsegs);
     }
   }
 
-  int count = r_sub->numlines;
+  int count = sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    RenderLightLine(ds);
+    RenderLightLine(curreg, ds);
     ++ds;
   }
 
-  RenderLightSecSurface(region->floor, r_region->floor->SkyBox);
-  RenderLightSecSurface(region->ceil, r_region->ceiling->SkyBox);
+  RenderLightSecSurface(region->floor, curreg->floor->SkyBox);
+  RenderLightSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
   if (region->next && dist > CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, r_sub, CurrLightPos, CurrLightRadius)) return;
-    RenderLightSubRegion(region->next);
+    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    RenderLightSubRegion(sub, region->next);
   }
 }
 
@@ -660,7 +650,6 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subregion_t *region) {
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubsector (int num) {
   subsector_t *Sub = &Level->Subsectors[num];
-  r_sub = Sub;
 
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -670,7 +659,7 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 
   if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
 
-  RenderLightSubRegion(Sub->regions);
+  RenderLightSubRegion(Sub, Sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes

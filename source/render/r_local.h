@@ -415,6 +415,13 @@ protected:
   bool seen1SWall;
   bool seen2SWall;
 
+  // renderer info; put here to avoid passing it around
+  // k8: it was a bunch of globals; i will eventually got rid of this
+  subsector_t *r_sub;
+  subregion_t *r_subregion;
+  sec_region_t *r_region;
+  bool MirrorClipSegs;
+
 protected:
   void NewBSPVisibilityFrame ();
   bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
@@ -691,16 +698,17 @@ protected:
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, bool LightCanCross);
-  void RenderShadowLine (drawseg_t *dseg);
+  void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderShadowSubRegion (subregion_t *region);
+  void RenderShadowSubRegion (subsector_t *sub, subregion_t *region);
   void RenderShadowSubsector (int num);
   void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
+
   void DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                           VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross);
-  void RenderLightLine (drawseg_t *dseg);
+  void RenderLightLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderLightSubRegion (subregion_t *region);
+  void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
