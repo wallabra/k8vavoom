@@ -171,12 +171,12 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 
 //==========================================================================
 //
-//  IsSegAClosedSomething
+//  VViewClipper::IsSegAClosedSomething
 //
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t *seg, const TVec *lorg=nullptr, const float *lrad=nullptr) {
+bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) {
   if (!clip_platforms) return false;
 
   const line_t *ldef = seg->linedef;
@@ -354,13 +354,13 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
         // we can add this seg to clipper.
         // this way, we can clip alot of things when camera looks at
         // floor/ceiling, and we can clip away too high/low windows.
-        const TFrustum &Frustum = clip.GetFrustum();
+        //const TFrustum &Frustum = clip.GetFrustum();
         bool lcheck = false;
         if (lorg) {
           if (!ldef->SphereTouches(*lorg, *lrad)) return true;
           lcheck = true;
         }
-        if (Frustum.isValid() || lcheck) {
+        if ((Frustum && Frustum->isValid()) || lcheck) {
           // create bounding box for linked subsector
           const subsector_t *bss = seg->partner->front_sub;
           const sector_t *bssec = bss->sector;
@@ -393,9 +393,9 @@ static inline bool IsSegAClosedSomething (const VViewClipper &clip, const seg_t 
           }
           */
 
-          if (Frustum.isValid()) {
+          if (Frustum && Frustum->isValid()) {
             // check (only top, bottom, and back)
-            if (!Frustum.checkBox(bbox, TFrustum::TopBit|TFrustum::BottomBit|TFrustum::BackBit)) {
+            if (!Frustum->checkBox(bbox, TFrustum::TopBit|TFrustum::BottomBit|TFrustum::BackBit)) {
               // out of frustum
               return true;
             }
@@ -1142,7 +1142,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     if (seg->backsector && seg->backsector != seg->frontsector &&
         (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED)
     {
-      if (IsSegAClosedSomething(*this, seg)) AddClipRange(v1, v2);
+      if (IsSegAClosedSomething(&Frustum, seg)) AddClipRange(v1, v2);
     }
     return;
   }
@@ -1169,7 +1169,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-    if (!IsSegAClosedSomething(*this, seg)) {
+    if (!IsSegAClosedSomething(&Frustum, seg)) {
       // it can still be culled by frustum
       // if it is, clip with it
       if (skipSphereCheck || !clip_frustum || !clip_frustum_seg_2s || CheckSegFrustum(seg)) {
@@ -1431,7 +1431,7 @@ bool VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-    if (!IsSegAClosedSomething(*this, seg, &CurrLightPos, &CurrLightRadius)) return false;
+    if (!IsSegAClosedSomething(&Frustum, seg, &CurrLightPos, &CurrLightRadius)) return false;
   }
 
   AddClipRange(*v2, *v1);

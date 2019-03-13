@@ -426,7 +426,7 @@ protected:
 
 protected:
   void NewBSPVisibilityFrame ();
-  bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
+  bool CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub);
   bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
   void ResetVisFrameCount ();

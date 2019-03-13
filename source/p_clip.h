@@ -158,4 +158,7 @@ private:
   // light radius should be valid
   int CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
+
+public:
+  static bool IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg=nullptr, const float *lrad=nullptr);
 };

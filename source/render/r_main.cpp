@@ -693,7 +693,7 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
 //  VRenderLevelShared::CheckBSPVisibilitySub
 //
 //==========================================================================
-bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub) {
+bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub) {
   const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
   // rendered means "visible"
   if (BspVis[csubidx>>3]&(1<<(csubidx&7))) return true;
@@ -702,6 +702,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq,
   // recurse into neighbour subsectors
   bspVisRadius[csubidx].framecount = bspVisRadiusFrame; // mark as visited
   if (currsub->numlines == 0) return false;
+  const float radiusSq = radius*radius;
   const seg_t *seg = &Level->Segs[currsub->firstline];
   for (int count = currsub->numlines; count--; ++seg) {
     // skip non-portals
@@ -709,6 +710,16 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq,
     if (ldef) {
       // not a miniseg; check if linedef is passable
       if (!(ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX))) continue; // solid line
+      // check if we can touch midtex, 'cause why not?
+      const sector_t *bsec = seg->backsector;
+      if (org.z+radius <= bsec->botregion->floor->minz ||
+          org.z-radius >= bsec->topregion->ceiling->maxz)
+      {
+        // cannot possibly leak through midtex, consider this wall solid
+        continue;
+      }
+      // don't go through closed doors and raised lifts
+      if (VViewClipper::IsSegAClosedSomething(nullptr/*no frustum*/, seg, &org, &radius)) continue;
     } // minisegs are portals
     // we should have partner seg
     if (!seg->partner || seg->partner == seg || seg->partner->front_sub == currsub) continue;
@@ -721,7 +732,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, float radiusSq,
     // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
     // ok, it is touching, recurse
-    if (CheckBSPVisibilitySub(org, radiusSq, seg->partner->front_sub)) {
+    if (CheckBSPVisibilitySub(org, radius, seg->partner->front_sub)) {
       //GCon->Logf("RECURSE HIT!");
       return true;
     }
@@ -775,7 +786,7 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
     bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
     memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
   }
-  return CheckBSPVisibilitySub(org, radius*radius, sub);
+  return CheckBSPVisibilitySub(org, radius, sub);
 }
 
 
@@ -918,10 +929,11 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       }
       // check if we can touch midtex
       const sector_t *fsec = seg->frontsector;
-      if (CurrLightPos.z+CurrLightRadius <= fsec->botregion->floor->minz ||
-          CurrLightPos.z-CurrLightRadius >= fsec->topregion->ceiling->maxz)
+      const sector_t *bsec = seg->backsector;
+      if (CurrLightPos.z+CurrLightRadius <= bsec->botregion->floor->minz ||
+          CurrLightPos.z-CurrLightRadius >= bsec->topregion->ceiling->maxz)
       {
-        // cannot possibly touch midtex, consider this wall solid
+        // cannot possibly leak through midtex, consider this wall solid
         if (dist <= 0) {
           if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
             // oops
@@ -944,7 +956,6 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
         doShadows = true;
         return;
       }
-      const sector_t *bsec = seg->backsector;
       const sec_region_t *fbotr = fsec->botregion;
       const sec_region_t *bbotr = bsec->botregion;
       // if we have elevation change, and the light is
