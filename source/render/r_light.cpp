@@ -116,15 +116,23 @@ void VRenderLevelShared::PushDlights () {
   if (!r_dynamic) return;
 
   dlight_t *l = DLights;
-  for (int i = 0; i < MAX_DLIGHTS; ++i, ++l) {
+  for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
     if (l->radius < 1.0f || l->die < Level->Time) {
       dlinfo[i].needTrace = 0;
       dlinfo[i].leafnum = -1;
       continue;
     }
     dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
-    dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
-    MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
+    //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
+    //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
+    //FIXME: this has one frame latency; meh for now
+    if (CalcLightVis(l->origin, l->radius, 1U<<i)) {
+      dlinfo[i].needTrace = (doShadows ? 1 : -1);
+    } else {
+      // this one is invisible
+      dlinfo[i].needTrace = 0;
+      dlinfo[i].leafnum = -1;
+    }
   }
 }
 

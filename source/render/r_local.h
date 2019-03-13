@@ -377,6 +377,7 @@ protected:
   // moved here so that model rendering methods can be merged
   TVec CurrLightPos;
   float CurrLightRadius;
+  vuint32 CurrLightBit; // tag (bitor) subsectors with this in lightvis builder
   int CurrLightsNumber;
   int CurrShadowsNumber;
   int AllLightsNumber;
@@ -407,10 +408,12 @@ protected:
   vuint8 *LightBspVis;
   bool HasLightIntersection; // set by `BuildLightVis()`
 
+  // lightvis result
   bool doShadows; // true: don't do more checks
+  // lightvis working variables
+  bool hasAnyLitSurfaces;
   bool seen1SWall;
   bool seen2SWall;
-  bool hasAnyLitSurfaces;
 
 protected:
   void NewBSPVisibilityFrame ();
@@ -440,7 +443,7 @@ protected:
   // main entry point for lightvis calculation
   // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
   // returns `false` if the light is invisible
-  bool CalcLightVis (const TVec &org, const float radius);
+  bool CalcLightVis (const TVec &org, const float radius, vuint32 currltbit=0);
 
   // yes, non-virtual
   // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)

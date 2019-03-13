@@ -45,6 +45,8 @@ static VCvarB r_extrasamples("r_extrasamples", true, "Do static lightmap filteri
 static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 
+extern VCvarB dbg_adv_light_notrace_mark;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static bool r_light_add;
@@ -577,11 +579,12 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius) {
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
+      if (!dlinfo[i].needTrace) continue;
       // check potential visibility
       if (dyn_facevis) {
         //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         const int leafnum = dlinfo[i].leafnum;
-        check(leafnum >= 0);
+        if (leafnum < 0) continue;
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
       const dlight_t &dl = DLights[i];
@@ -673,6 +676,9 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
     if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
 
+    const int xnfo = dlinfo[lnum].needTrace;
+    if (!xnfo) continue;
+
     float rad = dl.radius;
     float dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
     if (r_dynamic_clip) {
@@ -691,14 +697,22 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       int leafnum = dlinfo[lnum].leafnum;
-      check(leafnum >= 0);
+      if (leafnum < 0) continue;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
 
-    const float rmul = (dl.colour>>16)&255;
-    const float gmul = (dl.colour>>8)&255;
-    const float bmul = dl.colour&255;
+    //TODO: we can use clipper to check if destination subsector is occluded
+    bool needProperTrace = (doCheckTrace && xnfo > 0);
+
+    ++gf_dynlights_processed;
+    if (needProperTrace) ++gf_dynlights_traced;
+
+    vuint32 dlcolor = (!needProperTrace && dbg_adv_light_notrace_mark ? 0xffff00ffU : dl.colour);
+
+    const float rmul = (dlcolor>>16)&255;
+    const float gmul = (dlcolor>>8)&255;
+    const float bmul = dlcolor&255;
 
     TVec local;
     local.x = DotProduct(impact, tex->saxis)+tex->soffs;
@@ -707,23 +721,6 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     local.x -= starts;
     local.y -= startt;
-
-    //TODO: we can use clipper to check if destination subsector is occluded
-
-    // check if we have some blocking lines
-    // to make proper shadows, we have to check if we have any 2-sided lines
-    // around our light. if not, we can skip raycasting
-    // bleeding to nearest sectors will be prevented by PVS
-    bool needProperTrace;
-    const int xnfo = dlinfo[lnum].needTrace;
-    if (xnfo) {
-      needProperTrace = (xnfo > 0);
-    } else {
-      needProperTrace = ((dlinfo[lnum].needTrace = (doCheckTrace && Level->NeedProperLightTraceAt(dl.origin, dl.radius) ? 1 : -1)) > 0);
-    }
-
-    ++gf_dynlights_processed;
-    if (needProperTrace) ++gf_dynlights_traced;
 
     if (!pointsCalced && /*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
       pointsCalced = true;
@@ -769,7 +766,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
             blocklightsg[i] += (rad-dist)*gmul;
             blocklightsb[i] += (rad-dist)*bmul;
           }
-          if (dl.colour != 0xffffffff) is_coloured = true;
+          if (dlcolor != 0xffffffff) is_coloured = true;
         }
       }
     }

@@ -979,7 +979,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 
   if (bspnum == -1) {
     const unsigned SubNum = 0;
-    const subsector_t *Sub = &Level->Subsectors[SubNum];
+    subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
       LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
@@ -988,6 +988,14 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
     UPDATE_LIGHTVIS(SubNum);
     CheckLightSubsector(Sub);
+    if (CurrLightBit) {
+      if (Sub->dlightframe != r_dlightframecount) {
+        Sub->dlightbits = CurrLightBit;
+        Sub->dlightframe = r_dlightframecount;
+      } else {
+        Sub->dlightbits |= CurrLightBit;
+      }
+    }
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
     return;
   }
@@ -1014,7 +1022,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     }
   } else {
     const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
-    const subsector_t *Sub = &Level->Subsectors[SubNum];
+    subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
       LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
@@ -1023,6 +1031,14 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
     UPDATE_LIGHTVIS(SubNum);
     CheckLightSubsector(Sub);
+    if (CurrLightBit) {
+      if (Sub->dlightframe != r_dlightframecount) {
+        Sub->dlightbits = CurrLightBit;
+        Sub->dlightframe = r_dlightframecount;
+      } else {
+        Sub->dlightbits |= CurrLightBit;
+      }
+    }
     LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
   }
 }
@@ -1036,7 +1052,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 //  returns `false` if the light is invisible
 //
 //==========================================================================
-bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius) {
+bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuint32 currltbit) {
   if (radius < 2) return false;
 
   doShadows = (radius < 12.0f); // arbitrary; set "do shadows" flag to skip checks
@@ -1046,6 +1062,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius) {
 
   CurrLightPos = org;
   CurrLightRadius = radius;
+  CurrLightBit = currltbit;
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
@@ -1489,6 +1506,9 @@ again:
     UpdateParticles(host_frametime);
   }
 
+  //TODO: we can separate BspVis building (and batching surfaces for rendering), and
+  //      the actual rendering. this way we'll be able to do better dynlight checks
+
   PushDlights();
 
   // update camera textures that were visible in last frame
@@ -1502,6 +1522,7 @@ again:
   RenderScene(&refdef, nullptr);
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
+
   if (light_reset_surface_cache != 0) {
     light_reset_surface_cache = 0;
     if (--renderattempts <= 0) Host_Error("*** Surface cache overflow, cannot repair");

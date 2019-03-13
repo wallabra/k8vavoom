@@ -57,7 +57,7 @@ VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How cl
 
 extern VCvarB r_dynamic_clip_more;
 
-static VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
+VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive|CVAR_PreInit);
@@ -202,11 +202,12 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
   if (r_dynamic && sub->dlightframe == r_dlightframecount) {
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
+      if (!dlinfo[i].needTrace) continue;
       // check potential visibility
       if (dyn_facevis) {
         //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         const int leafnum = dlinfo[i].leafnum;
-        check(leafnum >= 0);
+        if (leafnum < 0) continue;
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
       const dlight_t &dl = DLights[i];
