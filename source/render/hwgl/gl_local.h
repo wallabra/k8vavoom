@@ -201,6 +201,7 @@ typedef void (APIENTRY*glGetActiveUniformARB_t)(GLhandleARB, GLuint, GLsizei, GL
 typedef void (APIENTRY*glGetUniformfvARB_t)(GLhandleARB, GLint, GLfloat *);
 typedef void (APIENTRY*glGetUniformivARB_t)(GLhandleARB, GLint, GLint *);
 typedef void (APIENTRY*glGetShaderSourceARB_t)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
+typedef void (APIENTRY*glDepthBoundsEXT_t)(GLclampd zmin, GLclampd zmax);
 
 #ifndef GL_ARB_vertex_shader
 #define GL_VERTEX_SHADER_ARB        0x8B31
@@ -338,6 +339,14 @@ typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid **);
 #ifndef GL_EXT_draw_range_elements
 #define GL_MAX_ELEMENTS_VERTICES_EXT    0x80E8
 #define GL_MAX_ELEMENTS_INDICES_EXT     0x80E9
+#endif
+
+#ifndef GL_DEPTH_BOUNDS_TEST_EXT
+# define GL_DEPTH_BOUNDS_TEST_EXT  0x8890
+#endif
+
+#ifndef GL_DEPTH_BOUNDS_EXT
+# define GL_DEPTH_BOUNDS_EXT  0x8891
 #endif
 
 typedef void (APIENTRY*glDrawRangeElementsEXT_t)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
@@ -632,6 +641,7 @@ protected:
 
   bool useReverseZ;
   bool hasNPOT;
+  bool hasBoundsTest; // GL_EXT_depth_bounds_test
 
   GLuint mainFBO;
   GLuint mainFBOColorTid;
@@ -1106,6 +1116,7 @@ protected:
   _(glDrawRangeElementsEXT);
 
   _(glClipControl);
+  _(glDepthBoundsEXT);
 #undef _
 
   //void MultiTexCoord(int level, GLfloat s, GLfloat t) { p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t); }

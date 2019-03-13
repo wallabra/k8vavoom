@@ -33,6 +33,8 @@ extern VCvarB r_allow_ambient;
 
 static VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
 
+static VCvarB r_adv_limit_extrude("r_adv_limit_extrude", false, "Don't extrude shadow volumes further than light radius goes?", CVAR_Archive);
+
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
 static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
@@ -970,10 +972,11 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 
   TVec *v = poolVec;
 
-
+  // there is no need to extrude light further than light raduis
+  const float mult = (r_adv_limit_extrude ? Radius+128 : M_INFINITY);
   for (int i = 0; i < surf->count; ++i) {
-    v[i] = Normalise(surf->verts[i]-LightPos);
-    v[i] *= M_INFINITY;
+    v[i] = (surf->verts[i]-LightPos).normalised();
+    v[i] *= mult;
     v[i] += LightPos;
   }
 

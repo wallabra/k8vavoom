@@ -64,6 +64,8 @@ VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less t
 static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
 static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
 
+static VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", false, "Use depth bounds extension if found?", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -321,6 +323,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   MaxTextureUnits = 1;
   useReverseZ = false;
   hasNPOT = false;
+  hasBoundsTest = false;
 
   mainFBO = 0;
   mainFBOColorTid = 0;
@@ -475,6 +478,7 @@ void VOpenGLDrawer::InitResolution () {
   if (maxTexSize < 1024) maxTexSize = 1024; // 'cmon!
 
   hasNPOT = CheckExtension("GL_ARB_texture_non_power_of_two") || CheckExtension("GL_OES_texture_npot");
+  hasBoundsTest = CheckExtension("GL_EXT_depth_bounds_test");
 
 #define _(x)  p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
 
@@ -643,6 +647,16 @@ void VOpenGLDrawer::InitResolution () {
 
     if (!found) Sys_Error("OpenGL FATAL: no shader support");
 
+    if (hasBoundsTest) {
+      check(found);
+      _(glDepthBoundsEXT);
+      if (!found) {
+        hasBoundsTest = false;
+        GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
+      }
+    }
+
+
     GLint tmp;
     GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
@@ -729,6 +743,8 @@ void VOpenGLDrawer::InitResolution () {
   } else {
     HaveDrawRangeElements = false;
   }
+
+  if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");
 
 #undef _
 
@@ -1506,16 +1522,47 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //
 //==========================================================================
 static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, const VMatrix4 &projection, const int *viewport, float *windowCoordinate) {
+#if 0
   TVec inworld = point;
   const float iww = modelview.Transform2InPlace(inworld);
   if (inworld.z >= 0.0f) return false; // the w value
   TVec proj = projection.Transform2(inworld, iww);
+#else
+  // our `w` is always 1
+  TVec inworld = modelview.Transform2(point);
+  if (inworld.z >= 0.0f) return false; // the w value
+  TVec proj = projection.Transform2OnlyXY(inworld); // we don't care about z here
+#endif
   const float pjw = -1.0f/inworld.z;
   proj.x *= pjw;
   proj.y *= pjw;
   windowCoordinate[0] = (proj.x*0.5f+0.5f)*viewport[2]+viewport[0];
   windowCoordinate[1] = (proj.y*0.5f+0.5f)*viewport[3]+viewport[1];
   return true;
+}
+
+
+//==========================================================================
+//
+//  glhProjectfZ
+//
+//==========================================================================
+static inline float glhProjectfZ (const TVec &point, const float zofs, const VMatrix4 &modelview, const VMatrix4 &projection) {
+#if 0
+  TVec inworld = point;
+  const float iww = modelview.Transform2InPlace(inworld);
+  if (inworld.z >= 0.0f) return 0.0f;
+  TVec proj = projection.Transform2(inworld, iww);
+#else
+  // our `w` is always 1
+  TVec inworld = modelview.Transform2(point);
+  inworld.z += zofs;
+  if (inworld.z >= 0.0f) return 0.0f;
+  float projz = projection.Transform2OnlyZ(inworld); // we don't care about z here
+#endif
+  const float pjw = -1.0f/inworld.z;
+  projz *= pjw;
+  return (1.0f+projz)*0.5f;
 }
 
 
@@ -1556,6 +1603,24 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     //glScissor(0, 0, 0, 0);
     return 0;
+  }
+
+  if (hasBoundsTest && gl_enable_depth_bounds) {
+    /*
+    // transform light's center to camera space
+    TVec lcorg = mmat.Transform2(org);
+    // project nearest and furthest points
+    TVec lcnear = TVec(lcorg.x, lcorg.y, lcorg.z-radius);
+    TVec lcfar = TVec(lcorg.x, lcorg.y, lcorg.z+radius);
+    */
+
+    const float z0 = glhProjectfZ(org, +radius, mmat[0], pmat[0]);
+    const float z1 = glhProjectfZ(org, -radius, mmat[0], pmat[0]);
+
+    //GCon->Logf("radius=%f; z0=%f; z1=%f", radius, z0, z1);
+
+    p_glDepthBoundsEXT(z0, z1);
+    glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
   // create light bbox
@@ -1652,6 +1717,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 void VOpenGLDrawer::ResetScissor () {
   glScissor(0, 0, ScreenWidth, ScreenHeight);
   glDisable(GL_SCISSOR_TEST);
+  if (hasBoundsTest) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
 }
 
 
