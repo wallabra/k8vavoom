@@ -496,8 +496,6 @@ public:
   // doesn't check pvs or reject
   bool CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector=nullptr);
 
-  bool NeedProperLightTraceAt (const TVec &org, float radius);
-
   void SetCameraToTexture (VEntity *, VName, int);
 
   msecnode_t *AddSecnode (sector_t *, VEntity *, msecnode_t *);
