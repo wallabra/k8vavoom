@@ -55,7 +55,6 @@ struct SavedVObjectPtr {
 //
 //==========================================================================
 bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
-  guard(VBasePlayer::ExecuteNetMethod);
   if (GDemoRecordingContext) {
     // find initial version of the method
     VMethod *Base = Func;
@@ -98,13 +97,10 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   }
 
   // clean up parameters
-  guard(VBasePlayer::ExecuteNetMethod::CleanUp);
   Func->CleanupParams();
-  unguard;
 
   // it's been handled here
   return true;
-  unguard;
 }
 
 
@@ -114,7 +110,6 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
 //
 //==========================================================================
 void VBasePlayer::SpawnClient () {
-  guard(VBasePlayer::SpawnClient);
   if (!sv_loading) {
     if (PlayerFlags&PF_Spawned) GCon->Log(NAME_Dev, "Already spawned");
     if (MO) GCon->Log(NAME_Dev, "Mobj already spawned");
@@ -159,7 +154,6 @@ void VBasePlayer::SpawnClient () {
 
   // for single play, save immediately into the reborn slot
   //!if (GGameInfo->NetMode < NM_DedicatedServer) SV_SaveGameToReborn();
-  unguard;
 }
 
 
@@ -169,7 +163,6 @@ void VBasePlayer::SpawnClient () {
 //
 //==========================================================================
 __attribute__((format(printf,2,3))) void VBasePlayer::Printf (const char *s, ...) {
-  guard(VBasePlayer::Printf);
   va_list v;
   static char buf[4096];
 
@@ -178,7 +171,6 @@ __attribute__((format(printf,2,3))) void VBasePlayer::Printf (const char *s, ...
   va_end(v);
 
   eventClientPrint(buf);
-  unguard;
 }
 
 
@@ -188,7 +180,6 @@ __attribute__((format(printf,2,3))) void VBasePlayer::Printf (const char *s, ...
 //
 //==========================================================================
 __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *s, ...) {
-  guard(VBasePlayer::CentrePrintf);
   va_list v;
   static char buf[4096];
 
@@ -197,7 +188,6 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *
   va_end(v);
 
   eventClientCentrePrint(buf);
-  unguard;
 }
 
 
@@ -207,7 +197,6 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *
 //
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
-  guard(VBasePlayer::SetViewState);
   /*
   if (!fldPendingWeapon) {
     fldPendingWeapon = GetClass()->FindFieldChecked("PendingWeapon");
@@ -278,7 +267,6 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through
   //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
-  unguard;
 }
 
 
@@ -317,12 +305,10 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
 //
 //==========================================================================
 void VBasePlayer::SetUserInfo (const VStr &info) {
-  guard(VBasePlayer::SetUserInfo);
   if (!sv_loading) {
     UserInfo = info;
     ReadFromUserInfo();
   }
-  unguard;
 }
 
 
@@ -332,13 +318,11 @@ void VBasePlayer::SetUserInfo (const VStr &info) {
 //
 //==========================================================================
 void VBasePlayer::ReadFromUserInfo () {
-  guard(VBasePlayer::ReadFromUserInfo);
   if (!sv_loading) BaseClass = atoi(*Info_ValueForKey(UserInfo, "class"));
   PlayerName = Info_ValueForKey(UserInfo, "name");
   VStr val = Info_ValueForKey(UserInfo, "colour");
   Colour = M_ParseColour(*val);
   eventUserinfoChanged();
-  unguard;
 }
 
 
@@ -351,9 +335,7 @@ void VBasePlayer::DoClientStartSound (int SoundId, TVec Org, int OriginId,
   int Channel, float Volume, float Attenuation, bool Loop)
 {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientStartSound);
   GAudio->PlaySound(SoundId, Org, TVec(0, 0, 0), OriginId, Channel, Volume, Attenuation, Loop);
-  unguard;
 #endif
 }
 
@@ -365,9 +347,7 @@ void VBasePlayer::DoClientStartSound (int SoundId, TVec Org, int OriginId,
 //==========================================================================
 void VBasePlayer::DoClientStopSound (int OriginId, int Channel) {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientStopSound);
   GAudio->StopSound(OriginId, Channel);
-  unguard;
 #endif
 }
 
@@ -379,9 +359,7 @@ void VBasePlayer::DoClientStopSound (int OriginId, int Channel) {
 //==========================================================================
 void VBasePlayer::DoClientStartSequence (TVec Origin, int OriginId, VName Name, int ModeNum) {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientStartSequence);
   GAudio->StartSequence(OriginId, Origin, Name, ModeNum);
-  unguard;
 #endif
 }
 
@@ -393,9 +371,7 @@ void VBasePlayer::DoClientStartSequence (TVec Origin, int OriginId, VName Name, 
 //==========================================================================
 void VBasePlayer::DoClientAddSequenceChoice (int OriginId, VName Choice) {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientAddSequenceChoice);
   GAudio->AddSeqChoice(OriginId, Choice);
-  unguard;
 #endif
 }
 
@@ -407,9 +383,7 @@ void VBasePlayer::DoClientAddSequenceChoice (int OriginId, VName Choice) {
 //==========================================================================
 void VBasePlayer::DoClientStopSequence (int OriginId) {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientStopSequence);
   GAudio->StopSequence(OriginId);
-  unguard;
 #endif
 }
 
@@ -420,7 +394,6 @@ void VBasePlayer::DoClientStopSequence (int OriginId) {
 //
 //==========================================================================
 void VBasePlayer::DoClientPrint (VStr AStr) {
-  guard(VBasePlayer::DoClientPrint);
   VStr Str(AStr);
 
   if (Str.IsEmpty()) return;
@@ -428,7 +401,6 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
   if (hud_msg_echo) GCon->Logf("\034S%s", *Str);
 
   ClGame->eventAddNotifyMessage(Str);
-  unguard;
 }
 
 
@@ -438,7 +410,6 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
 //
 //==========================================================================
 void VBasePlayer::DoClientCentrePrint (VStr Str) {
-  guard(VBasePlayer::DoClientCentrePrint);
   VStr Msg(Str);
 
   if (Msg.IsEmpty()) return;
@@ -450,7 +421,6 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
   }
 
   ClGame->eventAddCentreMessage(Msg);
-  unguard;
 }
 
 
@@ -460,10 +430,8 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
 //
 //==========================================================================
 void VBasePlayer::DoClientSetAngles (TAVec Angles) {
-  guard(VBasePlayer::DoClientSetAngles);
   ViewAngles = Angles;
   ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
-  unguard;
 }
 
 
@@ -473,7 +441,6 @@ void VBasePlayer::DoClientSetAngles (TAVec Angles) {
 //
 //==========================================================================
 void VBasePlayer::DoClientIntermission (VName NextMap) {
-  guard(VBasePlayer::DoClientIntermission);
   im_t &im = ClGame->im;
 
   im.Text.Clean();
@@ -542,7 +509,6 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
 #endif
 
   ClGame->eventIintermissionStart();
-  unguard;
 }
 
 
@@ -553,7 +519,6 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
 //==========================================================================
 void VBasePlayer::DoClientPause (bool Paused) {
 #ifdef CLIENT
-  guard(VBasePlayer::DoClientPause);
   if (Paused) {
     GGameInfo->Flags |= VGameInfo::GIF_Paused;
     GAudio->PauseSound();
@@ -561,7 +526,6 @@ void VBasePlayer::DoClientPause (bool Paused) {
     GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
     GAudio->ResumeSound();
   }
-  unguard;
 #endif
 }
 
@@ -572,9 +536,7 @@ void VBasePlayer::DoClientPause (bool Paused) {
 //
 //==========================================================================
 void VBasePlayer::DoClientSkipIntermission () {
-  guard(VBasePlayer::DoClientSkipIntermission);
   ClGame->ClientFlags |= VClientGameBase::CF_SkipIntermission;
-  unguard;
 }
 
 
@@ -584,13 +546,11 @@ void VBasePlayer::DoClientSkipIntermission () {
 //
 //==========================================================================
 void VBasePlayer::DoClientFinale (VStr Type) {
-  guard(VBasePlayer::DoClientFinale);
   ClGame->intermission = 2;
 #ifdef CLIENT
   AM_Stop();
 #endif
   ClGame->eventStartFinale(*Type);
-  unguard;
 }
 
 
@@ -600,12 +560,10 @@ void VBasePlayer::DoClientFinale (VStr Type) {
 //
 //==========================================================================
 void VBasePlayer::DoClientChangeMusic (VName Song) {
-  guard(VBasePlayer::DoClientChangeMusic);
   Level->SongLump = Song;
 #ifdef CLIENT
   GAudio->MusicChanged();
 #endif
-  unguard;
 }
 
 
@@ -615,12 +573,10 @@ void VBasePlayer::DoClientChangeMusic (VName Song) {
 //
 //==========================================================================
 void VBasePlayer::DoClientSetServerInfo (VStr Key, VStr Value) {
-  guard(VBasePlayer::DoClientSetServerInfo);
   Info_SetValueForKey(ClGame->serverinfo, Key, Value);
 #ifdef CLIENT
   CL_ReadFromServerInfo();
 #endif
-  unguard;
 }
 
 
@@ -633,10 +589,8 @@ void VBasePlayer::DoClientHudMessage (const VStr &Message, VName Font, int Type,
   int Id, int Colour, const VStr &ColourName, float x, float y,
   int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
 {
-  guard(VBasePlayer::DoClientHudMessage);
   ClGame->eventAddHudMessage(Message, Font, Type, Id, Colour, ColourName,
     x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
-  unguard;
 }
 
 
@@ -646,13 +600,11 @@ void VBasePlayer::DoClientHudMessage (const VStr &Message, VName Font, int Type,
 //
 //==========================================================================
 void VBasePlayer::WriteViewData () {
-  guard(VBasePlayer::WriteViewData);
   // update bam_angles (after teleportation)
   if (PlayerFlags&PF_FixAngle) {
     PlayerFlags &= ~PF_FixAngle;
     eventClientSetAngles(ViewAngles);
   }
-  unguard;
 }
 
 
@@ -755,7 +707,6 @@ bool VBasePlayer::ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr
 //
 //==========================================================================
 COMMAND(SetInfo) {
-  guard(COMMAND SetInfo);
   if (Source != SRC_Client) {
     GCon->Log("SetInfo is not valid from console");
     return;
@@ -765,7 +716,6 @@ COMMAND(SetInfo) {
 
   Info_SetValueForKey(Player->UserInfo, *Args[1], *Args[2]);
   Player->ReadFromUserInfo();
-  unguard;
 }
 
 

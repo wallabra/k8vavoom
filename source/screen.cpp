@@ -199,7 +199,6 @@ extern void WriteJPG (const VStr &FileName, const void *Data, int Width, int Hei
 //
 //==========================================================================
 COMMAND(ScreenShot) {
-  guard(COMMAND ScreenShot);
   int i;
   int bpp;
   bool bot2top;
@@ -247,8 +246,6 @@ COMMAND(ScreenShot) {
   } else {
     GCon->Log("Not enough memory to take a screenshot");
   }
-
-  unguard;
 }
 
 
@@ -264,8 +261,6 @@ COMMAND(ScreenShot) {
 //
 //==========================================================================
 static void DrawFPS () {
-  guard(DrawFPS);
-
   const float FilterFadeoff = 0.1f; // 10%
   static float curFilterValue = 0;
 
@@ -338,8 +333,6 @@ static void DrawFPS () {
     if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos += 9; }
     if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos += 9; }
   }
-
-  unguard;
 }
 
 
@@ -350,7 +343,6 @@ static void DrawFPS () {
 //==========================================================================
 /*
 static void DrawCycles () {
-  guard(DrawCycles);
   if (draw_cycles) {
     T_SetFont(ConFont);
     T_SetAlign(hright, vtop);
@@ -359,7 +351,6 @@ static void DrawCycles () {
       host_cycles[i] = 0;
     }
   }
-  unguard;
 }
 */
 
@@ -376,7 +367,6 @@ static void DrawCycles () {
 //
 //==========================================================================
 static void ChangeResolution (int InWidth, int InHeight) {
-  guard(ChangeResolution);
   int width = InWidth;
   int height = InHeight;
   //bool win = false;
@@ -427,8 +417,6 @@ static void ChangeResolution (int InWidth, int InHeight) {
 
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
   if (GRoot) GRoot->RefreshScale();
-
-  unguard;
 }
 
 
@@ -438,7 +426,6 @@ static void ChangeResolution (int InWidth, int InHeight) {
 //
 //==========================================================================
 static void CheckResolutionChange () {
-  guard(CheckResolutionChange);
   bool res_changed = false;
 
   if (brightness != usegamma) {
@@ -468,7 +455,6 @@ static void CheckResolutionChange () {
     R_SetViewSize(screenblocks);
   }
   graphics_started = true;
-  unguard;
 }
 
 
@@ -521,7 +507,6 @@ void SCR_Init () {
 //
 //==========================================================================
 void SCR_Update () {
-  guard(SCR_Update);
   CheckResolutionChange();
 
   Drawer->StartUpdate();
@@ -558,7 +543,6 @@ void SCR_Update () {
   //DrawCycles();
 
   Drawer->Update(); // page flip or blit buffer
-  unguard;
 }
 
 
@@ -569,13 +553,11 @@ void SCR_Update () {
 //==========================================================================
 void Draw_TeleportIcon () {
   /*
-  guard(Draw_TeleportIcon);
   if (W_CheckNumForName(NAME_teleicon) >= 0) {
     Drawer->BeginDirectUpdate();
     R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_teleicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
-  unguard;
   */
 }
 
@@ -587,13 +569,11 @@ void Draw_TeleportIcon () {
 //==========================================================================
 void Draw_SaveIcon () {
   /*
-  guard(Draw_SaveIcon);
   if (W_CheckNumForName(NAME_saveicon) >= 0) {
     Drawer->BeginDirectUpdate();
     R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_saveicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
-  unguard;
   */
 }
 
@@ -605,13 +585,11 @@ void Draw_SaveIcon () {
 //==========================================================================
 void Draw_LoadIcon () {
   /*
-  guard(Draw_LoadIcon);
   if (W_CheckNumForName(NAME_loadicon) >= 0) {
     Drawer->BeginDirectUpdate();
     R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_loadicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
-  unguard;
   */
 }
 
@@ -622,7 +600,6 @@ void Draw_LoadIcon () {
 //
 //==========================================================================
 void SCR_SetVirtualScreen (int Width, int Height) {
-  guard(SCR_SetVirtualScreen);
   VirtualWidth = Width;
   VirtualHeight = Height;
   fScaleX = (float)ScreenWidth/(float)VirtualWidth;
@@ -631,5 +608,4 @@ void SCR_SetVirtualScreen (int Width, int Height) {
   //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
   if (GRoot) GRoot->RefreshScale();
   //GCon->Logf("***SCALE1: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
-  unguard;
 }

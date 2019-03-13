@@ -436,7 +436,6 @@ private:
 //
 //==========================================================================
 void VAcsGrowingArray::Serialise (VStream &Strm) {
-  guard(VAcsGrowingArray::Serialise);
   vuint8 xver = 1;
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS growing array version in save file");
@@ -461,7 +460,6 @@ void VAcsGrowingArray::Serialise (VStream &Strm) {
       Strm << STRM_INDEX(index) << STRM_INDEX(value);
     }
   }
-  unguard;
 }
 
 
@@ -472,7 +470,6 @@ void VAcsGrowingArray::Serialise (VStream &Strm) {
 //
 //==========================================================================
 VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
-  guard(VAcsObject::VAcsObject);
   Format = ACS_Unknown;
   LumpNum = Lump;
   LibraryID = 0;
@@ -580,7 +577,6 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
   } else {
     LoadEnhancedObject();
   }
-  unguard;
 }
 
 
@@ -590,7 +586,6 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
 //
 //==========================================================================
 VAcsObject::~VAcsObject () {
-  //guard(VAcsObject::~VAcsObject);
   delete[] Scripts;
   Scripts = nullptr;
   delete[] Strings;
@@ -611,7 +606,6 @@ VAcsObject::~VAcsObject () {
   }
   delete[] Data;
   Data = nullptr;
-  //unguard;
 }
 
 
@@ -621,7 +615,6 @@ VAcsObject::~VAcsObject () {
 //
 //==========================================================================
 void VAcsObject::LoadOldObject () {
-  guard(VAcsObject::LoadOldObject);
   int i;
   int *buffer;
   VAcsInfo *info;
@@ -665,7 +658,6 @@ void VAcsObject::LoadOldObject () {
   {
     MapVars[i] = &MapVarStore[i];
   }
-  unguard;
 }
 
 
@@ -675,7 +667,6 @@ void VAcsObject::LoadOldObject () {
 //
 //==========================================================================
 void VAcsObject::LoadEnhancedObject () {
-  guard(VAcsObject::LoadEnhancedObject);
   int i;
   int *buffer;
   VAcsInfo *info;
@@ -1035,9 +1026,8 @@ void VAcsObject::LoadEnhancedObject () {
       delete [] sbuf;
     }
   }
-
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1047,7 +1037,6 @@ void VAcsObject::LoadEnhancedObject () {
 
 void VAcsObject::UnencryptStrings()
 {
-  guard(VAcsObject::UnencryptStrings);
   vuint8 *prevchunk = nullptr;
   vuint32 *chunk = (vuint32*)FindChunk("STRE");
   while (chunk)
@@ -1073,8 +1062,8 @@ void VAcsObject::UnencryptStrings()
   {
     prevchunk[3] = 'L';
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1084,10 +1073,9 @@ void VAcsObject::UnencryptStrings()
 
 int VAcsObject::FindFunctionName(const char *Name) const
 {
-  guard(VAcsObject::FindFunctionName);
   return FindStringInChunk(FindChunk("FNAM"), Name);
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1097,10 +1085,9 @@ int VAcsObject::FindFunctionName(const char *Name) const
 
 int VAcsObject::FindMapVarName(const char *Name) const
 {
-  guard(VAcsObject::FindMapVarName);
   return FindStringInChunk(FindChunk("MEXP"), Name);
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1110,15 +1097,14 @@ int VAcsObject::FindMapVarName(const char *Name) const
 
 int VAcsObject::FindMapArray(const char *Name) const
 {
-  guard(VAcsObject::FindMapArray);
   int var = FindMapVarName(Name);
   if (var >= 0)
   {
     return MapVarStore[var];
   }
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1128,7 +1114,6 @@ int VAcsObject::FindMapArray(const char *Name) const
 
 int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
 {
-  guard(VAcsObject::FindStringInChunk);
   if (Chunk)
   {
     int count = LittleLong(((int*)Chunk)[2]);
@@ -1142,8 +1127,8 @@ int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
     }
   }
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1153,7 +1138,6 @@ int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
 
 vuint8 *VAcsObject::FindChunk(const char *id) const
 {
-  guard(VAcsObject::FindChunk);
   vuint8 *chunk = Chunks;
   while (chunk && chunk < Data + DataSize)
   {
@@ -1164,8 +1148,8 @@ vuint8 *VAcsObject::FindChunk(const char *id) const
     chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1175,7 +1159,6 @@ vuint8 *VAcsObject::FindChunk(const char *id) const
 
 vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
 {
-  guard(VAcsObject::NextChunk);
   int id = *(int*)prev;
   vuint8 *chunk = prev + LittleLong(((int*)prev)[1]) + 8;
   while (chunk && chunk < Data + DataSize)
@@ -1187,7 +1170,6 @@ vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
     chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -1197,7 +1179,6 @@ vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
 //
 //==========================================================================
 void VAcsObject::Serialise (VStream &Strm) {
-  guard(VAcsObject::Serialise);
   vuint8 xver = 1; // current version is 1 (fuck v0)
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS object version in save file");
@@ -1252,7 +1233,6 @@ void VAcsObject::Serialise (VStream &Strm) {
     }
     for (int j = 0; j < ArrayStore[i].Size; ++j) Strm << STRM_INDEX(ArrayStore[i].Data[j]);
   }
-  unguard;
 }
 
 
@@ -1286,7 +1266,6 @@ int VAcsObject::PtrToOffset(vuint8 *Ptr)
 
 VAcsInfo *VAcsObject::FindScript(int Number) const
 {
-  guard(VAcsObject::FindScript);
   if (Number <= -100000) {
     Number = -(Number+100000);
     return &Scripts[Number];
@@ -1299,8 +1278,8 @@ VAcsInfo *VAcsObject::FindScript(int Number) const
     }
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1310,7 +1289,6 @@ VAcsInfo *VAcsObject::FindScript(int Number) const
 
 VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 {
-  guard(VAcsObject::FindScriptByName);
   if (nameidx == 0) return nullptr;
   if (nameidx < 0) {
     nameidx = -nameidx;
@@ -1321,8 +1299,8 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
     if (Scripts[i].Name.GetIndex() == nameidx) return Scripts + i;
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1332,15 +1310,14 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 
 VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
 {
-  guard(VAcsObject::FindScriptByNameStr);
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
     if (Scripts[i].Name == nn) return Scripts + i;
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1350,15 +1327,14 @@ VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
 
 int VAcsObject::FindScriptNumberByName (const VStr &aname) const
 {
-  guard(VAcsObject::FindScriptNumberByName);
   if (aname.length() == 0) return -1;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
     if (Scripts[i].Name == nn) return -100000-i;
   }
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1369,7 +1345,6 @@ int VAcsObject::FindScriptNumberByName (const VStr &aname) const
 VAcsFunction *VAcsObject::GetFunction(int funcnum,
   VAcsObject *&Object)
 {
-  guard(VAcsObject::GetFunction);
   if ((unsigned)funcnum >= (unsigned)NumFunctions)
   {
     return nullptr;
@@ -1382,8 +1357,8 @@ VAcsFunction *VAcsObject::GetFunction(int funcnum,
   }
   Object = this;
   return Func;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1393,14 +1368,13 @@ VAcsFunction *VAcsObject::GetFunction(int funcnum,
 
 int VAcsObject::GetArrayVal(int ArrayIdx, int Index)
 {
-  guard(VAcsObject::GetArrayVal);
   if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays)
     return 0;
   if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size)
     return 0;
   return Arrays[ArrayIdx]->Data[Index];
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1410,14 +1384,13 @@ int VAcsObject::GetArrayVal(int ArrayIdx, int Index)
 
 void VAcsObject::SetArrayVal(int ArrayIdx, int Index, int Value)
 {
-  guard(VAcsObject::SetArrayVal);
   if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays)
     return;
   if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size)
     return;
   Arrays[ArrayIdx]->Data[Index] = Value;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1428,7 +1401,6 @@ void VAcsObject::SetArrayVal(int ArrayIdx, int Index, int Value)
 void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
   VEntity *Activator, bool Always, bool RunNow)
 {
-  guard(VAcsObject::StartTypedACScripts);
   for (int i = 0; i < NumScripts; i++)
   {
     if (Scripts[i].Type == Type)
@@ -1445,7 +1417,6 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*i
       }
     }
   }
-  unguard;
 }
 
 
@@ -1525,15 +1496,14 @@ int VAcsLevel::PutNewString (VStr str) {
 //
 //==========================================================================
 VAcsObject *VAcsLevel::LoadObject(int Lump) {
-  guard(VAcsLevel::LoadObject);
   for (int i = 0; i < LoadedObjects.Num(); i++) {
     if (LoadedObjects[i]->LumpNum == Lump) {
       return LoadedObjects[i];
     }
   }
   return new VAcsObject(this, Lump);
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1543,7 +1513,6 @@ VAcsObject *VAcsLevel::LoadObject(int Lump) {
 
 VAcsInfo *VAcsLevel::FindScript(int Number, VAcsObject *&Object)
 {
-  guard(VAcsLevel::FindScript);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     VAcsInfo *Found = LoadedObjects[i]->FindScript(Number);
@@ -1554,8 +1523,8 @@ VAcsInfo *VAcsLevel::FindScript(int Number, VAcsObject *&Object)
     }
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1565,7 +1534,6 @@ VAcsInfo *VAcsLevel::FindScript(int Number, VAcsObject *&Object)
 
 VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 {
-  guard(VAcsLevel::FindScriptByName);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(Number);
@@ -1576,8 +1544,8 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
     }
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1587,7 +1555,6 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 
 VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object)
 {
-  guard(VAcsLevel::FindScriptByNameStr);
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < LoadedObjects.Num(); i++)
@@ -1600,8 +1567,8 @@ VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object
     }
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1610,7 +1577,6 @@ VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object
 //==========================================================================
 int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object)
 {
-  guard(VAcsLevel::FindScriptNumberByName);
   if (aname.length() == 0) return -1;
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
@@ -1622,7 +1588,6 @@ int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object)
     }
   }
   return -1;
-  unguard;
 }
 
 
@@ -1632,12 +1597,10 @@ int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object)
 //
 //==========================================================================
 VStr VAcsLevel::GetString (int Index) {
-  guard(VAcsLevel::GetString);
   int ObjIdx = (vuint32)Index>>16;
   if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) return GetNewString(Index&0xffff);
   if (ObjIdx >= LoadedObjects.Num()) return "";
   return LoadedObjects[ObjIdx]->GetString(Index&0xffff);
-  unguard;
 }
 
 
@@ -1647,7 +1610,6 @@ VStr VAcsLevel::GetString (int Index) {
 //
 //==========================================================================
 VName VAcsLevel::GetNameLowerCase (int Index) {
-  guard(VAcsLevel::GetNameLowerCase);
   //GCon->Logf("VAcsLevel::GetNameLowerCase: index=0x%08x", (vuint32)Index);
   int ObjIdx = (vuint32)Index>>16;
   if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) {
@@ -1657,7 +1619,6 @@ VName VAcsLevel::GetNameLowerCase (int Index) {
   if (ObjIdx >= LoadedObjects.Num()) return NAME_None;
   //GCon->Logf("VAcsLevel::GetNameLowerCase: object #%d: '%s'", ObjIdx, *LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff));
   return LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff);
-  unguard;
 }
 
 
@@ -1668,14 +1629,13 @@ VName VAcsLevel::GetNameLowerCase (int Index) {
 //==========================================================================
 VAcsObject *VAcsLevel::GetObject(int Index)
 {
-  guard(VAcsLevel::GetObject);
   if ((unsigned)Index >= (unsigned)LoadedObjects.Num())
   {
     return nullptr;
   }
   return LoadedObjects[Index];
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -1686,12 +1646,10 @@ VAcsObject *VAcsLevel::GetObject(int Index)
 void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   VEntity *Activator, bool Always, bool RunNow)
 {
-  guard(VAcsLevel::StartTypedACScripts);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     LoadedObjects[i]->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
   }
-  unguard;
 }
 
 
@@ -1701,7 +1659,6 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 void VAcsLevel::Serialise (VStream &Strm) {
-  guard(VAcsLevel::Serialise);
   vuint8 xver = 1;
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS level version in save file");
@@ -1728,7 +1685,6 @@ void VAcsLevel::Serialise (VStream &Strm) {
     stringMapByStr.clear();
     for (int f = 0; f < sllen; ++f) stringMapByStr.put(stringList[f], f);
   }
-  unguard;
 }
 
 
@@ -1740,7 +1696,6 @@ void VAcsLevel::Serialise (VStream &Strm) {
 bool VAcsLevel::AddToACSStore (int Type, VName Map, int Number, int Arg1,
                                int Arg2, int Arg3, int Arg4, VEntity *Activator)
 {
-  guard(VAcsLevel::AddToACSStore);
   VAcsStore &S = XLevel->WorldInfo->Acs->Store.Alloc();
   S.Map = Map;
   S.Type = Type;
@@ -1751,7 +1706,6 @@ bool VAcsLevel::AddToACSStore (int Type, VName Map, int Number, int Arg1,
   S.Args[2] = Arg3;
   S.Args[4] = Arg4;
   return true;
-  unguard;
 }
 
 
@@ -1764,7 +1718,6 @@ bool VAcsLevel::AddToACSStore (int Type, VName Map, int Number, int Arg1,
 //
 //==========================================================================
 void VAcsLevel::CheckAcsStore () {
-  guard(VAcsLevel::CheckAcsStore);
   for (int i = XLevel->WorldInfo->Acs->Store.length()-1; i >= 0; --i) {
     VAcsStore *store = &XLevel->WorldInfo->Acs->Store[i];
     if (store->Map != XLevel->MapName) continue;
@@ -1809,7 +1762,6 @@ void VAcsLevel::CheckAcsStore () {
     }
     XLevel->WorldInfo->Acs->Store.RemoveIndex(i);
   }
-  unguard;
 }
 
 
@@ -1822,8 +1774,6 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
   bool Net, int *realres)
 {
-  guard(VAcsLevel::Start);
-
   /*
   if (WantResult) {
     if (realres) *realres = 1;
@@ -1879,7 +1829,6 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
 
   if (realres) *realres = 0;
   return true;
-  unguard;
 }
 
 
@@ -1889,7 +1838,6 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
 //
 //==========================================================================
 bool VAcsLevel::Terminate (int Number, int MapNum) {
-  guard(VAcsLevel::Terminate);
   if (MapNum) {
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
     if (Map != NAME_None && Map != XLevel->MapName) {
@@ -1910,7 +1858,6 @@ bool VAcsLevel::Terminate (int Number, int MapNum) {
   }
   Info->RunningScript->State = VAcs::ASTE_Terminating;
   return true;
-  unguard;
 }
 
 
@@ -1920,7 +1867,6 @@ bool VAcsLevel::Terminate (int Number, int MapNum) {
 //
 //==========================================================================
 bool VAcsLevel::Suspend (int Number, int MapNum) {
-  guard(VAcsLevel::Suspend);
   if (MapNum) {
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
     if (Map != NAME_None && Map != XLevel->MapName) {
@@ -1944,7 +1890,6 @@ bool VAcsLevel::Suspend (int Number, int MapNum) {
   }
   Info->RunningScript->State = VAcs::ASTE_Suspended;
   return true;
-  unguard;
 }
 
 
@@ -1957,7 +1902,6 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
   bool Always, bool Delayed, bool ImmediateRun)
 {
-  guard(VAcsLevel::SpawnScript);
   if (!Always && Info->RunningScript) {
     if (Info->RunningScript->State == VAcs::ASTE_Suspended) {
       // resume a suspended script
@@ -2011,7 +1955,6 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   }
   XLevel->AddScriptThinker(script, ImmediateRun);
   return script;
-  unguard;
 }
 
 
@@ -2068,7 +2011,6 @@ void VAcs::Destroy () {
 //
 //==========================================================================
 void VAcs::Serialise (VStream &Strm) {
-  guard(VAcs::Serialise);
   vint32 TmpInt;
 
   //Super::Serialise(Strm);
@@ -2153,7 +2095,6 @@ void VAcs::Serialise (VStream &Strm) {
   Strm << HudWidth
     << HudHeight
     << Font;
-  unguard;
 }
 
 
@@ -2163,14 +2104,12 @@ void VAcs::Serialise (VStream &Strm) {
 //
 //==========================================================================
 void VAcs::ClearReferences () {
-  guard(VAcs::ClearReferences);
   //Super::ClearReferences();
   if (!destroyed) {
     if (Activator && (Activator->GetFlags()&_OF_CleanupRef)) Activator = nullptr;
     if (XLevel && (XLevel->GetFlags()&_OF_CleanupRef)) XLevel = nullptr;
     if (Level && (Level->GetFlags()&_OF_CleanupRef)) Level = nullptr;
   }
-  unguard;
 }
 
 
@@ -3294,7 +3233,6 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 //
 //==========================================================================
 int VAcs::RunScript (float DeltaTime, bool immediate) {
-  guard(VAcs::RunScript);
   VAcsObject *WaitObject;
 
   //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
@@ -6716,8 +6654,8 @@ LblFuncStop:
 
   Z_Free(stack);
   return resultValue;
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -6863,7 +6801,6 @@ void VAcsStore::Serialise (VStream &Strm) {
 //
 //==========================================================================
 void VAcsGlobal::Serialise (VStream &Strm) {
-  guard(VAcsGlobal::Serialise);
   vuint8 xver = 1;
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS global store version in save file");
@@ -6909,7 +6846,6 @@ void VAcsGlobal::Serialise (VStream &Strm) {
 
   // store
   Strm << Store;
-  unguard;
 }
 
 
@@ -7081,7 +7017,6 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
 //
 //==========================================================================
 COMMAND(Puke) {
-  guard(COMMAND Puke);
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -7103,7 +7038,6 @@ COMMAND(Puke) {
 
   Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
     GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
-  unguard;
 }
 
 
@@ -7113,7 +7047,6 @@ COMMAND(Puke) {
 //
 //==========================================================================
 COMMAND(PukeName) {
-  guard(COMMAND PukeName);
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -7135,5 +7068,4 @@ COMMAND(PukeName) {
 
   Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
     GGameInfo->Players[0]->MO, nullptr, 0, /*Script < 0*/false/*always:wtf?*/, false, true);
-  unguard;
 }

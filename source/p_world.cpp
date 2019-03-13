@@ -124,7 +124,6 @@ VBlockLinesIterator::VBlockLinesIterator (VLevel *ALevel, int x, int y, line_t *
 //
 //==========================================================================
 bool VBlockLinesIterator::GetNext () {
-  guard(VBlockLinesIterator::GetNext);
   if (!List) return false; // off the map
 
   // check polyobj blockmap
@@ -165,7 +164,6 @@ bool VBlockLinesIterator::GetNext () {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -198,7 +196,6 @@ VRadiusThingsIterator::VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr
 //
 //==========================================================================
 bool VRadiusThingsIterator::GetNext () {
-  guard(VRadiusThingsIterator::GetNext);
   while (1) {
     while (Ent) {
       *EntPtr = Ent;
@@ -219,7 +216,6 @@ bool VRadiusThingsIterator::GetNext () {
       Ent = Self->XLevel->BlockLinks[y*Self->XLevel->BlockMapWidth+x];
     }
   }
-  unguard;
 }
 
 
@@ -249,7 +245,6 @@ VPathTraverse::VPathTraverse (VThinker *Self, intercept_t **AInPtr, float InX1,
 //
 //==========================================================================
 void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, float y2, int flags) {
-  guard(VPathTraverse::Init);
   float x1 = InX1;
   float y1 = InY1;
   int xt1;
@@ -398,8 +393,6 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 #ifdef PARANOID
   for (int f = 1; f < Count; ++f) if (In[f].frac < In[f-1].frac) Sys_Error("VPathTraverse: internal sorting error");
 #endif
-
-  unguard;
 }
 
 
@@ -452,7 +445,6 @@ void VPathTraverse::RemoveInterceptsAfter (const float frac) {
 //
 //==========================================================================
 bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut) {
-  guard(VPathTraverse::AddLineIntercepts);
   line_t *ld;
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); ) {
     float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
@@ -486,7 +478,6 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     if (doExit) return false; // early out flag
   }
   return true;
-  unguard;
 }
 
 
@@ -496,7 +487,6 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 //
 //==========================================================================
 void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
-  guard(VPathTraverse::AddThingIntercepts);
   if (dbg_use_buggy_thing_traverser) {
     // original
     for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
@@ -620,7 +610,6 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -630,13 +619,9 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
 //
 //==========================================================================
 bool VPathTraverse::GetNext () {
-  guard(VPathTraverse::GetNext);
   if (!Count) return false; // everything was traversed
   --Count;
-
   //k8: it is already sorted
   *InPtr = In++;
   return true;
-
-  unguard;
 }
