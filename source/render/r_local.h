@@ -419,6 +419,9 @@ protected:
   // k8: it was a bunch of globals; i will eventually got rid of this
   bool MirrorClipSegs;
 
+  // used in `CreateWorldSurfaces()` and friends
+  segpart_t *pspart;
+
 protected:
   void NewBSPVisibilityFrame ();
   bool CheckBSPVisibilitySub (const TVec &org, float radiusSq, const subsector_t *currsub);
@@ -430,7 +433,7 @@ protected:
 
   void UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset);
   void UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset);
-  void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg/*, bool ShouldClip*/);
+  void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region/*, bool ClipSegs*/);
   void UpdateSubsector (int num, float *bbox);
   void UpdateBSPNode (int bspnum, float *bbox);
@@ -517,7 +520,7 @@ protected:
   void FreeWSurfs (surface_t*);
   surface_t *CreateWSurfs (TVec*, texinfo_t*, seg_t*, subsector_t*);
   int CountSegParts (seg_t*);
-  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t*, seg_t*);
+  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);

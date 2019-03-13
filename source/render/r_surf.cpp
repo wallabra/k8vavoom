@@ -41,13 +41,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static sec_plane_t *r_floor;
-static sec_plane_t *r_ceiling;
-
-static segpart_t *pspart;
-
-
 static VCvarB dbg_kdizd_water("dbg_kdizd_water", false, "KDIZD water hacks?", CVAR_Archive);
+
 extern VCvarB w_update_clip_bsp;
 extern VCvarB w_update_clip_region;
 extern VCvarB w_update_in_renderer;
@@ -402,7 +397,7 @@ int VRenderLevelShared::CountSegParts (seg_t *seg) {
 //  VRenderLevelShared::CreateSegParts
 //
 //==========================================================================
-void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg) {
+void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
   TVec wv[4];
   segpart_t *sp;
 
@@ -801,14 +796,14 @@ void VRenderLevelShared::UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
-void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg/*, bool ShouldClip*/) {
+void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
   segpart_t *sp;
   TVec wv[4];
 
   if (!seg->linedef) return; // miniseg
 
-  if (w_update_clip_region /*ShouldClip*/ && !seg->PointOnSide(vieworg)) {
+  if (w_update_clip_region /*ShouldClip*/) {
     /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -826,7 +821,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
     */
-    if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+    if (!seg->PointOnSide(vieworg)) {
+      if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+    } else {
+      if (!ViewClip.IsRangeVisible(*seg->v1, *seg->v2)) return;
+    }
   }
 
   side_t *sidedef = seg->sidedef;
@@ -1361,8 +1360,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
     subsector_t *r_surf_sub = sub;
     for (reg = sub->sector->botregion; reg; reg = reg->next) {
-      r_floor = reg->floor;
-      r_ceiling = reg->ceiling;
+      sec_plane_t *r_floor = reg->floor;
+      sec_plane_t *r_ceiling = reg->ceiling;
 
       if (sub->sector->fakefloors) {
         if (r_floor == &sub->sector->floor) r_floor = &sub->sector->fakefloors->floorplane;
@@ -1379,14 +1378,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
       sreg->lines = pds;
       pds += sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(r_surf_sub, &sreg->lines[j], &Level->Segs[sub->firstline+j]);
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(r_surf_sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling);
       if (sub->poly) {
         // polyobj
         int j = sub->numlines;
         int polyCount = sub->poly->numsegs;
         seg_t **polySeg = sub->poly->segs;
         while (polyCount--) {
-          CreateSegParts(r_surf_sub, &sreg->lines[j], *polySeg);
+          CreateSegParts(r_surf_sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling);
           ++polySeg;
           ++j;
         }
@@ -1410,8 +1409,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region/*, bool ClipSegs*/) {
-  r_floor = region->floorplane;
-  r_ceiling = region->ceilplane;
+  sec_plane_t *r_floor = region->floorplane;
+  sec_plane_t *r_ceiling = region->ceilplane;
   if (r_surf_sub->sector->fakefloors) {
     if (r_floor == &r_surf_sub->sector->floor) r_floor = &r_surf_sub->sector->fakefloors->floorplane;
     if (r_ceiling == &r_surf_sub->sector->ceiling) r_ceiling = &r_surf_sub->sector->fakefloors->ceilplane;
@@ -1420,7 +1419,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *
   int count = r_surf_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--) {
-    UpdateDrawSeg(r_surf_sub, ds/*, ClipSegs*/);
+    UpdateDrawSeg(r_surf_sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
     ++ds;
   }
 
@@ -1432,7 +1431,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *
     int polyCount = r_surf_sub->poly->numsegs;
     seg_t **polySeg = r_surf_sub->poly->segs;
     while (polyCount--) {
-      UpdateDrawSeg(r_surf_sub, (*polySeg)->drawsegs/*, ClipSegs*/);
+      UpdateDrawSeg(r_surf_sub, (*polySeg)->drawsegs, r_floor, r_ceiling/*, ClipSegs*/);
       ++polySeg;
     }
   }
