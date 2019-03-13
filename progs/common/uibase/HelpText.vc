@@ -49,7 +49,7 @@ void setText (string text) {
 
 override void OnDraw () {
   if (!mText || Width < 1 || Height < 1) return;
-  SetOrigin((GetVirtualWidth()-Width)/2, (atTop ? 2 : GetVirtualHeight()-Height-2));
+  SetOrigin((GetVirtualWidth()-Width)/2, (atTop ? 2+16 : GetVirtualHeight()-Height-2));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
   ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
