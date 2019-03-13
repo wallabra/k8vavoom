@@ -65,7 +65,6 @@ static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Dis
 //
 //==========================================================================
 void VEntity::InitFuncIndexes () {
-  guard(VEntity::InitFuncIndexes);
   FIndex_OnMapSpawn = StaticClass()->GetMethodIndex(NAME_OnMapSpawn);
   FIndex_BeginPlay = StaticClass()->GetMethodIndex(NAME_BeginPlay);
   FIndex_Destroyed = StaticClass()->GetMethodIndex(NAME_Destroyed);
@@ -83,7 +82,6 @@ void VEntity::InitFuncIndexes () {
   FIndex_GetSigilPieces = StaticClass()->GetMethodIndex(NAME_GetSigilPieces);
   FIndex_MoveThing = StaticClass()->GetMethodIndex(NAME_MoveThing);
   FIndex_GetStateTime = StaticClass()->GetMethodIndex(NAME_GetStateTime);
-  unguard;
 }
 
 
@@ -93,14 +91,12 @@ void VEntity::InitFuncIndexes () {
 //
 //==========================================================================
 void VEntity::SerialiseOther (VStream &Strm) {
-  guard(VEntity::Serialise);
   Super::SerialiseOther(Strm);
   if (Strm.IsLoading()) {
     if (EntityFlags&EF_IsPlayer) Player->MO = this;
     SubSector = nullptr; // must mark as not linked
     LinkToWorld(true);
   }
-  unguard;
 }
 
 
@@ -110,8 +106,6 @@ void VEntity::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VEntity::DestroyThinker () {
-  guard(VEntity::DestroyThinker)
-
   if ((GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == 0) {
     if (Role == ROLE_Authority) {
       eventDestroyed();
@@ -126,8 +120,6 @@ void VEntity::DestroyThinker () {
 
     Super::DestroyThinker();
   }
-
-  unguard;
 }
 
 
@@ -137,11 +129,9 @@ void VEntity::DestroyThinker () {
 //
 //==========================================================================
 void VEntity::AddedToLevel () {
-  guard(VEntity::AddedToLevel);
   if (!XLevel->NextSoundOriginID) XLevel->NextSoundOriginID = 1;
   SoundOriginID = XLevel->NextSoundOriginID+(SNDORG_Entity<<24);
   XLevel->NextSoundOriginID = (XLevel->NextSoundOriginID+1)&0x00ffffff;
-  unguard;
 }
 
 
@@ -151,10 +141,8 @@ void VEntity::AddedToLevel () {
 //
 //==========================================================================
 void VEntity::SetTID (int tid) {
-  guard(VEntity::SetTID);
   RemoveFromTIDList();
   if (tid) InsertIntoTIDList(tid);
-  unguard;
 }
 
 
@@ -164,7 +152,6 @@ void VEntity::SetTID (int tid) {
 //
 //==========================================================================
 void VEntity::InsertIntoTIDList (int tid) {
-  guard(VEntity::InsertIntoTIDList);
   check(TID == 0);
   TID = tid;
   int HashIndex = tid&(VLevelInfo::TID_HASH_SIZE-1);
@@ -172,7 +159,6 @@ void VEntity::InsertIntoTIDList (int tid) {
   TIDHashNext = Level->TIDHash[HashIndex];
   if (TIDHashNext) TIDHashNext->TIDHashPrev = this;
   Level->TIDHash[HashIndex] = this;
-  unguard;
 }
 
 
@@ -182,7 +168,6 @@ void VEntity::InsertIntoTIDList (int tid) {
 //
 //==========================================================================
 void VEntity::RemoveFromTIDList () {
-  guard(VEntity::RemoveFromTIDList);
   if (!TID) return; // no TID, which means it's not in the cache
   if (TIDHashNext) TIDHashNext->TIDHashPrev = TIDHashPrev;
   if (TIDHashPrev) {
@@ -193,7 +178,6 @@ void VEntity::RemoveFromTIDList () {
     Level->TIDHash[HashIndex] = TIDHashNext;
   }
   TID = 0;
-  unguard;
 }
 
 
@@ -205,7 +189,6 @@ void VEntity::RemoveFromTIDList () {
 //
 //==========================================================================
 bool VEntity::SetState (VState *InState) {
-  guard(VEntity::SetState);
   VState *st = InState;
   //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
   if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
@@ -272,7 +255,6 @@ bool VEntity::SetState (VState *InState) {
     st = State->NextState;
   } while (!StateTime);
   return true;
-  unguard;
 }
 
 
@@ -284,7 +266,6 @@ bool VEntity::SetState (VState *InState) {
 //
 //==========================================================================
 void VEntity::SetInitialState (VState *InState) {
-  guard(VEntity::SetInitialState);
   State = InState;
   if (InState) {
     UpdateDispFrameFrom(InState);
@@ -294,7 +275,6 @@ void VEntity::SetInitialState (VState *InState) {
     DispSpriteName = NAME_None;
     StateTime = -1.0f;
   }
-  unguard;
 }
 
 
@@ -304,7 +284,6 @@ void VEntity::SetInitialState (VState *InState) {
 //
 //==========================================================================
 bool VEntity::AdvanceState (float deltaTime) {
-  guard(VEntity::AdvanceState);
   if (deltaTime <= 0.0f) return true;
   if (dbg_disable_state_advance) return true;
   if (State && StateTime != -1.0f) {
@@ -316,7 +295,6 @@ bool VEntity::AdvanceState (float deltaTime) {
     }
   }
   return true;
-  unguard;
 }
 
 
@@ -326,7 +304,6 @@ bool VEntity::AdvanceState (float deltaTime) {
 //
 //==========================================================================
 VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
-  guard(VEntity::FindState);
   VStateLabel *Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
   if (!Lbl && !Exact && SubLabel == NAME_None && StateName != NAME_None && strchr(*StateName, '.')) {
     // try to split, if not exact
@@ -337,7 +314,6 @@ VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
   }
   //if (Lbl) GCon->Logf("VEntity::FindState(%s): found '%s' (%s : %s)", GetClass()->GetName(), *StateName, *Lbl->Name, *Lbl->State->Loc.toStringNoCol());
   return (Lbl ? Lbl->State : nullptr);
-  unguard;
 }
 
 
@@ -347,12 +323,10 @@ VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
 //
 //==========================================================================
 VState *VEntity::FindStateEx (const VStr &StateName, bool Exact) {
-  guard(VEntity::FindStateEx);
   TArray<VName> Names;
   VMemberBase::StaticSplitStateLabel(StateName, Names);
   VStateLabel *Lbl = GetClass()->FindStateLabel(Names, Exact);
   return (Lbl ? Lbl->State : nullptr);
-  unguard;
 }
 
 
@@ -362,10 +336,8 @@ VState *VEntity::FindStateEx (const VStr &StateName, bool Exact) {
 //
 //==========================================================================
 bool VEntity::HasSpecialStates (VName StateName) {
-  guard(VEntity::HasSpecialStates);
   VStateLabel *Lbl = GetClass()->FindStateLabel(StateName);
   return (Lbl != nullptr && Lbl->SubLabels.Num() > 0);
-  unguard;
 }
 
 
@@ -375,7 +347,6 @@ bool VEntity::HasSpecialStates (VName StateName) {
 //
 //==========================================================================
 void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VParticleEffectDef *> &Part) const {
-  guard(VEntity::GetStateEffects);
   // clear arrays
   Lights.reset();
   // check for valid state
@@ -395,7 +366,6 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
     if (State->LightName.length()) State->LightDef = R_FindLightEffect(State->LightName);
   }
   if (State->LightDef) Lights.Append(State->LightDef);
-  unguard;
 }
 
 
@@ -405,7 +375,6 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
 //
 //==========================================================================
 bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
-  guard(VEntity::CallStateChain);
   // set up state call structure
   VStateCall *PrevCall = XLevel->StateCall;
   VStateCall Call;
@@ -449,7 +418,6 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 
   XLevel->StateCall = PrevCall;
   return Ret;
-  unguard;
 }
 
 
@@ -459,13 +427,11 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 //
 //==========================================================================
 void VEntity::StartSound (VName Sound, vint32 Channel, float Volume, float Attenuation, bool Loop, bool Local) {
-  guard(VEntity::StartSound);
   if (!Sector) return;
   if (Sector->SectorFlags&sector_t::SF_Silent) return;
   Super::StartSound(Origin, SoundOriginID,
     GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
     Channel, Volume, Attenuation, Loop, Local);
-  unguard;
 }
 
 
@@ -475,14 +441,12 @@ void VEntity::StartSound (VName Sound, vint32 Channel, float Volume, float Atten
 //
 //==========================================================================
 void VEntity::StartLocalSound (VName Sound, vint32 Channel, float Volume, float Attenuation) {
-  guard(VEntity::StartLocalSound);
   if (Sector->SectorFlags&sector_t::SF_Silent) return;
   if (Player) {
     Player->eventClientStartSound(
       GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
       TVec(0, 0, 0), /*0*/-666, Channel, Volume, Attenuation, false);
   }
-  unguard;
 }
 
 
@@ -492,9 +456,7 @@ void VEntity::StartLocalSound (VName Sound, vint32 Channel, float Volume, float 
 //
 //==========================================================================
 void VEntity::StopSound (vint32 channel) {
-  guard(VEntity::StopSound);
   Super::StopSound(SoundOriginID, channel);
-  unguard;
 }
 
 
@@ -504,10 +466,8 @@ void VEntity::StopSound (vint32 channel) {
 //
 //==========================================================================
 void VEntity::StartSoundSequence (VName Name, vint32 ModeNum) {
-  guard(VEntity::StartSoundSequence);
   if (Sector->SectorFlags&sector_t::SF_Silent) return;
   Super::StartSoundSequence(Origin, SoundOriginID, Name, ModeNum);
-  unguard;
 }
 
 
@@ -517,10 +477,8 @@ void VEntity::StartSoundSequence (VName Name, vint32 ModeNum) {
 //
 //==========================================================================
 void VEntity::AddSoundSequenceChoice (VName Choice) {
-  guard(VEntity::AddSoundSequenceChoice);
   if (Sector->SectorFlags&sector_t::SF_Silent) return;
   Super::AddSoundSequenceChoice(SoundOriginID, Choice);
-  unguard;
 }
 
 
@@ -530,9 +488,7 @@ void VEntity::AddSoundSequenceChoice (VName Choice) {
 //
 //==========================================================================
 void VEntity::StopSoundSequence () {
-  guard(VEntity::StopSoundSequence);
   Super::StopSoundSequence(SoundOriginID);
-  unguard;
 }
 
 

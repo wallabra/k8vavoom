@@ -209,7 +209,6 @@ BUTTON(MouseLook)
 //
 //==========================================================================
 void TKButton::KeyDown (const char *c) {
-  guard(TKButton::KeyDown);
   int k = -1;
 
   if (c && c[0]) k = atoi(c); // otherwise, typed manually at the console for continuous down
@@ -223,7 +222,6 @@ void TKButton::KeyDown (const char *c) {
   if (state&1) return; // still down
 
   state |= 1|2; // down + impulse down
-  unguard;
 }
 
 
@@ -233,8 +231,6 @@ void TKButton::KeyDown (const char *c) {
 //
 //==========================================================================
 void TKButton::KeyUp (const char *c) {
-  guard(TKButton::KeyUp);
-
   if (!c || !c[0]) {
     // typed manually at the console, assume for unsticking, so clear all
     down[0] = down[1] = 0;
@@ -253,7 +249,6 @@ void TKButton::KeyUp (const char *c) {
 
   state &= ~1; // now up
   state |= 4; // impulse up
-  unguard;
 }
 
 
@@ -268,7 +263,6 @@ void TKButton::KeyUp (const char *c) {
 //
 //==========================================================================
 float TKButton::KeyState () {
-  guard(TKButton::KeyState);
   static const float newVal[8] = {
     0.0f, // up the entire frame
     1.0f, // held the entire frame
@@ -284,7 +278,6 @@ float TKButton::KeyState () {
   state &= 1; // clear impulses
 
   return val;
-  unguard;
 }
 
 
@@ -294,9 +287,7 @@ float TKButton::KeyState () {
 //
 //==========================================================================
 void TCmdKeyDown::Run () {
-  guard(TCmdKeyDown::Run);
   Key.KeyDown(Args.Num() > 1 ? *Args[1] : "");
-  unguard;
 }
 
 
@@ -306,9 +297,7 @@ void TCmdKeyDown::Run () {
 //
 //==========================================================================
 void TCmdKeyUp::Run () {
-  guard(TCmdKeyUp::Run);
   Key.KeyUp(Args.Num() > 1 ? *Args[1] : "");
-  unguard;
 }
 
 
@@ -318,10 +307,8 @@ void TCmdKeyUp::Run () {
 //
 //==========================================================================
 COMMAND(Impulse) {
-  guard(COMMAND Impulse);
   if (Args.Num() < 2) return;
   impulse_cmd = atoi(*Args[1]);
-  unguard;
 }
 
 
@@ -331,7 +318,6 @@ COMMAND(Impulse) {
 //
 //==========================================================================
 COMMAND(ToggleAlwaysRun) {
-  guard(COMMAND ToggleAlwaysRun);
 #ifdef CLIENT
   if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
     return;
@@ -349,7 +335,6 @@ COMMAND(ToggleAlwaysRun) {
   {
     GCon->Log(allways_run ? "Always run on" : "Always run off");
   }
-  unguard;
 }
 
 
@@ -359,12 +344,10 @@ COMMAND(ToggleAlwaysRun) {
 //
 //==========================================================================
 COMMAND(Use) {
-  guard(COMMAND Use);
   if (Args.Num() < 1) return;
 #ifdef CLIENT
   cl->eventUseInventory(*Args[1]);
 #endif
-  unguard;
 }
 
 
@@ -394,8 +377,6 @@ void VBasePlayer::StopPitchDrift () {
 //
 //==========================================================================
 void VBasePlayer::AdjustAngles () {
-  guard(VBasePlayer::AdjustAngles);
-
   float speed = host_frametime*(KeySpeed.state&1 ? cl_anglespeedkey : 1.0f);
 
   if ((KeyMouseLook.state&4) && lookspring) StartPitchDrift();
@@ -448,7 +429,6 @@ void VBasePlayer::AdjustAngles () {
   if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
 
   if (!sv_ignore_nomlook && (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) ViewAngles.pitch = 0;
-  unguard;
 }
 
 
@@ -460,7 +440,6 @@ void VBasePlayer::AdjustAngles () {
 //
 //==========================================================================
 void VBasePlayer::HandleInput () {
-  guard(VBasePlayer::HandleInput);
   float forward = 0;
   float side = 0;
   float flyheight = 0;
@@ -551,7 +530,6 @@ void VBasePlayer::HandleInput () {
 
   mousex = 0;
   mousey = 0;
-  unguard;
 }
 
 
@@ -563,7 +541,6 @@ void VBasePlayer::HandleInput () {
 //
 //==========================================================================
 bool VBasePlayer::Responder (event_t *ev) {
-  guard(VBasePlayer::Responder);
   switch (ev->type) {
     case ev_mouse:
       mousex = ev->data2*mouse_x_sensitivity;
@@ -580,7 +557,6 @@ bool VBasePlayer::Responder (event_t *ev) {
       break;
   }
   return false;
-  unguard;
 }
 
 
@@ -590,12 +566,10 @@ bool VBasePlayer::Responder (event_t *ev) {
 //
 //==========================================================================
 void VBasePlayer::ClearInput () {
-  guard(VBasePlayer::ClearInput);
   // clear cmd building stuff
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
   impulse_cmd = 0;
-  unguard;
 }
 
 
@@ -605,7 +579,6 @@ void VBasePlayer::ClearInput () {
 //
 //==========================================================================
 int VBasePlayer::AcsGetInput (int InputType) {
-  guard(VBasePlayer::AcsGetInput);
   int Btn;
   int Ret = 0;
   //float angle0 = 0, angle1 = 0;
@@ -658,5 +631,4 @@ int VBasePlayer::AcsGetInput (int InputType) {
       return (int)(FlyMove*3*256/80);
   }
   return 0;
-  unguard;
 }

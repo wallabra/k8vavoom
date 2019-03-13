@@ -342,7 +342,6 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
 //
 //==========================================================================
 void InitMapInfo () {
-  guard(InitMapInfo);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_mapinfo) {
       GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
@@ -379,7 +378,6 @@ void InitMapInfo () {
   DefaultMap.HorizWallShade = -8;
   DefaultMap.VertWallShade = 8;
   //GCon->Logf("*** DEFAULT MAP: Sky1Texture=%d", DefaultMap.Sky1Texture);
-  unguard;
 }
 
 
@@ -389,7 +387,6 @@ void InitMapInfo () {
 //
 //==========================================================================
 static void SetMapDefaults (mapInfo_t &Info) {
-  guard(SetMapDefaults);
   Info.LumpName = NAME_None;
   Info.Name = VStr();
   Info.LevelNum = 0;
@@ -429,7 +426,6 @@ static void SetMapDefaults (mapInfo_t &Info) {
   if (GGameInfo->Flags & VGameInfo::GIF_DefaultLaxMonsterActivation) {
     Info.Flags2 |= MAPINFOF2_LaxMonsterActivation;
   }
-  unguard;
 }
 
 
@@ -439,7 +435,6 @@ static void SetMapDefaults (mapInfo_t &Info) {
 //
 //==========================================================================
 static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
-  guard(ParseNextMapName);
   if (sc->CheckNumber()) {
     if (HexenMode) return va("&wt@%02d", sc->Number);
     return va("map%02d", sc->Number);
@@ -468,7 +463,6 @@ static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
     }
   }
   return VName(*sc->String, VName::AddLower8);
-  unguard;
 }
 
 
@@ -478,7 +472,6 @@ static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
 //
 //==========================================================================
 static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
-  guard(DoCompatFlag);
   int Set = 1;
   sc->Check("=");
   if (sc->CheckNumber()) Set = sc->Number;
@@ -487,7 +480,6 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
   } else {
     info->Flags2 &= ~Flag;
   }
-  unguard;
 }
 
 
@@ -512,7 +504,6 @@ static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
 //
 //==========================================================================
 static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode) {
-  guard(ParseMapCommon);
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   // process optional tokens
@@ -988,7 +979,6 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
   if (info->Flags&MAPINFOF_DoubleSky) {
     GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
   }
-  unguard;
 }
 
 
@@ -1052,7 +1042,6 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //
 //==========================================================================
 static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
-  guard(ParseMap);
   mapInfo_t *info = nullptr;
   VName MapLumpName;
   if (sc->CheckNumber()) {
@@ -1165,7 +1154,6 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
       MapInfo[i].LevelNum = 0;
     }
   }
-  unguard;
 }
 
 
@@ -1175,7 +1163,6 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
 //
 //==========================================================================
 static void ParseClusterDef (VScriptParser *sc) {
-  guard(ParseClusterDef);
   VClusterDef *CDef = nullptr;
   sc->ExpectNumber();
 
@@ -1280,8 +1267,6 @@ static void ParseClusterDef (VScriptParser *sc) {
   // make sure text lump names are in lower case
   if (CDef->Flags&CLUSTERF_EnterTextIsLump) CDef->EnterText = CDef->EnterText.ToLower();
   if (CDef->Flags&CLUSTERF_ExitTextIsLump) CDef->ExitText = CDef->ExitText.ToLower();
-
-  unguard;
 }
 
 
@@ -1291,7 +1276,6 @@ static void ParseClusterDef (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseEpisodeDef (VScriptParser *sc) {
-  guard(ParseEpisodeDef);
   VEpisodeDef *EDef = nullptr;
   int EIdx = 0;
   sc->ExpectName8();
@@ -1352,7 +1336,6 @@ static void ParseEpisodeDef (VScriptParser *sc) {
     }
   }
   //if (newFormat) sc->SetCMode(false);
-  unguard;
 }
 
 
@@ -1362,7 +1345,6 @@ static void ParseEpisodeDef (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
-  guard(ParseSkillDefOld);
   for (;;) {
     if (sc->Check("AmmoFactor")) {
       sc->ExpectFloat();
@@ -1438,7 +1420,6 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
       break;
     }
   }
-  unguard;
 }
 
 
@@ -1448,7 +1429,6 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
 //
 //==========================================================================
 static void ParseSkillDef (VScriptParser *sc) {
-  guard(ParseSkillDef);
   VSkillDef *sdef = nullptr;
   sc->ExpectString();
 
@@ -1625,7 +1605,6 @@ static void ParseSkillDef (VScriptParser *sc) {
       break;
     }
   }
-  unguard;
 }
 
 
@@ -1635,7 +1614,6 @@ static void ParseSkillDef (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseMapInfo (VScriptParser *sc) {
-  guard(ParseMapInfo);
   const unsigned int MaxStack = 64;
   bool HexenMode = false;
   VScriptParser *scstack[MaxStack];
@@ -1820,7 +1798,6 @@ static void ParseMapInfo (VScriptParser *sc) {
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 
@@ -1840,12 +1817,10 @@ static int QualifyMap (int map) {
 //
 //==========================================================================
 const mapInfo_t &P_GetMapInfo (VName map) {
-  guard(P_GetMapInfo);
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (map == MapInfo[i].LumpName) return MapInfo[i];
   }
   return DefaultMap;
-  unguard;
 }
 
 
@@ -1867,13 +1842,11 @@ VStr P_GetMapName (int map) {
 //
 //==========================================================================
 int P_GetMapIndexByLevelNum (int map) {
-  guard(P_GetMapNameByLevelNum);
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (MapInfo[i].LevelNum == map) return i;
   }
   // not found
   return 0;
-  unguard;
 }
 
 
@@ -1895,13 +1868,11 @@ VName P_GetMapLumpName (int map) {
 //
 //==========================================================================
 VName P_TranslateMap (int map) {
-  guard(P_TranslateMap);
   for (int i = MapInfo.length()-1; i >= 0; --i) {
     if (MapInfo[i].WarpTrans == map) return MapInfo[i].LumpName;
   }
   // not found
   return (MapInfo.length() > 0 ? MapInfo[0].LumpName : NAME_None);
-  unguard;
 }
 
 
@@ -1913,13 +1884,11 @@ VName P_TranslateMap (int map) {
 //
 //==========================================================================
 VName P_TranslateMapEx (int map) {
-  guard(P_TranslateMap);
   for (int i = MapInfo.length()-1; i >= 0; --i) {
     if (MapInfo[i].WarpTrans == map) return MapInfo[i].LumpName;
   }
   // not found
   return NAME_None;
-  unguard;
 }
 
 
@@ -1931,13 +1900,11 @@ VName P_TranslateMapEx (int map) {
 //
 //==========================================================================
 VName P_GetMapLumpNameByLevelNum (int map) {
-  guard(P_GetMapNameByLevelNum);
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (MapInfo[i].LevelNum == map) return MapInfo[i].LumpName;
   }
   // not found, use map##
   return va("map%02d", map);
-  unguard;
 }
 
 
@@ -1947,11 +1914,9 @@ VName P_GetMapLumpNameByLevelNum (int map) {
 //
 //==========================================================================
 void P_PutMapSongLump (int map, VName lumpName) {
-  guard(P_PutMapSongLump);
   FMapSongInfo &ms = MapSongList.Alloc();
   ms.MapName = va("map%02d", map);
   ms.SongName = lumpName;
-  unguard;
 }
 
 
@@ -1961,12 +1926,10 @@ void P_PutMapSongLump (int map, VName lumpName) {
 //
 //==========================================================================
 const VClusterDef *P_GetClusterDef (int Cluster) {
-  guard(P_GetClusterDef);
   for (int i = 0; i < ClusterDefs.Num(); ++i) {
     if (Cluster == ClusterDefs[i].Cluster) return &ClusterDefs[i];
   }
   return &DefaultClusterDef;
-  unguard;
 }
 
 
@@ -1986,9 +1949,7 @@ int P_GetNumEpisodes () {
 //
 //==========================================================================
 int P_GetNumMaps () {
-  guard(P_GetNumMaps);
   return MapInfo.Num();
-  unguard;
 }
 
 
@@ -1998,9 +1959,7 @@ int P_GetNumMaps () {
 //
 //==========================================================================
 mapInfo_t *P_GetMapInfoPtr (int mapidx) {
-  guard(P_GetMapInfo);
   return (mapidx >= 0 && mapidx < MapInfo.Num() ? &MapInfo[mapidx] : nullptr);
-  unguard;
 }
 
 
@@ -2040,7 +1999,6 @@ const VSkillDef *P_GetSkillDef (int Index) {
 //
 //==========================================================================
 void P_GetMusicLumpNames (TArray<FReplacedString> &List) {
-  guard(P_GetMusicLumpNames);
   for (int i = 0; i < MapInfo.Num(); ++i) {
     const char *MName = *MapInfo[i].SongLump;
     if (MName[0] == 'd' && MName[1] == '_') {
@@ -2050,7 +2008,6 @@ void P_GetMusicLumpNames (TArray<FReplacedString> &List) {
       R.Old = MName+2;
     }
   }
-  unguard;
 }
 
 
@@ -2060,13 +2017,11 @@ void P_GetMusicLumpNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void P_ReplaceMusicLumpNames (TArray<FReplacedString> &List) {
-  guard(P_ReplaceMusicLumpNames);
   for (int i = 0; i < List.Num(); ++i) {
     if (List[i].Replaced) {
       MapInfo[List[i].Index].SongLump = VName(*(VStr("d_")+List[i].New), VName::AddLower8);
     }
   }
-  unguard;
 }
 
 
@@ -2076,7 +2031,6 @@ void P_ReplaceMusicLumpNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void P_SetParTime (VName Map, int Par) {
-  guard(P_SetParTime);
   if (Map == NAME_None || Par < 0) return;
   if (mapinfoParsed) {
     for (int i = 0; i < MapInfo.length(); ++i) {
@@ -2092,7 +2046,6 @@ void P_SetParTime (VName Map, int Par) {
     pi.MapName = Map;
     pi.par = Par;
   }
-  unguard;
 }
 
 
@@ -2102,12 +2055,10 @@ void P_SetParTime (VName Map, int Par) {
 //
 //==========================================================================
 bool IsMapPresent (VName MapName) {
-  guard(IsMapPresent);
   if (W_CheckNumForName(MapName) >= 0) return true;
   VStr FileName = va("maps/%s.wad", *MapName);
   if (FL_FileExists(FileName)) return true;
   return false;
-  unguard;
 }
 
 
@@ -2117,13 +2068,11 @@ bool IsMapPresent (VName MapName) {
 //
 //==========================================================================
 COMMAND(MapList) {
-  guard(COMMAND MapList);
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (IsMapPresent(MapInfo[i].LumpName)) {
       GCon->Log(VStr(MapInfo[i].LumpName)+" - "+(MapInfo[i].Flags&MAPINFOF_LookupName ? GLanguage[*MapInfo[i].Name] : MapInfo[i].Name));
     }
   }
-  unguard;
 }
 
 
@@ -2133,12 +2082,10 @@ COMMAND(MapList) {
 //
 //==========================================================================
 void ShutdownMapInfo () {
-  guard(ShutdownMapInfo);
   DefaultMap.Name.Clean();
   MapInfo.Clear();
   MapSongList.Clear();
   ClusterDefs.Clear();
   EpisodeDefs.Clear();
   SkillDefs.Clear();
-  unguard;
 }

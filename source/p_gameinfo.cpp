@@ -56,15 +56,14 @@ VGameInfo::VGameInfo ()
 //
 //==========================================================================
 bool VGameInfo::IsPaused () {
-  guard(VGameInfo::IsPaused);
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
   return (Flags&GIF_Paused) || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
 #endif
   return !!(Flags&GIF_Paused);
-  unguard;
 }
+
 
 IMPLEMENT_FUNCTION(VGameInfo, get_isPaused) {
   P_GET_SELF;
@@ -78,10 +77,8 @@ IMPLEMENT_FUNCTION(VGameInfo, get_isPaused) {
 //
 //==========================================================================
 COMMAND(ClearPlayerClasses) {
-  guard(COMMAND ClearPlayerClasses);
   if (!ParsingKeyConf) return;
   GGameInfo->PlayerClasses.Clear();
-  unguard;
 }
 
 
@@ -91,7 +88,6 @@ COMMAND(ClearPlayerClasses) {
 //
 //==========================================================================
 COMMAND(AddPlayerClass) {
-  guard(COMMAND AddPlayerClass);
   if (!ParsingKeyConf) return;
 
   if (Args.Num() < 2) {
@@ -117,7 +113,6 @@ COMMAND(AddPlayerClass) {
   }
 
   GGameInfo->PlayerClasses.Append(Class);
-  unguard;
 }
 
 
@@ -127,9 +122,7 @@ COMMAND(AddPlayerClass) {
 //
 //==========================================================================
 COMMAND(WeaponSection) {
-  guard(COMMAND WeaponSection);
   GGameInfo->eventCmdWeaponSection(Args.Num() > 1 ? Args[1] : "");
-  unguard;
 }
 
 
@@ -139,9 +132,7 @@ COMMAND(WeaponSection) {
 //
 //==========================================================================
 COMMAND(SetSlot) {
-  guard(COMMAND SetSlot);
   GGameInfo->eventCmdSetSlot(&Args);
-  unguard;
 }
 
 
@@ -151,7 +142,5 @@ COMMAND(SetSlot) {
 //
 //==========================================================================
 COMMAND(AddSlotDefault) {
-  guard(COMMAND AddSlotDefault);
   GGameInfo->eventCmdAddSlotDefault(&Args);
-  unguard;
 }

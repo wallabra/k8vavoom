@@ -362,9 +362,7 @@ const VStr &VInput::getBinding (bool down, int idx) {
 //
 //==========================================================================
 void VInput::Init () {
-  guard(VInput::Init);
   Device = VInputDevice::CreateDevice();
-  unguard;
 }
 
 
@@ -374,12 +372,10 @@ void VInput::Init () {
 //
 //==========================================================================
 void VInput::Shutdown () {
-  guard(VInput::Shutdown);
   if (Device) {
     delete Device;
     Device = nullptr;
   }
-  unguard;
 }
 
 
@@ -409,7 +405,6 @@ bool VInputPublic::PostKeyEvent (int key, int press, vuint32 modflags) {
 //
 //==========================================================================
 void VInput::ProcessEvents () {
-  guard(VInput::ProcessEvents);
   Device->ReadInput();
   for (int count = VObject::CountQueuedEvents(); count > 0; --count) {
     event_t ev;
@@ -464,7 +459,6 @@ void VInput::ProcessEvents () {
 
     if (CL_Responder(&ev)) continue;
   }
-  unguard;
 }
 
 
@@ -474,7 +468,6 @@ void VInput::ProcessEvents () {
 //
 //==========================================================================
 int VInput::ReadKey () {
-  guard(VInput::ReadKey);
   int ret = 0;
   do {
     Device->ReadInput();
@@ -484,7 +477,6 @@ int VInput::ReadKey () {
     }
   } while (!ret);
   return ret;
-  unguard;
 }
 
 
@@ -494,7 +486,6 @@ int VInput::ReadKey () {
 //
 //==========================================================================
 void VInput::GetBindingKeys (const VStr &bindStr, int &Key1, int &Key2, int strifemode) {
-  guard(VInput::GetBindingKeys);
   Key1 = -1;
   Key2 = -1;
   if (bindStr.isEmpty()) return;
@@ -512,7 +503,6 @@ void VInput::GetBindingKeys (const VStr &bindStr, int &Key1, int &Key2, int stri
       Key1 = kf;
     }
   }
-  unguard;
 }
 
 
@@ -522,12 +512,10 @@ void VInput::GetBindingKeys (const VStr &bindStr, int &Key1, int &Key2, int stri
 //
 //==========================================================================
 void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
-  guard(VInput::GetBinding);
   //Down = KeyBindingsDown[KeyNum];
   //Up = KeyBindingsUp[KeyNum];
   Down = getBinding(true, KeyNum);
   Up = getBinding(false, KeyNum);
-  unguard;
 }
 
 
@@ -537,7 +525,6 @@ void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
 //
 //==========================================================================
 void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save, int strifemode) {
-  guard(VInput::SetBinding);
   if (KeyNum < 1 || KeyNum > 255) return;
   if (Down.IsEmpty() && Up.IsEmpty() && !KeyBindingsSave[KeyNum]) return;
   KeyBindingsSave[KeyNum] = Save;
@@ -551,7 +538,6 @@ void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save
     KeyBindingsStrife[KeyNum].cmdDown = Down;
     KeyBindingsStrife[KeyNum].cmdUp = Up;
   }
-  unguard;
 }
 
 
@@ -563,7 +549,6 @@ void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save
 //
 //==========================================================================
 void VInput::WriteBindings (FILE *f) {
-  guard(VInput::WriteBindings);
   fprintf(f, "UnbindAll\n");
   for (int i = 1; i < 256; ++i) {
     if (!KeyBindingsSave[i]) continue;
@@ -571,7 +556,6 @@ void VInput::WriteBindings (FILE *f) {
     if (!KeyBindingsStrife[i].IsEmpty()) fprintf(f, "bind strife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsStrife[i].cmdDown.quote(), *KeyBindingsStrife[i].cmdUp.quote());
     if (!KeyBindingsNonStrife[i].IsEmpty()) fprintf(f, "bind notstrife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsNonStrife[i].cmdDown.quote(), *KeyBindingsNonStrife[i].cmdUp.quote());
   }
-  unguard;
 }
 
 
@@ -581,10 +565,8 @@ void VInput::WriteBindings (FILE *f) {
 //
 //==========================================================================
 int VInput::TranslateKey (int ch) {
-  guard(VInput::TranslateKey);
   int Tmp = ch;
   return (ShiftDown ? ShiftXForm[Tmp] : Tmp);
-  unguard;
 }
 
 
@@ -597,12 +579,10 @@ int VInput::TranslateKey (int ch) {
 //
 //==========================================================================
 int VInput::KeyNumForName (const VStr &Name) {
-  guard(VInput::KeyNumForName);
   if (Name.IsEmpty()) return -1;
   int res = VObject::VKeyFromName(Name);
   if (res <= 0) res = -1;
   return res;
-  unguard;
 }
 
 
@@ -614,14 +594,12 @@ int VInput::KeyNumForName (const VStr &Name) {
 //
 //==========================================================================
 VStr VInput::KeyNameForNum (int KeyNr) {
-  guard(VInput::KeyNameForNum);
        if (KeyNr == ' ') return "SPACE";
   else if (KeyNr == K_ESCAPE) return VStr("ESCAPE");
   else if (KeyNr == K_ENTER) return VStr("ENTER");
   else if (KeyNr == K_TAB) return VStr("TAB");
   else if (KeyNr == K_BACKSPACE) return VStr("BACKSPACE");
   else return VObject::NameFromVKey(KeyNr);
-  unguard;
 }
 
 
@@ -673,8 +651,6 @@ VStr VInput::GetClipboardText () {
 //
 //==========================================================================
 COMMAND(Unbind) {
-  guard(COMMAND Unbind);
-
   int stidx = 1;
   int strifeFlag = 0;
 
@@ -696,7 +672,6 @@ COMMAND(Unbind) {
   }
 
   GInput->SetBinding(b, VStr(), VStr(), true, strifeFlag);
-  unguard;
 }
 
 
@@ -706,9 +681,7 @@ COMMAND(Unbind) {
 //
 //==========================================================================
 COMMAND(UnbindAll) {
-  guard(COMMAND UnbindAll);
   GInput->ClearBindings();
-  unguard;
 }
 
 

@@ -44,7 +44,6 @@
 //
 //==========================================================================
 VStr Info_ValueForKey (const VStr &s, const VStr &key) {
-  guard(Info_ValueForKey);
   if (s.IsEmpty() || key.IsEmpty()) return VStr();
   //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_ValueForKey: oversize infostring");
 
@@ -67,7 +66,6 @@ VStr Info_ValueForKey (const VStr &s, const VStr &key) {
     if (!s[i]) return VStr();
     ++i;
   }
-  unguard;
 }
 
 
@@ -77,7 +75,6 @@ VStr Info_ValueForKey (const VStr &s, const VStr &key) {
 //
 //==========================================================================
 void Info_RemoveKey (VStr &s, const VStr &key) {
-  guard(Info_RemoveKey);
   if (s.IsEmpty()) return;
   //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_RemoveKey: oversize infostring");
   if (strchr(*key, '\\')) { GCon->Logf("Can't use a key with a \\ (%s)", *key.quote()); return; }
@@ -105,7 +102,6 @@ void Info_RemoveKey (VStr &s, const VStr &key) {
 
     if (!s[i]) return;
   }
-  unguard;
 }
 
 
@@ -117,7 +113,6 @@ void Info_RemoveKey (VStr &s, const VStr &key) {
 //
 //==========================================================================
 void Info_SetValueForKey (VStr &s, const VStr &key, const VStr &value) {
-  guard(Info_SetValueForKey);
   //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_SetValueForKey: oversize infostring");
 
   if (strchr(*key, '\\')) { GCon->Logf("Can't use keys with a \\ (%s)", *key.quote()); return;}
@@ -146,5 +141,4 @@ void Info_SetValueForKey (VStr &s, const VStr &key, const VStr &value) {
   }
 
   s = s+newi;
-  unguard;
 }

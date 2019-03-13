@@ -126,7 +126,6 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
 //
 //==========================================================================
 void VLevel::AddThinker (VThinker *Th) {
-  guard(VLevel::AddThinker);
   Th->XLevel = this;
   Th->Level = LevelInfo;
   Th->Prev = ThinkerTail;
@@ -135,7 +134,6 @@ void VLevel::AddThinker (VThinker *Th) {
   ThinkerTail = Th;
   // notify thinker that is was just added to a level
   Th->AddedToLevel();
-  unguard;
 }
 
 
@@ -160,8 +158,6 @@ void VLevel::RemoveThinker (VThinker *Th) {
 //
 //==========================================================================
 void VLevel::DestroyAllThinkers () {
-  guard(VLevel::DestroyAllThinkers);
-
   // destroy scripts
   for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) if (scriptThinkers[scidx]) scriptThinkers[scidx]->Destroy();
   for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) delete scriptThinkers[scidx];
@@ -182,7 +178,6 @@ void VLevel::DestroyAllThinkers () {
   }
   ThinkerHead = nullptr;
   ThinkerTail = nullptr;
-  unguard;
 }
 
 
@@ -252,8 +247,6 @@ void VLevel::RunScriptThinkers (float DeltaTime) {
 //
 //==========================================================================
 void VLevel::TickWorld (float DeltaTime) {
-  guard(VLevel::TickWorld);
-
   if (DeltaTime <= 0.0f) return;
 
   double stimed = 0, stimet = 0;
@@ -334,8 +327,6 @@ void VLevel::TickWorld (float DeltaTime) {
     GCon->Logf("VECTOR: (%f,%f,%f)", v.x, v.y, v.z);
   }
   */
-
-  unguard;
 }
 
 
@@ -347,7 +338,6 @@ void VLevel::TickWorld (float DeltaTime) {
 VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
                                 const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
 {
-  guard(VLevel::SpawnThinker);
   check(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
   if (!Class) Class = AClass;
@@ -371,7 +361,6 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   }
 
   return Ret;
-  unguard;
 }
 
 

@@ -48,11 +48,9 @@ IMPLEMENT_CLASS(V, Thinker)
 //
 //==========================================================================
 void VThinker::Destroy () {
-  guard(VThinker::Destroy);
   // close any thinker channels
   if (XLevel) XLevel->NetContext->ThinkerDestroyed(this);
   Super::Destroy();
-  unguard;
 }
 
 
@@ -62,10 +60,8 @@ void VThinker::Destroy () {
 //
 //==========================================================================
 void VThinker::SerialiseOther (VStream &Strm) {
-  guard(VThinker::Serialise);
   Super::SerialiseOther(Strm);
   if (Strm.IsLoading()) XLevel->AddThinker(this);
-  unguard;
 }
 
 
@@ -75,12 +71,10 @@ void VThinker::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VThinker::Tick (float DeltaTime) {
-  guard(VThinker::Tick);
   P_PASS_SELF;
   P_PASS_FLOAT(DeltaTime);
   if (DeltaTime <= 0.0f) return;
   EV_RET_VOID_IDX(FIndex_Tick);
-  unguard;
 }
 
 
@@ -90,9 +84,7 @@ void VThinker::Tick (float DeltaTime) {
 //
 //==========================================================================
 void VThinker::DestroyThinker () {
-  guard(VThinker::DestroyThinker);
   SetFlags(_OF_DelayedDestroy);
-  unguard;
 }
 
 
@@ -124,13 +116,11 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
   vint32 sound_id, vint32 channel, float volume, float Attenuation,
   bool Loop, bool Local)
 {
-  guard(VThinker::StartSound);
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientStartSound(sound_id, origin, (Local ? -666 : origin_id), channel, volume, Attenuation, Loop);
   }
-  unguard;
 }
 
 
@@ -140,14 +130,12 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
 //
 //==========================================================================
 void VThinker::StopSound (vint32 origin_id, vint32 channel) {
-  guard(VThinker::StopSound);
   if (!Level) return;
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientStopSound(origin_id, channel);
   }
-  unguard;
 }
 
 
@@ -157,7 +145,6 @@ void VThinker::StopSound (vint32 origin_id, vint32 channel) {
 //
 //==========================================================================
 void VThinker::StartSoundSequence (const TVec &Origin, vint32 OriginId, VName Name, vint32 ModeNum) {
-  guard(VThinker::StartSoundSequence);
   // remove any existing sequences of this origin
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
     if (XLevel->ActiveSequences[i].OriginId == OriginId) {
@@ -177,7 +164,6 @@ void VThinker::StartSoundSequence (const TVec &Origin, vint32 OriginId, VName Na
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientStartSequence(Origin, OriginId, Name, ModeNum);
   }
-  unguard;
 }
 
 
@@ -187,7 +173,6 @@ void VThinker::StartSoundSequence (const TVec &Origin, vint32 OriginId, VName Na
 //
 //==========================================================================
 void VThinker::AddSoundSequenceChoice (int origin_id, VName Choice) {
-  guard(VThinker::AddSoundSequenceChoice);
   // remove it from server's sequences list
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
     if (XLevel->ActiveSequences[i].OriginId == origin_id) {
@@ -200,7 +185,6 @@ void VThinker::AddSoundSequenceChoice (int origin_id, VName Choice) {
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientAddSequenceChoice(origin_id, Choice);
   }
-  unguard;
 }
 
 
@@ -210,7 +194,6 @@ void VThinker::AddSoundSequenceChoice (int origin_id, VName Choice) {
 //
 //==========================================================================
 void VThinker::StopSoundSequence (int origin_id) {
-  guard(VThinker::StopSoundSequence);
   // remove it from server's sequences list
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
     if (XLevel->ActiveSequences[i].OriginId == origin_id) {
@@ -224,7 +207,6 @@ void VThinker::StopSoundSequence (int origin_id) {
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientStopSequence(origin_id);
   }
-  unguard;
 }
 
 
@@ -234,11 +216,9 @@ void VThinker::StopSoundSequence (int origin_id) {
 //
 //==========================================================================
 void VThinker::BroadcastPrint (const char *s) {
-  guard(VThinker::BroadcastPrint);
   for (int i = 0; i < svs.max_clients; ++i) {
     if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientPrint(s);
   }
-  unguard;
 }
 
 
@@ -248,7 +228,6 @@ void VThinker::BroadcastPrint (const char *s) {
 //
 //==========================================================================
 __attribute__((format(printf,2,3))) void VThinker::BroadcastPrintf (const char *s, ...) {
-  guard(VThinker::BroadcastPrintf);
   va_list v;
   static char buf[4096];
 
@@ -257,7 +236,6 @@ __attribute__((format(printf,2,3))) void VThinker::BroadcastPrintf (const char *
   va_end(v);
 
   BroadcastPrint(buf);
-  unguard;
 }
 
 
@@ -267,11 +245,9 @@ __attribute__((format(printf,2,3))) void VThinker::BroadcastPrintf (const char *
 //
 //==========================================================================
 void VThinker::BroadcastCentrePrint (const char *s) {
-  guard(VThinker::BroadcastCentrePrint);
   for (int i = 0; i < svs.max_clients; ++i) {
     if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCentrePrint(s);
   }
-  unguard;
 }
 
 
@@ -281,7 +257,6 @@ void VThinker::BroadcastCentrePrint (const char *s) {
 //
 //==========================================================================
 __attribute__((format(printf,2,3))) void VThinker::BroadcastCentrePrintf (const char *s, ...) {
-  guard(VThinker::BroadcastCentrePrintf);
   va_list v;
   static char buf[4096];
 
@@ -290,7 +265,6 @@ __attribute__((format(printf,2,3))) void VThinker::BroadcastCentrePrintf (const 
   va_end(v);
 
   BroadcastCentrePrint(buf);
-  unguard;
 }
 
 

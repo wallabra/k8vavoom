@@ -141,7 +141,6 @@ void VEntity::Destroy () {
 //
 //=============================================================================
 void VEntity::CreateSecNodeList () {
-  guard(VEntity::CreateSecNodeList);
   int xl, xh, yl, yh, bx, by;
   msecnode_t *Node;
 
@@ -224,7 +223,6 @@ void VEntity::CreateSecNodeList () {
       Node = Node->TNext;
     }
   }
-  unguard;
 }
 
 
@@ -238,7 +236,6 @@ void VEntity::CreateSecNodeList () {
 //
 //==========================================================================
 void VEntity::UnlinkFromWorld () {
-  guard(SV_UnlinkFromWorld);
   if (!SubSector) return;
 
   if (!(EntityFlags&EF_NoSector)) {
@@ -289,7 +286,6 @@ void VEntity::UnlinkFromWorld () {
   }
   SubSector = nullptr;
   Sector = nullptr;
-  unguardf(("(%s)", GetClass()->GetName()));
 }
 
 
@@ -457,7 +453,6 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
 //
 //==========================================================================
 bool VEntity::CheckWater () {
-  guard(VEntity::CheckWater);
   TVec point;
   int cont;
 
@@ -486,7 +481,6 @@ bool VEntity::CheckWater () {
     }
   }
   return (WaterLevel > 1);
-  unguard;
 }
 
 
@@ -509,7 +503,6 @@ bool VEntity::CheckWater () {
 //
 //==========================================================================
 bool VEntity::CheckPosition (TVec Pos) {
-  guard(VEntity::CheckPosition);
   int xl;
   int xh;
   int yl;
@@ -588,7 +581,6 @@ bool VEntity::CheckPosition (TVec Pos) {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -598,7 +590,6 @@ bool VEntity::CheckPosition (TVec Pos) {
 //
 //==========================================================================
 bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
-  guardSlow(VEntity::CheckThing);
   // don't clip against self
   if (Other == this) return true;
   // can't hit thing
@@ -625,7 +616,6 @@ bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
   }
 
   return false;
-  unguardSlow;
 }
 
 
@@ -637,7 +627,6 @@ bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
 //
 //==========================================================================
 bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
-  guardSlow(VEntity::CheckLine);
   if (cptrace.bbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
       cptrace.bbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
       cptrace.bbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
@@ -685,7 +674,6 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
   }
 
   return true;
-  unguardSlow;
 }
 
 
@@ -725,7 +713,6 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
 //
 //==========================================================================
 bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
-  guard(VEntity::CheckRelPosition);
   int xl;
   int xh;
   int yl;
@@ -893,7 +880,6 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -903,7 +889,6 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
 //
 //==========================================================================
 bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
-  guardSlow(VEntity::CheckRelThing);
   // don't clip against self
   if (Other == this) return true;
   // can't hit thing
@@ -954,7 +939,6 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
   }
 
   return eventTouch(Other);
-  unguardSlow;
 }
 
 
@@ -1081,10 +1065,8 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
 //
 //==========================================================================
 void VEntity::BlockedByLine (line_t *ld) {
-  guardSlow(VEntity::BlockedByLine);
   if (EntityFlags&EF_Blasted) eventBlastedHitLine();
   if (ld->special) eventCheckForPushSpecial(ld, 0);
-  unguardSlow;
 }
 
 
@@ -1096,7 +1078,6 @@ void VEntity::BlockedByLine (line_t *ld) {
 //
 //==========================================================================
 bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
-  guard(VEntity::TryMove);
   bool check;
   TVec oldorg(0, 0, 0);
   line_t *ld;
@@ -1299,7 +1280,6 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -1309,7 +1289,6 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
 //
 //==========================================================================
 void VEntity::PushLine (const tmtrace_t &tmtrace) {
-  guardSlow(VEntity::PushLine);
   if (EntityFlags&EF_ColideWithWorld) {
     if (EntityFlags&EF_Blasted) eventBlastedHitLine();
     int NumSpecHitTemp = tmtrace.SpecHit.Num();
@@ -1321,7 +1300,6 @@ void VEntity::PushLine (const tmtrace_t &tmtrace) {
       eventCheckForPushSpecial(ld, side);
     }
   }
-  unguardSlow;
 }
 
 
@@ -1351,7 +1329,6 @@ TVec VEntity::ClipVelocity (const TVec &in, const TVec &normal, float overbounce
 //
 //==========================================================================
 void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, float x, float y, float StepVelScale) {
-  guard(VEntity::SlidePathTraverse);
   TVec SlideOrg(x, y, Origin.z);
   TVec SlideDir = Velocity*StepVelScale;
   intercept_t *in;
@@ -1402,7 +1379,6 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
 
     break;  // stop
   }
-  unguard;
 }
 
 
@@ -1418,7 +1394,6 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
 //
 //==========================================================================
 void VEntity::SlideMove (float StepVelScale) {
-  guard(VEntity::SlideMove);
   float leadx;
   float leady;
   float trailx;
@@ -1505,7 +1480,6 @@ void VEntity::SlideMove (float StepVelScale) {
     XMove = Velocity.x*StepVelScale;
     YMove = Velocity.y*StepVelScale;
   } while (!TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y+YMove, Origin.z), true));
-  unguard;
 }
 
 
@@ -1523,7 +1497,6 @@ void VEntity::SlideMove (float StepVelScale) {
 //
 //============================================================================
 void VEntity::BounceWall (float overbounce, float bouncefactor) {
-  guard(VEntity::BounceWall);
   TVec SlideOrg;
 
   if (Velocity.x > 0.0f) SlideOrg.x = Origin.x+Radius; else SlideOrg.x = Origin.x-Radius;
@@ -1579,7 +1552,6 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
     Velocity.y = (Velocity.y*bouncefactor)*sin(delta_ang.yaw);
     Velocity = ClipVelocity(Velocity, BestSlideLine->normal, overbounce);
   }
-  unguard;
 }
 
 
@@ -1589,7 +1561,6 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
 //
 //==========================================================================
 void VEntity::UpdateVelocity () {
-  guard(VEntity::UpdateVelocity);
   /*
   if (Origin.z <= FloorZ && !Velocity.x && !Velocity.y &&
       !Velocity.z && !bCountKill && !(EntityFlags & EF_IsPlayer))
@@ -1620,7 +1591,6 @@ void VEntity::UpdateVelocity () {
   if (Velocity.x || Velocity.y/* || Velocity.z*/) {
     eventApplyFriction();
   }
-  unguard;
 }
 
 
@@ -1638,7 +1608,6 @@ void VEntity::UpdateVelocity () {
 //
 //=============================================================================
 VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
-  guard(VEntity::TestMobjZ);
   int xl, xh, yl, yh, bx, by;
 
   // can't hit thing
@@ -1676,7 +1645,6 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
   }
 
   return nullptr;
-  unguard;
 }
 
 
@@ -1688,14 +1656,12 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
 //
 //=============================================================================
 TVec VEntity::FakeZMovement () {
-  guard(VEntity::FakeZMovement);
   TVec Ret = TVec(0, 0, 0);
   eventCalcFakeZMovement(Ret, host_frametime);
   // clip movement
   if (Ret.z <= FloorZ) Ret.z = FloorZ; // hit the floor
   if (Ret.z+Height > CeilingZ) Ret.z = CeilingZ-Height; // hit the ceiling
   return Ret;
-  unguard;
 }
 
 
@@ -1707,9 +1673,7 @@ TVec VEntity::FakeZMovement () {
 //
 //=============================================================================
 VEntity *VEntity::CheckOnmobj () {
-  guard(VEntity::CheckOnmobj);
   return TestMobjZ(FakeZMovement());
-  unguard;
 }
 
 
@@ -1732,7 +1696,6 @@ VEntity *VEntity::CheckOnmobj () {
 //
 //==========================================================================
 bool VEntity::CheckSides (TVec lsPos) {
-  guard(VEntity::CheckSides);
   int bx,by,xl,xh,yl,yh;
 
   // here is the bounding box of the trajectory
@@ -1788,7 +1751,6 @@ bool VEntity::CheckSides (TVec lsPos) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -1807,7 +1769,6 @@ bool VEntity::CheckSides (TVec lsPos) {
 //
 //=============================================================================
 void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
-  guard(VEntity::CheckDropOff);
   float t_bbox[4];
   int xl;
   int xh;
@@ -1870,7 +1831,6 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -1887,7 +1847,6 @@ VRoughBlockSearchIterator::VRoughBlockSearchIterator (VEntity *ASelf, int ADista
   , Count(1)
   , CurrentEdge(-1)
 {
-  guard(VRoughBlockSearchIterator::VRoughBlockSearchIterator);
   StartX = MapBlock(Self->Origin.x-Self->XLevel->BlockMapOrgX);
   StartY = MapBlock(Self->Origin.y-Self->XLevel->BlockMapOrgY);
 
@@ -1897,7 +1856,6 @@ VRoughBlockSearchIterator::VRoughBlockSearchIterator (VEntity *ASelf, int ADista
   {
     Ent = Self->XLevel->BlockLinks[StartY*Self->XLevel->BlockMapWidth+StartX];
   }
-  unguard;
 }
 
 
@@ -1907,7 +1865,6 @@ VRoughBlockSearchIterator::VRoughBlockSearchIterator (VEntity *ASelf, int ADista
 //
 //==========================================================================
 bool VRoughBlockSearchIterator::GetNext () {
-  guard(VRoughBlockSearchIterator::GetNext);
   int BlockX;
   int BlockY;
 
@@ -1990,7 +1947,6 @@ bool VRoughBlockSearchIterator::GetNext () {
     }
   }
   return false;
-  unguard;
 }
 
 

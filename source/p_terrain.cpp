@@ -94,12 +94,10 @@ static TArray<VTerrainType> TerrainTypes;
 //
 //==========================================================================
 static VSplashInfo *GetSplashInfo (VName Name) {
-  guard(GetSplashInfo);
   for (int i = 0; i < SplashInfos.Num(); ++i) {
     if (SplashInfos[i].Name == Name) return &SplashInfos[i];
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -109,12 +107,10 @@ static VSplashInfo *GetSplashInfo (VName Name) {
 //
 //==========================================================================
 static VTerrainInfo *GetTerrainInfo (VName Name) {
-  guard(GetTerrainInfo);
   for (int i = 0; i < TerrainInfos.Num(); ++i) {
     if (TerrainInfos[i].Name == Name) return &TerrainInfos[i];
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -124,7 +120,6 @@ static VTerrainInfo *GetTerrainInfo (VName Name) {
 //
 //==========================================================================
 static void ParseTerrainScript (VScriptParser *sc) {
-  guard(ParseTerrainScript);
   while (!sc->AtEnd()) {
     auto loc = sc->GetLoc();
     if (sc->Check("splash")) {
@@ -280,7 +275,6 @@ static void ParseTerrainScript (VScriptParser *sc) {
     }
   }
   delete sc;
-  unguard;
 }
 
 
@@ -290,7 +284,6 @@ static void ParseTerrainScript (VScriptParser *sc) {
 //
 //==========================================================================
 void P_InitTerrainTypes () {
-  guard(P_InitTerrainTypes);
   // create default terrain
   VTerrainInfo &DefT = TerrainInfos.Alloc();
   DefT.Name = "Solid";
@@ -311,7 +304,6 @@ void P_InitTerrainTypes () {
     TerrainTypes[i].Info = GetTerrainInfo(TerrainTypes[i].TypeName);
     if (!TerrainTypes[i].Info) TerrainTypes[i].Info = &TerrainInfos[0];
   }
-  unguard;
 }
 
 
@@ -321,12 +313,10 @@ void P_InitTerrainTypes () {
 //
 //==========================================================================
 VTerrainInfo *SV_TerrainType (int pic) {
-  guard(SV_TerrainType);
   for (int i = 0; i < TerrainTypes.Num(); ++i) {
     if (TerrainTypes[i].Pic == pic) return TerrainTypes[i].Info;
   }
   return &TerrainInfos[0];
-  unguard;
 }
 
 
@@ -336,11 +326,9 @@ VTerrainInfo *SV_TerrainType (int pic) {
 //
 //==========================================================================
 void P_FreeTerrainTypes () {
-  guard(P_FreeTerrainTypes);
   SplashInfos.Clear();
   TerrainInfos.Clear();
   TerrainTypes.Clear();
-  unguard;
 }
 
 

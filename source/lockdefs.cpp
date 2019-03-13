@@ -35,7 +35,6 @@ static VLockDef *LockDefs[256];
 //
 //==========================================================================
 static void ParseLockDefs (VScriptParser *sc) {
-  guard(ParseLockDefs);
   while (!sc->AtEnd()) {
     if (sc->Check("ClearLocks")) {
       for (int i = 0; i < 256; ++i) {
@@ -123,7 +122,6 @@ static void ParseLockDefs (VScriptParser *sc) {
     sc->Error(va("invalid lockdef command (%s)", *sc->String));
   }
   delete sc;
-  unguard;
 }
 
 
@@ -133,14 +131,12 @@ static void ParseLockDefs (VScriptParser *sc) {
 //
 //==========================================================================
 void InitLockDefs () {
-  guard(InitLockDefs);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_lockdefs) {
       GCon->Logf(NAME_Init, "Parsing lockdefs from '%s'...", *W_FullLumpName(Lump));
       ParseLockDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
-  unguard;
 }
 
 
@@ -150,14 +146,12 @@ void InitLockDefs () {
 //
 //==========================================================================
 void ShutdownLockDefs () {
-  guard(ShutdownLockDefs);
   for (int i = 0; i < 256; ++i) {
     if (LockDefs[i]) {
       delete LockDefs[i];
       LockDefs[i] = nullptr;
     }
   }
-  unguard;
 }
 
 
@@ -167,7 +161,5 @@ void ShutdownLockDefs () {
 //
 //==========================================================================
 VLockDef *GetLockDef (int Lock) {
-  guard(GetLockDef);
   return (Lock < 0 || Lock > 255 ? nullptr : LockDefs[Lock]);
-  unguard;
 }
