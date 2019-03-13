@@ -48,13 +48,11 @@ void VWorldInfo::PostCtor () {
 //
 //==========================================================================
 void VWorldInfo::SerialiseOther (VStream &Strm) {
-  guard(VWorldInfo::Serialise);
   Super::SerialiseOther(Strm);
   vuint8 xver = 0;
   Strm << xver;
   // serialise global script info
   Acs->Serialise(Strm);
-  unguard;
 }
 
 
@@ -64,12 +62,10 @@ void VWorldInfo::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VWorldInfo::Destroy () {
-  guard(VWorldInfo::Destroy);
   delete Acs;
   Acs = nullptr;
 
   Super::Destroy();
-  unguard;
 }
 
 
@@ -79,7 +75,6 @@ void VWorldInfo::Destroy () {
 //
 //==========================================================================
 void VWorldInfo::SetSkill (int ASkill) {
-  guard(VWorldInfo::SetSkill);
        if (ASkill < 0) GameSkill = 0;
   else if (ASkill >= P_GetNumSkills()) GameSkill = P_GetNumSkills()-1;
   else GameSkill = ASkill;
@@ -95,7 +90,6 @@ void VWorldInfo::SetSkill (int ASkill) {
   SkillAcsReturn = SDef->AcsReturn;
   Flags = (Flags & 0xffffff00) | (SDef->Flags & 0x0000000f);
   if (SDef->Flags&SKILLF_SlowMonsters) Flags |= WIF_SkillSlowMonsters;
-  unguard;
 }
 
 

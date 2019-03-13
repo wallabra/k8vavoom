@@ -102,7 +102,6 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
 //
 //==========================================================================
 int P_BoxOnLineSide (float *tmbox, line_t *ld) {
-  guard(P_BoxOnLineSide);
   int p1 = 0;
   int p2 = 0;
 
@@ -135,7 +134,6 @@ int P_BoxOnLineSide (float *tmbox, line_t *ld) {
 
   if (p1 == p2) return p1;
   return -1;
-  unguard;
 }
 
 
@@ -220,7 +218,6 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //
 //==========================================================================
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
-  guard(SV_LineOpenings);
   opening_t *op;
   int opsused;
   sec_region_t *frontreg;
@@ -337,7 +334,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   }
 
   return op;
-  unguard;
 }
 
 
@@ -364,7 +360,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 //
 //==========================================================================
 sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2) {
-  guard(SV_FindThingGap);
   sec_region_t *gaps = InGaps;
 
   int fit_num = 0;
@@ -418,7 +413,6 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   if (fit_num == 1) return fit_last;
   if (fit_num > 1) return fit_closest;
   return nofit_closest;
-  unguard;
 }
 
 
@@ -445,7 +439,6 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
 //
 //==========================================================================
 opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
-  guard(SV_FindOpening);
   opening_t *gaps = InGaps;
 
   int fit_num = 0;
@@ -492,7 +485,6 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
   if (fit_num == 1) return fit_last;
   if (fit_num > 1) return fit_closest;
   return nofit_closest;
-  unguard;
 }
 
 
@@ -502,14 +494,12 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 //
 //==========================================================================
 sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p) {
-  guard(SV_PointInRegion);
   sec_region_t *reg;
   // logic: find matching region, otherwise return highest one
   for (reg = sector->botregion; reg && reg->next; reg = reg->next) {
     if (p.z < reg->ceiling->GetPointZ(p)) break;
   }
   return reg;
-  unguard;
 }
 
 
@@ -519,7 +509,6 @@ sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p) {
 //
 //==========================================================================
 int SV_PointContents (const sector_t *sector, const TVec &p) {
-  guard(SV_PointContents);
   check(sector);
   if (sector->heightsec &&
       (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
@@ -539,7 +528,6 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
   } else {
     return sector->botregion->params->contents;
   }
-  unguard;
 }
 
 
@@ -566,7 +554,6 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
 //
 //==========================================================================
 bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
-  guard(VLevel::ChangeSectorInternal);
   msecnode_t *n;
 
   check(sector);
@@ -626,7 +613,6 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
     }
   }
   return ret;
-  unguard;
 }
 
 

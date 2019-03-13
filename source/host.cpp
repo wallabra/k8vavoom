@@ -120,8 +120,6 @@ static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-net
 //
 //==========================================================================
 void Host_Init () {
-  guard(Host_Init);
-
   (void)Sys_Time(); // this initializes timer
 
 #ifdef CLIENT
@@ -284,7 +282,6 @@ void Host_Init () {
 #endif
 
   host_initialised = true;
-  unguard;
 }
 
 
@@ -296,7 +293,6 @@ void Host_Init () {
 //
 //==========================================================================
 static void Host_GetConsoleCommands () {
-  guard(Host_GetConsoleCommands);
   char *cmd;
 
 #ifdef CLIENT
@@ -306,7 +302,6 @@ static void Host_GetConsoleCommands () {
   for (cmd = Sys_ConsoleInput(); cmd; cmd = Sys_ConsoleInput()) {
     GCmdBuf << cmd << "\n";
   }
-  unguard;
 }
 
 
@@ -335,7 +330,6 @@ void Host_ResetSkipFrames () {
 //
 //==========================================================================
 static bool FilterTime () {
-  guard(FilterTime);
   double curr_time = Sys_Time();
   double time = curr_time-last_time;
 
@@ -396,7 +390,6 @@ static bool FilterTime () {
   lasttime = thistime;
 
   return true;
-  unguard;
 }
 
 
@@ -406,7 +399,6 @@ static bool FilterTime () {
 //
 //==========================================================================
 static void Host_UpdateLanguage () {
-  guard(Host_UpdateLanguage);
   if (!Language.IsModified()) return;
 
   VStr NewLang = VStr((const char*)Language).ToLower();
@@ -420,7 +412,6 @@ static void Host_UpdateLanguage () {
 
   GLanguage.LoadStrings(*NewLang);
   VStr::Cpy(CurrentLanguage, *NewLang);
-  unguard;
 }
 
 
@@ -432,7 +423,6 @@ static void Host_UpdateLanguage () {
 //
 //==========================================================================
 void Host_Frame () {
-  guard(Host_Frame);
   static double time1 = 0;
   static double time2 = 0;
   static double time3 = 0;
@@ -563,7 +553,6 @@ void Host_Frame () {
     Sys_Error("Host_EndGame: %s\n", e.message); // dedicated servers exit
 #endif
   }
-  unguard;
 }
 
 
@@ -669,7 +658,6 @@ void Host_SaveConfiguration () {
 # include <unistd.h>
 #endif
 void Host_Quit () {
-  guard(Host_Quit);
   SV_ShutdownGame();
 #ifdef CLIENT
   // save game configyration
@@ -703,7 +691,6 @@ void Host_Quit () {
   }
 
   Sys_Quit(GotEndText ? EndText : nullptr);
-  unguard;
 }
 
 

@@ -175,8 +175,6 @@ void VDecalDef::fixup () {
 
 // name is not parsed yet
 bool VDecalDef::parse (VScriptParser *sc) {
-  guard(VDecalDef::parse);
-
   sc->SetCMode(false);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal name"); return false; }
@@ -271,7 +269,6 @@ bool VDecalDef::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -358,8 +355,6 @@ VDecalDef *VDecalGroup::chooseDecal (int reclevel) {
 
 // name is not parsed yet
 bool VDecalGroup::parse (VScriptParser *sc) {
-  guard(VDecalGroup::parse);
-
   sc->SetCMode(false);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal group name"); return false; }
@@ -382,7 +377,6 @@ bool VDecalGroup::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -459,16 +453,13 @@ VDecalAnim *VDecalAnimFader::clone () {
 
 
 void VDecalAnimFader::doIO (VStream &Strm) {
-  guard(VDecalAnimFader::doIO);
   Strm << timePassed;
   Strm << startTime;
   Strm << actionTime;
-  unguard;
 }
 
 
 bool VDecalAnimFader::animate (decal_t *decal, float timeDelta) {
-  guard(VDecalAnimFader::animate);
   if (decal->origAlpha <= 0 || decal->alpha <= 0) return false;
   timePassed += timeDelta;
   if (timePassed < startTime) return true; // not yet
@@ -482,13 +473,10 @@ bool VDecalAnimFader::animate (decal_t *decal, float timeDelta) {
   decal->alpha = aleft-aleft*dtx/actionTime;
   //GCon->Logf("decal %p: dtx=%f; origA=%f; a=%f", decal, dtx, decal->origAlpha, decal->alpha);
   return (decal->alpha > 0);
-  unguard;
 }
 
 
 bool VDecalAnimFader::parse (VScriptParser *sc) {
-  guard(VDecalAnimFader::parse);
-
   sc->SetCMode(true);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
@@ -506,7 +494,6 @@ bool VDecalAnimFader::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -529,18 +516,15 @@ VDecalAnim *VDecalAnimStretcher::clone () {
 
 
 void VDecalAnimStretcher::doIO (VStream &Strm) {
-  guard(VDecalAnimStretcher::doIO);
   Strm << timePassed;
   Strm << goalX;
   Strm << goalY;
   Strm << startTime;
   Strm << actionTime;
-  unguard;
 }
 
 
 bool VDecalAnimStretcher::animate (decal_t *decal, float timeDelta) {
-  guard(VDecalAnimStretcher::animate);
   if (decal->origScaleX <= 0 || decal->origScaleY <= 0) { decal->alpha = 0; return false; }
   if (decal->scaleX <= 0 || decal->scaleY <= 0) { decal->alpha = 0; return false; }
   timePassed += timeDelta;
@@ -560,13 +544,10 @@ bool VDecalAnimStretcher::animate (decal_t *decal, float timeDelta) {
     if ((decal->scaleY = decal->origScaleY+aleft*dtx/actionTime) <= 0) { decal->alpha = 0; return false; }
   }
   return true;
-  unguard;
 }
 
 
 bool VDecalAnimStretcher::parse (VScriptParser *sc) {
-  guard(VDecalAnimStretcher::parse);
-
   sc->SetCMode(true);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
@@ -586,7 +567,6 @@ bool VDecalAnimStretcher::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -608,18 +588,15 @@ VDecalAnim *VDecalAnimSlider::clone () {
 
 
 void VDecalAnimSlider::doIO (VStream &Strm) {
-  guard(VDecalAnimSlider::doIO);
   Strm << timePassed;
   Strm << distX;
   Strm << distY;
   Strm << startTime;
   Strm << actionTime;
-  unguard;
 }
 
 
 bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
-  guard(VDecalAnimSlider::animate);
   timePassed += timeDelta;
   if (timePassed < startTime) return true; // not yet
   if (timePassed >= startTime+actionTime || actionTime <= 0) {
@@ -631,13 +608,10 @@ bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
   decal->ofsX = distX*dtx/actionTime;
   decal->ofsY = distY*dtx/actionTime;
   return true;
-  unguard;
 }
 
 
 bool VDecalAnimSlider::parse (VScriptParser *sc) {
-  guard(VDecalAnimSlider::parse);
-
   sc->SetCMode(true);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
@@ -657,7 +631,6 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -680,30 +653,24 @@ VDecalAnim *VDecalAnimColorChanger::clone () {
 
 
 void VDecalAnimColorChanger::doIO (VStream &Strm) {
-  guard(VDecalAnimColorChanger::doIO);
   Strm << timePassed;
   Strm << dest[0];
   Strm << dest[1];
   Strm << dest[2];
   Strm << startTime;
   Strm << actionTime;
-  unguard;
 }
 
 
 bool VDecalAnimColorChanger::animate (decal_t *decal, float timeDelta) {
-  guard(VDecalAnimColorChanger::animate);
   // not yet, sorry
   // as we are using pre-translated textures, color changer cannot work
   // and we need pre-translated textures for working colormaps
   return true;
-  unguard;
 }
 
 
 bool VDecalAnimColorChanger::parse (VScriptParser *sc) {
-  guard(VDecalAnimColorChanger::parse);
-
   sc->SetCMode(true);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
@@ -730,7 +697,6 @@ bool VDecalAnimColorChanger::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
@@ -762,7 +728,6 @@ VDecalAnim *VDecalAnimCombiner::clone () {
 
 
 void VDecalAnimCombiner::doIO (VStream &Strm) {
-  guard(VDecalAnimCombiner::doIO);
   Strm << timePassed;
   int len = 0;
   if (Strm.IsLoading()) {
@@ -775,12 +740,10 @@ void VDecalAnimCombiner::doIO (VStream &Strm) {
     Strm << len;
   }
   for (int f = 0; f < list.Num(); ++f) VDecalAnim::Serialise(Strm, list[f]);
-  unguard;
 }
 
 
 bool VDecalAnimCombiner::animate (decal_t *decal, float timeDelta) {
-  guard(VDecalAnimCombiner::animate);
   bool res = false;
   int f = 0;
   while (f < list.length()) {
@@ -794,13 +757,10 @@ bool VDecalAnimCombiner::animate (decal_t *decal, float timeDelta) {
     }
   }
   return res;
-  unguard;
 }
 
 
 bool VDecalAnimCombiner::parse (VScriptParser *sc) {
-  guard(VDecalAnimCombiner::parse);
-
   sc->SetCMode(true);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
@@ -818,12 +778,10 @@ bool VDecalAnimCombiner::parse (VScriptParser *sc) {
   }
 
   return false;
-  unguard;
 }
 
 
 void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
-  guard(VDecalAnim::Serialise);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
   // animator
@@ -849,23 +807,18 @@ void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
     Strm << type;
     aptr->doIO(Strm);
   }
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
-  guard(SetClassFieldName);
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetName((VObject *)Class->Defaults, Value);
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void ParseDecalDef (VScriptParser *sc) {
-  guard(ParseDecalDef);
-
   const unsigned int MaxStack = 64;
   VScriptParser *scstack[MaxStack];
   unsigned int scsp = 0;
@@ -993,15 +946,11 @@ void ParseDecalDef (VScriptParser *sc) {
   }
 
   delete sc;
-
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void ProcessDecalDefs () {
-  guard(ProcessDecalDefs);
-
   GCon->Logf(NAME_Init, "Parsing DECAL definitions");
 
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
@@ -1020,5 +969,4 @@ void ProcessDecalDefs () {
   optionalDecalGroups.clear();
 
   //!TLocation::ClearSourceFiles();
-  unguard;
 }

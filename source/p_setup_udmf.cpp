@@ -128,7 +128,6 @@ VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump))
 //
 //==========================================================================
 void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
-  guard(VUdmfParser::Parse);
   sc.SetCMode(true);
 
   bExtended = false;
@@ -159,7 +158,6 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
     else if (sc.Check("thing")) ParseThing();
     else sc.Error("Syntax error");
   }
-  unguard;
 }
 
 
@@ -169,7 +167,6 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
 //
 //==========================================================================
 void VUdmfParser::ParseVertex () {
-  guard(VUdmfParser::ParseVertex);
   // allocate a new vertex
   vertex_t &V = ParsedVertexes.Alloc();
   V = TVec(0, 0, 0);
@@ -179,7 +176,6 @@ void VUdmfParser::ParseVertex () {
          if (!Key.ICmp("x")) V.x = CheckFloat();
     else if (!Key.ICmp("y")) V.y = CheckFloat();
   }
-  unguard;
 }
 
 
@@ -189,7 +185,6 @@ void VUdmfParser::ParseVertex () {
 //
 //==========================================================================
 void VUdmfParser::ParseSector (VLevel *Level) {
-  guard(VUdmfParser::ParseSector);
   sector_t &S = ParsedSectors.Alloc();
   memset((void *)&S, 0, sizeof(sector_t));
   S.floor.Set(TVec(0, 0, 1), 0);
@@ -264,7 +259,6 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -274,7 +268,6 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 //
 //==========================================================================
 void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
-  guard(VUdmfParser::ParseLineDef);
   VParsedLine &L = ParsedLines.Alloc();
   memset((void *)&L, 0, sizeof(VParsedLine));
   L.V1Index = -1;
@@ -401,8 +394,6 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       L.L.arg1 = 0;
     }
   }
-
-  unguard;
 }
 
 
@@ -412,7 +403,6 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 //
 //==========================================================================
 void VUdmfParser::ParseSideDef () {
-  guard(VUdmfParser::ParseSideDef);
   VParsedSide &S = ParsedSides.Alloc();
   memset((void *)&S, 0, sizeof(VParsedSide));
   S.TopTexture = "-";
@@ -450,7 +440,6 @@ void VUdmfParser::ParseSideDef () {
   S.S.TopRowOffset += YOffs;
   S.S.MidRowOffset += YOffs;
   S.S.BotRowOffset += YOffs;
-  unguard;
 }
 
 
@@ -460,7 +449,6 @@ void VUdmfParser::ParseSideDef () {
 //
 //==========================================================================
 void VUdmfParser::ParseThing () {
-  guard(VUdmfParser::ParseThing);
   mthing_t &T = ParsedThings.Alloc();
   memset((void *)&T, 0, sizeof(mthing_t));
 
@@ -534,7 +522,6 @@ void VUdmfParser::ParseThing () {
       else if (!Key.ICmp("arg4")) T.arg5 = CheckInt();
     }
   }
-  unguard;
 }
 
 
@@ -544,7 +531,6 @@ void VUdmfParser::ParseThing () {
 //
 //==========================================================================
 void VUdmfParser::ParseKey () {
-  guard(VUdmfParser::ParseKey);
   // get key and value
   sc.ExpectString();
   Key = sc.String;
@@ -586,7 +572,6 @@ void VUdmfParser::ParseKey () {
     Val = sc.String;
   }
   sc.Expect(";");
-  unguard;
 }
 
 
@@ -676,7 +661,6 @@ inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, s
 //
 //==========================================================================
 void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
-  guard(VLevel::LoadTextMap);
   VUdmfParser Parser(Lump);
   Parser.Parse(this, MInfo);
 
@@ -817,5 +801,4 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   NumThings = Parser.ParsedThings.Num();
   Things = new mthing_t[NumThings];
   memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
-  unguard;
 }

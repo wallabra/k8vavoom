@@ -119,12 +119,10 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
 //
 //==========================================================================
 VCommand::VCommand (const char *name) {
-  guard(VCommand::VCommand);
   Next = Cmds;
   Name = name;
   Cmds = this;
   if (Initialised) AddToAutoComplete(Name);
-  unguard;
 }
 
 
@@ -155,15 +153,12 @@ VStr VCommand::AutoCompleteArg (const TArray<VStr> &args, int aidx) {
 //
 //==========================================================================
 void VCommand::Init () {
-  guard(VCommand::Init);
-
   for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) AddToAutoComplete(cmd->Name);
 
   // add configuration file execution
   GCmdBuf.Insert("exec startup.vs\n__run_cli_commands__\n");
 
   Initialised = true;
-  unguard;
 }
 
 
@@ -271,7 +266,6 @@ void VCommand::WriteAlias (FILE *fl) {
 //
 //==========================================================================
 void VCommand::Shutdown () {
-  guard(VCommand::Shutdown);
   for (VAlias *a = Alias; a;) {
     VAlias *Next = a->Next;
     delete a;
@@ -280,7 +274,6 @@ void VCommand::Shutdown () {
   AutoCompleteTable.Clear();
   Args.Clear();
   Original.Clean();
-  unguard;
 }
 
 
@@ -290,7 +283,6 @@ void VCommand::Shutdown () {
 //
 //==========================================================================
 void VCommand::ProcessKeyConf () {
-  guard(VCommand::ProcessKeyConf);
   // enable special mode for console commands
   ParsingKeyConf = true;
 
@@ -315,7 +307,6 @@ void VCommand::ProcessKeyConf () {
 
   // back to normal console command execution
   ParsingKeyConf = false;
-  unguard;
 }
 
 
@@ -325,8 +316,6 @@ void VCommand::ProcessKeyConf () {
 //
 //==========================================================================
 void VCommand::AddToAutoComplete (const char *string) {
-  guard(VCommand::AddToAutoComplete);
-
   if (!string || !string[0] || string[0] == '_') return;
 
   for (int i = 0; i < AutoCompleteTable.length(); ++i) {
@@ -341,8 +330,6 @@ void VCommand::AddToAutoComplete (const char *string) {
     AutoCompleteTable[i] = AutoCompleteTable[i-1];
     AutoCompleteTable[i-1] = swap;
   }
-
-  unguard;
 }
 
 
@@ -438,8 +425,6 @@ static VBasePlayer *findPlayer () {
 //
 //==========================================================================
 VStr VCommand::GetAutoComplete (const VStr &prefix) {
-  guard(VCommand::GetAutoComplete);
-
   if (prefix.length() == 0) return prefix; // oops
 
   TArray<VStr> args;
@@ -549,7 +534,6 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 
   // nothing's found
   return prefix;
-  unguard;
 }
 
 
@@ -591,8 +575,6 @@ void VCommand::rebuildCommandCache () {
 //
 //==========================================================================
 void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APlayer) {
-  guard(VCommand::ExecuteString);
-
   //fprintf(stderr, "+++ command BEFORE tokenizing: <%s>\n", *Acmd);
   TokeniseString(Acmd);
   Source = src;
@@ -685,7 +667,6 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   if (host_initialised)
 #endif
     GCon->Logf("Unknown command '%s'", *Args[0]);
-  unguard;
 }
 
 
@@ -695,7 +676,6 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
 //
 //==========================================================================
 void VCommand::ForwardToServer () {
-  guard(VCommand::ForwardToServer);
 #ifdef CLIENT
   if (!cl) {
     GCon->Log("You must be in a game to execute this command");
@@ -709,7 +689,6 @@ void VCommand::ForwardToServer () {
     VCommand::ExecuteString(Original, VCommand::SRC_Client, cl);
   }
 #endif
-  unguard;
 }
 
 
@@ -719,12 +698,10 @@ void VCommand::ForwardToServer () {
 //
 //==========================================================================
 int VCommand::CheckParm (const char *check) {
-  guard(VCommand::CheckParm);
   for (int i = 1; i < Args.Num(); ++i) {
     if (Args[i].ICmp(check) == 0) return i;
   }
   return 0;
-  unguard;
 }
 
 
@@ -761,9 +738,7 @@ VStr VCommand::GetArgV (int idx) {
 //
 //==========================================================================
 void VCmdBuf::Insert (const char *text) {
-  guard(VCmdBuf::Insert);
   Buffer = VStr(text)+Buffer;
-  unguard;
 }
 
 
@@ -773,9 +748,7 @@ void VCmdBuf::Insert (const char *text) {
 //
 //==========================================================================
 void VCmdBuf::Insert (const VStr &text) {
-  guard(VCmdBuf::Insert);
   Buffer = text+Buffer;
-  unguard;
 }
 
 
@@ -785,9 +758,7 @@ void VCmdBuf::Insert (const VStr &text) {
 //
 //==========================================================================
 void VCmdBuf::Print (const char *data) {
-  guard(VCmdBuf::Print);
   Buffer += data;
-  unguard;
 }
 
 
@@ -797,9 +768,7 @@ void VCmdBuf::Print (const char *data) {
 //
 //==========================================================================
 void VCmdBuf::Print (const VStr &data) {
-  guard(VCmdBuf::Print);
   Buffer += data;
-  unguard;
 }
 
 
@@ -809,7 +778,6 @@ void VCmdBuf::Print (const VStr &data) {
 //
 //==========================================================================
 void VCmdBuf::Exec () {
-  guard(VCmdBuf::Exec);
   int len;
   int quotes;
   bool comment;
@@ -852,7 +820,6 @@ void VCmdBuf::Exec () {
       break;
     }
   } while (len);
-  unguard;
 }
 
 
@@ -868,7 +835,6 @@ void VCmdBuf::Exec () {
 //
 //==========================================================================
 COMMAND(CmdList) {
-  guard(COMMAND CmdList);
   const char *prefix = (Args.Num() > 1 ? *Args[1] : "");
   int pref_len = VStr::Length(prefix);
   int count = 0;
@@ -878,7 +844,6 @@ COMMAND(CmdList) {
     ++count;
   }
   GCon->Logf("%d commands.", count);
-  unguard;
 }
 
 
@@ -888,7 +853,6 @@ COMMAND(CmdList) {
 //
 //==========================================================================
 COMMAND(Alias) {
-  guard(COMMAND Alias);
   VCommand::VAlias *a;
   VStr tmp;
   int i;
@@ -918,7 +882,6 @@ COMMAND(Alias) {
     VCommand::Alias = a;
   }
   a->CmdLine = tmp;
-  unguard;
 }
 
 
@@ -928,7 +891,6 @@ COMMAND(Alias) {
 //
 //==========================================================================
 COMMAND(Echo) {
-  guard(COMMAND Echo);
   if (Args.Num() < 2) return;
 
   VStr Text = Args[1];
@@ -946,7 +908,6 @@ COMMAND(Echo) {
   {
     GCon->Log(Text);
   }
-  unguard;
 }
 
 
@@ -956,7 +917,6 @@ COMMAND(Echo) {
 //
 //==========================================================================
 COMMAND(Exec) {
-  guard(COMMAND Exec);
   if (Args.length() < 2 || Args.length() > 3) {
     GCon->Log("Exec <filename> : execute script file");
     return;
@@ -1006,7 +966,6 @@ COMMAND(Exec) {
   GCmdBuf.Insert(buf);
 
   delete[] buf;
-  unguard;
 }
 
 

@@ -67,7 +67,6 @@ static double LastKeepAliveTime = 0.0;
 //
 //==========================================================================
 void CL_Init () {
-  guard(CL_Init);
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
   // load user-specified VaVoom C script files
   G_LoadVCMods("loadvcc", "client");
@@ -76,7 +75,6 @@ void CL_Init () {
   GClGame = (VClientGameBase *)VObject::StaticSpawnWithReplace(VClass::FindClass("ClientGame"));
   GClGame->Game = GGameInfo;
   GClGame->eventPostSpawn();
-  unguard;
 }
 
 
@@ -86,7 +84,6 @@ void CL_Init () {
 //
 //==========================================================================
 void CL_Ticker () {
-  guard(CL_Ticker);
   // do main actions
   switch (GClGame->intermission) {
     case 0:
@@ -95,7 +92,6 @@ void CL_Ticker () {
       break;
   }
   R_AnimateSurfaces();
-  unguard;
 }
 
 
@@ -105,7 +101,6 @@ void CL_Ticker () {
 //
 //==========================================================================
 void CL_Shutdown () {
-  guard(CL_Shutdown);
   if (cl) SV_ShutdownGame(); // disconnect
   // free up memory
   if (GClGame) GClGame->ConditionalDestroy();
@@ -113,7 +108,6 @@ void CL_Shutdown () {
   cls.userinfo.Clean();
   delete ClientNetContext;
   ClientNetContext = nullptr;
-  unguard;
 }
 
 
@@ -123,9 +117,7 @@ void CL_Shutdown () {
 //
 //==========================================================================
 void CL_DecayLights () {
-  guard(CL_DecayLights);
   if (GClLevel && GClLevel->RenderData) GClLevel->RenderData->DecayLights(host_frametime);
-  unguard;
 }
 
 
@@ -135,12 +127,10 @@ void CL_DecayLights () {
 //
 //==========================================================================
 void CL_UpdateMobjs () {
-  guard(CL_UpdateMobjs);
   if (!GClLevel) return; //k8: this is wrong!
   for (TThinkerIterator<VThinker> Th(GClLevel); Th; ++Th) {
     Th->eventClientTick(host_frametime);
   }
-  unguard;
 }
 
 
@@ -152,7 +142,6 @@ void CL_UpdateMobjs () {
 //
 //==========================================================================
 void CL_ReadFromServer () {
-  guard(CL_ReadFromServer);
   if (!cl) return;
 
   if (cl->Net) {
@@ -178,7 +167,6 @@ void CL_ReadFromServer () {
       GAudio->MusicChanged();
     }
   }
-  unguard;
 }
 
 
@@ -230,7 +218,6 @@ void CL_KeepaliveMessageEx (double currTime, bool forced) {
 //
 //==========================================================================
 void CL_EstablishConnection (const char *host) {
-  guard(CL_EstablishConnection);
   if (GGameInfo->NetMode == NM_DedicatedServer) return;
 
   SV_ShutdownGame();
@@ -252,7 +239,6 @@ void CL_EstablishConnection (const char *host) {
   LastKeepAliveTime = Sys_Time();
 
   MN_DeactivateMenu();
-  unguard;
 }
 
 
@@ -262,7 +248,6 @@ void CL_EstablishConnection (const char *host) {
 //
 //==========================================================================
 void CL_SetUpLocalPlayer () {
-  guard(CL_SetUpLocalPlayer);
   if (GGameInfo->NetMode == NM_DedicatedServer) return;
 
   VBasePlayer *Player = GPlayersBase[0];
@@ -281,7 +266,6 @@ void CL_SetUpLocalPlayer () {
   MN_DeactivateMenu();
 
   CL_SetUpStandaloneClient();
-  unguard;
 }
 
 
@@ -291,7 +275,6 @@ void CL_SetUpLocalPlayer () {
 //
 //==========================================================================
 void CL_SetUpStandaloneClient () {
-  guard(CL_SetUpStandaloneClient);
   CL_Clear();
 
   GClGame->serverinfo = svs.serverinfo;
@@ -326,8 +309,6 @@ void CL_SetUpStandaloneClient () {
   GCmdBuf << "HideConsole\n";
 
   Host_ResetSkipFrames();
-
-  unguard;
 }
 
 
@@ -337,7 +318,6 @@ void CL_SetUpStandaloneClient () {
 //
 //==========================================================================
 void CL_SendMove () {
-  guard(CL_SendMove);
   if (!cl) return;
 
   if (cls.demoplayback || GGameInfo->NetMode == NM_TitleMap) return;
@@ -348,7 +328,6 @@ void CL_SendMove () {
   }
 
   if (cl->Net) cl->Net->Tick();
-  unguard;
 }
 
 
@@ -360,11 +339,9 @@ void CL_SendMove () {
 //
 //==========================================================================
 bool CL_Responder (event_t *ev) {
-  guard(CL_Responder);
   if (GGameInfo->NetMode == NM_TitleMap) return false;
   if (cl) return cl->Responder(ev);
   return false;
-  unguard;
 }
 
 
@@ -374,13 +351,11 @@ bool CL_Responder (event_t *ev) {
 //
 //==========================================================================
 void CL_Clear () {
-  guard(CL_Clear);
   GClGame->serverinfo.Clean();
   GClGame->intermission = 0;
   if (cl) cl->ClearInput();
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) GAudio->StopAllSound(); // make sure all sounds are stopped
   cls.signon = 0;
-  unguard;
 }
 
 
@@ -390,9 +365,7 @@ void CL_Clear () {
 //
 //==========================================================================
 void CL_ReadFromServerInfo () {
-  guard(CL_ReadFromServerInfo);
   VCvar::SetCheating(!!atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_cheats")));
-  unguard;
 }
 
 
@@ -402,7 +375,6 @@ void CL_ReadFromServerInfo () {
 //
 //==========================================================================
 void CL_ParseServerInfo (VMessageIn &msg) {
-  guard(CL_ParseServerInfo);
   CL_Clear();
 
   msg << GClGame->serverinfo;
@@ -433,7 +405,6 @@ void CL_ParseServerInfo (VMessageIn &msg) {
   SB_Start();
 
   GCon->Log(NAME_Dev, "Client level loaded");
-  unguard;
 }
 
 
@@ -453,7 +424,6 @@ VLevel *VClientNetContext::GetLevel () {
 //
 //==========================================================================
 void CL_SetUpNetClient (VSocketPublic *Sock) {
-  guard(CL_SetUpNetClient);
   // create player structure
   cl = (VBasePlayer *)VObject::StaticSpawnWithReplace(VClass::FindClass("Player"));
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
@@ -467,7 +437,6 @@ void CL_SetUpNetClient (VSocketPublic *Sock) {
   }
   ClientNetContext->ServerConnection = cl->Net;
   ((VPlayerChannel *)cl->Net->Channels[CHANIDX_Player])->SetPlayer(cl);
-  unguard;
 }
 
 
@@ -477,7 +446,6 @@ void CL_SetUpNetClient (VSocketPublic *Sock) {
 //
 //==========================================================================
 void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
-  guard(CL_PlayDemo);
   char magic[8];
 
   // open the demo file
@@ -542,7 +510,6 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
 
   GGameInfo->NetMode = NM_Client;
   GClGame->eventDemoPlaybackStarted();
-  unguard;
 }
 
 
@@ -552,7 +519,6 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
 //
 //==========================================================================
 void CL_StopRecording () {
-  guard(CL_StopRecording);
   // finish up
   delete cls.demofile;
   cls.demofile = nullptr;
@@ -562,7 +528,6 @@ void CL_StopRecording () {
     GDemoRecordingContext = nullptr;
   }
   GCon->Log("Completed demo");
-  unguard;
 }
 
 
@@ -594,14 +559,12 @@ COMMAND(Disconnect) {
 //
 //==========================================================================
 COMMAND(StopDemo) {
-  guard(COMMAND StopDemo);
   if (Source != SRC_Command) return;
   if (!cls.demorecording) {
     GCon->Log("Not recording a demo.");
     return;
   }
   CL_StopRecording();
-  unguard;
 }
 
 
@@ -613,7 +576,6 @@ COMMAND(StopDemo) {
 //
 //==========================================================================
 COMMAND(Record) {
-  guard(COMMAND Record);
   if (Source != SRC_Command) return;
 
   int c = Args.Num();
@@ -681,7 +643,6 @@ COMMAND(Record) {
     Conn->SendServerInfo();
     ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->SetPlayer(cl);
   }
-  unguard;
 }
 
 
@@ -693,14 +654,12 @@ COMMAND(Record) {
 //
 //==========================================================================
 COMMAND(PlayDemo) {
-  guard(COMMAND PlayDemo);
   if (Source != SRC_Command) return;
   if (Args.Num() != 2) {
     GCon->Log("play <demoname> : plays a demo");
     return;
   }
   CL_PlayDemo(Args[1], false);
-  unguard;
 }
 
 
@@ -712,12 +671,10 @@ COMMAND(PlayDemo) {
 //
 //==========================================================================
 COMMAND(TimeDemo) {
-  guard(COMMAND TimeDemo);
   if (Source != SRC_Command) return;
   if (Args.Num() != 2) {
     GCon->Log("timedemo <demoname> : gets demo speeds");
     return;
   }
   CL_PlayDemo(Args[1], true);
-  unguard;
 }

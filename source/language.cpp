@@ -63,10 +63,8 @@ VLanguage::~VLanguage () {
 //
 //==========================================================================
 void VLanguage::FreeData () {
-  guard(VLanguage::FreeData);
   delete table;
   table = nullptr;
-  unguard;
 }
 
 
@@ -76,12 +74,10 @@ void VLanguage::FreeData () {
 //
 //==========================================================================
 void VLanguage::FreeNonDehackedStrings () {
-  guard(VLanguage::FreeNonDehackedStrings);
   if (!table) return;
   for (auto it = table->first(); it; ++it) {
     if (it.getValue().PassNum != 0) it.removeCurrent();
   }
-  unguard;
 }
 
 
@@ -91,7 +87,6 @@ void VLanguage::FreeNonDehackedStrings () {
 //
 //==========================================================================
 void VLanguage::LoadStrings (const char *LangId) {
-  guard(VLanguage::LoadStrings);
   if (!table) table = new TMap<VName, VLangEntry>();
 
   FreeNonDehackedStrings();
@@ -107,7 +102,6 @@ void VLanguage::LoadStrings (const char *LangId) {
       ParseLanguageScript(Lump, "**", true, j++);
     }
   }
-  unguard;
 }
 
 
@@ -117,7 +111,6 @@ void VLanguage::LoadStrings (const char *LangId) {
 //
 //==========================================================================
 void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool ExactMatch, vint32 PassNum) {
-  guard(VLanguage::ParseLanguageScript);
   //fprintf(stderr, "LANG: <%s>\n", *W_LumpName(Lump));
 
   char Code[4];
@@ -228,7 +221,6 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
   }
   delete sc;
   sc = nullptr;
-  unguard;
 }
 
 
@@ -238,7 +230,6 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
 //
 //==========================================================================
 VStr VLanguage::HandleEscapes (const VStr &Src) {
-  guard(VLanguage::HandleEscapes);
   bool hasWork = false;
   for (size_t i = Src.Length(); i > 0; --i) if (Src[i-1] == '\\') { hasWork = true; break; }
   if (!hasWork) return VStr(Src);
@@ -257,7 +248,6 @@ VStr VLanguage::HandleEscapes (const VStr &Src) {
     Ret += c;
   }
   return Ret;
-  unguard;
 }
 
 
@@ -267,7 +257,6 @@ VStr VLanguage::HandleEscapes (const VStr &Src) {
 //
 //==========================================================================
 VStr VLanguage::Find (VName Key, bool *found) const {
-  guard(VLanguage::Find);
   if (Key == NAME_None) {
     if (found) *found = true;
     return VStr();
@@ -291,7 +280,6 @@ VStr VLanguage::Find (VName Key, bool *found) const {
   }
   if (found) *found = false;
   return VStr();
-  unguard;
 }
 
 
@@ -301,12 +289,10 @@ VStr VLanguage::Find (VName Key, bool *found) const {
 //
 //==========================================================================
 VStr VLanguage::operator [] (VName Key) const {
-  guard(VLanguage::operator[]);
   bool found = false;
   VStr res = Find(Key, &found);
   if (found) return res;
   return VStr(Key);
-  unguard;
 }
 
 
@@ -328,13 +314,11 @@ bool VLanguage::HasTranslation (VName s) const {
 //
 //==========================================================================
 VName VLanguage::GetStringId (const VStr &Str) {
-  guard(VLanguage::GetStringId);
   if (!table) return NAME_None;
   for (auto it = table->first(); it; ++it) {
     if (it.getValue().Value == Str) return it.GetKey();
   }
   return NAME_None;
-  unguard;
 }
 
 
@@ -344,10 +328,8 @@ VName VLanguage::GetStringId (const VStr &Str) {
 //
 //==========================================================================
 void VLanguage::ReplaceString (VName Key, const VStr &Value) {
-  guard(VLanguage::ReplaceString);
   VLangEntry Entry;
   Entry.Value = Value;
   Entry.PassNum = 0;
   table->Set(Key, Entry);
-  unguard;
 }

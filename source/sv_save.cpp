@@ -619,13 +619,11 @@ static VStr TimeVal2Str (const TTimeVal *tvin, bool forAutosave=false) {
 //
 //==========================================================================
 void VSaveSlot::Clear () {
-  guard(VSaveSlot::Clear);
   Description.Clean();
   CurrentMap = NAME_None;
   for (int i = 0; i < Maps.Num(); ++i) { delete Maps[i]; Maps[i] = nullptr; }
   Maps.Clear();
   CheckPoint.Clear();
-  unguard;
 }
 
 
@@ -732,7 +730,6 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
 //
 //==========================================================================
 bool VSaveSlot::LoadSlot (int Slot) {
-  guard(VSaveSlot::LoadSlot);
   Clear();
 
   VStream *Strm = SV_OpenSlotFileRead(Slot);
@@ -863,7 +860,6 @@ bool VSaveSlot::LoadSlot (int Slot) {
 
   Host_ResetSkipFrames();
   return !err;
-  unguard;
 }
 
 
@@ -873,8 +869,6 @@ bool VSaveSlot::LoadSlot (int Slot) {
 //
 //==========================================================================
 void VSaveSlot::SaveToSlot (int Slot) {
-  guard(VSaveSlot::SaveToSlot);
-
   VStream *Strm = SV_CreateSlotFileWrite(Slot, Description);
   if (!Strm) {
     GCon->Logf("ERROR: cannot save to slot %d!", Slot);
@@ -969,8 +963,6 @@ void VSaveSlot::SaveToSlot (int Slot) {
     GCon->Logf("ERROR: error saving to slot %d, savegame is corrupted!", Slot);
     return;
   }
-
-  unguard;
 }
 
 
@@ -980,10 +972,8 @@ void VSaveSlot::SaveToSlot (int Slot) {
 //
 //==========================================================================
 VSavedMap *VSaveSlot::FindMap (VName Name) {
-  guard(VSaveSlot::FindMap);
   for (int i = 0; i < Maps.Num(); ++i) if (Maps[i]->Name == Name) return Maps[i];
   return nullptr;
-  unguard;
 }
 
 
@@ -993,7 +983,6 @@ VSavedMap *VSaveSlot::FindMap (VName Name) {
 //
 //==========================================================================
 bool SV_GetSaveString (int Slot, VStr &Desc) {
-  guard(SV_GetSaveString);
   VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
@@ -1033,7 +1022,6 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
     Desc = EMPTYSTRING;
     return false;
   }
-  unguard;
 }
 
 
@@ -1044,7 +1032,6 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
 //
 //==========================================================================
 void SV_GetSaveDateString (int Slot, VStr &datestr) {
-  guard(SV_GetSaveDate);
   VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
@@ -1061,7 +1048,6 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
   } else {
     datestr = "UNKNOWN";
   }
-  unguard;
 }
 
 
@@ -1073,7 +1059,6 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
 //
 //==========================================================================
 static bool SV_GetSaveDateTVal (int Slot, TTimeVal *tv) {
-  guard(SV_GetSaveDate);
   memset((void *)tv, 0, sizeof(*tv));
   VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
@@ -1092,7 +1077,6 @@ static bool SV_GetSaveDateTVal (int Slot, TTimeVal *tv) {
   } else {
     return false;
   }
-  unguard;
 }
 
 
@@ -1132,9 +1116,7 @@ static int SV_FindAutosaveSlot () {
 //
 //==========================================================================
 static void AssertSegment (VStream &Strm, gameArchiveSegment_t segType) {
-  guard(AssertSegment);
   if (Streamer<int>(Strm) != (int)segType) Host_Error("Corrupt save game: Segment [%d] failed alignment check", segType);
-  unguard;
 }
 
 
@@ -1214,7 +1196,6 @@ static void UnarchiveNames (VSaveLoaderStream *Loader) {
 //
 //==========================================================================
 static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
-  guard(ArchiveThinkers);
   vint32 Seg = ASEG_WORLD;
   *Saver << Seg;
 
@@ -1275,8 +1256,6 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
 
   // save collected VAcs objects contents
   for (vint32 f = 0; f < Saver->AcsExports.length(); ++f) Saver->AcsExports[f]->Serialise(*Saver);
-
-  unguard;
 }
 
 
@@ -1286,7 +1265,6 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
 //
 //==========================================================================
 static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
-  guard(UnarchiveThinkers);
   VObject *Obj = nullptr;
 
   AssertSegment(*Loader, ASEG_WORLD);
@@ -1415,7 +1393,6 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
   GLevelInfo->eventAfterUnarchiveThinkers();
   GLevel->eventAfterUnarchiveThinkers();
-  unguard;
 }
 
 
@@ -1499,8 +1476,6 @@ static void UnarchiveSounds (VStream &Strm) {
 //
 //==========================================================================
 static void SV_SaveMap (bool savePlayers) {
-  guard(SV_SaveMap);
-
   // make sure we don't have any garbage
   VObject::CollectGarbage();
 
@@ -1557,7 +1532,6 @@ static void SV_SaveMap (bool savePlayers) {
   }
 
   delete Saver;
-  unguard;
 }
 
 
@@ -1788,8 +1762,6 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
 //
 //==========================================================================
 void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
-  guard(SV_SaveGame);
-
   BaseSlot.Description = Description;
   BaseSlot.CurrentMap = GLevel->MapName;
 
@@ -1819,7 +1791,6 @@ void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
   BaseSlot.SaveToSlot(slot);
 
   Host_ResetSkipFrames();
-  unguard;
 }
 
 
@@ -1872,7 +1843,6 @@ void SV_InitBaseSlot () {
   CHANGELEVEL_PRERAISEWEAPON  = 0x00000040,
 */
 void SV_MapTeleport (VName mapname, int flags, int newskill) {
-  guard(SV_MapTeleport);
   TArray<VThinker *> TravelObjs;
 
   if (newskill >= 0 && (flags&CHANGELEVEL_CHANGESKILL) != 0) {
@@ -2002,8 +1972,6 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   if (!deathmatch) GLevel->Acs->CheckAcsStore();
 
   if (doSaveGame) GCmdBuf << "AutoSaveEnter\n";
-
-  unguard;
 }
 
 
@@ -2115,7 +2083,6 @@ void SV_AutoSaveOnLevelExit () {
 //
 //==========================================================================
 COMMAND(Save) {
-  guard(COMMAND Save)
   if (Args.Num() != 3) return;
 
   if (!CheckIfSaveIsAllowed()) return;
@@ -2131,7 +2098,6 @@ COMMAND(Save) {
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game saved.");
-  unguard;
 }
 
 
@@ -2141,8 +2107,6 @@ COMMAND(Save) {
 //
 //==========================================================================
 COMMAND(DeleteSavedGame) {
-  guard(COMMAND DeleteSavedGame);
-
   //GCon->Logf("DeleteSavedGame: argc=%d", Args.length());
 
   if (Args.Num() != 2) return;
@@ -2182,8 +2146,6 @@ COMMAND(DeleteSavedGame) {
   if (SV_DeleteSlotFile(slot)) {
     if (slot < 0) BroadcastSaveText(va("Autosave #%d deleted", -slot)); else BroadcastSaveText(va("Savegame #%d deleted", slot));
   }
-
-  unguard;
 }
 
 
@@ -2193,7 +2155,6 @@ COMMAND(DeleteSavedGame) {
 //
 //==========================================================================
 COMMAND(Load) {
-  guard(COMMAND Load);
   if (Args.Num() != 2) return;
 
   if (!CheckIfLoadIsAllowed()) return;
@@ -2212,7 +2173,6 @@ COMMAND(Load) {
 
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
   BroadcastSaveText(va("Loaded save \"%s\".", *desc));
-  unguard;
 }
 
 
@@ -2222,8 +2182,6 @@ COMMAND(Load) {
 //
 //==========================================================================
 COMMAND(QuickSave) {
-  guard(COMMAND QuickSave)
-
   if (!CheckIfSaveIsAllowed()) return;
 
   Draw_SaveIcon();
@@ -2232,7 +2190,6 @@ COMMAND(QuickSave) {
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game quicksaved.");
-  unguard;
 }
 
 
@@ -2242,8 +2199,6 @@ COMMAND(QuickSave) {
 //
 //==========================================================================
 COMMAND(QuickLoad) {
-  guard(COMMAND QuickLoad);
-
   if (!CheckIfLoadIsAllowed()) return;
 
   VStr desc;
@@ -2259,7 +2214,6 @@ COMMAND(QuickLoad) {
   // don't copy to reborn slot -- this is quickload after all!
 
   BroadcastSaveText("Quicksave loaded.");
-  unguard;
 }
 
 
@@ -2269,8 +2223,6 @@ COMMAND(QuickLoad) {
 //
 //==========================================================================
 COMMAND(AutoSaveEnter) {
-  guard(COMMAND AutoSaveEnter)
-
   // there is no reason to autosave on standard maps when we have pwads
   if (!CheckIfSaveIsAllowed()) return;
 
@@ -2290,7 +2242,6 @@ COMMAND(AutoSaveEnter) {
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
-  unguard;
 }
 
 
@@ -2300,9 +2251,7 @@ COMMAND(AutoSaveEnter) {
 //
 //==========================================================================
 COMMAND(AutoSaveLeave) {
-  guard(COMMAND AutoSaveLeave)
   SV_AutoSaveOnLevelExit();
   Host_ResetSkipFrames();
-  unguard;
 }
 #endif

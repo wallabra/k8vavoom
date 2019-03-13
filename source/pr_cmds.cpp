@@ -226,8 +226,6 @@ public:
 
 // caller should be tagged with `[printf]` attribute
 VStr PF_FormatString () {
-  guard(PF_FormatString);
-
   const int MAX_PARAMS = 256;
 
   //VStr Ret;
@@ -523,7 +521,6 @@ VStr PF_FormatString () {
 
   VStr res(pbuf.getCStr());
   return res;
-  unguard;
 }
 
 #ifndef VCC_STANDALONE_EXECUTOR

@@ -465,7 +465,6 @@ static void RunFunction (VMethod *func) {
   float ftemp;
   vint32 itemp;
 
-  guard(RunFunction);
   current_func = func;
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
@@ -2866,7 +2865,6 @@ func_loop:
   #ifdef VMEXEC_RUNDUMP
   printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
   #endif
-  unguardf(("(%s %d)", *func->GetFullName(), (int)(ip-func->Statements.Ptr())));
 }
 
 
@@ -2888,8 +2886,6 @@ struct CurrFuncHolder {
 //
 //==========================================================================
 VFuncRes VObject::ExecuteFunction (VMethod *func) {
-  guard(VObject::ExecuteFunction);
-
   //fprintf(stderr, "*** VObject::ExecuteFunction: <%s>\n", *func->GetFullName());
 
   VFuncRes ret;
@@ -2971,7 +2967,6 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
 
   // all done
   return ret;
-  unguardf(("(%s)", *func->GetFullName()));
 }
 
 

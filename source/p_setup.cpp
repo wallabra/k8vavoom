@@ -683,7 +683,6 @@ void VLevel::SetupThingsFromMapinfo () {
 //
 //==========================================================================
 void VLevel::LoadMap (VName AMapName) {
-  guard(VLevel::LoadMap);
   bool killCache = loader_cache_ignore_one;
   loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
@@ -1254,8 +1253,6 @@ load_again:
   }
 
   mapTextureWarns.clear();
-
-  unguard;
 }
 
 
@@ -1433,7 +1430,6 @@ void VLevel::BuildDecalsVVListOld () {
 //
 //==========================================================================
 int VLevel::FindGLNodes (VName name) const {
-  guard(VLevel::FindGLNodes);
   if (VStr::Length(*name) < 6) return W_CheckNumForName(VName(va("gl_%s", *name), VName::AddLower8));
 
   // long map name, check GL_LEVEL lumps
@@ -1457,7 +1453,6 @@ int VLevel::FindGLNodes (VName name) const {
     if (!VStr::ICmp(Buf+6, *name)) return Lump;
   }
   return -1;
-  unguard;
 }
 
 
@@ -1467,7 +1462,6 @@ int VLevel::FindGLNodes (VName name) const {
 //
 //==========================================================================
 void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
-  guard(VLevel::LoadVertexes);
   int GlFormat = 0;
   if (GLLump >= 0) {
     // read header of the GL vertexes lump and determinte GL vertex format
@@ -1520,7 +1514,6 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -1530,7 +1523,6 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
 //
 //==========================================================================
 void VLevel::LoadSectors (int Lump) {
-  guard(VLevel::LoadSectors);
   // allocate memory for sectors
   NumSectors = W_LumpLength(Lump)/26;
   Sectors = new sector_t[NumSectors];
@@ -1602,7 +1594,6 @@ void VLevel::LoadSectors (int Lump) {
     ss->Zone = -1;
   }
   //HashSectors(); //k8: do it later, 'cause map fixer can change loaded map
-  unguard;
 }
 
 
@@ -1612,7 +1603,6 @@ void VLevel::LoadSectors (int Lump) {
 //
 //==========================================================================
 void VLevel::CreateSides () {
-  guard(VLevel::CreateSides);
   // perform side index and two-sided flag checks and count number of sides needed
   int NumNewSides = 0;
   line_t *Line = Lines;
@@ -1673,7 +1663,6 @@ void VLevel::CreateSides () {
   check(CurrentSide == NumNewSides);
 
   NumSides = NumNewSides;
-  unguard;
 }
 
 
@@ -1683,7 +1672,6 @@ void VLevel::CreateSides () {
 //
 //==========================================================================
 void VLevel::LoadSideDefs (int Lump) {
-  guard(VLevel::LoadSideDefs);
   NumSides = W_LumpLength(Lump)/30;
   CreateSides();
 
@@ -1761,7 +1749,6 @@ void VLevel::LoadSideDefs (int Lump) {
         break;
       }
   }
-  unguard;
 }
 
 
@@ -1773,7 +1760,6 @@ void VLevel::LoadSideDefs (int Lump) {
 //
 //==========================================================================
 void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) {
-  guard(VLevel::LoadLineDefs1);
   NumLines = W_LumpLength(Lump)/14;
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
@@ -1804,7 +1790,6 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
-  unguard;
 }
 
 
@@ -1816,7 +1801,6 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
 //
 //==========================================================================
 void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) {
-  guard(VLevel::LoadLineDefs2);
   NumLines = W_LumpLength(Lump)/16;
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
@@ -1860,7 +1844,6 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
-  unguard;
 }
 
 
@@ -1870,7 +1853,6 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
 //
 //==========================================================================
 void VLevel::FinaliseLines () {
-  guard(VLevel::FinaliseLines);
   line_t *Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
     // calculate line's plane, slopetype, etc
@@ -1883,7 +1865,6 @@ void VLevel::FinaliseLines () {
       Line->backsector = nullptr;
     }
   }
-  unguard;
 }
 
 
@@ -1893,7 +1874,6 @@ void VLevel::FinaliseLines () {
 //
 //==========================================================================
 void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
-  guard(VLevel::LoadGLSegs);
   vertex_t *GLVertexes = Vertexes+NumBaseVerts;
   int NumGLVertexes = NumVertexes-NumBaseVerts;
 
@@ -1994,7 +1974,6 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
     // calc seg's plane params
     CalcSeg(li);
   }
-  unguard;
 }
 
 
@@ -2102,7 +2081,6 @@ void VLevel::PostLoadSubsectors () {
 //
 //==========================================================================
 void VLevel::LoadSubsectors (int Lump) {
-  guard(VLevel::LoadSubsectors);
   // determine format of the subsectors data
   int Format;
   if (LevelFlags&LF_GLNodesV5) {
@@ -2142,7 +2120,6 @@ void VLevel::LoadSubsectors (int Lump) {
       ss->firstline = firstseg;
     }
   }
-  unguard;
 }
 
 
@@ -2152,7 +2129,6 @@ void VLevel::LoadSubsectors (int Lump) {
 //
 //==========================================================================
 void VLevel::LoadNodes (int Lump) {
-  guard(VLevel::LoadNodes);
   if (LevelFlags&LF_GLNodesV5) {
     NumNodes = W_LumpLength(Lump)/32;
   } else {
@@ -2200,7 +2176,6 @@ void VLevel::LoadNodes (int Lump) {
       no->bbox[j][5] = 32768.0f;
     }
   }
-  unguard;
 }
 
 
@@ -2210,7 +2185,6 @@ void VLevel::LoadNodes (int Lump) {
 //
 //==========================================================================
 void VLevel::LoadPVS (int Lump) {
-  guard(VLevel::LoadPVS);
   if (W_LumpName(Lump) != NAME_gl_pvs || W_LumpLength(Lump) == 0) {
     GCon->Logf(NAME_Dev, "Empty or missing PVS lump");
     if (NoVis == nullptr && VisData == nullptr) BuildPVS();
@@ -2233,7 +2207,6 @@ void VLevel::LoadPVS (int Lump) {
       VisData = VisDataNew;
     }
   }
-  unguard;
 }
 
 
@@ -2243,7 +2216,6 @@ void VLevel::LoadPVS (int Lump) {
 //
 //==========================================================================
 bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
-  guard(VLevel::LoadCompressedGLNodes);
   VStream *BaseStrm = W_CreateLumpReaderNum(Lump);
 
   // read header
@@ -2311,232 +2283,232 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   }
 
   // read extra vertex data
-  guard(VLevel::LoadCompressedGLNodes::Vertexes);
-  vuint32 OrgVerts, NewVerts;
-  *Strm << OrgVerts << NewVerts;
+  {
+    vuint32 OrgVerts, NewVerts;
+    *Strm << OrgVerts << NewVerts;
 
-  if (Strm->IsError()) {
-    delete Strm;
-    delete DataStrm;
-    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
-    return false;
-  }
-
-  if (OrgVerts != (vuint32)NumVertexes) {
-    delete Strm;
-    delete DataStrm;
-    GCon->Logf(NAME_Warning, "error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
-    return false;
-  }
-
-  if (OrgVerts+NewVerts != (vuint32)NumVertexes) {
-    vertex_t *OldVerts = Vertexes;
-    NumVertexes = OrgVerts+NewVerts;
-    Vertexes = new vertex_t[NumVertexes];
-    if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
-    if (OldVerts) memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts*sizeof(vertex_t));
-    // fix up vertex pointers in linedefs
-    for (int i = 0; i < NumLines; ++i) {
-      line_t &L = Lines[i];
-      int v1 = L.v1-OldVerts;
-      int v2 = L.v2-OldVerts;
-      L.v1 = &Vertexes[v1];
-      L.v2 = &Vertexes[v2];
+    if (Strm->IsError()) {
+      delete Strm;
+      delete DataStrm;
+      GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
+      return false;
     }
-    delete[] OldVerts;
-    OldVerts = nullptr;
-  }
 
-  // read new vertexes
-  vertex_t *DstVert = Vertexes+OrgVerts;
-  for (vuint32 i = 0; i < NewVerts; ++i, ++DstVert) {
-    vint32 x, y;
-    *Strm << x << y;
-    *DstVert = TVec(x/65536.0f, y/65536.0f, 0.0f);
+    if (OrgVerts != (vuint32)NumVertexes) {
+      delete Strm;
+      delete DataStrm;
+      GCon->Logf(NAME_Warning, "error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
+      return false;
+    }
+
+    if (OrgVerts+NewVerts != (vuint32)NumVertexes) {
+      vertex_t *OldVerts = Vertexes;
+      NumVertexes = OrgVerts+NewVerts;
+      Vertexes = new vertex_t[NumVertexes];
+      if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+      if (OldVerts) memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts*sizeof(vertex_t));
+      // fix up vertex pointers in linedefs
+      for (int i = 0; i < NumLines; ++i) {
+        line_t &L = Lines[i];
+        int v1 = L.v1-OldVerts;
+        int v2 = L.v2-OldVerts;
+        L.v1 = &Vertexes[v1];
+        L.v2 = &Vertexes[v2];
+      }
+      delete[] OldVerts;
+      OldVerts = nullptr;
+    }
+
+    // read new vertexes
+    vertex_t *DstVert = Vertexes+OrgVerts;
+    for (vuint32 i = 0; i < NewVerts; ++i, ++DstVert) {
+      vint32 x, y;
+      *Strm << x << y;
+      *DstVert = TVec(x/65536.0f, y/65536.0f, 0.0f);
+    }
   }
-  unguard;
 
   // load subsectors
   int FirstSeg = 0;
-  guard(VLevel::LoadCompressedGLNodes::Subsectors);
-  NumSubsectors = Streamer<vuint32>(*Strm);
-  if (NumSubsectors == 0 || NumSubsectors > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u subsectors)", NumSubsectors);
-  Subsectors = new subsector_t[NumSubsectors];
-  memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
-  subsector_t *ss = Subsectors;
+  {
+    NumSubsectors = Streamer<vuint32>(*Strm);
+    if (NumSubsectors == 0 || NumSubsectors > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u subsectors)", NumSubsectors);
+    Subsectors = new subsector_t[NumSubsectors];
+    memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
+    subsector_t *ss = Subsectors;
 
-  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
-    vuint32 NumSubSegs;
-    *Strm << NumSubSegs;
-    ss->numlines = NumSubSegs;
-    ss->firstline = FirstSeg;
-    FirstSeg += NumSubSegs;
+    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+      vuint32 NumSubSegs;
+      *Strm << NumSubSegs;
+      ss->numlines = NumSubSegs;
+      ss->firstline = FirstSeg;
+      FirstSeg += NumSubSegs;
+    }
+    if (FirstSeg == 0 || FirstSeg > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (counted %i subsegs)", FirstSeg);
   }
-  if (FirstSeg == 0 || FirstSeg > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (counted %i subsegs)", FirstSeg);
-  unguard;
 
   // load segs
-  guard(VLevel::LoadCompressedGLNodes::Segs);
-  NumSegs = Streamer<vuint32>(*Strm);
-  if (NumSegs != FirstSeg || Strm->IsError()) Host_Error("error reading GL nodes (got %d segs, expected %d segs)", NumSegs, FirstSeg);
+  {
+    NumSegs = Streamer<vuint32>(*Strm);
+    if (NumSegs != FirstSeg || Strm->IsError()) Host_Error("error reading GL nodes (got %d segs, expected %d segs)", NumSegs, FirstSeg);
 
-  Segs = new seg_t[NumSegs];
-  memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
-  for (int i = 0; i < NumSubsectors; ++i) {
-    for (int j = 0; j < Subsectors[i].numlines; ++j) {
-      vuint32 v1, partner, linedef;
-      *Strm << v1 << partner;
+    Segs = new seg_t[NumSegs];
+    memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
+    for (int i = 0; i < NumSubsectors; ++i) {
+      for (int j = 0; j < Subsectors[i].numlines; ++j) {
+        vuint32 v1, partner, linedef;
+        *Strm << v1 << partner;
 
-      if (type >= 2) {
-        *Strm << linedef;
-      } else {
-        vuint16 l16;
-        *Strm << l16;
-        linedef = l16;
-        if (linedef == 0xffff) linedef = 0xffffffffu;
-      }
-      vuint8 side;
-      *Strm << side;
-
-      seg_t *li = Segs+Subsectors[i].firstline+j;
-
-      // assign partner (we need it for self-referencing deep water)
-      li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
-
-      li->v1 = &Vertexes[v1];
-      // v2 will be set later
-
-      if (linedef != 0xffffffffu) {
-        if (linedef >= (vuint32)NumLines) Host_Error("Bad linedef index %u (ss=%d; nl=%d)", linedef, i, j);
-        if (side > 1) Host_Error("Bad seg side %d", side);
-
-        line_t *ldef = &Lines[linedef];
-
-        li->linedef = ldef;
-        /*
-        li->sidedef = &Sides[ldef->sidenum[side]];
-        li->frontsector = Sides[ldef->sidenum[side]].Sector;
-
-        if (/ *(ldef->flags&ML_TWOSIDED) != 0 &&* / ldef->sidenum[side^1] >= 0) {
-          li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+        if (type >= 2) {
+          *Strm << linedef;
         } else {
-          li->backsector = nullptr;
-          ldef->flags &= ~ML_TWOSIDED;
+          vuint16 l16;
+          *Strm << l16;
+          linedef = l16;
+          if (linedef == 0xffff) linedef = 0xffffffffu;
         }
+        vuint8 side;
+        *Strm << side;
 
-        if (side) {
-          check(li);
-          check(li->v1);
-          check(ldef->v2);
-          li->offset = Length(*li->v1 - *ldef->v2);
+        seg_t *li = Segs+Subsectors[i].firstline+j;
+
+        // assign partner (we need it for self-referencing deep water)
+        li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
+
+        li->v1 = &Vertexes[v1];
+        // v2 will be set later
+
+        if (linedef != 0xffffffffu) {
+          if (linedef >= (vuint32)NumLines) Host_Error("Bad linedef index %u (ss=%d; nl=%d)", linedef, i, j);
+          if (side > 1) Host_Error("Bad seg side %d", side);
+
+          line_t *ldef = &Lines[linedef];
+
+          li->linedef = ldef;
+          /*
+          li->sidedef = &Sides[ldef->sidenum[side]];
+          li->frontsector = Sides[ldef->sidenum[side]].Sector;
+
+          if (/ *(ldef->flags&ML_TWOSIDED) != 0 &&* / ldef->sidenum[side^1] >= 0) {
+            li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+          } else {
+            li->backsector = nullptr;
+            ldef->flags &= ~ML_TWOSIDED;
+          }
+
+          if (side) {
+            check(li);
+            check(li->v1);
+            check(ldef->v2);
+            li->offset = Length(*li->v1 - *ldef->v2);
+          } else {
+            check(li);
+            check(li->v1);
+            check(ldef->v1);
+            li->offset = Length(*li->v1 - *ldef->v1);
+          }
+          li->side = side;
+          */
         } else {
-          check(li);
-          check(li->v1);
-          check(ldef->v1);
-          li->offset = Length(*li->v1 - *ldef->v1);
+          li->linedef = nullptr;
+          li->sidedef = nullptr;
+          li->frontsector = li->backsector = (Segs+Subsectors[i].firstline)->frontsector;
         }
-        li->side = side;
-        */
-      } else {
-        li->linedef = nullptr;
-        li->sidedef = nullptr;
-        li->frontsector = li->backsector = (Segs+Subsectors[i].firstline)->frontsector;
       }
     }
   }
-  unguard;
 
   // load nodes
-  guard(VLevel::LoadCompressedGLNodes::Nodes);
-  NumNodes = Streamer<vuint32>(*Strm);
-  if (NumNodes == 0 || NumNodes > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u nodes)", NumNodes);
-  Nodes = new node_t[NumNodes];
-  memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
-  node_t *no = Nodes;
-  for (int i = 0; i < NumNodes; ++i, ++no) {
-    vuint32 children[2];
-    vint16 bbox[2][4];
-    if (type < 3) {
-      vint16 xx, yy, dxx, dyy;
-      *Strm << xx << yy << dxx << dyy;
-      vint32 x, y, dx, dy;
-      x = xx;
-      y = yy;
-      dx = dxx;
-      dy = dyy;
-      if (dx == 0 && dy == 0) {
-        //Host_Error("invalid nodes (dir)");
-        GCon->Log("invalid BSP node (zero direction)");
-        no->SetPointDirXY(TVec(x, y, 0), TVec(0.001f, 0, 0));
+  {
+    NumNodes = Streamer<vuint32>(*Strm);
+    if (NumNodes == 0 || NumNodes > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u nodes)", NumNodes);
+    Nodes = new node_t[NumNodes];
+    memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
+    node_t *no = Nodes;
+    for (int i = 0; i < NumNodes; ++i, ++no) {
+      vuint32 children[2];
+      vint16 bbox[2][4];
+      if (type < 3) {
+        vint16 xx, yy, dxx, dyy;
+        *Strm << xx << yy << dxx << dyy;
+        vint32 x, y, dx, dy;
+        x = xx;
+        y = yy;
+        dx = dxx;
+        dy = dyy;
+        if (dx == 0 && dy == 0) {
+          //Host_Error("invalid nodes (dir)");
+          GCon->Log("invalid BSP node (zero direction)");
+          no->SetPointDirXY(TVec(x, y, 0), TVec(0.001f, 0, 0));
+        } else {
+          no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+        }
       } else {
-        no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+        vint32 x, y, dx, dy;
+        *Strm << x << y << dx << dy;
+        if (dx == 0 && dy == 0) {
+          GCon->Log("invalid BSP node (zero direction)");
+          no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(0.001f, 0, 0));
+        } else {
+          no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
+        }
       }
-    } else {
-      vint32 x, y, dx, dy;
-      *Strm << x << y << dx << dy;
-      if (dx == 0 && dy == 0) {
-        GCon->Log("invalid BSP node (zero direction)");
-        no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(0.001f, 0, 0));
-      } else {
-        no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
+
+      *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
+            << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3]
+            << children[0] << children[1];
+
+      for (int j = 0; j < 2; ++j) {
+        no->children[j] = children[j];
+        no->bbox[j][0] = bbox[j][BOXLEFT];
+        no->bbox[j][1] = bbox[j][BOXBOTTOM];
+        no->bbox[j][2] = -32768.0f;
+        no->bbox[j][3] = bbox[j][BOXRIGHT];
+        no->bbox[j][4] = bbox[j][BOXTOP];
+        no->bbox[j][5] = 32768.0f;
       }
-    }
-
-    *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
-          << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3]
-          << children[0] << children[1];
-
-    for (int j = 0; j < 2; ++j) {
-      no->children[j] = children[j];
-      no->bbox[j][0] = bbox[j][BOXLEFT];
-      no->bbox[j][1] = bbox[j][BOXBOTTOM];
-      no->bbox[j][2] = -32768.0f;
-      no->bbox[j][3] = bbox[j][BOXRIGHT];
-      no->bbox[j][4] = bbox[j][BOXTOP];
-      no->bbox[j][5] = 32768.0f;
     }
   }
-  unguard;
 
   // set v2 of the segs
-  guard(VLevel::LoadCompressedGLNodes::Set up seg v2);
-  subsector_t *Sub = Subsectors;
-  for (int i = 0; i < NumSubsectors; ++i, ++Sub) {
-    seg_t *Seg = Segs+Sub->firstline;
-    for (int j = 0; j < Sub->numlines-1; ++j, ++Seg) {
-      Seg->v2 = Seg[1].v1;
+  {
+    subsector_t *Sub = Subsectors;
+    for (int i = 0; i < NumSubsectors; ++i, ++Sub) {
+      seg_t *Seg = Segs+Sub->firstline;
+      for (int j = 0; j < Sub->numlines-1; ++j, ++Seg) {
+        Seg->v2 = Seg[1].v1;
+      }
+      Seg->v2 = Segs[Sub->firstline].v1;
     }
-    Seg->v2 = Segs[Sub->firstline].v1;
   }
-  unguard;
 
   /*
-  guard(VLevel::LoadCompressedGLNodes::Calc segs);
-  seg_t *li = Segs;
-  for (int i = 0; i < NumSegs; ++i, ++li) {
-    // calc seg's plane params
-    li->length = Length(*li->v2 - *li->v1);
-    CalcSeg(li);
-  }
-  unguard;
-
-  guard(Calc subsectors);
-  subsector_t *ss = Subsectors;
-  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
-    // look up sector number for each subsector
-    seg_t *seg = &Segs[ss->firstline];
-    for (int j = 0; j < ss->numlines; ++j) {
-      if (seg[j].linedef) {
-        ss->sector = seg[j].sidedef->Sector;
-        ss->seclink = ss->sector->subsectors;
-        ss->sector->subsectors = ss;
-        break;
-      }
+  {
+    seg_t *li = Segs;
+    for (int i = 0; i < NumSegs; ++i, ++li) {
+      // calc seg's plane params
+      li->length = Length(*li->v2 - *li->v1);
+      CalcSeg(li);
     }
-    for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-    if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
-  unguard;
+
+  {
+    subsector_t *ss = Subsectors;
+    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+      // look up sector number for each subsector
+      seg_t *seg = &Segs[ss->firstline];
+      for (int j = 0; j < ss->numlines; ++j) {
+        if (seg[j].linedef) {
+          ss->sector = seg[j].sidedef->Sector;
+          ss->seclink = ss->sector->subsectors;
+          ss->sector->subsectors = ss;
+          break;
+        }
+      }
+      for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
+      if (!ss->sector) Host_Error("Subsector %d without sector", i);
+    }
+  }
   */
 
   // create dummy VIS data
@@ -2550,7 +2522,6 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   if (wasError) Host_Error("error reading GL Nodes (turn on forced node rebuilder in options to load this map)");
 
   return true;
-  unguard;
 }
 
 
@@ -2560,7 +2531,6 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 //
 //==========================================================================
 void VLevel::LoadBlockMap (int Lump) {
-  guard(VLevel::LoadBlockMap);
   VStream *Strm = nullptr;
 
   if (build_blockmap) {
@@ -2620,7 +2590,6 @@ void VLevel::LoadBlockMap (int Lump) {
   BlockLinks = new VEntity*[Count];
   memset(BlockLinks, 0, sizeof(VEntity*) * Count);
   */
-  unguard;
 }
 
 
@@ -2630,7 +2599,6 @@ void VLevel::LoadBlockMap (int Lump) {
 //
 //==========================================================================
 void VLevel::CreateBlockMap () {
-  guard(VLevel::CreateBlockMap);
   // determine bounds of the map
   float MinX = Vertexes[0].x;
   float MaxX = MinX;
@@ -2742,7 +2710,6 @@ void VLevel::CreateBlockMap () {
 
   delete[] BlockLines;
   BlockLines = nullptr;
-  unguard;
 }
 
 
@@ -2752,7 +2719,6 @@ void VLevel::CreateBlockMap () {
 //
 //==========================================================================
 void VLevel::LoadReject (int Lump) {
-  guard(VLevel::LoadReject);
   if (Lump < 0) return;
   VStream *lumpstream = W_CreateLumpReaderNum(Lump);
   VCheckedStream Strm(lumpstream);
@@ -2783,7 +2749,6 @@ void VLevel::LoadReject (int Lump) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -2793,7 +2758,6 @@ void VLevel::LoadReject (int Lump) {
 //
 //==========================================================================
 void VLevel::LoadThings1 (int Lump) {
-  guard(VLevel::LoadThings1);
   NumThings = W_LumpLength(Lump)/10;
   Things = new mthing_t[NumThings];
   memset((void *)Things, 0, sizeof(mthing_t)*NumThings);
@@ -2815,7 +2779,6 @@ void VLevel::LoadThings1 (int Lump) {
     if (options&2) th->SkillClassFilter |= 0x04;
     if (options&4) th->SkillClassFilter |= 0x18;
   }
-  unguard;
 }
 
 
@@ -2825,7 +2788,6 @@ void VLevel::LoadThings1 (int Lump) {
 //
 //==========================================================================
 void VLevel::LoadThings2 (int Lump) {
-  guard(VLevel::LoadThings2);
   NumThings = W_LumpLength(Lump)/20;
   Things = new mthing_t[NumThings];
   memset((void *)Things, 0, sizeof(mthing_t)*NumThings);
@@ -2857,7 +2819,6 @@ void VLevel::LoadThings2 (int Lump) {
     th->arg4 = arg4;
     th->arg5 = arg5;
   }
-  unguard;
 }
 
 
@@ -2904,7 +2865,6 @@ void VLevel::LoadLoadACS (int lacsLump, int XMapLump) {
 //
 //==========================================================================
 void VLevel::LoadACScripts (int Lump, int XMapLump) {
-  guard(VLevel::LoadACScripts);
   Acs = new VAcsLevel(this);
 
   GCon->Logf(NAME_Dev, "ACS: BEHAVIOR lump: %d", Lump);
@@ -2938,7 +2898,6 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
     if (W_LumpName(ScLump) != NAME_loadacs) continue;
     LoadLoadACS(ScLump, XMapLump);
   }
-  unguard;
 }
 
 
@@ -3036,7 +2995,6 @@ IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
 //
 //==========================================================================
 int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
-  guard(VLevel::TexNumForName);
   if (!name || !name[0] || VStr::Cmp(name, "-") == 0) return 0;
   return texForceLoad(name, Type, CMap, /*(fromUDMF ? r_udmf_allow_extra_textures : false)*/true);
 /*
@@ -3077,7 +3035,6 @@ int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF)
   }
   return i;
 */
-  unguard;
 }
 
 
@@ -3100,7 +3057,6 @@ int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
 //
 //==========================================================================
 int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32 &Col) const {
-  guard(VLevel::TexNumOrColour);
   VName Name(name, VName::AddLower8);
   int i = GTextureManager.CheckNumForName(Name, Type, true, true);
   if (i == -1) {
@@ -3114,7 +3070,6 @@ int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32
   }
   GotColour = false;
   return i;
-  unguard;
 }
 
 
@@ -3124,7 +3079,6 @@ int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32
 //
 //==========================================================================
 void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *&SpeechList, int &NumSpeeches) const {
-  guard(VLevel::LoadRogueConScript);
   bool teaser = false;
   // clear variables
   SpeechList = nullptr;
@@ -3224,7 +3178,6 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
       C.TextNo = Tmp;
     }
   }
-  unguard;
 }
 
 
@@ -3283,7 +3236,6 @@ void VLevel::PostProcessForDecals () {
 //
 //==========================================================================
 void VLevel::GroupLines () const {
-  guard(VLevel::GroupLines);
   line_t ** linebuffer;
   int total;
   line_t *li;
@@ -3358,8 +3310,6 @@ void VLevel::GroupLines () const {
   }
   delete[] SecLineCount;
   SecLineCount = nullptr;
-
-  unguard;
 }
 
 
@@ -3369,7 +3319,6 @@ void VLevel::GroupLines () const {
 //
 //==========================================================================
 void VLevel::LinkNode (int BSPNum, node_t *pParent) const {
-  guardSlow(LinkNode);
   if (BSPNum&NF_SUBSECTOR) {
     int num = (BSPNum == -1 ? 0 : BSPNum&(~NF_SUBSECTOR));
     if (num < 0 || num >= NumSubsectors) Host_Error("ss %i with numss = %i", num, NumSubsectors);
@@ -3381,7 +3330,6 @@ void VLevel::LinkNode (int BSPNum, node_t *pParent) const {
     LinkNode(bsp->children[0], bsp);
     LinkNode(bsp->children[1], bsp);
   }
-  unguardSlow;
 }
 
 
@@ -3391,7 +3339,6 @@ void VLevel::LinkNode (int BSPNum, node_t *pParent) const {
 //
 //==========================================================================
 void VLevel::CreateRepBase () {
-  guard(VLevel::CreateRepBase);
   BaseLines = new rep_line_t[NumLines];
   for (int i = 0; i < NumLines; ++i) {
     line_t &L = Lines[i];
@@ -3454,7 +3401,6 @@ void VLevel::CreateRepBase () {
     B.startSpot = P.startSpot;
     B.angle = P.angle;
   }
-  unguard;
 }
 
 
@@ -3464,7 +3410,6 @@ void VLevel::CreateRepBase () {
 //
 //==========================================================================
 void VLevel::HashSectors () {
-  guard(VLevel::HashSectors);
   // clear hash; count number of sectors with fake something
   for (int i = 0; i < NumSectors; ++i) Sectors[i].HashFirst = Sectors[i].HashNext = -1;
   // create hash: process sectors in backward order so that they get processed in original order
@@ -3475,7 +3420,6 @@ void VLevel::HashSectors () {
       Sectors[HashIndex].HashFirst = i;
     }
   }
-  unguard;
 }
 
 
@@ -3531,7 +3475,6 @@ void VLevel::BuildSectorLists () {
 //
 //==========================================================================
 void VLevel::HashLines () {
-  guard(VLevel::HashLines);
   // clear hash
   for (int i = 0; i < NumLines; ++i) Lines[i].HashFirst = -1;
   // create hash: process lines in backward order so that they get processed in original order
@@ -3540,7 +3483,6 @@ void VLevel::HashLines () {
     Lines[i].HashNext = Lines[HashIndex].HashFirst;
     Lines[HashIndex].HashFirst = i;
   }
-  unguard;
 }
 
 
@@ -3550,7 +3492,6 @@ void VLevel::HashLines () {
 //
 //==========================================================================
 void VLevel::FloodZones () {
-  guard(VLevel::FloodZones);
   for (int i = 0; i < NumSectors; ++i) {
     if (Sectors[i].Zone == -1) {
       FloodZone(&Sectors[i], NumZones);
@@ -3560,7 +3501,6 @@ void VLevel::FloodZones () {
 
   Zones = new vint32[NumZones];
   for (int i = 0; i < NumZones; ++i) Zones[i] = 0;
-  unguard;
 }
 
 
@@ -3570,7 +3510,6 @@ void VLevel::FloodZones () {
 //
 //==========================================================================
 void VLevel::FloodZone (sector_t *Sec, int Zone) {
-  guard(VLevel::FloodZone);
   Sec->Zone = Zone;
   for (int i = 0; i < Sec->linecount; ++i) {
     line_t *Line = Sec->lines[i];
@@ -3578,7 +3517,6 @@ void VLevel::FloodZone (sector_t *Sec, int Zone) {
     if (Line->frontsector && Line->frontsector->Zone == -1) FloodZone(Line->frontsector, Zone);
     if (Line->backsector && Line->backsector->Zone == -1) FloodZone(Line->backsector, Zone);
   }
-  unguard;
 }
 
 

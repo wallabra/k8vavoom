@@ -211,8 +211,6 @@ VSdlInputDevice::VSdlInputDevice ()
   , joy_oldx(0)
   , joy_oldy(0)
 {
-  guard(VSdlInputDevice::VSdlInputDevice);
-
   // mouse and keyboard are setup using SDL's video interface
   mouse = true;
   if (GArgs.CheckParm("-nomouse")) {
@@ -232,7 +230,6 @@ VSdlInputDevice::VSdlInputDevice ()
 
   // initialise joystick
   StartupJoystick();
-  unguard;
 }
 
 
@@ -242,14 +239,12 @@ VSdlInputDevice::VSdlInputDevice ()
 //
 //==========================================================================
 VSdlInputDevice::~VSdlInputDevice () {
-  //guard(VSdlInputDevice::~VSdlInputDevice);
   // on
   SDL_ShowCursor(1);
   if (joystick_started) {
     SDL_JoystickClose(joystick);
     SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
   }
-  //unguard;
 }
 
 
@@ -362,7 +357,6 @@ VStr VSdlInputDevice::GetClipboardText () {
 //
 //==========================================================================
 void VSdlInputDevice::ReadInput () {
-  guard(VSdlInputDevice::ReadInput);
   SDL_Event ev;
   event_t vev;
   //int rel_x = 0, rel_y = 0;
@@ -556,8 +550,6 @@ void VSdlInputDevice::ReadInput () {
   }
 
   PostJoystick();
-
-  unguard;
 }
 
 #ifdef __SWITCH__
@@ -601,7 +593,6 @@ static inline int SwitchJoyToKey(int b) {
 //
 //==========================================================================
 void VSdlInputDevice::StartupJoystick () {
-  guard(VSdlInputDevice::StartupJoystick);
 #ifndef __SWITCH__
   // always enable joystick on the switch
   if (!GArgs.CheckParm("-joystick")) return;
@@ -622,7 +613,6 @@ void VSdlInputDevice::StartupJoystick () {
   joystick_started = true;
   memset(joy_oldb, 0, sizeof(joy_oldb));
   memset(joy_newb, 0, sizeof(joy_newb));
-  unguard;
 }
 
 
@@ -632,7 +622,6 @@ void VSdlInputDevice::StartupJoystick () {
 //
 //==========================================================================
 void VSdlInputDevice::PostJoystick () {
-  guard(VSdlInputDevice::PostJoystick);
   event_t event;
 
   if (!joystick_started) return;
@@ -659,7 +648,6 @@ void VSdlInputDevice::PostJoystick () {
       joy_oldb[i] = joy_newb[i];
     }
   }
-  unguard;
 }
 
 

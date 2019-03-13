@@ -67,7 +67,6 @@ void VLevelInfo::PostCtor () {
 //
 //==========================================================================
 void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
-  guard(VLevelInfo::SetMapInfo);
   const VClusterDef *CInfo = P_GetClusterDef(Info.Cluster);
 
   LevelName = Info.Name;
@@ -113,7 +112,6 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
   if (Info.Flags&MAPINFOF_NoAutoSndSeq) {
     for (int i = 0; i < XLevel->NumSectors; ++i) XLevel->Sectors[i].seqType = 0;
   }
-  unguard;
 }
 
 
@@ -125,14 +123,12 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
 void VLevelInfo::SectorStartSound (const sector_t *Sector, int SoundId,
                                    int Channel, float Volume, float Attenuation)
 {
-  guard(VLevelInfo::SectorStartSound);
   if (Sector) {
     if (Sector->SectorFlags&sector_t::SF_Silent) return;
     StartSound(Sector->soundorg, (Sector-XLevel->Sectors)+(SNDORG_Sector<<24), SoundId, Channel, Volume, Attenuation, false);
   } else {
     StartSound(TVec(0, 0, 0), 0, SoundId, Channel, Volume, Attenuation, false);
   }
-  unguard;
 }
 
 
@@ -142,9 +138,7 @@ void VLevelInfo::SectorStartSound (const sector_t *Sector, int SoundId,
 //
 //==========================================================================
 void VLevelInfo::SectorStopSound (const sector_t *sector, int channel) {
-  guard(VLevelInfo::SectorStopSound);
   if (sector) StopSound((sector-XLevel->Sectors)+(SNDORG_Sector<<24), channel);
-  unguard;
 }
 
 
@@ -154,14 +148,12 @@ void VLevelInfo::SectorStopSound (const sector_t *sector, int channel) {
 //
 //==========================================================================
 void VLevelInfo::SectorStartSequence (const sector_t *Sector, VName Name, int ModeNum) {
-  guard(VLevelInfo::SectorStartSequence);
   if (Sector) {
     if (Sector->SectorFlags&sector_t::SF_Silent) return;
     StartSoundSequence(Sector->soundorg, (Sector-XLevel->Sectors)+(SNDORG_Sector<<24), Name, ModeNum);
   } else {
     StartSoundSequence(TVec(0, 0, 0), 0, Name, ModeNum);
   }
-  unguard;
 }
 
 
@@ -171,9 +163,7 @@ void VLevelInfo::SectorStartSequence (const sector_t *Sector, VName Name, int Mo
 //
 //==========================================================================
 void VLevelInfo::SectorStopSequence (const sector_t *sector) {
-  guard(VLevelInfo::SectorStopSequence);
   if (sector) StopSoundSequence((sector-XLevel->Sectors)+(SNDORG_Sector<<24));
-  unguard;
 }
 
 
@@ -183,13 +173,11 @@ void VLevelInfo::SectorStopSequence (const sector_t *sector) {
 //
 //==========================================================================
 void VLevelInfo::PolyobjStartSequence (const polyobj_t *Poly, VName Name, int ModeNum) {
-  guard(VLevelInfo::PolyobjStartSequence);
   if (!Poly || !Poly->subsector || !Poly->subsector->sector) return;
   if (Poly->subsector && Poly->subsector->sector) {
     if (Poly->subsector->sector->SectorFlags&sector_t::SF_Silent) return;
   }
   StartSoundSequence(Poly->startSpot, (Poly-XLevel->PolyObjs)+(SNDORG_PolyObj<<24), Name, ModeNum);
-  unguard;
 }
 
 
@@ -199,10 +187,8 @@ void VLevelInfo::PolyobjStartSequence (const polyobj_t *Poly, VName Name, int Mo
 //
 //==========================================================================
 void VLevelInfo::PolyobjStopSequence (const polyobj_t *poly) {
-  guard(VLevelInfo::PolyobjStopSequence);
   if (!poly) return;
   StopSoundSequence((poly-XLevel->PolyObjs)+(SNDORG_PolyObj<<24));
-  unguard;
 }
 
 
@@ -212,10 +198,8 @@ void VLevelInfo::PolyobjStopSequence (const polyobj_t *poly) {
 //
 //==========================================================================
 void VLevelInfo::ExitLevel (int Position) {
-  guard(VLevelInfo::ExitLevel);
   LeavePosition = Position;
   completed = true;
-  unguard;
 }
 
 
@@ -225,7 +209,6 @@ void VLevelInfo::ExitLevel (int Position) {
 //
 //==========================================================================
 void VLevelInfo::SecretExitLevel (int Position) {
-  guard(VLevelInfo::SecretExitLevel);
   if (SecretMap == NAME_None) {
     // no secret map, use normal exit
     ExitLevel(Position);
@@ -240,7 +223,6 @@ void VLevelInfo::SecretExitLevel (int Position) {
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (Game->Players[i]) Game->Players[i]->PlayerFlags |= VBasePlayer::PF_DidSecret;
   }
-  unguard;
 }
 
 
@@ -253,7 +235,6 @@ void VLevelInfo::SecretExitLevel (int Position) {
 //
 //==========================================================================
 void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
-  guard(VLevelInfo::Completed);
   int Map = InMap;
   int Position = InPosition;
   if (Map == -1 && Position == -1) {
@@ -271,7 +252,6 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
 
   LeavePosition = Position;
   completed = true;
-  unguard;
 }
 
 
@@ -281,12 +261,10 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
 //
 //==========================================================================
 VEntity *VLevelInfo::FindMobjFromTID (int tid, VEntity *Prev) {
-  guard(VLevelInfo::FindMobjFromTID);
   for (VEntity *E = (Prev ? Prev->TIDHashNext : TIDHash[tid&(TID_HASH_SIZE-1)]); E; E = E->TIDHashNext) {
     if (E->TID == tid) return E;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -296,9 +274,7 @@ VEntity *VLevelInfo::FindMobjFromTID (int tid, VEntity *Prev) {
 //
 //==========================================================================
 void VLevelInfo::ChangeMusic (VName SongName) {
-  guard(SV_ChangeMusic);
   SongLump = SongName;
-  unguard;
 }
 
 

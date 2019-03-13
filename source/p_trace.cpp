@@ -59,7 +59,6 @@ bool VLevel::CheckPlane (linetrace_t &Trace, const sec_plane_t *Plane) const {
 //
 //==========================================================================
 bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
-  guard(VLevel::CheckPlanes);
   sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 
   if (StartReg != nullptr) {
@@ -75,7 +74,6 @@ bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
   }
 
   return true;
-  unguard;
 }
 
 
@@ -85,7 +83,6 @@ bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
 //
 //==========================================================================
 bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
-  guard(VLevel::CheckLine);
   line_t *line;
   int s1;
   int s2;
@@ -153,7 +150,6 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
 
   if (!(line->flags&ML_TWOSIDED)) Trace.SightEarlyOut = true;
   return false;
-  unguard;
 }
 
 
@@ -165,7 +161,6 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
 //
 //==========================================================================
 bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
-  guard(VLevel::CrossSubsector);
   subsector_t *sub;
   int count;
   seg_t *seg;
@@ -192,7 +187,6 @@ bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
   }
   // passed the subsector ok
   return true;
-  unguard;
 }
 
 
@@ -204,7 +198,6 @@ bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
 //
 //==========================================================================
 bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
-  guard(VLevel::CrossBSPNode);
   if (BspNum == -1) return CrossSubsector(Trace, 0);
 
   if (!(BspNum&NF_SUBSECTOR)) {
@@ -225,7 +218,6 @@ bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
   }
 
   return CrossSubsector(Trace, BspNum&(~NF_SUBSECTOR));
-  unguard;
 }
 
 
@@ -235,8 +227,6 @@ bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
 //
 //==========================================================================
 bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags) {
-  guard(VLevel::TraceLine);
-  //++validcount;
   IncrementValidCount();
 
   TVec realEnd = End;
@@ -264,7 +254,6 @@ bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, 
     return CheckPlanes(Trace, PointInSubsector(realEnd)->sector);
   }
   return false;
-  unguard;
 }
 
 
