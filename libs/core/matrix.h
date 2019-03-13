@@ -69,6 +69,20 @@ public:
   }
 
   // this can be used to transform with OpenGL model/projection matrices
+  inline TVec Transform2OnlyXY (const TVec &V) const {
+    TVec Out;
+    Out.x = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]);
+    Out.y = VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]);
+    Out.z = V.z; // meh
+    return Out;
+  }
+
+  // this can be used to transform with OpenGL model/projection matrices
+  inline float Transform2OnlyZ (const TVec &V) const {
+    return VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
+  }
+
+  // this can be used to transform with OpenGL model/projection matrices
   inline TVec Transform2 (const TVec &V, const float w) const {
     TVec Out;
     Out.x = VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]*w);
