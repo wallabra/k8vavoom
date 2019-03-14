@@ -296,7 +296,7 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                                               bool CheckSkyBoxAlways, bool LightCanCross)
+                                               bool CheckSkyBoxAlways, int LightCanCross)
 {
   surface_t *surfs = InSurfs;
   if (!surfs) return;
@@ -351,17 +351,17 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
 
   if (!seg->backsector) {
     // single sided line
-    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, false);
-    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, false);
+    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, 0);
+    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, 0);
   } else {
     // two sided line
-    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, false, false);
-    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, true);
-    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, false, false);
-    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, true);
+    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, false, 0);
+    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, -1);
+    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, false, 0);
+    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, 1);
 
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawShadowSurfaces(sp->surfs, &sp->texinfo, false, false);
+      DrawShadowSurfaces(sp->surfs, &sp->texinfo, false, 0);
     }
   }
 }
@@ -370,6 +370,8 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderShadowSecSurface
+//
+//  this is used for floor and ceilings
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
@@ -382,7 +384,7 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
   if (fabsf(dist) >= CurrLightRadius) return;
 
-  DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, true, false);
+  DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, true, 0);
 }
 
 

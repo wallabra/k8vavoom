@@ -507,7 +507,7 @@ public:
   virtual void BeginShadowVolumesPass () override;
   virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) override;
   virtual void EndLightShadowVolumes () override;
-  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, bool LightCanCross) override;
+  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) override;
   virtual void BeginLightPass (TVec &, float, vuint32) override;
   virtual void DrawSurfaceLight (surface_t *, TVec&, float, bool) override;
   virtual void DrawWorldTexturesPass () override;
