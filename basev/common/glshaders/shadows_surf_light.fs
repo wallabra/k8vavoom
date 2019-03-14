@@ -17,7 +17,7 @@ void main () {
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   //if (TexColour.a < 0.1) discard; //FIXME
-  if (TexColour.a < 0.666) discard; //FIXME
+  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 
   float DistToView = dot(VertToView, VertToView);
   if (DistToView <= 0.0) discard;

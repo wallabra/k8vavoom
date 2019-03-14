@@ -7,7 +7,8 @@ varying vec2 TextureCoordinate;
 
 void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard;
+  //if (TexColour.a < 0.01) discard;
+  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 
   vec4 FinalColour_1;
   FinalColour_1.rgb = TexColour.rgb;
