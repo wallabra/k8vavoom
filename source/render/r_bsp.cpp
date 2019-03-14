@@ -233,7 +233,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         surfs->dcseg = nullptr; // sky cannot have decals anyway
         DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
           0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
-          false, 0, 0, TVec(), 0, TVec(), TVec(), TVec());
+          false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
       }
       surfs = surfs->next;
     } while (surfs);
@@ -261,7 +261,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       //surfs->dcseg = nullptr;
       surfs->dcseg = seg; // allow decals on masked polys
       DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
-        0, texinfo->Alpha, texinfo->Additive, 0, false, 0, 0,
+        0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
         TVec(), 0, TVec(), TVec(), TVec());
     }
     surfs = surfs->next;

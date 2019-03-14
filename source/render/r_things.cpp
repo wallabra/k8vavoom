@@ -414,6 +414,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   }
   */
 
+  //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
+
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
     if (thing) {

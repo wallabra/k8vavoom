@@ -1,5 +1,7 @@
 #version 120
 
+//#define VAVOOM_ADV_MASKED_FOG
+
 uniform sampler2D Texture;
 uniform vec4 Light;
 uniform float AlphaRef;
@@ -10,8 +12,10 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < AlphaRef) discard;
+  //TexColour *= Light;
+  TexColour.rgb *= Light.rgb;
 
   // convert to premultiplied
   vec4 FinalColour_1;

@@ -1527,6 +1527,15 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     Alpha = 1.0f;
   }
 
+  //GCon->Logf("SPRITE: light=0x%08x; fade=0x%08x", light, Fade);
+  //Fade ^= 0x00ffffff;
+  //light = 0xffff0000;
+  //Fade = 0x3f323232;
+  /*
+  if (Fade != FADE_LIGHT && RendLev->IsAdvancedRenderer()) {
+    Fade ^= 0x00ffffff;
+  }
+  */
 
   p_glUniform4fARB(SurfMasked_LightLoc,
     ((light>>16)&255)/255.0f,
