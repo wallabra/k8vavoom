@@ -447,6 +447,11 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   LightVis = new vuint8[VisSize];
   LightBspVis = new vuint8[VisSize];
 
+  memset(BspVis, 0, VisSize);
+  memset(BspVisThing, 0, VisSize);
+  memset(LightVis, 0, VisSize);
+  memset(LightBspVis, 0, VisSize);
+
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
 
