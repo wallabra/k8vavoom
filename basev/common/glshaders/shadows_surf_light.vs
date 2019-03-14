@@ -2,12 +2,7 @@
 
 uniform vec3 ViewOrigin;
 uniform vec3 LightPos;
-uniform vec3 SAxis;
-uniform vec3 TAxis;
-uniform float SOffs;
-uniform float TOffs;
-uniform float TexIW;
-uniform float TexIH;
+$include "common/texture_vars.vs"
 
 attribute vec3 SurfNormal;
 attribute float SurfDist;
@@ -17,19 +12,13 @@ varying vec3 VertToLight;
 varying vec3 VertToView;
 varying float Dist;
 varying float VDist;
-varying vec2 TextureCoordinate;
 
 
 void main () {
   // transforming the vertex
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
 
-  // calculate texture coordinates
-  vec2 ts = vec2(
-    (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW,
-    (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH
-  );
-  TextureCoordinate = ts;
+  $include "common/texture_calc.vs"
 
   Normal = SurfNormal;
 

@@ -9,7 +9,8 @@ varying vec3 VertToLight;
 varying vec3 VertToView;
 varying float Dist;
 varying float VDist;
-varying vec2 TextureCoordinate;
+
+$include "common/texture_vars.fs"
 
 
 void main () {
