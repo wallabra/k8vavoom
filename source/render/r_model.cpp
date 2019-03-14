@@ -933,23 +933,18 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
       case RPASS_Normal:
       case RPASS_Ambient:
         break;
-
       case RPASS_ShadowVolumes:
         if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
         break;
-
       case RPASS_Textures:
         if (Md2Alpha <= getAlphaThreshold()) continue;
         break;
-
       case RPASS_Light:
         if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
         break;
-
       case RPASS_Fog:
         if (Md2Alpha <= 0.666f || SubMdl.NoShadow) continue;
         break;
-
       case RPASS_NonShadow:
         if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
         break;
@@ -998,7 +993,6 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
             !IsViewModel && isAdvanced); // for advanced renderer, we need to fill z-buffer, but not color buffer
         }
         break;
-
       case RPASS_Ambient:
         if (!SubMdl.AllowTransparency)
           Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Offset, Scale,
@@ -1006,26 +1000,22 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
             Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency);
         break;
-
       case RPASS_ShadowVolumes:
         Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, smooth_inter, Interpolate,
           LightPos, LightRadius);
         break;
-
       case RPASS_Light:
         Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
-
       case RPASS_Textures:
         Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Trans, ColourMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
-
       case RPASS_Fog:
         Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),

@@ -1,5 +1,6 @@
 #version 120
 
+uniform bool FogEnabled; // unused, but required
 uniform vec4 FogColour;
 uniform sampler2D Texture;
 uniform float FogDensity;

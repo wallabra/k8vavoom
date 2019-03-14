@@ -1,5 +1,8 @@
 #version 120
 
+#define VAVOOM_SIMPLE_ALPHA_FOG
+
+uniform bool FogEnabled; // unused, but required
 uniform int FogType;
 uniform vec4 FogColour;
 uniform float FogDensity;
@@ -8,6 +11,7 @@ uniform float FogEnd;
 
 
 void main () {
+#if 0
 #ifdef VAVOOM_REVERSE_Z
   float z = 1.0/gl_FragCoord.w;
 #else
@@ -28,11 +32,16 @@ void main () {
 
   float SmoothFactor = clamp((ClampFogFactor-0.1)/0.9, 0.0, 1.0);
 
-  vec4 FinalFogColour;
+  vec4 FinalColour_1;
 
-  FinalFogColour.rgb = FogColour.rgb;
-  FinalFogColour.a = SmoothFactor*(SmoothFactor*(3.0-(2.0*SmoothFactor)));
-  if (FinalFogColour.a < 0.01) discard;
+  FinalColour_1.rgb = FogColour.rgb;
+  FinalColour_1.a = SmoothFactor*(SmoothFactor*(3.0-(2.0*SmoothFactor)));
+  if (FinalColour_1.a < 0.01) discard;
 
-  gl_FragColor = FinalFogColour;
+#else
+  vec4 FinalColour_1;
+  $include "common/fog_calc_main.fs"
+#endif
+
+  gl_FragColor = FinalColour_1;
 }

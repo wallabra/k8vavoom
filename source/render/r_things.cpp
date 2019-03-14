@@ -443,7 +443,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 //  VRenderLevelShared::RenderAliasModel
 //
 //==========================================================================
-bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
+bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
 {
   if (!r_models) return false;
