@@ -427,8 +427,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , bspVisRadius(nullptr)
   , bspVisRadiusFrame(0)
 {
-  r_dlightframecount = 0;
-  r_visframecount = 0;
+  currDLightFrame = 0;
+  currQueueFrame = 0;
+  currVisFrame = 0;
 
   memset(light_block, 0, sizeof(light_block));
   memset(block_changed, 0, sizeof(block_changed));
@@ -436,12 +437,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   memset(add_block, 0, sizeof(add_block));
   memset(add_changed, 0, sizeof(add_changed));
   memset(add_chain, 0, sizeof(add_chain));
-  SimpleSurfsHead = nullptr;
-  SimpleSurfsTail = nullptr;
-  SkyPortalsHead = nullptr;
-  SkyPortalsTail = nullptr;
-  HorizonPortalsHead = nullptr;
-  HorizonPortalsTail = nullptr;
   PortalDepth = 0;
   //VPortal::ResetFrame();
 
@@ -573,7 +568,7 @@ VRenderLevelShared::~VRenderLevelShared () {
 //
 //==========================================================================
 void VRenderLevelShared::ResetVisFrameCount () {
-  r_visframecount = 1;
+  currVisFrame = 1;
   for (unsigned nidx = 0; nidx < (unsigned)Level->NumNodes; ++nidx) {
     Level->Nodes[nidx].VisFrame = 0;
   }
@@ -589,11 +584,38 @@ void VRenderLevelShared::ResetVisFrameCount () {
 //
 //==========================================================================
 void VRenderLevelShared::ResetDLightFrameCount () {
-  r_dlightframecount = 1;
+  currDLightFrame = 1;
   for (unsigned idx = 0; idx < (unsigned)Level->NumSubsectors; ++idx) {
     Level->Subsectors[idx].dlightframe = 0;
     Level->Subsectors[idx].dlightbits = 0;
   }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ResetUpdateWorldFrame
+//
+//==========================================================================
+void VRenderLevelShared::ResetUpdateWorldFrame () {
+  updateWorldFrame = 1;
+  for (unsigned f = 0; f < (unsigned)Level->NumSubsectors; ++f) Level->Subsectors[f].updateWorldFrame = 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ClearQueues
+//
+//==========================================================================
+void VRenderLevelShared::ClearQueues () {
+  DrawSurfList.reset();
+  DrawSkyList.reset();
+  DrawHorizonList.reset();
+  IncQueueFrameCount();
+  // this is prolly not required for advanced renderer, but meh...
+  memset(light_chain, 0, sizeof(light_chain));
+  memset(add_chain, 0, sizeof(add_chain));
 }
 
 
@@ -1031,9 +1053,9 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     UPDATE_LIGHTVIS(SubNum);
     CheckLightSubsector(Sub);
     if (CurrLightBit) {
-      if (Sub->dlightframe != r_dlightframecount) {
+      if (Sub->dlightframe != currDLightFrame) {
         Sub->dlightbits = CurrLightBit;
-        Sub->dlightframe = r_dlightframecount;
+        Sub->dlightframe = currDLightFrame;
       } else {
         Sub->dlightbits |= CurrLightBit;
       }
@@ -1074,9 +1096,9 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     UPDATE_LIGHTVIS(SubNum);
     CheckLightSubsector(Sub);
     if (CurrLightBit) {
-      if (Sub->dlightframe != r_dlightframecount) {
+      if (Sub->dlightframe != currDLightFrame) {
         Sub->dlightbits = CurrLightBit;
-        Sub->dlightframe = r_dlightframecount;
+        Sub->dlightframe = currDLightFrame;
       } else {
         Sub->dlightbits |= CurrLightBit;
       }
@@ -1387,7 +1409,7 @@ void VRenderLevelShared::MarkLeaves () {
   r_oldviewleaf = r_viewleaf;
   if (!Level->HasPVS()) return;
 
-  const int currvisframe = IncVisFrameCount();
+  const vuint32 currvisframe = IncVisFrameCount();
 
   const vuint8 *vis = Level->LeafPVS(r_viewleaf);
   subsector_t *sub = &Level->Subsectors[0];
@@ -1505,12 +1527,7 @@ void VRenderLevelShared::RenderPlayerView () {
   int renderattempts = 2;
   bool didIt = false;
 
-  if (updateWorldFrame == 0x7fffffff) {
-    for (unsigned f = 0; f < (unsigned)Level->NumSubsectors; ++f) Level->Subsectors[f].updateWorldFrame = 0;
-    updateWorldFrame = 1;
-  } else {
-    ++updateWorldFrame;
-  }
+  IncUpdateWorldFrame();
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);

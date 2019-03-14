@@ -586,12 +586,20 @@ public:
 private:
   vuint8 decalStcVal;
   bool decalUsedStencil;
+  bool stencilBufferDirty;
   bool maskedDecalsStarted;
+
+  enum DecalType { DT_SIMPLE, DT_LIGHTMAP, DT_ADVANCED };
+
+  // this is required for decals
+  inline void NoteStencilBufferDirty () { stencilBufferDirty = true; }
+  inline bool IsStencilBufferDirty () const { return stencilBufferDirty; }
+  inline void ClearStencilBuffer () { if (stencilBufferDirty) { glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; } }
 
   void RenderShaderDecalsStart ();
   void RenderShaderDecalsEnd ();
   void RenderPrepareShaderDecals (surface_t *surf);
-  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache, int cmap);
+  bool RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap);
 
   void UpdateAndUploadSurfaceTexture (surface_t *surf);
 

@@ -512,7 +512,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //  VRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevel::LightPoint (const TVec &p, float radius) {
+vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *surfplane) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;
@@ -575,7 +575,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius) {
   }
 
   // add dynamic lights
-  if (r_dynamic && sub->dlightframe == r_dlightframecount) {
+  if (r_dynamic && sub->dlightframe == currDLightFrame) {
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
@@ -594,6 +594,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius) {
       float add = (dl.radius-dl.minlight)-sqrtf(distSq);
       if (add > 8) {
         if (r_dynamic_clip) {
+          if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
@@ -649,6 +650,8 @@ this way, when level geometry changed, we can re-trace static lights too.
 //
 //  VRenderLevel::AddDynamicLights
 //
+//  dlight frame already checked
+//
 //==========================================================================
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
   if (surf->count < 3) return; // wtf?!
@@ -669,8 +672,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
   bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more);
 
-  for (int lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
-    if (!(surf->dlightbits&(1<<lnum))) continue; // not lit by this light
+  for (unsigned lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
+    if (!(surf->dlightbits&(1U<<lnum))) continue; // not lit by this light
 
     const dlight_t &dl = DLights[lnum];
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
@@ -860,7 +863,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   }
 
   // add all the dynamic lights
-  if (surf->dlightframe == r_dlightframecount) AddDynamicLights(surf);
+  if (surf->dlightframe == currDLightFrame) AddDynamicLights(surf);
 
   // calc additive light
   // this must be done before lightmap procesing because it will clamp all lights
@@ -1141,7 +1144,7 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
 
   const vuint32 srflight = fixSurfLightLevel(surface);
 
-  if (cache && !cache->dlight && surface->dlightframe != r_dlightframecount && cache->Light == srflight) {
+  if (cache && !cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
     bnum = cache->blocknum;
     cache->chain = light_chain[bnum];
     light_chain[bnum] = cache;
@@ -1166,7 +1169,7 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
     cache->surf = surface;
   }
 
-  if (surface->dlightframe == r_dlightframecount) {
+  if (surface->dlightframe == currDLightFrame) {
     cache->dlight = 1;
   } else {
     cache->dlight = 0;

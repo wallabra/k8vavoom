@@ -67,19 +67,37 @@ static int oldPortalDepth = -666;
 
 //==========================================================================
 //
+//  VRenderLevelShared::SurfCheckAndQueue
+//
+//  this checks if surface is not queued twice
+//
+//==========================================================================
+void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
+  check(surf);
+  if (surf->queueframe == currQueueFrame) {
+    if (surf->dcseg) {
+      Host_Error("subsector %d, seg %d surface queued for rendering twice",
+        (int)(ptrdiff_t)(surf->dcseg-Level->Segs),
+        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
+    } else {
+      Host_Error("subsector %d surface queued for rendering twice",
+        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
+    }
+  }
+  surf->queueframe = currQueueFrame;
+  queue.append(surf);
+  //GCon->Logf("frame %u: queued surface with texinfo %p", currQueueFrame, surf->texinfo);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::QueueSimpleSurf
 //
 //==========================================================================
 void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
   surf->dcseg = seg;
-  if (SimpleSurfsTail) {
-    SimpleSurfsTail->DrawNext = surf;
-    SimpleSurfsTail = surf;
-  } else {
-    SimpleSurfsHead = surf;
-    SimpleSurfsTail = surf;
-  }
-  surf->DrawNext = nullptr;
+  SurfCheckAndQueue(DrawSurfList, surf);
 }
 
 
@@ -90,14 +108,7 @@ void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
 //==========================================================================
 void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
   surf->dcseg = nullptr;
-  if (SkyPortalsTail) {
-    SkyPortalsTail->DrawNext = surf;
-    SkyPortalsTail = surf;
-  } else {
-    SkyPortalsHead = surf;
-    SkyPortalsTail = surf;
-  }
-  surf->DrawNext = nullptr;
+  SurfCheckAndQueue(DrawSkyList, surf);
 }
 
 
@@ -108,14 +119,7 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
 //==========================================================================
 void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
   surf->dcseg = nullptr;
-  if (HorizonPortalsTail) {
-    HorizonPortalsTail->DrawNext = surf;
-    HorizonPortalsTail = surf;
-  } else {
-    HorizonPortalsHead = surf;
-    HorizonPortalsTail = surf;
-  }
-  surf->DrawNext = nullptr;
+  SurfCheckAndQueue(DrawHorizonList, surf);
 }
 
 
@@ -630,7 +634,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
   subsector_t *sub = &Level->Subsectors[num];
   //r_sub = sub;
 
-  if (Level->HasPVS() && sub->VisFrame != r_visframecount) return;
+  if (Level->HasPVS() && sub->VisFrame != currVisFrame) return;
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -657,7 +661,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
   // update world
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
     sub->updateWorldFrame = updateWorldFrame;
-    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == r_visframecount) {
+    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame) {
       //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
       //auto oldrss = r_surf_sub;
       //r_surf_sub = sub;
@@ -718,7 +722,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   if ((bspnum&NF_SUBSECTOR) == 0) {
     node_t *bsp = &Level->Nodes[bspnum];
 
-    if (Level->HasPVS() && bsp->VisFrame != r_visframecount) return;
+    if (Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
 
     // decide which side the view point is on
     int side = bsp->PointOnSide(vieworg);

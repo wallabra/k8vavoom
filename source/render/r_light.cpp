@@ -89,11 +89,12 @@ void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, i
       if (!(dyn_facevis[lleafnum>>3]&(1<<(lleafnum&7)))) return;
     }
 
-    if (ss->dlightframe != r_dlightframecount) {
-      ss->dlightbits = 0;
-      ss->dlightframe = r_dlightframecount;
+    if (ss->dlightframe != currDLightFrame) {
+      ss->dlightbits = bit;
+      ss->dlightframe = currDLightFrame;
+    } else {
+      ss->dlightbits |= bit;
     }
-    ss->dlightbits |= bit;
   } else {
     node_t *node = &Level->Nodes[bspnum];
     const float dist = DotProduct(light->origin, node->normal)-node->dist;

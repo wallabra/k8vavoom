@@ -102,15 +102,27 @@ public:
   bool add_changed[NUM_BLOCK_SURFS];
   surfcache_t *add_chain[NUM_BLOCK_SURFS];
 
+  /*
   surface_t *SimpleSurfsHead;
   surface_t *SimpleSurfsTail;
   surface_t *SkyPortalsHead;
   surface_t *SkyPortalsTail;
   surface_t *HorizonPortalsHead;
   surface_t *HorizonPortalsTail;
+  */
+
+  // render lists; various queue functions will put surfaces there
+  // those arrays are never cleared, only reset
+  // each surface is marked with `currQueueFrame`
+  // note that there is no overflow protection, so don't leave
+  // the game running one level for weeks ;-)
+  TArray<surface_t *> DrawSurfList;
+  TArray<surface_t *> DrawSkyList;
+  TArray<surface_t *> DrawHorizonList;
 
   int PortalDepth;
-  int r_dlightframecount;
+  vuint32 currDLightFrame;
+  vuint32 currQueueFrame;
 
 public:
   virtual void BuildLightMap (surface_t *) = 0;
@@ -119,7 +131,8 @@ public:
   // public, because it is used in advrender to determine rough
   // lightness of masked surfaces
   // `radius` is used for visibility raycasts
-  virtual vuint32 LightPoint (const TVec &p, /*VEntity *mobj*/float raduis) = 0;
+  // `surfplane` is used to light masked surfaces
+  virtual vuint32 LightPoint (const TVec &p, float raduis, const TPlane *surfplane=nullptr) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 };

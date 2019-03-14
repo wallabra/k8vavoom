@@ -76,26 +76,27 @@ enum {
 
 struct surface_t {
   surface_t *next;
-  surface_t *DrawNext;
+  //surface_t *DrawNext;
   texinfo_t *texinfo;
   TPlane *plane;
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour
   vuint32 Fade;
-  subsector_t *subsector;
+  subsector_t *subsector; // owning subsector
+  //seg_t *seg; // owning seg (may be null for floor/ceiling)
   // not exposed to VC
   vuint8 *lightmap;
   rgb_t *lightmap_rgb;
   //int lmapwdt, lmaphgt; // must be set if any lightmap is allocated
-  int dlightframe;
-  int dlightbits;
+  vuint32 queueframe; // this is used to prevent double queuing
+  vuint32 dlightframe;
+  vuint32 dlightbits;
   int count;
   short texturemins[2];
   short extents[2];
   surfcache_t *CacheSurf;
   seg_t *dcseg; // seg with decals for this surface
   vuint32 lmapflags; // Lightmap_XXX
-  //subsector_t *subsector;
   TVec verts[1]; // dynamic array
 };
 

@@ -73,6 +73,8 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
 
   Drawer->SetupViewOrg();
 
+  ClearQueues();
+
   if (times_render_highlevel) GCon->Log("========= RenderScene =========");
 
   double stt = -Sys_Time();

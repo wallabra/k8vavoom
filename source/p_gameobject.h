@@ -616,9 +616,9 @@ struct subsector_t {
   polyobj_t *poly;
 
   node_t *parent;
-  vint32 VisFrame;
-  vint32 SkyVisFrame;
-  vint32 updateWorldFrame;
+  vuint32 VisFrame;
+  vuint32 SkyVisFrame;
+  vuint32 updateWorldFrame;
 
   sector_t *deepref; // for deepwater
 
@@ -626,7 +626,7 @@ struct subsector_t {
   float bbox[4];
 
   vuint32 dlightbits; // bitmask of active dynamic lights
-  vint32 dlightframe; // `dlightbits` validity counter
+  vuint32 dlightframe; // `dlightbits` validity counter
   subregion_t *regions;
 };
 
@@ -653,8 +653,8 @@ struct node_t : public TPlane {
   vuint32 children[2];
 
   node_t *parent;
-  vint32 VisFrame;
-  vint32 SkyVisFrame;
+  vuint32 VisFrame;
+  vuint32 SkyVisFrame;
 };
 
 

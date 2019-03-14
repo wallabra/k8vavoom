@@ -630,20 +630,10 @@ struct surface_t {
   sec_plane_t *HorizonPlane;
   int Light; // light level and colour (unsigned)
   int Fade; // (unsigned)
-  subsector_t *subsector;
-/*
-  ubyte *lightmap; // can be equal to `SURF_NEED_TO_BUILD_LIGHMAP`
-  rgb_t *lightmap_rgb;
-  int dlightframe;
-  int dlightbits;
-  int count;
-  short texturemins[2];
-  short extents[2];
-  surfcache_t *CacheSurf;
-  seg_t *dcseg; // seg with decals for this surface
-  vuint32 lmapflags; // Lightmap_XXX
-  TVec verts[1]; // dynamic array
-*/
+  subsector_t *subsector; // owning subsector
+  //seg_t *seg; // owning seg (may be null for floor/ceiling)
+  // this has more fields in C++, but they aren't exposed
+  // so never copy this struct, and never keep it anywhere as value
 };
 
 
@@ -999,9 +989,9 @@ struct subsector_t {
   polyobj_t *poly;
 
   native transient node_t *parent;
-  int VisFrame;
-  int SkyVisFrame;
-  int updateWorldFrame;
+  int VisFrame; // unsigned
+  int SkyVisFrame; // unsigned
+  int updateWorldFrame; // unsigned
 
   sector_t *deepref;
 
@@ -1037,8 +1027,8 @@ struct node_t : TPlane {
   int[2] children; // unsigned
 
   native transient node_t *parent;
-  int VisFrame;
-  int SkyVisFrame;
+  int VisFrame; // unsigned
+  int SkyVisFrame; // unsigned
 };
 
 

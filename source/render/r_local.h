@@ -393,7 +393,7 @@ protected:
   bool updateWorldCheckVisFrame; // `true` for regular, `false` for advanced
 
   // mark all updated subsectors with this; increment on each new frame
-  vint32 updateWorldFrame;
+  vuint32 updateWorldFrame;
 
   TArray<VEntity *> visibleObjects;
   //TMapNC<VEntity *, bool> visibleObjects;
@@ -422,7 +422,7 @@ protected:
   // used in `CreateWorldSurfaces()` and friends
   segpart_t *pspart;
 
-  int r_visframecount;
+  vuint32 currVisFrame;
 
 protected:
   void NewBSPVisibilityFrame ();
@@ -430,16 +430,35 @@ protected:
   bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
   void ResetVisFrameCount ();
-  inline int IncVisFrameCount () {
-    if ((++r_visframecount) == 0x7fffffff) ResetVisFrameCount();
-    return r_visframecount;
+  inline vuint32 IncVisFrameCount () {
+    if ((++currVisFrame) == 0x7fffffff) ResetVisFrameCount();
+    return currVisFrame;
   }
 
   void ResetDLightFrameCount ();
   inline int IncDLightFrameCount () {
-    if ((++r_dlightframecount) == 0x7fffffff) ResetDLightFrameCount();
-    return r_dlightframecount;
+    if ((++currDLightFrame) == 0xffffffff) ResetDLightFrameCount();
+    return currDLightFrame;
   }
+
+  void ResetUpdateWorldFrame ();
+  inline void IncUpdateWorldFrame () {
+    if ((++updateWorldFrame) == 0xffffffff) ResetUpdateWorldFrame();
+  }
+
+  inline void IncQueueFrameCount () {
+    //if ((++currQueueFrame) == 0xffffffff) ResetQueueFrameCount();
+    ++currQueueFrame;
+    if (currQueueFrame == 0xffffffff) {
+      // there is nothing we can do with this yet
+      // resetting this is too expensive, and doesn't worth the efforts
+      // i am not expecting for someone to play one level for that long in one seat
+      Sys_Error("*************** WARNING!!! QUEUE FRAME COUNT OVERFLOW!!! ***************");
+    }
+  }
+
+  // clears render queues
+  void ClearQueues ();
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
@@ -505,6 +524,9 @@ protected:
   // sky methods
   void InitSky ();
   void AnimateSky (float);
+
+  // this checks if surface is not queued twice
+  void SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf);
 
   // world BSP rendering
   void QueueSimpleSurf (seg_t *seg, surface_t *surf);
@@ -683,7 +705,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 
@@ -709,6 +731,7 @@ protected:
   // light methods
   //virtual void PushDlights () override;
   // `radius` is used for... nothing yet
+  // `surfplace` is used to light masked surfaces
   vuint32 LightPointAmbient (const TVec &p, float radius);
 
   // world BSP rendering
@@ -752,7 +775,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 

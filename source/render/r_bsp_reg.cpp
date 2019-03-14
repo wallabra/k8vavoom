@@ -50,7 +50,7 @@ void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
 
-  bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount);
+  bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
   surf->dcseg = seg;
 
   if (lightmaped) {

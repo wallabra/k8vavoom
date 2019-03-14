@@ -139,7 +139,7 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 //  VAdvancedRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
+vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *surfplane) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;
@@ -185,6 +185,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
       const float add = stl->radius-sqrtf(distSq);
       if (add > 8) {
         if (r_dynamic_clip) {
+          if (surfplane && surfplane->PointOnSide(stl->origin)) continue;
           if (!RadiusCastRay(p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
@@ -196,7 +197,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
   }
 
   // add dynamic lights
-  if (r_dynamic && sub->dlightframe == r_dlightframecount) {
+  if (r_dynamic && sub->dlightframe == currDLightFrame) {
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
       if (!dlinfo[i].needTrace) continue;
@@ -216,6 +217,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius) {
       if (add > 8) {
         // check potential visibility
         if (r_dynamic_clip) {
+          if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;

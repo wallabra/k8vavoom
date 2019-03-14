@@ -344,7 +344,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   readBackTempBufSize = 0;
 
   decalUsedStencil = false;
+  decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
   maskedDecalsStarted = false;
+  stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
 }
 
@@ -895,6 +897,7 @@ void VOpenGLDrawer::InitResolution () {
 
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  stencilBufferDirty = false;
 
 
   // allocate ambient FBO object
@@ -1765,6 +1768,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   //RestoreDepthFunc();
 
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  stencilBufferDirty = false;
 
   glViewport(rd->x, ScreenHeight-rd->height-rd->y, rd->width, rd->height);
 
@@ -1816,17 +1820,6 @@ void VOpenGLDrawer::SetupViewOrg () {
     glClipPlane(GL_CLIP_PLANE0, eq);
   } else {
     glDisable(GL_CLIP_PLANE0);
-  }
-
-  if (RendLev) {
-    memset(RendLev->light_chain, 0, sizeof(RendLev->light_chain));
-    memset(RendLev->add_chain, 0, sizeof(RendLev->add_chain));
-    RendLev->SimpleSurfsHead = nullptr;
-    RendLev->SimpleSurfsTail = nullptr;
-    RendLev->SkyPortalsHead = nullptr;
-    RendLev->SkyPortalsTail = nullptr;
-    RendLev->HorizonPortalsHead = nullptr;
-    RendLev->HorizonPortalsTail = nullptr;
   }
 }
 
