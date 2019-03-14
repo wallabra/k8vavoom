@@ -175,6 +175,8 @@ vuint8 *VPngTexture::GetPixels () {
     }
   }
 
+  delete png;
+
   if (Strm->IsError()) { delete Strm; Sys_Error("Can't open PNG file '%s'", *Name); }
 
   // free memory
