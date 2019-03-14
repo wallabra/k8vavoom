@@ -723,7 +723,7 @@ protected:
   void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
 
   void DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                          VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross);
+                          VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderLightLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderLightSubRegion (subsector_t *sub, subregion_t *region);

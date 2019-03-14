@@ -961,7 +961,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (LightCanCross) {
     if (LightCanCross > 0) {
       // two-sided wall
-      if (!surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+      if (!surf->plane->PointOnSide(vieworg)) return;
     } else {
       // horizon
       if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
@@ -980,7 +980,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       // two-sided wall
       //GCon->Logf("STI: alpha=%f; transp=%d", surf->texinfo->Alpha, (int)surf->texinfo->Tex->isTransparent());
       // walls with empty pixels won't block
-      if (surf->texinfo && surf->texinfo->Alpha >= 1.0f && !surf->texinfo->Tex->isTransparent()) {
+      if (tex->Tex->isTransparent()) {
         // solid
         if (dist >= Radius || dist <= 0.0f) return; // light is too far away
       } else {
@@ -1070,18 +1070,31 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
 //
 //  this blends surfaces from light sources to ambient map.
 //
+//  `LightCanCross` means that light can span over this surface
+//  light can span over two-sided midtex, for example, but not over
+//  one-sided wall
+//    <0: horizon
+//    >0: two-sided wall
+//    =0: one-sided wall
+//
 //==========================================================================
-void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) {
+void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, int LightCanCross) {
   if (Surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (Surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", Surf->count);
     return;
   }
 
-  float dist = DotProduct(LightPos, Surf->plane->normal)-Surf->plane->dist;
-  if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
+  const float dist = DotProduct(LightPos, Surf->plane->normal)-Surf->plane->dist;
+  if (dist <= 0.0f || dist >= Radius) return; // light is too far away
+  //if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
-  texinfo_t *tex = Surf->texinfo;
+  // don't render translucent surfaces
+  // they should not end up here, but...
+  const texinfo_t *tex = Surf->texinfo;
+  if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
+  if (tex->Alpha < 1.0f) return;
+
   SetTexture(tex->Tex, tex->ColourMap);
 
   ShadowsLightLocs.storeTexture(0);
@@ -1109,7 +1122,8 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
 //
 //  VOpenGLDrawer::DrawWorldTexturesPass
 //
-//  This renders textured level with ambient (aka sector) lighting
+//  this renders textured level with ambient (aka sector) lighting
+//  this is for advanced renderer only
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldTexturesPass () {
@@ -1180,11 +1194,15 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       continue;
     }
 
-    // this is for advanced renderer only
-    texinfo_t *tex = surf->texinfo;
+    // don't render translucent surfaces
+    // they should not end up here, but...
+    const texinfo_t *tex = surf->texinfo;
+    if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
+    if (tex->Alpha < 1.0f) return;
+
     SetTexture(tex->Tex, tex->ColourMap);
 
-    bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
+    bool doDecals = (tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals);
 
     // fill stencil buffer for decals
     if (doDecals) RenderPrepareShaderDecals(surf);

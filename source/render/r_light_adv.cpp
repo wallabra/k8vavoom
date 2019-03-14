@@ -508,7 +508,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
 //
 //==========================================================================
 void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                                              VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross)
+                                              VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
 
@@ -535,7 +535,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 //
 //  VAdvancedRenderLevel::RenderLightLine
 //
-//  Clips the given segment and adds any visible pieces to the line list.
+//  clips the given segment and adds any visible pieces to the line list
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *dseg) {
@@ -568,17 +568,17 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 
   if (!seg->backsector) {
     // single sided line
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, 0);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, 0);
   } else {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, true);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, true);
+    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, 0);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
+    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, 0);
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, 1);
 
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, false);
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, 0);
     }
   }
 }
@@ -587,6 +587,8 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderLightSecSurface
+//
+//  this is used for floor and ceilings
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
@@ -598,7 +600,7 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
   if (fabsf(dist) >= CurrLightRadius) return;
 
-  DrawLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, false);
+  DrawLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0);
 }
 
 

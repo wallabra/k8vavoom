@@ -235,7 +235,7 @@ public:
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) = 0;
   virtual void BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
-  virtual void DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) = 0;
+  virtual void DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, int LightCanCross) = 0;
   virtual void DrawWorldTexturesPass () = 0;
   virtual void DrawWorldFogPass () = 0;
   virtual void EndFogPass () = 0;
