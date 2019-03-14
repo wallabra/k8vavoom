@@ -1468,7 +1468,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   bool decalsAllowed = false;
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    //p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.01f);
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     // translucent things should not modify z-buffer
@@ -1484,7 +1485,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       decalsAllowed = true;
     }
   } else {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.666f);
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->dcseg && surf->dcseg->decals) {
       if (!maskedDecalsStarted) {
@@ -1635,7 +1636,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (hangup) {
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, /*getAlphaThreshold()*/0.3f);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, /*getAlphaThreshold()*/0.666f);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
     glPolygonOffset(updir, updir);
@@ -1650,7 +1651,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       glDepthMask(GL_FALSE);
     }
   } else {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.666f);
     Alpha = 1.0f;
   }
 
