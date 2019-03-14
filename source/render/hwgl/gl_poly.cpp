@@ -927,7 +927,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
     glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(0.0f, 0.0f);
   }
-  glDisable(GL_SCISSOR_TEST);
+  //glDisable(GL_SCISSOR_TEST);
   glEnable(GL_TEXTURE_2D);
 }
 

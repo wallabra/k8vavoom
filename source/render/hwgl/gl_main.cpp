@@ -1558,8 +1558,9 @@ static inline float glhProjectfZ (const TVec &point, const float zofs, const VMa
   // our `w` is always 1
   TVec inworld = modelview.Transform2(point);
   inworld.z += zofs;
-  if (inworld.z >= 0.0f) return 0.0f;
-  float projz = projection.Transform2OnlyZ(inworld); // we don't care about z here
+  //if (inworld.z >= 0.0f) return 0.0f;
+  if (inworld.z > -0.001f) inworld.z = -0.001f;
+  float projz = projection.Transform2OnlyZ(inworld);
 #endif
   const float pjw = -1.0f/inworld.z;
   projz *= pjw;
@@ -1582,7 +1583,6 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   VMatrix4 pmat, mmat;
   glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
   glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
-  const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
 
   if (!scoord) scoord = tmpscoord;
 
@@ -1600,7 +1600,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   // usually, light completely fades away at edges, so we can safely shrink our scissor box
   // even such small shrinking can win one-two FPS on light-heavy scenes
   //radius -= 6;
-  if (radius < 2) {
+  if (radius < 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     //glScissor(0, 0, 0, 0);
     return 0;
@@ -1615,8 +1615,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     TVec lcfar = TVec(lcorg.x, lcorg.y, lcorg.z+radius);
     */
 
-    const float z0 = glhProjectfZ(org, +radius, mmat[0], pmat[0]);
-    const float z1 = glhProjectfZ(org, -radius, mmat[0], pmat[0]);
+    const float z0 = glhProjectfZ(org, +radius+radius*0.5f, mmat[0], pmat[0]);
+    const float z1 = glhProjectfZ(org, -radius-radius*0.5f, mmat[0], pmat[0]);
 
     //GCon->Logf("radius=%f; z0=%f; z1=%f", radius, z0, z1);
 
@@ -1630,6 +1630,16 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   if (gl_use_optimised_scissor_calculation) {
     // transform light center to camera space
     TVec lcorg = mmat.Transform2(org);
+
+    // usually, light completely fades away at edges, so we can safely shrink our scissor box
+    // even such small shrinking can win one-two FPS on light-heavy scenes
+    /*
+         if (radius >= 256) radius -= 16;
+    else if (radius >= 128) radius -= 8;
+    else if (radius >= 64) radius -= 6;
+    else if (radius >= 16) radius -= 2;
+    */
+    //radius /= 2;
 
     // the thing that should not be
     if (lcorg.z-radius > -0.001f) {
@@ -1653,6 +1663,9 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
     check(bbox[0+2] <= -0.001f);
 
+    const float scrw = ScreenWidth;
+    const float scrh = ScreenHeight;
+
     // transform points, get min and max
     for (unsigned f = 0; f < 8; ++f) {
       TVec inworld = TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]);
@@ -1660,8 +1673,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
       const float pjw = -1.0f/inworld.z;
       proj.x *= pjw;
       proj.y *= pjw;
-      float winx = (proj.x*0.5f+0.5f)*ScreenWidth;
-      float winy = (proj.y*0.5f+0.5f)*ScreenHeight;
+      float winx = (proj.x*0.5f+0.5f)*scrw;
+      float winy = (proj.y*0.5f+0.5f)*scrh;
 
       if (minx > winx) minx = winx;
       if (miny > winy) miny = winy;
@@ -1670,6 +1683,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
   } else {
     // my original code
+    const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
 
     // create light bbox
     float bbox[6];
@@ -1723,6 +1737,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     */
   }
 
+
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     glScissor(0, 0, 0, 0);
@@ -1739,6 +1754,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     //glScissor(0, 0, 0, 0);
     return 0;
   }
+
+  //GCon->Logf("radius=%f; box=(%d,%d)-(%d,%d)", radius, (int)minx, (int)miny, (int)maxx, (int)maxy);
 
   glScissor(minx, miny, maxx-minx+1, maxy-miny+1);
   scoord[0] = minx;
