@@ -835,6 +835,8 @@ static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasMo
 //
 //  DrawModel
 //
+//  FIXME: make this faster -- stop looping, cache data!
+//
 //==========================================================================
 static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
@@ -929,6 +931,21 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     if (FDef.AlphaStart != 1.0f || FDef.AlphaEnd != 1.0f) Md2Alpha *= FDef.AlphaStart+(FDef.AlphaEnd-FDef.AlphaStart)*Inter;
     if (F.AlphaStart != 1.0f || F.AlphaEnd != 1.0f) Md2Alpha *= F.AlphaStart+(F.AlphaEnd-F.AlphaStart)*Inter;
 
+    /*
+    const char *passname = nullptr;
+    switch (Pass) {
+      case RPASS_Normal: passname = "normal"; break;
+      case RPASS_Ambient: passname = "ambient"; break;
+      case RPASS_ShadowVolumes: passname = "shadow"; break;
+      case RPASS_Light: passname = "light"; break;
+      case RPASS_Textures: passname = "texture"; break;
+      case RPASS_Fog: passname = "fog"; break;
+      case RPASS_NonShadow: passname = "nonshadow"; break;
+      default: Sys_Error("WTF?!");
+    }
+    GCon->Logf("000: MODEL(%s): class='%s'; alpha=%f; noshadow=%d; usedepth=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow, (int)SubMdl.UseDepth);
+    */
+
     switch (Pass) {
       case RPASS_Normal:
       case RPASS_Ambient:
@@ -946,9 +963,11 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         if (Md2Alpha <= 0.666f || SubMdl.NoShadow) continue;
         break;
       case RPASS_NonShadow:
-        if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
+        //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
+        if (Md2Alpha < 1.0f || Additive || SubMdl.NoShadow) continue;
         break;
     }
+    //GCon->Logf("     MODEL(%s): class='%s'; alpha=%f; noshadow=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow);
 
     float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
@@ -980,6 +999,8 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     // light
     vuint32 Md2Light = Light;
     if (SubMdl.FullBright) Md2Light = 0xffffffff;
+
+    //if (Pass != RPASS_NonShadow) return;
 
     switch (Pass) {
       case RPASS_Normal:
