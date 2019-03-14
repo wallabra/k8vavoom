@@ -191,7 +191,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   GLint oldBlendEnabled;
   glGetIntegerv(GL_BLEND, &oldBlendEnabled);
 
-  glDepthMask(GL_FALSE);
+  glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -736,7 +736,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 //==========================================================================
 void VOpenGLDrawer::BeginShadowVolumesPass () {
   glEnable(GL_STENCIL_TEST);
-  glDepthMask(GL_FALSE);
+  glDepthMask(GL_FALSE); // no z-buffer writes
 }
 
 
@@ -970,6 +970,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 //==========================================================================
 void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
   RestoreDepthFunc();
+  glDepthMask(GL_FALSE); // no z-buffer writes
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -1049,7 +1050,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf, TVec &LightPos, float Rad
 void VOpenGLDrawer::DrawWorldTexturesPass () {
   // stop stenciling now
   glDisable(GL_STENCIL_TEST);
-  glDepthMask(GL_TRUE); // just in case
+  glDepthMask(GL_FALSE); // no z-buffer writes
 
   // copy ambient light texture to FBO, so we can use it to light decals
   {
@@ -1173,7 +1174,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   glEnable(GL_BLEND);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthMask(GL_TRUE); // just in case
+  glDepthMask(GL_FALSE); // no z-buffer writes
 
   // draw surfaces
   p_glUseProgramObjectARB(ShadowsFog_Program);
@@ -1213,7 +1214,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 void VOpenGLDrawer::EndFogPass () {
   glDisable(GL_BLEND);
   // back to normal z-buffering
-  glDepthMask(GL_TRUE);
+  glDepthMask(GL_TRUE); // allow z-buffer writes
 }
 
 
@@ -1275,11 +1276,14 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   SurfSimple_Locs.storeFogFade(surf->Fade, 1.0f);
 
   // draw it
-  glDepthMask(GL_FALSE);
+  GLint oldDepthMask;
+  glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+  glDepthMask(GL_FALSE); // no z-buffer writes
   glBegin(GL_POLYGON);
   for (unsigned i = 0; i < 4; ++i) glVertex(v[i]);
   glEnd();
-  glDepthMask(GL_TRUE);
+  //glDepthMask(GL_TRUE); // allow z-buffer writes
+  glDepthMask(oldDepthMask);
 
   // write to the depth buffer
   p_glUseProgramObjectARB(SurfZBuf_Program);
@@ -1386,16 +1390,21 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   bool zbufferWriteDisabled = false;
   bool decalsAllowed = false;
+  bool restoreBlend = false;
+
+  GLint oldDepthMask = 0;
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     //p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
-    p_glUniform1fARB(SurfMasked_AlphaRefLoc, 0.01f);
+    restoreBlend = true;
+    p_glUniform1fARB(SurfMasked_AlphaRefLoc, (Additive ? getAlphaThreshold() : 0.666f));
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     // translucent things should not modify z-buffer
     if (Additive || Alpha < 1.0f) {
       zbufferWriteDisabled = true;
-      glDepthMask(GL_FALSE);
+      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+      glDepthMask(GL_FALSE); // no z-buffer writes
     }
     if (r_decals_enabled && r_decals_wall_alpha && surf->dcseg && surf->dcseg->decals) {
       decalsAllowed = true;
@@ -1493,9 +1502,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (blend_sprites || Additive || Alpha < 1.0f) {
+  if (restoreBlend) {
     glDisable(GL_BLEND);
-    if (zbufferWriteDisabled) glDepthMask(GL_TRUE); // re-enable z-buffer
+    if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
   }
   if (Additive) {
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
@@ -1531,27 +1540,37 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   SurfMasked_Locs.storeFogType();
 
   bool zbufferWriteDisabled = false;
+  bool restoreBlend = false;
 
-  if (hangup) {
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    p_glUniform1fARB(SurfMasked_AlphaRefLoc, /*getAlphaThreshold()*/0.666f);
-    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
-    glPolygonOffset(updir, updir);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-  } else if (blend_sprites || Additive || Alpha < 1.0f) {
-    p_glUniform1fARB(SurfMasked_AlphaRefLoc, getAlphaThreshold());
-    glEnable(GL_BLEND);
-    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    // translucent things should not modify z-buffer
-    if (Additive || Alpha < 1.0f) {
+  GLint oldDepthMask = 0;
+
+  if (blend_sprites || Additive || hangup || Alpha < 1.0f) {
+    restoreBlend = true;
+    p_glUniform1fARB(SurfMasked_AlphaRefLoc, (hangup || Additive ? getAlphaThreshold() : 0.666f));
+    if (hangup) {
       zbufferWriteDisabled = true;
-      glDepthMask(GL_FALSE);
+      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+      glDepthMask(GL_FALSE); // no z-buffer writes
+      const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
+      glPolygonOffset(updir, updir);
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    }
+    glEnable(GL_BLEND);
+    // translucent things should not modify z-buffer
+    if (!zbufferWriteDisabled && (Additive || Alpha < 1.0f)) {
+      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+      glDepthMask(GL_FALSE); // no z-buffer writes
+      zbufferWriteDisabled = true;
+    }
+    if (Additive) {
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    } else {
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
     p_glUniform1fARB(SurfMasked_AlphaRefLoc, 0.666f);
     Alpha = 1.0f;
+    glDisable(GL_BLEND);
   }
 
   //GCon->Logf("SPRITE: light=0x%08x; fade=0x%08x", light, Fade);
@@ -1571,70 +1590,43 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   SurfMasked_Locs.storeFogFade(Fade, Alpha);
 
-#if 0
-  if (Alpha >= 1.0f) {
-    /*
-    GLint odf = GL_LEQUAL;
-    glGetIntegerv(GL_DEPTH_FUNC, &odf);
-    glDepthFunc(!CanUseRevZ() ? GL_LESS : GL_GREATER);
-    //glDepthFunc(GL_ALWAYS);
-    */
-    int nn = Tex->Name.GetIndex()%400;
-    float ofs = ((float)nn)/400.0f;
-    glPolygonOffset(/*0.75f*/-ofs, -4);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-  }
-#endif
-
   glBegin(GL_QUADS);
+    texpt = cv[0]-texorg;
+    p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
+      DotProduct(texpt, saxis)*tex_iw,
+      DotProduct(texpt, taxis)*tex_ih);
+    glVertex(cv[0]);
 
-  texpt = cv[0]-texorg;
-  p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
-    DotProduct(texpt, saxis)*tex_iw,
-    DotProduct(texpt, taxis)*tex_ih);
-  glVertex(cv[0]);
+    texpt = cv[1]-texorg;
+    p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
+      DotProduct(texpt, saxis)*tex_iw,
+      DotProduct(texpt, taxis)*tex_ih);
+    glVertex(cv[1]);
 
-  texpt = cv[1]-texorg;
-  p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
-    DotProduct(texpt, saxis)*tex_iw,
-    DotProduct(texpt, taxis)*tex_ih);
-  glVertex(cv[1]);
+    texpt = cv[2]-texorg;
+    p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
+      DotProduct(texpt, saxis)*tex_iw,
+      DotProduct(texpt, taxis)*tex_ih);
+    glVertex(cv[2]);
 
-  texpt = cv[2]-texorg;
-  p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
-    DotProduct(texpt, saxis)*tex_iw,
-    DotProduct(texpt, taxis)*tex_ih);
-  glVertex(cv[2]);
-
-  texpt = cv[3]-texorg;
-  p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
-    DotProduct(texpt, saxis)*tex_iw,
-    DotProduct(texpt, taxis)*tex_ih);
-  glVertex(cv[3]);
-
+    texpt = cv[3]-texorg;
+    p_glVertexAttrib2fARB(SurfMasked_TexCoordLoc,
+      DotProduct(texpt, saxis)*tex_iw,
+      DotProduct(texpt, taxis)*tex_ih);
+    glVertex(cv[3]);
   glEnd();
 
-#if 0
-  if (Alpha >= 1.0f) {
-    //glDepthFunc(odf);
-    glPolygonOffset(0, 0);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-  }
-#endif
-
-  if (hangup) {
-    glDepthMask(GL_TRUE);
+  if (restoreBlend) {
+    if (hangup) {
+      glPolygonOffset(0.0f, 0.0f);
+      glDisable(GL_POLYGON_OFFSET_FILL);
+    }
     glDisable(GL_BLEND);
-    if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glPolygonOffset(0.0f, 0.0f);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-  } else if (blend_sprites || Additive || Alpha < 1.0f) {
-    glDisable(GL_BLEND);
-    if (zbufferWriteDisabled) glDepthMask(GL_TRUE); // re-enable z-buffer
-  }
-  if (Additive) {
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
+    if (Additive) {
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    }
   }
 }
 
@@ -1714,7 +1706,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       p_glUseProgramObjectARB(SurfZBuf_Program);
       glDisable(GL_TEXTURE_2D);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-      glDepthMask(GL_FALSE);
+      glDepthMask(GL_FALSE); // no z-buffer writes
 
       // set up stencil test
       /*if (!RendLev->PortalDepth)*/ glEnable(GL_STENCIL_TEST);
@@ -1729,7 +1721,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
       if (Portal->NeedsDepthBuffer()) {
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE); // allow z-buffer writes
         // clear depth buffer
         if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
         glDepthFunc(GL_ALWAYS);
@@ -1738,7 +1730,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
         RestoreDepthFunc();
         glDepthRange(0, 1);
       } else {
-        glDepthMask(GL_FALSE);
+        glDepthMask(GL_FALSE); // no z-buffer writes
         glDisable(GL_DEPTH_TEST);
       }
     } else {
@@ -1752,7 +1744,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     ++RendLev->PortalDepth;
   } else {
     if (!Portal->NeedsDepthBuffer()) {
-      glDepthMask(GL_FALSE);
+      glDepthMask(GL_FALSE); // no z-buffer writes
       glDisable(GL_DEPTH_TEST);
     }
   }
@@ -1795,7 +1787,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
         p_glUseProgramObjectARB(0);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthFunc(GL_ALWAYS);
-        glDepthMask(GL_FALSE);
+        glDepthMask(GL_FALSE); // no z-buffer writes
         glColor3f(1, 0, 0);
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST);
@@ -1804,7 +1796,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
         glEnable(GL_STENCIL_TEST);
         p_glUseProgramObjectARB(SurfZBuf_Program);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE); // allow z-buffer writes
       }
 
       if (Portal->NeedsDepthBuffer()) {
@@ -1816,7 +1808,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
         RestoreDepthFunc();
         glDepthRange(0, 1);
       } else {
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE); // allow z-buffer writes
         glEnable(GL_DEPTH_TEST);
       }
 
@@ -1840,7 +1832,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       // clear depth buffer
       glClear(GL_DEPTH_BUFFER_BIT);
     } else {
-      glDepthMask(GL_TRUE);
+      glDepthMask(GL_TRUE); // allow z-buffer writes
       glEnable(GL_DEPTH_TEST);
     }
 
