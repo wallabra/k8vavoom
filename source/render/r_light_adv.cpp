@@ -791,10 +791,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow();
+    ResetMobjsLightCount(false);
   }
   Drawer->EndLightShadowVolumes();
-
-  ResetMobjsLightCount(false);
 
   // k8: the question is: why we are rendering surfaces instead
   //     of simply render a light circle? shadow volumes should
@@ -807,6 +806,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
   RenderMobjsLight();
+  ResetMobjsLightCount(false);
 
   /*if (hasScissor)*/ Drawer->ResetScissor();
 }

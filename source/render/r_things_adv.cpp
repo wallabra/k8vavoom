@@ -224,12 +224,15 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
 bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent, bool Count) {
   const TVec Delta = ent->Origin-CurrLightPos;
   const float Dist = ent->Radius+CurrLightRadius;
+/*
   if (Delta.x > Dist || Delta.y > Dist) return false;
   if (Delta.z < -CurrLightRadius) return false;
   if (Delta.z > CurrLightRadius+ent->Height) return false;
   //Delta.z = 0;
   if (Delta.Length2DSquared() > Dist*Dist) return false;
-  if (Count) ent->NumTouchingLights += 1;
+*/
+  if (Delta.LengthSquared() >= Dist*Dist) return false;
+  if (Count) ++ent->NumTouchingLights;
   return true;
 }
 
@@ -298,7 +301,6 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
       // we already have a list of visible things built
       VEntity **ent = visibleObjects.ptr();
       for (int count = visibleObjects.length(); count--; ++ent) {
-        if ((*ent)->NumTouchingLights == 0) continue; // no need to do anything
         if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
         if (!(*ent)->State) continue;
         if (!IsTouchedByLight(*ent, false)) continue;
@@ -307,7 +309,6 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
       }
     } else {
       for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
-        if (ent->NumTouchingLights == 0) continue; // no need to do anything
         if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
         if (!ent->State) continue;
         if (!IsTouchedByLight(*ent, false)) continue;
@@ -438,6 +439,7 @@ void VAdvancedRenderLevel::RenderMobjsShadow () {
   }
 #else
   int count = mobjAffected.length();
+  //GCon->Logf("THING SHADOWS: %d", count);
   if (!count) return;
   VEntity **entp = mobjAffected.ptr();
   for (; count--; ++entp) {

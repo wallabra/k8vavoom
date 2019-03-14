@@ -39,6 +39,8 @@ static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (r
 static VCvarB mdl_report_errors("mdl_report_errors", false, "Show errors in alias models?", 0/*CVAR_Archive*/);
 static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias model loading?", 0/*CVAR_Archive*/);
 
+static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "Some debug log.", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
@@ -931,20 +933,20 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     if (FDef.AlphaStart != 1.0f || FDef.AlphaEnd != 1.0f) Md2Alpha *= FDef.AlphaStart+(FDef.AlphaEnd-FDef.AlphaStart)*Inter;
     if (F.AlphaStart != 1.0f || F.AlphaEnd != 1.0f) Md2Alpha *= F.AlphaStart+(F.AlphaEnd-F.AlphaStart)*Inter;
 
-    /*
     const char *passname = nullptr;
-    switch (Pass) {
-      case RPASS_Normal: passname = "normal"; break;
-      case RPASS_Ambient: passname = "ambient"; break;
-      case RPASS_ShadowVolumes: passname = "shadow"; break;
-      case RPASS_Light: passname = "light"; break;
-      case RPASS_Textures: passname = "texture"; break;
-      case RPASS_Fog: passname = "fog"; break;
-      case RPASS_NonShadow: passname = "nonshadow"; break;
-      default: Sys_Error("WTF?!");
+    if (gl_dbg_log_model_rendering) {
+      switch (Pass) {
+        case RPASS_Normal: passname = "normal"; break;
+        case RPASS_Ambient: passname = "ambient"; break;
+        case RPASS_ShadowVolumes: passname = "shadow"; break;
+        case RPASS_Light: passname = "light"; break;
+        case RPASS_Textures: passname = "texture"; break;
+        case RPASS_Fog: passname = "fog"; break;
+        case RPASS_NonShadow: passname = "nonshadow"; break;
+        default: Sys_Error("WTF?!");
+      }
+      GCon->Logf("000: MODEL(%s): class='%s'; alpha=%f; noshadow=%d; usedepth=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow, (int)SubMdl.UseDepth);
     }
-    GCon->Logf("000: MODEL(%s): class='%s'; alpha=%f; noshadow=%d; usedepth=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow, (int)SubMdl.UseDepth);
-    */
 
     switch (Pass) {
       case RPASS_Normal:
@@ -967,7 +969,8 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         if (Md2Alpha < 1.0f || Additive || SubMdl.NoShadow) continue;
         break;
     }
-    //GCon->Logf("     MODEL(%s): class='%s'; alpha=%f; noshadow=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow);
+
+    if (gl_dbg_log_model_rendering) GCon->Logf("     MODEL(%s): class='%s'; alpha=%f; noshadow=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow);
 
     float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
@@ -1120,7 +1123,7 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
   //VState *DispState = Ent->State; //FIXME: skipframes
   // check if we want to interpolate model frames
-  const bool Interpolate = !!r_interpolate_frames;
+  const bool Interpolate = r_interpolate_frames;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
     if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) {
       GCon->Logf("Can't find %s", *Ent->FixedModelName);

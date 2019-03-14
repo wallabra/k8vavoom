@@ -135,12 +135,13 @@ menudef AdvVideoOptions {
   }
   */
 
-  /* k8: this is broken; need to be restored later
   option bool {
     title = "Model Shadows";
     cvar = r_model_shadows;
+    help =
+      "Let 3D models cast shadows in stenciled lighting mode."
+      "WARNING: This will *DRAMATICALLY* slow down renderer!";
   }
-  */
 
 
   header "Other Lightmap Lighting";
