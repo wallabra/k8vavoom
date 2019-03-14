@@ -1,13 +1,8 @@
 #version 120
 
 uniform sampler2D Texture;
-uniform vec4 FogColour;
-uniform float FogDensity;
-uniform float FogStart;
-uniform float FogEnd;
+$include "common/fog_vars.fs"
 uniform float InAlpha;
-uniform int FogType;
-uniform bool FogEnabled;
 uniform bool AllowTransparency;
 
 varying vec4 Light;
@@ -29,7 +24,7 @@ void main () {
   vec4 FinalColour_1 = TexColour;
 
   // do fog before premultiply, otherwise it is wrong
-  $include "common/fog.fs"
+  $include "common/fog_calc.fs"
 
   // convert to premultiplied
   FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;

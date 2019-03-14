@@ -7,12 +7,7 @@ uniform sampler2D SpecularMap;
 #endif
 uniform vec4 Light;
 uniform float SplatAlpha; // image alpha will be multiplied by this
-uniform bool FogEnabled;
-uniform int FogType;
-uniform vec4 FogColour;
-uniform float FogDensity;
-uniform float FogStart;
-uniform float FogEnd;
+$include "common/fog_vars.fs"
 
 varying vec2 TextureCoordinate;
 #ifdef REG_LIGHTMAP
@@ -47,7 +42,7 @@ void main () {
   FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
 #endif
 
-  $include "common/fog.fs"
+  $include "common/fog_calc.fs"
 
   // convert to premultiplied
   FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;

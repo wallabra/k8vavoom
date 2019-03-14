@@ -4,13 +4,8 @@
 
 uniform sampler2D Texture;
 uniform vec4 Light;
-uniform bool FogEnabled;
-uniform int FogType;
-uniform vec4 FogColour;
-uniform float FogDensity;
-uniform float FogStart;
-uniform float FogEnd;
 
+$include "common/fog_vars.fs"
 $include "common/texture_vars.fs"
 
 
@@ -19,11 +14,11 @@ void main () {
   //if (TexColour.a < 0.01) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard; // for steamlined textures
+  if (TexColour.a < 0.01) discard; // for steamlined textures //FIXME
   TexColour *= Light;
 
   vec4 FinalColour_1 = TexColour;
-  $include "common/fog.fs"
+  $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColour_1;
 }

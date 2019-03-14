@@ -2,13 +2,9 @@
 
 uniform sampler2D Texture;
 uniform vec4 Light;
-uniform bool FogEnabled;
-uniform int FogType;
-uniform vec4 FogColour;
-uniform float FogDensity;
-uniform float FogStart;
-uniform float FogEnd;
 uniform float AlphaRef;
+
+$include "common/fog_vars.fs"
 
 varying vec2 TextureCoordinate;
 
@@ -23,7 +19,7 @@ void main () {
   FinalColour_1.g = TexColour.g*TexColour.a*Light.a;
   FinalColour_1.b = TexColour.b*TexColour.a*Light.a;
   FinalColour_1.a = TexColour.a;
-  $include "common/fog.fs"
+  $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColour_1;
 }

@@ -16,7 +16,8 @@ void main () {
   if (VDist <= 0.0 || Dist <= 0.0) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.1) discard;
+  //if (TexColour.a < 0.1) discard; //FIXME
+  if (TexColour.a < 0.666) discard; //FIXME
 
   float DistToView = dot(VertToView, VertToView);
   if (DistToView <= 0.0) discard;
