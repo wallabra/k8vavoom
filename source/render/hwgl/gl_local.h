@@ -513,7 +513,6 @@ public:
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;
   virtual void EndFogPass () override;
-  virtual void FinishMaskedDecals () override;
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
   virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
@@ -587,17 +586,14 @@ private:
   vuint8 decalStcVal;
   bool decalUsedStencil;
   bool stencilBufferDirty;
-  bool maskedDecalsStarted;
 
   enum DecalType { DT_SIMPLE, DT_LIGHTMAP, DT_ADVANCED };
 
   // this is required for decals
   inline void NoteStencilBufferDirty () { stencilBufferDirty = true; }
   inline bool IsStencilBufferDirty () const { return stencilBufferDirty; }
-  inline void ClearStencilBuffer () { if (stencilBufferDirty) { glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; } }
+  inline void ClearStencilBuffer () { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
 
-  void RenderShaderDecalsStart ();
-  void RenderShaderDecalsEnd ();
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap);
 

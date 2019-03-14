@@ -772,12 +772,10 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     trans_sprite_t &spr = trans_sprites[f];
     if (spr.type == 2) {
       // alias model
-      if (r_decals_enabled) Drawer->FinishMaskedDecals();
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
     } else if (spr.type) {
       // sprite
-      if (r_decals_enabled) Drawer->FinishMaskedDecals();
       if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
         lastpdist = spr.pdist;
         if (!firstSprite) {
@@ -822,7 +820,6 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   }
 #undef MAX_POFS
 
-  if (r_decals_enabled) Drawer->FinishMaskedDecals();
   if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
 
   // reset list

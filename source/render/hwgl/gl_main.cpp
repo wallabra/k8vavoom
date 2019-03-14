@@ -345,7 +345,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   decalUsedStencil = false;
   decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
-  maskedDecalsStarted = false;
   stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
 }

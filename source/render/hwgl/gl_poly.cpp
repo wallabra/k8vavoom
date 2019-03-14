@@ -120,38 +120,18 @@ static inline void glVertex (const TVec &v) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::RenderShaderDecalsStart
-//
-//==========================================================================
-void VOpenGLDrawer::RenderShaderDecalsStart () {
-  // `255` will clear stencil buffer
-  decalStcVal = (IsStencilBufferDirty() ? 255 : 0);
-  decalUsedStencil = false;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::RenderShaderDecalsEnd
-//
-//==========================================================================
-void VOpenGLDrawer::RenderShaderDecalsEnd () {
-  // stencil buffer manager will take care of stencil buffer state,
-  // so we have nothing to do here
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::RenderPrepareShaderDecals
 //
 //==========================================================================
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
   if (!r_decals_enabled) return;
+  if (RendLev->PortalDepth) return; //FIXME: not yet
 
   if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
 
   if (gl_decal_debug_nostencil) return; // debug
+
+  if (!decalUsedStencil) decalStcVal = (IsStencilBufferDirty() ? 255 : 0);
 
   if (++decalStcVal == 0) {
     // it wrapped, so clear stencil buffer
@@ -557,9 +537,6 @@ void VOpenGLDrawer::WorldDrawing () {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   }
 
-  // initialize decal renderer
-  RenderShaderDecalsStart();
-
   // draw surfaces without lightmaps
   if (RendLev->DrawSurfList.length()) {
     // sort by texture, to minimise texture switches
@@ -659,8 +636,6 @@ void VOpenGLDrawer::WorldDrawing () {
       }
     }
   }
-
-  RenderShaderDecalsEnd();
 }
 
 
@@ -1132,8 +1107,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   //p_glUniform1iARB(ShadowsTexture_TextureLoc, 0);
   ShadowsTexture_Locs.storeTexture(0);
 
-  RenderShaderDecalsStart();
-
   // no need to sort surfaces there, it is already done in ambient pass
   const texinfo_t *lastTexinfo = nullptr;
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
@@ -1188,8 +1161,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       }
     }
   }
-
-  RenderShaderDecalsEnd();
 }
 
 
@@ -1394,19 +1365,6 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 
 //==========================================================================
 //
-//  VOpenGLDrawer::FinishMaskedDecals
-//
-//==========================================================================
-void VOpenGLDrawer::FinishMaskedDecals () {
-  if (maskedDecalsStarted) {
-    maskedDecalsStarted = false;
-    RenderShaderDecalsEnd();
-  }
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::DrawMaskedPolygon
 //
 //==========================================================================
@@ -1440,20 +1398,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       glDepthMask(GL_FALSE);
     }
     if (r_decals_enabled && r_decals_wall_alpha && surf->dcseg && surf->dcseg->decals) {
-      if (!maskedDecalsStarted) {
-        maskedDecalsStarted = true;
-        RenderShaderDecalsStart();
-      }
       decalsAllowed = true;
     }
   } else {
     p_glUniform1fARB(SurfMasked_AlphaRefLoc, 0.666f);
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->dcseg && surf->dcseg->decals) {
-      if (!maskedDecalsStarted) {
-        maskedDecalsStarted = true;
-        RenderShaderDecalsStart();
-      }
       decalsAllowed = true;
     }
   }
@@ -1542,8 +1492,6 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       //return true;
     }
   }
-
-  //if (decalsInited) RenderShaderDecalsEnd();
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
     glDisable(GL_BLEND);

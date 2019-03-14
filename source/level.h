@@ -441,6 +441,10 @@ public:
   // this saves everything except thinkers, so i can load it for further experiments
   void DebugSaveLevel (VStream &strm);
 
+  void UpdateSubsectorBBox (int num, float *bbox, const float skyheight);
+  void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);
+  void RecalcWorldBBoxes ();
+
 public:
   virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;

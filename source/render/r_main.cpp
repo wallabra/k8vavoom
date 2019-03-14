@@ -459,9 +459,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   screenblocks = 0;
 
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-  RecalcWorldBBoxes(Level->NumNodes-1, dummy_bbox);
-
   // preload graphics
   if (r_precache_textures_override != 0) {
     if (r_precache_textures || r_precache_textures_override > 0) PrecacheLevel();

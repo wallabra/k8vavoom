@@ -39,54 +39,6 @@ VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector 
 
 //==========================================================================
 //
-//  VRenderLevelShared::UpdateSubsectorBBox
-//
-//==========================================================================
-void VRenderLevelShared::UpdateSubsectorBBox (int num, float *bbox) {
-  subsector_t *sub = &Level->Subsectors[num];
-
-  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
-
-  bbox[2] = sub->sector->floor.minz;
-  if (IsSky(&sub->sector->ceiling)) {
-    bbox[5] = skyheight;
-  } else {
-    bbox[5] = sub->sector->ceiling.maxz;
-  }
-  FixBBoxZ(bbox);
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::RecalcWorldBBoxes
-//
-//==========================================================================
-void VRenderLevelShared::RecalcWorldBBoxes (int bspnum, float *bbox) {
-  if (bspnum == -1) {
-    UpdateSubsectorBBox(0, bbox);
-    return;
-  }
-  // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
-    // nope, this is a normal node
-    node_t *bsp = &Level->Nodes[bspnum];
-    // decide which side the view point is on
-    unsigned side = bsp->PointOnSide(vieworg);
-    RecalcWorldBBoxes(bsp->children[side], bsp->bbox[side]);
-    bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
-    bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
-    side ^= 1;
-    return RecalcWorldBBoxes(bsp->children[side], bsp->bbox[side]); // help gcc to see tail-call
-  } else {
-    // leaf node (subsector)
-    UpdateSubsectorBBox(bspnum&(~NF_SUBSECTOR), bbox);
-  }
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::UpdateSubsector
 //
 //==========================================================================
