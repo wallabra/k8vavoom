@@ -88,6 +88,7 @@ public:
   inline int numAllocated () const { return ArrSize; }
   inline int capacity () const { return ArrSize; }
 
+  // don't do any sanity checks here, `ptr()` can be used even on empty arrays
   inline T *Ptr () { return ArrData; }
   inline const T *Ptr () const { return ArrData; }
 
