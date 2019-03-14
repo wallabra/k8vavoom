@@ -1207,8 +1207,10 @@ void VOpenGLDrawer::InitResolution () {
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_texture.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_texture.fs");
   ShadowsTextureProgram = CreateProgram(VertexShader, FragmentShader);
-  ShadowsTextureTexCoordLoc = p_glGetAttribLocationARB(ShadowsTextureProgram, "TexCoord");
-  ShadowsTextureTextureLoc = p_glGetUniformLocationARB(ShadowsTextureProgram, "Texture");
+  //ShadowsTextureTexCoordLoc = p_glGetAttribLocationARB(ShadowsTextureProgram, "TexCoord");
+  //ShadowsTextureTextureLoc = p_glGetUniformLocationARB(ShadowsTextureProgram, "Texture");
+  ShadowsTextureLocs.setupProg(this, ShadowsTextureProgram);
+  ShadowsTextureLocs.setupTexture();
 
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_ambient.vs");

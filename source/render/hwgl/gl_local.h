@@ -879,8 +879,9 @@ protected:
   GLint ShadowsLightViewOrigin;
 
   GLhandleARB ShadowsTextureProgram;
-  GLint ShadowsTextureTexCoordLoc;
-  GLint ShadowsTextureTextureLoc;
+  //GLint ShadowsTextureTexCoordLoc;
+  //GLint ShadowsTextureTextureLoc;
+  VGLShaderCommonLocs ShadowsTextureLocs; // texture
 
   GLhandleARB ShadowsModelAmbientProgram;
   GLint ShadowsModelAmbientInterLoc;

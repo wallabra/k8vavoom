@@ -2,7 +2,7 @@
 
 uniform sampler2D Texture;
 
-varying vec2 TextureCoordinate;
+$include "common/texture_vars.fs"
 
 
 void main () {

@@ -980,7 +980,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       // two-sided wall
       //GCon->Logf("STI: alpha=%f; transp=%d", surf->texinfo->Alpha, (int)surf->texinfo->Tex->isTransparent());
       // walls with empty pixels won't block
-      if (tex->Tex->isTransparent()) {
+      if (!tex->Tex->isTransparent()) {
         // solid
         if (dist >= Radius || dist <= 0.0f) return; // light is too far away
       } else {
@@ -1183,7 +1183,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   if (!gl_dbg_adv_render_textures_surface) return;
 
   p_glUseProgramObjectARB(ShadowsTextureProgram);
-  p_glUniform1iARB(ShadowsTextureTextureLoc, 0);
+  //p_glUniform1iARB(ShadowsTextureTextureLoc, 0);
+
+  ShadowsTextureLocs.storeTexture(0);
 
   RenderShaderDecalsStart();
 
@@ -1201,6 +1203,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     if (tex->Alpha < 1.0f) return;
 
     SetTexture(tex->Tex, tex->ColourMap);
+    ShadowsTextureLocs.storeTextureParams(tex);
 
     bool doDecals = (tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals);
 
@@ -1209,9 +1212,11 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
     glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) {
+      /*
       p_glVertexAttrib2fARB(ShadowsTextureTexCoordLoc,
         (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+      */
       glVertex(surf->verts[i]);
     }
     glEnd();

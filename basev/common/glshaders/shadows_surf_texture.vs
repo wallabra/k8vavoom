@@ -1,13 +1,14 @@
 #version 120
 
-attribute vec2 TexCoord;
+//attribute vec2 TexCoord;
 
-varying vec2 TextureCoordinate;
+$include "common/texture_vars.vs"
 
 
 void main () {
   // transforming the vertex
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
   // pass texture coordinates
-  TextureCoordinate = TexCoord;
+  //TextureCoordinate = TexCoord;
+  $include "common/texture_calc.vs"
 }
