@@ -732,6 +732,12 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   //CurrLightRadius = Radius;
   if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
 
+  /*
+  if (Radius < 300) return;
+  if (Pos.y < 1150) return;
+  //GCon->Logf("(%f,%f,%f) : %f", Pos.x, Pos.y, Pos.z, Radius);
+  */
+
   if (!CalcLightVis(Pos, Radius)) return;
 
   CurrLightColour = Colour;

@@ -65,6 +65,7 @@ static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy le
 static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
 
 static VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", false, "Use depth bounds extension if found?", CVAR_Archive);
+static VCvarB gl_use_optimised_scissor_calculation("gl_use_optimised_scissor_calculation", true, "Use optimised shadow volume scissor calculation?", CVAR_Archive);
 
 
 //==========================================================================
@@ -1598,7 +1599,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   // usually, light completely fades away at edges, so we can safely shrink our scissor box
   // even such small shrinking can win one-two FPS on light-heavy scenes
-  radius -= 6;
+  //radius -= 6;
   if (radius < 2) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     //glScissor(0, 0, 0, 0);
@@ -1607,7 +1608,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (hasBoundsTest && gl_enable_depth_bounds) {
     /*
-    // transform light's center to camera space
+    // transform light to camera space
     TVec lcorg = mmat.Transform2(org);
     // project nearest and furthest points
     TVec lcnear = TVec(lcorg.x, lcorg.y, lcorg.z-radius);
@@ -1623,56 +1624,104 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
-  // create light bbox
-  float bbox[6];
-  bbox[0+0] = org.x-radius;
-  bbox[0+1] = org.y-radius;
-  bbox[0+2] = org.z-radius;
-
-  bbox[3+0] = org.x+radius;
-  bbox[3+1] = org.y+radius;
-  bbox[3+2] = org.z+radius;
-
-  // create 8 bbox points
-  TVec bbp[8];
-  bbp[0] = TVec(bbox[0+0], bbox[0+1], bbox[0+2]);
-  bbp[1] = TVec(bbox[3+0], bbox[0+1], bbox[0+2]);
-  bbp[2] = TVec(bbox[0+0], bbox[3+1], bbox[0+2]);
-  bbp[3] = TVec(bbox[3+0], bbox[3+1], bbox[0+2]);
-  bbp[4] = TVec(bbox[0+0], bbox[0+1], bbox[3+2]);
-  bbp[5] = TVec(bbox[3+0], bbox[0+1], bbox[3+2]);
-  bbp[6] = TVec(bbox[0+0], bbox[3+1], bbox[3+2]);
-  bbp[7] = TVec(bbox[3+0], bbox[3+1], bbox[3+2]);
-
-  //unsigned badCount = 0;
   float minx = ScreenWidth*4, miny = ScreenHeight*4;
   float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
-  // transform points, get min and max
-  for (unsigned f = 0; f < 8; ++f) {
-    float wc[2];
-    if (!glhProjectf(bbp[f], mmat[0], pmat[0], viewport, wc)) {
+
+  if (gl_use_optimised_scissor_calculation) {
+    // transform light center to camera space
+    TVec lcorg = mmat.Transform2(org);
+
+    // the thing that should not be
+    if (lcorg.z-radius > -0.001f) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       //glScissor(0, 0, 0, 0);
+      //GCon->Logf("FUCK! (%f) radius=%f; z=%f; z0=%f; z1=%f", org.y, radius, lcorg.z, lcorg.z-radius, lcorg.z+radius);
       return -1;
-      //++badCount;
-      //continue;
     }
-    //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
-    if (minx > wc[0]) minx = wc[0];
-    if (miny > wc[1]) miny = wc[1];
-    if (maxx < wc[0]) maxx = wc[0];
-    if (maxy < wc[1]) maxy = wc[1];
-  }
 
-  /*
-  if (badCount == 8) {
-    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    //glScissor(0, 0, 0, 0);
-    GCon->Logf("completely away, wtf?!");
-    return 0;
+    // create light bbox
+    float bbox[6];
+    bbox[0+0] = lcorg.x-radius;
+    bbox[0+1] = lcorg.y-radius;
+    bbox[0+2] = lcorg.z-radius;
+
+    bbox[3+0] = lcorg.x+radius;
+    bbox[3+1] = lcorg.y+radius;
+    bbox[3+2] = lcorg.z+radius;
+
+    if (bbox[3+2] > -0.001f) bbox[3+2] = -0.001f;
+
+    check(bbox[0+2] <= -0.001f);
+
+    // transform points, get min and max
+    for (unsigned f = 0; f < 8; ++f) {
+      TVec inworld = TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]);
+      TVec proj = pmat.Transform2OnlyXY(inworld); // we don't care about z here
+      const float pjw = -1.0f/inworld.z;
+      proj.x *= pjw;
+      proj.y *= pjw;
+      float winx = (proj.x*0.5f+0.5f)*ScreenWidth;
+      float winy = (proj.y*0.5f+0.5f)*ScreenHeight;
+
+      if (minx > winx) minx = winx;
+      if (miny > winy) miny = winy;
+      if (maxx < winx) maxx = winx;
+      if (maxy < winy) maxy = winy;
+    }
+  } else {
+    // my original code
+
+    // create light bbox
+    float bbox[6];
+    bbox[0+0] = org.x-radius;
+    bbox[0+1] = org.y-radius;
+    bbox[0+2] = org.z-radius;
+
+    bbox[3+0] = org.x+radius;
+    bbox[3+1] = org.y+radius;
+    bbox[3+2] = org.z+radius;
+
+    // create 8 bbox points
+    TVec bbp[8];
+    bbp[0] = TVec(bbox[0+0], bbox[0+1], bbox[0+2]);
+    bbp[1] = TVec(bbox[3+0], bbox[0+1], bbox[0+2]);
+    bbp[2] = TVec(bbox[0+0], bbox[3+1], bbox[0+2]);
+    bbp[3] = TVec(bbox[3+0], bbox[3+1], bbox[0+2]);
+    bbp[4] = TVec(bbox[0+0], bbox[0+1], bbox[3+2]);
+    bbp[5] = TVec(bbox[3+0], bbox[0+1], bbox[3+2]);
+    bbp[6] = TVec(bbox[0+0], bbox[3+1], bbox[3+2]);
+    bbp[7] = TVec(bbox[3+0], bbox[3+1], bbox[3+2]);
+
+    //unsigned badCount = 0;
+    //float minx = ScreenWidth*4, miny = ScreenHeight*4;
+    //float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
+    // transform points, get min and max
+    for (unsigned f = 0; f < 8; ++f) {
+      float wc[2];
+      if (!glhProjectf(bbp[f], mmat[0], pmat[0], viewport, wc)) {
+        scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+        //glScissor(0, 0, 0, 0);
+        return -1;
+        //++badCount;
+        //continue;
+      }
+      //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
+      if (minx > wc[0]) minx = wc[0];
+      if (miny > wc[1]) miny = wc[1];
+      if (maxx < wc[0]) maxx = wc[0];
+      if (maxy < wc[1]) maxy = wc[1];
+    }
+
+    /*
+    if (badCount == 8) {
+      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      //glScissor(0, 0, 0, 0);
+      GCon->Logf("completely away, wtf?!");
+      return 0;
+    }
+    if (badCount) GCon->Logf("bc=%u; org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", badCount, org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
+    */
   }
-  if (badCount) GCon->Logf("bc=%u; org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", badCount, org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
-  */
 
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
