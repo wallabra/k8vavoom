@@ -569,11 +569,13 @@ void VOpenGLDrawer::InitResolution () {
 
   // check main stencil buffer
   // this is purely informative, as we are using FBO to render things anyway
+  /*
   {
     GLint stencilBits = 0;
     glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
     GCon->Logf(NAME_Init, "Main stencil buffer depth: %d", stencilBits);
   }
+  */
 
   // anisotropy extension
   max_anisotropy = 1.0f;
