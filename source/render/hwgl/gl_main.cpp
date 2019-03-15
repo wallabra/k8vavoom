@@ -67,6 +67,31 @@ static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected
 static VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", false, "Use depth bounds extension if found?", CVAR_Archive);
 static VCvarB gl_use_optimised_scissor_calculation("gl_use_optimised_scissor_calculation", true, "Use optimised shadow volume scissor calculation?", CVAR_Archive);
 
+VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive|CVAR_PreInit);
+
+VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
+VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
+
+VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
+
+VCvarB r_adv_limit_extrude("r_adv_limit_extrude", false, "Don't extrude shadow volumes further than light radius goes?", CVAR_Archive);
+
+VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
+VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
+VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
+VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!", 0);
+
+VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", CVAR_PreInit);
+// this makes shadows glitch for some reason with fp z-buffer (investigate!)
+VCvarB gl_dbg_adv_render_offset_shadow_volume("gl_dbg_adv_render_offset_shadow_volume", false, "Offset shadow volumes?", CVAR_PreInit);
+VCvarB gl_dbg_adv_render_never_offset_shadow_volume("gl_dbg_adv_render_never_offset_shadow_volume", false, "Never offseting shadow volumes?", CVAR_Archive|CVAR_PreInit);
+
+VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0);
+
+VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad to clear stencil buffer instead of 'glClear'?", CVAR_Archive|CVAR_PreInit);
+
+VCvarB gl_dbg_use_zpass("gl_dbg_use_zpass", false, "DO NOT USE!", CVAR_PreInit);
+
 
 //==========================================================================
 //
@@ -347,6 +372,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
   stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
+
+  surfList = nullptr;
+  surfListUsed = surfListSize = 0;
 }
 
 
@@ -356,6 +384,10 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
+  if (surfList) Z_Free(surfList);
+  surfList = nullptr;
+  surfListUsed = surfListSize = 0;
+
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
   if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
   tmpImgBufSize = 0;

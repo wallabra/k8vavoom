@@ -39,6 +39,43 @@ extern VCvarB r_models;
 extern VCvarB r_model_shadows;
 
 
+/*
+  possible shadow volume optimisation:
+  for things like pillars (i.e. sectors that has solid walls facing outwards),
+  we can construct a shadow silhouette. that is, all connected light-facing
+  walls can be replaced with one. this will render much less sides.
+  that is, we can effectively turn our pillar into cube.
+
+  we can prolly use sector lines to render this (not segs). i thinkg that it
+  will be better to use sector lines to render shadow volumes in any case,
+  'cause we don't really need to render one line in several segments.
+  that is, one line split by BSP gives us two surfaces, which adds two
+  unnecessary polygons to shadow volume. by using linedefs instead, we can
+  avoid this. there is no need to create texture coordinates and surfaces
+  at all: we can easily calculate all required vertices.
+
+  note that we cannot do the same with floors and ceilings: they can have
+  arbitrary shape.
+
+  actually, we can solve this in another way. note that we need to extrude
+  only silhouette edges. so we can collect surfaces from connected subsectors
+  into "shape", and run silhouette extraction on it. this way we can extrude
+  onyl a silhouette. and we can avoid rendering caps if our camera is not
+  lie inside any shadow volume (and volume is not clipped by near plane).
+
+  we can easily determine if the camera is inside a volume by checking if
+  it lies inside any extruded subsector. as subsectors are convex, this is a
+  simple set of point-vs-plane checks. first check if light and camera are
+  on a different sides of a surface, and do costly checks only if they are.
+
+  if the camera is outside of shadow volume, we can use faster z-pass method.
+
+  if a light is behing a camera, we can move back frustum plane, so it will
+  contain light origin, and clip everything behind it. the same can be done
+  for all other frustum planes. or we can build full light-vs-frustum clip.
+*/
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // private data definitions
 // ////////////////////////////////////////////////////////////////////////// //
@@ -62,7 +99,8 @@ VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark not
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive|CVAR_PreInit);
 // this is wrong for now
-static VCvarB r_advlight_opt_frustum("r_advlight_opt_frustum", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_frustum_full("r_advlight_opt_frustum_full", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_frustum_back("r_advlight_opt_frustum_back", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -315,7 +353,11 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is behind a player
   bool checkFrustum = view_frustum.checkSphereBack(CurrLightPos, CurrLightRadius);
-  if (!r_advlight_opt_frustum) checkFrustum = false;
+  if (!r_advlight_opt_frustum_back) checkFrustum = false;
+
+  // TODO: if light is behing a camera, we can move back frustum plane, so it will
+  //       contain light origin, and clip everything behind it. the same can be done
+  //       for all other frustum planes.
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
@@ -811,7 +853,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   CurrLightColour = Colour;
   // if our light is in frustum, ignore any out-of-frustum polys
-  if (r_advlight_opt_frustum) {
+  if (r_advlight_opt_frustum_full) {
     CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius+4.0f);
   } else {
     CurrLightInFrustum = false; // don't do frustum optimisations

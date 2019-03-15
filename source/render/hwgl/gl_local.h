@@ -414,6 +414,26 @@ typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
+extern VCvarB gl_sort_textures;
+extern VCvarI r_ambient;
+extern VCvarB r_allow_ambient;
+extern VCvarB r_decals_enabled;
+extern VCvarB r_decals_wall_masked;
+extern VCvarB r_decals_wall_alpha;
+extern VCvarB r_adv_masked_wall_vertex_light;
+extern VCvarB r_adv_masked_wall_vertex_light;
+extern VCvarB r_adv_limit_extrude;
+extern VCvarB gl_decal_debug_nostencil;
+extern VCvarB gl_decal_debug_noalpha;
+extern VCvarB gl_decal_dump_max;
+extern VCvarB gl_decal_reset_max;
+extern VCvarB gl_sort_textures;
+extern VCvarB gl_dbg_adv_render_textures_surface;
+extern VCvarB gl_dbg_adv_render_offset_shadow_volume;
+extern VCvarB gl_dbg_adv_render_never_offset_shadow_volume;
+extern VCvarB gl_dbg_render_stack_portal_bounds;
+extern VCvarB gl_use_stencil_quad_clear;
+extern VCvarB gl_dbg_use_zpass;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -474,10 +494,6 @@ public:
     void storeFogType ();
     void storeFogFade (vuint32 Fade, float Alpha);
   };
-
-  /*
-    GLint locSpecularMap;
-  */
 
 public:
   // VDrawer interface
@@ -611,14 +627,16 @@ private:
   vuint8 *readBackTempBuf;
   int readBackTempBufSize;
 
+public:
   struct SurfListItem {
     surface_t *surf;
     surfcache_t *cache;
   };
 
-  static SurfListItem *surfList;
-  static vuint32 surfListUsed;
-  static vuint32 surfListSize;
+private:
+  SurfListItem *surfList;
+  vuint32 surfListUsed;
+  vuint32 surfListSize;
 
   inline void surfListClear () {
     surfListUsed = 0;
@@ -635,9 +653,24 @@ private:
     si->cache = cache;
   }
 
+private:
+  static inline float getSurfLightLevel (const surface_t *surf) {
+    if (!surf || !r_allow_ambient) return 0;
+    int slins = (surf->Light>>24)&0xff;
+    if (slins < r_ambient) slins = clampToByte(r_ambient);
+    //slins = MAX(slins, r_ambient);
+    //if (slins > 255) slins = 255;
+    return float(slins)/255.0f;
+  }
+
+  static inline void glVertex (const TVec &v) {
+    glVertex3f(v.x, v.y, v.z);
+  }
+
 protected:
   //enum { M_INFINITY = 8000 };
-  enum { M_INFINITY = 36000 };
+  //enum { M_INFINITY = 36000 };
+  enum { M_INFINITY = 64000 };
 
   vuint8 *tmpImgBuf0;
   vuint8 *tmpImgBuf1;

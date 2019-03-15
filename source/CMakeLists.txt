@@ -379,10 +379,15 @@ set(MAIN_COMMON_SOURCES
 #-- Common OpenGL files --
 set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_local.h
+  render/hwgl/gl_decal.cpp
   render/hwgl/gl_draw.cpp
   render/hwgl/gl_main.cpp
+  render/hwgl/gl_masked.cpp
   render/hwgl/gl_model.cpp
+  render/hwgl/gl_particle.cpp
   render/hwgl/gl_poly.cpp
+  render/hwgl/gl_poly_adv.cpp
+  render/hwgl/gl_portal.cpp
   render/hwgl/gl_tex.cpp
 )
 
