@@ -420,17 +420,27 @@ public:
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
 
+  /*
+  // returns `true` if point is behind the plane
+  // "th" means "with threshold"
+  inline bool PointOnBackTh (const TVec &point) const {
+    return (DotProduct(point, normal)-dist < -0.1f);
+  }
+  */
+
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
   inline int SphereOnSide (const TVec &center, float radius) const {
-    return (DotProduct(center, normal)-dist < -radius);
+    return (DotProduct(center, normal)-dist <= -radius);
   }
 
+  /*
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
   inline int SphereOnBackTh (const TVec &center, float radius) const {
     return (DotProduct(center, normal)-dist < -(radius+0.1f));
   }
+  */
 
   inline bool SphereTouches (const TVec &center, float radius) const {
     return (fabsf(DotProduct(center, normal)-dist) < radius);
@@ -440,12 +450,6 @@ public:
   inline int SphereOnSide2 (const TVec &center, float radius) const {
     const float dist = DotProduct(center, normal)-dist;
     return (dist < -radius ? 1 : dist > radius ? 0 : 2);
-  }
-
-  // returns `true` if point is behind the plane
-  // "th" means "with threshold"
-  inline bool PointOnBackTh (const TVec &point) const {
-    return (DotProduct(point, normal)-dist < -0.1f);
   }
 
   // distance from point to plane
