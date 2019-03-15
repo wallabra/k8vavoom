@@ -36,8 +36,8 @@
 VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
 
-static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
-static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available?", CVAR_Archive|CVAR_PreInit);
+static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
+static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Completely disable reverse z, even if it is available?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_dbg_force_reverse_z("gl_dbg_force_reverse_z", false, "Force-enable reverse z when fp depth buffer is not available.", CVAR_PreInit);
 static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, "Ignore GPU blacklist, and don't turn off features?", CVAR_PreInit);
 static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
@@ -530,7 +530,7 @@ void VOpenGLDrawer::InitResolution () {
       if (p_glClipControl) {
         GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
         useReverseZ = true;
-        if (gl_disable_reverse_z) {
+        if (!gl_enable_reverse_z) {
           GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
           useReverseZ = false;
         }

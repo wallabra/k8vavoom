@@ -231,20 +231,28 @@ menudef AdvVideoOptions {
       "Floating point depth buffer has much better precision than normal,"
       "but it is twice as big. Turning off fp depth buffer can give you"
       "somewhat better FPS in stenciled lighting."
+      ""
       "NOTE: You have to go to 'Screen Resolution' menu and"
       "use 'Set Resolution' to activate this.";
   }
 
   option bool [gl_is_shitty_gpu == 0] {
-    title = "Disable 'Reverse Z' trick";
-    cvar = gl_disable_reverse_z;
+    title = "Enable 'Reverse Z' trick";
+    cvar = gl_enable_reverse_z;
     help =
-      "There is little reason to play with this, just leave it 'OFF', and"
-      "the engine will decide if it should use it."
-      "If you are curious, this is the trick that allows almost infinite view"
-      "distance. You have to enable floating point depth buffer for this"
-      "to work, though. If your GPU don't have support for fp depth buffer,"
+      "IF IN DOUBT, LEAVE THIS 'ON'!"
+      "WARNING: stenciled lighting is broken with fp depth buffer, if"
+      "this is turned off!"
+      ""
+      "This is the trick that allows almost infinite view distance."
+      "You have to enable floating point depth buffer for this to"
+      "work, though. If your GPU cannot support fp depth buffer,"
       "the engine will not use this trick."
+      ""
+      "WARNING: currently not all shaders are ready for this, so"
+      "you can expirience rendering bugs, especially with stenciled"
+      "lighting!"
+      ""
       "NOTE: You have to go to 'Screen Resolution' menu and"
       "use 'Set Resolution' to activate this.";
   }
