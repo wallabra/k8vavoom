@@ -868,58 +868,11 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //    >0: two-sided wall
 //    =0: one-sided wall
 //
+//  most checks are done in caller
+//
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) {
   if (surf->count < 3) return; // just in case
-
-  // don't render translucent surfaces
-  // they should not end up here, but...
-  const texinfo_t *tex = surf->texinfo;
-  if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
-  if (tex->Alpha < 1.0f) return;
-
-  // k8: if we won't filter this out, we'll get z-fighting on two-sided walls (see E1M1 exit).
-  //     for now, i cannot grasp this logic (oh boy, my head is going to crack!)
-  // k8: aha! this flag is true for two-sided walls, and two-sided walls has two sets of surfaces.
-  //     so we will throw away one, uninteresting set.
-  // k8: i don't know if it is different for horizon and for two-sided wall
-  if (LightCanCross) {
-    if (LightCanCross > 0) {
-      // two-sided wall
-      if (!surf->plane->PointOnSide(vieworg)) return;
-    } else {
-      // horizon
-      if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
-    }
-  }
-
-  const float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
-  // k8: use `<=` and `>=` for radius checks, 'cause why not?
-  //     light completely fades away at that distance
-  //if ((!LightCanCross && dist <= 0.0f) || dist <= -Radius || dist >= Radius) return; // light is too far away
-  // do simpler check first
-  //if (dist >= Radius || dist <= (LightCanCross ? -Radius : 0.0f)) return; // light is too far away
-  // k8: i don't know if it is different for horizon and for two-sided wall
-  if (LightCanCross) {
-    if (LightCanCross > 0) {
-      // two-sided wall
-      //GCon->Logf("STI: alpha=%f; transp=%d", surf->texinfo->Alpha, (int)surf->texinfo->Tex->isTransparent());
-      // walls with empty pixels won't block
-      if (!tex->Tex->isTransparent()) {
-        // solid
-        if (dist >= Radius || dist <= 0.0f) return; // light is too far away
-      } else {
-        // with holes
-        //if (fabsf(dist) >= Radius) return; // light is too far away
-        return;
-      }
-    } else {
-      // horizon
-      if (fabsf(dist) >= Radius) return; // light is too far away
-    }
-  } else {
-    if (dist >= Radius || dist <= 0.0f) return; // light is too far away
-  }
 
   //FIXME: move this to drawer class
   static TVec *poolVec = nullptr;
@@ -968,7 +921,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 //  setup rendering parameters for lighted surface rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
+void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) {
   RestoreDepthFunc();
   glDepthMask(GL_FALSE); // no z-buffer writes
 
@@ -978,7 +931,7 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   // do not use stencil test if we rendered no shadow surfaces
-  if (IsStencilBufferDirty()) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+  if (doShadow && IsStencilBufferDirty()) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   glEnable(GL_BLEND);
@@ -1006,24 +959,17 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
 //    >0: two-sided wall
 //    =0: one-sided wall
 //
+//  most checks are done in caller
+//
 //==========================================================================
-void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf, TVec &LightPos, float Radius, int LightCanCross) {
-  if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
+  //if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", surf->count);
     return;
   }
 
-  const float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
-  if (dist <= 0.0f || dist >= Radius) return; // light is too far away
-  //if ((dist <= 0.0f && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
-
-  // don't render translucent surfaces
-  // they should not end up here, but...
   const texinfo_t *tex = surf->texinfo;
-  if (!tex || !tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
-  if (tex->Alpha < 1.0f) return;
-
   SetTexture(tex->Tex, tex->ColourMap);
 
   ShadowsLight_Locs.storeTexture(0);

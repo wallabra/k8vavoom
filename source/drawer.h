@@ -102,15 +102,6 @@ public:
   bool add_changed[NUM_BLOCK_SURFS];
   surfcache_t *add_chain[NUM_BLOCK_SURFS];
 
-  /*
-  surface_t *SimpleSurfsHead;
-  surface_t *SimpleSurfsTail;
-  surface_t *SkyPortalsHead;
-  surface_t *SkyPortalsTail;
-  surface_t *HorizonPortalsHead;
-  surface_t *HorizonPortalsTail;
-  */
-
   // render lists; various queue functions will put surfaces there
   // those arrays are never cleared, only reset
   // each surface is marked with `currQueueFrame`
@@ -244,8 +235,8 @@ public:
   virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) = 0;
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) = 0;
-  virtual void BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
-  virtual void DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, int LightCanCross) = 0;
+  virtual void BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) = 0;
+  virtual void DrawSurfaceLight (surface_t *Surf) = 0;
   virtual void DrawWorldTexturesPass () = 0;
   virtual void DrawWorldFogPass () = 0;
   virtual void EndFogPass () = 0;

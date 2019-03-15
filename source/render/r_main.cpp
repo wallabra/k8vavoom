@@ -82,6 +82,7 @@ static VCvarB r_light_opt_separate_vis("r_light_opt_separate_vis", false, "Calcu
 static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
 
 extern VCvarB r_dynamic_clip_more;
+extern VCvarB r_light_opt_shadow;
 
 VDrawer *Drawer;
 
@@ -1121,7 +1122,10 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuint32 currltbit) {
   if (radius < 2) return false;
 
+  bool skipShadowCheck = !r_light_opt_shadow;
+
   doShadows = (radius < 12.0f); // arbitrary; set "do shadows" flag to skip checks
+  if (skipShadowCheck) doShadows = true;
   seen1SWall = false;
   seen2SWall = false;
   hasAnyLitSurfaces = false;
@@ -1139,10 +1143,12 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
   HasLightIntersection = false;
   BuildLightVis(Level->NumNodes-1, dummy_bbox);
   if (!r_light_opt_separate_vis && !HasLightIntersection) return false;
-  if (radius < 12.0f) {
-    doShadows = false;
-  } else {
-    if (!doShadows && !hasAnyLitSurfaces) return false;
+  if (!skipShadowCheck) {
+    if (radius < 12.0f) {
+      doShadows = false;
+    } else {
+      if (!doShadows && !hasAnyLitSurfaces) return false;
+    }
   }
 
   // create combined light and view visibility
@@ -1153,6 +1159,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
       LightBspVis[i] = BspVis[i]&LightVis[i];
       if (LightBspVis[i]) HaveIntersect = true;
     }
+    HasLightIntersection = HaveIntersect;
     if (!HaveIntersect) return false;
   }
 

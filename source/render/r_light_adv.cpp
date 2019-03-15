@@ -34,6 +34,9 @@ extern VCvarB r_allow_ambient;
 extern VCvarB r_allow_subtractive_lights;
 extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_more;
+extern VCvarB r_draw_mobjs;
+extern VCvarB r_models;
+extern VCvarB r_model_shadows;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -58,6 +61,8 @@ VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark not
 
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive|CVAR_PreInit);
+// this is wrong for now
+static VCvarB r_advlight_opt_frustum("r_advlight_opt_frustum", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -300,16 +305,48 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
 void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                                bool CheckSkyBoxAlways, int LightCanCross)
 {
-  surface_t *surfs = InSurfs;
-  if (!surfs) return;
+  if (!InSurfs) return;
 
-  if (texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f) return;
+  if (LightCanCross > 0 && texinfo->Tex->isTransparent()) return; // has holes, don't bother
 
-  do {
-    Drawer->RenderSurfaceShadowVolume(surfs, CurrLightPos, CurrLightRadius, LightCanCross);
-    surfs = surfs->next;
-  } while (surfs);
+  // ignore everything that is placed behind player's back
+  // we shouldn't have many of those, so check them in the loop below
+  // but do this only if the light is behind a player
+  bool checkFrustum = view_frustum.checkSphereBack(CurrLightPos, CurrLightRadius);
+
+  for (surface_t *surf = InSurfs; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
+
+    // for two-sided walls, we want to leave only one surface, otherwise z-fighting will occur
+    // also, don't bother with it at all if texture has holes
+    if (LightCanCross < 0) {
+      // horizon
+      // k8: can horizont surfaces block light? i think they shouldn't
+      //if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+      continue;
+    }
+
+    // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
+    const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+    // k8: use `<=` and `>=` for radius checks, 'cause why not?
+    //     light completely fades away at that distance
+    if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
+
+    if (checkFrustum) {
+      bool hasFront = false;
+      for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+        if (!hasFront && view_frustum.checkPointBack(surf->verts[i])) {
+          hasFront = true;
+          break;
+        }
+      }
+      if (!hasFront) continue;
+    }
+
+    Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius, LightCanCross);
+  }
 }
 
 
@@ -324,10 +361,13 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
 
-  // note: we don't want to filter out shadows that are behind
+  // note that we don't want to filter out shadows that are behind
+  // but we are want to filter out surfaces that cannot possibly block light
+  // (i.e. back-surfaces with respect to light origin)
   const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
-  if (fabsf(dist) >= CurrLightRadius) return;
+  //if (fabsf(dist) >= CurrLightRadius) return;
+  if (dist <= 0.0f || dist > CurrLightRadius) return;
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
@@ -381,10 +421,13 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 
   if (!plane.pic) return;
 
-  // note: we don't want to filter out shadows that are behind
+  // note that we don't want to filter out shadows that are behind
+  // but we are want to filter out surfaces that cannot possibly block light
+  // (i.e. back-surfaces with respect to light origin)
   const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
-  if (fabsf(dist) >= CurrLightRadius) return;
+  //if (fabsf(dist) >= CurrLightRadius) return;
+  if (dist <= 0.0f || dist > CurrLightRadius) return;
 
   DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, true, 0);
 }
@@ -437,20 +480,38 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
-  subsector_t *Sub = &Level->Subsectors[num];
+  subsector_t *sub = &Level->Subsectors[num];
 
   // don't do this check for shadows
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightCheckSubsector(sub, CurrLightPos, CurrLightRadius)) return;
 
-  RenderShadowSubRegion(Sub, Sub->regions);
+  // if our light is in frustum, out-of-frustum subsectors are not interesting
+  //FIXME: pass "need frustum check" flag to other functions
+  bool needToRender = true;
+  if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
+    // this subsector is invisible, check if it is in frustum
+    float bbox[6];
+    // min
+    bbox[0] = sub->bbox[0];
+    bbox[1] = sub->bbox[1];
+    bbox[2] = sub->sector->floor.minz;
+    // max
+    bbox[3] = sub->bbox[2];
+    bbox[4] = sub->bbox[3];
+    bbox[5] = sub->sector->ceiling.maxz;
+    FixBBoxZ(bbox);
+    needToRender = view_frustum.checkBox(bbox);
+  }
+
+  if (needToRender) RenderShadowSubRegion(sub, sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+  LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
 }
 
 
@@ -481,7 +542,6 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
     node_t *bsp = &Level->Nodes[bspnum];
-
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
@@ -514,7 +574,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 {
   if (!InSurfs) return;
 
-  if (texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f) return;
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
@@ -525,11 +585,13 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
     return;
   }
 
-  surface_t *surfs = InSurfs;
-  do {
-    Drawer->DrawSurfaceLight(surfs, CurrLightPos, CurrLightRadius, LightCanCross);
-    surfs = surfs->next;
-  } while (surfs);
+  for (surface_t *surf = InSurfs; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
+    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+    if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
+    Drawer->DrawSurfaceLight(surf);
+  }
 }
 
 
@@ -655,21 +717,21 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubsector (int num) {
-  subsector_t *Sub = &Level->Subsectors[num];
+  subsector_t *sub = &Level->Subsectors[num];
 
-  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
   if (!(LightBspVis[(unsigned)num>>3]&(1<<((unsigned)num&7)))) return;
 
-  if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightCheckSubsector(sub, CurrLightPos, CurrLightRadius)) return;
 
-  RenderLightSubRegion(Sub, Sub->regions);
+  RenderLightSubRegion(sub, sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+  LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
 }
 
 
@@ -733,7 +795,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
                                                TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
 {
-  //if (Radius < 2.0f) return;
+  //if (Radius < 4.0f) return;
   //CurrLightPos = Pos;
   //CurrLightRadius = Radius;
   if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
@@ -747,6 +809,15 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   if (!CalcLightVis(Pos, Radius)) return;
 
   CurrLightColour = Colour;
+  // if our light is in frustum, ignore any out-of-frustum polys
+  if (r_advlight_opt_frustum) {
+    CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius+4.0f);
+  } else {
+    CurrLightInFrustum = false; // don't do frustum optimisations
+  }
+
+  // if we want model shadows, always do full rendering
+  if (!doShadows && r_draw_mobjs && r_models && r_model_shadows) doShadows = true;
 
   if (!doShadows && dbg_adv_light_notrace_mark) {
     //Colour = 0xffff0000U;
@@ -803,7 +874,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   //     circle should do the trick.
 
   // draw light
-  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, Colour);
+  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, Colour, doShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);

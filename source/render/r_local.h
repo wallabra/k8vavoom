@@ -377,6 +377,7 @@ protected:
   // moved here so that model rendering methods can be merged
   TVec CurrLightPos;
   float CurrLightRadius;
+  bool CurrLightInFrustum; // moved to drawer.h
   vuint32 CurrLightBit; // tag (bitor) subsectors with this in lightvis builder
   int CurrLightsNumber;
   int CurrShadowsNumber;
