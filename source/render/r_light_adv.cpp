@@ -315,6 +315,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is behind a player
   bool checkFrustum = view_frustum.checkSphereBack(CurrLightPos, CurrLightRadius);
+  if (!r_advlight_opt_frustum) checkFrustum = false;
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
