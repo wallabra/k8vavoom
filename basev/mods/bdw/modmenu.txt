@@ -12,6 +12,12 @@ menudef k8BDWModMenu {
       "It is recommended to keep this under 1000.";
   }
 
+  option bool {
+    title = "Cheating Rifle Reload";
+    cvar = K8BDWOpt_RifleCheatReload;
+    help = "Cheaters will keep unused ammo from dropped clip.";
+  }
+
 
   header "Dropouts";
 

@@ -1,6 +1,7 @@
 //Actor BDW_RifleSpread : Inventory { inventory.maxamount 6 }
 
 
+// this is loaded ammo, you will never pick it up, only get from clips
 Actor BDW_RifleAmmo : Ammo {
   Inventory.Amount 0
   Inventory.MaxAmount 31
@@ -205,6 +206,10 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       RIFR HIKL 1
       RIFR M 3
       RIFR NOPQRST 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      // if reload in not cheating, drop unused ammo
+      "----" A 0 A_JumpIfCVarTrue("K8BDWOpt_RifleCheatReload", "ReloadMainLoop")
+      // drop all unused ammo, as we are loading a new clip
+      "----" A 0 A_TakeInventory("BDW_RifleAmmo", 31)
       // reload loop
     ReloadMainLoop:
       "----" A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "ReadyAfterRefire")

@@ -4,6 +4,7 @@ user int K8BDWOpt_DropEmptyShells = 1;
 user int K8BDWOpt_DropEmptyCasing = 1;
 user int K8BDWOpt_DropEmptyMagazine = 1;
 user int K8BDWOpt_RifleTracers = 1;
+user int K8BDWOpt_RifleCheatReload = 0;
 user int K8BDWOpt_ShotgunTracers = 1;
 user int K8BDWOpt_EmptyShellTime = 4;
 user int K8BDWOpt_EmptyCasingTime = 4;
