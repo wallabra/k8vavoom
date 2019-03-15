@@ -593,10 +593,10 @@ public:
   // 0: completely outside; >0: completely inside; <0: partially inside
   int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const;
 
-  // returns `false` is point is out of frustum (or frustum is not valid)
+  // returns `false` is point is out of frustum
   bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
 
-  // returns `false` is sphere is out of frustum (or frustum is not valid)
+  // returns `false` is sphere is out of frustum
   bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
 
 
@@ -605,10 +605,10 @@ public:
   // 0: completely outside; >0: completely inside; <0: partially inside
   int checkBoxExBack (const float bbox[6], const unsigned mask=~0u) const;
 
-  // returns `false` is point is out of frustum (or frustum is not valid)
+  // returns `false` is point is out of frustum
   bool checkPointBack (const TVec &point, const unsigned mask=~0u) const;
 
-  // returns `false` is sphere is out of frustum (or frustum is not valid)
+  // returns `false` is sphere is out of frustum
   bool checkSphereBack (const TVec &center, const float radius, const unsigned mask=~0u) const;
 };
 
