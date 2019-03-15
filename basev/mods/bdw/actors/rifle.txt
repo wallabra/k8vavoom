@@ -148,12 +148,14 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
           // base damage is 9
           if (GetCVarB("K8BDWOpt_RifleCheatReload")) {
             user_bulletDamage = 9;
-          } else {
+          } else if (user_spread >= 4) {
                  if (CountInv("BDW_RifleAmmo") == 1) user_bulletDamage = 22;
             else if (CountInv("BDW_RifleAmmo") == 2) user_bulletDamage = 13;
             else user_bulletDamage = 9;
+          } else {
+            user_bulletDamage = 9;
           }
-          A_k8ConLog(va("damage: %d", user_bulletDamage));
+          //A_k8ConLog(va("damage: %d", user_bulletDamage));
                if (user_spread >= 5) A_FireBullets(7, 7, 1, user_bulletDamage, "BDW_HitPuff"); // high
           else if (user_spread >= 3) A_FireBullets(4, 4, 1, user_bulletDamage, "BDW_HitPuff"); // mid
           else A_FireBullets(2, 2, 1, user_bulletDamage, "BDW_HitPuff"); // normal
