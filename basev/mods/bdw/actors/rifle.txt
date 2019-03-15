@@ -71,6 +71,7 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
 
   var int user_HadAmmo; // this tells if we should drop empty clip
   var int user_spread; // from 0 to 6
+  var int user_bulletDamage; // temporary
 
   States {
     Spawn:
@@ -143,9 +144,19 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
     SkipTracer:
       "####" A 1 BRIGHT // not B, i don't like that frame
         {
-               if (user_spread >= 5) A_FireBullets(7, 7, 1, 9, "BDW_HitPuff"); // high
-          else if (user_spread >= 3) A_FireBullets(4, 4, 1, 9, "BDW_HitPuff"); // mid
-          else A_FireBullets(2, 2, 1, 9, "BDW_HitPuff"); // normal
+          // two last bullets does more damage (but only in non-cheating mode)
+          // base damage is 9
+          if (GetCVarB("K8BDWOpt_RifleCheatReload")) {
+            user_bulletDamage = 9;
+          } else {
+                 if (CountInv("BDW_RifleAmmo") == 1) user_bulletDamage = 22;
+            else if (CountInv("BDW_RifleAmmo") == 2) user_bulletDamage = 13;
+            else user_bulletDamage = 9;
+          }
+          A_k8ConLog(va("damage: %d", user_bulletDamage));
+               if (user_spread >= 5) A_FireBullets(7, 7, 1, user_bulletDamage, "BDW_HitPuff"); // high
+          else if (user_spread >= 3) A_FireBullets(4, 4, 1, user_bulletDamage, "BDW_HitPuff"); // mid
+          else A_FireBullets(2, 2, 1, user_bulletDamage, "BDW_HitPuff"); // normal
         }
       "----" B 0 BRIGHT
         {
