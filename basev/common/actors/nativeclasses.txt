@@ -409,6 +409,9 @@ class Actor extends Thinker
   alias CallACS = ACS_NamedExecuteWithResult;
 
   alias GetCVar = GetCvarF;
+  alias GetCVarF = GetCvarF;
+  alias GetCVarI = GetCvarI;
+  alias GetCVarB = GetCvarB;
 
   action native CountInv (string itemtype, optional int ptr_select);
 
