@@ -172,7 +172,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (distSq >= stlight->radius*stlight->radius) {
-        if (distSq > rlightraduisSq || backPlane.PointOnBackTh(stlight->origin)) continue; // too far away
+        if (distSq > rlightraduisSq || backPlane.PointOnSide(stlight->origin)) continue; // too far away
         if (fp.needUpdate(vieworg, viewangles)) {
           fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
           frustum.setup(clip_base, fp, false); //true, r_lights_radius);
@@ -238,7 +238,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
       // if the light is behind a view, drop it if it is further than light radius
       if (distSq >= l->radius*l->radius) {
-        if (distSq > rlightraduisSq || backPlane.PointOnBackTh(l->origin)) continue; // too far away
+        if (distSq > rlightraduisSq || backPlane.PointOnSide(l->origin)) continue; // too far away
         if (fp.needUpdate(vieworg, viewangles)) {
           fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
           frustum.setup(clip_base, fp, false); //true, r_lights_radius);

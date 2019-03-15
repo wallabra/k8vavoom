@@ -592,7 +592,8 @@ void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
 void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angles,
                                           const TVec &Offset, const TVec &Scale,
                                           VMeshModel *Mdl, int frame, int nextframe,
-                                          float Inter, bool Interpolate, const TVec &LightPos, float LightRadius)
+                                          float Inter, bool Interpolate,
+                                          const TVec &LightPos, float LightRadius)
 {
   UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
@@ -622,7 +623,8 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   TPlane *P = PlanesFrame->Planes;
   for (int i = 0; i < Mdl->Tris.length(); ++i, ++P) {
     // planes facing to the light
-    PlaneSides[i] = DotProduct(LocalLightPos, P->normal)-P->dist > 0.0f && DotProduct(LocalLightPos, P->normal)-P->dist <= LightRadius;
+    const float pdist = DotProduct(LocalLightPos, P->normal)-P->dist;
+    PlaneSides[i] = (pdist > 0.0f && pdist < LightRadius);
   }
 
   p_glUniform1fARB(ShadowsModelShadow_InterLoc, Inter);
@@ -634,27 +636,30 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glVertexAttribPointerARB(ShadowsModelShadow_Vert2Loc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(ShadowsModelShadow_Vert2Loc);
 
-  float Shadow_Offset = M_INFINITY;
+  const float Shadow_Offset = M_INFINITY;
 
-  glBegin(GL_TRIANGLES);
-  p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0);
-  for (int i = 0; i < Mdl->Tris.length(); ++i) {
-    if (PlaneSides[i]) {
-      glArrayElement(Mdl->Tris[i].VertIndex[0]);
-      glArrayElement(Mdl->Tris[i].VertIndex[1]);
-      glArrayElement(Mdl->Tris[i].VertIndex[2]);
+  // caps
+  if (!usingZPass && !gl_dbg_use_zpass) {
+    glBegin(GL_TRIANGLES);
+    p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0);
+    for (int i = 0; i < Mdl->Tris.length(); ++i) {
+      if (PlaneSides[i]) {
+        glArrayElement(Mdl->Tris[i].VertIndex[0]);
+        glArrayElement(Mdl->Tris[i].VertIndex[1]);
+        glArrayElement(Mdl->Tris[i].VertIndex[2]);
+      }
     }
-  }
 
-  p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, Shadow_Offset);
-  for (int i = 0; i < Mdl->Tris.length(); ++i) {
-    if (PlaneSides[i]) {
-      glArrayElement(Mdl->Tris[i].VertIndex[2]);
-      glArrayElement(Mdl->Tris[i].VertIndex[1]);
-      glArrayElement(Mdl->Tris[i].VertIndex[0]);
+    p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, Shadow_Offset);
+    for (int i = 0; i < Mdl->Tris.length(); ++i) {
+      if (PlaneSides[i]) {
+        glArrayElement(Mdl->Tris[i].VertIndex[2]);
+        glArrayElement(Mdl->Tris[i].VertIndex[1]);
+        glArrayElement(Mdl->Tris[i].VertIndex[0]);
+      }
     }
+    glEnd();
   }
-  glEnd();
 
   for (int i = 0; i < Mdl->Edges.length(); ++i) {
     // edges with no matching pair are drawn only if corresponding triangle

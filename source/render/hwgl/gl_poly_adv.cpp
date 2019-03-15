@@ -311,7 +311,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   }
 
   // back cap
-  if (!usingZPass) {
+  if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_POLYGON);
     for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
     glEnd();
@@ -348,7 +348,11 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-  glStencilFunc(GL_EQUAL, 0x0, 0xff);
+  if (gl_dbg_use_zpass > 1) {
+    glStencilFunc(GL_EQUAL, 0x1, 0xff);
+  } else {
+    glStencilFunc(GL_EQUAL, 0x0, 0xff);
+  }
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   // do not use stencil test if we rendered no shadow surfaces

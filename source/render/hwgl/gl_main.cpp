@@ -90,7 +90,8 @@ VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", fa
 
 VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad to clear stencil buffer instead of 'glClear'?", CVAR_Archive|CVAR_PreInit);
 
-VCvarB gl_dbg_use_zpass("gl_dbg_use_zpass", false, "DO NOT USE!", CVAR_PreInit);
+// 1: normal; 2: 1-skewed
+VCvarI gl_dbg_use_zpass("gl_dbg_use_zpass", "0", "DO NOT USE!", CVAR_PreInit);
 
 
 //==========================================================================

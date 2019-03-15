@@ -433,7 +433,7 @@ extern VCvarB gl_dbg_adv_render_offset_shadow_volume;
 extern VCvarB gl_dbg_adv_render_never_offset_shadow_volume;
 extern VCvarB gl_dbg_render_stack_portal_bounds;
 extern VCvarB gl_use_stencil_quad_clear;
-extern VCvarB gl_dbg_use_zpass;
+extern VCvarI gl_dbg_use_zpass;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
