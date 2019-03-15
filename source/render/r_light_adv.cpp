@@ -388,7 +388,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
       if (!hasFront) continue;
     }
 
-    Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius, LightCanCross);
+    Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
   }
 }
 
@@ -897,11 +897,19 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     }
   }
 
+  bool useZPass = false;
+
+  /* nope
+  if ((CurrLightPos-vieworg).lengthSquared() > CurrLightRadius*CurrLightRadius) {
+    useZPass = true;
+  }
+  */
+
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   ResetMobjsLightCount(true);
   // do shadow volumes
-  Drawer->BeginLightShadowVolumes(hasScissor, scoord);
+  Drawer->BeginLightShadowVolumes(useZPass, hasScissor, scoord);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   if (doShadows && r_max_shadow_segs_all) {
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);

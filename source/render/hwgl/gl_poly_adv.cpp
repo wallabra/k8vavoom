@@ -153,7 +153,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //  setup rendering parameters for shadow volume rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) {
+void VOpenGLDrawer::BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) {
   glDisable(GL_TEXTURE_2D);
   if (hasScissor) {
     if (gl_use_stencil_quad_clear) {
@@ -241,14 +241,16 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool hasScissor, const int scoords[
   }
   // face, stencil-fail, depth-fail, depth-pass
 
-  // a typical setup for z-fail method
-  p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
-  p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
+  usingZPass = useZPass;
 
-  // a typical setup for z-pass method
-  if (gl_dbg_use_zpass) {
+  if (gl_dbg_use_zpass || useZPass) {
+    // a typical setup for z-pass method
     p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP_EXT);
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_KEEP, GL_DECR_WRAP_EXT);
+  } else {
+    // a typical setup for z-fail method
+    p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
+    p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
   p_glUseProgramObjectARB(SurfZBuf_Program);
@@ -286,7 +288,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //  most checks are done in caller
 //
 //==========================================================================
-void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) {
+void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (surf->count < 3) return; // just in case
 
   //FIXME: move this to drawer class
@@ -308,13 +310,17 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     v[i] += LightPos;
   }
 
-  glBegin(GL_POLYGON);
-  for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
-  glEnd();
+  // back cap
+  if (!usingZPass) {
+    glBegin(GL_POLYGON);
+    for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
+    glEnd();
 
-  glBegin(GL_POLYGON);
-  for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
-  glEnd();
+    // front cap
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+    glEnd();
+  }
 
   glBegin(GL_TRIANGLE_STRIP);
   for (int i = 0; i < surf->count; ++i) {

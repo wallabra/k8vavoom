@@ -495,6 +495,9 @@ public:
     void storeFogFade (vuint32 Fade, float Alpha);
   };
 
+private:
+  bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
+
 public:
   // VDrawer interface
   VOpenGLDrawer ();
@@ -520,15 +523,19 @@ public:
   // polygon drawing
   virtual void WorldDrawing () override;
   virtual void DrawWorldAmbientPass () override;
+
   virtual void BeginShadowVolumesPass () override;
-  virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) override;
+  virtual void BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) override;
   virtual void EndLightShadowVolumes () override;
-  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) override;
+  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
+
   virtual void BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
+
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;
   virtual void EndFogPass () override;
+
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
   virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,

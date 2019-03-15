@@ -232,14 +232,17 @@ public:
   virtual bool SupportsAdvancedRendering () = 0;
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
-  virtual void BeginLightShadowVolumes (bool hasScissor, const int scoords[4]) = 0;
+  virtual void BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) = 0;
   virtual void EndLightShadowVolumes () = 0;
-  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius, int LightCanCross) = 0;
+  virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
+
   virtual void BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) = 0;
   virtual void DrawSurfaceLight (surface_t *Surf) = 0;
+
   virtual void DrawWorldTexturesPass () = 0;
   virtual void DrawWorldFogPass () = 0;
   virtual void EndFogPass () = 0;
+
   virtual void DrawAliasModelAmbient (const TVec &origin, const TAVec &angles,
                                       const TVec &Offset, const TVec &Scale,
                                       VMeshModel *Mdl, int frame, int nextframe,
