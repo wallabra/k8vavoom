@@ -324,16 +324,20 @@ private:
 
   void xxHashLinedef (XXH32_state_t *xctx, const line_t &line) const {
     if (!xctx) return;
+    /* ignore vertices and flags
     vuint32 v0idx = (vuint32)(ptrdiff_t)(line.v1-Vertexes);
     XXH32_update(xctx, &v0idx, sizeof(v0idx));
     vuint32 v1idx = (vuint32)(ptrdiff_t)(line.v2-Vertexes);
     XXH32_update(xctx, &v1idx, sizeof(v1idx));
     XXH32_update(xctx, &line.flags, sizeof(line.flags));
     XXH32_update(xctx, &line.SpacFlags, sizeof(line.SpacFlags));
+    */
     XXH32_update(xctx, &line.sidenum[0], sizeof(line.sidenum[0]));
     XXH32_update(xctx, &line.sidenum[1], sizeof(line.sidenum[1]));
+    /* ignore bbox and slope
     for (int f = 0; f < 4; ++f) XXH32_update(xctx, &line.bbox[f], sizeof(line.bbox[f]));
     XXH32_update(xctx, &line.slopetype, sizeof(line.slopetype));
+    */
     vuint32 fsnum = (line.frontsector ? (vuint32)(ptrdiff_t)(line.frontsector-Sectors) : 0xffffffffU);
     XXH32_update(xctx, &fsnum, sizeof(fsnum));
     vuint32 bsnum = (line.backsector ? (vuint32)(ptrdiff_t)(line.backsector-Sectors) : 0xffffffffU);
@@ -343,7 +347,7 @@ private:
 
   void xxHashSidedef (XXH32_state_t *xctx, const side_t &side) const {
     if (!xctx) return;
-    /*!
+    /* ignore textures
     XXH32_update(xctx, &side.TopTextureOffset, sizeof(side.TopTextureOffset));
     XXH32_update(xctx, &side.BotTextureOffset, sizeof(side.BotTextureOffset));
     XXH32_update(xctx, &side.MidTextureOffset, sizeof(side.MidTextureOffset));
@@ -356,10 +360,8 @@ private:
     XXH32_update(xctx, &side.BottomTexture.id, sizeof(side.BottomTexture.id));
     XXH32_update(xctx, &side.MidTexture.id, sizeof(side.MidTexture.id));
     */
-
     vuint32 secnum = (side.Sector ? (vuint32)(ptrdiff_t)(side.Sector-Sectors) : 0xffffffffU);
     XXH32_update(xctx, &secnum, sizeof(secnum));
-
     XXH32_update(xctx, &side.LineNum, sizeof(side.LineNum));
     //!XXH32_update(xctx, &side.Flags, sizeof(side.Flags));
     //hash something else?
@@ -395,14 +397,18 @@ private:
 
   void xxHashSectordef (XXH32_state_t *xctx, const sector_t &sec) const {
     if (!xctx) return;
+    /* ignore planes
     xxHashSecPlane(xctx, sec.floor);
     xxHashSecPlane(xctx, sec.ceiling);
     vuint32 drnum = (sec.deepref ? (vuint32)(ptrdiff_t)(sec.deepref-Sectors) : 0xffffffffU);
     XXH32_update(xctx, &drnum, sizeof(drnum));
     XXH32_update(xctx, &sec.skyheight, sizeof(sec.skyheight));
+    */
     //hash sector line indicies?
     XXH32_update(xctx, &sec.linecount, sizeof(sec.linecount));
+    /* ignore sector flags
     XXH32_update(xctx, &sec.SectorFlags, sizeof(sec.SectorFlags));
+    */
     //hash something else?
   }
 

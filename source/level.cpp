@@ -279,6 +279,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
       if (dcSize < 0) Host_Error("decals section is broken");
       Strm.Seek(Strm.Tell()+dcSize);
     }
+    if (dcSize) {
+      GCon->Logf("seg hash doesn't match (this is harmless, but you lost decals)");
+    } else {
+      GCon->Logf("seg hash doesn't match (this is harmless)");
+    }
   }
 
   // sectors
@@ -361,7 +366,8 @@ void VLevel::SerialiseOther (VStream &Strm) {
         VNTValueIOEx vio(&Strm);
         vio.io(VName("flags"), li->flags);
         vio.io(VName("SpacFlags"), li->SpacFlags);
-        vio.iodef(VName("exFlags"), li->exFlags, 0);
+        //vio.iodef(VName("exFlags"), li->exFlags, 0);
+        vio.io(VName("exFlags"), li->exFlags);
         vio.io(VName("special"), li->special);
         vio.io(VName("arg1"), li->arg1);
         vio.io(VName("arg2"), li->arg2);
