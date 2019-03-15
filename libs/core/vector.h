@@ -101,6 +101,8 @@ public:
   TVec (float Ax, float Ay, float Az=0.0f) : x(Ax), y(Ay), z(Az) {}
   TVec (const float f[3]) { x = f[0]; y = f[1]; z = f[2]; }
 
+  static inline TVec Invalid () { return TVec(NAN, NAN, NAN); }
+
   /*
   inline TVec &operator = (const TVec &b) {
     //if (coords != b.coords) memcpy(coords, b.coords, sizeof(coords));
@@ -177,6 +179,14 @@ public:
   // 2d cross product (z, as x and y are effectively zero in 2d)
   inline float Cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
   inline float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
+
+  // z is zero
+  inline TVec mul2 (const float s) const { return TVec(x*s, y*s, 0); }
+  inline TVec mul3 (const float s) const { return TVec(x*s, y*s, z*s); }
+
+  // returns projection of this vector onto `v`
+  inline TVec projectTo (const TVec &v) const { return v.mul3(dot(v)/v.lengthSquared()); }
+  inline TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
@@ -192,6 +202,10 @@ static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) {
 
 static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
 static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
+
+static __attribute__((unused)) inline float operator * (const TVec &a, const TVec &b) { return a.dot(b); }
+static __attribute__((unused)) inline TVec operator ^ (const TVec &a, const TVec &b) { return a.cross(b); }
+static __attribute__((unused)) inline TVec operator % (const TVec &a, const TVec &b) { return a.cross(b); }
 
 static __attribute__((unused)) inline float Length (const TVec &v) { return v.length(); }
 static __attribute__((unused)) inline float length (const TVec &v) { return v.length(); }
@@ -299,12 +313,22 @@ public:
     SetPointDirXY(v1, v2-v1);
   }
 
+  void SetFromTriangle (const TVec &a, const TVec &b, const TVec &c) {
+    normal = (b-a).cross(c-a).normalised();
+    dist = DotProduct(a, normal);
+  }
+
   // WARNING! do not call this repeatedly, or on normalized plane!
   //          due to floating math inexactness, you will accumulate errors.
   inline void Normalise () {
     const float mag = normal.invlength();
     normal *= mag;
     dist *= mag;
+  }
+
+  inline void flipInPlace () {
+    normal = -normal;
+    dist = -dist;
   }
 
   // get z of point with given x and y coords
@@ -316,6 +340,68 @@ public:
   inline float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
   }
+
+  // "land" point onto the plane
+  // plane must be normalized
+  inline TVec landAlongNormal (const TVec &point) const {
+    const float pdist = DotProduct(point, normal)-dist;
+    return (fabs(pdist) > 0.0001f ? point-normal*pdist : point);
+  }
+
+  // plane must be normalized
+  inline TVec Project (const TVec &v) const {
+    return v-(v-normal*dist).dot(normal)*normal;
+  }
+
+  // returns the point where the line p0-p1 intersects this plane
+  // `p0` and `p1` must not be the same
+  inline float LineIntersectTime (const TVec &p0, const TVec &p1) const {
+    return (dist-normal.dot(p0))/normal.dot(p1-p0);
+  }
+
+  // returns the point where the line p0-p1 intersects this plane
+  // `p0` and `p1` must not be the same
+  inline TVec LineIntersect (const TVec &p0, const TVec &p1) const {
+    const TVec dif = p1-p0;
+    const float t = (dist-normal.dot(p0))/normal.dot(dif);
+    return p0+(dif*t);
+  }
+
+  // intersection of 3 planes, Graphics Gems 1 pg 305
+  TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const {
+    const float det = normal.cross(plane2.normal).dot(plane3.normal);
+    // if the determinant is 0, that means parallel planes, no intersection
+    if (fabs(det) < 0.00001f) return TVec::Invalid();
+    return
+      (plane2.normal.cross(plane3.normal)*(-dist)+
+       plane3.normal.cross(normal)*(-plane2.dist)+
+       normal.cross(plane2.normal)*(-plane3.dist))/det;
+  }
+
+  // sphere sweep test; if `true` (hit), `hitpos` will be sphere position when it hits this plane, and `u` will be normalized collision time
+  bool sweepSphere (const TVec &origin, const float radius, const TVec &amove, TVec *hitpos=nullptr, float *u=nullptr) const {
+    const TVec c1 = origin+amove;
+    const float d0 = (normal*origin)+dist;
+    // check if the sphere is touching the plane
+    if (fabsf(d0) <= radius) {
+      if (hitpos) *hitpos = origin;
+      if (u) *u = 0;
+      return true;
+    }
+    const float d1 = (normal*c1)+dist;
+    // check if the sphere penetrated during movement
+    if (d0 > radius && d1 < radius) {
+      if (u || hitpos) {
+        const float uu = (d0-radius)/(d0-d1); // normalized time
+        if (u) *u = uu;
+        if (hitpos) *hitpos = (1-uu)*origin+uu*c1; // point of first contact
+      }
+      return true;
+    }
+    // no collision
+    return false;
+  }
+
 
   // returns side 0 (front) or 1 (back, or on plane)
   inline int PointOnSide (const TVec &point) const {
