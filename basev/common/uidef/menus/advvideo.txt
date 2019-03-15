@@ -256,4 +256,14 @@ menudef AdvVideoOptions {
       "NOTE: You have to go to 'Screen Resolution' menu and"
       "use 'Set Resolution' to activate this.";
   }
+
+  option bool {
+    title = "Improve depth buffer precision";
+    cvar = gl_enable_clip_control;
+    help =
+      "If your OpenGL has `glClipControl()` function (or the corresponding"
+      "extension), the engine can better utilize depth buffer (you can set"
+      "'gl_maxdist' cvar to greater values without artifacts)."
+      "If in doubt, leave this 'ON', and the engine will decide.";
+  }
 }

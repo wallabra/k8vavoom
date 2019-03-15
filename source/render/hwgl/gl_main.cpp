@@ -37,7 +37,8 @@ VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.",
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
 
 static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
-static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Completely disable reverse z, even if it is available?", CVAR_Archive|CVAR_PreInit);
+static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Allow using \"reverse z\" trick?", CVAR_Archive|CVAR_PreInit);
+static VCvarB gl_enable_clip_control("gl_enable_clip_control", true, "Allow using `glClipControl()`?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_dbg_force_reverse_z("gl_dbg_force_reverse_z", false, "Force-enable reverse z when fp depth buffer is not available.", CVAR_PreInit);
 static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, "Ignore GPU blacklist, and don't turn off features?", CVAR_PreInit);
 static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
@@ -522,25 +523,30 @@ void VOpenGLDrawer::InitResolution () {
   glGetIntegerv(GL_MAJOR_VERSION, &major);
   glGetIntegerv(GL_MINOR_VERSION, &minor);
   GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
-  if (!isShittyGPU) {
-    // normal GPUs
-    if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
-      //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-      p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
-      if (p_glClipControl) {
-        GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
-        useReverseZ = true;
-        if (!gl_enable_reverse_z) {
-          GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
-          useReverseZ = false;
-        }
-      }
+
+  p_glClipControl = nullptr;
+  if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
+    p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
+  }
+  if (p_glClipControl) {
+    if (gl_enable_clip_control) {
+      GCon->Logf(NAME_Init, "OpenGL: glClipControl found");
     } else {
       p_glClipControl = nullptr;
+      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, but disabled by user; i shall obey");
+    }
+  }
+
+  if (!isShittyGPU && p_glClipControl) {
+    // normal GPUs
+    useReverseZ = true;
+    if (!gl_enable_reverse_z) {
+      GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
+      useReverseZ = false;
     }
   } else {
     GCon->Logf(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
-    p_glClipControl = nullptr;
+    useReverseZ = false;
   }
 
   // check multi-texture extensions
@@ -862,8 +868,9 @@ void VOpenGLDrawer::InitResolution () {
   glBindTexture(GL_TEXTURE_2D, mainFBODepthStencilTid);
 
   GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
-
-  if (major >= 3 && gl_enable_floating_zbuffer) {
+  // there is (almost) no reason to use fp depth buffer without reverse z
+  // besides, stenciled shadows are glitchy for "forward" fp depth buffer (i don't know why, and too lazy to investigate)
+  if (major >= 3 && gl_enable_floating_zbuffer && useReverseZ) {
     if (isShittyGPU) {
       GCon->Logf(NAME_Init, "OpenGL: fp depth buffer is turned off for your GPU");
       useReverseZ = false; // just in case
@@ -913,6 +920,7 @@ void VOpenGLDrawer::InitResolution () {
       Sys_Error("OpenGL initialization error");
     }
   }
+  GCon->Logf(NAME_Init, "OpenGL: reverse z is %s", (useReverseZ ? "enabled" : "disabled"));
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mainFBODepthStencilTid, 0);
 
   {

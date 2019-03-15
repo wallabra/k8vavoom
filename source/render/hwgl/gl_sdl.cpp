@@ -171,8 +171,13 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   int Height = AHeight;
   if (Width < 320 || Height < 200) {
     // set defaults
+    /*
     Width = 800;
     Height = 600;
+    */
+    //k8: 'cmon, this is silly! let's set something better!
+    Width = 1024;
+    Height = 768;
   }
 
   if (fsmode < 0 || fsmode > 2) fsmode = 0;
