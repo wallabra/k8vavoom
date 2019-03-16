@@ -302,18 +302,20 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 
   TVec *v = poolVec;
 
-  // there is no need to extrude light further than light raduis
-  const float mult = (r_adv_limit_extrude ? Radius+128 : M_INFINITY);
+  // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
   for (int i = 0; i < surf->count; ++i) {
+    /* no need to extrude anything, OpenGL will do it for us
     v[i] = (surf->verts[i]-LightPos).normalised();
     v[i] *= mult;
     v[i] += LightPos;
+    */
+    v[i] = surf->verts[i]-LightPos;
   }
 
   // back cap
   if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_POLYGON);
-    for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
+    for (int i = surf->count-1; i >= 0; --i) glVertex4(v[i], 0);
     glEnd();
 
     // front cap
@@ -325,10 +327,10 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   glBegin(GL_TRIANGLE_STRIP);
   for (int i = 0; i < surf->count; ++i) {
     glVertex(surf->verts[i]);
-    glVertex(v[i]);
+    glVertex4(v[i], 0);
   }
   glVertex(surf->verts[0]);
-  glVertex(v[0]);
+  glVertex4(v[0], 0);
   glEnd();
 
   NoteStencilBufferDirty();

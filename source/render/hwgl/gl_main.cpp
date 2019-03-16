@@ -75,8 +75,6 @@ VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on transl
 
 VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
 
-VCvarB r_adv_limit_extrude("r_adv_limit_extrude", false, "Don't extrude shadow volumes further than light radius goes?", CVAR_Archive);
-
 VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
 VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);

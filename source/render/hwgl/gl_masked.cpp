@@ -28,40 +28,6 @@
 #include "render/r_local.h"
 
 
-extern VCvarB gl_dbg_adv_render_textures_surface;
-
-/*
-extern VCvarB r_decals_enabled;
-extern VCvarI r_ambient;
-extern VCvarB r_allow_ambient;
-
-static VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
-
-static VCvarB r_adv_limit_extrude("r_adv_limit_extrude", false, "Don't extrude shadow volumes further than light radius goes?", CVAR_Archive);
-
-static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
-static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
-static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
-static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!", 0);
-
-static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive|CVAR_PreInit);
-
-static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", CVAR_PreInit);
-// this makes shadows glitch for some reason with fp z-buffer (investigate!)
-static VCvarB gl_dbg_adv_render_offset_shadow_volume("gl_dbg_adv_render_offset_shadow_volume", false, "Offset shadow volumes?", CVAR_PreInit);
-static VCvarB gl_dbg_adv_render_never_offset_shadow_volume("gl_dbg_adv_render_never_offset_shadow_volume", false, "Never offseting shadow volumes?", CVAR_Archive|CVAR_PreInit);
-
-static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0);
-
-static VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad to clear stencil buffer instead of 'glClear'?", CVAR_Archive|CVAR_PreInit);
-
-static VCvarB gl_dbg_use_zpass("gl_dbg_use_zpass", false, "DO NOT USE!", CVAR_PreInit);
-
-VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
-VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
-*/
-
-
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawMaskedPolygon

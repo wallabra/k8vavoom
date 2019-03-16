@@ -423,7 +423,6 @@ extern VCvarB r_decals_wall_masked;
 extern VCvarB r_decals_wall_alpha;
 extern VCvarB r_adv_masked_wall_vertex_light;
 extern VCvarB r_adv_masked_wall_vertex_light;
-extern VCvarB r_adv_limit_extrude;
 extern VCvarB gl_decal_debug_nostencil;
 extern VCvarB gl_decal_debug_noalpha;
 extern VCvarB gl_decal_dump_max;
@@ -671,9 +670,8 @@ private:
     return float(slins)/255.0f;
   }
 
-  static inline void glVertex (const TVec &v) {
-    glVertex3f(v.x, v.y, v.z);
-  }
+  static inline void glVertex (const TVec &v) { glVertex3f(v.x, v.y, v.z); }
+  static inline void glVertex4 (const TVec &v, const float w) { glVertex4f(v.x, v.y, v.z, w); }
 
 protected:
   //enum { M_INFINITY = 8000 };
