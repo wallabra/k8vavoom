@@ -1823,6 +1823,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     }
   } else {
     // reversed
+    // see https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
     glClearDepth(0.0f);
     glDepthFunc(GL_GEQUAL);
     for (int f = 0; f < 4; ++f) for (int c = 0; c < 4; ++c) ProjMat.m[f][c] = 0;
