@@ -253,13 +253,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
-  if (HaveDepthClamp) {
-    p_glUseProgramObjectARB(SurfShadowVolume_Program);
-    p_glUniform3fvARB(SurfShadowVolume_LightPosLoc, 1, &LightPos.x);
-  } else {
-    // manual...
-    p_glUseProgramObjectARB(SurfZBuf_Program);
-  }
+  p_glUseProgramObjectARB(SurfShadowVolume_Program);
+  p_glUniform3fvARB(SurfShadowVolume_LightPosLoc, 1, &LightPos.x);
 }
 
 
@@ -297,64 +292,32 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (surf->count < 3) return; // just in case
 
-  //FIXME: move this to drawer class
-  static TVec *poolVec = nullptr;
-  static int poolVecSize = 0;
-
-  if (!HaveDepthClamp) {
-    if (poolVecSize < surf->count) {
-      poolVecSize = (surf->count|0xfff)+1;
-      poolVec = (TVec *)Z_Realloc(poolVec, poolVecSize*sizeof(TVec));
-    }
-  }
-
   const unsigned vcount = (unsigned)surf->count;
   const TVec *sverts = surf->verts;
-
-  const TVec *v = (HaveDepthClamp ? sverts : poolVec);
+  const TVec *v = sverts;
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
-  if (!HaveDepthClamp) {
-    // if we don't have depth clamping, use this approach (otherwise our vertex shader will do the work)
-    for (unsigned i = 0; i < vcount; ++i) {
-      poolVec[i] = (surf->verts[i]-LightPos).normalised();
-      poolVec[i] *= M_INFINITY;
-      poolVec[i] += LightPos;
-    }
-  }
+  // just do it in vertex shader
 
   if (!usingZPass && !gl_dbg_use_zpass) {
     // far cap
     glBegin(GL_POLYGON);
-    if (HaveDepthClamp) {
       for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
-    } else {
-      for (unsigned i = vcount; i--; ) glVertex(v[i]);
-    }
     glEnd();
 
     // near cap
     glBegin(GL_POLYGON);
-    for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
+      for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
     glEnd();
   }
 
   glBegin(GL_TRIANGLE_STRIP);
-  if (HaveDepthClamp) {
     for (unsigned i = 0; i < vcount; ++i) {
       glVertex(sverts[i]);
       glVertex4(v[i], 0);
     }
     glVertex(sverts[0]);
     glVertex4(v[0], 0);
-  } else {
-    for (unsigned i = 0; i < vcount; ++i) {
-      glVertex(sverts[i]);
-      glVertex(v[i]);
-    }
-    glVertex(sverts[0]);
-    glVertex(v[0]);
-  }
   glEnd();
 
   NoteStencilBufferDirty();

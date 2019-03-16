@@ -1303,7 +1303,7 @@ bool VOpenGLDrawer::CheckExtension (const char *ext) {
 //
 //==========================================================================
 bool VOpenGLDrawer::SupportsAdvancedRendering () {
-  return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDrawRangeElements);
+  return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDrawRangeElements && HaveDepthClamp);
 }
 
 
