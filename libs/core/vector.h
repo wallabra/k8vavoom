@@ -203,9 +203,9 @@ static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) {
 static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
 static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
 
-static __attribute__((unused)) inline float operator * (const TVec &a, const TVec &b) { return a.dot(b); }
-static __attribute__((unused)) inline TVec operator ^ (const TVec &a, const TVec &b) { return a.cross(b); }
-static __attribute__((unused)) inline TVec operator % (const TVec &a, const TVec &b) { return a.cross(b); }
+//static __attribute__((unused)) inline float operator * (const TVec &a, const TVec &b) { return a.dot(b); }
+//static __attribute__((unused)) inline TVec operator ^ (const TVec &a, const TVec &b) { return a.cross(b); }
+//static __attribute__((unused)) inline TVec operator % (const TVec &a, const TVec &b) { return a.cross(b); }
 
 static __attribute__((unused)) inline float Length (const TVec &v) { return v.length(); }
 static __attribute__((unused)) inline float length (const TVec &v) { return v.length(); }
@@ -353,6 +353,7 @@ public:
     return v-(v-normal*dist).dot(normal)*normal;
   }
 
+  /*
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
   inline float LineIntersectTime (const TVec &p0, const TVec &p1) const {
@@ -366,8 +367,10 @@ public:
     const float t = (dist-normal.dot(p0))/normal.dot(dif);
     return p0+(dif*t);
   }
+  */
 
   // intersection of 3 planes, Graphics Gems 1 pg 305
+  // not sure if it should be `dist` or `-dist` here for vavoom planes
   TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const {
     const float det = normal.cross(plane2.normal).dot(plane3.normal);
     // if the determinant is 0, that means parallel planes, no intersection
@@ -379,16 +382,17 @@ public:
   }
 
   // sphere sweep test; if `true` (hit), `hitpos` will be sphere position when it hits this plane, and `u` will be normalized collision time
+  // not sure if it should be `dist` or `-dist` here for vavoom planes
   bool sweepSphere (const TVec &origin, const float radius, const TVec &amove, TVec *hitpos=nullptr, float *u=nullptr) const {
     const TVec c1 = origin+amove;
-    const float d0 = (normal*origin)+dist;
+    const float d0 = normal.dot(origin)-dist;
     // check if the sphere is touching the plane
     if (fabsf(d0) <= radius) {
       if (hitpos) *hitpos = origin;
       if (u) *u = 0;
       return true;
     }
-    const float d1 = (normal*c1)+dist;
+    const float d1 = normal.dot(c1)-dist;
     // check if the sphere penetrated during movement
     if (d0 > radius && d1 < radius) {
       if (u || hitpos) {
