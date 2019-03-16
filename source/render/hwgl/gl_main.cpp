@@ -1829,7 +1829,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
-    ProjMat[3][2] = 0.001f;
+    ProjMat[3][2] = 0.02f; // zNear
   }
   //RestoreDepthFunc();
 
