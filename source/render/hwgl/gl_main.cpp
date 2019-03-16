@@ -877,6 +877,7 @@ void VOpenGLDrawer::InitResolution () {
   GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
   // there is (almost) no reason to use fp depth buffer without reverse z
   // besides, stenciled shadows are glitchy for "forward" fp depth buffer (i don't know why, and too lazy to investigate)
+  // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
   if (major >= 3 && gl_enable_fp_zbuffer) {
     depthStencilFormat = GL_DEPTH32F_STENCIL8;
     GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
