@@ -300,36 +300,38 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     poolVec = (TVec *)Z_Realloc(poolVec, poolVecSize*sizeof(TVec));
   }
 
+  const unsigned vcount = (unsigned)surf->count;
+  const TVec *sverts = surf->verts;
   TVec *v = poolVec;
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
-  for (int i = 0; i < surf->count; ++i) {
+  for (unsigned i = 0; i < vcount; ++i) {
     /* no need to extrude anything, OpenGL will do it for us
     v[i] = (surf->verts[i]-LightPos).normalised();
     v[i] *= mult;
     v[i] += LightPos;
     */
-    v[i] = surf->verts[i]-LightPos;
+    v[i] = sverts[i]-LightPos;
   }
 
   // back cap
   if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_POLYGON);
-    for (int i = surf->count-1; i >= 0; --i) glVertex4(v[i], 0);
+    for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
     glEnd();
 
     // front cap
     glBegin(GL_POLYGON);
-    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+    for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
     glEnd();
   }
 
   glBegin(GL_TRIANGLE_STRIP);
-  for (int i = 0; i < surf->count; ++i) {
-    glVertex(surf->verts[i]);
+  for (unsigned i = 0; i < vcount; ++i) {
+    glVertex(sverts[i]);
     glVertex4(v[i], 0);
   }
-  glVertex(surf->verts[0]);
+  glVertex(sverts[0]);
   glVertex4(v[0], 0);
   glEnd();
 
