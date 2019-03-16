@@ -415,6 +415,7 @@ public:
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
+  // used in line tracing (only)
   inline int PointOnSide2 (const TVec &point) const {
     const float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
