@@ -1237,6 +1237,7 @@ static void AM_DrawMinisegs () {
   const seg_t *seg = &GClLevel->Segs[0];
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
+    if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
 
     mline_t l;
     l.a.x = seg->v1->x;
