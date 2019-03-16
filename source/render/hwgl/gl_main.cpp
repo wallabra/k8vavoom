@@ -36,7 +36,7 @@
 VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
 
-static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
+static VCvarB gl_enable_fp_zbuffer("gl_enable_fp_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Allow using \"reverse z\" trick?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_enable_clip_control("gl_enable_clip_control", true, "Allow using `glClipControl()`?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_dbg_force_reverse_z("gl_dbg_force_reverse_z", false, "Force-enable reverse z when fp depth buffer is not available.", CVAR_PreInit);
@@ -104,7 +104,7 @@ VCvarI gl_dbg_use_zpass("gl_dbg_use_zpass", "0", "DO NOT USE!", CVAR_PreInit);
 //  `fuckedName` is what we are looking for
 //
 //==========================================================================
-static bool CheckVendorString (VStr vs, const char *fuckedName) {
+static __attribute__((unused)) bool CheckVendorString (VStr vs, const char *fuckedName) {
   if (vs.length() == 0) return false;
   if (!fuckedName || !fuckedName[0]) return false;
   const int fnlen = (int)strlen(fuckedName);
@@ -487,6 +487,7 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   isShittyGPU = false;
+  /*
   {
     const char *vcstr = (const char *)glGetString(GL_VENDOR);
     VStr vs = VStr(vcstr).toLowerCase();
@@ -500,6 +501,7 @@ void VOpenGLDrawer::InitResolution () {
       }
     }
   }
+  */
 
   if (!isShittyGPU && gl_dbg_force_gpu_blacklisting) {
     GCon->Log(NAME_Init, "User command is to blacklist GPU; I shall obey!");
@@ -875,30 +877,16 @@ void VOpenGLDrawer::InitResolution () {
   GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
   // there is (almost) no reason to use fp depth buffer without reverse z
   // besides, stenciled shadows are glitchy for "forward" fp depth buffer (i don't know why, and too lazy to investigate)
-  if (major >= 3 && gl_enable_floating_zbuffer && useReverseZ) {
-    if (isShittyGPU) {
-      GCon->Logf(NAME_Init, "OpenGL: fp depth buffer is turned off for your GPU");
-      useReverseZ = false; // just in case
-    } else {
-      depthStencilFormat = GL_DEPTH32F_STENCIL8;
-      GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
-    }
-  } else {
-    if (useReverseZ) {
-      if (gl_dbg_force_reverse_z) {
-        GCon->Log(NAME_Init, "OpenGL: cannot use fp depth buffer, but \"reverse z\" is forced by user");
-      } else {
-        GCon->Log(NAME_Init, "OpenGL: cannot use fp depth buffer, turning off \"reverse z\"");
-        useReverseZ = false;
-      }
-    }
+  if (major >= 3 && gl_enable_fp_zbuffer) {
+    depthStencilFormat = GL_DEPTH32F_STENCIL8;
+    GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
   }
 
   (void)glGetError();
   /*
   if (!useReverseZ) {
-    if (major >= 3 && gl_enable_floating_zbuffer) GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
-    //glTexImage2D(GL_TEXTURE_2D, 0, (major >= 3 && gl_enable_floating_zbuffer ? GL_DEPTH32F_STENCIL8 : GL_DEPTH_STENCIL), ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+    if (major >= 3 && gl_enable_fp_zbuffer) GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
+    //glTexImage2D(GL_TEXTURE_2D, 0, (major >= 3 && gl_enable_fp_zbuffer ? GL_DEPTH32F_STENCIL8 : GL_DEPTH_STENCIL), ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
     glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
   } else {
     // reversed z
@@ -909,16 +897,7 @@ void VOpenGLDrawer::InitResolution () {
   glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
   if (glGetError() != 0) {
     if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
-      if (useReverseZ) {
-        if (gl_dbg_force_reverse_z) {
-          GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, but \"reverse z\" is forced by user");
-        } else {
-          GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, turning off \"reverse z\"");
-          useReverseZ = false;
-        }
-      } else {
-        GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
-      }
+      GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
       glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
       if (glGetError() != 0) Sys_Error("OpenGL initialization error");
     } else {
@@ -1830,7 +1809,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
-    ProjMat[3][2] = 0.02f; // zNear
+    ProjMat[3][2] = 1.0f; // zNear
   }
   //RestoreDepthFunc();
 
