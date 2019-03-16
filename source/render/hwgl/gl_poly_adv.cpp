@@ -319,8 +319,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     }
   }
 
-  // back cap
   if (!usingZPass && !gl_dbg_use_zpass) {
+    // far cap
     glBegin(GL_POLYGON);
     if (HaveDepthClamp) {
       for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
@@ -329,7 +329,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     }
     glEnd();
 
-    // front cap
+    // near cap
     glBegin(GL_POLYGON);
     for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
     glEnd();
