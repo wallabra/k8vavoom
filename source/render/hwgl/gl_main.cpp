@@ -993,18 +993,28 @@ void VOpenGLDrawer::InitResolution () {
   DrawShadow_TextureLoc = p_glGetUniformLocationARB(DrawShadow_Program, "Texture");
   DrawShadow_AlphaLoc = p_glGetUniformLocationARB(DrawShadow_Program, "Alpha");
 
+
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_fixed_col.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_fixed_col.fs");
   DrawFixedCol_Program = CreateProgram(VertexShader, FragmentShader);
   DrawFixedCol_ColourLoc = p_glGetUniformLocationARB(DrawFixedCol_Program, "Colour");
 
+
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_automap.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_automap.fs");
   DrawAutomap_Program = CreateProgram(VertexShader, FragmentShader);
 
+
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_zbuf.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_zbuf.fs");
   SurfZBuf_Program = CreateProgram(VertexShader, FragmentShader);
+
+
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_svol.vs");
+  // reuse fragment shader
+  //FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_svol.fs");
+  SurfShadowVolume_Program = CreateProgram(VertexShader, FragmentShader);
+  SurfShadowVolume_LightPosLoc = p_glGetUniformLocationARB(SurfShadowVolume_Program, "LightPos");
 
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_adv.vs");

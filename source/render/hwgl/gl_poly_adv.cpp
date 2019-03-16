@@ -153,7 +153,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //  setup rendering parameters for shadow volume rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) {
+void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) {
   glDisable(GL_TEXTURE_2D);
   if (hasScissor) {
     if (gl_use_stencil_quad_clear) {
@@ -253,7 +253,13 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool useZPass, bool hasScissor, con
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
-  p_glUseProgramObjectARB(SurfZBuf_Program);
+  if (HaveDepthClamp) {
+    p_glUseProgramObjectARB(SurfShadowVolume_Program);
+    p_glUniform3fvARB(SurfShadowVolume_LightPosLoc, 1, &LightPos.x);
+  } else {
+    // manual...
+    p_glUseProgramObjectARB(SurfZBuf_Program);
+  }
 }
 
 
@@ -263,14 +269,14 @@ void VOpenGLDrawer::BeginLightShadowVolumes (bool useZPass, bool hasScissor, con
 //
 //==========================================================================
 void VOpenGLDrawer::EndLightShadowVolumes () {
-  RestoreDepthFunc();
+  //RestoreDepthFunc(); // no need to do this, if will be modified anyway
   // meh, just turn if off each time
   /*if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer)*/ {
     glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(0.0f, 0.0f);
   }
   //glDisable(GL_SCISSOR_TEST);
-  glEnable(GL_TEXTURE_2D);
+  //glEnable(GL_TEXTURE_2D);
 }
 
 
@@ -295,27 +301,25 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   static TVec *poolVec = nullptr;
   static int poolVecSize = 0;
 
-  if (poolVecSize < surf->count) {
-    poolVecSize = (surf->count|0xfff)+1;
-    poolVec = (TVec *)Z_Realloc(poolVec, poolVecSize*sizeof(TVec));
+  if (!HaveDepthClamp) {
+    if (poolVecSize < surf->count) {
+      poolVecSize = (surf->count|0xfff)+1;
+      poolVec = (TVec *)Z_Realloc(poolVec, poolVecSize*sizeof(TVec));
+    }
   }
 
   const unsigned vcount = (unsigned)surf->count;
   const TVec *sverts = surf->verts;
-  TVec *v = poolVec;
+
+  const TVec *v = (HaveDepthClamp ? sverts : poolVec);
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
-  if (HaveDepthClamp) {
+  if (!HaveDepthClamp) {
+    // if we don't have depth clamping, use this approach (otherwise our vertex shader will do the work)
     for (unsigned i = 0; i < vcount; ++i) {
-      // no need to extrude anything, OpenGL will do it for us
-      v[i] = sverts[i]-LightPos;
-    }
-  } else {
-    // if we don't have depth clamping, use this approach
-    for (unsigned i = 0; i < vcount; ++i) {
-      v[i] = (surf->verts[i]-LightPos).normalised();
-      v[i] *= M_INFINITY;
-      v[i] += LightPos;
+      poolVec[i] = (surf->verts[i]-LightPos).normalised();
+      poolVec[i] *= M_INFINITY;
+      poolVec[i] += LightPos;
     }
   }
 
@@ -367,6 +371,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) {
   RestoreDepthFunc();
   glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisable(GL_TEXTURE_2D);
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -386,12 +391,9 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
   glDepthFunc(GL_EQUAL);
 
   p_glUseProgramObjectARB(ShadowsLight_Program);
-  p_glUniform3fARB(ShadowsLight_LightPosLoc, LightPos.x, LightPos.y, LightPos.z);
+  p_glUniform3fvARB(ShadowsLight_LightPosLoc, 1, &LightPos.x);
   p_glUniform1fARB(ShadowsLight_LightRadiusLoc, Radius);
-  p_glUniform3fARB(ShadowsLight_LightColourLoc,
-    ((Colour>>16)&255)/255.0f,
-    ((Colour>>8)&255)/255.0f,
-    (Colour&255)/255.0f);
+  p_glUniform3fARB(ShadowsLight_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
 }
 
 
@@ -446,6 +448,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   // stop stenciling now
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
 
   // copy ambient light texture to FBO, so we can use it to light decals
   if (p_glBlitFramebuffer) {

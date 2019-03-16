@@ -232,7 +232,7 @@ public:
   virtual bool SupportsAdvancedRendering () = 0;
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
-  virtual void BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) = 0;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) = 0;
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 

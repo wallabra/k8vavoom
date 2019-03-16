@@ -525,7 +525,7 @@ public:
   virtual void DrawWorldAmbientPass () override;
 
   virtual void BeginShadowVolumesPass () override;
-  virtual void BeginLightShadowVolumes (bool useZPass, bool hasScissor, const int scoords[4]) override;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) override;
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
 
@@ -744,6 +744,9 @@ protected:
   GLhandleARB DrawAutomap_Program;
 
   GLhandleARB SurfZBuf_Program;
+
+  GLhandleARB SurfShadowVolume_Program;
+  GLhandleARB SurfShadowVolume_LightPosLoc;
 
   GLhandleARB SurfAdvDecal_Program;
   GLint SurfAdvDecal_TextureLoc;
