@@ -22,7 +22,7 @@ void main () {
   FinalColour_1.r = TexColour.r*TexColour.a*Light.a;
   FinalColour_1.g = TexColour.g*TexColour.a*Light.a;
   FinalColour_1.b = TexColour.b*TexColour.a*Light.a;
-  FinalColour_1.a = TexColour.a;
+  FinalColour_1.a = TexColour.a*Light.a;
   $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColour_1;
