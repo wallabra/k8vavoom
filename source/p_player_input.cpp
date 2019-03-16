@@ -475,8 +475,8 @@ void VBasePlayer::HandleInput () {
     side += m_side*mousex;
   }
 
-  forward = MID(forward, -cl_backspeed, cl_forwardspeed);
-  side = MID(side, -cl_sidespeed, cl_sidespeed);
+  forward = MID(forward, -cl_backspeed, cl_forwardspeed.asFloat());
+  side = MID(side, -cl_sidespeed, cl_sidespeed.asFloat());
 
   if (allways_run || (KeySpeed.state&1)) {
     forward *= cl_movespeedkey;
@@ -484,7 +484,7 @@ void VBasePlayer::HandleInput () {
     flyheight *= cl_movespeedkey;
   }
 
-  flyheight = MID(flyheight, -127, 127);
+  flyheight = MID(flyheight, -127.0f, 127.0f);
   if (KeyFlyCentre.KeyState()) flyheight = TOCENTRE;
 
   // buttons

@@ -199,10 +199,10 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
     // region's base light
     if (r_allow_ambient) {
       l = reg->secregion->params->lightlevel+ExtraLight;
-      l = MID(0, l, 255);
+      l = MID(0.0f, l, 255.0f);
       if (r_darken) l = light_remap[(int)l];
       if (l < r_ambient) l = r_ambient;
-      l = MID(0, l, 255);
+      l = MID(0.0f, l, 255.0f);
     } else {
       l = 0;
     }
@@ -309,10 +309,10 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
   // region's base light
   if (r_allow_ambient) {
     l = reg->secregion->params->lightlevel+ExtraLight;
-    l = MID(0, l, 255);
+    l = MID(0.0f, l, 255.0f);
     if (r_darken) l = light_remap[(int)l];
     if (l < r_ambient) l = r_ambient;
-    l = MID(0, l, 255);
+    l = MID(0.0f, l, 255.0f);
   } else {
     l = 0;
   }

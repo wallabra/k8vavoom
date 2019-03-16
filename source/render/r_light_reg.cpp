@@ -95,7 +95,7 @@ static bool is_coloured;
 static inline int getSurfLightLevelInt (const surface_t *surf) {
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
-  slins = MAX(slins, r_ambient);
+  slins = MAX(slins, r_ambient.asInt());
   //if (slins > 255) slins = 255;
   return clampToByte(slins);
 }
@@ -109,7 +109,7 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
 static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
-  slins = MAX(slins, r_ambient);
+  slins = MAX(slins, r_ambient.asInt());
   //if (slins > 255) slins = 255;
   return (surf->Light&0xffffff)|(((vuint32)clampToByte(slins))<<24);
 }
@@ -529,11 +529,11 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *sur
     // region's base light
     if (r_allow_ambient) {
       l = reg->secregion->params->lightlevel+ExtraLight;
-      l = MID(0, l, 255);
+      l = MID(0.0f, l, 255.0f);
       if (r_darken) l = light_remap[(int)l];
       if (l < r_ambient) l = r_ambient;
       //l = MIN(255, l);
-      l = MID(0, l, 255);
+      l = MID(0.0f, l, 255.0f);
     } else {
       l = 0;
     }

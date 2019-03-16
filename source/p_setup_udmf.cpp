@@ -356,7 +356,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
       if (!Key.ICmp("alpha")) {
         L.L.alpha = CheckFloat();
-        L.L.alpha = MID(0, L.L.alpha, 1);
+        L.L.alpha = MID(0.0f, L.L.alpha, 1.0f);
       } else if (!Key.ICmp("renderstyle")) {
         VStr RS = CheckString();
              if (!RS.ICmp("translucent")) L.L.flags &= ~ML_ADDITIVE;

@@ -987,11 +987,11 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   while (!sc->Check("}")) {
     if (sc->Check("colour")) {
       sc->ExpectFloat();
-      float r = MID(0, sc->Float, 1);
+      float r = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0, sc->Float, 1);
+      float g = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0, sc->Float, 1);
+      float b = MID(0.0f, (float)sc->Float, 1.0f);
       L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("radius")) {
       sc->ExpectFloat();
@@ -1058,11 +1058,11 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   while (!sc->Check("}")) {
     if (sc->Check("color")) {
       sc->ExpectFloat();
-      float r = MID(0, sc->Float, 1);
+      float r = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0, sc->Float, 1);
+      float g = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0, sc->Float, 1);
+      float b = MID(0.0f, (float)sc->Float, 1.0f);
       L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("size")) {
       sc->ExpectNumber();
@@ -1163,11 +1163,11 @@ static void ParseParticleEffect (VScriptParser *sc) {
       else sc->Error("Bad type");
     } else if (sc->Check("colour")) {
       sc->ExpectFloat();
-      float r = MID(0, sc->Float, 1);
+      float r = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0, sc->Float, 1);
+      float g = MID(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0, sc->Float, 1);
+      float b = MID(0.0f, (float)sc->Float, 1.0f);
       P->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("offset")) {
       sc->ExpectFloat();

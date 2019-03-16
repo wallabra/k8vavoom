@@ -1378,7 +1378,7 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0f-MID(0.0f, sc->Float, 1.0f);
+      sdef->Aggressiveness = 1.0f-MID(0.0f, (float)sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       if (sc->CheckNumber()) {
         if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
@@ -1492,7 +1492,7 @@ static void ParseSkillDef (VScriptParser *sc) {
       sc->Expect("=");
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0f-MID(0.0f, sc->Float, 1.0f);
+      sdef->Aggressiveness = 1.0f-MID(0.0f, (float)sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       sc->Expect("=");
       if (sc->CheckNumber()) {

@@ -1884,16 +1884,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_Percent:
             sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, MID(0, sc->Float, 100)/100.0f);
+            P.Field->SetFloat(DefObj, MID(0.0f, (float)sc->Float, 100.0f)/100.0f);
             break;
           case PROP_FloatClamped:
             sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, MID(P.FMin, sc->Float, P.FMax));
+            P.Field->SetFloat(DefObj, MID(P.FMin, (float)sc->Float, P.FMax));
             break;
           case PROP_FloatClamped2:
             sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, MID(P.FMin, sc->Float, P.FMax));
-            P.Field2->SetFloat(DefObj, MID(P.FMin, sc->Float, P.FMax));
+            P.Field->SetFloat(DefObj, MID(P.FMin, (float)sc->Float, P.FMax));
+            P.Field2->SetFloat(DefObj, MID(P.FMin, (float)sc->Float, P.FMax));
             break;
           case PROP_FloatOpt2:
             sc->ExpectFloat();
@@ -2283,7 +2283,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               // alpha may be missing
               if (!sc->Crossed) {
                 sc->ExpectFloat();
-                a = MID(0, int(sc->Float*255), 254);
+                a = clampToByte((int)(sc->Float*255));
                 if (a > 250) a = 250;
               } else {
                 a = 88; // default alpha, around 0.(3)
@@ -2645,7 +2645,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       SetClassFieldFloat(Class, "ScaleY", sc->Float);
     } else if (sc->Check("Alpha")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Alpha", MID(0.0f, sc->Float, 1.0f));
+      SetClassFieldFloat(Class, "Alpha", MID(0.0f, (float)sc->Float, 1.0f));
     } else if (sc->Check("RenderStyle")) {
       int RenderStyle = 0;
            if (sc->Check("STYLE_None")) RenderStyle = STYLE_None;

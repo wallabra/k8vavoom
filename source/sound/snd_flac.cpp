@@ -419,7 +419,7 @@ void VFlacAudioCodec::FStream::metadata_callback (const ::FLAC__StreamMetadata *
       return;
     }
     SampleRate = metadata->data.stream_info.sample_rate;
-    NumChannels = MIN(2, metadata->data.stream_info.channels);
+    NumChannels = MIN((unsigned)2, metadata->data.stream_info.channels);
     SampleBits = metadata->data.stream_info.bits_per_sample;
     PoolSize = metadata->data.stream_info.max_blocksize*2;
 

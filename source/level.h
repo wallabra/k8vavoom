@@ -447,6 +447,15 @@ public:
   // this saves everything except thinkers, so i can load it for further experiments
   void DebugSaveLevel (VStream &strm);
 
+  // this is slow!
+  float CalcSkyHeight () const;
+
+  // some sectors (like doors) has floor and ceiling on the same level, so
+  // we have to look at neighbour sector to get height.
+  // note that if neighbour sector is closed door too, we can safely use
+  // our zero height, as camera cannot see through top/bottom textures.
+  void CalcSectorBoundingHeight (const sector_t *sector, float *minz, float *maxz) const;
+
   void UpdateSubsectorBBox (int num, float *bbox, const float skyheight);
   void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);
   void RecalcWorldBBoxes ();

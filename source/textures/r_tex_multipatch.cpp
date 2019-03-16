@@ -331,25 +331,25 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                 P.Blend.g = (Col>>8)&0xff;
                 P.Blend.b = Col&0xff;
               } else {
-                P.Blend.r = MID(0, sc->Number, 255);
+                P.Blend.r = clampToByte((int)sc->Number);
                 sc->Expect(",");
                 sc->ExpectNumber();
-                P.Blend.g = MID(0, sc->Number, 255);
+                P.Blend.g = clampToByte((int)sc->Number);
                 sc->Expect(",");
                 sc->ExpectNumber();
-                P.Blend.b = MID(0, sc->Number, 255);
+                P.Blend.b = clampToByte((int)sc->Number);
                 //sc->Expect(",");
               }
               if (sc->Check(",")) {
                 sc->ExpectFloat();
-                P.Blend.a = MID(0, int(sc->Float*255), 254);
+                P.Blend.a = clampToByte((int)(sc->Float*255));
               } else {
                 P.Blend.a = 255;
               }
             }
             else if (sc->Check("alpha")) {
               sc->ExpectFloat();
-              P.Alpha = MID(0, sc->Float, 1);
+              P.Alpha = MID(0.0f, (float)sc->Float, 1.0f);
             } else {
               if (sc->Check("style")) expectStyle = true;
                    if (sc->Check("copy")) P.Style = STYLE_Copy;

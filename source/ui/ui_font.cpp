@@ -597,7 +597,7 @@ void VFont::BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool Consol
   float Scale = 1.0f/(Rescale ? MaxLum-MinLum : 255.0f);
   for (int i = 1; i < 256; ++i) {
     Luminosity[i] = (Luminosity[i]-MinLum)*Scale;
-    Luminosity[i] = MID(0.0, Luminosity[i], 1.0);
+    Luminosity[i] = MID(0.0f, Luminosity[i], 1.0f);
   }
 
   Translation = new rgba_t[256*TextColours.Num()];
@@ -623,9 +623,9 @@ void VFont::BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool Consol
       int r = (int)((1.0-v)*TDef.From.r+v*TDef.To.r);
       int g = (int)((1.0-v)*TDef.From.g+v*TDef.To.g);
       int b = (int)((1.0-v)*TDef.From.b+v*TDef.To.b);
-      pOut[i].r = MID(0, r, 255);
-      pOut[i].g = MID(0, g, 255);
-      pOut[i].b = MID(0, b, 255);
+      pOut[i].r = clampToByte(r);
+      pOut[i].g = clampToByte(g);
+      pOut[i].b = clampToByte(b);
       pOut[i].a = 255;
     }
   }
@@ -1342,20 +1342,21 @@ vuint8 *VFontChar2::GetPixels () {
   int Count = Width*Height;
   Pixels = new vuint8[Count];
   vuint8 *pDst = Pixels;
+  vuint8 maxcol = clampToByte(MaxCol);
   do {
     vint32 Code = Streamer<vint8>(Strm);
     if (Code >= 0) {
       Count -= Code+1;
       while (Code-- >= 0) {
         *pDst = Streamer<vuint8>(Strm);
-        *pDst = MIN(*pDst, MaxCol);
+        *pDst = MIN(*pDst, maxcol);
         ++pDst;
       }
     } else if (Code != -128) {
       Code = 1-Code;
       Count -= Code;
       vuint8 Val = Streamer<vuint8>(Strm);
-      Val = MIN(Val, MaxCol);
+      Val = MIN(Val, maxcol);
       while (Code-- > 0) *pDst++ = Val;
     }
   } while (Count > 0);

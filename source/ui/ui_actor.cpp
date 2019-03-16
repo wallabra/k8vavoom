@@ -74,7 +74,7 @@ void VActorDisplayWindow::OnDraw () {
   float TimeFrac = 0.0;
   if (StateTime > 0.0) {
     TimeFrac = 1.0 - CastTime / StateTime;
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
   if (!R_DrawStateModelFrame(CastState, CastState->NextState ? CastState->NextState : CastState,
      TimeFrac, TVec(-128.0, 0.0, -48.0), 0.0))

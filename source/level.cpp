@@ -91,6 +91,118 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
 
 //==========================================================================
 //
+//  VLevel::CalcSkyHeight
+//
+//==========================================================================
+float VLevel::CalcSkyHeight () const {
+  if (NumSectors == 0) return 0.0f; // just in case
+  // calculate sky height
+  float skyheight = -99999.0f;
+  for (unsigned i = 0; i < (unsigned)NumSectors; ++i) {
+    if (Sectors[i].ceiling.pic == skyflatnum &&
+        Sectors[i].ceiling.maxz > skyheight)
+    {
+      skyheight = Sectors[i].ceiling.maxz;
+    }
+  }
+  // make it a bit higher to avoid clipping of the sprites
+  skyheight += 8*1024;
+  return skyheight;
+}
+
+
+//==========================================================================
+//
+//  VLevel::CalcSectorBoundingHeight
+//
+//  some sectors (like doors) has floor and ceiling on the same level, so
+//  we have to look at neighbour sector to get height.
+//  note that if neighbour sector is closed door too, we can safely use
+//  our zero height, as camera cannot see through top/bottom textures.
+//
+//==========================================================================
+void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, float *maxz) const {
+  float tmp0, tmp1;
+  if (!minz) minz = &tmp0;
+  if (!maxz) maxz = &tmp1;
+  *minz = sector->floor.minz;
+  *maxz = sector->ceiling.maxz;
+  if (!sector->linecount) return; // skip sectors containing original polyobjs
+  // check if we have two-sided lines in this sector
+  line_t * const *lines = sector->lines;
+  for (unsigned count = sector->linecount; count--; ++lines) {
+    const line_t *line = *lines;
+    if (!(line->flags&ML_TWOSIDED)) continue;
+    // get neighbour sector
+    const sector_t *bsec = (sector == line->frontsector ? line->backsector : line->frontsector);
+    if (bsec == sector) {
+      //FIXME: this is deepwater, make in infinitely high
+      *minz = -32767.0f;
+      *maxz = 32767.0f;
+      return;
+    }
+    //*minz = MIN(
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::UpdateSubsectorBBox
+//
+//==========================================================================
+void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
+  subsector_t *sub = &Subsectors[num];
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+  bbox[2] = sub->sector->floor.minz;
+  bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
+  FixBBoxZ(bbox);
+}
+
+
+//==========================================================================
+//
+//  VLevel::RecalcWorldNodeBBox
+//
+//==========================================================================
+void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight) {
+  if (bspnum == -1) {
+    UpdateSubsectorBBox(0, bbox, skyheight);
+    return;
+  }
+  // found a subsector?
+  if (!(bspnum&NF_SUBSECTOR)) {
+    // nope, this is a normal node
+    node_t *bsp = &Nodes[bspnum];
+    // decide which side the view point is on
+    unsigned side = bsp->PointOnSide(vieworg);
+    RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
+    bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
+    bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
+    side ^= 1;
+    return RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight); // help gcc to see tail-call
+  } else {
+    // leaf node (subsector)
+    UpdateSubsectorBBox(bspnum&(~NF_SUBSECTOR), bbox, skyheight);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::RecalcWorldBBoxes
+//
+//==========================================================================
+void VLevel::RecalcWorldBBoxes () {
+  if (NumSectors == 0) return; // just in case
+  const float skyheight = CalcSkyHeight();
+  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+  RecalcWorldNodeBBox(NumNodes-1, dummy_bbox, skyheight);
+}
+
+
+//==========================================================================
+//
 //  DecalIO
 //
 //==========================================================================

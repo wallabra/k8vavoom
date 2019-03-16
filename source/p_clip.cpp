@@ -36,12 +36,12 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_init_range("clip_frustum_init_range", true, "Init clipper range with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_bsp("clip_frustum_bsp", false, "Clip BSP geometry with frustum?", CVAR_PreInit); // sometimes this glitches
-VCvarB clip_frustum_sub("clip_frustum_sub", false, "Clip subsectors with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit); // sometimes this glitches
+VCvarB clip_frustum_sub("clip_frustum_sub", true, "Clip subsectors with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bbox("clip_frustum_bbox", true, "Clip BSP bounding boxes with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_region("clip_frustum_region", false, "Clip drawing regions with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_region("clip_frustum_region", true, "Clip drawing regions with frustum?", CVAR_PreInit);
 //VCvarB clip_frustum_seg("clip_frustum_seg", false, "Clip segs with frustum?", CVAR_PreInit);
-VCvarB clip_frustum_seg_2s("clip_frustum_seg_2s", false, "Clip 2-sided segs with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_seg_2s("clip_frustum_seg_2s", true, "Clip 2-sided segs with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_seg_backface("clip_frustum_seg_backface", false, "Add backface-looking segs to clipper?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit, "Which frustum planes we should check?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "19", "Which frustum planes we should check?", CVAR_PreInit);
