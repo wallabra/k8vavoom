@@ -58,7 +58,7 @@ VCvarF r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive)
 VCvarF r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
 VCvarI r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
 
-VCvarI r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
+//VCvarI r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
 VCvarB r_fog_test("r_fog_test", false, "Is fog testing enabled?");
 VCvarF r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
 VCvarF r_fog_g("r_fog_g", "0.5", "Fog color: green component.");

@@ -205,7 +205,7 @@ void VOpenGLDrawer::VGLShaderCommonLocs::setupLMap () {
 void VOpenGLDrawer::VGLShaderCommonLocs::setupFog () {
   check(prog);
   locFogEnabled = owner->p_glGetUniformLocationARB(prog, "FogEnabled");
-  locFogType = owner->p_glGetUniformLocationARB(prog, "FogType");
+  //locFogType = owner->p_glGetUniformLocationARB(prog, "FogType");
   locFogColour = owner->p_glGetUniformLocationARB(prog, "FogColour");
   locFogDensity = owner->p_glGetUniformLocationARB(prog, "FogDensity");
   locFogStart = owner->p_glGetUniformLocationARB(prog, "FogStart");
@@ -308,10 +308,12 @@ void VOpenGLDrawer::VGLShaderCommonLocs::storeTextureLMapParams (const texinfo_t
 //  VOpenGLDrawer::VGLShaderCommonLocs::storeFogType
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::VGLShaderCommonLocs::storeFogType () {
   check(prog);
   owner->p_glUniform1iARB(locFogType, r_fog&3);
 }
+*/
 
 
 //==========================================================================
@@ -1249,7 +1251,7 @@ void VOpenGLDrawer::InitResolution () {
   GLSL_LOADLOC(Inter);
   GLSL_LOADLOC(ModelToWorldMat);
   GLSL_LOADLOC(Texture);
-  GLSL_LOADLOC(FogType);
+  //GLSL_LOADLOC(FogType);
   GLSL_LOADLOC(FogColour);
   GLSL_LOADLOC(FogDensity);
   GLSL_LOADLOC(FogStart);
@@ -1994,14 +1996,15 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
   if ((vuint32)CurrentFade == NewFade) return;
 
   if (NewFade) {
-    static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
+    //static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
     float fogColour[4];
 
     fogColour[0] = float((NewFade>>16)&255)/255.0f;
     fogColour[1] = float((NewFade>>8)&255)/255.0f;
     fogColour[2] = float(NewFade&255)/255.0f;
     fogColour[3] = float((NewFade>>24)&255)/255.0f;
-    glFogi(GL_FOG_MODE, fogMode[r_fog&3]);
+    //glFogi(GL_FOG_MODE, fogMode[r_fog&3]);
+    glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogfv(GL_FOG_COLOR, fogColour);
     if (NewFade == FADE_LIGHT) {
       glFogf(GL_FOG_DENSITY, 0.3f);
@@ -2012,7 +2015,8 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
       glFogf(GL_FOG_START, r_fog_start);
       glFogf(GL_FOG_END, r_fog_end);
     }
-    glHint(GL_FOG_HINT, r_fog < 4 ? GL_DONT_CARE : GL_NICEST);
+    //glHint(GL_FOG_HINT, r_fog < 4 ? GL_DONT_CARE : GL_NICEST);
+    glHint(GL_FOG_HINT, GL_DONT_CARE);
     glEnable(GL_FOG);
   } else {
     glDisable(GL_FOG);

@@ -4,13 +4,13 @@
 #endif
 
     float FogFactor_3;
-
 #ifdef VAVOOM_REVERSE_Z
     float z = 1.0/gl_FragCoord.w;
 #else
     float z = gl_FragCoord.z/gl_FragCoord.w;
 #endif
 
+/*
     if (FogType == 3) {
       FogFactor_3 = exp2(-FogDensity*FogDensity*z*z*1.442695);
     } else if (FogType == 2) {
@@ -18,6 +18,8 @@
     } else {
       FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
     }
+*/
+    FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
 #ifdef VAVOOM_SIMPLE_ALPHA_FOG
     FogFactor_3 = 1.0-FogFactor_3;
 #else

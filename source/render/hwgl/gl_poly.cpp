@@ -206,7 +206,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
 
   p_glUseProgramObjectARB(SurfSimple_Program);
   SurfSimple_Locs.storeTexture(0);
-  SurfSimple_Locs.storeFogType();
+  //SurfSimple_Locs.storeFogType();
   SurfSimple_Locs.storeTextureParams(Tex);
 
   const float lev = getSurfLightLevel(surf);
@@ -384,7 +384,7 @@ void VOpenGLDrawer::WorldDrawing () {
     p_glUseProgramObjectARB(SurfSimple_Program);
 
     SurfSimple_Locs.storeTexture(0);
-    SurfSimple_Locs.storeFogType();
+    //SurfSimple_Locs.storeFogType();
 
     const texinfo_t *lastTexinfo = nullptr;
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
@@ -408,7 +408,7 @@ void VOpenGLDrawer::WorldDrawing () {
     p_glUseProgramObjectARB(SurfLightmap_Program);
     SurfLightmap_Locs.storeTexture(0);
     SurfLightmap_Locs.storeLMap(1);
-    SurfLightmap_Locs.storeFogType();
+    //SurfLightmap_Locs.storeFogType();
     p_glUniform1iARB(SurfLightmap_SpecularMapLoc, 2);
 
     const texinfo_t *lastTexinfo = nullptr;

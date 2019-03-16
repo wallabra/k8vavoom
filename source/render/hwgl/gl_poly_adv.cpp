@@ -556,8 +556,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 
   // draw surfaces
   p_glUseProgramObjectARB(ShadowsFog_Program);
-  //p_glUniform1iARB(ShadowsFog_FogTypeLoc, r_fog&3);
-  ShadowsFog_Locs.storeFogType();
+  //ShadowsFog_Locs.storeFogType();
 
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {

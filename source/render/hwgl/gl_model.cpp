@@ -202,7 +202,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
   p_glUseProgramObjectARB(SurfModel_Program);
   p_glUniform1iARB(SurfModel_TextureLoc, 0);
-  SurfModel_Locs.storeFogType();
+  //SurfModel_Locs.storeFogType();
   SurfModel_Locs.storeFogFade(Fade, Alpha);
   p_glUniform1fARB(SurfModel_AlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
   p_glUniform1iARB(SurfModel_AllowTransparencyLoc, (AllowTransparency ? GL_TRUE : GL_FALSE));
@@ -722,7 +722,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glUniform1iARB(ShadowsModelFog_TextureLoc, 0);
   p_glUniform1fARB(ShadowsModelFog_InterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelFog_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
-  p_glUniform1iARB(ShadowsModelFog_FogTypeLoc, r_fog&3);
+  //p_glUniform1iARB(ShadowsModelFog_FogTypeLoc, r_fog&3);
   p_glUniform4fARB(ShadowsModelFog_FogColourLoc, ((Fade>>16)&255)/255.0f, ((Fade>>8)&255)/255.0f, (Fade&255)/255.0f, Alpha);
   p_glUniform1fARB(ShadowsModelFog_FogDensityLoc, (Fade == FADE_LIGHT ? 0.3f : r_fog_density));
   p_glUniform1fARB(ShadowsModelFog_FogStartLoc, (Fade == FADE_LIGHT ? 1.0f : r_fog_start));

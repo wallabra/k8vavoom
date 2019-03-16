@@ -76,13 +76,13 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     case DT_SIMPLE:
       p_glUseProgramObjectARB(SurfDecalNoLMap_Program);
       p_glUniform1iARB(SurfDecalNoLMap_TextureLoc, 0);
-      SurfDecalNoLMap_Locs.storeFogType();
+      //SurfDecalNoLMap_Locs.storeFogType();
       SurfDecalNoLMap_Locs.storeFogFade(surf->Fade, 1.0f);
       break;
     case DT_LIGHTMAP:
       p_glUseProgramObjectARB(SurfDecalLMap_Program);
       p_glUniform1iARB(SurfDecalLMap_TextureLoc, 0);
-      SurfDecalLMap_Locs.storeFogType();
+      //SurfDecalLMap_Locs.storeFogType();
       SurfDecalLMap_Locs.storeFogFade(surf->Fade, 1.0f);
       SurfDecalLMap_Locs.storeLMap(1);
       p_glUniform1iARB(SurfDecalLMap_SpecularMapLoc, 2);

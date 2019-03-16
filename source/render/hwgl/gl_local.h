@@ -463,7 +463,7 @@ public:
     GLint locLightMap;
     // fog variable locations
     GLint locFogEnabled;
-    GLint locFogType;
+    //GLint locFogType;
     GLint locFogColour;
     GLint locFogDensity;
     GLint locFogStart;
@@ -492,7 +492,7 @@ public:
     void storeLMapParams (const surface_t *surf, const surfcache_t *cache); // call `storeTextureParams()` first!
     void storeLMapOnlyParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache);
 
-    void storeFogType ();
+    //void storeFogType ();
     void storeFogFade (vuint32 Fade, float Alpha);
   };
 
@@ -890,7 +890,7 @@ protected:
   GLint ShadowsModelFog_InterLoc;
   GLint ShadowsModelFog_ModelToWorldMatLoc;
   GLint ShadowsModelFog_TextureLoc;
-  GLint ShadowsModelFog_FogTypeLoc;
+  //GLint ShadowsModelFog_FogTypeLoc;
   GLint ShadowsModelFog_FogColourLoc;
   GLint ShadowsModelFog_FogDensityLoc;
   GLint ShadowsModelFog_FogStartLoc;

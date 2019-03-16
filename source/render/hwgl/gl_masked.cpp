@@ -81,7 +81,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   p_glUseProgramObjectARB(SurfMasked_Program);
   p_glUniform1iARB(SurfMasked_TextureLoc, 0);
-  SurfMasked_Locs.storeFogType();
+  //SurfMasked_Locs.storeFogType();
 
   bool zbufferWriteDisabled = false;
   bool decalsAllowed = false;
@@ -232,7 +232,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   p_glUseProgramObjectARB(SurfMasked_Program);
   p_glUniform1iARB(SurfMasked_TextureLoc, 0);
-  SurfMasked_Locs.storeFogType();
+  //SurfMasked_Locs.storeFogType();
 
   bool zbufferWriteDisabled = false;
   bool restoreBlend = false;
