@@ -94,24 +94,6 @@ VMatrix4::VMatrix4 (const float *m2) {
 //  operator VMatrix4 * VMatrix4
 //
 //==========================================================================
-/*
-VMatrix4 operator * (const VMatrix4 &in1, const VMatrix4 &in2) {
-  VMatrix4 out;
-  for (unsigned i = 0; i < 4; ++i) {
-    for (unsigned j = 0; j < 4; ++j) {
-      out[i][j] = VSUM4(in1.m[i][0]*in2.m[0][j], in1.m[i][1]*in2.m[1][j], in1.m[i][2]*in2.m[2][j], in1.m[i][3]*in2.m[3][j]);
-    }
-  }
-  return out;
-}
-*/
-
-
-//==========================================================================
-//
-//  operator VMatrix4 * VMatrix4
-//
-//==========================================================================
 VMatrix4 VMatrix4::operator * (const VMatrix4 &in2) const {
   VMatrix4 out;
   for (unsigned i = 0; i < 4; ++i) {
@@ -243,14 +225,103 @@ VMatrix4 VMatrix4::Transpose () const {
 
 //==========================================================================
 //
+//  VMatrix4::CombineAndExtractFrustum
+//
+//==========================================================================
+void VMatrix4::CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]) {
+  const float *projm = (const float *)proj.m;
+  const float *modlm = (const float *)model.m;
+  float clip[16];
+
+  // combine the two matrices (multiply projection by modelview)
+  clip[ 0] = VSUM4(modlm[ 0]*projm[ 0], modlm[ 1]*projm[ 4], modlm[ 2]*projm[ 8], modlm[ 3]*projm[12]);
+  clip[ 1] = VSUM4(modlm[ 0]*projm[ 1], modlm[ 1]*projm[ 5], modlm[ 2]*projm[ 9], modlm[ 3]*projm[13]);
+  clip[ 2] = VSUM4(modlm[ 0]*projm[ 2], modlm[ 1]*projm[ 6], modlm[ 2]*projm[10], modlm[ 3]*projm[14]);
+  clip[ 3] = VSUM4(modlm[ 0]*projm[ 3], modlm[ 1]*projm[ 7], modlm[ 2]*projm[11], modlm[ 3]*projm[15]);
+
+  clip[ 4] = VSUM4(modlm[ 4]*projm[ 0], modlm[ 5]*projm[ 4], modlm[ 6]*projm[ 8], modlm[ 7]*projm[12]);
+  clip[ 5] = VSUM4(modlm[ 4]*projm[ 1], modlm[ 5]*projm[ 5], modlm[ 6]*projm[ 9], modlm[ 7]*projm[13]);
+  clip[ 6] = VSUM4(modlm[ 4]*projm[ 2], modlm[ 5]*projm[ 6], modlm[ 6]*projm[10], modlm[ 7]*projm[14]);
+  clip[ 7] = VSUM4(modlm[ 4]*projm[ 3], modlm[ 5]*projm[ 7], modlm[ 6]*projm[11], modlm[ 7]*projm[15]);
+
+  clip[ 8] = VSUM4(modlm[ 8]*projm[ 0], modlm[ 9]*projm[ 4], modlm[10]*projm[ 8], modlm[11]*projm[12]);
+  clip[ 9] = VSUM4(modlm[ 8]*projm[ 1], modlm[ 9]*projm[ 5], modlm[10]*projm[ 9], modlm[11]*projm[13]);
+  clip[10] = VSUM4(modlm[ 8]*projm[ 2], modlm[ 9]*projm[ 6], modlm[10]*projm[10], modlm[11]*projm[14]);
+  clip[11] = VSUM4(modlm[ 8]*projm[ 3], modlm[ 9]*projm[ 7], modlm[10]*projm[11], modlm[11]*projm[15]);
+
+  clip[12] = VSUM4(modlm[12]*projm[ 0], modlm[13]*projm[ 4], modlm[14]*projm[ 8], modlm[15]*projm[12]);
+  clip[13] = VSUM4(modlm[12]*projm[ 1], modlm[13]*projm[ 5], modlm[14]*projm[ 9], modlm[15]*projm[13]);
+  clip[14] = VSUM4(modlm[12]*projm[ 2], modlm[13]*projm[ 6], modlm[14]*projm[10], modlm[15]*projm[14]);
+  clip[15] = VSUM4(modlm[12]*projm[ 3], modlm[13]*projm[ 7], modlm[14]*projm[11], modlm[15]*projm[15]);
+
+  planes[TFrustum::Right].SetAndNormalise(TVec(VSUM2(clip[3], -clip[0]), VSUM2(clip[7], -clip[4]), VSUM2(clip[11], -clip[8])), -VSUM2(clip[15], -clip[12]));
+  planes[TFrustum::Left].SetAndNormalise(TVec(VSUM2(clip[3], clip[0]), VSUM2(clip[7], clip[4]), VSUM2(clip[11], clip[8])), -VSUM2(clip[15], clip[12]));
+  planes[TFrustum::Bottom].SetAndNormalise(TVec(VSUM2(clip[3], clip[1]), VSUM2(clip[7], clip[5]), VSUM2(clip[11], clip[9])), -VSUM2(clip[15], clip[13]));
+  planes[TFrustum::Top].SetAndNormalise(TVec(VSUM2(clip[3], -clip[1]), VSUM2(clip[7], -clip[5]), VSUM2(clip[11], -clip[9])), -VSUM2(clip[15], -clip[13]));
+  planes[TFrustum::Far].SetAndNormalise(TVec(VSUM2(clip[3], -clip[2]), VSUM2(clip[7], -clip[6]), VSUM2(clip[11], -clip[10])), -VSUM2(clip[15], -clip[14]));
+  planes[TFrustum::Near].SetAndNormalise(TVec(VSUM2(clip[3], clip[2]), VSUM2(clip[7], clip[6]), VSUM2(clip[11], clip[10])), -VSUM2(clip[15], clip[14]));
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustumLeft
+//
+//  combine the two matrices (multiply projection by modelview)
+//
+//==========================================================================
+void VMatrix4::ModelProjectCombine (const VMatrix4 &model, const VMatrix4 &proj) {
+  const float *projm = (const float *)proj.m;
+  const float *modlm = (const float *)model.m;
+  float *clip = (float *)m;
+
+  // combine the two matrices (multiply projection by modelview)
+  clip[ 0] = VSUM4(modlm[ 0]*projm[ 0], modlm[ 1]*projm[ 4], modlm[ 2]*projm[ 8], modlm[ 3]*projm[12]);
+  clip[ 1] = VSUM4(modlm[ 0]*projm[ 1], modlm[ 1]*projm[ 5], modlm[ 2]*projm[ 9], modlm[ 3]*projm[13]);
+  clip[ 2] = VSUM4(modlm[ 0]*projm[ 2], modlm[ 1]*projm[ 6], modlm[ 2]*projm[10], modlm[ 3]*projm[14]);
+  clip[ 3] = VSUM4(modlm[ 0]*projm[ 3], modlm[ 1]*projm[ 7], modlm[ 2]*projm[11], modlm[ 3]*projm[15]);
+
+  clip[ 4] = VSUM4(modlm[ 4]*projm[ 0], modlm[ 5]*projm[ 4], modlm[ 6]*projm[ 8], modlm[ 7]*projm[12]);
+  clip[ 5] = VSUM4(modlm[ 4]*projm[ 1], modlm[ 5]*projm[ 5], modlm[ 6]*projm[ 9], modlm[ 7]*projm[13]);
+  clip[ 6] = VSUM4(modlm[ 4]*projm[ 2], modlm[ 5]*projm[ 6], modlm[ 6]*projm[10], modlm[ 7]*projm[14]);
+  clip[ 7] = VSUM4(modlm[ 4]*projm[ 3], modlm[ 5]*projm[ 7], modlm[ 6]*projm[11], modlm[ 7]*projm[15]);
+
+  clip[ 8] = VSUM4(modlm[ 8]*projm[ 0], modlm[ 9]*projm[ 4], modlm[10]*projm[ 8], modlm[11]*projm[12]);
+  clip[ 9] = VSUM4(modlm[ 8]*projm[ 1], modlm[ 9]*projm[ 5], modlm[10]*projm[ 9], modlm[11]*projm[13]);
+  clip[10] = VSUM4(modlm[ 8]*projm[ 2], modlm[ 9]*projm[ 6], modlm[10]*projm[10], modlm[11]*projm[14]);
+  clip[11] = VSUM4(modlm[ 8]*projm[ 3], modlm[ 9]*projm[ 7], modlm[10]*projm[11], modlm[11]*projm[15]);
+
+  clip[12] = VSUM4(modlm[12]*projm[ 0], modlm[13]*projm[ 4], modlm[14]*projm[ 8], modlm[15]*projm[12]);
+  clip[13] = VSUM4(modlm[12]*projm[ 1], modlm[13]*projm[ 5], modlm[14]*projm[ 9], modlm[15]*projm[13]);
+  clip[14] = VSUM4(modlm[12]*projm[ 2], modlm[13]*projm[ 6], modlm[14]*projm[10], modlm[15]*projm[14]);
+  clip[15] = VSUM4(modlm[12]*projm[ 3], modlm[13]*projm[ 7], modlm[14]*projm[11], modlm[15]*projm[15]);
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ExtractFrustum
+//
+//==========================================================================
+void VMatrix4::ExtractFrustum (TPlane planes[6]) const {
+  const float *clip = (const float *)m;
+  planes[TFrustum::Right].SetAndNormalise(TVec(VSUM2(clip[3], -clip[0]), VSUM2(clip[7], -clip[4]), VSUM2(clip[11], -clip[8])), -VSUM2(clip[15], -clip[12]));
+  planes[TFrustum::Left].SetAndNormalise(TVec(VSUM2(clip[3], clip[0]), VSUM2(clip[7], clip[4]), VSUM2(clip[11], clip[8])), -VSUM2(clip[15], clip[12]));
+  planes[TFrustum::Bottom].SetAndNormalise(TVec(VSUM2(clip[3], clip[1]), VSUM2(clip[7], clip[5]), VSUM2(clip[11], clip[9])), -VSUM2(clip[15], clip[13]));
+  planes[TFrustum::Top].SetAndNormalise(TVec(VSUM2(clip[3], -clip[1]), VSUM2(clip[7], -clip[5]), VSUM2(clip[11], -clip[9])), -VSUM2(clip[15], -clip[13]));
+  planes[TFrustum::Far].SetAndNormalise(TVec(VSUM2(clip[3], -clip[2]), VSUM2(clip[7], -clip[6]), VSUM2(clip[11], -clip[10])), -VSUM2(clip[15], -clip[14]));
+  planes[TFrustum::Near].SetAndNormalise(TVec(VSUM2(clip[3], clip[2]), VSUM2(clip[7], clip[6]), VSUM2(clip[11], clip[10])), -VSUM2(clip[15], clip[14]));
+}
+
+
+//==========================================================================
+//
 //  VMatrix4::ExtractFrustumLeft
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumLeft (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], m[0][0]);
-  plane.normal.y = VSUM2(m[1][3], m[1][0]);
-  plane.normal.z = VSUM2(m[2][3], m[2][0]);
-  plane.dist = VSUM2(m[3][3], m[3][0]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], clip[0]), VSUM2(clip[7], clip[4]), VSUM2(clip[11], clip[8])), -VSUM2(clip[15], clip[12]));
 }
 
 
@@ -260,10 +331,8 @@ void VMatrix4::ExtractFrustumLeft (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumRight (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], -m[0][0]);
-  plane.normal.y = VSUM2(m[1][3], -m[1][0]);
-  plane.normal.z = VSUM2(m[2][3], -m[2][0]);
-  plane.dist = VSUM2(m[3][3], -m[3][0]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], -clip[0]), VSUM2(clip[7], -clip[4]), VSUM2(clip[11], -clip[8])), -VSUM2(clip[15], -clip[12]));
 }
 
 
@@ -273,10 +342,8 @@ void VMatrix4::ExtractFrustumRight (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumTop (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], -m[0][1]);
-  plane.normal.y = VSUM2(m[1][3], -m[1][1]);
-  plane.normal.z = VSUM2(m[2][3], -m[2][1]);
-  plane.dist = VSUM2(m[3][3], -m[3][1]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], -clip[1]), VSUM2(clip[7], -clip[5]), VSUM2(clip[11], -clip[9])), -VSUM2(clip[15], -clip[13]));
 }
 
 
@@ -286,10 +353,8 @@ void VMatrix4::ExtractFrustumTop (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumBottom (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], m[0][1]);
-  plane.normal.y = VSUM2(m[1][3], m[1][1]);
-  plane.normal.z = VSUM2(m[2][3], m[2][1]);
-  plane.dist = VSUM2(m[3][3], m[3][1]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], clip[1]), VSUM2(clip[7], clip[5]), VSUM2(clip[11], clip[9])), -VSUM2(clip[15], clip[13]));
 }
 
 
@@ -299,10 +364,8 @@ void VMatrix4::ExtractFrustumBottom (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumFar (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], -m[0][2]);
-  plane.normal.y = VSUM2(m[1][3], -m[1][2]);
-  plane.normal.z = VSUM2(m[2][3], -m[2][2]);
-  plane.dist = VSUM2(m[3][3], -m[3][2]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], -clip[2]), VSUM2(clip[7], -clip[6]), VSUM2(clip[11], -clip[10])), -VSUM2(clip[15], -clip[14]));
 }
 
 
@@ -312,8 +375,6 @@ void VMatrix4::ExtractFrustumFar (TPlane &plane) const {
 //
 //==========================================================================
 void VMatrix4::ExtractFrustumNear (TPlane &plane) const {
-  plane.normal.x = VSUM2(m[0][3], m[0][2]);
-  plane.normal.y = VSUM2(m[1][3], m[1][2]);
-  plane.normal.z = VSUM2(m[2][3], m[2][2]);
-  plane.dist = VSUM2(m[3][3], m[3][2]);
+  const float *clip = (const float *)m;
+  plane.SetAndNormalise(TVec(VSUM2(clip[3], clip[2]), VSUM2(clip[7], clip[6]), VSUM2(clip[11], clip[10])), -VSUM2(clip[15], clip[14]));
 }

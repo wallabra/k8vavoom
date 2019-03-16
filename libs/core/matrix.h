@@ -39,6 +39,9 @@ public:
   VMatrix4 (const float *m2);
   VMatrix4 (const VMatrix4 &m2) { memcpy(m, m2.m, sizeof(m)); }
 
+  void SetIdentity () { memcpy((void *)m, (const void *)Identity.m, sizeof(m)); }
+  void SetZero () { memset((void *)m, 0, sizeof(m)); }
+
   float Determinant () const;
   VMatrix4 Inverse () const;
   VMatrix4 Transpose () const;
@@ -146,10 +149,17 @@ public:
   inline float *operator [] (int i) { return m[i]; }
   inline const float *operator [] (int i) const { return m[i]; }
 
-  //friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
-
   VMatrix4 operator * (const VMatrix4 &M2) const;
 
+  static void CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]);
+
+  // combine the two matrices (multiply projection by modelview)
+  void ModelProjectCombine (const VMatrix4 &model, const VMatrix4 &proj);
+
+  // this expects result of `ModelProjectCombine()`
+  void ExtractFrustum (TPlane planes[6]) const;
+
+  // the following expects result of `ModelProjectCombine()`
   void ExtractFrustumLeft (TPlane &plane) const;
   void ExtractFrustumRight (TPlane &plane) const;
   void ExtractFrustumTop (TPlane &plane) const;
