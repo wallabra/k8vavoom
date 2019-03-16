@@ -52,11 +52,11 @@ static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
   t3matrix[1][3] = Scale.y*Offset.y;
   t3matrix[2][3] = Scale.z*Offset.z;
 
-  TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
+  TVec alias_forward, alias_right, alias_up;
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
   VMatrix4 t2matrix = VMatrix4::Identity;
-  for (int i = 0; i < 3; ++i) {
+  for (unsigned i = 0; i < 3; ++i) {
     t2matrix[i][0] = alias_forward[i];
     t2matrix[i][1] = -alias_right[i];
     t2matrix[i][2] = alias_up[i];

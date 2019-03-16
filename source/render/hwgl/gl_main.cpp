@@ -1796,11 +1796,12 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     R_DrawViewBorder();
   }
 
-  VMatrix4 ProjMat = VMatrix4::Identity;
+  VMatrix4 ProjMat;
   if (!CanUseRevZ()) {
     // normal
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
+    ProjMat.SetIdentity();
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
@@ -1817,7 +1818,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     // see https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
     glClearDepth(0.0f);
     glDepthFunc(GL_GEQUAL);
-    for (int f = 0; f < 4; ++f) for (int c = 0; c < 4; ++c) ProjMat.m[f][c] = 0;
+    ProjMat.SetZero();
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
@@ -1830,10 +1831,10 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 
   glViewport(rd->x, ScreenHeight-rd->height-rd->y, rd->width, rd->height);
 
-  glMatrixMode(GL_PROJECTION);    // Select The Projection Matrix
+  glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(ProjMat[0]);
 
-  glMatrixMode(GL_MODELVIEW);     // Select The Modelview Matrix
+  glMatrixMode(GL_MODELVIEW);
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
@@ -1843,9 +1844,9 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   glDisable(GL_ALPHA_TEST);
-  if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) {
-    glEnable(GL_DEPTH_CLAMP);
-  }
+  //if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+  //k8: there is no reason to not do it
+  if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 }
 
 
