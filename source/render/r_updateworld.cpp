@@ -43,27 +43,34 @@ VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector 
 //
 //==========================================================================
 void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
-  subsector_t *surf_sub = &Level->Subsectors[num];
-  if (surf_sub->updateWorldFrame == updateWorldFrame) return;
-  surf_sub->updateWorldFrame = updateWorldFrame;
+  subsector_t *sub = &Level->Subsectors[num];
+  if (sub->updateWorldFrame == updateWorldFrame) return;
+  sub->updateWorldFrame = updateWorldFrame;
 
-  if (updateWorldCheckVisFrame && Level->HasPVS() && surf_sub->VisFrame != currVisFrame) return;
+  if (updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
 
-  if (!surf_sub->sector->linecount) return; // skip sectors containing original polyobjs
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(surf_sub)) return;
+  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(sub)) return;
 
-  bbox[2] = surf_sub->sector->floor.minz;
-  if (IsSky(&surf_sub->sector->ceiling)) {
+  /*
+  bbox[2] = sub->sector->floor.minz;
+  if (IsSky(&sub->sector->ceiling)) {
     bbox[5] = skyheight;
   } else {
-    bbox[5] = surf_sub->sector->ceiling.maxz;
+    bbox[5] = sub->sector->ceiling.maxz;
   }
   FixBBoxZ(bbox);
+  */
 
-  UpdateSubRegion(surf_sub, surf_sub->regions/*, ClipSegs:true*/);
+  //FIXME: this will calculate sector height too many times
+  Level->CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
+  if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
+  FixBBoxZ(bbox);
 
-  ViewClip.ClipAddSubsectorSegs(surf_sub);
+  UpdateSubRegion(sub, sub->regions/*, ClipSegs:true*/);
+
+  ViewClip.ClipAddSubsectorSegs(sub);
 }
 
 

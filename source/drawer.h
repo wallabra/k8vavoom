@@ -126,6 +126,9 @@ public:
   virtual vuint32 LightPoint (const TVec &p, float raduis, const TPlane *surfplane=nullptr) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
+
+  virtual bool IsNodeRendered (const node_t *node) const = 0;
+  virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
 };
 
 

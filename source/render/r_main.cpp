@@ -567,6 +567,28 @@ VRenderLevelShared::~VRenderLevelShared () {
 
 //==========================================================================
 //
+//  VRenderLevelShared::IsNodeRendered
+//
+//==========================================================================
+bool VRenderLevelShared::IsNodeRendered (const node_t *node) const {
+  if (!node) return false;
+  return (node->VisFrame == currVisFrame);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::IsSubsectorRendered
+//
+//==========================================================================
+bool VRenderLevelShared::IsSubsectorRendered (const subsector_t *sub) const {
+  if (!sub) return false;
+  return (sub->VisFrame == currVisFrame);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::ResetVisFrameCount
 //
 //==========================================================================
@@ -1412,6 +1434,13 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 //
 //==========================================================================
 void VRenderLevelShared::MarkLeaves () {
+  // we need this for debug automap view
+  if (!Level->HasPVS()) {
+    (void)IncVisFrameCount();
+    r_oldviewleaf = r_viewleaf;
+    return;
+  }
+
   // no need to do anything if we are still in the same subsector
   if (r_oldviewleaf == r_viewleaf) return;
 

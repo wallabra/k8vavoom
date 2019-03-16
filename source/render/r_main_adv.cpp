@@ -121,6 +121,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   Drawer->SetupViewOrg();
 
+#if 0
   {
     VMatrix4 model, proj;
     Drawer->GetModelMatrix(model);
@@ -148,6 +149,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     view_frustum.planeCount = 5;
     //check(view_frustum.planes[4].PointOnSide(vieworg));
   }
+#endif
 
   ClearQueues();
 

@@ -194,6 +194,8 @@ static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on au
 static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", CVAR_Cheat);
 static VCvarB am_show_static_lights("am_show_static_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
 static VCvarB am_show_dynamic_lights("am_show_dynamic_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
+static VCvarB am_show_rendered_nodes("am_show_rendered_nodes", false, "Show rendered BSP nodes on automap (cheating should be turned on).", CVAR_Cheat);
+static VCvarB am_show_rendered_subs("am_show_rendered_subs", false, "Show rendered subsectors on automap (cheating should be turned on).", CVAR_Cheat);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
@@ -1230,6 +1232,38 @@ static void AM_drawWalls () {
 
 //==========================================================================
 //
+//  AM_DrawSimpleLine
+//
+//==========================================================================
+static void AM_DrawSimpleLine (float x0, float y0, float x1, float y1, vuint32 color) {
+  mline_t l;
+  l.a.x = x0;
+  l.a.y = y0;
+  l.b.x = x1;
+  l.b.y = y1;
+  if (am_rotate) {
+    AM_rotatePoint(&l.a.x, &l.a.y);
+    AM_rotatePoint(&l.b.x, &l.b.y);
+  }
+  AM_drawMline(&l, color);
+}
+
+
+//==========================================================================
+//
+//  AM_DrawBox
+//
+//==========================================================================
+static void AM_DrawBox (float x0, float y0, float x1, float y1, vuint32 color) {
+  AM_DrawSimpleLine(x0, y0, x1, y0, color);
+  AM_DrawSimpleLine(x1, y0, x1, y1, color);
+  AM_DrawSimpleLine(x1, y1, x0, y1, color);
+  AM_DrawSimpleLine(x0, y1, x0, y0, color);
+}
+
+
+//==========================================================================
+//
 //  AM_DrawMinisegs
 //
 //==========================================================================
@@ -1238,20 +1272,57 @@ static void AM_DrawMinisegs () {
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
     if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
-
-    mline_t l;
-    l.a.x = seg->v1->x;
-    l.a.y = seg->v1->y;
-    l.b.x = seg->v2->x;
-    l.b.y = seg->v2->y;
-
-    if (am_rotate) {
-      AM_rotatePoint(&l.a.x, &l.a.y);
-      AM_rotatePoint(&l.b.x, &l.b.y);
-    }
-
-    AM_drawMline(&l, MinisegColour);
+    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColour);
   }
+}
+
+
+//==========================================================================
+//
+//  AM_DrawRenderedNodes
+//
+//==========================================================================
+static void AM_DrawRenderedNodes () {
+  const node_t *node = &GClLevel->Nodes[0];
+  for (unsigned i = GClLevel->NumNodes; i--; ++node) {
+    if (!Drawer->RendLev->IsNodeRendered(node)) continue;
+    AM_DrawBox(node->bbox[0][0], node->bbox[0][1], node->bbox[1][0], node->bbox[1][1], 0xffff7f00);
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_DrawRenderedSubs
+//
+//==========================================================================
+static void AM_DrawRenderedSubs (const subsector_t *sub, vuint32 color, bool drawMinisegs) {
+  if (!sub) return;
+  const seg_t *seg = &GClLevel->Segs[sub->firstline];
+  for (unsigned i = sub->numlines; i--; ++seg) {
+    if (!drawMinisegs && !seg->linedef) continue;
+    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, color);
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_DrawRenderedSubs
+//
+//==========================================================================
+static void AM_DrawRenderedSubs () {
+  subsector_t *mysub = GClLevel->PointInSubsector(cl->ViewOrg);
+  check(mysub);
+
+  const subsector_t *sub = &GClLevel->Subsectors[0];
+  for (unsigned scount = GClLevel->NumSubsectors; scount--; ++sub) {
+    if (mysub == sub) continue;
+    if (!Drawer->RendLev->IsSubsectorRendered(sub)) continue;
+    AM_DrawRenderedSubs(sub, 0xff00ffff, true);
+  }
+
+  if (mysub) AM_DrawRenderedSubs(mysub, (Drawer->RendLev->IsSubsectorRendered(mysub) ? 0xff00ff00 : 0xffff0000), true);
 }
 
 
@@ -1686,6 +1757,8 @@ void AM_Drawer () {
   if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColour);
   if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColour);
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
+  if (am_cheating && am_show_rendered_nodes) AM_DrawRenderedNodes();
+  if (am_cheating && am_show_rendered_subs) AM_DrawRenderedSubs();
   Drawer->EndAutomap();
   AM_DrawWorldTimer();
   T_SetFont(SmallFont);

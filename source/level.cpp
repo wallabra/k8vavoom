@@ -127,9 +127,13 @@ void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, floa
   if (!maxz) maxz = &tmp1;
   *minz = sector->floor.minz;
   *maxz = sector->ceiling.maxz;
-  if (!sector->linecount) return; // skip sectors containing original polyobjs
+  if (!sector->linecount) {
+    // skip sectors containing original polyobjs
+    *maxz = *minz;
+  }
+  if (*maxz < *minz) { const float tmp = *minz; *minz = *maxz; *maxz = tmp; }
   // check if we have two-sided lines in this sector
-  line_t * const *lines = sector->lines;
+  line_t *const *lines = sector->lines;
   for (unsigned count = sector->linecount; count--; ++lines) {
     const line_t *line = *lines;
     if (!(line->flags&ML_TWOSIDED)) continue;
@@ -141,8 +145,35 @@ void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, floa
       *maxz = 32767.0f;
       return;
     }
-    //*minz = MIN(
+    const float zmin = MIN(bsec->floor.minz, bsec->ceiling.maxz);
+    const float zmax = MAX(bsec->floor.minz, bsec->ceiling.maxz);
+    *minz = MIN(*minz, zmin);
+    *maxz = MAX(*maxz, zmax);
   }
+}
+
+
+//==========================================================================
+//
+//  VLevel::GetSubsectorBBox
+//
+//==========================================================================
+void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
+  bbox[0] = sub->bbox[0];
+  bbox[1] = sub->bbox[1];
+  bbox[2] = MIN(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
+  // max
+  bbox[3] = sub->bbox[2];
+  bbox[4] = sub->bbox[3];
+  bbox[5] = MAX(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
+  FixBBoxZ(bbox);
+
+  /*
+  float minz, maxz;
+  CalcSectorBoundingHeight(sub->sector, &minz, &maxz);
+  bbox[2] = MIN(bbox[2], minz);
+  bbox[5] = MAX(bbox[5], maxz);
+  */
 }
 
 
@@ -154,8 +185,12 @@ void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, floa
 void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
   subsector_t *sub = &Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+  /*
   bbox[2] = sub->sector->floor.minz;
   bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
+  */
+  CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
+  if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
   FixBBoxZ(bbox);
 }
 
@@ -175,7 +210,7 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
     // nope, this is a normal node
     node_t *bsp = &Nodes[bspnum];
     // decide which side the view point is on
-    unsigned side = bsp->PointOnSide(vieworg);
+    unsigned side = 0; //bsp->PointOnSide(vieworg);
     RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
     bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
@@ -2773,7 +2808,6 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       vint32 nnum = (sub->parent ? (vint32)(ptrdiff_t)(sub->parent-Nodes) : -1);
       strm << nnum;
       //strm << sub->VisFrame;
-      //strm << sub->SkyVisFrame;
       // regions
       vint32 regcount = 0;
       for (subregion_t *sreg = sub->regions; sreg; sreg = sreg->next) ++regcount;
@@ -2831,7 +2865,6 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       vint32 nnum = (node->parent ? (vint32)(ptrdiff_t)(node->parent-Nodes) : -1);
       strm << nnum;
       //strm << node->VisFrame;
-      //strm << node->SkyVisFrame;
     }
   }
 

@@ -460,6 +460,8 @@ public:
   void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);
   void RecalcWorldBBoxes ();
 
+  void GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const;
+
 public:
   virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;

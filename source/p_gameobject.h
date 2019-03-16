@@ -617,7 +617,6 @@ struct subsector_t {
 
   node_t *parent;
   vuint32 VisFrame;
-  vuint32 SkyVisFrame;
   vuint32 updateWorldFrame;
 
   sector_t *deepref; // for deepwater
@@ -654,7 +653,6 @@ struct node_t : public TPlane {
 
   node_t *parent;
   vuint32 VisFrame;
-  vuint32 SkyVisFrame;
 };
 
 

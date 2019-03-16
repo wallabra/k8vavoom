@@ -990,7 +990,6 @@ struct subsector_t {
 
   native transient node_t *parent;
   int VisFrame; // unsigned
-  int SkyVisFrame; // unsigned
   int updateWorldFrame; // unsigned
 
   sector_t *deepref;
@@ -1028,7 +1027,6 @@ struct node_t : TPlane {
 
   native transient node_t *parent;
   int VisFrame; // unsigned
-  int SkyVisFrame; // unsigned
 };
 
 

@@ -57,6 +57,7 @@ extern VCvarB r_draw_adjacent_subsector_things;
 extern VCvarB w_update_in_renderer;
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
+extern VCvarB clip_frustum_mirror;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -425,7 +426,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 
   if (seg->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (MirrorClipSegs && clip_frustum && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror
     if (view_frustum.planes[5].PointOnSide(*seg->v1) && view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
   }
@@ -640,6 +641,9 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!ViewClip.ClipCheckSubsector(sub, true)) return;
 
+  sub->parent->VisFrame = currVisFrame;
+  sub->VisFrame = currVisFrame;
+
   BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
 
@@ -689,9 +693,18 @@ void VRenderLevelShared::RenderSubsector (int num) {
 void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags) {
   if (ViewClip.ClipIsFull()) return;
 
+  if (bspnum == -1) {
+    RenderSubsector(0);
+    return;
+  }
+
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
   if (clipflags && clip_frustum && clip_frustum_bsp) {
+    //static float newbbox[6];
+    //memcpy(newbbox, bbox, sizeof(float)*6);
+    //newbbox[2] = -32767.0f;
+    //newbbox[5] = +32767.0f;
     const TClipPlane *cp = &view_frustum.planes[0];
     for (unsigned i = view_frustum.planeCount; i--; ++cp) {
       if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
@@ -711,7 +724,19 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       }
 #else
       int cres = cp->checkBoxEx(bbox);
-      if (cres == TFrustum::OUTSIDE) return;
+      //int cres = cp->checkBoxEx(newbbox);
+      if (cres == TFrustum::OUTSIDE) {
+        // add subsector to clipper (why not?)
+        /*
+        if ((bspnum&NF_SUBSECTOR) != 0) {
+          if (ViewClip.ClipIsBBoxVisible(bbox)) {
+            subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
+            ViewClip.ClipAddAllSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+          }
+        }
+        */
+        return;
+      }
       if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #endif
     }
@@ -719,19 +744,14 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 
   if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
 
-  if (bspnum == -1) {
-    RenderSubsector(0);
-    return;
-  }
-
   // found a subsector?
   if ((bspnum&NF_SUBSECTOR) == 0) {
     node_t *bsp = &Level->Nodes[bspnum];
 
-    if (Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
-
     // decide which side the view point is on
     int side = bsp->PointOnSide(vieworg);
+
+    if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
 
     // recursively divide front space (toward the viewer)
     RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
@@ -768,6 +788,10 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
     }
     MirrorClipSegs = (MirrorClip && !view_frustum.planes[5].normal.z);
+    if (!clip_frustum_mirror) {
+      MirrorClipSegs = false;
+      view_frustum.planes[5].clipflag = 0;
+    }
 
     // head node is the last node output
     RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));

@@ -461,6 +461,10 @@ protected:
   // clears render queues
   void ClearQueues ();
 
+public:
+  virtual bool IsNodeRendered (const node_t *node) const override;
+  virtual bool IsSubsectorRendered (const subsector_t *sub) const override;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
