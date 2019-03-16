@@ -42,6 +42,7 @@ static VCvarB gl_enable_clip_control("gl_enable_clip_control", true, "Allow usin
 static VCvarB gl_dbg_force_reverse_z("gl_dbg_force_reverse_z", false, "Force-enable reverse z when fp depth buffer is not available.", CVAR_PreInit);
 static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, "Ignore GPU blacklist, and don't turn off features?", CVAR_PreInit);
 static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
+static VCvarB gl_dbg_disable_depth_clamp("gl_dbg_disable_depth_clamp", false, "Disable depth clamping.", CVAR_PreInit);
 
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite interpolation mode.", CVAR_Archive);
@@ -736,10 +737,10 @@ void VOpenGLDrawer::InitResolution () {
     }
   }
 
-  if (CheckExtension("GL_ARB_depth_clamp")) {
+  if (!gl_dbg_disable_depth_clamp && CheckExtension("GL_ARB_depth_clamp")) {
     GCon->Log(NAME_Init, "Found GL_ARB_depth_clamp...");
     HaveDepthClamp = true;
-  } else if (CheckExtension("GL_NV_depth_clamp")) {
+  } else if (!gl_dbg_disable_depth_clamp && CheckExtension("GL_NV_depth_clamp")) {
     GCon->Log(NAME_Init, "Found GL_NV_depth_clamp...");
     HaveDepthClamp = true;
   } else {

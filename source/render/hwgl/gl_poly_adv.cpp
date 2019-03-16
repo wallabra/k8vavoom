@@ -305,19 +305,28 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   TVec *v = poolVec;
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
-  for (unsigned i = 0; i < vcount; ++i) {
-    /* no need to extrude anything, OpenGL will do it for us
-    v[i] = (surf->verts[i]-LightPos).normalised();
-    v[i] *= mult;
-    v[i] += LightPos;
-    */
-    v[i] = sverts[i]-LightPos;
+  if (HaveDepthClamp) {
+    for (unsigned i = 0; i < vcount; ++i) {
+      // no need to extrude anything, OpenGL will do it for us
+      v[i] = sverts[i]-LightPos;
+    }
+  } else {
+    // if we don't have depth clamping, use this approach
+    for (unsigned i = 0; i < vcount; ++i) {
+      v[i] = (surf->verts[i]-LightPos).normalised();
+      v[i] *= M_INFINITY;
+      v[i] += LightPos;
+    }
   }
 
   // back cap
   if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_POLYGON);
-    for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
+    if (HaveDepthClamp) {
+      for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
+    } else {
+      for (unsigned i = vcount; i--; ) glVertex(v[i]);
+    }
     glEnd();
 
     // front cap
@@ -327,12 +336,21 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   }
 
   glBegin(GL_TRIANGLE_STRIP);
-  for (unsigned i = 0; i < vcount; ++i) {
-    glVertex(sverts[i]);
-    glVertex4(v[i], 0);
+  if (HaveDepthClamp) {
+    for (unsigned i = 0; i < vcount; ++i) {
+      glVertex(sverts[i]);
+      glVertex4(v[i], 0);
+    }
+    glVertex(sverts[0]);
+    glVertex4(v[0], 0);
+  } else {
+    for (unsigned i = 0; i < vcount; ++i) {
+      glVertex(sverts[i]);
+      glVertex(v[i]);
+    }
+    glVertex(sverts[0]);
+    glVertex(v[0]);
   }
-  glVertex(sverts[0]);
-  glVertex4(v[0], 0);
   glEnd();
 
   NoteStencilBufferDirty();
