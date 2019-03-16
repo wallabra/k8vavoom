@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 uniform vec3 ViewOrigin;
 uniform vec3 LightPos;

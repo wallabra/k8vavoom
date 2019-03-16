@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 uniform float LightRadius;
 

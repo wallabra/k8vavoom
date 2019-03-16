@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 // vertex shader for lightmapped surfaces
 $include "common/texlmap_vars.vs"

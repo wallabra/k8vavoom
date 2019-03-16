@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 uniform mat4 ModelToWorldMat;
 uniform vec3 LightPos;

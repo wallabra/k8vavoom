@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 #define VAVOOM_SIMPLE_ALPHA_FOG
 

@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 $include "common/texture_vars.vs"
 

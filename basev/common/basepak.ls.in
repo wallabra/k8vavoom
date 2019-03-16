@@ -198,6 +198,7 @@ fxdefs/strife/weapons.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/strife/weapons.txt
 
 $recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .fs
 $recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .vs
+$recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .inc
 
 //  Console font
 $load @CMAKE_CURRENT_SOURCE_DIR@/confont.pcx

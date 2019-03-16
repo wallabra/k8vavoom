@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 attribute vec4 LightVal;
 attribute vec2 TexCoord;

@@ -1,4 +1,5 @@
 #version 120
+$include "common/common.inc"
 
 uniform sampler2D Texture;
 uniform vec3 LightColour;
