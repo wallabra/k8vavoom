@@ -426,7 +426,12 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glDepthMask(GL_FALSE); // no z-buffer writes
 
   // copy ambient light texture to FBO, so we can use it to light decals
-  {
+  if (p_glBlitFramebuffer) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ambLightFBO);
+    p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+  } else {
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);

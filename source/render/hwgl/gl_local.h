@@ -410,6 +410,7 @@ typedef GLenum (APIENTRY *glCheckFramebufferStatusFn) (GLenum target);
 typedef void (APIENTRY *glBindFramebufferFn) (GLenum target, GLuint framebuffer);
 
 typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
+typedef void (APIENTRY *glBlitFramebuffer_t) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1061,6 +1062,7 @@ protected:
 
   _(glClipControl);
   _(glDepthBoundsEXT);
+  _(glBlitFramebuffer);
 #undef _
 
   //void MultiTexCoord(int level, GLfloat s, GLfloat t) { p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t); }
