@@ -352,8 +352,12 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
   // ignore everything that is placed behind player's back
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is behind a player
-  bool checkFrustum = view_frustum.checkSphereBack(CurrLightPos, CurrLightRadius);
-  if (!r_advlight_opt_frustum_back) checkFrustum = false;
+  bool checkFrustum;
+  if (!r_advlight_opt_frustum_back) {
+    checkFrustum = false;
+  } else {
+    checkFrustum = view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit);
+  }
 
   // TODO: if light is behing a camera, we can move back frustum plane, so it will
   //       contain light origin, and clip everything behind it. the same can be done
@@ -378,14 +382,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
     if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
 
     if (checkFrustum) {
-      bool hasFront = false;
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-        if (!hasFront && view_frustum.checkPointBack(surf->verts[i])) {
-          hasFront = true;
-          break;
-        }
-      }
-      if (!hasFront) continue;
+      if (!view_frustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
     }
 
     Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);

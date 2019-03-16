@@ -121,6 +121,34 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   Drawer->SetupViewOrg();
 
+  {
+    VMatrix4 model, proj;
+    Drawer->GetModelMatrix(model);
+    Drawer->GetProjectionMatrix(proj);
+
+    VMatrix4 comb;
+    comb.ModelProjectCombine(model, proj);
+
+    TPlane planes[6];
+    //VMatrix4::ExtractFrustum(model, proj, planes);
+    comb.ExtractFrustum(planes);
+
+    /*
+    for (unsigned f = 0; f < 6; ++f) {
+      GCon->Logf("plane #%u: (%f,%f,%f) : %f", f, planes[f].normal.x, planes[f].normal.y, planes[f].normal.z, planes[f].dist);
+      GCon->Logf("plane #%u: (%f,%f,%f) : %f", f, view_frustum.planes[f].normal.x, view_frustum.planes[f].normal.y, view_frustum.planes[f].normal.z, view_frustum.planes[f].dist);
+    }
+    */
+
+    // we aren't interested in far plane
+    for (unsigned f = 0; f < 5; ++f) {
+      view_frustum.planes[f] = planes[f];
+      view_frustum.planes[f].clipflag = 1U<<f;
+    }
+    view_frustum.planeCount = 5;
+    //check(view_frustum.planes[4].PointOnSide(vieworg));
+  }
+
   ClearQueues();
 
   MarkLeaves();

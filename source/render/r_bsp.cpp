@@ -693,10 +693,11 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   // cull the clipping planes if not trivial accept
   if (clipflags && clip_frustum && clip_frustum_bsp) {
     const TClipPlane *cp = &view_frustum.planes[0];
-    for (unsigned i = 0; i < 6; ++i, ++cp) {
+    for (unsigned i = view_frustum.planeCount; i--; ++cp) {
       if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
       //k8: this check is always true, because view origin is outside of frustum (oops)
       //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
+#ifdef FRUSTUM_BOX_OPTIMISATION
       // check reject point
       if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
         // completely outside of any plane means "invisible"
@@ -706,8 +707,13 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       // is node entirely on screen?
       if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
         // yes, don't check this plane
-        clipflags ^= view_frustum.planes[i].clipflag;
+        clipflags ^= cp->clipflag;
       }
+#else
+      int cres = cp->checkBoxEx(bbox);
+      if (cres == TFrustum::OUTSIDE) return;
+      if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
+#endif
     }
   }
 
