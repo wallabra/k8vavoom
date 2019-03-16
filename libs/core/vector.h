@@ -24,6 +24,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+//#define FRUSTUM_BOX_OPTIMISATION
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 static const unsigned BBoxVertexIndex[8][3] = {
   {0+0, 0+1, 0+2},
@@ -270,6 +273,14 @@ public:
     dist = Adist;
   }
 
+  inline void SetAndNormalise (const TVec &Anormal, float Adist) {
+    normal = Anormal;
+    dist = Adist;
+    const float mag = normal.invlength();
+    normal *= mag;
+    dist *= mag;
+  }
+
   // initialises vertical plane from point and direction
   inline void SetPointDirXY (const TVec &point, const TVec &dir) {
     normal = TVec(dir.y, -dir.x, 0);
@@ -471,7 +482,9 @@ public:
 class TClipPlane : public TPlane {
 public:
   unsigned clipflag;
+#ifdef FRUSTUM_BOX_OPTIMISATION
   unsigned pindex[6];
+#endif
 
 public:
   //TClipPlane () : TPlane(E_NoInit) { clipflag = 0; }
@@ -483,11 +496,17 @@ public:
   inline TClipPlane &operator = (const TPlane &p) {
     normal = p.normal;
     dist = p.dist;
+#ifdef FRUSTUM_BOX_OPTIMISATION
     if (normal.isValid()) setupBoxIndicies(); // why not?
+#endif
     return *this;
   }
 
+#ifdef FRUSTUM_BOX_OPTIMISATION
   void setupBoxIndicies ();
+#else
+  inline void setupBoxIndicies () {}
+#endif
 
   // returns `false` is box is on the back of the plane (or clipflag is 0)
   bool checkBox (const float *bbox) const;
@@ -673,6 +692,13 @@ public:
 
   void setupBoxIndiciesForPlane (unsigned pidx);
 
+
+  // returns `false` is point is out of frustum
+  bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
+
+  // returns `false` is sphere is out of frustum
+  bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
+
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:
   //   [0] is minx
@@ -688,23 +714,8 @@ public:
   // 0: completely outside; >0: completely inside; <0: partially inside
   int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const;
 
-  // returns `false` is point is out of frustum
-  bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
-
-  // returns `false` is sphere is out of frustum
-  bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
-
-
-  bool checkBoxBack (const float bbox[6], const unsigned mask=~0u) const;
-
-  // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxExBack (const float bbox[6], const unsigned mask=~0u) const;
-
-  // returns `false` is point is out of frustum
-  bool checkPointBack (const TVec &point, const unsigned mask=~0u) const;
-
-  // returns `false` is sphere is out of frustum
-  bool checkSphereBack (const TVec &center, const float radius, const unsigned mask=~0u) const;
+  bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
+  int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
 };
 
 
