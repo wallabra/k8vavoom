@@ -146,7 +146,9 @@ public:
   inline float *operator [] (int i) { return m[i]; }
   inline const float *operator [] (int i) const { return m[i]; }
 
-  friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
+  //friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
+
+  VMatrix4 operator * (const VMatrix4 &M2) const;
 
   void ExtractFrustumLeft (TPlane &plane) const;
   void ExtractFrustumRight (TPlane &plane) const;

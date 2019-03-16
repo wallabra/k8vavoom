@@ -94,11 +94,29 @@ VMatrix4::VMatrix4 (const float *m2) {
 //  operator VMatrix4 * VMatrix4
 //
 //==========================================================================
+/*
 VMatrix4 operator * (const VMatrix4 &in1, const VMatrix4 &in2) {
   VMatrix4 out;
   for (unsigned i = 0; i < 4; ++i) {
     for (unsigned j = 0; j < 4; ++j) {
-      out[i][j] = VSUM4(in1[i][0]*in2[0][j], in1[i][1]*in2[1][j], in1[i][2]*in2[2][j], in1[i][3]*in2[3][j]);
+      out[i][j] = VSUM4(in1.m[i][0]*in2.m[0][j], in1.m[i][1]*in2.m[1][j], in1.m[i][2]*in2.m[2][j], in1.m[i][3]*in2.m[3][j]);
+    }
+  }
+  return out;
+}
+*/
+
+
+//==========================================================================
+//
+//  operator VMatrix4 * VMatrix4
+//
+//==========================================================================
+VMatrix4 VMatrix4::operator * (const VMatrix4 &in2) const {
+  VMatrix4 out;
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = 0; j < 4; ++j) {
+      out[i][j] = VSUM4(m[i][0]*in2.m[0][j], m[i][1]*in2.m[1][j], m[i][2]*in2.m[2][j], m[i][3]*in2.m[3][j]);
     }
   }
   return out;
