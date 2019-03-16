@@ -37,6 +37,7 @@ extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_draw_mobjs;
 extern VCvarB r_models;
 extern VCvarB r_model_shadows;
+extern VCvarB r_draw_pobj;
 
 
 /*
@@ -491,7 +492,7 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
 
   sec_region_t *curreg = region->secregion;
 
-  if (sub->poly) {
+  if (sub->poly && r_draw_pobj) {
     // render the polyobj in the subsector first
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
@@ -726,7 +727,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 
   sec_region_t *curreg = region->secregion;
 
-  if (sub->poly) {
+  if (sub->poly && r_draw_pobj) {
     // render the polyobj in the subsector first
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {

@@ -31,6 +31,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VCvarB r_draw_pobj;
+
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
@@ -1249,7 +1251,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
     }
   }
 
-  if (doPoly) {
+  if (doPoly && r_draw_pobj) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       const seg_t *seg = *polySeg;
@@ -1287,7 +1289,7 @@ void VViewClipper::ClipAddAllSubsectorSegs (const subsector_t *sub, const TPlane
     }
   }
 
-  if (doPoly) {
+  if (doPoly && r_draw_pobj) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       const seg_t *seg = *polySeg;
@@ -1532,7 +1534,7 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec
     }
   }
 
-  if (doPoly) {
+  if (doPoly && r_draw_pobj) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       const seg_t *seg = *polySeg;
