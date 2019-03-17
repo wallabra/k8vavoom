@@ -778,6 +778,21 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// returns the closest point to `this` on the line segment from `a` to `b`
+static TVec projectOnLine (const TVec &p, const TVec &a, const TVec b) {
+  const TVec ab = b-a; // vector from a to b
+  // squared distance from a to b
+  const float absq = ab.dot(ab);
+  if (fabs(absq) < 0.001f) return a; // a and b are the same point (roughly)
+  const TVec ap = p-a; // vector from a to p
+  const float t = ap.dot(ab)/absq;
+  if (t < 0) return a; // "before" a on the line
+  if (t > 1) return b; // "after" b on the line
+  // projection lies "inbetween" a and b on the line
+  return a+t*ab;
+}
+
+
 struct SubInfo {
   subsector_t *sub;
   float minDistSq; // minimum distance to view origin (used to sort subsectors)
@@ -790,21 +805,47 @@ struct SubInfo {
     sub = asub;
     minDistSq = FLT_MAX;
     seenSeg = false;
+    float bestMini = FLT_MAX;
+    bool seenMini = false;
+    float bestNonMini = FLT_MAX;
+    bool seenNonMini = false;
     const seg_t *seg = &Level->Segs[asub->firstline];
     for (unsigned i = asub->numlines; i--; ++seg) {
-      //const line_t *line = seg->linedef;
-      if (seg->PointOnSide(origin)) continue; // cannot see
-      seenSeg = true;
-      /*
-      const TVec v1 = *seg->v1-origin, v2 = seg->v2-origin;
-      float distSq = v1.length2DSquared();
-      minDistSq = MIN(distSq, minDistSq);
-      float distSq = v2.length2DSquared();
-      minDistSq = MIN(distSq, minDistSq);
-      */
-      const float distSq = fabsf(DotProduct(origin, seg->normal)-seg->dist);
-      minDistSq = MIN(distSq, minDistSq);
+      const line_t *line = seg->linedef;
+      //if (seg->PointOnSide(origin)) continue; // cannot see
+      if (!line) {
+        // miniseg
+        seenSeg = true;
+        seenMini = true;
+        const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
+        const float distSq = proj.length2DSquared();
+        bestMini = MIN(distSq, bestMini);
+      } else {
+        // normal seg
+        seenSeg = true;
+        seenNonMini = true;
+        /*
+        const TVec v1 = *seg->v1-origin, v2 = seg->v2-origin;
+        float distSq = v1.length2DSquared();
+        minDistSq = MIN(distSq, minDistSq);
+        float distSq = v2.length2DSquared();
+        minDistSq = MIN(distSq, minDistSq);
+        */
+        /*
+        const float distSq = fabsf(DotProduct(origin, seg->normal)-seg->dist);
+        minDistSq = MIN(distSq, minDistSq);
+        */
+        const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
+        const float distSq = proj.length2DSquared();
+        bestNonMini = MIN(distSq, bestNonMini);
+      }
     }
+    if (seenNonMini) {
+      minDistSq = bestNonMini;
+    } else if (seenMini) {
+      minDistSq = bestMini;
+    }
+    minDistSq = MIN(bestMini, bestNonMini);
   }
 };
 
@@ -848,6 +889,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     }
 
     if (r_flood_renderer && Level->NumSubsectors) {
+      GCon->Log("============");
       // start from r_viewleaf
       static TArray<SubInfo> queue;
       static TArray<vuint8> addedSubs;
@@ -894,8 +936,8 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
           if (!ps || ps == currsub) continue; // just in case
           if (ps->VisFrame == currVisFrame) continue; // already processed
           const unsigned psnum = (unsigned)(ptrdiff_t)(ps-Level->Subsectors);
-          if (addedSubs[psnum]) continue; // already added
-          addedSubs[psnum] = 1;
+          if (addedSubs.ptr()[psnum]) continue; // already added
+          addedSubs.ptr()[psnum] = 1;
           SubInfo si = SubInfo(Level, vieworg, ps);
           if (si.seenSeg) {
             //GCon->Log(" +++");
@@ -916,11 +958,18 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       {
         const SubInfo *si = queue.ptr();
         for (int sicount = queue.length(); sicount--; ++si) {
-          if (!ViewClip.ClipIsBBoxVisible(si->bbox)) continue;
+          //if (!ViewClip.ClipIsBBoxVisible(si->bbox)) continue;
           const subsector_t *currsub = si->sub;
-          if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) continue;
+          const int snum = (int)(ptrdiff_t)(currsub-Level->Subsectors);
+          if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) {
+            GCon->Logf("SKIP SEG #%d", snum);
+            continue;
+          }
           // render it, and add to clipper
-          RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), true);
+          RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), false);
+          GCon->Logf("RENDER SEG #%d (before)", snum); ViewClip.Dump();
+          ViewClip.ClipAddSubsectorSegs(currsub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+          GCon->Logf("RENDER SEG #%d (after)", snum); ViewClip.Dump();
         }
       }
       //ViewClip.Dump();
