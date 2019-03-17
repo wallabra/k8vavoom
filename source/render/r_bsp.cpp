@@ -28,6 +28,9 @@
 //**  BSP traversal, handling of LineSegs for rendering.
 //**
 //**************************************************************************
+#include <limits.h>
+#include <float.h>
+
 #include "gamedefs.h"
 #include "r_local.h"
 
@@ -774,6 +777,49 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct SubInfo {
+  subsector_t *sub;
+  float minDistSq; // minimum distance to view origin (used to sort subsectors)
+  bool seenSeg;
+  float bbox[6];
+
+  SubInfo () {}
+  SubInfo (ENoInit) {}
+  SubInfo (const VLevel *Level, const TVec &origin, subsector_t *asub) {
+    sub = asub;
+    minDistSq = FLT_MAX;
+    seenSeg = false;
+    const seg_t *seg = &Level->Segs[asub->firstline];
+    for (unsigned i = asub->numlines; i--; ++seg) {
+      //const line_t *line = seg->linedef;
+      if (seg->PointOnSide(origin)) continue; // cannot see
+      seenSeg = true;
+      /*
+      const TVec v1 = *seg->v1-origin, v2 = seg->v2-origin;
+      float distSq = v1.length2DSquared();
+      minDistSq = MIN(distSq, minDistSq);
+      float distSq = v2.length2DSquared();
+      minDistSq = MIN(distSq, minDistSq);
+      */
+      const float distSq = fabsf(DotProduct(origin, seg->normal)-seg->dist);
+      minDistSq = MIN(distSq, minDistSq);
+    }
+  }
+};
+
+extern "C" {
+  static int subinfoCmp (const void *a, const void *b, void *udata) {
+    if (a == b) return 0;
+    const SubInfo *aa = (const SubInfo *)a;
+    const SubInfo *bb = (const SubInfo *)b;
+    if (aa->minDistSq < bb->minDistSq) return -1;
+    if (aa->minDistSq > bb->minDistSq) return 1;
+    return 0;
+  }
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderBspWorld
@@ -801,55 +847,30 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       view_frustum.planes[5].clipflag = 0;
     }
 
-    if (r_flood_renderer) {
+    if (r_flood_renderer && Level->NumSubsectors) {
       // start from r_viewleaf
-      static TArray<subsector_t *> queue;
+      static TArray<SubInfo> queue;
+      static TArray<vuint8> addedSubs;
+      if (addedSubs.length() != Level->NumSubsectors) addedSubs.setLength(Level->NumSubsectors);
+      memset(addedSubs.ptr(), 0, Level->NumSubsectors);
       queue.reset();
-      queue.append(r_viewleaf);
+      // start from this subsector
+      queue.append(SubInfo(Level, vieworg, r_viewleaf));
+      addedSubs[(unsigned)(ptrdiff_t)(r_viewleaf-Level->Subsectors)] = 1;
+      // add other subsectors
       int queuenum = 0;
-      GCon->Log("============");
       while (queuenum < queue.length()) {
-        subsector_t *currsub = queue[queuenum++];
+        subsector_t *currsub = queue[queuenum++].sub;
         if (currsub->VisFrame == currVisFrame) continue; // already processed
         currsub->VisFrame = currVisFrame; // mark as processed
         if (!currsub->sector->linecount) continue; // skip sectors containing original polyobjs
-        const unsigned csnum = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
+        //const unsigned csnum = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
         // check clipper
         float bbox[6];
         Level->GetSubsectorBBox(currsub, bbox);
-        if (!view_frustum.checkBox(bbox)) {
-          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: frustum", csnum);
-          continue;
-        }
-        if (!ViewClip.ClipIsBBoxVisible(bbox)) {
-          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: bbox", csnum);
-          //continue;
-        }
-        if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) {
-          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: subcheck", csnum);
-          if (csnum == 100) {
-            ViewClip.Dump();
-            ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper, true);
-            GCon->Logf(" numlines: %d", currsub->numlines);
-            const seg_t *sss = &Level->Segs[currsub->firstline];
-            for (unsigned i = currsub->numlines; i--; ++sss) {
-              GCon->Logf("  seg: (%f,%f,%f)-(%f,%f,%f) (%f) (%f : %f)", sss->v1->x, sss->v1->y, sss->v1->z, sss->v2->x, sss->v2->y, sss->v2->z, DotProduct(vieworg, sss->normal)-sss->dist,
-                ViewClip.PointToClipAngle(*sss->v1), ViewClip.PointToClipAngle(*sss->v2));
-            }
-          }
-          continue;
-        }
-        GCon->Logf("*** SUB #%u (before)", csnum); ViewClip.Dump();
-        // render it, and add to clipper
-        switch ((int)(ptrdiff_t)(currsub-Level->Subsectors)) {
-          //case 135: continue;
-          case 139: continue;
-          case 163: continue;
-        }
-        //GCon->Logf("*** SUB #%u", csnum);
-        RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), false);
-        GCon->Logf("*** SUB #%u (after)", csnum); ViewClip.Dump();
+        if (!view_frustum.checkBox(bbox)) continue;
         // travel to other subsectors
+        //GCon->Log("...");
         const seg_t *seg = &Level->Segs[currsub->firstline];
         for (unsigned i = currsub->numlines; i--; ++seg) {
           const line_t *line = seg->linedef;
@@ -857,26 +878,52 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
             // not a miniseg; check for two-sided
             if (!(line->flags&ML_TWOSIDED)) {
               // not a two-sided, nowhere to travel
-              if (seg->PointOnSide(vieworg)) continue; // cannot see
-              GCon->Logf("  adding one-sided seg #%u (linedef #%u) (%f : %f)", (unsigned)(ptrdiff_t)(seg-Level->Segs), (unsigned)(ptrdiff_t)(line-Level->Lines), ViewClip.PointToClipAngle(*seg->v2), ViewClip.PointToClipAngle(*seg->v1));
-              ViewClip.AddClipRange(*seg->v2, *seg->v1);
               continue;
             }
           }
-          if (seg->PointOnSide(vieworg)) continue; // cannot see
-          // check clipper
-          const TVec *v1 = seg->v1, *v2 = seg->v2;
-          //if (!ViewClip.IsRangeVisible(*v2, *v1)) continue;
-          // it is visible, travel to partner subsector
           if (!seg->partner) continue; // just in case
+          if (seg->PointOnSide(vieworg)) continue; // cannot see
+          // closed door/lift?
+          if (seg->backsector && seg->backsector != seg->frontsector &&
+              (line->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED)
+          {
+            if (VViewClipper::IsSegAClosedSomething(&view_frustum, seg)) continue;
+          }
+          // it is visible, travel to partner subsector
           subsector_t *ps = seg->partner->front_sub;
           if (!ps || ps == currsub) continue; // just in case
           if (ps->VisFrame == currVisFrame) continue; // already processed
-          queue.append(ps);
-          //ViewClip.AddClipRange(*v2, *v1);
+          const unsigned psnum = (unsigned)(ptrdiff_t)(ps-Level->Subsectors);
+          if (addedSubs[psnum]) continue; // already added
+          addedSubs[psnum] = 1;
+          SubInfo si = SubInfo(Level, vieworg, ps);
+          if (si.seenSeg) {
+            //GCon->Log(" +++");
+            memcpy(si.bbox, bbox, sizeof(float)*6);
+            queue.append(si);
+          }
         }
       }
-      ViewClip.Dump();
+      //GCon->Logf("found #%d subsectors", queue.length());
+
+      // sort subsectors
+      if (queue.length() > 1) {
+        timsort_r(queue.ptr()+1, queue.length()-1, sizeof(SubInfo), &subinfoCmp, nullptr);
+      }
+
+      // render subsectors using clipper
+      // no need to check frustum, it is already done
+      {
+        const SubInfo *si = queue.ptr();
+        for (int sicount = queue.length(); sicount--; ++si) {
+          if (!ViewClip.ClipIsBBoxVisible(si->bbox)) continue;
+          const subsector_t *currsub = si->sub;
+          if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) continue;
+          // render it, and add to clipper
+          RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), true);
+        }
+      }
+      //ViewClip.Dump();
     } else {
       // head node is the last node output
       RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));

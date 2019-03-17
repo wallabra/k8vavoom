@@ -28,7 +28,7 @@
 #include "sv_local.h"
 
 //#define XXX_CLIPPER_DEBUG
-#define XXX_CLIPPER_MANY_DUMPS
+//#define XXX_CLIPPER_MANY_DUMPS
 
 
 // ////////////////////////////////////////////////////////////////////////// //
