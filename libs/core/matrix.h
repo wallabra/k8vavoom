@@ -32,15 +32,30 @@ public:
   static const VMatrix4 Identity;
 
   VMatrix4 () {}
+  VMatrix4 (ENoInit) {}
   VMatrix4 (float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
     float m30, float m31, float m32, float m33);
-  VMatrix4 (const float *m2);
+  VMatrix4 (const float *m2) { memcpy(m, m2, sizeof(m)); }
   VMatrix4 (const VMatrix4 &m2) { memcpy(m, m2.m, sizeof(m)); }
+  VMatrix4 (const TVec &v) {
+    memcpy((void *)m, (const void *)Identity.m, sizeof(m));
+    m[0][0] = v.x;
+    m[1][1] = v.y;
+    m[2][2] = v.z;
+  }
 
-  void SetIdentity () { memcpy((void *)m, (const void *)Identity.m, sizeof(m)); }
-  void SetZero () { memset((void *)m, 0, sizeof(m)); }
+  inline void SetIdentity () { memcpy((void *)m, (const void *)Identity.m, sizeof(m)); }
+  inline void SetZero () { memset((void *)m, 0, sizeof(m)); }
+
+  TVec getRow (int idx) const;
+  TVec getCol (int idx) const;
+
+  // this is for camera matrices
+  inline TVec getUpVector () const { return TVec(m[0][1], m[1][1], m[2][1]); }
+  inline TVec getRightVector () const { return TVec(m[0][0], m[1][0], m[2][0]); }
+  inline TVec getForwardVector () const { return TVec(m[0][2], m[1][2], m[2][2]); }
 
   float Determinant () const;
   VMatrix4 Inverse () const;
@@ -169,13 +184,16 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VRotMatrix {
 public:
   float m[3][3];
 
   VRotMatrix (const TVec &Axis, float Angle) {
-    const float s = msin(Angle);
-    const float c = mcos(Angle);
+    //const float s = msin(Angle);
+    //const float c = mcos(Angle);
+    float s, c;
+    msincos(Angle, &s, &c);
     const float t = 1.0f-c;
 
     m[0][0] = VSUM2(t*Axis.x*Axis.x, c);

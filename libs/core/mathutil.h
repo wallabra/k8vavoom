@@ -233,6 +233,7 @@ static __attribute__((unused)) inline float masin (const float x) { return RAD2D
 static __attribute__((unused)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
 static __attribute__((unused)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
 static __attribute__((unused)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
+static __attribute__((unused)) inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }

@@ -43,13 +43,6 @@ static const unsigned BBoxVertexIndex[8][3] = {
 // ////////////////////////////////////////////////////////////////////////// //
 class TAVec {
 public:
-  /*
-  union {
-    float angles[3];
-    struct {
-    };
-  };
-  */
   float pitch; // up/down
   float yaw; // left/right
   float roll; // around screen center
@@ -62,16 +55,6 @@ public:
   inline bool isValid () const { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
   inline bool isZero () const { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
   inline bool isZeroSkipRoll () const { return (pitch == 0.0f && yaw == 0.0f); }
-
-  /*
-  inline TAVec &operator = (const TAVec &b) {
-    //if (angles != b.angles) memcpy(angles, b.angles, sizeof(angles));
-    angles[0] = b.angles[0];
-    angles[1] = b.angles[1];
-    angles[2] = b.angles[2];
-    return *this;
-  }
-  */
 
   friend VStream &operator << (VStream &Strm, TAVec &v) {
     return Strm << v.pitch << v.yaw << v.roll;
@@ -88,14 +71,6 @@ static __attribute__((unused)) inline bool operator != (const TAVec &v1, const T
 // ////////////////////////////////////////////////////////////////////////// //
 class TVec {
 public:
-  /*
-  union {
-    float coords[3];
-    struct {
-      float x, y, z;
-    };
-  };
-  */
   float x, y, z;
 
   TVec () {}
@@ -105,16 +80,6 @@ public:
   TVec (const float f[3]) { x = f[0]; y = f[1]; z = f[2]; }
 
   static inline TVec Invalid () { return TVec(NAN, NAN, NAN); }
-
-  /*
-  inline TVec &operator = (const TVec &b) {
-    //if (coords != b.coords) memcpy(coords, b.coords, sizeof(coords));
-    coords[0] = b.coords[0];
-    coords[1] = b.coords[1];
-    coords[2] = b.coords[2];
-    return *this;
-  }
-  */
 
   inline const float &operator [] (size_t i) const { check(i < 3); return (&x)[i]; }
   inline float &operator [] (size_t i) { check(i < 3); return (&x)[i]; }
@@ -248,9 +213,14 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle);
 
 static __attribute__((unused)) inline void AngleVectorPitch (const float pitch, TVec &forward) {
+  msincos(pitch, &forward.z, &forward.x);
+  forward.y = 0.0f;
+  forward.z = -forward.z;
+  /*
   forward.x = mcos(pitch);
   forward.y = 0;
   forward.z = -msin(pitch);
+  */
 }
 
 

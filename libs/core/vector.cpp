@@ -34,18 +34,7 @@
 //
 //==========================================================================
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
-#if 0
-  const double ay = DEG2RADD(angles.yaw);
-  const double ap = DEG2RADD(angles.pitch);
-  const double ar = DEG2RADD(angles.roll);
-
-  const double sy = sin(ay);
-  const double cy = cos(ay);
-  const double sp = sin(ap);
-  const double cp = cos(ap);
-  const double sr = sin(ar);
-  const double cr = cos(ar);
-#else
+  /*
   const float ay = DEG2RADF(angles.yaw);
   const float ap = DEG2RADF(angles.pitch);
   const float ar = DEG2RADF(angles.roll);
@@ -56,17 +45,51 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
   const float cp = cosf(ap);
   const float sr = sinf(ar);
   const float cr = cosf(ar);
-#endif
+  */
 
-  forward.x = cp*cy;
-  forward.y = cp*sy;
-  forward.z = -sp;
-  right.x = VSUM2(-sr*sp*cy, cr*sy);
-  right.y = VSUM2(-sr*sp*sy, -(cr*cy));
-  right.z = -sr*cp;
-  up.x = VSUM2(cr*sp*cy, sr*sy);
-  up.y = VSUM2(cr*sp*sy, -(sr*cy));
-  up.z = cr*cp;
+  float sy, cy;
+  float sp, cp;
+  float sr, cr;
+
+  msincos(angles.yaw, &sy, &cy);
+  if (angles.pitch) {
+    msincos(angles.pitch, &sp, &cp);
+    if (angles.roll) {
+      msincos(angles.roll, &sr, &cr);
+
+      forward.x = cp*cy;
+      forward.y = cp*sy;
+      forward.z = -sp;
+      right.x = VSUM2(-sr*sp*cy, cr*sy);
+      right.y = VSUM2(-sr*sp*sy, -(cr*cy));
+      right.z = -sr*cp;
+      up.x = VSUM2(cr*sp*cy, sr*sy);
+      up.y = VSUM2(cr*sp*sy, -(sr*cy));
+      up.z = cr*cp;
+    } else {
+      // no roll
+      forward.x = cp*cy;
+      forward.y = cp*sy;
+      forward.z = -sp;
+      right.x = sy;
+      right.y = -cy;
+      right.z = 0.0f;
+      up.x = sp*cy;
+      up.y = sp*sy;
+      up.z = cp;
+    }
+  } else {
+    // no pitch, no roll
+    forward.x = cy;
+    forward.y = sy;
+    forward.z = 0.0f;
+    right.x = sy;
+    right.y = -cy;
+    right.z = 0.0f;
+    up.x = 0.0f;
+    up.y = 0.0f;
+    up.z = 1.0f;
+  }
 }
 
 
@@ -76,6 +99,7 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
 //
 //==========================================================================
 void AngleVector (const TAVec &angles, TVec &forward) {
+  /*
   const float ay = DEG2RADF(angles.yaw);
   const float ap = DEG2RADF(angles.pitch);
 
@@ -83,10 +107,21 @@ void AngleVector (const TAVec &angles, TVec &forward) {
   const float cy = cosf(ay);
   const float sp = sinf(ap);
   const float cp = cosf(ap);
+  */
+  if (angles.pitch) {
+    float sy, cy;
+    float sp, cp;
+    msincos(angles.yaw, &sy, &cy);
+    msincos(angles.pitch, &sp, &cp);
 
-  forward.x = cp*cy;
-  forward.y = cp*sy;
-  forward.z = -sp;
+    forward.x = cp*cy;
+    forward.y = cp*sy;
+    forward.z = -sp;
+  } else {
+    // no pitch
+    msincos(angles.yaw, &forward.y, &forward.x);
+    forward.z = 0;
+  }
 }
 
 
