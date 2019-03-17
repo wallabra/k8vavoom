@@ -69,10 +69,11 @@ private:
 
   bool DoIsRangeVisible (const VFloat From, const VFloat To) const;
 
-  bool IsRangeVisible (const VFloat From, const VFloat To) const;
+  bool IsRangeVisibleAngle (const VFloat From, const VFloat To) const;
 
-  void AddClipRange (const VFloat From, const VFloat To);
+  void AddClipRangeAngle (const VFloat From, const VFloat To);
 
+public:
   inline VFloat PointToClipAngle (const TVec &Pt) const {
     VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
     if (Ret < (VFloat)0) Ret += (VFloat)360;
@@ -124,18 +125,18 @@ public:
   }
 
   inline bool IsRangeVisible (const TVec &vfrom, const TVec &vto) const {
-    return IsRangeVisible(PointToClipAngle(vfrom), PointToClipAngle(vto));
+    return IsRangeVisibleAngle(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
   void ClipToRanges (const VViewClipper &Range);
 
   inline void AddClipRange (const TVec &vfrom, const TVec &vto) {
-    AddClipRange(PointToClipAngle(vfrom), PointToClipAngle(vto));
+    AddClipRangeAngle(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
   bool ClipIsBBoxVisible (const float BBox[6], bool checkFrustum=false) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
-  bool ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped=false);
+  bool ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped=false, bool debugDump=false);
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;
@@ -152,6 +153,9 @@ public:
   // this doesn't check for radius
   void ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror=nullptr);
 #endif
+
+  // debug
+  void Dump () const;
 
 private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool skipSphereCheck=false);

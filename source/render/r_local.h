@@ -546,8 +546,8 @@ protected:
   void RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderSubRegion (subsector_t *sub, subregion_t *region);
-  void RenderSubsector (int num);
+  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool useClipper=true);
+  void RenderSubsector (int num, bool useClipper=true);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();

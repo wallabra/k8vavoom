@@ -185,11 +185,14 @@ COMMAND(MyPos) {
     return;
   }
   if (CheatAllowed(Player)) {
-    Player->Printf("MAP %s  X:%f  Y:%f  Z:%f  Yaw:%f Pitch:%f",
+    const VLevel *lvl = Player->Level->XLevel;
+    const subsector_t *ss = lvl->PointInSubsector(Player->MO->Origin);
+    GCon->Logf("sub: %d; sector: %d", (int)(ptrdiff_t)(ss-lvl->Subsectors), (int)(ptrdiff_t)(ss->sector-lvl->Sectors));
+    Player->Printf("MAP %s (%f,%f,%f) v:(%f,%f)",
       *GLevel->MapName, Player->MO->Origin.x,
       Player->MO->Origin.y, Player->MO->Origin.z,
       Player->MO->Angles.yaw, Player->MO->Angles.pitch);
-    GCon->Logf("warpto %d %d %d", (int)Player->MO->Origin.x, (int)Player->MO->Origin.y, (int)Player->MO->Origin.z);
+    GCon->Logf("+map %s; \"+warpto %d %d %d\"", *GLevel->MapName, (int)Player->MO->Origin.x, (int)Player->MO->Origin.y, (int)Player->MO->Origin.z);
   }
 }
 

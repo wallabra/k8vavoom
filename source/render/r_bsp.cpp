@@ -48,6 +48,8 @@ static VCvarB r_steamline_masked_walls("r_steamline_masked_walls", true, "Render
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
+static VCvarB r_flood_renderer("r_flood_renderer", true, "Use new floodfill renderer?", CVAR_PreInit);
+
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
@@ -59,6 +61,7 @@ extern VCvarB w_update_in_renderer;
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
+extern VCvarB clip_use_1d_clipper;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -588,11 +591,11 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region) {
+void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool useClipper) {
   const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
   if (region->next && d <= 0.0f) {
-    if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next);
+    if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
+    RenderSubRegion(sub, region->next, useClipper);
   }
 
   check(sub->sector != nullptr);
@@ -621,8 +624,8 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
   RenderSecSurface(sub, secregion, region->ceil, secregion->ceiling->SkyBox);
 
   if (region->next && d > 0.0f) {
-    if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next);
+    if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
+    RenderSubRegion(sub, region->next, useClipper);
   }
 }
 
@@ -632,7 +635,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
 //  VRenderLevelShared::RenderSubsector
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubsector (int num) {
+void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   subsector_t *sub = &Level->Subsectors[num];
   //r_sub = sub;
 
@@ -640,7 +643,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!ViewClip.ClipCheckSubsector(sub, true)) return;
+  if (useClipper && !ViewClip.ClipCheckSubsector(sub, clip_use_1d_clipper)) return;
 
   sub->parent->VisFrame = currVisFrame;
   sub->VisFrame = currVisFrame;
@@ -675,11 +678,13 @@ void VRenderLevelShared::RenderSubsector (int num) {
     }
   }
 
-  RenderSubRegion(sub, sub->regions);
+  RenderSubRegion(sub, sub->regions, useClipper);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+  if (useClipper && clip_use_1d_clipper) {
+    ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+  }
 }
 
 
@@ -796,8 +801,86 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       view_frustum.planes[5].clipflag = 0;
     }
 
-    // head node is the last node output
-    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
+    if (r_flood_renderer) {
+      // start from r_viewleaf
+      static TArray<subsector_t *> queue;
+      queue.reset();
+      queue.append(r_viewleaf);
+      int queuenum = 0;
+      GCon->Log("============");
+      while (queuenum < queue.length()) {
+        subsector_t *currsub = queue[queuenum++];
+        if (currsub->VisFrame == currVisFrame) continue; // already processed
+        currsub->VisFrame = currVisFrame; // mark as processed
+        if (!currsub->sector->linecount) continue; // skip sectors containing original polyobjs
+        const unsigned csnum = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
+        // check clipper
+        float bbox[6];
+        Level->GetSubsectorBBox(currsub, bbox);
+        if (!view_frustum.checkBox(bbox)) {
+          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: frustum", csnum);
+          continue;
+        }
+        if (!ViewClip.ClipIsBBoxVisible(bbox)) {
+          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: bbox", csnum);
+          //continue;
+        }
+        if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) {
+          /*if (csnum == 135)*/ GCon->Logf("!!!!!!!!!! #%u: subcheck", csnum);
+          if (csnum == 100) {
+            ViewClip.Dump();
+            ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper, true);
+            GCon->Logf(" numlines: %d", currsub->numlines);
+            const seg_t *sss = &Level->Segs[currsub->firstline];
+            for (unsigned i = currsub->numlines; i--; ++sss) {
+              GCon->Logf("  seg: (%f,%f,%f)-(%f,%f,%f) (%f) (%f : %f)", sss->v1->x, sss->v1->y, sss->v1->z, sss->v2->x, sss->v2->y, sss->v2->z, DotProduct(vieworg, sss->normal)-sss->dist,
+                ViewClip.PointToClipAngle(*sss->v1), ViewClip.PointToClipAngle(*sss->v2));
+            }
+          }
+          continue;
+        }
+        GCon->Logf("*** SUB #%u (before)", csnum); ViewClip.Dump();
+        // render it, and add to clipper
+        switch ((int)(ptrdiff_t)(currsub-Level->Subsectors)) {
+          //case 135: continue;
+          case 139: continue;
+          case 163: continue;
+        }
+        //GCon->Logf("*** SUB #%u", csnum);
+        RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), false);
+        GCon->Logf("*** SUB #%u (after)", csnum); ViewClip.Dump();
+        // travel to other subsectors
+        const seg_t *seg = &Level->Segs[currsub->firstline];
+        for (unsigned i = currsub->numlines; i--; ++seg) {
+          const line_t *line = seg->linedef;
+          if (line) {
+            // not a miniseg; check for two-sided
+            if (!(line->flags&ML_TWOSIDED)) {
+              // not a two-sided, nowhere to travel
+              if (seg->PointOnSide(vieworg)) continue; // cannot see
+              GCon->Logf("  adding one-sided seg #%u (linedef #%u) (%f : %f)", (unsigned)(ptrdiff_t)(seg-Level->Segs), (unsigned)(ptrdiff_t)(line-Level->Lines), ViewClip.PointToClipAngle(*seg->v2), ViewClip.PointToClipAngle(*seg->v1));
+              ViewClip.AddClipRange(*seg->v2, *seg->v1);
+              continue;
+            }
+          }
+          if (seg->PointOnSide(vieworg)) continue; // cannot see
+          // check clipper
+          const TVec *v1 = seg->v1, *v2 = seg->v2;
+          //if (!ViewClip.IsRangeVisible(*v2, *v1)) continue;
+          // it is visible, travel to partner subsector
+          if (!seg->partner) continue; // just in case
+          subsector_t *ps = seg->partner->front_sub;
+          if (!ps || ps == currsub) continue; // just in case
+          if (ps->VisFrame == currVisFrame) continue; // already processed
+          queue.append(ps);
+          //ViewClip.AddClipRange(*v2, *v1);
+        }
+      }
+      ViewClip.Dump();
+    } else {
+      // head node is the last node output
+      RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
+    }
 
     if (PortalLevel == 0) {
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
