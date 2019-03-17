@@ -59,6 +59,8 @@ static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clip
 static VCvarB clip_height("clip_height", true, "Clip with top and bottom frustum?", CVAR_PreInit);
 static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CVAR_PreInit);
 
+static VCvarB clip_use_transfers("clip_use_transfers", true, "Use transfer sectors to clip?", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 /*
@@ -106,28 +108,30 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
   *fplane = *(TPlane *)&sec->floor;
   *cplane = *(TPlane *)&sec->ceiling;
 
-  // check transferred (k8: do we need more checks here?)
-  const sector_t *hs = sec->heightsec;
-  if (!hs) return;
-  if ((hs->SectorFlags&sector_t::SF_IgnoreHeightSec) != 0) return;
+  if (clip_use_transfers) {
+    // check transferred (k8: do we need more checks here?)
+    const sector_t *hs = sec->heightsec;
+    if (!hs) return;
+    if ((hs->SectorFlags&sector_t::SF_IgnoreHeightSec) != 0) return;
 
-  if (hs->SectorFlags&sector_t::SF_ClipFakePlanes) {
-    if (!CopyPlaneIfValid(fplane, &hs->floor, &sec->ceiling)) {
-      if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) return;
-    }
-    *fpic = hs->floor.pic;
-    if (!CopyPlaneIfValid(cplane, &hs->ceiling, &sec->floor)) {
-      return;
-    }
-    *cpic = hs->ceiling.pic;
-  } else {
-    if (hs->SectorFlags&sector_t::SF_FakeCeilingOnly) {
-      *cplane = *(TPlane *)&hs->ceiling;
-    } else if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) {
-      *fplane = *(TPlane *)&hs->floor;
+    if (hs->SectorFlags&sector_t::SF_ClipFakePlanes) {
+      if (!CopyPlaneIfValid(fplane, &hs->floor, &sec->ceiling)) {
+        if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) return;
+      }
+      *fpic = hs->floor.pic;
+      if (!CopyPlaneIfValid(cplane, &hs->ceiling, &sec->floor)) {
+        return;
+      }
+      *cpic = hs->ceiling.pic;
     } else {
-      *cplane = *(TPlane *)&hs->ceiling;
-      *fplane = *(TPlane *)&hs->floor;
+      if (hs->SectorFlags&sector_t::SF_FakeCeilingOnly) {
+        *cplane = *(TPlane *)&hs->ceiling;
+      } else if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) {
+        *fplane = *(TPlane *)&hs->floor;
+      } else {
+        *cplane = *(TPlane *)&hs->ceiling;
+        *fplane = *(TPlane *)&hs->floor;
+      }
     }
   }
 }
