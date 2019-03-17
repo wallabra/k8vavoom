@@ -164,7 +164,34 @@ public:
   inline float *operator [] (int i) { return m[i]; }
   inline const float *operator [] (int i) const { return m[i]; }
 
-  VMatrix4 operator * (const VMatrix4 &M2) const;
+  VMatrix4 operator * (const VMatrix4 &m) const {
+    return VMatrix4(
+      VSUM4(m[0][0]*m.m[0][0],m[1][0]*m.m[0][1],m[2][0]*m.m[0][2],m[3][0]*m.m[0][3]),VSUM4(m[0][1]*m.m[0][0],m[1][1]*m.m[0][1],m[2][1]*m.m[0][2],m[3][1]*m.m[0][3]),VSUM4(m[0][2]*m.m[0][0],m[1][2]*m.m[0][1],m[2][2]*m.m[0][2],m[3][2]*m.m[0][3]),VSUM4(m[0][3]*m.m[0][0],m[1][3]*m.m[0][1],m[2][3]*m.m[0][2],m[3][3]*m.m[0][3]),
+      VSUM4(m[0][0]*m.m[1][0],m[1][0]*m.m[1][1],m[2][0]*m.m[1][2],m[3][0]*m.m[1][3]),VSUM4(m[0][1]*m.m[1][0],m[1][1]*m.m[1][1],m[2][1]*m.m[1][2],m[3][1]*m.m[1][3]),VSUM4(m[0][2]*m.m[1][0],m[1][2]*m.m[1][1],m[2][2]*m.m[1][2],m[3][2]*m.m[1][3]),VSUM4(m[0][3]*m.m[1][0],m[1][3]*m.m[1][1],m[2][3]*m.m[1][2],m[3][3]*m.m[1][3]),
+      VSUM4(m[0][0]*m.m[2][0],m[1][0]*m.m[2][1],m[2][0]*m.m[2][2],m[3][0]*m.m[2][3]),VSUM4(m[0][1]*m.m[2][0],m[1][1]*m.m[2][1],m[2][1]*m.m[2][2],m[3][1]*m.m[2][3]),VSUM4(m[0][2]*m.m[2][0],m[1][2]*m.m[2][1],m[2][2]*m.m[2][2],m[3][2]*m.m[2][3]),VSUM4(m[0][3]*m.m[2][0],m[1][3]*m.m[2][1],m[2][3]*m.m[2][2],m[3][3]*m.m[2][3]),
+      VSUM4(m[0][0]*m.m[3][0],m[1][0]*m.m[3][1],m[2][0]*m.m[3][2],m[3][0]*m.m[3][3]),VSUM4(m[0][1]*m.m[3][0],m[1][1]*m.m[3][1],m[2][1]*m.m[3][2],m[3][1]*m.m[3][3]),VSUM4(m[0][2]*m.m[3][0],m[1][2]*m.m[3][1],m[2][2]*m.m[3][2],m[3][2]*m.m[3][3]),VSUM4(m[0][3]*m.m[3][0],m[1][3]*m.m[3][1],m[2][3]*m.m[3][2],m[3][3]*m.m[3][3])
+    );
+  }
+
+  inline VMatrix4 operator - (void) const {
+    /*
+    VMatrix4 res = VMatrix4(*this);
+    for (unsigned i = 0; i < 4; ++i) {
+      for (unsigned j = 0; j < 4; ++j) {
+        res.mt[i][j] = -res.mt[i][j];
+      }
+    }
+    return res;
+    */
+    return VMatrix4(
+      -m[0][0], -m[0][1], -m[0][2], -m[0][3],
+      -m[1][0], -m[1][1], -m[1][2], -m[1][3],
+      -m[2][0], -m[2][1], -m[2][2], -m[2][3],
+      -m[3][0], -m[3][1], -m[3][2], -m[3][3]
+    );
+  }
+
+  inline VMatrix4 operator + (void) const { return VMatrix4(*this); }
 
   static void CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]);
 
@@ -181,7 +208,125 @@ public:
   void ExtractFrustumBottom (TPlane &plane) const;
   void ExtractFrustumFar (TPlane &plane) const;
   void ExtractFrustumNear (TPlane &plane) const;
+
+  // more matrix operations (not used in k8vavoom, but nice to have)
+  // this is for OpenGL coordinate system
+  static VMatrix4 RotateX (float angle);
+  static VMatrix4 RotateY (float angle);
+  static VMatrix4 RotateZ (float angle);
+
+  static VMatrix4 Translate (const TVec &v);
+  static VMatrix4 TranslateNeg (const TVec &v);
+
+  static VMatrix4 Scale (const TVec &v);
+  static VMatrix4 Rotate (const TVec &v); // x, y and z are angles; does x, then y, then z
+
+  // for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+  static VMatrix4 RotateZXY (const TVec &v);
+  static VMatrix4 RotateZXY (const TAVec &v);
+
+  // same as `glFrustum()`
+  static VMatrix4 Frustum (float left, float right, float bottom, float top, float nearVal, float farVal);
+  // same as `glOrtho()`
+  static VMatrix4 Ortho (float left, float right, float bottom, float top, float nearVal, float farVal);
+  // same as `gluPerspective()`
+  // sets the frustum to perspective mode
+  // fovY   - Field of vision in degrees in the y direction
+  // aspect - Aspect ratio of the viewport
+  // zNear  - The near clipping distance
+  // zFar   - The far clipping distance
+  static VMatrix4 Perspective (float fovY, float aspect, float zNear, float zFar);
+
+  static VMatrix4 LookAtFucked (const TVec &eye, const TVec &center, const TVec &up);
+
+  // does `gluLookAt()`
+  VMatrix4 lookAt (const TVec &eye, const TVec &center, const TVec &up) const;
+
+  // rotate matrix to face along the target direction
+  // this function will clear the previous rotation and scale, but it will keep the previous translation
+  // it is for rotating object to look at the target, NOT for camera
+  VMatrix4 &lookingAt (const TVec &target);
+  VMatrix4 &lookingAt (const TVec &target, const TVec &upVec);
+
+  inline VMatrix4 lookAt (const TVec &target) const { auto res = VMatrix4(*this); return res.lookingAt(target); }
+  inline VMatrix4 lookAt (const TVec &target, const TVec &upVec) const { auto res = VMatrix4(*this); return res.lookingAt(target, upVec); }
+
+  VMatrix4 &rotate (float angle, const TVec &axis);
+  VMatrix4 &rotateX (float angle);
+  VMatrix4 &rotateY (float angle);
+  VMatrix4 &rotateZ (float angle);
+
+  inline VMatrix4 rotated (float angle, const TVec &axis) const { auto res = VMatrix4(*this); return res.rotate(angle, axis); }
+  inline VMatrix4 rotatedX (float angle) const { auto res = VMatrix4(*this); return res.rotateX(angle); }
+  inline VMatrix4 rotatedY (float angle) const { auto res = VMatrix4(*this); return res.rotateY(angle); }
+  inline VMatrix4 rotatedZ (float angle) const { auto res = VMatrix4(*this); return res.rotateZ(angle); }
+
+  // retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz, in degrees
+  // Rx: rotation about X-axis, pitch
+  // Ry: rotation about Y-axis, yaw (heading)
+  // Rz: rotation about Z-axis, roll
+  TAVec getAngles () const;
+
+  inline VMatrix4 transposed () const {
+    return VMatrix4(
+      m[0][0], m[1][0], m[2][0], m[3][0],
+      m[0][1], m[1][1], m[2][1], m[3][1],
+      m[0][2], m[1][2], m[2][2], m[3][2],
+      m[0][3], m[1][3], m[2][3], m[3][3]
+    );
+  }
+
+  // blends two matrices together, at a given percentage (range is [0..1]), blend==0: m2 is ignored
+  // WARNING! it won't sanitize `blend`
+  VMatrix4 blended (const VMatrix4 &m2, float blend) const;
+
+  //WARNING: this must be tested for row/col
+  // partially ;-) taken from DarkPlaces
+  // this assumes uniform scaling
+  VMatrix4 invertedSimple () const;
+  //FIXME: make this fast pasta!
+  inline VMatrix4 &invertSimple () { VMatrix4 i = invertedSimple(); memcpy(m, i.m, sizeof(m)); return *this; }
+
+  // compute the inverse of 4x4 Euclidean transformation matrix
+  //
+  // Euclidean transformation is translation, rotation, and reflection.
+  // With Euclidean transform, only the position and orientation of the object
+  // will be changed. Euclidean transform does not change the shape of an object
+  // (no scaling). Length and angle are prereserved.
+  //
+  // Use inverseAffine() if the matrix has scale and shear transformation.
+  VMatrix4 &invertEuclidean ();
+
+  // compute the inverse of a 4x4 affine transformation matrix
+  //
+  // Affine transformations are generalizations of Euclidean transformations.
+  // Affine transformation includes translation, rotation, reflection, scaling,
+  // and shearing. Length and angle are NOT preserved.
+  VMatrix4 &invertAffine ();
+
+  // compute the inverse of a general 4x4 matrix using Cramer's Rule
+  // if cannot find inverse, return indentity matrix
+  VMatrix4 &invertGeneral ();
+
+  // general matrix inversion
+  VMatrix4 &invert ();
+
+  void toQuaternion (float quat[4]) const;
 };
+
+static inline __attribute__((unused)) TVec operator * (const VMatrix4 &m, const TVec &v) {
+  return TVec(
+    VSUM4(m.m[0][0]*v.x, m[1][0]*v.y, m.m[2][0]*v.z, m.m[3][0]),
+    VSUM4(m.m[0][1]*v.x, m[1][1]*v.y, m.m[2][1]*v.z, m.m[3][1]),
+    VSUM4(m.m[0][2]*v.x, m[1][2]*v.y, m.m[2][2]*v.z, m.m[3][2]));
+}
+
+static inline __attribute__((unused)) TVec operator * (const TVec &v, const VMatrix4 &m) {
+  return TVec(
+    VSUM4(m.m[0][0]*v.x, m.m[0][1]*v.y, m.m[0][2]*v.z, m.m[0][3]),
+    VSUM4(m.m[1][0]*v.x, m.m[1][1]*v.y, m.m[1][2]*v.z, m.m[1][3]),
+    VSUM4(m.m[2][0]*v.x, m.m[2][1]*v.y, m.m[2][2]*v.z, m.m[2][3]));
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
