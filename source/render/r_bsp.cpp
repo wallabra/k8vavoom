@@ -51,7 +51,7 @@ static VCvarB r_steamline_masked_walls("r_steamline_masked_walls", true, "Render
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
-static VCvarB r_flood_renderer("r_flood_renderer", true, "Use new floodfill renderer?", CVAR_PreInit);
+static VCvarB r_flood_renderer("r_flood_renderer", false, "Use new floodfill renderer?", CVAR_PreInit);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
@@ -727,13 +727,15 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
         return;
       }
       // is node entirely on screen?
+      // k8: don't do this: frustum test are cheap, and we can hit false positive easily
+      /*
       if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
         // yes, don't check this plane
         clipflags ^= cp->clipflag;
       }
-#elif 1
+      */
+#elif 0
       int cres = cp->checkBoxEx(bbox);
-      //int cres = cp->checkBoxEx(newbbox);
       if (cres == TFrustum::OUTSIDE) {
         // add subsector to clipper (why not?)
         /*
@@ -746,7 +748,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
         */
         return;
       }
-      if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
+      // k8: don't do this: frustum test are cheap, and we can hit false positive easily
+      //if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #else
       if (!cp->checkBox(bbox)) return;
 #endif
