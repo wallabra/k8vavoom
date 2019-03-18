@@ -67,7 +67,6 @@ static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy le
 static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
 
 static VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", true, "Use depth bounds extension if found?", CVAR_Archive);
-static VCvarB gl_use_optimised_scissor_calculation("gl_use_optimised_scissor_calculation", true, "Use optimised shadow volume scissor calculation?", CVAR_Archive);
 
 VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive|CVAR_PreInit);
 
@@ -1638,29 +1637,27 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
+  // transform into world coords
+  TVec inworld = mmat.Transform2(org);
+
+  // the thing that should not be (completely behind)
+  if (inworld.z-radius > -1.0f) {
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    //glScissor(0, 0, 0, 0);
+    //GCon->Logf("FUCK! (%f) radius=%f; z=%f; z0=%f; z1=%f", org.y, radius, lcorg.z, lcorg.z-radius, lcorg.z+radius);
+    return -1;
+  }
+
   if (hasBoundsTest && gl_enable_depth_bounds) {
     const bool zeroZ = (gl_enable_clip_control && p_glClipControl);
     const bool revZ = CanUseRevZ();
 
-    TVec inworld = mmat.Transform2(org);
     const float ofsz0 = MIN(-1.0f, inworld.z+radius);
-    const float ofsz1 = MIN(-1.0f, inworld.z-radius);
+    const float ofsz1 = inworld.z-radius;
+    check(ofsz1 <= -1.0f);
+
     float pjwz0 = -1.0f/ofsz0;
     float pjwz1 = -1.0f/ofsz1;
-    /*
-    inworld.z += zofs;
-    //if (inworld.z > -0.001f) inworld.z = -0.001f;
-    if (inworld.z > -1.0f) inworld.z = -1.0f; // -znear
-    float pjw = -1.0f/inworld.z;
-    // for reverse z, projz is always 1, so we can simply use pjw
-    if (!revZ) {
-      const float projz = projection.Transform2OnlyZ(inworld);
-      //GCon->Logf("iwz=%f; pjw=%f; projz=%f; depthz=%f; calcz=%f", inworld.z, pjw, projz, projz*pjw, (1.0f+projz*pjw)*0.5f);
-      //projz *= pjw;
-      pjw *= projz;
-    }
-    return (hasClip ? pjw : (1.0f+pjw)*0.5f);
-    */
 
     // for reverse z, projz is always 1, so we can simply use pjw
     if (!revZ) {
@@ -1679,134 +1676,40 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     } else {
       p_glDepthBoundsEXT(pjwz0, pjwz1);
     }
-    /*
-    const float z0 = glhProjectfZ(org, +radius, mmat[0], pmat[0], !!p_glClipControl, CanUseRevZ());
-    const float z1 = glhProjectfZ(org, -radius, mmat[0], pmat[0], !!p_glClipControl, CanUseRevZ());
-
-    if (CanUseRevZ()) {
-      //GCon->Logf("radius=%f; z1=%f; z0=%f", radius, z1, z0);
-      p_glDepthBoundsEXT(z1, z0);
-    } else {
-      //GCon->Logf("radius=%f; z0=%f; z1=%f", radius, z0, z1);
-      p_glDepthBoundsEXT(z0, z1);
-    }
-    */
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
   float minx = ScreenWidth*4, miny = ScreenHeight*4;
   float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
 
-  if (gl_use_optimised_scissor_calculation) {
-    // transform light center to camera space
-    TVec lcorg = mmat.Transform2(org);
+  // create light bbox
+  float bbox[6];
+  bbox[0+0] = inworld.x-radius;
+  bbox[0+1] = inworld.y-radius;
+  bbox[0+2] = inworld.z-radius;
 
-    // usually, light completely fades away at edges, so we can safely shrink our scissor box
-    // even such small shrinking can win one-two FPS on light-heavy scenes
-    /*
-         if (radius >= 256) radius -= 16;
-    else if (radius >= 128) radius -= 8;
-    else if (radius >= 64) radius -= 6;
-    else if (radius >= 16) radius -= 2;
-    */
-    //radius /= 2;
+  bbox[3+0] = inworld.x+radius;
+  bbox[3+1] = inworld.y+radius;
+  bbox[3+2] = MIN(-1.0f, inworld.z+radius); // clamp to znear
 
-    // the thing that should not be
-    if (lcorg.z-radius > -0.001f) {
-      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-      //glScissor(0, 0, 0, 0);
-      //GCon->Logf("FUCK! (%f) radius=%f; z=%f; z0=%f; z1=%f", org.y, radius, lcorg.z, lcorg.z-radius, lcorg.z+radius);
-      return -1;
-    }
+  const float scrw = ScreenWidth;
+  const float scrh = ScreenHeight;
 
-    // create light bbox
-    float bbox[6];
-    bbox[0+0] = lcorg.x-radius;
-    bbox[0+1] = lcorg.y-radius;
-    bbox[0+2] = lcorg.z-radius;
+  // transform points, get min and max
+  for (unsigned f = 0; f < 8; ++f) {
+    TVec vtx = TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]);
+    TVec proj = pmat.Transform2OnlyXY(vtx); // we don't care about z here
+    const float pjw = -1.0f/vtx.z;
+    proj.x *= pjw;
+    proj.y *= pjw;
+    float winx = (proj.x*0.5f+0.5f)*scrw;
+    float winy = (proj.y*0.5f+0.5f)*scrh;
 
-    bbox[3+0] = lcorg.x+radius;
-    bbox[3+1] = lcorg.y+radius;
-    bbox[3+2] = lcorg.z+radius;
-
-    if (bbox[3+2] > -0.001f) bbox[3+2] = -0.001f;
-
-    check(bbox[0+2] <= -0.001f);
-
-    const float scrw = ScreenWidth;
-    const float scrh = ScreenHeight;
-
-    // transform points, get min and max
-    for (unsigned f = 0; f < 8; ++f) {
-      TVec inworld = TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]);
-      TVec proj = pmat.Transform2OnlyXY(inworld); // we don't care about z here
-      const float pjw = -1.0f/inworld.z;
-      proj.x *= pjw;
-      proj.y *= pjw;
-      float winx = (proj.x*0.5f+0.5f)*scrw;
-      float winy = (proj.y*0.5f+0.5f)*scrh;
-
-      if (minx > winx) minx = winx;
-      if (miny > winy) miny = winy;
-      if (maxx < winx) maxx = winx;
-      if (maxy < winy) maxy = winy;
-    }
-  } else {
-    // my original code
-    const int viewport[4] = { 0, 0, ScreenWidth, ScreenHeight };
-
-    // create light bbox
-    float bbox[6];
-    bbox[0+0] = org.x-radius;
-    bbox[0+1] = org.y-radius;
-    bbox[0+2] = org.z-radius;
-
-    bbox[3+0] = org.x+radius;
-    bbox[3+1] = org.y+radius;
-    bbox[3+2] = org.z+radius;
-
-    // create 8 bbox points
-    TVec bbp[8];
-    bbp[0] = TVec(bbox[0+0], bbox[0+1], bbox[0+2]);
-    bbp[1] = TVec(bbox[3+0], bbox[0+1], bbox[0+2]);
-    bbp[2] = TVec(bbox[0+0], bbox[3+1], bbox[0+2]);
-    bbp[3] = TVec(bbox[3+0], bbox[3+1], bbox[0+2]);
-    bbp[4] = TVec(bbox[0+0], bbox[0+1], bbox[3+2]);
-    bbp[5] = TVec(bbox[3+0], bbox[0+1], bbox[3+2]);
-    bbp[6] = TVec(bbox[0+0], bbox[3+1], bbox[3+2]);
-    bbp[7] = TVec(bbox[3+0], bbox[3+1], bbox[3+2]);
-
-    //unsigned badCount = 0;
-    //float minx = ScreenWidth*4, miny = ScreenHeight*4;
-    //float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
-    // transform points, get min and max
-    for (unsigned f = 0; f < 8; ++f) {
-      float wc[2];
-      if (!glhProjectf(bbp[f], mmat[0], pmat[0], viewport, wc)) {
-        scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-        //glScissor(0, 0, 0, 0);
-        return -1;
-        //++badCount;
-        //continue;
-      }
-      //GCon->Logf("f=%u; org=(%f,%f,%f); radius=%f; wc=(%f,%f)", f, bbp[f].x, bbp[f].y, bbp[f].z, radius, wc[0], wc[1]);
-      if (minx > wc[0]) minx = wc[0];
-      if (miny > wc[1]) miny = wc[1];
-      if (maxx < wc[0]) maxx = wc[0];
-      if (maxy < wc[1]) maxy = wc[1];
-    }
-
-    /*
-    if (badCount == 8) {
-      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-      //glScissor(0, 0, 0, 0);
-      GCon->Logf("completely away, wtf?!");
-      return 0;
-    }
-    if (badCount) GCon->Logf("bc=%u; org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", badCount, org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
-    */
+    if (minx > winx) minx = winx;
+    if (miny > winy) miny = winy;
+    if (maxx < winx) maxx = winx;
+    if (maxy < winy) maxy = winy;
   }
-
 
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
@@ -1814,44 +1717,27 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
-  if (minx < 0) minx = 0; else if (minx > ScreenWidth) minx = ScreenWidth;
-  if (miny < 0) miny = 0; else if (miny > ScreenHeight) miny = ScreenHeight;
-  if (maxx < 0) maxx = 0; else if (maxx > ScreenWidth) maxx = ScreenWidth;
-  if (maxy < 0) maxy = 0; else if (maxy > ScreenHeight) maxy = ScreenHeight;
+  const int x0 = MID(0, (int)minx, ScreenWidth);
+  const int y0 = MID(0, (int)miny, ScreenHeight);
+  const int x1 = MID(0, (int)maxx, ScreenWidth);
+  const int y1 = MID(0, (int)maxy, ScreenHeight);
 
-  if (maxx <= minx || maxy <= miny) {
-    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    //glScissor(0, 0, 0, 0);
-    return 0;
-  }
-
-  //GCon->Logf("radius=%f; box=(%d,%d)-(%d,%d)", radius, (int)minx, (int)miny, (int)maxx, (int)maxy);
+  const int wdt = x1-x0;
+  const int hgt = y1-y0;
 
   // drop very small lights, why not?
-  int wdt = (int)(maxx-minx+1);
-  int hgt = (int)(maxy-miny+1);
-  if (wdt < 8 || hgt < 8) {
+  if (wdt <= 4 || hgt <= 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     //glScissor(0, 0, 0, 0);
     return 0;
   }
-  int x0 = (int)minx;
-  int y0 = (int)miny;
 
   glScissor(x0, y0, wdt, hgt);
   scoord[0] = x0;
   scoord[1] = y0;
-  scoord[2] = x0+wdt-1;
-  scoord[3] = y0+hgt-1;
-  /*
-  if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth-1 && scoord[3] == ScreenHeight-1) {
-  } else {
-    GCon->Logf("org=(%f,%f,%f); radius=%f; scissor=(%f,%f)-(%f,%f)", org.x, org.y, org.z, radius, minx, miny, maxx, maxy);
-  }
-  */
+  scoord[2] = x1;
+  scoord[3] = y1;
 
-  //GCon->Logf("org=(%f,%f,%f); radius=%f; bbox=(%f,%f,%f)-(%f,%f,%f)", org.x, org.y, org.z, radius, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
-  //GCon->Logf("  trbbox=(%f,%f,%f)-(%f,%f,%f); prbbox=(%f,%f,%f)-(%f,%f,%f)", trbb[0].x, trbb[0].y, trbb[0].z, trbb[1].x, trbb[1].y, trbb[1].z, prbb[0].x, prbb[0].y, prbb[0].z, prbb[1].x, prbb[1].y, prbb[1].z);
   return 1;
 }
 
