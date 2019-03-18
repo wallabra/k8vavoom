@@ -264,25 +264,20 @@ void VEntity::UnlinkFromWorld () {
     TouchingSectorList = nullptr; // to be restored by LinkToWorld
   }
 
-  if (!(EntityFlags&EF_NoBlockmap)) {
-    // inert things don't need to be in blockmap
+  if (BlockMapCell /*&& !(EntityFlags&EF_NoBlockmap)*/) {
     // unlink from block map
     if (BlockMapNext) BlockMapNext->BlockMapPrev = BlockMapPrev;
     if (BlockMapPrev) {
       BlockMapPrev->BlockMapNext = BlockMapNext;
     } else {
-      int blockx = MapBlock(Origin.x-XLevel->BlockMapOrgX);
-      int blocky = MapBlock(Origin.y-XLevel->BlockMapOrgY);
-
-      if (blockx >= 0 && blockx < XLevel->BlockMapWidth &&
-          blocky >= 0 && blocky < XLevel->BlockMapHeight)
-      {
-        check(XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] == this);
-        if (XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] == this) {
-          XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] = BlockMapNext;
-        }
-      }
+      // we are the first entity in blockmap cell
+      BlockMapCell -= 1; // real cell number
+      // do some sanity checks
+      check(XLevel->BlockLinks[BlockMapCell] == this);
+      // fix list head
+      XLevel->BlockLinks[BlockMapCell] = BlockMapNext;
     }
+    BlockMapCell = 0;
   }
   SubSector = nullptr;
   Sector = nullptr;
@@ -427,6 +422,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
 
   // link into blockmap
   if (!(EntityFlags&EF_NoBlockmap)) {
+    check(BlockMapCell == 0);
     // inert things don't need to be in blockmap
     int blockx = MapBlock(Origin.x-XLevel->BlockMapOrgX);
     int blocky = MapBlock(Origin.y-XLevel->BlockMapOrgY);
@@ -434,11 +430,13 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     if (blockx >= 0 && blockx < XLevel->BlockMapWidth &&
         blocky >= 0 && blocky < XLevel->BlockMapHeight)
     {
-      VEntity **link = &XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx];
+      BlockMapCell = ((unsigned)blocky*(unsigned)XLevel->BlockMapWidth+(unsigned)blockx);
+      VEntity **link = &XLevel->BlockLinks[BlockMapCell];
       BlockMapPrev = nullptr;
       BlockMapNext = *link;
       if (*link) (*link)->BlockMapPrev = this;
       *link = this;
+      BlockMapCell += 1;
     } else {
       // thing is off the map
       BlockMapNext = BlockMapPrev = nullptr;

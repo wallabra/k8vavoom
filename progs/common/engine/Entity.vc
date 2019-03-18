@@ -237,6 +237,7 @@ native readonly sector_t *Sector;
 // links in blocks (if needed)
 native readonly private Entity BlockMapNext;
 native readonly private Entity BlockMapPrev;
+native readonly private int BlockMapCell;
 
 // links in sector (if needed)
 native readonly Entity SNext;

@@ -178,6 +178,7 @@ class VEntity : public VThinker {
   //      it won't return one thing several times
   VEntity *BlockMapNext;
   VEntity *BlockMapPrev;
+  vuint32 BlockMapCell; // blockmap cell index+1, so it will be independent of coords (0 means none)
 
   // links in sector (if needed)
   VEntity *SNext;
