@@ -53,8 +53,8 @@ TAVec viewangles(0, 0, 0);
 TFrustum view_frustum;
 
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
-VCvarF r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
-VCvarF r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
+VCvarF r_chase_dist("r_chase_dist", "32", "Chasecam distance.", CVAR_Archive);
+VCvarF r_chase_up("r_chase_up", "128", "Chasecam position: up.", CVAR_Archive);
 VCvarF r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
 VCvarI r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
 
@@ -63,8 +63,8 @@ VCvarB r_fog_test("r_fog_test", false, "Is fog testing enabled?");
 VCvarF r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
 VCvarF r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
 VCvarF r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
-VCvarF r_fog_start("r_fog_start", "1.0", "Fog start distance.");
-VCvarF r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
+VCvarF r_fog_start("r_fog_start", "1", "Fog start distance.");
+VCvarF r_fog_end("r_fog_end", "2048", "Fog end distance.");
 VCvarF r_fog_density("r_fog_density", "0.5", "Fog density.");
 
 VCvarI aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);

@@ -151,7 +151,7 @@ static VCvarF cl_backspeed("cl_backspeed", "200", "Backward speed.", CVAR_Archiv
 static VCvarF cl_sidespeed("cl_sidespeed", "200", "Sidestepping speed.", CVAR_Archive);
 static VCvarF cl_flyspeed("cl_flyspeed", "80", "Flying speed.", CVAR_Archive);
 
-static VCvarF cl_movespeedkey("cl_movespeedkey", "2.0", "Running multiplier.", CVAR_Archive);
+static VCvarF cl_movespeedkey("cl_movespeedkey", "2", "Running multiplier.", CVAR_Archive);
 
 static VCvarF cl_yawspeed("cl_yawspeed", "140", "Yaw speed.", CVAR_Archive);
 static VCvarF cl_pitchspeed("cl_pitchspeed", "150", "Pitch speed.", CVAR_Archive);
@@ -162,8 +162,8 @@ static VCvarF cl_anglespeedkey("cl_anglespeedkey", "1.5", "Fast turning multipli
 static VCvarF cl_deathroll("cl_deathroll", "75", "Deathroll amount.", CVAR_Archive);
 static VCvarF cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", CVAR_Archive);
 
-static VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.0", "Horizontal mouse sensitivity.", CVAR_Archive);
-static VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.0", "Vertical mouse sensitivity.", CVAR_Archive);
+static VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.5", "Horizontal mouse sensitivity.", CVAR_Archive);
+static VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.5", "Vertical mouse sensitivity.", CVAR_Archive);
 static VCvarB mouse_look("mouse_look", true, "Allow mouselook?", CVAR_Archive);
 static VCvarB invert_mouse("invert_mouse", false, "Invert mouse?", CVAR_Archive);
 static VCvarB lookstrafe("lookstrafe", false, "Allow lookstrafe?", CVAR_Archive);
@@ -171,7 +171,7 @@ static VCvarB lookspring("lookspring", false, "Allow lookspring?", CVAR_Archive)
 
 static VCvarF m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
 static VCvarF m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);
-static VCvarF m_forward("m_forward", "1.0", "Mouse forward speed.", CVAR_Archive);
+static VCvarF m_forward("m_forward", "1", "Mouse forward speed.", CVAR_Archive);
 static VCvarF m_side("m_side", "0.8", "Mouse sidestepping speed.", CVAR_Archive);
 
 static VCvarF joy_yaw("joy_yaw", "140", "Joystick yaw speed.", CVAR_Archive);

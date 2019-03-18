@@ -48,7 +48,7 @@ static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal
 static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit/*|CVAR_Archive*/);
 
 static VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
-static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3.0", "Cache data if building took more than this number of seconds.", CVAR_Archive);
+static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3", "Cache data if building took more than this number of seconds.", CVAR_Archive);
 static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remove cached data older than this number of days (<=0: none).", CVAR_Archive);
 
 //static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
