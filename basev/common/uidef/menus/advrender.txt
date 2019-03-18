@@ -159,6 +159,14 @@ menudef AdvRenderOptions {
   }
 
   option bool {
+    title = "Use Depth Bounding";
+    cvar = gl_enable_depth_bounds;
+    help =
+      "Limit z by the actual light radius, if your GPU can do it."
+      "This can buy you some FPS by reducing fill rate.";
+  }
+
+  option bool {
     title = "Better masked wall lighting";
     cvar = r_adv_masked_wall_vertex_light;
     help =
