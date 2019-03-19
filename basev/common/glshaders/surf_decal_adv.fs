@@ -26,11 +26,13 @@ void main () {
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
   vec4 ambColor = texture2D(AmbLightTexture, tc2);
-  if (FullBright == 0) {
-    FinalColour_1.r = clamp(FinalColour_1.r*ambColor.r, 0.0, 1.0);
-    FinalColour_1.g = clamp(FinalColour_1.g*ambColor.g, 0.0, 1.0);
-    FinalColour_1.b = clamp(FinalColour_1.b*ambColor.b, 0.0, 1.0);
-  }
+  // if `FullBright` is 1, mul by 1.0, otherwise mul by ambient
+  ambColor.r = 1.0*FullBright+(1.0-FullBright)*ambColor.r;
+  ambColor.g = 1.0*FullBright+(1.0-FullBright)*ambColor.g;
+  ambColor.b = 1.0*FullBright+(1.0-FullBright)*ambColor.b;
+  FinalColour_1.r = clamp(FinalColour_1.r*ambColor.r, 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*ambColor.g, 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*ambColor.b, 0.0, 1.0);
 
   // convert to premultiplied
   FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;
