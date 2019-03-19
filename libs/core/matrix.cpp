@@ -27,6 +27,7 @@
 #include "core.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 const VMatrix4 VMatrix4::Identity(
   1, 0, 0, 0,
   0, 1, 0, 0,
@@ -35,6 +36,83 @@ const VMatrix4 VMatrix4::Identity(
 );
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+//==========================================================================
+//
+//  glhProjectf
+//
+//==========================================================================
+static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, const VMatrix4 &projection, const int *viewport, float *windowCoordinate) {
+  // our `w` is always 1
+  TVec inworld = modelview.Transform2(point);
+  //if (inworld.z >= 0.0f) return false; // the w value
+  if (inworld.z > -1.0f) inworld.z = -1.0f; // -znear
+  TVec proj = projection.Transform2OnlyXY(inworld); // we don't care about z here
+  const float pjw = -1.0f/inworld.z;
+  proj.x *= pjw;
+  proj.y *= pjw;
+  windowCoordinate[0] = (proj.x*0.5f+0.5f)*viewport[2]+viewport[0];
+  windowCoordinate[1] = (proj.y*0.5f+0.5f)*viewport[3]+viewport[1];
+  return true;
+}
+
+
+//==========================================================================
+//
+//  glhProjectfZOld
+//
+//==========================================================================
+static inline __attribute__((unused)) float glhProjectfZOld (const TVec &point, const float zofs, const VMatrix4 &modelview, const VMatrix4 &projection) {
+#if 0
+  TVec inworld = point;
+  const float iww = modelview.Transform2InPlace(inworld);
+  if (inworld.z >= 0.0f) return 0.0f;
+  TVec proj = projection.Transform2(inworld, iww);
+#else
+  // our `w` is always 1
+  TVec inworld = modelview.Transform2(point);
+  inworld.z += zofs;
+  //if (inworld.z >= 0.0f) return 0.0f;
+  //if (inworld.z > -0.001f) inworld.z = -0.001f;
+  if (inworld.z > -1.0f) inworld.z = -1.0f;
+  float projz = projection.Transform2OnlyZ(inworld);
+#endif
+  const float pjw = -1.0f/inworld.z;
+  //GCon->Logf("iwz=%f; pjw=%f; projz=%f; depthz=%f; calcz=%f", inworld.z, pjw, projz, projz*pjw, (1.0f+projz*pjw)*0.5f);
+  projz *= pjw;
+  return (1.0f+projz)*0.5f;
+}
+
+
+//==========================================================================
+//
+//  glhProjectfZ
+//
+//==========================================================================
+static inline __attribute__((unused)) float glhProjectfZ (const TVec &point, const float zofs,
+                                                          const VMatrix4 &modelview, const VMatrix4 &projection,
+                                                          bool hasClip, bool revZ)
+{
+  // our `w` is always 1
+  TVec inworld = modelview.Transform2(point);
+  inworld.z += zofs;
+  //if (inworld.z > -0.001f) inworld.z = -0.001f;
+  if (inworld.z > -1.0f) inworld.z = -1.0f; // -znear
+  float pjw = -1.0f/inworld.z;
+  // for reverse z, projz is always 1, so we can simply use pjw
+  if (!revZ) {
+    const float projz = projection.Transform2OnlyZ(inworld);
+    //GCon->Logf("iwz=%f; pjw=%f; projz=%f; depthz=%f; calcz=%f", inworld.z, pjw, projz, projz*pjw, (1.0f+projz*pjw)*0.5f);
+    //projz *= pjw;
+    pjw *= projz;
+  }
+  return (hasClip ? pjw : (1.0f+pjw)*0.5f);
+}
+*/
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 //==========================================================================
 //
 //  VMatrix4::VMatrix4
