@@ -880,10 +880,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   if (r_advlight_opt_scissor) {
     hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord);
     if (hasScissor <= 0) {
-      // something is VERY wrong (0), or scissor is empty (-1)
+      // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
-      if (!hasScissor) return; // undefined scissor
-      //return;
+      if (!hasScissor) return; // empty scissor
       hasScissor = 0;
       scoord[0] = scoord[1] = 0;
       scoord[2] = ScreenWidth;

@@ -603,7 +603,8 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
 
   VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
-  TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
+  //TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
+  TVec LocalLightPos = LightPos*InvRotationMatrix;
 
   if (!gl_dbg_adv_render_shadow_models) return;
 
