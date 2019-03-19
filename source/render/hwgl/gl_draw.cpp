@@ -66,12 +66,6 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex, float shade)
 {
   SetPic(Tex, nullptr, CM_Default);
-  /*
-  int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
-  */
   p_glUseProgramObjectARB(DrawShadow_Program);
   p_glUniform1iARB(DrawShadow_TextureLoc, 0); //k8: was DrawSimple
   p_glUniform1fARB(DrawShadow_AlphaLoc, shade); //k8: was DrawSimple

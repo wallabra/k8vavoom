@@ -419,6 +419,11 @@ void VOpenGLDrawer::WorldDrawing () {
       glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      if (anisotropyExists) {
+        glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
+          (gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
+        );
+      }
 
       if (RendLev->block_changed[lb]) {
         RendLev->block_changed[lb] = false;
@@ -430,6 +435,11 @@ void VOpenGLDrawer::WorldDrawing () {
       glBindTexture(GL_TEXTURE_2D, addmap_id[lb]);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      if (anisotropyExists) {
+        glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
+          (float)(gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
+        );
+      }
 
       if (RendLev->add_changed[lb]) {
         RendLev->add_changed[lb] = false;

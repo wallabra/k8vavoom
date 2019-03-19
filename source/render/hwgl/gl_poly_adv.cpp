@@ -92,6 +92,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // other passes can skip surface sorting
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
 
+    float prevsflight = -666;
     const texinfo_t *lastTexinfo = nullptr;
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
@@ -120,10 +121,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       }
 
       const float lev = getSurfLightLevel(surf);
-      p_glUniform4fARB(ShadowsAmbient_LightLoc,
-        ((surf->Light>>16)&255)*lev/255.0f,
-        ((surf->Light>>8)&255)*lev/255.0f,
-        (surf->Light&255)*lev/255.0f, 1.0f);
+      if (lev != prevsflight) {
+        prevsflight = lev;
+        p_glUniform4fARB(ShadowsAmbient_LightLoc,
+          ((surf->Light>>16)&255)*lev/255.0f,
+          ((surf->Light>>8)&255)*lev/255.0f,
+          (surf->Light&255)*lev/255.0f, 1.0f);
+      }
 
       glBegin(GL_POLYGON);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
@@ -357,6 +361,8 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
   p_glUniform3fvARB(ShadowsLight_LightPosLoc, 1, &LightPos.x);
   p_glUniform1fARB(ShadowsLight_LightRadiusLoc, Radius);
   p_glUniform3fARB(ShadowsLight_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+  p_glUniform3fARB(ShadowsLight_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
+  ShadowsLight_Locs.storeTexture(0);
 }
 
 
@@ -386,11 +392,9 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
 
-  ShadowsLight_Locs.storeTexture(0);
   ShadowsLight_Locs.storeTextureParams(tex);
   p_glVertexAttrib3fvARB(ShadowsLight_SurfNormalLoc, &surf->plane->normal.x);
   p_glVertexAttrib1fvARB(ShadowsLight_SurfDistLoc, &surf->plane->dist);
-  p_glUniform3fARB(ShadowsLight_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
 
   glBegin(GL_POLYGON);
   for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
@@ -546,6 +550,11 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   p_glUseProgramObjectARB(ShadowsFog_Program);
   //ShadowsFog_Locs.storeFogType();
 
+  if (RendLev->DrawSurfList.length() == 0) return;
+
+  vuint32 lastFade = RendLev->DrawSurfList[0]->Fade;
+  ShadowsFog_Locs.storeFogFade(lastFade, 1.0f);
+
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
@@ -562,7 +571,10 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
     if (currTexinfo->Alpha < 1.0f) continue;
 
-    ShadowsFog_Locs.storeFogFade(surf->Fade, 1.0f);
+    if (surf->Fade != lastFade) {
+      lastFade = surf->Fade;
+      ShadowsFog_Locs.storeFogFade(lastFade, 1.0f);
+    }
 
     glBegin(GL_POLYGON);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);

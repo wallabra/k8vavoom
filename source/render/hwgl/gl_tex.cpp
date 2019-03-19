@@ -166,18 +166,6 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
   if (!Tex) Sys_Error("cannot set null texture");
   SetSpriteLump(Tex, nullptr, CMap, false);
   SetupTextureFiltering(texture_filter);
-  /*
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR / *GL_NEAREST* / / *GL_LINEAR_MIPMAP_NEAREST* /);
-  } else {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
-  }
-  if (max_anisotropy > 1.0f) {
-    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
-  }
-  */
 }
 
 
@@ -232,15 +220,6 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
 //
 //==========================================================================
 void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
-  /*
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
-  } else {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
-  }
-  */
-
   SetSpriteLump(Tex, Trans, CMap, true);
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
@@ -257,14 +236,6 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   SetSpriteLump(Tex, Trans, CMap, false);
   SetupTextureFiltering(model_filter);
-  /*
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
-  } else {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
-  }
-  */
 }
 
 
