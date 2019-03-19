@@ -629,6 +629,14 @@ else(SWITCH_LIBNX)
 endif(SWITCH_LIBNX)
 
 
+### if(CMAKE_EXECUTABLE_FORMAT STREQUAL "ELF")
+###   add_subdirectory(libs/libbacktrace)
+###   #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbacktrace)
+###   set(MAIN_LIBS backtrace ${MAIN_LIBS})
+###   add_definitions(-DHAVE_BACKTRACE=1)
+### endif()
+
+
 message(STATUS "=== COMPONENTS ===")
 message(STATUS "  VaVoom Client: " ${ENABLE_CLIENT})
 message(STATUS "  VaVoom Server: " ${ENABLE_SERVER})
