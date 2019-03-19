@@ -139,6 +139,7 @@ public:
     VCB_InitVideo,
     VCB_DeinitVideo,
     VCB_InitResolution,
+    VCB_DeinitResolution, //FIXME: not implemented yet
     VCB_FinishUpdate,
   };
 
@@ -163,6 +164,7 @@ public:
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS
   virtual bool SetResolution (int AWidth, int AHeight, int fsmode) = 0;
   virtual void InitResolution () = 0;
+  virtual void DeinitResolution () = 0;
   inline bool IsInited () const { return mInitialized; }
 
   virtual void StartUpdate (bool allowClear=true) = 0;

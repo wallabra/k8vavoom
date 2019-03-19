@@ -504,6 +504,7 @@ public:
   VOpenGLDrawer ();
   virtual ~VOpenGLDrawer () override;
   virtual void InitResolution () override;
+  virtual void DeinitResolution () override;
   virtual void StartUpdate (bool allowClear=true) override;
   virtual void Setup2D () override;
   //virtual void BeginDirectUpdate () override;

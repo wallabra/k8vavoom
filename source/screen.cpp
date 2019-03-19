@@ -372,7 +372,9 @@ static void ChangeResolution (int InWidth, int InHeight) {
   //bool win = false;
   //if (screen_fsmode > 0) win = true;
 
-  // Changing resolution
+  Drawer->DeinitResolution();
+
+  // changing resolution
   if (!Drawer->SetResolution(width, height, screen_fsmode)) {
     GCon->Logf("Failed to set resolution %dx%d", width, height);
     if (ScreenWidth && lastFSMode >= 0) {

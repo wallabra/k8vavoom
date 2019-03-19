@@ -507,6 +507,48 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DeinitResolution
+//
+//==========================================================================
+void VOpenGLDrawer::DeinitResolution () {
+  // delete old FBOs
+  if (mainFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (mainFBOColorTid) glDeleteTextures(1, &mainFBOColorTid);
+    if (mainFBODepthStencilTid) glDeleteTextures(1, &mainFBODepthStencilTid);
+    glDeleteFramebuffers(1, &mainFBO);
+    mainFBO = 0;
+    mainFBOColorTid = 0;
+    mainFBODepthStencilTid = 0;
+  }
+
+  if (secondFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (secondFBOColorTid) glDeleteTextures(1, &secondFBOColorTid);
+    glDeleteFramebuffers(1, &secondFBO);
+    secondFBO = 0;
+    secondFBOColorTid = 0;
+  }
+
+  if (ambLightFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (ambLightFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
+    glDeleteFramebuffers(1, &ambLightFBO);
+    ambLightFBO = 0;
+    ambLightFBOColorTid = 0;
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::InitResolution
 //
 //==========================================================================
@@ -849,41 +891,6 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
-
-  // delete old FBOs
-  if (mainFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (mainFBOColorTid) glDeleteTextures(1, &mainFBOColorTid);
-    if (mainFBODepthStencilTid) glDeleteTextures(1, &mainFBODepthStencilTid);
-    glDeleteFramebuffers(1, &mainFBO);
-    mainFBO = 0;
-    mainFBOColorTid = 0;
-    mainFBODepthStencilTid = 0;
-  }
-
-  if (secondFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (secondFBOColorTid) glDeleteTextures(1, &secondFBOColorTid);
-    glDeleteFramebuffers(1, &secondFBO);
-    secondFBO = 0;
-    secondFBOColorTid = 0;
-  }
-
-  if (ambLightFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (ambLightFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
-    glDeleteFramebuffers(1, &ambLightFBO);
-    ambLightFBO = 0;
-    ambLightFBOColorTid = 0;
-  }
-
 
   // allocate main FBO object
   glGenFramebuffers(1, &mainFBO);
