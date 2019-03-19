@@ -28,6 +28,9 @@
 //**  OpenGL driver, main module
 //**
 //**************************************************************************
+#include <limits.h>
+#include <float.h>
+
 #include "gl_local.h"
 #include "../r_local.h"
 
@@ -1522,7 +1525,7 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //   1 if scissor is set
 //
 //==========================================================================
-int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[4]) {
+int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox) {
   int tmpscoord[4];
   VMatrix4 pmat, mmat;
   glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
@@ -1546,13 +1549,100 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
+  // create light bbox
+  float bbox[6];
+  bbox[0+0] = inworld.x-radius;
+  bbox[0+1] = inworld.y-radius;
+  bbox[0+2] = inworld.z-radius;
+
+  bbox[3+0] = inworld.x+radius;
+  bbox[3+1] = inworld.y+radius;
+  bbox[3+2] = MIN(-1.0f, inworld.z+radius); // clamp to znear
+
+  // clamp it with geometry bbox, if there is any
+#if 1
+  if (geobbox) {
+    float gbb[6];
+    gbb[0] = geobbox[0].x;
+    gbb[1] = geobbox[0].y;
+    gbb[2] = geobbox[0].z;
+    gbb[3] = geobbox[1].x;
+    gbb[4] = geobbox[1].y;
+    gbb[5] = geobbox[1].z;
+    float trbb[6] = { FLT_MAX, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX };
+    for (unsigned f = 0; f < 8; ++f) {
+      TVec vtx = mmat*TVec(gbb[BBoxVertexIndex[f][0]], gbb[BBoxVertexIndex[f][1]], gbb[BBoxVertexIndex[f][2]]);
+      trbb[0] = MIN(trbb[0], vtx.x);
+      trbb[1] = MIN(trbb[1], vtx.y);
+      trbb[2] = MIN(trbb[2], vtx.z);
+      trbb[3] = MAX(trbb[3], vtx.x);
+      trbb[4] = MAX(trbb[4], vtx.y);
+      trbb[5] = MAX(trbb[5], vtx.z);
+    }
+
+    if (trbb[0] >= trbb[3+0] || trbb[1] >= trbb[3+1] || trbb[2] >= trbb[3+2]) {
+      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      glDisable(GL_SCISSOR_TEST);
+      return 0;
+    }
+
+    trbb[2] = MIN(-1.0f, trbb[2]);
+    trbb[5] = MIN(-1.0f, trbb[5]);
+
+    /*
+    if (trbb[0] > bbox[0] || trbb[1] > bbox[1] || trbb[2] > bbox[2] ||
+        trbb[3] < bbox[3] || trbb[4] < bbox[4] || trbb[5] < bbox[5])
+    {
+      GCon->Logf("GEOCLAMP: (%f,%f,%f)-(%f,%f,%f) : (%f,%f,%f)-(%f,%f,%f)", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5], trbb[0], trbb[1], trbb[2], trbb[3], trbb[4], trbb[5]);
+    }
+    */
+
+    bbox[0] = MAX(bbox[0], trbb[0]);
+    bbox[1] = MAX(bbox[1], trbb[1]);
+    bbox[2] = MAX(bbox[2], trbb[2]);
+    bbox[3] = MIN(bbox[3], trbb[3]);
+    bbox[4] = MIN(bbox[4], trbb[4]);
+    bbox[5] = MIN(bbox[5], trbb[5]);
+    if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
+      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      glDisable(GL_SCISSOR_TEST);
+      return 0;
+    }
+
+    /*
+    TVec bc0 = mmat*geobbox[0];
+    TVec bc1 = mmat*geobbox[1];
+    TVec bmin = TVec(MIN(bc0.x, bc1.x), MIN(bc0.y, bc1.y), MIN(-1.0f, MIN(bc0.z, bc1.z)));
+    TVec bmax = TVec(MAX(bc0.x, bc1.x), MAX(bc0.y, bc1.y), MIN(-1.0f, MAX(bc0.z, bc1.z)));
+    if (bmin.x > bbox[0] || bmin.y > bbox[1] || bmin.z > bbox[2] ||
+        bmax.x < bbox[3] || bmax.y < bbox[4] || bmax.z < bbox[5])
+    {
+      GCon->Logf("GEOCLAMP: (%f,%f,%f)-(%f,%f,%f) : (%f,%f,%f)-(%f,%f,%f)", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5], bmin.x, bmin.y, bmin.z, bmax.x, bmax.y, bmax.z);
+    }
+    bbox[0] = MAX(bbox[0], bmin.x);
+    bbox[1] = MAX(bbox[1], bmin.y);
+    bbox[2] = MAX(bbox[2], bmin.z);
+    bbox[3] = MIN(bbox[3], bmax.x);
+    bbox[4] = MIN(bbox[4], bmax.y);
+    bbox[5] = MIN(bbox[5], bmax.z);
+    if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
+      scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      glDisable(GL_SCISSOR_TEST);
+      return 0;
+    }
+    */
+  }
+#endif
+
   // setup depth bounds
   if (hasBoundsTest && gl_enable_depth_bounds) {
     const bool zeroZ = (gl_enable_clip_control && p_glClipControl);
     const bool revZ = CanUseRevZ();
 
-    const float ofsz0 = MIN(-1.0f, inworld.z+radius);
-    const float ofsz1 = inworld.z-radius;
+    //const float ofsz0 = MIN(-1.0f, inworld.z+radius);
+    //const float ofsz1 = inworld.z-radius;
+    const float ofsz0 = bbox[5];
+    const float ofsz1 = bbox[2];
     check(ofsz1 <= -1.0f);
 
     float pjwz0 = -1.0f/ofsz0;
@@ -1577,16 +1667,6 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
-
-  // create light bbox
-  float bbox[6];
-  bbox[0+0] = inworld.x-radius;
-  bbox[0+1] = inworld.y-radius;
-  bbox[0+2] = inworld.z-radius;
-
-  bbox[3+0] = inworld.x+radius;
-  bbox[3+1] = inworld.y+radius;
-  bbox[3+2] = MIN(-1.0f, inworld.z+radius); // clamp to znear
 
   GLint vport[4];
   glGetIntegerv(GL_VIEWPORT, vport);
@@ -1649,6 +1729,15 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   maxx = MID(vport[0], maxx, scrx1);
   maxy = MID(vport[1], maxy, scry1);
 #endif
+
+  /*
+  int cx = (minx+maxx)/2;
+  int cy = (minx+maxx)/2;
+  minx = cx-32;
+  miny = cy-32;
+  maxx = cx+32;
+  maxy = cy+32;
+  */
 
   //GCon->Logf("  radius=%f; (%d,%d)-(%d,%d)", radius, minx, miny, maxx, maxy);
   const int wdt = maxx-minx+1;
@@ -2023,6 +2112,58 @@ void VOpenGLDrawer::CopyToSecondaryFBO () {
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
     glPopAttrib();
   }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DebugRenderScreenRect
+//
+//==========================================================================
+void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) {
+  glPushAttrib(/*GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT*/GL_ALL_ATTRIB_BITS);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+
+  //glColor4f(((color>>16)&0xff)/255.0f, ((color>>8)&0xff)/255.0f, (color&0xff)/255.0f, ((color>>24)&0xff)/255.0f);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  //glDisable(GL_STENCIL_TEST);
+  //glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_TEXTURE_2D);
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  //p_glUseProgramObjectARB(0);
+
+  p_glUseProgramObjectARB(DrawFixedCol_Program);
+  p_glUniform4fARB(DrawFixedCol_ColourLoc,
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);
+
+  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+  glBegin(GL_QUADS);
+    glVertex2i(x0, y0);
+    glVertex2i(x1, y0);
+    glVertex2i(x1, y1);
+    glVertex2i(x0, y1);
+  glEnd();
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+
+  glPopAttrib();
+  p_glUseProgramObjectARB(0);
 }
 
 

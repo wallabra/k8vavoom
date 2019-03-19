@@ -284,8 +284,10 @@ public:
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
 
   // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
-  virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4]) = 0;
+  virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) = 0;
   virtual void ResetScissor () = 0;
+
+  virtual void DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) = 0;
 };
 
 

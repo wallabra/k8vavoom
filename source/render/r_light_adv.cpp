@@ -24,6 +24,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include <limits.h>
+#include <float.h>
+
 #include "gamedefs.h"
 #include "r_local.h"
 
@@ -98,10 +101,12 @@ extern VCvarB r_dynamic_clip_more;
 VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
-static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive);
 // this is wrong for now
-static VCvarB r_advlight_opt_frustum_full("r_advlight_opt_frustum_full", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
-static VCvarB r_advlight_opt_frustum_back("r_advlight_opt_frustum_back", false, "Optimise 'light is in frustum' case.", CVAR_Archive|CVAR_PreInit);
+static VCvarB r_advlight_opt_frustum_full("r_advlight_opt_frustum_full", false, "Optimise 'light is in frustum' case.", CVAR_Archive);
+static VCvarB r_advlight_opt_frustum_back("r_advlight_opt_frustum_back", false, "Optimise 'light is in frustum' case.", CVAR_Archive);
+
+VCvarB r_advlight_opt_optimise_scissor("r_advlight_opt_optimise_scissor", true, "Optimise scissor with lit geometry bounds.", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -849,6 +854,9 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   if (!CalcLightVis(Pos, Radius)) return;
 
+  if (r_advlight_opt_optimise_scissor && !LitSurfaces) return; // no lit surfaces, nothing to do
+  if (LightVisSubs.length() == 0) return; // just in case
+
   CurrLightColour = Colour;
   // if our light is in frustum, ignore any out-of-frustum polys
   if (r_advlight_opt_frustum_full) {
@@ -876,9 +884,11 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   int hasScissor = 1;
   int scoord[4];
 
+  //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
+
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord);
+    hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
     if (hasScissor <= 0) {
       // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
@@ -948,6 +958,8 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
   RenderMobjsLight();
   ResetMobjsLightCount(false);
+
+  //if (hasScissor) Drawer->DebugRenderScreenRect(scoord[0], scoord[1], scoord[2], scoord[3], 0x7f007f00);
 
   /*if (hasScissor)*/ Drawer->ResetScissor();
 }

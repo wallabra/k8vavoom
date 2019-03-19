@@ -29,7 +29,8 @@
 //**  geometry, trigonometry). See tables.c, too.
 //**
 //**************************************************************************
-//#define RADVLIGHT_GRID_OPTIMIZER
+#include <limits.h>
+#include <float.h>
 
 #include "gamedefs.h"
 #include "r_local.h"
@@ -37,6 +38,8 @@
 //#define VAVOOM_DEBUG_PORTAL_POOL
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
+extern VCvarB r_draw_pobj;
+extern VCvarB r_advlight_opt_optimise_scissor;
 
 
 void R_FreeSkyboxData ();
@@ -837,12 +840,94 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
 }
 
 
+//==========================================================================
+//
+//  VRenderLevelShared::UpdateBBoxWithSurface
+//
+//==========================================================================
+void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
+                                                VEntity *SkyBox, bool CheckSkyBoxAlways)
+{
+  if (!surfs) return;
+
+  if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (texinfo->Alpha < 1.0f) return;
+
+  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+
+  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
+      (CheckSkyBoxAlways && SkyBox && SkyBox->eventSkyBoxGetAlways()))
+  {
+    return;
+  }
+
+  for (const surface_t *surf = surfs; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
+    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+    if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
+    ++LitSurfaces;
+    const TVec *vert = surf->verts;
+    for (int vcount = surf->count; vcount--; ++vert) {
+      bbox[0].x = MIN(bbox[0].x, vert->x);
+      bbox[0].y = MIN(bbox[0].y, vert->y);
+      bbox[0].z = MIN(bbox[0].z, vert->z);
+      bbox[1].x = MAX(bbox[1].x, vert->x);
+      bbox[1].y = MAX(bbox[1].y, vert->y);
+      bbox[1].z = MAX(bbox[1].z, vert->z);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::UpdateBBoxWithLine
+//
+//==========================================================================
+void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg) {
+  const seg_t *seg = dseg->seg;
+  if (!seg->linedef) return; // miniseg
+  if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+  if (!seg->backsector) {
+    // single sided line
+    UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
+    UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
+  } else {
+    // two sided line
+    UpdateBBoxWithSurface(bbox, dseg->top->surfs, &dseg->top->texinfo, SkyBox, false);
+    UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
+    UpdateBBoxWithSurface(bbox, dseg->bot->surfs, &dseg->bot->texinfo, SkyBox, false);
+    UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
+    for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+      UpdateBBoxWithSurface(bbox, sp->surfs, &sp->texinfo, SkyBox, false);
+    }
+  }
+}
+
+
 #define UPDATE_LIGHTVIS(ssindex)  do { \
   LightSubs.append((int)ssindex); \
   LightVis[(unsigned)(ssindex)>>3] |= 1<<((unsigned)(ssindex)&7); \
   if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) { \
     HasLightIntersection = true; \
     LightVisSubs.append((int)ssindex); \
+    if (r_advlight_opt_optimise_scissor) { \
+      const subsector_t *sub = &Level->Subsectors[ssindex]; \
+      for (const subregion_t *region = sub->regions; region; region = region->next) { \
+        sec_region_t *curreg = region->secregion; \
+        if (sub->poly && r_draw_pobj) { \
+          seg_t **polySeg = sub->poly->segs; \
+          for (int count = sub->poly->numsegs; count--; ++polySeg) { \
+            UpdateBBoxWithLine(LitBBox, curreg->ceiling->SkyBox, (*polySeg)->drawsegs); \
+          } \
+        } \
+        drawseg_t *ds = region->lines; \
+        for (int count = sub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->ceiling->SkyBox, ds); \
+        UpdateBBoxWithSurface(LitBBox, region->floor->surfs, &region->floor->texinfo, curreg->floor->SkyBox, true); \
+        UpdateBBoxWithSurface(LitBBox, region->ceil->surfs, &region->ceil->texinfo, curreg->ceiling->SkyBox, true); \
+      } \
+    } \
   } \
 } while (0)
 
@@ -1162,6 +1247,10 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
 
   LightSubs.reset(); // all affected subsectors
   LightVisSubs.reset(); // visible affected subsectors
+  LitSurfaces = 0;
+
+  LitBBox[0] = TVec(FLT_MAX, FLT_MAX, FLT_MAX);
+  LitBBox[1] = TVec(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 

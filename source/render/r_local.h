@@ -410,6 +410,8 @@ protected:
   bool HasLightIntersection; // set by `BuildLightVis()`
   TArray<int> LightSubs; // all affected subsectors
   TArray<int> LightVisSubs; // visible affected subsectors
+  TVec LitBBox[2];
+  int LitSurfaces;
 
   // lightvis result
   bool doShadows; // true: don't do more checks
@@ -481,6 +483,10 @@ protected:
 
   void UpdateSubsectorBBox (int num, float *bbox);
   void RecalcWorldBBoxes (int bspnum, float *bbox);
+
+  void UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
+                              VEntity *SkyBox, bool CheckSkyBoxAlways);
+  void UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg);
 
   // this two is using to check if light can cast any shadow (and if it is visible at all)
   // note that this should be called with filled `BspVis`
