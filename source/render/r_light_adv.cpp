@@ -902,14 +902,25 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   }
   */
 
+#if 0
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+#endif
 
   ResetMobjsLightCount(true);
   // do shadow volumes
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   if (doShadows && r_max_shadow_segs_all) {
+#if 0
     RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
+#else
+    {
+      const int *subidx = LightSubs.ptr();
+      for (int sscount = LightSubs.length(); sscount--; ++subidx) {
+        RenderShadowSubsector(*subidx);
+      }
+    }
+#endif
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow();
     ResetMobjsLightCount(false);
@@ -924,7 +935,16 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, Colour, doShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level);
+#if 0
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
+#else
+  {
+    const int *subidx = LightVisSubs.ptr();
+    for (int sscount = LightVisSubs.length(); sscount--; ++subidx) {
+      RenderLightSubsector(*subidx);
+    }
+  }
+#endif
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
   RenderMobjsLight();
   ResetMobjsLightCount(false);

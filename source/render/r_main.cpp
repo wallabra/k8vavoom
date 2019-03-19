@@ -77,7 +77,7 @@ VCvarF r_sky_bright_factor("r_sky_bright_factor", "1", "Skybright actor factor."
 
 VCvarF r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_Archive);
 //static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
-static VCvarB r_light_opt_separate_vis("r_light_opt_separate_vis", false, "Calculate light and render vis intersection as separate steps?", CVAR_Archive|CVAR_PreInit);
+//static VCvarB r_light_opt_separate_vis("r_light_opt_separate_vis", false, "Calculate light and render vis intersection as separate steps?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
 
@@ -838,8 +838,12 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
 
 
 #define UPDATE_LIGHTVIS(ssindex)  do { \
+  LightSubs.append((int)ssindex); \
   LightVis[(unsigned)(ssindex)>>3] |= 1<<((unsigned)(ssindex)&7); \
-  if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) HasLightIntersection = true; \
+  if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) { \
+    HasLightIntersection = true; \
+    LightVisSubs.append((int)ssindex); \
+  } \
 } while (0)
 
 /*
@@ -1156,33 +1160,24 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
   CurrLightRadius = radius;
   CurrLightBit = currltbit;
 
+  LightSubs.reset(); // all affected subsectors
+  LightVisSubs.reset(); // visible affected subsectors
+
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
   memset(LightVis, 0, VisSize);
-  if (!r_light_opt_separate_vis) memset(LightBspVis, 0, VisSize);
+  memset(LightBspVis, 0, VisSize);
   HasLightIntersection = false;
   BuildLightVis(Level->NumNodes-1, dummy_bbox);
-  if (!r_light_opt_separate_vis && !HasLightIntersection) return false;
+  if (!HasLightIntersection) return false;
   if (!skipShadowCheck) {
     if (radius < 12.0f) {
       doShadows = false;
     } else {
       if (!doShadows && !hasAnyLitSurfaces) return false;
     }
-  }
-
-  // create combined light and view visibility
-  if (r_light_opt_separate_vis) {
-    //memset(LightBspVis, 0, VisSize);
-    bool HaveIntersect = false;
-    for (int i = 0; i < VisSize; ++i) {
-      LightBspVis[i] = BspVis[i]&LightVis[i];
-      if (LightBspVis[i]) HaveIntersect = true;
-    }
-    HasLightIntersection = HaveIntersect;
-    if (!HaveIntersect) return false;
   }
 
   return true;

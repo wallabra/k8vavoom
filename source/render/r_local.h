@@ -408,6 +408,8 @@ protected:
   vuint8 *LightVis;
   vuint8 *LightBspVis;
   bool HasLightIntersection; // set by `BuildLightVis()`
+  TArray<int> LightSubs; // all affected subsectors
+  TArray<int> LightVisSubs; // visible affected subsectors
 
   // lightvis result
   bool doShadows; // true: don't do more checks
