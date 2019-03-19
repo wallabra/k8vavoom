@@ -412,6 +412,7 @@ protected:
   TArray<int> LightVisSubs; // visible affected subsectors
   TVec LitBBox[2];
   int LitSurfaces;
+  bool HasBackLit; // if there's no backlit surfaces, use zpass
 
   // lightvis result
   bool doShadows; // true: don't do more checks

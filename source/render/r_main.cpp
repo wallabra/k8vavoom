@@ -863,7 +863,14 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *s
 
   for (const surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (surf->plane->PointOnSide(vieworg)) {
+      // viewer is in back side or on plane
+      if (!HasBackLit) {
+        const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+        HasBackLit = (dist > 0.0f && dist < CurrLightRadius);
+      }
+      continue;
+    }
     const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
     ++LitSurfaces;
@@ -1248,6 +1255,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
   LightSubs.reset(); // all affected subsectors
   LightVisSubs.reset(); // visible affected subsectors
   LitSurfaces = 0;
+  HasBackLit = false;
 
   LitBBox[0] = TVec(FLT_MAX, FLT_MAX, FLT_MAX);
   LitBBox[1] = TVec(-FLT_MAX, -FLT_MAX, -FLT_MAX);
