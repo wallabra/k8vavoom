@@ -1514,93 +1514,6 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 
 //==========================================================================
 //
-//  glhProjectf
-//
-//==========================================================================
-static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, const VMatrix4 &projection, const int *viewport, float *windowCoordinate) {
-#if 0
-  TVec inworld = point;
-  const float iww = modelview.Transform2InPlace(inworld);
-  if (inworld.z >= 0.0f) return false; // the w value
-  TVec proj = projection.Transform2(inworld, iww);
-#else
-  // our `w` is always 1
-  TVec inworld = modelview.Transform2(point);
-  //if (inworld.z >= 0.0f) return false; // the w value
-  if (inworld.z > -1.0f) inworld.z = -1.0f; // -znear
-  TVec proj = projection.Transform2OnlyXY(inworld); // we don't care about z here
-#endif
-  const float pjw = -1.0f/inworld.z;
-  proj.x *= pjw;
-  proj.y *= pjw;
-  windowCoordinate[0] = (proj.x*0.5f+0.5f)*viewport[2]+viewport[0];
-  windowCoordinate[1] = (proj.y*0.5f+0.5f)*viewport[3]+viewport[1];
-  return true;
-}
-
-
-//==========================================================================
-//
-//  glhProjectfZOld
-//
-//==========================================================================
-static inline __attribute__((unused)) float glhProjectfZOld (const TVec &point, const float zofs, const VMatrix4 &modelview, const VMatrix4 &projection) {
-#if 0
-  TVec inworld = point;
-  const float iww = modelview.Transform2InPlace(inworld);
-  if (inworld.z >= 0.0f) return 0.0f;
-  TVec proj = projection.Transform2(inworld, iww);
-#else
-  // our `w` is always 1
-  TVec inworld = modelview.Transform2(point);
-  inworld.z += zofs;
-  //if (inworld.z >= 0.0f) return 0.0f;
-  //if (inworld.z > -0.001f) inworld.z = -0.001f;
-  if (inworld.z > -1.0f) inworld.z = -1.0f;
-  float projz = projection.Transform2OnlyZ(inworld);
-#endif
-  const float pjw = -1.0f/inworld.z;
-  //GCon->Logf("iwz=%f; pjw=%f; projz=%f; depthz=%f; calcz=%f", inworld.z, pjw, projz, projz*pjw, (1.0f+projz*pjw)*0.5f);
-  projz *= pjw;
-  /*
-  if (p_glClipControl) {
-    return (1.0f+projz)*0.5f;
-  } else
-  */
-  {
-    return (1.0f+projz)*0.5f;
-  }
-}
-
-
-//==========================================================================
-//
-//  glhProjectfZ
-//
-//==========================================================================
-static inline __attribute__((unused)) float glhProjectfZ (const TVec &point, const float zofs,
-                                                          const VMatrix4 &modelview, const VMatrix4 &projection,
-                                                          bool hasClip, bool revZ)
-{
-  // our `w` is always 1
-  TVec inworld = modelview.Transform2(point);
-  inworld.z += zofs;
-  //if (inworld.z > -0.001f) inworld.z = -0.001f;
-  if (inworld.z > -1.0f) inworld.z = -1.0f; // -znear
-  float pjw = -1.0f/inworld.z;
-  // for reverse z, projz is always 1, so we can simply use pjw
-  if (!revZ) {
-    const float projz = projection.Transform2OnlyZ(inworld);
-    //GCon->Logf("iwz=%f; pjw=%f; projz=%f; depthz=%f; calcz=%f", inworld.z, pjw, projz, projz*pjw, (1.0f+projz*pjw)*0.5f);
-    //projz *= pjw;
-    pjw *= projz;
-  }
-  return (hasClip ? pjw : (1.0f+pjw)*0.5f);
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::SetupLightScissor
 //
 //  returns:
@@ -1617,37 +1530,23 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (!scoord) scoord = tmpscoord;
 
-/*TODO:
-    transform light origin into world coordinates
-    build bounding cube in world coordinates (clamping z)
-    use bounding cube vertices to do projection
-    this way we can still use scissoring for lights behind our back
-    also, we can use only 1-3 planes of a cube (but this doesn't look worthy,
-    at the worst case we'll drop only one vertex)
-*/
-
-  glEnable(GL_SCISSOR_TEST);
-
-  // usually, light completely fades away at edges, so we can safely shrink our scissor box
-  // even such small shrinking can win one-two FPS on light-heavy scenes
-  //radius -= 6;
   if (radius < 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    //glScissor(0, 0, 0, 0);
+    glScissor(0, 0, 0, 0);
     return 0;
   }
 
   // transform into world coords
-  TVec inworld = mmat.Transform2(org);
+  TVec inworld = mmat*org;
 
   // the thing that should not be (completely behind)
   if (inworld.z-radius > -1.0f) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    //glScissor(0, 0, 0, 0);
-    //GCon->Logf("FUCK! (%f) radius=%f; z=%f; z0=%f; z1=%f", org.y, radius, lcorg.z, lcorg.z-radius, lcorg.z+radius);
-    return -1;
+    glDisable(GL_SCISSOR_TEST);
+    return 0;
   }
 
+  // setup depth bounds
   if (hasBoundsTest && gl_enable_depth_bounds) {
     const bool zeroZ = (gl_enable_clip_control && p_glClipControl);
     const bool revZ = CanUseRevZ();
@@ -1665,22 +1564,19 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
       pjwz1 *= pmat.Transform2OnlyZ(TVec(inworld.x, inworld.y, ofsz1));
     }
 
+    // transformation for [-1..1] z range
     if (!zeroZ) {
       pjwz0 = (1.0f+pjwz0)*0.5f;
       pjwz1 = (1.0f+pjwz1)*0.5f;
     }
 
     if (revZ) {
-      //GCon->Logf("radius=%f; pjwz1=%f; pjwz0=%f", radius, pjwz1, pjwz0);
       p_glDepthBoundsEXT(pjwz1, pjwz0);
     } else {
       p_glDepthBoundsEXT(pjwz0, pjwz1);
     }
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
-
-  float minx = ScreenWidth*4, miny = ScreenHeight*4;
-  float maxx = -ScreenWidth*4, maxy = -ScreenHeight*4;
 
   // create light bbox
   float bbox[6];
@@ -1692,8 +1588,23 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   bbox[3+1] = inworld.y+radius;
   bbox[3+2] = MIN(-1.0f, inworld.z+radius); // clamp to znear
 
-  const float scrw = ScreenWidth;
-  const float scrh = ScreenHeight;
+  GLint vport[4];
+  glGetIntegerv(GL_VIEWPORT, vport);
+  if (vport[2] < 1 || vport[3] < 1) {
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    glDisable(GL_SCISSOR_TEST);
+    return 0;
+  }
+  //GCon->Logf("vport: (%d,%d)-(%d,%d)", vport[0], vport[1], vport[2], vport[3]);
+
+  int scrx1 = vport[0]+vport[2]-1;
+  int scry1 = vport[1]+vport[3]-1;
+
+  const float scrw = vport[2]*0.5f;
+  const float scrh = vport[3]*0.5f;
+
+  int minx = scrx1+64, miny = scry1+64;
+  int maxx = -(vport[0]-64), maxy = -(vport[1]-64);
 
   // transform points, get min and max
   for (unsigned f = 0; f < 8; ++f) {
@@ -1702,8 +1613,9 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     const float pjw = -1.0f/vtx.z;
     proj.x *= pjw;
     proj.y *= pjw;
-    float winx = (proj.x*0.5f+0.5f)*scrw;
-    float winy = (proj.y*0.5f+0.5f)*scrh;
+    int winx = vport[0]+(int)((1.0f+proj.x)*scrw);
+    int winy = vport[1]+(int)((1.0f+proj.y)*scrh);
+    //GCon->Logf("x=%f; y=%f; win=(%d,%d)", proj.x, proj.y, winx, winy);
 
     if (minx > winx) minx = winx;
     if (miny > winy) miny = winy;
@@ -1711,32 +1623,51 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     if (maxy < winy) maxy = winy;
   }
 
+#if 0
+  //GCon->Logf("  radius=%f; (%d,%d)-(%d,%d)", radius, minx, miny, maxx, maxy);
   if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    glScissor(0, 0, 0, 0);
+    glDisable(GL_SCISSOR_TEST);
+    if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
     return 0;
   }
 
-  const int x0 = MID(0, (int)minx, ScreenWidth);
-  const int y0 = MID(0, (int)miny, ScreenHeight);
-  const int x1 = MID(0, (int)maxx, ScreenWidth);
-  const int y1 = MID(0, (int)maxy, ScreenHeight);
+  minx = MID(0, minx, ScreenWidth-1);
+  miny = MID(0, miny, ScreenHeight-1);
+  maxx = MID(0, maxx, ScreenWidth-1);
+  maxy = MID(0, maxy, ScreenHeight-1);
+#else
+  if (minx > scrx1 || miny > scry1 || maxx < vport[0] || maxy < vport[1]) {
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    glDisable(GL_SCISSOR_TEST);
+    if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
+    return 0;
+  }
 
-  const int wdt = x1-x0;
-  const int hgt = y1-y0;
+  minx = MID(vport[0], minx, scrx1);
+  miny = MID(vport[1], miny, scry1);
+  maxx = MID(vport[0], maxx, scrx1);
+  maxy = MID(vport[1], maxy, scry1);
+#endif
+
+  //GCon->Logf("  radius=%f; (%d,%d)-(%d,%d)", radius, minx, miny, maxx, maxy);
+  const int wdt = maxx-minx+1;
+  const int hgt = maxy-miny+1;
 
   // drop very small lights, why not?
   if (wdt <= 4 || hgt <= 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    //glScissor(0, 0, 0, 0);
+    glDisable(GL_SCISSOR_TEST);
+    if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
     return 0;
   }
 
-  glScissor(x0, y0, wdt, hgt);
-  scoord[0] = x0;
-  scoord[1] = y0;
-  scoord[2] = x1;
-  scoord[3] = y1;
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(minx, miny, wdt, hgt);
+  scoord[0] = minx;
+  scoord[1] = miny;
+  scoord[2] = maxx;
+  scoord[3] = maxy;
 
   return 1;
 }
@@ -1815,9 +1746,9 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   glDisable(GL_ALPHA_TEST);
-  //if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+  if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
   //k8: there is no reason to not do it
-  if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+  //if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 }
 
 
