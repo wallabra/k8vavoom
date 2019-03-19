@@ -9,8 +9,8 @@ uniform bool AllowTransparency;
 varying vec2 TextureCoordinate;
 varying vec3 VertToView;
 varying vec3 VPos;
-varying float PlaneDist;
-varying float Dist;
+//!varying float PlaneDist;
+//!varying float Dist;
 uniform vec2 ScreenSize;
 
 

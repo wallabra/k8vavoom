@@ -444,6 +444,7 @@ public:
   class VGLShaderCommonLocs {
   public:
     VOpenGLDrawer *owner;
+    const char *progname;
     // compiled vertex program
     GLhandleARB prog;
     // texture variable locations
@@ -464,7 +465,7 @@ public:
     GLint locFogEnabled;
     //GLint locFogType;
     GLint locFogColour;
-    GLint locFogDensity;
+    //GLint locFogDensity;
     GLint locFogStart;
     GLint locFogEnd;
 
@@ -472,12 +473,12 @@ public:
     VGLShaderCommonLocs () : owner(nullptr), prog(0) {}
 
     // call this first!
-    void setupProg (VOpenGLDrawer *aowner, GLhandleARB aprog);
+    void setupProg (VOpenGLDrawer *aowner, const char *aprogname, GLhandleARB aprog);
 
     void setupTexture (); // setup texture variables
     void setupLMap (); // setup lightmap variables
     void setupLMapOnly (); // setup lightmap variables for shader without texture params (decals)
-    void setupFog (); // setup fog variables
+    void setupFog (bool hasFogEnabled=true); // setup fog variables
 
     void storeTexture (GLint tid);
 
@@ -632,6 +633,10 @@ private:
   void RestoreDepthFunc ();
   inline bool CanUseRevZ () const { return useReverseZ; }
 
+public:
+  GLint glGetUniLoc (const char *prog, GLhandleARB pid, const char *name);
+  GLint glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name);
+
 private:
   vuint8 *readBackTempBuf;
   int readBackTempBufSize;
@@ -766,7 +771,7 @@ protected:
   GLhandleARB SurfDecalLMap_Program;
   GLint SurfDecalLMap_TextureLoc;
   GLint SurfDecalLMap_SplatAlphaLoc;
-  GLint SurfDecalLMap_LightLoc;
+  //!GLint SurfDecalLMap_LightLoc;
   VGLShaderCommonLocs SurfDecalLMap_Locs; // fog, texture and lightmap
   GLint SurfDecalLMap_SpecularMapLoc;
 
@@ -803,7 +808,7 @@ protected:
   VGLShaderCommonLocs SurfModel_Locs; // fog
   GLint SurfModel_Vert2Loc;
   GLint SurfModel_TexCoordLoc;
-  GLint SurfModel_AlphaLoc;
+  GLint SurfModel_InAlphaLoc;
   GLint SurfModel_LightValLoc;
   GLint SurfModel_ViewOriginLoc;
   GLint SurfModel_AllowTransparencyLoc;
@@ -827,7 +832,6 @@ protected:
   GLint ShadowsLight_SurfNormalLoc;
   GLint ShadowsLight_SurfDistLoc;
   VGLShaderCommonLocs ShadowsLight_Locs; // texture
-  GLint ShadowsLight_AlphaLoc;
   GLint ShadowsLight_ViewOriginLoc;
 
   GLhandleARB ShadowsTexture_Program;
@@ -843,22 +847,22 @@ protected:
   GLint ShadowsModelAmbient_VertNormalLoc;
   GLint ShadowsModelAmbient_Vert2NormalLoc;
   GLint ShadowsModelAmbient_TexCoordLoc;
-  GLint ShadowsModelAmbient_AlphaLoc;
+  GLint ShadowsModelAmbient_InAlphaLoc;
   GLint ShadowsModelAmbient_ViewOriginLoc;
   GLint ShadowsModelAmbient_AllowTransparencyLoc;
 
   GLhandleARB ShadowsModelTextures_Program;
   GLint ShadowsModelTextures_InterLoc;
   GLint ShadowsModelTextures_TextureLoc;
-  GLint ShadowsModelTextures_AlphaLoc;
+  GLint ShadowsModelTextures_InAlphaLoc;
   GLint ShadowsModelTextures_ModelToWorldMatLoc;
-  GLint ShadowsModelTextures_NormalToWorldMatLoc;
+  //!GLint ShadowsModelTextures_NormalToWorldMatLoc;
   GLint ShadowsModelTextures_Vert2Loc;
-  GLint ShadowsModelTextures_VertNormalLoc;
-  GLint ShadowsModelTextures_Vert2NormalLoc;
+  //!GLint ShadowsModelTextures_VertNormalLoc;
+  //!GLint ShadowsModelTextures_Vert2NormalLoc;
   GLint ShadowsModelTextures_TexCoordLoc;
   GLint ShadowsModelTextures_ViewOriginLoc;
-  GLint ShadowsModelTextures_AllowTransparencyLoc;
+  //!GLint ShadowsModelTextures_AllowTransparencyLoc;
   GLint ShadowsModelTextures_AmbLightTextureLoc;
   GLint ShadowsModelTextures_ScreenSizeLoc;
 
@@ -895,12 +899,12 @@ protected:
   GLint ShadowsModelFog_TextureLoc;
   //GLint ShadowsModelFog_FogTypeLoc;
   GLint ShadowsModelFog_FogColourLoc;
-  GLint ShadowsModelFog_FogDensityLoc;
+  //GLint ShadowsModelFog_FogDensityLoc;
   GLint ShadowsModelFog_FogStartLoc;
   GLint ShadowsModelFog_FogEndLoc;
   GLint ShadowsModelFog_Vert2Loc;
   GLint ShadowsModelFog_TexCoordLoc;
-  GLint ShadowsModelFog_AlphaLoc;
+  GLint ShadowsModelFog_InAlphaLoc;
   GLint ShadowsModelFog_ViewOriginLoc;
   GLint ShadowsModelFog_AllowTransparencyLoc;
 
@@ -944,8 +948,8 @@ protected:
   void DoHorizonPolygon(surface_t*);
   void DrawPortalArea(VPortal*);
 
-  GLhandleARB LoadShader(GLenum Type, const VStr &FileName);
-  GLhandleARB CreateProgram(GLhandleARB VertexShader, GLhandleARB FragmentShader);
+  GLhandleARB LoadShader (GLenum Type, const VStr &FileName);
+  GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
   void UploadModel(VMeshModel *Mdl);
   void UnloadModels();

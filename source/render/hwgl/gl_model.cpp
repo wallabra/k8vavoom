@@ -204,7 +204,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   p_glUniform1iARB(SurfModel_TextureLoc, 0);
   //SurfModel_Locs.storeFogType();
   SurfModel_Locs.storeFogFade(Fade, Alpha);
-  p_glUniform1fARB(SurfModel_AlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
+  p_glUniform1fARB(SurfModel_InAlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
   p_glUniform1iARB(SurfModel_AllowTransparencyLoc, (AllowTransparency ? GL_TRUE : GL_FALSE));
   p_glUniform1fARB(SurfModel_InterLoc, Inter);
 
@@ -336,7 +336,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   p_glVertexAttribPointerARB(ShadowsModelAmbient_TexCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelAmbient_TexCoordLoc);
   p_glUniform3fARB(ShadowsModelAmbient_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-  p_glUniform1fARB(ShadowsModelAmbient_AlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
+  p_glUniform1fARB(ShadowsModelAmbient_InAlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
 
   p_glUniform1iARB(ShadowsModelAmbient_AllowTransparencyLoc, GL_FALSE);
 
@@ -392,6 +392,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   VMatrix4 normalmatrix;
   AliasSetUpNormalTransform(angles, Scale, normalmatrix);
 
+  /*
   float NormalMat[3][3];
   NormalMat[0][0] = normalmatrix[0][0];
   NormalMat[0][1] = normalmatrix[0][1];
@@ -402,28 +403,29 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   NormalMat[2][0] = normalmatrix[2][0];
   NormalMat[2][1] = normalmatrix[2][1];
   NormalMat[2][2] = normalmatrix[2][2];
+  */
 
   p_glUseProgramObjectARB(ShadowsModelTextures_Program);
 
   p_glUniform1iARB(ShadowsModelTextures_TextureLoc, 0);
   p_glUniform1fARB(ShadowsModelTextures_InterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelTextures_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
-  p_glUniformMatrix3fvARB(ShadowsModelTextures_NormalToWorldMatLoc, 1, GL_FALSE, NormalMat[0]);
+  //!p_glUniformMatrix3fvARB(ShadowsModelTextures_NormalToWorldMatLoc, 1, GL_FALSE, NormalMat[0]);
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
-  p_glVertexAttribPointerARB(ShadowsModelTextures_VertNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelTextures_VertNormalLoc);
+  //!p_glVertexAttribPointerARB(ShadowsModelTextures_VertNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
+  //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures_VertNormalLoc);
   p_glVertexAttribPointerARB(ShadowsModelTextures_Vert2Loc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(ShadowsModelTextures_Vert2Loc);
-  p_glVertexAttribPointerARB(ShadowsModelTextures_Vert2NormalLoc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelTextures_Vert2NormalLoc);
+  //!p_glVertexAttribPointerARB(ShadowsModelTextures_Vert2NormalLoc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
+  //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures_Vert2NormalLoc);
   p_glVertexAttribPointerARB(ShadowsModelTextures_TexCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelTextures_TexCoordLoc);
   p_glUniform3fARB(ShadowsModelTextures_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-  p_glUniform1fARB(ShadowsModelTextures_AlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
-  p_glUniform1iARB(ShadowsModelTextures_AllowTransparencyLoc, (AllowTransparency ? GL_TRUE : GL_FALSE));
+  p_glUniform1fARB(ShadowsModelTextures_InAlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
+  //!p_glUniform1iARB(ShadowsModelTextures_AllowTransparencyLoc, (AllowTransparency ? GL_TRUE : GL_FALSE));
 
 
   /* original
@@ -469,9 +471,9 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
   p_glDisableVertexAttribArrayARB(0);
-  p_glDisableVertexAttribArrayARB(ShadowsModelTextures_VertNormalLoc);
+  //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures_VertNormalLoc);
   p_glDisableVertexAttribArrayARB(ShadowsModelTextures_Vert2Loc);
-  p_glDisableVertexAttribArrayARB(ShadowsModelTextures_Vert2NormalLoc);
+  //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures_Vert2NormalLoc);
   p_glDisableVertexAttribArrayARB(ShadowsModelTextures_TexCoordLoc);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
@@ -725,7 +727,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glUniformMatrix4fvARB(ShadowsModelFog_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
   //p_glUniform1iARB(ShadowsModelFog_FogTypeLoc, r_fog&3);
   p_glUniform4fARB(ShadowsModelFog_FogColourLoc, ((Fade>>16)&255)/255.0f, ((Fade>>8)&255)/255.0f, (Fade&255)/255.0f, Alpha);
-  p_glUniform1fARB(ShadowsModelFog_FogDensityLoc, (Fade == FADE_LIGHT ? 0.3f : r_fog_density));
+  //p_glUniform1fARB(ShadowsModelFog_FogDensityLoc, (Fade == FADE_LIGHT ? 0.3f : r_fog_density));
   p_glUniform1fARB(ShadowsModelFog_FogStartLoc, (Fade == FADE_LIGHT ? 1.0f : r_fog_start));
   p_glUniform1fARB(ShadowsModelFog_FogEndLoc, (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end));
 
@@ -737,7 +739,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glVertexAttribPointerARB(ShadowsModelFog_TexCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelFog_TexCoordLoc);
   p_glUniform3fARB(ShadowsModelFog_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-  p_glUniform1fARB(ShadowsModelFog_AlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
+  p_glUniform1fARB(ShadowsModelFog_InAlphaLoc, (Alpha < 1.0f ? Alpha : 1.0f));
   p_glUniform1iARB(ShadowsModelFog_AllowTransparencyLoc, (AllowTransparency ? GL_TRUE : GL_FALSE));
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
