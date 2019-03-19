@@ -204,7 +204,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
             glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
             p_glActiveTextureARB(GL_TEXTURE0);
           }
-          p_glUniform4fARB(SurfAdvDecal_FullBright, 0, 0, 0, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
+          p_glUniform1fARB(SurfAdvDecal_FullBright, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
           p_glUniform1iARB(SurfAdvDecal_AmbLightTextureLoc, 1);
           p_glUniform2fARB(SurfAdvDecal_ScreenSize, (float)ScreenWidth, (float)ScreenHeight);
         }
