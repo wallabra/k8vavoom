@@ -3071,6 +3071,7 @@ int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32
     return 0;
   }
   GotColour = false;
+  Col = 0;
   return i;
 }
 
