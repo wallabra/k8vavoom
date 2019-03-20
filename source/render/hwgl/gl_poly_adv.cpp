@@ -597,6 +597,8 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+  //glBlendEquation(GL_MAX_EXT);
 
   glDepthFunc(GL_EQUAL);
 
@@ -659,6 +661,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_TEXTURE_2D);
+  //glBlendEquation(GL_FUNC_ADD);
 
   // copy ambient light texture to FBO, so we can use it to light decals
   if (p_glBlitFramebuffer) {
