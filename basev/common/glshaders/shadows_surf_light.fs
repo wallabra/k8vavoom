@@ -40,9 +40,15 @@ void main () {
   float Transp = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
 
   vec4 FinalColour_1;
+#ifdef VV_DEBUG_LIGHT
+  //FinalColour_1 = vec4(1.0, 0.5, 0.5, 1.0);
+  FinalColour_1.rgb = LightColour;
+  FinalColour_1.a = 1.0;
+#else
   FinalColour_1.rgb = LightColour;
   FinalColour_1.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
   if (FinalColour_1.a < 0.01) discard;
+#endif
 
   gl_FragColor = FinalColour_1;
 }

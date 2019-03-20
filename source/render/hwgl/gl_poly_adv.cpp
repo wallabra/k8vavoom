@@ -29,6 +29,8 @@
 
 
 extern VCvarB gl_enable_depth_bounds;
+extern VCvarB gl_dbg_advlight_debug;
+extern VCvarI gl_dbg_advlight_color;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -602,12 +604,22 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
 
   glDepthFunc(GL_EQUAL);
 
-  p_glUseProgramObjectARB(ShadowsLight_Program);
-  p_glUniform3fvARB(ShadowsLight_LightPosLoc, 1, &LightPos.x);
-  p_glUniform1fARB(ShadowsLight_LightRadiusLoc, Radius);
-  p_glUniform3fARB(ShadowsLight_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-  p_glUniform3fARB(ShadowsLight_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-  ShadowsLight_Locs.storeTexture(0);
+  if (!gl_dbg_advlight_debug) {
+    p_glUseProgramObjectARB(ShadowsLight_Program);
+    p_glUniform3fvARB(ShadowsLight_LightPosLoc, 1, &LightPos.x);
+    p_glUniform1fARB(ShadowsLight_LightRadiusLoc, Radius);
+    p_glUniform3fARB(ShadowsLight_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    p_glUniform3fARB(ShadowsLight_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
+    ShadowsLight_Locs.storeTexture(0);
+  } else {
+    p_glUseProgramObjectARB(ShadowsLightDbg_Program);
+    p_glUniform3fvARB(ShadowsLightDbg_LightPosLoc, 1, &LightPos.x);
+    p_glUniform1fARB(ShadowsLightDbg_LightRadiusLoc, Radius);
+    Colour = gl_dbg_advlight_color;
+    p_glUniform3fARB(ShadowsLightDbg_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    p_glUniform3fARB(ShadowsLightDbg_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
+    ShadowsLightDbg_Locs.storeTexture(0);
+  }
 }
 
 
@@ -637,9 +649,15 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
 
-  ShadowsLight_Locs.storeTextureParams(tex);
-  p_glVertexAttrib3fvARB(ShadowsLight_SurfNormalLoc, &surf->plane->normal.x);
-  p_glVertexAttrib1fvARB(ShadowsLight_SurfDistLoc, &surf->plane->dist);
+  if (!gl_dbg_advlight_debug) {
+    ShadowsLight_Locs.storeTextureParams(tex);
+    p_glVertexAttrib3fvARB(ShadowsLight_SurfNormalLoc, &surf->plane->normal.x);
+    p_glVertexAttrib1fvARB(ShadowsLight_SurfDistLoc, &surf->plane->dist);
+  } else {
+    ShadowsLightDbg_Locs.storeTextureParams(tex);
+    p_glVertexAttrib3fvARB(ShadowsLightDbg_SurfNormalLoc, &surf->plane->normal.x);
+    p_glVertexAttrib1fvARB(ShadowsLightDbg_SurfDistLoc, &surf->plane->dist);
+  }
 
   glBegin(GL_POLYGON);
   for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);

@@ -30,6 +30,7 @@
 //**************************************************************************
 #include <limits.h>
 #include <float.h>
+#include <stdarg.h>
 
 #include "gl_local.h"
 #include "../r_local.h"
@@ -94,6 +95,28 @@ VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad 
 
 // 1: normal; 2: 1-skewed
 VCvarI gl_dbg_use_zpass("gl_dbg_use_zpass", "0", "DO NOT USE!", CVAR_PreInit);
+
+VCvarB gl_dbg_advlight_debug("gl_dbg_advlight_debug", false, "Draw non-fading lights?", CVAR_PreInit);
+VCvarI gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for debug lights (only dec/hex).", CVAR_PreInit);
+
+
+//==========================================================================
+//
+//  MSA
+//
+//==========================================================================
+static __attribute__((sentinel)) TArray<VStr> MSA (const char *first, ...) {
+  TArray<VStr> res;
+  res.append(VStr(first));
+  va_list ap;
+  va_start(ap, first);
+  for (;;) {
+    const char *str = va_arg(ap, const char *);
+    if (!str) break;
+    res.append(VStr(str));
+  }
+  return res;
+}
 
 
 //==========================================================================
@@ -1196,6 +1219,24 @@ void VOpenGLDrawer::InitResolution () {
   GLSL_LOADLOC(ViewOrigin);
   ShadowsLight_Locs.setupProg(this, "ShadowsLight", ShadowsLight_Program);
   ShadowsLight_Locs.setupTexture();
+#undef GLSL_LOADATR
+#undef GLSL_LOADLOC
+
+
+#define GLSL_LOADLOC(lcname_)  ShadowsLightDbg_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsLight", ShadowsLightDbg_Program, "" #lcname_)
+#define GLSL_LOADATR(lcname_)  ShadowsLightDbg_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsLight", ShadowsLightDbg_Program, "" #lcname_)
+  // reuse vertex shader
+  //VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_light.vs", MSA("VV_DEBUG_LIGHT", nullptr));
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_light.fs", MSA("VV_DEBUG_LIGHT", nullptr));
+  ShadowsLightDbg_Program = CreateProgram("ShadowsLightDbg", VertexShader, FragmentShader);
+  GLSL_LOADLOC(LightPos);
+  GLSL_LOADLOC(LightRadius);
+  GLSL_LOADLOC(LightColour);
+  GLSL_LOADATR(SurfNormal);
+  GLSL_LOADATR(SurfDist);
+  GLSL_LOADLOC(ViewOrigin);
+  ShadowsLightDbg_Locs.setupProg(this, "ShadowsLightDbg", ShadowsLightDbg_Program);
+  ShadowsLightDbg_Locs.setupTexture();
 #undef GLSL_LOADATR
 #undef GLSL_LOADLOC
 
@@ -2338,7 +2379,7 @@ static VStr getDirectiveArg (const VStr &s) {
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
+GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const TArray<VStr> &defines) {
   // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
   if (!Shader) Sys_Error("Failed to create shader object");
@@ -2388,6 +2429,14 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
       if (needToAddRevZ) {
         if (isVersionLine(line)) { res += line; continue; }
         res += "#define VAVOOM_REVERSE_Z\n";
+        // add other defines
+        for (int didx = 0; didx < defines.length(); ++didx) {
+          const VStr &def = defines[didx];
+          if (def.isEmpty()) continue;
+          res += "#define ";
+          res += def;
+          res += "\n";
+        }
         needToAddRevZ = false;
       }
       res += line;
@@ -2401,6 +2450,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
     incf += ssrc;
     ssrc = incf;
   }
+  //if (defines.length()) GCon->Logf("%s", *res);
   //fprintf(stderr, "================ %s ================\n%s\n=================================\n", *FileName, *res);
   //vsShaderSrc = res;
 

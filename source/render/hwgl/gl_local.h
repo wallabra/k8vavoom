@@ -835,6 +835,15 @@ protected:
   VGLShaderCommonLocs ShadowsLight_Locs; // texture
   GLint ShadowsLight_ViewOriginLoc;
 
+  GLhandleARB ShadowsLightDbg_Program;
+  GLint ShadowsLightDbg_LightPosLoc;
+  GLint ShadowsLightDbg_LightRadiusLoc;
+  GLint ShadowsLightDbg_LightColourLoc;
+  GLint ShadowsLightDbg_SurfNormalLoc;
+  GLint ShadowsLightDbg_SurfDistLoc;
+  VGLShaderCommonLocs ShadowsLightDbg_Locs; // texture
+  GLint ShadowsLightDbg_ViewOriginLoc;
+
   GLhandleARB ShadowsTexture_Program;
   VGLShaderCommonLocs ShadowsTexture_Locs; // texture
 
@@ -949,7 +958,7 @@ protected:
   void DoHorizonPolygon(surface_t*);
   void DrawPortalArea(VPortal*);
 
-  GLhandleARB LoadShader (GLenum Type, const VStr &FileName);
+  GLhandleARB LoadShader (GLenum Type, const VStr &FileName, const TArray<VStr> &defines=TArray<VStr>());
   GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
   void UploadModel(VMeshModel *Mdl);
