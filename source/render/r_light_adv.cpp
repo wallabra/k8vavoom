@@ -905,9 +905,11 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   }
 
   // if there are no lit surfaces oriented away from camera, it cannot possibly be in shadow volume
-  bool useZPass = !HasBackLit;
+  // nope, it is wrong
+  //bool useZPass = !HasBackLit;
   //if (useZPass) GCon->Log("*** ZPASS");
   //useZPass = false;
+  bool useZPass = false;
 
   /* nope
   if ((CurrLightPos-vieworg).lengthSquared() > CurrLightRadius*CurrLightRadius) {
