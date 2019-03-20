@@ -564,8 +564,10 @@ protected:
   // surf methods
   void SetupSky ();
   void FlushSurfCaches (surface_t*);
-  sec_surface_t *CreateSecSurface (subsector_t*, sec_plane_t*);
-  void UpdateSecSurface (sec_surface_t*, sec_plane_t*, subsector_t*);
+  // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
+  // this is used both to create initial surfaces, and to update changed surfaces
+  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane);
+  void UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub); // subsector is not changed, but we need it non-const
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t*);
   surface_t *CreateWSurfs (TVec*, texinfo_t*, seg_t*, subsector_t*);
@@ -576,6 +578,8 @@ protected:
   void UpdateFakeFlats (sector_t*);
   void UpdateDeepWater (sector_t*);
   void UpdateFloodBug (sector_t *sec);
+  // free all surfaces except the first one, clear first, set number of vertices to vcount
+  surface_t *ReallocSurface (surface_t *surfs, int vcount);
   void FreeSurfaces (surface_t*);
   void FreeSegParts (segpart_t*);
 

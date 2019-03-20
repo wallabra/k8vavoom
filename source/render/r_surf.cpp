@@ -37,7 +37,7 @@
 #define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(MAXWVERTS-1))
 
 // this is used to compare floats like ints which is faster
-#define FASI(var) (*(int *)&var)
+#define FASI(var) (*(const int32_t *)&var)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -53,45 +53,10 @@ extern VCvarB w_update_in_renderer;
 //  Scaling
 //
 //**************************************************************************
-
-//==========================================================================
-//
-//  TextureSScale
-//
-//==========================================================================
-static inline float TextureSScale (VTexture *pic) {
-  return pic->SScale;
-}
-
-
-//==========================================================================
-//
-//  TextureTScale
-//
-//==========================================================================
-static inline float TextureTScale (VTexture *pic) {
-  return pic->TScale;
-}
-
-
-//==========================================================================
-//
-//  TextureOffsetSScale
-//
-//==========================================================================
-static inline float TextureOffsetSScale (VTexture *pic) {
-  return (pic->bWorldPanning ? pic->SScale : 1.0f);
-}
-
-
-//==========================================================================
-//
-//  TextureOffsetTScale
-//
-//==========================================================================
-static inline float TextureOffsetTScale (VTexture *pic) {
-  return (pic->bWorldPanning ? pic->TScale : 1.0f);
-}
+static inline __attribute__((const)) float TextureSScale (const VTexture *pic) { return pic->SScale; }
+static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
+static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
+static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
 
 
 //**************************************************************************
@@ -145,25 +110,51 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //
 //  VRenderLevelShared::CreateSecSurface
 //
+//  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
+//
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane_t *InSplane) {
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane) {
   sec_plane_t *splane = InSplane;
+  int vcount = sub->numlines;
+  check(vcount >= 3);
+  // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
+  bool isSkyFlat = (splane->pic == skyflatnum);
+  bool recalcSurface = true;
+  bool updateZ = false;
 
-  sec_surface_t *ssurf = new sec_surface_t;
-  memset((void *)ssurf, 0, sizeof(sec_surface_t));
-  surface_t *surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(sub->numlines-1)*sizeof(TVec));
+  // fix plane
+  if (isSkyFlat && splane->normal.z < 0.0f) splane = &sky_plane;
 
-  if (splane->pic == skyflatnum && splane->normal.z < 0.0f) splane = &sky_plane;
+  surface_t *surf;
+  if (!ssurf) {
+    // new sector surface
+    ssurf = new sec_surface_t;
+    memset((void *)ssurf, 0, sizeof(sec_surface_t));
+    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(TVec));
+  } else {
+    // change sector surface
+    // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
+    recalcSurface = !isSkyFlat || ((ssurf->secplane->pic == skyflatnum) != isSkyFlat);
+    if (recalcSurface) {
+      surf = ReallocSurface(ssurf->surfs, vcount);
+    } else {
+      updateZ = (FASI(ssurf->dist) != FASI(splane->dist));
+      surf = ssurf->surfs;
+    }
+    ssurf->surfs = nullptr; // just in case
+  }
+
   ssurf->secplane = splane;
   ssurf->dist = splane->dist;
 
   // setup texture
   VTexture *Tex = GTextureManager(splane->pic);
+  check(Tex);
   if (fabsf(splane->normal.z) > 0.1f) {
-    ssurf->texinfo.saxis = TVec(mcos(splane->BaseAngle-splane->Angle),
-      msin(splane->BaseAngle-splane->Angle), 0)*TextureSScale(Tex)*splane->XScale;
-    ssurf->texinfo.taxis = TVec(msin(splane->BaseAngle-splane->Angle),
-      -mcos(splane->BaseAngle-splane->Angle), 0)*TextureTScale(Tex)*splane->YScale;
+    float s, c;
+    msincos(splane->BaseAngle-splane->Angle, &s, &c);
+    ssurf->texinfo.saxis = TVec(c,  s, 0)*TextureSScale(Tex)*splane->XScale;
+    ssurf->texinfo.taxis = TVec(s, -c, 0)*TextureTScale(Tex)*splane->YScale;
   } else {
     ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(Tex)*splane->YScale;
     ssurf->texinfo.saxis = Normalise(CrossProduct(splane->normal, ssurf->texinfo.taxis))*TextureSScale(Tex)*splane->XScale;
@@ -179,26 +170,51 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane
   ssurf->YScale = splane->YScale;
   ssurf->Angle = splane->BaseAngle-splane->Angle;
 
-  //surf->subsector = sub; // this is required to calculate static lightmaps, and done in `InitSurfs()`
-  surf->count = sub->numlines;
-  seg_t *line = &Level->Segs[sub->firstline];
-  bool vlindex = (splane->normal.z < 0);
-  //fprintf(stderr, "surf; first=%d; count=%d; num=%d; max=%d; endidx=%d\n", sub->firstline, sub->numlines, surf->count, Level->NumSegs-1, sub->firstline+sub->numlines-1);
-  for (int i = 0; i < surf->count; ++i) {
-    TVec &v = *line[vlindex ? surf->count-i-1 : i].v1;
-    TVec &dst = surf->verts[i];
-    dst = v;
-    dst.z = splane->GetPointZ(dst);
-  }
+  if (recalcSurface) {
+    //surf->subsector = sub; // this is required to calculate static lightmaps, and done in `InitSurfs()`
+    surf->count = vcount;
+    const seg_t *seg = &Level->Segs[sub->firstline];
+    TVec *dptr = surf->verts;
+    if (splane->normal.z < 0.0f) {
+      // backward
+      for (seg += (vcount-1); vcount--; ++dptr, --seg) {
+        const TVec &v = *seg->v1;
+        *dptr = TVec(v.x, v.y, splane->GetPointZ(v));
+      }
+    } else {
+      // forward
+      for (; vcount--; ++dptr, ++seg) {
+        const TVec &v = *seg->v1;
+        *dptr = TVec(v.x, v.y, splane->GetPointZ(v.x, v.y));
+      }
+    }
+    /*
+    const bool vlindex = (splane->normal.z < 0);
+    for (int i = 0; i < vcount; ++i) {
+      const TVec &v = *seg[vlindex ? surf->count-i-1 : i].v1;
+      TVec &dst = surf->verts[i];
+      dst = v;
+      dst.z = splane->GetPointZ(dst);
+    }
+    */
 
-  if (splane->pic == skyflatnum) {
-    // don't subdivide sky
-    ssurf->surfs = surf;
-    surf->texinfo = &ssurf->texinfo;
-    surf->plane = splane;
+    if (isSkyFlat) {
+      // don't subdivide sky, as it cannot have lightmap
+      ssurf->surfs = surf;
+      surf->texinfo = &ssurf->texinfo;
+      surf->plane = splane;
+    } else {
+      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
+      InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
+    }
   } else {
-    ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
-    InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
+    // still update z coords, if necessary
+    if (updateZ) {
+      for (; surf; surf = surf->next) {
+        TVec *svert = surf->verts;
+        for (int i = surf->count; i--; ++svert) svert->z = splane->GetPointZ(svert->x, svert->y);
+      }
+    }
   }
 
   return ssurf;
@@ -213,78 +229,64 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane
 void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub) {
   sec_plane_t *plane = ssurf->secplane;
 
-  if (!plane->pic) return;
+  if (!plane->pic) return; // no texture? nothing to do
 
   if (plane != RealPlane) {
     // check for sky changes
-    if (plane->pic == skyflatnum && RealPlane->pic != skyflatnum) {
-      ssurf->secplane = RealPlane;
-      plane = RealPlane;
-      if (!ssurf->surfs->extents[0]) {
-        ssurf->surfs = SubdivideFace(ssurf->surfs, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
-        InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
+    if ((plane->pic == skyflatnum) != (RealPlane->pic != skyflatnum)) {
+      // sky <-> non-sky, simply recreate it
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+      check(newsurf == ssurf); // sanity check
+      ssurf->texinfo.ColourMap = ColourMap; // just in case
+      // nothing more to do
+      return;
+    }
+    // substitute real plane with sky plane if necessary
+    if (RealPlane->pic == skyflatnum && RealPlane->normal.z < 0.0f) {
+      if (plane != &sky_plane) {
+        // recreate it, just in case
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+        check(newsurf == ssurf); // sanity check
+        ssurf->texinfo.ColourMap = ColourMap; // just in case
+        // nothing more to do
+        return;
       }
-    } else if (plane->pic != skyflatnum && RealPlane->pic == skyflatnum) {
-      // don't subdivide sky
-      ssurf->secplane = &sky_plane;
       plane = &sky_plane;
     }
   }
 
-  ssurf->texinfo.ColourMap = ColourMap;
-  VTexture *newtex = GTextureManager(plane->pic);
-  if (ssurf->texinfo.Tex != newtex) {
-    ssurf->texinfo.Tex = newtex;
-    ssurf->texinfo.noDecals = (newtex ? newtex->noDecals : true);
-  }
-  if (FASI(ssurf->dist) != FASI(plane->dist)) {
-    ssurf->dist = plane->dist;
-    for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
-      for (int i = 0; i < surf->count; ++i) surf->verts[i].z = plane->GetPointZ(surf->verts[i]);
-    }
-    if (plane->pic != skyflatnum) {
-      FlushSurfCaches(ssurf->surfs);
-      InitSurfs(ssurf->surfs, &ssurf->texinfo, nullptr, sub);
-    }
-  }
+  // if scale/angle was changed, we should update everything, and possibly rebuild the surface
+  // our general surface creation function will take care of everything
   if (FASI(ssurf->XScale) != FASI(plane->XScale) ||
       FASI(ssurf->YScale) != FASI(plane->YScale) ||
       ssurf->Angle != plane->BaseAngle-plane->Angle)
   {
-    if (fabsf(plane->normal.z) > 0.1f) {
-      ssurf->texinfo.saxis = TVec(mcos(plane->BaseAngle-plane->Angle),
-        msin(plane->BaseAngle-plane->Angle), 0)*TextureSScale(ssurf->texinfo.Tex)*plane->XScale;
-      ssurf->texinfo.taxis = TVec(msin(plane->BaseAngle-plane->Angle),
-        -mcos(plane->BaseAngle-plane->Angle), 0)*TextureTScale(ssurf->texinfo.Tex)*plane->YScale;
-    } else {
-      ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(ssurf->texinfo.Tex)*plane->YScale;
-      ssurf->texinfo.saxis = Normalise(CrossProduct(plane->normal, ssurf->texinfo.taxis))*TextureSScale(ssurf->texinfo.Tex)*plane->XScale;
+    // this will update texture, offsets, and everything
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+    check(newsurf == ssurf); // sanity check
+    ssurf->texinfo.ColourMap = ColourMap; // just in case
+    // nothing more to do
+    return;
+  }
+
+  ssurf->texinfo.ColourMap = ColourMap; // just in case
+
+  // ok, we still may need to update texture or z coords
+  // update texture?
+  VTexture *Tex = GTextureManager(plane->pic);
+  if (ssurf->texinfo.Tex != Tex) {
+    ssurf->texinfo.Tex = Tex;
+    ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
+  }
+
+  // update z coords?
+  if (FASI(ssurf->dist) != FASI(plane->dist)) {
+    ssurf->dist = plane->dist;
+    for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
+      TVec *svert = surf->verts;
+      for (int i = surf->count; i--; ++svert) svert->z = plane->GetPointZ(svert->x, svert->y);
     }
-    ssurf->texinfo.soffs = plane->xoffs;
-    ssurf->texinfo.toffs = plane->yoffs+plane->BaseYOffs;
-    ssurf->XScale = plane->XScale;
-    ssurf->YScale = plane->YScale;
-    ssurf->Angle = plane->BaseAngle-plane->Angle;
-    if (plane->pic != skyflatnum) {
-      FreeSurfaces(ssurf->surfs);
-      surface_t *surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(sub->numlines-1)*sizeof(TVec));
-      surf->count = sub->numlines;
-      seg_t *line = &Level->Segs[sub->firstline];
-      bool vlindex = (plane->normal.z < 0);
-      for (int i = 0; i < surf->count; ++i) {
-        TVec &v = *line[vlindex ? surf->count-i-1 : i].v1;
-        TVec &dst = surf->verts[i];
-        dst = v;
-        dst.z = plane->GetPointZ(dst);
-      }
-      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis, sub);
-      InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
-    }
-  } else if (FASI(ssurf->texinfo.soffs) != FASI(plane->xoffs) ||
-             ssurf->texinfo.toffs != plane->yoffs+plane->BaseYOffs)
-  {
-    ssurf->texinfo.soffs = plane->xoffs;
-    ssurf->texinfo.toffs = plane->yoffs+plane->BaseYOffs;
+    // force lightmap recalculation
     if (plane->pic != skyflatnum) {
       FlushSurfCaches(ssurf->surfs);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, nullptr, sub);
@@ -1371,8 +1373,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->floor = CreateSecSurface(sub, r_floor);
-      sreg->ceil = CreateSecSurface(sub, r_ceiling);
+      sreg->floor = CreateSecSurface(nullptr, sub, r_floor);
+      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling);
 
       sreg->count = sub->numlines;
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
@@ -1797,6 +1799,46 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *Sec) {
   Sec->fakefloors->params = Sec->params;
 
   Sec->topregion->params = &Sec->fakefloors->params;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ReallocSurface
+//
+//  free all surfaces except the first one, clear first, set
+//  number of vertices to vcount
+//
+//==========================================================================
+surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
+  check(vcount > 2); // just in case
+  surface_t *surf = surfs;
+  if (surf) {
+    // clear first surface
+    if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
+    if (surf->lightmap) Z_Free(surf->lightmap);
+    if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
+    // free extra surfaces
+    surface_t *next;
+    for (surface_t *s = surfs->next; s; s = next) {
+      if (s->CacheSurf) FreeSurfCache(s->CacheSurf);
+      if (s->lightmap) Z_Free(s->lightmap);
+      if (s->lightmap_rgb) Z_Free(s->lightmap_rgb);
+      next = s->next;
+      Z_Free(s);
+    }
+    // realloc first surface (if necessary)
+    if (surf->count != vcount) {
+      const size_t msize = sizeof(surface_t)+(vcount-1)*sizeof(TVec);
+      surf = (surface_t *)Z_Realloc(surf, msize);
+      memset((void *)surf, 0, msize);
+      surf->count = vcount;
+    }
+  } else {
+    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(TVec));
+    surf->count = vcount;
+  }
+  return surf;
 }
 
 
