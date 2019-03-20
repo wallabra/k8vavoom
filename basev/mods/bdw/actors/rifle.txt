@@ -152,6 +152,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
                  if (CountInv("BDW_RifleAmmo") == 1) user_bulletDamage = 22;
             else if (CountInv("BDW_RifleAmmo") == 2) user_bulletDamage = 13;
             else user_bulletDamage = 9;
+          } else if (user_spread >= 4) {
+            if (CountInv("BDW_RifleAmmo") <= 2) user_bulletDamage = 18;
           } else {
             user_bulletDamage = 9;
           }
