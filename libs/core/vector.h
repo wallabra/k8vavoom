@@ -79,14 +79,14 @@ public:
   TVec (float Ax, float Ay, float Az=0.0f) : x(Ax), y(Ay), z(Az) {}
   TVec (const float f[3]) { x = f[0]; y = f[1]; z = f[2]; }
 
-  static inline TVec Invalid () { return TVec(NAN, NAN, NAN); }
+  static inline __attribute__((warn_unused_result)) TVec Invalid () { return TVec(NAN, NAN, NAN); }
 
-  inline const float &operator [] (size_t i) const { check(i < 3); return (&x)[i]; }
-  inline float &operator [] (size_t i) { check(i < 3); return (&x)[i]; }
+  inline __attribute__((warn_unused_result)) const float &operator [] (size_t i) const { check(i < 3); return (&x)[i]; }
+  inline __attribute__((warn_unused_result)) float &operator [] (size_t i) { check(i < 3); return (&x)[i]; }
 
-  inline bool isValid () const { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
-  inline bool isZero () const { return (x == 0.0f && y == 0.0f && z == 0.0f); }
-  inline bool isZero2D () const { return (x == 0.0f && y == 0.0f); }
+  inline __attribute__((warn_unused_result)) bool isValid () const { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
+  inline __attribute__((warn_unused_result)) bool isZero () const { return (x == 0.0f && y == 0.0f && z == 0.0f); }
+  inline __attribute__((warn_unused_result)) bool isZero2D () const { return (x == 0.0f && y == 0.0f); }
 
   inline TVec &operator += (const TVec &v) { x += v.x; y += v.y; z += v.z; return *this; }
   inline TVec &operator -= (const TVec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
@@ -107,54 +107,54 @@ public:
   inline TVec operator - (void) const { return TVec(-x, -y, -z); }
 
 #ifdef USE_FAST_INVSQRT
-  inline float invlength () const { return fastInvSqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline float invlength2D () const { return fastInvSqrtf(VSUM2(x*x, y*y)); }
+  inline __attribute__((warn_unused_result)) float invlength () const { return fastInvSqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline __attribute__((warn_unused_result)) float invlength2D () const { return fastInvSqrtf(VSUM2(x*x, y*y)); }
 #else
-  inline float invlength () const { return 1.0f/sqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline float invlength2D () const { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
+  inline __attribute__((warn_unused_result)) float invlength () const { return 1.0f/sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline __attribute__((warn_unused_result)) float invlength2D () const { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
 #endif
 
-  inline float Length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline float length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline __attribute__((warn_unused_result)) float Length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline __attribute__((warn_unused_result)) float length () const { return sqrtf(VSUM3(x*x, y*y, z*z)); }
 
-  inline float Length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
-  inline float length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
+  inline __attribute__((warn_unused_result)) float Length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
+  inline __attribute__((warn_unused_result)) float length2D () const { return sqrtf(VSUM2(x*x, y*y)); }
 
-  inline float LengthSquared () const { return VSUM3(x*x, y*y, z*z); }
-  inline float lengthSquared () const { return VSUM3(x*x, y*y, z*z); }
+  inline __attribute__((warn_unused_result)) float LengthSquared () const { return VSUM3(x*x, y*y, z*z); }
+  inline __attribute__((warn_unused_result)) float lengthSquared () const { return VSUM3(x*x, y*y, z*z); }
 
-  inline float Length2DSquared () const { return VSUM2(x*x, y*y); }
-  inline float length2DSquared () const { return VSUM2(x*x, y*y); }
+  inline __attribute__((warn_unused_result)) float Length2DSquared () const { return VSUM2(x*x, y*y); }
+  inline __attribute__((warn_unused_result)) float length2DSquared () const { return VSUM2(x*x, y*y); }
 
   inline void normaliseInPlace () { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
   inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; }
 
-  inline TVec Normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
-  inline TVec normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline __attribute__((warn_unused_result)) TVec Normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline __attribute__((warn_unused_result)) TVec normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
 
-  inline TVec Normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
-  inline TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
+  inline __attribute__((warn_unused_result)) TVec Normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
+  inline __attribute__((warn_unused_result)) TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
 
-  inline float Dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
-  inline float dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
+  inline __attribute__((warn_unused_result)) float Dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
+  inline __attribute__((warn_unused_result)) float dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
 
-  inline float Dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
-  inline float dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
+  inline __attribute__((warn_unused_result)) float Dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
+  inline __attribute__((warn_unused_result)) float dot2D (const TVec &v2) const { return VSUM2(x*v2.x, y*v2.y); }
 
-  inline TVec Cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
-  inline TVec cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+  inline __attribute__((warn_unused_result)) TVec Cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+  inline __attribute__((warn_unused_result)) TVec cross (const TVec &v2) const { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
 
   // 2d cross product (z, as x and y are effectively zero in 2d)
-  inline float Cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
-  inline float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
+  inline __attribute__((warn_unused_result)) float Cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
+  inline __attribute__((warn_unused_result)) float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
 
   // z is zero
-  inline TVec mul2 (const float s) const { return TVec(x*s, y*s, 0); }
-  inline TVec mul3 (const float s) const { return TVec(x*s, y*s, z*s); }
+  inline __attribute__((warn_unused_result)) TVec mul2 (const float s) const { return TVec(x*s, y*s, 0); }
+  inline __attribute__((warn_unused_result)) TVec mul3 (const float s) const { return TVec(x*s, y*s, z*s); }
 
   // returns projection of this vector onto `v`
-  inline TVec projectTo (const TVec &v) const { return v.mul3(dot(v)/v.lengthSquared()); }
-  inline TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
+  inline __attribute__((warn_unused_result)) TVec projectTo (const TVec &v) const { return v.mul3(dot(v)/v.lengthSquared()); }
+  inline __attribute__((warn_unused_result)) TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
@@ -175,33 +175,33 @@ static __attribute__((unused)) inline bool operator != (const TVec &v1, const TV
 //static __attribute__((unused)) inline TVec operator ^ (const TVec &a, const TVec &b) { return a.cross(b); }
 //static __attribute__((unused)) inline TVec operator % (const TVec &a, const TVec &b) { return a.cross(b); }
 
-static __attribute__((unused)) inline float Length (const TVec &v) { return v.length(); }
-static __attribute__((unused)) inline float length (const TVec &v) { return v.length(); }
-static __attribute__((unused)) inline float Length2D (const TVec &v) { return v.length2D(); }
-static __attribute__((unused)) inline float length2D (const TVec &v) { return v.length2D(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length (const TVec &v) { return v.length(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length (const TVec &v) { return v.length(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length2D (const TVec &v) { return v.length2D(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length2D (const TVec &v) { return v.length2D(); }
 
-static __attribute__((unused)) inline float LengthSquared (const TVec &v) { return v.lengthSquared(); }
-static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return v.lengthSquared(); }
-static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return v.length2DSquared(); }
-static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return v.length2DSquared(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float LengthSquared (const TVec &v) { return v.lengthSquared(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float lengthSquared (const TVec &v) { return v.lengthSquared(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length2DSquared (const TVec &v) { return v.length2DSquared(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length2DSquared (const TVec &v) { return v.length2DSquared(); }
 
-static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v.normalised(); }
-static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v.normalised(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec Normalise (const TVec &v) { return v.normalised(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec normalise (const TVec &v) { return v.normalised(); }
 
-static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { return v.normalised2D(); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec normalise2D (const TVec &v) { return v.normalised2D(); }
 
-static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
-static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot (const TVec &v1, const TVec &v2) { return v1.dot(v2); }
 
-static __attribute__((unused)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
-static __attribute__((unused)) inline float dot2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot2D (const TVec &v1, const TVec &v2) { return v1.dot2D(v2); }
 
-static __attribute__((unused)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
-static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec cross (const TVec &v1, const TVec &v2) { return v1.cross(v2); }
 
 // returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
-static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
-static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float cross2D (const TVec &v1, const TVec &v2) { return v1.cross2D(v2); }
 
 static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
 
@@ -210,9 +210,10 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up);
 void AngleVector (const TAVec &angles, TVec &forward);
 void VectorAngles (const TVec &vec, TAVec &angles);
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles);
-TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle);
 
-static __attribute__((unused)) inline void AngleVectorPitch (const float pitch, TVec &forward) {
+__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle);
+
+static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, TVec &forward) {
   msincos(pitch, &forward.z, &forward.x);
   forward.y = 0.0f;
   forward.z = -forward.z;
@@ -235,8 +236,8 @@ public:
   //TPlane () : TVec(1, 0, 0), dist(0) {}
   //TPlane (ENoInit) {}
 
-  inline bool isValid () const { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
-  inline bool isVertical () const { return (normal.z == 0.0f); }
+  inline __attribute__((warn_unused_result)) bool isValid () const { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
+  inline __attribute__((warn_unused_result)) bool isVertical () const { return (normal.z == 0.0f); }
 
   inline void Set (const TVec &Anormal, float Adist) {
     normal = Anormal;
@@ -314,23 +315,23 @@ public:
 
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
-  inline float GetPointZ (float x, float y) const {
+  inline __attribute__((warn_unused_result)) float GetPointZ (float x, float y) const {
     return (VSUM3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
   }
 
-  inline float GetPointZ (const TVec &v) const {
+  inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
   }
 
   // "land" point onto the plane
   // plane must be normalized
-  inline TVec landAlongNormal (const TVec &point) const {
+  inline __attribute__((warn_unused_result)) TVec landAlongNormal (const TVec &point) const {
     const float pdist = DotProduct(point, normal)-dist;
     return (fabs(pdist) > 0.0001f ? point-normal*pdist : point);
   }
 
   // plane must be normalized
-  inline TVec Project (const TVec &v) const {
+  inline __attribute__((warn_unused_result)) TVec Project (const TVec &v) const {
     return v-(v-normal*dist).dot(normal)*normal;
   }
 
@@ -352,7 +353,7 @@ public:
 
   // intersection of 3 planes, Graphics Gems 1 pg 305
   // not sure if it should be `dist` or `-dist` here for vavoom planes
-  TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const {
+  __attribute__((warn_unused_result)) TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const {
     const float det = normal.cross(plane2.normal).dot(plane3.normal);
     // if the determinant is 0, that means parallel planes, no intersection
     if (fabs(det) < 0.00001f) return TVec::Invalid();
@@ -389,19 +390,19 @@ public:
 
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline int PointOnSide (const TVec &point) const {
+  inline __attribute__((warn_unused_result)) int PointOnSide (const TVec &point) const {
     return (DotProduct(point, normal)-dist <= 0);
   }
 
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
-  inline int PointOnSideFri (const TVec &point) const {
+  inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
     return (DotProduct(point, normal)-dist < 0);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
   // used in line tracing (only)
-  inline int PointOnSide2 (const TVec &point) const {
+  inline __attribute__((warn_unused_result)) int PointOnSide2 (const TVec &point) const {
     const float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
@@ -416,7 +417,7 @@ public:
 
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
-  inline int SphereOnSide (const TVec &center, float radius) const {
+  inline __attribute__((warn_unused_result)) int SphereOnSide (const TVec &center, float radius) const {
     return (DotProduct(center, normal)-dist <= -radius);
   }
 
@@ -428,19 +429,19 @@ public:
   }
   */
 
-  inline bool SphereTouches (const TVec &center, float radius) const {
+  inline __attribute__((warn_unused_result)) bool SphereTouches (const TVec &center, float radius) const {
     return (fabsf(DotProduct(center, normal)-dist) < radius);
   }
 
   // returns side 0 (front), 1 (back), or 2 (collides)
-  inline int SphereOnSide2 (const TVec &center, float radius) const {
+  inline __attribute__((warn_unused_result)) int SphereOnSide2 (const TVec &center, float radius) const {
     const float dist = DotProduct(center, normal)-dist;
     return (dist < -radius ? 1 : dist > radius ? 0 : 2);
   }
 
   // distance from point to plane
   // plane must be normalized
-  inline float Distance (const TVec &p) const {
+  inline __attribute__((warn_unused_result)) float Distance (const TVec &p) const {
     //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
     //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
     return DotProduct(p, normal)-dist;
@@ -479,10 +480,10 @@ public:
 #endif
 
   // returns `false` is box is on the back of the plane (or clipflag is 0)
-  bool checkBox (const float *bbox) const;
+  __attribute__((warn_unused_result)) bool checkBox (const float *bbox) const;
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxEx (const float *bbox) const;
+  __attribute__((warn_unused_result)) int checkBoxEx (const float *bbox) const;
 };
 
 
@@ -529,13 +530,13 @@ public:
     }
   }
 
-  inline bool isValid () const {
+  inline __attribute__((warn_unused_result)) bool isValid () const {
     return
       origin.isValid() && angles.isValid() && vforward.isValid() && vright.isValid() && vup.isValid() &&
       !vforward.isZero() && !vright.isZero() && !vright.isZero();
   }
 
-  inline bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
+  inline __attribute__((warn_unused_result)) bool needUpdate (const TVec &aorg, const TAVec &aangles) const {
     if (!isValid()) return true;
     return (aorg != origin || aangles != angles);
   }
@@ -585,11 +586,11 @@ public:
   TClipBase (const float afovx, const float afovy) { setupFromFOVs(afovx, afovy); }
   TClipBase (const TClipParam &cp) { setupViewport(cp); }
 
-  inline bool isValid () const { return (fovx != 0.0f); }
+  inline __attribute__((warn_unused_result)) bool isValid () const { return (fovx != 0.0f); }
 
   inline void clear () { fovx = fovy = 0; }
 
-  const TVec &operator [] (size_t idx) const { check(idx < 4); return clipbase[idx]; }
+  inline __attribute__((warn_unused_result)) const TVec &operator [] (size_t idx) const { check(idx < 4); return clipbase[idx]; }
 
   void setupFromFOVs (const float afovx, const float afovy);
 
@@ -650,7 +651,7 @@ public:
     setup(clipbase, fp, createbackplane, farplanez);
   }
 
-  inline bool isValid () const { return (planeCount > 0); }
+  inline __attribute__((warn_unused_result)) bool isValid () const { return (planeCount > 0); }
 
   inline void clear () { planeCount = 0; planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = planes[5].clipflag = 0; }
 
@@ -664,10 +665,10 @@ public:
 
 
   // returns `false` is point is out of frustum
-  bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
 
   // returns `false` is sphere is out of frustum
-  bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
 
   // returns `false` is box is out of frustum (or frustum is not valid)
   // bbox:
@@ -677,15 +678,15 @@ public:
   //   [3] is maxx
   //   [4] is maxy
   //   [5] is maxz
-  bool checkBox (const float bbox[6], const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) bool checkBox (const float bbox[6], const unsigned mask=~0u) const;
 
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const;
 
-  bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
-  int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
+  __attribute__((warn_unused_result)) int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
 };
 
 
@@ -717,7 +718,7 @@ static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // check to see if the sphere overlaps the AABB
-static __attribute__((unused)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) {
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) {
   float d = 0;
   // find the square of the distance from the sphere to the box
   /*
@@ -752,7 +753,7 @@ static __attribute__((unused)) inline bool CheckSphereVsAABB (const float bbox[6
 
 
 // check to see if the sphere overlaps the AABB (ignore z coords)
-static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) {
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) {
   float d = 0, s;
   // find the square of the distance from the sphere to the box
   // first check is min, second check is max

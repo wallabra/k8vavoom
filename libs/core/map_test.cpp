@@ -64,9 +64,9 @@ void Sys_Error (const char *msg) { fatal(msg); }
 #include "zone.h"
 #include "map.h"
 
-int zone_malloc_call_count;
-int zone_realloc_call_count;
-int zone_free_call_count;
+//int zone_malloc_call_count;
+//int zone_realloc_call_count;
+//int zone_free_call_count;
 
 
 

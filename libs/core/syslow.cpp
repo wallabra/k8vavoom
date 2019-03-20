@@ -33,9 +33,11 @@
 #include "core.h"
 
 // k8: ah, let it be here, why not...
+#ifdef VAVOOM_CORE_COUNT_ALLOCS
 int zone_malloc_call_count = 0;
 int zone_realloc_call_count = 0;
 int zone_free_call_count = 0;
+#endif
 
 
 /*

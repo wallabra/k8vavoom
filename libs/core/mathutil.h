@@ -34,17 +34,17 @@
 # define isNaNF     isnan
 # define isInfF     isinf
 #else
-static __attribute__((unused)) inline bool isFiniteF (const float v) {
+static __attribute__((unused)) __attribute__((const)) inline bool isFiniteF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x&0x7f800000u) != 0x7f800000u);
 }
 
-static __attribute__((unused)) inline bool isNaNF (const float v) {
+static __attribute__((unused)) __attribute__((const)) inline bool isNaNF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) > 0xff000000u);
 }
 
-static __attribute__((unused)) inline bool isInfF (const float v) {
+static __attribute__((unused)) __attribute__((const)) inline bool isInfF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) == 0xff000000u);
 }
@@ -59,7 +59,7 @@ static __attribute__((unused)) inline void killInfNaNF (float &f) {
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
-static __attribute__((unused)) inline float smoothstep (const float edge0, const float edge1, float x) {
+static __attribute__((unused)) __attribute__((const)) inline float smoothstep (const float edge0, const float edge1, float x) {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
   if (!isFiniteF(x)) return 1;
@@ -71,7 +71,7 @@ static __attribute__((unused)) inline float smoothstep (const float edge0, const
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
-static __attribute__((unused)) inline float smoothstepPerlin (const float edge0, const float edge1, float x) {
+static __attribute__((unused)) __attribute__((const)) inline float smoothstepPerlin (const float edge0, const float edge1, float x) {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
   if (!isFiniteF(x)) return 1;
@@ -83,7 +83,7 @@ static __attribute__((unused)) inline float smoothstepPerlin (const float edge0,
 
 extern "C" {
 //k8: this is UB in shitplusplus, but i really can't care less
-static __attribute__((unused)) inline float fastInvSqrtf (const float n) {
+static __attribute__((unused)) __attribute__((const)) inline float fastInvSqrtf (const float n) {
   union { float f; vuint32 i; } ufi;
   const float ndiv2 = n*0.5f;
   ufi.f = n;
@@ -115,10 +115,10 @@ static __attribute__((unused)) inline float fastInvSqrtf (const float n) {
 #define MAX(x, y)   ((x) >= (y) ? (x) : (y))
 #define MID(min, val, max)  MAX(min, MIN(val, max))
 */
-template <class T> constexpr inline T MIN (const T a, const T b) { return (a <= b ? a : b); }
-template <class T> constexpr inline T MAX (const T a, const T b) { return (a >= b ? a : b); }
+template <class T> constexpr __attribute__((const)) inline T MIN (const T a, const T b) { return (a <= b ? a : b); }
+template <class T> constexpr __attribute__((const)) inline T MAX (const T a, const T b) { return (a >= b ? a : b); }
 //template <class T> constexpr inline T MID (const T min, const T val, const T max) { return MAX(min, MIN(val, max)); }
-template <class T> constexpr inline T MID (const T min, const T val, const T max) { return (val <= min ? min : val >= max ? max : val); }
+template <class T> constexpr __attribute__((const)) inline T MID (const T min, const T val, const T max) { return (val <= min ? min : val >= max ? max : val); }
 
 
 // bounding box
@@ -156,7 +156,7 @@ enum {
 //int mround (float);
 static __attribute__((unused)) inline int mround (const float Val) { return (int)floorf(Val+0.5f); }
 
-static __attribute__((unused)) inline int ToPowerOf2 (int val) {
+static __attribute__((unused)) __attribute__((const)) inline int ToPowerOf2 (int val) {
   /*
   int answer = 1;
   while (answer < val) answer <<= 1;
@@ -176,7 +176,7 @@ static __attribute__((unused)) inline int ToPowerOf2 (int val) {
 //float AngleMod (float angle);
 //float AngleMod180 (float angle);
 
-static __attribute__((unused)) inline float AngleMod (float angle) {
+static __attribute__((unused)) __attribute__((pure)) inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
   while (angle < 0.0f) angle += 360.0f;
@@ -187,7 +187,7 @@ static __attribute__((unused)) inline float AngleMod (float angle) {
   return angle;
 }
 
-static __attribute__((unused)) inline float AngleMod180 (float angle) {
+static __attribute__((unused)) __attribute__((pure)) inline float AngleMod180 (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
   while (angle < -180.0f) angle += 360.0f;
@@ -201,7 +201,7 @@ static __attribute__((unused)) inline float AngleMod180 (float angle) {
 }
 
 
-static __attribute__((unused)) inline double AngleModD (double angle) {
+static __attribute__((unused)) __attribute__((pure)) inline double AngleModD (double angle) {
 #if 1
   angle = fmod(angle, 360.0);
   while (angle < 0.0) angle += 360.0;
@@ -212,7 +212,7 @@ static __attribute__((unused)) inline double AngleModD (double angle) {
   return angle;
 }
 
-static __attribute__((unused)) inline double AngleMod180D (double angle) {
+static __attribute__((unused)) __attribute__((pure)) inline double AngleMod180D (double angle) {
 #if 1
   angle = fmod(angle, 360.0);
   while (angle < -180.0) angle += 360.0;
@@ -226,41 +226,41 @@ static __attribute__((unused)) inline double AngleMod180D (double angle) {
 }
 
 
-static __attribute__((unused)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
-static __attribute__((unused)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
-static __attribute__((unused)) inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
-static __attribute__((unused)) inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
-static __attribute__((unused)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
-static __attribute__((unused)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
-static __attribute__((unused)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
+static __attribute__((unused)) __attribute__((pure)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
+static __attribute__((unused)) __attribute__((pure)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
+static __attribute__((unused)) __attribute__((pure)) inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
+static __attribute__((unused)) __attribute__((pure)) inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
+static __attribute__((unused)) __attribute__((pure)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
+static __attribute__((unused)) __attribute__((pure)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
+static __attribute__((unused)) __attribute__((pure)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
 static __attribute__((unused)) inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
 
 
-static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
-static __attribute__((unused)) inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
+static __attribute__((unused)) __attribute__((const)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
+static __attribute__((unused)) __attribute__((pure)) inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
-static __attribute__((unused)) inline vuint8 clampToByte (vint32 n) {
+static __attribute__((unused)) __attribute__((const)) inline vuint8 clampToByte (vint32 n) {
   n &= -(vint32)(n >= 0);
   return (vuint8)(n|((255-(vint32)n)>>31));
   //return (n < 0 ? 0 : n > 255 ? 255 : n);
 }
 
-static __attribute__((unused)) inline vuint8 clampToByteU (vuint32 n) {
+static __attribute__((unused)) __attribute__((const)) inline vuint8 clampToByteU (vuint32 n) {
   return (vuint8)((n&0xff)|(255-((-(vint32)(n < 256))>>24)));
 }
 
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) inline float neumsum2 (float v0, const float v1) {
+static __attribute__((unused)) __attribute__((pure)) inline float neumsum2 (float v0, const float v1) {
   // one iteration
   const float t = v0+v1;
   return t+(fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) inline float neumsum3 (float v0, const float v1, const float v2) {
+static __attribute__((unused)) __attribute__((pure)) inline float neumsum3 (float v0, const float v1, const float v2) {
   // first iteration
   const float t = v0+v1;
   const float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -270,7 +270,7 @@ static __attribute__((unused)) inline float neumsum3 (float v0, const float v1, 
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) inline float neumsum4 (float v0, const float v1, const float v2, const float v3) {
+static __attribute__((unused)) __attribute__((pure)) inline float neumsum4 (float v0, const float v1, const float v2, const float v3) {
   // first iteration
   float t = v0+v1;
   float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -287,14 +287,14 @@ static __attribute__((unused)) inline float neumsum4 (float v0, const float v1, 
 
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) inline double neumsum2D (double v0, const double v1) {
+static __attribute__((unused)) __attribute__((pure)) inline double neumsum2D (double v0, const double v1) {
   // one iteration
   const double t = v0+v1;
   return t+(fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) inline double neumsum3D (double v0, const double v1, const double v2) {
+static __attribute__((unused)) __attribute__((pure)) inline double neumsum3D (double v0, const double v1, const double v2) {
   // first iteration
   const double t = v0+v1;
   const double c = (fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);

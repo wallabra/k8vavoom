@@ -26,7 +26,9 @@
 //**************************************************************************
 #include "core.h"
 
-#define FRUSTUM_BBOX_CHECKS
+// debug checks
+//#define FRUSTUM_BBOX_CHECKS
+
 
 //==========================================================================
 //
@@ -174,17 +176,6 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 
 //==========================================================================
 //
-//  RotateVectorAroundVector
-//
-//==========================================================================
-TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, const float Angle) {
-  VRotMatrix M(Axis, Angle);
-  return Vector*M;
-}
-
-
-//==========================================================================
-//
 //  PerpendicularVector
 //
 //  assumes "src" is normalised
@@ -212,6 +203,17 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
     //dst = NormaliseSafe(dst);
     dst.normaliseInPlace();
   }
+}
+
+
+//==========================================================================
+//
+//  RotateVectorAroundVector
+//
+//==========================================================================
+__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) {
+  VRotMatrix M(Axis, Angle);
+  return Vector*M;
 }
 
 

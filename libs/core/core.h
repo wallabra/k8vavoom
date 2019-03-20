@@ -27,6 +27,10 @@
 #ifndef VAVOOM_CORE_HEADER
 #define VAVOOM_CORE_HEADER
 
+// define this to activate zone allocator counters
+//#define VAVOOM_CORE_COUNT_ALLOCS
+
+
 //#define USE_NEUMAIER_KAHAN
 #define USE_FAST_INVSQRT
 

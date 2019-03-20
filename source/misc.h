@@ -90,7 +90,7 @@ vuint8 P_Random (); // [0..255]
 
 
 // see https://www.compuphase.com/cmetric.htm
-static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
+static inline __attribute__((unused)) __attribute__((const)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
   const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
   const vint32 r = (vint32)r0-(vint32)r1;
   const vint32 g = (vint32)g0-(vint32)g1;

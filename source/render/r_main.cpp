@@ -2039,14 +2039,17 @@ COMMAND(TimeRefresh) {
 
     Drawer->StartUpdate();
 
+#ifdef VAVOOM_CORE_COUNT_ALLOCS
     zone_malloc_call_count = 0;
     zone_realloc_call_count = 0;
     zone_free_call_count = 0;
+#endif
 
     RenderTime -= Sys_Time();
     R_RenderPlayerView();
     RenderTime += Sys_Time();
 
+#ifdef VAVOOM_CORE_COUNT_ALLOCS
     renderAlloc += zone_malloc_call_count;
     renderRealloc += zone_realloc_call_count;
     renderFree += zone_free_call_count;
@@ -2054,6 +2057,7 @@ COMMAND(TimeRefresh) {
     if (renderPeakAlloc < zone_malloc_call_count) renderPeakAlloc = zone_malloc_call_count;
     if (renderPeakRealloc < zone_realloc_call_count) renderPeakRealloc = zone_realloc_call_count;
     if (renderPeakFree < zone_free_call_count) renderPeakFree = zone_free_call_count;
+#endif
 
     UpdateTime -= Sys_Time();
     Drawer->Update();
