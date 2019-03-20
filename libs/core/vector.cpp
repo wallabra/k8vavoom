@@ -638,3 +638,83 @@ int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsi
   }
   return res;
 }
+
+
+
+//==========================================================================
+//
+//  R_ClipSurface
+//
+//  clip convex surface to the given plane
+//  returns number of new vertices
+//  `dest` should have room for at least `vcount+1` vertices
+//  precondition: vcount >= 3
+//
+//  WARNING! not thread-safe, not reentrant!
+//
+//==========================================================================
+int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane) {
+#define ON_EPSILON  (0.1f)
+
+  enum {
+    PlaneBack = -1,
+    PlaneCoplanar = 0,
+    PlaneFront = 1,
+  };
+
+  check(dest);
+  check(src);
+  check(dest != src);
+  check(vcount >= 3);
+
+  static int *sides = nullptr;
+  static float *dots = nullptr;
+  static int tbsize = 0;
+
+  if (tbsize < vcount+1) {
+    tbsize = (vcount|0x7f)+1;
+    sides = (int *)Z_Realloc(sides, tbsize*sizeof(sides[0]));
+    dots = (float *)Z_Realloc(dots, tbsize*sizeof(dots[0]));
+  }
+
+  // determine sides for each point
+  bool hasFrontSomething = false;
+  for (int i = 0; i < vcount; ++i) {
+    const float dot = DotProduct(src[i], plane.normal)-plane.dist;
+    dots[i] = dot;
+         if (dot < -ON_EPSILON) sides[i] = PlaneBack;
+    else if (dot > ON_EPSILON) { sides[i] = PlaneFront; hasFrontSomething = true; }
+    else sides[i] = PlaneCoplanar;
+  }
+
+  if (!hasFrontSomething) return 0; // completely clipped away
+
+  dots[vcount] = dots[0];
+  sides[vcount] = sides[0];
+
+  int dcount = 0;
+
+  for (int i = 0; i < vcount; ++i) {
+    if (sides[i] == PlaneCoplanar) {
+      dest[dcount++] = src[i];
+      continue;
+    }
+    if (sides[i] == PlaneFront) dest[dcount++] = src[i];
+    if (sides[i+1] == PlaneCoplanar || sides[i] == sides[i+1]) continue;
+
+    // generate a split point
+    const TVec &p1 = src[i];
+    const TVec &p2 = src[(i+1)%vcount];
+    const float dist = dots[i]/(dots[i]-dots[i+1]);
+    TVec &mid = dest[dcount++];
+    for (int j = 0; j < 3; ++j) {
+      // avoid round off error when possible
+           if (plane.normal[j] == 1) mid[j] = plane.dist;
+      else if (plane.normal[j] == -1) mid[j] = -plane.dist;
+      else mid[j] = p1[j]+dist*(p2[j]-p1[j]);
+    }
+  }
+
+  return dcount;
+#undef ON_EPSILON
+}

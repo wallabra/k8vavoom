@@ -767,3 +767,18 @@ static __attribute__((unused)) inline bool CheckSphereVsAABBIgnoreZ (const float
 
   return (d < radius*radius); // or <= if you want exact touching
 }
+
+
+//==========================================================================
+//
+//  R_ClipSurface
+//
+//  clip convex surface to the given plane
+//  returns number of new vertices
+//  `dest` should have room for at least `vcount+1` vertices
+//  precondition: vcount >= 3
+//
+//  WARNING! not thread-safe, not reentrant!
+//
+//==========================================================================
+int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane);

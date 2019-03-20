@@ -49,8 +49,9 @@ public:
   inline void SetIdentity () { memcpy((void *)m, (const void *)Identity.m, sizeof(m)); }
   inline void SetZero () { memset((void *)m, 0, sizeof(m)); }
 
-  TVec getRow (int idx) const;
-  TVec getCol (int idx) const;
+  inline const TVec &GetRow (int idx) const { return *(const TVec *)(m[idx]); }
+  //inline TVec GetRow (int idx) const { return *(TVec *)(m[idx]); }
+  inline TVec GetCol (int idx) const { return TVec(m[0][idx], m[1][idx], m[2][idx]); }
 
   // this is for camera matrices
   inline TVec getUpVector () const { return TVec(m[0][1], m[1][1], m[2][1]); }
@@ -202,6 +203,7 @@ public:
   static void CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]);
 
   // combine the two matrices (multiply projection by modelview)
+  // destroys (ignores) current matrix
   void ModelProjectCombine (const VMatrix4 &model, const VMatrix4 &proj);
 
   // this expects result of `ModelProjectCombine()`

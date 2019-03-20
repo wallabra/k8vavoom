@@ -142,6 +142,7 @@ VMatrix4::VMatrix4 (float m00, float m01, float m02, float m03,
 }
 
 
+/*
 //==========================================================================
 //
 //  VMatrix4::getRow
@@ -162,6 +163,7 @@ TVec VMatrix4::getCol (int idx) const {
   if (idx < 0 || idx > 3) return TVec(0, 0, 0);
   return TVec(m[idx][0], m[idx][1], m[idx][2]);
 }
+*/
 
 
 //==========================================================================
