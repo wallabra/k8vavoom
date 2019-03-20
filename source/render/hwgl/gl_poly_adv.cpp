@@ -785,8 +785,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 //==========================================================================
 void VOpenGLDrawer::DrawWorldFogPass () {
   glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
   glDepthMask(GL_FALSE); // no z-buffer writes
 
   // draw surfaces
@@ -823,6 +822,8 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
   }
+
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
 }
 
 
