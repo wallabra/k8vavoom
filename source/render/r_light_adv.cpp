@@ -888,7 +888,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
+    hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord, (r_advlight_opt_optimise_scissor && !r_model_shadows ? LitBBox : nullptr));
     if (hasScissor <= 0) {
       // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
