@@ -571,7 +571,7 @@ protected:
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t*);
   surface_t *CreateWSurfs (TVec*, texinfo_t*, seg_t*, subsector_t*);
-  int CountSegParts (seg_t*);
+  int CountSegParts (const seg_t *);
   void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);

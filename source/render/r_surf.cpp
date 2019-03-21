@@ -309,8 +309,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
 surface_t *VRenderLevelShared::NewWSurf () {
   if (!free_wsurfs) {
     // allocate some more surfs
-    vuint8 *tmp = (vuint8 *)Z_Malloc(WSURFSIZE*128+sizeof(void *));
-    memset(tmp, 0, WSURFSIZE*128+sizeof(void *));
+    vuint8 *tmp = (vuint8 *)Z_Calloc(WSURFSIZE*128+sizeof(void *));
     *(void **)tmp = AllocatedWSurfBlocks;
     AllocatedWSurfBlocks = tmp;
     tmp += sizeof(void *);
@@ -361,7 +360,7 @@ surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t
   surface_t *surf = NewWSurf();
   surf->next = nullptr;
   surf->count = 4;
-  memcpy(surf->verts, wv, surf->count*sizeof(TVec));
+  memcpy(surf->verts, wv, /*surf->count*/4*sizeof(TVec));
 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
     // never split sky surfaces
@@ -381,16 +380,93 @@ surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t
 //  VRenderLevelShared::CountSegParts
 //
 //==========================================================================
-int VRenderLevelShared::CountSegParts (seg_t *seg) {
+int VRenderLevelShared::CountSegParts (const seg_t *seg) {
   if (!seg->linedef) return 0; // miniseg
-  int count;
-  if (!seg->backsector) {
-    count = 2;
-  } else {
-    count = 4;
-    for (sec_region_t *reg = seg->backsector->topregion; reg->prev; reg = reg->prev) ++count;
-  }
+  if (!seg->backsector) return 2;
+  int count = 4;
+  for (const sec_region_t *reg = seg->backsector->topregion; reg->prev; reg = reg->prev) ++count;
   return count;
+}
+
+
+//==========================================================================
+//
+//  FixTexturePeg
+//
+//==========================================================================
+static inline void FixTexturePegMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, const sec_plane_t *r_floor, const sec_plane_t *r_ceiling) {
+  //check(seg->front_sub == r_surf_sub);
+  const line_t *linedef = seg->linedef;
+  if (linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    sp->texinfo.toffs = r_floor->TexZ+MTex->GetScaledHeight();
+  } else if (linedef->flags&ML_DONTPEGTOP) {
+    // top of texture at top of top region
+    sp->texinfo.toffs = seg->front_sub->sector->topregion->ceiling->TexZ;
+  } else {
+    // top of texture at top
+    sp->texinfo.toffs = r_ceiling->TexZ;
+  }
+  sp->texinfo.toffs *= TextureTScale(MTex);
+  sp->texinfo.toffs += seg->sidedef->MidRowOffset*TextureOffsetTScale(MTex);
+}
+
+
+//==========================================================================
+//
+//  FixTexturePegTop
+//
+//==========================================================================
+static inline void FixTexturePegTop (const seg_t *seg, segpart_t *sp, VTexture *TTex, const sec_plane_t *back_ceiling, float top_TexZ) {
+  if (seg->linedef->flags&ML_DONTPEGTOP) {
+    // top of texture at top
+    sp->texinfo.toffs = top_TexZ;
+  } else {
+    // bottom of texture
+    sp->texinfo.toffs = back_ceiling->TexZ+TTex->GetScaledHeight();
+  }
+  sp->texinfo.toffs *= TextureTScale(TTex);
+  sp->texinfo.toffs += seg->sidedef->TopRowOffset*TextureOffsetTScale(TTex);
+}
+
+
+//==========================================================================
+//
+//  FixTexturePegBot
+//
+//==========================================================================
+static inline void FixTexturePegBot (const seg_t *seg, segpart_t *sp, VTexture *BTex, const sec_plane_t *back_floor, float top_TexZ) {
+  if (seg->linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    // top of texture at top
+    sp->texinfo.toffs = top_TexZ;
+  } else {
+    // top of texture at top
+    sp->texinfo.toffs = back_floor->TexZ;
+  }
+  sp->texinfo.toffs *= TextureTScale(BTex);
+  sp->texinfo.toffs += seg->sidedef->BotRowOffset*TextureOffsetTScale(BTex);
+}
+
+
+//==========================================================================
+//
+//  FixPegZOrgMid
+//
+//==========================================================================
+static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, const float texh) {
+  float z_org;
+  if (seg->linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    // top of texture at top
+    z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
+  } else {
+    // top of texture at top
+    z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
+  }
+  z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+  sp->texinfo.toffs = z_org*TextureTScale(MTex);
+  return z_org;
 }
 
 
@@ -407,26 +483,24 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
   dseg->next = seg->drawsegs;
   seg->drawsegs = dseg;
 
-  if (!seg->linedef) return; // miniseg
-
-  side_t *sidedef = seg->sidedef;
-  line_t *linedef = seg->linedef;
-
-  //TVec segdir = (*seg->v2-*seg->v1)/seg->length;
+  const line_t *linedef = seg->linedef;
+  if (!linedef) return; // miniseg
+  const side_t *sidedef = seg->sidedef;
 
   TVec segdir;
-  check(seg->length >= 0);
-  if (seg->length <= 0) {
+  if (seg->length <= 0.0f) {
     GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
     segdir = TVec(1, 0, 0); // arbitrary
   } else {
-    segdir = (*seg->v2-*seg->v1)/seg->length;
+    //segdir = (*seg->v2-*seg->v1)/seg->length;
+    //segdir = (seg->v2->sub2D(*seg->v1))/seg->length;
+    segdir = (*seg->v2-*seg->v1).normalised2D();
   }
 
-  float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  float botz1 = r_floor->GetPointZ(*seg->v1);
-  float botz2 = r_floor->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
+  const float botz1 = r_floor->GetPointZ(*seg->v1);
+  const float botz2 = r_floor->GetPointZ(*seg->v2);
 
   if (!seg->backsector) {
     dseg->mid = pspart++;
@@ -447,18 +521,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
 
-    if (linedef->flags&ML_DONTPEGBOTTOM) {
-      // bottom of texture at bottom
-      sp->texinfo.toffs = r_floor->TexZ+MTex->GetScaledHeight();
-    } else if (linedef->flags&ML_DONTPEGTOP) {
-      // top of texture at top of top region
-      sp->texinfo.toffs = r_surf_sub->sector->topregion->ceiling->TexZ;
-    } else {
-      // top of texture at top
-      sp->texinfo.toffs = r_ceiling->TexZ;
-    }
-    sp->texinfo.toffs *= TextureTScale(MTex);
-    sp->texinfo.toffs += sidedef->MidRowOffset*TextureOffsetTScale(MTex);
+    FixTexturePegMid(seg, sp, MTex, r_floor, r_ceiling);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -510,10 +573,10 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
 
     VTexture *TTex = GTextureManager(sidedef->TopTexture);
 
-    float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
-    float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
-    float back_botz1 = back_floor->GetPointZ(*seg->v1);
-    float back_botz2 = back_floor->GetPointZ(*seg->v2);
+    const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
+    const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
+    const float back_botz1 = back_floor->GetPointZ(*seg->v1);
+    const float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
     // hack to allow height changes in outdoor areas
     float top_topz1 = topz1;
@@ -542,15 +605,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
 
-    if (linedef->flags&ML_DONTPEGTOP) {
-      // top of texture at top
-      sp->texinfo.toffs = top_TexZ;
-    } else {
-      // bottom of texture
-      sp->texinfo.toffs = back_ceiling->TexZ+TTex->GetScaledHeight();
-    }
-    sp->texinfo.toffs *= TextureTScale(TTex);
-    sp->texinfo.toffs += sidedef->TopRowOffset*TextureOffsetTScale(TTex);
+    FixTexturePegTop(seg, sp, TTex, back_ceiling, top_TexZ);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -610,16 +665,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
 
-    if (linedef->flags&ML_DONTPEGBOTTOM) {
-      // bottom of texture at bottom
-      // top of texture at top
-      sp->texinfo.toffs = top_TexZ;
-    } else {
-      // top of texture at top
-      sp->texinfo.toffs = back_floor->TexZ;
-    }
-    sp->texinfo.toffs *= TextureTScale(BTex);
-    sp->texinfo.toffs += sidedef->BotRowOffset*TextureOffsetTScale(BTex);
+    FixTexturePegBot(seg, sp, BTex, back_floor, top_TexZ);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -664,7 +710,6 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
     if (MTex->Type != TEXTYPE_Null) {
       // masked MidTexture
       float texh = MTex->GetScaledHeight();
-      float z_org;
 
       sp->texinfo.saxis = segdir*TextureSScale(MTex);
       sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex);
@@ -672,17 +717,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
       sp->texinfo.Alpha = linedef->alpha;
       sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
 
-      if (linedef->flags&ML_DONTPEGBOTTOM) {
-        // bottom of texture at bottom
-        // top of texture at top
-        z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
-      } else {
-        // top of texture at top
-        z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
-      }
-      z_org += sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-
-      sp->texinfo.toffs = z_org*TextureTScale(MTex);
+      float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
 
       wv[0].x = wv[1].x = seg->v1->x;
       wv[0].y = wv[1].y = seg->v1->y;
@@ -772,11 +807,11 @@ void VRenderLevelShared::CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dse
 //  VRenderLevelShared::UpdateRowOffset
 //
 //==========================================================================
-void VRenderLevelShared::UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset) {
+void VRenderLevelShared::UpdateRowOffset (subsector_t *sub, segpart_t *sp, float RowOffset) {
   sp->texinfo.toffs += (RowOffset-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
   sp->RowOffset = RowOffset;
   FlushSurfCaches(sp->surfs);
-  InitSurfs(sp->surfs, &sp->texinfo, nullptr, r_surf_sub);
+  InitSurfs(sp->surfs, &sp->texinfo, nullptr, sub);
 }
 
 
@@ -800,8 +835,8 @@ void VRenderLevelShared::UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t
 //==========================================================================
 void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
-  segpart_t *sp;
   TVec wv[4];
+  segpart_t *sp;
 
   if (!seg->linedef) return; // miniseg
 
@@ -851,18 +886,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
       FreeWSurfs(sp->surfs);
       sp->surfs = nullptr;
 
-      if (linedef->flags&ML_DONTPEGBOTTOM) {
-        // bottom of texture at bottom
-        sp->texinfo.toffs = r_floor->TexZ+MTex->GetScaledHeight();
-      } else if (linedef->flags&ML_DONTPEGTOP) {
-        // top of texture at top of top region
-        sp->texinfo.toffs = r_surf_sub->sector->topregion->ceiling->TexZ;
-      } else {
-        // top of texture at top
-        sp->texinfo.toffs = r_ceiling->TexZ;
-      }
-      sp->texinfo.toffs *= TextureTScale(MTex);
-      sp->texinfo.toffs += sidedef->MidRowOffset*TextureOffsetTScale(MTex);
+      FixTexturePegMid(seg, sp, MTex, r_floor, r_ceiling);
+
       sp->texinfo.Tex = MTex;
       sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
 
@@ -958,15 +983,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
       FreeWSurfs(sp->surfs);
       sp->surfs = nullptr;
 
-      if (linedef->flags&ML_DONTPEGTOP) {
-        // top of texture at top
-        sp->texinfo.toffs = top_TexZ;
-      } else {
-        // bottom of texture
-        sp->texinfo.toffs = back_ceiling->TexZ+TTex->GetScaledHeight();
-      }
-      sp->texinfo.toffs *= TextureTScale(TTex);
-      sp->texinfo.toffs += sidedef->TopRowOffset*TextureOffsetTScale(TTex);
+      FixTexturePegTop(seg, sp, TTex, back_ceiling, top_TexZ);
+
       sp->texinfo.Tex = TTex;
       sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
 
@@ -1058,16 +1076,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
       FreeWSurfs(sp->surfs);
       sp->surfs = nullptr;
 
-      if (linedef->flags&ML_DONTPEGBOTTOM) {
-        // bottom of texture at bottom
-        // top of texture at top
-        sp->texinfo.toffs = top_TexZ;
-      } else {
-        // top of texture at top
-        sp->texinfo.toffs = back_floor->TexZ;
-      }
-      sp->texinfo.toffs *= TextureTScale(BTex);
-      sp->texinfo.toffs += sidedef->BotRowOffset*TextureOffsetTScale(BTex);
+      FixTexturePegBot(seg, sp, BTex, back_floor, top_TexZ);
 
       wv[0].x = wv[1].x = seg->v1->x;
       wv[0].y = wv[1].y = seg->v1->y;
@@ -1137,17 +1146,15 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
         }
 
         float texh = MTex->GetScaledHeight();
-        float z_org;
-
-        //TVec segdir = (*seg->v2-*seg->v1)/seg->length;
 
         TVec segdir;
-        //check(seg->length >= 0);
-        if (seg->length <= 0) {
+        if (seg->length <= 0.0f) {
           GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
           segdir = TVec(1, 0, 0); // arbitrary
         } else {
-          segdir = (*seg->v2-*seg->v1)/seg->length;
+          //segdir = (*seg->v2-*seg->v1)/seg->length;
+          //segdir = (seg->v2->sub2D(*seg->v1))/seg->length;
+          segdir = (*seg->v2-*seg->v1).normalised2D();
         }
 
         sp->texinfo.saxis = segdir*TextureSScale(MTex);
@@ -1156,17 +1163,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg
         sp->texinfo.Alpha = linedef->alpha;
         sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
 
-        if (linedef->flags&ML_DONTPEGBOTTOM) {
-          // bottom of texture at bottom
-          // top of texture at top
-          z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
-        } else {
-          // top of texture at top
-          z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
-        }
-        z_org += sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-
-        sp->texinfo.toffs = z_org*TextureTScale(MTex);
+        float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
 
         wv[0].x = wv[1].x = seg->v1->x;
         wv[0].y = wv[1].y = seg->v1->y;
@@ -1300,12 +1297,6 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 //
 //==========================================================================
 void VRenderLevelShared::CreateWorldSurfaces () {
-  int count, dscount, spcount;
-  subregion_t *sreg;
-  subsector_t *sub;
-  drawseg_t *pds;
-  sec_region_t *reg;
-
   free_wsurfs = nullptr;
   SetupSky();
 
@@ -1322,35 +1313,33 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   // count regions in all subsectors
-  count = 0;
-  dscount = 0;
-  spcount = 0;
+  int count = 0;
+  int dscount = 0;
+  int spcount = 0;
   for (int i = 0; i < Level->NumSubsectors; ++i) {
-    sub = &Level->Subsectors[i];
+    const subsector_t *sub = &Level->Subsectors[i];
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
-    for (reg = sub->sector->botregion; reg; reg = reg->next) {
+    for (const sec_region_t *reg = sub->sector->botregion; reg; reg = reg->next) {
       ++count;
       dscount += sub->numlines;
       if (sub->poly) dscount += sub->poly->numsegs; // polyobj
       for (int j = 0; j < sub->numlines; ++j) spcount += CountSegParts(&Level->Segs[sub->firstline+j]);
       if (sub->poly) {
-        int polyCount = sub->poly->numsegs;
-        seg_t **polySeg = sub->poly->segs;
-        while (polyCount--) {
-          spcount += CountSegParts(*polySeg);
-          ++polySeg;
-        }
+        seg_t *const *polySeg = sub->poly->segs;
+        for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) spcount += CountSegParts(*polySeg);
       }
     }
   }
 
   // get some memory
-  sreg = new subregion_t[count+1];
-  pds = new drawseg_t[dscount+1];
+  subregion_t *sreg = new subregion_t[count+1];
+  drawseg_t *pds = new drawseg_t[dscount+1];
   pspart = new segpart_t[spcount+1];
+
   memset((void *)sreg, 0, sizeof(subregion_t)*(count+1));
   memset((void *)pds, 0, sizeof(drawseg_t)*(dscount+1));
   memset((void *)pspart, 0, sizeof(segpart_t)*(spcount+1));
+
   AllocatedSubRegions = sreg;
   AllocatedDrawSegs = pds;
   AllocatedSegParts = pspart;
@@ -1358,10 +1347,10 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   // add dplanes
   for (int i = 0; i < Level->NumSubsectors; ++i) {
     //if (!(i&63)) CL_KeepaliveMessage(); // this is done in progressbar code
-    sub = &Level->Subsectors[i];
+    subsector_t *sub = &Level->Subsectors[i];
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
-    subsector_t *r_surf_sub = sub;
-    for (reg = sub->sector->botregion; reg; reg = reg->next) {
+    //subsector_t *r_surf_sub = sub;
+    for (sec_region_t *reg = sub->sector->botregion; reg; reg = reg->next) {
       sec_plane_t *r_floor = reg->floor;
       sec_plane_t *r_ceiling = reg->ceiling;
 
@@ -1380,16 +1369,13 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
       sreg->lines = pds;
       pds += sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(r_surf_sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling);
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(/*r_surf_*/sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling);
       if (sub->poly) {
         // polyobj
         int j = sub->numlines;
-        int polyCount = sub->poly->numsegs;
         seg_t **polySeg = sub->poly->segs;
-        while (polyCount--) {
-          CreateSegParts(r_surf_sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling);
-          ++polySeg;
-          ++j;
+        for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg, ++j) {
+          CreateSegParts(/*r_surf_*/sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling);
         }
       }
 
@@ -1413,16 +1399,15 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region/*, bool ClipSegs*/) {
   sec_plane_t *r_floor = region->floorplane;
   sec_plane_t *r_ceiling = region->ceilplane;
+
   if (r_surf_sub->sector->fakefloors) {
     if (r_floor == &r_surf_sub->sector->floor) r_floor = &r_surf_sub->sector->fakefloors->floorplane;
     if (r_ceiling == &r_surf_sub->sector->ceiling) r_ceiling = &r_surf_sub->sector->fakefloors->ceilplane;
   }
 
-  int count = r_surf_sub->numlines;
   drawseg_t *ds = region->lines;
-  while (count--) {
+  for (int count = r_surf_sub->numlines; count--; ++ds) {
     UpdateDrawSeg(r_surf_sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
-    ++ds;
   }
 
   UpdateSecSurface(region->floor, region->floorplane, r_surf_sub);
@@ -1430,11 +1415,9 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *
 
   if (r_surf_sub->poly) {
     // update the polyobj
-    int polyCount = r_surf_sub->poly->numsegs;
     seg_t **polySeg = r_surf_sub->poly->segs;
-    while (polyCount--) {
+    for (int polyCount = r_surf_sub->poly->numsegs; polyCount--; ++polySeg) {
       UpdateDrawSeg(r_surf_sub, (*polySeg)->drawsegs, r_floor, r_ceiling/*, ClipSegs*/);
-      ++polySeg;
     }
   }
 

@@ -1962,11 +1962,12 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
       }
 
       if (side) {
-        li->offset = Length(*li->v1 - *ldef->v2);
+        li->offset = li->v1->DistanceTo2D(*ldef->v2);
       } else {
-        li->offset = Length(*li->v1 - *ldef->v1);
+        li->offset = li->v1->DistanceTo2D(*ldef->v1);
       }
-      li->length = Length(*li->v2 - *li->v1);
+      li->length = li->v2->DistanceTo2D(*li->v1);
+      if (li->length < 0.001f) Sys_Error("zero-length seg #%d", i);
       li->side = side;
     }
 
@@ -2016,15 +2017,13 @@ void VLevel::PostLoadSegs () {
       }
 
       if (dside) {
-        destseg->offset = Length(*destseg->v1 - *ldef->v2);
+        destseg->offset = destseg->v1->DistanceTo2D(*ldef->v2);
       } else {
-        destseg->offset = Length(*destseg->v1 - *ldef->v1);
+        destseg->offset = destseg->v1->DistanceTo2D(*ldef->v1);
       }
     }
-
-    destseg->length = Length(*destseg->v2 - *destseg->v1);
-
-    if (destseg->length < 0.0001f) Sys_Error("zero-length seg #%d", i);
+    destseg->length = destseg->v2->DistanceTo2D(*destseg->v1);
+    if (destseg->length < 0.001f) Sys_Error("zero-length seg #%d", i);
 
     // calc seg's plane params
     CalcSeg(destseg);
