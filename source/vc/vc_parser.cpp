@@ -1121,7 +1121,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       // setup types for `auto`
       for (int f = 0; f < vexcount; ++f) {
         if (vex[f].decl && vex[f].decl->Vars[0].TypeExpr->IsAutoTypeExpr()) {
-          VStr newName = VStr(*((VInvocationBase *)loarr)->GetMethodName())+"_opIterNext";
+          VStr newName = VStr(((VInvocationBase *)loarr)->GetMethodName())+"_opIterNext";
           VInvocationBase *ee = (VInvocationBase *)loarr->SyntaxCopy();
           ee->SetMethodName(VName(*newName));
           vex[f].decl->Vars[0].TypeOfExpr = ee;
@@ -2593,7 +2593,7 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
       Lex.NextToken();
       VStr txname;
       // name
-           if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { txname = VStr(*Lex.Name); Lex.NextToken(); }
+           if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { txname = VStr(Lex.Name); Lex.NextToken(); }
       else if (Lex.Token == TK_StringLiteral) { txname = Lex.String; Lex.NextToken(); }
       else ParseError(Lex.Location, "Texture name expected");
       txname = txname.toLowerCase();
@@ -2615,7 +2615,7 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
         }
         if (VStr::ICmp(*Lex.Name, "image") == 0) {
           Lex.NextToken();
-               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { ti.texImage = VStr(*Lex.Name); Lex.NextToken(); }
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { ti.texImage = VStr(Lex.Name); Lex.NextToken(); }
           else if (Lex.Token == TK_StringLiteral) { ti.texImage = Lex.String; Lex.NextToken(); }
           else ParseError(Lex.Location, "String expected");
           Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -2675,7 +2675,7 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
         }
         if (VStr::ICmp(*Lex.Name, "texture_dir") == 0) {
           Lex.NextToken();
-               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(*Lex.Name); Lex.NextToken(); }
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(Lex.Name); Lex.NextToken(); }
           else if (Lex.Token == TK_StringLiteral) { texDir = Lex.String; Lex.NextToken(); }
           else ParseError(Lex.Location, "String expected");
           Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -2708,7 +2708,7 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
       }
     } else {
       bool wasString = (Lex.Token == TK_StringLiteral);
-      tmpName = (Lex.Token == TK_StringLiteral ? Lex.String : VStr(*Lex.Name));
+      tmpName = (Lex.Token == TK_StringLiteral ? Lex.String : VStr(Lex.Name));
       Lex.NextToken();
       if (!wasString && Lex.Check(TK_Dot)) {
         if (Lex.Token != TK_Identifier) {
@@ -3099,7 +3099,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       Lex.NextToken();
       VStr txname;
       // name
-           if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { txname = VStr(*Lex.Name); Lex.NextToken(); }
+           if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { txname = VStr(Lex.Name); Lex.NextToken(); }
       else if (Lex.Token == TK_StringLiteral) { txname = Lex.String; Lex.NextToken(); }
       else ParseError(Lex.Location, "Texture name expected");
       txname = txname.toLowerCase();
@@ -3121,7 +3121,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         }
         if (VStr::ICmp(*Lex.Name, "image") == 0) {
           Lex.NextToken();
-               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { ti.texImage = VStr(*Lex.Name); Lex.NextToken(); }
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { ti.texImage = VStr(Lex.Name); Lex.NextToken(); }
           else if (Lex.Token == TK_StringLiteral) { ti.texImage = Lex.String; Lex.NextToken(); }
           else ParseError(Lex.Location, "String expected");
           Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -3187,7 +3187,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
           if (wasTexDir) ParseError(Lex.Location, "Duplicate option '%s'", *Lex.Name);
           wasTexDir = true;
           Lex.NextToken();
-               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(*Lex.Name); Lex.NextToken(); }
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(Lex.Name); Lex.NextToken(); }
           else if (Lex.Token == TK_StringLiteral) { texDir = Lex.String; Lex.NextToken(); }
           else ParseError(Lex.Location, "String expected");
           Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -3218,7 +3218,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       }
     } else {
       bool wasString = (Lex.Token == TK_StringLiteral);
-      tmpName = (Lex.Token == TK_StringLiteral ? Lex.String : VStr(*Lex.Name));
+      tmpName = (Lex.Token == TK_StringLiteral ? Lex.String : VStr(Lex.Name));
       Lex.NextToken();
       if (!wasString && Lex.Check(TK_Dot)) {
         if (Lex.Token != TK_Identifier) {

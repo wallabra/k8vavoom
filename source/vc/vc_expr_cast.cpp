@@ -710,7 +710,7 @@ VExpression *VCastToString::DoResolve (VEmitContext &ec) {
     case TYPE_Name:
       if (op->IsNameConst()) {
         // do it inplace
-        VStr ns = VStr(*op->GetNameConst());
+        VStr ns = VStr(op->GetNameConst());
         int val = ec.Package->FindString(*ns);
         VExpression *e = (new VStringLiteral(ns, val, Loc))->Resolve(ec);
         delete this;
@@ -913,7 +913,7 @@ void VDynamicCast::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDynamicCast::toString () const {
-  return (Class ? VStr(*Class->Name) : e2s(nullptr))+"("+e2s(op)+")";
+  return (Class ? VStr(Class->Name) : e2s(nullptr))+"("+e2s(op)+")";
 }
 
 
@@ -999,7 +999,7 @@ void VDynamicClassCast::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDynamicClassCast::toString () const {
-  return VStr(*ClassName)+"("+e2s(op)+")";
+  return VStr(ClassName)+"("+e2s(op)+")";
 }
 
 

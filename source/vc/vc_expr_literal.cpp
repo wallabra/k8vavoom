@@ -286,7 +286,7 @@ void VNameLiteral::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VNameLiteral::toString () const {
-  return VStr("'")+VStr(*Value)+"'";
+  return VStr("'")+VStr(Value)+"'";
 }
 
 

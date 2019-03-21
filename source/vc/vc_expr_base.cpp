@@ -684,7 +684,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // identifier?
       if (IsDecorateSingleName()) {
         VDecorateSingleName *e = (VDecorateSingleName *)this;
-        VExpression *enew = new VStringLiteral(VStr(*e->Name), ec.Package->FindString(*e->Name), Loc);
+        VExpression *enew = new VStringLiteral(VStr(e->Name), ec.Package->FindString(*e->Name), Loc);
         delete this;
         return enew;
       }
@@ -702,7 +702,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // identifier?
       if (IsDecorateSingleName()) {
         VDecorateSingleName *e = (VDecorateSingleName *)this;
-        VExpression *enew = new VStringLiteral(VStr(*e->Name), ec.Package->FindString(*e->Name), Loc);
+        VExpression *enew = new VStringLiteral(VStr(e->Name), ec.Package->FindString(*e->Name), Loc);
         delete this;
         return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
       }

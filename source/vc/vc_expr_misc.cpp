@@ -499,7 +499,7 @@ bool VSingleName::IsValidTypeExpression () const {
 //
 //==========================================================================
 VStr VSingleName::toString () const {
-  return VStr(*Name);
+  return VStr(Name);
 }
 
 
@@ -639,7 +639,7 @@ bool VDoubleName::IsDoubleName () const {
 //
 //==========================================================================
 VStr VDoubleName::toString () const {
-  return VStr(*Name1)+"::"+VStr(*Name2);
+  return VStr(Name1)+"::"+VStr(Name2);
 }
 
 
@@ -1167,7 +1167,7 @@ void VClassConstant::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VClassConstant::toString () const {
-  return VStr("(")+(Class ? VStr(*Class->Name) : e2s(nullptr))+")";
+  return VStr("(")+(Class ? VStr(Class->Name) : e2s(nullptr))+")";
 }
 
 
@@ -1235,7 +1235,7 @@ void VStateConstant::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VStateConstant::toString () const {
-  return VStr("`")+(State ? VStr(*State->Name) : e2s(nullptr))+"`";
+  return VStr("`")+(State ? VStr(State->Name) : e2s(nullptr))+"`";
 }
 
 

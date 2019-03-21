@@ -778,7 +778,7 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
-  if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
+  if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(Name));
   if (LumpNum < 0) {
     GCon->Logf(NAME_Warning, "VTextureManager::AddRawWithPal: \"%s\" not found", *Name);
     return -1;
@@ -2476,11 +2476,11 @@ void VTextureManager::FillNameAutocompletion (const VStr &prefix, TArray<VStr> &
   }
   for (int f = 1; f < Textures.length(); ++f) {
     if (Textures[f]->Name == NAME_None) continue;
-    if (VStr::startsWithNoCase(*Textures[f]->Name, *prefix)) list.append(VStr(*Textures[f]->Name));
+    if (VStr::startsWithNoCase(*Textures[f]->Name, *prefix)) list.append(VStr(Textures[f]->Name));
   }
   for (int f = 0; f < MapTextures.length(); ++f) {
     if (MapTextures[f]->Name == NAME_None) continue;
-    if (VStr::startsWithNoCase(*MapTextures[f]->Name, *prefix)) list.append(VStr(*MapTextures[f]->Name));
+    if (VStr::startsWithNoCase(*MapTextures[f]->Name, *prefix)) list.append(VStr(MapTextures[f]->Name));
   }
 }
 

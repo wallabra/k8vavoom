@@ -390,7 +390,7 @@ void VClass::GetSpriteNames (TArray<FReplacedString> &List) {
     FReplacedString &R = List.Alloc();
     R.Index = i;
     R.Replaced = false;
-    R.Old = VStr(*GSpriteNames[i]).ToUpper();
+    R.Old = VStr(GSpriteNames[i]).ToUpper();
   }
 }
 
@@ -2426,7 +2426,7 @@ bool VClass::SetReplacement (VClass *cls) {
 //==========================================================================
 /*
 void VClass::HashLowerCased () {
-  LowerCaseName = *VStr(*Name).ToLower();
+  LowerCaseName = *VStr(Name).ToLower();
   int HashIndex = GetTypeHash(LowerCaseName)&(LOWER_CASE_HASH_SIZE-1);
   LowerCaseHashNext = GLowerCaseHashTable[HashIndex];
   GLowerCaseHashTable[HashIndex] = this;

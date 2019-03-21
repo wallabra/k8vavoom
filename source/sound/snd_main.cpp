@@ -812,9 +812,9 @@ void VAudio::UpdateSfx () {
 //==========================================================================
 void VAudio::StartSong (VName song, bool loop) {
   if (loop) {
-    GCmdBuf << "Music Loop " << *VStr(*song).quote() << "\n";
+    GCmdBuf << "Music Loop " << *VStr(song).quote() << "\n";
   } else {
-    GCmdBuf << "Music Play " << *VStr(*song).quote() << "\n";
+    GCmdBuf << "Music Play " << *VStr(song).quote() << "\n";
   }
 }
 

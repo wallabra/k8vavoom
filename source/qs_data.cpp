@@ -98,7 +98,7 @@ VStr QSValue::toString () const {
       break;
     case QSType::QST_Name:
       res += "(name)";
-      res += VStr(*nval);
+      res += VStr(nval);
       break;
     case QSType::QST_Str:
       res += "(str)";

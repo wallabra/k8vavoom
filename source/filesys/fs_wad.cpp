@@ -143,7 +143,7 @@ void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream, co
     fi.pakdataofs = LittleLong(fileinfo->filepos);
     fi.filesize = LittleLong(fileinfo->size);
     fi.lumpNamespace = WADNS_Global;
-    fi.fileName = VStr(*fi.lumpName);
+    fi.fileName = VStr(fi.lumpName);
     pakdir.append(fi);
     /*
     lump_p->Name = VName(namebuf, VName::AddLower8);

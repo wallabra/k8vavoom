@@ -50,7 +50,7 @@ VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
 //
 //==========================================================================
 VConstant::VConstant (VName AEnumName, VName AName, VMemberBase *AOuter, const TLocation &ALoc)
-  : VMemberBase(MEMBER_Const, VName(*(VStr(*AEnumName)+" "+(*AName))), AOuter, ALoc)
+  : VMemberBase(MEMBER_Const, VName(*(VStr(AEnumName)+" "+VStr(AName))), AOuter, ALoc)
   , alreadyDefined(false)
   , Type(TYPE_Unknown)
   , bitconstant(false)

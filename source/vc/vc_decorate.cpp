@@ -1582,7 +1582,7 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
       auto fnloc = sc->GetLoc(); // for error messages
       sc->ExpectIdentifier();
       VName fldname = VName(*sc->String, VName::AddLower);
-      VStr uvname = VStr(*fldname);
+      VStr uvname = VStr(fldname);
       if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name '%s' in DECORATE must start with `user_`", *sc->String, *sc->GetLoc().toStringNoCol()));
       for (int f = 0; f < uvars.length(); ++f) {
         if (fldname == uvars[f].name) sc->Error(va("%s: duplicate DECORATE user variable `%s`", *sc->GetLoc().toStringNoCol(), *sc->String));
@@ -3222,7 +3222,7 @@ void ProcessDecorateScripts () {
           VName cn = newWSlots[wsidx].getSlotName(sidx, widx);
           VClass *wc = nullptr;
           if (cn != NAME_None) {
-            VStr lcn = VStr(*cn).toLowerCase();
+            VStr lcn = VStr(cn).toLowerCase();
             wc = VClass::FindClassLowerCase(*lcn);
             if (!wc) {
               GLog.Logf(NAME_Warning, "unknown weapon class '%s'", *cn);

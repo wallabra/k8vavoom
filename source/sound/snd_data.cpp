@@ -474,7 +474,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       sc->ExpectName();
       int lump = W_CheckNumForName(sc->Name, WADNS_Sounds);
       if (lump < 0) lump = W_CheckNumForName(sc->Name, WADNS_Global);
-      if (lump < 0) lump = W_CheckNumForFileName(VStr(*sc->Name));
+      if (lump < 0) lump = W_CheckNumForFileName(VStr(sc->Name));
       //GCon->Logf("SND: tag=<%s>; name=<%s>; lump=%d", *TagName, *sc->Name, lump);
       AddSound(TagName, lump);
     }

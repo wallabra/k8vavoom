@@ -202,7 +202,7 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
     VMethod *M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *Name));
     if (!M) M = ec.SelfClass->FindMethod/*NoCase*/(Name);
     if (!M) {
-      VStr loname = VStr(*Name).toLowerCase();
+      VStr loname = VStr(Name).toLowerCase();
       M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *loname));
       if (!M) M = ec.SelfClass->FindMethod(VName(*loname));
       if (!M && ec.SelfClass) {
@@ -424,7 +424,7 @@ void VDecorateUserVar::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDecorateUserVar::toString () const {
-  VStr res = VStr(*fldname);
+  VStr res = VStr(fldname);
   if (index) { res += "["; res += index->toString(); res += "]"; }
   return res;
 }
@@ -467,7 +467,7 @@ VDecorateSingleName::VDecorateSingleName () {
 //
 //==========================================================================
 VStr VDecorateSingleName::toString () const {
-  return VStr(*Name);
+  return VStr(Name);
 }
 
 

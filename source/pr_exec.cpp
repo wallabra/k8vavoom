@@ -2153,7 +2153,7 @@ func_loop:
           ++ip;
           VName n = VName((EName)sp[-1].i);
           sp[-1].p = nullptr;
-          *(VStr *)&sp[-1].p = VStr(*n);
+          *(VStr *)&sp[-1].p = VStr(n);
         }
         PR_VM_BREAK;
 

@@ -201,7 +201,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
         texid = GTextureManager.AddPatchShaded(pic, TEXTYPE_Pic, shadeclr, true);
         if (texid < 0 && VStr::length(*pic) > 8) {
           // try short version
-          VStr pn = VStr(*pic);
+          VStr pn = VStr(pic);
           VName pp = *pn.left(8);
           texid = GTextureManager.AddPatchShaded(pp, TEXTYPE_Pic, shadeclr, true);
         }
@@ -210,7 +210,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
         texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
         if (texid < 0 && VStr::length(*pic) > 8) {
           // try short version
-          VStr pn = VStr(*pic);
+          VStr pn = VStr(pic);
           VName pp = *pn.left(8);
           texid = GTextureManager.AddPatch(pp, TEXTYPE_Pic, true);
         }

@@ -1002,5 +1002,5 @@ COMMAND(__k8_run_first_map) {
     return;
   }
 
-  GCmdBuf.Insert(va("map \"%s\"\n", *VStr(*startMap).quote()));
+  GCmdBuf.Insert(va("map \"%s\"\n", *VStr(startMap).quote()));
 }

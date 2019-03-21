@@ -2474,7 +2474,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     // int SetActorFlag (int tid, str flagname, bool value);
     case ACSF_SetActorFlag:
       {
-        VStr name = VStr(*GetNameLowerCase(args[1]));
+        VStr name = VStr(GetNameLowerCase(args[1]));
         int count = 0;
         if (name.length()) {
           if (args[0] == 0) {

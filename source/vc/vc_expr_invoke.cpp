@@ -735,7 +735,7 @@ void VCastOrInvocation::SetMethodName (VName aname) {
 //
 //==========================================================================
 VStr VCastOrInvocation::toString () const {
-  return VStr(*Name)+args2str();
+  return VStr(Name)+args2str();
 }
 
 
@@ -1494,7 +1494,7 @@ void VDotInvocation::SetMethodName (VName aname) {
 //
 //==========================================================================
 VStr VDotInvocation::toString () const {
-  return e2s(SelfExpr)+"."+VStr(*MethodName)+args2str();
+  return e2s(SelfExpr)+"."+VStr(MethodName)+args2str();
 }
 
 
@@ -1716,7 +1716,7 @@ void VTypeInvocation::SetMethodName (VName aname) {
 //
 //==========================================================================
 VStr VTypeInvocation::toString () const {
-  return e2s(TypeExpr)+"."+VStr(*MethodName)+args2str();
+  return e2s(TypeExpr)+"."+VStr(MethodName)+args2str();
 }
 
 

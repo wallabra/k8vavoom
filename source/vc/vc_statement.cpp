@@ -1676,7 +1676,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
   int itlocidx = -1;
   {
     // create initializer expression
-    VStr newName = VStr(*ib->GetMethodName())+"_opIterInit";
+    VStr newName = VStr(ib->GetMethodName())+"_opIterInit";
     if (reversed) newName += "Reverse";
     VInvocationBase *einit = (VInvocationBase *)arr->SyntaxCopy();
     einit->SetMethodName(VName(*newName));
@@ -1733,7 +1733,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
 
   {
     // create next expression
-    VStr newName = VStr(*ib->GetMethodName())+"_opIterNext";
+    VStr newName = VStr(ib->GetMethodName())+"_opIterNext";
     VInvocationBase *enext = (VInvocationBase *)arr->SyntaxCopy();
     enext->SetMethodName(VName(*newName));
     VMethod *mnext = enext->GetVMethod(ec);
@@ -1775,7 +1775,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
 
   {
     // create done expression
-    VStr newName = VStr(*ib->GetMethodName())+"_opIterDone";
+    VStr newName = VStr(ib->GetMethodName())+"_opIterDone";
     VInvocationBase *edone = (VInvocationBase *)arr->SyntaxCopy();
     edone->SetMethodName(VName(*newName));
     VMethod *mdone = edone->GetVMethod(ec);

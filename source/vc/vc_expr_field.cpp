@@ -224,7 +224,7 @@ void VPointerField::Emit (VEmitContext &) {
 //
 //==========================================================================
 VStr VPointerField::toString () const {
-  return e2s(op)+"->"+VStr(*FieldName);
+  return e2s(op)+"->"+VStr(FieldName);
 }
 
 
@@ -844,7 +844,7 @@ void VDotField::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDotField::toString () const {
-  return e2s(op)+"."+VStr(*FieldName);
+  return e2s(op)+"."+VStr(FieldName);
 }
 
 
@@ -985,7 +985,7 @@ void VFieldAccess::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VFieldAccess::toString () const {
-  return e2s(op)+"->"+(field ? VStr(*field->Name) : e2s(nullptr));
+  return e2s(op)+"->"+(field ? VStr(field->Name) : e2s(nullptr));
 }
 
 
@@ -1089,5 +1089,5 @@ void VDelegateVal::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDelegateVal::toString () const {
-  return VStr("&(")+e2s(op)+"."+(M ? VStr(*M->Name) : e2s(nullptr))+")";
+  return VStr("&(")+e2s(op)+"."+(M ? VStr(M->Name) : e2s(nullptr))+")";
 }
