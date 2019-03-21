@@ -53,7 +53,6 @@ VNetObjectsMap::VNetObjectsMap (VNetConnection *AConnection) : Connection(AConne
 //
 //==========================================================================
 void VNetObjectsMap::SetUpClassLookup () {
-  guard(VNetObjectsMap::SetUpClassLookup);
   NameMap.SetNum(VName::GetNumNames());
   NameLookup.SetNum(VName::GetNumNames());
   for (int i = 0; i < VName::GetNumNames(); ++i) {
@@ -72,7 +71,6 @@ void VNetObjectsMap::SetUpClassLookup () {
       }
     }
   }
-  unguard;
 }
 
 
@@ -101,7 +99,6 @@ bool VNetObjectsMap::CanSerialiseObject (VObject *obj) {
 //
 //==========================================================================
 bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
-  guard(VNetObjectsMap::SerialiseName);
   if (Strm.IsLoading()) {
     vuint32 NameIndex;
     Strm.SerialiseInt(NameIndex/*, NameLookup.length()+1*/);
@@ -116,7 +113,6 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
     Strm.SerialiseInt(NameIndex/*, NameLookup.length()+1*/);
     return ((vint32)NameIndex != NameLookup.length());
   }
-  unguard;
 }
 
 
@@ -126,7 +122,6 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
 //
 //==========================================================================
 bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&obj) {
-  guard(VNetObjectsMap::SerialiseObject);
 #if 0
   if (Strm.IsLoading()) {
     obj = nullptr;
@@ -165,7 +160,6 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&obj) {
   obj = nullptr;
   return false;
 #endif
-  unguard;
 }
 
 
@@ -175,7 +169,6 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&obj) {
 //
 //==========================================================================
 bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
-  guard(VNetObjectsMap::SerialiseClass);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
     Strm.SerialiseInt(ClassId/*, ClassLookup.length()*/);
@@ -194,7 +187,6 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
     }
   }
   return true;
-  unguard;
 }
 
 
@@ -204,7 +196,6 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
 //
 //==========================================================================
 bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
-  guard(VNetObjectsMap::SerialiseState);
   if (Strm.IsLoading()) {
     vuint32 ClassId;
     Strm.SerialiseInt(ClassId/*, ClassLookup.length()*/);
@@ -228,5 +219,4 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
     }
   }
   return true;
-  unguard;
 }

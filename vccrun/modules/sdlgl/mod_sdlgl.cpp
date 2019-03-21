@@ -1253,7 +1253,7 @@ VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
 VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
   VStr sname;
   if (txname != NAME_None) {
-    sname = VStr(*txname);
+    sname = VStr(txname);
     if (sname.length() > 0) {
       VOpenGLTexture **loaded = txLoaded.find(sname);
       if (loaded) {

@@ -443,11 +443,9 @@ const char *VCvar::GetHelp (const char *var_name) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 int VCvar::GetVarFlags (const char *var_name) {
-  guard(VCvar::GetHelp);
   VCvar *var = FindVariable(var_name);
   if (!var) return -1;
   return var->getFlags();
-  unguard;
 }
 
 

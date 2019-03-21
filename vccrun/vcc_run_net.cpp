@@ -157,8 +157,6 @@ static void replicateObj (VObject *obj, vuint8 *oldData) {
   // clear temporary networking flags
   obj->ThinkerFlags &= ~VThinker::TF_NetInitial;
   obj->ThinkerFlags &= ~VThinker::TF_NetOwner;
-
-  unguard;
 }
 #endif
 
