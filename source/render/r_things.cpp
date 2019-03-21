@@ -607,6 +607,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
     if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    (*Ent)->NumRenderedShadows = 0; // for advanced renderer
 
     int RendStyle = mobj->RenderStyle;
     if (RendStyle == STYLE_None) continue;
@@ -627,7 +628,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     }
     if (RendStyle == STYLE_Fuzzy) Alpha = FUZZY_ALPHA;
 
-    if (Alpha <= 0.0002f) continue; // no reason to render it, it is invisible
+    if (Alpha < 0.01f) continue; // no reason to render it, it is invisible
 
     visibleObjects.append(mobj);
   }

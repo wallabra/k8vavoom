@@ -779,7 +779,7 @@ protected:
   void RenderMobjsAmbient ();
   void RenderThingTextures (VEntity*);
   void RenderMobjsTextures ();
-  bool IsTouchedByLight (VEntity*, bool);
+  bool IsTouchedByLight (VEntity*);
   void RenderThingLight (VEntity*);
   void RenderMobjsLight ();
   void RenderThingShadow (VEntity*);

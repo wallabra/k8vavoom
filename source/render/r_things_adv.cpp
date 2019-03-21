@@ -52,7 +52,7 @@ extern VCvarB r_drawfuzz;
 extern VCvarF r_transsouls;
 extern VCvarI crosshair;
 extern VCvarF crosshair_alpha;
-extern VCvarI r_max_model_lights;
+//extern VCvarI r_max_model_lights;
 extern VCvarI r_max_model_shadows;
 
 
@@ -111,6 +111,81 @@ static inline bool SetupRenderStyleAndTime (const VEntity *mobj, int &RendStyle,
 
   return true;
 }
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::IsTouchedByLight
+//
+//==========================================================================
+bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent) {
+  const TVec Delta = ent->Origin-CurrLightPos;
+  const float Dist = ent->Radius+CurrLightRadius;
+/*
+  if (Delta.x > Dist || Delta.y > Dist) return false;
+  if (Delta.z < -CurrLightRadius) return false;
+  if (Delta.z > CurrLightRadius+ent->Height) return false;
+  //Delta.z = 0;
+  if (Delta.Length2DSquared() > Dist*Dist) return false;
+*/
+  if (Delta.LengthSquared() >= Dist*Dist) return false;
+  return true;
+}
+
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::ResetMobjsLightCount
+//
+//==========================================================================
+void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
+  if (!r_draw_mobjs || !r_models) {
+    mobjAffected.reset();
+    return;
+  }
+  if (first) {
+    // first time, build new list
+    mobjAffected.reset();
+    // if we won't render thing shadows, don't bother trying invisible things
+    if (!r_model_shadows) {
+      // we already have a list of visible things built
+      VEntity **ent = visibleObjects.ptr();
+      for (int count = visibleObjects.length(); count--; ++ent) {
+        if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+        if (!(*ent)->State) continue;
+        if (!IsTouchedByLight(*ent)) continue;
+        mobjAffected.append(*ent);
+      }
+    } else {
+      // we need to render shadows, so process all things
+      //TODO: optimise this by build a unified visibility for all lights
+      for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
+        if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+        if (!ent->State) continue;
+        ent->NumRenderedShadows = 0;
+        if (!IsTouchedByLight(*ent)) continue;
+        mobjAffected.append(*ent);
+      }
+    }
+  } else {
+    // no need to do anything here, as the list will be reset for each new light
+    /*
+    int count = mobjAffected.length();
+    if (!count) return;
+    VEntity **entp = mobjAffected.ptr();
+    for (; count--; ++entp) {
+      VEntity *ent = *entp;
+      if (ent->NumRenderedShadows == 0) continue; // no need to do anything
+      if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+      if (!ent->State) continue;
+      if (!IsTouchedByLight(ent)) continue;
+      ent->NumRenderedShadows = 0;
+    }
+    */
+  }
+}
+
 
 
 //==========================================================================
@@ -191,26 +266,6 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
 }
 
 
-//==========================================================================
-//
-//  VAdvancedRenderLevel::IsTouchedByLight
-//
-//==========================================================================
-bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent, bool Count) {
-  const TVec Delta = ent->Origin-CurrLightPos;
-  const float Dist = ent->Radius+CurrLightRadius;
-/*
-  if (Delta.x > Dist || Delta.y > Dist) return false;
-  if (Delta.z < -CurrLightRadius) return false;
-  if (Delta.z > CurrLightRadius+ent->Height) return false;
-  //Delta.z = 0;
-  if (Delta.Length2DSquared() > Dist*Dist) return false;
-*/
-  if (Delta.LengthSquared() >= Dist*Dist) return false;
-  if (Count) ++ent->NumTouchingLights;
-  return true;
-}
-
 
 //==========================================================================
 //
@@ -230,54 +285,6 @@ void VAdvancedRenderLevel::RenderThingLight (VEntity *mobj) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::ResetMobjsLightCount
-//
-//==========================================================================
-void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
-  if (!r_draw_mobjs || !r_models) {
-    mobjAffected.reset();
-    return;
-  }
-  if (first) {
-    mobjAffected.reset();
-    // if we won't render thing shadows, don't bother trying invisible things
-    if (!r_model_shadows) {
-      // we already have a list of visible things built
-      VEntity **ent = visibleObjects.ptr();
-      for (int count = visibleObjects.length(); count--; ++ent) {
-        if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        if (!(*ent)->State) continue;
-        if (!IsTouchedByLight(*ent, false)) continue;
-        (*ent)->NumTouchingLights = 0;
-        mobjAffected.append(*ent);
-      }
-    } else {
-      for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
-        if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        if (!ent->State) continue;
-        if (!IsTouchedByLight(*ent, false)) continue;
-        ent->NumTouchingLights = 0;
-        mobjAffected.append(*ent);
-      }
-    }
-  } else {
-    int count = mobjAffected.length();
-    if (!count) return;
-    VEntity **entp = mobjAffected.ptr();
-    for (; count--; ++entp) {
-      VEntity *ent = *entp;
-      if (ent->NumTouchingLights == 0) continue; // no need to do anything
-      if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-      if (!ent->State) continue;
-      if (!IsTouchedByLight(ent, false)) continue;
-      ent->NumTouchingLights = 0;
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VAdvancedRenderLevel::RenderMobjsLight
 //
 //  can use `mobjAffected`
@@ -290,17 +297,17 @@ void VAdvancedRenderLevel::RenderMobjsLight () {
   VEntity **entp = mobjAffected.ptr();
   for (; count--; ++entp) {
     VEntity *ent = *entp;
-    if (ent->NumTouchingLights > r_max_model_lights) continue; // limit maximum lights for this Entity
     if (ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
     if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     if (!ent->State) continue;
     // skip things in subsectors that are not visible
     const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    if (!IsTouchedByLight(ent, true)) continue;
+    if (!IsTouchedByLight(ent)) continue;
     RenderThingLight(ent);
   }
 }
+
 
 
 //==========================================================================
@@ -314,6 +321,7 @@ void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
   bool Additive;
   if (!SetupRenderStyleAndTime(mobj, RendStyle, Alpha, Additive, TimeFrac)) return;
 
+  //GCon->Logf("THING SHADOW! (%s)", *mobj->GetClass()->GetFullName());
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_ShadowVolumes);
 }
 
@@ -333,16 +341,18 @@ void VAdvancedRenderLevel::RenderMobjsShadow () {
   VEntity **entp = mobjAffected.ptr();
   for (; count--; ++entp) {
     VEntity *ent = *entp;
-    if (ent->NumTouchingLights > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     if (!ent->State) continue;
     // skip things in subsectors that are not visible
     const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(LightVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-    if (!IsTouchedByLight(ent, true)) continue;
+    if (!IsTouchedByLight(ent)) continue;
     RenderThingShadow(ent);
+    ++ent->NumRenderedShadows;
   }
 }
+
 
 
 //==========================================================================

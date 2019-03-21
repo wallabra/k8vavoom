@@ -154,7 +154,7 @@ class VEntity : public VThinker {
   VName FixedSpriteName;
   VStr FixedModelName;
   vuint8 ModelVersion;
-  int NumTouchingLights;
+  int NumRenderedShadows;
 
   vuint8 RenderStyle;
   float Alpha;
@@ -196,7 +196,7 @@ class VEntity : public VThinker {
   sec_plane_t *Ceiling;
 
   // if == validcount, already checked
-  int ValidCount;
+  //int ValidCount;
 
   // flags
   enum {

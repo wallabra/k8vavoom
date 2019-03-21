@@ -84,8 +84,8 @@ extern VCvarB r_draw_pobj;
 // private data definitions
 // ////////////////////////////////////////////////////////////////////////// //
 
-VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
-VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
+//VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum lights that can affect one model when we aren't using model shadows.", CVAR_Archive);
+VCvarI r_max_model_shadows("r_max_model_shadows", "16", "Maximum number of shadows one model can cast.", CVAR_Archive);
 
 VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
 static VCvarI r_max_light_segs_all("r_max_light_segs_all", "-1", "Maximum light segments for all lights.", CVAR_Archive);
@@ -841,16 +841,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
                                                TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
 {
-  //if (Radius < 4.0f) return;
-  //CurrLightPos = Pos;
-  //CurrLightRadius = Radius;
   if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
-
-  /*
-  if (Radius < 300) return;
-  if (Pos.y < 1150) return;
-  //GCon->Logf("(%f,%f,%f) : %f", Pos.x, Pos.y, Pos.z, Radius);
-  */
 
   if (!CalcLightVis(Pos, Radius)) return;
 

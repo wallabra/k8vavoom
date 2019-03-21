@@ -215,7 +215,7 @@ ubyte SpriteType; // how to draw sprite
 name FixedSpriteName;
 string FixedModelName;
 ubyte ModelVersion;
-int NumTouchingLights;
+native int NumRenderedShadows;
 
 ubyte RenderStyle;
 float Alpha;
@@ -255,7 +255,7 @@ native sec_plane_t *Floor;
 native sec_plane_t *Ceiling;
 
 // if == validcount, already checked
-int ValidCount;
+//native int ValidCount;
 
 // flags
 bool bSolid; // blocks
@@ -336,10 +336,12 @@ name DecalName;
 replication {
   reliable if (Role == ROLE_Authority)
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
-    FixedSpriteName, ModelVersion, NumTouchingLights, RenderStyle, Alpha,
-    Translation, ScaleX, ScaleY, bFly, bNoSector, bInvisible, bFullBright,
+    FixedSpriteName, ModelVersion, RenderStyle, Alpha,
+    Translation, StencilColour, ScaleX, ScaleY,
+    bFly, bNoSector, bInvisible, bFullBright,
     bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
-    DispSpriteFrame, DispSpriteName;
+    DispSpriteFrame, DispSpriteName,
+    DecalName;
 
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;
