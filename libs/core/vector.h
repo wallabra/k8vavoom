@@ -126,6 +126,12 @@ public:
   inline __attribute__((warn_unused_result)) float Length2DSquared () const { return VSUM2(x*x, y*y); }
   inline __attribute__((warn_unused_result)) float length2DSquared () const { return VSUM2(x*x, y*y); }
 
+  inline __attribute__((warn_unused_result)) float DistanceTo (const TVec &v) const { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
+  inline __attribute__((warn_unused_result)) float DistanceTo2D (const TVec &v) const { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
+
+  inline __attribute__((warn_unused_result)) float distanceTo (const TVec &v) const { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
+  inline __attribute__((warn_unused_result)) float distanceTo2D (const TVec &v) const { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
+
   inline void normaliseInPlace () { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
   inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; }
 
@@ -155,6 +161,8 @@ public:
   // returns projection of this vector onto `v`
   inline __attribute__((warn_unused_result)) TVec projectTo (const TVec &v) const { return v.mul3(dot(v)/v.lengthSquared()); }
   inline __attribute__((warn_unused_result)) TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
+
+  inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const { return TVec(x-v.x, y-v.y, 0); }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
