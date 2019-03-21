@@ -39,9 +39,9 @@ static VName::VNameEntry *HashTableSpc[HASH_SIZE];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define REGISTER_NAME(name)   { nullptr, NAME_##name, #name },
+#define REGISTER_NAME(name)   { nullptr, NAME_##name, 0, 0, -0x0fffffff, #name },
 VName::VNameEntry VName::AutoNames[] = {
-  { nullptr, NAME_none, "" },
+  { nullptr, NAME_none, 0, 0, -0x0fffffff, "" },
 #include "names.h"
 };
 
@@ -70,10 +70,12 @@ int VName::AppendNameEntry (VNameEntry *e) {
 
 
 static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) {
-  size_t size = sizeof(VName::VNameEntry)-NAME_SIZE+int(VStr::Length(Name))+1;
-  VName::VNameEntry *e = (VName::VNameEntry *)Z_Malloc(size);
-  memset((void *)e, 0, size);
-  //VStr::Cpy(e->Name, Name);
+  const int slen = int(VStr::Length(Name));
+  size_t size = sizeof(VName::VNameEntry)-NAME_SIZE+slen+1;
+  VName::VNameEntry *e = (VName::VNameEntry *)Z_Calloc(size);
+  e->rc = -0x0fffffff; // "immutable" VStr flag
+  e->length = slen;
+  e->alloted = slen+1;
   if (Name && Name[0]) strcpy(e->Name, Name);
   e->HashNext = HashNext;
   return e;
@@ -190,17 +192,22 @@ void VName::StaticInit () {
     memset((void *)HashTableSpc, 0, sizeof(HashTableSpc));
     // register hardcoded names
     for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
+      // fixup name entry
+      VNameEntry &e = AutoNames[i];
+      check(e.rc == -0x0fffffff);
+      e.length = VStr::Length(e.Name);
+      e.alloted = e.length+1;
       AppendNameEntry(&AutoNames[i]);
       if (i) {
-        vuint32 HashIndex = GetTypeHash(AutoNames[i].Name)&(HASH_SIZE-1);
+        vuint32 HashIndex = GetTypeHash(e.Name)&(HASH_SIZE-1);
         VNameEntry **htbl = HashTable;
-        for (const vuint8 *ss = (const vuint8 *)AutoNames[i].Name; *ss; ++ss) if (*ss <= ' ') { htbl = HashTableSpc; break; }
-        AutoNames[i].HashNext = htbl[HashIndex];
+        for (const vuint8 *ss = (const vuint8 *)e.Name; *ss; ++ss) if (*ss <= ' ') { htbl = HashTableSpc; break; }
+        e.HashNext = htbl[HashIndex];
         htbl[HashIndex] = &AutoNames[i];
       } else {
-        AutoNames[i].Index = 0;
+        e.Index = 0;
       }
-      check(AutoNames[i].Index == i);
+      check(e.Index == i);
     }
     // we are now initialised
     Initialised = true;

@@ -42,9 +42,14 @@ enum { NAME_SIZE = 127 };
 class VName {
 public:
   // entry in the names table
+  // WARNING! this should be kept in sync with `VStr` storage!
   struct VNameEntry {
     VNameEntry *HashNext; // next name for this hash list
     vint32 Index; // index of the name
+    // `VStr` data follows (WARNING! it is invalid prior to calling `StaticInit()`)
+    int length;
+    int alloted;
+    int rc; // negative number means "immutable string" (and it is always negative here)
     char Name[NAME_SIZE]; // name value
   };
 
@@ -79,6 +84,8 @@ public:
   VName (ENoInit) {}
   VName (EName N) : Index(N) {}
   VName (const char *, ENameFindType=Add);
+
+  static inline bool IsInitialised () { return Initialised; }
 
   // accessors
   inline const char *operator * () const {
@@ -132,6 +139,8 @@ public:
 };
 
 static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for VaVoom C
+
+static_assert(__builtin_offsetof(VName::VNameEntry, rc)+sizeof(int) == __builtin_offsetof(VName::VNameEntry, Name), "VNameEntry layout failure");
 
 
 inline vuint32 GetTypeHash (const VName &N) { return hashU32((vuint32)(N.GetIndex())); }

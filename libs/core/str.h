@@ -38,7 +38,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // WARNING! this cannot be bigger than one pointer, or VM will break!
 class VStr {
-private:
+public:
   struct Store {
     int length;
     int alloted;
@@ -95,6 +95,8 @@ private:
   void resize (int newlen); // always makes string unique; also, always sets [length] to 0; clears string on `newlen == 0`
   void setContent (const char *s, int len=-1);
 
+  void setNameContent (const VName InName);
+
 public:
   // some utilities
   static bool convertInt (const char *s, int *outv);
@@ -116,7 +118,7 @@ public:
   VStr (const char *instr, int len=-1) : dataptr(nullptr) { setContent(instr, len); }
   VStr (const VStr &instr, int start, int len) : dataptr(nullptr) { assign(instr.mid(start, len)); }
 
-  explicit VStr (const VName &InName) : dataptr(nullptr) { setContent(*InName); }
+  explicit VStr (const VName InName) : dataptr(nullptr) { setNameContent(InName); }
 
   explicit VStr (char v) : dataptr(nullptr) { setContent(&v, 1); }
   explicit VStr (bool v) : dataptr(nullptr) { setContent(v ? "true" : "false"); }

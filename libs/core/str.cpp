@@ -696,6 +696,17 @@ void VStr::setContent (const char *s, int len) {
 }
 
 
+void VStr::setNameContent (const VName InName) {
+  clear();
+  if (!VName::IsInitialised()) {
+    setContent(*InName);
+  } else {
+    //GLog.Logf("NAME->STR: '%s'", *InName);
+    dataptr = (char *)(*InName);
+  }
+}
+
+
 bool VStr::StartsWith (const char *s) const {
   if (!s || !s[0]) return false;
   int l = length(s);
