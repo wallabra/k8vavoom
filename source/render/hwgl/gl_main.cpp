@@ -1322,7 +1322,7 @@ void VOpenGLDrawer::InitResolution () {
   GLSL_LOADLOC(ModelToWorldMat);
   GLSL_LOADATR(Vert2);
   GLSL_LOADATR(Offset);
-  GLSL_LOADLOC(ViewOrigin);
+  //GLSL_LOADLOC(ViewOrigin);
 #undef GLSL_LOADATR
 #undef GLSL_LOADLOC
 

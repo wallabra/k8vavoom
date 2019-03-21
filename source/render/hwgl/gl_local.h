@@ -898,7 +898,7 @@ protected:
   GLint ShadowsModelShadow_ModelToWorldMatLoc;
   GLint ShadowsModelShadow_Vert2Loc;
   GLint ShadowsModelShadow_OffsetLoc;
-  GLint ShadowsModelShadow_ViewOriginLoc;
+  //GLint ShadowsModelShadow_ViewOriginLoc;
 
   GLhandleARB ShadowsFog_Program;
   VGLShaderCommonLocs ShadowsFog_Locs; // only fog

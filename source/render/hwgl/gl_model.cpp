@@ -605,8 +605,10 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
 
   VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
-  //TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
-  TVec LocalLightPos = LightPos*InvRotationMatrix;
+  //VMatrix4 InvRotationMatrix = RotationMatrix;
+  //InvRotationMatrix.invert();
+  TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
+  //TVec LocalLightPos = LightPos*InvRotationMatrix;
 
   if (!gl_dbg_adv_render_shadow_models) return;
 
@@ -624,10 +626,16 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
   VMeshFrame *PlanesFrame = (Inter >= 0.5f ? NextFrameDesc : FrameDesc);
   TPlane *P = PlanesFrame->Planes;
+  int xcount = 0;
   for (int i = 0; i < Mdl->Tris.length(); ++i, ++P) {
     // planes facing to the light
     const float pdist = DotProduct(LocalLightPos, P->normal)-P->dist;
     PlaneSides[i] = (pdist > 0.0f && pdist < LightRadius);
+    xcount += PlaneSides[i];
+  }
+  if (xcount == 0) {
+    //GCon->Logf("WTF?! xcount=%d", xcount);
+    return;
   }
 
   p_glUniform1fARB(ShadowsModelShadow_InterLoc, Inter);
@@ -639,25 +647,31 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glVertexAttribPointerARB(ShadowsModelShadow_Vert2Loc, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(ShadowsModelShadow_Vert2Loc);
 
-  const float Shadow_Offset = M_INFINITY;
+  //const float Shadow_Offset = M_INFINITY;
 
   // caps
   if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_TRIANGLES);
-    p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0);
+    //p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
       }
     }
 
-    p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, Shadow_Offset);
+    //p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0.0f);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
+        p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
       }
     }
@@ -675,20 +689,20 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
       glBegin(GL_TRIANGLE_STRIP);
       if (PlaneSides[Mdl->Edges[i].Tri1]) {
-        outv(1, 0);
-        outv(1, Shadow_Offset);
-        outv(2, 0);
-        outv(2, Shadow_Offset);
+        outv(1, 1.0f);
+        outv(1, 0.0f);
+        outv(2, 1.0f);
+        outv(2, 0.0f);
       } else {
-        outv(2, 0);
-        outv(2, Shadow_Offset);
-        outv(1, 0);
-        outv(1, Shadow_Offset);
+        outv(2, 1.0f);
+        outv(2, 0.0f);
+        outv(1, 1.0f);
+        outv(1, 0.0f);
       }
       glEnd();
     }
   }
-  p_glUniform3fARB(ShadowsModelShadow_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
+  //p_glUniform3fARB(ShadowsModelShadow_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
 
   p_glDisableVertexAttribArrayARB(0);
   p_glDisableVertexAttribArrayARB(ShadowsModelShadow_Vert2Loc);
