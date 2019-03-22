@@ -1410,12 +1410,17 @@ static void AM_drawPlayers () {
 //==========================================================================
 static void AM_drawThings (vuint32 colour) {
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
-    float x = FTOM(MTOF(Ent->Origin.x));
-    float y = FTOM(MTOF(Ent->Origin.y));
-    float angle = Ent->Angles.yaw;
+    VEntity *mobj = *Ent;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
+    if (mobj->RenderStyle == STYLE_None) continue;
+
+    float x = FTOM(MTOF(mobj->Origin.x));
+    float y = FTOM(MTOF(mobj->Origin.y));
+    float angle = mobj->Angles.yaw;
 
     if (am_rotate) {
-      AM_rotatePoint (&x, &y);
+      AM_rotatePoint(&x, &y);
       angle += 90.0f-cl->ViewAngles.yaw;
     }
 
