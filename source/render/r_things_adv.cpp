@@ -57,6 +57,7 @@ extern VCvarI r_max_model_shadows;
 
 static VCvarB r_dbg_advthing_dump_actlist("r_dbg_advthing_dump_actlist", false, "Dump built list of active/affected things in advrender?", 0);
 static VCvarB r_dbg_advthing_dump_ambient("r_dbg_advthing_dump_ambient", false, "Dump rendered ambient things?", 0);
+static VCvarB r_dbg_advthing_dump_textures("r_dbg_advthing_dump_textures", false, "Dump rendered textured things?", 0);
 
 static VCvarB r_dbg_advthing_draw_ambient("r_dbg_advthing_draw_ambient", true, "Draw ambient light for things?", 0);
 static VCvarB r_dbg_advthing_draw_texture("r_dbg_advthing_draw_texture", true, "Draw textures for things?", 0);
@@ -276,10 +277,10 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_texture) return;
   VEntity **ent = visibleObjects.ptr();
-  GCon->Log("=== textures ===");
+  if (r_dbg_advthing_dump_textures) GCon->Log("=== textures ===");
   for (int count = visibleObjects.length(); count--; ++ent) {
     if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
+    if (r_dbg_advthing_dump_textures) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
     RenderThingTextures(*ent);
   }
 }
