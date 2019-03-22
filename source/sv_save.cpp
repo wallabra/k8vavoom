@@ -1386,6 +1386,13 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   }
   */
 
+  /*
+  for (int i = 0; i < elist.length(); ++i) {
+    VEntity *e = elist[i];
+    GCon->Logf("ENTITY <%s>: org=(%f,%f,%f); flags=0x%08x", *e->GetClass()->GetFullName(), e->Origin.x, e->Origin.y, e->Origin.z, e->EntityFlags);
+  }
+  */
+
   // remove unnecessary entities
   if (hasSomethingToRemove && !loader_ignore_kill_on_unarchive) {
     for (int i = 0; i < elist.length(); ++i) if (elist[i]->EntityFlags&VEntity::EF_KillOnUnarchive) elist[i]->DestroyThinker();

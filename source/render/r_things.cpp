@@ -42,6 +42,9 @@ extern VCvarB gl_pic_filtering;
 extern VCvarF fov;
 extern VCvarB r_chasecam;
 
+static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
+
+
 extern refdef_t refdef;
 
 
@@ -603,6 +606,7 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleObjects.reset();
 
+  if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
@@ -630,6 +634,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 
     if (Alpha < 0.01f) continue; // no reason to render it, it is invisible
 
+    if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
     visibleObjects.append(mobj);
   }
 

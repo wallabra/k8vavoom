@@ -1004,6 +1004,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     if (SubMdl.FullBright) Md2Light = 0xffffffff;
 
     //if (Pass != RPASS_NonShadow) return;
+    //if (Pass != RPASS_Ambient) return;
 
     switch (Pass) {
       case RPASS_Normal:

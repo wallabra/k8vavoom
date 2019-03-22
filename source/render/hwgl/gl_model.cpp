@@ -297,7 +297,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 
   if (!gl_dbg_adv_render_ambient_models) return;
 
-  GCon->Logf("  amb: origin=(%f,%f,%f); offset=(%f,%f,%f)", origin.x, origin.y, origin.z, Offset.x, Offset.y, Offset.z);
+  //GCon->Logf("  amb: origin=(%f,%f,%f); offset=(%f,%f,%f)", origin.x, origin.y, origin.z, Offset.x, Offset.y, Offset.z);
 
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
