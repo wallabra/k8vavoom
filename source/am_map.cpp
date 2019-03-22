@@ -1412,8 +1412,10 @@ static void AM_drawThings (vuint32 colour) {
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
-    if (mobj->RenderStyle == STYLE_None) continue;
+    if (am_cheating <= 2) {
+      if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
+      if (mobj->RenderStyle == STYLE_None) continue;
+    }
 
     float x = FTOM(MTOF(mobj->Origin.x));
     float y = FTOM(MTOF(mobj->Origin.y));
@@ -1759,7 +1761,7 @@ void AM_Drawer () {
   if (grid) AM_drawGrid(GridColour);
   AM_drawWalls();
   AM_drawPlayers();
-  if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
+  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
   if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColour);
   if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColour);
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
