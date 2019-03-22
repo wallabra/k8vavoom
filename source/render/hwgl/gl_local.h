@@ -468,63 +468,6 @@ public:
 
 #include "glz_shaddef.hi"
 
-  // many shaders require common variables
-  // instead of doing copypasta, we'll use the following classes
-  class VGLShaderCommonLocs {
-  public:
-    VOpenGLDrawer *owner;
-    const char *progname;
-    // compiled vertex program
-    GLhandleARB prog;
-    // texture variable locations
-    GLint locSAxis;
-    GLint locTAxis;
-    GLint locSOffs;
-    GLint locTOffs;
-    GLint locTexIW;
-    GLint locTexIH;
-    GLint locTexture;
-    // lightmap variable locations
-    GLint locTexMinS;
-    GLint locTexMinT;
-    GLint locCacheS;
-    GLint locCacheT;
-    GLint locLightMap;
-    // fog variable locations
-    GLint locFogEnabled;
-    //GLint locFogType;
-    GLint locFogColour;
-    //GLint locFogDensity;
-    GLint locFogStart;
-    GLint locFogEnd;
-
-  public:
-    VGLShaderCommonLocs () : owner(nullptr), prog(0) {}
-
-    // call this first!
-    void setupProg (VOpenGLDrawer *aowner, const char *aprogname, GLhandleARB aprog);
-
-    void setupTexture (); // setup texture variables
-    void setupLMap (); // setup lightmap variables
-    void setupLMapOnly (); // setup lightmap variables for shader without texture params (decals)
-    void setupFog (bool hasFogEnabled=true); // setup fog variables
-
-    void storeTexture (GLint tid);
-
-    // `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
-    void storeTextureParams (const texinfo_t *textr);
-
-    // `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
-    void storeTextureLMapParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache);
-
-    void storeLMap (GLint tid);
-    void storeLMapParams (const surface_t *surf, const surfcache_t *cache); // call `storeTextureParams()` first!
-    void storeLMapOnlyParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache);
-
-    //void storeFogType ();
-    void storeFogFade (vuint32 Fade, float Alpha);
-  };
-
 private:
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
 
@@ -533,7 +476,31 @@ protected:
 
   VShaderDef_DrawFixedCol DrawFixedCol;
   VShaderDef_DrawSimple DrawSimple;
+  VShaderDef_DrawShadow DrawShadow;
+  VShaderDef_DrawAutomap DrawAutomap;
+  VShaderDef_SurfZBuf SurfZBuf;
+  VShaderDef_SurfShadowVolume SurfShadowVolume;
+  VShaderDef_SurfAdvDecal SurfAdvDecal;
+  VShaderDef_SurfDecalNoLMap SurfDecalNoLMap;
+  VShaderDef_SurfDecalLMap SurfDecalLMap;
+  VShaderDef_SurfSimple SurfSimple;
+  VShaderDef_SurfLightmap SurfLightmap;
+  VShaderDef_SurfSky SurfSky;
+  VShaderDef_SurfDSky SurfDSky;
+  VShaderDef_SurfMasked SurfMasked;
+  VShaderDef_SurfPartSq SurfPartSq;
+  VShaderDef_SurfPartSm SurfPartSm;
+  VShaderDef_ShadowsAmbient ShadowsAmbient;
+  VShaderDef_ShadowsTexture ShadowsTexture;
+  VShaderDef_ShadowsFog ShadowsFog;
+  VShaderDef_ShadowsLight ShadowsLight;
+  VShaderDef_ShadowsLightDbg ShadowsLightDbg;
+  VShaderDef_SurfModel SurfModel;
   VShaderDef_ShadowsModelAmbient ShadowsModelAmbient;
+  VShaderDef_ShadowsModelTextures ShadowsModelTextures;
+  VShaderDef_ShadowsModelLight ShadowsModelLight;
+  VShaderDef_ShadowsModelShadow ShadowsModelShadow;
+  VShaderDef_ShadowsModelFog ShadowsModelFog;
 
   void registerShader (VGLShader *shader);
   void CompileShaders ();
@@ -675,8 +642,8 @@ private:
   inline bool CanUseRevZ () const { return useReverseZ; }
 
 public:
-  GLint glGetUniLoc (const char *prog, GLhandleARB pid, const char *name);
-  GLint glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name);
+  GLint glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional=false);
+  GLint glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name, bool optional=false);
 
 private:
   vuint8 *readBackTempBuf;
@@ -777,190 +744,6 @@ protected:
 
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
-
-  /*
-  GLhandleARB DrawSimple_Program;
-  GLint DrawSimple_TextureLoc;
-  GLint DrawSimple_AlphaLoc;
-  */
-
-  GLhandleARB DrawShadow_Program;
-  GLint DrawShadow_TextureLoc;
-  GLint DrawShadow_AlphaLoc;
-
-  /*
-  GLhandleARB DrawFixedCol_Program;
-  GLint DrawFixedCol_ColourLoc;
-  */
-
-  GLhandleARB DrawAutomap_Program;
-
-  GLhandleARB SurfZBuf_Program;
-
-  GLhandleARB SurfShadowVolume_Program;
-  GLhandleARB SurfShadowVolume_LightPosLoc;
-
-  GLhandleARB SurfAdvDecal_Program;
-  GLint SurfAdvDecal_TextureLoc;
-  GLint SurfAdvDecal_AmbLightTextureLoc;
-  GLint SurfAdvDecal_SplatAlphaLoc;
-  GLint SurfAdvDecal_FullBright;
-  GLint SurfAdvDecal_ScreenSize;
-
-  GLhandleARB SurfDecalNoLMap_Program;
-  GLint SurfDecalNoLMap_TextureLoc;
-  GLint SurfDecalNoLMap_SplatAlphaLoc;
-  GLint SurfDecalNoLMap_LightLoc;
-  VGLShaderCommonLocs SurfDecalNoLMap_Locs; // only fog
-
-  GLhandleARB SurfDecalLMap_Program;
-  GLint SurfDecalLMap_TextureLoc;
-  GLint SurfDecalLMap_SplatAlphaLoc;
-  //!GLint SurfDecalLMap_LightLoc;
-  VGLShaderCommonLocs SurfDecalLMap_Locs; // fog, texture and lightmap
-  GLint SurfDecalLMap_SpecularMapLoc;
-
-  GLhandleARB SurfSimple_Program;
-  VGLShaderCommonLocs SurfSimple_Locs; // fog, texture
-  GLint SurfSimple_LightLoc;
-
-  GLhandleARB SurfLightmap_Program;
-  VGLShaderCommonLocs SurfLightmap_Locs; // fog, texture, and lightmap
-  GLint SurfLightmap_SpecularMapLoc;
-
-  GLhandleARB SurfSky_Program;
-  GLint SurfSky_TextureLoc;
-  GLint SurfSky_BrightnessLoc;
-  GLint SurfSky_TexCoordLoc;
-
-  GLhandleARB SurfDSky_Program;
-  GLint SurfDSky_TextureLoc;
-  GLint SurfDSky_Texture2Loc;
-  GLint SurfDSky_BrightnessLoc;
-  GLint SurfDSky_TexCoordLoc;
-  GLint SurfDSky_TexCoord2Loc;
-
-  GLhandleARB SurfMasked_Program;
-  VGLShaderCommonLocs SurfMasked_Locs; // fog
-  GLint SurfMasked_TextureLoc;
-  GLint SurfMasked_LightLoc;
-  GLint SurfMasked_AlphaRefLoc;
-  GLint SurfMasked_TexCoordLoc;
-
-  GLhandleARB SurfModel_Program;
-  GLint SurfModel_InterLoc;
-  GLint SurfModel_TextureLoc;
-  VGLShaderCommonLocs SurfModel_Locs; // fog
-  GLint SurfModel_Vert2Loc;
-  GLint SurfModel_TexCoordLoc;
-  GLint SurfModel_InAlphaLoc;
-  GLint SurfModel_LightValLoc;
-  GLint SurfModel_ViewOriginLoc;
-  GLint SurfModel_AllowTransparencyLoc;
-
-  GLhandleARB SurfPartSq_Program;
-  GLint SurfPartSq_TexCoordLoc;
-  GLint SurfPartSq_LightValLoc;
-
-  GLhandleARB SurfPartSm_Program;
-  GLint SurfPartSm_TexCoordLoc;
-  GLint SurfPartSm_LightValLoc;
-
-  GLhandleARB ShadowsAmbient_Program;
-  VGLShaderCommonLocs ShadowsAmbient_Locs; // texture
-  GLint ShadowsAmbient_LightLoc;
-
-  GLhandleARB ShadowsLight_Program;
-  GLint ShadowsLight_LightPosLoc;
-  GLint ShadowsLight_LightRadiusLoc;
-  GLint ShadowsLight_LightColourLoc;
-  GLint ShadowsLight_SurfNormalLoc;
-  GLint ShadowsLight_SurfDistLoc;
-  VGLShaderCommonLocs ShadowsLight_Locs; // texture
-  GLint ShadowsLight_ViewOriginLoc;
-
-  GLhandleARB ShadowsLightDbg_Program;
-  GLint ShadowsLightDbg_LightPosLoc;
-  GLint ShadowsLightDbg_LightRadiusLoc;
-  GLint ShadowsLightDbg_LightColourLoc;
-  GLint ShadowsLightDbg_SurfNormalLoc;
-  GLint ShadowsLightDbg_SurfDistLoc;
-  VGLShaderCommonLocs ShadowsLightDbg_Locs; // texture
-  GLint ShadowsLightDbg_ViewOriginLoc;
-
-  GLhandleARB ShadowsTexture_Program;
-  VGLShaderCommonLocs ShadowsTexture_Locs; // texture
-
-  GLhandleARB ShadowsModelAmbient_Program;
-  GLint ShadowsModelAmbient_InterLoc;
-  GLint ShadowsModelAmbient_TextureLoc;
-  GLint ShadowsModelAmbient_LightLoc;
-  GLint ShadowsModelAmbient_ModelToWorldMatLoc;
-  GLint ShadowsModelAmbient_NormalToWorldMatLoc;
-  GLint ShadowsModelAmbient_Vert2Loc;
-  GLint ShadowsModelAmbient_VertNormalLoc;
-  GLint ShadowsModelAmbient_Vert2NormalLoc;
-  GLint ShadowsModelAmbient_TexCoordLoc;
-  GLint ShadowsModelAmbient_InAlphaLoc;
-  GLint ShadowsModelAmbient_ViewOriginLoc;
-  GLint ShadowsModelAmbient_AllowTransparencyLoc;
-
-  GLhandleARB ShadowsModelTextures_Program;
-  GLint ShadowsModelTextures_InterLoc;
-  GLint ShadowsModelTextures_TextureLoc;
-  GLint ShadowsModelTextures_InAlphaLoc;
-  GLint ShadowsModelTextures_ModelToWorldMatLoc;
-  //!GLint ShadowsModelTextures_NormalToWorldMatLoc;
-  GLint ShadowsModelTextures_Vert2Loc;
-  //!GLint ShadowsModelTextures_VertNormalLoc;
-  //!GLint ShadowsModelTextures_Vert2NormalLoc;
-  GLint ShadowsModelTextures_TexCoordLoc;
-  GLint ShadowsModelTextures_ViewOriginLoc;
-  //!GLint ShadowsModelTextures_AllowTransparencyLoc;
-  GLint ShadowsModelTextures_AmbLightTextureLoc;
-  GLint ShadowsModelTextures_ScreenSizeLoc;
-
-  GLhandleARB ShadowsModelLight_Program;
-  GLint ShadowsModelLight_InterLoc;
-  GLint ShadowsModelLight_TextureLoc;
-  GLint ShadowsModelLight_LightPosLoc;
-  GLint ShadowsModelLight_LightRadiusLoc;
-  GLint ShadowsModelLight_LightColourLoc;
-  GLint ShadowsModelLight_ModelToWorldMatLoc;
-  GLint ShadowsModelLight_NormalToWorldMatLoc;
-  GLint ShadowsModelLight_Vert2Loc;
-  GLint ShadowsModelLight_VertNormalLoc;
-  GLint ShadowsModelLight_Vert2NormalLoc;
-  GLint ShadowsModelLight_TexCoordLoc;
-  GLint ShadowsModelLight_ViewOriginLoc;
-  GLint ShadowsModelLight_AllowTransparencyLoc;
-  GLint ShadowsModelLight_AlphaLoc;
-
-  GLhandleARB ShadowsModelShadow_Program;
-  GLint ShadowsModelShadow_InterLoc;
-  GLint ShadowsModelShadow_LightPosLoc;
-  GLint ShadowsModelShadow_ModelToWorldMatLoc;
-  GLint ShadowsModelShadow_Vert2Loc;
-  GLint ShadowsModelShadow_OffsetLoc;
-  //GLint ShadowsModelShadow_ViewOriginLoc;
-
-  GLhandleARB ShadowsFog_Program;
-  VGLShaderCommonLocs ShadowsFog_Locs; // only fog
-
-  GLhandleARB ShadowsModelFog_Program;
-  GLint ShadowsModelFog_InterLoc;
-  GLint ShadowsModelFog_ModelToWorldMatLoc;
-  GLint ShadowsModelFog_TextureLoc;
-  //GLint ShadowsModelFog_FogTypeLoc;
-  GLint ShadowsModelFog_FogColourLoc;
-  //GLint ShadowsModelFog_FogDensityLoc;
-  GLint ShadowsModelFog_FogStartLoc;
-  GLint ShadowsModelFog_FogEndLoc;
-  GLint ShadowsModelFog_Vert2Loc;
-  GLint ShadowsModelFog_TexCoordLoc;
-  GLint ShadowsModelFog_InAlphaLoc;
-  GLint ShadowsModelFog_ViewOriginLoc;
-  GLint ShadowsModelFog_AllowTransparencyLoc;
 
   // console variables
   static VCvarI texture_filter;

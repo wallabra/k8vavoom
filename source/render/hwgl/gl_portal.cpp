@@ -44,7 +44,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       if (RendLev->NeedsInfiniteFarClip) return false;
 
       // disable drawing
-      p_glUseProgramObjectARB(SurfZBuf_Program);
+      SurfZBuf.Activate();
       glDisable(GL_TEXTURE_2D);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
       glDepthMask(GL_FALSE); // no z-buffer writes
@@ -118,7 +118,7 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
 //
 //==========================================================================
 void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
-  p_glUseProgramObjectARB(SurfZBuf_Program);
+  SurfZBuf.Activate();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glDisable(GL_TEXTURE_2D);
 
@@ -135,7 +135,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
         DrawPortalArea(Portal);
 
         glEnable(GL_STENCIL_TEST);
-        p_glUseProgramObjectARB(SurfZBuf_Program);
+        SurfZBuf.Activate();
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glDepthMask(GL_TRUE); // allow z-buffer writes
       }

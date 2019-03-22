@@ -94,17 +94,17 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SetTexture(Texture2, CMap);
     SelectTexture(0);
 
-    p_glUseProgramObjectARB(SurfDSky_Program);
-    p_glUniform1iARB(SurfDSky_TextureLoc, 0);
-    p_glUniform1iARB(SurfDSky_Texture2Loc, 1);
-    p_glUniform1fARB(SurfDSky_BrightnessLoc, r_sky_bright_factor);
+    SurfDSky.Activate();
+    SurfDSky.SetTexture(0);
+    SurfDSky.SetTexture2(1);
+    SurfDSky.SetBrightness(r_sky_bright_factor);
 
     glBegin(GL_POLYGON);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      p_glVertexAttrib2fARB(SurfDSky_TexCoordLoc,
+      SurfDSky.SetTexCoord(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
-      p_glVertexAttrib2fARB(SurfDSky_TexCoord2Loc,
+      SurfDSky.SetTexCoord2(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs2)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       glVertex(surf->verts[i]);
@@ -113,13 +113,13 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
   } else {
     SetTexture(Texture1, CMap);
 
-    p_glUseProgramObjectARB(SurfSky_Program);
-    p_glUniform1iARB(SurfSky_TextureLoc, 0);
-    p_glUniform1fARB(SurfSky_BrightnessLoc, r_sky_bright_factor);
+    SurfSky.Activate();
+    SurfSky.SetTexture(0);
+    SurfSky.SetBrightness(r_sky_bright_factor);
 
     glBegin(GL_POLYGON);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      p_glVertexAttrib2fARB(SurfSky_TexCoordLoc,
+      SurfSky.SetTexCoord(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       glVertex(surf->verts[i]);
@@ -204,14 +204,14 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   texinfo_t *Tex = surf->texinfo;
   SetTexture(Tex->Tex, Tex->ColourMap);
 
-  p_glUseProgramObjectARB(SurfSimple_Program);
-  SurfSimple_Locs.storeTexture(0);
+  SurfSimple.Activate();
+  SurfSimple.SetTexture(0);
   //SurfSimple_Locs.storeFogType();
-  SurfSimple_Locs.storeTextureParams(Tex);
+  SurfSimple.SetTex(Tex);
 
   const float lev = getSurfLightLevel(surf);
-  p_glUniform4fARB(SurfSimple_LightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-  SurfSimple_Locs.storeFogFade(surf->Fade, 1.0f);
+  SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+  SurfSimple.SetFogFade(surf->Fade, 1.0f);
 
   // draw it
   GLint oldDepthMask;
@@ -224,7 +224,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   glDepthMask(oldDepthMask);
 
   // write to the depth buffer
-  p_glUseProgramObjectARB(SurfZBuf_Program);
+  SurfZBuf.Activate();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glBegin(GL_POLYGON);
   for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
@@ -253,12 +253,11 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     return false;
   }
 
-  SurfSimple_Locs.storeTextureParams(textr);
+  SurfSimple.SetTex(textr);
 
   const float lev = getSurfLightLevel(surf);
-  p_glUniform4fARB(SurfSimple_LightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-
-  SurfSimple_Locs.storeFogFade(surf->Fade, 1.0f);
+  SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+  SurfSimple.SetFogFade(surf->Fade, 1.0f);
 
   bool doDecals = textr->Tex && !textr->noDecals && surf->dcseg && surf->dcseg->decals;
 
@@ -279,7 +278,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      p_glUseProgramObjectARB(SurfSimple_Program);
+      SurfSimple.Activate();
       return true;
     }
   }
@@ -308,8 +307,9 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     return false;
   }
 
-  SurfLightmap_Locs.storeTextureLMapParams(tex, surf, cache);
-  SurfLightmap_Locs.storeFogFade(surf->Fade, 1.0f);
+  SurfLightmap.SetTex(tex);
+  SurfLightmap.SetLMap(surf, cache);
+  SurfLightmap.SetFogFade(surf->Fade, 1.0f);
 
   bool doDecals = (tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals);
 
@@ -330,7 +330,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     if (RenderFinishShaderDecals(DT_LIGHTMAP, surf, cache, tex->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      p_glUseProgramObjectARB(SurfLightmap_Program);
+      SurfLightmap.Activate();
       return true;
     }
   }
@@ -359,7 +359,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // for sky areas we just write to the depth buffer to prevent drawing polygons behind the sky
   {
-    p_glUseProgramObjectARB(SurfZBuf_Program);
+    SurfZBuf.Activate();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
@@ -381,9 +381,8 @@ void VOpenGLDrawer::WorldDrawing () {
     // sort by texture, to minimise texture switches
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
 
-    p_glUseProgramObjectARB(SurfSimple_Program);
-
-    SurfSimple_Locs.storeTexture(0);
+    SurfSimple.Activate();
+    SurfSimple.SetTexture(0);
     //SurfSimple_Locs.storeFogType();
 
     const texinfo_t *lastTexinfo = nullptr;
@@ -405,11 +404,11 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // draw surfaces with lightmaps
   {
-    p_glUseProgramObjectARB(SurfLightmap_Program);
-    SurfLightmap_Locs.storeTexture(0);
-    SurfLightmap_Locs.storeLMap(1);
+    SurfLightmap.Activate();
+    SurfLightmap.SetTexture(0);
+    SurfLightmap.SetLightMap(1);
+    SurfLightmap.SetSpecularMap(2);
     //SurfLightmap_Locs.storeFogType();
-    p_glUniform1iARB(SurfLightmap_SpecularMapLoc, 2);
 
     const texinfo_t *lastTexinfo = nullptr;
     for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {

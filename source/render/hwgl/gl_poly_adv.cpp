@@ -72,7 +72,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // set z-buffer for skies
   if (RendLev->DrawSkyList.length()) {
-    p_glUseProgramObjectARB(SurfZBuf_Program);
+    SurfZBuf.Activate();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
@@ -91,8 +91,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (RendLev->DrawSurfList.length()) {
-    p_glUseProgramObjectARB(ShadowsAmbient_Program);
-    ShadowsAmbient_Locs.storeTexture(0);
+    ShadowsAmbient.Activate();
+    ShadowsAmbient.SetTexture(0);
 
     // other passes can skip surface sorting
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
@@ -122,13 +122,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
       if (textureChanded) {
         SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
-        ShadowsAmbient_Locs.storeTextureParams(currTexinfo);
+        ShadowsAmbient.SetTex(currTexinfo);
       }
 
       const float lev = getSurfLightLevel(surf);
       if (lev != prevsflight) {
         prevsflight = lev;
-        p_glUniform4fARB(ShadowsAmbient_LightLoc,
+        ShadowsAmbient.SetLight(
           ((surf->Light>>16)&255)*lev/255.0f,
           ((surf->Light>>8)&255)*lev/255.0f,
           (surf->Light&255)*lev/255.0f, 1.0f);
@@ -262,8 +262,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
-  p_glUseProgramObjectARB(SurfShadowVolume_Program);
-  p_glUniform3fvARB(SurfShadowVolume_LightPosLoc, 1, &LightPos.x);
+  SurfShadowVolume.Activate();
+  SurfShadowVolume.SetLightPos(LightPos);
 }
 
 
@@ -605,20 +605,20 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
   glDepthFunc(GL_EQUAL);
 
   if (!gl_dbg_advlight_debug) {
-    p_glUseProgramObjectARB(ShadowsLight_Program);
-    p_glUniform3fvARB(ShadowsLight_LightPosLoc, 1, &LightPos.x);
-    p_glUniform1fARB(ShadowsLight_LightRadiusLoc, Radius);
-    p_glUniform3fARB(ShadowsLight_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-    p_glUniform3fARB(ShadowsLight_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-    ShadowsLight_Locs.storeTexture(0);
+    ShadowsLight.Activate();
+    ShadowsLight.SetLightPos(LightPos);
+    ShadowsLight.SetLightRadius(Radius);
+    ShadowsLight.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    ShadowsLight.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
+    ShadowsLight.SetTexture(0);
   } else {
-    p_glUseProgramObjectARB(ShadowsLightDbg_Program);
-    p_glUniform3fvARB(ShadowsLightDbg_LightPosLoc, 1, &LightPos.x);
-    p_glUniform1fARB(ShadowsLightDbg_LightRadiusLoc, Radius);
+    ShadowsLightDbg.Activate();
+    ShadowsLightDbg.SetLightPos(LightPos);
+    ShadowsLightDbg.SetLightRadius(Radius);
     Colour = gl_dbg_advlight_color;
-    p_glUniform3fARB(ShadowsLightDbg_LightColourLoc, ((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-    p_glUniform3fARB(ShadowsLightDbg_ViewOriginLoc, vieworg.x, vieworg.y, vieworg.z);
-    ShadowsLightDbg_Locs.storeTexture(0);
+    ShadowsLightDbg.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    ShadowsLightDbg.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
+    ShadowsLightDbg.SetTexture(0);
   }
 }
 
@@ -650,13 +650,13 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   SetTexture(tex->Tex, tex->ColourMap);
 
   if (!gl_dbg_advlight_debug) {
-    ShadowsLight_Locs.storeTextureParams(tex);
-    p_glVertexAttrib3fvARB(ShadowsLight_SurfNormalLoc, &surf->plane->normal.x);
-    p_glVertexAttrib1fvARB(ShadowsLight_SurfDistLoc, &surf->plane->dist);
+    ShadowsLight.SetTex(tex);
+    ShadowsLight.SetSurfNormal(surf->plane->normal);
+    ShadowsLight.SetSurfDist(surf->plane->dist);
   } else {
-    ShadowsLightDbg_Locs.storeTextureParams(tex);
-    p_glVertexAttrib3fvARB(ShadowsLightDbg_SurfNormalLoc, &surf->plane->normal.x);
-    p_glVertexAttrib1fvARB(ShadowsLightDbg_SurfDistLoc, &surf->plane->dist);
+    ShadowsLightDbg.SetTex(tex);
+    ShadowsLightDbg.SetSurfNormal(surf->plane->normal);
+    ShadowsLightDbg.SetSurfDist(surf->plane->dist);
   }
 
   glBegin(GL_POLYGON);
@@ -738,9 +738,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   if (!gl_dbg_adv_render_textures_surface || RendLev->DrawSurfList.length() == 0) return;
 
-  p_glUseProgramObjectARB(ShadowsTexture_Program);
-  //p_glUniform1iARB(ShadowsTexture_TextureLoc, 0);
-  ShadowsTexture_Locs.storeTexture(0);
+  ShadowsTexture.Activate();
+  ShadowsTexture.SetTexture(0);
 
   // no need to sort surfaces there, it is already done in ambient pass
   const texinfo_t *lastTexinfo = nullptr;
@@ -768,7 +767,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
     if (textureChanded) {
       SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
-      ShadowsTexture_Locs.storeTextureParams(currTexinfo);
+      ShadowsTexture.SetTex(currTexinfo);
     }
 
     bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->dcseg && surf->dcseg->decals);
@@ -789,7 +788,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
     if (doDecals) {
       if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColourMap)) {
-        p_glUseProgramObjectARB(ShadowsTexture_Program);
+        ShadowsTexture.Activate();
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         //glEnable(GL_BLEND);
         lastTexinfo = nullptr; // resetup texture
@@ -810,13 +809,13 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   glDepthMask(GL_FALSE); // no z-buffer writes
 
   // draw surfaces
-  p_glUseProgramObjectARB(ShadowsFog_Program);
-  //ShadowsFog_Locs.storeFogType();
+  ShadowsFog.Activate();
+  //ShadowsFog.SetFogType();
 
   if (RendLev->DrawSurfList.length() == 0) return;
 
   vuint32 lastFade = RendLev->DrawSurfList[0]->Fade;
-  ShadowsFog_Locs.storeFogFade(lastFade, 1.0f);
+  ShadowsFog.SetFogFade(lastFade, 1.0f);
 
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
@@ -836,7 +835,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 
     if (surf->Fade != lastFade) {
       lastFade = surf->Fade;
-      ShadowsFog_Locs.storeFogFade(lastFade, 1.0f);
+      ShadowsFog.SetFogFade(lastFade, 1.0f);
     }
 
     glBegin(GL_POLYGON);

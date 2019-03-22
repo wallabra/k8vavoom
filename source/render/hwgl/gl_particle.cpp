@@ -35,7 +35,7 @@
 //==========================================================================
 void VOpenGLDrawer::StartParticles () {
   glEnable(GL_BLEND);
-  p_glUseProgramObjectARB(gl_smooth_particles ? SurfPartSm_Program : SurfPartSq_Program);
+  if (gl_smooth_particles) SurfPartSm.Activate(); else SurfPartSq.Activate();
   glBegin(GL_QUADS);
 }
 
@@ -46,18 +46,46 @@ void VOpenGLDrawer::StartParticles () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawParticle (particle_t *p) {
-  GLint lvLoc, tcLoc;
-  if (gl_smooth_particles) {
-    lvLoc = SurfPartSm_LightValLoc;
-    tcLoc = SurfPartSm_TexCoordLoc;
-  } else {
-    lvLoc = SurfPartSq_LightValLoc;
-    tcLoc = SurfPartSq_TexCoordLoc;
-  }
   const float r = ((p->colour>>16)&255)/255.0f;
   const float g = ((p->colour>>8)&255)/255.0f;
   const float b = (p->colour&255)/255.0f;
   const float a = ((p->colour>>24)&255)/255.0f;
+
+  //GLint lvLoc, tcLoc;
+  if (gl_smooth_particles) {
+    SurfPartSm.SetLightVal(r, g, b, a);
+    SurfPartSm.SetTexCoord(-1, -1);
+    glVertex(p->org-viewright*p->Size+viewup*p->Size);
+
+    SurfPartSm.SetLightVal(r, g, b, a);
+    SurfPartSm.SetTexCoord(1, -1);
+    glVertex(p->org+viewright*p->Size+viewup*p->Size);
+
+    SurfPartSm.SetLightVal(r, g, b, a);
+    SurfPartSm.SetTexCoord(1, 1);
+    glVertex(p->org+viewright*p->Size-viewup*p->Size);
+
+    SurfPartSm.SetLightVal(r, g, b, a);
+    SurfPartSm.SetTexCoord(-1, 1);
+    glVertex(p->org-viewright*p->Size-viewup*p->Size);
+  } else {
+    SurfPartSq.SetLightVal(r, g, b, a);
+    SurfPartSq.SetTexCoord(-1, -1);
+    glVertex(p->org-viewright*p->Size+viewup*p->Size);
+
+    SurfPartSq.SetLightVal(r, g, b, a);
+    SurfPartSq.SetTexCoord(1, -1);
+    glVertex(p->org+viewright*p->Size+viewup*p->Size);
+
+    SurfPartSq.SetLightVal(r, g, b, a);
+    SurfPartSq.SetTexCoord(1, 1);
+    glVertex(p->org+viewright*p->Size-viewup*p->Size);
+
+    SurfPartSq.SetLightVal(r, g, b, a);
+    SurfPartSq.SetTexCoord(-1, 1);
+    glVertex(p->org-viewright*p->Size-viewup*p->Size);
+  }
+  /*
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, -1, -1);
   glVertex(p->org-viewright*p->Size+viewup*p->Size);
@@ -70,6 +98,7 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
   p_glVertexAttrib4fARB(lvLoc, r, g, b, a);
   p_glVertexAttrib2fARB(tcLoc, -1, 1);
   glVertex(p->org-viewright*p->Size-viewup*p->Size);
+  */
 }
 
 

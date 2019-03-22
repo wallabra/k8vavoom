@@ -3,13 +3,13 @@ $include "common/common.inc"
 
 uniform sampler2D Texture;
 uniform bool AllowTransparency;
+uniform float InAlpha;
 $include "common/fog_vars.fs"
 
 varying vec3 VertToView;
 varying vec3 VPos;
 varying vec2 TextureCoordinate;
 varying float Dist;
-uniform float InAlpha;
 
 
 void main () {

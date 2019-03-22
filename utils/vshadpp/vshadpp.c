@@ -326,6 +326,11 @@ const char *getShitppType (const Parser *par, const char *glslType) {
   if (strcmp(glslType, "mat3") == 0) return "float *";
   // samplers
   if (strcmp(glslType, "sampler2D") == 0) return "vuint32";
+  // other
+  if (strcmp(glslType, "TextureSTSet") == 0) return "TextureSTSet";
+  if (strcmp(glslType, "LightmapSTSet") == 0) return "LightmapSTSet";
+  if (strcmp(glslType, "PureLightmapSTSet") == 0) return "PureLightmapSTSet";
+  if (strcmp(glslType, "FogSet") == 0) return "FogSet";
   // oops
   static char errmsg[1024];
   snprintf(errmsg, sizeof(errmsg), "unknown type `%s`", glslType);
@@ -360,6 +365,7 @@ LocInfo *newLoc (const char *aname) {
   LocInfo *loc = xalloc(sizeof(LocInfo));
   loc->name = xalloc(strlen(aname)+1);
   strcpy(loc->name, aname);
+  if (strcmp(aname, "_") == 0) loc->name[0] = 0;
   // append to list
   LocInfo *last = loclist;
   if (last) {
@@ -397,7 +403,45 @@ void genHeader (FILE *fo) {
   fprintf(fo, "  public:\n");
 
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    fprintf(fo, "    GLint loc_%s; // %s %s -> %s\n", loc->name, (loc->isAttr ? "attribute" : "uniform"), loc->glslType, loc->shitppType);
+    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+      fprintf(fo, "    // texture\n");
+      fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sSOffs;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTOffs;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTexIW;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTexIH;\n", loc->name);
+    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+      fprintf(fo, "    // texture\n");
+      fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sSOffs;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTOffs;\n", loc->name);
+    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+      fprintf(fo, "    // lightmap\n");
+      fprintf(fo, "    GLint loc_%sTexMinS;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTexMinT;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sCacheS;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sCacheT;\n", loc->name);
+    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+      fprintf(fo, "    // pure lightmap (without texture)\n");
+      fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sSOffs;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTOffs;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTexMinS;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sTexMinT;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sCacheS;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sCacheT;\n", loc->name);
+    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+      fprintf(fo, "    // fog variable locations\n");
+      fprintf(fo, "    GLint loc_%sFogEnabled; // may be missing\n", loc->name);
+      fprintf(fo, "    GLint loc_%sFogColour;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sFogStart;\n", loc->name);
+      fprintf(fo, "    GLint loc_%sFogEnd;\n", loc->name);
+    } else {
+      fprintf(fo, "    GLint loc_%s; // %s %s -> %s\n", loc->name, (loc->isAttr ? "attribute" : "uniform"), loc->glslType, loc->shitppType);
+    }
   }
 
   fprintf(fo, "\n");
@@ -467,8 +511,95 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniformMatrix3fvARB(loc_%s, 1, GL_FALSE, v);", loc->name);
         fprintf(fo, " }\n");
+      } else if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+        fprintf(fo, "    inline void Set%sTex (const texinfo_t *textr) {\n", loc->name);
+        fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTexIW >= 0) owner->p_glUniform1fARB(loc_%sTexIW, owner->tex_iw);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTAxis >= 0) owner->p_glUniform3fvARB(loc_%sTAxis, 1, &textr->taxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTOffs >= 0) owner->p_glUniform1fARB(loc_%sTOffs, textr->toffs);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTexIH >= 0) owner->p_glUniform1fARB(loc_%sTexIH, owner->tex_ih);\n", loc->name, loc->name);
+        fprintf(fo, "    }\n");
+      } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+        fprintf(fo, "    inline void Set%sTexNoSize (const texinfo_t *textr) {\n", loc->name);
+        fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTAxis >= 0) owner->p_glUniform3fvARB(loc_%sTAxis, 1, &textr->taxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTOffs >= 0) owner->p_glUniform1fARB(loc_%sTOffs, textr->toffs);\n", loc->name, loc->name);
+        fprintf(fo, "    }\n");
+      } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+        fprintf(fo, "    inline void Set%sLMap (const surface_t *surf, const surfcache_t *cache) {\n", loc->name);
+        fprintf(fo, "      if (loc_%sTexMinS >= 0) owner->p_glUniform1fARB(loc_%sTexMinS, surf->texturemins[0]);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTexMinT >= 0) owner->p_glUniform1fARB(loc_%sTexMinT, surf->texturemins[1]);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sCacheS >= 0) owner->p_glUniform1fARB(loc_%sCacheS, cache->s);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sCacheT >= 0) owner->p_glUniform1fARB(loc_%sCacheT, cache->t);\n", loc->name, loc->name);
+        fprintf(fo, "    }\n");
+      } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+        fprintf(fo, "    inline void Set%sLMapOnly (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {\n", loc->name);
+        fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTAxis >= 0) owner->p_glUniform3fvARB(loc_%sTAxis, 1, &textr->taxis.x);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTOffs >= 0) owner->p_glUniform1fARB(loc_%sTOffs, textr->toffs);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTexMinS >= 0) owner->p_glUniform1fARB(loc_%sTexMinS, surf->texturemins[0]);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sTexMinT >= 0) owner->p_glUniform1fARB(loc_%sTexMinT, surf->texturemins[1]);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sCacheS >= 0) owner->p_glUniform1fARB(loc_%sCacheS, cache->s);\n", loc->name, loc->name);
+        fprintf(fo, "      if (loc_%sCacheT >= 0) owner->p_glUniform1fARB(loc_%sCacheT, cache->t);\n", loc->name, loc->name);
+        fprintf(fo, "    }\n");
+      } else if (strcmp(loc->glslType, "FogSet") == 0) {
+        fprintf(fo, "    inline void Set%sFogFade (vuint32 Fade, float Alpha) {\n", loc->name);
+        fprintf(fo, "      if (Fade) {\n");
+        fprintf(fo, "        if (loc_%sFogEnabled >= 0) owner->p_glUniform1iARB(loc_%sFogEnabled, GL_TRUE);\n", loc->name, loc->name);
+        fprintf(fo, "        owner->p_glUniform4fARB(loc_%sFogColour,\n", loc->name);
+        fprintf(fo, "          ((Fade>>16)&255)/255.0f,\n");
+        fprintf(fo, "          ((Fade>>8)&255)/255.0f,\n");
+        fprintf(fo, "          (Fade&255)/255.0f, Alpha);\n");
+        fprintf(fo, "        //owner->p_glUniform1fARB(loc_%sFogDensity, Fade == FADE_LIGHT ? 0.3f : r_fog_density);\n", loc->name);
+        fprintf(fo, "        owner->p_glUniform1fARB(loc_%sFogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);\n", loc->name);
+        fprintf(fo, "        owner->p_glUniform1fARB(loc_%sFogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);\n", loc->name);
+        fprintf(fo, "      } else {\n");
+        fprintf(fo, "        if (loc_%sFogEnabled >= 0) owner->p_glUniform1iARB(loc_%sFogEnabled, GL_FALSE);\n", loc->name, loc->name);
+        fprintf(fo, "      }\n");
+        fprintf(fo, "    }\n");
       } else {
         fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
+        abort();
+      }
+    } else {
+      // attrs
+      if (strcmp(loc->glslType, "float") == 0) {
+        fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib1fARB(loc_%s, v);", loc->name);
+        fprintf(fo, " }\n");
+      } else if (strcmp(loc->glslType, "vec2") == 0) {
+        fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib2fvARB(loc_%s, v);", loc->name);
+        fprintf(fo, " }\n");
+        fprintf(fo, "    inline void Set%s (const float x, const float y) { ", loc->name);
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib2fARB(loc_%s, x, y);", loc->name);
+        fprintf(fo, " }\n");
+      } else if (strcmp(loc->glslType, "vec4") == 0) {
+        fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib4fvARB(loc_%s, v);", loc->name);
+        fprintf(fo, " }\n");
+        fprintf(fo, "    inline void Set%s (const float x, const float y, const float z, const float w) { ", loc->name);
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib4fARB(loc_%s, x, y, z, w);", loc->name);
+        fprintf(fo, " }\n");
+      } else if (strcmp(loc->glslType, "vec3") == 0) {
+        fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib3fvARB(loc_%s, &v.x);", loc->name);
+        fprintf(fo, " }\n");
+        fprintf(fo, "    inline void Set%s (const float x, const float y, const float z) { ", loc->name);
+        fprintf(fo, "if (loc_%s >= 0) ", loc->name);
+        fprintf(fo, "owner->p_glVertexAttrib3fARB(loc_%s, x, y, z);", loc->name);
+        fprintf(fo, " }\n");
+      } else {
+        fprintf(stderr, "FATAL: cannot emit attribute setter for GLSL type '%s'\n", loc->glslType);
         abort();
       }
     }
@@ -484,7 +615,40 @@ void genCode (FILE *fo) {
   fprintf(fo, "VOpenGLDrawer::VShaderDef_%s::VShaderDef_%s ()\n", shadname, shadname);
   fprintf(fo, "  : VGLShader()\n");
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    fprintf(fo, "  , loc_%s(-1)\n", loc->name);
+    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+      fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTOffs(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTexIW(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTexIH(-1)\n", loc->name);
+    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+      fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTOffs(-1)\n", loc->name);
+    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+      fprintf(fo, "  , loc_%sTexMinS(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTexMinT(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sCacheS(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sCacheT(-1)\n", loc->name);
+    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+      fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTOffs(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTexMinS(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sTexMinT(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sCacheS(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sCacheT(-1)\n", loc->name);
+    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+      fprintf(fo, "  , loc_%sFogEnabled(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sFogColour(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sFogStart(-1)\n", loc->name);
+      fprintf(fo, "  , loc_%sFogEnd(-1)\n", loc->name);
+    } else {
+      fprintf(fo, "  , loc_%s(-1)\n", loc->name);
+    }
   }
   fprintf(fo, "{}\n");
   fprintf(fo, "\n");
@@ -497,7 +661,40 @@ void genCode (FILE *fo) {
   // generate uniform loader
   fprintf(fo, "void VOpenGLDrawer::VShaderDef_%s::LoadUniforms () {\n", shadname);
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    fprintf(fo, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+      fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTOffs = owner->glGet%sLoc(progname, prog, \"%sTOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTexIW = owner->glGet%sLoc(progname, prog, \"%sTexIW\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTexIH = owner->glGet%sLoc(progname, prog, \"%sTexIH\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+      fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTOffs = owner->glGet%sLoc(progname, prog, \"%sTOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+      fprintf(fo, "  loc_%sTexMinS = owner->glGet%sLoc(progname, prog, \"%sTexMinS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTexMinT = owner->glGet%sLoc(progname, prog, \"%sTexMinT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sCacheS = owner->glGet%sLoc(progname, prog, \"%sCacheS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sCacheT = owner->glGet%sLoc(progname, prog, \"%sCacheT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+      fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTOffs = owner->glGet%sLoc(progname, prog, \"%sTOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTexMinS = owner->glGet%sLoc(progname, prog, \"%sTexMinS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sTexMinT = owner->glGet%sLoc(progname, prog, \"%sTexMinT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sCacheS = owner->glGet%sLoc(progname, prog, \"%sCacheS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sCacheT = owner->glGet%sLoc(progname, prog, \"%sCacheT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+      fprintf(fo, "  loc_%sFogEnabled = owner->glGet%sLoc(progname, prog, \"%sFogEnabled\", true);\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sFogColour = owner->glGet%sLoc(progname, prog, \"%sFogColour\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sFogStart = owner->glGet%sLoc(progname, prog, \"%sFogStart\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+      fprintf(fo, "  loc_%sFogEnd = owner->glGet%sLoc(progname, prog, \"%sFogEnd\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    } else {
+      fprintf(fo, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
+    }
   }
   fprintf(fo, "}\n");
 }

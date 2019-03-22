@@ -74,23 +74,23 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   // setup shader
   switch (dtype) {
     case DT_SIMPLE:
-      p_glUseProgramObjectARB(SurfDecalNoLMap_Program);
-      p_glUniform1iARB(SurfDecalNoLMap_TextureLoc, 0);
+      SurfDecalNoLMap.Activate();
+      SurfDecalNoLMap.SetTexture(0);
       //SurfDecalNoLMap_Locs.storeFogType();
-      SurfDecalNoLMap_Locs.storeFogFade(surf->Fade, 1.0f);
+      SurfDecalNoLMap.SetFogFade(surf->Fade, 1.0f);
       break;
     case DT_LIGHTMAP:
-      p_glUseProgramObjectARB(SurfDecalLMap_Program);
-      p_glUniform1iARB(SurfDecalLMap_TextureLoc, 0);
+      SurfDecalLMap.Activate();
+      SurfDecalLMap.SetTexture(0);
       //SurfDecalLMap_Locs.storeFogType();
-      SurfDecalLMap_Locs.storeFogFade(surf->Fade, 1.0f);
-      SurfDecalLMap_Locs.storeLMap(1);
-      p_glUniform1iARB(SurfDecalLMap_SpecularMapLoc, 2);
-      SurfDecalLMap_Locs.storeLMapOnlyParams(tex, surf, cache);
+      SurfDecalLMap.SetFogFade(surf->Fade, 1.0f);
+      SurfDecalLMap.SetLightMap(1);
+      SurfDecalLMap.SetSpecularMap(2);
+      SurfDecalLMap.SetLMapOnly(tex, surf, cache);
       break;
     case DT_ADVANCED:
-      p_glUseProgramObjectARB(SurfAdvDecal_Program);
-      p_glUniform1iARB(SurfAdvDecal_TextureLoc, 0);
+      SurfAdvDecal.Activate();
+      SurfAdvDecal.SetTexture(0);
       break;
     default:
       abort();
@@ -184,29 +184,29 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       case DT_SIMPLE:
         {
           const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
-          p_glUniform4fARB(SurfDecalNoLMap_LightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-          p_glUniform1fARB(SurfDecalNoLMap_SplatAlphaLoc, dc->alpha);
+          SurfDecalNoLMap.SetLight(((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
+          SurfDecalNoLMap.SetSplatAlpha(dc->alpha);
         }
         break;
       case DT_LIGHTMAP:
         {
           //!const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
           //!p_glUniform4fARB(SurfDecalLMap_LightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-          p_glUniform1fARB(SurfDecalLMap_SplatAlphaLoc, dc->alpha);
+          SurfDecalLMap.SetSplatAlpha(dc->alpha);
         }
         break;
       case DT_ADVANCED:
         {
-          p_glUniform1fARB(SurfAdvDecal_SplatAlphaLoc, dc->alpha);
+          SurfAdvDecal.SetSplatAlpha(dc->alpha);
           if (!tex1set) {
             tex1set = true;
             p_glActiveTextureARB(GL_TEXTURE0+1);
             glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
             p_glActiveTextureARB(GL_TEXTURE0);
           }
-          p_glUniform1fARB(SurfAdvDecal_FullBright, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
-          p_glUniform1iARB(SurfAdvDecal_AmbLightTextureLoc, 1);
-          p_glUniform2fARB(SurfAdvDecal_ScreenSize, (float)ScreenWidth, (float)ScreenHeight);
+          SurfAdvDecal.SetFullBright(dc->flags&decal_t::Fullbright ? 1.0f : 0.0f);
+          SurfAdvDecal.SetAmbLightTexture(1);
+          SurfAdvDecal.SetScreenSize((float)ScreenWidth, (float)ScreenHeight);
         }
         break;
     }

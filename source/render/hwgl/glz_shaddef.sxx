@@ -6,6 +6,7 @@ Shader DrawFixedCol both="draw_fixed_col"
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Shader DrawSimple both="draw_simple" {
   uniform sampler2D Texture;
   uniform float Alpha;
@@ -13,8 +14,278 @@ Shader DrawSimple both="draw_simple" {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelAmbient both="shadows_model_ambient"
-{
+Shader DrawShadow vertex="draw_simple" fragment="draw_shadow" {
+  uniform sampler2D Texture;
+  uniform float Alpha;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader DrawAutomap both="draw_automap" {
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfZBuf both="surf_zbuf" {
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfShadowVolume vertex="surf_svol" fragment="surf_zbuf" {
+  uniform vec3 LightPos;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfDecalNoLMap both="surf_decal_nolmap" {
+  uniform sampler2D Texture;
+  uniform vec4 Light;
+  uniform float SplatAlpha; // image alpha will be multiplied by this
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfDecalLMap both="surf_decal_lmap" {
+  uniform sampler2D Texture;
+  uniform sampler2D LightMap;
+  uniform sampler2D SpecularMap;
+  uniform vec4 Light;
+  uniform float SplatAlpha; // image alpha will be multiplied by this
+  uniform FogSet _;
+  //uniform TextureSTSetNoSize _;
+  //uniform LightmapSTSet _;
+  uniform PureLightmapSTSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfAdvDecal both="surf_decal_adv" {
+  uniform sampler2D Texture;
+  uniform sampler2D AmbLightTexture;
+  uniform float SplatAlpha; // image alpha will be multiplied by this
+  uniform float FullBright;
+  uniform vec2 ScreenSize;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfSimple both="surf_simple" {
+  uniform sampler2D Texture;
+  uniform vec4 Light;
+  uniform TextureSTSet _;
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfLightmap both="surf_lightmap" {
+  uniform sampler2D Texture;
+  uniform sampler2D LightMap;
+  uniform sampler2D SpecularMap;
+  uniform TextureSTSet _;
+  uniform LightmapSTSet _;
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfSky both="surf_sky" {
+  attribute vec2 TexCoord;
+  uniform sampler2D Texture;
+  uniform float Brightness;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfDSky both="surf_dsky" {
+  attribute vec2 TexCoord;
+  attribute vec2 TexCoord2;
+  uniform sampler2D Texture;
+  uniform sampler2D Texture2;
+  uniform float Brightness;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfMasked both="surf_masked" {
+  attribute vec2 TexCoord;
+  uniform sampler2D Texture;
+  uniform vec4 Light;
+  uniform float AlphaRef;
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfPartSq vertex="particle" fragment="particle_sq" {
+  attribute vec4 LightVal;
+  attribute vec2 TexCoord;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfPartSm vertex="particle" fragment="particle_sm" {
+  attribute vec4 LightVal;
+  attribute vec2 TexCoord;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsAmbient both="shadows_surf_ambient" {
+  uniform sampler2D Texture;
+  uniform vec4 Light;
+  uniform TextureSTSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsTexture both="shadows_surf_texture" {
+  uniform sampler2D Texture;
+  uniform TextureSTSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsFog both="shadows_surf_fog" {
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsLight both="shadows_surf_light" {
+  uniform sampler2D Texture;
+  uniform vec3 LightColour;
+  uniform float LightRadius;
+  uniform vec3 ViewOrigin;
+  uniform vec3 LightPos;
+  uniform TextureSTSet _;
+  attribute vec3 SurfNormal;
+  attribute float SurfDist;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsLightDbg both="shadows_surf_light" {
+  uniform sampler2D Texture;
+  uniform vec3 LightColour;
+  uniform float LightRadius;
+  uniform vec3 ViewOrigin;
+  uniform vec3 LightPos;
+  uniform TextureSTSet _;
+  attribute vec3 SurfNormal;
+  attribute float SurfDist;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader SurfModel both="surf_model" {
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+  attribute vec4 Vert2;
+  attribute vec4 LightVal;
+  attribute vec2 TexCoord;
+  uniform sampler2D Texture;
+  uniform float InAlpha;
+  uniform bool AllowTransparency;
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelAmbient both="shadows_model_ambient" {
+  uniform mat4 ModelToWorldMat;
+  uniform mat3 NormalToWorldMat;
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+
+  attribute vec4 Vert2;
+  attribute vec3 VertNormal;
+  attribute vec3 Vert2Normal;
+  attribute vec2 TexCoord;
+
+  uniform vec4 Light;
+  uniform sampler2D Texture;
+  uniform float InAlpha;
+  uniform bool AllowTransparency;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelTextures both="shadows_model_textures" {
+  uniform mat4 ModelToWorldMat;
+  //!uniform mat3 NormalToWorldMat;
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+
+  attribute vec4 Vert2;
+  attribute vec3 VertNormal;
+  attribute vec3 Vert2Normal;
+  attribute vec2 TexCoord;
+
+  uniform sampler2D Texture;
+  uniform sampler2D AmbLightTexture;
+  uniform float InAlpha;
+  uniform bool AllowTransparency;
+  uniform vec2 ScreenSize;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelLight both="shadows_model_light" {
+  uniform mat4 ModelToWorldMat;
+  uniform mat3 NormalToWorldMat;
+  uniform vec3 LightPos;
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+
+  attribute vec4 Vert2;
+  attribute vec3 VertNormal;
+  attribute vec3 Vert2Normal;
+  attribute vec2 TexCoord;
+
+  uniform sampler2D Texture;
+  uniform vec3 LightColour;
+  uniform float LightRadius;
+  uniform float InAlpha;
+  uniform bool AllowTransparency;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelShadow both="shadows_model_shadow" {
+  uniform float Inter;
+  uniform vec3 LightPos;
+  uniform mat4 ModelToWorldMat;
+
+  attribute vec4 Vert2;
+  attribute float Offset; //0 means "offset to infinity"
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelFog both="shadows_model_fog" {
+  uniform mat4 ModelToWorldMat;
+  uniform mat3 NormalToWorldMat;
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+
+  attribute vec4 Vert2;
+  attribute vec3 VertNormal;
+  attribute vec3 Vert2Normal;
+  attribute vec2 TexCoord;
+
+  uniform sampler2D Texture;
+  uniform bool AllowTransparency;
+  uniform float InAlpha;
+  uniform FogSet _;
+}
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+/+
+Shader ShadowsModelAmbient both="shadows_model_ambient" {
   /* directly copied from shader code */
   uniform mat4 ModelToWorldMat;
   uniform mat3 NormalToWorldMat;
@@ -31,3 +302,4 @@ Shader ShadowsModelAmbient both="shadows_model_ambient"
   uniform float InAlpha;
   uniform bool AllowTransparency;
 }
++/

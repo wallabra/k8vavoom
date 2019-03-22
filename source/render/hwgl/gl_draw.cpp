@@ -66,9 +66,9 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex, float shade)
 {
   SetPic(Tex, nullptr, CM_Default);
-  p_glUseProgramObjectARB(DrawShadow_Program);
-  p_glUniform1iARB(DrawShadow_TextureLoc, 0); //k8: was DrawSimple
-  p_glUniform1fARB(DrawShadow_AlphaLoc, shade); //k8: was DrawSimple
+  DrawShadow.Activate();
+  DrawShadow.SetTexture(0);
+  DrawShadow.SetAlpha(shade);
   glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
@@ -232,7 +232,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
 //
 //==========================================================================
 void VOpenGLDrawer::StartAutomap () {
-  p_glUseProgramObjectARB(DrawAutomap_Program);
+  DrawAutomap.Activate();
   glEnable(GL_LINE_SMOOTH);
   glEnable(GL_BLEND);
   glBegin(GL_LINES);

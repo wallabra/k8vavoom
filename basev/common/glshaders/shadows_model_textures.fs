@@ -5,13 +5,13 @@ uniform sampler2D Texture;
 uniform sampler2D AmbLightTexture;
 uniform float InAlpha;
 uniform bool AllowTransparency;
+uniform vec2 ScreenSize;
 
 varying vec2 TextureCoordinate;
 varying vec3 VertToView;
 varying vec3 VPos;
 //!varying float PlaneDist;
 //!varying float Dist;
-uniform vec2 ScreenSize;
 
 
 void main () {

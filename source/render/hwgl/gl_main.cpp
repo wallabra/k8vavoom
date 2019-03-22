@@ -105,6 +105,7 @@ VCvarI gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for deb
 //  MSA
 //
 //==========================================================================
+/*
 static __attribute__((sentinel)) TArray<VStr> MSA (const char *first, ...) {
   TArray<VStr> res;
   res.append(VStr(first));
@@ -117,6 +118,7 @@ static __attribute__((sentinel)) TArray<VStr> MSA (const char *first, ...) {
   }
   return res;
 }
+*/
 
 
 //==========================================================================
@@ -151,13 +153,17 @@ static __attribute__((unused)) bool CheckVendorString (VStr vs, const char *fuck
 //  VOpenGLDrawer::glGetUniLoc
 //
 //==========================================================================
-GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char *name) {
+GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
   check(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
   (void)glGetError(); // reset error flag
   GLint res = p_glGetUniformLocationARB(pid, name);
   //if (glGetError() != 0 || res == -1) Sys_Error("shader program '%s' has no uniform '%s'", prog, name);
-  if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no uniform '%s'", prog, name);
+  if (optional) {
+    if (glGetError() != 0 || res == -1) res = -1;
+  } else {
+    if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no uniform '%s'", prog, name);
+  }
   return res;
 }
 
@@ -167,235 +173,18 @@ GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char 
 //  VOpenGLDrawer::glGetAttrLoc
 //
 //==========================================================================
-GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name) {
+GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
   check(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
   (void)glGetError(); // reset error flag
   GLint res = p_glGetAttribLocationARB(pid, name);
   //if (glGetError() != 0 || res == -1) Sys_Error("shader program '%s' has no attribute '%s'", prog, name);
-  if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no attribute '%s'", prog, name);
+  if (optional) {
+    if (glGetError() != 0 || res == -1) res = -1;
+  } else {
+    if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no attribute '%s'", prog, name);
+  }
   return res;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::setupProg
-//
-//  call this first!
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::setupProg (VOpenGLDrawer *aowner, const char *aprogname, GLhandleARB aprog) {
-  //check(!owner);
-  //check(!prog);
-  check(aowner);
-  check(aprog);
-  owner = aowner;
-  prog = aprog;
-  progname = aprogname;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::setupNormal
-//
-//  setup texture variables
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::setupTexture () {
-  check(prog);
-  locSAxis = owner->glGetUniLoc(progname, prog, "SAxis");
-  locTAxis = owner->glGetUniLoc(progname, prog, "TAxis");
-  locSOffs = owner->glGetUniLoc(progname, prog, "SOffs");
-  locTOffs = owner->glGetUniLoc(progname, prog, "TOffs");
-  locTexIW = owner->glGetUniLoc(progname, prog, "TexIW");
-  locTexIH = owner->glGetUniLoc(progname, prog, "TexIH");
-  locTexture = owner->glGetUniLoc(progname, prog, "Texture");
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::setupLMapOnly
-//
-//  setup lightmap variables for shader without texture params (decals)
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::setupLMapOnly () {
-  locSAxis = owner->glGetUniLoc(progname, prog, "SAxis");
-  locTAxis = owner->glGetUniLoc(progname, prog, "TAxis");
-  locSOffs = owner->glGetUniLoc(progname, prog, "SOffs");
-  locTOffs = owner->glGetUniLoc(progname, prog, "TOffs");
-  locTexMinS = owner->glGetUniLoc(progname, prog, "TexMinS");
-  locTexMinT = owner->glGetUniLoc(progname, prog, "TexMinT");
-  locCacheS = owner->glGetUniLoc(progname, prog, "CacheS");
-  locCacheT = owner->glGetUniLoc(progname, prog, "CacheT");
-  locLightMap = owner->glGetUniLoc(progname, prog, "LightMap");
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::setupLMap
-//
-//  setup lightmap variables
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::setupLMap () {
-  check(prog);
-  locTexMinS = owner->glGetUniLoc(progname, prog, "TexMinS");
-  locTexMinT = owner->glGetUniLoc(progname, prog, "TexMinT");
-  locCacheS = owner->glGetUniLoc(progname, prog, "CacheS");
-  locCacheT = owner->glGetUniLoc(progname, prog, "CacheT");
-  locLightMap = owner->glGetUniLoc(progname, prog, "LightMap");
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::setupFog
-//
-//  setup fog variables
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::setupFog (bool hasFogEnabled) {
-  check(prog);
-  if (hasFogEnabled) {
-    locFogEnabled = owner->glGetUniLoc(progname, prog, "FogEnabled");
-  } else {
-    locFogEnabled = -1;
-  }
-  //locFogType = owner->glGetUniLoc(progname, prog, "FogType");
-  locFogColour = owner->glGetUniLoc(progname, prog, "FogColour");
-  //locFogDensity = owner->glGetUniLoc(progname, prog, "FogDensity");
-  locFogStart = owner->glGetUniLoc(progname, prog, "FogStart");
-  locFogEnd = owner->glGetUniLoc(progname, prog, "FogEnd");
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeTexture
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeTexture (GLint tid) {
-  check(prog);
-  owner->p_glUniform1iARB(locTexture, tid);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeTextureParams
-//
-//  `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeTextureParams (const texinfo_t *textr) {
-  check(prog);
-  check(textr);
-  owner->p_glUniform3fvARB(locSAxis, 1, &textr->saxis.x);
-  owner->p_glUniform1fARB(locSOffs, textr->soffs);
-  owner->p_glUniform1fARB(locTexIW, owner->tex_iw);
-  owner->p_glUniform3fvARB(locTAxis, 1, &textr->taxis.x);
-  owner->p_glUniform1fARB(locTOffs, textr->toffs);
-  owner->p_glUniform1fARB(locTexIH, owner->tex_ih);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeLMap
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeLMap (GLint tid) {
-  check(prog);
-  owner->p_glUniform1iARB(locLightMap, tid);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeLMapParams
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeLMapParams (const surface_t *surf, const surfcache_t *cache) {
-  check(prog);
-  check(surf);
-  check(cache);
-  owner->p_glUniform1fARB(locTexMinS, surf->texturemins[0]);
-  owner->p_glUniform1fARB(locTexMinT, surf->texturemins[1]);
-  owner->p_glUniform1fARB(locCacheS, cache->s);
-  owner->p_glUniform1fARB(locCacheT, cache->t);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeLMapOnlyParams
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeLMapOnlyParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {
-  check(prog);
-  check(surf);
-  check(cache);
-  owner->p_glUniform3fvARB(locSAxis, 1, &textr->saxis.x);
-  owner->p_glUniform1fARB(locSOffs, textr->soffs);
-  owner->p_glUniform3fvARB(locTAxis, 1, &textr->taxis.x);
-  owner->p_glUniform1fARB(locTOffs, textr->toffs);
-  owner->p_glUniform1fARB(locTexMinS, surf->texturemins[0]);
-  owner->p_glUniform1fARB(locTexMinT, surf->texturemins[1]);
-  owner->p_glUniform1fARB(locCacheS, cache->s);
-  owner->p_glUniform1fARB(locCacheT, cache->t);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeTextureLMapParams
-//
-//  `SetTexture()` must be called! it sets `tex_iw` and `tex_ih`
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeTextureLMapParams (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {
-  storeTextureParams(textr);
-  storeLMapParams(surf, cache);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeFogType
-//
-//==========================================================================
-/*
-void VOpenGLDrawer::VGLShaderCommonLocs::storeFogType () {
-  check(prog);
-  owner->p_glUniform1iARB(locFogType, r_fog&3);
-}
-*/
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::VGLShaderCommonLocs::storeFogFade
-//
-//==========================================================================
-void VOpenGLDrawer::VGLShaderCommonLocs::storeFogFade (vuint32 Fade, float Alpha) {
-  check(prog);
-  if (Fade) {
-    if (locFogEnabled >= 0) owner->p_glUniform1iARB(locFogEnabled, GL_TRUE);
-    owner->p_glUniform4fARB(locFogColour,
-      ((Fade>>16)&255)/255.0f,
-      ((Fade>>8)&255)/255.0f,
-      (Fade&255)/255.0f, Alpha);
-    //owner->p_glUniform1fARB(locFogDensity, Fade == FADE_LIGHT ? 0.3f : r_fog_density);
-    owner->p_glUniform1fARB(locFogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-    owner->p_glUniform1fARB(locFogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
-  } else {
-    if (locFogEnabled >= 0) owner->p_glUniform1iARB(locFogEnabled, GL_FALSE);
-  }
 }
 
 
@@ -1146,327 +935,33 @@ void VOpenGLDrawer::InitResolution () {
 
   DrawFixedCol.Setup(this);
   DrawSimple.Setup(this);
+  DrawShadow.Setup(this);
+  DrawAutomap.Setup(this);
+  SurfZBuf.Setup(this);
+  SurfShadowVolume.Setup(this);
+  SurfAdvDecal.Setup(this);
+  SurfDecalNoLMap.Setup(this);
+  SurfDecalLMap.Setup(this);
+  SurfSimple.Setup(this);
+  SurfLightmap.Setup(this);
+  SurfSky.Setup(this);
+  SurfDSky.Setup(this);
+  SurfMasked.Setup(this);
+  SurfPartSq.Setup(this);
+  SurfPartSm.Setup(this);
+  ShadowsAmbient.Setup(this);
+  ShadowsTexture.Setup(this);
+  ShadowsFog.Setup(this);
+  ShadowsLight.Setup(this);
+  ShadowsLightDbg.Setup(this); ShadowsLightDbg.defines.append("VV_DEBUG_LIGHT");
+  SurfModel.Setup(this);
   ShadowsModelAmbient.Setup(this);
+  ShadowsModelTextures.Setup(this);
+  ShadowsModelLight.Setup(this);
+  ShadowsModelShadow.Setup(this);
+  ShadowsModelFog.Setup(this);
 
   CompileShaders();
-
-  GLhandleARB VertexShader, FragmentShader;
-
-  /*
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_fixed_col.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_fixed_col.fs");
-  DrawFixedCol_Program = CreateProgram("DrawFixedCol", VertexShader, FragmentShader);
-  DrawFixedCol_ColourLoc = glGetUniLoc("DrawFixedCol", DrawFixedCol_Program, "Colour");
-  */
-
-
-  /*
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_simple.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_simple.fs");
-  DrawSimple_Program = CreateProgram("DrawSimple", VertexShader, FragmentShader);
-  DrawSimple_TextureLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Texture");
-  DrawSimple_AlphaLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Alpha");
-  */
-
-
-  // reuses vertex shader
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_simple.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_shadow.fs");
-  DrawShadow_Program = CreateProgram("DrawShadow", VertexShader, FragmentShader);
-  DrawShadow_TextureLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Texture");
-  DrawShadow_AlphaLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Alpha");
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_automap.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_automap.fs");
-  DrawAutomap_Program = CreateProgram("DrawAutomap", VertexShader, FragmentShader);
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_zbuf.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_zbuf.fs");
-  SurfZBuf_Program = CreateProgram("SurfZBuf", VertexShader, FragmentShader);
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_svol.vs");
-  // reuse fragment shader
-  //FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_svol.fs");
-  SurfShadowVolume_Program = CreateProgram("SurfShadowVolume", VertexShader, FragmentShader);
-  SurfShadowVolume_LightPosLoc = glGetUniLoc("SurfShadowVolume", SurfShadowVolume_Program, "LightPos");
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_adv.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_adv.fs");
-  SurfAdvDecal_Program = CreateProgram("SurfAdvDecal", VertexShader, FragmentShader);
-  SurfAdvDecal_TextureLoc = glGetUniLoc("SurfAdvDecal", SurfAdvDecal_Program, "Texture");
-  SurfAdvDecal_AmbLightTextureLoc = glGetUniLoc("SurfAdvDecal", SurfAdvDecal_Program, "AmbLightTexture");
-  SurfAdvDecal_SplatAlphaLoc = glGetUniLoc("SurfAdvDecal", SurfAdvDecal_Program, "SplatAlpha");
-  SurfAdvDecal_FullBright = glGetUniLoc("SurfAdvDecal", SurfAdvDecal_Program, "FullBright");
-  SurfAdvDecal_ScreenSize = glGetUniLoc("SurfAdvDecal", SurfAdvDecal_Program, "ScreenSize");
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_nolmap.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_nolmap.fs");
-  SurfDecalNoLMap_Program = CreateProgram("SurfDecalNoLMap", VertexShader, FragmentShader);
-  SurfDecalNoLMap_TextureLoc = glGetUniLoc("SurfDecalNoLMap", SurfDecalNoLMap_Program, "Texture");
-  SurfDecalNoLMap_SplatAlphaLoc = glGetUniLoc("SurfDecalNoLMap", SurfDecalNoLMap_Program, "SplatAlpha");
-  SurfDecalNoLMap_LightLoc = glGetUniLoc("SurfDecalNoLMap", SurfDecalNoLMap_Program, "Light");
-  SurfDecalNoLMap_Locs.setupProg(this, "SurfDecalNoLMap", SurfDecalNoLMap_Program);
-  SurfDecalNoLMap_Locs.setupFog();
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_lmap.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_lmap.fs");
-  SurfDecalLMap_Program = CreateProgram("SurfDecalLMap", VertexShader, FragmentShader);
-  SurfDecalLMap_TextureLoc = glGetUniLoc("SurfDecalLMap", SurfDecalLMap_Program, "Texture");
-  SurfDecalLMap_SplatAlphaLoc = glGetUniLoc("SurfDecalLMap", SurfDecalLMap_Program, "SplatAlpha");
-  //!SurfDecalLMap_LightLoc = glGetUniLoc("SurfDecalLMap", SurfDecalLMap_Program, "Light");
-  SurfDecalLMap_SpecularMapLoc = glGetUniLoc("SurfDecalLMap", SurfDecalLMap_Program, "SpecularMap");
-  SurfDecalLMap_Locs.setupProg(this, "SurfDecalLMap", SurfDecalLMap_Program);
-  SurfDecalLMap_Locs.setupLMapOnly();
-  SurfDecalLMap_Locs.setupFog();
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_simple.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_simple.fs");
-  SurfSimple_Program = CreateProgram("SurfSimple", VertexShader, FragmentShader);
-  SurfSimple_LightLoc = glGetUniLoc("SurfSimple", SurfSimple_Program, "Light");
-  SurfSimple_Locs.setupProg(this, "SurfSimple", SurfSimple_Program);
-  SurfSimple_Locs.setupTexture();
-  SurfSimple_Locs.setupFog();
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_lightmap.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_lightmap.fs");
-  SurfLightmap_Program = CreateProgram("SurfLightmap", VertexShader, FragmentShader);
-  SurfLightmap_SpecularMapLoc = glGetUniLoc("SurfLightmap", SurfLightmap_Program, "SpecularMap");
-  SurfLightmap_Locs.setupProg(this, "SurfLightmap", SurfLightmap_Program);
-  SurfLightmap_Locs.setupTexture();
-  SurfLightmap_Locs.setupLMap();
-  SurfLightmap_Locs.setupFog();
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_sky.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_sky.fs");
-  SurfSky_Program = CreateProgram("SurfSky", VertexShader, FragmentShader);
-  SurfSky_TextureLoc = glGetUniLoc("SurfSky", SurfSky_Program, "Texture");
-  SurfSky_BrightnessLoc = glGetUniLoc("SurfSky", SurfSky_Program, "Brightness");
-  SurfSky_TexCoordLoc = glGetAttrLoc("SurfSky", SurfSky_Program, "TexCoord");
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_dsky.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_dsky.fs");
-  SurfDSky_Program = CreateProgram("SurfDSky", VertexShader, FragmentShader);
-  SurfDSky_TextureLoc = glGetUniLoc("SurfDSky", SurfDSky_Program, "Texture");
-  SurfDSky_Texture2Loc = glGetUniLoc("SurfDSky", SurfDSky_Program, "Texture2");
-  SurfDSky_BrightnessLoc = glGetUniLoc("SurfDSky", SurfDSky_Program, "Brightness");
-  SurfDSky_TexCoordLoc = glGetAttrLoc("SurfDSky", SurfDSky_Program, "TexCoord");
-  SurfDSky_TexCoord2Loc = glGetAttrLoc("SurfDSky", SurfDSky_Program, "TexCoord2");
-
-
-#define GLSL_LOADLOC(lcname_)  SurfMasked_ ## lcname_ ## Loc  = glGetUniLoc("SurfMasked", SurfMasked_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  SurfMasked_ ## lcname_ ## Loc  = glGetAttrLoc("SurfMasked", SurfMasked_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_masked.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_masked.fs");
-  SurfMasked_Program = CreateProgram("SurfMasked", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Texture);
-  GLSL_LOADLOC(Light);
-  GLSL_LOADLOC(AlphaRef);
-  GLSL_LOADATR(TexCoord);
-  SurfMasked_Locs.setupProg(this, "SurfMasked", SurfMasked_Program);
-  SurfMasked_Locs.setupFog();
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-#define GLSL_LOADLOC(lcname_)  SurfModel_ ## lcname_ ## Loc  = glGetUniLoc("SurfModel", SurfModel_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  SurfModel_ ## lcname_ ## Loc  = glGetAttrLoc("SurfModel", SurfModel_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_model.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_model.fs");
-  SurfModel_Program = CreateProgram("SurfModel", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(Texture);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(TexCoord);
-  GLSL_LOADLOC(InAlpha);
-  GLSL_LOADATR(LightVal);
-  GLSL_LOADLOC(ViewOrigin);
-  GLSL_LOADLOC(AllowTransparency);
-  SurfModel_Locs.setupProg(this, "SurfModel", SurfModel_Program);
-  SurfModel_Locs.setupFog();
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/particle.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/particle_sq.fs");
-  SurfPartSq_Program = CreateProgram("SurfPartSq", VertexShader, FragmentShader);
-  SurfPartSq_TexCoordLoc = glGetAttrLoc("SurfPartSq", SurfPartSq_Program, "TexCoord");
-  SurfPartSq_LightValLoc = glGetAttrLoc("SurfPartSq", SurfPartSq_Program, "LightVal");
-
-
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/particle_sm.fs");
-  SurfPartSm_Program = CreateProgram("SurfPartSm", VertexShader, FragmentShader);
-  SurfPartSm_TexCoordLoc = glGetAttrLoc("SurfPartSm", SurfPartSm_Program, "TexCoord");
-  SurfPartSm_LightValLoc = glGetAttrLoc("SurfPartSm", SurfPartSm_Program, "LightVal");
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_ambient.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_ambient.fs");
-  ShadowsAmbient_Program = CreateProgram("ShadowsAmbient", VertexShader, FragmentShader);
-  ShadowsAmbient_LightLoc = glGetUniLoc("ShadowsAmbient", ShadowsAmbient_Program, "Light");
-  ShadowsAmbient_Locs.setupProg(this, "ShadowsAmbient", ShadowsAmbient_Program);
-  ShadowsAmbient_Locs.setupTexture();
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsLight_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsLight", ShadowsLight_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsLight_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsLight", ShadowsLight_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_light.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_light.fs");
-  ShadowsLight_Program = CreateProgram("ShadowsLight", VertexShader, FragmentShader);
-  GLSL_LOADLOC(LightPos);
-  GLSL_LOADLOC(LightRadius);
-  GLSL_LOADLOC(LightColour);
-  GLSL_LOADATR(SurfNormal);
-  GLSL_LOADATR(SurfDist);
-  GLSL_LOADLOC(ViewOrigin);
-  ShadowsLight_Locs.setupProg(this, "ShadowsLight", ShadowsLight_Program);
-  ShadowsLight_Locs.setupTexture();
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsLightDbg_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsLight", ShadowsLightDbg_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsLightDbg_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsLight", ShadowsLightDbg_Program, "" #lcname_)
-  // reuse vertex shader
-  //VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_light.vs", MSA("VV_DEBUG_LIGHT", nullptr));
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_light.fs", MSA("VV_DEBUG_LIGHT", nullptr));
-  ShadowsLightDbg_Program = CreateProgram("ShadowsLightDbg", VertexShader, FragmentShader);
-  GLSL_LOADLOC(LightPos);
-  GLSL_LOADLOC(LightRadius);
-  GLSL_LOADLOC(LightColour);
-  GLSL_LOADATR(SurfNormal);
-  GLSL_LOADATR(SurfDist);
-  GLSL_LOADLOC(ViewOrigin);
-  ShadowsLightDbg_Locs.setupProg(this, "ShadowsLightDbg", ShadowsLightDbg_Program);
-  ShadowsLightDbg_Locs.setupTexture();
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_texture.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_texture.fs");
-  ShadowsTexture_Program = CreateProgram("ShadowsTexture", VertexShader, FragmentShader);
-  ShadowsTexture_Locs.setupProg(this, "ShadowsTexture", ShadowsTexture_Program);
-  ShadowsTexture_Locs.setupTexture();
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsModelAmbient_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsModelAmbient", ShadowsModelAmbient_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsModelAmbient_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsModelAmbient", ShadowsModelAmbient_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_ambient.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_ambient.fs");
-  ShadowsModelAmbient_Program = CreateProgram("ShadowsModelAmbient", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(Texture);
-  GLSL_LOADLOC(Light);
-  GLSL_LOADLOC(ModelToWorldMat);
-  GLSL_LOADLOC(NormalToWorldMat);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(VertNormal);
-  GLSL_LOADATR(Vert2Normal);
-  GLSL_LOADATR(TexCoord);
-  GLSL_LOADLOC(InAlpha);
-  GLSL_LOADLOC(ViewOrigin);
-  GLSL_LOADLOC(AllowTransparency);
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsModelTextures_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsModelTextures", ShadowsModelTextures_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsModelTextures_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsModelTextures", ShadowsModelTextures_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_textures.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_textures.fs");
-  ShadowsModelTextures_Program = CreateProgram("ShadowsModelTextures", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(Texture);
-  GLSL_LOADLOC(ModelToWorldMat);
-  //GLSL_LOADLOC(NormalToWorldMat);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(TexCoord);
-  //GLSL_LOADATR(VertNormal);
-  //GLSL_LOADATR(Vert2Normal);
-  GLSL_LOADLOC(InAlpha);
-  GLSL_LOADLOC(ViewOrigin);
-  //GLSL_LOADLOC(AllowTransparency);
-  GLSL_LOADLOC(AmbLightTexture);
-  GLSL_LOADLOC(ScreenSize);
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-#define GLSL_LOADLOC(lcname_)  ShadowsModelLight_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsModelLight", ShadowsModelLight_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsModelLight_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsModelLight", ShadowsModelLight_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_light.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_light.fs");
-  ShadowsModelLight_Program = CreateProgram("ShadowsModelLight", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(Texture);
-  GLSL_LOADLOC(LightPos);
-  GLSL_LOADLOC(LightRadius);
-  GLSL_LOADLOC(LightColour);
-  GLSL_LOADLOC(ModelToWorldMat);
-  GLSL_LOADLOC(NormalToWorldMat);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(VertNormal);
-  GLSL_LOADATR(Vert2Normal);
-  GLSL_LOADATR(TexCoord);
-  GLSL_LOADLOC(ViewOrigin);
-  GLSL_LOADLOC(AllowTransparency);
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsModelShadow_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsModelShadow", ShadowsModelShadow_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsModelShadow_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsModelShadow", ShadowsModelShadow_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_shadow.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_shadow.fs");
-  ShadowsModelShadow_Program = CreateProgram("ShadowsModelShadow", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(LightPos);
-  GLSL_LOADLOC(ModelToWorldMat);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(Offset);
-  //GLSL_LOADLOC(ViewOrigin);
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
-
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_surf_fog.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_surf_fog.fs");
-  ShadowsFog_Program = CreateProgram("ShadowsFog", VertexShader, FragmentShader);
-  ShadowsFog_Locs.setupProg(this, "ShadowsFog", ShadowsFog_Program);
-  ShadowsFog_Locs.setupFog(false);
-
-
-#define GLSL_LOADLOC(lcname_)  ShadowsModelFog_ ## lcname_ ## Loc  = glGetUniLoc("ShadowsModelFog", ShadowsModelFog_Program, "" #lcname_)
-#define GLSL_LOADATR(lcname_)  ShadowsModelFog_ ## lcname_ ## Loc  = glGetAttrLoc("ShadowsModelFog", ShadowsModelFog_Program, "" #lcname_)
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_fog.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_fog.fs");
-  ShadowsModelFog_Program = CreateProgram("ShadowsModelFog", VertexShader, FragmentShader);
-  GLSL_LOADLOC(Inter);
-  GLSL_LOADLOC(ModelToWorldMat);
-  GLSL_LOADLOC(Texture);
-  //GLSL_LOADLOC(FogType);
-  GLSL_LOADLOC(FogColour);
-  //GLSL_LOADLOC(FogDensity);
-  GLSL_LOADLOC(FogStart);
-  GLSL_LOADLOC(FogEnd);
-  GLSL_LOADATR(Vert2);
-  GLSL_LOADATR(TexCoord);
-  GLSL_LOADLOC(InAlpha);
-  GLSL_LOADLOC(ViewOrigin);
-  GLSL_LOADLOC(AllowTransparency);
-#undef GLSL_LOADATR
-#undef GLSL_LOADLOC
-
 
   if (glGetError() != 0) Sys_Error("OpenGL initialization error");
 
