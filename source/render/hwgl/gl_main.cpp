@@ -402,11 +402,75 @@ void VOpenGLDrawer::VGLShaderCommonLocs::storeFogFade (vuint32 Fade, float Alpha
 
 //==========================================================================
 //
+//  VOpenGLDrawer::VGLShader::Setup
+//
+//==========================================================================
+void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *avssrcfile, const char *afssrcfile) {
+  next = nullptr;
+  owner = aowner;
+  progname = aprogname;
+  vssrcfile = avssrcfile;
+  fssrcfile = afssrcfile;
+  prog = -1;
+  owner->registerShader(this);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::VGLShader::Activate
+//
+//==========================================================================
+void VOpenGLDrawer::VGLShader::Activate () {
+  owner->p_glUseProgramObjectARB(prog);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::VGLShader::Deactivate
+//
+//==========================================================================
+void VOpenGLDrawer::VGLShader::Deactivate () {
+  owner->p_glUseProgramObjectARB(0);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::VGLShader::Compile
+//
+//==========================================================================
+void VOpenGLDrawer::VGLShader::Compile () {
+  GCon->Logf(NAME_Init, "compiling shader '%s'...", progname);
+  GLhandleARB VertexShader = owner->LoadShader(GL_VERTEX_SHADER_ARB, vssrcfile, defines);
+  GLhandleARB FragmentShader = owner->LoadShader(GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
+  prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
+  LoadUniforms();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::VGLShader::Unload
+//
+//==========================================================================
+void VOpenGLDrawer::VGLShader::Unload () {
+  GCon->Logf(NAME_Init, "unloading shader '%s'...", progname);
+}
+
+
+#include "glz_shaddef.ci"
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::VOpenGLDrawer
 //
 //==========================================================================
 VOpenGLDrawer::VOpenGLDrawer ()
   : VDrawer()
+  , shaderHead(nullptr)
   , texturesGenerated(false)
   , lastgamma(0)
   , CurrentFade(0)
@@ -458,6 +522,35 @@ VOpenGLDrawer::~VOpenGLDrawer () {
   tmpImgBufSize = 0;
   if (readBackTempBuf) { Z_Free(readBackTempBuf); readBackTempBuf = nullptr; }
   readBackTempBufSize = 0;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::registerShader
+//
+//==========================================================================
+void VOpenGLDrawer::registerShader (VGLShader *shader) {
+  if (developer) GCon->Logf(NAME_Dev, "registering shader '%s'...", shader->progname);
+  shader->owner = this;
+  shader->next = shaderHead;
+  shaderHead = shader;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::CompileShaders
+//
+//==========================================================================
+void VOpenGLDrawer::CompileShaders () {
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next) shad->Compile();
+}
+
+
+void VOpenGLDrawer::DestroyShaders () {
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next) shad->Unload();
+  shaderHead = nullptr;
 }
 
 
@@ -534,6 +627,9 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 //
 //==========================================================================
 void VOpenGLDrawer::DeinitResolution () {
+  // unload shaders
+  DestroyShaders();
+
   // delete old FBOs
   if (mainFBO) {
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
@@ -1045,24 +1141,40 @@ void VOpenGLDrawer::InitResolution () {
   glDisable(GL_POLYGON_SMOOTH);
 
 
-  GLhandleARB VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_simple.vs");
-  GLhandleARB FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_simple.fs");
-  DrawSimple_Program = CreateProgram("DrawSimple", VertexShader, FragmentShader);
-  DrawSimple_TextureLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Texture");
-  DrawSimple_AlphaLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Alpha");
+  // shaders
+  shaderHead = nullptr; // just in case
 
+  DrawFixedCol.Setup(this);
+  DrawSimple.Setup(this);
+  ShadowsModelAmbient.Setup(this);
 
-  // reuses vertex shader
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_shadow.fs");
-  DrawShadow_Program = CreateProgram("DrawShadow", VertexShader, FragmentShader);
-  DrawShadow_TextureLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Texture");
-  DrawShadow_AlphaLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Alpha");
+  CompileShaders();
 
+  GLhandleARB VertexShader, FragmentShader;
 
+  /*
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_fixed_col.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_fixed_col.fs");
   DrawFixedCol_Program = CreateProgram("DrawFixedCol", VertexShader, FragmentShader);
   DrawFixedCol_ColourLoc = glGetUniLoc("DrawFixedCol", DrawFixedCol_Program, "Colour");
+  */
+
+
+  /*
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_simple.vs");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_simple.fs");
+  DrawSimple_Program = CreateProgram("DrawSimple", VertexShader, FragmentShader);
+  DrawSimple_TextureLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Texture");
+  DrawSimple_AlphaLoc = glGetUniLoc("DrawSimple", DrawSimple_Program, "Alpha");
+  */
+
+
+  // reuses vertex shader
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_simple.vs");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/draw_shadow.fs");
+  DrawShadow_Program = CreateProgram("DrawShadow", VertexShader, FragmentShader);
+  DrawShadow_TextureLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Texture");
+  DrawShadow_AlphaLoc = glGetUniLoc("DrawShadow", DrawShadow_Program, "Alpha");
 
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/draw_automap.vs");
@@ -1963,8 +2075,8 @@ void VOpenGLDrawer::EndView () {
   Setup2D();
 
   if (cl && cl->CShift) {
-    p_glUseProgramObjectARB(DrawFixedCol_Program);
-    p_glUniform4fARB(DrawFixedCol_ColourLoc,
+    DrawFixedCol.Activate();
+    DrawFixedCol.SetColour(
       (float)((cl->CShift>>16)&255)/255.0f,
       (float)((cl->CShift>>8)&255)/255.0f,
       (float)(cl->CShift&255)/255.0f,
@@ -2220,8 +2332,8 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   //p_glUseProgramObjectARB(0);
 
-  p_glUseProgramObjectARB(DrawFixedCol_Program);
-  p_glUniform4fARB(DrawFixedCol_ColourLoc,
+  DrawFixedCol.Activate();
+  DrawFixedCol.SetColour(
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);

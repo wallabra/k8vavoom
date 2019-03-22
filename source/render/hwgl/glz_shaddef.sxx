@@ -1,0 +1,33 @@
+// ////////////////////////////////////////////////////////////////////////// //
+Shader DrawFixedCol both="draw_fixed_col"
+/* or: vertex="name" fragment="name" */
+{
+  uniform vec4 Colour;
+}
+
+
+Shader DrawSimple both="draw_simple" {
+  uniform sampler2D Texture;
+  uniform float Alpha;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsModelAmbient both="shadows_model_ambient"
+{
+  /* directly copied from shader code */
+  uniform mat4 ModelToWorldMat;
+  uniform mat3 NormalToWorldMat;
+  uniform vec3 ViewOrigin;
+  uniform float Inter;
+
+  attribute vec4 Vert2;
+  attribute vec3 VertNormal;
+  attribute vec3 Vert2Normal;
+  attribute vec2 TexCoord;
+
+  uniform vec4 Light;
+  uniform sampler2D Texture;
+  uniform float InAlpha;
+  uniform bool AllowTransparency;
+}

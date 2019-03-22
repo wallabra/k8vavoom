@@ -1,3 +1,23 @@
+function(sxx_compile output filename)
+  get_filename_component(ext ${filename} EXT)
+  if(NOT ext STREQUAL ".sxx")
+    return()
+  endif()
+  get_filename_component(base ${filename} NAME_WE)
+  set(base_abs ${CMAKE_CURRENT_BINARY_DIR}/${base})
+  set(outfiles ${base_abs}.ci ${base_abs}.hi)
+  set(${output} ${${output}} ${outfiles} PARENT_SCOPE)
+  message("outfiles=${outfiles}, DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
+  add_custom_command(
+    OUTPUT ${outfiles}
+    COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+    DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+    #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
+  )
+  set_source_files_properties(${outfiles} PROPERTIES GENERATED TRUE)
+endfunction()
+
+
 #---------------------------------------
 #
 # VaVoom C compiler sources
@@ -389,7 +409,21 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_poly_adv.cpp
   render/hwgl/gl_portal.cpp
   render/hwgl/gl_tex.cpp
+  render/hwgl/glz_shaddef.sxx
+  ${CMAKE_CURRENT_BINARY_DIR}/glz_shaddef.hi
+  ${CMAKE_CURRENT_BINARY_DIR}/glz_shaddef.ci
 )
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+foreach(file ${MAIN_OPENGL_SOURCES})
+  sxx_compile(OPENGL_GENERATED_SOURCES ${file})
+endforeach()
+
+source_group("" FILES ${MAIN_OPENGL_SOURCES})
+source_group(generated FILES ${OPENGL_GENERATED_SOURCES})
+
+#add_executable(vshadpp ${MAIN_OPENGL_SOURCES} ${OPENGL_GENERATED_SOURCES})
+#sxx_compile(render/hwgl/glz_shaddef.sxx  render/hwgl/gl_main.cpp)
 
 
 include_directories( .

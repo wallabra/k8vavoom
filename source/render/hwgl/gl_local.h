@@ -439,6 +439,35 @@ extern VCvarI gl_dbg_use_zpass;
 // ////////////////////////////////////////////////////////////////////////// //
 class VOpenGLDrawer : public VDrawer {
 public:
+  class VGLShader {
+  public:
+    VGLShader *next;
+    VOpenGLDrawer *owner;
+    const char *progname;
+    const char *vssrcfile;
+    const char *fssrcfile;
+    // compiled vertex program
+    GLhandleARB prog;
+    TArray<VStr> defines;
+
+  public:
+    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1) {}
+
+    void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *avssrcfile, const char *afssrcfile);
+
+    virtual void Compile ();
+    virtual void Unload ();
+    virtual void Setup (VOpenGLDrawer *aowner) = 0;
+    virtual void LoadUniforms () = 0;
+
+    void Activate ();
+    void Deactivate ();
+  };
+
+  friend class VGLShader;
+
+#include "glz_shaddef.hi"
+
   // many shaders require common variables
   // instead of doing copypasta, we'll use the following classes
   class VGLShaderCommonLocs {
@@ -498,6 +527,17 @@ public:
 
 private:
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
+
+protected:
+  VGLShader *shaderHead;
+
+  VShaderDef_DrawFixedCol DrawFixedCol;
+  VShaderDef_DrawSimple DrawSimple;
+  VShaderDef_ShadowsModelAmbient ShadowsModelAmbient;
+
+  void registerShader (VGLShader *shader);
+  void CompileShaders ();
+  void DestroyShaders ();
 
 public:
   // VDrawer interface
@@ -738,16 +778,20 @@ protected:
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
 
+  /*
   GLhandleARB DrawSimple_Program;
   GLint DrawSimple_TextureLoc;
   GLint DrawSimple_AlphaLoc;
+  */
 
   GLhandleARB DrawShadow_Program;
   GLint DrawShadow_TextureLoc;
   GLint DrawShadow_AlphaLoc;
 
+  /*
   GLhandleARB DrawFixedCol_Program;
   GLint DrawFixedCol_ColourLoc;
+  */
 
   GLhandleARB DrawAutomap_Program;
 
