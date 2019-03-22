@@ -6548,7 +6548,7 @@ override void SpawnMapThing (mthing_t *mthing) {
   if (mthing->type <= 0) return;
 
   //if (mthing.tid == 54 || mthing.tid == 43) writeln("*** TREE! ***");
-  //writeln("SPAWN MAP THING: ", mthing.tid, "; type=", mthing.type);
+  //print("SPAWN MAP THING: %s; type=%s; org=(%s,%s); height=%s; opts=0x%08x; skill=0x%08x", mthing.tid, mthing.type, mthing.x, mthing.y, mthing.height, mthing.options, mthing.SkillClassFilter);
 
   // count deathmatch start positions
   if (mthing->type == 11) {
@@ -6661,11 +6661,14 @@ override void SpawnMapThing (mthing_t *mthing) {
     }
   }
 
-  if (Level.Game.nomonsters && moClass.default.bMonster) return;
+  if (Level.Game.nomonsters && moClass.default.bMonster) {
+    //print("  monster skipped (%C)", moClass);
+    return;
+  }
 
   // spawn it
   auto thg = Spawn(moClass, default, default, mthing, false);
-  //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f)", thg, mthing->type, thg.Height, moClass.default.Height);
+  //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing->type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 }
 
