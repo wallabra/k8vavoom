@@ -200,13 +200,13 @@ class VEntity : public VThinker {
 
   // flags
   enum {
-    EF_Solid      = 0x00000001, // blocks
-    EF_NoSector   = 0x00000002, // don't use the sector links (invisible but touchable)
-    EF_NoBlockmap = 0x00000004, // don't use the blocklinks (inert but displayable)
-    EF_IsPlayer   = 0x00000008, // player or player-bot
-    EF_FixedModel = 0x00000010, // internal renderer flag
-    EF_NoGravity  = 0x00000020, // don't apply gravity every tic
-    EF_PassMobj   = 0x00000040, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
+    EF_Solid             = 0x00000001, // blocks
+    EF_NoSector          = 0x00000002, // don't use the sector links (invisible but touchable)
+    EF_NoBlockmap        = 0x00000004, // don't use the blocklinks (inert but displayable)
+    EF_IsPlayer          = 0x00000008, // player or player-bot
+    EF_FixedModel        = 0x00000010, // internal renderer flag
+    EF_NoGravity         = 0x00000020, // don't apply gravity every tic
+    EF_PassMobj          = 0x00000040, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
     EF_ColideWithThings  = 0x00000080,
     EF_ColideWithWorld   = 0x00000100,
     EF_CheckLineBlocking = 0x00000200,
