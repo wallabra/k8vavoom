@@ -249,7 +249,7 @@ void VOpenGLDrawer::VGLShader::Unload () {
 }
 
 
-#include "glz_shaddef.ci"
+#include "gl_shaddef.ci"
 
 
 //==========================================================================

@@ -7,7 +7,7 @@ function(sxx_compile output filename)
   set(base_abs ${CMAKE_CURRENT_BINARY_DIR}/${base})
   set(outfiles ${base_abs}.ci ${base_abs}.hi)
   set(${output} ${${output}} ${outfiles} PARENT_SCOPE)
-  message("outfiles=${outfiles}, DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
+  #message("outfiles=${outfiles}, DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
   add_custom_command(
     OUTPUT ${outfiles}
     COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
@@ -409,9 +409,9 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_poly_adv.cpp
   render/hwgl/gl_portal.cpp
   render/hwgl/gl_tex.cpp
-  render/hwgl/glz_shaddef.sxx
-  ${CMAKE_CURRENT_BINARY_DIR}/glz_shaddef.hi
-  ${CMAKE_CURRENT_BINARY_DIR}/glz_shaddef.ci
+  render/hwgl/gl_shaddef.sxx
+  ${CMAKE_CURRENT_BINARY_DIR}/gl_shaddef.hi
+  ${CMAKE_CURRENT_BINARY_DIR}/gl_shaddef.ci
 )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -423,7 +423,7 @@ source_group("" FILES ${MAIN_OPENGL_SOURCES})
 source_group(generated FILES ${OPENGL_GENERATED_SOURCES})
 
 #add_executable(vshadpp ${MAIN_OPENGL_SOURCES} ${OPENGL_GENERATED_SOURCES})
-#sxx_compile(render/hwgl/glz_shaddef.sxx  render/hwgl/gl_main.cpp)
+#sxx_compile(render/hwgl/gl_shaddef.sxx  render/hwgl/gl_main.cpp)
 
 
 include_directories( .

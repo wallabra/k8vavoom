@@ -466,7 +466,7 @@ public:
 
   friend class VGLShader;
 
-#include "glz_shaddef.hi"
+#include "gl_shaddef.hi"
 
 private:
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
