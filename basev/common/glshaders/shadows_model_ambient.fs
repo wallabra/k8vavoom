@@ -8,13 +8,14 @@ uniform bool AllowTransparency;
 
 varying vec2 TextureCoordinate;
 varying vec3 VertToView;
-varying vec3 VPos;
+//varying vec3 VPos;
 varying float Dist;
 
 
 void main () {
-  float DistVPos = dot(VPos, VPos);
-  if (Dist > 0.0 && DistVPos < 0.0) discard;
+  // `DistVPos` is always positive (or zero)
+  //float DistVPos = dot(VPos, VPos);
+  //if (Dist > 0.0 && DistVPos < 0.0) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;
@@ -27,6 +28,7 @@ void main () {
     if (ClampTransp < 0.01) discard;
   }
 
+  // `DistToView` is always positive (or zero)
   float DistToView = dot(VertToView, VertToView);
 
   vec4 FinalColour_1;

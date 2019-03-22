@@ -13,7 +13,7 @@ attribute vec2 TexCoord;
 
 varying vec3 Normal;
 varying vec3 VertToView;
-varying vec3 VPos;
+//varying vec3 VPos;
 varying vec2 TextureCoordinate;
 varying float PlaneDist;
 varying float Dist;
@@ -29,6 +29,6 @@ void main () {
   PlaneDist = SurfDist;
   Dist = dot(ViewOrigin, Normal)-SurfDist;
   VertToView = ViewOrigin-Vert.xyz;
-  VPos = ViewOrigin-gl_Position.xyz;
+  //VPos = ViewOrigin-gl_Position.xyz;
   TextureCoordinate = TexCoord;
 }
