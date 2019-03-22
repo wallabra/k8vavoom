@@ -290,13 +290,14 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
                                            float Inter, bool Interpolate,
                                            bool ForceDepth, bool AllowTransparency)
 {
-  UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   SetPicModel(Skin, nullptr, CM_Default);
 
   if (!gl_dbg_adv_render_ambient_models) return;
+
+  GCon->Logf("  amb: origin=(%f,%f,%f); offset=(%f,%f,%f)", origin.x, origin.y, origin.z, Offset.x, Offset.y, Offset.z);
 
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
@@ -324,6 +325,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   p_glUniformMatrix4fvARB(ShadowsModelAmbient_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
   p_glUniformMatrix3fvARB(ShadowsModelAmbient_NormalToWorldMatLoc, 1, GL_FALSE, NormalMat[0]);
 
+  UploadModel(Mdl);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
@@ -379,7 +381,6 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
                                             float Alpha, float Inter,
                                             bool Interpolate, bool ForceDepth, bool AllowTransparency)
 {
-  UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
@@ -406,12 +407,12 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   */
 
   p_glUseProgramObjectARB(ShadowsModelTextures_Program);
-
   p_glUniform1iARB(ShadowsModelTextures_TextureLoc, 0);
   p_glUniform1fARB(ShadowsModelTextures_InterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelTextures_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
   //!p_glUniformMatrix3fvARB(ShadowsModelTextures_NormalToWorldMatLoc, 1, GL_FALSE, NormalMat[0]);
 
+  UploadModel(Mdl);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
@@ -515,7 +516,6 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
                                          VTexture *Skin, float Alpha, float Inter,
                                          bool Interpolate, bool AllowTransparency)
 {
-  UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
@@ -543,6 +543,7 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   p_glUniformMatrix4fvARB(ShadowsModelLight_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
   p_glUniformMatrix3fvARB(ShadowsModelLight_NormalToWorldMatLoc, 1, GL_FALSE, NormalMat[0]);
 
+  UploadModel(Mdl);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
@@ -597,7 +598,6 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
                                           float Inter, bool Interpolate,
                                           const TVec &LightPos, float LightRadius)
 {
-  UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
@@ -641,6 +641,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glUniform1fARB(ShadowsModelShadow_InterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelShadow_ModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
 
+  UploadModel(Mdl);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
@@ -723,7 +724,6 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
                                        VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                        bool Interpolate, bool AllowTransparency)
 {
-  UploadModel(Mdl);
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
@@ -745,6 +745,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glUniform1fARB(ShadowsModelFog_FogStartLoc, (Fade == FADE_LIGHT ? 1.0f : r_fog_start));
   p_glUniform1fARB(ShadowsModelFog_FogEndLoc, (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end));
 
+  UploadModel(Mdl);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
