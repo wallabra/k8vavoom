@@ -222,14 +222,16 @@ IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   } else {
     ObjectSaver saver(*strm, svmap);
     bool res = saver.saveAll();
+    bool err = saver.IsError();
     delete strm;
-    RET_BOOL(res && !saver.IsError());
+    RET_BOOL(res && !err);
   }
 #else
   ObjectSaver saver(*strm, svmap);
   bool res = saver.saveAll();
+  bool err = saver.IsError();
   delete strm;
-  RET_BOOL(res && !saver.IsError());
+  RET_BOOL(res && !err);
 #endif
 }
 
