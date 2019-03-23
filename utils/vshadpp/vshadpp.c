@@ -33,6 +33,27 @@ char *xstrcat (const char *s0, const char *s1) {
 }
 
 
+char *strReplaceExt (const char *s, const char *ext) {
+  char *res = malloc(strlen(s)+strlen(ext)+64);
+  strcpy(res, s);
+  char *e = res+strlen(res);
+  while (e > res) {
+    if (e[-1] == '/') break;
+    if (e[-1] == '.') { e[-1] = 0; break; }
+    --e;
+  }
+  strcat(res, ext);
+  return res;
+}
+
+
+int strEqu (const char *s0, const char *s1) {
+  if (!s0) s0 = "";
+  if (!s1) s1 = "";
+  return (strcmp(s0, s1) == 0);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 struct Parser {
   const char *text;
@@ -259,9 +280,25 @@ char *prGetToken (Parser *par) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// `{` already eaten
+void prSkipCompount (Parser *par) {
+  int level = 1;
+  for (;;) {
+    const char *tk = prGetToken(par);
+    if (!tk) prError(par, "unexpected EOF");
+    if (strEqu(tk, "{")) {
+      ++level;
+    } else if (strEqu(tk, "}")) {
+      if (--level == 0) break;
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void prExpect (Parser *par, const char *checktok) {
   const char *tk = prGetToken(par);
-  if (!tk || strcmp(tk, checktok) || par->isString) {
+  if (!tk || !strEqu(tk, checktok) || par->isString) {
     static char errmsg[1024];
     snprintf(errmsg, sizeof(errmsg), "expected '%s', got '%s'", checktok, (tk ? tk : "<EOF>"));
     prError(par, errmsg);
@@ -294,7 +331,7 @@ char *prExpectString (Parser *par) {
 int prCheck (Parser *par, const char *checktok) {
   Parser *state = prSavePos(par);
   const char *tk = prGetToken(par);
-  if (tk && !par->isString && strcmp(tk, checktok) == 0) {
+  if (tk && !par->isString && !strEqu(tk, checktok) == 0) {
     prFreePos(&state);
     return 1;
   }
@@ -316,21 +353,21 @@ void prSetup (Parser *par, const char *text) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 const char *getShitppType (const Parser *par, const char *glslType) {
-  if (strcmp(glslType, "float") == 0) return "float";
-  if (strcmp(glslType, "bool") == 0) return "bool";
-  if (strcmp(glslType, "vec3") == 0) return "TVec";
-  if (strcmp(glslType, "mat4") == 0) return "VMatrix4";
+  if (strEqu(glslType, "float")) return "float";
+  if (strEqu(glslType, "bool")) return "bool";
+  if (strEqu(glslType, "vec3")) return "TVec";
+  if (strEqu(glslType, "mat4")) return "VMatrix4";
   // non-standard types
-  if (strcmp(glslType, "vec4") == 0) return "float *";
-  if (strcmp(glslType, "vec2") == 0) return "float *";
-  if (strcmp(glslType, "mat3") == 0) return "float *";
+  if (strEqu(glslType, "vec4")) return "float *";
+  if (strEqu(glslType, "vec2")) return "float *";
+  if (strEqu(glslType, "mat3")) return "float *";
   // samplers
-  if (strcmp(glslType, "sampler2D") == 0) return "vuint32";
+  if (strEqu(glslType, "sampler2D")) return "vuint32";
   // other
-  if (strcmp(glslType, "TextureSTSet") == 0) return "TextureSTSet";
-  if (strcmp(glslType, "LightmapSTSet") == 0) return "LightmapSTSet";
-  if (strcmp(glslType, "PureLightmapSTSet") == 0) return "PureLightmapSTSet";
-  if (strcmp(glslType, "FogSet") == 0) return "FogSet";
+  if (strEqu(glslType, "TextureSTSet")) return "TextureSTSet";
+  if (strEqu(glslType, "LightmapSTSet")) return "LightmapSTSet";
+  if (strEqu(glslType, "PureLightmapSTSet")) return "PureLightmapSTSet";
+  if (strEqu(glslType, "FogSet")) return "FogSet";
   // oops
   static char errmsg[1024];
   snprintf(errmsg, sizeof(errmsg), "unknown type `%s`", glslType);
@@ -341,8 +378,8 @@ const char *getShitppType (const Parser *par, const char *glslType) {
 
 const char *getShitppAmp (const char *shitppType) {
   if (shitppType[strlen(shitppType)-1] == '*') return "";
-  if (strcmp(shitppType, "TVec") == 0) return "&";
-  if (strcmp(shitppType, "VMatrix4") == 0) return "&";
+  if (strEqu(shitppType, "TVec")) return "&";
+  if (strEqu(shitppType, "VMatrix4")) return "&";
   return "";
 }
 
@@ -365,7 +402,7 @@ LocInfo *newLoc (const char *aname) {
   LocInfo *loc = xalloc(sizeof(LocInfo));
   loc->name = xalloc(strlen(aname)+1);
   strcpy(loc->name, aname);
-  if (strcmp(aname, "_") == 0) loc->name[0] = 0;
+  if (strEqu(aname, "_")) loc->name[0] = 0;
   // append to list
   LocInfo *last = loclist;
   if (last) {
@@ -374,6 +411,15 @@ LocInfo *newLoc (const char *aname) {
   } else {
     loclist = loc;
   }
+  return loc;
+}
+
+
+LocInfo *newLocEx (Parser *par, const char *aname, int aIsAttr, const char *aglslType) {
+  LocInfo *loc = newLoc(aname);
+  loc->isAttr = aIsAttr;
+  loc->glslType = xstrdup(aglslType);
+  loc->shitppType = getShitppType(par, aglslType);
   return loc;
 }
 
@@ -390,6 +436,7 @@ void clearAll () {
     loclist = curr->next;
     free(curr->name);
     free(curr->glslType);
+    free(curr);
   }
   free(shadname); shadname = nullptr;
   free(vssrc); vssrc = nullptr;
@@ -403,7 +450,7 @@ void genHeader (FILE *fo) {
   fprintf(fo, "  public:\n");
 
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+    if (strEqu(loc->glslType, "TextureSTSet")) {
       fprintf(fo, "    // texture\n");
       fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
@@ -411,19 +458,19 @@ void genHeader (FILE *fo) {
       fprintf(fo, "    GLint loc_%sTOffs;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTexIW;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTexIH;\n", loc->name);
-    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+    } else if (strEqu(loc->glslType, "TextureSTSetNoSize")) {
       fprintf(fo, "    // texture\n");
       fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
       fprintf(fo, "    GLint loc_%sSOffs;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTOffs;\n", loc->name);
-    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "LightmapSTSet")) {
       fprintf(fo, "    // lightmap\n");
       fprintf(fo, "    GLint loc_%sTexMinS;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTexMinT;\n", loc->name);
       fprintf(fo, "    GLint loc_%sCacheS;\n", loc->name);
       fprintf(fo, "    GLint loc_%sCacheT;\n", loc->name);
-    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "PureLightmapSTSet")) {
       fprintf(fo, "    // pure lightmap (without texture)\n");
       fprintf(fo, "    GLint loc_%sSAxis;\n", loc->name);
       fprintf(fo, "    GLint loc_%sTAxis;\n", loc->name);
@@ -433,7 +480,7 @@ void genHeader (FILE *fo) {
       fprintf(fo, "    GLint loc_%sTexMinT;\n", loc->name);
       fprintf(fo, "    GLint loc_%sCacheS;\n", loc->name);
       fprintf(fo, "    GLint loc_%sCacheT;\n", loc->name);
-    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+    } else if (strEqu(loc->glslType, "FogSet")) {
       fprintf(fo, "    // fog variable locations\n");
       fprintf(fo, "    GLint loc_%sFogEnabled; // may be missing\n", loc->name);
       fprintf(fo, "    GLint loc_%sFogColour;\n", loc->name);
@@ -455,22 +502,22 @@ void genHeader (FILE *fo) {
   // generate setters
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
     if (!loc->isAttr) {
-      if (strcmp(loc->glslType, "float") == 0) {
+      if (strEqu(loc->glslType, "float")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform1fARB(loc_%s, v);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "bool") == 0) {
+      } else if (strEqu(loc->glslType, "bool")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform1iARB(loc_%s, (v ? GL_TRUE : GL_FALSE));", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "sampler2D") == 0) {
+      } else if (strEqu(loc->glslType, "sampler2D")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform1iARB(loc_%s, (GLint)v);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec3") == 0) {
+      } else if (strEqu(loc->glslType, "vec3")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform3fvARB(loc_%s, 1, &v.x);", loc->name);
@@ -479,7 +526,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform3fARB(loc_%s, x, y, z);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "mat4") == 0) {
+      } else if (strEqu(loc->glslType, "mat4")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, v[0]);", loc->name);
@@ -488,7 +535,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, v);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec4") == 0) {
+      } else if (strEqu(loc->glslType, "vec4")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform4fvARB(loc_%s, 1, v);", loc->name);
@@ -497,7 +544,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform4fARB(loc_%s, x, y, z, w);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec2") == 0) {
+      } else if (strEqu(loc->glslType, "vec2")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform2fvARB(loc_%s, 1, v);", loc->name);
@@ -506,12 +553,12 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniform2fARB(loc_%s, x, y);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "mat3") == 0) {
+      } else if (strEqu(loc->glslType, "mat3")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glUniformMatrix3fvARB(loc_%s, 1, GL_FALSE, v);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+      } else if (strEqu(loc->glslType, "TextureSTSet")) {
         fprintf(fo, "    inline void Set%sTex (const texinfo_t *textr) {\n", loc->name);
         fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
@@ -520,21 +567,21 @@ void genHeader (FILE *fo) {
         fprintf(fo, "      if (loc_%sTOffs >= 0) owner->p_glUniform1fARB(loc_%sTOffs, textr->toffs);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sTexIH >= 0) owner->p_glUniform1fARB(loc_%sTexIH, owner->tex_ih);\n", loc->name, loc->name);
         fprintf(fo, "    }\n");
-      } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+      } else if (strEqu(loc->glslType, "TextureSTSetNoSize")) {
         fprintf(fo, "    inline void Set%sTexNoSize (const texinfo_t *textr) {\n", loc->name);
         fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sTAxis >= 0) owner->p_glUniform3fvARB(loc_%sTAxis, 1, &textr->taxis.x);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sTOffs >= 0) owner->p_glUniform1fARB(loc_%sTOffs, textr->toffs);\n", loc->name, loc->name);
         fprintf(fo, "    }\n");
-      } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+      } else if (strEqu(loc->glslType, "LightmapSTSet")) {
         fprintf(fo, "    inline void Set%sLMap (const surface_t *surf, const surfcache_t *cache) {\n", loc->name);
         fprintf(fo, "      if (loc_%sTexMinS >= 0) owner->p_glUniform1fARB(loc_%sTexMinS, surf->texturemins[0]);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sTexMinT >= 0) owner->p_glUniform1fARB(loc_%sTexMinT, surf->texturemins[1]);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sCacheS >= 0) owner->p_glUniform1fARB(loc_%sCacheS, cache->s);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sCacheT >= 0) owner->p_glUniform1fARB(loc_%sCacheT, cache->t);\n", loc->name, loc->name);
         fprintf(fo, "    }\n");
-      } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+      } else if (strEqu(loc->glslType, "PureLightmapSTSet")) {
         fprintf(fo, "    inline void Set%sLMapOnly (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {\n", loc->name);
         fprintf(fo, "      if (loc_%sSAxis >= 0) owner->p_glUniform3fvARB(loc_%sSAxis, 1, &textr->saxis.x);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sSOffs >= 0) owner->p_glUniform1fARB(loc_%sSOffs, textr->soffs);\n", loc->name, loc->name);
@@ -545,7 +592,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "      if (loc_%sCacheS >= 0) owner->p_glUniform1fARB(loc_%sCacheS, cache->s);\n", loc->name, loc->name);
         fprintf(fo, "      if (loc_%sCacheT >= 0) owner->p_glUniform1fARB(loc_%sCacheT, cache->t);\n", loc->name, loc->name);
         fprintf(fo, "    }\n");
-      } else if (strcmp(loc->glslType, "FogSet") == 0) {
+      } else if (strEqu(loc->glslType, "FogSet")) {
         fprintf(fo, "    inline void Set%sFogFade (vuint32 Fade, float Alpha) {\n", loc->name);
         fprintf(fo, "      if (Fade) {\n");
         fprintf(fo, "        if (loc_%sFogEnabled >= 0) owner->p_glUniform1iARB(loc_%sFogEnabled, GL_TRUE);\n", loc->name, loc->name);
@@ -566,12 +613,12 @@ void genHeader (FILE *fo) {
       }
     } else {
       // attrs
-      if (strcmp(loc->glslType, "float") == 0) {
+      if (strEqu(loc->glslType, "float")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib1fARB(loc_%s, v);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec2") == 0) {
+      } else if (strEqu(loc->glslType, "vec2")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib2fvARB(loc_%s, v);", loc->name);
@@ -580,7 +627,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib2fARB(loc_%s, x, y);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec4") == 0) {
+      } else if (strEqu(loc->glslType, "vec4")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib4fvARB(loc_%s, v);", loc->name);
@@ -589,7 +636,7 @@ void genHeader (FILE *fo) {
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib4fARB(loc_%s, x, y, z, w);", loc->name);
         fprintf(fo, " }\n");
-      } else if (strcmp(loc->glslType, "vec3") == 0) {
+      } else if (strEqu(loc->glslType, "vec3")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
         fprintf(fo, "owner->p_glVertexAttrib3fvARB(loc_%s, &v.x);", loc->name);
@@ -615,24 +662,24 @@ void genCode (FILE *fo) {
   fprintf(fo, "VOpenGLDrawer::VShaderDef_%s::VShaderDef_%s ()\n", shadname, shadname);
   fprintf(fo, "  : VGLShader()\n");
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+    if (strEqu(loc->glslType, "TextureSTSet")) {
       fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTOffs(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTexIW(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTexIH(-1)\n", loc->name);
-    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+    } else if (strEqu(loc->glslType, "TextureSTSetNoSize")) {
       fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTOffs(-1)\n", loc->name);
-    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "LightmapSTSet")) {
       fprintf(fo, "  , loc_%sTexMinS(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTexMinT(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sCacheS(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sCacheT(-1)\n", loc->name);
-    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "PureLightmapSTSet")) {
       fprintf(fo, "  , loc_%sSAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sTAxis(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sSOffs(-1)\n", loc->name);
@@ -641,7 +688,7 @@ void genCode (FILE *fo) {
       fprintf(fo, "  , loc_%sTexMinT(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sCacheS(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sCacheT(-1)\n", loc->name);
-    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+    } else if (strEqu(loc->glslType, "FogSet")) {
       fprintf(fo, "  , loc_%sFogEnabled(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sFogColour(-1)\n", loc->name);
       fprintf(fo, "  , loc_%sFogStart(-1)\n", loc->name);
@@ -661,24 +708,24 @@ void genCode (FILE *fo) {
   // generate uniform loader
   fprintf(fo, "void VOpenGLDrawer::VShaderDef_%s::LoadUniforms () {\n", shadname);
   for (const LocInfo *loc = loclist; loc; loc = loc->next) {
-    if (strcmp(loc->glslType, "TextureSTSet") == 0) {
+    if (strEqu(loc->glslType, "TextureSTSet")) {
       fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTOffs = owner->glGet%sLoc(progname, prog, \"%sTOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTexIW = owner->glGet%sLoc(progname, prog, \"%sTexIW\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTexIH = owner->glGet%sLoc(progname, prog, \"%sTexIH\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-    } else if (strcmp(loc->glslType, "TextureSTSetNoSize") == 0) {
+    } else if (strEqu(loc->glslType, "TextureSTSetNoSize")) {
       fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTOffs = owner->glGet%sLoc(progname, prog, \"%sTOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-    } else if (strcmp(loc->glslType, "LightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "LightmapSTSet")) {
       fprintf(fo, "  loc_%sTexMinS = owner->glGet%sLoc(progname, prog, \"%sTexMinS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTexMinT = owner->glGet%sLoc(progname, prog, \"%sTexMinT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sCacheS = owner->glGet%sLoc(progname, prog, \"%sCacheS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sCacheT = owner->glGet%sLoc(progname, prog, \"%sCacheT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-    } else if (strcmp(loc->glslType, "PureLightmapSTSet") == 0) {
+    } else if (strEqu(loc->glslType, "PureLightmapSTSet")) {
       fprintf(fo, "  loc_%sSAxis = owner->glGet%sLoc(progname, prog, \"%sSAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sTAxis = owner->glGet%sLoc(progname, prog, \"%sTAxis\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sSOffs = owner->glGet%sLoc(progname, prog, \"%sSOffs\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
@@ -687,7 +734,7 @@ void genCode (FILE *fo) {
       fprintf(fo, "  loc_%sTexMinT = owner->glGet%sLoc(progname, prog, \"%sTexMinT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sCacheS = owner->glGet%sLoc(progname, prog, \"%sCacheS\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sCacheT = owner->glGet%sLoc(progname, prog, \"%sCacheT\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-    } else if (strcmp(loc->glslType, "FogSet") == 0) {
+    } else if (strEqu(loc->glslType, "FogSet")) {
       fprintf(fo, "  loc_%sFogEnabled = owner->glGet%sLoc(progname, prog, \"%sFogEnabled\", true);\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sFogColour = owner->glGet%sLoc(progname, prog, \"%sFogColour\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       fprintf(fo, "  loc_%sFogStart = owner->glGet%sLoc(progname, prog, \"%sFogStart\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
@@ -828,18 +875,75 @@ int parseOneShaderDef (Parser *par) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int parseGLSL (Parser *par, const char *name) {
+  prExpect(par, "#");
+  prExpect(par, "version");
+  prExpect(par, "120");
+
+  int level = 0;
+
+  for (;;) {
+    char *tk = prGetToken(par);
+    if (!tk) break;
+
+    if (strEqu(tk, "{")) {
+      ++level;
+      continue;
+    }
+
+    if (strEqu(tk, "}")) {
+      if (--level < 0) prError(par, "unbalanced compounds");
+      continue;
+    }
+
+    if (level == 0) {
+      int isAttr = -1;
+           if (prCheck(par, "uniform")) isAttr = 0;
+      else if (prCheck(par, "attribute")) isAttr = 1;
+      if (isAttr >= 0) {
+        char *glslType = xstrdup(prExpectId(par));
+        //const char *shitppType = getShitppType(par, glslType);
+        char *idname = xstrdup(prExpectId(par));
+        prExpect(par, ";");
+        newLocEx(par, idname, isAttr, glslType);
+        continue;
+      }
+    }
+
+    if (strEqu(tk, "$")) {
+      prExpect(par, "include");
+      tk = prExpectString(par);
+      if (level == 0) {
+        if (strEqu(tk, "common/texture_vars.vs")) {
+          newLocEx(par, "_", 0, "TextureSTSet");
+          continue;
+        }
+      }
+      continue;
+    }
+  }
+
+  if (level != 0) prError(par, "unbalanced compounds");
+
+  return 1;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   char *infname = nullptr;
   char *outdir = ".";
+  bool toStdout = false;
 
   for (int aidx = 1; aidx < argc; ++aidx) {
     char *arg = argv[aidx];
-    if (strcmp(arg, "-o") == 0) {
+    if (strEqu(arg, "-o")) {
       if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-o' expects argument!\n"); abort(); }
       outdir = xstrdup(argv[++aidx]);
       //if (outdir[strlen(outdir)-1] != '/') outdir = strcat(outdir, "/");
       continue;
     }
+    if (strEqu(arg, "-")) { toStdout = true; continue; }
     if (infname) { fprintf(stderr, "FATAL: duplicate file name!\n"); abort(); }
     infname = xstrdup(arg);
   }
@@ -857,11 +961,21 @@ int main (int argc, char **argv) {
   printf("[  generating '%s'...]\n", outhname);
   printf("[  generating '%s'...]\n", outcname);
 
-  FILE *foh = fopen(outhname, "w");
-  if (!foh) { fprintf(stderr, "FATAL: cannot create output file '%s'", outhname); abort(); }
+  FILE *foh = nullptr;
+  if (!toStdout) {
+    foh = fopen(outhname, "w");
+    if (!foh) { fprintf(stderr, "FATAL: cannot create output file '%s'", outhname); abort(); }
+  } else {
+    foh = stdout;
+  }
 
-  FILE *foc = fopen(outcname, "w");
-  if (!foc) { fprintf(stderr, "FATAL: cannot create output file '%s'", outcname); abort(); }
+  FILE *foc = nullptr;
+  if (!toStdout) {
+    foc = fopen(outcname, "w");
+    if (!foc) { fprintf(stderr, "FATAL: cannot create output file '%s'", outcname); abort(); }
+  } else {
+    foc = stdout;
+  }
 
   while (parseOneShaderDef(&par)) {
     genHeader(foh);
@@ -869,58 +983,26 @@ int main (int argc, char **argv) {
     clearAll();
   }
 
-  fclose(foh);
-  fclose(foc);
+  /*
+  parseGLSL(&par, "ShadowsSurf");
+
+  text = loadWholeFile(strReplaceExt(infname, ".fs"));
+  parseGLSL(&par, "ShadowsSurf");
+
+
+  shadname = xstrdup("ShadowsSurf");
+  vssrc = xstrdup("shadows_surf_texture");
+  fssrc = xstrdup("shadows_surf_texture");
+
+  genHeader(foh);
+  genCode(foc);
+  */
+
+
+  if (!toStdout) {
+    fclose(foh);
+    fclose(foc);
+  }
 
   return 0;
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-#if 0
-Shader ShadowsModelAmbient both="shadows_model_ambient"
-/* or: vertex="name" fragment="name" */
-{
-  /* directly copied from shader code */
-  uniform mat4 ModelToWorldMat;
-  uniform mat3 NormalToWorldMat;
-  uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform vec4 Light;
-  uniform sampler2D Texture;
-  uniform float InAlpha;
-  uniform bool AllowTransparency;
-}
-
-
-/*
-generated object:
-
-class VShaderDef_ShadowsModelAmbient : VGLShader {
-  GLint loc_ModelToWorldMat;
-  // and so on
-
-  VShaderDef_ShadowsModelAmbient (VOpenGLDrawer *aowner);
-    : VGLShader(aowner, "ShadowsModelAmbient", "glshaders/shadows_model_ambient.vs", "glshaders/shadows_model_ambient.fs")
-    , loc_ModelToWorldMat(-1)
-  {}
-
-  virtual void LoadUniforms () override;
-
-  inline void setModelToWorldMat (const VMatrix4 &v) { if (loc_ModelToWorldMat >= 0) p_glUniformMatrix4fvARB(prog, 1, GL_FALSE, v[0]); }
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-
-void VOpenGLDrawer::VShaderDef_ShadowsModelAmbient::LoadUniforms () {
-  loc_ModelToWorldMat = owner->glGetUniLoc(progname, prog, "ModelToWorldMat");
-}
-*/
-#endif
