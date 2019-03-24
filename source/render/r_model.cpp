@@ -736,6 +736,9 @@ static void Mod_BuildFrames (VMeshModel *mod) {
     }
   }
 
+  // if there were some errors, disable shadows for this model, it is probably broken anyway
+  mod->HadErrors = hadError;
+
   // store edges
   mod->Edges.SetNum(Edges.Num());
   for (int i = 0; i < Edges.Num(); ++i) {
@@ -765,12 +768,12 @@ static void Mod_BuildFrames (VMeshModel *mod) {
 
 //==========================================================================
 //
-//  Mod_Extradata
+//  Mod_ParseModel
 //
 //  Loads the data if needed
 //
 //==========================================================================
-static mmdl_t *Mod_Extradata (VMeshModel *mod) {
+static mmdl_t *Mod_ParseModel (VMeshModel *mod) {
   if (mod->Data) return mod->Data;
 
   // load the file
@@ -800,7 +803,7 @@ static mmdl_t *Mod_Extradata (VMeshModel *mod) {
 //
 //==========================================================================
 static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int InFrame) {
-  mmdl_t *pmdl = (mmdl_t *)Mod_Extradata(wpmodel);
+  mmdl_t *pmdl = (mmdl_t *)Mod_ParseModel(wpmodel);
   unsigned frame = (unsigned)InFrame;
   if (frame >= pmdl->numframes) frame = 0;
   mtriangle_t *ptris = (mtriangle_t *)((vuint8 *)pmdl+pmdl->ofstris);
@@ -912,7 +915,9 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     VScriptSubModel::VFrame &NF = SubMdl.Frames[NFDef.FrameIndex];
 
     // locate the proper data
-    mmdl_t *pmdl = (mmdl_t *)Mod_Extradata(SubMdl.Model);
+    mmdl_t *pmdl = (mmdl_t *)Mod_ParseModel(SubMdl.Model);
+    //FIXME: this should be done earilier
+    if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
 
     // skin aniations
     int Md2SkinIdx = 0;

@@ -190,6 +190,7 @@ struct VMeshModel {
   TArray<VMeshTri> Tris; // vetex indicies
   TArray<VMeshEdge> Edges; // for `Tris`
   bool Uploaded;
+  bool HadErrors;
   vuint32 VertsBuffer;
   vuint32 IndexBuffer;
 };
