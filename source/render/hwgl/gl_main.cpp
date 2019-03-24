@@ -955,6 +955,7 @@ void VOpenGLDrawer::InitResolution () {
   ShadowsAmbient.Setup(this);
   ShadowsTexture.Setup(this);
   ShadowsFog.Setup(this);
+  ShadowsFogMasked.Setup(this); ShadowsFogMasked.defines.append("VV_MASKED_FOG");
   ShadowsLight.Setup(this);
   ShadowsLightDbg.Setup(this); ShadowsLightDbg.defines.append("VV_DEBUG_LIGHT");
   SurfModel.Setup(this);

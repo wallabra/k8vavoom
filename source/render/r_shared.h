@@ -75,6 +75,8 @@ enum {
 };
 
 struct surface_t {
+  enum { DF_MASKED = 0x0001u };
+
   surface_t *next;
   //surface_t *DrawNext;
   texinfo_t *texinfo;
@@ -91,6 +93,7 @@ struct surface_t {
   vuint32 queueframe; // this is used to prevent double queuing
   vuint32 dlightframe;
   vuint32 dlightbits;
+  vuint32 drawflags; // DF_XXX
   int count;
   short texturemins[2];
   short extents[2];

@@ -153,6 +153,14 @@ Shader ShadowsFog both="shadows_surf_fog" {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+Shader ShadowsFogMasked both="shadows_surf_fog" {
+  uniform sampler2D Texture;
+  uniform TextureSTSet _;
+  uniform FogSet _;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 Shader ShadowsLight both="shadows_surf_light" {
   uniform sampler2D Texture;
   uniform vec3 LightColour;

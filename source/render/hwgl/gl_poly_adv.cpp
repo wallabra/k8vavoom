@@ -39,6 +39,12 @@ extern "C" {
     if (sa == sb) return 0;
     const texinfo_t *ta = sa->texinfo;
     const texinfo_t *tb = sb->texinfo;
+    // put steamlined masked textures on bottom (this is useful in fog rendering)
+    if (sa->drawflags&surface_t::DF_MASKED) {
+      if (!(sb->drawflags&surface_t::DF_MASKED)) return 1;
+    } else if (sb->drawflags&surface_t::DF_MASKED) {
+      if (!(sa->drawflags&surface_t::DF_MASKED)) return -1;
+    }
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
     return ((int)ta->ColourMap)-((int)tb->ColourMap);
@@ -810,15 +816,22 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   glDepthMask(GL_FALSE); // no z-buffer writes
 
   // draw surfaces
-  ShadowsFog.Activate();
+  //ShadowsFog.Activate();
   //ShadowsFog.SetFogType();
 
   if (RendLev->DrawSurfList.length() == 0) return;
 
-  vuint32 lastFade = RendLev->DrawSurfList[0]->Fade;
+  int activated = -1; // -1: none; 0: normal; 1: masked
+  bool fadeSet[2] = { false, false };
+  vuint32 lastFade[2] = { 0, 0 }; //RendLev->DrawSurfList[0]->Fade;
+
+  /*
+  ShadowsFog.SetTexture(0);
   ShadowsFog.SetFogFade(lastFade, 1.0f);
+  */
 
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
+  const texinfo_t *lastTexinfo = nullptr;
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
     if (!surf->Fade) continue;
@@ -834,9 +847,39 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
     if (currTexinfo->Alpha < 1.0f) continue;
 
-    if (surf->Fade != lastFade) {
-      lastFade = surf->Fade;
-      ShadowsFog.SetFogFade(lastFade, 1.0f);
+    if (surf->drawflags&surface_t::DF_MASKED) {
+      if (activated != 1) {
+        activated = 1;
+        ShadowsFogMasked.Activate();
+        ShadowsFogMasked.SetTexture(0);
+      }
+      if (!fadeSet[activated] && lastFade[activated] != surf->Fade) {
+        fadeSet[activated] = true;
+        lastFade[activated] = surf->Fade;
+        ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
+      }
+
+      bool textureChanded =
+        !lastTexinfo ||
+        lastTexinfo != currTexinfo ||
+        lastTexinfo->Tex != currTexinfo->Tex ||
+        lastTexinfo->ColourMap != currTexinfo->ColourMap;
+      lastTexinfo = currTexinfo;
+
+      if (textureChanded) {
+        SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+        ShadowsFogMasked.SetTex(currTexinfo);
+      }
+    } else {
+      if (activated != 0) {
+        activated = 0;
+        ShadowsFog.Activate();
+      }
+      if (!fadeSet[activated] && lastFade[activated] != surf->Fade) {
+        fadeSet[activated] = true;
+        lastFade[activated] = surf->Fade;
+        ShadowsFog.SetFogFade(surf->Fade, 1.0f);
+      }
     }
 
     glBegin(GL_POLYGON);

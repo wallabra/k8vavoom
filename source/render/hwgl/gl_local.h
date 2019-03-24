@@ -496,6 +496,7 @@ protected:
   VShaderDef_ShadowsAmbient ShadowsAmbient;
   VShaderDef_ShadowsTexture ShadowsTexture;
   VShaderDef_ShadowsFog ShadowsFog;
+  VShaderDef_ShadowsFogMasked ShadowsFogMasked;
   VShaderDef_ShadowsLight ShadowsLight;
   VShaderDef_ShadowsLightDbg ShadowsLightDbg;
   VShaderDef_SurfModel SurfModel;
