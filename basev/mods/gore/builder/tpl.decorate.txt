@@ -9,6 +9,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
 #endif
   $(Translation)
   Decal K8GoreBloodSplat$(Color)
+  //+Decals2SPass
   game Doom
   +FORCEXYBILLBOARD
   +NOGRAVITY
@@ -110,6 +111,7 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
   //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuper$(Color)
+  +Decals2SPass
   +MISSILE
   +CLIENTSIDEONLY
   +NOTELEPORT
@@ -198,6 +200,7 @@ Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(TransientSfx) {
   //renderstyle Translucent
   //alpha 0.7
   Decal K8GoreBloodSplat$(Color)
+  +Decals2SPass
   +NOTELEPORT
   +NOBLOCKMAP
   //+NOCLIP
@@ -249,6 +252,7 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(TransientSfx) {
   //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplat$(Color)
+  +Decals2SPass
   +MISSILE
   +CLIENTSIDEONLY
   +NOTELEPORT
@@ -289,6 +293,7 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(TransientSfx) {
 Actor K8Gore_FlyingBloodFakeNoDecal$(Color) : K8Gore_FlyingBloodFake$(Color) {
   $(Translation)
   Decal None
+  -Decals2SPass
 }
 
 
@@ -298,6 +303,7 @@ Actor K8Gore_FlyingBloodFakeNoDecal$(Color) : K8Gore_FlyingBloodFake$(Color) {
 Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
   $(Translation)
   Decal K8GoreBloodSuper$(Color)
+  +Decals2SPass
   +MISSILE
   +NOTELEPORT
   +NOBLOCKMAP
@@ -373,7 +379,10 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
 #endif
   Mass 99999
   Scale 0.5
-  Decal K8GoreBloodSplat$(Color)
+  Decal None
+  -Decals2SPass
+  //Decal K8GoreBloodSplat$(Color)
+  //+Decals2SPass
   DamageFactor "TeleportRemover", 100.0
 
   States {
@@ -554,7 +563,10 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
   Height 0
   Speed 400
   Gravity 0.0
-  Decal K8GoreBloodSuper$(Color)
+  //Decal K8GoreBloodSuper$(Color)
+  //+Decals2SPass
+  Decal None
+  -Decals2SPass
 
   States {
     Spawn:
@@ -659,6 +671,7 @@ Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +DontSplash
   Gravity 0.3 //0.7
   Decal K8GoreBloodSplat$(Color)
+  +Decals2SPass
   +MISSILE
   +CLIENTSIDEONLY
   +NOTELEPORT
@@ -829,6 +842,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   //Alpha 0.9
   Scale 0.25
   Decal K8GoreBloodSplat$(Color)
+  +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
   //!Renderstyle Translucent
   //!Alpha 0.99
@@ -906,7 +920,10 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   +OrientedOfs
   //+NoInteraction
   Scale 1.0
-  Decal K8GoreBloodSplat$(Color)
+  Decal None
+  -Decals2SPass
+  //Decal K8GoreBloodSplat$(Color)
+  //+Decals2SPass
   //!Renderstyle Translucent
   //!Alpha 0.99
 
