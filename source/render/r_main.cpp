@@ -1718,7 +1718,7 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 
   if (!GTextureManager[TexNum]->bIsCameraTexture) return;
 
-  VCameraTexture *Tex = (VCameraTexture*)GTextureManager[TexNum];
+  VCameraTexture *Tex = (VCameraTexture *)GTextureManager[TexNum];
   if (!Tex->bNeedsUpdate) return;
 
   refdef_t CameraRefDef;

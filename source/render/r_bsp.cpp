@@ -84,13 +84,15 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
   check(surf);
   if (surf->queueframe == currQueueFrame) {
     if (surf->dcseg) {
-      Host_Error("subsector %d, seg %d surface queued for rendering twice",
+      //abort();
+      GCon->Logf(NAME_Warning, "subsector %d, seg %d surface queued for rendering twice",
         (int)(ptrdiff_t)(surf->dcseg-Level->Segs),
         (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     } else {
-      Host_Error("subsector %d surface queued for rendering twice",
+      GCon->Logf(NAME_Warning, "subsector %d surface queued for rendering twice",
         (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     }
+    return;
   }
   surf->queueframe = currQueueFrame;
   queue.append(surf);
