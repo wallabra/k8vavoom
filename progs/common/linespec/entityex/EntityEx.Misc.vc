@@ -1637,6 +1637,7 @@ final void DoStateEffects (float DeltaTime) {
       }
       dl->colour = L->Colour;
       dl->minlight = L->MinLight;
+      dl->bNoSelfShadow = !!L->NoSelfShadow;
       dl->die = XLevel.Time+0.1;
       prev_rad = dl->radius;
     }

@@ -770,7 +770,7 @@ protected:
   void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
-  void RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
+  void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
                            TVec &Pos, float Radius, float LightMin, vuint32 Colour, bool LimitLights);
 
   // things
@@ -783,7 +783,7 @@ protected:
   void RenderThingLight (VEntity*);
   void RenderMobjsLight ();
   void RenderThingShadow (VEntity*);
-  void RenderMobjsShadow ();
+  void RenderMobjsShadow (VEntity *owner, vuint32 dlflags);
   void RenderThingFog (VEntity*);
   void RenderMobjsFog ();
 

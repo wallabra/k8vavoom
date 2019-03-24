@@ -167,6 +167,7 @@ struct VLightEffectDef {
   float Chance;
   float Interval;
   float Scale;
+  vint32 NoSelfShadow; // this will become flags
 };
 
 

@@ -354,7 +354,7 @@ void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
 //  can use `mobjAffected`
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsShadow () {
+void VAdvancedRenderLevel::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
   int count = mobjAffected.length();
@@ -363,6 +363,7 @@ void VAdvancedRenderLevel::RenderMobjsShadow () {
   VEntity **entp = mobjAffected.ptr();
   for (; count--; ++entp) {
     VEntity *ent = *entp;
+    if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     //if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     //if (!ent->State) continue;

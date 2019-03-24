@@ -838,7 +838,8 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 //  VAdvancedRenderLevel::RenderLightShadows
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
+void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
+                                               const VViewClipper *Range,
                                                TVec &Pos, float Radius, float LightMin, vuint32 Colour,
                                                bool LimitLights)
 {
@@ -930,7 +931,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     }
 #endif
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
-    RenderMobjsShadow();
+    RenderMobjsShadow(ent, dlflags);
     ResetMobjsLightCount(false);
   }
   Drawer->EndLightShadowVolumes();

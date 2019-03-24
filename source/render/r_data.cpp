@@ -981,6 +981,7 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   L->Chance = 0.0f;
   L->Interval = 0.0f;
   L->Scale = 0.0f;
+  L->NoSelfShadow = 0;
 
   // parse light def
   sc->Expect("{");
@@ -1002,6 +1003,8 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
     } else if (sc->Check("minlight")) {
       sc->ExpectFloat();
       L->MinLight = sc->Float;
+    } else if (sc->Check("noselfshadow")) {
+      L->NoSelfShadow = 1;
     } else if (sc->Check("offset")) {
       sc->ExpectFloat();
       L->Offset.x = sc->Float;
@@ -1052,6 +1055,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   L->Chance = 0.0f;
   L->Interval = 0.0f;
   L->Scale = 0.0f;
+  L->NoSelfShadow = 0;
 
   // parse light def
   sc->Expect("{");

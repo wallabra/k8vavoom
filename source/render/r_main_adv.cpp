@@ -238,7 +238,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         sli.stlight = stlight;
         sli.distSq = distSq;
       } else {
-        RenderLightShadows(RD, Range, stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : stlight->radius), 0.0f, stlight->colour, true);
+        RenderLightShadows(nullptr, 0, RD, Range, stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : stlight->radius), 0.0f, stlight->colour, true);
       }
     }
 
@@ -246,7 +246,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     if (visstatlightCount > 0) {
       timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
       for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
-        RenderLightShadows(RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->colour, true);
+        RenderLightShadows(nullptr, 0, RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->colour, true);
       }
     }
   }
@@ -299,7 +299,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         dli.l = l;
         dli.distSq = distSq;
       } else {
-        RenderLightShadows(RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->minlight, l->colour, true);
+        VEntity *own = (l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)l->Owner : nullptr);
+        RenderLightShadows(own, l->flags, RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->minlight, l->colour, true);
       }
     }
 
@@ -307,7 +308,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     if (visdynlightCount > 0) {
       timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
       for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
-        RenderLightShadows(RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->colour, true);
+        VEntity *own = (dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
+        RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->colour, true);
       }
     }
   }
