@@ -4,6 +4,7 @@ pointlight ShortRedTorch
   colour 1 0 0
   radius 160
   offset 0 0 35
+  noselfshadow
 }
 
 class ShortRedTorch
@@ -18,6 +19,7 @@ pointlight ShortGreenTorch
   colour 0 1 0
   radius 160
   offset 0 0 35
+  noselfshadow
 }
 
 class ShortGreenTorch
@@ -32,6 +34,7 @@ pointlight ShortBlueTorch
   colour 0 0 1
   radius 160
   offset 0 0 35
+  noselfshadow
 }
 
 class ShortBlueTorch
@@ -46,6 +49,7 @@ pointlight RedTorch
   colour 1 0 0
   radius 160
   offset 0 0 55
+  noselfshadow
 }
 
 class RedTorch
@@ -60,6 +64,7 @@ pointlight GreenTorch
   colour 0 1 0
   radius 160
   offset 0 0 55
+  noselfshadow
 }
 
 class GreenTorch
@@ -74,6 +79,7 @@ pointlight BlueTorch
   colour 0 0 1
   radius 160
   offset 0 0 55
+  noselfshadow
 }
 
 class BlueTorch
@@ -88,6 +94,7 @@ pointlight Column
   colour 1 1 1
   radius 160
   offset 0 0 40
+  noselfshadow
 }
 
 class Column
@@ -102,6 +109,7 @@ pointlight TechLamp
   colour 1 1 1
   radius 160
   offset 0 0 64
+  noselfshadow
 }
 
 class TechLamp
@@ -116,6 +124,7 @@ pointlight TechLamp2
   colour 1 1 1
   radius 160
   offset 0 0 48
+  noselfshadow
 }
 
 class TechLamp2
@@ -131,6 +140,7 @@ pointlight BurningBarrel
   radius 140
   //offset 0 0 16
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight BurningBarrel_LX0
@@ -139,6 +149,7 @@ pointlight BurningBarrel_LX0
   radius 135
   //offset 0 0 16
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight BurningBarrel_LX1
@@ -147,6 +158,7 @@ pointlight BurningBarrel_LX1
   radius 140
   //offset 0 0 16
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight BurningBarrel_LX2
@@ -155,6 +167,7 @@ pointlight BurningBarrel_LX2
   radius 135
   //offset 0 0 16
   offset 0 0 24
+  noselfshadow
 }
 
 particleeffect BurningBarrelFlameParts
@@ -193,6 +206,7 @@ pointlight Candlestick
 {
   colour 1 1 0.5
   radius 64
+  noselfshadow
 }
 
 class Candlestick
@@ -207,6 +221,7 @@ pointlight HeadCandles
   colour 1 0.5 0.3
   radius 140
   offset 0 0 40
+  noselfshadow
 }
 
 class HeadCandles
@@ -221,6 +236,7 @@ pointlight Candelabra
   colour 1 1 0.5
   radius 128
   offset 0 0 48
+  noselfshadow
 }
 
 class Candelabra
@@ -235,6 +251,7 @@ pointlight FloatingSkull
   colour 1 0.5 0.1
   radius 140
   offset 0 0 40
+  noselfshadow
 }
 
 class FloatingSkull
@@ -249,6 +266,7 @@ pointlight EvilEye
   colour 1 1 0.5
   radius 128
   offset 0 0 46
+  noselfshadow
 }
 
 class EvilEye
@@ -263,6 +281,7 @@ pointlight ExplosiveBarrel_X1
   colour 0.8 0.65 0
   radius 320
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight ExplosiveBarrel_X2
@@ -270,6 +289,7 @@ pointlight ExplosiveBarrel_X2
   colour 0.8 0.65 0
   radius 240
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight ExplosiveBarrel_X3
@@ -277,6 +297,7 @@ pointlight ExplosiveBarrel_X3
   colour 0.8 0.65 0
   radius 160
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight ExplosiveBarrel_X4
@@ -284,6 +305,7 @@ pointlight ExplosiveBarrel_X4
   colour 0.8 0.65 0
   radius 80
   offset 0 0 24
+  noselfshadow
 }
 
 particleeffect ExplosiveBarrel
@@ -305,6 +327,7 @@ pointlight ExplosiveBarrel_N0
   colour 0.2 0.8 0
   radius 86
   offset 0 0 24
+  noselfshadow
 }
 
 pointlight ExplosiveBarrel_N1
@@ -312,6 +335,7 @@ pointlight ExplosiveBarrel_N1
   colour 0.2 0.9 0
   radius 96
   offset 0 0 24
+  noselfshadow
 }
 
 class ExplosiveBarrel

@@ -4,6 +4,7 @@ pointlight HealthBonus
   colour 0 0 0.9
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class HealthBonus
@@ -17,6 +18,7 @@ pointlight GreenArmor
   colour 0 1 0
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class GreenArmor
@@ -30,6 +32,7 @@ pointlight BlueArmor
   colour 0 0 1
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class BlueArmor
@@ -56,6 +59,7 @@ pointlight Soulsphere
   colour 0 0 1
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class Soulsphere
@@ -69,6 +73,7 @@ pointlight BlurSphere
   colour 0.65 0 0
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class BlurSphere
@@ -82,6 +87,7 @@ pointlight InvulnerabilitySphere
   colour 0 0.7 0
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class InvulnerabilitySphere
@@ -95,6 +101,7 @@ pointlight Megasphere
   colour 0.55 0.45 0.35
   radius 86
   offset 0 0 1
+  noselfshadow
 }
 
 class Megasphere

@@ -3,24 +3,28 @@ pointlight Rocket
 {
   colour 0.75 0.3 0
   radius 126
+  noselfshadow
 }
 
 pointlight Rocket_X1
 {
   colour 1 0.35 0.35
   radius 300
+  noselfshadow
 }
 
 pointlight Rocket_X2
 {
   colour 1 0.35 0.35
   radius 200
+  noselfshadow
 }
 
 pointlight Rocket_X3
 {
   colour 1 0.35 0.35
   radius 100
+  noselfshadow
 }
 
 particleeffect Rocket
@@ -50,36 +54,42 @@ pointlight PlasmaBall
 {
   colour 0.45 0.45 1
   radius 126
+  noselfshadow
 }
 
 pointlight PlasmaBall_X1
 {
   colour 0.45 0.45 1
   radius 160
+  noselfshadow
 }
 
 pointlight PlasmaBall_X2
 {
   colour 0.45 0.45 1
   radius 128
+  noselfshadow
 }
 
 pointlight PlasmaBall_X3
 {
   colour 0.45 0.45 1
   radius 96
+  noselfshadow
 }
 
 pointlight PlasmaBall_X4
 {
   colour 0.45 0.45 1
   radius 64
+  noselfshadow
 }
 
 pointlight PlasmaBall_X5
 {
   colour 0.45 0.45 1
   radius 32
+  noselfshadow
 }
 
 particleeffect PlasmaBall
@@ -112,42 +122,49 @@ pointlight BFGBall
 {
   colour 0.35 0.8 0.35
   radius 150
+  noselfshadow
 }
 
 pointlight BFGBall_X1
 {
   colour 0.35 0.8 0.35
   radius 300
+  noselfshadow
 }
 
 pointlight BFGBall_X2
 {
   colour 0.35 0.8 0.35
   radius 250
+  noselfshadow
 }
 
 pointlight BFGBall_X3
 {
   colour 0.35 0.8 0.35
   radius 200
+  noselfshadow
 }
 
 pointlight BFGBall_X4
 {
   colour 0.35 0.8 0.35
   radius 150
+  noselfshadow
 }
 
 pointlight BFGBall_X5
 {
   colour 0.35 0.8 0.35
   radius 100
+  noselfshadow
 }
 
 pointlight BFGBall_X6
 {
   colour 0.35 0.8 0.35
   radius 50
+  noselfshadow
 }
 
 particleeffect BFGBall
@@ -181,24 +198,28 @@ pointlight BFGExtra_X1
 {
   colour 0.35 0.8 0.35
   radius 200
+  noselfshadow
 }
 
 pointlight BFGExtra_X2
 {
   colour 0.35 0.8 0.35
   radius 150
+  noselfshadow
 }
 
 pointlight BFGExtra_X3
 {
   colour 0.35 0.8 0.35
   radius 100
+  noselfshadow
 }
 
 pointlight BFGExtra_X4
 {
   colour 0.35 0.8 0.35
   radius 50
+  noselfshadow
 }
 
 class BFGExtra
