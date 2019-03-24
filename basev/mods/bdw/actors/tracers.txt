@@ -10,6 +10,7 @@ Actor BDW_Tracer : FastProjectile {
   Radius 2
   Height 2
   Speed 60
+  //Speed 2
   RenderStyle Add
   Alpha 0.9
   Scale .15
