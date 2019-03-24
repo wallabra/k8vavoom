@@ -641,9 +641,11 @@ void VRenderLevelShared::ClearQueues () {
   DrawSkyList.reset();
   DrawHorizonList.reset();
   IncQueueFrameCount();
-  // this is prolly not required for advanced renderer, but meh...
-  memset(light_chain, 0, sizeof(light_chain));
-  memset(add_chain, 0, sizeof(add_chain));
+  // this is prolly not required for advanced renderer
+  if (!IsAdvancedRenderer()) {
+    memset(light_chain, 0, sizeof(light_chain));
+    memset(add_chain, 0, sizeof(add_chain));
+  }
 }
 
 
