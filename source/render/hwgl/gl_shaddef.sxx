@@ -50,7 +50,7 @@ Shader SurfDecalLMap both="surf_decal_lmap" {
   uniform sampler2D Texture;
   uniform sampler2D LightMap;
   uniform sampler2D SpecularMap;
-  uniform vec4 Light;
+  //uniform vec4 Light;
   uniform float SplatAlpha; // image alpha will be multiplied by this
   uniform FogSet _;
   //uniform TextureSTSetNoSize _;
@@ -180,7 +180,8 @@ Shader ShadowsLightDbg both="shadows_surf_light" {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Shader SurfModel both="surf_model" {
-  uniform vec3 ViewOrigin;
+  //uniform vec3 ViewOrigin;
+  uniform mat4 ModelToWorldMat;
   uniform float Inter;
   attribute vec4 Vert2;
   attribute vec4 LightVal;
@@ -215,18 +216,18 @@ Shader ShadowsModelAmbient both="shadows_model_ambient" {
 Shader ShadowsModelTextures both="shadows_model_textures" {
   uniform mat4 ModelToWorldMat;
   //!uniform mat3 NormalToWorldMat;
-  uniform vec3 ViewOrigin;
+  //uniform vec3 ViewOrigin;
   uniform float Inter;
 
   attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
+  //attribute vec3 VertNormal;
+  //attribute vec3 Vert2Normal;
   attribute vec2 TexCoord;
 
   uniform sampler2D Texture;
   uniform sampler2D AmbLightTexture;
   uniform float InAlpha;
-  uniform bool AllowTransparency;
+  //uniform bool AllowTransparency;
   uniform vec2 ScreenSize;
 }
 
@@ -280,26 +281,3 @@ Shader ShadowsModelFog both="shadows_model_fog" {
   uniform float InAlpha;
   uniform FogSet _;
 }
-
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-/+
-Shader ShadowsModelAmbient both="shadows_model_ambient" {
-  /* directly copied from shader code */
-  uniform mat4 ModelToWorldMat;
-  uniform mat3 NormalToWorldMat;
-  uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform vec4 Light;
-  uniform sampler2D Texture;
-  uniform float InAlpha;
-  uniform bool AllowTransparency;
-}
-+/

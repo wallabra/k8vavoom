@@ -3,7 +3,7 @@ $include "common/common.inc"
 
 uniform mat4 ModelToWorldMat;
 //!uniform mat3 NormalToWorldMat;
-uniform vec3 ViewOrigin;
+//!uniform vec3 ViewOrigin;
 uniform float Inter;
 
 attribute vec4 Vert2;
@@ -28,7 +28,7 @@ void main () {
   //!float SurfDist = dot(Normal, Vert.xyz);
   //!PlaneDist = SurfDist;
   //!Dist = dot(ViewOrigin, Normal)-SurfDist;
-  VertToView = ViewOrigin-Vert.xyz;
-  VPos = ViewOrigin-gl_Position.xyz;
+  //!VertToView = ViewOrigin-Vert.xyz;
+  //!VPos = ViewOrigin-gl_Position.xyz;
   TextureCoordinate = TexCoord;
 }

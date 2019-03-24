@@ -683,6 +683,9 @@ void VOpenGLDrawer::InitResolution () {
     _(glGetVertexAttribivARB);
     _(glGetVertexAttribPointervARB);
 
+    //_(glGetProgramiv);
+    //_(glGetActiveUniform);
+
     if (!found) Sys_Error("OpenGL FATAL: no shader support");
 
     if (hasBoundsTest) {

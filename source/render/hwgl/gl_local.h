@@ -412,6 +412,9 @@ typedef void (APIENTRY *glBindFramebufferFn) (GLenum target, GLuint framebuffer)
 typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
 typedef void (APIENTRY *glBlitFramebuffer_t) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
+typedef void (APIENTRY *glGetProgramiv_t) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
@@ -907,6 +910,10 @@ protected:
   _(glClipControl);
   _(glDepthBoundsEXT);
   _(glBlitFramebuffer);
+
+  //_(glGetProgramiv);
+  //_(glGetActiveUniform);
+
 #undef _
 
   //void MultiTexCoord(int level, GLfloat s, GLfloat t) { p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t); }
@@ -915,6 +922,42 @@ protected:
 
   static inline void SetColour (vuint32 c) {
     glColor4ub((vuint8)((c>>16)&255), (vuint8)((c>>8)&255), (vuint8)(c&255), (vuint8)((c>>24)&255));
+  }
+
+  static const char *glTypeName (GLenum type) {
+    switch (type) {
+      case /*GL_BYTE*/ 0x1400: return "byte";
+      case /*GL_UNSIGNED_BYTE*/ 0x1401: return "ubyte";
+      case /*GL_SHORT*/ 0x1402: return "short";
+      case /*GL_UNSIGNED_SHORT*/ 0x1403: return "ushort";
+      case /*GL_INT*/ 0x1404: return "int";
+      case /*GL_UNSIGNED_INT*/ 0x1405: return "uint";
+      case /*GL_FLOAT*/ 0x1406: return "float";
+      case /*GL_2_BYTES*/ 0x1407: return "byte2";
+      case /*GL_3_BYTES*/ 0x1408: return "byte3";
+      case /*GL_4_BYTES*/ 0x1409: return "byte4";
+      case /*GL_DOUBLE*/ 0x140A: return "double";
+      case /*GL_FLOAT_VEC2*/ 0x8B50: return "vec2";
+      case /*GL_FLOAT_VEC3*/ 0x8B51: return "vec3";
+      case /*GL_FLOAT_VEC4*/ 0x8B52: return "vec4";
+      case /*GL_INT_VEC2*/ 0x8B53: return "ivec2";
+      case /*GL_INT_VEC3*/ 0x8B54: return "ivec3";
+      case /*GL_INT_VEC4*/ 0x8B55: return "ivec4";
+      case /*GL_BOOL*/ 0x8B56: return "bool";
+      case /*GL_BOOL_VEC2*/ 0x8B57: return "bvec2";
+      case /*GL_BOOL_VEC3*/ 0x8B58: return "bvec3";
+      case /*GL_BOOL_VEC4*/ 0x8B59: return "bvec4";
+      case /*GL_FLOAT_MAT2*/ 0x8B5A: return "mat2";
+      case /*GL_FLOAT_MAT3*/ 0x8B5B: return "mat3";
+      case /*GL_FLOAT_MAT4*/ 0x8B5C: return "mat4";
+      case /*GL_SAMPLER_1D*/ 0x8B5D: return "sampler1D";
+      case /*GL_SAMPLER_2D*/ 0x8B5E: return "sampler2D";
+      case /*GL_SAMPLER_3D*/ 0x8B5F: return "sampler3D";
+      case /*GL_SAMPLER_CUBE*/ 0x8B60: return "samplerCube";
+      case /*GL_SAMPLER_1D_SHADOW*/ 0x8B61: return "sampler1D_shadow";
+      case /*GL_SAMPLER_2D_SHADOW*/ 0x8B62: return "sampler2D_shadow";
+    }
+    return "<unknown>";
   }
 
 public:

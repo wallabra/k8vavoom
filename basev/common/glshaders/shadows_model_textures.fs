@@ -8,18 +8,18 @@ uniform bool AllowTransparency;
 uniform vec2 ScreenSize;
 
 varying vec2 TextureCoordinate;
-varying vec3 VertToView;
-varying vec3 VPos;
+//!varying vec3 VertToView;
+//!varying vec3 VPos;
 //!varying float PlaneDist;
 //!varying float Dist;
 
 
 void main () {
-  float DistVPos = dot(VPos, VPos);
-  if (DistVPos < 0.0) discard;
+  //!float DistVPos = dot(VPos, VPos);
+  //!if (DistVPos < 0.0) discard;
 
-  float DistToView = dot(VertToView, VertToView);
-  if (DistToView < 0.0) discard;
+  //!float DistToView = dot(VertToView, VertToView);
+  //!if (DistToView < 0.0) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;

@@ -7,17 +7,17 @@ uniform float InAlpha;
 uniform bool AllowTransparency;
 
 varying vec4 Light;
-varying vec3 VertToView;
-varying vec3 VPos;
+//varying vec3 VertToView;
+//varying vec3 VPos;
 varying vec2 TextureCoordinate;
 
 
 void main () {
-  float DistVPos = dot(VPos, VPos);
-  if (DistVPos < 0.0) discard;
+  //float DistVPos = dot(VPos, VPos);
+  //if (DistVPos < 0.0) discard;
 
-  float DistToView = dot(VertToView, VertToView);
-  if (DistToView < 0.0) discard;
+  //float DistToView = dot(VertToView, VertToView);
+  //if (DistToView < 0.0) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
   if (TexColour.a < 0.01) discard;
