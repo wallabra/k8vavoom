@@ -1000,7 +1000,8 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
         break;
       case RPASS_Fog:
-        if (Md2Alpha <= 0.666f || SubMdl.NoShadow) continue;
+        // noshadow model is rendered as "normal", so it doesn't need fog
+        if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
         break;
       case RPASS_NonShadow:
         //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
