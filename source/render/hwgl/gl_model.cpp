@@ -543,11 +543,12 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
 //  VOpenGLDrawer::BeginModelsLightPass
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelsLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
+void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour) {
   ShadowsModelLight.Activate();
   ShadowsModelLight.SetTexture(0);
   ShadowsModelLight.SetLightPos(LightPos);
   ShadowsModelLight.SetLightRadius(Radius);
+  ShadowsModelLight.SetLightMin(LightMin);
   ShadowsModelLight.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
 }
 

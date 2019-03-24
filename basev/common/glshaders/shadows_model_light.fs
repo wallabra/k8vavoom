@@ -4,6 +4,7 @@ $include "common/common.inc"
 uniform sampler2D Texture;
 uniform vec3 LightColour;
 uniform float LightRadius;
+uniform float LightMin;
 uniform float InAlpha;
 uniform bool AllowTransparency;
 
@@ -85,7 +86,7 @@ void main () {
   */
 
 
-  float Add = (LightRadius-DistToLight)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  float Add = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
   if (Add <= 0.0) discard;
 
   float ClampAdd = clamp(Add/255.0, 0.0, 1.0);

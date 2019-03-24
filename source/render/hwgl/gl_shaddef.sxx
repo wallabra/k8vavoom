@@ -157,6 +157,7 @@ Shader ShadowsLight both="shadows_surf_light" {
   uniform sampler2D Texture;
   uniform vec3 LightColour;
   uniform float LightRadius;
+  uniform float LightMin;
   uniform vec3 ViewOrigin;
   uniform vec3 LightPos;
   uniform TextureSTSet _;
@@ -170,6 +171,7 @@ Shader ShadowsLightDbg both="shadows_surf_light" {
   uniform sampler2D Texture;
   uniform vec3 LightColour;
   uniform float LightRadius;
+  uniform float LightMin;
   uniform vec3 ViewOrigin;
   uniform vec3 LightPos;
   uniform TextureSTSet _;
@@ -248,6 +250,7 @@ Shader ShadowsModelLight both="shadows_model_light" {
   uniform sampler2D Texture;
   uniform vec3 LightColour;
   uniform float LightRadius;
+  uniform float LightMin;
   uniform float InAlpha;
   uniform bool AllowTransparency;
 }

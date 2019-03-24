@@ -241,7 +241,7 @@ public:
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
-  virtual void BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) = 0;
+  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) = 0;
   virtual void DrawSurfaceLight (surface_t *Surf) = 0;
 
   virtual void DrawWorldTexturesPass () = 0;
@@ -260,7 +260,7 @@ public:
                                        VTexture *Skin, VTextureTranslation *Trans,
                                        int CMap, float Alpha, float Inter,
                                        bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
-  virtual void BeginModelsLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour) = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const TVec &Offset, const TVec &Scale,
                                     VMeshModel *Mdl, int frame, int nextframe,

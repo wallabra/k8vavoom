@@ -580,7 +580,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 //  setup rendering parameters for lighted surface rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 Colour, bool doShadow) {
+void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) {
   RestoreDepthFunc();
   glDepthMask(GL_FALSE); // no z-buffer writes
   glDisable(GL_TEXTURE_2D);
@@ -608,6 +608,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, vuint32 
     ShadowsLight.Activate();
     ShadowsLight.SetLightPos(LightPos);
     ShadowsLight.SetLightRadius(Radius);
+    ShadowsLight.SetLightMin(LightMin);
     ShadowsLight.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
     ShadowsLight.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
     ShadowsLight.SetTexture(0);

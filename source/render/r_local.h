@@ -771,7 +771,7 @@ protected:
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
-                           TVec &Pos, float Radius, vuint32 Colour, bool LimitLights);
+                           TVec &Pos, float Radius, float LightMin, vuint32 Colour, bool LimitLights);
 
   // things
   void ResetMobjsLightCount (bool first); // if `first` is true, build array of affected entities

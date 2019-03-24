@@ -3,6 +3,7 @@ $include "common/common.inc"
 
 uniform vec3 LightColour;
 uniform float LightRadius;
+uniform float LightMin;
 uniform sampler2D Texture;
 
 varying vec3 Normal;
@@ -21,8 +22,8 @@ void main () {
   //if (TexColour.a < 0.1) discard; //FIXME
   if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 
-  float DistToView = dot(VertToView, VertToView);
-  if (DistToView <= 0.0) discard;
+  //float DistToView = dot(VertToView, VertToView);
+  //if (DistToView <= 0.0) discard;
 
   float DistToLight = dot(VertToLight, VertToLight);
   if (DistToLight <= 0.0) discard;
@@ -31,7 +32,7 @@ void main () {
 
   if (DistToLight > LightRadius) discard;
 
-  float Add_1 = (LightRadius-DistToLight)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  float Add_1 = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
   if (Add_1 <= 0.0) discard;
 
   float ClampAdd = clamp(Add_1/255.0, 0.0, 1.0);

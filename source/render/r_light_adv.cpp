@@ -839,11 +839,13 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewClipper *Range,
-                                               TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
+                                               TVec &Pos, float Radius, float LightMin, vuint32 Colour,
+                                               bool LimitLights)
 {
-  if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
+  if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin) return;
 
-  if (!CalcLightVis(Pos, Radius)) return;
+  if (!CalcLightVis(Pos, Radius-LightMin)) return;
+  CurrLightRadius = Radius; // we need full radius, not modified
 
   if (r_advlight_opt_optimise_scissor && !LitSurfaces) return; // no lit surfaces, nothing to do
   if (LightVisSubs.length() == 0) return; // just in case
@@ -851,7 +853,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   CurrLightColour = Colour;
   // if our light is in frustum, ignore any out-of-frustum polys
   if (r_advlight_opt_frustum_full) {
-    CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius+4.0f);
+    CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius-LightMin+4.0f);
   } else {
     CurrLightInFrustum = false; // don't do frustum optimisations
   }
@@ -879,7 +881,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius, scoord, (r_advlight_opt_optimise_scissor && !r_model_shadows ? LitBBox : nullptr));
+    hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor && !r_model_shadows ? LitBBox : nullptr));
     if (hasScissor <= 0) {
       // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
@@ -939,7 +941,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
   //     circle should do the trick.
 
   // draw light
-  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, Colour, doShadows);
+  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, doShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level);
 #if 0
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
@@ -951,7 +953,7 @@ void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD, const VViewCl
     }
   }
 #endif
-  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, Colour);
+  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour);
   RenderMobjsLight();
   ResetMobjsLightCount(false);
 
