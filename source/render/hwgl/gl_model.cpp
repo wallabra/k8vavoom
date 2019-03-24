@@ -663,11 +663,12 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
 
-  VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
-  //VMatrix4 InvRotationMatrix = RotationMatrix;
-  //InvRotationMatrix.invert();
-  TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
-  //TVec LocalLightPos = LightPos*InvRotationMatrix;
+  //VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
+  VMatrix4 InvRotationMatrix = RotationMatrix;
+  InvRotationMatrix.invert();
+  //TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
+  TVec LocalLightPos = LightPos*InvRotationMatrix;
+  //TVec LocalLightPos = RotationMatrix*(LightPos-origin)+LightPos;
 
   //TArray<bool> PlaneSides;
   //PlaneSides.SetNum(Mdl->Tris.Num());

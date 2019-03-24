@@ -745,6 +745,13 @@ static void Mod_BuildFrames (VMeshModel *mod) {
     mod->Edges[i].Tri2 = Edges[i].Tri2;
   }
 
+  /*
+  for (int i = 0; i < Edges.Num(); ++i) {
+    //mod->Edges[i].Vert1 = Edges[i].Vert1;
+    //mod->Edges[i].Vert2 = Edges[i].Vert2;
+    mod->Edges[i].Tri2 = -1;
+  }
+  */
 
   // commands
   pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
