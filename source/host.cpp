@@ -101,15 +101,15 @@ static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show sk
 static double last_time;
 
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
-VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
-VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
+VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", CVAR_PreInit); // checkparm of -respawn
+VCvarB fastparm("g_fast_monsters", false, "Fast monsters?", CVAR_PreInit); // checkparm of -fast
 
 static VCvarB show_time("dbg_show_times", false, "Show some debug times?", CVAR_PreInit);
 
-static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
+static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive|CVAR_PreInit);
 
 static char CurrentLanguage[4];
-static VCvarS Language("language", "en", "Game language.", CVAR_Archive);
+static VCvarS Language("language", "en", "Game language.", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
 
@@ -270,6 +270,8 @@ void Host_Init () {
   }
 
   GCmdBuf.Exec();
+
+  R_InitHiResTextures();
 
 #ifndef CLIENT
   if (GGameInfo->NetMode == NM_None && !wasWarp) {

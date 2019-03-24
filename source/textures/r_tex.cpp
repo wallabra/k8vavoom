@@ -125,7 +125,7 @@ int skyflatnum; // sky mapping
 // switches
 TArray<TSwitch *>  Switches;
 
-VCvarB r_hirestex("r_hirestex", false, "Allow high-resolution texture replacements?", CVAR_Archive);
+VCvarB r_hirestex("r_hirestex", false, "Allow high-resolution texture replacements?", CVAR_Archive|CVAR_PreInit);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
 static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);
@@ -213,7 +213,7 @@ void VTextureManager::Init () {
   AddGroup(TEXTYPE_Sprite, WADNS_Sprites);
 
   // initialise hires textures
-  AddHiResTextures();
+  //AddHiResTextures();
 
   // force-load numbered textures
   AddMissingNumberedTextures(numberedNames);
@@ -1223,6 +1223,7 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 //==========================================================================
 void VTextureManager::AddHiResTextures () {
   check(inMapTextures == 0);
+  //GCon->Logf("HIRES: %d", (r_hirestex ? 1 : 0));
 
   for (int Lump = W_IterateNS(-1, WADNS_HiResTextures); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_HiResTextures)) {
     VName Name = W_LumpName(Lump);
@@ -1235,27 +1236,35 @@ void VTextureManager::AddHiResTextures () {
 
     // find texture to replace
     int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true, true);
-    if (OldIdx < 0) OldIdx = AddPatch(Name, TEXTYPE_Pic, true);
+    if (OldIdx < 0) {
+      if (!r_hirestex) continue; // don't replace
+      OldIdx = AddPatch(Name, TEXTYPE_Pic, true);
+    }
 
     if (OldIdx < 0) {
       // add it as a new texture
-      NewTex->Type = TEXTYPE_Overload;
-      AddTexture(NewTex);
+      if (r_hirestex) {
+        NewTex->Type = TEXTYPE_Overload;
+        AddTexture(NewTex);
+      }
     } else {
-      // repalce existing texture by adjusting scale and offsets
-      VTexture *OldTex = Textures[OldIdx];
-      //fprintf(stderr, "REPLACE0 <%s> (%d)\n", *OldTex->Name, OldIdx);
-      NewTex->bWorldPanning = true;
-      NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
-      NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
-      NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
-      NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
-      NewTex->Type = OldTex->Type;
-      NewTex->TextureTranslation = OldTex->TextureTranslation;
-      NewTex->HashNext = OldTex->HashNext;
-      Textures[OldIdx] = NewTex;
-      delete OldTex;
-      OldTex = nullptr;
+      if (r_hirestex) {
+        // repalce existing texture by adjusting scale and offsets
+        VTexture *OldTex = Textures[OldIdx];
+        //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIdx);
+        NewTex->Name = OldTex->Name;
+        NewTex->bWorldPanning = true;
+        NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
+        NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
+        NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
+        NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
+        NewTex->Type = OldTex->Type;
+        NewTex->TextureTranslation = OldTex->TextureTranslation;
+        NewTex->HashNext = OldTex->HashNext;
+        Textures[OldIdx] = NewTex;
+        delete OldTex;
+        OldTex = nullptr;
+      }
     }
   }
 
@@ -1280,30 +1289,35 @@ void VTextureManager::AddHiResTextures () {
 
         sc->ExpectName8Warn();
         int OldIdx = CheckNumForName(sc->Name8, Type, Overload, false);
-        if (OldIdx < 0) OldIdx = AddPatch(sc->Name8, TEXTYPE_Pic, true);
+        if (OldIdx < 0) {
+          if (!r_hirestex) continue; // don't replace
+          OldIdx = AddPatch(sc->Name8, TEXTYPE_Pic, true);
+        }
 
         sc->ExpectName8Warn();
         int LumpIdx = W_CheckNumForName(sc->Name8, WADNS_Graphics);
         if (OldIdx < 0 || LumpIdx < 0) continue;
 
-        // create new texture
-        VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, LumpIdx);
-        if (!NewTex) continue;
-        // repalce existing texture by adjusting scale and offsets
-        VTexture *OldTex = Textures[OldIdx];
-        //fprintf(stderr, "REPLACE1 <%s> (%d)\n", *OldTex->Name, OldIdx);
-        NewTex->bWorldPanning = true;
-        NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
-        NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
-        NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
-        NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
-        NewTex->Name = OldTex->Name;
-        NewTex->Type = OldTex->Type;
-        NewTex->TextureTranslation = OldTex->TextureTranslation;
-        NewTex->HashNext = OldTex->HashNext;
-        Textures[OldIdx] = NewTex;
-        delete OldTex;
-        OldTex = nullptr;
+        if (r_hirestex) {
+          // create new texture
+          VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, LumpIdx);
+          if (!NewTex) continue;
+          // repalce existing texture by adjusting scale and offsets
+          VTexture *OldTex = Textures[OldIdx];
+          //fprintf(stderr, "REPLACE1 <%s> (%d)\n", *OldTex->Name, OldIdx);
+          NewTex->bWorldPanning = true;
+          NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
+          NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
+          NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
+          NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
+          NewTex->Name = OldTex->Name;
+          NewTex->Type = OldTex->Type;
+          NewTex->TextureTranslation = OldTex->TextureTranslation;
+          NewTex->HashNext = OldTex->HashNext;
+          Textures[OldIdx] = NewTex;
+          delete OldTex;
+          OldTex = nullptr;
+        }
       } else if (sc->Check("define")) {
         sc->ExpectName();
         VName Name = sc->Name;
@@ -1326,6 +1340,9 @@ void VTextureManager::AddHiResTextures () {
         int Height = sc->Number;
         if (LumpIdx < 0) continue;
 
+        int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false, false);
+        if (!r_hirestex && OldIdx < 0) continue; // don't replace
+
         // create new texture
         VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Overload, LumpIdx);
         if (!NewTex) continue;
@@ -1336,7 +1353,6 @@ void VTextureManager::AddHiResTextures () {
         NewTex->TScale = NewTex->GetHeight()/Height;
         NewTex->Name = Name;
 
-        int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false, false);
         if (OldIdx >= 0) {
           VTexture *OldTex = Textures[OldIdx];
           //fprintf(stderr, "REPLACE2 <%s> (%d)\n", *OldTex->Name, OldIdx);
@@ -2434,6 +2450,17 @@ void R_InitTexture () {
   if (GArgs.CheckParm("-dbg-dump-textures")) {
     R_DumpTextures();
   }
+}
+
+
+//==========================================================================
+//
+//  R_InitHiResTextures
+//
+//==========================================================================
+void R_InitHiResTextures () {
+  // initialise hires textures
+  GTextureManager.AddHiResTextures();
 }
 
 

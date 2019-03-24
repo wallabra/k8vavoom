@@ -453,12 +453,15 @@ private:
 
   friend void R_InitTexture ();
   friend void R_DumpTextures ();
+
+  friend void R_InitHiResTextures ();
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // r_tex
 void R_InitTexture ();
+void R_InitHiResTextures ();
 void R_DumpTextures ();
 void R_ShutdownTexture ();
 VAnimDoorDef *R_FindAnimDoor (vint32);
