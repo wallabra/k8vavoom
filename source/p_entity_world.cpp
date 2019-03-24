@@ -62,7 +62,7 @@ struct tmtrace_t {
   sec_plane_t *Ceiling;
 
   enum {
-    TF_FloatOk = 0x01,  // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
+    TF_FloatOk   = 0x01u, // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
   };
   vuint32 TraceFlags;
 
@@ -756,7 +756,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
 
   //++validcount;
   XLevel->IncrementValidCount();
-  tmtrace.SpecHit.Clear();
+  tmtrace.SpecHit.reset(); // was `Clear()`
 
   tmtrace.BlockingMobj = nullptr;
   tmtrace.StepThing = nullptr;
