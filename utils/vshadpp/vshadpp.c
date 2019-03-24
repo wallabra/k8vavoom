@@ -529,7 +529,7 @@ void genHeader (FILE *fo) {
       } else if (strEqu(loc->glslType, "mat4")) {
         fprintf(fo, "    inline void Set%s (const %s %sv) { ", loc->name, loc->shitppType, getShitppAmp(loc->shitppType));
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
-        fprintf(fo, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, v[0]);", loc->name);
+        fprintf(fo, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, &v.m[0][0]);", loc->name);
         fprintf(fo, " }\n");
         fprintf(fo, "    inline void Set%s (const float * v) { ", loc->name);
         fprintf(fo, "if (loc_%s >= 0) ", loc->name);
