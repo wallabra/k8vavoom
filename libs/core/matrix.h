@@ -171,12 +171,12 @@ public:
   inline float *operator [] (int i) { return m[i]; }
   inline const float *operator [] (int i) const { return m[i]; }
 
-  VMatrix4 operator * (const VMatrix4 &m) const {
+  VMatrix4 operator * (const VMatrix4 &mt) const {
     return VMatrix4(
-      VSUM4(m[0][0]*m.m[0][0],m[1][0]*m.m[0][1],m[2][0]*m.m[0][2],m[3][0]*m.m[0][3]),VSUM4(m[0][1]*m.m[0][0],m[1][1]*m.m[0][1],m[2][1]*m.m[0][2],m[3][1]*m.m[0][3]),VSUM4(m[0][2]*m.m[0][0],m[1][2]*m.m[0][1],m[2][2]*m.m[0][2],m[3][2]*m.m[0][3]),VSUM4(m[0][3]*m.m[0][0],m[1][3]*m.m[0][1],m[2][3]*m.m[0][2],m[3][3]*m.m[0][3]),
-      VSUM4(m[0][0]*m.m[1][0],m[1][0]*m.m[1][1],m[2][0]*m.m[1][2],m[3][0]*m.m[1][3]),VSUM4(m[0][1]*m.m[1][0],m[1][1]*m.m[1][1],m[2][1]*m.m[1][2],m[3][1]*m.m[1][3]),VSUM4(m[0][2]*m.m[1][0],m[1][2]*m.m[1][1],m[2][2]*m.m[1][2],m[3][2]*m.m[1][3]),VSUM4(m[0][3]*m.m[1][0],m[1][3]*m.m[1][1],m[2][3]*m.m[1][2],m[3][3]*m.m[1][3]),
-      VSUM4(m[0][0]*m.m[2][0],m[1][0]*m.m[2][1],m[2][0]*m.m[2][2],m[3][0]*m.m[2][3]),VSUM4(m[0][1]*m.m[2][0],m[1][1]*m.m[2][1],m[2][1]*m.m[2][2],m[3][1]*m.m[2][3]),VSUM4(m[0][2]*m.m[2][0],m[1][2]*m.m[2][1],m[2][2]*m.m[2][2],m[3][2]*m.m[2][3]),VSUM4(m[0][3]*m.m[2][0],m[1][3]*m.m[2][1],m[2][3]*m.m[2][2],m[3][3]*m.m[2][3]),
-      VSUM4(m[0][0]*m.m[3][0],m[1][0]*m.m[3][1],m[2][0]*m.m[3][2],m[3][0]*m.m[3][3]),VSUM4(m[0][1]*m.m[3][0],m[1][1]*m.m[3][1],m[2][1]*m.m[3][2],m[3][1]*m.m[3][3]),VSUM4(m[0][2]*m.m[3][0],m[1][2]*m.m[3][1],m[2][2]*m.m[3][2],m[3][2]*m.m[3][3]),VSUM4(m[0][3]*m.m[3][0],m[1][3]*m.m[3][1],m[2][3]*m.m[3][2],m[3][3]*m.m[3][3])
+      VSUM4(m[0][0]*mt.m[0][0],m[1][0]*mt.m[0][1],m[2][0]*mt.m[0][2],m[3][0]*mt.m[0][3]),VSUM4(m[0][1]*mt.m[0][0],m[1][1]*mt.m[0][1],m[2][1]*mt.m[0][2],m[3][1]*mt.m[0][3]),VSUM4(m[0][2]*mt.m[0][0],m[1][2]*mt.m[0][1],m[2][2]*mt.m[0][2],m[3][2]*mt.m[0][3]),VSUM4(m[0][3]*mt.m[0][0],m[1][3]*mt.m[0][1],m[2][3]*mt.m[0][2],m[3][3]*mt.m[0][3]),
+      VSUM4(m[0][0]*mt.m[1][0],m[1][0]*mt.m[1][1],m[2][0]*mt.m[1][2],m[3][0]*mt.m[1][3]),VSUM4(m[0][1]*mt.m[1][0],m[1][1]*mt.m[1][1],m[2][1]*mt.m[1][2],m[3][1]*mt.m[1][3]),VSUM4(m[0][2]*mt.m[1][0],m[1][2]*mt.m[1][1],m[2][2]*mt.m[1][2],m[3][2]*mt.m[1][3]),VSUM4(m[0][3]*mt.m[1][0],m[1][3]*mt.m[1][1],m[2][3]*mt.m[1][2],m[3][3]*mt.m[1][3]),
+      VSUM4(m[0][0]*mt.m[2][0],m[1][0]*mt.m[2][1],m[2][0]*mt.m[2][2],m[3][0]*mt.m[2][3]),VSUM4(m[0][1]*mt.m[2][0],m[1][1]*mt.m[2][1],m[2][1]*mt.m[2][2],m[3][1]*mt.m[2][3]),VSUM4(m[0][2]*mt.m[2][0],m[1][2]*mt.m[2][1],m[2][2]*mt.m[2][2],m[3][2]*mt.m[2][3]),VSUM4(m[0][3]*mt.m[2][0],m[1][3]*mt.m[2][1],m[2][3]*mt.m[2][2],m[3][3]*mt.m[2][3]),
+      VSUM4(m[0][0]*mt.m[3][0],m[1][0]*mt.m[3][1],m[2][0]*mt.m[3][2],m[3][0]*mt.m[3][3]),VSUM4(m[0][1]*mt.m[3][0],m[1][1]*mt.m[3][1],m[2][1]*mt.m[3][2],m[3][1]*mt.m[3][3]),VSUM4(m[0][2]*mt.m[3][0],m[1][2]*mt.m[3][1],m[2][2]*mt.m[3][2],m[3][2]*mt.m[3][3]),VSUM4(m[0][3]*mt.m[3][0],m[1][3]*mt.m[3][1],m[2][3]*mt.m[3][2],m[3][3]*mt.m[3][3])
     );
   }
 
@@ -322,18 +322,18 @@ public:
   void toQuaternion (float quat[4]) const;
 };
 
-static inline __attribute__((unused)) TVec operator * (const VMatrix4 &m, const TVec &v) {
+static inline __attribute__((unused)) TVec operator * (const VMatrix4 &mt, const TVec &v) {
   return TVec(
-    VSUM4(m.m[0][0]*v.x, m[1][0]*v.y, m.m[2][0]*v.z, m.m[3][0]),
-    VSUM4(m.m[0][1]*v.x, m[1][1]*v.y, m.m[2][1]*v.z, m.m[3][1]),
-    VSUM4(m.m[0][2]*v.x, m[1][2]*v.y, m.m[2][2]*v.z, m.m[3][2]));
+    VSUM4(mt.m[0][0]*v.x, mt.m[1][0]*v.y, mt.m[2][0]*v.z, mt.m[3][0]),
+    VSUM4(mt.m[0][1]*v.x, mt.m[1][1]*v.y, mt.m[2][1]*v.z, mt.m[3][1]),
+    VSUM4(mt.m[0][2]*v.x, mt.m[1][2]*v.y, mt.m[2][2]*v.z, mt.m[3][2]));
 }
 
-static inline __attribute__((unused)) TVec operator * (const TVec &v, const VMatrix4 &m) {
+static inline __attribute__((unused)) TVec operator * (const TVec &v, const VMatrix4 &mt) {
   return TVec(
-    VSUM4(m.m[0][0]*v.x, m.m[0][1]*v.y, m.m[0][2]*v.z, m.m[0][3]),
-    VSUM4(m.m[1][0]*v.x, m.m[1][1]*v.y, m.m[1][2]*v.z, m.m[1][3]),
-    VSUM4(m.m[2][0]*v.x, m.m[2][1]*v.y, m.m[2][2]*v.z, m.m[2][3]));
+    VSUM4(mt.m[0][0]*v.x, mt.m[0][1]*v.y, mt.m[0][2]*v.z, mt.m[0][3]),
+    VSUM4(mt.m[1][0]*v.x, mt.m[1][1]*v.y, mt.m[1][2]*v.z, mt.m[1][3]),
+    VSUM4(mt.m[2][0]*v.x, mt.m[2][1]*v.y, mt.m[2][2]*v.z, mt.m[2][3]));
 }
 
 
@@ -362,11 +362,11 @@ public:
     m[2][2] = VSUM2(t*Axis.z*Axis.z, c);
   }
 
-  friend inline TVec operator * (const TVec &v, const VRotMatrix &m) {
+  friend inline TVec operator * (const TVec &v, const VRotMatrix &mt) {
     return TVec(
-      VSUM3(m.m[0][0]*v.x, m.m[0][1]*v.y, m.m[0][2]*v.z),
-      VSUM3(m.m[1][0]*v.x, m.m[1][1]*v.y, m.m[1][2]*v.z),
-      VSUM3(m.m[2][0]*v.x, m.m[2][1]*v.y, m.m[2][2]*v.z)
+      VSUM3(mt.m[0][0]*v.x, mt.m[0][1]*v.y, mt.m[0][2]*v.z),
+      VSUM3(mt.m[1][0]*v.x, mt.m[1][1]*v.y, mt.m[1][2]*v.z),
+      VSUM3(mt.m[2][0]*v.x, mt.m[2][1]*v.y, mt.m[2][2]*v.z)
     );
   }
 };

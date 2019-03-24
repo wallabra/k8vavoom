@@ -504,33 +504,33 @@ VMatrix4 VMatrix4::RotateZ (float angle) {
 
 VMatrix4 VMatrix4::Translate (const TVec &v) {
   VMatrix4 res;
-  res.SetZero();
-  res.m[0][0] = res.m[1][1] = res.m[2][2] = 1.0f;
+  res.SetIdentity();
+  //res.m[0][0] = res.m[1][1] = res.m[2][2] = 1.0f;
   res.m[3][0] = v.x;
   res.m[3][1] = v.y;
   res.m[3][2] = v.z;
-  res.m[3][3] = 1.0f;
+  //res.m[3][3] = 1.0f;
   return res;
 }
 
 VMatrix4 VMatrix4::TranslateNeg (const TVec &v) {
   VMatrix4 res;
-  res.SetZero();
-  res.m[0][0] = res.m[1][1] = res.m[2][2] = 1;
+  res.SetIdentity();
+  //res.m[0][0] = res.m[1][1] = res.m[2][2] = 1;
   res.m[3][0] = -v.x;
   res.m[3][1] = -v.y;
   res.m[3][2] = -v.z;
-  res.m[3][3] = 1;
+  //res.m[3][3] = 1.0f;
   return res;
 }
 
 VMatrix4 VMatrix4::Scale (const TVec &v) {
   VMatrix4 res;
-  res.SetZero();
+  res.SetIdentity();
   res.m[0][0] = v.x;
   res.m[1][1] = v.y;
   res.m[2][2] = v.z;
-  res.m[3][3] = 1.0f;
+  //res.m[3][3] = 1.0f;
   return res;
 }
 
