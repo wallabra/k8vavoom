@@ -29,74 +29,60 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
 // little-endian "IDP2"
-#define IDPOLY2HEADER   (('2'<<24)+('P'<<16)+('D'<<8)+'I')
-#define ALIAS_VERSION   8
+#define IDPOLY2HEADER  (((vuint32)'2'<<24)+((vuint32)'P'<<16)+((vuint32)'D'<<8)+(vuint32)'I')
+#define ALIAS_VERSION  (8)
 
-#define MAXALIASVERTS   16000 // TODO: tune this
-#define MAXALIASSTVERTS   16000 // TODO: tune this
+// TODO: tune this
+#define MAXALIASVERTS    (16000)
+#define MAXALIASSTVERTS  (16000)
 
-// TYPES -------------------------------------------------------------------
 
 #pragma pack(push, 1)
 
-struct mmdl_t
-{
-  int     ident;
-  int     version;
-  int     skinwidth;
-  int     skinheight;
-  int     framesize;
-  int     numskins;
-  int     numverts;
-  int     numstverts;
-  int     numtris;
-  int     numcmds;
-  int     numframes;
-  int     ofsskins;
-  int     ofsstverts;
-  int     ofstris;
-  int     ofsframes;
-  int     ofscmds;
-  int     ofsend;
+struct mmdl_t {
+  vuint32 ident;
+  vuint32 version;
+  vuint32 skinwidth;
+  vuint32 skinheight;
+  vuint32 framesize;
+  vuint32 numskins;
+  vuint32 numverts;
+  vuint32 numstverts;
+  vuint32 numtris;
+  vuint32 numcmds;
+  vuint32 numframes;
+  vuint32 ofsskins;
+  vuint32 ofsstverts;
+  vuint32 ofstris;
+  vuint32 ofsframes;
+  vuint32 ofscmds;
+  vuint32 ofsend;
 };
 
-struct mskin_t
-{
-  char    name[64];
+struct mskin_t {
+  char name[64];
 };
 
-struct mstvert_t
-{
-  short   s;
-  short   t;
+struct mstvert_t {
+  vint16 s;
+  vint16 t;
 };
 
-struct mtriangle_t
-{
-  short   vertindex[3];
-  short   stvertindex[3];
+struct mtriangle_t {
+  vuint16 vertindex[3];
+  vuint16 stvertindex[3];
 };
 
-struct mframe_t
-{
-  TVec    scale;
-  TVec    scale_origin;
-  char    name[16];
+struct mframe_t {
+  TVec scale;
+  TVec scale_origin;
+  char name[16];
 };
 
-struct trivertx_t
-{
-  vuint8  v[3];
-  vuint8  lightnormalindex;
+struct trivertx_t {
+  vuint8 v[3];
+  vuint8 lightnormalindex;
 };
 
 #pragma pack(pop)
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------

@@ -34,7 +34,7 @@
 #define VAVOOM_BIGGER_RGB_TABLE
 //#define VAVOOM_HUGE_RGB_TABLE
 
-#include "fmd2defs.h"
+//#include "fmd2defs.h"
 #include "drawer.h"
 
 
@@ -150,10 +150,15 @@ struct VMeshFrame {
   TVec *Verts;
   TVec *Normals;
   TPlane *Planes;
+  TArray<vuint8> ValidTris;
+  // those are used for rebuilt frames (for multiframe models `TriCount` is constant)
+  vuint32 TriCount;
+  // cached offsets on OpenGL buffer
   vuint32 VertsOffset;
   vuint32 NormalsOffset;
 };
 
+#pragma pack(push,1)
 struct VMeshSTVert {
   float S;
   float T;
@@ -169,6 +174,9 @@ struct VMeshEdge {
   vint16 Tri1;
   vint16 Tri2;
 };
+#pragma pack(pop)
+
+struct mmdl_t;
 
 struct VMeshModel {
   VStr Name;
@@ -179,8 +187,8 @@ struct VMeshModel {
   TArray<TVec> AllNormals;
   TArray<TPlane> AllPlanes;
   TArray<VMeshSTVert> STVerts;
-  TArray<VMeshTri> Tris;
-  TArray<VMeshEdge> Edges;
+  TArray<VMeshTri> Tris; // vetex indicies
+  TArray<VMeshEdge> Edges; // for `Tris`
   bool Uploaded;
   vuint32 VertsBuffer;
   vuint32 IndexBuffer;

@@ -29,7 +29,7 @@
 
 #include "cl_local.h"
 #include "r_shared.h"
-
+#include "fmd2defs.h"
 
 #define MAX_SPRITE_MODELS 10*1024
 

@@ -111,12 +111,16 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   // create buffer
   p_glGenBuffersARB(1, &Mdl->VertsBuffer);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
+
   int Size = sizeof(VMeshSTVert)*Mdl->STVerts.length()+sizeof(TVec)*Mdl->STVerts.length()*2*Mdl->Frames.length();
   p_glBufferDataARB(GL_ARRAY_BUFFER_ARB, Size, nullptr, GL_STATIC_DRAW_ARB);
 
   // upload data
+  // texture coords array
   p_glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(VMeshSTVert)*Mdl->STVerts.length(), &Mdl->STVerts[0]);
+  // vertices array
   p_glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, sizeof(VMeshSTVert)*Mdl->STVerts.length(), sizeof(TVec)*Mdl->AllVerts.length(), &Mdl->AllVerts[0]);
+  // normals array
   p_glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, sizeof(VMeshSTVert)*Mdl->STVerts.length()+sizeof(TVec)*Mdl->AllVerts.length(), sizeof(TVec)*Mdl->AllNormals.length(), &Mdl->AllNormals[0]);
 
   // pre-calculate offsets
@@ -128,6 +132,8 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   // indexes
   p_glGenBuffersARB(1, &Mdl->IndexBuffer);
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
+
+  // vertex indicies
   p_glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 6*Mdl->Tris.length(), &Mdl->Tris[0], GL_STATIC_DRAW_ARB);
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
@@ -221,16 +227,21 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
+
     p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
     p_glEnableVertexAttribArrayARB(0);
+
     p_glVertexAttribPointerARB(SurfModel.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
     p_glEnableVertexAttribArrayARB(SurfModel.loc_Vert2);
+
     p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
     p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
+
     SurfModel.SetViewOrigin(vieworg);
     SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
+
     //bool turnOnDepthMask = false;
     if ((Alpha < 1.0f && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
       glDepthMask(GL_FALSE);

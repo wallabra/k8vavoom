@@ -145,8 +145,7 @@ static TArray<VModel *> mod_known;
 static TArray<VMeshModel *> GMeshModels;
 static TArray<VClassModelScript *> ClassModels;
 
-static const float r_avertexnormals[NUMVERTEXNORMALS][3] =
-{
+static const float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "anorms.h"
 };
 
@@ -482,13 +481,15 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 //
 //  Mod_FindName
 //
+//  used in VC `InstallModel()`
+//
 //==========================================================================
 VModel *Mod_FindName (const VStr &name) {
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models
   for (int i = 0; i < mod_known.Num(); ++i) {
-    if (mod_known[i]->Name == name) return mod_known[i];
+    if (mod_known[i]->Name.ICmp(name) == 0) return mod_known[i];
   }
 
   VModel *mod = new VModel();
@@ -511,15 +512,12 @@ VModel *Mod_FindName (const VStr &name) {
 //  AddEdge
 //
 //==========================================================================
-//static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int OrigVert1, int Vert2, int OrigVert2, int Tri)
 static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   // check for a match
   // compare original vertex indices since texture coordinates are not important here
   for (int i = 0; i < Edges.Num(); ++i) {
     VTempEdge &E = Edges[i];
-    //if (E.Tri2 == -1 && E.OrigVert1 == OrigVert2 && E.OrigVert2 == OrigVert1)
-    if (E.Tri2 == -1 && E.Vert1 == Vert2 && E.Vert2 == Vert1)
-    {
+    if (E.Tri2 == -1 && E.Vert1 == Vert2 && E.Vert2 == Vert1) {
       E.Tri2 = Tri;
       return;
     }
@@ -529,8 +527,6 @@ static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   VTempEdge &e = Edges.Alloc();
   e.Vert1 = Vert1;
   e.Vert2 = Vert2;
-  //e.OrigVert1 = OrigVert1;
-  //e.OrigVert2 = OrigVert2;
   e.Tri1 = Tri;
   e.Tri2 = -1;
 }
@@ -541,7 +537,7 @@ static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
 //  Mod_SwapAliasModel
 //
 //==========================================================================
-static void Mod_SwapAliasModel (VMeshModel *mod) {
+static void Mod_BuildFrames (VMeshModel *mod) {
   mmdl_t *pmodel;
   mstvert_t *pstverts;
   mtriangle_t *ptri;
@@ -554,7 +550,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   mod->IndexBuffer = 0;
 
   // endian-adjust and swap the data, starting with the alias model header
-  for (int i = 0; i < (int)sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
+  for (unsigned i = 0; i < sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
 
   if (pmodel->version != ALIAS_VERSION) Sys_Error("%s has wrong version number (%i should be %i)", *mod->Name, pmodel->version, ALIAS_VERSION);
   if (pmodel->numverts <= 0) Sys_Error("model %s has no vertices", *mod->Name);
@@ -568,18 +564,19 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
 
   // base s and t vertices
   pstverts = (mstvert_t *)((vuint8 *)pmodel+pmodel->ofsstverts);
-  for (int i = 0; i < pmodel->numstverts; ++i) {
+  for (unsigned i = 0; i < pmodel->numstverts; ++i) {
     pstverts[i].s = LittleShort(pstverts[i].s);
     pstverts[i].t = LittleShort(pstverts[i].t);
   }
 
   // triangles
+  //k8: this tried to collape same vertices, but meh
   TArray<TVertMap> VertMap;
   TArray<VTempEdge> Edges;
   mod->Tris.SetNum(pmodel->numtris);
   ptri = (mtriangle_t *)((vuint8 *)pmodel+pmodel->ofstris);
-  for (int i = 0; i < pmodel->numtris; ++i) {
-    for (int j = 0; j < 3; ++j) {
+  for (unsigned i = 0; i < pmodel->numtris; ++i) {
+    for (unsigned j = 0; j < 3; ++j) {
       ptri[i].vertindex[j] = LittleShort(ptri[i].vertindex[j]);
       ptri[i].stvertindex[j] = LittleShort(ptri[i].stvertindex[j]);
       /*k8: who cares?
@@ -605,12 +602,13 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
       v.VertIndex = ptri[i].vertindex[j];
       v.STIndex = ptri[i].stvertindex[j];
     }
-    for (int j = 0; j < 3; ++j) {
+    for (unsigned j = 0; j < 3; ++j) {
       //AddEdge(Edges, mod->Tris[i].VertIndex[j], ptri[i].vertindex[j], mod->Tris[i].VertIndex[(j+1)%3], ptri[i].vertindex[(j+1)%3], i);
       AddEdge(Edges, mod->Tris[i].VertIndex[j], mod->Tris[i].VertIndex[(j+1)%3], i);
     }
   }
 
+  /*
   mod->Edges.SetNum(Edges.Num());
   for (int i = 0; i < Edges.Num(); ++i) {
     mod->Edges[i].Vert1 = Edges[i].Vert1;
@@ -618,6 +616,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
     mod->Edges[i].Tri1 = Edges[i].Tri1;
     mod->Edges[i].Tri2 = Edges[i].Tri2;
   }
+  */
 
   // calculate remapped ST verts
   mod->STVerts.SetNum(VertMap.Num());
@@ -629,7 +628,13 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   // frames
   bool hadError = false;
   bool showError = true;
-  bool cannotFix = false;
+
+  // if we have only one frame, and that frame has invalid triangles, just rebuild it
+  TArray<vuint8> validTri;
+  if (pmodel->numframes == 1) {
+    validTri.setLength((int)pmodel->numtris);
+    memset(validTri.ptr(), 0, pmodel->numtris);
+  }
 
   mod->Frames.SetNum(pmodel->numframes);
   mod->AllVerts.SetNum(pmodel->numframes*VertMap.Num());
@@ -637,7 +642,8 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   mod->AllPlanes.SetNum(pmodel->numframes*pmodel->numtris);
   pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
 
-  for (int i = 0; i < pmodel->numframes; ++i) {
+  int triIgonded = 0;
+  for (unsigned i = 0; i < pmodel->numframes; ++i) {
     pframe->scale[0] = LittleFloat(pframe->scale[0]);
     pframe->scale[1] = LittleFloat(pframe->scale[1]);
     pframe->scale[2] = LittleFloat(pframe->scale[2]);
@@ -651,70 +657,102 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
     Frame.Planes = &mod->AllPlanes[i*pmodel->numtris];
     Frame.VertsOffset = 0;
     Frame.NormalsOffset = 0;
+    Frame.TriCount = pmodel->numtris;
+    Frame.ValidTris.setLength((int)pmodel->numtris);
 
     trivertx_t *Verts = (trivertx_t *)(pframe+1);
     for (int j = 0; j < VertMap.Num(); ++j) {
-      trivertx_t &Vert = Verts[VertMap[j].VertIndex];
+      const trivertx_t &Vert = Verts[VertMap[j].VertIndex];
       Frame.Verts[j].x = Vert.v[0]*pframe->scale[0]+pframe->scale_origin[0];
       Frame.Verts[j].y = Vert.v[1]*pframe->scale[1]+pframe->scale_origin[1];
       Frame.Verts[j].z = Vert.v[2]*pframe->scale[2]+pframe->scale_origin[2];
       Frame.Normals[j] = r_avertexnormals[Vert.lightnormalindex];
     }
 
-    for (int j = 0; j < pmodel->numtris; ++j) {
-      TVec v1 = Frame.Verts[mod->Tris[j].VertIndex[0]];
-      TVec v2 = Frame.Verts[mod->Tris[j].VertIndex[1]];
-      TVec v3 = Frame.Verts[mod->Tris[j].VertIndex[2]];
-      TVec d1 = v2-v3;
-      TVec d2 = v1-v3;
-      //TVec PlaneNormal = Normalise(CrossProduct(d1, d2));
-      TVec PlaneNormal = CrossProduct(d1, d2);
-      if (lengthSquared(PlaneNormal) == 0) {
-        //k8:hack!
-        if (mdl_report_errors) {
-          GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
-            *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
-        }
-        bool ok = false;
-        for (int vnn = 1; vnn <= 3; ++vnn) {
-          v1 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+0)%3]];
-          v2 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+1)%3]];
-          v3 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+2)%3]];
-          d1 = v2-v3;
-          d2 = v1-v3;
-          PlaneNormal = CrossProduct(d1, d2);
-          if (lengthSquared(PlaneNormal) != 0) {
-            ok = true;
-            break;
+    for (unsigned j = 0; j < pmodel->numtris; ++j) {
+      TVec PlaneNormal;
+      TVec v3(0, 0, 0);
+      bool reported = false, hacked = false;
+      for (int vnn = 0; vnn < 3; ++vnn) {
+        TVec v1 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+0)%3]];
+        TVec v2 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+1)%3]];
+             v3 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+2)%3]];
+
+        TVec d1 = v2-v3;
+        TVec d2 = v1-v3;
+        PlaneNormal = CrossProduct(d1, d2);
+        if (lengthSquared(PlaneNormal) == 0) {
+          //k8:hack!
+          if (mdl_report_errors && !reported) {
+            GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
+              *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
           }
+          reported = true;
+        } else {
+          hacked = (vnn != 0);
+          break;
         }
-        if (!ok) {
-          if (mdl_report_errors) {
-            GCon->Logf("  CANNOT FIX!");
-          }
-          cannotFix = true;
-          PlaneNormal = TVec(0, 0, 1);
-          //showError = false;
-        }
-        hadError = true;
       }
+      if (mdl_report_errors && reported) {
+        if (hacked) GCon->Log("  hacked around"); else { GCon->Log("  CANNOT FIX"); PlaneNormal = TVec(0, 0, 1); }
+      }
+      hadError = hadError || reported;
       PlaneNormal = Normalise(PlaneNormal);
       const float PlaneDist = DotProduct(PlaneNormal, v3);
       Frame.Planes[j].Set(PlaneNormal, PlaneDist);
+      if (reported) {
+        ++triIgonded;
+        if (mdl_report_errors) GCon->Logf("  triangle #%u is ignored", j);
+        Frame.ValidTris[j] = 0;
+      } else {
+        Frame.ValidTris[j] = 1;
+      }
     }
     pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
   }
-  if (!mdl_report_errors && hadError && showError) {
-    GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!%s", *mod->Name, (cannotFix ? " (cannot fix)" : ""));
+
+  if (pmodel->numframes == 1) {
+    // rebuild triangle indicies, why not
+    if (hadError) {
+      VMeshFrame &Frame = mod->Frames[0];
+      TArray<VMeshTri> NewTris; // vetex indicies
+      Frame.TriCount = 0;
+      for (unsigned j = 0; j < pmodel->numtris; ++j) {
+        if (Frame.ValidTris[j]) {
+          NewTris.append(mod->Tris[j]);
+          ++Frame.TriCount;
+        }
+      }
+      if (Frame.TriCount == 0) Sys_Error("model %s has no valid triangles", *mod->Name);
+      // replace index array
+      mod->Tris.setLength(NewTris.length());
+      memcpy(mod->Tris.ptr(), NewTris.ptr(), NewTris.length()*sizeof(VMeshTri));
+      pmodel->numtris = Frame.TriCount;
+      if (showError) {
+        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgonded, pmodel->numtris);
+      }
+      // rebuild edges
+      mod->Edges.SetNum(0);
+      for (unsigned i = 0; i < pmodel->numtris; ++i) {
+        for (unsigned j = 0; j < 3; ++j) {
+          //AddEdge(Edges, mod->Tris[i].VertIndex[j], ptri[i].vertindex[j], mod->Tris[i].VertIndex[(j+1)%3], ptri[i].vertindex[(j+1)%3], i);
+          AddEdge(Edges, mod->Tris[i].VertIndex[j], mod->Tris[i].VertIndex[(j+1)%3], i);
+        }
+      }
+    }
+  } else {
+    if (hadError && showError) {
+      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgonded, pmodel->numtris);
+    }
   }
 
   // commands
   pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
-  for (int i = 0; i < pmodel->numcmds; ++i) pcmds[i] = LittleLong(pcmds[i]);
+  for (unsigned i = 0; i < pmodel->numcmds; ++i) pcmds[i] = LittleLong(pcmds[i]);
 
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
-  for (int i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*VStr(pskindesc[i].name).ToLower());
+  for (unsigned i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*VStr(pskindesc[i].name).ToLower());
 }
 
 
@@ -743,7 +781,7 @@ static mmdl_t *Mod_Extradata (VMeshModel *mod) {
   }
 
   // swap model
-  Mod_SwapAliasModel(mod);
+  Mod_BuildFrames(mod);
 
   return mod->Data;
 }
@@ -756,8 +794,8 @@ static mmdl_t *Mod_Extradata (VMeshModel *mod) {
 //==========================================================================
 static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int InFrame) {
   mmdl_t *pmdl = (mmdl_t *)Mod_Extradata(wpmodel);
-  int frame = InFrame;
-  if (frame >= pmdl->numframes || frame < 0) frame = 0;
+  unsigned frame = (unsigned)InFrame;
+  if (frame >= pmdl->numframes) frame = 0;
   mtriangle_t *ptris = (mtriangle_t *)((vuint8 *)pmdl+pmdl->ofstris);
   mframe_t *pframe = (mframe_t *)((vuint8 *)pmdl+pmdl->ofsframes+frame*pmdl->framesize);
   trivertx_t *pverts = (trivertx_t *)(pframe+1);
@@ -887,7 +925,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin, SubMdl.SkinShades[Md2SkinIdx]);
       }
     } else {
-      if (Md2SkinIdx < 0 || Md2SkinIdx >= pmdl->numskins) {
+      if ((unsigned)Md2SkinIdx >= pmdl->numskins) {
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[0], TEXTYPE_Skin);
       } else {
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx], TEXTYPE_Skin);
@@ -896,7 +934,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // get and verify frame number
     int Md2Frame = F.Index;
-    if (Md2Frame >= pmdl->numframes || Md2Frame < 0) {
+    if ((unsigned)Md2Frame >= pmdl->numframes) {
       GCon->Logf(NAME_Dev, "no such frame %d in %s", Md2Frame, *SubMdl.Model->Name);
       Md2Frame = 0;
       // stop further warnings
@@ -905,7 +943,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // get and verify next frame number
     int Md2NextFrame = NF.Index;
-    if (Md2NextFrame >= pmdl->numframes || Md2NextFrame < 0) {
+    if ((unsigned)Md2NextFrame >= pmdl->numframes) {
       GCon->Logf(NAME_Dev, "no such next frame %d in %s", Md2NextFrame, *SubMdl.Model->Name);
       Md2NextFrame = 0;
       // stop further warnings
