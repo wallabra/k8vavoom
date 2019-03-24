@@ -608,16 +608,6 @@ static void Mod_BuildFrames (VMeshModel *mod) {
     }
   }
 
-  /*
-  mod->Edges.SetNum(Edges.Num());
-  for (int i = 0; i < Edges.Num(); ++i) {
-    mod->Edges[i].Vert1 = Edges[i].Vert1;
-    mod->Edges[i].Vert2 = Edges[i].Vert2;
-    mod->Edges[i].Tri1 = Edges[i].Tri1;
-    mod->Edges[i].Tri2 = Edges[i].Tri2;
-  }
-  */
-
   // calculate remapped ST verts
   mod->STVerts.SetNum(VertMap.Num());
   for (int i = 0; i < VertMap.Num(); ++i) {
@@ -745,6 +735,16 @@ static void Mod_BuildFrames (VMeshModel *mod) {
       GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgonded, pmodel->numtris);
     }
   }
+
+  // store edges
+  mod->Edges.SetNum(Edges.Num());
+  for (int i = 0; i < Edges.Num(); ++i) {
+    mod->Edges[i].Vert1 = Edges[i].Vert1;
+    mod->Edges[i].Vert2 = Edges[i].Vert2;
+    mod->Edges[i].Tri1 = Edges[i].Tri1;
+    mod->Edges[i].Tri2 = Edges[i].Tri2;
+  }
+
 
   // commands
   pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
