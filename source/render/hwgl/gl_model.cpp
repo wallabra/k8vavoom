@@ -60,30 +60,39 @@ static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
                                  const TVec &Offset, const TVec &Scale,
                                  VMatrix4 &RotationMatrix)
 {
-  VMatrix4 t3matrix = VMatrix4::Identity;
-  t3matrix[0][0] = Scale.x;
-  t3matrix[1][1] = Scale.y;
-  t3matrix[2][2] = Scale.z;
-
-  t3matrix[0][3] = Scale.x*Offset.x;
-  t3matrix[1][3] = Scale.y*Offset.y;
-  t3matrix[2][3] = Scale.z*Offset.z;
-
   TVec alias_forward, alias_right, alias_up;
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
-  VMatrix4 t2matrix = VMatrix4::Identity;
+  // create rotation matrix
+  VMatrix4 rotmat = VMatrix4::Identity;
   for (unsigned i = 0; i < 3; ++i) {
-    t2matrix[i][0] = alias_forward[i];
-    t2matrix[i][1] = -alias_right[i];
-    t2matrix[i][2] = alias_up[i];
+    rotmat[i][0] = alias_forward[i];
+    rotmat[i][1] = -alias_right[i];
+    rotmat[i][2] = alias_up[i];
   }
 
-  t2matrix[0][3] = modelorg[0];
-  t2matrix[1][3] = modelorg[1];
-  t2matrix[2][3] = modelorg[2];
+  // shift it
+  rotmat[0][3] = modelorg[0];
+  rotmat[1][3] = modelorg[1];
+  rotmat[2][3] = modelorg[2];
 
-  RotationMatrix = t2matrix*t3matrix;
+  //RotationMatrix = rotmat*t3matrix;
+
+  if (Scale.x != 1.0f || Scale.y != 1.0f || Scale.z != 1.0f) {
+    // create scaling matrix
+    VMatrix4 scalemat = VMatrix4::Identity;
+    scalemat[0][0] = Scale.x;
+    scalemat[1][1] = Scale.y;
+    scalemat[2][2] = Scale.z;
+
+    scalemat[0][3] = Scale.x*Offset.x;
+    scalemat[1][3] = Scale.y*Offset.y;
+    scalemat[2][3] = Scale.z*Offset.z;
+
+    RotationMatrix = scalemat*rotmat;
+  } else {
+    RotationMatrix = rotmat;
+  }
 }
 
 
@@ -96,20 +105,23 @@ static void AliasSetUpNormalTransform (const TAVec &angles, const TVec &Scale, V
   TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
-  VMatrix4 t3matrix = VMatrix4::Identity;
-  t3matrix[0][0] = Scale.x;
-  t3matrix[1][1] = Scale.y;
-  t3matrix[2][2] = Scale.z;
+  VMatrix4 scalemat = VMatrix4::Identity;
+  scalemat[0][0] = Scale.x;
+  scalemat[1][1] = Scale.y;
+  scalemat[2][2] = Scale.z;
 
-  VMatrix4 t2matrix = VMatrix4::Identity;
+  VMatrix4 rotmat = VMatrix4::Identity;
   for (int i = 0; i < 3; ++i) {
-    t2matrix[i][0] = alias_forward[i];
-    t2matrix[i][1] = -alias_right[i];
-    t2matrix[i][2] = alias_up[i];
+    rotmat[i][0] = alias_forward[i];
+    rotmat[i][1] = -alias_right[i];
+    rotmat[i][2] = alias_up[i];
   }
 
-  RotationMatrix = t2matrix*t3matrix;
+  //k8: it seems that the order should be reversed
+  //RotationMatrix = rotmat*scalemat;
+  RotationMatrix = scalemat*rotmat;
 
+  //k8: wtf?!
   if (fabsf(Scale.x) != fabsf(Scale.y) || fabsf(Scale.x) != fabsf(Scale.z)) {
     // non-uniform scale, do full inverse transpose
     RotationMatrix = RotationMatrix.Inverse().Transpose();
@@ -211,6 +223,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   glEnable(GL_BLEND);
 
 
+  //GCon->Logf("%s: org=(%f,%f,%f); scale=(%f,%f,%f); ofs=(%f,%f,%f)", *Mdl->Name, origin.x, origin.y, origin.z, Scale.x, Scale.y, Scale.z, Offset.x, Offset.y, Offset.z);
+
   /*
   glPushMatrix();
   glTranslatef(origin.x, origin.y, origin.z);
@@ -225,6 +239,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
+  //AliasSetUpTransform(origin, angles, Offset, TVec(1, 1, 1), RotationMatrix);
 
   SurfModel.Activate();
   SurfModel.SetTexture(0);
