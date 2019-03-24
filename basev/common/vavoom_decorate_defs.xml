@@ -233,6 +233,7 @@
     <flag name="HitMaster" property="bHitMaster" />
     <flag name="HitTracer" property="bHitTracer" />
     <flag name="HitOwner" property="bHitOwner" />
+    <flag name="Decals2SPass" property="bDecals2SPass" />
     <!-- Bouncing -->
     <flag name="BounceOnWalls" property="bBounceWalls" />
     <flag name="BounceOnFloors" property="bBounceFloors" />

@@ -243,7 +243,7 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 //
 //==========================================================================
 final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
-                       optional name DecalName)
+                       optional name DecalName, optional bool only2S)
 {
   intercept_t *in;
   TVec lineEnd;
@@ -346,7 +346,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       tr->side = side;
       tr->didhit = true;
 
-      if (DecalName) SpawnDecal(hit_point, DecalName, side, li);
+      if (DecalName && !only2S) SpawnDecal(hit_point, DecalName, side, li);
 
       // don't go any farther
       return true;

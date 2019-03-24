@@ -364,6 +364,9 @@ bool bHitMaster;
 bool bHitTracer;
 bool bHitOwner;
 
+// if `true`, flying projectile will leave decals on 2-sided walls it flied through
+bool bDecals2SPass;
+
 // params
 float Speed;
 float FastSpeed;
