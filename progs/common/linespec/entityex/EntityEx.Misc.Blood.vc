@@ -310,6 +310,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
             if (DecalName && li.alpha >= 0.6) {
               SpawnDecal(hit_point, DecalName, side, li);
+              // and from another side
+              //if (li.alpha >= 1.0 && !(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) SpawnDecal(hit_point, DecalName, 1-side, li);
               break; // shot continues, why not?
             } else {
               if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) break; // shot continues
@@ -430,7 +432,10 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
   trsplat_t tr;
   while (count-- > 0) {
-    float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
+    //float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
+    //k8: meh, spray it in all directions sometimes
+    //float bleedang = (P_Random() >= 170 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
+    float bleedang = 360.0*Random();
     float bleedpitch = AngleMod360(pitch+(P_Random()-128)*noise);
     //bleedpitch = pitch;
     //double cosp = bleedpitch.Cos();
