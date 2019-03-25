@@ -61,12 +61,14 @@ menudef OptionsMenu {
 
   header "";
 
+  modsubmenus; // place mod submenus here
+
+  header "";
+
   option submenu {
     title = "Clipper Debug";
     submenu = ClipperOptions;
   }
-
-  modsubmenus; // place mod submenus here
 
   header "";
 
