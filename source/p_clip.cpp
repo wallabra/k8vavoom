@@ -32,7 +32,11 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#ifdef CLIENT
 extern VCvarB r_draw_pobj;
+#else
+enum { r_draw_pobj = true };
+#endif
 
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
