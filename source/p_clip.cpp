@@ -451,6 +451,22 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
             // check (only top, bottom, and back)
             if (!Frustum->checkBox(bbox, TFrustum::TopBit|TFrustum::BottomBit|TFrustum::BackBit)) {
               // out of frustum
+              /*
+              GCon->Logf("!!!!!!!!! top=%d; bot=%d; back=%d",
+                (int)Frustum->checkBox(bbox, TFrustum::TopBit),
+                (int)Frustum->checkBox(bbox, TFrustum::BottomBit),
+                (int)Frustum->checkBox(bbox, TFrustum::BackBit));
+              GCon->Logf("  back: (%f,%f,%f : %f)",
+                Frustum->planes[TFrustum::Back].normal.x,
+                Frustum->planes[TFrustum::Back].normal.y,
+                Frustum->planes[TFrustum::Back].normal.z,
+                Frustum->planes[TFrustum::Back].dist);
+              GCon->Logf("  bbox: (%f,%f,%f)-(%f,%f,%f)", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
+              for (unsigned j = 0; j < 8; ++j) {
+                TVec pt(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]);
+                GCon->Logf("   pt: (%f,%f,%f) : res=%d", pt.x, pt.y, pt.z, Frustum->planes[TFrustum::Back].PointOnSide(pt));
+              }
+              */
               return true;
             }
           }
@@ -1117,7 +1133,11 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   for (auto count = sub->numlines; count--; ++ds) {
     const TVec &v1 = *ds->seg->v1;
     const TVec &v2 = *ds->seg->v2;
-    if (ds->seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
+    const int orgside = ds->seg->PointOnSide2(Origin);
+    if (orgside) {
+      if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+      continue; // viewer is in back side or on plane?
+    }
     if (IsRangeVisible(v2, v1)) {
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || !clip_frustum_region || CheckSegFrustum(ds->seg)) {
         return true;
@@ -1149,7 +1169,9 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumCl
         for (int count = sub->numlines; count--; ++sg) {
           const TVec &v1 = *sg->v1;
           const TVec &v2 = *sg->v2;
-          if (sg->PointOnSide(Origin)) {
+          const int orgside = sg->PointOnSide2(Origin);
+          if (orgside == 2) continue; // origin is on plane, we cannot do anything sane
+          if (orgside) {
             // viewer is in back side or on plane?
             AddClipRange(v1, v2);
           } else {
@@ -1166,7 +1188,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumCl
     /*
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-    if (seg->PointOnSide(Origin)) continue; // viewer is in back side or on plane?
+    if (seg->PointOnSideThreshold(Origin)) continue; // viewer is in back side or on plane?
     if (IsRangeVisible(v2, v1)) {
       if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
         return true;
@@ -1175,7 +1197,9 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumCl
     */
     //k8: i am not sure here, but why don't check both sides?
     const TVec *v1, *v2;
-    if (seg->PointOnSide(Origin)) {
+    const int orgside = seg->PointOnSide2(Origin);
+    if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+    if (orgside) {
       v1 = seg->v2;
       v2 = seg->v1;
       continue;
@@ -1205,7 +1229,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool addFrustumCl
 static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec &v2) {
   if (Mirror) {
     // clip seg with mirror plane
-    if (Mirror->PointOnSide(v1) && Mirror->PointOnSide(v2)) return false;
+    if (Mirror->PointOnSideThreshold(v1) && Mirror->PointOnSideThreshold(v2)) return false;
     // and clip it while we are here
     //const float dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
     //const float dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
@@ -1232,7 +1256,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   const TVec &v2 = *seg->v2;
 
   // viewer is in back side or on plane?
-  if (seg->PointOnSide(Origin)) {
+  const int orgside = seg->PointOnSide2(Origin);
+  if (orgside) {
+    if (orgside == 2) return; // origin is on plane, we cannot do anything sane
     // if it is out of view frustum, still clip with it
     if (!skipSphereCheck && clip_frustum && clip_frustum_seg_backface &&
         //seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED &&
@@ -1249,7 +1275,10 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 #ifdef XXX_CLIPPER_DEBUG
       currLevel = Level;
 #endif
-      if (IsSegAClosedSomething(&Frustum, seg)) AddClipRange(v1, v2);
+      if (IsSegAClosedSomething(&Frustum, seg)) {
+        //GCon->Logf("2S(0): angles=(%f,%f)", PointToClipAngle(v1), PointToClipAngle(v2));
+        AddClipRange(v1, v2);
+      }
     }
     return;
   }
@@ -1286,6 +1315,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
         return;
       }
       //GCon->Logf("get lost, line #%d!", (int)(ptrdiff_t)(ldef-Level->Lines));
+      //GCon->Logf("2S(0): angles=(%f,%f)", PointToClipAngle(v2), PointToClipAngle(v1));
     }
   }
 
@@ -1366,7 +1396,9 @@ void VViewClipper::ClipAddAllSubsectorSegs (const subsector_t *sub, const TPlane
       if (!ldef) continue; // miniseg cannot clip anything
       const TVec &v1 = *seg->v1;
       const TVec &v2 = *seg->v2;
-      if (seg->PointOnSide(Origin)) {
+      const int orgside = seg->PointOnSide2(Origin);
+      if (orgside == 2) continue; // origin is on plane, we cannot do anything sane
+      if (orgside) {
         AddClipRange(v1, v2);
       } else {
         AddClipRange(v2, v1);
@@ -1383,7 +1415,9 @@ void VViewClipper::ClipAddAllSubsectorSegs (const subsector_t *sub, const TPlane
         if (!ldef) continue; // miniseg cannot clip anything
         const TVec &v1 = *seg->v1;
         const TVec &v2 = *seg->v2;
-        if (seg->PointOnSide(Origin)) {
+        const int orgside = seg->PointOnSide2(Origin);
+        if (orgside == 2) continue; // origin is on plane, we cannot do anything sane
+        if (orgside) {
           AddClipRange(v1, v2);
         } else {
           AddClipRange(v2, v1);
@@ -1480,7 +1514,9 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsec
     }
     // we have to check even "invisible" segs here, 'cause we need them all
     const TVec *v1, *v2;
-    if (ds->seg->PointOnSide(Origin)) {
+    const int orgside = ds->seg->PointOnSide2(Origin);
+    if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+    if (orgside) {
       v1 = ds->seg->v2;
       v2 = ds->seg->v1;
     } else {
@@ -1506,7 +1542,9 @@ bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, const TVec &CurrLightPos
   if (!seg->SphereTouches(CurrLightPos, CurrLightRadius)) return false;
   // we have to check even "invisible" segs here, 'cause we need them all
   const TVec *v1, *v2;
-  if (seg->PointOnSide(Origin)) {
+  const int orgside = seg->PointOnSide2(Origin);
+  if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+  if (orgside) {
     v1 = seg->v2;
     v2 = seg->v1;
   } else {
@@ -1534,7 +1572,9 @@ bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, const TVec &
     }
     // we have to check even "invisible" segs here, 'cause we need them all
     const TVec *v1, *v2;
-    if (seg->PointOnSide(Origin)) {
+    const int orgside = seg->PointOnSide2(Origin);
+    if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+    if (orgside) {
       v1 = seg->v2;
       v2 = seg->v1;
     } else {
@@ -1575,7 +1615,9 @@ bool VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TVec &CurrLight
 
   // light has 360 degree FOV, so clip with all walls
   const TVec *v1, *v2;
-  if (seg->PointOnSide(Origin)) {
+  const int orgside = seg->PointOnSide2(Origin);
+  if (orgside == 2) return false; // origin is on plane, we cannot do anything sane
+  if (orgside) {
     v1 = seg->v2;
     v2 = seg->v1;
   } else {
