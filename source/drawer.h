@@ -146,6 +146,7 @@ public:
 protected:
   bool mInitialized;
   bool isShittyGPU;
+  bool useReverseZ;
 
   static TArray<void (*) (int phase)> cbInitDeinit;
 
@@ -157,8 +158,10 @@ public:
 public:
   VRenderLevelDrawer *RendLev;
 
-  VDrawer () : RendLev(nullptr) { mInitialized = false; }
+  VDrawer () : mInitialized(false), isShittyGPU(false), useReverseZ(false), RendLev(nullptr) {}
   virtual ~VDrawer () {}
+
+  inline bool CanUseRevZ () const { return useReverseZ; }
 
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS

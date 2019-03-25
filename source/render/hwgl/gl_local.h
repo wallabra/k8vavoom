@@ -643,7 +643,6 @@ private:
   bool RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache);
 
   void RestoreDepthFunc ();
-  inline bool CanUseRevZ () const { return useReverseZ; }
 
 public:
   GLint glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional=false);
@@ -701,7 +700,6 @@ protected:
   vuint8 *tmpImgBuf1;
   int tmpImgBufSize;
 
-  bool useReverseZ;
   bool hasNPOT;
   bool hasBoundsTest; // GL_EXT_depth_bounds_test
 
