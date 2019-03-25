@@ -402,6 +402,11 @@ public:
     return (DotProduct(point, normal)-dist <= 0);
   }
 
+  // returns side 0 (front) or 1 (back, or on plane)
+  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point) const {
+    return (DotProduct(point, normal)-dist < 0.1f);
+  }
+
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
   inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
@@ -414,14 +419,6 @@ public:
     const float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
-
-  /*
-  // returns `true` if point is behind the plane
-  // "th" means "with threshold"
-  inline bool PointOnBackTh (const TVec &point) const {
-    return (DotProduct(point, normal)-dist < -0.1f);
-  }
-  */
 
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"

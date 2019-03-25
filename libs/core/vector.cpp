@@ -417,8 +417,9 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
     // move back plane forward a little
     // it should be moved to match projection, but our line tracing code
     // is using `0.1f` tolerance, and it should be lower than that
-    // our `zNear` is `1.0f` for normal z, and `0.02f` for reverse z
-    planes[4].SetPointNormal3D(fp.origin+fp.vforward*0.02f, fp.vforward);
+    //planes[4].SetPointNormal3D(fp.origin/*+fp.vforward*0.02f*/, fp.vforward);
+    // disregard that; our `zNear` is `1.0f`, so just use it
+    planes[4].SetPointNormal3D(fp.origin+fp.vforward, fp.vforward);
     // sanity check: camera shouldn't be in frustum
     //check(planes[4].PointOnSide(fp.origin));
     planes[4].clipflag = 1U<<4;
