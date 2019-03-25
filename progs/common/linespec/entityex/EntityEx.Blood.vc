@@ -435,7 +435,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     //float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
     //k8: meh, spray it in all directions sometimes
     //float bleedang = (P_Random() >= 170 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
-    float bleedang = 360.0*Random();
+    float bleedang = (GetCvarB('blood_widespread') || P_Random() >= 220 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
     float bleedpitch = AngleMod360(pitch+(P_Random()-128)*noise);
     //bleedpitch = pitch;
     //double cosp = bleedpitch.Cos();
