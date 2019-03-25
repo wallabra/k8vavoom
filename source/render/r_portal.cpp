@@ -31,6 +31,8 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+extern VCvarB gl_dbg_wireframe;
+
 
 //==========================================================================
 //
@@ -110,6 +112,8 @@ bool VPortal::MatchMirror (TPlane *) const {
 //
 //==========================================================================
 void VPortal::Draw (bool UseStencil) {
+  if (gl_dbg_wireframe) return;
+
   if (!Drawer->StartPortal(this, UseStencil)) {
     // all portal polygons are clipped away
     //GCon->Logf("portal is clipped away");
@@ -320,6 +324,8 @@ bool VSkyBoxPortal::MatchSkyBox (VEntity *AEnt) const {
 //
 //==========================================================================
 void VSkyBoxPortal::DrawContents () {
+  if (gl_dbg_wireframe) return;
+
   // set view origin to be sky view origin
   RLev->ViewEnt = Viewport;
   vieworg = Viewport->Origin;

@@ -67,7 +67,7 @@ extern "C" {
 //==========================================================================
 void VOpenGLDrawer::DrawWorldAmbientPass () {
   // draw horizons
-  {
+  if (!gl_dbg_wireframe) {
     surface_t **surfptr = RendLev->DrawHorizonList.ptr();
     for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
@@ -77,7 +77,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   }
 
   // set z-buffer for skies
-  if (RendLev->DrawSkyList.length()) {
+  if (RendLev->DrawSkyList.length() && !gl_dbg_wireframe) {
     SurfZBuf.Activate();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
@@ -97,8 +97,14 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (RendLev->DrawSurfList.length()) {
-    ShadowsAmbient.Activate();
-    ShadowsAmbient.SetTexture(0);
+    if (gl_dbg_wireframe) {
+      DrawAutomap.Activate();
+      glEnable(GL_BLEND);
+      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    } else {
+      ShadowsAmbient.Activate();
+      ShadowsAmbient.SetTexture(0);
+    }
 
     // other passes can skip surface sorting
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
@@ -114,11 +120,18 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         continue;
       }
 
+      if (gl_dbg_wireframe) {
+        float clr = (float)(count+1)/RendLev->DrawSurfList.length();
+        if (clr < 0.1f) clr = 0.1f;
+        glColor4f(clr, clr, clr, 1.0f);
+      }
+
       // don't render translucent surfaces
       // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
       if (currTexinfo->Alpha < 1.0f) continue;
+
       bool textureChanded =
         !lastTexinfo ||
         lastTexinfo != currTexinfo ||
@@ -127,12 +140,14 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       lastTexinfo = currTexinfo;
 
       if (textureChanded) {
-        SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
-        ShadowsAmbient.SetTex(currTexinfo);
+        if (!gl_dbg_wireframe) {
+          SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+          ShadowsAmbient.SetTex(currTexinfo);
+        }
       }
 
       const float lev = getSurfLightLevel(surf);
-      if (lev != prevsflight) {
+      if (lev != prevsflight && !gl_dbg_wireframe) {
         prevsflight = lev;
         ShadowsAmbient.SetLight(
           ((surf->Light>>16)&255)*lev/255.0f,
@@ -140,7 +155,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           (surf->Light&255)*lev/255.0f, 1.0f);
       }
 
-      glBegin(GL_POLYGON);
+      glBegin(gl_dbg_wireframe ? GL_LINE_LOOP : GL_POLYGON);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
     }
@@ -169,6 +184,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) {
+  if (gl_dbg_wireframe) return;
   glDisable(GL_TEXTURE_2D);
   if (hasScissor) {
     if (gl_use_stencil_quad_clear) {
@@ -383,6 +399,7 @@ static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TV
 //
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
+  if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
   const unsigned vcount = (unsigned)surf->count;
@@ -587,6 +604,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) {
+  if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
   glDepthMask(GL_FALSE); // no z-buffer writes
   glDisable(GL_TEXTURE_2D);
@@ -647,6 +665,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
+  if (gl_dbg_wireframe) return;
   //if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", surf->count);
@@ -682,6 +701,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldTexturesPass () {
+  if (gl_dbg_wireframe) return;
   // stop stenciling now
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
@@ -811,6 +831,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldFogPass () {
+  if (gl_dbg_wireframe) return;
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
   glDepthMask(GL_FALSE); // no z-buffer writes
