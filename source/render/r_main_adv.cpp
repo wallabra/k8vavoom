@@ -134,18 +134,29 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     //VMatrix4::ExtractFrustum(model, proj, planes);
     comb.ExtractFrustum(planes);
 
-    /*
+
+    GCon->Log("=== FRUSTUM ===");
     for (unsigned f = 0; f < 6; ++f) {
-      GCon->Logf("plane #%u: (%f,%f,%f) : %f", f, planes[f].normal.x, planes[f].normal.y, planes[f].normal.z, planes[f].dist);
-      GCon->Logf("plane #%u: (%f,%f,%f) : %f", f, view_frustum.planes[f].normal.x, view_frustum.planes[f].normal.y, view_frustum.planes[f].normal.z, view_frustum.planes[f].dist);
+      const float len = planes[f].normal.length();
+      planes[f].normal /= len;
+      planes[f].dist /= len;
+      //planes[f].Normalise();
+      GCon->Logf("  GL plane #%u: (%9f,%9f,%9f) : %f", f, planes[f].normal.x, planes[f].normal.y, planes[f].normal.z, planes[f].dist);
+      GCon->Logf("  MY plane #%u: (%9f,%9f,%9f) : %f", f, view_frustum.planes[f].normal.x, view_frustum.planes[f].normal.y, view_frustum.planes[f].normal.z, view_frustum.planes[f].dist);
     }
-    */
 
     // we aren't interested in far plane
-    for (unsigned f = 0; f < 5; ++f) {
+    for (unsigned f = 0; f < 4; ++f) {
       view_frustum.planes[f] = planes[f];
       view_frustum.planes[f].clipflag = 1U<<f;
     }
+    // near plane for reverse z is "far"
+    if (Drawer->CanUseRevZ()) {
+      view_frustum.planes[TFrustum::Back] = planes[5];
+    } else {
+      view_frustum.planes[TFrustum::Back] = planes[4];
+    }
+    view_frustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
     view_frustum.planeCount = 5;
     //check(view_frustum.planes[4].PointOnSide(vieworg));
   }
