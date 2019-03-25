@@ -374,6 +374,7 @@ native static final float fclamp (float Val, float Min, float Max) [builtin Floa
 native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClamp]; // clamped value
 native static final float sin (float angle) [builtin Sin]; // sine
 native static final float cos (float angle) [builtin Cos]; // cosine
+native static final void sincos (float angle, out float sin, out float cos) [builtin SinCos];
 native static final float tan (float angle) [builtin Tan]; // tangent
 native static final float asin (float x) [builtin ASin]; // arcsine
 native static final float acos (float x) [builtin ACos]; // arccosine

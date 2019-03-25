@@ -2690,6 +2690,7 @@ func_loop:
           case OPC_Builtin_ATan: sp[-1].f = RAD2DEGF(atanf(sp[-1].f)); break;
           case OPC_Builtin_Sqrt: sp[-1].f = sqrtf(sp[-1].f); break;
           case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
+          case OPC_Builtin_SinCos: msincos(sp[-3].f, (float *)sp[-2].p, (float *)sp[-1].p); sp -= 3; break;
           case OPC_Builtin_VecLength:
             if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
             sp[-3].f = sqrtf(VSUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));

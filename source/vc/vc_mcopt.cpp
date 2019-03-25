@@ -935,6 +935,9 @@ struct Instr {
           case OPC_Builtin_ATan2:
             spdelta = -1;
             return;
+          case OPC_Builtin_SinCos:
+            spdelta = -3;
+            return;
           case OPC_Builtin_VecLength:
           case OPC_Builtin_VecLengthSquared:
           case OPC_Builtin_VecLength2D:
