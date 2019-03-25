@@ -387,6 +387,15 @@ bool SetCommonMenu (string Name) {
   if (!stricmp(Name, "Resolution")) { PushMenuScreen(SpawnMenu(MenuScreenScreenResolution)); return true; }
   if (!stricmp(Name, "Video")) { PushMenuScreen(SpawnNamedMenu('VideoOptions')); return true; }
   if (!stricmp(Name, "Sound")) { PushMenuScreen(SpawnNamedMenu('SoundOptions')); return true; }
+
+  // find named menu
+  foreach (MenuDefinition mdef; menudefs) {
+    if (stricmp(mdef.menuName, Name) == 0) {
+      PushMenuScreen(SpawnNamedMenu(name(Name)));
+      return true;
+    }
+  }
+
   //if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return true; }
   //if (!stricmp(Name, "Quit")) { menu_quit(); return true; }
   //PushMenuScreen(SpawnMenu(MenuScreenMain));
