@@ -325,8 +325,10 @@ final void ThrustPlayer (float angle, float move, float deltaTime) {
   {
     move *= LineSpecialGameInfo(Level.Game).IceMoveFactor;
   }
-  MO.Velocity.x += move*cos(angle)*deltaTime;
-  MO.Velocity.y += move*sin(angle)*deltaTime;
+  float s, c;
+  sincos(angle, out s, out c);
+  MO.Velocity.x += move*c*deltaTime;
+  MO.Velocity.y += move*s*deltaTime;
 }
 
 
@@ -1516,9 +1518,11 @@ void ClientSparkParticles (int Count, TVec Org, float Angle) {
   TVec porg;
   foreach (auto i; 0..Count) {
     float an = Angle+Random()*45.0;
-    porg.x = Org.x+(Random ()*15.0)*cos(an);
-    porg.y = Org.y+(Random ()*15.0)*sin(an);
-    porg.z = Org.z-Random ()*4.0;
+    float s, c;
+    sincos(an, out s, out c);
+    porg.x = Org.x+(Random()*15.0)*c;
+    porg.y = Org.y+(Random()*15.0)*s;
+    porg.z = Org.z-Random()*4.0;
 
     particle_t *p = Level.NewParticle(porg);
     if (!p) break;
@@ -3377,8 +3381,10 @@ override void SetViewPos () {
 
     if (MorphTime && ChickenPeck) {
       // set chicken attack view position
-      ViewOrg.x += float(ChickenPeck)*cos(MO.Angles.yaw);
-      ViewOrg.y += float(ChickenPeck)*sin(MO.Angles.yaw);
+      float s, c;
+      sincos(MO.Angles.yaw, out s, out c);
+      ViewOrg.x += float(ChickenPeck)*c;
+      ViewOrg.y += float(ChickenPeck)*s;
     }
   }
 

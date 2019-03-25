@@ -1008,6 +1008,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   TVec lineStart;
   TVec lineEnd;
   TVec shootOrigin;
+  float sina, cosa;
 
   if (!Silent) PlaySound('weapons/railgf', CHAN_WEAPON);
 
@@ -1026,8 +1027,9 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     shootOrigin.z += 8.0;
   }
   shootOrigin.z += spawnofs_z;
-  shootOrigin.x += Offset*cos(Angles.yaw-90.0);
-  shootOrigin.y += Offset*sin(Angles.yaw-90.0);
+  sincos(Angles.yaw-90.0, out sina, out cosa);
+  shootOrigin.x += Offset*cosa;
+  shootOrigin.y += Offset*sina;
 
   //float distance = 8192.0;
   if (!specified_distance || !distance) distance = 8192.0;

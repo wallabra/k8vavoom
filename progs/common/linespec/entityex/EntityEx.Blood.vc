@@ -439,11 +439,14 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     float bleedpitch = AngleMod360(pitch+(P_Random()-128)*noise);
     //bleedpitch = pitch;
     //double cosp = bleedpitch.Cos();
-    float cosp = cos(bleedpitch);
+    float cosp, sinp;
+    sincos(bleedpitch, out sinp, out cosp);
+    float bas, bac;
+    sincos(bleedang, out bas, out bac);
     TVec vdir;
-    vdir.x = cosp*cos(bleedang);
-    vdir.y = cosp*sin(bleedang);
-    vdir.z = -sin(bleedpitch);
+    vdir.x = cosp*bac;
+    vdir.y = cosp*bas;
+    vdir.z = -sinp;
     //DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
 
     if (isSmallDamage && !radiusDamage) continue;

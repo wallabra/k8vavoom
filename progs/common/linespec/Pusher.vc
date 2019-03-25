@@ -136,8 +136,10 @@ int CheckForSectorMatch (int type, int tag) {
 //==========================================================================
 void ChangeValues (int magnitude, int angle) {
   float ang = float(angle)*360.0/256.0;
-  Xmag = int(float(magnitude)*cos(ang));
-  Ymag = int(float(magnitude)*sin(ang));
+  float s, c;
+  sincos(ang, out s, out c);
+  Xmag = int(float(magnitude)*c);
+  Ymag = int(float(magnitude)*s);
   Magnitude = magnitude;
 }
 
@@ -193,26 +195,22 @@ override void Tick (float DeltaTime) {
       // the object's x and y momentum values are changed
       //
       // tmpusher belongs to the point source (MT_PUSH/MT_PULL)
-      float sx;
-      float sy;
-      float dist;
-      float speed;
-      float pushangle;
-
       if (EntityEx(thing).bWindThrust && thing.bColideWithWorld) {
-        sx = X;
-        sy = Y;
-        dist = Length2D(vector(thing.Origin.x-sx, thing.Origin.y-sy));
-        speed = float(Magnitude-(int(dist)>>1))/(2.0*PUSH_FACTOR);
+        float sx = X;
+        float sy = Y;
+        float dist = Length2D(vector(thing.Origin.x-sx, thing.Origin.y-sy));
+        float speed = float(Magnitude-(int(dist)>>1))/(2.0*PUSH_FACTOR);
 
         // If speed <= 0, you're outside the effective radius. You also have
         // to be able to see the push/pull source point.
 
         if ((speed > 0.0) && thing.CanSee(Source)) {
-          pushangle = atan2(sy-thing.Origin.y, sx-thing.Origin.x);
+          float pushangle = atan2(sy-thing.Origin.y, sx-thing.Origin.x);
           if (PointPusher(Source)) pushangle += 180.0; // away
-          thing.Velocity.x += speed*cos(pushangle)*35.0*DeltaTime;
-          thing.Velocity.y += speed*sin(pushangle)*35.0*DeltaTime;
+          float s, c;
+          sincos(pushangle, out s, out c);
+          thing.Velocity.x += speed*c*35.0*DeltaTime;
+          thing.Velocity.y += speed*s*35.0*DeltaTime;
         }
       }
     }

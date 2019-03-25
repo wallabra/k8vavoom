@@ -292,8 +292,7 @@ final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) 
 
   float dist = fmax(1.0, DistTo2(dest));
   if (!dist.isfinite) dist = 0;
-  dir.x = cos(Angles.yaw);
-  dir.y = sin(Angles.yaw);
+  sincos(Angles.yaw, out dir.y, out dir.x);
   dir.z = (dist != 0.0 ? (dest.Origin.z-Origin.z)/dist : A.Speed);
   // fuzzy player
   if (dest.bShadow) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
@@ -381,8 +380,10 @@ final EntityEx SpawnMissileAngle (class!EntityEx type, float angle,
   mo.PlayMissileSpawnSound(self);
   mo.Target = self; // originator
   mo.Angles.yaw = angle;
-  mo.Velocity.x = mo.Speed*cos(angle);
-  mo.Velocity.y = mo.Speed*sin(angle);
+  float sina, cosa;
+  sincos(angle, out sina, out cosa);
+  mo.Velocity.x = mo.Speed*cosa;
+  mo.Velocity.y = mo.Speed*sina;
   mo.Velocity.z = momz;
   return (mo.CheckMissileSpawn() ? mo : none);
 }
@@ -409,8 +410,10 @@ final EntityEx SpawnMissileAngleSpeed (class!EntityEx type, float angle,
   if (!mo.DecalName) mo.DecalName = type.default.DecalName;
   mo.Tracer = self; // Originator
   mo.Angles.yaw = angle;
-  mo.Velocity.x = speed*cos(angle);
-  mo.Velocity.y = speed*sin(angle);
+  float sina, cosa;
+  sincos(angle, out sina, out cosa);
+  mo.Velocity.x = speed*cosa;
+  mo.Velocity.y = speed*sina;
   mo.Velocity.z = momz;
   mo.PlayMissileSpawnSound(self);
   return mo.CheckMissileSpawn() ? mo : none;
@@ -432,8 +435,10 @@ final EntityEx SpawnSubMissile (class!EntityEx type, EntityEx AInstigator) {
   other.Angles = Angles;
   other.DecalName = other.default.DecalName;
 
-  other.Velocity.x = other.Speed*cos(Angles.yaw);
-  other.Velocity.y = other.Speed*sin(Angles.yaw);
+  float sina, cosa;
+  sincos(Angles.yaw, out sina, out cosa);
+  other.Velocity.x = other.Speed*cosa;
+  other.Velocity.y = other.Speed*sina;
   AimLineAttack(dir, Angles, 1024.0, isRocket:true);
   other.Velocity.z = other.Speed*dir.z;
   other.CheckMissileSpawn();

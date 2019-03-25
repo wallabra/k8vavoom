@@ -300,8 +300,10 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
   }
   HandleFloorclip();
   if (bMissile) {
-    Velocity.x = Speed*cos(angle);
-    Velocity.y = Speed*sin(angle);
+    float s, c;
+    sincos(angle, out s, out c);
+    Velocity.x = Speed*c;
+    Velocity.y = Speed*s;
   } else if (!KeepDir) {
     // no fog doesn't alter the player's momentums
     Velocity = vector(0.0, 0.0, 0.0);
@@ -364,8 +366,10 @@ final bool TestLocation () {
 //
 //==========================================================================
 final void Thrust (float angle, float move) {
-  Velocity.x += move*cos(angle)*35.0;
-  Velocity.y += move*sin(angle)*35.0;
+  float s, c;
+  sincos(angle, out s, out c);
+  Velocity.x += move*c*35.0;
+  Velocity.y += move*s*35.0;
 }
 
 
@@ -1164,6 +1168,7 @@ bool CanSeek (EntityEx Targ) {
 final bool SeekerMissile (float thresh, float turnMax, optional bool precise, optional bool curspeed) {
   float dist;
   float delta;
+  float s, c;
 
   if (!Tracer) return false;
   if (!Tracer.bShootable) {
@@ -1190,8 +1195,9 @@ final bool SeekerMissile (float thresh, float turnMax, optional bool precise, op
   //k8: is this right?
   if (!curspeed) {
     if (!precise) {
-      Velocity.x = Speed*cos(angle);
-      Velocity.y = Speed*sin(angle);
+      sincos(angle, out s, out c);
+      Velocity.x = Speed*c;
+      Velocity.y = Speed*s;
       if (Origin.z+Height < Tracer.Origin.z ||
           Tracer.Origin.z+Tracer.Height < Origin.z)
       {
@@ -1213,10 +1219,14 @@ final bool SeekerMissile (float thresh, float turnMax, optional bool precise, op
       if (Tracer.bIsPlayer) aimheight = PlayerEx(Tracer.Player).ViewHeight;
       float pitch = atan2((Tracer.Origin.z+aimheight)-(Origin.z+Height/2.0), fabs(dist));
 
-      float xyscale = Speed*cos(pitch);
-      Velocity.x = xyscale*cos(angle);
-      Velocity.y = xyscale*sin(angle);
-      Velocity.z = Speed*sin(pitch);
+      float ps, pc;
+      sincos(angle, out s, out c);
+      sincos(pitch, out ps, out pc);
+
+      float xyscale = Speed*pc;
+      Velocity.x = xyscale*c;
+      Velocity.y = xyscale*s;
+      Velocity.z = Speed*ps;
     }
   }
 
@@ -1965,8 +1975,10 @@ final EntityEx TossUpObject (class!EntityEx type) {
     A.Angles.yaw = an;
     A.Tracer = Target;
     A.Target = self;
-    A.Velocity.x = randomspeed*cos(an)*35.0;
-    A.Velocity.y = randomspeed*sin(an)*35.0;
+    float sina, cosa;
+    sincos(an, out sina, out cosa);
+    A.Velocity.x = randomspeed*cosa*35.0;
+    A.Velocity.y = randomspeed*sina*35.0;
     A.Velocity.z = (12.0+Random()/8.0)*35.0;
   }
   return A;
@@ -2132,6 +2144,7 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   EntityEx mo;
   Actor newSkull;
   float prestep;
+  float sina, cosa;
 
   if (!SpawnType) SpawnType = LostSoul;
   if (nameicmp(DamageType, 'Massacre') == 0) return;
@@ -2150,29 +2163,29 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   // okay, there's place for another one
   prestep = 4.0+3.0*(Radius+SpawnType.default.Radius)/2.0;
 
+  sincos(angle, out sina, out cosa);
+  sina *= prestep;
+  cosa *= prestep;
+
   // Check whether the Lost Soul is being fired through a 1-sided
   // wall or an impassible line, or a "monsters can't cross" line.
   // If it is, then we don't allow the spawn.
-  if (CheckSides(Origin+vector(prestep*cos(angle), prestep*sin(angle), 8.0))) {
-    return;
-  }
+  if (CheckSides(Origin+vector(cosa, sina, 8.0))) return;
 
   newSkull = Spawn(SpawnType, Origin);
 
   // Check to see if the new Lost Soul's z value is above the
   // ceiling of its new sector, or below the floor. If so, kill it.
-  if ((newSkull.Origin.z > (newSkull.CeilingZ-newSkull.Height)) ||
-      (newSkull.Origin.z < newSkull.FloorZ))
+  if (newSkull.Origin.z > newSkull.CeilingZ-newSkull.Height ||
+      newSkull.Origin.z < newSkull.FloorZ)
   {
     // kill it immediately
     newSkull.Damage(self, self, 10000, forced:true);
     return;
   }
 
-  // Check for movements.
-  if (!newSkull.TryMove(newSkull.Origin+vector(
-      prestep*cos(angle), prestep*sin(angle), 8.0), false))
-  {
+  // check for movements
+  if (!newSkull.TryMove(newSkull.Origin+vector(cosa, sina, 8.0), false)) {
     // kill it immediately
     newSkull.Damage(self, self, 10000, forced:true);
     return;
@@ -2426,8 +2439,10 @@ final void SpawnDirt (float radius) {
   class!EntityEx dtype;
 
   float angle = 360.0*Random();
-  org.x = Origin.x+radius*cos(angle);
-  org.y = Origin.y+radius*sin(angle);
+  float sina, cosa;
+  sincos(angle, out sina, out cosa);
+  org.x = Origin.x+radius*cosa;
+  org.y = Origin.y+radius*sina;
   org.z = Origin.z+Random()*2.0+1.0;
   switch (P_Random()%6) {
     case 0: dtype = Dirt1; break;

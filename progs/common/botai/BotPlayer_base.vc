@@ -533,8 +533,7 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
   TVec bottracedir;
 
   float bottracerange = dist;
-  bottracedir.x = cos(ang);
-  bottracedir.y = sin(ang);
+  sincos(ang, out bottracedir.y, bottracedir.x);
   bottracedir.z = 0.0;
   float x1 = botmo.Origin.x;
   float y1 = botmo.Origin.y;

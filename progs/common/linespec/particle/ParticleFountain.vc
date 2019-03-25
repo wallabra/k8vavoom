@@ -153,8 +153,10 @@ override void ClientTick (float deltaTime) {
   float Out = Radius*Random();
 
   TVec porg;
-  porg.x = Origin.x+Out*cos(An);
-  porg.y = Origin.y+Out*sin(An);
+  float psin, pcos;
+  sincos(An, out psin, out pcos);
+  porg.x = Origin.x+Out*pcos;
+  porg.y = Origin.y+Out*psin;
   porg.z = Origin.z+Height+1.0;
 
   particle_t *p = Level.NewParticle(porg);

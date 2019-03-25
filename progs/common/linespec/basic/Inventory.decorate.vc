@@ -639,8 +639,10 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 
   TVec ShootOrg = Origin;
   if (SpawnXY) {
-    ShootOrg.x += float(SpawnXY)*cos(Angles.yaw-90.0);
-    ShootOrg.y += float(SpawnXY)*sin(Angles.yaw-90.0);
+    float s, c;
+    sincos(Angles.yaw-90.0, out s, out c);
+    ShootOrg.x += float(SpawnXY)*c;
+    ShootOrg.y += float(SpawnXY)*s;
   }
   ShootOrg.z += SpawnZ;
 
