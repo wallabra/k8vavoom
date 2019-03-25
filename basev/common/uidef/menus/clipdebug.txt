@@ -19,7 +19,7 @@ menudef ClipperOptions {
   header "Frustum";
 
   option bool { title = "Enable frustum"; cvar = clip_frustum; }
-  option bool { title = "Top/bottom frustum"; cvar = clip_height; }
+  option bool { title = "Top/bottom frustum door/lifts"; cvar = clip_height; }
   option bool { title = "Add frustum-clipped"; cvar = clip_frustum_add_clipped; }
   option bool { title = "Add frustum-clipped subs"; cvar = clip_frustum_add_clipped_sub; }
   option bool { title = "Frustum bboxes"; cvar = clip_frustum_bbox; }
