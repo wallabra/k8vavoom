@@ -1,0 +1,8 @@
+class Main : Object;
+
+
+void main () {
+  float s = 666, c = 42;
+  sincos(0, out s, out c);
+  print("s=%s; c=%s", s, c);
+}
