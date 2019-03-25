@@ -1,0 +1,35 @@
+// debug clipper options
+menudef ClipperOptions {
+  //selector = MenuSelector_SmallRight;
+  Title = "CLIPPER";
+
+  option bool { title = "Enable clipping"; cvar = clip_enabled; }
+  option bool { title = "Enable 1D clipper"; cvar = clip_use_1d_clipper; }
+  option bool { title = "BSP clipping"; cvar = clip_bsp; }
+  option bool { title = "Clip with polyobj"; cvar = clip_with_polyobj; }
+
+  header "Other";
+
+  option bool { title = "Solid midtex"; cvar = clip_midsolid; }
+  option bool { title = "Closed doors/lifts"; cvar = clip_platforms; }
+  option bool { title = "Skip 1-sided slopes"; cvar = clip_skip_slopes_1side; }
+  option bool { title = "Subregions"; cvar = clip_subregion; }
+  option bool { title = "Use transfer heights"; cvar = clip_use_transfers; }
+
+  header "Frustum";
+
+  option bool { title = "Enable frustum"; cvar = clip_frustum; }
+  option bool { title = "Top/bottom frustum"; cvar = clip_height; }
+  option bool { title = "Add frustum-clipped"; cvar = clip_frustum_add_clipped; }
+  option bool { title = "Add frustum-clipped subs"; cvar = clip_frustum_add_clipped_sub; }
+  option bool { title = "Frustum bboxes"; cvar = clip_frustum_bbox; }
+  option bool { title = "Frustum BSP"; cvar = clip_frustum_bsp; }
+  option bool { title = "Init range with frustum"; cvar = clip_frustum_init_range; }
+  option bool { title = "Frustum regions"; cvar = clip_frustum_region; }
+  option bool { title = "2-Sided"; cvar = clip_frustum_seg_2s; }
+  option bool { title = "Seg backfaces"; cvar = clip_frustum_seg_backface; }
+  option bool { title = "Subsectors"; cvar = clip_frustum_sub; }
+  option bool { title = "Frustum mirrors"; cvar = clip_frustum_mirror; }
+
+  //option bool { title = ""; cvar = clip_frustum_check_mask; }
+}

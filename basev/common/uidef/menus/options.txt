@@ -59,6 +59,13 @@ menudef OptionsMenu {
     submenu = HealthAccumOptions;
   }
 
+  header "";
+
+  option submenu {
+    title = "Clipper Debug";
+    submenu = ClipperOptions;
+  }
+
   modsubmenus; // place mod submenus here
 
   header "";

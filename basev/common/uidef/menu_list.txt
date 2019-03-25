@@ -12,4 +12,6 @@ menus {
   "menus/xmp.txt",
 
   "menus/controls_main.txt",
+
+  "menus/clipdebug.txt",
 }
