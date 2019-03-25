@@ -116,7 +116,14 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane) {
   sec_plane_t *splane = InSplane;
   int vcount = sub->numlines;
-  check(vcount >= 3);
+
+  if (vcount < 3) {
+    GCon->Logf(NAME_Warning, "CreateSecSurface: subsector #%d has only #%d vertices", (int)(ptrdiff_t)(sub-Level->Subsectors), vcount);
+    if (vcount < 1) Sys_Error("ONE VERTEX. WTF?!");
+    if (ssurf) return ssurf;
+  }
+  //check(vcount >= 3);
+
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
   bool isSkyFlat = (splane->pic == skyflatnum);
   bool recalcSurface = true;
