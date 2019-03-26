@@ -432,7 +432,7 @@ void VMirrorPortal::DrawContents () {
   const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
   view_frustum.planes[5] = *Plane;
   view_frustum.planes[5].clipflag = 0x20U;
-  view_frustum.setupBoxIndiciesForPlane(5);
+  //view_frustum.setupBoxIndiciesForPlane(5);
   const unsigned planeCount = view_frustum.planeCount;
   view_frustum.planeCount = 6;
 

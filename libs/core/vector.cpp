@@ -220,6 +220,132 @@ __attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &V
 
 //==========================================================================
 //
+//  TPlane::checkBox
+//
+//  returns `false` is box is on the back of the plane (or clipflag is 0)
+//  bbox:
+//    [0] is minx
+//    [1] is miny
+//    [2] is minz
+//    [3] is maxx
+//    [4] is maxy
+//    [5] is maxz
+//
+//==========================================================================
+bool TPlane::checkBox (const float bbox[6]) const {
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
+#ifdef FRUSTUM_BOX_OPTIMISATION
+  // check reject point
+  return !PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
+#else
+  for (unsigned j = 0; j < 8; ++j) {
+    if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
+      return true;
+    }
+  }
+  return false;
+#endif
+}
+
+
+//==========================================================================
+//
+//  TPlane::checkBoxEx
+//
+//  0: completely outside; >0: completely inside; <0: partially inside
+//
+//==========================================================================
+int TPlane::checkBoxEx (const float bbox[6]) const {
+#ifdef FRUSTUM_BBOX_CHECKS
+  check(bbox[0] <= bbox[3+0]);
+  check(bbox[1] <= bbox[3+1]);
+  check(bbox[2] <= bbox[3+2]);
+#endif
+#ifdef FRUSTUM_BOX_OPTIMISATION
+  // check reject point
+  if (PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return TFrustum::OUTSIDE; // completely outside
+  // check accept point
+  return (PointOnSide(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]])) ? TFrustum::PARTIALLY : TFrustum::INSIDE);
+#else
+  unsigned passed = 0;
+  for (unsigned j = 0; j < 8; ++j) {
+    if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
+      ++passed;
+      break;
+    }
+  }
+  return (passed ? (passed == 8 ? TFrustum::INSIDE : TFrustum::PARTIALLY) : TFrustum::OUTSIDE);
+#endif
+}
+
+
+//==========================================================================
+//
+//  CreateBBox
+//
+//==========================================================================
+static inline void CreateBBox (float bbox[6], const TVec &v0, const TVec &v1) {
+  if (v0.x < v1.x) {
+    bbox[0+0] = v0.x;
+    bbox[3+0] = v1.x;
+  } else {
+    bbox[0+0] = v1.x;
+    bbox[3+0] = v0.x;
+  }
+  if (v0.y < v1.y) {
+    bbox[0+1] = v0.y;
+    bbox[3+1] = v1.y;
+  } else {
+    bbox[0+1] = v1.y;
+    bbox[3+1] = v0.y;
+  }
+  if (v0.z < v1.z) {
+    bbox[0+2] = v0.z;
+    bbox[3+2] = v1.z;
+  } else {
+    bbox[0+2] = v1.z;
+    bbox[3+2] = v0.z;
+  }
+}
+
+
+//==========================================================================
+//
+//  TPlane::checkRect
+//
+//  returns `false` is rect is on the back of the plane
+//
+//==========================================================================
+bool TPlane::checkRect (const TVec &v0, const TVec &v1) const {
+  //FIXME: this can be faster
+  float bbox[6];
+  CreateBBox(bbox, v0, v1);
+  return checkBox(bbox);
+}
+
+
+//==========================================================================
+//
+//  TPlane::checkRectEx
+//
+//  0: completely outside; >0: completely inside; <0: partially inside
+//
+//==========================================================================
+int TPlane::checkRectEx (const TVec &v0, const TVec &v1) const {
+  //FIXME: this can be faster
+  float bbox[6];
+  CreateBBox(bbox, v0, v1);
+  return checkBoxEx(bbox);
+}
+
+
+
+//==========================================================================
+//
 //  TClipBase::setupFromFOVs
 //
 //==========================================================================
@@ -297,101 +423,6 @@ void TClipPlane::setupBoxIndicies () {
 
 //==========================================================================
 //
-//  TClipPlane::checkBox
-//
-//  returns `false` is box is on the back of the plane (or clipflag is 0)
-//  bbox:
-//    [0] is minx
-//    [1] is miny
-//    [2] is minz
-//    [3] is maxx
-//    [4] is maxy
-//    [5] is maxz
-//
-//==========================================================================
-bool TClipPlane::checkBox (const float bbox[6]) const {
-  if (!clipflag) return true; // don't need to clip against it
-#ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
-#endif
-#ifdef FRUSTUM_BOX_OPTIMISATION
-  // check reject point
-  return !PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
-#else
-  for (unsigned j = 0; j < 8; ++j) {
-    if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
-      return true;
-    }
-  }
-  return false;
-#endif
-}
-
-
-//==========================================================================
-//
-//  TClipPlane::checkBoxEx
-//
-//  0: completely outside; >0: completely inside; <0: partially inside
-//
-//==========================================================================
-int TClipPlane::checkBoxEx (const float bbox[6]) const {
-  if (!clipflag) return 1; // don't need to clip against it
-#ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
-#endif
-#ifdef FRUSTUM_BOX_OPTIMISATION
-  // check reject point
-  if (PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return TFrustum::OUTSIDE; // completely outside
-  // check accept point
-  return (PointOnSide(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]])) ? TFrustum::PARTIALLY : TFrustum::INSIDE);
-#else
-  unsigned passed = 0;
-  for (unsigned j = 0; j < 8; ++j) {
-    if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
-      ++passed;
-      break;
-    }
-  }
-  return (passed ? (passed == 8 ? TFrustum::INSIDE : TFrustum::PARTIALLY) : TFrustum::OUTSIDE);
-#endif
-}
-
-
-
-//==========================================================================
-//
-//  TFrustum::setupBoxIndicies
-//
-//  setup indicies for box checking
-//
-//==========================================================================
-void TFrustum::setupBoxIndicies () {
-  for (unsigned i = 0; i < 6; ++i) {
-    if (!planes[i].clipflag) continue;
-    setupBoxIndiciesForPlane(i);
-  }
-}
-
-
-//==========================================================================
-//
-//  TFrustum::setupBoxIndicies
-//
-//==========================================================================
-void TFrustum::setupBoxIndiciesForPlane (unsigned pidx) {
-  if (pidx < 6 && planes[pidx].clipflag) {
-    planes[pidx].setupBoxIndicies();
-  }
-}
-
-
-//==========================================================================
-//
 //  TFrustum::setup
 //
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
@@ -435,7 +466,6 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
   } else {
     planes[5].clipflag = 0;
   }
-  setupBoxIndicies();
 }
 
 

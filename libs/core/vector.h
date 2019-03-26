@@ -24,10 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//#define FRUSTUM_BOX_OPTIMISATION
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static const unsigned BBoxVertexIndex[8][3] = {
   {0+0, 0+1, 0+2},
   {3+0, 0+1, 0+2},
@@ -451,6 +447,18 @@ public:
     //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
     return DotProduct(p, normal)-dist;
   }
+
+  // returns `false` is box is on the back of the plane (or clipflag is 0)
+  __attribute__((warn_unused_result)) bool checkBox (const float *bbox) const;
+
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  __attribute__((warn_unused_result)) int checkBoxEx (const float *bbox) const;
+
+  // returns `false` is rect is on the back of the plane
+  __attribute__((warn_unused_result)) bool checkRect (const TVec &v0, const TVec &v1) const;
+
+  // 0: completely outside; >0: completely inside; <0: partially inside
+  __attribute__((warn_unused_result)) int checkRectEx (const TVec &v0, const TVec &v1) const;
 };
 
 
@@ -458,9 +466,6 @@ public:
 class TClipPlane : public TPlane {
 public:
   unsigned clipflag;
-#ifdef FRUSTUM_BOX_OPTIMISATION
-  unsigned pindex[6];
-#endif
 
 public:
   //TClipPlane () : TPlane(E_NoInit) { clipflag = 0; }
@@ -472,23 +477,8 @@ public:
   inline TClipPlane &operator = (const TPlane &p) {
     normal = p.normal;
     dist = p.dist;
-#ifdef FRUSTUM_BOX_OPTIMISATION
-    if (normal.isValid()) setupBoxIndicies(); // why not?
-#endif
     return *this;
   }
-
-#ifdef FRUSTUM_BOX_OPTIMISATION
-  void setupBoxIndicies ();
-#else
-  inline void setupBoxIndicies () {}
-#endif
-
-  // returns `false` is box is on the back of the plane (or clipflag is 0)
-  __attribute__((warn_unused_result)) bool checkBox (const float *bbox) const;
-
-  // 0: completely outside; >0: completely inside; <0: partially inside
-  __attribute__((warn_unused_result)) int checkBoxEx (const float *bbox) const;
 };
 
 
