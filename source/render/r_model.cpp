@@ -1244,6 +1244,18 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
 
 //==========================================================================
 //
+//  VRenderLevelShared::HasAliasModel
+//
+//==========================================================================
+bool VRenderLevelShared::HasAliasModel (VName clsName) const {
+  if (clsName == NAME_None) return false;
+  VClassModelScript *Cls = FindClassModelByName(clsName);
+  return !!Cls;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawAliasModel
 //
 //==========================================================================

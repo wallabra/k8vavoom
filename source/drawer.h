@@ -206,6 +206,7 @@ public:
                                vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
                                bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
                                bool onlyDepth) = 0;
+
   virtual bool StartPortal (VPortal *Portal, bool UseStencil) = 0;
   virtual void EndPortal (VPortal *Portal, bool UseStencil) = 0;
 

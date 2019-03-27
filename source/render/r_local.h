@@ -596,6 +596,7 @@ protected:
     bool, float, bool, ERenderPass);
   bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
+  bool HasAliasModel (VName clsName) const;
 
   // things
   void DrawTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,

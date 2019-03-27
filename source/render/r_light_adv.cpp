@@ -41,6 +41,7 @@ extern VCvarB r_draw_mobjs;
 extern VCvarB r_models;
 extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
+extern VCvarB r_chasecam;
 
 
 /*
@@ -882,7 +883,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 
   // setup light scissor rectangle
   if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor && !r_model_shadows ? LitBBox : nullptr));
+    hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
     if (hasScissor <= 0) {
       // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
@@ -918,6 +919,75 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   ResetMobjsLightCount(true);
 
   //TODO: if we want to scissor on geometry, check if any lit model is out of our light bbox
+  if (r_advlight_opt_optimise_scissor && r_model_shadows && r_models) {
+    int count = mobjAffected.length();
+    VEntity **entp = mobjAffected.ptr();
+    float xbbox[6];
+    xbbox[0+0] = LitBBox[0].x;
+    xbbox[0+1] = LitBBox[0].y;
+    xbbox[0+2] = LitBBox[0].z;
+    xbbox[3+0] = LitBBox[1].x;
+    xbbox[3+1] = LitBBox[1].y;
+    xbbox[3+2] = LitBBox[1].z;
+    bool wasHit = false;
+    for (; count--; ++entp) {
+      VEntity *ment = *entp;
+      if (ment == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+      // skip things in subsectors that are not visible
+      const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
+      if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+      if (ment->Radius < 1) continue;
+      if (!HasAliasModel(ment->GetClass()->Name)) continue;
+      // assume that it is not bigger than its radius
+      wasHit = true;
+      float zup, zdown;
+      if (ment->Height < 2) {
+        //GCon->Logf("  <%s>: height=%f; radius=%f", *ment->GetClass()->GetFullName(), ment->Height, ment->Radius);
+        zup = ment->Radius;
+        zdown = ment->Radius;
+      } else {
+        zup = ment->Height;
+        zdown = 0;
+      }
+      xbbox[0+0] = MIN(xbbox[0+0], ment->Origin.x-ment->Radius);
+      xbbox[0+1] = MIN(xbbox[0+1], ment->Origin.y-ment->Radius);
+      xbbox[0+2] = MIN(xbbox[0+2], ment->Origin.z-zup);
+      xbbox[3+0] = MAX(xbbox[3+0], ment->Origin.x+ment->Radius);
+      xbbox[3+1] = MAX(xbbox[3+1], ment->Origin.y+ment->Radius);
+      xbbox[3+2] = MAX(xbbox[3+2], ment->Origin.z+zdown);
+    }
+    if (wasHit &&
+        (xbbox[0+0] < LitBBox[0].x || xbbox[0+1] < LitBBox[0].y || xbbox[0+2] < LitBBox[0].z ||
+         xbbox[3+0] > LitBBox[1].x || xbbox[3+1] > LitBBox[1].y || xbbox[3+2] > LitBBox[1].z))
+    {
+      /*
+      GCon->Logf("fixing light bbox; old=(%f,%f,%f)-(%f,%f,%f); new=(%f,%f,%f)-(%f,%f,%f)",
+        LitBBox[0].x, LitBBox[0].y, LitBBox[0].z,
+        LitBBox[1].x, LitBBox[1].y, LitBBox[1].z,
+        xbbox[0], xbbox[1], xbbox[2], xbbox[3], xbbox[4], xbbox[5]);
+      */
+      LitBBox[0].x = MIN(xbbox[0+0], LitBBox[0].x);
+      LitBBox[0].y = MIN(xbbox[0+1], LitBBox[0].y);
+      LitBBox[0].z = MIN(xbbox[0+2], LitBBox[0].z);
+      LitBBox[1].x = MAX(xbbox[3+0], LitBBox[1].x);
+      LitBBox[1].y = MAX(xbbox[3+1], LitBBox[1].y);
+      LitBBox[1].z = MAX(xbbox[3+2], LitBBox[1].z);
+      hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, LitBBox);
+      if (hasScissor <= 0) {
+        // something is VERY wrong (-1), or scissor is empty (0)
+        Drawer->ResetScissor();
+        if (!hasScissor) return; // empty scissor
+        hasScissor = 0;
+        scoord[0] = scoord[1] = 0;
+        scoord[2] = ScreenWidth;
+        scoord[3] = ScreenHeight;
+      } else {
+        if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth && scoord[3] == ScreenHeight) {
+          hasScissor = 0;
+        }
+      }
+    }
+  }
 
   // do shadow volumes
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
