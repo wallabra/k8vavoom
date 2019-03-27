@@ -1,0 +1,88 @@
+//==========================================================================
+//
+//  GetSubsectorCenter
+//
+//==========================================================================
+final TVec GetSubsectorCenter (const subsector_t *sub) {
+  if (!sub) Error("wut?!");
+  TVec res;
+  if (sub.numlines == 0) Error("wut?!");
+  seg_t *seg = &XLevel.Segs[sub.firstline];
+  foreach (; 0..sub.numlines) {
+    res.x += seg.v1.x;
+    res.y += seg.v1.y;
+  }
+  res.x /= float(sub.numlines);
+  res.y /= float(sub.numlines);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  CanMoveTo
+//
+//==========================================================================
+final bool CanMoveTo (TVec start, TVec end) {
+  end.z = start.z;
+
+  TVec vdist = end-start;
+  if (!vdist.x && !vdist.y) return true;
+
+  float dist = vdist.length2D;
+  TVec dir = vdist.normalise;
+
+  intercept_t *in;
+  foreach PathTraverse(in, start.x, start.y, end.x, end.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
+    if (in.bIsALine) {
+      sector_t *back;
+      sector_t *front;
+
+      line_t *ld = in.line; // this linedef
+
+      // line isn't two sided
+      if (!ld.backsector) return false;
+
+      // line is impassible
+      if (!(ld.flags&ML_TWOSIDED) || (ld.flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) return false;
+
+      if (!PointOnPlaneSide(start, *ld)) {
+        back = ld.backsector;
+        front = ld.frontsector;
+      } else {
+        back = ld.frontsector;
+        front = ld.backsector;
+      }
+
+      TVec hitpoint = start+(dist*in.frac)*dir;
+
+      // crosses a two sided line
+      opening_t *open = LineOpenings(ld, hitpoint);
+      open = FindOpening(open, hitpoint.z, hitpoint.z+Height);
+      // no valid openings
+      if (!open) return false;
+
+      float diffheight = GetPlanePointZ(ref back->floor, hitpoint)-GetPlanePointZ(ref front->floor, hitpoint);
+
+      // no cliff jumping unless we're going after something
+      //if (-diffheight > 32.0 && !enemy) return false;
+
+      /*
+      if (diffheight > 0.0) {
+        if (diffheight > 48.0) return false;
+        if (diffheight >= 24.0 && diffheight <= 48.0) wantJump = true;
+      }
+      */
+      if (diffheight >= 24.0) return false;
+    } else {
+      if (!in.Thing.bSolid) continue;
+      Actor th = Actor(in.Thing);
+      if (!th) return false;
+      if (th.bMonster || th.bIsPlayer) continue;
+      if (th.bShootable && th.Health <= 1000) continue;
+      return false;
+    }
+  }
+
+  return true;
+}

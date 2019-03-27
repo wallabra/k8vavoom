@@ -34,6 +34,7 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
     linespec/secaction/*.vc
     linespec/strife/*.vc
     linespec/weapon/*.vc
+    linespec/pathfind/*.vc
     ${OUTDIR}/engine.dat)
 add_custom_target(linespec ALL DEPENDS ${OUTDIR}/linespec.dat)
 add_dependencies(linespec vcc engine)
