@@ -763,7 +763,9 @@ static bool PickNodeWorker(superblock_t *part_list,
 	for (part=part_list->segs ; part ; part = part->next)
 	{
 		if (cur_info->cancelled)
+		{
 			return false;
+		}
 
 #   if DEBUG_PICKNODE
 		ajbsp_DebugPrintf("PickNode:   %sSEG %p  sector=%d  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
@@ -794,7 +796,10 @@ static bool PickNodeWorker(superblock_t *part_list,
 	for (num=0 ; num < 2 ; num++)
 	{
 		if (part_list->subs[num])
+		{
+			ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
 			PickNodeWorker(part_list->subs[num], seg_list, best, best_cost);
+		}
 	}
 
 	return true;
