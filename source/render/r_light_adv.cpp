@@ -849,8 +849,8 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
   CurrLightRadius = Radius; // we need full radius, not modified
 
-  if (r_advlight_opt_optimise_scissor && !LitSurfaces) return; // no lit surfaces, nothing to do
-  if (LightVisSubs.length() == 0) return; // just in case
+  if (r_advlight_opt_optimise_scissor && !LitSurfaces && !r_models) return; // no lit surfaces, nothing to do
+  if (LightVisSubs.length() == 0 && !r_models) return; // just in case
 
   CurrLightColour = Colour;
   // if our light is in frustum, ignore any out-of-frustum polys
@@ -878,6 +878,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   //  1 if scissor is set
   int hasScissor = 1;
   int scoord[4];
+  bool checkModels = false;
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
@@ -887,7 +888,8 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
     if (hasScissor <= 0) {
       // something is VERY wrong (-1), or scissor is empty (0)
       Drawer->ResetScissor();
-      if (!hasScissor) return; // empty scissor
+      if (!hasScissor && r_advlight_opt_optimise_scissor && !r_models) return; // empty scissor
+      checkModels = r_advlight_opt_optimise_scissor;
       hasScissor = 0;
       scoord[0] = scoord[1] = 0;
       scoord[2] = ScreenWidth;
@@ -918,17 +920,25 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 
   ResetMobjsLightCount(true);
 
-  //TODO: if we want to scissor on geometry, check if any lit model is out of our light bbox
-  if (r_advlight_opt_optimise_scissor && r_model_shadows && r_models && mobjAffected.length()) {
+  // if we want to scissor on geometry, check if any lit model is out of our light bbox.
+  // stop right here! say, is there ANY reason to not limit light box with map geometry?
+  // after all, most of the things that can receive light is contained inside a map.
+  // still, we may miss some lighting on models from flying lights that cannot touch
+  // any geometry at all. to somewhat ease this case, rebuild light box when the light
+  // didn't touched anything.
+  if (checkModels) {
     int count = mobjAffected.length();
+    if (!count) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     VEntity **entp = mobjAffected.ptr();
-    float xbbox[6];
+    float xbbox[6] = {0};
+    /*
     xbbox[0+0] = LitBBox[0].x;
     xbbox[0+1] = LitBBox[0].y;
     xbbox[0+2] = LitBBox[0].z;
     xbbox[3+0] = LitBBox[1].x;
     xbbox[3+1] = LitBBox[1].y;
     xbbox[3+2] = LitBBox[1].z;
+    */
     bool wasHit = false;
     for (; count--; ++entp) {
       VEntity *ment = *entp;
@@ -939,7 +949,6 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
       if (ment->Radius < 1) continue;
       if (!HasAliasModel(ment->GetClass()->Name)) continue;
       // assume that it is not bigger than its radius
-      wasHit = true;
       float zup, zdown;
       if (ment->Height < 2) {
         //GCon->Logf("  <%s>: height=%f; radius=%f", *ment->GetClass()->GetFullName(), ment->Height, ment->Radius);
@@ -949,12 +958,22 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
         zup = ment->Height;
         zdown = 0;
       }
-      xbbox[0+0] = MIN(xbbox[0+0], ment->Origin.x-ment->Radius);
-      xbbox[0+1] = MIN(xbbox[0+1], ment->Origin.y-ment->Radius);
-      xbbox[0+2] = MIN(xbbox[0+2], ment->Origin.z-zup);
-      xbbox[3+0] = MAX(xbbox[3+0], ment->Origin.x+ment->Radius);
-      xbbox[3+1] = MAX(xbbox[3+1], ment->Origin.y+ment->Radius);
-      xbbox[3+2] = MAX(xbbox[3+2], ment->Origin.z+zdown);
+      if (wasHit) {
+        xbbox[0+0] = MIN(xbbox[0+0], ment->Origin.x-ment->Radius);
+        xbbox[0+1] = MIN(xbbox[0+1], ment->Origin.y-ment->Radius);
+        xbbox[0+2] = MIN(xbbox[0+2], ment->Origin.z-zup);
+        xbbox[3+0] = MAX(xbbox[3+0], ment->Origin.x+ment->Radius);
+        xbbox[3+1] = MAX(xbbox[3+1], ment->Origin.y+ment->Radius);
+        xbbox[3+2] = MAX(xbbox[3+2], ment->Origin.z+zdown);
+      } else {
+        wasHit = true;
+        xbbox[0+0] = ment->Origin.x-ment->Radius;
+        xbbox[0+1] = ment->Origin.y-ment->Radius;
+        xbbox[0+2] = ment->Origin.z-zup;
+        xbbox[3+0] = ment->Origin.x+ment->Radius;
+        xbbox[3+1] = ment->Origin.y+ment->Radius;
+        xbbox[3+2] = ment->Origin.z+zdown;
+      }
     }
     if (wasHit &&
         (xbbox[0+0] < LitBBox[0].x || xbbox[0+1] < LitBBox[0].y || xbbox[0+2] < LitBBox[0].z ||
