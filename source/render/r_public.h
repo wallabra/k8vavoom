@@ -110,6 +110,8 @@ void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, fl
 
 float R_GetAspectRatio ();
 
+bool R_ModelNoSelfShadow (VName clsName);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int validcount;

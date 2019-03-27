@@ -107,6 +107,7 @@ struct VScriptedModelFrame {
 struct VClassModelScript {
   VName Name;
   VModel *Model;
+  bool NoSelfShadow;
   TArray<VScriptedModelFrame> Frames;
 };
 
@@ -169,6 +170,17 @@ static VClassModelScript *FindClassModelByName (VName clsName) {
   }
   auto mp = mdlmap.find(clsName);
   return (mp ? *mp : nullptr);
+}
+
+
+//==========================================================================
+//
+//  R_ModelNoSelfShadow
+//
+//==========================================================================
+bool R_ModelNoSelfShadow (VName clsName) {
+  VClassModelScript *cs = FindClassModelByName(clsName);
+  return (cs && cs->NoSelfShadow);
 }
 
 
@@ -380,6 +392,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     VClassModelScript *Cls = new VClassModelScript();
     Cls->Model = Mdl;
     Cls->Name = *CN->GetAttribute("name");
+    Cls->NoSelfShadow = (CN->HasAttribute("noselfshadow") ? !CN->GetAttribute("noselfshadow").ICmp("true") : false);
     if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
     ClassModels.Append(Cls);
     ClassDefined = true;
