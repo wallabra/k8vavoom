@@ -56,16 +56,16 @@ public:
   inline double Length () const { return sqrt(x*x+y*y); }
 };
 
-inline TVec2D operator + (const TVec2D &v1, const TVec2D &v2) { return TVec2D(v1.x+v2.x, v1.y+v2.y); }
-inline TVec2D operator - (const TVec2D &v1, const TVec2D &v2) { return TVec2D(v1.x-v2.x, v1.y-v2.y); }
-inline TVec2D operator * (const TVec2D &v, double s) { return TVec2D(s*v.x, s*v.y); }
-inline TVec2D operator * (double s, const TVec2D &v) { return TVec2D(s*v.x, s*v.y); }
-inline TVec2D operator / (const TVec2D &v, double s) { return TVec2D(v.x/s, v.y/s); }
-inline bool operator == (const TVec2D &v1, const TVec2D &v2) { return (v1.x == v2.x && v1.y == v2.y); }
-inline bool operator != (const TVec2D &v1, const TVec2D &v2) { return (v1.x != v2.x || v1.y != v2.y); }
-inline double Length (const TVec2D &v) { return sqrt(v.x*v.x+v.y*v.y); }
-inline TVec2D Normalise (const TVec2D &v) { return v/v.Length(); }
-inline double DotProduct (const TVec2D &v1, const TVec2D &v2) { return v1.x*v2.x+v1.y*v2.y; }
+static inline TVec2D operator + (const TVec2D &v1, const TVec2D &v2) { return TVec2D(v1.x+v2.x, v1.y+v2.y); }
+static inline TVec2D operator - (const TVec2D &v1, const TVec2D &v2) { return TVec2D(v1.x-v2.x, v1.y-v2.y); }
+static inline TVec2D operator * (const TVec2D &v, double s) { return TVec2D(s*v.x, s*v.y); }
+static inline TVec2D operator * (double s, const TVec2D &v) { return TVec2D(s*v.x, s*v.y); }
+static inline TVec2D operator / (const TVec2D &v, double s) { return TVec2D(v.x/s, v.y/s); }
+static inline bool operator == (const TVec2D &v1, const TVec2D &v2) { return (v1.x == v2.x && v1.y == v2.y); }
+static inline bool operator != (const TVec2D &v1, const TVec2D &v2) { return (v1.x != v2.x || v1.y != v2.y); }
+static inline double Length (const TVec2D &v) { return sqrt(v.x*v.x+v.y*v.y); }
+static inline TVec2D Normalise (const TVec2D &v) { return v/v.Length(); }
+static inline double DotProduct (const TVec2D &v1, const TVec2D &v2) { return v1.x*v2.x+v1.y*v2.y; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -100,6 +100,22 @@ public:
 struct winding_t {
   bool original; // don't free, it's part of the portal
   TVec2D points[2];
+
+  inline bool checkPositiveDist (const TPlane2D &p) const {
+    for (int k = 0; k < 2; ++k) {
+      const double d = DotProduct(points[k], p.normal)-p.dist;
+      if (d > ON_EPSILON) return true;
+    }
+    return false; // no points on front
+  }
+
+  inline bool checkNegativeDist (const TPlane2D &p) const {
+    for (int k = 0; k < 2; ++k) {
+      const double d = DotProduct(points[k], p.normal)-p.dist;
+      if (d < -ON_EPSILON) return true;
+    }
+    return false; // no points on front
+  }
 };
 
 // normal pointing into neighbor
@@ -124,9 +140,11 @@ struct PVSInfo {
   int rowbytes;
   int *leaves; // NumSegs
   subsec_extra_t *ssex; // NumSubsectors
-  // temp, don't free
+  // temp, don't free; bitmap
+private:
   vuint8 *portalsee;
 
+public:
   PVSInfo ()
     : numportals(0)
     , NumSegs(0)
@@ -161,6 +179,34 @@ struct PVSInfo {
     leaves = a.leaves;
     ssex = a.ssex;
     portalsee = nullptr;
+  }
+
+  void createPortalSee () {
+    check(!portalsee);
+    portalsee = new vuint8[(numportals+7)/8];
+    memset(portalsee, 0, (numportals+7)/8);
+  }
+
+  void deletePortalSee () {
+    delete [] portalsee;
+    portalsee = nullptr;
+  }
+
+  void clearPortalSee () {
+    check(portalsee);
+    memset(portalsee, 0, (numportals+7)/8);
+  }
+
+  inline void setPortalSee (int pidx) {
+    check(pidx >= 0 && pidx < numportals);
+    check(portalsee);
+    portalsee[(pidx+7)/8] |= (vuint8)(1u<<(pidx&7));
+  }
+
+  inline bool getPortalSee (int pidx) const {
+    check(pidx >= 0 && pidx < numportals);
+    check(portalsee);
+    return !!(portalsee[(pidx+7)/8]&(vuint8)(1u<<(pidx&7)));
   }
 };
 
@@ -233,7 +279,7 @@ extern "C" {
     subsec_extra_t *leaf = &nfo->ssex[leafnum];
     for (int i = 0; i < leaf->numportals; ++i) {
       portal_t *p = leaf->portals[i];
-      if (!nfo->portalsee[p-nfo->portals]) continue;
+      if (!nfo->getPortalSee((int)(ptrdiff_t)(p-nfo->portals))) continue;
       SimpleFlood(srcportal, p->leaf, nfo);
     }
   }
@@ -241,7 +287,7 @@ extern "C" {
 
   static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
     PVSInfo *nfo = (PVSInfo *)aarg;
-    nfo->portalsee = new vuint8[nfo->numportals];
+    nfo->createPortalSee();
     for (;;) {
       int pnum = getNextPortalNum();
       if (pnum >= nfo->numportals) break;
@@ -250,34 +296,20 @@ extern "C" {
       p->mightsee = new vuint8[nfo->bitbytes];
       memset(p->mightsee, 0, nfo->bitbytes);
 
-      memset(nfo->portalsee, 0, nfo->numportals);
+      nfo->clearPortalSee();
       portal_t *tp = nfo->portals;
       for (int j = 0; j < nfo->numportals; ++j, ++tp) {
         if (j == pnum) continue;
-        winding_t *w = &tp->winding;
-        int k;
-        for (k = 0; k < 2; ++k) {
-          const double d = DotProduct(w->points[k], p->normal)-p->dist;
-          if (d > ON_EPSILON) break;
-        }
-        if (k == 2) continue; // no points on front
-
-        w = &p->winding;
-        for (k = 0; k < 2; ++k) {
-          const double d = DotProduct(w->points[k], tp->normal)-tp->dist;
-          if (d < -ON_EPSILON) break;
-        }
-        if (k == 2) continue; // no points on front
-
-        nfo->portalsee[j] = 1;
+        if (!tp->winding.checkPositiveDist(*p)) continue;
+        if (!p->winding.checkNegativeDist(*tp)) continue;
+        nfo->setPortalSee(j);
       }
 
       SimpleFlood(p, p->leaf, nfo);
 
-      // fastvis just uses mightsee for a very loose bound
       p->visbits = p->mightsee;
     }
-    delete[] nfo->portalsee;
+    nfo->deletePortalSee();
     return MYTHREAD_RET_VALUE;
   }
 }
@@ -400,7 +432,7 @@ void VLevel::BuildPVS () {
     if (numOfThreads > PVSThreadMax) numOfThreads = PVSThreadMax;
     GCon->Logf("using %d thread%s for PVS builder", numOfThreads, (numOfThreads != 1 ? "s" : ""));
     //if (numOfThreads < 2) numOfThreads = 2; // it looks better this way
-    nfo.NumSegs = NumSegs;
+    nfo.NumSegs = NumSegs/100;
     if (numOfThreads > 1) {
       pvsStartThreads(nfo);
     } else {
@@ -428,7 +460,7 @@ void VLevel::BuildPVS () {
     NoVis = new vuint8[(NumSubsectors+7)/8];
     memset(NoVis, 0xff, (NumSubsectors+7)/8);
   } else {
-    GCon->Logf("PVS building (rough) complete.");
+    GCon->Logf("PVS building (rough) complete (%d bytes).", (NumSubsectors+7)/8);
   }
 
   for (int i = 0; i < nfo.numportals; ++i) {
@@ -534,7 +566,7 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   }
 
 #ifdef CLIENT
-  R_PBarUpdate("PVS", 0, NumSegs+nfo->numportals);
+  R_PBarUpdate("PVS", 0, NumSegs/100+nfo->numportals);
 #endif
 
   portal_t *p = nfo->portals;
@@ -570,7 +602,7 @@ bool VLevel::CreatePortals (void *pvsinfo) {
       }
     }
 #ifdef CLIENT
-    R_PBarUpdate("PVS", i+1, NumSegs+nfo->numportals);
+    R_PBarUpdate("PVS", (i+1)/100, NumSegs/100+nfo->numportals);
 #endif
   }
 
@@ -602,7 +634,7 @@ void VLevel::SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsin
   subsec_extra_t *leaf = &nfo->ssex[leafnum];
   for (int i = 0; i < leaf->numportals; ++i) {
     portal_t *p = leaf->portals[i];
-    if (!nfo->portalsee[p-nfo->portals]) continue;
+    if (!nfo->getPortalSee((int)(ptrdiff_t)(p-nfo->portals))) continue;
     SimpleFlood(srcportal, p->leaf, pvsinfo);
   }
 }
@@ -617,57 +649,32 @@ void VLevel::SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsin
 //
 //==========================================================================
 void VLevel::BasePortalVis (void *pvsinfo) {
-  int i, j, k;
-  portal_t *tp, *p;
-  double d;
-  winding_t *w;
-
   PVSInfo *nfo = (PVSInfo *)pvsinfo;
 
-  nfo->portalsee = new vuint8[nfo->numportals];
-  for (i = 0, p = nfo->portals; i < nfo->numportals; ++i, ++p) {
-    //Owner.DisplayBaseVisProgress(i, numportals);
-
+  nfo->createPortalSee();
+  portal_t *p = nfo->portals;
+  for (int pnum = 0; pnum < nfo->numportals; ++pnum, ++p) {
     p->mightsee = new vuint8[nfo->bitbytes];
     memset(p->mightsee, 0, nfo->bitbytes);
 
-    //nfo->c_portalsee = 0;
-    memset(nfo->portalsee, 0, nfo->numportals);
-
-    for (j = 0, tp = nfo->portals; j < nfo->numportals; ++j, ++tp) {
-      if (j == i) continue;
-      w = &tp->winding;
-      for (k = 0; k < 2; ++k) {
-        d = DotProduct(w->points[k], p->normal) - p->dist;
-        if (d > ON_EPSILON) break;
-      }
-      if (k == 2) continue; // no points on front
-
-      w = &p->winding;
-      for (k = 0; k < 2; ++k) {
-        d = DotProduct(w->points[k], tp->normal) - tp->dist;
-        if (d < -ON_EPSILON) break;
-      }
-      if (k == 2) continue; // no points on front
-
-      nfo->portalsee[j] = 1;
-      //++nfo->c_portalsee;
+    nfo->clearPortalSee();
+    portal_t *tp = nfo->portals;
+    for (int j = 0; j < nfo->numportals; ++j, ++tp) {
+      if (j == pnum) continue;
+      if (!tp->winding.checkPositiveDist(*p)) continue;
+      if (!p->winding.checkNegativeDist(*tp)) continue;
+      nfo->setPortalSee(j);
     }
 
-    //nfo->c_leafsee = 0;
     SimpleFlood(p, p->leaf, pvsinfo);
-    //p->nummightsee = nfo->c_leafsee;
 
-    // fastvis just uses mightsee for a very loose bound
     p->visbits = p->mightsee;
-    //p->status = stat_done;
 
 #ifdef CLIENT
-    R_PBarUpdate("PVS", NumSegs+i, NumSegs+nfo->numportals);
+    R_PBarUpdate("PVS", NumSegs/100+pnum, NumSegs/100+nfo->numportals);
 #endif
   }
-  //Owner.DisplayBaseVisProgress(numportals, numportals);
-  delete[] nfo->portalsee;
+  nfo->deletePortalSee();
 }
 
 
@@ -679,26 +686,18 @@ void VLevel::BasePortalVis (void *pvsinfo) {
 //
 //==========================================================================
 bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
-  //leaf_t *leaf;
-  vuint8 *outbuffer;
-  //int numvis;
-
   PVSInfo *nfo = (PVSInfo *)pvsinfo;
 
   // flow through all portals, collecting visible bits
-  outbuffer = VisData+leafnum*nfo->rowbytes;
-  //leaf = &subsectors[leafnum];
+  vuint8 *outbuffer = VisData+leafnum*nfo->rowbytes;
   subsec_extra_t *leaf = &nfo->ssex[leafnum];
   for (int i = 0; i < leaf->numportals; ++i) {
     portal_t *p = leaf->portals[i];
     if (p == nullptr) continue;
-    //if (p->status != stat_done) throw GLVisError("portal %d not done", (int)(p - portals));
     for (int j = 0; j < nfo->rowbytes; ++j) {
       if (p->visbits[j] == 0) continue;
       outbuffer[j] |= p->visbits[j];
     }
-    //delete[] p->visbits;
-    //p->visbits = nullptr;
   }
 
   if (outbuffer[leafnum>>3]&(1<<(leafnum&7))) {
@@ -706,16 +705,7 @@ bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
     return false;
   }
 
-  outbuffer[leafnum>>3] |= (1<<(leafnum&7));
+  outbuffer[leafnum>>3] |= (vuint8)(1u<<(leafnum&7));
 
-  /*
-  numvis = 0;
-  for (int i = 0; i < numsubsectors; i++) {
-    if (outbuffer[i>>3]&(1<<(i&3))) ++numvis;
-  }
-  totalvis += numvis;
-  */
-
-  //if (Owner.verbose) Owner.DisplayMessage("leaf %4i : %4i visible\n", leafnum, numvis);
   return true;
 }
