@@ -200,13 +200,13 @@ public:
   inline void setPortalSee (int pidx) {
     check(pidx >= 0 && pidx < numportals);
     check(portalsee);
-    portalsee[(pidx+7)/8] |= (vuint8)(1u<<(pidx&7));
+    portalsee[pidx/8] |= (vuint8)(1u<<(pidx&7));
   }
 
   inline bool getPortalSee (int pidx) const {
     check(pidx >= 0 && pidx < numportals);
     check(portalsee);
-    return !!(portalsee[(pidx+7)/8]&(vuint8)(1u<<(pidx&7)));
+    return !!(portalsee[pidx/8]&(vuint8)(1u<<(pidx&7)));
   }
 };
 
