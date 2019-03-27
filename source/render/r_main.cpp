@@ -84,7 +84,6 @@ VCvarF r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_
 
 static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
 
-extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_light_opt_shadow;
 
 VDrawer *Drawer;

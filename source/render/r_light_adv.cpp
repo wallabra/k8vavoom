@@ -97,8 +97,6 @@ static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shad
 
 VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.1", "How close static lights should be to be filtered out?\n(0.1-0.3 is usually ok).", CVAR_Archive);
 
-extern VCvarB r_dynamic_clip_more;
-
 VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);

@@ -34,6 +34,7 @@ VCvarI r_ambient("r_ambient", "0", "Minimal ambient light.", CVAR_Archive);
 VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
 VCvarB r_dynamic("r_dynamic", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
+VCvarB r_dynamic_clip_pvs("r_dynamic_clip_pvs", false, "Clip dynamic lights with PVS?", CVAR_Archive);
 VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
@@ -105,7 +106,7 @@ void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, i
     const int num = (bspnum != -1 ? bspnum&(~NF_SUBSECTOR) : 0);
     subsector_t *ss = &Level->Subsectors[num];
 
-    if (r_dynamic_clip && Level->HasPVS()) {
+    if (r_dynamic_clip_pvs && Level->HasPVS()) {
       const vuint8 *dyn_facevis = Level->LeafPVS(ss);
       //int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
       // check potential visibility
@@ -217,7 +218,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     int leafnum = -1;
 
     // pvs check
-    if (r_dynamic_clip && Level->HasPVS()) {
+    if (r_dynamic_clip_pvs && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
         lastDLightView = cl->ViewOrg;

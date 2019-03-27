@@ -32,6 +32,7 @@
 extern VCvarI r_ambient;
 extern VCvarB r_allow_ambient;
 extern VCvarB r_dynamic_clip;
+extern VCvarB r_dynamic_clip_pvs;
 extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_allow_subtractive_lights;
 
@@ -695,7 +696,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     TVec impact = dl.origin-surf->plane->normal*dist;
 
-    if (hasPVS && r_dynamic_clip) {
+    if (hasPVS && r_dynamic_clip_pvs) {
       subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;

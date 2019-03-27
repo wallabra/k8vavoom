@@ -34,7 +34,6 @@
 
 
 extern VCvarF r_lights_radius;
-extern VCvarB r_dynamic_clip_more;
 extern VCvarB w_update_in_renderer;
 extern VCvarI r_max_lights;
 
