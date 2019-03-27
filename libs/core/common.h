@@ -24,6 +24,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#ifndef VAVOOM_CORE_LIB_COMMON
+#define VAVOOM_CORE_LIB_COMMON
+
 #ifndef _WIN32
 # define __declspec(whatever)
 #endif
@@ -117,3 +120,6 @@ class VName;
 class VMemberBase;
 class VStruct;
 class VObject;
+
+
+#endif

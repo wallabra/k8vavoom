@@ -26,6 +26,8 @@
 #ifndef VAVOOM_CORE_LIB_HASHFUNC
 #define VAVOOM_CORE_LIB_HASHFUNC
 
+#include "common.h"
+
 
 static __attribute__((unused)) inline int digitInBase (char ch, int base=10) {
   if (base < 1 || base > 36 || ch < '0') return -1;

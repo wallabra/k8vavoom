@@ -29,10 +29,29 @@
 //**  misc. LUTs.
 //**
 //**************************************************************************
-
 #define DEBUG_DEEP_WATERS
 
+#include <stdlib.h>
+#include <string.h>
+#include "../libs/core/hashfunc.h"
 
+struct VectorInfo {
+  float xy[2];
+  unsigned aidx;
+  unsigned lidx; // linedef index
+  VectorInfo *next;
+
+  //inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
+  //inline bool operator != (const VectorInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
+
+  inline bool operator == (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
+  inline bool operator != (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
+};
+
+static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #include "gamedefs.h"
 #ifdef SERVER
 #include "sv_local.h"
@@ -1256,22 +1275,6 @@ load_again:
 
   RecalcWorldBBoxes();
 }
-
-
-struct VectorInfo {
-  float xy[2];
-  unsigned aidx;
-  unsigned lidx; // linedef index
-  VectorInfo *next;
-
-  //inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
-  //inline bool operator != (const VectorInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
-
-  inline bool operator == (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
-  inline bool operator != (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
-};
-
-static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
 
 
 //==========================================================================

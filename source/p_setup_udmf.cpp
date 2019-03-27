@@ -24,6 +24,25 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include <stdlib.h>
+#include <string.h>
+#include "../libs/core/hashfunc.h"
+
+struct VertexInfo {
+  float xy[2];
+  int idx;
+
+  VertexInfo (const float ax, const float ay, int aidx) { xy[0] = ax; xy[1] = ay; idx = aidx; }
+  //inline bool operator == (const VertexInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
+  //inline bool operator != (const VertexInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
+  inline bool operator == (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
+  inline bool operator != (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
+};
+
+inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #include "gamedefs.h"
 #include "sv_local.h"
 
@@ -119,6 +138,16 @@ public:
 //
 //==========================================================================
 VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump)) {
+}
+
+
+//==========================================================================
+//
+//  VUdmfParser::Flag
+//
+//==========================================================================
+void VUdmfParser::Flag (vuint32 &Field, int Mask) {
+  if (CheckBool()) Field |= Mask; else Field &= ~Mask;
 }
 
 
@@ -635,28 +664,6 @@ void VUdmfParser::Flag (int &Field, int Mask) {
 
 //==========================================================================
 //
-//  VUdmfParser::Flag
-//
-//==========================================================================
-void VUdmfParser::Flag (vuint32 &Field, int Mask) {
-  if (CheckBool()) Field |= Mask; else Field &= ~Mask;
-}
-
-
-struct VertexInfo {
-  float xy[2];
-  int idx;
-
-  VertexInfo (const vertex_t &v, int aidx) { xy[0] = v.x; xy[1] = v.y; idx = aidx; }
-  inline bool operator == (const VertexInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
-  inline bool operator != (const VertexInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
-};
-
-inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
-
-
-//==========================================================================
-//
 //  VLevel::LoadTextMap
 //
 //==========================================================================
@@ -676,7 +683,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   TMapNC<int, int> vremap; // key: original vertex index; value: new vertex index
 
   for (int f = 0; f < NumVertexes; ++f) {
-    VertexInfo vi = VertexInfo(Vertexes[f], f);
+    VertexInfo vi = VertexInfo(Vertexes[f].x, Vertexes[f].y, f);
     auto ip = vmap.find(vi);
     if (ip) {
       vremap.put(f, *ip);
