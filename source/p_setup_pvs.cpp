@@ -117,6 +117,7 @@ struct subsec_extra_t {
 
 struct PVSInfo {
   int numportals;
+  int NumSegs;
   portal_t *portals;
   int bitbytes;
   int bitlongs;
@@ -128,6 +129,7 @@ struct PVSInfo {
 
   PVSInfo ()
     : numportals(0)
+    , NumSegs(0)
     , portals(nullptr)
     , bitbytes(0)
     , bitlongs(0)
@@ -139,6 +141,7 @@ struct PVSInfo {
 
   PVSInfo (const PVSInfo &a)
     : numportals(a.numportals)
+    , NumSegs(0)
     , portals(a.portals)
     , bitbytes(a.bitbytes)
     , bitlongs(a.bitlongs)
@@ -150,6 +153,7 @@ struct PVSInfo {
 
   inline void operator = (const PVSInfo &a) {
     numportals = a.numportals;
+    NumSegs = NumSegs;
     portals = a.portals;
     bitbytes = a.bitbytes;
     bitlongs = a.bitlongs;
@@ -170,7 +174,7 @@ struct PVSThreadInfo {
 };
 
 static PVSThreadInfo pvsTreadList[PVSThreadMax];
-static int pvsNextPortal, pvsMaxPortals, pvsLastReport; // next portal to process
+static int pvsNextPortal, pvsMaxPortals, pvsLastReport, pvsNumSegs; // next portal to process
 static mythread_mutex pvsNPLock;
 static double pvsLastReportTime;
 static double pvsReportTimeout;
@@ -283,6 +287,7 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   pvsNextPortal = 0;
   pvsLastReport = 0;
   pvsMaxPortals = anfo.numportals;
+  pvsNumSegs = anfo.NumSegs;
   pvsPBarDone = false;
   int pvsThreadsToUse = /*loader_pvs_builder_threads*/numOfThreads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
@@ -320,7 +325,7 @@ static void pvsStartThreads (const PVSInfo &anfo) {
     if (done && !wasProgress) break; // don't spam with progress messages
     //pvsDrawPBar(pvsPBarCur, pvsPBarMax);
 #ifdef CLIENT
-    R_PBarUpdate("PVS", pvsPBarCur, pvsPBarMax);
+    R_PBarUpdate("PVS", pvsNumSegs+pvsPBarCur, pvsNumSegs+pvsPBarMax);
 #endif
     wasProgress = true;
     if (done) break;
@@ -395,6 +400,7 @@ void VLevel::BuildPVS () {
     if (numOfThreads > PVSThreadMax) numOfThreads = PVSThreadMax;
     GCon->Logf("using %d thread%s for PVS builder", numOfThreads, (numOfThreads != 1 ? "s" : ""));
     //if (numOfThreads < 2) numOfThreads = 2; // it looks better this way
+    nfo.NumSegs = NumSegs;
     if (numOfThreads > 1) {
       pvsStartThreads(nfo);
     } else {
@@ -527,6 +533,10 @@ bool VLevel::CreatePortals (void *pvsinfo) {
     nfo->portals[i].mightsee = nullptr;
   }
 
+#ifdef CLIENT
+  R_PBarUpdate("PVS", 0, NumSegs+nfo->numportals);
+#endif
+
   portal_t *p = nfo->portals;
   seg = &Segs[0];
   for (int i = 0; i < NumSegs; ++i, ++seg) {
@@ -540,32 +550,36 @@ bool VLevel::CreatePortals (void *pvsinfo) {
       if (/*line->leaf == line->partner->leaf*/nfo->leaves[i] == nfo->leaves[pnum]) {
         //GCon->Logf("Self-referencing subsector detected (%d)", i);
         --nfo->numportals;
-        continue;
-      }
+      } else {
+        // create portal
+        if (sub->numportals == MAX_PORTALS_ON_LEAF) {
+          //throw GLVisError("Leaf with too many portals");
+          GCon->Logf(NAME_Warning, "PVS: Leaf with too many portals!");
+          return false;
+        }
+        sub->portals[sub->numportals++] = p;
 
-      // create portal
-      if (sub->numportals == MAX_PORTALS_ON_LEAF) {
-        //throw GLVisError("Leaf with too many portals");
-        GCon->Logf(NAME_Warning, "PVS: Leaf with too many portals!");
-        return false;
+        p->winding.original = true;
+        p->winding.points[0] = *seg->v1;
+        p->winding.points[1] = *seg->v2;
+        p->normal = seg->partner->normal;
+        p->dist = seg->partner->dist;
+        //p->leaf = line->partner->leaf;
+        p->leaf = nfo->leaves[pnum];
+        ++p;
       }
-      sub->portals[sub->numportals++] = p;
-
-      p->winding.original = true;
-      p->winding.points[0] = *seg->v1;
-      p->winding.points[1] = *seg->v2;
-      p->normal = seg->partner->normal;
-      p->dist = seg->partner->dist;
-      //p->leaf = line->partner->leaf;
-      p->leaf = nfo->leaves[pnum];
-      ++p;
     }
+#ifdef CLIENT
+    R_PBarUpdate("PVS", i+1, NumSegs+nfo->numportals);
+#endif
   }
+
   if (origpcount != nfo->numportals) {
     GCon->Logf("PVS: %d portals found (%d portals dropped)", nfo->numportals, origpcount-nfo->numportals);
   } else {
     GCon->Logf("PVS: %d portals found", nfo->numportals);
   }
+
   //if (p-portals != numportals) throw GLVisError("Portals miscounted");
   return (nfo->numportals > 0);
 }
@@ -649,7 +663,7 @@ void VLevel::BasePortalVis (void *pvsinfo) {
     //p->status = stat_done;
 
 #ifdef CLIENT
-    R_PBarUpdate("PVS", i, nfo->numportals);
+    R_PBarUpdate("PVS", NumSegs+i, NumSegs+nfo->numportals);
 #endif
   }
   //Owner.DisplayBaseVisProgress(numportals, numportals);
