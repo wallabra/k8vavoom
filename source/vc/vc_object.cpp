@@ -43,7 +43,7 @@
 // compact slot storage on each GC cycle?
 //#define VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
 
-static VCvarB gc_use_compacting_collector("gc_use_compacting_collector", true, "Use new compacting GC?", 0);
+//static VCvarB gc_use_compacting_collector("gc_use_compacting_collector", true, "Use new compacting GC?", 0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -213,11 +213,6 @@ bool VObject::GGCMessagesAllowed = false;
 bool VObject::GCDebugMessagesAllowed = false;
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
 
-// to speed up garbage collection
-// as we can only set flags via our accessors, and
-// number of dead objects per frame is small, no need to
-// use hashtables here, just go with queues
-static VQueueLifo<vint32> gDeadObjects;
 #ifdef VCC_STANDALONE_EXECUTOR
 static VQueueLifo<vint32> gDelayDeadObjects;
 #endif
@@ -366,7 +361,6 @@ void VObject::StaticInit () {
   GNumDeleted = 0;
   GInGarbageCollection = false;
   //GNewObject = nullptr;
-  gDeadObjects.clear();
   #ifdef VCC_STANDALONE_EXECUTOR
   gDelayDeadObjects.clear();
   #endif
@@ -635,9 +629,9 @@ bool destroyDelayed
   // be moved to the end of the slot area (with possible gap between dead and alive
   // objects, but it doesn't matter).
 
-  if (gc_use_compacting_collector) {
-    gDeadObjects.reset();
-
+  // there is no reason to use old non-compacting collector, so i removed it
+  //if (gc_use_compacting_collector)
+  {
     // move finger to first alive object
     int finger = /*gObjFirstFree*/ilen-1;
     while (finger >= 0) {
@@ -738,135 +732,12 @@ bool destroyDelayed
       }
       ++itpos;
     }
-  } else {
-    // non-compacting collector
-    gDeadObjects.reset();
-    // do it backwards, so avaliable indicies will go in natural order
-    // also, find new last used index
-    bool registerFree = false;
-    for (int i = ilen-1; i >= 0; --i) {
-      VObject *obj = goptr[i];
-      if (!obj) {
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_MORE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-        if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "* FREE SLOT #%d", i);
-#endif
-        if (registerFree) gObjAvailable.push(i);
-        continue;
-      }
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(obj->Index == i);
-#endif
-      if (obj->ObjectFlags&_OF_Destroyed) {
-        // this will be free
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_MORE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-        if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "* FUTURE FREE SLOT #%d", i);
-#endif
-        if (registerFree) gObjAvailable.push(i);
-        gDeadObjects.push(i);
-        continue;
-      }
-      if (!registerFree) {
-        registerFree = true;
-        gObjFirstFree = i+1;
-      }
-      obj->ClearReferences();
-      ++alive;
-    }
-
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_XTRA) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (GCDebugMessagesAllowed && developer) {
-      GLog.Logf(NAME_Dev, " %d free, %d preys", gObjAvailable.length(), gDeadObjects.length());
-      GLog.Logf(NAME_Dev, " === dead ==="); for (int f = 0; f < gDeadObjects.length(); ++f) GLog.Logf(NAME_Dev, "  #%d: %d", f, gDeadObjects[f]);
-      GLog.Logf(NAME_Dev, " === free ==="); for (int f = 0; f < gObjAvailable.length(); ++f) GLog.Logf(NAME_Dev, "  #%d: %d", f, gObjAvailable[f]);
-    }
-#endif
-
-    goptr = GObjObjects.ptr();
-    // now actually delete the objects
-    while (gDeadObjects.length()) {
-      int i = gDeadObjects.popValue();
-      check(i >= 0 && i < ilen);
-      VObject *obj = goptr[i];
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(obj);
-#endif
-#if defined(VC_GARBAGE_COLLECTOR_CHECKS) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      if (developer && !(obj->ObjectFlags&_OF_Destroyed)) {
-        GLog.Logf(NAME_Dev, "deleting non-dead object(%u) #%d: %p (%s); %d left to delete", obj->UniqueId, i, obj, obj->GetClass()->GetName(), gDeadObjects.length());
-      }
-#endif
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(obj->ObjectFlags&_OF_Destroyed);
-#endif
-      ++bodycount;
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "deleting object(%u) #%d: %p (%s)", obj->UniqueId, i, obj, obj->GetClass()->GetName());
-#endif
-      delete obj;
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(goptr[i] == nullptr); // sanity check
-#endif
-    }
-
-    // compact object storage if we have too big difference between number of free objects and last used index
-    if (/*alive+341 < gObjFirstFree ||*/ alive+alive/3 < gObjFirstFree) {
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "  compacting pool (alive=%d; firstfree=%d)", alive, gObjFirstFree);
-#endif
-      goptr = GObjObjects.ptr();
-      // find first free slot
-      int currFreeIdx = 0;
-      while (currFreeIdx < ilen && goptr[currFreeIdx]) {
-        check(goptr[currFreeIdx]->Index == currFreeIdx);
-        ++currFreeIdx;
-      }
-      check(currFreeIdx < ilen);
-      // move other objects up (and do integrity checks)
-      int currObjIdx = currFreeIdx+1;
-      while (currObjIdx < ilen) {
-        VObject *obj = goptr[currObjIdx];
-        if (obj) {
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-          check(currFreeIdx < ilen);
-          check(currFreeIdx < currObjIdx);
-          check(obj->Index == currObjIdx);
-#endif
-          goptr[currFreeIdx] = obj;
-          obj->Index = currFreeIdx;
-          goptr[currObjIdx] = nullptr;
-#ifdef VCC_STANDALONE_EXECUTOR
-          // just in case
-          if ((obj->ObjectFlags&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) gDelayDeadObjects.push(obj->Index);
-#endif
-          while (currFreeIdx < ilen && goptr[currFreeIdx]) ++currFreeIdx;
-        }
-        ++currObjIdx;
-      }
-      // ok, we compacted the list, now shrink it
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(currFreeIdx < ilen);
-      check(goptr[currFreeIdx] == nullptr);
-#endif
-      // new last used index is ready
-      gObjFirstFree = currFreeIdx;
-      // no need to shrink the pool, we have another means of tracking last used index
-      //GObjObjects.setLength(currFreeIdx+256, (currFreeIdx*2 < GObjObjects.NumAllocated())); // resize if the array is too big
-      // we don't need free index list anymore
-      gObjAvailable.reset();
-      memset((void *)(GObjObjects.ptr()+currFreeIdx), 0, (ilen-currFreeIdx)*sizeof(VObject *));
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "  pool compaction complete (alive=%d; firstfree=%d)", alive, gObjFirstFree);
-#endif
-    }
   } // gc complete
 
   gcLastStats.lastCollectTime = Sys_Time();
   lasttime += gcLastStats.lastCollectTime;
 
   GNumDeleted = 0;
-#if defined(VC_GARBAGE_COLLECTOR_CHECKS)
-  check(gDeadObjects.length() == 0);
-#endif
 
   // update GC stats
   gcLastStats.alive = alive;
