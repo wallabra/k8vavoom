@@ -369,6 +369,7 @@ void R_Init () {
 //
 //==========================================================================
 void R_Start (VLevel *ALevel) {
+  SCR_Update();
   if (r_level_renderer > 1 && !Drawer->SupportsAdvancedRendering()) {
     GCon->Logf(NAME_Warning, "Your GPU doesn't support Advanced Renderer, so I will switch to regular one.");
     r_level_renderer = 1;
