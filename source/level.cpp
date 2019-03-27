@@ -601,9 +601,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
     }
     for (i = 0; i < NumStaticLights; ++i) {
       VNTValueIOEx vio(&Strm);
+      //TODO: save static light entity
       vio.io(VName("Origin"), StaticLights[i].Origin);
       vio.io(VName("Radius"), StaticLights[i].Radius);
       vio.io(VName("Colour"), StaticLights[i].Colour);
+      vio.io(VName("Owner"), StaticLights[i].Owner);
     }
   }
 
@@ -723,23 +725,33 @@ void VLevel::ClearReferences () {
   // clear other refs
   sector_t *sec = Sectors;
   for (int i = NumSectors-1; i >= 0; --i, ++sec) {
-    if (sec->SoundTarget && sec->SoundTarget->GetFlags()&_OF_CleanupRef) sec->SoundTarget = nullptr;
-    if (sec->FloorData && sec->FloorData->GetFlags()&_OF_CleanupRef) sec->FloorData = nullptr;
-    if (sec->CeilingData && sec->CeilingData->GetFlags()&_OF_CleanupRef) sec->CeilingData = nullptr;
-    if (sec->LightingData && sec->LightingData->GetFlags()&_OF_CleanupRef) sec->LightingData = nullptr;
-    if (sec->AffectorData && sec->AffectorData->GetFlags()&_OF_CleanupRef) sec->AffectorData = nullptr;
-    if (sec->ActionList && sec->ActionList->GetFlags()&_OF_CleanupRef) sec->ActionList = nullptr;
+    if (sec->SoundTarget && (sec->SoundTarget->GetFlags()&_OF_CleanupRef)) sec->SoundTarget = nullptr;
+    if (sec->FloorData && (sec->FloorData->GetFlags()&_OF_CleanupRef)) sec->FloorData = nullptr;
+    if (sec->CeilingData && (sec->CeilingData->GetFlags()&_OF_CleanupRef)) sec->CeilingData = nullptr;
+    if (sec->LightingData && (sec->LightingData->GetFlags()&_OF_CleanupRef)) sec->LightingData = nullptr;
+    if (sec->AffectorData && (sec->AffectorData->GetFlags()&_OF_CleanupRef)) sec->AffectorData = nullptr;
+    if (sec->ActionList && (sec->ActionList->GetFlags()&_OF_CleanupRef)) sec->ActionList = nullptr;
   }
+  // polyobjects
   for (int i = 0; i < NumPolyObjs; ++i) {
     if (PolyObjs[i].SpecialData && (PolyObjs[i].SpecialData->GetFlags()&_OF_CleanupRef)) {
       PolyObjs[i].SpecialData = nullptr;
     }
   }
+  // cameras
   for (int i = 0; i < CameraTextures.Num(); ++i) {
     if (CameraTextures[i].Camera && (CameraTextures[i].Camera->GetFlags()&_OF_CleanupRef)) {
       CameraTextures[i].Camera = nullptr;
     }
   }
+  // static lights
+  // TODO: collect all static lights with owners into separate list for speed
+  for (int f = 0; f < NumStaticLights; ++f) {
+    rep_light_t &sl = StaticLights[f];
+    if (sl.Owner && (sl.Owner->GetFlags()&_OF_CleanupRef)) sl.Owner = nullptr;
+  }
+  // renderer
+  if (RenderData) RenderData->ClearReferences();
 }
 
 
@@ -920,6 +932,28 @@ void VLevel::Destroy () {
 
   // call parent class' `Destroy()` method
   Super::Destroy();
+}
+
+
+//==========================================================================
+//
+//  VLevel::SetCameraToTexture
+//
+//==========================================================================
+void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour) {
+  //FIXME: use proper data structure instead of reallocating it again and again
+  rep_light_t *OldLights = StaticLights;
+  ++NumStaticLights;
+  StaticLights = new rep_light_t[NumStaticLights];
+  if (OldLights) {
+    memcpy(StaticLights, OldLights, (NumStaticLights-1)*sizeof(rep_light_t));
+    delete[] OldLights;
+  }
+  rep_light_t &L = StaticLights[NumStaticLights-1];
+  L.Owner = Ent;
+  L.Origin = Origin;
+  L.Radius = Radius;
+  L.Colour = Colour;
 }
 
 

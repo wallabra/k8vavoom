@@ -589,11 +589,12 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_StaticLight:
         {
+          //FIXME: owner!
           TVec Origin;
           float Radius;
           vuint32 Colour;
           Msg << Origin << Radius << Colour;
-          Level->RenderData->AddStaticLight(Origin, Radius, Colour);
+          Level->RenderData->AddStaticLightRGB(nullptr, Origin, Radius, Colour);
         }
         break;
       case CMD_NewLevel:

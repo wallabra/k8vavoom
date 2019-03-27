@@ -59,17 +59,39 @@ extern VCvarF r_lights_radius;
 
 //==========================================================================
 //
-//  VRenderLevelShared::AddStaticLight
+//  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
-void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint32 colour) {
+void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 colour) {
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
   L.radius = radius;
   L.colour = colour;
+  L.owner = Owner;
   L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ClearReferences
+//
+//==========================================================================
+void VRenderLevelShared::ClearReferences () {
+  // TODO: collect all static lights with owners into separate list for speed
+  light_t *sl = Lights.ptr();
+  for (int count = Lights.length(); count--; ++sl) {
+    if (sl->owner && (sl->owner->GetFlags()&_OF_CleanupRef)) sl->owner = nullptr;
+  }
+  // dynlights
+  dlight_t *l = DLights;
+  for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
+    if (l->Owner && (l->Owner->GetFlags()&_OF_CleanupRef)) {
+      RL_CLEAR_DLIGHT(l);
+    }
+  }
 }
 
 

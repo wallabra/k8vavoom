@@ -300,6 +300,7 @@ public:
     TVec origin;
     float radius;
     vuint32 colour;
+    VEntity *owner;
     int leafnum;
     bool active; // for filtering
   };
@@ -633,7 +634,9 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
-  virtual void AddStaticLight (const TVec&, float, vuint32) override;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32) override;
+  virtual void ClearReferences () override;
+
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
   virtual void DecayLights (float) override;
   virtual void RemoveOwnedLight (VThinker *Owner) override;

@@ -298,7 +298,7 @@ void CL_SetUpStandaloneClient () {
 
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
-    GClLevel->RenderData->AddStaticLight(L.Origin, L.Radius, L.Colour);
+    GClLevel->RenderData->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Colour);
   }
   GClLevel->RenderData->PreRender();
 

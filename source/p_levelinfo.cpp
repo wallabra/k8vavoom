@@ -335,38 +335,18 @@ bool VLevelInfo::IsTIDUsed (int tid) const {
 IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLight) {
   P_GET_FLOAT(Radius);
   P_GET_VEC(Origin);
+  P_GET_REF(VEntity, Ent);
   P_GET_SELF;
-  rep_light_t *OldLights = Self->XLevel->StaticLights;
-  Self->XLevel->NumStaticLights++;
-  Self->XLevel->StaticLights = new rep_light_t[Self->XLevel->NumStaticLights];
-  if (OldLights) {
-    memcpy(Self->XLevel->StaticLights, OldLights, (Self->XLevel->NumStaticLights-1)*sizeof(rep_light_t));
-    delete[] OldLights;
-    OldLights = nullptr;
-  }
-  rep_light_t &L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights-1];
-  L.Origin = Origin;
-  L.Radius = Radius;
-  L.Colour = 0xffffffff;
+  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, 0xffffffffu);
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB) {
   P_GET_INT(Colour);
   P_GET_FLOAT(Radius);
   P_GET_VEC(Origin);
+  P_GET_REF(VEntity, Ent);
   P_GET_SELF;
-  rep_light_t *OldLights = Self->XLevel->StaticLights;
-  Self->XLevel->NumStaticLights++;
-  Self->XLevel->StaticLights = new rep_light_t[Self->XLevel->NumStaticLights];
-  if (OldLights) {
-    memcpy(Self->XLevel->StaticLights, OldLights, (Self->XLevel->NumStaticLights-1)*sizeof(rep_light_t));
-    delete[] OldLights;
-    OldLights = nullptr;
-  }
-  rep_light_t &L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights-1];
-  L.Origin = Origin;
-  L.Radius = Radius;
-  L.Colour = Colour;
+  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Colour);
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, SectorStartSequence) {

@@ -57,6 +57,13 @@ struct SectorLink {
   int next; // index, or -1
 };
 
+struct rep_light_t {
+  TVec Origin;
+  float Radius;
+  int Colour;
+  Entity Owner;
+};
+
 native readonly name MapName;
 native readonly string MapHash; // lowercase
 native readonly string MapHashMD5; // lowercase
@@ -135,7 +142,7 @@ native readonly private void *BaseSectors;
 native readonly private void *BasePolyObjs;
 
 //native readonly private int[] StaticLights;
-native readonly private void *StaticLights;
+native readonly private rep_light_t *StaticLights;
 native readonly private int NumStaticLights;
 
 // not really array of ints, and properly cleared by C++ code

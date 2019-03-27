@@ -65,9 +65,9 @@ override void OnMapSpawn (mthing_t *mthing) {
   if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
     //dprint("*** adding static light for class '%n'", GetClassName(Class));
     if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3) {
-      Level.AddStaticLight(Origin, StaticIntensityToRadius(float(mthing->arg4)));
+      Level.AddStaticLight(none, Origin, StaticIntensityToRadius(float(mthing->arg4)));
     } else {
-      Level.AddStaticLightRGB(Origin,
+      Level.AddStaticLightRGB(none, Origin,
         StaticIntensityToRadius(float(mthing->arg4)),
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     }
@@ -80,12 +80,12 @@ override void OnMapSpawn (mthing_t *mthing) {
     if (Intensity < 0.0) Intensity = 0.0;
     if (Intensity > 255.0) Intensity = 255.0;
     //print("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, LightType, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
-    Level.AddStaticLightRGB(Origin, IntensityToRadius(Intensity), RGB(Args[0], Args[1], Args[2]));
+    Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(Args[0], Args[1], Args[2]));
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
-      Level.AddStaticLight(Origin, StaticIntensityToRadius(float(mthing->arg4)));
+      Level.AddStaticLight(none, Origin, StaticIntensityToRadius(float(mthing->arg4)));
     } else {
-      Level.AddStaticLightRGB(Origin,
+      Level.AddStaticLightRGB(none, Origin,
         StaticIntensityToRadius(float(mthing->arg4)),
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     }

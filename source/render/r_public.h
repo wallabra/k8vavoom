@@ -62,7 +62,9 @@ public:
   virtual void SetupFakeFloors (sector_t *) = 0;
   virtual void RenderPlayerView () = 0;
 
-  virtual void AddStaticLight (const TVec&, float, vuint32) = 0;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32) = 0;
+  virtual void ClearReferences () = 0;
+
   virtual dlight_t *AllocDlight (VThinker*, const TVec &lorg, float radius, int lightid=-1) = 0;
   virtual void DecayLights (float) = 0;
   virtual void RemoveOwnedLight (VThinker *Owner) = 0;

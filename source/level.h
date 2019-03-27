@@ -100,6 +100,7 @@ struct rep_light_t {
   TVec Origin;
   float Radius;
   vuint32 Colour;
+  VEntity *Owner;
 };
 
 
@@ -492,6 +493,8 @@ public:
     }
     return 0xff;
   }
+
+  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour);
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
