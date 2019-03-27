@@ -460,7 +460,7 @@ void VLevel::BuildPVS () {
     NoVis = new vuint8[(NumSubsectors+7)/8];
     memset(NoVis, 0xff, (NumSubsectors+7)/8);
   } else {
-    GCon->Logf("PVS building (rough) complete (%d bytes).", (NumSubsectors+7)/8);
+    GCon->Logf("PVS building (rough) complete (%d bytes).", nfo.rowbytes*NumSubsectors);
   }
 
   for (int i = 0; i < nfo.numportals; ++i) {
