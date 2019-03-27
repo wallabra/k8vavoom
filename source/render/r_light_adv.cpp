@@ -916,6 +916,9 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 #endif
 
   ResetMobjsLightCount(true);
+
+  //TODO: if we want to scissor on geometry, check if any lit model is out of our light bbox
+
   // do shadow volumes
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
   LightClip.ClearClipNodes(CurrLightPos, Level);

@@ -101,14 +101,25 @@ struct VScriptedModelFrame {
   //
   VName sprite;
   int frame; // sprite frame
+  // index for next frame with the same sprite and frame
+  int nextSpriteIdx;
+  // index for next frame with the same number
+  int nextNumberIdx;
 };
+
+
+static inline vuint32 SprNameFrameToInt (VName name, int frame) { return (vuint32)name.GetIndex()|((vuint32)frame<<19); }
 
 
 struct VClassModelScript {
   VName Name;
   VModel *Model;
   bool NoSelfShadow;
+  bool OneForAll; // no need to do anything, this is "one model for all frames"
   TArray<VScriptedModelFrame> Frames;
+  bool CacheBuilt;
+  TMapNC<vuint32, int> SprFrameMap; // sprite name -> frame index (first)
+  TMapNC<int, int> NumFrameMap; // frame number -> frame index (first)
 };
 
 
@@ -393,10 +404,15 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     Cls->Model = Mdl;
     Cls->Name = *CN->GetAttribute("name");
     Cls->NoSelfShadow = (CN->HasAttribute("noselfshadow") ? !CN->GetAttribute("noselfshadow").ICmp("true") : false);
+    Cls->OneForAll = false;
+    Cls->CacheBuilt = false;
     if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
     ClassModels.Append(Cls);
     ClassDefined = true;
     //GCon->Logf("found model for class '%s'", *Cls->Name);
+
+    bool hasOneAll = false;
+    bool hasOthers = false;
 
     // process frames
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext()) {
@@ -477,13 +493,23 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
           ffr.anglePitch = F.anglePitch;
           ffr.angleRoll = F.angleRoll;
         }
+        hasOthers = true;
       } else {
-        if (F.Number < 0 && F.sprite == NAME_None) F.Number = -666;
+        if (F.Number < 0 && F.sprite == NAME_None) {
+          F.Number = -666;
+          hasOneAll = true;
+        } else {
+          hasOthers = true;
+        }
       }
     }
-    if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
+    if (!Cls->Frames.Num()) Sys_Error("model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
+    if (hasOneAll && !hasOthers) {
+      Cls->OneForAll = true;
+      //GCon->Logf("model '%s' for class '%s' is \"one-for-all\"", *Mdl->Name, *Cls->Name);
+    }
   }
-  if (!ClassDefined) Sys_Error("%s defined no classes", *Mdl->Name);
+  if (!ClassDefined) Sys_Error("model '%s' defined no classes", *Mdl->Name);
 
   // we don't need the xml file anymore
   delete Doc;
@@ -525,7 +551,7 @@ VModel *Mod_FindName (const VStr &name) {
 //  AddEdge
 //
 //==========================================================================
-static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
+static void AddEdge (TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   // check for a match
   // compare original vertex indices since texture coordinates are not important here
   for (int i = 0; i < Edges.Num(); ++i) {
@@ -844,9 +870,50 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
 //  FindFrame
 //
 //==========================================================================
-static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
+static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
+  // try cached frames
+  if (Cls.OneForAll) return 0; // guaranteed
+
+  if (!Cls.CacheBuilt) {
+    for (int i = 0; i < Cls.Frames.Num(); ++i) {
+      VScriptedModelFrame &frm = Cls.Frames[i];
+      frm.nextSpriteIdx = frm.nextNumberIdx = -1;
+      // sprite cache
+      if (frm.sprite != NAME_None) {
+        //FIXME: sanity checks
+        check(frm.frame >= 0 && frm.frame < 4096);
+        check(frm.sprite.GetIndex() > 0 && frm.sprite.GetIndex() < 524288);
+        vuint32 nfi = SprNameFrameToInt(frm.sprite, frm.frame);
+        if (!Cls.SprFrameMap.has(nfi)) {
+          // new one
+          Cls.SprFrameMap.put(nfi, i);
+        } else {
+          // add to list
+          int idx = *Cls.SprFrameMap.get(nfi);
+          while (Cls.Frames[idx].nextSpriteIdx != -1) idx = Cls.Frames[idx].nextSpriteIdx;
+          Cls.Frames[idx].nextSpriteIdx = i;
+        }
+      }
+      // frame number cache
+      if (frm.Number >= 0) {
+        if (!Cls.NumFrameMap.has(frm.Number)) {
+          // new one
+          Cls.NumFrameMap.put(frm.Number, i);
+        } else {
+          // add to list
+          int idx = *Cls.NumFrameMap.get(frm.Number);
+          while (Cls.Frames[idx].nextNumberIdx != -1) idx = Cls.Frames[idx].nextNumberIdx;
+          Cls.Frames[idx].nextNumberIdx = i;
+        }
+      }
+    }
+    Cls.CacheBuilt = true;
+  }
+
+#if 0
   int Ret = -1;
   int frameAny = -1;
+
   for (int i = 0; i < Cls.Frames.Num(); ++i) {
     const VScriptedModelFrame &frm = Cls.Frames[i];
     if (frm.Inter <= Inter) {
@@ -867,6 +934,37 @@ static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &
   }
   if (Ret == -1 && frameAny >= 0) return frameAny;
   return Ret;
+#else
+  int res = -1;
+  // by index
+  if (Frame.index >= 0) {
+    int *idxp = Cls.NumFrameMap.find(Frame.index);
+    if (idxp) {
+      int idx = *idxp;
+      while (idx != -1) {
+        const VScriptedModelFrame &frm = Cls.Frames[idx];
+             if (frm.Inter <= Inter) res = idx;
+        else if (frm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        idx = frm.nextNumberIdx;
+      }
+    }
+  }
+  if (res >= 0) return res;
+  // by sprite name
+  if (Frame.sprite != NAME_None && Frame.frame >= 0 && Frame.frame < 4096) {
+    int *idxp = Cls.SprFrameMap.find(SprNameFrameToInt(Frame.sprite, Frame.frame));
+    if (idxp) {
+      int idx = *idxp;
+      while (idx != -1) {
+        const VScriptedModelFrame &frm = Cls.Frames[idx];
+             if (frm.Inter <= Inter) res = idx;
+        else if (frm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        idx = frm.nextSpriteIdx;
+      }
+    }
+  }
+  return res;
+#endif
 }
 
 
@@ -875,7 +973,8 @@ static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &
 //  FindNextFrame
 //
 //==========================================================================
-static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
+static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
+  if (FIdx < 0) return -1; // just in case
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   if (FIdx < Cls.Frames.Num()-1) {
     const VScriptedModelFrame &frm = Cls.Frames[FIdx+1];
