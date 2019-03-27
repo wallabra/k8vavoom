@@ -18,6 +18,12 @@ menudef k8BDWModMenu {
     help = "Cheaters will keep unused ammo from dropped clip.";
   }
 
+  option bool {
+    title = "Rifle Low Ammo Beep";
+    cvar = K8BDWOpt_RifleWarnLowAmmo;
+    help = "Emit annoying beeps when Assault Rifle low on ammo.";
+  }
+
 
   header "Dropouts";
 

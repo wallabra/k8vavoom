@@ -72,6 +72,7 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
   var int user_HadAmmo; // this tells if we should drop empty clip
   var int user_spread; // from 0 to 6
   var int user_bulletDamage; // temporary
+  var int user_lowPauseCount;
 
   States {
     Spawn:
@@ -97,11 +98,28 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       "----" A 0 A_SetUserVar("user_spread", 0)
       RIF1 D 0 A_JumpIfInventory("BDW_RifleAmmo", 21, "ReadyLoop2")
       RIF2 D 0 A_JumpIfInventory("BDW_RifleAmmo", 11, "ReadyLoop2")
-      RIF3 D 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "ReadyLoop2")
+      RIF3 D 0 A_JumpIfInventory("BDW_RifleAmmo", 8, "ReadyLoop2")
+      RIF3 D 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "ReadyLoop2Snd")
       RIF4 D 0
     ReadyLoop2:
       "----" D 1 A_WeaponReady(WRF_ALLOWRELOAD)
       Goto ReadyLoop
+
+    ReadyLoop2Snd:
+      "----" D 0 {
+        //A_k8ConLog(va("000: %s", user_lowPauseCount));
+        user_lowPauseCount = user_lowPauseCount-1;
+        if (user_lowPauseCount < 1) {
+          //A_k8ConLog("*** 001");
+          if (GetCVarB("K8BDWOpt_RifleWarnLowAmmo")) {
+            A_PlaySound("weapons/bdw_rifle/lowammo", CHAN_VOICE, 1.0);
+          }
+          if (CountInv("BDW_RifleAmmo") > 4) user_lowPauseCount = 40;
+          if (CountInv("BDW_RifleAmmo") > 2) user_lowPauseCount = 30;
+          else user_lowPauseCount = 20;
+        }
+      }
+      Goto ReadyLoop2
 
     Deselect:
       RIF4 B 1 Offset(-2, 34)

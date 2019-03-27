@@ -4,6 +4,8 @@ weapons/bdw_rifle/shotfast  bdwrshot
 weapons/bdw_rifle/clipin    bdwrclpn
 weapons/bdw_rifle/empty     bdwrempt
 weapons/bdw_rifle/reload    bdwrreld
+weapons/bdw_rifle/lowammo   bdwrlow
+$pitchshift weapons/bdw_rifle/lowammo 0
 
 weapons/bdw_shotgun/sgfire   bdwsshot
 weapons/bdw_shotgun/sgpump   bdwspump
