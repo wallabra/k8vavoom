@@ -93,8 +93,8 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // simple PVS
-#define MAX_PORTALS_ON_LEAF   (512)
-#define ON_EPSILON  (0.1)
+#define MAX_PORTALS_ON_LEAF   (512*4)
+#define ON_EPSILON  (0.001)
 
 
 struct winding_t {
@@ -701,8 +701,9 @@ bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
   }
 
   if (outbuffer[leafnum>>3]&(1<<(leafnum&7))) {
-    GCon->Logf(NAME_Warning, "Leaf portals saw into leaf");
-    return false;
+    //k8: so what?
+    GCon->Logf(NAME_Warning, "Leaf %d portals saw into leaf", leafnum);
+    //return false;
   }
 
   outbuffer[leafnum>>3] |= (vuint8)(1u<<(leafnum&7));
