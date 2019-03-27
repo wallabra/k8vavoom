@@ -26,7 +26,7 @@
 //**************************************************************************
 
 void SCR_Init ();
-void SCR_Update ();
+void SCR_Update (bool fullUpdate=true);
 
 
 extern int ScreenWidth;

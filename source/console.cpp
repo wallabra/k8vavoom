@@ -54,9 +54,6 @@ public:
 };
 
 
-extern bool graphics_started;
-
-
 FConsoleDevice Console;
 FOutputDevice *GCon = &Console;
 
@@ -612,9 +609,6 @@ static const char *cpSkipColorEscape (const char *ch) {
 
 
 static void DoPrint (const char *buf) {
-#ifndef _WIN32
-  //k8: done in `Serialize()` if (!graphics_started) printf("%s", buf);
-#endif
   const char *ch = buf;
   while (*ch) {
     if (*ch == '\n') {

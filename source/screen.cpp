@@ -441,6 +441,7 @@ static void CheckResolutionChange () {
       brightness = usegamma;
     }
   }
+
   if (setresolutionneeded) {
     ChangeResolution(setwidth, setheight);
     setresolutionneeded = false;
@@ -508,8 +509,10 @@ void SCR_Init () {
 //  SCR_Update
 //
 //==========================================================================
-void SCR_Update () {
+void SCR_Update (bool fullUpdate) {
   CheckResolutionChange();
+
+  if (!fullUpdate) return;
 
   Drawer->StartUpdate();
 
