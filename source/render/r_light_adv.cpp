@@ -919,7 +919,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   ResetMobjsLightCount(true);
 
   //TODO: if we want to scissor on geometry, check if any lit model is out of our light bbox
-  if (r_advlight_opt_optimise_scissor && r_model_shadows && r_models) {
+  if (r_advlight_opt_optimise_scissor && r_model_shadows && r_models && mobjAffected.length()) {
     int count = mobjAffected.length();
     VEntity **entp = mobjAffected.ptr();
     float xbbox[6];
