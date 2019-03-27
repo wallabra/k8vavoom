@@ -645,7 +645,9 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   subsector_t *sub = &Level->Subsectors[num];
   //r_sub = sub;
 
-  if (Level->HasPVS() && sub->VisFrame != currVisFrame) return;
+  if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
+    /*if (!sub->sector->botregion || !sub->sector->botregion->next)*/ return;
+  }
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -675,7 +677,9 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   // update world
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
     sub->updateWorldFrame = updateWorldFrame;
-    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame) {
+    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame/* ||
+        !sub->sector->botregion || !sub->sector->botregion->next*/)
+    {
       //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
       //auto oldrss = r_surf_sub;
       //r_surf_sub = sub;
