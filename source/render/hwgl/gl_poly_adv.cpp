@@ -88,8 +88,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
         continue;
       }
-      glBegin(GL_POLYGON);
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -155,9 +156,18 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           (surf->Light&255)*lev/255.0f, 1.0f);
       }
 
-      glBegin(gl_dbg_wireframe ? GL_LINE_LOOP : GL_POLYGON);
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
-      glEnd();
+      if (!gl_dbg_wireframe) {
+        // normal
+        glBegin(GL_TRIANGLE_FAN);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        glEnd();
+      } else {
+        // wireframe
+        //FIXME: this is wrong for "quality mode", where we'll subdivide surface to more triangles
+        glBegin(GL_LINE_LOOP);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        glEnd();
+      }
     }
   }
 }
@@ -411,12 +421,14 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 
   if (!usingZPass && !gl_dbg_use_zpass) {
     // render far cap
-    glBegin(GL_POLYGON);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
     glEnd();
 
     // render near cap
-    glBegin(GL_POLYGON);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
     glEnd();
   } else {
@@ -464,14 +476,16 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
 
       // render near cap (it should be front-facing, so it will do "teh right thing")
-      glBegin(GL_POLYGON);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
         for (unsigned f = 0; f < vcount; ++f) glVertex(dest[f]);
       glEnd();
 
       p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
       p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
 
-      glBegin(GL_POLYGON);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
         for (unsigned f = 0; f < vcount; ++f) glVertex(sverts[f]);
       glEnd();
 #else
@@ -480,7 +494,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
 
       // render near cap (it should be front-facing, so it will do "teh right thing")
-      glBegin(GL_POLYGON);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
         for (unsigned f = 0; f < vcount; ++f) {
           //glVertex(dest[f]);
           TVec vv = (sverts[f]-LightPos).normalised();
@@ -493,7 +508,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
       p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
 
-      glBegin(GL_POLYGON);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
         for (unsigned f = 0; f < vcount; ++f) {
           glVertex(sverts[f]);
         }
@@ -554,7 +570,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
 
     // render near cap (it should be front-facing, so it will do "teh right thing")
-    glBegin(GL_POLYGON);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
     glEnd();
     {
@@ -564,10 +581,10 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       //glEnable(GL_BLEND);
       glColor3f(1.0f, 1.0f, 0.0f);
       glBegin(GL_LINES);
-      for (unsigned i = 0; i < vcount; ++i) {
-        glVertex(sverts[i]);
-        glVertex(sverts[(i+1)%vcount]);
-      }
+        for (unsigned i = 0; i < vcount; ++i) {
+          glVertex(sverts[i]);
+          glVertex(sverts[(i+1)%vcount]);
+        }
       glEnd();
       glColor3f(1.0f, 1.0f, 1.0f);
       p_glUseProgramObjectARB(SurfShadowVolume_Program);
@@ -685,8 +702,9 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
     ShadowsLightDbg.SetSurfDist(surf->plane->dist);
   }
 
-  glBegin(GL_POLYGON);
-  for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
+    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
 }
 
@@ -802,15 +820,16 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     // fill stencil buffer for decals
     if (doDecals) RenderPrepareShaderDecals(surf);
 
-    glBegin(GL_POLYGON);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      /*
-      p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-        (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-        (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-      */
-      glVertex(surf->verts[i]);
-    }
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
+      for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+        /*
+        p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
+          (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+          (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+        */
+        glVertex(surf->verts[i]);
+      }
     glEnd();
 
     if (doDecals) {
@@ -903,8 +922,9 @@ void VOpenGLDrawer::DrawWorldFogPass () {
       }
     }
 
-    glBegin(GL_POLYGON);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
+      for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
   }
 

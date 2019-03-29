@@ -99,7 +99,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SurfDSky.SetTexture2(1);
     SurfDSky.SetBrightness(r_sky_bright_factor);
 
-    glBegin(GL_POLYGON);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
       SurfDSky.SetTexCoord(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
@@ -117,7 +118,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SurfSky.SetTexture(0);
     SurfSky.SetBrightness(r_sky_bright_factor);
 
-    glBegin(GL_POLYGON);
+    //glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
       SurfSky.SetTexCoord(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
@@ -217,8 +219,9 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
   glDepthMask(GL_FALSE); // no z-buffer writes
-  glBegin(GL_POLYGON);
-  for (unsigned i = 0; i < 4; ++i) glVertex(v[i]);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
+    for (unsigned i = 0; i < 4; ++i) glVertex(v[i]);
   glEnd();
   //glDepthMask(GL_TRUE); // allow z-buffer writes
   glDepthMask(oldDepthMask);
@@ -226,8 +229,9 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   // write to the depth buffer
   SurfZBuf.Activate();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-  glBegin(GL_POLYGON);
-  for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
+    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
@@ -267,10 +271,10 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
-  for (int i = 0; i < surf->count; ++i) {
-    ++glWDVertexTotal;
-    glVertex(surf->verts[i]);
-  }
+    for (int i = 0; i < surf->count; ++i) {
+      ++glWDVertexTotal;
+      glVertex(surf->verts[i]);
+    }
   glEnd();
 
   // draw decals
@@ -319,10 +323,10 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
-  for (int i = 0; i < surf->count; ++i) {
-    ++glWDVertexTotal;
-    glVertex(surf->verts[i]);
-  }
+    for (int i = 0; i < surf->count; ++i) {
+      ++glWDVertexTotal;
+      glVertex(surf->verts[i]);
+    }
   glEnd();
 
   // draw decals
@@ -369,8 +373,9 @@ void VOpenGLDrawer::WorldDrawing () {
         if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
         continue;
       }
-      glBegin(GL_POLYGON);
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+      //glBegin(GL_POLYGON);
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
