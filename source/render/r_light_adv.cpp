@@ -43,6 +43,8 @@ extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
 
+extern VCvarB gl_dbg_wireframe;
+
 
 /*
   possible shadow volume optimisation:
@@ -842,7 +844,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
                                                TVec &Pos, float Radius, float LightMin, vuint32 Colour,
                                                bool LimitLights)
 {
-  if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin) return;
+  if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
 
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
   CurrLightRadius = Radius; // we need full radius, not modified

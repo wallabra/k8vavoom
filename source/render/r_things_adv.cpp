@@ -129,16 +129,11 @@ static inline bool SetupRenderStyleAndTime (const VEntity *mobj, int &RendStyle,
 //
 //==========================================================================
 bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent) {
-  const TVec Delta = ent->Origin-CurrLightPos;
+  const TVec Delta = CurrLightPos-ent->Origin;
   const float Dist = ent->Radius+CurrLightRadius;
-/*
-  if (Delta.x > Dist || Delta.y > Dist) return false;
-  if (Delta.z < -CurrLightRadius) return false;
-  if (Delta.z > CurrLightRadius+ent->Height) return false;
-  //Delta.z = 0;
-  if (Delta.Length2DSquared() > Dist*Dist) return false;
-*/
   if (Delta.LengthSquared() >= Dist*Dist) return false;
+  // if light is higher than thing height, assume that the thing is not touched
+  if (Delta.z >= CurrLightRadius+ent->Height) return false;
   return true;
 }
 
@@ -165,8 +160,8 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
       for (int count = visibleObjects.length(); count--; ++ent) {
         if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
         if (!(*ent)->State) continue;
-        if (!IsTouchedByLight(*ent)) continue;
         if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+        if (!IsTouchedByLight(*ent)) continue;
         if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
         mobjAffected.append(*ent);
       }
@@ -176,9 +171,9 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
       for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
         if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
         if (!ent->State) continue;
+        if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
         ent->NumRenderedShadows = 0;
         if (!IsTouchedByLight(*ent)) continue;
-        if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
         mobjAffected.append(*ent);
       }
     }
@@ -248,8 +243,8 @@ void VAdvancedRenderLevel::RenderMobjsAmbient () {
   if (r_dbg_advthing_dump_ambient) GCon->Log("=== ambient ===");
   for (int count = visibleObjects.length(); count--; ++ent) {
     if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (r_dbg_advthing_dump_ambient) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
     if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+    if (r_dbg_advthing_dump_ambient) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
     RenderThingAmbient(*ent);
   }
 }
@@ -283,8 +278,8 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
   if (r_dbg_advthing_dump_textures) GCon->Log("=== textures ===");
   for (int count = visibleObjects.length(); count--; ++ent) {
     if (*ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
-    if (r_dbg_advthing_dump_textures) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
     if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+    if (r_dbg_advthing_dump_textures) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
     RenderThingTextures(*ent);
   }
 }

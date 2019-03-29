@@ -78,8 +78,6 @@ static inline void spvReserve (int size) {
 //==========================================================================
 void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
   surface_t *surfs = ASurfs;
-  //float dot, mins, maxs;
-  //int bmins, bmaxs;
 
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
@@ -106,25 +104,21 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
         if (dot < mins) mins = dot;
         if (dot > maxs) maxs = dot;
       }
-
       int bmins = (int)floor(mins/16);
       int bmaxs = (int)ceil(maxs/16);
-      surfs->texturemins[0] = bmins*16;
-      surfs->extents[0] = (bmaxs-bmins)*16;
-      /*
-      if (surfs->extents[0] > 256) {
-        //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
-        GCon->Logf(NAME_Warning, "Bad extents (0): %d", (int)surfs->extents[0]);
+
+      if (bmins < -32767/16 || bmins > 32767/16 ||
+          bmaxs < -32767/16 || bmaxs > 32767/16 ||
+          (bmaxs-bmins) < -32767/16 ||
+          (bmaxs-bmins) > 32767/16)
+      {
+        GCon->Logf(NAME_Warning, "Subsector %d got too big S surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
+        surfs->texturemins[0] = 0;
         surfs->extents[0] = 256;
+      } else {
+        surfs->texturemins[0] = bmins*16;
+        surfs->extents[0] = (bmaxs-bmins)*16;
       }
-      */
-      /*
-      if (surfs->extents[0] < 1) {
-        //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
-        GCon->Logf(NAME_Warning, "Bad extents (0): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[0], mins, bmins, maxs, bmaxs);
-        surfs->extents[0] = 256;
-      }
-      */
 
       mins = 99999.0f;
       maxs = -99999.0f;
@@ -135,25 +129,20 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       }
       bmins = (int)floor(mins/16);
       bmaxs = (int)ceil(maxs/16);
-      surfs->texturemins[1] = bmins*16;
-      surfs->extents[1] = (bmaxs-bmins)*16;
-      /*
-      if (surfs->extents[1] > 256) {
-        //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
-        GCon->Logf(NAME_Warning, "Bad extents (1): %d", (int)surfs->extents[1]);
-        surfs->extents[1] = 256;
-      }
-      */
-      /*
-      if (surfs->extents[1] < 1) {
-        //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
-        GCon->Logf(NAME_Warning, "Bad extents (1): %d (mins=%f : %d; maxs=%f : %d)", (int)surfs->extents[1], mins, bmins, maxs, bmaxs);
-        surfs->extents[1] = 256;
-      }
-      */
 
-      //GCon->Logf("***INITSURF***");
-      surfs->subsector = sub;
+      if (bmins < -32767/16 || bmins > 32767/16 ||
+          bmaxs < -32767/16 || bmaxs > 32767/16 ||
+          (bmaxs-bmins) < -32767/16 ||
+          (bmaxs-bmins) > 32767/16)
+      {
+        GCon->Logf(NAME_Warning, "Subsector %d got too big T surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
+        surfs->texturemins[1] = 0;
+        surfs->extents[1] = 256;
+      } else {
+        surfs->texturemins[1] = bmins*16;
+        surfs->extents[1] = (bmaxs-bmins)*16;
+      }
+
       if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
         surfs->lmapflags |= Lightmap_Required;
         //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
@@ -162,7 +151,6 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
         surfs->lmapflags &= ~Lightmap_Required; // just in case
         LightFace(surfs, sub);
       }
-      //LightFace(surfs, sub);
     }
 
     surfs = surfs->next;
@@ -184,8 +172,11 @@ static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, con
 //  VRenderLevel::SubdivideFace
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis, subsector_t *sub) {
+surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
   surface_t *f = InF;
+  subsector_t *sub = f->subsector;
+  check(sub);
+
   float mins = 99999.0f;
   float maxs = -99999.0f;
 
@@ -203,7 +194,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   // this can happen for wall without texture
   if (!axis.isValid() || axis.isZero()) {
     GCon->Logf(NAME_Warning, "ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     //f->count = 0; // ignore this surface
     return f;
   }
@@ -222,7 +213,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   }
 
   if (maxs-mins <= subdivide_size) {
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
 
@@ -343,7 +334,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     //GCon->Logf(NAME_Warning, "empty surface at subsector");
     //GCon->Logf("f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)", f->count, count1, count2, axis.x, axis.y, axis.z);
     // no subdivide found
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr, sub);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
 
@@ -355,14 +346,16 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(count2-1)*sizeof(TVec));
   back->count = count2;
   memcpy(back->verts, verts2, count2*sizeof(TVec));
+  back->subsector = sub;
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
   front->count = count1;
   memcpy(front->verts, verts1, count1*sizeof(TVec));
+  front->subsector = sub;
 
   front->next = next;
-  back->next = SubdivideFace(front, axis, nextaxis, sub);
-  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr, sub);
+  back->next = SubdivideFace(front, axis, nextaxis);
+  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr);
   return back;
 }
 
@@ -372,8 +365,10 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 //  VRenderLevel::SubdivideSeg
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg, subsector_t *sub) {
+surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   surface_t *surf = InSurf;
+  subsector_t *sub = surf->subsector;
+  check(sub);
 
   if (surf->count == 0) {
     //GCon->Logf(NAME_Warning, "empty surface at subsector #%d (0)", (int)(ptrdiff_t)(f->subsector-Level->Subsectors));
@@ -389,7 +384,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   // this can happen for wall without texture
   if (!axis.isValid() || axis.isZero()) {
     GCon->Logf(NAME_Warning, "ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg);
     //surf->count = 0; // ignore this surface
     return surf;
   }
@@ -411,7 +406,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   }
 
   if (maxs-mins <= subdivide_size) {
-    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
+    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr, seg);
     return surf;
   }
 
@@ -535,7 +530,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 #endif
 
   if (count1 < 3 || count2 < 3) {
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
+    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg);
     return surf;
   }
 
@@ -547,10 +542,11 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   surface_t *news = NewWSurf();
   news->count = count1;
   memcpy(news->verts, verts1, count1*sizeof(TVec));
+  news->subsector = sub;
 
   news->next = surf->next;
-  surf->next = SubdivideSeg(news, axis, nextaxis, seg, sub);
-  if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg, sub);
+  surf->next = SubdivideSeg(news, axis, nextaxis, seg);
+  if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg);
   return surf;
 }
 

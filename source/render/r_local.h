@@ -509,8 +509,8 @@ protected:
   //virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
 
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
-  virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*, subsector_t *) = 0;
-  virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*, seg_t *, subsector_t *) = 0;
+  virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
+  virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
   virtual void QueueWorldSurface (seg_t*, surface_t*) = 0;
   virtual void FreeSurfCache (surfcache_t*);
   virtual bool CacheSurface (surface_t*);
@@ -697,8 +697,8 @@ protected:
 
   // surf methods
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
-  virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*, subsector_t *) override;
-  virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*, seg_t *, subsector_t *) override;
+  virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
+  virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   // light methods
   static void CalcMinMaxs (surface_t *surf);
@@ -747,8 +747,8 @@ protected:
 
   // surf methods
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
-  virtual surface_t *SubdivideFace (surface_t*, const TVec&, const TVec*, subsector_t *) override;
-  virtual surface_t *SubdivideSeg (surface_t*, const TVec&, const TVec*, seg_t *, subsector_t *) override;
+  virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
+  virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   // light methods
   //virtual void PushDlights () override;
