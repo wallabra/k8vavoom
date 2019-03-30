@@ -92,7 +92,7 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surfs->texturemins[1] = 16;
       surfs->extents[1] = 16;
       surfs->subsector = sub;
-      surfs->lmapflags &= ~surface_t::LM_REQUIRED; // just in case
+      surfs->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
     } else {
       float mins = 99999.0f;
       float maxs = -99999.0f;
@@ -141,11 +141,11 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       }
 
       if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
-        surfs->lmapflags |= surface_t::LM_REQUIRED;
+        surfs->drawflags |= surface_t::DF_CALC_LMAP;
         //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
         //LightFace(surfs, sub);
       } else {
-        surfs->lmapflags &= ~surface_t::LM_REQUIRED; // just in case
+        surfs->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         LightFace(surfs, sub);
       }
     }

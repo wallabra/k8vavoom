@@ -73,18 +73,21 @@ struct texinfo_t {
 
 struct surface_t {
   enum {
-    MAXWVERTS = 8, // maximum number of vertices in wsurf (world/wall surface)
+    MAXWVERTS = 8+8, // maximum number of vertices in wsurf (world/wall surface)
   };
 
   enum {
     DF_MASKED     = 1u<<0, // this surface has "masked" texture
     DF_WSURF      = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
     DF_FIX_CRACKS = 1u<<2, // this surface must be subdivised to fix "cracks"
+    DF_CALC_LMAP  = 1u<<3, // calculate static lightmap
   };
 
+  /*
   enum {
     LM_REQUIRED = 1u<<0,
   };
+  */
 
   surface_t *next;
   //surface_t *DrawNext;
@@ -107,7 +110,7 @@ struct surface_t {
   short texturemins[2];
   short extents[2];
   surfcache_t *CacheSurf;
-  vuint32 lmapflags; // LM_XXX
+  vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   TVec verts[1]; // dynamic array
 };
 
