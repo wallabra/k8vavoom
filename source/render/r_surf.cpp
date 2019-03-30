@@ -360,6 +360,7 @@ surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t
 
   surface_t *surf = NewWSurf();
   surf->subsector = sub;
+  surf->seg = seg;
   surf->next = nullptr;
   surf->count = 4;
   memcpy(surf->verts, wv, /*surf->count*/4*sizeof(TVec));

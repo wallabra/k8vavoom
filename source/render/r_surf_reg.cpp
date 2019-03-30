@@ -175,6 +175,7 @@ static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, con
 surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
   surface_t *f = InF;
   subsector_t *sub = f->subsector;
+  seg_t *seg = f->seg;
   check(sub);
 
   float mins = 99999.0f;
@@ -347,11 +348,13 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   back->count = count2;
   memcpy(back->verts, verts2, count2*sizeof(TVec));
   back->subsector = sub;
+  back->seg = seg;
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
   front->count = count1;
   memcpy(front->verts, verts1, count1*sizeof(TVec));
   front->subsector = sub;
+  front->seg = seg;
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
@@ -368,6 +371,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   surface_t *surf = InSurf;
   subsector_t *sub = surf->subsector;
+  check(surf->seg == seg);
   check(sub);
 
   if (surf->count == 0) {
@@ -543,6 +547,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   news->count = count1;
   memcpy(news->verts, verts1, count1*sizeof(TVec));
   news->subsector = sub;
+  news->seg = seg;
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis, seg);

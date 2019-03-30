@@ -631,7 +631,7 @@ struct surface_t {
   int Light; // light level and colour (unsigned)
   int Fade; // (unsigned)
   subsector_t *subsector; // owning subsector
-  //seg_t *seg; // owning seg (may be null for floor/ceiling)
+  seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
   // this has more fields in C++, but they aren't exposed
   // so never copy this struct, and never keep it anywhere as value
 };

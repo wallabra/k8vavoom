@@ -75,7 +75,10 @@ enum {
 };
 
 struct surface_t {
-  enum { DF_MASKED = 0x0001u };
+  enum {
+    DF_MASKED     = 1u<<0, // this surface has "masked" texture
+    DF_FIX_CRACKS = 1u<<1, // this surface must be subdivised to fix "cracks"
+  };
 
   surface_t *next;
   //surface_t *DrawNext;
@@ -85,7 +88,7 @@ struct surface_t {
   vuint32 Light; // light level and colour
   vuint32 Fade;
   subsector_t *subsector; // owning subsector
-  //seg_t *seg; // owning seg (may be null for floor/ceiling)
+  seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
   // not exposed to VC
   vuint8 *lightmap;
   rgb_t *lightmap_rgb;
