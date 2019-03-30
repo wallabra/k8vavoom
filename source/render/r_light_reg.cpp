@@ -801,8 +801,8 @@ static inline int xblight (int add, int sub) {
 //
 //==========================================================================
 void VRenderLevel::BuildLightMap (surface_t *surf) {
-  if (surf->lmapflags&Lightmap_Required) {
-    surf->lmapflags &= ~Lightmap_Required;
+  if (surf->lmapflags&surface_t::LM_REQUIRED) {
+    surf->lmapflags &= ~surface_t::LM_REQUIRED;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
     if (surf->subsector) LightFace(surf, surf->subsector);
   }

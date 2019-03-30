@@ -70,14 +70,15 @@ struct texinfo_t {
   vuint8 ColourMap;
 };
 
-enum {
-  Lightmap_Required = 0x0001u,
-};
 
 struct surface_t {
   enum {
     DF_MASKED     = 1u<<0, // this surface has "masked" texture
     DF_FIX_CRACKS = 1u<<1, // this surface must be subdivised to fix "cracks"
+  };
+
+  enum {
+    LM_REQUIRED = 1u<<0,
   };
 
   surface_t *next;
@@ -102,7 +103,7 @@ struct surface_t {
   short extents[2];
   surfcache_t *CacheSurf;
   seg_t *dcseg; // seg with decals for this surface
-  vuint32 lmapflags; // Lightmap_XXX
+  vuint32 lmapflags; // LM_XXX
   TVec verts[1]; // dynamic array
 };
 
