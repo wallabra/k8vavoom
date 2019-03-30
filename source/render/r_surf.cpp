@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-//#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1))
-
 // this is used to compare floats like ints which is faster
 #define FASI(var) (*(const int32_t *)&var)
 
@@ -102,6 +100,8 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //==========================================================================
 //
 //  VRenderLevelShared::CreateSecSurface
+//
+//  this is used to create floor and ceiling surfaces
 //
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
@@ -219,6 +219,8 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //
 //  VRenderLevelShared::UpdateSecSurface
 //
+//  this is used to update floor and ceiling surfaces
+//
 //==========================================================================
 void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub) {
   sec_plane_t *plane = ssurf->secplane;
@@ -301,7 +303,8 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
 //
 //==========================================================================
 surface_t *VRenderLevelShared::NewWSurf () {
-#if 0
+  enum { WSURFSIZE = sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1) };
+#if 1
   if (!free_wsurfs) {
     // allocate some more surfs
     vuint8 *tmp = (vuint8 *)Z_Calloc(WSURFSIZE*128+sizeof(void *));
@@ -319,7 +322,7 @@ surface_t *VRenderLevelShared::NewWSurf () {
 
   memset((void *)surf, 0, WSURFSIZE);
 #else
-  surface_t *surf = (surface_t *)Z_Calloc(sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1));
+  surface_t *surf = (surface_t *)Z_Calloc(WSURFSIZE);
 #endif
 
   return surf;
@@ -332,7 +335,7 @@ surface_t *VRenderLevelShared::NewWSurf () {
 //
 //==========================================================================
 void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
-#if 0
+#if 1
   surface_t *surfs = InSurfs;
   FlushSurfCaches(surfs);
   while (surfs) {
@@ -359,6 +362,8 @@ void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
 //==========================================================================
 //
 //  VRenderLevelShared::CreateWSurfs
+//
+//  this is used to create world/wall surface
 //
 //==========================================================================
 surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub) {
@@ -483,6 +488,8 @@ static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MT
 //==========================================================================
 //
 //  VRenderLevelShared::CreateSegParts
+//
+//  create world/wall surfaces
 //
 //==========================================================================
 void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
@@ -1307,7 +1314,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 //
 //==========================================================================
 void VRenderLevelShared::CreateWorldSurfaces () {
-  //free_wsurfs = nullptr;
+  check(!free_wsurfs);
   SetupSky();
 
   // set up fake floors
