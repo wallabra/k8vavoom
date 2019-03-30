@@ -111,6 +111,10 @@ struct surface_t {
   short extents[2];
   surfcache_t *CacheSurf;
   vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
+  // heights, to avoid recalcs (RAM is cheap! ;-)
+  float topHeights[4]; // v1top, v1bot, v2top, v2bot
+  float botHeights[4]; // v1top, v1bot, v2top, v2bot
+  float midHeights[4]; // v1top, v1bot, v2top, v2bot
   TVec verts[1]; // dynamic array
 };
 

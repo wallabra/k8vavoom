@@ -562,6 +562,14 @@ protected:
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();
 
+  void SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+
   // surf methods
   void SetupSky ();
   void FlushSurfCaches (surface_t*);
