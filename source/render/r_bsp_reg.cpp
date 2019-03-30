@@ -43,7 +43,7 @@ extern int light_reset_surface_cache; // in r_light_reg.cpp
 //  VRenderLevel::QueueWorldSurface
 //
 //==========================================================================
-void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
+void VRenderLevel::QueueWorldSurface (surface_t *surf) {
   if (surf->lmapflags&surface_t::LM_REQUIRED) {
     surf->lmapflags &= ~surface_t::LM_REQUIRED;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
@@ -51,7 +51,6 @@ void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
   }
 
   bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
-  surf->dcseg = seg;
 
   if (lightmaped) {
     if (CacheSurface(surf)) return;
@@ -59,7 +58,7 @@ void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
     // this is ugly, but much better than lost surfaces
   }
 
-  QueueSimpleSurf(seg, surf);
+  QueueSimpleSurf(surf);
 }
 
 

@@ -263,7 +263,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
   SurfSimple.SetFogFade(surf->Fade, 1.0f);
 
-  bool doDecals = textr->Tex && !textr->noDecals && surf->dcseg && surf->dcseg->decals;
+  bool doDecals = textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals;
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -315,7 +315,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   SurfLightmap.SetLMap(surf, cache);
   SurfLightmap.SetFogFade(surf->Fade, 1.0f);
 
-  bool doDecals = (tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals);
+  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);

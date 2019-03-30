@@ -511,7 +511,7 @@ protected:
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
-  virtual void QueueWorldSurface (seg_t*, surface_t*) = 0;
+  virtual void QueueWorldSurface (surface_t*) = 0;
   virtual void FreeSurfCache (surfcache_t*);
   virtual bool CacheSurface (surface_t*);
 
@@ -544,7 +544,7 @@ protected:
   void SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf);
 
   // world BSP rendering
-  void QueueSimpleSurf (seg_t *seg, surface_t *surf);
+  void QueueSimpleSurf (surface_t *surf);
   void QueueSkyPortal (surface_t *surf);
   void QueueHorizonPortal (surface_t *surf);
 
@@ -719,7 +719,7 @@ protected:
   virtual bool CacheSurface (surface_t*) override;
 
   // world BSP rendering
-  virtual void QueueWorldSurface (seg_t*, surface_t*) override;
+  virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
 public:
@@ -757,7 +757,7 @@ protected:
   vuint32 LightPointAmbient (const TVec &p, float radius);
 
   // world BSP rendering
-  virtual void QueueWorldSurface (seg_t*, surface_t*) override;
+  virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, int LightCanCross);

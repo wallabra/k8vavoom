@@ -83,10 +83,10 @@ static int oldPortalDepth = -666;
 void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
   check(surf);
   if (surf->queueframe == currQueueFrame) {
-    if (surf->dcseg) {
+    if (surf->seg) {
       //abort();
       GCon->Logf(NAME_Warning, "subsector %d, seg %d surface queued for rendering twice",
-        (int)(ptrdiff_t)(surf->dcseg-Level->Segs),
+        (int)(ptrdiff_t)(surf->seg-Level->Segs),
         (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     } else {
       GCon->Logf(NAME_Warning, "subsector %d surface queued for rendering twice",
@@ -105,8 +105,7 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
 //  VRenderLevelShared::QueueSimpleSurf
 //
 //==========================================================================
-void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
-  surf->dcseg = seg;
+void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
   SurfCheckAndQueue(DrawSurfList, surf);
 }
 
@@ -117,7 +116,6 @@ void VRenderLevelShared::QueueSimpleSurf (seg_t *seg, surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
-  surf->dcseg = nullptr;
   SurfCheckAndQueue(DrawSkyList, surf);
 }
 
@@ -128,7 +126,6 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
-  surf->dcseg = nullptr;
   SurfCheckAndQueue(DrawHorizonList, surf);
 }
 
@@ -244,7 +241,6 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         surfs->Fade = Fade;
         surfs->dlightframe = sub->dlightframe;
         surfs->dlightbits = sub->dlightbits;
-        surfs->dcseg = nullptr; // sky cannot have decals anyway
         DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
           0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
           false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
@@ -268,13 +264,10 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = surfs;
         S.Type = 0;
-        surfs->dcseg = seg;
       } else {
-        QueueWorldSurface(seg, surfs);
+        QueueWorldSurface(surfs);
       }
     } else {
-      //surfs->dcseg = nullptr;
-      surfs->dcseg = seg; // allow decals on masked polys
       DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
         0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
         TVec(), 0, TVec(), TVec(), TVec());
@@ -338,7 +331,6 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = Surf;
         S.Type = 2;
-        Surf->dcseg = nullptr;
       } else {
         QueueHorizonPortal(Surf);
       }
@@ -379,7 +371,6 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = Surf;
         S.Type = 2;
-        Surf->dcseg = nullptr;
       } else {
         QueueHorizonPortal(Surf);
       }
@@ -1012,11 +1003,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       for (int i = 0; i < wslen; ++i) {
         switch (WorldSurfs[i].Type) {
           case 0:
-            {
-              seg_t *dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
-              //if (dcseg) printf("world surface! %p\n", dcseg);
-              QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
-            }
+            QueueWorldSurface(WorldSurfs[i].Surf);
             break;
           case 1:
             QueueSkyPortal(WorldSurfs[i].Surf);

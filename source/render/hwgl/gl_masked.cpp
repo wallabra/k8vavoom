@@ -67,13 +67,13 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
       glDepthMask(GL_FALSE); // no z-buffer writes
     }
-    if (r_decals_enabled && r_decals_wall_alpha && surf->dcseg && surf->dcseg->decals) {
+    if (r_decals_enabled && r_decals_wall_alpha && surf->seg && surf->seg->decals) {
       decalsAllowed = true;
     }
   } else {
     SurfMasked.SetAlphaRef(0.666f);
     Alpha = 1.0f;
-    if (r_decals_enabled && r_decals_wall_masked && surf->dcseg && surf->dcseg->decals) {
+    if (r_decals_enabled && r_decals_wall_masked && surf->seg && surf->seg->decals) {
       decalsAllowed = true;
     }
   }
@@ -139,7 +139,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   SurfMasked.SetFogFade(surf->Fade, Alpha);
 
-  bool doDecals = (decalsAllowed && tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals);
+  bool doDecals = (decalsAllowed && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);

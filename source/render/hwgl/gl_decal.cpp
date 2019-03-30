@@ -37,7 +37,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
   if (!r_decals_enabled) return;
   if (RendLev->PortalDepth) return; //FIXME: not yet
 
-  if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
+  if (!surf->seg || !surf->seg->decals) return; // nothing to do
 
   if (gl_decal_debug_nostencil) return; // debug
 
@@ -67,7 +67,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
 bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap) {
   if (!r_decals_enabled) return false;
 
-  if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
+  if (!surf->seg || !surf->seg->decals) return false; // nothing to do
 
   texinfo_t *tex = surf->texinfo;
 
@@ -118,7 +118,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
   // also, clear dead decals here, 'cause why not?
   decal_t *prev = nullptr;
-  decal_t *dc = surf->dcseg->decals;
+  decal_t *dc = surf->seg->decals;
 
   int rdcount = 0;
   static int maxrdcount = 0;
@@ -133,7 +133,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       // remove it
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        if (prev) prev->next = n; else surf->seg->decals = n;
         delete dc;
       } else {
         prev = dc;
@@ -148,7 +148,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       // remove it
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        if (prev) prev->next = n; else surf->seg->decals = n;
         delete dc;
       } else {
         prev = dc;
@@ -172,7 +172,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       // remove it, if it is not animated
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        if (prev) prev->next = n; else surf->seg->decals = n;
         delete dc;
       }
       dc = n;

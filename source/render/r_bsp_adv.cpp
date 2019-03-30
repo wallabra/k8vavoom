@@ -37,8 +37,8 @@
 //  VAdvancedRenderLevel::QueueWorldSurface
 //
 //==========================================================================
-void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
-  QueueSimpleSurf(seg, surf);
+void VAdvancedRenderLevel::QueueWorldSurface (surface_t *surf) {
+  QueueSimpleSurf(surf);
 }
 
 

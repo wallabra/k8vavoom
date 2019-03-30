@@ -102,7 +102,7 @@ struct surface_t {
   short texturemins[2];
   short extents[2];
   surfcache_t *CacheSurf;
-  seg_t *dcseg; // seg with decals for this surface
+  //seg_t *dcseg; // seg with decals for this surface
   vuint32 lmapflags; // LM_XXX
   TVec verts[1]; // dynamic array
 };
