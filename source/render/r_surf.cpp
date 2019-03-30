@@ -27,7 +27,7 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1))
+//#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1))
 
 // this is used to compare floats like ints which is faster
 #define FASI(var) (*(const int32_t *)&var)
@@ -301,6 +301,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
 //
 //==========================================================================
 surface_t *VRenderLevelShared::NewWSurf () {
+#if 0
   if (!free_wsurfs) {
     // allocate some more surfs
     vuint8 *tmp = (vuint8 *)Z_Calloc(WSURFSIZE*128+sizeof(void *));
@@ -317,6 +318,9 @@ surface_t *VRenderLevelShared::NewWSurf () {
   free_wsurfs = surf->next;
 
   memset((void *)surf, 0, WSURFSIZE);
+#else
+  surface_t *surf = (surface_t *)Z_Calloc(sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1));
+#endif
 
   return surf;
 }
@@ -328,6 +332,7 @@ surface_t *VRenderLevelShared::NewWSurf () {
 //
 //==========================================================================
 void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
+#if 0
   surface_t *surfs = InSurfs;
   FlushSurfCaches(surfs);
   while (surfs) {
@@ -338,6 +343,16 @@ void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
     free_wsurfs = surfs;
     surfs = next;
   }
+#else
+  while (InSurfs) {
+    surface_t *surf = InSurfs;
+    InSurfs = InSurfs->next;
+    if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
+    if (surf->lightmap) Z_Free(surf->lightmap);
+    if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
+    Z_Free(surf);
+  }
+#endif
 }
 
 
@@ -1292,7 +1307,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 //
 //==========================================================================
 void VRenderLevelShared::CreateWorldSurfaces () {
-  free_wsurfs = nullptr;
+  //free_wsurfs = nullptr;
   SetupSky();
 
   // set up fake floors

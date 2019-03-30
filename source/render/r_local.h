@@ -360,8 +360,8 @@ protected:
 
   sec_plane_t sky_plane;
   float skyheight;
-  surface_t *free_wsurfs;
-  void *AllocatedWSurfBlocks;
+  //surface_t *free_wsurfs;
+  //void *AllocatedWSurfBlocks;
   subregion_t *AllocatedSubRegions;
   drawseg_t *AllocatedDrawSegs;
   segpart_t *AllocatedSegParts;

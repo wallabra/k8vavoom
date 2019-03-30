@@ -419,8 +419,8 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , traspUsed(0)
   , traspSize(0)
   , traspFirst(0)
-  , free_wsurfs(nullptr)
-  , AllocatedWSurfBlocks(nullptr)
+  //, free_wsurfs(nullptr)
+  //, AllocatedWSurfBlocks(nullptr)
   , AllocatedSubRegions(nullptr)
   , AllocatedDrawSegs(nullptr)
   , AllocatedSegParts(nullptr)
@@ -524,12 +524,14 @@ VRenderLevelShared::~VRenderLevelShared () {
   }
 
   // free allocated wall surface blocks
+  /*
   for (void *Block = AllocatedWSurfBlocks; Block; ) {
     void *Next = *(void **)Block;
     Z_Free(Block);
     Block = Next;
   }
   AllocatedWSurfBlocks = nullptr;
+  */
 
   // free big blocks
   delete[] AllocatedSubRegions;
