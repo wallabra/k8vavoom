@@ -27,14 +27,7 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-#define USE_FASTER_SUBDIVIDER
-
-
-#define ON_EPSILON      (0.1f)
-#define subdivide_size  (240)
-
-#define MAXWVERTS  (8)
-#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(MAXWVERTS-1))
+#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(surface_t::MAXWVERTS-1))
 
 // this is used to compare floats like ints which is faster
 #define FASI(var) (*(const int32_t *)&var)

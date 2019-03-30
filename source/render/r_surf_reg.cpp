@@ -30,13 +30,10 @@
 #define USE_FASTER_SUBDIVIDER
 
 #define ON_EPSILON      (0.1f)
-#define subdivide_size  (240)
+#define SUBDIVIDE_SIZE  (240)
 
-#define MAXWVERTS  (8)
-#define WSURFSIZE  (sizeof(surface_t)+sizeof(TVec)*(MAXWVERTS-1))
-
-//  This is used to compare floats like ints which is faster
-#define FASI(var) (*(int *)&var)
+// this is used to compare floats like ints which is faster
+#define FASI(var) (*(const int *)&var)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -213,7 +210,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     if (dot > maxs) maxs = dot;
   }
 
-  if (maxs-mins <= subdivide_size) {
+  if (maxs-mins <= SUBDIVIDE_SIZE) {
     if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
@@ -223,7 +220,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   plane.normal = axis;
   const float dot0 = Length(plane.normal);
   plane.normal = Normalise(plane.normal);
-  plane.dist = (mins+subdivide_size-16)/dot0;
+  plane.dist = (mins+SUBDIVIDE_SIZE-16)/dot0;
 
   enum {
     PlaneBack = -1,
@@ -409,7 +406,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
     if (dot > maxs) maxs = dot;
   }
 
-  if (maxs-mins <= subdivide_size) {
+  if (maxs-mins <= SUBDIVIDE_SIZE) {
     if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr, seg);
     return surf;
   }
@@ -419,7 +416,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   plane.normal = axis;
   const float dot0 = Length(plane.normal);
   plane.normal = Normalise(plane.normal);
-  plane.dist = (mins+subdivide_size-16)/dot0;
+  plane.dist = (mins+SUBDIVIDE_SIZE-16)/dot0;
 
   enum {
     PlaneBack = -1,
