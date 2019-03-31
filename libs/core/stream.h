@@ -29,7 +29,7 @@
 //**
 //**************************************************************************
 class VStr;
-class VNTValue;
+struct VNTValue;
 class VStream;
 class VFieldType;
 

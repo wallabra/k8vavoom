@@ -436,8 +436,8 @@ public:
 
   // returns side 0 (front), 1 (back), or 2 (collides)
   inline __attribute__((warn_unused_result)) int SphereOnSide2 (const TVec &center, float radius) const {
-    const float dist = DotProduct(center, normal)-dist;
-    return (dist < -radius ? 1 : dist > radius ? 0 : 2);
+    const float d = DotProduct(center, normal)-dist;
+    return (d < -radius ? 1 : d > radius ? 0 : 2);
   }
 
   // distance from point to plane
