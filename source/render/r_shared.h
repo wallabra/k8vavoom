@@ -83,14 +83,7 @@ struct surface_t {
     DF_CALC_LMAP  = 1u<<3, // calculate static lightmap
   };
 
-  /*
-  enum {
-    LM_REQUIRED = 1u<<0,
-  };
-  */
-
   surface_t *next;
-  //surface_t *DrawNext;
   texinfo_t *texinfo;
   TPlane *plane;
   sec_plane_t *HorizonPlane;
@@ -101,7 +94,6 @@ struct surface_t {
   // not exposed to VC
   vuint8 *lightmap;
   rgb_t *lightmap_rgb;
-  //int lmapwdt, lmaphgt; // must be set if any lightmap is allocated
   vuint32 queueframe; // this is used to prevent double queuing
   vuint32 dlightframe;
   vuint32 dlightbits;

@@ -624,7 +624,6 @@ struct sec_surface_t {
 
 struct surface_t {
   surface_t *next;
-  private surface_t *DrawNext;
   texinfo_t *texinfo;
   TPlane *plane;
   sec_plane_t *HorizonPlane;
