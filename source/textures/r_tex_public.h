@@ -327,6 +327,7 @@ public:
         tm = alock.tm;
       }
       if (tm) ++tm->inMapTextures;
+      return *this;
     }
   };
 
