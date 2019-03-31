@@ -743,6 +743,7 @@ void parseShaderList (Parser *par, const char *basebase) {
     prExpect(par, "=");
     basedir = va("%s/%s", basebase, prExpectString(par));
   }
+  if (!basedir) basedir = xstrdup(basebase);
   prExpect(par, "{");
   while (!prCheck(par, "}")) {
     if (prCheck(par, ";")) continue;
