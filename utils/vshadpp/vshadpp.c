@@ -466,7 +466,7 @@ char *prExpectString (Parser *par) {
 int prCheck (Parser *par, const char *checktok) {
   Parser *state = prSimpleSavePos(par);
   const char *tk = prGetToken(par);
-  if (tk && !par->isString && !strEqu(tk, checktok) == 0) {
+  if (tk && !par->isString && strEqu(tk, checktok)) {
     prSimpleFreePos(&state);
     return 1;
   }
