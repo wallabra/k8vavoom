@@ -8,17 +8,32 @@ function(sxx_compile output filename)
   set(outfiles ${base_abs}.ci ${base_abs}.hi)
   set(${output} ${${output}} ${outfiles} PARENT_SCOPE)
   #message("outfiles=${outfiles}, DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-  add_custom_command(
-    OUTPUT ${outfiles}
-    COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-    DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
-      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
-      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
-      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
-      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
-    #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
-  )
+  if(CMAKE_CROSSCOMPILING AND NOT WIN32)
+    # assume we have vshadpp in PATH
+    add_custom_command(
+      OUTPUT ${outfiles}
+      COMMAND vshadpp -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
+      #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
+    )
+  else()
+    add_custom_command(
+      OUTPUT ${outfiles}
+      COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+      DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
+      #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
+    )
+  endif()
   set_source_files_properties(${outfiles} PROPERTIES GENERATED TRUE)
 endfunction()
 

@@ -562,19 +562,6 @@ endif(WITH_FLAC)
   endif(WITH_OPENGL)
 #endif(NOT WIN32)
 
-
-if(NO_SSE)
-  add_definitions(-DNO_SSE=1)
-endif(NO_SSE)
-
-if(NO_PTHREAD)
-  add_definitions(-DNO_PTHREAD=1)
-endif(NO_PTHREAD)
-
-if(NO_MEMRCHR)
-  add_definitions(-DNO_MEMRCHR=1)
-endif(NO_MEMRCHR)
-
 if(WITH_GLAD)
   add_definitions(-DUSE_GLAD=1)
   if(GLAD_INCLUDE_DIR AND GLAD_LIBRARY)
@@ -600,6 +587,12 @@ if(SWITCH_LIBNX)
   set(CMAKE_CXX_COMPILER "aarch64-none-elf-g++")
   set(CMAKE_AR "aarch64-none-elf-gcc-ar")
   set(CMAKE_RANLIB "aarch64-none-elf-gcc-ranlib")
+  # enable necessary switches
+  set(NO_SSE ON)
+  set(NO_SIGNALS ON)
+  set(NO_SYSCONF ON)
+  set(NO_SINCOS ON)
+  set(NO_MEMRCHR ON)
   # turn on nxlink if necessary
   if(WITH_NXLINK)
     add_definitions(-DSWITCH_NXLINK)
@@ -627,6 +620,31 @@ else(SWITCH_LIBNX)
     add_definitions(-DUSE_GNU_TLS)
   endif(GNUTLS_FOUND)
 endif(SWITCH_LIBNX)
+
+
+if(NO_SSE)
+  add_definitions(-DNO_SSE=1)
+endif(NO_SSE)
+
+if(NO_PTHREAD)
+  add_definitions(-DNO_PTHREAD=1)
+endif(NO_PTHREAD)
+
+if(NO_SINCOS)
+  add_definitions(-DNO_SINCOS=1)
+endif(NO_SINCOS)
+
+if(NO_SIGNALS)
+  add_definitions(-DNO_SIGNALS=1)
+endif(NO_SIGNALS)
+
+if(NO_SYSCONF)
+  add_definitions(-DNO_SYSCONF=1)
+endif(NO_SYSCONF)
+
+if(NO_MEMRCHR)
+  add_definitions(-DNO_MEMRCHR=1)
+endif(NO_MEMRCHR)
 
 
 ### if(CMAKE_EXECUTABLE_FORMAT STREQUAL "ELF")

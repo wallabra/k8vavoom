@@ -225,6 +225,17 @@ static __attribute__((unused)) __attribute__((pure)) inline double AngleMod180D 
   return angle;
 }
 
+#ifdef NO_SINCOS
+
+// TODO: NEON-based impl?
+static __attribute__((unused)) inline void sincosf_dumb (float x, float *vsin, float *vcos) {
+  *vsin = sinf(x);
+  *vcos = cosf(x);
+}
+
+#define sincosf sincosf_dumb
+
+#endif
 
 static __attribute__((unused)) __attribute__((pure)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
 static __attribute__((unused)) __attribute__((pure)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }

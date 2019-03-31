@@ -93,11 +93,13 @@ typedef struct timespec mythread_condtime;
 // Use pthread_sigmask() to set the signal mask in multi-threaded programs.
 // Do nothing on OpenVMS since it lacks pthread_sigmask().
 static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) {
+#ifndef NO_SIGNALS
   /*int ret =*/ pthread_sigmask(how, set, oset);
   /*
   assert(ret == 0);
   (void)ret;
   */
+#endif
 }
 
 // Creates a new thread with all signals blocked. Returns zero on success

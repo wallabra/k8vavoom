@@ -284,7 +284,15 @@ void Sys_Yield () {
 //==========================================================================
 int Sys_GetCPUCount () {
   //nprocs_max = sysconf(_SC_NPROCESSORS_CONF);
+#ifdef NO_SYSCONF
+# ifdef __SWITCH__
+  int res = 4;
+# else
+  int res = 1;
+# endif
+#else
   int res = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
   if (res < 1) return 1;
   if (res > 64) return 64; // arbitrary limit
   return res;
