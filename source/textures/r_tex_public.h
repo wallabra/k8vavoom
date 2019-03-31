@@ -177,6 +177,8 @@ public:
   int HashNext;
   int SourceLump;
 
+  VTexture *Brightmap;
+
   bool noDecals;
   bool staticNoDecals;
   bool animNoDecals;

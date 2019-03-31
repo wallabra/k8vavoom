@@ -1297,6 +1297,46 @@ static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &Class
 
 //==========================================================================
 //
+//  ParseBrightmap
+//
+//==========================================================================
+static void ParseBrightmap (VScriptParser *sc) {
+       if (sc->Check("flat")) {}
+  else if (sc->Check("sprite")) {}
+  else if (sc->Check("texture")) {}
+  else sc->Error("unknown brightmap type");
+  sc->ExpectName8Warn();
+  VName img = sc->Name8;
+  VStr bmap;
+  bool iwad = false;
+  bool thiswad = false;
+  bool nofb = false;
+  sc->Expect("{");
+  while (!sc->Check("}")) {
+    if (sc->Check("map")) {
+      if (!sc->GetString()) sc->Error("brightmap image name expected");
+      if (sc->String.isEmpty()) sc->Error("empty brightmap image");
+      if (!bmap.isEmpty()) GCon->Logf(NAME_Warning, "duplicate brightmap image");
+      bmap = sc->String;
+    } else if (sc->Check("iwad")) {
+      iwad = true;
+    } else if (sc->Check("thiswad")) {
+      thiswad = true;
+    } else if (sc->Check("disablefullbright")) {
+      nofb = true;
+    } else {
+      sc->Error(va("Unknown command (%s)", *sc->String));
+    }
+  }
+  (void)img;
+  (void)iwad;
+  (void)thiswad;
+  (void)nofb;
+}
+
+
+//==========================================================================
+//
 //  ParseGZDoomEffectDefs
 //
 //==========================================================================
@@ -1320,18 +1360,10 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector);
     else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
     else if (sc->Check("skybox")) R_ParseMapDefSkyBoxesScript(sc);
-    else if (sc->Check("brightmap")) {
-      if (GArgs.CheckParm("-Wbrightmaps") || GArgs.CheckParm("-Wall")) sc->Message("Brightmaps are not supported.");
-      sc->SkipBracketed();
-    } else if (sc->Check("glow")) {
-      sc->Message("Glowing textures aren't supported yet.");
-      sc->SkipBracketed();
-    } else if (sc->Check("hardwareshader")) {
-      sc->Message("Shaders are not supported");
-      sc->SkipBracketed();
-    } else {
-      sc->Error(va("Unknown command (%s)", *sc->String));
-    }
+    else if (sc->Check("brightmap")) ParseBrightmap(sc);
+    else if (sc->Check("glow")) { sc->Message("Glowing textures aren't supported yet."); sc->SkipBracketed(); }
+    else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }
+    else { sc->Error(va("Unknown command (%s)", *sc->String)); }
   }
   delete sc;
 }
