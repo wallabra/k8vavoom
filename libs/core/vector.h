@@ -151,14 +151,14 @@ public:
   inline __attribute__((warn_unused_result)) float cross2D (const TVec &v2) const { return VSUM2(x*v2.y, -(y*v2.x)); }
 
   // z is zero
-  inline __attribute__((warn_unused_result)) TVec mul2 (const float s) const { return TVec(x*s, y*s, 0); }
+  inline __attribute__((warn_unused_result)) TVec mul2 (const float s) const { return TVec(x*s, y*s, 0.0f); }
   inline __attribute__((warn_unused_result)) TVec mul3 (const float s) const { return TVec(x*s, y*s, z*s); }
 
   // returns projection of this vector onto `v`
   inline __attribute__((warn_unused_result)) TVec projectTo (const TVec &v) const { return v.mul3(dot(v)/v.lengthSquared()); }
   inline __attribute__((warn_unused_result)) TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
 
-  inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const { return TVec(x-v.x, y-v.y, 0); }
+  inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const { return TVec(x-v.x, y-v.y, 0.0f); }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
@@ -223,7 +223,7 @@ static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, 
   forward.z = -forward.z;
   /*
   forward.x = mcos(pitch);
-  forward.y = 0;
+  forward.y = 0.0f;
   forward.z = -msin(pitch);
   */
 }
@@ -237,7 +237,7 @@ public:
   float dist;
 
 public:
-  //TPlane () : TVec(1, 0, 0), dist(0) {}
+  //TPlane () : TVec(1.0f, 0.0f, 0.0f), dist(0.0f) {}
   //TPlane (ENoInit) {}
 
   inline __attribute__((warn_unused_result)) bool isValid () const { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
@@ -258,14 +258,14 @@ public:
 
   // initialises vertical plane from point and direction
   inline void SetPointDirXY (const TVec &point, const TVec &dir) {
-    normal = TVec(dir.y, -dir.x, 0);
+    normal = TVec(dir.y, -dir.x, 0.0f);
     normal.normaliseInPlace();
     if (normal.isValid() && !normal.isZero()) {
       dist = DotProduct(point, normal);
     } else {
       //k8: what to do here?!
-      normal = TVec(0, 0, 1);
-      dist = 1;
+      normal = TVec(0.0f, 0.0f, 1.0f);
+      dist = 1.0f;
     }
   }
 
@@ -284,13 +284,13 @@ public:
         dist = DotProduct(point, normal);
       } else {
         //k8: what to do here?!
-        normal = TVec(0, 0, 1);
-        dist = 1;
+        normal = TVec(0.0f, 0.0f, 1.0f);
+        dist = 1.0f;
       }
     } else {
       //k8: what to do here?!
-      normal = TVec(0, 0, 1);
-      dist = 1;
+      normal = TVec(0.0f, 0.0f, 1.0f);
+      dist = 1.0f;
     }
   }
 
@@ -360,7 +360,7 @@ public:
   __attribute__((warn_unused_result)) TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const {
     const float det = normal.cross(plane2.normal).dot(plane3.normal);
     // if the determinant is 0, that means parallel planes, no intersection
-    if (fabs(det) < 0.00001f) return TVec::Invalid();
+    if (fabs(det) < 0.001f) return TVec::Invalid();
     return
       (plane2.normal.cross(plane3.normal)*(-dist)+
        plane3.normal.cross(normal)*(-plane2.dist)+
@@ -375,7 +375,7 @@ public:
     // check if the sphere is touching the plane
     if (fabsf(d0) <= radius) {
       if (hitpos) *hitpos = origin;
-      if (u) *u = 0;
+      if (u) *u = 0.0f;
       return true;
     }
     const float d1 = normal.dot(c1)-dist;
@@ -384,7 +384,7 @@ public:
       if (u || hitpos) {
         const float uu = (d0-radius)/(d0-d1); // normalized time
         if (u) *u = uu;
-        if (hitpos) *hitpos = (1-uu)*origin+uu*c1; // point of first contact
+        if (hitpos) *hitpos = (1.0f-uu)*origin+uu*c1; // point of first contact
       }
       return true;
     }
@@ -395,7 +395,7 @@ public:
 
   // returns side 0 (front) or 1 (back, or on plane)
   inline __attribute__((warn_unused_result)) int PointOnSide (const TVec &point) const {
-    return (DotProduct(point, normal)-dist <= 0);
+    return (DotProduct(point, normal)-dist <= 0.0f);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
@@ -406,7 +406,7 @@ public:
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
   inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
-    return (DotProduct(point, normal)-dist < 0);
+    return (DotProduct(point, normal)-dist < 0.0f);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
@@ -513,15 +513,15 @@ public:
 
 public:
   //TFrustumParam (ENoInit) {}
-  TFrustumParam () : origin(0, 0, 0), angles(0, 0, 0), vforward(0, 0, 0), vright(0, 0, 0), vup(0, 0, 0) {}
+  TFrustumParam () : origin(0.0f, 0.0f, 0.0f), angles(0.0f, 0.0f, 0.0f), vforward(0.0f, 0.0f, 0.0f), vright(0.0f, 0.0f, 0.0f), vup(0.0f, 0.0f, 0.0f) {}
   TFrustumParam (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) : origin(aorigin), angles(aangles), vforward(vf), vright(vr), vup(vu) {}
   TFrustumParam (const TVec &aorigin, const TAVec &aangles) : origin(aorigin), angles(aangles) {
     if (aangles.isValid()) {
       AngleVectors(aangles, vforward, vright, vup);
     } else {
-      vforward = TVec(0, 0, 0);
-      vright = TVec(0, 0, 0);
-      vup = TVec(0, 0, 0);
+      vforward = TVec(0.0f, 0.0f, 0.0f);
+      vright = TVec(0.0f, 0.0f, 0.0f);
+      vup = TVec(0.0f, 0.0f, 0.0f);
     }
   }
 
@@ -555,9 +555,9 @@ public:
     if (aangles.isValid()) {
       AngleVectors(aangles, vforward, vright, vup);
     } else {
-      vforward = TVec(0, 0, 0);
-      vright = TVec(0, 0, 0);
-      vup = TVec(0, 0, 0);
+      vforward = TVec(0.0f, 0.0f, 0.0f);
+      vright = TVec(0.0f, 0.0f, 0.0f);
+      vup = TVec(0.0f, 0.0f, 0.0f);
     }
   }
 };
@@ -576,14 +576,14 @@ public:
 
 public:
   //TClipBase (ENoInit) {}
-  TClipBase () : fovx(0), fovy(0) {}
+  TClipBase () : fovx(0.0f), fovy(0.0f) {}
   TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) { setupViewport(awidth, aheight, afov, apixelAspect); }
   TClipBase (const float afovx, const float afovy) { setupFromFOVs(afovx, afovy); }
   TClipBase (const TClipParam &cp) { setupViewport(cp); }
 
   inline __attribute__((warn_unused_result)) bool isValid () const { return (fovx != 0.0f); }
 
-  inline void clear () { fovx = fovy = 0; }
+  inline void clear () { fovx = fovy = 0.0f; }
 
   inline __attribute__((warn_unused_result)) const TVec &operator [] (size_t idx) const { check(idx < 4); return clipbase[idx]; }
 
@@ -689,7 +689,7 @@ public:
 // returns `false` on error (and zero `dst`)
 static __attribute__((unused)) inline bool ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) {
   const float inv_denom = 1.0f/DotProduct(normal, normal);
-  if (!isFiniteF(inv_denom)) { dst = TVec(0, 0, 0); return false; } //k8: what to do here?
+  if (!isFiniteF(inv_denom)) { dst = TVec(0.0f, 0.0f, 0.0f); return false; } //k8: what to do here?
   const float d = DotProduct(normal, p)*inv_denom;
   dst = p-d*(normal*inv_denom);
   return true;
@@ -714,7 +714,7 @@ static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) {
 // ////////////////////////////////////////////////////////////////////////// //
 // check to see if the sphere overlaps the AABB
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) {
-  float d = 0;
+  float d = 0.0f;
   // find the square of the distance from the sphere to the box
   /*
   for (unsigned i = 0; i < 3; ++i) {
@@ -749,7 +749,7 @@ static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool C
 
 // check to see if the sphere overlaps the AABB (ignore z coords)
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) {
-  float d = 0, s;
+  float d = 0.0f, s;
   // find the square of the distance from the sphere to the box
   // first check is min, second check is max
   const float *li = &lorg[0];

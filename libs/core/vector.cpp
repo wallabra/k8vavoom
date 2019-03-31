@@ -122,7 +122,7 @@ void AngleVector (const TAVec &angles, TVec &forward) {
   } else {
     // no pitch
     msincos(angles.yaw, &forward.y, &forward.x);
-    forward.z = 0;
+    forward.z = 0.0f;
   }
 }
 
@@ -137,13 +137,13 @@ void VectorAngles (const TVec &vec, TAVec &angles) {
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
   if (len2d < 0.0001f) {
-    angles.pitch = (vec.z > 0 ? 90 : 270);
-    angles.yaw = 0;
+    angles.pitch = (vec.z > 0.0f ? 90 : 270);
+    angles.yaw = 0.0f;
   } else {
     angles.pitch = -matan(vec.z, sqrtf(len2d));
     angles.yaw = matan(fy, fx);
   }
-  angles.roll = 0;
+  angles.roll = 0.0f;
 }
 
 
@@ -157,8 +157,8 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
   const float fy = forward.y;
   float len2d = VSUM2(fx*fx, fy*fy);
   if (len2d < 0.0001f) {
-    angles.yaw = 0;
-    if (forward.z > 0) {
+    angles.yaw = 0.0f;
+    if (forward.z > 0.0f) {
       angles.pitch = 90;
       angles.roll = matan(-up.y, -up.x);
     } else {
@@ -169,7 +169,7 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
     len2d = sqrtf(len2d);
     angles.pitch = matan(-forward.z, len2d); // up/down
     angles.yaw = matan(fy, fx); // left/right
-    angles.roll = (right.z || up.z ? matan(-right.z/len2d, up.z/len2d) : 0);
+    angles.roll = (right.z || up.z ? matan(-right.z/len2d, up.z/len2d) : 0.0f);
   }
 }
 
@@ -712,7 +712,7 @@ int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane)
 
   // determine sides for each point
   bool hasFrontSomething = false;
-  for (int i = 0; i < vcount; ++i) {
+  for (unsigned i = 0; i < (unsigned)vcount; ++i) {
     const float dot = DotProduct(src[i], plane.normal)-plane.dist;
     dots[i] = dot;
          if (dot < -ON_EPSILON) sides[i] = PlaneBack;
@@ -727,7 +727,7 @@ int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane)
 
   int dcount = 0;
 
-  for (int i = 0; i < vcount; ++i) {
+  for (unsigned i = 0; i < (unsigned)vcount; ++i) {
     if (sides[i] == PlaneCoplanar) {
       dest[dcount++] = src[i];
       continue;
