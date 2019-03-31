@@ -5,6 +5,9 @@
 #include <unistr.h>
 
 
+int verbose = 0;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 #define nullptr  NULL
 
@@ -592,7 +595,7 @@ SetInfo *setlist = nullptr;
 void parseSet (Parser *par) {
   SetInfo *set = xalloc(sizeof(SetInfo));
   set->name = xstrdup(prExpectId(par));
-  printf("[  parsing set '%s']\n", set->name);
+  if (verbose) printf("[  parsing set '%s']\n", set->name);
   prExpect(par, "{");
   while (!prCheck(par, "}")) {
     if (prCheck(par, ";")) continue;
@@ -751,7 +754,7 @@ void parseShaderList (Parser *par) {
     ShaderInfo *si = xalloc(sizeof(ShaderInfo));
     // name
     si->name = xstrdup(prExpectId(par));
-    printf("[  found shader info '%s']\n", si->name);
+    if (verbose) printf("[  found shader info '%s']\n", si->name);
     // shader source
     if (prCheck(par, "both")) {
       prExpect(par, "=");
@@ -1006,6 +1009,7 @@ int main (int argc, char **argv) {
 
   for (int aidx = 1; aidx < argc; ++aidx) {
     char *arg = argv[aidx];
+    if (strEqu(arg, "-v") || strEqu(arg, "--verbose")) { ++verbose; continue; }
     if (strEqu(arg, "-o")) {
       if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-o' expects argument!\n"); abort(); }
       outdir = xstrdup(argv[++aidx]);
@@ -1019,12 +1023,12 @@ int main (int argc, char **argv) {
 
   if (!infname) { fprintf(stderr, "FATAL: file name expected!\n"); abort(); }
 
-  printf("[parsing '%s'...]\n", infname);
+  if (verbose) printf("[parsing '%s'...]\n", infname);
 
   char *outhname = createFileName(outdir, infname, ".hi");
   char *outcname = createFileName(outdir, infname, ".ci");
-  printf("[ generating '%s'...]\n", outhname);
-  printf("[ generating '%s'...]\n", outcname);
+  if (verbose) printf("[ generating '%s'...]\n", outhname);
+  if (verbose) printf("[ generating '%s'...]\n", outcname);
 
   FILE *foh = nullptr;
   if (!toStdout) {
@@ -1063,11 +1067,11 @@ int main (int argc, char **argv) {
   // parse shader files
   for (ShaderInfo *si = shaderlist; si; si = si->next) {
     if (!si->basedir) abort();
-    printf("[  parsing vert shader '%s.vs']\n", si->vssrc);
+    if (verbose) printf("[  parsing vert shader '%s.vs']\n", si->vssrc);
     par = prCreateFromFile(va("%s/%s.vs", si->basedir, si->vssrc));
     parseGLSL(par, si);
     prDestroy(&par);
-    printf("[  parsing frag shader '%s.fs']\n", si->fssrc);
+    if (verbose) printf("[  parsing frag shader '%s.fs']\n", si->fssrc);
     par = prCreateFromFile(va("%s/%s.fs", si->basedir, si->fssrc));
     parseGLSL(par, si);
     prDestroy(&par);
