@@ -85,7 +85,7 @@ int strEqu (const char *s0, const char *s1) {
 
 
 char *loadWholeFile (const char *fname) {
-  FILE *fi = fopen(fname, "r");
+  FILE *fi = fopen(fname, "rb");
   if (!fi) { fprintf(stderr, "FATAL: cannot open file '%s'\n", fname); abort(); }
   fseek(fi, 0, SEEK_END);
   if (ftell(fi) > 0x3ffff) { fprintf(stderr, "FATAL: file '%s' too big\n", fname); abort(); }
