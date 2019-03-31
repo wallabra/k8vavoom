@@ -12,6 +12,11 @@ function(sxx_compile output filename)
     OUTPUT ${outfiles}
     COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
     DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
+      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
+      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
+      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
+      ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
     #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
   )
   set_source_files_properties(${outfiles} PROPERTIES GENERATED TRUE)
