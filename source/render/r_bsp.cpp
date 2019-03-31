@@ -642,7 +642,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (useClipper && !ViewClip.ClipCheckSubsector(sub, clip_use_1d_clipper)) return;
+  if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
 
   sub->parent->VisFrame = currVisFrame;
   sub->VisFrame = currVisFrame;
@@ -736,20 +736,9 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
       */
 #elif 0
       int cres = cp->checkBoxEx(bbox);
-      if (cres == TFrustum::OUTSIDE) {
-        // add subsector to clipper (why not?)
-        /*
-        if ((bspnum&NF_SUBSECTOR) != 0) {
-          if (ViewClip.ClipIsBBoxVisible(bbox)) {
-            subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
-            ViewClip.ClipAddAllSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
-          }
-        }
-        */
-        return;
-      }
+      if (cres == TFrustum::OUTSIDE) return;
       // k8: don't do this: frustum test are cheap, and we can hit false positive easily
-      //if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
+      if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #else
       if (!cp->checkBox(bbox)) return;
 #endif
@@ -758,11 +747,14 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 
   // found a subsector?
   if ((bspnum&NF_SUBSECTOR) == 0) {
+    // nope
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the view point is on
-    int side = bsp->PointOnSide(vieworg);
+    //int side = bsp->PointOnSide(vieworg);
+    const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
+    unsigned side = (unsigned)(dist <= 0.0f);
     // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
-    if (side == 0) side = bsp->PointOnSide(vieworg+viewforward*64);
+    if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
     if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
     // recursively divide front space (toward the viewer)
     RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);

@@ -136,7 +136,7 @@ public:
 
   bool ClipIsBBoxVisible (const float BBox[6], bool checkFrustum=false) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
-  bool ClipCheckSubsector (const subsector_t *sub, bool addFrustumClipped=false, bool debugDump=false);
+  bool ClipCheckSubsector (const subsector_t *sub, bool debugDump=false);
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;
@@ -147,7 +147,6 @@ public:
 #endif
 
   void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
-  void ClipAddAllSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
 
 #ifdef CLIENT
   // this doesn't check for radius

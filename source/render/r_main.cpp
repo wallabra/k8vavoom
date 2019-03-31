@@ -1203,7 +1203,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
       return BuildLightVis(bsp->children[1], bsp->bbox[1]);
     } else {
       //unsigned side = (unsigned)bsp->PointOnSide(CurrLightPos);
-      unsigned side = (unsigned)(dist <= 0); //(unsigned)bsp->PointOnSide(CurrLightPos);
+      unsigned side = (unsigned)(dist <= 0.0f); //(unsigned)bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
       BuildLightVis(bsp->children[side], bsp->bbox[side]);
       // possibly divide back space

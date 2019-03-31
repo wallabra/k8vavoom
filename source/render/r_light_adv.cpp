@@ -598,7 +598,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
       return RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
-      int side = (dist <= 0.0f);
+      unsigned side = (unsigned)(dist <= 0.0f);
       // recursively divide front space
       RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // always divide back space for shadows
@@ -819,7 +819,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
       return RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
-      int side = (dist <= 0.0f);
+      unsigned side = (unsigned)(dist <= 0.0f);
       // recursively divide front space
       RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // possibly divide back space
