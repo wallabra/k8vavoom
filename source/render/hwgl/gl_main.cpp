@@ -937,36 +937,6 @@ void VOpenGLDrawer::InitResolution () {
 
   // shaders
   shaderHead = nullptr; // just in case
-  /*
-  DrawFixedCol.Setup(this);
-  DrawSimple.Setup(this);
-  DrawShadow.Setup(this);
-  DrawAutomap.Setup(this);
-  SurfZBuf.Setup(this);
-  SurfShadowVolume.Setup(this);
-  SurfAdvDecal.Setup(this);
-  SurfDecalNoLMap.Setup(this);
-  SurfDecalLMap.Setup(this);
-  SurfSimple.Setup(this);
-  SurfLightmap.Setup(this);
-  SurfSky.Setup(this);
-  SurfDSky.Setup(this);
-  SurfMasked.Setup(this);
-  SurfPartSq.Setup(this);
-  SurfPartSm.Setup(this);
-  ShadowsAmbient.Setup(this);
-  ShadowsTexture.Setup(this);
-  ShadowsFog.Setup(this);
-  ShadowsFogMasked.Setup(this); ShadowsFogMasked.defines.append("VV_MASKED_FOG");
-  ShadowsLight.Setup(this);
-  ShadowsLightDbg.Setup(this); ShadowsLightDbg.defines.append("VV_DEBUG_LIGHT");
-  SurfModel.Setup(this);
-  ShadowsModelAmbient.Setup(this);
-  ShadowsModelTextures.Setup(this);
-  ShadowsModelLight.Setup(this);
-  ShadowsModelShadow.Setup(this);
-  ShadowsModelFog.Setup(this);
-  */
 
   LoadAllShaders();
   CompileShaders();

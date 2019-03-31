@@ -478,37 +478,6 @@ private:
 protected:
   VGLShader *shaderHead;
 
-  /*
-  VShaderDef_DrawFixedCol DrawFixedCol;
-  VShaderDef_DrawSimple DrawSimple;
-  VShaderDef_DrawShadow DrawShadow;
-  VShaderDef_DrawAutomap DrawAutomap;
-  VShaderDef_SurfZBuf SurfZBuf;
-  VShaderDef_SurfShadowVolume SurfShadowVolume;
-  VShaderDef_SurfAdvDecal SurfAdvDecal;
-  VShaderDef_SurfDecalNoLMap SurfDecalNoLMap;
-  VShaderDef_SurfDecalLMap SurfDecalLMap;
-  VShaderDef_SurfSimple SurfSimple;
-  VShaderDef_SurfLightmap SurfLightmap;
-  VShaderDef_SurfSky SurfSky;
-  VShaderDef_SurfDSky SurfDSky;
-  VShaderDef_SurfMasked SurfMasked;
-  VShaderDef_SurfPartSq SurfPartSq;
-  VShaderDef_SurfPartSm SurfPartSm;
-  VShaderDef_ShadowsAmbient ShadowsAmbient;
-  VShaderDef_ShadowsTexture ShadowsTexture;
-  VShaderDef_ShadowsFog ShadowsFog;
-  VShaderDef_ShadowsFogMasked ShadowsFogMasked;
-  VShaderDef_ShadowsLight ShadowsLight;
-  VShaderDef_ShadowsLightDbg ShadowsLightDbg;
-  VShaderDef_SurfModel SurfModel;
-  VShaderDef_ShadowsModelAmbient ShadowsModelAmbient;
-  VShaderDef_ShadowsModelTextures ShadowsModelTextures;
-  VShaderDef_ShadowsModelLight ShadowsModelLight;
-  VShaderDef_ShadowsModelShadow ShadowsModelShadow;
-  VShaderDef_ShadowsModelFog ShadowsModelFog;
-  */
-
   void registerShader (VGLShader *shader);
   void CompileShaders ();
   void DestroyShaders ();
