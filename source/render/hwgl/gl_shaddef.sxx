@@ -139,7 +139,7 @@ Set SimpleFogSet {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-ShaderList basedir="/home/ketmar/back/vavoom_dev/src/basev/common/glshaders" {
+ShaderList basedir="basev/common/glshaders" {
   Shader DrawFixedCol both="draw_fixed_col";
   Shader DrawSimple both="draw_simple";
   Shader DrawShadow vertex="draw_simple" fragment="draw_shadow";

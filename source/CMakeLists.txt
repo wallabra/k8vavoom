@@ -10,7 +10,7 @@ function(sxx_compile output filename)
   #message("outfiles=${outfiles}, DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
   add_custom_command(
     OUTPUT ${outfiles}
-    COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+    COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
     DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
       ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
       ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs

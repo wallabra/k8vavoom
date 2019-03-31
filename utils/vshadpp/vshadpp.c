@@ -737,11 +737,11 @@ int hasDefine (ShaderInfo *si, const char *defstr) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // `ShaderList` eaten
-void parseShaderList (Parser *par) {
+void parseShaderList (Parser *par, const char *basebase) {
   char *basedir = nullptr;
   if (prCheck(par, "basedir")) {
     prExpect(par, "=");
-    basedir = xstrdup(prExpectString(par));
+    basedir = va("%s/%s", basebase, prExpectString(par));
   }
   prExpect(par, "{");
   while (!prCheck(par, "}")) {
@@ -1006,6 +1006,7 @@ const char *getShitppAmp (const char *shitppType) {
 int main (int argc, char **argv) {
   char *infname = nullptr;
   char *outdir = ".";
+  char *basebase = ".";
   int toStdout = 0;
 
   for (int aidx = 1; aidx < argc; ++aidx) {
@@ -1014,7 +1015,11 @@ int main (int argc, char **argv) {
     if (strEqu(arg, "-o")) {
       if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-o' expects argument!\n"); abort(); }
       outdir = xstrdup(argv[++aidx]);
-      //if (outdir[strlen(outdir)-1] != '/') outdir = strcat(outdir, "/");
+      continue;
+    }
+    if (strEqu(arg, "-b")) {
+      if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-b' expects argument!\n"); abort(); }
+      basebase = xstrdup(argv[++aidx]);
       continue;
     }
     if (strEqu(arg, "-")) { toStdout = 1; continue; }
@@ -1055,7 +1060,7 @@ int main (int argc, char **argv) {
       continue;
     }
     if (prCheck(par, "ShaderList")) {
-      parseShaderList(par);
+      parseShaderList(par, basebase);
       continue;
     }
     char *tk = prGetToken(par);
