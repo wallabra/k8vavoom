@@ -34,8 +34,8 @@
 //
 //==========================================================================
 void TILine::Init () {
- len = 0;
- Data[0] = 0;
+  len = 0;
+  Data[0] = 0;
 }
 
 
@@ -88,6 +88,62 @@ void TILine::DelWord () {
 //==========================================================================
 bool TILine::Key (const event_t &ev) {
   if (ev.type != ev_keydown) return false;
+
+  switch (ev.data1) {
+    // clipboard
+    case K_INSERT:
+      {
+        vuint32 flg = ev.modflags&(bCtrl|bAlt|bShift|bHyper);
+        // ctrl+insert: copy to clipboard
+        if (flg == bCtrl) {
+          GInput->SetClipboardText(VStr(Data));
+          return true;
+        }
+        // shift+insert: insert from clipboard
+        if (flg == bShift) {
+          VStr ntx = GInput->GetClipboardText();
+          if (ntx.length()) {
+            bool prevWasBlank = false;
+            for (int f = 0; f < ntx.length(); ++f) {
+              char ch = ntx[f];
+              if (ch < 0) continue;
+              if (ch == '\n') {
+                if (Data[len] != ' ' && Data[len] != '\t') AddChar(' ');
+                AddChar(';');
+                prevWasBlank = false;
+                continue;
+              }
+              if (ch <= 32) {
+                if (!prevWasBlank) AddChar(' ');
+                prevWasBlank = true;
+                continue;
+              }
+              AddChar(ch);
+              prevWasBlank = false;
+            }
+          }
+        }
+      }
+      return true;
+
+    // clear line
+    case K_y:
+      if (ev.modflags&bCtrl) {
+        // clear line
+        Init();
+        return true;
+      }
+      break;
+
+    // delete workd
+    case K_w:
+      if (ev.modflags&bCtrl) {
+        DelWord();
+        return true;
+      }
+      break;
+  }
+
   int ch = ev.data1;
   if (ch >= ' ' && ch < 128) {
     ch = GInput->TranslateKey(ch);

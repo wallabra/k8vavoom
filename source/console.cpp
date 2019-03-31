@@ -427,46 +427,6 @@ bool C_Responder (event_t *ev) {
       }
       return true;
 
-    // clipboard
-    case K_INSERT:
-      {
-        vuint32 flg = ev->modflags&(bCtrl|bAlt|bShift|bHyper);
-        // ctrl+insert: copy to clipboard
-        if (flg == bCtrl) {
-          GInput->SetClipboardText(VStr(c_iline.Data));
-          return true;
-        }
-        // shift+insert: insert from clipboard
-        if (flg == bShift) {
-          VStr ntx = GInput->GetClipboardText();
-          if (ntx.length()) {
-            bool prevWasBlank = false;
-            for (int f = 0; f < ntx.length(); ++f) {
-              char ch = ntx[f];
-              if (ch < 0) continue;
-              if (ch == '\n') { c_iline.AddChar(';'); prevWasBlank = false; continue; }
-              if (ch <= 32) {
-                if (!prevWasBlank) c_iline.AddChar(' ');
-                prevWasBlank = true;
-                continue;
-              }
-              c_iline.AddChar(ch);
-              prevWasBlank = false;
-            }
-          }
-        }
-      }
-      return true;
-
-    // clear line
-    case K_y:
-      if (ev->modflags&bCtrl) {
-        // clear line
-        c_iline.Init();
-        return true;
-      }
-      return c_iline.Key(*ev);
-
     // auto complete
     case K_TAB:
       if (c_iline.Data[0]) {
