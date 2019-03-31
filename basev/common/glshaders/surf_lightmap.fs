@@ -20,6 +20,8 @@ void main () {
   TexColour *= texture2D(LightMap, LightmapCoordinate);
   TexColour += texture2D(SpecularMap, LightmapCoordinate);
 
+  TexColour = clamp(TexColour, 0.0, 1.0);
+
   vec4 FinalColour_1 = TexColour;
   $include "common/fog_calc.fs"
 

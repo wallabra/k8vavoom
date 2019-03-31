@@ -8,7 +8,6 @@ uniform sampler2D Texture;
 
 varying vec3 Normal;
 varying vec3 VertToLight;
-varying vec3 VertToView;
 varying float Dist;
 varying float VDist;
 
@@ -22,15 +21,11 @@ void main () {
   //if (TexColour.a < 0.1) discard; //FIXME
   if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 
-  //float DistToView = dot(VertToView, VertToView);
-  //if (DistToView <= 0.0) discard;
-
-  float DistToLight = dot(VertToLight, VertToLight);
-  if (DistToLight <= 0.0) discard;
+  float DistToLight = max(1.0, dot(VertToLight, VertToLight));
+  if (DistToLight >= LightRadius*LightRadius) discard;
 
   DistToLight = sqrt(DistToLight);
 
-  if (DistToLight > LightRadius) discard;
 
   float Add_1 = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
   if (Add_1 <= 0.0) discard;

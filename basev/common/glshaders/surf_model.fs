@@ -7,20 +7,18 @@ uniform float InAlpha;
 uniform bool AllowTransparency;
 
 varying vec4 Light;
-//varying vec3 VertToView;
-//varying vec3 VPos;
 varying vec2 TextureCoordinate;
 
 
 void main () {
-  //float DistVPos = dot(VPos, VPos);
-  //if (DistVPos < 0.0) discard;
-
-  //float DistToView = dot(VertToView, VertToView);
-  //if (DistToView < 0.0) discard;
-
-  vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
-  if (TexColour.a < 0.01) discard;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  //if (TexColour.a < 0.01) discard;
+  if (!AllowTransparency) {
+    if (TexColour.a < 0.666) discard;
+  } else {
+    if (TexColour.a < 0.01) discard;
+  }
+  TexColour *= Light;
 
   vec4 FinalColour_1 = TexColour;
 
@@ -28,15 +26,10 @@ void main () {
   $include "common/fog_calc.fs"
 
   // convert to premultiplied
-  FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;
-  FinalColour_1.g = FinalColour_1.g*FinalColour_1.a;
-  FinalColour_1.b = FinalColour_1.b*FinalColour_1.a;
-
-  if (!AllowTransparency) {
-    if (InAlpha == 1.0 && FinalColour_1.a < 0.666) discard;
-  } else {
-    if (FinalColour_1.a < 0.01) discard;
-  }
+  FinalColour_1.rgb *= FinalColour_1.a;
+  FinalColour_1.a *= InAlpha;
+  if (FinalColour_1.a < 0.01) discard;
+  FinalColour_1 = clamp(FinalColour_1, 0.0, 1.0);
 
   gl_FragColor = FinalColour_1;
 }

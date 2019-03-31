@@ -20,7 +20,13 @@ varying float VDist;
 
 void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard;
+  //if (TexColour.a < 0.01) discard;
+  TexColour.a *= InAlpha;
+  if (!AllowTransparency) {
+    if (TexColour.a < 0.666) discard;
+  } else {
+    if (TexColour.a < 0.01) discard;
+  }
 
   float DistVPosL = dot(VPosL, VPosL);
   float DistVPos = dot(VPos, VPos);
@@ -93,12 +99,15 @@ void main () {
   Add = ClampAdd;
 
   float ClampTrans = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
+  if (ClampTrans < 0.01) discard;
 
+  /*
   if (!AllowTransparency) {
     if (InAlpha == 1.0 && ClampTrans < 0.666) discard;
   } else {
     if (ClampTrans < 0.01) discard;
   }
+  */
 
   vec4 FinalColour_1;
   FinalColour_1.rgb = LightColour;

@@ -30,14 +30,10 @@ void main () {
   ambColor.r = 1.0*FullBright+(1.0-FullBright)*ambColor.r;
   ambColor.g = 1.0*FullBright+(1.0-FullBright)*ambColor.g;
   ambColor.b = 1.0*FullBright+(1.0-FullBright)*ambColor.b;
-  FinalColour_1.r = clamp(FinalColour_1.r*ambColor.r, 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*ambColor.g, 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*ambColor.b, 0.0, 1.0);
+  FinalColour_1.rgb = clamp(FinalColour_1.rgb*ambColor.rgb, 0.0, 1.0);
 
   // convert to premultiplied
-  FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;
-  FinalColour_1.g = FinalColour_1.g*FinalColour_1.a;
-  FinalColour_1.b = FinalColour_1.b*FinalColour_1.a;
+  FinalColour_1.rgb *= FinalColour_1.a;
 
   //FinalColour_1 = ambColor;
   gl_FragColor = FinalColour_1;

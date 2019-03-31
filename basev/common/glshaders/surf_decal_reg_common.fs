@@ -34,22 +34,21 @@ void main () {
   // lightmapped
   vec4 lmc = texture2D(LightMap, LightmapCoordinate);
   vec4 spc = texture2D(SpecularMap, LightmapCoordinate);
-  FinalColour_1.r = clamp(FinalColour_1.r*lmc.r+spc.r, 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*lmc.g+spc.g, 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*lmc.b+spc.b, 0.0, 1.0);
+  FinalColour_1.rgb *= lmc.rgb;
+  FinalColour_1.rgb += spc.rgb;
 #else
   // normal
-  FinalColour_1.r = clamp((FinalColour_1.r*Light.r)*Light.a, 0.0, 1.0);
-  FinalColour_1.g = clamp((FinalColour_1.g*Light.g)*Light.a, 0.0, 1.0);
-  FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
+  FinalColour_1.rgb *= Light.rgb;
+  FinalColour_1.rgb *= Light.a;
 #endif
+  FinalColour_1.rgb = clamp(FinalColour_1.rgb, 0.0, 1.0);
 
   $include "common/fog_calc.fs"
 
+  if (FinalColour_1.a < 0.01) discard;
+
   // convert to premultiplied
-  FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;
-  FinalColour_1.g = FinalColour_1.g*FinalColour_1.a;
-  FinalColour_1.b = FinalColour_1.b*FinalColour_1.a;
+  FinalColour_1.rgb *= FinalColour_1.a;
 
   gl_FragColor = FinalColour_1;
 }

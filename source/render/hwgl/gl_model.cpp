@@ -392,7 +392,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 
   ShadowsModelAmbient.SetViewOrigin(vieworg);
   ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  ShadowsModelAmbient.SetAllowTransparency(false);
+  ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
 
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
@@ -487,7 +487,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
 
   //ShadowsModelTextures.SetViewOrigin(vieworg);
   ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  //!ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
+  ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
 
 
   /* original

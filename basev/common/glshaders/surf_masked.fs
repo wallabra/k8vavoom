@@ -20,9 +20,7 @@ void main () {
 
   // convert to premultiplied
   vec4 FinalColour_1;
-  FinalColour_1.r = TexColour.r*TexColour.a*Light.a;
-  FinalColour_1.g = TexColour.g*TexColour.a*Light.a;
-  FinalColour_1.b = TexColour.b*TexColour.a*Light.a;
+  FinalColour_1.rgb = (TexColour.rgb*TexColour.a)*Light.a;
   FinalColour_1.a = TexColour.a*Light.a;
   $include "common/fog_calc.fs"
 

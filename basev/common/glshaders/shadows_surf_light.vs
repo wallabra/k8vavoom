@@ -10,7 +10,6 @@ attribute float SurfDist;
 
 varying vec3 Normal;
 varying vec3 VertToLight;
-//varying vec3 VertToView;
 varying float Dist;
 varying float VDist;
 
@@ -29,5 +28,4 @@ void main () {
   VDist = ViewDist-SurfDist;
 
   VertToLight = LightPos-gl_Vertex.xyz;
-  //VertToView = ViewOrigin-gl_Vertex.xyz;
 }

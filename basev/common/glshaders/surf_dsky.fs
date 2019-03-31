@@ -14,11 +14,7 @@ void main () {
 
   float ClampTransp2 = clamp((Tex2.a-0.1)/0.9, 0.0, 1.0);
 
-  vec4 BrightFactor;
-  BrightFactor.a = 1.0;
-  BrightFactor.r = Brightness;
-  BrightFactor.g = Brightness;
-  BrightFactor.b = Brightness;
+  vec4 BrightFactor = vec4(Brightness, Brightness, Brightness, 1.0);
 
   gl_FragColor = mix(texture2D(Texture2, TextureCoordinate), Tex2, ClampTransp2*(ClampTransp2*(3.0-(2.0*ClampTransp2))))*BrightFactor;
 }
