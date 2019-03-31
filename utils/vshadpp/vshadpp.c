@@ -482,8 +482,8 @@ void prDestroy (Parser **par) {
   if (!par[0]) return;
   xfree(par[0]->text);
   xfree(par[0]->token);
-  xfree(par[0]);
   memset(*par, 0, sizeof(Parser));
+  xfree(par[0]);
   par[0] = nullptr;
 }
 
