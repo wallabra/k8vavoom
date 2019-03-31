@@ -1583,6 +1583,7 @@ void AM_DrawWorldTimer () {
 //  AM_DrawDeathmatchStats
 //
 //===========================================================================
+#if 0
 static void AM_DrawDeathmatchStats () {
 /*
   int i, k, m;
@@ -1634,6 +1635,7 @@ static void AM_DrawDeathmatchStats () {
   }
 */
 }
+#endif
 
 
 //===========================================================================
@@ -1774,7 +1776,7 @@ void AM_Drawer () {
   T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
   T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
-  if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
+  //if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
   if (use_marks) AM_drawMarks();
 
   if (am_overlay) {
