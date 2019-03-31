@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistr.h>
+#include <stddef.h>
+#include <unistd.h>
 
 
 int verbose = 0;
@@ -1005,7 +1006,7 @@ const char *getShitppAmp (const char *shitppType) {
 int main (int argc, char **argv) {
   char *infname = nullptr;
   char *outdir = ".";
-  bool toStdout = false;
+  int toStdout = 0;
 
   for (int aidx = 1; aidx < argc; ++aidx) {
     char *arg = argv[aidx];
@@ -1016,7 +1017,7 @@ int main (int argc, char **argv) {
       //if (outdir[strlen(outdir)-1] != '/') outdir = strcat(outdir, "/");
       continue;
     }
-    if (strEqu(arg, "-")) { toStdout = true; continue; }
+    if (strEqu(arg, "-")) { toStdout = 1; continue; }
     if (infname) { fprintf(stderr, "FATAL: duplicate file name!\n"); abort(); }
     infname = xstrdup(arg);
   }
