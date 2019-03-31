@@ -705,6 +705,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     return;
   }
 
+  if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
+
   unsigned clipflags = AClipflags;
   // cull the clipping planes if not trivial accept
   if (clipflags && clip_frustum && clip_frustum_bsp) {
@@ -754,26 +756,21 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     }
   }
 
-  if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
-
   // found a subsector?
   if ((bspnum&NF_SUBSECTOR) == 0) {
     node_t *bsp = &Level->Nodes[bspnum];
-
     // decide which side the view point is on
     int side = bsp->PointOnSide(vieworg);
-
+    // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
+    if (side == 0) side = bsp->PointOnSide(vieworg+viewforward*64);
     if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
-
     // recursively divide front space (toward the viewer)
     RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
-
     // possibly divide back space (away from the viewer)
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1])) return;
-
-    RenderBSPNode(bsp->children[side^1], bsp->bbox[side^1], clipflags);
+    side ^= 1;
+    return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
   } else {
-    RenderSubsector(bspnum&(~NF_SUBSECTOR));
+    return RenderSubsector(bspnum&(~NF_SUBSECTOR));
   }
 }
 

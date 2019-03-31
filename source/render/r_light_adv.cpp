@@ -581,9 +581,8 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
   if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
 
   if (bspnum == -1) {
-    RenderShadowSubsector(0);
     if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
-    return;
+    return RenderShadowSubsector(0);
   }
 
   // found a subsector?
@@ -593,20 +592,22 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
+      return RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
+      return RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
-      int side = bsp->PointOnSide(CurrLightPos);
+      //int side = bsp->PointOnSide(CurrLightPos);
+      int side = (dist <= 0.0f);
       // recursively divide front space
       RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // always divide back space for shadows
-      RenderShadowBSPNode(bsp->children[side^1], bsp->bbox[side^1], LimitLights);
+      side ^= 1;
+      return RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
     }
   } else {
-    RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
     if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
+    return RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
   }
 }
 
@@ -801,35 +802,33 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
   if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
 
   if (bspnum == -1) {
-    RenderLightSubsector(0);
     if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
-    return;
+    return RenderLightSubsector(0);
   }
 
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
     node_t *bsp = &Level->Nodes[bspnum];
-
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
+      return RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
+      return RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
-      int side = bsp->PointOnSide(CurrLightPos);
+      //int side = bsp->PointOnSide(CurrLightPos);
+      int side = (dist <= 0.0f);
       // recursively divide front space
       RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
       // possibly divide back space
-      if (LightClip.ClipLightIsBBoxVisible(bsp->bbox[side^1], CurrLightPos, CurrLightRadius)) {
-        RenderLightBSPNode(bsp->children[side^1], bsp->bbox[side^1], LimitLights);
-      }
+      side ^= 1;
+      return RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
     }
   } else {
-    RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
     if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
+    return RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
   }
 }
 

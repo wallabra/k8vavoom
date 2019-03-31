@@ -93,20 +93,17 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
   if (!(bspnum&NF_SUBSECTOR)) {
     // nope, this is a normal node
     node_t *bsp = &Level->Nodes[bspnum];
-
     if (updateWorldCheckVisFrame && Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
-
     // decide which side the view point is on
     unsigned side = bsp->PointOnSide(vieworg);
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
     bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
     side ^= 1;
-    if (w_update_clip_bsp && !ViewClip.ClipIsBBoxVisible(bsp->bbox[side])) return;
-    UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
+    return UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
   } else {
     // leaf node (subsector)
-    UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
+    return UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
   }
 }
 
