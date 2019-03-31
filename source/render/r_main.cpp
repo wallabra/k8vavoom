@@ -917,8 +917,11 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
 
 #define UPDATE_LIGHTVIS(ssindex)  do { \
   LightSubs.append((int)ssindex); \
-  LightVis[(unsigned)(ssindex)>>3] |= 1<<((unsigned)(ssindex)&7); \
-  if (LightBspVis[(unsigned)(ssindex)>>3] |= BspVis[(unsigned)(ssindex)>>3]&(1<<((unsigned)(ssindex)&7))) { \
+  const vuint8 bvbit = (vuint8)(1u<<((unsigned)(ssindex)&7)); \
+  const unsigned sid8 = (unsigned)(ssindex)>>3; \
+  LightVis[sid8] |= bvbit; \
+  if (BspVis[sid8]&bvbit) { \
+    LightBspVis[sid8] |= bvbit; \
     HasLightIntersection = true; \
     LightVisSubs.append((int)ssindex); \
     if (r_advlight_opt_optimise_scissor) { \

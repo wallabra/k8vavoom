@@ -147,10 +147,12 @@ struct VTempEdge {
 
 
 // precalculated dot products for quantized angles
+/*
 enum { SHADEDOT_QUANT = 16 };
 static const float r_avertexnormal_dots[SHADEDOT_QUANT][256] =
 #include "anorm_dots.h"
 ;
+*/
 
 
 static TArray<VModel *> mod_known;

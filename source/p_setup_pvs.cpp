@@ -171,7 +171,7 @@ public:
 
   inline void operator = (const PVSInfo &a) {
     numportals = a.numportals;
-    NumSegs = NumSegs;
+    NumSegs = a.NumSegs;
     portals = a.portals;
     bitbytes = a.bitbytes;
     bitlongs = a.bitlongs;

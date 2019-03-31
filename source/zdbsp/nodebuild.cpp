@@ -505,10 +505,6 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
           nosplitters = true;
         }
       }
-      else
-      {
-        pseg = pseg;
-      }
     }
 
     seg = pseg->next;

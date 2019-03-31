@@ -1279,7 +1279,7 @@ int main (int argc, char **argv) {
     }
     // generate set setters
     for (SetInfo *css = foundSets; css; css = css->nextTemp) {
-      fprintf(foh, css->code);
+      fprintf(foh, "%s", css->code);
     }
     fprintf(foh, "  };\n");
 

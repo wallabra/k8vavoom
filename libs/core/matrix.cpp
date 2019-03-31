@@ -980,12 +980,14 @@ static inline float getCofactor (float m0, float m1, float m2, float m3, float m
   return m0*(m4*m8-m5*m7)-m1*(m3*m8-m5*m6)+m2*(m3*m7-m4*m6);
 }
 
+/*
 static inline float determinant (const float m[4][4]) {
   return m[0][0]*getCofactor(m[1][1], m[1][2], m[1][3], m[2][1], m[2][2], m[2][3], m[3][1], m[3][2], m[3][3])-
          m[0][1]*getCofactor(m[1][0], m[1][2], m[1][3], m[2][0], m[2][2], m[2][3], m[3][0], m[3][2], m[3][3])+
          m[0][2]*getCofactor(m[1][0], m[1][1], m[1][3], m[2][0], m[2][1], m[2][3], m[3][0], m[3][1], m[3][3])-
          m[0][3]*getCofactor(m[1][0], m[1][1], m[1][2], m[2][0], m[2][1], m[2][2], m[3][0], m[3][1], m[3][2]);
 }
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //

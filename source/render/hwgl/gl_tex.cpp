@@ -31,18 +31,6 @@ extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 
 
-static const vuint8 ptex[8][8] = {
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 1, 1, 0, 0, 0 },
-  { 0, 0, 1, 1, 1, 1, 0, 0 },
-  { 0, 0, 1, 1, 1, 1, 0, 0 },
-  { 0, 0, 0, 1, 1, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-};
-
-
 //==========================================================================
 //
 //  VOpenGLDrawer::GenerateTextures

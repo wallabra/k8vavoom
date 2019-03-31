@@ -2416,10 +2416,10 @@ NUIFont::~NUIFont() {
 //==========================================================================
 NUIFont *NUIFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTexture) {
   VOpenGLTexture *tex = VOpenGLTexture::Load(fnameTexture);
-  if (!tex) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
+  if (!tex) Sys_Error("cannot load font '%s' (texture not found)", *aname);
 
   auto inif = FL_OpenFileRead(fnameIni);
-  if (!inif) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (description not found)", *aname)); }
+  if (!inif) { tex->release(); tex = nullptr; Sys_Error("cannot load font '%s' (description not found)", *aname); }
   //fprintf(stderr, "*** %d %d %d %d\n", (int)inif->AtEnd(), (int)inif->IsError(), inif->TotalSize(), inif->Tell());
 
   VStr currSection;
@@ -2431,7 +2431,7 @@ NUIFont *NUIFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTe
   // parse ini file
   while (!inif->AtEnd()) {
     VStr line = readLine(inif);
-    if (inif->IsError()) { delete inif; tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (error loading description)", *aname)); }
+    if (inif->IsError()) { delete inif; tex->release(); tex = nullptr; Sys_Error("cannot load font '%s' (error loading description)", *aname); }
     if (line.isEmpty() || line[0] == ';' || line.startsWith("//")) continue;
     if (line[0] == '[') { currSection = line; continue; }
     // fontmap?
@@ -2464,10 +2464,10 @@ NUIFont *NUIFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTe
 
   delete inif;
 
-  if (cwdt < 1 || chgt < 1) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (invalid description 00)", *aname)); }
+  if (cwdt < 1 || chgt < 1) { tex->release(); tex = nullptr; Sys_Error("cannot load font '%s' (invalid description 00)", *aname); }
   int xchars = tex->width/cwdt;
   int ychars = tex->height/chgt;
-  if (xchars < 1 || ychars < 1 || xchars*ychars < 128) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (invalid description 01)", *aname)); }
+  if (xchars < 1 || ychars < 1 || xchars*ychars < 128) { tex->release(); tex = nullptr; Sys_Error("cannot load font '%s' (invalid description 01)", *aname); }
 
   NUIFont *fnt = new NUIFont();
   fnt->name = aname;
@@ -2533,10 +2533,10 @@ NUIFont *NUIFont::LoadPCF (VName aname, const VStr &filename) {
 */
 
   auto fl = FL_OpenFileRead(filename);
-  if (!fl) { Sys_Error(va("cannot load font '%s'", *aname)); }
+  if (!fl) { Sys_Error("cannot load font '%s'", *aname); }
 
   PcfFont pcf;
-  if (!pcf.load(*fl)) { Sys_Error(va("invalid PCF font '%s'", *aname)); }
+  if (!pcf.load(*fl)) { Sys_Error("invalid PCF font '%s'", *aname); }
 
   NUIFont *fnt = new NUIFont();
   fnt->name = aname;

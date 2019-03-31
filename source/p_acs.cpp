@@ -1704,7 +1704,7 @@ bool VAcsLevel::AddToACSStore (int Type, VName Map, int Number, int Arg1,
   S.Args[0] = Arg1;
   S.Args[1] = Arg2;
   S.Args[2] = Arg3;
-  S.Args[4] = Arg4;
+  S.Args[3] = Arg4;
   return true;
 }
 
