@@ -478,6 +478,7 @@ private:
 protected:
   VGLShader *shaderHead;
 
+  /*
   VShaderDef_DrawFixedCol DrawFixedCol;
   VShaderDef_DrawSimple DrawSimple;
   VShaderDef_DrawShadow DrawShadow;
@@ -506,6 +507,7 @@ protected:
   VShaderDef_ShadowsModelLight ShadowsModelLight;
   VShaderDef_ShadowsModelShadow ShadowsModelShadow;
   VShaderDef_ShadowsModelFog ShadowsModelFog;
+  */
 
   void registerShader (VGLShader *shader);
   void CompileShaders ();

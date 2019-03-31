@@ -937,7 +937,7 @@ void VOpenGLDrawer::InitResolution () {
 
   // shaders
   shaderHead = nullptr; // just in case
-
+  /*
   DrawFixedCol.Setup(this);
   DrawSimple.Setup(this);
   DrawShadow.Setup(this);
@@ -966,7 +966,9 @@ void VOpenGLDrawer::InitResolution () {
   ShadowsModelLight.Setup(this);
   ShadowsModelShadow.Setup(this);
   ShadowsModelFog.Setup(this);
+  */
 
+  LoadAllShaders();
   CompileShaders();
 
   if (glGetError() != 0) Sys_Error("OpenGL initialization error");

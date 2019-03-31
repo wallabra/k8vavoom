@@ -1,294 +1,171 @@
 // ////////////////////////////////////////////////////////////////////////// //
-Shader DrawFixedCol both="draw_fixed_col"
-/* or: vertex="name" fragment="name" */
-{
-  uniform vec4 Colour;
+//   if a shader has all variables in set, use literal code provided by set
+//   intstead of generating simple accessors.
+//   there is no "best fit", preprocessor will use first matched set.
+// ////////////////////////////////////////////////////////////////////////// //
+
+Set PureLightmapSTSet {
+  forbidden uniform float TexIW;
+  forbidden uniform float TexIH;
+
+  uniform vec3 SAxis;
+  uniform vec3 TAxis;
+  uniform float SOffs;
+  uniform float TOffs;
+  uniform float TexMinS;
+  uniform float TexMinT;
+  uniform float CacheS;
+  uniform float CacheT;
+
+  code [[
+    inline void SetLMapOnly (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {
+      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
+      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
+      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
+      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
+      if (loc_TexMinS >= 0) owner->p_glUniform1fARB(loc_TexMinS, surf->texturemins[0]);
+      if (loc_TexMinT >= 0) owner->p_glUniform1fARB(loc_TexMinT, surf->texturemins[1]);
+      if (loc_CacheS >= 0) owner->p_glUniform1fARB(loc_CacheS, cache->s);
+      if (loc_CacheT >= 0) owner->p_glUniform1fARB(loc_CacheT, cache->t);
+    }
+  ]]
+}
+
+
+Set TextureSTSet {
+  uniform vec3 SAxis;
+  uniform vec3 TAxis;
+  uniform float SOffs;
+  uniform float TOffs;
+  uniform float TexIW;
+  uniform float TexIH;
+
+  code [[
+    inline void SetTex (const texinfo_t *textr) {
+      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
+      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
+      if (loc_TexIW >= 0) owner->p_glUniform1fARB(loc_TexIW, owner->tex_iw);
+      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
+      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
+      if (loc_TexIH >= 0) owner->p_glUniform1fARB(loc_TexIH, owner->tex_ih);
+    }
+  ]]
+}
+
+
+Set TextureSTSetNoSize {
+  forbidden set PureLightmapSTSet;
+
+  forbidden uniform float TexIW;
+  forbidden uniform float TexIH;
+
+  uniform vec3 SAxis;
+  uniform vec3 TAxis;
+  uniform float SOffs;
+  uniform float TOffs;
+
+  code [[
+    inline void SetTexNoSize (const texinfo_t *textr) {
+      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
+      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
+      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
+      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
+    }
+  ]]
+}
+
+
+Set LightmapSTSet {
+  forbidden set PureLightmapSTSet;
+
+  uniform float TexMinS;
+  uniform float TexMinT;
+  uniform float CacheS;
+  uniform float CacheT;
+
+  code [[
+    inline void SetLMap (const surface_t *surf, const surfcache_t *cache) {
+      if (loc_TexMinS >= 0) owner->p_glUniform1fARB(loc_TexMinS, surf->texturemins[0]);
+      if (loc_TexMinT >= 0) owner->p_glUniform1fARB(loc_TexMinT, surf->texturemins[1]);
+      if (loc_CacheS >= 0) owner->p_glUniform1fARB(loc_CacheS, cache->s);
+      if (loc_CacheT >= 0) owner->p_glUniform1fARB(loc_CacheT, cache->t);
+    }
+  ]]
+}
+
+
+Set FogSet {
+  uniform bool FogEnabled;
+  uniform vec4 FogColour;
+  uniform float FogStart;
+  uniform float FogEnd;
+
+  code [[
+    inline void SetFogFade (vuint32 Fade, float Alpha) {
+      if (Fade) {
+        if (loc_FogEnabled >= 0) owner->p_glUniform1iARB(loc_FogEnabled, GL_TRUE);
+        owner->p_glUniform4fARB(loc_FogColour,
+          ((Fade>>16)&255)/255.0f,
+          ((Fade>>8)&255)/255.0f,
+          (Fade&255)/255.0f, Alpha);
+        owner->p_glUniform1fARB(loc_FogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
+        owner->p_glUniform1fARB(loc_FogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+      } else {
+        if (loc_FogEnabled >= 0) owner->p_glUniform1iARB(loc_FogEnabled, GL_FALSE);
+      }
+    }
+  ]]
+}
+
+
+Set SimpleFogSet {
+  forbidden uniform bool FogEnabled;
+
+  uniform vec4 FogColour;
+  uniform float FogStart;
+  uniform float FogEnd;
+
+  code [[
+    inline void SetFogFade (vuint32 Fade, float Alpha) {
+      owner->p_glUniform4fARB(loc_FogColour,
+        ((Fade>>16)&255)/255.0f,
+        ((Fade>>8)&255)/255.0f,
+        (Fade&255)/255.0f, Alpha);
+      owner->p_glUniform1fARB(loc_FogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
+      owner->p_glUniform1fARB(loc_FogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+    }
+  ]]
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-Shader DrawSimple both="draw_simple" {
-  uniform sampler2D Texture;
-  uniform float Alpha;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader DrawShadow vertex="draw_simple" fragment="draw_shadow" {
-  uniform sampler2D Texture;
-  uniform float Alpha;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader DrawAutomap both="draw_automap" {
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfZBuf both="surf_zbuf" {
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfShadowVolume vertex="surf_svol" fragment="surf_zbuf" {
-  uniform vec3 LightPos;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfDecalNoLMap both="surf_decal_nolmap" {
-  uniform sampler2D Texture;
-  uniform vec4 Light;
-  uniform float SplatAlpha; // image alpha will be multiplied by this
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfDecalLMap both="surf_decal_lmap" {
-  uniform sampler2D Texture;
-  uniform sampler2D LightMap;
-  uniform sampler2D SpecularMap;
-  //uniform vec4 Light;
-  uniform float SplatAlpha; // image alpha will be multiplied by this
-  uniform FogSet _;
-  //uniform TextureSTSetNoSize _;
-  //uniform LightmapSTSet _;
-  uniform PureLightmapSTSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfAdvDecal both="surf_decal_adv" {
-  uniform sampler2D Texture;
-  uniform sampler2D AmbLightTexture;
-  uniform float SplatAlpha; // image alpha will be multiplied by this
-  uniform float FullBright;
-  uniform vec2 ScreenSize;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfSimple both="surf_simple" {
-  uniform sampler2D Texture;
-  uniform vec4 Light;
-  uniform TextureSTSet _;
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfLightmap both="surf_lightmap" {
-  uniform sampler2D Texture;
-  uniform sampler2D LightMap;
-  uniform sampler2D SpecularMap;
-  uniform TextureSTSet _;
-  uniform LightmapSTSet _;
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfSky both="surf_sky" {
-  attribute vec2 TexCoord;
-  uniform sampler2D Texture;
-  uniform float Brightness;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfDSky both="surf_dsky" {
-  attribute vec2 TexCoord;
-  attribute vec2 TexCoord2;
-  uniform sampler2D Texture;
-  uniform sampler2D Texture2;
-  uniform float Brightness;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfMasked both="surf_masked" {
-  attribute vec2 TexCoord;
-  uniform sampler2D Texture;
-  uniform vec4 Light;
-  uniform float AlphaRef;
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfPartSq vertex="particle" fragment="particle_sq" {
-  attribute vec4 LightVal;
-  attribute vec2 TexCoord;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfPartSm vertex="particle" fragment="particle_sm" {
-  attribute vec4 LightVal;
-  attribute vec2 TexCoord;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsAmbient both="shadows_surf_ambient" {
-  uniform sampler2D Texture;
-  uniform vec4 Light;
-  uniform TextureSTSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsTexture both="shadows_surf_texture" {
-  uniform sampler2D Texture;
-  uniform TextureSTSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsFog both="shadows_surf_fog" {
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsFogMasked both="shadows_surf_fog" {
-  uniform sampler2D Texture;
-  uniform TextureSTSet _;
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsLight both="shadows_surf_light" {
-  uniform sampler2D Texture;
-  uniform vec3 LightColour;
-  uniform float LightRadius;
-  uniform float LightMin;
-  uniform vec3 ViewOrigin;
-  uniform vec3 LightPos;
-  uniform TextureSTSet _;
-  attribute vec3 SurfNormal;
-  attribute float SurfDist;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsLightDbg both="shadows_surf_light" {
-  uniform sampler2D Texture;
-  uniform vec3 LightColour;
-  uniform float LightRadius;
-  uniform float LightMin;
-  uniform vec3 ViewOrigin;
-  uniform vec3 LightPos;
-  uniform TextureSTSet _;
-  attribute vec3 SurfNormal;
-  attribute float SurfDist;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader SurfModel both="surf_model" {
-  //uniform vec3 ViewOrigin;
-  uniform mat4 ModelToWorldMat;
-  uniform float Inter;
-  attribute vec4 Vert2;
-  attribute vec4 LightVal;
-  attribute vec2 TexCoord;
-  uniform sampler2D Texture;
-  uniform float InAlpha;
-  uniform bool AllowTransparency;
-  uniform FogSet _;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelAmbient both="shadows_model_ambient" {
-  uniform mat4 ModelToWorldMat;
-  uniform mat3 NormalToWorldMat;
-  uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform vec4 Light;
-  uniform sampler2D Texture;
-  uniform float InAlpha;
-  uniform bool AllowTransparency;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelTextures both="shadows_model_textures" {
-  uniform mat4 ModelToWorldMat;
-  //!uniform mat3 NormalToWorldMat;
-  //uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  //attribute vec3 VertNormal;
-  //attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform sampler2D Texture;
-  uniform sampler2D AmbLightTexture;
-  uniform float InAlpha;
-  //uniform bool AllowTransparency;
-  uniform vec2 ScreenSize;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelLight both="shadows_model_light" {
-  uniform mat4 ModelToWorldMat;
-  uniform mat3 NormalToWorldMat;
-  uniform vec3 LightPos;
-  uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform sampler2D Texture;
-  uniform vec3 LightColour;
-  uniform float LightRadius;
-  uniform float LightMin;
-  uniform float InAlpha;
-  uniform bool AllowTransparency;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelShadow both="shadows_model_shadow" {
-  uniform float Inter;
-  uniform vec3 LightPos;
-  uniform mat4 ModelToWorldMat;
-
-  attribute vec4 Vert2;
-  attribute float Offset; //0 means "offset to infinity"
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-Shader ShadowsModelFog both="shadows_model_fog" {
-  uniform mat4 ModelToWorldMat;
-  uniform mat3 NormalToWorldMat;
-  uniform vec3 ViewOrigin;
-  uniform float Inter;
-
-  attribute vec4 Vert2;
-  attribute vec3 VertNormal;
-  attribute vec3 Vert2Normal;
-  attribute vec2 TexCoord;
-
-  uniform sampler2D Texture;
-  uniform bool AllowTransparency;
-  uniform float InAlpha;
-  uniform FogSet _;
+ShaderList basedir="/home/ketmar/back/vavoom_dev/src/basev/common/glshaders" {
+  Shader DrawFixedCol both="draw_fixed_col";
+  Shader DrawSimple both="draw_simple";
+  Shader DrawShadow vertex="draw_simple" fragment="draw_shadow";
+  Shader DrawAutomap both="draw_automap";
+  Shader SurfZBuf both="surf_zbuf";
+  Shader [advanced] SurfShadowVolume vertex="surf_svol" fragment="surf_zbuf";
+  Shader SurfDecalNoLMap both="surf_decal_nolmap";
+  Shader SurfDecalLMap both="surf_decal_lmap";
+  Shader SurfAdvDecal both="surf_decal_adv";
+  Shader SurfSimple both="surf_simple";
+  Shader SurfLightmap both="surf_lightmap";
+  Shader SurfSky both="surf_sky";
+  Shader SurfDSky both="surf_dsky";
+  Shader SurfMasked both="surf_masked";
+  Shader SurfPartSq vertex="particle" fragment="particle_sq";
+  Shader SurfPartSm vertex="particle" fragment="particle_sm";
+  Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";
+  Shader [advanced] ShadowsTexture both="shadows_surf_texture";
+  Shader [advanced] ShadowsFog both="shadows_surf_fog";
+  Shader [advanced] ShadowsFogMasked both="shadows_surf_fog" { defines { "VV_MASKED_FOG" } }
+  Shader [advanced] ShadowsLight both="shadows_surf_light";
+  Shader [advanced] ShadowsLightDbg both="shadows_surf_light" { define "VV_DEBUG_LIGHT"; }
+  Shader SurfModel both="surf_model";
+  Shader [advanced] ShadowsModelAmbient both="shadows_model_ambient";
+  Shader [advanced] ShadowsModelTextures both="shadows_model_textures";
+  Shader [advanced] ShadowsModelLight both="shadows_model_light";
+  Shader [advanced] ShadowsModelShadow both="shadows_model_shadow";
+  Shader [advanced] ShadowsModelFog both="shadows_model_fog";
 }
