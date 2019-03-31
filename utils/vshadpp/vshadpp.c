@@ -100,7 +100,7 @@ char *loadWholeFile (const char *fname) {
 
 char *createFileName (const char *outdir, const char *infname, const char *ext) {
   if (!outdir) outdir = "";
-  if (!infname) abort();
+  if (!infname) { fprintf(stderr, "FATAL: wut?!\n"); abort(); }
   if (!ext) ext = "";
   char *res = xalloc(strlen(outdir)+strlen(infname)+strlen(ext)+128);
   strcpy(res, outdir);
@@ -139,7 +139,7 @@ char *vavarg (const char *text, va_list ap) {
   va_copy(apcopy, ap);
   int size = vsnprintf(va_intr_bufset[va_intr_bufidx], va_intr_bufsizes[va_intr_bufidx], text, apcopy);
   va_end(apcopy);
-  if (size < 0) abort();
+  if (size < 0) { fprintf(stderr, "FUCK YOU SHITDOWS!\n"); /*abort();*/ size = 1024*1024; }
   if (size >= va_intr_bufsizes[va_intr_bufidx]) {
     va_intr_bufsizes[va_intr_bufidx] = size+16;
     va_intr_bufset[va_intr_bufidx] = realloc(va_intr_bufset[va_intr_bufidx], va_intr_bufsizes[va_intr_bufidx]);
@@ -500,11 +500,13 @@ void prDestroy (Parser **par) {
 
 
 Parser *prCreateFromFile (const char *fname) {
+  if (verbose > 1) printf("[   creating parser for '%s'...]\n", fname);
   Parser *par = xalloc(sizeof(Parser));
   par->text = loadWholeFile(fname);
   par->nextpos = par->text;
   par->tkpos = par->text;
   par->textend = par->text+strlen(par->text);
+  if (verbose > 1) printf("[   created parser for '%s'...]\n", fname);
   return par;
 }
 
@@ -513,6 +515,7 @@ Parser *prCreateFromFile (const char *fname) {
 // includes at the current position, so next token will be from include
 // also, inserts "\n"
 void prIncludeHere (Parser *par, const char *fname) {
+  if (verbose > 1) printf("[    including '%s'...]\n", fname);
   char *inctext = loadWholeFile(fname);
   size_t tlen = strlen(inctext);
   if (!tlen) { xfree(inctext); return; }
