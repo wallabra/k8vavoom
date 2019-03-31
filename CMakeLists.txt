@@ -43,17 +43,17 @@ if(SWITCH_LIBNX)
 endif(SWITCH_LIBNX)
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
-  message(SEND_ERROR "GNU C/C++ compilers are required to build VaVoom and tools")
+  message(SEND_ERROR "GNU C/C++ compilers are required to build k8vavoom and tools")
   return()
 endif(NOT CMAKE_COMPILER_IS_GNUCC)
 
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 
 option(ENABLE_CLIENT   "Build client executable" ON)
-option(ENABLE_SERVER   "Build dedicated server executable" OFF)
-option(ENABLE_MASTER   "Build master server" OFF)
+option(ENABLE_SERVER   "Build dedicated server executable (don't do that!)" OFF)
+option(ENABLE_MASTER   "Build master server (no reason to build it)" OFF)
 option(ENABLE_VCCRUN   "Build vcc_run executable" OFF)
-option(ENABLE_MD2FIXER "Build fixmd2 executable" OFF)
+option(ENABLE_MD2FIXER "Build fixmd2 executable (you don't need it)" OFF)
 
 option(ENABLE_VCCRUN_ONLY "Build ONLY vccrun" OFF)
 
