@@ -39,13 +39,18 @@
 #endif
 
 #if defined(USE_FPU_MATH)
-# include <fenv.h>
 # define VAVOOM_ALLOW_FPU_DEBUG
 #elif defined(__linux__)
 # if defined(__x86_64__) || defined(__i386__)
-#  include <fenv.h>
 #  define VAVOOM_ALLOW_FPU_DEBUG
 # endif
+#endif
+
+#ifdef VAVOOM_ALLOW_FPU_DEBUG
+# ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+# endif
+# include <fenv.h>
 #endif
 
 #include "gamedefs.h"
