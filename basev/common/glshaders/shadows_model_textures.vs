@@ -7,8 +7,8 @@ uniform mat4 ModelToWorldMat;
 uniform float Inter;
 
 attribute vec4 Vert2;
-attribute vec3 VertNormal;
-attribute vec3 Vert2Normal;
+//attribute vec3 VertNormal;
+//attribute vec3 Vert2Normal;
 attribute vec2 TexCoord;
 
 //!varying vec3 Normal;

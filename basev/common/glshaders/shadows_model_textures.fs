@@ -4,7 +4,7 @@ $include "common/common.inc"
 uniform sampler2D Texture;
 uniform sampler2D AmbLightTexture;
 uniform float InAlpha;
-uniform bool AllowTransparency;
+//uniform bool AllowTransparency;
 uniform vec2 ScreenSize;
 
 varying vec2 TextureCoordinate;

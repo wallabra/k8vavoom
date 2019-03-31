@@ -5,7 +5,9 @@ uniform sampler2D Texture;
 uniform sampler2D LightMap;
 uniform sampler2D SpecularMap;
 #endif
+#ifndef REG_LIGHTMAP
 uniform vec4 Light;
+#endif
 uniform float SplatAlpha; // image alpha will be multiplied by this
 $include "common/fog_vars.fs"
 
