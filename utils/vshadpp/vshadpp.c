@@ -120,24 +120,35 @@ char *createFileName (const char *outdir, const char *infname, const char *ext) 
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define VABUF_COUNT  (8)
+static char *va_intr_bufset[VABUF_COUNT] = {nullptr};
+static size_t va_intr_bufsizes[VABUF_COUNT] = {0};
+static unsigned va_intr_bufidx = 0;
+
+void vaShutdown () {
+  for (unsigned f = 0; f < VABUF_COUNT; ++f) {
+    xfree(va_intr_bufset[f]);
+    va_intr_bufset[f] = 0;
+    va_intr_bufsizes[f] = 0;
+  }
+  va_intr_bufidx = 0;
+}
+
+
 char *vavarg (const char *text, va_list ap) {
-  static char *bufset[VABUF_COUNT] = {nullptr};
-  static size_t bufsizes[VABUF_COUNT] = {0};
-  static unsigned bufidx = 0;
   va_list apcopy;
   va_copy(apcopy, ap);
-  int size = vsnprintf(bufset[bufidx], bufsizes[bufidx], text, apcopy);
+  int size = vsnprintf(va_intr_bufset[va_intr_bufidx], va_intr_bufsizes[va_intr_bufidx], text, apcopy);
   va_end(apcopy);
   if (size < 0) abort();
-  if (size >= bufsizes[bufidx]) {
-    bufsizes[bufidx] = size+16;
-    bufset[bufidx] = realloc(bufset[bufidx], bufsizes[bufidx]);
+  if (size >= va_intr_bufsizes[va_intr_bufidx]) {
+    va_intr_bufsizes[va_intr_bufidx] = size+16;
+    va_intr_bufset[va_intr_bufidx] = realloc(va_intr_bufset[va_intr_bufidx], va_intr_bufsizes[va_intr_bufidx]);
     va_copy(apcopy, ap);
-    vsnprintf(bufset[bufidx], bufsizes[bufidx], text, apcopy);
+    vsnprintf(va_intr_bufset[va_intr_bufidx], va_intr_bufsizes[va_intr_bufidx], text, apcopy);
     va_end(apcopy);
   }
-  char *res = bufset[bufidx++];
-  bufidx %= VABUF_COUNT;
+  char *res = va_intr_bufset[va_intr_bufidx++];
+  va_intr_bufidx %= VABUF_COUNT;
   return res;
 }
 
@@ -504,7 +515,7 @@ Parser *prCreateFromFile (const char *fname) {
 void prIncludeHere (Parser *par, const char *fname) {
   char *inctext = loadWholeFile(fname);
   size_t tlen = strlen(inctext);
-  if (!tlen) return;
+  if (!tlen) { xfree(inctext); return; }
   // we have some room there, so it is safe
   memmove(inctext+1, inctext, tlen+1);
   inctext[0] = '\n';
@@ -517,6 +528,7 @@ void prIncludeHere (Parser *par, const char *fname) {
   if (npos) memcpy(newtext, par->text, npos);
   memcpy(newtext+npos, inctext, tlen);
   if (npos < epos) memcpy(newtext+npos+tlen, par->text+npos, epos-npos);
+  xfree(par->text);
   par->text = newtext;
   par->textend = par->text+epos+tlen;
   par->nextpos = par->text+npos;
@@ -590,6 +602,20 @@ struct SetInfo {
 
 
 SetInfo *setlist = nullptr;
+
+
+void clearSetList (SetInfo **setlist) {
+  if (!setlist) return;
+  while (*setlist) {
+    SetInfo *si = *setlist;
+    *setlist = si->next;
+    xfree(si->name);
+    xfree(si->code);
+    clearLocs(&si->locs);
+    clearLocs(&si->badsets);
+    xfree(si);
+  }
+}
 
 
 // `Set` already parsed
@@ -701,6 +727,22 @@ struct ShaderInfo {
 
 
 ShaderInfo *shaderlist = nullptr;
+
+
+void clearShaderList (ShaderInfo **slist) {
+  if (!slist) return;
+  while (*slist) {
+    ShaderInfo *si = *slist;
+    *slist = si->next;
+    xfree(si->name);
+    xfree(si->vssrc);
+    xfree(si->fssrc);
+    xfree(si->basedir);
+    xfree(si->defines);
+    clearLocs(&si->locs);
+    xfree(si);
+  }
+}
 
 
 void appendDefine (ShaderInfo *si, const char *defstr) {
@@ -1006,8 +1048,8 @@ const char *getShitppAmp (const char *shitppType) {
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   char *infname = nullptr;
-  char *outdir = ".";
-  char *basebase = ".";
+  char *outdir = xstrdup(".");
+  char *basebase = xstrdup(".");
   int toStdout = 0;
 
   for (int aidx = 1; aidx < argc; ++aidx) {
@@ -1015,11 +1057,13 @@ int main (int argc, char **argv) {
     if (strEqu(arg, "-v") || strEqu(arg, "--verbose")) { ++verbose; continue; }
     if (strEqu(arg, "-o")) {
       if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-o' expects argument!\n"); abort(); }
+      xfree(outdir);
       outdir = xstrdup(argv[++aidx]);
       continue;
     }
     if (strEqu(arg, "-b")) {
       if (aidx+1 >= argc) { fprintf(stderr, "FATAL: '-b' expects argument!\n"); abort(); }
+      xfree(basebase);
       basebase = xstrdup(argv[++aidx]);
       continue;
     }
@@ -1293,6 +1337,17 @@ int main (int argc, char **argv) {
     fclose(foh);
     fclose(foc);
   }
+
+  clearSetList(&setlist);
+  clearShaderList(&shaderlist);
+
+  xfree(outdir);
+  xfree(basebase);
+  xfree(infname);
+  xfree(outhname);
+  xfree(outcname);
+
+  vaShutdown();
 
   return 0;
 }
