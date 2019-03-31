@@ -47,7 +47,7 @@ inline void *Z_Malloc (size_t size) {
 }
 
 
-static __attribute__((unused)) __attribute__((alloc_size(2))) __attribute__((returns_nonnull))
+static __attribute__((unused)) __attribute__((alloc_size(2)))
 inline void *Z_Realloc (void *ptr, size_t size) {
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_realloc_call_count;
