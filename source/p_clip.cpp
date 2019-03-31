@@ -1098,13 +1098,13 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
   if (ClipIsEmpty() && sfres > 0) return true; // no clip nodes yet
   const drawseg_t *ds = region->lines;
   for (auto count = sub->numlines; count--; ++ds) {
-    const TVec &v1 = *ds->seg->v1;
-    const TVec &v2 = *ds->seg->v2;
     const int orgside = ds->seg->PointOnSide2(Origin);
     if (orgside) {
       if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
       continue; // viewer is in back side
     }
+    const TVec &v1 = *ds->seg->v1;
+    const TVec &v2 = *ds->seg->v2;
     if (IsRangeVisible(v2, v1)) {
       if (sfres > 0 || !clip_frustum || !clip_frustum_region || CheckSegFrustum(ds->seg)) {
         return true;
@@ -1147,7 +1147,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool debugDump) {
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
     if (IsRangeVisible(v2, v1)) {
-      if (sfres > 0 || !clip_frustum || !clip_frustum_sub || CheckSegFrustum(seg)) {
+      if (sfres > 0 || !clip_frustum || !clip_frustum_seg || CheckSegFrustum(seg)) {
         return true;
       }
       if (debugDump) GCon->Logf("  ::: visible, but skipped seg #%u (%f : %f)", (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1));
@@ -1187,9 +1187,18 @@ static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool skipSphereCheck) {
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool skipSphereCheck, bool skipFrustumCheck) {
   const line_t *ldef = seg->linedef;
-  if (!ldef) return; // miniseg cannot clip anything
+  if (!ldef) {
+    // miniseg cannot clip anything...
+    // ...except if it is out of frustum
+    if (skipFrustumCheck) {
+      AddClipRange(*seg->v2, *seg->v1);
+    } else if (clip_frustum && !skipSphereCheck && !seg->PointOnSide2(Origin) && !CheckSegFrustum(seg)) {
+      AddClipRange(*seg->v2, *seg->v1);
+    }
+    return;
+  }
 
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
@@ -1211,7 +1220,12 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
-  if (!skipSphereCheck && clip_frustum_seg && !CheckSegFrustum(seg)) return; // out of frustum
+  // if it is out of frustum, clip with it unconditionally
+  if (skipFrustumCheck || (!skipSphereCheck && !CheckSegFrustum(seg))) {
+    AddClipRange(v2, v1);
+    return;
+  }
+  //if (!skipSphereCheck && clip_frustum_seg && !CheckSegFrustum(seg)) return; // out of frustum
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
@@ -1241,19 +1255,19 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 //  VViewClipper::ClipAddSubsectorSegs
 //
 //==========================================================================
-void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror) {
+void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror, bool skipFrustumCheck) {
   if (!clip_enabled) return;
   if (ClipIsFull()) return;
 
-  bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj);
+  bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj && !skipFrustumCheck);
 
-  const int ssFrustum = (clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : TFrustum::PARTIALLY);
+  const int ssFrustum = (!skipFrustumCheck && clip_frustum && clip_frustum_sub ? CheckSubsectorFrustum(sub) : TFrustum::PARTIALLY);
 
   if (ssFrustum != TFrustum::OUTSIDE) {
     const seg_t *seg = &Level->Segs[sub->firstline];
     for (int count = sub->numlines; count--; ++seg) {
       if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-      CheckAddClipSeg(seg, Mirror, (ssFrustum == TFrustum::INSIDE));
+      CheckAddClipSeg(seg, Mirror, (ssFrustum == TFrustum::INSIDE), skipFrustumCheck);
     }
   } else {
     // completely outside

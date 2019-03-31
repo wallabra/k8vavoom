@@ -697,7 +697,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags) {
+void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip) {
   if (ViewClip.ClipIsFull()) return;
 
   if (bspnum == -1) {
@@ -708,40 +708,47 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
   if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
 
   unsigned clipflags = AClipflags;
-  // cull the clipping planes if not trivial accept
-  if (clipflags && clip_frustum && clip_frustum_bsp) {
-    //static float newbbox[6];
-    //memcpy(newbbox, bbox, sizeof(float)*6);
-    //newbbox[2] = -32767.0f;
-    //newbbox[5] = +32767.0f;
-    const TClipPlane *cp = &view_frustum.planes[0];
-    for (unsigned i = view_frustum.planeCount; i--; ++cp) {
-      if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
-      //k8: this check is always true, because view origin is outside of frustum (oops)
-      //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
+  if (!onlyClip) {
+    // cull the clipping planes if not trivial accept
+    if (clipflags && clip_frustum && clip_frustum_bsp) {
+      //static float newbbox[6];
+      //memcpy(newbbox, bbox, sizeof(float)*6);
+      //newbbox[2] = -32767.0f;
+      //newbbox[5] = +32767.0f;
+      const TClipPlane *cp = &view_frustum.planes[0];
+      for (unsigned i = view_frustum.planeCount; i--; ++cp) {
+        if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
+        //k8: this check is always true, because view origin is outside of frustum (oops)
+        //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
 #if defined(FRUSTUM_BOX_OPTIMISATION)
-      // check reject point
-      if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
-        // completely outside of any plane means "invisible"
-        check(cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
-        return;
-      }
-      // is node entirely on screen?
-      // k8: don't do this: frustum test are cheap, and we can hit false positive easily
-      /*
-      if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
-        // yes, don't check this plane
-        clipflags ^= cp->clipflag;
-      }
-      */
-#elif 0
-      int cres = cp->checkBoxEx(bbox);
-      if (cres == TFrustum::OUTSIDE) return;
-      // k8: don't do this: frustum test are cheap, and we can hit false positive easily
-      if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
+        // check reject point
+        if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
+          // completely outside of any plane means "invisible"
+          check(cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
+          return;
+        }
+        // is node entirely on screen?
+        // k8: don't do this: frustum test are cheap, and we can hit false positive easily
+        /*
+        if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
+          // yes, don't check this plane
+          clipflags ^= cp->clipflag;
+        }
+        */
+#elif 1
+        int cres = cp->checkBoxEx(bbox);
+        if (cres == TFrustum::OUTSIDE) return;
+        // k8: don't do this: frustum test are cheap, and we can hit false positive easily
+        if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #else
-      if (!cp->checkBox(bbox)) return;
+        if (!cp->checkBox(bbox)) {
+          if (cp != &view_frustum.planes[TFrustum::Back]) {
+            // this node is out of frustum, clip with it
+          }
+          return;
+        }
 #endif
+      }
     }
   }
 
@@ -750,19 +757,31 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     // nope
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the view point is on
-    //int side = bsp->PointOnSide(vieworg);
-    const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
-    unsigned side = (unsigned)(dist <= 0.0f);
-    // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
-    if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
-    if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
-    // recursively divide front space (toward the viewer)
-    RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
-    // possibly divide back space (away from the viewer)
-    side ^= 1;
-    return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
+    if (!onlyClip) {
+      //int side = bsp->PointOnSide(vieworg);
+      const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
+      unsigned side = (unsigned)(dist <= 0.0f);
+      // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
+      if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
+      if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
+      // recursively divide front space (toward the viewer)
+      RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
+      // possibly divide back space (away from the viewer)
+      side ^= 1;
+      return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
+    } else {
+      RenderBSPNode(bsp->children[0], bsp->bbox[0], clipflags, true);
+      return RenderBSPNode(bsp->children[1], bsp->bbox[1], clipflags, true);
+    }
   } else {
-    return RenderSubsector(bspnum&(~NF_SUBSECTOR));
+    if (onlyClip) {
+      if (clip_use_1d_clipper) {
+        subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
+        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr), true);
+      }
+    } else {
+      return RenderSubsector(bspnum&(~NF_SUBSECTOR));
+    }
   }
 }
 
