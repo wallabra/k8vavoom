@@ -60,6 +60,7 @@ private:
   TVec Origin;
   VLevel *Level;
   TFrustum Frustum; // why not?
+  bool ClearClipNodesCalled;
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
@@ -130,9 +131,9 @@ public:
     AddClipRangeAngle(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
-  bool ClipIsBBoxVisible (const float BBox[6], bool checkFrustum=false) const;
+  bool ClipIsBBoxVisible (const float BBox[6]) const;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const;
-  bool ClipCheckSubsector (const subsector_t *sub, bool debugDump=false);
+  bool ClipCheckSubsector (const subsector_t *sub);
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;

@@ -40,6 +40,9 @@
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_draw_pobj;
 extern VCvarB r_advlight_opt_optimise_scissor;
+extern VCvarB dbg_clip_dump_added_ranges;
+
+static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
 
 
 void R_FreeSkyboxData ();
@@ -1664,6 +1667,18 @@ void VRenderLevelShared::RenderPlayerView () {
 
   IncUpdateWorldFrame();
 
+  if (dbg_autoclear_automap) {
+    line_t *line = &Level->Lines[0];
+    for (int i = Level->NumLines; i--; ++line) {
+      line->flags &= ~ML_MAPPED;
+      line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+    }
+    seg_t *seg = &Level->Segs[0];
+    for (int i = GClLevel->NumSegs; i--; ++seg) {
+      seg->flags &= ~SF_MAPPED;
+    }
+  }
+
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
@@ -1690,10 +1705,14 @@ again:
 
   SetupFrame();
 
+  if (dbg_clip_dump_added_ranges) GCon->Logf("=== RENDER SCENE: (%f,%f,%f); (yaw=%f; pitch=%f)", vieworg.x, vieworg.y, vieworg.x, viewangles.yaw, viewangles.pitch);
+
   double stt = -Sys_Time();
   RenderScene(&refdef, nullptr);
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
+
+  if (dbg_clip_dump_added_ranges) ViewClip.Dump();
 
   if (light_reset_surface_cache != 0) {
     light_reset_surface_cache = 0;

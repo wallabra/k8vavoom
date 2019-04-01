@@ -972,15 +972,15 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
           //if (!ViewClip.ClipIsBBoxVisible(si->bbox)) continue;
           const subsector_t *currsub = si->sub;
           const int snum = (int)(ptrdiff_t)(currsub-Level->Subsectors);
-          if (!ViewClip.ClipCheckSubsector(currsub, clip_use_1d_clipper)) {
-            GCon->Logf("SKIP SEG #%d", snum);
+          if (!ViewClip.ClipCheckSubsector(currsub)) {
+            GCon->Logf("SKIP SUB #%d", snum);
             continue;
           }
           // render it, and add to clipper
           RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), false);
-          GCon->Logf("RENDER SEG #%d (before)", snum); ViewClip.Dump();
+          GCon->Logf("RENDER SUB #%d (before)", snum); ViewClip.Dump();
           ViewClip.ClipAddSubsectorSegs(currsub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
-          GCon->Logf("RENDER SEG #%d (after)", snum); ViewClip.Dump();
+          GCon->Logf("RENDER SUB #%d (after)", snum); ViewClip.Dump();
         }
       }
       //ViewClip.Dump();

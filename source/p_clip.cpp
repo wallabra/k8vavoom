@@ -30,7 +30,7 @@
 //#define VV_CLIPPER_USE_DIAMONDS
 
 //#define XXX_CLIPPER_DEBUG
-//#define XXX_CLIPPER_MANY_DUMPS
+#define XXX_CLIPPER_MANY_DUMPS
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -61,6 +61,9 @@ static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CV
 static VCvarB clip_use_transfers("clip_use_transfers", true, "Use transfer sectors to clip?", CVAR_PreInit);
 
 VCvarB clip_use_1d_clipper("clip_use_1d_clipper", true, "Use 1d clipper?", CVAR_PreInit);
+
+VCvarB dbg_clip_dump_added_ranges("dbg_clip_dump_added_ranges", false, "Dump added ranges in 1D clipper?", CVAR_PreInit);
+VCvarB dbg_clip_dump_sub_checks("dbg_clip_dump_sub_checks", false, "Dump subsector checks in 1D clipper?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -487,6 +490,7 @@ VViewClipper::VViewClipper ()
   : FreeClipNodes(nullptr)
   , ClipHead(nullptr)
   , ClipTail(nullptr)
+  , ClearClipNodesCalled(false)
 {
 }
 
@@ -552,6 +556,7 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
   currLevel = ALevel;
 #endif
   ClipResetFrustumPlanes();
+  ClearClipNodesCalled = true;
 }
 
 
@@ -622,10 +627,15 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   ClipInitFrustumPlanes(viewangles, viewforward, viewright, viewup, fovx, fovy);
 
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
+  /*
   if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) {
     // looking up or down, can see behind
     //return;
   }
+  */
+
+  ClearClipNodesCalled = false;
+  if (dbg_clip_dump_added_ranges) GCon->Log("==== ClipInitFrustumRange ===");
 
   if (!clip_frustum) return;
   if (!clip_frustum_init_range) return;
@@ -641,7 +651,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   Pts[3] = TVec(-fovx, -fovy, 1.0f);
   TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
   //k8: i don't think that we need to normalize it, but...
-  clipforward.normaliseInPlace();
+  //clipforward.normaliseInPlace();
 
   for (unsigned i = 0; i < 4; ++i) {
     TransPts[i].x = VSUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
@@ -673,6 +683,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   VFloat a2 = VVC_AngleMod(viewangles.yaw+d2);
 
   if (a1 > a2) {
+    if (dbg_clip_dump_added_ranges) GCon->Logf("  clip frustum: %f : %f", a2, a1);
     ClipHead = NewClipNode();
     ClipTail = ClipHead;
     ClipHead->From = a2;
@@ -680,6 +691,10 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     ClipHead->Prev = nullptr;
     ClipHead->Next = nullptr;
   } else {
+    if (dbg_clip_dump_added_ranges) {
+      GCon->Logf("  clip frustum: %f : %f", 0.0, a1);
+      GCon->Logf("  clip frustum: %f : %f", a1, 360.0);
+    }
     ClipHead = NewClipNode();
     ClipHead->From = 0;
     ClipHead->To = a1;
@@ -800,7 +815,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     if (To < Node->From) {
       // insert a new clip range before current one
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ inserting (%f : %f) before (%f : %f)", From, To, Node->From, Node->To);
+    if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ inserting (%f : %f) before (%f : %f)", From, To, Node->From, Node->To);
 #endif
       VClipNode *N = NewClipNode();
       N->From = From;
@@ -817,7 +832,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     if (Node->From <= From && Node->To >= To) {
       // it contains this range
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ hidden (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
+      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ hidden (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
 #endif
       return;
     }
@@ -825,7 +840,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     if (From < Node->From) {
       // extend start of the current range
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ using (%f : %f) to extend head of (%f : %f)", From, To, Node->From, Node->To);
+      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ using (%f : %f) to extend head of (%f : %f)", From, To, Node->From, Node->To);
 #endif
       Node->From = From;
     }
@@ -833,7 +848,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     if (To <= Node->To) {
       // end is included, so we are done here
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ hidden (end) (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
+      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ hidden (end) (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
 #endif
       return;
     }
@@ -841,7 +856,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     // merge with following nodes if needed
     while (Node->Next && Node->Next->From <= To) {
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ merger (%f : %f) eat (%f : %f)", From, To, Node->From, Node->To);
+      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ merger (%f : %f) eat (%f : %f)", From, To, Node->From, Node->To);
 #endif
       Node->To = Node->Next->To;
       RemoveClipNode(Node->Next);
@@ -850,7 +865,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
     if (To > Node->To) {
       // extend end
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-      GCon->Logf(" +++ using (%f : %f) to extend end of (%f : %f)", From, To, Node->From, Node->To);
+      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ using (%f : %f) to extend end of (%f : %f)", From, To, Node->From, Node->To);
 #endif
       Node->To = To;
     }
@@ -860,7 +875,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
   }
 
 #if defined(XXX_CLIPPER_MANY_DUMPS)
-  GCon->Logf(" +++ appending (%f : %f) to the end (%f : %f)", From, To, ClipTail->From, ClipTail->To);
+  if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ appending (%f : %f) to the end (%f : %f)", From, To, ClipTail->From, ClipTail->To);
 #endif
   // if we are here it means it's a new range at the end
   VClipNode *NewTail = NewClipNode();
@@ -894,23 +909,9 @@ void VViewClipper::AddClipRangeAngle (const VFloat From, const VFloat To) {
 //
 //==========================================================================
 bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
-#if 0
   for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
-#else
-  // walk from two sides, this may be slightly faster
-  const VClipNode *s = ClipHead;
-  if (!s) return true;
-  const VClipNode *e = ClipTail;
-  if (s == e) return !(From >= s->From && To <= s->To);
-  for (;;) {
-    if (From >= s->From && To <= s->To) return false;
-    if ((s = s->Next) == e) break;
-    if (From >= e->From && To <= e->To) return false;
-    if ((e = e->Prev) == s) break;
-  }
-#endif
   return true;
 }
 
@@ -1064,7 +1065,7 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg, const unsigned mask) const
 //  VViewClipper::ClipIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipIsBBoxVisible (const float BBox[6], bool checkFrustum) const {
+bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
   if (!clip_enabled || !clip_bbox) return true;
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
       BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
@@ -1107,27 +1108,34 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //  VViewClipper::ClipCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool debugDump) {
+bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
   if (!clip_enabled) return true;
   if (ClipIsFull()) {
-    if (debugDump) GCon->Log("  ::: clip is full");
+    if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: clip is full", (int)(ptrdiff_t)(sub-Level->Subsectors));
     return false;
   }
+  if (dbg_clip_dump_sub_checks) Dump();
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     //k8: q: i am not sure here, but why don't check both sides?
     //    a: because differently oriented side is not visible in any case
     const int orgside = seg->PointOnSide2(Origin);
     if (orgside) {
-      if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
+      if (orgside == 2) {
+        if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: seg #%u contains origin", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs));
+        return true; // origin is on plane, we cannot do anything sane
+      }
       continue; // viewer is in back side
     }
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
-    if (IsRangeVisible(v2, v1)) return true;
-    if (debugDump) GCon->Logf("  ::: invisible seg #%u (%f : %f)", (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1));
+    if (IsRangeVisible(v2, v1)) {
+      if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: visible seg #%u (%f : %f) (vis=%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1), IsRangeVisible(v2, v1));
+      return true;
+    }
+    if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: invisible seg #%u (%f : %f)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1));
   }
-  if (debugDump) GCon->Log("  ::: no visible segs");
+  if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: no visible segs", (int)(ptrdiff_t)(sub-Level->Subsectors));
   return false;
 }
 
@@ -1191,18 +1199,17 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
     if (!IsSegAClosedSomething(&Frustum, seg)) return;
   }
 
-  //if (IsRangeVisible(v2, v1))
-  {
 #if defined(XXX_CLIPPER_MANY_DUMPS)
+  if (dbg_clip_dump_added_ranges) {
     GCon->Logf("added seg #%d (line #%d); range=(%f : %f); vis=%d",
       (int)(ptrdiff_t)(seg-Level->Segs),
       (int)(ptrdiff_t)(ldef-Level->Lines),
       PointToClipAngle(v2), PointToClipAngle(v1),
       (int)IsRangeVisible(v2, v1));
-    if (IsRangeVisible(v2, v1))
-#endif
-      AddClipRange(v2, v1);
+    //if (!IsRangeVisible(v2, v1)) return;
   }
+#endif
+  AddClipRange(v2, v1);
 }
 
 
