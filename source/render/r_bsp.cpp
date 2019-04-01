@@ -735,7 +735,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
           clipflags ^= cp->clipflag;
         }
         */
-#elif 0
+#elif 1
         int cres = cp->checkBoxEx(bbox);
         if (cres == TFrustum::OUTSIDE) return;
         // k8: don't do this: frustum test are cheap, and we can hit false positive easily
