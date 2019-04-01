@@ -60,8 +60,6 @@ private:
   TVec Origin;
   VLevel *Level;
   TFrustum Frustum; // why not?
-  //TClipPlane FrustumTop;
-  //TClipPlane FrustumBottom;
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
@@ -89,8 +87,6 @@ public:
 
   inline const TVec &GetOrigin () const { return Origin; }
   inline const TFrustum &GetFrustum () const { return Frustum; }
-  //inline const TClipPlane &GetFrustumTop () const { return FrustumTop; }
-  //inline const TClipPlane &GetFrustumBottom () const { return FrustumBottom; }
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask=~0u) const;
@@ -146,7 +142,7 @@ public:
   bool ClipLightCheckSeg (const seg_t *seg, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
 
-  void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr, bool skipFrustumCheck=false);
+  void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
 
 #ifdef CLIENT
   // this doesn't check for radius
@@ -157,10 +153,9 @@ public:
   void Dump () const;
 
 private:
-  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool skipSphereCheck=false, bool skipFrustumCheck=false);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr);
 #ifdef CLIENT
-  // returns `true` if clip is full
-  bool CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
+  void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
   // light radius should be valid
   int CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
