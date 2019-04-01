@@ -80,7 +80,7 @@ typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 //==========================================================================
 VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
   static const struct {
-    VTexCreateFunc  Create;
+    VTexCreateFunc Create;
     int Type;
   } TexTable[] = {
     { VImgzTexture::Create,     TEXTYPE_Any },
@@ -144,6 +144,7 @@ VTexture::VTexture ()
   , animated(false)
   , needFBO(false)
   , transparent(false)
+  , nofullbright(false)
   , mFBO(0)
   , mFBOColorTid(0)
   , mFBODepthStencilTid(0)
@@ -171,6 +172,8 @@ VTexture::~VTexture () {
   if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
   if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
   if (HiResTexture) { delete HiResTexture; HiResTexture = nullptr; }
+  delete Brightmap;
+  Brightmap = nullptr;
 }
 
 

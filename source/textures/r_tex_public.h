@@ -185,6 +185,7 @@ public:
   bool animated; // used to select "no decals" flag
   bool needFBO;
   bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
+  bool nofullbright; // valid only for brightmap textures
 
   GLuint mFBO;
   GLuint mFBOColorTid;
@@ -251,7 +252,8 @@ public:
   VTexture ();
   virtual ~VTexture ();
 
-  static VTexture *CreateTexture (int, int);
+  // this won't add texture to texture hash
+  static VTexture *CreateTexture (int Type, int LumpNum);
 
   // WARNING! this converts texture to RGBA!
   // DO NOT USE! DEBUG ONLY!

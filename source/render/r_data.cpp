@@ -1332,6 +1332,36 @@ static void ParseBrightmap (VScriptParser *sc) {
   (void)iwad;
   (void)thiswad;
   (void)nofb;
+  // there is no need to load brightmap textures for server
+#ifdef CLIENT
+  if (img != NAME_None && VStr::Cmp(*img, "-") != 0 && !bmap.isEmpty()) {
+    static int doWarn = -1;
+    if (doWarn < 0) doWarn = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wbrightmap") ? 1 : 0);
+
+    static int doLoadDump = -1;
+    if (doLoadDump < 0) doLoadDump = (GArgs.CheckParm("-dump-brightmaps") ? 1 : 0);
+
+    VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
+    if (!basetex) {
+      if (doWarn) GCon->Logf(NAME_Warning, "texture '%s' not found, cannot attach brightmap", *img);
+      return;
+    }
+    int lmp = W_GetNumForFileName(bmap);
+    if (lmp < 0) {
+      GCon->Logf(NAME_Warning, "brightmap texture '%s' not found", *bmap);
+      return;
+    }
+    VTexture *bm = VTexture::CreateTexture(TEXTYPE_Any, lmp);
+    if (!bm) {
+      GCon->Logf(NAME_Warning, "cannot load brightmap texture '%s'", *bmap);
+      return;
+    }
+    bm->nofullbright = nofb;
+    delete basetex->Brightmap;
+    basetex->Brightmap = bm;
+    if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s'", *img, *bmap);
+  }
+#endif
 }
 
 
