@@ -157,6 +157,7 @@ ShaderList basedir="basev/common/glshaders" {
   Shader SurfPartSq vertex="particle" fragment="particle_sq";
   Shader SurfPartSm vertex="particle" fragment="particle_sm";
   Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";
+  Shader [advanced] ShadowsAmbientMasked both="shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
   Shader [advanced] ShadowsTexture both="shadows_surf_texture";
   Shader [advanced] ShadowsFog both="shadows_surf_fog";
   Shader [advanced] ShadowsFogMasked both="shadows_surf_fog" { defines { "VV_MASKED_FOG" } }

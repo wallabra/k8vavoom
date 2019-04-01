@@ -102,13 +102,15 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (RendLev->DrawSurfList.length()) {
+    bool lastWasMasked = false;
+    bool firstMasked = true;
+
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
       glEnable(GL_BLEND);
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
       ShadowsAmbient.Activate();
-      ShadowsAmbient.SetTexture(0);
     }
 
     // other passes can skip surface sorting
@@ -119,7 +121,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     const texinfo_t *lastTexinfo = nullptr;
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-      surface_t *surf = *surfptr;
+      const surface_t *surf = *surfptr;
       if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render simple ambient surface with %d vertices", surf->count);
@@ -138,17 +140,39 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
       if (currTexinfo->Alpha < 1.0f) continue;
 
-      bool textureChanded =
-        !lastTexinfo ||
-        lastTexinfo != currTexinfo ||
-        lastTexinfo->Tex != currTexinfo->Tex ||
-        lastTexinfo->ColourMap != currTexinfo->ColourMap;
-      lastTexinfo = currTexinfo;
+      if (surf->drawflags&surface_t::DF_MASKED) {
+        // masked wall
+        if (!lastWasMasked) {
+          // switch shader
+          ShadowsAmbientMasked.Activate();
+          lastWasMasked = true;
+          if (firstMasked) {
+            ShadowsAmbientMasked.SetTexture(0);
+            firstMasked = false;
+          }
+          //GCon->Logf("SWITCH TO MASKED!");
+        }
 
-      if (textureChanded) {
-        if (!gl_dbg_wireframe) {
-          SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
-          ShadowsAmbient.SetTex(currTexinfo);
+        bool textureChanded =
+          !lastTexinfo ||
+          lastTexinfo != currTexinfo ||
+          lastTexinfo->Tex != currTexinfo->Tex ||
+          lastTexinfo->ColourMap != currTexinfo->ColourMap;
+        lastTexinfo = currTexinfo;
+
+        if (textureChanded) {
+          if (!gl_dbg_wireframe) {
+            SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+            ShadowsAmbientMasked.SetTex(currTexinfo);
+          }
+        }
+      } else {
+        // normal wall
+        if (lastWasMasked) {
+          // switch shader
+          ShadowsAmbient.Activate();
+          lastWasMasked = false;
+          //GCon->Logf("SWITCH TO NORMAL!");
         }
       }
 
@@ -157,10 +181,17 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
           prevsflight = lev;
           prevlight = surf->Light;
-          ShadowsAmbient.SetLight(
-            ((surf->Light>>16)&255)*lev/255.0f,
-            ((surf->Light>>8)&255)*lev/255.0f,
-            (surf->Light&255)*lev/255.0f, 1.0f);
+          if (lastWasMasked) {
+            ShadowsAmbientMasked.SetLight(
+              ((surf->Light>>16)&255)*lev/255.0f,
+              ((surf->Light>>8)&255)*lev/255.0f,
+              (surf->Light&255)*lev/255.0f, 1.0f);
+          } else {
+            ShadowsAmbient.SetLight(
+              ((surf->Light>>16)&255)*lev/255.0f,
+              ((surf->Light>>8)&255)*lev/255.0f,
+              (surf->Light&255)*lev/255.0f, 1.0f);
+          }
         }
       }
 
