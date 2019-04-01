@@ -322,8 +322,27 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache) {
   texinfo_t *tex = surf->texinfo;
 
+  bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
+
   if (textureChanged) {
-    SetTexture(tex->Tex, tex->ColourMap);
+    if (doBrightmap) {
+      SurfLightmapBrightmap.Activate();
+      SurfLightmapBrightmap.SetTexture(0);
+      SurfLightmapBrightmap.SetLightMap(1);
+      SurfLightmapBrightmap.SetSpecularMap(2);
+      SurfLightmapBrightmap.SetTextureBM(3);
+      p_glActiveTextureARB(GL_TEXTURE0+3);
+      SetTexture(tex->Tex->Brightmap, 0);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      p_glActiveTextureARB(GL_TEXTURE0);
+      SetTexture(tex->Tex, tex->ColourMap);
+      SurfLightmapBrightmap.SetTex(tex);
+    } else {
+      SetTexture(tex->Tex, tex->ColourMap);
+      SurfLightmap.Activate();
+      SurfLightmap.SetTex(tex);
+    }
     ++glWDTextureChangesTotal;
   }
 
@@ -332,9 +351,13 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     return false;
   }
 
-  SurfLightmap.SetTex(tex);
-  SurfLightmap.SetLMap(surf, cache);
-  SurfLightmap.SetFogFade(surf->Fade, 1.0f);
+  if (doBrightmap) {
+    SurfLightmapBrightmap.SetLMap(surf, cache);
+    SurfLightmapBrightmap.SetFogFade(surf->Fade, 1.0f);
+  } else {
+    SurfLightmap.SetLMap(surf, cache);
+    SurfLightmap.SetFogFade(surf->Fade, 1.0f);
+  }
 
   bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
 
@@ -355,7 +378,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     if (RenderFinishShaderDecals(DT_LIGHTMAP, surf, cache, tex->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      SurfLightmap.Activate();
+      if (doBrightmap) SurfLightmapBrightmap.Activate(); else SurfLightmap.Activate();
       return true;
     }
   }
