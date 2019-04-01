@@ -27,7 +27,7 @@ void main () {
   if (TexColour.a < 0.01) discard;
 
   FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-  if (FinalColour_1.a < 0.01) discard;
+  //if (FinalColour_1.a < 0.01) discard;
   FinalColour_1.rgb = TexColour.rgb;
 
 #ifdef REG_LIGHTMAP
@@ -45,7 +45,7 @@ void main () {
 
   $include "common/fog_calc.fs"
 
-  if (FinalColour_1.a < 0.01) discard;
+  //if (FinalColour_1.a < 0.01) discard;
 
   // convert to premultiplied
   FinalColour_1.rgb *= FinalColour_1.a;

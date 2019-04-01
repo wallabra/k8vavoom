@@ -43,7 +43,7 @@ void main () {
 #else
   FinalColour_1.rgb = LightColour;
   FinalColour_1.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
-  if (FinalColour_1.a < 0.01) discard;
+  //if (FinalColour_1.a < 0.01) discard;
 #endif
 
   gl_FragColor = FinalColour_1;

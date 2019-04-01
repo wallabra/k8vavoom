@@ -1,6 +1,6 @@
   // FinalColour_1 should contain "current final" color
 #ifndef VAVOOM_SIMPLE_ALPHA_FOG
-    if (FinalColour_1.a < 0.01) discard; //k8: dunno if it worth it, but meh...
+    //!if (FinalColour_1.a < 0.01) discard; //k8: dunno if it worth it, but meh...
 #endif
 
     float FogFactor_3;

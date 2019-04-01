@@ -19,7 +19,7 @@ void main () {
   float ClampTransp = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
   FinalColour_1.a = TexColour.a*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
 #ifdef VV_TEXTURED_MASKED_WALL
-  if (FinalColour_1.a < 0.01) discard;
+  //if (FinalColour_1.a < 0.01) discard;
 #endif
 
   gl_FragColor = FinalColour_1;
