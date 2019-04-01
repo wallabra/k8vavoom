@@ -928,6 +928,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   int activated = -1; // -1: none; 0: normal; 1: masked
   bool fadeSet[2] = { false, false };
   vuint32 lastFade[2] = { 0, 0 }; //RendLev->DrawSurfList[0]->Fade;
+  bool maskedFirst = true;
 
   /*
   ShadowsFog.SetTexture(0);
@@ -955,7 +956,10 @@ void VOpenGLDrawer::DrawWorldFogPass () {
       if (activated != 1) {
         activated = 1;
         ShadowsFogMasked.Activate();
-        ShadowsFogMasked.SetTexture(0);
+        if (maskedFirst) {
+          ShadowsFogMasked.SetTexture(0);
+          maskedFirst = false;
+        }
       }
       if (!fadeSet[activated] && lastFade[activated] != surf->Fade) {
         fadeSet[activated] = true;
