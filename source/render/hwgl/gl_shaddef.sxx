@@ -154,6 +154,7 @@ ShaderList basedir="basev/common/glshaders" {
   Shader SurfSky both="surf_sky";
   Shader SurfDSky both="surf_dsky";
   Shader SurfMasked both="surf_masked";
+  Shader SurfMaskedBrightmap both="surf_masked" { define "VV_MASKED_BRIGHTMAP"; }
   Shader SurfPartSq vertex="particle" fragment="particle_sq";
   Shader SurfPartSm vertex="particle" fragment="particle_sm";
   Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";

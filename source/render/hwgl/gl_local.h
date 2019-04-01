@@ -441,6 +441,8 @@ extern VCvarB gl_dbg_render_stack_portal_bounds;
 extern VCvarB gl_use_stencil_quad_clear;
 extern VCvarI gl_dbg_use_zpass;
 extern VCvarB gl_dbg_wireframe;
+extern VCvarB r_brightmaps;
+extern VCvarB r_brightmaps_sprite;
 
 
 // ////////////////////////////////////////////////////////////////////////// //

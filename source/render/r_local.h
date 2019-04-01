@@ -613,7 +613,7 @@ protected:
                             const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
                             int hangup=0);
-  void RenderSprite (VEntity*, vuint32, vuint32, float, bool);
+  void RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight);
   void RenderTranslucentAliasModel (VEntity*, vuint32, vuint32, float, bool, float);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);
   void RenderThing (VEntity*, ERenderPass);

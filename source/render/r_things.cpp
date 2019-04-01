@@ -41,6 +41,8 @@
 extern VCvarB gl_pic_filtering;
 extern VCvarF fov;
 extern VCvarB r_chasecam;
+extern VCvarB r_brightmaps;
+extern VCvarB r_brightmaps_sprite;
 
 static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
 
@@ -191,7 +193,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
 //  VRenderLevelShared::RenderSprite
 //
 //==========================================================================
-void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive) {
+void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
   int spr_type = thing->SpriteType;
 
   TVec sprorigin = thing->Origin;
@@ -386,6 +388,9 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   }
 
   VTexture *Tex = GTextureManager[lump];
+
+  if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
+
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
   int TexSOffset = Tex->SOffset;
@@ -405,18 +410,6 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[2] = sprorigin+end+topdelta;
   sv[3] = sprorigin+end+botdelta;
 
-  //FIXME: k8: i don't know why yet, but it doesn't work with sorting
-  /*
-  if (hangup) {
-    Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
-      Additive, GetTranslation(thing->Translation), ColourMap, light,
-      Fade, -sprforward, DotProduct(sprorigin, -sprforward),
-      (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
-    return;
-  }
-  */
-
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
@@ -434,7 +427,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
       , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
   } else {
-    Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
+    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,
@@ -521,20 +514,22 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   //if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
   // setup lighting
-  vuint32 light;
+  vuint32 light, seclight;
 
   if (RendStyle == STYLE_Fuzzy) {
-    light = 0;
+    light = seclight = 0;
   } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
              (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
     light = 0xffffffff;
+    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->Radius) : light);
   } else {
-    light = LightPoint(mobj->Origin, mobj->Radius);
+    light = seclight = LightPoint(mobj->Origin, mobj->Radius);
   }
 
   //FIXME: fake "solid color" with colored light for now
   if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
     light = (light&0xff000000)|(mobj->StencilColour&0xffffff);
+    seclight = (seclight&0xff000000)|(mobj->StencilColour&0xffffff);
   }
 
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
@@ -542,7 +537,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   // try to draw a model
   // if it's a script and it doesn't specify model for this frame, draw sprite instead
   if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
-    RenderSprite(mobj, light, Fade, Alpha, Additive);
+    RenderSprite(mobj, light, Fade, Alpha, Additive, seclight);
   }
 }
 

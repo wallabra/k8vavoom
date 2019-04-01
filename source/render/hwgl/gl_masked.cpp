@@ -191,14 +191,28 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   TVec texpt(0, 0, 0);
 
+  bool doBrightmap = (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
+
+  if (doBrightmap) {
+    SurfMaskedBrightmap.Activate();
+    SurfMaskedBrightmap.SetTexture(0);
+    SurfMaskedBrightmap.SetTextureBM(1);
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SetTexture(Tex->Brightmap, 0);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+    SetupTextureFiltering(sprite_filter);
+    p_glActiveTextureARB(GL_TEXTURE0);
+  } else {
+    SurfMasked.Activate();
+    SurfMasked.SetTexture(0);
+    //SurfMasked.SetFogType();
+  }
+
   SetSpriteLump(Tex, Translation, CMap, true);
   //SetupTextureFiltering(noDepthChange ? 3 : sprite_filter);
   //SetupTextureFiltering(noDepthChange ? model_filter : sprite_filter);
   SetupTextureFiltering(sprite_filter);
-
-  SurfMasked.Activate();
-  SurfMasked.SetTexture(0);
-  //SurfMasked.SetFogType();
 
   bool zbufferWriteDisabled = false;
   bool restoreBlend = false;
@@ -207,7 +221,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   if (blend_sprites || Additive || hangup || Alpha < 1.0f) {
     restoreBlend = true;
-    SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+    } else {
+      SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+    }
     if (hangup) {
       zbufferWriteDisabled = true;
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
@@ -229,7 +247,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
-    SurfMasked.SetAlphaRef(0.666f);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetAlphaRef(0.666f);
+    } else {
+      SurfMasked.SetAlphaRef(0.666f);
+    }
     Alpha = 1.0f;
     glDisable(GL_BLEND);
   }
@@ -244,37 +266,71 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   }
   */
 
-  SurfMasked.SetLight(
-    ((light>>16)&255)/255.0f,
-    ((light>>8)&255)/255.0f,
-    (light&255)/255.0f, Alpha);
-  SurfMasked.SetFogFade(Fade, Alpha);
+  if (doBrightmap) {
+    SurfMaskedBrightmap.SetLight(
+      ((light>>16)&255)/255.0f,
+      ((light>>8)&255)/255.0f,
+      (light&255)/255.0f, Alpha);
+    SurfMaskedBrightmap.SetFogFade(Fade, Alpha);
 
-  glBegin(GL_QUADS);
-    texpt = cv[0]-texorg;
-    SurfMasked.SetTexCoord(
-      DotProduct(texpt, saxis)*tex_iw,
-      DotProduct(texpt, taxis)*tex_ih);
-    glVertex(cv[0]);
+    glBegin(GL_QUADS);
+      texpt = cv[0]-texorg;
+      SurfMaskedBrightmap.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[0]);
 
-    texpt = cv[1]-texorg;
-    SurfMasked.SetTexCoord(
-      DotProduct(texpt, saxis)*tex_iw,
-      DotProduct(texpt, taxis)*tex_ih);
-    glVertex(cv[1]);
+      texpt = cv[1]-texorg;
+      SurfMaskedBrightmap.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[1]);
 
-    texpt = cv[2]-texorg;
-    SurfMasked.SetTexCoord(
-      DotProduct(texpt, saxis)*tex_iw,
-      DotProduct(texpt, taxis)*tex_ih);
-    glVertex(cv[2]);
+      texpt = cv[2]-texorg;
+      SurfMaskedBrightmap.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[2]);
 
-    texpt = cv[3]-texorg;
-    SurfMasked.SetTexCoord(
-      DotProduct(texpt, saxis)*tex_iw,
-      DotProduct(texpt, taxis)*tex_ih);
-    glVertex(cv[3]);
-  glEnd();
+      texpt = cv[3]-texorg;
+      SurfMaskedBrightmap.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[3]);
+    glEnd();
+  } else {
+    SurfMasked.SetLight(
+      ((light>>16)&255)/255.0f,
+      ((light>>8)&255)/255.0f,
+      (light&255)/255.0f, Alpha);
+    SurfMasked.SetFogFade(Fade, Alpha);
+
+    glBegin(GL_QUADS);
+      texpt = cv[0]-texorg;
+      SurfMasked.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[0]);
+
+      texpt = cv[1]-texorg;
+      SurfMasked.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[1]);
+
+      texpt = cv[2]-texorg;
+      SurfMasked.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[2]);
+
+      texpt = cv[3]-texorg;
+      SurfMasked.SetTexCoord(
+        DotProduct(texpt, saxis)*tex_iw,
+        DotProduct(texpt, taxis)*tex_ih);
+      glVertex(cv[3]);
+    glEnd();
+  }
 
   if (restoreBlend) {
     if (hangup) {
@@ -287,5 +343,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
+  }
+
+  if (doBrightmap) {
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    p_glActiveTextureARB(GL_TEXTURE0);
   }
 }

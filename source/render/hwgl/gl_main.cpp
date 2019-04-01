@@ -101,6 +101,9 @@ VCvarI gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for deb
 
 VCvarB gl_dbg_wireframe("gl_dbg_wireframe", false, "Render wireframe level?", CVAR_PreInit);
 
+VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
+VCvarB r_brightmaps_sprite("r_brightmaps_sprite", true, "Allow sprite brightmaps?", CVAR_Archive);
+
 
 //==========================================================================
 //

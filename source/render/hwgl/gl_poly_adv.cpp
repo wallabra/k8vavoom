@@ -36,8 +36,6 @@ extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
-static VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
