@@ -1372,8 +1372,10 @@ static void ParseBrightmap (VScriptParser *sc) {
     delete basetex->Brightmap;
 
     if (bm->GetWidth() != basetex->GetWidth() || bm->GetHeight() != basetex->GetHeight()) {
-      GCon->Logf(NAME_Warning, "texture '%s' has dimensions (%d,%d), but brightmap '%s' has dimensions (%d,%d)",
-        *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
+      if (doWarn) {
+        GCon->Logf(NAME_Warning, "texture '%s' has dimensions (%d,%d), but brightmap '%s' has dimensions (%d,%d)",
+          *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
+      }
       //delete bm;
       //return;
     }
@@ -1382,6 +1384,46 @@ static void ParseBrightmap (VScriptParser *sc) {
     if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s'", *img, *bmap);
   }
 #endif
+}
+
+
+//==========================================================================
+//
+//  ParseGlow
+//
+//==========================================================================
+static void ParseGlow (VScriptParser *sc) {
+  sc->Expect("{");
+  while (!sc->Check("}")) {
+    // not implemented gozzo feature (in gozzo too)
+    if (sc->Check("Texture")) {
+      sc->GetString();
+      while (sc->Check(",")) sc->GetString();
+      continue;
+    }
+    // texture list
+    if (sc->Check("flats") || sc->Check("walls")) {
+      sc->Expect("{");
+      while (!sc->Check("}")) {
+        if (sc->Check(",")) continue;
+        sc->ExpectName8Warn();
+#ifdef CLIENT
+        VName img = sc->Name8;
+        if (img != NAME_None && img != "-") {
+          VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
+          if (basetex) basetex->glowing = true;
+        }
+#endif
+      }
+      continue;
+    }
+    // something strange
+    if (sc->Check("{")) {
+      sc->SkipBracketed(true);
+      continue;
+    }
+    if (!sc->GetString()) sc->Error("unexpected EOF");
+  }
 }
 
 
@@ -1411,7 +1453,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
     else if (sc->Check("skybox")) R_ParseMapDefSkyBoxesScript(sc);
     else if (sc->Check("brightmap")) ParseBrightmap(sc);
-    else if (sc->Check("glow")) { sc->Message("Glowing textures aren't supported yet."); sc->SkipBracketed(); }
+    else if (sc->Check("glow")) ParseGlow(sc);
     else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }
     else { sc->Error(va("Unknown command (%s)", *sc->String)); }
   }

@@ -186,6 +186,7 @@ public:
   bool needFBO;
   bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
   bool nofullbright; // valid only for brightmap textures
+  bool glowing; // is this a glowing texture? (has any meaning only for floors and ceilings)
 
   GLuint mFBO;
   GLuint mFBOColorTid;
