@@ -35,20 +35,29 @@ static VCvarB gl_dbg_adv_render_shadow_models("gl_dbg_adv_render_shadow_models",
 static VCvarB gl_dbg_adv_render_fog_models("gl_dbg_adv_render_fog_models", true, "Render model fog?", 0);
 
 
-/*
-{
+//==========================================================================
+//
+//  dumpShaderLocs
+//
+//==========================================================================
+static __attribute__((unused)) void dumpShaderLocs (VOpenGLDrawer *drawer, GLuint prog) {
+  char name[1024];
   GLint unicount;
-  p_glGetProgramiv(SurfModel.prog, GL_ACTIVE_UNIFORMS, &unicount);
+  GLint size;
+  GLenum type;
+  drawer->p_glGetProgramiv(prog, GL_ACTIVE_UNIFORMS, &unicount);
   GCon->Logf("=== active uniforms: %d ===", unicount);
   for (int f = 0; f < unicount; ++f) {
-    char name[1024];
-    GLint size;
-    GLenum type;
-    p_glGetActiveUniform(SurfModel.prog, (unsigned)f, sizeof(name), nullptr, &size, &type, name);
-    GCon->Logf("  %d: <%s> (%d : %s)", f, name, size, glTypeName(type));
+    drawer->p_glGetActiveUniformARB(prog, (unsigned)f, sizeof(name), nullptr, &size, &type, name);
+    GCon->Logf("  %d: <%s> (%d : %s)", f, name, size, drawer->glTypeName(type));
+  }
+  drawer->p_glGetProgramiv(prog, GL_ACTIVE_ATTRIBUTES, &unicount);
+  GCon->Logf("=== active attributes: %d ===", unicount);
+  for (int f = 0; f < unicount; ++f) {
+    drawer->p_glGetActiveAttribARB(prog, (unsigned)f, sizeof(name), nullptr, &size, &type, name);
+    GCon->Logf("  %d: <%s> (%d : %s)", f, name, size, drawer->glTypeName(type));
   }
 }
-*/
 
 
 //==========================================================================
@@ -236,6 +245,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   glScalef(Scale.x, Scale.y, Scale.z);
   glTranslatef(Offset.x, Offset.y, Offset.z);
   */
+
+  //dumpShaderLocs(this, SurfModel.prog);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);

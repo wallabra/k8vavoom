@@ -198,6 +198,7 @@ typedef void (APIENTRY*glGetInfoLogARB_t)(GLhandleARB, GLsizei, GLsizei *, GLcha
 typedef void (APIENTRY*glGetAttachedObjectsARB_t)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *);
 typedef GLint (APIENTRY*glGetUniformLocationARB_t)(GLhandleARB, const GLcharARB *);
 typedef void (APIENTRY*glGetActiveUniformARB_t)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *);
+typedef void (APIENTRY*glGetActiveAttribARB_t)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *);
 typedef void (APIENTRY*glGetUniformfvARB_t)(GLhandleARB, GLint, GLfloat *);
 typedef void (APIENTRY*glGetUniformivARB_t)(GLhandleARB, GLint, GLint *);
 typedef void (APIENTRY*glGetShaderSourceARB_t)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
@@ -413,7 +414,8 @@ typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
 typedef void (APIENTRY *glBlitFramebuffer_t) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 typedef void (APIENTRY *glGetProgramiv_t) (GLuint program, GLenum pname, GLint *params);
-typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
+//typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
+//typedef void (APIENTRY *glGetActiveAttrib_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -766,6 +768,7 @@ protected:
 
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
 
+public:
 #define _(x)  x##_t p_##x
   //_(glMultiTexCoord2fARB);
   _(glActiveTextureARB);
@@ -881,8 +884,7 @@ protected:
   _(glDepthBoundsEXT);
   _(glBlitFramebuffer);
 
-  //_(glGetProgramiv);
-  //_(glGetActiveUniform);
+  _(glGetProgramiv);
 
 #undef _
 
