@@ -712,7 +712,6 @@ protected:
 
   bool HaveDepthClamp;
   bool HaveStencilWrap;
-  bool HaveDrawRangeElements;
 
   int MaxTextureUnits;
 

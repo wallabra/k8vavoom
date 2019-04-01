@@ -457,6 +457,9 @@ void VOpenGLDrawer::DeinitResolution () {
 }
 
 
+#define gl_(x)   p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) Sys_Error("OpenGL: `%s()` not found!", ""#x);
+#define glc_(x)  ({ p_##x = x##_t(GetExtFuncPtr(#x)); !!p_##x; })
+
 //==========================================================================
 //
 //  VOpenGLDrawer::InitResolution
@@ -510,8 +513,6 @@ void VOpenGLDrawer::InitResolution () {
   hasNPOT = CheckExtension("GL_ARB_texture_non_power_of_two") || CheckExtension("GL_OES_texture_npot");
   hasBoundsTest = CheckExtension("GL_EXT_depth_bounds_test");
 
-#define _(x)  p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
-
   useReverseZ = false;
   GLint major, minor;
   glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -550,12 +551,8 @@ void VOpenGLDrawer::InitResolution () {
   if (!CheckExtension("GL_ARB_multitexture")) {
     Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
   } else {
-    bool found = true;
-
-    //_(glMultiTexCoord2fARB);
-    _(glActiveTextureARB);
-
-    if (!found) Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
+    //gl_(glMultiTexCoord2fARB);
+    gl_(glActiveTextureARB);
 
     GCon->Log(NAME_Init, "Multitexture extensions found.");
     GLint tmp;
@@ -596,104 +593,98 @@ void VOpenGLDrawer::InitResolution () {
   if (CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
       CheckExtension("GL_ARB_vertex_shader") && CheckExtension("GL_ARB_fragment_shader"))
   {
-    bool found = true;
+    gl_(glDeleteObjectARB);
+    gl_(glGetHandleARB);
+    gl_(glDetachObjectARB);
+    gl_(glCreateShaderObjectARB);
+    gl_(glShaderSourceARB);
+    gl_(glCompileShaderARB);
+    gl_(glCreateProgramObjectARB);
+    gl_(glAttachObjectARB);
+    gl_(glLinkProgramARB);
+    gl_(glUseProgramObjectARB);
+    gl_(glValidateProgramARB);
+    gl_(glUniform1fARB);
+    gl_(glUniform2fARB);
+    gl_(glUniform3fARB);
+    gl_(glUniform4fARB);
+    gl_(glUniform1iARB);
+    gl_(glUniform2iARB);
+    gl_(glUniform3iARB);
+    gl_(glUniform4iARB);
+    gl_(glUniform1fvARB);
+    gl_(glUniform2fvARB);
+    gl_(glUniform3fvARB);
+    gl_(glUniform4fvARB);
+    gl_(glUniform1ivARB);
+    gl_(glUniform2ivARB);
+    gl_(glUniform3ivARB);
+    gl_(glUniform4ivARB);
+    gl_(glUniformMatrix2fvARB);
+    gl_(glUniformMatrix3fvARB);
+    gl_(glUniformMatrix4fvARB);
+    gl_(glGetObjectParameterfvARB);
+    gl_(glGetObjectParameterivARB);
+    gl_(glGetInfoLogARB);
+    gl_(glGetAttachedObjectsARB);
+    gl_(glGetUniformLocationARB);
+    gl_(glGetActiveUniformARB);
+    gl_(glGetUniformfvARB);
+    gl_(glGetUniformivARB);
+    gl_(glGetShaderSourceARB);
 
-    _(glDeleteObjectARB);
-    _(glGetHandleARB);
-    _(glDetachObjectARB);
-    _(glCreateShaderObjectARB);
-    _(glShaderSourceARB);
-    _(glCompileShaderARB);
-    _(glCreateProgramObjectARB);
-    _(glAttachObjectARB);
-    _(glLinkProgramARB);
-    _(glUseProgramObjectARB);
-    _(glValidateProgramARB);
-    _(glUniform1fARB);
-    _(glUniform2fARB);
-    _(glUniform3fARB);
-    _(glUniform4fARB);
-    _(glUniform1iARB);
-    _(glUniform2iARB);
-    _(glUniform3iARB);
-    _(glUniform4iARB);
-    _(glUniform1fvARB);
-    _(glUniform2fvARB);
-    _(glUniform3fvARB);
-    _(glUniform4fvARB);
-    _(glUniform1ivARB);
-    _(glUniform2ivARB);
-    _(glUniform3ivARB);
-    _(glUniform4ivARB);
-    _(glUniformMatrix2fvARB);
-    _(glUniformMatrix3fvARB);
-    _(glUniformMatrix4fvARB);
-    _(glGetObjectParameterfvARB);
-    _(glGetObjectParameterivARB);
-    _(glGetInfoLogARB);
-    _(glGetAttachedObjectsARB);
-    _(glGetUniformLocationARB);
-    _(glGetActiveUniformARB);
-    _(glGetUniformfvARB);
-    _(glGetUniformivARB);
-    _(glGetShaderSourceARB);
+    gl_(glVertexAttrib1dARB);
+    gl_(glVertexAttrib1dvARB);
+    gl_(glVertexAttrib1fARB);
+    gl_(glVertexAttrib1fvARB);
+    gl_(glVertexAttrib1sARB);
+    gl_(glVertexAttrib1svARB);
+    gl_(glVertexAttrib2dARB);
+    gl_(glVertexAttrib2dvARB);
+    gl_(glVertexAttrib2fARB);
+    gl_(glVertexAttrib2fvARB);
+    gl_(glVertexAttrib2sARB);
+    gl_(glVertexAttrib2svARB);
+    gl_(glVertexAttrib3dARB);
+    gl_(glVertexAttrib3dvARB);
+    gl_(glVertexAttrib3fARB);
+    gl_(glVertexAttrib3fvARB);
+    gl_(glVertexAttrib3sARB);
+    gl_(glVertexAttrib3svARB);
+    gl_(glVertexAttrib4NbvARB);
+    gl_(glVertexAttrib4NivARB);
+    gl_(glVertexAttrib4NsvARB);
+    gl_(glVertexAttrib4NubARB);
+    gl_(glVertexAttrib4NubvARB);
+    gl_(glVertexAttrib4NuivARB);
+    gl_(glVertexAttrib4NusvARB);
+    gl_(glVertexAttrib4bvARB);
+    gl_(glVertexAttrib4dARB);
+    gl_(glVertexAttrib4dvARB);
+    gl_(glVertexAttrib4fARB);
+    gl_(glVertexAttrib4fvARB);
+    gl_(glVertexAttrib4ivARB);
+    gl_(glVertexAttrib4sARB);
+    gl_(glVertexAttrib4svARB);
+    gl_(glVertexAttrib4ubvARB);
+    gl_(glVertexAttrib4uivARB);
+    gl_(glVertexAttrib4usvARB);
+    gl_(glVertexAttribPointerARB);
+    gl_(glEnableVertexAttribArrayARB);
+    gl_(glDisableVertexAttribArrayARB);
+    gl_(glBindAttribLocationARB);
+    gl_(glGetActiveAttribARB);
+    gl_(glGetAttribLocationARB);
+    gl_(glGetVertexAttribdvARB);
+    gl_(glGetVertexAttribfvARB);
+    gl_(glGetVertexAttribivARB);
+    gl_(glGetVertexAttribPointervARB);
 
-    _(glVertexAttrib1dARB);
-    _(glVertexAttrib1dvARB);
-    _(glVertexAttrib1fARB);
-    _(glVertexAttrib1fvARB);
-    _(glVertexAttrib1sARB);
-    _(glVertexAttrib1svARB);
-    _(glVertexAttrib2dARB);
-    _(glVertexAttrib2dvARB);
-    _(glVertexAttrib2fARB);
-    _(glVertexAttrib2fvARB);
-    _(glVertexAttrib2sARB);
-    _(glVertexAttrib2svARB);
-    _(glVertexAttrib3dARB);
-    _(glVertexAttrib3dvARB);
-    _(glVertexAttrib3fARB);
-    _(glVertexAttrib3fvARB);
-    _(glVertexAttrib3sARB);
-    _(glVertexAttrib3svARB);
-    _(glVertexAttrib4NbvARB);
-    _(glVertexAttrib4NivARB);
-    _(glVertexAttrib4NsvARB);
-    _(glVertexAttrib4NubARB);
-    _(glVertexAttrib4NubvARB);
-    _(glVertexAttrib4NuivARB);
-    _(glVertexAttrib4NusvARB);
-    _(glVertexAttrib4bvARB);
-    _(glVertexAttrib4dARB);
-    _(glVertexAttrib4dvARB);
-    _(glVertexAttrib4fARB);
-    _(glVertexAttrib4fvARB);
-    _(glVertexAttrib4ivARB);
-    _(glVertexAttrib4sARB);
-    _(glVertexAttrib4svARB);
-    _(glVertexAttrib4ubvARB);
-    _(glVertexAttrib4uivARB);
-    _(glVertexAttrib4usvARB);
-    _(glVertexAttribPointerARB);
-    _(glEnableVertexAttribArrayARB);
-    _(glDisableVertexAttribArrayARB);
-    _(glBindAttribLocationARB);
-    _(glGetActiveAttribARB);
-    _(glGetAttribLocationARB);
-    _(glGetVertexAttribdvARB);
-    _(glGetVertexAttribfvARB);
-    _(glGetVertexAttribivARB);
-    _(glGetVertexAttribPointervARB);
-
-    //_(glGetProgramiv);
-    //_(glGetActiveUniform);
-
-    if (!found) Sys_Error("OpenGL FATAL: no shader support");
+    //gl_(glGetProgramiv);
+    //gl_(glGetActiveUniform);
 
     if (hasBoundsTest) {
-      check(found);
-      _(glDepthBoundsEXT);
-      if (!found) {
+      if (!glc_(glDepthBoundsEXT)) {
         hasBoundsTest = false;
         GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
       }
@@ -718,16 +709,22 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   {
-    bool found = true;
-    _(glStencilFuncSeparate);
-    _(glStencilOpSeparate);
-    if (found) {
+    if (glc_(glStencilFuncSeparate) && glc_(glStencilOpSeparate)) {
       GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
     } else if (CheckExtension("GL_ATI_separate_stencil")) {
       GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil...");
       p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
       p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
-      if (p_glStencilFuncSeparate && p_glStencilOpSeparate) GCon->Log(NAME_Init, "Separate stencil extensions found");
+      if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
+        GCon->Log(NAME_Init, "Separate stencil extensions found");
+      } else {
+        p_glStencilFuncSeparate = nullptr;
+        p_glStencilOpSeparate = nullptr;
+      }
+    } else {
+      GCon->Log(NAME_Init, "No separate stencil methods found");
+      p_glStencilFuncSeparate = nullptr;
+      p_glStencilOpSeparate = nullptr;
     }
   }
 
@@ -753,43 +750,26 @@ void VOpenGLDrawer::InitResolution () {
   if (!CheckExtension("GL_ARB_vertex_buffer_object")) {
     Sys_Error("OpenGL FATAL: VBO not found.");
   } else {
-    bool found = true;
-
-    _(glBindBufferARB);
-    _(glDeleteBuffersARB);
-    _(glGenBuffersARB);
-    _(glIsBufferARB);
-    _(glBufferDataARB);
-    _(glBufferSubDataARB);
-    _(glGetBufferSubDataARB);
-    _(glMapBufferARB);
-    _(glUnmapBufferARB);
-    _(glGetBufferParameterivARB);
-    _(glGetBufferPointervARB);
-
-    if (!found) Sys_Error("OpenGL FATAL: VBO not found.");
+    gl_(glBindBufferARB);
+    gl_(glDeleteBuffersARB);
+    gl_(glGenBuffersARB);
+    gl_(glIsBufferARB);
+    gl_(glBufferDataARB);
+    gl_(glBufferSubDataARB);
+    gl_(glGetBufferSubDataARB);
+    gl_(glMapBufferARB);
+    gl_(glUnmapBufferARB);
+    gl_(glGetBufferParameterivARB);
+    gl_(glGetBufferPointervARB);
   }
 
-  if (CheckExtension("GL_EXT_draw_range_elements")) {
-    GCon->Log(NAME_Init, "Found GL_EXT_draw_range_elements...");
-
-    bool found = true;
-    _(glDrawRangeElementsEXT);
-
-    if (found) {
-      GCon->Log(NAME_Init, "Draw range elements extensions found.");
-      HaveDrawRangeElements = true;
-    } else {
-      GCon->Log(NAME_Init, "Symbol not found, draw range elements extensions disabled.");
-      HaveDrawRangeElements = false;
-    }
+  if (!CheckExtension("GL_EXT_draw_range_elements")) {
+    Sys_Error("OpenGL FATAL: GL_EXT_draw_range_elements not found");
   } else {
-    HaveDrawRangeElements = false;
+    gl_(glDrawRangeElementsEXT);
   }
 
   if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");
-
-#undef _
 
   glFramebufferTexture2D = (glFramebufferTexture2DFn)GetExtFuncPtr("glFramebufferTexture2D");
   glDeleteFramebuffers = (glDeleteFramebuffersFn)GetExtFuncPtr("glDeleteFramebuffers");
@@ -949,6 +929,9 @@ void VOpenGLDrawer::InitResolution () {
   callICB(VCB_InitResolution);
 }
 
+#undef gl_
+#undef glc_
+
 
 //==========================================================================
 //
@@ -970,7 +953,7 @@ bool VOpenGLDrawer::CheckExtension (const char *ext) {
 //
 //==========================================================================
 bool VOpenGLDrawer::SupportsAdvancedRendering () {
-  return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDrawRangeElements && HaveDepthClamp);
+  return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDepthClamp);
 }
 
 
