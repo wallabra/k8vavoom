@@ -27,7 +27,10 @@ void main () {
   //if (TexColour.a <= 0.01) discard;
   if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
-  lt.rgb = max(lt.rgb, BMColor.rgb);
+  BMColor.rgb *= BMColor.a;
+  lt.r = max(lt.r, BMColor.r);
+  lt.g = max(lt.g, BMColor.g);
+  lt.b = max(lt.b, BMColor.b);
   //lt.rgb = BMColor.rgb;
 #endif
   gl_FragColor = lt;

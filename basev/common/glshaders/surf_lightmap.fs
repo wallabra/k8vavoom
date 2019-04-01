@@ -24,7 +24,10 @@ void main () {
   vec4 lt = texture2D(LightMap, LightmapCoordinate);
 #ifdef VV_LIGHTMAP_BRIGHTMAP
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
-  lt.rgb = max(lt.rgb, BMColor.rgb);
+  BMColor.rgb *= BMColor.a;
+  lt.r = max(lt.r, BMColor.r);
+  lt.g = max(lt.g, BMColor.g);
+  lt.b = max(lt.b, BMColor.b);
   //lt.rgb = BMColor.rgb;
 #endif
   TexColour *= lt;
