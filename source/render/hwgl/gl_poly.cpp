@@ -249,6 +249,9 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   bool doBrightmap = (r_brightmaps && textr->Tex->Brightmap);
 
+  GlowParams gp;
+  CalcGlow(gp, surf);
+
   if (textureChanged) {
     if (doBrightmap) {
       SurfSimpleBrightmap.Activate();
@@ -263,10 +266,20 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       p_glActiveTextureARB(GL_TEXTURE0);
       SetTexture(textr->Tex, textr->ColourMap);
       SurfSimpleBrightmap.SetTex(textr);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleBrightmap, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
+      }
     } else {
       SetTexture(textr->Tex, textr->ColourMap);
       SurfSimple.Activate();
       SurfSimple.SetTex(textr);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
+      }
     }
     ++glWDTextureChangesTotal;
   }
@@ -326,6 +339,9 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
 
+  GlowParams gp;
+  CalcGlow(gp, surf);
+
   if (textureChanged) {
     if (doBrightmap) {
       SurfLightmapBrightmap.Activate();
@@ -340,10 +356,20 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       p_glActiveTextureARB(GL_TEXTURE0);
       SetTexture(tex->Tex, tex->ColourMap);
       SurfLightmapBrightmap.SetTex(tex);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapBrightmap, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
+      }
     } else {
       SetTexture(tex->Tex, tex->ColourMap);
       SurfLightmap.Activate();
       SurfLightmap.SetTex(tex);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+      }
     }
     ++glWDTextureChangesTotal;
   }
