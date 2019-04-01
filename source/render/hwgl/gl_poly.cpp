@@ -291,7 +291,6 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
 
   float lev = getSurfLightLevel(surf);
-  if (r_glow_flat && !surf->seg && textr->Tex->glowing) lev = 1.0f;
   if (doBrightmap) {
     SurfSimpleBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfSimpleBrightmap.SetFogFade(surf->Fade, 1.0f);

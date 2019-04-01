@@ -35,6 +35,7 @@ extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_pvs;
 extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_allow_subtractive_lights;
+extern VCvarB r_glow_flat;
 
 vuint32 gf_dynlights_processed = 0;
 vuint32 gf_dynlights_traced = 0;
@@ -94,6 +95,17 @@ static bool is_coloured;
 //
 //==========================================================================
 static inline int getSurfLightLevelInt (const surface_t *surf) {
+  if (r_glow_flat && surf && !surf->seg && surf->subsector) {
+    const sector_t *sec = surf->subsector->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
+    }
+    if (sec->ceiling.pic) {
+      VTexture *gtex = GTextureManager(sec->ceiling.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
+    }
+  }
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient.asInt());
@@ -104,15 +116,26 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
 
 //==========================================================================
 //
-//  getSurfLightLevelInt
+//  fixSurfLightLevel
 //
 //==========================================================================
 static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
+  if (r_glow_flat && surf && !surf->seg && surf->subsector) {
+    const sector_t *sec = surf->subsector->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
+    }
+    if (sec->ceiling.pic) {
+      VTexture *gtex = GTextureManager(sec->ceiling.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
+    }
+  }
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient.asInt());
   //if (slins > 255) slins = 255;
-  return (surf->Light&0xffffff)|(((vuint32)clampToByte(slins))<<24);
+  return (surf->Light&0xffffffu)|(((vuint32)clampToByte(slins))<<24);
 }
 
 
@@ -572,6 +595,20 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *sur
         lb += ltmp;
       }
       break;
+    }
+  }
+
+  if (r_glow_flat && sub->sector) {
+    const sector_t *sec = sub->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        /*
+        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
+        l = 255;
+        */
+        return gtex->glowing|0xff000000u;
+      }
     }
   }
 

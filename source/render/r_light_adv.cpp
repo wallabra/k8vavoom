@@ -42,6 +42,7 @@ extern VCvarB r_models;
 extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
+extern VCvarB r_glow_flat;
 
 extern VCvarB gl_dbg_wireframe;
 
@@ -196,6 +197,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
 
   subsector_t *sub = Level->PointInSubsector(p);
   subregion_t *reg = sub->regions;
+
   if (reg) {
     while (reg->next) {
       const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
@@ -217,6 +219,21 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
     lr = ((SecLightColour>>16)&255)*l/255.0f;
     lg = ((SecLightColour>>8)&255)*l/255.0f;
     lb = (SecLightColour&255)*l/255.0f;
+  }
+
+  if (r_glow_flat && sub->sector) {
+    const sector_t *sec = sub->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        /*
+        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
+        l = 255;
+        if (!lr && !lg && !lb) lr = lg = lb = 255;
+        */
+        return gtex->glowing|0xff000000u;
+      }
+    }
   }
 
   const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
@@ -328,6 +345,21 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
   float lr = ((SecLightColour>>16)&255)*l/255.0f;
   float lg = ((SecLightColour>>8)&255)*l/255.0f;
   float lb = (SecLightColour&255)*l/255.0f;
+
+  if (r_glow_flat && sub->sector) {
+    const sector_t *sec = sub->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        /*
+        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
+        l = 255;
+        if (!lr && !lg && !lb) lr = lg = lb = 255;
+        */
+        return gtex->glowing|0xff000000u;
+      }
+    }
+  }
 
   return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
 }
