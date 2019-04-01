@@ -247,8 +247,25 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
 bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   texinfo_t *textr = surf->texinfo;
 
+  bool doBrightmap = (r_brightmaps && textr->Tex->Brightmap);
+
   if (textureChanged) {
-    SetTexture(textr->Tex, textr->ColourMap);
+    if (doBrightmap) {
+      SurfSimpleBrightmap.Activate();
+      SurfSimpleBrightmap.SetTexture(0);
+      SurfSimpleBrightmap.SetTextureBM(1);
+      p_glActiveTextureARB(GL_TEXTURE0+1);
+      SetTexture(textr->Tex->Brightmap, 0);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      p_glActiveTextureARB(GL_TEXTURE0);
+      SetTexture(textr->Tex, textr->ColourMap);
+      SurfSimpleBrightmap.SetTex(textr);
+    } else {
+      SetTexture(textr->Tex, textr->ColourMap);
+      SurfSimple.Activate();
+      SurfSimple.SetTex(textr);
+    }
     ++glWDTextureChangesTotal;
   }
 
@@ -257,11 +274,15 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     return false;
   }
 
-  SurfSimple.SetTex(textr);
 
   const float lev = getSurfLightLevel(surf);
-  SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-  SurfSimple.SetFogFade(surf->Fade, 1.0f);
+  if (doBrightmap) {
+    SurfSimpleBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+    SurfSimpleBrightmap.SetFogFade(surf->Fade, 1.0f);
+  } else {
+    SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+    SurfSimple.SetFogFade(surf->Fade, 1.0f);
+  }
 
   bool doDecals = textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals;
 
@@ -282,7 +303,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      SurfSimple.Activate();
+      if (doBrightmap) SurfSimpleBrightmap.Activate(); else SurfSimple.Activate();
       return true;
     }
   }

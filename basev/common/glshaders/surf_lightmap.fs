@@ -6,6 +6,9 @@ $include "common/common.inc"
 uniform sampler2D Texture;
 uniform sampler2D LightMap;
 uniform sampler2D SpecularMap;
+#ifdef VV_LIGHTMAP_BRIGHTMAP
+uniform sampler2D TextureBM;
+#endif
 
 $include "common/fog_vars.fs"
 $include "common/texlmap_vars.fs"
@@ -17,7 +20,14 @@ void main () {
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard; // for steamlined masked textures //FIXME
-  TexColour *= texture2D(LightMap, LightmapCoordinate);
+
+  vec4 lt = texture2D(LightMap, LightmapCoordinate);
+#ifdef VV_LIGHTMAP_BRIGHTMAP
+  vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
+  lt.rgb = max(lt.rgb, BMColor.rgb);
+  //lt.rgb = BMColor.rgb;
+#endif
+  TexColour *= lt;
   TexColour += texture2D(SpecularMap, LightmapCoordinate);
 
   TexColour = clamp(TexColour, 0.0, 1.0);
