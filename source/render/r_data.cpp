@@ -1411,7 +1411,10 @@ static void ParseGlow (VScriptParser *sc) {
         VName img = sc->Name8;
         if (img != NAME_None && img != "-") {
           VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
-          if (basetex) basetex->glowing = true;
+          if (basetex) {
+            //GCon->Logf("GLOW: <%s>", *img);
+            basetex->glowing = true;
+          }
         }
 #endif
       }
