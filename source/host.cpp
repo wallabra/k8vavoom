@@ -647,6 +647,14 @@ void Host_SaveConfiguration () {
 
   fclose(f);
 }
+
+COMMAND(SaveConfig) {
+  if (!host_initialised) return;
+  VStr cfgdir = Host_GetConfigDir();
+  cfgdir = cfgdir+"/"+configfile;
+  GCon->Logf("writing config to '%s'...", *cfgdir);
+  Host_SaveConfiguration();
+}
 #endif
 
 
