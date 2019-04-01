@@ -314,46 +314,90 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       FakeName[len + 1] = Gender + '0';
       VStr::Cpy(&FakeName[len + 2], *S_sfx[RefId].TagName);
 
-      id = AddSoundLump(FakeName, W_CheckNumForName(
-        VName(*sc->String, VName::AddLower), WADNS_Sounds));
-      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-      PlrSnd.ClassId = PClass;
-      PlrSnd.GenderId = Gender;
-      PlrSnd.RefId = RefId;
-      PlrSnd.SoundId = id;
+      //GCon->Logf("PLRSND<%s>: %d", *sc->String, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
+      id = AddSoundLump(FakeName, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
+      bool found = false;
+      for (int f = 0; f < PlayerSounds.length(); ++f) {
+        FPlayerSound &PlrSnd = PlayerSounds[f];
+        if (PlrSnd.ClassId == PClass &&
+            PlrSnd.GenderId == Gender &&
+            PlrSnd.RefId == RefId)
+        {
+          //GCon->Log("  REPLACED!");
+          PlrSnd.SoundId = id;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
+        PlrSnd.ClassId = PClass;
+        PlrSnd.GenderId = Gender;
+        PlrSnd.RefId = RefId;
+        PlrSnd.SoundId = id;
+      }
     } else if (sc->Check("$playersounddup")) {
       // $playersounddup <player class> <gender> <logical name> <target sound name>
       int PClass, Gender, RefId, TargId;
 
       ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
       TargId = FindSound(*sc->String);
-      if (!TargId)
-      {
+      if (!TargId) {
         TargId = AddSound(*sc->String, -1);
         S_sfx[TargId].Link = NumPlayerReserves++;
         S_sfx[TargId].bPlayerReserve = true;
-      }
-      else if (!S_sfx[TargId].bPlayerReserve)
-      {
+      } else if (!S_sfx[TargId].bPlayerReserve) {
         sc->Error(va("%s is not a player sound", *sc->String));
       }
       int AliasTo = FindPlayerSound(PClass, Gender, TargId);
-      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-      PlrSnd.ClassId = PClass;
-      PlrSnd.GenderId = Gender;
-      PlrSnd.RefId = RefId;
-      PlrSnd.SoundId = AliasTo;
+
+      bool found = false;
+      for (int f = 0; f < PlayerSounds.length(); ++f) {
+        FPlayerSound &PlrSnd = PlayerSounds[f];
+        if (PlrSnd.ClassId == PClass &&
+            PlrSnd.GenderId == Gender &&
+            PlrSnd.RefId == RefId)
+        {
+          //GCon->Log("  REPLACED!");
+          PlrSnd.SoundId = AliasTo;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
+        PlrSnd.ClassId = PClass;
+        PlrSnd.GenderId = Gender;
+        PlrSnd.RefId = RefId;
+        PlrSnd.SoundId = AliasTo;
+      }
     } else if (sc->Check("$playeralias")) {
       // $playeralias <player class> <gender> <logical name> <logical name of existing sound>
       int PClass, Gender, RefId;
 
       ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
       int AliasTo = FindOrAddSound(*sc->String);
-      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-      PlrSnd.ClassId = PClass;
-      PlrSnd.GenderId = Gender;
-      PlrSnd.RefId = RefId;
-      PlrSnd.SoundId = AliasTo;
+
+      bool found = false;
+      for (int f = 0; f < PlayerSounds.length(); ++f) {
+        FPlayerSound &PlrSnd = PlayerSounds[f];
+        if (PlrSnd.ClassId == PClass &&
+            PlrSnd.GenderId == Gender &&
+            PlrSnd.RefId == RefId)
+        {
+          //GCon->Log("  REPLACED!");
+          PlrSnd.SoundId = AliasTo;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
+        PlrSnd.ClassId = PClass;
+        PlrSnd.GenderId = Gender;
+        PlrSnd.RefId = RefId;
+        PlrSnd.SoundId = AliasTo;
+      }
     } else if (sc->Check("$singular")) {
       // $singular <logical name>
       sc->ExpectString();
