@@ -223,7 +223,8 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
 
   if (r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
-    if (sec->floor.pic) {
+    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         /*
@@ -348,7 +349,8 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
 
   if (r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
-    if (sec->floor.pic) {
+    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         /*

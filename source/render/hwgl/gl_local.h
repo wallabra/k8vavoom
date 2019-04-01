@@ -702,13 +702,13 @@ private:
 
 private:
   static inline float getSurfLightLevel (const surface_t *surf) {
-    if (r_glow_flat && surf && !surf->seg && surf->subsector) {
+    if (r_glow_flat && surf && !surf->seg && surf->subsector && surf->plane) {
       const sector_t *sec = surf->subsector->sector;
-      if (sec->floor.pic) {
+      if (sec->floor.pic && surf->plane->normal.z > 0.0f) {
         VTexture *gtex = GTextureManager(sec->floor.pic);
         if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
       }
-      if (sec->ceiling.pic) {
+      if (sec->ceiling.pic && surf->plane->normal.z < 0.0f) {
         VTexture *gtex = GTextureManager(sec->ceiling.pic);
         if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
       }

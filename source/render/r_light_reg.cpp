@@ -97,11 +97,11 @@ static bool is_coloured;
 static inline int getSurfLightLevelInt (const surface_t *surf) {
   if (r_glow_flat && surf && !surf->seg && surf->subsector) {
     const sector_t *sec = surf->subsector->sector;
-    if (sec->floor.pic) {
+    if (sec->floor.pic && surf->plane->normal.z > 0.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
     }
-    if (sec->ceiling.pic) {
+    if (sec->ceiling.pic && surf->plane->normal.z < 0.0f) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
     }
@@ -122,11 +122,11 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
 static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   if (r_glow_flat && surf && !surf->seg && surf->subsector) {
     const sector_t *sec = surf->subsector->sector;
-    if (sec->floor.pic) {
+    if (sec->floor.pic && surf->plane->normal.z > 0.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
     }
-    if (sec->ceiling.pic) {
+    if (sec->ceiling.pic && surf->plane->normal.z < 0.0f) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
     }
@@ -600,7 +600,8 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *sur
 
   if (r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
-    if (sec->floor.pic) {
+    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         /*
