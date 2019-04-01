@@ -72,6 +72,9 @@ menudef VideoOptions {
   option bool {
     title = "Brightmaps";
     cvar = r_brightmaps;
+    help =
+      "Enable brightmaps."
+      "You still should have proper GLDEFS and brightmap textures loaded.";
   }
 
   option bool {
@@ -80,6 +83,14 @@ menudef VideoOptions {
     help =
       "If you have brightmaps turned on, you can"
       "turn off brightmaps for sprites here.";
+  }
+
+  option bool {
+    title = "Glowing Flats";
+    cvar = r_glow_flat;
+    help =
+      "Enable glowing flats."
+      "You still should have proper GLDEFS loaded.";
   }
 
   option bool {
