@@ -822,6 +822,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   if (!gl_dbg_adv_render_textures_surface || RendLev->DrawSurfList.length() == 0) return;
 
+  bool lastWasMasked = false;
+  bool firstMasked = true;
+
   ShadowsTexture.Activate();
   ShadowsTexture.SetTexture(0);
 
@@ -849,9 +852,31 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       lastTexinfo->ColourMap != currTexinfo->ColourMap;
     lastTexinfo = currTexinfo;
 
+    if (surf->drawflags&surface_t::DF_MASKED) {
+      // masked wall
+      if (!lastWasMasked) {
+        // switch shader
+        ShadowsTextureMasked.Activate();
+        if (firstMasked) {
+          ShadowsTextureMasked.SetTexture(0);
+          firstMasked = false;
+        }
+        lastWasMasked = true;
+        textureChanded = true; //FIXME: hold two of those
+      }
+    } else {
+      // normal wall
+      if (lastWasMasked) {
+        // switch shader
+        ShadowsTexture.Activate();
+        lastWasMasked = false;
+        textureChanded = true; //FIXME: hold two of those
+      }
+    }
+
     if (textureChanded) {
       SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
-      ShadowsTexture.SetTex(currTexinfo);
+      if (lastWasMasked) ShadowsTextureMasked.SetTex(currTexinfo); else ShadowsTexture.SetTex(currTexinfo);
     }
 
     bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decals);
@@ -873,7 +898,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
     if (doDecals) {
       if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColourMap)) {
-        ShadowsTexture.Activate();
+        if (lastWasMasked) ShadowsTextureMasked.Activate(); else ShadowsTexture.Activate();
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         //glEnable(GL_BLEND);
         lastTexinfo = nullptr; // resetup texture
