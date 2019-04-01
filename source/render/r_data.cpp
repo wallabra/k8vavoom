@@ -1413,7 +1413,13 @@ static void ParseGlow (VScriptParser *sc) {
           VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
           if (basetex) {
             //GCon->Logf("GLOW: <%s>", *img);
-            basetex->glowing = true;
+            //basetex->glowing = true;
+            rgb_t gclr = basetex->GetAverageColor(153);
+            if (gclr.r || gclr.g || gclr.b) {
+              basetex->glowing = 0xff000000u|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
+            } else {
+              basetex->glowing = 0;
+            }
           }
         }
 #endif

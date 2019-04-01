@@ -443,6 +443,7 @@ extern VCvarI gl_dbg_use_zpass;
 extern VCvarB gl_dbg_wireframe;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
+extern VCvarB r_glow_flat;
 
 
 // ////////////////////////////////////////////////////////////////////////// //

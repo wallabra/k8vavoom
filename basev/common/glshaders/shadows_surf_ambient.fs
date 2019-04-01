@@ -15,8 +15,34 @@ $include "common/texture_vars.fs"
 #endif
 
 
+//#ifdef VV_AMBIENT_GLOW
+// if a is 0, there is no glow
+uniform vec4 GlowColorFloor;
+uniform vec4 GlowColorCeiling;
+
+varying float floorHeight;
+varying float ceilingHeight;
+
+
+vec4 calcGlow (vec4 light) {
+  float fh = ((128.0-clamp(abs(floorHeight), 0.0, 128.0))*GlowColorFloor.a)/128.0;
+  float ch = ((128.0-clamp(abs(ceilingHeight), 0.0, 128.0))*GlowColorCeiling.a)/128.0;
+  vec4 lt;
+  lt.r = clamp(light.r+GlowColorFloor.r*fh+GlowColorCeiling.r*ch, 0.0, 1.0);
+  lt.g = clamp(light.g+GlowColorFloor.g*fh+GlowColorCeiling.g*ch, 0.0, 1.0);
+  lt.b = clamp(light.b+GlowColorFloor.b*fh+GlowColorCeiling.b*ch, 0.0, 1.0);
+  lt.a = light.a;
+  return lt;
+}
+//#endif
+
+
 void main () {
-  vec4 lt = Light;
+//#ifdef VV_AMBIENT_GLOW
+  vec4 lt = calcGlow(Light);
+//#else
+//  vec4 lt = Light;
+//#endif
 #ifdef VV_AMBIENT_MASKED_WALL
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   //if (TexColour.a <= 0.01) discard;

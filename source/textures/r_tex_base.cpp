@@ -145,7 +145,7 @@ VTexture::VTexture ()
   , needFBO(false)
   , transparent(false)
   , nofullbright(false)
-  , glowing(false)
+  , glowing(0)
   , mFBO(0)
   , mFBOColorTid(0)
   , mFBODepthStencilTid(0)
@@ -871,6 +871,7 @@ rgb_t VTexture::GetAverageColor (vuint32 maxout) {
   if (Width < 1 || Height < 1) return rgb_t(255, 255, 255);
 
   unsigned int r = 0, g = 0, b = 0;
+  (void)GetPixels();
   ConvertPixelsToRGBA();
 
   const rgba_t *pic = (const rgba_t *)Pixels;
