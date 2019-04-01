@@ -362,8 +362,8 @@ final void A_Saw () {
 //===========================================================================
 final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   optional int SawDamage, optional class!Actor PuffType,
-  optional int flags, optional float range, optional float spread_xy, optional float spread_z
-  /*, optional float lifesteal, optional float lifestealmax, string armorbonustype*/)
+  optional int flags, optional float range, optional float spread_xy, optional float spread_z,
+  optional float lifesteal, optional float lifestealmax, optional string armorbonustype)
 {
   //float angle;
   //int damage;
@@ -372,6 +372,10 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   TVec dir;
 
   if (!bIsPlayer) return;
+
+  if (lifesteal || lifestealmax || armorbonustype) {
+    print("WARNING: extra `A_Saw()` parameters ignored!");
+  }
 
   if (!specified_FullSound) {
     FullSound = 'weapons/sawfull';
