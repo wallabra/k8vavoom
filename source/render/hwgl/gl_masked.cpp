@@ -44,12 +44,15 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   if (!tex->Tex || (!gl_dbg_adv_render_textures_surface && RendLev->IsAdvancedRenderer())) return;
 
+  GlowParams gp;
+  CalcGlow(gp, surf);
+
   bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
 
   if (doBrightmap) {
-    SurfMaskedBrightmap.Activate();
-    SurfMaskedBrightmap.SetTexture(0);
-    SurfMaskedBrightmap.SetTextureBM(1);
+    SurfMaskedBrightmapGlow.Activate();
+    SurfMaskedBrightmapGlow.SetTexture(0);
+    SurfMaskedBrightmapGlow.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
     SetTexture(tex->Tex->Brightmap, 0);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -57,10 +60,20 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     p_glActiveTextureARB(GL_TEXTURE0);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedBrightmapGlow, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedBrightmapGlow);
+    }
   } else {
-    SurfMasked.Activate();
-    SurfMasked.SetTexture(0);
-    //SurfMasked.SetFogType();
+    SurfMaskedGlow.Activate();
+    SurfMaskedGlow.SetTexture(0);
+    //SurfMaskedGlow.SetFogType();
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedGlow, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedGlow);
+    }
   }
 
   SetTexture(tex->Tex, tex->ColourMap);
@@ -74,9 +87,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (blend_sprites || Additive || Alpha < 1.0f) {
     restoreBlend = true;
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      SurfMaskedBrightmapGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMasked.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
     }
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -91,9 +104,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   } else {
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetAlphaRef(0.666f);
+      SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
     } else {
-      SurfMasked.SetAlphaRef(0.666f);
+      SurfMaskedGlow.SetAlphaRef(0.666f);
     }
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->seg && surf->seg->decals) {
@@ -116,9 +129,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
     double iscale = 1.0f/(size*255*256);
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
+      SurfMaskedBrightmapGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
     } else {
-      SurfMasked.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
+      SurfMaskedGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
     }
   } else {
     if (r_adv_masked_wall_vertex_light && RendLev->IsAdvancedRenderer()) {
@@ -155,19 +168,19 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
         if (b < lb) b = lb;
       }
       if (doBrightmap) {
-        SurfMaskedBrightmap.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
+        SurfMaskedBrightmapGlow.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
       } else {
-        SurfMasked.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
+        SurfMaskedGlow.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
       }
     } else {
       const float lev = getSurfLightLevel(surf);
       if (doBrightmap) {
-        SurfMaskedBrightmap.SetLight(
+        SurfMaskedBrightmapGlow.SetLight(
           ((surf->Light>>16)&255)*lev/255.0f,
           ((surf->Light>>8)&255)*lev/255.0f,
           (surf->Light&255)*lev/255.0f, Alpha);
       } else {
-        SurfMasked.SetLight(
+        SurfMaskedGlow.SetLight(
           ((surf->Light>>16)&255)*lev/255.0f,
           ((surf->Light>>8)&255)*lev/255.0f,
           (surf->Light&255)*lev/255.0f, Alpha);
@@ -176,9 +189,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   if (doBrightmap) {
-    SurfMaskedBrightmap.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedBrightmapGlow.SetFogFade(surf->Fade, Alpha);
   } else {
-    SurfMasked.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedGlow.SetFogFade(surf->Fade, Alpha);
   }
 
   bool doDecals = (decalsAllowed && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
@@ -189,11 +202,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetTexCoord(
+      SurfMaskedBrightmapGlow.SetTexCoord(
         (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
     } else {
-      SurfMasked.SetTexCoord(
+      SurfMaskedGlow.SetTexCoord(
         (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
     }

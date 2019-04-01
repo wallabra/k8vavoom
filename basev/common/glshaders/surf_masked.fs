@@ -14,13 +14,21 @@ $include "common/fog_vars.fs"
 
 varying vec2 TextureCoordinate;
 
+#ifdef VV_MASKED_GLOW
+$include "common/glow_vars.fs"
+#endif
+
 
 void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < AlphaRef) discard;
   //TexColour *= Light;
 
+#ifdef VV_MASKED_GLOW
+  vec4 lt = calcGlow(Light);
+#else
   vec4 lt = Light;
+#endif
 #ifdef VV_MASKED_BRIGHTMAP
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
   BMColor.rgb *= BMColor.a;

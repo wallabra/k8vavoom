@@ -15,6 +15,8 @@ $include "common/texlmap_vars.fs"
 
 //#ifdef VV_AMBIENT_GLOW
 $include "common/glow_vars.fs"
+uniform float FullBright; // 0.0 or 1.0
+uniform vec4 Light;
 //#endif
 
 
@@ -26,6 +28,9 @@ void main () {
   if (TexColour.a < 0.01) discard; // for steamlined masked textures //FIXME
 
   vec4 lt = texture2D(LightMap, LightmapCoordinate);
+  lt.r = mix(lt.r, Light.r, FullBright);
+  lt.g = mix(lt.g, Light.g, FullBright);
+  lt.b = mix(lt.b, Light.b, FullBright);
   lt = calcGlow(lt);
 #ifdef VV_LIGHTMAP_BRIGHTMAP
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);

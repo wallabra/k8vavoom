@@ -255,9 +255,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
         float lev = getSurfLightLevel(surf);
         // glowing flats should be rendered fullbright
-        if (r_glow_flat && !surf->seg && currTexinfo->Tex->glowing) {
-          lev = 1.0f;
-        }
+        if (r_glow_flat && !surf->seg && currTexinfo->Tex->glowing) lev = 1.0f;
         if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
           prevsflight = lev;
           prevlight = surf->Light;

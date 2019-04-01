@@ -290,7 +290,8 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   }
 
 
-  const float lev = getSurfLightLevel(surf);
+  float lev = getSurfLightLevel(surf);
+  if (r_glow_flat && !surf->seg && textr->Tex->glowing) lev = 1.0f;
   if (doBrightmap) {
     SurfSimpleBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfSimpleBrightmap.SetFogFade(surf->Fade, 1.0f);
@@ -379,11 +380,20 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     return false;
   }
 
+  float lev = getSurfLightLevel(surf);
+  if (r_glow_flat && !surf->seg && tex->Tex->glowing) {
+    lev = 1.0f;
+    if (doBrightmap) SurfLightmapBrightmap.SetFullBright(1.0); else SurfLightmap.SetFullBright(1.0);
+  } else {
+    if (doBrightmap) SurfLightmapBrightmap.SetFullBright(0.0); else SurfLightmap.SetFullBright(0.0);
+  }
   if (doBrightmap) {
     SurfLightmapBrightmap.SetLMap(surf, cache);
+    SurfLightmapBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfLightmapBrightmap.SetFogFade(surf->Fade, 1.0f);
   } else {
     SurfLightmap.SetLMap(surf, cache);
+    SurfLightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfLightmap.SetFogFade(surf->Fade, 1.0f);
   }
 
