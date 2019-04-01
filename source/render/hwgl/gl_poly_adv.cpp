@@ -28,6 +28,10 @@
 #include "render/r_local.h"
 
 
+// this is used to compare floats like ints which is faster
+#define FASI(var) (*(const uint32_t *)&var)
+
+
 extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
@@ -111,6 +115,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
 
     float prevsflight = -666;
+    vuint32 prevlight = 0;
     const texinfo_t *lastTexinfo = nullptr;
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
@@ -147,13 +152,16 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         }
       }
 
-      const float lev = getSurfLightLevel(surf);
-      if (lev != prevsflight && !gl_dbg_wireframe) {
-        prevsflight = lev;
-        ShadowsAmbient.SetLight(
-          ((surf->Light>>16)&255)*lev/255.0f,
-          ((surf->Light>>8)&255)*lev/255.0f,
-          (surf->Light&255)*lev/255.0f, 1.0f);
+      if (!gl_dbg_wireframe) {
+        const float lev = getSurfLightLevel(surf);
+        if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+          prevsflight = lev;
+          prevlight = surf->Light;
+          ShadowsAmbient.SetLight(
+            ((surf->Light>>16)&255)*lev/255.0f,
+            ((surf->Light>>8)&255)*lev/255.0f,
+            (surf->Light&255)*lev/255.0f, 1.0f);
+        }
       }
 
       if (!gl_dbg_wireframe) {
