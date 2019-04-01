@@ -55,7 +55,7 @@ actor Spectre : Demon 58
   game Doom
   SpawnID 9
   RenderStyle OptFuzzy
-  Alpha 0.4
+  Alpha 0.6
   SeeSound "spectre/sight"
   ActiveSound "spectre/active"
   AttackSound "spectre/melee"
