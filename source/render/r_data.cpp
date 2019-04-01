@@ -1370,6 +1370,14 @@ static void ParseBrightmap (VScriptParser *sc) {
     bm->nofullbright = nofb;
 
     delete basetex->Brightmap;
+
+    if (bm->GetWidth() != basetex->GetWidth() || bm->GetHeight() != basetex->GetHeight()) {
+      GCon->Logf(NAME_Warning, "texture '%s' has dimensions (%d,%d), but brightmap '%s' has dimensions (%d,%d)",
+        *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
+      //delete bm;
+      //return;
+    }
+
     basetex->Brightmap = bm;
     if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s'", *img, *bmap);
   }
