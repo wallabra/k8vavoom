@@ -131,6 +131,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
   }
   Tex->DriverTranslated.Clear();
+  if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
 }
 
 
@@ -142,6 +143,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
 void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
   if (!Tex) return;
   SetTexture(Tex, 0);
+  if (Tex->Brightmap) SetTexture(Tex->Brightmap, 0);
 }
 
 

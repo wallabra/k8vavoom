@@ -36,6 +36,8 @@ extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
+static VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -102,8 +104,21 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (RendLev->DrawSurfList.length()) {
-    bool lastWasMasked = false;
-    bool firstMasked = true;
+    enum {
+      SOLID = 0,
+      MASKED = 1,
+      BRIGHTMAP = 2,
+    };
+    int currShader = SOLID;
+
+    // setup samplers for all shaders
+    // masked
+    ShadowsAmbientMasked.Activate();
+    ShadowsAmbientMasked.SetTexture(0);
+    // brightmap
+    ShadowsAmbientBrightmap.Activate();
+    ShadowsAmbientBrightmap.SetTexture(0);
+    ShadowsAmbientBrightmap.SetTextureBM(1);
 
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
@@ -128,71 +143,101 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         continue;
       }
 
-      if (gl_dbg_wireframe) {
-        float clr = (float)(count+1)/RendLev->DrawSurfList.length();
-        if (clr < 0.1f) clr = 0.1f;
-        glColor4f(clr, clr, clr, 1.0f);
-      }
-
       // don't render translucent surfaces
       // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
       if (currTexinfo->Alpha < 1.0f) continue;
 
-      if (surf->drawflags&surface_t::DF_MASKED) {
-        // masked wall
-        if (!lastWasMasked) {
-          // switch shader
-          ShadowsAmbientMasked.Activate();
-          lastWasMasked = true;
-          if (firstMasked) {
-            ShadowsAmbientMasked.SetTexture(0);
-            firstMasked = false;
+      if (!gl_dbg_wireframe) {
+        if (r_brightmaps && currTexinfo->Tex->Brightmap) {
+          // texture with brightmap
+          if (currShader != BRIGHTMAP) {
+            currShader = BRIGHTMAP;
+            ShadowsAmbientBrightmap.Activate();
+            prevsflight = -666; // force light setup
           }
-          //GCon->Logf("SWITCH TO MASKED!");
-        }
+          p_glActiveTextureARB(GL_TEXTURE0+1);
+          SetTexture(currTexinfo->Tex->Brightmap, 0);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+          p_glActiveTextureARB(GL_TEXTURE0);
+          // set normal texture
+          SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+          ShadowsAmbientBrightmap.SetTex(currTexinfo);
+          lastTexinfo = nullptr;
+        } else if (surf->drawflags&surface_t::DF_MASKED) {
+          // masked wall
+          bool textureChanded =
+            !lastTexinfo ||
+            lastTexinfo != currTexinfo ||
+            lastTexinfo->Tex != currTexinfo->Tex ||
+            lastTexinfo->ColourMap != currTexinfo->ColourMap;
+          lastTexinfo = currTexinfo;
 
-        bool textureChanded =
-          !lastTexinfo ||
-          lastTexinfo != currTexinfo ||
-          lastTexinfo->Tex != currTexinfo->Tex ||
-          lastTexinfo->ColourMap != currTexinfo->ColourMap;
-        lastTexinfo = currTexinfo;
+          if (currShader != MASKED) {
+            /*
+            if (currShader == BRIGHTMAP) {
+              p_glActiveTextureARB(GL_TEXTURE0+1);
+              glBindTexture(GL_TEXTURE_2D, 0);
+              p_glActiveTextureARB(GL_TEXTURE0);
+            }
+            */
+            currShader = MASKED;
+            ShadowsAmbientMasked.Activate();
+            prevsflight = -666; // force light setup
+            textureChanded = true;
+          }
 
-        if (textureChanded) {
-          if (!gl_dbg_wireframe) {
+          if (textureChanded) {
             SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
             ShadowsAmbientMasked.SetTex(currTexinfo);
           }
+        } else {
+          // normal wall
+          if (currShader != SOLID) {
+            /*
+            if (currShader == BRIGHTMAP) {
+              p_glActiveTextureARB(GL_TEXTURE0+1);
+              glBindTexture(GL_TEXTURE_2D, 0);
+              p_glActiveTextureARB(GL_TEXTURE0);
+            }
+            */
+            currShader = SOLID;
+            ShadowsAmbient.Activate();
+            prevsflight = -666; // force light setup
+          }
         }
-      } else {
-        // normal wall
-        if (lastWasMasked) {
-          // switch shader
-          ShadowsAmbient.Activate();
-          lastWasMasked = false;
-          //GCon->Logf("SWITCH TO NORMAL!");
-        }
-      }
 
-      if (!gl_dbg_wireframe) {
         const float lev = getSurfLightLevel(surf);
         if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
           prevsflight = lev;
           prevlight = surf->Light;
-          if (lastWasMasked) {
-            ShadowsAmbientMasked.SetLight(
-              ((surf->Light>>16)&255)*lev/255.0f,
-              ((surf->Light>>8)&255)*lev/255.0f,
-              (surf->Light&255)*lev/255.0f, 1.0f);
-          } else {
-            ShadowsAmbient.SetLight(
-              ((surf->Light>>16)&255)*lev/255.0f,
-              ((surf->Light>>8)&255)*lev/255.0f,
-              (surf->Light&255)*lev/255.0f, 1.0f);
+          switch (currShader) {
+            case SOLID:
+              ShadowsAmbient.SetLight(
+                ((surf->Light>>16)&255)*lev/255.0f,
+                ((surf->Light>>8)&255)*lev/255.0f,
+                (surf->Light&255)*lev/255.0f, 1.0f);
+              break;
+            case MASKED:
+              ShadowsAmbientMasked.SetLight(
+                ((surf->Light>>16)&255)*lev/255.0f,
+                ((surf->Light>>8)&255)*lev/255.0f,
+                (surf->Light&255)*lev/255.0f, 1.0f);
+              break;
+            case BRIGHTMAP:
+              ShadowsAmbientBrightmap.SetLight(
+                ((surf->Light>>16)&255)*lev/255.0f,
+                ((surf->Light>>8)&255)*lev/255.0f,
+                (surf->Light&255)*lev/255.0f, 1.0f);
+              break;
           }
         }
+      } else {
+        float clr = (float)(count+1)/RendLev->DrawSurfList.length();
+        if (clr < 0.1f) clr = 0.1f;
+        glColor4f(clr, clr, clr, 1.0f);
       }
 
       if (!gl_dbg_wireframe) {
@@ -209,6 +254,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       }
     }
   }
+
+  p_glActiveTextureARB(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  p_glActiveTextureARB(GL_TEXTURE0);
 }
 
 
