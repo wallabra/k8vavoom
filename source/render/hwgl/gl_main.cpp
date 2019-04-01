@@ -681,6 +681,7 @@ void VOpenGLDrawer::InitResolution () {
     gl_(glGetVertexAttribPointervARB);
 
     gl_(glGetProgramiv);
+    //gl_(glGetPointerv);
 
     if (hasBoundsTest) {
       if (!glc_(glDepthBoundsEXT)) {

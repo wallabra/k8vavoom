@@ -414,6 +414,7 @@ typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
 typedef void (APIENTRY *glBlitFramebuffer_t) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 typedef void (APIENTRY *glGetProgramiv_t) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRY *glGetPointerv_t) (GLenum pname,  GLvoid **params);
 //typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 //typedef void (APIENTRY *glGetActiveAttrib_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 
@@ -885,6 +886,7 @@ public:
   _(glBlitFramebuffer);
 
   _(glGetProgramiv);
+  //_(glGetPointerv);
 
 #undef _
 
