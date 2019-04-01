@@ -143,7 +143,7 @@ public:
   bool ClipLightCheckSeg (const seg_t *seg, const TVec &CurrLightPos, const float CurrLightRadius) const;
 #endif
 
-  void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
+  void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr, bool clipAll=false);
 
 #ifdef CLIENT
   // this doesn't check for radius
@@ -154,7 +154,7 @@ public:
   void Dump () const;
 
 private:
-  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr);
+  void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool clipAll=false);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
   // light radius should be valid

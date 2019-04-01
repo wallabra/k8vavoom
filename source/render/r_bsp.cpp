@@ -735,7 +735,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
           clipflags ^= cp->clipflag;
         }
         */
-#elif 1
+#elif 0
         int cres = cp->checkBoxEx(bbox);
         if (cres == TFrustum::OUTSIDE) return;
         // k8: don't do this: frustum test are cheap, and we can hit false positive easily
@@ -779,7 +779,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
     if (onlyClip) {
       if (clip_use_1d_clipper) {
         subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
-        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr), true);
       }
     } else {
       return RenderSubsector(bspnum&(~NF_SUBSECTOR));

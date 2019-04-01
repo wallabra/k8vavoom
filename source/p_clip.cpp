@@ -1167,9 +1167,9 @@ static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool clipAll) {
   const line_t *ldef = seg->linedef;
-  if (!ldef) return; // miniseg
+  if (!clipAll && !ldef) return; // miniseg
 
   // viewer is in back side or on plane?
   const int orgside = seg->PointOnSide2(Origin);
@@ -1192,7 +1192,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
   // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
+  if (!clipAll && seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
 #ifdef XXX_CLIPPER_DEBUG
     currLevel = Level;
 #endif
@@ -1218,7 +1218,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror) {
 //  VViewClipper::ClipAddSubsectorSegs
 //
 //==========================================================================
-void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror) {
+void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror, bool clipAll) {
   if (!clip_enabled) return;
   if (ClipIsFull()) return;
 
@@ -1228,7 +1228,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
     const seg_t *seg = &Level->Segs[sub->firstline];
     for (int count = sub->numlines; count--; ++seg) {
       if (doPoly && !IsGoodSegForPoly(*this, seg)) doPoly = false;
-      CheckAddClipSeg(seg, Mirror);
+      CheckAddClipSeg(seg, Mirror, clipAll);
     }
   }
 
@@ -1237,7 +1237,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       const seg_t *seg = *polySeg;
       if (IsGoodSegForPoly(*this, seg)) {
-        CheckAddClipSeg(seg, Mirror);
+        CheckAddClipSeg(seg, Mirror, clipAll);
       }
     }
   }
