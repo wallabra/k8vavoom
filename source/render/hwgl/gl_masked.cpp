@@ -41,13 +41,27 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   texinfo_t *tex = surf->texinfo;
+
+  if (!tex->Tex || (!gl_dbg_adv_render_textures_surface && RendLev->IsAdvancedRenderer())) return;
+
+  bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
+
+  if (doBrightmap) {
+    SurfMaskedBrightmap.Activate();
+    SurfMaskedBrightmap.SetTexture(0);
+    SurfMaskedBrightmap.SetTextureBM(1);
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SetTexture(tex->Tex->Brightmap, 0);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    p_glActiveTextureARB(GL_TEXTURE0);
+  } else {
+    SurfMasked.Activate();
+    SurfMasked.SetTexture(0);
+    //SurfMasked.SetFogType();
+  }
+
   SetTexture(tex->Tex, tex->ColourMap);
-
-  if (!gl_dbg_adv_render_textures_surface && RendLev->IsAdvancedRenderer()) return;
-
-  SurfMasked.Activate();
-  SurfMasked.SetTexture(0);
-  //SurfMasked.SetFogType();
 
   bool zbufferWriteDisabled = false;
   bool decalsAllowed = false;
@@ -56,9 +70,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   GLint oldDepthMask = 0;
 
   if (blend_sprites || Additive || Alpha < 1.0f) {
-    //p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     restoreBlend = true;
-    SurfMasked.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+    } else {
+      SurfMasked.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+    }
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     // translucent things should not modify z-buffer
@@ -71,7 +88,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       decalsAllowed = true;
     }
   } else {
-    SurfMasked.SetAlphaRef(0.666f);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetAlphaRef(0.666f);
+    } else {
+      SurfMasked.SetAlphaRef(0.666f);
+    }
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->seg && surf->seg->decals) {
       decalsAllowed = true;
@@ -92,7 +113,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       b += 255*256-blocklightsb[i];
     }
     double iscale = 1.0f/(size*255*256);
-    SurfMasked.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
+    } else {
+      SurfMasked.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
+    }
   } else {
     if (r_adv_masked_wall_vertex_light && RendLev->IsAdvancedRenderer()) {
       // collect vertex lighting
@@ -127,17 +152,32 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
         if (g < lg) g = lg;
         if (b < lb) b = lb;
       }
-      SurfMasked.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
+      if (doBrightmap) {
+        SurfMaskedBrightmap.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
+      } else {
+        SurfMasked.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
+      }
     } else {
       const float lev = getSurfLightLevel(surf);
-      SurfMasked.SetLight(
-        ((surf->Light>>16)&255)*lev/255.0f,
-        ((surf->Light>>8)&255)*lev/255.0f,
-        (surf->Light&255)*lev/255.0f, Alpha);
+      if (doBrightmap) {
+        SurfMaskedBrightmap.SetLight(
+          ((surf->Light>>16)&255)*lev/255.0f,
+          ((surf->Light>>8)&255)*lev/255.0f,
+          (surf->Light&255)*lev/255.0f, Alpha);
+      } else {
+        SurfMasked.SetLight(
+          ((surf->Light>>16)&255)*lev/255.0f,
+          ((surf->Light>>8)&255)*lev/255.0f,
+          (surf->Light&255)*lev/255.0f, Alpha);
+      }
     }
   }
 
-  SurfMasked.SetFogFade(surf->Fade, Alpha);
+  if (doBrightmap) {
+    SurfMaskedBrightmap.SetFogFade(surf->Fade, Alpha);
+  } else {
+    SurfMasked.SetFogFade(surf->Fade, Alpha);
+  }
 
   bool doDecals = (decalsAllowed && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
 
@@ -146,9 +186,15 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
-    SurfMasked.SetTexCoord(
-      (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
-      (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+    if (doBrightmap) {
+      SurfMaskedBrightmap.SetTexCoord(
+        (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+    } else {
+      SurfMasked.SetTexCoord(
+        (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+    }
     glVertex(surf->verts[i]);
   }
   glEnd();
@@ -170,6 +216,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (Additive) {
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  }
+
+  if (doBrightmap) {
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    p_glActiveTextureARB(GL_TEXTURE0);
   }
 }
 
