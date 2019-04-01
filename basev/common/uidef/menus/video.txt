@@ -70,6 +70,19 @@ menudef VideoOptions {
   }
 
   option bool {
+    title = "Brightmaps";
+    cvar = r_brightmaps;
+  }
+
+  option bool {
+    title = "Sprite Brightmaps";
+    cvar = r_brightmaps_sprite;
+    help =
+      "If you have brightmaps turned on, you can"
+      "turn off brightmaps for sprites here.";
+  }
+
+  option bool {
     title = "High Resolution Textures";
     cvar = r_hirestex;
     textColor = PURPLE;
