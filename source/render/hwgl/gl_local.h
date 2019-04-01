@@ -622,6 +622,50 @@ private:
 
   void RestoreDepthFunc ();
 
+  struct GlowParams {
+    vuint32 glowCC, glowCF; // glow colors
+    float floorZ, ceilingZ;
+    GlowParams () : glowCC(0), glowCF(0), floorZ(0), ceilingZ(0) {}
+    inline bool isActive () const { return !!(glowCC|glowCF); }
+  };
+
+#define VV_GLDRAWER_ACTIVATE_GLOW(shad_,gp_)  do { \
+  shad_.SetGlowColorFloor(((gp_.glowCF>>16)&0xff)/255.0f, ((gp_.glowCF>>8)&0xff)/255.0f, (gp_.glowCF&0xff)/255.0f, ((gp_.glowCF>>24)&0xff)/255.0f); \
+  shad_.SetGlowColorCeiling(((gp_.glowCC>>16)&0xff)/255.0f, ((gp_.glowCC>>8)&0xff)/255.0f, (gp_.glowCC&0xff)/255.0f, ((gp_.glowCC>>24)&0xff)/255.0f); \
+  shad_.SetFloorZ(gp_.floorZ); \
+  shad_.SetCeilingZ(gp_.ceilingZ); \
+} while (0)
+
+#define VV_GLDRAWER_DEACTIVATE_GLOW(shad_)  do { \
+    shad_.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0); \
+    shad_.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0); \
+} while (0)
+
+  inline void CalcGlow (GlowParams &gp, const surface_t *surf) const {
+    gp.glowCC = gp.glowCF = 0; // glow colors
+    gp.floorZ = gp.ceilingZ = 0;
+    if (r_glow_flat && surf->seg && surf->subsector) {
+      // check for glowing textures
+      const sector_t *sec = surf->subsector->sector;
+      if (sec) {
+        if (sec->floor.pic) {
+          VTexture *gtex = GTextureManager(sec->floor.pic);
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+            gp.glowCF = gtex->glowing;
+          }
+        }
+        if (sec->ceiling.pic) {
+          VTexture *gtex = GTextureManager(sec->ceiling.pic);
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+            gp.glowCC = gtex->glowing;
+          }
+        }
+        gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
+        gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
+      }
+    }
+  }
+
 public:
   GLint glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional=false);
   GLint glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name, bool optional=false);

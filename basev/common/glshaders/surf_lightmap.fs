@@ -13,6 +13,10 @@ uniform sampler2D TextureBM;
 $include "common/fog_vars.fs"
 $include "common/texlmap_vars.fs"
 
+//#ifdef VV_AMBIENT_GLOW
+$include "common/glow_vars.fs"
+//#endif
+
 
 void main () {
   //vec4 TexColour = texture2D(Texture, TextureCoordinate)*texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
@@ -22,6 +26,7 @@ void main () {
   if (TexColour.a < 0.01) discard; // for steamlined masked textures //FIXME
 
   vec4 lt = texture2D(LightMap, LightmapCoordinate);
+  lt = calcGlow(lt);
 #ifdef VV_LIGHTMAP_BRIGHTMAP
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
   BMColor.rgb *= BMColor.a;

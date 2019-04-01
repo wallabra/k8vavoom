@@ -12,6 +12,10 @@ uniform vec4 Light;
 $include "common/fog_vars.fs"
 $include "common/texture_vars.fs"
 
+//#ifdef VV_AMBIENT_GLOW
+$include "common/glow_vars.fs"
+//#endif
+
 
 void main () {
   //vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
@@ -20,7 +24,7 @@ void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard; // for steamlined textures //FIXME
 
-  vec4 lt = Light;
+  vec4 lt = calcGlow(Light);
 #ifdef VV_SIMPLE_BRIGHTMAP
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
   BMColor.rgb *= BMColor.a;

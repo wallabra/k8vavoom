@@ -141,6 +141,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
 
     bool prevGlowActive[3] = { false, false, false };
+    GlowParams gp;
 
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
       const surface_t *surf = *surfptr;
@@ -157,28 +158,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (currTexinfo->Alpha < 1.0f) continue;
 
       if (!gl_dbg_wireframe) {
-        vuint32 glowCC = 0, glowCF = 0; // glow colors
-        float floorZ = 0, ceilingZ = 0;
-        if (r_glow_flat && surf->seg && surf->subsector) {
-          // check for glowing textures
-          const sector_t *sec = surf->subsector->sector;
-          if (sec) {
-            if (sec->floor.pic) {
-              VTexture *gtex = GTextureManager(sec->floor.pic);
-              if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-                glowCF = gtex->glowing;
-              }
-            }
-            if (sec->ceiling.pic) {
-              VTexture *gtex = GTextureManager(sec->ceiling.pic);
-              if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-                glowCC = gtex->glowing;
-              }
-            }
-            floorZ = sec->floor.GetPointZ(*surf->seg->v1);
-            ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
-          }
-        }
+        CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
           // texture with brightmap
@@ -198,17 +178,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
           // glow
-          if (glowCC|glowCF) {
+          if (gp.isActive()) {
             prevGlowActive[currShader] = true;
-            ShadowsAmbientBrightmap.SetGlowColorFloor(((glowCF>>16)&0xff)/255.0f, ((glowCF>>8)&0xff)/255.0f, (glowCF&0xff)/255.0f, ((glowCF>>24)&0xff)/255.0f);
-            ShadowsAmbientBrightmap.SetGlowColorCeiling(((glowCC>>16)&0xff)/255.0f, ((glowCC>>8)&0xff)/255.0f, (glowCC&0xff)/255.0f, ((glowCC>>24)&0xff)/255.0f);
-            ShadowsAmbientBrightmap.SetFloorZ(floorZ);
-            ShadowsAmbientBrightmap.SetCeilingZ(ceilingZ);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, gp);
           } else {
             if (prevGlowActive[currShader]) {
               prevGlowActive[currShader] = false;
-              ShadowsAmbientBrightmap.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-              ShadowsAmbientBrightmap.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
             }
           }
           lastTexinfo = nullptr;
@@ -241,17 +217,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
 
           // glow
-          if (glowCC|glowCF) {
+          if (gp.isActive()) {
             prevGlowActive[currShader] = true;
-            ShadowsAmbientMasked.SetGlowColorFloor(((glowCF>>16)&0xff)/255.0f, ((glowCF>>8)&0xff)/255.0f, (glowCF&0xff)/255.0f, ((glowCF>>24)&0xff)/255.0f);
-            ShadowsAmbientMasked.SetGlowColorCeiling(((glowCC>>16)&0xff)/255.0f, ((glowCC>>8)&0xff)/255.0f, (glowCC&0xff)/255.0f, ((glowCC>>24)&0xff)/255.0f);
-            ShadowsAmbientMasked.SetFloorZ(floorZ);
-            ShadowsAmbientMasked.SetCeilingZ(ceilingZ);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, gp);
           } else {
             if (prevGlowActive[currShader]) {
               prevGlowActive[currShader] = false;
-              ShadowsAmbientMasked.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-              ShadowsAmbientMasked.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
             }
           }
         } else {
@@ -270,17 +242,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
 
           // glow
-          if (glowCC|glowCF) {
+          if (gp.isActive()) {
             prevGlowActive[currShader] = true;
-            ShadowsAmbient.SetGlowColorFloor(((glowCF>>16)&0xff)/255.0f, ((glowCF>>8)&0xff)/255.0f, (glowCF&0xff)/255.0f, ((glowCF>>24)&0xff)/255.0f);
-            ShadowsAmbient.SetGlowColorCeiling(((glowCC>>16)&0xff)/255.0f, ((glowCC>>8)&0xff)/255.0f, (glowCC&0xff)/255.0f, ((glowCC>>24)&0xff)/255.0f);
-            ShadowsAmbient.SetFloorZ(floorZ);
-            ShadowsAmbient.SetCeilingZ(ceilingZ);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, gp);
           } else {
             if (prevGlowActive[currShader]) {
               prevGlowActive[currShader] = false;
-              ShadowsAmbient.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-              ShadowsAmbient.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
             }
           }
         }
