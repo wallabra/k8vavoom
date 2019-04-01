@@ -243,6 +243,9 @@ protected:
 public:
   static void filterFringe (rgba_t *pic, int wdt, int hgt);
 
+  // use `153` to calculate glow color
+  rgb_t GetAverageColor (vuint32 maxout);
+
 public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
   inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }

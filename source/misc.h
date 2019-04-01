@@ -97,3 +97,13 @@ static inline __attribute__((unused)) __attribute__((const)) vint32 rgbDistanceS
   const vint32 b = (vint32)b0-(vint32)b1;
   return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
 }
+
+
+static inline __attribute__((unused)) __attribute__((const)) vint32 scaleInt (vint32 a, vint32 b, vint32 c) {
+  return (vint32)(((vint64)a*b)/c);
+}
+
+
+static inline __attribute__((unused)) __attribute__((const)) vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) {
+  return (vuint32)(((vuint64)a*b)/c);
+}

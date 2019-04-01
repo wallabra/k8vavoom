@@ -863,6 +863,40 @@ void VTexture::stencilPixelsRGBA (int shadeColor) {
 
 //==========================================================================
 //
+//  VTexture::GetAverageColor
+//
+//==========================================================================
+rgb_t VTexture::GetAverageColor (vuint32 maxout) {
+  if (Width < 1 || Height < 1) return rgb_t(255, 255, 255);
+
+  unsigned int r = 0, g = 0, b = 0;
+  ConvertPixelsToRGBA();
+
+  const rgba_t *pic = (const rgba_t *)Pixels;
+  for (int f = Width*Height; f--; ++pic) {
+    r += pic->r;
+    g += pic->g;
+    b += pic->b;
+  }
+
+  r /= (unsigned)(Width*Height);
+  g /= (unsigned)(Width*Height);
+  b /= (unsigned)(Width*Height);
+
+  unsigned int maxv = MAX(MAX(r, g), b);
+
+  if (maxv && maxout) {
+    r = scaleUInt(r, maxout, maxv);
+    g = scaleUInt(g, maxout, maxv);
+    b = scaleUInt(b, maxout, maxv);
+  }
+
+  return rgb_t(clampToByte(r), clampToByte(g), clampToByte(b));
+}
+
+
+//==========================================================================
+//
 //  VTexture::filterFringe
 //
 //==========================================================================
