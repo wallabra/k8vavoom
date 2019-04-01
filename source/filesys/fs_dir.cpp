@@ -34,7 +34,8 @@
 //
 //==========================================================================
 VFilesDir::VFilesDir (const VStr &aPath)
-  : path(aPath)
+  : VSearchPath()
+  , path(aPath)
   , cachedFiles()
   , cachedMap()
   //, cacheInited(false)

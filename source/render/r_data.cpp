@@ -1346,17 +1346,29 @@ static void ParseBrightmap (VScriptParser *sc) {
       if (doWarn) GCon->Logf(NAME_Warning, "texture '%s' not found, cannot attach brightmap", *img);
       return;
     }
+
+    if (iwad && !W_IsIWADLump(basetex->SourceLump)) {
+      // oops
+      if (doWarn) GCon->Logf(NAME_Warning, "IWAD SKIP! '%s' (%s)", *img, *W_FullLumpName(basetex->SourceLump));
+      return;
+    }
+    //if (iwad && doWarn) GCon->Logf(NAME_Warning, "IWAD PASS! '%s'", *img);
+
     int lmp = W_GetNumForFileName(bmap);
     if (lmp < 0) {
       GCon->Logf(NAME_Warning, "brightmap texture '%s' not found", *bmap);
       return;
     }
+
+    if (thiswad && W_LumpFile(lmp) != W_LumpFile(basetex->SourceLump)) return;
+
     VTexture *bm = VTexture::CreateTexture(TEXTYPE_Any, lmp);
     if (!bm) {
       GCon->Logf(NAME_Warning, "cannot load brightmap texture '%s'", *bmap);
       return;
     }
     bm->nofullbright = nofb;
+
     delete basetex->Brightmap;
     basetex->Brightmap = bm;
     if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s'", *img, *bmap);

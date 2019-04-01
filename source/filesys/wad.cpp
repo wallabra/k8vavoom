@@ -845,3 +845,16 @@ VStr W_FindMapInAuxuliaries (int *mapnum) {
   }
   return VStr();
 }
+
+
+//==========================================================================
+//
+//  W_IsIWADLump
+//
+//==========================================================================
+bool W_IsIWADLump (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  if (fidx < 0 || fidx >= SearchPaths.length()) return false;
+  return SearchPaths[fidx]->iwad;
+}

@@ -1488,6 +1488,11 @@ void FL_Init () {
 
   if (isChex) AddGameDir("basev/mods/chex");
 
+  // setup "iwad" flags
+  for (int i = 0; i < SearchPaths.length(); ++i) {
+    SearchPaths[i]->iwad = true;
+  }
+
   // load custom mode pwads
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
   CustomModeLoadPwads(CM_PRE_PWADS);

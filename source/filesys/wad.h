@@ -96,6 +96,7 @@ int W_LumpFile (int lump);
 // returns handle or -1
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
 
+bool W_IsIWADLump (int lump);
 
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);

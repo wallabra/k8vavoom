@@ -77,12 +77,37 @@ static const char *PK3IgnoreExts[] = {
 };
 
 
+//==========================================================================
+//
+//  VFS_ShouldIgnoreExt
+//
+//==========================================================================
 bool VFS_ShouldIgnoreExt (const VStr &fname) {
   if (fname.length() == 0) return false;
   for (const char **s = PK3IgnoreExts; *s; ++s) if (fname.endsWithNoCase(*s)) return true;
   //if (fname.length() > 12 && fname.endsWithNoCase(".txt")) return true;
   return false;
 }
+
+
+
+//==========================================================================
+//
+//  VSearchPath::VSearchPath
+//
+//==========================================================================
+VSearchPath::VSearchPath () : iwad(false) {
+}
+
+
+//==========================================================================
+//
+//  VSearchPath::~VSearchPath
+//
+//==========================================================================
+VSearchPath::~VSearchPath () {
+}
+
 
 
 //==========================================================================
@@ -541,7 +566,8 @@ int VFileDirectory::nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VPakFileBase::VPakFileBase (const VStr &apakfilename, bool aaszip)
-  : PakFileName(apakfilename)
+  : VSearchPath()
+  , PakFileName(apakfilename)
   , pakdir(this, aaszip)
 {
 }

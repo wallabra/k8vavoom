@@ -52,7 +52,11 @@ struct VPK3ResDirInfo {
 //==========================================================================
 class VSearchPath {
 public:
-  virtual ~VSearchPath () {}
+  bool iwad;
+
+public:
+  VSearchPath ();
+  virtual ~VSearchPath ();
   virtual bool FileExists (const VStr &Name) = 0;
   virtual VStream *OpenFileRead (const VStr &Name) = 0;
   virtual void Close () = 0;
