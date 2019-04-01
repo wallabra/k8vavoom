@@ -325,6 +325,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("submenubig") || par.Check("submenu_big")) res = SpawnObject(MenuDefOptionSubMenuBig);
   else if (par.Check("mod_controls")) res = SpawnObject(MenuDefOptionControls);
   else if (par.Check("console")) res = SpawnObject(MenuDefOptionConsole);
+  else if (par.Check("concmd")) res = SpawnObject(MenuDefOptionConCmd);
   else if (par.Check("crosshair")) res = SpawnObject(MenuDefOptionCrosshair);
   else if (par.Check("bind")) res = SpawnObject(MenuDefOptionBind);
   else if (par.Check("render")) res = SpawnObject(MenuDefOptionRenderType);
@@ -846,6 +847,42 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   opt.Activated = delegate void (Object Sender) { CmdBuf_AddText("ToggleConsole\n"); };
+  return opt;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionConCmd : MenuDefOptionBase;
+
+string concmd;
+
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("concmd")) {
+    par.Expect("=");
+    par.ExpectString();
+    concmd = par.String;
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.Text = title;
+  opt.concmd = concmd;
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  opt.Activated = delegate void (Object Sender) {
+    auto btn = MenuTextButton(Sender);
+    if (btn && btn.concmd) {
+      CmdBuf_AddText("%s\n", btn.concmd);
+    }
+  };
   return opt;
 }
 

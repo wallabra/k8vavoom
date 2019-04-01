@@ -33,6 +33,7 @@ int TextHAlign;
 int TextVAlign;
 class!MenuScreen submenuClass;
 string submenuName;
+string concmd;
 
 
 delegate void Activated (Object Sender);

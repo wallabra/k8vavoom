@@ -75,4 +75,11 @@ menudef OptionsMenu {
   option console {
     title = "Go to console";
   }
+
+  header "";
+
+  option concmd {
+    title = "Save Config";
+    concmd = "SaveConfig";
+  }
 }
