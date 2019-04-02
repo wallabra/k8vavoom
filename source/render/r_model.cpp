@@ -67,6 +67,7 @@ struct VScriptSubModel {
   int SkinAnimSpeed;
   int SkinAnimRange;
   int Version;
+  int MeshIndex; // for md3
   TArray<VFrame> Frames;
   TArray<VName> Skins;
   TArray<int> SkinShades;
@@ -250,16 +251,17 @@ void R_FreeModels () {
 //  Mod_FindMeshModel
 //
 //==========================================================================
-static VMeshModel *Mod_FindMeshModel (const VStr &name) {
+static VMeshModel *Mod_FindMeshModel (const VStr &name, int meshIndex) {
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models
   for (int i = 0; i < GMeshModels.Num(); ++i) {
-    if (GMeshModels[i]->Name == name) return GMeshModels[i];
+    if (GMeshModels[i]->MeshIndex == meshIndex && GMeshModels[i]->Name == name) return GMeshModels[i];
   }
 
   VMeshModel *mod = new VMeshModel();
   mod->Name = name;
+  mod->MeshIndex = meshIndex;
   //mod->Data = nullptr;
   mod->loaded = false;
   GMeshModels.Append(mod);
@@ -292,24 +294,28 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     const char *mdx = (N->FindChild("md2") ? "md2" : "md3");
     for (VXmlNode *SN = N->FindChild(mdx); SN; SN = SN->FindNext()) {
       VScriptSubModel &Md2 = SMdl.SubModels.Alloc();
-      Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes());
+
+      Md2.MeshIndex = 0;
+      if (SN->HasAttribute("mesh")) Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh"));
+
+      Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
 
       // version
       Md2.Version = -1;
-      if (SN->HasAttribute("version")) Md2.Version = atoi(*SN->GetAttribute("version"));
+      if (SN->HasAttribute("version")) Md2.Version = VStr::atoi(*SN->GetAttribute("version"));
 
       // position model
       Md2.PositionModel = nullptr;
       if (SN->HasAttribute("position_file")) {
-        Md2.PositionModel = Mod_FindMeshModel(SN->GetAttribute("position_file").ToLower().FixFileSlashes());
+        Md2.PositionModel = Mod_FindMeshModel(SN->GetAttribute("position_file").ToLower().FixFileSlashes(), Md2.MeshIndex);
       }
 
       // skin animation
       Md2.SkinAnimSpeed = 0;
       Md2.SkinAnimRange = 0;
       if (SN->HasAttribute("skin_anim_speed")) {
-        Md2.SkinAnimSpeed = atoi(*SN->GetAttribute("skin_anim_speed"));
-        Md2.SkinAnimRange = atoi(*SN->GetAttribute("skin_anim_range"));
+        Md2.SkinAnimSpeed = VStr::atoi(*SN->GetAttribute("skin_anim_speed"));
+        Md2.SkinAnimRange = VStr::atoi(*SN->GetAttribute("skin_anim_range"));
       }
 
       // base offset
@@ -351,11 +357,11 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       // process frames
       for (VXmlNode *FN = SN->FindChild("frame"); FN; FN = FN->FindNext()) {
         VScriptSubModel::VFrame &F = Md2.Frames.Alloc();
-        F.Index = atoi(*FN->GetAttribute("index"));
+        F.Index = VStr::atoi(*FN->GetAttribute("index"));
 
         // position model frame index
         F.PositionIndex = 0;
-        if (FN->HasAttribute("position_index")) F.PositionIndex = atoi(*FN->GetAttribute("position_index"));
+        if (FN->HasAttribute("position_index")) F.PositionIndex = VStr::atoi(*FN->GetAttribute("position_index"));
 
         // offset
         F.Offset = Offset;
@@ -382,7 +388,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
         // skin index
         F.SkinIndex = -1;
-        if (FN->HasAttribute("skin_index")) F.SkinIndex = atoi(*FN->GetAttribute("skin_index"));
+        if (FN->HasAttribute("skin_index")) F.SkinIndex = VStr::atoi(*FN->GetAttribute("skin_index"));
       }
 
       // process skins
@@ -434,8 +440,8 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
       int lastIndex = -666;
       if (N->HasAttribute("index")) {
-        F.Number = atoi(*N->GetAttribute("index"));
-        if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
+        F.Number = VStr::atoi(*N->GetAttribute("index"));
+        if (N->HasAttribute("last_index")) lastIndex = VStr::atoi(*N->GetAttribute("last_index"));
         F.sprite = NAME_None;
         F.frame = -1;
       } else if (N->HasAttribute("sprite") && N->HasAttribute("sprite_frame")) {
@@ -454,7 +460,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
         Sys_Error("Model '%s' has invalid state", *Mdl->Name);
       }
 
-      F.FrameIndex = atoi(*N->GetAttribute("frame_index"));
+      F.FrameIndex = VStr::atoi(*N->GetAttribute("frame_index"));
 
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
@@ -833,10 +839,12 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   pmodel->surfaceOfs = LittleLong(pmodel->surfaceOfs);
   pmodel->eofOfs = LittleLong(pmodel->eofOfs);
 
+
   if (pmodel->ver != MD3_VERSION) Sys_Error("model '%s' has wrong version number (%u should be %i)", *mod->Name, pmodel->ver, MD3_VERSION);
   if (pmodel->frameNum < 1 || pmodel->frameNum > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u", *mod->Name, pmodel->frameNum);
   if (pmodel->surfaceNum < 1) Sys_Error("model '%s' has no meshes", *mod->Name);
-  if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes", *mod->Name, pmodel->surfaceNum);
+  if ((unsigned)mod->MeshIndex >= pmodel->surfaceNum) Sys_Error("model '%s' has no mesh with index %d", *mod->Name, mod->MeshIndex);
+  //if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes", *mod->Name, pmodel->surfaceNum);
 
   // convert frame data
   MD3Frame *pframe = (MD3Frame *)((vuint8 *)pmodel+pmodel->frameOfs);
@@ -853,24 +861,29 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   // load first mesh
   MD3Surface *pmesh = (MD3Surface *)(Data+pmodel->surfaceOfs);
 
-  if (memcmp(pmesh->sign, "IDP3", 4) != 0) Sys_Error("model '%s' has invalid mesh signature", *mod->Name);
-  pmesh->flags = LittleLong(pmesh->flags);
-  pmesh->frameNum = LittleLong(pmesh->frameNum);
-  pmesh->shaderNum = LittleLong(pmesh->shaderNum);
-  pmesh->vertNum = LittleLong(pmesh->vertNum);
-  pmesh->triNum = LittleLong(pmesh->triNum);
-  pmesh->triOfs = LittleLong(pmesh->triOfs);
-  pmesh->shaderOfs = LittleLong(pmesh->shaderOfs);
-  pmesh->stOfs = LittleLong(pmesh->stOfs);
-  pmesh->vertOfs = LittleLong(pmesh->vertOfs);
-  pmesh->endOfs = LittleLong(pmesh->endOfs);
+  // skip to relevant mesh
+  for (int f = 0; f < mod->MeshIndex; ++f) {
+    if (memcmp(pmesh->sign, "IDP3", 4) != 0) Sys_Error("model '%s' has invalid mesh signature", *mod->Name);
+    pmesh->flags = LittleLong(pmesh->flags);
+    pmesh->frameNum = LittleLong(pmesh->frameNum);
+    pmesh->shaderNum = LittleLong(pmesh->shaderNum);
+    pmesh->vertNum = LittleLong(pmesh->vertNum);
+    pmesh->triNum = LittleLong(pmesh->triNum);
+    pmesh->triOfs = LittleLong(pmesh->triOfs);
+    pmesh->shaderOfs = LittleLong(pmesh->shaderOfs);
+    pmesh->stOfs = LittleLong(pmesh->stOfs);
+    pmesh->vertOfs = LittleLong(pmesh->vertOfs);
+    pmesh->endOfs = LittleLong(pmesh->endOfs);
 
-  if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *mod->Name, pmesh->shaderNum);
-  if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh", *mod->Name);
-  if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *mod->Name);
-  if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
-  if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *mod->Name);
-  if (pmesh->triNum > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
+    if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *mod->Name, pmesh->shaderNum);
+    if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh", *mod->Name);
+    if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *mod->Name);
+    if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
+    if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *mod->Name);
+    if (pmesh->triNum > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
+
+    pmesh = (MD3Surface *)((vuint8 *)pmesh+pmesh->endOfs);
+  }
 
   // convert and copy shader data
   MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);

@@ -45,7 +45,7 @@ void VRenderLevelShared::InitParticles () {
   const char *p = GArgs.CheckValue("-particles");
 
   if (p) {
-    NumParticles = atoi(p);
+    NumParticles = VStr::atoi(p);
     if (NumParticles < ABSOLUTE_MIN_PARTICLES) NumParticles = ABSOLUTE_MIN_PARTICLES;
   } else {
     NumParticles = MAX_PARTICLES;

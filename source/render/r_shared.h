@@ -193,7 +193,7 @@ struct mmdl_t;
 
 struct VMeshModel {
   VStr Name;
-  bool loaded;
+  int MeshIndex;
   TArray<VName> Skins;
   TArray<VMeshFrame> Frames;
   TArray<TVec> AllVerts;
@@ -202,6 +202,7 @@ struct VMeshModel {
   TArray<VMeshSTVert> STVerts;
   TArray<VMeshTri> Tris; // vetex indicies
   TArray<VMeshEdge> Edges; // for `Tris`
+  bool loaded;
   bool Uploaded;
   bool HadErrors;
   vuint32 VertsBuffer;
