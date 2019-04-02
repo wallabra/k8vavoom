@@ -60,6 +60,16 @@ struct VScriptSubModel {
     TVec Offset;
     TVec Scale;
     int SkinIndex;
+
+    void copyFrom (const VFrame &src) {
+      Index = src.Index;
+      PositionIndex = src.PositionIndex;
+      AlphaStart = src.AlphaStart;
+      AlphaEnd = src.AlphaEnd;
+      Offset = src.Offset;
+      Scale = src.Scale;
+      SkinIndex = src.SkinIndex;
+    }
   };
 
   VMeshModel *Model;
@@ -75,6 +85,28 @@ struct VScriptSubModel {
   bool NoShadow;
   bool UseDepth;
   bool AllowTransparency;
+
+  void copyFrom (VScriptSubModel &src) {
+    Model = src.Model;
+    PositionModel = src.PositionModel;
+    SkinAnimSpeed = src.SkinAnimSpeed;
+    SkinAnimRange = src.SkinAnimRange;
+    Version = src.Version;
+    MeshIndex = src.MeshIndex; // for md3
+    FullBright = src.FullBright;
+    NoShadow = src.NoShadow;
+    UseDepth = src.UseDepth;
+    AllowTransparency = src.AllowTransparency;
+    // copy skin names
+    Skins.setLength(src.Skins.length());
+    for (int f = 0; f < src.Skins.length(); ++f) Skins[f] = src.Skins[f];
+    // copy skin shades
+    SkinShades.setLength(src.SkinShades.length());
+    for (int f = 0; f < src.SkinShades.length(); ++f) SkinShades[f] = src.SkinShades[f];
+    // copy frames
+    Frames.setLength(src.Frames.length());
+    for (int f = 0; f < src.Frames.length(); ++f) Frames[f].copyFrom(src.Frames[f]);
+  }
 };
 
 
@@ -295,8 +327,12 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     for (VXmlNode *SN = N->FindChild(mdx); SN; SN = SN->FindNext()) {
       VScriptSubModel &Md2 = SMdl.SubModels.Alloc();
 
+      bool hasMeshIndex = false;
       Md2.MeshIndex = 0;
-      if (SN->HasAttribute("mesh_index")) Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
+      if (SN->HasAttribute("mesh_index")) {
+        hasMeshIndex = true;
+        Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
+      }
 
       Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
 
@@ -403,6 +439,39 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
             shade = parseHexRGB(sfl);
           }
           Md2.SkinShades.Append(shade);
+        }
+      }
+
+      // if this is MD3 without mesh index, create additional models for all meshes
+      if (!hasMeshIndex && mdx[2] == '3') {
+        // load model and get number of meshes
+        VStream *md3strm = FL_OpenFileRead(Md2.Model->Name);
+        // allow missing models
+        if (md3strm) {
+          char sign[4] = {0};
+          md3strm->Serialise(sign, 4);
+          if (memcmp(sign, "IDP3", 4) == 0) {
+            // skip uninteresting data
+            md3strm->Seek(4+4+64+4+4+4);
+            vuint32 n = 0;
+            md3strm->Serialise(&n, 4);
+            n = LittleLong(n);
+            if (n > 1 && n < 64) {
+              GCon->Logf(NAME_Init, "model '%s' got automatic submodel%s for %u more mesh%s", *Md2.Model->Name, (n > 2 ? "s" : ""), n-1, (n > 2 ? "es" : ""));
+              for (unsigned f = 1; f < n; ++f) {
+                VScriptSubModel &newmdl = SMdl.SubModels.Alloc();
+                newmdl.copyFrom(Md2);
+                newmdl.MeshIndex = f;
+                newmdl.Model = Mod_FindMeshModel(newmdl.Model->Name, newmdl.MeshIndex);
+                if (newmdl.PositionModel) {
+                  newmdl.PositionModel = Mod_FindMeshModel(newmdl.PositionModel->Name, newmdl.MeshIndex);
+                }
+              }
+            } else {
+              if (n != 1) GCon->Logf(NAME_Warning, "model '%s' has invalid number of meshes (%u)", *Md2.Model->Name, n);
+            }
+          }
+          delete md3strm;
         }
       }
     }
@@ -838,7 +907,6 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   pmodel->tagOfs = LittleLong(pmodel->tagOfs);
   pmodel->surfaceOfs = LittleLong(pmodel->surfaceOfs);
   pmodel->eofOfs = LittleLong(pmodel->eofOfs);
-
 
   if (pmodel->ver != MD3_VERSION) Sys_Error("model '%s' has wrong version number (%u should be %i)", *mod->Name, pmodel->ver, MD3_VERSION);
   if (pmodel->frameNum < 1 || pmodel->frameNum > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u", *mod->Name, pmodel->frameNum);
