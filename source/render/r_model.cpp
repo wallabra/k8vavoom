@@ -283,8 +283,13 @@ void R_FreeModels () {
 //  Mod_FindMeshModel
 //
 //==========================================================================
-static VMeshModel *Mod_FindMeshModel (const VStr &name, int meshIndex) {
+static VMeshModel *Mod_FindMeshModel (VStr filename, VStr name, int meshIndex) {
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
+
+  if (name.indexOf('/') < 0) {
+    filename = filename.ExtractFilePath().toLowerCase();
+    if (filename.length()) name = filename+name;
+  }
 
   // search the currently loaded models
   for (int i = 0; i < GMeshModels.Num(); ++i) {
@@ -334,7 +339,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
         Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
       }
 
-      Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
+      Md2.Model = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
 
       // version
       Md2.Version = -1;
@@ -343,7 +348,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       // position model
       Md2.PositionModel = nullptr;
       if (SN->HasAttribute("position_file")) {
-        Md2.PositionModel = Mod_FindMeshModel(SN->GetAttribute("position_file").ToLower().FixFileSlashes(), Md2.MeshIndex);
+        Md2.PositionModel = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("position_file").ToLower().FixFileSlashes(), Md2.MeshIndex);
       }
 
       // skin animation
@@ -431,6 +436,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       for (VXmlNode *SkN = SN->FindChild("skin"); SkN; SkN = SkN->FindNext()) {
         VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
         if (sfl.length()) {
+          if (sfl.indexOf('/') < 0) sfl = Md2.Model->Name.ExtractFilePath()+sfl;
           if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
           Md2.Skins.Append(*sfl);
           int shade = -1;
@@ -462,9 +468,9 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
                 VScriptSubModel &newmdl = SMdl.SubModels.Alloc();
                 newmdl.copyFrom(Md2);
                 newmdl.MeshIndex = f;
-                newmdl.Model = Mod_FindMeshModel(newmdl.Model->Name, newmdl.MeshIndex);
+                newmdl.Model = Mod_FindMeshModel(Mdl->Name, newmdl.Model->Name, newmdl.MeshIndex);
                 if (newmdl.PositionModel) {
-                  newmdl.PositionModel = Mod_FindMeshModel(newmdl.PositionModel->Name, newmdl.MeshIndex);
+                  newmdl.PositionModel = Mod_FindMeshModel(Mdl->Name, newmdl.PositionModel->Name, newmdl.MeshIndex);
                 }
               }
             } else {
@@ -879,7 +885,13 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
 
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
-  for (unsigned i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*getStrZ(pskindesc[i].name, 64).ToLower());
+  for (unsigned i = 0; i < pmodel->numskins; ++i) {
+    //mod->Skins.Append(*getStrZ(pskindesc[i].name, 64).ToLower());
+    VStr name = getStrZ(pskindesc[i].name, 64).toLowerCase();
+    // prepend model path
+    if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name.ExtractFileBaseName();
+    mod->Skins.Append(*name);
+  }
 
   mod->loaded = true;
 }
@@ -957,11 +969,11 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);
   for (unsigned i = 0; i < pmesh->shaderNum; ++i) {
     pshader[i].index = LittleLong(pshader[i].index);
-    VStr name = getStrZ(pshader[i].name, 64);
+    VStr name = getStrZ(pshader[i].name, 64).toLowerCase();
     // prepend model path
-    if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name;
+    if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name.ExtractFileBaseName();
     //GCon->Logf("SKIN: %s", *name);
-    mod->Skins.Append(*name.ToLower());
+    mod->Skins.Append(*name);
   }
 
   // convert S and T (texture coordinates)
@@ -1407,19 +1419,19 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     // get and verify frame number
     int Md2Frame = F.Index;
     if ((unsigned)Md2Frame >= (unsigned)SubMdl.Model->Frames.length()) {
-      GCon->Logf(NAME_Dev, "no such frame %d in %s", Md2Frame, *SubMdl.Model->Name);
-      Md2Frame = 0;
+      GCon->Logf(NAME_Dev, "no such frame %d in model '%s'", Md2Frame, *SubMdl.Model->Name);
+      Md2Frame = (Md2Frame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
       // stop further warnings
-      F.Index = 0;
+      F.Index = Md2Frame;
     }
 
     // get and verify next frame number
     int Md2NextFrame = NF.Index;
     if ((unsigned)Md2NextFrame >= (unsigned)SubMdl.Model->Frames.length()) {
-      GCon->Logf(NAME_Dev, "no such next frame %d in %s", Md2NextFrame, *SubMdl.Model->Name);
-      Md2NextFrame = 0;
+      GCon->Logf(NAME_Dev, "no such next frame %d in model '%s'", Md2NextFrame, *SubMdl.Model->Name);
+      Md2NextFrame = (Md2NextFrame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
       // stop further warnings
-      NF.Index = 0;
+      NF.Index = Md2NextFrame;
     }
 
     // position
