@@ -296,7 +296,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       VScriptSubModel &Md2 = SMdl.SubModels.Alloc();
 
       Md2.MeshIndex = 0;
-      if (SN->HasAttribute("mesh")) Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh"));
+      if (SN->HasAttribute("mesh_index")) Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
 
       Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
 
