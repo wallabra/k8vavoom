@@ -157,6 +157,8 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VMeshFrame {
+  TVec Scale;
+  TVec Origin;
   TVec *Verts;
   TVec *Normals;
   TPlane *Planes;
@@ -190,7 +192,8 @@ struct mmdl_t;
 
 struct VMeshModel {
   VStr Name;
-  mmdl_t *Data; // only access through Mod_Extradata
+  bool loaded;
+  //mmdl_t *Data; // only access through Mod_Extradata
   TArray<VName> Skins;
   TArray<VMeshFrame> Frames;
   TArray<TVec> AllVerts;

@@ -33,6 +33,9 @@
 #define IDPOLY2HEADER  (((vuint32)'2'<<24)+((vuint32)'P'<<16)+((vuint32)'D'<<8)+(vuint32)'I')
 #define ALIAS_VERSION  (8)
 
+#define IDPOLY3HEADER  (((vuint32)'3'<<24)+((vuint32)'P'<<16)+((vuint32)'D'<<8)+(vuint32)'I')
+#define MD3_VERSION    (15)
+
 // TODO: tune this
 #define MAXALIASVERTS    (16000)
 #define MAXALIASSTVERTS  (16000)

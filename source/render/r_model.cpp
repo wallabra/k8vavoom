@@ -231,7 +231,7 @@ void R_FreeModels () {
   mod_known.Clear();
 
   for (int i = 0; i < GMeshModels.Num(); ++i) {
-    if (GMeshModels[i]->Data) Z_Free(GMeshModels[i]->Data);
+    //if (GMeshModels[i]->Data) Z_Free(GMeshModels[i]->Data);
     delete GMeshModels[i];
     GMeshModels[i] = nullptr;
   }
@@ -260,7 +260,8 @@ static VMeshModel *Mod_FindMeshModel (const VStr &name) {
 
   VMeshModel *mod = new VMeshModel();
   mod->Name = name;
-  mod->Data = nullptr;
+  //mod->Data = nullptr;
+  mod->loaded = false;
   GMeshModels.Append(mod);
 
   return mod;
@@ -288,7 +289,8 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     SMdl.Name = *N->GetAttribute("name");
 
     // process model parts
-    for (VXmlNode *SN = N->FindChild("md2"); SN; SN = SN->FindNext()) {
+    const char *mdx = (N->FindChild("md2") ? "md2" : "md3");
+    for (VXmlNode *SN = N->FindChild(mdx); SN; SN = SN->FindNext()) {
       VScriptSubModel &Md2 = SMdl.SubModels.Alloc();
       Md2.Model = Mod_FindMeshModel(SN->GetAttribute("file").ToLower().FixFileSlashes());
 
@@ -575,17 +577,17 @@ static void AddEdge (TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
 
 //==========================================================================
 //
-//  Mod_SwapAliasModel
+//  Mod_BuildFrames
 //
 //==========================================================================
-static void Mod_BuildFrames (VMeshModel *mod) {
+static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   mmdl_t *pmodel;
   mstvert_t *pstverts;
   mtriangle_t *ptri;
   mframe_t *pframe;
   vint32 *pcmds;
 
-  pmodel = mod->Data;
+  pmodel = (mmdl_t *)/*mod->*/Data;
   mod->Uploaded = false;
   mod->VertsBuffer = 0;
   mod->IndexBuffer = 0;
@@ -620,31 +622,12 @@ static void Mod_BuildFrames (VMeshModel *mod) {
     for (unsigned j = 0; j < 3; ++j) {
       ptri[i].vertindex[j] = LittleShort(ptri[i].vertindex[j]);
       ptri[i].stvertindex[j] = LittleShort(ptri[i].stvertindex[j]);
-      /*k8: who cares?
-      bool found = false;
-      for (int vi = 0; vi < VertMap.Num(); ++vi) {
-        if (VertMap[vi].VertIndex == ptri[i].vertindex[j] &&
-            VertMap[vi].STIndex == ptri[i].stvertindex[j])
-        {
-          found = true;
-          mod->Tris[i].VertIndex[j] = vi;
-          break;
-        }
-      }
-      if (!found) {
-        mod->Tris[i].VertIndex[j] = VertMap.Num();
-        TVertMap &V = VertMap.Alloc();
-        V.VertIndex = ptri[i].vertindex[j];
-        V.STIndex = ptri[i].stvertindex[j];
-      }
-      */
       mod->Tris[i].VertIndex[j] = VertMap.length();
       TVertMap &v = VertMap.alloc();
       v.VertIndex = ptri[i].vertindex[j];
       v.STIndex = ptri[i].stvertindex[j];
     }
     for (unsigned j = 0; j < 3; ++j) {
-      //AddEdge(Edges, mod->Tris[i].VertIndex[j], ptri[i].vertindex[j], mod->Tris[i].VertIndex[(j+1)%3], ptri[i].vertindex[(j+1)%3], i);
       AddEdge(Edges, mod->Tris[i].VertIndex[j], mod->Tris[i].VertIndex[(j+1)%3], i);
     }
   }
@@ -683,6 +666,8 @@ static void Mod_BuildFrames (VMeshModel *mod) {
     pframe->scale_origin[2] = LittleFloat(pframe->scale_origin[2]);
 
     VMeshFrame &Frame = mod->Frames[i];
+    Frame.Scale = TVec(pframe->scale[0], pframe->scale[1], pframe->scale[2]);
+    Frame.Origin = TVec(pframe->scale_origin[0], pframe->scale_origin[1], pframe->scale_origin[2]);
     Frame.Verts = &mod->AllVerts[i*VertMap.Num()];
     Frame.Normals = &mod->AllNormals[i*VertMap.Num()];
     Frame.Planes = &mod->AllPlanes[i*pmodel->numtris];
@@ -809,32 +794,45 @@ static void Mod_BuildFrames (VMeshModel *mod) {
 
 //==========================================================================
 //
+//  Mod_BuildFramesMD3
+//
+//==========================================================================
+static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
+  Sys_Error("MD3 models aren't supported yet");
+}
+
+
+//==========================================================================
+//
 //  Mod_ParseModel
 //
 //  Loads the data if needed
 //
 //==========================================================================
-static mmdl_t *Mod_ParseModel (VMeshModel *mod) {
-  if (mod->Data) return mod->Data;
+static void Mod_ParseModel (VMeshModel *mod) {
+  if (mod->loaded) return;
 
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
   if (!Strm) Sys_Error("Couldn't load %s", *mod->Name);
 
-  mod->Data = (mmdl_t *)Z_Malloc(Strm->TotalSize());
-  Strm->Serialise(mod->Data, Strm->TotalSize());
+  vuint8 *Data = (vuint8 *)Z_Malloc(Strm->TotalSize());
+  Strm->Serialise(Data, Strm->TotalSize());
   delete Strm;
-  Strm = nullptr;
 
-  if (LittleLong(*(vuint32 *)mod->Data) != IDPOLY2HEADER) {
-    Z_Free(mod->Data);
-    Sys_Error("model %s is not a md2 model", *mod->Name);
+  if (LittleLong(*(vuint32 *)Data) == IDPOLY2HEADER) {
+    // swap model
+    Mod_BuildFrames(mod, Data);
+    mod->loaded = true;
+  } else if (LittleLong(*(vuint32 *)Data) == IDPOLY3HEADER) {
+    // swap model
+    Mod_BuildFramesMD3(mod, Data);
+    mod->loaded = true;
+  } else {
+    Sys_Error("model %s is not an md2/md3 model", *mod->Name);
   }
 
-  // swap model
-  Mod_BuildFrames(mod);
-
-  return mod->Data;
+  Z_Free(Data);
 }
 
 
@@ -844,17 +842,25 @@ static mmdl_t *Mod_ParseModel (VMeshModel *mod) {
 //
 //==========================================================================
 static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int InFrame) {
-  mmdl_t *pmdl = (mmdl_t *)Mod_ParseModel(wpmodel);
+  /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(wpmodel);
   unsigned frame = (unsigned)InFrame;
-  if (frame >= pmdl->numframes) frame = 0;
+  if (frame >= /*pmdl->numframes*/(unsigned)wpmodel->Frames.length()) frame = 0;
+  TVec p[3];
+/*
   mtriangle_t *ptris = (mtriangle_t *)((vuint8 *)pmdl+pmdl->ofstris);
   mframe_t *pframe = (mframe_t *)((vuint8 *)pmdl+pmdl->ofsframes+frame*pmdl->framesize);
   trivertx_t *pverts = (trivertx_t *)(pframe+1);
-  TVec p[3];
   for (int vi = 0; vi < 3; ++vi) {
     p[vi].x = pverts[ptris[0].vertindex[vi]].v[0]*pframe->scale[0]+pframe->scale_origin[0];
     p[vi].y = pverts[ptris[0].vertindex[vi]].v[1]*pframe->scale[1]+pframe->scale_origin[1];
     p[vi].z = pverts[ptris[0].vertindex[vi]].v[2]*pframe->scale[2]+pframe->scale_origin[2];
+  }
+*/
+  const VMeshFrame &frm = wpmodel->Frames[(int)frame];
+  for (int vi = 0; vi < 3; ++vi) {
+    p[vi].x = frm.Verts[0].x*frm.Scale.x+frm.Origin.x;
+    p[vi].y = frm.Verts[0].y*frm.Scale.y+frm.Origin.y;
+    p[vi].z = frm.Verts[0].z*frm.Scale.z+frm.Origin.z;
   }
   TVec md_forward(0, 0, 0), md_left(0, 0, 0), md_up(0, 0, 0);
   AngleVectors(Angles, md_forward, md_left, md_up);
@@ -1029,7 +1035,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     VScriptSubModel::VFrame &NF = SubMdl.Frames[NFDef.FrameIndex];
 
     // locate the proper data
-    mmdl_t *pmdl = (mmdl_t *)Mod_ParseModel(SubMdl.Model);
+    /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(SubMdl.Model);
     //FIXME: this should be done earilier
     if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
 
@@ -1051,7 +1057,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin, SubMdl.SkinShades[Md2SkinIdx]);
       }
     } else {
-      if ((unsigned)Md2SkinIdx >= pmdl->numskins) {
+      if ((unsigned)Md2SkinIdx >= (unsigned)SubMdl.Model->Frames.length()) {
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[0], TEXTYPE_Skin);
       } else {
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx], TEXTYPE_Skin);
@@ -1060,7 +1066,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // get and verify frame number
     int Md2Frame = F.Index;
-    if ((unsigned)Md2Frame >= pmdl->numframes) {
+    if ((unsigned)Md2Frame >= (unsigned)SubMdl.Model->Frames.length()) {
       GCon->Logf(NAME_Dev, "no such frame %d in %s", Md2Frame, *SubMdl.Model->Name);
       Md2Frame = 0;
       // stop further warnings
@@ -1069,7 +1075,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // get and verify next frame number
     int Md2NextFrame = NF.Index;
-    if ((unsigned)Md2NextFrame >= pmdl->numframes) {
+    if ((unsigned)Md2NextFrame >= (unsigned)SubMdl.Model->Frames.length()) {
       GCon->Logf(NAME_Dev, "no such next frame %d in %s", Md2NextFrame, *SubMdl.Model->Name);
       Md2NextFrame = 0;
       // stop further warnings
