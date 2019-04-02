@@ -654,8 +654,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   opt.AddItem("Select automatically", 0);
-  opt.AddItem("Lightmapped (recommended)", 1);
-  opt.AddItem("Stencil (experimental)", 2);
+  opt.AddItem("Lightmaps (Quake-style)", 1);
+  opt.AddItem("Stencil Shadows (DooM 3-style)", 2);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
