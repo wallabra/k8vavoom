@@ -105,6 +105,9 @@ public:
   static float atof (const char *s) { float res = 0; convertFloat(s, &res, nullptr); return res; }
   static float atof (const char *s, float defval) { float res = 0; convertFloat(s, &res, &defval); return res; }
 
+  static float atoi (const char *s) { int res = 0; if (!convertInt(s, &res)) res = 0; return res; }
+  static float atoi (const char *s, int defval) { int res = 0; if (!convertInt(s, &res)) res = defval; return res; }
+
   enum { FloatBufSize = 16 };
   static int float2str (char *buf, float v); // 0-terminated
 
