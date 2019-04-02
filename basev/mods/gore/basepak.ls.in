@@ -10,7 +10,7 @@ $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
 // models
-$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
+//$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
 
 // progs
 $recursedir progs/  @CMAKE_CURRENT_SOURCE_DIR@/progs/
