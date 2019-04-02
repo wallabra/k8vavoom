@@ -88,4 +88,80 @@ struct trivertx_t {
   vuint8 lightnormalindex;
 };
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+// md3
+struct MD3Header {
+  char sign[4];
+  vuint32 ver;
+  char name[64];
+  vuint32 flags;
+  vuint32 frameNum;
+  vuint32 tagNum;
+  vuint32 surfaceNum;
+  vuint32 skinNum;
+  vuint32 frameOfs;
+  vuint32 tagOfs;
+  vuint32 surfaceOfs;
+  vuint32 eofOfs;
+};
+
+struct MD3Frame {
+  float bmin[3];
+  float bmax[3];
+  float origin[3];
+  float radius;
+  char name[16];
+};
+
+struct MD3Tag {
+  char name[64];
+  float origin[3];
+  float axes[3][3];
+};
+
+struct MD3Shader {
+  char name[64];
+  vuint32 index;
+};
+
+struct MD3Tri {
+  vuint32 v0, v1, v2;
+};
+
+struct MD3ST {
+  float s, t;
+};
+
+struct MD3Vertex {
+  vint16 x, y, z;
+  vuint16 normal;
+};
+
+struct MD3Surface {
+  char sign[4];
+  vuint32 ver;
+  char name[64];
+  vuint32 flags;
+  vuint32 frameNum;
+  vuint32 shaderNum;
+  vuint32 vertNum;
+  vuint32 triNum;
+  vuint32 triOfs;
+  vuint32 shaderOfs;
+  vuint32 stOfs;
+  vuint32 vertOfs;
+  vuint32 endOfs;
+};
+
+
+static inline __attribute__((unused)) TVec md3vert (const MD3Vertex *v) { return TVec(v->x/64.0f, v->y/64.0f, v->z/64.0f); }
+
+static inline __attribute__((unused)) TVec md3vertNormal (const MD3Vertex *v) {
+  const float lat = ((v->normal>>8)&0xff)*(2*M_PI)/255.0f;
+  const float lng = (v->normal&0xff)*(2*M_PI)/255.0f;
+  return TVec(cosf(lat)*sinf(lng), sinf(lat)*sinf(lng), cosf(lng));
+}
+
+
 #pragma pack(pop)
