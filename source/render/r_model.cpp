@@ -669,7 +669,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   mod->AllPlanes.SetNum(pmodel->numframes*pmodel->numtris);
   pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
 
-  int triIgonded = 0;
+  int triIgnored = 0;
   for (unsigned i = 0; i < pmodel->numframes; ++i) {
     pframe->scale[0] = LittleFloat(pframe->scale[0]);
     pframe->scale[1] = LittleFloat(pframe->scale[1]);
@@ -731,7 +731,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
       const float PlaneDist = DotProduct(PlaneNormal, v3);
       Frame.Planes[j].Set(PlaneNormal, PlaneDist);
       if (reported) {
-        ++triIgonded;
+        ++triIgnored;
         if (mdl_report_errors) GCon->Logf("  triangle #%u is ignored", j);
         if (validTri.length()) validTri[j] = 0;
       } else {
@@ -759,7 +759,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
       memcpy(mod->Tris.ptr(), NewTris.ptr(), NewTris.length()*sizeof(VMeshTri));
       pmodel->numtris = Frame.TriCount;
       if (showError) {
-        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgonded, pmodel->numtris);
+        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgnored, pmodel->numtris);
       }
       // rebuild edges
       mod->Edges.SetNum(0);
@@ -772,7 +772,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     }
   } else {
     if (hadError && showError) {
-      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgonded, pmodel->numtris);
+      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgnored, pmodel->numtris);
     }
   }
 
@@ -838,6 +838,18 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   if (pmodel->surfaceNum < 1) Sys_Error("model '%s' has no meshes", *mod->Name);
   if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes", *mod->Name, pmodel->surfaceNum);
 
+  // convert frame data
+  MD3Frame *pframe = (MD3Frame *)((vuint8 *)pmodel+pmodel->frameOfs);
+  for (unsigned i = 0; i < pmodel->frameNum; ++i) {
+    for (unsigned f = 0; f < 3; ++f) {
+      pframe[i].bmin[f] = LittleFloat(pframe[i].bmin[f]);
+      pframe[i].bmax[f] = LittleFloat(pframe[i].bmax[f]);
+      pframe[i].origin[f] = LittleFloat(pframe[i].origin[f]);
+    }
+    pframe[i].radius = LittleFloat(pframe[i].radius);
+  }
+
+
   // load first mesh
   MD3Surface *pmesh = (MD3Surface *)(Data+pmodel->surfaceOfs);
 
@@ -860,17 +872,6 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *mod->Name);
   if (pmesh->triNum > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
 
-  // convert frame data
-  MD3Frame *pframe = (MD3Frame *)((vuint8 *)pmodel+pmodel->frameOfs);
-  for (unsigned i = 0; i < pmesh->frameNum; ++i) {
-    for (unsigned f = 0; f < 3; ++f) {
-      pframe[i].bmin[f] = LittleFloat(pframe[i].bmin[f]);
-      pframe[i].bmax[f] = LittleFloat(pframe[i].bmax[f]);
-      pframe[i].origin[f] = LittleFloat(pframe[i].origin[f]);
-    }
-    pframe[i].radius = LittleFloat(pframe[i].radius);
-  }
-
   // convert and copy shader data
   MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);
   for (unsigned i = 0; i < pmesh->shaderNum; ++i) {
@@ -891,7 +892,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
 
   // convert vertex data
   MD3Vertex *pverts = (MD3Vertex *)((vuint8 *)pmesh+pmesh->vertOfs);
-  for (unsigned i = 0; i < pmesh->vertNum*pmesh->frameNum; ++i) {
+  for (unsigned i = 0; i < pmesh->vertNum*pmodel->frameNum; ++i) {
     pverts[i].x = LittleShort(pverts[i].x);
     pverts[i].y = LittleShort(pverts[i].y);
     pverts[i].z = LittleShort(pverts[i].z);
@@ -927,9 +928,9 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   }
 
   // copy vertices
-  mod->AllVerts.setLength(pmesh->frameNum*pmesh->vertNum);
-  mod->AllNormals.setLength(pmesh->frameNum*pmesh->vertNum);
-  for (unsigned i = 0; i < pmesh->vertNum*pmesh->frameNum; ++i) {
+  mod->AllVerts.setLength(pmodel->frameNum*pmesh->vertNum);
+  mod->AllNormals.setLength(pmodel->frameNum*pmesh->vertNum);
+  for (unsigned i = 0; i < pmesh->vertNum*pmodel->frameNum; ++i) {
     mod->AllVerts[i] = md3vert(pverts+i);
     mod->AllNormals[i] = md3vertNormal(pverts+i);
   }
@@ -940,16 +941,16 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
 
   // if we have only one frame, and that frame has invalid triangles, just rebuild it
   TArray<vuint8> validTri;
-  if (pmesh->frameNum == 1) {
+  if (pmodel->frameNum == 1) {
     validTri.setLength((int)pmesh->triNum);
     memset(validTri.ptr(), 0, pmesh->triNum);
   }
 
-  mod->Frames.setLength(pmesh->frameNum);
-  mod->AllPlanes.setLength(pmesh->frameNum*pmesh->triNum);
+  mod->Frames.setLength(pmodel->frameNum);
+  mod->AllPlanes.setLength(pmodel->frameNum*pmesh->triNum);
 
-  int triIgonded = 0;
-  for (unsigned i = 0; i < pmesh->frameNum; ++i, ++pframe) {
+  int triIgnored = 0;
+  for (unsigned i = 0; i < pmodel->frameNum; ++i, ++pframe) {
     VMeshFrame &Frame = mod->Frames[i];
     Frame.Name = getStrZ(pframe->name, 16);
     Frame.Scale = TVec(1.0f, 1.0f, 1.0f);
@@ -994,7 +995,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
       const float PlaneDist = DotProduct(PlaneNormal, v3);
       Frame.Planes[j].Set(PlaneNormal, PlaneDist);
       if (reported) {
-        ++triIgonded;
+        ++triIgnored;
         if (mdl_report_errors) GCon->Logf("  triangle #%u is ignored", j);
         if (validTri.length()) validTri[j] = 0;
       } else {
@@ -1003,7 +1004,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
     }
   }
 
-  if (pmesh->frameNum == 1 && validTri.length()) {
+  if (pmodel->frameNum == 1 && validTri.length()) {
     // rebuild triangle indicies, why not
     if (hadError) {
       VMeshFrame &Frame = mod->Frames[0];
@@ -1021,7 +1022,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
       memcpy(mod->Tris.ptr(), NewTris.ptr(), NewTris.length()*sizeof(VMeshTri));
       pmesh->triNum = Frame.TriCount;
       if (showError) {
-        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgonded, pmesh->triNum);
+        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgnored, pmesh->triNum);
       }
       // rebuild edges
       mod->Edges.setLength(0);
@@ -1034,7 +1035,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
     }
   } else {
     if (hadError && showError) {
-      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgonded, pmesh->triNum);
+      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgnored, pmesh->triNum);
     }
   }
 
