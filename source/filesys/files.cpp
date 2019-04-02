@@ -67,6 +67,7 @@ struct version_t {
   int ParmFound;
   bool FixVoices;
   VStr warp;
+  TArray<VStr> filters;
 };
 
 
@@ -86,6 +87,30 @@ static int IWadIndex;
 static VStr warpTpl;
 static TArray<ArgVarValue> preinitCV;
 static ArgVarValue emptyAV;
+static TArray<VStr> filters;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// removes prefix, returns filter index (or -1, and does nothing)
+int FL_CheckFilterName (VStr &fname) {
+  if (fname.isEmpty() || filters.length() == 0) return -1;
+  if (!fname.startsWithNoCase("filter/")) return -1;
+  //GCon->Logf("!!! %d", filters.length());
+  int bestIdx = -1;
+  for (int f = 0; f < filters.length(); ++f) {
+    const VStr &fs = filters[f];
+    //GCon->Logf("f=%d; fs=<%s>; fname=<%s>", f, *fs, *fname);
+    if (fname.length() > fs.length()+1 && fname[fs.length()] == '/' && fname.startsWith(fs)) {
+      bestIdx = f;
+    }
+  }
+  if (bestIdx >= 0) {
+    const VStr &fs = filters[bestIdx];
+    fname.chopLeft(fs.length()+1);
+    while (fname.length() && fname[0] == '/') fname.chopLeft(1);
+  }
+  return bestIdx;
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1021,6 +1046,11 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
         dst.warp = VStr(sc->String);
         continue;
       }
+      if (sc->Check("filter")) {
+        sc->ExpectString();
+        if (!sc->String.isEmpty()) dst.filters.append(VStr("filter/")+sc->String.toLowerCase());
+        continue;
+      }
       break;
     }
     sc->Expect("end");
@@ -1117,6 +1147,9 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
 
   if (mainWadPath.isEmpty()) Sys_Error("Main wad file \"%s\" not found.", (gmi.MainWads.length() ? *gmi.MainWads[0] : "<none>"));
 
+  //GCon->Logf("********* %d", gmi.filters.length());
+
+  filters = gmi.filters;
   warpTpl = gmi.warp;
 
   IWadIndex = SearchPaths.length();

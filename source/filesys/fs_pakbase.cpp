@@ -214,18 +214,29 @@ void VFileDirectory::clear () {
 }
 
 
+struct FilterItem {
+  int fileno; // file index
+  int filter; // filter number
+
+  FilterItem () {}
+  FilterItem (int afno, int afidx) : fileno(afno), filter(afidx) {}
+};
+
+
 //==========================================================================
 //
 //  VFileDirectory::buildLumpNames
 //
 //  won't touch entries with `lumpName != NAME_None`
 //
+//  this also performs filtering
+//
 //==========================================================================
 void VFileDirectory::buildLumpNames () {
   if (files.length() > 65520) Sys_Error("Archive \"%s\" contains too many files", *getArchiveName());
 
-  // index of the last overlong lump in `files`; -1 means "removed, and don't register anymore"
-  //TMap<VName, int> overlongLumps;
+  TMapNC<VName, FilterItem> flumpmap; // lump name -> filter info
+  TMap<VStr, FilterItem> fnamemap; // file name -> filter info
 
   for (int i = 0; i < files.length(); ++i) {
     VPakFileInfo &fi = files[i];
@@ -241,6 +252,22 @@ void VFileDirectory::buildLumpNames () {
       //!!!HACK!!!
       if (fi.fileName.Cmp("default.cfg") == 0) continue;
       if (fi.fileName.Cmp("startup.vs") == 0) continue;
+
+      VStr origName = fi.fileName;
+      int fidx = -1;
+
+      // filtering
+      if (fi.fileName.startsWith("filter/")) {
+        VStr fn = fi.fileName;
+        fidx = FL_CheckFilterName(fn);
+        //if (fidx >= 0) GCon->Logf("FILTER CHECK: fidx=%d; oname=<%s>; name=<%s>", fidx, *origName, *fn);
+        if (fidx < 0) {
+          // hide this file
+          fi.fileName.clear(); // hide this file
+          continue;
+        }
+        fi.fileName = fn;
+      }
 
       // set up lump name for WAD-like access
       VStr lumpName = fi.fileName.ExtractFileName().StripExtension();
@@ -293,41 +320,42 @@ void VFileDirectory::buildLumpNames () {
       //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
       //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 
+      // do filtering
+      if (fidx >= 0) {
+        // filter hit: check file name
+        VStr fn = fi.fileName;
+        auto np = fnamemap.find(fn);
+        if (np) {
+          // found previous file: hide it if it has lower filter index
+          if (np->filter > fidx) {
+            // hide this file
+            //GCon->Logf("removed '%s'", *origName);
+            fi.fileName.clear();
+            continue;
+          }
+        }
+        // put this file to name map
+        fnamemap.put(fn, FilterItem(i, fidx));
+        // check lump name
+        VName ln = (lumpName.length() ? VName(*lumpName, VName::AddLower8) : NAME_None);
+        if (ln != NAME_None) {
+          auto lp = flumpmap.find(ln);
+          if (lp) {
+            // found previous lump: hide it if it has lower filter index
+            if (lp->filter > fidx) {
+              // don't register this file as a lump
+              continue;
+            }
+          }
+          // put this lump to lump map
+          flumpmap.put(ln, FilterItem(i, fidx));
+        }
+        //GCon->Logf("replaced '%s' -> '%s' (%s)", *origName, *fn, *lumpName);
+      }
+
       // final lump name
       if (lumpName.length() != 0) {
         fi.lumpName = VName(*lumpName, VName::AddLower8);
-        // overlong checks
-        /*
-        if (lumpName.length() > 8) {
-          // new overlong lump
-          auto lip = overlongLumps.find(fi.lumpName);
-          if (lip) {
-            // already seen
-            if (*lip == -1) {
-              // don't register
-              fi.lumpName = NAME_None;
-            } else {
-              // insert into list
-              overlongLumps.put(fi.lumpName, i);
-            }
-          } else {
-            // remember first overlong lump
-            overlongLumps.put(fi.lumpName, i);
-          }
-        } else if (lumpName.length() == 8) {
-          // exact match, remove all previous overlong lumps (if there are any)
-          auto lip = overlongLumps.find(fi.lumpName);
-          if (lip && *lip >= 0) {
-            for (int xidx = *lip; xidx >= 0; --xidx) {
-              if (files[xidx].lumpName == fi.lumpName) {
-                if (!fsys_no_dup_reports) GCon->Logf(NAME_Init, "removing overlong lump <%s> (%s)", *fi.lumpName, *files[xidx].fileName);
-                files[xidx].lumpName = NAME_None;
-              }
-            }
-          }
-          overlongLumps.put(fi.lumpName, -1); // mark as found
-        }
-        */
       }
     }
   }

@@ -8,6 +8,12 @@ iwad doom2.wad
 altiwad doom2f.wad
 param -doom2
 warp MAP##
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom2
+filter doom.doom2.commercial
 end
 
 // Doom / Ultimate Doom
@@ -21,6 +27,13 @@ altiwad doom.wad
 altiwad doom1.wad
 param -doom
 warp E#M#
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom1
+filter doom.doom1.registered
+filter doom.doom1.ultimate
 end
 
 // Freedoom 1
@@ -29,6 +42,12 @@ base basev/doom
 iwad freedoom1.wad
 param -freedoom
 warp E#M#
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.freedoom
+filter doom.freedoom.phase1
 end
 
 // Freedoom 2
@@ -37,6 +56,12 @@ base basev/doom
 iwad freedoom2.wad
 param -freedoom2
 warp MAP##
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.freedoom
+filter doom.freedoom.phase2
 end
 
 // Doom II:TNT Evilution
@@ -46,6 +71,12 @@ base basev/doom2
 iwad tnt.wad
 param -tnt
 warp MAP##
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom2
+filter doom.doom2.tnt
 end
 
 // Doom II:The Plutonia Experiment
@@ -55,6 +86,12 @@ base basev/doom2
 iwad plutonia.wad
 param -plutonia
 warp MAP##
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom2
+filter doom.doom2.plutonia
 end
 
 // Heretic, Shareware Heretic
@@ -63,6 +100,10 @@ iwad heretic.wad
 altiwad heretic1.wad
 param -heretic
 warp E#M#
+filter game-raven
+filter heretic
+filter game-heretic
+filter heretic.heretic
 end
 
 // Hexen
@@ -70,6 +111,10 @@ game basev/hexen
 iwad hexen.wad
 param -hexen
 warp MAP##
+filter game-raven
+filter hexen
+filter game-hexen
+filter hexen.hexen
 end
 
 // Teaser Strife
@@ -77,6 +122,8 @@ game basev/strife
 iwad strife0.wad
 param -strifeteaser
 fixvoices
+filter strife
+filter game-strife
 end
 
 // Strife
@@ -84,6 +131,8 @@ game basev/strife
 iwad strife1.wad
 addfile optional voices.wad
 param -strife
+filter strife
+filter game-strife
 end
 
 // No Rest for the Living
@@ -94,6 +143,14 @@ iwad doom2.wad
 addfile nerve.wad
 param -nerve
 warp MAP##
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom2
+filter doom.doom2.commercial
+filter doom.doom2.nerve
+filter doom.doom2.bfg
 end
 
 // Doom:Complete

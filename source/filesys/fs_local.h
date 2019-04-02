@@ -349,6 +349,9 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
 
 bool VFS_ShouldIgnoreExt (const VStr &fname);
 
+// removes prefix, returns filter index (or -1, and does nothing)
+int FL_CheckFilterName (VStr &fname);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern const VPK3ResDirInfo PK3ResourceDirs[];

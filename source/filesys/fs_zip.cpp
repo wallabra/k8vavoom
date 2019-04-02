@@ -74,6 +74,7 @@ enum {
 
 static const char *moreresdirs[] = {
   "models/",
+  "filter/",
   nullptr,
 };
 
