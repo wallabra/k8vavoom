@@ -491,8 +491,19 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     Cls->NoSelfShadow = (CN->HasAttribute("noselfshadow") ? !CN->GetAttribute("noselfshadow").ICmp("true") : false);
     Cls->OneForAll = false;
     Cls->CacheBuilt = false;
-    if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
-    ClassModels.Append(Cls);
+    bool deleteIt = false;
+    {
+      int fp = GArgs.CheckParm("-model-ignore-class");
+      while (++fp != GArgs.Count()) {
+        if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
+        VStr cname = VStr(GArgs[fp]);
+        if (cname.ICmp(*Cls->Name) == 0) { deleteIt = true; break; }
+      }
+    }
+    if (!deleteIt) {
+      if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
+      ClassModels.Append(Cls);
+    }
     ClassDefined = true;
     //GCon->Logf("found model for class '%s'", *Cls->Name);
 
@@ -589,6 +600,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       }
     }
     if (!Cls->Frames.Num()) Sys_Error("model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
+    if (deleteIt) { delete Cls; continue; }
     if (hasOneAll && !hasOthers) {
       Cls->OneForAll = true;
       //GCon->Logf("model '%s' for class '%s' is \"one-for-all\"", *Mdl->Name, *Cls->Name);
