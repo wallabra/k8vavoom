@@ -194,7 +194,6 @@ struct mmdl_t;
 struct VMeshModel {
   VStr Name;
   bool loaded;
-  //mmdl_t *Data; // only access through Mod_Extradata
   TArray<VName> Skins;
   TArray<VMeshFrame> Frames;
   TArray<TVec> AllVerts;

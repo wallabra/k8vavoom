@@ -615,8 +615,8 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   if (pmodel->numtris <= 0) Sys_Error("model '%s' has no triangles", *mod->Name);
   if (pmodel->numtris > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
   //if (pmodel->skinwidth&0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
-  if (pmodel->numskins < 1 || pmodel->numskins > 1024) Sys_Error("model '%s' has invalid number of skins: %u\n", *mod->Name, pmodel->numskins);
-  if (pmodel->numframes < 1 || pmodel->numframes > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u\n", *mod->Name, pmodel->numframes);
+  if (pmodel->numskins < 1 || pmodel->numskins > 1024) Sys_Error("model '%s' has invalid number of skins: %u", *mod->Name, pmodel->numskins);
+  if (pmodel->numframes < 1 || pmodel->numframes > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u", *mod->Name, pmodel->numframes);
 
   // base s and t vertices
   pstverts = (mstvert_t *)((vuint8 *)pmodel+pmodel->ofsstverts);
@@ -834,9 +834,9 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   pmodel->eofOfs = LittleLong(pmodel->eofOfs);
 
   if (pmodel->ver != MD3_VERSION) Sys_Error("model '%s' has wrong version number (%u should be %i)", *mod->Name, pmodel->ver, MD3_VERSION);
-  if (pmodel->frameNum < 1 || pmodel->frameNum > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u\n", *mod->Name, pmodel->frameNum);
+  if (pmodel->frameNum < 1 || pmodel->frameNum > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u", *mod->Name, pmodel->frameNum);
   if (pmodel->surfaceNum < 1) Sys_Error("model '%s' has no meshes", *mod->Name);
-  if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes\n", *mod->Name, pmodel->surfaceNum);
+  if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes", *mod->Name, pmodel->surfaceNum);
 
   // load first mesh
   MD3Surface *pmesh = (MD3Surface *)(Data+pmodel->surfaceOfs);
@@ -853,8 +853,8 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   pmesh->vertOfs = LittleLong(pmesh->vertOfs);
   pmesh->endOfs = LittleLong(pmesh->endOfs);
 
-  if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u\n", *mod->Name, pmesh->shaderNum);
-  if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh\n", *mod->Name);
+  if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *mod->Name, pmesh->shaderNum);
+  if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh", *mod->Name);
   if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *mod->Name);
   if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
   if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *mod->Name);
