@@ -577,6 +577,19 @@ static void AddEdge (TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
 
 //==========================================================================
 //
+//  getStrZ
+//
+//==========================================================================
+static VStr getStrZ (const char *s, unsigned maxlen) {
+  if (!s || maxlen == 0 || !s[0]) return VStr::EmptyString;
+  const char *se = s;
+  while (maxlen-- && *se) ++se;
+  return VStr(s, (int)(ptrdiff_t)(se-s));
+}
+
+
+//==========================================================================
+//
 //  Mod_BuildFrames
 //
 //==========================================================================
@@ -666,6 +679,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     pframe->scale_origin[2] = LittleFloat(pframe->scale_origin[2]);
 
     VMeshFrame &Frame = mod->Frames[i];
+    Frame.Name = getStrZ(pframe->name, 16);
     Frame.Scale = TVec(pframe->scale[0], pframe->scale[1], pframe->scale[2]);
     Frame.Origin = TVec(pframe->scale_origin[0], pframe->scale_origin[1], pframe->scale_origin[2]);
     Frame.Verts = &mod->AllVerts[i*VertMap.Num()];
@@ -788,7 +802,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
 
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
-  for (unsigned i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*VStr(pskindesc[i].name).ToLower());
+  for (unsigned i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*getStrZ(pskindesc[i].name, 64).ToLower());
 }
 
 

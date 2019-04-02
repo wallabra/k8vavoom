@@ -157,6 +157,7 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VMeshFrame {
+  VStr Name;
   TVec Scale;
   TVec Origin;
   TVec *Verts;
