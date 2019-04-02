@@ -211,7 +211,7 @@ BUTTON(MouseLook)
 void TKButton::KeyDown (const char *c) {
   int k = -1;
 
-  if (c && c[0]) k = atoi(c); // otherwise, typed manually at the console for continuous down
+  if (c && c[0]) k = VStr::atoi(c); // otherwise, typed manually at the console for continuous down
 
   if (k == down[0] || k == down[1]) return; // repeating key
 
@@ -238,7 +238,7 @@ void TKButton::KeyUp (const char *c) {
     return;
   }
 
-  int k = atoi(c);
+  int k = VStr::atoi(c);
 
        if (down[0] == k) down[0] = 0;
   else if (down[1] == k) down[1] = 0;
@@ -308,7 +308,7 @@ void TCmdKeyUp::Run () {
 //==========================================================================
 COMMAND(Impulse) {
   if (Args.Num() < 2) return;
-  impulse_cmd = atoi(*Args[1]);
+  impulse_cmd = VStr::atoi(*Args[1]);
 }
 
 

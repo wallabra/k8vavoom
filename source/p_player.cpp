@@ -318,7 +318,7 @@ void VBasePlayer::SetUserInfo (const VStr &info) {
 //
 //==========================================================================
 void VBasePlayer::ReadFromUserInfo () {
-  if (!sv_loading) BaseClass = atoi(*Info_ValueForKey(UserInfo, "class"));
+  if (!sv_loading) BaseClass = VStr::atoi(*Info_ValueForKey(UserInfo, "class"));
   PlayerName = Info_ValueForKey(UserInfo, "name");
   VStr val = Info_ValueForKey(UserInfo, "colour");
   Colour = M_ParseColour(*val);

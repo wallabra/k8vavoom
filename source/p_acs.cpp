@@ -7024,13 +7024,13 @@ COMMAND(Puke) {
 
   if (Args.Num() < 2) return;
 
-  int Script = atoi(*Args[1]);
+  int Script = VStr::atoi(*Args[1]);
   if (Script == 0) return; // script 0 is special
 
   int ScArgs[4];
   for (int i = 0; i < 4; ++i) {
     if (Args.Num() >= i+3) {
-      ScArgs[i] = atoi(*Args[i+2]);
+      ScArgs[i] = VStr::atoi(*Args[i+2]);
     } else {
       ScArgs[i] = 0;
     }
@@ -7060,7 +7060,7 @@ COMMAND(PukeName) {
   int ScArgs[4];
   for (int i = 0; i < 4; ++i) {
     if (Args.Num() >= i+3) {
-      ScArgs[i] = atoi(*Args[i+2]);
+      ScArgs[i] = VStr::atoi(*Args[i+2]);
     } else {
       ScArgs[i] = 0;
     }

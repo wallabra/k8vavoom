@@ -89,7 +89,7 @@ static void PutEndText (const char *text) {
   // if the xterm has more then 80 columns we need to add nl's
   col = getenv("COLUMNS");
   if (col) {
-    if (atoi(col) > 80) ++nlflag;
+    if (VStr::atoi(col) > 80) ++nlflag;
   } else {
     ++nlflag;
   }

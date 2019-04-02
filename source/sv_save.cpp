@@ -2101,7 +2101,7 @@ COMMAND(Save) {
 
   Draw_SaveIcon();
 
-  SV_SaveGame(atoi(*Args[1]), Args[2], false); // not a checkpoint
+  SV_SaveGame(VStr::atoi(*Args[1]), Args[2], false); // not a checkpoint
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game saved.");
@@ -2166,7 +2166,7 @@ COMMAND(Load) {
 
   if (!CheckIfLoadIsAllowed()) return;
 
-  int slot = atoi(*Args[1]);
+  int slot = VStr::atoi(*Args[1]);
   VStr desc;
   if (!SV_GetSaveString(slot, desc)) {
     BroadcastSaveText("Empty slot!");

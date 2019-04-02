@@ -186,7 +186,7 @@ VNetwork::~VNetwork () {
 //==========================================================================
 void VNetwork::Init () {
   const char *p = GArgs.CheckValue("-port");
-  if (p) DefaultHostPort = atoi(p);
+  if (p) DefaultHostPort = VStr::atoi(p);
   HostPort = DefaultHostPort;
 
 #ifdef CLIENT
@@ -766,7 +766,7 @@ COMMAND(Listen) {
     GCon->Logf("\"listen\" is \"%d\"", Net->Listening ? 1 : 0);
     return;
   }
-  Net->Listening = (atoi(*Args[1]) ? true : false);
+  Net->Listening = (VStr::atoi(*Args[1]) ? true : false);
   for (int i = 0; i < VNetwork::NumDrivers; ++i) {
     if (VNetwork::Drivers[i]->initialised == false) continue;
     VNetwork::Drivers[i]->Listen(Net->Listening);
@@ -789,7 +789,7 @@ COMMAND(Port) {
     return;
   }
 
-  n = atoi(*Args[1]);
+  n = VStr::atoi(*Args[1]);
   if (n < 1 || n > 65534) {
     GCon->Log("Bad value, must be between 1 and 65534");
     return;

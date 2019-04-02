@@ -280,7 +280,7 @@ static bool ParseParam () {
 
   ValueString = val+1;
   while (*ValueString && *(vuint8 *)ValueString <= ' ') ++ValueString;
-  value = atoi(ValueString);
+  value = VStr::atoi(ValueString);
 
   do {
     *val = 0;
@@ -400,7 +400,7 @@ static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
   if (FlagName.Length() == 0) return;
   if (FlagName[0] >= '0' && FlagName[0] <= '9') {
     // clear flags that were not used by Doom engine as well as SLIDE flag which desn't exist anymore
-    Values[0] = atoi(*FlagName)&0x0fffdfff;
+    Values[0] = VStr::atoi(*FlagName)&0x0fffdfff;
     Changed[0] = true;
     return;
   }
@@ -900,7 +900,7 @@ static void ReadPointer (int num) {
 static void ReadCodePtr (int) {
   while (ParseParam()) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
-      int Index = atoi(String+5);
+      int Index = VStr::atoi(String+5);
       if (Index < 0 || Index >= States.Num()) {
         Warning("Bad frame index %d", Index);
         continue;
@@ -1143,7 +1143,7 @@ static void ReadText (int oldSize) {
 
   lenPtr = strtok(nullptr, " \t");
   if (!lenPtr) return;
-  newSize = atoi(lenPtr);
+  newSize = VStr::atoi(lenPtr);
 
   oldStr = new char[oldSize+1];
   newStr = new char[newSize+1];
@@ -1323,7 +1323,7 @@ static void LoadDehackedFile (VStream *Strm) {
 
     char *numStr = strtok(nullptr, " \t");
     int i = 0;
-    if (numStr) i = atoi(numStr);
+    if (numStr) i = VStr::atoi(numStr);
 
          if (!VStr::ICmp(Section, "Thing")) ReadThing(i);
     else if (!VStr::ICmp(Section, "Sound")) ReadSound(i);

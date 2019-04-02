@@ -354,19 +354,19 @@ void InitMapInfo () {
 
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (VStr(MapInfo[i].NextMap).StartsWith("&wt@")) {
-      MapInfo[i].NextMap = P_TranslateMap(atoi(*MapInfo[i].NextMap+4));
+      MapInfo[i].NextMap = P_TranslateMap(VStr::atoi(*MapInfo[i].NextMap+4));
     }
     if (VStr(MapInfo[i].SecretMap).StartsWith("&wt@")) {
-      MapInfo[i].SecretMap = P_TranslateMap(atoi(*MapInfo[i].SecretMap+4));
+      MapInfo[i].SecretMap = P_TranslateMap(VStr::atoi(*MapInfo[i].SecretMap+4));
     }
   }
 
   for (int i = 0; i < EpisodeDefs.Num(); ++i) {
     if (VStr(EpisodeDefs[i].Name).StartsWith("&wt@")) {
-      EpisodeDefs[i].Name = P_TranslateMap(atoi(*EpisodeDefs[i].Name+4));
+      EpisodeDefs[i].Name = P_TranslateMap(VStr::atoi(*EpisodeDefs[i].Name+4));
     }
     if (VStr(EpisodeDefs[i].TeaserName).StartsWith("&wt@")) {
-      EpisodeDefs[i].TeaserName = P_TranslateMap(atoi(*EpisodeDefs[i].TeaserName+4));
+      EpisodeDefs[i].TeaserName = P_TranslateMap(VStr::atoi(*EpisodeDefs[i].TeaserName+4));
     }
   }
 
@@ -1138,7 +1138,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   // set default levelnum for this map
   const char *mn = *MapLumpName;
   if (mn[0] == 'm' && mn[1] == 'a' && mn[2] == 'p' && mn[5] == 0) {
-    int num = atoi(mn+3);
+    int num = VStr::atoi(mn+3);
     if (num >= 1 && num <= 99) info->LevelNum = num;
   } else if (mn[0] == 'e' && mn[1] >= '0' && mn[1] <= '9' &&
              mn[2] == 'm' && mn[3] >= '0' && mn[3] <= '9')

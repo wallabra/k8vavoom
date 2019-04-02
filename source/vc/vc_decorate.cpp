@@ -456,7 +456,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_int_const") {
         VPropDef &P = Lst.NewProp(PROP_IntConst, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
-        P.IConst = atoi(*PN->GetAttribute("value")); //FIXME
+        P.IConst = VStr::atoi(*PN->GetAttribute("value")); //FIXME
       } else if (PN->Name == "prop_int_unsupported") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN);
       } else if (PN->Name == "prop_float_unsupported") {
@@ -620,8 +620,8 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "flag_byte") {
         VFlagDef &F = Lst.NewFlag(FLAG_Byte, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
-        F.BTrue = atoi(*PN->GetAttribute("true_value")); //FIXME
-        F.BFalse = atoi(*PN->GetAttribute("false_value")); //FIXME
+        F.BTrue = VStr::atoi(*PN->GetAttribute("true_value")); //FIXME
+        F.BFalse = VStr::atoi(*PN->GetAttribute("false_value")); //FIXME
       } else if (PN->Name == "flag_float") {
         VFlagDef &F = Lst.NewFlag(FLAG_Float, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -2491,7 +2491,7 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
     int DurColon = Tokens[TokIdx].IndexOf(':');
     float Duration = 4;
     if (DurColon >= 0) {
-      Duration = atoi(pFrame);
+      Duration = VStr::atoi(pFrame);
       if (Duration < 1 || Duration > 65534) sc->Error ("Rates must be in the range [0,65534]");
       pFrame = *Tokens[TokIdx]+DurColon+1;
     }

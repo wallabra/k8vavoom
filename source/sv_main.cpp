@@ -688,7 +688,7 @@ COMMAND(TeleportNewMap) {
 
   if (Args.Num() == 3) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
-    LeavePosition = atoi(*Args[2]);
+    LeavePosition = VStr::atoi(*Args[2]);
   } else if (sv.intermission != 1) {
     return;
   }
@@ -1395,7 +1395,7 @@ COMMAND(MaxPlayers) {
     return;
   }
 
-  int n = atoi(*Args[1]);
+  int n = VStr::atoi(*Args[1]);
   if (n < 1) n = 1;
   if (n > MAXPLAYERS) {
     n = MAXPLAYERS;

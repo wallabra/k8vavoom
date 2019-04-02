@@ -544,7 +544,7 @@ int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int Defa
     addr = (addr<<8)+num;
   }
 
-  if (*b++ == ':') port = atoi(b); else port = DefaultPort;
+  if (*b++ == ':') port = VStr::atoi(b); else port = DefaultPort;
 
   hostaddr->sa_family = AF_INET;
   ((sockaddr_in *)hostaddr)->sin_port = htons((short)port);
