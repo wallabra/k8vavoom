@@ -29,7 +29,7 @@ void main () {
   FinalColour_1.rgb *= FinalColour_1.a;
   FinalColour_1.a *= InAlpha;
   if (FinalColour_1.a < 0.01) discard;
-  FinalColour_1 = clamp(FinalColour_1, 0.0, 1.0);
+  FinalColour_1 = min(FinalColour_1, 1.0);
 
   gl_FragColor = FinalColour_1;
 }
