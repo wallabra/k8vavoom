@@ -163,7 +163,7 @@ struct VMeshFrame {
   TVec *Verts;
   TVec *Normals;
   TPlane *Planes;
-  TArray<vuint8> ValidTris;
+  //TArray<vuint8> ValidTris;
   // those are used for rebuilt frames (for multiframe models `TriCount` is constant)
   vuint32 TriCount;
   // cached offsets on OpenGL buffer

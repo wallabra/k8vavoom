@@ -598,7 +598,6 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   mstvert_t *pstverts;
   mtriangle_t *ptri;
   mframe_t *pframe;
-  vint32 *pcmds;
 
   pmodel = (mmdl_t *)/*mod->*/Data;
   mod->Uploaded = false;
@@ -608,15 +607,16 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   // endian-adjust and swap the data, starting with the alias model header
   for (unsigned i = 0; i < sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
 
-  if (pmodel->version != ALIAS_VERSION) Sys_Error("%s has wrong version number (%i should be %i)", *mod->Name, pmodel->version, ALIAS_VERSION);
-  if (pmodel->numverts <= 0) Sys_Error("model %s has no vertices", *mod->Name);
-  if (pmodel->numverts > MAXALIASVERTS) Sys_Error("model %s has too many vertices", *mod->Name);
-  if (pmodel->numstverts <= 0) Sys_Error("model %s has no texture vertices", *mod->Name);
-  if (pmodel->numstverts > MAXALIASSTVERTS) Sys_Error("model %s has too many texture vertices", *mod->Name);
-  if (pmodel->numtris <= 0) Sys_Error("model %s has no triangles", *mod->Name);
-  if (pmodel->skinwidth&0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
-  if (pmodel->numskins < 1) Sys_Error("Mod_LoadAliasModel: Invalid # of skins: %d\n", pmodel->numskins);
-  if (pmodel->numframes < 1) Sys_Error("Mod_LoadAliasModel: Invalid # of frames: %d\n", pmodel->numframes);
+  if (pmodel->version != ALIAS_VERSION) Sys_Error("model '%s' has wrong version number (%i should be %i)", *mod->Name, pmodel->version, ALIAS_VERSION);
+  if (pmodel->numverts <= 0) Sys_Error("model '%s' has no vertices", *mod->Name);
+  if (pmodel->numverts > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
+  if (pmodel->numstverts <= 0) Sys_Error("model '%s' has no texture vertices", *mod->Name);
+  if (pmodel->numstverts > MAXALIASSTVERTS) Sys_Error("model '%s' has too many texture vertices", *mod->Name);
+  if (pmodel->numtris <= 0) Sys_Error("model '%s' has no triangles", *mod->Name);
+  if (pmodel->numtris > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
+  //if (pmodel->skinwidth&0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
+  if (pmodel->numskins < 1 || pmodel->numskins > 1024) Sys_Error("model '%s' has invalid number of skins: %u\n", *mod->Name, pmodel->numskins);
+  if (pmodel->numframes < 1 || pmodel->numframes > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u\n", *mod->Name, pmodel->numframes);
 
   // base s and t vertices
   pstverts = (mstvert_t *)((vuint8 *)pmodel+pmodel->ofsstverts);
@@ -688,7 +688,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     Frame.VertsOffset = 0;
     Frame.NormalsOffset = 0;
     Frame.TriCount = pmodel->numtris;
-    Frame.ValidTris.setLength((int)pmodel->numtris);
+    //Frame.ValidTris.setLength((int)pmodel->numtris);
 
     trivertx_t *Verts = (trivertx_t *)(pframe+1);
     for (int j = 0; j < VertMap.Num(); ++j) {
@@ -733,22 +733,22 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
       if (reported) {
         ++triIgonded;
         if (mdl_report_errors) GCon->Logf("  triangle #%u is ignored", j);
-        Frame.ValidTris[j] = 0;
+        if (validTri.length()) validTri[j] = 0;
       } else {
-        Frame.ValidTris[j] = 1;
+        if (validTri.length()) validTri[j] = 1;
       }
     }
     pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
   }
 
-  if (pmodel->numframes == 1) {
+  if (pmodel->numframes == 1 && validTri.length()) {
     // rebuild triangle indicies, why not
     if (hadError) {
       VMeshFrame &Frame = mod->Frames[0];
       TArray<VMeshTri> NewTris; // vetex indicies
       Frame.TriCount = 0;
       for (unsigned j = 0; j < pmodel->numtris; ++j) {
-        if (Frame.ValidTris[j]) {
+        if (validTri[j]) {
           NewTris.append(mod->Tris[j]);
           ++Frame.TriCount;
         }
@@ -797,12 +797,16 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   */
 
   // commands
-  pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
+  /*
+  vint32 *pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
   for (unsigned i = 0; i < pmodel->numcmds; ++i) pcmds[i] = LittleLong(pcmds[i]);
+  */
 
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
   for (unsigned i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*getStrZ(pskindesc[i].name, 64).ToLower());
+
+  mod->loaded = true;
 }
 
 
@@ -812,7 +816,249 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
 //
 //==========================================================================
 static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
-  Sys_Error("MD3 models aren't supported yet");
+  mod->Uploaded = false;
+  mod->VertsBuffer = 0;
+  mod->IndexBuffer = 0;
+
+  // endian-adjust and swap the data, starting with the alias model header
+  MD3Header *pmodel = (MD3Header *)Data;
+  pmodel->ver = LittleLong(pmodel->ver);
+  pmodel->flags = LittleLong(pmodel->flags);
+  pmodel->frameNum = LittleLong(pmodel->frameNum);
+  pmodel->tagNum = LittleLong(pmodel->tagNum);
+  pmodel->surfaceNum = LittleLong(pmodel->surfaceNum);
+  pmodel->skinNum = LittleLong(pmodel->skinNum);
+  pmodel->frameOfs = LittleLong(pmodel->frameOfs);
+  pmodel->tagOfs = LittleLong(pmodel->tagOfs);
+  pmodel->surfaceOfs = LittleLong(pmodel->surfaceOfs);
+  pmodel->eofOfs = LittleLong(pmodel->eofOfs);
+
+  if (pmodel->ver != MD3_VERSION) Sys_Error("model '%s' has wrong version number (%u should be %i)", *mod->Name, pmodel->ver, MD3_VERSION);
+  if (pmodel->frameNum < 1 || pmodel->frameNum > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u\n", *mod->Name, pmodel->frameNum);
+  if (pmodel->surfaceNum < 1) Sys_Error("model '%s' has no meshes", *mod->Name);
+  if (pmodel->surfaceNum > 1) GCon->Logf(NAME_Warning, "model '%s' has more than one mesh (%u); ignoring extra meshes\n", *mod->Name, pmodel->surfaceNum);
+
+  // load first mesh
+  MD3Surface *pmesh = (MD3Surface *)(Data+pmodel->surfaceOfs);
+
+  if (memcmp(pmesh->sign, "IDP3", 4) != 0) Sys_Error("model '%s' has invalid mesh signature", *mod->Name);
+  pmesh->flags = LittleLong(pmesh->flags);
+  pmesh->frameNum = LittleLong(pmesh->frameNum);
+  pmesh->shaderNum = LittleLong(pmesh->shaderNum);
+  pmesh->vertNum = LittleLong(pmesh->vertNum);
+  pmesh->triNum = LittleLong(pmesh->triNum);
+  pmesh->triOfs = LittleLong(pmesh->triOfs);
+  pmesh->shaderOfs = LittleLong(pmesh->shaderOfs);
+  pmesh->stOfs = LittleLong(pmesh->stOfs);
+  pmesh->vertOfs = LittleLong(pmesh->vertOfs);
+  pmesh->endOfs = LittleLong(pmesh->endOfs);
+
+  if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u\n", *mod->Name, pmesh->shaderNum);
+  if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh\n", *mod->Name);
+  if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *mod->Name);
+  if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
+  if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *mod->Name);
+  if (pmesh->triNum > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
+
+  // convert frame data
+  MD3Frame *pframe = (MD3Frame *)((vuint8 *)pmodel+pmodel->frameOfs);
+  for (unsigned i = 0; i < pmesh->frameNum; ++i) {
+    for (unsigned f = 0; f < 3; ++f) {
+      pframe[i].bmin[f] = LittleFloat(pframe[i].bmin[f]);
+      pframe[i].bmax[f] = LittleFloat(pframe[i].bmax[f]);
+      pframe[i].origin[f] = LittleFloat(pframe[i].origin[f]);
+    }
+    pframe[i].radius = LittleFloat(pframe[i].radius);
+  }
+
+  // convert and copy shader data
+  MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);
+  for (unsigned i = 0; i < pmesh->shaderNum; ++i) {
+    pshader[i].index = LittleLong(pshader[i].index);
+    VStr name = getStrZ(pshader[i].name, 64);
+    // prepend model path
+    if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name;
+    //GCon->Logf("SKIN: %s", *name);
+    mod->Skins.Append(*name.ToLower());
+  }
+
+  // convert S and T (texture coordinates)
+  MD3ST *pstverts = (MD3ST *)((vuint8 *)pmesh+pmesh->stOfs);
+  for (unsigned i = 0; i < pmesh->vertNum; ++i) {
+    pstverts[i].s = LittleFloat(pstverts[i].s);
+    pstverts[i].t = LittleFloat(pstverts[i].t);
+  }
+
+  // convert vertex data
+  MD3Vertex *pverts = (MD3Vertex *)((vuint8 *)pmesh+pmesh->vertOfs);
+  for (unsigned i = 0; i < pmesh->vertNum*pmesh->frameNum; ++i) {
+    pverts[i].x = LittleShort(pverts[i].x);
+    pverts[i].y = LittleShort(pverts[i].y);
+    pverts[i].z = LittleShort(pverts[i].z);
+    pverts[i].normal = LittleShort(pverts[i].normal);
+  }
+
+  // convert triangle data
+  MD3Tri *ptri = (MD3Tri *)((vuint8 *)pmesh+pmesh->triOfs);
+  for (unsigned i = 0; i < pmesh->triNum; ++i) {
+    ptri[i].v0 = LittleLong(ptri[i].v0);
+    ptri[i].v1 = LittleLong(ptri[i].v1);
+    ptri[i].v2 = LittleLong(ptri[i].v2);
+    if (ptri[i].v0 >= pmesh->vertNum || ptri[i].v1 >= pmesh->vertNum || ptri[i].v2 >= pmesh->vertNum) Sys_Error("model '%s' has invalid vertex index in triangle #%u", *mod->Name, i);
+  }
+
+  // copy texture coordinates
+  mod->STVerts.setLength((int)pmesh->vertNum);
+  for (unsigned i = 0; i < pmesh->vertNum; ++i) {
+    mod->STVerts[i].S = pstverts[i].s;
+    mod->STVerts[i].T = pstverts[i].t;
+  }
+
+  // copy triangles, create edges
+  TArray<VTempEdge> Edges;
+  mod->Tris.setLength(pmesh->triNum);
+  for (unsigned i = 0; i < pmesh->triNum; ++i) {
+    mod->Tris[i].VertIndex[0] = ptri[i].v0;
+    mod->Tris[i].VertIndex[1] = ptri[i].v1;
+    mod->Tris[i].VertIndex[2] = ptri[i].v2;
+    for (unsigned j = 0; j < 3; ++j) {
+      AddEdge(Edges, mod->Tris[i].VertIndex[j], mod->Tris[i].VertIndex[(j+1)%3], i);
+    }
+  }
+
+  // copy vertices
+  mod->AllVerts.setLength(pmesh->frameNum*pmesh->vertNum);
+  mod->AllNormals.setLength(pmesh->frameNum*pmesh->vertNum);
+  for (unsigned i = 0; i < pmesh->vertNum*pmesh->frameNum; ++i) {
+    mod->AllVerts[i] = md3vert(pverts+i);
+    mod->AllNormals[i] = md3vertNormal(pverts+i);
+  }
+
+  // frames
+  bool hadError = false;
+  bool showError = true;
+
+  // if we have only one frame, and that frame has invalid triangles, just rebuild it
+  TArray<vuint8> validTri;
+  if (pmesh->frameNum == 1) {
+    validTri.setLength((int)pmesh->triNum);
+    memset(validTri.ptr(), 0, pmesh->triNum);
+  }
+
+  mod->Frames.setLength(pmesh->frameNum);
+  mod->AllPlanes.setLength(pmesh->frameNum*pmesh->triNum);
+
+  int triIgonded = 0;
+  for (unsigned i = 0; i < pmesh->frameNum; ++i, ++pframe) {
+    VMeshFrame &Frame = mod->Frames[i];
+    Frame.Name = getStrZ(pframe->name, 16);
+    Frame.Scale = TVec(1.0f, 1.0f, 1.0f);
+    Frame.Origin = TVec(pframe->origin[0], pframe->origin[1], pframe->origin[2]);
+    Frame.Verts = &mod->AllVerts[i*pmesh->vertNum];
+    Frame.Normals = &mod->AllNormals[i*pmesh->vertNum];
+    Frame.Planes = &mod->AllPlanes[i*pmesh->triNum];
+    Frame.VertsOffset = 0;
+    Frame.NormalsOffset = 0;
+    Frame.TriCount = pmesh->triNum;
+
+    // process triangles
+    for (unsigned j = 0; j < pmesh->triNum; ++j) {
+      TVec PlaneNormal;
+      TVec v3(0, 0, 0);
+      bool reported = false, hacked = false;
+      for (int vnn = 0; vnn < 3; ++vnn) {
+        TVec v1 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+0)%3]];
+        TVec v2 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+1)%3]];
+             v3 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+2)%3]];
+
+        TVec d1 = v2-v3;
+        TVec d2 = v1-v3;
+        PlaneNormal = CrossProduct(d1, d2);
+        if (lengthSquared(PlaneNormal) == 0) {
+          //k8:hack!
+          if (mdl_report_errors && !reported) {
+            GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
+              *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
+          }
+          reported = true;
+        } else {
+          hacked = (vnn != 0);
+          break;
+        }
+      }
+      if (mdl_report_errors && reported) {
+        if (hacked) GCon->Log("  hacked around"); else { GCon->Log("  CANNOT FIX"); PlaneNormal = TVec(0, 0, 1); }
+      }
+      hadError = hadError || reported;
+      PlaneNormal = Normalise(PlaneNormal);
+      const float PlaneDist = DotProduct(PlaneNormal, v3);
+      Frame.Planes[j].Set(PlaneNormal, PlaneDist);
+      if (reported) {
+        ++triIgonded;
+        if (mdl_report_errors) GCon->Logf("  triangle #%u is ignored", j);
+        if (validTri.length()) validTri[j] = 0;
+      } else {
+        if (validTri.length()) validTri[j] = 1;
+      }
+    }
+  }
+
+  if (pmesh->frameNum == 1 && validTri.length()) {
+    // rebuild triangle indicies, why not
+    if (hadError) {
+      VMeshFrame &Frame = mod->Frames[0];
+      TArray<VMeshTri> NewTris; // vetex indicies
+      Frame.TriCount = 0;
+      for (unsigned j = 0; j < pmesh->triNum; ++j) {
+        if (validTri[j]) {
+          NewTris.append(mod->Tris[j]);
+          ++Frame.TriCount;
+        }
+      }
+      if (Frame.TriCount == 0) Sys_Error("model %s has no valid triangles", *mod->Name);
+      // replace index array
+      mod->Tris.setLength(NewTris.length());
+      memcpy(mod->Tris.ptr(), NewTris.ptr(), NewTris.length()*sizeof(VMeshTri));
+      pmesh->triNum = Frame.TriCount;
+      if (showError) {
+        GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u! model rebuilt.", *mod->Name, triIgonded, pmesh->triNum);
+      }
+      // rebuild edges
+      mod->Edges.setLength(0);
+      for (unsigned i = 0; i < pmesh->triNum; ++i) {
+        for (unsigned j = 0; j < 3; ++j) {
+          //AddEdge(Edges, mod->Tris[i].VertIndex[j], ptri[i].vertindex[j], mod->Tris[i].VertIndex[(j+1)%3], ptri[i].vertindex[(j+1)%3], i);
+          AddEdge(Edges, mod->Tris[i].VertIndex[j], mod->Tris[i].VertIndex[(j+1)%3], i);
+        }
+      }
+    }
+  } else {
+    if (hadError && showError) {
+      GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *mod->Name, triIgonded, pmesh->triNum);
+    }
+  }
+
+  // if there were some errors, disable shadows for this model, it is probably broken anyway
+  mod->HadErrors = hadError;
+
+  // store edges
+  mod->Edges.setLength(Edges.Num());
+  for (int i = 0; i < Edges.Num(); ++i) {
+    mod->Edges[i].Vert1 = Edges[i].Vert1;
+    mod->Edges[i].Vert2 = Edges[i].Vert2;
+    mod->Edges[i].Tri1 = Edges[i].Tri1;
+    mod->Edges[i].Tri2 = Edges[i].Tri2;
+  }
+
+  /*
+  for (int i = 0; i < Edges.Num(); ++i) {
+    //mod->Edges[i].Vert1 = Edges[i].Vert1;
+    //mod->Edges[i].Vert2 = Edges[i].Vert2;
+    mod->Edges[i].Tri2 = -1;
+  }
+  */
+
+  mod->loaded = true;
 }
 
 
@@ -837,11 +1083,9 @@ static void Mod_ParseModel (VMeshModel *mod) {
   if (LittleLong(*(vuint32 *)Data) == IDPOLY2HEADER) {
     // swap model
     Mod_BuildFrames(mod, Data);
-    mod->loaded = true;
   } else if (LittleLong(*(vuint32 *)Data) == IDPOLY3HEADER) {
     // swap model
     Mod_BuildFramesMD3(mod, Data);
-    mod->loaded = true;
   } else {
     Sys_Error("model %s is not an md2/md3 model", *mod->Name);
   }
@@ -872,9 +1116,9 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
 */
   const VMeshFrame &frm = wpmodel->Frames[(int)frame];
   for (int vi = 0; vi < 3; ++vi) {
-    p[vi].x = frm.Verts[0].x*frm.Scale.x+frm.Origin.x;
-    p[vi].y = frm.Verts[0].y*frm.Scale.y+frm.Origin.y;
-    p[vi].z = frm.Verts[0].z*frm.Scale.z+frm.Origin.z;
+    p[vi].x = frm.Verts[wpmodel->Tris[0].VertIndex[vi]].x;
+    p[vi].y = frm.Verts[wpmodel->Tris[0].VertIndex[vi]].y;
+    p[vi].z = frm.Verts[wpmodel->Tris[0].VertIndex[vi]].z;
   }
   TVec md_forward(0, 0, 0), md_left(0, 0, 0), md_up(0, 0, 0);
   AngleVectors(Angles, md_forward, md_left, md_up);

@@ -37,8 +37,8 @@
 #define MD3_VERSION    (15)
 
 // TODO: tune this
-#define MAXALIASVERTS    (16000)
-#define MAXALIASSTVERTS  (16000)
+#define MAXALIASVERTS    (65536)
+#define MAXALIASSTVERTS  (65536)
 
 
 #pragma pack(push, 1)
@@ -140,7 +140,6 @@ struct MD3Vertex {
 
 struct MD3Surface {
   char sign[4];
-  vuint32 ver;
   char name[64];
   vuint32 flags;
   vuint32 frameNum;
