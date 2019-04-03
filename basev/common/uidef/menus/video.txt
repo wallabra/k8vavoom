@@ -103,13 +103,25 @@ menudef VideoOptions {
   }
 
   option bool {
-    title = "Render Monster Models";
+    title = "Render Thing Models";
     cvar = r_models;
   }
 
   option bool {
     title = "Render Hand Weapon Models";
     cvar = r_view_models;
+  }
+
+  option bool {
+    title = "Model Autorotation";
+    cvar = r_model_autorotating;
+    help = "You can turn off pickup model rotation here.";
+  }
+
+  option bool {
+    title = "Model Autobobbing";
+    cvar = r_model_autobobbing;
+    help = "You can turn off pickup model bobbing here.";
   }
 
 

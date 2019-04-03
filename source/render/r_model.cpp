@@ -41,6 +41,9 @@ static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias mod
 
 static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "Some debug log.", CVAR_PreInit);
 
+static VCvarB r_model_autorotating("r_model_autorotating", true, "Allow model autorotation?", CVAR_Archive);
+static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model autobobbing?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
@@ -1526,11 +1529,11 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
 
     if (Level && mobj) {
-      if (FDef.rotateSpeed) {
+      if (r_model_autorotating && FDef.rotateSpeed) {
         Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed+rndVal*38.6f);
       }
 
-      if (FDef.bobSpeed) {
+      if (r_model_autobobbing && FDef.bobSpeed) {
         //GCon->Logf("UID: %3u (%s)", (hashU32(mobj->GetUniqueId())&0xff), *mobj->GetClass()->GetFullName());
         const float bobHeight = 4.0f;
         float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed+rndVal*44.5f))*bobHeight;
