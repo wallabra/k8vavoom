@@ -548,7 +548,7 @@ public:
   virtual void DrawAliasModelTextures(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, float, float, bool,
     bool, bool) override;
-  virtual void BeginModelsLightPass(const TVec&, float, float, vuint32) override;
+  virtual void BeginModelsLightPass(const TVec&, float, float, vuint32, const TVec &aconeDir, const float aconeAngle) override;
   virtual void DrawAliasModelLight(const TVec&, const TAVec&, const TVec&,
     const TVec&, VMeshModel*, int, int, VTexture*, float, float, bool, bool) override;
   virtual void BeginModelsShadowsPass(TVec&, float) override;

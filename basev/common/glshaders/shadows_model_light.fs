@@ -7,6 +7,10 @@ uniform float LightRadius;
 uniform float LightMin;
 uniform float InAlpha;
 uniform bool AllowTransparency;
+#ifdef VV_SPOTLIGHT
+uniform vec3 ConeDirection;
+uniform float ConeAngle; // degrees
+#endif
 
 varying vec3 Normal;
 varying vec3 VertToLight;
@@ -92,11 +96,25 @@ void main () {
   */
 
 
-  float Add = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
-  if (Add <= 0.0) discard;
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 
-  float ClampAdd = clamp(Add/255.0, 0.0, 1.0);
-  Add = ClampAdd;
+#ifdef VV_SPOTLIGHT
+  // cone restrictions (affects attenuation)
+  vec3 surfaceToLight = normalize(VertToLight);
+  float distanceToLight = length(VertToLight);
+
+  //vec3 ConeDirection = vec3(1.0, 0.0, 0.0);
+  //float ConeAngle = 50.0;
+
+  //float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, normalize(ConeDirection))));
+  float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, ConeDirection)));
+  if (lightToSurfaceAngle > ConeAngle) attenuation = 0.0;
+#endif
+
+  if (attenuation <= 0.0) discard;
+
+  float ClampAdd = min(attenuation/255.0, 1.0);
+  attenuation = ClampAdd;
 
   float ClampTrans = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
   if (ClampTrans < 0.01) discard;

@@ -190,7 +190,7 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 //  VAdvancedRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *surfplane) {
+vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;
@@ -205,20 +205,22 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
       reg = reg->next;
     }
 
-    // region's base light
-    if (r_allow_ambient) {
-      l = reg->secregion->params->lightlevel+ExtraLight;
-      l = MID(0.0f, l, 255.0f);
-      if (r_darken) l = light_remap[(int)l];
-      if (l < r_ambient) l = r_ambient;
-      l = MID(0.0f, l, 255.0f);
-    } else {
-      l = 0;
+    if (reg) {
+      // region's base light
+      if (r_allow_ambient) {
+        l = reg->secregion->params->lightlevel+ExtraLight;
+        l = MID(0.0f, l, 255.0f);
+        if (r_darken) l = light_remap[(int)l];
+        if (l < r_ambient) l = r_ambient;
+        l = MID(0.0f, l, 255.0f);
+      } else {
+        l = 0;
+      }
+      int SecLightColour = reg->secregion->params->LightColour;
+      lr = ((SecLightColour>>16)&255)*l/255.0f;
+      lg = ((SecLightColour>>8)&255)*l/255.0f;
+      lb = (SecLightColour&255)*l/255.0f;
     }
-    int SecLightColour = reg->secregion->params->LightColour;
-    lr = ((SecLightColour>>16)&255)*l/255.0f;
-    lg = ((SecLightColour>>8)&255)*l/255.0f;
-    lb = (SecLightColour&255)*l/255.0f;
   }
 
   if (r_glow_flat && sub->sector) {
@@ -266,6 +268,9 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
 
   // add dynamic lights
   if (r_dynamic && sub->dlightframe == currDLightFrame) {
+    bool checkSpot = (height > 0.0f);
+    //float sph = (checkSpot && height > 8.0f ? height-6.0f : 0.0f);
+    //float sph = (checkSpot ? height*0.5f : 0.0f);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
       if (!dlinfo[i].needTrace) continue;
@@ -287,6 +292,24 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, const TPl
         if (r_dynamic_clip) {
           if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+            float bbox[6];
+            bbox[0+0] = p.x-radius*0.4f;
+            bbox[0+1] = p.y-radius*0.4f;
+            bbox[0+2] = p.z;
+            bbox[3+0] = p.x+radius*0.4f;
+            bbox[3+1] = p.y+radius*0.4f;
+            bbox[3+2] = p.z+height;
+            TPlane pl;
+            pl.SetPointNormal3D(dl.origin, dl.coneDirection);
+            if (!pl.checkBox(bbox)) continue;
+            bool splhit = false;
+            for (unsigned bi = 0; bi < 8; ++bi) {
+              const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
+              if (vv.isInSpotlight(dl.origin, dl.coneDirection, dl.coneAngle)) { splhit = true; break; }
+            }
+            if (!splhit) continue;
+          }
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
@@ -329,17 +352,19 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
     reg = reg->next;
   }
 
-  float l;
+  float l = 0.0f;
 
-  // region's base light
-  if (r_allow_ambient) {
-    l = reg->secregion->params->lightlevel+ExtraLight;
-    l = MID(0.0f, l, 255.0f);
-    if (r_darken) l = light_remap[(int)l];
-    if (l < r_ambient) l = r_ambient;
-    l = MID(0.0f, l, 255.0f);
-  } else {
-    l = 0;
+  if (reg) {
+    // region's base light
+    if (r_allow_ambient) {
+      l = reg->secregion->params->lightlevel+ExtraLight;
+      l = MID(0.0f, l, 255.0f);
+      if (r_darken) l = light_remap[(int)l];
+      if (l < r_ambient) l = r_ambient;
+      l = MID(0.0f, l, 255.0f);
+    } else {
+      l = 0;
+    }
   }
 
   int SecLightColour = reg->secregion->params->LightColour;
@@ -896,6 +921,8 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   // if we want model shadows, always do full rendering
   if (!doShadows && r_draw_mobjs && r_models && r_model_shadows) doShadows = true;
 
+  if (dlflags&dlight_t::NoShadow) doShadows = false;
+
   if (!doShadows && dbg_adv_light_notrace_mark) {
     //Colour = 0xffff0000U;
     Colour = 0xffff00ffU; // purple; it should be very noticeable
@@ -1079,7 +1106,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
     }
   }
 #endif
-  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour);
+  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, coneDir, coneAngle);
   RenderMobjsLight();
   ResetMobjsLightCount(false);
 

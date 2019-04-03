@@ -159,6 +159,13 @@ public:
   inline __attribute__((warn_unused_result)) TVec projectTo2D (const TVec &v) const { return v.mul2(dot2D(v)/v.length2DSquared()); }
 
   inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const { return TVec(x-v.x, y-v.y, 0.0f); }
+
+  // dir must be normalised, angle must be valid
+  inline __attribute__((warn_unused_result)) bool isInSpotlight (const TVec &origin, const TVec &dir, const float angle) const {
+    const TVec surfaceToLight = TVec(origin.x-x, origin.y-y, origin.z-z).normalised();
+    const float ltangle = macos((-surfaceToLight).dot(dir));
+    return (ltangle < angle);
+  }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");

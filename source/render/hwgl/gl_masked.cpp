@@ -159,7 +159,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
         if (b < lb) b = lb;
       }
       for (int i = 0; i < surf->count; ++i) {
-        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius, surf->plane);
+        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius, 0, surf->plane);
         int lr = (lt0>>16)&255;
         int lg = (lt0>>8)&255;
         int lb = lt0&255;

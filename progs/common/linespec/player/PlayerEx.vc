@@ -3363,6 +3363,8 @@ override void PlayerTick (float deltaTime) {
       fl.die = MO.XLevel.Time+(2.0/35.0);
       fl.type = DynamicLight::DLTYPE_Spot;
       fl.minlight = 64;
+      fl.bNoShadow = !GetCvarB('k8_flashlight_shadows');
+      fl.bPlayerLight = true;
     }
   }
 }

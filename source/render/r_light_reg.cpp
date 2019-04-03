@@ -536,7 +536,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //  VRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, const TPlane *surfplane) {
+vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   float l = 0, lr = 0, lg = 0, lb = 0;

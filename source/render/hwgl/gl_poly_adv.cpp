@@ -427,7 +427,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   }
 
   coneDir = aconeDir;
-  coneAngle = (aconeAngle < 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
 
   if (coneAngle) {
     spotLight = true;
@@ -557,17 +557,26 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   const TVec *sverts = surf->verts;
   const TVec *v = sverts;
 
+  /*
   if (spotLight) {
     const TVec *vv = sverts;
-    bool hasGood = false;
+    bool splhit = false;
     for (unsigned f = vcount; f--; ++vv) {
-      const TVec surfaceToLight = LightPos-(*vv);
-      const float ltangle = macos(DotProduct(-surfaceToLight, coneDir));
-      if (ltangle <= coneAngle) { hasGood = true; break; }
+      if (vv->isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
     }
-    if (!hasGood) return;
+    if (!splhit) return;
   }
-
+  */
+  if (spotLight) {
+    TPlane pl;
+    pl.SetPointNormal3D(LightPos, coneDir);
+    const TVec *vv = sverts;
+    bool splhit = false;
+    for (unsigned f = vcount; f--; ++vv) {
+      if (!pl.PointOnSide(*vv)) { splhit = true; break; }
+    }
+    if (!splhit) return;
+  }
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
   // just do it in vertex shader

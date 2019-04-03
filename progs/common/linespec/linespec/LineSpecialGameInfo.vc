@@ -210,6 +210,8 @@ override void Init () {
 
   CreateCvar('blood_widespread', "0", "Throw blood splats on full 360 degrees circle?", CVAR_ARCHIVE);
 
+  CreateCvar('k8_flashlight_shadows', "0", "Do shadow casting from player flashlight?", CVAR_ARCHIVE);
+
   ::Init(); // parse cvarinfo and such
 }
 

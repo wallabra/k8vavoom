@@ -123,7 +123,7 @@ public:
   // lightness of masked surfaces
   // `radius` is used for visibility raycasts
   // `surfplane` is used to light masked surfaces
-  virtual vuint32 LightPoint (const TVec &p, float raduis, const TPlane *surfplane=nullptr) = 0;
+  virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 
@@ -264,7 +264,7 @@ public:
                                        VTexture *Skin, VTextureTranslation *Trans,
                                        int CMap, float Alpha, float Inter,
                                        bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour) = 0;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, const TVec &aconeDir, const float aconeAngle) = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const TVec &Offset, const TVec &Scale,
                                     VMeshModel *Mdl, int frame, int nextframe,

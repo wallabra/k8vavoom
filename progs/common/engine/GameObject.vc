@@ -1191,6 +1191,7 @@ struct dlight_t {
   float coneAngle; // 0 means "point light", otherwise it is spotlight
   bool bPlayerLight; // set in alloc, player lights should survive
   bool bNoSelfShadow;
+  bool bNoShadow;
 };
 
 

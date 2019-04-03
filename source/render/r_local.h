@@ -735,7 +735,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, const TPlane *surfplane=nullptr) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 
@@ -807,7 +807,7 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, const TPlane *surfplane=nullptr) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 
