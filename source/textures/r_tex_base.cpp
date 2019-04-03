@@ -899,6 +899,36 @@ rgb_t VTexture::GetAverageColor (vuint32 maxout) {
 
 //==========================================================================
 //
+//  VTexture::ResizeCanvas
+//
+//==========================================================================
+void VTexture::ResizeCanvas (int newwdt, int newhgt) {
+  if (newwdt < 1 || newhgt < 1) return;
+  if (newwdt == Width && newhgt == Height) return;
+  (void)GetPixels();
+  ConvertPixelsToRGBA();
+  rgba_t *newpic = new rgba_t[newwdt*newhgt];
+  rgba_t *dest = newpic;
+  const rgba_t *oldpix = (const rgba_t *)Pixels;
+  for (int y = 0; y < newhgt; ++y) {
+    for (int x = 0; x < newwdt; ++x) {
+      if (x < Width && y < Height) {
+        *dest = oldpix[y*Width+x];
+      } else {
+        *dest = rgba_t(0, 0, 0, 0);
+      }
+      ++dest;
+    }
+  }
+  delete [] Pixels;
+  Pixels = (vuint8 *)newpic;
+  Width = newwdt;
+  Height = newhgt;
+}
+
+
+//==========================================================================
+//
 //  VTexture::filterFringe
 //
 //==========================================================================

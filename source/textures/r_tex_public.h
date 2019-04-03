@@ -246,6 +246,7 @@ public:
 
   // use `153` to calculate glow color
   rgb_t GetAverageColor (vuint32 maxout);
+  void ResizeCanvas (int newwdt, int newhgt);
 
 public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`

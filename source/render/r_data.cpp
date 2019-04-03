@@ -1376,6 +1376,7 @@ static void ParseBrightmap (VScriptParser *sc) {
         GCon->Logf(NAME_Warning, "texture '%s' has dimensions (%d,%d), but brightmap '%s' has dimensions (%d,%d)",
           *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
       }
+      bm->ResizeCanvas(basetex->GetWidth(), basetex->GetHeight());
       //delete bm;
       //return;
     }
