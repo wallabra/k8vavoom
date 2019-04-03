@@ -158,22 +158,13 @@ override int GetRebornHealth()
 //
 //==========================================================================
 override void PlayerImpulse () {
+  ::PlayerImpulse();
+
   int impulse = Impulse;
   Impulse = 0;
+  if (!impulse) return;
+
   Inventory Arti = none;
-
-       if (impulse <= PlayerPawn::NUM_WEAPON_SLOTS) ChangeWeapon(impulse);
-  else if (impulse == 13) InventoryLeft();
-  else if (impulse == 14) InventoryRight();
-  else if (impulse == 15) InventoryUse();
-  else if (impulse == 16) Actor(MO).Damage(none, none, 10000);
-  else if (impulse == 17) PrevWeapon();
-  else if (impulse == 18) NextWeapon();
-  else if (impulse >= 200 && impulse <= 205) LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
-
-  else if (impulse == 43) Actor(MO).FireSuperBullet();
-  else if (impulse == 142) Actor(MO).DebugCheckMidTex();
-  else if (impulse == 56) bReloadQueued = true;
 
   // Hexen artifact hot keys
   if (!Arti) {
@@ -191,6 +182,7 @@ override void PlayerImpulse () {
     EntityEx(MO).UseInventory(Arti);
   }
 }
+
 
 //==========================================================================
 //

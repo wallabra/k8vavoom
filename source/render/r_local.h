@@ -47,6 +47,7 @@ enum DLType {
   DLTYPE_Sector,
   DLTYPE_Subtractive, // partially supported
   DLTYPE_SectorSubtractive, // not supported
+  DLTYPE_Spot,
 };
 
 
@@ -782,7 +783,9 @@ protected:
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
-                           TVec &Pos, float Radius, float LightMin, vuint32 Colour, bool LimitLights);
+                           TVec &Pos, float Radius, float LightMin, vuint32 Colour,
+                           bool LimitLights,
+                           TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f);
 
   // things
   void ResetMobjsLightCount (bool first); // if `first` is true, build array of affected entities

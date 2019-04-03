@@ -144,23 +144,30 @@ ShaderList basedir="basev/common/glshaders" {
   Shader DrawSimple both="draw_simple";
   Shader DrawShadow vertex="draw_simple" fragment="draw_shadow";
   Shader DrawAutomap both="draw_automap";
+
   Shader SurfZBuf both="surf_zbuf";
   Shader [advanced] SurfShadowVolume vertex="surf_svol" fragment="surf_zbuf";
+
   Shader SurfDecalNoLMap both="surf_decal_nolmap";
   Shader SurfDecalLMap both="surf_decal_lmap";
   Shader SurfAdvDecal both="surf_decal_adv";
+
   Shader SurfSimple both="surf_simple";
   Shader SurfLightmap both="surf_lightmap";
   Shader SurfSimpleBrightmap both="surf_simple" { define "VV_SIMPLE_BRIGHTMAP"; }
   Shader SurfLightmapBrightmap both="surf_lightmap" { define "VV_LIGHTMAP_BRIGHTMAP"; }
+
   Shader SurfSky both="surf_sky";
   Shader SurfDSky both="surf_dsky";
+
   Shader SurfMasked both="surf_masked";
   Shader SurfMaskedBrightmap both="surf_masked" { define "VV_MASKED_BRIGHTMAP"; }
   Shader SurfMaskedGlow both="surf_masked" { define "VV_MASKED_GLOW"; }
   Shader SurfMaskedBrightmapGlow both="surf_masked" { defines { "VV_MASKED_BRIGHTMAP", "VV_MASKED_GLOW" } }
+
   Shader SurfPartSq vertex="particle" fragment="particle_sq";
   Shader SurfPartSm vertex="particle" fragment="particle_sm";
+
   Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";
   Shader [advanced] ShadowsAmbientMasked both="shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
   Shader [advanced] ShadowsAmbientBrightmap both="shadows_surf_ambient" { define "VV_AMBIENT_BRIGHTMAP_WALL"; }
@@ -174,7 +181,10 @@ ShaderList basedir="basev/common/glshaders" {
   Shader [advanced] ShadowsFog both="shadows_surf_fog";
   Shader [advanced] ShadowsFogMasked both="shadows_surf_fog" { defines { "VV_MASKED_FOG" } }
   Shader [advanced] ShadowsLight both="shadows_surf_light";
+  Shader [advanced] ShadowsLightSpot both="shadows_surf_light" { define "VV_SPOTLIGHT"; }
   Shader [advanced] ShadowsLightDbg both="shadows_surf_light" { define "VV_DEBUG_LIGHT"; }
+  Shader [advanced] ShadowsLightSpotDbg both="shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
+
   Shader SurfModel both="surf_model";
   Shader [advanced] ShadowsModelAmbient both="shadows_model_ambient";
   Shader [advanced] ShadowsModelTextures both="shadows_model_textures";

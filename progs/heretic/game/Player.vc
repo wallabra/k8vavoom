@@ -119,34 +119,27 @@ override void GotAmmo(Ammo NewAmmo)
 //
 //==========================================================================
 override void PlayerImpulse () {
+  ::PlayerImpulse();
+
   int impulse = Impulse;
   Impulse = 0;
+  if (!impulse) return;
+
   Inventory Arti = none;
 
-       if (impulse <= PlayerPawn::NUM_WEAPON_SLOTS) ChangeWeapon(impulse);
-  else if (impulse == 13) InventoryLeft();
-  else if (impulse == 14) InventoryRight();
-  else if (impulse == 15) InventoryUse();
   // Heretic artifact hot keys
-  else if (impulse == 11) {
+  if (impulse == 11) {
     if (!EntityEx(MO).FindInventory(PowerWeaponLevel2)) {
       Arti = EntityEx(MO).FindInventory(ArtiTomeOfPower);
     }
   }
-  else if (impulse == 16) Actor(MO).Damage(none, none, 10000);
-  else if (impulse == 17) PrevWeapon();
-  else if (impulse == 18) NextWeapon();
-  else if (impulse >= 200 && impulse <= 205) LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse-200);
-
-  else if (impulse == 43) Actor(MO).FireSuperBullet();
-  else if (impulse == 142) Actor(MO).DebugCheckMidTex();
-  else if (impulse == 56) bReloadQueued = true;
 
   if (Arti) {
     // Use an artifact
     EntityEx(MO).UseInventory(Arti);
   }
 }
+
 
 //==========================================================================
 //

@@ -875,7 +875,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                const VViewClipper *Range,
                                                TVec &Pos, float Radius, float LightMin, vuint32 Colour,
-                                               bool LimitLights)
+                                               bool LimitLights, TVec coneDir, float coneAngle)
 {
   if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
 
@@ -1042,7 +1042,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   }
 
   // do shadow volumes
-  Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
+  Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   if (doShadows && r_max_shadow_segs_all) {
 #if 0

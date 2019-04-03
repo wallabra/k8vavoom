@@ -5,6 +5,10 @@ uniform vec3 LightColour;
 uniform float LightRadius;
 uniform float LightMin;
 uniform sampler2D Texture;
+#ifdef VV_SPOTLIGHT
+uniform vec3 ConeDirection;
+uniform float ConeAngle; // degrees
+#endif
 
 varying vec3 Normal;
 varying vec3 VertToLight;
@@ -26,12 +30,25 @@ void main () {
 
   DistToLight = sqrt(DistToLight);
 
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 
-  float Add_1 = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
-  if (Add_1 <= 0.0) discard;
+#ifdef VV_SPOTLIGHT
+  // cone restrictions (affects attenuation)
+  vec3 surfaceToLight = normalize(VertToLight);
+  float distanceToLight = length(VertToLight);
 
-  float ClampAdd = clamp(Add_1/255.0, 0.0, 1.0);
-  Add_1 = ClampAdd;
+  //vec3 ConeDirection = vec3(1.0, 0.0, 0.0);
+  //float ConeAngle = 50.0;
+
+  //float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, normalize(ConeDirection))));
+  float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, ConeDirection)));
+  if (lightToSurfaceAngle > ConeAngle) attenuation = 0.0;
+#endif
+
+  if (attenuation <= 0.0) discard;
+
+  float ClampAdd = min(attenuation/255.0, 1.0);
+  attenuation = ClampAdd;
 
   float Transp = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
 

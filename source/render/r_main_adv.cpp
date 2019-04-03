@@ -316,7 +316,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       } else {
         VEntity *own = (l->Owner && l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)l->Owner : nullptr);
         if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) l->flags |= dlight_t::NoSelfShadow;
-        RenderLightShadows(own, l->flags, RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->minlight, l->colour, true);
+        RenderLightShadows(own, l->flags, RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->minlight, l->colour, true, l->coneDirection, l->coneAngle);
       }
     }
 
@@ -326,7 +326,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
         VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
         if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
-        RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->colour, true);
+        RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->colour, true, dli->l->coneDirection, dli->l->coneAngle);
       }
     }
   }

@@ -43,6 +43,8 @@ struct dlight_t {
   /*DLType*/vint32 type;
   vuint32 colour; // for coloured lights
   VThinker *Owner; // used to identify owner to reuse the same light
+  TVec coneDirection;
+  float coneAngle; // 0 means "point light", otherwise it is spotlight
   // flags
   vuint32 flags;
   enum {

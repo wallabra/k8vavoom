@@ -148,6 +148,9 @@ int k8HealthAccum_Amount; // amount of currently accumulated health
 float k8HealthAccum_LastRegenTime = -10000;
 float k8HealthAccum_LastBoostTime = -10000;
 
+bool bFlashlightOn;
+bool bFlashlightNoToggle;
+
 
 replication {
   reliable if (!bIsClient)
@@ -166,7 +169,7 @@ replication {
     ClientSlideshow2, SetFOV;
 
   reliable if (bIsClient)
-    bAutoAim;
+    bAutoAim, bFlashlightOn;
 }
 
 
@@ -2273,6 +2276,9 @@ void ResetPlayerOnSpawn () {
   k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
   k8HealthAccum_LastBoostTime = -10000;
+
+  bFlashlightOn = false;
+  bFlashlightNoToggle = false;
 }
 
 
@@ -3344,6 +3350,21 @@ override void PlayerTick (float deltaTime) {
   }
 
   if (!isBot) HealthBarProcessor();
+
+  // flashlight test
+  if (bFlashlightOn) {
+    TVec dir;
+    AngleVector(MO.Angles, out dir);
+    dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), 256*2);
+    if (fl) {
+      fl.coneDirection = dir;
+      fl.coneAngle = 30.0;
+      fl.colour = 0xff_ff_ff_00;
+      fl.die = MO.XLevel.Time+(2.0/35.0);
+      fl.type = DynamicLight::DLTYPE_Spot;
+      fl.minlight = 64;
+    }
+  }
 }
 
 
@@ -4177,8 +4198,39 @@ void SpawnSpeedEffect () {
 //
 //  PlayerImpulse
 //
+//  return `true` if impulse was eaten
+//
 //==========================================================================
 void PlayerImpulse () {
+  if (!Impulse) return;
+
+  if (Impulse <= PlayerPawn::NUM_WEAPON_SLOTS) { ChangeWeapon(Impulse); Impulse = 0; return; }
+
+  switch (Impulse) {
+    case 13: InventoryLeft(); Impulse = 0; return;
+    case 14: InventoryRight(); Impulse = 0; return;
+    case 15: InventoryUse(); Impulse = 0; return;
+    case 16: Actor(MO).Damage(none, none, 10000); Impulse = 0; return;
+    case 17: PrevWeapon(); Impulse = 0; return;
+    case 18: NextWeapon(); Impulse = 0; return;
+    case 43: Actor(MO).FireSuperBullet(); Impulse = 0; return;
+    case 56: bReloadQueued = true; Impulse = 0; return;
+    case 142: Actor(MO).DebugCheckMidTex(); Impulse = 0; return;
+    case 146:
+      if (!bFlashlightNoToggle) {
+        bFlashlightNoToggle = true;
+        bFlashlightOn = !bFlashlightOn;
+      }
+      Impulse = 0;
+      return;
+    case 147: bFlashlightNoToggle = false; Impulse = 0; return;
+  }
+
+  if (Impulse >= 200 && Impulse <= 205) {
+    LineSpecialLevelInfo(Level).ConChoiceImpulse(Impulse-200); // strife does additional processing
+    Impulse = 0;
+    return;
+  }
 }
 
 

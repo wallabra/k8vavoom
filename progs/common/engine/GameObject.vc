@@ -1187,6 +1187,8 @@ struct dlight_t {
   int type;
   int colour;
   Thinker owner;
+  TVec coneDirection;
+  float coneAngle; // 0 means "point light", otherwise it is spotlight
   bool bPlayerLight; // set in alloc, player lights should survive
   bool bNoSelfShadow;
 };
