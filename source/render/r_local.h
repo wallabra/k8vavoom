@@ -593,13 +593,12 @@ protected:
   void FreeSegParts (segpart_t*);
 
   // models
-  bool DrawAliasModel (const TVec&, const TAVec&, float, float, VModel*,
-    //int, int,
+  bool DrawAliasModel (VEntity *mobj, const TVec&, const TAVec&, float, float, VModel*,
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation*, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
-  bool DrawAliasModel (VName clsName, const TVec&, const TAVec&, float, float,
-    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState*, VState*,
+  bool DrawAliasModel (VEntity *mobj, VName clsName, const TVec&, const TAVec&, float, float,
+    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation*, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
   bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);

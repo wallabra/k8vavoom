@@ -118,7 +118,7 @@ struct VScriptModel {
 
 struct ModelAngle {
 public:
-  enum Mode { Relative, Absolute };
+  enum Mode { Relative, Absolute, RelativeRandom, AbsoluteRandom };
 public:
   float angle;
   Mode mode;
@@ -127,11 +127,16 @@ public:
 
   inline void SetRelative (float aangle) { angle = AngleMod(aangle); mode = Relative; }
   inline void SetAbsolute (float aangle) { angle = AngleMod(aangle); mode = Absolute; }
-  inline void SetAbsoluteRandom () { angle = AngleMod(360.0f*Random()); mode = Absolute; }
-  inline void SetRelativeRandom () { angle = AngleMod(360.0f*Random()); mode = Relative; }
+  inline void SetAbsoluteRandom () { angle = AngleMod(360.0f*Random()); mode = AbsoluteRandom; }
+  inline void SetRelativeRandom () { angle = AngleMod(360.0f*Random()); mode = RelativeRandom; }
 
-  inline float GetAngle (float baseangle) const {
-    if (mode == Relative) return AngleMod(baseangle+angle);
+  inline float GetAngle (float baseangle, vuint8 rndVal) const {
+    switch (mode) {
+      case Relative: return AngleMod(baseangle+angle);
+      case Absolute: return angle;
+      case RelativeRandom: return AngleMod(baseangle+angle+(float)rndVal*360.0f/255.0f);
+      case AbsoluteRandom: return AngleMod(angle+(float)rndVal*360.0f/255.0f);
+    }
     return angle;
   }
 };
@@ -1431,7 +1436,7 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
 //  FIXME: make this faster -- stop looping, cache data!
 //
 //==========================================================================
-static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
+static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
   VTextureTranslation *Trans, int ColourMap, int Version, vuint32 Light,
   vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
@@ -1462,7 +1467,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     //FIXME: this should be done earilier
     if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
 
-    // skin aniations
+    // skin animations
     int Md2SkinIdx = 0;
     if (F.SkinIndex >= 0) {
       Md2SkinIdx = F.SkinIndex;
@@ -1514,18 +1519,23 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
       Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
     }
 
-    Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw);
-    Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch);
-    Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll);
+    vuint8 rndVal = (mobj ? (hashU32(mobj->GetUniqueId())>>4)&0xffu : 0);
 
-    if (FDef.rotateSpeed) {
-      Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed);
-    }
+    Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
+    Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);
+    Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
 
-    if (FDef.bobSpeed) {
-      const float bobHeight = 4.0f;
-      float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed))*bobHeight;
-      Md2Org.z += zdelta+bobHeight;
+    if (Level && mobj) {
+      if (FDef.rotateSpeed) {
+        Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed+rndVal*38.6f);
+      }
+
+      if (FDef.bobSpeed) {
+        //GCon->Logf("UID: %3u (%s)", (hashU32(mobj->GetUniqueId())&0xff), *mobj->GetClass()->GetFullName());
+        const float bobHeight = 4.0f;
+        float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed+rndVal*44.5f))*bobHeight;
+        Md2Org.z += zdelta+bobHeight;
+      }
     }
 
     // position model
@@ -1660,7 +1670,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 //  VRenderLevelShared::DrawAliasModel
 //
 //==========================================================================
-bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
+bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VModel *Mdl,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
   VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
@@ -1675,7 +1685,7 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
     NFIdx = FIdx;
     Interpolate = false;
   }
-  DrawModel(Level, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
+  DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
     NFIdx, Trans, ColourMap, Version, Light, Fade, Alpha, Additive,
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
     Pass, IsAdvancedRenderer());
@@ -1700,7 +1710,7 @@ bool VRenderLevelShared::HasAliasModel (VName clsName) const {
 //  VRenderLevelShared::DrawAliasModel
 //
 //==========================================================================
-bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const TAVec &Angles,
+bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState *State, VState *NextState,
   VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
@@ -1722,7 +1732,7 @@ bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const T
     Interpolate = false;
   }
 
-  DrawModel(Level, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
+  DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
     ColourMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
     InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsAdvancedRenderer());
   return true;
@@ -1748,14 +1758,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
     }
     VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
     if (!Mdl) return false;
-    return DrawAliasModel(Ent->Origin-TVec(0, 0, Ent->FloorClip),
+    return DrawAliasModel(Ent, Ent->Origin-TVec(0, 0, Ent->FloorClip),
       Ent->Angles, Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
-    return DrawAliasModel(Ent->GetClass()->Name, Ent->Origin-TVec(0, 0, Ent->FloorClip),
+    return DrawAliasModel(Ent, Ent->GetClass()->Name, Ent->Origin-TVec(0, 0, Ent->FloorClip),
       Ent->Angles, Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
@@ -1835,7 +1845,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   Angles.pitch = 0;
   Angles.roll = 0;
 
-  DrawModel(nullptr, Origin, Angles, 1.0f, 1.0f, *Model->DefaultClass, FIdx,
+  DrawModel(nullptr, nullptr, Origin, Angles, 1.0f, 1.0f, *Model->DefaultClass, FIdx,
     NFIdx, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart,
     TranslEnd, Colour), nullptr), 0, 0, 0xffffffff, 0, 1.0f, false, false,
     InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
@@ -1892,7 +1902,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   Angles.pitch = 0;
   Angles.roll = 0;
 
-  DrawModel(nullptr, Origin, Angles, 1.0f, 1.0f, *Cls, FIdx, NFIdx, nullptr, 0, 0,
+  DrawModel(nullptr, nullptr, Origin, Angles, 1.0f, 1.0f, *Cls, FIdx, NFIdx, nullptr, 0, 0,
     0xffffffff, 0, 1.0f, false, false, InterpFrac, Interpolate,
     TVec(), 0, RPASS_Normal, true); // force draw
 
