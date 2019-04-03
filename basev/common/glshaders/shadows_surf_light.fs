@@ -30,9 +30,12 @@ void main () {
 
   DistToLight = sqrt(DistToLight);
 
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
-
 #ifdef VV_SPOTLIGHT
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  //float attenuation = 1.0/(1.0+(LightRadius-LightMin)*DistToLight);
+  //attenuation *= 255.0;
+  //attenuation = 1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
+
   // cone restrictions (affects attenuation)
   vec3 surfaceToLight = normalize(VertToLight);
   float distanceToLight = length(VertToLight);
@@ -43,6 +46,8 @@ void main () {
   //float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, normalize(ConeDirection))));
   float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, ConeDirection)));
   if (lightToSurfaceAngle > ConeAngle) attenuation = 0.0;
+#else
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 #endif
 
   if (attenuation <= 0.0) discard;

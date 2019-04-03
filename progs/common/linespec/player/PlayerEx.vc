@@ -3359,10 +3359,10 @@ override void PlayerTick (float deltaTime) {
     if (fl) {
       fl.coneDirection = dir;
       fl.coneAngle = 30.0;
-      fl.colour = 0xff_ff_ff_00;
+      fl.colour = 0xff_af_af_00;
       fl.die = MO.XLevel.Time+(2.0/35.0);
       fl.type = DynamicLight::DLTYPE_Spot;
-      fl.minlight = 64;
+      //fl.minlight = 64;
       fl.bNoShadow = !GetCvarB('k8_flashlight_shadows');
       fl.bPlayerLight = true;
     }
