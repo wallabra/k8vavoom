@@ -765,20 +765,22 @@ void AddAutoloadRC (const VStr &aubasedir) {
   if (!aurc) return;
 
   // collect autoload groups to skip
-  TArray<VStr> skipGrp;
+  TMap<VStr, bool> cliGroupMap; // true: enabled; false: disabled
   // add skips from custom mode
-  for (int f = 0; f < customMode.autoskips.length(); ++f) skipGrp.append(customMode.autoskips[f]);
+  for (int f = 0; f < customMode.autoskips.length(); ++f) cliGroupMap.put(customMode.autoskips[f].toLowerCase(), false);
   // add skips from command line
-  bool inSkipArg = false;
+  int inSkipArg = 0;
   for (int asp = 1; asp < GArgs.Count(); ++asp) {
     if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0) {
-      inSkipArg = true;
+      inSkipArg = -1;
+    } else if (VStr::Cmp(GArgs[asp], "-auto") == 0 || VStr::Cmp(GArgs[asp], "-autoload") == 0) {
+      inSkipArg = 1;
     } else if (inSkipArg) {
       VStr sg = GArgs[asp];
       if (!sg.isEmpty() && (*sg)[0] != '-' && (*sg)[0] != '+') {
-        skipGrp.append(sg);
+        cliGroupMap.put(sg.toLowerCase(), (inSkipArg == 1));
       }
-      inSkipArg = false;
+      inSkipArg = 0;
     }
   }
 
@@ -788,10 +790,11 @@ void AddAutoloadRC (const VStr &aubasedir) {
     sc->Expect("group");
     sc->ExpectString();
     VStr grpname = sc->String;
+    bool enabled = !sc->Check("disabled");
     sc->Expect("{");
-    bool doSkip = false;
-    for (int f = 0; f < skipGrp.length(); ++f) if (skipGrp[f].ICmp(grpname) == 0) { doSkip = true; break; }
-    if (doSkip) {
+    auto gmp = cliGroupMap.find(grpname.toLowerCase());
+    if (gmp) enabled = *gmp;
+    if (!enabled) {
       GCon->Logf(NAME_Init, "skipping autoload group '%s'", *grpname);
       sc->SkipBracketed(true); // bracket eaten
       continue;
