@@ -116,6 +116,27 @@ struct VScriptModel {
 };
 
 
+struct ModelAngle {
+public:
+  enum Mode { Relative, Absolute };
+public:
+  float angle;
+  Mode mode;
+
+  ModelAngle () : angle(0.0f), mode(Relative) {}
+
+  inline void SetRelative (float aangle) { angle = AngleMod(aangle); mode = Relative; }
+  inline void SetAbsolute (float aangle) { angle = AngleMod(aangle); mode = Absolute; }
+  inline void SetAbsoluteRandom () { angle = AngleMod(360.0f*Random()); mode = Absolute; }
+  inline void SetRelativeRandom () { angle = AngleMod(360.0f*Random()); mode = Relative; }
+
+  inline float GetAngle (float baseangle) const {
+    if (mode == Relative) return AngleMod(baseangle+angle);
+    return angle;
+  }
+};
+
+
 struct VScriptedModelFrame {
   int Number;
   float Inter;
@@ -125,12 +146,9 @@ struct VScriptedModelFrame {
   float AngleEnd;
   float AlphaStart;
   float AlphaEnd;
-  bool hasYaw;
-  float angleYaw;
-  bool hasRoll;
-  float angleRoll;
-  bool hasPitch;
-  float anglePitch;
+  ModelAngle angleYaw;
+  ModelAngle angleRoll;
+  ModelAngle anglePitch;
   //
   VName sprite;
   int frame; // sprite frame
@@ -304,6 +322,27 @@ static VMeshModel *Mod_FindMeshModel (VStr filename, VStr name, int meshIndex) {
   GMeshModels.Append(mod);
 
   return mod;
+}
+
+
+//==========================================================================
+//
+//  ParseAngle
+//
+//==========================================================================
+static void ParseAngle (VXmlNode *N, const char *name, ModelAngle &angle) {
+  angle.SetRelative(0.0f);
+  VStr aname = VStr("angle_")+name;
+  if (N->HasAttribute(aname)) {
+    VStr val = N->GetAttribute(aname);
+    if (val.ICmp("random") == 0) angle.SetAbsoluteRandom(); else angle.SetAbsolute(VStr::atof(*val));
+  } else {
+    aname = VStr("rotate_")+name;
+    if (N->HasAttribute(aname)) {
+      VStr val = N->GetAttribute(aname);
+      if (val.ICmp("random") == 0) angle.SetRelativeRandom(); else angle.SetRelative(VStr::atof(*val));
+    }
+  }
 }
 
 
@@ -514,15 +553,9 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext()) {
       VScriptedModelFrame &F = Cls->Frames.Alloc();
 
-      F.hasYaw = N->HasAttribute("angle_yaw");
-      F.hasPitch = N->HasAttribute("angle_pitch");
-      F.hasRoll = N->HasAttribute("angle_roll");
-      if (F.hasYaw && N->GetAttribute("angle_yaw") == "random") F.angleYaw = AngleMod(360.0f*Random());
-      else F.angleYaw = AngleMod(F.hasYaw ? VStr::atof(*N->GetAttribute("angle_yaw")) : 0.0f);
-      if (F.hasPitch && N->GetAttribute("angle_pitch") == "random") F.anglePitch = AngleMod(360.0f*Random());
-      else F.anglePitch = AngleMod(F.hasPitch ? VStr::atof(*N->GetAttribute("angle_pitch")) : 0.0f);
-      if (F.hasRoll && N->GetAttribute("angle_roll") == "random") F.angleRoll = AngleMod(360.0f*Random());
-      else F.angleRoll = AngleMod(F.hasRoll ? VStr::atof(*N->GetAttribute("angle_roll")) : 0.0f);
+      ParseAngle(N, "yaw", F.angleYaw);
+      ParseAngle(N, "pitch", F.anglePitch);
+      ParseAngle(N, "roll", F.angleRoll);
 
       int lastIndex = -666;
       if (N->HasAttribute("index")) {
@@ -582,9 +615,6 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
           ffr.AngleEnd = F.AngleEnd;
           ffr.AlphaStart = F.AlphaStart;
           ffr.AlphaEnd = F.AlphaEnd;
-          ffr.hasYaw = F.hasYaw;
-          ffr.hasPitch = F.hasPitch;
-          ffr.hasRoll = F.hasRoll;
           ffr.angleYaw = F.angleYaw;
           ffr.anglePitch = F.anglePitch;
           ffr.angleRoll = F.angleRoll;
@@ -1455,9 +1485,9 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
       Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
     }
 
-    if (FDef.hasYaw) Md2Angle.yaw = FDef.angleYaw;
-    if (FDef.hasPitch) Md2Angle.pitch = FDef.anglePitch;
-    if (FDef.hasRoll) Md2Angle.roll = FDef.angleRoll;
+    Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw);
+    Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch);
+    Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll);
 
     // position model
     if (SubMdl.PositionModel) PositionModel(Md2Org, Md2Angle, SubMdl.PositionModel, F.PositionIndex);
