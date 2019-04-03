@@ -459,23 +459,15 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       if (SN->HasAttribute("scale_z")) Scale.z = VStr::atof(*SN->GetAttribute("scale_z"), 1);
 
       // fullbright flag
-      Md2.FullBright = false;
-      if (SN->HasAttribute("fullbright")) Md2.FullBright = !SN->GetAttribute("fullbright").ICmp("true");
-
+      Md2.FullBright = ParseBool(SN, "fullbright", false);
       // no shadow flag
-      Md2.NoShadow = false;
-      if (SN->HasAttribute("noshadow")) Md2.NoShadow = !SN->GetAttribute("noshadow").ICmp("true");
-
+      Md2.NoShadow = ParseBool(SN, "noshadow", false);
       // force depth test flag (for things like monsters with alpha transaparency)
-      Md2.UseDepth = false;
-      if (SN->HasAttribute("usedepth")) Md2.UseDepth = !SN->GetAttribute("usedepth").ICmp("true");
+      Md2.UseDepth = ParseBool(SN, "usedepth", false);
 
       // allow transparency in skin files
       // for skins that are transparent in solid models (Alpha = 1.0f)
-      Md2.AllowTransparency = false;
-      if (SN->HasAttribute("allowtransparency")) {
-        Md2.AllowTransparency = !SN->GetAttribute("allowtransparency").ICmp("true");
-      }
+      Md2.AllowTransparency = ParseBool(SN, "allowtransparency", false);
 
       // process frames
       for (VXmlNode *FN = SN->FindChild("frame"); FN; FN = FN->FindNext()) {
@@ -570,7 +562,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
     VClassModelScript *Cls = new VClassModelScript();
     Cls->Model = Mdl;
     Cls->Name = *CN->GetAttribute("name");
-    Cls->NoSelfShadow = (CN->HasAttribute("noselfshadow") ? !CN->GetAttribute("noselfshadow").ICmp("true") : false);
+    Cls->NoSelfShadow = ParseBool(CN, "noselfshadow", false);
     Cls->OneForAll = false;
     Cls->CacheBuilt = false;
     bool deleteIt = false;
