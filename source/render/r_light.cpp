@@ -50,7 +50,7 @@ extern VCvarF r_lights_radius;
 #define RL_CLEAR_DLIGHT(_dl)  do { \
   (_dl)->radius = 0; \
   (_dl)->flags = 0; \
-  if ((_dl)->Owner) { \
+  if ((_dl)->Owner && !(_dl)->lightid) { \
     dlowners.del((_dl)->Owner->GetUniqueId()); \
     (_dl)->Owner = nullptr; \
   } \
@@ -324,7 +324,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  if (dl->Owner && dl->Owner != Owner) dlowners.del(dl->Owner->GetUniqueId());
+  if (dl->Owner && !dl->lightid) dlowners.del(dl->Owner->GetUniqueId());
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
@@ -335,7 +335,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->lightid = lightid;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
-  if (!dlowner && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+  if (!lightid && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   return dl;
 }
