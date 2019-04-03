@@ -145,6 +145,18 @@ void Sys_Error (const char *, ...) __attribute__((noreturn, format(printf, 1, 2)
 // call `abort()` or `exit()` there to stop standard processing
 extern void (*SysErrorCB) (const char *msg);
 
+//const char *SkipPathPartCStr (const char *s);
+constexpr inline __attribute__((pure)) const char *SkipPathPartCStr (const char *s) {
+  const char *lastSlash = nullptr;
+  for (const char *t = s; *t; ++t) {
+    if (*t == '/') lastSlash = t+1;
+#ifdef _WIN32
+    if (*t == '\\') lastSlash = t+1;
+#endif
+  }
+  return (lastSlash ? lastSlash : s);
+}
+
 
 //==========================================================================
 //
@@ -155,8 +167,8 @@ extern void (*SysErrorCB) (const char *msg);
 #if DO_CHECK
 //# define check(e)  if (!(e)) throw VavoomError("Assertion failed: " #e)
 //# define verify(e) if (!(e)) throw VavoomError("Assertion failed: " #e)
-#define check(e)  if (!(e)) do { Sys_Error("Assertion failed: %s", #e); } while (0)
-#define verify(e) if (!(e)) do { Sys_Error("Assertion failed: %s", #e); } while (0)
+#define check(e)  if (!(e)) do { Sys_Error("%s:%d: Assertion failed: %s", SkipPathPartCStr(__FILE__), __LINE__, #e); } while (0)
+#define verify(e) if (!(e)) do { Sys_Error("%s:%d: Assertion failed: %s", SkipPathPartCStr(__FILE__), __LINE__, #e); } while (0)
 #else
 #define check(e)
 #define verify(e) (e)
