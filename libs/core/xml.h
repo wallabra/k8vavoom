@@ -47,32 +47,39 @@ public:
   VXmlNode ();
   ~VXmlNode ();
 
-  VXmlNode *FindChild (const char*) const;
-  VXmlNode *FindChild (const VStr&) const;
-  VXmlNode *GetChild (const char*) const;
-  VXmlNode *GetChild (const VStr&) const;
-  VXmlNode *FindNext (const char*) const;
-  VXmlNode *FindNext (const VStr&) const;
-  VXmlNode *FindNext () const;
-  bool HasAttribute (const char*) const;
-  bool HasAttribute (const VStr&) const;
-  VStr GetAttribute (const char*, bool = true) const;
-  VStr GetAttribute (const VStr&, bool = true) const;
+  VXmlNode *FindChild (const char *AName) const;
+  VXmlNode *FindChild (const VStr &AName) const;
+  VXmlNode *GetChild (const char *AName) const;
+  VXmlNode *GetChild (const VStr &AName) const;
+  VXmlNode *FindNext (const char *AName) const;
+  VXmlNode *FindNext (const VStr &AName) const;
+  VXmlNode *FindNext () const; // with the same name as the current one
+  bool HasAttribute (const char *AttrName) const;
+  bool HasAttribute (const VStr &AttrName) const;
+  const VStr &GetAttribute (const char *AttrName, bool Required=true) const;
+  const VStr &GetAttribute (const VStr &AttrName, bool Required=true) const;
 };
 
 
 class VXmlDocument {
-public:
-  VStr Name;
-  VXmlNode Root;
-
-public:
-  void Parse (VStream&, VStr);
+private:
+  enum { UTF8, WIN1251, KOI8 };
 
 private:
   char *Buf;
   int CurPos;
   int EndPos;
+  int Encoding;
+
+public:
+  VStr Name;
+  VXmlNode Root;
+
+public:
+  void Parse (VStream &Strm, const VStr &AName);
+
+private:
+  vuint32 GetChar (); // with correct encoding
 
   void SkipWhitespace ();
   bool SkipComment ();
