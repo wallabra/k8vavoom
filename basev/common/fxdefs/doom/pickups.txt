@@ -108,3 +108,81 @@ class Megasphere
 {
   frame MEGA { light Megasphere }
 }
+
+
+//------------------------------------------------------------------------------
+pointlight RedCard0 {
+  colour 1 0 0
+  radius 36
+  offset 0 0 1
+  noselfshadow
+}
+
+pointlight RedCard1 {
+  colour 1 0 0
+  radius 48
+  offset 0 0 1
+  noselfshadow
+}
+
+class RedCard {
+  frame RKEYA { light RedCard0 }
+  frame RKEYB { light RedCard1 }
+}
+
+class RedSkull {
+  frame RSKUA { light RedCard0 }
+  frame RSKUB { light RedCard1 }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight BlueCard0 {
+  colour 0 0 1
+  radius 36
+  offset 0 0 1
+  noselfshadow
+}
+
+pointlight BlueCard1 {
+  colour 0 0 1
+  radius 48
+  offset 0 0 1
+  noselfshadow
+}
+
+class BlueCard {
+  frame BKEYA { light BlueCard0 }
+  frame BKEYB { light BlueCard1 }
+}
+
+class BlueSkull {
+  frame BSKUA { light BlueCard0 }
+  frame BSKUB { light BlueCard1 }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight YellowCard0 {
+  colour 1 0.5 0
+  radius 36
+  offset 0 0 1
+  noselfshadow
+}
+
+pointlight YellowCard1 {
+  colour 1 0.5 0
+  radius 48
+  offset 0 0 1
+  noselfshadow
+}
+
+class YellowCard {
+  frame YKEYA { light YellowCard0 }
+  frame YKEYB { light YellowCard1 }
+}
+
+class YellowSkull {
+  frame YSKUA { light YellowCard0 }
+  frame YSKUB { light YellowCard1 }
+}
