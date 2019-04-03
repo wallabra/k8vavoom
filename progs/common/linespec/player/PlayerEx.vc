@@ -3353,18 +3353,22 @@ override void PlayerTick (float deltaTime) {
 
   // flashlight test
   if (bFlashlightOn) {
-    TVec dir;
-    AngleVector(MO.Angles, out dir);
-    dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), 256*2, 666);
-    if (fl) {
-      fl.coneDirection = dir;
-      fl.coneAngle = 30.0;
-      fl.colour = 0xff_af_af_00;
-      fl.die = MO.XLevel.Time+(2.0/35.0);
-      fl.type = DynamicLight::DLTYPE_Spot;
-      //fl.minlight = 64;
-      fl.bNoShadow = !GetCvarB('k8_flashlight_shadows');
-      fl.bPlayerLight = true;
+    float flradius = GetCvarF('k8_flashlight_distance');
+    int flcolor = GetCvarI('k8_flashlight_color')&0xff_ff_ff;
+    if (flcolor && flradius > 0) {
+      TVec dir;
+      AngleVector(MO.Angles, out dir);
+      dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), flradius, 666);
+      if (fl) {
+        fl.coneDirection = dir;
+        fl.coneAngle = 30.0;
+        fl.colour = flcolor|0xff_00_00_00;
+        fl.die = MO.XLevel.Time+(2.0/35.0);
+        fl.type = DynamicLight::DLTYPE_Spot;
+        //fl.minlight = 64;
+        fl.bNoShadow = !GetCvarB('k8_flashlight_shadows');
+        fl.bPlayerLight = true;
+      }
     }
   }
 }
