@@ -149,6 +149,8 @@ struct VScriptedModelFrame {
   ModelAngle angleYaw;
   ModelAngle angleRoll;
   ModelAngle anglePitch;
+  float rotateSpeed; // yaw rotation speed
+  float bobSpeed; // bobbing speed
   //
   VName sprite;
   int frame; // sprite frame
@@ -156,6 +158,26 @@ struct VScriptedModelFrame {
   int nextSpriteIdx;
   // index for next frame with the same number
   int nextNumberIdx;
+
+  void copyFrom (const VScriptedModelFrame &src) {
+    Number = src.Number;
+    Inter = src.Inter;
+    ModelIndex = src.ModelIndex;
+    FrameIndex = src.FrameIndex;
+    AngleStart = src.AngleStart;
+    AngleEnd = src.AngleEnd;
+    AlphaStart = src.AlphaStart;
+    AlphaEnd = src.AlphaEnd;
+    angleYaw = src.angleYaw;
+    angleRoll = src.angleRoll;
+    anglePitch = src.anglePitch;
+    rotateSpeed = src.rotateSpeed;
+    bobSpeed = src.bobSpeed;
+    sprite = src.sprite;
+    frame = src.frame;
+    nextSpriteIdx = src.nextSpriteIdx;
+    nextNumberIdx = src.nextNumberIdx;
+  }
 };
 
 
@@ -334,15 +356,28 @@ static void ParseAngle (VXmlNode *N, const char *name, ModelAngle &angle) {
   angle.SetRelative(0.0f);
   VStr aname = VStr("angle_")+name;
   if (N->HasAttribute(aname)) {
-    VStr val = N->GetAttribute(aname);
+    const VStr &val = N->GetAttribute(aname);
     if (val.ICmp("random") == 0) angle.SetAbsoluteRandom(); else angle.SetAbsolute(VStr::atof(*val));
   } else {
     aname = VStr("rotate_")+name;
     if (N->HasAttribute(aname)) {
-      VStr val = N->GetAttribute(aname);
+      const VStr &val = N->GetAttribute(aname);
       if (val.ICmp("random") == 0) angle.SetRelativeRandom(); else angle.SetRelative(VStr::atof(*val));
     }
   }
+}
+
+
+//==========================================================================
+//
+//  ParseBool
+//
+//==========================================================================
+static bool ParseBool (VXmlNode *N, const char *name, bool defval) {
+  if (!N->HasAttribute(name)) return defval;
+  const VStr &val = N->GetAttribute(name);
+  if (val.ICmp("yes") == 0 || val.ICmp("tan") == 0 || val.ICmp("true") == 0) return true;
+  return false;
 }
 
 
@@ -557,6 +592,9 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       ParseAngle(N, "pitch", F.anglePitch);
       ParseAngle(N, "roll", F.angleRoll);
 
+      if (ParseBool(N, "rotation", false)) F.rotateSpeed = 100.0f;
+      if (ParseBool(N, "bobbing", false)) F.bobSpeed = 180.0f;
+
       int lastIndex = -666;
       if (N->HasAttribute("index")) {
         F.Number = VStr::atoi(*N->GetAttribute("index"));
@@ -607,17 +645,8 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       if (F.Number >= 0 && lastIndex > 0) {
         for (int cfidx = F.Number+1; cfidx <= lastIndex; ++cfidx) {
           VScriptedModelFrame &ffr = Cls->Frames.Alloc();
+          ffr.copyFrom(F);
           ffr.Number = cfidx;
-          ffr.FrameIndex = F.FrameIndex;
-          ffr.ModelIndex = F.ModelIndex;
-          ffr.Inter = F.Inter;
-          ffr.AngleStart = F.AngleStart;
-          ffr.AngleEnd = F.AngleEnd;
-          ffr.AlphaStart = F.AlphaStart;
-          ffr.AlphaEnd = F.AlphaEnd;
-          ffr.angleYaw = F.angleYaw;
-          ffr.anglePitch = F.anglePitch;
-          ffr.angleRoll = F.angleRoll;
         }
         hasOthers = true;
       } else {
@@ -1488,6 +1517,16 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw);
     Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch);
     Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll);
+
+    if (FDef.rotateSpeed) {
+      Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed);
+    }
+
+    if (FDef.bobSpeed) {
+      const float bobHeight = 4.0f;
+      float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed))*bobHeight;
+      Md2Org.z += zdelta+bobHeight;
+    }
 
     // position model
     if (SubMdl.PositionModel) PositionModel(Md2Org, Md2Angle, SubMdl.PositionModel, F.PositionIndex);
