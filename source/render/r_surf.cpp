@@ -832,12 +832,18 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedMidExtraWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr, sec_plane_t *r_floor, sec_plane_t *r_ceiling, bool forward) {
   check(MTextr);
   TVec wv[4];
 
-  sec_plane_t *extratop = reg->floor;
-  sec_plane_t *extrabot = reg->prev->ceiling;
+  sec_plane_t *extratop, *extrabot;
+  if (forward) {
+    extratop = reg->next->floor;
+    extrabot = reg->ceiling;
+  } else {
+    extratop = reg->floor;
+    extrabot = reg->prev->ceiling;
+  }
   //side_t *extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
 
   float topz1 = r_ceiling->GetPointZ(*seg->v1);
@@ -1034,7 +1040,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->texinfo.Additive = !!(extrabot->flags&SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
 
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling);
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, false);
       sp->TextureOffset = sidedef->MidTextureOffset;
     }
   }
@@ -1275,7 +1281,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
       spp->texinfo.ColourMap = ColourMap;
       VTexture *ETex = GTextureManager(extraside->MidTexture);
       spp->texinfo.Tex = ETex;
-      spp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+      spp->texinfo.noDecals = (spp->texinfo.Tex ? spp->texinfo.Tex->noDecals : true);
 
       if (FASI(spp->frontTopDist) != FASI(r_ceiling->dist) ||
           FASI(spp->frontBotDist) != FASI(r_floor->dist) ||
@@ -1287,7 +1293,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
         spp->texinfo.toffs = extratop->TexZ*TextureTScale(ETex)+sidedef->MidRowOffset*TextureOffsetTScale(ETex);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, ETex, r_floor, r_ceiling);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, true);
       } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, spp, sidedef->MidRowOffset);
       }
