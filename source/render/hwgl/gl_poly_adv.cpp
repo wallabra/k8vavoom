@@ -313,7 +313,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::BeginShadowVolumesPass () {
-  glEnable(GL_STENCIL_TEST);
+  //glEnable(GL_STENCIL_TEST);
+  glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
 }
 
@@ -388,6 +389,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
   glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+  glEnable(GL_STENCIL_TEST);
 
   if (!CanUseRevZ()) {
     // normal
@@ -429,7 +431,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   coneDir = aconeDir;
   coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
 
-  if (coneAngle) {
+  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
     spotLight = true;
     coneDir.normaliseInPlace();
   } else {
@@ -774,6 +776,20 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   NoteStencilBufferDirty();
 }
 
+#define SETUP_LIGHT_SHADER(shad_)  do { \
+  (shad_).Activate(); \
+  (shad_).SetLightPos(LightPos); \
+  (shad_).SetLightRadius(Radius); \
+  (shad_).SetViewOrigin(vieworg.x, vieworg.y, vieworg.z); \
+  (shad_).SetTexture(0); \
+  if (!gl_dbg_advlight_debug) { \
+    (shad_).SetLightMin(LightMin); \
+  } else { \
+    Colour = gl_dbg_advlight_color; \
+  } \
+  (shad_).SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f); \
+} while (0)
+
 
 //==========================================================================
 //
@@ -809,43 +825,19 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   if (spotLight) {
     if (!gl_dbg_advlight_debug) {
-      ShadowsLightSpot.Activate();
-      ShadowsLightSpot.SetLightPos(LightPos);
-      ShadowsLightSpot.SetLightRadius(Radius);
-      ShadowsLightSpot.SetLightMin(LightMin);
-      ShadowsLightSpot.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-      ShadowsLightSpot.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
-      ShadowsLightSpot.SetTexture(0);
+      SETUP_LIGHT_SHADER(ShadowsLightSpot);
       ShadowsLightSpot.SetConeDirection(coneDir);
       ShadowsLightSpot.SetConeAngle(coneAngle);
     } else {
-      ShadowsLightSpotDbg.Activate();
-      ShadowsLightSpotDbg.SetLightPos(LightPos);
-      ShadowsLightSpotDbg.SetLightRadius(Radius);
-      Colour = gl_dbg_advlight_color;
-      ShadowsLightSpotDbg.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-      ShadowsLightSpotDbg.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
-      ShadowsLightSpotDbg.SetTexture(0);
+      SETUP_LIGHT_SHADER(ShadowsLightSpotDbg);
       ShadowsLightSpotDbg.SetConeDirection(coneDir);
       ShadowsLightSpotDbg.SetConeAngle(coneAngle);
     }
   } else {
     if (!gl_dbg_advlight_debug) {
-      ShadowsLight.Activate();
-      ShadowsLight.SetLightPos(LightPos);
-      ShadowsLight.SetLightRadius(Radius);
-      ShadowsLight.SetLightMin(LightMin);
-      ShadowsLight.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-      ShadowsLight.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
-      ShadowsLight.SetTexture(0);
+      SETUP_LIGHT_SHADER(ShadowsLight);
     } else {
-      ShadowsLightDbg.Activate();
-      ShadowsLightDbg.SetLightPos(LightPos);
-      ShadowsLightDbg.SetLightRadius(Radius);
-      Colour = gl_dbg_advlight_color;
-      ShadowsLightDbg.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
-      ShadowsLightDbg.SetViewOrigin(vieworg.x, vieworg.y, vieworg.z);
-      ShadowsLightDbg.SetTexture(0);
+      SETUP_LIGHT_SHADER(ShadowsLightDbg);
     }
   }
 }

@@ -918,12 +918,14 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
     CurrLightInFrustum = false; // don't do frustum optimisations
   }
 
+  bool allowShadows = doShadows;
+
   // if we want model shadows, always do full rendering
-  if (!doShadows && r_draw_mobjs && r_models && r_model_shadows) doShadows = true;
+  if (!allowShadows && r_draw_mobjs && r_models && r_model_shadows) allowShadows = true;
 
-  if (dlflags&dlight_t::NoShadow) doShadows = false;
+  if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
-  if (!doShadows && dbg_adv_light_notrace_mark) {
+  if (!allowShadows && dbg_adv_light_notrace_mark) {
     //Colour = 0xffff0000U;
     Colour = 0xffff00ffU; // purple; it should be very noticeable
   }
@@ -978,7 +980,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 #endif
 
-  ResetMobjsLightCount(true);
+  ResetMobjsLightCount(true, allowShadows);
 
   // if we want to scissor on geometry, check if any lit model is out of our light bbox.
   // stop right here! say, is there ANY reason to not limit light box with map geometry?
@@ -986,7 +988,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   // still, we may miss some lighting on models from flying lights that cannot touch
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
-  if (checkModels) {
+  if (allowShadows && checkModels) {
     int count = mobjAffected.length();
     if (!count) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     VEntity **entp = mobjAffected.ptr();
@@ -1071,20 +1073,22 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   // do shadow volumes
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
   LightClip.ClearClipNodes(CurrLightPos, Level);
-  if (doShadows && r_max_shadow_segs_all) {
+  if (allowShadows) {
+      if (r_max_shadow_segs_all) {
 #if 0
-    RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
+      RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
 #else
-    {
-      const int *subidx = LightSubs.ptr();
-      for (int sscount = LightSubs.length(); sscount--; ++subidx) {
-        RenderShadowSubsector(*subidx);
+      {
+        const int *subidx = LightSubs.ptr();
+        for (int sscount = LightSubs.length(); sscount--; ++subidx) {
+          RenderShadowSubsector(*subidx);
+        }
       }
-    }
 #endif
+    }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
-    ResetMobjsLightCount(false);
+    ResetMobjsLightCount(false, allowShadows);
   }
   Drawer->EndLightShadowVolumes();
 
@@ -1094,7 +1098,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   //     circle should do the trick.
 
   // draw light
-  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, doShadows);
+  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, allowShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level);
 #if 0
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
@@ -1108,7 +1112,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 #endif
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, coneDir, coneAngle);
   RenderMobjsLight();
-  ResetMobjsLightCount(false);
+  ResetMobjsLightCount(false, allowShadows);
 
   //if (hasScissor) Drawer->DebugRenderScreenRect(scoord[0], scoord[1], scoord[2], scoord[3], 0x7f007f00);
 

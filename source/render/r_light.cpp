@@ -258,10 +258,20 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // first try to find owned light to replace
   if (Owner) {
-    auto idxp = dlowners.find(Owner->GetUniqueId());
-    if (idxp) {
-      dlowner = &DLights[*idxp];
-      check(dlowner->Owner == Owner);
+    if (lightid == 0) {
+      auto idxp = dlowners.find(Owner->GetUniqueId());
+      if (idxp) {
+        dlowner = &DLights[*idxp];
+        check(dlowner->Owner == Owner);
+      }
+    } else {
+      dl = DLights;
+      for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
+        if (dl->Owner == Owner && dl->lightid == lightid && dl->die >= Level->Time && dl->radius > 0.0f) {
+          dlowner = dl;
+          break;
+        }
+      }
     }
   }
 
@@ -322,6 +332,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->origin = lorg;
   dl->radius = radius;
   dl->type = DLTYPE_Point;
+  dl->lightid = lightid;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
   if (!dlowner && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));

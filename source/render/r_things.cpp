@@ -600,6 +600,7 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 //==========================================================================
 void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleObjects.reset();
+  allModelObjects.reset();
 
   if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
@@ -610,6 +611,12 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 
     int RendStyle = mobj->RenderStyle;
     if (RendStyle == STYLE_None) continue;
+
+    do {
+      if (!mobj->State) break;
+      if (!HasAliasModel(mobj->GetClass()->Name)) break;
+      allModelObjects.append(mobj);
+    } while (0);
 
     // skip things in subsectors that are not visible
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);

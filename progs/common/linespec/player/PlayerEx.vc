@@ -3355,7 +3355,7 @@ override void PlayerTick (float deltaTime) {
   if (bFlashlightOn) {
     TVec dir;
     AngleVector(MO.Angles, out dir);
-    dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), 256*2);
+    dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), 256*2, 666);
     if (fl) {
       fl.coneDirection = dir;
       fl.coneAngle = 30.0;

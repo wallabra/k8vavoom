@@ -589,6 +589,44 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
   }
 }
 
+#define DO_DRAW_AMDL_LIGHT(shad_)  do { \
+  (shad_).SetInter(Inter); \
+  (shad_).SetModelToWorldMat(RotationMatrix); \
+  (shad_).SetNormalToWorldMat(NormalMat[0]); \
+ \
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
+ \
+  p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
+  p_glEnableVertexAttribArrayARB(0); \
+ \
+  p_glVertexAttribPointerARB((shad_).loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_).loc_VertNormal); \
+ \
+  p_glVertexAttribPointerARB((shad_).loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_).loc_Vert2); \
+ \
+  p_glVertexAttribPointerARB((shad_).loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
+ \
+  p_glVertexAttribPointerARB((shad_).loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
+  p_glEnableVertexAttribArrayARB((shad_).loc_TexCoord); \
+ \
+  (shad_).SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
+  (shad_).SetAllowTransparency(AllowTransparency); \
+  (shad_).SetViewOrigin(vieworg); \
+ \
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer); \
+  p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0); \
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0); \
+ \
+  p_glDisableVertexAttribArrayARB(0); \
+  p_glDisableVertexAttribArrayARB((shad_).loc_VertNormal); \
+  p_glDisableVertexAttribArrayARB((shad_).loc_Vert2); \
+  p_glDisableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
+  p_glDisableVertexAttribArrayARB((shad_).loc_TexCoord); \
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
+} while (0)
+
 
 //==========================================================================
 //
@@ -627,77 +665,9 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   UploadModel(Mdl);
 
   if (spotLight) {
-    ShadowsModelLightSpot.SetInter(Inter);
-    ShadowsModelLightSpot.SetModelToWorldMat(RotationMatrix);
-    ShadowsModelLightSpot.SetNormalToWorldMat(NormalMat[0]);
-
-    p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
-
-    p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(0);
-
-    p_glVertexAttribPointerARB(ShadowsModelLightSpot.loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLightSpot.loc_VertNormal);
-
-    p_glVertexAttribPointerARB(ShadowsModelLightSpot.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLightSpot.loc_Vert2);
-
-    p_glVertexAttribPointerARB(ShadowsModelLightSpot.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLightSpot.loc_Vert2Normal);
-
-    p_glVertexAttribPointerARB(ShadowsModelLightSpot.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLightSpot.loc_TexCoord);
-
-    ShadowsModelLightSpot.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-    ShadowsModelLightSpot.SetAllowTransparency(AllowTransparency);
-    ShadowsModelLightSpot.SetViewOrigin(vieworg);
-
-    p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
-    p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
-    p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-
-    p_glDisableVertexAttribArrayARB(0);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLightSpot.loc_VertNormal);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLightSpot.loc_Vert2);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLightSpot.loc_Vert2Normal);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLightSpot.loc_TexCoord);
-    p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    DO_DRAW_AMDL_LIGHT(ShadowsModelLightSpot);
   } else {
-    ShadowsModelLight.SetInter(Inter);
-    ShadowsModelLight.SetModelToWorldMat(RotationMatrix);
-    ShadowsModelLight.SetNormalToWorldMat(NormalMat[0]);
-
-    p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
-
-    p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(0);
-
-    p_glVertexAttribPointerARB(ShadowsModelLight.loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLight.loc_VertNormal);
-
-    p_glVertexAttribPointerARB(ShadowsModelLight.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLight.loc_Vert2);
-
-    p_glVertexAttribPointerARB(ShadowsModelLight.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLight.loc_Vert2Normal);
-
-    p_glVertexAttribPointerARB(ShadowsModelLight.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    p_glEnableVertexAttribArrayARB(ShadowsModelLight.loc_TexCoord);
-
-    ShadowsModelLight.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-    ShadowsModelLight.SetAllowTransparency(AllowTransparency);
-    ShadowsModelLight.SetViewOrigin(vieworg);
-
-    p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
-    p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
-    p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-
-    p_glDisableVertexAttribArrayARB(0);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLight.loc_VertNormal);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLight.loc_Vert2);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLight.loc_Vert2Normal);
-    p_glDisableVertexAttribArrayARB(ShadowsModelLight.loc_TexCoord);
-    p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    DO_DRAW_AMDL_LIGHT(ShadowsModelLight);
   }
 }
 

@@ -1589,7 +1589,7 @@ final void DoStateEffects (float DeltaTime) {
     foreach (auto i; 0..Lights.length) {
       LightEffectDef *L = Lights[i];
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
-      dlight_t *dl = AllocDlight(self, lorg, radius:fmax(0, fmax(prev_rad, L->Radius)), lightid:i+1); // pass "light id" to allow replacing
+      dlight_t *dl = AllocDlight(self, lorg, radius:fmax(0, fmax(prev_rad, L->Radius)), lightid:i); // pass "light id" to allow replacing
       if (!dl) continue; // alas
       //print("%C: rad: %s", self, dl->radius);
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;

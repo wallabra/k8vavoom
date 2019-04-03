@@ -399,6 +399,7 @@ protected:
   vuint32 updateWorldFrame;
 
   TArray<VEntity *> visibleObjects;
+  TArray<VEntity *> allModelObjects; // used in advrender
   //TMapNC<VEntity *, bool> visibleObjects;
   //VEntity **visibleObjects;
   //unsigned visibleObjectsCount;
@@ -788,7 +789,7 @@ protected:
                            TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f);
 
   // things
-  void ResetMobjsLightCount (bool first); // if `first` is true, build array of affected entities
+  void ResetMobjsLightCount (bool first, bool doShadows); // if `first` is true, build array of affected entities
   void RenderThingAmbient (VEntity*);
   void RenderMobjsAmbient ();
   void RenderThingTextures (VEntity*);

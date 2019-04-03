@@ -144,7 +144,7 @@ bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent) {
 //  VAdvancedRenderLevel::ResetMobjsLightCount
 //
 //==========================================================================
-void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
+void VAdvancedRenderLevel::ResetMobjsLightCount (bool first, bool doShadows) {
   if (!r_draw_mobjs || !r_models) {
     mobjAffected.reset();
     return;
@@ -153,13 +153,13 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
     // first time, build new list
     mobjAffected.reset();
     // if we won't render thing shadows, don't bother trying invisible things
-    if (!r_model_shadows) {
+    if (!doShadows || !r_model_shadows) {
       // we already have a list of visible things built
       if (r_dbg_advthing_dump_actlist) GCon->Log("=== counting objects ===");
       VEntity **ent = visibleObjects.ptr();
       for (int count = visibleObjects.length(); count--; ++ent) {
-        if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        if (!(*ent)->State) continue;
+        //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+        //if (!(*ent)->State) continue;
         if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
         if (!IsTouchedByLight(*ent)) continue;
         if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
@@ -167,13 +167,24 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first) {
       }
     } else {
       // we need to render shadows, so process all things
-      //TODO: optimise this by build a unified visibility for all lights
+      //TODO: optimise this by build an unified visibility for all lights
+      /*
       for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
-        if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        if (!ent->State) continue;
+        //if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+        //if (!ent->State) continue;
         if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
         ent->NumRenderedShadows = 0;
         if (!IsTouchedByLight(*ent)) continue;
+        mobjAffected.append(*ent);
+      }
+      */
+      VEntity **ent = allModelObjects.ptr();
+      for (int count = allModelObjects.length(); count--; ++ent) {
+        //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+        //if (!(*ent)->State) continue;
+        //if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+        if (!IsTouchedByLight(*ent)) continue;
+        //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
         mobjAffected.append(*ent);
       }
     }
