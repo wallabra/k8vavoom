@@ -113,15 +113,15 @@ class Megasphere
 //------------------------------------------------------------------------------
 pointlight RedCard0 {
   colour 1 0 0
-  radius 36
-  offset 0 0 1
+  radius 38
+  offset 0 0 8
   noselfshadow
 }
 
 pointlight RedCard1 {
   colour 1 0 0
   radius 48
-  offset 0 0 1
+  offset 0 0 8
   noselfshadow
 }
 
@@ -139,15 +139,15 @@ class RedSkull {
 //------------------------------------------------------------------------------
 pointlight BlueCard0 {
   colour 0 0 1
-  radius 36
-  offset 0 0 1
+  radius 38
+  offset 0 0 8
   noselfshadow
 }
 
 pointlight BlueCard1 {
   colour 0 0 1
   radius 48
-  offset 0 0 1
+  offset 0 0 8
   noselfshadow
 }
 
@@ -165,15 +165,15 @@ class BlueSkull {
 //------------------------------------------------------------------------------
 pointlight YellowCard0 {
   colour 1 0.5 0
-  radius 36
-  offset 0 0 1
+  radius 38
+  offset 0 0 8
   noselfshadow
 }
 
 pointlight YellowCard1 {
   colour 1 0.5 0
   radius 48
-  offset 0 0 1
+  offset 0 0 8
   noselfshadow
 }
 
