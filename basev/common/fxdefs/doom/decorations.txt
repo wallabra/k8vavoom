@@ -206,6 +206,7 @@ pointlight Candlestick
 {
   colour 1 1 0.5
   radius 64
+  offset 0 0 8
   noselfshadow
 }
 
