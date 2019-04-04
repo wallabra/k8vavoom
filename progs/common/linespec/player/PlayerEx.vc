@@ -2285,7 +2285,7 @@ void ResetPlayerOnSpawn () {
   k8HealthAccum_LastRegenTime = -10000;
   k8HealthAccum_LastBoostTime = -10000;
 
-  bFlashlightOn = false;
+  if (GetCvarB('r_allow_ambient')) bFlashlightOn = false;
   bFlashlightButtonDown = false;
 }
 
