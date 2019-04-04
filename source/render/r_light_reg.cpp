@@ -746,6 +746,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     //TODO: we can use clipper to check if destination subsector is occluded
     bool needProperTrace = (doCheckTrace && xnfo > 0);
+    if (dl.flags&dlight_t::NoShadow) needProperTrace = false;
 
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;
@@ -772,6 +773,17 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       //facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
     }
 
+    bool spotLight = false;
+    float coneAngle = (dl.coneAngle <= 0.0f || dl.coneAngle >= 360.0f ? 0.0f : dl.coneAngle);
+    TVec coneDir = dl.coneDirection;
+    if (coneAngle && coneDir.isValid() && !coneDir.isZero()) {
+      spotLight = true;
+      coneDir.normaliseInPlace();
+    }
+
+    float us = 0.0f, ut = 0.0f;
+    TVec spt(0.0f, 0.0f, 0.0f);
+
     for (int t = 0; t < tmax; ++t) {
       int td = (int)local.y-t*16;
       if (td < 0) td = -td;
@@ -784,11 +796,22 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           dist = td+(sd>>1);
         }
         if (dist < minlight) {
+          // check spotlight cone
+          if (spotLight) {
+            us = starts+s*step;
+            ut = startt+t*step;
+            spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+            if (length2DSquared(spt-dl.origin) > 2*2) {
+              if (!spt.isInSpotlight(dl.origin, coneDir, coneAngle)) continue;
+            }
+          }
           // do more dynlight clipping
           if (needProperTrace) {
-            float us = starts+s*step;
-            float ut = startt+t*step;
-            TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+            if (!spotLight) {
+              us = starts+s*step;
+              ut = startt+t*step;
+              spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+            }
             if (length2DSquared(spt-dl.origin) > 2*2) {
               //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
               //linetrace_t Trace;
