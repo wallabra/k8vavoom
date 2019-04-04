@@ -3398,6 +3398,39 @@ override void PlayerTick (float deltaTime) {
       }
     }
   }
+
+#ifdef SPOTLIGHT_DISCO_TEST
+  {
+    DebugPutRotatingSpotlight(vector(1100, -3270, 110), 100, 512, 0xff_ff_00_00, 0);
+
+    DebugPutRotatingSpotlight(vector(990, -2990, 68), 100, 512, 0xff_00_ff_00, 1);
+
+    DebugPutRotatingSpotlight(vector(588, -3226, 100), 100, 512, 0xff_ff_00_00, 2);
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  DebugPutRotatingSpotlight
+//
+//==========================================================================
+final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, int color, int id) {
+  TAVec ag;
+  ag.yaw = AngleMod360(MO.XLevel.Time*speed);
+  TVec dir;
+  AngleVector(ag, out dir);
+  dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 669+id);
+  if (!fl) return;
+  fl.coneDirection = dir;
+  fl.coneAngle = 42.0f;
+  fl.colour = color|0xff_00_00_00;
+  fl.die = MO.XLevel.Time+(2.0/35.0);
+  fl.type = DynamicLight::DLTYPE_Spot;
+  //fl.minlight = 64;
+  fl.bNoShadow = false;
+  fl.bPlayerLight = true;
 }
 
 
