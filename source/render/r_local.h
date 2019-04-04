@@ -367,8 +367,10 @@ protected:
   drawseg_t *AllocatedDrawSegs;
   segpart_t *AllocatedSegParts;
 
-  // light variables
+  // static lights
   TArray<light_t> Lights;
+  TMapNC<vuint32, vint32> StOwners; // key: object id; value: index in `Lights`
+  // dynamic lights
   dlight_t DLights[MAX_DLIGHTS];
   DLightInfo dlinfo[MAX_DLIGHTS];
   TMapNC<vuint32, vuint32> dlowners; // key: object id; value: index in `DLights`
@@ -648,6 +650,8 @@ protected:
   // calculate subsector's light from static light sources (light variables must be initialized)
   void CalculateSubStatic (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
 
+  virtual void InvalidateStaticLightmaps (const TVec &org, float radius);
+
 public:
   virtual particle_t *NewParticle (const TVec &porg) override;
 
@@ -662,7 +666,8 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32) override;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 colour) override;
+  virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) override;
   virtual void ClearReferences () override;
 
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
@@ -755,6 +760,12 @@ public:
   };
 
 protected:
+  void InvalidateSurfacesLMaps (surface_t *surf);
+  void InvalidateLineLMaps (drawseg_t *dseg);
+
+protected:
+  virtual void InvalidateStaticLightmaps (const TVec &org, float radius) override;
+
   // general
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
 
@@ -822,7 +833,7 @@ protected:
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
-  void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, bool CheckSkyBoxAlways, int LightCanCross);
+  void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderShadowSubRegion (subsector_t *sub, subregion_t *region);

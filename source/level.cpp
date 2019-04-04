@@ -937,7 +937,7 @@ void VLevel::Destroy () {
 
 //==========================================================================
 //
-//  VLevel::SetCameraToTexture
+//  VLevel::AddStaticLightRGB
 //
 //==========================================================================
 void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour) {
@@ -954,6 +954,26 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
   L.Origin = Origin;
   L.Radius = Radius;
   L.Colour = Colour;
+}
+
+
+//==========================================================================
+//
+//  VLevel::AddStaticLightRGB
+//
+//==========================================================================
+void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
+  //FIXME: use proper data structure instead of reallocating it again and again
+  //TODO: write this with hashmap, and replicate properly
+  /*
+  rep_light_t *stl = StaticLights;
+  for (int count = NumStaticLights; count--; ++stl) {
+    if (stl->Owner == Ent) {
+      stl->Origin = Origin;
+    }
+  }
+  */
+  if (RenderData) RenderData->MoveStaticLightByOwner(Ent, Origin);
 }
 
 

@@ -710,6 +710,87 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
 //==========================================================================
 //
+//  VRenderLevel::InvalidateSurfacesLMaps
+//
+//==========================================================================
+void VRenderLevel::InvalidateSurfacesLMaps (surface_t *surf) {
+  for (; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
+    if (surf->CacheSurf) { FreeSurfCache(surf->CacheSurf); surf->CacheSurf = nullptr; }
+    if (surf->lightmap) { Z_Free(surf->lightmap); surf->lightmap = nullptr; }
+    if (surf->lightmap_rgb) { Z_Free(surf->lightmap_rgb); surf->lightmap_rgb = nullptr; }
+    //if (surf->drawflags&surface_t::DF_CALC_LMAP) continue;
+    /*if (surf->lightmap || surf->lightmap_rgb)*/
+    {
+      surf->drawflags |= surface_t::DF_CALC_LMAP;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevel::InvalidateLineLMaps
+//
+//==========================================================================
+void VRenderLevel::InvalidateLineLMaps (drawseg_t *dseg) {
+  const seg_t *seg = dseg->seg;
+
+  if (!seg->linedef) return; // miniseg
+
+  InvalidateSurfacesLMaps(dseg->mid->surfs);
+  if (seg->backsector) {
+    // two sided line
+    InvalidateSurfacesLMaps(dseg->top->surfs);
+    // no lightmaps on sky anyway
+    //InvalidateSurfacesLMaps(dseg->topsky->surfs);
+    InvalidateSurfacesLMaps(dseg->bot->surfs);
+    for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+      InvalidateSurfacesLMaps(sp->surfs);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevel::InvalidateStaticLightmaps
+//
+//==========================================================================
+void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius) {
+  //FIXME: make this faster!
+  if (radius < 2.0f) return;
+  float bbox[6];
+  subsector_t *sub = Level->Subsectors;
+  for (int count = Level->NumSubsectors; count--; ++sub) {
+    if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
+    Level->GetSubsectorBBox(sub, bbox);
+    if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) continue;
+    //GCon->Logf("invalidating subsector %d", (int)(ptrdiff_t)(sub-Level->Subsectors));
+    // polyobj
+    if (sub->poly) {
+      int polyCount = sub->poly->numsegs;
+      seg_t **polySeg = sub->poly->segs;
+      while (polyCount--) {
+        InvalidateLineLMaps((*polySeg)->drawsegs);
+        ++polySeg;
+      }
+    }
+    //TODO: invalidate only relevant segs
+    for (subregion_t *subregion = sub->regions; subregion; subregion = subregion->next) {
+      drawseg_t *ds = subregion->lines;
+      for (int dscount = sub->numlines; dscount--; ++ds) {
+        InvalidateLineLMaps(ds);
+      }
+      InvalidateSurfacesLMaps(subregion->floor->surfs);
+      InvalidateSurfacesLMaps(subregion->ceil->surfs);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  xblight
 //
 //==========================================================================
@@ -1082,7 +1163,7 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
     cache->chain = light_chain[bnum];
     light_chain[bnum] = cache;
     cache->lastframe = cacheframecount;
-    return true;
+    if (!(surface->drawflags&surface_t::DF_CALC_LMAP)) return true;
   }
 
   // determine shape of surface

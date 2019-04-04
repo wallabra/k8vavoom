@@ -226,13 +226,21 @@ void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                                               bool CheckSkyBoxAlways, int LightCanCross)
+                                               VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f) return;
   if (LightCanCross > 0 && texinfo->Tex->isTransparent()) return; // has holes, don't bother
+
+  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+
+  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
+      (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
+  {
+    return;
+  }
 
   // ignore everything that is placed behind player's back
   // we shouldn't have many of those, so check them in the loop below
@@ -316,20 +324,15 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   //line_t *linedef = seg->linedef;
   //side_t *sidedef = seg->sidedef;
 
-  if (!seg->backsector) {
-    // single sided line
-    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, 0);
-    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, 0);
-  } else {
+  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  if (seg->backsector) {
     // two sided line
-    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, false, 0);
+    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, -1);
-    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, false, 0);
-    DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, 1);
-
+    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
+    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawShadowSurfaces(sp->surfs, &sp->texinfo, false, 0);
+      DrawShadowSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, 0);
     }
   }
 }
@@ -355,7 +358,7 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
   //if (fabsf(dist) >= CurrLightRadius) return;
   if (dist <= 0.0f || dist > CurrLightRadius) return;
 
-  DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, true, 0);
+  DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0);
 }
 
 
@@ -567,17 +570,13 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-  if (!seg->backsector) {
-    // single sided line
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, 0);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, 0);
-  } else {
+  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  if (seg->backsector) {
     // two sided line
     DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, 0);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
+    //k8: horizon/sky cannot block light
+    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
     DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, 0);
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, 1);
-
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, 0);
     }

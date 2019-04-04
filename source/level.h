@@ -495,6 +495,7 @@ public:
   }
 
   void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour);
+  void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,

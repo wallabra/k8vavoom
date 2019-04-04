@@ -170,6 +170,7 @@ public:
   // static lights
   DECLARE_FUNCTION(AddStaticLight)
   DECLARE_FUNCTION(AddStaticLightRGB)
+  DECLARE_FUNCTION(MoveStaticLightByOwner)
 
   // sound sequences
   DECLARE_FUNCTION(SectorStartSequence)

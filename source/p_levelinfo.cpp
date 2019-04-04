@@ -349,6 +349,13 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB) {
   Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Colour);
 }
 
+IMPLEMENT_FUNCTION(VLevelInfo, MoveStaticLightByOwner) {
+  P_GET_VEC(Origin);
+  P_GET_REF(VEntity, Ent);
+  P_GET_SELF;
+  Self->XLevel->MoveStaticLightByOwner(Ent, Origin);
+}
+
 IMPLEMENT_FUNCTION(VLevelInfo, SectorStartSequence) {
   P_GET_INT(ModeNum);
   P_GET_NAME(name);

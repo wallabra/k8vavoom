@@ -510,6 +510,11 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
     Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
   }
 
+  // move static light, if there is any
+  if (/*bStaticLight &&*/ bStaticLightSpawned) {
+    Level.MoveStaticLightByOwner(self, Origin+LightOffset);
+  }
+
   return true;
 }
 

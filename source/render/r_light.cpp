@@ -81,6 +81,38 @@ void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, 
   L.owner = Owner;
   L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
+  if (Owner) {
+    auto osp = StOwners.find(Owner->GetUniqueId());
+    if (osp) Lights[*osp].owner = nullptr;
+    StOwners.put(Owner->GetUniqueId(), Lights.length()-1);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::MoveStaticLightByOwner
+//
+//==========================================================================
+void VRenderLevelShared::MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) {
+  if (!Owner) return;
+  if (Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return;
+  auto stp = StOwners.get(Owner->GetUniqueId());
+  if (!stp) return;
+  light_t &sl = Lights[*stp];
+  if (sl.origin == origin) return;
+  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius);
+  sl.origin = origin;
+  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::InvalidateStaticLightmaps
+//
+//==========================================================================
+void VRenderLevelShared::InvalidateStaticLightmaps (const TVec &org, float radius) {
 }
 
 
@@ -91,10 +123,15 @@ void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, 
 //==========================================================================
 void VRenderLevelShared::ClearReferences () {
   // TODO: collect all static lights with owners into separate list for speed
+  /*
   light_t *sl = Lights.ptr();
   for (int count = Lights.length(); count--; ++sl) {
-    if (sl->owner && (sl->owner->GetFlags()&_OF_CleanupRef)) sl->owner = nullptr;
+    if (sl->owner && (sl->owner->GetFlags()&_OF_CleanupRef)) {
+      StOwners.del(sl->owner->GetUniqueId());
+      sl->owner = nullptr;
+    }
   }
+  */
   // dynlights
   dlight_t *l = DLights;
   for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
@@ -403,6 +440,12 @@ void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
     dl->flags = 0;
     dl->Owner = nullptr;
     dlowners.del(Owner->GetUniqueId());
+  }
+  auto stxp = StOwners.find(Owner->GetUniqueId());
+  if (stxp) {
+    Lights[*stxp].owner = nullptr;
+    Lights[*stxp].active = false;
+    StOwners.del(Owner->GetUniqueId());
   }
 }
 

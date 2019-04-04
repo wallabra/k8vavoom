@@ -63,6 +63,7 @@ public:
   virtual void RenderPlayerView () = 0;
 
   virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32) = 0;
+  virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) = 0;
   virtual void ClearReferences () = 0;
 
   virtual dlight_t *AllocDlight (VThinker*, const TVec &lorg, float radius, int lightid=-1) = 0;

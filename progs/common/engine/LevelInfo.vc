@@ -191,6 +191,7 @@ void RemoveMapMarker (int markerid) {
 // static lights
 native final void AddStaticLight (Entity ent, TVec origin, float radius);
 native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int colour);
+native final void MoveStaticLightByOwner (Entity ent, TVec origin);
 
 // ////////////////////////////////////////////////////////////////////////// //
 // sound sequences
