@@ -513,7 +513,7 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
             add *= attn;
             if (add <= 1.0f) continue;
           }
-          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if ((dl.flags&dlight_t::NoShadow) == 0 && !RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         } else {
           if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
             const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
