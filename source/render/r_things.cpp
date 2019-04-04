@@ -524,6 +524,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->Radius, mobj->Height) : light);
   } else {
     light = seclight = LightPoint(mobj->Origin, mobj->Radius, mobj->Height);
+    //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
   }
 
   //FIXME: fake "solid color" with colored light for now

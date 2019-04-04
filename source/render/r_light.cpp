@@ -432,7 +432,16 @@ bool VRenderLevelShared::CacheSurface (surface_t *) {
 //
 //==========================================================================
 float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle) {
+  float ltangle = 0.0f;
+
   //if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f)
+  if (radius == 0.0f && height == 0.0f) {
+    if (p.isInSpotlight(coneOrigin, coneDir, coneAngle, &ltangle)) {
+      return sinf(MID(0.0f, (coneAngle-ltangle)/coneAngle, 1.0f)*(M_PI/2.0));
+    }
+    return 0.0f;
+  }
+
   float bbox[6];
   bbox[0+0] = p.x-radius*0.4f;
   bbox[0+1] = p.y-radius*0.4f;
@@ -444,7 +453,6 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
   pl.SetPointNormal3D(coneOrigin, coneDir);
   if (!pl.checkBox(bbox)) return 0.0f;
   float res = 0.0f;
-  float ltangle = 0.0f;
   for (unsigned bi = 0; bi < 8; ++bi) {
     const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
     if (vv.isInSpotlight(coneOrigin, coneDir, coneAngle, &ltangle)) {
@@ -467,7 +475,6 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
 void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane) {
   if (r_dynamic && sub->dlightframe == currDLightFrame) {
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
-    bool checkSpot = (height > 0.0f);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
       if (!dlinfo[i].needTrace) continue;
@@ -488,14 +495,14 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
         // check potential visibility
         if (r_dynamic_clip) {
           if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
-          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+          if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
             const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
             add *= attn;
             if (add <= 1.0f) continue;
           }
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         } else {
-          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+          if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
             const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
             add *= attn;
             if (add <= 1.0f) continue;
