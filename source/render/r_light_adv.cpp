@@ -826,14 +826,14 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (!(LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7)))) return;
+  //if (!(LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7)))) return;
   if (!LightClip.ClipLightCheckSubsector(sub, false)) return;
 
   RenderLightSubRegion(sub, sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(sub, false);
+  //LightClip.ClipLightAddSubsectorSegs(sub, false);
 }
 
 

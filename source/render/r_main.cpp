@@ -1004,7 +1004,7 @@ static bool IsTouchingSectorRegion (const sector_t *sector, const TVec &point, c
 //
 //==========================================================================
 void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
-  //LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
+  //LightClip.ClipLightAddSubsectorSegs(sub);
   if (doShadows) return; // already determined
 
   // check sector regions, if there are more than one

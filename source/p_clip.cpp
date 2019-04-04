@@ -1362,7 +1362,7 @@ bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {
   const int orgside = seg->PointOnSide2(Origin);
   if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
   if (orgside) {
-    if (!asShadow) return false;
+    //if (!asShadow) return false;
     v1 = seg->v2;
     v2 = seg->v1;
   } else {
@@ -1393,7 +1393,7 @@ bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, bool asShado
     const int orgside = seg->PointOnSide2(Origin);
     if (orgside == 2) return true; // origin is on plane, we cannot do anything sane
     if (orgside) {
-      if (!asShadow) continue;
+      //if (!asShadow) continue;
       v1 = seg->v2;
       v2 = seg->v1;
     } else {
