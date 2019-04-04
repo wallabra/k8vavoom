@@ -3361,7 +3361,7 @@ override void PlayerTick (float deltaTime) {
       dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), flradius, 666);
       if (fl) {
         fl.coneDirection = dir;
-        fl.coneAngle = 30.0;
+        fl.coneAngle = GetCvarF('k8_flashlight_angle');
         fl.colour = flcolor|0xff_00_00_00;
         fl.die = MO.XLevel.Time+(2.0/35.0);
         fl.type = DynamicLight::DLTYPE_Spot;
