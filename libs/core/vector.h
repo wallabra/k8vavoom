@@ -166,6 +166,14 @@ public:
     const float ltangle = macos(surfaceToLight.dot(dir));
     return (ltangle < angle);
   }
+
+  // dir must be normalised, angle must be valid
+  inline __attribute__((warn_unused_result)) bool isInSpotlight (const TVec &origin, const TVec &dir, const float angle, float *ltangleptr) const {
+    const TVec surfaceToLight = -(TVec(origin.x-x, origin.y-y, origin.z-z).normalised());
+    const float ltangle = macos(surfaceToLight.dot(dir));
+    if (ltangleptr) *ltangleptr = ltangle;
+    return (ltangle < angle);
+  }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
