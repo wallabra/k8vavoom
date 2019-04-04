@@ -650,7 +650,7 @@ protected:
   // calculate subsector's light from static light sources (light variables must be initialized)
   void CalculateSubStatic (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
 
-  virtual void InvalidateStaticLightmaps (const TVec &org, float radius);
+  virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight);
 
 public:
   virtual particle_t *NewParticle (const TVec &porg) override;
@@ -723,6 +723,8 @@ private:
   surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
   surfcache_t blockbuf[NUM_CACHE_BLOCKS];
 
+  bool invalidateRelight;
+
 public:
   struct LMapTraceInfo {
     enum { GridSize = 18 };
@@ -760,14 +762,14 @@ public:
   };
 
 protected:
-  void InvalidateSurfacesLMaps (surface_t *surf);
-  void InvalidateLineLMaps (drawseg_t *dseg);
+  void InvalidateSurfacesLMaps (const TVec &org, float radius, surface_t *surf);
+  void InvalidateLineLMaps (const TVec &org, float radius, drawseg_t *dseg);
 
   void InvalidateSubsectorLMaps (const TVec &org, float radius, int num);
   void InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox);
 
 protected:
-  virtual void InvalidateStaticLightmaps (const TVec &org, float radius) override;
+  virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) override;
 
   // general
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;

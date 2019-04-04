@@ -101,9 +101,9 @@ void VRenderLevelShared::MoveStaticLightByOwner (VEntity *Owner, const TVec &ori
   if (!stp) return;
   light_t &sl = Lights[*stp];
   if (sl.origin == origin) return;
-  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius);
+  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, false);
   sl.origin = origin;
-  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius);
+  if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, true);
 }
 
 
@@ -112,7 +112,7 @@ void VRenderLevelShared::MoveStaticLightByOwner (VEntity *Owner, const TVec &ori
 //  VRenderLevelShared::InvalidateStaticLightmaps
 //
 //==========================================================================
-void VRenderLevelShared::InvalidateStaticLightmaps (const TVec &org, float radius) {
+void VRenderLevelShared::InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) {
 }
 
 

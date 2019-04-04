@@ -713,16 +713,24 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 //  VRenderLevel::InvalidateSurfacesLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateSurfacesLMaps (surface_t *surf) {
+void VRenderLevel::InvalidateSurfacesLMaps (const TVec &org, float radius, surface_t *surf) {
   for (; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (surf->CacheSurf) { FreeSurfCache(surf->CacheSurf); surf->CacheSurf = nullptr; }
-    if (surf->lightmap) { Z_Free(surf->lightmap); surf->lightmap = nullptr; }
-    if (surf->lightmap_rgb) { Z_Free(surf->lightmap_rgb); surf->lightmap_rgb = nullptr; }
-    //if (surf->drawflags&surface_t::DF_CALC_LMAP) continue;
-    /*if (surf->lightmap || surf->lightmap_rgb)*/
-    {
+    if (!surf->plane->SphereTouches(org, radius)) continue;
+    if (!invalidateRelight) {
+      if (surf->lightmap || surf->lightmap_rgb) {
+        surf->drawflags |= surface_t::DF_CALC_LMAP;
+      }
+      if (surf->CacheSurf) { FreeSurfCache(surf->CacheSurf); surf->CacheSurf = nullptr; }
+      /*
+      if (surf->lightmap) { Z_Free(surf->lightmap); surf->lightmap = nullptr; }
+      if (surf->lightmap_rgb) { Z_Free(surf->lightmap_rgb); surf->lightmap_rgb = nullptr; }
+      */
+    } else {
+      //if (surf->subsector) LightFace(surf, surf->subsector);
+      //surf->drawflags &= ~surface_t::DF_CALC_LMAP;
       surf->drawflags |= surface_t::DF_CALC_LMAP;
+      //CacheSurface(surf);
     }
   }
 }
@@ -733,20 +741,21 @@ void VRenderLevel::InvalidateSurfacesLMaps (surface_t *surf) {
 //  VRenderLevel::InvalidateLineLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateLineLMaps (drawseg_t *dseg) {
+void VRenderLevel::InvalidateLineLMaps (const TVec &org, float radius, drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
+  if (!seg->SphereTouches(org, radius)) return;
 
-  InvalidateSurfacesLMaps(dseg->mid->surfs);
+  InvalidateSurfacesLMaps(org, radius, dseg->mid->surfs);
   if (seg->backsector) {
     // two sided line
-    InvalidateSurfacesLMaps(dseg->top->surfs);
+    InvalidateSurfacesLMaps(org, radius, dseg->top->surfs);
     // no lightmaps on sky anyway
-    //InvalidateSurfacesLMaps(dseg->topsky->surfs);
-    InvalidateSurfacesLMaps(dseg->bot->surfs);
+    //InvalidateSurfacesLMaps(org, radius, dseg->topsky->surfs);
+    InvalidateSurfacesLMaps(org, radius, dseg->bot->surfs);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      InvalidateSurfacesLMaps(sp->surfs);
+      InvalidateSurfacesLMaps(org, radius, sp->surfs);
     }
   }
 }
@@ -765,7 +774,7 @@ void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int 
     int polyCount = sub->poly->numsegs;
     seg_t **polySeg = sub->poly->segs;
     while (polyCount--) {
-      InvalidateLineLMaps((*polySeg)->drawsegs);
+      InvalidateLineLMaps(org, radius, (*polySeg)->drawsegs);
       ++polySeg;
     }
   }
@@ -773,10 +782,10 @@ void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int 
   for (subregion_t *subregion = sub->regions; subregion; subregion = subregion->next) {
     drawseg_t *ds = subregion->lines;
     for (int dscount = sub->numlines; dscount--; ++ds) {
-      InvalidateLineLMaps(ds);
+      InvalidateLineLMaps(org, radius, ds);
     }
-    InvalidateSurfacesLMaps(subregion->floor->surfs);
-    InvalidateSurfacesLMaps(subregion->ceil->surfs);
+    InvalidateSurfacesLMaps(org, radius, subregion->floor->surfs);
+    InvalidateSurfacesLMaps(org, radius, subregion->ceil->surfs);
   }
 }
 
@@ -791,6 +800,9 @@ void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bs
     return InvalidateSubsectorLMaps(org, radius, 0);
   }
 
+  if (LightClip.ClipIsFull()) return;
+
+  if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
   if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) return;
 
   // found a subsector?
@@ -814,7 +826,10 @@ void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bs
       return InvalidateBSPNodeLMaps(org, radius, bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    return InvalidateSubsectorLMaps(org, radius, bspnum&(~NF_SUBSECTOR));
+    subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
+    if (!LightClip.ClipLightCheckSubsector(sub, false)) return;
+    InvalidateSubsectorLMaps(org, radius, bspnum&(~NF_SUBSECTOR));
+    LightClip.ClipLightAddSubsectorSegs(sub, false);
   }
 }
 
@@ -824,9 +839,10 @@ void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bs
 //  VRenderLevel::InvalidateStaticLightmaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius) {
+void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) {
   //FIXME: make this faster!
   if (radius < 2.0f) return;
+  invalidateRelight = relight;
   float bbox[6];
 #if 0
   subsector_t *sub = Level->Subsectors;
@@ -840,6 +856,7 @@ void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius) {
 #else
   bbox[0] = bbox[1] = bbox[2] = -999999.0f;
   bbox[3] = bbox[4] = bbox[5] = 999999.0f;
+  LightClip.ClearClipNodes(org, Level, radius);
   InvalidateBSPNodeLMaps(org, radius, Level->NumNodes-1, bbox);
 #endif
 }
@@ -869,6 +886,7 @@ static inline int xblight (int add, int sub) {
 //==========================================================================
 void VRenderLevel::BuildLightMap (surface_t *surf) {
   if (surf->drawflags&surface_t::DF_CALC_LMAP) {
+    //if (surf->subsector) GCon->Logf("relighting subsector %d", (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     surf->drawflags &= ~surface_t::DF_CALC_LMAP;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
     if (surf->subsector) LightFace(surf, surf->subsector);
