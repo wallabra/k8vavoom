@@ -257,7 +257,11 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->Fade = Fade;
     surfs->dlightframe = sub->dlightframe;
     surfs->dlightbits = sub->dlightbits;
-    surfs->drawflags = (r_steamline_masked_walls && texinfo->Alpha == 1.0f ? surface_t::DF_MASKED : 0);
+    if (r_steamline_masked_walls && texinfo->Alpha == 1.0f) {
+      surfs->drawflags |= surface_t::DF_MASKED;
+    } else {
+      surfs->drawflags &= ~surface_t::DF_MASKED;
+    }
 
     if (texinfo->Alpha > 1.0f || (r_steamline_masked_walls && texinfo->Alpha >= 1.0f)) {
       if (PortalLevel == 0) {

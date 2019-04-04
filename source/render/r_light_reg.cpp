@@ -721,8 +721,8 @@ void VRenderLevel::InvalidateSurfacesLMaps (const TVec &org, float radius, surfa
       if (surf->lightmap || surf->lightmap_rgb) {
         surf->drawflags |= surface_t::DF_CALC_LMAP;
       }
-      if (surf->CacheSurf) { FreeSurfCache(surf->CacheSurf); surf->CacheSurf = nullptr; }
       /*
+      if (surf->CacheSurf) { FreeSurfCache(surf->CacheSurf); surf->CacheSurf = nullptr; }
       if (surf->lightmap) { Z_Free(surf->lightmap); surf->lightmap = nullptr; }
       if (surf->lightmap_rgb) { Z_Free(surf->lightmap_rgb); surf->lightmap_rgb = nullptr; }
       */
