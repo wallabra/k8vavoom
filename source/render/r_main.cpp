@@ -928,17 +928,17 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
     HasLightIntersection = true; \
     LightVisSubs.append((int)ssindex); \
     if (r_advlight_opt_optimise_scissor) { \
-      const subsector_t *sub = &Level->Subsectors[ssindex]; \
-      for (const subregion_t *region = sub->regions; region; region = region->next) { \
+      const subsector_t *vsub = &Level->Subsectors[ssindex]; \
+      for (const subregion_t *region = vsub->regions; region; region = region->next) { \
         sec_region_t *curreg = region->secregion; \
-        if (sub->poly && r_draw_pobj) { \
-          seg_t **polySeg = sub->poly->segs; \
-          for (int count = sub->poly->numsegs; count--; ++polySeg) { \
+        if (vsub->poly && r_draw_pobj) { \
+          seg_t **polySeg = vsub->poly->segs; \
+          for (int count = vsub->poly->numsegs; count--; ++polySeg) { \
             UpdateBBoxWithLine(LitBBox, curreg->ceiling->SkyBox, (*polySeg)->drawsegs); \
           } \
         } \
         drawseg_t *ds = region->lines; \
-        for (int count = sub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->ceiling->SkyBox, ds); \
+        for (int count = vsub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->ceiling->SkyBox, ds); \
         UpdateBBoxWithSurface(LitBBox, region->floor->surfs, &region->floor->texinfo, curreg->floor->SkyBox, true); \
         UpdateBBoxWithSurface(LitBBox, region->ceil->surfs, &region->ceil->texinfo, curreg->ceiling->SkyBox, true); \
       } \
@@ -1031,14 +1031,14 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       // one-sided wall: if it is not facing light, it can create a shadow
       if (dist <= 0) {
         // oops
-        if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+        if (LightClip.ClipLightCheckSeg(seg)) {
           doShadows = true;
           return;
         }
       }
       // if it is facing light, note it
       if (!seen1SWall) {
-        if (!LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) continue;
+        if (!LightClip.ClipLightCheckSeg(seg)) continue;
         hasAnyLitSurfaces = true;
         seen1SWall = true;
         if (seen1SWall && seen2SWall) {
@@ -1056,12 +1056,12 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
         // dunno
         if (dist <= 0) {
           // oops
-          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+          if (LightClip.ClipLightCheckSeg(seg)) {
             doShadows = true;
             return;
           }
         } else {
-          if (!hasAnyLitSurfaces) hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius);
+          if (!hasAnyLitSurfaces) hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg);
         }
         continue;
       }
@@ -1086,20 +1086,20 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       {
         // cannot possibly leak through midtex, consider this wall solid
         if (dist <= 0) {
-          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+          if (LightClip.ClipLightCheckSeg(seg)) {
             // oops
             doShadows = true;
             return;
           }
         } else if (!seen1SWall) {
-          if (LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) {
+          if (LightClip.ClipLightCheckSeg(seg)) {
             hasAnyLitSurfaces = true;
             seen1SWall = true;
           }
         }
         continue;
       }
-      if (!LightClip.ClipLightCheckSeg(seg, CurrLightPos, CurrLightRadius)) continue;
+      if (!LightClip.ClipLightCheckSeg(seg)) continue;
       hasAnyLitSurfaces = true;
       //GCon->Logf("MIDTOUCH! seen1SWall=%d", (int)seen1SWall);
       // if we've seen some one-sided wall, assume shadowing
@@ -1168,28 +1168,28 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
 void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
   if (LightClip.ClipIsFull()) return;
 
-  if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
-    const unsigned SubNum = 0;
-    subsector_t *Sub = &Level->Subsectors[SubNum];
-    if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
-      LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+    const unsigned subidx = 0;
+    subsector_t *sub = &Level->Subsectors[subidx];
+    if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (!LightClip.ClipLightCheckSubsector(sub)) {
+      LightClip.ClipLightAddSubsectorSegs(sub);
       return;
     }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
-    UPDATE_LIGHTVIS(SubNum);
-    CheckLightSubsector(Sub);
+    UPDATE_LIGHTVIS(subidx);
+    CheckLightSubsector(sub);
     if (CurrLightBit) {
-      if (Sub->dlightframe != currDLightFrame) {
-        Sub->dlightbits = CurrLightBit;
-        Sub->dlightframe = currDLightFrame;
+      if (sub->dlightframe != currDLightFrame) {
+        sub->dlightbits = CurrLightBit;
+        sub->dlightframe = currDLightFrame;
       } else {
-        Sub->dlightbits |= CurrLightBit;
+        sub->dlightbits |= CurrLightBit;
       }
     }
-    LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+    LightClip.ClipLightAddSubsectorSegs(sub);
     return;
   }
 
@@ -1214,25 +1214,60 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
       return BuildLightVis(bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    const unsigned SubNum = (unsigned)(bspnum&(~NF_SUBSECTOR));
-    subsector_t *Sub = &Level->Subsectors[SubNum];
-    if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(Sub, CurrLightPos, CurrLightRadius)) {
-      LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+    const unsigned subidx = (unsigned)(bspnum&(~NF_SUBSECTOR));
+    subsector_t *sub = &Level->Subsectors[subidx];
+    if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (!LightClip.ClipLightCheckSubsector(sub)) {
+      LightClip.ClipLightAddSubsectorSegs(sub);
       return;
     }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
-    UPDATE_LIGHTVIS(SubNum);
-    CheckLightSubsector(Sub);
-    if (CurrLightBit) {
-      if (Sub->dlightframe != currDLightFrame) {
-        Sub->dlightbits = CurrLightBit;
-        Sub->dlightframe = currDLightFrame;
-      } else {
-        Sub->dlightbits |= CurrLightBit;
+
+#if 0
+    bool hasGoodSurf = false;
+    if (!sub->poly) {
+      const seg_t *seg = &Level->Segs[sub->firstline];
+      for (int count = sub->numlines; count--; ++seg) {
+        if (seg->SphereTouches(CurrLightPos, CurrLightRadius)) {
+          hasGoodSurf = true;
+          break;
+        }
+      }
+      if (!hasGoodSurf) {
+        for (const subregion_t *region = sub->regions; region; region = region->next) {
+          //const sec_region_t *curreg = region->secregion;
+          //const drawseg_t *ds = region->lines;
+          if (region->floorplane && region->floorplane->SphereTouches(CurrLightPos, CurrLightRadius)) {
+            hasGoodSurf = true;
+            break;
+          }
+          if (region->ceilplane && region->ceilplane->SphereTouches(CurrLightPos, CurrLightRadius)) {
+            hasGoodSurf = true;
+            break;
+          }
+        }
+      }
+      //if (!hasGoodSurf) GCon->Logf("skipped uninteresting subsector");
+    } else {
+      //FIXME!
+      hasGoodSurf = true;
+    }
+
+    if (hasGoodSurf)
+#endif
+    {
+      UPDATE_LIGHTVIS(subidx);
+      CheckLightSubsector(sub);
+      if (CurrLightBit) {
+        if (sub->dlightframe != currDLightFrame) {
+          sub->dlightbits = CurrLightBit;
+          sub->dlightframe = currDLightFrame;
+        } else {
+          sub->dlightbits |= CurrLightBit;
+        }
       }
     }
-    LightClip.ClipLightAddSubsectorSegs(Sub, CurrLightPos, CurrLightRadius);
+    LightClip.ClipLightAddSubsectorSegs(sub);
   }
 }
 
@@ -1271,7 +1306,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   // build vis data for light
-  LightClip.ClearClipNodes(CurrLightPos, Level);
+  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   memset(LightVis, 0, VisSize);
   memset(LightBspVis, 0, VisSize);
   HasLightIntersection = false;

@@ -534,7 +534,7 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckRegion(region->next, sub)) return;
     RenderShadowSubRegion(sub, region->next);
   }
 
@@ -557,7 +557,7 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
   RenderShadowSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
   if (region->next && dist > CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckRegion(region->next, sub)) return;
     RenderShadowSubRegion(sub, region->next);
   }
 }
@@ -576,7 +576,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!LightClip.ClipLightCheckSubsector(sub, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightCheckSubsector(sub)) return;
 
   // if our light is in frustum, out-of-frustum subsectors are not interesting
   //FIXME: pass "need frustum check" flag to other functions
@@ -600,7 +600,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
+  LightClip.ClipLightAddSubsectorSegs(sub);
 }
 
 
@@ -620,7 +620,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
 
   if (LightClip.ClipIsFull()) return;
 
-  if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
     if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
@@ -770,7 +770,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckRegion(region->next, sub)) return;
     RenderLightSubRegion(sub, region->next);
   }
 
@@ -795,7 +795,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
   RenderLightSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
   if (region->next && dist > CurrLightRadius) {
-    if (!LightClip.ClipLightCheckRegion(region->next, sub, CurrLightPos, CurrLightRadius)) return;
+    if (!LightClip.ClipLightCheckRegion(region->next, sub)) return;
     RenderLightSubRegion(sub, region->next);
   }
 }
@@ -807,21 +807,24 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubsector (int num) {
+  check(num >= 0 && num < Level->NumSubsectors);
   subsector_t *sub = &Level->Subsectors[num];
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
-  if (!(LightBspVis[(unsigned)num>>3]&(1<<((unsigned)num&7)))) return;
 
-  if (!LightClip.ClipLightCheckSubsector(sub, CurrLightPos, CurrLightRadius)) return;
+  if (!(LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7)))) return;
+  //if (!(LightVis[(unsigned)num>>3]&(1u<<((unsigned)num&7)))) return;
+
+  if (!LightClip.ClipLightCheckSubsector(sub)) return;
 
   RenderLightSubRegion(sub, sub->regions);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(sub, CurrLightPos, CurrLightRadius);
+  LightClip.ClipLightAddSubsectorSegs(sub);
 }
 
 
@@ -841,7 +844,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 
   if (LightClip.ClipIsFull()) return;
 
-  if (!LightClip.ClipLightIsBBoxVisible(bbox, CurrLightPos, CurrLightRadius)) return;
+  if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
   if (bspnum == -1) {
     if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
@@ -1055,7 +1058,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 
   // do shadow volumes
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
-  LightClip.ClearClipNodes(CurrLightPos, Level);
+  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (allowShadows) {
       if (r_max_shadow_segs_all) {
 #if 0
@@ -1082,15 +1085,19 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, allowShadows);
-  LightClip.ClearClipNodes(CurrLightPos, Level);
+  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
 #if 0
   RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
 #else
   {
+#if 0
     const int *subidx = LightVisSubs.ptr();
     for (int sscount = LightVisSubs.length(); sscount--; ++subidx) {
       RenderLightSubsector(*subidx);
     }
+#else
+    for (int f = 0; f < Level->NumSubsectors; ++f) RenderLightSubsector(f);
+#endif
   }
 #endif
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, coneDir, coneAngle);

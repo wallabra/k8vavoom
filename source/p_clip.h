@@ -58,6 +58,7 @@ private:
   VClipNode *ClipHead;
   VClipNode *ClipTail;
   TVec Origin;
+  float Radius; // for light clipper
   VLevel *Level;
   TFrustum Frustum; // why not?
   bool ClearClipNodesCalled;
@@ -93,7 +94,7 @@ public:
   int CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask=~0u) const;
   bool CheckSegFrustum (const seg_t *seg, const unsigned mask=~0u) const;
 
-  void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
+  void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float aradius=0.0f);
 
 
   void ClipResetFrustumPlanes (); // call this after setting up frustum to disable height clipping
@@ -136,18 +137,18 @@ public:
   bool ClipCheckSubsector (const subsector_t *sub);
 
 #ifdef CLIENT
-  bool ClipLightIsBBoxVisible (const float BBox[6], const TVec &CurrLightPos, const float CurrLightRadius) const;
-  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
-  bool ClipLightCheckSubsector (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  bool ClipLightIsBBoxVisible (const float BBox[6]) const;
+  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub) const;
+  bool ClipLightCheckSubsector (const subsector_t *sub) const;
   // this doesn't do raduis and subsector checks: this is done in `BuildLightVis()`
-  bool ClipLightCheckSeg (const seg_t *seg, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  bool ClipLightCheckSeg (const seg_t *seg) const;
 #endif
 
   void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr, bool clipAll=false);
 
 #ifdef CLIENT
   // this doesn't check for radius
-  void ClipLightAddSubsectorSegs (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror=nullptr);
+  void ClipLightAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
 #endif
 
   // debug
@@ -156,9 +157,9 @@ public:
 private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool clipAll=false);
 #ifdef CLIENT
-  void CheckLightAddClipSeg (const seg_t *line, const TVec &CurrLightPos, const float CurrLightRadius, const TPlane *Mirror);
+  void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror);
   // light radius should be valid
-  int CheckSubsectorLight (const subsector_t *sub, const TVec &CurrLightPos, const float CurrLightRadius) const;
+  int CheckSubsectorLight (const subsector_t *sub) const;
 #endif
 
 public:
