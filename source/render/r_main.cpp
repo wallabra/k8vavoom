@@ -1279,6 +1279,8 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 //  sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
 //  returns `false` if the light is invisible
 //
+//  TODO: clip invisible geometry for spotlights
+//
 //==========================================================================
 bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuint32 currltbit) {
   if (radius < 2) return false;
