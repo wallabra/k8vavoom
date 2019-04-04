@@ -8,8 +8,7 @@ uniform float LightMin;
 uniform float InAlpha;
 uniform bool AllowTransparency;
 #ifdef VV_SPOTLIGHT
-uniform vec3 ConeDirection;
-uniform float ConeAngle; // degrees
+$include "common/spotlight_vars.fs"
 #endif
 
 varying vec3 Normal;
@@ -97,18 +96,8 @@ void main () {
 
 
   float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
-
 #ifdef VV_SPOTLIGHT
-  // cone restrictions (affects attenuation)
-  vec3 surfaceToLight = normalize(VertToLight);
-  float distanceToLight = length(VertToLight);
-
-  //vec3 ConeDirection = vec3(1.0, 0.0, 0.0);
-  //float ConeAngle = 50.0;
-
-  //float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, normalize(ConeDirection))));
-  float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, ConeDirection)));
-  if (lightToSurfaceAngle > ConeAngle) attenuation = 0.0;
+  $include "common/spotlight_calc.fs"
 #endif
 
   if (attenuation <= 0.0) discard;

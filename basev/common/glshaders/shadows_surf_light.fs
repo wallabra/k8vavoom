@@ -6,8 +6,7 @@ uniform float LightRadius;
 uniform float LightMin;
 uniform sampler2D Texture;
 #ifdef VV_SPOTLIGHT
-uniform vec3 ConeDirection;
-uniform float ConeAngle; // degrees
+$include "common/spotlight_vars.fs"
 #endif
 
 varying vec3 Normal;
@@ -30,24 +29,9 @@ void main () {
 
   DistToLight = sqrt(DistToLight);
 
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 #ifdef VV_SPOTLIGHT
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
-  //float attenuation = 1.0/(1.0+(LightRadius-LightMin)*DistToLight);
-  //attenuation *= 255.0;
-  //attenuation = 1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
-
-  // cone restrictions (affects attenuation)
-  vec3 surfaceToLight = normalize(VertToLight);
-  float distanceToLight = length(VertToLight);
-
-  //vec3 ConeDirection = vec3(1.0, 0.0, 0.0);
-  //float ConeAngle = 50.0;
-
-  //float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, normalize(ConeDirection))));
-  float lightToSurfaceAngle = degrees(acos(dot(-surfaceToLight, ConeDirection)));
-  if (lightToSurfaceAngle > ConeAngle) attenuation = 0.0;
-#else
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  $include "common/spotlight_calc.fs"
 #endif
 
   if (attenuation <= 0.0) discard;
