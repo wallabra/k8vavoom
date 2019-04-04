@@ -138,17 +138,17 @@ public:
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6]) const;
-  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub) const;
-  bool ClipLightCheckSubsector (const subsector_t *sub) const;
+  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, bool asShadow) const;
+  bool ClipLightCheckSubsector (const subsector_t *sub, bool asShadow) const;
   // this doesn't do raduis and subsector checks: this is done in `BuildLightVis()`
-  bool ClipLightCheckSeg (const seg_t *seg) const;
+  bool ClipLightCheckSeg (const seg_t *seg, bool asShadow) const;
 #endif
 
   void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr, bool clipAll=false);
 
 #ifdef CLIENT
   // this doesn't check for radius
-  void ClipLightAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr);
+  void ClipLightAddSubsectorSegs (const subsector_t *sub, bool asShadow, const TPlane *Mirror=nullptr);
 #endif
 
   // debug
@@ -157,7 +157,7 @@ public:
 private:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool clipAll=false);
 #ifdef CLIENT
-  void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror);
+  void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror, bool asShadow);
   // light radius should be valid
   int CheckSubsectorLight (const subsector_t *sub) const;
 #endif

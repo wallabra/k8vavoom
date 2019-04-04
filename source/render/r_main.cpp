@@ -1031,14 +1031,14 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       // one-sided wall: if it is not facing light, it can create a shadow
       if (dist <= 0) {
         // oops
-        if (LightClip.ClipLightCheckSeg(seg)) {
+        if (LightClip.ClipLightCheckSeg(seg, false)) {
           doShadows = true;
           return;
         }
       }
       // if it is facing light, note it
       if (!seen1SWall) {
-        if (!LightClip.ClipLightCheckSeg(seg)) continue;
+        if (!LightClip.ClipLightCheckSeg(seg, false)) continue;
         hasAnyLitSurfaces = true;
         seen1SWall = true;
         if (seen1SWall && seen2SWall) {
@@ -1056,12 +1056,12 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
         // dunno
         if (dist <= 0) {
           // oops
-          if (LightClip.ClipLightCheckSeg(seg)) {
+          if (LightClip.ClipLightCheckSeg(seg, false)) {
             doShadows = true;
             return;
           }
         } else {
-          if (!hasAnyLitSurfaces) hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg);
+          if (!hasAnyLitSurfaces) hasAnyLitSurfaces = LightClip.ClipLightCheckSeg(seg, false);
         }
         continue;
       }
@@ -1086,20 +1086,20 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       {
         // cannot possibly leak through midtex, consider this wall solid
         if (dist <= 0) {
-          if (LightClip.ClipLightCheckSeg(seg)) {
+          if (LightClip.ClipLightCheckSeg(seg, false)) {
             // oops
             doShadows = true;
             return;
           }
         } else if (!seen1SWall) {
-          if (LightClip.ClipLightCheckSeg(seg)) {
+          if (LightClip.ClipLightCheckSeg(seg, false)) {
             hasAnyLitSurfaces = true;
             seen1SWall = true;
           }
         }
         continue;
       }
-      if (!LightClip.ClipLightCheckSeg(seg)) continue;
+      if (!LightClip.ClipLightCheckSeg(seg, false)) continue;
       hasAnyLitSurfaces = true;
       //GCon->Logf("MIDTOUCH! seen1SWall=%d", (int)seen1SWall);
       // if we've seen some one-sided wall, assume shadowing
@@ -1174,8 +1174,8 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     const unsigned subidx = 0;
     subsector_t *sub = &Level->Subsectors[subidx];
     if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(sub)) {
-      LightClip.ClipLightAddSubsectorSegs(sub);
+    if (!LightClip.ClipLightCheckSubsector(sub, false)) {
+      LightClip.ClipLightAddSubsectorSegs(sub, false);
       return;
     }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
@@ -1189,7 +1189,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
         sub->dlightbits |= CurrLightBit;
       }
     }
-    LightClip.ClipLightAddSubsectorSegs(sub);
+    LightClip.ClipLightAddSubsectorSegs(sub, false);
     return;
   }
 
@@ -1217,8 +1217,8 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     const unsigned subidx = (unsigned)(bspnum&(~NF_SUBSECTOR));
     subsector_t *sub = &Level->Subsectors[subidx];
     if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!LightClip.ClipLightCheckSubsector(sub)) {
-      LightClip.ClipLightAddSubsectorSegs(sub);
+    if (!LightClip.ClipLightCheckSubsector(sub, false)) {
+      LightClip.ClipLightAddSubsectorSegs(sub, false);
       return;
     }
     //LightVis[SubNum>>3] |= 1<<(SubNum&7);
@@ -1267,7 +1267,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
         }
       }
     }
-    LightClip.ClipLightAddSubsectorSegs(sub);
+    LightClip.ClipLightAddSubsectorSegs(sub, false);
   }
 }
 
