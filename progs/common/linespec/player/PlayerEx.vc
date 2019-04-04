@@ -3383,8 +3383,9 @@ override void PlayerTick (float deltaTime) {
       TVec dir;
       AngleVector(MO.Angles, out dir);
       TVec florg = MO.Origin;
-      florg.z += MO.Height*0.5-MO.FloorClip;
-      florg.z += GetAttackZOfs();
+      //florg.z += MO.Height*0.5-MO.FloorClip;
+      //florg.z += GetAttackZOfs();
+      florg.z += ViewHeight;
       dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 666);
       if (fl) {
         fl.coneDirection = dir;
