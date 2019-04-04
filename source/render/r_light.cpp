@@ -432,14 +432,28 @@ bool VRenderLevelShared::CacheSurface (surface_t *) {
 //
 //==========================================================================
 float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle) {
-  float ltangle = 0.0f;
+  TPlane pl;
+  pl.SetPointNormal3D(coneOrigin, coneDir);
+
+  if ((p-coneOrigin).lengthSquared() <= 8.0f) return 1.0f;
 
   //if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f)
-  if (radius == 0.0f && height == 0.0f) {
-    if (p.isInSpotlight(coneOrigin, coneDir, coneAngle, &ltangle)) {
-      return sinf(MID(0.0f, (coneAngle-ltangle)/coneAngle, 1.0f)*(M_PI/2.0));
+  if (radius == 0.0f) {
+    if (height == 0.0f) {
+      if (pl.PointOnSide(p)) return 0.0f;
+      return p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+    } else {
+      const TVec p1(p.x, p.y, p.z+height);
+      if (pl.PointOnSide(p)) {
+        if (pl.PointOnSide(p1)) return 0.0f;
+        return p1.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+      } else {
+        const float att0 = p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+        if (att0 == 1.0f || pl.PointOnSide(p1)) return att0;
+        const float att1 = p1.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+        return MAX(att0, att1);
+      }
     }
-    return 0.0f;
   }
 
   float bbox[6];
@@ -449,15 +463,14 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
   bbox[3+0] = p.x+radius*0.4f;
   bbox[3+1] = p.y+radius*0.4f;
   bbox[3+2] = p.z+height;
-  TPlane pl;
-  pl.SetPointNormal3D(coneOrigin, coneDir);
   if (!pl.checkBox(bbox)) return 0.0f;
   float res = 0.0f;
   for (unsigned bi = 0; bi < 8; ++bi) {
     const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
-    if (vv.isInSpotlight(coneOrigin, coneDir, coneAngle, &ltangle)) {
-      const float attn = sinf(MID(0.0f, (coneAngle-ltangle)/coneAngle, 1.0f)*(M_PI/2.0));
-      if (attn > res) res = attn;
+    const float attn = vv.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+    if (attn > res) {
+      res = attn;
+      if (res == 1.0f) return 1.0f; // it can't be higher than this
     }
   }
   return res;

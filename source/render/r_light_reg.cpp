@@ -675,32 +675,30 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           if (lmi.spotLight) {
             //spt = lmi.calcPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              float ltangle;
-              if (!spt->isInSpotlight(dl.origin, lmi.coneDir, lmi.coneAngle, &ltangle)) continue;
-              attn = sinf(MID(0.0f, (lmi.coneAngle-ltangle)/lmi.coneAngle, 1.0f)*(M_PI/2.0));
+              attn = spt->CalcSpotlightAttMult(dl.origin, lmi.coneDir, lmi.coneAngle);
+              if (attn == 0.0f) continue;
             }
           }
+          float add = (rad-dist)*attn;
+          if (add <= 0.0f) continue;
           // do more dynlight clipping
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
-              //linetrace_t Trace;
-              //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
               if (!Level->CastCanSee(dl.origin, *spt, 0)) continue;
             }
           }
           int i = t*smax+s;
           if (dl.type == DLTYPE_Subtractive) {
             //blocklightsS[i] += (rad-dist)*256.0f;
-            blocklightsrS[i] += (rad-dist)*rmul*attn;
-            blocklightsgS[i] += (rad-dist)*gmul*attn;
-            blocklightsbS[i] += (rad-dist)*bmul*attn;
+            blocklightsrS[i] += rmul*add;
+            blocklightsgS[i] += gmul*add;
+            blocklightsbS[i] += bmul*add;
           } else {
             //blocklights[i] += (rad-dist)*256.0f;
-            blocklightsr[i] += (rad-dist)*rmul*attn;
-            blocklightsg[i] += (rad-dist)*gmul*attn;
-            blocklightsb[i] += (rad-dist)*bmul*attn;
+            blocklightsr[i] += rmul*add;
+            blocklightsg[i] += gmul*add;
+            blocklightsb[i] += bmul*add;
           }
           if (dlcolor != 0xffffffff) is_coloured = true;
         }

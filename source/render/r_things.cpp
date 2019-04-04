@@ -981,7 +981,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
   } else if (RendStyle == STYLE_OptFuzzy) {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
   switch (RendStyle) {
@@ -996,18 +996,56 @@ void VRenderLevelShared::DrawPlayerSprites () {
   if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
 
+  int ltxr = 0, ltxg = 0, ltxb = 0;
+  {
+    static VClass *eclass = nullptr;
+    if (!eclass) eclass = VClass::FindClass("Entity");
+    // check if we have any light at player's origin (rough), and owned by player
+    const dlight_t *dl = DLights;
+    for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
+      if (!dl->Owner || !dl->Owner->IsA(eclass)) continue;
+      VEntity *e = (VEntity *)dl->Owner;
+      if (dl->die < Level->Time || dl->radius < 1.0f) continue;
+      if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
+      if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
+      ltxr += (dl->colour>>16)&0xff;
+      ltxg += (dl->colour>>8)&0xff;
+      ltxb += dl->colour&0xff;
+    }
+  }
+
   // add all active psprites
   for (int i = 0; i < NUMPSPRITES; ++i) {
     if (!cl->ViewStates[i].State) continue;
 
     vuint32 light;
-         if (RendStyle == STYLE_Fuzzy) light = 0;
-    else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) light = 0xffffffff;
-    else light = LightPoint(vieworg, cl->MO->Radius, -1);
+    if (RendStyle == STYLE_Fuzzy) {
+      light = 0;
+    } else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) {
+      light = 0xffffffff;
+    } else {
+      /*
+      light = LightPoint(vieworg, cl->MO->Radius, -1);
+      if (ltxr|ltxg|ltxb) {
+        //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
+        int r = MAX(ltxr, (int)((light>>16)&0xff));
+        int g = MAX(ltxg, (int)((light>>8)&0xff));
+        int b = MAX(ltxb, (int)(light&0xff));
+        light = (light&0xff000000u)|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b));
+      }
+      */
+      if (ltxr|ltxg|ltxb) {
+        light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
+      } else {
+        light = LightPoint(vieworg, cl->MO->Radius, -1);
+      }
+      //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
+      //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
+    }
 
     //FIXME: fake "solid color" with colored light for now
     if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-      light = (light&0xff000000)|(cl->MO->StencilColour&0xffffff);
+      light = (light&0xff000000u)|(cl->MO->StencilColour&0xffffffu);
     }
 
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
