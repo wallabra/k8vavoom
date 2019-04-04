@@ -213,7 +213,7 @@ override void Init () {
   CreateCvar('k8_flashlight_shadows', "0", "Do shadow casting from player flashlight?", CVAR_ARCHIVE);
   CreateCvar('k8_flashlight_distance', "768", "Flashlight distance.", CVAR_ARCHIVE);
   CreateCvar('k8_flashlight_color', "0xafaf00", "Flashlight color.", CVAR_ARCHIVE);
-  CreateCvar('k8_flashlight_angle', "15", "Flashlight cone angle.", CVAR_ARCHIVE);
+  CreateCvar('k8_flashlight_angle', "20", "Flashlight cone angle.", CVAR_ARCHIVE);
 
   ::Init(); // parse cvarinfo and such
 }

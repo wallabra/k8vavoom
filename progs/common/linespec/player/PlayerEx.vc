@@ -3358,7 +3358,10 @@ override void PlayerTick (float deltaTime) {
     if (flcolor && flradius > 0) {
       TVec dir;
       AngleVector(MO.Angles, out dir);
-      dlight_t *fl = MO.AllocDlight(MO, MO.Origin+vector(0, 0, MO.Height-8), flradius, 666);
+      TVec florg = MO.Origin;
+      florg.z += MO.Height*0.5-MO.FloorClip;
+      florg.z += GetAttackZOfs();
+      dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 666);
       if (fl) {
         fl.coneDirection = dir;
         fl.coneAngle = GetCvarF('k8_flashlight_angle');
