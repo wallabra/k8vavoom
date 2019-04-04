@@ -510,7 +510,8 @@ protected:
   virtual void PushDlights ();
   //virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
 
-  static bool CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
+  // returns attenuation multiplier (0 means "out of cone")
+  static float CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
 
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;

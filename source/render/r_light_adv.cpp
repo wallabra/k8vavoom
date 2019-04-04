@@ -293,7 +293,9 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, float hei
         if (r_dynamic_clip) {
           if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
           if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
-            if (!CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle)) continue;
+            const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
+            if (attn == 0.0f) continue;
+            add *= attn;
           }
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
