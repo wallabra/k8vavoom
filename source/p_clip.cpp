@@ -1077,6 +1077,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
   }
   if (ClipIsFull()) return false;
   if (ClipIsEmpty()) return true; // no clip nodes yet
+
   TVec v1, v2;
   CreateBBVerts(v1, v2, BBox, Origin);
   return IsRangeVisible(v1, v2);
