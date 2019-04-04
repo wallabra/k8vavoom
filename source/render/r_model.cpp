@@ -961,6 +961,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     VStr name = getStrZ(pskindesc[i].name, 64).toLowerCase();
     // prepend model path
     if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name.ExtractFileBaseName();
+    //GCon->Logf("model '%s' has skin #%u '%s'", *mod->Name, i, *name);
     mod->Skins.Append(*name);
   }
 
@@ -1469,22 +1470,30 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     } else if (SubMdl.SkinAnimSpeed) {
       Md2SkinIdx = int((Level ? Level->Time : 0)*SubMdl.SkinAnimSpeed)%SubMdl.SkinAnimRange;
     }
+    if (Md2SkinIdx < 0) Md2SkinIdx = 0; // just in case
 
     // get the proper skin texture ID
     int SkinID;
-    if (SubMdl.Skins.Num()) {
+    if (SubMdl.Skins.length()) {
       // skins defined in definition file override all skins in MD2 file
       if (Md2SkinIdx < 0 || Md2SkinIdx >= SubMdl.Skins.Num()) {
+        if (SubMdl.Skins.length() == 0) Sys_Error("model '%s' has no skins", *SubMdl.Model->Name);
+        if (SubMdl.SkinShades.length() == 0) Sys_Error("model '%s' has no skin shades", *SubMdl.Model->Name);
         SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[0], TEXTYPE_Skin, SubMdl.SkinShades[0]);
       } else {
         SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin, SubMdl.SkinShades[Md2SkinIdx]);
       }
     } else {
-      if ((unsigned)Md2SkinIdx >= (unsigned)SubMdl.Model->Frames.length()) {
+      if (SubMdl.Model->Skins.length() == 0) Sys_Error("model '%s' has no skins", *SubMdl.Model->Name);
+      /*
+      if ((unsigned)Md2SkinIdx >= (unsigned)SubMdl.Model->Skins.length()) {
+        //GCon->Logf("model '%s' has invalid skin (%d requested, bit only '%d' is there)", *SubMdl.Model->Name, Md2SkinIdx, SubMdl.Model->Skins.length());
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[0], TEXTYPE_Skin);
       } else {
         SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx], TEXTYPE_Skin);
       }
+      */
+      SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx%SubMdl.Model->Skins.length()], TEXTYPE_Skin);
     }
 
     // get and verify frame number
