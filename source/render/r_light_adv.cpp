@@ -33,6 +33,9 @@
 //#define VV_LADV_CLIPCHECK_REGIONS_LIGHT
 //#define VV_LADV_CLIPCHECK_REGIONS_SHADOW
 
+//k8: i don't know what Janis wanted to with this
+//#define VV_LADV_STRANGE_REGION_SORTING
+
 
 extern VCvarB r_darken;
 extern VCvarI r_ambient;
@@ -320,7 +323,8 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   } else {
     // two sided line
     DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, false, 0);
-    DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, -1);
+    //k8: horizon/sky cannot block light
+    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, false, -1);
     DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, false, 0);
     DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, false, 1);
 
@@ -364,14 +368,16 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
+#ifdef VV_LADV_STRANGE_REGION_SORTING
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
-#ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
+# ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
     if (!LightClip.ClipLightCheckRegion(region->next, sub, true)) return;
-#endif
+# endif
     RenderShadowSubRegion(sub, region->next);
   }
+#endif
 
   sec_region_t *curreg = region->secregion;
 
@@ -391,12 +397,16 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
   RenderShadowSecSurface(region->floor, curreg->floor->SkyBox);
   RenderShadowSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
+#ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > CurrLightRadius) {
 #ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
     if (!LightClip.ClipLightCheckRegion(region->next, sub, true)) return;
 #endif
-    RenderShadowSubRegion(sub, region->next);
+    return RenderShadowSubRegion(sub, region->next);
   }
+#else
+  if (region->next) return RenderShadowSubRegion(sub, region->next);
+#endif
 }
 
 
@@ -604,6 +614,7 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region) {
+#ifdef VV_LADV_STRANGE_REGION_SORTING
   const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
 
   if (region->next && dist <= -CurrLightRadius) {
@@ -612,6 +623,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 #endif
     RenderLightSubRegion(sub, region->next);
   }
+#endif
 
   sec_region_t *curreg = region->secregion;
 
@@ -633,12 +645,16 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
   RenderLightSecSurface(region->floor, curreg->floor->SkyBox);
   RenderLightSecSurface(region->ceil, curreg->ceiling->SkyBox);
 
+#ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > CurrLightRadius) {
-#ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
+# ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
     if (!LightClip.ClipLightCheckRegion(region->next, sub, false)) return;
-#endif
-    RenderLightSubRegion(sub, region->next);
+# endif
+    return RenderLightSubRegion(sub, region->next);
   }
+#else
+  if (region->next) return RenderLightSubRegion(sub, region->next);
+#endif
 }
 
 
