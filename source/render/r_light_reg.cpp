@@ -137,18 +137,17 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 //
 //  VRenderLevel::CastRay
 //
-//  Returns the distance between the points, or -1 if blocked
+//  Returns the distance between the points, or 0 if blocked
 //
 //==========================================================================
 float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
-  linetrace_t Trace;
-
   const TVec delta = p2-p1;
   const float t = DotProduct(delta, delta);
-  if (t > squaredist) return -1; // too far away
+  if (t >= squaredist) return 0.0f; // too far away
   if (t <= 2.0f) return 1.0f; // at light point
 
-  if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return -1; // ray was blocked
+  linetrace_t Trace;
+  if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
 
   //if (t == 0) t = 1; // don't blow up...
   return sqrtf(t);
@@ -363,14 +362,21 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
 
   // calc points only when surface may be lit by a light
   if (!lmi.pointsCalced) {
-    memset(lightmap, 0, lmi.numsurfpt*4);
-    memset(lightmapr, 0, lmi.numsurfpt*4);
-    memset(lightmapg, 0, lmi.numsurfpt*4);
-    memset(lightmapb, 0, lmi.numsurfpt*4);
+    if (!CalcFaceVectors(lmi, surf)) {
+      lmi.numsurfpt = 0;
+      memset(lightmap, 0, GridSize*GridSize*4*sizeof(float));
+      memset(lightmapr, 0, GridSize*GridSize*4*sizeof(float));
+      memset(lightmapg, 0, GridSize*GridSize*4*sizeof(float));
+      memset(lightmapb, 0, GridSize*GridSize*4*sizeof(float));
+      return;
+    }
 
-    if (!CalcFaceVectors(lmi, surf)) return;
     CalcPoints(lmi, surf, false);
     lmi.pointsCalced = true;
+    memset(lightmap, 0, lmi.numsurfpt*sizeof(float));
+    memset(lightmapr, 0, lmi.numsurfpt*sizeof(float));
+    memset(lightmapg, 0, lmi.numsurfpt*sizeof(float));
+    memset(lightmapb, 0, lmi.numsurfpt*sizeof(float));
   }
 
   // check it for real
@@ -381,7 +387,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   const float bmul = (light->colour&255)/255.0f;
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
-    if (dist < 0) continue; // light doesn't reach
+    if (!dist) continue; // light ray is blocked
 
     TVec incoming = light->origin-(*spt);
     incoming.normaliseInPlace();
