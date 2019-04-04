@@ -766,8 +766,7 @@ final void A_WeaponReady (optional int Flags) {
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) {
-    Player.bReloadQueued = false;
-    PlayerEx(Player).Refire = 0;
+    PlayerEx(Player).ResetWeaponReloadRefire();
     return;
   }
 
@@ -790,8 +789,7 @@ final void A_WeaponReady (optional int Flags) {
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(ps_weapon, Wpn.GetDownState());
-      Player.bReloadQueued = false;
-      PlayerEx(Player).Refire = 0;
+      PlayerEx(Player).ResetWeaponReloadRefire();
       return;
     }
   }
@@ -823,8 +821,6 @@ final void A_WeaponReady (optional int Flags) {
   // check for reload
   if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && Wpn.FindState('Reload')) {
     Player.bAttackDown = true;
-    Player.bReloadQueued = false;
-    PlayerEx(Player).Refire = 0;
     PlayerEx(Player).ReloadWeapon();
     return;
   }

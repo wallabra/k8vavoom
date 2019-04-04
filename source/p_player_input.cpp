@@ -201,6 +201,9 @@ BUTTON(Button8)
 BUTTON(Speed)
 BUTTON(Strafe)
 BUTTON(MouseLook)
+BUTTON(Reload)
+BUTTON(Flashlight)
+BUTTON(SuperBullet)
 
 
 //==========================================================================
@@ -495,10 +498,10 @@ void VBasePlayer::HandleInput () {
   if (KeyJump.KeyState()) Buttons |= BT_JUMP;
   if (KeyCrouch.KeyState()) Buttons |= BT_CROUCH;
   if (KeyAltAttack.KeyState()) Buttons |= BT_ALT_ATTACK;
-  if (KeyButton5.KeyState()) Buttons |= 0x10;
-  if (KeyButton6.KeyState()) Buttons |= 0x20;
-  if (KeyButton7.KeyState()) Buttons |= 0x40;
-  if (KeyButton8.KeyState()) Buttons |= 0x80;
+  if (KeyButton5.KeyState()) Buttons |= BT_BUTTON_5;
+  if (KeyButton6.KeyState()) Buttons |= BT_BUTTON_6;
+  if (KeyButton7.KeyState()) Buttons |= BT_BUTTON_7;
+  if (KeyButton8.KeyState()) Buttons |= BT_BUTTON_8;
 
   if (KeyForward.KeyState()) Buttons |= BT_FORWARD;
   if (KeyBackward.KeyState()) Buttons |= BT_BACKWARD;
@@ -508,6 +511,10 @@ void VBasePlayer::HandleInput () {
   if (KeyMoveRight.KeyState()) Buttons |= BT_MOVERIGHT;
   if (KeyStrafe.KeyState()) Buttons |= BT_STRAFE;
   if (KeySpeed.KeyState()) Buttons |= BT_SPEED;
+  if (KeyReload.KeyState()) Buttons |= BT_RELOAD;
+  if (KeyFlashlight.KeyState()) Buttons |= BT_FLASHLIGHT;
+
+  if (KeySuperBullet.KeyState()) Buttons |= BT_SUPERBULLET;
   //GCon->Logf("VBasePlayer::HandleInput(%p): Buttons=0x%08x", this, Buttons);
 
   AcsCurrButtonsPressed |= Buttons;
@@ -608,6 +615,7 @@ int VBasePlayer::AcsGetInput (int InputType) {
       if (Btn&BT_MOVERIGHT) Ret |= ACS_BT_MOVERIGHT;
       if (Btn&BT_STRAFE) Ret |= ACS_BT_STRAFE;
       if (Btn&BT_SPEED) Ret |= ACS_BT_SPEED;
+      if (Btn&BT_RELOAD) Ret |= ACS_BT_RELOAD;
       return Ret;
 
     case INPUT_YAW: case MODINPUT_YAW:

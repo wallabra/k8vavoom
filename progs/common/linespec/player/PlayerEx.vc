@@ -149,7 +149,7 @@ float k8HealthAccum_LastRegenTime = -10000;
 float k8HealthAccum_LastBoostTime = -10000;
 
 bool bFlashlightOn;
-bool bFlashlightNoToggle;
+bool bFlashlightButtonDown;
 
 
 replication {
@@ -278,6 +278,17 @@ override void ClearEntityInventoryQS () {
   ::ClearEntityInventoryQS();
 }
 */
+
+
+//==========================================================================
+//
+//  ResetWeaponReloadRefire
+//
+//==========================================================================
+void ResetWeaponReloadRefire () {
+  bReloadQueued = false;
+  Refire = 0;
+}
 
 
 //==========================================================================
@@ -959,8 +970,7 @@ final void BringUpWeapon (optional bool instant) {
 
   PendingWeapon = none;
   ViewStates[ps_weapon].SY = (bInstantWeaponSwitch || instant ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
-  Refire = 0;
-  bReloadQueued = false;
+  ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
     //dprint("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
@@ -991,8 +1001,7 @@ final void BringUpWeapon (optional bool instant) {
 //
 //===========================================================================
 final void DropWeapon () {
-  Refire = 0;
-  bReloadQueued = false;
+  ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, ReadyWeapon.GetDownState());
@@ -1085,8 +1094,8 @@ void AltFireWeapon (optional state firestate) {
 //
 //===========================================================================
 void ReloadWeapon () {
-  Refire = 0; //k8: reloading weapon resets refire state
-  bReloadQueued = false;
+  //k8: reloading weapon resets refire state
+  ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     state rst = ReadyWeapon.GetReloadState();
     if (!rst) return;
@@ -2270,15 +2279,14 @@ void ResetPlayerOnSpawn () {
   ChickenPeck = 0; // chicken peck countdown
 
   //k8: just in case
-  bReloadQueued = false;
-  Refire = 0;
+  ResetWeaponReloadRefire();
 
   k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
   k8HealthAccum_LastBoostTime = -10000;
 
   bFlashlightOn = false;
-  bFlashlightNoToggle = false;
+  bFlashlightButtonDown = false;
 }
 
 
@@ -2650,8 +2658,7 @@ void PlayerReborn () {
   // set initial data
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
-  bReloadQueued = false;
-  Refire = 0;
+  ResetWeaponReloadRefire();
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
   LocalQuakeHappening = vector(0, 0, 0);
@@ -2749,8 +2756,7 @@ override void PlayerExitMap (bool clusterChange) {
   Rain1 = none;
   Rain2 = none;
   //k8: just in case
-  bReloadQueued = false;
-  Refire = 0;
+  ResetWeaponReloadRefire();
   LocalQuakeHappening = vector(0, 0, 0);
 }
 
@@ -3198,6 +3204,7 @@ override void PlayerTick (float deltaTime) {
     ForwardMove = 0.0;
     SideMove = 0.0;
     FlyMove = 0.0;
+    ResetWeaponReloadRefire(); // no reload too
   } else if (bFrozen) {
     ForwardMove = 0.0;
     SideMove = 0.0;
@@ -3208,6 +3215,7 @@ override void PlayerTick (float deltaTime) {
   InventoryTick(deltaTime);
 
   if (PlayerState == PST_DEAD) {
+    ResetWeaponReloadRefire(); // no reload
     DeathPlayerTick(deltaTime);
     return;
   }
@@ -3226,6 +3234,11 @@ override void PlayerTick (float deltaTime) {
       k8BossesDetected = 666;
       PerformBossDetection();
     }
+  }
+
+  // queue reload
+  if (Buttons&BT_RELOAD) {
+    bReloadQueued = true;
   }
 
   // copy view angles
@@ -3266,6 +3279,7 @@ override void PlayerTick (float deltaTime) {
 
   // check for weapon change (and other impulse commands)
   if (Impulse) PlayerImpulse();
+  if (Buttons&BT_SUPERBULLET) Actor(MO).FireSuperBullet();
 
   // check for use
   if (Buttons&BT_USE) {
@@ -3350,6 +3364,16 @@ override void PlayerTick (float deltaTime) {
   }
 
   if (!isBot) HealthBarProcessor();
+
+  // flashlight code
+  if (Buttons&BT_FLASHLIGHT) {
+    if (!bFlashlightButtonDown) {
+      bFlashlightButtonDown = true;
+      bFlashlightOn = !bFlashlightOn;
+    }
+  } else {
+    bFlashlightButtonDown = false;
+  }
 
   // flashlight test
   if (bFlashlightOn) {
@@ -4223,16 +4247,9 @@ void PlayerImpulse () {
     case 17: PrevWeapon(); Impulse = 0; return;
     case 18: NextWeapon(); Impulse = 0; return;
     case 43: Actor(MO).FireSuperBullet(); Impulse = 0; return;
-    case 56: bReloadQueued = true; Impulse = 0; return;
+    case 56: bReloadQueued = true; Impulse = 0; return; // so you can use this in aliases and such
     case 142: Actor(MO).DebugCheckMidTex(); Impulse = 0; return;
-    case 146:
-      if (!bFlashlightNoToggle) {
-        bFlashlightNoToggle = true;
-        bFlashlightOn = !bFlashlightOn;
-      }
-      Impulse = 0;
-      return;
-    case 147: bFlashlightNoToggle = false; Impulse = 0; return;
+    case 149: bFlashlightOn = !bFlashlightOn; Impulse = 0; return; // so you can use this in aliases and such
   }
 
   if (Impulse >= 200 && Impulse <= 205) {

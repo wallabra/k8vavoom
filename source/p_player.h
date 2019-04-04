@@ -55,21 +55,26 @@ enum playerstate_t {
 
 // button/action code definitions
 enum {
-  BT_ATTACK     = 1, // press "fire"
-  BT_USE        = 2, // use button, to open doors, activate switches
-  BT_JUMP       = 4,
-  BT_ALT_ATTACK = 8,
-
-  BT_RELOAD     = 0x00000100,
-  BT_SPEED      = 0x00000200,
-  BT_STRAFE     = 0x00000400,
-  BT_CROUCH     = 0x00000800,
-  BT_MOVELEFT   = 0x00001000,
-  BT_MOVERIGHT  = 0x00002000,
-  BT_LEFT       = 0x00004000,
-  BT_RIGHT      = 0x00008000,
-  BT_FORWARD    = 0x00010000,
-  BT_BACKWARD   = 0x00020000,
+  BT_ATTACK      = 0x00000001, // press "fire"
+  BT_USE         = 0x00000002, // use button, to open doors, activate switches
+  BT_JUMP        = 0x00000004,
+  BT_ALT_ATTACK  = 0x00000008,
+  BT_BUTTON_5    = 0x00000010,
+  BT_BUTTON_6    = 0x00000020,
+  BT_BUTTON_7    = 0x00000040,
+  BT_BUTTON_8    = 0x00000080,
+  BT_RELOAD      = 0x00000100,
+  BT_SPEED       = 0x00000200,
+  BT_STRAFE      = 0x00000400,
+  BT_CROUCH      = 0x00000800,
+  BT_MOVELEFT    = 0x00001000,
+  BT_MOVERIGHT   = 0x00002000,
+  BT_LEFT        = 0x00004000,
+  BT_RIGHT       = 0x00008000,
+  BT_FORWARD     = 0x00010000,
+  BT_BACKWARD    = 0x00020000,
+  BT_FLASHLIGHT  = 0x00100000,
+  BT_SUPERBULLET = 0x00200000,
 };
 
 struct VViewState {
