@@ -45,6 +45,7 @@ VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtr
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
 
 extern VCvarF r_lights_radius;
+extern VCvarB r_glow_flat;
 
 
 #define RL_CLEAR_DLIGHT(_dl)  do { \
@@ -56,6 +57,14 @@ extern VCvarF r_lights_radius;
   } \
 } while (0)
 
+
+//==========================================================================
+//
+//  VRenderLevelShared::RefilterStaticLights
+//
+//==========================================================================
+void VRenderLevelShared::RefilterStaticLights () {
+}
 
 
 //==========================================================================
@@ -444,6 +453,218 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
     }
   }
   return res;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalculateDynLightSub
+//
+//  this is common code for light point calculation
+//  pass light values from ambient pass
+//
+//==========================================================================
+void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane) {
+  if (r_dynamic && sub->dlightframe == currDLightFrame) {
+    const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
+    bool checkSpot = (height > 0.0f);
+    for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
+      if (!(sub->dlightbits&(1U<<i))) continue;
+      if (!dlinfo[i].needTrace) continue;
+      // check potential visibility
+      if (dyn_facevis) {
+        //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+        const int leafnum = dlinfo[i].leafnum;
+        if (leafnum < 0) continue;
+        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      }
+      const dlight_t &dl = DLights[i];
+      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
+      //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
+      const float distSq = (p-dl.origin).lengthSquared();
+      if (distSq >= dl.radius*dl.radius) continue; // too far away
+      float add = (dl.radius-dl.minlight)-sqrtf(distSq);
+      if (add > 0.0f) {
+        // check potential visibility
+        if (r_dynamic_clip) {
+          if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
+          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+            const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
+            add *= attn;
+            if (add <= 1.0f) continue;
+          }
+          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
+        } else {
+          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+            const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
+            add *= attn;
+            if (add <= 1.0f) continue;
+          }
+        }
+        if (dl.type == DLTYPE_Subtractive) add = -add;
+        l += add;
+        lr += add*((dl.colour>>16)&255)/255.0f;
+        lg += add*((dl.colour>>8)&255)/255.0f;
+        lb += add*(dl.colour&255)/255.0f;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalculateSubStatic
+//
+//  calculate subsector's light from static light sources
+//  (light variables must be initialized)
+//
+//==========================================================================
+void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane) {
+  if (r_static_lights) {
+    if (!staticLightsFiltered) RefilterStaticLights();
+    const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
+    const light_t *stl = Lights.Ptr();
+    for (int i = Lights.length(); i--; ++stl) {
+      //if (!stl->radius) continue;
+      if (!stl->active) continue;
+      // check potential visibility
+      if (dyn_facevis && !(dyn_facevis[stl->leafnum>>3]&(1<<(stl->leafnum&7)))) continue;
+      const float distSq = (p-stl->origin).lengthSquared();
+      if (distSq >= stl->radius*stl->radius) continue; // too far away
+      const float add = stl->radius-sqrtf(distSq);
+      if (add > 0.0f) {
+        if (surfplane && surfplane->PointOnSide(stl->origin)) continue;
+        if (r_dynamic_clip) {
+          if (!RadiusCastRay(p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
+        }
+        l += add;
+        lr += add*((stl->colour>>16)&255)/255.0f;
+        lg += add*((stl->colour>>8)&255)/255.0f;
+        lb += add*(stl->colour&255)/255.0f;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalculateSubAmbient
+//
+//  calculate subsector's ambient light
+//  (light variables must be initialized)
+//
+//==========================================================================
+void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane) {
+  bool skipAmbient = false;
+
+  // glowing flats
+  if (r_glow_flat && sub->sector) {
+    const sector_t *sec = sub->sector;
+    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        /*
+        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
+        l = 255;
+        */
+        //return gtex->glowing|0xff000000u;
+        skipAmbient = true;
+        l = 255.0f;
+        lr = (gtex->glowing>>16)&0xff;
+        lg = (gtex->glowing>>8)&0xff;
+        lb = gtex->glowing&0xff;
+      }
+    }
+  }
+
+  subregion_t *reg = sub->regions;
+  if (!skipAmbient && reg) {
+    while (reg->next) {
+      const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+      if (d >= 0.0f) break;
+      reg = reg->next;
+    }
+
+    // region's base light
+    if (r_allow_ambient) {
+      l = reg->secregion->params->lightlevel+ExtraLight;
+      l = MID(0.0f, l, 255.0f);
+      if (r_darken) l = light_remap[(int)l];
+      if (l < r_ambient) l = r_ambient;
+      l = MID(0.0f, l, 255.0f);
+    } else {
+      l = 0.0f;
+    }
+
+    int SecLightColour = reg->secregion->params->LightColour;
+    lr = ((SecLightColour>>16)&255)*l/255.0f;
+    lg = ((SecLightColour>>8)&255)*l/255.0f;
+    lb = (SecLightColour&255)*l/255.0f;
+
+    if (!IsAdvancedRenderer()) {
+      // light from floor's lightmap
+      int s = (int)(DotProduct(p, reg->floor->texinfo.saxis)+reg->floor->texinfo.soffs);
+      int t = (int)(DotProduct(p, reg->floor->texinfo.taxis)+reg->floor->texinfo.toffs);
+      int ds, dt;
+      for (surface_t *surf = reg->floor->surfs; surf; surf = surf->next) {
+        if (surf->lightmap == nullptr) continue;
+        if (surf->count < 3) continue; // wtf?!
+        if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
+
+        ds = s-surf->texturemins[0];
+        dt = t-surf->texturemins[1];
+
+        if (ds > surf->extents[0] || dt > surf->extents[1]) continue;
+
+        if (surf->lightmap_rgb) {
+          l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+          const rgb_t *rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+          lr += rgbtmp->r;
+          lg += rgbtmp->g;
+          lb += rgbtmp->b;
+        } else {
+          int ltmp = surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+          l += ltmp;
+          lr += ltmp;
+          lg += ltmp;
+          lb += ltmp;
+        }
+        break;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::LightPoint
+//
+//==========================================================================
+vuint32 VRenderLevelShared::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane) {
+  if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
+
+  subsector_t *sub = Level->PointInSubsector(p);
+
+  float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
+
+  // calculate ambient light level
+  CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, surfplane);
+
+  // add static lights
+  if (IsAdvancedRenderer()) CalculateSubStatic(l, lr, lg, lb, sub, p, radius, surfplane);
+
+  // add dynamic lights
+  CalculateDynLightSub(l, lr, lg, lb, sub, p, radius, height, surfplane);
+
+  return
+    (((vuint32)clampToByte((int)l))<<24)|
+    (((vuint32)clampToByte((int)lr))<<16)|
+    (((vuint32)clampToByte((int)lg))<<8)|
+    ((vuint32)clampToByte((int)lb));
 }
 
 

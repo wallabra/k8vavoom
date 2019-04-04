@@ -473,6 +473,8 @@ public:
   virtual bool IsNodeRendered (const node_t *node) const override;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const override;
 
+  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -633,6 +635,19 @@ protected:
   // used in light checking
   bool RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced);
 
+protected:
+  virtual void RefilterStaticLights ();
+
+  // this is common code for light point calculation
+  // pass light values from ambient pass
+  void CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
+
+  // calculate subsector's ambient light (light variables must be initialized)
+  void CalculateSubAmbient (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
+
+  // calculate subsector's light from static light sources (light variables must be initialized)
+  void CalculateSubStatic (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
+
 public:
   virtual particle_t *NewParticle (const TVec &porg) override;
 
@@ -775,7 +790,6 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 
@@ -788,7 +802,7 @@ private:
   int LightsRendered;
 
 protected:
-  void RefilterStaticLights ();
+  virtual void RefilterStaticLights () override;
 
   // general
   virtual void RenderScene (const refdef_t*, const VViewClipper*) override;
@@ -847,7 +861,6 @@ public:
 
   virtual void PreRender () override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
   virtual void BuildLightMap (surface_t *) override;
 };
 

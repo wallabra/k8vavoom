@@ -190,193 +190,21 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::LightPoint
-//
-//==========================================================================
-vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane) {
-  if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
-
-  float l = 0, lr = 0, lg = 0, lb = 0;
-
-  subsector_t *sub = Level->PointInSubsector(p);
-  subregion_t *reg = sub->regions;
-
-  if (reg) {
-    while (reg->next) {
-      const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      if (d >= 0.0f) break;
-      reg = reg->next;
-    }
-
-    if (reg) {
-      // region's base light
-      if (r_allow_ambient) {
-        l = reg->secregion->params->lightlevel+ExtraLight;
-        l = MID(0.0f, l, 255.0f);
-        if (r_darken) l = light_remap[(int)l];
-        if (l < r_ambient) l = r_ambient;
-        l = MID(0.0f, l, 255.0f);
-      } else {
-        l = 0;
-      }
-      int SecLightColour = reg->secregion->params->LightColour;
-      lr = ((SecLightColour>>16)&255)*l/255.0f;
-      lg = ((SecLightColour>>8)&255)*l/255.0f;
-      lb = (SecLightColour&255)*l/255.0f;
-    }
-  }
-
-  if (r_glow_flat && sub->sector) {
-    const sector_t *sec = sub->sector;
-    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
-    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
-      VTexture *gtex = GTextureManager(sec->floor.pic);
-      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        /*
-        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
-        l = 255;
-        if (!lr && !lg && !lb) lr = lg = lb = 255;
-        */
-        return gtex->glowing|0xff000000u;
-      }
-    }
-  }
-
-  const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
-
-  // add static lights
-  if (r_static_lights) {
-    if (!staticLightsFiltered) RefilterStaticLights();
-    const light_t *stl = Lights.Ptr();
-    for (int i = Lights.length(); i--; ++stl) {
-      //if (!stl->radius) continue;
-      if (!stl->active) continue;
-      // check potential visibility
-      if (dyn_facevis && !(dyn_facevis[stl->leafnum>>3]&(1<<(stl->leafnum&7)))) continue;
-      const float distSq = (p-stl->origin).lengthSquared();
-      if (distSq >= stl->radius*stl->radius) continue; // too far away
-      const float add = stl->radius-sqrtf(distSq);
-      if (add > 8) {
-        if (r_dynamic_clip) {
-          if (surfplane && surfplane->PointOnSide(stl->origin)) continue;
-          if (!RadiusCastRay(p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
-        }
-        l += add;
-        lr += add*((stl->colour>>16)&255)/255.0f;
-        lg += add*((stl->colour>>8)&255)/255.0f;
-        lb += add*(stl->colour&255)/255.0f;
-      }
-    }
-  }
-
-  // add dynamic lights
-  if (r_dynamic && sub->dlightframe == currDLightFrame) {
-    bool checkSpot = (height > 0.0f);
-    for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
-      if (!(sub->dlightbits&(1U<<i))) continue;
-      if (!dlinfo[i].needTrace) continue;
-      // check potential visibility
-      if (dyn_facevis) {
-        //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
-        const int leafnum = dlinfo[i].leafnum;
-        if (leafnum < 0) continue;
-        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-      }
-      const dlight_t &dl = DLights[i];
-      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
-      //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
-      const float distSq = (p-dl.origin).lengthSquared();
-      if (distSq >= dl.radius*dl.radius) continue; // too far away
-      float add = (dl.radius-dl.minlight)-sqrtf(distSq);
-      if (add > 8) {
-        // check potential visibility
-        if (r_dynamic_clip) {
-          if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
-          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
-            const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
-            if (attn == 0.0f) continue;
-            add *= attn;
-          }
-          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
-        }
-        if (dl.type == DLTYPE_Subtractive) add = -add;
-        l += add;
-        lr += add*((dl.colour>>16)&255)/255.0f;
-        lg += add*((dl.colour>>8)&255)/255.0f;
-        lb += add*(dl.colour&255)/255.0f;
-      }
-    }
-  }
-
-  /*
-  if (l > 255) l = 255; else if (l < 0) l = 0;
-  if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
-  if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
-  if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
-  return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
-  */
-
-  return
-    (((vuint32)clampToByte((int)l))<<24)|
-    (((vuint32)clampToByte((int)lr))<<16)|
-    (((vuint32)clampToByte((int)lg))<<8)|
-    ((vuint32)clampToByte((int)lb));
-}
-
-
-//==========================================================================
-//
 //  VAdvancedRenderLevel::LightPointAmbient
 //
 //==========================================================================
 vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
-  subsector_t *sub = Level->PointInSubsector(p);
-  subregion_t *reg = sub->regions;
-  while (reg->next) {
-    const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-    if (d >= 0.0f) break;
-    reg = reg->next;
-  }
+  const subsector_t *sub = Level->PointInSubsector(p);
+  float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
+  CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, nullptr);
 
-  float l = 0.0f;
-
-  if (reg) {
-    // region's base light
-    if (r_allow_ambient) {
-      l = reg->secregion->params->lightlevel+ExtraLight;
-      l = MID(0.0f, l, 255.0f);
-      if (r_darken) l = light_remap[(int)l];
-      if (l < r_ambient) l = r_ambient;
-      l = MID(0.0f, l, 255.0f);
-    } else {
-      l = 0;
-    }
-  }
-
-  int SecLightColour = reg->secregion->params->LightColour;
-  float lr = ((SecLightColour>>16)&255)*l/255.0f;
-  float lg = ((SecLightColour>>8)&255)*l/255.0f;
-  float lb = (SecLightColour&255)*l/255.0f;
-
-  if (r_glow_flat && sub->sector) {
-    const sector_t *sec = sub->sector;
-    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
-    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
-      VTexture *gtex = GTextureManager(sec->floor.pic);
-      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        /*
-        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
-        l = 255;
-        if (!lr && !lg && !lb) lr = lg = lb = 255;
-        */
-        return gtex->glowing|0xff000000u;
-      }
-    }
-  }
-
-  return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
+  return
+    (((vuint32)clampToByte((int)l))<<24)|
+    (((vuint32)clampToByte((int)lr))<<16)|
+    (((vuint32)clampToByte((int)lg))<<8)|
+    ((vuint32)clampToByte((int)lb));
 }
 
 
