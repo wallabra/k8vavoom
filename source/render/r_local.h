@@ -763,6 +763,9 @@ protected:
   void InvalidateSurfacesLMaps (surface_t *surf);
   void InvalidateLineLMaps (drawseg_t *dseg);
 
+  void InvalidateSubsectorLMaps (const TVec &org, float radius, int num);
+  void InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox);
+
 protected:
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius) override;
 

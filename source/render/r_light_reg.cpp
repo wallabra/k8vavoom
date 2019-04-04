@@ -754,6 +754,73 @@ void VRenderLevel::InvalidateLineLMaps (drawseg_t *dseg) {
 
 //==========================================================================
 //
+//  VRenderLevel::InvalidateSubsectorLMaps
+//
+//==========================================================================
+void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int num) {
+  subsector_t *sub = &Level->Subsectors[num];
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+  // polyobj
+  if (sub->poly) {
+    int polyCount = sub->poly->numsegs;
+    seg_t **polySeg = sub->poly->segs;
+    while (polyCount--) {
+      InvalidateLineLMaps((*polySeg)->drawsegs);
+      ++polySeg;
+    }
+  }
+  //TODO: invalidate only relevant segs
+  for (subregion_t *subregion = sub->regions; subregion; subregion = subregion->next) {
+    drawseg_t *ds = subregion->lines;
+    for (int dscount = sub->numlines; dscount--; ++ds) {
+      InvalidateLineLMaps(ds);
+    }
+    InvalidateSurfacesLMaps(subregion->floor->surfs);
+    InvalidateSurfacesLMaps(subregion->ceil->surfs);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevel::InvalidateBSPNodeLMaps
+//
+//==========================================================================
+void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox) {
+  if (bspnum == -1) {
+    return InvalidateSubsectorLMaps(org, radius, 0);
+  }
+
+  if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) return;
+
+  // found a subsector?
+  if (!(bspnum&NF_SUBSECTOR)) {
+    node_t *bsp = &Level->Nodes[bspnum];
+    // decide which side the light is on
+    const float dist = DotProduct(org, bsp->normal)-bsp->dist;
+    if (dist > radius) {
+      // light is completely on front side
+      return InvalidateBSPNodeLMaps(org, radius, bsp->children[0], bsp->bbox[0]);
+    } else if (dist < -radius) {
+      // light is completely on back side
+      return InvalidateBSPNodeLMaps(org, radius, bsp->children[1], bsp->bbox[1]);
+    } else {
+      //int side = bsp->PointOnSide(CurrLightPos);
+      unsigned side = (unsigned)(dist <= 0.0f);
+      // recursively divide front space
+      InvalidateBSPNodeLMaps(org, radius, bsp->children[side], bsp->bbox[side]);
+      // possibly divide back space
+      side ^= 1;
+      return InvalidateBSPNodeLMaps(org, radius, bsp->children[side], bsp->bbox[side]);
+    }
+  } else {
+    return InvalidateSubsectorLMaps(org, radius, bspnum&(~NF_SUBSECTOR));
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::InvalidateStaticLightmaps
 //
 //==========================================================================
@@ -761,31 +828,20 @@ void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius) {
   //FIXME: make this faster!
   if (radius < 2.0f) return;
   float bbox[6];
+#if 0
   subsector_t *sub = Level->Subsectors;
   for (int count = Level->NumSubsectors; count--; ++sub) {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
     Level->GetSubsectorBBox(sub, bbox);
     if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) continue;
     //GCon->Logf("invalidating subsector %d", (int)(ptrdiff_t)(sub-Level->Subsectors));
-    // polyobj
-    if (sub->poly) {
-      int polyCount = sub->poly->numsegs;
-      seg_t **polySeg = sub->poly->segs;
-      while (polyCount--) {
-        InvalidateLineLMaps((*polySeg)->drawsegs);
-        ++polySeg;
-      }
-    }
-    //TODO: invalidate only relevant segs
-    for (subregion_t *subregion = sub->regions; subregion; subregion = subregion->next) {
-      drawseg_t *ds = subregion->lines;
-      for (int dscount = sub->numlines; dscount--; ++ds) {
-        InvalidateLineLMaps(ds);
-      }
-      InvalidateSurfacesLMaps(subregion->floor->surfs);
-      InvalidateSurfacesLMaps(subregion->ceil->surfs);
-    }
+    InvalidateSubsectorLMaps(org, radius, (int)(ptrdiff_t)(sub-Level->Subsectors));
   }
+#else
+  bbox[0] = bbox[1] = bbox[2] = -999999.0f;
+  bbox[3] = bbox[4] = bbox[5] = 999999.0f;
+  InvalidateBSPNodeLMaps(org, radius, Level->NumNodes-1, bbox);
+#endif
 }
 
 
