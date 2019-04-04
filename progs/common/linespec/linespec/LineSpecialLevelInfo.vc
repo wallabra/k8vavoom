@@ -698,6 +698,10 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
       if (CheckLock(A, Arg5, true)) buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A, Line, Side, false, false);
       break;
 
+    case LNSPEC_PolyobjStop:
+      buttonSuccess = EV_StopPoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, false);
+      break;
+
     case LNSPEC_PolyobjMoveToSpot:
       buttonSuccess = EV_MovePolyToSpot(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, false);
       break;
@@ -1938,10 +1942,44 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
 //==========================================================================
 //
+//  EV_StopPoly
+//
+//==========================================================================
+final bool EV_StopPoly (line_t *line, int Arg1, int Arg2, int Arg3,
+                        int Arg4, int Arg5, int direction, bool overRide)
+{
+  int mirror;
+  int polyNum;
+  PolyobjRotator pe;
+  polyobj_t *poly;
+
+  polyNum = Arg1;
+  poly = XLevel.GetPolyobj(polyNum);
+  if (!poly) Error("EV_RotatePoly: Invalid polyobj num"); //: %d\n", polyNum);
+  pe = PolyobjRotator(poly->SpecialData);
+  if (pe) delete poly->SpecialData;
+
+  poly->SpecialData = pe;
+  PolyobjStopSequence(poly);
+
+  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(polyNum)) {
+    poly = XLevel.GetPolyobj(mirror);
+    if (!poly) Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
+
+    pe = PolyobjRotator(poly->SpecialData);
+    if (pe) delete poly->SpecialData;
+
+    PolyobjStopSequence(poly);
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  EV_RotatePoly
 //
 //==========================================================================
-
 final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
   int Arg4, int Arg5, int direction, bool overRide)
 {

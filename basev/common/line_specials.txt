@@ -73,6 +73,8 @@
 83  ACS_LockedExecute
 84  ACS_ExecuteWithResult
 85  ACS_LockedExecuteDoor
+86  Polyobj_MoveToSpot
+87  Polyobj_Stop
 90  Polyobj_OR_RotateLeft
 91  Polyobj_OR_RotateRight
 92  Polyobj_OR_Move
