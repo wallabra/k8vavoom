@@ -1948,27 +1948,16 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 final bool EV_StopPoly (line_t *line, int Arg1, int Arg2, int Arg3,
                         int Arg4, int Arg5, int direction, bool overRide)
 {
-  int mirror;
-  int polyNum;
-  PolyobjRotator pe;
-  polyobj_t *poly;
-
-  polyNum = Arg1;
-  poly = XLevel.GetPolyobj(polyNum);
+  int polyNum = Arg1;
+  polyobj_t *poly = XLevel.GetPolyobj(polyNum);
   if (!poly) Error("EV_RotatePoly: Invalid polyobj num"); //: %d\n", polyNum);
-  pe = PolyobjRotator(poly->SpecialData);
-  if (pe) delete poly->SpecialData;
-
-  poly->SpecialData = pe;
+  delete poly->SpecialData;
   PolyobjStopSequence(poly);
 
-  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(polyNum)) {
+  for (int mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(polyNum)) {
     poly = XLevel.GetPolyobj(mirror);
     if (!poly) Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
-
-    pe = PolyobjRotator(poly->SpecialData);
-    if (pe) delete poly->SpecialData;
-
+    delete poly->SpecialData;
     PolyobjStopSequence(poly);
   }
   return true;
