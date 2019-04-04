@@ -269,8 +269,6 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, float hei
   // add dynamic lights
   if (r_dynamic && sub->dlightframe == currDLightFrame) {
     bool checkSpot = (height > 0.0f);
-    //float sph = (checkSpot && height > 8.0f ? height-6.0f : 0.0f);
-    //float sph = (checkSpot ? height*0.5f : 0.0f);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
       if (!dlinfo[i].needTrace) continue;
@@ -291,25 +289,10 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, float radius, float hei
         // check potential visibility
         if (r_dynamic_clip) {
           if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
-          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
           if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
-            float bbox[6];
-            bbox[0+0] = p.x-radius*0.4f;
-            bbox[0+1] = p.y-radius*0.4f;
-            bbox[0+2] = p.z;
-            bbox[3+0] = p.x+radius*0.4f;
-            bbox[3+1] = p.y+radius*0.4f;
-            bbox[3+2] = p.z+height;
-            TPlane pl;
-            pl.SetPointNormal3D(dl.origin, dl.coneDirection);
-            if (!pl.checkBox(bbox)) continue;
-            bool splhit = false;
-            for (unsigned bi = 0; bi < 8; ++bi) {
-              const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
-              if (vv.isInSpotlight(dl.origin, dl.coneDirection, dl.coneAngle)) { splhit = true; break; }
-            }
-            if (!splhit) continue;
+            if (!CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle)) continue;
           }
+          if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;

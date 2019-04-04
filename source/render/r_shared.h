@@ -245,10 +245,6 @@ extern TFrustum view_frustum;
 extern bool MirrorFlip;
 extern bool MirrorClip;
 
-extern vuint32 blocklightsr[18*18];
-extern vuint32 blocklightsg[18*18];
-extern vuint32 blocklightsb[18*18];
-
 extern rgba_t r_palette[256];
 extern vuint8 r_black_colour;
 extern vuint8 r_white_colour;

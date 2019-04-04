@@ -417,4 +417,29 @@ bool VRenderLevelShared::CacheSurface (surface_t *) {
 }
 
 
+//==========================================================================
+//
+//  VRenderLevelShared::CheckLightPointCone
+//
+//==========================================================================
+bool VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle) {
+  //if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f)
+  float bbox[6];
+  bbox[0+0] = p.x-radius*0.4f;
+  bbox[0+1] = p.y-radius*0.4f;
+  bbox[0+2] = p.z;
+  bbox[3+0] = p.x+radius*0.4f;
+  bbox[3+1] = p.y+radius*0.4f;
+  bbox[3+2] = p.z+height;
+  TPlane pl;
+  pl.SetPointNormal3D(coneOrigin, coneDir);
+  if (!pl.checkBox(bbox)) return false;
+  for (unsigned bi = 0; bi < 8; ++bi) {
+    const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
+    if (vv.isInSpotlight(coneOrigin, coneDir, coneAngle)) return true;
+  }
+  return false;
+}
+
+
 #undef RL_CLEAR_DLIGHT

@@ -53,17 +53,19 @@ extern VCvarB dbg_adv_light_notrace_mark;
 // ////////////////////////////////////////////////////////////////////////// //
 static bool r_light_add;
 
-vuint32 blocklightsr[18*18];
-vuint32 blocklightsg[18*18];
-vuint32 blocklightsb[18*18];
-static vuint32 blockaddlightsr[18*18];
-static vuint32 blockaddlightsg[18*18];
-static vuint32 blockaddlightsb[18*18];
+enum { GridSize = VRenderLevel::LMapTraceInfo::GridSize };
+
+vuint32 blocklightsr[GridSize*GridSize];
+vuint32 blocklightsg[GridSize*GridSize];
+vuint32 blocklightsb[GridSize*GridSize];
+static vuint32 blockaddlightsr[GridSize*GridSize];
+static vuint32 blockaddlightsg[GridSize*GridSize];
+static vuint32 blockaddlightsb[GridSize*GridSize];
 
 // subtractive
-static vuint32 blocklightsrS[18*18];
-static vuint32 blocklightsgS[18*18];
-static vuint32 blocklightsbS[18*18];
+static vuint32 blocklightsrS[GridSize*GridSize];
+static vuint32 blocklightsgS[GridSize*GridSize];
+static vuint32 blocklightsbS[GridSize*GridSize];
 
 vuint8 light_remap[256];
 int light_mem = 0;
@@ -72,21 +74,13 @@ int light_reset_surface_cache = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static TVec smins, smaxs;
-static TVec worldtotex[2];
-static TVec textoworld[2];
-static TVec texorg;
-static TVec surfpt[18*18*4];
-static int  numsurfpt;
-static bool points_calculated;
-static float lightmap[18*18*4];
-static float lightmapr[18*18*4];
-static float lightmapg[18*18*4];
-static float lightmapb[18*18*4];
-static bool light_hit;
+ // *4 for extra filtering
+static float lightmap[GridSize*GridSize*4];
+static float lightmapr[GridSize*GridSize*4];
+static float lightmapg[GridSize*GridSize*4];
+static float lightmapb[GridSize*GridSize*4];
+//static bool light_hit;
 static bool is_coloured;
-
-//static int c_bad;
 
 
 //==========================================================================
@@ -141,12 +135,34 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 
 //==========================================================================
 //
+//  VRenderLevel::CastRay
+//
+//  Returns the distance between the points, or -1 if blocked
+//
+//==========================================================================
+float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
+  linetrace_t Trace;
+
+  const TVec delta = p2-p1;
+  const float t = DotProduct(delta, delta);
+  if (t > squaredist) return -1; // too far away
+  if (t <= 2.0f) return 1.0f; // at light point
+
+  if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return -1; // ray was blocked
+
+  //if (t == 0) t = 1; // don't blow up...
+  return sqrtf(t);
+}
+
+
+//==========================================================================
+//
 // VRenderLevel::CalcMinMaxs
 //
 //==========================================================================
-void VRenderLevel::CalcMinMaxs (surface_t *surf) {
-  smins = TVec(99999.0f, 99999.0f, 99999.0f);
-  smaxs = TVec(-999999.0f, -999999.0f, -999999.0f);
+void VRenderLevel::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
+  TVec smins(999999.0f, 999999.0f, 999999.0f);
+  TVec smaxs(-999999.0f, -999999.0f, -999999.0f);
   const TVec *v = &surf->verts[0];
   for (int i = surf->count; i--; ++v) {
     if (smins.x > v->x) smins.x = v->x;
@@ -156,27 +172,8 @@ void VRenderLevel::CalcMinMaxs (surface_t *surf) {
     if (smaxs.y < v->y) smaxs.y = v->y;
     if (smaxs.z < v->z) smaxs.z = v->z;
   }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevel::CastRay
-//
-//  Returns the distance between the points, or -1 if blocked
-//
-//==========================================================================
-float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
-  linetrace_t Trace;
-
-  TVec delta = p2-p1;
-  float t = DotProduct(delta, delta);
-  if (t > squaredist) return -1; // too far away
-
-  if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return -1; // ray was blocked
-
-  if (t == 0) t = 1; // don't blow up...
-  return sqrt(t);
+  lmi.smins = smins;
+  lmi.smaxs = smaxs;
 }
 
 
@@ -187,20 +184,19 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 //  fills in texorg, worldtotex, and textoworld
 //
 //==========================================================================
-bool VRenderLevel::CalcFaceVectors (surface_t *surf) {
-  texinfo_t *tex = surf->texinfo;
+bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
+  const texinfo_t *tex = surf->texinfo;
 
-  // convert from float to vec_t
-  worldtotex[0] = tex->saxis;
-  worldtotex[1] = tex->taxis;
+  lmi.worldtotex[0] = tex->saxis;
+  lmi.worldtotex[1] = tex->taxis;
 
   // calculate a normal to the texture axis
   // points can be moved along this without changing their S/T
-  TVec texnormal;
-  texnormal.x = tex->taxis.y*tex->saxis.z-tex->taxis.z*tex->saxis.y;
-  texnormal.y = tex->taxis.z*tex->saxis.x-tex->taxis.x*tex->saxis.z;
-  texnormal.z = tex->taxis.x*tex->saxis.y-tex->taxis.y*tex->saxis.x;
-  texnormal = Normalise(texnormal);
+  TVec texnormal(
+    tex->taxis.y*tex->saxis.z-tex->taxis.z*tex->saxis.y,
+    tex->taxis.z*tex->saxis.x-tex->taxis.x*tex->saxis.z,
+    tex->taxis.x*tex->saxis.y-tex->taxis.y*tex->saxis.x);
+  texnormal.normaliseInPlace();
   if (!isFiniteF(texnormal.x)) return false; // no need to check other coords
 
   // flip it towards plane normal
@@ -217,26 +213,37 @@ bool VRenderLevel::CalcFaceVectors (surface_t *surf) {
   if (!isFiniteF(distscale)) return false;
 
   for (int i = 0; i < 2; ++i) {
-    float len = Length(worldtotex[i]);
+    const float len = 1.0f/lmi.worldtotex[i].length();
+    //float len = lmi.worldtotex[i].length();
     if (!isFiniteF(len)) return false; // just in case
-    float dist = DotProduct(worldtotex[i], surf->plane->normal);
-    dist *= distscale;
-    textoworld[i] = worldtotex[i]-dist*texnormal;
-    textoworld[i] = textoworld[i]*(1.0f/len)*(1.0f/len);
+    const float dist = DotProduct(lmi.worldtotex[i], surf->plane->normal)*distscale;
+    lmi.textoworld[i] = lmi.worldtotex[i]-texnormal*dist;
+    lmi.textoworld[i] = lmi.textoworld[i]*len*len;
+    //lmi.textoworld[i] = lmi.textoworld[i]*(1.0f/len)*(1.0f/len);
   }
 
   // calculate texorg on the texture plane
-  for (int i = 0; i < 3; ++i) texorg[i] = -tex->soffs*textoworld[0][i]-tex->toffs*textoworld[1][i];
+  for (int i = 0; i < 3; ++i) lmi.texorg[i] = -tex->soffs*lmi.textoworld[0][i]-tex->toffs*lmi.textoworld[1][i];
 
   // project back to the face plane
   {
-    float dist = DotProduct(texorg, surf->plane->normal)-surf->plane->dist-1;
-    dist *= distscale;
-    texorg = texorg-dist*texnormal;
+    const float dist = (DotProduct(lmi.texorg, surf->plane->normal)-surf->plane->dist-1.0f)*distscale;
+    lmi.texorg = lmi.texorg-texnormal*dist;
   }
 
   return true;
 }
+
+
+#define CP_FIX_UT(uort_)  do { \
+  if (u##uort_ > mid##uort_) { \
+    u##uort_ -= 8; \
+    if (u##uort_ < mid##uort_) u##uort_ = mid##uort_; \
+  } else { \
+    u##uort_ += 8; \
+    if (u##uort_ > mid##uort_) u##uort_ = mid##uort_; \
+  } \
+} while (0) \
 
 
 //==========================================================================
@@ -246,25 +253,18 @@ bool VRenderLevel::CalcFaceVectors (surface_t *surf) {
 //  for each texture aligned grid point, back project onto the plane
 //  to get the world xyz value of the sample point
 //
+//  for dynlights, set `lowres` to `true`
+//
 //==========================================================================
-void VRenderLevel::CalcPoints (surface_t *surf) {
+void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres) {
   int w, h;
   float step;
   float starts, startt;
   linetrace_t Trace;
 
-  // fill in surforg
-  // the points are biased towards the centre of the surface
-  // to help avoid edge cases just inside walls
-  TVec *spt = surfpt;
-  const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
-  const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
-
-  TVec facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
-
   bool doExtra = r_extrasamples;
   if (ldr_extrasamples_override >= 0) doExtra = (ldr_extrasamples_override > 0);
-  if (doExtra) {
+  if (!lowres && doExtra) {
     // extra filtering
     w = ((surf->extents[0]>>4)+1)*2;
     h = ((surf->extents[1]>>4)+1)*2;
@@ -278,39 +278,49 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
     startt = surf->texturemins[1];
     step = 16;
   }
+  lmi.didExtra = doExtra;
 
-  numsurfpt = w*h;
+  // fill in surforg
+  // the points are biased towards the centre of the surface
+  // to help avoid edge cases just inside walls
+  const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
+  const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
+  const TVec facemid = lmi.texorg+lmi.textoworld[0]*mids+lmi.textoworld[1]*midt;
+
+  lmi.numsurfpt = w*h;
+  bool doPointCheck = false;
+  // *4 for extra filtering
+  if (lmi.numsurfpt > LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4) {
+    GCon->Logf(NAME_Warning, "too many points in lightmap tracer");
+    lmi.numsurfpt = LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4;
+    doPointCheck = true;
+  }
+
+  TVec *spt = lmi.surfpt;
   for (int t = 0; t < h; ++t) {
     for (int s = 0; s < w; ++s, ++spt) {
+      if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4) return;
       float us = starts+s*step;
       float ut = startt+t*step;
 
       // if a line can be traced from surf to facemid, the point is good
       for (int i = 0; i < 6; ++i) {
         // calculate texture point
-        *spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-        const TVec fms = facemid-(*spt);
-        if (length2DSquared(fms) < 0.002f) break; // same point, got it
+        //*spt = lmi.texorg+lmi.textoworld[0]*us+lmi.textoworld[1]*ut;
+        *spt = lmi.calcPoint(us, ut);
+        if (lowres) break;
+        //const TVec fms = facemid-(*spt);
+        //if (length2DSquared(fms) < 0.1f) break; // same point, got it
         if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
+
         if (i&1) {
-          if (us > mids) {
-            us -= 8;
-            if (us < mids) us = mids;
-          } else {
-            us += 8;
-            if (us > mids) us = mids;
-          }
+          CP_FIX_UT(s);
         } else {
-          if (ut > midt) {
-            ut -= 8;
-            if (ut < midt) ut = midt;
-          } else {
-            ut += 8;
-            if (ut > midt) ut = midt;
-          }
+          CP_FIX_UT(t);
         }
 
         // move surf 8 pixels towards the centre
+        const TVec fms = facemid-(*spt);
         *spt += 8*Normalise(fms);
       }
       //if (i == 2) ++c_bad;
@@ -324,7 +334,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 //  VRenderLevel::SingleLightFace
 //
 //==========================================================================
-void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis) {
+void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
   if (surf->count < 3) return; // wtf?!
 
   // check potential visibility
@@ -333,12 +343,12 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
   }
 
   // check bounding box
-  if (light->origin.x+light->radius < smins.x ||
-      light->origin.x-light->radius > smaxs.x ||
-      light->origin.y+light->radius < smins.y ||
-      light->origin.y-light->radius > smaxs.y ||
-      light->origin.z+light->radius < smins.z ||
-      light->origin.z-light->radius > smaxs.z)
+  if (light->origin.x+light->radius < lmi.smins.x ||
+      light->origin.x-light->radius > lmi.smaxs.x ||
+      light->origin.y+light->radius < lmi.smins.y ||
+      light->origin.y-light->radius > lmi.smaxs.y ||
+      light->origin.z+light->radius < lmi.smins.z ||
+      light->origin.z-light->radius > lmi.smaxs.z)
   {
     return;
   }
@@ -352,24 +362,24 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
   if (dist > light->radius) return;
 
   // calc points only when surface may be lit by a light
-  if (!points_calculated) {
-    memset(lightmap, 0, numsurfpt*4);
-    memset(lightmapr, 0, numsurfpt*4);
-    memset(lightmapg, 0, numsurfpt*4);
-    memset(lightmapb, 0, numsurfpt*4);
+  if (!lmi.pointsCalced) {
+    memset(lightmap, 0, lmi.numsurfpt*4);
+    memset(lightmapr, 0, lmi.numsurfpt*4);
+    memset(lightmapg, 0, lmi.numsurfpt*4);
+    memset(lightmapb, 0, lmi.numsurfpt*4);
 
-    if (!CalcFaceVectors(surf)) return;
-    CalcPoints(surf);
-    points_calculated = true;
+    if (!CalcFaceVectors(lmi, surf)) return;
+    CalcPoints(lmi, surf, false);
+    lmi.pointsCalced = true;
   }
 
   // check it for real
-  const TVec *spt = surfpt;
+  const TVec *spt = lmi.surfpt;
   const float squaredist = light->radius*light->radius;
   const float rmul = ((light->colour>>16)&255)/255.0f;
   const float gmul = ((light->colour>>8)&255)/255.0f;
   const float bmul = (light->colour&255)/255.0f;
-  for (int c = 0; c < numsurfpt; ++c, ++spt) {
+  for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist < 0) continue; // light doesn't reach
 
@@ -379,16 +389,16 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
     float angle = DotProduct(incoming, surf->plane->normal);
 
     angle = 0.5f+0.5f*angle;
-    float add = light->radius-dist;
-    add *= angle;
+    const float add = (light->radius-dist)*angle;
     if (add < 0) continue;
+
     lightmap[c] += add;
     lightmapr[c] += add*rmul;
     lightmapg[c] += add*gmul;
     lightmapb[c] += add*bmul;
     // ignore really tiny lights
     if (lightmap[c] > 1) {
-      light_hit = true;
+      lmi.light_hit = true;
       if (light->colour != 0xffffffff) is_coloured = true;
     }
   }
@@ -403,22 +413,22 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
 void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   if (surf->count < 3) return; // wtf?!
 
-  float total;
+  LMapTraceInfo lmi;
+  //lmi.points_calculated = false;
+  check(!lmi.pointsCalced);
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
-  points_calculated = false;
-  light_hit = false;
+  lmi.light_hit = false;
   is_coloured = false;
 
-  // cast all lights
-  CalcMinMaxs(surf);
-
+  // cast all static lights
+  CalcMinMaxs(lmi, surf);
   if (r_static_lights) {
     light_t *stl = Lights.ptr();
-    for (int i = Lights.length(); i--; ++stl) SingleLightFace(stl, surf, facevis);
+    for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf, facevis);
   }
 
-  if (!light_hit) {
+  if (!lmi.light_hit) {
     // no light hitting it
     if (surf->lightmap) {
       Z_Free(surf->lightmap);
@@ -448,46 +458,41 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
-        if (r_extrasamples) {
+        float total;
+        if (lmi.didExtra) {
           // filtered sample
           total = lightmapr[t*w*4+s*2]+
-              lightmapr[t*2*w*2+s*2+1]+
-              lightmapr[(t*2+1)*w*2+s*2]+
-              lightmapr[(t*2+1)*w*2+s*2+1];
+                  lightmapr[t*2*w*2+s*2+1]+
+                  lightmapr[(t*2+1)*w*2+s*2]+
+                  lightmapr[(t*2+1)*w*2+s*2+1];
           total *= 0.25f;
         } else {
           total = lightmapr[i];
         }
-        //if (total > 255) total = 255;
-        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].r = clampToByte((int)total);
 
-        if (r_extrasamples) {
+        if (lmi.didExtra) {
           // filtered sample
           total = lightmapg[t*w*4+s*2]+
-              lightmapg[t*2*w*2+s*2+1]+
-              lightmapg[(t*2+1)*w*2+s*2]+
-              lightmapg[(t*2+1)*w*2+s*2+1];
+                  lightmapg[t*2*w*2+s*2+1]+
+                  lightmapg[(t*2+1)*w*2+s*2]+
+                  lightmapg[(t*2+1)*w*2+s*2+1];
           total *= 0.25f;
         } else {
           total = lightmapg[i];
         }
-        //if (total > 255) total = 255;
-        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].g = clampToByte((int)total);
 
-        if (r_extrasamples) {
+        if (lmi.didExtra) {
           // filtered sample
           total = lightmapb[t*w*4+s*2]+
-              lightmapb[t*2*w*2+s*2+1]+
-              lightmapb[(t*2+1)*w*2+s*2]+
-              lightmapb[(t*2+1)*w*2+s*2+1];
+                  lightmapb[t*2*w*2+s*2+1]+
+                  lightmapb[(t*2+1)*w*2+s*2]+
+                  lightmapb[(t*2+1)*w*2+s*2+1];
           total *= 0.25f;
         } else {
           total = lightmapb[i];
         }
-        //if (total > 255) total = 255;
-        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].b = clampToByte((int)total);
       }
     }
@@ -506,18 +511,17 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   int i = 0;
   for (int t = 0; t < h; ++t) {
     for (int s = 0; s < w; ++s, ++i) {
-      if (r_extrasamples) {
+      float total;
+      if (lmi.didExtra) {
         // filtered sample
         total = lightmap[t*w*4+s*2]+
-            lightmap[t*2*w*2+s*2+1]+
-            lightmap[(t*2+1)*w*2+s*2]+
-            lightmap[(t*2+1)*w*2+s*2+1];
+                lightmap[t*2*w*2+s*2+1]+
+                lightmap[(t*2+1)*w*2+s*2]+
+                lightmap[(t*2+1)*w*2+s*2+1];
         total *= 0.25f;
       } else {
         total = lightmap[i];
       }
-      //if (total > 255) total = 255;
-      //if (total < 0) Sys_Error("light < 0");
       surf->lightmap[i] = clampToByte((int)total);
     }
   }
@@ -615,6 +619,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, float height, con
 
   // add dynamic lights
   if (r_dynamic && sub->dlightframe == currDLightFrame) {
+    bool checkSpot = (height > 0.0f);
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
@@ -634,6 +639,9 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, float radius, float height, con
       if (add > 8) {
         if (r_dynamic_clip) {
           if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
+          if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
+            if (!CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle)) continue;
+          }
           if (!RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
@@ -697,15 +705,21 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
   //float mids = 0, midt = 0;
   //TVec facemid = TVec(0,0,0);
-  bool pointsCalced = false;
+  LMapTraceInfo lmi;
+  check(!lmi.pointsCalced);
 
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
-  texinfo_t *tex = surf->texinfo;
+  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
+  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
 
+  const texinfo_t *tex = surf->texinfo;
+
+  /*
   const float starts = surf->texturemins[0];
   const float startt = surf->texturemins[1];
   const float step = 16;
+  */
 
   const bool hasPVS = Level->HasPVS();
 
@@ -735,7 +749,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     TVec impact = dl.origin-surf->plane->normal*dist;
 
     if (hasPVS && r_dynamic_clip_pvs) {
-      subsector_t *sub = Level->PointInSubsector(impact);
+      const subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       int leafnum = dlinfo[lnum].leafnum;
@@ -762,74 +776,59 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     local.y = DotProduct(impact, tex->taxis)+tex->toffs;
     local.z = 0;
 
-    local.x -= starts;
-    local.y -= startt;
+    local.x -= /*starts*/surf->texturemins[0];
+    local.y -= /*startt*/surf->texturemins[1];
 
-    if (!pointsCalced && /*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
-      pointsCalced = true;
-      if (!CalcFaceVectors(surf)) return;
-      //mids = starts+surf->extents[0]*0.5f;
-      //midt = startt+surf->extents[1]*0.5f;
-      //facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
+    lmi.setupSpotlight(dl.coneDirection, dl.coneAngle);
+
+    if (!lmi.pointsCalced && (needProperTrace || lmi.spotLight)) {
+      if (!CalcFaceVectors(lmi, surf)) return;
+      CalcPoints(lmi, surf, true);
+      lmi.pointsCalced = true;
     }
 
-    bool spotLight = false;
-    float coneAngle = (dl.coneAngle <= 0.0f || dl.coneAngle >= 360.0f ? 0.0f : dl.coneAngle);
-    TVec coneDir = dl.coneDirection;
-    if (coneAngle && coneDir.isValid() && !coneDir.isZero()) {
-      spotLight = true;
-      coneDir.normaliseInPlace();
-    }
+    //TVec spt(0.0f, 0.0f, 0.0f);
+    float attn = 1.0f;
 
-    float us = 0.0f, ut = 0.0f;
-    TVec spt(0.0f, 0.0f, 0.0f);
-
+    const TVec *spt = lmi.surfpt;
     for (int t = 0; t < tmax; ++t) {
       int td = (int)local.y-t*16;
       if (td < 0) td = -td;
-      for (int s = 0; s < smax; ++s) {
+      for (int s = 0; s < smax; ++s, ++spt) {
         int sd = (int)local.x-s*16;
         if (sd < 0) sd = -sd;
-        if (sd > td) {
-          dist = sd+(td>>1);
-        } else {
-          dist = td+(sd>>1);
-        }
+        dist = (sd > td ? sd+(td>>1) : td+(sd>>1));
         if (dist < minlight) {
           // check spotlight cone
-          if (spotLight) {
-            us = starts+s*step;
-            ut = startt+t*step;
-            spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-            if (length2DSquared(spt-dl.origin) > 2*2) {
-              if (!spt.isInSpotlight(dl.origin, coneDir, coneAngle)) continue;
+          if (lmi.spotLight) {
+            //spt = lmi.calcPoint(starts+s*step, startt+t*step);
+            if (length2DSquared((*spt)-dl.origin) > 2*2) {
+              float ltangle;
+              if (!spt->isInSpotlight(dl.origin, lmi.coneDir, lmi.coneAngle, &ltangle)) continue;
+              attn = sinf(MID(0.0f, (lmi.coneAngle-ltangle)/lmi.coneAngle, 1.0f)*(M_PI/2.0));
             }
           }
           // do more dynlight clipping
           if (needProperTrace) {
-            if (!spotLight) {
-              us = starts+s*step;
-              ut = startt+t*step;
-              spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-            }
-            if (length2DSquared(spt-dl.origin) > 2*2) {
+            //if (!lmi.spotLight) spt = lmi.calcPoint(starts+s*step, startt+t*step);
+            if (length2DSquared((*spt)-dl.origin) > 2*2) {
               //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
               //linetrace_t Trace;
               //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
-              if (!Level->CastCanSee(dl.origin, spt, 0)) continue;
+              if (!Level->CastCanSee(dl.origin, *spt, 0)) continue;
             }
           }
           int i = t*smax+s;
           if (dl.type == DLTYPE_Subtractive) {
             //blocklightsS[i] += (rad-dist)*256.0f;
-            blocklightsrS[i] += (rad-dist)*rmul;
-            blocklightsgS[i] += (rad-dist)*gmul;
-            blocklightsbS[i] += (rad-dist)*bmul;
+            blocklightsrS[i] += (rad-dist)*rmul*attn;
+            blocklightsgS[i] += (rad-dist)*gmul*attn;
+            blocklightsbS[i] += (rad-dist)*bmul*attn;
           } else {
             //blocklights[i] += (rad-dist)*256.0f;
-            blocklightsr[i] += (rad-dist)*rmul;
-            blocklightsg[i] += (rad-dist)*gmul;
-            blocklightsb[i] += (rad-dist)*bmul;
+            blocklightsr[i] += (rad-dist)*rmul*attn;
+            blocklightsg[i] += (rad-dist)*gmul*attn;
+            blocklightsb[i] += (rad-dist)*bmul*attn;
           }
           if (dlcolor != 0xffffffff) is_coloured = true;
         }
@@ -873,6 +872,8 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   r_light_add = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
+  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
+  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
   int size = smax*tmax;
   vuint8 *lightmap = surf->lightmap;
   rgb_t *lightmap_rgb = surf->lightmap_rgb;

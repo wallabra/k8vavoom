@@ -510,6 +510,8 @@ protected:
   virtual void PushDlights ();
   //virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
 
+  static bool CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
+
   virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
@@ -700,6 +702,42 @@ private:
   surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
   surfcache_t blockbuf[NUM_CACHE_BLOCKS];
 
+public:
+  struct LMapTraceInfo {
+    enum { GridSize = 18 };
+    TVec smins, smaxs;
+    TVec worldtotex[2];
+    TVec textoworld[2];
+    TVec texorg;
+    TVec surfpt[GridSize*GridSize*4]; // *4 for extra filtering
+    int numsurfpt;
+    bool pointsCalced;
+    bool light_hit;
+    bool didExtra;
+    // for spotlights
+    bool spotLight;
+    float coneAngle;
+    TVec coneDir;
+
+    LMapTraceInfo () { memset((void *)this, 0, sizeof(LMapTraceInfo)); }
+    LMapTraceInfo (const LMapTraceInfo &) = delete;
+    LMapTraceInfo & operator = (const LMapTraceInfo &) = delete;
+
+    TVec calcPoint (const float us, const float ut) const {
+      return texorg+textoworld[0]*us+textoworld[1]*ut;
+    }
+
+    inline void setupSpotlight (const TVec &aconeDir, const float aconeAngle) {
+      spotLight = false;
+      coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+      coneDir = aconeDir;
+      if (coneAngle && coneDir.isValid() && !coneDir.isZero()) {
+        spotLight = true;
+        coneDir.normaliseInPlace();
+      }
+    }
+  };
+
 protected:
   // general
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
@@ -710,11 +748,11 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   // light methods
-  static void CalcMinMaxs (surface_t *surf);
   float CastRay (const TVec &p1, const TVec &p2, float squaredist);
-  static bool CalcFaceVectors (surface_t *surf);
-  void CalcPoints (surface_t *surf);
-  void SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis);
+  static void CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf);
+  static bool CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf);
+  void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`
+  void SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis);
   void LightFace (surface_t *surf, subsector_t *leaf);
   void AddDynamicLights (surface_t *surf);
   //virtual void PushDlights () override;
@@ -843,6 +881,10 @@ extern int NumTranslationTables;
 extern VTextureTranslation IceTranslation;
 extern TArray<VTextureTranslation *> DecorateTranslations;
 extern TArray<VTextureTranslation *> BloodTranslations;
+
+extern vuint32 blocklightsr[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
+extern vuint32 blocklightsg[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
+extern vuint32 blocklightsb[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
 
 
 //==========================================================================
