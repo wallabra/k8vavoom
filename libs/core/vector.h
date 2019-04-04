@@ -161,18 +161,22 @@ public:
   inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const { return TVec(x-v.x, y-v.y, 0.0f); }
 
   // dir must be normalised, angle must be valid
-  inline __attribute__((warn_unused_result)) bool isInSpotlight (const TVec &origin, const TVec &dir, const float angle) const {
-    const TVec surfaceToLight = -(TVec(origin.x-x, origin.y-y, origin.z-z).normalised());
+  inline __attribute__((warn_unused_result)) bool IsInSpotlight (const TVec &origin, const TVec &dir, const float angle) const {
+    TVec surfaceToLight = TVec(-(origin.x-x), -(origin.y-y), -(origin.z-z));
+    if (surfaceToLight.lengthSquared() <= 8.0f) return true;
+    surfaceToLight.normaliseInPlace();
     const float ltangle = macos(surfaceToLight.dot(dir));
     return (ltangle < angle);
   }
 
   // dir must be normalised, angle must be valid
-  inline __attribute__((warn_unused_result)) bool isInSpotlight (const TVec &origin, const TVec &dir, const float angle, float *ltangleptr) const {
-    const TVec surfaceToLight = -(TVec(origin.x-x, origin.y-y, origin.z-z).normalised());
+  // returns cone light attenuation multiplier in range [0..1]
+  inline __attribute__((warn_unused_result)) float CalcSpotlightAttMult (const TVec &origin, const TVec &dir, const float angle) const {
+    TVec surfaceToLight = TVec(-(origin.x-x), -(origin.y-y), -(origin.z-z));
+    if (surfaceToLight.lengthSquared() <= 8.0f) { return 1.0f; }
+    surfaceToLight.normaliseInPlace();
     const float ltangle = macos(surfaceToLight.dot(dir));
-    if (ltangleptr) *ltangleptr = ltangle;
-    return (ltangle < angle);
+    return (ltangle < angle ? sinf(MID(0.0f, (angle-ltangle)/angle, 1.0f)*((float)M_PI/2.0f)) : 0.0f);
   }
 };
 
