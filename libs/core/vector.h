@@ -162,8 +162,8 @@ public:
 
   // dir must be normalised, angle must be valid
   inline __attribute__((warn_unused_result)) bool isInSpotlight (const TVec &origin, const TVec &dir, const float angle) const {
-    const TVec surfaceToLight = TVec(origin.x-x, origin.y-y, origin.z-z).normalised();
-    const float ltangle = macos((-surfaceToLight).dot(dir));
+    const TVec surfaceToLight = -(TVec(origin.x-x, origin.y-y, origin.z-z).normalised());
+    const float ltangle = macos(surfaceToLight.dot(dir));
     return (ltangle < angle);
   }
 };
