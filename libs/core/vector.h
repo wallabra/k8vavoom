@@ -60,6 +60,8 @@ public:
 static_assert(__builtin_offsetof(TAVec, yaw) == __builtin_offsetof(TAVec, pitch)+sizeof(float), "TAVec layout fail (0)");
 static_assert(__builtin_offsetof(TAVec, roll) == __builtin_offsetof(TAVec, yaw)+sizeof(float), "TAVec layout fail (1)");
 
+static inline __attribute__((unused)) vuint32 GetTypeHash (const TAVec &v) { return joaatHashBuf(&v, 3*sizeof(float)); }
+
 static __attribute__((unused)) inline bool operator == (const TAVec &v1, const TAVec &v2) { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
 static __attribute__((unused)) inline bool operator != (const TAVec &v1, const TAVec &v2) { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
 
@@ -182,6 +184,8 @@ public:
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
 static_assert(__builtin_offsetof(TVec, z) == __builtin_offsetof(TVec, y)+sizeof(float), "TVec layout fail (1)");
+
+static inline __attribute__((unused)) vuint32 GetTypeHash (const TVec &v) { return joaatHashBuf(&v, 3*sizeof(float)); }
 
 
 static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
@@ -479,6 +483,10 @@ public:
   // 0: completely outside; >0: completely inside; <0: partially inside
   __attribute__((warn_unused_result)) int checkRectEx (const TVec &v0, const TVec &v1) const;
 };
+
+static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail");
+
+static inline __attribute__((unused)) vuint32 GetTypeHash (const TPlane &v) { return joaatHashBuf(&v, 4*sizeof(float)); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
