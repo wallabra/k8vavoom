@@ -1,6 +1,9 @@
   vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
   BMColor.rgb *= BMColor.a;
-  lt.r = max(lt.r, BMColor.r);
-  lt.g = max(lt.g, BMColor.g);
-  lt.b = max(lt.b, BMColor.b);
+#if 0
+  lt.rgb = max(lt.rgb, BMColor.rgb);
   //lt.rgb = BMColor.rgb;
+#else
+  // additive brightmaps
+  lt.rgb = min(lt.rgb+BMColor.rgb, 1.0);
+#endif
