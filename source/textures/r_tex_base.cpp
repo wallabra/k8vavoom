@@ -911,16 +911,14 @@ void VTexture::ResizeCanvas (int newwdt, int newhgt) {
   (void)GetPixels();
   ConvertPixelsToRGBA();
   rgba_t *newpic = new rgba_t[newwdt*newhgt];
+  memset((void *)newpic, 0, newwdt*newhgt*sizeof(rgba_t));
   rgba_t *dest = newpic;
   const rgba_t *oldpix = (const rgba_t *)Pixels;
   for (int y = 0; y < newhgt; ++y) {
     for (int x = 0; x < newwdt; ++x) {
       if (x < Width && y < Height) {
-        *dest = oldpix[y*Width+x];
-      } else {
-        *dest = rgba_t(0, 0, 0, 0);
+        dest[y*newwdt+x] = oldpix[y*Width+x];
       }
-      ++dest;
     }
   }
   delete [] Pixels;
