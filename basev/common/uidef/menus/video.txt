@@ -86,6 +86,15 @@ menudef VideoOptions {
   }
 
   option bool {
+    title = "Additive Brightmaps";
+    cvar = r_brightmaps_additive;
+    help =
+      "If you have brightmaps turned on, brightmaps will be added"
+      "to the current ambient light level, otherwise max(ambient, bmap)"
+      "will be used.";
+  }
+
+  option bool {
     title = "Glowing Flats";
     cvar = r_glow_flat;
     help =

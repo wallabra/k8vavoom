@@ -117,6 +117,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     ShadowsAmbientMasked.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
     // brightmap
     ShadowsAmbientBrightmap.Activate();
+    ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     ShadowsAmbientBrightmap.SetTexture(0);
     ShadowsAmbientBrightmap.SetTextureBM(1);
     ShadowsAmbientBrightmap.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);

@@ -51,6 +51,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   if (doBrightmap) {
     SurfMaskedBrightmapGlow.Activate();
+    SurfMaskedBrightmapGlow.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     SurfMaskedBrightmapGlow.SetTexture(0);
     SurfMaskedBrightmapGlow.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
@@ -263,6 +264,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (doBrightmap) {
     //GCon->Logf("BRMAP for '%s' (%s)", *Tex->Name, *Tex->Brightmap->Name);
     SurfMaskedBrightmap.Activate();
+    SurfMaskedBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     SurfMaskedBrightmap.SetTexture(0);
     SurfMaskedBrightmap.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
