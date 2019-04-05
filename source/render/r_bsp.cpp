@@ -633,29 +633,15 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
 
 //==========================================================================
 //
-//  VRenderLevelShared::RenderSubsector
+//  VRenderLevelShared::RenderMarkAdjSubsectorsThings
+//
+//  used for "better things rendering"
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
-  subsector_t *sub = &Level->Subsectors[num];
-  //r_sub = sub;
-
-  if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
-    /*if (!sub->sector->botregion || !sub->sector->botregion->next)*/ return;
-  }
-
-  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
-
-  if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
-
-  sub->parent->VisFrame = currVisFrame;
-  sub->VisFrame = currVisFrame;
-
-  BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
+void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
-
-  // mark adjacent subsectors
   if (r_draw_adjacent_subsector_things) {
+    subsector_t *sub = &Level->Subsectors[num];
     int sgcount = sub->numlines;
     if (sgcount) {
       const seg_t *seg = &Level->Segs[sub->firstline];
@@ -668,6 +654,42 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
       }
     }
   }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RenderSubsector
+//
+//==========================================================================
+void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
+  subsector_t *sub = &Level->Subsectors[num];
+  //r_sub = sub;
+
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+
+  if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
+    if (r_draw_adjacent_subsector_things) {
+      if (!useClipper || ViewClip.ClipCheckSubsector(sub)) {
+        RenderMarkAdjSubsectorsThings(num);
+        if (useClipper && clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+      }
+    } else if (useClipper && clip_use_1d_clipper) {
+      ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+    }
+    /*if (!sub->sector->botregion || !sub->sector->botregion->next)*/ return;
+  }
+
+  if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
+
+  sub->parent->VisFrame = currVisFrame;
+  sub->VisFrame = currVisFrame;
+
+  // mark this subsector as rendered
+  BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
+
+  // mark thing subsectors
+  RenderMarkAdjSubsectorsThings(num);
 
   // update world
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {

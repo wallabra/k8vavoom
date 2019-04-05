@@ -100,7 +100,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, int hangup)
 {
   check(count >= 0);
-  if (count == 0 || Alpha < 0.0002f) return;
+  if (count == 0 || Alpha < 0.01f) return;
 
   // make room
   if (traspUsed == traspSize) {
@@ -479,13 +479,10 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   }
 
   int RendStyle = mobj->RenderStyle;
+  if (RendStyle == STYLE_None) return;
 
   if (Pass == RPASS_Normal) {
-    if (RendStyle == STYLE_None) return;
-
     // skip things in subsectors that are not visible
-    //TODO: for advanced renderer, we may need to render things several times, so
-    //      it is good place to cache them for the given frame
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
   }
@@ -551,32 +548,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 //==========================================================================
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   if (!r_draw_mobjs) return;
-
-#if 0
-  if (r_draw_adjacent_subsector_things) {
-    //int zzcount = 0;
-    for (unsigned sidx = 0; sidx < (unsigned)Level->NumSubsectors; ++sidx) {
-      if ((sidx&7) == 0) BspVisThing[sidx>>3] |= BspVis[sidx>>3];
-      if (BspVis[sidx>>3]&(1U<<(sidx&7))) {
-        subsector_t *sub = &Level->Subsectors[sidx];
-        int sgcount = sub->numlines;
-        if (sgcount) {
-          seg_t *seg = &Level->Segs[sub->firstline];
-          for (; sgcount--; ++seg) {
-            if (seg->linedef && !(seg->linedef->flags&ML_TWOSIDED)) continue; // don't go through solid walls
-            seg_t *pseg = seg->partner;
-            if (!pseg || !pseg->front_sub) continue;
-            unsigned psidx = (unsigned)(ptrdiff_t)(pseg->front_sub-Level->Subsectors);
-            //if (!(BspVisThing[psidx>>3]&(1U<<(psidx&7)))) ++zzcount;
-            BspVisThing[psidx>>3] |= 1U<<(psidx&7);
-          }
-        }
-      }
-    }
-    //if (zzcount) GCon->Logf("additional thing subsectors: %d", zzcount);
-  }
-#endif
-
   // "normal" pass has no object list
   if (Pass == RPASS_Normal) {
     // render things
@@ -614,6 +585,8 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     int RendStyle = mobj->RenderStyle;
     if (RendStyle == STYLE_None) continue;
 
+    // collect all things with models (we'll need them in advrender)
+    //TODO: make this faster somehow?
     do {
       if (!mobj->State) break;
       if (!HasAliasModel(mobj->GetClass()->Name)) break;
