@@ -261,6 +261,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   bool doBrightmap = (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
 
   if (doBrightmap) {
+    //GCon->Logf("BRMAP for '%s' (%s)", *Tex->Name, *Tex->Brightmap->Name);
     SurfMaskedBrightmap.Activate();
     SurfMaskedBrightmap.SetTexture(0);
     SurfMaskedBrightmap.SetTextureBM(1);

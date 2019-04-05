@@ -5,7 +5,7 @@ $include "common/common.inc"
 
 uniform sampler2D Texture;
 #ifdef VV_MASKED_BRIGHTMAP
-uniform sampler2D TextureBM;
+$include "common/brightmap_vars.fs"
 #endif
 uniform vec4 Light;
 uniform float AlphaRef;
@@ -30,12 +30,7 @@ void main () {
   vec4 lt = Light;
 #endif
 #ifdef VV_MASKED_BRIGHTMAP
-  vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
-  BMColor.rgb *= BMColor.a;
-  lt.r = max(lt.r, BMColor.r);
-  lt.g = max(lt.g, BMColor.g);
-  lt.b = max(lt.b, BMColor.b);
-  //lt.rgb = BMColor.rgb;
+  $include "common/brightmap_calc.fs"
 #endif
   TexColour *= lt;
 

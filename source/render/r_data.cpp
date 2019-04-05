@@ -1354,6 +1354,10 @@ static void ParseBrightmap (VScriptParser *sc) {
     }
     //if (iwad && doWarn) GCon->Logf(NAME_Warning, "IWAD PASS! '%s'", *img);
 
+    basetex->nofullbright = nofb;
+    delete basetex->Brightmap;
+    basetex->Brightmap = nullptr;
+
     int lmp = W_GetNumForFileName(bmap);
     if (lmp < 0) {
       GCon->Logf(NAME_Warning, "brightmap texture '%s' not found", *bmap);
@@ -1367,9 +1371,7 @@ static void ParseBrightmap (VScriptParser *sc) {
       GCon->Logf(NAME_Warning, "cannot load brightmap texture '%s'", *bmap);
       return;
     }
-    bm->nofullbright = nofb;
-
-    delete basetex->Brightmap;
+    bm->nofullbright = nofb; // just in case
 
     if (bm->GetWidth() != basetex->GetWidth() || bm->GetHeight() != basetex->GetHeight()) {
       if (doWarn) {
@@ -1377,8 +1379,8 @@ static void ParseBrightmap (VScriptParser *sc) {
           *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
       }
       bm->ResizeCanvas(basetex->GetWidth(), basetex->GetHeight());
-      //delete bm;
-      //return;
+      check(bm->GetWidth() == basetex->GetWidth());
+      check(bm->GetHeight() == basetex->GetHeight());
     }
 
     basetex->Brightmap = bm;

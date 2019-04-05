@@ -7,7 +7,7 @@ uniform sampler2D Texture;
 uniform sampler2D LightMap;
 uniform sampler2D SpecularMap;
 #ifdef VV_LIGHTMAP_BRIGHTMAP
-uniform sampler2D TextureBM;
+$include "common/brightmap_vars.fs"
 #endif
 
 $include "common/fog_vars.fs"
@@ -33,12 +33,7 @@ void main () {
   lt.b = mix(lt.b, Light.b, FullBright);
   lt = calcGlow(lt);
 #ifdef VV_LIGHTMAP_BRIGHTMAP
-  vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
-  BMColor.rgb *= BMColor.a;
-  lt.r = max(lt.r, BMColor.r);
-  lt.g = max(lt.g, BMColor.g);
-  lt.b = max(lt.b, BMColor.b);
-  //lt.rgb = BMColor.rgb;
+  $include "common/brightmap_calc.fs"
 #endif
   TexColour *= lt;
   TexColour += texture2D(SpecularMap, LightmapCoordinate);

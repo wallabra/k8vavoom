@@ -104,7 +104,10 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
       if (doSeek) Strm.Seek(0); else doSeek = true;
       VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
-        if (Tex->Name == NAME_None) Tex->Name = W_LumpName(LumpNum);
+        if (Tex->Name == NAME_None) {
+          Tex->Name = W_LumpName(LumpNum);
+          if (Tex->Name == NAME_None) Tex->Name = VName(*W_RealLumpName(LumpNum));
+        }
         Tex->Type = Type;
         return Tex;
       }

@@ -10,7 +10,7 @@ $include "common/texture_vars.fs"
 
 #ifdef VV_AMBIENT_BRIGHTMAP_WALL
 uniform sampler2D Texture;
-uniform sampler2D TextureBM;
+$include "common/brightmap_vars.fs"
 $include "common/texture_vars.fs"
 #endif
 
@@ -35,12 +35,7 @@ void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   //if (TexColour.a <= 0.01) discard;
   if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
-  vec4 BMColor = texture2D(TextureBM, TextureCoordinate);
-  BMColor.rgb *= BMColor.a;
-  lt.r = max(lt.r, BMColor.r);
-  lt.g = max(lt.g, BMColor.g);
-  lt.b = max(lt.b, BMColor.b);
-  //lt.rgb = BMColor.rgb;
+  $include "common/brightmap_calc.fs"
 #endif
   gl_FragColor = lt;
 }
