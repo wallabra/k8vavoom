@@ -99,14 +99,16 @@ private:
 
 public:
   // some utilities
-  static bool convertInt (const char *s, int *outv);
+  static bool convertInt (const char *s, int *outv, bool loose=false);
   static bool convertFloat (const char *s, float *outv, const float *defval=nullptr);
 
   static float atof (const char *s) { float res = 0; convertFloat(s, &res, nullptr); return res; }
   static float atof (const char *s, float defval) { float res = 0; convertFloat(s, &res, &defval); return res; }
 
-  static int atoi (const char *s) { int res = 0; if (!convertInt(s, &res)) res = 0; return res; }
-  static int atoi (const char *s, int defval) { int res = 0; if (!convertInt(s, &res)) res = defval; return res; }
+  static int atoiStrict (const char *s) { int res = 0; if (!convertInt(s, &res)) res = 0; return res; }
+  static int atoiStrict (const char *s, int defval) { int res = 0; if (!convertInt(s, &res)) res = defval; return res; }
+
+  static int atoi (const char *s) { int res = 0; convertInt(s, &res, true); return res; }
 
   enum { FloatBufSize = 16 };
   static int float2str (char *buf, float v); // 0-terminated

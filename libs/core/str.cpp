@@ -1569,7 +1569,7 @@ VStr VStr::buf2hex (const void *buf, int buflen) {
 //  VStr::convertInt
 //
 //==========================================================================
-bool VStr::convertInt (const char *s, int *outv) {
+bool VStr::convertInt (const char *s, int *outv, bool loose) {
   bool neg = false;
   int dummy = 0;
   if (!outv) outv = &dummy;
@@ -1596,12 +1596,12 @@ bool VStr::convertInt (const char *s, int *outv) {
   while (*s) {
     char ch = *s++;
     int d = digitInBase(ch, base);
-    if (d < 0) { *outv = 0; return false; }
+    if (d < 0) { if (neg) *outv = -(*outv); if (!loose) *outv = 0; return false; }
     *outv = (*outv)*base+d;
   }
-  while (*s && (vuint8)*s <= ' ') ++s;
-  if (*s) { *outv = 0; return false; }
   if (neg) *outv = -(*outv);
+  while (*s && (vuint8)*s <= ' ') ++s;
+  if (*s) { if (!loose) *outv = 0; return false; }
   return true;
 }
 
