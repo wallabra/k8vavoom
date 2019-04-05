@@ -160,6 +160,12 @@ void VLevel::SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt) {
 }
 
 
+struct SegV1Info {
+  seg_t *seg;
+  SegV1Info *next;
+};
+
+
 //==========================================================================
 //
 //  VLevel::IterFindPolySegs
@@ -172,7 +178,10 @@ void VLevel::IterFindPolySegs (const TVec &From, seg_t **segList,
                                int &PolySegCount, const TVec &PolyStart)
 {
   if (From == PolyStart) return; // reached starting vertex
-  for (int i = 0; i < NumSegs; i++) {
+  if (NumSegs == 0) Host_Error("no segs (wtf?!)");
+/*
+  GCon->Logf("IterFindPolySegs: from=(%f,%f,%f); count=%d", From.x, From.y, From.z, PolySegCount);
+  for (int i = 0; i < NumSegs; ++i) {
     if (!Segs[i].linedef) continue; // skip minisegs
     if (*Segs[i].v1 == From) {
       if (!segList) {
@@ -187,10 +196,111 @@ void VLevel::IterFindPolySegs (const TVec &From, seg_t **segList,
         // k8: and i am enabling it again
         Segs[i].frontsector->linecount = 0;
       }
+      GCon->Logf("IterFindPolySegs: from=(%f,%f,%f); count=%d; recurse with %d", From.x, From.y, From.z, PolySegCount, i);
       return IterFindPolySegs(*Segs[i].v2, segList, PolySegCount, PolyStart);
     }
   }
-  Host_Error("Non-closed Polyobj located.\n");
+*/
+#if 0
+  TArray<vuint8> touched;
+  touched.setLength(NumSegs);
+  memset(touched.ptr(), 0, touched.length());
+  TArray<TVec> vlist;
+  int vlpos = 0;
+  vlist.append(From);
+  while (vlpos < vlist.length()) {
+    TVec v0 = vlist[vlpos++];
+    bool found = false;
+    seg_t *seg = Segs;
+    vuint8 *tptr = touched.ptr();
+    for (int i = NumSegs; i--; ++seg, ++tptr) {
+      if (!seg->linedef) continue; // skip minisegs
+      if (*tptr) continue;
+      if (*seg->v1 == v0) {
+        found = true;
+        *tptr = 1;
+        if (!segList) {
+          // count segs
+          ++PolySegCount;
+        } else {
+          // add to the list
+          *segList++ = seg;
+          // set sector's line count to 0 to force it not to be
+          // rendered even if we do a no-clip into it
+          // -- FB -- I'm disabling this behavior
+          // k8: and i am enabling it again
+          seg->frontsector->linecount = 0;
+        }
+        if (*seg->v2 != PolyStart) {
+          bool gotV2 = false;
+          for (int f = 0; f < vlist.length(); ++f) if (vlist[f] == *seg->v2) { gotV2 = true; break; }
+          if (!gotV2) vlist.append(*seg->v2);
+        }
+      }
+    }
+    if (!found) Host_Error("Non-closed Polyobj located.");
+  }
+#else
+  // first, build map with all segs, keyed by v1
+  TMapNC<TVec, SegV1Info *> smap;
+  TArray<SegV1Info> sinfo;
+  sinfo.setLength(NumSegs);
+  int sinfoCount = 0;
+  {
+    seg_t *seg = Segs;
+    for (int i = NumSegs; i--; ++seg) {
+      if (!seg->frontsector) continue;
+      if (!seg->linedef) continue; // skip minisegs
+      SegV1Info *si = &sinfo[sinfoCount++];
+      si->seg = seg;
+      si->next = nullptr;
+      auto mp = smap.find(*seg->v1);
+      if (mp) {
+        SegV1Info *l = *mp;
+        while (l->next) l = l->next;
+        l->next = si;
+      } else {
+        smap.put(*seg->v1, si);
+      }
+    }
+  }
+  // now collect segs
+  TMapNC<TVec, bool> vseen;
+  vseen.put(PolyStart, true);
+  TArray<TVec> vlist;
+  int vlpos = 0;
+  vlist.append(From);
+  while (vlpos < vlist.length()) {
+    TVec v0 = vlist[vlpos++];
+    auto mp = smap.find(v0);
+    if (!mp) {
+      //Host_Error("Non-closed Polyobj located (vlpos=%d; vlcount=%d).", vlpos, vlist.length());
+      continue;
+    }
+    SegV1Info *si = *mp;
+    smap.del(v0);
+    for (; si; si = si->next) {
+      seg_t *seg = si->seg;
+      if (!segList) {
+        // count segs
+        ++PolySegCount;
+      } else {
+        // add to the list
+        *segList++ = seg;
+        // set sector's line count to 0 to force it not to be
+        // rendered even if we do a no-clip into it
+        // -- FB -- I'm disabling this behavior
+        // k8: and i am enabling it again
+        seg->frontsector->linecount = 0;
+      }
+      v0 = *seg->v2;
+      if (!vseen.put(v0, true)) {
+        // new vertex
+        vlist.append(v0);
+      }
+    }
+  }
+#endif
 }
 
 
