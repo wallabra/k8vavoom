@@ -1291,7 +1291,11 @@ void VTextureManager::AddHiResTextures () {
         sc->ExpectName8Warn();
         int OldIdx = CheckNumForName(sc->Name8, Type, Overload, false);
         if (OldIdx < 0) {
-          if (!r_hirestex) continue; // don't replace
+          if (!r_hirestex) {
+            // don't replace
+            sc->ExpectName8Warn();
+            continue;
+          }
           OldIdx = AddPatch(sc->Name8, TEXTYPE_Pic, true);
         }
 
