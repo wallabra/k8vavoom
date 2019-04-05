@@ -961,6 +961,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       skipUnimplementedCommand(sc, false);
     } else if (sc->Check("spawnwithweaponraised")) {
       skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("noautosavehint")) {
+      skipUnimplementedCommand(sc, false);
     } else {
       if (newFormat) {
         if (sc->Check("}")) break;

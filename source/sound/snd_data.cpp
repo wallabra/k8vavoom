@@ -511,6 +511,9 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       rlf->MinDistance = sc->Float;
       sc->ExpectFloat();
       rlf->MaxDistance = sc->Float;
+    } else if (sc->Check("$mididevice")) {
+      sc->ExpectString();
+      sc->ExpectString();
     } else {
       sc->ExpectString();
       if (**sc->String == '$') sc->Error(va("Unknown command (%s)", *sc->String));
