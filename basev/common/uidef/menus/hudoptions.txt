@@ -107,6 +107,12 @@ menudef HUDOptions {
   header "Service Messages";
 
   option bool {
+    title = "Autosave messages";
+    cvar = sv_save_messages;
+    help = "Show save/load messages in HUD?";
+  }
+
+  option bool {
     title = "Playing Timer";
     cvar = draw_world_timer;
   }
@@ -165,5 +171,29 @@ menudef HUDOptions {
     min = 0;
     max = 1;
     step = 0.1;
+  }
+
+
+  header "Status Bar";
+
+  option slider {
+    title = "Fullsceen Opacity";
+    cvar = r_hud_fullscreen_alpha;
+    min = 0;
+    max = 1;
+    step = 0.1;
+  }
+
+  option bool {
+    title = "Draw StatusBar";
+    cvar = r_statusbar_draw;
+    help =
+      "You can turn off statusbar if some mod does it's own,"
+      "and k8VaVoom is not able to detect it.";
+  }
+
+  option bool {
+    title = "Ammo in Fullscreen";
+    cvar = r_hud_draw_fs_ammo;
   }
 }

@@ -177,6 +177,13 @@ float sb_face_lastattackdown;
 int sb_faceindex;
 
 
+struct AmmoInfo {
+  Ammo ammo;
+  int wslot;
+  int widx;
+}
+
+
 //==========================================================================
 //
 //  checkForDoom2
@@ -273,14 +280,14 @@ void SB_DrawTallNum (int x, int y, int num, float alpha, bool perc) {
   if (neg) num = -num;
 
   // in the special case of 0, you draw 0
-  if (!num) DrawPic(x-w, y, pic_tallnum[0], alpha);
+  //if (!num) DrawPic(x-w, y, pic_tallnum[0], alpha);
 
   // draw the new number
-  while (num) {
+  do {
     x -= w;
     DrawPic(x, y, pic_tallnum[num%10], alpha);
     num /= 10;
-  }
+  } while (num);
 
   // draw a minus sign if necessary
   if (neg) DrawPic(x-8, y, pic_minus, alpha);
@@ -293,23 +300,22 @@ void SB_DrawTallNum (int x, int y, int num, float alpha, bool perc) {
 //
 //==========================================================================
 void SB_DrawSmallNum (int x, int y, int num) {
-  int w;
   picinfo_t info;
 
   if (num < 0) num = -num;
 
   R_GetPicInfo(pic_yellownum[0], &info);
-  w = info.width;
+  int w = info.width;
 
   // in the special case of 0, you draw 0
-  if (!num) DrawPic(x-w, y, pic_yellownum[0]);
+  //if (!num) DrawPic(x-w, y, pic_yellownum[0]);
 
   // draw the new number
-  while (num) {
+  do {
     x -= w;
-    DrawPic(x, y, pic_yellownum[num % 10]);
+    DrawPic(x, y, pic_yellownum[num%10]);
     num /= 10;
-  }
+  } while (num);
 }
 
 
@@ -400,8 +406,8 @@ override void SB_DrawMainBar () {
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
-    if (Item) DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime&4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
+    if (Item) DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime&4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
   } else if (cl.InvPtr) {
     // ready artifact
     DrawPic(486, 448, pic_artibox, ST_FULLSCREEN_ALPHA);
@@ -500,6 +506,100 @@ override void SB_DrawFullscreenStats () {
     SB_DrawTallNum(ovw-10, 10, cl.Frags, fsalpha, false);
   }
 
+
+  // weapons owned and their ammo
+  /*
+  {
+    auto pawn = PlayerPawn(cl.MO);
+    if (pawn) {
+      Weapon wlist[10]; // arbitrary limit
+      int widx[10];
+      int wpncount = 0;
+      // collect and count weapons to properly center it
+      for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+        Weapon wpn = Weapon(Item);
+        if (!wpn) continue;
+        if (!wpn.Ammo1) continue;
+        int tmpslot, tmpindex;
+        pawn.FindWeaponSlot(class!Weapon(wpn.Class), out tmpslot, out tmpindex);
+        if (tmpslot >= 2 && tmpslot <= 9) {
+          if (wlist[tmpslot] && widx[tmpslot] >= tmpindex) continue;
+          if (!wlist[tmpslot]) ++wpncount;
+          wlist[tmpslot] = wpn;
+          widx[tmpslot] = tmpindex;
+        }
+      }
+      // draw weapons
+      if (wpncount) {
+        SetFont('smallfont');
+        int xpos = ovw/2-(wpncount*30)/2;
+        int ypos = ovh-10-30;
+        foreach (auto idx; 0..wlist.length) {
+          if (!wlist[idx]) continue;
+          //SB_DrawTallNum(xpos, ypos, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
+          //DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
+          DrawPic(xpos, ypos, R_RegisterPic(wlist[idx].Ammo1.IconName), fsalpha);
+          SetTextAlign(hleft, vtop);
+          DrawText(xpos, ypos+20, va("%3d", wlist[idx].Ammo1.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
+          xpos += 30;
+        }
+      }
+    }
+  }
+  */
+  if (GetCvarB('r_hud_draw_fs_ammo')) {
+    auto pawn = PlayerPawn(cl.MO);
+    if (pawn) {
+      array!AmmoInfo alist; // arbitrary limit
+      // collect and count weapon ammo to properly center it
+      for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+        Weapon wpn = Weapon(Item);
+        if (!wpn) continue;
+        if (!wpn.Ammo1) continue;
+        int tmpslot, tmpindex;
+        pawn.FindWeaponSlot(class!Weapon(wpn.Class), out tmpslot, out tmpindex);
+        if (tmpslot >= 2 && tmpslot <= 9) {
+          bool found = false;
+          foreach (const ref AmmoInfo a; alist) if (a.ammo == wpn.Ammo1) { found = true; break; }
+          if (!found) {
+            // new ammo
+            AmmoInfo *ai = alist.alloc();
+            ai.ammo = wpn.Ammo1;
+            ai.wslot = tmpslot;
+            ai.widx = tmpindex;
+          }
+        }
+      }
+      // draw ammo
+      if (alist.length) {
+        alist.sort(delegate int (const ref AmmoInfo a, const ref AmmoInfo b) {
+          int d = a.wslot-b.wslot;
+          if (d) return d;
+          return a.widx-b.widx;
+        });
+        SetFont('smallfont');
+        SetTextAlign(hleft, vtop);
+        //SetTextAlign(hcenter, vtop);
+        int xpos = ovw/2-(alist.length*30)/2;
+        int ypos = ovh-10-20;
+        picinfo_t pi;
+        foreach (const ref AmmoInfo ai; alist) {
+          //SB_DrawTallNum(xpos, ypos, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
+          //DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
+          int ico = R_RegisterPic(ai.ammo.IconName);
+          if (ico) {
+            R_GetPicInfo(ico, &pi);
+            DrawPic(xpos+(30-pi.width)/2, ypos, ico, fsalpha);
+          }
+          DrawText(xpos, ypos+4, va("%3d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
+          //DrawText(xpos+(30/2), ypos+4, va("%d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
+          xpos += 30;
+        }
+      }
+    }
+  }
+
+
   // draw inventory bar or ready item when needed (it's drawn with transparency)
   if (cl.InventoryTime && cl.InvFirst) {
     // inventory
@@ -513,8 +613,8 @@ override void SB_DrawFullscreenStats () {
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, /*447*/ovh-33, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
-    if (Item) DrawPic(429, /*447*/ovh-33, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, /*447*/ovh-33, pic_invgeml[!(ClGame.GLevel.TicTime&4) ? 0 : 1], fsalpha);
+    if (Item) DrawPic(429, /*447*/ovh-33, pic_invgemr[!(ClGame.GLevel.TicTime&4) ? 0 : 1], fsalpha);
   } else if (cl.InvPtr) {
     // ready artifact
     DrawPic(486, /*448*/ovh-32, pic_artibox, fsalpha);
@@ -557,7 +657,7 @@ override void SB_Drawer (int sb_view) {
 //
 //==========================================================================
 final int CalcPainOffset () {
-  int health = cl.Health > 100 ? 100 : cl.Health;
+  int health = (cl.Health > 100 ? 100 : cl.Health);
   if (health != sb_cpo_oldhealth) {
     sb_cpo_lastcalc = ST_FACESTRIDE*(((100-health)*ST_NUMPAINFACES)/101);
     sb_cpo_oldhealth = health;
@@ -601,7 +701,7 @@ final void UpdateFaceWidget (float FrameTime) {
         // evil grin if just picked up weapon
         sb_face_priority = 8;
         sb_facetime = ST_EVILGRINTIME;
-        sb_faceindex = CalcPainOffset() + ST_EVILGRINOFFSET;
+        sb_faceindex = CalcPainOffset()+ST_EVILGRINOFFSET;
       }
     }
   }
@@ -664,7 +764,7 @@ final void UpdateFaceWidget (float FrameTime) {
   if (sb_face_priority < 6) {
     // rapid firing
     if (cl.bAttackDown && !cl.bFrozen && !cl.bTotallyFrozen ||
-        (cl.Level.bFrozen && !(cl.Cheats & PlayerEx::CF_TIMEFREEZE)))
+        (cl.Level.bFrozen && !(cl.Cheats&PlayerEx::CF_TIMEFREEZE)))
     {
       if (sb_face_lastattackdown == -1.0) {
         sb_face_lastattackdown = ST_RAMPAGEDELAY;
