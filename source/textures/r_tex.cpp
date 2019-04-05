@@ -1189,6 +1189,7 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
       }
       // ignore empty and duplicate textures
       if (Tex->Name == NAME_None || Tex->Name == dashName || tseen.has(Tex->Name)) { delete Tex; continue; }
+      if (Tex->SourceLump < TexLump) Tex->SourceLump = TexLump;
       tseen.put(Tex->Name, true);
       AddTexture(Tex);
     }

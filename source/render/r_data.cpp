@@ -1349,7 +1349,7 @@ static void ParseBrightmap (VScriptParser *sc) {
 
     if (iwad && !W_IsIWADLump(basetex->SourceLump)) {
       // oops
-      if (doWarn) GCon->Logf(NAME_Warning, "IWAD SKIP! '%s' (%s)", *img, *W_FullLumpName(basetex->SourceLump));
+      if (doWarn) GCon->Logf(NAME_Warning, "IWAD SKIP! '%s' (%s[%d]; '%s')", *img, *W_FullLumpName(basetex->SourceLump), basetex->SourceLump, *basetex->Name);
       return;
     }
     //if (iwad && doWarn) GCon->Logf(NAME_Warning, "IWAD PASS! '%s'", *img);
