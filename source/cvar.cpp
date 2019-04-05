@@ -648,6 +648,25 @@ COMMAND(WhatIs) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// COMMAND toggle
+//
+// Toggles boolean cvar
+COMMAND(Toggle) {
+  if (Args.Num() != 2) {
+    GCon->Logf("Toggles boolean cvar.");
+    GCon->Logf("usage: toggle varname");
+  } else {
+    VCvar *cvar = VCvar::FindVariable(*(Args[1]));
+    if (cvar) {
+      cvar->Set(cvar->asBool() ? 0 : 1);
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // COMMAND cvarinfovar
 //
 // create temp variable from user mod
