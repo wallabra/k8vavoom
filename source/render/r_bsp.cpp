@@ -82,6 +82,7 @@ static int oldPortalDepth = -666;
 //==========================================================================
 void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
   check(surf);
+  //if (surf->seg && surf->seg->frontsector->linecount == 0) return; // original polyobj sector, skip it
   if (surf->queueframe == currQueueFrame) {
     if (surf->seg) {
       //abort();
@@ -592,11 +593,11 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool useClipper) {
+void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper) {
   const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
   if (region->next && d <= 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next, useClipper);
+    RenderSubRegion(sub, region->next, addPoly, useClipper);
   }
 
   check(sub->sector != nullptr);
@@ -604,13 +605,12 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
   subregion_t *subregion = region;
   sec_region_t *secregion = region->secregion;
 
-  if (sub->poly && r_draw_pobj) {
+  if (addPoly && sub->poly && r_draw_pobj) {
     // render the polyobj in the subsector first
-    int polyCount = sub->poly->numsegs;
+    addPoly = false;
     seg_t **polySeg = sub->poly->segs;
-    while (polyCount--) {
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
       RenderLine(sub, secregion, subregion, (*polySeg)->drawsegs);
-      ++polySeg;
     }
   }
 
@@ -626,7 +626,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
 
   if (region->next && d > 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next, useClipper);
+    RenderSubRegion(sub, region->next, addPoly, useClipper);
   }
 }
 
@@ -683,7 +683,8 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
     }
   }
 
-  RenderSubRegion(sub, sub->regions, useClipper);
+  bool addPoly = true;
+  RenderSubRegion(sub, sub->regions, addPoly, useClipper);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes

@@ -565,7 +565,7 @@ protected:
   void RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool useClipper=true);
+  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper=true);
   void RenderSubsector (int num, bool useClipper=true);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
@@ -841,7 +841,7 @@ protected:
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderShadowSubRegion (subsector_t *sub, subregion_t *region);
+  void RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
   void RenderShadowSubsector (int num);
   void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
 
@@ -849,7 +849,7 @@ protected:
                           VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderLightLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
+  void RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
