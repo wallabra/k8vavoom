@@ -393,66 +393,39 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
           const TVec sv1 = *seg->v1;
           const TVec sv2 = *seg->v2;
 
-          float bbox[6];
           const float bfz1 = bssec->floor.GetPointZ(sv1);
           const float bfz2 = bssec->floor.GetPointZ(sv2);
           const float bcz1 = bssec->ceiling.GetPointZ(sv1);
           const float bcz2 = bssec->ceiling.GetPointZ(sv2);
 
-          // min
-          bbox[0] = MIN(sv1.x, sv2.x);
-          bbox[1] = MIN(sv1.y, sv2.y);
-          bbox[2] = MIN(bfz1, bfz2);
-          // max
-          bbox[3] = MAX(sv1.x, sv2.x);
-          bbox[4] = MAX(sv1.y, sv2.y);
-          bbox[5] = MAX(bcz1, bcz2);
-          FixBBoxZ(bbox);
-
-          //FIXME
-          if (bbox[2] >= bbox[5]) {
-            // definitely closed
-            return true;
-          }
-
-          // debug
-          /*
-          const int lidx = (int)(ptrdiff_t)(ldef-clip.GetLevel()->Lines);
-          if (lidx == / *126* / 132) {
-            GCon->Logf("bbox:(%f,%f,%f)-(%f,%f,%f) : %d : %d", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5], (int)FrustumTop.checkBox(bbox), (int)FrustumBot.checkBox(bbox));
-            for (int f = bss->firstline; f < bss->firstline+bss->numlines; ++f) {
-              const seg_t *s2 = &clip.GetLevel()->Segs[f];
-              GCon->Logf("  %d: (%f,%f)-(%f,%f)", f, s2->v1->x, s2->v1->y, s2->v2->x, s2->v2->y);
-            }
-          }
-          */
-
           if (Frustum && Frustum->isValid()) {
+            TVec verts[4];
+            verts[0] = TVec(sv1.x, sv1.y, bfz1);
+            verts[1] = TVec(sv1.x, sv1.y, bcz1);
+            verts[2] = TVec(sv2.x, sv2.y, bcz2);
+            verts[3] = TVec(sv2.x, sv2.y, bfz2);
+            if (MIN(verts[0].z, verts[3].z) >= MAX(verts[1].z, verts[2].z)) return true; // definitely closed
             // check (only top, bottom, and back)
-            if (!Frustum->checkBox(bbox, TFrustum::TopBit|TFrustum::BottomBit/*|TFrustum::BackBit*/)) {
-              // out of frustum
-              /*
-              GCon->Logf("!!!!!!!!! top=%d; bot=%d; back=%d",
-                (int)Frustum->checkBox(bbox, TFrustum::TopBit),
-                (int)Frustum->checkBox(bbox, TFrustum::BottomBit),
-                (int)Frustum->checkBox(bbox, TFrustum::BackBit));
-              GCon->Logf("  back: (%f,%f,%f : %f)",
-                Frustum->planes[TFrustum::Back].normal.x,
-                Frustum->planes[TFrustum::Back].normal.y,
-                Frustum->planes[TFrustum::Back].normal.z,
-                Frustum->planes[TFrustum::Back].dist);
-              GCon->Logf("  bbox: (%f,%f,%f)-(%f,%f,%f)", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
-              for (unsigned j = 0; j < 8; ++j) {
-                TVec pt(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]);
-                GCon->Logf("   pt: (%f,%f,%f) : res=%d", pt.x, pt.y, pt.z, Frustum->planes[TFrustum::Back].PointOnSide(pt));
-              }
-              */
+            if (!Frustum->checkVerts(verts, 4, TFrustum::TopBit|TFrustum::BottomBit/*|TFrustum::BackBit*/)) {
               return true;
             }
           }
 
           // check if light can see midtex
           if (lcheck) {
+            // min
+            float bbox[6];
+            bbox[0] = MIN(sv1.x, sv2.x);
+            bbox[1] = MIN(sv1.y, sv2.y);
+            bbox[2] = MIN(bfz1, bfz2);
+            // max
+            bbox[3+0] = MAX(sv1.x, sv2.x);
+            bbox[3+1] = MAX(sv1.y, sv2.y);
+            bbox[3+2] = MAX(bcz1, bcz2);
+            FixBBoxZ(bbox);
+
+            if (bbox[2] >= bbox[3+2]) return true; // definitely closed
+
             if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
           }
         }
