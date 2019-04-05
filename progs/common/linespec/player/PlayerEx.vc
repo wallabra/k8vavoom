@@ -149,7 +149,8 @@ float k8HealthAccum_LastRegenTime = -10000;
 float k8HealthAccum_LastBoostTime = -10000;
 
 bool bFlashlightOn;
-bool bFlashlightButtonDown;
+transient bool bFlashlightButtonDown;
+transient float k8NextSuperBulletTime;
 
 
 replication {
@@ -3279,7 +3280,14 @@ override void PlayerTick (float deltaTime) {
 
   // check for weapon change (and other impulse commands)
   if (Impulse) PlayerImpulse();
-  if (Buttons&BT_SUPERBULLET) Actor(MO).FireSuperBullet();
+
+  if (Buttons&BT_SUPERBULLET) {
+    float lt = MO.XLevel.Time;
+    if (lt >= k8NextSuperBulletTime) {
+      k8NextSuperBulletTime = lt+GetCvarF('k8SuperBulletCooldown');
+      Actor(MO).FireSuperBullet();
+    }
+  }
 
   // check for use
   if (Buttons&BT_USE) {
