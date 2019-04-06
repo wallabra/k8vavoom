@@ -6,6 +6,7 @@ menudef ClipperOptions {
   option bool { title = "Enable clipping"; cvar = clip_enabled; }
   option bool { title = "Enable 1D clipper"; cvar = clip_use_1d_clipper; }
   option bool { title = "BSP BBox 1D clipping"; cvar = clip_bbox; }
+  option bool { title = "BSP BBox 1D Z clipping"; cvar = clip_check_bbox_z; }
   option bool { title = "Clip with polyobj"; cvar = clip_with_polyobj; }
 
   header "Other";

@@ -41,6 +41,7 @@ enum { r_draw_pobj = true };
 #endif
 
 static VCvarB clip_bbox("clip_bbox", true, "Clip BSP bboxes with 1D clipper?", CVAR_PreInit);
+static VCvarB clip_check_bbox_z("clip_check_bbox_z", true, "Consider bbox height when cliping BSP bboxes with 1D clipper?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
@@ -1048,7 +1049,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
   if (!clip_enabled || !clip_bbox) return true;
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
       BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
-      BBox[2] <= Origin.z && BBox[5] >= Origin.z)
+      (!clip_check_bbox_z || (BBox[2] <= Origin.z && BBox[5] >= Origin.z)))
   {
     // viewer is inside the box
     return true;
@@ -1273,7 +1274,7 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6]) const {
 
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
       BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
-      BBox[2] <= Origin.y && BBox[5] >= Origin.y)
+      (!clip_check_bbox_z || (BBox[2] <= Origin.z && BBox[5] >= Origin.z)))
   {
     // viewer is inside the box
     return true;
