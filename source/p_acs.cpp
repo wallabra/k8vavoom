@@ -317,6 +317,10 @@ public:
   virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
   virtual void ClearReferences () override;
+
+  virtual VName GetName () override;
+  virtual int GetNumber () override;
+
   int RunScript (float, bool immediate);
   virtual void Tick (float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
@@ -1987,6 +1991,26 @@ VLevelScriptThinker *AcsCreateEmptyThinker () {
 
 //==========================================================================
 //
+//  AcsSuspendScript
+//
+//==========================================================================
+void AcsSuspendScript (VAcsLevel *acslevel, int number, int map) {
+  if (acslevel) acslevel->Suspend(number, map);
+}
+
+
+//==========================================================================
+//
+//  AcsTerminateScript
+//
+//==========================================================================
+void AcsTerminateScript (VAcsLevel *acslevel, int number, int map) {
+  if (acslevel) acslevel->Terminate(number, map);
+}
+
+
+//==========================================================================
+//
 //  VAcs::Destroy
 //
 //==========================================================================
@@ -2121,6 +2145,26 @@ void VAcs::ClearReferences () {
 void VAcs::Tick (float DeltaTime) {
   if (DeltaTime <= 0.0f) return;
   if (!destroyed) RunScript(DeltaTime, false);
+}
+
+
+//==========================================================================
+//
+//  VAcs::GetName
+//
+//==========================================================================
+VName VAcs::GetName () {
+  return (info ? info->Name : NAME_None);
+}
+
+
+//==========================================================================
+//
+//  VAcs::GetNumber
+//
+//==========================================================================
+int VAcs::GetNumber () {
+  return (info ? info->Number : -1);
 }
 
 
@@ -2400,6 +2444,22 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // bool ACS_NamedTerminate (string script, int map) -- always returns `true`
+    case ACSF_ACS_NamedTerminate:
+      if (argCount >= 2) {
+        VStr scname = VStr(GetNameLowerCase(args[0]));
+        XLevel->TerminateNamedScriptThinkers(scname, args[1]);
+      }
+      return 1;
+
+    // bool ACS_NamedSuspend (string script, int map) -- always returns `true`
+    case ACSF_ACS_NamedSuspend:
+      if (argCount >= 2) {
+        VStr scname = VStr(GetNameLowerCase(args[0]));
+        XLevel->SuspendNamedScriptThinkers(scname, args[1]);
+      }
+      return 1;
+
     // bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
     case ACSF_ACS_NamedExecute:
       if (argCount > 0) {
@@ -2455,6 +2515,37 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           return 0;
         }
         //GCon->Logf("   OK!");
+        return 1;
+      }
+      return 0;
+
+
+    case ACSF_ACS_NamedLockedExecute:
+      if (argCount >= 5) {
+        VName name = GetNameLowerCase(args[0]);
+        if (name == NAME_None) return 0;
+        if (!Level->eventCheckLock(Activator, args[4], false)) return 0;
+        int ScArgs[4];
+        ScArgs[0] = args[2];
+        ScArgs[1] = args[3];
+        ScArgs[2] = 0;
+        ScArgs[3] = 0;
+        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
+        return 1;
+      }
+      return 0;
+
+    case ACSF_ACS_NamedLockedExecuteDoor:
+      if (argCount >= 5) {
+        VName name = GetNameLowerCase(args[0]);
+        if (name == NAME_None) return 0;
+        if (!Level->eventCheckLock(Activator, args[4], true)) return 0;
+        int ScArgs[4];
+        ScArgs[0] = args[2];
+        ScArgs[1] = args[3];
+        ScArgs[2] = 0;
+        ScArgs[3] = 0;
+        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
         return 1;
       }
       return 0;

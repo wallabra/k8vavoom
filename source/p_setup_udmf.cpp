@@ -414,7 +414,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
-  if (hasArg0Str && L.L.special >= 80 && L.L.special < 90) {
+  if (hasArg0Str && ((L.L.special >= 80 && L.L.special <= 85) || L.L.special == 226)) {
     VName sn = VName(*CheckString(), VName::AddLower); // 'cause script names are lowercased
     if (sn.GetIndex() != NAME_None) {
       L.L.arg1 = -(int)sn.GetIndex();

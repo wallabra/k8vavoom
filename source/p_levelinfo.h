@@ -193,6 +193,18 @@ public:
   DECLARE_FUNCTION(FindFreeTID)
   DECLARE_FUNCTION(IsTIDUsed)
 
+  // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+  // final bool CheckLock (Entity user, int lock, bool door)
+  bool eventCheckLock (VEntity *user, int lock, bool door) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("CheckLock"));
+    P_PASS_SELF;
+    P_PASS_REF(user);
+    P_PASS_INT(lock);
+    P_PASS_BOOL(door);
+    EV_RET_BOOL_IDX(mtindex);
+  }
+
   void eventSpawnSpecials () {
     P_PASS_SELF;
     EV_RET_VOID(NAME_SpawnSpecials);

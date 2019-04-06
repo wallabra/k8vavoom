@@ -141,10 +141,16 @@ public:
   virtual void ClearReferences () = 0;
   virtual void Tick (float DeltaTime) = 0;
 
+  virtual VName GetName () = 0;
+  virtual int GetNumber () = 0;
+
   virtual VStr DebugDumpToString () = 0;
 };
 
 extern VLevelScriptThinker *AcsCreateEmptyThinker ();
+//FIXME
+extern void AcsSuspendScript (VAcsLevel *acslevel, int number, int map);
+extern void AcsTerminateScript (VAcsLevel *acslevel, int number, int map);
 
 
 //==========================================================================
@@ -441,6 +447,9 @@ public:
   void AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun);
   void RemoveScriptThinker (VLevelScriptThinker *sth); // won't call `Destroy()`, won't call `delete`
   void RunScriptThinkers (float DeltaTime);
+
+  void SuspendNamedScriptThinkers (const VStr &name, int map);
+  void TerminateNamedScriptThinkers (const VStr &name, int map);
 
 public:
   void IncrementValidCount ();

@@ -122,6 +122,44 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
 
 //==========================================================================
 //
+//  VLevel::SuspendNamedScriptThinkers
+//
+//==========================================================================
+void VLevel::SuspendNamedScriptThinkers (const VStr &name, int map) {
+  if (name.length() == 0) return;
+  const int sclenOrig = scriptThinkers.length();
+  VLevelScriptThinker **sth = scriptThinkers.ptr();
+  for (int count = sclenOrig; count--; ++sth) {
+    if (!sth[0] || sth[0]->destroyed) continue;
+    if (name.ICmp(*sth[0]->GetName()) == 0) {
+      //Acs->Suspend(sth[0]->GetNumber(), map);
+      AcsSuspendScript(Acs, sth[0]->GetNumber(), map);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::TerminateNamedScriptThinkers
+//
+//==========================================================================
+void VLevel::TerminateNamedScriptThinkers (const VStr &name, int map) {
+  if (name.length() == 0) return;
+  const int sclenOrig = scriptThinkers.length();
+  VLevelScriptThinker **sth = scriptThinkers.ptr();
+  for (int count = sclenOrig; count--; ++sth) {
+    if (!sth[0] || sth[0]->destroyed) continue;
+    if (name.ICmp(*sth[0]->GetName()) == 0) {
+      //Acs->Terminate(sth[0]->GetNumber(), map);
+      AcsTerminateScript(Acs, sth[0]->GetNumber(), map);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddThinker
 //
 //==========================================================================

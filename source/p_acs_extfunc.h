@@ -63,10 +63,10 @@
   ACS_EXTFUNC(AnnouncerSound) // skulltag, ignored
   ACS_EXTFUNC(SetPointer) // partially implemented
   ACS_EXTFUNC(ACS_NamedExecute) // implemented
-  ACS_EXTFUNC(ACS_NamedSuspend)
-  ACS_EXTFUNC(ACS_NamedTerminate)
-  ACS_EXTFUNC(ACS_NamedLockedExecute)
-  ACS_EXTFUNC(ACS_NamedLockedExecuteDoor)
+  ACS_EXTFUNC(ACS_NamedSuspend) // implemented
+  ACS_EXTFUNC(ACS_NamedTerminate) // implemented
+  ACS_EXTFUNC(ACS_NamedLockedExecute) // implemented
+  ACS_EXTFUNC(ACS_NamedLockedExecuteDoor) // implemented
   ACS_EXTFUNC(ACS_NamedExecuteWithResult) // implemented
   ACS_EXTFUNC(ACS_NamedExecuteAlways) // implemented
   ACS_EXTFUNC(UniqueTID) // implemented
