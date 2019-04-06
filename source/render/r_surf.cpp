@@ -1433,7 +1433,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //  VRenderLevelShared::UpdateSubRegion
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region/*, bool ClipSegs*/) {
+void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region, bool updatePoly) {
   sec_plane_t *r_floor = region->floorplane;
   sec_plane_t *r_ceiling = region->ceilplane;
 
@@ -1450,8 +1450,9 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region/
   UpdateSecSurface(region->floor, region->floorplane, sub);
   UpdateSecSurface(region->ceil, region->ceilplane, sub);
 
-  if (sub->poly) {
+  if (updatePoly && sub->poly) {
     // update the polyobj
+    updatePoly = false;
     seg_t **polySeg = sub->poly->segs;
     for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
       UpdateDrawSeg(sub, (*polySeg)->drawsegs, r_floor, r_ceiling/*, ClipSegs*/);
@@ -1462,7 +1463,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region/
     if (w_update_clip_region && !w_update_in_renderer /*ClipSegs*/) {
       if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
     }
-    UpdateSubRegion(sub, region->next/*, ClipSegs*/);
+    UpdateSubRegion(sub, region->next, updatePoly);
   }
 }
 

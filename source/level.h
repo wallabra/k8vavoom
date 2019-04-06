@@ -464,7 +464,7 @@ public:
   // we have to look at neighbour sector to get height.
   // note that if neighbour sector is closed door too, we can safely use
   // our zero height, as camera cannot see through top/bottom textures.
-  void CalcSectorBoundingHeight (const sector_t *sector, float *minz, float *maxz) const;
+  void CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz);
 
   void UpdateSubsectorBBox (int num, float *bbox, const float skyheight);
   void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);

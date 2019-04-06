@@ -121,17 +121,26 @@ float VLevel::CalcSkyHeight () const {
 //  our zero height, as camera cannot see through top/bottom textures.
 //
 //==========================================================================
-void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, float *maxz) const {
+void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz) {
   float tmp0, tmp1;
   if (!minz) minz = &tmp0;
   if (!maxz) maxz = &tmp1;
+
+  if (sector->ZExtentsCached && sector->LastFloorZ == sector->floor.minz && sector->LastCeilingZ == sector->ceiling.maxz) {
+    *minz = sector->LastMinZ;
+    *maxz = sector->LastMaxZ;
+    return;
+  }
+
   *minz = sector->floor.minz;
   *maxz = sector->ceiling.maxz;
+
   if (!sector->linecount) {
     // skip sectors containing original polyobjs
     *maxz = *minz;
   }
   if (*maxz < *minz) { const float tmp = *minz; *minz = *maxz; *maxz = tmp; }
+
   // check if we have two-sided lines in this sector
   line_t *const *lines = sector->lines;
   for (unsigned count = sector->linecount; count--; ++lines) {
@@ -145,11 +154,21 @@ void VLevel::CalcSectorBoundingHeight (const sector_t *sector, float *minz, floa
       *maxz = 32767.0f;
       return;
     }
-    const float zmin = MIN(bsec->floor.minz, bsec->ceiling.maxz);
-    const float zmax = MAX(bsec->floor.minz, bsec->ceiling.maxz);
+    float zmin = MIN(bsec->floor.minz, bsec->floor.maxz);
+    zmin = MIN(bsec->ceiling.minz, bsec->ceiling.maxz);
+    float zmax = MAX(bsec->ceiling.minz, bsec->ceiling.maxz);
+    zmax = MAX(bsec->floor.minz, bsec->floor.maxz);
+    if (zmax < zmin) { const float tmp = zmax; zmax = zmin; zmin = tmp; }
     *minz = MIN(*minz, zmin);
     *maxz = MAX(*maxz, zmax);
   }
+
+  // cache values
+  sector->ZExtentsCached |= 1;
+  sector->LastFloorZ = sector->floor.minz;
+  sector->LastCeilingZ = sector->ceiling.maxz;
+  sector->LastMinZ = *minz;
+  sector->LastMaxZ = *maxz;
 }
 
 

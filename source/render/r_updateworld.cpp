@@ -41,17 +41,23 @@ VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector 
 //
 //  VRenderLevelShared::UpdateSubsector
 //
+//  if `bbox` is `nullptr`, it means "update nodes bounding boxes"
+//  (i.e. it is called from renderer)
+//
 //==========================================================================
 void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   subsector_t *sub = &Level->Subsectors[num];
-  if (sub->updateWorldFrame == updateWorldFrame) return;
+
+  if (bbox) {
+    if (sub->updateWorldFrame == updateWorldFrame) return;
+  }
   sub->updateWorldFrame = updateWorldFrame;
 
-  if (updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
+  if (bbox && updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (w_update_clip_bsp && !ViewClip.ClipCheckSubsector(sub)) return;
+  if (bbox && w_update_clip_bsp && !ViewClip.ClipCheckSubsector(sub)) return;
 
   /*
   bbox[2] = sub->sector->floor.minz;
@@ -63,14 +69,65 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   FixBBoxZ(bbox);
   */
 
-  //FIXME: this will calculate sector height too many times
-  Level->CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
-  if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
-  FixBBoxZ(bbox);
+  UpdateSubRegion(sub, sub->regions);
 
-  UpdateSubRegion(sub, sub->regions/*, ClipSegs:true*/);
+  if (bbox) {
+    //FIXME: this will calculate sector height too many times
+    Level->CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
+    if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
+    FixBBoxZ(bbox);
 
-  ViewClip.ClipAddSubsectorSegs(sub);
+    ViewClip.ClipAddSubsectorSegs(sub);
+  } else {
+    // oops, called from renderer, trigger node bbox update
+    if (!sub->parent) return;
+
+    float minz = 999999.0f;
+    float maxz = -999999.0f;
+    Level->CalcSectorBoundingHeight(sub->sector, &minz, &maxz);
+
+    // update bsp bounding boxes
+    node_t *bsp = sub->parent;
+
+    if (bsp->children[0] == ((unsigned)num|NF_SUBSECTOR)) {
+      if (bsp->bbox[0][2] <= minz && bsp->bbox[0][5] >= maxz) return;
+      //!GCon->Logf("sub #%d, new=(%f,%f)", num, minz, maxz);
+      //!GCon->Logf("  sub #%d: updating front (%f,%f) : (%f,%f)", num, bsp->bbox[0][2], bsp->bbox[0][5], minz, maxz);
+    } else if (bsp->children[1] == ((unsigned)num|NF_SUBSECTOR)) {
+      if (bsp->bbox[1][2] <= minz && bsp->bbox[1][5] >= maxz) return;
+      //!GCon->Logf("sub #%d, new=(%f,%f)", num, minz, maxz);
+      //!GCon->Logf("  sub #%d: updating back (%f,%f) : (%f,%f)", num, bsp->bbox[0][2], bsp->bbox[0][5], minz, maxz);
+    } else {
+      return;
+    }
+
+    node_t *child = nullptr;
+    for (; bsp; child = bsp, bsp = bsp->parent) {
+      if (!child) {
+        if (bsp->children[0] == ((unsigned)num|NF_SUBSECTOR)) {
+          //!GCon->Logf("  sub #%d: updating front", num);
+          bsp->bbox[0][2] = minz;
+          bsp->bbox[0][5] = maxz;
+        } else if (bsp->children[1] == ((unsigned)num|NF_SUBSECTOR)) {
+          //!GCon->Logf("  sub #%d: updating back", num);
+          bsp->bbox[1][2] = minz;
+          bsp->bbox[1][5] = maxz;
+        } else {
+          break;
+        }
+      } else if (bsp->children[0] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
+        if (bsp->bbox[0][2] <= minz && bsp->bbox[0][5] >= maxz) break;
+        //!GCon->Logf("  sub #%d: updating front node", num);
+        bsp->bbox[0][2] = MIN(bsp->bbox[0][2], minz);
+        bsp->bbox[0][5] = MAX(bsp->bbox[0][5], maxz);
+      } else if (bsp->children[1] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
+        if (bsp->bbox[1][2] <= minz && bsp->bbox[1][5] >= maxz) break;
+        //!GCon->Logf("  sub #%d: updating back node", num);
+        bsp->bbox[1][2] = MIN(bsp->bbox[1][2], minz);
+        bsp->bbox[1][5] = MAX(bsp->bbox[1][5], maxz);
+      }
+    }
+  }
 }
 
 

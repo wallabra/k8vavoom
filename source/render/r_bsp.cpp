@@ -693,6 +693,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
   // update world
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
+#if 0
     sub->updateWorldFrame = updateWorldFrame;
     if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame/* ||
         !sub->sector->botregion || !sub->sector->botregion->next*/)
@@ -700,9 +701,13 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
       //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
       //auto oldrss = r_surf_sub;
       //r_surf_sub = sub;
-      UpdateSubRegion(sub, sub->regions/*, ClipSegs:true*/);
+      //bool updatePoly = true;
+      UpdateSubRegion(sub, sub->regions);
       //r_surf_sub = oldrss;
     }
+#else
+    UpdateSubsector(num, nullptr); // trigger BSP updating
+#endif
   }
 
   bool addPoly = true;
@@ -712,6 +717,23 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   // clipping against mirror is done only for vertical mirror planes
   if (useClipper && clip_use_1d_clipper) {
     ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+  }
+}
+
+
+//==========================================================================
+//
+//  bspCalcZExtents
+//
+//==========================================================================
+static __attribute__((unused)) void bspCalcZExtents (VLevel *level, int bspnum, float *minz, float *maxz) {
+  if ((bspnum&NF_SUBSECTOR) == 0) {
+    node_t *bsp = &level->Nodes[bspnum];
+    bspCalcZExtents(level, bsp->children[0], minz, maxz);
+    bspCalcZExtents(level, bsp->children[1], minz, maxz);
+  } else {
+    const subsector_t *sub = &level->Subsectors[bspnum&(~NF_SUBSECTOR)];
+    if (sub->sector) level->CalcSectorBoundingHeight(sub->sector, minz, maxz);
   }
 }
 
@@ -769,6 +791,38 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
         if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #else
         if (!cp->checkBox(bbox)) {
+          //HACK: this should be done in world update, but just in case it failed to do its work...
+          //      seems to be fixed
+          /*
+          float newbbox[6];
+          memcpy(newbbox, bbox, sizeof(float)*6);
+          newbbox[2] = -32767.0f;
+          newbbox[5] = +32767.0f;
+          if (cp->checkBox(newbbox)) {
+            float minz = 999999.0f;
+            float maxz = -999999.0f;
+            bspCalcZExtents(Level, bspnum, &minz, &maxz);
+            newbbox[2] = MIN(minz, bbox[2]);
+            newbbox[5] = MAX(maxz, bbox[5]);
+            if (cp->checkBox(newbbox)) {
+              GCon->Logf("BBOX! (%f,%f) : (%f,%f) : %d", bbox[2], bbox[5], minz, maxz, (int)cp->checkBox(newbbox));
+              if ((bspnum&NF_SUBSECTOR) == 0) {
+                node_t *bsp = &Level->Nodes[bspnum];
+                node_t *child = bsp;
+                for (bsp = bsp->parent; bsp; child = bsp, bsp = bsp->parent) {
+                  if (bsp->children[0] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
+                    bsp->bbox[0][2] = newbbox[2];
+                    bsp->bbox[0][5] = newbbox[5];
+                  } else if (bsp->children[1] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
+                    bsp->bbox[1][2] = newbbox[2];
+                    bsp->bbox[1][5] = newbbox[5];
+                  }
+                }
+              }
+              continue;
+            }
+          }
+          */
           if (cp != &view_frustum.planes[TFrustum::Back]) {
             // this node is out of frustum, clip with it
             onlyClip = true;
