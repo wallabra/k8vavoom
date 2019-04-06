@@ -6705,7 +6705,8 @@ override void SpawnMapThing (mthing_t *mthing) {
 //  CheckLock
 //
 //==========================================================================
-final bool CheckLock (Entity user, int lock, bool door) {
+/*final*/ bool CheckLock (Entity user, int lock, bool door) {
+  if (!user) return false;
   if (!user.bIsPlayer) return false;
   if (!lock) return true;
   LockDef *Lock = GetLockDef(lock);
