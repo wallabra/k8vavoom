@@ -226,6 +226,24 @@ public:
   // `dest` points at column, `x` is used only to build checker
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
 
+  static const char *TexTypeToStr (int ttype) {
+    switch (ttype) {
+      case TEXTYPE_Any: return "any";
+      case TEXTYPE_WallPatch: return "patch";
+      case TEXTYPE_Wall: return "wall";
+      case TEXTYPE_Flat: return "flat";
+      case TEXTYPE_Overload: return "overload";
+      case TEXTYPE_Sprite: return "sprite";
+      case TEXTYPE_SkyMap: return "sky";
+      case TEXTYPE_Skin: return "skin";
+      case TEXTYPE_Pic: return "pic";
+      case TEXTYPE_Autopage: return "autopage";
+      case TEXTYPE_Null: return "null";
+      case TEXTYPE_FontChar: return "fontchar";
+    }
+    return "unknown";
+  }
+
 protected:
   // this should be called after `Pixels` were converted to RGBA
   void shadePixelsRGBA (int shadeColor);
@@ -448,7 +466,7 @@ public:
 
   // to use in `ExportTexture` command
   void FillNameAutocompletion (const VStr &prefix, TArray<VStr> &list);
-  VTexture *GetExistingTextureByName (const VStr &txname);
+  VTexture *GetExistingTextureByName (const VStr &txname, int type=TEXTYPE_Any);
 
 private:
   void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames);

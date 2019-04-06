@@ -2565,36 +2565,13 @@ void VTextureManager::FillNameAutocompletion (const VStr &prefix, TArray<VStr> &
 //  to use in `ExportTexture` command
 //
 //==========================================================================
-VTexture *VTextureManager::GetExistingTextureByName (const VStr &txname) {
+VTexture *VTextureManager::GetExistingTextureByName (const VStr &txname, int type) {
   VName nn = VName(*txname, VName::FindLower);
   if (nn == NAME_None) return nullptr;
 
-  /*
-  for (int f = 1; f < Textures.length(); ++f) {
-    if (txname.ICmp(*Textures[f]->Name) == 0) {
-      GCon->Logf("TEXTURE '%s' found at index %d (%d:%s)", *txname, f, Textures[f]->SourceLump, *W_FullLumpName(Textures[f]->SourceLump));
-    }
-  }
-  for (int f = 0; f < MapTextures.length(); ++f) {
-    if (txname.ICmp(*MapTextures[f]->Name) == 0) {
-      GCon->Logf("TEXTURE '%s' found at index %d (%d:%s) (map)", *txname, f, MapTextures[f]->SourceLump, *W_FullLumpName(MapTextures[f]->SourceLump));
-    }
-  }
-  */
-
-  int idx = CheckNumForName(nn, TEXTYPE_Any, true, true);
+  int idx = CheckNumForName(nn, type, true/*overloads*/, false/*any*/);
   if (idx >= 0) return this->operator()(idx);
   return nullptr;
-
-  /*
-  for (int f = 1; f < Textures.length(); ++f) {
-    if (txname.ICmp(*Textures[f]->Name) == 0) return Textures[f];
-  }
-  for (int f = 0; f < MapTextures.length(); ++f) {
-    if (txname.ICmp(*MapTextures[f]->Name) == 0) return MapTextures[f];
-  }
-  return nullptr;
-  */
 }
 
 
@@ -2615,12 +2592,41 @@ extern "C" {
 //
 //==========================================================================
 COMMAND_WITH_AC(ExportTexture) {
-  if (Args.length() != 2) {
-    GCon->Log("(only) texture name expected!");
+  if (Args.length() < 2 || Args.length() > 3) {
+    GCon->Log(
+      "usage: ExportTexture name [type]\n"
+      "where \"type\" is one of:\n"
+      "  any\n"
+      "  patch\n"
+      "  wall\n"
+      "  flat\n"
+      "  sprite\n"
+      "  sky\n"
+      "  skin\n"
+      "  pic\n"
+      "  autopage\n"
+      "  fontchar"
+      "");
     return;
   }
 
-  VTexture *tx = GTextureManager.GetExistingTextureByName(Args[1]);
+  int ttype = TEXTYPE_Any;
+  if (Args.length() == 3) {
+    const VStr &tstr = Args[2];
+         if (tstr.ICmp("any") == 0) ttype = TEXTYPE_Any;
+    else if (tstr.ICmp("patch") == 0) ttype = TEXTYPE_WallPatch;
+    else if (tstr.ICmp("wall") == 0) ttype = TEXTYPE_Wall;
+    else if (tstr.ICmp("flat") == 0) ttype = TEXTYPE_Flat;
+    else if (tstr.ICmp("sprite") == 0) ttype = TEXTYPE_Sprite;
+    else if (tstr.ICmp("sky") == 0) ttype = TEXTYPE_SkyMap;
+    else if (tstr.ICmp("skin") == 0) ttype = TEXTYPE_Skin;
+    else if (tstr.ICmp("pic") == 0) ttype = TEXTYPE_Pic;
+    else if (tstr.ICmp("autopage") == 0) ttype = TEXTYPE_Autopage;
+    else if (tstr.ICmp("fontchar") == 0) ttype = TEXTYPE_FontChar;
+    else { GCon->Logf("unknown texture type '%s'", *tstr); return; }
+  }
+
+  VTexture *tx = GTextureManager.GetExistingTextureByName(Args[1], ttype);
   if (!tx) {
     GCon->Logf(NAME_Error, "Texture '%s' not found!", *Args[1]);
     return;
@@ -2637,25 +2643,42 @@ COMMAND_WITH_AC(ExportTexture) {
   tx->WriteToPNG(strm);
   delete strm;
 
-  GCon->Logf("Exported to '%s'", *fname);
+  GCon->Logf("Exported texture '%s' of type '%s' to '%s'", *tx->Name, VTexture::TexTypeToStr(tx->Type), *fname);
 }
 
 COMMAND_AC(ExportTexture) {
-  if (aidx != 1) return VStr::EmptyString;
-  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  //if (aidx != 1) return VStr::EmptyString;
   TArray<VStr> list;
-  GTextureManager.FillNameAutocompletion(prefix, list);
-  if (!list.length()) return VStr::EmptyString;
-  // sort
-  timsort_r(list.ptr(), list.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
-  // remove possible duplicates
-  int pos = 1;
-  while (pos < list.length()) {
-    if (list[pos].ICmp(list[pos-1]) == 0) {
-      list.removeAt(pos);
-    } else {
-      ++pos;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    GTextureManager.FillNameAutocompletion(prefix, list);
+    if (!list.length()) return VStr::EmptyString;
+    // sort
+    timsort_r(list.ptr(), list.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
+    // remove possible duplicates
+    int pos = 1;
+    while (pos < list.length()) {
+      if (list[pos].ICmp(list[pos-1]) == 0) {
+        list.removeAt(pos);
+      } else {
+        ++pos;
+      }
     }
+    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else if (aidx == 2) {
+    // type
+    list.append(VStr("any"));
+    list.append(VStr("autopage"));
+    list.append(VStr("flat"));
+    list.append(VStr("fontchar"));
+    list.append(VStr("patch"));
+    list.append(VStr("pic"));
+    list.append(VStr("skin"));
+    list.append(VStr("sky"));
+    list.append(VStr("sprite"));
+    list.append(VStr("wall"));
+    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else {
+    return VStr::EmptyString;
   }
-  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
 }
