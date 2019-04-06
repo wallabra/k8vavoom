@@ -118,6 +118,19 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     if (headshot && showHeadshots) print("HSBIG: TAN");
   }
 
+  // precision shot is headshot near thing vertical center
+  int precisionShot = 0; // 0: nope; -2: very far; -1: too far; 1: almost
+  if (headshot && vicRadius > 0) {
+    //print("HITXY=(%s,%s)", hitpos.x, hitpos.y);
+    float hc = fmin(fabs(hitpos.x), fabs(hitpos.y));
+    float r3 = vicRadius/3;
+         if (hc <= r3*0.7) precisionShot = 2;
+    else if (hc <= r3) precisionShot = 1;
+    else if (hc > r3*2.4) precisionShot = -2;
+    else if (hc > r3*2) precisionShot = -1;
+    //print("HC=%s; precisionShot=%s; radius=%s; r3*0.7=%s; r3=%s; r3*2=%s; r3*2.4=%s", hc, precisionShot, Radius, r3*0.7, r3, r3*2, r3*2.4);
+  }
+
   // calc distance
   float mult = GetCvarF('k8HSDistMult');
   if (mult < 0.1) mult = 1.1;
@@ -153,16 +166,16 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       // very rarely, shotgun can do double criticals
       ++plr.k8hsCount;
       if (plr.k8hsCount == 1) {
-        // first hitscan
+        // second hitscan
       } else if (plr.k8hsCount == 2) {
-        // second hitscan; 1.25 damage sometimes
+        // third hitscan; 1.25 damage sometimes
         critChance = 1;
         if (Random()*100.0 > 75.0) {
           dodmg += dodmg/4;
           if (debugCrits) print("*Critx1.25 (2); d=%d", dodmg);
         }
       } else {
-        // third and other hitscans; 1.25 damage sometimes
+        // fourth and other hitscans; 1.25 damage sometimes
         critChance = 1;
         if (Random()*100.0 > 80) {
           dodmg += dodmg/4;
@@ -181,11 +194,22 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     else if (len > 300) { if (critChance >= 75 && Random()*100 > 50) critChance = 13; }
     else if (len > 200) { if (critChance >= 75 && Random()*100 > 70) critChance = 13; }
     else if (len < 90) {
-           if (plr.k8hsCount <= 2) critChance += 42;
+           if (plr.k8hsCount <= 1) critChance += 42;
+      else if (plr.k8hsCount <= 2) critChance += 33;
       else if (plr.k8hsCount >= 8) critChance += 10;
       else critChance += (8-plr.k8hsCount)*9;
+      if (precisionShot > 0 && plr.k8hsCount > 1) precisionShot = 0; // don't do it for secondary bullets
     }
     if (debugme) print("oldcc=%d; critChance=%d; len=%f", oldcc, critChance, len);
+
+    if (precisionShot) {
+      //print("PREC=%s; chance-before=%s", precisionShot, critChance);
+           if (precisionShot > 1) critChance += 23;
+      else if (precisionShot > 0) critChance += 13;
+      else if (precisionShot < -1) critChance -= 23;
+      else if (precisionShot < 0) critChance -= 13;
+      //print("  chance-after=%s", critChance);
+    }
 
     // create message
     bool showMessage = false;
