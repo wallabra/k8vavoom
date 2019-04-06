@@ -85,6 +85,8 @@ private:
     return strifeMode;
   }
 
+  bool lastWasGameBinding = false;
+
   /*
   struct Binding {
     //VStr cmdDown;
@@ -418,10 +420,13 @@ bool VInputPublic::PostKeyEvent (int key, int press, vuint32 modflags) {
 //
 //==========================================================================
 void VInput::ProcessEvents () {
+  bool reachedBinding = false;
+  bool wasEvent = false;
   Device->ReadInput();
   for (int count = VObject::CountQueuedEvents(); count > 0; --count) {
     event_t ev;
     if (!VObject::GetEvent(&ev)) break;
+    wasEvent = true;
 
     // shift key state
     if (ev.data1 == K_RSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
@@ -444,6 +449,13 @@ void VInput::ProcessEvents () {
     //if (C_Active() && (ev.type == ev_keydown || ev.type == ev_keyup)) continue;
     // actually, when console is active, it eats everything
     if (C_Active()) continue;
+
+    reachedBinding = true;
+    if (!lastWasGameBinding) {
+      //GCon->Log("unpressing(0)...");
+      lastWasGameBinding = true;
+      UnpressAll();
+    }
 
     if (cl && !GClGame->intermission) {
       if (KBCheatProcessor(&ev)) continue; // cheatcode typed
@@ -471,6 +483,15 @@ void VInput::ProcessEvents () {
     }
 
     if (CL_Responder(&ev)) continue;
+  }
+
+  if (wasEvent && !reachedBinding) {
+    // something ate all the keys, so unpress buttons
+    if (lastWasGameBinding) {
+      //GCon->Log("unpressing(1)...");
+      lastWasGameBinding = false;
+      UnpressAll();
+    }
   }
 }
 
