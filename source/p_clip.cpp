@@ -1271,18 +1271,16 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub) const {
 bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6]) const {
   if (ClipIsFull()) return false;
 
-  /*
-  //k8: most BSP bboxes has non-sensical z, so no z checks
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
-      BBox[1] <= Origin.y && BBox[4] >= Origin.y)
+      BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
+      BBox[2] <= Origin.y && BBox[5] >= Origin.y)
   {
     // viewer is inside the box
     return true;
   }
-  */
 
   if (!CheckSphereVsAABBIgnoreZ(BBox, Origin, Radius)) return false;
-  return true;
+  //return true;
 
   if (ClipIsEmpty()) return true; // no clip nodes yet
 
