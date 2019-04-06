@@ -219,7 +219,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
             if (Tex < 0) {
               VTexture *T = CreateTexture(TEXTYPE_WallPatch, LumpNum);
-              if (!T) T = CreateTexture(TEXTYPE_Any, LumpNum);
+              if (!T) {
+                T = CreateTexture(TEXTYPE_Any, LumpNum);
+                if (T && T->Type == TEXTYPE_Any) T->Type = TEXTYPE_WallPatch;
+              }
               if (T) {
                 Tex = GTextureManager.AddTexture(T);
                 T->Name = NAME_None;

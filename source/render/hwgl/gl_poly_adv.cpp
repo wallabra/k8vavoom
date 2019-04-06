@@ -163,6 +163,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
           // texture with brightmap
+          //GCon->Logf("WALL BMAP: wall texture is '%s', brightmap is '%s'", *currTexinfo->Tex->Name, *currTexinfo->Tex->Brightmap->Name);
           if (currShader != BRIGHTMAP) {
             currShader = BRIGHTMAP;
             ShadowsAmbientBrightmap.Activate();
@@ -190,6 +191,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
           lastTexinfo = nullptr;
         } else if (surf->drawflags&surface_t::DF_MASKED) {
+          //GCon->Logf("MASKED WALL: wall texture is '%s'", *currTexinfo->Tex->Name);
           // masked wall
           bool textureChanded =
             !lastTexinfo ||
@@ -229,6 +231,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
         } else {
           // normal wall
+          //GCon->Logf("SOLID WALL: wall texture is '%s' (%p:%p)", *currTexinfo->Tex->Name, currTexinfo->Tex, currTexinfo->Tex->Brightmap);
           if (currShader != SOLID) {
             /*
             if (currShader == BRIGHTMAP) {
