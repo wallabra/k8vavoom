@@ -3890,6 +3890,157 @@ void Cheat_Summon () {
 
 //==========================================================================
 //
+//  Cheat_RemoveAllEntities_AC
+//
+//==========================================================================
+void Cheat_RemoveAllEntities_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  dictionary!(name, bool) classmap;
+
+  // scan level entities
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (classmap.find(cname)) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    classmap.put(cname, true);
+    aclist[$] = string(cname);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_RemoveAllEntities
+//
+//==========================================================================
+void Cheat_RemoveAllEntities () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() != 2) {
+    cprint("RemoveAllEntities: class name expected");
+    return;
+  }
+
+  name wantname = name(Cmd_GetArgV(1));
+
+  // find which type to remove
+  auto moClass = class!EntityEx(FindClassNoCase(wantname));
+  if (!moClass) {
+    // Can't find thing type
+    print("RemoveAllEntities: unknown class '%s'", Cmd_GetArgV(1));
+    return;
+  }
+
+  array!EntityEx elist;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (nameicmp(cname, wantname) != 0) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    elist[$] = ent;
+  }
+
+  if (elist.length == 0) {
+    print("RemoveAllEntities: no entities of class '%s' found", wantname);
+  } else {
+    foreach (EntityEx e; elist) delete e;
+    print("RemoveAllEntities: %s %s of class '%s' removed", elist.length, (elist.length != 1 ? "entities" : "entity"), wantname);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountEntities_AC
+//
+//==========================================================================
+void Cheat_CountEntities_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  dictionary!(name, bool) classmap;
+
+  // scan level entities
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (classmap.find(cname)) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    classmap.put(cname, true);
+    aclist[$] = string(cname);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountEntities
+//
+//==========================================================================
+void Cheat_CountEntities () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() != 2) {
+    cprint("CountEntities: class name expected");
+    return;
+  }
+
+  name wantname = name(Cmd_GetArgV(1));
+
+  // find which type to remove
+  auto moClass = class!EntityEx(FindClassNoCase(wantname));
+  if (!moClass) {
+    // Can't find thing type
+    print("CountEntities: unknown class '%s'", Cmd_GetArgV(1));
+    return;
+  }
+
+  int count = 0;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (nameicmp(cname, wantname) != 0) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    ++count;
+  }
+
+  if (count == 0) {
+    print("CountEntities: no entities of class '%s' found", wantname);
+  } else {
+    print("CountEntities: %s %s of class '%s' found", count, (count != 1 ? "entities" : "entity"), wantname);
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_NoClip
 //
 //==========================================================================

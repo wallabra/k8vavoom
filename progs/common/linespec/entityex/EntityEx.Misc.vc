@@ -1927,7 +1927,7 @@ final bool CheckBossDeath () {
 
   // scan the remaining thinkers to see if all bosses are dead
   EntityEx Other;
-  foreach AllThinkers(class!Thinker(Class), Other) {
+  foreach AllThinkers(class!EntityEx(Class), out Other) {
     if (Other != self && Other.Class == Class && Other.Health > 0) {
       // found a living boss
       return false;
