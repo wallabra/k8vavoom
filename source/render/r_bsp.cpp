@@ -82,7 +82,10 @@ static int oldPortalDepth = -666;
 //==========================================================================
 void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
   check(surf);
-  //if (surf->seg && surf->seg->frontsector->linecount == 0) return; // original polyobj sector, skip it
+
+  VTexture *tex = surf->texinfo->Tex;
+  if (!tex || tex->Type == TEXTYPE_Null) return;
+
   if (surf->queueframe == currQueueFrame) {
     if (surf->seg) {
       //abort();
@@ -96,6 +99,12 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
     return;
   }
   surf->queueframe = currQueueFrame;
+
+  if (!(surf->drawflags&surface_t::DF_MASKED)) {
+    // check for non-solid texture
+    if (surf->texinfo->Alpha < 1.0f || tex->isTransparent()) surf->drawflags |= surface_t::DF_MASKED;
+  }
+
   queue.append(surf);
   //GCon->Logf("frame %u: queued surface with texinfo %p", currQueueFrame, surf->texinfo);
 }
