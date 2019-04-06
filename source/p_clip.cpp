@@ -360,7 +360,8 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
 
       if (clip_height && /*clip_frustum &&*/
           seg->partner && seg->partner != seg &&
-          seg->partner->front_sub && seg->partner->front_sub != seg->front_sub)
+          seg->partner->front_sub && seg->partner->front_sub != seg->front_sub &&
+          (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
       {
 #ifdef XXX_CLIPPER_DEBUG
         if (currLevel) {
@@ -407,6 +408,10 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
             if (MIN(verts[0].z, verts[3].z) >= MAX(verts[1].z, verts[2].z)) return true; // definitely closed
             // check (only top, bottom, and back)
             if (!Frustum->checkVerts(verts, 4, TFrustum::TopBit|TFrustum::BottomBit/*|TFrustum::BackBit*/)) {
+              /*
+              if (!hasMidTex) GCon->Logf("NO MIDTEX");
+              else GCon->Logf("SOLID for '%s': %s", *GTextureManager[seg->sidedef->MidTexture]->Name, (GTextureManager[seg->sidedef->MidTexture]->isTransparent() ? "ona" : "tan"));
+              */
               return true;
             }
           }
