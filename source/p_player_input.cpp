@@ -93,14 +93,22 @@ protected:
   };
 
 protected:
-  int down[2]; // key nums holding it down
+  TMapNC<vint32, bool> down; // key nums holding it down
+  //int down[2]; // key nums holding it down
   // current state, and impulses
   //   bit 0: "currently pressed"
   //   bit 1: just pressed
   //   bit 2: just released
   unsigned state;
+  // all known buttons
+  TKButton *next;
+
+  // fuck
+  friend void UnpressAllButtons ();
 
 public:
+  TKButton ();
+
   void KeyDown (const char *c);
   void KeyUp (const char *c);
   float KeyState ();
@@ -108,6 +116,8 @@ public:
   inline bool IsDown () const { return !!(state&BitDown); }
   inline bool IsJustDown () const { return !!(state&BitJustDown); }
   inline bool IsJustUp () const { return !!(state&BitJustUp); }
+
+  inline void Unpress () { state = 0; down.reset(); }
 
   inline void ClearEdges () { state &= BitDown; }
   inline void SetDown (bool flag) { if (flag) state |= BitDown; else state &= ~BitDown; }
@@ -198,6 +208,8 @@ static VCvarF m_side("m_side", "0.8", "Mouse sidestepping speed.", CVAR_Archive)
 static VCvarF joy_yaw("joy_yaw", "140", "Joystick yaw speed.", CVAR_Archive);
 
 
+static TKButton *knownButtons = nullptr;
+
 BUTTON(Forward)
 BUTTON(Backward)
 BUTTON(Left)
@@ -229,19 +241,47 @@ BUTTON(SuperBullet)
 
 //==========================================================================
 //
+//  UnpressAllButtons
+//
+//  this is called on window activation/deactivation
+//
+//==========================================================================
+void UnpressAllButtons () {
+  for (TKButton *bt = knownButtons; bt; bt = bt->next) bt->Unpress();
+}
+
+
+//==========================================================================
+//
+//  TKButton::TKButton
+//
+//==========================================================================
+TKButton::TKButton () {
+  state = 0;
+  // register in list
+  next = knownButtons;
+  knownButtons = this;
+}
+
+
+//==========================================================================
+//
 //  TKButton::KeyDown
 //
 //==========================================================================
 void TKButton::KeyDown (const char *c) {
-  int k = -1;
+  vint32 k = -1;
 
   if (c && c[0]) k = VStr::atoi(c); // otherwise, typed manually at the console for continuous down
 
+  /*
   if (k == down[0] || k == down[1]) return; // repeating key
 
        if (!down[0]) down[0] = k;
   else if (!down[1]) down[1] = k;
   else { GCon->Log(NAME_Dev, "Three keys down for a button!"); return; }
+  */
+  if (k > 0) down.put(k, true);
 
   if (IsDown()) return; // still down
 
@@ -258,18 +298,25 @@ void TKButton::KeyDown (const char *c) {
 void TKButton::KeyUp (const char *c) {
   if (!c || !c[0]) {
     // typed manually at the console, assume for unsticking, so clear all
-    down[0] = down[1] = 0;
-    state = BitJustUp; // impulse up
+    //down[0] = down[1] = 0;
+    Unpress();
+    SetJustUp(true); // impulse up
     return;
   }
 
   int k = VStr::atoi(c);
 
+  /*
        if (down[0] == k) down[0] = 0;
   else if (down[1] == k) down[1] = 0;
   else return; // key up without coresponding down (menu pass through)
 
   if (down[0] || down[1]) return; // some other key is still holding it down
+  */
+
+  down.del(k);
+  if (down.length() != 0) return; // some other key is still holding it down
+
   if (!IsDown()) return; // still up (this should not happen)
 
   SetDown(false);

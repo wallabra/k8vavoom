@@ -39,7 +39,10 @@
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
 
+extern void UnpressAllButtons ();
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 // input subsystem, handles all input events
 class VInput : public VInputPublic {
 public:
@@ -294,6 +297,16 @@ bool VInputPublic::KBCheatProcessor (event_t *ev) {
   // nothing was found, reset
   if (!wasCheat) currkbcheat[0] = 0;
   return false;
+}
+
+
+//==========================================================================
+//
+//  VInputPublic::UnpressAll
+//
+//==========================================================================
+void VInputPublic::UnpressAll () {
+  UnpressAllButtons();
 }
 
 

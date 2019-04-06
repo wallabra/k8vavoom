@@ -442,6 +442,7 @@ void VSdlInputDevice::ReadInput () {
         switch (ev.window.event) {
           case SDL_WINDOWEVENT_FOCUS_GAINED:
             //fprintf(stderr, "***FOCUS GAIN; wa=%d; first=%d; drawer=%p\n", (int)winactive, (int)firsttime, Drawer);
+            VInputPublic::UnpressAll();
             curmodflags = 0; // just in case
             vev.modflags = 0;
             if (!winactive && mouse) {
@@ -460,6 +461,7 @@ void VSdlInputDevice::ReadInput () {
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
+            VInputPublic::UnpressAll();
             curmodflags = 0; // just in case
             vev.modflags = 0;
             winactive = false;

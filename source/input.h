@@ -91,6 +91,8 @@ public:
   static void KBCheatAppend (VStr keys, VStr concmd);
   static bool KBCheatProcessor (event_t *ev);
 
+  static void UnpressAll ();
+
   static VInputPublic *Create ();
 };
 
