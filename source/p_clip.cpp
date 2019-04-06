@@ -200,6 +200,8 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
   if (!clip_platforms) return false;
   if (!seg->backsector) return false;
 
+  if (!seg->partner || seg->partner == seg) return false;
+
   const line_t *ldef = seg->linedef;
 
   if (ldef->alpha < 1.0f) return false; // skip translucent walls
@@ -222,15 +224,6 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
 
   if (fsec == bsec) return false; // self-referenced sector
 
-  int fcpic, ffpic;
-  int bcpic, bfpic;
-
-  TPlane ffplane, fcplane;
-  TPlane bfplane, bcplane;
-
-  CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
-  CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
-
   // only apply this to sectors without slopes
   /*k8: why?
   if (ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
@@ -248,6 +241,16 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
       const TVec vv1 = *ldef->v1;
       const TVec vv2 = *ldef->v2;
       */
+
+      int fcpic, ffpic;
+      int bcpic, bfpic;
+
+      TPlane ffplane, fcplane;
+      TPlane bfplane, bcplane;
+
+      CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
+      CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
+
 
       const TVec vv1 = *seg->v1;
       const TVec vv2 = *seg->v2;
@@ -359,11 +362,22 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
         }
 #endif
 
-      if (clip_height && /*clip_frustum &&*/
+      if (clip_height && /*clip_frustum &&*/ (hasTopTex || hasBotTex) &&
           seg->partner && seg->partner != seg &&
           seg->partner->front_sub && seg->partner->front_sub != seg->front_sub &&
           (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
       {
+        /*
+        const side_t *otherside = seg->partner->sidedef;
+
+        if (GTextureManager.IsEmptyTexture(otherside->TopTexture) &&
+            GTextureManager.IsEmptyTexture(otherside->BottomTexture) &&
+            GTextureManager.IsEmptyTexture(otherside->MidTexture))
+        {
+          return false;
+        }
+        */
+
 #ifdef XXX_CLIPPER_DEBUG
         if (currLevel) {
           const unsigned lnum = (unsigned)(ptrdiff_t)(ldef-currLevel->Lines);
@@ -412,6 +426,13 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
               /*
               if (!hasMidTex) GCon->Logf("NO MIDTEX");
               else GCon->Logf("SOLID for '%s': %s", *GTextureManager[seg->sidedef->MidTexture]->Name, (GTextureManager[seg->sidedef->MidTexture]->isTransparent() ? "ona" : "tan"));
+              GCon->Logf("verts: (%f,%f,%f)-(%f,%f,%f)-(%f,%f,%f)-(%f,%f,%f)",
+                verts[0].x, verts[0].y, verts[0].z,
+                verts[1].x, verts[1].y, verts[1].z,
+                verts[2].x, verts[2].y, verts[2].z,
+                verts[3].x, verts[3].y, verts[3].z);
+              GCon->Logf("front: floor=(%f,%f); ceil=(%f,%f)", frontfz1, frontfz2, frontcz1, frontcz2);
+              GCon->Logf("back : floor=(%f,%f); ceil=(%f,%f)", backfz1, backfz2, backcz1, backcz2);
               */
               return true;
             }
@@ -1158,7 +1179,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   if (clip_skip_slopes_1side) {
     // do not clip with slopes, if it has no midtex
-    if ((ldef->flags&ML_TWOSIDED) == 0) {
+    if (ldef->frontsector && (ldef->flags&ML_TWOSIDED) == 0) {
       int fcpic, ffpic;
       TPlane ffplane, fcplane;
       CopyHeight(ldef->frontsector, &ffplane, &fcplane, &ffpic, &fcpic);
