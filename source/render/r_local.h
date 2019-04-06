@@ -475,7 +475,7 @@ public:
   virtual bool IsNodeRendered (const node_t *node) const override;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr) override;
+  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
@@ -833,7 +833,7 @@ protected:
   //virtual void PushDlights () override;
   // `radius` is used for... nothing yet
   // `surfplace` is used to light masked surfaces
-  vuint32 LightPointAmbient (const TVec &p, float radius);
+  vuint32 LightPointAmbient (const TVec &p, float radius, const subsector_t *psub=nullptr);
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t*) override;

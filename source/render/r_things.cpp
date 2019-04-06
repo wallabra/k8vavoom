@@ -519,9 +519,9 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
              (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
     light = 0xffffffff;
-    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->Radius, mobj->Height) : light);
+    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->Radius, mobj->Height, nullptr, mobj->SubSector) : light);
   } else {
-    light = seclight = LightPoint(mobj->Origin, mobj->Radius, mobj->Height);
+    light = seclight = LightPoint(mobj->Origin, mobj->Radius, mobj->Height, nullptr, mobj->SubSector);
     //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
   }
 
@@ -532,6 +532,11 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   }
 
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
+  //vuint32 Fade = GetFade(SV_PointInRegion(mobj->SubSector->sector, mobj->Origin));
+  //vuint32 Fade = GetFade(SV_PointInRegion(Level->PointInSubsector(mobj->Origin)->sector, mobj->Origin));
+  //if (mobj->SubSector->sector->botregion->next) {
+  //  GCon->Logf("%s: fade=0x%08x, rfd=0x%08x", *mobj->GetClass()->GetFullName(), Fade, SV_PointInRegion(mobj->SubSector->sector, mobj->Origin)->params->Fade);
+  //}
 
   // try to draw a model
   // if it's a script and it doesn't specify model for this frame, draw sprite instead

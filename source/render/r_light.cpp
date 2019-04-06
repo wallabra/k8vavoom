@@ -713,10 +713,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
 //  VRenderLevelShared::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevelShared::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane) {
+vuint32 VRenderLevelShared::LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
-  subsector_t *sub = Level->PointInSubsector(p);
+  const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
 
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
 

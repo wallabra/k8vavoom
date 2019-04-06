@@ -196,10 +196,10 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 //  VAdvancedRenderLevel::LightPointAmbient
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius) {
+vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
-  const subsector_t *sub = Level->PointInSubsector(p);
+  const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
   CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, nullptr);
 

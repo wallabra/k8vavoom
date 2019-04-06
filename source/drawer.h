@@ -123,7 +123,7 @@ public:
   // lightness of masked surfaces
   // `radius` is used for visibility raycasts
   // `surfplane` is used to light masked surfaces
-  virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr) = 0;
+  virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 

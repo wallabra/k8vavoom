@@ -220,6 +220,9 @@ COMMAND(my_sector_info) {
   GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
   GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
   GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
+
+  sec_region_t *reg = SV_PointInRegion(Player->MO->Sector, Player->MO->Origin);
+  GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
 }
 
 

@@ -338,6 +338,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   }
   */
 
+  //GCon->Logf("Tex=%s; Fade=0x%08x; light=0x%08x; alpha=%f", *Tex->Name, Fade, light, Alpha);
+  //Fade = 0xff505050;
+
   if (doBrightmap) {
     SurfMaskedBrightmap.SetLight(
       ((light>>16)&255)/255.0f,
