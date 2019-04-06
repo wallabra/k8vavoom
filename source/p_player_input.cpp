@@ -85,13 +85,34 @@ static TCmdKeyUp  name ## Up_f("-" #name, Key ## name);
 
 
 class TKButton {
-public:
-  int down[2]; // key nums holding it down
-  int state; // low bit is down state
+protected:
+  enum {
+    BitDown = 1u<<0,
+    BitJustDown = 1u<<1,
+    BitJustUp = 1u<<2,
+  };
 
+protected:
+  int down[2]; // key nums holding it down
+  // current state, and impulses
+  //   bit 0: "currently pressed"
+  //   bit 1: just pressed
+  //   bit 2: just released
+  unsigned state;
+
+public:
   void KeyDown (const char *c);
   void KeyUp (const char *c);
   float KeyState ();
+
+  inline bool IsDown () const { return !!(state&BitDown); }
+  inline bool IsJustDown () const { return !!(state&BitJustDown); }
+  inline bool IsJustUp () const { return !!(state&BitJustUp); }
+
+  inline void ClearEdges () { state &= BitDown; }
+  inline void SetDown (bool flag) { if (flag) state |= BitDown; else state &= ~BitDown; }
+  inline void SetJustDown (bool flag) { if (flag) state |= BitJustDown; else state &= ~BitJustDown; }
+  inline void SetJustUp (bool flag) { if (flag) state |= BitJustUp; else state &= ~BitJustUp; }
 };
 
 
@@ -222,9 +243,10 @@ void TKButton::KeyDown (const char *c) {
   else if (!down[1]) down[1] = k;
   else { GCon->Log(NAME_Dev, "Three keys down for a button!"); return; }
 
-  if (state&1) return; // still down
+  if (IsDown()) return; // still down
 
-  state |= 1|2; // down + impulse down
+  SetDown(true);
+  SetJustDown(true);
 }
 
 
@@ -237,7 +259,7 @@ void TKButton::KeyUp (const char *c) {
   if (!c || !c[0]) {
     // typed manually at the console, assume for unsticking, so clear all
     down[0] = down[1] = 0;
-    state = 4; // impulse up
+    state = BitJustUp; // impulse up
     return;
   }
 
@@ -248,10 +270,10 @@ void TKButton::KeyUp (const char *c) {
   else return; // key up without coresponding down (menu pass through)
 
   if (down[0] || down[1]) return; // some other key is still holding it down
-  if (!(state&1)) return; // still up (this should not happen)
+  if (!IsDown()) return; // still up (this should not happen)
 
-  state &= ~1; // now up
-  state |= 4; // impulse up
+  SetDown(false);
+  SetJustUp(true);
 }
 
 
@@ -277,9 +299,8 @@ float TKButton::KeyState () {
     0.75f // released and re-pressed this frame
   };
 
-  float val = newVal[state&7];
-  state &= 1; // clear impulses
-
+  const float val = newVal[state&7];
+  ClearEdges();
   return val;
 }
 
@@ -380,19 +401,19 @@ void VBasePlayer::StopPitchDrift () {
 //
 //==========================================================================
 void VBasePlayer::AdjustAngles () {
-  float speed = host_frametime*(KeySpeed.state&1 ? cl_anglespeedkey : 1.0f);
+  float speed = host_frametime*(KeySpeed.IsDown() ? cl_anglespeedkey : 1.0f);
 
-  if ((KeyMouseLook.state&4) && lookspring) StartPitchDrift();
-  KeyMouseLook.state &= 1;
+  if (KeyMouseLook.IsJustUp() && lookspring) StartPitchDrift();
+  KeyMouseLook.ClearEdges();
 
   // yaw
-  if (!(KeyStrafe.state&1)) {
+  if (!KeyStrafe.IsDown()) {
     ViewAngles.yaw -= KeyRight.KeyState()*cl_yawspeed*speed;
     ViewAngles.yaw += KeyLeft.KeyState()*cl_yawspeed*speed;
     if (joyxmove > 0) ViewAngles.yaw -= joy_yaw*speed;
     if (joyxmove < 0) ViewAngles.yaw += joy_yaw*speed;
   }
-  if (!(KeyStrafe.state&1) && (!lookstrafe || (!mouse_look && !(KeyMouseLook.state&1)))) ViewAngles.yaw -= mousex*m_yaw;
+  if (!KeyStrafe.IsDown() && (!lookstrafe || (!mouse_look && !KeyMouseLook.IsDown()))) ViewAngles.yaw -= mousex*m_yaw;
   ViewAngles.yaw = AngleMod(ViewAngles.yaw);
 
   // pitch
@@ -400,11 +421,11 @@ void VBasePlayer::AdjustAngles () {
   float down = KeyLookDown.KeyState();
   ViewAngles.pitch -= cl_pitchspeed*up*speed;
   ViewAngles.pitch += cl_pitchspeed*down*speed;
-  if (up || down || (KeyMouseLook.state&1)) StopPitchDrift();
-  if ((mouse_look || (KeyMouseLook.state&1)) && !(KeyStrafe.state&1)) ViewAngles.pitch -= mousey*m_pitch;
+  if (up || down || KeyMouseLook.IsDown()) StopPitchDrift();
+  if ((mouse_look || KeyMouseLook.IsDown()) && !KeyStrafe.IsDown()) ViewAngles.pitch -= mousey*m_pitch;
 
   // centre look
-  if ((KeyLookCentre.state&1) || (KeyFlyCentre.state&1)) StartPitchDrift();
+  if (KeyLookCentre.IsDown() || KeyFlyCentre.IsDown()) StartPitchDrift();
   if (PlayerFlags&PF_Centreing) {
     float adelta = cl_pitchdriftspeed*host_frametime;
     if (fabsf(ViewAngles.pitch) < adelta) {
@@ -450,7 +471,7 @@ void VBasePlayer::HandleInput () {
   AdjustAngles();
 
   // let movement keys cancel each other out
-  if (KeyStrafe.state&1) {
+  if (KeyStrafe.IsDown()) {
     side += KeyRight.KeyState()*cl_sidespeed;
     side -= KeyLeft.KeyState()*cl_sidespeed;
     if (joyxmove > 0) side += cl_sidespeed;
@@ -470,18 +491,18 @@ void VBasePlayer::HandleInput () {
   flyheight += KeyFlyUp.KeyState()*cl_flyspeed; // note that the actual flyheight will be twice this
   flyheight -= KeyFlyDown.KeyState()*cl_flyspeed;
 
-  if ((!mouse_look && !(KeyMouseLook.state&1)) || (KeyStrafe.state&1)) {
+  if ((!mouse_look && !KeyMouseLook.IsDown()) || KeyStrafe.IsDown()) {
     forward += m_forward*mousey;
   }
 
-  if ((KeyStrafe.state&1) || (lookstrafe && (mouse_look || (KeyMouseLook.state&1)))) {
+  if (KeyStrafe.IsDown() || (lookstrafe && (mouse_look || KeyMouseLook.IsDown()))) {
     side += m_side*mousex;
   }
 
   forward = MID(forward, -cl_backspeed, cl_forwardspeed.asFloat());
   side = MID(side, -cl_sidespeed, cl_sidespeed.asFloat());
 
-  if (allways_run || (KeySpeed.state&1)) {
+  if (allways_run || KeySpeed.IsDown()) {
     forward *= cl_movespeedkey;
     side *= cl_movespeedkey;
     flyheight *= cl_movespeedkey;
