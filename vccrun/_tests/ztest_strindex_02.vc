@@ -1,0 +1,20 @@
+class Main : Object;
+
+
+void main () {
+  string s0 = "xaabcdef0124abcdef";
+  string s1 = "bCde";
+
+  writeln(s0.strIndexOf(s1, caseSensitive:false), " : ", 3);
+  writeln(s0.strIndexOf(s1, 5, caseSensitive:false), " : ", 13);
+  writeln(s0.strIndexOf(s1, -5, caseSensitive:false), " : ", 13);
+  writeln(s0.strIndexOf(s1, -4, caseSensitive:false), " : ", -1);
+  writeln(s0.strIndexOf(s1, -1024, caseSensitive:false), " : ", 3);
+
+  writeln();
+  writeln(s0.strLastIndexOf(s1, caseSensitive:false), " : ", 13);
+  writeln(s0.strLastIndexOf(s1, 5, caseSensitive:false), " : ", 13);
+  writeln(s0.strLastIndexOf(s1, -5, caseSensitive:false), " : ", 13);
+  writeln(s0.strLastIndexOf(s1, -4, caseSensitive:false), " : ", -1);
+  writeln(s0.strLastIndexOf(s1, -1024, caseSensitive:false), " : ", 13);
+}

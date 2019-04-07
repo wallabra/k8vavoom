@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+  string s0 = "xaabcdef0124abcdef";
+
+  writeln(s0.globmatch("*1*"));
+  writeln(s0.globmatch("*[0-4]*"));
+  writeln(s0.globmatch("*[5-9]*"));
+  writeln(s0.globmatch("*[A]*"));
+  writeln(s0.globmatch("*[A]*", caseSensitive:false));
+  writeln(s0.globmatch("*[a]*", caseSensitive:false));
+}
