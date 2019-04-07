@@ -1817,7 +1817,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
 //  VStr::globmatch
 //
 //==========================================================================
-bool VStr::globmatch (const char *pat, const char *str, bool caseSensitive) {
+bool VStr::globmatch (const char *str, const char *pat, bool caseSensitive) {
   bool star = false;
   if (!pat) pat = "";
   if (!str) str = "";
@@ -1825,13 +1825,13 @@ loopStart:
   size_t patpos = 0;
   for (size_t i = 0; str[i]; ++i) {
     char sch = str[i];
+    if (!caseSensitive) sch = upcase1251(sch);
     //if (patpos == pat.length) goto starCheck;
-    if (!pat[patpos]) goto starCheck;
     switch (pat[patpos++]) {
+      case 0: goto starCheck;
       case '\\':
         //if (patpos == pat.length) return false; // malformed pattern
         if (!pat[patpos]) return false; // malformed pattern
-        ++patpos;
         goto defcheck;
       case '?': // match anything //except '.'
         //if (sch == '.') goto starCheck;
@@ -1847,12 +1847,40 @@ loopStart:
         //if (pat.length == 0) return true;
         if (*pat == 0) return true;
         goto loopStart;
+      case '[':
+        {
+          int hasMatch = 0;
+          int inverted = 0;
+          if (pat[patpos] == '^') { inverted = 1; ++patpos; }
+          while (pat[patpos] && pat[patpos] != ']') {
+            char c0 = pat[patpos++];
+            if (!caseSensitive) c0 = upcase1251(c0);
+            char c1;
+            if (pat[patpos] == '-') {
+              // char range
+              ++patpos; // skip '-'
+              c1 = pat[patpos++];
+              if (!c1) {
+                --patpos;
+                c1 = c0;
+              }
+              if (!caseSensitive) c1 = upcase1251(c1);
+            } else {
+              c1 = c0;
+            }
+            if (!hasMatch && (vuint8)sch >= (vuint8)c0 && (vuint8)sch <= (vuint8)c1) hasMatch = 1;
+          }
+          if (pat[patpos] == ']') ++patpos;
+          if (inverted) hasMatch = !hasMatch;
+          if (!hasMatch) goto starCheck;
+          break;
+        }
       default:
       defcheck:
         if (caseSensitive) {
           if (sch != pat[patpos-1]) goto starCheck;
         } else {
-          if (upcase1251(sch) != upcase1251(pat[patpos-1])) goto starCheck;
+          if (sch != upcase1251(pat[patpos-1])) goto starCheck;
         }
         break;
     }

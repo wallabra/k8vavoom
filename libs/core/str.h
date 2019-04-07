@@ -483,7 +483,7 @@ public:
   inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }
 
-  static bool globmatch (const char *pat, const char *str, bool caseSensitive=true);
+  static bool globmatch (const char *str, const char *pat, bool caseSensitive=true);
 
   // will not clear `args`
   void Tokenise (TArray <VStr> &args) const;
