@@ -1166,9 +1166,9 @@ void VScriptParser::SkipBracketed (bool bracketEaten) {
 void VScriptParser::Message (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  GCon->Logf(NAME_Warning, "\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
 #else
-  GLog.WriteLine("\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  GLog.WriteLine(NAME_Warning, "\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
 #endif
 }
 
