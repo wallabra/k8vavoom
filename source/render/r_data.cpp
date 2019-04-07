@@ -1325,7 +1325,9 @@ static void ParseBrightmap (VScriptParser *sc) {
     } else if (sc->Check("disablefullbright")) {
       nofb = true;
     } else {
-      sc->Error(va("Unknown command (%s)", *sc->String));
+      //sc->Error(va("Unknown command (%s)", *sc->String));
+      sc->ExpectString();
+      sc->Message(va("Unknown command (%s)", *sc->String));
     }
   }
   (void)img;
