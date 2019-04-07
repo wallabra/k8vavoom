@@ -502,7 +502,7 @@ native static final string strFromInt (int v);
 // creates string from a number
 native static final string strFromFloat (float v);
 // do glob matching (knows '*' and '?')
-native static final bool globmatch (const string pat, const string str, optional bool caseSensitive/*=true*/);
+native static final bool globmatch (const string str, const string pat, optional bool caseSensitive/*=true*/);
 // returns 0-based index or -1
 // negative startpos means offset from string end; startpos doesn't affect result
 native static final int strIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);

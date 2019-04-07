@@ -448,8 +448,8 @@ final void decorate_A_CheckFloorTextureGlob (string txname, state label, optiona
   if (!tgt) return;
   if (!tgt.Sector) return; // just in case
   auto tname = GetTextureName(tgt.Sector.floor.pic);
-  if (dumpTexture) print("TEXTURE NAME: <%s> gmatch <%s>: res=%B", tname, txname, globmatch(txname, string(tname), caseSensitive:false));
-  if (!globmatch(txname, string(tname), caseSensitive:false)) return;
+  if (dumpTexture) print("TEXTURE NAME: <%s> gmatch <%s>: res=%B", tname, txname, globmatch(string(tname), txname, caseSensitive:false));
+  if (!globmatch(string(tname), txname, caseSensitive:false)) return;
   DoJump(label);
 }
 
@@ -844,13 +844,13 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
     return true;
   }
   auto tname = string(GetTextureName(tgt.Sector.floor.pic));
-  if (globmatch("*water*", tname, caseSensitive:false) ||
-      globmatch("*nukage*", tname, caseSensitive:false) ||
-      globmatch("*lava*", tname, caseSensitive:false) ||
-      globmatch("*blood*", tname, caseSensitive:false) ||
-      globmatch("*slime*", tname, caseSensitive:false) ||
-      globmatch("*slimage*", tname, caseSensitive:false) ||
-      globmatch("f_watr*", tname, caseSensitive:false)) // Strife water
+  if (globmatch(tname, "*water*", caseSensitive:false) ||
+      globmatch(tname, "*nukage*", caseSensitive:false) ||
+      globmatch(tname, "*lava*", caseSensitive:false) ||
+      globmatch(tname, "*blood*", caseSensitive:false) ||
+      globmatch(tname, "*slime*", caseSensitive:false) ||
+      globmatch(tname, "*slimage*", caseSensitive:false) ||
+      globmatch(tname, "f_watr*", caseSensitive:false)) // Strife water
   {
     DoJump(label);
     return true;

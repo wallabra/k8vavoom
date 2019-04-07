@@ -382,12 +382,12 @@ IMPLEMENT_FUNCTION(VObject, strFromFloat) {
   RET_STR(s);
 }
 
-//native static final bool globmatch (string pat, string str, optional bool caseSensitive/*=true*/);
+//native static final bool globmatch (string str, string pat, optional bool caseSensitive/*=true*/);
 IMPLEMENT_FUNCTION(VObject, globmatch) {
   P_GET_BOOL_OPT(caseSens, true);
-  P_GET_STR(str);
   P_GET_STR(pat);
-  RET_BOOL(VStr::globmatch(*pat, *str, caseSens));
+  P_GET_STR(str);
+  RET_BOOL(VStr::globmatch(*str, *pat, caseSens));
 }
 
 
