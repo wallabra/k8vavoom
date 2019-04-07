@@ -236,12 +236,21 @@ const ArgVarValue &FL_GetPreInitAt (int idx) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct GroupMask {
+  VStr mask;
+  bool enabled;
+
+  bool isGlob () const { return (mask.indexOf('*') >= 0 || mask.indexOf('?') >= 0 || mask.indexOf('[') >= 0); }
+  bool match (const VStr &s) const { return s.globmatch(mask, false); }
+};
+
+
 struct CustomModeInfo {
   VStr name;
   TArray<VStr> aliases;
   TArray<VStr> pwads;
   TArray<VStr> postpwads;
-  TArray<VStr> autoskips;
+  TArray<GroupMask> autoskips;
   bool disableBloodReplacement;
   bool disableGoreMod;
   VStr basedir;
@@ -312,7 +321,17 @@ static void SetupCustomMode (VStr basedir) {
       } else if (sc->Check("skipauto")) {
         for (;;) {
           sc->ExpectString();
-          mode.autoskips.append(sc->String);
+          GroupMask &gi = mode.autoskips.alloc();
+          gi.mask = sc->String;
+          gi.enabled = false;
+          if (!sc->Check(",")) break;
+        }
+      } else if (sc->Check("forceauto")) {
+        for (;;) {
+          sc->ExpectString();
+          GroupMask &gi = mode.autoskips.alloc();
+          gi.mask = sc->String;
+          gi.enabled = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("DisableBloodReplacement")) {
@@ -766,19 +785,35 @@ void AddAutoloadRC (const VStr &aubasedir) {
 
   // collect autoload groups to skip
   TMap<VStr, bool> cliGroupMap; // true: enabled; false: disabled
+  TArray<GroupMask> cliGroupMask;
   // add skips from custom mode
-  for (int f = 0; f < customMode.autoskips.length(); ++f) cliGroupMap.put(customMode.autoskips[f].toLowerCase(), false);
+  for (int f = 0; f < customMode.autoskips.length(); ++f) {
+    GroupMask &gi = customMode.autoskips[f];
+    if (gi.isGlob()) {
+      cliGroupMask.append(gi);
+    } else {
+      cliGroupMap.put(gi.mask.toLowerCase(), false);
+    }
+  }
   // add skips from command line
   int inSkipArg = 0;
   for (int asp = 1; asp < GArgs.Count(); ++asp) {
-    if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0) {
+    if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0 ||
+        VStr::Cmp(GArgs[asp], "-skipauto") == 0 || VStr::Cmp(GArgs[asp], "-skipautoload") == 0) {
       inSkipArg = -1;
     } else if (VStr::Cmp(GArgs[asp], "-auto") == 0 || VStr::Cmp(GArgs[asp], "-autoload") == 0) {
       inSkipArg = 1;
     } else if (inSkipArg) {
       VStr sg = GArgs[asp];
       if (!sg.isEmpty() && (*sg)[0] != '-' && (*sg)[0] != '+') {
-        cliGroupMap.put(sg.toLowerCase(), (inSkipArg == 1));
+        GroupMask gi;
+        gi.mask = sg;
+        gi.enabled = (inSkipArg == 1);
+        if (gi.isGlob()) {
+          cliGroupMask.append(gi);
+        } else {
+          cliGroupMap.put(sg.toLowerCase(), gi.enabled);
+        }
       }
       inSkipArg = 0;
     }
@@ -792,8 +827,19 @@ void AddAutoloadRC (const VStr &aubasedir) {
     VStr grpname = sc->String;
     bool enabled = !sc->Check("disabled");
     sc->Expect("{");
+    // exact matches has precedence
     auto gmp = cliGroupMap.find(grpname.toLowerCase());
-    if (gmp) enabled = *gmp;
+    if (gmp) {
+      enabled = *gmp;
+    } else {
+      // process masks; backwards, so latest mask has precedence
+      for (int f = cliGroupMask.length()-1; f >= 0; --f) {
+        if (grpname.globmatch(cliGroupMask[f].mask, false)) {
+          enabled = cliGroupMask[f].enabled;
+          break;
+        }
+      }
+    }
     if (!enabled) {
       GCon->Logf(NAME_Init, "skipping autoload group '%s'", *grpname);
       sc->SkipBracketed(true); // bracket eaten
