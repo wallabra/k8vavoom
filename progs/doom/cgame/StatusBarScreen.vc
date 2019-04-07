@@ -433,6 +433,39 @@ void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoC
 
 //==========================================================================
 //
+//  IsStandardAmmoClass
+//
+//==========================================================================
+bool IsStandardAmmoClass (class a) {
+  if ((a isa Clip) ||
+      (a isa Shell) ||
+      (a isa RocketAmmo) ||
+      (a isa Cell))
+  {
+    return true;
+  }
+  class arep = GetClassReplacee(a);
+  if (arep != a) {
+    //print("*** C2: %C replaced %C", a, arep);
+    if ((arep isa Clip) ||
+        (arep isa Shell) ||
+        (arep isa RocketAmmo) ||
+        (arep isa Cell))
+    {
+      return true;
+    }
+  }
+  while (a) {
+    if (nameicmp(GetClassName(a), 'BDW_RifleClip') == 0) return true;
+    if (nameicmp(GetClassName(a), 'BDW_ShotgunShell') == 0) return true;
+    a = GetClassParent(a);
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
@@ -554,17 +587,35 @@ override void SB_DrawFullscreenStats () {
       // collect and count weapon ammo to properly center it
       for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
         Weapon wpn = Weapon(Item);
-        if (!wpn) continue;
-        if (!wpn.Ammo1) continue;
+        if (!wpn || !wpn.Ammo1) continue;
+        Ammo wammo = wpn.Ammo1;
+        if (!wammo) {
+          wammo = wpn.Ammo2;
+          if (!wammo) continue;
+        } else {
+          if (!IsStandardAmmoClass(wammo.Class)) {
+            // check if secondary ammo is something standard
+            Ammo wa2 = wpn.Ammo2;
+            if (wa2) {
+              //print("BAD AMMO CLASS %C; GOOD AMMO CLASS %C (%s)", wammo, wa2, IsStandardAmmoClass(wa2.Class));
+              if (IsStandardAmmoClass(wa2.Class)) wammo = wa2;
+            }
+          } else {
+            //print("GOOD AMMO CLASS %C", wammo);
+          }
+        }
+        //class!Ammo a2 = class!Ammo(GetClassReplacement(wammo));
+        //if (a2) wammo = a2;
         int tmpslot, tmpindex;
         pawn.FindWeaponSlot(class!Weapon(wpn.Class), out tmpslot, out tmpindex);
         if (tmpslot >= 2 && tmpslot <= 9) {
           bool found = false;
-          foreach (const ref AmmoInfo a; alist) if (a.ammo == wpn.Ammo1) { found = true; break; }
+          foreach (const ref AmmoInfo a; alist) if (a.ammo == wammo) { found = true; break; }
           if (!found) {
             // new ammo
+            //print("ammo %C for weapon %C; secondary is %C, good: %s", wammo, wpn, wpn.Ammo2, IsStandardAmmoClass(wammo.Class));
             AmmoInfo *ai = alist.alloc();
-            ai.ammo = wpn.Ammo1;
+            ai.ammo = wammo;
             ai.wslot = tmpslot;
             ai.widx = tmpindex;
           }
