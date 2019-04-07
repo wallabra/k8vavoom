@@ -178,13 +178,21 @@ void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *max
 //
 //==========================================================================
 void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
-  bbox[0] = sub->bbox[0];
-  bbox[1] = sub->bbox[1];
-  bbox[2] = MIN(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
+  // min
+  bbox[0+0] = sub->bbox[0];
+  bbox[0+1] = sub->bbox[1];
   // max
-  bbox[3] = sub->bbox[2];
-  bbox[4] = sub->bbox[3];
-  bbox[5] = MAX(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
+  bbox[3+0] = sub->bbox[2];
+  bbox[3+1] = sub->bbox[3];
+
+  // for one-sector degenerate maps
+  if (sub->parent) {
+    bbox[0+2] = MIN(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
+    bbox[3+2] = MAX(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
+  } else {
+    bbox[0+2] = sub->sector->floor.minz;
+    bbox[3+2] = sub->sector->ceiling.maxz;
+  }
   FixBBoxZ(bbox);
 
   /*

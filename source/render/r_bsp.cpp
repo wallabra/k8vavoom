@@ -691,7 +691,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
   if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
 
-  sub->parent->VisFrame = currVisFrame;
+  if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
   sub->VisFrame = currVisFrame;
 
   // mark this subsector as rendered
