@@ -255,7 +255,8 @@ void SetSkill (int NewSkill) {
   RespawnTime = WorldInfo.SkillRespawnTime;
   if (!RespawnTime && GetCvar('RespawnMonsters')) RespawnTime = 12.0/35.0;
   int rst = GetCvarI('g_monsters_respawn_override');
-  if (rst > 0) RespawnTime = rst;
+       if (rst > 0) RespawnTime = rst;
+  else if (rst < 0) RespawnTime = 0;
   //print("*********** skill: %s; fastparm: %s; fmon: %s; respawn=%s", NewSkill, fastparm, fmon, RespawnTime);
 }
 
