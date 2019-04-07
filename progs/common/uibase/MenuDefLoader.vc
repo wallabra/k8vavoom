@@ -492,8 +492,12 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
 
   par.ExpectString();
   print("MENUDEF: skipping gz command '%s'", par.String);
+  auto oldNumSign = par.IsAllowNumSign();
+  scope(exit) par.SetAllowNumSign(oldNumSign);
+  par.SetAllowNumSign(true);
   for (;;) {
     par.ExpectString();
+    //if (par.String == "-" || par.String == "+" || par.String == ".") par.ExpectString();
     if (!par.Check(",")) break;
   }
   //par.ScriptError("invalid gz command '%s'", par.String);

@@ -63,7 +63,9 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(IsText)
   DECLARE_FUNCTION(IsAtEol)
   DECLARE_FUNCTION(IsCMode)
+  DECLARE_FUNCTION(IsAllowNumSign)
   DECLARE_FUNCTION(SetCMode)
+  DECLARE_FUNCTION(SetAllowNumSign)
   DECLARE_FUNCTION(IsEscape)
   DECLARE_FUNCTION(SetEscape)
   DECLARE_FUNCTION(AtEnd)
@@ -106,6 +108,14 @@ struct CharClassifier {
   static inline bool isNCIdTerm (char ch) { return !!(ncidterm[(ch>>5)&0x07]&(1U<<(ch&0x1f))); }
 
   static inline void setCharBit (vuint32 *set, char ch) { set[(ch>>5)&0x07] |= (1U<<(ch&0x1f)); }
+
+  static inline bool isDigit (char ch) { return (ch >= '0' && ch <= '9'); }
+
+  static inline bool isNumStart (const char *s, bool allowNumSign) {
+    if (allowNumSign) if (*s == '+' || *s == '-') ++s;
+    if (*s == '.') ++s;
+    return isDigit(*s);
+  }
 
   CharClassifier () {
     static const char *cIdTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,\"'"; // was with '@'
@@ -159,6 +169,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   //, AlreadyGot(false)
   , CMode(false)
   , Escape(true)
+  , AllowNumSign(false)
 {
   ScriptSize = Strm->TotalSize();
   ScriptBuffer = new char[ScriptSize+1];
@@ -193,6 +204,7 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
   //, AlreadyGot(false)
   , CMode(false)
   , Escape(true)
+  , AllowNumSign(false)
 {
   if (atext && atext[0]) {
     ScriptSize = (int)strlen(atext);
@@ -261,6 +273,7 @@ VScriptParser *VScriptParser::clone () const {
   //res->AlreadyGot = AlreadyGot;
   res->CMode = CMode;
   res->Escape = Escape;
+  res->AllowNumSign = AllowNumSign;
 
   return res;
 }
@@ -540,10 +553,10 @@ bool VScriptParser::GetString () {
       // special double-character token
       String += *ScriptPtr++;
       String += *ScriptPtr++;
-    } else if ((ScriptPtr[0] >= '0' && ScriptPtr[0] <= '9') ||
-               (ScriptPtr[0] == '.' && ScriptPtr[1] >= '0' && ScriptPtr[1] <= '9'))
-    {
+    } else if (CharClassifier::isNumStart(ScriptPtr, AllowNumSign)) {
       // number
+      if (ScriptPtr[0] == '+' || ScriptPtr[0] == '-') String += *ScriptPtr++;
+      if (ScriptPtr[0] == '.') { String += "0."; ++ScriptPtr; }
       while (ScriptPtr < ScriptEndPtr) {
         const char ch = *ScriptPtr++;
         if (CharClassifier::isCNumTerm(ch)) { --ScriptPtr; break; }
@@ -1343,6 +1356,19 @@ IMPLEMENT_FUNCTION(VScriptsParser, SetCMode) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->SetCMode(On);
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, IsAllowNumSign) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->IsAllowNumSign());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, SetAllowNumSign) {
+  P_GET_BOOL(On);
+  P_GET_SELF;
+  Self->CheckInterface();
+  Self->Int->SetAllowNumSign(On);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsEscape) {

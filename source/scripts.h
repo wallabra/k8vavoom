@@ -50,6 +50,7 @@ private:
   //bool AlreadyGot;
   bool CMode;
   bool Escape;
+  bool AllowNumSign;
 
 private:
   VScriptParser () {}
@@ -121,4 +122,8 @@ public:
   inline const VStr &GetScriptName () const { return ScriptName; }
   inline bool IsCMode () const { return CMode; }
   inline bool IsEscape () const { return Escape; }
+
+  // for C mode
+  inline bool IsAllowNumSign () const { return AllowNumSign; }
+  inline void SetAllowNumSign (bool v) { AllowNumSign = v; }
 };
