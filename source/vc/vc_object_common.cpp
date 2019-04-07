@@ -400,10 +400,10 @@ IMPLEMENT_FUNCTION(VObject, atoi) {
   P_GET_STR(str);
   int res = 0;
   if (str.convertInt(&res)) {
-    *err = 0;
+    if (err) *err = 0;
     RET_INT(res);
   } else {
-    *err = 1;
+    if (err) *err = 1;
     RET_INT(0);
   }
 }
@@ -421,16 +421,28 @@ IMPLEMENT_FUNCTION(VObject, atof) {
   }
 }
 
+//native static final bool StrStartsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
 IMPLEMENT_FUNCTION(VObject, StrStartsWith) {
+  P_GET_BOOL_OPT(caseSens, true);
   P_GET_STR(Check);
   P_GET_STR(Str);
-  RET_BOOL(Str.StartsWith(Check));
+  if (caseSens) {
+    RET_BOOL(Str.StartsWith(Check));
+  } else {
+    RET_BOOL(Str.startsWithNoCase(Check));
+  }
 }
 
+//native static final bool StrEndsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
 IMPLEMENT_FUNCTION(VObject, StrEndsWith) {
+  P_GET_BOOL_OPT(caseSens, true);
   P_GET_STR(Check);
   P_GET_STR(Str);
-  RET_BOOL(Str.EndsWith(Check));
+  if (caseSens) {
+    RET_BOOL(Str.EndsWith(Check));
+  } else {
+    RET_BOOL(Str.endsWithNoCase(Check));
+  }
 }
 
 IMPLEMENT_FUNCTION(VObject, StrReplace) {
@@ -438,6 +450,26 @@ IMPLEMENT_FUNCTION(VObject, StrReplace) {
   P_GET_STR(Search);
   P_GET_STR(Str);
   RET_STR(Str.Replace(Search, Replacement));
+}
+
+//native static final int strIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
+IMPLEMENT_FUNCTION(VObject, strIndexOf) {
+  P_GET_BOOL_OPT(caseSens, true);
+  P_GET_INT_OPT(startpos, 0);
+  P_GET_STR(pat);
+  P_GET_STR(str);
+  if (!caseSens) { pat = pat.toLowerCase(); str = str.toLowerCase(); }
+  RET_INT(str.indexOf(pat, startpos));
+}
+
+//native static final int strLastIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
+IMPLEMENT_FUNCTION(VObject, strLastIndexOf) {
+  P_GET_BOOL_OPT(caseSens, true);
+  P_GET_INT_OPT(startpos, 0);
+  P_GET_STR(pat);
+  P_GET_STR(str);
+  if (!caseSens) { pat = pat.toLowerCase(); str = str.toLowerCase(); }
+  RET_INT(str.lastIndexOf(pat, startpos));
 }
 
 

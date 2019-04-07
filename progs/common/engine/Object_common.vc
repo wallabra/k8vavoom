@@ -503,6 +503,12 @@ native static final string strFromInt (int v);
 native static final string strFromFloat (float v);
 // do glob matching (knows '*' and '?')
 native static final bool globmatch (const string pat, const string str, optional bool caseSensitive/*=true*/);
+// returns 0-based index or -1
+// negative startpos means offset from string end; startpos doesn't affect result
+native static final int strIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
+// returns 0-based index or -1
+// negative startpos means offset from string end; startpos doesn't affect result
+native static final int strLastIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
 
 // does varargs print into a temporary buffer
 native static final string va (string format, ...) [printf,1];
@@ -513,10 +519,10 @@ native static final int atoi (string str, optional out bool err);
 native static final float atof (string str, optional out bool err);
 
 // checks if string starts with given string
-native static final bool StrStartsWith (string Str, string Check);
+native static final bool StrStartsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
 alias strStartsWith = StrStartsWith;
 // checks if string ends with given string
-native static final bool StrEndsWith (string Str, string Check);
+native static final bool StrEndsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
 alias strEndsWith = StrEndsWith;
 // replaces substrings with another string
 native static final string StrReplace (string Str, string Search, string Replacement);

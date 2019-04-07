@@ -82,6 +82,8 @@
   DECLARE_FUNCTION(StrEndsWith)
   DECLARE_FUNCTION(StrReplace)
   DECLARE_FUNCTION(globmatch)
+  DECLARE_FUNCTION(strIndexOf)
+  DECLARE_FUNCTION(strLastIndexOf)
 
   // random numbers
   DECLARE_FUNCTION(Random)
