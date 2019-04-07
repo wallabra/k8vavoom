@@ -180,7 +180,15 @@ override void OnDraw () {
   }
 
   SetTextAlign(hleft, vtop);
-  DrawText(xt+3, 3, va("%f", Value), CR_BLACK);
+  string sv;
+  if (fabs(Value) < 0.000001) sv = "0";
+  else {
+    sv = va("%f", Value*10);
+         if ("*.9999*".globmatch(sv)) sv = va("0.%s", int(Value*10)%10+1);
+    else if ("*.0000*".globmatch(sv)) sv = va("0.%s", int(Value*10)%10);
+    else sv = va("%f", Value);
+  }
+  DrawText(xt+3, 3, sv, CR_BLACK);
 }
 
 
