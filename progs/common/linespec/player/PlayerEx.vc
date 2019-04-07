@@ -3106,7 +3106,7 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
   if (itemhealthlimit) {
     // you should be able to pick up health bonuses even at full health
     // note that health bonuses cannot be accumulated
-    // increare health
+    // increase health
     Health = min(Health+amount, itemhealthlimit);
     if (toucher) toucher.Health = Health;
     return true; // eaten

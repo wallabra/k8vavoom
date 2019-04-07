@@ -59,7 +59,7 @@ override Inventory CreateTossable () {
 //
 //==========================================================================
 override bool HandlePickup (Inventory Item) {
-  // health pickups of the same type but with different health amount are considerer different items
+  // health pickups of the same type but with different health amount are considered different items
   if (Item.Health == Health) return ::HandlePickup(Item);
   if (Inventory) return Inventory.HandlePickup(Item);
   return false;
