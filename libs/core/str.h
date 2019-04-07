@@ -312,19 +312,19 @@ public:
     return true;
   }
 
-  int IndexOf (char) const;
-  int IndexOf (const char *) const;
-  int IndexOf (const VStr &) const;
-  int LastIndexOf (char) const;
-  int LastIndexOf (const char *) const;
-  int LastIndexOf (const VStr &) const;
+  int IndexOf (char pch, int stpos=0) const;
+  int IndexOf (const char *ps, int stpos=0) const;
+  int IndexOf (const VStr &ps, int stpos=0) const;
+  int LastIndexOf (char pch, int stpos=0) const;
+  int LastIndexOf (const char *ps, int stpos=0) const;
+  int LastIndexOf (const VStr &ps, int stpos=0) const;
 
-  inline int indexOf (char v) const { return IndexOf(v); }
-  inline int indexOf (const char *v) const { return IndexOf(v); }
-  inline int indexOf (const VStr &v) const { return IndexOf(v); }
-  inline int lastIndexOf (char v) const { return LastIndexOf(v); }
-  inline int lastIndexOf (const char *v) const { return LastIndexOf(v); }
-  inline int lastIndexOf (const VStr &v) const { return LastIndexOf(v); }
+  inline int indexOf (char v, int stpos=0) const { return IndexOf(v, stpos); }
+  inline int indexOf (const char *v, int stpos=0) const { return IndexOf(v, stpos); }
+  inline int indexOf (const VStr &v, int stpos=0) const { return IndexOf(v, stpos); }
+  inline int lastIndexOf (char v, int stpos=0) const { return LastIndexOf(v, stpos); }
+  inline int lastIndexOf (const char *v, int stpos=0) const { return LastIndexOf(v, stpos); }
+  inline int lastIndexOf (const VStr &v, int stpos=0) const { return LastIndexOf(v, stpos); }
 
   VStr Replace (const char *, const char *) const;
   VStr Replace (const VStr &, const VStr &) const;

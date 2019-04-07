@@ -841,49 +841,102 @@ VStr VStr::ToUpper () const {
 }
 
 
-int VStr::IndexOf (char c) const {
+#define NORM_STPOS()  do { \
+  if (stpos < 0) { \
+    if (stpos == MIN_VINT32) stpos = 0; else stpos += l; \
+    if (stpos < 0) stpos = 0; \
+  } \
+  if (stpos >= l) return -1; \
+} while (0)
+
+
+static inline const char *k8memmem (const char *hay, size_t haylen, const char *need, size_t needlen) {
+  if (haylen < needlen || needlen == 0) return nullptr;
+  haylen -= needlen;
+  while (haylen--) {
+    if (memcmp(hay, need, needlen) == 0) return hay;
+    ++hay;
+  }
+  return nullptr;
+}
+
+
+static inline const char *k8memrmem (const char *hay, size_t haylen, const char *need, size_t needlen) {
+  if (haylen < needlen || needlen == 0) return nullptr;
+  haylen -= needlen;
+  hay += haylen;
+  ++haylen;
+  while (haylen--) {
+    if (memcmp(hay, need, needlen) == 0) return hay;
+    --hay;
+  }
+  return nullptr;
+}
+
+
+int VStr::IndexOf (char c, int stpos) const {
   const char *data = getData();
   if (data && length()) {
-    const char *pos = (const char *)memchr(data, c, length());
-    return (pos ? (int)(pos-data) : -1);
+    int l = int(length());
+    NORM_STPOS();
+    const char *pos = (const char *)memchr(data+stpos, c, length()-stpos);
+    return (pos ? (int)(ptrdiff_t)(pos-data) : -1);
   } else {
     return -1;
   }
 }
 
 
-int VStr::IndexOf (const char *s) const {
+int VStr::IndexOf (const char *s, int stpos) const {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
   if (l == 0 || sl == 0) return -1;
+  NORM_STPOS();
+  if (l-stpos < sl) return -1;
+#if 0
+  const char *data = getData()+stpos;
+  for (int i = 0; i <= l-sl-stpos; ++i) if (NCmp(data+i, s, sl) == 0) return i;
+#else
   const char *data = getData();
-  for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, s, sl) == 0) return i;
+  const char *pos = k8memmem(data+stpos, l-stpos, s, sl);
+  return (pos ? (int)(ptrdiff_t)(pos-data) : -1);
+#endif
   return -1;
 }
 
 
-int VStr::IndexOf (const VStr &s) const {
+int VStr::IndexOf (const VStr &s, int stpos) const {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
   if (l == 0) return -1;
+  NORM_STPOS();
+  if (l-stpos < sl) return -1;
+#if 0
+  const char *data = getData()+stpos;
+  for (int i = 0; i <= l-sl-stpos; ++i) if (NCmp(data+i, *s, sl) == 0) return i;
+#else
   const char *data = getData();
-  for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, *s, sl) == 0) return i;
+  const char *pos = k8memmem(data+stpos, l-stpos, *s, sl);
+  return (pos ? (int)(ptrdiff_t)(pos-data) : -1);
+#endif
   return -1;
 }
 
 
-int VStr::LastIndexOf (char c) const {
+int VStr::LastIndexOf (char c, int stpos) const {
   const char *data = getData();
   if (data && length()) {
+    int l = int(length());
+    NORM_STPOS();
 #if !defined(WIN32) && !defined(NO_MEMRCHR)
-    const char *pos = (const char *)memrchr(data, c, length());
+    const char *pos = (const char *)memrchr(data+stpos, c, l-stpos);
     return (pos ? (int)(pos-data) : -1);
 #else
-    size_t pos = length();
-    while (pos > 0 && data[pos-1] != c) --pos;
-    return (pos ? (int)(pos-1) : -1);
+    size_t pos = (size_t)l;
+    while (pos > (size_t)stpos && data[pos-1] != c) --pos;
+    return (pos ? (int)(ptrdiff_t)(pos-1) : -1);
 #endif
   } else {
     return -1;
@@ -891,24 +944,42 @@ int VStr::LastIndexOf (char c) const {
 }
 
 
-int VStr::LastIndexOf (const char *s) const {
+int VStr::LastIndexOf (const char *s, int stpos) const {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
   if (l == 0 || sl == 0) return -1;
+  NORM_STPOS();
+  if (l-stpos < sl) return -1;
+#if 0
+  const char *data = getData()+stpos;
+  for (int i = l-sl-stpos; i >= 0; --i) if (NCmp(data+i, s, sl) == 0) return i;
+#else
   const char *data = getData();
-  for (int i = l-sl; i >= 0; --i) if (NCmp(data+i, s, sl) == 0) return i;
+  const char *pos = k8memrmem(data+stpos, l-stpos, s, sl);
+  return (pos ? (int)(ptrdiff_t)(pos-data) : -1);
+#endif
   return -1;
 }
 
 
-int VStr::LastIndexOf (const VStr &s) const {
+int VStr::LastIndexOf (const VStr &s, int stpos) const {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
   if (l == 0) return -1;
+  //fprintf(stderr, "0: stpos=%d; len=%d; slen=%d\n", stpos, l, sl);
+  NORM_STPOS();
+  if (l-stpos < sl) return -1;
+#if 0
+  const char *data = getData()+stpos;
+  for (int i = l-sl-stpos; i >= 0; --i) if (NCmp(data+i, *s, sl) == 0) return i;
+#else
   const char *data = getData();
-  for (int i = l-sl; i >= 0; --i) if (NCmp(data + i, *s, sl) == 0) return i;
+  //fprintf(stderr, "1: stpos=%d; len=%d; slen=%d (%s)\n", stpos, l, sl, data+stpos);
+  const char *pos = k8memrmem(data+stpos, l-stpos, *s, sl);
+  return (pos ? (int)(ptrdiff_t)(pos-data) : -1);
+#endif
   return -1;
 }
 
