@@ -102,7 +102,9 @@ static double last_time;
 
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
 VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", CVAR_PreInit); // checkparm of -respawn
-VCvarB fastparm("g_fast_monsters", false, "Fast monsters?", CVAR_PreInit); // checkparm of -fast
+VCvarI fastparm("g_fast_monsters", "0", "Fast(1), slow(2), normal(0) monsters?", CVAR_PreInit); // checkparm of -fast
+static VCvarI fastmon_override("g_fast_monsters_override", "0", "Fast(1), slow(2), normal(0) monsters?", CVAR_PreInit|CVAR_Archive);
+static VCvarI respawn_override("g_monsters_respawn_override", "0", "Override monster respawn (time in seconds).", CVAR_PreInit|CVAR_Archive);
 
 static VCvarB show_time("dbg_show_times", false, "Show some debug times?", CVAR_PreInit);
 

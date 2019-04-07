@@ -1404,10 +1404,22 @@ override void Tick (float deltaTime) {
       }
     }
 
+    // old code
+    /*
     ++MoveCount;
     if (MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
     if (XLevel.TicTime&31) return;
     if (P_Random() > 4) return;
+    */
+    // new code
+    //print("OMC=%s", MoveCount);
+    if (MoveCount >= 0) MoveCount = -XLevel.TicTime;
+    //print("MC=%s; tc=%s; delta=%s; rt=%s", MoveCount, XLevel.TicTime, XLevel.TicTime+MoveCount, int(LineSpecialGameInfo(Level.Game).RespawnTime));
+    if (XLevel.TicTime+MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime)) return;
+    if (XLevel.TicTime&31) return;
+    if (P_Random() > 4) return;
+    MoveCount = 0;
+
     NightmareRespawn();
   }
 }

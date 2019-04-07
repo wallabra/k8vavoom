@@ -1234,7 +1234,7 @@ static void RenameSprites () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarB respawnparm;
-extern VCvarB fastparm;
+extern VCvarI fastparm;
 extern VCvarB NoMonsters;
 extern VCvarI Skill;
 
@@ -1295,7 +1295,9 @@ void FL_Init () {
 
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 
-  if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
+       if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
+  else if (GArgs.CheckParm("-slow") != 0) fastparm = -1;
+
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
 
