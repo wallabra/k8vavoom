@@ -51,7 +51,7 @@ override bool HandlePickup (Inventory Item) {
       if (!num || BackpackItem(Item).bDepleeted) continue;
       if (!Item.bIgnoreSkill) {
         // extra ammo in baby mode and nightmare mode
-        num = int(float(num)*Level.World.SkillAmmoFactor);
+        num = int(float(num)*Level.World.GetAmmoFactor());
       }
       //AmmoItem.Amount += num;
       //if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
@@ -97,7 +97,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
     if (!num || bDepleeted) continue;
     if (!bIgnoreSkill) {
       // extra ammo in baby mode and nightmare mode
-      num = int(float(num)*Level.World.SkillAmmoFactor);
+      num = int(float(num)*Level.World.GetAmmoFactor());
     }
     //AmmoItem.Amount += num;
     //if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;

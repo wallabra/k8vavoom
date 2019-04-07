@@ -107,7 +107,7 @@ override bool HandlePickup (Inventory Item) {
     int ReceiveAmount = Item.Amount;
     if (!Item.bIgnoreSkill) {
       // extra ammo in baby mode and nightmare mode
-      ReceiveAmount = int(float(ReceiveAmount)*Level.World.SkillAmmoFactor);
+      ReceiveAmount = int(float(ReceiveAmount)*Level.World.GetAmmoFactor());
     }
 
 
@@ -136,7 +136,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
   int NewAmount = Amount;
   if (!bIgnoreSkill) {
     // extra ammo in baby mode and nightmare mode
-    NewAmount = int(float(NewAmount)*Level.World.SkillAmmoFactor);
+    NewAmount = int(float(NewAmount)*Level.World.GetAmmoFactor());
   }
 
   Inventory Copy;

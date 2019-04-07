@@ -421,7 +421,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   if (bIsPlayer) {
     // Take half damage in trainer mode
-    damage = int(float(damage)*Level.World.SkillDamageFactor);
+    damage = int(float(damage)*Level.World.GetDamageFactor());
   }
 
   // special damage types
@@ -937,7 +937,7 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
   if (bInvulnerable && damage < 10000) return; // mobj is invulnerable
   if (bIsPlayer) {
     // take half damage in trainer mode
-    damage = int(float(damage)*Level.World.SkillDamageFactor);
+    damage = int(float(damage)*Level.World.GetDamageFactor());
   }
   if (damage < 1000 && ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable)) {
     return;

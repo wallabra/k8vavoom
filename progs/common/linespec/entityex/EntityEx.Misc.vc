@@ -1397,9 +1397,8 @@ override void Tick (float deltaTime) {
     if (!bAlwaysRespawn) {
       if (!bMonster || bDormant || bNeverRespawn) return;
       if (!LineSpecialGameInfo(Level.Game).RespawnTime) return;
-      if (Level.World.SkillRespawnLimit > 0 &&
-          SkillRespawnCount >= Level.World.SkillRespawnLimit)
-      {
+      int respLimit = Level.World.GetRespawnLimit();
+      if (respLimit > 0 && SkillRespawnCount >= respLimit) {
         return;
       }
     }

@@ -1955,7 +1955,7 @@ final bool GiveAmmo (class!Ammo ammo, int count) {
   if (AmmoItem.Amount == AmmoItem.MaxAmount) return false;
 
   // extra ammo in baby mode and nightmare mode
-  count = int(float(count)*Level.World.SkillAmmoFactor);
+  count = int(float(count)*Level.World.GetAmmoFactor());
 
   oldammo = AmmoItem.Amount;
   AmmoItem.Amount += count;

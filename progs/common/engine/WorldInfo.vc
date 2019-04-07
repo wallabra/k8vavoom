@@ -29,12 +29,12 @@ class WorldInfo : GameObject native abstract;
 native private readonly void *Acs;
 
 readonly ubyte GameSkill;
-readonly float SkillAmmoFactor;
-readonly float SkillDoubleAmmoFactor;
-readonly float SkillDamageFactor;
+readonly float SkillAmmoFactor; // 1.0
+readonly float SkillDoubleAmmoFactor; // unused
+readonly float SkillDamageFactor; // 1.0
 readonly float SkillRespawnTime;
 readonly int SkillRespawnLimit;
-readonly float SkillAggressiveness;
+readonly float SkillAggressiveness; // 1.0
 readonly int SkillSpawnFilter;
 readonly int SkillAcsReturn;
 
@@ -58,6 +58,14 @@ native final int GetACSWorldInt (int index);
 native final float GetACSWorldFloat (int index);
 native final void SetACSWorldInt (int index, int value);
 native final void SetACSWorldFloat (int index, float value);
+
+
+final float GetAmmoFactor () { float v = GetCvarF('g_skill_ammo_factor_override'); return (v > 0 ? v : SkillAmmoFactor); }
+//final float GetDoubleAmmoFactor () { return SkillDoubleAmmoFactor; } // unused
+final float GetDamageFactor () { float v = GetCvarF('g_skill_damage_factor_override'); return (v > 0 ? v : SkillDamageFactor); }
+final int GetRespawnLimit () { int v = GetCvarI('g_skill_respawn_limit_override'); return (v > 0 ? v : v < 0 ? 0 : SkillRespawnLimit); }
+final float GetAggressiveness () { float v = GetCvarF('g_skill_aggressiveness_override'); return (v > 0 ? v : SkillAggressiveness); }
+final int GetSpawnFilter () { int v = GetCvarI('g_skill_spawn_filter_override'); return (v > 0 ? v : v < 0 ? 0 : SkillSpawnFilter); }
 
 
 defaultproperties {

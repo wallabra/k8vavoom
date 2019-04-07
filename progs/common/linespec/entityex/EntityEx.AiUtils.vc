@@ -101,10 +101,12 @@ final bool CheckMissileRange () {
   if (bTriggerHappy) dist /= 2.0; // attack from far away
   if (bMissileEvenMore) dist /= 8.0;
 
-  float MChance = MissileChance*Level.World.SkillAggressiveness;
+  float MChance = MissileChance*Level.World.GetAggressiveness();
+  //print("MChance=%s; dist=%s", MChance, dist);
   if (dist > MChance) dist = MChance;
 
   if (Random()*256.0 < dist) return false;
+  //print("  *** MISSILE");
 
   return true;
 }

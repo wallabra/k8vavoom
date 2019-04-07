@@ -6608,7 +6608,7 @@ override void SpawnMapThing (mthing_t *mthing) {
     if (!(mthing->options&spawnMask)) return;
 
     // check current skill with spawn flags
-    if (!(mthing->SkillClassFilter&World.SkillSpawnFilter)) return;
+    if (!(mthing->SkillClassFilter&World.GetSpawnFilter())) return;
 
     // check current character classes with spawn flags
     spawnMask = GetPClassSpawnFlags();
