@@ -190,6 +190,8 @@ override void Init () {
   CreateCvar('vid_renderer', "1", "Tell some idiotic mod authors that we're GZDoom in OpenGL mode (1).", 0);
 
   CreateCvar('k8HealthAccum_Enabled', "0", "Enable Health Accumulation?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_Reset', "1", "Reset accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_NewMapHeal', "1", "Heal with accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8HealthAccum_Max', "666", "How much health Accumulator can hold?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8HealthAccum_RegenLow', "70", "When health goes below this, Accummulator will start regenerating your health (0 means always).", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8HealthAccum_RegenRate', "2", "Seconds between regenerating health.", CVAR_ARCHIVE|CVAR_SERVERINFO);

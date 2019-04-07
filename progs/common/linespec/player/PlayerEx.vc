@@ -2282,7 +2282,7 @@ void ResetPlayerOnSpawn () {
   //k8: just in case
   ResetWeaponReloadRefire();
 
-  k8HealthAccum_Amount = 0;
+  if (GetCvarB('k8HealthAccum_Reset')) k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
   k8HealthAccum_LastBoostTime = -10000;
 
@@ -2687,13 +2687,15 @@ void DoClearPlayer () {
 //
 //==========================================================================
 override void PlayerBeforeExitMap () {
-  int maxhealth = GetMaxHealth();
-  int oldhealth = Health;
-  if (maxhealth > 0 && oldhealth < maxhealth && k8HealthAccum_Amount > 0) {
-    Health = min(oldhealth+k8HealthAccum_Amount, maxhealth);
-    if (Health > oldhealth) {
-      if (MO) MO.Health = Health;
-      k8HealthAccum_Amount -= Health-oldhealth; // just in case
+  if (GetCvarB('k8HealthAccum_NewMapHeal')) {
+    int maxhealth = GetMaxHealth();
+    int oldhealth = Health;
+    if (maxhealth > 0 && oldhealth < maxhealth && k8HealthAccum_Amount > 0) {
+      Health = min(oldhealth+k8HealthAccum_Amount, maxhealth);
+      if (Health > oldhealth) {
+        if (MO) MO.Health = Health;
+        k8HealthAccum_Amount -= Health-oldhealth; // just in case
+      }
     }
   }
 }

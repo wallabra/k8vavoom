@@ -16,6 +16,18 @@ menudef HealthAccumOptions {
       "but requires a big cooldown after this.";
   }
 
+  option bool {
+    title = "Reset on map transition";
+    cvar = k8HealthAccum_Reset;
+    help = "Reset accumulated health on map transition?";
+  }
+
+  option bool {
+    title = "Heal on map transition";
+    cvar = k8HealthAccum_NewMapHeal;
+    help = "Heal with accumulated health on map transition?";
+  }
+
   option numeric {
     title = "Maximum accumulated health";
     cvar = k8HealthAccum_Max;
