@@ -1048,7 +1048,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
-    float currSY = cl->ViewStates[i].SY;
+    const float currSY = cl->ViewStates[i].SY;
     float dur = cl->PSpriteWeaponLoweringDuration;
     if (dur > 0.0f) {
       float stt = cl->PSpriteWeaponLoweringStartTime;
@@ -1079,6 +1079,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
       }
       cl->ViewStates[i].SY = prevSY;
     }
+
+    cl->ViewStates[i].SY += cl->ViewStates[i].OfsY;
 
     if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
       RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);

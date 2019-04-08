@@ -42,10 +42,10 @@ enum {
 const float TOCENTRE = -128.0;
 
 struct VViewState {
-  state State; // a 0 state means not active
+  state State; // `none` state means not active
   float StateTime;
-  float SX;
-  float SY;
+  float SX, SY;
+  float OfsY;
 };
 
 readonly LevelInfo Level;

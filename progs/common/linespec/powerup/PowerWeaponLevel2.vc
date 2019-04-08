@@ -51,6 +51,7 @@ override void InitEffect()
   if (Sist.GetReadyState() != Wpn.GetReadyState()) {
     Player.SetViewObject(Sist);
     PlayerEx(Owner.Player).SetViewState(PS_WEAPON, Sist.GetReadyState());
+    Sist.bBobDisabled = true;
   }
 }
 

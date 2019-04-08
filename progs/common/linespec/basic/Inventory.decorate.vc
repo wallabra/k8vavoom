@@ -82,6 +82,9 @@ final void decorate_A_Lower (optional float lowerspeed) {
   Weapon ready = PlayerEx(Player).ReadyWeapon;
   Weapon pending = PlayerEx(Player).PendingWeapon;
 
+  if (ready) ready.bBobDisabled = true;
+  if (pending) pending.bBobDisabled = true;
+
   /*
   if (ready && ready == pending) {
     if (Player.PlayerState != PST_DEAD &&
@@ -104,11 +107,14 @@ final void decorate_A_Lower (optional float lowerspeed) {
     Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
   } else {
     // FIXME!!
+    /*
     if (Level.Game.frametime < 1.0/35.0) {
       Player.ViewStates[PS_WEAPON].SY += lowerspeed;
     } else {
       Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
     }
+    */
+    Player.ViewStates[PS_WEAPON].SY += lowerspeed;
   }
 
   if (Player.ViewStates[PS_WEAPON].SY < Weapon::WEAPONBOTTOM) {
@@ -165,21 +171,28 @@ final void A_Raise () {
 //==========================================================================
 final void decorate_A_Raise (optional float raisespeed) {
   if (!bIsPlayer) return;
+
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  Wpn.bBobDisabled = true;
 
   if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
   if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
+
+  //print("RAISING %C: curr=%s; top=%s; bot=%s; speed=%s; time=%s", Wpn, Player.ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM, raisespeed, Player.ViewStates[PS_WEAPON].StateTime);
 
   Player.PSpriteWeaponLoweringStartTime = 0;
   Player.PSpriteWeaponLoweringDuration = 0;
   Player.PSpriteWeaponLowerPrev = Player.ViewStates[PS_WEAPON].SY;
 
   // FIXME!!
+  /*
   if (Level.Game.frametime < 1.0/35.0) {
     Player.ViewStates[PS_WEAPON].SY -= raisespeed;
   } else {
     Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
   }
+  */
+  Player.ViewStates[PS_WEAPON].SY -= raisespeed;
 
   if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) {
     // not raised all the way yet

@@ -732,6 +732,7 @@ final void EndPowerup () {
   if (SisterWeapon) {
     PlayerEx(Owner.Player).SetWeapon(SisterWeapon);
     if (SisterWeapon.GetReadyState() != GetReadyState()) {
+      SisterWeapon.bBobDisabled = true;
       PlayerEx(Owner.Player).SetViewObject(SisterWeapon);
       PlayerEx(Owner.Player).SetViewState(PS_WEAPON, SisterWeapon.GetReadyState());
     }

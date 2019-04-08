@@ -81,8 +81,8 @@ enum {
 struct VViewState {
   VState *State;
   float StateTime;
-  float SX;
-  float SY;
+  float SX, SY;
+  float OfsY;
 };
 
 // extended player object info: player_t

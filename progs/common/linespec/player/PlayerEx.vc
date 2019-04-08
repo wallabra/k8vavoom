@@ -973,12 +973,14 @@ final void BringUpWeapon (optional bool instant) {
   ViewStates[PS_WEAPON].SY = (bInstantWeaponSwitch || instant ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
+    ReadyWeapon.bBobDisabled = true;
     SetViewObject(ReadyWeapon);
     //dprint("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
     //k8: old code did "up state" anyway; this seems to be wrong
     if (bInstantWeaponSwitch || instant) {
       SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
     } else {
+      //print("BRINGING %C: curr=%s; top=%s; bot=%s", ReadyWeapon, ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM);
       SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
     }
     //dprint("MO=%C; RW=%C", MO, ReadyWeapon);
@@ -2652,6 +2654,7 @@ void AddDefaultInventory () {
       Item.Destroy();
     } else if (Weapon(Item) && Weapon(Item).CheckAmmo(Weapon::FIRE_Either, false)) {
       SetWeapon(Weapon(Item));
+      Weapon(Item).bBobDisabled = true;
     }
   }
 }
@@ -2753,7 +2756,9 @@ override void PlayerExitMap (bool clusterChange) {
   }
 
   if (MorphTime) {
-    SetWeapon(Weapon(Actor(MO).Tracer)); // restore weapon
+    Weapon wpn = Weapon(Actor(MO).Tracer);
+    if (wpn) wpn.bBobDisabled = true;
+    SetWeapon(wpn); // restore weapon
     MorphTime = 0.0;
   }
 
@@ -3667,6 +3672,7 @@ final void ActivateMorphWeapon () {
   SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
+    ReadyWeapon.bBobDisabled = true;
     SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
   } else {
     SetViewState(PS_WEAPON, none);
@@ -3685,6 +3691,7 @@ final void PostMorphWeapon (Weapon weapon) {
   ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
+    ReadyWeapon.bBobDisabled = true;
     SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
   } else {
     SetViewState(PS_WEAPON, none);
@@ -4110,7 +4117,8 @@ void Cheat_NoWeapons () {
     Item = Next;
   }
   SetWeapon(Weakest);
-  PendingWeapon = Weakest;
+  PendingWeapon = none; //Weakest;
+  if (Weakest) Weakest.bBobDisabled = true;
 
   cprint("CHEATER-YOU DON'T DESERVE WEAPONS");
 }
