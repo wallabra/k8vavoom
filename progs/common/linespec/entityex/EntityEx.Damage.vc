@@ -25,6 +25,35 @@
 //**
 //**************************************************************************
 
+
+//==========================================================================
+//
+//  K8HS_IsGoodDamageType
+//
+//  virtual, so mods can override this
+//
+//==========================================================================
+bool K8HS_IsGoodDamageType (name damageType) {
+  if (damageType) {
+    if (damageType != 'Bullet' &&
+        damageType != 'Shell' &&
+        damageType != 'BDW_Bullet' &&
+        damageType != 'BDW_Shell'
+       )
+    {
+      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+      return false;
+    }
+  } else {
+    if (!GetCvarB('k8HSAllowEmptyDamageType')) {
+      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+      return false;
+    }
+  }
+  return true;
+}
+
+
 //==========================================================================
 //
 //  K8onBeforeLineDamage
@@ -36,29 +65,12 @@
 //  "awake" it.
 //
 //==========================================================================
-final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
   // is it from player?
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
-
-  if (damageType) {
-    if (damageType != 'Bullet' &&
-        damageType != 'Shell' &&
-        damageType != 'BDW_Bullet' &&
-        damageType != 'BDW_Shell'
-       )
-    {
-      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
-      return damage;
-    }
-  } else {
-    if (!GetCvarB('k8HSAllowEmptyDamageType')) {
-      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
-      return damage;
-    }
-  }
-
   if (!GetCvarB('k8HSEnabled')) return damage;
+  if (!K8HS_IsGoodDamageType(damageType)) return damage;
 
   bool debugme = GetCvarB('k8HSDebug');
 
