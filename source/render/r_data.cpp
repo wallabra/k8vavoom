@@ -419,7 +419,7 @@ static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
 //==========================================================================
 void R_InstallSprite (const char *name, int index) {
   if ((vuint32)index >= MAX_SPRITE_MODELS) Host_Error("Invalid sprite index %d for sprite %s", index, name);
-  //fprintf(stderr, "!!INSTALL_SPRITE: <%s> (%d)\n", name, index);
+  //GCon->Logf("!!INSTALL_SPRITE: <%s> (%d)", name, index);
   spritename = name;
 #if 1
   memset(sprtemp, -1, sizeof(sprtemp));
@@ -436,18 +436,24 @@ void R_InstallSprite (const char *name, int index) {
 
   // scan all the lump names for each of the names, noting the highest frame letter
   // just compare 4 characters as ints
-  int intname = *(int*)*VName(spritename, VName::AddLower8);
+  //int intname = *(int*)*VName(spritename, VName::AddLower8);
+  const char *intname = *VName(spritename, VName::AddLower8);
+  if (!intname[0] || !intname[1] || !intname[2] || !intname[3]) {
+    GCon->Logf(NAME_Warning, "trying to install sprite with invalid name '%s'", intname);
+    sprites[index].numframes = 0;
+    return;
+  }
 
   // scan the lumps, filling in the frames for whatever is found
   for (int l = 0; l < GTextureManager.GetNumTextures(); ++l) {
     if (GTextureManager[l]->Type == TEXTYPE_Sprite) {
       const char *lumpname = *GTextureManager[l]->Name;
-      if (*(int*)lumpname == intname) {
-        //fprintf(stderr, "!!<%s> [4]=%c; [6]=%c; [7]=%c\n", lumpname, lumpname[4], lumpname[6], (lumpname[6] ? lumpname[7] : 0));
-        InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
-        if (lumpname && strlen(lumpname) >= 6 && lumpname[6]) {
-          InstallSpriteLump(l, VStr::ToUpper(lumpname[6])-'A', lumpname[7], true);
-        }
+      if (!lumpname[0] || !lumpname[1] || !lumpname[2] || !lumpname[3] || !lumpname[4] || !lumpname[5]) continue;
+      if (memcmp(lumpname, intname, 4) != 0) continue;
+      //GCon->Logf("  !!<%s> [4]=%c; [6]=%c; [7]=%c", lumpname, lumpname[4], lumpname[6], (lumpname[6] ? lumpname[7] : 0));
+      InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
+      if (lumpname && strlen(lumpname) >= 6 && lumpname[6]) {
+        InstallSpriteLump(l, VStr::ToUpper(lumpname[6])-'A', lumpname[7], true);
       }
     }
   }

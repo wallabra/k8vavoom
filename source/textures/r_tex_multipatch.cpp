@@ -409,6 +409,64 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   }
 
   sc->SetCMode(false);
+
+#if 0
+  // sprite hack: if this is sprite, and it is 320x200, this seems to be a psprite; crop it
+  if (Type == TEXTYPE_Sprite && Width == 320 && Height == 200) {
+    //GCon->Logf("************** %s", *Name);
+    // ok, shrink it to real size, and calculate offset
+    // this is slow, but idc
+    if (!GetPixels()) {
+      GCon->Logf(NAME_Warning, "WTF with the sprite '%s'?", *Name);
+      return;
+    }
+    ConvertPixelsToRGBA();
+    // find image dimensions
+    int xmin = 9999, ymin = 9999;
+    int xmax = -9999, ymax = -9999;
+    bool gotPixel = false;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x) {
+        rgba_t pix = getPixel(x, y);
+        if (pix.a) {
+          xmin = MIN(xmin, x);
+          ymin = MIN(ymin, y);
+          xmax = MAX(xmax, x);
+          ymax = MAX(ymax, y);
+          gotPixel = true;
+        }
+      }
+    }
+    if (!gotPixel) return;
+    GCon->Logf("*** SPRITE '%s': bounds: (%d,%d)-(%d,%d)", *Name, xmin, ymin, xmax, ymax);
+    // create cropped image
+    transparent = false;
+    int neww = xmax-xmin+1;
+    int newh = ymax-ymin+1;
+    check(neww > 0 && newh > 0);
+    vuint8 *np = new vuint8[neww*newh*4];
+    rgba_t *newpix = (rgba_t *)np;
+    for (int y = 0; y < newh; ++y) {
+      for (int x = 0; x < neww; ++x) {
+        rgba_t pix = getPixel(x+xmin, y+ymin);
+        if (!transparent && pix.a < 255) transparent = true;
+        newpix[y*neww+x] = pix;
+      }
+    }
+    delete [] Pixels;
+    Pixels = np;
+    check(Format == TEXFMT_RGBA);
+    // fix offsets
+    SOffset += (320/2)-xmax;
+    TOffset += (200/2)-ymax;
+    Width = neww;
+    Height = newh;
+    /*
+    TOffset = -127;
+    SOffset = -112;
+    */
+  }
+#endif
 }
 
 

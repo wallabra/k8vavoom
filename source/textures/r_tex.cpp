@@ -213,7 +213,7 @@ void VTextureManager::Init () {
   AddGroup(TEXTYPE_Sprite, WADNS_Sprites);
 
   // initialise hires textures
-  //AddHiResTextures();
+  AddTextureTextLumps(false); // only normal for now
 
   // force-load numbered textures
   AddMissingNumberedTextures(numberedNames);
@@ -478,7 +478,10 @@ int VTextureManager::FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *ov
   }
 
   VName currname = VName(*Name, VName::FindLower);
-  if (currname == NAME_None) return 0;
+  if (currname == NAME_None) {
+    currname = VName(*Name, VName::FindLower8);
+    if (currname == NAME_None) return 0;
+  }
 
   int slotCount = 0;
 
@@ -574,6 +577,7 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
 //
 //==========================================================================
 int VTextureManager::FindPatchByName (VName Name) {
+/*
   int nums[TEXTYPE_MAX];
 
   int scount = FindAllForName(Name, nums);
@@ -582,10 +586,10 @@ int VTextureManager::FindPatchByName (VName Name) {
   static const int anyBestMatch[] = {
     //TEXTYPE_Overload,
     TEXTYPE_WallPatch,
-    TEXTYPE_Pic,
     TEXTYPE_Flat,
     TEXTYPE_Wall,
     TEXTYPE_Sprite,
+    TEXTYPE_Pic,
     TEXTYPE_Null,
     -1,
   };
@@ -593,6 +597,53 @@ int VTextureManager::FindPatchByName (VName Name) {
   for (unsigned f = 0; anyBestMatch[f] >= 0; ++f) {
     int res = nums[anyBestMatch[f]];
     if (res >= 0) return res;
+  }
+
+  return -1;
+*/
+  // check for "NoTexture" marker
+  if (Name == NAME_None) return -1;
+
+  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+
+  VName currname = VName(*Name, VName::FindLower);
+  if (currname == NAME_None) {
+    currname = VName(*Name, VName::FindLower8);
+    if (currname == NAME_None) return -1;
+  }
+
+  for (int trynum = 2; trynum > 0; --trynum) {
+    if (trynum == 1) {
+      // try short name too
+      if (VStr::length(*Name) <= 8) break;
+      currname = VName(*Name, VName::FindLower8);
+      if (currname == NAME_None) break;
+    }
+
+    int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
+    for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
+      check(i >= 0);
+      if (i >= FirstMapTextureIndex) {
+        if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
+      } else {
+        if (i >= Textures.length()) continue;
+      }
+
+      VTexture *ctex = getTxByIndex(i);
+      check(ctex);
+
+      if (ctex->Name != currname) continue;
+
+      switch (ctex->Type) {
+        case TEXTYPE_WallPatch:
+        case TEXTYPE_Flat:
+        case TEXTYPE_Wall:
+        case TEXTYPE_Sprite:
+        case TEXTYPE_Pic:
+        //case TEXTYPE_Null:
+          return i;
+      }
+    }
   }
 
   return -1;
@@ -1315,55 +1366,57 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 
 //==========================================================================
 //
-//  VTextureManager::AddHiResTextures
+//  VTextureManager::AddTextureTextLumps
 //
 //==========================================================================
-void VTextureManager::AddHiResTextures () {
+void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
   check(inMapTextures == 0);
   //GCon->Logf("HIRES: %d", (r_hirestex ? 1 : 0));
 
-  for (int Lump = W_IterateNS(-1, WADNS_HiResTextures); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_HiResTextures)) {
-    VName Name = W_LumpName(Lump);
-    // to avoid duplicates, add only the last one
-    if (W_GetNumForName(Name, WADNS_HiResTextures) != Lump) continue;
+  if (onlyHiRes) {
+    for (int Lump = W_IterateNS(-1, WADNS_HiResTextures); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_HiResTextures)) {
+      VName Name = W_LumpName(Lump);
+      // to avoid duplicates, add only the last one
+      if (W_GetNumForName(Name, WADNS_HiResTextures) != Lump) continue;
 
-    // create new texture
-    VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, Lump);
-    if (!NewTex) continue;
-    if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
+      // create new texture
+      VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, Lump);
+      if (!NewTex) continue;
+      if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
 
-    // find texture to replace
-    int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true, true);
-    if (OldIdx < 0) {
-      if (!r_hirestex) continue; // don't replace
-      OldIdx = AddPatch(Name, TEXTYPE_Pic, true);
-    }
-
-    if (OldIdx < 0) {
-      // add it as a new texture
-      if (r_hirestex) {
-        //NewTex->Type = TEXTYPE_Overload;
-        AddTexture(NewTex);
+      // find texture to replace
+      int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true, true);
+      if (OldIdx < 0) {
+        if (!r_hirestex) continue; // don't replace
+        OldIdx = AddPatch(Name, TEXTYPE_Pic, true);
       }
-    } else {
-      if (r_hirestex) {
-        // repalce existing texture by adjusting scale and offsets
-        VTexture *OldTex = Textures[OldIdx];
-        //NewTex->Type = OldTex->Type;
-        NewTex->Type = TEXTYPE_Overload;
-        //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIdx);
-        NewTex->Name = OldTex->Name;
-        NewTex->bWorldPanning = true;
-        NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
-        NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
-        NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
-        NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
-        NewTex->Type = OldTex->Type;
-        NewTex->TextureTranslation = OldTex->TextureTranslation;
-        NewTex->HashNext = OldTex->HashNext;
-        Textures[OldIdx] = NewTex;
-        delete OldTex;
-        OldTex = nullptr;
+
+      if (OldIdx < 0) {
+        // add it as a new texture
+        if (r_hirestex) {
+          //NewTex->Type = TEXTYPE_Overload;
+          AddTexture(NewTex);
+        }
+      } else {
+        if (r_hirestex) {
+          // repalce existing texture by adjusting scale and offsets
+          VTexture *OldTex = Textures[OldIdx];
+          //NewTex->Type = OldTex->Type;
+          NewTex->Type = TEXTYPE_Overload;
+          //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIdx);
+          NewTex->Name = OldTex->Name;
+          NewTex->bWorldPanning = true;
+          NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
+          NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
+          NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
+          NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
+          NewTex->Type = OldTex->Type;
+          NewTex->TextureTranslation = OldTex->TextureTranslation;
+          NewTex->HashNext = OldTex->HashNext;
+          Textures[OldIdx] = NewTex;
+          delete OldTex;
+          OldTex = nullptr;
+        }
       }
     }
   }
@@ -1388,6 +1441,11 @@ void VTextureManager::AddHiResTextures () {
         }
 
         sc->ExpectName8Warn();
+        if (!onlyHiRes) {
+          sc->ExpectName8Warn();
+          continue;
+        }
+
         int OldIdx = CheckNumForName(sc->Name8, Type, Overload, false);
         if (OldIdx < 0) {
           if (!r_hirestex) {
@@ -1433,18 +1491,20 @@ void VTextureManager::AddHiResTextures () {
           LumpIdx = W_CheckNumForName(Name8, WADNS_Graphics);
           //FIXME: fix name?
           if (LumpIdx >= 0) {
-            GCon->Logf(NAME_Warning, "Texture: found short texture '%s' for long texture '%s'", *Name8, *Name);
+            if (onlyHiRes) GCon->Logf(NAME_Warning, "Texture: found short texture '%s' for long texture '%s'", *Name8, *Name);
             Name = Name8;
           }
         }
         sc->Check("force32bit");
 
-        //  Dimensions
+        // dimensions
         sc->ExpectNumber();
         int Width = sc->Number;
         sc->ExpectNumber();
         int Height = sc->Number;
         if (LumpIdx < 0) continue;
+
+        if (!onlyHiRes) continue;
 
         int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false, false);
         if (!r_hirestex && OldIdx < 0) continue; // don't replace
@@ -1471,15 +1531,15 @@ void VTextureManager::AddHiResTextures () {
           AddTexture(NewTex);
         }
       } else if (sc->Check("walltexture")) {
-        AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Wall));
+        if (!onlyHiRes) AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Wall)); else sc->SkipBracketed(false);
       } else if (sc->Check("flat")) {
-        AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Flat));
+        if (!onlyHiRes) AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Flat)); else sc->SkipBracketed(false);
       } else if (sc->Check("texture")) {
-        AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Overload));
+        if (!onlyHiRes) AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Overload)); else sc->SkipBracketed(false);
       } else if (sc->Check("sprite")) {
-        AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Sprite));
+        if (!onlyHiRes) AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Sprite)); else sc->SkipBracketed(false);
       } else if (sc->Check("graphic")) {
-        AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Pic));
+        if (!onlyHiRes) AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Pic)); else sc->SkipBracketed(false);
       } else {
         sc->Error(va("Bad command: '%s'", *sc->String));
       }
@@ -2566,9 +2626,9 @@ void R_InitTexture () {
 //  R_InitHiResTextures
 //
 //==========================================================================
-void R_InitHiResTextures () {
+void R_InitHiResTextures (bool onlyHiRes) {
   // initialise hires textures
-  GTextureManager.AddHiResTextures();
+  GTextureManager.AddTextureTextLumps(onlyHiRes);
 }
 
 

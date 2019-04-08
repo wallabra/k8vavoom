@@ -817,6 +817,18 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 
 //==========================================================================
 //
+//  showPSpriteWarnings
+//
+//==========================================================================
+static bool showPSpriteWarnings () {
+  static int flag = -1;
+  if (flag < 0) flag = (GArgs.CheckParm("-Wpsprite") || GArgs.CheckParm("-Wall") ? 1 : 0);
+  return !!flag;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
@@ -833,29 +845,34 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   // decide which patch to use
   if ((vuint32)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= MAX_SPRITE_MODELS) {
-#ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite number %d", /*VSt->State->SpriteIndex*/mfi.spriteIndex);
-#endif
+    if (showPSpriteWarnings()) {
+      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite number %d", mfi.spriteIndex);
+    }
     return;
   }
   sprdef = &sprites[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
+
   if (mfi.frame/*(VSt->State->Frame & VState::FF_FRAMEMASK)*/ >= sprdef->numframes) {
-#ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite frame %d : %d", mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
-#endif
+    if (showPSpriteWarnings()) {
+      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite frame %d : %d (max is %d)", mfi.spriteIndex, mfi.frame, sprdef->numframes);
+    }
     return;
   }
   sprframe = &sprdef->spriteframes[mfi.frame/*VSt->State->Frame & VState::FF_FRAMEMASK*/];
 
   lump = sprframe->lump[0];
   if (lump < 0) {
-    //GCon->Logf("R_ProjectSprite: invalid sprite texture id %d in frame %d : %d", lump, mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
+    if (showPSpriteWarnings()) {
+      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite texture id %d in frame %d : %d", lump, mfi.spriteIndex, mfi.frame);
+    }
     return;
   }
   flip = sprframe->flip[0];
   VTexture *Tex = GTextureManager[lump];
   if (!Tex) {
-    GCon->Logf("R_ProjectSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
+    if (showPSpriteWarnings()) {
+      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex, mfi.frame);
+    }
     return;
   }
 
@@ -863,6 +880,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   int TexHeight = Tex->GetHeight();
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
+
+  //GCon->Logf("PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset);
 
   TVec dv[4];
 

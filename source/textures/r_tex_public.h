@@ -485,21 +485,21 @@ private:
   void AddMissingNumberedTextures (TArray<VName> &numberedNames);
   void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
-  void AddHiResTextures ();
+  void AddTextureTextLumps (bool onlyHiRes);
 
   void WipeWallPatches ();
 
   friend void R_InitTexture ();
   friend void R_DumpTextures ();
 
-  friend void R_InitHiResTextures ();
+  friend void R_InitHiResTextures (bool onlyHiRes);
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // r_tex
 void R_InitTexture ();
-void R_InitHiResTextures ();
+void R_InitHiResTextures (bool onlyHiRes);
 void R_DumpTextures ();
 void R_ShutdownTexture ();
 VAnimDoorDef *R_FindAnimDoor (vint32);
