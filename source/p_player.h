@@ -41,8 +41,8 @@ enum {
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 enum psprnum_t {
-  ps_weapon,
-  ps_flash, // only DOOM uses it
+  PS_WEAPON,
+  PS_FLASH, // only DOOM uses it
   NUMPSPRITES
 };
 

@@ -648,8 +648,8 @@ final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
 
   //  If called from weapon, then use ammo.
   if (bIsPlayer &&
-      (XLevel.CallingState == Player.ViewStates[ps_weapon].State ||
-       XLevel.CallingState == Player.ViewStates[ps_flash].State))
+      (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State ||
+       XLevel.CallingState == Player.ViewStates[PS_FLASH].State))
   {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (!Wpn) return;

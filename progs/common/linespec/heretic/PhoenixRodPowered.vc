@@ -68,7 +68,7 @@ final void A_FirePhoenixPL2() self(Actor)
   {
     // Out of flame
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Shutdown'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Shutdown'));
     PlayerEx(Player).Refire = 0;
     return;
   }

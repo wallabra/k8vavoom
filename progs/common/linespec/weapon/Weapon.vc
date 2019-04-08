@@ -663,7 +663,7 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
 
   PlayerEx(Owner.Player).PendingWeapon = Best;
   Owner.Player.SetViewObject(self);
-  Owner.Player.SetViewState(ps_weapon, GetDownState());
+  Owner.Player.SetViewState(PS_WEAPON, GetDownState());
   return false;
 }
 
@@ -733,7 +733,7 @@ final void EndPowerup () {
     PlayerEx(Owner.Player).SetWeapon(SisterWeapon);
     if (SisterWeapon.GetReadyState() != GetReadyState()) {
       PlayerEx(Owner.Player).SetViewObject(SisterWeapon);
-      PlayerEx(Owner.Player).SetViewState(ps_weapon, SisterWeapon.GetReadyState());
+      PlayerEx(Owner.Player).SetViewState(PS_WEAPON, SisterWeapon.GetReadyState());
     }
   }
 }

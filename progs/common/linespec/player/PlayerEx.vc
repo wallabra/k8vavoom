@@ -970,16 +970,16 @@ final void BringUpWeapon (optional bool instant) {
   }
 
   PendingWeapon = none;
-  ViewStates[ps_weapon].SY = (bInstantWeaponSwitch || instant ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
+  ViewStates[PS_WEAPON].SY = (bInstantWeaponSwitch || instant ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
     //dprint("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
     //k8: old code did "up state" anyway; this seems to be wrong
     if (bInstantWeaponSwitch || instant) {
-      SetViewState(ps_weapon, ReadyWeapon.GetReadyState());
+      SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
     } else {
-      SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+      SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
     }
     //dprint("MO=%C; RW=%C", MO, ReadyWeapon);
     if (!ReadyWeapon) {
@@ -1005,7 +1005,7 @@ final void DropWeapon () {
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
-    SetViewState(ps_weapon, ReadyWeapon.GetDownState());
+    SetViewState(PS_WEAPON, ReadyWeapon.GetDownState());
   }
 }
 
@@ -1042,14 +1042,14 @@ void MovePsprites (float deltaTime) {
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
     float angle = AngleMod360(180.0*MO.XLevel.Time);
-    ViewStates[ps_weapon].SX = 1.0+Bob*cos(angle);
+    ViewStates[PS_WEAPON].SX = 1.0+Bob*cos(angle);
     if (angle >= 180.0) angle -= 180.0;
-    ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+Bob*sin(angle);
+    ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Bob*sin(angle);
   }
 
   AdvanceViewStates(deltaTime);
-  ViewStates[ps_flash].SX = ViewStates[ps_weapon].SX;
-  ViewStates[ps_flash].SY = ViewStates[ps_weapon].SY;
+  ViewStates[PS_FLASH].SX = ViewStates[PS_WEAPON].SX;
+  ViewStates[PS_FLASH].SY = ViewStates[PS_WEAPON].SY;
 }
 
 
@@ -1062,14 +1062,14 @@ void FireWeapon (optional state firestate) {
   bReloadQueued = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
-  //print("FireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
+  //print("FireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
   //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
 
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
-  SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
+  SetViewState(PS_WEAPON, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
@@ -1085,14 +1085,14 @@ void AltFireWeapon (optional state firestate) {
   bReloadQueued = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
-  //print("AltFireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
+  //print("AltFireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
   //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
 
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
-  SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
+  SetViewState(PS_WEAPON, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
@@ -1111,7 +1111,7 @@ void ReloadWeapon () {
     state rst = ReadyWeapon.GetReloadState();
     if (!rst) return;
     SetViewObject(ReadyWeapon);
-    SetViewState(ps_weapon, rst);
+    SetViewState(PS_WEAPON, rst);
   }
 }
 
@@ -3665,11 +3665,11 @@ final void ActivateMorphWeapon () {
   SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
-    SetViewState(ps_weapon, ReadyWeapon.GetReadyState());
+    SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
   } else {
-    SetViewState(ps_weapon, none);
+    SetViewState(PS_WEAPON, none);
   }
-  ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
+  ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
 }
 
 
@@ -3680,12 +3680,12 @@ final void ActivateMorphWeapon () {
 //===========================================================================
 final void PostMorphWeapon (Weapon weapon) {
   SetWeapon(weapon);
-  ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+  ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
-    SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+    SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
   } else {
-    SetViewState(ps_weapon, none);
+    SetViewState(PS_WEAPON, none);
   }
 }
 

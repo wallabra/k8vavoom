@@ -786,7 +786,7 @@ final void A_ShowElectricFlash () self(Actor) {
   if (!Wpn) return;
 
   Player.SetViewObject(Wpn);
-  Player.SetViewState(ps_flash, Wpn.FindState('ElectricFlash'));
+  Player.SetViewState(PS_FLASH, Wpn.FindState('ElectricFlash'));
 }
 
 
@@ -845,7 +845,7 @@ final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) 
   if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
 
   // make it flash
-  Player.SetViewState(ps_flash, flash);
+  Player.SetViewState(PS_FLASH, flash);
 
   Origin.z += 32.0;
   EntityEx grenade = SpawnSubMissile(grenadetype, self);
@@ -933,8 +933,8 @@ final void A_FireMauler2Pre () self(Actor) {
   if (!Wpn) return;
 
   PlaySound('weapons/mauler2charge', CHAN_WEAPON);
-  Player.ViewStates[ps_weapon].SX += (Random()-Random())*4.0;
-  Player.ViewStates[ps_weapon].SY += (Random()-Random())*4.0;
+  Player.ViewStates[PS_WEAPON].SX += (Random()-Random())*4.0;
+  Player.ViewStates[PS_WEAPON].SY += (Random()-Random())*4.0;
 }
 
 
@@ -966,5 +966,5 @@ final void A_FireMauler2 () self(Actor) {
 final void A_ClearFlash() {
   if (!bIsPlayer) return;
 
-  Player.SetViewState(ps_flash, none);
+  Player.SetViewState(PS_FLASH, none);
 }

@@ -581,8 +581,8 @@ final void A_GauntletAttack (int power) self(Actor) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
 
-  Player.ViewStates[ps_weapon].SX = Random()*4.0-2.0;
-  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+Random()*4.0;
+  Player.ViewStates[PS_WEAPON].SX = Random()*4.0-2.0;
+  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Random()*4.0;
   angles = Angles;
   if (power) {
     damage = HITDICE(2);
@@ -830,8 +830,8 @@ final void A_FireMacePL1 () self(Actor) {
     return;
   }
 
-  Player.ViewStates[ps_weapon].SX = Random()*4.0-2.0;
-  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+Random()*4.0;
+  Player.ViewStates[PS_WEAPON].SX = Random()*4.0-2.0;
+  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Random()*4.0;
   {
     EntityEx ball = SpawnPlayerMissileAngle(MaceFX1, AngleMod360(Angles.yaw+(Random()-0.5)*45.0/4.0));
     if (ball) Actor(ball).Special1 = 16;  // tics till dropoff
@@ -912,8 +912,8 @@ final void A_BeakRaise () self(Actor) {
   if (!Wpn) return;
 
   Player.SetViewObject(Wpn);
-  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
-  Player.SetViewState(ps_weapon, Wpn.GetReadyState());
+  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
+  Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
 }
 
 
@@ -939,7 +939,7 @@ final void A_BeakAttackPL1 () self(Actor) {
   }
   PlaySound('chicken/peck', CHAN_VOICE);
   PlayerEx(Player).ChickenPeck = 12;
-  Player.ViewStates[ps_weapon].StateTime -= Random()*0.25;
+  Player.ViewStates[PS_WEAPON].StateTime -= Random()*0.25;
 }
 
 
@@ -965,7 +965,7 @@ final void A_BeakAttackPL2 () self(Actor) {
   }
   PlaySound('chicken/peck', CHAN_VOICE);
   PlayerEx(Player).ChickenPeck = 12;
-  Player.ViewStates[ps_weapon].StateTime -= Random()*0.125;
+  Player.ViewStates[PS_WEAPON].StateTime -= Random()*0.125;
 }
 
 

@@ -193,23 +193,23 @@ final void A_SelectSigilReady() self(Actor)
   {
   case 1:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Ready1'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
     break;
   case 2:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Ready2'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready2'));
     break;
   case 3:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Ready3'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready3'));
     break;
   case 4:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Ready4'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready4'));
     break;
   case 5:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Ready5'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready5'));
     break;
   }
 }
@@ -238,23 +238,23 @@ final void A_SelectSigilDown() self(Actor)
   {
   case 1:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Deselect1'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
     break;
   case 2:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Deselect2'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect2'));
     break;
   case 3:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Deselect3'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect3'));
     break;
   case 4:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Deselect4'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect4'));
     break;
   case 5:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Deselect5'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect5'));
     break;
   }
 }
@@ -277,23 +277,23 @@ final void A_SelectSigilUp() self(Actor)
   {
   case 1:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Select1'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
     break;
   case 2:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Select2'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select2'));
     break;
   case 3:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Select3'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select3'));
     break;
   case 4:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Select4'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select4'));
     break;
   case 5:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Select5'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select5'));
     break;
   }
 }
@@ -316,23 +316,23 @@ final void A_SelectSigilAttack() self(Actor)
   {
   case 1:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Fire1'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
     break;
   case 2:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Fire2'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire2'));
     break;
   case 3:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Fire3'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire3'));
     break;
   case 4:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Fire4'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire4'));
     break;
   case 5:
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_weapon, Wpn.FindState('Fire5'));
+    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire5'));
     break;
   }
 }

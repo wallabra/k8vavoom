@@ -470,8 +470,8 @@ final void A_ItBurnsItBurns () {
     state WaveState = wpn.FindState('BurnWave');
     if (WaveState) {
       Player.SetViewObject(wpn);
-      Player.SetViewState(ps_weapon, WaveState);
-      Player.SetViewState(ps_flash, none);
+      Player.SetViewState(PS_WEAPON, WaveState);
+      Player.SetViewState(PS_FLASH, none);
     }
   }
 }
@@ -778,7 +778,7 @@ final void A_WeaponReady (optional int Flags) {
     SetState(IdleState);
   }
 
-  if (Player.ViewStates[ps_weapon].State == Wpn.GetReadyState() &&
+  if (Player.ViewStates[PS_WEAPON].State == Wpn.GetReadyState() &&
       Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
   {
     PlaySound(Wpn.ReadySound, CHAN_WEAPON);
@@ -788,7 +788,7 @@ final void A_WeaponReady (optional int Flags) {
     // put the weapon away if the player has a pending weapon or has died
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
       Player.SetViewObject(Wpn);
-      Player.SetViewState(ps_weapon, Wpn.GetDownState());
+      Player.SetViewState(PS_WEAPON, Wpn.GetDownState());
       PlayerEx(Player).ResetWeaponReloadRefire();
       Wpn.bBobDisabled = true;
       return;
@@ -833,9 +833,9 @@ final void A_WeaponReady (optional int Flags) {
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {
     // bob the weapon based on movement speed
     float angle = AngleMod360(180.0*XLevel.Time);
-    Player.ViewStates[ps_weapon].SX = 1.0+PlayerEx(Player).Bob*cos(angle);
+    Player.ViewStates[PS_WEAPON].SX = 1.0+PlayerEx(Player).Bob*cos(angle);
     if (angle >= 180.0) angle -= 180.0;
-    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
   }
   */
   Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);

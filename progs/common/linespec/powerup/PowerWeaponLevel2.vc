@@ -50,7 +50,7 @@ override void InitEffect()
   PlayerEx(Owner.Player).SetWeapon(Sist);
   if (Sist.GetReadyState() != Wpn.GetReadyState()) {
     Player.SetViewObject(Sist);
-    PlayerEx(Owner.Player).SetViewState(ps_weapon, Sist.GetReadyState());
+    PlayerEx(Owner.Player).SetViewState(PS_WEAPON, Sist.GetReadyState());
   }
 }
 

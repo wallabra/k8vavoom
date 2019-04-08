@@ -2537,16 +2537,16 @@ final state FindJumpState (name Label) {
     return st;
   }
   if (bIsPlayer) {
-    if (XLevel.CallingState == Player.ViewStates[ps_weapon].State) {
+    if (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (ps_weapon) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
-    if (XLevel.CallingState == Player.ViewStates[ps_flash].State) {
+    if (XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (ps_flash) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
   }
@@ -2566,12 +2566,12 @@ final state FindJumpState (name Label) {
 final void DoJump (state State) {
   if (XLevel.StateCall) {
     XLevel.StateCall->State = State;
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_weapon].State) {
+  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(ps_weapon, State);
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_flash].State) {
+    Player.SetViewState(PS_WEAPON, State);
+  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(ps_flash, State);
+    Player.SetViewState(PS_FLASH, State);
   } else {
     SetState(State);
   }

@@ -95,33 +95,33 @@ final void decorate_A_Lower (optional float lowerspeed) {
   if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
 
   if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
-    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
   } else {
     // FIXME!!
     if (Level.Game.frametime < 1.0/35.0) {
-      Player.ViewStates[ps_weapon].SY += lowerspeed;
+      Player.ViewStates[PS_WEAPON].SY += lowerspeed;
     } else {
-      Player.ViewStates[ps_weapon].SY += lowerspeed*35.0*Level.Game.frametime;
+      Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
     }
   }
 
-  if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
+  if (Player.ViewStates[PS_WEAPON].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
 
   if (Player.PlayerState == PST_DEAD) {
     // player is dead, so don't bring up a pending weapon
-    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
     return;
   }
 
   if (Player.MO.Health <= 0) {
     // player is dead, so keep the weapon off screen
     Player.SetViewObject(none);
-    Player.SetViewState(ps_weapon, none);
+    Player.SetViewState(PS_WEAPON, none);
     return;
   }
 
   // clear flash state, needed for Strife
-  Player.SetViewState(ps_flash, none);
+  Player.SetViewState(PS_FLASH, none);
 
   if (!pending) {
     PlayerEx(Player).SetWeapon(none);
@@ -161,18 +161,18 @@ final void decorate_A_Raise (optional float raisespeed) {
 
   // FIXME!!
   if (Level.Game.frametime < 1.0/35.0) {
-    Player.ViewStates[ps_weapon].SY -= raisespeed;
+    Player.ViewStates[PS_WEAPON].SY -= raisespeed;
   } else {
-    Player.ViewStates[ps_weapon].SY -= raisespeed*35.0*Level.Game.frametime;
+    Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
   }
 
-  if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
-  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
+  if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
+  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
   Player.SetViewObject(Wpn);
   if (Wpn) {
-    Player.SetViewState(ps_weapon, Wpn.GetReadyState());
+    Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
   } else {
-    Player.SetViewState(ps_weapon, none);
+    Player.SetViewState(PS_WEAPON, none);
   }
 }
 
@@ -275,7 +275,7 @@ final void decorate_A_GunFlash (optional name newstate, optional int flags) {
   if (!specified_newstate) newstate = 'Flash';
 
   if (MeleeState) SetState(MeleeState);
-  if (newstate && !(flags&1)) Player.SetViewState(ps_flash, Wpn.FindState(newstate));
+  if (newstate && !(flags&1)) Player.SetViewState(PS_FLASH, Wpn.FindState(newstate));
 }
 
 
@@ -768,7 +768,7 @@ final void A_FirePistol () {
     if (Wpn) {
       if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
       Player.SetViewObject(Wpn);
-      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
       if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -804,7 +804,7 @@ final void A_FireShotgun () {
   if (Wpn) {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -833,7 +833,7 @@ final void A_FireShotgun2 () {
   if (Wpn) {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 2)) return;
     Player.SetViewObject(Wpn);
-    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
     if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -900,10 +900,10 @@ final void A_FireCGun () {
   if (Wpn) {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
     Player.SetViewObject(Wpn);
-    if (Player.ViewStates[ps_weapon].State == Wpn.GetAttackState(false)) {
-      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    if (Player.ViewStates[PS_WEAPON].State == Wpn.GetAttackState(false)) {
+      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
     } else {
-      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+      Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
@@ -948,9 +948,9 @@ final void A_FirePlasma () {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
     Player.SetViewObject(Wpn);
     if (!(P_Random()&1)) {
-      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
     } else {
-      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+      Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
     decal = Wpn.DecalName;
   }
@@ -970,9 +970,9 @@ final void DoFireRailgun (float Offset) {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
     Player.SetViewObject(Wpn);
     if (!(P_Random()&1)) {
-      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
     } else {
-      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+      Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
   }
   int RailDamage = (Level.Game.deathmatch ? 100 : 150);

@@ -37,7 +37,7 @@ override void MorphPlayerThink()
   if (Health > 0)
   {
     // Handle beak movement
-    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP +
       float(PlayerEx(Player).ChickenPeck) / 2.0;
   }
   if (int(32.0 * PlayerEx(Player).MorphTime) & 15)

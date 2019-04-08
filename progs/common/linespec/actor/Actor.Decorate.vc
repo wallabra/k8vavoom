@@ -109,8 +109,8 @@ final void decorate_A_RetDoJump (state State) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
        if (XLevel.StateCall) XLevel.StateCall->State = State;
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_weapon].State) Player.SetViewState(ps_weapon, State);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_flash].State) Player.SetViewState(ps_flash, State);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, State);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, State);
   else SetState(State);
 }
 
