@@ -798,6 +798,25 @@ final void A_SpawnParticle (string color1, optional int flags, optional int life
 
 //==========================================================================
 //
+//  A_JumpIfTracerCloser
+//
+//==========================================================================
+final state A_JumpIfTracerCloser (float distance, state label, optional bool noz) {
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!Tracer) return none;
+  distance = fmax(0, distance);
+  float dist = (noz ? DistTo(Tracer) : DistTo2(Tracer));
+  if (dist < distance) {
+    DoJump(label);
+    return label;
+  } else {
+    return none;
+  }
+}
+
+
+//==========================================================================
+//
 //  A_k8MoveBy
 //
 //==========================================================================
