@@ -38,7 +38,8 @@ static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive)
 static VCvarI hud_font_color("hud_font_color", "11", "Font color.", CVAR_Archive);
 static VCvarI hud_font_color_centered("hud_font_color_centered", "11", "Secondary font color.", CVAR_Archive);
 
-VField *VBasePlayer::fldPendingWeapon = nullptr;
+//VField *VBasePlayer::fldPendingWeapon = nullptr;
+//VField *VBasePlayer::fldReadyWeapon = nullptr;
 
 
 struct SavedVObjectPtr {
@@ -197,6 +198,9 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *
 //
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
+  if (position < 0 || position >= NUMPSPRITES) return; // sanity check
+  if (position == PS_WEAPON && !stnum) ViewStates[PS_WEAPON_OVL].State = nullptr;
+  //if (position == PS_WEAPON_OVL /*&& stnum*/) GCon->Logf("ticking OVERLAY (%s)", (stnum ? "tan" : "ona"));
   /*
   if (!fldPendingWeapon) {
     fldPendingWeapon = GetClass()->FindFieldChecked("PendingWeapon");
@@ -209,6 +213,40 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
   //fprintf(stderr, "VBasePlayer::SetViewState(%s): route=<%s>\n", GetClass()->GetName(), (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<fuck>"));
   //VField *VBasePlayer::fldPendingWeapon = nullptr;
   //fprintf(stderr, "  VBasePlayer::SetViewState: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
+  if (position == PS_WEAPON && stnum) {
+    static VClass *WeaponClass = nullptr;
+    if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
+    if (!fldReadyWeapon) {
+      fldReadyWeapon = GetClass()->FindFieldChecked("ReadyWeapon");
+      if (fldReadyWeapon->Type.Type != TYPE_Reference) Sys_Error("'ReadyWeapon' in playerpawn should be a reference");
+    }
+    if (WeaponClass) {
+      VObject *wobj = fldReadyWeapon->GetObjectValue(this);
+      if (wobj != lastReadyWeapon) {
+        lastReadyWeapon = wobj;
+        if (wobj && wobj->GetClass()->IsChildOf(WeaponClass)) {
+          VEntity *wpn = (VEntity *)wobj;
+          lastReadyWeaponReadyState = wpn->FindState("Ready");
+          //GCon->Logf("WEAPON CHANGED TO '%s'", *wpn->GetClass()->Name);
+          SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
+          /*
+          ViewStates[PS_WEAPON_OVL].State = wpn->FindState("Display");
+          if (ViewStates[PS_WEAPON_OVL].State) {
+            GCon->Logf("WEAPON CHANGED TO '%s', 'Display' substate found", *wpn->GetClass()->Name);
+          }
+          */
+        } else {
+          lastReadyWeaponReadyState = nullptr;
+          ViewStates[PS_WEAPON_OVL].State = nullptr;
+        }
+      }
+      /*
+      if (lastReadyWeaponReadyState == stnum) {
+        GCon->Logf("SetViewState: %s", *stnum->Name);
+      }
+      */
+    }
+  }
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
   int watchcatCount = 1024;
@@ -267,6 +305,11 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through
   //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
+  if (position == PS_WEAPON && !VSt.State) {
+    ViewStates[PS_WEAPON_OVL].State = nullptr;
+    DispSpriteFrame[PS_WEAPON_OVL] = 0;
+    DispSpriteName[PS_WEAPON_OVL] = NAME_None;
+  }
 }
 
 
@@ -277,7 +320,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
 //==========================================================================
 void VBasePlayer::AdvanceViewStates (float deltaTime) {
   if (deltaTime <= 0.0f) return;
-  for (int i = 0; i < NUMPSPRITES; ++i) {
+  for (unsigned i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
     // a null state means not active
     if (St.State) {

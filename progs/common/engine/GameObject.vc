@@ -72,6 +72,7 @@ enum {
 enum {
   PS_WEAPON,
   PS_FLASH,
+  PS_WEAPON_OVL,
   NUMPSPRITES
 };
 

@@ -138,6 +138,12 @@ native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
+private native transient void *fldPendingWeapon;
+private native transient void *fldReadyWeapon;
+
+private native transient Object lastReadyWeapon;
+private native transient state lastReadyWeaponReadyState;
+
 
 replication {
   reliable if (!bIsClient)

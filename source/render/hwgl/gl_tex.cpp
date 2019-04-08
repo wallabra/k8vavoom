@@ -249,7 +249,9 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 
   if (SrcTex->Type == TEXTYPE_Null) {
     // fuckin' idiots
-    GCon->Logf(NAME_Warning, "somwthing is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
+    if (SrcTex->Name != NAME_None) {
+      GCon->Logf(NAME_Warning, "something is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
+    }
     check(SrcTex->GetWidth() > 0);
     check(SrcTex->GetHeight() > 0);
     rgba_t *dummy = (rgba_t *)Z_Calloc(SrcTex->GetWidth()*SrcTex->GetHeight()*sizeof(rgba_t));

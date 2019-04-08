@@ -1050,6 +1050,8 @@ void MovePsprites (float deltaTime) {
   AdvanceViewStates(deltaTime);
   ViewStates[PS_FLASH].SX = ViewStates[PS_WEAPON].SX;
   ViewStates[PS_FLASH].SY = ViewStates[PS_WEAPON].SY;
+  ViewStates[PS_WEAPON_OVL].SX = ViewStates[PS_WEAPON].SX;
+  ViewStates[PS_WEAPON_OVL].SY = ViewStates[PS_WEAPON].SY;
 }
 
 

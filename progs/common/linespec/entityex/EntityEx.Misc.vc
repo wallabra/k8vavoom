@@ -2549,6 +2549,12 @@ final state FindJumpState (name Label) {
       if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
+    if (XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
+      if (!PlayerEx(Player).ReadyWeapon) return none;
+      state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      return res;
+    }
   }
   state res = FindState(Label);
   if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
@@ -2572,6 +2578,9 @@ final void DoJump (state State) {
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
     Player.SetViewState(PS_FLASH, State);
+  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
+    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
+    Player.SetViewState(PS_WEAPON_OVL, State);
   } else {
     SetState(State);
   }

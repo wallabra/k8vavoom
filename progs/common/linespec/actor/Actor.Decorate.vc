@@ -111,6 +111,7 @@ final void decorate_A_RetDoJump (state State) {
        if (XLevel.StateCall) XLevel.StateCall->State = State;
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, State);
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, State);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, State);
   else SetState(State);
 }
 

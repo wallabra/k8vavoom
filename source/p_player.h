@@ -43,6 +43,7 @@ enum {
 enum psprnum_t {
   PS_WEAPON,
   PS_FLASH, // only DOOM uses it
+  PS_WEAPON_OVL, // temporary hack
   NUMPSPRITES
 };
 
@@ -90,8 +91,6 @@ class VBasePlayer : public VGameObject {
   NO_DEFAULT_CONSTRUCTOR(VBasePlayer)
 
   enum { TOCENTRE = -128 };
-
-  static VField *fldPendingWeapon;
 
   VLevelInfo *Level;
 
@@ -185,6 +184,12 @@ class VBasePlayer : public VGameObject {
   VClientGameBase *ClGame;
 
   VPlayerReplicationInfo *PlayerReplicationInfo;
+
+  VField *fldPendingWeapon;
+  VField *fldReadyWeapon;
+
+  VObject *lastReadyWeapon;
+  VState *lastReadyWeaponReadyState;
 
 private:
   inline void UpdateDispFrameFrom (int idx, const VState *st) {
