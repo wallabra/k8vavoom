@@ -54,6 +54,7 @@ final bool CheckMissileSpawn () {
 
   // move a little forward so an angle can be computed if it immediately explodes
   UnlinkFromWorld();
+  bIntrJustMoved = false; // disable movement interpolation
   if (Speed > 100.0*35.0) {
     // ultra-fast missile
     Origin += Velocity*0.0142857143/8.0;

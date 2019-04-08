@@ -32,6 +32,7 @@
 //==========================================================================
 final void A_MntrFloorFire () {
   Origin.z = FloorZ;
+  bIntrJustMoved = false; // disable interpolation
   Actor A = Spawn(MinotaurFX3, vector(Origin.x+(Random()-Random())*4.0, Origin.y+(Random()-Random())*4.0, ONFLOORZ));
   A.Target = Target;
   A.Velocity.x = 0.00001; // force block checking

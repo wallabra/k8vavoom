@@ -201,6 +201,12 @@ struct tmtrace_t {
 // info for drawing: position
 TVec Origin;
 
+// for smooth movement
+native transient TVec PrevOrigin;
+native transient float LastMoveTime;
+native transient float LastMoveDuration;
+native transient bool bIntrJustMoved;
+
 // momentums, used to update position
 TVec Velocity;
 
@@ -790,16 +796,17 @@ void CalcFakeZMovement(out TVec Ret, float DeltaTime)
 {
 }
 
+
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-final void SetOrigin(TVec NewOrigin, optional bool properFloorCheck)
-{
+final void SetOrigin (TVec NewOrigin, optional bool properFloorCheck) {
   UnlinkFromWorld();
   Origin = NewOrigin;
+  PrevOrigin = NewOrigin;
+  bIntrJustMoved = false;
   LinkToWorld(properFloorCheck:properFloorCheck!optional);
 }
 

@@ -87,6 +87,8 @@ extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
 extern VCvarB r_decals_wall_alpha;
 
+VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Dump built list of visible things?", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -196,8 +198,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
 void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
   int spr_type = thing->SpriteType;
 
-  TVec sprorigin = thing->Origin;
-  sprorigin.z -= thing->FloorClip;
+  TVec sprorigin = thing->GetDrawOrigin();
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);

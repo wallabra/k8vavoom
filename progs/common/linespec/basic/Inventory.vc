@@ -198,6 +198,7 @@ final void BecomeItem () {
   UnlinkFromWorld();
   bNoSector = true;
   bNoBlockmap = true;
+  bIntrJustMoved = false; // disable movement interpolation
   LinkToWorld();
   SetTID(0);
   bSpecial = false;
@@ -215,6 +216,7 @@ final void BecomePickup () {
   UnlinkFromWorld();
   bNoSector = false;
   bNoBlockmap = false;
+  bIntrJustMoved = false; // disable movement interpolation
   LinkToWorld(properFloorCheck:true);
   bSpecial = default.bSpecial;
   SetState(IdleState);

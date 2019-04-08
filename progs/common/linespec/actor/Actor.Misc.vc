@@ -416,6 +416,7 @@ final void A_BeShadowyFoe () {
 final void A_FreeTargMobj () {
   Velocity = vector(0.0, 0.0, 0.0);
   Origin.z = CeilingZ+4.0;
+  bIntrJustMoved = false; // disable interpolation
   Gravity = 1.0;
   bSolid = false;
   bShootable = false;
@@ -632,6 +633,7 @@ final void A_LayToFloorWithYaw (float yaw) {
     //Angles.yaw = yaw;
   }
   Origin.z = tmtrace.FloorZ;
+  bIntrJustMoved = false; // disable interpolation
 }
 
 
@@ -675,6 +677,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
     //Angles.yaw = yaw;
   }
   Origin.z = tmtrace.CeilingZ-Height;
+  bIntrJustMoved = false; // disable interpolation
 }
 
 
@@ -710,6 +713,7 @@ final void A_LayToFloorWithYawSprite (float yaw) {
     //Angles.yaw = yaw;
   }
   Origin.z = tmtrace.FloorZ;
+  bIntrJustMoved = false; // disable interpolation
 }
 
 
@@ -744,6 +748,7 @@ final void A_LayToCeilingWithYawSprite (float yaw) {
     //Angles.yaw = yaw;
   }
   Origin.z = tmtrace.CeilingZ-Height;
+  bIntrJustMoved = false; // disable interpolation
 }
 
 

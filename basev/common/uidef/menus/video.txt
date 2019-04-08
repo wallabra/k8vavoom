@@ -133,6 +133,18 @@ menudef VideoOptions {
     help = "You can turn off pickup model bobbing here.";
   }
 
+  option bool {
+    title = "Model Frame Interpolation";
+    cvar = r_interpolate_frames;
+    help = "Interpolate model animation if it has interstate frames?";
+  }
+
+  option bool {
+    title = "Sprite Movement Interpolation";
+    cvar = r_interpolate_thing_movement;
+    help = "Interpolate thing/monster movement?";
+  }
+
 
   header "Visual Hacks";
 

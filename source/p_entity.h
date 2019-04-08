@@ -139,6 +139,15 @@ class VEntity : public VThinker {
   // info for drawing: position
   TVec Origin;
 
+  // for smooth movement
+  TVec PrevOrigin;
+  float LastMoveTime;
+  float LastMoveDuration;
+  enum {
+    MVF_JustMoved = 1u<<0,
+  };
+  vuint32 MoveFlags;
+
   // momentums, used to update position
   TVec Velocity;
 
@@ -310,6 +319,8 @@ public:
   void SetTID (int);
   void InsertIntoTIDList (int);
   void RemoveFromTIDList ();
+
+  TVec GetDrawOrigin ();
 
   inline VEntity *GetTopOwner () {
     VEntity *Ret = this;

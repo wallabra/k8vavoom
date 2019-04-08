@@ -928,10 +928,13 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
 
   //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, tomove.Angles, Angles.pitch, newa.pitch);
 
+  tomove.PrevOrigin = tomove.Origin;
+  tomove.LastMoveTime = XLevel.Time;
   tomove.UnlinkFromWorld();
   tomove.Origin = dest;
   tomove.Angles = newa;
   tomove.LinkToWorld();
+  tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
 
        if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
   else if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;
@@ -957,6 +960,7 @@ final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) 
   Origin.y += dy;
   Origin.z += dz;
   if (dx || dy) LinkToWorld(properFloorCheck:true);
+  bIntrJustMoved = false; // disable movement interpolation
 }
 
 
@@ -973,6 +977,7 @@ final void A_k8MoveTo (optional float nx, optional float ny, optional float nz) 
   if (specified_ny) Origin.y = ny;
   if (specified_nz) Origin.z = nz;
   if (specified_nx || specified_ny) LinkToWorld(properFloorCheck:true);
+  bIntrJustMoved = false; // disable movement interpolation
 }
 
 

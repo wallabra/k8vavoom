@@ -182,6 +182,7 @@ final void decorate_A_Fire (optional int Height) {
   } else {
     Origin.z = Tracer.Origin.z+float(Height);
   }
+  bIntrJustMoved = false; // disable movement interpolation
   LinkToWorld();
 }
 

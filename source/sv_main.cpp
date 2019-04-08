@@ -30,11 +30,11 @@
 #include "cl_local.h"
 
 /*
-double FrameTime = 1.0f/35.0f;
+static double FrameTime = 1.0f/35.0f;
 // round a little bit up to prevent "slow motion"
 *(vuint64 *)&FrameTime += 1;
 */
-const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
 
 
 static void G_DoReborn (int playernum);

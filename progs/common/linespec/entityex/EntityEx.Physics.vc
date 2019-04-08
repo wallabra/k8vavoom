@@ -99,6 +99,7 @@ bool Physics (float DeltaTime) {
     if (Velocity || !bNoBlockmap) {
       // move, and unlink from blockmap
       UnlinkFromWorld();
+      bIntrJustMoved = false; // disable movement interpolation
       // it is safe to change this flag here
       bNoBlockmap = true;
       // it is safe to change origin here

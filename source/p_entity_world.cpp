@@ -35,9 +35,17 @@
 #define WATER_SINK_FACTOR  (3.0f)
 #define WATER_SINK_SPEED   (0.5f)
 
+/*
+static double FrameTime = 1.0f/35.0f;
+// round a little bit up to prevent "slow motion"
+*(vuint64 *)&FrameTime += 1;
+*/
+static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
+extern VCvarB r_interpolate_thing_movement;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -236,6 +244,8 @@ void VEntity::CreateSecNodeList () {
 //
 //==========================================================================
 void VEntity::UnlinkFromWorld () {
+  //!MoveFlags &= ~MVF_JustMoved;
+
   if (!SubSector) return;
 
   if (!(EntityFlags&EF_NoSector)) {
@@ -294,6 +304,9 @@ void VEntity::UnlinkFromWorld () {
 //==========================================================================
 void VEntity::LinkToWorld (bool properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
+
+  //!PrevOrigin = Origin;
+  //!MoveFlags &= ~MVF_JustMoved;
 
   // link into subsector
   subsector_t *ss = XLevel->PointInSubsector(Origin);
@@ -1070,6 +1083,35 @@ void VEntity::BlockedByLine (line_t *ld) {
 
 //==========================================================================
 //
+//  VEntity::GetDrawOrigin
+//
+//==========================================================================
+TVec VEntity::GetDrawOrigin () {
+  TVec sprorigin = Origin;
+  // movement interpolation
+  if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
+    float ctt = XLevel->Time-LastMoveTime;
+    if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
+      TVec delta = (Origin-PrevOrigin);
+      if (/*delta.lengthSquared() < 32.0f*32.0f*/!delta.isZero()) {
+        sprorigin = PrevOrigin;
+        delta *= ctt/LastMoveDuration;
+        //if (!delta.isZero()) GCon->Logf("%s: dur=%f; ctt=%f; t=%f; delta=(%f,%f,%f); full=(%f,%f,%f)", *GetClass()->GetFullName(), LastMoveDuration, ctt, ctt/LastMoveDuration, delta.x, delta.y, delta.z, (PrevOrigin-sprorigin).x, (PrevOrigin-sprorigin).y, (PrevOrigin-sprorigin).z);
+        sprorigin += delta;
+      } else {
+        MoveFlags &= ~VEntity::MVF_JustMoved;
+      }
+    } else {
+      MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
+  }
+  sprorigin.z -= FloorClip;
+  return sprorigin;
+}
+
+
+//==========================================================================
+//
 //  VEntity::TryMove
 //
 //  Attempt to move to a new position, crossing special lines.
@@ -1241,6 +1283,12 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   Origin = newPos;
 
   LinkToWorld();
+
+  // for interpolator
+  PrevOrigin = oldorg;
+  LastMoveTime = XLevel->Time;
+  MoveFlags |= MVF_JustMoved;
+
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
   DropOffZ = tmtrace.DropOffZ;

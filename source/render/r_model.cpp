@@ -44,6 +44,8 @@ static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "S
 static VCvarB r_model_autorotating("r_model_autorotating", true, "Allow model autorotation?", CVAR_Archive);
 static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model autobobbing?", CVAR_Archive);
 
+extern VCvarB r_interpolate_thing_movement;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
@@ -1753,6 +1755,10 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
 {
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
   //VState *DispState = Ent->State; //FIXME: skipframes
+
+  // movement interpolation
+  TVec sprorigin = Ent->GetDrawOrigin();
+
   // check if we want to interpolate model frames
   const bool Interpolate = r_interpolate_frames;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
@@ -1762,14 +1768,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
     }
     VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
     if (!Mdl) return false;
-    return DrawAliasModel(Ent, Ent->Origin-TVec(0, 0, Ent->FloorClip),
+    return DrawAliasModel(Ent, sprorigin,
       Ent->Angles, Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
-    return DrawAliasModel(Ent, Ent->GetClass()->Name, Ent->Origin-TVec(0, 0, Ent->FloorClip),
+    return DrawAliasModel(Ent, Ent->GetClass()->Name, sprorigin,
       Ent->Angles, Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,

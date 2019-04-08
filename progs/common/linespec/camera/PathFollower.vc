@@ -269,6 +269,9 @@ bool Interpolate () {
   if ((Args[2]&8) && Time > 0.0) TempOrg = Origin;
 
   UnlinkFromWorld();
+  PrevOrigin = Origin;
+  LastMoveTime = XLevel.Time;
+  bIntrJustMoved = true; // enable movement interpolation
   if (Args[2]&1) {
     // linear
     Origin.x = Lerp(CurrNode.Origin.x, CurrNode.NextPoint.Origin.x);

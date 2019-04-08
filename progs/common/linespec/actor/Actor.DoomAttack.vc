@@ -453,6 +453,7 @@ final void A_SkelMissile () {
   if (A) {
     A.UnlinkFromWorld();
     A.Origin = A.Origin+A.Velocity*0.03;
+    A.bIntrJustMoved = false; // disable movement interpolation
     A.LinkToWorld();
     A.Tracer = Target;
     A.bSeekerMissile = true;
@@ -644,6 +645,7 @@ final void A_VileAttack (optional string sound, optional int initialdamage,
   fire.UnlinkFromWorld();
   fire.Origin.x = Target.Origin.x-24.0*cos(Angles.yaw);
   fire.Origin.y = Target.Origin.y-24.0*sin(Angles.yaw);
+  fire.bIntrJustMoved = false; // disable movement interpolation
   fire.LinkToWorld();
 
   if (!specified_blastdamage) blastdamage = 70;
@@ -912,6 +914,7 @@ final void decorate_A_Mushroom (optional class!Actor SpawnType,
       target.UnlinkFromWorld();
       target.Origin.x = Origin.x+float(i);
       target.Origin.y = Origin.y+float(j);
+      target.bIntrJustMoved = false; // disable movement interpolation
       target.LinkToWorld();
       // aim up fairly high
       target.Origin.z = Origin.z+Length(vector(float(i), float(j), 0.0))*(vrange ? vrange : 4.0);

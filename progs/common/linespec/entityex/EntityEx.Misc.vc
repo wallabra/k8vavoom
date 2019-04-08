@@ -46,6 +46,7 @@ override void Destroyed () {
 //==========================================================================
 final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional float moreHeight) {
   UnlinkFromWorld();
+  bIntrJustMoved = false; // disable movement interpolation
 
   Origin = origin;
 
@@ -241,9 +242,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
 
   // the move is ok,
   // so link the thing into its new position
-  UnlinkFromWorld();
-  Origin = org;
-  LinkToWorld(properFloorCheck:true);
+  SetOrigin(org, properFloorCheck:true);
   if (org.z == ONFLOORZ) Origin.z = FloorZ;
 
   return true;
@@ -308,6 +307,7 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
     // no fog doesn't alter the player's momentums
     Velocity = vector(0.0, 0.0, 0.0);
   }
+  bIntrJustMoved = false; // disable movement interpolation
   return true;
 }
 
@@ -324,6 +324,7 @@ override bool MoveThing (TVec Pos, bool Fog) {
   Origin = Pos;
   LinkToWorld(properFloorCheck:true); //k8: really?
   if (TestLocation()) {
+    bIntrJustMoved = false; // disable movement interpolation
     if (Fog) {
       Spawn(TeleportFog, Pos+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
       Spawn(TeleportFog, OldOrg+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
@@ -332,7 +333,7 @@ override bool MoveThing (TVec Pos, bool Fog) {
   } else {
     UnlinkFromWorld();
     Origin = OldOrg;
-    LinkToWorld(properFloorCheck:true);
+    LinkToWorld(properFloorCheck:false);
     return false;
   }
 }
@@ -1382,15 +1383,47 @@ override void Tick (float deltaTime) {
 
   if (JumpTime) JumpTime = fmax(0, JumpTime-deltaTime);
 
+  TVec lastOrg = Origin;
+  bool lastInterp = bIntrJustMoved;
+  bIntrJustMoved = true; // teleports and others will reset it
+
+  // physics is already interpolated
   if (!Physics(deltaTime)) return;
+
+  if (bIntrJustMoved) {
+    if (lastInterp) {
+      TVec delta = Origin-lastOrg;
+      if (delta) PrevOrigin += delta;
+      bIntrJustMoved = true;
+    } else {
+      bIntrJustMoved = false;
+    }
+  }
 
   // cycle through states, calling action functions at transitions
   if (StateTime != -1.0) {
     //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK! 000", self);
+    bool stateChange = (State && StateTime-deltaTime <= 0);
+    lastOrg = Origin;
+    lastInterp = bIntrJustMoved;
+    bIntrJustMoved = true; // teleports and others will reset it
     if (!AdvanceState(deltaTime)) {
       // freed itself
       //if (self isa PlayerPawn) print("*** *** PLAYERPAWN(%C): TICK! 001", self);
       return;
+    }
+    if (stateChange && bIntrJustMoved) {
+      TVec delta = Origin-lastOrg;
+      if (delta) {
+        // moved
+        PrevOrigin = lastOrg;
+        LastMoveTime = XLevel.Time;
+        LastMoveDuration = StateTime;
+      } else {
+        bIntrJustMoved = false;
+      }
+    } else {
+      bIntrJustMoved = lastInterp;
     }
   } else {
     // check for nightmare respawn

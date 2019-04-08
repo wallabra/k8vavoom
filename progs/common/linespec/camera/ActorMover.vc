@@ -127,6 +127,7 @@ override bool Activate (EntityEx Activator) {
     Tracer.UnlinkFromWorld();
     Tracer.bNoBlockmap = true;
     Tracer.bSolid = false;
+    Tracer.bIntrJustMoved = false; // disable movement interpolation
     Tracer.LinkToWorld();
   }
   if (Tracer.bMonster) Tracer.bDormant = true;
@@ -145,6 +146,7 @@ override bool Deactivate (EntityEx Activator) {
     Tracer.bSolid = bSavedSolid;
     Tracer.bNoGravity = bSavedNoGravity;
     Tracer.UnlinkFromWorld();
+    Tracer.bIntrJustMoved = false; // disable movement interpolation
     Tracer.bNoBlockmap = bSavedNoBlockmap;
     Tracer.LinkToWorld(properFloorCheck:Tracer.bMonster);
     Tracer.bDormant = bSavedDormant;
