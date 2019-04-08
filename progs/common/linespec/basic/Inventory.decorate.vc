@@ -99,12 +99,15 @@ final void decorate_A_Lower (optional float lowerspeed) {
   if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
   if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
 
+  float prevsy = Player.ViewStates[PS_WEAPON].SY;
+
   Player.PSpriteWeaponLoweringStartTime = 0;
   Player.PSpriteWeaponLoweringDuration = 0;
-  Player.PSpriteWeaponLowerPrev = Player.ViewStates[PS_WEAPON].SY;
+  Player.PSpriteWeaponLowerPrev = prevsy;
 
   if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
     Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+    prevsy = Weapon::WEAPONBOTTOM;
   } else {
     // FIXME!!
     /*
@@ -117,7 +120,9 @@ final void decorate_A_Lower (optional float lowerspeed) {
     Player.ViewStates[PS_WEAPON].SY += lowerspeed;
   }
 
-  if (Player.ViewStates[PS_WEAPON].SY < Weapon::WEAPONBOTTOM) {
+  float sy = Player.ViewStates[PS_WEAPON].SY;
+
+  if (sy < Weapon::WEAPONBOTTOM) {
     // not lowered all the way yet
     Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
     Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
@@ -135,6 +140,12 @@ final void decorate_A_Lower (optional float lowerspeed) {
     Player.SetViewObject(none);
     Player.SetViewState(PS_WEAPON, none);
     return;
+  }
+
+  if (prevsy < Weapon::WEAPONTOP) {
+    // lower last time
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
   }
 
   // clear flash state, needed for Strife
@@ -180,9 +191,11 @@ final void decorate_A_Raise (optional float raisespeed) {
 
   //print("RAISING %C: curr=%s; top=%s; bot=%s; speed=%s; time=%s", Wpn, Player.ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM, raisespeed, Player.ViewStates[PS_WEAPON].StateTime);
 
+  float prevsy = Player.ViewStates[PS_WEAPON].SY;
+
   Player.PSpriteWeaponLoweringStartTime = 0;
   Player.PSpriteWeaponLoweringDuration = 0;
-  Player.PSpriteWeaponLowerPrev = Player.ViewStates[PS_WEAPON].SY;
+  Player.PSpriteWeaponLowerPrev = prevsy;
 
   // FIXME!!
   /*
@@ -192,13 +205,20 @@ final void decorate_A_Raise (optional float raisespeed) {
     Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
   }
   */
-  Player.ViewStates[PS_WEAPON].SY -= raisespeed;
+  float sy = prevsy-raisespeed;
+  Player.ViewStates[PS_WEAPON].SY = sy;
 
-  if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) {
+  if (sy > Weapon::WEAPONTOP) {
     // not raised all the way yet
     Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
     Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
     return;
+  }
+
+  if (prevsy > Weapon::WEAPONTOP) {
+    // raise last time
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
   }
 
   Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
