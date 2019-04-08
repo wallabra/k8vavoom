@@ -147,6 +147,7 @@ void VRenderLevelShared::ClearReferences () {
 //  VRenderLevelShared::MarkLights
 //
 //==========================================================================
+/*
 void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum) {
   if (bspnum&NF_SUBSECTOR) {
     const int num = (bspnum != -1 ? bspnum&(~NF_SUBSECTOR) : 0);
@@ -172,6 +173,7 @@ void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, i
     if (dist < light->radius-light->minlight) MarkLights(light, bit, node->children[1], lleafnum);
   }
 }
+*/
 
 
 //==========================================================================
@@ -192,6 +194,8 @@ void VRenderLevelShared::PushDlights () {
       dlinfo[i].leafnum = -1;
       continue;
     }
+    l->origin = l->origOrigin;
+    if (l->Owner && l->Owner->GetClass()->IsChildOf(VEntity::StaticClass())) l->origin += ((VEntity *)l->Owner)->GetDrawDelta();
     dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
     //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
@@ -382,6 +386,13 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
   if (!lightid && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+
+  dl->origOrigin = lorg;
+  if (Owner) {
+    if (Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
+      dl->origin += ((VEntity *)Owner)->GetDrawDelta();
+    }
+  }
 
   return dl;
 }

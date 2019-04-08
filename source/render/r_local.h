@@ -508,7 +508,7 @@ protected:
 
   // yes, non-virtual
   // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)
-  void MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum);
+  //void MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum);
 
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
   virtual void PushDlights ();

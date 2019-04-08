@@ -321,6 +321,9 @@ public:
   void RemoveFromTIDList ();
 
   TVec GetDrawOrigin ();
+  // this returns only interpolated delta (from current origin to previous origin!)
+  // used in dynamic light rendering
+  TVec GetDrawDelta ();
 
   inline VEntity *GetTopOwner () {
     VEntity *Ret = this;

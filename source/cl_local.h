@@ -46,6 +46,7 @@ struct dlight_t {
   vint32 lightid;
   TVec coneDirection;
   float coneAngle; // 0 means "point light", otherwise it is spotlight
+  TVec origOrigin;
   // flags
   vuint32 flags;
   enum {

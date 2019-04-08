@@ -1087,7 +1087,8 @@ void VEntity::BlockedByLine (line_t *ld) {
 //
 //==========================================================================
 TVec VEntity::GetDrawOrigin () {
-  TVec sprorigin = Origin;
+  TVec sprorigin = Origin+GetDrawDelta();
+#if 0
   // movement interpolation
   if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
     float ctt = XLevel->Time-LastMoveTime;
@@ -1105,8 +1106,34 @@ TVec VEntity::GetDrawOrigin () {
       MoveFlags &= ~VEntity::MVF_JustMoved;
     }
   }
+#endif
   sprorigin.z -= FloorClip;
   return sprorigin;
+}
+
+
+//==========================================================================
+//
+//  VEntity::GetDrawDelta
+//
+//==========================================================================
+TVec VEntity::GetDrawDelta () {
+  // movement interpolation
+  if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
+    float ctt = XLevel->Time-LastMoveTime;
+    if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
+      TVec delta = (Origin-PrevOrigin);
+      if (/*delta.lengthSquared() < 32.0f*32.0f*/!delta.isZero()) {
+        delta *= ctt/LastMoveDuration;
+        return (PrevOrigin+delta)-Origin;
+      } else {
+        MoveFlags &= ~VEntity::MVF_JustMoved;
+      }
+    } else {
+      MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
+  }
+  return TVec(0.0f, 0.0f, 0.0f);
 }
 
 
