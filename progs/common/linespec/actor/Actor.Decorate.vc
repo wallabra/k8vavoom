@@ -860,9 +860,12 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
   }
   if (!tgt) return false;
 
+  EntityEx tomove = self;
+
   if (flags&WARPF_MOVEPTR) {
-    print("%C: A_Warp(WARPF_MOVEPTR) is not supported yet!", self);
-    return false;
+    //print("%C: A_Warp(WARPF_MOVEPTR) is not supported yet!", self);
+    //return false;
+    tomove = tgt;
   }
 
 
@@ -901,7 +904,7 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
 
   dest += vector(tgt.Radius*radiusoffset, tgt.Radius*radiusoffset, tgt.Height*heightoffset);
 
-  TAVec newa = Angles;
+  TAVec newa = tomove.Angles;
   if (!(flags&WARPF_USECALLERANGLE)) newa.yaw = tgt.Angles.yaw;
 
   if (flags&WARPF_ABSOLUTEANGLE) {
@@ -917,20 +920,20 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
   }
 
   if (!(flags&WARPF_NOCHECKPOSITION)) {
-    if (!CheckPosition(dest)) return false;
+    if (!tomove.CheckPosition(dest)) return false;
   }
 
   if (flags&WARPF_TESTONLY) return true;
 
-  //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, Angles, Angles.pitch, newa.pitch);
+  //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, tomove.Angles, Angles.pitch, newa.pitch);
 
-  UnlinkFromWorld();
-  Origin = dest;
-  Angles = newa;
-  LinkToWorld();
+  tomove.UnlinkFromWorld();
+  tomove.Origin = dest;
+  tomove.Angles = newa;
+  tomove.LinkToWorld();
 
-       if (flags&WARPF_STOP) Velocity = vector(0, 0, 0);
-  else if (flags&WARPF_COPYVELOCITY) Velocity = tgt.Velocity;
+       if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
+  else if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;
 
   if (success_state) {
     DoJump(success_state);

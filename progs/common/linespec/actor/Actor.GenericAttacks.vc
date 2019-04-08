@@ -138,7 +138,7 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
       }
       if (Flags&CMF_OFFSETPITCH) Pitch += A.Angles.pitch;
       if (Flags&CMF_SAVEPITCH) A.Angles.pitch = Pitch;
-      if (Flags&CMF_SAVEPITCH) print("%C: saved pitch is %s", self, Pitch);
+      //if (Flags&CMF_SAVEPITCH) print("%C: saved pitch is %s", self, Pitch);
     }
   } else if (Flags&CMF_CHECKTARGETDEAD) {
     //k8: ???
