@@ -1037,6 +1037,16 @@ final void SetupPsprites () {
 //
 //==========================================================================
 void MovePsprites (float deltaTime) {
+  // moved here, so weapon can bob independently
+  Weapon wpn = Weapon(ReadyWeapon);
+  if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
+    // bob the weapon based on movement speed
+    float angle = AngleMod360(180.0*MO.XLevel.Time);
+    ViewStates[ps_weapon].SX = 1.0+Bob*cos(angle);
+    if (angle >= 180.0) angle -= 180.0;
+    ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+Bob*sin(angle);
+  }
+
   AdvanceViewStates(deltaTime);
   ViewStates[ps_flash].SX = ViewStates[ps_weapon].SX;
   ViewStates[ps_flash].SY = ViewStates[ps_weapon].SY;

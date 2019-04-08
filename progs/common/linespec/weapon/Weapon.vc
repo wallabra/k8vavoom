@@ -92,6 +92,8 @@ bool bBotMelee; // it's a melee weapon
 bool bBotProjectile; // it's a projectile weapon
 bool bBotBfg; // it's a BFG
 
+bool bBobDisabled; // set in `A_WeaponReady()`
+
 // runtime in-inventory references
 Ammo Ammo1;
 Ammo Ammo2;

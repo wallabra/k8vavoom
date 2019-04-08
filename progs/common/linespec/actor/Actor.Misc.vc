@@ -790,6 +790,7 @@ final void A_WeaponReady (optional int Flags) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(ps_weapon, Wpn.GetDownState());
       PlayerEx(Player).ResetWeaponReloadRefire();
+      Wpn.bBobDisabled = true;
       return;
     }
   }
@@ -803,6 +804,7 @@ final void A_WeaponReady (optional int Flags) {
         Player.bReloadQueued = false;
         PlayerEx(Player).FireWeapon();
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
+        Wpn.bBobDisabled = true;
         return;
       }
     } else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) != 0 && Wpn.FindState('AltFire')) {
@@ -811,6 +813,7 @@ final void A_WeaponReady (optional int Flags) {
         Player.bReloadQueued = false;
         PlayerEx(Player).AltFireWeapon();
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
+        Wpn.bBobDisabled = true;
         return;
       }
     } else {
@@ -822,9 +825,11 @@ final void A_WeaponReady (optional int Flags) {
   if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && Wpn.FindState('Reload')) {
     Player.bAttackDown = true;
     PlayerEx(Player).ReloadWeapon();
+    Wpn.bBobDisabled = true;
     return;
   }
 
+  /* moved out of here, so weapon can bob independently
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {
     // bob the weapon based on movement speed
     float angle = AngleMod360(180.0*XLevel.Time);
@@ -832,6 +837,8 @@ final void A_WeaponReady (optional int Flags) {
     if (angle >= 180.0) angle -= 180.0;
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
   }
+  */
+  Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 }
 
 
