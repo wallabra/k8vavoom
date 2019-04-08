@@ -216,6 +216,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
   //fprintf(stderr, "VBasePlayer::SetViewState(%s): route=<%s>\n", GetClass()->GetName(), (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<fuck>"));
   //VField *VBasePlayer::fldPendingWeapon = nullptr;
   //fprintf(stderr, "  VBasePlayer::SetViewState: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
+#if 0
   if (position == PS_WEAPON && stnum) {
     static VClass *WeaponClass = nullptr;
     if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
@@ -250,6 +251,25 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
       */
     }
   }
+#else
+  if (_stateRouteSelf != LastViewObject[position]) {
+    LastViewObject[position] = _stateRouteSelf;
+    ViewStates[position].SX = ViewStates[position].OfsY = 0;
+    // "display" state
+    if (position == PS_WEAPON) {
+      LastViewObject[PS_WEAPON_OVL] = _stateRouteSelf;
+      static VClass *WeaponClass = nullptr;
+      if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
+      if (_stateRouteSelf && _stateRouteSelf->GetClass()->IsChildOf(WeaponClass)) {
+        VEntity *wpn = (VEntity *)_stateRouteSelf;
+        SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
+      } else {
+        ViewStates[PS_WEAPON_OVL].State = nullptr;
+        LastViewObject[PS_WEAPON_OVL] = nullptr;
+      }
+    }
+  }
+#endif
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
   int watchcatCount = 1024;
@@ -308,10 +328,9 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through
   //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
-  if (position == PS_WEAPON && !VSt.State) {
-    ViewStates[PS_WEAPON_OVL].State = nullptr;
-    DispSpriteFrame[PS_WEAPON_OVL] = 0;
-    DispSpriteName[PS_WEAPON_OVL] = NAME_None;
+  if (!VSt.State) {
+    LastViewObject[position] = nullptr;
+    if (position == PS_WEAPON) LastViewObject[PS_WEAPON_OVL] = nullptr;
   }
 }
 

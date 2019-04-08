@@ -188,11 +188,12 @@ class VBasePlayer : public VGameObject {
 
   VPlayerReplicationInfo *PlayerReplicationInfo;
 
-  VField *fldPendingWeapon;
-  VField *fldReadyWeapon;
+  //VField *fldPendingWeapon;
+  //VField *fldReadyWeapon;
 
-  VObject *lastReadyWeapon;
-  VState *lastReadyWeaponReadyState;
+  VObject *LastViewObject[NUMPSPRITES];
+  //VObject *lastReadyWeapon;
+  //VState *lastReadyWeaponReadyState;
 
 private:
   inline void UpdateDispFrameFrom (int idx, const VState *st) {

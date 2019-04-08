@@ -123,9 +123,9 @@ ubyte FixedColourmap;
 int CShift;
 
 // overlay view sprites (gun, etc)
-VViewState ViewStates[NUMPSPRITES];
-int DispSpriteFrame[NUMPSPRITES];
-name DispSpriteName[NUMPSPRITES];
+VViewState[NUMPSPRITES] ViewStates;
+int[NUMPSPRITES] DispSpriteFrame;
+name[NUMPSPRITES] DispSpriteName;
 float PSpriteSY;
 float PSpriteWeaponLowerPrev;
 float PSpriteWeaponLoweringStartTime;
@@ -141,11 +141,12 @@ native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
-private native transient void *fldPendingWeapon;
-private native transient void *fldReadyWeapon;
+//private native transient void *fldPendingWeapon;
+//private native transient void *fldReadyWeapon;
 
-private native transient Object lastReadyWeapon;
-private native transient state lastReadyWeaponReadyState;
+//private native transient Object lastReadyWeapon;
+//private native transient state lastReadyWeaponReadyState;
+private native transient Object[NUMPSPRITES] LastViewObject;
 
 
 replication {
