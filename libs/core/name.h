@@ -77,6 +77,7 @@ public:
     AddLower8, // find or add lowercased, max length 8 name
     AddLower,  // find or add lowercased
     FindLower, // find a name, return 0 if it doesn't exist
+    FindLower8, // find a name, lowercased, max length is 8, return 0 if it doesn't exist
   };
 
   // constructors

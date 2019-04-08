@@ -107,8 +107,9 @@ VName::VName (const char *Name, ENameFindType FindType) {
     size_t nlen = strlen(Name);
     check(nlen > 0);
     if (nlen >= NAME_SIZE) nlen = NAME_SIZE;
-    if (FindType == AddLower || FindType == FindLower) {
+    if (FindType == AddLower || FindType == FindLower || FindType == FindLower8) {
       for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
+      if (FindType == FindLower8) NameBuf[8] = 0; // shrink it
     } else {
       memcpy(NameBuf, Name, nlen);
     }
@@ -141,7 +142,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
   }
 
   // add new name if not found
-  if (FindType != Find && FindType != FindLower) {
+  if (FindType != Find && FindType != FindLower && FindType != FindLower8) {
     VNameEntry *e = AllocateNameEntry(NameBuf, htbl[HashIndex]);
     Index = AppendNameEntry(e);
     htbl[HashIndex] = Names[Index];
