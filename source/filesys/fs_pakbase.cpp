@@ -61,7 +61,7 @@ static const char *PK3IgnoreExts[] = {
   ".bat",
   ".ini",
   ".cpp",
-  ".acs",
+  //".acs",
   ".doc",
   ".me",
   ".rtf",
@@ -675,14 +675,28 @@ int VPakFileBase::FindACSObject (const VStr &fname) {
   int rough = -1;
   int prevlen = -1;
   const int count = pakdir.files.length();
+  char sign[3];
   for (int f = 0; f < count; ++f) {
     const VPakFileInfo &fi = pakdir.files[f];
     if (fi.lumpNamespace != WADNS_ACSLibrary) continue;
     if (fi.lumpName != ln) continue;
-    if (fi.filesize < 2) continue; // why not?
+    //if (LumpLength(f) < 3) continue; // why not?
+    if (fi.filesize >= 0 && fi.filesize < 3) continue; // why not?
+    //GCon->Logf("*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
     const VStr fn = fi.fileName.ExtractFileBaseName().StripExtension();
-    if (fn.ICmp(afn) == 0) return f; // exact match
+    if (fn.ICmp(afn) == 0) {
+      // exact match
+      //GCon->Logf("*** ACS0: %s", *fi.fileName);
+      memset(sign, 0, 3);
+      ReadFromLump(f, sign, 0, 3);
+      if (memcmp(sign, "ACS", 3) != 0) continue;
+      return f;
+    }
     if (rough < 0 || (fn.length() >= afn.length() && prevlen > fn.length())) {
+      //GCon->Logf("*** ACS1: %s", *fi.fileName);
+      memset(sign, 0, 3);
+      ReadFromLump(f, sign, 0, 3);
+      if (memcmp(sign, "ACS", 3) != 0) continue;
       rough = f;
       prevlen = fn.length();
     }

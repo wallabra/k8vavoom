@@ -511,6 +511,7 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
       delete Strm;
       header = (VAcsHeader *)Data;
 
+      /*
       // check header
       if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
         // try to find another lump with the same name
@@ -536,6 +537,8 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
       } else {
         break;
       }
+      */
+      break;
     }
   }
 
