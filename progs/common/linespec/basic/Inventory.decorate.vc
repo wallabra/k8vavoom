@@ -82,6 +82,7 @@ final void decorate_A_Lower (optional float lowerspeed) {
   Weapon ready = PlayerEx(Player).ReadyWeapon;
   Weapon pending = PlayerEx(Player).PendingWeapon;
 
+  /*
   if (ready && ready == pending) {
     if (Player.PlayerState != PST_DEAD &&
         Player.MO == self && // voodoo doll
@@ -90,9 +91,14 @@ final void decorate_A_Lower (optional float lowerspeed) {
       print("%C: LOWERING UNRAISED WEAPON! (3)", self);
     }
   }
+  */
 
   if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
   if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
+
+  Player.PSpriteWeaponLoweringStartTime = 0;
+  Player.PSpriteWeaponLoweringDuration = 0;
+  Player.PSpriteWeaponLowerPrev = Player.ViewStates[PS_WEAPON].SY;
 
   if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
     Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
@@ -105,7 +111,12 @@ final void decorate_A_Lower (optional float lowerspeed) {
     }
   }
 
-  if (Player.ViewStates[PS_WEAPON].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
+  if (Player.ViewStates[PS_WEAPON].SY < Weapon::WEAPONBOTTOM) {
+    // not lowered all the way yet
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
+    return;
+  }
 
   if (Player.PlayerState == PST_DEAD) {
     // player is dead, so don't bring up a pending weapon
@@ -159,6 +170,10 @@ final void decorate_A_Raise (optional float raisespeed) {
   if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
   if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
 
+  Player.PSpriteWeaponLoweringStartTime = 0;
+  Player.PSpriteWeaponLoweringDuration = 0;
+  Player.PSpriteWeaponLowerPrev = Player.ViewStates[PS_WEAPON].SY;
+
   // FIXME!!
   if (Level.Game.frametime < 1.0/35.0) {
     Player.ViewStates[PS_WEAPON].SY -= raisespeed;
@@ -166,7 +181,13 @@ final void decorate_A_Raise (optional float raisespeed) {
     Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
   }
 
-  if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
+  if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) {
+    // not raised all the way yet
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
+    return;
+  }
+
   Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
   Player.SetViewObject(Wpn);
   if (Wpn) {

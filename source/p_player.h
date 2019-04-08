@@ -174,6 +174,9 @@ class VBasePlayer : public VGameObject {
   vint32 DispSpriteFrame[NUMPSPRITES]; // see entity code for explanation
   VName DispSpriteName[NUMPSPRITES]; // see entity code for explanation
   float PSpriteSY;
+  float PSpriteWeaponLowerPrev;
+  float PSpriteWeaponLoweringStartTime;
+  float PSpriteWeaponLoweringDuration;
 
   float WorldTimer; // total time the player's been playing
 

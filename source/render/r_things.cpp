@@ -1048,9 +1048,43 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
+    float currSY = cl->ViewStates[i].SY;
+    float dur = cl->PSpriteWeaponLoweringDuration;
+    if (dur > 0.0f) {
+      float stt = cl->PSpriteWeaponLoweringStartTime;
+      float currt = Level->Time;
+      float t = currt-stt;
+      float prevSY = cl->PSpriteWeaponLowerPrev;
+      if (t >= 0.0f && t < dur) {
+        float ydelta = fabs(prevSY-currSY)*(t/dur);
+        //GCon->Logf("prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY+ydelta, dur, t, t/dur, ydelta);
+        if (prevSY < currSY) {
+          prevSY += ydelta;
+          //GCon->Logf("DOWN: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
+          if (prevSY >= currSY) {
+            prevSY = currSY;
+            cl->PSpriteWeaponLoweringDuration = 0.0f;
+          }
+        } else {
+          prevSY -= ydelta;
+          //GCon->Logf("UP: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
+          if (prevSY <= currSY) {
+            prevSY = currSY;
+            cl->PSpriteWeaponLoweringDuration = 0.0f;
+          }
+        }
+      } else {
+        prevSY = currSY;
+        cl->PSpriteWeaponLoweringDuration = 0.0f;
+      }
+      cl->ViewStates[i].SY = prevSY;
+    }
+
     if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
       RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);
     }
+
+    cl->ViewStates[i].SY = currSY;
   }
 }
 
