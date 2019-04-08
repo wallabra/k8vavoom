@@ -459,33 +459,37 @@ void VTextureManager::AddToHash (int Index) {
 
 //==========================================================================
 //
-//  VTextureManager::CheckNumForName
+//  VTextureManager::FindAllForName
 //
-//  Check whether texture is available. Filter out NoTexture indicator.
+//  this returns "best matches" for all texture types, and
+//  number of filled slots
 //
 //==========================================================================
-int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
+int VTextureManager::FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *overloadFirst) {
+  for (int f = 0; f < TEXTYPE_MAX; ++f) nums[f] = -1;
+  if (overloadFirst) *overloadFirst = false;
+
   // check for "NoTexture" marker
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
-  // TEXTYPE_Any should use wallpatch only if nothing else was found
-  // eh, prefer wall texture, then flat texture, then sprite texture, then other types
-  int wallIdx = -1;
-  int flatIdx = -1;
-  int spriteIdx = -1;
-  int wallpatchIdx = -1;
-  int otherIdx = -1;
-  int nullIdx = -1;
-  int otherType = 666;
+  if ((*Name)[0] == '-' && (*Name)[1] == 0) {
+    memset(nums, 0, sizeof(nums[0])*TEXTYPE_MAX);
+    return TEXTYPE_MAX;
+  }
 
-  VName currname = VName(*Name, VName::AddLower);
+  VName currname = VName(*Name, VName::FindLower);
+  if (currname == NAME_None) return 0;
+
+  int slotCount = 0;
+
   for (int trynum = 2; trynum > 0; --trynum) {
     if (trynum == 1) {
       // try short name too
       if (VStr::length(*Name) <= 8) break;
-      currname = VName(*Name, VName::AddLower8);
+      currname = VName(*Name, VName::FindLower8);
+      if (currname == NAME_None) break;
     }
+
     int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
     for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
       check(i >= 0);
@@ -500,38 +504,96 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
 
       if (ctex->Name != currname) continue;
 
-      if (Type == TEXTYPE_Any || ctex->Type == Type || (bOverload && ctex->Type == TEXTYPE_Overload)) {
-        if (Type == TEXTYPE_Any) {
-          switch (ctex->Type) {
-            case TEXTYPE_WallPatch: wallpatchIdx = i; break;
-            case TEXTYPE_Wall: case TEXTYPE_Overload: wallIdx = i; break; // what to do with overloads?
-            case TEXTYPE_Flat: flatIdx = i; break;
-            case TEXTYPE_Sprite: spriteIdx = i; break;
-            case TEXTYPE_Null: nullIdx = i; break;
-            default:
-              if (ctex->Type < otherType) {
-                otherType = ctex->Type;
-                otherIdx = i;
-              }
-              break;
-          }
-        } else {
-          if (ctex->Type == TEXTYPE_Null) return 0;
-          return i;
-        }
+      check((unsigned)ctex->Type < (unsigned)TEXTYPE_MAX);
+      if (nums[ctex->Type] < 0) {
+        if (slotCount == 0 && overloadFirst && ctex->Type == TEXTYPE_Overload) *overloadFirst = false;
+        ++slotCount;
+        nums[ctex->Type] = i;
       }
     }
   }
 
-  // if we're looking for "any", return best match
-  if (wallIdx >= 0) return wallIdx;
-  if (flatIdx >= 0) return flatIdx;
-  if (spriteIdx >= 0) return spriteIdx;
-  if (wallpatchIdx >= 0) return wallpatchIdx;
-  if (otherIdx >= 0) return otherIdx;
-  if (nullIdx >= 0) return 0;
+  return slotCount;
+}
 
-  if (bCheckAny && Type != TEXTYPE_Any) return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
+
+//==========================================================================
+//
+//  VTextureManager::CheckNumForName
+//
+//  Check whether texture is available. Filter out NoTexture indicator.
+//
+//==========================================================================
+int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
+  int nums[TEXTYPE_MAX];
+
+  if ((unsigned)Type >= (unsigned)TEXTYPE_MAX) return -1; // oops
+
+  bool overFirst = false;
+  int scount = FindAllForName(Name, nums, &overFirst);
+  if (!scount) return -1;
+
+  if (Type != TEXTYPE_Any) {
+    if (bOverload && overFirst && nums[TEXTYPE_Overload] > 0) return nums[TEXTYPE_Overload];
+    if (nums[Type] >= 0) return nums[Type];
+    if (nums[TEXTYPE_Null]) return 0;
+    if (!bCheckAny) return -1;
+  }
+
+  // "any" fallback, return best match
+  if (bOverload && overFirst && nums[TEXTYPE_Overload] > 0) return nums[TEXTYPE_Overload];
+
+  static const int anyBestMatch[] = {
+    TEXTYPE_Wall,
+    TEXTYPE_Flat,
+    TEXTYPE_Sprite,
+    TEXTYPE_Pic,
+    TEXTYPE_WallPatch,
+    TEXTYPE_SkyMap,
+    TEXTYPE_Autopage,
+    TEXTYPE_Skin,
+    TEXTYPE_FontChar,
+    TEXTYPE_Null,
+    -1,
+  };
+
+  for (unsigned f = 0; anyBestMatch[f] >= 0; ++f) {
+    int res = nums[anyBestMatch[f]];
+    if (res >= 0) return res;
+  }
+
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::FindPatchByName
+//
+//  used in multipatch texture builder
+//
+//==========================================================================
+int VTextureManager::FindPatchByName (VName Name) {
+  int nums[TEXTYPE_MAX];
+
+  int scount = FindAllForName(Name, nums);
+  if (!scount) return -1;
+
+  static const int anyBestMatch[] = {
+    //TEXTYPE_Overload,
+    TEXTYPE_WallPatch,
+    TEXTYPE_Pic,
+    TEXTYPE_Flat,
+    TEXTYPE_Wall,
+    TEXTYPE_Sprite,
+    TEXTYPE_Null,
+    -1,
+  };
+
+  for (unsigned f = 0; anyBestMatch[f] >= 0; ++f) {
+    int res = nums[anyBestMatch[f]];
+    if (res >= 0) return res;
+  }
 
   return -1;
 }

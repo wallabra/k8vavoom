@@ -208,11 +208,15 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
+        /*
         int Tex = GTextureManager.CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
         // try other texture types, why not?
         if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Flat, false, false);
         if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Wall, false, false);
         if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Sprite, false, false);
+        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Pic, false, false);
+        */
+        int Tex = GTextureManager.FindPatchByName(PatchName);
         if (Tex < 0) {
           int LumpNum = W_CheckNumForTextureFileName(sc->String);
           if (LumpNum >= 0) {

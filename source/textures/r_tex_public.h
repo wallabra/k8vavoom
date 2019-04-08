@@ -39,6 +39,8 @@ enum {
   TEXTYPE_Autopage,
   TEXTYPE_Null,
   TEXTYPE_FontChar,
+  //
+  TEXTYPE_MAX,
 };
 
 
@@ -378,6 +380,12 @@ public:
   float Time; // time value for warp textures
 
 public:
+  struct TexNumRes {
+    int idx;
+    int number;
+  };
+
+public:
   VTextureManager ();
 
   void Init ();
@@ -393,7 +401,9 @@ public:
 
   int AddTexture (VTexture *Tex);
   void ReplaceTexture (int Index, VTexture *Tex);
+  int FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *overloadFirst=nullptr); // this returns "best matches" for all texture types, and number of filled slots
   int CheckNumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
+  int FindPatchByName (VName Name); // used in multipatch texture builder
   int NumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
   int FindTextureByLumpNum (int);
   VName GetTextureName (int TexNum);
