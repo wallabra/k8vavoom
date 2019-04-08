@@ -63,6 +63,30 @@ enum /*ERadiusGiveFlags*/ {
 };
 
 
+enum /*WARPF*/ {
+  WARPF_ABSOLUTEOFFSET    = 0x1,
+  WARPF_ABSOLUTEANGLE     = 0x2,
+  WARPF_USECALLERANGLE    = 0x4,
+
+  WARPF_NOCHECKPOSITION   = 0x8,
+
+  WARPF_INTERPOLATE       = 0x10,
+  WARPF_WARPINTERPOLATION = 0x20,
+  WARPF_COPYINTERPOLATION = 0x40,
+
+  WARPF_STOP              = 0x80,
+  WARPF_TOFLOOR           = 0x100,
+  WARPF_TESTONLY          = 0x200,
+  WARPF_ABSOLUTEPOSITION  = 0x400,
+  WARPF_BOB               = 0x800,
+  WARPF_MOVEPTR           = 0x1000,
+  WARPF_USEPTR            = 0x2000,
+  WARPF_USETID            = 0x2000,
+  WARPF_COPYVELOCITY      = 0x4000,
+  WARPF_COPYPITCH         = 0x8000,
+};
+
+
 // flags for A_QuakeEx are in `QuakeFocusEx`
 
 
@@ -812,6 +836,107 @@ final state A_JumpIfTracerCloser (float distance, state label, optional bool noz
   } else {
     return none;
   }
+}
+
+
+//==========================================================================
+//
+//  A_Warp
+//
+//==========================================================================
+final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional float zofs,
+                    optional float angle, optional int flags, optional state success_state,
+                    optional float heightoffset, optional float radiusoffset, optional float pitch)
+{
+  if (success_state) {
+    if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  }
+
+  EntityEx tgt;
+  if (flags&WARPF_USETID) {
+    tgt = (aptr ? EntityEx(Level.FindMobjFromTID(aptr, none)) : EntityEx(self));
+  } else {
+    tgt = EntityEx(DecorDoAAPtr('A_Warp', aptr));
+  }
+  if (!tgt) return false;
+
+  if (flags&WARPF_MOVEPTR) {
+    print("%C: A_Warp(WARPF_MOVEPTR) is not supported yet!", self);
+    return false;
+  }
+
+
+  TVec dest = tgt.Origin;
+
+  if (flags&WARPF_ABSOLUTEPOSITION) {
+    dest = vector(xofs, yofs, zofs);
+    if (flags&WARPF_TOFLOOR) {
+      //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
+      sector_t *sec = XLevel.PointInSector(dest);
+      dest.z = GetPlanePointZ(ref sec->floor, dest)+zofs;
+    }
+  } else {
+    if (xofs || yofs || zofs) {
+      if (flags&WARPF_ABSOLUTEOFFSET) {
+        //FIXME: up is not right here?
+        dest += vector(xofs, yofs, 0);
+      } else {
+        TVec fwd, right, up;
+        AngleVectors(tgt.Angles, out fwd, out right, out up);
+        dest += fwd*xofs;
+        dest += right*yofs;
+        //FIXME: up is not right here?
+        //dir += up*zofs;
+      }
+    }
+    //FIXME: up is not right here?
+    if (flags&WARPF_TOFLOOR) {
+      //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
+      sector_t *sec = XLevel.PointInSector(dest);
+      dest.z = GetPlanePointZ(ref sec->floor, dest)+zofs;
+    } else {
+      dest.z += zofs;
+    }
+  }
+
+  dest += vector(tgt.Radius*radiusoffset, tgt.Radius*radiusoffset, tgt.Height*heightoffset);
+
+  TAVec newa = Angles;
+  if (!(flags&WARPF_USECALLERANGLE)) newa.yaw = tgt.Angles.yaw;
+
+  if (flags&WARPF_ABSOLUTEANGLE) {
+    newa.yaw = AngleMod360(angle);
+  } else {
+    newa.yaw = AngleMod360(newa.yaw+angle);
+  }
+
+  if (flags&WARPF_COPYPITCH) {
+    newa.pitch = pitch;
+  } else {
+    newa.pitch += pitch;
+  }
+
+  if (!(flags&WARPF_NOCHECKPOSITION)) {
+    if (!CheckPosition(dest)) return false;
+  }
+
+  if (flags&WARPF_TESTONLY) return true;
+
+  //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, Angles, Angles.pitch, newa.pitch);
+
+  UnlinkFromWorld();
+  Origin = dest;
+  Angles = newa;
+  LinkToWorld();
+
+       if (flags&WARPF_STOP) Velocity = vector(0, 0, 0);
+  else if (flags&WARPF_COPYVELOCITY) Velocity = tgt.Velocity;
+
+  if (success_state) {
+    DoJump(success_state);
+  }
+
+  return true;
 }
 
 
