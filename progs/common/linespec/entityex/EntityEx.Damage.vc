@@ -41,18 +41,26 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
 
-  if (damageType != 'Bullet' &&
-      damageType != 'Shell' &&
-      damageType != 'BDW_Bullet' &&
-      damageType != 'BDW_Shell'
-     )
-  {
-    return damage;
+  if (damageType) {
+    if (damageType != 'Bullet' &&
+        damageType != 'Shell' &&
+        damageType != 'BDW_Bullet' &&
+        damageType != 'BDW_Shell'
+       )
+    {
+      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+      return damage;
+    }
+  } else {
+    if (!GetCvarB('k8HSAllowEmptyDamageType')) {
+      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+      return damage;
+    }
   }
 
   if (!GetCvarB('k8HSEnabled')) return damage;
 
-  bool debugme = GetCvarB('k8HSDEBUG');
+  bool debugme = GetCvarB('k8HSDebug');
 
   if (debugme) {
     print("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
@@ -152,7 +160,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       print("K8HS: Headshot! %C; vicHgt=%f; fromtop=%f; radius=%f; len=%f", Class, vicHgt, fromtop, vicRadius, len);
     }
     bool debugCrits = false;
-    if (debugme) debugCrits = GetCvarB('k8HSDebugCrits');
+    if (debugme) debugCrits = GetCvarB('k8HSDebug_Crits');
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
