@@ -2713,24 +2713,68 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     if (!Args[i]) continue;
 
     // hack for idiotic mod authors (hello, LCA!)
-    if (Func->ParamTypes[i].Type == TYPE_String && Args[i]->IsIntConst() && Func->Params[i].Name == "ChannelNameOrNumber") {
-      int chan = (Args[i]->GetIntConst()&7);
-      const char *chanName;
-      switch (chan) {
-        default:
-        case 0: chanName = "Auto"; break;
-        case 1: chanName = "Weapon"; break;
-        case 2: chanName = "Voice"; break;
-        case 3: chanName = "Item"; break;
-        case 4: chanName = "Body"; break;
-        case 5: chanName = "SoundSlot5"; break;
-        case 6: chanName = "SoundSlot6"; break;
-        case 7: chanName = "SoundSlot7"; break;
+    if (Func->ParamTypes[i].Type == TYPE_Int && Func->Params[i].Name == "ChannelNameOrNumber") {
+      if (Args[i]->IsStrConst() || Args[i]->IsNameConst()) {
+        VStr s = (Args[i]->IsStrConst() ? Args[i]->GetStrConst(ec.Package) : VStr(Args[i]->GetNameConst()));
+        int v = 0;
+        if (!VStr::convertInt(*s, &v)) {
+          // convert digits
+          const char *str = *s;
+          v = 0;
+          while (*str && digitInBase(*str, 10) < 0) ++str;
+          if (*str) {
+            while (*str) {
+              int d = digitInBase(*str, 10);
+              if (d < 0) break;
+              v = v*10+d;
+              ++str;
+            }
+          } else {
+            VStr t = s;
+            while (t.length()) {
+              if (t[0] == '_' || (vuint8)(t[0]) <= ' ') { t.chopLeft(1); continue; }
+              if (t.startsWithNoCase("CHANNEL")) { t.chopLeft(7); continue; }
+              if (t.startsWithNoCase("CHAN")) { t.chopLeft(4); continue; }
+              if (t.startsWithNoCase("SoundSlot")) { t.chopLeft(9); continue; }
+              if (t.startsWithNoCase("Slot")) { t.chopLeft(4); continue; }
+              if (t.startsWithNoCase("Sound")) { t.chopLeft(5); continue; }
+              break;
+            }
+                 if (t.ICmp("Auto") == 0) v = 0;
+            else if (t.ICmp("Weapon") == 0) v = 1;
+            else if (t.ICmp("Voice") == 0) v = 2;
+            else if (t.ICmp("Item") == 0) v = 3;
+            else if (t.ICmp("Body") == 0) v = 4;
+            else v = 0;
+          }
+        }
+        //if (v < 0 || v > 7) v = 0;
+        //v &= 7;
+        if (v < 0 || v > 127) v = 0;
+        ParseWarning(Args[i]->Loc, "`%s` argument #%d converted from '%s' to %d", Func->GetName(), i+1, *s, v);
+        VExpression *e = new VIntLiteral(v, Args[i]->Loc);
+        delete Args[i];
+        Args[i] = e;
+        /*
+        int chan = (Args[i]->GetIntConst()&7);
+        const char *chanName;
+        switch (chan) {
+          default:
+          case 0: chanName = "Auto"; break;
+          case 1: chanName = "Weapon"; break;
+          case 2: chanName = "Voice"; break;
+          case 3: chanName = "Item"; break;
+          case 4: chanName = "Body"; break;
+          case 5: chanName = "SoundSlot5"; break;
+          case 6: chanName = "SoundSlot6"; break;
+          case 7: chanName = "SoundSlot7"; break;
+        }
+        ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string (replaced %d with \"%s\"); PLEASE, FIX THE CODE!", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
+        VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
+        delete Args[i];
+        Args[i] = e;
+        */
       }
-      ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string (replaced %d with \"%s\"); PLEASE, FIX THE CODE!", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
-      VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
-      delete Args[i];
-      Args[i] = e;
     }
 
     Args[i] = Args[i]->MassageDecorateArg(ec, CallerState, Func->GetName(), i+1, Func->ParamTypes[i]);
