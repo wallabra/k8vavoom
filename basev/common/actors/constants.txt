@@ -499,3 +499,11 @@ enum WARPF {
   WARPF_COPYVELOCITY      = 0x4000,
   WARPF_COPYPITCH         = 0x8000,
 };
+
+
+enum FAF_Flags {
+  FAF_BOTTOM = 1,
+  FAF_MIDDLE = 2,
+  FAF_TOP    = 4,
+  FAF_NODISTFACTOR = 8, // deprecated
+};

@@ -64,6 +64,13 @@ enum /*EProximityFlags*/ {
 };
 
 
+enum /*FAF_Flags*/ {
+  FAF_BOTTOM = 1,
+  FAF_MIDDLE = 2,
+  FAF_TOP    = 4,
+};
+
+
 //==========================================================================
 //
 //  A_Look
@@ -726,7 +733,10 @@ final void A_FaceTarget () {
 //  decorate_A_FaceTarget
 //
 //==========================================================================
-final void decorate_A_FaceTarget (optional float max_turn) {
+final void decorate_A_FaceTarget (optional float max_turn, optional float max_pitch,
+                                  optional float ang_offset, optional float pitch_offset,
+                                  optional int flags, optional float z_ofs)
+{
   if (!Target || Target == self) return;
 
   // Andy Baker's stealth monsters
@@ -734,25 +744,63 @@ final void decorate_A_FaceTarget (optional float max_turn) {
 
   bAmbush = false;
 
-  float oldyaw = AngleMod360(Angles.yaw);
-  // wtf? sometimes i got nan here
-  float newyaw = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
-  if (!newyaw.isfinite) {
-    //print("%C:%s: A_FaceTarget: got nan; Target=%C (%B); mypos=%s; tpos=%s (%f,%f); myvel=%s; myspeed=%s", self, State, Target, (Target == self), Origin, Target.Origin, Target.Origin.y-Origin.y, Target.Origin.x-Origin.x, Velocity, Speed);
-    newyaw = oldyaw;
-  }
-  Angles.yaw = AngleMod360(newyaw);
+  float newyaw = AngleTo(Target);
+  float adiff = AngleDelta(Angles.yaw, newyaw);
 
-  //FIXME: this is wrong!
-  if (specified_max_turn && max_turn != 0) {
-    max_turn = fabs(max_turn);
-    if (fabs(oldyaw-Angles.yaw) > max_turn && fabs(Angles.yaw-oldyaw) > max_turn) {
-      Angles.yaw = oldyaw;
+  if (specified_max_turn && max_turn < adiff) {
+    if (adiff < 0) Angles.yaw -= max_turn+ang_offset; else Angles.yaw += max_turn+ang_offset;
+  } else {
+    Angles.yaw = newyaw+ang_offset;
+  }
+  Angles.yaw = AngleMod360(Angles.yaw);
+
+  if (specified_max_pitch && max_pitch <= 180) {
+    TVec dist = Target.Origin-Origin;
+    dist.z = 0;
+
+    // positioning ala missile spawning, 32 units above foot level
+    float source_z = Origin.z+32;
+    float target_z;
+
+    // if the target z is above the target's head, reposition to the middle of its body
+    if (source_z >= Origin.z+Height) source_z = GetCentreZ();
+
+    if (flags&(FAF_BOTTOM|FAF_MIDDLE|FAF_TOP)) {
+      // note there is no +32 on purpose. this is for customization sake.
+      // if one doesn't want this behavior, just don't use FAF_BOTTOM.
+      if (flags&FAF_BOTTOM) target_z = Target.Origin.z;
+      if (flags&FAF_MIDDLE) target_z = Target.GetCentreZ();
+      if (flags&FAF_TOP) target_z = Target.Origin.z+Target.Height;
+    } else {
+      target_z = Target.Origin.z+32;
+      if (target_z >= Target.Origin.z+Target.Height) target_z = Target.GetCentreZ();
     }
-    return;
+
+    target_z += z_ofs;
+
+    float dist_z = target_z-source_z;
+    if (dist_z > 0) {
+      float ddist = sqrt(dist.x*dist.x+dist.y*dist.y+dist_z*dist_z);
+      if (ddist > 0) {
+        float other_pitch = AngleMod180(-asin(dist_z/ddist));
+        if (max_pitch != 0) {
+          if (Angles.pitch > other_pitch) {
+            max_pitch = AngleMod360(fmin(max_pitch, Angles.pitch-other_pitch));
+            Angles.pitch -= max_pitch;
+          } else {
+            max_pitch = AngleMod360(fmin(max_pitch, other_pitch-Angles.pitch));
+            Angles.pitch += max_pitch;
+          }
+        } else {
+          Angles.pitch = other_pitch;
+        }
+        Angles.pitch += pitch_offset;
+      }
+    }
   }
 
-  if (Target.bShadow) {
+
+  if (!max_turn && !ang_offset && Target.bShadow) {
     Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
 }

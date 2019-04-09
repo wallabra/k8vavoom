@@ -494,19 +494,16 @@ void HandleFloorclip () {
 //  CrossSpecialLine
 //
 //==========================================================================
-
-void CrossSpecialLine(line_t *ld, int side)
-{
+void CrossSpecialLine (line_t *ld, int side) {
 }
+
 
 //==========================================================================
 //
 //  ApplyFriction
 //
 //==========================================================================
-
-void ApplyFriction()
-{
+void ApplyFriction () {
 }
 
 
@@ -528,148 +525,133 @@ bool SectorChanged (int CrushChange) {
 //  ClearInventory
 //
 //===========================================================================
-
-void ClearInventory()
-{
+void ClearInventory () {
 }
+
 
 //===========================================================================
 //
 //  GiveInventory
 //
 //===========================================================================
-
-void GiveInventory(name ItemName, int Amount)
-{
+void GiveInventory (name ItemName, int Amount) {
 }
+
 
 //===========================================================================
 //
 //  TakeInventory
 //
 //===========================================================================
-
-void TakeInventory(name ItemName, int Amount)
-{
+void TakeInventory (name ItemName, int Amount) {
 }
+
 
 //===========================================================================
 //
 //  CheckInventory
 //
 //===========================================================================
-
-int CheckInventory(name ItemName)
-{
+int CheckInventory (name ItemName) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  UseInventoryName
 //
 //===========================================================================
-
-int UseInventoryName(name ItemName)
-{
+int UseInventoryName (name ItemName) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  GetSigilPieces
 //
 //===========================================================================
-
-int GetSigilPieces()
-{
+int GetSigilPieces () {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  GetArmorPoints
 //
 //===========================================================================
-
-int GetArmorPoints()
-{
+int GetArmorPoints () {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  GetArmorPointsForType
 //
 //===========================================================================
-
-int GetArmorPointsForType (name armtype)
-{
+int GetArmorPointsForType (name armtype) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  CheckNamedWeapon
 //
 //===========================================================================
-
-int CheckNamedWeapon(name Name)
-{
+int CheckNamedWeapon (name Name) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  SetNamedWeapon
 //
 //===========================================================================
-
-int SetNamedWeapon(name Name)
-{
+int SetNamedWeapon (name Name) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  GetAmmoCapacity
 //
 //===========================================================================
-
-int GetAmmoCapacity(name Name)
-{
+int GetAmmoCapacity (name Name) {
   return 0;
 }
+
 
 //===========================================================================
 //
 //  SetAmmoCapacity
 //
 //===========================================================================
-
-void SetAmmoCapacity(name Name, int Amount)
-{
+void SetAmmoCapacity (name Name, int Amount) {
 }
+
 
 //===========================================================================
 //
 //  MoveThing
 //
 //===========================================================================
-
-bool MoveThing(TVec Pos, bool Fog)
-{
+bool MoveThing (TVec Pos, bool Fog) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  GetStateTime
 //
 //==========================================================================
-
-float GetStateTime(state AState, float AStateTime)
-{
+float GetStateTime (state AState, float AStateTime) {
   switch (GetStateTicKind(AState)) {
     case StateTicKind.Normal: return AStateTime;
     case StateTicKind.Random: return float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f;
@@ -677,123 +659,114 @@ float GetStateTime(state AState, float AStateTime)
   }
 }
 
+
 //==========================================================================
 //
 //  SetActorProperty
 //
 //==========================================================================
-
-void SetActorProperty(int Prop, int IntVal, string StrVal)
-{
+void SetActorProperty (int Prop, int IntVal, string StrVal) {
 }
+
 
 //==========================================================================
 //
 //  GetActorProperty
 //
 //==========================================================================
-
-int GetActorProperty(int Prop)
-{
+int GetActorProperty (int Prop) {
   return 0;
 }
+
 
 //==========================================================================
 //
 //  CheckForSectorActions
 //
 //==========================================================================
-
-void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
-  bool OldAboveFakeCeiling)
+void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor,
+                            bool OldAboveFakeCeiling)
 {
 }
+
 
 //==========================================================================
 //
 //  SkyBoxGetAlways
 //
 //==========================================================================
-
-bool SkyBoxGetAlways()
-{
+bool SkyBoxGetAlways () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  SkyBoxGetMate
 //
 //==========================================================================
-
-Entity SkyBoxGetMate()
-{
+Entity SkyBoxGetMate () {
   return none;
 }
+
 
 //==========================================================================
 //
 //  SkyBoxGetPlaneAlpha
 //
 //==========================================================================
-
-float SkyBoxGetPlaneAlpha()
-{
+float SkyBoxGetPlaneAlpha () {
   return 0.0;
 }
+
 
 //==========================================================================
 //
 //  ClassifyActor
 //
 //==========================================================================
-
-int ClassifyActor()
-{
+int ClassifyActor () {
   return 0;
 }
+
 
 //==========================================================================
 //
 //  MorphActor
 //
 //==========================================================================
-
-int MorphActor(name PlayerClass, name MonsterClass, float Duration,
-  int Style, name MorphFlash, name UnmorphFlash)
+int MorphActor (name PlayerClass, name MonsterClass, float Duration,
+                int Style, name MorphFlash, name UnmorphFlash)
 {
   return 0;
 }
+
 
 //==========================================================================
 //
 //  UnmorphActor
 //
 //==========================================================================
-
-int UnmorphActor(Entity Activator, int Force)
-{
+int UnmorphActor (Entity Activator, int Force) {
   return 0;
 }
+
 
 //==========================================================================
 //
 //  GetViewEntRenderParams
 //
 //==========================================================================
-
-void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
-{
+void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle) {
 }
+
 
 //==========================================================================
 //
 //  CalcFakeZMovement
 //
 //==========================================================================
-
-void CalcFakeZMovement(out TVec Ret, float DeltaTime)
-{
+void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 }
 
 
@@ -810,39 +783,14 @@ final void SetOrigin (TVec NewOrigin, optional bool properFloorCheck) {
   LinkToWorld(properFloorCheck:properFloorCheck!optional);
 }
 
+
 //==========================================================================
 //
 //  RemoveThing
 //
 //==========================================================================
-
-void RemoveThing()
-{
+void RemoveThing () {
   Destroy();
-}
-
-//==========================================================================
-//
-//  DistTo
-//
-//==========================================================================
-
-final float DistTo(Entity Other)
-{
-  return Length(Other.GetCentre() - GetCentre());
-}
-
-//==========================================================================
-//
-//  DistTo2
-//
-//==========================================================================
-
-final float DistTo2(Entity Other)
-{
-  TVec dir = Other.Origin - Origin;
-  dir.z = 0.0;
-  return Length2D(dir);
 }
 
 
@@ -851,10 +799,76 @@ final float DistTo2(Entity Other)
 //  GetCentre
 //
 //==========================================================================
+final TVec GetCentre () {
+  return Origin+vector(0.0, 0.0, Height*0.5-FloorClip);
+}
 
-final TVec GetCentre()
-{
-  return Origin + vector(0.0, 0.0, Height * 0.5 - FloorClip);
+
+//==========================================================================
+//
+//  GetCentreZ
+//
+//==========================================================================
+final float GetCentreZ () {
+  return Origin.z+(Height*0.5-FloorClip);
+}
+
+
+//==========================================================================
+//
+//  DistTo
+//
+//==========================================================================
+final float DistTo (Entity Other) {
+  return Length(Other.GetCentre()-GetCentre());
+}
+
+
+//==========================================================================
+//
+//  DistTo2
+//
+//==========================================================================
+final float DistTo2 (Entity Other) {
+  TVec dir = Other.Origin-Origin;
+  dir.z = 0.0;
+  return Length2D(dir);
+}
+
+
+//==========================================================================
+//
+//  AngleTo
+//
+//==========================================================================
+final float AngleTo (Entity Other) {
+  TVec dir = Other.Origin-Origin;
+  float res = atan2(dir.y, dir.x);
+  return (res.isfinite ? res : 0);
+}
+
+
+//==========================================================================
+//
+//  AngleToWithOfs
+//
+//==========================================================================
+final float AngleToWithOfs (Entity Other, const TVec ofs) {
+  TVec dir = (Other.Origin-Origin)+ofs;
+  float res = atan2(dir.y, dir.x);
+  return (res.isfinite ? res : 0);
+}
+
+
+//==========================================================================
+//
+//  AngleDelta
+//
+//==========================================================================
+static final float AngleDelta (float a1, float a2) {
+  a1 = AngleMod360(a1);
+  a2 = AngleMod360(a2);
+  return (a1 < a2 ? AngleMod180(a2-a1) : -AngleMod180(a2-a1));
 }
 
 
@@ -916,111 +930,6 @@ bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
 //===========================================================================
 void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid) {
 }
-
-
-//==========================================================================
-//
-//  decoDoFlagActionSpecific
-//
-//  returns `true` if processed
-//
-//==========================================================================
-/+
-bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool newvalue) {
-  if (flagname) {
-    auto tgt = self;
-    if (stricmp(flagname, "Solid") == 0) { resvalue = tgt.bSolid; if (specified_newvalue) tgt.bSolid = newvalue; return true; }
-    if (stricmp(flagname, "NoSector") == 0) { resvalue = tgt.bNoSector; /*if (specified_newvalue) tgt.bNoSector = newvalue;*/ return true; }
-    if (stricmp(flagname, "NoBlockmap") == 0) { resvalue = tgt.bNoBlockmap; /*if (specified_newvalue) tgt.bNoBlockmap = newvalue;*/ return true; }
-    if (stricmp(flagname, "NoGravity") == 0) { resvalue = tgt.bNoGravity; if (specified_newvalue) tgt.bNoGravity = newvalue; return true; }
-    if (stricmp(flagname, "CanPass") == 0) { resvalue = tgt.bPassMobj; if (specified_newvalue) tgt.bPassMobj = newvalue; return true; }
-    //<flag_noclip name="NoClip" />
-    if (stricmp(flagname, "NoClip") == 0) { resvalue = !(tgt.bColideWithThings || tgt.bColideWithWorld); if (specified_newvalue) { tgt.bColideWithThings = newvalue; tgt.bColideWithWorld = newvalue; } return true; } //FIXME
-    if (stricmp(flagname, "DropOff") == 0) { resvalue = tgt.bDropOff; if (specified_newvalue) tgt.bDropOff = newvalue; return true; }
-    if (stricmp(flagname, "Float") == 0) { resvalue = tgt.bFloat; if (specified_newvalue) tgt.bFloat = newvalue; return true; }
-    if (stricmp(flagname, "Fly") == 0) { resvalue = tgt.bFly; if (specified_newvalue) tgt.bFly = newvalue; return true; }
-    if (stricmp(flagname, "Blasted") == 0) { resvalue = tgt.bBlasted; if (specified_newvalue) tgt.bBlasted = newvalue; return true; }
-    if (stricmp(flagname, "CantLeaveFloorPic") == 0) { resvalue = tgt.bCantLeaveFloorpic; if (specified_newvalue) tgt.bCantLeaveFloorpic = newvalue; return true; }
-    if (stricmp(flagname, "FloorClip") == 0) { resvalue = tgt.bFloorClip; if (specified_newvalue) tgt.bFloorClip = newvalue; return true; }
-    if (stricmp(flagname, "CeilingHugger") == 0) { resvalue = tgt.bIgnoreCeilingStep; if (specified_newvalue) tgt.bIgnoreCeilingStep = newvalue; return true; }
-    if (stricmp(flagname, "FloorHugger") == 0) { resvalue = tgt.bIgnoreFloorStep; if (specified_newvalue) tgt.bIgnoreFloorStep = newvalue; return true; }
-    if (stricmp(flagname, "Corpse") == 0) { resvalue = tgt.bCorpse; if (specified_newvalue) tgt.bCorpse = newvalue; return true; }
-    if (stricmp(flagname, "Invisible") == 0) { resvalue = tgt.bInvisible; if (specified_newvalue) tgt.bInvisible = newvalue; return true; }
-    if (stricmp(flagname, "Missile") == 0) { resvalue = tgt.bMissile; if (specified_newvalue) tgt.bMissile = newvalue; return true; }
-    if (stricmp(flagname, "DontOverlap") == 0) { resvalue = tgt.bDontOverlap; if (specified_newvalue) tgt.bDontOverlap = newvalue; return true; }
-    if (stricmp(flagname, "ActLikeBridge") == 0) { resvalue = tgt.bActLikeBridge; if (specified_newvalue) tgt.bActLikeBridge = newvalue; return true; }
-    if (stricmp(flagname, "NoDropOff") == 0) { resvalue = tgt.bNoDropOff; if (specified_newvalue) tgt.bNoDropOff = newvalue; return true; }
-    if (stricmp(flagname, "Bright") == 0) { resvalue = tgt.bBright; if (specified_newvalue) tgt.bBright = newvalue; return true; }
-    if (stricmp(flagname, "StepMissile") == 0) { resvalue = tgt.bStepMissile; if (specified_newvalue) tgt.bStepMissile = newvalue; return true; }
-    // VaVoom flags
-    if (stricmp(flagname, "CanJump") == 0) { resvalue = tgt.bCanJump; if (specified_newvalue) tgt.bCanJump = newvalue; return true; }
-
-    //bool bCheckLineBlocking;
-    //bool bCheckLineBlockMonsters;
-    //bool bAvoidingDropoff;  // used to move monsters away from dropoffs
-    //bool bOnMobj;     // mobj is resting on top of another mobj
-    //bool bFullBright;   // make current state full bright
-  }
-  resvalue = false;
-  return false;
-}
-+/
-
-
-//==========================================================================
-//
-//  decoDoFlagAction
-//
-//==========================================================================
-/*
-static final bool decoDoFlagAction (string flagname, Entity tgt, optional bool newvalue) {
-  if (!tgt || !flagname) return false;
-
-  bool res = false;
-  if (tgt.decoDoFlagActionSpecific(flagname, out res, newvalue!optional)) return res;
-
-  print("DECORATE: checking unknown flag '%s'", flagname);
-  return 0;
-}
-*/
-
-
-//==========================================================================
-//
-//  decoDoCheckFlag
-//
-//==========================================================================
-/*
-static final bool decoDoCheckFlag (string flagname, Entity tgt) {
-  //return decoDoFlagAction(flagname, tgt);
-  if (!tgt || !flagname) return false;
-
-  bool res = false;
-  if (tgt.decoDoFlagActionSpecific(flagname, out res)) return res;
-
-  print("DECORATE: checking unknown flag '%s'", flagname);
-  return false;
-}
-*/
-
-
-//==========================================================================
-//
-//  decoDoSetFlag
-//
-//==========================================================================
-/*
-static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue) {
-  //decoDoFlagAction(flagname, tgt, newvalue);
-  if (!tgt || !flagname) return false;
-
-  bool res = false;
-  if (tgt.decoDoFlagActionSpecific(flagname, out res, newvalue)) return true;
-
-  print("DECORATE: setting unknown flag '%s'", flagname);
-  return false;
-}
-*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
