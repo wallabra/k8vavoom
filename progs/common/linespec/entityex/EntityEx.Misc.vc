@@ -1398,6 +1398,8 @@ override void Tick (float deltaTime) {
     } else {
       bIntrJustMoved = false;
     }
+  } else {
+    //print("%C: interpolation aborted by physics", self);
   }
 
   // cycle through states, calling action functions at transitions
@@ -1414,13 +1416,30 @@ override void Tick (float deltaTime) {
     }
     if (stateChange && bIntrJustMoved) {
       TVec delta = Origin-lastOrg;
-      // if we have some velocity, don't interpolate
-      if (delta && StateTime > 0 && !Velocity) {
-        // moved
-        PrevOrigin = lastOrg;
-        LastMoveTime = XLevel.Time;
-        LastMoveDuration = StateTime;
+      if (delta && StateTime > 0 /*&& delta.lengthSquared < 256*256*/) {
+        // if we have some velocity, don't interpolate (but ignore gravity)
+        /*
+        bool noVelocity = false;
+        if (!Velocity.x && !Velocity.y) {
+          if (Velocity.z) {
+            // check if it is on a floor/on a ceiling
+                 if (Velocity.z > 0 && Origin.z == FloorZ) noVelocity = true;
+            else if (Velocity.z < 0 && Origin.z == CeilingZ) noVelocity = true;
+          } else {
+            noVelocity = true;
+          }
+        }
+        if (noVelocity)
+        */
+        if (true) {
+          PrevOrigin = lastOrg;
+          LastMoveTime = XLevel.Time;
+          LastMoveDuration = StateTime;
+        } else {
+          bIntrJustMoved = false;
+        }
       } else {
+        //print("%C: interpolation aborted by state change; delta=%s; StateTime=%s; Velocity=%s", self, delta, StateTime, Velocity);
         bIntrJustMoved = false;
       }
     } else {
