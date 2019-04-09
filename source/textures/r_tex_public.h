@@ -107,7 +107,7 @@ struct TSwitch {
   vint16 NumFrames;
   bool Quest;
 
-  TSwitch () : Frames(nullptr) {}
+  TSwitch () : Tex(0), PairIndex(0), Sound(0), Frames(nullptr), NumFrames(0), Quest(false) {}
   ~TSwitch () { if (Frames) { delete[] Frames; Frames = nullptr; } }
 };
 

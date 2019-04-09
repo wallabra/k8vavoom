@@ -2031,6 +2031,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
 //
 //==========================================================================
 static int AddSwitchDef (TSwitch *Switch) {
+//TEMPORARY
+#if 0
   for (int i = 0; i < Switches.length(); ++i) {
     if (Switches[i]->Tex == Switch->Tex) {
       delete Switches[i];
@@ -2039,6 +2041,7 @@ static int AddSwitchDef (TSwitch *Switch) {
       return i;
     }
   }
+#endif
   return Switches.Append(Switch);
 }
 
@@ -2145,14 +2148,8 @@ static void ParseSwitchDef (VScriptParser *sc) {
   }
 
   if (t1 < 0 || !Def1) {
-    if (Def1) {
-      delete Def1;
-      Def1 = nullptr;
-    }
-    if (Def2) {
-      delete Def2;
-      Def2 = nullptr;
-    }
+    if (Def1) delete Def1;
+    if (Def2) delete Def2;
     return;
   }
 
@@ -2169,7 +2166,10 @@ static void ParseSwitchDef (VScriptParser *sc) {
 
   Def1->Tex = t1;
   Def2->Tex = Def1->Frames[Def1->NumFrames-1].Texture;
-  if (Def1->Tex == Def2->Tex) sc->Error("On state must not end on base texture");
+  if (Def1->Tex == Def2->Tex) {
+    sc->Error("On state must not end on base texture");
+    //sc->Message("On state must not end on base texture");
+  }
   Def1->Quest = Quest;
   Def2->Quest = Quest;
   Def2->PairIndex = AddSwitchDef(Def1);
