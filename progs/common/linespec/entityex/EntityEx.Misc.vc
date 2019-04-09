@@ -1414,7 +1414,8 @@ override void Tick (float deltaTime) {
     }
     if (stateChange && bIntrJustMoved) {
       TVec delta = Origin-lastOrg;
-      if (delta) {
+      // if we have some velocity, don't interpolate
+      if (delta && StateTime > 0 && !Velocity) {
         // moved
         PrevOrigin = lastOrg;
         LastMoveTime = XLevel.Time;
