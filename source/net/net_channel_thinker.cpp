@@ -245,7 +245,15 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
   }
 
   VEntity *Ent = Cast<VEntity>(Thinker);
-  if (Ent) Ent->UnlinkFromWorld();
+  //TVec oldOrg(0.0f, 0.0f, 0.0f);
+  if (Ent) {
+    Ent->UnlinkFromWorld();
+    //TODO: use this to interpolate movements
+    //      actually, we need to quantize movements by frame tics (1/35), and
+    //      setup interpolation variables
+    //oldOrg = Eng->Origin;
+  }
+
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(/*Thinker->GetClass()->NumNetFields*/);
     VField *F = nullptr;
@@ -271,7 +279,11 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
     Sys_Error("Bad net field %d", FldIdx);
   }
-  if (Ent) Ent->LinkToWorld(true);
+
+  if (Ent) {
+    Ent->LinkToWorld(true);
+    //TVec newOrg = Eng->Origin;
+  }
 }
 
 
