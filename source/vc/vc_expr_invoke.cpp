@@ -2741,8 +2741,8 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
               break;
             }
                  if (t.ICmp("Auto") == 0) v = 0;
-            else if (t.ICmp("Weapon") == 0) v = 1;
-            else if (t.ICmp("Voice") == 0) v = 2;
+            else if (t.ICmp("Voice") == 0) v = 1;
+            else if (t.ICmp("Weapon") == 0) v = 2;
             else if (t.ICmp("Item") == 0) v = 3;
             else if (t.ICmp("Body") == 0) v = 4;
             else v = 0;
