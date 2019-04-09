@@ -2751,7 +2751,8 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         //if (v < 0 || v > 7) v = 0;
         //v &= 7;
         if (v < 0 || v > 127) v = 0;
-        ParseWarning(Args[i]->Loc, "`%s` argument #%d converted from '%s' to %d", Func->GetName(), i+1, *s, v);
+        //k8: don't show warning, it was only for debugging
+        //ParseWarning(Args[i]->Loc, "`%s` argument #%d converted from '%s' to %d", Func->GetName(), i+1, *s, v);
         VExpression *e = new VIntLiteral(v, Args[i]->Loc);
         delete Args[i];
         Args[i] = e;
