@@ -508,8 +508,8 @@ void VMultiPatchTexture::SetFrontSkyLayer () {
 //
 //  VMultiPatchTexture::GetPixels
 //
-// using the texture definition, the composite texture is created from the
-// patches, and each column is cached
+//  using the texture definition, the composite texture is created from the
+//  patches, and each column is cached
 //
 //==========================================================================
 vuint8 *VMultiPatchTexture::GetPixels () {
@@ -517,33 +517,10 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   if (Pixels) return Pixels;
   transparent = false;
 
-  static int dumpPng = -1;
-  if (dumpPng < 0) dumpPng = (GArgs.CheckParm("-dump-multipatch-textures") ? 1 : 0);
-
-  if (dumpPng > 0 && Name != "doortrak") dumpPng = -1;
-
   // load all patches, if any of them is not in standard palette, then switch to 32 bit mode
   for (int i = 0; i < PatchCount; ++i) {
     if (!Patches[i].Tex) continue;
     Patches[i].Tex->GetPixels();
-    if (dumpPng > 0) {
-      //Patches[i].Tex->ConvertPixelsToRGBA();
-      VStream *strm = nullptr;
-      VStr basename = VStr(Name != NAME_None ? *Name : "_untitled");
-      basename += "_patches_";
-      if (Patches[i].Tex->Name != NAME_None) basename += *Patches[i].Tex->Name; else basename += "untitled";
-      for (int count = 0; ; ++count) {
-        VStr fname = va("_texdump/%s_%04d_%04d.png", *basename, count, i);
-        if (!Sys_FileExists(fname)) {
-          strm = FL_OpenFileWrite(fname, true); // as full name
-          if (strm) {
-            WriteToPNG(strm);
-            delete strm;
-          }
-          break;
-        }
-      }
-    }
     if (Patches[i].Tex->Format != TEXFMT_8) mFormat = TEXFMT_RGBA;
   }
 
@@ -559,7 +536,10 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   VTexPatch *patch = Patches;
   for (int i = 0; i < PatchCount; ++i, ++patch) {
     VTexture *PatchTex = patch->Tex;
-    if (!PatchTex) continue;
+    if (!PatchTex || PatchTex->Type == TEXTYPE_Null) {
+      //abort();
+      continue;
+    }
     vuint8 *PatchPixels = (patch->Trans ? PatchTex->GetPixels8() : PatchTex->GetPixels());
     int PWidth = PatchTex->GetWidth();
     int PHeight = PatchTex->GetHeight();
@@ -571,6 +551,8 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     if (y2 > Height) y2 = Height;
     float IAlpha = 1.0-patch->Alpha;
     if (IAlpha < 0) IAlpha = 0; else if (IAlpha > 1) IAlpha = 1;
+
+    //GCon->Logf("Texture '%s'; patch #%d; patchtex '%s'", *Name, i, *PatchTex->Name);
 
     for (int y = y1 < 0 ? 0 : y1; y < y2; ++y) {
       int PIdxY;
@@ -691,22 +673,6 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   }
 
   ConvertPixelsToShaded();
-
-  if (dumpPng > 0) {
-    VStream *strm = nullptr;
-    VStr basename = VStr(Name != NAME_None ? *Name : "_untitled");
-    for (int counter = 0; ; ++counter) {
-      VStr fname = VStr(counter ? va("_texdump/%s_%04d.png", *basename, counter) : va("_texdump/%s.png", *basename));
-      if (!Sys_FileExists(fname)) {
-        strm = FL_OpenFileWrite(fname, true); // as full name
-        break;
-      }
-    }
-    if (strm) {
-      WriteToPNG(strm);
-      delete strm;
-    }
-  }
 
   return Pixels;
 }

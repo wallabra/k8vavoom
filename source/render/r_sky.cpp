@@ -92,8 +92,7 @@ static void ParseSkyBoxesScript(VScriptParser *sc)
       sc->Expect("{");
       sc->Expect("map");
       sc->ExpectString();
-      info.surfs[i].texture = GTextureManager.AddFileTexture(
-        VName(*sc->String), TEXTYPE_SkyMap);
+      info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*sc->String), TEXTYPE_SkyMap);
       sc->Expect("}");
     }
     sc->Expect("}");

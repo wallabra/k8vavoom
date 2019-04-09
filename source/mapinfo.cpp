@@ -292,7 +292,10 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
 
   //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
   //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
+  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_SkyMap, true, false);
+  if (Tex > 0) return Tex;
+
+  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
   if (Tex >= 0) {
     forceList.put(loname, Tex);
     return Tex;
