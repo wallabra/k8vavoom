@@ -864,11 +864,11 @@ final float AngleToWithOfs (Entity Other, const TVec ofs) {
 //
 //  AngleDelta
 //
+//  returns signed angle from a1 to a2, [-180..180]
+//
 //==========================================================================
 static final float AngleDelta (float a1, float a2) {
-  a1 = AngleMod360(a1);
-  a2 = AngleMod360(a2);
-  return (a1 < a2 ? AngleMod180(a2-a1) : -AngleMod180(a2-a1));
+  return AngleMod360(a2-a1+180)-180;
 }
 
 
