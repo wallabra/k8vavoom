@@ -326,6 +326,8 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
 
       // taken from Zandronum
       // now check for closed sectors
+
+      // closed door
       if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
         // preserve a kind of transparent door/lift special effect:
         if (!hasTopTex) return false;
@@ -342,6 +344,7 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
         return true;
       }
 
+      // if door is closed because back is shut
       if (backcz1 <= backfz1 && backcz2 <= backfz2) {
         // preserve a kind of transparent door/lift special effect:
         if (backcz1 < frontcz1 || backcz2 < frontcz2) {
