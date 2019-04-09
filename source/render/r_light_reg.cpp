@@ -800,7 +800,9 @@ void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bs
     return InvalidateSubsectorLMaps(org, radius, 0);
   }
 
+#ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
+#endif
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
   if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) return;

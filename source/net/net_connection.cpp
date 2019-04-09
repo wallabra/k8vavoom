@@ -466,7 +466,9 @@ void VNetConnection::SetUpFatPVS () {
 //==========================================================================
 void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   VLevel *Level = Context->GetLevel();
+#ifdef VV_CLIPPER_FULL_CHECK
   if (Clipper.ClipIsFull()) return;
+#endif
   if (!Clipper.ClipIsBBoxVisible(BBox)) return;
 
   if (BspNum == -1) {

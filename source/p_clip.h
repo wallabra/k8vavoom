@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #define VAVOOM_CLIPPER_USE_FLOAT
+#define VAVOOM_CLIPPER_USE_REAL_ANGLES
 
 #ifdef VAVOOM_CLIPPER_USE_FLOAT
 # define  VVC_matan  matan
@@ -34,6 +35,13 @@
 # define  VVC_matan  matand
 # define  VVC_AngleMod  AngleModD
 # define  VVC_AngleMod180  AngleMod180D
+#endif
+
+#ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+# define PointToClipAngle  PointToRealAngle
+# define VV_CLIPPER_FULL_CHECK
+#else
+# define PointToClipAngle  PointToPseudoAngle
 #endif
 
 
@@ -73,12 +81,44 @@ private:
 
   void AddClipRangeAngle (const VFloat From, const VFloat To);
 
+  void DoRemoveClipRange (VFloat From, VFloat To);
+  void RemoveClipRangeAngle (VFloat From, VFloat To);
+
 public:
-  inline VFloat PointToClipAngle (const TVec &Pt) const {
+  inline VFloat PointToRealAngle (const float x, const float y) const {
+    VFloat Ret = VVC_matan(y-Origin.y, x-Origin.x);
+    if (Ret < (VFloat)0) Ret += (VFloat)360;
+    return Ret;
+  }
+
+  inline VFloat PointToRealAngle (const TVec &Pt) const {
     VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
     if (Ret < (VFloat)0) Ret += (VFloat)360;
     return Ret;
   }
+
+  //-----------------------------------------------------------------------------
+  //
+  // ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the
+  // line from p1 to p2. The pseudoangle has the property that the ordering of
+  // points by true angle around p1 and ordering of points by pseudoangle are the
+  // same.
+  //
+  // For clipping exact angles are not needed. Only the ordering matters.
+  // This is about as fast as the fixed point R_PointToAngle2 but without
+  // the precision issues associated with that function.
+  //
+  //-----------------------------------------------------------------------------
+  inline VFloat PointToPseudoAngle (float x, float y) const {
+    VFloat dx = x-Origin.x;
+    VFloat dy = y-Origin.y;
+    if (dx == 0 && dy == 0) return 0;
+    VFloat res = dy/(fabsf(dx)+fabsf(dy));
+    if (dx < 0) res = 2.0f-res;
+    return res;
+  }
+
+  inline VFloat PointToPseudoAngle (const TVec &p) const { return PointToPseudoAngle(p.x, p.y); }
 
 public:
   VViewClipper ();
@@ -114,12 +154,14 @@ public:
   void ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy);
 
 
+#ifdef VV_CLIPPER_FULL_CHECK
   inline bool ClipIsFull () const {
     return (ClipHead && ClipHead->From == (VFloat)0 && ClipHead->To == (VFloat)360);
   }
+#endif
 
   inline bool ClipIsEmpty () const {
-    return (!ClipHead);
+    return !ClipHead;
   }
 
   inline bool IsRangeVisible (const TVec &vfrom, const TVec &vto) const {

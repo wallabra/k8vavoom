@@ -756,7 +756,9 @@ static __attribute__((unused)) void bspCalcZExtents (VLevel *level, int bspnum, 
 //
 //==========================================================================
 void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip) {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ViewClip.ClipIsFull()) return;
+#endif
 
   if (bspnum == -1) {
     RenderSubsector(0);

@@ -472,7 +472,9 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
     if (r_max_shadow_segs_one >= 0 && CurrShadowsNumber > r_max_shadow_segs_one) return;
   }
 
+#ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
+#endif
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
@@ -700,7 +702,9 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
      if (r_max_light_segs_one >= 0 && CurrLightsNumber > r_max_light_segs_one) return;
   }
 
+#ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
+#endif
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
   //if (!CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;

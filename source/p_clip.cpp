@@ -32,6 +32,14 @@
 //#define XXX_CLIPPER_DEBUG
 #define XXX_CLIPPER_MANY_DUMPS
 
+#ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+# define MIN_ANGLE  ((VFloat)0)
+# define MAX_ANGLE  ((VFloat)360)
+#else
+# define MIN_ANGLE  ((VFloat)-1)
+# define MAX_ANGLE  ((VFloat)3)
+#endif
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #ifdef CLIENT
@@ -41,7 +49,7 @@ enum { r_draw_pobj = true };
 #endif
 
 static VCvarB clip_bbox("clip_bbox", true, "Clip BSP bboxes with 1D clipper?", CVAR_PreInit);
-static VCvarB clip_check_bbox_z("clip_check_bbox_z", true, "Consider bbox height when cliping BSP bboxes with 1D clipper?", CVAR_PreInit);
+static VCvarB clip_check_bbox_z("clip_check_bbox_z", false, "Consider bbox height when cliping BSP bboxes with 1D clipper?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
@@ -641,6 +649,59 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   if (!clip_frustum) return;
   if (!clip_frustum_init_range) return;
 
+#ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+# if 0
+    float fov = RAD2DEGF(atanf(fovx)*2.0f);
+    float frangle;
+
+    /*
+    float tilt = 45.0f-fabsf(AngleMod180(viewangles.pitch)-90.0f);
+
+    if (tilt > 90.0f) {
+      frangle = 180.0f;
+    } else {
+      float range = 64.0f/(fov-(/ *widescreen* /0 ? -4.0f : 10.0f));
+      if (range > 1.0f) range = 1.0f;
+      float floatangle = (float)tilt*range;
+      frangle = 270.0f-floatangle;
+    }
+    GCon->Logf("fovx=%f; fov=%f; frangle=%f; tilt=%f; pitch=%f", fovx, fov, frangle, tilt, viewangles.pitch);
+    */
+    float tilt = AngleMod180(fabsf(viewangles.pitch));
+    if (tilt > 90.0f) return;
+    float range = 64.0f/(fov-(/*widescreen*/0 ? -4.0f : 10.0f));
+    if (range > 1.0f) range = 1.0f;
+    float floatangle = tilt*range;
+    //frangle = fov+floatangle;
+    frangle = fov+tilt;
+
+    float a0 = AngleMod(viewangles.yaw-frangle*0.5f);
+    float a1 = AngleMod(viewangles.yaw+frangle*0.5f);
+
+    //GCon->Logf("fovx=%f; fov=%f; tilt=%f; pitch=%f; range=%f; floatangle=%f; frangle=%f; (%f : %f); %f", fovx, fov, tilt, viewangles.pitch, range, floatangle, frangle, a0, a1, viewangles.yaw);
+
+    if (a0 > a1) {
+      ClipHead = NewClipNode();
+      ClipTail = ClipHead;
+      ClipHead->From = a1;
+      ClipHead->To = a0;
+      ClipHead->Prev = nullptr;
+      ClipHead->Next = nullptr;
+    } else {
+      ClipHead = NewClipNode();
+      ClipHead->From = MIN_ANGLE;
+      ClipHead->To = a0;
+
+      ClipTail = NewClipNode();
+      ClipTail->From = a1;
+      ClipTail->To = MAX_ANGLE;
+
+      ClipHead->Prev = nullptr;
+      ClipHead->Next = ClipTail;
+      ClipTail->Prev = ClipHead;
+      ClipTail->Next = nullptr;
+    }
+# else
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
 
@@ -707,6 +768,17 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     ClipTail->Prev = ClipHead;
     ClipTail->Next = nullptr;
   }
+# endif
+#else
+  TVec fwd;
+  AngleVector(TAVec(0, viewangles.yaw-90), fwd);
+  TVec v0 = Origin+fwd*42;
+  AngleVector(TAVec(0, viewangles.yaw+90), fwd);
+  TVec v1 = Origin+fwd*42;
+  check(!ClipHead);
+  check(!ClipTail);
+  AddClipRangeAngle(PointToClipAngle(v0), PointToClipAngle(v1));
+#endif
 }
 
 
@@ -759,16 +831,16 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
     // add new clip node
     ClipHead = NewClipNode();
     ClipTail = ClipHead;
-    ClipHead->From = (VFloat)0;
-    ClipHead->To = (VFloat)360;
+    ClipHead->From = MIN_ANGLE;
+    ClipHead->To = MAX_ANGLE;
     ClipHead->Prev = nullptr;
     ClipHead->Next = nullptr;
     return;
   }
 
   // add head and tail ranges
-  if (Range.ClipHead->From > (VFloat)0) DoAddClipRange((VFloat)0, Range.ClipHead->From);
-  if (Range.ClipTail->To < (VFloat)360) DoAddClipRange(Range.ClipTail->To, (VFloat)360);
+  if (Range.ClipHead->From > MIN_ANGLE) DoAddClipRange(MIN_ANGLE, Range.ClipHead->From);
+  if (Range.ClipTail->To < MAX_ANGLE) DoAddClipRange(Range.ClipTail->To, MAX_ANGLE);
 
   // add middle ranges
   for (VClipNode *N = Range.ClipHead; N->Next; N = N->Next) DoAddClipRange(N->To, N->Next->From);
@@ -782,7 +854,9 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 //==========================================================================
 void VViewClipper::Dump () const {
   GCon->Logf("=== CLIPPER: origin=(%f,%f,%f) ===", Origin.x, Origin.y, Origin.z);
+#ifdef VV_CLIPPER_FULL_CHECK
   GCon->Logf(" full: %d", (int)ClipIsFull());
+#endif
   GCon->Logf(" empty: %d", (int)ClipIsEmpty());
   for (VClipNode *node = ClipHead; node; node = node->Next) {
     GCon->Logf("  node: (%f : %f)", node->From, node->To);
@@ -796,9 +870,11 @@ void VViewClipper::Dump () const {
 //
 //==========================================================================
 void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
+#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
   if (From < (VFloat)(VFloat)0) From = (VFloat)0; else if (From >= (VFloat)360) From = (VFloat)360;
   if (To < (VFloat)0) To = (VFloat)0; else if (To >= (VFloat)360) To = (VFloat)360;
   //check(From <= To || (From > To && To == (VFloat)360));
+#endif
 
   if (ClipIsEmpty()) {
     ClipHead = NewClipNode();
@@ -896,10 +972,72 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
 //==========================================================================
 void VViewClipper::AddClipRangeAngle (const VFloat From, const VFloat To) {
   if (From > To) {
-    DoAddClipRange((VFloat)0, To);
-    DoAddClipRange(From, (VFloat)360);
+    DoAddClipRange(MIN_ANGLE, To);
+    DoAddClipRange(From, MAX_ANGLE);
   } else {
     DoAddClipRange(From, To);
+  }
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::DoRemoveClipRange
+//
+//  NOT TESTED!
+//
+//==========================================================================
+void VViewClipper::DoRemoveClipRange (VFloat From, VFloat To) {
+  if (ClipHead) {
+    // check to see if range contains any old ranges
+    VClipNode *node = ClipHead;
+    while (node != nullptr && node->From < To) {
+      if (node->From >= From && node->To <= To) {
+        VClipNode *temp = node;
+        node = node->Next;
+        RemoveClipNode(temp);
+      } else {
+        node = node->Next;
+      }
+    }
+
+    // check to see if range overlaps a range (or possibly 2)
+    node = ClipHead;
+    while (node) {
+      if (node->From >= From && node->From <= To) {
+        node->From = To;
+        break;
+      } else if (node->To >= From && node->To <= To) {
+        node->To = From;
+      } else if (node->From < From && node->To > To) {
+        // split node
+        VClipNode *temp = NewClipNode();
+        temp->From = To;
+        temp->To = node->To;
+        node->To = From;
+        temp->Next = node->Next;
+        temp->Prev = node;
+        node->Next = temp;
+        if (temp->Next) temp->Next->Prev = temp;
+        break;
+      }
+      node = node->Next;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::RemoveClipRange
+//
+//==========================================================================
+void VViewClipper::RemoveClipRangeAngle (VFloat From, VFloat To) {
+  if (From > To) {
+    DoRemoveClipRange(MIN_ANGLE, To);
+    DoRemoveClipRange(From, MAX_ANGLE);
+  } else {
+    DoRemoveClipRange(From, To);
   }
 }
 
@@ -923,7 +1061,7 @@ bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
 //
 //==========================================================================
 bool VViewClipper::IsRangeVisibleAngle (const VFloat From, const VFloat To) const {
-  if (From > To) return (DoIsRangeVisible((VFloat)0, To) || DoIsRangeVisible(From, (VFloat)360));
+  if (From > To) return (DoIsRangeVisible(MIN_ANGLE, To) || DoIsRangeVisible(From, MAX_ANGLE));
   return DoIsRangeVisible(From, To);
 }
 
@@ -932,59 +1070,99 @@ bool VViewClipper::IsRangeVisibleAngle (const VFloat From, const VFloat To) cons
 //
 //  CreateBBVerts
 //
+//  returns `true` if no check required (origin in is a box)
+//
 //==========================================================================
-inline static void CreateBBVerts (TVec &v1, TVec &v2, const float BBox[6], const TVec &origin) {
+inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const TVec &origin) {
   enum { MIN_X, MIN_Y, MIN_Z, MAX_X, MAX_Y, MAX_Z };
-  //v1 = TVec(0, 0, 0);
-  //v2 = TVec(0, 0, 0);
-  if (BBox[MIN_X] > origin.x) {
-    if (BBox[MIN_Y] > origin.y) {
-      v1.x = BBox[MAX_X];
-      v1.y = BBox[MIN_Y];
-      v2.x = BBox[MIN_X];
-      v2.y = BBox[MAX_Y];
-    } else if (BBox[MAX_Y] < origin.y) {
-      v1.x = BBox[MIN_X];
-      v1.y = BBox[MIN_Y];
-      v2.x = BBox[MAX_X];
-      v2.y = BBox[MAX_Y];
+
+#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
+  static const vuint8 checkcoord[12][4] = {
+    { MAX_Y,MIN_X,MAX_X,MIN_Y },
+    { MAX_Y,MIN_X,MAX_X,MIN_X },
+    { MAX_Y,MIN_Y,MAX_X,MIN_X },
+    { MIN_X },
+    { MAX_X,MIN_X,MAX_X,MIN_Y },
+    { MIN_X },
+    { MAX_Y,MIN_Y,MAX_Y,MIN_X },
+    { MIN_X },
+    { MAX_X,MIN_X,MAX_Y,MIN_Y },
+    { MAX_X,MIN_Y,MAX_Y,MIN_Y },
+    { MAX_X,MIN_Y,MAX_Y,MIN_X }
+  };
+
+  // find the corners of the box that define the edges from current viewpoint
+  const float ox = origin.x, oy = origin.y;
+  const unsigned boxpos = (ox <= bbox[MIN_X] ? 0 : ox < bbox[MAX_X] ? 1 : 2)+
+                          (oy >= bbox[MAX_Y] ? 0 : oy > bbox[MIN_Y] ? 4 : 8);
+
+  if (boxpos == 5) return true;
+  check(boxpos != 3 && boxpos != 7);
+
+  const vuint8 *check = checkcoord[boxpos];
+  v1 = TVec(bbox[check[0]], bbox[check[1]], 0.0f);
+  v2 = TVec(bbox[check[2]], bbox[check[3]], 0.0f);
+
+#else
+  if (bbox[0] <= origin.x && bbox[3] >= origin.x &&
+      bbox[1] <= origin.y && bbox[4] >= origin.y &&
+      (!clip_check_bbox_z || (bbox[2] <= origin.z && bbox[5] >= origin.z)))
+  {
+    // viewer is inside the box
+    return true;
+  }
+
+  if (bbox[MIN_X] > origin.x) {
+    if (bbox[MIN_Y] > origin.y) {
+      v1.x = bbox[MAX_X];
+      v1.y = bbox[MIN_Y];
+      v2.x = bbox[MIN_X];
+      v2.y = bbox[MAX_Y];
+    } else if (bbox[MAX_Y] < origin.y) {
+      v1.x = bbox[MIN_X];
+      v1.y = bbox[MIN_Y];
+      v2.x = bbox[MAX_X];
+      v2.y = bbox[MAX_Y];
     } else {
-      v1.x = BBox[MIN_X];
-      v1.y = BBox[MIN_Y];
-      v2.x = BBox[MIN_X];
-      v2.y = BBox[MAX_Y];
+      v1.x = bbox[MIN_X];
+      v1.y = bbox[MIN_Y];
+      v2.x = bbox[MIN_X];
+      v2.y = bbox[MAX_Y];
     }
-  } else if (BBox[MAX_X] < origin.x) {
-    if (BBox[MIN_Y] > origin.y) {
-      v1.x = BBox[MAX_X];
-      v1.y = BBox[MAX_Y];
-      v2.x = BBox[MIN_X];
-      v2.y = BBox[MIN_Y];
-    } else if (BBox[MAX_Y] < origin.y) {
-      v1.x = BBox[MIN_X];
-      v1.y = BBox[MAX_Y];
-      v2.x = BBox[MAX_X];
-      v2.y = BBox[MIN_Y];
+  } else if (bbox[MAX_X] < origin.x) {
+    if (bbox[MIN_Y] > origin.y) {
+      v1.x = bbox[MAX_X];
+      v1.y = bbox[MAX_Y];
+      v2.x = bbox[MIN_X];
+      v2.y = bbox[MIN_Y];
+    } else if (bbox[MAX_Y] < origin.y) {
+      v1.x = bbox[MIN_X];
+      v1.y = bbox[MAX_Y];
+      v2.x = bbox[MAX_X];
+      v2.y = bbox[MIN_Y];
     } else {
-      v1.x = BBox[MAX_X];
-      v1.y = BBox[MAX_Y];
-      v2.x = BBox[MAX_X];
-      v2.y = BBox[MIN_Y];
+      v1.x = bbox[MAX_X];
+      v1.y = bbox[MAX_Y];
+      v2.x = bbox[MAX_X];
+      v2.y = bbox[MIN_Y];
     }
   } else {
-    if (BBox[MIN_Y] > origin.y) {
-      v1.x = BBox[MAX_X];
-      v1.y = BBox[MIN_Y];
-      v2.x = BBox[MIN_X];
-      v2.y = BBox[MIN_Y];
+    if (bbox[MIN_Y] > origin.y) {
+      v1.x = bbox[MAX_X];
+      v1.y = bbox[MIN_Y];
+      v2.x = bbox[MIN_X];
+      v2.y = bbox[MIN_Y];
     } else {
-      v1.x = BBox[MIN_X];
-      v1.y = BBox[MAX_Y];
-      v2.x = BBox[MAX_X];
-      v2.y = BBox[MAX_Y];
+      v1.x = bbox[MIN_X];
+      v1.y = bbox[MAX_Y];
+      v2.x = bbox[MAX_X];
+      v2.y = bbox[MAX_Y];
     }
   }
-  v1.z = v2.z = 0;
+  v1.z = v2.z = 0.0f;
+#endif
+
+  return false;
 }
 
 
@@ -1066,20 +1244,15 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg, const unsigned mask) const
 //  VViewClipper::ClipIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
+bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const {
   if (!clip_enabled || !clip_bbox) return true;
-  if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
-      BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
-      (!clip_check_bbox_z || (BBox[2] <= Origin.z && BBox[5] >= Origin.z)))
-  {
-    // viewer is inside the box
-    return true;
-  }
-  if (ClipIsFull()) return false;
   if (ClipIsEmpty()) return true; // no clip nodes yet
+#ifdef VV_CLIPPER_FULL_CHECK
+  if (ClipIsFull()) return false;
+#endif
 
   TVec v1, v2;
-  CreateBBVerts(v1, v2, BBox, Origin);
+  if (CreateBBVerts(v1, v2, bbox, Origin)) return true;
   return IsRangeVisible(v1, v2);
 }
 
@@ -1091,7 +1264,9 @@ bool VViewClipper::ClipIsBBoxVisible (const float BBox[6]) const {
 //==========================================================================
 bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const {
   if (!clip_enabled || !clip_subregion) return true;
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
+#endif
   const drawseg_t *ds = region->lines;
   for (auto count = sub->numlines; count--; ++ds) {
     const int orgside = ds->seg->PointOnSide2(Origin);
@@ -1112,10 +1287,12 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //==========================================================================
 bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
   if (!clip_enabled) return true;
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) {
     if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: clip is full", (int)(ptrdiff_t)(sub-Level->Subsectors));
     return false;
   }
+#endif
   if (dbg_clip_dump_sub_checks) Dump();
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
@@ -1222,7 +1399,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 //==========================================================================
 void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror, bool clipAll) {
   if (!clip_enabled) return;
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return;
+#endif
 
   bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj);
 
@@ -1290,24 +1469,15 @@ int VViewClipper::CheckSubsectorLight (const subsector_t *sub) const {
 //  VViewClipper::ClipLightIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6]) const {
+bool VViewClipper::ClipLightIsBBoxVisible (const float bbox[6]) const {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
-
-  if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
-      BBox[1] <= Origin.y && BBox[4] >= Origin.y &&
-      (!clip_check_bbox_z || (BBox[2] <= Origin.z && BBox[5] >= Origin.z)))
-  {
-    // viewer is inside the box
-    return true;
-  }
-
-  if (!CheckSphereVsAABBIgnoreZ(BBox, Origin, Radius)) return false;
-  //return true;
-
+#endif
+  if (!CheckSphereVsAABBIgnoreZ(bbox, Origin, Radius)) return false;
   if (ClipIsEmpty()) return true; // no clip nodes yet
 
   TVec v1, v2;
-  CreateBBVerts(v1, v2, BBox, Origin);
+  if (CreateBBVerts(v1, v2, bbox, Origin)) return true;
   return IsRangeVisible(v1, v2);
 }
 
@@ -1318,7 +1488,9 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float BBox[6]) const {
 //
 //==========================================================================
 bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, bool asShadow) const {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
+#endif
   const int slight = CheckSubsectorLight(sub);
   if (!slight) return false;
   if (slight > 0 && ClipIsEmpty()) return true; // no clip nodes yet
@@ -1378,7 +1550,9 @@ bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {
 //
 //==========================================================================
 bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, bool asShadow) const {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
+#endif
   const int slight = CheckSubsectorLight(sub);
   if (!slight) return false;
   if (slight > 0 && ClipIsEmpty()) return true; // no clip nodes yet
@@ -1466,7 +1640,9 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
 //
 //==========================================================================
 void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asShadow, const TPlane *Mirror) {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return;
+#endif
 
   bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj);
 
@@ -1478,7 +1654,12 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asSha
     }
   }
 
-  if (doPoly && !ClipIsFull()) {
+  if (doPoly
+#ifdef VV_CLIPPER_FULL_CHECK
+      && !ClipIsFull()
+#endif
+     )
+  {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       const seg_t *seg = *polySeg;

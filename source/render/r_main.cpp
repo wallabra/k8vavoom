@@ -1166,7 +1166,9 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
 //
 //==========================================================================
 void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
+#endif
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 

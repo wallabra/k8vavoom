@@ -137,7 +137,9 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
+#ifdef VV_CLIPPER_FULL_CHECK
   if (ViewClip.ClipIsFull()) return;
+#endif
 
   if (w_update_clip_bsp && !ViewClip.ClipIsBBoxVisible(bbox)) return;
 
