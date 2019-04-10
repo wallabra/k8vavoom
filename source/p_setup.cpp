@@ -3876,7 +3876,10 @@ void VLevel::FixDeepWaters () {
     for (int sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
       if (sec->linecount == 0 || sec->deepref) continue;
-      if (sec->SectorFlags != 0) continue; // this is special sector, skip it
+      if (sec->SectorFlags&sector_t::SF_UnderWater) continue; // this is special sector, skip it
+      if ((sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
+        if (!(sec->SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
+      }
       // slopes aren't interesting
       if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
       if (sec->floor.minz >= sec->ceiling.minz) continue;
