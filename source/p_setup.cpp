@@ -3854,6 +3854,8 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
 //
 //==========================================================================
 void VLevel::FixDeepWaters () {
+  if (NumSectors == 0) return;
+
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
     sec->deepref = nullptr;
@@ -3871,9 +3873,10 @@ void VLevel::FixDeepWaters () {
 
   if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
     // fix "floor holes"
-    for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
+    for (int sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
       if (sec->linecount == 0 || sec->deepref) continue;
+      if (sec->SectorFlags != 0) continue; // this is special sector, skip it
       // slopes aren't interesting
       if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
       if (sec->floor.minz >= sec->ceiling.minz) continue;
