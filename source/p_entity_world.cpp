@@ -1648,7 +1648,7 @@ void VEntity::UpdateVelocity () {
   */
 
   // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7f)) {
+  if (Sector && !(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7f)) {
     if (WaterLevel < 2) {
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
     } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {

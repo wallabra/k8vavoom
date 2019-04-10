@@ -167,6 +167,7 @@ bool Physics (float DeltaTime) {
   }
 
   CheckWater();
+  //print("WaterLevel=%s", WaterLevel);
   if (!bFloatBob || !bSpecial) UpdateVelocity();
 
   // momentum movement
@@ -437,6 +438,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   float delta;
   float OldZ = Origin.z;
 
+  //print("*** vz=%s", Velocity.z);
   FixNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
@@ -450,6 +452,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
     float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
     if (grav.isinf) grav = 1000;
     float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
+    //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
 
     if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ) {
       if (WaterLevel < 2) {

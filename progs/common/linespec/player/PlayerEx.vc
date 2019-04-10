@@ -579,7 +579,15 @@ final void WaterMove (float deltaTime) {
   PlayerPawn(MO).AdjustSpeed(forward, side);
 
   wishvel = vforward*forward+vright*side;
-  if (!forward && !side /*&& !cmd.upmove*/) wishvel.z -= 60.0; // drift towards bottom
+  float wishvz = wishvel.z;
+  if (!forward && !side /*&& !cmd.upmove*/ && !(Buttons&BT_JUMP)) {
+    //wishvel.z -= 60.0; // drift towards bottom
+    if (MO.WaterLevel < 2) {
+      wishvel.z -= 60.0; // drift towards bottom
+    } else {
+      wishvel.z -= 6;
+    }
+  }
   //else wishvel.z += cmd.upmove;
 
   MO.Velocity += 3.5*deltaTime*wishvel;
@@ -590,6 +598,10 @@ final void WaterMove (float deltaTime) {
          if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = 100.0;
     else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
     else MO.Velocity.z = 50.0;
+  } else {
+    if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0 && MO.Velocity.z < -20) {
+      MO.Velocity.z = -20;
+    }
   }
   CheckWaterJump();
 }
