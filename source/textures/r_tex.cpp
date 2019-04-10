@@ -514,20 +514,27 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload) {
 doitagain:
   int seenOther = -1;
   int seenType = -1;
+  int seenOne = -1;
+  int seenOneType = -1;
+
+  //if (secondary) GCon->Logf("*** SECONDARY lookup for texture '%s'", *Name);
 
   for (int trynum = 0; trynum < 2; ++trynum) {
     if (trynum == 1) {
-      if (VStr::length(*Name) < 8) return -1;
+      if (VStr::length(*Name) < 8) break;
       Name = VName(*Name, VName::FindLower8);
       if (Name == NAME_None) return -1;
     }
 
+    //GCon->Logf("::: LOOKING FOR '%s' (%s)", *Name, VTexture::TexTypeToStr(Type));
     for (auto it = firstWithName(Name); !it.empty(); (void)it.next()) {
+      //GCon->Logf("  (---) %d", it.index());
       VTexture *ctex = it.tex();
+      //GCon->Logf("* %s * idx=%d; name='%s' (%s : %s)", *Name, it.index(), *ctex->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(ctex->Type));
       if (Type == TEXTYPE_Any || ctex->Type == Type || (bOverload && ctex->Type == TEXTYPE_Overload)) {
+        //GCon->Logf("  (000) %d", it.index());
         if (secondary) {
           // secondary check
-          bool ok = true;
           switch (ctex->Type) {
             case TEXTYPE_WallPatch:
             case TEXTYPE_Overload:
@@ -535,14 +542,19 @@ doitagain:
             case TEXTYPE_Autopage:
             case TEXTYPE_Null:
             case TEXTYPE_FontChar:
-              ok = false;
-              break;
+              //GCon->Logf("  (001) %d", it.index());
+              continue;
           }
-          if (!ok) continue;
         }
-        if (ctex->Type == TEXTYPE_Null) return 0;
+        //GCon->Logf("   HIT! '%s' (%s)", *ctex->Name, VTexture::TexTypeToStr(ctex->Type));
+        if (ctex->Type == TEXTYPE_Null) {
+          //GCon->Logf("  (002) %d", it.index());
+          return 0;
+        }
+        //GCon->Logf("  (003) %d", it.index());
         return it.index();
       } else if (Type == TEXTYPE_WallPatch && ctex->Type != TEXTYPE_Null) {
+        //GCon->Logf("  (004) %d", it.index());
         bool repl = false;
         switch (ctex->Type) {
           case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
@@ -551,20 +563,52 @@ doitagain:
           case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
         }
         if (repl) {
+          //GCon->Logf("  (005) %d", it.index());
           seenOther = it.index();
           seenType = ctex->Type;
+        }
+      } else {
+        //GCon->Logf("  (100) %d", it.index());
+        switch (ctex->Type) {
+          case TEXTYPE_WallPatch:
+          case TEXTYPE_Overload:
+          case TEXTYPE_Skin:
+          case TEXTYPE_Autopage:
+          case TEXTYPE_Null:
+          case TEXTYPE_FontChar:
+            break;
+          default:
+            if (seenOneType < 0) {
+              seenOneType = ctex->Type;
+              seenOne = (seenOneType != TEXTYPE_Null ? it.index() : 0);
+            } else {
+              seenOne = -1;
+            }
+            break;
         }
       }
     }
 
-    if (seenOther >= 0) return seenOther;
+    if (seenOther >= 0) {
+      //GCon->Logf("  SO-HIT: * %s * idx=%d; name='%s' (%s : %s)", *Name, seenOther, *getTxByIndex(seenOther)->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(getTxByIndex(seenOther)->Type));
+      return seenOther;
+    }
   }
 
+  //GCon->Logf("* %s * NOT FOUND! (%s)", *Name, VTexture::TexTypeToStr(Type));
+
   if (!secondary && Type != TEXTYPE_Any) {
+    //GCon->Logf("  (006)");
+    if (seenOne >= 0) {
+      //VTexture *ctex = getTxByIndex(seenOne);
+      //GCon->Logf("SEENONE '%s' for type '%s' (%d : %s : %s)", *Name, VTexture::TexTypeToStr(Type), seenOne, *ctex->Name, VTexture::TexTypeToStr(ctex->Type));
+      return seenOne;
+    }
     switch (Type) {
       case TEXTYPE_Wall:
       case TEXTYPE_Flat:
       case TEXTYPE_Pic:
+        //GCon->Logf("*** looking for any texture for %s '%s'", VTexture::TexTypeToStr(Type), *Name);
         secondary = true;
         Type = TEXTYPE_Any;
         goto doitagain;
@@ -1389,7 +1433,7 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
       //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): skipped lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
       continue;
     }
-    //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
+    //GCon->Logf("VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
     AddTexture(VTexture::CreateTexture(Type, Lump));
   }
 }

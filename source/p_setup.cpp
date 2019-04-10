@@ -2954,7 +2954,18 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
   //if (i == -1 && VStr::length(name) > 8) i = GTextureManager.AddFileTexture(VName(name, VName::AddLower), Type);
 
   if (i == -1 /*&& !slash*/ && allowForceLoad) {
-    i = GTextureManager.AddFileTextureChecked(VName(name, VName::AddLower), Type);
+    //GCon->Logf("texForceLoad(x): <%s>", name);
+    /*
+    if (!slash && loname != NAME_None) {
+      if (loname == "ftub3") {
+        GCon->Log("===========");
+        i = GTextureManager.CheckNumForName(loname, Type, true);
+        //i = GTextureManager.CheckNumForName(loname, TEXTYPE_Flat, false);
+        GCon->Logf("*********** FTUB3 (%s)! i=%d", VTexture::TexTypeToStr(Type), i);
+      }
+    }
+    */
+    if (i == -1) i = GTextureManager.AddFileTextureChecked(VName(name, VName::AddLower), Type);
     //if (i != -1) GCon->Logf("texForceLoad(2): <%s> (%d)", name, i);
     if (i == -1 && loname != NAME_None) {
       i = GTextureManager.AddFileTextureChecked(loname, Type);
@@ -3048,7 +3059,7 @@ int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF)
 //
 //==========================================================================
 int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
-  if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
+  if (!name || !name[0]) return 0; //GTextureManager.DefaultTexture; // just in case
   //int res = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, /*bOverload*/true, /*bCheckAny*/true);
   //if (!fromUDMF) return res;
   return texForceLoad(name, Type, /*CMap*/false, /*r_udmf_allow_extra_textures*/true);
