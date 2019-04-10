@@ -249,7 +249,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 
   if (SrcTex->Type == TEXTYPE_Null) {
     // fuckin' idiots
-    if (SrcTex->Name != NAME_None) {
+    /*if (SrcTex->Name != NAME_None)*/ {
       GCon->Logf(NAME_Warning, "something is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
     }
     check(SrcTex->GetWidth() > 0);

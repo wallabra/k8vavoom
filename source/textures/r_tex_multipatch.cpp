@@ -110,7 +110,8 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     vint16 PatchIdx = Streamer<vint16>(Strm);
     // one patch with index `-1` means "use the same named texture, and get out"
     if (PatchIdx == -1 && PatchCount == 1) {
-      int tid = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Any, true, true, false);
+      int tid = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, false);
+      if (tid < 0) tid = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Any, true, false);
       patch->Tex = (tid >= 0 ? GTextureManager[tid] : nullptr);
     } else if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
@@ -208,14 +209,6 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
-        /*
-        int Tex = GTextureManager.CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
-        // try other texture types, why not?
-        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Flat, false, false);
-        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Wall, false, false);
-        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Sprite, false, false);
-        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Pic, false, false);
-        */
         int Tex = GTextureManager.FindPatchByName(PatchName);
         if (Tex < 0) {
           int LumpNum = W_CheckNumForTextureFileName(sc->String);

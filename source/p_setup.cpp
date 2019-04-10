@@ -1714,7 +1714,7 @@ void VLevel::LoadSideDefs (int Lump) {
     switch (sd->MidTexture) {
       case LNSPEC_LineTranslucent:
         // in BOOM midtexture can be translucency table lump name
-        sd->MidTexture = GTextureManager.CheckNumForName(VName(midtexture, VName::AddLower8), TEXTYPE_Wall, true, true);
+        sd->MidTexture = GTextureManager.CheckNumForName(VName(midtexture, VName::AddLower8), TEXTYPE_Wall, true);
         if (sd->MidTexture == -1) sd->MidTexture = 0;
         sd->TopTexture = TexNumForName(toptexture, TEXTYPE_Wall);
         sd->BottomTexture = TexNumForName(bottomtexture, TEXTYPE_Wall);
@@ -2935,7 +2935,7 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
   }
 
   if (loname != NAME_None) {
-    i = GTextureManager.CheckNumForName(loname, Type);
+    i = GTextureManager.CheckNumForName(loname, Type, true);
     if (i >= 0) return i;
     if (CMap) return 0;
     if (!allowForceLoad) return GTextureManager.DefaultTexture;
@@ -2945,7 +2945,7 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
 
   if (i == -1) {
     VName loname8((dot ? dot+1 : slash ? slash+1 : name), VName::AddLower8);
-    i = GTextureManager.CheckNumForName(loname8, Type, true, true);
+    i = GTextureManager.CheckNumForName(loname8, Type, true);
     //if (i != -1) GCon->Logf("texForceLoad(1): <%s><%s> (%d)", *loname8, name, i);
     if (i == -1 && CMap) return 0;
   }
@@ -3062,7 +3062,7 @@ int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
 //==========================================================================
 int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32 &Col) const {
   VName Name(name, VName::AddLower8);
-  int i = GTextureManager.CheckNumForName(Name, Type, true, true);
+  int i = GTextureManager.CheckNumForName(Name, Type, true);
   if (i == -1) {
     char TmpName[9];
     memcpy(TmpName, name, 8);

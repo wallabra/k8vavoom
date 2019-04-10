@@ -3934,9 +3934,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ChangeFloor)
       {
-        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
-        for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
-          XLevel->Sectors[Idx].floor.pic = Flat;
+        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true);
+        if (Flat > 0) { //???
+          for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
+            XLevel->Sectors[Idx].floor.pic = Flat;
+          }
         }
         sp -= 2;
       }
@@ -3945,20 +3947,24 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ChangeFloorDirect)
       {
         int Tag = READ_INT32(ip);
-        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
-        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
+        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
-          XLevel->Sectors[Idx].floor.pic = Flat;
+        if (Flat > 0) { //???
+          for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
+            XLevel->Sectors[Idx].floor.pic = Flat;
+          }
         }
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ChangeCeiling)
       {
-        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
-        for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
-          XLevel->Sectors[Idx].ceiling.pic = Flat;
+        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true);
+        if (Flat > 0) { //???
+          for (int Idx = FindSectorFromTag(sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
+            XLevel->Sectors[Idx].ceiling.pic = Flat;
+          }
         }
         sp -= 2;
       }
@@ -3967,11 +3973,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ChangeCeilingDirect)
       {
         int Tag = READ_INT32(ip);
-        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
-        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
+        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
-          XLevel->Sectors[Idx].ceiling.pic = Flat;
+        if (Flat > 0) { //???
+          for (int Idx = FindSectorFromTag(Tag); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
+            XLevel->Sectors[Idx].ceiling.pic = Flat;
+          }
         }
       }
       ACSVM_BREAK;
@@ -4195,7 +4203,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SetLineTexture)
       {
-        int Tex = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true, true);
+        int Tex = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
         if (Tex < 0) {
           GCon->Logf(NAME_Warning, "ACS: texture '%s' not found!", *GetName8(sp[-1]));
         } else {
@@ -5690,10 +5698,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ChangeSky)
-      Level->Sky1Texture = GTextureManager.NumForName(GetName8(sp[-2]),
-        TEXTYPE_Wall, true, false);
-      Level->Sky2Texture = GTextureManager.NumForName(GetName8(sp[-1]),
-        TEXTYPE_Wall, true, false);
+      {
+        int sky1tid = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true);
+        int sky2tid = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
+        if (sky1tid > 0) Level->Sky1Texture = sky1tid;
+        if (sky2tid > 0) Level->Sky2Texture = sky2tid;
+      }
       sp -= 2;
       ACSVM_BREAK;
 
@@ -6262,10 +6272,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ReplaceTextures)
       if (~sp[-1] & (NOT_TOP | NOT_MIDDLE | NOT_BOTTOM))
       {
-        int FromTex = GTextureManager.NumForName(GetName8(sp[-3]),
-          TEXTYPE_Wall, true);
-        int ToTex = GTextureManager.NumForName(GetName8(sp[-2]),
-          TEXTYPE_Wall, true);
+        int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Wall, true);
+        int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true);
         for (int i = 0; i < XLevel->NumSides; i++)
         {
           if (!(sp[-1] & NOT_TOP) &&
@@ -6287,20 +6295,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       if (~sp[-1] & (NOT_FLOOR | NOT_CEILING))
       {
-        int FromTex = GTextureManager.NumForName(GetName8(sp[-3]),
-          TEXTYPE_Flat, true);
-        int ToTex = GTextureManager.NumForName(GetName8(sp[-2]),
-          TEXTYPE_Flat, true);
-        for (int i = 0; i < XLevel->NumSectors; i++)
-        {
-          if (!(sp[-1] & NOT_FLOOR) &&
-            XLevel->Sectors[i].floor.pic == FromTex)
-          {
+        int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Flat, true);
+        int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Flat, true);
+        for (int i = 0; i < XLevel->NumSectors; i++) {
+          if (!(sp[-1] & NOT_FLOOR) && XLevel->Sectors[i].floor.pic == FromTex) {
             XLevel->Sectors[i].floor.pic = ToTex;
           }
-          if (!(sp[-1] & NOT_CEILING) &&
-            XLevel->Sectors[i].ceiling.pic == FromTex)
-          {
+          if (!(sp[-1] & NOT_CEILING) && XLevel->Sectors[i].ceiling.pic == FromTex) {
             XLevel->Sectors[i].ceiling.pic = ToTex;
           }
         }
@@ -6444,8 +6445,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (Ent)
         {
-          int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]),
-            TEXTYPE_Wall, true);
+          int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
           sp[-2] = Ent->Sector->ceiling.pic == Tex;
         }
         else
@@ -6461,8 +6461,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (Ent)
         {
-          int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]),
-            TEXTYPE_Wall, true);
+          int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
           sp[-2] = Ent->Sector->floor.pic == Tex;
         }
         else

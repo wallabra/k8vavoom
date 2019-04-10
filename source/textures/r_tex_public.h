@@ -380,10 +380,40 @@ public:
   float Time; // time value for warp textures
 
 public:
-  struct TexNumRes {
+  struct Iter {
+  private:
+    VTextureManager *tman;
     int idx;
-    int number;
+    VName name;
+
+  public:
+    Iter () : tman(nullptr), idx(-1), name(NAME_None) {}
+    Iter (VTextureManager *atman, int aidx, VName aname=NAME_None) : tman(atman), idx(aidx), name(aname) {}
+
+    inline bool empty () const { return (idx < 0); }
+    inline bool next () {
+      if (!idx) { idx = -1; return false; }
+      while (idx >= 0) {
+        idx = tman->getTxByIndex(idx)->HashNext;
+        if (idx < 0) break;
+        if (idx >= tman->FirstMapTextureIndex) {
+          if (idx-FirstMapTextureIndex >= tman->MapTextures.length()) continue;
+        } else {
+          if (idx >= tman->Textures.length()) continue;
+        }
+        VTexture *ctex = tman->getTxByIndex(idx);
+        check(ctex);
+        if (ctex->Name == name) return true;
+      }
+      return false;
+    }
+    inline int index () const { return idx; }
+    inline VTexture *tex () const { return tman->getTxByIndex(idx); }
   };
+
+  Iter firstWithName (VName n);
+  Iter firstWithStr (const VStr &s, bool stripTo8=false);
+  inline Iter firstWithStr8 (const VStr &s) { return firstWithStr(s, true); }
 
 public:
   VTextureManager ();
@@ -401,10 +431,11 @@ public:
 
   int AddTexture (VTexture *Tex);
   void ReplaceTexture (int Index, VTexture *Tex);
-  int FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *overloadFirst=nullptr); // this returns "best matches" for all texture types, and number of filled slots
-  int CheckNumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
+  int CheckNumForName (VName Name, int Type, bool bOverload=false);
   int FindPatchByName (VName Name); // used in multipatch texture builder
-  int NumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
+  int FindWallByName (VName Name, bool bOverload=true); // used to find wall texture (but can return non-wall)
+  int FindFlatByName (VName Name, bool bOverload=true); // used to find flat texture (but can return non-flat)
+  int NumForName (VName Name, int Type, bool bOverload=false);
   int FindTextureByLumpNum (int);
   VName GetTextureName (int TexNum);
   float TextureWidth (int TexNum);
@@ -419,7 +450,7 @@ public:
   int AddFileTextureShaded (VName Name, int Type, int shade); // shade==-1: don't shade
   int AddFileTextureChecked (VName Name, int Type); // returns -1 if no texture found
   // try to force-load texture
-  int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent);
+  int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool silent);
 
   inline bool IsMapLocalTexture (int TexNum) const { return (TexNum >= FirstMapTextureIndex); }
 

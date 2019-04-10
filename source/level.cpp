@@ -1013,7 +1013,7 @@ void VLevel::SetCameraToTexture (VEntity *Ent, VName TexName, int FOV) {
   if (!Ent) return;
 
   // get texture index
-  int TexNum = GTextureManager.CheckNumForName(TexName, TEXTYPE_Wall, true, false);
+  int TexNum = GTextureManager.CheckNumForName(TexName, TEXTYPE_Wall, true);
   if (TexNum < 0) {
     GCon->Logf("SetCameraToTexture: %s is not a valid texture", *TexName);
     return;

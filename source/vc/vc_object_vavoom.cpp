@@ -34,22 +34,22 @@
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, CheckTextureNumForName) {
   P_GET_NAME(name);
-  RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false));
+  RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true));
 }
 
 IMPLEMENT_FUNCTION(VObject, TextureNumForName) {
   P_GET_NAME(name);
-  RET_INT(GTextureManager.NumForName(name, TEXTYPE_Wall, true, false));
+  RET_INT(GTextureManager.NumForName(name, TEXTYPE_Wall, false));
 }
 
 IMPLEMENT_FUNCTION(VObject, CheckFlatNumForName) {
   P_GET_NAME(name);
-  RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Flat, true, false));
+  RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Flat, true));
 }
 
 IMPLEMENT_FUNCTION(VObject, FlatNumForName) {
   P_GET_NAME(name);
-  RET_INT(GTextureManager.NumForName(name, TEXTYPE_Flat, true, false));
+  RET_INT(GTextureManager.NumForName(name, TEXTYPE_Flat, false));
 }
 
 IMPLEMENT_FUNCTION(VObject, TextureHeight) {

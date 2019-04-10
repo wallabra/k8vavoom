@@ -219,13 +219,13 @@ void VTextureManager::Init () {
   AddMissingNumberedTextures(numberedNames);
 
   // find default texture
-  DefaultTexture = CheckNumForName("-noflat-", TEXTYPE_Overload, false, false);
+  DefaultTexture = CheckNumForName("-noflat-", TEXTYPE_Overload, false);
   if (DefaultTexture == -1) Sys_Error("Default texture -noflat- not found");
 
   // find sky flat number
-  skyflatnum = CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true, false);
-  if (skyflatnum < 0) skyflatnum = CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true, false);
-  if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, true, false);
+  skyflatnum = CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
+  if (skyflatnum < 0) skyflatnum = CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
+  if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, false);
 }
 
 
@@ -459,64 +459,40 @@ void VTextureManager::AddToHash (int Index) {
 
 //==========================================================================
 //
-//  VTextureManager::FindAllForName
-//
-//  this returns "best matches" for all texture types, and
-//  number of filled slots
+//  VTextureManager::firstWithName
 //
 //==========================================================================
-int VTextureManager::FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *overloadFirst) {
-  for (int f = 0; f < TEXTYPE_MAX; ++f) nums[f] = -1;
-  if (overloadFirst) *overloadFirst = false;
-
+VTextureManager::Iter VTextureManager::firstWithName (VName n) {
   // check for "NoTexture" marker
-  if (Name == NAME_None) return 0;
+  if (n == NAME_None) return Iter();
+  if ((*n)[0] == '-' && (*n)[1] == 0) return Iter(this, 0, n);
 
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) {
-    memset(nums, 0, sizeof(nums[0])*TEXTYPE_MAX);
-    return TEXTYPE_MAX;
-  }
-
-  VName currname = VName(*Name, VName::FindLower);
-  if (currname == NAME_None) {
-    currname = VName(*Name, VName::FindLower8);
-    if (currname == NAME_None) return 0;
-  }
-
-  int slotCount = 0;
-
-  for (int trynum = 2; trynum > 0; --trynum) {
-    if (trynum == 1) {
-      // try short name too
-      if (VStr::length(*Name) <= 8) break;
-      currname = VName(*Name, VName::FindLower8);
-      if (currname == NAME_None) break;
+  int HashIndex = GetTypeHash(n)&(HASH_SIZE-1);
+  for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
+    if (i >= FirstMapTextureIndex) {
+      if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
+    } else {
+      if (i >= Textures.length()) continue;
     }
-
-    int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
-    for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
-      check(i >= 0);
-      if (i >= FirstMapTextureIndex) {
-        if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
-      } else {
-        if (i >= Textures.length()) continue;
-      }
-
-      VTexture *ctex = getTxByIndex(i);
-      check(ctex);
-
-      if (ctex->Name != currname) continue;
-
-      check((unsigned)ctex->Type < (unsigned)TEXTYPE_MAX);
-      if (nums[ctex->Type] < 0) {
-        if (slotCount == 0 && overloadFirst && ctex->Type == TEXTYPE_Overload) *overloadFirst = false;
-        ++slotCount;
-        nums[ctex->Type] = i;
-      }
-    }
+    VTexture *ctex = getTxByIndex(i);
+    check(ctex);
+    if (ctex->Name == n) return Iter(this, i, n);
   }
 
-  return slotCount;
+  return Iter();
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::firstWithStr
+//
+//==========================================================================
+VTextureManager::Iter VTextureManager::firstWithStr (const VStr &s, bool stripTo8) {
+  if (s.isEmpty()) return Iter();
+  VName n = VName(*s, (stripTo8 ? VName::FindLower8 : VName::FindLower));
+  if (n == NAME_None) return Iter();
+  return firstWithName(n);
 }
 
 
@@ -527,42 +503,72 @@ int VTextureManager::FindAllForName (VName Name, int nums[TEXTYPE_MAX], bool *ov
 //  Check whether texture is available. Filter out NoTexture indicator.
 //
 //==========================================================================
-int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
-  int nums[TEXTYPE_MAX];
-
+int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload) {
   if ((unsigned)Type >= (unsigned)TEXTYPE_MAX) return -1; // oops
 
-  bool overFirst = false;
-  int scount = FindAllForName(Name, nums, &overFirst);
-  if (!scount) return -1;
+  if (Name == NAME_None) return -1;
+  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
-  if (Type != TEXTYPE_Any) {
-    if (bOverload && overFirst && nums[TEXTYPE_Overload] > 0) return nums[TEXTYPE_Overload];
-    if (nums[Type] >= 0) return nums[Type];
-    if (nums[TEXTYPE_Null]) return 0;
-    if (!bCheckAny) return -1;
+  bool secondary = false;
+
+doitagain:
+  int seenOther = -1;
+  int seenType = -1;
+
+  for (int trynum = 0; trynum < 2; ++trynum) {
+    if (trynum == 1) {
+      if (VStr::length(*Name) < 8) return -1;
+      Name = VName(*Name, VName::FindLower8);
+      if (Name == NAME_None) return -1;
+    }
+
+    for (auto it = firstWithName(Name); !it.empty(); (void)it.next()) {
+      VTexture *ctex = it.tex();
+      if (Type == TEXTYPE_Any || ctex->Type == Type || (bOverload && ctex->Type == TEXTYPE_Overload)) {
+        if (secondary) {
+          // secondary check
+          bool ok = true;
+          switch (ctex->Type) {
+            case TEXTYPE_WallPatch:
+            case TEXTYPE_Overload:
+            case TEXTYPE_Skin:
+            case TEXTYPE_Autopage:
+            case TEXTYPE_Null:
+            case TEXTYPE_FontChar:
+              ok = false;
+              break;
+          }
+          if (!ok) continue;
+        }
+        if (ctex->Type == TEXTYPE_Null) return 0;
+        return it.index();
+      } else if (Type == TEXTYPE_WallPatch && ctex->Type != TEXTYPE_Null) {
+        bool repl = false;
+        switch (ctex->Type) {
+          case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
+          case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
+          case TEXTYPE_Sprite: repl = (seenType < 0); break;
+          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
+        }
+        if (repl) {
+          seenOther = it.index();
+          seenType = ctex->Type;
+        }
+      }
+    }
+
+    if (seenOther >= 0) return seenOther;
   }
 
-  // "any" fallback, return best match
-  if (bOverload && overFirst && nums[TEXTYPE_Overload] > 0) return nums[TEXTYPE_Overload];
-
-  static const int anyBestMatch[] = {
-    TEXTYPE_Wall,
-    TEXTYPE_Flat,
-    TEXTYPE_Sprite,
-    TEXTYPE_Pic,
-    TEXTYPE_WallPatch,
-    TEXTYPE_SkyMap,
-    TEXTYPE_Autopage,
-    TEXTYPE_Skin,
-    TEXTYPE_FontChar,
-    TEXTYPE_Null,
-    -1,
-  };
-
-  for (unsigned f = 0; anyBestMatch[f] >= 0; ++f) {
-    int res = nums[anyBestMatch[f]];
-    if (res >= 0) return res;
+  if (!secondary && Type != TEXTYPE_Any) {
+    switch (Type) {
+      case TEXTYPE_Wall:
+      case TEXTYPE_Flat:
+      case TEXTYPE_Pic:
+        secondary = true;
+        Type = TEXTYPE_Any;
+        goto doitagain;
+    }
   }
 
   return -1;
@@ -577,73 +583,98 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
 //
 //==========================================================================
 int VTextureManager::FindPatchByName (VName Name) {
-/*
-  int nums[TEXTYPE_MAX];
+  return CheckNumForName(Name, TEXTYPE_WallPatch, true);
+}
 
-  int scount = FindAllForName(Name, nums);
-  if (!scount) return -1;
 
-  static const int anyBestMatch[] = {
-    //TEXTYPE_Overload,
-    TEXTYPE_WallPatch,
-    TEXTYPE_Flat,
-    TEXTYPE_Wall,
-    TEXTYPE_Sprite,
-    TEXTYPE_Pic,
-    TEXTYPE_Null,
-    -1,
-  };
+//==========================================================================
+//
+//  VTextureManager::FindWallByName
+//
+//  used to find wall texture (but can return non-wall)
+//
+//==========================================================================
+int VTextureManager::FindWallByName (VName Name, bool bOverload) {
+  if (Name == NAME_None) return -1;
+  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
-  for (unsigned f = 0; anyBestMatch[f] >= 0; ++f) {
-    int res = nums[anyBestMatch[f]];
-    if (res >= 0) return res;
+  int seenOther = -1;
+  int seenType = -1;
+
+  for (int trynum = 0; trynum < 2; ++trynum) {
+    if (trynum == 1) {
+      if (VStr::length(*Name) < 8) return -1;
+      Name = VName(*Name, VName::FindLower8);
+      if (Name == NAME_None) return -1;
+    }
+
+    for (auto it = firstWithName(Name); !it.empty(); (void)it.next()) {
+      VTexture *ctex = it.tex();
+      if (ctex->Type == TEXTYPE_Wall || (bOverload && ctex->Type == TEXTYPE_Overload)) {
+        if (ctex->Type == TEXTYPE_Null) return 0;
+        return it.index();
+      } else if (ctex->Type != TEXTYPE_Null) {
+        bool repl = false;
+        switch (ctex->Type) {
+          case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
+          case TEXTYPE_Sprite: repl = (seenType < 0); break;
+          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
+        }
+        if (repl) {
+          seenOther = it.index();
+          seenType = ctex->Type;
+        }
+      }
+    }
+
+    if (seenOther >= 0) return seenOther;
   }
 
   return -1;
-*/
-  // check for "NoTexture" marker
-  if (Name == NAME_None) return -1;
+}
 
+
+//==========================================================================
+//
+//  VTextureManager::FindFlatByName
+//
+//  used to find flat texture (but can return non-flat)
+//
+//==========================================================================
+int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
+  if (Name == NAME_None) return -1;
   if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
-  VName currname = VName(*Name, VName::FindLower);
-  if (currname == NAME_None) {
-    currname = VName(*Name, VName::FindLower8);
-    if (currname == NAME_None) return -1;
-  }
+  int seenOther = -1;
+  int seenType = -1;
 
-  for (int trynum = 2; trynum > 0; --trynum) {
+  for (int trynum = 0; trynum < 2; ++trynum) {
     if (trynum == 1) {
-      // try short name too
-      if (VStr::length(*Name) <= 8) break;
-      currname = VName(*Name, VName::FindLower8);
-      if (currname == NAME_None) break;
+      if (VStr::length(*Name) < 8) return -1;
+      Name = VName(*Name, VName::FindLower8);
+      if (Name == NAME_None) return -1;
     }
 
-    int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
-    for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
-      check(i >= 0);
-      if (i >= FirstMapTextureIndex) {
-        if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
-      } else {
-        if (i >= Textures.length()) continue;
-      }
-
-      VTexture *ctex = getTxByIndex(i);
-      check(ctex);
-
-      if (ctex->Name != currname) continue;
-
-      switch (ctex->Type) {
-        case TEXTYPE_WallPatch:
-        case TEXTYPE_Flat:
-        case TEXTYPE_Wall:
-        case TEXTYPE_Sprite:
-        case TEXTYPE_Pic:
-        //case TEXTYPE_Null:
-          return i;
+    for (auto it = firstWithName(Name); !it.empty(); (void)it.next()) {
+      VTexture *ctex = it.tex();
+      if (ctex->Type == TEXTYPE_Flat || (bOverload && ctex->Type == TEXTYPE_Overload)) {
+        if (ctex->Type == TEXTYPE_Null) return 0;
+        return it.index();
+      } else if (ctex->Type != TEXTYPE_Null) {
+        bool repl = false;
+        switch (ctex->Type) {
+          case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
+          case TEXTYPE_Sprite: repl = (seenType < 0); break;
+          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Wall); break;
+        }
+        if (repl) {
+          seenOther = it.index();
+          seenType = ctex->Type;
+        }
       }
     }
+
+    if (seenOther >= 0) return seenOther;
   }
 
   return -1;
@@ -657,14 +688,14 @@ int VTextureManager::FindPatchByName (VName Name) {
 //  Calls R_CheckTextureNumForName, aborts with error message.
 //
 //==========================================================================
-int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
+int VTextureManager::NumForName (VName Name, int Type, bool bOverload) {
   static TStrSet numForNameWarned;
   if (Name == NAME_None) return 0;
   if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
-  int i = CheckNumForName(Name, Type, bOverload, bCheckAny);
+  int i = CheckNumForName(Name, Type, bOverload);
   if (i == -1) {
     if (!numForNameWarned.put(*Name)) {
-      GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
+      GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d)", *Name, (int)Type, (int)bOverload);
     }
     i = DefaultTexture;
   }
@@ -967,7 +998,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
     }
   }
 
-  return CheckNumForNameAndForce(Name, Type, true/*bOverload*/, false/*bCheckAny*/, true/*silent*/);
+  return CheckNumForNameAndForce(Name, Type, true/*bOverload*/, true/*silent*/);
 }
 
 
@@ -1067,8 +1098,8 @@ int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silen
 //  find or force-load texture
 //
 //==========================================================================
-int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
-  int tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool silent) {
+  int tidx = CheckNumForName(Name, Type, bOverload);
   if (tidx >= 0) return tidx;
   // do not try to load already seen missing texture
   if (isSeenMissingTexture(Name)) return -1; // alas
@@ -1079,9 +1110,9 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
       findAndLoadTexture(Name, Type, WADNS_Flats) || // why not?
       findAndLoadTexture(Name, Type, WADNS_Global))
   {
-    tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+    tidx = CheckNumForName(Name, Type, bOverload);
     if (developer && tidx <= 0) {
-      GCon->Logf(NAME_Dev, "CheckNumForNameAndForce: OOPS for '%s'; type=%d; overload=%d; any=%d", *Name, Type, (int)bOverload, (int)bCheckAny);
+      GCon->Logf(NAME_Dev, "CheckNumForNameAndForce: OOPS for '%s'; type=%d; overload=%d", *Name, Type, (int)bOverload);
       int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
       for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
         VTexture *tx = getTxByIndex(i);
@@ -1205,7 +1236,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       wpi.name = PatchName;
 
       // check if it's already has been added
-      int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
+      int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false);
       if (PIdx >= 0) {
         //patchtexlookup[i] = Textures[PIdx];
         wpi.tx = Textures[PIdx];
@@ -1267,8 +1298,8 @@ void VTextureManager::AddMissingNumberedTextures (TArray<VName> &numberedNames) 
       for (int c = 2; c < 10; ++c) {
         nbuf[namelen-1] = '0'+c;
         VName PatchName(nbuf, VName::AddLower8);
-        if (CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false) < 0) {
-          int tid = CheckNumForNameAndForce(PatchName, TEXTYPE_WallPatch, false, false, true);
+        if (CheckNumForName(PatchName, TEXTYPE_WallPatch, false) < 0) {
+          int tid = CheckNumForNameAndForce(PatchName, TEXTYPE_WallPatch, true, true);
           if (tid > 0) GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);
         } else {
           if (developer) GCon->Logf(NAME_Dev, "Textures: already loaded numbered texture '%s'", nbuf);
@@ -1385,7 +1416,7 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
       if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
 
       // find texture to replace
-      int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true, true);
+      int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true);
       if (OldIdx < 0) {
         if (!r_hirestex) continue; // don't replace
         OldIdx = AddPatch(Name, TEXTYPE_Pic, true);
@@ -1446,7 +1477,7 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
           continue;
         }
 
-        int OldIdx = CheckNumForName(sc->Name8, Type, Overload, false);
+        int OldIdx = CheckNumForName(sc->Name8, Type, Overload);
         if (OldIdx < 0) {
           if (!r_hirestex) {
             // don't replace
@@ -1506,7 +1537,7 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
 
         if (!onlyHiRes) continue;
 
-        int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false, false);
+        int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false);
         if (!r_hirestex && OldIdx < 0) continue; // don't replace
 
         // create new texture
@@ -1584,12 +1615,12 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
     return;
   }
 
-  if (GTextureManager.CheckNumForName(W_LumpName(pic1lmp), txtype, true, false) <= 0) {
+  if (GTextureManager.CheckNumForName(W_LumpName(pic1lmp), txtype, true) <= 0) {
     if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: first animtex '%s' not a texture", *nfirst);
     return;
   }
 
-  if (GTextureManager.CheckNumForName(W_LumpName(pic2lmp), txtype, true, false) <= 0) {
+  if (GTextureManager.CheckNumForName(W_LumpName(pic2lmp), txtype, true) <= 0) {
     if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: second animtex '%s' not a texture", *nlast);
     return;
   }
@@ -1630,7 +1661,7 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
         continue;
       }
     }
-    int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true, false);
+    int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true);
     if (developer) {
       GCon->Logf(NAME_Dev, "  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
     }
@@ -1812,7 +1843,7 @@ static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
     if (lmp == -1) break; // oops
     VName lmpName = W_LumpName(lmp);
     if (lmpName == NAME_None) continue;
-    int txidx = GTextureManager.CheckNumForName(lmpName, txtype, true, false);
+    int txidx = GTextureManager.CheckNumForName(lmpName, txtype, true);
     if (txidx == -1) {
       //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: trying to force-load lump 0x%08x (%s)", lmp, *lmpName);
       // not a texture, try to load one
@@ -1854,7 +1885,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   // name
   bool ignore = false;
   sc->ExpectName8Warn();
-  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
+  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
@@ -1918,7 +1949,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
         check(ad.range == 1);
         // simple pic
         check(CurType == 1);
-        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
+        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
         if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
         animPicSeen.put(sc->Name8, true);
         fd.BaseTime = vanillaTics;
@@ -1963,7 +1994,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
           if (!ad.range) {
             // simple pic
             check(CurType == 1);
-            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
+            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
             if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
             animPicSeen.put(sc->Name8, true);
           } else {
@@ -2065,7 +2096,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
       sc->ExpectName8Warn();
-      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, /*false*/IgnoreBad || silentTexError);
+      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, /*false*/IgnoreBad || silentTexError);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
@@ -2127,7 +2158,7 @@ static void ParseSwitchDef (VScriptParser *sc) {
 
   // switch texture
   sc->ExpectName8Warn();
-  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, silentTexError);
+  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, silentTexError);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
   TSwitch *Def2 = nullptr;
@@ -2186,7 +2217,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
   // get base texture name
   bool ignore = false;
   sc->ExpectName8Warn();
-  vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
+  vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false);
   if (BaseTex == -1) {
     ignore = true;
     GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find animdoor texture \"%s\"", *sc->String);
@@ -2208,7 +2239,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
         v = BaseTex+sc->Number-1;
       } else {
         sc->ExpectName8Warn();
-        v = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
+        v = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false);
         if (v == -1 && !ignore) sc->Message(va("Unknown texture %s", *sc->String));
       }
       Frames.Append(v);
@@ -2241,7 +2272,7 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   else sc->Error("Texture type expected");
 
   sc->ExpectName8Warn();
-  int TexNum = GTextureManager.CheckNumForNameAndForce(sc->Name8, TexType, true, true, false);
+  int TexNum = GTextureManager.CheckNumForNameAndForce(sc->Name8, TexType, true, false);
   if (TexNum < 0) return;
 
   float speed = 1;
@@ -2298,7 +2329,7 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (Name != NAME_None) {
     // check for replacing an existing texture
     Tex = new VCameraTexture(Name, Width, Height);
-    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, true, false);
+    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
     if (TexNum != -1) {
       // by default camera texture will fit in old texture
       VTexture *OldTex = GTextureManager[TexNum];
@@ -2431,8 +2462,8 @@ void P_InitSwitchList () {
         GCon->Logf(NAME_Warning, "Switch \"%s\" in SWITCHES has the same 'on' state", TmpName1);
         continue;
       }
-      int t1 = GTextureManager.CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false, false);
-      int t2 = GTextureManager.CheckNumForNameAndForce(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false, false);
+      int t1 = GTextureManager.CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false);
+      int t2 = GTextureManager.CheckNumForNameAndForce(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false);
       if (t1 < 0 || t2 < 0) continue;
       TSwitch *Def1 = new TSwitch();
       TSwitch *Def2 = new TSwitch();
@@ -2691,7 +2722,7 @@ VTexture *VTextureManager::GetExistingTextureByName (const VStr &txname, int typ
   VName nn = VName(*txname, VName::FindLower);
   if (nn == NAME_None) return nullptr;
 
-  int idx = CheckNumForName(nn, type, true/*overloads*/, false/*any*/);
+  int idx = CheckNumForName(nn, type, true/*overloads*/);
   if (idx >= 0) return this->operator()(idx);
   return nullptr;
 }

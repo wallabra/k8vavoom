@@ -759,8 +759,8 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
     switch (Spec) {
       case LNSPEC_LineTranslucent:
         // in BOOM midtexture can be translucency table lump name
-        //sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower), TEXTYPE_Wall, true, true);
-        //if (sd->MidTexture == -1) sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower8), TEXTYPE_Wall, true, true);
+        //sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower), TEXTYPE_Wall, true);
+        //if (sd->MidTexture == -1) sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower8), TEXTYPE_Wall, true);
         sd->MidTexture = TexNumForName2(*Src.MidTexture, TEXTYPE_Wall, true);
         if (sd->MidTexture == -1) sd->MidTexture = TexNumForName2(*Src.MidTexture, TEXTYPE_Wall, true);
 

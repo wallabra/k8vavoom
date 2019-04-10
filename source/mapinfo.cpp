@@ -290,18 +290,18 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
   auto tidp = forceList.find(loname);
   if (tidp) return *tidp;
 
-  //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-  //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_SkyMap, true, false);
+  //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
+  //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
+  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_SkyMap, true);
   if (Tex > 0) return Tex;
 
-  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
+  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true);
   if (Tex >= 0) {
     forceList.put(loname, Tex);
     return Tex;
   }
 
-  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false, false);
+  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false);
   if (Tex < 0) {
     int LumpNum = W_CheckNumForTextureFileName(*name);
     if (LumpNum >= 0) {
@@ -328,7 +328,8 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
   }
   if (Tex < 0) {
     miWarning(sc, "sky '%s' not found; replaced with 'sky1'", *name);
-    Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+    Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_SkyMap, true);
+    if (Tex < 0) Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true);
     forceList.put(loname, Tex);
     return Tex;
     //return GTextureManager.DefaultTexture;
@@ -562,7 +563,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //!sc->SetCMode(true); // we need this to properly parse commas
       //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName();
-      //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, true, false);
+      //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
       VName skbname = R_HasNamedSkybox(sc->String);
       if (skbname != NAME_None) {
         info->SkyBox = skbname;
@@ -606,7 +607,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //!sc->SetCMode(true); // we need this to properly parse commas
       //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName8();
-      //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
       //info->SkyBox = NAME_None; //k8:required or not???
       info->Sky2Texture = loadSkyTexture(sc, sc->Name8);
       info->Sky2ScrollDelta = 0;

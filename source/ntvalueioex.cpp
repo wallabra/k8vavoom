@@ -92,14 +92,16 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     } else {
       auto lock = GTextureManager.LockMapLocalTextures();
       /*
-      int texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, true, false);
-      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, true, false);
-      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, true, false);
+      int texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, false);
       */
-      int texid = GTextureManager.CheckNumForName(tname, ttype, true/*overload*/, true/*checkany*/);
-      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, true, false);
-      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, true, false);
-      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, true, false);
+      int texid = GTextureManager.CheckNumForName(tname, ttype, true/*overload*/);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForName(tname, TEXTYPE_Pic, true/*overload*/);
+      //if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Pic, true, false);
       if (texid < 0) {
         GCon->Logf(NAME_Warning, "LOAD: save file is broken (texture '%s' not found)", *tname);
         texid = GTextureManager.DefaultTexture;

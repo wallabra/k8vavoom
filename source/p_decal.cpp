@@ -196,7 +196,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
         if (!isOptionalDecal(name)) GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
         return true;
       }
-      //texid = GTextureManager./*AddPatch*/CheckNumForNameAndForce(pic, TEXTYPE_Pic, false, false, true);
+      //texid = GTextureManager./*AddPatch*/CheckNumForNameAndForce(pic, TEXTYPE_Pic, false, true);
       if (shadeclr != -1) {
         texid = GTextureManager.AddPatchShaded(pic, TEXTYPE_Pic, shadeclr, true);
         if (texid < 0 && VStr::length(*pic) > 8) {

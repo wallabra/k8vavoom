@@ -70,7 +70,7 @@ void VTextureID::Serialise (VStream &strm) {
       } else if (txname != GTextureManager.GetTextureName(this->id)) {
         // try to fix texture
         auto lock = GTextureManager.LockMapLocalTextures();
-        int texid = GTextureManager.CheckNumForNameAndForce(txname, TEXTYPE_Wall, true, true, false);
+        int texid = GTextureManager.CheckNumForNameAndForce(txname, TEXTYPE_Wall, true, false);
         if (texid <= 0) texid = GTextureManager.DefaultTexture;
         if (developer) GCon->Logf("LOAD: REPLACED texture '%s' (id %d) with '%s' (id %d)", *txname, this->id, *GTextureManager.GetTextureName(texid), texid);
         this->id = texid;

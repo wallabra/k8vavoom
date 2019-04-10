@@ -733,7 +733,7 @@ void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name)
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
     Drawer->FillRectWithFlat(X1, Y1, X2, Y2, S1, T1, S2, T2,
-      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true, true)));
+      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true)));
   }
 }
 
@@ -755,7 +755,7 @@ void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
     Drawer->FillRectWithFlatRepeat(X1, Y1, X2, Y2, S1, T1, S2, T2,
-      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true, true)));
+      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true)));
   }
 }
 

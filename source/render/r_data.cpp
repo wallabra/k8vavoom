@@ -1307,9 +1307,10 @@ static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &Class
 //
 //==========================================================================
 static void ParseBrightmap (VScriptParser *sc) {
-       if (sc->Check("flat")) {}
-  else if (sc->Check("sprite")) {}
-  else if (sc->Check("texture")) {}
+  int ttype = TEXTYPE_Any;
+       if (sc->Check("flat")) ttype = TEXTYPE_Flat;
+  else if (sc->Check("sprite")) ttype = TEXTYPE_Sprite;
+  else if (sc->Check("texture")) ttype = TEXTYPE_Wall;
   else sc->Error("unknown brightmap type");
   sc->ExpectName8Warn();
   VName img = sc->Name8;
@@ -1349,7 +1350,7 @@ static void ParseBrightmap (VScriptParser *sc) {
     static int doLoadDump = -1;
     if (doLoadDump < 0) doLoadDump = (GArgs.CheckParm("-dump-brightmaps") ? 1 : 0);
 
-    VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
+    VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
     if (!basetex) {
       if (doWarn) GCon->Logf(NAME_Warning, "texture '%s' not found, cannot attach brightmap", *img);
       return;
@@ -1413,7 +1414,10 @@ static void ParseGlow (VScriptParser *sc) {
       continue;
     }
     // texture list
-    if (sc->Check("flats") || sc->Check("walls")) {
+    int ttype = -1;
+         if (sc->Check("flats")) ttype = TEXTYPE_Flat;
+    else if (sc->Check("walls")) ttype = TEXTYPE_Wall;
+    if (ttype > 0) {
       sc->Expect("{");
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
@@ -1421,7 +1425,7 @@ static void ParseGlow (VScriptParser *sc) {
 #ifdef CLIENT
         VName img = sc->Name8;
         if (img != NAME_None && img != "-") {
-          VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img));
+          VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
           if (basetex) {
             //GCon->Logf("GLOW: <%s>", *img);
             //basetex->glowing = true;
