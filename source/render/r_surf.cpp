@@ -837,32 +837,6 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   check(MTextr);
   TVec wv[4];
 
-  /*
-  sec_plane_t *extratop, *extrabot;
-  if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
-  if (forward) {
-    // creation from bottom region to top region (change)
-    extratop = reg->next->floor;
-    extrabot = reg->ceiling;
-  } else {
-    // creation from top region to bottom region (initial)
-    extratop = reg->prev->ceiling;
-    extrabot = reg->floor;
-  }
-  */
-
-  /* old code
-  {
-    if (forward) {
-      extratop = reg->next->floor;
-      extrabot = reg->ceiling;
-    } else {
-      extratop = reg->floor;
-      extrabot = reg->prev->ceiling;
-    }
-  }
-  */
-
   const float topz1 = r_ceiling->GetPointZ(*seg->v1);
   const float topz2 = r_ceiling->GetPointZ(*seg->v2);
   const float botz1 = r_floor->GetPointZ(*seg->v1);
@@ -882,6 +856,12 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   wv[1].z = MIN(extratopz1, topz1);
   wv[2].z = MIN(extratopz2, topz2);
   wv[3].z = MAX(extrabotz2, botz2);
+
+  /*
+  GCon->Logf("extra: %f, %f, %f, %f", wv[0].z, wv[1].z, wv[2].z, wv[3].z);
+  GCon->Logf("       ez1=(%f,%f); ez2=(%f,%f); bz1=(%f,%f); bz2=(%f,%f)", extrabotz1, extratopz1, extrabotz2, extratopz2, botz1, topz1, botz2, topz2);
+  for (int f = 0; f < 4; ++f) GCon->Logf("       %d: (%f,%f,%f)", f, wv[f].x, wv[f].y, wv[f].z);
+  */
 
   sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
 
@@ -909,8 +889,8 @@ static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t
   if (fromtop) {
     if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
       // idiotic gozzo 3d floor
-      extratop = reg->floor; // new floor
-      extrabot = reg->ceiling; // new ceiling
+      extrabot = reg->floor; // new floor
+      extratop = reg->ceiling; // new ceiling
       extraside = &Level->Sides[reg->extraline->sidenum[0]];
     } else {
       // sane vavoom 3d floor
@@ -921,8 +901,8 @@ static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t
   } else {
     if (reg->next->regflags&sec_region_t::RF_FuckYouGozzo) {
       // idiotic gozzo 3d floor
-      extratop = reg->floor; // new floor
-      extrabot = reg->ceiling; // new ceiling
+      extrabot = reg->next->floor; // new floor
+      extratop = reg->next->ceiling; // new ceiling
       extraside = &Level->Sides[reg->next->extraline->sidenum[0]];
     } else {
       // sane vavoom 3d floor

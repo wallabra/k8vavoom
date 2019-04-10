@@ -2150,6 +2150,7 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, bool swapFloorCeiling)
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
+  //swapFloorCeiling = true;
 
   // swap planes for 3d floors like those of GZDoom
   if ((swapFloorCeiling && floorz < ceilz) || (swapFloorCeiling && floorz > ceilz)) {
