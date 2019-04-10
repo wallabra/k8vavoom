@@ -411,6 +411,7 @@ public:
     Iter (VTextureManager *atman, VName aname, bool aAllowShrink=true) : tman(atman), idx(-1), name(aname), allowShrink(aAllowShrink) { restart(); }
 
     inline bool empty () const { return (idx < 0); }
+    inline bool isMapTexture () const { return (tman && idx >= tman->Textures.length()); }
     inline bool next () {
       if (idx < 0) return false;
       for (;;) {
@@ -430,7 +431,7 @@ public:
     inline VTexture *tex () const { return tman->getTxByIndex(idx); }
   };
 
-  inline Iter firstWithName (VName n) { return Iter(this, n); }
+  inline Iter firstWithName (VName n, bool allowShrink=true) { return Iter(this, n, allowShrink); }
   Iter firstWithStr (const VStr &s);
 
 public:

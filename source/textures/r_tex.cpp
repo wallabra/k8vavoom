@@ -268,7 +268,11 @@ void VTextureManager::DumpHashStats (EName logName) {
 //==========================================================================
 void VTextureManager::rehashTextures () {
   for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
-  for (int f = 0; f < Textures.length(); ++f) if (Textures[f]) AddToHash(f);
+  if (Textures.length()) {
+    check(Textures[0]->Name == NAME_None);
+    check(Textures[0]->Type == TEXTYPE_Null);
+    for (int f = 1; f < Textures.length(); ++f) if (Textures[f]) AddToHash(f);
+  }
   for (int f = 0; f < MapTextures.length(); ++f) if (MapTextures[f]) AddToHash(FirstMapTextureIndex+f);
 }
 
@@ -348,18 +352,19 @@ int VTextureManager::AddTexture (VTexture *Tex) {
     abort();
   }
 
+  if (Tex->Name == "-") return 0; // "no texture"
+
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
     if (Tex->Name != NAME_None && (*Tex->Name)[0] != 0x7f) {
       int repidx = -1;
-      int HashIndex = GetTypeHash(Tex->Name)&(HASH_SIZE-1);
-      for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
-        if (i < 0 || i >= Textures.length()) continue;
-        VTexture *tx = getTxByIndex(i);
-        check(tx);
+      // loop, no shinking allowed
+      for (auto it = firstWithName(Tex->Name, false); !it.empty(); it.next()) {
+        if (it.isMapTexture()) continue; // skip map textures
+        VTexture *tx = it.tex();
         if (tx->Name != Tex->Name) continue;
         if (tx->Type != Tex->Type) continue;
-        repidx = i;
+        repidx = it.index();
         break;
       }
       if (repidx > 0) {
@@ -422,13 +427,6 @@ void VTextureManager::AddToHash (int Index) {
   check(tx);
   tx->HashNext = -1;
   if (tx->Name == NAME_None || (*tx->Name)[0] == 0x7f) return;
-  /*
-  GCon->Logf("VTextureManager::AddToHash(%d): <%s> (%d:%s)", Index, *tx->Name, tx->SourceLump, *W_FullLumpName(tx->SourceLump));
-  if (tx->Name == "bfall1") {
-    static int left = 1;
-    if (left-- == 0) abort();
-  }
-  */
   int HashIndex = GetTypeHash(tx->Name)&(HASH_SIZE-1);
   if (Index < FirstMapTextureIndex) {
     Textures[Index]->HashNext = TextureHash[HashIndex];
