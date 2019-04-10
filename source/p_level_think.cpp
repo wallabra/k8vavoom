@@ -306,28 +306,53 @@ void VLevel::TickWorld (float DeltaTime) {
   worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
 
   if (dbg_world_think_vm_time) stimet = -Sys_Time();
+
   // run thinkers
-  VThinker *Th = ThinkerHead;
-  while (Th) {
-    VThinker *c = Th;
-    Th = c->Next;
-    if (!(c->GetFlags()&_OF_DelayedDestroy)) {
-      if (dbg_vm_disable_thinkers) {
-        if (c->IsA(VEntity::StaticClass())) {
-          VEntity *e = (VEntity *)c;
-          if (e->EntityFlags&VEntity::EF_IsPlayer) c->Tick(DeltaTime);
-        }
-      } else {
-        c->Tick(DeltaTime);
-      }
-    }
-    if (c->GetFlags()&_OF_DelayedDestroy) {
-      RemoveThinker(c);
-      // if it is just destroyed, call level notifier
-      if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
-      c->ConditionalDestroy();
+#ifdef CLIENT
+  // first run player mobile thinker, so we'll get camera position
+  VThinker *plrmo = (cl ? cl->MO : nullptr);
+  if (plrmo) {
+    if (plrmo->GetFlags()&_OF_DelayedDestroy) {
+      plrmo = nullptr;
+    } else {
+      plrmo->Tick(DeltaTime);
     }
   }
+#else
+  // server: run player thinkers when vm thinkers are disabled
+  if (dbg_vm_disable_thinkers) {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      VBasePlayer *Player = GGameInfo->Players[i];
+      if (!Player) continue;
+      if (!(Player->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
+      VThinker *plrmo = Player->MO;
+      if (plrmo && !(plrmo->GetFlags()&_OF_DelayedDestroy)) {
+        plrmo->Tick(DeltaTime);
+      }
+    }
+  }
+#endif
+
+  VThinker *Th = ThinkerHead;
+  if (!dbg_vm_disable_thinkers) {
+    while (Th) {
+      VThinker *c = Th;
+      Th = c->Next;
+#ifdef CLIENT
+      if (c != plrmo)
+#endif
+      {
+        if (!(c->GetFlags()&_OF_DelayedDestroy)) c->Tick(DeltaTime);
+      }
+      if (c->GetFlags()&_OF_DelayedDestroy) {
+        RemoveThinker(c);
+        // if it is just destroyed, call level notifier
+        if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+        c->ConditionalDestroy();
+      }
+    }
+  }
+
   worldThinkTimeVM = (dbg_world_think_vm_time ? Sys_Time()+stimet : -1);
 
   RunScriptThinkers(DeltaTime);
