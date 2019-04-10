@@ -195,7 +195,7 @@ native final bool TraceLine (const TVec start, const TVec end, out TVec HitPoint
 // returns `false` if there was any unfitting actor
 native final bool ChangeSector (sector_t *sector, int crunch);
 // this is used to create ROR and various 3d structures
-native final sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
+native final sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, optional bool swapFloorCeiling/*=true*/);
 // swap sector's floor and ceiling, it's used by level converter to support EDGE and Legacy 3D floors
 native final void SwapPlanes (sector_t *s);
 

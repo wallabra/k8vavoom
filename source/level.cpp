@@ -2139,7 +2139,7 @@ void CL_LoadLevel (VName MapName) {
 //  AddExtraFloor
 //
 //==========================================================================
-sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
+sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, bool swapFloorCeiling) {
   sec_region_t *region;
   sec_region_t *inregion;
   sector_t *src;
@@ -2152,43 +2152,30 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
 
   // swap planes for 3d floors like those of GZDoom
-  if (floorz < ceilz) {
+  if ((swapFloorCeiling && floorz < ceilz) || (swapFloorCeiling && floorz > ceilz)) {
     SwapPlanes(src);
     floorz = src->floor.GetPointZ(dst->soundorg);
     ceilz = src->ceiling.GetPointZ(dst->soundorg);
-    GCon->Logf("Swapped planes for tag: %d, ceilz: %f, floorz: %f", line->arg1, ceilz, floorz);
+    // report only unexpected swaps
+    if (!swapFloorCeiling) GCon->Logf("Swapped planes for tag: %d, floorz: %f, ceilz: %f", line->arg1, ceilz, floorz);
+  }
+  if (!swapFloorCeiling) {
+    src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
+    src->ceiling = src->floor;
+    src->ceiling.flipInPlace();
   }
 
   for (inregion = dst->botregion; inregion; inregion = inregion->next) {
     float infloorz = inregion->floor->GetPointZ(dst->soundorg);
     float inceilz = inregion->ceiling->GetPointZ(dst->soundorg);
 
-    if (infloorz <= floorz && inceilz >= ceilz) {
-      region = new sec_region_t;
-      memset((void *)region, 0, sizeof(*region));
-      region->floor = inregion->floor;
-      region->ceiling = &src->ceiling;
-      region->params = &src->params;
-      region->extraline = line;
-      inregion->floor = &src->floor;
-
-      if (inregion->prev) {
-        inregion->prev->next = region;
-      } else {
-        dst->botregion = region;
-      }
-      region->prev = inregion->prev;
-      region->next = inregion;
-      inregion->prev = region;
-
-      return region;
-    }
-
-    // check for sloped floor
-    if (inregion->floor->normal.z != 1.0f) {
-      if (inregion->floor->maxz <= src->ceiling.minz && inregion->ceiling->maxz >= src->floor.minz) {
+    if (swapFloorCeiling) {
+      // vavoom-like
+      if (infloorz <= floorz && inceilz >= ceilz) {
         region = new sec_region_t;
         memset((void *)region, 0, sizeof(*region));
+
+        // new region is from old floor to new ceiling
         region->floor = inregion->floor;
         region->ceiling = &src->ceiling;
         region->params = &src->params;
@@ -2207,35 +2194,164 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
         return region;
       }
 
-      //GCon->Logf("tag: %d, floor->maxz: %f, ceiling.minz: %f, ceiling->maxz: %f, floor.minz: %f", line->arg1, inregion->floor->maxz, src->ceiling.minz, inregion->ceiling->maxz, src->floor.minz);
-    }
+      // check for sloped floor
+      if (inregion->floor->normal.z != 1.0f) {
+        if (inregion->floor->maxz <= src->ceiling.minz && inregion->ceiling->maxz >= src->floor.minz) {
+          region = new sec_region_t;
+          memset((void *)region, 0, sizeof(*region));
+          region->floor = inregion->floor;
+          region->ceiling = &src->ceiling;
+          region->params = &src->params;
+          region->extraline = line;
+          inregion->floor = &src->floor;
 
-    // check for sloped ceiling
-    if (inregion->ceiling->normal.z != -1.0f) {
-      if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz) {
+          if (inregion->prev) {
+            inregion->prev->next = region;
+          } else {
+            dst->botregion = region;
+          }
+          region->prev = inregion->prev;
+          region->next = inregion;
+          inregion->prev = region;
+
+          return region;
+        }
+
+        //GCon->Logf("tag: %d, floor->maxz: %f, ceiling.minz: %f, ceiling->maxz: %f, floor.minz: %f", line->arg1, inregion->floor->maxz, src->ceiling.minz, inregion->ceiling->maxz, src->floor.minz);
+      }
+
+      // check for sloped ceiling
+      if (inregion->ceiling->normal.z != -1.0f) {
+        if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz) {
+          region = new sec_region_t;
+          memset((void *)region, 0, sizeof(*region));
+          region->floor = inregion->floor;
+          region->ceiling = &src->ceiling;
+          region->params = &src->params;
+          region->extraline = line;
+          inregion->floor = &src->floor;
+
+          if (inregion->prev) {
+            inregion->prev->next = region;
+          } else {
+            dst->botregion = region;
+          }
+          region->prev = inregion->prev;
+          region->next = inregion;
+          inregion->prev = region;
+
+          return region;
+        }
+
+        //GCon->Logf("tag: %d, floor->minz: %f, ceiling.maxz: %f, ceiling->minz: %f, floor.maxz: %f", line->arg1, inregion->floor->minz, src->ceiling.maxz, inregion->ceiling->minz, src->floor.maxz);
+      }
+    } else {
+      if (infloorz <= floorz && inceilz >= ceilz) {
+        GCon->Logf("reg: (%f : %f); dst: (%f, %f)", infloorz, inceilz, floorz, ceilz);
+
         region = new sec_region_t;
         memset((void *)region, 0, sizeof(*region));
-        region->floor = inregion->floor;
-        region->ceiling = &src->ceiling;
-        region->params = &src->params;
-        region->extraline = line;
-        inregion->floor = &src->floor;
 
-        if (inregion->prev) {
-          inregion->prev->next = region;
+        // new region is from new floor to ceiling
+        region->floor = &src->floor;
+        region->ceiling = inregion->ceiling;
+        region->params = &src->params;
+        //region->extraline = inregion->extraline;
+        region->extraline = line;
+        region->regflags = sec_region_t::RF_FuckYouGozzo;
+        //inregion->extraline = line;
+        inregion->ceiling = &src->ceiling;
+
+        if (inregion->next) {
+          inregion->next->prev = region;
         } else {
-          dst->botregion = region;
+          dst->topregion = region;
         }
-        region->prev = inregion->prev;
-        region->next = inregion;
-        inregion->prev = region;
+        region->next = inregion->next;
+        region->prev = inregion;
+        inregion->next = region;
+
+        GCon->Log(" === bot -> top ===");
+        for (inregion = dst->botregion; inregion; inregion = inregion->next) {
+          GCon->Logf("  floor=(%f,%f,%f : %f); ceil=(%f,%f,%f : %f)",
+            inregion->floor->normal.x,
+            inregion->floor->normal.y,
+            inregion->floor->normal.z,
+            inregion->floor->dist,
+            inregion->ceiling->normal.x,
+            inregion->ceiling->normal.y,
+            inregion->ceiling->normal.z,
+            inregion->ceiling->dist);
+        }
+
+        GCon->Log(" === top -> bot ===");
+        for (inregion = dst->topregion; inregion; inregion = inregion->prev) {
+          GCon->Logf("  floor=(%f,%f,%f : %f); ceil=(%f,%f,%f : %f)",
+            inregion->floor->normal.x,
+            inregion->floor->normal.y,
+            inregion->floor->normal.z,
+            inregion->floor->dist,
+            inregion->ceiling->normal.x,
+            inregion->ceiling->normal.y,
+            inregion->ceiling->normal.z,
+            inregion->ceiling->dist);
+        }
 
         return region;
       }
 
-      //GCon->Logf("tag: %d, floor->minz: %f, ceiling.maxz: %f, ceiling->minz: %f, floor.maxz: %f", line->arg1, inregion->floor->minz, src->ceiling.maxz, inregion->ceiling->minz, src->floor.maxz);
-    }
+      /*k8: not yet
+      // check for sloped floor
+      if (inregion->floor->normal.z != 1.0f) {
+        if (inregion->floor->maxz <= src->ceiling.minz && inregion->ceiling->maxz >= src->floor.minz) {
+          region = new sec_region_t;
+          memset((void *)region, 0, sizeof(*region));
+          region->floor = inregion->floor;
+          region->ceiling = &src->ceiling;
+          region->params = &src->params;
+          region->extraline = line;
+          inregion->floor = &src->floor;
 
+          if (inregion->prev) {
+            inregion->prev->next = region;
+          } else {
+            dst->botregion = region;
+          }
+          region->prev = inregion->prev;
+          region->next = inregion;
+          inregion->prev = region;
+
+          return region;
+        }
+        //GCon->Logf("tag: %d, floor->maxz: %f, ceiling.minz: %f, ceiling->maxz: %f, floor.minz: %f", line->arg1, inregion->floor->maxz, src->ceiling.minz, inregion->ceiling->maxz, src->floor.minz);
+      }
+
+      // check for sloped ceiling
+      if (inregion->ceiling->normal.z != -1.0f) {
+        if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz) {
+          region = new sec_region_t;
+          memset((void *)region, 0, sizeof(*region));
+          region->floor = inregion->floor;
+          region->ceiling = &src->ceiling;
+          region->params = &src->params;
+          region->extraline = line;
+          inregion->floor = &src->floor;
+
+          if (inregion->prev) {
+            inregion->prev->next = region;
+          } else {
+            dst->botregion = region;
+          }
+          region->prev = inregion->prev;
+          region->next = inregion;
+          inregion->prev = region;
+
+          return region;
+        }
+        //GCon->Logf("tag: %d, floor->minz: %f, ceiling.maxz: %f, ceiling->minz: %f, floor.maxz: %f", line->arg1, inregion->floor->minz, src->ceiling.maxz, inregion->ceiling->minz, src->floor.maxz);
+      }
+        */
+    }
     //GCon->Logf("tag: %d, infloorz: %f, ceilz: %f, inceilz: %f, floorz: %f", line->arg1, infloorz, ceilz, inceilz, floorz);
   }
   GCon->Logf("Invalid extra floor, tag %d", dst->tag);
@@ -2356,11 +2472,12 @@ IMPLEMENT_FUNCTION(VLevel, ChangeSector) {
 }
 
 IMPLEMENT_FUNCTION(VLevel, AddExtraFloor) {
+  P_GET_BOOL_OPT(swapFC, true);
   P_GET_PTR(sector_t, dst);
   P_GET_PTR(line_t, line);
   P_GET_SELF;
   (void)Self;
-  RET_PTR(AddExtraFloor(line, dst));
+  RET_PTR(AddExtraFloor(line, dst, swapFC));
 }
 
 IMPLEMENT_FUNCTION(VLevel, SwapPlanes) {

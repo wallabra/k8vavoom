@@ -762,7 +762,7 @@ void CalcLine (line_t *line);
 void CalcSeg (seg_t *seg);
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
-sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
+sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, bool swapFloorCeiling);
 void SwapPlanes (sector_t *);
 void CalcSecMinMaxs (sector_t *sector);
 

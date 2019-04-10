@@ -751,12 +751,29 @@ final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) 
 //  SpawnExtraFloors
 //
 //==========================================================================
-final void SpawnExtraFloors (Level InLevel, line_t *line) {
+final void SpawnExtraFloors (Level InLevel, line_t *line, optional bool doswap) {
+  if (!specified_doswap) doswap = true;
   foreach (auto j; 0..InLevel.Sectors.length) {
     if (line->arg1 == InLevel.Sectors[j].tag) {
-      InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
+      InLevel.AddExtraFloor(line, &InLevel.Sectors[j], doswap);
     }
   }
+}
+
+
+//==========================================================================
+//
+//  MakeWaterContents
+//
+//==========================================================================
+final void MakeWaterContents (Level InLevel, line_t *line) {
+  int contents = CONTENTS_WATER;
+  sector_t *sec = line->frontsector;
+  sec.params.contents = contents;
+  sec.floor.Alpha = contents_alpha[contents];
+  sec.ceiling.Alpha = contents_alpha[contents];
+  sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+  sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
 }
 
 
@@ -765,24 +782,27 @@ final void SpawnExtraFloors (Level InLevel, line_t *line) {
 //  MakeContents
 //
 //==========================================================================
-void MakeContents (line_t *line) {
+final void MakeContents (line_t *line) {
   if (!line->arg1 && !line->arg2 && !line->arg3) {
-    int contents = 1;//CONTENTS_WATER;
-    line->frontsector->params.contents = contents;
-    if (line->frontsector->floor.dist == -line->frontsector->ceiling.dist) {
-      line->frontsector->floor.Alpha = contents_alpha[contents];
-      line->frontsector->ceiling.Alpha = contents_alpha[contents];
-      line->frontsector->ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
-      line->frontsector->floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+    //MakeWaterContents(line);
+    int contents = CONTENTS_WATER;
+    sector_t *sec = line->frontsector;
+    sec.params.contents = contents;
+    if (sec.floor.dist == -sec.ceiling.dist) {
+      sec.floor.Alpha = contents_alpha[contents];
+      sec.ceiling.Alpha = contents_alpha[contents];
+      sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+      sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
     }
   } else {
-    line->frontsector->params.contents = line->arg1;
+    sector_t *sec = line->frontsector;
+    sec.params.contents = line->arg1;
 
-    line->frontsector->floor.Alpha = (100.0-float(line->arg2))/100.0;
-    line->frontsector->ceiling.Alpha = (100.0-float(line->arg2))/100.0;
+    sec.floor.Alpha = (100.0-float(line->arg2))/100.0;
+    sec.ceiling.Alpha = (100.0-float(line->arg2))/100.0;
 
-    line->frontsector->ceiling.flags = line->arg3;
-    line->frontsector->floor.flags = line->arg3;
+    sec.ceiling.flags = line->arg3;
+    sec.floor.flags = line->arg3;
   }
 }
 
@@ -797,12 +817,12 @@ void MakeContents (line_t *line) {
 //==========================================================================
 void MakeHeightSec (Level InLevel, line_t *line) {
   sector_t *sec = line->frontsector;
-  sec->bTransferSource = true;
-  if (line->arg2&2) sec->bFakeFloorOnly = true;
-  if (line->arg2&4) sec->bClipFakePlanes = true;
-  if (line->arg2&8) sec->bUnderWater = true;
-  if (line->arg2&16) sec->bIgnoreHeightSec = true;
-  if (line->arg2&32) sec->bNoFakeLight = true;
+  sec.bTransferSource = true;
+  if (line->arg2&2) sec.bFakeFloorOnly = true;
+  if (line->arg2&4) sec.bClipFakePlanes = true;
+  if (line->arg2&8) sec.bUnderWater = true;
+  if (line->arg2&16) sec.bIgnoreHeightSec = true;
+  if (line->arg2&32) sec.bNoFakeLight = true;
   for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s  >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
     InLevel.Sectors[s].heightsec = sec;
     InLevel.SetHeightSector(&InLevel.Sectors[s], sec, line->arg2);
@@ -1016,8 +1036,14 @@ override void SpawnWorld (Level InLevel) {
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
     switch (line->special) {
+      // Sector_Set3dFloor(tag, type, flags, alpha, hi-tag/line ID)
       case LNSPEC_SectorSet3dFloor:
-        SpawnExtraFloors(InLevel, line);
+        SpawnExtraFloors(InLevel, line, (line->arg2 == 0));
+        if (line->arg2) print("*** 3D FLOOR OF TYPE %s (flags=0x%04x; alpha=%s; hitag=%s)", line->arg2, line->arg3, line->arg4, line->arg5);
+        if (line->arg2 == 2) {
+          print("SWIMMABLE FLOOR!");
+          MakeWaterContents(InLevel, line);
+        }
         line->special = 0;
         break;
       case LNSPEC_Contents:
@@ -1055,6 +1081,7 @@ override void SpawnWorld (Level InLevel) {
         line->special = 0;
         break;
       case LNSPEC_TransferHeights:
+        //if (line->arg2) print("transferheights: flags=0x%02x", line->arg2);
         MakeHeightSec(InLevel, line);
         line->special = 0;
         break;
@@ -1287,15 +1314,16 @@ override void CmdAddSlotDefault (ref array!string Args) {
 
 
 defaultproperties {
-  contents_alpha[0] = 1.0;
-  contents_alpha[1] = 0.5;
-  contents_alpha[2] = 0.8;
-  contents_alpha[3] = 0.6;
-  contents_alpha[4] = 0.55;
-  contents_alpha[5] = 0.7;
-  contents_alpha[6] = 0.85;
-  contents_alpha[7] = 0.7;
-  contents_alpha[8] = 0.7;
+  contents_alpha[CONTENTS_EMPTY] = 1.0;
+  contents_alpha[CONTENTS_WATER] = 0.5;
+  contents_alpha[CONTENTS_LAVA] = 0.8;
+  contents_alpha[CONTENTS_NUKAGE] = 0.6;
+  contents_alpha[CONTENTS_SLIME] = 0.55;
+  contents_alpha[CONTENTS_HELLSLIME] = 0.7;
+  contents_alpha[CONTENTS_BLOOD] = 0.85;
+  contents_alpha[CONTENTS_SLUDGE] = 0.7;
+  contents_alpha[CONTENTS_HAZARD] = 0.7;
+
 
   windTab[0] = 5.0/32.0;
   windTab[1] = 10.0/32.0;

@@ -786,6 +786,8 @@ struct sec_region_t {
 
   sec_params_t *params;
   line_t *extraline;
+
+  bool bFuckYouGozzo;
 };
 
 //
@@ -884,6 +886,7 @@ struct sector_t {
   bool bSilent;           // actors don't make noise in this sector
   bool bNoFallingDamage;  // no falling damage in this sector
   bool bFakeCeilingOnly;  // when used as heightsec in R_FakeFlat, only copies ceiling
+  bool GZDoomStyleReg;    // gzdoom-style region (special wall creation code)
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;

@@ -372,6 +372,12 @@ struct sec_region_t {
 
   sec_params_t *params;
   line_t *extraline;
+
+  enum {
+    RF_FuckYouGozzo = 1u<<0,
+  };
+
+  vuint32 regflags;
 };
 
 
@@ -468,6 +474,7 @@ struct sector_t {
     SF_Silent           = 0x0100, // actors don't make noise in this sector
     SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
     SF_FakeCeilingOnly  = 0x0400, // when used as heightsec in R_FakeFlat, only copies ceiling
+    SF_GZDoomStyleReg   = 0x0800, // gzdoom-style region (special wall creation code)
   };
   vuint32 SectorFlags;
 

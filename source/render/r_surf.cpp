@@ -830,29 +830,48 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedMidExtraWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr, sec_plane_t *r_floor, sec_plane_t *r_ceiling, bool forward) {
+void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
+                                                     sec_plane_t *r_floor, sec_plane_t *r_ceiling,
+                                                     sec_plane_t *extratop, sec_plane_t *extrabot)
+{
   check(MTextr);
   TVec wv[4];
 
+  /*
   sec_plane_t *extratop, *extrabot;
+  if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
   if (forward) {
+    // creation from bottom region to top region (change)
     extratop = reg->next->floor;
     extrabot = reg->ceiling;
   } else {
-    extratop = reg->floor;
-    extrabot = reg->prev->ceiling;
+    // creation from top region to bottom region (initial)
+    extratop = reg->prev->ceiling;
+    extrabot = reg->floor;
   }
-  //side_t *extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
+  */
 
-  float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  float botz1 = r_floor->GetPointZ(*seg->v1);
-  float botz2 = r_floor->GetPointZ(*seg->v2);
+  /* old code
+  {
+    if (forward) {
+      extratop = reg->next->floor;
+      extrabot = reg->ceiling;
+    } else {
+      extratop = reg->floor;
+      extrabot = reg->prev->ceiling;
+    }
+  }
+  */
 
-  float extratopz1 = extratop->GetPointZ(*seg->v1);
-  float extratopz2 = extratop->GetPointZ(*seg->v2);
-  float extrabotz1 = extrabot->GetPointZ(*seg->v1);
-  float extrabotz2 = extrabot->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
+  const float botz1 = r_floor->GetPointZ(*seg->v1);
+  const float botz2 = r_floor->GetPointZ(*seg->v2);
+
+  const float extratopz1 = extratop->GetPointZ(*seg->v1);
+  const float extratopz2 = extratop->GetPointZ(*seg->v2);
+  const float extrabotz1 = extrabot->GetPointZ(*seg->v1);
+  const float extrabotz2 = extrabot->GetPointZ(*seg->v2);
 
   wv[0].x = wv[1].x = seg->v1->x;
   wv[0].y = wv[1].y = seg->v1->y;
@@ -878,6 +897,40 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->backTopDist = extratop->dist;
   sp->backBotDist = extrabot->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
+}
+
+
+//==========================================================================
+//
+//  GetExtraTopBot
+//
+//==========================================================================
+static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t *&extratop, sec_plane_t *&extrabot, side_t *&extraside, bool fromtop) {
+  if (fromtop) {
+    if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
+      // idiotic gozzo 3d floor
+      extratop = reg->floor; // new floor
+      extrabot = reg->ceiling; // new ceiling
+      extraside = &Level->Sides[reg->extraline->sidenum[0]];
+    } else {
+      // sane vavoom 3d floor
+      extratop = reg->floor; // new floor
+      extrabot = reg->prev->ceiling; // new ceiling
+      extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
+    }
+  } else {
+    if (reg->next->regflags&sec_region_t::RF_FuckYouGozzo) {
+      // idiotic gozzo 3d floor
+      extratop = reg->floor; // new floor
+      extrabot = reg->ceiling; // new ceiling
+      extraside = &Level->Sides[reg->next->extraline->sidenum[0]];
+    } else {
+      // sane vavoom 3d floor
+      extratop = reg->next->floor; // new floor
+      extrabot = reg->ceiling; // new ceiling
+      extraside = &Level->Sides[reg->extraline->sidenum[0]];
+    }
+  }
 }
 
 
@@ -1022,9 +1075,9 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->next = dseg->extra;
       dseg->extra = sp;
 
-      sec_plane_t *extratop = reg->floor;
-      sec_plane_t *extrabot = reg->prev->ceiling;
-      side_t *extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
+      sec_plane_t *extratop, *extrabot;
+      side_t *extraside;
+      GetExtraTopBot(Level, reg, extratop, extrabot, extraside, true); // from top
 
       VTexture *MTextr = GTextureManager(extraside->MidTexture);
       sp->texinfo.saxis = segdir*TextureSScale(MTextr);
@@ -1038,7 +1091,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->texinfo.Additive = !!(extrabot->flags&SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
 
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, false);
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot);
       sp->TextureOffset = sidedef->MidTextureOffset;
     }
   }
@@ -1272,9 +1325,15 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
     segpart_t *spp = dseg->extra;
     for (sec_region_t *reg = seg->backsector->botregion; reg->next; reg = reg->next, spp = spp->next) {
+      /*
       sec_plane_t *extratop = reg->next->floor;
       sec_plane_t *extrabot = reg->ceiling;
-      side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+      //side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+      side_t *extraside = &Level->Sides[(reg->next->regflags&sec_region_t::RF_FuckYouGozzo ? reg->next : reg)->extraline->sidenum[0]];
+      */
+      sec_plane_t *extratop, *extrabot;
+      side_t *extraside;
+      GetExtraTopBot(Level, reg, extratop, extrabot, extraside, false); // from bottom
 
       spp->texinfo.ColourMap = ColourMap;
       VTexture *ETex = GTextureManager(extraside->MidTexture);
@@ -1291,7 +1350,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
         spp->texinfo.toffs = extratop->TexZ*TextureTScale(ETex)+sidedef->MidRowOffset*TextureOffsetTScale(ETex);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, true);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot);
       } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, spp, sidedef->MidRowOffset);
       }
