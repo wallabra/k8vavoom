@@ -462,7 +462,7 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload) {
   if ((unsigned)Type >= (unsigned)TEXTYPE_MAX) return -1; // oops
 
   if (Name == NAME_None) return -1;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   bool secondary = false;
 
@@ -587,7 +587,7 @@ int VTextureManager::FindPatchByName (VName Name) {
 //==========================================================================
 int VTextureManager::FindWallByName (VName Name, bool bOverload) {
   if (Name == NAME_None) return -1;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   int seenOther = -1;
   int seenType = -1;
@@ -634,7 +634,7 @@ int VTextureManager::FindWallByName (VName Name, bool bOverload) {
 //==========================================================================
 int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
   if (Name == NAME_None) return -1;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   int seenOther = -1;
   int seenType = -1;
@@ -682,7 +682,7 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
 int VTextureManager::NumForName (VName Name, int Type, bool bOverload) {
   static TStrSet numForNameWarned;
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
   int i = CheckNumForName(Name, Type, bOverload);
   if (i == -1) {
     if (!numForNameWarned.put(*Name)) {
@@ -781,7 +781,7 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 //==========================================================================
 static bool findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
   if (Name == NAME_None) return false;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return false;
+  if (VTextureManager::IsDummyTextureName(Name)) return false;
   VName PatchName(*Name, VName::AddLower8);
   // need to collect 'em to go in backwards order
   TArray<int> fulllist; // full names
@@ -833,7 +833,7 @@ static bool findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
 //==========================================================================
 static bool findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNamespace NS, int shade) {
   if (Name == NAME_None) return false;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return false;
+  if (VTextureManager::IsDummyTextureName(Name)) return false;
   VName PatchName(*Name, VName::AddLower8);
   // need to collect 'em to go in backwards order
   TArray<int> fulllist; // full names
@@ -875,7 +875,7 @@ static bool findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNa
 //==========================================================================
 int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   // check if it's already registered
   int i = CheckNumForName(Name, Type);
@@ -942,7 +942,7 @@ int VTextureManager::AddPatchLump (int LumpNum, VName Name, int Type, bool Silen
 //==========================================================================
 int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
   if (Name == NAME_None) abort();
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) abort();
+  if (IsDummyTextureName(Name)) abort();
   //TODO
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
@@ -974,7 +974,7 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 //==========================================================================
 int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
@@ -1000,7 +1000,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
 //==========================================================================
 int VTextureManager::AddFileTexture (VName Name, int Type) {
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
   int i = AddFileTextureChecked(Name, Type);
   if (i == -1) {
     GCon->Logf(NAME_Warning, "Couldn\'t create texture \"%s\".", *Name);
@@ -1021,7 +1021,7 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   if (shade == -1) return AddFileTexture(Name, Type);
 
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   VName shName = VName(va("%s %08x", *Name, (vuint32)shade));
 
@@ -1054,7 +1054,7 @@ int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silen
   if (shade == -1) return AddPatch(Name, Type, Silent);
 
   if (Name == NAME_None) return 0;
-  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
+  if (IsDummyTextureName(Name)) return 0;
 
   VName shName = VName(va("%s %08x", *Name, (vuint32)shade));
 

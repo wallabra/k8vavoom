@@ -1339,7 +1339,7 @@ static void ParseBrightmap (VScriptParser *sc) {
   }
   // there is no need to load brightmap textures for server
 #ifdef CLIENT
-  if (img != NAME_None && VStr::Cmp(*img, "-") != 0 && !bmap.isEmpty()) {
+  if (img != NAME_None && !VTextureManager::IsDummyTextureName(img) && !bmap.isEmpty()) {
     static int doWarn = -1;
     if (doWarn < 0) doWarn = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wbrightmap") ? 1 : 0);
 
@@ -1426,7 +1426,7 @@ static void ParseGlow (VScriptParser *sc) {
         sc->ExpectName8Warn();
 #ifdef CLIENT
         VName img = sc->Name8;
-        if (img != NAME_None && img != "-") {
+        if (img != NAME_None && !VTextureManager::IsDummyTextureName(img)) {
           VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
           if (basetex) {
             //GCon->Logf("GLOW: <%s>", *img);

@@ -380,6 +380,10 @@ public:
   float Time; // time value for warp textures
 
 public:
+  static inline bool IsDummyTextureName (VName n) {
+    return (n != NAME_None && (n == "-" || VStr::ICmp(*n, "AASTINKY") == 0));
+  }
+
   struct Iter {
   private:
     VTextureManager *tman;
@@ -392,7 +396,7 @@ public:
       // check for empty texture name
       if (name == NAME_None) { idx = -1; return false; }
       // check for "NoTexture" marker
-      if ((*name)[0] == '-' && (*name)[1] == 0) { idx = 0; return true; }
+      if (VTextureManager::IsDummyTextureName(name)) { idx = 0; return true; }
       // has texture manager object?
       if (!tman) { idx = -1; return false; }
       // hashmap search
