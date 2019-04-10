@@ -45,7 +45,9 @@ static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
+#ifdef CLIENT
 extern VCvarB r_interpolate_thing_movement;
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1118,6 +1120,7 @@ TVec VEntity::GetDrawOrigin () {
 //
 //==========================================================================
 TVec VEntity::GetDrawDelta () {
+#ifdef CLIENT
   // movement interpolation
   if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
     float ctt = XLevel->Time-LastMoveTime;
@@ -1133,6 +1136,7 @@ TVec VEntity::GetDrawDelta () {
       MoveFlags &= ~VEntity::MVF_JustMoved;
     }
   }
+#endif
   return TVec(0.0f, 0.0f, 0.0f);
 }
 

@@ -1,5 +1,4 @@
 add_subdirectory(core)
-add_subdirectory(xmplite)
 
 if(NOT WITH_SYS_LZMA)
   add_subdirectory(liblzma)
@@ -27,3 +26,7 @@ endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY)
 if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
   add_subdirectory(timidity)
 endif(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
+
+if(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
+  add_subdirectory(xmplite)
+endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)

@@ -54,6 +54,7 @@ option(ENABLE_SERVER   "Build dedicated server executable (don't do that!)" OFF)
 option(ENABLE_MASTER   "Build master server (no reason to build it)" OFF)
 option(ENABLE_VCCRUN   "Build vcc_run executable" OFF)
 option(ENABLE_MD2FIXER "Build fixmd2 executable (you don't need it)" OFF)
+option(ENABLE_GLVIS    "Build glvis PVS builder executable (you don't need it)" OFF)
 
 option(ENABLE_VCCRUN_ONLY "Build ONLY vccrun" OFF)
 
@@ -468,11 +469,13 @@ else(WITH_OPUS)
 endif(WITH_OPUS)
 
 
-set(XMPLITE_FOUND ON)
-set(MAIN_LIBS xmplite ${MAIN_LIBS})
-include_directories(libs/xmplite)
-add_definitions(-DLIBXMP_CORE_PLAYER)
-add_definitions(-DXMP_SYM_VISIBILITY)
+if(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
+  set(XMPLITE_FOUND ON)
+  set(MAIN_LIBS xmplite ${MAIN_LIBS})
+  include_directories(libs/xmplite)
+  add_definitions(-DLIBXMP_CORE_PLAYER)
+  add_definitions(-DXMP_SYM_VISIBILITY)
+endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
 
 
 #

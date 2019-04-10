@@ -1337,10 +1337,6 @@ static void ParseBrightmap (VScriptParser *sc) {
       sc->Message(va("Unknown command (%s)", *sc->String));
     }
   }
-  (void)img;
-  (void)iwad;
-  (void)thiswad;
-  (void)nofb;
   // there is no need to load brightmap textures for server
 #ifdef CLIENT
   if (img != NAME_None && VStr::Cmp(*img, "-") != 0 && !bmap.isEmpty()) {
@@ -1395,6 +1391,12 @@ static void ParseBrightmap (VScriptParser *sc) {
     basetex->Brightmap = bm;
     if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s' (%p)", *basetex->Name, *bm->Name, basetex);
   }
+#else
+  (void)img;
+  (void)iwad;
+  (void)thiswad;
+  (void)nofb;
+  (void)ttype;
 #endif
 }
 
