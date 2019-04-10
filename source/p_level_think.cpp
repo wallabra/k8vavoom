@@ -32,6 +32,7 @@ extern VCvarB r_decals_enabled;
 VCvarB dbg_world_think_vm_time("dbg_world_think_vm_time", false, "Show time taken by VM thinkers (for debug)?", CVAR_Archive);
 VCvarB dbg_world_think_decal_time("dbg_world_think_decal_time", false, "Show time taken by decal thinkers (for debug)?", CVAR_Archive);
 VCvarB dbg_vm_disable_thinkers("dbg_vm_disable_thinkers", false, "Disable VM thinkers (for debug)?", CVAR_PreInit);
+VCvarB dbg_vm_enable_secthink("dbg_vm_enable_secthink", true, "Enable sector thinkers when VM thinkers are disabled (for debug)?", CVAR_PreInit);
 VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updating specials (for debug)?", CVAR_PreInit);
 
 double worldThinkTimeVM = -1;
@@ -349,6 +350,31 @@ void VLevel::TickWorld (float DeltaTime) {
         // if it is just destroyed, call level notifier
         if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
         c->ConditionalDestroy();
+      }
+    }
+  } else {
+    // thinkers are disabled
+    if (dbg_vm_enable_secthink) {
+      // but sector thinkers are enabled
+      static VClass *SSClass = nullptr;
+      if (!SSClass) {
+        SSClass = VClass::FindClass("SectorThinker");
+        if (!SSClass) Sys_Error("VM class 'SectorThinker' not found!");
+      }
+      while (Th) {
+        VThinker *c = Th;
+        Th = c->Next;
+        if (!(c->GetFlags()&_OF_DelayedDestroy)) {
+          if (c->GetClass()->IsChildOf(SSClass)) {
+            c->Tick(DeltaTime);
+            if (c->GetFlags()&_OF_DelayedDestroy) {
+              RemoveThinker(c);
+              // if it is just destroyed, call level notifier
+              if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+              c->ConditionalDestroy();
+            }
+          }
+        }
       }
     }
   }
