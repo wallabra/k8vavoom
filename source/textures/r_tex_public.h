@@ -385,25 +385,44 @@ public:
     VTextureManager *tman;
     int idx;
     VName name;
+    bool allowShrink;
+
+  private:
+    inline bool restart () {
+      // check for empty texture name
+      if (name == NAME_None) { idx = -1; return false; }
+      // check for "NoTexture" marker
+      if ((*name)[0] == '-' && (*name)[1] == 0) { idx = 0; return true; }
+      // has texture manager object?
+      if (!tman) { idx = -1; return false; }
+      // hashmap search
+      int cidx = tman->TextureHash[GetTypeHash(name)&(HASH_SIZE-1)];
+      while (cidx >= 0) {
+        VTexture *ctex = tman->getTxByIndex(cidx);
+        if (ctex->Name == name) { idx = cidx; return true; }
+        cidx = ctex->HashNext;
+      }
+      idx = -1;
+      return false;
+    }
 
   public:
-    Iter () : tman(nullptr), idx(-1), name(NAME_None) {}
-    Iter (VTextureManager *atman, int aidx, VName aname=NAME_None) : tman(atman), idx(aidx), name(aname) {}
+    Iter () : tman(nullptr), idx(-1), name(NAME_None), allowShrink(false) {}
+    Iter (VTextureManager *atman, VName aname, bool aAllowShrink=true) : tman(atman), idx(-1), name(aname), allowShrink(aAllowShrink) { restart(); }
 
     inline bool empty () const { return (idx < 0); }
     inline bool next () {
-      if (!idx) { idx = -1; return false; }
-      while (idx >= 0) {
+      if (idx < 0) return false;
+      for (;;) {
         idx = tman->getTxByIndex(idx)->HashNext;
         if (idx < 0) break;
-        if (idx >= tman->FirstMapTextureIndex) {
-          if (idx-FirstMapTextureIndex >= tman->MapTextures.length()) continue;
-        } else {
-          if (idx >= tman->Textures.length()) continue;
-        }
-        VTexture *ctex = tman->getTxByIndex(idx);
-        check(ctex);
-        if (ctex->Name == name) return true;
+        if (tman->getTxByIndex(idx)->Name == name) return true;
+      }
+      // here we can restart iteration with shrinked name, if it is longer than 8 chars
+      if (allowShrink && VStr::length(*name) > 8) {
+        allowShrink = false;
+        name = VName(*name, VName::FindLower8);
+        if (name != NAME_None) return restart();
       }
       return false;
     }
@@ -411,9 +430,8 @@ public:
     inline VTexture *tex () const { return tman->getTxByIndex(idx); }
   };
 
-  Iter firstWithName (VName n);
-  Iter firstWithStr (const VStr &s, bool stripTo8=false);
-  inline Iter firstWithStr8 (const VStr &s) { return firstWithStr(s, true); }
+  inline Iter firstWithName (VName n) { return Iter(this, n); }
+  Iter firstWithStr (const VStr &s);
 
 public:
   VTextureManager ();

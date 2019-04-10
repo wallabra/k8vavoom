@@ -343,24 +343,6 @@ void VTextureManager::ResetMapTextures () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   if (!Tex) return -1;
 
-  /*
-  if (Tex->Name == "w108_4" || Tex->Name == "doortrak") {
-    VStream *strm = nullptr;
-    VStr basename = VStr(Tex->Name != NAME_None ? *Tex->Name : "_untitled");
-    for (int counter = 0; ; ++counter) {
-      VStr fname = VStr(counter ? va("_texdump/%s_%04d.png", *basename, counter) : va("_texdump/%s.png", *basename));
-      if (!Sys_FileExists(fname)) {
-        strm = FL_OpenFileWrite(fname, true); // as full name
-        break;
-      }
-    }
-    if (strm) {
-      Tex->WriteToPNG(strm);
-      delete strm;
-    }
-  }
-  */
-
   if (Tex->Name == NAME_None && Textures.length()) {
     R_DumpTextures();
     abort();
@@ -376,7 +358,6 @@ int VTextureManager::AddTexture (VTexture *Tex) {
         VTexture *tx = getTxByIndex(i);
         check(tx);
         if (tx->Name != Tex->Name) continue;
-        if (tx->Type == TEXTYPE_WallPatch/*TEXTYPE_Null*/) break;
         if (tx->Type != Tex->Type) continue;
         repidx = i;
         break;
@@ -385,17 +366,18 @@ int VTextureManager::AddTexture (VTexture *Tex) {
         check(repidx > 0 && repidx < FirstMapTextureIndex);
         static int warnReplace = -1;
         if (warnReplace < 0) warnReplace = (GArgs.CheckParm("-Wduplicate-textures") ? 1 : 0);
-        if (warnReplace > 0) GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
+        if (warnReplace > 0 || developer) GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
         ReplaceTexture(repidx, Tex);
         return repidx;
       }
     }
+    if (developer) GCon->Logf(NAME_Dev, "***NEW TEXTURE #%d: <%s> (%s)", Textures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
     Textures.Append(Tex);
     Tex->TextureTranslation = Textures.length()-1;
     AddToHash(Textures.length()-1);
     return Textures.length()-1;
   } else {
-    if (developer) GCon->Logf(NAME_Dev, "***MAP-TEXTURE #%d: <%s>", MapTextures.length(), *Tex->Name);
+    if (developer) GCon->Logf(NAME_Dev, "***MAP-TEXTURE #%d: <%s> (%s)", MapTextures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
     MapTextures.Append(Tex);
     Tex->TextureTranslation = FirstMapTextureIndex+MapTextures.length()-1;
     AddToHash(FirstMapTextureIndex+MapTextures.length()-1);
@@ -459,38 +441,13 @@ void VTextureManager::AddToHash (int Index) {
 
 //==========================================================================
 //
-//  VTextureManager::firstWithName
-//
-//==========================================================================
-VTextureManager::Iter VTextureManager::firstWithName (VName n) {
-  // check for "NoTexture" marker
-  if (n == NAME_None) return Iter();
-  if ((*n)[0] == '-' && (*n)[1] == 0) return Iter(this, 0, n);
-
-  int HashIndex = GetTypeHash(n)&(HASH_SIZE-1);
-  for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
-    if (i >= FirstMapTextureIndex) {
-      if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
-    } else {
-      if (i >= Textures.length()) continue;
-    }
-    VTexture *ctex = getTxByIndex(i);
-    check(ctex);
-    if (ctex->Name == n) return Iter(this, i, n);
-  }
-
-  return Iter();
-}
-
-
-//==========================================================================
-//
 //  VTextureManager::firstWithStr
 //
 //==========================================================================
-VTextureManager::Iter VTextureManager::firstWithStr (const VStr &s, bool stripTo8) {
+VTextureManager::Iter VTextureManager::firstWithStr (const VStr &s) {
   if (s.isEmpty()) return Iter();
-  VName n = VName(*s, (stripTo8 ? VName::FindLower8 : VName::FindLower));
+  VName n = VName(*s, VName::FindLower);
+  if (n == NAME_None && s.length() > 8) n = VName(*s, VName::FindLower8);
   if (n == NAME_None) return Iter();
   return firstWithName(n);
 }
@@ -519,56 +476,15 @@ doitagain:
 
   //if (secondary) GCon->Logf("*** SECONDARY lookup for texture '%s'", *Name);
 
-  for (int trynum = 0; trynum < 2; ++trynum) {
-    if (trynum == 1) {
-      if (VStr::length(*Name) < 8) break;
-      Name = VName(*Name, VName::FindLower8);
-      if (Name == NAME_None) return -1;
-    }
-
-    //GCon->Logf("::: LOOKING FOR '%s' (%s)", *Name, VTexture::TexTypeToStr(Type));
-    for (auto it = firstWithName(Name); !it.empty(); (void)it.next()) {
-      //GCon->Logf("  (---) %d", it.index());
-      VTexture *ctex = it.tex();
-      //GCon->Logf("* %s * idx=%d; name='%s' (%s : %s)", *Name, it.index(), *ctex->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(ctex->Type));
-      if (Type == TEXTYPE_Any || ctex->Type == Type || (bOverload && ctex->Type == TEXTYPE_Overload)) {
-        //GCon->Logf("  (000) %d", it.index());
-        if (secondary) {
-          // secondary check
-          switch (ctex->Type) {
-            case TEXTYPE_WallPatch:
-            case TEXTYPE_Overload:
-            case TEXTYPE_Skin:
-            case TEXTYPE_Autopage:
-            case TEXTYPE_Null:
-            case TEXTYPE_FontChar:
-              //GCon->Logf("  (001) %d", it.index());
-              continue;
-          }
-        }
-        //GCon->Logf("   HIT! '%s' (%s)", *ctex->Name, VTexture::TexTypeToStr(ctex->Type));
-        if (ctex->Type == TEXTYPE_Null) {
-          //GCon->Logf("  (002) %d", it.index());
-          return 0;
-        }
-        //GCon->Logf("  (003) %d", it.index());
-        return it.index();
-      } else if (Type == TEXTYPE_WallPatch && ctex->Type != TEXTYPE_Null) {
-        //GCon->Logf("  (004) %d", it.index());
-        bool repl = false;
-        switch (ctex->Type) {
-          case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
-          case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
-          case TEXTYPE_Sprite: repl = (seenType < 0); break;
-          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
-        }
-        if (repl) {
-          //GCon->Logf("  (005) %d", it.index());
-          seenOther = it.index();
-          seenType = ctex->Type;
-        }
-      } else {
-        //GCon->Logf("  (100) %d", it.index());
+  //GCon->Logf("::: LOOKING FOR '%s' (%s)", *Name, VTexture::TexTypeToStr(Type));
+  for (auto it = firstWithName(Name); !it.empty(); it.next()) {
+    //GCon->Logf("  (---) %d", it.index());
+    VTexture *ctex = it.tex();
+    //GCon->Logf("* %s * idx=%d; name='%s' (%s : %s)", *Name, it.index(), *ctex->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(ctex->Type));
+    if (Type == TEXTYPE_Any || ctex->Type == Type || (bOverload && ctex->Type == TEXTYPE_Overload)) {
+      //GCon->Logf("  (000) %d", it.index());
+      if (secondary) {
+        // secondary check
         switch (ctex->Type) {
           case TEXTYPE_WallPatch:
           case TEXTYPE_Overload:
@@ -576,23 +492,56 @@ doitagain:
           case TEXTYPE_Autopage:
           case TEXTYPE_Null:
           case TEXTYPE_FontChar:
-            break;
-          default:
-            if (seenOneType < 0) {
-              seenOneType = ctex->Type;
-              seenOne = (seenOneType != TEXTYPE_Null ? it.index() : 0);
-            } else {
-              seenOne = -1;
-            }
-            break;
+            //GCon->Logf("  (001) %d", it.index());
+            continue;
         }
       }
+      //GCon->Logf("   HIT! '%s' (%s)", *ctex->Name, VTexture::TexTypeToStr(ctex->Type));
+      if (ctex->Type == TEXTYPE_Null) {
+        //GCon->Logf("  (002) %d", it.index());
+        return 0;
+      }
+      //GCon->Logf("  (003) %d", it.index());
+      return it.index();
+    } else if (Type == TEXTYPE_WallPatch && ctex->Type != TEXTYPE_Null) {
+      //GCon->Logf("  (004) %d", it.index());
+      bool repl = false;
+      switch (ctex->Type) {
+        case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
+        case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
+        case TEXTYPE_Sprite: repl = (seenType < 0); break;
+        case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
+      }
+      if (repl) {
+        //GCon->Logf("  (005) %d", it.index());
+        seenOther = it.index();
+        seenType = ctex->Type;
+      }
+    } else {
+      //GCon->Logf("  (100) %d", it.index());
+      switch (ctex->Type) {
+        case TEXTYPE_WallPatch:
+        case TEXTYPE_Overload:
+        case TEXTYPE_Skin:
+        case TEXTYPE_Autopage:
+        case TEXTYPE_Null:
+        case TEXTYPE_FontChar:
+          break;
+        default:
+          if (seenOneType < 0) {
+            seenOneType = ctex->Type;
+            seenOne = (seenOneType != TEXTYPE_Null ? it.index() : 0);
+          } else {
+            seenOne = -1;
+          }
+          break;
+      }
     }
+  }
 
-    if (seenOther >= 0) {
-      //GCon->Logf("  SO-HIT: * %s * idx=%d; name='%s' (%s : %s)", *Name, seenOther, *getTxByIndex(seenOther)->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(getTxByIndex(seenOther)->Type));
-      return seenOther;
-    }
+  if (seenOther >= 0) {
+    //GCon->Logf("  SO-HIT: * %s * idx=%d; name='%s' (%s : %s)", *Name, seenOther, *getTxByIndex(seenOther)->Name, VTexture::TexTypeToStr(Type), VTexture::TexTypeToStr(getTxByIndex(seenOther)->Type));
+    return seenOther;
   }
 
   //GCon->Logf("* %s * NOT FOUND! (%s)", *Name, VTexture::TexTypeToStr(Type));
