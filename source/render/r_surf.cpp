@@ -32,8 +32,6 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB dbg_kdizd_water("dbg_kdizd_water", false, "KDIZD water hacks?", CVAR_Archive);
-
 extern VCvarB w_update_clip_bsp;
 extern VCvarB w_update_clip_region;
 extern VCvarB w_update_in_renderer;
@@ -1564,22 +1562,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
           if (floorlightlevel != nullptr) *floorlightlevel = GetFloorLight (s);
           if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetFloorLight (s);
           */
-          if (dbg_kdizd_water) {
-            ff->ceilplane = s->floor;
-            ff->ceilplane.normal = -s->floor.normal;
-            ff->ceilplane.dist = -s->floor.dist;
-            /*
-            ff->floorplane = s->ceiling;
-            ff->floorplane.normal = -s->ceiling.normal;
-            ff->floorplane.dist = -s->ceiling.dist;
-            */
-          }
           //ff->floorplane = (heightsec ? heightsec->floor : sec->floor);
-        }
-        return;
-      } else {
-        if (dbg_kdizd_water) {
-          ff->floorplane = s->floor;
         }
       }
       return;
