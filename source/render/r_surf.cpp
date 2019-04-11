@@ -249,6 +249,9 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
     }
   }
 
+  ssurf->texinfo.soffs = plane->xoffs;
+  ssurf->texinfo.toffs = plane->yoffs+plane->BaseYOffs;
+
   // if scale/angle was changed, we should update everything, and possibly rebuild the surface
   // our general surface creation function will take care of everything
   if (FASI(ssurf->XScale) != FASI(plane->XScale) ||
