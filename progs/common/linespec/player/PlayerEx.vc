@@ -489,7 +489,7 @@ final void MovePlayer (float deltaTime) {
   }
 
   fly = FlyMove/16.0;
-  if (fly && (EntityEx(MO).FindInventory(PowerFlight) || bFly)) {
+  if (fly && (bFly || EntityEx(MO).FindInventory(PowerFlight))) {
     if (FlyMove != TOCENTRE) {
       FlyHeight = fly*2.0;
       if (!MO.bFly) {
@@ -509,11 +509,36 @@ final void MovePlayer (float deltaTime) {
   }
 
   if (MO.bFly) {
+    /* old code
     MO.Velocity.z = FlyHeight*35.0;
     if (FlyHeight) FlyHeight /= 2.0;
+    */
+    if (fabs(FlyHeight) > 0.1) {
+      MO.Velocity.z = FlyHeight*35.0;
+      FlyHeight /= 2.0;
+      if (fabs(FlyHeight) <= 0.1) FlyHeight = 0;
+    } else {
+      // directional flight
+      if (forward) {
+        TVec vfdir;
+        AngleVector(MO.Angles, out vfdir);
+        vfdir.z *= forward*deltaTime;
+        MO.Velocity.z += vfdir.z;
+      } else {
+        if (MO.Velocity.z < 0) {
+          MO.Velocity.z = fmin(0, MO.Velocity.z+4);
+        } else if (MO.Velocity.z > 0) {
+          MO.Velocity.z = fmax(0, MO.Velocity.z-4);
+        }
+      }
+    }
+    if (Buttons&BT_JUMP && MO.Velocity.z < 160) MO.Velocity.z += 30;
+    float limit = (Buttons&BT_SPEED ? 400 : 200);
+    MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
+    //print("VZ=%s; FH=%s; fvwd=%s", MO.Velocity.z, FlyHeight, vforward);
   }
 
-  if ((Buttons&BT_JUMP) && onground && !JumpTime) {
+  if ((Buttons&BT_JUMP) && !bFly && onground && !JumpTime) {
     MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*(Cheats&CF_HIGHJUMP ? 2.0 : 1.0))*1.1;
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
