@@ -2210,11 +2210,21 @@ static __attribute__((unused)) void makeSecPlaneMutable (sec_plane_t *&src) {
 //
 //  Level::AddExtraFloor
 //
+//  can return `nullptr`
+//
 //==========================================================================
-sec_region_t *VLevel::AddExtraFloor (line_t *line, sector_t *dst, int eftype) {
+sec_region_t *VLevel::AddExtraFloor (line_t *line, sector_t *dst) {
+  enum {
+    EFTYPE_Vavoom,
+    EFTYPE_Gozzo,
+    EFTYPE_GozzoEmpty,
+  };
+
   sec_region_t *region;
   sec_region_t *inregion;
   sector_t *src;
+
+  int eftype = (line->arg2 == 0 ? EFTYPE_Vavoom : (line->arg2&3) == 1 ? EFTYPE_GozzoEmpty : EFTYPE_Gozzo);
 
   src = line->frontsector;
   src->SectorFlags |= sector_t::SF_ExtrafloorSource;
@@ -2637,11 +2647,10 @@ IMPLEMENT_FUNCTION(VLevel, ChangeSector) {
 }
 
 IMPLEMENT_FUNCTION(VLevel, AddExtraFloor) {
-  P_GET_INT_OPT(swapFC, EFTYPE_Vavoom);
   P_GET_PTR(sector_t, dst);
   P_GET_PTR(line_t, line);
   P_GET_SELF;
-  RET_PTR(Self->AddExtraFloor(line, dst, swapFC));
+  RET_PTR(Self->AddExtraFloor(line, dst));
 }
 
 IMPLEMENT_FUNCTION(VLevel, SwapPlanes) {

@@ -551,7 +551,8 @@ public:
 
   void FixKnownMapErrors ();
 
-  sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, int eftype);
+  // can return `nullptr`
+  sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
 
 private:
   // map loaders
@@ -760,17 +761,11 @@ private:
   DECLARE_FUNCTION(LdrTexNumForName)
 };
 
-enum {
-  EFTYPE_Vavoom,
-  EFTYPE_Gozzo,
-  EFTYPE_GozzoEmpty,
-};
 
 void CalcLine (line_t *line);
 void CalcSeg (seg_t *seg);
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
-//sec_region_t *AddExtraFloor (line_t *line, sector_t *dst, int eftype);
 void SwapPlanes (sector_t *);
 void CalcSecMinMaxs (sector_t *sector);
 

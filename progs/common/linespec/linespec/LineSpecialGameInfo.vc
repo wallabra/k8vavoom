@@ -751,10 +751,10 @@ final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) 
 //  SpawnExtraFloors
 //
 //==========================================================================
-final void SpawnExtraFloors (Level InLevel, line_t *line, int eftype) {
+final void SpawnExtraFloors (Level InLevel, line_t *line) {
   foreach (auto j; 0..InLevel.Sectors.length) {
     if (line->arg1 == InLevel.Sectors[j].tag) {
-      InLevel.AddExtraFloor(line, &InLevel.Sectors[j], eftype);
+      InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
     }
   }
 }
@@ -1061,7 +1061,7 @@ override void SpawnWorld (Level InLevel) {
           print("SOLID FLOOR!");
           MakeSolidContents(InLevel, line);
         }
-        SpawnExtraFloors(InLevel, line, (line->arg2 == 0 ? EFTYPE_Vavoom : (line->arg2&3) == 1 ? EFTYPE_GozzoEmpty : EFTYPE_Gozzo));
+        SpawnExtraFloors(InLevel, line);
         line->special = 0;
         break;
       case LNSPEC_Contents:

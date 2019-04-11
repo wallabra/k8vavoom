@@ -58,11 +58,6 @@ enum {
   CONTENTS_SOLID = -1
 }
 
-enum {
-  EFTYPE_Vavoom,
-  EFTYPE_Gozzo,
-  EFTYPE_GozzoEmpty,
-}
 
 #include "entityex/EntityEx.Head.vc"
 #include "entityex/EntityEx.Physics.vc"
