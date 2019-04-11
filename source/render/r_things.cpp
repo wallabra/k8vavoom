@@ -969,6 +969,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
 //==========================================================================
 void VRenderLevelShared::DrawPlayerSprites () {
   if (!r_draw_psprites || r_chasecam) return;
+  if (!cl || !cl->MO) return;
 
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0f;
@@ -992,7 +993,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     case STYLE_AddStencil: Additive = true; break;
   }
   //Alpha = MID(0.0f, Alpha, 1.0f);
-  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
+  if (Alpha <= 0.002f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
 
   int ltxr = 0, ltxg = 0, ltxb = 0;
@@ -1002,9 +1003,9 @@ void VRenderLevelShared::DrawPlayerSprites () {
     // check if we have any light at player's origin (rough), and owned by player
     const dlight_t *dl = DLights;
     for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
-      if (!dl->Owner || !dl->Owner->IsA(eclass)) continue;
-      VEntity *e = (VEntity *)dl->Owner;
       if (dl->die < Level->Time || dl->radius < 1.0f) continue;
+      if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
+      VEntity *e = (VEntity *)dl->Owner;
       if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
       if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
       ltxr += (dl->colour>>16)&0xff;

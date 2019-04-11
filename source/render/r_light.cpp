@@ -135,6 +135,10 @@ void VRenderLevelShared::ClearReferences () {
   // dynlights
   dlight_t *l = DLights;
   for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
+    if (l->die < Level->Time || l->radius < 1.0f) {
+      RL_CLEAR_DLIGHT(l);
+      continue;
+    }
     if (l->Owner && (l->Owner->GetFlags()&_OF_CleanupRef)) {
       RL_CLEAR_DLIGHT(l);
     }
