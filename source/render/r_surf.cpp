@@ -835,44 +835,47 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
                                                      sec_plane_t *r_floor, sec_plane_t *r_ceiling,
-                                                     sec_plane_t *extratop, sec_plane_t *extrabot)
+                                                     sec_plane_t *extratop, sec_plane_t *extrabot, bool createES)
 {
   check(MTextr);
-  TVec wv[4];
 
-  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  const float botz1 = r_floor->GetPointZ(*seg->v1);
-  const float botz2 = r_floor->GetPointZ(*seg->v2);
+  if (createES) {
+    TVec wv[4];
 
-  const float extratopz1 = extratop->GetPointZ(*seg->v1);
-  const float extratopz2 = extratop->GetPointZ(*seg->v2);
-  const float extrabotz1 = extrabot->GetPointZ(*seg->v1);
-  const float extrabotz2 = extrabot->GetPointZ(*seg->v2);
+    const float topz1 = r_ceiling->GetPointZ(*seg->v1);
+    const float topz2 = r_ceiling->GetPointZ(*seg->v2);
+    const float botz1 = r_floor->GetPointZ(*seg->v1);
+    const float botz2 = r_floor->GetPointZ(*seg->v2);
 
-  wv[0].x = wv[1].x = seg->v1->x;
-  wv[0].y = wv[1].y = seg->v1->y;
-  wv[2].x = wv[3].x = seg->v2->x;
-  wv[2].y = wv[3].y = seg->v2->y;
+    const float extratopz1 = extratop->GetPointZ(*seg->v1);
+    const float extratopz2 = extratop->GetPointZ(*seg->v2);
+    const float extrabotz1 = extrabot->GetPointZ(*seg->v1);
+    const float extrabotz2 = extrabot->GetPointZ(*seg->v2);
 
-  wv[0].z = MAX(extrabotz1, botz1);
-  wv[1].z = MIN(extratopz1, topz1);
-  wv[2].z = MIN(extratopz2, topz2);
-  wv[3].z = MAX(extrabotz2, botz2);
+    wv[0].x = wv[1].x = seg->v1->x;
+    wv[0].y = wv[1].y = seg->v1->y;
+    wv[2].x = wv[3].x = seg->v2->x;
+    wv[2].y = wv[3].y = seg->v2->y;
 
-  /*
-  GCon->Logf("extra: %f, %f, %f, %f", wv[0].z, wv[1].z, wv[2].z, wv[3].z);
-  GCon->Logf("       ez1=(%f,%f); ez2=(%f,%f); bz1=(%f,%f); bz2=(%f,%f)", extrabotz1, extratopz1, extrabotz2, extratopz2, botz1, topz1, botz2, topz2);
-  for (int f = 0; f < 4; ++f) GCon->Logf("       %d: (%f,%f,%f)", f, wv[f].x, wv[f].y, wv[f].z);
-  */
+    wv[0].z = MAX(extrabotz1, botz1);
+    wv[1].z = MIN(extratopz1, topz1);
+    wv[2].z = MIN(extratopz2, topz2);
+    wv[3].z = MAX(extrabotz2, botz2);
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+    /*
+    GCon->Logf("extra: %f, %f, %f, %f", wv[0].z, wv[1].z, wv[2].z, wv[3].z);
+    GCon->Logf("       ez1=(%f,%f); ez2=(%f,%f); bz1=(%f,%f); bz2=(%f,%f)", extrabotz1, extratopz1, extrabotz2, extratopz2, botz1, topz1, botz2, topz2);
+    for (int f = 0; f < 4; ++f) GCon->Logf("       %d: (%f,%f,%f)", f, wv[f].x, wv[f].y, wv[f].z);
+    */
 
-  if (sp->surfs) {
-    sp->surfs->midHeights[0] = MIN(extratopz1, topz1);
-    sp->surfs->midHeights[1] = MAX(extrabotz1, botz1);
-    sp->surfs->midHeights[2] = MIN(extratopz2, topz2);
-    sp->surfs->midHeights[3] = MAX(extrabotz2, botz2);
+    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+
+    if (sp->surfs) {
+      sp->surfs->midHeights[0] = MIN(extratopz1, topz1);
+      sp->surfs->midHeights[1] = MAX(extrabotz1, botz1);
+      sp->surfs->midHeights[2] = MIN(extratopz2, topz2);
+      sp->surfs->midHeights[3] = MAX(extrabotz2, botz2);
+    }
   }
 
   sp->frontTopDist = r_ceiling->dist;
@@ -890,6 +893,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 //==========================================================================
 static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t *&extratop, sec_plane_t *&extrabot, side_t *&extraside, bool fromtop) {
   if (fromtop) {
+    // creating
     if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
       // idiotic gozzo 3d floor
       extrabot = reg->floor; // new floor
@@ -902,6 +906,7 @@ static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t
       extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
     }
   } else {
+    // updating
     if (reg->next->regflags&sec_region_t::RF_FuckYouGozzo) {
       // idiotic gozzo 3d floor
       extrabot = reg->next->floor; // new floor
@@ -1074,7 +1079,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->texinfo.Additive = !!(extrabot->flags&SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
 
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot);
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot, !(reg->regflags&sec_region_t::RF_GozzoEmptyContent));
       sp->TextureOffset = sidedef->MidTextureOffset;
     }
   }
@@ -1333,7 +1338,16 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
         spp->texinfo.toffs = extratop->TexZ*TextureTScale(ETex)+sidedef->MidRowOffset*TextureOffsetTScale(ETex);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot);
+        /*
+        if (reg->floor->exflags&SPF_EX_ALLOCATED) {
+          if (region->floor->exflags&SPF_EX_FLOOR) {
+            region->
+          } else {
+          }
+        }
+        */
+
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot, !(reg->next->regflags&sec_region_t::RF_GozzoEmptyContent));
       } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, spp, sidedef->MidRowOffset);
       }

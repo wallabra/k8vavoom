@@ -312,10 +312,15 @@ struct side_t {
 //
 //==========================================================================
 enum {
-  SPF_NOBLOCKING   = 1, // Not blocking
-  SPF_NOBLOCKSIGHT = 2, // Do not block sight
-  SPF_NOBLOCKSHOOT = 4, // Do not block shooting
-  SPF_ADDITIVE     = 8, // Additive translucency
+  SPF_NOBLOCKING   = 1u, // Not blocking
+  SPF_NOBLOCKSIGHT = 2u, // Do not block sight
+  SPF_NOBLOCKSHOOT = 4u, // Do not block shooting
+  SPF_ADDITIVE     = 8u, // Additive translucency
+};
+
+enum {
+  SPF_EX_ALLOCATED = 1u<<0,
+  SPF_EX_FLOOR     = 1u<<1,
 };
 
 enum {
@@ -343,12 +348,15 @@ struct sec_plane_t : public TPlane {
   float BaseAngle;
   float BaseYOffs;
 
-  vint32 flags;
+  vuint32 flags; // SPF_xxx
   float Alpha;
   float MirrorAlpha;
 
   vint32 LightSourceSector;
   VEntity *SkyBox;
+
+  sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
+  vuint32 exflags; // SPF_EX_xxx
 };
 
 
@@ -374,9 +382,10 @@ struct sec_region_t {
   line_t *extraline;
 
   enum {
-    RF_FuckYouGozzo = 1u<<0,
+    RF_FuckYouGozzo      = 1u<<0,
+    RF_GozzoEmptyContent = 1u<<1,
+    RF_GozzoCutout       = 1u<<2,
   };
-
   vuint32 regflags;
 };
 
@@ -511,6 +520,9 @@ struct sector_t {
   // if sector has more than one neighbour, this is `nullptr`
   sector_t *othersecFloor;
   sector_t *othersecCeiling;
+
+  // for gozzo source sectors
+  sec_plane_t origCeiling;
 };
 
 

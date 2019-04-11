@@ -193,6 +193,11 @@ enum {
   SPF_ADDITIVE     = 8,
 };
 
+enum {
+  SPF_EX_ALLOCATED = 1<<0,
+  SPF_EX_FLOOR     = 1<<1,
+};
+
 const int SKY_FROM_SIDE = 0x8000;
 
 // sidedef flags
@@ -764,6 +769,9 @@ struct sec_plane_t : TPlane {
   int LightSourceSector;
 
   Entity SkyBox;
+
+  sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
+  int exflags;
 };
 
 
@@ -788,6 +796,8 @@ struct sec_region_t {
   line_t *extraline;
 
   bool bFuckYouGozzo;
+  bool bGozzoEmptyContent; // for gozzo crap
+  bool bGozzoCutout;
 };
 
 //
@@ -921,6 +931,9 @@ struct sector_t {
   // if sector has more than one neighbour, this is `nullptr`
   sector_t *othersecFloor;
   sector_t *othersecCeiling;
+
+  // for gozzo floors
+  sec_plane_t origCeiling;
 };
 
 

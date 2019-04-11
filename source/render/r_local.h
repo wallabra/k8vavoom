@@ -579,7 +579,8 @@ protected:
   void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
   void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
   void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                   sec_plane_t *r_floor, sec_plane_t *r_ceiling, sec_plane_t *extratop, sec_plane_t *extrabot);
+                                   sec_plane_t *r_floor, sec_plane_t *r_ceiling, sec_plane_t *extratop, sec_plane_t *extrabot,
+                                   bool createES);
 
   // surf methods
   void SetupSky ();

@@ -751,11 +751,10 @@ final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) 
 //  SpawnExtraFloors
 //
 //==========================================================================
-final void SpawnExtraFloors (Level InLevel, line_t *line, optional bool doswap) {
-  if (!specified_doswap) doswap = true;
+final void SpawnExtraFloors (Level InLevel, line_t *line, int eftype) {
   foreach (auto j; 0..InLevel.Sectors.length) {
     if (line->arg1 == InLevel.Sectors[j].tag) {
-      InLevel.AddExtraFloor(line, &InLevel.Sectors[j], doswap);
+      InLevel.AddExtraFloor(line, &InLevel.Sectors[j], eftype);
     }
   }
 }
@@ -774,6 +773,22 @@ final void MakeWaterContents (Level InLevel, line_t *line) {
   sec.ceiling.Alpha = contents_alpha[contents];
   sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
   sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+}
+
+
+//==========================================================================
+//
+//  MakeSolidContents
+//
+//==========================================================================
+final void MakeSolidContents (Level InLevel, line_t *line) {
+  int contents = CONTENTS_EMPTY;
+  sector_t *sec = line->frontsector;
+  sec.params.contents = contents;
+  sec.floor.Alpha = contents_alpha[contents];
+  sec.ceiling.Alpha = contents_alpha[contents];
+  //sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+  //sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
 }
 
 
@@ -1038,12 +1053,15 @@ override void SpawnWorld (Level InLevel) {
     switch (line->special) {
       // Sector_Set3dFloor(tag, type, flags, alpha, hi-tag/line ID)
       case LNSPEC_SectorSet3dFloor:
-        SpawnExtraFloors(InLevel, line, (line->arg2 == 0));
-        if (line->arg2) print("*** 3D FLOOR OF TYPE %s (flags=0x%04x; alpha=%s; hitag=%s)", line->arg2, line->arg3, line->arg4, line->arg5);
-        if (line->arg2 == 2) {
+        if (line->arg2) print("*** 3D FLOOR OF TYPE %s (tag=%s; flags=0x%04x; alpha=%s; hitag=%s)", line->arg2, line->arg1, line->arg3, line->arg4, line->arg5);
+        if ((line->arg2&3) == 2) {
           print("SWIMMABLE FLOOR!");
           MakeWaterContents(InLevel, line);
+        } else if ((line->arg2&3) == 1) {
+          print("SOLID FLOOR!");
+          MakeSolidContents(InLevel, line);
         }
+        SpawnExtraFloors(InLevel, line, (line->arg2 == 0 ? EFTYPE_Vavoom : (line->arg2&3) == 1 ? EFTYPE_GozzoEmpty : EFTYPE_Gozzo));
         line->special = 0;
         break;
       case LNSPEC_Contents:
