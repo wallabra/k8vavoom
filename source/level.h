@@ -555,6 +555,10 @@ public:
   sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
 
 private:
+  sec_region_t *AddExtraFloorSane (line_t *line, sector_t *dst); // vavoom
+  sec_region_t *AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
+
+private:
   // map loaders
   void LoadVertexes (int, int, int&);
   void LoadSectors (int);
