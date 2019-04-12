@@ -92,13 +92,22 @@ struct segpart_t {
 
 
 struct sec_surface_t {
-  sec_plane_t *secplane;
+  sec_plane_t *esecplane;
   texinfo_t texinfo;
-  float dist;
+  float edist;
   float XScale;
   float YScale;
   float Angle;
+  bool flipSecPlane;
   surface_t *surfs;
+
+  float PointDist (const TVec &p) const {
+    if (!flipSecPlane) {
+      return DotProduct(p, esecplane->normal)-esecplane->dist;
+    } else {
+      return DotProduct(p, -esecplane->normal)+esecplane->dist;
+    }
+  }
 };
 
 
@@ -587,11 +596,11 @@ protected:
   void FlushSurfCaches (surface_t*);
   // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
   // this is used both to create initial surfaces, and to update changed surfaces
-  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane);
-  void UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub); // subsector is not changed, but we need it non-const
+  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane, bool revflag);
+  void UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub, bool revflag); // subsector is not changed, but we need it non-const
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t*);
-  surface_t *CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
+  surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
   int CountSegParts (const seg_t *);
   void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
   void CreateWorldSurfaces ();

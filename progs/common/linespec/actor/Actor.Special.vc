@@ -168,7 +168,7 @@ final void A_KlaxonBlare () {
 //
 //==========================================================================
 final void A_CheckTerrain () {
-  if (Origin.z == GetPlanePointZ(ref *Floor, Origin)) {
+  if (Origin.z == GetPlanePointZRevFlag(ref *EFloor, Origin, bFlipFloor)) {
     if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageInstantDeath) {
       Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
     } else if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_ScrollCurrent) {

@@ -37,7 +37,7 @@ void VAdvancedRenderLevel::InitSurfs (surface_t *surfs, texinfo_t *texinfo, TPla
   // it's always one surface
   if (surfs && plane) {
     surfs->texinfo = texinfo;
-    surfs->plane = plane;
+    surfs->eplane = plane;
   }
 }
 

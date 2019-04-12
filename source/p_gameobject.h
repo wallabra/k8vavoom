@@ -369,29 +369,87 @@ struct sec_params_t {
 
 
 // "regions" are floor/ceiling info for sector
+// region "inside" is empty, and you can walk there
 struct sec_region_t {
   // linked list of regions in bottom to top order
-  sec_region_t *prev;
-  sec_region_t *next;
+  sec_region_t *prev; // region at the top
+  sec_region_t *next; // region at the bottom
 
   // planes
-  sec_plane_t *floor;
-  sec_plane_t *ceiling;
+  sec_plane_t *efloor;
+  sec_plane_t *eceiling;
 
   sec_params_t *params;
+
+  // side of this region
+  // can be `nullptr`, cannot be changed after surface creation
+  // this is from our floor to our ceiling
   line_t *extraline;
 
   enum {
-    RF_FuckYouGozzo      = 1u<<0,
-    RF_GozzoEmptyContent = 1u<<1,
-    RF_GozzoCutout       = 1u<<2,
+    RF_FlipFloor   = 1u<<0,
+    RF_FlipCeiling = 1u<<1,
   };
   vuint32 regflags;
 
   inline void clear () {
-    if (floor && floor->exflags&SPF_EX_ALLOCATED) delete floor;
-    if (ceiling && ceiling->exflags&SPF_EX_ALLOCATED) delete ceiling;
+    if (efloor && efloor->exflags&SPF_EX_ALLOCATED) delete efloor;
+    if (eceiling && eceiling->exflags&SPF_EX_ALLOCATED) delete eceiling;
     memset((void *)this, 0, sizeof(*this));
+  }
+
+  float GetFloorPointZ (const TVec &p) const {
+    if (!(regflags&RF_FlipFloor)) {
+      return efloor->GetPointZ(p);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *efloor;
+      pl.flipInPlace();
+      return pl.GetPointZ(p);
+    }
+  }
+
+  float GetCeilingPointZ (const TVec &p) const {
+    if (!(regflags&RF_FlipCeiling)) {
+      return eceiling->GetPointZ(p);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *eceiling;
+      pl.flipInPlace();
+      return pl.GetPointZ(p);
+    }
+  }
+
+  inline float GetFloorNormalZ () const { return (!(regflags&RF_FlipFloor) ? efloor->normal.z : -efloor->normal.z); }
+  inline TVec GetFloorNormal () const { return (!(regflags&RF_FlipFloor) ? efloor->normal : -efloor->normal); }
+  inline float GetFloorDist () const { return (!(regflags&RF_FlipFloor) ? efloor->dist : -efloor->dist); }
+  inline void GetFloorPlane (TPlane *p) const { *p = *efloor; if (regflags&RF_FlipFloor) p->flipInPlace(); }
+
+  inline float GetCeilingNormalZ () const { return (!(regflags&RF_FlipCeiling) ? eceiling->normal.z : -eceiling->normal.z); }
+  inline TVec GetCeilingNormal () const { return (!(regflags&RF_FlipCeiling) ? eceiling->normal : -eceiling->normal); }
+  inline float GetCeilingDist () const { return (!(regflags&RF_FlipCeiling) ? eceiling->dist : -eceiling->dist); }
+  inline void GetCeilingPlane (TPlane *p) const { *p = *eceiling; if (regflags&RF_FlipCeiling) p->flipInPlace(); }
+
+  inline bool SphereTouchesFloor (const TVec &center, float radius) const {
+    if (!(regflags&RF_FlipFloor)) {
+      return efloor->SphereTouches(center, radius);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *efloor;
+      pl.flipInPlace();
+      return pl.SphereTouches(center, radius);
+    }
+  }
+
+  inline bool SphereTouchesCeiling (const TVec &center, float radius) const {
+    if (!(regflags&RF_FlipCeiling)) {
+      return eceiling->SphereTouches(center, radius);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *eceiling;
+      pl.flipInPlace();
+      return pl.SphereTouches(center, radius);
+    }
   }
 };
 

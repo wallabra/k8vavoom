@@ -431,8 +431,10 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
       // faster checking
       GetFloorAndCeiling(out tmtrace);
       // update position
-      Floor = tmtrace.Floor;
-      Ceiling = tmtrace.Ceiling;
+      EFloor = tmtrace.EFloor;
+      bFlipFloor = tmtrace.bFlipFloor;
+      ECeiling = tmtrace.ECeiling;
+      bFlipCeiling = tmtrace.bFlipCeiling;
       FloorZ = tmtrace.FloorZ;
       CeilingZ = tmtrace.CeilingZ;
       if (bStickToFloor || bStickToCeiling) {
@@ -460,8 +462,10 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
 
   //if (skipTriggers && bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
 
-  Floor = tmtrace.Floor;
-  Ceiling = tmtrace.Ceiling;
+  EFloor = tmtrace.EFloor;
+  bFlipFloor = tmtrace.bFlipFloor;
+  ECeiling = tmtrace.ECeiling;
+  bFlipCeiling = tmtrace.bFlipCeiling;
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 
@@ -3354,6 +3358,24 @@ final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional 
   }
 
   return false;
+}
+
+
+//==========================================================================
+//
+//  GetPlanePointZRevFlag
+//
+//==========================================================================
+final float GetPlanePointZRevFlag (const ref TPlane plane, const ref TVec point, bool rev) {
+  if (rev) {
+    // gozzo shit, idc
+    TPlane pl;
+    pl.normal = -plane.normal;
+    pl.dist = -plane.dist;
+    return GetPlanePointZ(ref pl, point);
+  } else {
+    return GetPlanePointZ(ref plane, point);
+  }
 }
 
 

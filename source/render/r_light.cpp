@@ -667,7 +667,8 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
   subregion_t *reg = sub->regions;
   if (!skipAmbient && reg) {
     while (reg->next) {
-      const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+      //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+      const float d = reg->floor->PointDist(p);
       if (d >= 0.0f) break;
       reg = reg->next;
     }

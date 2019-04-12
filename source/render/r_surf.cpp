@@ -104,7 +104,7 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane) {
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane, bool revflag) {
   sec_plane_t *splane = InSplane;
   int vcount = sub->numlines;
 
@@ -132,11 +132,11 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   } else {
     // change sector surface
     // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
-    recalcSurface = !isSkyFlat || ((ssurf->secplane->pic == skyflatnum) != isSkyFlat);
+    recalcSurface = !isSkyFlat || ((ssurf->esecplane->pic == skyflatnum) != isSkyFlat);
     if (recalcSurface) {
       surf = ReallocSurface(ssurf->surfs, vcount);
     } else {
-      updateZ = (FASI(ssurf->dist) != FASI(splane->dist));
+      updateZ = (FASI(ssurf->edist) != FASI(splane->dist));
       surf = ssurf->surfs;
     }
     ssurf->surfs = nullptr; // just in case
@@ -145,20 +145,24 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   // this is required to calculate static lightmaps, and for other business
   for (surface_t *ss = surf; ss; ss = ss->next) ss->subsector = sub; // this is required to calculate static lightmaps, and for other business
 
-  ssurf->secplane = splane;
-  ssurf->dist = splane->dist;
+  ssurf->esecplane = splane;
+  ssurf->edist = splane->dist;
+  ssurf->flipSecPlane = revflag;
+
+  TPlane spl = *splane;
+  if (revflag) spl.flipInPlace();
 
   // setup texture
   VTexture *Tex = GTextureManager(splane->pic);
   check(Tex);
-  if (fabsf(splane->normal.z) > 0.1f) {
+  if (fabsf(spl.normal.z) > 0.1f) {
     float s, c;
     msincos(splane->BaseAngle-splane->Angle, &s, &c);
     ssurf->texinfo.saxis = TVec(c,  s, 0)*TextureSScale(Tex)*splane->XScale;
     ssurf->texinfo.taxis = TVec(s, -c, 0)*TextureTScale(Tex)*splane->YScale;
   } else {
     ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(Tex)*splane->YScale;
-    ssurf->texinfo.saxis = Normalise(CrossProduct(splane->normal, ssurf->texinfo.taxis))*TextureSScale(Tex)*splane->XScale;
+    ssurf->texinfo.saxis = Normalise(CrossProduct(spl.normal, ssurf->texinfo.taxis))*TextureSScale(Tex)*splane->XScale;
   }
   ssurf->texinfo.soffs = splane->xoffs;
   ssurf->texinfo.toffs = splane->yoffs+splane->BaseYOffs;
@@ -172,20 +176,21 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   ssurf->Angle = splane->BaseAngle-splane->Angle;
 
   if (recalcSurface) {
+    if (revflag) surf->drawflags |= surface_t::DF_FLIP_PLANE; else surf->drawflags &= ~surface_t::DF_FLIP_PLANE;
     surf->count = vcount;
     const seg_t *seg = &Level->Segs[sub->firstline];
     TVec *dptr = surf->verts;
-    if (splane->normal.z < 0.0f) {
+    if (spl.normal.z < 0.0f) {
       // backward
       for (seg += (vcount-1); vcount--; ++dptr, --seg) {
         const TVec &v = *seg->v1;
-        *dptr = TVec(v.x, v.y, splane->GetPointZ(v));
+        *dptr = TVec(v.x, v.y, spl.GetPointZ(v));
       }
     } else {
       // forward
       for (; vcount--; ++dptr, ++seg) {
         const TVec &v = *seg->v1;
-        *dptr = TVec(v.x, v.y, splane->GetPointZ(v.x, v.y));
+        *dptr = TVec(v.x, v.y, spl.GetPointZ(v.x, v.y));
       }
     }
 
@@ -193,7 +198,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       // don't subdivide sky, as it cannot have lightmap
       ssurf->surfs = surf;
       surf->texinfo = &ssurf->texinfo;
-      surf->plane = splane;
+      surf->eplane = splane;
     } else {
       ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
@@ -203,7 +208,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     if (updateZ) {
       for (; surf; surf = surf->next) {
         TVec *svert = surf->verts;
-        for (int i = surf->count; i--; ++svert) svert->z = splane->GetPointZ(svert->x, svert->y);
+        for (int i = surf->count; i--; ++svert) svert->z = spl.GetPointZ(svert->x, svert->y);
       }
     }
   }
@@ -220,16 +225,15 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub) {
-  sec_plane_t *plane = ssurf->secplane;
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub, bool revflag) {
+  if (!ssurf->esecplane->pic) return; // no texture? nothing to do
 
-  if (!plane->pic) return; // no texture? nothing to do
-
-  if (plane != RealPlane) {
+  sec_plane_t *splane = ssurf->esecplane;
+  if (splane != RealPlane) {
     // check for sky changes
-    if ((plane->pic == skyflatnum) != (RealPlane->pic == skyflatnum)) {
+    if ((splane->pic == skyflatnum) != (RealPlane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
-      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
       check(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColourMap = ColourMap; // just in case
       // nothing more to do
@@ -237,29 +241,29 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
     }
     // substitute real plane with sky plane if necessary
     if (RealPlane->pic == skyflatnum && RealPlane->normal.z < 0.0f) {
-      if (plane != &sky_plane) {
+      if (splane != &sky_plane) {
         // recreate it, just in case
-        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
         check(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColourMap = ColourMap; // just in case
         // nothing more to do
         return;
       }
-      plane = &sky_plane;
+      splane = &sky_plane;
     }
   }
 
-  ssurf->texinfo.soffs = plane->xoffs;
-  ssurf->texinfo.toffs = plane->yoffs+plane->BaseYOffs;
+  ssurf->texinfo.soffs = splane->xoffs;
+  ssurf->texinfo.toffs = splane->yoffs+splane->BaseYOffs;
 
   // if scale/angle was changed, we should update everything, and possibly rebuild the surface
   // our general surface creation function will take care of everything
-  if (FASI(ssurf->XScale) != FASI(plane->XScale) ||
-      FASI(ssurf->YScale) != FASI(plane->YScale) ||
-      ssurf->Angle != plane->BaseAngle-plane->Angle)
+  if (FASI(ssurf->XScale) != FASI(splane->XScale) ||
+      FASI(ssurf->YScale) != FASI(splane->YScale) ||
+      ssurf->Angle != splane->BaseAngle-splane->Angle)
   {
     // this will update texture, offsets, and everything
-    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
     check(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColourMap = ColourMap; // just in case
     // nothing more to do
@@ -270,21 +274,23 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
 
   // ok, we still may need to update texture or z coords
   // update texture?
-  VTexture *Tex = GTextureManager(plane->pic);
+  VTexture *Tex = GTextureManager(splane->pic);
   if (ssurf->texinfo.Tex != Tex) {
     ssurf->texinfo.Tex = Tex;
     ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
   }
 
   // update z coords?
-  if (FASI(ssurf->dist) != FASI(plane->dist)) {
-    ssurf->dist = plane->dist;
+  if (FASI(ssurf->edist) != FASI(splane->dist)) {
+    ssurf->edist = splane->dist;
+    TPlane spl = *splane;
+    if (revflag) spl.flipInPlace();
     for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
       TVec *svert = surf->verts;
-      for (int i = surf->count; i--; ++svert) svert->z = plane->GetPointZ(svert->x, svert->y);
+      for (int i = surf->count; i--; ++svert) svert->z = spl.GetPointZ(svert->x, svert->y);
     }
     // force lightmap recalculation
-    if (plane->pic != skyflatnum) {
+    if (splane->pic != skyflatnum) {
       FlushSurfCaches(ssurf->surfs);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, nullptr, sub);
     }
@@ -362,12 +368,12 @@ void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::CreateWSurfs
+//  VRenderLevelShared::CreateWSurf
 //
 //  this is used to create world/wall surface
 //
 //==========================================================================
-surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount) {
+surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount) {
   if (wvcount < 3 || (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z)) return nullptr;
   if (wvcount > surface_t::MAXWVERTS) Sys_Error("cannot create huge world surface (the thing that should not be)");
 
@@ -383,7 +389,7 @@ surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
     // never split sky surfaces
     surf->texinfo = texinfo;
-    surf->plane = seg;
+    surf->eplane = seg;
     return surf;
   }
 
@@ -419,7 +425,7 @@ static inline void FixTexturePegMid (const seg_t *seg, segpart_t *sp, VTexture *
     sp->texinfo.toffs = r_floor->TexZ+MTex->GetScaledHeight();
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
-    sp->texinfo.toffs = seg->front_sub->sector->topregion->ceiling->TexZ;
+    sp->texinfo.toffs = seg->front_sub->sector->topregion->eceiling->TexZ;
   } else {
     // top of texture at top
     sp->texinfo.toffs = r_ceiling->TexZ;
@@ -489,20 +495,6 @@ static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MT
 
 //==========================================================================
 //
-//  GetLineHeights
-//
-//  get heights for two-sided linedef
-//  top, midtop, midbottom, bottom
-//
-//==========================================================================
-/*
-static void GetLineHeights (const line_t *linedef, bool left, float harr[4]) {
-}
-*/
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::SetupOneSidedWSurf
 //
 //==========================================================================
@@ -526,7 +518,7 @@ void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpa
   wv[2].z = topz2;
   wv[3].z = botz2;
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
@@ -554,7 +546,7 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   wv[1].z = wv[2].z = skyheight;
   wv[3].z = topz2;
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
 }
@@ -586,7 +578,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   wv[1].z = wv[2].z = skyheight;
   wv[3].z = topz2;
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
 }
@@ -638,7 +630,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   wv[2].z = top_topz2;
   wv[3].z = MAX(back_topz2, botz2);
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
@@ -691,7 +683,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   wv[2].z = MIN(back_botz2, topz2);
   wv[3].z = botz2;
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
@@ -791,7 +783,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   wv[2].z = hgts[2];
   wv[3].z = hgts[3];
 
-  sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
+  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
@@ -820,6 +812,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float botz1 = r_floor->GetPointZ(*seg->v1);
     const float botz2 = r_floor->GetPointZ(*seg->v2);
 
+    //FIXME: FUCK YOU, GOZZO, FUCK YOU, FUCK YOU, FUCK YOU!
+    //FIXME: we should pass "reverse" flags here. shit.
     const float extratopz1 = extratop->GetPointZ(*seg->v1);
     const float extratopz2 = extratop->GetPointZ(*seg->v2);
     const float extrabotz1 = extrabot->GetPointZ(*seg->v1);
@@ -847,12 +841,12 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       // degenerate side surface (thin line), cannot create it (no render support)
     } if (wv[0].z == wv[1].z) {
       // can reduce to triangle
-      sp->surfs = CreateWSurfs(wv+1, &sp->texinfo, seg, sub, 3);
+      sp->surfs = CreateWSurf(wv+1, &sp->texinfo, seg, sub, 3);
     } if (wv[2].z == wv[3].z) {
       // can reduce to triangle
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub, 3);
+      sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 3);
     } else {
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub, 4);
+      sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
     }
   }
 
@@ -872,30 +866,14 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t *&extratop, sec_plane_t *&extrabot, side_t *&extraside, bool fromtop) {
   if (fromtop) {
     // creating
-    if (reg->regflags&sec_region_t::RF_FuckYouGozzo) {
-      // idiotic gozzo 3d floor
-      extrabot = reg->floor; // new floor
-      extratop = reg->ceiling; // new ceiling
-      extraside = &Level->Sides[reg->extraline->sidenum[0]];
-    } else {
-      // sane vavoom 3d floor
-      extratop = reg->floor; // new floor
-      extrabot = reg->prev->ceiling; // new ceiling
-      extraside = &Level->Sides[reg->prev->extraline->sidenum[0]];
-    }
+    extratop = reg->efloor; // new floor
+    extrabot = reg->prev->eceiling; // new ceiling
+    extraside = (reg->prev->extraline ? &Level->Sides[reg->prev->extraline->sidenum[0]] : nullptr);
   } else {
     // updating
-    if (reg->next->regflags&sec_region_t::RF_FuckYouGozzo) {
-      // idiotic gozzo 3d floor
-      extrabot = reg->next->floor; // new floor
-      extratop = reg->next->ceiling; // new ceiling
-      extraside = &Level->Sides[reg->next->extraline->sidenum[0]];
-    } else {
-      // sane vavoom 3d floor
-      extratop = reg->next->floor; // new floor
-      extrabot = reg->ceiling; // new ceiling
-      extraside = &Level->Sides[reg->extraline->sidenum[0]];
-    }
+    extratop = reg->next->efloor; // new floor
+    extrabot = reg->eceiling; // new ceiling
+    extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
   }
 }
 
@@ -1037,13 +1015,15 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->MidTextureOffset;
 
     for (sec_region_t *reg = seg->backsector->topregion; reg->prev; reg = reg->prev) {
+      sec_plane_t *extratop, *extrabot;
+      side_t *extraside;
+
+      GetExtraTopBot(Level, reg, extratop, extrabot, extraside, true); // from top
+      if (!extraside) continue; // no need to create extra side
+
       sp = pspart++;
       sp->next = dseg->extra;
       dseg->extra = sp;
-
-      sec_plane_t *extratop, *extrabot;
-      side_t *extraside;
-      GetExtraTopBot(Level, reg, extratop, extrabot, extraside, true); // from top
 
       VTexture *MTextr = GTextureManager(extraside->MidTexture);
       sp->texinfo.saxis = segdir*TextureSScale(MTextr);
@@ -1057,7 +1037,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->texinfo.Additive = !!(extrabot->flags&SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
 
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot, !(reg->regflags&sec_region_t::RF_GozzoEmptyContent));
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot, true);
       sp->TextureOffset = sidedef->MidTextureOffset;
     }
   }
@@ -1290,7 +1270,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     }
 
     segpart_t *spp = dseg->extra;
-    for (sec_region_t *reg = seg->backsector->botregion; reg->next; reg = reg->next, spp = spp->next) {
+    for (sec_region_t *reg = seg->backsector->botregion; reg->next; reg = reg->next) {
       /*
       sec_plane_t *extratop = reg->next->floor;
       sec_plane_t *extrabot = reg->ceiling;
@@ -1300,6 +1280,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
       sec_plane_t *extratop, *extrabot;
       side_t *extraside;
       GetExtraTopBot(Level, reg, extratop, extrabot, extraside, false); // from bottom
+      if (!extraside) continue; // no need to create extra side (and no extra seg parts were created)
 
       spp->texinfo.ColourMap = ColourMap;
       VTexture *ETex = GTextureManager(extraside->MidTexture);
@@ -1316,16 +1297,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
         spp->texinfo.toffs = extratop->TexZ*TextureTScale(ETex)+sidedef->MidRowOffset*TextureOffsetTScale(ETex);
 
-        /*
-        if (reg->floor->exflags&SPF_EX_ALLOCATED) {
-          if (region->floor->exflags&SPF_EX_FLOOR) {
-            region->
-          } else {
-          }
-        }
-        */
-
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot, !(reg->next->regflags&sec_region_t::RF_GozzoEmptyContent));
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot, true);
       } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, spp, sidedef->MidRowOffset);
       }
@@ -1333,6 +1305,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
       if (FASI(spp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
         UpdateTextureOffset(sub, spp, sidedef->MidTextureOffset);
       }
+
+      spp = spp->next;
     }
   }
 }
@@ -1419,8 +1393,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
     for (sec_region_t *reg = sub->sector->botregion; reg; reg = reg->next) {
-      sec_plane_t *r_floor = reg->floor;
-      sec_plane_t *r_ceiling = reg->ceiling;
+      sec_plane_t *r_floor = reg->efloor;
+      sec_plane_t *r_ceiling = reg->eceiling;
 
       if (sub->sector->fakefloors) {
         if (r_floor == &sub->sector->floor) r_floor = &sub->sector->fakefloors->floorplane;
@@ -1430,8 +1404,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->floor = CreateSecSurface(nullptr, sub, r_floor);
-      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling);
+      sreg->floor = CreateSecSurface(nullptr, sub, r_floor, !!(reg->regflags&sec_region_t::RF_FlipFloor));
+      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling, !!(reg->regflags&sec_region_t::RF_FlipCeiling));
 
       sreg->count = sub->numlines;
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
@@ -1479,8 +1453,8 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
   }
 
-  UpdateSecSurface(region->floor, region->floorplane, sub);
-  UpdateSecSurface(region->ceil, region->ceilplane, sub);
+  UpdateSecSurface(region->floor, region->floorplane, sub, !!(region->secregion->regflags&sec_region_t::RF_FlipFloor));
+  UpdateSecSurface(region->ceil, region->ceilplane, sub, !!(region->secregion->regflags&sec_region_t::RF_FlipCeiling));
 
   if (updatePoly && sub->poly) {
     // update the polyobj

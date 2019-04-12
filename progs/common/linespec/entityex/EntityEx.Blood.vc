@@ -137,10 +137,10 @@ final void BloodAddZClamped (ref TVec spos, float delta) {
   if (reg) {
     if (delta > 0) {
       // positive delta
-      spos.z = fmin(spos.z+delta, reg.ceiling.minz-1);
+      spos.z = fmin(spos.z+delta, reg.eceiling.minz-1);
     } else {
       // negative delta
-      spos.z = fmax(spos.z+delta, reg.floor.maxz+1);
+      spos.z = fmax(spos.z+delta, reg.efloor.maxz+1);
     }
     //print("spz=%s; cmz=%s", spos.z, reg.ceiling.minz);
   } else {

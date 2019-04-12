@@ -81,7 +81,7 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
   while (surfs) {
     if (plane) {
       surfs->texinfo = texinfo;
-      surfs->plane = plane;
+      surfs->eplane = plane;
     }
 
     if (surfs->count == 0) {
@@ -338,16 +338,19 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 
   ++c_subdivides;
 
+  vuint32 drawflags = f->drawflags;
   surface_t *next = f->next;
   Z_Free(f);
 
   surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(count2-1)*sizeof(TVec));
+  back->drawflags = drawflags;
   back->count = count2;
   memcpy(back->verts, verts2, count2*sizeof(TVec));
   back->subsector = sub;
   back->seg = seg;
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
+  front->drawflags = drawflags;
   front->count = count1;
   memcpy(front->verts, verts1, count1*sizeof(TVec));
   front->subsector = sub;
@@ -541,6 +544,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   memcpy(surf->verts, verts2, count2*sizeof(TVec));
 
   surface_t *news = NewWSurf();
+  news->drawflags = surf->drawflags;
   news->count = count1;
   memcpy(news->verts, verts1, count1*sizeof(TVec));
   news->subsector = sub;

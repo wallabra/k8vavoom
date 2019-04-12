@@ -597,13 +597,13 @@ final void A_ChangeScaleYExt (float delta, optional float killLimit) {
 final void A_LayToFloorWithYaw (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
-  if (!tmtrace.Floor) {
+  if (!tmtrace.EFloor) {
     Angles.roll = 0;
     Angles.yaw = yaw;
     Angles.pitch = 0;
     return;
   }
-  TVec norm = tmtrace.Floor.normal;
+  TVec norm = (tmtrace.bFlipFloor ? -tmtrace.EFloor.normal : tmtrace.EFloor.normal);
 
   /*
   auto sec = Level.XLevel.PointInSector(Origin);
@@ -645,13 +645,13 @@ final void A_LayToFloorWithYaw (float yaw) {
 final void A_LayToCeilingWithYaw (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
-  if (!tmtrace.Ceiling) {
+  if (!tmtrace.ECeiling) {
     Angles.roll = 0;
     Angles.yaw = yaw;
     Angles.pitch = 180+90;
     return;
   }
-  TVec norm = tmtrace.Ceiling.normal;
+  TVec norm = (tmtrace.bFlipCeiling ? -tmtrace.ECeiling.normal : tmtrace.ECeiling.normal);
 
   /*
   auto sec = Level.XLevel.PointInSector(Origin);
@@ -689,13 +689,13 @@ final void A_LayToCeilingWithYaw (float yaw) {
 final void A_LayToFloorWithYawSprite (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
-  if (!tmtrace.Floor) {
+  if (!tmtrace.EFloor) {
     Angles.roll = 0;
     Angles.yaw = yaw;
     Angles.pitch = 90;
     return;
   }
-  TVec norm = tmtrace.Floor.normal;
+  TVec norm = (tmtrace.bFlipFloor ? -tmtrace.EFloor.normal : tmtrace.EFloor.normal);
 
   //print("floor normal: %v", norm);
   if (norm.x == 0 && norm.y == 0) {
@@ -725,13 +725,13 @@ final void A_LayToFloorWithYawSprite (float yaw) {
 final void A_LayToCeilingWithYawSprite (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
-  if (!tmtrace.Ceiling) {
+  if (!tmtrace.ECeiling) {
     Angles.roll = 0;
     Angles.yaw = yaw;
     Angles.pitch = 270;
     return;
   }
-  TVec norm = tmtrace.Ceiling.normal;
+  TVec norm = (tmtrace.bFlipCeiling ? -tmtrace.ECeiling.normal : tmtrace.ECeiling.normal);
 
   //print("ceiling normal: %v", norm);
   if (norm.x == 0 && norm.y == 0) {

@@ -76,13 +76,13 @@ struct sight_trace_t {
 //  SightCheckPlane
 //
 //==========================================================================
-static bool SightCheckPlane (const sight_trace_t &Trace, const sec_plane_t *Plane) {
+static bool SightCheckPlane (const sight_trace_t &Trace, const sec_plane_t *Plane, unsigned rev) {
   if (Plane->flags&SPF_NOBLOCKSIGHT) return true; // plane doesn't block
 
-  const float OrgDist = DotProduct(Trace.LineStart, Plane->normal)-Plane->dist;
+  const float OrgDist = (rev ? DotProduct(Trace.LineStart, -Plane->normal)+Plane->dist : DotProduct(Trace.LineStart, Plane->normal)-Plane->dist);
   if (OrgDist < -0.1f) return true; // ignore back side
 
-  const float HitDist = DotProduct(Trace.LineEnd, Plane->normal)-Plane->dist;
+  const float HitDist = (rev ? DotProduct(Trace.LineEnd, -Plane->normal)+Plane->dist : DotProduct(Trace.LineEnd, Plane->normal)-Plane->dist);
   if (HitDist >= -0.1f) return true; // didn't cross plane
 
   if (Plane->pic == skyflatnum) return false; // hit sky, don't clip
@@ -104,13 +104,13 @@ static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec) {
 
   if (StartReg != nullptr) {
     for (sec_region_t *Reg = StartReg; Reg; Reg = Reg->next) {
-      if (!SightCheckPlane(Trace, Reg->floor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->ceiling)) return false; // hit ceiling
+      if (!SightCheckPlane(Trace, Reg->efloor, Reg->regflags&sec_region_t::RF_FlipFloor)) return false; // hit floor
+      if (!SightCheckPlane(Trace, Reg->eceiling, Reg->regflags&sec_region_t::RF_FlipCeiling)) return false; // hit ceiling
     }
 
     for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
-      if (!SightCheckPlane(Trace, Reg->floor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->ceiling)) return false; // hit ceiling
+      if (!SightCheckPlane(Trace, Reg->efloor, Reg->regflags&sec_region_t::RF_FlipFloor)) return false; // hit floor
+      if (!SightCheckPlane(Trace, Reg->eceiling, Reg->regflags&sec_region_t::RF_FlipCeiling)) return false; // hit ceiling
     }
   }
 

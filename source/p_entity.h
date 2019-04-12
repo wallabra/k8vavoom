@@ -201,8 +201,13 @@ class VEntity : public VThinker {
   float DropOffZ;
 
   // closest floor and ceiling, source of floorz and ceilingz
-  sec_plane_t *Floor;
-  sec_plane_t *Ceiling;
+  enum {
+    FC_FlipFloor = 1u<<0,
+    FC_FlipCeiling = 1u<<1,
+  };
+  vuint32 fcflags;
+  sec_plane_t *EFloor;
+  sec_plane_t *ECeiling;
 
   // if == validcount, already checked
   //int ValidCount;
@@ -286,6 +291,12 @@ class VEntity : public VThinker {
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
+  void CopyTraceFloor (tmtrace_t *tr, bool setz=true);
+  void CopyTraceCeiling (tmtrace_t *tr, bool setz=true);
+
+  void CopyRegFloor (sec_region_t *reg, bool setz=true);
+  void CopyRegCeiling (sec_region_t *reg, bool setz=true);
+
 public:
   static int FIndex_OnMapSpawn;
   static int FIndex_BeginPlay;
@@ -306,6 +317,9 @@ public:
   static int FIndex_GetStateTime;
 
 public:
+  inline float GetFloorNormalZ () const { return (!(fcflags&FC_FlipFloor) ? EFloor->normal.z : -EFloor->normal.z); }
+  inline float GetCeilingNormalZ () const { return (!(fcflags&FC_FlipCeiling) ? ECeiling->normal.z : -ECeiling->normal.z); }
+
   static void InitFuncIndexes ();
 
   // VObject interface
@@ -701,8 +715,8 @@ public:
 
 private:
   // world iterator callbacks
-  bool CheckThing (cptrace_t &, VEntity *);
-  bool CheckLine (cptrace_t &, line_t *);
+  bool CheckThing (tmtrace_t &, VEntity *);
+  bool CheckLine (tmtrace_t &, line_t *);
   bool CheckRelThing (tmtrace_t &, VEntity *);
   bool CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials=false);
   void BlockedByLine (line_t *);

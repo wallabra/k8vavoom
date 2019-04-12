@@ -295,7 +295,7 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
                 //GCon->Logf("000");
               } else if (ldef->flags&ML_DONTPEGTOP) {
                 // top of texture at top of top region
-                toffs = sec->topregion->ceiling->TexZ;
+                toffs = sec->topregion->eceiling->TexZ;
                 //GCon->Logf("001");
               } else {
                 // top of texture at top

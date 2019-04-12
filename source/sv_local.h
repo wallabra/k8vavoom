@@ -212,11 +212,17 @@ struct opening_t {
   float range; // negatve: this is 3dmidtex
   float lowfloor;
   float highceiling;
-  sec_plane_t *floor;
-  sec_plane_t *ceiling;
-  sec_plane_t *lowfloorplane;
-  sec_plane_t *highceilingplane;
+  sec_plane_t *efloor;
+  sec_plane_t *eceiling;
+  //sec_plane_t *lowfloorplane;
+  //sec_plane_t *highceilingplane;
   opening_t *next;
+  // closest floor and ceiling, source of floorz and ceilingz
+  enum {
+    FC_FlipFloor = 1u<<0,
+    FC_FlipCeiling = 1u<<1,
+  };
+  vuint32 fcflags;
 };
 
 

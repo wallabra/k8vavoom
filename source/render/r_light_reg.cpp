@@ -91,11 +91,11 @@ static bool is_coloured;
 static inline int getSurfLightLevelInt (const surface_t *surf) {
   if (r_glow_flat && surf && !surf->seg && surf->subsector) {
     const sector_t *sec = surf->subsector->sector;
-    if (sec->floor.pic && surf->plane->normal.z > 0.0f) {
+    if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
     }
-    if (sec->ceiling.pic && surf->plane->normal.z < 0.0f) {
+    if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
     }
@@ -116,11 +116,11 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
 static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   if (r_glow_flat && surf && !surf->seg && surf->subsector) {
     const sector_t *sec = surf->subsector->sector;
-    if (sec->floor.pic && surf->plane->normal.z > 0.0f) {
+    if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
     }
-    if (sec->ceiling.pic && surf->plane->normal.z < 0.0f) {
+    if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
     }
@@ -199,7 +199,7 @@ bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
   if (!isFiniteF(texnormal.x)) return false; // no need to check other coords
 
   // flip it towards plane normal
-  float distscale = DotProduct(texnormal, surf->plane->normal);
+  float distscale = DotProduct(texnormal, surf->GetNormal());
   if (!distscale) Host_Error("Texture axis perpendicular to face");
   if (distscale < 0) {
     distscale = -distscale;
@@ -215,7 +215,7 @@ bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
     const float len = 1.0f/lmi.worldtotex[i].length();
     //float len = lmi.worldtotex[i].length();
     if (!isFiniteF(len)) return false; // just in case
-    const float dist = DotProduct(lmi.worldtotex[i], surf->plane->normal)*distscale;
+    const float dist = DotProduct(lmi.worldtotex[i], surf->GetNormal())*distscale;
     lmi.textoworld[i] = lmi.worldtotex[i]-texnormal*dist;
     lmi.textoworld[i] = lmi.textoworld[i]*len*len;
     //lmi.textoworld[i] = lmi.textoworld[i]*(1.0f/len)*(1.0f/len);
@@ -226,7 +226,7 @@ bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
 
   // project back to the face plane
   {
-    const float dist = (DotProduct(lmi.texorg, surf->plane->normal)-surf->plane->dist-1.0f)*distscale;
+    const float dist = (DotProduct(lmi.texorg, surf->GetNormal())-surf->GetDist()-1.0f)*distscale;
     lmi.texorg = lmi.texorg-texnormal*dist;
   }
 
@@ -352,7 +352,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     return;
   }
 
-  float dist = DotProduct(light->origin, surf->plane->normal)-surf->plane->dist;
+  float dist = DotProduct(light->origin, surf->GetNormal())-surf->GetDist();
 
   // don't bother with lights behind the surface
   if (dist <= -0.1f) return;
@@ -392,7 +392,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     TVec incoming = light->origin-(*spt);
     incoming.normaliseInPlace();
     if (!incoming.isValid()) continue;
-    float angle = DotProduct(incoming, surf->plane->normal);
+    float angle = DotProduct(incoming, surf->GetNormal());
 
     angle = 0.5f+0.5f*angle;
     const float add = (light->radius-dist)*angle;
@@ -608,7 +608,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (!xnfo) continue;
 
     float rad = dl.radius;
-    float dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
+    float dist = DotProduct(dl.origin, surf->GetNormal())-surf->GetDist();
     if (r_dynamic_clip) {
       if (dist <= -0.1f) continue;
     }
@@ -618,7 +618,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (rad < minlight) continue;
     minlight = rad-minlight;
 
-    TVec impact = dl.origin-surf->plane->normal*dist;
+    TVec impact = dl.origin-surf->GetNormal()*dist;
 
     if (hasPVS && r_dynamic_clip_pvs) {
       const subsector_t *sub = Level->PointInSubsector(impact);
@@ -716,7 +716,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 void VRenderLevel::InvalidateSurfacesLMaps (const TVec &org, float radius, surface_t *surf) {
   for (; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (!surf->plane->SphereTouches(org, radius)) continue;
+    if (!surf->SphereTouches(org, radius)) continue;
     if (!invalidateRelight) {
       if (surf->lightmap || surf->lightmap_rgb) {
         surf->drawflags |= surface_t::DF_CALC_LMAP;

@@ -81,11 +81,12 @@ struct surface_t {
     DF_WSURF      = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
     DF_FIX_CRACKS = 1u<<2, // this surface must be subdivised to fix "cracks"
     DF_CALC_LMAP  = 1u<<3, // calculate static lightmap
+    DF_FLIP_PLANE = 1u<<4, // flip plane
   };
 
   surface_t *next;
   texinfo_t *texinfo;
-  TPlane *plane;
+  TPlane *eplane;
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour
   vuint32 Fade;
@@ -104,6 +105,34 @@ struct surface_t {
   surfcache_t *CacheSurf;
   vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   TVec verts[1]; // dynamic array
+
+  inline bool PointOnSide (const TVec &point) const {
+    if (!(drawflags&DF_FLIP_PLANE)) {
+      return eplane->PointOnSide(point);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *eplane;
+      pl.flipInPlace();
+      return pl.PointOnSide(point);
+    }
+  }
+
+  inline bool SphereTouches (const TVec &center, float radius) const {
+    if (!(drawflags&DF_FLIP_PLANE)) {
+      return eplane->SphereTouches(center, radius);
+    } else {
+      // this is for gozzo shit, i don't care if it is fast or not
+      TPlane pl = *eplane;
+      pl.flipInPlace();
+      return pl.SphereTouches(center, radius);
+    }
+  }
+
+  inline float GetNormalZ () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->normal.z : -eplane->normal.z); }
+  inline TVec GetNormal () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->normal : -eplane->normal); }
+  inline float GetDist () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->dist : -eplane->dist); }
+
+  inline void GetPlane (TPlane *p) const { *p = *eplane; if (drawflags&DF_FLIP_PLANE) p->flipInPlace(); }
 };
 
 

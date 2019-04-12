@@ -177,8 +177,11 @@ struct tmtrace_t {
   float FloorZ;
   float CeilingZ;
   float DropOffZ;
-  sec_plane_t *Floor;
-  sec_plane_t *Ceiling;
+
+  bool bFlipFloor;
+  bool bFlipCeiling;
+  sec_plane_t *EFloor;
+  sec_plane_t *ECeiling;
 
   bool bFloatOk; // if true, move would be ok if within tmtrace.FloorZ-tmtrace.CeilingZ
 
@@ -258,8 +261,11 @@ native float CeilingZ;
 native float DropOffZ;
 
 // closest floor and ceiling, source of floorz and ceilingz
-native sec_plane_t *Floor;
-native sec_plane_t *Ceiling;
+native bool bFlipFloor;
+native bool bFlipCeiling;
+
+native sec_plane_t *EFloor;
+native sec_plane_t *ECeiling;
 
 // if == validcount, already checked
 //native int ValidCount;

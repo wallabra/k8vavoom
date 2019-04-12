@@ -34,7 +34,32 @@
 #include "sv_local.h"
 
 
-static opening_t openings[65536]; //k8: this should be enough for everyone, lol
+//k8: this should be enough for everyone, lol
+#define MAX_OPENINGS  (65536)
+static opening_t openings[MAX_OPENINGS];
+
+
+struct FuckedSecPlane {
+  sec_plane_t *splane;
+  bool reversed;
+
+  FuckedSecPlane () : splane(nullptr), reversed(false) {}
+
+  inline void setFloor (sec_region_t *r) { splane = r->efloor; reversed = !!(r->regflags&sec_region_t::RF_FlipFloor); }
+  inline void setCeiling (sec_region_t *r) { splane = r->eceiling; reversed = !!(r->regflags&sec_region_t::RF_FlipCeiling); }
+
+  inline float GetPointZ (const TVec &point) const {
+    if (!reversed) {
+      return splane->GetPointZ(point);
+    } else {
+      // gozzo shit, idc
+      TPlane pl = *splane;
+      pl.flipInPlace();
+      return pl.GetPointZ(point);
+    }
+  }
+};
+
 
 
 //==========================================================================
@@ -180,7 +205,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     toffs = sec->floor.TexZ+mheight;
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
-    toffs = sec->topregion->ceiling->TexZ;
+    toffs = sec->topregion->eceiling->TexZ;
   } else {
     // top of texture at top
     toffs = sec->ceiling.TexZ;
@@ -218,21 +243,12 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //
 //==========================================================================
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
-  opening_t *op;
-  int opsused;
-  sec_region_t *frontreg;
-  sec_region_t *backreg;
-  sec_plane_t *frontfloor = nullptr;
-  sec_plane_t *backfloor = nullptr;
-  sec_plane_t *frontceil = nullptr;
-  sec_plane_t *backceil = nullptr;
-
   if (linedef->sidenum[1] == -1 || linedef->backsector == nullptr) return nullptr; // single sided line
 
-  op = nullptr;
-  opsused = 0;
-  frontreg = linedef->frontsector->botregion;
-  backreg = linedef->backsector->botregion;
+  opening_t *op = nullptr;
+  int opsused = 0;
+  sec_region_t *frontreg = linedef->frontsector->botregion;
+  sec_region_t *backreg = linedef->backsector->botregion;
 
   //FIXME: this is wrong, it should insert opening into full list instead!
   //       move opening scan to separate function with top/bot limits instead
@@ -256,13 +272,14 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
           // bot
           op->bottom = floorz;
           op->lowfloor = floorz;
-          op->floor = &linedef->frontsector->floor;
-          op->lowfloorplane = &linedef->frontsector->floor;
+          op->efloor = &linedef->frontsector->floor;
+          //op->lowfloorplane = &linedef->frontsector->floor;
           // top
           op->top = bot;
           op->highceiling = ceilz;
-          op->ceiling = &linedef->frontsector->ceiling;
-          op->highceilingplane = &linedef->frontsector->ceiling;
+          op->eceiling = &linedef->frontsector->ceiling;
+          //op->highceilingplane = &linedef->frontsector->ceiling;
+          op->fcflags = 0;
         }
         // top opening
         if (top < ceilz) {
@@ -273,63 +290,79 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
           // bot
           op->bottom = top;
           op->lowfloor = floorz;
-          op->floor = &linedef->frontsector->floor;
-          op->lowfloorplane = &linedef->frontsector->floor;
+          op->efloor = &linedef->frontsector->floor;
+          //op->lowfloorplane = &linedef->frontsector->floor;
           // top
           op->top = ceilz;
           op->highceiling = ceilz;
-          op->ceiling = &linedef->frontsector->ceiling;
-          op->highceilingplane = &linedef->frontsector->ceiling;
+          op->eceiling = &linedef->frontsector->ceiling;
+          //op->highceilingplane = &linedef->frontsector->ceiling;
+          op->fcflags = 0;
         }
         return op;
       }
     }
   }
 
+  FuckedSecPlane frontfloor;
+  FuckedSecPlane backfloor;
+  FuckedSecPlane frontceil;
+  FuckedSecPlane backceil;
+
   while (frontreg && backreg) {
-    if (!(frontreg->floor->flags&NoBlockFlags)) frontfloor = frontreg->floor;
-    if (!(backreg->floor->flags&NoBlockFlags)) backfloor = backreg->floor;
-    if (!(frontreg->ceiling->flags&NoBlockFlags)) frontceil = frontreg->ceiling;
-    if (!(backreg->ceiling->flags&NoBlockFlags)) backceil = backreg->ceiling;
+    if (!(frontreg->efloor->flags&NoBlockFlags)) frontfloor.setFloor(frontreg);
+    if (!(backreg->efloor->flags&NoBlockFlags)) backfloor.setFloor(backreg);
+    if (!(frontreg->eceiling->flags&NoBlockFlags)) frontceil.setCeiling(frontreg);
+    if (!(backreg->eceiling->flags&NoBlockFlags)) backceil.setCeiling(backreg);
 
-    if (backreg->ceiling->flags&NoBlockFlags) { backreg = backreg->next; continue; }
-    if (frontreg->ceiling->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
+    if (backreg->eceiling->flags&NoBlockFlags) { backreg = backreg->next; continue; }
+    if (frontreg->eceiling->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
 
-    float frontfloorz = frontfloor->GetPointZ(point);
-    float backfloorz = backfloor->GetPointZ(point);
-    float frontceilz = frontceil->GetPointZ(point);
-    float backceilz = backceil->GetPointZ(point);
+    float frontfloorz = frontfloor.GetPointZ(point);
+    float backfloorz = backfloor.GetPointZ(point);
+    float frontceilz = frontceil.GetPointZ(point);
+    float backceilz = backceil.GetPointZ(point);
 
     if (frontfloorz >= backceilz) { backreg = backreg->next; continue; }
     if (backfloorz >= frontceilz) { frontreg = frontreg->next; continue; }
 
+    if (opsused >= MAX_OPENINGS) { GCon->Logf("too many openings for line!"); break; }
+
     openings[opsused].next = op;
     op = &openings[opsused];
     ++opsused;
+    op->fcflags = 0;
+
     if (frontfloorz > backfloorz) {
       op->bottom = frontfloorz;
       op->lowfloor = backfloorz;
-      op->floor = frontfloor;
-      op->lowfloorplane = backfloor;
+      op->efloor = frontfloor.splane;
+      op->fcflags |= (frontfloor.reversed ? opening_t::FC_FlipFloor : 0u);
+      //op->lowfloorplane = backfloor;
     } else {
       op->bottom = backfloorz;
       op->lowfloor = frontfloorz;
-      op->floor = backfloor;
-      op->lowfloorplane = frontfloor;
+      op->efloor = backfloor.splane;
+      op->fcflags |= (backfloor.reversed ? opening_t::FC_FlipFloor : 0u);
+      //op->lowfloorplane = frontfloor;
     }
+
     if (frontceilz < backceilz) {
       op->top = frontceilz;
       op->highceiling = backceilz;
-      op->ceiling = frontceil;
-      op->highceilingplane = backceil;
+      op->eceiling = frontceil.splane;
+      op->fcflags |= (frontceil.reversed ? opening_t::FC_FlipFloor : 0u);
+      //op->highceilingplane = backceil;
       frontreg = frontreg->next;
     } else {
       op->top = backceilz;
       op->highceiling = frontceilz;
-      op->ceiling = backceil;
-      op->highceilingplane = frontceil;
+      op->eceiling = backceil.splane;
+      op->fcflags |= (backceil.reversed ? opening_t::FC_FlipFloor : 0u);
+      //op->highceilingplane = frontceil;
       backreg = backreg->next;
     }
+
     op->range = op->top-op->bottom;
   }
 
@@ -375,17 +408,17 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   if (gaps == nullptr) return nullptr;
   if (gaps->next == nullptr) return gaps;
 
-  sec_plane_t *floor = nullptr;
-  sec_plane_t *ceil = nullptr;
+  FuckedSecPlane floor;
+  FuckedSecPlane ceil;
 
   // there are 2 or more gaps; now it gets interesting :-)
   while (gaps != nullptr) {
-    if (gaps->floor->flags == 0) floor = gaps->floor;
-    if (gaps->ceiling->flags == 0) ceil = gaps->ceiling;
-    if (gaps->ceiling->flags) { gaps = gaps->next; continue; }
+    if (gaps->efloor->flags == 0) floor.setFloor(gaps);
+    if (gaps->eceiling->flags == 0) ceil.setCeiling(gaps);
+    if (gaps->eceiling->flags) { gaps = gaps->next; continue; }
 
-    const float f = floor->GetPointZ(point);
-    const float c = ceil->GetPointZ(point);
+    const float f = floor.GetPointZ(point);
+    const float c = ceil.GetPointZ(point);
 
     if (z1 >= f && z2 <= c) return gaps; // [1]
 
@@ -497,7 +530,7 @@ sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p) {
   sec_region_t *reg;
   // logic: find matching region, otherwise return highest one
   for (reg = sector->botregion; reg && reg->next; reg = reg->next) {
-    if (p.z < reg->ceiling->GetPointZ(p)) break;
+    if (p.z < reg->GetCeilingPointZ(p)) break;
   }
   return reg;
 }
@@ -520,7 +553,7 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
 
   if (sector->SectorFlags&sector_t::SF_HasExtrafloors) {
     for (sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
-      if (p.z <= reg->ceiling->GetPointZ(p) && p.z >= reg->floor->GetPointZ(p)) {
+      if (p.z <= reg->GetCeilingPointZ(p) && p.z >= reg->GetFloorPointZ(p)) {
         return reg->params->contents;
       }
     }
@@ -603,7 +636,7 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
       sector_t *sec2 = &Sectors[i];
       if ((sec2->SectorFlags&sector_t::SF_HasExtrafloors) != 0 && sec2 != sector) {
         for (sec_region_t *reg = sec2->botregion; reg; reg = reg->next) {
-          if (reg->floor == &sector->floor || reg->ceiling == &sector->ceiling) {
+          if (reg->efloor == &sector->floor || reg->eceiling == &sector->ceiling) {
             ret |= ChangeSectorInternal(sec2, crunch);
             if (ret) csTouched[secnum] |= 0x80000000U;
             break;

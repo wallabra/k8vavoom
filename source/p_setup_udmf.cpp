@@ -704,8 +704,8 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
     // region
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
-    region->floor = &S.floor;
-    region->ceiling = &S.ceiling;
+    region->efloor = &S.floor;
+    region->eceiling = &S.ceiling;
     region->params = &S.params;
     S.topregion = region;
     S.botregion = region;

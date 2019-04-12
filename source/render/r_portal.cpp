@@ -204,9 +204,9 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
     //return;
   }
   for (int i = 0; i < Surfs.Num(); ++i) {
-    if (Surfs[i]->plane->normal.z == 0) {
+    if (Surfs[i]->GetNormalZ() == 0) {
       // wall
-      seg_t *Seg = (seg_t *)Surfs[i]->plane;
+      seg_t *Seg = (seg_t *)Surfs[i]->eplane;
       check(Seg >= RLev->Level->Segs);
       check(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
       /*
@@ -227,7 +227,7 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
       // subsector
       for (int j = 0; j < Surfs[i]->count; ++j) {
         TVec v1, v2;
-        if ((Surfs[i]->plane->normal.z < 0) != Revert) {
+        if ((Surfs[i]->GetNormalZ() < 0) != Revert) {
           v1 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0];
           v2 = Surfs[i]->verts[j];
         } else {

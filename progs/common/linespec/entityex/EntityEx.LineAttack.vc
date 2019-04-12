@@ -663,14 +663,14 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
 //==========================================================================
 final bool ShootHitPlane (sector_t *sec, line_t *li, sec_plane_t *plane,
                           TVec linestart, TVec lineend, float range,
-                          class!EntityEx PuffType, TVec *outHitPoint)
+                          class!EntityEx PuffType, TVec *outHitPoint, bool rev)
 {
   if (plane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
 
-  float org_dist = DotProduct(linestart, plane->normal)-plane->dist;
+  float org_dist = (rev ? DotProduct(linestart, -plane->normal)+plane->dist : DotProduct(linestart, plane->normal)-plane->dist);
   if (org_dist < 0.0) return true; // don't shoot back side
 
-  float hit_dist = DotProduct(lineend, plane->normal)-plane->dist;
+  float hit_dist = (rev ? DotProduct(lineend, -plane->normal)+plane->dist : DotProduct(lineend, plane->normal)-plane->dist);
   if (hit_dist >= 0.0) return true; // didn't hit plane
 
   // hit plane
@@ -685,7 +685,7 @@ final bool ShootHitPlane (sector_t *sec, line_t *li, sec_plane_t *plane,
   lineend -= (lineend-linestart)*hit_dist/(hit_dist-org_dist);
 
   // position a bit closer
-  lineend += 4.0*plane->normal;
+  lineend += 4.0*(rev ? -plane->normal : plane->normal);
 
   // spawn bullet puffs
   //SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
@@ -713,13 +713,13 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
   startreg = PointInRegion(sec, linestart);
 
   for (reg = startreg; reg; reg = reg->next) {
-    if (!ShootHitPlane(sec, line, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, line, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
+    if (!ShootHitPlane(sec, line, reg->efloor, linestart, lineend, range, PuffType, outHitPoint, reg->bFlipFloor)) return false; // hit floor
+    if (!ShootHitPlane(sec, line, reg->eceiling, linestart, lineend, range, PuffType, outHitPoint, reg->bFlipCeiling)) return false; // hit ceiling
   }
 
   for (reg = startreg->prev; reg; reg = reg->prev) {
-    if (!ShootHitPlane(sec, line, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, line, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
+    if (!ShootHitPlane(sec, line, reg->efloor, linestart, lineend, range, PuffType, outHitPoint, reg->bFlipFloor)) return false; // hit floor
+    if (!ShootHitPlane(sec, line, reg->eceiling, linestart, lineend, range, PuffType, outHitPoint, reg->bFlipCeiling)) return false; // hit ceiling
   }
 
   return true;
@@ -938,14 +938,14 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 //
 //==========================================================================
 final bool RailHitPlane (sec_plane_t *plane, TVec linestart, out TVec lineend,
-                         float range, class!EntityEx PuffType)
+                         float range, class!EntityEx PuffType, bool rev)
 {
   if (plane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
-  float org_dist = DotProduct(linestart, plane->normal)-plane->dist;
+  float org_dist = (rev ? DotProduct(linestart, -plane->normal)+plane->dist : DotProduct(linestart, plane->normal)-plane->dist);
 
   if (org_dist < 0.0) return true; // don't shoot back side
 
-  float hit_dist = DotProduct(lineend, plane->normal)-plane->dist;
+  float hit_dist = (rev ? DotProduct(lineend, -plane->normal)+plane->dist : DotProduct(lineend, plane->normal)-plane->dist);
   if (hit_dist >= 0.0) return true; // didn't hit plane
 
   // hit plane
@@ -956,7 +956,7 @@ final bool RailHitPlane (sec_plane_t *plane, TVec linestart, out TVec lineend,
   lineend -= (lineend-linestart)*hit_dist/(hit_dist-org_dist);
 
   // position a bit closer
-  lineend += 4.0*plane->normal;
+  lineend += 4.0*(rev ? -plane->normal : plane->normal);
 
   if (PuffType) SpawnPuff(lineend, range, PuffType, false); // spawn bullet puffs
 
@@ -974,17 +974,16 @@ final bool RailCheckPlanes (sector_t *sec, TVec linestart, out TVec lineend,
                             float range, class!EntityEx PuffType)
 {
   sec_region_t *reg;
-
   sec_region_t *startreg = PointInRegion(sec, linestart);
 
   for (reg = startreg; reg; reg = reg->next) {
-    if (!RailHitPlane(reg->floor, linestart, lineend, range, PuffType)) return false; // hit floor
-    if (!RailHitPlane(reg->ceiling, linestart, lineend, range, PuffType)) return false; // hit ceiling
+    if (!RailHitPlane(reg->efloor, linestart, lineend, range, PuffType, reg->bFlipFloor)) return false; // hit floor
+    if (!RailHitPlane(reg->eceiling, linestart, lineend, range, PuffType, reg->bFlipCeiling)) return false; // hit ceiling
   }
 
   for (reg = startreg->prev; reg; reg = reg->prev) {
-    if (!RailHitPlane(reg->floor, linestart, lineend, range, PuffType)) return false; // hit floor
-    if (!RailHitPlane(reg->ceiling, linestart, lineend, range, PuffType)) return false; // hit ceiling
+    if (!RailHitPlane(reg->efloor, linestart, lineend, range, PuffType, reg->bFlipFloor)) return false; // hit floor
+    if (!RailHitPlane(reg->eceiling, linestart, lineend, range, PuffType, reg->bFlipCeiling)) return false; // hit ceiling
   }
 
   return true;

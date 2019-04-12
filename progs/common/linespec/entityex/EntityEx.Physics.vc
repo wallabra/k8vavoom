@@ -45,11 +45,6 @@ final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
   bColideWithWorld = false;
   // find new position
   CheckRelPosition(&tmtrace, Origin);
-  // update position
-  //Floor = tmtrace.Floor;
-  //Ceiling = tmtrace.Ceiling;
-  //FloorZ = tmtrace.FloorZ;
-  //CeilingZ = tmtrace.CeilingZ;
 }
 
 
@@ -685,6 +680,26 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 
 //==========================================================================
 //
+//  PhysGetFloorNormal
+//
+//==========================================================================
+final TVec PhysGetFloorNormal () {
+  return (bFlipFloor ? -EFloor->normal : EFloor->normal);
+}
+
+
+//==========================================================================
+//
+//  PhysGetCeilingNormal
+//
+//==========================================================================
+final TVec PhysGetCeilingNormal () {
+  return (bFlipCeiling ? -ECeiling->normal : ECeiling->normal);
+}
+
+
+//==========================================================================
+//
 //  HitFloor
 //
 //==========================================================================
@@ -723,7 +738,7 @@ final bool HitFloor () {
     return false;
   }
 
-  float vdot = DotProduct(Velocity, Floor->normal);
+  float vdot = DotProduct(Velocity, PhysGetFloorNormal());
   if (bMonster) {
     // blasted mobj falling
     if (vdot < -23.0*35.0) MonsterFallingDamage();
@@ -750,7 +765,7 @@ final bool HitFloor () {
         PlayerLandedOnThing();
       }
     }
-    TVec Vel = vdot*Floor->normal;
+    TVec Vel = vdot*PhysGetFloorNormal();
     Velocity.z -= Vel.z;
   }
   if (bSkullFly) {
@@ -780,7 +795,7 @@ final bool HitCeiling () {
       return false;
     }
     if (bIgnoreCeilingStep) return false;
-    if (Ceiling->pic == Level.Game.skyflatnum) {
+    if (ECeiling->pic == Level.Game.skyflatnum) {
            if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
       else if (bExplodeOnSky) ExplodeMissile(none);
       else Destroy();
@@ -790,10 +805,10 @@ final bool HitCeiling () {
     return false;
   }
 
-  float vdot = DotProduct(Velocity, Ceiling->normal);
+  float vdot = DotProduct(Velocity, PhysGetCeilingNormal());
 
   if (vdot < 0.0) {
-    TVec Vel = vdot*Ceiling->normal;
+    TVec Vel = vdot*PhysGetCeilingNormal();
     Velocity.z -= Vel.z;
   }
 
@@ -846,21 +861,21 @@ void FloorBounceMissile () {
     return;
   }
 
-  vdot = DotProduct(Velocity, Floor->normal);
+  vdot = DotProduct(Velocity, PhysGetFloorNormal());
 
   if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
-    Velocity -= 2.0*(vdot*Floor->normal);
+    Velocity -= 2.0*(vdot*PhysGetFloorNormal());
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
     return;
   }
 
   if (bMBFBounce) {
-    Velocity = Velocity-(2.0*(vdot*Floor->normal));
+    Velocity = Velocity-(2.0*(vdot*PhysGetFloorNormal()));
     Velocity.z = Velocity.z*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   } else {
-    Velocity = (Velocity-(2.0*(vdot*Floor->normal)))*BounceFactor;
+    Velocity = (Velocity-(2.0*(vdot*PhysGetFloorNormal())))*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   }
 
@@ -906,10 +921,10 @@ final void CeilingBounceMissile () {
     return;
   }
 
-  vdot = DotProduct(Velocity, Ceiling->normal);
+  vdot = DotProduct(Velocity, PhysGetCeilingNormal());
 
   if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
-    Velocity -= 2.0*(vdot*Ceiling->normal);
+    Velocity -= 2.0*(vdot*PhysGetCeilingNormal());
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
     return;
@@ -917,11 +932,11 @@ final void CeilingBounceMissile () {
 
   // reverse momentum here for ceiling bounce
   if (bMBFBounce) {
-    Velocity = Velocity-(2.0*(vdot*Ceiling->normal));
+    Velocity = Velocity-(2.0*(vdot*PhysGetCeilingNormal()));
     Velocity.z = Velocity.z*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   } else {
-    Velocity = (Velocity-(2.0*(vdot*Ceiling->normal)))*BounceFactor;
+    Velocity = (Velocity-(2.0*(vdot*PhysGetCeilingNormal())))*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   }
 
@@ -1187,7 +1202,7 @@ final bool HitFloorType () {
 //
 //===========================================================================
 final VTerrainInfo *GetFloorType () {
-  return TerrainType(Floor->pic);
+  return TerrainType(EFloor->pic);
 }
 
 
@@ -1225,9 +1240,9 @@ override void ApplyFriction () {
 
   // clip velocity
   if (Origin.z <= FloorZ) {
-    float dot = DotProduct(Velocity, Floor->normal);
+    float dot = DotProduct(Velocity, PhysGetFloorNormal());
     if (dot < 0.0) {
-      TVec Vel = dot*Floor->normal;
+      TVec Vel = dot*PhysGetFloorNormal();
       Velocity.x -= Vel.x;
       Velocity.y -= Vel.y;
     }

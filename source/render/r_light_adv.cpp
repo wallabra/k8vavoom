@@ -264,19 +264,19 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
     if (LightCanCross < 0) {
       // horizon
       // k8: can horizont surfaces block light? i think they shouldn't
-      //if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+      //if (surf->PointOnSide(vieworg)) return; // viewer is in back side or on plane
       continue;
     }
 
     // floor or ceiling? ignore masked
-    if (surf->plane->normal.z != 0) {
+    if (surf->GetNormalZ() != 0) {
       VTexture *tex = surf->texinfo->Tex;
       if (!tex || tex->Type == TEXTYPE_Null) continue;
       if (tex->isTransparent()) continue; // this is masked texture
     }
 
     // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
-    const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     // k8: use `<=` and `>=` for radius checks, 'cause why not?
     //     light completely fades away at that distance
     if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
@@ -331,15 +331,15 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   //line_t *linedef = seg->linedef;
   //side_t *sidedef = seg->sidedef;
 
-  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->eceiling->SkyBox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, 0);
+    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->eceiling->SkyBox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
-    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, 0);
+    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->eceiling->SkyBox, false, -1);
+    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->eceiling->SkyBox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawShadowSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, 0);
+      DrawShadowSurfaces(sp->surfs, &sp->texinfo, secregion->eceiling->SkyBox, false, 0);
     }
   }
 }
@@ -353,14 +353,14 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
-  const sec_plane_t &plane = *ssurf->secplane;
-
-  if (!plane.pic) return;
+  //const sec_plane_t &plane = *ssurf->secplane;
+  if (!ssurf->esecplane->pic) return;
 
   // note that we don't want to filter out shadows that are behind
   // but we are want to filter out surfaces that cannot possibly block light
   // (i.e. back-surfaces with respect to light origin)
-  const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
+  //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
+  const float dist = ssurf->PointDist(CurrLightPos);
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
   //if (fabsf(dist) >= CurrLightRadius) return;
   if (dist <= 0.0f || dist > CurrLightRadius) return;
@@ -379,7 +379,8 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_STRANGE_REGION_SORTING
-  const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
+  //const float dist = DotProduct(CurrLightPos, region->efloor->secplane->normal)-region->efloor->secplane->dist;
+  const float dist = region->floor->PointDist(CurrLightPos);
 
   if (region->next && dist <= 0.0f) {
 # ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
@@ -405,8 +406,8 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(curreg, ds);
   }
 
-  RenderShadowSecSurface(region->floor, curreg->floor->SkyBox);
-  RenderShadowSecSurface(region->ceil, curreg->ceiling->SkyBox);
+  RenderShadowSecSurface(region->floor, curreg->efloor->SkyBox);
+  RenderShadowSecSurface(region->ceil, curreg->eceiling->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {
@@ -540,8 +541,8 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-    const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
+    if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
     Drawer->DrawSurfaceLight(surf);
   }
@@ -583,15 +584,15 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->ceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->eceiling->SkyBox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->ceiling->SkyBox, false, 0);
+    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->eceiling->SkyBox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->ceiling->SkyBox, false, -1);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->ceiling->SkyBox, false, 0);
+    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->eceiling->SkyBox, false, -1);
+    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->eceiling->SkyBox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->ceiling->SkyBox, false, 0);
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->eceiling->SkyBox, false, 0);
     }
   }
 }
@@ -605,11 +606,11 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
-  const sec_plane_t &plane = *ssurf->secplane;
+  //const sec_plane_t &plane = *ssurf->secplane;
+  if (!ssurf->esecplane->pic) return;
 
-  if (!plane.pic) return;
-
-  const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
+  //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
+  const float dist = ssurf->PointDist(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
   if (fabsf(dist) >= CurrLightRadius) return;
 
@@ -627,7 +628,8 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_STRANGE_REGION_SORTING
-  const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
+  //const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
+  const float dist = region->floor->PointDist(CurrLightPos);
 
   if (region->next && dist <= 0.0f) {
 #ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
@@ -653,8 +655,8 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(curreg, ds);
   }
 
-  RenderLightSecSurface(region->floor, curreg->floor->SkyBox);
-  RenderLightSecSurface(region->ceil, curreg->ceiling->SkyBox);
+  RenderLightSecSurface(region->floor, curreg->efloor->SkyBox);
+  RenderLightSecSurface(region->ceil, curreg->eceiling->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {

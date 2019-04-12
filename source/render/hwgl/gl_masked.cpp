@@ -34,7 +34,7 @@
 //
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
-  if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (surf->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render masked surface with %d vertices", surf->count);
     return;
@@ -159,8 +159,10 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
         if (g < lg) g = lg;
         if (b < lb) b = lb;
       }
+      TPlane pl;
+      surf->GetPlane(&pl);
       for (int i = 0; i < surf->count; ++i) {
-        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius, 0, surf->plane);
+        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius, 0, &pl);
         int lr = (lt0>>16)&255;
         int lg = (lt0>>8)&255;
         int lb = lt0&255;

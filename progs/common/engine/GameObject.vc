@@ -624,9 +624,9 @@ struct drawseg_t {
 };
 
 struct sec_surface_t {
-  sec_plane_t *secplane;
+  sec_plane_t *esecplane;
   texinfo_t texinfo;
-  float dist;
+  float edist;
   float XScale;
   float YScale;
   float Angle;
@@ -636,7 +636,7 @@ struct sec_surface_t {
 struct surface_t {
   surface_t *next;
   texinfo_t *texinfo;
-  TPlane *plane;
+  TPlane *eplane;
   sec_plane_t *HorizonPlane;
   int Light; // light level and colour (unsigned)
   int Fade; // (unsigned)
@@ -783,21 +783,27 @@ struct sec_params_t {
 };
 
 
+// "regions" are floor/ceiling info for sector
+// region "inside" is empty, and you can walk there
 struct sec_region_t {
   // linked list of regions in bottom to top order
-  sec_region_t *prev;
-  sec_region_t *next;
+  sec_region_t *prev; // region at the top
+  sec_region_t *next; // region at the bottom
 
   // planes
-  sec_plane_t *floor;
-  sec_plane_t *ceiling;
+  sec_plane_t *efloor;
+  sec_plane_t *eceiling;
 
   sec_params_t *params;
+
+  // side of this region
+  // can be `nullptr`, cannot be changed after surface creation
+  // this is from our floor to our ceiling
   line_t *extraline;
 
-  bool bFuckYouGozzo;
-  bool bGozzoEmptyContent; // for gozzo crap
-  bool bGozzoCutout;
+  // for gozzo crap
+  bool bFlipFloor;
+  bool bFlipCeiling;
 };
 
 //
@@ -1126,11 +1132,13 @@ struct opening_t {
   float range;
   float lowfloor;
   float highceiling;
-  sec_plane_t *floor;
-  sec_plane_t *ceiling;
-  sec_plane_t *lowfloorplane;
-  sec_plane_t *highceilingplane;
+  sec_plane_t *efloor;
+  sec_plane_t *eceiling;
+  //sec_plane_t *lowfloorplane;
+  //sec_plane_t *highceilingplane;
   opening_t *next;
+  bool bFlipFloor;
+  bool bFlipCeiling;
 };
 
 

@@ -51,28 +51,37 @@ extern VCvarB r_interpolate_thing_movement;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 struct cptrace_t {
   TVec Pos;
-  float bbox[4];
-  float FloorZ;
-  float CeilingZ;
-  float DropOffZ;
-  sec_plane_t *Floor;
-  sec_plane_t *Ceiling;
-};
-
-struct tmtrace_t {
-  VEntity *StepThing;
-  TVec End;
   float BBox[4];
   float FloorZ;
   float CeilingZ;
   float DropOffZ;
-  sec_plane_t *Floor;
-  sec_plane_t *Ceiling;
+  sec_plane_t *EFloor;
+  sec_plane_t *ECeiling;
+};
+*/
+
+struct tmtrace_t {
+  VEntity *StepThing; // not for cptrace_t
+  TVec End; // not for cptrace_t
+  float BBox[4]; // valid for cptrace_t
+  float FloorZ; // valid for cptrace_t
+  float CeilingZ; // valid for cptrace_t
+  float DropOffZ; // valid for cptrace_t
+
+  // WARNING! keep in sync with VEntity fcflags
+  enum {
+    FC_FlipFloor = 1u<<0,
+    FC_FlipCeiling = 1u<<1,
+  };
+  vuint32 fcflags; // valid for cptrace_t
+  sec_plane_t *EFloor; // valid for cptrace_t
+  sec_plane_t *ECeiling; // valid for cptrace_t
 
   enum {
-    TF_FloatOk   = 0x01u, // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
+    TF_FloatOk = 0x01u, // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
   };
   vuint32 TraceFlags;
 
@@ -90,7 +99,71 @@ struct tmtrace_t {
 
   VEntity *BlockingMobj;
   line_t *AnyBlockingLine; // any blocking lines (including two-sided)
+
+  // from cptrace_t
+  TVec Pos; // valid for cptrace_t
+
+
+  inline void CopyRegFloor (sec_region_t *r, const TVec *Origin) {
+    EFloor = r->efloor;
+    fcflags &= ~FC_FlipFloor;
+    fcflags |= (r->regflags&sec_region_t::RF_FlipFloor ? FC_FlipFloor : 0u);
+    if (Origin) FloorZ = r->GetFloorPointZ(*Origin);
+  }
+
+  inline void CopyRegCeiling (sec_region_t *r, const TVec *Origin) {
+    ECeiling = r->eceiling;
+    fcflags &= ~FC_FlipCeiling;
+    fcflags |= (r->regflags&sec_region_t::RF_FlipCeiling ? FC_FlipCeiling : 0u);
+    if (Origin) CeilingZ = r->GetCeilingPointZ(*Origin);
+  }
+
+  inline void CopyOpenFloor (opening_t *o, bool setz=true) {
+    EFloor = o->efloor;
+    fcflags &= ~FC_FlipFloor;
+    fcflags |= (o->fcflags&opening_t::FC_FlipFloor ? FC_FlipFloor : 0u);
+    if (setz) FloorZ = o->bottom;
+  }
+
+  inline void CopyOpenCeiling (opening_t *o, bool setz=true) {
+    ECeiling = o->eceiling;
+    fcflags &= ~FC_FlipCeiling;
+    fcflags |= (o->fcflags&opening_t::FC_FlipCeiling ? FC_FlipCeiling : 0u);
+    if (setz) CeilingZ = o->top;
+  }
 };
+
+
+void VEntity::CopyTraceFloor (tmtrace_t *tr, bool setz) {
+  fcflags &= FC_FlipFloor;
+  fcflags |= (tr->fcflags&tmtrace_t::FC_FlipFloor ? FC_FlipFloor : 0u);
+  EFloor = tr->EFloor;
+  if (setz) FloorZ = tr->FloorZ;
+}
+
+
+void VEntity::CopyTraceCeiling (tmtrace_t *tr, bool setz) {
+  fcflags &= FC_FlipCeiling;
+  fcflags |= (tr->fcflags&tmtrace_t::FC_FlipCeiling ? FC_FlipCeiling : 0u);
+  ECeiling = tr->ECeiling;
+  if (setz) CeilingZ = tr->CeilingZ;
+}
+
+
+void VEntity::CopyRegFloor (sec_region_t *r, bool setz) {
+  EFloor = r->efloor;
+  fcflags &= ~FC_FlipFloor;
+  fcflags |= (r->regflags&sec_region_t::RF_FlipFloor ? FC_FlipFloor : 0u);
+  FloorZ = r->GetFloorPointZ(Origin);
+}
+
+
+void VEntity::CopyRegCeiling (sec_region_t *r, bool setz) {
+  ECeiling = r->eceiling;
+  fcflags &= ~FC_FlipCeiling;
+  fcflags |= (r->regflags&sec_region_t::RF_FlipCeiling ? FC_FlipCeiling : 0u);
+  CeilingZ = r->GetCeilingPointZ(Origin);
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -346,21 +419,18 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
       sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
       sec_region_t *reg = gap;
-      while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
-      tmtrace.Floor = reg->floor;
-      tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+      while (reg->prev && reg->efloor->flags&SPF_NOBLOCKING) reg = reg->prev;
+      tmtrace.CopyRegFloor(reg, &Origin);
+      tmtrace.EFloor = reg->efloor;
       tmtrace.DropOffZ = tmtrace.FloorZ;
       reg = gap;
-      while (reg->next && reg->ceiling->flags&SPF_NOBLOCKING) reg = reg->next;
-      tmtrace.Ceiling = reg->ceiling;
-      tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+      while (reg->next && reg->eceiling->flags&SPF_NOBLOCKING) reg = reg->next;
+      tmtrace.CopyRegCeiling(reg, &Origin);
     } else {
       sec_region_t *reg = newsubsec->sector->botregion;
-      tmtrace.Floor = reg->floor;
-      tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+      tmtrace.CopyRegFloor(reg, &Origin);
       tmtrace.DropOffZ = tmtrace.FloorZ;
-      tmtrace.Ceiling = reg->ceiling;
-      tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+      tmtrace.CopyRegCeiling(reg, &Origin);
     }
 
     // check lines
@@ -387,24 +457,20 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
       }
     }
 
-    Floor = tmtrace.Floor;
-    FloorZ = tmtrace.FloorZ;
-    Ceiling = tmtrace.Ceiling;
-    CeilingZ = tmtrace.CeilingZ;
+    CopyTraceFloor(&tmtrace);
+    CopyTraceCeiling(&tmtrace);
     //if (Origin.z < FloorZ) Origin.z = FloorZ; // just in case
   } else {
     // simplified check
     sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 0.0f));
 
     sec_region_t *r = reg;
-    while (r->floor->flags && r->prev) r = r->prev;
-    Floor = r->floor;
-    FloorZ = r->floor->GetPointZ(Origin);
+    while (r->efloor->flags && r->prev) r = r->prev;
+    CopyRegFloor(r);
 
     r = reg;
-    while (r->ceiling->flags && r->next) r = r->next;
-    Ceiling = r->ceiling;
-    CeilingZ = r->ceiling->GetPointZ(Origin);
+    while (r->eceiling->flags && r->next) r = r->next;
+    CopyRegCeiling(r);
   }
 
   // link into sector
@@ -525,15 +591,16 @@ bool VEntity::CheckPosition (TVec Pos) {
   subsector_t *newsubsec;
   sec_region_t *gap;
   sec_region_t *reg;
-  cptrace_t cptrace;
+  tmtrace_t cptrace;
   bool good = true;
 
+  memset((void *)&cptrace, 0, sizeof(cptrace));
   cptrace.Pos = Pos;
 
-  cptrace.bbox[BOXTOP] = Pos.y+Radius;
-  cptrace.bbox[BOXBOTTOM] = Pos.y-Radius;
-  cptrace.bbox[BOXRIGHT] = Pos.x+Radius;
-  cptrace.bbox[BOXLEFT] = Pos.x-Radius;
+  cptrace.BBox[BOXTOP] = Pos.y+Radius;
+  cptrace.BBox[BOXBOTTOM] = Pos.y-Radius;
+  cptrace.BBox[BOXRIGHT] = Pos.x+Radius;
+  cptrace.BBox[BOXLEFT] = Pos.x-Radius;
 
   newsubsec = XLevel->PointInSubsector(Pos);
 
@@ -541,14 +608,12 @@ bool VEntity::CheckPosition (TVec Pos) {
   // Any contacted lines the step closer together will adjust them.
   gap = SV_FindThingGap(newsubsec->sector->botregion, Pos, Pos.z, Pos.z+Height);
   reg = gap;
-  while (reg->prev && (reg->floor->flags&SPF_NOBLOCKING) != 0) reg = reg->prev;
-  cptrace.Floor = reg->floor;
-  cptrace.FloorZ = reg->floor->GetPointZ(Pos);
+  while (reg->prev && (reg->efloor->flags&SPF_NOBLOCKING) != 0) reg = reg->prev;
+  cptrace.CopyRegFloor(reg, &Pos);
   cptrace.DropOffZ = cptrace.FloorZ;
   reg = gap;
-  while (reg->next && (reg->ceiling->flags&SPF_NOBLOCKING) != 0) reg = reg->next;
-  cptrace.Ceiling = reg->ceiling;
-  cptrace.CeilingZ = reg->ceiling->GetPointZ(Pos);
+  while (reg->next && (reg->eceiling->flags&SPF_NOBLOCKING) != 0) reg = reg->next;
+  cptrace.CopyRegCeiling(reg, &Pos);
 
   //++validcount;
   XLevel->IncrementValidCount();
@@ -559,10 +624,10 @@ bool VEntity::CheckPosition (TVec Pos) {
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    xl = MapBlock(cptrace.bbox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
-    xh = MapBlock(cptrace.bbox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
-    yl = MapBlock(cptrace.bbox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
-    yh = MapBlock(cptrace.bbox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
+    xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
+    xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
+    yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
+    yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
 
     for (bx = xl; bx <= xh; ++bx) {
       for (by = yl; by <= yh; ++by) {
@@ -575,10 +640,10 @@ bool VEntity::CheckPosition (TVec Pos) {
 
   if (EntityFlags&EF_ColideWithWorld) {
     // check lines
-    xl = MapBlock(cptrace.bbox[BOXLEFT]-XLevel->BlockMapOrgX);
-    xh = MapBlock(cptrace.bbox[BOXRIGHT]-XLevel->BlockMapOrgX);
-    yl = MapBlock(cptrace.bbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
-    yh = MapBlock(cptrace.bbox[BOXTOP]-XLevel->BlockMapOrgY);
+    xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
+    xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
 
     for (bx = xl; bx <= xh; ++bx) {
       for (by = yl; by <= yh; ++by) {
@@ -602,7 +667,7 @@ bool VEntity::CheckPosition (TVec Pos) {
 //  VEntity::CheckThing
 //
 //==========================================================================
-bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
+bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   // don't clip against self
   if (Other == this) return true;
   // can't hit thing
@@ -639,16 +704,16 @@ bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
 //  Adjusts cptrace.FloorZ and cptrace.CeilingZ as lines are contacted
 //
 //==========================================================================
-bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
-  if (cptrace.bbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-      cptrace.bbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-      cptrace.bbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
-      cptrace.bbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
+  if (cptrace.BBox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
+      cptrace.BBox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+      cptrace.BBox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+      cptrace.BBox[BOXBOTTOM] >= ld->bbox[BOXTOP])
   {
     return true;
   }
 
-  if (P_BoxOnLineSide(&cptrace.bbox[0], ld) != -1) return true;
+  if (P_BoxOnLineSide(&cptrace.BBox[0], ld) != -1) return true;
 
   // a line has been hit
   if (!ld->backsector) return false; // one sided line
@@ -669,14 +734,12 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
 
   if (open) {
     // adjust floor / ceiling heights
-    if (!(open->ceiling->flags&SPF_NOBLOCKING) && open->top < cptrace.CeilingZ) {
-      cptrace.Ceiling = open->ceiling;
-      cptrace.CeilingZ = open->top;
+    if (!(open->eceiling->flags&SPF_NOBLOCKING) && open->top < cptrace.CeilingZ) {
+      cptrace.CopyOpenCeiling(open);
     }
 
-    if (!(open->floor->flags&SPF_NOBLOCKING) && open->bottom > cptrace.FloorZ) {
-      cptrace.Floor = open->floor;
-      cptrace.FloorZ = open->bottom;
+    if (!(open->efloor->flags&SPF_NOBLOCKING) && open->bottom > cptrace.FloorZ) {
+      cptrace.CopyOpenFloor(open);
     }
 
     if (open->lowfloor < cptrace.DropOffZ) cptrace.DropOffZ = open->lowfloor;
@@ -752,21 +815,17 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
     sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
     sec_region_t *reg = gap;
-    while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
-    tmtrace.Floor = reg->floor;
-    tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+    while (reg->prev && reg->efloor->flags&SPF_NOBLOCKING) reg = reg->prev;
+    tmtrace.CopyRegFloor(reg, &tmtrace.End);
     tmtrace.DropOffZ = tmtrace.FloorZ;
     reg = gap;
-    while (reg->next && reg->ceiling->flags&SPF_NOBLOCKING) reg = reg->next;
-    tmtrace.Ceiling = reg->ceiling;
-    tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+    while (reg->next && reg->eceiling->flags&SPF_NOBLOCKING) reg = reg->next;
+    tmtrace.CopyRegCeiling(reg, &tmtrace.End);
   } else {
     sec_region_t *reg = newsubsec->sector->botregion;
-    tmtrace.Floor = reg->floor;
-    tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
+    tmtrace.CopyRegFloor(reg, &tmtrace.End);
     tmtrace.DropOffZ = tmtrace.FloorZ;
-    tmtrace.Ceiling = reg->ceiling;
-    tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
+    tmtrace.CopyRegCeiling(reg, &tmtrace.End);
   }
 
   //++validcount;
@@ -1042,18 +1101,16 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
 
   if (open) {
     // adjust floor / ceiling heights
-    if (!(open->ceiling->flags&SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ) {
+    if (!(open->eceiling->flags&SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ) {
       if (!skipSpecials || open->top+hgt >= Origin.z+hgt) {
-        tmtrace.Ceiling = open->ceiling;
-        tmtrace.CeilingZ = open->top;
+        tmtrace.CopyOpenCeiling(open);
         tmtrace.CeilingLine = ld;
       }
     }
 
-    if (!(open->floor->flags&SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ) {
+    if (!(open->efloor->flags&SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ) {
       if (!skipSpecials || open->bottom <= Origin.z) {
-        tmtrace.Floor = open->floor;
-        tmtrace.FloorZ = open->bottom;
+        tmtrace.CopyOpenFloor(open);
         tmtrace.FloorLine = ld;
       }
     }
@@ -1292,7 +1349,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
       }
     }
 
-    if (EntityFlags&EF_CantLeaveFloorpic && (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z)) {
+    if (EntityFlags&EF_CantLeaveFloorpic && (tmtrace.EFloor->pic != EFloor->pic || tmtrace.FloorZ != Origin.z)) {
       // must stay within a sector of a certain floor type
       //printf("*** WORLD(8)!\n");
       return false;
@@ -1323,8 +1380,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
   DropOffZ = tmtrace.DropOffZ;
-  Floor = tmtrace.Floor;
-  Ceiling = tmtrace.Ceiling;
+  CopyTraceFloor(&tmtrace, false);
+  CopyTraceCeiling(&tmtrace, false);
 
   if (EntityFlags&EF_FloorClip) {
     eventHandleFloorclip();
@@ -1648,7 +1705,7 @@ void VEntity::UpdateVelocity () {
   */
 
   // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (Sector && !(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7f)) {
+  if (Sector && !(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || GetFloorNormalZ() <= 0.7f)) {
     if (WaterLevel < 2) {
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
     } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {
@@ -1886,8 +1943,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
           // new logic for 3D Floors
           sec_region_t *FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Origin.z, Origin.z+Height);
           sec_region_t *BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Origin.z, Origin.z+Height);
-          float front = FrontReg->floor->GetPointZ(Origin);
-          float back = BackReg->floor->GetPointZ(Origin);
+          float front = FrontReg->GetFloorPointZ(Origin);
+          float back = BackReg->GetFloorPointZ(Origin);
 
           // the monster must contact one of the two floors, and the other must be a tall dropoff
           TVec Dir;
