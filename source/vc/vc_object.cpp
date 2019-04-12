@@ -201,8 +201,7 @@ TArray<VObject *> VObject::GObjObjects;
 // this is LIFO queue of free slots in `GObjObjects`
 // it is not required in compacting collector
 // but Spelunky Remake *may* use "immediate delete" mode, so leave it here
-static VQueueLifo<vint32> gObjAvailable;
-static int gObjFirstFree = 0; // frist free index in `gObjAvailable`, so we don't have to scan it all
+static int gObjFirstFree = 0; // frist free index in `GObjObjects`
 int VObject::GNumDeleted = 0;
 bool VObject::GInGarbageCollection = false;
 static void *GNewObject = nullptr;
@@ -297,8 +296,8 @@ VObject::~VObject () {
       obj->GetClass()->CleanObject(obj);
     }
     ++gcLastStats.lastCollected;
-    // your penalty for doing this in non-standard way is slower GC cycles
-    gObjAvailable.append(Index);
+    // cheap check, why not?
+    while (gObjFirstFree > 0 && !GObjObjects[gObjFirstFree-1]) --gObjFirstFree;
   }
 }
 
@@ -356,15 +355,6 @@ void VObject::StaticInit () {
   VMemberBase::StaticInit();
   //GObjInitialised = true;
   memset(&gcLastStats, 0, sizeof(gcLastStats)); // easy way
-  /* nope
-  gObjAvailable.clear();
-  GNumDeleted = 0;
-  GInGarbageCollection = false;
-  //GNewObject = nullptr;
-  #ifdef VCC_STANDALONE_EXECUTOR
-  gDelayDeadObjects.clear();
-  #endif
-  */
 }
 
 
@@ -374,13 +364,6 @@ void VObject::StaticInit () {
 //
 //==========================================================================
 void VObject::StaticExit () {
-  /*
-  for (int i = 0; i < GObjObjects.length(); ++i) if (GObjObjects[i]) GObjObjects[i]->ConditionalDestroy();
-  CollectGarbage();
-  GObjObjects.Clear();
-  gObjAvailable.clear();
-  //GObjInitialised = false;
-  */
   VMemberBase::StaticExit();
 }
 
@@ -452,34 +435,22 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 void VObject::Register () {
   UniqueId = ++gLastUsedUniqueId;
   if (gLastUsedUniqueId == 0) gLastUsedUniqueId = 1;
-  if (gObjAvailable.length()) {
-    Index = gObjAvailable.popValue();
-#if defined(VC_GARBAGE_COLLECTOR_CHECKS) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (developer && GObjObjects[Index] != nullptr) GLog.Logf(NAME_Dev, "*** trying to allocate non-empty index #%d", Index);
-#endif
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
-    check(GObjObjects[Index] == nullptr);
-    check(Index < gObjFirstFree);
-#endif
-    GObjObjects[Index] = this;
+  if (gObjFirstFree < GObjObjects.length()) {
+    Index = gObjFirstFree;
+    GObjObjects[gObjFirstFree++] = this;
+    gcLastStats.firstFree = gObjFirstFree;
   } else {
-    if (gObjFirstFree < GObjObjects.length()) {
-      Index = gObjFirstFree;
-      GObjObjects[gObjFirstFree++] = this;
-      gcLastStats.firstFree = gObjFirstFree;
-    } else {
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(gObjFirstFree == GObjObjects.length());
+    check(gObjFirstFree == GObjObjects.length());
 #endif
-      Index = GObjObjects.append(this);
-      gObjFirstFree = Index+1;
+    Index = GObjObjects.append(this);
+    gObjFirstFree = Index+1;
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(gObjFirstFree == GObjObjects.length());
+    check(gObjFirstFree == GObjObjects.length());
 #endif
-      gcLastStats.firstFree = gObjFirstFree;
-      gcLastStats.poolSize = gObjFirstFree;
-      gcLastStats.poolAllocated = GObjObjects.NumAllocated();
-    }
+    gcLastStats.firstFree = gObjFirstFree;
+    gcLastStats.poolSize = gObjFirstFree;
+    gcLastStats.poolAllocated = GObjObjects.NumAllocated();
   }
 #if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
@@ -602,17 +573,13 @@ bool destroyDelayed
   const int ilen = gObjFirstFree;
   VObject **goptr = GObjObjects.ptr();
 
-  // clean references (and rebuild free index list, while we're there anyway)
-  // reset, but don't reallocate
-  gObjAvailable.reset();
-
   // we can do a trick here: instead of simply walking the array, we can do
   // both object destroying, and list compaction.
   // let's put a finger on a last used element in the array.
   // on each iteration, check if we hit a dead object, and if we did, delete it.
-  // now check if current slot is empty. if it is not, continue iteration.
-  // yet if current slot is not empty, take object from last used slot, and
-  // move it to the current slot; then check current slot again. also,
+  // now check if the current slot is empty. if it is not, continue iteration.
+  // yet if the current slot is not empty, take object from the last used slot, and
+  // move it to the current slot; then check the current slot again. also,
   // move finger to the previous non-empty slot.
   // invariant: when iteration position and finger met, it means that we hit
   // the last slot, so we can stop after processing it.
@@ -623,7 +590,7 @@ bool destroyDelayed
   // in slot list.
   //
   // this is slightly complicated by the fact that we cannot really destroy objects
-  // by the way (as `ClearReferences()` will check their "dead" flag). so instead of
+  // on our way (as `ClearReferences()` will check their "dead" flag). so instead of
   // destroying dead objects right away, we'll use finger to point to only alive
   // objects, and swap dead and alive objects. this way all dead objects will
   // be moved to the end of the slot area (with possible gap between dead and alive
@@ -738,6 +705,11 @@ bool destroyDelayed
   lasttime += gcLastStats.lastCollectTime;
 
   GNumDeleted = 0;
+
+  // shring object pool, why not?
+  if (GObjObjects.length() > 8192 && gObjFirstFree+8192 < GObjObjects.length()/2) {
+    GObjObjects.setLength(gObjFirstFree+8192);
+  }
 
   // update GC stats
   gcLastStats.alive = alive;
