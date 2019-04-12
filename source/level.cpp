@@ -846,8 +846,7 @@ void VLevel::Destroy () {
       sec_region_t *r = Sectors[i].botregion;
       while (r) {
         sec_region_t *Next = r->next;
-        if (r->floor && (r->floor->exflags&SPF_EX_ALLOCATED)) delete r->floor;
-        if (r->ceiling && (r->ceiling->exflags&SPF_EX_ALLOCATED)) delete r->ceiling;
+        r->clear();
         delete r;
         r = Next;
       }
@@ -2145,7 +2144,8 @@ void CL_LoadLevel (VName MapName) {
 static __attribute__((unused)) void dumpSectorRegions (const sector_t *dst) {
   GCon->Log(" === bot -> top ===");
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    GCon->Logf("  floor=(%g,%g,%g:%g); (%g : %g), flags=0x%08x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%08x",
+    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%08x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%08x",
+      inregion,
       inregion->floor->normal.x,
       inregion->floor->normal.y,
       inregion->floor->normal.z,
@@ -2204,6 +2204,19 @@ static __attribute__((unused)) void makeSecPlaneMutable (sec_plane_t *&src) {
   }
 }
 */
+
+
+//==========================================================================
+//
+//  removeRegion
+//
+//==========================================================================
+static void removeRegion (sector_t *dst, sec_region_t *reg) {
+  if (reg->prev) reg->prev->next = reg->next; else dst->botregion = reg->next;
+  if (reg->next) reg->next->prev = reg->prev; else dst->topregion = reg->prev;
+  reg->clear();
+  delete reg;
+}
 
 
 //==========================================================================
@@ -2283,11 +2296,7 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
     region->extraline = line;
     inregion->floor = &src->floor;
 
-    if (inregion->prev) {
-      inregion->prev->next = region;
-    } else {
-      dst->botregion = region;
-    }
+    if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
     region->prev = inregion->prev;
     region->next = inregion;
     inregion->prev = region;
@@ -2296,6 +2305,62 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   }
 
   GCon->Logf(NAME_Warning, "Invalid Vavoom 3d floor, tag %d (destsec=%d; srcsec=%d)", dst->tag, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors));
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VLevel::AddExtraFloorPaperThin
+//
+//  gozzo support
+//  all checks are made, just insert paper-thin region
+//  no new region properties are filled
+//
+//  this inserts new region on top of old one
+//
+//==========================================================================
+sec_region_t *VLevel::AddExtraFloorPaperThin (sector_t *dst, int regz, float minz, float maxz) {
+  for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
+    if (!inregion->floor || !inregion->ceiling) continue; // this is temporary region
+
+    // skip paper-thin regions
+    if (inregion->floor->minz == inregion->floor->maxz &&
+        inregion->ceiling->minz == inregion->ceiling->maxz &&
+        inregion->floor->minz == inregion->ceiling->maxz)
+    {
+      continue;
+    }
+
+    float infloorz = inregion->floor->GetPointZ(dst->soundorg);
+    float inceilz = inregion->ceiling->GetPointZ(dst->soundorg);
+
+    bool doInsert = (infloorz <= regz && inceilz >= regz);
+    // check for sloped floor
+    if (!doInsert && inregion->floor->normal.z != 1.0f) {
+      if (inregion->floor->maxz <= minz && inregion->ceiling->maxz >= minz) {
+        doInsert = true;
+      }
+    }
+    // check for sloped ceiling
+    if (!doInsert && inregion->ceiling->normal.z != -1.0f) {
+      if (inregion->floor->minz <= maxz && inregion->ceiling->minz >= maxz) {
+        doInsert = true;
+      }
+    }
+
+    if (!doInsert) continue;
+
+    sec_region_t *region = new sec_region_t;
+    memset((void *)region, 0, sizeof(*region));
+
+    if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
+    region->prev = inregion->prev;
+    region->next = inregion;
+    inregion->prev = region;
+    return region;
+  }
+
   return nullptr;
 }
 
@@ -2354,13 +2419,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     }
     // easy deal, mark the whole thing with new params
     //FIXME: don't remove all created regions?
-    while (dst->botregion->next) {
-      sec_region_t *inregion = dst->botregion->next;
-      dst->botregion = inregion->next;
-      if (inregion->floor->exflags&SPF_EX_ALLOCATED) delete inregion->floor;
-      if (inregion->ceiling->exflags&SPF_EX_ALLOCATED) delete inregion->ceiling;
-      delete inregion;
-    }
+    while (dst->botregion->next) removeRegion(dst, dst->botregion->next);
     dst->botregion->params = &src->params;
     //src->SectorFlags &= ~sector_t::SF_ExtrafloorSource;
     dst->SectorFlags &= ~sector_t::SF_HasExtrafloors;
@@ -2417,15 +2476,83 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->extraline = line;
       inregion->floor = dupSecPlane(&src->ceiling, true); // flip
 
-      if (inregion->prev) {
-        inregion->prev->next = region;
-      } else {
-        dst->botregion = region;
-      }
+      if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
       region->prev = inregion->prev;
       region->next = inregion;
       inregion->prev = region;
       return region;
+    }
+  } else if (isSolid || floorz == ceilz) {
+    // paper-thin regions
+    // we still want to add them, because they can be used to create content areas
+    sec_region_t *region = AddExtraFloorPaperThin(dst, floorz, src->floor.minz, src->floor.maxz);
+    if (region) {
+      if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
+        if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
+        src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
+        src->origCeiling = src->ceiling;
+      }
+      src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+      dst->SectorFlags |= sector_t::SF_HasExtrafloors;
+
+      region->floor = &src->floor;
+      region->ceiling = &src->ceiling;
+      region->params = &src->params;
+      region->extraline = line;
+      return region;
+    }
+  } else {
+    // non-solid regions
+    GCon->Logf("::: NON-SOLID ::: (%g, %g)", floorz, ceilz); dumpSectorRegions(dst);
+    if (src->floor.normal.z != 1.0f || src->ceiling.normal.z != -1.0f) {
+      GCon->Logf("oops; gozzo 3d non-solid regions with slopes are not supported yet");
+      return nullptr;
+    }
+    sec_region_t *rbot = AddExtraFloorPaperThin(dst, floorz, src->floor.minz, src->floor.maxz);
+    if (rbot) {
+      // set temporary floor and ceiling
+      rbot->floor = dupSecPlane(&src->floor, false); // no flip
+      rbot->ceiling = dupSecPlane(&src->floor, true); // flip
+      rbot->floor->dist = rbot->floor->minz = rbot->floor->maxz = floorz;
+      rbot->ceiling->dist = -floorz;
+      rbot->ceiling->minz = rbot->ceiling->maxz = floorz;
+      GCon->Logf("::: NON-SOLID; after rbot ::: (%g, %g)", floorz, ceilz); dumpSectorRegions(dst);
+      sec_region_t *rtop = AddExtraFloorPaperThin(dst, ceilz, src->ceiling.minz, src->ceiling.maxz);
+      if (rtop) {
+        rtop->floor = &src->ceiling;
+        rtop->ceiling = &src->ceiling;
+        GCon->Logf("::: NON-SOLID; after rtop ::: (%g, %g)", floorz, ceilz); dumpSectorRegions(dst);
+
+        if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
+          if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
+          src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
+          src->origCeiling = src->ceiling;
+        }
+        src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+        dst->SectorFlags |= sector_t::SF_HasExtrafloors;
+
+        // everything between rbot and rtop should be annihilated
+        if (rbot->next != rtop) {
+          for (;;) {
+            sec_region_t *n = rbot->next;
+            if (!n) Sys_Error("something is VERY wrong with non-solid region creation code (0)");
+            if (n == rtop) break;
+            // delete this region
+            removeRegion(dst, n);
+          }
+        }
+        check(rbot->next == rtop); // invariant
+        // now we can kill rtop
+        removeRegion(dst, rtop);
+        if (rbot->ceiling->exflags&SPF_EX_ALLOCATED) delete rbot->ceiling;
+        rbot->ceiling = &src->ceiling;
+        // setup rbot region params
+        rbot->params = &src->params;
+        rbot->extraline = line;
+        return rbot;
+      } else {
+        removeRegion(dst, rbot);
+      }
     }
   }
 

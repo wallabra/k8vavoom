@@ -367,17 +367,18 @@ void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
 //  this is used to create world/wall surface
 //
 //==========================================================================
-surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub) {
-  if (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z) return nullptr;
+surface_t *VRenderLevelShared::CreateWSurfs (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount) {
+  if (wvcount < 3 || (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z)) return nullptr;
+  if (wvcount > surface_t::MAXWVERTS) Sys_Error("cannot create huge world surface (the thing that should not be)");
 
-  if (texinfo->Tex->Type == TEXTYPE_Null) return nullptr;
+  if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return nullptr;
 
   surface_t *surf = NewWSurf();
   surf->subsector = sub;
   surf->seg = seg;
   surf->next = nullptr;
-  surf->count = 4;
-  memcpy(surf->verts, wv, /*surf->count*/4*sizeof(TVec));
+  surf->count = wvcount;
+  memcpy(surf->verts, wv, wvcount*sizeof(TVec));
 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
     // never split sky surfaces
@@ -527,13 +528,6 @@ void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpa
 
   sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
 
-  if (sp->surfs) {
-    sp->surfs->midHeights[0] = topz1;
-    sp->surfs->midHeights[1] = botz1;
-    sp->surfs->midHeights[2] = topz2;
-    sp->surfs->midHeights[3] = botz2;
-  }
-
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
@@ -646,13 +640,6 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
 
-  if (sp->surfs) {
-    sp->surfs->topHeights[0] = top_topz1;
-    sp->surfs->topHeights[1] = MAX(back_topz1, botz1);
-    sp->surfs->topHeights[2] = top_topz2;
-    sp->surfs->topHeights[3] = MAX(back_topz2, botz2);
-  }
-
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
   sp->backTopDist = back_ceiling->dist;
@@ -705,13 +692,6 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   wv[3].z = botz2;
 
   sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
-
-  if (sp->surfs) {
-    sp->surfs->botHeights[0] = MIN(back_botz1, topz1);
-    sp->surfs->botHeights[1] = botz1;
-    sp->surfs->botHeights[2] = MIN(back_botz2, topz2);
-    sp->surfs->botHeights[3] = botz2;
-  }
 
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
@@ -813,13 +793,6 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
 
-  if (sp->surfs) {
-    sp->surfs->midHeights[0] = hgts[1];
-    sp->surfs->midHeights[1] = hgts[0];
-    sp->surfs->midHeights[2] = hgts[2];
-    sp->surfs->midHeights[3] = hgts[3];
-  }
-
   sp->frontTopDist = r_ceiling->dist;
   sp->frontBotDist = r_floor->dist;
   sp->backTopDist = back_ceiling->dist;
@@ -868,13 +841,18 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     for (int f = 0; f < 4; ++f) GCon->Logf("       %d: (%f,%f,%f)", f, wv[f].x, wv[f].y, wv[f].z);
     */
 
-    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub);
-
-    if (sp->surfs) {
-      sp->surfs->midHeights[0] = MIN(extratopz1, topz1);
-      sp->surfs->midHeights[1] = MAX(extrabotz1, botz1);
-      sp->surfs->midHeights[2] = MIN(extratopz2, topz2);
-      sp->surfs->midHeights[3] = MAX(extrabotz2, botz2);
+    if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
+      // degenerate side surface, no need to create it
+    } if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
+      // degenerate side surface (thin line), cannot create it (no render support)
+    } if (wv[0].z == wv[1].z) {
+      // can reduce to triangle
+      sp->surfs = CreateWSurfs(wv+1, &sp->texinfo, seg, sub, 3);
+    } if (wv[2].z == wv[3].z) {
+      // can reduce to triangle
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub, 3);
+    } else {
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, sub, 4);
     }
   }
 

@@ -387,6 +387,12 @@ struct sec_region_t {
     RF_GozzoCutout       = 1u<<2,
   };
   vuint32 regflags;
+
+  inline void clear () {
+    if (floor && floor->exflags&SPF_EX_ALLOCATED) delete floor;
+    if (ceiling && ceiling->exflags&SPF_EX_ALLOCATED) delete ceiling;
+    memset((void *)this, 0, sizeof(*this));
+  }
 };
 
 
