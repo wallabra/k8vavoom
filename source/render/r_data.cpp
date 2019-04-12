@@ -1306,7 +1306,7 @@ static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &Class
 //  ParseBrightmap
 //
 //==========================================================================
-static void ParseBrightmap (VScriptParser *sc) {
+static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
   int ttype = TEXTYPE_Any;
        if (sc->Check("flat")) ttype = TEXTYPE_Flat;
   else if (sc->Check("sprite")) ttype = TEXTYPE_Sprite;
@@ -1324,7 +1324,7 @@ static void ParseBrightmap (VScriptParser *sc) {
       if (!sc->GetString()) sc->Error("brightmap image name expected");
       if (sc->String.isEmpty()) sc->Error("empty brightmap image");
       if (!bmap.isEmpty()) GCon->Logf(NAME_Warning, "duplicate brightmap image");
-      bmap = sc->String;
+      bmap = sc->String.fixSlashes();
     } else if (sc->Check("iwad")) {
       iwad = true;
     } else if (sc->Check("thiswad")) {
@@ -1363,9 +1363,32 @@ static void ParseBrightmap (VScriptParser *sc) {
     delete basetex->Brightmap;
     basetex->Brightmap = nullptr;
 
-    int lmp = W_GetNumForFileName(bmap);
+    int lmp = W_CheckNumForFileName(bmap);
     if (lmp < 0) {
-      GCon->Logf(NAME_Warning, "brightmap texture '%s' not found", *bmap);
+      static const EWadNamespace lookns[] = {
+        WADNS_Graphics,
+        WADNS_Sprites,
+        WADNS_Flats,
+        WADNS_NewTextures,
+        WADNS_HiResTextures,
+        WADNS_Patches,
+        WADNS_Global,
+        // end marker
+        WADNS_ZipSpecial,
+      };
+
+      // this can be ordinary texture lump, try hard to find it
+      if (bmap.indexOf('/') < 0 && bmap.indexOf('.') < 0) {
+        for (unsigned nsidx = 0; lookns[nsidx] != WADNS_ZipSpecial; ++nsidx) {
+          for (int Lump = W_IterateNS(-1, lookns[nsidx]); Lump >= 0; Lump = W_IterateNS(Lump, lookns[nsidx])) {
+            if (W_LumpFile(Lump) > W_LumpFile(SrcLump)) break;
+            if (Lump <= lmp) continue;
+            if (bmap.ICmp(*W_LumpName(Lump)) == 0) lmp = Lump;
+          }
+        }
+        //if (lmp >= 0) GCon->Logf(NAME_Warning, "std. brightmap texture '%s' is '%s'", *bmap, *W_FullLumpName(lmp));
+      }
+      if (lmp < 0) GCon->Logf(NAME_Warning, "brightmap texture '%s' not found", *bmap);
       return;
     }
 
@@ -1458,7 +1481,7 @@ static void ParseGlow (VScriptParser *sc) {
 //  ParseGZDoomEffectDefs
 //
 //==========================================================================
-static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
+static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1468,7 +1491,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseGZDoomEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      ParseGZDoomEffectDefs(Lump, new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
     else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point);
@@ -1478,7 +1501,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector);
     else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
     else if (sc->Check("skybox")) R_ParseMapDefSkyBoxesScript(sc);
-    else if (sc->Check("brightmap")) ParseBrightmap(sc);
+    else if (sc->Check("brightmap")) ParseBrightmap(SrcLump, sc);
     else if (sc->Check("glow")) ParseGlow(sc);
     else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }
     else { sc->Error(va("Unknown command (%s)", *sc->String)); }
@@ -1506,7 +1529,7 @@ void R_ParseEffectDefs () {
         W_LumpName(Lump) == NAME_doomdefs || W_LumpName(Lump) == NAME_hticdefs ||
         W_LumpName(Lump) == NAME_hexndefs || W_LumpName(Lump) == NAME_strfdefs)
     {
-      ParseGZDoomEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
     }
   }
 
