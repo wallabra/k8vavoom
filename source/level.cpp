@@ -2433,7 +2433,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   // for solid, cut solid sector from region (new emptyness will be inserted at bottom)
   // for other, cut region with two paper-thin planes (i.e. create new emptyness with
   // control sector bounds, and set its params to source params)
-  if (isSolid && floorz != ceilz) {
+  if (isSolid || floorz == ceilz) {
     // solid, non paper-thin regions
     for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
       float infloorz = inregion->floor->GetPointZ(dst->soundorg);
@@ -2480,25 +2480,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->prev = inregion->prev;
       region->next = inregion;
       inregion->prev = region;
-      return region;
-    }
-  } else if (isSolid || floorz == ceilz) {
-    // paper-thin regions
-    // we still want to add them, because they can be used to create content areas
-    sec_region_t *region = AddExtraFloorPaperThin(dst, floorz, src->floor.minz, src->floor.maxz);
-    if (region) {
-      if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
-        if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
-        src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
-        src->origCeiling = src->ceiling;
-      }
-      src->SectorFlags |= sector_t::SF_ExtrafloorSource;
-      dst->SectorFlags |= sector_t::SF_HasExtrafloors;
 
-      region->floor = &src->floor;
-      region->ceiling = &src->ceiling;
-      region->params = &src->params;
-      region->extraline = line;
+      GCon->Logf("::: SOLID; (%g, %g)", floorz, ceilz); dumpSectorRegions(dst);
       return region;
     }
   } else {
