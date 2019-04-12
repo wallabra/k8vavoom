@@ -268,6 +268,13 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
       continue;
     }
 
+    // floor or ceiling? ignore masked
+    if (surf->plane->normal.z != 0) {
+      VTexture *tex = surf->texinfo->Tex;
+      if (!tex || tex->Type == TEXTYPE_Null) continue;
+      if (tex->isTransparent()) continue; // this is masked texture
+    }
+
     // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
     const float dist = DotProduct(CurrLightPos, surf->plane->normal)-surf->plane->dist;
     // k8: use `<=` and `>=` for radius checks, 'cause why not?
