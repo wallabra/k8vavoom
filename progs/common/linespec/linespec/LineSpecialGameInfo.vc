@@ -752,8 +752,9 @@ final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) 
 //
 //==========================================================================
 final void SpawnExtraFloors (Level InLevel, line_t *line) {
+  int tag = line->arg1+(line->arg1&8 ? 0 : line->arg5);
   foreach (auto j; 0..InLevel.Sectors.length) {
-    if (line->arg1 == InLevel.Sectors[j].tag) {
+    if (InLevel.Sectors[j].tag == tag) {
       InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
     }
   }
@@ -789,6 +790,22 @@ final void MakeSolidContents (Level InLevel, line_t *line) {
   sec.ceiling.Alpha = contents_alpha[contents];
   //sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
   //sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+}
+
+
+//==========================================================================
+//
+//  MakeNonSolidContents
+//
+//==========================================================================
+final void MakeNonSolidContents (Level InLevel, line_t *line) {
+  int contents = CONTENTS_EMPTY;
+  sector_t *sec = line->frontsector;
+  sec.params.contents = contents;
+  sec.floor.Alpha = contents_alpha[contents];
+  sec.ceiling.Alpha = contents_alpha[contents];
+  sec.ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+  sec.floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
 }
 
 
@@ -1054,12 +1071,42 @@ override void SpawnWorld (Level InLevel) {
       // Sector_Set3dFloor(tag, type, flags, alpha, hi-tag/line ID)
       case LNSPEC_SectorSet3dFloor:
         if (line->arg2) print("*** 3D FLOOR OF TYPE %s (tag=%s; flags=0x%04x; alpha=%s; hitag=%s)", line->arg2, line->arg1, line->arg3, line->arg4, line->arg5);
-        if ((line->arg2&3) == 2) {
-          print("SWIMMABLE FLOOR!");
-          MakeWaterContents(InLevel, line);
-        } else if ((line->arg2&3) == 1) {
-          print("SOLID FLOOR!");
-          MakeSolidContents(InLevel, line);
+        switch (line->arg2&3) {
+          case 1:
+            print("SOLID FLOOR!");
+            MakeSolidContents(InLevel, line);
+            break;
+          case 2:
+            print("SWIMMABLE FLOOR!");
+            MakeWaterContents(InLevel, line);
+            break;
+          case 3:
+            print("NON-SOLID FLOOR!");
+            MakeNonSolidContents(InLevel, line);
+            break;
+        }
+        // flags
+        if (line->arg2 != 0) {
+          sector_t *sec = line->frontsector;
+          // invert sight?
+          if (line->arg2&16) {
+            sec.ceiling.flags ^= SPF_NOBLOCKSIGHT;
+            sec.floor.flags ^= SPF_NOBLOCKSIGHT;
+          }
+          // invert shootability?
+          if (line->arg2&32) {
+            sec.ceiling.flags ^= SPF_NOBLOCKSHOOT;
+            sec.floor.flags ^= SPF_NOBLOCKSHOOT;
+          }
+          // set line tag
+          if (line->arg2&8) line->LineTag = line->arg5;
+          if (line->arg4 <= 0) {
+            print("IGNORED INVISILITY ON 3D FLOOR");
+          } else if (line->arg4 < 255) {
+            float secalpha = clamp(line->arg4, 0, 255)/255.0;
+            sec.floor.Alpha = secalpha;
+            sec.ceiling.Alpha = secalpha;
+          }
         }
         SpawnExtraFloors(InLevel, line);
         line->special = 0;
