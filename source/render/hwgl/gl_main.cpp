@@ -689,6 +689,8 @@ void VOpenGLDrawer::InitResolution () {
     gl_(glGetProgramiv);
     //gl_(glGetPointerv);
 
+    gl_(glBlendFuncSeparate);
+
     if (hasBoundsTest) {
       if (!glc_(glDepthBoundsEXT)) {
         hasBoundsTest = false;

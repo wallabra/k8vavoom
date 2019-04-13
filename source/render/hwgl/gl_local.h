@@ -418,6 +418,8 @@ typedef void (APIENTRY *glGetPointerv_t) (GLenum pname,  GLvoid **params);
 //typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 //typedef void (APIENTRY *glGetActiveAttrib_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 
+typedef void (APIENTRY *glBlendFuncSeparate_t) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
@@ -949,6 +951,8 @@ public:
 
   _(glGetProgramiv);
   //_(glGetPointerv);
+
+  _(glBlendFuncSeparate);
 
 #undef _
 

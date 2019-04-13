@@ -36,8 +36,13 @@ void main () {
 
   // convert to premultiplied
   vec4 FinalColour_1;
+#if 0
   FinalColour_1.rgb = (TexColour.rgb*TexColour.a)*lt.a;
   FinalColour_1.a = TexColour.a*lt.a;
+#else
+  FinalColour_1.rgb = TexColour.rgb;
+  FinalColour_1.a = TexColour.a*lt.a;
+#endif
   $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColour_1;

@@ -93,7 +93,13 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
     }
     glEnable(GL_BLEND);
-    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //glDisable(GL_BLEND);
+    if (Additive) {
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    } else {
+      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    }
     // translucent things should not modify z-buffer
     if (Additive || Alpha < 1.0f) {
       zbufferWriteDisabled = true;
@@ -104,6 +110,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       decalsAllowed = true;
     }
   } else {
+    glDisable(GL_BLEND);
     if (doBrightmap) {
       SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
     } else {
@@ -231,7 +238,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     glDisable(GL_BLEND);
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
   }
-  if (Additive) {
+  //if (Additive)
+  {
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
@@ -318,7 +326,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     if (Additive) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     } else {
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
     if (doBrightmap) {
@@ -416,7 +425,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     }
     glDisable(GL_BLEND);
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
-    if (Additive) {
+    //if (Additive)
+    {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
