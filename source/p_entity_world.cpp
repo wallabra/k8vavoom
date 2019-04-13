@@ -419,11 +419,11 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
       sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
       sec_region_t *reg = gap;
-      while (reg->prev && reg->efloor->flags&SPF_NOBLOCKING) reg = reg->prev;
+      while (reg->prev && (reg->efloor->flags&SPF_NOBLOCKING)) reg = reg->prev;
       tmtrace.CopyRegFloor(reg, &Origin);
       tmtrace.DropOffZ = tmtrace.FloorZ;
       reg = gap;
-      while (reg->next && reg->eceiling->flags&SPF_NOBLOCKING) reg = reg->next;
+      while (reg->next && (reg->eceiling->flags&SPF_NOBLOCKING)) reg = reg->next;
       tmtrace.CopyRegCeiling(reg, &Origin);
     } else {
       sec_region_t *reg = newsubsec->sector->botregion;
@@ -464,11 +464,11 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 0.0f));
 
     sec_region_t *r = reg;
-    while (r->efloor->flags && r->prev) r = r->prev;
+    while ((r->efloor->flags&SPF_NOBLOCKING) && r->prev) r = r->prev;
     CopyRegFloor(r);
 
     r = reg;
-    while (r->eceiling->flags && r->next) r = r->next;
+    while ((r->eceiling->flags&SPF_NOBLOCKING) && r->next) r = r->next;
     CopyRegCeiling(r);
   }
 
@@ -814,11 +814,11 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
     sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
     sec_region_t *reg = gap;
-    while (reg->prev && reg->efloor->flags&SPF_NOBLOCKING) reg = reg->prev;
+    while (reg->prev && (reg->efloor->flags&SPF_NOBLOCKING)) reg = reg->prev;
     tmtrace.CopyRegFloor(reg, &tmtrace.End);
     tmtrace.DropOffZ = tmtrace.FloorZ;
     reg = gap;
-    while (reg->next && reg->eceiling->flags&SPF_NOBLOCKING) reg = reg->next;
+    while (reg->next && (reg->eceiling->flags&SPF_NOBLOCKING)) reg = reg->next;
     tmtrace.CopyRegCeiling(reg, &tmtrace.End);
   } else {
     sec_region_t *reg = newsubsec->sector->botregion;
