@@ -2329,62 +2329,6 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
 
 //==========================================================================
 //
-//  VLevel::AddExtraFloorPaperThin
-//
-//  gozzo support
-//  all checks are made, just insert paper-thin region
-//  no new region properties are filled
-//
-//  this inserts new region on top of old one
-//
-//==========================================================================
-sec_region_t *VLevel::AddExtraFloorPaperThin (sector_t *dst, int regz, float minz, float maxz) {
-  for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    if (!inregion->efloor || !inregion->eceiling) continue; // this is temporary region
-
-    // skip paper-thin regions
-    if (inregion->efloor->minz == inregion->efloor->maxz &&
-        inregion->eceiling->minz == inregion->eceiling->maxz &&
-        inregion->efloor->minz == inregion->eceiling->maxz)
-    {
-      continue;
-    }
-
-    float infloorz = inregion->GetFloorPointZ(dst->soundorg);
-    float inceilz = inregion->GetCeilingPointZ(dst->soundorg);
-
-    bool doInsert = (infloorz <= regz && inceilz >= regz);
-    // check for sloped floor
-    if (!doInsert && inregion->GetFloorNormalZ() != 1.0f) {
-      if (inregion->efloor->maxz <= minz && inregion->eceiling->maxz >= minz) {
-        doInsert = true;
-      }
-    }
-    // check for sloped ceiling
-    if (!doInsert && inregion->GetCeilingNormalZ() != -1.0f) {
-      if (inregion->efloor->minz <= maxz && inregion->eceiling->minz >= maxz) {
-        doInsert = true;
-      }
-    }
-
-    if (!doInsert) continue;
-
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-
-    if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
-    region->prev = inregion->prev;
-    region->next = inregion;
-    inregion->prev = region;
-    return region;
-  }
-
-  return nullptr;
-}
-
-
-//==========================================================================
-//
 //  VLevel::AddExtraFloorShitty
 //
 //  gozzo
@@ -2405,8 +2349,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   //src->SectorFlags |= sector_t::SF_ExtrafloorSource;
   //dst->SectorFlags |= sector_t::SF_HasExtrafloors;
 
-  GCon->Logf("src sector #%d: floor=%s; ceiling=%s", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic));
-  GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z);
+  GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz));
+  GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz));
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);

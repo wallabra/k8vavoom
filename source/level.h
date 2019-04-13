@@ -557,7 +557,6 @@ public:
 private:
   sec_region_t *AddExtraFloorSane (line_t *line, sector_t *dst); // vavoom
   sec_region_t *AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
-  sec_region_t *AddExtraFloorPaperThin (sector_t *dst, int regz, float minz, float maxz); // gozzo support
 
 private:
   // map loaders
