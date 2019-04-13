@@ -209,6 +209,7 @@ bool Physics (float DeltaTime) {
           //print("Player is on thing %C", onmo);
           if (Velocity.z < -DEFAULT_GRAVITY*0.25 && !bFly && !bNoGravity) PlayerLandedOnThing();
         }
+
         if (onmo.Origin.z+onmo.Height-Origin.z <= MaxStepHeight) {
           if (bIsPlayer) {
             PlayerEx pex = PlayerEx(Player);
@@ -217,6 +218,7 @@ bool Physics (float DeltaTime) {
           }
           Origin.z = onmo.Origin.z+onmo.Height;
         }
+
         bOnMobj = true;
         Velocity.z = 0.0;
         Crash();
@@ -244,6 +246,14 @@ bool Physics (float DeltaTime) {
       // handle Z momentum and gravity
       ZMovement(DeltaTime, oldfloorz);
       if (IsDestroyed()) return false; // entity was removed
+    }
+  } else {
+    // see comment in `ZMovement()`
+    if (!bNoGravity && Sector && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
+        !bStickToFloor && !bStickToCeiling)
+    {
+      // yeah, several regions; recalc FloorZ
+      HeightClip(skipTriggers:true, skipObjects:true);
     }
   }
 
@@ -439,10 +449,27 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
        if (Mass.isinf) Mass = 10000;
   else if (Mass < 0) Mass = 0;
 
+  // k8: if we are in sector with several regions (i.e. with 3d floors),
+  //     check for gaps on each step. because moving regions won't trigger
+  //     `SectorChanged()` (technically, the entity is not in a control
+  //     sector), and we don't have a link from control sector to all its
+  //     destination sectors yet, so we cannot trigger this properly.
+  //     this is a hack, but it is better than nothing.
+  //     note that rising 3d floors will automatically work due to physics
+  //     (but really fast movement won't work yet).
+  //     i have to rewrite this in a proper way, of course.
+  bool hasGravity = (!bNoGravity && Sector);
+  if (hasGravity && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
+      !bStickToFloor && !bStickToCeiling)
+  {
+    // yeah, several regions; recalc FloorZ
+    HeightClip(skipTriggers:true, skipObjects:true);
+  }
+
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
   // Make objects fall to their own weight.
-  if (Origin.z > FloorZ && !bNoGravity && Sector) {
+  if (hasGravity && Origin.z > FloorZ) {
     float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
     if (grav.isinf) grav = 1000;
     float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
