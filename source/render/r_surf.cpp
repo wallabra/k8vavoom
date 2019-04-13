@@ -864,7 +864,11 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 //
 //==========================================================================
 static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t *&extratop, sec_plane_t *&extrabot, side_t *&extraside, bool fromtop) {
-  if (fromtop) {
+  if (reg->regflags&sec_region_t::RF_NonSolid) {
+    extratop = reg->eceiling; // new floor
+    extrabot = reg->efloor; // new ceiling
+    extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
+  } else if (fromtop) {
     // creating
     extratop = reg->efloor; // new floor
     extrabot = reg->prev->eceiling; // new ceiling

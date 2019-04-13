@@ -389,6 +389,7 @@ struct sec_region_t {
   enum {
     RF_FlipFloor   = 1u<<0,
     RF_FlipCeiling = 1u<<1,
+    RF_NonSolid    = 1u<<2, // this is used for shitty gozzo "non-solid" 3d floors
   };
   vuint32 regflags;
 

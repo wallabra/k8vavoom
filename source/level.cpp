@@ -2144,7 +2144,7 @@ void CL_LoadLevel (VName MapName) {
 static __attribute__((unused)) void dumpSectorRegions (const sector_t *dst) {
   GCon->Log(" === bot -> top ===");
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%08x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%08x",
+    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d",
       inregion,
       inregion->efloor->normal.x,
       inregion->efloor->normal.y,
@@ -2157,7 +2157,8 @@ static __attribute__((unused)) void dumpSectorRegions (const sector_t *dst) {
       inregion->eceiling->normal.z,
       inregion->eceiling->dist,
       inregion->eceiling->minz, inregion->eceiling->maxz,
-      inregion->eceiling->flags);
+      inregion->eceiling->flags,
+      (inregion->extraline ? 1 : 0));
   }
   GCon->Log("--------");
 }
@@ -2349,7 +2350,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   //src->SectorFlags |= sector_t::SF_ExtrafloorSource;
   //dst->SectorFlags |= sector_t::SF_HasExtrafloors;
 
-  GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz));
+  GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid);
   GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz));
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
@@ -2399,6 +2400,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.maxz;
 
   GCon->Logf("3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz);
+  GCon->Logf("::: BEFORE"); dumpSectorRegions(dst);
 
   // for solid, cut solid sector from region (new emptyness will be inserted at bottom)
   // for other, cut region with two paper-thin planes (i.e. create new emptyness with
@@ -2428,7 +2430,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
 
-    if (Solid || floorz == ceilz) {
+    if (isSolid || floorz == ceilz) {
       if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
         if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
         src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
@@ -2468,6 +2470,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->eceiling = &src->ceiling;
       region->params = &src->params;
       region->extraline = line;
+      region->regflags |= sec_region_t::RF_NonSolid;
 
       // create xtr region
       sec_region_t *xtr = new sec_region_t;
@@ -2482,9 +2485,15 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       xtr->efloor = &src->ceiling; // flip
       xtr->regflags |= sec_region_t::RF_FlipFloor;
       xtr->eceiling = inregion->eceiling;
-      xtr->regflags = inregion->regflags&sec_region_t::RF_FlipCeiling;
+      xtr->regflags |= inregion->regflags&sec_region_t::RF_FlipCeiling;
       xtr->params = inregion->params;
       xtr->extraline = inregion->extraline;
+
+      /*
+      region->extraline = line;
+      xtr->extraline = line;
+      inregion->extraline = line;
+      */
 
       // fix old region
       //inregion->ceiling = dupSecPlane(&src->floor, true); // flip
@@ -2492,9 +2501,9 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       inregion->regflags |= sec_region_t::RF_FlipCeiling;
 
       // link new regions into region list
+      xtr->next = inregion->next;
       if (inregion->next) inregion->next->prev = xtr; else dst->topregion = xtr;
       region->prev = inregion;
-      xtr->next = inregion->next;
       inregion->next = region;
     }
 
