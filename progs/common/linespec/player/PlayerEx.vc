@@ -624,9 +624,10 @@ final void WaterMove (float deltaTime) {
     else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
     else MO.Velocity.z = 50.0;
   } else {
-    if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0 && MO.Velocity.z < -20) {
-      MO.Velocity.z = -20;
+    if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
+      if (MO.Velocity.z > 0) MO.Velocity.z -= 10;
     }
+    if (MO.Velocity.z < -20) MO.Velocity.z = -20;
   }
   CheckWaterJump();
 }
