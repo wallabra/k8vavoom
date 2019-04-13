@@ -135,7 +135,7 @@ struct tmtrace_t {
 
 
 void VEntity::CopyTraceFloor (tmtrace_t *tr, bool setz) {
-  fcflags &= FC_FlipFloor;
+  fcflags &= ~FC_FlipFloor;
   fcflags |= (tr->fcflags&tmtrace_t::FC_FlipFloor ? FC_FlipFloor : 0u);
   EFloor = tr->EFloor;
   if (setz) FloorZ = tr->FloorZ;
@@ -143,7 +143,7 @@ void VEntity::CopyTraceFloor (tmtrace_t *tr, bool setz) {
 
 
 void VEntity::CopyTraceCeiling (tmtrace_t *tr, bool setz) {
-  fcflags &= FC_FlipCeiling;
+  fcflags &= ~FC_FlipCeiling;
   fcflags |= (tr->fcflags&tmtrace_t::FC_FlipCeiling ? FC_FlipCeiling : 0u);
   ECeiling = tr->ECeiling;
   if (setz) CeilingZ = tr->CeilingZ;
@@ -421,7 +421,6 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
       sec_region_t *reg = gap;
       while (reg->prev && reg->efloor->flags&SPF_NOBLOCKING) reg = reg->prev;
       tmtrace.CopyRegFloor(reg, &Origin);
-      tmtrace.EFloor = reg->efloor;
       tmtrace.DropOffZ = tmtrace.FloorZ;
       reg = gap;
       while (reg->next && reg->eceiling->flags&SPF_NOBLOCKING) reg = reg->next;
@@ -1489,9 +1488,9 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
       opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
       open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
-      if (open && (open->range >= Height) &&  //  fits
-          (open->top-Origin.z >= Height) && // mobj is not too high
-          (open->bottom-Origin.z <= MaxStepHeight)) // not too big a step up
+      if (open && open->range >= Height && // fits
+          open->top-Origin.z >= Height && // mobj is not too high
+          open->bottom-Origin.z <= MaxStepHeight) // not too big a step up
       {
         // this line doesn't block movement
         if (Origin.z < open->bottom) {
@@ -1650,9 +1649,9 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
       opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
       open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
-      if (open != nullptr && open->range >= Height &&  // fits
-        Origin.z+Height <= open->top &&
-        Origin.z >= open->bottom) // mobj is not too high
+      if (open && open->range >= Height && // fits
+          Origin.z+Height <= open->top &&
+          Origin.z >= open->bottom) // mobj is not too high
       {
         continue; // this line doesn't block movement
       }
@@ -1704,6 +1703,8 @@ void VEntity::UpdateVelocity () {
   }
   */
 
+  //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(0): vel=(%g,%g,%g); vnz=(%g,%g,%g) (%g)", Velocity.x, Velocity.y, Velocity.z, EFloor->normal.x, EFloor->normal.y, EFloor->normal.z, GetFloorNormalZ());
+
   // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
   if (Sector && !(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || GetFloorNormalZ() <= 0.7f)) {
     if (WaterLevel < 2) {
@@ -1723,8 +1724,12 @@ void VEntity::UpdateVelocity () {
 
   // friction
   if (Velocity.x || Velocity.y/* || Velocity.z*/) {
+    //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(1): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
     eventApplyFriction();
+    //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(2): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
   }
+
+  //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(3): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
 }
 
 
