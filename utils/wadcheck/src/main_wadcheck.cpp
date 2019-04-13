@@ -34,6 +34,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static bool longReport = false;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 static VStr getBaseWad (const VStr &s) {
   auto cpos = s.lastIndexOf(':');
   if (cpos <= 0) return VStr::EmptyString;
@@ -107,6 +111,15 @@ static void appendHash (XXH64_hash_t hash, VStr fname, vint32 size) {
 }
 
 
+extern "C" {
+  static int ts_strcmp (const void *aa, const void *bb, void *) {
+    VStr *a = (VStr *)aa;
+    VStr *b = (VStr *)bb;
+    return a->ICmp(*b);
+  }
+}
+
+
 static void checkHash (XXH64_hash_t hash, VStr fname, vint32 size) {
   VStr origName = fname;
   fname = normalizeName(fname);
@@ -114,16 +127,31 @@ static void checkHash (XXH64_hash_t hash, VStr fname, vint32 size) {
   fh.hash = hash;
   auto fip = wadlist.find(fh);
   if (!fip) return;
-  bool wasHeader = false;
+
+  TArray<VStr> hits;
   for (int f = 0; f < fip->names.length(); ++f) {
     if (fip->names[f].size != size) continue;
-    if (!wasHeader) {
-      wasHeader = true;
-      //GLog.WriteLine("LUMP HIT FOR '%s'", *origName);
-      fprintf(stderr, "LUMP HIT FOR '%s'\n", *origName);
+    hits.append(VStr(fip->names[f].name));
+  }
+  if (hits.length() == 0) return;
+
+  timsort_r(hits.ptr(), hits.length(), sizeof(hits[0]), &ts_strcmp, nullptr);
+
+  // remove duplicates
+  for (int f = 0; f < hits.length()-1; ) {
+    if (hits[f].ICmp(hits[f+1]) == 0) {
+      hits.removeAt(f+1);
+    } else {
+      ++f;
     }
-    //GLog.WriteLine("  %s", *(fip->names[f].name));
-    fprintf(stderr, "  %s\n", *(fip->names[f].name));
+  }
+  if (hits.length() == 0) return;
+
+  if (longReport) {
+    fprintf(stderr, "LUMP HIT FOR '%s'\n", *origName);
+    for (int f = 0; f < hits.length(); ++f) fprintf(stderr, "  %s\n", *hits[f]);
+  } else {
+    for (int f = 0; f < hits.length(); ++f) fprintf(stderr, "LUMP HIT FOR '%s': %s\n", *origName, *hits[f]);
   }
 }
 
@@ -243,6 +271,7 @@ static __attribute__((noreturn)) void usage () {
     "USAGE:\n"
     "  wadcheck [--db dbfilename] --register wad/pk3\n"
     "  wadcheck [--db dbfilename] wad/pk3\n"
+    "use `--long` option to show matches on separate lines\n"
     "");
   exit(1);
 }
@@ -253,18 +282,53 @@ int main (int argc, char **argv) {
   GLog.WriteLine("WADCHECK build date: %s  %s", __DATE__, __TIME__);
   //GLog.WriteLine("%s", "");
 
-  VStr dbname = ".wadhash.wdb";
-  if (argc > 1 && strcmp(argv[1], "--db") == 0) {
-    if (argc < 3) usage();
-    dbname = VStr(argv[2]);
-    if (dbname.length() == 0) usage();
-    for (int f = 3; f < argc; ++f) argv[f-2] = argv[f];
-    argc -= 2;
-    dbname = dbname.DefaultExtension(".wdb");
+  VStr dbname;
+  bool doneOptions = false;
+  bool doRegisterWads = false;
+  TArray<VStr> flist;
+
+  for (int f = 1; f < argc; ++f) {
+    VStr arg = VStr(argv[f]);
+    if (arg.isEmpty()) continue;
+    if (doneOptions || arg[0] != '-') {
+      bool found = false;
+      for (int c = 0; c < flist.length(); ++c) {
+        int cres;
+#ifdef _WIN32
+        cres = arg.ICmp(flist[c]);
+#else
+        cres = arg.Cmp(flist[c]);
+#endif
+        if (cres == 0) { found = true; break; }
+      }
+      if (!found) flist.append(arg);
+      continue;
+    }
+    if (arg == "--") { doneOptions = true; continue; }
+    // "--register"
+    if (arg.ICmp("-r") == 0 || arg.ICmp("-register") == 0 || arg.ICmp("--register") == 0) {
+      if (flist.length() != 0) Sys_Error("cannot both register and check files, do that sequentially, please!");
+      doRegisterWads = true;
+      continue;
+    }
+    // "--db"
+    if (arg.ICmp("-db") == 0 || arg.ICmp("--db") == 0) {
+      if (f >= argc) Sys_Error("missing database name");
+      if (!dbname.isEmpty()) Sys_Error("duplicate database name");
+      dbname = VStr(argv[++f]);
+      dbname = dbname.DefaultExtension(".wdb");
+      continue;
+    }
+    if (arg.ICmp("-long") == 0 || arg.ICmp("--long") == 0) {
+      longReport = true;
+      continue;
+    }
+    Sys_Error("unknown option '%s'", *arg);
   }
 
-  if (argc < 2) usage();
+  if (flist.length() == 0) usage();
 
+  if (dbname.isEmpty()) dbname = ".wadhash.wdb";
   // prepend binary path to db name
   if (!dbname.IsAbsolutePath()) {
     dbname = VStr(VArgs::GetBinaryDir())+"/"+dbname;
@@ -279,8 +343,8 @@ int main (int argc, char **argv) {
     }
   }
 
-  if (strcmp(argv[1], "--register") == 0) {
-    for (int f = 2; f < argc; ++f) W_AddFile(argv[f]);
+  if (doRegisterWads) {
+    for (int f = 0; f < flist.length(); ++f) W_AddFile(flist[f]);
     GLog.WriteLine("calculating hashes...");
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;
@@ -293,13 +357,14 @@ int main (int argc, char **argv) {
 
     {
       VStream *fo = FL_OpenSysFileWrite(dbname);
+      if (!fo) Sys_Error("cannot create output database '%s'", *dbname);
       writeList(fo);
       delete fo;
     }
   } else {
-    if (wadlist.length() == 0) Sys_Error("database not found");
+    if (wadlist.length() == 0) Sys_Error("database file '%s' not found or empty", *dbname);
 
-    for (int f = 1; f < argc; ++f) W_AddFile(argv[f]);
+    for (int f = 0; f < flist.length(); ++f) W_AddFile(flist[f]);
 
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;
