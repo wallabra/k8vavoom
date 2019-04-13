@@ -225,6 +225,12 @@ COMMAND(my_sector_info) {
   GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
 
   if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
+  if (Args.length() > 2) {
+    sec_region_t *gap = SV_FindThingGap(sec->botregion, Player->MO->Origin, Player->MO->Origin.z, Player->MO->Origin.z+Player->MO->Height, true);
+    if (gap) {
+      GCon->Logf("=== GAP: %p", gap);
+    }
+  }
 }
 
 

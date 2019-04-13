@@ -236,7 +236,7 @@ sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p);
 
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex=false);
 
-sec_region_t *SV_FindThingGap (sec_region_t *gaps, const TVec &point, float z1, float z2);
+sec_region_t *SV_FindThingGap (sec_region_t *gaps, const TVec &point, float z1, float z2, bool dbgDump=false);
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 
 

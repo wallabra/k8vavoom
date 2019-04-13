@@ -392,7 +392,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 //  Returns the gap number, or -1 if there are no gaps at all.
 //
 //==========================================================================
-sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2) {
+sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2, bool dbgDump) {
   sec_region_t *gaps = InGaps;
 
   int fit_num = 0;
@@ -410,34 +410,59 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
 
   FuckedSecPlane floor;
   FuckedSecPlane ceil;
+  sec_region_t *lastFloorGap = nullptr;
 
   // there are 2 or more gaps; now it gets interesting :-)
-  while (gaps != nullptr) {
-    if (gaps->efloor->flags == 0) floor.setFloor(gaps);
-    if (gaps->eceiling->flags == 0) ceil.setCeiling(gaps);
-    if (gaps->eceiling->flags) { gaps = gaps->next; continue; }
+  while (gaps) {
+    if (dbgDump) GCon->Logf("  svftg: checking gap=%p; z1=%g; z2=%g (regflags=0x%02x)", gaps, z1, z2, gaps->regflags);
+    if ((gaps->efloor->flags&SPF_NOBLOCKING) == 0) {
+      if (dbgDump) GCon->Logf("  svftg: new floor gap=%p; z1=%g; z2=%g", gaps, z1, z2);
+      floor.setFloor(gaps);
+      lastFloorGap = gaps;
+    }
+    if ((gaps->eceiling->flags&SPF_NOBLOCKING) == 0) {
+      if (dbgDump) GCon->Logf("  svftg: new ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
+      ceil.setCeiling(gaps);
+    }
+    if (gaps->eceiling->flags&SPF_NOBLOCKING) {
+      //if ((gaps->regflags&sec_region_t::RF_NonSolid))
+      {
+        if (dbgDump) GCon->Logf("  svftg: skip ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
+        gaps = gaps->next;
+        continue;
+      }
+    }
 
     const float f = floor.GetPointZ(point);
     const float c = ceil.GetPointZ(point);
 
-    if (z1 >= f && z2 <= c) return gaps; // [1]
+    if (dbgDump) GCon->Logf("  svftg: gap=%p; f=%g; c=%g; z1=%g; z2=%g", gaps, f, c, z1, z2);
+
+    if (z1 >= f && z2 <= c) {
+      if (dbgDump) GCon->Logf("  svftg RES: gap=%p; f=%g; c=%g; z1=%g; z2=%g", gaps, f, c, z1, z2);
+      //return gaps; // [1]
+      return (lastFloorGap ? lastFloorGap : gaps);
+    }
 
     const float dist = fabsf(z1-f);
 
-    if (z2 - z1 <= c - f) {
+    if (z2-z1 <= c-f) {
       // [2]
       ++fit_num;
-      fit_last = gaps;
+      fit_last = lastFloorGap; //gaps;
+      if (dbgDump) GCon->Logf("  svftg: fit_last=%p (%d); f=%g; c=%g; z1=%g; z2=%g", fit_last, fit_num, f, c, z1, z2);
       if (dist < fit_mindist) {
         // [3]
         fit_mindist = dist;
-        fit_closest = gaps;
+        fit_closest = lastFloorGap; //gaps;
+        if (dbgDump) GCon->Logf("  svftg: fit_closest=%p (%d); f=%g; c=%g; z1=%g; z2=%g", fit_closest, fit_num, f, c, z1, z2);
       }
     } else {
       if (dist < nofit_mindist) {
         // [4]
         nofit_mindist = dist;
-        nofit_closest = gaps;
+        nofit_closest = lastFloorGap; //gaps;
+        if (dbgDump) GCon->Logf("  svftg: nofit_closest=%p (%d); f=%g; c=%g; z1=%g; z2=%g", nofit_closest, fit_num, f, c, z1, z2);
       }
     }
     gaps = gaps->next;

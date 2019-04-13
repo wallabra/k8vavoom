@@ -2403,9 +2403,6 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   GCon->Logf("3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz);
   GCon->Logf("::: BEFORE"); dumpSectorRegions(dst);
 
-  // for solid, cut solid sector from region (new emptyness will be inserted at bottom)
-  // for other, cut region with two paper-thin planes (i.e. create new emptyness with
-  // control sector bounds, and set its params to source params)
   for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
     float infloorz = inregion->GetFloorPointZ(dst->soundorg);
     float inceilz = inregion->GetCeilingPointZ(dst->soundorg);
@@ -2463,7 +2460,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     } else {
       src->SectorFlags |= sector_t::SF_ExtrafloorSource;
 
-      // non-solid region
+      // non-solid, non paper-thin region
       // old region is from old floor to new flipped floor (shrinked)
       // new region is from new floor to new ceiling
       // xtr region is from new flipped ceiling to old ceiling (duplicate of old region)
@@ -2483,18 +2480,13 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
 
       // copy data to xtr
       //xtr->floor = dupSecPlane(&src->ceiling, true); // flip
+      xtr->regflags = inregion->regflags&~(sec_region_t::RF_FlipFloor|sec_region_t::RF_FlipCeiling);
       xtr->efloor = &src->ceiling; // flip
       xtr->regflags |= sec_region_t::RF_FlipFloor;
       xtr->eceiling = inregion->eceiling;
       xtr->regflags |= inregion->regflags&sec_region_t::RF_FlipCeiling;
       xtr->params = inregion->params;
       xtr->extraline = inregion->extraline;
-
-      /*
-      region->extraline = line;
-      xtr->extraline = line;
-      inregion->extraline = line;
-      */
 
       // fix old region
       //inregion->ceiling = dupSecPlane(&src->floor, true); // flip
