@@ -162,7 +162,6 @@ bool Physics (float DeltaTime) {
   }
 
   CheckWater();
-  //print("WaterLevel=%s", WaterLevel);
   if (!bFloatBob || !bSpecial) UpdateVelocity();
 
   // momentum movement
@@ -199,7 +198,6 @@ bool Physics (float DeltaTime) {
   //     if player (or monster, i think) moved into step-like thing while standing on
   //     a floor, that thing will be ignored. meh, just always check things, 'cause
   //     why not?
-
   EntityEx onmo = EntityEx(CheckOnmobj());
   if (onmo || Velocity.z || (Origin.z != FloorZ && (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
   {
@@ -227,6 +225,7 @@ bool Physics (float DeltaTime) {
           Velocity.x = onmo.Velocity.x;
           Velocity.y = onmo.Velocity.y;
         }
+
         if (onmo.Origin.z < onmo.FloorZ) {
           Origin.z += onmo.FloorZ-onmo.Origin.z;
           if (onmo.bIsPlayer) {
@@ -768,10 +767,12 @@ final bool HitFloor () {
     TVec Vel = vdot*PhysGetFloorNormal();
     Velocity.z -= Vel.z;
   }
+
   if (bSkullFly) {
     // the skull slammed into something
     Velocity.z = -Velocity.z;
   }
+
   Crash();
   return true;
 }
@@ -1016,7 +1017,9 @@ final void PlayerLandedOnThing () {
   PlayerEx(Player).DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
   if (Health > 0 && !PlayerEx(Player).MorphTime) {
-    if (Velocity.z < -DEFAULT_GRAVITY*0.375) PlaySound('*grunt', CHAN_VOICE);
+    if (Velocity.z < -DEFAULT_GRAVITY*0.375) {
+      PlaySound('*grunt', CHAN_VOICE);
+    }
     if ((Origin.z > FloorZ || !GetFloorType()->bLiquid) && !AreSoundsEquivalent('*grunt', '*land')) {
       PlaySound('*land', CHAN_BODY);
     }
