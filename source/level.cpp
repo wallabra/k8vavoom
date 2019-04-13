@@ -2138,13 +2138,13 @@ void CL_LoadLevel (VName MapName) {
 
 //==========================================================================
 //
-//  dumpSectorRegions
+//  VLevel::dumpSectorRegions
 //
 //==========================================================================
-static __attribute__((unused)) void dumpSectorRegions (const sector_t *dst) {
+void VLevel::dumpSectorRegions (const sector_t *dst) const {
   GCon->Log(" === bot -> top ===");
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d",
+    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
       inregion,
       inregion->efloor->normal.x,
       inregion->efloor->normal.y,
@@ -2158,7 +2158,8 @@ static __attribute__((unused)) void dumpSectorRegions (const sector_t *dst) {
       inregion->eceiling->dist,
       inregion->eceiling->minz, inregion->eceiling->maxz,
       inregion->eceiling->flags,
-      (inregion->extraline ? 1 : 0));
+      (inregion->extraline ? 1 : 0),
+      inregion->regflags);
   }
   GCon->Log("--------");
 }

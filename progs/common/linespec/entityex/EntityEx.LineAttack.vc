@@ -348,11 +348,13 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
             print(":: line #%d (flags=0x%08x) ::", li-&XLevel.Lines[0], li->flags);
             for (opening_t *o = open; o; o = o->next) {
               print(" opening:");
-              print("  open top: %s", o->top);
               print("  open bot: %s", o->bottom);
+              print("  open top: %s", o->top);
               print("  open range: %s", o->range);
               print("  open lowfloor: %s", o->lowfloor);
               print("  open highceiling: %s", o->highceiling);
+              print("  open floor: (%s:%s)%s", o->efloor.normal, o->efloor.dist, (o.bFlipFloor ? "[flipped]" : ""));
+              print("  open ceiling: (%s:%s)%s", o->eceiling.normal, o->eceiling.dist, (o.bFlipCeiling ? "[flipped]" : ""));
             }
           }
           if (stopat3dmidtex && (li->flags&ML_3DMIDTEX)) {

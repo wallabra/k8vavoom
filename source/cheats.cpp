@@ -221,14 +221,16 @@ COMMAND(my_sector_info) {
   GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
   GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
 
-  sec_region_t *reg = SV_PointInRegion(Player->MO->Sector, Player->MO->Origin);
+  sec_region_t *reg = SV_PointInRegion(sec, Player->MO->Origin);
   GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
+
+  if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
 }
 
 
 //==========================================================================
 //
-//  my_sector_info
+//  my_clear_automap
 //
 //==========================================================================
 COMMAND(my_clear_automap) {
