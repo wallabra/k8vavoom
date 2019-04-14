@@ -50,9 +50,9 @@ inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, s
 enum {
   ML_PASSUSE_BOOM = 0x0200, // Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
 
-  MTF_AMBUSH      = 0x0008, // Deaf monsters/do not react to sound.
-  MTF_DORMANT     = 0x0010, // The thing is dormant
-  MTF_GSINGLE     = 0x0100, // Appearing in game modes
+  MTF_AMBUSH      = 0x0008, // deaf monsters/do not react to sound
+  MTF_DORMANT     = 0x0010, // the thing is dormant
+  MTF_GSINGLE     = 0x0100, // appearing in game modes
   MTF_GCOOP       = 0x0200,
   MTF_GDEATHMATCH = 0x0400,
   MTF_SHADOW      = 0x0800,
@@ -62,6 +62,7 @@ enum {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VUdmfParser {
 public:
   // supported namespaces; use bits to have faster cheks

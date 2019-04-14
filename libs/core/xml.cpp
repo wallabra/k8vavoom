@@ -506,7 +506,7 @@ VStr VXmlDocument::HandleReferences (const VStr &AStr) {
           if (dg < 0) Error("Bad character reference");
           Val = (Val<<4)|dg;
         }
-        NewVal = VStr::FromChar(Val);
+        NewVal = VStr::FromUtf8Char(Val);
       } else if (Seq.length() > 3 && Seq[1] == '#') {
         int Val = 0;
         for (int j = 2; j < Seq.length()-1; ++j) {
@@ -514,7 +514,7 @@ VStr VXmlDocument::HandleReferences (const VStr &AStr) {
           if (dg < 0) Error("Bad character reference");
           Val = (Val*10)+dg;
         }
-        NewVal = VStr::FromChar(Val);
+        NewVal = VStr::FromUtf8Char(Val);
       } else if (Seq == "&amp;") NewVal = "&";
         else if (Seq == "&quot;") NewVal = "\"";
         else if (Seq == "&apos;") NewVal = "\'";

@@ -1180,7 +1180,7 @@ bool VStr::IsValidUtf8 () const {
 VStr VStr::Latin1ToUtf8 () const {
   const char *data = getData();
   VStr res;
-  for (int i = 0; i < length(); ++i) res += FromChar((vuint8)data[i]);
+  for (int i = 0; i < length(); ++i) res += FromUtf8Char((vuint8)data[i]);
   return res;
 }
 
@@ -1504,7 +1504,7 @@ size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
 }
 
 
-int VStr::GetChar (const char *&s) {
+int VStr::Utf8GetChar (const char *&s) {
   if ((vuint8)*s < 128) return *s++;
   int cnt, val;
   if ((*s&0xe0) == 0xc0) {
@@ -1536,7 +1536,7 @@ int VStr::GetChar (const char *&s) {
 }
 
 
-VStr VStr::FromChar (int c) {
+VStr VStr::FromUtf8Char (int c) {
   char res[8];
   if (c < 0x80) {
     res[0] = c;

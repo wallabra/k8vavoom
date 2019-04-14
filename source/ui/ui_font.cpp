@@ -375,7 +375,7 @@ void VFont::ParseFontDefs () {
           CHECK_TYPE(1);
           sc.ExpectLoneChar();
           const char *CPtr = *sc.String;
-          int CharIdx = VStr::GetChar(CPtr);
+          int CharIdx = VStr::Utf8GetChar(CPtr);
           sc.ExpectString();
           VName LumpName(*sc.String, VName::AddLower8);
           if (W_CheckNumForName(LumpName, WADNS_Graphics) >= 0) {
@@ -758,7 +758,7 @@ int VFont::FindTextColour (VName Name) {
 int VFont::StringWidth (const VStr &String) const {
   int w = 0;
   for (const char *SPtr = *String; *SPtr; ) {
-    int c = VStr::GetChar(SPtr);
+    int c = VStr::Utf8GetChar(SPtr);
     // check for colour escape
     if (c == TEXT_COLOUR_ESCAPE) {
       ParseColourEscape(SPtr, CR_UNDEFINED, CR_UNDEFINED);
@@ -821,7 +821,7 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
   int CurW = 0;
   for (const char *SPtr = *Text; *SPtr; ) {
     const char *PChar = SPtr;
-    int c = VStr::GetChar(SPtr);
+    int c = VStr::Utf8GetChar(SPtr);
 
     // check for colour escape
     if (c == TEXT_COLOUR_ESCAPE) {
@@ -840,7 +840,7 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
       int NewW = CurW;
       while (c2 > ' ' || c2 == TEXT_COLOUR_ESCAPE) {
         if (c2 != TEXT_COLOUR_ESCAPE) NewW += GetCharWidth(c2);
-        c2 = VStr::GetChar(SPtr2);
+        c2 = VStr::Utf8GetChar(SPtr2);
         // check for colour escape
         if (c2 == TEXT_COLOUR_ESCAPE) ParseColourEscape(SPtr2, CR_UNDEFINED, CR_UNDEFINED);
       }

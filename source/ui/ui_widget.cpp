@@ -874,7 +874,7 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
   gl_pic_filtering = gl_font_filtering;
 
   for (const char *SPtr = *String; *SPtr; ) {
-    int c = VStr::GetChar(SPtr);
+    int c = VStr::Utf8GetChar(SPtr);
 
     // check for colour escape.
     if (c == TEXT_COLOUR_ESCAPE) {

@@ -269,6 +269,21 @@ public:
   inline int icmp (const char *S2) const { return ICmp(getData(), S2); }
   inline int icmp (const VStr &S2) const { return ICmp(getData(), *S2); }
 
+  inline bool StrEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  inline bool StrEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  inline bool StrEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  inline bool StrEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+
+  inline bool strequ (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  inline bool strequ (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  inline bool strequCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  inline bool strequCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+
+  inline bool strEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  inline bool strEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  inline bool strEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  inline bool strEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+
   bool StartsWith (const char *) const;
   bool StartsWith (const VStr &) const;
   bool EndsWith (const char *) const;
@@ -284,10 +299,30 @@ public:
   bool endsWithNoCase (const char *s) const;
   bool endsWithNoCase (const VStr &s) const;
 
+  inline bool StartsWithNoCase (const char *s) const { return startsWithNoCase(s); }
+  inline bool StartsWithNoCase (const VStr &s) const { return startsWithNoCase(s); }
+  inline bool EndsWithNoCase (const char *s) const { return endsWithNoCase(s); }
+  inline bool EndsWithNoCase (const VStr &s) const { return endsWithNoCase(s); }
+
+  inline bool StartsWithCI (const char *s) const { return startsWithNoCase(s); }
+  inline bool StartsWithCI (const VStr &s) const { return startsWithNoCase(s); }
+  inline bool EndsWithCI (const char *s) const { return endsWithNoCase(s); }
+  inline bool EndsWithCI (const VStr &s) const { return endsWithNoCase(s); }
+
+  inline bool startsWithCI (const char *s) const { return startsWithNoCase(s); }
+  inline bool startsWithCI (const VStr &s) const { return startsWithNoCase(s); }
+  inline bool endsWithCI (const char *s) const { return endsWithNoCase(s); }
+  inline bool endsWithCI (const VStr &s) const { return endsWithNoCase(s); }
+
   static bool startsWith (const char *str, const char *part);
   static bool endsWith (const char *str, const char *part);
   static bool startsWithNoCase (const char *str, const char *part);
   static bool endsWithNoCase (const char *str, const char *part);
+
+  static inline bool StartsWith (const char *str, const char *part) { return startsWith(str, part); }
+  static inline bool SndsWith (const char *str, const char *part) { return endsWith(str, part); }
+  static inline bool startsWithCI (const char *str, const char *part) { return startsWithNoCase(str, part); }
+  static inline bool endsWithCI (const char *str, const char *part) { return endsWithNoCase(str, part); }
 
   VStr ToLower () const;
   VStr ToUpper () const;
@@ -396,14 +431,30 @@ public:
   static int Utf8Length (const char *s, int len=-1);
   static inline int utf8Length (const char *s, int len=-1) { return (int)Utf8Length(s, len); }
   static size_t ByteLengthForUtf8 (const char *, size_t);
-  static int GetChar (const char *&); // utf8
-  static VStr FromChar (int);
+  // get utf8 char; advances pointer, returns '?' on invalid char
+  static int Utf8GetChar (const char *&s);
+  static VStr FromUtf8Char (int);
 
   static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
   static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
 
   static int ICmp (const char *s0, const char *s1);
   static int NICmp (const char *s0, const char *s1, size_t max);
+
+  static inline bool strequ (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static inline bool strequCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static inline bool nstrequ (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static inline bool nstrequCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
+
+  static inline bool StrEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static inline bool StrEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static inline bool NStrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static inline bool NStrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
+
+  static inline bool strEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static inline bool strEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static inline bool nstrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static inline bool nstrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
 
   static inline void Cpy (char *dst, const char *src) {
     if (dst) { if (src) strcpy(dst, src); else *dst = 0; }
