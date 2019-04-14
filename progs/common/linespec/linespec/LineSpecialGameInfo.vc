@@ -187,6 +187,7 @@ override void Init () {
   CreateCvar('r_statusbar_draw', "1", "Draw statusbar?", CVAR_ARCHIVE);
 
   CreateCvar('r_hud_draw_fs_ammo', "1", "Draw ammo counts on fullscreen HUD?", CVAR_ARCHIVE);
+  CreateCvar('r_hud_draw_fs_face', "1", "Draw Doomguy face on fullscreen HUD?", CVAR_ARCHIVE);
 
   CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 

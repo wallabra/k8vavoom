@@ -650,6 +650,11 @@ override void SB_DrawFullscreenStats () {
     }
   }
 
+  if (GetCvarB('r_hud_draw_fs_face')) {
+    // faces
+    if (ClGame.maxclients > 1) DrawPic(12, ovh-32, pic_faceback, fsalpha, cl.MO.Translation);
+    DrawPic(12, ovh-32, pic_faces[sb_faceindex], fsalpha);
+  }
 
   // draw inventory bar or ready item when needed (it's drawn with transparency)
   if (cl.InventoryTime && cl.InvFirst) {

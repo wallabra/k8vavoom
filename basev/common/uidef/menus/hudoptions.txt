@@ -196,4 +196,9 @@ menudef HUDOptions {
     title = "Ammo in Fullscreen";
     cvar = r_hud_draw_fs_ammo;
   }
+
+  option bool {
+    title = "Doomguy Face in Fullscreen";
+    cvar = r_hud_draw_fs_face;
+  }
 }
