@@ -745,8 +745,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     segdir = (*seg->v2-*seg->v1).normalised2D();
   }
 
-  sp->texinfo.saxis = segdir*TextureSScale(MTex);
-  sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex);
+  sp->texinfo.saxis = segdir*TextureSScale(MTex)*seg->sidedef->MidScaleX;
+  sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex)*seg->sidedef->MidScaleY;
   sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+seg->offset*TextureSScale(MTex)+seg->sidedef->MidTextureOffset*TextureOffsetSScale(MTex);
   sp->texinfo.Alpha = seg->linedef->alpha;
   sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
@@ -760,17 +760,19 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   float hgts[4];
 
-  if (seg->linedef->flags&ML_WRAP_MIDTEX) {
-    hgts[0] = MAX(midbotz1, z_org-texh);
-    hgts[1] = MIN(midtopz1, z_org);
-    hgts[2] = MIN(midtopz2, z_org);
-    hgts[3] = MAX(midbotz2, z_org-texh);
-    /*
-    hgts[0] = midbotz1;
-    hgts[1] = midtopz1;
-    hgts[2] = midtopz2;
-    hgts[3] = midbotz2;
-    */
+  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
+    if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (seg->sidedef->Flags&SDF_CLIPMIDTEX)) {
+      //k8: this is totally wrong
+      hgts[0] = MAX(midbotz1, z_org-texh);
+      hgts[1] = MIN(midtopz1, z_org);
+      hgts[2] = MIN(midtopz2, z_org);
+      hgts[3] = MAX(midbotz2, z_org-texh);
+    } else {
+      hgts[0] = midbotz1;
+      hgts[1] = midtopz1;
+      hgts[2] = midtopz2;
+      hgts[3] = midbotz2;
+    }
   } else {
     hgts[0] = MAX(midbotz1, z_org-texh);
     hgts[1] = MIN(midtopz1, z_org);
@@ -920,8 +922,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
       MTex = GTextureManager[GTextureManager.DefaultTexture];
     }
-    sp->texinfo.saxis = segdir*TextureSScale(MTex);
-    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex);
+    sp->texinfo.saxis = segdir*TextureSScale(MTex)*seg->sidedef->MidScaleX;
+    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex)*seg->sidedef->MidScaleY;
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+seg->offset*TextureSScale(MTex)+sidedef->MidTextureOffset*TextureOffsetSScale(MTex);
     sp->texinfo.Tex = MTex;
     sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
@@ -962,8 +964,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp = dseg->top;
 
 
-    sp->texinfo.saxis = segdir*TextureSScale(TTex);
-    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(TTex);
+    sp->texinfo.saxis = segdir*TextureSScale(TTex)*seg->sidedef->TopScaleX;
+    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(TTex)*seg->sidedef->TopScaleY;
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+seg->offset*TextureSScale(TTex)+sidedef->TopTextureOffset*TextureOffsetSScale(TTex);
     sp->texinfo.Tex = TTex;
     sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
@@ -988,8 +990,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     VTexture *BTex = GTextureManager(sidedef->BottomTexture);
     check(BTex);
-    sp->texinfo.saxis = segdir*TextureSScale(BTex);
-    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(BTex);
+    sp->texinfo.saxis = segdir*TextureSScale(BTex)*seg->sidedef->BotScaleX;
+    sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(BTex)*seg->sidedef->BotScaleY;
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+seg->offset*TextureSScale(BTex)+sidedef->BotTextureOffset*TextureOffsetSScale(BTex);
     sp->texinfo.Tex = BTex;
     sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
@@ -1030,8 +1032,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       dseg->extra = sp;
 
       VTexture *MTextr = GTextureManager(extraside->MidTexture);
-      sp->texinfo.saxis = segdir*TextureSScale(MTextr);
-      sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTextr);
+      sp->texinfo.saxis = segdir*TextureSScale(MTextr)*seg->sidedef->MidScaleX;
+      sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTextr)*seg->sidedef->MidScaleY;
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+seg->offset*TextureSScale(MTextr)+sidedef->MidTextureOffset*TextureOffsetSScale(MTextr);
 
       sp->texinfo.toffs = extratop->TexZ*TextureTScale(MTextr)+sidedef->MidRowOffset*TextureOffsetTScale(MTextr);
@@ -1326,7 +1328,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
   if (!seg->linedef) Sys_Error("R_SegMoved: miniseg");
 
   VTexture *Tex = seg->drawsegs->mid->texinfo.Tex;
-  seg->drawsegs->mid->texinfo.saxis = (*seg->v2-*seg->v1)/seg->length*TextureSScale(Tex);
+  seg->drawsegs->mid->texinfo.saxis = (*seg->v2-*seg->v1)/seg->length*TextureSScale(Tex)*seg->sidedef->MidScaleX;
   seg->drawsegs->mid->texinfo.soffs = -DotProduct(*seg->v1, seg->drawsegs->mid->texinfo.saxis)+seg->offset*TextureSScale(Tex)+seg->sidedef->MidTextureOffset*TextureOffsetSScale(Tex);
 
   // force update

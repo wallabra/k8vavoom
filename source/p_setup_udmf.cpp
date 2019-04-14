@@ -826,6 +826,9 @@ void VUdmfParser::ParseSideDef () {
   S.TopTexture = "-";
   S.MidTexture = "-";
   S.BotTexture = "-";
+  S.S.TopScaleX = S.S.TopScaleY = 1.0f;
+  S.S.BotScaleX = S.S.BotScaleY = 1.0f;
+  S.S.MidScaleX = S.S.MidScaleY = 1.0f;
   float XOffs = 0;
   float YOffs = 0;
 
@@ -895,6 +898,36 @@ void VUdmfParser::ParseSideDef () {
         continue;
       }
 
+      if (Key.strEquCI("scalex_top")) {
+        S.S.TopScaleX = CheckFloat();
+        continue;
+      }
+
+      if (Key.strEquCI("scaley_top")) {
+        S.S.TopScaleY = CheckFloat();
+        continue;
+      }
+
+      if (Key.strEquCI("scalex_mid")) {
+        S.S.MidScaleX = CheckFloat();
+        continue;
+      }
+
+      if (Key.strEquCI("scaley_mid")) {
+        S.S.MidScaleY = CheckFloat();
+        continue;
+      }
+
+      if (Key.strEquCI("scalex_bottom")) {
+        S.S.BotScaleX = CheckFloat();
+        continue;
+      }
+
+      if (Key.strEquCI("scaley_bottom")) {
+        S.S.BotScaleY = CheckFloat();
+        continue;
+      }
+
       if (Key.strEquCI("light")) {
         S.S.Light = CheckInt();
         continue;
@@ -902,6 +935,16 @@ void VUdmfParser::ParseSideDef () {
 
       if (Key.strEquCI("lightabsolute")) {
         Flag(S.S.Flags, SDF_ABSLIGHT);
+        continue;
+      }
+
+      if (Key.strEquCI("wrapmidtex")) {
+        Flag(S.S.Flags, SDF_WRAPMIDTEX);
+        continue;
+      }
+
+      if (Key.strEquCI("clipmidtex")) {
+        Flag(S.S.Flags, SDF_CLIPMIDTEX);
         continue;
       }
     }
@@ -1057,6 +1100,12 @@ void VUdmfParser::ParseThing () {
 
       if (Key.strEquCI("arg4")) {
         T.arg5 = CheckInt();
+        continue;
+      }
+
+      if (Key.strEquCI("arg0str")) {
+        // this should be color name for dynamic lights
+        T.arg1 = M_ParseColour(*CheckString())&0xffffffu;
         continue;
       }
 

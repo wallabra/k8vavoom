@@ -201,7 +201,9 @@ enum {
 const int SKY_FROM_SIDE = 0x8000;
 
 // sidedef flags
-const int SDF_ABSLIGHT = 0x0001; // light is absolute value
+const int SDF_ABSLIGHT   = 0x0001; // light is absolute value
+const int SDF_WRAPMIDTEX = 0x0002;
+const int SDF_CLIPMIDTEX = 0x0003;
 
 const float ATTN_NONE   = 0.0;
 const float ATTN_NORMAL = 1.0;
@@ -724,6 +726,10 @@ struct side_t {
   float TopRowOffset;
   float BotRowOffset;
   float MidRowOffset;
+
+  float TopScaleX, TopScaleY;
+  float BotScaleX, BotScaleY;
+  float MidScaleX, MidScaleY;
 
   // texture indices: we do not maintain names here
   // 0 means "no texture"; -1 means "i forgot what it is"

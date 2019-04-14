@@ -274,7 +274,9 @@ struct line_t : public TPlane {
 //
 //==========================================================================
 enum {
-  SDF_ABSLIGHT = 0x0001, // light is absolute value
+  SDF_ABSLIGHT   = 0x0001u, // light is absolute value
+  SDF_WRAPMIDTEX = 0x0002u,
+  SDF_CLIPMIDTEX = 0x0003u,
 };
 
 
@@ -288,6 +290,10 @@ struct side_t {
   float TopRowOffset;
   float BotRowOffset;
   float MidRowOffset;
+
+  float TopScaleX, TopScaleY;
+  float BotScaleX, BotScaleY;
+  float MidScaleX, MidScaleY;
 
   // texture indices: we do not maintain names here
   // 0 means "no texture"; -1 means "i forgot what it is"

@@ -1646,6 +1646,12 @@ void VLevel::CreateSides () {
   Sides = new side_t[NumNewSides+1];
   memset((void *)Sides, 0, sizeof(side_t)*(NumNewSides+1));
 
+  for (int f = 0; f < NumNewSides; ++f) {
+    Sides[f].TopScaleX = Sides[f].TopScaleY = 1.0f;
+    Sides[f].BotScaleX = Sides[f].BotScaleY = 1.0f;
+    Sides[f].MidScaleX = Sides[f].MidScaleY = 1.0f;
+  }
+
   int CurrentSide = 0;
   Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {

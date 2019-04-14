@@ -285,8 +285,10 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
           // check if we have only one region
           if (!sec->botregion->next) {
             VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
-            // here we should check if midtex covers the whole height, as it is not tiled vertically
-            {
+            if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
+              //TODO
+            } else {
+              // here we should check if midtex covers the whole height, as it is not tiled vertically
               const float mheight = MTex->GetScaledHeight();
               float toffs;
               if (ldef->flags&ML_DONTPEGBOTTOM) {
