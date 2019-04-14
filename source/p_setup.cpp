@@ -1615,10 +1615,11 @@ void VLevel::CreateSides () {
     if (Line->sidenum[0] == -1) {
       GCon->Logf("Bad WAD: Line %d has no front side", i);
       // let it glitch...
-      Line->sidenum[0] = 0;
+      //Line->sidenum[0] = 0;
+    } else {
+      if (Line->sidenum[0] < 0 || Line->sidenum[0] >= NumSides) Host_Error("Bad side-def index %d", Line->sidenum[0]);
+      ++NumNewSides;
     }
-    if (Line->sidenum[0] < 0 || Line->sidenum[0] >= NumSides) Host_Error("Bad side-def index %d", Line->sidenum[0]);
-    ++NumNewSides;
 
     if (Line->sidenum[1] != -1) {
       // has second side
@@ -1655,21 +1656,28 @@ void VLevel::CreateSides () {
   int CurrentSide = 0;
   Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
-    Sides[CurrentSide].BottomTexture = Line->sidenum[0];
+    Sides[CurrentSide].BottomTexture = Line->sidenum[0]; //k8: this is for UDMF
     Sides[CurrentSide].LineNum = i;
-    Line->sidenum[0] = CurrentSide;
-    ++CurrentSide;
+    bool skipInit0 = false;
+    if (Line->sidenum[0] == -1) {
+      // let it glitch...
+      Line->sidenum[0] = 0;
+      skipInit0 = true;
+    } else {
+      Line->sidenum[0] = CurrentSide++;
+    }
     if (Line->sidenum[1] != -1) {
-      Sides[CurrentSide].BottomTexture = Line->sidenum[1];
+      Sides[CurrentSide].BottomTexture = Line->sidenum[1]; //k8: this is for UDMF
       Sides[CurrentSide].LineNum = i;
-      Line->sidenum[1] = CurrentSide;
-      ++CurrentSide;
+      Line->sidenum[1] = CurrentSide++;
     }
 
     // assign line specials to sidedefs midtexture and arg1 to toptexture
     if (Line->special == LNSPEC_StaticInit && Line->arg2 != 1) continue;
-    Sides[Line->sidenum[0]].MidTexture = Line->special;
-    Sides[Line->sidenum[0]].TopTexture = Line->arg1;
+    if (!skipInit0) {
+      Sides[Line->sidenum[0]].MidTexture = Line->special;
+      Sides[Line->sidenum[0]].TopTexture = Line->arg1;
+    }
   }
   check(CurrentSide == NumNewSides);
 

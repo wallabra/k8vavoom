@@ -338,7 +338,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
     if (Ceil->esecplane->pic == skyflatnum) {
       // if it's a sky, render it as a regular sky surface
       DrawSurfaces(sub, secregion, nullptr, Surf, &Ceil->texinfo, secregion->eceiling->SkyBox, -1,
-        seg->sidedef->Light, !!(seg->sidedef->Flags & SDF_ABSLIGHT),
+        seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
         false);
     } else {
       if (PortalLevel == 0) {
@@ -378,7 +378,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
     if (Floor->esecplane->pic == skyflatnum) {
       // if it's a sky, render it as a regular sky surface
       DrawSurfaces(sub, secregion, nullptr, Surf, &Floor->texinfo, secregion->efloor->SkyBox, -1,
-        seg->sidedef->Light, !!(seg->sidedef->Flags & SDF_ABSLIGHT),
+        seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
         false);
     } else {
       if (PortalLevel == 0) {
@@ -421,7 +421,7 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
   } else {
     DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
       secregion->eceiling->SkyBox, -1, seg->sidedef->Light,
-      !!(seg->sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(seg->sidedef->Flags&SDF_ABSLIGHT), false);
   }
 }
 
@@ -509,11 +509,11 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     } else {
       DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
         secregion->eceiling->SkyBox, -1, sidedef->Light,
-        !!(sidedef->Flags & SDF_ABSLIGHT), false);
+        !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
     DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
       secregion->eceiling->SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(sidedef->Flags&SDF_ABSLIGHT), false);
   } else {
     // two sided line
     DrawSurfaces(sub, secregion, seg, dseg->top->surfs, &dseg->top->texinfo,

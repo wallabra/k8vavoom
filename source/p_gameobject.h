@@ -276,7 +276,7 @@ struct line_t : public TPlane {
 enum {
   SDF_ABSLIGHT   = 0x0001u, // light is absolute value
   SDF_WRAPMIDTEX = 0x0002u,
-  SDF_CLIPMIDTEX = 0x0003u,
+  SDF_CLIPMIDTEX = 0x0004u,
 };
 
 

@@ -200,13 +200,6 @@ enum {
 
 const int SKY_FROM_SIDE = 0x8000;
 
-// sidedef flags
-/*
-const int SDF_ABSLIGHT   = 0x0001; // light is absolute value
-const int SDF_WRAPMIDTEX = 0x0002;
-const int SDF_CLIPMIDTEX = 0x0003;
-*/
-
 const float ATTN_NONE   = 0.0;
 const float ATTN_NORMAL = 1.0;
 const float ATTN_IDLE   = 2.0;

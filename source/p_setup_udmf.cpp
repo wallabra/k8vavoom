@@ -369,6 +369,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
+
     if (Key.strEquCI("heightfloor")) {
       float FVal = CheckFloat();
       S.floor.dist = FVal;
@@ -488,6 +489,21 @@ void VUdmfParser::ParseSector (VLevel *Level) {
         Flag(S.SectorFlags, sector_t::SF_NoFallingDamage);
         continue;
       }
+
+      /*
+      if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
+        if (Key.strEquCI("lightfloor")) {
+          int lt = CheckInt();
+          if (S.params.lightlevel < lt) S.params.lightlevel = lt;
+          continue;
+        }
+        if (Key.strEquCI("lightceiling")) {
+          int lt = CheckInt();
+          if (S.params.lightlevel < lt) S.params.lightlevel = lt;
+          continue;
+        }
+      }
+      */
     }
 
     sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
@@ -930,6 +946,7 @@ void VUdmfParser::ParseSideDef () {
 
       if (Key.strEquCI("light")) {
         S.S.Light = CheckInt();
+        //GCon->Logf("sidedef #%d: light=%d", ParsedSides.length()-1, S.S.Light);
         continue;
       }
 
@@ -1214,6 +1231,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   CreateSides();
   side_t *sd = Sides;
   for (int i = 0; i < NumSides; ++i, ++sd) {
+    if (sd->BottomTexture < 0 || sd->BottomTexture >= Parser.ParsedSides.length()) Host_Error("Bad sidedef index (broken UDMF)");
     VUdmfParser::VParsedSide &Src = Parser.ParsedSides[sd->BottomTexture];
     int Spec = sd->MidTexture;
     int Tag = sd->TopTexture;
