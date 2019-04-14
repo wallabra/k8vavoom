@@ -450,8 +450,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   sky[5].texinfo.toffs = 128;
 
   NumSkySurfs = 6;
-  for (int j = 0; j < 6; j++)
-  {
+  for (int j = 0; j < 6; j++) {
     sky[j].texture1 = s1info.surfs[j].texture;
     sky[j].surf.eplane = &sky[j].plane;
     sky[j].surf.texinfo = &sky[j].texinfo;

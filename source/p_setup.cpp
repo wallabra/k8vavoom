@@ -1169,17 +1169,21 @@ load_again:
   MinMaxTime += Sys_Time();
 
   double WallShadesTime = -Sys_Time();
-  for (int i = 0; i < NumLines; i++) {
-    line_t *Line = Lines+i;
-    if (!Line->normal.x) {
-      Sides[Line->sidenum[0]].Light = MInfo.HorizWallShade;
-      if (Line->sidenum[1] >= 0) {
-        Sides[Lines[i].sidenum[1]].Light = MInfo.HorizWallShade;
-      }
-    } else if (!Line->normal.y) {
-      Sides[Line->sidenum[0]].Light = MInfo.VertWallShade;
-      if (Line->sidenum[1] >= 0) {
-        Sides[Lines[i].sidenum[1]].Light = MInfo.VertWallShade;
+  if (MInfo.HorizWallShade|MInfo.VertWallShade) {
+    line_t *Line = Lines;
+    for (int i = NumLines; i--; ++Line) {
+      int shadeChange =
+        !Line->normal.x ? MInfo.HorizWallShade :
+        !Line->normal.y ? MInfo.VertWallShade :
+        0;
+      if (shadeChange) {
+        for (int sn = 0; sn < 2; ++sn) {
+          const int sidx = Line->sidenum[sn];
+          if (sidx >= 0) {
+            side_t *side = &Sides[sidx];
+            side->Light += shadeChange;
+          }
+        }
       }
     }
   }
