@@ -46,14 +46,25 @@ final void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int
   Sector = InSector;
   TargetId = Arg1;
   Flags = Arg2;
+  int snums[2];
 
   // do a manual search, because tags hash is not yet set up.
   foreach (auto i; 0..XLevel.Lines.length) {
     if (XLevel.Lines[i].LineTag == TargetId) {
       line_t *Line = &XLevel.Lines[i];
-      DoTransfer(Line, Sector->params.lightlevel);
-      if ((Flags&WLF_SIDE1) && Line->sidenum[0] != -1) XLevel.Sides[Line->sidenum[0]].Flags |= SDF_ABSLIGHT;
-      if ((Flags&WLF_SIDE2) && Line->sidenum[1] != -1) XLevel.Sides[Line->sidenum[1]].Flags |= SDF_ABSLIGHT;
+      snums[0] = (Flags&WLF_SIDE1 ? Line->sidenum[0] : -1);
+      snums[1] = (Flags&WLF_SIDE2 ? Line->sidenum[1] : -1);
+      foreach (auto sidx; snums) {
+        if (sidx < 0) continue;
+        side_t *side = &XLevel.Sides[sidx];
+        side.Light = Sector->params.lightlevel;
+        side.bAbsLight = true;
+      }
+      //DoTransfer(Line, Sector->params.lightlevel);
+      //if ((Flags&WLF_SIDE1) && Line->sidenum[0] != -1) XLevel.Sides[Line->sidenum[0]].Flags |= SDF_ABSLIGHT;
+      //if ((Flags&WLF_SIDE2) && Line->sidenum[1] != -1) XLevel.Sides[Line->sidenum[1]].Flags |= SDF_ABSLIGHT;
+      //if ((Flags&WLF_SIDE1) && Line->sidenum[0] != -1) XLevel.Sides[Line->sidenum[0]].bAbsLight = true;
+      //if ((Flags&WLF_SIDE2) && Line->sidenum[1] != -1) XLevel.Sides[Line->sidenum[1]].bAbsLight = true;
     }
   }
   LastLight = Sector->params.lightlevel;
@@ -83,8 +94,15 @@ override void Tick (float DeltaTime) {
 //
 //==========================================================================
 final void DoTransfer (line_t *Line, int Light) {
-  if ((Flags&WLF_SIDE1) && Line->sidenum[0] != -1) XLevel.Sides[Line->sidenum[0]].Light = Light;
-  if ((Flags&WLF_SIDE2) && Line->sidenum[1] != -1) XLevel.Sides[Line->sidenum[1]].Light = Light;
+  int snums[2];
+  snums[0] = (Flags&WLF_SIDE1 ? Line->sidenum[0] : -1);
+  snums[1] = (Flags&WLF_SIDE2 ? Line->sidenum[1] : -1);
+  foreach (auto sidx; snums) {
+    if (sidx < 0) continue;
+    XLevel.Sides[sidx].Light = Light;
+  }
+  //if ((Flags&WLF_SIDE1) && Line->sidenum[0] != -1) XLevel.Sides[Line->sidenum[0]].Light = Light;
+  //if ((Flags&WLF_SIDE2) && Line->sidenum[1] != -1) XLevel.Sides[Line->sidenum[1]].Light = Light;
 }
 
 
