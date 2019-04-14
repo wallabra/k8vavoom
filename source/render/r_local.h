@@ -490,8 +490,8 @@ protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
 
-  void UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset);
-  void UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset);
+  void UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset, float Scale);
+  void UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset, float Scale);
   void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region, bool updatePoly=true);
   void UpdateSubsector (int num, float *bbox);

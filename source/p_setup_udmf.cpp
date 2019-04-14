@@ -1103,11 +1103,13 @@ void VUdmfParser::ParseThing () {
         continue;
       }
 
+      /*
       if (Key.strEquCI("arg0str")) {
         // this should be color name for dynamic lights
         T.arg1 = M_ParseColour(*CheckString())&0xffffffu;
         continue;
       }
+      */
 
       // classes (up to, and including 16)
       if (Key.startsWithCI("class")) {
