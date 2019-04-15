@@ -574,7 +574,7 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
       // crosses a two sided line
       //open = LineOpenings(ld, hit_point);
       //open = FindOpening(open, hit_point.z, hit_point.z+botmo.Height);
-      open = FindLineOpening(ld, hit_point, botmo.Height);
+      open = FindLineOpening(ld, hit_point, botmo.Height, do3dmidtex:true);
       // no valid openings
       if (!open) return false;
 

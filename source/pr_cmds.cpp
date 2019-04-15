@@ -552,9 +552,10 @@ IMPLEMENT_FUNCTION(VObject, SectorClosestPoint) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, LineOpenings) {
   P_GET_BOOL_OPT(do3dmidtex, false);
+  P_GET_INT_OPT(blockmask, SPF_NOBLOCKING);
   P_GET_PTR(TVec, point);
   P_GET_PTR(line_t, linedef);
-  RET_PTR(SV_LineOpenings(linedef, *point, 0xffffffff, do3dmidtex));
+  RET_PTR(SV_LineOpenings(linedef, *point, blockmask, do3dmidtex));
 }
 
 

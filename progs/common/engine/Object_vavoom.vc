@@ -470,7 +470,8 @@ native static final string LoadTextLump (name Name);
 // map utilites
 
 // warning! never change openings, they are cached!
-native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, const ref TVec point, optional bool do3dmidtex);
+// default blockmask is `SPF_NOBLOCKING`
+native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, const ref TVec point, optional int blockmask, optional bool do3dmidtex);
 // returns 0 - front, 1 - back, -1 - on
 native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
 // used for various 3dmidtex calculations
@@ -492,8 +493,8 @@ native static final TVec SectorClosestPoint (GameObject::sector_t *sec, TVec in)
 
 // find the best opening
 // warning! never change openings, they are cached!
-static final GameObject::opening_t *FindLineOpening (GameObject::line_t *linedef, const ref TVec point, float Height, optional bool do3dmidtex) {
-  auto open = LineOpenings(linedef, point);
+static final GameObject::opening_t *FindLineOpening (GameObject::line_t *linedef, const ref TVec point, float Height, optional int blockmask, optional bool do3dmidtex) {
+  auto open = LineOpenings(linedef, point, blockmask!optional, do3dmidtex!optional);
   if (!open) return nullptr;
   return FindOpening(open, point.z, point.z+Height);
 }

@@ -134,7 +134,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
         opening_t *open;
         float opentop = 0.0;
 
-        open = LineOpenings(li, hit_point);
+        open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
@@ -343,7 +343,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
           // crosses a two sided line
           float opentop = 0.0;
 
-          opening_t *open = LineOpenings(li, hit_point, stopat3dmidtex);
+          opening_t *open = LineOpenings(li, hit_point, SPF_NOBLOCKING, stopat3dmidtex);
           if (open) {
             print(":: line #%d (flags=0x%08x) ::", li-&XLevel.Lines[0], li->flags);
             for (opening_t *o = open; o; o = o->next) {
@@ -494,7 +494,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
       hit_point = Origin+dist*aim_dir;
       //open = LineOpenings(li, hit_point);
       //open = FindOpening(open, hit_point.z, hit_point.z);
-      open = FindLineOpening(li, hit_point, 0);
+      open = FindLineOpening(li, hit_point, 0, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
 
       if (!open || open->bottom >= open->top) break; // stop
 
@@ -814,7 +814,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
         opening_t *open;
         float opentop = 0.0;
 
-        open = LineOpenings(li, hit_point);
+        open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
@@ -1073,7 +1073,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
         opening_t *open;
         float opentop = 0.0;
 
-        open = LineOpenings(li, hit_point);
+        open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
