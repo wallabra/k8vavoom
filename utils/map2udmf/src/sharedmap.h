@@ -95,6 +95,7 @@ struct thing {
   virtual udmf::block convert (double xfactor=1.0, double yfactor=1.0, double zfactor=1.0) const = 0;
 };
 
+
 struct linedef {
   short start;
   short end;

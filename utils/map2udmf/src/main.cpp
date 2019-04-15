@@ -93,7 +93,7 @@ static void showhelp (int argc, char **argv) {
   std::cout << "-h\t\tDisplay this message" << std::endl;
   std::cout << "-f\t\tDon't prompt for overwrite of TEXTMAP" << std::endl;
   std::cout << "-v\t\tGenerate more output messages" << std::endl;
-  std::cout << "<namespace>\t\t-doom|-strife|-hexen|-zdoom" << std::endl;
+  std::cout << "<namespace>\t\t-doom|-strife|-hexen|-zdoom|-doomzdoom" << std::endl;
 }
 
 
@@ -214,6 +214,7 @@ int main (int argc, char **argv) {
     NS_Strife,
     NS_Hexen,
     NS_ZDoom,
+    NS_DoomZDoom,
   };
 
   try {
@@ -246,6 +247,7 @@ int main (int argc, char **argv) {
     else if (scanparm(argc, argv, "-strife")) ns = NS_Strife;
     else if (scanparm(argc, argv, "-hexen")) ns = NS_Hexen;
     else if (scanparm(argc, argv, "-zdoom")) ns = NS_ZDoom;
+    else if (scanparm(argc, argv, "-doomzdoom")) ns = NS_DoomZDoom;
     else throw exception::root("no namespace specified; use one of '-doom', '-strife', '-hexen', '-zdoom'");
 
     FILE *THINGS = 0;
@@ -344,6 +346,7 @@ int main (int argc, char **argv) {
       case NS_Strife: TEXTMAP << "Strife"; break;
       case NS_Hexen: TEXTMAP << "Hexen"; break;
       case NS_ZDoom: TEXTMAP << "ZDoom"; break;
+      case NS_DoomZDoom: TEXTMAP << "ZDoom"; break;
       default: abort();
     }
     TEXTMAP << "\";\n\n";
@@ -353,7 +356,7 @@ int main (int argc, char **argv) {
     TEXTMAP << "//                                    things\n";
     TEXTMAP << "// ////////////////////////////////////////////////////////////////////////// //\n";
     switch (ns) {
-      case NS_Doom: Convert<DoomThing>(TEXTMAP, THINGS, "thing", xfactor, yfactor, zfactor); break;
+      case NS_Doom: case NS_DoomZDoom: Convert<DoomThing>(TEXTMAP, THINGS, "thing", xfactor, yfactor, zfactor); break;
       case NS_Strife: Convert<StrifeThing>(TEXTMAP, THINGS, "thing", xfactor, yfactor, zfactor); break;
       case NS_Hexen: Convert<HexenThing>(TEXTMAP, THINGS, "thing", xfactor, yfactor, zfactor); break;
       case NS_ZDoom: Convert<ZDoomThing>(TEXTMAP, THINGS, "thing", xfactor, yfactor, zfactor); break;
@@ -373,7 +376,7 @@ int main (int argc, char **argv) {
     TEXTMAP << "//                                     lines\n";
     TEXTMAP << "// ////////////////////////////////////////////////////////////////////////// //\n";
     switch (ns) {
-      case NS_Doom: Convert<DoomLine>(TEXTMAP, LINEDEFS, "linedef", xfactor, yfactor, zfactor); break;
+      case NS_Doom: case NS_DoomZDoom: Convert<DoomLine>(TEXTMAP, LINEDEFS, "linedef", xfactor, yfactor, zfactor); break;
       case NS_Strife: Convert<StrifeLine>(TEXTMAP, LINEDEFS, "linedef", xfactor, yfactor, zfactor); break;
       case NS_Hexen: Convert<HexenLine>(TEXTMAP, LINEDEFS, "linedef", xfactor, yfactor, zfactor); break;
       case NS_ZDoom: Convert<ZDoomLine>(TEXTMAP, LINEDEFS, "linedef", xfactor, yfactor, zfactor); break;
@@ -392,7 +395,18 @@ int main (int argc, char **argv) {
     TEXTMAP << "// ////////////////////////////////////////////////////////////////////////// //\n";
     TEXTMAP << "//                                    sectors\n";
     TEXTMAP << "// ////////////////////////////////////////////////////////////////////////// //\n";
-    Convert<sector>(TEXTMAP, SECTORS, "sector", xfactor, yfactor, zfactor);
+    switch (ns) {
+      case NS_Doom:
+      case NS_Strife:
+      case NS_Hexen:
+        Convert<sector>(TEXTMAP, SECTORS, "sector", xfactor, yfactor, zfactor);
+        break;
+      case NS_DoomZDoom:
+      case NS_ZDoom:
+        Convert<DoomZDoomSector>(TEXTMAP, SECTORS, "sector", xfactor, yfactor, zfactor);
+        break;
+      default: abort();
+    }
 
     log("Closing files...");
     std::cout << "Conversion complete!" << std::endl;

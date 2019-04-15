@@ -71,4 +71,9 @@ struct DoomLine : public linedef {
 };
 
 
+struct DoomZDoomSector : public sector {
+  virtual udmf::block convert (double xfactor=1.0, double yfactor=1.0, double zfactor=1.0) const override;
+};
+
+
 #endif

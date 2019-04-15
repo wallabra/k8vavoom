@@ -115,3 +115,15 @@ udmf::block DoomLine::convert (double xfactor, double yfactor, double zfactor) c
   if (left != -1) ul.put("sideback", (unsigned short)left);
   return ul;
 }
+
+
+//==========================================================================
+//
+//  DoomZDoomSector::convert
+//
+//==========================================================================
+udmf::block DoomZDoomSector::convert (double xfactor, double yfactor, double zfactor) const {
+  auto res = sector::convert(xfactor, yfactor, zfactor);
+  if (tag) res.put("dropactors", true);
+  return res;
+}
