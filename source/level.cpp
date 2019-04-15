@@ -2190,6 +2190,63 @@ static __attribute__((unused)) void removeRegion (sector_t *dst, sec_region_t *r
 
 //==========================================================================
 //
+//  VLevel::AppendControlLink
+//
+//==========================================================================
+void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
+  if (!src || !dest || src == dest) return; // just in case
+
+  if (ControlLinks.length() == 0) {
+    // first time, create empty array
+    ControlLinks.setLength(NumSectors);
+    Ctl2DestLink *link = ControlLinks.ptr();
+    for (int f = NumSectors; f--; ++link) {
+      link->src = -1;
+      link->dest = -1;
+      link->next = -1;
+    }
+  }
+
+  const int srcidx = (int)(ptrdiff_t)(src-Sectors);
+  const int destidx = (int)(ptrdiff_t)(dest-Sectors);
+  Ctl2DestLink *lnk = &ControlLinks[srcidx];
+  if (lnk->dest < 0) {
+    // first slot
+    check(lnk->src == -1);
+    check(lnk->next == -1);
+    lnk->src = srcidx;
+    lnk->dest = destidx;
+    lnk->next = -1;
+  } else {
+    // find list tail
+    int lastidx = srcidx;
+    for (;;) {
+      int nli = ControlLinks[lastidx].next;
+      if (nli < 0) break;
+      lastidx = nli;
+    }
+    // append to list
+    int newidx = ControlLinks.length();
+    Ctl2DestLink *newlnk = &ControlLinks.alloc();
+    lnk = &ControlLinks[lastidx]; // refresh lnk, because array might be reallocated
+    check(lnk->next == -1);
+    lnk->next = newidx;
+    newlnk->src = srcidx;
+    newlnk->dest = destidx;
+    newlnk->next = -1;
+  }
+
+  /*
+  GCon->Logf("=== AppendControlLink (src=%d; dst=%d) ===", srcidx, destidx);
+  for (auto it = IterControlLinks(src); !it.isEmpty(); it.next()) {
+    GCon->Logf("   dest=%d", it.getDestSectorIndex());
+  }
+  */
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddExtraFloorSane
 //
 //  vavoom
@@ -2255,6 +2312,7 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
 
     src->SectorFlags |= sector_t::SF_ExtrafloorSource;
     dst->SectorFlags |= sector_t::SF_HasExtrafloors;
+    AppendControlLink(src, dst);
 
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
@@ -2434,6 +2492,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
         src->origCeiling = src->ceiling;
       }
       src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+      AppendControlLink(src, dst);
 
       // solid, or paper-thin region
       // new region is from old floor to new flipped floor
@@ -2456,6 +2515,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       GCon->Logf("::: SOLID; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst);
     } else {
       src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+      AppendControlLink(src, dst);
 
       // non-solid, non paper-thin region
       // old region is from old floor to new flipped floor (shrinked)

@@ -217,14 +217,6 @@ struct opening_t {
   //sec_plane_t *lowfloorplane;
   //sec_plane_t *highceilingplane;
   opening_t *next;
-  // closest floor and ceiling, source of floorz and ceilingz
-  /*
-  enum {
-    FC_FlipFloor = 1u<<0,
-    FC_FlipCeiling = 1u<<1,
-  };
-  vuint32 fcflags;
-  */
 };
 
 
@@ -238,7 +230,12 @@ sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p);
 
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex=false);
 
+// this can return region with non-blocking floor/ceiling
 sec_region_t *SV_FindThingGap (sec_region_t *gaps, const TVec &point, float z1, float z2, bool dbgDump=false);
+
+// this calls `SV_FindThingGap`, and returns blocking floor and ceiling planes
+void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float z1, float z2, TSecPlaneRef &floor, TSecPlaneRef &ceiling);
+
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 
 

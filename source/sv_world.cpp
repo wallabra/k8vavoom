@@ -437,7 +437,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   bestFloorDist = 999999.0f;
   bestFit = nullptr;
   int fitCount = 0;
-  sec_region_t *fitIndide = nullptr;
+  sec_region_t *fitIndid = nullptr;
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
       const float fz = reg->efloor.GetPointZ(point);
@@ -449,7 +449,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
         }
         const float cz = (rc ? rc->eceiling.GetPointZ(point) : reg->eceiling.GetPointZ(point));
         if (z2 <= cz) {
-          fitIndide = reg;
+          fitIndid = reg;
           ++fitCount;
         }
       }
@@ -463,7 +463,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   }
 
   // return gap we can fit inside
-  if (fitCount == 1) return fitIndide;
+  if (fitCount == 1) return fitIndid;
 
   return (bestFit ? bestFit : gaps);
 
@@ -554,6 +554,36 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   if (fit_num > 1) return fit_closest;
   return nofit_closest;
 #endif
+}
+
+
+//==========================================================================
+//
+//  SV_FindGapFloorCeiling
+//
+//  this calls `SV_FindThingGap`, and returns blocking
+//  floor and ceiling planes
+//
+//==========================================================================
+void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float z1, float z2, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
+  sec_region_t *gap = SV_FindThingGap(sector->botregion, p, z1, z1);
+  check(gap);
+  // get ceiling
+  ceiling = gap->eceiling;
+  for (sec_region_t *reg = gap; reg; reg = reg->next) {
+    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
+      ceiling = reg->eceiling;
+      break;
+    }
+  }
+  // get floor
+  floor = gap->efloor;
+  for (sec_region_t *reg = gap; reg; reg = reg->prev) {
+    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
+      floor = reg->efloor;
+      break;
+    }
+  }
 }
 
 
@@ -708,8 +738,6 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
 //
 //==========================================================================
 bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
-  msecnode_t *n;
-
   check(sector);
   int secnum = (int)(ptrdiff_t)(sector-Sectors);
   if ((csTouched[secnum]&0x7fffffffU) == csTouchCount) return !!(csTouched[secnum]&0x80000000U);
@@ -726,6 +754,10 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
   // Things can arbitrarily be inserted and removed and it won't mess up.
   //
   // killough 4/7/98: simplified to avoid using complicated counter
+  //
+  // ketmar: mostly rewritten
+
+  msecnode_t *n;
 
   // mark all things invalid
   for (n = sector->TouchingThingList; n; n = n->SNext) n->Visited = 0;
@@ -752,6 +784,13 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
     }
   } while (n); // repeat from scratch until all things left are marked valid
 
+  // this checks the case when 3d control sector moved (3d lifts)
+  for (auto it = IterControlLinks(sector); !it.isEmpty(); it.next()) {
+    //GCon->Logf("*** src=%d; dest=%d", secnum, it.getDestSectorIndex());
+    bool r2 = ChangeSectorInternal(it.getDestSector(), crunch);
+    if (r2) { ret = true; csTouched[secnum] |= 0x80000000U; }
+  }
+  /*
   if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) {
     for (int i = 0; i < NumSectors; ++i) {
       sector_t *sec2 = &Sectors[i];
@@ -766,6 +805,8 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
       }
     }
   }
+  */
+
   return ret;
 }
 

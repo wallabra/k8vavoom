@@ -387,7 +387,7 @@ native final void StopSoundSequence ();
 native final bool CheckSides (TVec lsPos);
 native final void CheckDropOff (out float DeltaX, out float DeltaY);
 native final bool CheckPosition (TVec Pos);
-native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos);
+native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/);
 native final bool TryMove (TVec newPos, bool AllowDropOff);
 native final bool TryMoveEx (tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff);
 native final bool TestMobjZ ();

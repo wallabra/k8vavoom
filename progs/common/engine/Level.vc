@@ -180,6 +180,17 @@ native transient private int *csTouched; // for ChangeSector; Z_Malloc'ed, NumSe
 native transient private array!int FakeFCSectors;
 native transient private array!int TaggedSectors;
 
+// this is used to keep control->dest 3d floor links
+// [0..NumSectors) is entry point, then follow next index (-1 means 'end')
+// order is undefined
+struct Ctl2DestLink {
+  int src; // sector number, just in case
+  int dest; // sector number
+  int next; // index in `ControlLinks` or -1
+};
+
+native transient private array!Ctl2DestLink ControlLinks;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // natives

@@ -326,7 +326,44 @@ class VLevel : public VGameObject {
   TArray<vint32> FakeFCSectors;
   TArray<vint32> TaggedSectors;
 
+  // this is used to keep control->dest 3d floor links
+  // [0..NumSectors) is entry point, then follow next index (-1 means 'end')
+  // order is undefined
+  struct Ctl2DestLink {
+    vint32 src; // sector number, just in case (can be -1 for unused slots)
+    vint32 dest; // sector number (can be -1 for unused slots)
+    vint32 next; // index in `ControlLinks` or -1
+  };
+
+  TArray<Ctl2DestLink> ControlLinks;
+
+  // iterator
+  struct CtlLinkIter {
+    VLevel *level;
+    int srcidx;
+    int curridx;
+
+    CtlLinkIter () = delete;
+
+    CtlLinkIter (VLevel *alevel, int asrcidx) : level(alevel), srcidx(asrcidx), curridx(asrcidx) {
+      if (!alevel || asrcidx < 0 || asrcidx >= alevel->ControlLinks.length()) {
+        curridx = -1;
+      } else if (alevel->ControlLinks[asrcidx].dest < 0) {
+        // no linked sectors for this source
+        curridx = -1;
+      }
+    }
+
+    inline bool isEmpty () const { return (!level || curridx < 0); }
+    inline sector_t *getDestSector () const { return (level && curridx >= 0 ? level->Sectors+level->ControlLinks[curridx].dest : nullptr); }
+    inline int getDestSectorIndex () const { return (level && curridx >= 0 ? level->ControlLinks[curridx].dest : -1); }
+    inline void next () { if (level && curridx >= 0) curridx = level->ControlLinks[curridx].next; }
+  };
+
 private:
+  void AppendControlLink (const sector_t *src, const sector_t *dest);
+  inline CtlLinkIter IterControlLinks (const sector_t *src) { return CtlLinkIter(this, (src ? (int)(ptrdiff_t)(src-Sectors) : -1)); }
+
   bool ChangeSectorInternal (sector_t *sector, int crunch);
 
   void xxHashLinedef (XXH32_state_t *xctx, const line_t &line) const {

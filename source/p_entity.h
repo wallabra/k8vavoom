@@ -676,7 +676,7 @@ public:
 
   bool CheckWater ();
   bool CheckPosition (TVec);
-  bool CheckRelPosition (tmtrace_t &, TVec);
+  bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false);
   bool TryMove (tmtrace_t &, TVec, bool);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float);
@@ -719,7 +719,7 @@ private:
   // world iterator callbacks
   bool CheckThing (tmtrace_t &, VEntity *);
   bool CheckLine (tmtrace_t &, line_t *);
-  bool CheckRelThing (tmtrace_t &, VEntity *);
+  bool CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups=false);
   bool CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials=false);
   void BlockedByLine (line_t *);
   void PushLine (const tmtrace_t &tmtrace);

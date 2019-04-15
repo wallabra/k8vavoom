@@ -128,24 +128,57 @@ struct tmtrace_t {
 };
 
 
+//==========================================================================
+//
+//  tmtSetupGap
+//
+//==========================================================================
+static void tmtSetupGap (tmtrace_t *tmtrace, sector_t *sector, float Height) {
+  SV_FindGapFloorCeiling(sector, tmtrace->End, tmtrace->End.z, tmtrace->End.z+(Height > 0 ? Height : 0.0f), tmtrace->EFloor, tmtrace->ECeiling);
+  tmtrace->FloorZ = tmtrace->EFloor.GetPointZ(tmtrace->End);
+  tmtrace->DropOffZ = tmtrace->FloorZ;
+  tmtrace->CeilingZ = tmtrace->ECeiling.GetPointZ(tmtrace->End);
+}
+
+
+//==========================================================================
+//
+//  VEntity::CopyTraceFloor
+//
+//==========================================================================
 void VEntity::CopyTraceFloor (tmtrace_t *tr, bool setz) {
   EFloor = tr->EFloor;
   if (setz) FloorZ = tr->FloorZ;
 }
 
 
+//==========================================================================
+//
+//  VEntity::CopyTraceCeiling
+//
+//==========================================================================
 void VEntity::CopyTraceCeiling (tmtrace_t *tr, bool setz) {
   ECeiling = tr->ECeiling;
   if (setz) CeilingZ = tr->CeilingZ;
 }
 
 
+//==========================================================================
+//
+//  VEntity::CopyRegFloor
+//
+//==========================================================================
 void VEntity::CopyRegFloor (sec_region_t *r, bool setz) {
   EFloor = r->efloor;
   FloorZ = EFloor.GetPointZ(Origin);
 }
 
 
+//==========================================================================
+//
+//  VEntity::CopyRegCeiling
+//
+//==========================================================================
 void VEntity::CopyRegCeiling (sec_region_t *r, bool setz) {
   ECeiling = r->eceiling;
   CeilingZ = ECeiling.GetPointZ(Origin);
@@ -402,6 +435,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
 
     // the base floor / ceiling is from the subsector that contains the point
     // any contacted lines the step closer together will adjust them
+    /*
     if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
       sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
       sec_region_t *reg = gap;
@@ -417,6 +451,8 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
       tmtrace.DropOffZ = tmtrace.FloorZ;
       tmtrace.CopyRegCeiling(reg, &Origin);
     }
+    */
+    tmtSetupGap(&tmtrace, newsubsec->sector, Height);
 
     // check lines
     XLevel->IncrementValidCount();
@@ -651,6 +687,8 @@ bool VEntity::CheckPosition (TVec Pos) {
 //
 //  VEntity::CheckThing
 //
+//  returns `false` when blocked
+//
 //==========================================================================
 bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   // don't clip against self
@@ -659,7 +697,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
   if (!(Other->EntityFlags&EF_Solid)) return true;
 
-  float blockdist = Other->Radius+Radius;
+  const float blockdist = Other->Radius+Radius;
 
   if (fabsf(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
       fabsf(Other->Origin.y-cptrace.Pos.y) >= blockdist)
@@ -668,9 +706,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
     return true;
   }
 
-  if ((EntityFlags&EF_PassMobj) || (EntityFlags&EF_Missile) ||
-      (Other->EntityFlags&EF_ActLikeBridge))
-  {
+  if ((EntityFlags&(EF_PassMobj|EF_Missile)) || (Other->EntityFlags&EF_ActLikeBridge)) {
     // prevent some objects from overlapping
     if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
     // check if a mobj passed over/under another object
@@ -773,18 +809,7 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //   blocked, or blocked by a line).
 //
 //==========================================================================
-bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
-  int xl;
-  int xh;
-  int yl;
-  int yh;
-  int bx;
-  int by;
-  subsector_t *newsubsec;
-  VEntity *thingblocker;
-  //VEntity *fakedblocker;
-  bool good = true;
-
+bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups) {
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOXTOP] = Pos.y+Radius;
@@ -792,11 +817,12 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   tmtrace.BBox[BOXRIGHT] = Pos.x+Radius;
   tmtrace.BBox[BOXLEFT] = Pos.x-Radius;
 
-  newsubsec = XLevel->PointInSubsector(Pos);
+  subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
   tmtrace.CeilingLine = nullptr;
 
   // the base floor / ceiling is from the subsector that contains the point
   // any contacted lines the step closer together will adjust them
+  /*
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
     sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
     sec_region_t *reg = gap;
@@ -812,15 +838,15 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
     tmtrace.DropOffZ = tmtrace.FloorZ;
     tmtrace.CopyRegCeiling(reg, &tmtrace.End);
   }
+  */
+  tmtSetupGap(&tmtrace, newsubsec->sector, Height);
 
-  //++validcount;
   XLevel->IncrementValidCount();
   tmtrace.SpecHit.reset(); // was `Clear()`
 
   tmtrace.BlockingMobj = nullptr;
   tmtrace.StepThing = nullptr;
-  thingblocker = nullptr;
-  //fakedblocker = nullptr;
+  VEntity *thingblocker = nullptr;
 
   // check things first, possibly picking things up.
   // the bounding box is extended by MAXRADIUS
@@ -828,16 +854,15 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   // based on their origin point, and can overlap
   // into adjacent blocks by up to MAXRADIUS units.
   if (EntityFlags&EF_ColideWithThings) {
-    xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
-    xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
-    yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
-    yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
-    //GCon->Logf("========= %s", GetClass()->GetName());
+    const int xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
+    const int xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
+    const int yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
+    const int yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
 
-    for (bx = xl; bx <= xh; ++bx) {
-      for (by = yl; by <= yh; ++by) {
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
-          if (!CheckRelThing(tmtrace, *It)) {
+          if (!CheckRelThing(tmtrace, *It, noPickups)) {
             // continue checking for other things in to see if we hit something
             if (!tmtrace.BlockingMobj || compat_nopassover ||
                 (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
@@ -845,22 +870,18 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
               // slammed into something
               return false;
             } else if (!tmtrace.BlockingMobj->Player &&
-                       !(EntityFlags&VEntity::EF_Float) &&
-                       !(EntityFlags&VEntity::EF_Missile) &&
+                       !(EntityFlags&(VEntity::EF_Float|VEntity::EF_Missile)) &&
                        tmtrace.BlockingMobj->Origin.z+tmtrace.BlockingMobj->Height-tmtrace.End.z <= MaxStepHeight)
             {
-              //GCon->Logf("  thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), tmtrace.BlockingMobj->GetClass()->GetName());
               if (!thingblocker || tmtrace.BlockingMobj->Origin.z > thingblocker->Origin.z) thingblocker = tmtrace.BlockingMobj;
               tmtrace.BlockingMobj = nullptr;
             } else if (Player && tmtrace.End.z+Height-tmtrace.BlockingMobj->Origin.z <= MaxStepHeight) {
               if (thingblocker) {
                 // something to step up on, set it as the blocker so that we don't step up
-                //GCon->Logf("  FUCKKY! thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), tmtrace.BlockingMobj->GetClass()->GetName());
                 return false;
               }
               // nothing is blocking, but this object potentially could
               // if there is something else to step on
-              //fakedblocker = tmtrace.BlockingMobj;
               tmtrace.BlockingMobj = nullptr;
             } else {
               // blocking
@@ -873,7 +894,6 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   }
 
   // check lines
-  //++validcount;
   XLevel->IncrementValidCount();
 
   float thingdropoffz = tmtrace.FloorZ;
@@ -881,19 +901,21 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   tmtrace.BlockingMobj = nullptr;
 
   if (EntityFlags&EF_ColideWithWorld) {
-    xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
-    xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
-    yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
-    yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
+    const int xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
+    const int xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    const int yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    const int yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
+    bool good = true;
 
     line_t *fuckhit = nullptr;
     float lastFrac = 1e7f;
-    for (bx = xl; bx <= xh; ++bx) {
-      for (by = yl; by <= yh; ++by) {
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
         line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
           //good &= CheckRelLine(tmtrace, ld);
-          if (!CheckRelLine(tmtrace, ld)) {
+          // if we don't want pickups, don't activate specials
+          if (!CheckRelLine(tmtrace, ld, noPickups)) {
             good = false;
             // find the fractional intercept point along the trace line
             const float den = DotProduct(ld->normal, tmtrace.End-Pos);
@@ -908,20 +930,17 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
                 lastFrac = fabsf(frac);
               }
             }
-            //if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
           }
         }
       }
     }
 
     if (!good) {
-      //printf("*** NOTGOOD\n");
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
 
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
-      //printf("*** SHITHEIGHT\n");
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
@@ -930,11 +949,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   if (tmtrace.StepThing) tmtrace.DropOffZ = thingdropoffz;
 
   tmtrace.BlockingMobj = thingblocker;
-  if (tmtrace.BlockingMobj) {
-    //printf("*** MOBJ\n");
-    //GCon->Logf("  EXIT! thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), (tmtrace.BlockingMobj ? tmtrace.BlockingMobj->GetClass()->GetName() : "<>"));
-    return false;
-  }
+  if (tmtrace.BlockingMobj) return false;
 
   return true;
 }
@@ -944,14 +959,16 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
 //
 //  VEntity::CheckRelThing
 //
+//  returns `false` when blocked
+//
 //==========================================================================
-bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
+bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups) {
   // don't clip against self
   if (Other == this) return true;
   // can't hit thing
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
 
-  float blockdist = Other->Radius+Radius;
+  const float blockdist = Other->Radius+Radius;
 
   if (fabsf(Other->Origin.x-tmtrace.End.x) >= blockdist ||
       fabsf(Other->Origin.y-tmtrace.End.y) >= blockdist)
@@ -963,11 +980,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
   tmtrace.BlockingMobj = Other;
   if (!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
       !compat_nopassover &&
-      (!(EntityFlags&EF_Float) ||
-       !(EntityFlags&EF_Missile) ||
-       !(EntityFlags&EF_NoGravity)) &&
-      (Other->EntityFlags&EF_Solid) &&
-      (Other->EntityFlags&EF_ActLikeBridge))
+      !(EntityFlags&(EF_Float|EF_Missile|EF_NoGravity)) &&
+      (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
   {
     // allow actors to walk on other actors as well as floors
     if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
@@ -982,8 +996,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
     }
   }
   //if (!(tmtrace.Thing->EntityFlags & VEntity::EF_NoPassMobj) || Actor(Other).bSpecial)
-  if ((((EntityFlags&EF_PassMobj) ||
-       (Other->EntityFlags&EF_ActLikeBridge)) &&
+  if ((((EntityFlags&EF_PassMobj) || (Other->EntityFlags&EF_ActLikeBridge)) &&
        !(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
        !compat_nopassover) ||
       (EntityFlags&EF_Missile))
@@ -995,7 +1008,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
     if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
-  return eventTouch(Other);
+  return (noPickups ? false : eventTouch(Other));
 }
 
 
@@ -1732,11 +1745,10 @@ void VEntity::UpdateVelocity () {
 //  TestMobjZ
 //
 //  Checks if the new Z position is legal
+//  returns blocking thing
 //
 //=============================================================================
 VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
-  int xl, xh, yl, yh, bx, by;
-
   // can't hit thing
   if (!(EntityFlags&EF_ColideWithThings)) return nullptr;
   // not solid
@@ -1745,14 +1757,14 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
   // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
   // into mapblocks based on their origin point, and can overlap into adjacent
   // blocks by up to MAXRADIUS units
-  xl = MapBlock(TryOrg.x-Radius-XLevel->BlockMapOrgX-MAXRADIUS);
-  xh = MapBlock(TryOrg.x+Radius-XLevel->BlockMapOrgX+MAXRADIUS);
-  yl = MapBlock(TryOrg.y-Radius-XLevel->BlockMapOrgY-MAXRADIUS);
-  yh = MapBlock(TryOrg.y+Radius-XLevel->BlockMapOrgY+MAXRADIUS);
+  const int xl = MapBlock(TryOrg.x-Radius-XLevel->BlockMapOrgX-MAXRADIUS);
+  const int xh = MapBlock(TryOrg.x+Radius-XLevel->BlockMapOrgX+MAXRADIUS);
+  const int yl = MapBlock(TryOrg.y-Radius-XLevel->BlockMapOrgY-MAXRADIUS);
+  const int yh = MapBlock(TryOrg.y+Radius-XLevel->BlockMapOrgY+MAXRADIUS);
 
   // xl->xh, yl->yh determine the mapblock set to search
-  for (bx = xl; bx <= xh; ++bx) {
-    for (by = yl; by <= yh; ++by) {
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
       for (VBlockThingsIterator Other(XLevel, bx, by); Other; ++Other) {
         if (*Other == this) continue; // don't clip against self
         if (!(Other->EntityFlags&EF_ColideWithThings)) continue; // can't hit thing
@@ -2101,10 +2113,11 @@ IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
+  P_GET_BOOL_OPT(noPickups, false);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
   P_GET_SELF;
-  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos));
+  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckSides) {
