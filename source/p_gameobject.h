@@ -50,6 +50,7 @@ struct sec_surface_t;
 struct subregion_t;
 
 struct decal_t;
+struct opening_t;
 
 class VThinker;
 class VLevelInfo;
@@ -87,6 +88,23 @@ enum {
   LNSPEC_ElevatorLowerToNearest = 247,
   */
 };
+
+
+enum {
+  SPF_NOBLOCKING   = 1u, // Not blocking
+  SPF_NOBLOCKSIGHT = 2u, // Do not block sight
+  SPF_NOBLOCKSHOOT = 4u, // Do not block shooting
+  SPF_ADDITIVE     = 8u, // Additive translucency
+
+  SPF_MAX_OPENINGS = 16,
+};
+
+/*
+enum {
+  SPF_EX_ALLOCATED = 1u<<0,
+  SPF_EX_FLOOR     = 1u<<1,
+};
+*/
 
 
 //==========================================================================
@@ -265,6 +283,10 @@ struct line_t : public TPlane {
   // lines connected to `v2`
   line_t **v2lines;
   vint32 v2linesCount;
+
+  //FIXME: do it better
+  mutable opening_t *oplist[SPF_MAX_OPENINGS]; // for each possible flag combination
+  mutable vuint32 oplistUsed;
 };
 
 
@@ -317,20 +339,6 @@ struct side_t {
 //  Sector
 //
 //==========================================================================
-enum {
-  SPF_NOBLOCKING   = 1u, // Not blocking
-  SPF_NOBLOCKSIGHT = 2u, // Do not block sight
-  SPF_NOBLOCKSHOOT = 4u, // Do not block shooting
-  SPF_ADDITIVE     = 8u, // Additive translucency
-};
-
-/*
-enum {
-  SPF_EX_ALLOCATED = 1u<<0,
-  SPF_EX_FLOOR     = 1u<<1,
-};
-*/
-
 enum {
   SKY_FROM_SIDE = 0x8000
 };

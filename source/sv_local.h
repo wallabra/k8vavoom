@@ -221,6 +221,21 @@ struct opening_t {
   // allocated list is double-linked, free list only using `listprev`
   opening_t *listprev;
   opening_t *listnext;
+
+  inline void copyFrom (const opening_t *op) {
+    if (op) {
+      top = op->top;
+      bottom = op->bottom;
+      range = op->range;
+      lowfloor = op->lowfloor;
+      highceiling = op->highceiling;
+      efloor = op->efloor;
+      eceiling = op->eceiling;
+    } else {
+      top = bottom = range = lowfloor = highceiling = 0.0f;
+      efloor.splane = eceiling.splane = nullptr;
+    }
+  }
 };
 
 

@@ -1071,6 +1071,7 @@ override void SpawnWorld (Level InLevel) {
     switch (line->special) {
       // Sector_Set3dFloor(tag, type, flags, alpha, hi-tag/line ID)
       case LNSPEC_SectorSet3dFloor:
+        //print("********************** %s", line->oplist.length);
         //if (line->arg2) print("*** 3D FLOOR OF TYPE %s (tag=%s; flags=0x%04x; alpha=%s; hitag=%s)", line->arg2, line->arg1, line->arg3, line->arg4, line->arg5);
         switch (line->arg2&3) {
           case 1:

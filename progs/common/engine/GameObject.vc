@@ -191,6 +191,8 @@ enum {
   SPF_NOBLOCKSIGHT = 2,
   SPF_NOBLOCKSHOOT = 4,
   SPF_ADDITIVE     = 8,
+
+  SPF_MAX_OPENINGS = 16,
 };
 
 /*
@@ -710,6 +712,10 @@ struct line_t : TPlane {
   line_t*[] v2lines;
   //line_t **v2lines;
   //int v2linesCount;
+
+  //FIXME: do it better
+  opening_t*[SPF_MAX_OPENINGS] oplist; // for each possible flag combination
+  int oplistUsed;
 };
 
 

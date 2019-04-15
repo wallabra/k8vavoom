@@ -222,6 +222,8 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
   if (linedef->sidenum[1] == -1 || linedef->backsector == nullptr) return nullptr; // single sided line
 
+  NoBlockFlags &= (SPF_MAX_OPENINGS-1);
+
   opening_t *op = nullptr;
   int opsused = 0;
   sec_region_t *frontreg = linedef->frontsector->botregion;
@@ -277,6 +279,14 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
         return op;
       }
     }
+  }
+
+  // check opening cache
+  op = linedef->oplist[NoBlockFlags];
+  if (op) {
+    // opening without floor plane means "no openings available"
+    //GCon->Logf("%p: opcache %d hit!", linedef, NoBlockFlags);
+    return (op->efloor.splane ? op : nullptr);
   }
 
   TSecPlaneRef frontfloor;
@@ -377,6 +387,21 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
     }
 
     op->range = op->top-op->bottom;
+  }
+
+  // cache it
+  if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+  if (op) {
+    opening_t *lastop = nullptr;
+    for (opening_t *xop = op; xop; xop = xop->next) {
+      opening_t *newop = VLevel::AllocOpening();
+      if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
+      newop->copyFrom(xop);
+      lastop = newop;
+    }
+  } else {
+    // no openings found, cache dummy item
+    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
   }
 
   return op;
@@ -805,6 +830,19 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
   csTouched[secnum] = csTouchCount;
 
   CalcSecMinMaxs(sector);
+
+  // reset opening cache
+  {
+    line_t **lptr = sector->lines;
+    for (int lcount = sector->linecount; lcount--; ++lptr) {
+      line_t *line = *lptr;
+      if (line->oplistUsed) {
+        //GCon->Logf("%p: opcache invalidated (%u)!", line, line->oplistUsed);
+        for (unsigned f = 0; f < line->oplistUsed; ++f) FreeOpeningList(line->oplist[f]);
+        line->oplistUsed = 0;
+      }
+    }
+  }
 
   bool ret = false;
 
