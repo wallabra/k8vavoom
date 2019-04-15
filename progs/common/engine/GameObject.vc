@@ -628,6 +628,7 @@ struct sec_surface_t {
   float XScale;
   float YScale;
   float Angle;
+  //bool bNoFaceCull;
   surface_t *surfs;
 };
 

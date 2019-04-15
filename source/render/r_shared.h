@@ -77,11 +77,12 @@ struct surface_t {
   };
 
   enum {
-    DF_MASKED     = 1u<<0, // this surface has "masked" texture
-    DF_WSURF      = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
-    DF_FIX_CRACKS = 1u<<2, // this surface must be subdivised to fix "cracks"
-    DF_CALC_LMAP  = 1u<<3, // calculate static lightmap
-    DF_FLIP_PLANE = 1u<<4, // flip plane
+    DF_MASKED       = 1u<<0, // this surface has "masked" texture
+    DF_WSURF        = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
+    DF_FIX_CRACKS   = 1u<<2, // this surface must be subdivised to fix "cracks"
+    DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
+    DF_FLIP_PLANE   = 1u<<4, // flip plane
+    DF_NO_FACE_CULL = 1u<<5, // ignore face culling
   };
 
   surface_t *next;
@@ -105,6 +106,29 @@ struct surface_t {
   surfcache_t *CacheSurf;
   vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   TVec verts[1]; // dynamic array
+
+  // to use in renderer
+  inline bool IsVisible (const TVec &point) const {
+    if (!(drawflags&DF_NO_FACE_CULL)) {
+      if (!(drawflags&DF_FLIP_PLANE)) {
+        return !eplane->PointOnSide(point);
+      } else {
+        // this is for gozzo shit, i don't care if it is fast or not
+        TPlane pl = *eplane;
+        pl.flipInPlace();
+        return !pl.PointOnSide(point);
+      }
+    } else {
+      if (!(drawflags&DF_FLIP_PLANE)) {
+        return (eplane->PointOnSide2(point) != 2);
+      } else {
+        // this is for gozzo shit, i don't care if it is fast or not
+        TPlane pl = *eplane;
+        pl.flipInPlace();
+        return (pl.PointOnSide2(point) != 2);
+      }
+    }
+  }
 
   inline bool PointOnSide (const TVec &point) const {
     if (!(drawflags&DF_FLIP_PLANE)) {

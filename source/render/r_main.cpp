@@ -868,7 +868,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *s
 
   for (const surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (surf->PointOnSide(vieworg)) {
+    if (!surf->IsVisible(vieworg)) {
       // viewer is in back side or on plane
       if (!HasBackLit) {
         const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();

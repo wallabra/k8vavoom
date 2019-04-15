@@ -30,6 +30,8 @@
 // this is used to compare floats like ints which is faster
 #define FASI(var) (*(const int32_t *)&var)
 
+//#define GOZZO_3DSHIT_TEMP_2S_HACK
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarB w_update_clip_bsp;
@@ -811,8 +813,6 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float botz1 = r_floor.GetPointZ(*seg->v1);
     const float botz2 = r_floor.GetPointZ(*seg->v2);
 
-    //FIXME: FUCK YOU, GOZZO, FUCK YOU, FUCK YOU, FUCK YOU!
-    //FIXME: we should pass "reverse" flags here. shit.
     const float extratopz1 = extratop.GetPointZ(*seg->v1);
     const float extratopz2 = extratop.GetPointZ(*seg->v2);
     const float extrabotz1 = extrabot.GetPointZ(*seg->v1);
@@ -827,6 +827,14 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     wv[1].z = MIN(extratopz1, topz1);
     wv[2].z = MIN(extratopz2, topz2);
     wv[3].z = MAX(extrabotz2, botz2);
+
+#if defined(GOZZO_3DSHIT_TEMP_2S_HACK)
+    TVec wv2[4];
+    wv2[0] = wv[3];
+    wv2[1] = wv[2];
+    wv2[2] = wv[1];
+    wv2[3] = wv[0];
+#endif
 
     /*
     GCon->Logf("extra: %f, %f, %f, %f", wv[0].z, wv[1].z, wv[2].z, wv[3].z);
@@ -847,6 +855,35 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     } else {
       sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
     }
+
+#if defined(GOZZO_3DSHIT_TEMP_2S_HACK)
+    surface_t *s2 = nullptr;
+    if (wv2[0].z == wv2[1].z && wv2[1].z == wv2[2].z && wv2[2].z == wv2[3].z) {
+      // degenerate side surface, no need to create it
+    } if (wv2[0].z == wv2[1].z && wv2[2].z == wv2[3].z) {
+      // degenerate side surface (thin line), cannot create it (no render support)
+    } if (wv2[0].z == wv2[1].z) {
+      // can reduce to triangle
+      s2 = CreateWSurf(wv2+1, &sp->texinfo, seg, sub, 3);
+    } if (wv2[2].z == wv2[3].z) {
+      // can reduce to triangle
+      s2 = CreateWSurf(wv2, &sp->texinfo, seg, sub, 3);
+    } else {
+      s2 = CreateWSurf(wv2, &sp->texinfo, seg, sub, 4);
+    }
+
+    if (s2) {
+      surface_t *slast = sp->surfs;
+      if (slast) {
+        while (slast->next) slast = slast->next;
+        slast->next = s2;
+      } else {
+        sp->surfs = s2;
+      }
+    }
+#else
+    for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+#endif
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -867,16 +904,19 @@ static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, TSecPlaneRe
     extratop.setCeiling(reg); // new floor
     extrabot.setFloor(reg); // new ceiling
     extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
+    //if (extraside && reg->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
   } else if (fromtop) {
     // creating
     extratop.setFloor(reg); // new floor
     extrabot.setCeiling(reg->prev); // new ceiling
     extraside = (reg->prev->extraline ? &Level->Sides[reg->prev->extraline->sidenum[0]] : nullptr);
+    //if (extraside && reg->prev->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
   } else {
     // updating
     extratop.setFloor(reg->next); // new floor
     extrabot.setCeiling(reg); // new ceiling
     extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
+    //if (extraside && reg->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
   }
 }
 

@@ -34,7 +34,7 @@
 //
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
-  if (surf->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render masked surface with %d vertices", surf->count);
     return;
@@ -209,6 +209,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
 
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
     if (doBrightmap) {
@@ -223,6 +224,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     glVertex(surf->verts[i]);
   }
   glEnd();
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
   // draw decals
   if (doDecals) {

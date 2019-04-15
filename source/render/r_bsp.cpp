@@ -235,7 +235,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     //GCon->Log("----");
     int doRenderSurf = -1;
     do {
-      if (surfs->PointOnSide(vieworg)) {
+      if (!surfs->IsVisible(vieworg)) {
         // viewer is in back side or on plane
         //GCon->Logf("  SURF SKIP!");
         continue;
@@ -260,8 +260,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     return;
   } // done skybox rendering
 
-  do {
-    if (surfs->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+  for (; surfs; surfs = surfs->next) {
+    //if (!surfs->IsVisible(vieworg)) continue;
 
     surfs->Light = (lLev<<24)|LightParams->LightColour;
     surfs->Fade = Fade;
@@ -286,8 +286,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
         TVec(), 0, TVec(), TVec(), TVec());
     }
-    surfs = surfs->next;
-  } while (surfs);
+  }
 }
 
 
@@ -439,7 +438,21 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 
   if (!linedef) return; // miniseg
 
-  if (seg->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (seg->PointOnSide(vieworg)) {
+    // viewer is in back side or on plane
+    // gozzo 3d floors should be rendered regardless from orientation
+    if (seg->backsector && dseg->extra) {
+      side_t *sidedef = seg->sidedef;
+      //GCon->Logf("00: extra for seg #%d (line #%d)", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
+      for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+        DrawSurfaces(sub, secregion, seg, sp->surfs, &sp->texinfo, secregion->eceiling->SkyBox,
+          -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
+        //GCon->Logf("  extra for seg #%d (%p)", (int)(ptrdiff_t)(seg-Level->Segs), sp);
+      }
+      //GCon->Logf("01: extra for seg #%d", (int)(ptrdiff_t)(seg-Level->Segs));
+    }
+    return;
+  }
 
   if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror

@@ -98,7 +98,6 @@ struct sec_surface_t {
   float XScale;
   float YScale;
   float Angle;
-  //bool flipSecPlane;
   surface_t *surfs;
 
   inline float PointDist (const TVec &p) const { return esecplane.DotPointDist(p); }

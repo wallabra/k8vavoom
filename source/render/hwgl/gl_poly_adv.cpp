@@ -75,7 +75,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = RendLev->DrawHorizonList.ptr();
     for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
@@ -87,7 +87,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
         continue;
@@ -146,7 +146,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
       const surface_t *surf = *surfptr;
-      if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render simple ambient surface with %d vertices", surf->count);
         continue;
@@ -288,6 +288,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         glColor4f(clr, clr, clr, 1.0f);
       }
 
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
       if (!gl_dbg_wireframe) {
         // normal
         glBegin(GL_TRIANGLE_FAN);
@@ -300,6 +301,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
         glEnd();
       }
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
     }
   }
 
@@ -553,6 +555,8 @@ static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TV
 //    =0: one-sided wall
 //
 //  most checks are done in caller
+//
+//  FIXME: idiotic gozzo 3d-shit extra should be rendered in both directions
 //
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
@@ -896,10 +900,12 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
     }
   }
 
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 }
 
 
@@ -988,7 +994,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
-    if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
     if (surf->count < 3) {
       if (developer) GCon->Logf(NAME_Dev, "trying to render texture surface with %d vertices", surf->count);
       continue;
@@ -1039,6 +1045,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     // fill stencil buffer for decals
     if (doDecals) RenderPrepareShaderDecals(surf);
 
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
@@ -1050,6 +1057,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         glVertex(surf->verts[i]);
       }
     glEnd();
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
     if (doDecals) {
       if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColourMap)) {
@@ -1095,7 +1103,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
     if (!surf->Fade) continue;
-    if (surf->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
     if (surf->count < 3) {
       if (developer) GCon->Logf(NAME_Dev, "trying to render fog surface with %d vertices", surf->count);
       continue;
@@ -1145,10 +1153,12 @@ void VOpenGLDrawer::DrawWorldFogPass () {
       }
     }
 
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
   }
 
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
