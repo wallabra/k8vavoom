@@ -1589,8 +1589,8 @@ void VLevel::LoadSectors (int Lump) {
     // region
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
-    region->efloor = &ss->floor;
-    region->eceiling = &ss->ceiling;
+    region->efloor.set(&ss->floor, false);
+    region->eceiling.set(&ss->ceiling, false);
     region->params = &ss->params;
     ss->topregion = region;
     ss->botregion = region;

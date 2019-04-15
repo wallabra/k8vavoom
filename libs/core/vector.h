@@ -346,8 +346,16 @@ public:
     return (VSUM3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
   }
 
+  inline __attribute__((warn_unused_result)) float GetPointZRev (float x, float y) const {
+    return (VSUM3(-dist, -(-normal.x*x), -(-normal.y*y))/(-normal.z));
+  }
+
   inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZRev (const TVec &v) const {
+    return GetPointZRev(v.x, v.y);
   }
 
   // "land" point onto the plane

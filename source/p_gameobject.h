@@ -324,10 +324,12 @@ enum {
   SPF_ADDITIVE     = 8u, // Additive translucency
 };
 
+/*
 enum {
   SPF_EX_ALLOCATED = 1u<<0,
   SPF_EX_FLOOR     = 1u<<1,
 };
+*/
 
 enum {
   SKY_FROM_SIDE = 0x8000
@@ -361,8 +363,8 @@ struct sec_plane_t : public TPlane {
   vint32 LightSourceSector;
   VEntity *SkyBox;
 
-  sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
-  vuint32 exflags; // SPF_EX_xxx
+  //sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
+  //vuint32 exflags; // SPF_EX_xxx
 };
 
 
@@ -375,40 +377,36 @@ struct sec_region_t;
 
 struct TSecPlaneRef {
   sec_plane_t *splane;
-  bool reversed;
+  bool flipped;
 
-  TSecPlaneRef () : splane(nullptr), reversed(false) {}
-  TSecPlaneRef (sec_plane_t *aplane, vuint32 arev=0) : splane(aplane), reversed(!!arev) {}
+  TSecPlaneRef () : splane(nullptr), flipped(false) {}
+  TSecPlaneRef (const TSecPlaneRef &sp) : splane(sp.splane), flipped(sp.flipped) {}
+  explicit TSecPlaneRef (sec_plane_t *aplane, bool arev) : splane(aplane), flipped(arev) {}
+
+  inline TSecPlaneRef &operator = (const TSecPlaneRef &sp) {
+    if (this != &sp) { splane = sp.splane; flipped = sp.flipped; }
+    return *this;
+  }
 
   inline bool isValid () const { return !!splane; }
 
-  inline void set (sec_plane_t *aplane, vuint32 arev=0) { splane = aplane; reversed = !!arev; }
+  inline void set (sec_plane_t *aplane, bool arev) { splane = aplane; flipped = arev; }
 
-  void setFloor (sec_region_t *r);
-  void setCeiling (sec_region_t *r);
+  inline TVec GetNormal () const { return (!flipped ? splane->normal : -splane->normal); }
+  inline float GetNormalZ () const { return (!flipped ? splane->normal.z : -splane->normal.z); }
+  inline float GetDist () const { return (!flipped ? splane->dist : -splane->dist); }
+  inline TPlane GetPlane () const { TPlane res; res.normal = (!flipped ? splane->normal : -splane->normal); res.dist = (!flipped ? splane->dist : -splane->dist); return res; }
 
-  inline TVec GetNormal () const { return (!reversed ? splane->normal : -splane->normal); }
-  inline float GetNormalZ () const { return (!reversed ? splane->normal.z : -splane->normal.z); }
-  inline float GetDist () const { return (!reversed ? splane->dist : -splane->dist); }
-  inline TPlane GetPlane () const { TPlane res; res.normal = (!reversed ? splane->normal : -splane->normal); res.dist = (!reversed ? splane->dist : -splane->dist); return res; }
-
-  inline void Flip () { reversed = !reversed; }
+  inline void Flip () { flipped = !flipped; }
 
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
   inline __attribute__((warn_unused_result)) float GetPointZ (float x, float y) const {
-    if (!reversed) {
-      return splane->GetPointZ(x, y);
-    } else {
-      // gozzo shit, idc
-      TPlane pl = *splane;
-      pl.flipInPlace();
-      return pl.GetPointZ(x, y);
-    }
+    return (!flipped ? splane->GetPointZ(x, y) : splane->GetPointZRev(x, y));
   }
 
   inline __attribute__((warn_unused_result)) float DotPoint (const TVec &point) const {
-    if (!reversed) {
+    if (!flipped) {
       return DotProduct(point, splane->normal);
     } else {
       // gozzo shit, idc
@@ -417,7 +415,7 @@ struct TSecPlaneRef {
   }
 
   inline __attribute__((warn_unused_result)) float DotPointDist (const TVec &point) const {
-    if (!reversed) {
+    if (!flipped) {
       return DotProduct(point, splane->normal)-splane->dist;
     } else {
       // gozzo shit, idc
@@ -426,7 +424,7 @@ struct TSecPlaneRef {
   }
 
   inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
-    return GetPointZ(v.x, v.y);
+    return (!flipped ? splane->GetPointZ(v.x, v.y) : splane->GetPointZRev(v.x, v.y));
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
@@ -494,8 +492,10 @@ struct sec_region_t {
   sec_region_t *next; // region at the bottom
 
   // planes
-  sec_plane_t *efloor;
-  sec_plane_t *eceiling;
+  //sec_plane_t *efloor;
+  //sec_plane_t *eceiling;
+  TSecPlaneRef efloor;
+  TSecPlaneRef eceiling;
 
   sec_params_t *params;
 
@@ -505,71 +505,11 @@ struct sec_region_t {
   line_t *extraline;
 
   enum {
-    RF_FlipFloor   = 1u<<0,
-    RF_FlipCeiling = 1u<<1,
-    RF_NonSolid    = 1u<<2, // this is used for shitty gozzo "non-solid" 3d floors
+    //RF_FlipFloor   = 1u<<0,
+    //RF_FlipCeiling = 1u<<1,
+    RF_NonSolid    = 1u<<1, // this is used for shitty gozzo "non-solid" 3d floors
   };
   vuint32 regflags;
-
-  inline void clear () {
-    if (efloor && efloor->exflags&SPF_EX_ALLOCATED) delete efloor;
-    if (eceiling && eceiling->exflags&SPF_EX_ALLOCATED) delete eceiling;
-    memset((void *)this, 0, sizeof(*this));
-  }
-
-  float GetFloorPointZ (const TVec &p) const {
-    if (!(regflags&RF_FlipFloor)) {
-      return efloor->GetPointZ(p);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *efloor;
-      pl.flipInPlace();
-      return pl.GetPointZ(p);
-    }
-  }
-
-  float GetCeilingPointZ (const TVec &p) const {
-    if (!(regflags&RF_FlipCeiling)) {
-      return eceiling->GetPointZ(p);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *eceiling;
-      pl.flipInPlace();
-      return pl.GetPointZ(p);
-    }
-  }
-
-  inline float GetFloorNormalZ () const { return (!(regflags&RF_FlipFloor) ? efloor->normal.z : -efloor->normal.z); }
-  inline TVec GetFloorNormal () const { return (!(regflags&RF_FlipFloor) ? efloor->normal : -efloor->normal); }
-  inline float GetFloorDist () const { return (!(regflags&RF_FlipFloor) ? efloor->dist : -efloor->dist); }
-  inline void GetFloorPlane (TPlane *p) const { *p = *efloor; if (regflags&RF_FlipFloor) p->flipInPlace(); }
-
-  inline float GetCeilingNormalZ () const { return (!(regflags&RF_FlipCeiling) ? eceiling->normal.z : -eceiling->normal.z); }
-  inline TVec GetCeilingNormal () const { return (!(regflags&RF_FlipCeiling) ? eceiling->normal : -eceiling->normal); }
-  inline float GetCeilingDist () const { return (!(regflags&RF_FlipCeiling) ? eceiling->dist : -eceiling->dist); }
-  inline void GetCeilingPlane (TPlane *p) const { *p = *eceiling; if (regflags&RF_FlipCeiling) p->flipInPlace(); }
-
-  inline bool SphereTouchesFloor (const TVec &center, float radius) const {
-    if (!(regflags&RF_FlipFloor)) {
-      return efloor->SphereTouches(center, radius);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *efloor;
-      pl.flipInPlace();
-      return pl.SphereTouches(center, radius);
-    }
-  }
-
-  inline bool SphereTouchesCeiling (const TVec &center, float radius) const {
-    if (!(regflags&RF_FlipCeiling)) {
-      return eceiling->SphereTouches(center, radius);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *eceiling;
-      pl.flipInPlace();
-      return pl.SphereTouches(center, radius);
-    }
-  }
 };
 
 
@@ -1008,4 +948,18 @@ public:
   DECLARE_FUNCTION(_set_user_var_float)
   DECLARE_FUNCTION(_get_user_var_type)
   DECLARE_FUNCTION(_get_user_var_dim)
+
+  DECLARE_FUNCTION(spGetNormal)
+  DECLARE_FUNCTION(spGetNormalZ)
+  DECLARE_FUNCTION(spGetDist)
+  DECLARE_FUNCTION(spGetPointZ)
+  DECLARE_FUNCTION(spDotPoint)
+  DECLARE_FUNCTION(spDotPointDist)
+  DECLARE_FUNCTION(spPointOnSide)
+  DECLARE_FUNCTION(spPointOnSideThreshold)
+  DECLARE_FUNCTION(spPointOnSideFri)
+  DECLARE_FUNCTION(spPointOnSide2)
+  DECLARE_FUNCTION(SphereOnSide)
+  DECLARE_FUNCTION(spSphereTouches)
+  DECLARE_FUNCTION(spSphereOnSide2)
 };

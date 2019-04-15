@@ -846,7 +846,6 @@ void VLevel::Destroy () {
       sec_region_t *r = Sectors[i].botregion;
       while (r) {
         sec_region_t *Next = r->next;
-        r->clear();
         delete r;
         r = Next;
       }
@@ -2146,18 +2145,18 @@ void VLevel::dumpSectorRegions (const sector_t *dst) const {
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
     GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
       inregion,
-      inregion->efloor->normal.x,
-      inregion->efloor->normal.y,
-      inregion->efloor->normal.z,
-      inregion->efloor->dist,
-      inregion->efloor->minz, inregion->efloor->maxz,
-      inregion->efloor->flags,
-      inregion->eceiling->normal.x,
-      inregion->eceiling->normal.y,
-      inregion->eceiling->normal.z,
-      inregion->eceiling->dist,
-      inregion->eceiling->minz, inregion->eceiling->maxz,
-      inregion->eceiling->flags,
+      inregion->efloor.GetNormal().x,
+      inregion->efloor.GetNormal().y,
+      inregion->efloor.GetNormal().z,
+      inregion->efloor.GetDist(),
+      inregion->efloor.splane->minz, inregion->efloor.splane->maxz,
+      inregion->efloor.splane->flags,
+      inregion->eceiling.GetNormal().x,
+      inregion->eceiling.GetNormal().y,
+      inregion->eceiling.GetNormal().z,
+      inregion->eceiling.GetDist(),
+      inregion->eceiling.splane->minz, inregion->eceiling.splane->maxz,
+      inregion->eceiling.splane->flags,
       (inregion->extraline ? 1 : 0),
       inregion->regflags);
   }
@@ -2179,60 +2178,12 @@ static __attribute__((unused)) const char *getTexName (int txid) {
 
 //==========================================================================
 //
-//  dupSecPlane
-//
-//==========================================================================
-static __attribute__((unused)) sec_plane_t *dupSecPlane (sec_plane_t *src, bool flip) {
-  sec_plane_t *cp = new sec_plane_t;
-  *cp = *src;
-  if (flip) cp->flipInPlace();
-  cp->exflags |= SPF_EX_ALLOCATED;
-  return cp;
-}
-
-
-//==========================================================================
-//
-//  copySecPlane
-//
-//  duplicates only allocated planes
-//
-//==========================================================================
-static __attribute__((unused)) sec_plane_t *copySecPlane (sec_plane_t *src) {
-  if (!(src->exflags&SPF_EX_ALLOCATED)) return src;
-  sec_plane_t *cp = new sec_plane_t;
-  *cp = *src;
-  cp->exflags |= SPF_EX_ALLOCATED;
-  return cp;
-}
-
-
-//==========================================================================
-//
-//  makeSecPlaneMutable
-//
-//==========================================================================
-/*
-static __attribute__((unused)) void makeSecPlaneMutable (sec_plane_t *&src) {
-  if (!(src->exflags&SPF_EX_ALLOCATED)) {
-    sec_plane_t *cp = new sec_plane_t;
-    *cp = *src;
-    cp->exflags |= SPF_EX_ALLOCATED;
-    src = cp;
-  }
-}
-*/
-
-
-//==========================================================================
-//
 //  removeRegion
 //
 //==========================================================================
 static __attribute__((unused)) void removeRegion (sector_t *dst, sec_region_t *reg) {
   if (reg->prev) reg->prev->next = reg->next; else dst->botregion = reg->next;
   if (reg->next) reg->next->prev = reg->prev; else dst->topregion = reg->prev;
-  reg->clear();
   delete reg;
 }
 
@@ -2269,7 +2220,7 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
     GCon->Logf(NAME_Warning, "Vavoom 3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
     GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
-    //return nullptr;
+    return nullptr;
   }
 
   // just in case
@@ -2277,19 +2228,23 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.maxz;
 
   for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    const float infloorz = inregion->GetFloorPointZ(dst->soundorg);
-    const float inceilz = inregion->GetCeilingPointZ(dst->soundorg);
+    const float infloorz = inregion->efloor.GetPointZ(dst->soundorg);
+    const float inceilz = inregion->eceiling.GetPointZ(dst->soundorg);
 
     bool doInsert = (infloorz <= floorz && inceilz >= ceilz);
     // check for sloped floor
-    if (!doInsert && inregion->GetFloorNormalZ() != 1.0f) {
-      if (inregion->efloor->maxz <= src->ceiling.minz && inregion->eceiling->maxz >= src->floor.minz) {
+    if (!doInsert && inregion->efloor.GetNormalZ() != 1.0f) {
+      if (inregion->efloor.splane->maxz <= src->ceiling.minz &&
+          inregion->eceiling.splane->maxz >= src->floor.minz)
+      {
         doInsert = true;
       }
     }
     // check for sloped ceiling
-    if (!doInsert && inregion->GetCeilingNormalZ() != -1.0f) {
-      if (inregion->efloor->minz <= src->ceiling.maxz && inregion->eceiling->minz >= src->floor.maxz) {
+    if (!doInsert && inregion->eceiling.GetNormalZ() != -1.0f) {
+      if (inregion->efloor.splane->minz <= src->ceiling.maxz &&
+          inregion->eceiling.splane->minz >= src->floor.maxz)
+      {
         doInsert = true;
       }
     }
@@ -2310,11 +2265,10 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
     // side walls will be created between this new one and next (upper) one
     // i.e. side walls are closing this region
     region->efloor = inregion->efloor;
-    region->regflags |= inregion->regflags&sec_region_t::RF_FlipFloor;
-    region->eceiling = &src->ceiling;
+    region->eceiling.set(&src->ceiling, false);
     region->params = &src->params;
     region->extraline = line;
-    inregion->efloor = &src->floor;
+    inregion->efloor.set(&src->floor, false);
 
     if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
     region->prev = inregion->prev;
@@ -2370,29 +2324,63 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   }
 
   if (ceilz <= dst->floor.minz) {
-    GCon->Logf(NAME_Warning, "IGNORED 3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
-    //return nullptr;
+    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
+    if (isSolid) return nullptr; // ignore it
+    /*
+    // insert as first
+    sec_region_t *region = new sec_region_t;
+    memset((void *)region, 0, sizeof(*region));
+
+    region->efloor.set(&src->floor, true);
+    region->eceiling.set(&src->ceiling, true);
+    region->params = &src->params;
+    // for paper-thin regions, we don't need side surfaces
+    region->extraline = (realFZ == realCZ ? nullptr : line);
+    region->regflags |= sec_region_t::RF_NonSolid;
+
+    region->next = dst->botregion;
+    dst->botregion->prev = region;
+    dst->botregion = region;
+    return region;
+    */
+    return nullptr;
   }
 
   if (floorz >= dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "IGNORED 3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    //return nullptr;
+    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
+    if (isSolid) return nullptr; // ignore it
+    /*
+    // insert as last
+    sec_region_t *region = new sec_region_t;
+    memset((void *)region, 0, sizeof(*region));
+
+    region->efloor.set(&src->floor, true);
+    region->eceiling.set(&src->ceiling, true);
+    region->params = &src->params;
+    // for paper-thin regions, we don't need side surfaces
+    region->extraline = (realFZ == realCZ ? nullptr : line);
+    region->regflags |= sec_region_t::RF_NonSolid;
+
+    region->prev = dst->topregion;
+    dst->topregion->next = region;
+    dst->topregion = region;
+    return region;
+    */
+    return nullptr;
   }
 
   if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
     GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    if (isSolid) {
+    //if (isSolid)
+    {
       GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
-      //return nullptr;
+      return nullptr;
     }
-    // easy deal, mark the whole thing with new params
-    //FIXME: don't remove all created regions?
     /*
-    while (dst->botregion->next) removeRegion(dst, dst->botregion->next);
-    dst->botregion->params = &src->params;
-    //src->SectorFlags &= ~sector_t::SF_ExtrafloorSource;
-    dst->SectorFlags &= ~sector_t::SF_HasExtrafloors;
-    return dst->botregion;
+    if ((line->arg2&3) != Swimmable) {
+      GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR, IT IS NON-SWIMMABLE!");
+      return nullptr;
+    }
     */
   }
 
@@ -2406,19 +2394,28 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   GCon->Logf("::: BEFORE"); dumpSectorRegions(dst);
 
   for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    float infloorz = inregion->GetFloorPointZ(dst->soundorg);
-    float inceilz = inregion->GetCeilingPointZ(dst->soundorg);
+    float infloorz = inregion->efloor.GetPointZ(dst->soundorg);
+    float inceilz = inregion->eceiling.GetPointZ(dst->soundorg);
 
     bool doInsert = (infloorz <= floorz && inceilz >= ceilz);
+    // check if next region floor z is the same; if it is, move up
+    if (doInsert && inregion->next && inregion->next->efloor.GetPointZ(dst->soundorg) == infloorz) {
+      continue;
+    }
+
     // check for sloped floor
-    if (!doInsert && inregion->GetFloorNormalZ() != 1.0f) {
-      if (inregion->efloor->maxz <= src->ceiling.minz && inregion->eceiling->maxz >= src->floor.minz) {
+    if (!doInsert && inregion->efloor.GetNormalZ() != 1.0f) {
+      if (inregion->efloor.splane->maxz <= src->ceiling.minz &&
+          inregion->eceiling.splane->maxz >= src->floor.minz)
+      {
         doInsert = true;
       }
     }
     // check for sloped ceiling
-    if (!doInsert && inregion->GetCeilingNormalZ() != -1.0f) {
-      if (inregion->efloor->minz <= src->ceiling.maxz && inregion->eceiling->minz >= src->floor.maxz) {
+    if (!doInsert && inregion->eceiling.GetNormalZ() != -1.0f) {
+      if (inregion->efloor.splane->minz <= src->ceiling.maxz &&
+          inregion->eceiling.splane->minz >= src->floor.maxz)
+      {
         doInsert = true;
       }
     }
@@ -2444,16 +2441,12 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       // i.e. insert new emptyness at bottom
       // side walls will be created between this and prev (i.e. betwen this and upper one)
       region->efloor = inregion->efloor;
-      region->regflags |= inregion->regflags&sec_region_t::RF_FlipFloor;
-      //region->ceiling = dupSecPlane(&src->floor, true); // flip
-      region->eceiling = &src->floor; // flip
-      region->regflags |= sec_region_t::RF_FlipCeiling;
+      region->eceiling.set(&src->floor, true); // flip
       region->params = &src->params;
       // for paper-thin regions, we don't need side surfaces
       region->extraline = (realFZ == realCZ ? nullptr : line);
-      //inregion->floor = dupSecPlane(&src->ceiling, true); // flip
-      inregion->efloor = &src->ceiling; // flip
-      inregion->regflags |= sec_region_t::RF_FlipFloor;
+
+      inregion->efloor.set(&src->ceiling, true); // flip
 
       if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
       region->prev = inregion->prev;
@@ -2468,8 +2461,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       // old region is from old floor to new flipped floor (shrinked)
       // new region is from new floor to new ceiling
       // xtr region is from new flipped ceiling to old ceiling (duplicate of old region)
-      region->efloor = &src->floor;
-      region->eceiling = &src->ceiling;
+      region->efloor.set(&src->floor, false);
+      region->eceiling.set(&src->ceiling, false);
       region->params = &src->params;
       region->extraline = line;
       region->regflags |= sec_region_t::RF_NonSolid;
@@ -2484,18 +2477,15 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
 
       // copy data to xtr
       //xtr->floor = dupSecPlane(&src->ceiling, true); // flip
-      xtr->regflags = inregion->regflags&~(sec_region_t::RF_FlipFloor|sec_region_t::RF_FlipCeiling);
-      xtr->efloor = &src->ceiling; // flip
-      xtr->regflags |= sec_region_t::RF_FlipFloor;
+      xtr->regflags = inregion->regflags;
+      xtr->efloor.set(&src->ceiling, true); // flip
       xtr->eceiling = inregion->eceiling;
-      xtr->regflags |= inregion->regflags&sec_region_t::RF_FlipCeiling;
       xtr->params = inregion->params;
       xtr->extraline = inregion->extraline;
 
       // fix old region
       //inregion->ceiling = dupSecPlane(&src->floor, true); // flip
-      inregion->eceiling = &src->floor; // flip
-      inregion->regflags |= sec_region_t::RF_FlipCeiling;
+      inregion->eceiling.set(&src->floor, true); // flip
 
       // link new regions into region list
       xtr->next = inregion->next;
@@ -3017,11 +3007,11 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) ++regcount;
       strm << regcount;
       for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) {
-        check(reg->efloor);
-        check(reg->eceiling);
+        check(reg->efloor.isValid());
+        check(reg->eceiling.isValid());
         check(reg->params);
-        WriteSectorPlane(strm, *reg->efloor);
-        WriteSectorPlane(strm, *reg->eceiling);
+        //WriteSectorPlane(strm, *reg->efloor);
+        //WriteSectorPlane(strm, *reg->eceiling);
         // params
         strm << reg->params->lightlevel;
         strm << reg->params->LightColour;
@@ -3182,11 +3172,11 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       strm << regcount;
       for (subregion_t *sreg = sub->regions; sreg; sreg = sreg->next) {
         sec_region_t *reg = sreg->secregion;
-        check(reg->efloor);
-        check(reg->eceiling);
+        check(reg->efloor.isValid());
+        check(reg->eceiling.isValid());
         check(reg->params);
-        WriteSectorPlane(strm, *reg->efloor);
-        WriteSectorPlane(strm, *reg->eceiling);
+        //WriteSectorPlane(strm, *reg->efloor);
+        //WriteSectorPlane(strm, *reg->eceiling);
         // params
         strm << reg->params->lightlevel;
         strm << reg->params->LightColour;

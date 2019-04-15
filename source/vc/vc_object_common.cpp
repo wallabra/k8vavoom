@@ -197,7 +197,15 @@ IMPLEMENT_FUNCTION(VObject, VectorAngles) {
 IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
   P_GET_VEC(point);
   P_GET_PTR(TPlane, plane);
-  float res = plane->GetPointZ(point);
+  const float res = plane->GetPointZ(point);
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  RET_FLOAT(res);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetPlanePointZRev) {
+  P_GET_VEC(point);
+  P_GET_PTR(TPlane, plane);
+  const float res = plane->GetPointZRev(point);
   if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
   RET_FLOAT(res);
 }
@@ -206,6 +214,12 @@ IMPLEMENT_FUNCTION(VObject, PointOnPlaneSide) {
   P_GET_PTR(TPlane, plane);
   P_GET_VEC(point);
   RET_INT(plane->PointOnSide(point));
+}
+
+IMPLEMENT_FUNCTION(VObject, PointOnPlaneSide2) {
+  P_GET_PTR(TPlane, plane);
+  P_GET_VEC(point);
+  RET_INT(plane->PointOnSide2(point));
 }
 
 IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {

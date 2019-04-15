@@ -767,8 +767,8 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
       if (!(ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX))) continue; // solid line
       // check if we can touch midtex, 'cause why not?
       const sector_t *bsec = seg->backsector;
-      if (org.z+radius <= bsec->botregion->efloor->minz ||
-          org.z-radius >= bsec->topregion->eceiling->maxz)
+      if (org.z+radius <= bsec->botregion->efloor.splane->minz ||
+          org.z-radius >= bsec->topregion->eceiling.splane->maxz)
       {
         // cannot possibly leak through midtex, consider this wall solid
         continue;
@@ -934,13 +934,13 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
         if (vsub->poly && r_draw_pobj) { \
           seg_t **polySeg = vsub->poly->segs; \
           for (int count = vsub->poly->numsegs; count--; ++polySeg) { \
-            UpdateBBoxWithLine(LitBBox, curreg->eceiling->SkyBox, (*polySeg)->drawsegs); \
+            UpdateBBoxWithLine(LitBBox, curreg->eceiling.splane->SkyBox, (*polySeg)->drawsegs); \
           } \
         } \
         drawseg_t *ds = region->lines; \
-        for (int count = vsub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->eceiling->SkyBox, ds); \
-        UpdateBBoxWithSurface(LitBBox, region->floor->surfs, &region->floor->texinfo, curreg->efloor->SkyBox, true); \
-        UpdateBBoxWithSurface(LitBBox, region->ceil->surfs, &region->ceil->texinfo, curreg->eceiling->SkyBox, true); \
+        for (int count = vsub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->eceiling.splane->SkyBox, ds); \
+        UpdateBBoxWithSurface(LitBBox, region->floor->surfs, &region->floor->texinfo, curreg->efloor.splane->SkyBox, true); \
+        UpdateBBoxWithSurface(LitBBox, region->ceil->surfs, &region->ceil->texinfo, curreg->eceiling.splane->SkyBox, true); \
       } \
     } \
   } \
@@ -985,13 +985,13 @@ static bool IsTouchingSectorRegion (const sector_t *sector, const TVec &point, c
   for (const sec_region_t *gap = sector->botregion; gap; gap = gap->next) {
     // assume that additive floor/ceiling is translucent, and doesn't block
     //FIXME: this is not true now, shadow volume renderer should be fixed
-    if (!(gap->efloor->flags&SPF_ADDITIVE)) {
+    if (!(gap->efloor.splane->flags&SPF_ADDITIVE)) {
       // check if we are crossing the floor
-      if (gap->SphereTouchesFloor(point, radius)) return true;
+      if (gap->efloor.SphereTouches(point, radius)) return true;
     }
-    if (!(gap->eceiling->flags&SPF_ADDITIVE)) {
+    if (!(gap->eceiling.splane->flags&SPF_ADDITIVE)) {
       // check if we are crossing the floor
-      if (gap->SphereTouchesCeiling(point, radius)) return true;
+      if (gap->eceiling.SphereTouches(point, radius)) return true;
     }
   }
   return false;
@@ -1081,8 +1081,8 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       // check if we can touch midtex
       const sector_t *fsec = seg->frontsector;
       const sector_t *bsec = seg->backsector;
-      if (CurrLightPos.z+CurrLightRadius <= bsec->botregion->efloor->minz ||
-          CurrLightPos.z-CurrLightRadius >= bsec->topregion->eceiling->maxz)
+      if (CurrLightPos.z+CurrLightRadius <= bsec->botregion->efloor.splane->minz ||
+          CurrLightPos.z-CurrLightRadius >= bsec->topregion->eceiling.splane->maxz)
       {
         // cannot possibly leak through midtex, consider this wall solid
         if (dist <= 0) {
@@ -1116,14 +1116,14 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
       if (!fbotr->next && !bbotr->next) {
         // two sectors with one region each, check for change
         // floor
-        if (fbotr->efloor->minz != bbotr->efloor->minz ||
-            fbotr->efloor->minz != bbotr->efloor->maxz ||
-            fbotr->efloor->maxz != bbotr->efloor->minz ||
-            fbotr->efloor->maxz != bbotr->efloor->maxz)
+        if (fbotr->efloor.splane->minz != bbotr->efloor.splane->minz ||
+            fbotr->efloor.splane->minz != bbotr->efloor.splane->maxz ||
+            fbotr->efloor.splane->maxz != bbotr->efloor.splane->minz ||
+            fbotr->efloor.splane->maxz != bbotr->efloor.splane->maxz)
         {
           // floor elevation changed, check if we're touching any floor
-          if (fbotr->SphereTouchesFloor(CurrLightPos, CurrLightRadius) ||
-              bbotr->SphereTouchesFloor(CurrLightPos, CurrLightRadius))
+          if (fbotr->efloor.SphereTouches(CurrLightPos, CurrLightRadius) ||
+              bbotr->efloor.SphereTouches(CurrLightPos, CurrLightRadius))
           {
             // oops
             doShadows = true;
@@ -1131,14 +1131,14 @@ void VRenderLevelShared::CheckLightSubsector (const subsector_t *sub) {
           }
         }
         // ceiling
-        if (fbotr->eceiling->minz != bbotr->eceiling->minz ||
-            fbotr->eceiling->minz != bbotr->eceiling->maxz ||
-            fbotr->eceiling->maxz != bbotr->eceiling->minz ||
-            fbotr->eceiling->maxz != bbotr->eceiling->maxz)
+        if (fbotr->eceiling.splane->minz != bbotr->eceiling.splane->minz ||
+            fbotr->eceiling.splane->minz != bbotr->eceiling.splane->maxz ||
+            fbotr->eceiling.splane->maxz != bbotr->eceiling.splane->minz ||
+            fbotr->eceiling.splane->maxz != bbotr->eceiling.splane->maxz)
         {
           // ceiling elevation changed, check if we're touching any ceiling
-          if (fbotr->SphereTouchesCeiling(CurrLightPos, CurrLightRadius) ||
-              bbotr->SphereTouchesCeiling(CurrLightPos, CurrLightRadius))
+          if (fbotr->eceiling.SphereTouches(CurrLightPos, CurrLightRadius) ||
+              bbotr->eceiling.SphereTouches(CurrLightPos, CurrLightRadius))
           {
             // oops
             doShadows = true;
@@ -1805,7 +1805,7 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
   if (r_fog_test) return 0xff000000|(int(255*r_fog_r)<<16)|(int(255*r_fog_g)<<8)|int(255*r_fog_b);
   if (Reg->params->Fade) return Reg->params->Fade;
-  if (Level->LevelInfo->OutsideFog && Reg->eceiling->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
+  if (Level->LevelInfo->OutsideFog && Reg->eceiling.splane->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
   if (Level->LevelInfo->Fade) return Level->LevelInfo->Fade;
   if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
   if (r_fade_light) return FADE_LIGHT; // simulate light fading using dark fog

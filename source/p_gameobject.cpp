@@ -30,10 +30,6 @@
 IMPLEMENT_CLASS(V, GameObject)
 
 
-void TSecPlaneRef::setFloor (sec_region_t *r) { splane = r->efloor; reversed = !!(r->regflags&sec_region_t::RF_FlipFloor); }
-void TSecPlaneRef::setCeiling (sec_region_t *r) { splane = r->eceiling; reversed = !!(r->regflags&sec_region_t::RF_FlipCeiling); }
-
-
 //==========================================================================
 //
 //  getFieldPtr
@@ -277,4 +273,96 @@ IMPLEMENT_FUNCTION(VGameObject, _get_user_var_dim) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot check field '%s' in null object", *fldname); }
   RET_INT(Self->_get_user_var_dim(fldname));
+}
+
+
+//native static final TVec spGetNormal (const ref TSecPlaneRef sp);
+IMPLEMENT_FUNCTION(VGameObject, spGetNormal) {
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_VEC(sp->GetNormal());
+}
+
+//native static final float spGetNormalZ (const ref TSecPlaneRef sp);
+IMPLEMENT_FUNCTION(VGameObject, spGetNormalZ) {
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_FLOAT(sp->GetNormalZ());
+}
+
+//native static final float spGetDist (const ref TSecPlaneRef sp);
+IMPLEMENT_FUNCTION(VGameObject, spGetDist) {
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_FLOAT(sp->GetDist());
+}
+
+//native static final float spGetPointZ (const ref TSecPlaneRef sp, const ref TVec p);
+IMPLEMENT_FUNCTION(VGameObject, spGetPointZ) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_FLOAT(sp->GetPointZ(point->x, point->y));
+}
+
+//native static final float spDotPoint (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spDotPoint) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_FLOAT(sp->DotPoint(*point));
+}
+
+//native static final float spDotPointDist (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spDotPointDist) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_FLOAT(sp->DotPointDist(*point));
+}
+
+//native static final int spPointOnSide (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spPointOnSide) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->PointOnSide(*point));
+}
+
+//native static final int spPointOnSideThreshold (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spPointOnSideThreshold) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->PointOnSideThreshold(*point));
+}
+
+//native static final int spPointOnSideFri (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spPointOnSideFri) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->PointOnSideFri(*point));
+}
+
+//native static final int spPointOnSide2 (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spPointOnSide2) {
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->PointOnSide2(*point));
+}
+
+//native static final int spSphereOnSide (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+IMPLEMENT_FUNCTION(VGameObject, SphereOnSide) {
+  P_GET_FLOAT(radius);
+  P_GET_PTR(TVec, center);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->SphereOnSide(*center, radius));
+}
+
+//native static final bool spSphereTouches (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+IMPLEMENT_FUNCTION(VGameObject, spSphereTouches) {
+  P_GET_FLOAT(radius);
+  P_GET_PTR(TVec, center);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_BOOL(sp->SphereTouches(*center, radius));
+}
+
+//native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+IMPLEMENT_FUNCTION(VGameObject, spSphereOnSide2) {
+  P_GET_FLOAT(radius);
+  P_GET_PTR(TVec, center);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->SphereOnSide2(*center, radius));
 }

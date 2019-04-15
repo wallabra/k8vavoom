@@ -331,15 +331,16 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   //line_t *linedef = seg->linedef;
   //side_t *sidedef = seg->sidedef;
 
-  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->eceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  VEntity *skybox = secregion->eceiling.splane->SkyBox;
+  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->eceiling->SkyBox, false, 0);
+    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->eceiling->SkyBox, false, -1);
-    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->eceiling->SkyBox, false, 0);
+    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
+    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawShadowSurfaces(sp->surfs, &sp->texinfo, secregion->eceiling->SkyBox, false, 0);
+      DrawShadowSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
     }
   }
 }
@@ -406,8 +407,8 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(curreg, ds);
   }
 
-  RenderShadowSecSurface(region->floor, curreg->efloor->SkyBox);
-  RenderShadowSecSurface(region->ceil, curreg->eceiling->SkyBox);
+  RenderShadowSecSurface(region->floor, curreg->efloor.splane->SkyBox);
+  RenderShadowSecSurface(region->ceil, curreg->eceiling.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {
@@ -584,15 +585,16 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, secregion->eceiling->SkyBox, false, (seg->backsector ? 1 : 0));
+  VEntity *skybox = secregion->eceiling.splane->SkyBox;
+  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, secregion->eceiling->SkyBox, false, 0);
+    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, secregion->eceiling->SkyBox, false, -1);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, secregion->eceiling->SkyBox, false, 0);
+    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
+    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo, secregion->eceiling->SkyBox, false, 0);
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
     }
   }
 }
@@ -655,8 +657,8 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(curreg, ds);
   }
 
-  RenderLightSecSurface(region->floor, curreg->efloor->SkyBox);
-  RenderLightSecSurface(region->ceil, curreg->eceiling->SkyBox);
+  RenderLightSecSurface(region->floor, curreg->efloor.splane->SkyBox);
+  RenderLightSecSurface(region->ceil, curreg->eceiling.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {

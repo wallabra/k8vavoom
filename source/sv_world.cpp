@@ -182,7 +182,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     toffs = sec->floor.TexZ+mheight;
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
-    toffs = sec->topregion->eceiling->TexZ;
+    toffs = sec->topregion->eceiling.splane->TexZ;
   } else {
     // top of texture at top
     toffs = sec->ceiling.TexZ;
@@ -249,14 +249,13 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
           // bot
           op->bottom = floorz;
           op->lowfloor = floorz;
-          op->efloor = &linedef->frontsector->floor;
+          op->efloor.set(&linedef->frontsector->floor, false);
           //op->lowfloorplane = &linedef->frontsector->floor;
           // top
           op->top = bot;
           op->highceiling = ceilz;
-          op->eceiling = &linedef->frontsector->ceiling;
+          op->eceiling.set(&linedef->frontsector->ceiling, false);
           //op->highceilingplane = &linedef->frontsector->ceiling;
-          op->fcflags = 0;
         }
         // top opening
         if (top < ceilz) {
@@ -267,14 +266,13 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
           // bot
           op->bottom = top;
           op->lowfloor = floorz;
-          op->efloor = &linedef->frontsector->floor;
+          op->efloor.set(&linedef->frontsector->floor, false);
           //op->lowfloorplane = &linedef->frontsector->floor;
           // top
           op->top = ceilz;
           op->highceiling = ceilz;
-          op->eceiling = &linedef->frontsector->ceiling;
+          op->eceiling.set(&linedef->frontsector->ceiling, false);
           //op->highceilingplane = &linedef->frontsector->ceiling;
-          op->fcflags = 0;
         }
         return op;
       }
@@ -286,56 +284,61 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   TSecPlaneRef frontceil;
   TSecPlaneRef backceil;
 
+  float frontfloorz = 0.0f;
+  float backfloorz = 0.0f;
+  float frontceilz = 0.0f;
+  float backceilz = 0.0f;
+
   while (frontreg && backreg) {
-    if (!(frontreg->efloor->flags&NoBlockFlags)) frontfloor.setFloor(frontreg);
-    if (!(backreg->efloor->flags&NoBlockFlags)) backfloor.setFloor(backreg);
-    if (!(frontreg->eceiling->flags&NoBlockFlags)) frontceil.setCeiling(frontreg);
-    if (!(backreg->eceiling->flags&NoBlockFlags)) backceil.setCeiling(backreg);
+    if (!(frontreg->efloor.splane->flags&NoBlockFlags)) {
+      frontfloor = frontreg->efloor;
+      frontfloorz = frontfloor.GetPointZ(point);
+    }
+    if (!(backreg->efloor.splane->flags&NoBlockFlags)) {
+      backfloor = backreg->efloor;
+      backfloorz = backfloor.GetPointZ(point);
+    }
+    if (!(frontreg->eceiling.splane->flags&NoBlockFlags)) {
+      frontceil = frontreg->eceiling;
+      frontceilz = frontceil.GetPointZ(point);
+    }
+    if (!(backreg->eceiling.splane->flags&NoBlockFlags)) {
+      backceil = backreg->eceiling;
+      backceilz = backceil.GetPointZ(point);
+    }
 
-    if (backreg->eceiling->flags&NoBlockFlags) { backreg = backreg->next; continue; }
-    if (frontreg->eceiling->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
-
-    float frontfloorz = frontfloor.GetPointZ(point);
-    float backfloorz = backfloor.GetPointZ(point);
-    float frontceilz = frontceil.GetPointZ(point);
-    float backceilz = backceil.GetPointZ(point);
+    if (backreg->eceiling.splane->flags&NoBlockFlags) { backreg = backreg->next; continue; }
+    if (frontreg->eceiling.splane->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
 
     if (frontfloorz >= backceilz) { backreg = backreg->next; continue; }
     if (backfloorz >= frontceilz) { frontreg = frontreg->next; continue; }
 
     if (opsused >= MAX_OPENINGS) { GCon->Logf("too many openings for line!"); break; }
-
     openings[opsused].next = op;
-    op = &openings[opsused];
-    ++opsused;
-    op->fcflags = 0;
+    op = &openings[opsused++];
 
     if (frontfloorz > backfloorz) {
       op->bottom = frontfloorz;
       op->lowfloor = backfloorz;
-      op->efloor = frontfloor.splane;
-      op->fcflags |= (frontfloor.reversed ? opening_t::FC_FlipFloor : 0u);
+      op->efloor = frontfloor;
       //op->lowfloorplane = backfloor;
     } else {
       op->bottom = backfloorz;
       op->lowfloor = frontfloorz;
-      op->efloor = backfloor.splane;
-      op->fcflags |= (backfloor.reversed ? opening_t::FC_FlipFloor : 0u);
+      op->efloor = backfloor;
       //op->lowfloorplane = frontfloor;
     }
 
     if (frontceilz < backceilz) {
       op->top = frontceilz;
       op->highceiling = backceilz;
-      op->eceiling = frontceil.splane;
-      op->fcflags |= (frontceil.reversed ? opening_t::FC_FlipFloor : 0u);
+      op->eceiling = frontceil;
       //op->highceilingplane = backceil;
       frontreg = frontreg->next;
     } else {
       op->top = backceilz;
       op->highceiling = frontceilz;
-      op->eceiling = backceil.splane;
-      op->fcflags |= (backceil.reversed ? opening_t::FC_FlipFloor : 0u);
+      op->eceiling = backceil;
       //op->highceilingplane = frontceil;
       backreg = backreg->next;
     }
@@ -344,6 +347,35 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   }
 
   return op;
+}
+
+
+//==========================================================================
+//
+//  SV_CanFitIntoGap
+//
+//  returns `true` if can fit
+//
+//==========================================================================
+static inline bool SV_CanFitIntoGap (float *fdist, const sec_region_t *gap, const TVec &point, float z1, float z2) {
+  float fz = gap->efloor.GetPointZ(point);
+  float cz = gap->eceiling.GetPointZ(point);
+  if (fz >= cz) return false; // paper-thin gap, skip it
+  if (z1 < fz) return false; // under the floor, skip it
+  *fdist = z1-fz; // distance to floor
+  // fully inside?
+  if (z2 <= cz) return true;
+  // now things becomes interesting
+  // walk up until solid floor/ceiling found, then check "inside" again
+  // this is for idiotic gozzo "swimmable/non-solid"
+  for (const sec_region_t *reg = gap; reg; reg = reg->next) {
+    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
+      cz = reg->eceiling.GetPointZ(point);
+      break;
+    }
+  }
+  // fully inside?
+  return (z2 <= cz);
 }
 
 
@@ -366,12 +398,76 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 //
 //  4. if there is no gaps which the thing could fit in, do the same.
 //
-//  Returns the gap number, or -1 if there are no gaps at all.
+//  Returns the gap, or `nullptr` if there are no gaps at all.
 //
 //==========================================================================
 sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2, bool dbgDump) {
   sec_region_t *gaps = InGaps;
 
+  // check for trivial gaps
+  if (gaps == nullptr) return nullptr;
+  if (gaps->next == nullptr) return gaps;
+
+  // try to find a gap we can fit in
+  float bestFloorDist = 999999.0f;
+  float bestCeilDist = 999999.0f;
+  sec_region_t *bestFit = nullptr;
+  float fdist = 0.0f;
+
+  for (sec_region_t *reg = gaps; reg; reg = reg->next) {
+    if (SV_CanFitIntoGap(&fdist, reg, point, z1, z2)) {
+      if (!bestFit || fdist < bestFloorDist) {
+        bestFloorDist = fdist;
+        bestFit = reg;
+        bestCeilDist = reg->eceiling.GetPointZ(point)-z2;
+      } else if (fdist == bestFloorDist) {
+        const float czd = reg->eceiling.GetPointZ(point)-z2;
+        if (czd < bestCeilDist) {
+          bestCeilDist = czd;
+          bestFit = reg;
+        }
+      }
+    }
+  }
+
+  if (bestFit) return bestFit;
+
+  // alas, cannot fit into any gap; find the gap with the floor that is closest to z1
+  // also, track the gap we can fit it
+  bestFloorDist = 999999.0f;
+  bestFit = nullptr;
+  int fitCount = 0;
+  sec_region_t *fitIndide = nullptr;
+  for (sec_region_t *reg = gaps; reg; reg = reg->next) {
+    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
+      const float fz = reg->efloor.GetPointZ(point);
+      // check for good fit
+      if (fitCount < 2 && z1 >= fz) {
+        sec_region_t *rc = reg;
+        for (; rc; rc = rc->next) {
+          if ((rc->eceiling.splane->flags&SPF_NOBLOCKING) == 0) break;
+        }
+        const float cz = (rc ? rc->eceiling.GetPointZ(point) : reg->eceiling.GetPointZ(point));
+        if (z2 <= cz) {
+          fitIndide = reg;
+          ++fitCount;
+        }
+      }
+      // check for closest floor
+      fdist = fabs(z1-fz);
+      if (!bestFit || fdist < bestFloorDist) {
+        bestFloorDist = fdist;
+        bestFit = reg;
+      }
+    }
+  }
+
+  // return gap we can fit inside
+  if (fitCount == 1) return fitIndide;
+
+  return (bestFit ? bestFit : gaps);
+
+#if 0
   int fit_num = 0;
   sec_region_t *fit_last = nullptr;
 
@@ -381,27 +477,26 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   sec_region_t *nofit_closest = nullptr;
   float nofit_mindist = 200000.0f;
 
-  // check for trivial gaps
-  if (gaps == nullptr) return nullptr;
-  if (gaps->next == nullptr) return gaps;
-
   TSecPlaneRef floor;
   TSecPlaneRef ceil;
   sec_region_t *lastFloorGap = nullptr;
 
+  float bestFloorDist = 999999.0f;
+  sec_region_t *bestFloor = nullptr;
+
   // there are 2 or more gaps; now it gets interesting :-)
   while (gaps) {
     if (dbgDump) GCon->Logf("  svftg: checking gap=%p; z1=%g; z2=%g (regflags=0x%02x)", gaps, z1, z2, gaps->regflags);
-    if ((gaps->efloor->flags&SPF_NOBLOCKING) == 0) {
+    if ((gaps->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
       if (dbgDump) GCon->Logf("  svftg: new floor gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-      floor.setFloor(gaps);
+      floor = gaps->efloor;
       lastFloorGap = gaps;
     }
-    if ((gaps->eceiling->flags&SPF_NOBLOCKING) == 0) {
+    if ((gaps->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
       if (dbgDump) GCon->Logf("  svftg: new ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-      ceil.setCeiling(gaps);
+      ceil = gaps->eceiling;
     }
-    if (gaps->eceiling->flags&SPF_NOBLOCKING) {
+    if (gaps->eceiling.splane->flags&SPF_NOBLOCKING) {
       //if ((gaps->regflags&sec_region_t::RF_NonSolid))
       {
         if (dbgDump) GCon->Logf("  svftg: skip ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
@@ -409,6 +504,16 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
         continue;
       }
     }
+    /*
+    if (gaps->efloor.splane->flags&SPF_NOBLOCKING) {
+      //if ((gaps->regflags&sec_region_t::RF_NonSolid))
+      {
+        if (dbgDump) GCon->Logf("  svftg: skip floor gap=%p; z1=%g; z2=%g", gaps, z1, z2);
+        gaps = gaps->next;
+        continue;
+      }
+    }
+    */
 
     const float f = floor.GetPointZ(point);
     const float c = ceil.GetPointZ(point);
@@ -448,6 +553,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   if (fit_num == 1) return fit_last;
   if (fit_num > 1) return fit_closest;
   return nofit_closest;
+#endif
 }
 
 
@@ -528,13 +634,23 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 //  SV_PointInRegion
 //
 //==========================================================================
-sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p) {
-  sec_region_t *reg;
+sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p) {
+  sec_region_t *best = nullptr;
+  float bestDist = 999999.0f; // minimum distance to region floor
   // logic: find matching region, otherwise return highest one
-  for (reg = sector->botregion; reg && reg->next; reg = reg->next) {
-    if (p.z < reg->GetCeilingPointZ(p)) break;
+  for (sec_region_t *reg = sector->botregion; reg && reg->next; reg = reg->next) {
+    const float fz = reg->efloor.GetPointZ(p);
+    const float cz = reg->eceiling.GetPointZ(p);
+    if (p.z >= fz && p.z <= cz) {
+      const float fdist = p.z-fz;
+      if (!best || fdist < bestDist) {
+        best = reg;
+        bestDist = fdist;
+      }
+    }
+    //if (p.z < reg->eceiling.GetPointZ(p)) break;
   }
-  return reg;
+  return (best ? best : sector->botregion);
 }
 
 
@@ -554,12 +670,15 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
   if (sector->SectorFlags&sector_t::SF_UnderWater) return 9;
 
   if (sector->SectorFlags&sector_t::SF_HasExtrafloors) {
+    /*
     for (sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
-      if (p.z <= reg->GetCeilingPointZ(p) && p.z >= reg->GetFloorPointZ(p)) {
+      if (p.z <= reg->eceiling.GetPointZ(p) && p.z >= reg->efloor.GetPointZ(p)) {
         return reg->params->contents;
       }
     }
-    return -1;
+    */
+    sec_region_t *reg = SV_PointInRegion(sector, p);
+    return (reg ? reg->params->contents : -1);
   } else {
     return sector->botregion->params->contents;
   }
@@ -638,7 +757,7 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
       sector_t *sec2 = &Sectors[i];
       if ((sec2->SectorFlags&sector_t::SF_HasExtrafloors) != 0 && sec2 != sector) {
         for (sec_region_t *reg = sec2->botregion; reg; reg = reg->next) {
-          if (reg->efloor == &sector->floor || reg->eceiling == &sector->ceiling) {
+          if (reg->efloor.splane == &sector->floor || reg->eceiling.splane == &sector->ceiling) {
             ret |= ChangeSectorInternal(sec2, crunch);
             if (ret) csTouched[secnum] |= 0x80000000U;
             break;

@@ -432,9 +432,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
       GetFloorAndCeiling(out tmtrace);
       // update position
       EFloor = tmtrace.EFloor;
-      bFlipFloor = tmtrace.bFlipFloor;
       ECeiling = tmtrace.ECeiling;
-      bFlipCeiling = tmtrace.bFlipCeiling;
       FloorZ = tmtrace.FloorZ;
       CeilingZ = tmtrace.CeilingZ;
       if (bStickToFloor || bStickToCeiling) {
@@ -463,9 +461,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   //if (skipTriggers && bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
 
   EFloor = tmtrace.EFloor;
-  bFlipFloor = tmtrace.bFlipFloor;
   ECeiling = tmtrace.ECeiling;
-  bFlipCeiling = tmtrace.bFlipCeiling;
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 

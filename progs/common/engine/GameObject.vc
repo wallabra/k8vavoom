@@ -193,10 +193,12 @@ enum {
   SPF_ADDITIVE     = 8,
 };
 
+/*
 enum {
   SPF_EX_ALLOCATED = 1<<0,
   SPF_EX_FLOOR     = 1<<1,
 };
+*/
 
 const int SKY_FROM_SIDE = 0x8000;
 
@@ -621,8 +623,7 @@ struct drawseg_t {
 };
 
 struct sec_surface_t {
-  native transient private sec_plane_t *esecplane;
-  native transient private bool bFlipped;
+  native transient private TSecPlaneRef esecplane;
   texinfo_t texinfo;
   float edist;
   float XScale;
@@ -776,8 +777,8 @@ struct sec_plane_t : TPlane {
 
   Entity SkyBox;
 
-  sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
-  int exflags;
+  //sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
+  //int exflags;
 };
 
 
@@ -789,6 +790,38 @@ struct sec_params_t {
 };
 
 
+struct TSecPlaneRef {
+  sec_plane_t *splane;
+  bool flipped;
+};
+
+
+native static final TVec spGetNormal (const ref TSecPlaneRef sp);
+native static final float spGetNormalZ (const ref TSecPlaneRef sp);
+native static final float spGetDist (const ref TSecPlaneRef sp);
+// get z of point with given x and y coords
+// don't try to use it on a vertical plane
+native static final float spGetPointZ (const ref TSecPlaneRef sp, const ref TVec p);
+native static final float spDotPoint (const ref TSecPlaneRef sp, const ref TVec point);
+native static final float spDotPointDist (const ref TSecPlaneRef sp, const ref TVec point);
+// returns side 0 (front) or 1 (back, or on plane)
+native static final int spPointOnSide (const ref TSecPlaneRef sp, const ref TVec point);
+// returns side 0 (front) or 1 (back, or on plane)
+native static final int spPointOnSideThreshold (const ref TSecPlaneRef sp, const ref TVec point);
+// returns side 0 (front, or on plane) or 1 (back)
+// "fri" means "front inclusive"
+native static final int spPointOnSideFri (const ref TSecPlaneRef sp, const ref TVec point);
+// returns side 0 (front), 1 (back), or 2 (on)
+// used in line tracing (only)
+native static final int spPointOnSide2 (const ref TSecPlaneRef sp, const ref TVec point);
+// returns side 0 (front), 1 (back)
+// if at least some part of the sphere is on a front side, it means "front"
+native static final int spSphereOnSide (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+native static final bool spSphereTouches (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+// returns side 0 (front), 1 (back), or 2 (collides)
+native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+
+
 // "regions" are floor/ceiling info for sector
 // region "inside" is empty, and you can walk there
 struct sec_region_t {
@@ -797,8 +830,8 @@ struct sec_region_t {
   sec_region_t *next; // region at the bottom
 
   // planes
-  sec_plane_t *efloor;
-  sec_plane_t *eceiling;
+  TSecPlaneRef efloor;
+  TSecPlaneRef eceiling;
 
   sec_params_t *params;
 
@@ -808,8 +841,7 @@ struct sec_region_t {
   line_t *extraline;
 
   // for gozzo crap
-  bool bFlipFloor;
-  bool bFlipCeiling;
+  bool bNonSolid;
 };
 
 //
@@ -1006,10 +1038,8 @@ struct polyobj_t {
 struct subregion_t {
   sec_region_t *secregion;
   subregion_t *next;
-  native transient private sec_plane_t *floorplane;
-  native transient private bool bFloorFlip;
-  native transient private sec_plane_t *ceilplane;
-  native transient private bool bCeilFlip;
+  native transient private TSecPlaneRef floorplane;
+  native transient private TSecPlaneRef ceilplane;
   native transient private sec_surface_t *floor;
   native transient private sec_surface_t *ceil;
   int count;
@@ -1140,13 +1170,11 @@ struct opening_t {
   float range;
   float lowfloor;
   float highceiling;
-  sec_plane_t *efloor;
-  sec_plane_t *eceiling;
+  TSecPlaneRef efloor;
+  TSecPlaneRef eceiling;
   //sec_plane_t *lowfloorplane;
   //sec_plane_t *highceilingplane;
   opening_t *next;
-  bool bFlipFloor;
-  bool bFlipCeiling;
 };
 
 

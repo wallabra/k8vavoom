@@ -5307,16 +5307,8 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
 //  GetRegionFloorPointZ
 //
 //==========================================================================
-final float GetRegionFloorPointZ (const sec_region_t *reg, const ref TVec p) {
-  if (reg->bFlipFloor) {
-    // gozzo crap, idc
-    TPlane pl;
-    pl.normal = reg->efloor->normal;
-    pl.dist = reg->efloor->dist;
-    return GetPlanePointZ(ref pl, p);
-  } else {
-    return GetPlanePointZ(ref *reg->efloor, p);
-  }
+static final float GetRegionFloorPointZ (const sec_region_t *reg, const ref TVec p) {
+  return reg->efloor.spGetPointZ(p);
 }
 
 
@@ -5325,16 +5317,8 @@ final float GetRegionFloorPointZ (const sec_region_t *reg, const ref TVec p) {
 //  GetRegionCeilingPointZ
 //
 //==========================================================================
-final float GetRegionCeilingPointZ (const sec_region_t *reg, const ref TVec p) {
-  if (reg->bFlipCeiling) {
-    // gozzo crap, idc
-    TPlane pl;
-    pl.normal = reg->eceiling->normal;
-    pl.dist = reg->eceiling->dist;
-    return GetPlanePointZ(ref pl, p);
-  } else {
-    return GetPlanePointZ(ref *reg->eceiling, p);
-  }
+static final float GetRegionCeilingPointZ (const sec_region_t *reg, const ref TVec p) {
+  return reg->eceiling.spGetPointZ(p);
 }
 
 

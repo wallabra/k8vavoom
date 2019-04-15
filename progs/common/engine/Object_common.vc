@@ -423,8 +423,11 @@ native static final void AngleVector (const TAVec angles, out TVec forward);
 native static final void VectorAngles (const TVec vec, out TAVec angles);
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
 native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);
-// returns side 0 (front) or 1 (back)
+native static final float GetPlanePointZRev (const ref TPlane plane, const TVec point);
+// returns side 0 (front), or 1 (back)
 native static final int PointOnPlaneSide (const TVec point, const ref TPlane plane);
+// returns side 0 (front), 1 (back), or 2 (on)
+native static final int PointOnPlaneSide2 (const TVec point, const ref TPlane plane);
 // rotates a direction vector
 native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
 // rotates vector around Z axis

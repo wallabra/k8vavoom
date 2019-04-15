@@ -201,13 +201,15 @@ class VEntity : public VThinker {
   float DropOffZ;
 
   // closest floor and ceiling, source of floorz and ceilingz
+  /*
   enum {
     FC_FlipFloor = 1u<<0,
     FC_FlipCeiling = 1u<<1,
   };
   vuint32 fcflags;
-  sec_plane_t *EFloor;
-  sec_plane_t *ECeiling;
+  */
+  TSecPlaneRef EFloor;
+  TSecPlaneRef ECeiling;
 
   // if == validcount, already checked
   //int ValidCount;
@@ -317,8 +319,8 @@ public:
   static int FIndex_GetStateTime;
 
 public:
-  inline float GetFloorNormalZ () const { return (!(fcflags&FC_FlipFloor) ? EFloor->normal.z : -EFloor->normal.z); }
-  inline float GetCeilingNormalZ () const { return (!(fcflags&FC_FlipCeiling) ? ECeiling->normal.z : -ECeiling->normal.z); }
+  inline float GetFloorNormalZ () const { return EFloor.GetNormalZ(); }
+  inline float GetCeilingNormalZ () const { return ECeiling.GetNormalZ(); }
 
   static void InitFuncIndexes ();
 
