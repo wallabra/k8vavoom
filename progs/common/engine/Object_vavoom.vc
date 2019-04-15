@@ -474,9 +474,9 @@ native static final GameObject::opening_t *LineOpenings (GameObject::line_t *lin
 native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
 // used for various 3dmidtex calculations
 native static final bool P_GetMidTexturePosition (const GameObject::line_t *line, int sideno, out float ptextop, out float ptexbot);
-// find the best gap that the thing could fit in, given a certain Z
-// position (z1 is foot, z2 is head).
-native static final GameObject::sec_region_t *FindThingGap (GameObject::sec_region_t *gaps, TVec point, float z1, float z2);
+// find the best gap that the thing could fit in, given a certain Z position
+// `point.z` is bottom
+native static final GameObject::sec_region_t *FindThingGap (GameObject::sec_region_t *gaps, const ref TVec point, float height);
 // find the best opening
 native static final GameObject::opening_t *FindOpening (GameObject::opening_t *gaps, float z1, float z2);
 // find best region in sector for a given point

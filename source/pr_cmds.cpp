@@ -591,11 +591,10 @@ IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, FindThingGap) {
-  P_GET_FLOAT(z2);
-  P_GET_FLOAT(z1);
-  P_GET_VEC(point);
+  P_GET_FLOAT(height);
+  P_GET_PTR(TVec, point);
   P_GET_PTR(sec_region_t, gaps);
-  RET_PTR(SV_FindThingGap(gaps, point, z1, z2));
+  RET_PTR(SV_FindThingGap(gaps, *point, height));
 }
 
 

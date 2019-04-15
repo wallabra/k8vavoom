@@ -356,9 +356,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 //
 //==========================================================================
 static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, sec_region_t *&floor, sec_region_t *&ceiling) {
-  floor = gap;
-  ceiling = gap;
   // find solid floor
+  floor = gap;
   for (sec_region_t *reg = gap; reg; reg = reg->prev) {
     if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
       floor = reg;
@@ -366,6 +365,7 @@ static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, se
     }
   }
   // find solid ceiling
+  ceiling = gap;
   for (sec_region_t *reg = gap; reg; reg = reg->next) {
     if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
       ceiling = reg;
@@ -397,10 +397,13 @@ static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, se
 //  Returns the gap, or `nullptr` if there are no gaps at all.
 //
 //==========================================================================
-sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2, bool dbgDump) {
+sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float height, bool dbgDump) {
   /* k8: here, we should return gap we can fit in, even if we are partially in it.
          this is because sector height change is using this to do various checks
    */
+  if (height < 0.0f) height = 0.0f;
+  const float z1 = point.z;
+  const float z2 = z1+height;
 
   sec_region_t *gaps = InGaps;
 
@@ -420,25 +423,9 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     float fz = reg->efloor.GetPointZ(point);
     float cz = reg->eceiling.GetPointZ(point);
-    float fdist = fabsf(point.z-fz); // we don't care about sign
-    // completely outside?
-    if (z2 < fz || z1 > cz) {
-      // yes, do "can fit vertically" checks, and choose the best one
-      // but only if we don't have "can fit" yet
-      if (!bestFit) {
-        sec_region_t *rfloor, *rceil;
-        SV_FindFloorCeiling(reg, point, rfloor, rceil);
-        fz = rfloor->efloor.GetPointZ(point);
-        cz = rceil->eceiling.GetPointZ(point);
-        if (z1 >= fz && z2 <= cz) {
-          // can fit, choose closest floor
-          if (!bestPossibleFit || fdist < bestPossibleFitFloorDist) {
-            bestPossibleFitFloorDist = fdist;
-            bestPossibleFit = reg;
-          }
-        }
-      }
-    } else {
+    float fdist = fabsf(z1-fz); // we don't care about sign
+    // at least partially inside?
+    if (z2 >= fz && z1 <= cz) {
       // at least partially inside, check if we can fit
       bool canFit = (z1 >= fz && z2 <= cz);
       if (!canFit) {
@@ -456,6 +443,22 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
           bestFit = reg;
         }
       }
+    } else {
+      // do "can fit vertically" checks, and choose the best one
+      // but only if we don't have "can fit" yet
+      if (!bestFit) {
+        sec_region_t *rfloor, *rceil;
+        SV_FindFloorCeiling(reg, point, rfloor, rceil);
+        fz = rfloor->efloor.GetPointZ(point);
+        cz = rceil->eceiling.GetPointZ(point);
+        if (z1 >= fz && z2 <= cz) {
+          // can fit, choose closest floor
+          if (!bestPossibleFit || fdist < bestPossibleFitFloorDist) {
+            bestPossibleFitFloorDist = fdist;
+            bestPossibleFit = reg;
+          }
+        }
+      }
     }
   }
 
@@ -468,7 +471,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   bestFit = nullptr;
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     float fz = reg->efloor.GetPointZ(point);
-    float fdist = fabsf(point.z-fz); // we don't care about sign
+    float fdist = fabsf(z1-fz); // we don't care about sign
     if (!bestFit || fdist < bestFitFloorDist) {
       bestFitFloorDist = fdist;
       bestFit = reg;
@@ -574,22 +577,22 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
 //  floor and ceiling planes
 //
 //==========================================================================
-void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float z1, float z2, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
-  sec_region_t *gap = SV_FindThingGap(sector->botregion, p, z1, z1);
+void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
+  sec_region_t *gap = SV_FindThingGap(sector->botregion, p, height);
   check(gap);
-  // get ceiling
-  ceiling = gap->eceiling;
-  for (sec_region_t *reg = gap; reg; reg = reg->next) {
-    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
-      ceiling = reg->eceiling;
-      break;
-    }
-  }
   // get floor
   floor = gap->efloor;
   for (sec_region_t *reg = gap; reg; reg = reg->prev) {
     if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
       floor = reg->efloor;
+      break;
+    }
+  }
+  // get ceiling
+  ceiling = gap->eceiling;
+  for (sec_region_t *reg = gap; reg; reg = reg->next) {
+    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
+      ceiling = reg->eceiling;
       break;
     }
   }

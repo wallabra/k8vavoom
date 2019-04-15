@@ -134,7 +134,7 @@ struct tmtrace_t {
 //
 //==========================================================================
 static void tmtSetupGap (tmtrace_t *tmtrace, sector_t *sector, float Height) {
-  SV_FindGapFloorCeiling(sector, tmtrace->End, tmtrace->End.z, tmtrace->End.z+(Height > 0 ? Height : 0.0f), tmtrace->EFloor, tmtrace->ECeiling);
+  SV_FindGapFloorCeiling(sector, tmtrace->End, Height, tmtrace->EFloor, tmtrace->ECeiling);
   tmtrace->FloorZ = tmtrace->EFloor.GetPointZ(tmtrace->End);
   tmtrace->DropOffZ = tmtrace->FloorZ;
   tmtrace->CeilingZ = tmtrace->ECeiling.GetPointZ(tmtrace->End);
@@ -437,7 +437,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     // any contacted lines the step closer together will adjust them
     /*
     if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-      sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
+      sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, Height);
       sec_region_t *reg = gap;
       while (reg->prev && (reg->efloor.splane->flags&SPF_NOBLOCKING)) reg = reg->prev;
       tmtrace.CopyRegFloor(reg, &Origin);
@@ -483,7 +483,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     //if (Origin.z < FloorZ) Origin.z = FloorZ; // just in case
   } else {
     // simplified check
-    sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+(Height > 0 ? Height : 0.0f));
+    sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Height);
 
     sec_region_t *r = reg;
     while ((r->efloor.splane->flags&SPF_NOBLOCKING) && r->prev) r = r->prev;
@@ -627,7 +627,7 @@ bool VEntity::CheckPosition (TVec Pos) {
 
   // The base floor / ceiling is from the subsector that contains the point.
   // Any contacted lines the step closer together will adjust them.
-  gap = SV_FindThingGap(newsubsec->sector->botregion, Pos, Pos.z, Pos.z+Height);
+  gap = SV_FindThingGap(newsubsec->sector->botregion, Pos, Height);
   reg = gap;
   while (reg->prev && (reg->efloor.splane->flags&SPF_NOBLOCKING) != 0) reg = reg->prev;
   cptrace.CopyRegFloor(reg, &Pos);
@@ -824,7 +824,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups) {
   // any contacted lines the step closer together will adjust them
   /*
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height > 0 ? Height : 0.0f));
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, Height);
     sec_region_t *reg = gap;
     while (reg->prev && (reg->efloor.splane->flags&SPF_NOBLOCKING)) reg = reg->prev;
     tmtrace.CopyRegFloor(reg, &tmtrace.End);
@@ -1946,8 +1946,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
             P_BoxOnLineSide(t_bbox, line) == -1)
         {
           // new logic for 3D Floors
-          sec_region_t *FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Origin.z, Origin.z+Height);
-          sec_region_t *BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Origin.z, Origin.z+Height);
+          sec_region_t *FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Height);
+          sec_region_t *BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Height);
           float front = FrontReg->efloor.GetPointZ(Origin);
           float back = BackReg->efloor.GetPointZ(Origin);
 
