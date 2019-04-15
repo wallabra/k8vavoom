@@ -2763,8 +2763,9 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
     if (!(in->line->flags&ML_TWOSIDED)) break; // stop
 
     hit_point = Origin+(UseThingRange*in->frac)*useDir;
-    open = LineOpenings(in->line, hit_point);
-    open = FindOpening(open, hit_point.z, hit_point.z+Height);
+    //open = LineOpenings(in->line, hit_point);
+    //open = FindOpening(open, hit_point.z, hit_point.z+Height);
+    open = FindLineOpening(in->line, hit_point, Height);
     if (!open || open->range < 1.0) break; // can't use through a wall
     continue;
   }
@@ -2784,8 +2785,9 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
         // gozzo does this
         open = nullptr;
       } else {
-        open = LineOpenings(line, hit_point);
-        open = FindOpening(open, hit_point.z, hit_point.z+Height);
+        //open = LineOpenings(line, hit_point);
+        //open = FindOpening(open, hit_point.z, hit_point.z+Height);
+        open = FindLineOpening(line, hit_point, Height);
       }
       if (!open || open->range <= 0.0 || (line->special && Level.CompatUseBlocking)) {
         DoSecAct = false;

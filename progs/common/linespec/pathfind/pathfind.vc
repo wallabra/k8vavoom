@@ -57,8 +57,10 @@ final bool CanMoveTo (TVec start, TVec end) {
       TVec hitpoint = start+(dist*in.frac)*dir;
 
       // crosses a two sided line
-      opening_t *open = LineOpenings(ld, hitpoint);
-      open = FindOpening(open, hitpoint.z, hitpoint.z+Height);
+      //opening_t *open = LineOpenings(ld, hitpoint);
+      //open = FindOpening(open, hitpoint.z, hitpoint.z+Height);
+      auto open = FindLineOpening(ld, hitpoint, Height);
+
       // no valid openings
       if (!open) return false;
 

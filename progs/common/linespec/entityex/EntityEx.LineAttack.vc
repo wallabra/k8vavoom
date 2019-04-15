@@ -492,8 +492,9 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
       if (dist < 0.01) continue; // shooter is on the line
 
       hit_point = Origin+dist*aim_dir;
-      open = LineOpenings(li, hit_point);
-      open = FindOpening(open, hit_point.z, hit_point.z);
+      //open = LineOpenings(li, hit_point);
+      //open = FindOpening(open, hit_point.z, hit_point.z);
+      open = FindLineOpening(li, hit_point, 0);
 
       if (!open || open->bottom >= open->top) break; // stop
 
