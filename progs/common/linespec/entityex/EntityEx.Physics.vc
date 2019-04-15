@@ -249,12 +249,14 @@ bool Physics (float DeltaTime) {
     }
   } else {
     // see comment in `ZMovement()`
+#ifdef SHITTY_3DFLOOR_HACK
     if (!bNoGravity && Sector && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
         !bStickToFloor && !bStickToCeiling)
     {
       // yeah, several regions; recalc FloorZ
       HeightClip(skipTriggers:true, skipObjects:true);
     }
+#endif
   }
 
   if (bStickToFloor || bStickToCeiling) {
@@ -459,12 +461,14 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   //     (but really fast movement won't work yet).
   //     i have to rewrite this in a proper way, of course.
   bool hasGravity = (!bNoGravity && Sector);
+#ifdef SHITTY_3DFLOOR_HACK
   if (hasGravity && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
       !bStickToFloor && !bStickToCeiling)
   {
     // yeah, several regions; recalc FloorZ
     HeightClip(skipTriggers:true, skipObjects:true);
   }
+#endif
 
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.

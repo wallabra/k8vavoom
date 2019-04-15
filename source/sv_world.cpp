@@ -352,30 +352,26 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 
 //==========================================================================
 //
-//  SV_CanFitIntoGap
-//
-//  returns `true` if can fit
+//  SV_FindFloorCeiling
 //
 //==========================================================================
-static inline bool SV_CanFitIntoGap (float *fdist, const sec_region_t *gap, const TVec &point, float z1, float z2) {
-  float fz = gap->efloor.GetPointZ(point);
-  float cz = gap->eceiling.GetPointZ(point);
-  if (fz >= cz) return false; // paper-thin gap, skip it
-  if (z1 < fz) return false; // under the floor, skip it
-  *fdist = z1-fz; // distance to floor
-  // fully inside?
-  if (z2 <= cz) return true;
-  // now things becomes interesting
-  // walk up until solid floor/ceiling found, then check "inside" again
-  // this is for idiotic gozzo "swimmable/non-solid"
-  for (const sec_region_t *reg = gap; reg; reg = reg->next) {
-    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
-      cz = reg->eceiling.GetPointZ(point);
+static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, sec_region_t *&floor, sec_region_t *&ceiling) {
+  floor = gap;
+  ceiling = gap;
+  // find solid floor
+  for (sec_region_t *reg = gap; reg; reg = reg->prev) {
+    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
+      floor = reg;
       break;
     }
   }
-  // fully inside?
-  return (z2 <= cz);
+  // find solid ceiling
+  for (sec_region_t *reg = gap; reg; reg = reg->next) {
+    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
+      ceiling = reg;
+      break;
+    }
+  }
 }
 
 
@@ -402,28 +398,61 @@ static inline bool SV_CanFitIntoGap (float *fdist, const sec_region_t *gap, cons
 //
 //==========================================================================
 sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1, float z2, bool dbgDump) {
+  /* k8: here, we should return gap we can fit in, even if we are partially in it.
+         this is because sector height change is using this to do various checks
+   */
+
   sec_region_t *gaps = InGaps;
 
   // check for trivial gaps
   if (gaps == nullptr) return nullptr;
   if (gaps->next == nullptr) return gaps;
 
-  // try to find a gap we can fit in
-  float bestFloorDist = 999999.0f;
-  float bestCeilDist = 999999.0f;
+  // region we are at least partially inside, and can fit
+  float bestFitFloorDist = 999999.0f;
   sec_region_t *bestFit = nullptr;
-  float fdist = 0.0f;
 
+  // region we can possibly fit, but not even partially inside
+  float bestPossibleFitFloorDist = 999999.0f;
+  sec_region_t *bestPossibleFit = nullptr;
+
+  // try to find a gap we can fit in
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
-    if (SV_CanFitIntoGap(&fdist, reg, point, z1, z2)) {
-      if (!bestFit || fdist < bestFloorDist) {
-        bestFloorDist = fdist;
-        bestFit = reg;
-        bestCeilDist = reg->eceiling.GetPointZ(point)-z2;
-      } else if (fdist == bestFloorDist) {
-        const float czd = reg->eceiling.GetPointZ(point)-z2;
-        if (czd < bestCeilDist) {
-          bestCeilDist = czd;
+    float fz = reg->efloor.GetPointZ(point);
+    float cz = reg->eceiling.GetPointZ(point);
+    float fdist = fabsf(point.z-fz); // we don't care about sign
+    // completely outside?
+    if (z2 < fz || z1 > cz) {
+      // yes, do "can fit vertically" checks, and choose the best one
+      // but only if we don't have "can fit" yet
+      if (!bestFit) {
+        sec_region_t *rfloor, *rceil;
+        SV_FindFloorCeiling(reg, point, rfloor, rceil);
+        fz = rfloor->efloor.GetPointZ(point);
+        cz = rceil->eceiling.GetPointZ(point);
+        if (z1 >= fz && z2 <= cz) {
+          // can fit, choose closest floor
+          if (!bestPossibleFit || fdist < bestPossibleFitFloorDist) {
+            bestPossibleFitFloorDist = fdist;
+            bestPossibleFit = reg;
+          }
+        }
+      }
+    } else {
+      // at least partially inside, check if we can fit
+      bool canFit = (z1 >= fz && z2 <= cz);
+      if (!canFit) {
+        // can't fit into current region, but it can be swimmable pool, so find solid floor and ceiling
+        sec_region_t *rfloor, *rceil;
+        SV_FindFloorCeiling(reg, point, rfloor, rceil);
+        fz = rfloor->efloor.GetPointZ(point);
+        cz = rceil->eceiling.GetPointZ(point);
+        canFit = (z1 >= fz && z2 <= cz);
+      }
+      if (canFit) {
+        // ok, we can fit here, check if this is a better candidate
+        if (!bestFit || fdist < bestFitFloorDist) {
+          bestFitFloorDist = fdist;
           bestFit = reg;
         }
       }
@@ -431,41 +460,21 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   }
 
   if (bestFit) return bestFit;
+  if (bestPossibleFit) return bestPossibleFit;
 
-  // alas, cannot fit into any gap; find the gap with the floor that is closest to z1
-  // also, track the gap we can fit it
-  bestFloorDist = 999999.0f;
+  // we don't have anything to fit into; this is something that should not happen
+  // yet, it *may* happen for bad maps or noclip, so return region with closest floor
+  bestFitFloorDist = 999999.0f;
   bestFit = nullptr;
-  int fitCount = 0;
-  sec_region_t *fitIndid = nullptr;
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
-    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
-      const float fz = reg->efloor.GetPointZ(point);
-      // check for good fit
-      if (fitCount < 2 && z1 >= fz) {
-        sec_region_t *rc = reg;
-        for (; rc; rc = rc->next) {
-          if ((rc->eceiling.splane->flags&SPF_NOBLOCKING) == 0) break;
-        }
-        const float cz = (rc ? rc->eceiling.GetPointZ(point) : reg->eceiling.GetPointZ(point));
-        if (z2 <= cz) {
-          fitIndid = reg;
-          ++fitCount;
-        }
-      }
-      // check for closest floor
-      fdist = fabs(z1-fz);
-      if (!bestFit || fdist < bestFloorDist) {
-        bestFloorDist = fdist;
-        bestFit = reg;
-      }
+    float fz = reg->efloor.GetPointZ(point);
+    float fdist = fabsf(point.z-fz); // we don't care about sign
+    if (!bestFit || fdist < bestFitFloorDist) {
+      bestFitFloorDist = fdist;
+      bestFit = reg;
     }
   }
-
-  // return gap we can fit inside
-  if (fitCount == 1) return fitIndid;
-
-  return (bestFit ? bestFit : gaps);
+  return bestFit;
 
 #if 0
   int fit_num = 0;
