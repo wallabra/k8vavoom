@@ -191,6 +191,10 @@ struct Ctl2DestLink {
 
 native transient private array!Ctl2DestLink ControlLinks;
 
+// they are static
+//native transient private opening_t *openListHead;
+//native transient private opening_t *openListFree;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // natives

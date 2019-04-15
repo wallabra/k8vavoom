@@ -216,7 +216,11 @@ struct opening_t {
   TSecPlaneRef eceiling;
   //sec_plane_t *lowfloorplane;
   //sec_plane_t *highceilingplane;
+  // next for this line
   opening_t *next;
+  // allocated list is double-linked, free list only using `listprev`
+  opening_t *listprev;
+  opening_t *listnext;
 };
 
 

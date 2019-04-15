@@ -35,6 +35,7 @@
 #define MapBlock(x)  ((int)floor(x)>>7)
 
 class VDecalDef;
+struct opening_t;
 
 
 //==========================================================================
@@ -360,6 +361,10 @@ class VLevel : public VGameObject {
     inline void next () { if (level && curridx >= 0) curridx = level->ControlLinks[curridx].next; }
   };
 
+  // line openings are cached, why not
+  static opening_t *openListHead;
+  static opening_t *openListFree;
+
 private:
   void AppendControlLink (const sector_t *src, const sector_t *dest);
   inline CtlLinkIter IterControlLinks (const sector_t *src) { return CtlLinkIter(this, (src ? (int)(ptrdiff_t)(src-Sectors) : -1)); }
@@ -487,6 +492,14 @@ public:
 
   void SuspendNamedScriptThinkers (const VStr &name, int map);
   void TerminateNamedScriptThinkers (const VStr &name, int map);
+
+public:
+  // allocate new opening from list
+  static opening_t *AllocOpening ();
+  // free one opening
+  static void FreeOpening (opening_t *op);
+  // free opening list
+  static void FreeOpeningList (opening_t *&op);
 
 public:
   void IncrementValidCount ();
