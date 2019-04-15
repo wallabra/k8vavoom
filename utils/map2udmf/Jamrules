@@ -1,0 +1,12 @@
+softinclude $(TOP)/Jamrules.configure ;
+
+set-profile ;
+set-target-locations ;
+
+
+HDRS += $(TOP)/src/shared ;
+
+
+softinclude $(TOP)/Jamrules.local ;
+softinclude $(TOP)/Jamrules.libs ;
+softinclude $(TOP)/Jamrules.install ;

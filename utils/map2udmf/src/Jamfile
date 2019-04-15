@@ -1,0 +1,14 @@
+SubDir TOP src ;
+
+Main map2udmf :
+  udmf.cpp
+
+  sharedmap.cpp
+
+  doommap.cpp
+  strifemap.cpp
+  hexenmap.cpp
+  zdoommap.cpp
+
+  main.cpp
+;
