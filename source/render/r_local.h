@@ -92,22 +92,16 @@ struct segpart_t {
 
 
 struct sec_surface_t {
-  sec_plane_t *esecplane;
+  TSecPlaneRef esecplane;
   texinfo_t texinfo;
   float edist;
   float XScale;
   float YScale;
   float Angle;
-  bool flipSecPlane;
+  //bool flipSecPlane;
   surface_t *surfs;
 
-  float PointDist (const TVec &p) const {
-    if (!flipSecPlane) {
-      return DotProduct(p, esecplane->normal)-esecplane->dist;
-    } else {
-      return DotProduct(p, -esecplane->normal)+esecplane->dist;
-    }
-  }
+  inline float PointDist (const TVec &p) const { return esecplane.DotPointDist(p); }
 };
 
 
@@ -492,7 +486,7 @@ protected:
 
   void UpdateRowOffset (subsector_t *r_surf_sub, segpart_t *sp, float RowOffset, float Scale);
   void UpdateTextureOffset (subsector_t *r_surf_sub, segpart_t *sp, float TextureOffset, float Scale);
-  void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/);
+  void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling/*, bool ShouldClip*/);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region, bool updatePoly=true);
   void UpdateSubsector (int num, float *bbox);
   void UpdateBSPNode (int bspnum, float *bbox);
@@ -581,14 +575,15 @@ protected:
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();
 
-  void SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
-  void SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
-  void SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
-  void SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
-  void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
-  void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                   sec_plane_t *r_floor, sec_plane_t *r_ceiling, sec_plane_t *extratop, sec_plane_t *extrabot,
+                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling,
+                                   TSecPlaneRef extratop, TSecPlaneRef extrabot,
                                    bool createES);
 
   // surf methods
@@ -596,13 +591,13 @@ protected:
   void FlushSurfCaches (surface_t*);
   // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
   // this is used both to create initial surfaces, and to update changed surfaces
-  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane, bool revflag);
-  void UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub, bool revflag); // subsector is not changed, but we need it non-const
+  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane);
+  void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub); // subsector is not changed, but we need it non-const
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t*);
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
   int CountSegParts (const seg_t *);
-  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling);
+  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);

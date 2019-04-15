@@ -30,6 +30,10 @@
 IMPLEMENT_CLASS(V, GameObject)
 
 
+void TSecPlaneRef::setFloor (sec_region_t *r) { splane = r->efloor; reversed = !!(r->regflags&sec_region_t::RF_FlipFloor); }
+void TSecPlaneRef::setCeiling (sec_region_t *r) { splane = r->eceiling; reversed = !!(r->regflags&sec_region_t::RF_FlipCeiling); }
+
+
 //==========================================================================
 //
 //  getFieldPtr

@@ -354,7 +354,7 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
   //const sec_plane_t &plane = *ssurf->secplane;
-  if (!ssurf->esecplane->pic) return;
+  if (!ssurf->esecplane.splane->pic) return;
 
   // note that we don't want to filter out shadows that are behind
   // but we are want to filter out surfaces that cannot possibly block light
@@ -607,7 +607,7 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
   //const sec_plane_t &plane = *ssurf->secplane;
-  if (!ssurf->esecplane->pic) return;
+  if (!ssurf->esecplane.splane->pic) return;
 
   //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
   const float dist = ssurf->PointDist(CurrLightPos);

@@ -366,6 +366,118 @@ struct sec_plane_t : public TPlane {
 };
 
 
+//==========================================================================
+//
+//  sector plane reference with flip flag
+//
+//==========================================================================
+struct sec_region_t;
+
+struct TSecPlaneRef {
+  sec_plane_t *splane;
+  bool reversed;
+
+  TSecPlaneRef () : splane(nullptr), reversed(false) {}
+  TSecPlaneRef (sec_plane_t *aplane, vuint32 arev=0) : splane(aplane), reversed(!!arev) {}
+
+  inline bool isValid () const { return !!splane; }
+
+  inline void set (sec_plane_t *aplane, vuint32 arev=0) { splane = aplane; reversed = !!arev; }
+
+  void setFloor (sec_region_t *r);
+  void setCeiling (sec_region_t *r);
+
+  inline TVec GetNormal () const { return (!reversed ? splane->normal : -splane->normal); }
+  inline float GetNormalZ () const { return (!reversed ? splane->normal.z : -splane->normal.z); }
+  inline float GetDist () const { return (!reversed ? splane->dist : -splane->dist); }
+  inline TPlane GetPlane () const { TPlane res; res.normal = (!reversed ? splane->normal : -splane->normal); res.dist = (!reversed ? splane->dist : -splane->dist); return res; }
+
+  inline void Flip () { reversed = !reversed; }
+
+  // get z of point with given x and y coords
+  // don't try to use it on a vertical plane
+  inline __attribute__((warn_unused_result)) float GetPointZ (float x, float y) const {
+    if (!reversed) {
+      return splane->GetPointZ(x, y);
+    } else {
+      // gozzo shit, idc
+      TPlane pl = *splane;
+      pl.flipInPlace();
+      return pl.GetPointZ(x, y);
+    }
+  }
+
+  inline __attribute__((warn_unused_result)) float DotPoint (const TVec &point) const {
+    if (!reversed) {
+      return DotProduct(point, splane->normal);
+    } else {
+      // gozzo shit, idc
+      return DotProduct(point, -splane->normal);
+    }
+  }
+
+  inline __attribute__((warn_unused_result)) float DotPointDist (const TVec &point) const {
+    if (!reversed) {
+      return DotProduct(point, splane->normal)-splane->dist;
+    } else {
+      // gozzo shit, idc
+      return DotProduct(point, -splane->normal)+splane->dist;
+    }
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
+    return GetPointZ(v.x, v.y);
+  }
+
+  // returns side 0 (front) or 1 (back, or on plane)
+  inline __attribute__((warn_unused_result)) int PointOnSide (const TVec &point) const {
+    return (DotPointDist(point) <= 0.0f);
+  }
+
+  // returns side 0 (front) or 1 (back, or on plane)
+  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point) const {
+    return (DotPointDist(point) < 0.1f);
+  }
+
+  // returns side 0 (front, or on plane) or 1 (back)
+  // "fri" means "front inclusive"
+  inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
+    return (DotPointDist(point) < 0.0f);
+  }
+
+  // returns side 0 (front), 1 (back), or 2 (on)
+  // used in line tracing (only)
+  inline __attribute__((warn_unused_result)) int PointOnSide2 (const TVec &point) const {
+    const float dot = DotPointDist(point);
+    return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
+  }
+
+  // returns side 0 (front), 1 (back)
+  // if at least some part of the sphere is on a front side, it means "front"
+  inline __attribute__((warn_unused_result)) int SphereOnSide (const TVec &center, float radius) const {
+    return (DotPointDist(center) <= -radius);
+  }
+
+  inline __attribute__((warn_unused_result)) bool SphereTouches (const TVec &center, float radius) const {
+    return (fabsf(DotPointDist(center)) < radius);
+  }
+
+  // returns side 0 (front), 1 (back), or 2 (collides)
+  inline __attribute__((warn_unused_result)) int SphereOnSide2 (const TVec &center, float radius) const {
+    const float d = DotPointDist(center);
+    return (d < -radius ? 1 : d > radius ? 0 : 2);
+  }
+
+  // distance from point to plane
+  // plane must be normalized
+  inline __attribute__((warn_unused_result)) float Distance (const TVec &p) const {
+    //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
+    //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
+    return DotPointDist(p);
+  }
+};
+
+
 struct sec_params_t {
   vint32 lightlevel;
   vint32 LightColour;
@@ -684,8 +796,10 @@ struct seg_t : public TPlane {
 struct subregion_t {
   sec_region_t *secregion;
   subregion_t *next;
-  sec_plane_t *floorplane;
-  sec_plane_t *ceilplane;
+  //sec_plane_t *floorplane;
+  //sec_plane_t *ceilplane;
+  TSecPlaneRef floorplane;
+  TSecPlaneRef ceilplane;
   sec_surface_t *floor;
   sec_surface_t *ceil;
   vint32 count;

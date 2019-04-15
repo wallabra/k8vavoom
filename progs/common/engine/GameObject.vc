@@ -621,7 +621,8 @@ struct drawseg_t {
 };
 
 struct sec_surface_t {
-  sec_plane_t *esecplane;
+  native transient private sec_plane_t *esecplane;
+  native transient private bool bFlipped;
   texinfo_t texinfo;
   float edist;
   float XScale;
@@ -1004,10 +1005,12 @@ struct polyobj_t {
 struct subregion_t {
   sec_region_t *secregion;
   subregion_t *next;
-  sec_plane_t *floorplane;
-  sec_plane_t *ceilplane;
-  native transient sec_surface_t *floor;
-  native transient sec_surface_t *ceil;
+  native transient private sec_plane_t *floorplane;
+  native transient private bool bFloorFlip;
+  native transient private sec_plane_t *ceilplane;
+  native transient private bool bCeilFlip;
+  native transient private sec_surface_t *floor;
+  native transient private sec_surface_t *ceil;
   int count;
   native transient drawseg_t *lines;
 };

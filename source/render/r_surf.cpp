@@ -104,8 +104,8 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, sec_plane_t *InSplane, bool revflag) {
-  sec_plane_t *splane = InSplane;
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane) {
+  TSecPlaneRef spl = InSplane;
   int vcount = sub->numlines;
 
   if (vcount < 3) {
@@ -116,12 +116,12 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   //check(vcount >= 3);
 
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
-  bool isSkyFlat = (splane->pic == skyflatnum);
+  bool isSkyFlat = (spl.splane->pic == skyflatnum);
   bool recalcSurface = true;
   bool updateZ = false;
 
   // fix plane
-  if (isSkyFlat && splane->normal.z < 0.0f) splane = &sky_plane;
+  if (isSkyFlat && spl.GetNormalZ() < 0.0f) spl.set(&sky_plane);
 
   surface_t *surf = nullptr;
   if (!ssurf) {
@@ -132,11 +132,11 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   } else {
     // change sector surface
     // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
-    recalcSurface = !isSkyFlat || ((ssurf->esecplane->pic == skyflatnum) != isSkyFlat);
+    recalcSurface = !isSkyFlat || ((ssurf->esecplane.splane->pic == skyflatnum) != isSkyFlat);
     if (recalcSurface) {
       surf = ReallocSurface(ssurf->surfs, vcount);
     } else {
-      updateZ = (FASI(ssurf->edist) != FASI(splane->dist));
+      updateZ = (FASI(ssurf->edist) != FASI(spl.splane->dist));
       surf = ssurf->surfs;
     }
     ssurf->surfs = nullptr; // just in case
@@ -145,46 +145,42 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   // this is required to calculate static lightmaps, and for other business
   for (surface_t *ss = surf; ss; ss = ss->next) ss->subsector = sub; // this is required to calculate static lightmaps, and for other business
 
-  ssurf->esecplane = splane;
-  ssurf->edist = splane->dist;
-  ssurf->flipSecPlane = revflag;
-
-  TPlane spl = *splane;
-  if (revflag) spl.flipInPlace();
+  ssurf->esecplane = spl;
+  ssurf->edist = spl.splane->dist;
 
   // setup texture
-  VTexture *Tex = GTextureManager(splane->pic);
+  VTexture *Tex = GTextureManager(spl.splane->pic);
   check(Tex);
-  if (fabsf(spl.normal.z) > 0.1f) {
+  if (fabsf(spl.GetNormalZ()) > 0.1f) {
     float s, c;
-    msincos(splane->BaseAngle-splane->Angle, &s, &c);
-    ssurf->texinfo.saxis = TVec(c,  s, 0)*TextureSScale(Tex)*splane->XScale;
-    ssurf->texinfo.taxis = TVec(s, -c, 0)*TextureTScale(Tex)*splane->YScale;
+    msincos(spl.splane->BaseAngle-spl.splane->Angle, &s, &c);
+    ssurf->texinfo.saxis = TVec(c,  s, 0)*TextureSScale(Tex)*spl.splane->XScale;
+    ssurf->texinfo.taxis = TVec(s, -c, 0)*TextureTScale(Tex)*spl.splane->YScale;
   } else {
-    ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(Tex)*splane->YScale;
-    ssurf->texinfo.saxis = Normalise(CrossProduct(spl.normal, ssurf->texinfo.taxis))*TextureSScale(Tex)*splane->XScale;
+    ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(Tex)*spl.splane->YScale;
+    ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*TextureSScale(Tex)*spl.splane->XScale;
   }
-  ssurf->texinfo.soffs = splane->xoffs;
-  ssurf->texinfo.toffs = splane->yoffs+splane->BaseYOffs;
+  ssurf->texinfo.soffs = spl.splane->xoffs;
+  ssurf->texinfo.toffs = spl.splane->yoffs+spl.splane->BaseYOffs;
   ssurf->texinfo.Tex = Tex;
   ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
-  ssurf->texinfo.Alpha = (splane->Alpha < 1.0f ? splane->Alpha : 1.1f);
-  ssurf->texinfo.Additive = !!(splane->flags&SPF_ADDITIVE);
+  ssurf->texinfo.Alpha = (spl.splane->Alpha < 1.0f ? spl.splane->Alpha : 1.1f);
+  ssurf->texinfo.Additive = !!(spl.splane->flags&SPF_ADDITIVE);
   ssurf->texinfo.ColourMap = 0;
-  ssurf->XScale = splane->XScale;
-  ssurf->YScale = splane->YScale;
-  ssurf->Angle = splane->BaseAngle-splane->Angle;
+  ssurf->XScale = spl.splane->XScale;
+  ssurf->YScale = spl.splane->YScale;
+  ssurf->Angle = spl.splane->BaseAngle-spl.splane->Angle;
 
   if (recalcSurface) {
-    if (revflag) surf->drawflags |= surface_t::DF_FLIP_PLANE; else surf->drawflags &= ~surface_t::DF_FLIP_PLANE;
+    if (spl.reversed) surf->drawflags |= surface_t::DF_FLIP_PLANE; else surf->drawflags &= ~surface_t::DF_FLIP_PLANE;
     surf->count = vcount;
     const seg_t *seg = &Level->Segs[sub->firstline];
     TVec *dptr = surf->verts;
-    if (spl.normal.z < 0.0f) {
+    if (spl.GetNormalZ() < 0.0f) {
       // backward
       for (seg += (vcount-1); vcount--; ++dptr, --seg) {
         const TVec &v = *seg->v1;
-        *dptr = TVec(v.x, v.y, spl.GetPointZ(v));
+        *dptr = TVec(v.x, v.y, spl.GetPointZ(v.x, v.y));
       }
     } else {
       // forward
@@ -198,10 +194,10 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       // don't subdivide sky, as it cannot have lightmap
       ssurf->surfs = surf;
       surf->texinfo = &ssurf->texinfo;
-      surf->eplane = splane;
+      surf->eplane = spl.splane;
     } else {
       ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
-      InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
+      InitSurfs(ssurf->surfs, &ssurf->texinfo, spl.splane, sub);
     }
   } else {
     // update z coords, if necessary
@@ -225,45 +221,46 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *RealPlane, subsector_t *sub, bool revflag) {
-  if (!ssurf->esecplane->pic) return; // no texture? nothing to do
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub) {
+  if (!ssurf->esecplane.splane->pic) return; // no texture? nothing to do
 
-  sec_plane_t *splane = ssurf->esecplane;
-  if (splane != RealPlane) {
+  TSecPlaneRef splane = ssurf->esecplane;
+
+  if (splane.splane != RealPlane.splane) {
     // check for sky changes
-    if ((splane->pic == skyflatnum) != (RealPlane->pic == skyflatnum)) {
+    if ((splane.splane->pic == skyflatnum) != (RealPlane.splane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
-      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
       check(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColourMap = ColourMap; // just in case
       // nothing more to do
       return;
     }
     // substitute real plane with sky plane if necessary
-    if (RealPlane->pic == skyflatnum && RealPlane->normal.z < 0.0f) {
-      if (splane != &sky_plane) {
+    if (RealPlane.splane->pic == skyflatnum && RealPlane.GetNormalZ() < 0.0f) {
+      if (splane.splane != &sky_plane) {
         // recreate it, just in case
-        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
         check(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColourMap = ColourMap; // just in case
         // nothing more to do
         return;
       }
-      splane = &sky_plane;
+      splane.set(&sky_plane);
     }
   }
 
-  ssurf->texinfo.soffs = splane->xoffs;
-  ssurf->texinfo.toffs = splane->yoffs+splane->BaseYOffs;
+  ssurf->texinfo.soffs = splane.splane->xoffs;
+  ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
 
   // if scale/angle was changed, we should update everything, and possibly rebuild the surface
   // our general surface creation function will take care of everything
-  if (FASI(ssurf->XScale) != FASI(splane->XScale) ||
-      FASI(ssurf->YScale) != FASI(splane->YScale) ||
-      ssurf->Angle != splane->BaseAngle-splane->Angle)
+  if (FASI(ssurf->XScale) != FASI(splane.splane->XScale) ||
+      FASI(ssurf->YScale) != FASI(splane.splane->YScale) ||
+      ssurf->Angle != splane.splane->BaseAngle-splane.splane->Angle)
   {
     // this will update texture, offsets, and everything
-    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, revflag);
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
     check(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColourMap = ColourMap; // just in case
     // nothing more to do
@@ -274,23 +271,21 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, sec_plane_t *Re
 
   // ok, we still may need to update texture or z coords
   // update texture?
-  VTexture *Tex = GTextureManager(splane->pic);
+  VTexture *Tex = GTextureManager(splane.splane->pic);
   if (ssurf->texinfo.Tex != Tex) {
     ssurf->texinfo.Tex = Tex;
     ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
   }
 
   // update z coords?
-  if (FASI(ssurf->edist) != FASI(splane->dist)) {
-    ssurf->edist = splane->dist;
-    TPlane spl = *splane;
-    if (revflag) spl.flipInPlace();
+  if (FASI(ssurf->edist) != FASI(splane.splane->dist)) {
+    ssurf->edist = splane.splane->dist;
     for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
       TVec *svert = surf->verts;
-      for (int i = surf->count; i--; ++svert) svert->z = spl.GetPointZ(svert->x, svert->y);
+      for (int i = surf->count; i--; ++svert) svert->z = splane.GetPointZ(svert->x, svert->y);
     }
     // force lightmap recalculation
-    if (splane->pic != skyflatnum) {
+    if (splane.splane->pic != skyflatnum) {
       FlushSurfCaches(ssurf->surfs);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, nullptr, sub);
     }
@@ -418,17 +413,17 @@ int VRenderLevelShared::CountSegParts (const seg_t *seg) {
 //  FixTexturePeg
 //
 //==========================================================================
-static inline void FixTexturePegMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, const sec_plane_t *r_floor, const sec_plane_t *r_ceiling) {
+static inline void FixTexturePegMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   const line_t *linedef = seg->linedef;
   if (linedef->flags&ML_DONTPEGBOTTOM) {
     // bottom of texture at bottom
-    sp->texinfo.toffs = r_floor->TexZ+(MTex->GetScaledHeight()*seg->sidedef->MidScaleY);
+    sp->texinfo.toffs = r_floor.splane->TexZ+(MTex->GetScaledHeight()*seg->sidedef->MidScaleY);
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
     sp->texinfo.toffs = seg->front_sub->sector->topregion->eceiling->TexZ;
   } else {
     // top of texture at top
-    sp->texinfo.toffs = r_ceiling->TexZ;
+    sp->texinfo.toffs = r_ceiling.splane->TexZ;
   }
   sp->texinfo.toffs *= TextureTScale(MTex)*seg->sidedef->MidScaleY;
   sp->texinfo.toffs += seg->sidedef->MidRowOffset*(TextureOffsetTScale(MTex)*seg->sidedef->MidScaleY);
@@ -498,7 +493,7 @@ static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MT
 //  VRenderLevelShared::SetupOneSidedWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   TVec wv[4];
 
   FixTexturePegMid(seg, sp, MTex, r_floor, r_ceiling);
@@ -508,10 +503,10 @@ void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpa
   wv[2].x = wv[3].x = seg->v2->x;
   wv[2].y = wv[3].y = seg->v2->y;
 
-  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  const float botz1 = r_floor->GetPointZ(*seg->v1);
-  const float botz2 = r_floor->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+  const float botz1 = r_floor.GetPointZ(*seg->v1);
+  const float botz2 = r_floor.GetPointZ(*seg->v2);
 
   wv[0].z = botz1;
   wv[1].z = topz1;
@@ -520,8 +515,8 @@ void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpa
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
-  sp->frontBotDist = r_floor->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
 }
 
@@ -531,11 +526,11 @@ void VRenderLevelShared::SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpa
 //  VRenderLevelShared::SetupOneSidedSkyWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   TVec wv[4];
 
-  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling.GetPointZ(*seg->v2);
 
   wv[0].x = wv[1].x = seg->v1->x;
   wv[0].y = wv[1].y = seg->v1->y;
@@ -548,7 +543,7 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
 }
 
 
@@ -557,11 +552,11 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedSkyWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   TVec wv[4];
 
-  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling.GetPointZ(*seg->v2);
 
   sp->texinfo.Tex = GTextureManager[skyflatnum];
   sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
@@ -580,7 +575,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
 }
 
 
@@ -589,7 +584,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedTopWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   check(TTex);
   TVec wv[4];
 
@@ -600,10 +595,10 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
 
-  const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  const float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  const float botz1 = r_floor->GetPointZ(*seg->v1);
-  const float botz2 = r_floor->GetPointZ(*seg->v2);
+  const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+  const float botz1 = r_floor.GetPointZ(*seg->v1);
+  const float botz2 = r_floor.GetPointZ(*seg->v2);
 
   const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
   const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
@@ -611,8 +606,8 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   // hack to allow height changes in outdoor areas
   float top_topz1 = topz1;
   float top_topz2 = topz2;
-  float top_TexZ = r_ceiling->TexZ;
-  if (IsSky(r_ceiling) && IsSky(back_ceiling) && r_ceiling->SkyBox == back_ceiling->SkyBox) {
+  float top_TexZ = r_ceiling.splane->TexZ;
+  if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox == back_ceiling->SkyBox) {
     top_topz1 = back_topz1;
     top_topz2 = back_topz2;
     top_TexZ = back_ceiling->TexZ;
@@ -632,8 +627,8 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
-  sp->frontBotDist = r_floor->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = back_ceiling->dist;
   sp->RowOffset = seg->sidedef->TopRowOffset;
 }
@@ -644,7 +639,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedBotWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   check(BTex);
   TVec wv[4];
 
@@ -655,17 +650,17 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
 
-  float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  float botz1 = r_floor->GetPointZ(*seg->v1);
-  float botz2 = r_floor->GetPointZ(*seg->v2);
-  float top_TexZ = r_ceiling->TexZ;
+  float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  float topz2 = r_ceiling.GetPointZ(*seg->v2);
+  float botz1 = r_floor.GetPointZ(*seg->v1);
+  float botz2 = r_floor.GetPointZ(*seg->v2);
+  float top_TexZ = r_ceiling.splane->TexZ;
 
   float back_botz1 = back_floor->GetPointZ(*seg->v1);
   float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
   // hack to allow height changes in outdoor areas
-  if (IsSky(r_ceiling) && IsSky(back_ceiling)) {
+  if (IsSky(r_ceiling.splane) && IsSky(back_ceiling)) {
     topz1 = back_ceiling->GetPointZ(*seg->v1);
     topz2 = back_ceiling->GetPointZ(*seg->v2);
     top_TexZ = back_ceiling->TexZ;
@@ -685,8 +680,8 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
-  sp->frontBotDist = r_floor->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
   sp->backBotDist = back_floor->dist;
   sp->RowOffset = seg->sidedef->BotRowOffset;
 }
@@ -697,7 +692,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 //  VRenderLevelShared::SetupTwoSidedMidWSurf
 //
 //==========================================================================
-void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   check(MTex);
   TVec wv[4];
 
@@ -708,10 +703,10 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
 
-  float topz1 = r_ceiling->GetPointZ(*seg->v1);
-  float topz2 = r_ceiling->GetPointZ(*seg->v2);
-  float botz1 = r_floor->GetPointZ(*seg->v1);
-  float botz2 = r_floor->GetPointZ(*seg->v2);
+  float topz1 = r_ceiling.GetPointZ(*seg->v1);
+  float topz2 = r_ceiling.GetPointZ(*seg->v2);
+  float botz1 = r_floor.GetPointZ(*seg->v1);
+  float botz2 = r_floor.GetPointZ(*seg->v2);
 
   float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
   float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
@@ -789,8 +784,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
-  sp->frontTopDist = r_ceiling->dist;
-  sp->frontBotDist = r_floor->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = back_ceiling->dist;
   sp->backBotDist = back_floor->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
@@ -803,25 +798,25 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                                     sec_plane_t *r_floor, sec_plane_t *r_ceiling,
-                                                     sec_plane_t *extratop, sec_plane_t *extrabot, bool createES)
+                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling,
+                                                     TSecPlaneRef extratop, TSecPlaneRef extrabot, bool createES)
 {
   check(MTextr);
 
   if (createES) {
     TVec wv[4];
 
-    const float topz1 = r_ceiling->GetPointZ(*seg->v1);
-    const float topz2 = r_ceiling->GetPointZ(*seg->v2);
-    const float botz1 = r_floor->GetPointZ(*seg->v1);
-    const float botz2 = r_floor->GetPointZ(*seg->v2);
+    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+    const float botz1 = r_floor.GetPointZ(*seg->v1);
+    const float botz2 = r_floor.GetPointZ(*seg->v2);
 
     //FIXME: FUCK YOU, GOZZO, FUCK YOU, FUCK YOU, FUCK YOU!
     //FIXME: we should pass "reverse" flags here. shit.
-    const float extratopz1 = extratop->GetPointZ(*seg->v1);
-    const float extratopz2 = extratop->GetPointZ(*seg->v2);
-    const float extrabotz1 = extrabot->GetPointZ(*seg->v1);
-    const float extrabotz2 = extrabot->GetPointZ(*seg->v2);
+    const float extratopz1 = extratop.GetPointZ(*seg->v1);
+    const float extratopz2 = extratop.GetPointZ(*seg->v2);
+    const float extrabotz1 = extrabot.GetPointZ(*seg->v1);
+    const float extrabotz2 = extrabot.GetPointZ(*seg->v2);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -854,10 +849,10 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     }
   }
 
-  sp->frontTopDist = r_ceiling->dist;
-  sp->frontBotDist = r_floor->dist;
-  sp->backTopDist = extratop->dist;
-  sp->backBotDist = extrabot->dist;
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
+  sp->backTopDist = extratop.splane->dist;
+  sp->backBotDist = extrabot.splane->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
 }
 
@@ -867,20 +862,20 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 //  GetExtraTopBot
 //
 //==========================================================================
-static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t *&extratop, sec_plane_t *&extrabot, side_t *&extraside, bool fromtop) {
+static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, TSecPlaneRef &extratop, TSecPlaneRef &extrabot, side_t *&extraside, bool fromtop) {
   if (reg->regflags&sec_region_t::RF_NonSolid) {
-    extratop = reg->eceiling; // new floor
-    extrabot = reg->efloor; // new ceiling
+    extratop.setCeiling(reg); // new floor
+    extrabot.setFloor(reg); // new ceiling
     extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
   } else if (fromtop) {
     // creating
-    extratop = reg->efloor; // new floor
-    extrabot = reg->prev->eceiling; // new ceiling
+    extratop.setFloor(reg); // new floor
+    extrabot.setCeiling(reg->prev); // new ceiling
     extraside = (reg->prev->extraline ? &Level->Sides[reg->prev->extraline->sidenum[0]] : nullptr);
   } else {
     // updating
-    extratop = reg->next->efloor; // new floor
-    extrabot = reg->eceiling; // new ceiling
+    extratop.setFloor(reg->next); // new floor
+    extrabot.setCeiling(reg); // new ceiling
     extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
   }
 }
@@ -893,7 +888,7 @@ static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, sec_plane_t
 //  create world/wall surfaces
 //
 //==========================================================================
-void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, sec_plane_t *r_floor, sec_plane_t *r_ceiling) {
+void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   segpart_t *sp;
 
   dseg->seg = seg;
@@ -947,7 +942,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->texinfo.Alpha = 1.1f;
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
-    if (IsSky(r_ceiling)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
   } else {
     // two sided line
     sec_plane_t *back_floor = &seg->backsector->floor;
@@ -958,7 +953,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     }
 
     VTexture *TTex = GTextureManager(sidedef->TopTexture);
-    if (IsSky(r_ceiling) && IsSky(back_ceiling) && r_ceiling->SkyBox != back_ceiling->SkyBox) {
+    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
       TTex = GTextureManager[skyflatnum];
     }
     check(TTex);
@@ -985,7 +980,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     // sky above top
     dseg->topsky = pspart++;
-    if (IsSky(r_ceiling) && !IsSky(back_ceiling)) {
+    if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling)) {
       sp = dseg->topsky;
       SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
     }
@@ -1029,7 +1024,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->MidTextureOffset;
 
     for (sec_region_t *reg = seg->backsector->topregion; reg->prev; reg = reg->prev) {
-      sec_plane_t *extratop, *extrabot;
+      TSecPlaneRef extratop, extrabot;
       side_t *extraside;
 
       GetExtraTopBot(Level, reg, extratop, extrabot, extraside, true); // from top
@@ -1045,12 +1040,12 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                           seg->offset*(TextureSScale(MTextr)*seg->sidedef->MidScaleX)+
                           sidedef->MidTextureOffset*(TextureOffsetSScale(MTextr)*seg->sidedef->MidScaleX);
-      sp->texinfo.toffs = extratop->TexZ*(TextureTScale(MTextr)*seg->sidedef->MidScaleY)+
+      sp->texinfo.toffs = extratop.splane->TexZ*(TextureTScale(MTextr)*seg->sidedef->MidScaleY)+
                           sidedef->MidRowOffset*(TextureOffsetTScale(MTextr)*seg->sidedef->MidScaleY);
       sp->texinfo.Tex = MTextr;
       sp->texinfo.noDecals = (MTextr ? MTextr->noDecals : true);
-      sp->texinfo.Alpha = extrabot->Alpha < 1.0f ? extrabot->Alpha : 1.1f;
-      sp->texinfo.Additive = !!(extrabot->flags&SPF_ADDITIVE);
+      sp->texinfo.Alpha = (extrabot.splane->Alpha < 1.0f ? extrabot.splane->Alpha : 1.1f);
+      sp->texinfo.Additive = !!(extrabot.splane->flags&SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
 
       SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, extratop, extrabot, true);
@@ -1091,7 +1086,7 @@ void VRenderLevelShared::UpdateTextureOffset (subsector_t *sub, segpart_t *sp, f
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
-void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_plane_t *r_floor, sec_plane_t *r_ceiling/*, bool ShouldClip*/) {
+void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
   segpart_t *sp;
 
@@ -1129,8 +1124,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     sp = dseg->mid;
     sp->texinfo.ColourMap = ColourMap;
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
+    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
         sp->texinfo.Tex->SScale != MTex->SScale ||
         sp->texinfo.Tex->TScale != MTex->TScale ||
         sp->texinfo.Tex->GetHeight() != MTex->GetHeight())
@@ -1157,7 +1152,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
     sp = dseg->topsky;
     sp->texinfo.ColourMap = ColourMap;
-    if (IsSky(r_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling->dist)) {
+    if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
       FreeWSurfs(sp->surfs);
       sp->surfs = nullptr;
 
@@ -1175,12 +1170,12 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     sp = dseg->top;
     sp->texinfo.ColourMap = ColourMap;
     VTexture *TTex = GTextureManager(sidedef->TopTexture);
-    if (IsSky(r_ceiling) && IsSky(back_ceiling) && r_ceiling->SkyBox != back_ceiling->SkyBox) {
+    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
       TTex = GTextureManager[skyflatnum];
     }
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
+    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
         FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
         sp->texinfo.Tex->SScale != TTex->SScale ||
         sp->texinfo.Tex->TScale != TTex->TScale)
@@ -1208,7 +1203,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     // sky above top
     sp = dseg->topsky;
     sp->texinfo.ColourMap = ColourMap;
-    if (IsSky(r_ceiling) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling->dist)) {
+    if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
       FreeWSurfs(sp->surfs);
       sp->surfs = nullptr;
 
@@ -1222,8 +1217,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     sp->texinfo.Tex = BTex;
     sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
+    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
         FASI(sp->backBotDist) != FASI(back_floor->dist))
     {
       FreeWSurfs(sp->surfs);
@@ -1244,8 +1239,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     check(MTex);
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
+    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
         FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
         FASI(sp->backBotDist) != FASI(back_floor->dist) ||
         FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset) ||
@@ -1267,8 +1262,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
         sp->texinfo.Additive = false;
       }
 
-      sp->frontTopDist = r_ceiling->dist;
-      sp->frontBotDist = r_floor->dist;
+      sp->frontTopDist = r_ceiling.splane->dist;
+      sp->frontBotDist = r_floor.splane->dist;
       sp->backTopDist = back_ceiling->dist;
       sp->backBotDist = back_floor->dist;
       sp->RowOffset = sidedef->MidRowOffset;
@@ -1287,13 +1282,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
 
     segpart_t *spp = dseg->extra;
     for (sec_region_t *reg = seg->backsector->botregion; reg->next; reg = reg->next) {
-      /*
-      sec_plane_t *extratop = reg->next->floor;
-      sec_plane_t *extrabot = reg->ceiling;
-      //side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
-      side_t *extraside = &Level->Sides[(reg->next->regflags&sec_region_t::RF_FuckYouGozzo ? reg->next : reg)->extraline->sidenum[0]];
-      */
-      sec_plane_t *extratop, *extrabot;
+      TSecPlaneRef extratop, extrabot;
       side_t *extraside;
       GetExtraTopBot(Level, reg, extratop, extrabot, extraside, false); // from bottom
       if (!extraside) continue; // no need to create extra side (and no extra seg parts were created)
@@ -1303,15 +1292,15 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, sec_p
       spp->texinfo.Tex = ETex;
       spp->texinfo.noDecals = (spp->texinfo.Tex ? spp->texinfo.Tex->noDecals : true);
 
-      if (FASI(spp->frontTopDist) != FASI(r_ceiling->dist) ||
-          FASI(spp->frontBotDist) != FASI(r_floor->dist) ||
-          FASI(spp->backTopDist) != FASI(extratop->dist) ||
-          FASI(spp->backBotDist) != FASI(extrabot->dist))
+      if (FASI(spp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(spp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          FASI(spp->backTopDist) != FASI(extratop.splane->dist) ||
+          FASI(spp->backBotDist) != FASI(extrabot.splane->dist))
       {
         FreeWSurfs(spp->surfs);
         spp->surfs = nullptr;
 
-        spp->texinfo.toffs = extratop->TexZ*(TextureTScale(ETex)*seg->sidedef->MidScaleY)+
+        spp->texinfo.toffs = extratop.splane->TexZ*(TextureTScale(ETex)*seg->sidedef->MidScaleY)+
                              sidedef->MidRowOffset*(TextureOffsetTScale(ETex)*seg->sidedef->MidScaleY);
 
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, ETex, r_floor, r_ceiling, extratop, extrabot, true);
@@ -1412,19 +1401,20 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
     for (sec_region_t *reg = sub->sector->botregion; reg; reg = reg->next) {
-      sec_plane_t *r_floor = reg->efloor;
-      sec_plane_t *r_ceiling = reg->eceiling;
+      TSecPlaneRef r_floor, r_ceiling;
+      r_floor.setFloor(reg);
+      r_ceiling.setCeiling(reg);
 
       if (sub->sector->fakefloors) {
-        if (r_floor == &sub->sector->floor) r_floor = &sub->sector->fakefloors->floorplane;
-        if (r_ceiling == &sub->sector->ceiling) r_ceiling = &sub->sector->fakefloors->ceilplane;
+        if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane);
+        if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane);
       }
 
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->floor = CreateSecSurface(nullptr, sub, r_floor, !!(reg->regflags&sec_region_t::RF_FlipFloor));
-      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling, !!(reg->regflags&sec_region_t::RF_FlipCeiling));
+      sreg->floor = CreateSecSurface(nullptr, sub, r_floor);
+      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling);
 
       sreg->count = sub->numlines;
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
@@ -1459,12 +1449,12 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region, bool updatePoly) {
-  sec_plane_t *r_floor = region->floorplane;
-  sec_plane_t *r_ceiling = region->ceilplane;
+  TSecPlaneRef r_floor = region->floorplane;
+  TSecPlaneRef r_ceiling = region->ceilplane;
 
   if (sub->sector->fakefloors) {
-    if (r_floor == &sub->sector->floor) r_floor = &sub->sector->fakefloors->floorplane;
-    if (r_ceiling == &sub->sector->ceiling) r_ceiling = &sub->sector->fakefloors->ceilplane;
+    if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane);
+    if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane);
   }
 
   drawseg_t *ds = region->lines;
@@ -1472,8 +1462,8 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
   }
 
-  UpdateSecSurface(region->floor, region->floorplane, sub, !!(region->secregion->regflags&sec_region_t::RF_FlipFloor));
-  UpdateSecSurface(region->ceil, region->ceilplane, sub, !!(region->secregion->regflags&sec_region_t::RF_FlipCeiling));
+  UpdateSecSurface(region->floor, region->floorplane, sub);
+  UpdateSecSurface(region->ceil, region->ceilplane, sub);
 
   if (updatePoly && sub->poly) {
     // update the polyobj

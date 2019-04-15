@@ -1101,9 +1101,7 @@ override void SpawnWorld (Level InLevel) {
           }
           // set line tag
           if (line->arg2&8) line->LineTag = line->arg5;
-          if (line->arg4 <= 0) {
-            print("IGNORED INVISILITY ON 3D FLOOR");
-          } else if (line->arg4 < 255) {
+          if (line->arg4 < 255) {
             float secalpha = clamp(line->arg4, 0, 255)/255.0;
             sec.floor.Alpha = secalpha;
             sec.ceiling.Alpha = secalpha;

@@ -3195,8 +3195,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
         vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);
         strm << elidx;
         // subregion things
-        WriteSectorPlane(strm, *sreg->floorplane);
-        WriteSectorPlane(strm, *sreg->ceilplane);
+        WriteSectorPlane(strm, *sreg->floorplane.splane);
+        WriteSectorPlane(strm, *sreg->ceilplane.splane);
         // surfaces; meh
         //sec_surface_t *floor;
         //sec_surface_t *ceil;

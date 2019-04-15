@@ -39,29 +39,6 @@
 static opening_t openings[MAX_OPENINGS];
 
 
-struct FuckedSecPlane {
-  sec_plane_t *splane;
-  bool reversed;
-
-  FuckedSecPlane () : splane(nullptr), reversed(false) {}
-
-  inline void setFloor (sec_region_t *r) { splane = r->efloor; reversed = !!(r->regflags&sec_region_t::RF_FlipFloor); }
-  inline void setCeiling (sec_region_t *r) { splane = r->eceiling; reversed = !!(r->regflags&sec_region_t::RF_FlipCeiling); }
-
-  inline float GetPointZ (const TVec &point) const {
-    if (!reversed) {
-      return splane->GetPointZ(point);
-    } else {
-      // gozzo shit, idc
-      TPlane pl = *splane;
-      pl.flipInPlace();
-      return pl.GetPointZ(point);
-    }
-  }
-};
-
-
-
 //==========================================================================
 //
 //  P_SectorClosestPoint
@@ -304,10 +281,10 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
     }
   }
 
-  FuckedSecPlane frontfloor;
-  FuckedSecPlane backfloor;
-  FuckedSecPlane frontceil;
-  FuckedSecPlane backceil;
+  TSecPlaneRef frontfloor;
+  TSecPlaneRef backfloor;
+  TSecPlaneRef frontceil;
+  TSecPlaneRef backceil;
 
   while (frontreg && backreg) {
     if (!(frontreg->efloor->flags&NoBlockFlags)) frontfloor.setFloor(frontreg);
@@ -408,8 +385,8 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   if (gaps == nullptr) return nullptr;
   if (gaps->next == nullptr) return gaps;
 
-  FuckedSecPlane floor;
-  FuckedSecPlane ceil;
+  TSecPlaneRef floor;
+  TSecPlaneRef ceil;
   sec_region_t *lastFloorGap = nullptr;
 
   // there are 2 or more gaps; now it gets interesting :-)
