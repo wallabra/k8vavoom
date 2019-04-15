@@ -2229,7 +2229,7 @@ static __attribute__((unused)) void makeSecPlaneMutable (sec_plane_t *&src) {
 //  removeRegion
 //
 //==========================================================================
-static void removeRegion (sector_t *dst, sec_region_t *reg) {
+static __attribute__((unused)) void removeRegion (sector_t *dst, sec_region_t *reg) {
   if (reg->prev) reg->prev->next = reg->next; else dst->botregion = reg->next;
   if (reg->next) reg->next->prev = reg->prev; else dst->topregion = reg->prev;
   reg->clear();
@@ -2259,17 +2259,17 @@ sec_region_t *VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   }
 
   if (ceilz <= dst->floor.minz) {
-    GCon->Logf(NAME_Warning, "Vavoom 3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
+    GCon->Logf(NAME_Warning, "IGNORED Vavoom 3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
     return nullptr;
   }
   if (floorz >= dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "Vavoom 3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
+    GCon->Logf(NAME_Warning, "IGNORED Vavoom 3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
     return nullptr;
   }
-  if (floorz <= dst->floor.minz && ceilz >= dst->ceiling.maxz) {
+  if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
     GCon->Logf(NAME_Warning, "Vavoom 3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    GCon->Logf(NAME_Warning, "LOOKS LIKE A MAPPING ERROR, IGNORING THIS 3D FLOOR");
-    return nullptr;
+    GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
+    //return nullptr;
   }
 
   // just in case
@@ -2358,40 +2358,42 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
   //if (src->SectorFlags&sector_t::SF_GZDoomStyleReg) ceilz = src->origCeiling.GetPointZ(dst->soundorg);
 
-  //float realFZ = floorz, realCZ = ceilz;
+  float realFZ = floorz, realCZ = ceilz;
 
   if (floorz > ceilz) {
     SwapPlanes(src);
     floorz = src->floor.GetPointZ(dst->soundorg);
     ceilz = src->ceiling.GetPointZ(dst->soundorg);
-    //realFZ = floorz;
-    //realCZ = ceilz;
+    realFZ = floorz;
+    realCZ = ceilz;
     GCon->Logf("Swapped planes for tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
 
   if (ceilz <= dst->floor.minz) {
-    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
-    return nullptr;
+    GCon->Logf(NAME_Warning, "IGNORED 3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
+    //return nullptr;
   }
 
   if (floorz >= dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    return nullptr;
+    GCon->Logf(NAME_Warning, "IGNORED 3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
+    //return nullptr;
   }
 
-  if (floorz <= dst->floor.minz && ceilz >= dst->ceiling.maxz) {
+  if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
     GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
     if (isSolid) {
-      GCon->Logf(NAME_Warning, "LOOKS LIKE A MAPPING ERROR, IGNORING THIS 3D FLOOR");
-      return nullptr;
+      GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
+      //return nullptr;
     }
     // easy deal, mark the whole thing with new params
     //FIXME: don't remove all created regions?
+    /*
     while (dst->botregion->next) removeRegion(dst, dst->botregion->next);
     dst->botregion->params = &src->params;
     //src->SectorFlags &= ~sector_t::SF_ExtrafloorSource;
     dst->SectorFlags &= ~sector_t::SF_HasExtrafloors;
     return dst->botregion;
+    */
   }
 
   if (floorz < dst->floor.minz) floorz = dst->floor.GetPointZ(dst->soundorg);
@@ -2428,7 +2430,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
 
-    if (isSolid || floorz == ceilz) {
+    if (isSolid || realFZ == realCZ) {
       if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
         if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
         src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
@@ -2448,7 +2450,7 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->regflags |= sec_region_t::RF_FlipCeiling;
       region->params = &src->params;
       // for paper-thin regions, we don't need side surfaces
-      region->extraline = (floorz == ceilz ? nullptr : line);
+      region->extraline = (realFZ == realCZ ? nullptr : line);
       //inregion->floor = dupSecPlane(&src->ceiling, true); // flip
       inregion->efloor = &src->ceiling; // flip
       inregion->regflags |= sec_region_t::RF_FlipFloor;
@@ -2457,6 +2459,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->prev = inregion->prev;
       region->next = inregion;
       inregion->prev = region;
+
+      GCon->Logf("::: SOLID; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst);
     } else {
       src->SectorFlags |= sector_t::SF_ExtrafloorSource;
 
@@ -2498,9 +2502,10 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       if (inregion->next) inregion->next->prev = xtr; else dst->topregion = xtr;
       region->prev = inregion;
       inregion->next = region;
+
+      GCon->Logf("::: GHOST; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst);
     }
 
-    GCon->Logf("::: SOLID; (%g, %g)", floorz, ceilz); dumpSectorRegions(dst);
     return region;
   }
 
