@@ -290,6 +290,39 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   float backceilz = 0.0f;
 
   while (frontreg && backreg) {
+    if (backreg->efloor.GetPointZ(point) > backreg->eceiling.GetPointZ(point)) {
+      /*
+      GCon->Logf("WUTAFUCK-BACK: (%g,%g,%g:%g) - (%g,%g,%g:%g); fz=%g; cz=%g; xfz=%g; xcz=%g; pt=(%g,%g)",
+        backreg->efloor.GetNormal().x, backreg->efloor.GetNormal().y, backreg->efloor.GetNormal().z, backreg->efloor.GetDist(),
+        backreg->eceiling.GetNormal().x, backreg->eceiling.GetNormal().y, backreg->eceiling.GetNormal().z, backreg->eceiling.GetDist(),
+        backreg->efloor.GetPointZ(point), backreg->eceiling.GetPointZ(point),
+        backreg->efloor.splane->GetPointZ(point), backreg->eceiling.splane->GetPointZ(point),
+        point.x, point.y);
+      GCon->Logf("WUTAFUCK-BACK:   (%g,%g,%g:%g) - (%g,%g,%g:%g)",
+        backreg->efloor.splane->normal.x, backreg->efloor.splane->normal.y, backreg->efloor.splane->normal.z, backreg->efloor.splane->dist,
+        backreg->eceiling.splane->normal.x, backreg->eceiling.splane->normal.y, backreg->eceiling.splane->normal.z, backreg->eceiling.splane->dist);
+      VLevel::dumpSectorRegions(linedef->backsector);
+      */
+      backreg = backreg->next;
+      continue;
+    }
+    if (frontreg->efloor.GetPointZ(point) > frontreg->eceiling.GetPointZ(point)) {
+      /*
+      GCon->Logf("WUTAFUCK-FRONT: (%g,%g,%g:%g) - (%g,%g,%g:%g); fz=%g; cz=%g; xfz=%g; xcz=%g; pt=(%g,%g)",
+        frontreg->efloor.GetNormal().x, frontreg->efloor.GetNormal().y, frontreg->efloor.GetNormal().z, frontreg->efloor.GetDist(),
+        frontreg->eceiling.GetNormal().x, frontreg->eceiling.GetNormal().y, frontreg->eceiling.GetNormal().z, frontreg->eceiling.GetDist(),
+        frontreg->efloor.GetPointZ(point), frontreg->eceiling.GetPointZ(point),
+        frontreg->efloor.splane->GetPointZ(point), frontreg->eceiling.splane->GetPointZ(point),
+        point.x, point.y);
+      GCon->Logf("WUTAFUCK-FRONT:   (%g,%g,%g:%g) - (%g,%g,%g:%g)",
+        frontreg->efloor.splane->normal.x, frontreg->efloor.splane->normal.y, frontreg->efloor.splane->normal.z, frontreg->efloor.splane->dist,
+        frontreg->eceiling.splane->normal.x, frontreg->eceiling.splane->normal.y, frontreg->eceiling.splane->normal.z, frontreg->eceiling.splane->dist);
+      VLevel::dumpSectorRegions(linedef->frontsector);
+      */
+      frontreg = frontreg->next;
+      continue;
+    }
+
     if (!(frontreg->efloor.splane->flags&NoBlockFlags)) {
       frontfloor = frontreg->efloor;
       frontfloorz = frontfloor.GetPointZ(point);
@@ -423,6 +456,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float he
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     float fz = reg->efloor.GetPointZ(point);
     float cz = reg->eceiling.GetPointZ(point);
+    if (fz > cz) continue;
     float fdist = fabsf(z1-fz); // we don't care about sign
     // at least partially inside?
     if (z2 >= fz && z1 <= cz) {
@@ -471,6 +505,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float he
   bestFit = nullptr;
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     float fz = reg->efloor.GetPointZ(point);
+    if (fz > reg->eceiling.GetPointZ(point)) continue;
     float fdist = fabsf(z1-fz); // we don't care about sign
     if (!bestFit || fdist < bestFitFloorDist) {
       bestFitFloorDist = fdist;

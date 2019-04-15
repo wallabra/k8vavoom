@@ -458,14 +458,14 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   CheckRelPosition(&tmtrace, Origin);
   // what about stranding a monster partially off an edge?
 
-  //if (skipTriggers && bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
+  //if (bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
 
   EFloor = tmtrace.EFloor;
   ECeiling = tmtrace.ECeiling;
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 
-  //if (skipTriggers && bIsPlayer) print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", Floor, Ceiling, FloorZ, CeilingZ);
+  //if (bIsPlayer) print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
 
   if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector)) {
     // walking monsters rise and fall with the floor
@@ -1492,6 +1492,7 @@ override bool SectorChanged (int CrushChange) {
     return HeightClip(skipTriggers:true, skipObjects:true);
   }
 
+  //print("SectorChanged for %C", self);
   if (HeightClip()) return true;
 
   // crunch bodies to giblets

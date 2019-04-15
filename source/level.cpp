@@ -2140,8 +2140,8 @@ void CL_LoadLevel (VName MapName) {
 //  VLevel::dumpSectorRegions
 //
 //==========================================================================
-void VLevel::dumpSectorRegions (const sector_t *dst) const {
-  GCon->Log(" === bot -> top ===");
+void VLevel::dumpSectorRegions (const sector_t *dst) {
+  GCon->Logf(" === bot -> top (sector: %p) ===", dst);
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
     GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
       inregion,
@@ -2356,6 +2356,14 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     NonSolid,
   };
 
+#ifdef VAVOOM_K8_DEVELOPER
+  static int doDump = -1;
+  if (doDump < 0) doDump = (GArgs.CheckParm("-Wno-all") || GArgs.CheckParm("-Wno-gozzo-shitty-3d") ? 0 : 1);
+#else
+  static int doDump = -1;
+  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-shitty-3d") ? 1 : 0);
+#endif
+
   //int eftype = (line->arg2&3);
   const bool isSolid = ((line->arg2&3) == Solid);
 
@@ -2363,8 +2371,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   //src->SectorFlags |= sector_t::SF_ExtrafloorSource;
   //dst->SectorFlags |= sector_t::SF_HasExtrafloors;
 
-  GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid);
-  GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz));
+  if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
+  if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz)); }
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
@@ -2448,8 +2456,8 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   if (floorz < dst->floor.minz) floorz = dst->floor.minz;
   if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.maxz;
 
-  GCon->Logf("3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz);
-  GCon->Logf("::: BEFORE"); dumpSectorRegions(dst);
+  if (doDump) { GCon->Logf("3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz); }
+  if (doDump) { GCon->Logf("::: BEFORE"); dumpSectorRegions(dst); }
 
   for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
     float infloorz = inregion->efloor.GetPointZ(dst->soundorg);
@@ -2512,8 +2520,10 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->next = inregion;
       inregion->prev = region;
 
-      GCon->Logf("::: SOLID; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst);
+      if (doDump) { GCon->Logf("::: SOLID; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst); }
     } else {
+      // idiotic gozzo mappers loves to create swimmable regions outside of vertical sector bounds
+      // i don't care if they will later move those or something, i will clamp that shit
       src->SectorFlags |= sector_t::SF_ExtrafloorSource;
       AppendControlLink(src, dst);
 
@@ -2521,8 +2531,19 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       // old region is from old floor to new flipped floor (shrinked)
       // new region is from new floor to new ceiling
       // xtr region is from new flipped ceiling to old ceiling (duplicate of old region)
-      region->efloor.set(&src->floor, false);
-      region->eceiling.set(&src->ceiling, false);
+
+      if (realFZ < infloorz) {
+        // gozzo out-of-bounds shit
+        region->efloor = inregion->efloor;
+      } else {
+        region->efloor.set(&src->floor, false);
+      }
+      if (realCZ > inceilz) {
+        // gozzo out-of-bounds shit
+        region->eceiling = inregion->eceiling;
+      } else {
+        region->eceiling.set(&src->ceiling, false);
+      }
       region->params = &src->params;
       region->extraline = line;
       region->regflags |= sec_region_t::RF_NonSolid;
@@ -2536,16 +2557,24 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       xtr->prev = region;
 
       // copy data to xtr
-      //xtr->floor = dupSecPlane(&src->ceiling, true); // flip
       xtr->regflags = inregion->regflags;
-      xtr->efloor.set(&src->ceiling, true); // flip
+      if (realCZ > inceilz) {
+        // gozzo out-of-bounds shit
+        xtr->efloor = inregion->eceiling;
+      } else {
+        xtr->efloor.set(&src->ceiling, true); // flip
+      }
       xtr->eceiling = inregion->eceiling;
       xtr->params = inregion->params;
       xtr->extraline = inregion->extraline;
 
       // fix old region
-      //inregion->ceiling = dupSecPlane(&src->floor, true); // flip
-      inregion->eceiling.set(&src->floor, true); // flip
+      if (realFZ < infloorz) {
+        // gozzo out-of-bounds shit
+        inregion->eceiling = inregion->efloor;
+      } else {
+        inregion->eceiling.set(&src->floor, true); // flip
+      }
 
       // link new regions into region list
       xtr->next = inregion->next;
@@ -2553,14 +2582,14 @@ sec_region_t *VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
       region->prev = inregion;
       inregion->next = region;
 
-      GCon->Logf("::: GHOST; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst);
+      if (doDump) { GCon->Logf("::: GHOST; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst); }
     }
 
     return region;
   }
 
   GCon->Logf(NAME_Warning, "Invalid extra floor, tag %d (destsec=%d; srcsec=%d)", dst->tag, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors));
-  {
+  if (doDump) {
     sec_plane_t sceil = (src->SectorFlags&sector_t::SF_GZDoomStyleReg ? src->origCeiling : src->ceiling);
     GCon->Logf("  dst: f=%g:%g; c=%g:%g; src: f=%g:%g; c=%g:%g", dst->floor.minz, dst->floor.maxz, dst->ceiling.minz, dst->ceiling.maxz, src->floor.minz, src->floor.maxz, sceil.minz, sceil.maxz);
     dumpSectorRegions(dst);

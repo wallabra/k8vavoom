@@ -596,7 +596,7 @@ private:
   sec_region_t *AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
 
 public:
-  void dumpSectorRegions (const sector_t *dst) const;
+  static void dumpSectorRegions (const sector_t *dst);
 
 private:
   // map loaders
