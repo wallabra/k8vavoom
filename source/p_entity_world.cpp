@@ -483,6 +483,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     //if (Origin.z < FloorZ) Origin.z = FloorZ; // just in case
   } else {
     // simplified check
+    /*
     sec_region_t *reg = SV_FindThingGap(ss->sector->botregion, Origin, Height);
 
     sec_region_t *r = reg;
@@ -492,6 +493,11 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     r = reg;
     while ((r->eceiling.splane->flags&SPF_NOBLOCKING) && r->next) r = r->next;
     CopyRegCeiling(r);
+    */
+    TSecPlaneRef floor, ceiling;
+    SV_FindGapFloorCeiling(ss->sector, Origin, Height, EFloor, ECeiling);
+    FloorZ = EFloor.GetPointZ(Origin);
+    CeilingZ = ECeiling.GetPointZ(Origin);
   }
 
   // link into sector
