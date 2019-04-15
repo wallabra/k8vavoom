@@ -720,6 +720,20 @@ sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p) {
     const float cz = reg->eceiling.GetPointZ(p);
     if (p.z >= fz && p.z <= cz) {
       const float fdist = p.z-fz;
+      // prefer regions with contents
+      if (best) {
+        if (!reg->params->contents) {
+          // no contents in current region
+          if (best->params->contents) continue;
+        } else {
+          // current region has contents
+          if (!best->params->contents) {
+            best = reg;
+            bestDist = fdist;
+            continue;
+          }
+        }
+      }
       if (!best || fdist < bestDist) {
         best = reg;
         bestDist = fdist;
