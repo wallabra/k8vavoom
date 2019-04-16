@@ -247,7 +247,7 @@ bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, fl
 int SV_PointContents (const sector_t *sector, const TVec &p);
 sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p);
 
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex=false);
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
 
 // this can return region with non-blocking floor/ceiling
 // `point.z` is bottom

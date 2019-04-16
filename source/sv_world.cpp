@@ -214,7 +214,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 
 extern "C" {
   // sort by floors
-  static int compareOpenings (const void *aa, const void *bb, void *nbfxx) {
+  static __attribute__((unused)) int compareOpenings (const void *aa, const void *bb, void *nbfxx) {
     if (aa == bb) return 0;
     const opening_t *a = (const opening_t *)aa;
     const opening_t *b = (const opening_t *)bb;
@@ -246,7 +246,7 @@ extern "C" {
 //  put resulting set into `openings` array, return number of openings
 //
 //==========================================================================
-static unsigned CompressOpenings (opening_t *oplistdest, opening_t *oplist, const unsigned count, const unsigned NoBlockFlags) {
+static __attribute__((unused)) unsigned CompressOpenings (opening_t *oplistdest, opening_t *oplist, const unsigned count, const unsigned NoBlockFlags) {
   if (!count) return 0;
   unsigned cpos = 0;
   // find first solid floor: we cannot go lower than that
@@ -321,6 +321,242 @@ static unsigned CompressOpenings (opening_t *oplistdest, opening_t *oplist, cons
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// floor/ceiling plane, with calculated z
+struct OpPlane {
+  TSecPlaneRef eplane;
+  float z; // calculated z, for sorting
+  TSecPlaneRef::Type type; // cached, why not
+
+  inline bool isFloor () const { return (type == TSecPlaneRef::Type::Floor); }
+  inline bool isCeiling () const { return (type == TSecPlaneRef::Type::Ceiling); }
+};
+
+
+//==========================================================================
+//
+//  DumpOpPlanes
+//
+//==========================================================================
+static __attribute__((unused)) void DumpOpPlanes (TArray<OpPlane> &list) {
+  GCon->Logf("=== opplanes: %d ===", list.length());
+  for (int f = 0; f < list.length(); ++f) {
+    const OpPlane &op = list[f];
+    GCon->Logf("  %d: %s: (%g,%g,%g:%g)  z=%g", f, (op.type == TSecPlaneRef::Floor ? "floor" : "ceil "),
+      op.eplane.GetNormal().x, op.eplane.GetNormal().y, op.eplane.GetNormal().z, op.eplane.GetDist(), op.z);
+  }
+  GCon->Log("----");
+}
+
+
+//==========================================================================
+//
+//  DumpRegion
+//
+//==========================================================================
+static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
+  GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
+    inregion,
+    inregion->efloor.GetNormal().x,
+    inregion->efloor.GetNormal().y,
+    inregion->efloor.GetNormal().z,
+    inregion->efloor.GetDist(),
+    inregion->efloor.splane->minz, inregion->efloor.splane->maxz,
+    inregion->efloor.splane->flags,
+    inregion->eceiling.GetNormal().x,
+    inregion->eceiling.GetNormal().y,
+    inregion->eceiling.GetNormal().z,
+    inregion->eceiling.GetDist(),
+    inregion->eceiling.splane->minz, inregion->eceiling.splane->maxz,
+    inregion->eceiling.splane->flags,
+    (inregion->extraline ? 1 : 0),
+    inregion->regflags);
+}
+
+
+//==========================================================================
+//
+//  CollectOpPlanes
+//
+//==========================================================================
+static __attribute__((unused)) void CollectOpPlanes (TArray<OpPlane> &dest, const sec_region_t *reg, const TVec point, unsigned NoBlockFlags) {
+  dest.reset();
+  for (; reg; reg = reg->next) {
+    if ((reg->efloor.splane->flags&NoBlockFlags) == 0) {
+      OpPlane &p = dest.alloc();
+      p.eplane = reg->efloor;
+      p.z = p.eplane.GetPointZ(point);
+      p.type = p.eplane.classify();
+      if (p.type != TSecPlaneRef::Type::Floor) {
+        GCon->Logf("***** FUCKED REGION %p (floor) *****", reg);
+        DumpRegion(reg);
+      }
+    }
+    if ((reg->eceiling.splane->flags&NoBlockFlags) == 0) {
+      OpPlane &p = dest.alloc();
+      p.eplane = reg->eceiling;
+      p.z = p.eplane.GetPointZ(point);
+      p.type = p.eplane.classify();
+      if (p.type != TSecPlaneRef::Type::Ceiling) {
+        GCon->Logf("***** FUCKED REGION %p (ceiling) *****", reg);
+        DumpRegion(reg);
+      }
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  static __attribute__((unused)) int opPlaneCompare (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const OpPlane *a = (const OpPlane *)aa;
+    const OpPlane *b = (const OpPlane *)bb;
+    if (a->z < b->z) return -1;
+    if (a->z > b->z) return 1;
+    // floors first
+    return (a->type-b->type);
+  }
+}
+
+
+//==========================================================================
+//
+//  SortOpPlanes
+//
+//  as a result, we will have list of alternating floor/ceiling planes
+//  paper-thin regions are removed
+//
+//==========================================================================
+static __attribute__((unused)) void SortOpPlanes (TArray<OpPlane> &arr) {
+  if (arr.length() > 1) {
+    timsort_r(arr.ptr(), (size_t)arr.length(), sizeof(OpPlane), &opPlaneCompare, nullptr);
+    // sequence should start with floor, and end with ceiling
+    while (arr.length() && arr[0].type != TSecPlaneRef::Type::Floor) arr.removeAt(0);
+    while (arr.length() && arr[arr.length()-1].type != TSecPlaneRef::Type::Ceiling) arr.removeAt(arr.length()-1);
+    // remove paper-thin regions, it is just noise
+    // also, remove sequence of several floors/ceilings
+    int pos = 0;
+    while (pos < arr.length()-1) {
+      const OpPlane &pl0 = arr[pos+0];
+      const OpPlane &pl1 = arr[pos+1];
+      if (pl0.type == pl1.type) {
+        // same type, remove next for floor, or this for ceiling
+        arr.removeAt(pos+1-pl0.type);
+      } else if (pl0.type == TSecPlaneRef::Type::Floor &&
+                 pl1.type == TSecPlaneRef::Type::Ceiling &&
+                 pl0.z == pl1.z)
+      {
+        // paper-thin region, remove it
+        arr.removeAt(pos);
+        arr.removeAt(pos);
+        if (pos > 0) --pos;
+      } else {
+        ++pos;
+      }
+    }
+    // sanity checks
+    if (arr.length() < 2) {
+      arr.reset();
+    } else {
+      check(arr[0].type == TSecPlaneRef::Type::Floor);
+      check(arr[arr.length()-1].type == TSecPlaneRef::Type::Ceiling);
+      const OpPlane *opc = arr.ptr();
+      TSecPlaneRef::Type currType = TSecPlaneRef::Type::Floor;
+      for (int f = arr.length(); f--; ++opc) {
+        check(opc->type == currType);
+        currType = (TSecPlaneRef::Type)(currType^1);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  IntersectOpSet
+//
+//  calculate intersection of two sets, put result to `openings`
+//  returns number of elements in `openings`
+//  note that `next` pointer is not set
+//
+//==========================================================================
+static __attribute__((unused)) unsigned IntersectOpSet (TArray<OpPlane> &a0, TArray<OpPlane> &a1) {
+  int a0left = a0.length();
+  int a1left = a1.length();
+  if (a0left < 2 || a1left < 2) return 0;
+  OpPlane *op0 = a0.ptr();
+  OpPlane *op1 = a1.ptr();
+  unsigned rescount = 0;
+  // find itersections
+  while (a0left > 1 && a1left > 1) {
+    // just in case
+    if (!op0->isFloor()) { ++op0; --a0left; continue; }
+    if (!op1->isFloor()) { ++op1; --a1left; continue; }
+    const float fz0 = op0[0].z;
+    const float cz0 = op0[1].z;
+    const float fz1 = op1[0].z;
+    const float cz1 = op1[1].z;
+    // same?
+    if (fz0 == fz1 && cz0 == cz1) {
+      // eat both
+      opening_t *opdest = &openings[rescount++];
+      opdest->top = cz0;
+      opdest->bottom = fz0;
+      opdest->range = opdest->top-opdest->bottom;
+      opdest->lowfloor = opdest->bottom;
+      opdest->efloor = op0[0].eplane;
+      opdest->eceiling = op0[1].eplane;
+      op0 += 2; a0left -= 2;
+      op1 += 2; a1left -= 2;
+    } else if (cz0 <= fz1) {
+      // op0 is lower than op1, skip op0
+      op0 += 2; a0left -= 2;
+    } else if (cz1 <= fz0) {
+      // op1 is lower than op0, skip op1
+      op1 += 2; a1left -= 2;
+    } else {
+      // there must be some intersection
+      opening_t *opdest = &openings[rescount++];
+      // take highest floor
+      if (fz0 >= fz1) {
+        // take floor 0
+        opdest->bottom = fz0;
+        opdest->lowfloor = fz1;
+        opdest->efloor = op0[0].eplane;
+      } else {
+        // take floor 1
+        opdest->bottom = fz1;
+        opdest->lowfloor = fz0;
+        opdest->efloor = op1[0].eplane;
+      }
+      // take lowest ceiling
+      if (cz0 <= cz1) {
+        // take ceiling 0
+        opdest->top = cz0;
+        opdest->eceiling = op0[1].eplane;
+      } else {
+        // take ceiling 1
+        opdest->top = cz1;
+        opdest->eceiling = op1[1].eplane;
+      }
+      opdest->range = opdest->top-opdest->bottom;
+      // if both has same ceiling, skip both, otherwise skip one with lower ceiling
+      if (cz0 == cz1) {
+        // skip both
+        op0 += 2; a0left -= 2;
+        op1 += 2; a1left -= 2;
+      } else if (cz0 < cz1) {
+        op0 += 2; a0left -= 2;
+      } else {
+        op1 += 2; a1left -= 2;
+      }
+    }
+  }
+  return rescount;
+}
+
+
 //==========================================================================
 //
 //  SV_LineOpenings
@@ -328,7 +564,7 @@ static unsigned CompressOpenings (opening_t *oplistdest, opening_t *oplist, cons
 //  sets opentop and openbottom to the window through a two sided line
 //
 //==========================================================================
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex) {
   if (linedef->sidenum[1] == -1 || !linedef->backsector) return nullptr; // single sided line
 
   NoBlockFlags &= (SPF_MAX_OPENINGS-1);
@@ -401,6 +637,79 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   }
 
 #if 1
+  // it will be cached anyway
+  if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+
+  static TArray<OpPlane> op0list;
+  static TArray<OpPlane> op1list;
+
+  //GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+
+  CollectOpPlanes(op0list, frontreg, point, NoBlockFlags);
+  //GCon->Log("::: before sort op0 :::"); DumpOpPlanes(op0list);
+
+  SortOpPlanes(op0list);
+  //GCon->Log("::: after sort op0 :::"); DumpOpPlanes(op0list);
+
+  if (op0list.length() < 2) {
+    // just in case: no front sector openings
+    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+    return nullptr;
+  }
+
+  CollectOpPlanes(op1list, backreg, point, NoBlockFlags);
+  //GCon->Log("::: before sort op1 :::"); DumpOpPlanes(op1list);
+
+  SortOpPlanes(op1list);
+  //GCon->Log("::: after sort op1 :::"); DumpOpPlanes(op1list);
+
+  if (op1list.length() < 2) {
+    // just in case: no back sector openings
+    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+    return nullptr;
+  }
+
+  //GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+  //GCon->Log("::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
+
+  unsigned destcount = IntersectOpSet(op0list, op1list);
+
+  /*
+  GCon->Logf("::: after (%u) :::", destcount);
+  for (unsigned f = 0; f < destcount; ++f) {
+    const opening_t *xop = &openings[f];
+    GCon->Logf("  %u: floor: %g (%g,%g,%g:%g); ceiling: %g (%g,%g,%g,%g); low=%g; range=%g", f,
+      xop->bottom, xop->efloor.GetNormal().x, xop->efloor.GetNormal().y, xop->efloor.GetNormal().z, xop->efloor.GetDist(),
+      xop->top, xop->eceiling.GetNormal().x, xop->eceiling.GetNormal().y, xop->eceiling.GetNormal().z, xop->eceiling.GetDist(),
+      xop->lowfloor, xop->range);
+  }
+  GCon->Log("-----------------------------");
+  */
+
+  // no intersections?
+  if (destcount == 0) {
+    // oops
+    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+    return nullptr;
+  }
+
+  // has some intersections, create cache
+  {
+    opening_t *lastop = nullptr, *dp = openings;
+    for (unsigned f = 0; f < destcount; ++f, ++dp) {
+      // calc range
+      //if (dp->range <= 0.0f) continue; // oops
+      //GCon->Logf("  %p: bot=%g; top=%g", linedef, dp->bottom, dp->top);
+      opening_t *newop = VLevel::AllocOpening();
+      if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
+      newop->copyFrom(dp);
+      lastop = newop;
+    }
+  }
+
+  return linedef->oplist[NoBlockFlags];
+
+#elif 0
   /* build openings
      first, create openings for front sector
      second, insert openings for back sector, shrinking/removing unnecessary ones

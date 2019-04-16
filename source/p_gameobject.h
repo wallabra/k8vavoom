@@ -381,9 +381,10 @@ struct sec_plane_t : public TPlane {
 //  sector plane reference with flip flag
 //
 //==========================================================================
-struct sec_region_t;
-
 struct TSecPlaneRef {
+  // WARNING! do not change this values, they are used to index things in other code!
+  enum Type { Unknown = -1, Floor = 0, Ceiling = 1 };
+
   sec_plane_t *splane;
   bool flipped;
 
@@ -398,10 +399,17 @@ struct TSecPlaneRef {
 
   inline bool isValid () const { return !!splane; }
 
+  inline bool isFloor () const { return (GetNormalZSafe() > 0.0f); }
+  inline bool isCeiling () const { return (GetNormalZSafe() < 0.0f); }
+
+  // see enum at the top
+  inline Type classify () const { const float z = GetNormalZSafe(); return (z < 0.0f ? Ceiling : z > 0.0f ? Floor : Unknown); }
+
   inline void set (sec_plane_t *aplane, bool arev) { splane = aplane; flipped = arev; }
 
   inline TVec GetNormal () const { return (!flipped ? splane->normal : -splane->normal); }
   inline float GetNormalZ () const { return (!flipped ? splane->normal.z : -splane->normal.z); }
+  inline float GetNormalZSafe () const { return (splane ? (!flipped ? splane->normal.z : -splane->normal.z) : 0.0f); }
   inline float GetDist () const { return (!flipped ? splane->dist : -splane->dist); }
   inline TPlane GetPlane () const { TPlane res; res.normal = (!flipped ? splane->normal : -splane->normal); res.dist = (!flipped ? splane->dist : -splane->dist); return res; }
 
