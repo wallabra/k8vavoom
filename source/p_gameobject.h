@@ -654,6 +654,8 @@ struct sector_t {
 
   // for gozzo source sectors
   sec_plane_t origCeiling;
+
+  bool Has3DFloors () const;
 };
 
 
@@ -970,4 +972,7 @@ public:
   DECLARE_FUNCTION(SphereOnSide)
   DECLARE_FUNCTION(spSphereTouches)
   DECLARE_FUNCTION(spSphereOnSide2)
+
+  DECLARE_FUNCTION(GetSectorFloorPointZ)
+  DECLARE_FUNCTION(SectorHas3DFloors)
 };

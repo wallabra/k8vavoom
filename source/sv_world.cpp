@@ -726,10 +726,12 @@ static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, se
 //  Returns the gap, or `nullptr` if there are no gaps at all.
 //
 //==========================================================================
-sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float height, bool dbgDump) {
+sec_region_t *SV_FindThingGap (const sector_t *sector, const TVec &point, float height, bool dbgDump) {
   /* k8: here, we should return gap we can fit in, even if we are partially in it.
          this is because sector height change is using this to do various checks
    */
+  sec_region_t *InGaps = sector->botregion;
+
   if (height < 0.0f) height = 0.0f;
   const float z1 = point.z;
   const float z2 = z1+height;
@@ -909,7 +911,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float he
 //
 //==========================================================================
 void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
-  sec_region_t *gap = SV_FindThingGap(sector->botregion, p, height);
+  sec_region_t *gap = SV_FindThingGap(sector, p, height);
   check(gap);
   // get floor
   floor = gap->efloor;
@@ -1072,6 +1074,28 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
 }
 
 
+//==========================================================================
+//
+//  SV_PointContents
+//
+//==========================================================================
+float SV_GetLowestSolidPointZ (const sector_t *sector, const TVec &point) {
+  if (!sector) return 0.0f; // idc
+  const float minfz = sector->floor.GetPointZ(point); // cannot be lower than this
+  if (sector->Has3DFloors()) {
+    float res = sector->ceiling.GetPointZ(point); // cannot be higher than this
+    for (sec_region_t *reg = sector->topregion; reg; reg = reg->prev) {
+      if (reg->efloor.splane->flags&SPF_NOBLOCKING) continue;
+      float fz = reg->efloor.GetPointZ(point);
+      if (fz >= minfz && fz < res) res = fz;
+    }
+    return res;
+  } else {
+    return minfz;
+  }
+}
+
+
 //**************************************************************************
 //
 //  SECTOR HEIGHT CHANGING
@@ -1160,22 +1184,6 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
     bool r2 = ChangeSectorInternal(it.getDestSector(), crunch);
     if (r2) { ret = true; csTouched[secnum] |= 0x80000000U; }
   }
-  /*
-  if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) {
-    for (int i = 0; i < NumSectors; ++i) {
-      sector_t *sec2 = &Sectors[i];
-      if ((sec2->SectorFlags&sector_t::SF_HasExtrafloors) != 0 && sec2 != sector) {
-        for (sec_region_t *reg = sec2->botregion; reg; reg = reg->next) {
-          if (reg->efloor.splane == &sector->floor || reg->eceiling.splane == &sector->ceiling) {
-            ret |= ChangeSectorInternal(sec2, crunch);
-            if (ret) csTouched[secnum] |= 0x80000000U;
-            break;
-          }
-        }
-      }
-    }
-  }
-  */
 
   return ret;
 }

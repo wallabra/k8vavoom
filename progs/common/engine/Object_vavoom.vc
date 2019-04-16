@@ -479,7 +479,7 @@ native static final bool P_GetMidTexturePosition (const GameObject::line_t *line
 // find the best gap that the thing could fit in, given a certain Z position
 // `point.z` is bottom
 // warning! never change regions, they are cached!
-native static final GameObject::sec_region_t *FindThingGap (GameObject::sec_region_t *gaps, const ref TVec point, float height);
+native static final GameObject::sec_region_t *FindThingGap (const GameObject::sector_t *sector, const ref TVec point, float height);
 // find the best opening
 // warning! never change openings, they are cached!
 native static final GameObject::opening_t *FindOpening (const GameObject::opening_t *gaps, float z1, float z2);

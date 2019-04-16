@@ -98,7 +98,7 @@ static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Pla
 //
 //==========================================================================
 static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec) {
-  if (Sec->topregion == Sec->botregion) return true; // don't bother with planes if there are no 3D floors
+  if (!Sec->Has3DFloors()) return true; // don't bother with planes if there are no 3D floors
 
   sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 

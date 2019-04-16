@@ -282,8 +282,7 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
         if (midSolid) {
           const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
           //const sector_t *secb = (seg->side ? ldef->backsector : ldef->frontsector);
-          // check if we have only one region
-          if (!sec->botregion->next) {
+          if (!sec->Has3DFloors()) {
             VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
             if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
               //TODO

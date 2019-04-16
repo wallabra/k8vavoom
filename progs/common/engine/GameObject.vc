@@ -894,8 +894,8 @@ struct sector_t {
   sec_plane_t ceiling;
   sec_params_t params;
 
-  sec_region_t *topregion; // highest region
-  sec_region_t *botregion; // lowest region
+  private sec_region_t *topregion; // highest region
+  private sec_region_t *botregion; // lowest region
 
   sector_t *deepref; // deep water hack
 
@@ -1315,6 +1315,10 @@ enum UserVarFieldType {
 
 native final UserVarFieldType _get_user_var_type (name fldname);
 native final int _get_user_var_dim (name fldname); // array dimension; -1: not an array, or absent
+
+
+native static final float GetSectorFloorPointZ (const sector_t *sector, const ref TVec point);
+native static final bool SectorHas3DFloors (const sector_t *sector);
 
 
 defaultproperties {

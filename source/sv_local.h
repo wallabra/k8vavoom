@@ -251,7 +251,11 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
 
 // this can return region with non-blocking floor/ceiling
 // `point.z` is bottom
-sec_region_t *SV_FindThingGap (sec_region_t *gaps, const TVec &point, float height, bool dbgDump=false);
+sec_region_t *SV_FindThingGap (const sector_t *sector, const TVec &point, float height, bool dbgDump=false);
+
+// this is slow!
+// it is used to find lowest sector point for silent teleporters
+float SV_GetLowestSolidPointZ (const sector_t *sector, const TVec &point);
 
 // this calls `SV_FindThingGap`, and returns blocking floor and ceiling planes
 // `p.z` is bottom

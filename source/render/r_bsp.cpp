@@ -701,7 +701,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
     } else if (useClipper && clip_use_1d_clipper) {
       ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
     }
-    /*if (!sub->sector->botregion || !sub->sector->botregion->next)*/ return;
+    return;
   }
 
   if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
@@ -719,9 +719,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
 #if 0
     sub->updateWorldFrame = updateWorldFrame;
-    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame/* ||
-        !sub->sector->botregion || !sub->sector->botregion->next*/)
-    {
+    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame) {
       //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
       //auto oldrss = r_surf_sub;
       //r_surf_sub = sub;
