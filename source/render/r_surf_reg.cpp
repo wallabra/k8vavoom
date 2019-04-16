@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-#define USE_FASTER_SUBDIVIDER
-
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
 
@@ -155,71 +153,47 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
 }
 
 
-static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, const TPlane &plane, const TVec &a, const TVec &b) {
-  //const float t = (plane.dist-(plane.normal*a))/(plane.normal*(b-a));
-  const float t = (plane.dist-DotProduct(plane.normal, a))/DotProduct(plane.normal, b-a);
-  res.x = a.x+(b.x-a.x)*t;
-  res.y = a.y+(b.y-a.y)*t;
-  res.z = a.z+(b.z-a.z)*t;
-}
+struct SClipInfo {
+  int vcount[2];
+  TVec *verts[2];
+};
 
 
 //==========================================================================
 //
-//  VRenderLevel::SubdivideFace
+//  SplitSurface
+//
+//  returns `false` if surface cannot be split
+//  axis must be valid
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
-  surface_t *f = InF;
-  subsector_t *sub = f->subsector;
-  seg_t *seg = f->seg;
-  check(sub);
+static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
+  clip.vcount[0] = clip.vcount[1] = 0;
+  if (!surf || surf->count < 3) return false; // cannot split
+
+  const int surfcount = surf->count;
 
   float mins = 99999.0f;
   float maxs = -99999.0f;
 
-  if (f->count == 0) {
-    //GCon->Logf(NAME_Warning, "empty surface at subsector #%d (0)", (int)(ptrdiff_t)(f->subsector-Level->Subsectors));
-    return f; // just in case
-  }
-
-  if (f->count < 2) {
-    //Sys_Error("surface with less than three (%d) vertices)", f->count);
-    GCon->Logf(NAME_Warning, "surface with less than two (%d) vertices (divface) (sub=%d; sector=%d)", f->count, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-    return f;
-  }
-
-  // this can happen for wall without texture
-  if (!axis.isValid() || axis.isZero()) {
-    GCon->Logf(NAME_Warning, "ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
-    //f->count = 0; // ignore this surface
-    return f;
-  }
-
-  for (int i = 0; i < f->count; ++i) {
-    if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
-      GCon->Logf(NAME_Warning, "ERROR(SF): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG! (sub=%d; sector=%d)",
-        i, f->verts[i].x, f->verts[i].y, f->verts[i].z, axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-      if (!isFiniteF(f->verts[i].x)) f->verts[i].x = 0;
-      if (!isFiniteF(f->verts[i].y)) f->verts[i].y = 0;
-      if (!isFiniteF(f->verts[i].z)) f->verts[i].z = 0;
+  TVec *vt = surf->verts;
+  for (int i = surfcount; i--; ++vt) {
+    if (!vt->isValid()) {
+      GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL VAVOOM BUG!");
+      surf->count = 0;
+      return false;
     }
-    const float dot = DotProduct(f->verts[i], axis);
+    const float dot = DotProduct(*vt, axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
   }
 
-  if (maxs-mins <= SUBDIVIDE_SIZE) {
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
-    return f;
-  }
+  if (maxs-mins <= SUBDIVIDE_SIZE) return false;
 
   TPlane plane;
-
   plane.normal = axis;
   const float dot0 = Length(plane.normal);
-  plane.normal = Normalise(plane.normal);
+  plane.normal.normaliseInPlace();
   plane.dist = (mins+SUBDIVIDE_SIZE-16)/dot0;
 
   enum {
@@ -228,138 +202,119 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     PlaneFront = 1,
   };
 
-  spvReserve(f->count*2+2); //k8: `f->count+1` is enough, but...
+  spvReserve(surfcount*2+2); //k8: `surf->count+1` is enough, but...
 
   float *dots = spvPoolDots;
   int *sides = spvPoolSides;
   TVec *verts1 = spvPoolV1;
   TVec *verts2 = spvPoolV2;
 
-  for (int i = 0; i < f->count; ++i) {
-    const float dot = DotProduct(f->verts[i], plane.normal)-plane.dist;
+  int backSideCount = 0, frontSideCount = 0;
+  vt = surf->verts;
+  for (int i = 0; i < surfcount; ++i, ++vt) {
+    const float dot = DotProduct(*vt, plane.normal)-plane.dist;
     dots[i] = dot;
-         if (dot < -ON_EPSILON) sides[i] = PlaneBack;
-    else if (dot > ON_EPSILON) sides[i] = PlaneFront;
+         if (dot < -ON_EPSILON) { ++backSideCount; sides[i] = PlaneBack; }
+    else if (dot > ON_EPSILON) { ++frontSideCount; sides[i] = PlaneFront; }
     else sides[i] = PlaneCoplanar;
   }
-  dots[f->count] = dots[0];
-  sides[f->count] = sides[0];
+  dots[surfcount] = dots[0];
+  sides[surfcount] = sides[0];
 
-  int count1 = 0;
-  int count2 = 0;
+  // completely on one side?
+  if (!backSideCount || !frontSideCount) return false;
+
   TVec mid(0, 0, 0);
+  clip.verts[0] = verts1;
+  clip.verts[1] = verts2;
 
-#if defined(USE_FASTER_SUBDIVIDER)
-  for (int i = 0; i < f->count; ++i) {
+  vt = surf->verts;
+  for (int i = 0; i < surfcount; ++i) {
     if (sides[i] == PlaneCoplanar) {
-      verts1[count1++] = f->verts[i];
-      verts2[count2++] = f->verts[i];
+      clip.verts[0][clip.vcount[0]++] = vt[i];
+      clip.verts[1][clip.vcount[1]++] = vt[i];
       continue;
     }
-    if (sides[i] == PlaneFront) {
-      verts1[count1++] = f->verts[i];
-    } else {
-      verts2[count2++] = f->verts[i];
-    }
+
+    unsigned cvidx = (sides[i] == PlaneFront ? 0 : 1);
+    clip.verts[cvidx][clip.vcount[cvidx]++] = vt[i];
+
     if (sides[i+1] == PlaneCoplanar || sides[i] == sides[i+1]) continue;
 
     // generate a split point
-    TVec &p1 = f->verts[i];
-    TVec &p2 = f->verts[(i+1)%f->count];
+    TVec &p1 = vt[i];
+    TVec &p2 = vt[(i+1)%surfcount];
 
     const float dot = dots[i]/(dots[i]-dots[i+1]);
     for (int j = 0; j < 3; ++j) {
       // avoid round off error when possible
-           if (plane.normal[j] == 1) mid[j] = plane.dist;
-      else if (plane.normal[j] == -1) mid[j] = -plane.dist;
+           if (plane.normal[j] == 1.0f) mid[j] = plane.dist;
+      else if (plane.normal[j] == -1.0f) mid[j] = -plane.dist;
       else mid[j] = p1[j]+dot*(p2[j]-p1[j]);
-      //if (!isFiniteF(mid[j])) GCon->Logf("FUCKED mid #%d (%f)! p1=%f; p2=%f; dot=%f", j, mid[j], p1[j], p2[j], dot);
     }
 
-    verts1[count1++] = mid;
-    verts2[count2++] = mid;
+    clip.verts[0][clip.vcount[0]++] = mid;
+    clip.verts[1][clip.vcount[1]++] = mid;
   }
-#else
-  // robust spliting, taken from "Real-Time Collision Detection" book
-  for (int i = 0; i < f->count; ++i) {
-    const auto atype = sides[i];
-    const auto btype = sides[i+1];
-    const TVec &va = f->verts[i];
-    const TVec &vb = f->verts[(i+1)%f->count];
-    if (btype == PlaneFront) {
-      if (atype == PlaneBack) {
-        // edge (a, b) straddles, output intersection point to both sides
-        intersectAgainstPlane(mid, plane, vb, va); // `(b, a)` for robustness; was (a, b)
-        // consistently clip edge as ordered going from in front -> behind
-        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        verts1[count1++] = mid;
-        verts2[count2++] = mid;
-      }
-      // in all three cases, output b to the front side
-      verts1[count1++] = vb;
-    } else if (btype == PlaneBack) {
-      if (atype == PlaneFront) {
-        // edge (a, b) straddles plane, output intersection point
-        intersectAgainstPlane(mid, plane, va, vb); // `(b, a)` for robustness; was (a, b)
-        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        verts1[count1++] = mid;
-        verts2[count2++] = mid;
-      } else if (atype == PlaneCoplanar) {
-        // output a when edge (a, b) goes from 'on' to 'behind' plane
-        verts2[count2++] = va;
-      }
-      // in all three cases, output b to the back side
-      verts2[count2++] = vb;
-    } else {
-      // b is on the plane. In all three cases output b to the front side
-      verts1[count1++] = vb;
-      // in one case, also output b to back side
-      if (atype == PlaneBack) {
-        verts2[count2++] = vb;
-      }
-    }
-  }
-#endif
 
-  /*
-  fprintf(stderr, "f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)\n", f->count, count1, count2, axis.x, axis.y, axis.z);
-  fprintf(stderr, "=== F ===\n"); for (int ff = 0; ff < f->count; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, f->verts[ff].x, f->verts[ff].y, f->verts[ff].z);
-  fprintf(stderr, "=== 1 ===\n"); for (int ff = 0; ff < count1; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts1[ff].x, verts1[ff].y, verts1[ff].z);
-  fprintf(stderr, "=== 2 ===\n"); for (int ff = 0; ff < count2; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts2[ff].x, verts2[ff].y, verts2[ff].z);
-  */
+  return (clip.vcount[0] >= 3 && clip.vcount[1] >= 3);
+}
 
-  if (count1 < 3 || count2 < 3) {
-    //GCon->Logf(NAME_Warning, "empty surface at subsector");
-    //GCon->Logf("f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)", f->count, count1, count2, axis.x, axis.y, axis.z);
-    // no subdivide found
-    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
-    return f;
+
+//==========================================================================
+//
+//  VRenderLevel::SubdivideFace
+//
+//==========================================================================
+surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
+  subsector_t *sub = surf->subsector;
+  seg_t *seg = surf->seg;
+  check(sub);
+
+  if (surf->count < 2) {
+    //Sys_Error("surface with less than three (%d) vertices)", f->count);
+    GCon->Logf(NAME_Warning, "surface with less than two (%d) vertices (divface) (sub=%d; sector=%d)", surf->count, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
+    return surf;
   }
+
+  // this can happen for wall without texture
+  if (!axis.isValid() || axis.isZero()) {
+    GCon->Logf(NAME_Warning, "ERROR(SF): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
+    return (nextaxis ? SubdivideFace(surf, *nextaxis, nullptr) : surf);
+  }
+
+  SClipInfo clip;
+  if (!SplitSurface(clip, surf, axis)) {
+    // cannot subdivide, try next axis
+    return (nextaxis ? SubdivideFace(surf, *nextaxis, nullptr) : surf);
+  }
+
+  check(clip.vcount[0] > 2);
+  check(clip.vcount[1] > 2);
 
   ++c_subdivides;
 
-  vuint32 drawflags = f->drawflags;
-  surface_t *next = f->next;
-  Z_Free(f);
+  vuint32 drawflags = surf->drawflags;
+  surface_t *next = surf->next;
+  Z_Free(surf);
 
-  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(count2-1)*sizeof(TVec));
+  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(TVec));
   back->drawflags = drawflags;
-  back->count = count2;
-  memcpy(back->verts, verts2, count2*sizeof(TVec));
   back->subsector = sub;
   back->seg = seg;
+  back->count = clip.vcount[1];
+  memcpy(back->verts, clip.verts[1], back->count*sizeof(TVec));
 
-  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
+  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(TVec));
   front->drawflags = drawflags;
-  front->count = count1;
-  memcpy(front->verts, verts1, count1*sizeof(TVec));
   front->subsector = sub;
   front->seg = seg;
+  front->count = clip.vcount[0];
+  memcpy(front->verts, clip.verts[0], front->count*sizeof(TVec));
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
-  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr);
-  return back;
+  return (nextaxis ? SubdivideFace(back, *nextaxis, nullptr) : back);
 }
 
 
@@ -368,16 +323,10 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 //  VRenderLevel::SubdivideSeg
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
-  surface_t *surf = InSurf;
+surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   subsector_t *sub = surf->subsector;
   check(surf->seg == seg);
   check(sub);
-
-  if (surf->count == 0) {
-    //GCon->Logf(NAME_Warning, "empty surface at subsector #%d (0)", (int)(ptrdiff_t)(f->subsector-Level->Subsectors));
-    return surf; // just in case
-  }
 
   if (surf->count < 2) {
     //Sys_Error("surface with less than three (%d) vertices)", surf->count);
@@ -388,167 +337,30 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   // this can happen for wall without texture
   if (!axis.isValid() || axis.isZero()) {
     GCon->Logf(NAME_Warning, "ERROR(SS): invalid axis (%f,%f,%f); THIS IS MAP BUG! (sub=%d; sector=%d)", axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg);
-    //surf->count = 0; // ignore this surface
-    return surf;
+    return (nextaxis ? SubdivideSeg(surf, *nextaxis, nullptr, seg) : surf);
   }
 
-  float mins = 99999.0f;
-  float maxs = -99999.0f;
-
-  for (int i = 0; i < surf->count; ++i) {
-    if (!isFiniteF(surf->verts[i].x) || !isFiniteF(surf->verts[i].y) || !isFiniteF(surf->verts[i].z)) {
-      GCon->Logf(NAME_Warning, "ERROR(SS): invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG! (sub=%d; sector=%d)",
-        i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, axis.x, axis.y, axis.z, (int)(ptrdiff_t)(sub-Level->Subsectors), (int)(ptrdiff_t)(sub->sector-Level->Sectors));
-      if (!isFiniteF(surf->verts[i].x)) surf->verts[i].x = 0;
-      if (!isFiniteF(surf->verts[i].y)) surf->verts[i].y = 0;
-      if (!isFiniteF(surf->verts[i].z)) surf->verts[i].z = 0;
-    }
-    const float dot = DotProduct(surf->verts[i], axis);
-    if (dot < mins) mins = dot;
-    if (dot > maxs) maxs = dot;
+  SClipInfo clip;
+  if (!SplitSurface(clip, surf, axis)) {
+    // cannot subdivide, try next axis
+    return (nextaxis ? SubdivideSeg(surf, *nextaxis, nullptr, seg) : surf);
   }
 
-  if (maxs-mins <= SUBDIVIDE_SIZE) {
-    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr, seg);
-    return surf;
-  }
-
-  TPlane plane;
-
-  plane.normal = axis;
-  const float dot0 = Length(plane.normal);
-  plane.normal = Normalise(plane.normal);
-  plane.dist = (mins+SUBDIVIDE_SIZE-16)/dot0;
-
-  enum {
-    PlaneBack = -1,
-    PlaneCoplanar = 0,
-    PlaneFront = 1,
-  };
-
-  spvReserve(surf->count*2+2); //k8: `f->count+1` is enough, but...
-
-  float *dots = spvPoolDots;
-  int *sides = spvPoolSides;
-  TVec *verts1 = spvPoolV1;
-  TVec *verts2 = spvPoolV2;
-
-  //float dots[MAXWVERTS+1];
-  //int sides[MAXWVERTS+1];
-
-  for (int i = 0; i < surf->count; ++i) {
-    const float dot = DotProduct(surf->verts[i], plane.normal)-plane.dist;
-    dots[i] = dot;
-         if (dot < -ON_EPSILON) sides[i] = PlaneBack;
-    else if (dot > ON_EPSILON) sides[i] = PlaneFront;
-    else sides[i] = PlaneCoplanar;
-  }
-  dots[surf->count] = dots[0];
-  sides[surf->count] = sides[0];
-
-  //TVec verts1[MAXWVERTS];
-  //TVec verts2[MAXWVERTS];
-  int count1 = 0;
-  int count2 = 0;
-  TVec mid(0, 0, 0);
-
-#if defined(USE_FASTER_SUBDIVIDER)
-  for (int i = 0; i < surf->count; ++i) {
-    if (sides[i] == 0) {
-      verts1[count1++] = surf->verts[i];
-      verts2[count2++] = surf->verts[i];
-      continue;
-    }
-    if (sides[i] == 1) {
-      verts1[count1++] = surf->verts[i];
-    } else {
-      verts2[count2++] = surf->verts[i];
-    }
-    if (sides[i+1] == 0 || sides[i] == sides[i+1]) continue;
-
-    // generate a split point
-    TVec &p1 = surf->verts[i];
-    TVec &p2 = surf->verts[(i+1)%surf->count];
-
-    const float dot = dots[i]/(dots[i]-dots[i+1]);
-    for (int j = 0; j < 3; ++j) {
-      // avoid round off error when possible
-           if (plane.normal[j] == 1) mid[j] = plane.dist;
-      else if (plane.normal[j] == -1) mid[j] = -plane.dist;
-      else mid[j] = p1[j]+dot*(p2[j]-p1[j]);
-    }
-
-    verts1[count1++] = mid;
-    verts2[count2++] = mid;
-  }
-#else
-  // robust spliting, taken from "Real-Time Collision Detection" book
-  for (int i = 0; i < surf->count; ++i) {
-    const auto atype = sides[i];
-    const auto btype = sides[i+1];
-    const TVec &va = surf->verts[i];
-    const TVec &vb = surf->verts[(i+1)%surf->count];
-    if (btype == PlaneFront) {
-      if (atype == PlaneBack) {
-        // edge (a, b) straddles, output intersection point to both sides
-        intersectAgainstPlane(mid, plane, vb, va); // `(b, a)` for robustness; was (a, b)
-        // consistently clip edge as ordered going from in front -> behind
-        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        //f.unsafeArrayAppend(mid);
-        //b.unsafeArrayAppend(mid);
-        verts1[count1++] = mid;
-        verts2[count2++] = mid;
-      }
-      // in all three cases, output b to the front side
-      //f.unsafeArrayAppend(vb);
-      verts1[count1++] = vb;
-    } else if (btype == PlaneBack) {
-      if (atype == PlaneFront) {
-        // edge (a, b) straddles plane, output intersection point
-        intersectAgainstPlane(mid, plane, va, vb); // `(b, a)` for robustness; was (a, b)
-        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        //f.unsafeArrayAppend(mid);
-        //b.unsafeArrayAppend(mid);
-        verts1[count1++] = mid;
-        verts2[count2++] = mid;
-      } else if (atype == PlaneCoplanar) {
-        // output a when edge (a, b) goes from 'on' to 'behind' plane
-        //b.unsafeArrayAppend(va);
-        verts2[count2++] = va;
-      }
-      // in all three cases, output b to the back side
-      //b.unsafeArrayAppend(vb);
-      verts2[count2++] = vb;
-    } else {
-      // b is on the plane. In all three cases output b to the front side
-      //f.unsafeArrayAppend(vb);
-      verts1[count1++] = vb;
-      // in one case, also output b to back side
-      if (atype == PlaneBack) {
-        //b.unsafeArrayAppend(vb);
-        verts2[count2++] = vb;
-      }
-    }
-  }
-#endif
-
-  if (count1 < 3 || count2 < 3) {
-    if (nextaxis) return SubdivideSeg(surf, *nextaxis, nullptr, seg);
-    return surf;
-  }
+  check(clip.vcount[0] > 2);
+  check(clip.vcount[1] > 2);
 
   ++c_seg_div;
 
-  surf->count = count2;
-  memcpy(surf->verts, verts2, count2*sizeof(TVec));
+  check(clip.vcount[1] <= surface_t::MAXWVERTS);
+  surf->count = clip.vcount[1];
+  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(TVec));
 
   surface_t *news = NewWSurf();
   news->drawflags = surf->drawflags;
-  news->count = count1;
-  memcpy(news->verts, verts1, count1*sizeof(TVec));
   news->subsector = sub;
   news->seg = seg;
+  news->count = clip.vcount[0];
+  memcpy(news->verts, clip.verts[0], news->count*sizeof(TVec));
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis, seg);
