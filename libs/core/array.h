@@ -249,7 +249,7 @@ public:
   }
   inline T &alloc () { return Alloc(); }
 
-  inline bool RemoveIndex (int index) {
+  inline void RemoveIndex (int index) {
     check(ArrData != nullptr);
     check(index >= 0);
     check(index < ArrNum);
@@ -257,9 +257,8 @@ public:
     --ArrNum;
     for (int i = index; i < ArrNum; ++i) ArrData[i] = ArrData[i+1];
     ArrData[ArrNum].~T();
-    return true;
   }
-  inline bool removeAt (int index) { return RemoveIndex(index); }
+  inline void removeAt (int index) { return RemoveIndex(index); }
 
   inline int Remove (const T &item) {
     Flatten(); // just in case
