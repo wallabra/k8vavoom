@@ -351,8 +351,6 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
               print("  open bot: %s", o->bottom);
               print("  open top: %s", o->top);
               print("  open range: %s", o->range);
-              print("  open lowfloor: %s", o->lowfloor);
-              print("  open highceiling: %s", o->highceiling);
               print("  open floor: (%s:%s)", o->efloor.spGetNormal(), o->efloor.spGetDist());
               print("  open ceiling: (%s:%s)", o->eceiling.spGetNormal(), o->eceiling.spGetDist());
             }

@@ -209,9 +209,9 @@ public:
 struct opening_t {
   float top;
   float bottom;
-  float range; // negatve: this is 3dmidtex
-  float lowfloor;
-  float highceiling;
+  float range; // top-bottom, to avoid calculations
+  float lowfloor; // this is used for dropoffs: floor height on the other side (always lower than bottom)
+  //float highceiling;
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
   //sec_plane_t *lowfloorplane;
@@ -228,11 +228,11 @@ struct opening_t {
       bottom = op->bottom;
       range = op->range;
       lowfloor = op->lowfloor;
-      highceiling = op->highceiling;
+      //highceiling = op->highceiling;
       efloor = op->efloor;
       eceiling = op->eceiling;
     } else {
-      top = bottom = range = lowfloor = highceiling = 0.0f;
+      top = bottom = range = lowfloor = /*highceiling =*/ 0.0f;
       efloor.splane = eceiling.splane = nullptr;
     }
   }
