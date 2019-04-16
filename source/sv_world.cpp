@@ -35,8 +35,10 @@
 
 
 //k8: this should be enough for everyone, lol
-#define MAX_OPENINGS  (65536)
+#define MAX_OPENINGS  (16384)
 static opening_t openings[MAX_OPENINGS];
+
+//#define VV_DUMP_OPENING_CREATION
 
 
 //==========================================================================
@@ -209,115 +211,6 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
   */
 
   return true;
-}
-
-
-extern "C" {
-  // sort by floors
-  static __attribute__((unused)) int compareOpenings (const void *aa, const void *bb, void *nbfxx) {
-    if (aa == bb) return 0;
-    const opening_t *a = (const opening_t *)aa;
-    const opening_t *b = (const opening_t *)bb;
-    const float dist = a->bottom-b->bottom;
-    if (dist) return (dist < 0 ? -1 : 1);
-    const unsigned nbf = (unsigned)(uintptr_t)nbfxx;
-    // same bottom; solid floors must came first
-    if ((a->efloor.splane->flags&nbf) == 0) {
-      // `a` is solid
-      // if `b` is solid, they are equal
-      // if `b` is non-solid, `b` is lesser than `a`
-      return ((b->efloor.splane->flags&nbf) == 0 ? 0 : 1);
-    } else if ((b->efloor.splane->flags&nbf) == 0) {
-      // `b` is solid
-      // if `a` is solid, they are equal
-      // if `a` is non-solid, `a` is lesser than `b`
-      return ((a->efloor.splane->flags&nbf) == 0 ? 0 : -1);
-    }
-    return 0;
-  }
-}
-
-
-//==========================================================================
-//
-//  CompressOpenings
-//
-//  join consecutive openings, remove paper-thin regions
-//  put resulting set into `openings` array, return number of openings
-//
-//==========================================================================
-static __attribute__((unused)) unsigned CompressOpenings (opening_t *oplistdest, opening_t *oplist, const unsigned count, const unsigned NoBlockFlags) {
-  if (!count) return 0;
-  unsigned cpos = 0;
-  // find first solid floor: we cannot go lower than that
-  while (cpos < count && (oplist[0].efloor.splane->flags&NoBlockFlags) != 0) ++cpos;
-  if (cpos >= count) return 0; // oops
-  // we have one
-  unsigned opused = 1;
-  // copy current opening
-  oplistdest[0] = oplist[cpos];
-  // now try to insert all openings one by one
-  cpos = 0;
-  while (cpos < count) {
-    opening_t &currop = oplist[cpos];
-    // ignore regions under first solid floor
-    if (currop.top <= oplistdest[0].bottom) { ++cpos; continue; }
-    // find resulting region that contains this floor
-    unsigned dpos = 0;
-    // if current region doesn't start below the first solid one, first one contains it
-    if (currop.bottom > oplistdest[0].bottom) {
-      while (dpos < opused) {
-        if (currop.bottom >= oplistdest[dpos].bottom && currop.bottom <= oplistdest[dpos].top) break;
-        ++dpos;
-      }
-      if (dpos >= opused) {
-        // nothing to extend, this is new region
-        oplistdest[opused++] = oplist[cpos++];
-        continue;
-      }
-    }
-    // found region to extend, do it
-    opening_t &currdest = oplistdest[dpos];
-    // first, replace floor if old one is non-solid, and new one is solid
-    if (currdest.bottom == currop.bottom) {
-      if ((currdest.efloor.splane->flags&NoBlockFlags) == 0 &&
-          (currop.efloor.splane->flags&NoBlockFlags) != 0)
-      {
-        currdest.efloor = currop.efloor;
-      }
-    }
-    // now check ceiling
-    if (currop.top <= currdest.top) {
-      // current region is completely inside destination, nothing to do
-      ++cpos;
-      continue;
-    }
-    // bump ceiling
-    currdest.eceiling = currop.eceiling;
-    currdest.top = currop.top;
-    // check if we hit some next regions
-    ++dpos; // move to next
-    const unsigned cdpidx = dpos;
-    while (dpos < opused && currdest.top >= oplistdest[dpos].bottom) {
-      // join current destination and next one
-      currdest.eceiling = oplistdest[dpos].eceiling;
-      currdest.top = oplistdest[dpos].top;
-      ++dpos; // move to next
-    }
-    // if our dpos is out of range here, it means that we eaten all possible regions
-    if (dpos >= opused) {
-      // everything was eaten
-      opused = cdpidx;
-    } else {
-      // move uneaten regions
-      memmove((void *)(oplistdest+cdpidx), (void *)(oplistdest+dpos), (opused-dpos)*sizeof(oplistdest[0]));
-      opused -= dpos-cdpidx;
-    }
-    // move to next source region
-    ++cpos;
-  }
-
-  return opused;
 }
 
 
@@ -636,20 +529,25 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return (op->efloor.splane ? op : nullptr);
   }
 
-#if 1
   // it will be cached anyway
   if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
 
   static TArray<OpPlane> op0list;
   static TArray<OpPlane> op1list;
 
-  //GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+#ifdef VV_DUMP_OPENING_CREATION
+  GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+#endif
 
   CollectOpPlanes(op0list, frontreg, point, NoBlockFlags);
-  //GCon->Log("::: before sort op0 :::"); DumpOpPlanes(op0list);
+#ifdef VV_DUMP_OPENING_CREATION
+  GCon->Log("::: before sort op0 :::"); DumpOpPlanes(op0list);
+#endif
 
   SortOpPlanes(op0list);
-  //GCon->Log("::: after sort op0 :::"); DumpOpPlanes(op0list);
+#ifdef VV_DUMP_OPENING_CREATION
+  GCon->Log("::: after sort op0 :::"); DumpOpPlanes(op0list);
+#endif
 
   if (op0list.length() < 2) {
     // just in case: no front sector openings
@@ -658,10 +556,14 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
   CollectOpPlanes(op1list, backreg, point, NoBlockFlags);
-  //GCon->Log("::: before sort op1 :::"); DumpOpPlanes(op1list);
+#ifdef VV_DUMP_OPENING_CREATION
+  GCon->Log("::: before sort op1 :::"); DumpOpPlanes(op1list);
+#endif
 
   SortOpPlanes(op1list);
-  //GCon->Log("::: after sort op1 :::"); DumpOpPlanes(op1list);
+#ifdef VV_DUMP_OPENING_CREATION
+  GCon->Log("::: after sort op1 :::"); DumpOpPlanes(op1list);
+#endif
 
   if (op1list.length() < 2) {
     // just in case: no back sector openings
@@ -669,12 +571,14 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return nullptr;
   }
 
+#ifdef VV_DUMP_OPENING_CREATION
   //GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
-  //GCon->Log("::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
+  GCon->Log("::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
+#endif
 
   unsigned destcount = IntersectOpSet(op0list, op1list);
 
-  /*
+#ifdef VV_DUMP_OPENING_CREATION
   GCon->Logf("::: after (%u) :::", destcount);
   for (unsigned f = 0; f < destcount; ++f) {
     const opening_t *xop = &openings[f];
@@ -684,7 +588,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       xop->lowfloor, xop->range);
   }
   GCon->Log("-----------------------------");
-  */
+#endif
 
   // no intersections?
   if (destcount == 0) {
@@ -708,283 +612,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
   return linedef->oplist[NoBlockFlags];
-
-#elif 0
-  /* build openings
-     first, create openings for front sector
-     second, insert openings for back sector, shrinking/removing unnecessary ones
-
-     we will cache build list, so we can spend some time doing better work
-   */
-
-  //GCon->Logf("%p: caching for 0x%02x!", linedef, (unsigned)NoBlockFlags);
-
-  // it will be cached anyway
-  if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-
-  // collect front sector openings
-  unsigned fopused = 0;
-  for (sec_region_t *reg = frontreg; reg; reg = reg->next) {
-    if (opsused >= MAX_OPENINGS/2) Host_Error("too many openings for line!");
-    opening_t *xop = &openings[MAX_OPENINGS/2+fopused++];
-    xop->top = reg->eceiling.GetPointZ(point);
-    xop->bottom = reg->efloor.GetPointZ(point);
-    // ignore invalid and paper-thin regions
-    if (xop->top <= xop->bottom) { --fopused; continue; }
-    xop->eceiling = reg->eceiling;
-    xop->efloor = reg->efloor;
-  }
-  // sort
-  timsort_r(openings+MAX_OPENINGS/2, fopused, sizeof(openings[0]), &compareOpenings, (void *)(uintptr_t)NoBlockFlags);
-  // compress
-  opening_t *foplist = openings;
-  fopused = CompressOpenings(foplist, openings+MAX_OPENINGS/2, fopused, (unsigned)NoBlockFlags);
-  // check
-  if (fopused == 0) {
-    // just in case: no front sector openings
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-    return nullptr;
-  }
-
-  // collect back sector openings
-  unsigned bopused = 0;
-  for (sec_region_t *reg = backreg; reg; reg = reg->next) {
-    if (opsused >= MAX_OPENINGS/2) Host_Error("too many openings for line!");
-    opening_t *xop = &openings[MAX_OPENINGS/2+bopused++];
-    xop->top = reg->eceiling.GetPointZ(point);
-    xop->bottom = reg->efloor.GetPointZ(point);
-    // ignore invalid and paper-thin regions
-    if (xop->top <= xop->bottom) { --bopused; continue; }
-    xop->eceiling = reg->eceiling;
-    xop->efloor = reg->efloor;
-  }
-  // sort
-  timsort_r(openings+MAX_OPENINGS/2, bopused, sizeof(openings[0]), &compareOpenings, (void *)(uintptr_t)NoBlockFlags);
-  // compress
-  opening_t *boplist = openings+fopused;
-  bopused = CompressOpenings(boplist, openings+MAX_OPENINGS/2, bopused, (unsigned)NoBlockFlags);
-  // check
-  if (bopused == 0) {
-    // just in case: no back sector openings
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-    return nullptr;
-  }
-
-  /* now we have two lists; build destination intersection list.
-     walk by both lists, and save intersection in destination list.
-   */
-  opening_t *destlist = boplist+bopused;
-  unsigned destcount = 0;
-
-  unsigned fpos = 0, bpos = 0;
-  // find first intersection
-  while (fpos < fopused && bpos < bopused) {
-    opening_t *fp = &foplist[fpos];
-    opening_t *bp = &boplist[bpos];
-    if (fp->top <= bp->bottom) {
-      // first list region is lower than second list region, try next first list region
-      ++fpos;
-      continue;
-    }
-    if (bp->top <= fp->bottom) {
-      // second list region is lower than first list region, try next second list region
-      ++bpos;
-      continue;
-    }
-    if (fp->bottom >= bp->top) {
-      // first list region is higher than second list region, try next second list region
-      ++bpos;
-      continue;
-    }
-    if (bp->bottom >= fp->top) {
-      // second list region is higher than first list region, try next first list region
-      ++fpos;
-      continue;
-    }
-    // this should be an intersection
-    check(!(fp->top <= bp->bottom || fp->bottom >= bp->top));
-    check(!(bp->top <= fp->bottom || bp->bottom >= fp->top));
-    // store first intersection
-    opening_t *dp = &destlist[destcount++];
-    // floor
-    if (fp->bottom >= bp->bottom) {
-      // first floor is higher than second floor
-      dp->efloor = fp->efloor;
-      dp->bottom = fp->bottom;
-      dp->lowfloor = bp->bottom; // for dropoffs
-    } else {
-      // second floor is higher than first floor
-      dp->efloor = bp->efloor;
-      dp->bottom = bp->bottom;
-      dp->lowfloor = fp->bottom; // for dropoffs
-    }
-    // ceiling
-    if (fp->top <= bp->top) {
-      // first ceiling is lower than second ceiling
-      dp->eceiling = fp->eceiling;
-      dp->top = fp->top;
-    } else {
-      // second ceiling is lower than first ceiling
-      dp->eceiling = bp->eceiling;
-      dp->top = bp->top;
-    }
-    // skip one or both source regions
-    if (fp->top == bp->top) {
-      // both ceilings are the same, skip both regions
-      ++fpos;
-      ++bpos;
-    } else if (fp->top < bp->top) {
-      // first ceiling is lower than second, skip first
-      ++fpos;
-    } else {
-      // second ceiling is lower than first, skip second
-      check(bp->top < fp->top);
-      ++bpos;
-    }
-  }
-
-  // no intersections?
-  if (destcount == 0) {
-    // oops
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-    return nullptr;
-  }
-
-  // has some intersections, create cache
-  {
-    opening_t *lastop = nullptr, *dp = destlist;
-    for (unsigned f = 0; f < destcount; ++f, ++dp) {
-      // calc range
-      dp->range = dp->top-dp->bottom;
-      if (dp->range <= 0.0f) continue; // oops
-      //GCon->Logf("  %p: bot=%g; top=%g", linedef, dp->bottom, dp->top);
-      opening_t *newop = VLevel::AllocOpening();
-      if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
-      newop->copyFrom(dp);
-      lastop = newop;
-    }
-  }
-
-  return linedef->oplist[NoBlockFlags];
-
-#else
-  TSecPlaneRef frontfloor;
-  TSecPlaneRef backfloor;
-  TSecPlaneRef frontceil;
-  TSecPlaneRef backceil;
-
-  float frontfloorz = 0.0f;
-  float backfloorz = 0.0f;
-  float frontceilz = 0.0f;
-  float backceilz = 0.0f;
-
-  while (frontreg && backreg) {
-    if (backreg->efloor.GetPointZ(point) > backreg->eceiling.GetPointZ(point)) {
-      /*
-      GCon->Logf("WUTAFUCK-BACK: (%g,%g,%g:%g) - (%g,%g,%g:%g); fz=%g; cz=%g; xfz=%g; xcz=%g; pt=(%g,%g)",
-        backreg->efloor.GetNormal().x, backreg->efloor.GetNormal().y, backreg->efloor.GetNormal().z, backreg->efloor.GetDist(),
-        backreg->eceiling.GetNormal().x, backreg->eceiling.GetNormal().y, backreg->eceiling.GetNormal().z, backreg->eceiling.GetDist(),
-        backreg->efloor.GetPointZ(point), backreg->eceiling.GetPointZ(point),
-        backreg->efloor.splane->GetPointZ(point), backreg->eceiling.splane->GetPointZ(point),
-        point.x, point.y);
-      GCon->Logf("WUTAFUCK-BACK:   (%g,%g,%g:%g) - (%g,%g,%g:%g)",
-        backreg->efloor.splane->normal.x, backreg->efloor.splane->normal.y, backreg->efloor.splane->normal.z, backreg->efloor.splane->dist,
-        backreg->eceiling.splane->normal.x, backreg->eceiling.splane->normal.y, backreg->eceiling.splane->normal.z, backreg->eceiling.splane->dist);
-      VLevel::dumpSectorRegions(linedef->backsector);
-      */
-      backreg = backreg->next;
-      continue;
-    }
-    if (frontreg->efloor.GetPointZ(point) > frontreg->eceiling.GetPointZ(point)) {
-      /*
-      GCon->Logf("WUTAFUCK-FRONT: (%g,%g,%g:%g) - (%g,%g,%g:%g); fz=%g; cz=%g; xfz=%g; xcz=%g; pt=(%g,%g)",
-        frontreg->efloor.GetNormal().x, frontreg->efloor.GetNormal().y, frontreg->efloor.GetNormal().z, frontreg->efloor.GetDist(),
-        frontreg->eceiling.GetNormal().x, frontreg->eceiling.GetNormal().y, frontreg->eceiling.GetNormal().z, frontreg->eceiling.GetDist(),
-        frontreg->efloor.GetPointZ(point), frontreg->eceiling.GetPointZ(point),
-        frontreg->efloor.splane->GetPointZ(point), frontreg->eceiling.splane->GetPointZ(point),
-        point.x, point.y);
-      GCon->Logf("WUTAFUCK-FRONT:   (%g,%g,%g:%g) - (%g,%g,%g:%g)",
-        frontreg->efloor.splane->normal.x, frontreg->efloor.splane->normal.y, frontreg->efloor.splane->normal.z, frontreg->efloor.splane->dist,
-        frontreg->eceiling.splane->normal.x, frontreg->eceiling.splane->normal.y, frontreg->eceiling.splane->normal.z, frontreg->eceiling.splane->dist);
-      VLevel::dumpSectorRegions(linedef->frontsector);
-      */
-      frontreg = frontreg->next;
-      continue;
-    }
-
-    if (!(frontreg->efloor.splane->flags&NoBlockFlags)) {
-      frontfloor = frontreg->efloor;
-      frontfloorz = frontfloor.GetPointZ(point);
-    }
-    if (!(backreg->efloor.splane->flags&NoBlockFlags)) {
-      backfloor = backreg->efloor;
-      backfloorz = backfloor.GetPointZ(point);
-    }
-    if (!(frontreg->eceiling.splane->flags&NoBlockFlags)) {
-      frontceil = frontreg->eceiling;
-      frontceilz = frontceil.GetPointZ(point);
-    }
-    if (!(backreg->eceiling.splane->flags&NoBlockFlags)) {
-      backceil = backreg->eceiling;
-      backceilz = backceil.GetPointZ(point);
-    }
-
-    if (backreg->eceiling.splane->flags&NoBlockFlags) { backreg = backreg->next; continue; }
-    if (frontreg->eceiling.splane->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
-
-    if (frontfloorz >= backceilz) { backreg = backreg->next; continue; }
-    if (backfloorz >= frontceilz) { frontreg = frontreg->next; continue; }
-
-    if (opsused >= MAX_OPENINGS) { GCon->Logf("too many openings for line!"); break; }
-    openings[opsused].next = op;
-    op = &openings[opsused++];
-
-    if (frontfloorz > backfloorz) {
-      op->bottom = frontfloorz;
-      op->lowfloor = backfloorz;
-      op->efloor = frontfloor;
-      //op->lowfloorplane = backfloor;
-    } else {
-      op->bottom = backfloorz;
-      op->lowfloor = frontfloorz;
-      op->efloor = backfloor;
-      //op->lowfloorplane = frontfloor;
-    }
-
-    if (frontceilz < backceilz) {
-      op->top = frontceilz;
-      op->highceiling = backceilz;
-      op->eceiling = frontceil;
-      //op->highceilingplane = backceil;
-      frontreg = frontreg->next;
-    } else {
-      op->top = backceilz;
-      op->highceiling = frontceilz;
-      op->eceiling = backceil;
-      //op->highceilingplane = frontceil;
-      backreg = backreg->next;
-    }
-
-    op->range = op->top-op->bottom;
-  }
-
-  // cache it
-  if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-  if (op) {
-    opening_t *lastop = nullptr;
-    for (opening_t *xop = op; xop; xop = xop->next) {
-      opening_t *newop = VLevel::AllocOpening();
-      if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
-      newop->copyFrom(xop);
-      lastop = newop;
-    }
-  } else {
-    // no openings found, cache dummy item
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-  }
-#endif
-
-  return op;
 }
 
 
