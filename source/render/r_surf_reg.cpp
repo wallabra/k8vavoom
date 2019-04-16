@@ -68,37 +68,69 @@ static inline void spvReserve (int size) {
 
 //==========================================================================
 //
+//  CalcSurfMinMax
+//
+//  surface must be valid
+//
+//==========================================================================
+static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, const TVec axis, const float offs=0.0f) {
+  float mins = +99999.0f;
+  float maxs = -99999.0f;
+  const TVec *vt = surf->verts;
+  for (int i = surf->count; i--; ++vt) {
+    if (!vt->isValid()) {
+      GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL VAVOOM BUG!");
+      surf->count = 0;
+      outmins = outmaxs = 0.0f;
+      return false;
+    }
+    const float dot = DotProduct(*vt, axis)+offs;
+    if (dot < mins) mins = dot;
+    if (dot > maxs) maxs = dot;
+  }
+  outmins = mins;
+  outmaxs = maxs;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::InitSurfs
 //
 //==========================================================================
 void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
-  surface_t *surfs = ASurfs;
-
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
-  while (surfs) {
+  for (surface_t *surf = ASurfs; surf; surf = surf->next) {
     if (plane) {
-      surfs->texinfo = texinfo;
-      surfs->eplane = plane;
+      surf->texinfo = texinfo;
+      surf->eplane = plane;
     }
 
-    if (surfs->count == 0) {
+    if (surf->count == 0) {
       GCon->Logf(NAME_Warning, "empty surface at subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));
-      //Sys_Error("invalid surface");
-      surfs->texturemins[0] = 16;
-      surfs->extents[0] = 16;
-      surfs->texturemins[1] = 16;
-      surfs->extents[1] = 16;
-      surfs->subsector = sub;
-      surfs->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
+      surf->texturemins[0] = 16;
+      surf->extents[0] = 16;
+      surf->texturemins[1] = 16;
+      surf->extents[1] = 16;
+      surf->subsector = sub;
+      surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
+    } else if (surf->count < 3) {
+      GCon->Logf(NAME_Warning, "degenerate surface with #%d vertices at subsector #%d", surf->count, (int)(ptrdiff_t)(sub-Level->Subsectors));
+      surf->texturemins[0] = 16;
+      surf->extents[0] = 16;
+      surf->texturemins[1] = 16;
+      surf->extents[1] = 16;
+      surf->subsector = sub;
+      surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
     } else {
-      float mins = 99999.0f;
-      float maxs = -99999.0f;
-      for (unsigned i = 0; i < (unsigned)surfs->count; ++i) {
-        float dot = DotProduct(surfs->verts[i], texinfo->saxis)+texinfo->soffs;
-        if (dot < mins) mins = dot;
-        if (dot > maxs) maxs = dot;
+      float mins, maxs;
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxis, texinfo->soffs)) {
+        // bad surface
+        continue;
       }
+
       int bmins = (int)floor(mins/16);
       int bmaxs = (int)ceil(maxs/16);
 
@@ -108,20 +140,18 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
           (bmaxs-bmins) > 32767/16)
       {
         GCon->Logf(NAME_Warning, "Subsector %d got too big S surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
-        surfs->texturemins[0] = 0;
-        surfs->extents[0] = 256;
+        surf->texturemins[0] = 0;
+        surf->extents[0] = 256;
       } else {
-        surfs->texturemins[0] = bmins*16;
-        surfs->extents[0] = (bmaxs-bmins)*16;
+        surf->texturemins[0] = bmins*16;
+        surf->extents[0] = (bmaxs-bmins)*16;
       }
 
-      mins = 99999.0f;
-      maxs = -99999.0f;
-      for (unsigned i = 0; i < (unsigned)surfs->count; ++i) {
-        float dot = DotProduct(surfs->verts[i], texinfo->taxis)+texinfo->toffs;
-        if (dot < mins) mins = dot;
-        if (dot > maxs) maxs = dot;
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxis, texinfo->toffs)) {
+        // bad surface
+        continue;
       }
+
       bmins = (int)floor(mins/16);
       bmaxs = (int)ceil(maxs/16);
 
@@ -131,28 +161,25 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
           (bmaxs-bmins) > 32767/16)
       {
         GCon->Logf(NAME_Warning, "Subsector %d got too big T surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
-        surfs->texturemins[1] = 0;
-        surfs->extents[1] = 256;
+        surf->texturemins[1] = 0;
+        surf->extents[1] = 256;
       } else {
-        surfs->texturemins[1] = bmins*16;
-        surfs->extents[1] = (bmaxs-bmins)*16;
+        surf->texturemins[1] = bmins*16;
+        surf->extents[1] = (bmaxs-bmins)*16;
       }
 
-      if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
-        surfs->drawflags |= surface_t::DF_CALC_LMAP;
-        //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
-        //LightFace(surfs, sub);
+      if (!doPrecalc && showCreateWorldSurfProgress && !surf->lightmap) {
+        surf->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
-        surfs->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
-        LightFace(surfs, sub);
+        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
+        LightFace(surf, sub);
       }
     }
-
-    surfs = surfs->next;
   }
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct SClipInfo {
   int vcount[2];
   TVec *verts[2];
@@ -171,21 +198,11 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
   clip.vcount[0] = clip.vcount[1] = 0;
   if (!surf || surf->count < 3) return false; // cannot split
 
-  const int surfcount = surf->count;
-
-  float mins = 99999.0f;
-  float maxs = -99999.0f;
-
-  TVec *vt = surf->verts;
-  for (int i = surfcount; i--; ++vt) {
-    if (!vt->isValid()) {
-      GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL VAVOOM BUG!");
-      surf->count = 0;
-      return false;
-    }
-    const float dot = DotProduct(*vt, axis);
-    if (dot < mins) mins = dot;
-    if (dot > maxs) maxs = dot;
+  float mins, maxs;
+  if (!CalcSurfMinMax(surf, mins, maxs, axis)) {
+    // invalid surface
+    surf->count = 0;
+    return false;
   }
 
   if (maxs-mins <= SUBDIVIDE_SIZE) return false;
@@ -202,6 +219,7 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
     PlaneFront = 1,
   };
 
+  const int surfcount = surf->count;
   spvReserve(surfcount*2+2); //k8: `surf->count+1` is enough, but...
 
   float *dots = spvPoolDots;
@@ -209,8 +227,9 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
   TVec *verts1 = spvPoolV1;
   TVec *verts2 = spvPoolV2;
 
+  const TVec *vt = surf->verts;
+
   int backSideCount = 0, frontSideCount = 0;
-  vt = surf->verts;
   for (int i = 0; i < surfcount; ++i, ++vt) {
     const float dot = DotProduct(*vt, plane.normal)-plane.dist;
     dots[i] = dot;
@@ -242,8 +261,8 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
     if (sides[i+1] == PlaneCoplanar || sides[i] == sides[i+1]) continue;
 
     // generate a split point
-    TVec &p1 = vt[i];
-    TVec &p2 = vt[(i+1)%surfcount];
+    const TVec &p1 = vt[i];
+    const TVec &p2 = vt[(i+1)%surfcount];
 
     const float dot = dots[i]/(dots[i]-dots[i+1]);
     for (int j = 0; j < 3; ++j) {
