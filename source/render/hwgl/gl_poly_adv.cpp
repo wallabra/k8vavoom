@@ -869,7 +869,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   if (gl_dbg_wireframe) return;
-  //if (surf->PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", surf->count);
     return;
