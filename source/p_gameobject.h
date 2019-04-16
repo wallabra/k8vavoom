@@ -402,6 +402,8 @@ struct TSecPlaneRef {
   inline bool isFloor () const { return (GetNormalZSafe() > 0.0f); }
   inline bool isCeiling () const { return (GetNormalZSafe() < 0.0f); }
 
+  inline bool isSlope () const { return (fabsf(GetNormalZSafe()) != 1.0f); }
+
   // see enum at the top
   inline Type classify () const { const float z = GetNormalZSafe(); return (z < 0.0f ? Ceiling : z > 0.0f ? Floor : Unknown); }
 
@@ -521,9 +523,9 @@ struct sec_region_t {
   line_t *extraline;
 
   enum {
-    //RF_FlipFloor   = 1u<<0,
-    //RF_FlipCeiling = 1u<<1,
-    RF_NonSolid    = 1u<<1, // this is used for shitty gozzo "non-solid" 3d floors
+    RF_NonSolid      = 1u<<0, // this is used for shitty gozzo "non-solid" 3d floors
+    RF_SkipFloorSurf = 1u<<1, // this is used for shitty gozzo "non-solid" 3d floors
+    RF_SkipCeilSurf  = 1u<<2, // this is used for shitty gozzo "non-solid" 3d floors
   };
   vuint32 regflags;
 };
@@ -566,11 +568,16 @@ struct sector_t {
 
   // floor/ceiling info for sector
   // for normal sectors, this is the same region, and
-  // for complex 3d sectors (ROR) there can be more than one region
-  // regions are sorted from bottom to top, so you can start
+  // for complex sectors with 3d floors there can be more than one region
+  // regions are (roughly) sorted from bottom to top, so you can start
   // from `botregion` and follow `next` pointer
+  // note that sorting order is not necessarily strict
   sec_region_t *topregion; // highest region
   sec_region_t *botregion; // lowest region
+
+  // this is cached planes for thing gap determination
+  // planes are sorted by... something
+  //TArray<TSecPlaneRef> regplanes;
 
   sector_t *deepref; // deep water hack
 

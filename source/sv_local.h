@@ -245,7 +245,7 @@ int P_BoxOnLineSide (float *tmbox, line_t *ld);
 bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
 
 int SV_PointContents (const sector_t *sector, const TVec &p);
-sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p);
+sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgDump=false);
 
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
 

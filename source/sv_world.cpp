@@ -966,35 +966,34 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 //  SV_PointInRegion
 //
 //==========================================================================
-sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p) {
+sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgDump) {
   sec_region_t *best = nullptr;
   float bestDist = 999999.0f; // minimum distance to region floor
+  if (dbgDump) GCon->Logf("SV_PointInRegion: z=%g", p.z);
+  const float secfz = sector->floor.GetPointZ(p);
+  const float seccz = sector->ceiling.GetPointZ(p);
   // logic: find matching region, otherwise return highest one
-  for (sec_region_t *reg = sector->botregion; reg && reg->next; reg = reg->next) {
-    const float fz = reg->efloor.GetPointZ(p);
-    const float cz = reg->eceiling.GetPointZ(p);
+  for (sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
+    // clamp coords
+    float fz = MAX(secfz, reg->efloor.GetPointZ(p));
+    float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
     if (p.z >= fz && p.z <= cz) {
       const float fdist = p.z-fz;
-      // prefer regions with contents
-      if (best) {
-        if (!reg->params->contents) {
-          // no contents in current region
-          if (best->params->contents) continue;
-        } else {
-          // current region has contents
-          if (!best->params->contents) {
-            best = reg;
-            bestDist = fdist;
-            continue;
-          }
-        }
-      }
+      if (dbgDump) GCon->Logf("  reg %p: fz=%g; cz=%g; fdist=%g (bestDist=%g)", reg, fz, cz, fdist, bestDist);
       if (!best || fdist < bestDist) {
+        if (dbgDump) GCon->Logf("    taken reg %p", reg);
         best = reg;
         bestDist = fdist;
+      } else if (fdist == bestDist) {
+        // prefer regions with contents
+        if (reg->params->contents && !best->params->contents) {
+          if (dbgDump) GCon->Logf("    taken reg %p by contents", reg);
+          best = reg;
+        }
       }
+    } else {
+      if (dbgDump) GCon->Logf("  SKIP reg %p: fz=%g; cz=%g; z=%g (bestDist=%g)", reg, fz, cz, p.z, bestDist);
     }
-    //if (p.z < reg->eceiling.GetPointZ(p)) break;
   }
   return (best ? best : sector->botregion);
 }

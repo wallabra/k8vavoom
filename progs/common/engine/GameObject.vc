@@ -848,6 +848,8 @@ struct sec_region_t {
 
   // for gozzo crap
   bool bNonSolid;
+  bool bSkipFloorSurf;
+  bool bSkipCeilSurf;
 };
 
 //

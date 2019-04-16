@@ -602,12 +602,11 @@ public:
 
   void FixKnownMapErrors ();
 
-  // can return `nullptr`
-  sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
+  void AddExtraFloor (line_t *line, sector_t *dst);
 
 private:
-  sec_region_t *AddExtraFloorSane (line_t *line, sector_t *dst); // vavoom
-  sec_region_t *AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
+  void AddExtraFloorSane (line_t *line, sector_t *dst); // vavoom
+  void AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
 
 public:
   static void dumpSectorRegions (const sector_t *dst);

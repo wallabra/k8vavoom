@@ -106,7 +106,7 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane) {
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, bool createSurface) {
   TSecPlaneRef spl(InSplane);
   int vcount = sub->numlines;
 
@@ -149,6 +149,8 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 
   ssurf->esecplane = spl;
   ssurf->edist = spl.splane->dist;
+
+  if (!createSurface) return ssurf;
 
   // setup texture
   VTexture *Tex = GTextureManager(spl.splane->pic);
@@ -223,7 +225,9 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub) {
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool createSurface) {
+  if (!createSurface) return;
+
   if (!ssurf->esecplane.splane->pic) return; // no texture? nothing to do
 
   TSecPlaneRef splane(ssurf->esecplane);
@@ -232,7 +236,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     // check for sky changes
     if ((splane.splane->pic == skyflatnum) != (RealPlane.splane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
-      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
       check(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColourMap = ColourMap; // just in case
       // nothing more to do
@@ -242,7 +246,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if (RealPlane.splane->pic == skyflatnum && RealPlane.GetNormalZ() < 0.0f) {
       if (splane.splane != &sky_plane) {
         // recreate it, just in case
-        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
         check(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColourMap = ColourMap; // just in case
         // nothing more to do
@@ -262,7 +266,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       ssurf->Angle != splane.splane->BaseAngle-splane.splane->Angle)
   {
     // this will update texture, offsets, and everything
-    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
     check(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColourMap = ColourMap; // just in case
     // nothing more to do
@@ -1453,8 +1457,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->floor = CreateSecSurface(nullptr, sub, r_floor);
-      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling);
+      sreg->floor = CreateSecSurface(nullptr, sub, r_floor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
+      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
 
       sreg->count = sub->numlines;
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
@@ -1502,8 +1506,8 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
   }
 
-  UpdateSecSurface(region->floor, region->floorplane, sub);
-  UpdateSecSurface(region->ceil, region->ceilplane, sub);
+  UpdateSecSurface(region->floor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
+  UpdateSecSurface(region->ceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
 
   if (updatePoly && sub->poly) {
     // update the polyobj

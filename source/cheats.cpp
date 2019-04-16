@@ -227,9 +227,13 @@ COMMAND(my_sector_info) {
   if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
   if (Args.length() > 2) {
     sec_region_t *gap = SV_FindThingGap(sec, Player->MO->Origin, Player->MO->Height, true);
-    if (gap) {
-      GCon->Logf("=== GAP: %p", gap);
-    }
+    if (gap) GCon->Logf("=== GAP: %p", gap);
+    gap = SV_PointInRegion(sec, Player->MO->Origin, true);
+    if (gap) GCon->Logf("=== PT0: %p", gap);
+    gap = SV_PointInRegion(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height*0.5f), true);
+    if (gap) GCon->Logf("=== PT1: %p", gap);
+    gap = SV_PointInRegion(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
+    if (gap) GCon->Logf("=== PT2: %p", gap);
   }
 }
 
