@@ -579,6 +579,7 @@ public:
 
   // doesn't check pvs or reject
   bool CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector=nullptr);
+  bool CastEx (const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector=nullptr);
 
   void SetCameraToTexture (VEntity *, VName, int);
 

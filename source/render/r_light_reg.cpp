@@ -146,8 +146,12 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
   if (t >= squaredist) return 0.0f; // too far away
   if (t <= 2.0f) return 1.0f; // at light point
 
+#if 0
   linetrace_t Trace;
   if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+#else
+  if (!Level->CastEx(p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+#endif
 
   //if (t == 0) t = 1; // don't blow up...
   return sqrtf(t);
@@ -363,20 +367,21 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   // calc points only when surface may be lit by a light
   if (!lmi.pointsCalced) {
     if (!CalcFaceVectors(lmi, surf)) {
+      GCon->Logf(NAME_Warning, "cannot calculate lightmap vectors");
       lmi.numsurfpt = 0;
-      memset(lightmap, 0, GridSize*GridSize*4*sizeof(float));
-      memset(lightmapr, 0, GridSize*GridSize*4*sizeof(float));
-      memset(lightmapg, 0, GridSize*GridSize*4*sizeof(float));
-      memset(lightmapb, 0, GridSize*GridSize*4*sizeof(float));
+      memset(lightmap, 0, sizeof(lightmap));
+      memset(lightmapr, 0, sizeof(lightmapr));
+      memset(lightmapg, 0, sizeof(lightmapg));
+      memset(lightmapb, 0, sizeof(lightmapb));
       return;
     }
 
     CalcPoints(lmi, surf, false);
     lmi.pointsCalced = true;
-    memset(lightmap, 0, lmi.numsurfpt*sizeof(float));
-    memset(lightmapr, 0, lmi.numsurfpt*sizeof(float));
-    memset(lightmapg, 0, lmi.numsurfpt*sizeof(float));
-    memset(lightmapb, 0, lmi.numsurfpt*sizeof(float));
+    memset(lightmap, 0, lmi.numsurfpt*sizeof(lightmap[0]));
+    memset(lightmapr, 0, lmi.numsurfpt*sizeof(lightmapr[0]));
+    memset(lightmapg, 0, lmi.numsurfpt*sizeof(lightmapg[0]));
+    memset(lightmapb, 0, lmi.numsurfpt*sizeof(lightmapb[0]));
   }
 
   // check it for real
@@ -387,11 +392,28 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   const float bmul = (light->colour&255)/255.0f;
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
-    if (!dist) continue; // light ray is blocked
+    if (dist <= 0.0f) {
+      // light ray is blocked
+      /*
+      lightmap[c] += 255.0f;
+      lightmapg[c] += 255.0f;
+      is_coloured = true;
+      lmi.light_hit = true;
+      */
+      continue;
+    }
 
     TVec incoming = light->origin-(*spt);
-    incoming.normaliseInPlace();
-    if (!incoming.isValid()) continue;
+    if (!incoming.isZero()) {
+      incoming.normaliseInPlace();
+      if (!incoming.isValid()) {
+        lightmap[c] += 255.0f;
+        lightmapr[c] += 255.0f;
+        is_coloured = true;
+        lmi.light_hit = true;
+        continue;
+      }
+    }
     float angle = DotProduct(incoming, surf->GetNormal());
 
     angle = 0.5f+0.5f*angle;
@@ -903,23 +925,29 @@ static inline int xblight (int add, int sub) {
 //
 //==========================================================================
 void VRenderLevel::BuildLightMap (surface_t *surf) {
+  if (surf->count < 3) {
+    surf->drawflags &= ~surface_t::DF_CALC_LMAP;
+    return;
+  }
+
   if (surf->drawflags&surface_t::DF_CALC_LMAP) {
     //if (surf->subsector) GCon->Logf("relighting subsector %d", (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     surf->drawflags &= ~surface_t::DF_CALC_LMAP;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
-  if (surf->count < 3) return; // wtf?!
 
   is_coloured = false;
   r_light_add = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
+  check(smax > 0);
+  check(tmax > 0);
   if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
   if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
   int size = smax*tmax;
-  vuint8 *lightmap = surf->lightmap;
-  rgb_t *lightmap_rgb = surf->lightmap_rgb;
+  const vuint8 *lightmap = surf->lightmap;
+  const rgb_t *lightmap_rgb = surf->lightmap_rgb;
 
   // clear to ambient
   int t = getSurfLightLevelInt(surf);
@@ -1283,7 +1311,7 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   cache->Light = srflight;
 
   // calculate the lightings
-  BuildLightMap(surface/*, 0*/);
+  BuildLightMap(surface);
   bnum = cache->blocknum;
   block_changed[bnum] = true;
 

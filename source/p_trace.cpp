@@ -44,11 +44,11 @@ bool VLevel::CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane) const {
 
   if (Plane.splane->pic == skyflatnum) return false; // hit sky, don't clip
 
-  // hit Plane
+  // hit plane
   Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
   Trace.HitPlaneNormal = Plane.GetNormal();
 
-  // crosses Plane
+  // crosses plane
   return false;
 }
 
@@ -83,25 +83,15 @@ bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
 //
 //==========================================================================
 bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
-  line_t *line;
-  int s1;
-  int s2;
-  sector_t *front;
-  float frac;
-  float num;
-  float den;
-  TVec hit_point(0, 0, 0);
-
-  line = Seg->linedef;
+  line_t *line = Seg->linedef;
   if (!line) return true;
 
   // allready checked other side?
   if (line->validcount == validcount) return true;
-
   line->validcount = validcount;
 
-  s1 = Trace.Plane.PointOnSide2(*line->v1);
-  s2 = Trace.Plane.PointOnSide2(*line->v2);
+  int s1 = Trace.Plane.PointOnSide2(*line->v1);
+  int s2 = Trace.Plane.PointOnSide2(*line->v2);
 
   // line isn't crossed?
   if (s1 == s2) return true;
@@ -113,15 +103,15 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
   if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
 
   // crosses a two sided line
-  front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
+  sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
 
   // intercept vector
   // don't need to check if den == 0, because then planes are paralel
   // (they will never cross) or it's the same plane (also rejected)
-  den = DotProduct(Trace.Delta, line->normal);
-  num = line->dist-DotProduct(Trace.Start, line->normal);
-  frac = num/den;
-  hit_point = Trace.Start+frac*Trace.Delta;
+  float den = DotProduct(Trace.Delta, line->normal);
+  float num = line->dist-DotProduct(Trace.Start, line->normal);
+  float frac = num/den;
+  TVec hit_point = Trace.Start+frac*Trace.Delta;
 
   Trace.LineEnd = hit_point;
 
@@ -132,9 +122,7 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
-    opening_t *open;
-
-    open = SV_LineOpenings(line, hit_point, Trace.PlaneNoBlockFlags);
+    opening_t *open = SV_LineOpenings(line, hit_point, Trace.PlaneNoBlockFlags);
     while (open) {
       if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
       open = open->next;
@@ -142,11 +130,7 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
   }
 
   // hit line
-  if (s1 == 0 || s1 == 2) {
-    Trace.HitPlaneNormal = line->normal;
-  } else {
-    Trace.HitPlaneNormal = -line->normal;
-  }
+  Trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
 
   if (!(line->flags&ML_TWOSIDED)) Trace.SightEarlyOut = true;
   return false;
@@ -161,30 +145,22 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
 //
 //==========================================================================
 bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
-  subsector_t *sub;
-  int count;
-  seg_t *seg;
-  int polyCount;
-  seg_t **polySeg;
-
-  sub = &Subsectors[num];
+  subsector_t *sub = &Subsectors[num];
 
   if (sub->poly) {
     // check the polyobj in the subsector first
-    polyCount = sub->poly->numsegs;
-    polySeg = sub->poly->segs;
-    while (polyCount--) {
-      if (!CheckLine(Trace, *polySeg++)) return false;
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      if (!CheckLine(Trace, *polySeg)) return false;
     }
   }
 
   // check lines
-  count = sub->numlines;
-  seg = &Segs[sub->firstline];
-
-  for ( ; count ; seg++, count--) {
+  seg_t *seg = &Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
     if (!CheckLine(Trace, seg)) return false;
   }
+
   // passed the subsector ok
   return true;
 }
@@ -201,20 +177,20 @@ bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
   if (BspNum == -1) return CrossSubsector(Trace, 0);
 
   if (!(BspNum&NF_SUBSECTOR)) {
-    node_t *Bsp = &Nodes[BspNum];
-
+    node_t *bsp = &Nodes[BspNum];
     // decide which side the start point is on
-    int Side = Bsp->PointOnSide2(Trace.Start);
-    if (Side == 2) Side = 0; // an "on" should cross both sides
-
+    int side = bsp->PointOnSide2(Trace.Start);
+    bool both = (side == 2);
+    //if (both) side = 0; // an "on" should cross both sides
+    side &= 1;
     // cross the starting side
-    if (!CrossBSPNode(Trace, Bsp->children[Side])) return false;
-
+    if (!CrossBSPNode(Trace, bsp->children[side])) {
+      return (both ? CrossBSPNode(Trace, bsp->children[side^1]) : false);
+    }
     // the partition plane is crossed here
-    if (Side == Bsp->PointOnSide2(Trace.End)) return true; // the line doesn't touch the other side
-
+    if (!both && side == bsp->PointOnSide2(Trace.End)) return true; // the line doesn't touch the other side
     // cross the ending side
-    return CrossBSPNode(Trace, Bsp->children[Side^1]);
+    return CrossBSPNode(Trace, bsp->children[side^1]);
   }
 
   return CrossSubsector(Trace, BspNum&(~NF_SUBSECTOR));
@@ -307,6 +283,9 @@ struct SightTraceInfo {
   bool EarlyOut;
   TVec LineStart;
   TVec LineEnd;
+
+  vuint32 PlaneNoBlockFlags;
+  TVec HitPlaneNormal;
   //TArray<intercept_t> Intercepts;
 };
 
@@ -316,8 +295,8 @@ struct SightTraceInfo {
 //  SightCheckPlane
 //
 //==========================================================================
-static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Plane) {
-  if (Plane.splane->flags&SPF_NOBLOCKSIGHT) return true; // plane doesn't block
+static bool SightCheckPlane (SightTraceInfo &Trace, const TSecPlaneRef &Plane) {
+  if (Plane.splane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
 
   const float OrgDist = Plane.DotPointDist(Trace.LineStart);
   if (OrgDist < -0.1f) return true; // ignore back side
@@ -326,6 +305,10 @@ static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Pl
   if (HitDist >= -0.1f) return true; // didn't cross plane
 
   if (Plane.splane->pic == skyflatnum) return false; // hit sky, don't clip
+
+  // hit plane
+  Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
+  Trace.HitPlaneNormal = Plane.GetNormal();
 
   // crosses plane
   return false;
@@ -337,7 +320,7 @@ static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Pl
 //  SightCheckPlanes
 //
 //==========================================================================
-static bool SightCheckPlanes (const SightTraceInfo &Trace, sector_t *Sec) {
+static bool SightCheckPlanes (SightTraceInfo &Trace, sector_t *Sec) {
   if (!Sec->Has3DFloors()) return true; // don't bother with planes if there are no 3D floors
 
   sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
@@ -364,23 +347,41 @@ static bool SightCheckPlanes (const SightTraceInfo &Trace, sector_t *Sec) {
 //
 //==========================================================================
 static bool SightTraverse (SightTraceInfo &Trace, const intercept_t *in) {
-  line_t *li = in->line;
-  int s1 = li->PointOnSide2(Trace.Start);
-  sector_t *front = (s1 == 0 || s1 == 2 ? li->frontsector : li->backsector);
+  line_t *line = in->line;
+  int s1 = line->PointOnSide2(Trace.Start);
+  sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   //sector_t *front = (li->PointOnSideFri(Trace.Start) ? li->frontsector : li->backsector);
   TVec hit_point = Trace.Start+in->frac*Trace.Delta;
   Trace.LineEnd = hit_point;
   if (!SightCheckPlanes(Trace, front)) return false;
   Trace.LineStart = Trace.LineEnd;
 
-  // crosses a two sided line
-  opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKSIGHT);
-  while (open) {
-    if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
-    open = open->next;
+  if (line->flags&ML_TWOSIDED) {
+    // crosses a two sided line
+    opening_t *open = SV_LineOpenings(line, hit_point, Trace.PlaneNoBlockFlags);
+    while (open) {
+      if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
+      open = open->next;
+    }
   }
 
+  // hit line
+  Trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
+
+  if (!(line->flags&ML_TWOSIDED)) Trace.EarlyOut = true;
   return false; // stop
+}
+
+
+extern "C" {
+  static int compareIcept (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const intercept_t *a = (const intercept_t *)aa;
+    const intercept_t *b = (const intercept_t *)bb;
+    if (a->frac < b->frac) return -1;
+    if (a->frac > b->frac) return 1;
+    return 0;
+  }
 }
 
 
@@ -394,27 +395,23 @@ static bool SightTraverse (SightTraceInfo &Trace, const intercept_t *in) {
 static bool SightTraverseIntercepts (SightTraceInfo &Trace, sector_t *EndSector) {
   int count = interUsed; //Trace.Intercepts.length();
 
-  // calculate intercept distance
-  intercept_t *scan = intercepts; //Trace.Intercepts.ptr();
-  for (int i = 0; i < count; ++i, ++scan) {
-    const float den = DotProduct(scan->line->normal, Trace.Delta);
-    const float num = scan->line->dist-DotProduct(Trace.Start, scan->line->normal);
-    scan->frac = num/den;
-  }
-
-  // go through in order
-  intercept_t *in = nullptr; // shut up compiler warning
-  while (count--) {
-    float dist = 99999.0f;
-    scan = intercepts; //Trace.Intercepts.ptr();
-    for (int i = 0; i < interUsed/*Trace.Intercepts.length()*/; ++i, ++scan) {
-      if (scan->frac < dist) {
-        dist = scan->frac;
-        in = scan;
-      }
+  if (count > 0) {
+    // calculate intercept distance
+    intercept_t *scan = intercepts;
+    for (int i = count; i--; ++scan) {
+      const float den = DotProduct(scan->line->normal, Trace.Delta);
+      const float num = scan->line->dist-DotProduct(Trace.Start, scan->line->normal);
+      scan->frac = num/den;
     }
-    if (!SightTraverse(Trace, in)) return false; // don't bother going farther
-    in->frac = 99999.0f;
+
+    // sort intercepts
+    timsort_r(intercepts, (size_t)count, sizeof(intercepts[0]), &compareIcept, nullptr);
+
+    // go through in order
+    scan = intercepts;
+    for (int i = count; i--; ++scan) {
+      if (!SightTraverse(Trace, scan)) return false; // don't bother going farther
+    }
   }
 
   Trace.LineEnd = Trace.End;
@@ -678,6 +675,8 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector
   }
   */
 
+  Trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
+
   if (radius <= /*12*/32) {
     Trace.Start = org;
     Trace.End = dest;
@@ -715,4 +714,44 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector
   }
 
   return false;
+}
+
+
+//==========================================================================
+//
+//  VLevel::CastEx
+//
+//  doesn't check pvs or reject
+//
+//==========================================================================
+bool VLevel::CastEx (const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector) {
+  SightTraceInfo Trace;
+
+  //sector_t *Sector = PointInSubsector(org)->sector;
+  sector_t *OtherSector = DestSector;
+  if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
+
+  // killough 4/19/98: make fake floors and ceilings block monster view
+  /*
+  if ((Sector->heightsec &&
+       ((org.z+Height <= Sector->heightsec->floor.GetPointZ(org.x, org.y) &&
+         dest.z >= Sector->heightsec->floor.GetPointZ(dest.x, dest.y)) ||
+        (org.z >= Sector->heightsec->ceiling.GetPointZ (org.x, org.y) &&
+         dest.z+Height <= Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y))))
+     ||
+      (Other->Sector->heightsec &&
+       ((dest.z+Other->Height <= Other->Sector->heightsec->floor.GetPointZ (dest.x, dest.y) &&
+         org.z >= Other->Sector->heightsec->floor.GetPointZ (org.x, org.y)) ||
+        (dest.z >= Other->Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y) &&
+         org.z+Other->Height <= Other->Sector->heightsec->ceiling.GetPointZ (org.x, org.y)))))
+  {
+    return false;
+  }
+  */
+
+  Trace.PlaneNoBlockFlags = blockflags;
+
+  Trace.Start = org;
+  Trace.End = dest;
+  return SightPathTraverse(Trace, this, OtherSector);
 }

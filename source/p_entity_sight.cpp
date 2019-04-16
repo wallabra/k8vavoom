@@ -76,8 +76,8 @@ struct sight_trace_t {
 //  SightCheckPlane
 //
 //==========================================================================
-static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Plane) {
-  if (Plane.splane->flags&SPF_NOBLOCKSIGHT) return true; // plane doesn't block
+static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Plane, unsigned blockflags) {
+  if (Plane.splane->flags&blockflags) return true; // plane doesn't block
 
   const float OrgDist = Plane.DotPointDist(Trace.LineStart);
   if (OrgDist < -0.1f) return true; // ignore back side
@@ -97,20 +97,20 @@ static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Pla
 //  SightCheckPlanes
 //
 //==========================================================================
-static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec) {
+static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec, unsigned blockflags) {
   if (!Sec->Has3DFloors()) return true; // don't bother with planes if there are no 3D floors
 
   sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 
   if (StartReg != nullptr) {
     for (sec_region_t *Reg = StartReg; Reg; Reg = Reg->next) {
-      if (!SightCheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
+      if (!SightCheckPlane(Trace, Reg->efloor, blockflags)) return false; // hit floor
+      if (!SightCheckPlane(Trace, Reg->eceiling, blockflags)) return false; // hit ceiling
     }
 
     for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
-      if (!SightCheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
+      if (!SightCheckPlane(Trace, Reg->efloor, blockflags)) return false; // hit floor
+      if (!SightCheckPlane(Trace, Reg->eceiling, blockflags)) return false; // hit ceiling
     }
   }
 
@@ -123,18 +123,18 @@ static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec) {
 //  SightTraverse
 //
 //==========================================================================
-static bool SightTraverse (sight_trace_t &Trace, intercept_t *in) {
+static bool SightTraverse (sight_trace_t &Trace, intercept_t *in, unsigned blockflags) {
   line_t *li = in->line;
   int s1 = li->PointOnSide2(Trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? li->frontsector : li->backsector);
   //sector_t *front = (li->PointOnSideFri(Trace.Start) ? li->frontsector : li->backsector);
   TVec hit_point = Trace.Start+in->frac*Trace.Delta;
   Trace.LineEnd = hit_point;
-  if (!SightCheckPlanes(Trace, front)) return false;
+  if (!SightCheckPlanes(Trace, front, blockflags)) return false;
   Trace.LineStart = Trace.LineEnd;
 
   // crosses a two sided line
-  opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKSIGHT);
+  opening_t *open = SV_LineOpenings(li, hit_point, blockflags);
   while (open) {
     if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
     open = open->next;
@@ -151,7 +151,7 @@ static bool SightTraverse (sight_trace_t &Trace, intercept_t *in) {
 //  Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightTraverseIntercepts (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector) {
+static bool SightTraverseIntercepts (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector, unsigned blockflags) {
   int count = Trace.Intercepts.length();
 
   // calculate intercept distance
@@ -173,12 +173,12 @@ static bool SightTraverseIntercepts (sight_trace_t &Trace, VThinker *Self, secto
         in = scan;
       }
     }
-    if (!SightTraverse(Trace, in)) return false; // don't bother going farther
+    if (!SightTraverse(Trace, in, blockflags)) return false; // don't bother going farther
     in->frac = 99999.0f;
   }
 
   Trace.LineEnd = Trace.End;
-  return SightCheckPlanes(Trace, EndSector);
+  return SightCheckPlanes(Trace, EndSector, blockflags);
 }
 
 
@@ -255,7 +255,7 @@ static bool SightBlockLinesIterator (sight_trace_t &Trace, VThinker *Self, int x
 //  each. Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector) {
+static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector, unsigned blockflags) {
   float x1 = Trace.Start.x;
   float y1 = Trace.Start.y;
   float x2 = Trace.End.x;
@@ -385,7 +385,7 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
   }
 
   // couldn't early out, so go through the sorted list
-  return SightTraverseIntercepts(Trace, Self, EndSector);
+  return SightTraverseIntercepts(Trace, Self, EndSector, blockflags);
 }
 
 
@@ -396,10 +396,10 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
 //  Rechecks Trace.Intercepts with different ending z value.
 //
 //==========================================================================
-static bool SightPathTraverse2 (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector) {
+static bool SightPathTraverse2 (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector, unsigned blockflags) {
   Trace.Delta = Trace.End-Trace.Start;
   Trace.LineStart = Trace.Start;
-  return SightTraverseIntercepts(Trace, Self, EndSector);
+  return SightTraverseIntercepts(Trace, Self, EndSector, blockflags);
 }
 #endif /* USE_BSP */
 
@@ -487,7 +487,7 @@ bool VEntity::CanSee (VEntity *Other) {
 #ifdef USE_BSP
     if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
 #else
-    if (SightPathTraverse(Trace, this, Other->SubSector->sector))
+    if (SightPathTraverse(Trace, this, Other->SubSector->sector, SPF_NOBLOCKSIGHT))
 #endif
     {
       return true;
@@ -509,7 +509,7 @@ bool VEntity::CanSee (VEntity *Other) {
 #ifdef USE_BSP
     if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
 #else
-    if (SightPathTraverse2(Trace, this, Other->SubSector->sector))
+    if (SightPathTraverse2(Trace, this, Other->SubSector->sector, SPF_NOBLOCKSIGHT))
 #endif
     {
       return true;
@@ -522,7 +522,7 @@ bool VEntity::CanSee (VEntity *Other) {
 #ifdef USE_BSP
     if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
 #else
-    if (SightPathTraverse2(Trace, this, Other->SubSector->sector))
+    if (SightPathTraverse2(Trace, this, Other->SubSector->sector, SPF_NOBLOCKSIGHT))
 #endif
     {
       return true;
