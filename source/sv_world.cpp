@@ -220,7 +220,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //
 //==========================================================================
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
-  if (linedef->sidenum[1] == -1 || linedef->backsector == nullptr) return nullptr; // single sided line
+  if (linedef->sidenum[1] == -1 || !linedef->backsector) return nullptr; // single sided line
 
   NoBlockFlags &= (SPF_MAX_OPENINGS-1);
 
