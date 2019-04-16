@@ -272,14 +272,16 @@ static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
 //  CollectOpPlanes
 //
 //==========================================================================
-static __attribute__((unused)) void CollectOpPlanes (TArray<OpPlane> &dest, const sec_region_t *reg, const TVec point, unsigned NoBlockFlags) {
+static __attribute__((unused)) void CollectOpPlanes (TArray<OpPlane> &dest, const sec_region_t *reg, const TVec point, unsigned NoBlockFlags, bool *hasSlopes) {
   dest.reset();
+  *hasSlopes = false;
   for (; reg; reg = reg->next) {
     if ((reg->efloor.splane->flags&NoBlockFlags) == 0) {
       OpPlane &p = dest.alloc();
       p.eplane = reg->efloor;
       p.z = p.eplane.GetPointZ(point);
       p.type = p.eplane.classify();
+      if (p.eplane.isSlope()) *hasSlopes = true;
       if (p.type != TSecPlaneRef::Type::Floor) {
         GCon->Logf("***** FUCKED REGION %p (floor) *****", reg);
         DumpRegion(reg);
@@ -290,6 +292,7 @@ static __attribute__((unused)) void CollectOpPlanes (TArray<OpPlane> &dest, cons
       p.eplane = reg->eceiling;
       p.z = p.eplane.GetPointZ(point);
       p.type = p.eplane.classify();
+      if (p.eplane.isSlope()) *hasSlopes = true;
       if (p.type != TSecPlaneRef::Type::Ceiling) {
         GCon->Logf("***** FUCKED REGION %p (ceiling) *****", reg);
         DumpRegion(reg);
@@ -529,17 +532,18 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return (op->efloor.splane ? op : nullptr);
   }
 
-  // it will be cached anyway
-  if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+  // alas, we cannot cache openings with slopes, so don't even try
+  // this is bad, but meh... i can live with it for now
 
   static TArray<OpPlane> op0list;
   static TArray<OpPlane> op1list;
+  bool hasSlopes0 = false, hasSlopes1 = false;
 
 #ifdef VV_DUMP_OPENING_CREATION
   GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
 #endif
 
-  CollectOpPlanes(op0list, frontreg, point, NoBlockFlags);
+  CollectOpPlanes(op0list, frontreg, point, NoBlockFlags, &hasSlopes0);
 #ifdef VV_DUMP_OPENING_CREATION
   GCon->Log("::: before sort op0 :::"); DumpOpPlanes(op0list);
 #endif
@@ -550,12 +554,14 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 #endif
 
   if (op0list.length() < 2) {
+    if (hasSlopes0) return nullptr;
     // just in case: no front sector openings
+    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
     return nullptr;
   }
 
-  CollectOpPlanes(op1list, backreg, point, NoBlockFlags);
+  CollectOpPlanes(op1list, backreg, point, NoBlockFlags, &hasSlopes1);
 #ifdef VV_DUMP_OPENING_CREATION
   GCon->Log("::: before sort op1 :::"); DumpOpPlanes(op1list);
 #endif
@@ -566,7 +572,9 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 #endif
 
   if (op1list.length() < 2) {
+    if (hasSlopes0 || hasSlopes1) return nullptr;
     // just in case: no back sector openings
+    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
     return nullptr;
   }
@@ -593,12 +601,16 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   // no intersections?
   if (destcount == 0) {
     // oops
+    if (hasSlopes0 || hasSlopes1) return nullptr;
+    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
     return nullptr;
   }
 
   // has some intersections, create cache
-  {
+  if (!hasSlopes0 & !hasSlopes1) {
+    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+
     opening_t *lastop = nullptr, *dp = openings;
     for (unsigned f = 0; f < destcount; ++f, ++dp) {
       // calc range
@@ -609,9 +621,18 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       newop->copyFrom(dp);
       lastop = newop;
     }
-  }
 
-  return linedef->oplist[NoBlockFlags];
+    return linedef->oplist[NoBlockFlags];
+  } else {
+    // has slopes, cannot cache openings (oops)
+    if (destcount > 1) {
+      for (unsigned f = 0; f < destcount-1; ++f) {
+        openings[f].next = &openings[f+1];
+      }
+    }
+    openings[destcount-1].next = nullptr;
+    return openings;
+  }
 }
 
 
@@ -690,7 +711,7 @@ sec_region_t *SV_FindThingGap (const sector_t *sector, const TVec &point, float 
   for (sec_region_t *reg = gaps; reg; reg = reg->next) {
     float fz = reg->efloor.GetPointZ(point);
     float cz = reg->eceiling.GetPointZ(point);
-    if (fz > cz) continue;
+    if (fz >= cz) continue; // either paper-thin, or something is wrong with this region
     float fdist = fabsf(z1-fz); // we don't care about sign
     // at least partially inside?
     if (z2 >= fz && z1 <= cz) {
