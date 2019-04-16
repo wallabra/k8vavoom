@@ -435,31 +435,38 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   }
 
   if (!lmi.light_hit) {
-    // no light hitting it
+    // no light hit it
     if (surf->lightmap) {
+      light_mem -= surf->lmsize;
       Z_Free(surf->lightmap);
       surf->lightmap = nullptr;
+      surf->lmsize = 0;
     }
     if (surf->lightmap_rgb) {
+      light_mem -= surf->lmrgbsize;
       Z_Free(surf->lightmap_rgb);
       surf->lightmap_rgb = nullptr;
+      surf->lmrgbsize = 0;
     }
     return;
   }
 
   const int w = (surf->extents[0]>>4)+1;
   const int h = (surf->extents[1]>>4)+1;
+  check(w > 0);
+  check(h > 0);
 
-  // if the surface already has a lightmap, we will reuse it,
-  // otherwise we must allocate a new block
+  // if the surface already has a static lightmap, we will reuse it,
+  // otherwise we must allocate a new one
   if (is_coloured) {
-    /*
-    if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
-    surf->lightmap_rgb = (rgb_t *)Z_Malloc(w*h*3);
-    */
-    // use realloc, just in case
-    if (!surf->lightmap_rgb) light_mem += w*h*3;
-    surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, w*h*3);
+    // need colored lightmap
+    int sz = w*h*(int)sizeof(surf->lightmap_rgb[0]);
+    if (surf->lmrgbsize != sz) {
+      light_mem -= surf->lmrgbsize;
+      light_mem += sz;
+      surf->lmrgbsize = sz;
+      surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, sz);
+    }
 
     int i = 0;
     for (int t = 0; t < h; ++t) {
@@ -503,32 +510,41 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       }
     }
   } else {
+    // free rgb lightmap
     if (surf->lightmap_rgb) {
+      light_mem -= surf->lmrgbsize;
       Z_Free(surf->lightmap_rgb);
       surf->lightmap_rgb = nullptr;
+      surf->lmrgbsize = 0;
     }
   }
 
-  if (!surf->lightmap) light_mem += w*h;
-  surf->lightmap = (vuint8 *)Z_Realloc(surf->lightmap, w*h);
-  //if (surf->lightmap) Z_Free(surf->lightmap);
-  //surf->lightmap = (vuint8 *)Z_Malloc(w*h);
+  {
+    // monochrome lightmap
+    int sz = w*h*(int)sizeof(surf->lightmap[0]);
+    if (surf->lmsize != sz) {
+      light_mem -= surf->lmsize;
+      light_mem += sz;
+      surf->lightmap = (vuint8 *)Z_Realloc(surf->lightmap, sz);
+      surf->lmsize = sz;
+    }
 
-  int i = 0;
-  for (int t = 0; t < h; ++t) {
-    for (int s = 0; s < w; ++s, ++i) {
-      float total;
-      if (lmi.didExtra) {
-        // filtered sample
-        total = lightmap[t*w*4+s*2]+
-                lightmap[t*2*w*2+s*2+1]+
-                lightmap[(t*2+1)*w*2+s*2]+
-                lightmap[(t*2+1)*w*2+s*2+1];
-        total *= 0.25f;
-      } else {
-        total = lightmap[i];
+    int i = 0;
+    for (int t = 0; t < h; ++t) {
+      for (int s = 0; s < w; ++s, ++i) {
+        float total;
+        if (lmi.didExtra) {
+          // filtered sample
+          total = lightmap[t*w*4+s*2]+
+                  lightmap[t*2*w*2+s*2+1]+
+                  lightmap[(t*2+1)*w*2+s*2]+
+                  lightmap[(t*2+1)*w*2+s*2+1];
+          total *= 0.25f;
+        } else {
+          total = lightmap[i];
+        }
+        surf->lightmap[i] = clampToByte((int)total);
       }
-      surf->lightmap[i] = clampToByte((int)total);
     }
   }
 }

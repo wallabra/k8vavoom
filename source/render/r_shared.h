@@ -94,6 +94,7 @@ struct surface_t {
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
   // not exposed to VC
+  int lmsize, lmrgbsize; // to track static lightmap memory
   vuint8 *lightmap;
   rgb_t *lightmap_rgb;
   vuint32 queueframe; // this is used to prevent double queuing
