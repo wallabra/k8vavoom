@@ -255,11 +255,24 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 
 //==========================================================================
 //
+//  DumpOpPlanes
+//
+//==========================================================================
+static __attribute__((unused)) void DumpOpPlanes (TArray<opening_t> &list) {
+  GCon->Logf(" ::: count=%d :::", list.length());
+  for (int f = 0; f < list.length(); ++f) DumpOpening(&list[f]);
+}
+
+
+//==========================================================================
+//
 //  InsertOpening
 //
 //  insert new opening, maintaing order and non-intersection invariants
 //  it is faster to insert openings from bottom to top,
 //  but it is not a requerement
+//
+//  note that this does joining logic for "solid" openings
 //
 //  in op: efloor, bottom, eceiling, top -- should be set and valid
 //
@@ -287,24 +300,38 @@ static void InsertOpening (TArray<opening_t> &dest, const opening_t &op) {
     ops[dlen-1].eceiling = op.eceiling;
     return;
   }
+  /*
+    7 -- max array index
+    5
+    3 -- here for 2 and 3
+    1 -- min array index (0)
+  */
   // find a place and insert
   // then join regions
   int cpos = dlen;
   while (cpos > 0 && opfz <= ops[cpos-1].bottom) --cpos;
   // now, we can safely insert it into cpos
-  check(ops[cpos].top <= op.bottom); // invariant
   // if op floor is the same as cpos ceiling, join
-  if (op.bottom == ops[cpos].top) {
-    // join
+  if (opfz == ops[cpos].bottom) {
+    // join (but check if new region is bigger first)
+    if (op.top <= ops[cpos].top) return; // completely inside
     ops[cpos].eceiling = op.eceiling;
     ops[cpos].top = op.top;
   } else {
-    // insert
-    dest.insert(cpos, op);
-    ops = dest.ptr();
-    ++dlen;
+    // check if new bottom is inside a previous region
+    if (cpos > 0 && opfz <= ops[cpos-1].top) {
+      // yes, join with previous region
+      --cpos;
+      ops[cpos].eceiling = op.eceiling;
+      ops[cpos].top = op.top;
+    } else {
+      // no, insert, and let the following loop take care of joins
+      dest.insert(cpos, op);
+      ops = dest.ptr();
+      ++dlen;
+    }
   }
-  // now eat regions that are inside our
+  // now check if `cpos` region intersects with upper regions, and perform joins
   int npos = cpos+1;
   while (npos < dlen) {
     // below?
@@ -317,10 +344,11 @@ static void InsertOpening (TArray<opening_t> &dest, const opening_t &op) {
       --dlen;
       continue;
     }
-    // simple join: drop npos floor and cpos ceiling
+    // join cpos (floor) and npos (ceiling)
     ops[cpos].eceiling = ops[npos].eceiling;
     ops[cpos].top = ops[npos].top;
     dest.removeAt(npos);
+    // done
     break;
   }
 }
@@ -337,6 +365,7 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
   op.eceiling = sector->regions[0].eceiling;
   op.top = op.eceiling.GetPointZ(point);
   op.range = op.top-op.bottom;
+  op.lowfloor = op.bottom;
   if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
 }
 
@@ -350,93 +379,97 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 //==========================================================================
 static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes=nullptr) {
   dest.reset();
-  // first is always sector limits
-  opening_t &op = dest.alloc();
-  op.efloor = sector->regions[0].efloor;
-  op.bottom = op.efloor.GetPointZ(point);
-  op.eceiling = sector->regions[0].eceiling;
-  op.top = op.eceiling.GetPointZ(point);
-  op.range = op.top-op.bottom;
-  if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
-/*
-  bool slopeDetected = false;
-  // do not go beyound sector limits
-  const float secfz = sector->floor.GetPointZ(point);
-  const float seccz = sector->ceiling.GetPointZ(point);
-  opening_t cop;
-  for (const sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
-    if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) == 0) {
-      if (!slopeDetected) slopeDetected = (fabsf(reg->efloor.GetNormalZ()) != 1.0f || fabsf(reg->eceiling.GetNormalZ()) != 1.0f);
-      const float fz = reg->efloor.GetPointZ(point);
-      const float cz = reg->eceiling.GetPointZ(point);
-      // floor, clamped
-      if (fz >= secfz) {
-        cop.efloor = reg->efloor;
-        cop.bottom = fz;
-      } else {
-        cop.efloor.set(&sector->floor, false);
-        cop.bottom = secfz;
-      }
-      // ceiling, clamped
-      if (cz <= seccz) {
-        cop.eceiling = reg->eceiling;
-        cop.top = cz;
-      } else {
-        cop.eceiling.set(&sector->ceiling, false);
-        cop.top = seccz;
-      }
-      InsertOpening(dest, cop);
-    }
-  }
-  if (hasSlopes) *hasSlopes = slopeDetected;
-*/
-}
-
-
-//==========================================================================
-//
-//  SV_GetSectorGapCoords
-//
-//==========================================================================
-void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz) {
-  if (!sector) { floorz = 0.0f; ceilz = 0.0f; return; }
+  // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors()) {
-    floorz = sector->floor.GetPointZ(point);
-    ceilz = sector->floor.GetPointZ(point);
+    opening_t &op = dest.alloc();
+    GetBaseSectorOpening(op, sector, point, hasSlopes);
     return;
   }
-  TSecPlaneRef f, c;
-  SV_FindGapFloorCeiling(sector, point, 0, f, c);
-  floorz = f.GetPointZ(point);
-  ceilz = c.GetPointZ(point);
-}
-
-
-//==========================================================================
-//
-//  IntersectOpSet
-//
-//==========================================================================
-static unsigned IntersectOpSet (TArray<opening_t> &op0list, TArray<opening_t> &op1list) {
-  unsigned op0len = (unsigned)op0list.length();
-  unsigned op1len = (unsigned)op1list.length();
-  if (op0len == 0 || op1len == 0) return 0; // just in case
-  const opening_t *op0 = op0list.ptr();
-  const opening_t *op1 = op1list.ptr();
-  unsigned dpos = 0, op0pos = 0, op1pos = 0;
-  while (op0len && op1len) {
-    // skip op0 if op0 is lower than op1
-    if (op0->top < op1->bottom) { ++op0; --op0len; continue; }
-    // skip op1 if op1 is lower than op0
-    if (op1->top < op0->bottom) { ++op1; --op1len; continue; }
-    // must intersect
-    check(!(op0->top < op1->bottom || op1->top < op0->bottom ||
-            op0->bottom > op1->top || op1->bottom > op0->top));
-    if (dpos >= MAX_OPENINGS) Host_Error("too many openings in line");
-    // floor
-    //if (op0->bottom
+  /* build list of closed regions (it doesn't matter if region is non-solid, as long as it satisfies flag mask).
+     that list has all intersecting regions joined.
+     then cut those solids from main empty region.
+   */
+  static TArray<opening_t> solids;
+  solids.reset();
+  bool slopeDetected = false;
+  opening_t cop;
+  cop.lowfloor = 0.0f; // for now
+  const sec_region_t *reg = sector->regions.ptr()+1; // skip base region for now
+  for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
+    if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
+    // check for slopes
+    if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
+    // border points
+    const float fz = reg->efloor.GetPointZ(point);
+    const float cz = reg->eceiling.GetPointZ(point);
+    cop.efloor = reg->efloor;
+    cop.bottom = fz;
+    cop.eceiling = reg->eceiling;
+    cop.top = cz;
+    // flip floor and ceiling if they are pointing outside a region
+    // i.e. they should point *inside*
+    // we will use this fact to create correct "empty" openings
+    if (cop.efloor.GetNormalZ() < 0.0f) cop.efloor.Flip();
+    if (cop.eceiling.GetNormalZ() > 0.0f) cop.eceiling.Flip();
+    // inserter will join regions
+    InsertOpening(solids, cop);
   }
-  return dpos;
+  if (hasSlopes) *hasSlopes = slopeDetected;
+  // if we have no openings, or openings are out of bounds, just use base sector region
+  const float secfz = sector->floor.GetPointZ(point);
+  const float seccz = sector->ceiling.GetPointZ(point);
+  if (solids.length() == 0 || solids[solids.length()-1].top <= secfz || solids[0].bottom >= seccz) {
+    opening_t &op = dest.alloc();
+    GetBaseSectorOpening(op, sector, point, hasSlopes);
+    return;
+  }
+  /* now we have to cut out all solid regions from base one
+     this can be done in a simple loop, because all solids are non-intersecting
+     paper-thin regions should be cutted too, as those can be real floors/ceilings
+
+     the algorithm is simple:
+       get sector floor as current floor.
+       for each solid:
+         if current floor if lower than solid floor:
+           insert opening from current floor to solid floor
+         set current floor to solid ceiling
+     take care that "emptyness" floor and ceiling are pointing inside
+   */
+  TSecPlaneRef currfloor;
+  currfloor.set(&sector->floor, false);
+  float currfloorz = secfz;
+  check(currfloor.isFloor());
+  // main loop
+  opening_t *cs = solids.ptr();
+  for (int scount = solids.length(); scount--; ++cs) {
+    if (cs->bottom >= seccz) break; // out of base sector bounds, we are done here
+    if (cs->top < currfloorz) continue; // below base sector bounds, nothing to do yet
+    if (currfloorz <= cs->bottom) {
+      // insert opening from current floor to solid floor
+      cop.efloor = currfloor;
+      cop.bottom = currfloorz;
+      cop.eceiling = cs->efloor;
+      cop.top = cs->bottom;
+      cop.range = cop.top-cop.bottom;
+      // flip ceiling if necessary, so it will point inside
+      if (!cop.eceiling.isCeiling()) cop.eceiling.Flip();
+      dest.append(cop);
+    }
+    // set current floor to solid ceiling (and flip, if necessary)
+    currfloor = cs->eceiling;
+    currfloorz = cs->top;
+    if (!currfloor.isFloor()) currfloor.Flip();
+  }
+  // add top cap (to sector base ceiling) if necessary
+  if (currfloorz <= seccz) {
+    cop.efloor = currfloor;
+    cop.bottom = currfloorz;
+    cop.eceiling.set(&sector->ceiling, false);
+    cop.top = seccz;
+    cop.range = cop.top-cop.bottom;
+    dest.append(cop);
+  }
 }
 
 
@@ -523,8 +556,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   bool hasSlopes0 = false, hasSlopes1 = false;
 
   // fast algo for two sectors without 3d floors
-  if (/*!linedef->frontsector->Has3DFloors() &&
-      !linedef->backsector->Has3DFloors()*/true)
+  if (!linedef->frontsector->Has3DFloors() &&
+      !linedef->backsector->Has3DFloors())
   {
     opening_t fop, bop;
     GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0);
@@ -563,10 +596,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return dop;
   }
 
-  abort();
-
-  //sec_region_t *frontreg = linedef->frontsector->botregion;
-  //sec_region_t *backreg = linedef->backsector->botregion;
+  // has 3d floors at least on one side, do full-featured intersection calculation
 
   static TArray<opening_t> op0list;
   static TArray<opening_t> op1list;
@@ -590,20 +620,100 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
 #ifdef VV_DUMP_OPENING_CREATION
-  //GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+  GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
   GCon->Log("::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
 #endif
 
-  unsigned destcount = IntersectOpSet(op0list, op1list);
+  /* build intersections
+     both lists are valid (sorted, without intersections -- but with possible paper-thin regions)
+   */
+  opening_t *dest = openings;
+  unsigned destcount = 0;
+
+  const opening_t *op0 = op0list.ptr();
+  int op0left = op0list.length();
+
+  const opening_t *op1 = op1list.ptr();
+  int op1left = op1list.length();
+
+  while (op0left && op1left) {
+    // if op0 is below op1, skip op0
+    if (op0->top < op1->bottom) {
+#ifdef VV_DUMP_OPENING_CREATION
+      GCon->Log(" +++ SKIP op0 (dump: op0, op1) +++");
+      DumpOpening(op0);
+      DumpOpening(op1);
+#endif
+      ++op0; --op0left;
+      continue;
+    }
+    // if op1 is below op0, skip op1
+    if (op1->top < op0->bottom) {
+#ifdef VV_DUMP_OPENING_CREATION
+      GCon->Log(" +++ SKIP op1 (dump: op0, op1) +++");
+      DumpOpening(op0);
+      DumpOpening(op1);
+#endif
+      ++op1; --op1left;
+      continue;
+    }
+    // here op0 and op1 are intersecting
+    check(op0->bottom <= op1->top);
+    check(op1->bottom <= op0->top);
+    if (destcount >= MAX_OPENINGS) Host_Error("too many line openings");
+    // floor
+    if (op0->bottom >= op1->bottom) {
+      dest->efloor = op0->efloor;
+      dest->bottom = op0->bottom;
+      dest->lowfloor = op1->bottom;
+    } else {
+      dest->efloor = op1->efloor;
+      dest->bottom = op1->bottom;
+      dest->lowfloor = op0->bottom;
+    }
+    // ceiling
+    if (op0->top <= op1->top) {
+      dest->eceiling = op0->eceiling;
+      dest->top = op0->top;
+    } else {
+      dest->eceiling = op1->eceiling;
+      dest->top = op1->top;
+    }
+    dest->range = dest->top-dest->bottom;
+#ifdef VV_DUMP_OPENING_CREATION
+    GCon->Log(" +++ NEW opening (dump: op0, op1, new) +++");
+    DumpOpening(op0);
+    DumpOpening(op1);
+    DumpOpening(dest);
+#endif
+    ++dest;
+    ++destcount;
+    // if both regions ends at the same height, skip both,
+    // otherwise skip region with lesser top
+    if (op0->top == op1->top) {
+#ifdef VV_DUMP_OPENING_CREATION
+      GCon->Log(" +++ SKIP BOTH +++");
+#endif
+      ++op0; --op0left;
+      ++op1; --op1left;
+    } else if (op0->top < op1->top) {
+#ifdef VV_DUMP_OPENING_CREATION
+      GCon->Log(" +++ SKIP OP0 +++");
+#endif
+      ++op0; --op0left;
+    } else {
+#ifdef VV_DUMP_OPENING_CREATION
+      GCon->Log(" +++ SKIP OP1 +++");
+#endif
+      ++op1; --op1left;
+    }
+  }
 
 #ifdef VV_DUMP_OPENING_CREATION
   GCon->Logf("::: after (%u) :::", destcount);
   for (unsigned f = 0; f < destcount; ++f) {
     const opening_t *xop = &openings[f];
-    GCon->Logf("  %u: floor: %g (%g,%g,%g:%g); ceiling: %g (%g,%g,%g,%g); low=%g; range=%g", f,
-      xop->bottom, xop->efloor.GetNormal().x, xop->efloor.GetNormal().y, xop->efloor.GetNormal().z, xop->efloor.GetDist(),
-      xop->top, xop->eceiling.GetNormal().x, xop->eceiling.GetNormal().y, xop->eceiling.GetNormal().z, xop->eceiling.GetDist(),
-      xop->lowfloor, xop->range);
+    DumpOpening(xop);
   }
   GCon->Log("-----------------------------");
 #endif
@@ -623,9 +733,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
     opening_t *lastop = nullptr, *dp = openings;
     for (unsigned f = 0; f < destcount; ++f, ++dp) {
-      // calc range
-      //if (dp->range <= 0.0f) continue; // oops
-      //GCon->Logf("  %p: bot=%g; top=%g", linedef, dp->bottom, dp->top);
       opening_t *newop = VLevel::AllocOpening();
       if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
       newop->copyFrom(dp);
@@ -731,6 +838,25 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
     floor = sector->regions[0].efloor;
     ceiling = sector->regions[0].eceiling;
   }
+}
+
+
+//==========================================================================
+//
+//  SV_GetSectorGapCoords
+//
+//==========================================================================
+void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz) {
+  if (!sector) { floorz = 0.0f; ceilz = 0.0f; return; }
+  if (!sector->Has3DFloors()) {
+    floorz = sector->floor.GetPointZ(point);
+    ceilz = sector->ceiling.GetPointZ(point);
+    return;
+  }
+  TSecPlaneRef f, c;
+  SV_FindGapFloorCeiling(sector, point, 0, f, c);
+  floorz = f.GetPointZ(point);
+  ceilz = c.GetPointZ(point);
 }
 
 

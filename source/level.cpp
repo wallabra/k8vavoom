@@ -2304,6 +2304,23 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  // sort by floor
+  static int regCompare (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const sec_region_t *a = (const sec_region_t *)aa;
+    const sec_region_t *b = (const sec_region_t *)bb;
+    float diff = a->efloor.splane->minz-b->efloor.splane->minz;
+    if (diff) return (diff < 0.0f ? -1 : 1);
+    // just for fun, sort by ceiling
+    diff = a->eceiling.splane->maxz-b->eceiling.splane->maxz;
+    if (diff) return (diff < 0.0f ? -1 : 1);
+    return 0;
+  }
+}
+
+
 //==========================================================================
 //
 //  VLevel::AddExtraFloorSane
@@ -2345,6 +2362,10 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   reg.params = &src->params;
   reg.extraline = line;
   dst->regions.append(reg);
+
+  if (dst->regions.length() > 2) {
+    timsort_r(dst->regions.ptr()+1, dst->regions.length()-1, sizeof(sec_region_t), &regCompare, nullptr);
+  }
 }
 
 
@@ -2438,6 +2459,10 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     reg.extraline = nullptr;
     reg.regflags = sec_region_t::RF_OnlyVisual;
     dst->regions.append(reg);
+  }
+
+  if (dst->regions.length() > 2) {
+    timsort_r(dst->regions.ptr()+1, dst->regions.length()-1, sizeof(sec_region_t), &regCompare, nullptr);
   }
 }
 
