@@ -430,8 +430,16 @@ protected:
 
   // used in `CreateWorldSurfaces()` and friends
   segpart_t *pspart;
+  int pspartsLeft;
 
   vuint32 currVisFrame;
+
+private:
+  inline segpart_t *SurfCreatorGetPSPart () {
+    if (pspartsLeft == 0) Sys_Error("internal level surface creation bug");
+    --pspartsLeft;
+    return pspart++;
+  }
 
 protected:
   void NewBSPVisibilityFrame ();

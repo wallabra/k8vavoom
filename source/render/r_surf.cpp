@@ -911,7 +911,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
   }
 
   if (!seg->backsector) {
-    dseg->mid = pspart++;
+    dseg->mid = SurfCreatorGetPSPart();
     sp = dseg->mid;
 
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
@@ -936,7 +936,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
 
     // sky above line
-    dseg->topsky = pspart++;
+    dseg->topsky = SurfCreatorGetPSPart();
     sp = dseg->topsky;
     sp->texinfo.Tex = GTextureManager[skyflatnum];
     sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
@@ -960,7 +960,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     check(TTex);
 
     // top wall
-    dseg->top = pspart++;
+    dseg->top = SurfCreatorGetPSPart();
     sp = dseg->top;
 
 
@@ -980,14 +980,14 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->TopTextureOffset;
 
     // sky above top
-    dseg->topsky = pspart++;
+    dseg->topsky = SurfCreatorGetPSPart();
     if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling)) {
       sp = dseg->topsky;
       SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
     }
 
     // bottom wall
-    dseg->bot = pspart++;
+    dseg->bot = SurfCreatorGetPSPart();
     sp = dseg->bot;
 
     VTexture *BTex = GTextureManager(sidedef->BottomTexture);
@@ -1009,7 +1009,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->BotTextureOffset;
 
 
-    dseg->mid = pspart++;
+    dseg->mid = SurfCreatorGetPSPart();
     sp = dseg->mid;
 
     // middle wall
@@ -1034,7 +1034,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       VTexture *MTextr = GTextureManager(extraside->MidTexture);
       if (!MTextr || MTextr->Type == TEXTYPE_Null) continue; // empty side
 
-      sp = pspart++;
+      sp = SurfCreatorGetPSPart();
       sp->next = dseg->extra;
       dseg->extra = sp;
       sp->regidx = ridx;
@@ -1092,7 +1092,6 @@ void VRenderLevelShared::UpdateTextureOffset (subsector_t *sub, segpart_t *sp, f
 //==========================================================================
 void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling/*, bool ShouldClip*/) {
   seg_t *seg = dseg->seg;
-  segpart_t *sp;
 
   if (!seg->linedef) return; // miniseg
 
@@ -1125,7 +1124,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
   line_t *linedef = seg->linedef;
 
   if (!seg->backsector) {
-    sp = dseg->mid;
+    segpart_t *sp = dseg->mid;
     sp->texinfo.ColourMap = ColourMap;
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
@@ -1171,7 +1170,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     }
 
     // top wall
-    sp = dseg->top;
+    segpart_t *sp = dseg->top;
     sp->texinfo.ColourMap = ColourMap;
     VTexture *TTex = GTextureManager(sidedef->TopTexture);
     if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
@@ -1284,41 +1283,38 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, seg->sidedef->MidScaleX);
     }
 
-
-    for (segpart_t *spp = dseg->extra; spp; spp = spp->next) {
-      int ridx = spp->regidx;
+    for (sp = dseg->extra; sp; sp = sp->next) {
+      int ridx = sp->regidx;
       //check(ridx >= 0 && ridx < seg->backsector->regions.length());
       sec_region_t *reg = &seg->backsector->regions[ridx];
       check(reg->extraline);
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
-      spp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColourMap = ColourMap;
       VTexture *MTexr = GTextureManager(extraside->MidTexture);
       check(MTexr);
-      spp->texinfo.Tex = MTexr;
-      spp->texinfo.noDecals = spp->texinfo.Tex->noDecals;
+      sp->texinfo.Tex = MTexr;
+      sp->texinfo.noDecals = sp->texinfo.Tex->noDecals;
 
-      if (FASI(spp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
-          FASI(spp->frontBotDist) != FASI(r_floor.splane->dist) ||
-          FASI(spp->backTopDist) != FASI(reg->eceiling.splane->dist) ||
-          FASI(spp->backBotDist) != FASI(reg->efloor.splane->dist))
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          FASI(sp->backTopDist) != FASI(reg->eceiling.splane->dist) ||
+          FASI(sp->backBotDist) != FASI(reg->efloor.splane->dist))
       {
-        FreeWSurfs(spp->surfs);
-        spp->surfs = nullptr;
+        FreeWSurfs(sp->surfs);
+        sp->surfs = nullptr;
 
-        spp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*sidedef->MidScaleY)+
+        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*sidedef->MidScaleY)+
                              sidedef->MidRowOffset*(TextureOffsetTScale(MTexr)*sidedef->MidScaleY);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, spp, MTexr, r_floor, r_ceiling);
-      } else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset)) {
-        UpdateRowOffset(sub, spp, sidedef->MidRowOffset, sidedef->MidScaleY);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling);
+      } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
+        UpdateRowOffset(sub, sp, sidedef->MidRowOffset, sidedef->MidScaleY);
       }
 
-      if (FASI(spp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-        UpdateTextureOffset(sub, spp, sidedef->MidTextureOffset, sidedef->MidScaleX);
+      if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
+        UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, sidedef->MidScaleX);
       }
-
-      spp = spp->next;
     }
   }
 }
@@ -1395,9 +1391,13 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   drawseg_t *pds = new drawseg_t[dscount+1];
   pspart = new segpart_t[spcount+1];
 
-  memset((void *)sreg, 0, sizeof(subregion_t)*(count+1));
-  memset((void *)pds, 0, sizeof(drawseg_t)*(dscount+1));
-  memset((void *)pspart, 0, sizeof(segpart_t)*(spcount+1));
+  pspartsLeft = spcount+1;
+  int sregLeft = count+1;
+  int pdsLeft = dscount+1;
+
+  memset((void *)sreg, 0, sizeof(subregion_t)*sregLeft);
+  memset((void *)pds, 0, sizeof(drawseg_t)*pdsLeft);
+  memset((void *)pspart, 0, sizeof(segpart_t)*pspartsLeft);
 
   AllocatedSubRegions = sreg;
   AllocatedDrawSegs = pds;
@@ -1409,6 +1409,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
     for (int ridx = 0; ridx < sub->sector->regions.length(); ++ridx) {
+      if (sregLeft == 0) Sys_Error("out of subregions in surface creator");
       sec_region_t *reg = &sub->sector->regions[ridx];
 
       TSecPlaneRef r_floor, r_ceiling;
@@ -1428,8 +1429,10 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 
       sreg->count = sub->numlines;
       if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
+      if (pdsLeft < sreg->count) Sys_Error("out of drawsegs in surface creator");
       sreg->lines = pds;
       pds += sreg->count;
+      pdsLeft -= sreg->count;
       for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling);
       if (sub->poly) {
         // polyobj
@@ -1442,7 +1445,9 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 
       sreg->next = sub->regions;
       sub->regions = sreg;
+
       ++sreg;
+      --sregLeft;
     }
 
     if (showCreateWorldSurfProgress) R_PBarUpdate("Lighting", Level->NumSubsectors-i, Level->NumSubsectors);
