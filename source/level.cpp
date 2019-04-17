@@ -2425,7 +2425,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   reg.params = &src->params;
   reg.extraline = line;
   if (!isSolid) {
-    reg.extraline = nullptr; //FIXME!
+    //reg.extraline = nullptr; //FIXME!
     reg.regflags |= sec_region_t::RF_NonSolid;
   }
   dst->regions.append(reg);

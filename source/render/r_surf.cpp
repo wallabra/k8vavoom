@@ -842,7 +842,9 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
     }
 
-    //for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+    if (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent()) {
+      for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+    }
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -851,35 +853,6 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->backBotDist = reg->efloor.splane->dist;
   sp->RowOffset = seg->sidedef->MidRowOffset;
 }
-
-
-//==========================================================================
-//
-//  GetExtraTopBot
-//
-//==========================================================================
-/*
-static inline void GetExtraTopBot (VLevel *Level, sec_region_t *reg, TSecPlaneRef &extratop, TSecPlaneRef &extrabot, side_t *&extraside, bool fromtop) {
-  if (reg->regflags&sec_region_t::RF_NonSolid) {
-    extratop = reg->eceiling; // new floor
-    extrabot = reg->efloor; // new ceiling
-    extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
-    //if (extraside && reg->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
-  } else if (fromtop) {
-    // creating
-    extratop = reg->efloor; // new floor
-    extrabot = reg->prev->eceiling; // new ceiling
-    extraside = (reg->prev->extraline ? &Level->Sides[reg->prev->extraline->sidenum[0]] : nullptr);
-    //if (extraside && reg->prev->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
-  } else {
-    // updating
-    extratop = reg->next->efloor; // new floor
-    extrabot = reg->eceiling; // new ceiling
-    extraside = (reg->extraline ? &Level->Sides[reg->extraline->sidenum[0]] : nullptr);
-    //if (extraside && reg->extraline->sidenum[1] != -1) GCon->Logf("EXTRA WITH TWO SIDES!");
-  }
-}
-*/
 
 
 //==========================================================================

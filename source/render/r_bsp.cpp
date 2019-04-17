@@ -441,10 +441,11 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   if (seg->PointOnSide(vieworg)) {
     // viewer is in back side or on plane
     // gozzo 3d floors should be rendered regardless from orientation
-    if (/*seg->backsector &&*/ dseg->extra) {
+    segpart_t *sp = dseg->extra;
+    if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Tex->isTransparent())) {
       side_t *sidedef = seg->sidedef;
       //GCon->Logf("00: extra for seg #%d (line #%d)", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
-      for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+      for (; sp; sp = sp->next) {
         DrawSurfaces(sub, secregion, seg, sp->surfs, &sp->texinfo, secregion->eceiling.splane->SkyBox,
           -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
         //GCon->Logf("  extra for seg #%d (%p)", (int)(ptrdiff_t)(seg-Level->Segs), sp);
