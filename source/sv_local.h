@@ -38,6 +38,24 @@ class VMessageOut;
 extern VLevelInfo *GLevelInfo;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// WARNING! keep in sync with script code!
+enum {
+  CONTENTS_EMPTY,
+  CONTENTS_WATER,
+  CONTENTS_LAVA,
+  CONTENTS_NUKAGE,
+  CONTENTS_SLIME,
+  CONTENTS_HELLSLIME,
+  CONTENTS_BLOOD,
+  CONTENTS_SLUDGE,
+  CONTENTS_HAZARD,
+  CONTENTS_BOOMWATER,
+
+  CONTENTS_SOLID = -1
+};
+
+
 //==========================================================================
 //
 //  sv_acs
@@ -236,31 +254,36 @@ struct opening_t {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 TVec P_SectorClosestPoint (sector_t *sec, TVec in);
 int P_BoxOnLineSide (float *tmbox, line_t *ld);
 
+// used only in debug code
 bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 int SV_PointContents (sector_t *sector, const TVec &p);
 
 // this is used to get region lighting
 sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump=false);
 
-// `point` can be `nullptr`
-//opening_t *SV_BuildSectorOpenings (sector_t *sector, const TVec point, unsigned NoBlockFlags);
-
-void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz);
-
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
-
-// this is slow!
-// it is used to find lowest sector point for silent teleporters
-float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
-
 // find region for thing, and return best floor/ceiling
 // `p.z` is bottom
 void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling);
 
+// find sector gap that contains the given point, and return its floor and ceiling
+void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz);
+
+// build list of openings for the given line and point
+// note that returned list can be reused on next call to `SV_LineOpenings()`
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
+
+// it is used to find lowest sector point for silent teleporters
+float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
+
+// find "best fit" opening for the given coordz
+// `z1` is feet, `z2` is head
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 
 

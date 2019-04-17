@@ -755,6 +755,78 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
 //==========================================================================
 //
+//  SV_FindOpening
+//
+//  Find the best gap that the thing could fit in, given a certain Z
+//  position (z1 is foot, z2 is head).  Assuming at least two gaps exist,
+//  the best gap is chosen as follows:
+//
+//  1. if the thing fits in one of the gaps without moving vertically,
+//     then choose that gap.
+//
+//  2. if there is only *one* gap which the thing could fit in, then
+//     choose that gap.
+//
+//  3. if there is multiple gaps which the thing could fit in, choose
+//     the gap whose floor is closest to the thing's current Z.
+//
+//  4. if there is no gaps which the thing could fit in, do the same.
+//
+//  Returns the gap number, or -1 if there are no gaps at all.
+//
+//==========================================================================
+opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
+  opening_t *gaps = InGaps;
+
+  int fit_num = 0;
+  opening_t *fit_last = nullptr;
+
+  opening_t *fit_closest = nullptr;
+  float fit_mindist = 99999.0f;
+
+  opening_t *nofit_closest = nullptr;
+  float nofit_mindist = 99999.0f;
+
+  // check for trivial gaps
+  if (!gaps) return nullptr;
+  if (!gaps->next) return gaps;
+
+  // there are 2 or more gaps; now it gets interesting :-)
+  while (gaps) {
+    const float f = gaps->bottom;
+    const float c = gaps->top;
+
+    if (z1 >= f && z2 <= c) return gaps; // [1]
+
+    const float dist = fabsf(z1-f);
+
+    if (z2 - z1 <= c - f) {
+      // [2]
+      ++fit_num;
+      fit_last = gaps;
+      if (dist < fit_mindist) {
+        // [3]
+        fit_mindist = dist;
+        fit_closest = gaps;
+      }
+    } else {
+      if (dist < nofit_mindist) {
+        // [4]
+        nofit_mindist = dist;
+        nofit_closest = gaps;
+      }
+    }
+    gaps = gaps->next;
+  }
+
+  if (fit_num == 1) return fit_last;
+  if (fit_num > 1) return fit_closest;
+  return nofit_closest;
+}
+
+
+//==========================================================================
+//
 //  SV_FindGapFloorCeiling
 //
 //  find region for thing, and return best floor/ceiling
@@ -862,78 +934,6 @@ void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, f
 
 //==========================================================================
 //
-//  SV_FindOpening
-//
-//  Find the best gap that the thing could fit in, given a certain Z
-//  position (z1 is foot, z2 is head).  Assuming at least two gaps exist,
-//  the best gap is chosen as follows:
-//
-//  1. if the thing fits in one of the gaps without moving vertically,
-//     then choose that gap.
-//
-//  2. if there is only *one* gap which the thing could fit in, then
-//     choose that gap.
-//
-//  3. if there is multiple gaps which the thing could fit in, choose
-//     the gap whose floor is closest to the thing's current Z.
-//
-//  4. if there is no gaps which the thing could fit in, do the same.
-//
-//  Returns the gap number, or -1 if there are no gaps at all.
-//
-//==========================================================================
-opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
-  opening_t *gaps = InGaps;
-
-  int fit_num = 0;
-  opening_t *fit_last = nullptr;
-
-  opening_t *fit_closest = nullptr;
-  float fit_mindist = 99999.0f;
-
-  opening_t *nofit_closest = nullptr;
-  float nofit_mindist = 99999.0f;
-
-  // check for trivial gaps
-  if (!gaps) return nullptr;
-  if (!gaps->next) return gaps;
-
-  // there are 2 or more gaps; now it gets interesting :-)
-  while (gaps) {
-    const float f = gaps->bottom;
-    const float c = gaps->top;
-
-    if (z1 >= f && z2 <= c) return gaps; // [1]
-
-    const float dist = fabsf(z1-f);
-
-    if (z2 - z1 <= c - f) {
-      // [2]
-      ++fit_num;
-      fit_last = gaps;
-      if (dist < fit_mindist) {
-        // [3]
-        fit_mindist = dist;
-        fit_closest = gaps;
-      }
-    } else {
-      if (dist < nofit_mindist) {
-        // [4]
-        nofit_mindist = dist;
-        nofit_closest = gaps;
-      }
-    }
-    gaps = gaps->next;
-  }
-
-  if (fit_num == 1) return fit_last;
-  if (fit_num > 1) return fit_closest;
-  return nofit_closest;
-}
-
-
-//==========================================================================
-//
 //  SV_PointInRegion
 //
 //  this is used to get region lighting
@@ -980,40 +980,6 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
   }
 
   return best;
-  /*
-  sec_region_t *best = nullptr;
-  float bestDist = 999999.0f; // minimum distance to region floor
-  if (dbgDump) GCon->Logf("SV_PointInRegion: z=%g", p.z);
-  const float secfz = sector->floor.GetPointZ(p);
-  const float seccz = sector->ceiling.GetPointZ(p);
-  // logic: find matching region, otherwise return highest one
-  sec_region_t *reg = sector->regions.ptr();
-  for (int rcount = sector->regions.length(); reg; reg = reg->next) {
-    // clamp coords
-    float fz = MAX(secfz, reg->efloor.GetPointZ(p));
-    float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
-    if (fz == cz) continue; // ignore paper-thin regions
-    if (p.z >= fz && p.z <= cz) {
-      const float fdist = p.z-fz;
-      if (dbgDump) GCon->Logf("  reg %p: fz=%g; cz=%g; fdist=%g (bestDist=%g)", reg, fz, cz, fdist, bestDist);
-      if (!best || fdist < bestDist) {
-        if (dbgDump) GCon->Logf("    taken reg %p", reg);
-        best = reg;
-        bestDist = fdist;
-      } else if (fdist == bestDist) {
-        // prefer regions with contents
-        if (reg->params->contents && !best->params->contents) {
-          if (dbgDump) GCon->Logf("    taken reg %p by contents", reg);
-          best = reg;
-        }
-      }
-    } else {
-      if (dbgDump) GCon->Logf("  SKIP reg %p: fz=%g; cz=%g; z=%g (bestDist=%g)", reg, fz, cz, p.z, bestDist);
-    }
-  }
-  return (best ? best : sector->botregion);
-  */
-  return nullptr;
 }
 
 
@@ -1023,29 +989,32 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 //
 //==========================================================================
 int SV_PointContents (sector_t *sector, const TVec &p) {
-  check(sector);
-  if (sector->heightsec &&
-      (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
+  if (!sector) return 0;
+
+  if (sector->heightsec && (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
       p.z <= sector->heightsec->floor.GetPointZ(p))
   {
-    return 9;
+    return CONTENTS_BOOMWATER;
   }
-  if (sector->SectorFlags&sector_t::SF_UnderWater) return 9;
+
+  if (sector->SectorFlags&sector_t::SF_UnderWater) return CONTENTS_BOOMWATER;
+
+  const sec_region_t *best = &sector->regions[0];
 
   if (sector->Has3DFloors()) {
     const float secfz = sector->floor.GetPointZ(p);
-    if (p.z <= secfz) return sector->params.contents;
+    const float seccz = sector->ceiling.GetPointZ(p);
+    if (p.z < secfz || p.z > seccz) return best->params->contents;
 
-    const sec_region_t *best = &sector->regions[0];
-    float bestDist = p.z-secfz; // minimum distance to region floor
-
-    const sec_region_t *reg = sector->regions.ptr()+1;
+    // prefer regions with contents
+    float bestDist = 999999.0f; // minimum distance to region floor
+    const sec_region_t *reg = sector->regions.ptr()+1; // skip base region
     for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
       // non-solid?
       if (reg->regflags&sec_region_t::RF_NonSolid) {
-        const float fz = reg->efloor.GetPointZ(p);
-        const float cz = reg->eceiling.GetPointZ(p);
+        const float fz = MAX(secfz, reg->efloor.GetPointZ(p));
+        const float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
         // check if point is inside, and for best floor dist
         if (p.z >= fz && p.z <= cz) {
           const float fdist = p.z-fz;
@@ -1060,10 +1029,9 @@ int SV_PointContents (sector_t *sector, const TVec &p) {
         }
       }
     }
-    return best->params->contents;
   }
 
-  return sector->params.contents;
+  return best->params->contents;
 }
 
 
