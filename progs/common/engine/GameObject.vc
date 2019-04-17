@@ -607,6 +607,7 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
+  int regidx; // region index (has no meaning for non-region parts)
 };
 
 // TODO: document this!
@@ -828,17 +829,13 @@ native static final bool spSphereTouches (const ref TSecPlaneRef sp, const ref T
 native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TVec center, float radius);
 
 
-// "regions" are floor/ceiling info for sector
-// region "inside" is empty, and you can walk there
+// "regions" keeps 3d floors for sector
+// region inside may be non-solid, if the corresponding flag is set
 struct sec_region_t {
-  // linked list of regions in bottom to top order
-  sec_region_t *prev; // region at the top
-  sec_region_t *next; // region at the bottom
-
   // planes
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
-
+  // contents and lighting
   sec_params_t *params;
 
   // side of this region
@@ -847,7 +844,9 @@ struct sec_region_t {
   line_t *extraline;
 
   // for gozzo crap
+  bool bSaneRegion;
   bool bNonSolid;
+  bool bOnlyVisual;
   bool bSkipFloorSurf;
   bool bSkipCeilSurf;
 };
@@ -896,8 +895,7 @@ struct sector_t {
   sec_plane_t ceiling;
   sec_params_t params;
 
-  private sec_region_t *topregion; // highest region
-  private sec_region_t *botregion; // lowest region
+  array!sec_region_t regions;
 
   sector_t *deepref; // deep water hack
 
@@ -948,7 +946,6 @@ struct sector_t {
   bool bSilent;           // actors don't make noise in this sector
   bool bNoFallingDamage;  // no falling damage in this sector
   bool bFakeCeilingOnly;  // when used as heightsec in R_FakeFlat, only copies ceiling
-  bool GZDoomStyleReg;    // gzdoom-style region (special wall creation code)
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;
@@ -983,9 +980,6 @@ struct sector_t {
   // if sector has more than one neighbour, this is `nullptr`
   sector_t *othersecFloor;
   sector_t *othersecCeiling;
-
-  // for gozzo floors
-  sec_plane_t origCeiling;
 };
 
 
@@ -1177,14 +1171,12 @@ struct opening_t {
   float bottom;
   float range; // top-bottom, to avoid calculations
   float lowfloor; // this is used for dropoffs: floor height on the other side (always lower than bottom)
-  //float highceiling;
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
-  //sec_plane_t *lowfloorplane;
-  //sec_plane_t *highceilingplane;
-  // next for this line
+  // for this list
   opening_t *next;
-  // allocated list is double-linked, free list only using `listnext`
+  //opening_t *prev;
+  // do not use!
   private opening_t *listprev;
   private opening_t *listnext;
 };

@@ -123,9 +123,10 @@
   DECLARE_FUNCTION(SectorClosestPoint)
   DECLARE_FUNCTION(LineOpenings)
   DECLARE_FUNCTION(P_BoxOnLineSide)
-  DECLARE_FUNCTION(FindThingGap)
+  //DECLARE_FUNCTION(FindThingGap)
   DECLARE_FUNCTION(FindOpening)
-  DECLARE_FUNCTION(PointInRegion)
+  //DECLARE_FUNCTION(PointInRegion)
+  DECLARE_FUNCTION(GetSectorGapCoords)
   DECLARE_FUNCTION(P_GetMidTexturePosition)
 
   // sound functions

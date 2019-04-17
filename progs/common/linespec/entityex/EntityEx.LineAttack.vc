@@ -28,6 +28,116 @@ const int FHF_NORANDOMPUFFZ = 1;
 const int FHF_NOIMPACTDECAL = 2;
 
 
+//==========================================================================
+//
+//  CheckPlaneHit
+//
+//  checks for plane hit, returns hit point and `false` if hit
+//  plane flags should be already checked
+//
+//==========================================================================
+final bool CheckPlaneHit (const ref TSecPlaneRef plane, TVec linestart, TVec lineend,
+                         float range, optional out TVec currhit, optional out bool isSky)
+{
+  float orgDist = plane.spDotPointDist(linestart);
+  if (orgDist < 0.0) return true; // don't shoot back side
+
+  float hitDist = plane.spDotPointDist(lineend);
+  if (hitDist >= 0.0) return true; // didn't hit plane
+
+  // hit plane
+
+  // sky?
+  if (plane.splane->pic == Level.Game.skyflatnum) {
+    // don't shoot the sky!
+    isSky = true;
+    if (specified_currhit) currhit = lineend;
+  } else {
+    isSky = false;
+    if (specified_currhit) {
+      currhit = lineend;
+      currhit -= (lineend-linestart)*hitDist/(hitDist-orgDist);
+    }
+  }
+
+  // don't go any farther
+  return false;
+}
+
+
+//==========================================================================
+//
+//  ShootCheckPlanes
+//
+//==========================================================================
+final bool CheckHitPlanes (sector_t *sec, TVec linestart, TVec lineend,
+                           float range, class!EntityEx PuffType, int flagmask,
+                           optional out TVec outHitPoint, optional float resofs)
+{
+  TVec besthit = lineend;
+  TVec bestNormal;
+  bool bestIsSky;
+  TVec currhit;
+  bool wasHit = false;
+  float besthdist = float.max;
+  bool isSky;
+
+  foreach (const ref sec_region_t reg; sec.regions) {
+    if (reg.bOnlyVisual) continue;
+    if (!(reg.efloor.splane->flags&flagmask) &&
+        !CheckPlaneHit(ref reg.efloor, linestart, lineend, range, out currhit, out isSky)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-linestart).lengthSquared;
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestIsSky = isSky;
+        besthdist = dist;
+        bestNormal = reg.efloor.spGetNormal();
+      }
+    }
+    if (!(reg.eceiling.splane->flags&flagmask) &&
+        !CheckPlaneHit(reg.eceiling, linestart, lineend, range, out currhit, out isSky)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-linestart).lengthSquared;
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestIsSky = isSky;
+        besthdist = dist;
+        bestNormal = reg.eceiling.spGetNormal();
+      }
+    }
+  }
+
+  if (wasHit) {
+    // hit floor or ceiling
+    if (specified_outHitPoint) {
+      if (specified_resofs) {
+        outHitPoint = besthit+resofs*bestNormal;
+      } else {
+        outHitPoint = besthit;
+      }
+    }
+
+    // puff?
+    if (!bestIsSky && PuffType) {
+      // if we are shooting floor or ceiling we are adjusting position
+      // to spawn puff on floor or ceiling, not on wall
+      // position a bit closer
+      besthit += 4.0*bestNormal;
+      // spawn bullet puffs
+      //SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
+      SpawnPuff(besthit, range, PuffType, false);
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+
 //**************************************************************************
 //
 //  aiming
@@ -656,49 +766,6 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
 //
 //**************************************************************************
 
-//==========================================================================
-//
-//  ShootHitPlane
-//
-//  This spawn poofs for floor/ceiling.
-//
-//==========================================================================
-final bool ShootHitPlane (sector_t *sec, line_t *li, const ref TSecPlaneRef plane,
-                          TVec linestart, TVec lineend, float range,
-                          class!EntityEx PuffType, TVec *outHitPoint)
-{
-  if (plane.splane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
-
-  float org_dist = plane.spDotPointDist(linestart);
-  if (org_dist < 0.0) return true; // don't shoot back side
-
-  float hit_dist = plane.spDotPointDist(lineend);
-  if (hit_dist >= 0.0) return true; // didn't hit plane
-
-  // hit plane
-  if (plane.splane->pic == Level.Game.skyflatnum) {
-    // don't shoot the sky!
-    if (outHitPoint) *outHitPoint = lineend;
-    return false;
-  }
-
-  // if we are shooting floor or ceiling we are adjusting position
-  // to spawn puff on floor or ceiling, not on wall
-  lineend -= (lineend-linestart)*hit_dist/(hit_dist-org_dist);
-
-  // position a bit closer
-  lineend += 4.0*spGetNormal(plane);
-
-  // spawn bullet puffs
-  //SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
-  if (PuffType) SpawnPuff(lineend, range, PuffType, false);
-
-  if (outHitPoint) *outHitPoint = lineend;
-
-  // don't go any farther
-  return false;
-}
-
 
 //==========================================================================
 //
@@ -709,22 +776,10 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
                              TVec linestart, TVec lineend, float range,
                              class!EntityEx PuffType, TVec *outHitPoint)
 {
-  sec_region_t *reg;
-  sec_region_t *startreg;
-
-  startreg = PointInRegion(sec, linestart);
-
-  for (reg = startreg; reg; reg = reg->next) {
-    if (!ShootHitPlane(sec, line, reg->efloor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, line, reg->eceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
-  }
-
-  for (reg = startreg->prev; reg; reg = reg->prev) {
-    if (!ShootHitPlane(sec, line, reg->efloor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, line, reg->eceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
-  }
-
-  return true;
+  TVec hitpoint;
+  if (CheckHitPlanes(sec, linestart, lineend, range, PuffType, SPF_NOBLOCKSHOOT, out hitpoint, resofs:4.0)) return true;
+  if (outHitPoint) *outHitPoint = hitpoint;
+  return false;
 }
 
 
@@ -934,38 +989,6 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 //
 //**************************************************************************
 
-//==========================================================================
-//
-//  RailHitPlane
-//
-//==========================================================================
-final bool RailHitPlane (const ref TSecPlaneRef plane, TVec linestart, out TVec lineend,
-                         float range, class!EntityEx PuffType)
-{
-  if (plane.splane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
-  float org_dist = plane.spDotPointDist(linestart);
-
-  if (org_dist < 0.0) return true; // don't shoot back side
-
-  float hit_dist = plane.spDotPointDist(lineend);
-  if (hit_dist >= 0.0) return true; // didn't hit plane
-
-  // hit plane
-  if (plane.splane->pic == Level.Game.skyflatnum) return false; // don't shoot the sky!
-
-  // if we are shooting floor or ceiling we are adjusting position
-  // to spawn puff on floor or ceiling, not on wall
-  lineend -= (lineend-linestart)*hit_dist/(hit_dist-org_dist);
-
-  // position a bit closer
-  lineend += 4.0*spGetNormal(plane);
-
-  if (PuffType) SpawnPuff(lineend, range, PuffType, false); // spawn bullet puffs
-
-  // don't go any farther
-  return false;
-}
-
 
 //==========================================================================
 //
@@ -975,20 +998,7 @@ final bool RailHitPlane (const ref TSecPlaneRef plane, TVec linestart, out TVec 
 final bool RailCheckPlanes (sector_t *sec, TVec linestart, out TVec lineend,
                             float range, class!EntityEx PuffType)
 {
-  sec_region_t *reg;
-  sec_region_t *startreg = PointInRegion(sec, linestart);
-
-  for (reg = startreg; reg; reg = reg->next) {
-    if (!RailHitPlane(reg->efloor, linestart, lineend, range, PuffType)) return false; // hit floor
-    if (!RailHitPlane(reg->eceiling, linestart, lineend, range, PuffType)) return false; // hit ceiling
-  }
-
-  for (reg = startreg->prev; reg; reg = reg->prev) {
-    if (!RailHitPlane(reg->efloor, linestart, lineend, range, PuffType)) return false; // hit floor
-    if (!RailHitPlane(reg->eceiling, linestart, lineend, range, PuffType)) return false; // hit ceiling
-  }
-
-  return true;
+  return CheckHitPlanes(sec, linestart, lineend, range, PuffType, SPF_NOBLOCKSHOOT, out lineend);
 }
 
 

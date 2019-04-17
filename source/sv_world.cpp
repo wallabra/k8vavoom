@@ -184,7 +184,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     toffs = sec->floor.TexZ+mheight;
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
-    toffs = sec->topregion->eceiling.splane->TexZ;
+    toffs = sec->ceiling.TexZ;
   } else {
     // top of texture at top
     toffs = sec->ceiling.TexZ;
@@ -211,34 +211,6 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
   */
 
   return true;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// floor/ceiling plane, with calculated z
-struct OpPlane {
-  TSecPlaneRef eplane;
-  float z; // calculated z, for sorting
-  TSecPlaneRef::Type type; // cached, why not
-
-  inline bool isFloor () const { return (type == TSecPlaneRef::Type::Floor); }
-  inline bool isCeiling () const { return (type == TSecPlaneRef::Type::Ceiling); }
-};
-
-
-//==========================================================================
-//
-//  DumpOpPlanes
-//
-//==========================================================================
-static __attribute__((unused)) void DumpOpPlanes (TArray<OpPlane> &list) {
-  GCon->Logf("=== opplanes: %d ===", list.length());
-  for (int f = 0; f < list.length(); ++f) {
-    const OpPlane &op = list[f];
-    GCon->Logf("  %d: %s: (%g,%g,%g:%g)  z=%g", f, (op.type == TSecPlaneRef::Floor ? "floor" : "ceil "),
-      op.eplane.GetNormal().x, op.eplane.GetNormal().y, op.eplane.GetNormal().z, op.eplane.GetDist(), op.z);
-  }
-  GCon->Log("----");
 }
 
 
@@ -269,102 +241,174 @@ static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
 
 //==========================================================================
 //
-//  CollectOpPlanes
+//  DumpOpening
 //
 //==========================================================================
-static __attribute__((unused)) void CollectOpPlanes (TArray<OpPlane> &dest, const sec_region_t *reg, const TVec point, unsigned NoBlockFlags, bool *hasSlopes) {
+static __attribute__((unused)) void DumpOpening (const opening_t *op) {
+  GCon->Logf("  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
+    op,
+    op->bottom, op->efloor.GetNormal().x, op->efloor.GetNormal().y, op->efloor.GetNormal().z, op->efloor.GetDist(),
+    op->top, op->eceiling.GetNormal().x, op->eceiling.GetNormal().y, op->eceiling.GetNormal().z, op->eceiling.GetDist(),
+    op->lowfloor, op->range);
+}
+
+
+//==========================================================================
+//
+//  InsertOpening
+//
+//  insert new opening, maintaing order and non-intersection invariants
+//  it is faster to insert openings from bottom to top,
+//  but it is not a requerement
+//
+//  in op: efloor, bottom, eceiling, top -- should be set and valid
+//
+//==========================================================================
+static void InsertOpening (TArray<opening_t> &dest, const opening_t &op) {
+  if (op.top < op.bottom) return; // shrinked to invalid size
+  int dlen = dest.length();
+  if (dlen == 0) {
+    dest.append(op);
+    return;
+  }
+  opening_t *ops = dest.ptr(); // to avoid range checks
+  // find region that contains our floor
+  const float opfz = op.bottom;
+  // check if current is higher than the last
+  if (opfz > ops[dlen-1].top) {
+    // append and exit
+    dest.append(op);
+    return;
+  }
+  // starts where last ends
+  if (opfz == ops[dlen-1].top) {
+    // grow last and exit
+    ops[dlen-1].top = op.top;
+    ops[dlen-1].eceiling = op.eceiling;
+    return;
+  }
+  // find a place and insert
+  // then join regions
+  int cpos = dlen;
+  while (cpos > 0 && opfz <= ops[cpos-1].bottom) --cpos;
+  // now, we can safely insert it into cpos
+  check(ops[cpos].top <= op.bottom); // invariant
+  // if op floor is the same as cpos ceiling, join
+  if (op.bottom == ops[cpos].top) {
+    // join
+    ops[cpos].eceiling = op.eceiling;
+    ops[cpos].top = op.top;
+  } else {
+    // insert
+    dest.insert(cpos, op);
+    ops = dest.ptr();
+    ++dlen;
+  }
+  // now eat regions that are inside our
+  int npos = cpos+1;
+  while (npos < dlen) {
+    // below?
+    if (ops[cpos].top < ops[npos].bottom) break; // done
+    // npos is completely inside?
+    if (ops[cpos].top >= ops[npos].top) {
+      // completely inside: eat it and continue
+      dest.removeAt(npos);
+      ops = dest.ptr();
+      --dlen;
+      continue;
+    }
+    // simple join: drop npos floor and cpos ceiling
+    ops[cpos].eceiling = ops[npos].eceiling;
+    ops[cpos].top = ops[npos].top;
+    dest.removeAt(npos);
+    break;
+  }
+}
+
+
+//==========================================================================
+//
+//  GetBaseSectorOpening
+//
+//==========================================================================
+static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec point, bool *hasSlopes=nullptr) {
+  op.efloor = sector->regions[0].efloor;
+  op.bottom = op.efloor.GetPointZ(point);
+  op.eceiling = sector->regions[0].eceiling;
+  op.top = op.eceiling.GetPointZ(point);
+  op.range = op.top-op.bottom;
+  if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
+}
+
+
+//==========================================================================
+//
+//  BuildSectorOpenings
+//
+//  this function doesn't like regions with floors that has different flags
+//
+//==========================================================================
+static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes=nullptr) {
   dest.reset();
-  *hasSlopes = false;
-  for (; reg; reg = reg->next) {
-    if ((reg->efloor.splane->flags&NoBlockFlags) == 0) {
-      OpPlane &p = dest.alloc();
-      p.eplane = reg->efloor;
-      p.z = p.eplane.GetPointZ(point);
-      p.type = p.eplane.classify();
-      if (p.eplane.isSlope()) *hasSlopes = true;
-      if (p.type != TSecPlaneRef::Type::Floor) {
-        GCon->Logf("***** FUCKED REGION %p (floor) *****", reg);
-        DumpRegion(reg);
-      }
-    }
-    if ((reg->eceiling.splane->flags&NoBlockFlags) == 0) {
-      OpPlane &p = dest.alloc();
-      p.eplane = reg->eceiling;
-      p.z = p.eplane.GetPointZ(point);
-      p.type = p.eplane.classify();
-      if (p.eplane.isSlope()) *hasSlopes = true;
-      if (p.type != TSecPlaneRef::Type::Ceiling) {
-        GCon->Logf("***** FUCKED REGION %p (ceiling) *****", reg);
-        DumpRegion(reg);
-      }
-    }
-  }
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-extern "C" {
-  static __attribute__((unused)) int opPlaneCompare (const void *aa, const void *bb, void *) {
-    if (aa == bb) return 0;
-    const OpPlane *a = (const OpPlane *)aa;
-    const OpPlane *b = (const OpPlane *)bb;
-    if (a->z < b->z) return -1;
-    if (a->z > b->z) return 1;
-    // floors first
-    return (a->type-b->type);
-  }
-}
-
-
-//==========================================================================
-//
-//  SortOpPlanes
-//
-//  as a result, we will have list of alternating floor/ceiling planes
-//  paper-thin regions are removed
-//
-//==========================================================================
-static __attribute__((unused)) void SortOpPlanes (TArray<OpPlane> &arr) {
-  if (arr.length() > 1) {
-    timsort_r(arr.ptr(), (size_t)arr.length(), sizeof(OpPlane), &opPlaneCompare, nullptr);
-    // sequence should start with floor, and end with ceiling
-    while (arr.length() && arr[0].type != TSecPlaneRef::Type::Floor) arr.removeAt(0);
-    while (arr.length() && arr[arr.length()-1].type != TSecPlaneRef::Type::Ceiling) arr.removeAt(arr.length()-1);
-    // remove paper-thin regions, it is just noise
-    // also, remove sequence of several floors/ceilings
-    int pos = 0;
-    while (pos < arr.length()-1) {
-      const OpPlane &pl0 = arr[pos+0];
-      const OpPlane &pl1 = arr[pos+1];
-      if (pl0.type == pl1.type) {
-        // same type, remove next for floor, or this for ceiling
-        arr.removeAt(pos+1-pl0.type);
-      } else if (pl0.type == TSecPlaneRef::Type::Floor &&
-                 pl1.type == TSecPlaneRef::Type::Ceiling &&
-                 pl0.z == pl1.z)
-      {
-        // paper-thin region, remove it
-        arr.removeAt(pos);
-        arr.removeAt(pos);
-        if (pos > 0) --pos;
+  // first is always sector limits
+  opening_t &op = dest.alloc();
+  op.efloor = sector->regions[0].efloor;
+  op.bottom = op.efloor.GetPointZ(point);
+  op.eceiling = sector->regions[0].eceiling;
+  op.top = op.eceiling.GetPointZ(point);
+  op.range = op.top-op.bottom;
+  if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
+/*
+  bool slopeDetected = false;
+  // do not go beyound sector limits
+  const float secfz = sector->floor.GetPointZ(point);
+  const float seccz = sector->ceiling.GetPointZ(point);
+  opening_t cop;
+  for (const sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
+    if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) == 0) {
+      if (!slopeDetected) slopeDetected = (fabsf(reg->efloor.GetNormalZ()) != 1.0f || fabsf(reg->eceiling.GetNormalZ()) != 1.0f);
+      const float fz = reg->efloor.GetPointZ(point);
+      const float cz = reg->eceiling.GetPointZ(point);
+      // floor, clamped
+      if (fz >= secfz) {
+        cop.efloor = reg->efloor;
+        cop.bottom = fz;
       } else {
-        ++pos;
+        cop.efloor.set(&sector->floor, false);
+        cop.bottom = secfz;
       }
-    }
-    // sanity checks
-    if (arr.length() < 2) {
-      arr.reset();
-    } else {
-      check(arr[0].type == TSecPlaneRef::Type::Floor);
-      check(arr[arr.length()-1].type == TSecPlaneRef::Type::Ceiling);
-      const OpPlane *opc = arr.ptr();
-      TSecPlaneRef::Type currType = TSecPlaneRef::Type::Floor;
-      for (int f = arr.length(); f--; ++opc) {
-        check(opc->type == currType);
-        currType = (TSecPlaneRef::Type)(currType^1);
+      // ceiling, clamped
+      if (cz <= seccz) {
+        cop.eceiling = reg->eceiling;
+        cop.top = cz;
+      } else {
+        cop.eceiling.set(&sector->ceiling, false);
+        cop.top = seccz;
       }
+      InsertOpening(dest, cop);
     }
   }
+  if (hasSlopes) *hasSlopes = slopeDetected;
+*/
+}
+
+
+//==========================================================================
+//
+//  SV_GetSectorGapCoords
+//
+//==========================================================================
+void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz) {
+  if (!sector) { floorz = 0.0f; ceilz = 0.0f; return; }
+  if (!sector->Has3DFloors()) {
+    floorz = sector->floor.GetPointZ(point);
+    ceilz = sector->floor.GetPointZ(point);
+    return;
+  }
+  TSecPlaneRef f, c;
+  SV_FindGapFloorCeiling(sector, point, 0, f, c);
+  floorz = f.GetPointZ(point);
+  ceilz = c.GetPointZ(point);
 }
 
 
@@ -372,84 +416,27 @@ static __attribute__((unused)) void SortOpPlanes (TArray<OpPlane> &arr) {
 //
 //  IntersectOpSet
 //
-//  calculate intersection of two sets, put result to `openings`
-//  returns number of elements in `openings`
-//  note that `next` pointer is not set
-//
 //==========================================================================
-static __attribute__((unused)) unsigned IntersectOpSet (TArray<OpPlane> &a0, TArray<OpPlane> &a1) {
-  int a0left = a0.length();
-  int a1left = a1.length();
-  if (a0left < 2 || a1left < 2) return 0;
-  OpPlane *op0 = a0.ptr();
-  OpPlane *op1 = a1.ptr();
-  unsigned rescount = 0;
-  // find itersections
-  while (a0left > 1 && a1left > 1) {
-    // just in case
-    if (!op0->isFloor()) { ++op0; --a0left; continue; }
-    if (!op1->isFloor()) { ++op1; --a1left; continue; }
-    const float fz0 = op0[0].z;
-    const float cz0 = op0[1].z;
-    const float fz1 = op1[0].z;
-    const float cz1 = op1[1].z;
-    // same?
-    if (fz0 == fz1 && cz0 == cz1) {
-      // eat both
-      opening_t *opdest = &openings[rescount++];
-      opdest->top = cz0;
-      opdest->bottom = fz0;
-      opdest->range = opdest->top-opdest->bottom;
-      opdest->lowfloor = opdest->bottom;
-      opdest->efloor = op0[0].eplane;
-      opdest->eceiling = op0[1].eplane;
-      op0 += 2; a0left -= 2;
-      op1 += 2; a1left -= 2;
-    } else if (cz0 <= fz1) {
-      // op0 is lower than op1, skip op0
-      op0 += 2; a0left -= 2;
-    } else if (cz1 <= fz0) {
-      // op1 is lower than op0, skip op1
-      op1 += 2; a1left -= 2;
-    } else {
-      // there must be some intersection
-      opening_t *opdest = &openings[rescount++];
-      // take highest floor
-      if (fz0 >= fz1) {
-        // take floor 0
-        opdest->bottom = fz0;
-        opdest->lowfloor = fz1;
-        opdest->efloor = op0[0].eplane;
-      } else {
-        // take floor 1
-        opdest->bottom = fz1;
-        opdest->lowfloor = fz0;
-        opdest->efloor = op1[0].eplane;
-      }
-      // take lowest ceiling
-      if (cz0 <= cz1) {
-        // take ceiling 0
-        opdest->top = cz0;
-        opdest->eceiling = op0[1].eplane;
-      } else {
-        // take ceiling 1
-        opdest->top = cz1;
-        opdest->eceiling = op1[1].eplane;
-      }
-      opdest->range = opdest->top-opdest->bottom;
-      // if both has same ceiling, skip both, otherwise skip one with lower ceiling
-      if (cz0 == cz1) {
-        // skip both
-        op0 += 2; a0left -= 2;
-        op1 += 2; a1left -= 2;
-      } else if (cz0 < cz1) {
-        op0 += 2; a0left -= 2;
-      } else {
-        op1 += 2; a1left -= 2;
-      }
-    }
+static unsigned IntersectOpSet (TArray<opening_t> &op0list, TArray<opening_t> &op1list) {
+  unsigned op0len = (unsigned)op0list.length();
+  unsigned op1len = (unsigned)op1list.length();
+  if (op0len == 0 || op1len == 0) return 0; // just in case
+  const opening_t *op0 = op0list.ptr();
+  const opening_t *op1 = op1list.ptr();
+  unsigned dpos = 0, op0pos = 0, op1pos = 0;
+  while (op0len && op1len) {
+    // skip op0 if op0 is lower than op1
+    if (op0->top < op1->bottom) { ++op0; --op0len; continue; }
+    // skip op1 if op1 is lower than op0
+    if (op1->top < op0->bottom) { ++op1; --op1len; continue; }
+    // must intersect
+    check(!(op0->top < op1->bottom || op1->top < op0->bottom ||
+            op0->bottom > op1->top || op1->bottom > op0->top));
+    if (dpos >= MAX_OPENINGS) Host_Error("too many openings in line");
+    // floor
+    //if (op0->bottom
   }
-  return rescount;
+  return dpos;
 }
 
 
@@ -467,8 +454,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
   opening_t *op = nullptr;
   int opsused = 0;
-  sec_region_t *frontreg = linedef->frontsector->botregion;
-  sec_region_t *backreg = linedef->backsector->botregion;
 
   //FIXME: this is wrong, it should insert opening into full list instead!
   //       move opening scan to separate function with top/bot limits instead
@@ -535,45 +520,70 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   // alas, we cannot cache openings with slopes, so don't even try
   // this is bad, but meh... i can live with it for now
 
-  static TArray<OpPlane> op0list;
-  static TArray<OpPlane> op1list;
   bool hasSlopes0 = false, hasSlopes1 = false;
 
-#ifdef VV_DUMP_OPENING_CREATION
-  GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
-#endif
+  // fast algo for two sectors without 3d floors
+  if (/*!linedef->frontsector->Has3DFloors() &&
+      !linedef->backsector->Has3DFloors()*/true)
+  {
+    opening_t fop, bop;
+    GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0);
+    GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1);
+    // no intersection?
+    if (fop.top <= bop.bottom || bop.top <= fop.bottom ||
+        fop.bottom >= bop.top || bop.bottom >= fop.top)
+    {
+      if (hasSlopes0 || hasSlopes1) return nullptr;
+      if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+      linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+      return nullptr;
+    }
+    // create opening
+    opening_t *dop = &openings[0];
+    // setup floor
+    if (fop.bottom >= bop.bottom) {
+      dop->efloor = fop.efloor;
+      dop->bottom = fop.bottom;
+      dop->lowfloor = bop.bottom;
+    } else {
+      dop->efloor = bop.efloor;
+      dop->bottom = bop.bottom;
+      dop->lowfloor = fop.bottom;
+    }
+    // setup ceiling
+    if (fop.top <= bop.top) {
+      dop->eceiling = fop.eceiling;
+      dop->top = fop.top;
+    } else {
+      dop->eceiling = bop.eceiling;
+      dop->top = bop.top;
+    }
+    dop->range = dop->top-dop->bottom;
+    dop->next = nullptr;
+    return dop;
+  }
 
-  CollectOpPlanes(op0list, frontreg, point, NoBlockFlags, &hasSlopes0);
-#ifdef VV_DUMP_OPENING_CREATION
-  GCon->Log("::: before sort op0 :::"); DumpOpPlanes(op0list);
-#endif
+  abort();
 
-  SortOpPlanes(op0list);
-#ifdef VV_DUMP_OPENING_CREATION
-  GCon->Log("::: after sort op0 :::"); DumpOpPlanes(op0list);
-#endif
+  //sec_region_t *frontreg = linedef->frontsector->botregion;
+  //sec_region_t *backreg = linedef->backsector->botregion;
 
-  if (op0list.length() < 2) {
-    if (hasSlopes0) return nullptr;
+  static TArray<opening_t> op0list;
+  static TArray<opening_t> op1list;
+
+  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0);
+  if (op0list.length() == 0) {
     // just in case: no front sector openings
+    if (hasSlopes0) return nullptr;
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
     return nullptr;
   }
 
-  CollectOpPlanes(op1list, backreg, point, NoBlockFlags, &hasSlopes1);
-#ifdef VV_DUMP_OPENING_CREATION
-  GCon->Log("::: before sort op1 :::"); DumpOpPlanes(op1list);
-#endif
-
-  SortOpPlanes(op1list);
-#ifdef VV_DUMP_OPENING_CREATION
-  GCon->Log("::: after sort op1 :::"); DumpOpPlanes(op1list);
-#endif
-
-  if (op1list.length() < 2) {
-    if (hasSlopes0 || hasSlopes1) return nullptr;
+  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1);
+  if (op1list.length() == 0) {
     // just in case: no back sector openings
+    if (hasSlopes0 || hasSlopes1) return nullptr;
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
     return nullptr;
@@ -638,253 +648,88 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
 //==========================================================================
 //
-//  SV_FindFloorCeiling
-//
-//==========================================================================
-static inline void SV_FindFloorCeiling (sec_region_t *gap, const TVec &point, sec_region_t *&floor, sec_region_t *&ceiling) {
-  // find solid floor
-  floor = gap;
-  for (sec_region_t *reg = gap; reg; reg = reg->prev) {
-    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
-      floor = reg;
-      break;
-    }
-  }
-  // find solid ceiling
-  ceiling = gap;
-  for (sec_region_t *reg = gap; reg; reg = reg->next) {
-    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
-      ceiling = reg;
-      break;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  SV_FindThingGap
-//
-//  Find the best gap that the thing could fit in, given a certain Z
-//  position (z1 is foot, z2 is head). Assuming at least two gaps exist,
-//  the best gap is chosen as follows:
-//
-//  1. if the thing fits in one of the gaps without moving vertically,
-//     then choose that gap.
-//
-//  2. if there is only *one* gap which the thing could fit in, then
-//     choose that gap.
-//
-//  3. if there is multiple gaps which the thing could fit in, choose
-//     the gap whose floor is closest to the thing's current Z.
-//
-//  4. if there is no gaps which the thing could fit in, do the same.
-//
-//  Returns the gap, or `nullptr` if there are no gaps at all.
-//
-//==========================================================================
-sec_region_t *SV_FindThingGap (const sector_t *sector, const TVec &point, float height, bool dbgDump) {
-  /* k8: here, we should return gap we can fit in, even if we are partially in it.
-         this is because sector height change is using this to do various checks
-   */
-  sec_region_t *InGaps = sector->botregion;
-
-  if (height < 0.0f) height = 0.0f;
-  const float z1 = point.z;
-  const float z2 = z1+height;
-
-  sec_region_t *gaps = InGaps;
-
-  // check for trivial gaps
-  if (gaps == nullptr) return nullptr;
-  if (gaps->next == nullptr) return gaps;
-
-  // region we are at least partially inside, and can fit
-  float bestFitFloorDist = 999999.0f;
-  sec_region_t *bestFit = nullptr;
-
-  // region we can possibly fit, but not even partially inside
-  float bestPossibleFitFloorDist = 999999.0f;
-  sec_region_t *bestPossibleFit = nullptr;
-
-  // try to find a gap we can fit in
-  for (sec_region_t *reg = gaps; reg; reg = reg->next) {
-    float fz = reg->efloor.GetPointZ(point);
-    float cz = reg->eceiling.GetPointZ(point);
-    if (fz >= cz) continue; // either paper-thin, or something is wrong with this region
-    float fdist = fabsf(z1-fz); // we don't care about sign
-    // at least partially inside?
-    if (z2 >= fz && z1 <= cz) {
-      // at least partially inside, check if we can fit
-      bool canFit = (z1 >= fz && z2 <= cz);
-      if (!canFit) {
-        // can't fit into current region, but it can be swimmable pool, so find solid floor and ceiling
-        sec_region_t *rfloor, *rceil;
-        SV_FindFloorCeiling(reg, point, rfloor, rceil);
-        fz = rfloor->efloor.GetPointZ(point);
-        cz = rceil->eceiling.GetPointZ(point);
-        canFit = (z1 >= fz && z2 <= cz);
-      }
-      if (canFit) {
-        // ok, we can fit here, check if this is a better candidate
-        if (!bestFit || fdist < bestFitFloorDist) {
-          bestFitFloorDist = fdist;
-          bestFit = reg;
-        }
-      }
-    } else {
-      // do "can fit vertically" checks, and choose the best one
-      // but only if we don't have "can fit" yet
-      if (!bestFit) {
-        sec_region_t *rfloor, *rceil;
-        SV_FindFloorCeiling(reg, point, rfloor, rceil);
-        fz = rfloor->efloor.GetPointZ(point);
-        cz = rceil->eceiling.GetPointZ(point);
-        if (z1 >= fz && z2 <= cz) {
-          // can fit, choose closest floor
-          if (!bestPossibleFit || fdist < bestPossibleFitFloorDist) {
-            bestPossibleFitFloorDist = fdist;
-            bestPossibleFit = reg;
-          }
-        }
-      }
-    }
-  }
-
-  if (bestFit) return bestFit;
-  if (bestPossibleFit) return bestPossibleFit;
-
-  // we don't have anything to fit into; this is something that should not happen
-  // yet, it *may* happen for bad maps or noclip, so return region with closest floor
-  bestFitFloorDist = 999999.0f;
-  bestFit = nullptr;
-  for (sec_region_t *reg = gaps; reg; reg = reg->next) {
-    float fz = reg->efloor.GetPointZ(point);
-    if (fz > reg->eceiling.GetPointZ(point)) continue;
-    float fdist = fabsf(z1-fz); // we don't care about sign
-    if (!bestFit || fdist < bestFitFloorDist) {
-      bestFitFloorDist = fdist;
-      bestFit = reg;
-    }
-  }
-  return bestFit;
-
-#if 0
-  int fit_num = 0;
-  sec_region_t *fit_last = nullptr;
-
-  sec_region_t *fit_closest = nullptr;
-  float fit_mindist = 200000.0f;
-
-  sec_region_t *nofit_closest = nullptr;
-  float nofit_mindist = 200000.0f;
-
-  TSecPlaneRef floor;
-  TSecPlaneRef ceil;
-  sec_region_t *lastFloorGap = nullptr;
-
-  float bestFloorDist = 999999.0f;
-  sec_region_t *bestFloor = nullptr;
-
-  // there are 2 or more gaps; now it gets interesting :-)
-  while (gaps) {
-    if (dbgDump) GCon->Logf("  svftg: checking gap=%p; z1=%g; z2=%g (regflags=0x%02x)", gaps, z1, z2, gaps->regflags);
-    if ((gaps->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
-      if (dbgDump) GCon->Logf("  svftg: new floor gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-      floor = gaps->efloor;
-      lastFloorGap = gaps;
-    }
-    if ((gaps->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
-      if (dbgDump) GCon->Logf("  svftg: new ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-      ceil = gaps->eceiling;
-    }
-    if (gaps->eceiling.splane->flags&SPF_NOBLOCKING) {
-      //if ((gaps->regflags&sec_region_t::RF_NonSolid))
-      {
-        if (dbgDump) GCon->Logf("  svftg: skip ceiling gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-        gaps = gaps->next;
-        continue;
-      }
-    }
-    /*
-    if (gaps->efloor.splane->flags&SPF_NOBLOCKING) {
-      //if ((gaps->regflags&sec_region_t::RF_NonSolid))
-      {
-        if (dbgDump) GCon->Logf("  svftg: skip floor gap=%p; z1=%g; z2=%g", gaps, z1, z2);
-        gaps = gaps->next;
-        continue;
-      }
-    }
-    */
-
-    const float f = floor.GetPointZ(point);
-    const float c = ceil.GetPointZ(point);
-
-    if (dbgDump) GCon->Logf("  svftg: gap=%p; f=%g; c=%g; z1=%g; z2=%g", gaps, f, c, z1, z2);
-
-    if (z1 >= f && z2 <= c) {
-      if (dbgDump) GCon->Logf("  svftg RES: gap=%p; f=%g; c=%g; z1=%g; z2=%g", gaps, f, c, z1, z2);
-      //return gaps; // [1]
-      return (lastFloorGap ? lastFloorGap : gaps);
-    }
-
-    const float dist = fabsf(z1-f);
-
-    if (z2-z1 <= c-f) {
-      // [2]
-      ++fit_num;
-      fit_last = lastFloorGap; //gaps;
-      if (dbgDump) GCon->Logf("  svftg: fit_last=%p (%d); f=%g; c=%g; z1=%g; z2=%g", fit_last, fit_num, f, c, z1, z2);
-      if (dist < fit_mindist) {
-        // [3]
-        fit_mindist = dist;
-        fit_closest = lastFloorGap; //gaps;
-        if (dbgDump) GCon->Logf("  svftg: fit_closest=%p (%d); f=%g; c=%g; z1=%g; z2=%g", fit_closest, fit_num, f, c, z1, z2);
-      }
-    } else {
-      if (dist < nofit_mindist) {
-        // [4]
-        nofit_mindist = dist;
-        nofit_closest = lastFloorGap; //gaps;
-        if (dbgDump) GCon->Logf("  svftg: nofit_closest=%p (%d); f=%g; c=%g; z1=%g; z2=%g", nofit_closest, fit_num, f, c, z1, z2);
-      }
-    }
-    gaps = gaps->next;
-  }
-
-  if (fit_num == 1) return fit_last;
-  if (fit_num > 1) return fit_closest;
-  return nofit_closest;
-#endif
-}
-
-
-//==========================================================================
-//
 //  SV_FindGapFloorCeiling
 //
-//  this calls `SV_FindThingGap`, and returns blocking
-//  floor and ceiling planes
+//  find region for thing, and return best floor/ceiling
+//  `p.z` is bottom
 //
 //==========================================================================
-void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
-  sec_region_t *gap = SV_FindThingGap(sector, p, height);
-  check(gap);
-  // get floor
-  floor = gap->efloor;
-  for (sec_region_t *reg = gap; reg; reg = reg->prev) {
-    if ((reg->efloor.splane->flags&SPF_NOBLOCKING) == 0) {
-      floor = reg->efloor;
-      break;
+void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
+  if (!sector->Has3DFloors()) {
+    // only one region, yay
+    floor = sector->regions[0].efloor;
+    ceiling = sector->regions[0].eceiling;
+    return;
+  }
+
+  if (height < 0.0f) height = 0.0f;
+
+  /* for multiple regions, we have some hard work to do.
+     as region sorting is not guaranteed, we will force-sort regions.
+     alas.
+   */
+  static TArray<opening_t> oplist;
+
+  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING);
+  if (oplist.length() == 0) {
+    // something is very wrong here, so use sector boundaries
+    floor = sector->regions[0].efloor;
+    ceiling = sector->regions[0].eceiling;
+    return;
+  }
+
+  // now find best-fit region:
+  //
+  //  1. if the thing fits in one of the gaps without moving vertically,
+  //     then choose that gap (one with less distance to the floor).
+  //
+  //  2. if there is only *one* gap which the thing could fit in, then
+  //     choose that gap.
+  //
+  //  3. if there is multiple gaps which the thing could fit in, choose
+  //     the gap whose floor is closest to the thing's current Z.
+  //
+  //  4. if there is no gaps which the thing could fit in, do the same.
+
+  // one the thing is currently in
+  const opening_t *bestFit = nullptr;
+  float bestFitDist = 999999.0f;
+
+  // one the thing can possibly fit
+  const opening_t *bestGap = nullptr;
+  float bestGapDist = 999999.0f;
+
+  const opening_t *op = oplist.ptr();
+  for (int opleft = oplist.length(); opleft--; ++op) {
+    const float fz = op->bottom;
+    const float cz = op->top;
+    if (point.z >= fz && point.z+height <= cz) {
+      // perfect fit
+      const float fdist = point.z-fz;
+      if (!bestFit || fdist < bestFitDist) {
+        bestFit = op;
+        bestFitDist = fdist;
+      }
+    } else if (cz-fz >= height) {
+      // can possibly fit
+      const float fdist = fabsf(point.z-fz); // we don't care about sign here
+      if (!bestGap || fdist < bestGapDist) {
+        bestGap = op;
+        bestGapDist = fdist;
+      }
     }
   }
-  // get ceiling
-  ceiling = gap->eceiling;
-  for (sec_region_t *reg = gap; reg; reg = reg->next) {
-    if ((reg->eceiling.splane->flags&SPF_NOBLOCKING) == 0) {
-      ceiling = reg->eceiling;
-      break;
-    }
+
+  if (bestFit) {
+    floor = bestFit->efloor;
+    ceiling = bestFit->eceiling;
+  } else if (bestGap) {
+    floor = bestGap->efloor;
+    ceiling = bestGap->eceiling;
+  } else {
+    // just fit into sector
+    floor = sector->regions[0].efloor;
+    ceiling = sector->regions[0].eceiling;
   }
 }
 
@@ -965,18 +810,63 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 //
 //  SV_PointInRegion
 //
+//  this is used to get region lighting
+//
 //==========================================================================
-sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgDump) {
+sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump) {
+  if (!sector->Has3DFloors()) return &sector->regions[0];
+  const float secfz = sector->floor.GetPointZ(p);
+  if (p.z <= secfz) return &sector->regions[0];
+  //const float seccz = sector->ceiling.GetPointZ(p);
+
+  sec_region_t *best = &sector->regions[0];
+  float bestDist = p.z-secfz; // minimum distance to region floor
+  bool insideNonSolid = false;
+
+  sec_region_t *reg = sector->regions.ptr()+1;
+  for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    const float fz = reg->efloor.GetPointZ(p);
+    const float cz = reg->eceiling.GetPointZ(p);
+    // non-solid?
+    if (reg->regflags&sec_region_t::RF_NonSolid) {
+      // check if point is inside, and for best floor dist
+      if (p.z >= fz && p.z <= cz) {
+        const float fdist = p.z-fz;
+        if (fdist == 0.0f) return reg;
+        if (fdist < bestDist) {
+          bestDist = fdist;
+          best = reg;
+          insideNonSolid = true;
+        }
+      }
+    } else if (!insideNonSolid) {
+      // non-solid regions has higher precedence
+      // solid regions: we can't be inside (ignore this possibility)
+      if (p.z >= cz) {
+        const float fdist = p.z-cz;
+        if (fdist < bestDist) {
+          bestDist = fdist;
+          best = reg;
+        }
+      }
+    }
+  }
+
+  return best;
+  /*
   sec_region_t *best = nullptr;
   float bestDist = 999999.0f; // minimum distance to region floor
   if (dbgDump) GCon->Logf("SV_PointInRegion: z=%g", p.z);
   const float secfz = sector->floor.GetPointZ(p);
   const float seccz = sector->ceiling.GetPointZ(p);
   // logic: find matching region, otherwise return highest one
-  for (sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
+  sec_region_t *reg = sector->regions.ptr();
+  for (int rcount = sector->regions.length(); reg; reg = reg->next) {
     // clamp coords
     float fz = MAX(secfz, reg->efloor.GetPointZ(p));
     float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
+    if (fz == cz) continue; // ignore paper-thin regions
     if (p.z >= fz && p.z <= cz) {
       const float fdist = p.z-fz;
       if (dbgDump) GCon->Logf("  reg %p: fz=%g; cz=%g; fdist=%g (bestDist=%g)", reg, fz, cz, fdist, bestDist);
@@ -996,6 +886,8 @@ sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgD
     }
   }
   return (best ? best : sector->botregion);
+  */
+  return nullptr;
 }
 
 
@@ -1004,7 +896,7 @@ sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgD
 //  SV_PointContents
 //
 //==========================================================================
-int SV_PointContents (const sector_t *sector, const TVec &p) {
+int SV_PointContents (sector_t *sector, const TVec &p) {
   check(sector);
   if (sector->heightsec &&
       (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
@@ -1014,41 +906,53 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
   }
   if (sector->SectorFlags&sector_t::SF_UnderWater) return 9;
 
-  if (sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-    /*
-    for (sec_region_t *reg = sector->botregion; reg; reg = reg->next) {
-      if (p.z <= reg->eceiling.GetPointZ(p) && p.z >= reg->efloor.GetPointZ(p)) {
-        return reg->params->contents;
+  if (sector->Has3DFloors()) {
+    const float secfz = sector->floor.GetPointZ(p);
+    if (p.z <= secfz) return sector->params.contents;
+
+    const sec_region_t *best = &sector->regions[0];
+    float bestDist = p.z-secfz; // minimum distance to region floor
+
+    const sec_region_t *reg = sector->regions.ptr()+1;
+    for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+      if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+      // non-solid?
+      if (reg->regflags&sec_region_t::RF_NonSolid) {
+        const float fz = reg->efloor.GetPointZ(p);
+        const float cz = reg->eceiling.GetPointZ(p);
+        // check if point is inside, and for best floor dist
+        if (p.z >= fz && p.z <= cz) {
+          const float fdist = p.z-fz;
+          if (fdist == 0.0f) {
+            best = reg;
+            break;
+          }
+          if (fdist < bestDist) {
+            bestDist = fdist;
+            best = reg;
+          }
+        }
       }
     }
-    */
-    sec_region_t *reg = SV_PointInRegion(sector, p);
-    return (reg ? reg->params->contents : -1);
-  } else {
-    return sector->botregion->params->contents;
+    return best->params->contents;
   }
+
+  return sector->params.contents;
 }
 
 
 //==========================================================================
 //
-//  SV_PointContents
+//  SV_GetLowestSolidPointZ
+//
+//  used for silent teleports
+//
+//  FIXME: this ignores 3d floors (this is prolly the right thing to do)
 //
 //==========================================================================
-float SV_GetLowestSolidPointZ (const sector_t *sector, const TVec &point) {
+float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point) {
   if (!sector) return 0.0f; // idc
-  const float minfz = sector->floor.GetPointZ(point); // cannot be lower than this
-  if (sector->Has3DFloors()) {
-    float res = sector->ceiling.GetPointZ(point); // cannot be higher than this
-    for (sec_region_t *reg = sector->topregion; reg; reg = reg->prev) {
-      if (reg->efloor.splane->flags&SPF_NOBLOCKING) continue;
-      float fz = reg->efloor.GetPointZ(point);
-      if (fz >= minfz && fz < res) res = fz;
-    }
-    return res;
-  } else {
-    return minfz;
-  }
+  return sector->floor.GetPointZ(point); // cannot be lower than this
 }
 
 

@@ -88,6 +88,7 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
+  vint32 regidx; // region index (has no meaning for non-region parts)
 };
 
 
@@ -421,12 +422,7 @@ protected:
   int LitSurfaces;
   bool HasBackLit; // if there's no backlit surfaces, use zpass
 
-  // lightvis result
-  bool doShadows; // true: don't do more checks
-  // lightvis working variables
-  bool hasAnyLitSurfaces;
-  bool seen1SWall;
-  bool seen2SWall;
+  bool doShadows; // for current light
 
   // renderer info; put here to avoid passing it around
   // k8: it was a bunch of globals; i will eventually got rid of this
@@ -581,9 +577,7 @@ protected:
   void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling,
-                                   TSecPlaneRef extratop, TSecPlaneRef extrabot,
-                                   bool createES);
+                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
 
   // surf methods
   void SetupSky ();

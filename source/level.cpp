@@ -904,15 +904,8 @@ void VLevel::Destroy () {
   }
 
   if (Sectors) {
-    for (int i = 0; i < NumSectors; ++i) {
-      // delete regions
-      sec_region_t *r = Sectors[i].botregion;
-      while (r) {
-        sec_region_t *Next = r->next;
-        delete r;
-        r = Next;
-      }
-    }
+    // delete regions
+    for (int i = 0; i < NumSectors; ++i) Sectors[i].regions.clear();
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
@@ -2217,6 +2210,7 @@ void CL_LoadLevel (VName MapName) {
 //
 //==========================================================================
 void VLevel::dumpSectorRegions (const sector_t *dst) {
+/*
   GCon->Logf(" === bot -> top (sector: %p) ===", dst);
   for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
     GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
@@ -2237,6 +2231,7 @@ void VLevel::dumpSectorRegions (const sector_t *dst) {
       inregion->regflags);
   }
   GCon->Log("--------");
+*/
 }
 
 
@@ -2249,18 +2244,6 @@ static __attribute__((unused)) const char *getTexName (int txid) {
   if (txid == 0) return "<->";
   VTexture *tex = GTextureManager[txid];
   return (tex ? *tex->Name : "<none>");
-}
-
-
-//==========================================================================
-//
-//  removeRegion
-//
-//==========================================================================
-static __attribute__((unused)) void removeRegion (sector_t *dst, sec_region_t *reg) {
-  if (reg->prev) reg->prev->next = reg->next; else dst->botregion = reg->next;
-  if (reg->next) reg->next->prev = reg->prev; else dst->topregion = reg->prev;
-  delete reg;
 }
 
 
@@ -2333,145 +2316,29 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
-
   bool flipped = false;
 
-  // swap planes for 3d floors like those of GZDoom
-  if (floorz < ceilz) {
+  if (floorz > ceilz) {
     flipped = true;
     floorz = src->ceiling.GetPointZ(dst->soundorg);
     ceilz = src->floor.GetPointZ(dst->soundorg);
+  } else {
     GCon->Logf("Swapped planes for Vavoom 3d floor, tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
 
-  if (ceilz <= dst->floor.minz) {
-    GCon->Logf(NAME_Warning, "IGNORED Vavoom 3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
-    return;
-  }
-  if (floorz >= dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "IGNORED Vavoom 3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    return;
-  }
-  if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "Vavoom 3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
-    return;
-  }
+  // append link
+  src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+  dst->SectorFlags |= sector_t::SF_HasExtrafloors;
+  AppendControlLink(src, dst);
 
-  // just in case
-  if (floorz < dst->floor.minz) floorz = dst->floor.minz;
-  if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.maxz;
-
-  for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    const float infloorz = inregion->efloor.GetPointZ(dst->soundorg);
-    const float inceilz = inregion->eceiling.GetPointZ(dst->soundorg);
-
-    bool doInsert = (infloorz <= floorz && inceilz >= ceilz);
-    // check for sloped floor
-    if (!doInsert && inregion->efloor.GetNormalZ() != 1.0f) {
-      if (inregion->efloor.splane->maxz <= src->ceiling.minz &&
-          inregion->eceiling.splane->maxz >= src->floor.minz)
-      {
-        doInsert = true;
-      }
-    }
-    // check for sloped ceiling
-    if (!doInsert && inregion->eceiling.GetNormalZ() != -1.0f) {
-      if (inregion->efloor.splane->minz <= src->ceiling.maxz &&
-          inregion->eceiling.splane->minz >= src->floor.maxz)
-      {
-        doInsert = true;
-      }
-    }
-
-    if (!doInsert) continue;
-
-    if (src->SectorFlags&sector_t::SF_GZDoomStyleReg) Host_Error("3d floor type mismatch!");
-
-    src->SectorFlags |= sector_t::SF_ExtrafloorSource;
-    dst->SectorFlags |= sector_t::SF_HasExtrafloors;
-    AppendControlLink(src, dst);
-
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-
-    // new region is from old floor to new ceiling
-    // old region from new floor to old ceiling
-    // i.e. insert new emptyness at bottom
-    // side walls will be created between this new one and next (upper) one
-    // i.e. side walls are closing this region
-    region->efloor = inregion->efloor;
-    if (!flipped) {
-      region->eceiling.set(&src->ceiling, false);
-      inregion->efloor.set(&src->floor, false);
-    } else {
-      region->eceiling.set(&src->floor, true);
-      inregion->efloor.set(&src->ceiling, true);
-    }
-    region->params = &src->params;
-    region->extraline = line;
-
-    if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
-    region->prev = inregion->prev;
-    region->next = inregion;
-    inregion->prev = region;
-
-    return;
-  }
-
-  GCon->Logf(NAME_Warning, "Invalid Vavoom 3d floor, tag %d (destsec=%d; srcsec=%d)", dst->tag, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors));
-}
-
-
-//==========================================================================
-//
-//  RegInsertAtBottom (so newreg->next will be oldreg)
-//
-//  if `oldreg` is nullptr, insert as top one
-//
-//==========================================================================
-static void RegInsertAtBottom (sector_t *sec, sec_region_t *newreg, sec_region_t *oldreg) {
-  if (!newreg) return;
-  check(sec);
-  if (oldreg) {
-    // insert before, so `oldrev->prev` will be newreg
-    newreg->next = oldreg;
-    newreg->prev = oldreg->prev;
-    if (oldreg->prev) oldreg->prev->next = newreg; else sec->botregion = newreg;
-    oldreg->prev = newreg;
-  } else {
-    // insert as top
-    newreg->prev = sec->topregion;
-    newreg->next = nullptr;
-    if (sec->topregion) sec->topregion->next = newreg; else sec->botregion = newreg;
-    sec->topregion = newreg;
-  }
-}
-
-
-//==========================================================================
-//
-//  RegInsertAtTop (so oldreg->next will be newreg)
-//
-//  if `oldreg` is nullptr, insert as bottom one
-//
-//==========================================================================
-static void RegInsertAtTop (sector_t *sec, sec_region_t *newreg, sec_region_t *oldreg) {
-  if (!newreg) return;
-  check(sec);
-  if (oldreg) {
-    // insert after, so `oldrev->next` will be newreg
-    newreg->prev = oldreg;
-    newreg->next = oldreg->next;
-    if (oldreg->next) oldreg->next->prev = newreg; else sec->topregion = newreg;
-    oldreg->next = newreg;
-  } else {
-    // insert as bottom
-    newreg->next = sec->botregion;
-    newreg->prev = nullptr;
-    if (sec->botregion) sec->botregion->prev = newreg; else sec->topregion = newreg;
-    sec->botregion = newreg;
-  }
+  // insert into region array
+  sec_region_t reg;
+  memset((void *)&reg, 0, sizeof(reg));
+  reg.efloor.set(&src->floor, flipped);
+  reg.eceiling.set(&src->ceiling, flipped);
+  reg.params = &src->params;
+  reg.extraline = line;
+  dst->regions.append(reg);
 }
 
 
@@ -2502,239 +2369,57 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   const bool isSolid = ((line->arg2&3) == Solid);
 
   sector_t *src = line->frontsector;
-  //src->SectorFlags |= sector_t::SF_ExtrafloorSource;
-  //dst->SectorFlags |= sector_t::SF_HasExtrafloors;
 
   if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
   if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz)); }
 
   float floorz = src->floor.GetPointZ(dst->soundorg);
   float ceilz = src->ceiling.GetPointZ(dst->soundorg);
-  //if (src->SectorFlags&sector_t::SF_GZDoomStyleReg) ceilz = src->origCeiling.GetPointZ(dst->soundorg);
-
-  float realFZ = floorz, realCZ = ceilz;
+  bool flipped = false;
 
   if (floorz > ceilz) {
-    SwapPlanes(src);
-    floorz = src->floor.GetPointZ(dst->soundorg);
-    ceilz = src->ceiling.GetPointZ(dst->soundorg);
-    realFZ = floorz;
-    realCZ = ceilz;
+    flipped = true;
+    floorz = src->ceiling.GetPointZ(dst->soundorg);
+    ceilz = src->floor.GetPointZ(dst->soundorg);
     GCon->Logf("Swapped planes for tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
-
-  if (ceilz <= dst->floor.minz) {
-    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is below dst (floorz=%g; ceilz=%g; dstfz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->floor.minz);
-    if (isSolid) return; // ignore it
-    /*
-    // insert as first
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-
-    region->efloor.set(&src->floor, true);
-    region->eceiling.set(&src->ceiling, true);
-    region->params = &src->params;
-    // for paper-thin regions, we don't need side surfaces
-    region->extraline = (realFZ == realCZ ? nullptr : line);
-    region->regflags |= sec_region_t::RF_NonSolid;
-
-    region->next = dst->botregion;
-    dst->botregion->prev = region;
-    dst->botregion = region;
-    return region;
-    */
-    return;
-  }
-
-  if (floorz >= dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is above dst (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    if (isSolid) return; // ignore it
-    /*
-    // insert as last
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-
-    region->efloor.set(&src->floor, true);
-    region->eceiling.set(&src->ceiling, true);
-    region->params = &src->params;
-    // for paper-thin regions, we don't need side surfaces
-    region->extraline = (realFZ == realCZ ? nullptr : line);
-    region->regflags |= sec_region_t::RF_NonSolid;
-
-    region->prev = dst->topregion;
-    dst->topregion->next = region;
-    dst->topregion = region;
-    return region;
-    */
-    return;
-  }
-
-  if (floorz < dst->floor.minz && ceilz > dst->ceiling.maxz) {
-    GCon->Logf(NAME_Warning, "3d floor for tag %d (dst #%d, src #%d) is too big (floorz=%g; ceilz=%g; dstcz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz, dst->ceiling.maxz);
-    //if (isSolid)
-    {
-      GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR!");
-      return;
-    }
-    /*
-    if ((line->arg2&3) != Swimmable) {
-      GCon->Logf(NAME_Warning, "THIS LOOKS LIKE A MAPPING ERROR, IT IS NON-SWIMMABLE!");
-      return nullptr;
-    }
-    */
-  }
-
-  if (floorz < dst->floor.minz) floorz = dst->floor.GetPointZ(dst->soundorg);
-  if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.GetPointZ(dst->soundorg);
-
-  if (floorz < dst->floor.minz) floorz = dst->floor.minz;
-  if (ceilz > dst->ceiling.maxz) ceilz = dst->ceiling.maxz;
 
   if (doDump) { GCon->Logf("3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz); }
   if (doDump) { GCon->Logf("::: BEFORE"); dumpSectorRegions(dst); }
 
-  // ghost non-paper-thin regions: insert before best ceiling (lower than it), ignoring floors
-  if (!isSolid && realFZ != realCZ) {
-    sec_region_t *dreg = nullptr; // insert before this
-    float bestCZ = 0.0f;
-    for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-      float inceilz = inregion->eceiling.GetPointZ(dst->soundorg);
-      // exact match?
-      if (realCZ == inceilz) {
-        dreg = inregion;
-        break;
-      }
-      // higher ceiling?
-      if (realCZ < inceilz) {
-        // check for better match
-        if (!dreg || inceilz < bestCZ) {
-          bestCZ = inceilz;
-          dreg = inregion;
-        }
-      }
-    }
+  // append link
+  src->SectorFlags |= sector_t::SF_ExtrafloorSource;
+  dst->SectorFlags |= sector_t::SF_HasExtrafloors;
+  AppendControlLink(src, dst);
 
-    dst->SectorFlags |= sector_t::SF_HasExtrafloors;
-    if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
-      if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
-      src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
-      src->origCeiling = src->ceiling;
-    }
-    src->SectorFlags |= sector_t::SF_ExtrafloorSource;
-    AppendControlLink(src, dst);
+  // insert into region array
+  sec_region_t reg;
+  memset((void *)&reg, 0, sizeof(reg));
+  reg.efloor.set(&src->floor, flipped);
+  reg.eceiling.set(&src->ceiling, flipped);
+  reg.params = &src->params;
+  reg.extraline = line;
+  if (!isSolid) reg.regflags |= sec_region_t::RF_NonSolid;
+  dst->regions.append(reg);
 
-    // create new region
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
+  if (!isSolid) {
+    // add paper-thin floor to render both sides of liquid bottom
+    memset((void *)&reg, 0, sizeof(reg));
+    reg.efloor.set(&src->floor, flipped);
+    reg.eceiling.set(&src->floor, !flipped);
+    reg.params = &src->params;
+    reg.extraline = nullptr;
+    reg.regflags |= sec_region_t::RF_OnlyVisual|sec_region_t::RF_SkipFloorSurf;
+    dst->regions.append(reg);
 
-    region->efloor.set(&src->floor, false);
-    region->eceiling.set(&src->ceiling, false);
-    region->params = &src->params;
-    region->extraline = line;
-    region->regflags |= sec_region_t::RF_NonSolid;
-
-    RegInsertAtBottom(dst, region, dreg);
-
-    // create two paper-thin surfaces for other sides of floor and ceiling
-
-    // paper-thin floor (it will render outside ceiling)
-    sec_region_t *fkfloor = new sec_region_t;
-    memset((void *)fkfloor, 0, sizeof(*fkfloor));
-    fkfloor->efloor.set(&src->floor, false);
-    fkfloor->eceiling.set(&src->floor, true); // flip floor, so it will become ceiling
-    fkfloor->params = &src->params;
-    fkfloor->extraline = nullptr; // it has no extra line
-    fkfloor->regflags |= sec_region_t::RF_NonSolid|sec_region_t::RF_SkipFloorSurf; // don't create floor surface
-    // insert before new region
-    RegInsertAtBottom(dst, fkfloor, region);
-
-    // paper-thin ceiling (it will render outside floor)
-    sec_region_t *fkceil = new sec_region_t;
-    memset((void *)fkceil, 0, sizeof(*fkceil));
-    fkceil->efloor.set(&src->ceiling, true); // flip ceiling, so it will become floor
-    fkceil->eceiling.set(&src->ceiling, false);
-    fkceil->params = &src->params;
-    fkceil->extraline = nullptr; // it has no extra line
-    fkceil->regflags |= sec_region_t::RF_NonSolid|sec_region_t::RF_SkipCeilSurf; // don't create floor surface
-    // insert after new region
-    RegInsertAtTop(dst, fkceil, region);
-
-    if (doDump) { GCon->Logf("::: GHOST; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst); }
-
-    return;
-  }
-
-  // solid, or paper-thin regions
-  for (sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    float infloorz = inregion->efloor.GetPointZ(dst->soundorg);
-    float inceilz = inregion->eceiling.GetPointZ(dst->soundorg);
-
-    bool doInsert = (infloorz <= floorz && inceilz >= ceilz);
-    // check if next region floor z is the same; if it is, move up
-    if (doInsert && inregion->next && inregion->next->efloor.GetPointZ(dst->soundorg) == infloorz) {
-      continue;
-    }
-
-    // check for sloped floor
-    if (!doInsert && inregion->efloor.GetNormalZ() != 1.0f) {
-      if (inregion->efloor.splane->maxz <= src->ceiling.minz &&
-          inregion->eceiling.splane->maxz >= src->floor.minz)
-      {
-        doInsert = true;
-      }
-    }
-    // check for sloped ceiling
-    if (!doInsert && inregion->eceiling.GetNormalZ() != -1.0f) {
-      if (inregion->efloor.splane->minz <= src->ceiling.maxz &&
-          inregion->eceiling.splane->minz >= src->floor.maxz)
-      {
-        doInsert = true;
-      }
-    }
-
-    if (!doInsert) continue;
-
-    dst->SectorFlags |= sector_t::SF_HasExtrafloors;
-
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-
-    if (!(src->SectorFlags&sector_t::SF_GZDoomStyleReg)) {
-      if (src->SectorFlags&sector_t::SF_ExtrafloorSource) Host_Error("3d floor type mismatch!");
-      src->SectorFlags |= sector_t::SF_GZDoomStyleReg;
-      src->origCeiling = src->ceiling;
-    }
-    src->SectorFlags |= sector_t::SF_ExtrafloorSource;
-    AppendControlLink(src, dst);
-
-    // solid, or paper-thin region
-    // new region is from old floor to new flipped floor
-    // old region from new flipped ceiling to old ceiling
-    // i.e. insert new emptyness at bottom
-    // side walls will be created between this and prev (i.e. betwen this and upper one)
-    region->efloor = inregion->efloor;
-    region->eceiling.set(&src->floor, true); // flip
-    region->params = &src->params;
-    // for paper-thin regions, we don't need side surfaces
-    region->extraline = (realFZ == realCZ ? nullptr : line);
-
-    inregion->efloor.set(&src->ceiling, true); // flip
-
-    if (inregion->prev) inregion->prev->next = region; else dst->botregion = region;
-    region->prev = inregion->prev;
-    region->next = inregion;
-    inregion->prev = region;
-
-    if (doDump) { GCon->Logf("::: SOLID; (%g, %g); real: (%g, %g)", floorz, ceilz, realFZ, realCZ); dumpSectorRegions(dst); }
-
-    return;
-  }
-
-  GCon->Logf(NAME_Warning, "Invalid extra floor, tag %d (destsec=%d; srcsec=%d)", dst->tag, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors));
-  if (doDump) {
-    sec_plane_t sceil = (src->SectorFlags&sector_t::SF_GZDoomStyleReg ? src->origCeiling : src->ceiling);
-    GCon->Logf("  dst: f=%g:%g; c=%g:%g; src: f=%g:%g; c=%g:%g", dst->floor.minz, dst->floor.maxz, dst->ceiling.minz, dst->ceiling.maxz, src->floor.minz, src->floor.maxz, sceil.minz, sceil.maxz);
-    dumpSectorRegions(dst);
+    // add paper-thin ceiling to render both sides of liquid bottom
+    memset((void *)&reg, 0, sizeof(reg));
+    reg.efloor.set(&src->ceiling, !flipped);
+    reg.eceiling.set(&src->ceiling, flipped);
+    reg.params = &src->params;
+    reg.extraline = nullptr;
+    reg.regflags |= sec_region_t::RF_OnlyVisual|sec_region_t::RF_SkipCeilSurf;
+    dst->regions.append(reg);
   }
 }
 
@@ -3232,6 +2917,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
         strm << ssnum;
       }
       // regions, from bottom to top
+      /*
       vint32 regcount = 0;
       for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) ++regcount;
       strm << regcount;
@@ -3249,6 +2935,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
         vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);
         strm << elidx;
       }
+      */
     }
   }
 

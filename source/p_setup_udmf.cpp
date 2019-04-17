@@ -1181,17 +1181,8 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   NumSectors = Parser.ParsedSectors.Num();
   Sectors = new sector_t[NumSectors];
   for (int i = 0; i < NumSectors; ++i) {
-    sector_t &S = Sectors[i];
     Sectors[i] = Parser.ParsedSectors[i];
-
-    // region
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-    region->efloor.set(&S.floor, false);
-    region->eceiling.set(&S.ceiling, false);
-    region->params = &S.params;
-    S.topregion = region;
-    S.botregion = region;
+    Sectors[i].CreateBaseRegion();
   }
   HashSectors();
 

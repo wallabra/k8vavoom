@@ -399,7 +399,7 @@ void VAdvancedRenderLevel::RenderThingFog (VEntity *mobj) {
   bool Additive;
   if (!SetupRenderStyleAndTime(mobj, RendStyle, Alpha, Additive, TimeFrac)) return;
 
-  vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
+  vuint32 Fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
   if (!Fade) return;
 
   DrawEntityModel(mobj, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);

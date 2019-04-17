@@ -76,7 +76,7 @@ struct sight_trace_t {
 //  SightCheckPlane
 //
 //==========================================================================
-static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Plane, unsigned blockflags) {
+static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Plane, unsigned blockflags, TVec &hitpoint) {
   if (Plane.splane->flags&blockflags) return true; // plane doesn't block
 
   const float OrgDist = Plane.DotPointDist(Trace.LineStart);
@@ -85,7 +85,10 @@ static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Pla
   const float HitDist = Plane.DotPointDist(Trace.LineEnd);
   if (HitDist >= -0.1f) return true; // didn't cross plane
 
-  if (Plane.splane->pic == skyflatnum) return false; // hit sky, don't clip
+  hitpoint = Trace.LineEnd;
+  if (Plane.splane->pic != skyflatnum) {
+    hitpoint -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
+  }
 
   // crosses plane
   return false;
@@ -97,21 +100,41 @@ static bool SightCheckPlane (const sight_trace_t &Trace, const TSecPlaneRef &Pla
 //  SightCheckPlanes
 //
 //==========================================================================
-static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *Sec, unsigned blockflags) {
-  if (!Sec->Has3DFloors()) return true; // don't bother with planes if there are no 3D floors
+static bool SightCheckPlanes (const sight_trace_t &Trace, sector_t *sec, unsigned blockflags) {
+  TVec besthit(0.0f, 0.0f, 0.0f);
+  TVec currhit(0.0f, 0.0f, 0.0f);
+  bool wasHit = false;
+  float besthdist = 999999.0f;
 
-  sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
+  //k8: for some reason, sight checks ignores base sector region
+  //if (!sec->Has3DFloors()) return true;
 
-  if (StartReg != nullptr) {
-    for (sec_region_t *Reg = StartReg; Reg; Reg = Reg->next) {
-      if (!SightCheckPlane(Trace, Reg->efloor, blockflags)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling, blockflags)) return false; // hit ceiling
+  const sec_region_t *reg = sec->regions.ptr()+1;
+  for (int rcount = sec->regions.length()-1; rcount--; ++reg) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    if (!SightCheckPlane(Trace, reg->efloor, blockflags, currhit)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        besthdist = dist;
+      }
     }
-
-    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
-      if (!SightCheckPlane(Trace, Reg->efloor, blockflags)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling, blockflags)) return false; // hit ceiling
+    if (!SightCheckPlane(Trace, reg->eceiling, blockflags, currhit)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        besthdist = dist;
+      }
     }
+  }
+
+  if (wasHit) {
+    // hit floor or ceiling
+    return false;
   }
 
   return true;

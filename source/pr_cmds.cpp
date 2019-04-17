@@ -591,6 +591,7 @@ IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
 //  FindThingGap
 //
 //==========================================================================
+/*
 IMPLEMENT_FUNCTION(VObject, FindThingGap) {
   P_GET_FLOAT(height);
   P_GET_PTR(TVec, point);
@@ -601,6 +602,7 @@ IMPLEMENT_FUNCTION(VObject, FindThingGap) {
     RET_PTR(nullptr);
   }
 }
+*/
 
 
 //==========================================================================
@@ -621,10 +623,22 @@ IMPLEMENT_FUNCTION(VObject, FindOpening) {
 //  PointInRegion
 //
 //==========================================================================
+/*
 IMPLEMENT_FUNCTION(VObject, PointInRegion) {
   P_GET_VEC(p);
   P_GET_PTR(sector_t, sector);
   RET_PTR(SV_PointInRegion(sector, p));
+}
+*/
+
+
+//native static final void GetSectorGapCoords (const GameObject::sector_t *sector, const ref TVec point, out float floorz, out float ceilz);
+IMPLEMENT_FUNCTION(VObject, GetSectorGapCoords) {
+  P_GET_PTR(float, ceilz);
+  P_GET_PTR(float, floorz);
+  P_GET_PTR(TVec, point);
+  P_GET_PTR(sector_t, sector);
+  SV_GetSectorGapCoords(sector, *point, *floorz, *ceilz);
 }
 
 

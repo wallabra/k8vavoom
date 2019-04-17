@@ -581,15 +581,8 @@ bool VEntity::CheckWater () {
 //
 //==========================================================================
 bool VEntity::CheckPosition (TVec Pos) {
-  int xl;
-  int xh;
-  int yl;
-  int yh;
-  int bx;
-  int by;
-  subsector_t *newsubsec;
-  sec_region_t *gap;
-  sec_region_t *reg;
+  //sec_region_t *gap;
+  //sec_region_t *reg;
   tmtrace_t cptrace;
   bool good = true;
 
@@ -601,10 +594,14 @@ bool VEntity::CheckPosition (TVec Pos) {
   cptrace.BBox[BOXRIGHT] = Pos.x+Radius;
   cptrace.BBox[BOXLEFT] = Pos.x-Radius;
 
-  newsubsec = XLevel->PointInSubsector(Pos);
+  subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
 
   // The base floor / ceiling is from the subsector that contains the point.
   // Any contacted lines the step closer together will adjust them.
+  SV_FindGapFloorCeiling(newsubsec->sector, Pos, Height, cptrace.EFloor, cptrace.ECeiling);
+  cptrace.DropOffZ = cptrace.FloorZ = cptrace.EFloor.GetPointZ(Pos);
+  cptrace.CeilingZ = cptrace.ECeiling.GetPointZ(Pos);
+  /*
   gap = SV_FindThingGap(newsubsec->sector, Pos, Height);
   reg = gap;
   while (reg->prev && (reg->efloor.splane->flags&SPF_NOBLOCKING) != 0) reg = reg->prev;
@@ -613,6 +610,7 @@ bool VEntity::CheckPosition (TVec Pos) {
   reg = gap;
   while (reg->next && (reg->eceiling.splane->flags&SPF_NOBLOCKING) != 0) reg = reg->next;
   cptrace.CopyRegCeiling(reg, &Pos);
+  */
 
   //++validcount;
   XLevel->IncrementValidCount();
@@ -623,13 +621,13 @@ bool VEntity::CheckPosition (TVec Pos) {
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
-    xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
-    yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
-    yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
+    const int xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
+    const int xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
+    const int yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
+    const int yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
 
-    for (bx = xl; bx <= xh; ++bx) {
-      for (by = yl; by <= yh; ++by) {
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
           if (!CheckThing(cptrace, *It)) return false;
         }
@@ -639,13 +637,13 @@ bool VEntity::CheckPosition (TVec Pos) {
 
   if (EntityFlags&EF_ColideWithWorld) {
     // check lines
-    xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
-    xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
-    yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
-    yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
+    const int xl = MapBlock(cptrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
+    const int xh = MapBlock(cptrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    const int yl = MapBlock(cptrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    const int yh = MapBlock(cptrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
 
-    for (bx = xl; bx <= xh; ++bx) {
-      for (by = yl; by <= yh; ++by) {
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
         line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
           //good &= CheckLine(cptrace, ld);
@@ -1905,10 +1903,18 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
             P_BoxOnLineSide(t_bbox, line) == -1)
         {
           // new logic for 3D Floors
+          /*
           sec_region_t *FrontReg = SV_FindThingGap(line->frontsector, Origin, Height);
           sec_region_t *BackReg = SV_FindThingGap(line->backsector, Origin, Height);
           float front = FrontReg->efloor.GetPointZ(Origin);
           float back = BackReg->efloor.GetPointZ(Origin);
+          */
+          TSecPlaneRef ffloor, fceiling;
+          TSecPlaneRef bfloor, bceiling;
+          SV_FindGapFloorCeiling(line->frontsector, Origin, Height, ffloor, fceiling);
+          SV_FindGapFloorCeiling(line->backsector, Origin, Height, bfloor, bceiling);
+          const float front = ffloor.GetPointZ(Origin);
+          const float back = bfloor.GetPointZ(Origin);
 
           // the monster must contact one of the two floors, and the other must be a tall dropoff
           TVec Dir;

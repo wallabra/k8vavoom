@@ -532,12 +532,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     seclight = (seclight&0xff000000)|(mobj->StencilColour&0xffffff);
   }
 
-  vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
-  //vuint32 Fade = GetFade(SV_PointInRegion(mobj->SubSector->sector, mobj->Origin));
-  //vuint32 Fade = GetFade(SV_PointInRegion(Level->PointInSubsector(mobj->Origin)->sector, mobj->Origin));
-  //if (mobj->SubSector->sector->botregion->next) {
-  //  GCon->Logf("%s: fade=0x%08x, rfd=0x%08x", *mobj->GetClass()->GetFullName(), Fade, SV_PointInRegion(mobj->SubSector->sector, mobj->Origin)->params->Fade);
-  //}
+  vuint32 Fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
 
   // try to draw a model
   // if it's a script and it doesn't specify model for this frame, draw sprite instead
@@ -1048,7 +1043,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       light = (light&0xff000000u)|(cl->MO->StencilColour&0xffffffu);
     }
 
-    vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
+    vuint32 Fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
 
     const float currSY = cl->ViewStates[i].SY;
     float dur = cl->PSpriteWeaponLoweringDuration;

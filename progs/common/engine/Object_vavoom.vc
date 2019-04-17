@@ -472,20 +472,30 @@ native static final string LoadTextLump (name Name);
 // warning! never change openings, they are cached!
 // default blockmask is `SPF_NOBLOCKING`
 native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, const ref TVec point, optional int blockmask, optional bool do3dmidtex);
+
 // returns 0 - front, 1 - back, -1 - on
 native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
+
 // used for various 3dmidtex calculations
 native static final bool P_GetMidTexturePosition (const GameObject::line_t *line, int sideno, out float ptextop, out float ptexbot);
+
 // find the best gap that the thing could fit in, given a certain Z position
 // `point.z` is bottom
 // warning! never change regions, they are cached!
-native static final GameObject::sec_region_t *FindThingGap (const GameObject::sector_t *sector, const ref TVec point, float height);
+// for now, this is never used in the code, so i removed it
+//native static final GameObject::sec_region_t *FindThingGap (const GameObject::sector_t *sector, const ref TVec point, float height);
+
+//native static final GameObject::opening_t *BuildSectorOpeningsAt (const GameObject::sector_t *sector, const ref TVec point, int blockmask);
+native static final void GetSectorGapCoords (const GameObject::sector_t *sector, const ref TVec point, out float floorz, out float ceilz);
+
 // find the best opening
 // warning! never change openings, they are cached!
 native static final GameObject::opening_t *FindOpening (const GameObject::opening_t *gaps, float z1, float z2);
+
 // find best region in sector for a given point
 // warning! never change regions, they are cached!
-native static final GameObject::sec_region_t *PointInRegion (GameObject::sector_t *sector, TVec p);
+//native static final GameObject::sec_region_t *PointInRegion (GameObject::sector_t *sector, TVec p);
+
 // given a point (x,y), returns the point (ox,oy) on the sector's defining
 // lines that is nearest to (x,y).
 // ignores `z`.
@@ -496,7 +506,7 @@ native static final TVec SectorClosestPoint (GameObject::sector_t *sec, TVec in)
 static final GameObject::opening_t *FindLineOpening (GameObject::line_t *linedef, const ref TVec point, float Height, optional int blockmask, optional bool do3dmidtex) {
   auto open = LineOpenings(linedef, point, blockmask!optional, do3dmidtex!optional);
   if (!open) return nullptr;
-  return FindOpening(open, point.z, point.z+Height);
+  return FindOpening(open, point.z, point.z+fmax(0, Height));
 }
 
 

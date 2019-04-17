@@ -130,22 +130,31 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 //  delta will be clamped to [0..)
 //
 //==========================================================================
-final void BloodAddZClamped (ref TVec spos, float delta) {
+final void BloodAddZClamped (ref TVec spos, float delta, float height) {
   if (!delta) return;
   auto sec = XLevel.PointInSector(spos);
-  auto reg = PointInRegion(sec, spos);
-  if (reg) {
+  height = fmax(0, height);
+  float fz, cz;
+  GetSectorGapCoords(sec, spos, out fz, out cz);
+  if (cz-fz <= height) return;
+  spos.z += delta;
+  spos.z = fclamp(fz, spos.z, cz-height);
+  /*
+  opening_t *open = BuildSectorOpeningsAt(sec, spos, SPF_NOBLOCKSHOOT); // each sector has at least one
+  open = FindOpening(open, spos.z, spos.z+fmax(0, height));
+  if (open) {
     if (delta > 0) {
-      // positive delta
-      spos.z = fmin(spos.z+delta, reg.eceiling.splane.minz-1);
+      // positive delta (up)
+      spos.z = fmin(spos.z+delta, open.eceiling.splane.minz-1-fmax(0, height));
     } else {
-      // negative delta
-      spos.z = fmax(spos.z+delta, reg.efloor.splane.maxz+1);
+      // negative delta (down)
+      spos.z = fmax(spos.z+delta, open.efloor.splane.maxz+1);
     }
     //print("spz=%s; cmz=%s", spos.z, reg.ceiling.splane.minz);
   } else {
     spos.z += delta;
   }
+  */
 }
 
 
@@ -207,7 +216,7 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
       spos.y = Origin.y+((Random()*51-25)/10.0);
       spos.z = Origin.z;
       float zmax = hgt+((Random()*29-14)/10.0);
-      BloodAddZClamped(spos, zmax);
+      BloodAddZClamped(spos, zmax, bloodClass.default.Height);
       EntityEx bld = EntityEx(Level.Spawn(bloodClass, spos)); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
       if (bld) {
         bld.SetBloodArgs(self, damage);
@@ -258,7 +267,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   //ShootOrigin.z += Height*0.5-FloorClip;
   if (specified_zofs) {
     //shootOrigin.z += zofs;
-    BloodAddZClamped(shootOrigin, zofs);
+    BloodAddZClamped(shootOrigin, zofs, 0);
   } else {
     //shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
   }
@@ -489,7 +498,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
 
   //Org.z += (Random()-Random())*4.0;
   if (!specified_zofs) zofs = (Random()-Random())*4.0;
-  BloodAddZClamped(Org, zofs);
+  BloodAddZClamped(Org, zofs, (BloodType ? BloodType.default.Height : 0));
   damage = (damage > 255 ? 255 : damage);
   c = P_Random()>>1;
   for (i = 0; i < MAXPLAYERS; ++i) {
@@ -674,7 +683,7 @@ final void SpawnRipperBlood () {
   org.x = Origin.x+(Random()-Random())*16.0;
   org.y = Origin.y+(Random()-Random())*16.0;
   org.z = Origin.z;
-  BloodAddZClamped(org, (Random()-Random())*16.0);
+  BloodAddZClamped(org, (Random()-Random())*16.0, BloodType.default.Height);
 
   EntityEx th = Spawn(BloodType, org);
   if (!th) return;

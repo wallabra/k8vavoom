@@ -687,8 +687,8 @@ private:
   bool PolyCheckMobjBlocking (seg_t *, polyobj_t *);
 
   // internal TraceLine methods
-  bool CheckPlane (linetrace_t &, const TSecPlaneRef &Plane) const;
-  bool CheckPlanes (linetrace_t &, sector_t *) const;
+  //bool CheckPlane (linetrace_t &, const TSecPlaneRef &Plane) const;
+  //bool CheckPlanes (linetrace_t &, sector_t *) const;
   bool CheckLine (linetrace_t &, seg_t *) const;
   bool CrossSubsector (linetrace_t &, int) const;
   bool CrossBSPNode (linetrace_t &, int) const;

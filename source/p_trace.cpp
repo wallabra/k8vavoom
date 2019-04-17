@@ -30,10 +30,10 @@
 
 //==========================================================================
 //
-//  VLevel::CheckPlane
+//  CheckPlane
 //
 //==========================================================================
-bool VLevel::CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane) const {
+static bool CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane, TVec &hitpoint, TVec &hitnorm) {
   if (Plane.splane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
 
   const float OrgDist = Plane.DotPointDist(Trace.LineStart);
@@ -42,11 +42,15 @@ bool VLevel::CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane) const {
   const float HitDist = Plane.DotPointDist(Trace.LineEnd);
   if (HitDist >= -0.1f) return true; // didn't cross plane
 
-  if (Plane.splane->pic == skyflatnum) return false; // hit sky, don't clip
+  hitnorm = Plane.GetNormal();
+  hitpoint = Trace.LineEnd;
+  if (Plane.splane->pic != skyflatnum) {
+    hitpoint -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
+  }
 
   // hit plane
-  Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
-  Trace.HitPlaneNormal = Plane.GetNormal();
+  //Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
+  //Trace.HitPlaneNormal = Plane.GetNormal();
 
   // crosses plane
   return false;
@@ -55,22 +59,68 @@ bool VLevel::CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane) const {
 
 //==========================================================================
 //
-//  VLevel::CheckPlanes
+//  CheckPlanes
 //
 //==========================================================================
-bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
-  sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
+static bool CheckPlanes (linetrace_t &Trace, sector_t *sec) {
+  TVec besthit(0.0f, 0.0f, 0.0f);
+  TVec bestnorm(0.0f, 0.0f, 0.0f);
+  TVec currhit(0.0f, 0.0f, 0.0f);
+  TVec currnorm(0.0f, 0.0f, 0.0f);
+  bool wasHit = false;
+  float besthdist = 999999.0f;
+  TSecPlaneRef spl;
 
-  if (StartReg != nullptr) {
-    for (sec_region_t *Reg = StartReg; Reg != nullptr; Reg = Reg->next) {
-      if (!CheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!CheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
-    }
+  // check sector floor and ceiling
+  spl.set(&sec->floor, false);
+  if (!CheckPlane(Trace, spl, currhit, currnorm)) {
+    wasHit = true;
+    besthit = currhit;
+    bestnorm = currnorm;
+    besthdist = (currhit-Trace.LineStart).lengthSquared();
+  }
 
-    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
-      if (!CheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!CheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
+  spl.set(&sec->ceiling, false);
+  if (!CheckPlane(Trace, spl, currhit, currnorm)) {
+    wasHit = true;
+    float dist = (currhit-Trace.LineStart).lengthSquared();
+    if (dist < besthdist) {
+      besthit = currhit;
+      bestnorm = currnorm;
+      besthdist = dist;
     }
+  }
+
+  const sec_region_t *reg = sec->regions.ptr();
+  for (int rcount = sec->regions.length(); rcount--; ++reg) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    if (!CheckPlane(Trace, reg->efloor, currhit, currnorm)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestnorm = currnorm;
+        besthdist = dist;
+      }
+    }
+    if (!CheckPlane(Trace, reg->eceiling, currhit, currnorm)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestnorm = currnorm;
+        besthdist = dist;
+      }
+    }
+  }
+
+  if (wasHit) {
+    // hit floor or ceiling
+    Trace.LineEnd = besthit;
+    Trace.HitPlaneNormal = bestnorm;
+    return false;
   }
 
   return true;
@@ -295,7 +345,7 @@ struct SightTraceInfo {
 //  SightCheckPlane
 //
 //==========================================================================
-static bool SightCheckPlane (SightTraceInfo &Trace, const TSecPlaneRef &Plane) {
+static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Plane, TVec &hitpoint) {
   if (Plane.splane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
 
   const float OrgDist = Plane.DotPointDist(Trace.LineStart);
@@ -304,11 +354,10 @@ static bool SightCheckPlane (SightTraceInfo &Trace, const TSecPlaneRef &Plane) {
   const float HitDist = Plane.DotPointDist(Trace.LineEnd);
   if (HitDist >= -0.1f) return true; // didn't cross plane
 
-  if (Plane.splane->pic == skyflatnum) return false; // hit sky, don't clip
-
-  // hit plane
-  Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
-  Trace.HitPlaneNormal = Plane.GetNormal();
+  hitpoint = Trace.LineEnd;
+  if (Plane.splane->pic != skyflatnum) {
+    hitpoint -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
+  }
 
   // crosses plane
   return false;
@@ -320,21 +369,39 @@ static bool SightCheckPlane (SightTraceInfo &Trace, const TSecPlaneRef &Plane) {
 //  SightCheckPlanes
 //
 //==========================================================================
-static bool SightCheckPlanes (SightTraceInfo &Trace, sector_t *Sec) {
-  if (!Sec->Has3DFloors()) return true; // don't bother with planes if there are no 3D floors
+static bool SightCheckPlanes (const SightTraceInfo &Trace, sector_t *sec) {
+  TVec besthit(0.0f, 0.0f, 0.0f);
+  TVec currhit(0.0f, 0.0f, 0.0f);
+  bool wasHit = false;
+  float besthdist = 999999.0f;
 
-  sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
-
-  if (StartReg != nullptr) {
-    for (sec_region_t *Reg = StartReg; Reg; Reg = Reg->next) {
-      if (!SightCheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
+  // check sector floor and ceiling
+  const sec_region_t *reg = sec->regions.ptr();
+  for (int rcount = sec->regions.length(); rcount--; ++reg) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    if (!SightCheckPlane(Trace, reg->efloor, currhit)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        besthdist = dist;
+      }
     }
-
-    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
-      if (!SightCheckPlane(Trace, Reg->efloor)) return false; // hit floor
-      if (!SightCheckPlane(Trace, Reg->eceiling)) return false; // hit ceiling
+    if (!SightCheckPlane(Trace, reg->eceiling, currhit)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-Trace.LineStart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        besthdist = dist;
+      }
     }
+  }
+
+  if (wasHit) {
+    // hit floor or ceiling
+    return false;
   }
 
   return true;

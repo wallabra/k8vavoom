@@ -221,19 +221,23 @@ COMMAND(my_sector_info) {
   GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
   GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
 
-  sec_region_t *reg = SV_PointInRegion(sec, Player->MO->Origin);
+  sec_region_t *reg = SV_PointRegionLight(sec, Player->MO->Origin);
   GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
 
   if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
   if (Args.length() > 2) {
-    sec_region_t *gap = SV_FindThingGap(sec, Player->MO->Origin, Player->MO->Height, true);
-    if (gap) GCon->Logf("=== GAP: %p", gap);
-    gap = SV_PointInRegion(sec, Player->MO->Origin, true);
+    TSecPlaneRef floor, ceiling;
+    SV_FindGapFloorCeiling(sec, Player->MO->Origin, Player->MO->Height, floor, ceiling);
+    GCon->Logf(" gap floor: %g (%g,%g,%g:%g)", floor.GetPointZ(Player->MO->Origin), floor.GetNormal().x, floor.GetNormal().y, floor.GetNormal().z, floor.GetDist());
+    GCon->Logf(" gap ceil : %g (%g,%g,%g:%g)", ceiling.GetPointZ(Player->MO->Origin), ceiling.GetNormal().x, ceiling.GetNormal().y, ceiling.GetNormal().z, ceiling.GetDist());
+    /*
+    sec_region_t *gap = SV_PointRegionLight(sec, Player->MO->Origin, true);
     if (gap) GCon->Logf("=== PT0: %p", gap);
-    gap = SV_PointInRegion(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height*0.5f), true);
+    gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height*0.5f), true);
     if (gap) GCon->Logf("=== PT1: %p", gap);
-    gap = SV_PointInRegion(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
+    gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
     if (gap) GCon->Logf("=== PT2: %p", gap);
+    */
   }
 }
 

@@ -502,19 +502,13 @@ struct sec_params_t {
 };
 
 
-// "regions" are floor/ceiling info for sector
-// region "inside" is empty, and you can walk there
+// "regions" keeps 3d floors for sector
+// region inside may be non-solid, if the corresponding flag is set
 struct sec_region_t {
-  // linked list of regions in bottom to top order
-  sec_region_t *prev; // region at the top
-  sec_region_t *next; // region at the bottom
-
   // planes
-  //sec_plane_t *efloor;
-  //sec_plane_t *eceiling;
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
-
+  // contents and lighting
   sec_params_t *params;
 
   // side of this region
@@ -522,10 +516,13 @@ struct sec_region_t {
   // this is from our floor to our ceiling
   line_t *extraline;
 
+  // flags are here to implement shitty gozzo 3d shit
   enum {
-    RF_NonSolid      = 1u<<0, // this is used for shitty gozzo "non-solid" 3d floors
-    RF_SkipFloorSurf = 1u<<1, // this is used for shitty gozzo "non-solid" 3d floors
-    RF_SkipCeilSurf  = 1u<<2, // this is used for shitty gozzo "non-solid" 3d floors
+    RF_SaneRegion    = 1u<<0, // sane Vavoom-style region; only one, only first
+    RF_NonSolid      = 1u<<1,
+    RF_OnlyVisual    = 1u<<2, // ignore this region in gap/opening processing
+    RF_SkipFloorSurf = 1u<<3, // do not create floor surface for this region
+    RF_SkipCeilSurf  = 1u<<4, // do not create ceiling surface for this region
   };
   vuint32 regflags;
 };
@@ -572,8 +569,11 @@ struct sector_t {
   // regions are (roughly) sorted from bottom to top, so you can start
   // from `botregion` and follow `next` pointer
   // note that sorting order is not necessarily strict
-  sec_region_t *topregion; // highest region
-  sec_region_t *botregion; // lowest region
+  //sec_region_t *topregion; // highest region
+  //sec_region_t *botregion; // lowest region
+
+  // first region is always base sector region that keeps "emptyness"
+  TArray<sec_region_t> regions;
 
   // this is cached planes for thing gap determination
   // planes are sorted by... something
@@ -629,7 +629,6 @@ struct sector_t {
     SF_Silent           = 0x0100, // actors don't make noise in this sector
     SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
     SF_FakeCeilingOnly  = 0x0400, // when used as heightsec in R_FakeFlat, only copies ceiling
-    SF_GZDoomStyleReg   = 0x0800, // gzdoom-style region (special wall creation code)
   };
   vuint32 SectorFlags;
 
@@ -667,10 +666,9 @@ struct sector_t {
   sector_t *othersecFloor;
   sector_t *othersecCeiling;
 
-  // for gozzo source sectors
-  sec_plane_t origCeiling;
-
   bool Has3DFloors () const;
+  // should be called for new sectors to setup base region
+  void CreateBaseRegion ();
 };
 
 

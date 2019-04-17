@@ -262,14 +262,7 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 //==========================================================================
 void VLevel::ClearAllLevelData () {
   if (Sectors) {
-    for (int i = 0; i < NumSectors; ++i) {
-      sec_region_t *r = Sectors[i].botregion;
-      while (r) {
-        sec_region_t *Next = r->next;
-        delete r;
-        r = Next;
-      }
-    }
+    for (int i = 0; i < NumSectors; ++i) Sectors[i].regions.clear();
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
@@ -1586,14 +1579,6 @@ void VLevel::LoadSectors (int Lump) {
     // params
     ss->params.lightlevel = lightlevel;
     ss->params.LightColour = 0x00ffffff;
-    // region
-    sec_region_t *region = new sec_region_t;
-    memset((void *)region, 0, sizeof(*region));
-    region->efloor.set(&ss->floor, false);
-    region->eceiling.set(&ss->ceiling, false);
-    region->params = &ss->params;
-    ss->topregion = region;
-    ss->botregion = region;
 
     ss->special = special;
     ss->tag = tag;
@@ -1601,6 +1586,8 @@ void VLevel::LoadSectors (int Lump) {
     ss->seqType = -1; // default seqType
     ss->Gravity = 1.0f;  // default sector gravity of 1.0
     ss->Zone = -1;
+
+    ss->CreateBaseRegion();
   }
   //HashSectors(); //k8: do it later, 'cause map fixer can change loaded map
 }

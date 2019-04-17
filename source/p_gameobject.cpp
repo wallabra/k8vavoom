@@ -37,7 +37,23 @@ IMPLEMENT_CLASS(V, GameObject)
 //
 //==========================================================================
 bool sector_t::Has3DFloors () const {
-  return (topregion != botregion);
+  return (regions.length() > 1);
+}
+
+
+//==========================================================================
+//
+//  sector_t::Has3DFloors
+//
+//==========================================================================
+void sector_t::CreateBaseRegion () {
+  check(regions.length() == 0);
+  sec_region_t &reg = regions.alloc();
+  reg.efloor.set(&floor, false);
+  reg.eceiling.set(&ceiling, false);
+  reg.params = &params;
+  reg.extraline = nullptr;
+  reg.regflags = sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid;
 }
 
 

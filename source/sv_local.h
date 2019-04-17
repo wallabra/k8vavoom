@@ -211,14 +211,12 @@ struct opening_t {
   float bottom;
   float range; // top-bottom, to avoid calculations
   float lowfloor; // this is used for dropoffs: floor height on the other side (always lower than bottom)
-  //float highceiling;
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
-  //sec_plane_t *lowfloorplane;
-  //sec_plane_t *highceilingplane;
-  // next for this line
+  // for this list
   opening_t *next;
-  // allocated list is double-linked, free list only using `listprev`
+  //opening_t *prev;
+  // allocated list is double-linked, free list only using `listnext`
   opening_t *listprev;
   opening_t *listnext;
 
@@ -228,11 +226,10 @@ struct opening_t {
       bottom = op->bottom;
       range = op->range;
       lowfloor = op->lowfloor;
-      //highceiling = op->highceiling;
       efloor = op->efloor;
       eceiling = op->eceiling;
     } else {
-      top = bottom = range = lowfloor = /*highceiling =*/ 0.0f;
+      top = bottom = range = lowfloor = 0.0f;
       efloor.splane = eceiling.splane = nullptr;
     }
   }
@@ -244,22 +241,25 @@ int P_BoxOnLineSide (float *tmbox, line_t *ld);
 
 bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
 
-int SV_PointContents (const sector_t *sector, const TVec &p);
-sec_region_t *SV_PointInRegion (const sector_t *sector, const TVec &p, bool dbgDump=false);
+int SV_PointContents (sector_t *sector, const TVec &p);
+
+// this is used to get region lighting
+sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump=false);
+
+// `point` can be `nullptr`
+//opening_t *SV_BuildSectorOpenings (sector_t *sector, const TVec point, unsigned NoBlockFlags);
+
+void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz);
 
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
 
-// this can return region with non-blocking floor/ceiling
-// `point.z` is bottom
-sec_region_t *SV_FindThingGap (const sector_t *sector, const TVec &point, float height, bool dbgDump=false);
-
 // this is slow!
 // it is used to find lowest sector point for silent teleporters
-float SV_GetLowestSolidPointZ (const sector_t *sector, const TVec &point);
+float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
 
-// this calls `SV_FindThingGap`, and returns blocking floor and ceiling planes
+// find region for thing, and return best floor/ceiling
 // `p.z` is bottom
-void SV_FindGapFloorCeiling (const sector_t *sector, const TVec &p, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling);
+void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling);
 
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 
