@@ -842,7 +842,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
     }
 
-    for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+    //for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;

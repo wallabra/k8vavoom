@@ -2314,15 +2314,12 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   sector_t *src = line->frontsector;
 
-  float floorz = src->floor.GetPointZ(dst->soundorg);
-  float ceilz = src->ceiling.GetPointZ(dst->soundorg);
+  const float floorz = src->floor.GetPointZ(dst->soundorg);
+  const float ceilz = src->ceiling.GetPointZ(dst->soundorg);
   bool flipped = false;
 
-  if (floorz > ceilz) {
+  if (floorz < ceilz) {
     flipped = true;
-    floorz = src->ceiling.GetPointZ(dst->soundorg);
-    ceilz = src->floor.GetPointZ(dst->soundorg);
-  } else {
     GCon->Logf("Swapped planes for Vavoom 3d floor, tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
 
@@ -2332,10 +2329,19 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   AppendControlLink(src, dst);
 
   // insert into region array
+  // control must have negative height, so
+  // region floor is ceiling, and region ceiling is floor
   sec_region_t reg;
   memset((void *)&reg, 0, sizeof(reg));
-  reg.efloor.set(&src->floor, flipped);
-  reg.eceiling.set(&src->ceiling, flipped);
+  if (flipped) {
+    // flipped
+    reg.efloor.set(&src->floor, true);
+    reg.eceiling.set(&src->ceiling, true);
+  } else {
+    // normal
+    reg.efloor.set(&src->ceiling, false);
+    reg.eceiling.set(&src->floor, false);
+  }
   reg.params = &src->params;
   reg.extraline = line;
   dst->regions.append(reg);
@@ -2373,14 +2379,12 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
   if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz)); }
 
-  float floorz = src->floor.GetPointZ(dst->soundorg);
-  float ceilz = src->ceiling.GetPointZ(dst->soundorg);
+  const float floorz = src->floor.GetPointZ(dst->soundorg);
+  const float ceilz = src->ceiling.GetPointZ(dst->soundorg);
   bool flipped = false;
 
   if (floorz > ceilz) {
     flipped = true;
-    floorz = src->ceiling.GetPointZ(dst->soundorg);
-    ceilz = src->floor.GetPointZ(dst->soundorg);
     GCon->Logf("Swapped planes for tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
 
@@ -2395,30 +2399,44 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   // insert into region array
   sec_region_t reg;
   memset((void *)&reg, 0, sizeof(reg));
-  reg.efloor.set(&src->floor, flipped);
-  reg.eceiling.set(&src->ceiling, flipped);
+  if (isSolid) {
+    // solid region: floor points down, ceiling points up
+    if (flipped) {
+      // flipped
+      reg.efloor.set(&src->ceiling, false);
+      reg.eceiling.set(&src->floor, false);
+    } else {
+      // normal
+      reg.efloor.set(&src->floor, true);
+      reg.eceiling.set(&src->ceiling, true);
+    }
+  } else {
+    // non-solid region: floor points up, ceiling points down
+    if (flipped) {
+      // flipped
+      reg.efloor.set(&src->ceiling, true);
+      reg.eceiling.set(&src->floor, true);
+    } else {
+      // normal
+      reg.efloor.set(&src->floor, false);
+      reg.eceiling.set(&src->ceiling, false);
+    }
+  }
   reg.params = &src->params;
   reg.extraline = line;
-  if (!isSolid) reg.regflags |= sec_region_t::RF_NonSolid;
+  if (!isSolid) {
+    reg.extraline = nullptr; //FIXME!
+    reg.regflags |= sec_region_t::RF_NonSolid;
+  }
   dst->regions.append(reg);
 
   if (!isSolid) {
-    // add paper-thin floor to render both sides of liquid bottom
-    memset((void *)&reg, 0, sizeof(reg));
-    reg.efloor.set(&src->floor, flipped);
-    reg.eceiling.set(&src->floor, !flipped);
-    reg.params = &src->params;
+    // non-solid regions has visible floor and ceiling only when camera is inside
+    // add the same region, but with flipped floor and ceiling (and mark it as visual only)
+    reg.efloor.Flip();
+    reg.eceiling.Flip();
     reg.extraline = nullptr;
-    reg.regflags |= sec_region_t::RF_OnlyVisual|sec_region_t::RF_SkipFloorSurf;
-    dst->regions.append(reg);
-
-    // add paper-thin ceiling to render both sides of liquid bottom
-    memset((void *)&reg, 0, sizeof(reg));
-    reg.efloor.set(&src->ceiling, !flipped);
-    reg.eceiling.set(&src->ceiling, flipped);
-    reg.params = &src->params;
-    reg.extraline = nullptr;
-    reg.regflags |= sec_region_t::RF_OnlyVisual|sec_region_t::RF_SkipCeilSurf;
+    reg.regflags = sec_region_t::RF_OnlyVisual;
     dst->regions.append(reg);
   }
 }
@@ -2442,13 +2460,9 @@ void VLevel::AddExtraFloor (line_t *line, sector_t *dst) {
 //
 //==========================================================================
 void SwapPlanes (sector_t *s) {
-  float tempHeight;
-  int tempTexture;
+  float tempHeight = s->floor.TexZ;
+  int tempTexture = s->floor.pic;
 
-  tempHeight = s->floor.TexZ;
-  tempTexture = s->floor.pic;
-
-  //  Floor
   s->floor.TexZ = s->ceiling.TexZ;
   s->floor.dist = s->floor.TexZ;
   s->floor.minz = s->floor.TexZ;
