@@ -208,6 +208,7 @@ private:
 
 public:
   //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
+  virtual void PostCtor () override;
 
   const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
   const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
@@ -333,6 +334,38 @@ public:
   bool eventCheckDoubleFiringSpeed () { P_PASS_SELF; EV_RET_BOOL(NAME_CheckDoubleFiringSpeed); }
 
   bool IsCheckpointPossible () { P_PASS_SELF; EV_RET_BOOL(VName("IsCheckpointPossible")); }
+
+  void eventResetToDefaults () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ResetToDefaults"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventOnSaveLoaded () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventOnSaveLoaded"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventOnBeforeSave (bool autosave, bool checkpoint) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventOnBeforeSave"));
+    P_PASS_SELF;
+    P_PASS_BOOL(autosave);
+    P_PASS_BOOL(checkpoint);
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventOnAfterSave (bool autosave, bool checkpoint) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventOnAfterSave"));
+    P_PASS_SELF;
+    P_PASS_BOOL(autosave);
+    P_PASS_BOOL(checkpoint);
+    EV_RET_VOID_IDX(mtindex);
+  }
 
   //void QS_Save ();
   void QS_Save () {

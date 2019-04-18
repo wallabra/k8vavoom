@@ -170,6 +170,7 @@ override void Init () {
   CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8ElvenDetect', (IsReleaseMode ? "0" : "1"), "Perform Elven Senses Detection?", CVAR_ARCHIVE);
 
   CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 

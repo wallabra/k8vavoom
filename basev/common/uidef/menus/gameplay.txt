@@ -324,6 +324,12 @@ menudef GameplayOptions {
   }
 
   option bool {
+    title = "Elven Detection";
+    cvar = k8ElvenDetect;
+    help = "Activate Elven Senses when entering into new place.";
+  }
+
+  option bool {
     title = "No Pain Elemental Attacks";
     cvar = k8ElvenPaineless;
     help =

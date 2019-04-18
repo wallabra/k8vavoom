@@ -55,6 +55,22 @@ struct SavedVObjectPtr {
 
 //==========================================================================
 //
+//  VBasePlayer::PostCtor
+//
+//==========================================================================
+void VBasePlayer::PostCtor () {
+  Super::PostCtor();
+  /*
+  GCon->Logf("********** BASEPLAYER POSTCTOR (%s) **********", *GetClass()->GetFullName());
+  VField *field = GetClass()->FindField("k8ElvenGiftMessageTime");
+  if (field) GCon->Logf("  k8ElvenGiftMessageTime=%g", field->GetFloat(this));
+  abort();
+  */
+}
+
+
+//==========================================================================
+//
 //  VBasePlayer::ExecuteNetMethod
 //
 //==========================================================================
@@ -815,8 +831,15 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->FlyMove = 0;
   Self->Buttons = 0;
   Self->Impulse = 0;
+  Self->AcsCurrButtonsPressed = 0;
+  Self->AcsCurrButtons = 0;
   Self->AcsButtons = 0;
   Self->OldButtons = 0;
+  Self->AcsNextButtonUpdate = 0;
+  Self->AcsPrevMouseX = 0;
+  Self->AcsPrevMouseY = 0;
+  Self->AcsMouseX = 0;
+  Self->AcsMouseY = 0;
   Self->MO = nullptr;
   Self->PlayerState = 0;
   Self->ViewOrg = TVec(0, 0, 0);
@@ -830,6 +853,10 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->FixedColourmap = 0;
   Self->CShift = 0;
   Self->PSpriteSY = 0;
+  Self->PSpriteWeaponLowerPrev = 0;
+  Self->PSpriteWeaponLoweringStartTime = 0;
+  Self->PSpriteWeaponLoweringDuration = 0;
+  memset((void *)Self->LastViewObject, 0, sizeof(Self->LastViewObject));
 
   vuint8 *Def = Self->GetClass()->Defaults;
   for (VField *F = Self->GetClass()->Fields; F; F = F->Next)

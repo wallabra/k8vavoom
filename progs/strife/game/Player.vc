@@ -37,8 +37,8 @@ const int INITIAL_AMMO   = 50;
 //  ResetPlayerOnSpawn
 //
 //==========================================================================
-override void ResetPlayerOnSpawn () {
-  ::ResetPlayerOnSpawn();
+override void ResetPlayerOnSpawn (optional bool keepPlayerState) {
+  ::ResetPlayerOnSpawn(keepPlayerState!optional);
 }
 
 

@@ -217,6 +217,54 @@ void SV_Init () {
 
 //==========================================================================
 //
+//  SV_ResetPlayers
+//
+//==========================================================================
+void SV_ResetPlayers () {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GPlayersBase[i]) GPlayersBase[i]->eventResetToDefaults();
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_SendLoadedEvent
+//
+//==========================================================================
+void SV_SendLoadedEvent () {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GPlayersBase[i]) GPlayersBase[i]->eventOnSaveLoaded();
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_SendBeforeSaveEvent
+//
+//==========================================================================
+void SV_SendBeforeSaveEvent (bool isAutosave, bool isCheckpoint) {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GPlayersBase[i]) GPlayersBase[i]->eventOnBeforeSave(isAutosave, isCheckpoint);
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_SendAfterSaveEvent
+//
+//==========================================================================
+void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint) {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GPlayersBase[i]) GPlayersBase[i]->eventOnAfterSave(isAutosave, isCheckpoint);
+  }
+}
+
+
+//==========================================================================
+//
 //  P_InitThinkers
 //
 //==========================================================================
@@ -1316,6 +1364,7 @@ COMMAND(Map) {
        if ((int)Skill < 0) Skill = 0;
   else if ((int)Skill >= P_GetNumSkills()) Skill = P_GetNumSkills()-1;
 
+  SV_ResetPlayers();
   SV_SpawnServer(*mapname, true/*spawn thinkers*/);
 
   if (mapLoaded == LMT_Unknown) {
@@ -1370,6 +1419,7 @@ bool Host_StartTitleMap () {
   RebornPosition = 0;
   GGameInfo->RebornPosition = RebornPosition;
 
+  SV_ResetPlayers();
   SV_SpawnServer("titlemap", true/*spawn thinkers*/, true/*titlemap*/);
 #ifdef CLIENT
   CL_SetUpLocalPlayer();

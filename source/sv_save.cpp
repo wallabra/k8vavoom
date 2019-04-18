@@ -1269,6 +1269,8 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
   AssertSegment(*Loader, ASEG_WORLD);
 
+  SV_ResetPlayers();
+
   // add level
   Loader->Exports.Append(GLevel);
 
@@ -1629,6 +1631,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
 
   // load a base level (spawn thinkers if this is checkpoint save)
   SV_SpawnServer(*MapName, isCheckpoint/*spawn thinkers*/);
+  SV_ResetPlayers();
 
 #ifdef CLIENT
   if (isCheckpoint) {
@@ -1768,7 +1771,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
 //  SV_SaveGame
 //
 //==========================================================================
-void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
+static void SV_SaveGame (int slot, const VStr &Description, bool checkpoint, bool isAutosave) {
   BaseSlot.Description = Description;
   BaseSlot.CurrentMap = GLevel->MapName;
 
@@ -1783,10 +1786,13 @@ void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
     }
   }
 
+  SV_SendBeforeSaveEvent(isAutosave, checkpoint);
+
   if (checkpoint) {
     // player state save
     if (!SV_SaveCheckpoint()) {
       GCon->Logf("AUTOSAVE: checkpoint creation failed, perform a full save sequence");
+      checkpoint = false;
       SV_SaveMap(true); // true = save player info
     }
   } else {
@@ -1796,6 +1802,8 @@ void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
 
   // write data to destination slot
   BaseSlot.SaveToSlot(slot);
+
+  SV_SendAfterSaveEvent(isAutosave, checkpoint);
 
   Host_ResetSkipFrames();
 }
@@ -1822,6 +1830,8 @@ void SV_LoadGame (int slot) {
     // launch waiting scripts
     if (!deathmatch) GLevel->Acs->CheckAcsStore();
   }
+
+  SV_SendLoadedEvent();
 }
 
 
@@ -2050,7 +2060,7 @@ void SV_AutoSave (bool checkpoint) {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname, checkpoint);
+  SV_SaveGame(aslot, svname, checkpoint, true);
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
@@ -2075,7 +2085,7 @@ void SV_AutoSaveOnLevelExit () {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname, false); // not a checkpoint, obviously
+  SV_SaveGame(aslot, svname, false, true); // not a checkpoint, obviously
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
@@ -2101,7 +2111,7 @@ COMMAND(Save) {
 
   Draw_SaveIcon();
 
-  SV_SaveGame(VStr::atoi(*Args[1]), Args[2], false); // not a checkpoint
+  SV_SaveGame(VStr::atoi(*Args[1]), Args[2], false, false); // not a checkpoint
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game saved.");
@@ -2193,7 +2203,7 @@ COMMAND(QuickSave) {
 
   Draw_SaveIcon();
 
-  SV_SaveGame(QUICKSAVE_SLOT, "quicksave", false); // not a checkpoint
+  SV_SaveGame(QUICKSAVE_SLOT, "quicksave", false, false); // not a checkpoint
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game quicksaved.");
@@ -2245,7 +2255,7 @@ COMMAND(AutoSaveEnter) {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname, sv_autoenter_checkpoints);
+  SV_SaveGame(aslot, svname, sv_autoenter_checkpoints, true);
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));

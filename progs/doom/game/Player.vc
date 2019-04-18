@@ -201,6 +201,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Backpack";
   aclist[$] = "Bersek";
   aclist[$] = "Choppers";
+  aclist[$] = "ElvenGifts";
   aclist[$] = "Health";
   aclist[$] = "Health2";
   aclist[$] = "Invisibility";
@@ -237,6 +238,11 @@ const int
 void Cheat_Gimme () {
   int i1 = 0;
   class!Inventory Cls;
+
+  if (Cmd_CheckParm("ElvenGifts")) {
+    GiveElvenGifts(forced:true);
+    return;
+  }
 
   // all
   if (Cmd_CheckParm("All")) i1 |= GIMME_ALL;

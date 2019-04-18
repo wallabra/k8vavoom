@@ -25,9 +25,9 @@
 //**
 //**************************************************************************
 
-extern void SV_SaveGame (int Slot, const VStr &Description, bool checkpoint);
+//extern void SV_SaveGame (int Slot, const VStr &Description, bool checkpoint, bool isAutosave);
 extern void SV_MapTeleport (VName MapName, int flags=0, int newskill=-1);
-extern void SV_LoadGame (int Slot);
+//extern void SV_LoadGame (int Slot);
 extern void SV_InitBaseSlot ();
 //extern void SV_UpdateRebornSlot ();
 //extern bool SV_LoadQuicksaveSlot ();

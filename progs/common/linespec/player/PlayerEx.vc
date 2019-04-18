@@ -179,6 +179,61 @@ replication {
 
 //==========================================================================
 //
+//  ResetToDefaults
+//
+//  this is called on save loading, etc.
+//  reset every important field to default
+//
+//==========================================================================
+override void ResetToDefaults () {
+  ::ResetToDefaults();
+  ResetPlayerOnSpawn(keepPlayerState:true);
+  //print("*** RESET ***");
+  //print("k8ElvenGiftMessageTime=%s", k8ElvenGiftMessageTime);
+}
+
+
+//==========================================================================
+//
+//  eventOnSaveLoaded
+//
+//  this is called after savegame was loaded
+//
+//==========================================================================
+override void eventOnSaveLoaded () {
+  ::eventOnSaveLoaded();
+  //print("*** LOADED ***");
+  //print("k8ElvenGiftMessageTime=%s", k8ElvenGiftMessageTime);
+  k8ElvenGiftMessageTime = 666; // checkpoint loads will set this, so reset it back
+  // but detect bosses
+  k8BossesDetected = (GetCvarB('k8ElvenDetect') ? -0.5 : 666);
+}
+
+
+//==========================================================================
+//
+//  eventOnBeforeSave
+//
+//==========================================================================
+override void eventOnBeforeSave (bool isAutosave, bool isCheckpoint) {
+  ::eventOnBeforeSave(isAutosave, isCheckpoint);
+  //print("*** BEFORE SAVING (auto:%B; checkpoint:%B) ***", isAutosave, isCheckpoint);
+}
+
+
+//==========================================================================
+//
+//  eventOnAfterSave
+//
+//==========================================================================
+override void eventOnAfterSave (bool isAutosave, bool isCheckpoint) {
+  ::eventOnAfterSave(isAutosave, isCheckpoint);
+  //print("*** SAVED (auto:%B; checkpoint:%B) ***", isAutosave, isCheckpoint);
+}
+
+
+//==========================================================================
+//
 //  IsCheckpointPossible
 //
 //  this should check player's inventory (and maybe some other things), and
@@ -2046,6 +2101,8 @@ override void SpawnClient () {
   bool playerWasReborn;
   EntityEx OldMO = EntityEx(MO);
 
+  //print("*** SPAWN CLIENT");
+
   Attacker = none;
   Poisoner = none;
 
@@ -2123,7 +2180,7 @@ override void SpawnClient () {
   // destroy all things touching players
   Actor(MO).TeleportMove(MO.Origin);
 
-  k8BossesDetected = (GetCvarB('k8ElvenGift') ? -0.5 : 666);
+  k8BossesDetected = (GetCvarB('k8ElvenDetect') ? -0.5 : 666);
 
   HealthBarInit();
 }
@@ -2320,8 +2377,8 @@ final void ResetACSButtons () {
 //  ResetPlayerOnSpawn
 //
 //==========================================================================
-void ResetPlayerOnSpawn () {
-  PlayerState = PST_LIVE;
+void ResetPlayerOnSpawn (optional bool keepPlayerState) {
+  if (!keepPlayerState) PlayerState = PST_LIVE;
   Refire = 0;
   DamageFlash = 0.0;
   BonusFlash = 0.0;
@@ -2372,6 +2429,9 @@ void ResetPlayerOnSpawn () {
   k8NextSuperBulletTime = 0;
 
   ResetACSButtons();
+
+  k8BossesDetected = 666;
+  k8ElvenGiftMessageTime = 666;
 }
 
 
@@ -2407,6 +2467,8 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   bool ResetInventory = false;
   bool reborned = false;
   Inventory Item;
+
+  //print("*** SPAWN PLAYER");
 
   //print("************SpawnPlayer: 000; Voodoo=%b; PST=%d", PlayerState);
   if (PlayerState == PST_REBORN) {
@@ -2499,7 +2561,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     }
   }
 
-  k8BossesDetected = (GetCvarB('k8ElvenGift') ? -0.5 : 666);
+  k8BossesDetected = (GetCvarB('k8ElvenDetect') ? -0.5 : 666);
 }
 
 
@@ -2568,10 +2630,11 @@ void ShowElvenGiftMessage () {
 //  this is virtual, so mods can override it
 //
 //===========================================================================
-void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
+void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional bool forced) {
   //print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
   k8ElvenGiftMessageTime = 666;
-  if (GetCvarB('k8ElvenGift')) {
+  if (forced || GetCvarB('k8ElvenGift')) {
+    if (forced) k8ElvenGifted = false;
     if (!Voodoo && !k8ElvenGifted) {
       k8ElvenGifted = true; // gifts should be given only once
       bool showMessage = false;
@@ -2742,12 +2805,12 @@ void PlayerReborn () {
   PClass = BaseClass;
 
   // set initial data
+  ResetPlayerOnSpawn(keepPlayerState:true);
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
   ResetWeaponReloadRefire();
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
-  LocalQuakeHappening = vector(0, 0, 0);
 }
 
 

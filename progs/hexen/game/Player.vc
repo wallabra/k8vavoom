@@ -109,9 +109,9 @@ override void DestroyBot()
 //
 //==========================================================================
 
-override void ResetPlayerOnSpawn()
+override void ResetPlayerOnSpawn(optional bool keepPlayerState)
 {
-  ::ResetPlayerOnSpawn();
+  ::ResetPlayerOnSpawn(keepPlayerState!optional);
 }
 
 //==========================================================================

@@ -390,6 +390,56 @@ void eventSetReadyWeapon (Entity ent) {}
 
 //==========================================================================
 //
+//  ResetToDefaults
+//
+//  this is called on save loading, etc.
+//  reset every important field to default
+//
+//==========================================================================
+void ResetToDefaults () {
+}
+
+
+//==========================================================================
+//
+//  eventOnSaveLoaded
+//
+//  this is called after savegame was loaded
+//
+//==========================================================================
+void eventOnSaveLoaded () {
+}
+
+
+//==========================================================================
+//
+//  eventOnBeforeSave
+//
+//  this is called before game will be saved
+//
+//  note that `isCheckpoint` is "advisory",
+//  the game may decide to do a full save anyway
+//
+//==========================================================================
+void eventOnBeforeSave (bool isAutosave, bool isCheckpoint) {
+}
+
+
+//==========================================================================
+//
+//  eventOnAfterSave
+//
+//  this is called after game was saved
+//
+//  `isCheckpoint` indicates if we really saved a checkpoint
+//
+//==========================================================================
+void eventOnAfterSave (bool isAutosave, bool isCheckpoint) {
+}
+
+
+//==========================================================================
+//
 //  QS_Save
 //
 //==========================================================================
