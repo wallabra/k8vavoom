@@ -107,6 +107,8 @@ class Actor extends Thinker
   action native A_ExtChase(eval bool usemelee, eval bool usemissile,
     optional evalnot bool playactive, optional eval bool nightmarefast);
   action native A_FaceTarget(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
+  action native A_FaceTracer(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
+  action native A_FaceMaster(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
   action native A_Die(optional DamageType);
   action native A_CentaurDefend();
   action native A_AlertMonsters();

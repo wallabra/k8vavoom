@@ -737,14 +737,59 @@ final void decorate_A_FaceTarget (optional float max_turn, optional float max_pi
                                   optional float ang_offset, optional float pitch_offset,
                                   optional int flags, optional float z_ofs)
 {
-  if (!Target || Target == self) return;
+  common_A_FaceSomething(Target, max_turn!optional, max_pitch!optional,
+                         ang_offset!optional, pitch_offset!optional,
+                         flags!optional, z_ofs!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_FaceTracer
+//
+//==========================================================================
+final void decorate_A_FaceTracer (optional float max_turn, optional float max_pitch,
+                                  optional float ang_offset, optional float pitch_offset,
+                                  optional int flags, optional float z_ofs)
+{
+  common_A_FaceSomething(Tracer, max_turn!optional, max_pitch!optional,
+                         ang_offset!optional, pitch_offset!optional,
+                         flags!optional, z_ofs!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_FaceMaster
+//
+//==========================================================================
+final void decorate_A_FaceMaster (optional float max_turn, optional float max_pitch,
+                                  optional float ang_offset, optional float pitch_offset,
+                                  optional int flags, optional float z_ofs)
+{
+  common_A_FaceSomething(Master, max_turn!optional, max_pitch!optional,
+                         ang_offset!optional, pitch_offset!optional,
+                         flags!optional, z_ofs!optional);
+}
+
+
+//==========================================================================
+//
+//  common_A_FaceSomething
+//
+//==========================================================================
+final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, optional float max_pitch,
+                                  optional float ang_offset, optional float pitch_offset,
+                                  optional int flags, optional float z_ofs)
+{
+  if (!Tgt || Tgt == self) return;
 
   // Andy Baker's stealth monsters
   if (bStealth) VisDir = 1;
 
   bAmbush = false;
 
-  float newyaw = AngleTo(Target);
+  float newyaw = AngleTo(Tgt);
   float adiff = AngleDelta(Angles.yaw, newyaw);
 
   if (specified_max_turn && max_turn < adiff) {
@@ -755,7 +800,7 @@ final void decorate_A_FaceTarget (optional float max_turn, optional float max_pi
   Angles.yaw = AngleMod360(Angles.yaw);
 
   if (specified_max_pitch && max_pitch <= 180) {
-    TVec dist = Target.Origin-Origin;
+    TVec dist = Tgt.Origin-Origin;
     dist.z = 0;
 
     // positioning ala missile spawning, 32 units above foot level
@@ -768,12 +813,12 @@ final void decorate_A_FaceTarget (optional float max_turn, optional float max_pi
     if (flags&(FAF_BOTTOM|FAF_MIDDLE|FAF_TOP)) {
       // note there is no +32 on purpose. this is for customization sake.
       // if one doesn't want this behavior, just don't use FAF_BOTTOM.
-      if (flags&FAF_BOTTOM) target_z = Target.Origin.z;
-      if (flags&FAF_MIDDLE) target_z = Target.GetCentreZ();
-      if (flags&FAF_TOP) target_z = Target.Origin.z+Target.Height;
+      if (flags&FAF_BOTTOM) target_z = Tgt.Origin.z;
+      if (flags&FAF_MIDDLE) target_z = Tgt.GetCentreZ();
+      if (flags&FAF_TOP) target_z = Tgt.Origin.z+Tgt.Height;
     } else {
-      target_z = Target.Origin.z+32;
-      if (target_z >= Target.Origin.z+Target.Height) target_z = Target.GetCentreZ();
+      target_z = Tgt.Origin.z+32;
+      if (target_z >= Tgt.Origin.z+Tgt.Height) target_z = Tgt.GetCentreZ();
     }
 
     target_z += z_ofs;
@@ -800,7 +845,7 @@ final void decorate_A_FaceTarget (optional float max_turn, optional float max_pi
   }
 
 
-  if (!max_turn && !ang_offset && Target.bShadow) {
+  if (!max_turn && !ang_offset && Tgt.bShadow) {
     Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
 }
