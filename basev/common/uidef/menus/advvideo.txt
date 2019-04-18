@@ -48,10 +48,19 @@ menudef AdvVideoOptions {
     cvar = r_fade_light;
   }
 
-  option bool {
-    title = "Extra lighmap samples";
-    cvar = r_extrasamples;
-    help = "Do better lightmap tracing for static lights in lightmapped renderer.";
+  option enum {
+    title = "Static Lightmap Filtering";
+    cvar = r_lmap_filtering;
+    list {
+      "None",
+      "Simple",
+      "SimpleExtra",
+      "Extra",
+    }
+    help =
+      "What kind of filtering apply to static lightmaps?"
+      "You can try various options to find good balance"
+      "between speed and quality.";
   }
 
   option slider {

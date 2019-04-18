@@ -43,7 +43,8 @@ int ldr_extrasamples_override = -1;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB r_extrasamples("r_extrasamples", true, "Do static lightmap filtering?", CVAR_Archive);
+static VCvarI r_lmap_filtering("r_lmap_filtering", "1", "Static lightmap filtering (0: none; 1: simple; 2: simple++; 3: extra).", CVAR_Archive);
+static VCvarB r_lmap_lowfilter("r_lmap_lowfilter", false, "Filter lightmaps without extra samples?", CVAR_Archive);
 static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 
@@ -75,6 +76,7 @@ int light_reset_surface_cache = 0;
 
 // ////////////////////////////////////////////////////////////////////////// //
  // *4 for extra filtering
+static vuint8 lightmapHit[GridSize*GridSize*4];
 static float lightmap[GridSize*GridSize*4];
 static float lightmapr[GridSize*GridSize*4];
 static float lightmapg[GridSize*GridSize*4];
@@ -265,7 +267,7 @@ void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool l
   float starts, startt;
   linetrace_t Trace;
 
-  bool doExtra = r_extrasamples;
+  bool doExtra = (r_lmap_filtering > 2);
   if (ldr_extrasamples_override >= 0) doExtra = (ldr_extrasamples_override > 0);
   if (!lowres && doExtra) {
     // extra filtering
@@ -334,6 +336,47 @@ void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool l
 
 //==========================================================================
 //
+//  FilterLightmap
+//
+//==========================================================================
+template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt) {
+  if (!r_lmap_lowfilter) return;
+  if (!lmap || (wdt < 2 && hgt < 2)) return;
+  static T *lmnew = nullptr;
+  static int lmnewSize = 0;
+  if (wdt*hgt > lmnewSize) {
+    lmnewSize = wdt*hgt;
+    lmnew = (T *)Z_Realloc(lmnew, lmnewSize*sizeof(T));
+  }
+  for (int y = 0; y < hgt; ++y) {
+    for (int x = 0; x < wdt; ++x) {
+      int count = 0;
+      float sum = 0;
+      for (int dy = -1; dy < 2; ++dy) {
+        const int sy = y+dy;
+        if (sy < 0 || sy >= hgt) continue;
+        T *row = lmap+(sy*wdt);
+        for (int dx = -1; dx < 2; ++dx) {
+          const int sx = x+dx;
+          if (sx < 0 || sx >= wdt) continue;
+          if ((dx|dy) == 0) continue;
+          ++count;
+          sum += row[sx];
+        }
+      }
+      if (!count) continue;
+      sum /= (float)count;
+      float v = lmap[y*wdt+x];
+      sum = (sum+v)*0.5f;
+      lmnew[y*wdt+x] = sum;
+    }
+  }
+  memcpy(lmap, lmnew, lmnewSize*sizeof(T));
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::SingleLightFace
 //
 //==========================================================================
@@ -390,6 +433,14 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   const float rmul = ((light->colour>>16)&255)/255.0f;
   const float gmul = ((light->colour>>8)&255)/255.0f;
   const float bmul = (light->colour&255)/255.0f;
+
+  int w = (surf->extents[0]>>4)+1;
+  int h = (surf->extents[1]>>4)+1;
+
+  bool doMidFilter = (!lmi.didExtra && r_lmap_filtering > 0);
+  if (doMidFilter) memset(lightmapHit, 0, w*h);
+
+  bool wasAnyHit = false;
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist <= 0.0f) {
@@ -414,11 +465,14 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
         continue;
       }
     }
-    float angle = DotProduct(incoming, surf->GetNormal());
 
+    float angle = DotProduct(incoming, surf->GetNormal());
     angle = 0.5f+0.5f*angle;
+
     const float add = (light->radius-dist)*angle;
     if (add < 0) continue;
+
+    if (doMidFilter) { wasAnyHit = true; lightmapHit[c] = 1; }
 
     lightmap[c] += add;
     lightmapr[c] += add*rmul;
@@ -428,6 +482,72 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     if (lightmap[c] > 1) {
       lmi.light_hit = true;
       if (light->colour != 0xffffffff) is_coloured = true;
+    }
+  }
+
+  if (doMidFilter && wasAnyHit) {
+    //GCon->Logf("w=%d; h=%d; num=%d; cnt=%d", w, h, w*h, lmi.numsurfpt);
+   again:
+    const vuint8 *lht = lightmapHit;
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x, ++lht) {
+        if (*lht) continue;
+        // check if any neighbour point was hit
+        // if not, don't bother to do better tracing
+        bool doit = false;
+        for (int dy = -1; dy < 2; ++dy) {
+          const int sy = y+dy;
+          if (sy < 0 || sy >= h) continue;
+          const vuint8 *row = lightmapHit+(sy*w);
+          for (int dx = -1; dx < 2; ++dx) {
+            if ((dx|dy) == 0) continue;
+            const int sx = x+dx;
+            if (sx < 0 || sx >= w) continue;
+            if (row[sx]) { doit = true; goto done; }
+          }
+        }
+       done:
+        if (doit) {
+          TVec pt = lmi.surfpt[y*w+x];
+          dist = 0.0f;
+          for (int dy = -1; dy < 2; ++dy) {
+            for (int dx = -1; dx < 2; ++dx) {
+              for (int dz = -1; dz < 2; ++dz) {
+                if ((dx|dy|dz) == 0) continue;
+                dist = CastRay(light->origin, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
+                if (dist > 0.0f) goto donetrace;
+              }
+            }
+          }
+          continue;
+         donetrace:
+          //GCon->Logf("x=%d; y=%d; w=%d; h=%d; dist=%g", x, y, w, h, dist);
+
+          TVec incoming = light->origin-pt;
+          if (!incoming.isZero()) {
+            incoming.normaliseInPlace();
+            if (!incoming.isValid()) continue;
+          }
+
+          float angle = DotProduct(incoming, surf->GetNormal());
+          angle = 0.5f+0.5f*angle;
+
+          const float add = (light->radius-dist)*angle*0.75f;
+          if (add < 0) continue;
+
+          lightmap[y*w+x] += add;
+          lightmapr[y*w+x] += add*rmul;
+          lightmapg[y*w+x] += add*gmul;
+          lightmapb[y*w+x] += add*bmul;
+          // ignore really tiny lights
+          if (lightmap[y*w+x] > 1) {
+            lmi.light_hit = true;
+            if (light->colour != 0xffffffff) is_coloured = true;
+          }
+          lightmapHit[y*w+x] = 1;
+          if (r_lmap_filtering == 2) goto again;
+        }
+      }
     }
   }
 }
@@ -490,6 +610,10 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, sz);
     }
 
+    if (!lmi.didExtra) FilterLightmap(lightmapr, w, h);
+    if (!lmi.didExtra) FilterLightmap(lightmapg, w, h);
+    if (!lmi.didExtra) FilterLightmap(lightmapb, w, h);
+
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
@@ -551,6 +675,8 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       surf->lmsize = sz;
     }
 
+    if (!lmi.didExtra) FilterLightmap(lightmap, w, h);
+
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
@@ -569,6 +695,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       }
     }
   }
+
 }
 
 
