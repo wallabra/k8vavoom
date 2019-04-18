@@ -117,7 +117,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
   bool isSkyFlat = (spl.splane->pic == skyflatnum);
-  bool recalcSurface = true;
+  bool recreateSurface = true;
   bool updateZ = false;
 
   // fix plane
@@ -132,8 +132,9 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   } else {
     // change sector surface
     // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
-    recalcSurface = !isSkyFlat || ((ssurf->esecplane.splane->pic == skyflatnum) != isSkyFlat);
-    if (recalcSurface) {
+    recreateSurface = !isSkyFlat || ((ssurf->esecplane.splane->pic == skyflatnum) != isSkyFlat);
+    if (recreateSurface) {
+      //GCon->Logf("***  RECREATING!");
       surf = ReallocSurface(ssurf->surfs, vcount);
     } else {
       updateZ = (FASI(ssurf->edist) != FASI(spl.splane->dist));
@@ -173,7 +174,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   ssurf->YScale = spl.splane->YScale;
   ssurf->Angle = spl.splane->BaseAngle-spl.splane->Angle;
 
-  if (recalcSurface) {
+  if (recreateSurface) {
     if (spl.flipped) surf->drawflags |= surface_t::DF_FLIP_PLANE; else surf->drawflags &= ~surface_t::DF_FLIP_PLANE;
     surf->count = vcount;
     const seg_t *seg = &Level->Segs[sub->firstline];
@@ -264,6 +265,12 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       ssurf->Angle != splane.splane->BaseAngle-splane.splane->Angle)
   {
     // this will update texture, offsets, and everything
+    /*
+    GCon->Logf("*** SSF RECREATION! xscale=(%g:%g), yscale=(%g,%g); angle=(%g,%g)",
+      ssurf->XScale, splane.splane->XScale,
+      ssurf->YScale, splane.splane->YScale,
+      ssurf->Angle, splane.splane->BaseAngle-splane.splane->Angle);
+    */
     sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
     check(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColourMap = ColourMap; // just in case
@@ -1548,8 +1555,17 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
   UpdateSecSurface(region->realfloor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
   UpdateSecSurface(region->realceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
 
-  if (region->fakefloor) UpdateSecSurface(region->fakefloor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
-  if (region->fakeceil) UpdateSecSurface(region->fakeceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+  if (region->fakefloor) {
+    TSecPlaneRef fakefloor;
+    fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+    UpdateSecSurface(region->fakefloor, fakefloor, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
+  }
+
+  if (region->fakeceil) {
+    TSecPlaneRef fakeceil;
+    fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+    UpdateSecSurface(region->fakeceil, fakeceil, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+  }
 
   if (updatePoly && sub->poly) {
     // update the polyobj
@@ -1934,13 +1950,16 @@ surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
       next = s->next;
       Z_Free(s);
     }
+    surf->next = nullptr;
     // realloc first surface (if necessary)
     if (surf->count != vcount) {
       const size_t msize = sizeof(surface_t)+(vcount-1)*sizeof(TVec);
       surf = (surface_t *)Z_Realloc(surf, msize);
       memset((void *)surf, 0, msize);
-      surf->count = vcount;
+    } else {
+      memset((void *)surf, 0, sizeof(surface_t)+(vcount-1)*sizeof(TVec));
     }
+    surf->count = vcount;
   } else {
     surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(TVec));
     surf->count = vcount;
