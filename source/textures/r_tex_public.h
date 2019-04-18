@@ -189,6 +189,7 @@ public:
   bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
   bool nofullbright; // valid for all textures; forces "no fullbright"
   vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none)
+  bool noHires; // hires texture tried and not found
 
   GLuint mFBO;
   GLuint mFBOColorTid;

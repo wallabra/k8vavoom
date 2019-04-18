@@ -149,6 +149,7 @@ VTexture::VTexture ()
   , transparent(false)
   , nofullbright(false)
   , glowing(0)
+  , noHires(false)
   , mFBO(0)
   , mFBOColorTid(0)
   , mFBODepthStencilTid(0)
@@ -341,13 +342,16 @@ rgba_t *VTexture::GetPalette () {
 // exist.
 //
 //==========================================================================
-VTexture *VTexture::GetHighResolutionTexture() {
+VTexture *VTexture::GetHighResolutionTexture () {
 #ifdef CLIENT
   if (!r_hirestex) return nullptr;
   // if high resolution texture is already created, then just return it
   if (HiResTexture) return HiResTexture;
 
-  // determine directory name depending on type.
+  if (noHires) return nullptr;
+  noHires = true;
+
+  // determine directory name depending on type
   const char *DirName;
   switch (Type) {
     case TEXTYPE_Wall: DirName = "walls"; break;
@@ -364,8 +368,10 @@ VTexture *VTexture::GetHighResolutionTexture() {
   if (LumpNum >= 0) {
     // create new high-resolution texture
     HiResTexture = CreateTexture(Type, LumpNum);
-    HiResTexture->Name = Name;
-    return HiResTexture;
+    if (HiResTexture) {
+      HiResTexture->Name = Name;
+      return HiResTexture;
+    }
   }
 #endif
   // no hi-res texture found

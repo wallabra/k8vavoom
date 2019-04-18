@@ -1459,8 +1459,9 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
           NewTex->TextureTranslation = OldTex->TextureTranslation;
           NewTex->HashNext = OldTex->HashNext;
           Textures[OldIdx] = NewTex;
-          delete OldTex;
-          OldTex = nullptr;
+          // k8: don't delete old texture, it can be referenced out there
+          //delete OldTex;
+          //OldTex = nullptr;
         }
       }
     }
@@ -1524,8 +1525,9 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
           NewTex->TextureTranslation = OldTex->TextureTranslation;
           NewTex->HashNext = OldTex->HashNext;
           Textures[OldIdx] = NewTex;
-          delete OldTex;
-          OldTex = nullptr;
+          // k8: don't delete old texture, it can be referenced out there
+          //delete OldTex;
+          //OldTex = nullptr;
         }
       } else if (sc->Check("define")) {
         sc->ExpectName();
@@ -1570,8 +1572,9 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
           NewTex->TextureTranslation = OldTex->TextureTranslation;
           NewTex->HashNext = OldTex->HashNext;
           Textures[OldIdx] = NewTex;
-          delete OldTex;
-          OldTex = nullptr;
+          // k8: don't delete old texture, it can be referenced out there
+          //delete OldTex;
+          //OldTex = nullptr;
         } else {
           AddTexture(NewTex);
         }
