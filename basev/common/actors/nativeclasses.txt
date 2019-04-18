@@ -526,3 +526,10 @@ class MageStaffFX2 extends Actor
 {
   action native A_MStaffTrack();
 }
+
+
+class Whirlwind extends Actor
+  native
+{
+  action native A_WhirlwindSeek();
+}
