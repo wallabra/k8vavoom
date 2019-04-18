@@ -519,3 +519,10 @@ class IceChunk extends Actor
 {
   action native A_IceSetTics();
 }
+
+
+class MageStaffFX2 extends Actor
+  native
+{
+  action native A_MStaffTrack();
+}
