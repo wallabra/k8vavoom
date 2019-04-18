@@ -518,11 +518,11 @@ VRenderLevelShared::~VRenderLevelShared () {
   // free seg parts
   for (int i = 0; i < Level->NumSegs; ++i) {
     for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next) {
-      FreeSegParts(ds->top);
-      FreeSegParts(ds->mid);
-      FreeSegParts(ds->bot);
-      FreeSegParts(ds->topsky);
-      FreeSegParts(ds->extra);
+      if (ds->top) FreeSegParts(ds->top);
+      if (ds->mid) FreeSegParts(ds->mid);
+      if (ds->bot) FreeSegParts(ds->bot);
+      if (ds->topsky) FreeSegParts(ds->topsky);
+      if (ds->extra) FreeSegParts(ds->extra);
       if (ds->HorizonTop) Z_Free(ds->HorizonTop);
       if (ds->HorizonBot) Z_Free(ds->HorizonBot);
     }
@@ -905,14 +905,14 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
   if (!seg->backsector) {
     // single sided line
-    UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
-    UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
+    if (dseg->mid) UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
+    if (dseg->topsky) UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
   } else {
     // two sided line
-    UpdateBBoxWithSurface(bbox, dseg->top->surfs, &dseg->top->texinfo, SkyBox, false);
-    UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
-    UpdateBBoxWithSurface(bbox, dseg->bot->surfs, &dseg->bot->texinfo, SkyBox, false);
-    UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
+    if (dseg->top) UpdateBBoxWithSurface(bbox, dseg->top->surfs, &dseg->top->texinfo, SkyBox, false);
+    if (dseg->topsky) UpdateBBoxWithSurface(bbox, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, false);
+    if (dseg->bot) UpdateBBoxWithSurface(bbox, dseg->bot->surfs, &dseg->bot->texinfo, SkyBox, false);
+    if (dseg->mid) UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       UpdateBBoxWithSurface(bbox, sp->surfs, &sp->texinfo, SkyBox, false);
     }

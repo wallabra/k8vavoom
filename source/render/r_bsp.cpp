@@ -400,6 +400,8 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
 void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   if (MirrorLevel < r_maxmirrors && r_allow_mirrors) {
+    if (!dseg->mid) return;
+
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(seg)) {
@@ -418,7 +420,7 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
       surfs = surfs->next;
     } while (surfs);
   } else {
-    DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+    if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
       secregion->eceiling.splane->SkyBox, -1, seg->sidedef->Light,
       !!(seg->sidedef->Flags&SDF_ABSLIGHT), false);
   }
@@ -522,25 +524,25 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     } else if (seg->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(sub, secregion, dseg);
     } else {
-      DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+      if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
         SkyBox, -1, sidedef->Light,
         !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
-    DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
+    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
       SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
   } else {
     // two sided line
-    DrawSurfaces(sub, secregion, seg, dseg->top->surfs, &dseg->top->texinfo,
+    if (dseg->top) DrawSurfaces(sub, secregion, seg, dseg->top->surfs, &dseg->top->texinfo,
       SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
+    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
       SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(sub, secregion, seg, dseg->bot->surfs, &dseg->bot->texinfo,
+    if (dseg->bot) DrawSurfaces(sub, secregion, seg, dseg->bot->surfs, &dseg->bot->texinfo,
       SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+    if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
       SkyBox, -1, sidedef->Light,
       !!(sidedef->Flags&SDF_ABSLIGHT), false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {

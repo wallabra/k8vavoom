@@ -785,13 +785,13 @@ void VRenderLevel::InvalidateLineLMaps (const TVec &org, float radius, drawseg_t
   if (!seg->linedef) return; // miniseg
   if (!seg->SphereTouches(org, radius)) return;
 
-  InvalidateSurfacesLMaps(org, radius, dseg->mid->surfs);
+  if (dseg->mid) InvalidateSurfacesLMaps(org, radius, dseg->mid->surfs);
   if (seg->backsector) {
     // two sided line
-    InvalidateSurfacesLMaps(org, radius, dseg->top->surfs);
+    if (dseg->top) InvalidateSurfacesLMaps(org, radius, dseg->top->surfs);
     // no lightmaps on sky anyway
-    //InvalidateSurfacesLMaps(org, radius, dseg->topsky->surfs);
-    InvalidateSurfacesLMaps(org, radius, dseg->bot->surfs);
+    //if (dseg->topsky) InvalidateSurfacesLMaps(org, radius, dseg->topsky->surfs);
+    if (dseg->bot) InvalidateSurfacesLMaps(org, radius, dseg->bot->surfs);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       InvalidateSurfacesLMaps(org, radius, sp->surfs);
     }

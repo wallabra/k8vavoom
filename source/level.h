@@ -609,6 +609,7 @@ private:
   void AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
 
 public:
+  static void dumpRegion (const sec_region_t *reg);
   static void dumpSectorRegions (const sector_t *dst);
 
 private:

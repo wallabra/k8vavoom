@@ -332,13 +332,13 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   //side_t *sidedef = seg->sidedef;
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
-  DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
+  if (dseg->mid) DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
+    if (dseg->top) DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
-    DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
+    //if (dseg->topsky) DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
+    if (dseg->bot) DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       DrawShadowSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
     }
@@ -586,13 +586,13 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
-  DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
+  if (dseg->mid) DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
+    if (dseg->top) DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
     //k8: horizon/sky cannot block light
-    //DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
+    //if (dseg->topsky) DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
+    if (dseg->bot) DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       DrawLightSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
     }

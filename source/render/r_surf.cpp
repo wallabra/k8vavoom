@@ -340,7 +340,7 @@ surface_t *VRenderLevelShared::NewWSurf () {
 //  VRenderLevelShared::FreeWSurfs
 //
 //==========================================================================
-void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
+void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
 #if 1
   surface_t *surfs = InSurfs;
   FlushSurfCaches(surfs);
@@ -352,6 +352,7 @@ void VRenderLevelShared::FreeWSurfs (surface_t *InSurfs) {
     free_wsurfs = surfs;
     surfs = next;
   }
+  InSurfs = nullptr;
 #else
   while (InSurfs) {
     surface_t *surf = InSurfs;
@@ -801,49 +802,78 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling)
+                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, bool createMid)
 {
   check(MTextr);
 
-  if (true) {
+  if (createMid) {
     TVec wv[4];
-
-    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
-    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
-    const float botz1 = r_floor.GetPointZ(*seg->v1);
-    const float botz2 = r_floor.GetPointZ(*seg->v2);
 
     const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
     const float extratopz2 = reg->eceiling.GetPointZ(*seg->v2);
     const float extrabotz1 = reg->efloor.GetPointZ(*seg->v1);
     const float extrabotz2 = reg->efloor.GetPointZ(*seg->v2);
 
-    wv[0].x = wv[1].x = seg->v1->x;
-    wv[0].y = wv[1].y = seg->v1->y;
-    wv[2].x = wv[3].x = seg->v2->x;
-    wv[2].y = wv[3].y = seg->v2->y;
+    /*
+    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+    const float botz1 = r_floor.GetPointZ(*seg->v1);
+    const float botz2 = r_floor.GetPointZ(*seg->v2);
+    */
 
-    wv[0].z = MAX(extrabotz1, botz1);
-    wv[1].z = MIN(extratopz1, topz1);
-    wv[2].z = MIN(extratopz2, topz2);
-    wv[3].z = MAX(extrabotz2, botz2);
+    const float topz1 = seg->frontsector->ceiling.GetPointZ(*seg->v1);
+    const float topz2 = seg->frontsector->ceiling.GetPointZ(*seg->v2);
+    const float botz1 = seg->frontsector->floor.GetPointZ(*seg->v1);
+    const float botz2 = seg->frontsector->floor.GetPointZ(*seg->v2);
 
-    if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
-      // degenerate side surface, no need to create it
-    } if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
-      // degenerate side surface (thin line), cannot create it (no render support)
-    } if (wv[0].z == wv[1].z) {
-      // can reduce to triangle
-      sp->surfs = CreateWSurf(wv+1, &sp->texinfo, seg, sub, 3);
-    } if (wv[2].z == wv[3].z) {
-      // can reduce to triangle
-      sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 3);
-    } else {
-      sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
+    bool doIt = true;
+
+    if (MIN(extrabotz1, extrabotz1) >= MAX(topz1, topz1) ||
+        MAX(extratopz1, extratopz2) <= MIN(botz1, botz2))
+    {
+      doIt = false;
     }
 
-    if (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent()) {
-      for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+    if (doIt) {
+      wv[0].x = wv[1].x = seg->v1->x;
+      wv[0].y = wv[1].y = seg->v1->y;
+      wv[2].x = wv[3].x = seg->v2->x;
+      wv[2].y = wv[3].y = seg->v2->y;
+
+      wv[0].z = MAX(extrabotz1, botz1);
+      wv[1].z = MIN(extratopz1, topz1);
+      wv[2].z = MIN(extratopz2, topz2);
+      wv[3].z = MAX(extrabotz2, botz2);
+
+      if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
+        // degenerate side surface, no need to create it
+      } if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
+        // degenerate side surface (thin line), cannot create it (no render support)
+      } if (wv[0].z == wv[1].z) {
+        // can reduce to triangle
+        sp->surfs = CreateWSurf(wv+1, &sp->texinfo, seg, sub, 3);
+      } if (wv[2].z == wv[3].z) {
+        // can reduce to triangle
+        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 3);
+      } else {
+        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
+      }
+
+      /*
+      if (sp->surfs) {
+        GCon->Log("========================");
+        GCon->Logf("EXTRA for region %p (dump follows)", reg);
+        VLevel::dumpRegion(reg);
+        GCon->Logf("front sector #%d; fz=(%g,%g); cz=(%g,%g)", (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), botz1, botz2, topz1, topz2);
+        //VLevel::dumpSectorRegions(seg->frontsector);
+        GCon->Logf("back sector #%d; frz=(%g,%g); crz=(%g,%g)", (int)(ptrdiff_t)(seg->backsector-Level->Sectors), extrabotz1, extrabotz2, extratopz1, extratopz2);
+        //VLevel::dumpSectorRegions(seg->backsector);
+      }
+      */
+
+      if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent())) {
+        for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+      }
     }
   }
 
@@ -862,7 +892,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 //  create world/wall surfaces
 //
 //==========================================================================
-void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, int cridx) {
   segpart_t *sp;
 
   dseg->seg = seg;
@@ -884,10 +914,17 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
   }
 
   if (!seg->backsector) {
+    if (cridx != 0) {
+      // 3d floor
+      // this is seg without another side, so we cannot see sidewall
+      return;
+    }
+
     dseg->mid = SurfCreatorGetPSPart();
     sp = dseg->mid;
+    sp->regidx = cridx;
 
-    VTexture *MTex = GTextureManager(sidedef->MidTexture);
+    VTexture *MTex = (cridx == 0 ? GTextureManager(sidedef->MidTexture) : GTextureManager[0]);
     // k8: one-sided line should have a midtex
     if (!MTex) {
       GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
@@ -909,16 +946,27 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
 
     // sky above line
-    dseg->topsky = SurfCreatorGetPSPart();
-    sp = dseg->topsky;
-    sp->texinfo.Tex = GTextureManager[skyflatnum];
-    sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
-    sp->texinfo.Alpha = 1.1f;
-    sp->texinfo.Additive = false;
-    sp->texinfo.ColourMap = 0;
-    if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    if (cridx == 0) {
+      dseg->topsky = SurfCreatorGetPSPart();
+      sp = dseg->topsky;
+      sp->regidx = cridx;
+      sp->texinfo.Tex = (cridx == 0 ? GTextureManager[skyflatnum] : GTextureManager[0]);
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+      sp->texinfo.Alpha = 1.1f;
+      sp->texinfo.Additive = false;
+      sp->texinfo.ColourMap = 0;
+      if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    }
   } else {
     // two sided line
+    if (cridx != 0) {
+      // 3d floor
+      sec_region_t *reg = &seg->frontsector->regions[cridx];
+      if (!reg->extraline) return; // no side, don't create
+      sidedef = &Level->Sides[reg->extraline->sidenum[0]];
+      if (sidedef->MidTexture <= 0) return;
+    }
+
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
     if (seg->backsector->fakefloors) {
@@ -926,66 +974,75 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
     }
 
-    VTexture *TTex = GTextureManager(sidedef->TopTexture);
-    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
-      TTex = GTextureManager[skyflatnum];
-    }
-    check(TTex);
-
     // top wall
-    dseg->top = SurfCreatorGetPSPart();
-    sp = dseg->top;
+    if (cridx == 0) {
+      VTexture *TTex = GTextureManager(sidedef->TopTexture);
+      if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
+        TTex = GTextureManager[skyflatnum];
+      }
+      check(TTex);
 
+      dseg->top = SurfCreatorGetPSPart();
+      sp = dseg->top;
+      sp->regidx = cridx;
 
-    sp->texinfo.saxis = segdir*(TextureSScale(TTex)*seg->sidedef->TopScaleX);
-    sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*seg->sidedef->TopScaleY);
-    sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                        seg->offset*(TextureSScale(TTex)*seg->sidedef->TopScaleX)+
-                        sidedef->TopTextureOffset*(TextureOffsetSScale(TTex)*seg->sidedef->TopScaleX);
-    sp->texinfo.Tex = TTex;
-    sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
-    sp->texinfo.Alpha = 1.1f;
-    sp->texinfo.Additive = false;
-    sp->texinfo.ColourMap = 0;
+      sp->texinfo.saxis = segdir*(TextureSScale(TTex)*seg->sidedef->TopScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*seg->sidedef->TopScaleY);
+      sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                          seg->offset*(TextureSScale(TTex)*seg->sidedef->TopScaleX)+
+                          sidedef->TopTextureOffset*(TextureOffsetSScale(TTex)*seg->sidedef->TopScaleX);
+      sp->texinfo.Tex = TTex;
+      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
+      sp->texinfo.Alpha = 1.1f;
+      sp->texinfo.Additive = false;
+      sp->texinfo.ColourMap = 0;
 
-    SetupTwoSidedTopWSurf(sub, seg, sp, TTex, r_floor, r_ceiling);
-    sp->backBotDist = back_floor->dist;
-    sp->TextureOffset = sidedef->TopTextureOffset;
+      SetupTwoSidedTopWSurf(sub, seg, sp, TTex, r_floor, r_ceiling);
+      sp->backBotDist = back_floor->dist;
+      sp->TextureOffset = sidedef->TopTextureOffset;
+    }
 
     // sky above top
-    dseg->topsky = SurfCreatorGetPSPart();
-    if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling)) {
-      sp = dseg->topsky;
-      SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    if (cridx == 0) {
+      dseg->topsky = SurfCreatorGetPSPart();
+      dseg->topsky->regidx = cridx;
+      if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling)) {
+        sp = dseg->topsky;
+        SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+      }
     }
 
     // bottom wall
-    dseg->bot = SurfCreatorGetPSPart();
-    sp = dseg->bot;
+    if (cridx == 0) {
+      dseg->bot = SurfCreatorGetPSPart();
+      sp = dseg->bot;
+      sp->regidx = cridx;
 
-    VTexture *BTex = GTextureManager(sidedef->BottomTexture);
-    check(BTex);
-    sp->texinfo.saxis = segdir*(TextureSScale(BTex)*seg->sidedef->BotScaleX);
-    sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*seg->sidedef->BotScaleY);
-    sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                        seg->offset*(TextureSScale(BTex)*seg->sidedef->BotScaleX)+
-                        sidedef->BotTextureOffset*(TextureOffsetSScale(BTex)*seg->sidedef->BotScaleX);
-    sp->texinfo.Tex = BTex;
-    sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
-    sp->texinfo.Alpha = 1.1f;
-    sp->texinfo.Additive = false;
-    sp->texinfo.ColourMap = 0;
-
-
-    SetupTwoSidedBotWSurf(sub, seg, sp, BTex, r_floor, r_ceiling);
-    sp->backTopDist = back_ceiling->dist;
-    sp->TextureOffset = sidedef->BotTextureOffset;
+      VTexture *BTex = GTextureManager(sidedef->BottomTexture);
+      if (cridx != 0) BTex = GTextureManager[0];
+      check(BTex);
+      sp->texinfo.saxis = segdir*(TextureSScale(BTex)*seg->sidedef->BotScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*seg->sidedef->BotScaleY);
+      sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                          seg->offset*(TextureSScale(BTex)*seg->sidedef->BotScaleX)+
+                          sidedef->BotTextureOffset*(TextureOffsetSScale(BTex)*seg->sidedef->BotScaleX);
+      sp->texinfo.Tex = BTex;
+      sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
+      sp->texinfo.Alpha = 1.1f;
+      sp->texinfo.Additive = false;
+      sp->texinfo.ColourMap = 0;
 
 
-    dseg->mid = SurfCreatorGetPSPart();
-    sp = dseg->mid;
+      SetupTwoSidedBotWSurf(sub, seg, sp, BTex, r_floor, r_ceiling);
+      sp->backTopDist = back_ceiling->dist;
+      sp->TextureOffset = sidedef->BotTextureOffset;
+    }
 
     // middle wall
+    dseg->mid = SurfCreatorGetPSPart();
+    sp = dseg->mid;
+    sp->regidx = cridx;
+
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     check(MTex);
     sp->texinfo.Tex = MTex;
@@ -998,35 +1055,37 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->MidTextureOffset;
 
     // create region sides
-    for (int ridx = 0; ridx < seg->backsector->regions.length(); ++ridx) {
-      sec_region_t *reg = &seg->backsector->regions[ridx];
-      if (!reg->extraline) continue; // no need to create extra side
+    if (cridx == 0) {
+      for (int ridx = 1; ridx < seg->backsector->regions.length(); ++ridx) {
+        sec_region_t *reg = &seg->backsector->regions[ridx];
+        if (!reg->extraline) continue; // no need to create extra side
 
-      side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+        side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
-      VTexture *MTextr = GTextureManager(extraside->MidTexture);
-      if (!MTextr || MTextr->Type == TEXTYPE_Null) continue; // empty side
+        VTexture *MTextr = GTextureManager(extraside->MidTexture);
+        if (!MTextr || MTextr->Type == TEXTYPE_Null) continue; // empty side
 
-      sp = SurfCreatorGetPSPart();
-      sp->next = dseg->extra;
-      dseg->extra = sp;
-      sp->regidx = ridx;
+        sp = SurfCreatorGetPSPart();
+        sp->regidx = -ridx;
+        sp->next = dseg->extra;
+        dseg->extra = sp;
 
-      sp->texinfo.saxis = segdir*(TextureSScale(MTextr)*sidedef->MidScaleX);
-      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTextr)*sidedef->MidScaleY);
-      sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                          seg->offset*(TextureSScale(MTextr)*sidedef->MidScaleX)+
-                          sidedef->MidTextureOffset*(TextureOffsetSScale(MTextr)*sidedef->MidScaleX);
-      sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTextr)*sidedef->MidScaleY)+
-                          sidedef->MidRowOffset*(TextureOffsetTScale(MTextr)*sidedef->MidScaleY);
-      sp->texinfo.Tex = MTextr;
-      sp->texinfo.noDecals = MTextr->noDecals;
-      sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
-      sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
-      sp->texinfo.ColourMap = 0;
-      sp->TextureOffset = sidedef->MidTextureOffset;
+        sp->texinfo.saxis = segdir*(TextureSScale(MTextr)*sidedef->MidScaleX);
+        sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTextr)*sidedef->MidScaleY);
+        sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                            seg->offset*(TextureSScale(MTextr)*sidedef->MidScaleX)+
+                            sidedef->MidTextureOffset*(TextureOffsetSScale(MTextr)*sidedef->MidScaleX);
+        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTextr)*sidedef->MidScaleY)+
+                            sidedef->MidRowOffset*(TextureOffsetTScale(MTextr)*sidedef->MidScaleY);
+        sp->texinfo.Tex = MTextr;
+        sp->texinfo.noDecals = MTextr->noDecals;
+        sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
+        sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
+        sp->texinfo.ColourMap = 0;
+        sp->TextureOffset = sidedef->MidTextureOffset;
 
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, (MTex->Type == TEXTYPE_Null));
+      }
     }
   }
 }
@@ -1098,43 +1157,46 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 
   if (!seg->backsector) {
     segpart_t *sp = dseg->mid;
-    sp->texinfo.ColourMap = ColourMap;
-    VTexture *MTex = GTextureManager(sidedef->MidTexture);
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
-        sp->texinfo.Tex->SScale != MTex->SScale ||
-        sp->texinfo.Tex->TScale != MTex->TScale ||
-        sp->texinfo.Tex->GetHeight() != MTex->GetHeight())
-    {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      VTexture *MTex = GTextureManager(sidedef->MidTexture);
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          sp->texinfo.Tex->SScale != MTex->SScale ||
+          sp->texinfo.Tex->TScale != MTex->TScale ||
+          sp->texinfo.Tex->GetHeight() != MTex->GetHeight())
+      {
+        FreeWSurfs(sp->surfs);
 
-      sp->texinfo.Tex = MTex;
-      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+        sp->texinfo.Tex = MTex;
+        sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
 
-      SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
-    } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
-      sp->texinfo.Tex = MTex;
-      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-      UpdateRowOffset(sub, sp, sidedef->MidRowOffset, seg->sidedef->MidScaleY);
-    } else {
-      sp->texinfo.Tex = MTex;
-      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-    }
+        SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
+      } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
+        sp->texinfo.Tex = MTex;
+        sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+        UpdateRowOffset(sub, sp, sidedef->MidRowOffset, seg->sidedef->MidScaleY);
+      } else {
+        sp->texinfo.Tex = MTex;
+        sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+      }
 
-    if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-      UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, seg->sidedef->MidScaleX);
+      if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
+        UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, seg->sidedef->MidScaleX);
+      }
     }
 
     sp = dseg->topsky;
-    sp->texinfo.ColourMap = ColourMap;
-    if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+        FreeWSurfs(sp->surfs);
 
-      SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+        SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+      }
     }
   } else {
+    // two-sided
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
     if (seg->backsector->fakefloors) {
@@ -1144,122 +1206,130 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 
     // top wall
     segpart_t *sp = dseg->top;
-    sp->texinfo.ColourMap = ColourMap;
-    VTexture *TTex = GTextureManager(sidedef->TopTexture);
-    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
-      TTex = GTextureManager[skyflatnum];
-    }
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      VTexture *TTex = GTextureManager(sidedef->TopTexture);
+      if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
+        TTex = GTextureManager[skyflatnum];
+      }
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
-        FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
-        sp->texinfo.Tex->SScale != TTex->SScale ||
-        sp->texinfo.Tex->TScale != TTex->TScale)
-    {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
+          sp->texinfo.Tex->SScale != TTex->SScale ||
+          sp->texinfo.Tex->TScale != TTex->TScale)
+      {
+        FreeWSurfs(sp->surfs);
 
-      sp->texinfo.Tex = TTex;
-      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
+        sp->texinfo.Tex = TTex;
+        sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
 
-      SetupTwoSidedTopWSurf(sub, seg, sp, TTex, r_floor, r_ceiling);
-    } else if (FASI(sp->RowOffset) != FASI(sidedef->TopRowOffset)) {
-      sp->texinfo.Tex = TTex;
-      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
-      UpdateRowOffset(sub, sp, sidedef->TopRowOffset, seg->sidedef->TopScaleY);
-    } else {
-      sp->texinfo.Tex = TTex;
-      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
-    }
+        SetupTwoSidedTopWSurf(sub, seg, sp, TTex, r_floor, r_ceiling);
+      } else if (FASI(sp->RowOffset) != FASI(sidedef->TopRowOffset)) {
+        sp->texinfo.Tex = TTex;
+        sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
+        UpdateRowOffset(sub, sp, sidedef->TopRowOffset, seg->sidedef->TopScaleY);
+      } else {
+        sp->texinfo.Tex = TTex;
+        sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
+      }
 
-    if (FASI(sp->TextureOffset) != FASI(sidedef->TopTextureOffset)) {
-      UpdateTextureOffset(sub, sp, sidedef->TopTextureOffset, seg->sidedef->TopScaleX);
+      if (FASI(sp->TextureOffset) != FASI(sidedef->TopTextureOffset)) {
+        UpdateTextureOffset(sub, sp, sidedef->TopTextureOffset, seg->sidedef->TopScaleX);
+      }
     }
 
     // sky above top
     sp = dseg->topsky;
-    sp->texinfo.ColourMap = ColourMap;
-    if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+        FreeWSurfs(sp->surfs);
 
-      SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+        SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+      }
     }
 
     // bottom wall
     sp = dseg->bot;
-    sp->texinfo.ColourMap = ColourMap;
-    VTexture *BTex = GTextureManager(sidedef->BottomTexture);
-    sp->texinfo.Tex = BTex;
-    sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      VTexture *BTex = GTextureManager(sidedef->BottomTexture);
+      sp->texinfo.Tex = BTex;
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
-        FASI(sp->backBotDist) != FASI(back_floor->dist))
-    {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          FASI(sp->backBotDist) != FASI(back_floor->dist))
+      {
+        FreeWSurfs(sp->surfs);
 
-      SetupTwoSidedBotWSurf(sub, seg, sp, BTex, r_floor, r_ceiling);
-    } else if (FASI(sp->RowOffset) != FASI(sidedef->BotRowOffset)) {
-      UpdateRowOffset(sub, sp, sidedef->BotRowOffset, seg->sidedef->BotScaleY);
-    }
+        SetupTwoSidedBotWSurf(sub, seg, sp, BTex, r_floor, r_ceiling);
+      } else if (FASI(sp->RowOffset) != FASI(sidedef->BotRowOffset)) {
+        UpdateRowOffset(sub, sp, sidedef->BotRowOffset, seg->sidedef->BotScaleY);
+      }
 
-    if (FASI(sp->TextureOffset) != FASI(sidedef->BotTextureOffset)) {
-      UpdateTextureOffset(sub, sp, sidedef->BotTextureOffset, seg->sidedef->BotScaleX);
+      if (FASI(sp->TextureOffset) != FASI(sidedef->BotTextureOffset)) {
+        UpdateTextureOffset(sub, sp, sidedef->BotTextureOffset, seg->sidedef->BotScaleX);
+      }
     }
 
     // masked MidTexture
+    bool nullMidTex = true;
     sp = dseg->mid;
-    sp->texinfo.ColourMap = ColourMap;
-    VTexture *MTex = GTextureManager(sidedef->MidTexture);
-    check(MTex);
+    if (sp) {
+      sp->texinfo.ColourMap = ColourMap;
+      VTexture *MTex = GTextureManager(sidedef->MidTexture);
+      check(MTex);
+      nullMidTex = (MTex->Type == TEXTYPE_Null);
 
-    if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
-        FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
-        FASI(sp->backBotDist) != FASI(back_floor->dist) ||
-        FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset) ||
-        sp->texinfo.Tex->SScale != MTex->SScale ||
-        sp->texinfo.Tex->TScale != MTex->TScale ||
-        sp->texinfo.Tex->GetHeight() != MTex->GetHeight() ||
-        (sp->texinfo.Tex->Type == TEXTYPE_Null) != (MTex->Type == TEXTYPE_Null))
-    {
-      FreeWSurfs(sp->surfs);
-      sp->surfs = nullptr;
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
+          FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
+          FASI(sp->backTopDist) != FASI(back_ceiling->dist) ||
+          FASI(sp->backBotDist) != FASI(back_floor->dist) ||
+          FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset) ||
+          sp->texinfo.Tex->SScale != MTex->SScale ||
+          sp->texinfo.Tex->TScale != MTex->TScale ||
+          sp->texinfo.Tex->GetHeight() != MTex->GetHeight() ||
+          (sp->texinfo.Tex->Type == TEXTYPE_Null) != (MTex->Type == TEXTYPE_Null))
+      {
+        FreeWSurfs(sp->surfs);
 
-      sp->texinfo.Tex = MTex;
-      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
-      if (MTex->Type != TEXTYPE_Null) {
-        // masked MidTexture
-        SetupTwoSidedMidWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
+        sp->texinfo.Tex = MTex;
+        sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+        if (MTex->Type != TEXTYPE_Null) {
+          // masked MidTexture
+          SetupTwoSidedMidWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
+        } else {
+          sp->texinfo.Alpha = 1.1f;
+          sp->texinfo.Additive = false;
+        }
+
+        sp->frontTopDist = r_ceiling.splane->dist;
+        sp->frontBotDist = r_floor.splane->dist;
+        sp->backTopDist = back_ceiling->dist;
+        sp->backBotDist = back_floor->dist;
+        sp->RowOffset = sidedef->MidRowOffset;
       } else {
-        sp->texinfo.Alpha = 1.1f;
-        sp->texinfo.Additive = false;
+        sp->texinfo.Tex = MTex;
+        sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+        if (sidedef->MidTexture) {
+          sp->texinfo.Alpha = linedef->alpha;
+          sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
+        }
       }
 
-      sp->frontTopDist = r_ceiling.splane->dist;
-      sp->frontBotDist = r_floor.splane->dist;
-      sp->backTopDist = back_ceiling->dist;
-      sp->backBotDist = back_floor->dist;
-      sp->RowOffset = sidedef->MidRowOffset;
-    } else {
-      sp->texinfo.Tex = MTex;
-      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
-      if (sidedef->MidTexture) {
-        sp->texinfo.Alpha = linedef->alpha;
-        sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
+      if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
+        UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, seg->sidedef->MidScaleX);
       }
     }
 
-    if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset)) {
-      UpdateTextureOffset(sub, sp, sidedef->MidTextureOffset, seg->sidedef->MidScaleX);
-    }
-
+    // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
       int ridx = sp->regidx;
+      if (ridx >= 0) continue; // wtf?!
       //check(ridx >= 0 && ridx < seg->backsector->regions.length());
-      sec_region_t *reg = &seg->backsector->regions[ridx];
+      sec_region_t *reg = &seg->backsector->regions[-ridx];
       check(reg->extraline);
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
@@ -1275,12 +1345,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
           FASI(sp->backBotDist) != FASI(reg->efloor.splane->dist))
       {
         FreeWSurfs(sp->surfs);
-        sp->surfs = nullptr;
 
         sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*sidedef->MidScaleY)+
                              sidedef->MidRowOffset*(TextureOffsetTScale(MTexr)*sidedef->MidScaleY);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling, nullMidTex);
       } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, sp, sidedef->MidRowOffset, sidedef->MidScaleY);
       }
@@ -1301,6 +1370,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 void VRenderLevelShared::SegMoved (seg_t *seg) {
   if (!seg->drawsegs) return; // drawsegs not created yet
   if (!seg->linedef) Sys_Error("R_SegMoved: miniseg");
+  if (!seg->drawsegs->mid) return; // no midsurf
 
   VTexture *Tex = seg->drawsegs->mid->texinfo.Tex;
   seg->drawsegs->mid->texinfo.saxis = (*seg->v2-*seg->v1)/seg->length*(TextureSScale(Tex)*seg->sidedef->MidScaleX);
@@ -1381,9 +1451,10 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   for (int i = Level->NumSubsectors; i--; ++sub) {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
-    for (int ridx = 0; ridx < sub->sector->regions.length(); ++ridx) {
+    sec_region_t *reg = sub->sector->regions.ptr();
+    const int reglen = sub->sector->regions.length();
+    for (int ridx = 0; ridx < reglen; ++ridx, ++reg) {
       if (sregLeft == 0) Sys_Error("out of subregions in surface creator");
-      sec_region_t *reg = &sub->sector->regions[ridx];
 
       TSecPlaneRef r_floor, r_ceiling;
       r_floor = reg->efloor;
@@ -1401,18 +1472,19 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
 
       sreg->count = sub->numlines;
-      if (sub->poly) sreg->count += sub->poly->numsegs; // polyobj
+      if (ridx == 0 && sub->poly) sreg->count += sub->poly->numsegs; // polyobj
       if (pdsLeft < sreg->count) Sys_Error("out of drawsegs in surface creator");
       sreg->lines = pds;
       pds += sreg->count;
       pdsLeft -= sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling);
-      if (sub->poly) {
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling, ridx);
+
+      if (ridx == 0 && sub->poly) {
         // polyobj
         int j = sub->numlines;
         seg_t **polySeg = sub->poly->segs;
         for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg, ++j) {
-          CreateSegParts(sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling);
+          CreateSegParts(sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling, 0);
         }
       }
 

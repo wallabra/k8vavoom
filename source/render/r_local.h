@@ -88,7 +88,7 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
-  vint32 regidx; // region index (has no meaning for non-region parts)
+  vint32 regidx; // region index (negative means "backsector region")
 };
 
 
@@ -585,7 +585,7 @@ protected:
   void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, bool createMid);
 
   // surf methods
   void SetupSky ();
@@ -595,10 +595,10 @@ protected:
   sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, bool createSurface);
   void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool createSurface); // subsector is not changed, but we need it non-const
   surface_t *NewWSurf ();
-  void FreeWSurfs (surface_t*);
+  void FreeWSurfs (surface_t *&);
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
   int CountSegParts (const seg_t *);
-  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, int curridx);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);

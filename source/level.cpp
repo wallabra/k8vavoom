@@ -2209,29 +2209,33 @@ void CL_LoadLevel (VName MapName) {
 //  VLevel::dumpSectorRegions
 //
 //==========================================================================
+void VLevel::dumpRegion (const sec_region_t *reg) {
+  if (!reg) return;
+  char xflags[128];
+  xflags[0] = 0;
+  if (reg->regflags&sec_region_t::RF_SaneRegion) strcat(xflags, " [sane]");
+  if (reg->regflags&sec_region_t::RF_NonSolid) strcat(xflags, " [non-solid]");
+  if (reg->regflags&sec_region_t::RF_OnlyVisual) strcat(xflags, " [visual]");
+  if (reg->regflags&sec_region_t::RF_SkipFloorSurf) strcat(xflags, " [skip-floor]");
+  if (reg->regflags&sec_region_t::RF_SkipCeilSurf) strcat(xflags, " [skip-ceil]");
+  GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x%s",
+    reg,
+    reg->efloor.GetNormal().x, reg->efloor.GetNormal().y, reg->efloor.GetNormal().z, reg->efloor.GetDist(),
+    reg->efloor.splane->minz, reg->efloor.splane->maxz,
+    reg->efloor.splane->flags,
+    reg->eceiling.GetNormal().x, reg->eceiling.GetNormal().y, reg->eceiling.GetNormal().z, reg->eceiling.GetDist(),
+    reg->eceiling.splane->minz, reg->eceiling.splane->maxz,
+    reg->eceiling.splane->flags,
+    (reg->extraline ? 1 : 0),
+    reg->regflags, xflags);
+}
+
+
 void VLevel::dumpSectorRegions (const sector_t *dst) {
-/*
   GCon->Logf(" === bot -> top (sector: %p) ===", dst);
-  for (const sec_region_t *inregion = dst->botregion; inregion; inregion = inregion->next) {
-    GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
-      inregion,
-      inregion->efloor.GetNormal().x,
-      inregion->efloor.GetNormal().y,
-      inregion->efloor.GetNormal().z,
-      inregion->efloor.GetDist(),
-      inregion->efloor.splane->minz, inregion->efloor.splane->maxz,
-      inregion->efloor.splane->flags,
-      inregion->eceiling.GetNormal().x,
-      inregion->eceiling.GetNormal().y,
-      inregion->eceiling.GetNormal().z,
-      inregion->eceiling.GetDist(),
-      inregion->eceiling.splane->minz, inregion->eceiling.splane->maxz,
-      inregion->eceiling.splane->flags,
-      (inregion->extraline ? 1 : 0),
-      inregion->regflags);
-  }
+  const sec_region_t *reg = dst->regions.ptr();
+  for (int rcount = dst->regions.length(); rcount--; ++reg) dumpRegion(reg);
   GCon->Log("--------");
-*/
 }
 
 
