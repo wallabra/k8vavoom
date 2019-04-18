@@ -1495,6 +1495,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         TSecPlaneRef fakefloor, fakeceil;
         fakefloor.set(&sub->sector->fakefloors->floorplane, false);
         fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+        if (!fakefloor.isFloor()) fakefloor.Flip();
+        if (!fakeceil.isCeiling()) fakeceil.Flip();
         sreg->fakefloor = CreateSecSurface(nullptr, sub, fakefloor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
         sreg->fakeceil = CreateSecSurface(nullptr, sub, fakeceil, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
       }
@@ -1558,12 +1560,16 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
   if (region->fakefloor) {
     TSecPlaneRef fakefloor;
     fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+    if (!fakefloor.isFloor()) fakefloor.Flip();
+    if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
     UpdateSecSurface(region->fakefloor, fakefloor, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
   }
 
   if (region->fakeceil) {
     TSecPlaneRef fakeceil;
     fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+    if (!fakeceil.isCeiling()) fakeceil.Flip();
+    if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
     UpdateSecSurface(region->fakeceil, fakeceil, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
   }
 

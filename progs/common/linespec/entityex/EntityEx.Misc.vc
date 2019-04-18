@@ -2696,6 +2696,7 @@ final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
 
     if (OldZ > FakeZ && Origin.z <= FakeZ) {
       SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFakeFloor);
+      if (!Sector || !Sector->heightsec || !Sector->ActionList) return;
     }
 
     float EyeZ = Origin.z+ViewH;
@@ -2706,6 +2707,7 @@ final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
     } else if (OldZ > FakeZ && EyeZ <= FakeZ) {
       SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_EyesDive);
     }
+    if (!Sector || !Sector->heightsec || !Sector->ActionList) return;
 
     if (!Sector->heightsec->bFakeFloorOnly) {
       FakeZ = GetPlanePointZ(ref Sector->heightsec->ceiling, Origin);
