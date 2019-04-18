@@ -53,9 +53,9 @@ menudef AdvVideoOptions {
     cvar = r_lmap_filtering;
     list {
       "None",
-      "Simple",
-      "SimpleExtra",
-      "Extra",
+      "Simple (recommended)",
+      "Simple+Extra",
+      "Extra (slow)",
     }
     help =
       "What kind of filtering apply to static lightmaps?"
