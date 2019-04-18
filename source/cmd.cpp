@@ -102,7 +102,9 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
   }
   if (GGameInfo->WorldInfo->Flags&VWorldInfo::WIF_SkillDisableCheats) {
     Player->Printf("You are too good to cheat!");
-    return false;
+    //k8: meh, if i want to cheat, i want to cheat!
+    //return false;
+    return true;
   }
   if (!allowDead && Player->Health <= 0) {
     // dead players can't cheat
