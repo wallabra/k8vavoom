@@ -502,15 +502,25 @@ VRenderLevelShared::~VRenderLevelShared () {
 
   for (int i = 0; i < Level->NumSubsectors; ++i) {
     for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next) {
-      if (r->floor != nullptr) {
-        FreeSurfaces(r->floor->surfs);
-        delete r->floor;
-        r->floor = nullptr;
+      if (r->realfloor != nullptr) {
+        FreeSurfaces(r->realfloor->surfs);
+        delete r->realfloor;
+        r->realfloor = nullptr;
       }
-      if (r->ceil != nullptr) {
-        FreeSurfaces(r->ceil->surfs);
-        delete r->ceil;
-        r->ceil = nullptr;
+      if (r->realceil != nullptr) {
+        FreeSurfaces(r->realceil->surfs);
+        delete r->realceil;
+        r->realceil = nullptr;
+      }
+      if (r->fakefloor != nullptr) {
+        FreeSurfaces(r->fakefloor->surfs);
+        delete r->fakefloor;
+        r->fakefloor = nullptr;
+      }
+      if (r->fakeceil != nullptr) {
+        FreeSurfaces(r->fakeceil->surfs);
+        delete r->fakeceil;
+        r->fakeceil = nullptr;
       }
     }
   }
@@ -941,8 +951,10 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
         } \
         drawseg_t *ds = region->lines; \
         for (int count = vsub->numlines; count--; ++ds) UpdateBBoxWithLine(LitBBox, curreg->eceiling.splane->SkyBox, ds); \
-        UpdateBBoxWithSurface(LitBBox, region->floor->surfs, &region->floor->texinfo, curreg->efloor.splane->SkyBox, true); \
-        UpdateBBoxWithSurface(LitBBox, region->ceil->surfs, &region->ceil->texinfo, curreg->eceiling.splane->SkyBox, true); \
+        UpdateBBoxWithSurface(LitBBox, region->realfloor->surfs, &region->realfloor->texinfo, curreg->efloor.splane->SkyBox, true); \
+        UpdateBBoxWithSurface(LitBBox, region->realceil->surfs, &region->realceil->texinfo, curreg->eceiling.splane->SkyBox, true); \
+        if (region->fakefloor) UpdateBBoxWithSurface(LitBBox, region->fakefloor->surfs, &region->fakefloor->texinfo, curreg->efloor.splane->SkyBox, true); \
+        if (region->fakeceil) UpdateBBoxWithSurface(LitBBox, region->fakeceil->surfs, &region->fakeceil->texinfo, curreg->eceiling.splane->SkyBox, true); \
       } \
     } \
   } \

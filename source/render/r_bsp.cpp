@@ -312,7 +312,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
 
   // handle top part
   if (TopZ > HorizonZ) {
-    sec_surface_t *Ceil = subregion->ceil;
+    sec_surface_t *Ceil = (subregion->fakeceil ? subregion->fakeceil : subregion->realceil);
 
     // calculate light and fade
     sec_params_t *LightParams = Ceil->esecplane.splane->LightSourceSector != -1 ?
@@ -352,7 +352,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
 
   // handle bottom part
   if (BotZ < HorizonZ) {
-    sec_surface_t *Floor = subregion->floor;
+    sec_surface_t *Floor = (subregion->fakefloor ? subregion->fakefloor : subregion->realfloor);
 
     // calculate light and fade
     sec_params_t *LightParams = Floor->esecplane.splane->LightSourceSector != -1 ?
@@ -559,6 +559,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 //
 //==========================================================================
 void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox) {
+  if (!ssurf) return;
   TSecPlaneRef plane(ssurf->esecplane);
 
   if (!plane.splane->pic) return;
@@ -621,7 +622,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //==========================================================================
 void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper) {
   //const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
-  const float d = region->floor->PointDist(vieworg);
+  const float d = (region->fakefloor ? region->fakefloor : region->realfloor)->PointDist(vieworg);
   if (region->next && d <= 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
     RenderSubRegion(sub, region->next, addPoly, useClipper);
@@ -648,8 +649,11 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
     ++ds;
   }
 
-  RenderSecSurface(sub, secregion, region->floor, secregion->efloor.splane->SkyBox);
-  RenderSecSurface(sub, secregion, region->ceil, secregion->eceiling.splane->SkyBox);
+  RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
+  RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
+
+  if (region->fakefloor) RenderSecSurface(sub, secregion, region->fakefloor, secregion->efloor.splane->SkyBox);
+  if (region->fakeceil) RenderSecSurface(sub, secregion, region->fakeceil, secregion->eceiling.splane->SkyBox);
 
   if (region->next && d > 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;

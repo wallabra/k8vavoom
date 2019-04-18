@@ -759,12 +759,12 @@ struct seg_t : public TPlane {
 struct subregion_t {
   sec_region_t *secregion;
   subregion_t *next;
-  //sec_plane_t *floorplane;
-  //sec_plane_t *ceilplane;
   TSecPlaneRef floorplane;
   TSecPlaneRef ceilplane;
-  sec_surface_t *floor;
-  sec_surface_t *ceil;
+  sec_surface_t *realfloor;
+  sec_surface_t *realceil;
+  sec_surface_t *fakefloor; // can be `nullptr`
+  sec_surface_t *fakeceil; // can be `nullptr`
   vint32 count;
   drawseg_t *lines;
 };

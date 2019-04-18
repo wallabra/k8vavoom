@@ -381,7 +381,7 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   //const float dist = DotProduct(CurrLightPos, region->efloor->secplane->normal)-region->efloor->secplane->dist;
-  const float dist = region->floor->PointDist(CurrLightPos);
+  const float dist = (region->fakefloor ? region->fakefloor : region->realfloor)->PointDist(CurrLightPos);
 
   if (region->next && dist <= 0.0f) {
 # ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
@@ -407,8 +407,11 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(curreg, ds);
   }
 
-  RenderShadowSecSurface(region->floor, curreg->efloor.splane->SkyBox);
-  RenderShadowSecSurface(region->ceil, curreg->eceiling.splane->SkyBox);
+  RenderShadowSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
+  RenderShadowSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
+
+  if (region->fakefloor) RenderShadowSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
+  if (region->fakeceil) RenderShadowSecSurface(region->fakeceil, curreg->efloor.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {
@@ -631,7 +634,7 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   //const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
-  const float dist = region->floor->PointDist(CurrLightPos);
+  const float dist = (region->fakefloor ? region->fakefloor : region->realfloor)->PointDist(CurrLightPos);
 
   if (region->next && dist <= 0.0f) {
 #ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
@@ -657,8 +660,11 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(curreg, ds);
   }
 
-  RenderLightSecSurface(region->floor, curreg->efloor.splane->SkyBox);
-  RenderLightSecSurface(region->ceil, curreg->eceiling.splane->SkyBox);
+  RenderLightSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
+  RenderLightSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
+
+  if (region->fakefloor) RenderLightSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
+  if (region->fakeceil) RenderLightSecSurface(region->fakeceil, curreg->eceiling.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {

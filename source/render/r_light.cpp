@@ -668,7 +668,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
   if (!skipAmbient && reg) {
     while (reg->next) {
       //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      const float d = reg->floor->PointDist(p);
+      const float d = (reg->fakefloor ? reg->fakefloor : reg->realfloor)->PointDist(p);
       if (d >= 0.0f) break;
       reg = reg->next;
     }
@@ -691,10 +691,22 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
 
     if (!IsAdvancedRenderer()) {
       // light from floor's lightmap
-      int s = (int)(DotProduct(p, reg->floor->texinfo.saxis)+reg->floor->texinfo.soffs);
-      int t = (int)(DotProduct(p, reg->floor->texinfo.taxis)+reg->floor->texinfo.toffs);
+      sec_surface_t *rfloor;
+      if (reg->fakefloor) {
+        const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
+        const float realz = reg->realfloor->esecplane.GetPointZ(p);
+        if (fakez < realz) {
+          rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
+        } else {
+          rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
+        }
+      } else {
+        rfloor = reg->realfloor;
+      }
+      int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
+      int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
       int ds, dt;
-      for (surface_t *surf = reg->floor->surfs; surf; surf = surf->next) {
+      for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
         if (surf->lightmap == nullptr) continue;
         if (surf->count < 3) continue; // wtf?!
         if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;

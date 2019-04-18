@@ -592,12 +592,14 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   check(TTex);
   TVec wv[4];
 
-  sec_plane_t *back_floor = &seg->backsector->floor;
+  //sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+  /*!!!FAKEFLOORS
   if (seg->backsector->fakefloors) {
     if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
+  */
 
   const float topz1 = r_ceiling.GetPointZ(*seg->v1);
   const float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -649,10 +651,12 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+  /*!!!FAKEFLOORS
   if (seg->backsector->fakefloors) {
     if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
+  */
 
   float topz1 = r_ceiling.GetPointZ(*seg->v1);
   float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -702,10 +706,12 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+  /*!!!FAKEFLOORS
   if (seg->backsector->fakefloors) {
     if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
     if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
   }
+  */
 
   float topz1 = r_ceiling.GetPointZ(*seg->v1);
   float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -969,10 +975,12 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+    /*!!!FAKEFLOORS
     if (seg->backsector->fakefloors) {
       if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
       if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
     }
+    */
 
     // top wall
     if (cridx == 0) {
@@ -1199,10 +1207,12 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // two-sided
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+    /*!!!FAKEFLOORS
     if (seg->backsector->fakefloors) {
       if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
       if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
     }
+    */
 
     // top wall
     segpart_t *sp = dseg->top;
@@ -1460,16 +1470,27 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       r_floor = reg->efloor;
       r_ceiling = reg->eceiling;
 
+      /*!!!FAKEFLOORS
       if (sub->sector->fakefloors) {
         if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane, false);
         if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane, false);
       }
+      */
 
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->floor = CreateSecSurface(nullptr, sub, r_floor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
-      sreg->ceil = CreateSecSurface(nullptr, sub, r_ceiling, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
+      sreg->realfloor = CreateSecSurface(nullptr, sub, r_floor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
+      sreg->realceil = CreateSecSurface(nullptr, sub, r_ceiling, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
+
+      // create fake floor and ceiling
+      if (ridx == 0 && sub->sector->fakefloors) {
+        TSecPlaneRef fakefloor, fakeceil;
+        fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+        fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+        sreg->fakefloor = CreateSecSurface(nullptr, sub, fakefloor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
+        sreg->fakeceil = CreateSecSurface(nullptr, sub, fakeceil, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
+      }
 
       sreg->count = sub->numlines;
       if (ridx == 0 && sub->poly) sreg->count += sub->poly->numsegs; // polyobj
@@ -1512,18 +1533,23 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
   TSecPlaneRef r_floor = region->floorplane;
   TSecPlaneRef r_ceiling = region->ceilplane;
 
+  /*!!!FAKEFLOORS
   if (sub->sector->fakefloors) {
     if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane, false);
     if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane, false);
   }
+  */
 
   drawseg_t *ds = region->lines;
   for (int count = sub->numlines; count--; ++ds) {
     UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
   }
 
-  UpdateSecSurface(region->floor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
-  UpdateSecSurface(region->ceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+  UpdateSecSurface(region->realfloor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
+  UpdateSecSurface(region->realceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+
+  if (region->fakefloor) UpdateSecSurface(region->fakefloor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
+  if (region->fakeceil) UpdateSecSurface(region->fakeceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
 
   if (updatePoly && sub->poly) {
     // update the polyobj
@@ -1868,8 +1894,6 @@ void VRenderLevelShared::UpdateFloodBug (sector_t *sec) {
 //
 //==========================================================================
 void VRenderLevelShared::SetupFakeFloors (sector_t *Sec) {
-  //TODO
-  /*
   if (!Sec->deepref) {
     sector_t *HeightSec = Sec->heightsec;
     if (HeightSec->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
@@ -1881,8 +1905,7 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *Sec) {
   Sec->fakefloors->ceilplane = Sec->ceiling;
   Sec->fakefloors->params = Sec->params;
 
-  Sec->topregion->params = &Sec->fakefloors->params;
-  */
+  Sec->regions[0].params = &Sec->fakefloors->params;
 }
 
 
