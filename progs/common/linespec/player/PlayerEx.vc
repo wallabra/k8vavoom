@@ -615,6 +615,7 @@ final void WaterMove (float deltaTime) {
   }
   //else wishvel.z += cmd.upmove;
 
+  //print("wishvel=%s; forward=%s; prevel=%s", wishvel, forward, MO.Velocity);
   MO.Velocity += 3.5*deltaTime*wishvel;
 
   if (forward || side) SetPlayerRunState();
@@ -627,8 +628,15 @@ final void WaterMove (float deltaTime) {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
       if (MO.Velocity.z > 0) MO.Velocity.z -= 10;
     }
-    if (MO.Velocity.z < -20) MO.Velocity.z = -20;
+    // if we are not moving forward, do not sink too fast
+    if (!forward) {
+      if (MO.Velocity.z < -20) MO.Velocity.z = fmin(-20, MO.Velocity.z+20);
+    } else {
+      float limit = (Buttons&BT_SPEED ? 140 : 140*2);
+      MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
+    }
   }
+
   CheckWaterJump();
 }
 
@@ -2289,6 +2297,26 @@ void SetUpPlayerClass () {
 
 //==========================================================================
 //
+//  ResetACSButtons
+//
+//  reset ACS button update timers and values
+//
+//==========================================================================
+final void ResetACSButtons () {
+  AcsCurrButtonsPressed = 0;
+  AcsCurrButtons = 0;
+  AcsButtons = 0;
+  OldButtons = 0;
+  AcsNextButtonUpdate = 0;
+  AcsPrevMouseX = 0;
+  AcsPrevMouseY = 0;
+  AcsMouseX = 0;
+  AcsMouseY = 0;
+}
+
+
+//==========================================================================
+//
 //  ResetPlayerOnSpawn
 //
 //==========================================================================
@@ -2342,6 +2370,8 @@ void ResetPlayerOnSpawn () {
   bFlashlightButtonDown = false;
 
   k8NextSuperBulletTime = 0;
+
+  ResetACSButtons();
 }
 
 
