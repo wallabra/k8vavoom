@@ -27,6 +27,12 @@ menudef GameplayOptions {
     help = "Do slightly better (and slower) line-of-sight checking for monsters.";
   }
 
+  option bool {
+    title = "Player Death Infighting";
+    cvar = gm_death_infighting;
+  }
+
+
   header "Other Options";
 
   option bool {

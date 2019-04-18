@@ -114,6 +114,8 @@ WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
 //
 //==========================================================================
 override void Init () {
+  CreateCvar('gm_death_infighting', "1", "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
+
   CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
 
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);

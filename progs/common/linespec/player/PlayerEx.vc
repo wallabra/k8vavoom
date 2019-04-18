@@ -2490,7 +2490,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     ResetInventory = true;
     reborned = true;
   } else if (PlayerState == PST_CHEAT_REBORN) {
-    print("*** CHEAT REBORN ***");
+    //print("*** CHEAT REBORN ***");
     PlayerReborn();
     ResetInventory = false;
     reborned = true;

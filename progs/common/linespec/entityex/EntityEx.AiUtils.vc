@@ -210,7 +210,8 @@ final bool LookForPlayers (bool allaround) {
       Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
   {
     // single player game and player is dead, look for monsters
-    return LookForMonsters();
+    if (GetCvarB('gm_death_infighting')) return LookForMonsters();
+    return false;
   }
 
   int c = 0;
