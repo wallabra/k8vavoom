@@ -2110,7 +2110,9 @@ override void SpawnClient () {
 
   if (Level.Game.netgame && !Level.Game.deathmatch) {
     // cooperative net-play, retain keys and weapons
-    playerWasReborn = (PlayerState == PST_REBORN);
+    playerWasReborn = (PlayerState == PST_REBORN || PlayerState == PST_CHEAT_REBORN);
+  } else {
+    playerWasReborn = (PlayerState == PST_CHEAT_REBORN);
   }
 
   // spawn player
@@ -2118,6 +2120,8 @@ override void SpawnClient () {
     DeathMatchSpawnPlayer();
   } else if (Level.Game.netgame || Level.bClusterHub) {
     SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+  } else if (PlayerState == PST_CHEAT_REBORN) {
+    SpawnPlayer(nullptr, false);
   } else {
     mthing_t *Best = nullptr;
     bool Spawned = false;
@@ -2211,26 +2215,31 @@ override void NetGameReborn () {
     return;
   }
 
-  bool foundSpot = false;
-  if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition))) {
-    // appropriate player start spot is open
-    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
-    foundSpot = true;
+  if (PlayerState == PST_CHEAT_REBORN) {
+    PreTravel(); // this stores all required inventory in `SavedInventory`
+    SpawnPlayer(nullptr, false);
   } else {
-    // try to spawn at one of the other player start spots
-    foreach (auto i; 0..MAXPLAYERS) {
-      if (CheckSpot(Level.GetPlayerStart(i, Level.Game.RebornPosition))) {
-        // found an open start spot
-        SpawnPlayer(Level.GetPlayerStart(i, Level.Game.RebornPosition), false);
-        foundSpot = true;
-        break;
+    bool foundSpot = false;
+    if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition))) {
+      // appropriate player start spot is open
+      SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+      foundSpot = true;
+    } else {
+      // try to spawn at one of the other player start spots
+      foreach (auto i; 0..MAXPLAYERS) {
+        if (CheckSpot(Level.GetPlayerStart(i, Level.Game.RebornPosition))) {
+          // found an open start spot
+          SpawnPlayer(Level.GetPlayerStart(i, Level.Game.RebornPosition), false);
+          foundSpot = true;
+          break;
+        }
       }
     }
-  }
 
-  if (!foundSpot) {
-    // player's going to be inside something. too bad.
-    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+    if (!foundSpot) {
+      // player's going to be inside something. too bad.
+      SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+    }
   }
 
   if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(LineSpecialGameInfo(Level.Game));
@@ -2468,28 +2477,40 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   bool reborned = false;
   Inventory Item;
 
+  TVec spawnOrigin = (mthing ? vector(mthing->x, mthing->y, Actor::ONFLOORZ) : MO.Origin);
+  float spawnYaw = (mthing ? float(45*(mthing->angle/45)) : MO.Angles.yaw);
+
   //print("*** SPAWN PLAYER");
+
+  bool cheatReborn = false;
 
   //print("************SpawnPlayer: 000; Voodoo=%b; PST=%d", PlayerState);
   if (PlayerState == PST_REBORN) {
     PlayerReborn();
     ResetInventory = true;
     reborned = true;
+  } else if (PlayerState == PST_CHEAT_REBORN) {
+    print("*** CHEAT REBORN ***");
+    PlayerReborn();
+    ResetInventory = false;
+    reborned = true;
+    cheatReborn = true;
   } else {
     if (Level.bResetInventory && !GetCvarB('sv_ignore_reset_inventory')) ResetInventory = true;
   }
-  if (GetCvarB('sv_force_pistol_start')) ResetInventory = true;
+
+  if (!cheatReborn && GetCvarB('sv_force_pistol_start')) ResetInventory = true;
 
   SetUpPlayerClass();
 
-  float x = mthing->x;
-  float y = mthing->y;
-  float z = Actor::ONFLOORZ;
+  float x = spawnOrigin.x;
+  float y = spawnOrigin.y;
+  float z = spawnOrigin.z;
   if (PClass >= Level.Game.PlayerClasses.Num) Error("Player::SpawnPlayer: Unknown class type");
 
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
   print("spawned player with class <%C>...", PP);
-  PP.Origin.z += mthing->height;
+  if (mthing) PP.Origin.z += mthing->height;
   PP.LinkToWorld(properFloorCheck:true);
   PP.FriendPlayer = GetPlayerNum()+1; // players are their own friends
 
@@ -2503,7 +2524,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   DesiredFOV = 90.0; //float(GetCvar('FOV'));
   FOV = DesiredFOV;
-  PP.Angles.yaw = float(45*(mthing->angle/45));
+  PP.Angles.yaw = spawnYaw;
   PP.Player = self;
   PP.bIsPlayer = true;
   PP.Health = Health;

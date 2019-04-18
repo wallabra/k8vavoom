@@ -153,6 +153,24 @@ COMMAND(VScript_Command) {
 
 //==========================================================================
 //
+//  COMMAND Resurrect
+//
+//==========================================================================
+COMMAND(Resurrect) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (!Player) return;
+  if (CheatAllowed(Player, true)) {
+    if (Player->PlayerState == PST_DEAD) Player->PlayerState = PST_CHEAT_REBORN;
+  }
+}
+
+
+//==========================================================================
+//
 //  Script_f
 //
 //==========================================================================

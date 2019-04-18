@@ -52,6 +52,7 @@ enum playerstate_t {
   PST_LIVE, // playing or camping
   PST_DEAD, // dead on the ground, view follows killer
   PST_REBORN, // ready to restart/respawn
+  PST_CHEAT_REBORN, // do not reload level, do not reset inventory
 };
 
 // button/action code definitions

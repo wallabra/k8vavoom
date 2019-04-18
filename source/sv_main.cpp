@@ -37,7 +37,7 @@ static double FrameTime = 1.0f/35.0f;
 static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
 
 
-static void G_DoReborn (int playernum);
+static void G_DoReborn (int playernum, bool cheatReborn);
 static void G_DoCompleted ();
 
 
@@ -479,7 +479,8 @@ static void SV_RunClients (bool skipFrame=false) {
     }
 
     // do player reborns if needed
-    if (Player->PlayerState == PST_REBORN) G_DoReborn(i);
+         if (Player->PlayerState == PST_REBORN) G_DoReborn(i, false);
+    else if (Player->PlayerState == PST_CHEAT_REBORN) G_DoReborn(i, true);
 
     if (Player->Net) {
       Player->Net->NeedsUpdate = false;
@@ -822,13 +823,13 @@ COMMAND(TeleportNewMapEx) {
 //  G_DoReborn
 //
 //==========================================================================
-static void G_DoReborn (int playernum) {
+static void G_DoReborn (int playernum, bool cheatReborn) {
   if (!GGameInfo->Players[playernum] ||
-      !(GGameInfo->Players[playernum]->PlayerFlags & VBasePlayer::PF_Spawned))
+      !(GGameInfo->Players[playernum]->PlayerFlags&VBasePlayer::PF_Spawned))
   {
     return;
   }
-  if (GGameInfo->NetMode == NM_Standalone) {
+  if (GGameInfo->NetMode == NM_Standalone && !cheatReborn) {
     GCmdBuf << "Restart\n";
     GGameInfo->Players[playernum]->PlayerState = PST_LIVE;
   } else {
