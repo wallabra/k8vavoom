@@ -906,18 +906,27 @@ void VScriptParser::ExpectIdentifier () {
 
 //==========================================================================
 //
+//  NormalizeFuckedGozzoNumber
+//
+//==========================================================================
+static VStr NormalizeFuckedGozzoNumber (const VStr &String) {
+  VStr str = String;
+  while (str.length() && (vuint8)str[0] <= ' ') str.chopLeft(1);
+  if (str.length() && strchr("lfLF", str[str.length()-1])) str.chopRight(1);
+  return str;
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::CheckNumber
 //
 //==========================================================================
 bool VScriptParser::CheckNumber () {
   if (GetString()) {
-    if (String.length() > 0) {
-      /*
-      char *stopper;
-      Number = strtol(*String, &stopper, 0);
-      if (*stopper == 0) return true;
-      */
-      if (String.convertInt(&Number)) {
+    VStr str = NormalizeFuckedGozzoNumber(String);
+    if (str.length() > 0) {
+      if (str.convertInt(&Number)) {
         //GCon->Logf("VScriptParser::CheckNumber: <%s> is %d", *String, Number);
         return true;
       }
@@ -934,26 +943,31 @@ bool VScriptParser::CheckNumber () {
 //
 //==========================================================================
 void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
-  if (GetString() && String.length() > 0) {
-    char *stopper;
-    Number = strtol(*String, &stopper, 0);
-    if (*stopper != 0) {
-      if (allowFloat && *stopper == '.') {
-        if (truncFloat) {
-          Message(va("Bad numeric constant \"%s\" (integer expected; truncated to %d).", *String, (int)Number));
-        } else {
-          if (stopper[1] >= '5') ++Number;
-          if (Number == 0) Number = 1; // just in case
-          Message(va("Bad numeric constant \"%s\" (integer expected; rounded to %d).", *String, (int)Number));
-        }
-        //fprintf(stderr, "%d\n", (int)Number);
-        //Error(va("Bad numeric constant \"%s\".", *String));
-      } else {
-        Error(va("Bad numeric constant \"%s\".", *String));
-      }
-    }
-  } else {
+  if (!GetString()) {
     Error("Missing integer.");
+  } else {
+    VStr str = NormalizeFuckedGozzoNumber(String);
+    if (str.length() > 0) {
+      char *stopper;
+      Number = strtol(*str, &stopper, 0);
+      if (*stopper != 0) {
+        if (allowFloat && *stopper == '.') {
+          if (truncFloat) {
+            Message(va("Bad numeric constant \"%s\" (integer expected; truncated to %d).", *String, (int)Number));
+          } else {
+            if (stopper[1] >= '5') ++Number;
+            if (Number == 0) Number = 1; // just in case
+            Message(va("Bad numeric constant \"%s\" (integer expected; rounded to %d).", *String, (int)Number));
+          }
+          //fprintf(stderr, "%d\n", (int)Number);
+          //Error(va("Bad numeric constant \"%s\".", *String));
+        } else {
+          Error(va("Bad numeric constant \"%s\".", *String));
+        }
+      }
+    } else {
+      Error("Missing integer.");
+    }
   }
 }
 
@@ -996,17 +1010,13 @@ void VScriptParser::ExpectNumberWithSign () {
 //==========================================================================
 bool VScriptParser::CheckFloat () {
   if (GetString()) {
-    if (String.length() > 0) {
+    VStr str = NormalizeFuckedGozzoNumber(String);
+    if (str.length() > 0) {
       float ff = 0;
-      if (String.convertFloat(&ff)) {
+      if (str.convertFloat(&ff)) {
         Float = ff;
         return true;
       }
-      /*
-      char *stopper;
-      Float = strtod(*String, &stopper);
-      if (*stopper == 0) return true;
-      */
     }
     UnGet();
   }
@@ -1020,42 +1030,42 @@ bool VScriptParser::CheckFloat () {
 //
 //==========================================================================
 void VScriptParser::ExpectFloat () {
-  if (GetString() && String.length() > 0) {
-    //FIXME: detect when we want to use a really big number
-    VStr sl = String.ToLower();
-    if (sl.StartsWith("0x7f") || sl.StartsWith("0xff")) {
-      Float = 99999.0f;
-    } else {
-      /*
-      char *stopper;
-      Float = strtod(*String, &stopper);
-      if (*stopper != 0) Error(va("Bad floating point constant \"%s\".", *String));
-      */
-      float ff = 0;
-      if (!String.convertFloat(&ff)) {
-        // fuckin' morons from LCA loves numbers like "90000000000000000000000000000000000000000000000000"
-        const char *s = *String;
-        while (*s && *(const vuint8 *)s <= ' ') ++s;
-        bool neg = false;
-        switch (*s) {
-          case '-':
-            neg = true;
-            /* fallthrough */
-          case '+':
-            ++s;
-            break;
-        }
-        while (*s >= '0' && *s <= '9') ++s;
-        while (*s && *(const vuint8 *)s <= ' ') ++s;
-        if (*s) Error(va("Bad floating point constant \"%s\".", *String));
-        GLog.WriteLine(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
-        ff = 1e14;
-        if (neg) ff = -ff;
-      }
-      Float = ff;
-    }
-  } else {
+  if (!GetString()) {
     Error("Missing float.");
+  } else {
+    VStr str = NormalizeFuckedGozzoNumber(String);
+    if (str.length() > 0) {
+      //FIXME: detect when we want to use a really big number
+      VStr sl = str.ToLower();
+      if (sl.StartsWith("0x7f") || sl.StartsWith("0xff")) {
+        Float = 99999.0f;
+      } else {
+        float ff = 0;
+        if (!str.convertFloat(&ff)) {
+          // fuckin' morons from LCA loves numbers like "90000000000000000000000000000000000000000000000000"
+          const char *s = *str;
+          while (*s && *(const vuint8 *)s <= ' ') ++s;
+          bool neg = false;
+          switch (*s) {
+            case '-':
+              neg = true;
+              /* fallthrough */
+            case '+':
+              ++s;
+              break;
+          }
+          while (*s >= '0' && *s <= '9') ++s;
+          while (*s && *(const vuint8 *)s <= ' ') ++s;
+          if (*s) Error(va("Bad floating point constant \"%s\".", *String));
+          GLog.WriteLine(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
+          ff = 1e14;
+          if (neg) ff = -ff;
+        }
+        Float = ff;
+      }
+    } else {
+      Error("Missing float.");
+    }
   }
 }
 
