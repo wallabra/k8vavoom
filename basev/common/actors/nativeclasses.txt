@@ -512,3 +512,10 @@ class Inventory extends Actor
   action native A_BFGsound();
   action native A_FireBFG();
 }
+
+
+class IceChunk extends Actor
+  native
+{
+  action native A_IceSetTics();
+}
