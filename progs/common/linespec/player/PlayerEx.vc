@@ -188,6 +188,7 @@ replication {
 override void ResetToDefaults () {
   ::ResetToDefaults();
   ResetPlayerOnSpawn(keepPlayerState:true);
+  k8HealthAccum_Amount = 0;
   //print("*** RESET ***");
   //print("k8ElvenGiftMessageTime=%s", k8ElvenGiftMessageTime);
 }
@@ -2210,6 +2211,7 @@ override void NetGameReborn () {
 
   // spawn at random spot if in death match
   if (Level.Game.deathmatch) {
+    k8HealthAccum_Amount = 0;
     OldMO.DestroyAllInventory();
     DeathMatchSpawnPlayer();
     return;
@@ -2217,8 +2219,11 @@ override void NetGameReborn () {
 
   if (PlayerState == PST_CHEAT_REBORN) {
     PreTravel(); // this stores all required inventory in `SavedInventory`
+    auto oldAccum = k8HealthAccum_Amount;
     SpawnPlayer(nullptr, false);
+    k8HealthAccum_Amount = oldAccum;
   } else {
+    k8HealthAccum_Amount = 0;
     bool foundSpot = false;
     if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition))) {
       // appropriate player start spot is open
@@ -3341,17 +3346,20 @@ override void PlayerTick (float deltaTime) {
   //print("***000: BUTTONS: 0x%08x; old=0x%08x", Buttons, OldButtons);
 
   // Health Accumulator
-  if (/*!(Cheats&CF_TIMEFREEZE) &&*/ PlayerState == PST_LIVE && GetCvarB('k8HealthAccum_Enabled')) {
-    int accMax = GetCvarI('k8HealthAccum_Max');
-    int accAmount = 0;
-    if (accMax > 0) {
-      //k8HealthAccum_LastRegenTime = 0;
-      //k8HealthAccum_LastBoostTime = 0;
-      k8HealthAccum_Amount = max(0, min(k8HealthAccum_Amount, accMax)); // sanitize
-      //print("k8HealthAccum_Amount=%s; bt=%s; rt=%s; lt=%s; tb=%s; tr=%s", k8HealthAccum_Amount, MO.XLevel.Time-k8HealthAccum_LastBoostTime, MO.XLevel.Time-k8HealthAccum_LastRegenTime, MO.XLevel.Time, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
-      if (!checkDoHealthAccumBoost()) checkDoHealthAccumRegen();
-    } else {
-      k8HealthAccum_Amount = 0;
+  if (GetCvarB('k8HealthAccum_Enabled')) {
+    // do not reset accumulator when player is dead
+    if (PlayerState == PST_LIVE) {
+      int accMax = GetCvarI('k8HealthAccum_Max');
+      int accAmount = 0;
+      if (accMax > 0) {
+        //k8HealthAccum_LastRegenTime = 0;
+        //k8HealthAccum_LastBoostTime = 0;
+        k8HealthAccum_Amount = max(0, min(k8HealthAccum_Amount, accMax)); // sanitize
+        //print("k8HealthAccum_Amount=%s; bt=%s; rt=%s; lt=%s; tb=%s; tr=%s", k8HealthAccum_Amount, MO.XLevel.Time-k8HealthAccum_LastBoostTime, MO.XLevel.Time-k8HealthAccum_LastRegenTime, MO.XLevel.Time, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
+        if (!checkDoHealthAccumBoost()) checkDoHealthAccumRegen();
+      } else {
+        k8HealthAccum_Amount = 0;
+      }
     }
   } else {
     k8HealthAccum_Amount = 0;
