@@ -833,6 +833,7 @@ native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TV
 // "regions" keeps 3d floors for sector
 // region inside may be non-solid, if the corresponding flag is set
 struct sec_region_t {
+  sec_region_t *next;
   // planes
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
@@ -896,7 +897,11 @@ struct sector_t {
   sec_plane_t ceiling;
   sec_params_t params;
 
-  array!sec_region_t regions;
+  // floor/ceiling info for sector
+  // first region is always base sector region that keeps "emptyness"
+  // other regions are "filled space" (yet that space can be non-solid)
+  // region floor and ceiling are better have the same set of `SPF_NOxxx` flags.
+  sec_region_t *eregions;
 
   sector_t *deepref; // deep water hack
 
@@ -1314,6 +1319,30 @@ native final int _get_user_var_dim (name fldname); // array dimension; -1: not a
 
 native static final float GetSectorFloorPointZ (const sector_t *sector, const ref TVec point);
 native static final bool SectorHas3DFloors (const sector_t *sector);
+
+
+//==========================================================================
+//
+//  CheckPlaneHit
+//
+//  checks for plane hit, returns hit point and `false` if hit
+//  plane flags should be already checked
+//
+//==========================================================================
+native static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
+                                 optional out TVec currhit, optional out bool isSky);
+
+//==========================================================================
+//
+//  CheckHitPlanes
+//
+//  checks all sector regions, returns `false` if any region plane was hit
+//  sets `outXXX` arguments on hit
+//
+//==========================================================================
+native static final bool CheckHitPlanes (const sector_t *sec, TVec linestart, TVec lineend, int flagmask,
+                                  optional out TVec outHitPoint, optional out TVec outHitNormal,
+                                  optional out bool outIsSky);
 
 
 defaultproperties {

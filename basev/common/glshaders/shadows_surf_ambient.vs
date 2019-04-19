@@ -3,10 +3,10 @@ $include "common/common.inc"
 
 #ifdef VV_AMBIENT_MASKED_WALL
 $include "common/texture_vars.vs"
-#endif
-
-#ifdef VV_AMBIENT_BRIGHTMAP_WALL
+#else
+# ifdef VV_AMBIENT_BRIGHTMAP_WALL
 $include "common/texture_vars.vs"
+# endif
 #endif
 
 //#ifdef VV_AMBIENT_GLOW

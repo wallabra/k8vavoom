@@ -905,7 +905,7 @@ void VLevel::Destroy () {
 
   if (Sectors) {
     // delete regions
-    for (int i = 0; i < NumSectors; ++i) Sectors[i].regions.clear();
+    for (int i = 0; i < NumSectors; ++i) Sectors[i].DeleteAllRegions();
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
@@ -2110,6 +2110,98 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
 
 //==========================================================================
 //
+//  checkPlaneHit
+//
+//  WARNING: `currhit` should not be the same as `lineend`!
+//
+//==========================================================================
+bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold) {
+  const float orgDist = plane.DotPointDist(linestart);
+  if (orgDist < threshold) return true; // don't shoot back side
+
+  const float hitDist = plane.DotPointDist(lineend);
+  if (hitDist >= threshold) return true; // didn't hit plane
+
+  currhit = lineend;
+  // sky?
+  if (plane.splane->pic == skyflatnum) {
+    // don't shoot the sky!
+    isSky = true;
+  } else {
+    isSky = false;
+    currhit -= (lineend-linestart)*hitDist/(hitDist-orgDist);
+  }
+
+  // don't go any farther
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VLevel::CheckHitPlanes
+//
+//  checks all sector regions, returns `false` if any region plane was hit
+//  sets `outXXX` arguments on hit (and only on hit!)
+//
+//  any `outXXX` can be `nullptr`
+//
+//==========================================================================
+bool VLevel::CheckHitPlanes (const sec_region_t *reg, TVec linestart, TVec lineend, unsigned flagmask,
+                             TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold)
+{
+  if (!reg) return true;
+
+  TVec besthit = lineend;
+  TVec bestNormal(0.0f, 0.0f, 0.0f);
+  bool bestIsSky = false;
+  TVec currhit(0.0f, 0.0f, 0.0f);
+  bool wasHit = false;
+  float besthdist = 9999999.0f;
+  bool isSky = false;
+
+  for (; reg; reg = reg->next) {
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    if (!(reg->efloor.splane->flags&flagmask) &&
+        !CheckPlaneHit(reg->efloor, linestart, lineend, currhit, isSky, threshold)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-linestart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestIsSky = isSky;
+        besthdist = dist;
+        bestNormal = reg->efloor.GetNormal();
+      }
+    }
+    if (!(reg->eceiling.splane->flags&(unsigned)flagmask) &&
+        !CheckPlaneHit(reg->eceiling, linestart, lineend, currhit, isSky, threshold)) {
+      // hit something
+      wasHit = true;
+      float dist = (currhit-linestart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestIsSky = isSky;
+        besthdist = dist;
+        bestNormal = reg->eceiling.GetNormal();
+      }
+    }
+  }
+
+  if (wasHit) {
+    // hit floor or ceiling
+    if (outHitPoint) *outHitPoint = besthit;
+    if (outHitNormal) *outHitNormal = bestNormal;
+    if (outIsSky) *outIsSky = bestIsSky;
+    return false;
+  } else {
+    return true;
+  }
+}
+
+
+//==========================================================================
+//
 //  CalcLine
 //
 //==========================================================================
@@ -2231,10 +2323,14 @@ void VLevel::dumpRegion (const sec_region_t *reg) {
 }
 
 
+//==========================================================================
+//
+//  VLevel::dumpSectorRegions
+//
+//==========================================================================
 void VLevel::dumpSectorRegions (const sector_t *dst) {
   GCon->Logf(" === bot -> top (sector: %p) ===", dst);
-  const sec_region_t *reg = dst->regions.ptr();
-  for (int rcount = dst->regions.length(); rcount--; ++reg) dumpRegion(reg);
+  for (const sec_region_t *reg = dst->eregions; reg; reg = reg->next) dumpRegion(reg);
   GCon->Log("--------");
 }
 
@@ -2308,23 +2404,6 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-extern "C" {
-  // sort by floor
-  static int regCompare (const void *aa, const void *bb, void *) {
-    if (aa == bb) return 0;
-    const sec_region_t *a = (const sec_region_t *)aa;
-    const sec_region_t *b = (const sec_region_t *)bb;
-    float diff = a->efloor.splane->minz-b->efloor.splane->minz;
-    if (diff) return (diff < 0.0f ? -1 : 1);
-    // just for fun, sort by ceiling
-    diff = a->eceiling.splane->maxz-b->eceiling.splane->maxz;
-    if (diff) return (diff < 0.0f ? -1 : 1);
-    return 0;
-  }
-}
-
-
 //==========================================================================
 //
 //  VLevel::AddExtraFloorSane
@@ -2352,24 +2431,18 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   // insert into region array
   // control must have negative height, so
   // region floor is ceiling, and region ceiling is floor
-  sec_region_t reg;
-  memset((void *)&reg, 0, sizeof(reg));
+  sec_region_t *reg = dst->AllocRegion();
   if (flipped) {
     // flipped
-    reg.efloor.set(&src->floor, true);
-    reg.eceiling.set(&src->ceiling, true);
+    reg->efloor.set(&src->floor, true);
+    reg->eceiling.set(&src->ceiling, true);
   } else {
     // normal
-    reg.efloor.set(&src->ceiling, false);
-    reg.eceiling.set(&src->floor, false);
+    reg->efloor.set(&src->ceiling, false);
+    reg->eceiling.set(&src->floor, false);
   }
-  reg.params = &src->params;
-  reg.extraline = line;
-  dst->regions.append(reg);
-
-  if (dst->regions.length() > 2) {
-    timsort_r(dst->regions.ptr()+1, dst->regions.length()-1, sizeof(sec_region_t), &regCompare, nullptr);
-  }
+  reg->params = &src->params;
+  reg->extraline = line;
 }
 
 
@@ -2422,51 +2495,48 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   AppendControlLink(src, dst);
 
   // insert into region array
-  sec_region_t reg;
-  memset((void *)&reg, 0, sizeof(reg));
+  sec_region_t *reg = dst->AllocRegion();
   if (isSolid) {
     // solid region: floor points down, ceiling points up
     if (flipped) {
       // flipped
-      reg.efloor.set(&src->ceiling, false);
-      reg.eceiling.set(&src->floor, false);
+      reg->efloor.set(&src->ceiling, false);
+      reg->eceiling.set(&src->floor, false);
     } else {
       // normal
-      reg.efloor.set(&src->floor, true);
-      reg.eceiling.set(&src->ceiling, true);
+      reg->efloor.set(&src->floor, true);
+      reg->eceiling.set(&src->ceiling, true);
     }
   } else {
     // non-solid region: floor points up, ceiling points down
     if (flipped) {
       // flipped
-      reg.efloor.set(&src->ceiling, true);
-      reg.eceiling.set(&src->floor, true);
+      reg->efloor.set(&src->ceiling, true);
+      reg->eceiling.set(&src->floor, true);
     } else {
       // normal
-      reg.efloor.set(&src->floor, false);
-      reg.eceiling.set(&src->ceiling, false);
+      reg->efloor.set(&src->floor, false);
+      reg->eceiling.set(&src->ceiling, false);
     }
   }
-  reg.params = &src->params;
-  reg.extraline = line;
+  reg->params = &src->params;
+  reg->extraline = line;
   if (!isSolid) {
     //reg.extraline = nullptr; //FIXME!
-    reg.regflags |= sec_region_t::RF_NonSolid;
+    reg->regflags |= sec_region_t::RF_NonSolid;
   }
-  dst->regions.append(reg);
 
   if (!isSolid) {
     // non-solid regions has visible floor and ceiling only when camera is inside
     // add the same region, but with flipped floor and ceiling (and mark it as visual only)
-    reg.efloor.Flip();
-    reg.eceiling.Flip();
-    reg.extraline = nullptr;
-    reg.regflags = sec_region_t::RF_OnlyVisual;
-    dst->regions.append(reg);
-  }
-
-  if (dst->regions.length() > 2) {
-    timsort_r(dst->regions.ptr()+1, dst->regions.length()-1, sizeof(sec_region_t), &regCompare, nullptr);
+    sec_region_t *reg2 = dst->AllocRegion();
+    reg2->efloor = reg->efloor;
+    reg2->efloor.Flip();
+    reg2->eceiling = reg->eceiling;
+    reg2->eceiling.Flip();
+    reg2->params = reg->params;
+    reg2->extraline = nullptr;
+    reg2->regflags = sec_region_t::RF_OnlyVisual;
   }
 }
 

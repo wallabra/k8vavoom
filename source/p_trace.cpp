@@ -30,96 +30,16 @@
 
 //==========================================================================
 //
-//  CheckPlane
-//
-//==========================================================================
-static bool CheckPlane (linetrace_t &Trace, const TSecPlaneRef &Plane, TVec &hitpoint, TVec &hitnorm) {
-  if (Plane.splane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
-
-  const float OrgDist = Plane.DotPointDist(Trace.LineStart);
-  if (OrgDist < -0.1f) return true; // ignore back side
-
-  const float HitDist = Plane.DotPointDist(Trace.LineEnd);
-  if (HitDist >= -0.1f) return true; // didn't cross plane
-
-  hitnorm = Plane.GetNormal();
-  hitpoint = Trace.LineEnd;
-  if (Plane.splane->pic != skyflatnum) {
-    hitpoint -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
-  }
-
-  // hit plane
-  //Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
-  //Trace.HitPlaneNormal = Plane.GetNormal();
-
-  // crosses plane
-  return false;
-}
-
-
-//==========================================================================
-//
 //  CheckPlanes
 //
 //==========================================================================
 static bool CheckPlanes (linetrace_t &Trace, sector_t *sec) {
-  TVec besthit(0.0f, 0.0f, 0.0f);
-  TVec bestnorm(0.0f, 0.0f, 0.0f);
-  TVec currhit(0.0f, 0.0f, 0.0f);
-  TVec currnorm(0.0f, 0.0f, 0.0f);
-  bool wasHit = false;
-  float besthdist = 999999.0f;
-  TSecPlaneRef spl;
+  TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  // check sector floor and ceiling
-  spl.set(&sec->floor, false);
-  if (!CheckPlane(Trace, spl, currhit, currnorm)) {
-    wasHit = true;
-    besthit = currhit;
-    bestnorm = currnorm;
-    besthdist = (currhit-Trace.LineStart).lengthSquared();
-  }
-
-  spl.set(&sec->ceiling, false);
-  if (!CheckPlane(Trace, spl, currhit, currnorm)) {
-    wasHit = true;
-    float dist = (currhit-Trace.LineStart).lengthSquared();
-    if (dist < besthdist) {
-      besthit = currhit;
-      bestnorm = currnorm;
-      besthdist = dist;
-    }
-  }
-
-  const sec_region_t *reg = sec->regions.ptr();
-  for (int rcount = sec->regions.length(); rcount--; ++reg) {
-    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    if (!CheckPlane(Trace, reg->efloor, currhit, currnorm)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-Trace.LineStart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        bestnorm = currnorm;
-        besthdist = dist;
-      }
-    }
-    if (!CheckPlane(Trace, reg->eceiling, currhit, currnorm)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-Trace.LineStart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        bestnorm = currnorm;
-        besthdist = dist;
-      }
-    }
-  }
-
-  if (wasHit) {
+  if (!VLevel::CheckHitPlanes(sec->eregions, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr/*, -0.1f*/)) {
     // hit floor or ceiling
-    Trace.LineEnd = besthit;
-    Trace.HitPlaneNormal = bestnorm;
+    Trace.LineEnd = outHit;
+    Trace.HitPlaneNormal = outNorm;
     return false;
   }
 
@@ -330,38 +250,16 @@ struct SightTraceInfo {
   TVec End;
   TVec Delta;
   TPlane Plane;
-  bool EarlyOut;
+  bool EarlyOut; // `true` means "hit one-sided wall"
   TVec LineStart;
   TVec LineEnd;
 
+  bool SkipBaseRegion;
+  unsigned LineBlockMask;
+
   vuint32 PlaneNoBlockFlags;
   TVec HitPlaneNormal;
-  //TArray<intercept_t> Intercepts;
 };
-
-
-//==========================================================================
-//
-//  SightCheckPlane
-//
-//==========================================================================
-static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Plane, TVec &hitpoint) {
-  if (Plane.splane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
-
-  const float OrgDist = Plane.DotPointDist(Trace.LineStart);
-  if (OrgDist < -0.1f) return true; // ignore back side
-
-  const float HitDist = Plane.DotPointDist(Trace.LineEnd);
-  if (HitDist >= -0.1f) return true; // didn't cross plane
-
-  hitpoint = Trace.LineEnd;
-  if (Plane.splane->pic != skyflatnum) {
-    hitpoint -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
-  }
-
-  // crosses plane
-  return false;
-}
 
 
 //==========================================================================
@@ -369,42 +267,12 @@ static bool SightCheckPlane (const SightTraceInfo &Trace, const TSecPlaneRef &Pl
 //  SightCheckPlanes
 //
 //==========================================================================
-static bool SightCheckPlanes (const SightTraceInfo &Trace, sector_t *sec) {
-  TVec besthit(0.0f, 0.0f, 0.0f);
-  TVec currhit(0.0f, 0.0f, 0.0f);
-  bool wasHit = false;
-  float besthdist = 999999.0f;
-
-  // check sector floor and ceiling
-  const sec_region_t *reg = sec->regions.ptr();
-  for (int rcount = sec->regions.length(); rcount--; ++reg) {
-    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    if (!SightCheckPlane(Trace, reg->efloor, currhit)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-Trace.LineStart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        besthdist = dist;
-      }
-    }
-    if (!SightCheckPlane(Trace, reg->eceiling, currhit)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-Trace.LineStart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        besthdist = dist;
-      }
-    }
-  }
-
-  if (wasHit) {
-    // hit floor or ceiling
-    return false;
-  }
-
-  return true;
+static bool SightCheckPlanes (SightTraceInfo &Trace, sector_t *sec) {
+  //k8: for some reason, real sight checks ignores base sector region
+  sec_region_t *sreg = sec->eregions;
+  if (Trace.SkipBaseRegion) sreg = sreg->next;
+  if (!sreg) return true;
+  return VLevel::CheckHitPlanes(sreg, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &Trace.LineEnd, &Trace.HitPlaneNormal, nullptr/*, -0.1f*/);
 }
 
 
@@ -507,7 +375,9 @@ static bool SightCheckLine (SightTraceInfo &Trace, line_t *ld) {
   if (dot1*dot2 >= 0) return true; // line isn't crossed
 
   // try to early out the check
-  if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&ML_BLOCKEVERYTHING)) return false; // stop checking
+  if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&Trace.LineBlockMask)) {
+    return false; // stop checking
+  }
 
   // store the line for later intersection testing
   if (interUsed < MAX_ST_INTERCEPTS) {
@@ -674,6 +544,7 @@ static bool SightPathTraverse (SightTraceInfo &Trace, VLevel *level, sector_t *E
       if (!SightBlockLinesIterator(Trace, level, mapx+mapxstep, mapy) ||
           !SightBlockLinesIterator(Trace, level, mapx, mapy+mapystep))
       {
+        Trace.EarlyOut = true;
         return false;
       }
       xintercept += xstep;
@@ -715,66 +586,68 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector) {
+bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, const TVec &dest, float myheight, float radius, float height, bool doExtraChecks, bool skipBaseRegion, sector_t *DestSector) {
+  if (lengthSquared(org-dest) <= 1) return true;
+
   SightTraceInfo Trace;
 
-  if (length2DSquared(org-dest) <= 2) return true;
+  if (!Sector) Sector = PointInSubsector(org)->sector;
 
-  //sector_t *Sector = PointInSubsector(org)->sector;
+  if (radius < 0.0f) radius = 0.0f;
+  if (height < 0.0f) height = 0.0f;
+  if (myheight < 0.0f) myheight = 0.0f;
+
+  // killough 4/19/98: make fake floors and ceilings block view
+  if (Sector->heightsec) {
+    const sector_t *hs = Sector->heightsec;
+    if ((org.z+myheight <= hs->floor.GetPointZ(org) && dest.z >= hs->floor.GetPointZ(dest)) ||
+        (org.z >= hs->ceiling.GetPointZ(org) && dest.z+height <= hs->ceiling.GetPointZ(dest)))
+    {
+      return false;
+    }
+  }
+
   sector_t *OtherSector = DestSector;
   if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
 
-  // killough 4/19/98: make fake floors and ceilings block monster view
-  /*
-  if ((Sector->heightsec &&
-       ((org.z+Height <= Sector->heightsec->floor.GetPointZ(org.x, org.y) &&
-         dest.z >= Sector->heightsec->floor.GetPointZ(dest.x, dest.y)) ||
-        (org.z >= Sector->heightsec->ceiling.GetPointZ (org.x, org.y) &&
-         dest.z+Height <= Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y))))
-     ||
-      (Other->Sector->heightsec &&
-       ((dest.z+Other->Height <= Other->Sector->heightsec->floor.GetPointZ (dest.x, dest.y) &&
-         org.z >= Other->Sector->heightsec->floor.GetPointZ (org.x, org.y)) ||
-        (dest.z >= Other->Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y) &&
-         org.z+Other->Height <= Other->Sector->heightsec->ceiling.GetPointZ (org.x, org.y)))))
-  {
-    return false;
+  if (OtherSector->heightsec) {
+    const sector_t *hs = OtherSector->heightsec;
+    if ((dest.z+height <= hs->floor.GetPointZ(dest) && org.z >= hs->floor.GetPointZ(org)) ||
+        (dest.z >= hs->ceiling.GetPointZ(dest) && org.z+myheight <= hs->ceiling.GetPointZ(org)))
+    {
+      return false;
+    }
   }
-  */
+
+  //if (length2DSquared(org-dest) <= 1) return true;
 
   Trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
+  Trace.LineBlockMask = ML_BLOCKEVERYTHING|ML_BLOCKSIGHT;
+  Trace.SkipBaseRegion = skipBaseRegion;
 
-  if (radius <= /*12*/32) {
+  if (!doExtraChecks || (radius < 4.0f && height < 4.0f && myheight < 4.0f)) {
     Trace.Start = org;
+    Trace.Start.z += myheight*0.5f;
     Trace.End = dest;
     return SightPathTraverse(Trace, this, OtherSector);
   } else {
-    static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
-    const float xofs = radius*0.73f;
-
-    for (unsigned d = 0; d < 3; ++d) {
+    static const float zmult[3] = { 0.5f, -0.75f, -0.75f };
+    for (unsigned myz = 0; myz < 3; ++myz) {
       // an unobstructed LOS is possible
       // now look from eyes of t1 to any part of t2
       Trace.Start = org;
       Trace.End = dest;
-      Trace.End.x += xofs*xmult[d];
+      Trace.End.z += myheight*zmult[myz];
 
       // check middle
       if (SightPathTraverse(Trace, this, OtherSector)) return true;
-      if (Trace.EarlyOut) {
-        //if (radius < 12) return false; // player is 16
-        continue;
-      }
-
-      //if (radius < 12) break; // player is 16
+      if (Trace.EarlyOut) continue;
 
       // check up and down
-      //if (radius >= 12)
-      for (unsigned zd = 1; zd < 3; ++zd) {
+      for (unsigned itsz = 1; itsz < 3; ++itsz) {
         Trace.Start = org;
         Trace.End = dest;
-        Trace.End.x += xofs*xmult[d];
-        Trace.End.z += xofs*xmult[zd];
+        Trace.End.z += height*zmult[itsz];
         if (SightPathTraverse2(Trace, OtherSector)) return true;
       }
     }
@@ -791,32 +664,39 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastEx (const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector) {
+bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector) {
+  if (lengthSquared(org-dest) <= 1) return true;
+
   SightTraceInfo Trace;
 
-  //sector_t *Sector = PointInSubsector(org)->sector;
+  // killough 4/19/98: make fake floors and ceilings block view
+  if (Sector->heightsec) {
+    const sector_t *hs = Sector->heightsec;
+    if ((org.z <= hs->floor.GetPointZ(org) && dest.z >= hs->floor.GetPointZ(dest)) ||
+        (org.z >= hs->ceiling.GetPointZ(org) && dest.z <= hs->ceiling.GetPointZ(dest)))
+    {
+      return false;
+    }
+  }
+
   sector_t *OtherSector = DestSector;
   if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
 
-  // killough 4/19/98: make fake floors and ceilings block monster view
-  /*
-  if ((Sector->heightsec &&
-       ((org.z+Height <= Sector->heightsec->floor.GetPointZ(org.x, org.y) &&
-         dest.z >= Sector->heightsec->floor.GetPointZ(dest.x, dest.y)) ||
-        (org.z >= Sector->heightsec->ceiling.GetPointZ (org.x, org.y) &&
-         dest.z+Height <= Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y))))
-     ||
-      (Other->Sector->heightsec &&
-       ((dest.z+Other->Height <= Other->Sector->heightsec->floor.GetPointZ (dest.x, dest.y) &&
-         org.z >= Other->Sector->heightsec->floor.GetPointZ (org.x, org.y)) ||
-        (dest.z >= Other->Sector->heightsec->ceiling.GetPointZ (dest.x, dest.y) &&
-         org.z+Other->Height <= Other->Sector->heightsec->ceiling.GetPointZ (org.x, org.y)))))
-  {
-    return false;
+  if (OtherSector->heightsec) {
+    const sector_t *hs = OtherSector->heightsec;
+    if ((dest.z <= hs->floor.GetPointZ(dest) && org.z >= hs->floor.GetPointZ(org)) ||
+        (dest.z >= hs->ceiling.GetPointZ(dest) && org.z <= hs->ceiling.GetPointZ(org)))
+    {
+      return false;
+    }
   }
-  */
+
+  //if (length2DSquared(org-dest) <= 1) return true;
 
   Trace.PlaneNoBlockFlags = blockflags;
+  Trace.SkipBaseRegion = false;
+  Trace.LineBlockMask = ML_BLOCKEVERYTHING;
+  if (Trace.PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) Trace.LineBlockMask |= ML_BLOCKSIGHT;
 
   Trace.Start = org;
   Trace.End = dest;

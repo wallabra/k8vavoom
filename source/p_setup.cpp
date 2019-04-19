@@ -262,7 +262,7 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 //==========================================================================
 void VLevel::ClearAllLevelData () {
   if (Sectors) {
-    for (int i = 0; i < NumSectors; ++i) Sectors[i].regions.clear();
+    for (int i = 0; i < NumSectors; ++i) Sectors[i].DeleteAllRegions();
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;

@@ -505,6 +505,7 @@ struct sec_params_t {
 // "regions" keeps 3d floors for sector
 // region inside may be non-solid, if the corresponding flag is set
 struct sec_region_t {
+  sec_region_t *next;
   // planes
   TSecPlaneRef efloor;
   TSecPlaneRef eceiling;
@@ -520,7 +521,10 @@ struct sec_region_t {
   enum {
     RF_SaneRegion    = 1u<<0, // sane Vavoom-style region; only one, only first
     RF_NonSolid      = 1u<<1,
-    RF_OnlyVisual    = 1u<<2, // ignore this region in gap/opening processing
+    // ignore this region in gap/opening processing
+    // this flags affects collision detection
+    RF_OnlyVisual    = 1u<<2,
+    // the following flags are only for renderer, collision detection igonres then
     RF_SkipFloorSurf = 1u<<3, // do not create floor surface for this region
     RF_SkipCeilSurf  = 1u<<4, // do not create ceiling surface for this region
   };
@@ -564,16 +568,10 @@ struct sector_t {
   sec_params_t params;
 
   // floor/ceiling info for sector
-  // for normal sectors, this is the same region, and
-  // for complex sectors with 3d floors there can be more than one region
-  // regions are (roughly) sorted from bottom to top, so you can start
-  // from `botregion` and follow `next` pointer
-  // note that sorting order is not necessarily strict
-  //sec_region_t *topregion; // highest region
-  //sec_region_t *botregion; // lowest region
-
   // first region is always base sector region that keeps "emptyness"
-  TArray<sec_region_t> regions;
+  // other regions are "filled space" (yet that space can be non-solid)
+  // region floor and ceiling are better have the same set of `SPF_NOxxx` flags.
+  sec_region_t *eregions;
 
   // this is cached planes for thing gap determination
   // planes are sorted by... something
@@ -669,6 +667,10 @@ struct sector_t {
   bool Has3DFloors () const;
   // should be called for new sectors to setup base region
   void CreateBaseRegion ();
+  void DeleteAllRegions ();
+
+  // `next` is set, everything other is zeroed
+  sec_region_t *AllocRegion ();
 };
 
 
@@ -984,8 +986,12 @@ public:
   DECLARE_FUNCTION(spPointOnSide2)
   DECLARE_FUNCTION(SphereOnSide)
   DECLARE_FUNCTION(spSphereTouches)
+  DECLARE_FUNCTION(spSphereOnSide)
   DECLARE_FUNCTION(spSphereOnSide2)
 
   DECLARE_FUNCTION(GetSectorFloorPointZ)
   DECLARE_FUNCTION(SectorHas3DFloors)
+
+  DECLARE_FUNCTION(CheckPlaneHit)
+  DECLARE_FUNCTION(CheckHitPlanes)
 };

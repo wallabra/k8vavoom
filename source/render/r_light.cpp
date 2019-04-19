@@ -577,7 +577,7 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
             add *= attn;
             if (add <= 1.0f) continue;
           }
-          if ((dl.flags&dlight_t::NoShadow) == 0 && !RadiusCastRay(p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if ((dl.flags&dlight_t::NoShadow) == 0 && !RadiusCastRay(sub->sector, p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         } else {
           if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
             const float attn = CheckLightPointCone(p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
@@ -620,7 +620,7 @@ void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, flo
       if (add > 0.0f) {
         if (surfplane && surfplane->PointOnSide(stl->origin)) continue;
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(sub->sector, p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
         lr += add*((stl->colour>>16)&255)/255.0f;

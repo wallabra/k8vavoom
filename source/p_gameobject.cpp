@@ -37,23 +37,56 @@ IMPLEMENT_CLASS(V, GameObject)
 //
 //==========================================================================
 bool sector_t::Has3DFloors () const {
-  return (regions.length() > 1);
+  return !!eregions->next;
 }
 
 
 //==========================================================================
 //
-//  sector_t::Has3DFloors
+//  sector_t::CreateBaseRegion
 //
 //==========================================================================
 void sector_t::CreateBaseRegion () {
-  check(regions.length() == 0);
-  sec_region_t &reg = regions.alloc();
-  reg.efloor.set(&floor, false);
-  reg.eceiling.set(&ceiling, false);
-  reg.params = &params;
-  reg.extraline = nullptr;
-  reg.regflags = sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid;
+  check(!eregions);
+  sec_region_t *reg = (sec_region_t *)Z_Calloc(sizeof(sec_region_t));
+  reg->efloor.set(&floor, false);
+  reg->eceiling.set(&ceiling, false);
+  reg->params = &params;
+  reg->extraline = nullptr;
+  reg->regflags = sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid;
+  eregions = reg;
+}
+
+
+//==========================================================================
+//
+//  sector_t::DeleteAllRegions
+//
+//==========================================================================
+void sector_t::DeleteAllRegions () {
+  while (eregions) {
+    sec_region_t *r = eregions;
+    eregions = r->next;
+    delete r;
+  }
+}
+
+
+//==========================================================================
+//
+//  sector_t::AllocRegion
+//
+//==========================================================================
+sec_region_t *sector_t::AllocRegion () {
+  sec_region_t *reg = (sec_region_t *)Z_Calloc(sizeof(sec_region_t));
+  sec_region_t *last = eregions;
+  if (last) {
+    while (last->next) last = last->next;
+    last->next = reg;
+  } else {
+    eregions = reg;
+  }
+  return reg;
 }
 
 
@@ -386,6 +419,14 @@ IMPLEMENT_FUNCTION(VGameObject, spSphereTouches) {
   RET_BOOL(sp->SphereTouches(*center, radius));
 }
 
+//native static final int spSphereOnSide (const ref TSecPlaneRef sp, const ref TVec center, float radius);
+IMPLEMENT_FUNCTION(VGameObject, spSphereOnSide) {
+  P_GET_FLOAT(radius);
+  P_GET_PTR(TVec, center);
+  P_GET_PTR(TSecPlaneRef, sp);
+  RET_INT(sp->SphereOnSide(*center, radius));
+}
+
 //native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TVec center, float radius);
 IMPLEMENT_FUNCTION(VGameObject, spSphereOnSide2) {
   P_GET_FLOAT(radius);
@@ -410,4 +451,44 @@ IMPLEMENT_FUNCTION(VGameObject, SectorHas3DFloors) {
   } else {
     RET_BOOL(false);
   }
+}
+
+
+//==========================================================================
+//
+//  CheckPlaneHit
+//
+//  checks for plane hit, returns hit point and `false` if hit
+//  plane flags should be already checked
+//
+//==========================================================================
+//static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
+//                                 optional out TVec currhit, optional out bool isSky);
+IMPLEMENT_FUNCTION(VGameObject, CheckPlaneHit) {
+  TVec ctmp(0.0f, 0.0f, 0.0f);
+  bool tmpb = false;
+
+  P_GET_PTR_OPT(bool, isSky, &tmpb);
+  P_GET_PTR_OPT(TVec, currhit, &ctmp);
+  P_GET_VEC(lineend);
+  P_GET_VEC(linestart);
+  P_GET_PTR(TSecPlaneRef, plane);
+
+  RET_BOOL(VLevel::CheckPlaneHit(*plane, linestart, lineend, *currhit, *isSky));
+}
+
+
+//static final bool CheckHitPlanes (const sector_t *sector, TVec linestart, TVec lineend, int flagmask,
+//                                  optional out TVec outHitPoint, optional out TVec outHitNormal,
+//                                  optional out bool outIsSky);
+IMPLEMENT_FUNCTION(VGameObject, CheckHitPlanes) {
+  P_GET_PTR_OPT(bool, outIsSky, nullptr);
+  P_GET_PTR_OPT(TVec, outHitNormal, nullptr);
+  P_GET_PTR_OPT(TVec, outHitPoint, nullptr);
+  P_GET_INT(flagmask);
+  P_GET_VEC(lineend);
+  P_GET_VEC(linestart);
+  P_GET_PTR(sector_t, sector);
+
+  RET_BOOL(VLevel::CheckHitPlanes(sector->eregions, linestart, lineend, (unsigned)flagmask, outHitPoint, outHitNormal, outIsSky));
 }

@@ -142,7 +142,7 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 //  Returns the distance between the points, or 0 if blocked
 //
 //==========================================================================
-float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
+float VRenderLevel::CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
   const TVec delta = p2-p1;
   const float t = DotProduct(delta, delta);
   if (t >= squaredist) return 0.0f; // too far away
@@ -152,7 +152,7 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
   linetrace_t Trace;
   if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
 #else
-  if (!Level->CastEx(p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
 #endif
 
   //if (t == 0) t = 1; // don't blow up...
@@ -441,8 +441,9 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   if (doMidFilter) memset(lightmapHit, 0, w*h);
 
   bool wasAnyHit = false;
+  sector_t *ssector = Level->PointInSubsector(light->origin)->sector;
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
-    dist = CastRay(light->origin, *spt, squaredist);
+    dist = CastRay(ssector, light->origin, *spt, squaredist);
     if (dist <= 0.0f) {
       // light ray is blocked
       /*
@@ -514,7 +515,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
             for (int dx = -1; dx < 2; ++dx) {
               for (int dz = -1; dz < 2; ++dz) {
                 if ((dx|dy|dz) == 0) continue;
-                dist = CastRay(light->origin, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
+                dist = CastRay(ssector, light->origin, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
                 if (dist > 0.0f) goto donetrace;
               }
             }
@@ -850,7 +851,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              if (!Level->CastCanSee(dl.origin, *spt, 0)) continue;
+              if (!Level->CastCanSee(Level->Subsectors[dlinfo[lnum].leafnum].sector, dl.origin, *spt, 0.0f, 0.0f, 0.0f, false)) continue;
             }
           }
           int i = t*smax+s;

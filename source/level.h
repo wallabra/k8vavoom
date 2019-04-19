@@ -578,8 +578,9 @@ public:
   bool TraceLine (linetrace_t &, const TVec &, const TVec &, int);
 
   // doesn't check pvs or reject
-  bool CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector=nullptr);
-  bool CastEx (const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector=nullptr);
+  // `Sector` can be `nullptr`
+  bool CastCanSee (sector_t *Sector, const TVec &org, const TVec &dest, float myheight, float radius, float height, bool doExtraChecks, bool skipBaseRegion=false, sector_t *DestSector=nullptr);
+  bool CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector=nullptr);
 
   void SetCameraToTexture (VEntity *, VName, int);
 
@@ -611,6 +612,10 @@ private:
 public:
   static void dumpRegion (const sec_region_t *reg);
   static void dumpSectorRegions (const sector_t *dst);
+
+  static bool CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold=0.0f);
+  static bool CheckHitPlanes (const sec_region_t *reg, TVec linestart, TVec lineend, unsigned flagmask,
+                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold=0.0f);
 
 private:
   // map loaders

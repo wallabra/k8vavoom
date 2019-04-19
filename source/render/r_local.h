@@ -88,7 +88,8 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
-  vint32 regidx; // region index (negative means "backsector region")
+  //vint32 regidx; // region index (negative means "backsector region")
+  sec_region_t *basereg;
 };
 
 
@@ -598,7 +599,7 @@ protected:
   void FreeWSurfs (surface_t *&);
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
   int CountSegParts (const seg_t *);
-  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, int curridx);
+  void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, sec_region_t *curreg, bool isMainRegion);
   void CreateWorldSurfaces ();
   bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
   void UpdateFakeFlats (sector_t*);
@@ -643,7 +644,7 @@ protected:
   virtual void GentlyFlushAllCaches () {}
 
   // used in light checking
-  bool RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced);
+  bool RadiusCastRay (sector_t *sector, const TVec &org, const TVec &dest, float radius, bool advanced);
 
 protected:
   virtual void RefilterStaticLights ();
@@ -788,7 +789,7 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   // light methods
-  float CastRay (const TVec &p1, const TVec &p2, float squaredist);
+  float CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist);
   static void CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf);
   static bool CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf);
   void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`

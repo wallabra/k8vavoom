@@ -1121,7 +1121,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
 //  VRenderLevelShared::RadiusCastRay
 //
 //==========================================================================
-bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced) {
+bool VRenderLevelShared::RadiusCastRay (sector_t *sector, const TVec &org, const TVec &dest, float radius, bool advanced) {
 #if 0
   // BSP tracing
   float dsq = length2DSquared(org-dest);
@@ -1154,7 +1154,7 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
   return false;
 #else
  // blockmap tracing
- return Level->CastCanSee(org, dest, (advanced ? radius : 0));
+ return Level->CastCanSee(sector, org, dest, 0.0f, (advanced ? radius : 0), (advanced ? radius*0.5f : 0), (advanced ? radius > 32 : false));
 #endif
 }
 

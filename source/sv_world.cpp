@@ -360,9 +360,9 @@ static void InsertOpening (TArray<opening_t> &dest, const opening_t &op) {
 //
 //==========================================================================
 static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec point, bool *hasSlopes=nullptr) {
-  op.efloor = sector->regions[0].efloor;
+  op.efloor = sector->eregions->efloor;
   op.bottom = op.efloor.GetPointZ(point);
-  op.eceiling = sector->regions[0].eceiling;
+  op.eceiling = sector->eregions->eceiling;
   op.top = op.eceiling.GetPointZ(point);
   op.range = op.top-op.bottom;
   op.lowfloor = op.bottom;
@@ -394,8 +394,8 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   bool slopeDetected = false;
   opening_t cop;
   cop.lowfloor = 0.0f; // for now
-  const sec_region_t *reg = sector->regions.ptr()+1; // skip base region for now
-  for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+  // skip base region for now
+  for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
     // check for slopes
@@ -836,8 +836,8 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
   if (!sector->Has3DFloors()) {
     // only one region, yay
-    floor = sector->regions[0].efloor;
-    ceiling = sector->regions[0].eceiling;
+    floor = sector->eregions->efloor;
+    ceiling = sector->eregions->eceiling;
     return;
   }
 
@@ -852,8 +852,8 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
   BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING);
   if (oplist.length() == 0) {
     // something is very wrong here, so use sector boundaries
-    floor = sector->regions[0].efloor;
-    ceiling = sector->regions[0].eceiling;
+    floor = sector->eregions->efloor;
+    ceiling = sector->eregions->eceiling;
     return;
   }
 
@@ -907,8 +907,8 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
     ceiling = bestGap->eceiling;
   } else {
     // just fit into sector
-    floor = sector->regions[0].efloor;
-    ceiling = sector->regions[0].eceiling;
+    floor = sector->eregions->efloor;
+    ceiling = sector->eregions->eceiling;
   }
 }
 
@@ -940,17 +940,17 @@ void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, f
 //
 //==========================================================================
 sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump) {
-  if (!sector->Has3DFloors()) return &sector->regions[0];
+  if (!sector->Has3DFloors()) return sector->eregions;
   const float secfz = sector->floor.GetPointZ(p);
-  if (p.z <= secfz) return &sector->regions[0];
+  if (p.z <= secfz) return sector->eregions;
   //const float seccz = sector->ceiling.GetPointZ(p);
 
-  sec_region_t *best = &sector->regions[0];
+  sec_region_t *best = sector->eregions;
   float bestDist = p.z-secfz; // minimum distance to region floor
   bool insideNonSolid = false;
 
-  sec_region_t *reg = sector->regions.ptr()+1;
-  for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+  // skip base region
+  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
     const float fz = reg->efloor.GetPointZ(p);
     const float cz = reg->eceiling.GetPointZ(p);
@@ -999,7 +999,7 @@ int SV_PointContents (sector_t *sector, const TVec &p) {
 
   if (sector->SectorFlags&sector_t::SF_UnderWater) return CONTENTS_BOOMWATER;
 
-  const sec_region_t *best = &sector->regions[0];
+  const sec_region_t *best = sector->eregions;
 
   if (sector->Has3DFloors()) {
     const float secfz = sector->floor.GetPointZ(p);
@@ -1008,8 +1008,8 @@ int SV_PointContents (sector_t *sector, const TVec &p) {
 
     // prefer regions with contents
     float bestDist = 999999.0f; // minimum distance to region floor
-    const sec_region_t *reg = sector->regions.ptr()+1; // skip base region
-    for (int rcount = sector->regions.length()-1; rcount--; ++reg) {
+    // skip base region
+    for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
       // non-solid?
       if (reg->regflags&sec_region_t::RF_NonSolid) {

@@ -414,7 +414,9 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
 int VRenderLevelShared::CountSegParts (const seg_t *seg) {
   if (!seg->linedef) return 0; // miniseg
   if (!seg->backsector) return 2;
-  int count = 4+seg->backsector->regions.length(); //k8:???
+  //k8: each backsector 3d floor can require segpart
+  int count = 4;
+  for (const sec_region_t *reg = seg->backsector->eregions; reg; reg = reg->next) count += 2; // just in case, reserve two
   return count;
 }
 
@@ -905,7 +907,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 //  create world/wall surfaces
 //
 //==========================================================================
-void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, int cridx) {
+void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, sec_region_t *curreg, bool isMainRegion) {
   segpart_t *sp;
 
   dseg->seg = seg;
@@ -927,43 +929,45 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
   }
 
   if (!seg->backsector) {
-    if (cridx != 0) {
+    if (!isMainRegion) {
       // 3d floor
       // this is seg without another side, so we cannot see sidewall
       return;
     }
 
-    dseg->mid = SurfCreatorGetPSPart();
-    sp = dseg->mid;
-    sp->regidx = cridx;
+    if (isMainRegion) {
+      dseg->mid = SurfCreatorGetPSPart();
+      sp = dseg->mid;
+      sp->basereg = curreg;
 
-    VTexture *MTex = (cridx == 0 ? GTextureManager(sidedef->MidTexture) : GTextureManager[0]);
-    // k8: one-sided line should have a midtex
-    if (!MTex) {
-      GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
-      MTex = GTextureManager[GTextureManager.DefaultTexture];
+      VTexture *MTex = GTextureManager(sidedef->MidTexture);
+      // k8: one-sided line should have a midtex
+      if (!MTex) {
+        GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
+        MTex = GTextureManager[GTextureManager.DefaultTexture];
+      }
+      sp->texinfo.saxis = segdir*(TextureSScale(MTex)*seg->sidedef->MidScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
+      sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                          seg->offset*(TextureSScale(MTex)*seg->sidedef->MidScaleX)+
+                          sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*seg->sidedef->MidScaleX);
+      sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+      sp->texinfo.Alpha = 1.1f;
+      sp->texinfo.Additive = false;
+      sp->texinfo.ColourMap = 0;
+
+      sp->TextureOffset = sidedef->MidTextureOffset;
+
+      SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
     }
-    sp->texinfo.saxis = segdir*(TextureSScale(MTex)*seg->sidedef->MidScaleX);
-    sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
-    sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                        seg->offset*(TextureSScale(MTex)*seg->sidedef->MidScaleX)+
-                        sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*seg->sidedef->MidScaleX);
-    sp->texinfo.Tex = MTex;
-    sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-    sp->texinfo.Alpha = 1.1f;
-    sp->texinfo.Additive = false;
-    sp->texinfo.ColourMap = 0;
-
-    sp->TextureOffset = sidedef->MidTextureOffset;
-
-    SetupOneSidedWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
 
     // sky above line
-    if (cridx == 0) {
+    if (isMainRegion) {
       dseg->topsky = SurfCreatorGetPSPart();
       sp = dseg->topsky;
-      sp->regidx = cridx;
-      sp->texinfo.Tex = (cridx == 0 ? GTextureManager[skyflatnum] : GTextureManager[0]);
+      sp->basereg = curreg;
+      sp->texinfo.Tex = GTextureManager[skyflatnum];
       sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       sp->texinfo.Alpha = 1.1f;
       sp->texinfo.Additive = false;
@@ -972,12 +976,11 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     }
   } else {
     // two sided line
-    if (cridx != 0) {
+    if (!isMainRegion) {
       // 3d floor
-      sec_region_t *reg = &seg->frontsector->regions[cridx];
-      if (!reg->extraline) return; // no side, don't create
-      sidedef = &Level->Sides[reg->extraline->sidenum[0]];
-      if (sidedef->MidTexture <= 0) return;
+      if (!curreg->extraline) return; // no side, don't create
+      sidedef = &Level->Sides[curreg->extraline->sidenum[0]];
+      //if (sidedef->MidTexture <= 0) return;
     }
 
     sec_plane_t *back_floor = &seg->backsector->floor;
@@ -990,7 +993,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     */
 
     // top wall
-    if (cridx == 0) {
+    if (isMainRegion) {
       VTexture *TTex = GTextureManager(sidedef->TopTexture);
       if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
         TTex = GTextureManager[skyflatnum];
@@ -999,7 +1002,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
       dseg->top = SurfCreatorGetPSPart();
       sp = dseg->top;
-      sp->regidx = cridx;
+      sp->basereg = curreg;
 
       sp->texinfo.saxis = segdir*(TextureSScale(TTex)*seg->sidedef->TopScaleX);
       sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*seg->sidedef->TopScaleY);
@@ -1018,9 +1021,9 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     }
 
     // sky above top
-    if (cridx == 0) {
+    if (isMainRegion) {
       dseg->topsky = SurfCreatorGetPSPart();
-      dseg->topsky->regidx = cridx;
+      dseg->topsky->basereg = curreg;
       if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling)) {
         sp = dseg->topsky;
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
@@ -1028,13 +1031,12 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     }
 
     // bottom wall
-    if (cridx == 0) {
+    if (isMainRegion) {
       dseg->bot = SurfCreatorGetPSPart();
       sp = dseg->bot;
-      sp->regidx = cridx;
+      sp->basereg = curreg;
 
       VTexture *BTex = GTextureManager(sidedef->BottomTexture);
-      if (cridx != 0) BTex = GTextureManager[0];
       check(BTex);
       sp->texinfo.saxis = segdir*(TextureSScale(BTex)*seg->sidedef->BotScaleX);
       sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*seg->sidedef->BotScaleY);
@@ -1056,7 +1058,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     // middle wall
     dseg->mid = SurfCreatorGetPSPart();
     sp = dseg->mid;
-    sp->regidx = cridx;
+    sp->basereg = curreg;
 
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     check(MTex);
@@ -1070,9 +1072,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     sp->TextureOffset = sidedef->MidTextureOffset;
 
     // create region sides
-    if (cridx == 0) {
-      for (int ridx = 1; ridx < seg->backsector->regions.length(); ++ridx) {
-        sec_region_t *reg = &seg->backsector->regions[ridx];
+    if (isMainRegion) {
+      for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
         if (!reg->extraline) continue; // no need to create extra side
 
         side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
@@ -1081,7 +1082,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         if (!MTextr || MTextr->Type == TEXTYPE_Null) continue; // empty side
 
         sp = SurfCreatorGetPSPart();
-        sp->regidx = -ridx;
+        sp->basereg = reg;
         sp->next = dseg->extra;
         dseg->extra = sp;
 
@@ -1343,10 +1344,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 
     // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
-      int ridx = sp->regidx;
-      if (ridx >= 0) continue; // wtf?!
+      //int ridx = sp->regidx;
+      //if (ridx >= 0) continue; // wtf?!
       //check(ridx >= 0 && ridx < seg->backsector->regions.length());
-      sec_region_t *reg = &seg->backsector->regions[-ridx];
+      //sec_region_t *reg = &seg->backsector->regions[-ridx];
+      sec_region_t *reg = sp->basereg;
       check(reg->extraline);
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
@@ -1433,8 +1435,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   for (int i = Level->NumSubsectors; i--; ++sub) {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
     count += 4*2; //k8: dunno
-    for (int ridx = 0; ridx < sub->sector->regions.length(); ++ridx) {
-      //sec_region_t *reg = &sub->sector->regions[ridx];
+    for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next) {
       ++count;
       dscount += sub->numlines;
       if (sub->poly) dscount += sub->poly->numsegs; // polyobj
@@ -1468,9 +1469,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   for (int i = Level->NumSubsectors; i--; ++sub) {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
-    sec_region_t *reg = sub->sector->regions.ptr();
-    const int reglen = sub->sector->regions.length();
-    for (int ridx = 0; ridx < reglen; ++ridx, ++reg) {
+    int ridx = 0;
+    for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next, ++ridx) {
       if (sregLeft == 0) Sys_Error("out of subregions in surface creator");
 
       TSecPlaneRef r_floor, r_ceiling;
@@ -1507,14 +1507,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->lines = pds;
       pds += sreg->count;
       pdsLeft -= sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling, ridx);
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling, reg, (ridx == 0));
 
       if (ridx == 0 && sub->poly) {
         // polyobj
         int j = sub->numlines;
         seg_t **polySeg = sub->poly->segs;
         for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg, ++j) {
-          CreateSegParts(sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling, 0);
+          CreateSegParts(sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling, nullptr, true);
         }
       }
 
@@ -1927,7 +1927,7 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *Sec) {
   Sec->fakefloors->ceilplane = Sec->ceiling;
   Sec->fakefloors->params = Sec->params;
 
-  Sec->regions[0].params = &Sec->fakefloors->params;
+  Sec->eregions->params = &Sec->fakefloors->params;
 }
 
 
