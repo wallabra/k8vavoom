@@ -222,7 +222,22 @@ void SV_Init () {
 //==========================================================================
 void SV_ResetPlayers () {
   for (int i = 0; i < MAXPLAYERS; ++i) {
-    if (GPlayersBase[i]) GPlayersBase[i]->eventResetToDefaults();
+    if (GPlayersBase[i]) {
+      GPlayersBase[i]->ResetButtons();
+      GPlayersBase[i]->eventResetToDefaults();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_ResetPlayerButtons
+//
+//==========================================================================
+void SV_ResetPlayerButtons () {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GPlayersBase[i]) GPlayersBase[i]->ResetButtons();
   }
 }
 

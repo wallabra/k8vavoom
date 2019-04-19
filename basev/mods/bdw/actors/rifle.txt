@@ -83,6 +83,11 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       TNT1 A 0
       Stop
 
+    // must come before "Ready"
+    ReadyForceInstant:
+      TNT1 A 0
+      Goto ReadyAfterRefire
+
     Ready:
       TNT1 A 0 A_PlaySoundEx("weapons/bdw_rifle/clipin", "Weapon")
       RIF4 D 1 Offset(-10, 46)

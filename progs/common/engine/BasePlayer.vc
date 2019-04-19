@@ -176,6 +176,8 @@ replication {
 }
 
 
+native static final bool IsCheckpointSpawn { get; }
+
 // print to client
 native final void cprint (string format, ...) [printf,1];
 // client's centre message
@@ -385,7 +387,7 @@ bool IsCheckpointPossible () {
 //  eventSetReadyWeapon
 //
 //==========================================================================
-void eventSetReadyWeapon (Entity ent) {}
+void eventSetReadyWeapon (Entity ent, bool instant) {}
 
 
 //==========================================================================

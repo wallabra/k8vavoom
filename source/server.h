@@ -44,6 +44,8 @@ void SV_ShutdownGame ();
 // set all player fields to defaults (calls `ResetToDefaults()` method)
 void SV_ResetPlayers ();
 
+void SV_ResetPlayerButtons ();
+
 void SV_SendLoadedEvent ();
 void SV_SendBeforeSaveEvent (bool isAutosave, bool isCheckpoint);
 void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint);

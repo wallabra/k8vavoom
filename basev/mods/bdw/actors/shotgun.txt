@@ -71,6 +71,12 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   var int user_ShotgunWasEmpty;
 
   States {
+    // must come before "Ready"
+    ReadyForceInstant:
+      TNT1 A 0
+      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1-clamp(CountInv("BDW_ShotgunAmmo"), 0, 1))
+      Goto OkToFire
+
     Ready:
       TNT1 A 0
       TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1-clamp(CountInv("BDW_ShotgunAmmo"), 0, 1))

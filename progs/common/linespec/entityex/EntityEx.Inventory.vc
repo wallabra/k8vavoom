@@ -48,7 +48,7 @@ override void QS_ClearEntityInventory () {
   if (bIsPlayer && Player && Player.MO == self) {
     PlayerEx plr = PlayerEx(Player);
     plr.SetWeapon(none);
-    plr.BringUpWeapon(instant:true);
+    plr.BringUpWeapon(instant:true, skipSound:true);
   }
 }
 

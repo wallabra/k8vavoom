@@ -196,6 +196,8 @@ class VBasePlayer : public VGameObject {
   //VObject *lastReadyWeapon;
   //VState *lastReadyWeaponReadyState;
 
+  static bool isCheckpointSpawn;
+
 private:
   inline void UpdateDispFrameFrom (int idx, const VState *st) {
     if (st) {
@@ -210,6 +212,8 @@ private:
 public:
   //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
   virtual void PostCtor () override;
+
+  void ResetButtons ();
 
   const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
   const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
@@ -280,6 +284,8 @@ public:
   bool ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr> &aclist);
 
   void CallDumpInventory ();
+
+  DECLARE_FUNCTION(get_IsCheckpointSpawn)
 
   DECLARE_FUNCTION(cprint)
   DECLARE_FUNCTION(centreprint)
@@ -511,11 +517,12 @@ public:
     EV_RET_REF_IDX(VEntity, mtindex);
   }
 
-  void eventSetReadyWeapon (VEntity *ent) {
+  void eventSetReadyWeapon (VEntity *ent, bool instant) {
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetReadyWeapon"));
     P_PASS_SELF;
     P_PASS_REF(ent);
+    P_PASS_BOOL(instant);
     EV_RET_VOID_IDX(mtindex);
   }
 };

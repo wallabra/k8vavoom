@@ -32,6 +32,9 @@
 
 IMPLEMENT_CLASS(V, BasePlayer)
 
+bool VBasePlayer::isCheckpointSpawn = false;
+
+
 static VCvarF hud_notify_time("hud_notify_time", "5", "Notification timeout, in seconds.", CVAR_Archive);
 static VCvarF centre_msg_time("hud_centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
 static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive);
@@ -784,6 +787,32 @@ bool VBasePlayer::ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr
 
 //==========================================================================
 //
+//  VBasePlayer::ResetButtons
+//
+//==========================================================================
+void VBasePlayer::ResetButtons () {
+  ForwardMove = 0;
+  SideMove = 0;
+  FlyMove = 0;
+  Buttons = 0;
+  Impulse = 0;
+  AcsCurrButtonsPressed = 0;
+  AcsCurrButtons = 0;
+  AcsButtons = 0;
+  OldButtons = 0;
+  AcsNextButtonUpdate = 0;
+  AcsPrevMouseX = 0;
+  AcsPrevMouseY = 0;
+  AcsMouseX = 0;
+  AcsMouseY = 0;
+  // reset "down" flags
+  PlayerFlags &= ~VBasePlayer::PF_AttackDown;
+  PlayerFlags &= ~VBasePlayer::PF_UseDown;
+}
+
+
+//==========================================================================
+//
 //  COMMAND SetInfo
 //
 //==========================================================================
@@ -805,6 +834,11 @@ COMMAND(SetInfo) {
 //  Natives
 //
 //==========================================================================
+IMPLEMENT_FUNCTION(VBasePlayer, get_IsCheckpointSpawn) {
+  RET_BOOL(isCheckpointSpawn);
+}
+
+
 IMPLEMENT_FUNCTION(VBasePlayer, cprint) {
   VStr msg = PF_FormatString();
   P_GET_SELF;

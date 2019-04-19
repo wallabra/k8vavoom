@@ -353,7 +353,7 @@ void ResetWeaponReloadRefire () {
 //  eventSetReadyWeapon
 //
 //==========================================================================
-override void eventSetReadyWeapon (Entity ent) {
+override void eventSetReadyWeapon (Entity ent, bool instant) {
   if (!MO) return;
   SetWeapon(none);
   Weapon wpn = Weapon(ent);
@@ -363,7 +363,7 @@ override void eventSetReadyWeapon (Entity ent) {
       break;
     }
   }
-  BringUpWeapon(instant:true);
+  BringUpWeapon(instant:instant, skipSound:instant);
 }
 
 
@@ -1061,8 +1061,9 @@ final void SetWeapon (Weapon NewWeapon) {
 //  Starts bringing the pending weapon up from the bottom of the screen.
 //
 //===========================================================================
-final void BringUpWeapon (optional bool instant) {
-  if (ReadyWeapon && ReadyWeapon.UpSound) {
+final void BringUpWeapon (optional bool instant, optional bool skipSound) {
+  //print("BringUpWeapon: %C (instant=%B: skipSound=%B)", ReadyWeapon, instant, skipSound);
+  if (!skipSound && ReadyWeapon && ReadyWeapon.UpSound) {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
   }
 
@@ -1072,15 +1073,19 @@ final void BringUpWeapon (optional bool instant) {
   }
 
   PendingWeapon = none;
-  ViewStates[PS_WEAPON].SY = (bInstantWeaponSwitch || instant ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
+  ViewStates[PS_WEAPON].SY = (instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
     SetViewObject(ReadyWeapon);
     //dprint("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
     //k8: old code did "up state" anyway; this seems to be wrong
-    if (bInstantWeaponSwitch || instant) {
-      SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
+    if (instant || bInstantWeaponSwitch) {
+      if (instant) {
+        SetViewState(PS_WEAPON, ReadyWeapon.GetInstaReadyState());
+      } else {
+        SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
+      }
     } else {
       //print("BRINGING %C: curr=%s; top=%s; bot=%s", ReadyWeapon, ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM);
       SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
@@ -1812,8 +1817,10 @@ void PaletteFlash () {
 //
 //==========================================================================
 override void PreTravel () {
+  ::PreTravel();
   SavedInventory = EntityEx(MO).Inventory;
   EntityEx(MO).Inventory = none;
+  ResetACSButtons();
 }
 
 
@@ -2562,7 +2569,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   // set up gun psprite
   SetupPsprites();
 
-  if (Level.Game.deathmatch) GiveDefaultDeathMatchInventory();
+  if (Level.Game.deathmatch && !IsCheckpointSpawn) GiveDefaultDeathMatchInventory();
 
   // wake up the status bar
   SB_Start();
@@ -2578,9 +2585,12 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     k8ElvenGifted = false;
   }
 
-  GiveElvenGifts(mthing, Voodoo);
+  //print("*** CHECKPOINT SPAWN: %B", IsCheckpointSpawn);
+  if (!IsCheckpointSpawn) {
+    GiveElvenGifts(mthing, Voodoo);
+  }
 
-  if (!reborned) {
+  if (!reborned && !IsCheckpointSpawn) {
     if ((Level.bResetHealth && !GetCvarB('sv_ignore_reset_health')) || GetCvarB('sv_force_health_reset')) {
       Health = GetRebornHealth();
       EntityEx(MO).Health = Health;
@@ -2678,7 +2688,7 @@ void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional b
             if (ReadyWeapon != Weapon(Item)) {
               //PendingWeapon = Weapon(Item);
               SetWeapon(Weapon(Item));
-              BringUpWeapon(instant:true);
+              BringUpWeapon();
             }
             break;
           }
@@ -2704,7 +2714,7 @@ final bool AddElvenGift (name Klass) {
       if (ReadyWeapon != Weapon(act)) {
         //PendingWeapon = Weapon(act);
         SetWeapon(Weapon(act));
-        BringUpWeapon(instant:true);
+        BringUpWeapon();
       }
     } else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) {
       Weapon(act).AmmoGive2 = 8;
@@ -2714,7 +2724,7 @@ final bool AddElvenGift (name Klass) {
       if (ReadyWeapon != Weapon(act)) {
         //PendingWeapon = Weapon(act);
         SetWeapon(Weapon(act));
-        BringUpWeapon(instant:true);
+        BringUpWeapon();
       }
     }
     return true;

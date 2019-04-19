@@ -1269,8 +1269,6 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
   AssertSegment(*Loader, ASEG_WORLD);
 
-  SV_ResetPlayers();
-
   // add level
   Loader->Exports.Append(GLevel);
 
@@ -1611,7 +1609,7 @@ static bool SV_SaveCheckpoint () {
 //  returns `true` if checkpoint was loaded
 //
 //==========================================================================
-static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
+static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) {
   bool isCheckpoint = (BaseSlot.Maps.length() == 0);
   if (isCheckpoint && !allowCheckpoints) {
     Host_Error("Trying to load checkpoint in hub game!");
@@ -1630,13 +1628,26 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
 #endif
 
   // load a base level (spawn thinkers if this is checkpoint save)
-  SV_SpawnServer(*MapName, isCheckpoint/*spawn thinkers*/);
-  SV_ResetPlayers();
+  if (!hubTeleport) SV_ResetPlayers();
+  try {
+    VBasePlayer::isCheckpointSpawn = isCheckpoint;
+    SV_SpawnServer(*MapName, isCheckpoint/*spawn thinkers*/);
+  } catch (...) {
+    VBasePlayer::isCheckpointSpawn = false;
+    throw;
+  }
 
 #ifdef CLIENT
   if (isCheckpoint) {
     sv_loading = false; // just in case
-    CL_SetUpLocalPlayer();
+    try {
+      VBasePlayer::isCheckpointSpawn = true;
+      CL_SetUpLocalPlayer();
+    } catch (...) {
+      VBasePlayer::isCheckpointSpawn = false;
+      throw;
+    }
+    VBasePlayer::isCheckpointSpawn = false;
 
     Host_ResetSkipFrames();
 
@@ -1709,7 +1720,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints=true) {
     QS_StartPhase(QSPhase::QSP_None);
 
     plr->PlayerState = PST_LIVE;
-    if (rwe) plr->eventSetReadyWeapon(rwe);
+    if (rwe) plr->eventSetReadyWeapon(rwe, true); // instant
 
     Host_ResetSkipFrames();
     return true;
@@ -1822,7 +1833,7 @@ void SV_LoadGame (int slot) {
   sv_loading = true;
 
   // load the current map
-  if (!SV_LoadMap(BaseSlot.CurrentMap)) {
+  if (!SV_LoadMap(BaseSlot.CurrentMap, true/*allowCheckpoints*/, false/*hubTeleport*/)) {
     // not a checkpoint
 #ifdef CLIENT
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
@@ -1923,7 +1934,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   sv_map_travel = true;
   if (!deathmatch && BaseSlot.FindMap(mapname)) {
     // unarchive map
-    SV_LoadMap(mapname, false); // don't allow checkpoints
+    SV_LoadMap(mapname, false/*allowCheckpoints*/, true/*hubTeleport*/); // don't allow checkpoints
   } else {
     // new map
     SV_SpawnServer(*mapname, true/*spawn thinkers*/);
