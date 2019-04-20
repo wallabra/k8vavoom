@@ -291,6 +291,10 @@ opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 // used in sector movement, so it tries hard to not leave current opening
 opening_t *SV_FindRelOpening (opening_t *gaps, float z1, float z2);
 
+// build list of openings for the given sector
+// this is used in surface creator
+opening_t *SV_SectorOpenings (sector_t *sector);
+
 
 //==========================================================================
 //

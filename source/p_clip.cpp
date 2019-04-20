@@ -288,24 +288,23 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
               //TODO
             } else {
               // here we should check if midtex covers the whole height, as it is not tiled vertically
-              const float mheight = MTex->GetScaledHeight();
-              float toffs;
+              const float texh = MTex->GetScaledHeight();
+              float z_org;
               if (ldef->flags&ML_DONTPEGBOTTOM) {
                 // bottom of texture at bottom
-                toffs = sec->floor.TexZ+mheight;
-                //GCon->Logf("000");
-              } else if (ldef->flags&ML_DONTPEGTOP) {
-                // top of texture at top of sector
-                toffs = seg->front_sub->sector->ceiling.TexZ;
-                //GCon->Logf("001");
+                // top of texture at top
+                z_org = MAX(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
               } else {
                 // top of texture at top
-                toffs = sec->ceiling.TexZ;
-                //GCon->Logf("002");
+                z_org = MIN(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
               }
-              toffs *= MTex->TScale;
-              toffs += seg->sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
-              //GCon->Logf("  TScale:%f; MidRowOffset=%f; toffs=%f; mheight=%f", MTex->TScale, seg->sidedef->MidRowOffset, toffs, mheight);
+              //k8: dunno why
+              if (seg->sidedef->MidRowOffset < 0) {
+                z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+              } else {
+                z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+              }
+              //GCon->Logf("  TScale:%f; MidRowOffset=%f; z_org=%f; texh=%f", MTex->TScale, seg->sidedef->MidRowOffset, z_org, texh);
               //GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
               float floorz, ceilz;
               if (sec == fsec) {
@@ -318,8 +317,8 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
                 //GCon->Logf("  Xsec: %f : %f", MIN(backfz1, backfz2), MAX(backcz1, backcz2));
               }
               //GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
-              //if (toffs >= sec->ceiling.minz && toffs-mheight <= sec->floor.maxz) return true; // fully covered
-              if (toffs >= ceilz && toffs-mheight <= floorz) return true; // fully covered
+              //if (z_org >= sec->ceiling.minz && z_org-texh <= sec->floor.maxz) return true; // fully covered
+              if (z_org >= ceilz && z_org-texh <= floorz) return true; // fully covered
             }
           }
         }

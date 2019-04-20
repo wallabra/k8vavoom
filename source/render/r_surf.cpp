@@ -26,6 +26,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "r_local.h"
+#include "sv_local.h"
 
 // this is used to compare floats like ints which is faster
 #define FASI(var) (*(const int32_t *)&var)
@@ -495,8 +496,16 @@ static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MT
     // top of texture at top
     z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
   }
-  z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+  //z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+  //z_org += (seg->sidedef->MidRowOffset+texh)*(seg->sidedef->MidScaleY*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale));
+  //k8: dunno why
+  if (seg->sidedef->MidRowOffset < 0) {
+    z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+  } else {
+    z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+  }
   sp->texinfo.toffs = z_org*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
+  //sp->texinfo.toffs = TextureTScale(MTex)*seg->sidedef->MidScaleY;
   return z_org;
 }
 
@@ -715,12 +724,6 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
-  /*!!!FAKEFLOORS
-  if (seg->backsector->fakefloors) {
-    if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
-    if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
-  }
-  */
 
   float topz1 = r_ceiling.GetPointZ(*seg->v1);
   float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -759,11 +762,22 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     segdir = (*seg->v2-*seg->v1).normalised2D();
   }
 
-  sp->texinfo.saxis = segdir*(TextureSScale(MTex)*seg->sidedef->MidScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
+  const side_t *side = seg->sidedef;
+
+  sp->texinfo.saxis = segdir*(TextureSScale(MTex)*side->MidScaleX);
+  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*side->MidScaleY);
   sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(MTex)*seg->sidedef->MidScaleX)+
-                      seg->sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*seg->sidedef->MidScaleX);
+                      seg->offset*(TextureSScale(MTex)*side->MidScaleX)+
+                      side->MidTextureOffset*(TextureOffsetSScale(MTex)*side->MidScaleX);
+  //if (side->MidRowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, *MTex->Name, side->MidScaleY);
+  //k8: this seems to be wrong
+  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
+    sp->texinfo.toffs = r_ceiling.splane->TexZ*(TextureTScale(MTex)*side->MidScaleY)+
+                        side->MidRowOffset*TextureOffsetTScale(MTex);
+  }
+  //sp->texinfo.toffs = 0;
+  //if (side->MidRowOffset) GCon->Logf("  toffs=%g", sp->texinfo.toffs);
+
   sp->texinfo.Alpha = seg->linedef->alpha;
   sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
 
@@ -776,8 +790,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   float hgts[4];
 
-  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
-    if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (seg->sidedef->Flags&SDF_CLIPMIDTEX)) {
+  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
+    if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (side->Flags&SDF_CLIPMIDTEX)) {
       //k8: this is totally wrong
       hgts[0] = MAX(midbotz1, z_org-texh);
       hgts[1] = MIN(midtopz1, z_org);
@@ -790,6 +804,16 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
       hgts[3] = midbotz2;
     }
   } else {
+    // here we should offset texture bottom
+    /*
+    if (side->MidRowOffset) {
+      GCon->Logf("line #%d: midofs=%g; scale=%g; tex=<%s>; zorg=%g; texh=%g; wpsc=%g; ofs=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, side->MidScaleY, *MTex->Name, z_org, texh, (!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale), seg->sidedef->MidRowOffset+texh);
+      z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+      GCon->Logf("line #%d: midofs=%g; scale=%g; tex=<%s>; zorg=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, side->MidScaleY, *MTex->Name, z_org);
+      //z_org -= 8*4;
+    }
+    */
+    //z_org -= side->MidRowOffset;
     hgts[0] = MAX(midbotz1, z_org-texh);
     hgts[1] = MIN(midtopz1, z_org);
     hgts[2] = MIN(midtopz2, z_org);
@@ -807,7 +831,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = back_ceiling->dist;
   sp->backBotDist = back_floor->dist;
-  sp->RowOffset = seg->sidedef->MidRowOffset;
+  sp->RowOffset = side->MidRowOffset;
 }
 
 
@@ -829,17 +853,10 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float extrabotz1 = reg->efloor.GetPointZ(*seg->v1);
     const float extrabotz2 = reg->efloor.GetPointZ(*seg->v2);
 
-    /*
     const float topz1 = r_ceiling.GetPointZ(*seg->v1);
     const float topz2 = r_ceiling.GetPointZ(*seg->v2);
     const float botz1 = r_floor.GetPointZ(*seg->v1);
     const float botz2 = r_floor.GetPointZ(*seg->v2);
-    */
-
-    const float topz1 = seg->frontsector->ceiling.GetPointZ(*seg->v1);
-    const float topz2 = seg->frontsector->ceiling.GetPointZ(*seg->v2);
-    const float botz1 = seg->frontsector->floor.GetPointZ(*seg->v1);
-    const float botz2 = seg->frontsector->floor.GetPointZ(*seg->v2);
 
     bool doIt = true;
 
@@ -896,7 +913,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = reg->eceiling.splane->dist;
   sp->backBotDist = reg->efloor.splane->dist;
-  sp->RowOffset = seg->sidedef->MidRowOffset;
+  sp->RowOffset = Level->Sides[reg->extraline->sidenum[0]].MidRowOffset;
 }
 
 
@@ -985,12 +1002,6 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
-    /*!!!FAKEFLOORS
-    if (seg->backsector->fakefloors) {
-      if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
-      if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
-    }
-    */
 
     // top wall
     if (isMainRegion) {
@@ -1073,6 +1084,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     // create region sides
     if (isMainRegion) {
+      // this creates sides for neightbour 3d floors
+      //opening_t *ops = SV_SectorOpenings(seg->frontsector);
       for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
         if (!reg->extraline) continue; // no need to create extra side
 
@@ -1086,19 +1099,19 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         sp->next = dseg->extra;
         dseg->extra = sp;
 
-        sp->texinfo.saxis = segdir*(TextureSScale(MTextr)*sidedef->MidScaleX);
-        sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTextr)*sidedef->MidScaleY);
+        sp->texinfo.saxis = segdir*(TextureSScale(MTextr)*extraside->MidScaleX);
+        sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTextr)*extraside->MidScaleY);
         sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                            seg->offset*(TextureSScale(MTextr)*sidedef->MidScaleX)+
-                            sidedef->MidTextureOffset*(TextureOffsetSScale(MTextr)*sidedef->MidScaleX);
-        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTextr)*sidedef->MidScaleY)+
-                            sidedef->MidRowOffset*(TextureOffsetTScale(MTextr)*sidedef->MidScaleY);
+                            seg->offset*(TextureSScale(MTextr)*extraside->MidScaleX)+
+                            extraside->MidTextureOffset*(TextureOffsetSScale(MTextr)*extraside->MidScaleX);
+        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTextr)*extraside->MidScaleY)+
+                            extraside->MidRowOffset*(TextureOffsetTScale(MTextr)*extraside->MidScaleY);
         sp->texinfo.Tex = MTextr;
         sp->texinfo.noDecals = MTextr->noDecals;
         sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
         sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
         sp->texinfo.ColourMap = 0;
-        sp->TextureOffset = sidedef->MidTextureOffset;
+        sp->TextureOffset = extraside->MidTextureOffset;
 
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, (MTex->Type == TEXTYPE_Null));
       }
@@ -1215,12 +1228,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // two-sided
     sec_plane_t *back_floor = &seg->backsector->floor;
     sec_plane_t *back_ceiling = &seg->backsector->ceiling;
-    /*!!!FAKEFLOORS
-    if (seg->backsector->fakefloors) {
-      if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
-      if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
-    }
-    */
 
     // top wall
     segpart_t *sp = dseg->top;
@@ -1365,8 +1372,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       {
         FreeWSurfs(sp->surfs);
 
-        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*sidedef->MidScaleY)+
-                             sidedef->MidRowOffset*(TextureOffsetTScale(MTexr)*sidedef->MidScaleY);
+        sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*extraside->MidScaleY)+
+                             extraside->MidRowOffset*(TextureOffsetTScale(MTexr)*extraside->MidScaleY);
 
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling, nullMidTex);
       } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
@@ -1469,6 +1476,9 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   for (int i = Level->NumSubsectors; i--; ++sub) {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
+    TSecPlaneRef main_floor = sub->sector->eregions->efloor;
+    TSecPlaneRef main_ceiling = sub->sector->eregions->eceiling;
+
     int ridx = 0;
     for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next, ++ridx) {
       if (sregLeft == 0) Sys_Error("out of subregions in surface creator");
@@ -1476,13 +1486,6 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       TSecPlaneRef r_floor, r_ceiling;
       r_floor = reg->efloor;
       r_ceiling = reg->eceiling;
-
-      /*!!!FAKEFLOORS
-      if (sub->sector->fakefloors) {
-        if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane, false);
-        if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane, false);
-      }
-      */
 
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
@@ -1507,14 +1510,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->lines = pds;
       pds += sreg->count;
       pdsLeft -= sreg->count;
-      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], r_floor, r_ceiling, reg, (ridx == 0));
+      for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], main_floor, main_ceiling, reg, (ridx == 0));
 
       if (ridx == 0 && sub->poly) {
         // polyobj
         int j = sub->numlines;
         seg_t **polySeg = sub->poly->segs;
         for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg, ++j) {
-          CreateSegParts(sub, &sreg->lines[j], *polySeg, r_floor, r_ceiling, nullptr, true);
+          CreateSegParts(sub, &sreg->lines[j], *polySeg, main_floor, main_ceiling, nullptr, true);
         }
       }
 
@@ -1541,13 +1544,6 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region, bool updatePoly) {
   TSecPlaneRef r_floor = region->floorplane;
   TSecPlaneRef r_ceiling = region->ceilplane;
-
-  /*!!!FAKEFLOORS
-  if (sub->sector->fakefloors) {
-    if (r_floor.splane == &sub->sector->floor) r_floor.set(&sub->sector->fakefloors->floorplane, false);
-    if (r_ceiling.splane == &sub->sector->ceiling) r_ceiling.set(&sub->sector->fakefloors->ceilplane, false);
-  }
-  */
 
   drawseg_t *ds = region->lines;
   for (int count = sub->numlines; count--; ++ds) {

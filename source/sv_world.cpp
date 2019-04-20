@@ -359,11 +359,16 @@ static void InsertOpening (TArray<opening_t> &dest, const opening_t &op) {
 //  GetBaseSectorOpening
 //
 //==========================================================================
-static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec point, bool *hasSlopes=nullptr) {
+static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec point, bool *hasSlopes, bool usePoint) {
   op.efloor = sector->eregions->efloor;
-  op.bottom = op.efloor.GetPointZ(point);
   op.eceiling = sector->eregions->eceiling;
-  op.top = op.eceiling.GetPointZ(point);
+  if (usePoint) {
+    op.bottom = op.efloor.GetPointZ(point);
+    op.top = op.eceiling.GetPointZ(point);
+  } else {
+    op.bottom = op.efloor.splane->minz;
+    op.top = op.eceiling.splane->maxz;
+  }
   op.range = op.top-op.bottom;
   op.lowfloor = op.bottom;
   op.next = nullptr;
@@ -378,12 +383,12 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 //  this function doesn't like regions with floors that has different flags
 //
 //==========================================================================
-static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList) {
+static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint=true) {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors()) {
     opening_t &op = dest.alloc();
-    GetBaseSectorOpening(op, sector, point, hasSlopes);
+    GetBaseSectorOpening(op, sector, point, hasSlopes, usePoint);
     return;
   }
   /* build list of closed regions (it doesn't matter if region is non-solid, as long as it satisfies flag mask).
@@ -402,8 +407,8 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
     // check for slopes
     if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
     // border points
-    const float fz = reg->efloor.GetPointZ(point);
-    const float cz = reg->eceiling.GetPointZ(point);
+    const float fz = (usePoint ? reg->efloor.GetPointZ(point) : reg->efloor.splane->minz);
+    const float cz = (usePoint ? reg->eceiling.GetPointZ(point) : reg->eceiling.splane->maxz);
     cop.efloor = reg->efloor;
     cop.bottom = fz;
     cop.eceiling = reg->eceiling;
@@ -418,11 +423,11 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   }
   if (hasSlopes) *hasSlopes = slopeDetected;
   // if we have no openings, or openings are out of bounds, just use base sector region
-  const float secfz = sector->floor.GetPointZ(point);
-  const float seccz = sector->ceiling.GetPointZ(point);
+  const float secfz = (usePoint ? sector->floor.GetPointZ(point) : sector->floor.minz);
+  const float seccz = (usePoint ? sector->ceiling.GetPointZ(point) : sector->ceiling.maxz);
   if (solids.length() == 0 || solids[solids.length()-1].top <= secfz || solids[0].bottom >= seccz) {
     opening_t &op = dest.alloc();
-    GetBaseSectorOpening(op, sector, point, hasSlopes);
+    GetBaseSectorOpening(op, sector, point, hasSlopes, usePoint);
     return;
   }
   /* now we have to cut out all solid regions from base one
@@ -471,12 +476,48 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
     cop.range = cop.top-cop.bottom;
     dest.append(cop);
   }
+  // if we aren't using point, join openings with paper-thin edges
+  if (!usePoint) {
+    cs = dest.ptr();
+    int dlen = dest.length();
+    int dpos = 0;
+    while (dpos < dlen-1) {
+      if (cs[dpos].top == cs[dpos+1].bottom) {
+        // join
+        cs[dpos].top = cs[dpos+1].top;
+        cs[dpos].eceiling = cs[dpos+1].eceiling;
+        cs[dpos].range = cs[dpos].top-cs[dpos].bottom;
+        dest.removeAt(dpos+1);
+        cs = dest.ptr();
+        --dlen;
+      } else {
+        // skip
+        ++dpos;
+      }
+    }
+  }
   // link list, if necessary
   if (linkList) {
     cs = dest.ptr();
     for (int f = dest.length()-1; f > 0; --f) cs[f-1].next = &cs[f];
     cs[dest.length()-1].next = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  SV_SectorOpenings
+//
+//  build list of openings for the given sector
+//  this is used in surface creator
+//
+//==========================================================================
+opening_t *SV_SectorOpenings (sector_t *sector) {
+  static TArray<opening_t> oplist;
+  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false);
+  check(oplist.length() > 0);
+  return oplist.ptr();
 }
 
 
@@ -567,8 +608,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       !linedef->backsector->Has3DFloors())
   {
     opening_t fop, bop;
-    GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0);
-    GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1);
+    GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0, true);
+    GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1, true);
     // no intersection?
     if (fop.top <= bop.bottom || bop.top <= fop.bottom ||
         fop.bottom >= bop.top || bop.bottom >= fop.top)
