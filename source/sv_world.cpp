@@ -400,10 +400,17 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   bool slopeDetected = false;
   opening_t cop;
   cop.lowfloor = 0.0f; // for now
+  //bool hadNonSolid;
   // skip base region for now
   for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
-    if (skipNonSolid && reg->regflags&sec_region_t::RF_NonSolid) continue;
+    if (skipNonSolid && (reg->regflags&sec_region_t::RF_NonSolid)) continue;
+    /*
+    if (reg->regflags&sec_region_t::RF_NonSolid) {
+      if (skipNonSolid) continue;
+      hadNonSolid = true;
+    }
+    */
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
     // check for slopes
     if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
@@ -449,9 +456,10 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   check(currfloor.isFloor());
   // HACK: if the whole sector is taken by some region, return sector opening
   //       this is required to proper 3d-floor backside creation
+  //       alas, `hadNonSolid` hack is required to get rid of "nano-water walls"
   opening_t *cs = solids.ptr();
-  if (!usePoint) {
-    if (cs[0].bottom <= sector->floor.minz && cs[solids.length()-1].top >= sector->floor.maxz) {
+  if (!usePoint /*&& !hadNonSolid*/ && solids.length() == 1) {
+    if (cs[0].bottom <= sector->floor.minz && cs[0].top >= sector->ceiling.maxz) {
       opening_t &op = dest.alloc();
       GetBaseSectorOpening(op, sector, point, hasSlopes, usePoint);
       return;
