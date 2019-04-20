@@ -36,7 +36,7 @@
 static bool CheckPlanes (linetrace_t &Trace, sector_t *sec) {
   TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  if (!VLevel::CheckHitPlanes(sec->eregions, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr/*, -0.1f*/)) {
+  if (!VLevel::CheckHitPlanes(sec, true, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr/*, -0.1f*/)) {
     // hit floor or ceiling
     Trace.LineEnd = outHit;
     Trace.HitPlaneNormal = outNorm;
@@ -254,7 +254,7 @@ struct SightTraceInfo {
   TVec LineStart;
   TVec LineEnd;
 
-  bool SkipBaseRegion;
+  bool CheckBaseRegion;
   unsigned LineBlockMask;
 
   vuint32 PlaneNoBlockFlags;
@@ -269,10 +269,7 @@ struct SightTraceInfo {
 //==========================================================================
 static bool SightCheckPlanes (SightTraceInfo &Trace, sector_t *sec) {
   //k8: for some reason, real sight checks ignores base sector region
-  sec_region_t *sreg = sec->eregions;
-  if (Trace.SkipBaseRegion) sreg = sreg->next;
-  if (!sreg) return true;
-  return VLevel::CheckHitPlanes(sreg, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &Trace.LineEnd, &Trace.HitPlaneNormal, nullptr/*, -0.1f*/);
+  return VLevel::CheckHitPlanes(sec, Trace.CheckBaseRegion, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &Trace.LineEnd, &Trace.HitPlaneNormal, nullptr/*, -0.1f*/);
 }
 
 
@@ -586,7 +583,7 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, const TVec &dest, float myheight, float radius, float height, bool doExtraChecks, bool skipBaseRegion, sector_t *DestSector) {
+bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight, const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector) {
   if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo Trace;
@@ -623,32 +620,44 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, const TVec &dest, fl
 
   Trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
   Trace.LineBlockMask = ML_BLOCKEVERYTHING|ML_BLOCKSIGHT;
-  Trace.SkipBaseRegion = skipBaseRegion;
+  Trace.CheckBaseRegion = !skipBaseRegion;
 
-  if (!doExtraChecks || (radius < 4.0f && height < 4.0f && myheight < 4.0f)) {
+  if (orgdirRight.isZero() || (radius < 4.0f && height < 4.0f && myheight < 4.0f)) {
     Trace.Start = org;
-    Trace.Start.z += myheight*0.5f;
+    Trace.Start.z += myheight*0.75f;
     Trace.End = dest;
+    Trace.End.z += height*0.5f;
     return SightPathTraverse(Trace, this, OtherSector);
   } else {
-    static const float zmult[3] = { 0.5f, -0.75f, -0.75f };
-    for (unsigned myz = 0; myz < 3; ++myz) {
-      // an unobstructed LOS is possible
-      // now look from eyes of t1 to any part of t2
-      Trace.Start = org;
-      Trace.End = dest;
-      Trace.End.z += myheight*zmult[myz];
-
-      // check middle
-      if (SightPathTraverse(Trace, this, OtherSector)) return true;
-      if (Trace.EarlyOut) continue;
-
-      // check up and down
-      for (unsigned itsz = 1; itsz < 3; ++itsz) {
-        Trace.Start = org;
+    static const float ithmult[2] = { 0.15f, 0.85f };
+    static const float sidemult[3] = { 0.0f, -0.75f, 0.75f };
+    static const float fwdmult[2] = { 0.75f, 0.0f };
+    //GCon->Logf("=== forward:(%g,%g,%g) ===", orgdirFwd.x, orgdirFwd.y, orgdirFwd.z);
+    //GCon->Logf("=== right:(%g,%g,%g) ===", orgdirRight.x, orgdirRight.y, orgdirRight.z);
+    for (unsigned myf = 0; myf < 2; ++myf) {
+      TVec orgStartFwd = org+orgdirFwd*(radius*fwdmult[myf]);
+      orgStartFwd.z += myheight*0.75f;
+      for (unsigned myx = 0; myx < 3; ++myx) {
+        // an unobstructed LOS is possible
+        // now look from eyes of t1 to any part of t2
+        TVec orgStart = orgStartFwd+orgdirRight*(radius*sidemult[myx]);
+        Trace.Start = orgStart;
         Trace.End = dest;
-        Trace.End.z += height*zmult[itsz];
-        if (SightPathTraverse2(Trace, OtherSector)) return true;
+        Trace.End.z += height*0.5f;
+        //GCon->Logf("myx=%u; itsz=*; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, org.x, org.y, org.z, dest.x, dest.y, dest.z, Trace.Start.x, Trace.Start.y, Trace.Start.z, Trace.End.x, Trace.End.y, Trace.End.z);
+
+        // check middle
+        if (SightPathTraverse(Trace, this, OtherSector)) return true;
+        if (Trace.EarlyOut) continue;
+
+        // check up and down
+        for (unsigned itsz = 0; itsz < 2; ++itsz) {
+          Trace.Start = orgStart;
+          Trace.End = dest;
+          Trace.End.z += height*ithmult[itsz];
+          //GCon->Logf("myx=%u; itsz=%u; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, itsz, org.x, org.y, org.z, dest.x, dest.y, dest.z, Trace.Start.x, Trace.Start.y, Trace.Start.z, Trace.End.x, Trace.End.y, Trace.End.z);
+          if (SightPathTraverse2(Trace, OtherSector)) return true;
+        }
       }
     }
   }
@@ -694,9 +703,10 @@ bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsign
   //if (length2DSquared(org-dest) <= 1) return true;
 
   Trace.PlaneNoBlockFlags = blockflags;
-  Trace.SkipBaseRegion = false;
+  Trace.CheckBaseRegion = true;
   Trace.LineBlockMask = ML_BLOCKEVERYTHING;
   if (Trace.PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) Trace.LineBlockMask |= ML_BLOCKSIGHT;
+  if (Trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT) Trace.LineBlockMask |= ML_BLOCKHITSCAN;
 
   Trace.Start = org;
   Trace.End = dest;

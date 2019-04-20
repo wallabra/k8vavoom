@@ -28,8 +28,6 @@ const int FHF_NORANDOMPUFFZ = 1;
 const int FHF_NOIMPACTDECAL = 2;
 
 
-
-
 //**************************************************************************
 //
 //  aiming
@@ -670,7 +668,7 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
 {
   TVec hitpoint, hitnormal;
   bool hitsky;
-  if (CheckHitPlanes(sec, linestart, lineend, SPF_NOBLOCKSHOOT, out hitpoint, out hitnormal, out hitsky)) {
+  if (CheckHitPlanes(sec, true, linestart, lineend, SPF_NOBLOCKSHOOT, out hitpoint, out hitnormal, out hitsky)) {
     if (outHitPoint) *outHitPoint = hitpoint;
     // if we are shooting floor or ceiling we are adjusting position
     // to spawn puff on floor or ceiling, not on wall

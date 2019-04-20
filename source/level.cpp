@@ -2143,14 +2143,16 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 //
 //  checks all sector regions, returns `false` if any region plane was hit
 //  sets `outXXX` arguments on hit (and only on hit!)
+//  if `checkSectorBounds` is false, skip checking sector bounds
+//  (and the first sector region)
 //
 //  any `outXXX` can be `nullptr`
 //
 //==========================================================================
-bool VLevel::CheckHitPlanes (const sec_region_t *reg, TVec linestart, TVec lineend, unsigned flagmask,
+bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold)
 {
-  if (!reg) return true;
+  if (!sector) return true;
 
   TVec besthit = lineend;
   TVec bestNormal(0.0f, 0.0f, 0.0f);
@@ -2160,7 +2162,39 @@ bool VLevel::CheckHitPlanes (const sec_region_t *reg, TVec linestart, TVec linee
   float besthdist = 9999999.0f;
   bool isSky = false;
 
-  for (; reg; reg = reg->next) {
+  if (checkSectorBounds) {
+    // make fake floors and ceilings block view
+    TSecPlaneRef bfloor, bceil;
+    sector_t *hs = sector->heightsec;
+    if (hs) {
+      bfloor.set(&hs->floor, false);
+      bceil.set(&hs->ceiling, false);
+    } else {
+      bfloor.set(&sector->floor, false);
+      bceil.set(&sector->ceiling, false);
+    }
+    // check sector floor
+    if (!CheckPlaneHit(bfloor, linestart, lineend, currhit, isSky, threshold)) {
+      wasHit = true;
+      besthit = currhit;
+      bestIsSky = isSky;
+      besthdist = (currhit-linestart).lengthSquared();
+      bestNormal = bfloor.GetNormal();
+    }
+    // check sector ceiling
+    if (!CheckPlaneHit(bceil, linestart, lineend, currhit, isSky, threshold)) {
+      wasHit = true;
+      float dist = (currhit-linestart).lengthSquared();
+      if (dist < besthdist) {
+        besthit = currhit;
+        bestIsSky = isSky;
+        besthdist = dist;
+        bestNormal = bceil.GetNormal();
+      }
+    }
+  }
+
+  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
     if (!(reg->efloor.splane->flags&flagmask) &&
         !CheckPlaneHit(reg->efloor, linestart, lineend, currhit, isSky, threshold)) {

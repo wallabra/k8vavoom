@@ -85,5 +85,17 @@ bool VEntity::CanSee (VEntity *Other) {
   // same subsector? obviously visible
   if (SubSector == Other->SubSector) return true;
 
-  return XLevel->CastCanSee(Sector, Origin, Other->Origin, Height, Other->Radius, Other->Height, compat_better_sight, true/*skip base region*/, Other->Sector);
+  TVec dirF, dirR;
+  if (compat_better_sight) {
+    //YawVectorRight(Angles.yaw, dirR);
+    TVec dirU;
+    TAVec ang;
+    ang.yaw = Angles.yaw;
+    ang.pitch = 0.0f;
+    ang.roll = 0.0f;
+    AngleVectors(ang, dirF, dirR, dirU);
+  } else {
+    dirR = TVec::ZeroVector;
+  }
+  return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector);
 }

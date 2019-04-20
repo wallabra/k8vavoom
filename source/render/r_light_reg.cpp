@@ -784,10 +784,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (rad < minlight) continue;
     minlight = rad-minlight;
 
-    TVec impact = dl.origin-surf->GetNormal()*dist;
-
-    if (hasPVS && r_dynamic_clip_pvs) {
-      const subsector_t *sub = Level->PointInSubsector(impact);
+    if (hasPVS && r_dynamic_clip_pvs && surf->subsector) {
+      const subsector_t *sub = surf->subsector; //Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       int leafnum = dlinfo[lnum].leafnum;
@@ -795,6 +793,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
+
+    TVec impact = dl.origin-surf->GetNormal()*dist;
 
     //TODO: we can use clipper to check if destination subsector is occluded
     bool needProperTrace = (doCheckTrace && xnfo > 0);
@@ -826,6 +826,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     }
 
     //TVec spt(0.0f, 0.0f, 0.0f);
+    sector_t *surfsector = (surf->subsector ? surf->subsector->sector : nullptr);
     float attn = 1.0f;
 
     const TVec *spt = lmi.surfpt;
@@ -851,7 +852,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              if (!Level->CastCanSee(Level->Subsectors[dlinfo[lnum].leafnum].sector, dl.origin, *spt, 0.0f, 0.0f, 0.0f, false)) continue;
+              if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dl.origin, *spt, SPF_NOBLOCKSIGHT, surfsector)) continue;
             }
           }
           int i = t*smax+s;

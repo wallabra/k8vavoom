@@ -1321,6 +1321,7 @@ native static final float GetSectorFloorPointZ (const sector_t *sector, const re
 native static final bool SectorHas3DFloors (const sector_t *sector);
 
 
+
 //==========================================================================
 //
 //  CheckPlaneHit
@@ -1330,7 +1331,7 @@ native static final bool SectorHas3DFloors (const sector_t *sector);
 //
 //==========================================================================
 native static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
-                                 optional out TVec currhit, optional out bool isSky);
+                                        optional out TVec currhit, optional out bool isSky);
 
 //==========================================================================
 //
@@ -1338,11 +1339,14 @@ native static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec
 //
 //  checks all sector regions, returns `false` if any region plane was hit
 //  sets `outXXX` arguments on hit
+//  if `checkSectorBounds` is false, skip checking sector bounds
+//  (and the first sector region)
 //
 //==========================================================================
-native static final bool CheckHitPlanes (const sector_t *sec, TVec linestart, TVec lineend, int flagmask,
-                                  optional out TVec outHitPoint, optional out TVec outHitNormal,
-                                  optional out bool outIsSky);
+native static final bool CheckHitPlanes (const sector_t *sec, bool checkSectorBounds,
+                                         TVec linestart, TVec lineend, int flagmask,
+                                         optional out TVec outHitPoint, optional out TVec outHitNormal,
+                                         optional out bool outIsSky);
 
 
 defaultproperties {

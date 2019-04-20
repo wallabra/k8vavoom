@@ -579,7 +579,8 @@ public:
 
   // doesn't check pvs or reject
   // `Sector` can be `nullptr`
-  bool CastCanSee (sector_t *Sector, const TVec &org, const TVec &dest, float myheight, float radius, float height, bool doExtraChecks, bool skipBaseRegion=false, sector_t *DestSector=nullptr);
+  // if `orgdir` is zero vector, don't do extra checks
+  bool CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight, const TVec &dest, float radius, float height, bool skipBaseRegion=false, sector_t *DestSector=nullptr);
   bool CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector=nullptr);
 
   void SetCameraToTexture (VEntity *, VName, int);
@@ -614,7 +615,8 @@ public:
   static void dumpSectorRegions (const sector_t *dst);
 
   static bool CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold=0.0f);
-  static bool CheckHitPlanes (const sec_region_t *reg, TVec linestart, TVec lineend, unsigned flagmask,
+  // if `checkSectorBounds` is false, skip checking sector bounds (and the first sector region)
+  static bool CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
                               TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold=0.0f);
 
 private:
