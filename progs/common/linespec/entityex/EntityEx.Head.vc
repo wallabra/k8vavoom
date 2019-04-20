@@ -403,6 +403,13 @@ EntityEx Goal;
 EntityEx Master;
 // last actor this one heard
 EntityEx LastHeard;
+// ketmar: last position we've seen a player
+//         if player cannot be seen, try to walk to this destination,
+//         then start wandering
+//         note that sometimes monster can forget about player position
+//         (roughly in 10% of cases)
+//!TVec LastPlayerSeenPos;
+//!bool LastPlayerSeenPosValid;
 
 // player number last looked for
 int LastLook;

@@ -2045,6 +2045,7 @@ final EntityEx TossUpObject (class!EntityEx type) {
     A.Angles.yaw = an;
     A.Tracer = Target;
     A.Target = self;
+    //!A.LastPlayerSeenPosValid = false;
     float sina, cosa;
     sincos(an, out sina, out cosa);
     A.Velocity.x = randomspeed*cosa*35.0;
@@ -2084,7 +2085,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     //case APROP_Species: return NameToIIndex(GetSpecies()); //HACK! keep in sync with C++ code!
     //case APROP_NameTag: return NameToIIndex(GetClassName(Class)); //HACK! keep in sync with C++ code!
     case APROP_MasterTID: if (IntVal <= 0) { Master = none; break; } Master = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Master == self) Master = none; break; //k8: allow self?
-    case APROP_TargetTID: if (IntVal <= 0) { Target = none; break; } Target = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Target == self) Target = none; break; //k8: allow self?
+    case APROP_TargetTID: if (IntVal <= 0) { Target = none; break; } Target = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Target == self) Target = none; /*!!LastPlayerSeenPosValid = false;*/ break; //k8: allow self?
     case APROP_TracerTID: if (IntVal <= 0) { Tracer = none; break; } Tracer = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Tracer == self) Tracer = none; break; //k8: allow self?
     //case APROP_WaterLevel: return WaterLevel;
     case APROP_ScaleX: ScaleX = float(IntVal)/65536.0; break;
@@ -3128,6 +3129,7 @@ final bool DoThingRaise () {
   Health = default.Health;
   Target = none;
   LastEnemy = none;
+  //!LastPlayerSeenPosValid = false;
 
   // if it counts as kill, count it as another one
   if (CountsAsKill()) ++Level.TotalKills;
@@ -3245,6 +3247,8 @@ void CopyFriendliness (EntityEx Src, bool ChangeTarget) {
   if (ChangeTarget && Src.Target && !Src.Target.bNeverTarget) {
     Target = Src.Target;
     LastHeard = Src.Target;
+    //!LastPlayerSeenPos = Src.LastPlayerSeenPos;
+    //!LastPlayerSeenPosValid = Src.LastPlayerSeenPosValid;
   }
 }
 

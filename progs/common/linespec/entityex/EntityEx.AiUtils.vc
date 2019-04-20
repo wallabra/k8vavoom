@@ -118,6 +118,8 @@ final bool CheckMissileRange () {
 //
 //==========================================================================
 final bool LookForMonsters () {
+  //!LastPlayerSeenPosValid = false;
+  //k8: this is used only when player is dead
   if (!Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
   int count = 0;
   Entity ee;
@@ -147,6 +149,7 @@ final bool LookForMonsters () {
 //
 //==========================================================================
 final bool LookForMonsters2 (bool allaround) {
+  //!LastPlayerSeenPosValid = false;
   //EntityEx mo;
   //foreach AllThinkers(EntityEx, mo)
   Entity ee;
@@ -210,7 +213,9 @@ final bool LookForPlayers (bool allaround) {
       Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
   {
     // single player game and player is dead, look for monsters
+    //!LastPlayerSeenPosValid = false;
     if (GetCvarB('gm_death_infighting')) return LookForMonsters();
+    Target = none;
     return false;
   }
 
@@ -226,17 +231,29 @@ final bool LookForPlayers (bool allaround) {
       if (!Target) {
         // use goal as target
         if (Goal) {
+          //!LastPlayerSeenPosValid = false;
           Target = Goal;
           return true;
         }
         // use last known enemy if no players sighted -- killough 2/15/98:
         if (LastEnemy && LastEnemy.Health > 0) {
+          /*!!
+          // small chance to forget about last player position
+          if (LastPlayerSeenPosValid) {
+            if (FRandomFull() > 0.1) {
+              Target = none;
+              return false;
+            }
+            print("%C: forgot player position", self);
+          }
+          LastPlayerSeenPosValid = false;
+          */
           Target = LastEnemy;
           LastEnemy = none;
           return true;
         }
       }
-      return Target == Goal && Goal;
+      return (Target == Goal && Goal);
     }
 
     if (!P.bSpawned || !P.MO) continue; // not spawned yet
@@ -273,6 +290,19 @@ final bool LookForPlayers (bool allaround) {
     if (Goal && Target == Goal) ReactionTime = 0.0;
 
     Target = EntityEx(P.MO);
+    /*!!
+    if (Target.bIsPlayer) {
+      if ((PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened) {
+        LastPlayerSeenPosValid = false;
+      } else {
+        print("%C: spotted player at %s", self, Target.Origin);
+        LastPlayerSeenPosValid = true;
+        LastPlayerSeenPos = Target.Origin;
+      }
+    } else {
+      !LastPlayerSeenPosValid = false;
+    }
+    */
     return true;
   }
 
@@ -686,17 +716,27 @@ final void DO_NewChaseDir (float deltax, float deltay) {
 //
 //=============================================================================
 final void NewChaseDir () {
-  float deltax;
-  float deltay;
-
   if ((bChaseGoal || Goal == Target) && Goal) {
-    deltax = Goal.Origin.x-Origin.x;
-    deltay = Goal.Origin.y-Origin.y;
+    NewChaseDirTo(Goal.Origin);
   } else {
     if (!Target) Error("NewChaseDir: called with no Target");
-    deltax = Target.Origin.x-Origin.x;
-    deltay = Target.Origin.y-Origin.y;
+    NewChaseDirTo(Target.Origin, Target);
+  }
+}
 
+
+//=============================================================================
+//
+//  NewChaseDirTo
+//
+//  killough 9/8/98: Split into two functions
+//
+//=============================================================================
+final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
+  float deltax = destination.x-Origin.x;
+  float deltay = destination.y-Origin.y;
+
+  if (Target) {
     if (!bNoFear) {
       if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened) {
         deltax = -deltax;
@@ -738,9 +778,9 @@ final void NewChaseDir () {
       return;
     }
   } else {
-    float dist = DistTo(Target);
+    float dist = Length2D(destination-GetCentre());
 
-    if (Target.Health > 0) {
+    if (Target && Target.Health > 0) {
       // Enemy target is alive
       if (GetCvar('monster_backing') && MissileState &&
           /*actor->type != MT_SKULL &&*/
@@ -769,6 +809,17 @@ final void NewChaseDir () {
 //
 //==========================================================================
 final void RandomChaseDir () {
+  /*!!
+  if (LastPlayerSeenPosValid) {
+    if (bNoFear || !bFrightened) {
+      //if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened)
+      print("%C: setting chase dir to last place where i've seen the player: %s", self, LastPlayerSeenPos);
+      NewChaseDirTo(LastPlayerSeenPos);
+      return;
+    }
+  }
+  */
+
   int olddir = MoveDir;
   int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 
