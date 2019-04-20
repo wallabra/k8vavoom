@@ -597,35 +597,6 @@ public:
 
   int eventGetArmorPointsForType (VName atype) { P_PASS_SELF; P_PASS_NAME(atype); EV_RET_INT(VName("GetArmorPointsForType")); }
 
-  void callSectorChanged (int crush) {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SectorChanged"));
-    P_PASS_SELF;
-    P_PASS_INT(crush);
-    EV_RET_VOID_IDX(mtindex);
-  }
-
-  //static final bool decoDoCheckFlag (string flagname, Entity tgt)
-  /*
-  bool eventCheckFlag (const VStr &flagname) {
-    if (flagname.length() == 0) return false;
-    P_PASS_STR(flagname);
-    P_PASS_PTR(this);
-    EV_RET_BOOL(NAME_decoDoCheckFlag);
-  }
-  */
-
-  //static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue)
-  /*
-  bool eventSetFlag (const VStr &flagname, bool newvalue) {
-    if (flagname.length() == 0) return false;
-    P_PASS_STR(flagname);
-    P_PASS_PTR(this);
-    P_PASS_BOOL(newvalue);
-    EV_RET_BOOL(NAME_decoDoSetFlag);
-  }
-  */
-
   void QS_ClearEntityInventory () {
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_ClearEntityInventory"));

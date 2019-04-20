@@ -247,16 +247,6 @@ bool Physics (float DeltaTime) {
       ZMovement(DeltaTime, oldfloorz);
       if (IsDestroyed()) return false; // entity was removed
     }
-  } else {
-    // see comment in `ZMovement()`
-#ifdef SHITTY_3DFLOOR_HACK
-    if (!bNoGravity && Sector && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
-        !bStickToFloor && !bStickToCeiling)
-    {
-      // yeah, several regions; recalc FloorZ
-      HeightClip(skipTriggers:true, skipObjects:true);
-    }
-#endif
   }
 
   if (bStickToFloor || bStickToCeiling) {
@@ -451,24 +441,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
        if (Mass.isinf) Mass = 10000;
   else if (Mass < 0) Mass = 0;
 
-  // k8: if we are in sector with several regions (i.e. with 3d floors),
-  //     check for gaps on each step. because moving regions won't trigger
-  //     `SectorChanged()` (technically, the entity is not in a control
-  //     sector), and we don't have a link from control sector to all its
-  //     destination sectors yet, so we cannot trigger this properly.
-  //     this is a hack, but it is better than nothing.
-  //     note that rising 3d floors will automatically work due to physics
-  //     (but really fast movement won't work yet).
-  //     i have to rewrite this in a proper way, of course.
   bool hasGravity = (!bNoGravity && Sector);
-#ifdef SHITTY_3DFLOOR_HACK
-  if (hasGravity && bColideWithWorld && Sector->bHasExtrafloors && Origin.z == FloorZ &&
-      !bStickToFloor && !bStickToCeiling)
-  {
-    // yeah, several regions; recalc FloorZ
-    HeightClip(skipTriggers:true, skipObjects:true);
-  }
-#endif
 
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
