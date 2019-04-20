@@ -703,6 +703,20 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
 //==========================================================================
 //
+//  DumpOpening
+//
+//==========================================================================
+static __attribute__((unused)) void DumpOpening (const opening_t *op) {
+  GCon->Logf("  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
+    op,
+    op->bottom, op->efloor.GetNormal().x, op->efloor.GetNormal().y, op->efloor.GetNormal().z, op->efloor.GetDist(),
+    op->top, op->eceiling.GetNormal().x, op->eceiling.GetNormal().y, op->eceiling.GetNormal().z, op->eceiling.GetDist(),
+    op->lowfloor, op->range);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedMidWSurf
 //
 //==========================================================================
@@ -713,32 +727,23 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
 
+  const side_t *side = seg->sidedef;
+
+  /*
   float topz1 = r_ceiling.GetPointZ(*seg->v1);
   float topz2 = r_ceiling.GetPointZ(*seg->v2);
   float botz1 = r_floor.GetPointZ(*seg->v1);
   float botz2 = r_floor.GetPointZ(*seg->v2);
+  */
 
-  float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
-  float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
-  float back_botz1 = back_floor->GetPointZ(*seg->v1);
-  float back_botz2 = back_floor->GetPointZ(*seg->v2);
+  const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
+  const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
+  const float back_botz1 = back_floor->GetPointZ(*seg->v1);
+  const float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
-  float midtopz1 = topz1;
-  float midtopz2 = topz2;
-  float midbotz1 = botz1;
-  float midbotz2 = botz2;
-
-  if (topz1 > back_topz1 && seg->sidedef->TopTexture > 0) {
-    midtopz1 = back_topz1;
-    midtopz2 = back_topz2;
-  }
-
-  if (botz1 < back_botz1 && seg->sidedef->BottomTexture > 0) {
-    midbotz1 = back_botz1;
-    midbotz2 = back_botz2;
-  }
-
-  float texh = MTex->GetScaledHeight();
+  // find opening for this side
+  const float exbotz = MIN(back_botz1, back_botz2);
+  const float extopz = MAX(back_topz1, back_topz2);
 
   TVec segdir;
   if (seg->length <= 0.0f) {
@@ -750,70 +755,161 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     segdir = (*seg->v2-*seg->v1).normalised2D();
   }
 
-  const side_t *side = seg->sidedef;
+  bool gotBackOp = false;
+  opening_t *backops = nullptr;
 
-  sp->texinfo.saxis = segdir*(TextureSScale(MTex)*side->MidScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*side->MidScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(MTex)*side->MidScaleX)+
-                      side->MidTextureOffset*(TextureOffsetSScale(MTex)*side->MidScaleX);
-  //if (side->MidRowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, *MTex->Name, side->MidScaleY);
-  //k8: this seems to be wrong
-  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
-    sp->texinfo.toffs = r_ceiling.splane->TexZ*(TextureTScale(MTex)*side->MidScaleY)+
-                        side->MidRowOffset*TextureOffsetTScale(MTex);
-  }
-  //sp->texinfo.toffs = 0;
-  //if (side->MidRowOffset) GCon->Logf("  toffs=%g", sp->texinfo.toffs);
+  bool doDump = ((ptrdiff_t)(seg->linedef-Level->Lines) == 1707);
 
-  sp->texinfo.Alpha = seg->linedef->alpha;
-  sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
-
-  float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
-
-  wv[0].x = wv[1].x = seg->v1->x;
-  wv[0].y = wv[1].y = seg->v1->y;
-  wv[2].x = wv[3].x = seg->v2->x;
-  wv[2].y = wv[3].y = seg->v2->y;
-
-  float hgts[4];
-
-  if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
-    if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (side->Flags&SDF_CLIPMIDTEX)) {
-      //k8: this is totally wrong
-      hgts[0] = MAX(midbotz1, z_org-texh);
-      hgts[1] = MIN(midtopz1, z_org);
-      hgts[2] = MIN(midtopz2, z_org);
-      hgts[3] = MAX(midbotz2, z_org-texh);
-    } else {
-      hgts[0] = midbotz1;
-      hgts[1] = midtopz1;
-      hgts[2] = midtopz2;
-      hgts[3] = midbotz2;
+  if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(seg->linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
+  for (opening_t *cop = SV_SectorOpenings(seg->frontsector, true); cop; cop = cop->next) {
+    if (extopz <= cop->bottom || exbotz >= cop->top) {
+      if (doDump) { GCon->Log(" SKIP opening"); DumpOpening(cop); }
+      continue;
     }
-  } else {
-    // here we should offset texture bottom
+    if (doDump) { GCon->Logf(" ACCEPT opening"); DumpOpening(cop); }
+    // ok, we are at least partially in this opening
+
+    float texh = MTex->GetScaledHeight();
+
+    sp->texinfo.saxis = segdir*(TextureSScale(MTex)*side->MidScaleX);
+    sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*side->MidScaleY);
+    sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                        seg->offset*(TextureSScale(MTex)*side->MidScaleX)+
+                        side->MidTextureOffset*(TextureOffsetSScale(MTex)*side->MidScaleX);
+    //if (side->MidRowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, *MTex->Name, side->MidScaleY);
+    //k8: this seems to be wrong
+    if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
+      sp->texinfo.toffs = r_ceiling.splane->TexZ*(TextureTScale(MTex)*side->MidScaleY)+
+                          side->MidRowOffset*TextureOffsetTScale(MTex);
+    }
+    //sp->texinfo.toffs = 0;
+    //if (side->MidRowOffset) GCon->Logf("  toffs=%g", sp->texinfo.toffs);
+
+    sp->texinfo.Alpha = seg->linedef->alpha;
+    sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
+
+    float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
+
+    wv[0].x = wv[1].x = seg->v1->x;
+    wv[0].y = wv[1].y = seg->v1->y;
+    wv[2].x = wv[3].x = seg->v2->x;
+    wv[2].y = wv[3].y = seg->v2->y;
+
+    const float topz1 = MIN(back_topz1, cop->eceiling.GetPointZ(*seg->v1));
+    const float topz2 = MIN(back_topz2, cop->eceiling.GetPointZ(*seg->v2));
+    const float botz1 = MAX(back_botz1, cop->efloor.GetPointZ(*seg->v1));
+    const float botz2 = MAX(back_botz2, cop->efloor.GetPointZ(*seg->v2));
+
+
     /*
-    if (side->MidRowOffset) {
-      GCon->Logf("line #%d: midofs=%g; scale=%g; tex=<%s>; zorg=%g; texh=%g; wpsc=%g; ofs=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, side->MidScaleY, *MTex->Name, z_org, texh, (!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale), seg->sidedef->MidRowOffset+texh);
-      z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-      GCon->Logf("line #%d: midofs=%g; scale=%g; tex=<%s>; zorg=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), side->MidRowOffset, side->MidScaleY, *MTex->Name, z_org);
-      //z_org -= 8*4;
+    if (topz1 > back_topz1 && side->TopTexture > 0) {
+      midtopz1 = back_topz1;
+      midtopz2 = back_topz2;
+    }
+
+    if (botz1 < back_botz1 && side->BottomTexture > 0) {
+      midbotz1 = back_botz1;
+      midbotz2 = back_botz2;
     }
     */
-    //z_org -= side->MidRowOffset;
-    hgts[0] = MAX(midbotz1, z_org-texh);
-    hgts[1] = MIN(midtopz1, z_org);
-    hgts[2] = MIN(midtopz2, z_org);
-    hgts[3] = MAX(midbotz2, z_org-texh);
+
+    if (!gotBackOp) {
+      gotBackOp = true;
+      backops = SV_SectorOpenings2(seg->backsector, true);
+    }
+
+    const float ourtopz = MAX(topz1, topz2);
+    const float ourbotz = MIN(botz1, botz2);
+
+    for (opening_t *bop = backops; bop; bop = bop->next) {
+      if (ourtopz <= bop->bottom || ourbotz >= bop->top) {
+        if (doDump) { GCon->Logf(" *SKIP(2) opening"); DumpOpening(bop); }
+        continue;
+      }
+      if (doDump) { GCon->Logf(" *ACCEPT(2) opening"); DumpOpening(bop); }
+      if (doDump) { GCon->Logf(" botz=(%g,%g); topz=(%g,%g)", botz1, botz2, topz1, topz2); }
+
+      float midtopz1 = topz1;
+      float midtopz2 = topz2;
+      float midbotz1 = botz1;
+      float midbotz2 = botz2;
+
+      if (side->TopTexture > 0) {
+        midtopz1 = MIN(midtopz1, bop->eceiling.GetPointZ(*seg->v1));
+        midtopz2 = MIN(midtopz2, bop->eceiling.GetPointZ(*seg->v2));
+      }
+
+      if (side->BottomTexture > 0) {
+        midbotz1 = MAX(midbotz1, bop->efloor.GetPointZ(*seg->v1));
+        midbotz2 = MAX(midbotz2, bop->efloor.GetPointZ(*seg->v1));
+      }
+
+      if (midbotz1 >= midtopz1 || midbotz2 >= midtopz2) continue;
+
+      if (doDump) { GCon->Logf(" botz=(%g,%g); topz=(%g,%g)", midbotz1, midbotz2, midtopz1, midtopz2); }
+
+      float hgts[4];
+
+      if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
+        if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (side->Flags&SDF_CLIPMIDTEX)) {
+          //k8: this is totally wrong
+          hgts[0] = MAX(midbotz1, z_org-texh);
+          hgts[1] = MIN(midtopz1, z_org);
+          hgts[2] = MIN(midtopz2, z_org);
+          hgts[3] = MAX(midbotz2, z_org-texh);
+        } else {
+          hgts[0] = midbotz1;
+          hgts[1] = midtopz1;
+          hgts[2] = midtopz2;
+          hgts[3] = midbotz2;
+        }
+      } else {
+        hgts[0] = MAX(midbotz1, z_org-texh);
+        hgts[1] = MIN(midtopz1, z_org);
+        hgts[2] = MIN(midtopz2, z_org);
+        hgts[3] = MAX(midbotz2, z_org-texh);
+      }
+
+      wv[0].z = hgts[0];
+      wv[1].z = hgts[1];
+      wv[2].z = hgts[2];
+      wv[3].z = hgts[3];
+
+      surface_t *origSurfs = sp->surfs;
+
+      //k8: HACK! HACK! HACK!
+      //    move middle wall backwards a little, so it will hide behind up/down surfaces
+      //bool doOffset = (side->BottomTexture > 0 || side->TopTexture > 0);
+      //bool doOffset = false;
+
+      //sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
+      if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
+        // degenerate side surface, no need to create it
+      } if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
+        // degenerate side surface (thin line), cannot create it (no render support)
+      } if (wv[0].z == wv[1].z) {
+        // can reduce to triangle
+        //if (doOffset) for (unsigned f = 0; f < 4; ++f) wv[f] -= seg->normal*0.01f;
+        sp->surfs = CreateWSurf(wv+1, &sp->texinfo, seg, sub, 3);
+      } if (wv[2].z == wv[3].z) {
+        // can reduce to triangle
+        //if (doOffset) for (unsigned f = 0; f < 4; ++f) wv[f] -= seg->normal*0.01f;
+        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 3);
+      } else {
+        //if (doOffset) for (unsigned f = 0; f < 4; ++f) wv[f] -= seg->normal*0.01f;
+        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
+      }
+
+      if (sp->surfs) {
+        // join
+        surface_t *ss = sp->surfs;
+        while (ss->next) ss = ss->next;
+        ss->next = origSurfs;
+      } else {
+        sp->surfs = origSurfs;
+      }
+    }
   }
-
-  wv[0].z = hgts[0];
-  wv[1].z = hgts[1];
-  wv[2].z = hgts[2];
-  wv[3].z = hgts[3];
-
-  sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
 
   sp->frontTopDist = r_ceiling.splane->dist;
   sp->frontBotDist = r_floor.splane->dist;

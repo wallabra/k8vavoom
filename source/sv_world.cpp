@@ -383,7 +383,7 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 //  this function doesn't like regions with floors that has different flags
 //
 //==========================================================================
-static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint) {
+static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint, bool skipNonSolid=false) {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors()) {
@@ -403,7 +403,7 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   // skip base region for now
   for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
-    //if (!usePoint && reg->regflags&sec_region_t::RF_NonSolid) continue;
+    if (skipNonSolid && reg->regflags&sec_region_t::RF_NonSolid) continue;
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
     // check for slopes
     if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
@@ -513,10 +513,41 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
 //  used in surface creator
 //
 //==========================================================================
-opening_t *SV_SectorOpenings (sector_t *sector) {
+opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
   check(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false);
+  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
+  check(oplist.length() > 0);
+  return oplist.ptr();
+}
+
+
+//==========================================================================
+//
+//  SV_SectorOpenings2
+//
+//  used in surface creator
+//
+//==========================================================================
+opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
+  /*
+  check(sector);
+  static TArray<opening_t> oplist;
+  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, false, false, skipNonSolid);
+  check(oplist.length() > 0);
+  if (oplist.length() > MAX_OPENINGS) Host_Error("too many sector openings");
+  opening_t *dest = openings;
+  opening_t *src = oplist.ptr();
+  for (int count = oplist.length(); count--; ++dest, ++src) {
+    *dest = *src;
+    dest->next = dest+1;
+  }
+  openings[oplist.length()-1].next = nullptr;
+  return openings;
+  */
+  check(sector);
+  static TArray<opening_t> oplist;
+  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
   check(oplist.length() > 0);
   return oplist.ptr();
 }
