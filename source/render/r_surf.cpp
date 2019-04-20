@@ -612,12 +612,6 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   //sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
-  /*!!!FAKEFLOORS
-  if (seg->backsector->fakefloors) {
-    if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
-    if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
-  }
-  */
 
   const float topz1 = r_ceiling.GetPointZ(*seg->v1);
   const float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -669,12 +663,6 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
-  /*!!!FAKEFLOORS
-  if (seg->backsector->fakefloors) {
-    if (back_floor == &seg->backsector->floor) back_floor = &seg->backsector->fakefloors->floorplane;
-    if (back_ceiling == &seg->backsector->ceiling) back_ceiling = &seg->backsector->fakefloors->ceilplane;
-  }
-  */
 
   float topz1 = r_ceiling.GetPointZ(*seg->v1);
   float topz2 = r_ceiling.GetPointZ(*seg->v2);
@@ -890,18 +878,6 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       } else {
         sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
       }
-
-      /*
-      if (sp->surfs) {
-        GCon->Log("========================");
-        GCon->Logf("EXTRA for region %p (dump follows)", reg);
-        VLevel::dumpRegion(reg);
-        GCon->Logf("front sector #%d; fz=(%g,%g); cz=(%g,%g)", (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), botz1, botz2, topz1, topz2);
-        //VLevel::dumpSectorRegions(seg->frontsector);
-        GCon->Logf("back sector #%d; frz=(%g,%g); crz=(%g,%g)", (int)(ptrdiff_t)(seg->backsector-Level->Sectors), extrabotz1, extrabotz2, extratopz1, extratopz2);
-        //VLevel::dumpSectorRegions(seg->backsector);
-      }
-      */
 
       if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent())) {
         for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
@@ -1351,10 +1327,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 
     // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
-      //int ridx = sp->regidx;
-      //if (ridx >= 0) continue; // wtf?!
-      //check(ridx >= 0 && ridx < seg->backsector->regions.length());
-      //sec_region_t *reg = &seg->backsector->regions[-ridx];
       sec_region_t *reg = sp->basereg;
       check(reg->extraline);
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
@@ -1633,7 +1605,6 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
   bool underwater = /*r_fakingunderwater ||*/
     //(heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg));
     (s && vieworg.z <= s->floor.GetPointZ(vieworg));
-  bool doorunderwater = false;
   bool diffTex = !!(s && s->SectorFlags&sector_t::SF_ClipFakePlanes);
 
   // replace sector being drawn with a copy to be hacked
@@ -1643,35 +1614,12 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
   ff->ceilplane = sec->ceiling;
   ff->params = sec->params;
 
-  //if (s) ff->params.Fade = s->params.Fade;
-  //if (s) { ff->floorplane = s->floor; return; }
-
-  /*
-  if (s) {
-    GCon->Logf("hs->flags=0x%08x; opic=%d; fpic=%d; diffTex=%s; uw=%s; vz=%f; sz=%f", s->SectorFlags, sec->floor.pic.id, s->floor.pic.id, (diffTex ? "tan" : "ona"), (underwater ? "tan" : "ona"),
-      vieworg.z, s->floor.GetPointZ(vieworg));
-    GCon->Logf("  (%d) hs->floorz=(%f,%f); hs->ceilz=(%f,%f)", (int)(ptrdiff_t)(s-Level->Sectors), s->floor.minz, s->floor.maxz, s->ceiling.minz, s->ceiling.maxz);
-    GCon->Logf("  (%d) sec->flags=0x%08x; opic=%d; fpic=%d", (int)(ptrdiff_t)(sec-Level->Sectors), sec->SectorFlags, sec->floor.pic.id, sec->floor.pic.id);
-    if (heightsec) GCon->Logf("  (%d) hs2->flags=0x%08x; opic=%d; fpic=%d", (int)(ptrdiff_t)(heightsec-Level->Sectors), heightsec->SectorFlags, heightsec->floor.pic.id, heightsec->floor.pic.id);
-    //return;
-  }
-  */
-
   // replace floor and ceiling height with control sector's heights
   if (diffTex && !(s->SectorFlags&sector_t::SF_FakeCeilingOnly)) {
     if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling)) {
       ff->floorplane.pic = s->floor.pic;
       //GCon->Logf("opic=%d; fpic=%d", sec->floor.pic.id, s->floor.pic.id);
     } else if (s && (s->SectorFlags&sector_t::SF_FakeFloorOnly)) {
-      /*
-      GCon->Logf("sec=%d; hs=%d; src:(%f,%f,%f:%f); dest=(%f,%f,%f:%f); opp:(%f,%f,%f:%f)",
-        (int)(ptrdiff_t)(sec-Level->Sectors),
-        (int)(ptrdiff_t)(s-Level->Sectors),
-        s->floor.normal.x, s->floor.normal.y, s->floor.normal.z, s->floor.dist,
-        ff->floorplane.normal.x, ff->floorplane.normal.y, ff->floorplane.normal.z, ff->floorplane.dist,
-        sec->ceiling.normal.x, sec->ceiling.normal.y, sec->ceiling.normal.z, sec->ceiling.dist
-        );
-      */
       if (underwater) {
         //GCon->Logf("heightsec=%s", (heightsec ? "tan" : "ona"));
         //tempsec->ColourMap = s->ColourMap;
@@ -1715,39 +1663,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
   //float orgflorz = sec->floor.GetPointZ(viewx, viewy);
   float orgceilz = sec->ceiling.GetPointZ(vieworg);
 
-#if 0
-  // [RH] Allow viewing underwater areas through doors/windows that
-  // are underwater but not in a water sector themselves.
-  // Only works if you cannot see the top surface of any deep water
-  // sectors at the same time.
-  if (s) {
-    for (int i = 0; i < sec->linecount; ++i) {
-      float rw_frontcz1 = sec->ceiling.GetPointZ (sec->lines[i]->v1->x, sec->lines[i]->v1->y);
-      float rw_frontcz2 = sec->ceiling.GetPointZ (sec->lines[i]->v2->x, sec->lines[i]->v2->y);
-
-      if (/*back && !r_fakingunderwater &&*/ !s->lines[i]->frontsector->heightsec) {
-        if (rw_frontcz1 <= s->floor.GetPointZ (sec->lines[i]->v1->x, sec->lines[i]->v1->y) &&
-            rw_frontcz2 <= s->floor.GetPointZ (sec->lines[i]->v2->x, sec->lines[i]->v2->y))
-        {
-          // check that the window is actually visible
-          /*
-          for (int z = WallSX1; z < WallSX2; ++z) {
-            if (floorclip[z] > ceilingclip[z])
-            bool val = (heightsec && ((vieworg.z <= heightsec->floor.GetPointZ(sec->lines[i]->v1->x, sec->lines[i]->v1->y) &&
-              vieworg.z <= heightsec->floor.GetPointZ(sec->lines[i]->v2->x, sec->lines[i]->v2->y))));
-            doorunderwater &= val;
-          }
-          */
-        }
-      }
-    }
-  }
-#endif
-
-  if (underwater || doorunderwater /*||
-      (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))*/
-     )
-  {
+  if (underwater /*||(heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))*/) {
     //!ff->floorplane.normal = sec->floor.normal;
     //!ff->floorplane.dist = sec->floor.dist;
     //!ff->ceilplane.normal = -s->floor.normal;
@@ -1759,11 +1675,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
   }
 
   // killough 11/98: prevent sudden light changes from non-water sectors:
-  if ((underwater /*&& !back*/) || doorunderwater ||
-      (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))
-     )
-  {
-    //GCon->Logf("  002");
+  if ((underwater /*&& !back*/) || (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))) {
     // head-below-floor hack
     ff->floorplane.pic = diffTex ? sec->floor.pic : s->floor.pic;
     ff->floorplane.xoffs = s->floor.xoffs;
@@ -1810,12 +1722,11 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
               (heightsec && vieworg.z > heightsec->ceiling.GetPointZ(vieworg))) &&
              orgceilz > refceilz && !(s->SectorFlags&sector_t::SF_FakeFloorOnly))
   {
-    //GCon->Logf("  003");
     // above-ceiling hack
     ff->ceilplane.normal = s->ceiling.normal;
     ff->ceilplane.dist = s->ceiling.dist;
     ff->floorplane.normal = -s->ceiling.normal;
-    ff->floorplane.dist = -s->ceiling.dist/* - s->ceiling.normal.z*/;
+    ff->floorplane.dist = -s->ceiling.dist;
     ff->params.Fade = s->params.Fade;
     //ff->params.ColourMap = s->params.ColourMap;
 
@@ -1843,10 +1754,6 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
     if (!(s->SectorFlags&sector_t::SF_NoFakeLight)) {
       ff->params.lightlevel  = s->params.lightlevel;
       ff->params.LightColour = s->params.LightColour;
-      /*
-      if (floorlightlevel != nullptr) *floorlightlevel = GetFloorLight (s);
-      if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetCeilingLight (s);
-      */
     }
   }
 }
@@ -1872,8 +1779,6 @@ void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
 
   ff->floorplane.normal = s->floor.normal;
   ff->floorplane.dist = s->floor.dist;
-
-  //sec->heightsec = sec->deepref;
 }
 
 
