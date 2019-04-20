@@ -1366,25 +1366,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   // load collected VAcs objects contents
   for (vint32 f = 0; f < Loader->AcsExports.length(); ++f) Loader->AcsExports[f]->Serialise(*Loader);
 
-  // this will fix thinker positions (`LinkToWorld()` should do it for us now)
-  /*
-  if (loader_recalc_z) {
-    // simple linking to world won't work here, due to the way world linking works.
-    // `VEntity::LinkToWorld()` thinks that object has no size, and it sets floor/ceiling info
-    // according to this. but entities actually have size! so entity "ass" can stuck in a ledge,
-    // while entity center is slighly off it. boom! now it is glitched and immobile.
-    // the proper fix will be to change `VEntity::LinkToWorld()` to call simplified
-    // `VEntity::CheckRelPosition()` instead of doing point checks.
-    for (int i = 0; i < elist.length(); ++i) {
-      //elist[i]->callSectorChanged(-666);
-      // as we aren't storing floor and ceiling info, relink entities (this will update all the necessary info)
-      if (elist[i]->EntityFlags&VEntity::EF_IsPlayer) GCon->Logf("PLROLD: FloorZ=%f; CeilingZ=%f; Floor=%p; Ceiling=%p", elist[i]->FloorZ, elist[i]->CeilingZ, elist[i]->Floor, elist[i]->Ceiling);
-      elist[i]->UnlinkFromWorld();
-      elist[i]->LinkToWorld(true);
-      if (elist[i]->EntityFlags&VEntity::EF_IsPlayer) GCon->Logf("PLRNEW: FloorZ=%f; CeilingZ=%f; Floor=%p; Ceiling=%p", elist[i]->FloorZ, elist[i]->CeilingZ, elist[i]->Floor, elist[i]->Ceiling);
-    }
-  }
-  */
+  // `LinkToWorld()` will fix our z position
 
   /*
   for (int i = 0; i < elist.length(); ++i) {

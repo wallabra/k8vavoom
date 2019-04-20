@@ -647,7 +647,7 @@ public:
 
   bool CheckWater ();
   bool CheckPosition (TVec);
-  bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false);
+  bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool debugDump=false);
   bool TryMove (tmtrace_t &, TVec, bool);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float);

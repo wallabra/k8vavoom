@@ -136,8 +136,8 @@ struct tmtrace_t {
 //  any contacted lines the step closer together will adjust them
 //
 //==========================================================================
-static void tmtSetupGap (tmtrace_t *tmtrace, sector_t *sector, float Height) {
-  SV_FindGapFloorCeiling(sector, tmtrace->End, Height, tmtrace->EFloor, tmtrace->ECeiling);
+static void tmtSetupGap (tmtrace_t *tmtrace, sector_t *sector, float Height, bool debugDump) {
+  SV_FindGapFloorCeiling(sector, tmtrace->End, Height, tmtrace->EFloor, tmtrace->ECeiling, debugDump);
   tmtrace->FloorZ = tmtrace->EFloor.GetPointZ(tmtrace->End);
   tmtrace->DropOffZ = tmtrace->FloorZ;
   tmtrace->CeilingZ = tmtrace->ECeiling.GetPointZ(tmtrace->End);
@@ -436,7 +436,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     tmtrace.BBox[BOXRIGHT] = Pos.x+Radius;
     tmtrace.BBox[BOXLEFT] = Pos.x-Radius;
 
-    tmtSetupGap(&tmtrace, newsubsec->sector, Height);
+    tmtSetupGap(&tmtrace, newsubsec->sector, Height, false);
 
     // check lines
     XLevel->IncrementValidCount();
@@ -785,7 +785,7 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //   blocked, or blocked by a line).
 //
 //==========================================================================
-bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups) {
+bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool debugDump) {
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOXTOP] = Pos.y+Radius;
@@ -796,7 +796,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups) {
   subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
   tmtrace.CeilingLine = nullptr;
 
-  tmtSetupGap(&tmtrace, newsubsec->sector, Height);
+  tmtSetupGap(&tmtrace, newsubsec->sector, Height, debugDump);
 
   XLevel->IncrementValidCount();
   tmtrace.SpecHit.reset(); // was `Clear()`
@@ -1052,7 +1052,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   const float hgt = (Height > 0 ? Height : 0.0f);
   TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
-  open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
+  open = SV_FindRelOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
 
   if (open) {
     // adjust floor / ceiling heights
@@ -2078,11 +2078,12 @@ IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
+  P_GET_BOOL_OPT(debugDump, false);
   P_GET_BOOL_OPT(noPickups, false);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
   P_GET_SELF;
-  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups));
+  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups, debugDump));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckSides) {

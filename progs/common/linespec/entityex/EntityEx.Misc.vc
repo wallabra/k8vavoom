@@ -455,10 +455,10 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
     return true;
   }
 
-  CheckRelPosition(&tmtrace, Origin);
-  // what about stranding a monster partially off an edge?
-
   //if (bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
+
+  CheckRelPosition(&tmtrace, Origin);//, debugDump:bIsPlayer);
+  // what about stranding a monster partially off an edge?
 
   EFloor = tmtrace.EFloor;
   ECeiling = tmtrace.ECeiling;

@@ -366,6 +366,7 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
   op.top = op.eceiling.GetPointZ(point);
   op.range = op.top-op.bottom;
   op.lowfloor = op.bottom;
+  op.next = nullptr;
   if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
 }
 
@@ -377,7 +378,7 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 //  this function doesn't like regions with floors that has different flags
 //
 //==========================================================================
-static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes=nullptr) {
+static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList) {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors()) {
@@ -469,6 +470,12 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
     cop.top = seccz;
     cop.range = cop.top-cop.bottom;
     dest.append(cop);
+  }
+  // link list, if necessary
+  if (linkList) {
+    cs = dest.ptr();
+    for (int f = dest.length()-1; f > 0; --f) cs[f-1].next = &cs[f];
+    cs[dest.length()-1].next = nullptr;
   }
 }
 
@@ -601,7 +608,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   static TArray<opening_t> op0list;
   static TArray<opening_t> op1list;
 
-  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0);
+  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false);
   if (op0list.length() == 0) {
     // just in case: no front sector openings
     if (hasSlopes0) return nullptr;
@@ -610,7 +617,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return nullptr;
   }
 
-  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1);
+  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false);
   if (op1list.length() == 0) {
     // just in case: no back sector openings
     if (hasSlopes0 || hasSlopes1) return nullptr;
@@ -728,7 +735,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
   // has some intersections, create cache
-  if (!hasSlopes0 & !hasSlopes1) {
+  if (!hasSlopes0 && !hasSlopes1) {
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
 
     opening_t *lastop = nullptr, *dp = openings;
@@ -776,7 +783,9 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 //
 //==========================================================================
 opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
-  opening_t *gaps = InGaps;
+  // check for trivial gaps
+  if (!InGaps) return nullptr;
+  if (!InGaps->next) return InGaps;
 
   int fit_num = 0;
   opening_t *fit_last = nullptr;
@@ -787,36 +796,31 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
   opening_t *nofit_closest = nullptr;
   float nofit_mindist = 99999.0f;
 
-  // check for trivial gaps
-  if (!gaps) return nullptr;
-  if (!gaps->next) return gaps;
-
   // there are 2 or more gaps; now it gets interesting :-)
-  while (gaps) {
-    const float f = gaps->bottom;
-    const float c = gaps->top;
+  for (opening_t *gap = InGaps; gap; gap = gap->next) {
+    const float f = gap->bottom;
+    const float c = gap->top;
 
-    if (z1 >= f && z2 <= c) return gaps; // [1]
+    if (z1 >= f && z2 <= c) return gap; // [1]
 
     const float dist = fabsf(z1-f);
 
-    if (z2 - z1 <= c - f) {
+    if (z2-z1 <= c-f) {
       // [2]
       ++fit_num;
-      fit_last = gaps;
+      fit_last = gap;
       if (dist < fit_mindist) {
         // [3]
         fit_mindist = dist;
-        fit_closest = gaps;
+        fit_closest = gap;
       }
     } else {
       if (dist < nofit_mindist) {
         // [4]
         nofit_mindist = dist;
-        nofit_closest = gaps;
+        nofit_closest = gap;
       }
     }
-    gaps = gaps->next;
   }
 
   if (fit_num == 1) return fit_last;
@@ -827,13 +831,78 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 
 //==========================================================================
 //
+//  SV_FindRelOpening
+//
+//  used in sector movement, so it tries hard to not leave current opening
+//
+//==========================================================================
+opening_t *SV_FindRelOpening (opening_t *InGaps, float z1, float z2) {
+  // check for trivial gaps
+  if (!InGaps) return nullptr;
+  if (!InGaps->next) return InGaps;
+
+  if (z2 < z1) z2 = z1;
+
+  opening_t *fit_closest = nullptr;
+  float fit_mindist = 99999.0f;
+
+  opening_t *nofit_closest = nullptr;
+  float nofit_mindist = 99999.0f;
+
+  const float zmid = z1+(z2-z1)*0.5f;
+
+  // there are 2 or more gaps; now it gets interesting :-)
+  for (opening_t *gap = InGaps; gap; gap = gap->next) {
+    const float f = gap->bottom;
+    const float c = gap->top;
+
+    if (z1 >= f && z2 <= c) return gap; // completely fits
+
+    // can this gap contain us?
+    if (z2-z1 <= c-f) {
+      // this gap is big enough to contain us
+      // if this gap's floor is higher than our feet, it is not interesting
+      if (f > zmid) continue;
+      // choose minimal distance to floor or ceiling
+      const float dist = fabsf(z1-f);
+      if (dist < fit_mindist) {
+        fit_mindist = dist;
+        fit_closest = gap;
+      }
+    } else {
+      // not big enough
+      const float dist = fabsf(z1-f);
+      if (dist < nofit_mindist) {
+        nofit_mindist = dist;
+        nofit_closest = gap;
+      }
+    }
+  }
+
+  return (fit_closest ? fit_closest : nofit_closest ? nofit_closest : InGaps);
+}
+
+
+//==========================================================================
+//
 //  SV_FindGapFloorCeiling
 //
 //  find region for thing, and return best floor/ceiling
 //  `p.z` is bottom
 //
+//  this is used mostly in sector movement, so we should try hard to stay
+//  inside our current gap, so we won't teleport up/down from lifts, and
+//  from crushers
+//
 //==========================================================================
-void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling) {
+void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling, bool debugDump) {
+  /*
+  if (debugDump) {
+    GCon->Logf("=== ALL OPENINGS: sector %p ===", sector);
+    for (const sec_region_t *reg = sector->eregions; reg; reg = reg->next) DumpRegion(reg);
+  }
+  */
+
   if (!sector->Has3DFloors()) {
     // only one region, yay
     floor = sector->eregions->efloor;
@@ -849,7 +918,7 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
    */
   static TArray<opening_t> oplist;
 
-  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING);
+  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING, nullptr, true);
   if (oplist.length() == 0) {
     // something is very wrong here, so use sector boundaries
     floor = sector->eregions->efloor;
@@ -857,6 +926,20 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
     return;
   }
 
+  if (debugDump) { GCon->Logf("=== ALL OPENINGS (z=%g; height=%g) ===", point.z, height); DumpOpPlanes(oplist); }
+
+#if 1
+  opening_t *opres = SV_FindRelOpening(oplist.ptr(), point.z, point.z+height);
+  if (opres) {
+    if (debugDump) { GCon->Logf(" found result"); DumpOpening(opres); }
+    floor = opres->efloor;
+    ceiling = opres->eceiling;
+  } else {
+    if (debugDump) GCon->Logf(" NO result");
+    floor = sector->eregions->efloor;
+    ceiling = sector->eregions->eceiling;
+  }
+#else
   // now find best-fit region:
   //
   //  1. if the thing fits in one of the gaps without moving vertically,
@@ -870,10 +953,6 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
   //
   //  4. if there is no gaps which the thing could fit in, do the same.
 
-  // one the thing is currently in
-  const opening_t *bestFit = nullptr;
-  float bestFitDist = 999999.0f;
-
   // one the thing can possibly fit
   const opening_t *bestGap = nullptr;
   float bestGapDist = 999999.0f;
@@ -882,34 +961,38 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
   for (int opleft = oplist.length(); opleft--; ++op) {
     const float fz = op->bottom;
     const float cz = op->top;
-    if (point.z >= fz && point.z+height <= cz) {
-      // perfect fit
-      const float fdist = point.z-fz;
-      if (!bestFit || fdist < bestFitDist) {
-        bestFit = op;
-        bestFitDist = fdist;
-      }
-    } else if (cz-fz >= height) {
-      // can possibly fit
+    if (point.z >= fz && point.z <= cz) {
+      // no need to move vertically
+      if (debugDump) { GCon->Logf(" best fit"); DumpOpening(op); }
+      return op;
+    } else {
       const float fdist = fabsf(point.z-fz); // we don't care about sign here
       if (!bestGap || fdist < bestGapDist) {
+        if (debugDump) { GCon->Logf(" gap fit"); DumpOpening(op); }
         bestGap = op;
         bestGapDist = fdist;
+        //if (fdist == 0.0f) break; // there is no reason to look further
+      } else {
+        if (debugDump) { GCon->Logf(" REJECTED gap fit"); DumpOpening(op); }
       }
     }
   }
 
   if (bestFit) {
+    if (debugDump) { GCon->Logf(" best result"); DumpOpening(bestFit); }
     floor = bestFit->efloor;
     ceiling = bestFit->eceiling;
   } else if (bestGap) {
+    if (debugDump) { GCon->Logf(" gap result"); DumpOpening(bestGap); }
     floor = bestGap->efloor;
     ceiling = bestGap->eceiling;
   } else {
     // just fit into sector
+    if (debugDump) { GCon->Logf(" no result"); }
     floor = sector->eregions->efloor;
     ceiling = sector->eregions->eceiling;
   }
+#endif
 }
 
 
@@ -1117,11 +1200,13 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
         // unprocessed thing found, mark thing as processed
         n->Visited = 1;
         // process it
+        //TVec oldOrg = n->Thing->Origin;
         if (!n->Thing->eventSectorChanged(crunch)) {
           // doesn't fit, keep checking (crush other things)
           // k8: no need to check flags, VC code does this for us
           /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/
           {
+            //GCon->Logf("Thing '%s' hit (old: %g; new: %g)", *n->Thing->GetClass()->GetFullName(), oldOrg.z, n->Thing->Origin.z);
             if (ret) csTouched[secnum] |= 0x80000000U;
             ret = true;
           }

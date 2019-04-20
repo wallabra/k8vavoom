@@ -270,7 +270,7 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 
 // find region for thing, and return best floor/ceiling
 // `p.z` is bottom
-void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling);
+void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, TSecPlaneRef &floor, TSecPlaneRef &ceiling, bool debugDump=false);
 
 // find sector gap that contains the given point, and return its floor and ceiling
 void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz);
@@ -285,6 +285,11 @@ float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
 // find "best fit" opening for the given coordz
 // `z1` is feet, `z2` is head
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
+
+// find "rel best fit" opening for the given coordz
+// `z1` is feet, `z2` is head
+// used in sector movement, so it tries hard to not leave current opening
+opening_t *SV_FindRelOpening (opening_t *gaps, float z1, float z2);
 
 
 //==========================================================================
