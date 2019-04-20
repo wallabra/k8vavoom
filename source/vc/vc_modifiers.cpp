@@ -57,6 +57,7 @@ int TModifiers::Parse (VLexer &Lex) {
     {TK_Const, Const},
     {TK_Repnotify, Repnotify},
     {TK_Scope, Scope},
+    {TK_Published, Published},
     {TK_EOF, 0},
   };
 
@@ -113,6 +114,7 @@ const char *TModifiers::Name (int Modifier) {
     case Repnotify: return "repnotify";
     case Scope: return "scope";
     case Internal: return "[internal]";
+    case Published: return "published";
   }
   return "";
 }
@@ -126,11 +128,18 @@ const char *TModifiers::Name (int Modifier) {
 //
 //==========================================================================
 int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
+  // check for conflicting protection
+  static const int ProtAttrs[] = { Private, Protected, Published, 0 };
+  int protcount = 0;
+  for (int f = 0; ProtAttrs[f]; ++f) if (Modifers&ProtAttrs[f]) ++protcount;
+  if (protcount > 1) ParseError(l, "conflicting protection modifiers"); // TODO: print modifiers
+
   int Bad = Modifers&~Allowed;
   if (Bad) {
     for (int i = 0; i < 32; ++i) if (Bad&(1<<i)) ParseError(l, "`%s` modifier is not allowed", Name(1<<i));
     return (Modifers&Allowed);
   }
+
   return Modifers;
 }
 
@@ -187,6 +196,7 @@ int TModifiers::FieldAttr (int Modifiers) {
   if (Modifiers&Protected) Attributes |= FIELD_Protected;
   if (Modifiers&Repnotify) Attributes |= FIELD_Repnotify;
   if (Modifiers&Internal) Attributes |= FIELD_Internal;
+  if (Modifiers&Published) Attributes |= FIELD_Published;
   return Attributes;
 }
 

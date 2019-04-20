@@ -45,14 +45,15 @@ public:
     Repnotify = 0x004000,
     Scope     = 0x008000,
     Internal  = 0x010000,
+    Published = 0x020000,
   };
 
-  static int Parse (VLexer &);
-  static const char *Name (int);
-  static int Check (int, int, const TLocation &);
-  static int MethodAttr (int);
-  static int ClassAttr (int);
-  static int FieldAttr (int);
-  static int PropAttr (int);
-  static int ParmAttr (int);
+  static int Parse (VLexer &Lex);
+  static const char *Name (int Modifier);
+  static int Check (int Modifers, int Allowed, const TLocation &l);
+  static int MethodAttr (int Modifers);
+  static int ClassAttr (int Modifers);
+  static int FieldAttr (int Modifers);
+  static int PropAttr (int Modifers);
+  static int ParmAttr (int Modifers);
 };

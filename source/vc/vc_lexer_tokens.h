@@ -78,6 +78,7 @@
   VC_LEXER_DEFTOKEN(Override,          "override")
   VC_LEXER_DEFTOKEN(Private,           "private")
   VC_LEXER_DEFTOKEN(Protected,         "protected")
+  VC_LEXER_DEFTOKEN(Published,         "published")
   VC_LEXER_DEFTOKEN(ReadOnly,          "readonly")
   VC_LEXER_DEFTOKEN(Ref,               "ref")
   VC_LEXER_DEFTOKEN(Reliable,          "reliable")
