@@ -1036,10 +1036,10 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
     const float fz = reg->efloor.GetPointZ(p);
-    const float cz = reg->eceiling.GetPointZ(p);
     // non-solid?
     if (reg->regflags&sec_region_t::RF_NonSolid) {
       // check if point is inside, and for best floor dist
+      const float cz = reg->eceiling.GetPointZ(p);
       if (p.z >= fz && p.z <= cz) {
         const float fdist = p.z-fz;
         if (fdist == 0.0f) return reg;
@@ -1052,8 +1052,8 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
     } else if (!insideNonSolid) {
       // non-solid regions has higher precedence
       // solid regions: we can't be inside (ignore this possibility)
-      if (p.z >= cz) {
-        const float fdist = p.z-cz;
+      if (p.z < fz) {
+        const float fdist = fz-p.z;
         if (fdist < bestDist) {
           bestDist = fdist;
           best = reg;
@@ -1095,16 +1095,21 @@ int SV_PointContents (sector_t *sector, const TVec &p) {
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
       // non-solid?
+      const float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
       if (reg->regflags&sec_region_t::RF_NonSolid) {
         const float fz = MAX(secfz, reg->efloor.GetPointZ(p));
-        const float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
         // check if point is inside, and for best floor dist
         if (p.z >= fz && p.z <= cz) {
           const float fdist = p.z-fz;
-          if (fdist == 0.0f) {
+          if (fdist < bestDist) {
+            bestDist = fdist;
             best = reg;
-            break;
           }
+        }
+      } else {
+        // check if we are above it
+        if (p.z >= cz) {
+          const float fdist = p.z-cz;
           if (fdist < bestDist) {
             bestDist = fdist;
             best = reg;
