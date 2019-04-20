@@ -30,6 +30,9 @@
 //#define FRUSTUM_BBOX_CHECKS
 
 
+const TVec TVec::ZeroVector = TVec(0.0f, 0.0f, 0.0f);
+
+
 //==========================================================================
 //
 //  AngleVectors
@@ -54,7 +57,7 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
   float sr, cr;
 
   msincos(angles.yaw, &sy, &cy);
-  if (angles.pitch) {
+  if (angles.pitch || angles.roll) {
     msincos(angles.pitch, &sp, &cp);
     if (angles.roll) {
       msincos(angles.roll, &sr, &cr);
@@ -92,6 +95,57 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
     up.y = 0.0f;
     up.z = 1.0f;
   }
+}
+
+
+//==========================================================================
+//
+//  AngleRightVector
+//
+//==========================================================================
+void AngleRightVector (const TAVec &angles, TVec &right) {
+  float sy, cy;
+  msincos(angles.yaw, &sy, &cy);
+  if (angles.pitch) {
+    if (angles.roll) {
+      float sp, cp;
+      float sr, cr;
+      msincos(angles.pitch, &sp, &cp);
+      msincos(angles.roll, &sr, &cr);
+
+      right.x = VSUM2(-sr*sp*cy, cr*sy);
+      right.y = VSUM2(-sr*sp*sy, -(cr*cy));
+      right.z = -sr*cp;
+    } else {
+      // no roll
+      right.x = sy;
+      right.y = -cy;
+      right.z = 0.0f;
+    }
+  } else {
+    // no pitch, no roll
+    right.x = sy;
+    right.y = -cy;
+    right.z = 0.0f;
+  }
+}
+
+
+//==========================================================================
+//
+//  YawVectorRight
+//
+//==========================================================================
+void YawVectorRight (float yaw, TVec &right) {
+  /*
+  float sy, cy;
+  msincos(yaw, &sy, &cy);
+  right.x = sy;
+  right.y = -cy;
+  */
+  msincos(yaw, &right.x, &right.y);
+  right.y = -right.y;
+  right.z = 0.0f;
 }
 
 

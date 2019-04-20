@@ -71,6 +71,10 @@ class TVec {
 public:
   float x, y, z;
 
+public:
+  static const TVec ZeroVector;
+
+public:
   TVec () {}
   TVec (ENoInit) {}
   //nope;TVec () : x(0.0f), y(0.0f), z(0.0f) {}
@@ -234,7 +238,9 @@ static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec 
 
 
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up);
+void AngleRightVector (const TAVec &angles, TVec &right);
 void AngleVector (const TAVec &angles, TVec &forward);
+void YawVectorRight (float yaw, TVec &right);
 void VectorAngles (const TVec &vec, TAVec &angles);
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles);
 
