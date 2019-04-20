@@ -447,8 +447,17 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   currfloor.set(&sector->floor, false);
   float currfloorz = secfz;
   check(currfloor.isFloor());
-  // main loop
+  // HACK: if the whole sector is taken by some region, return sector opening
+  //       this is required to proper 3d-floor backside creation
   opening_t *cs = solids.ptr();
+  if (!usePoint) {
+    if (cs[0].bottom <= sector->floor.minz && cs[solids.length()-1].top >= sector->floor.maxz) {
+      opening_t &op = dest.alloc();
+      GetBaseSectorOpening(op, sector, point, hasSlopes, usePoint);
+      return;
+    }
+  }
+  // main loop
   for (int scount = solids.length(); scount--; ++cs) {
     if (cs->bottom >= seccz) break; // out of base sector bounds, we are done here
     if (cs->top < currfloorz) continue; // below base sector bounds, nothing to do yet
