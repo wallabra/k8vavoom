@@ -277,7 +277,10 @@ void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, f
 
 // build list of openings for the given line and point
 // note that returned list can be reused on next call to `SV_LineOpenings()`
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false);
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex=false, bool usePoint=true);
+
+// used in surface creator
+opening_t *SV_SectorOpenings (sector_t *sector);
 
 // it is used to find lowest sector point for silent teleporters
 float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
@@ -290,10 +293,6 @@ opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
 // `z1` is feet, `z2` is head
 // used in sector movement, so it tries hard to not leave current opening
 opening_t *SV_FindRelOpening (opening_t *gaps, float z1, float z2);
-
-// build list of openings for the given sector
-// this is used in surface creator
-opening_t *SV_SectorOpenings (sector_t *sector);
 
 
 //==========================================================================

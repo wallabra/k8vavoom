@@ -586,7 +586,7 @@ protected:
   void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, bool createMid);
+                                   TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, opening_t *ops);
 
   // surf methods
   void SetupSky ();

@@ -383,7 +383,7 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 //  this function doesn't like regions with floors that has different flags
 //
 //==========================================================================
-static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint=true) {
+static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint) {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors()) {
@@ -403,6 +403,7 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   // skip base region for now
   for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
+    //if (!usePoint && reg->regflags&sec_region_t::RF_NonSolid) continue;
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
     // check for slopes
     if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
@@ -509,11 +510,11 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
 //
 //  SV_SectorOpenings
 //
-//  build list of openings for the given sector
-//  this is used in surface creator
+//  used in surface creator
 //
 //==========================================================================
 opening_t *SV_SectorOpenings (sector_t *sector) {
+  check(sector);
   static TArray<opening_t> oplist;
   BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false);
   check(oplist.length() > 0);
@@ -528,7 +529,7 @@ opening_t *SV_SectorOpenings (sector_t *sector) {
 //  sets opentop and openbottom to the window through a two sided line
 //
 //==========================================================================
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex) {
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex, bool usePoint) {
   if (linedef->sidenum[1] == -1 || !linedef->backsector) return nullptr; // single sided line
 
   NoBlockFlags &= (SPF_MAX_OPENINGS-1);
@@ -608,8 +609,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       !linedef->backsector->Has3DFloors())
   {
     opening_t fop, bop;
-    GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0, true);
-    GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1, true);
+    GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0, usePoint);
+    GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1, usePoint);
     // no intersection?
     if (fop.top <= bop.bottom || bop.top <= fop.bottom ||
         fop.bottom >= bop.top || bop.bottom >= fop.top)
@@ -649,7 +650,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   static TArray<opening_t> op0list;
   static TArray<opening_t> op1list;
 
-  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false);
+  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false, usePoint);
   if (op0list.length() == 0) {
     // just in case: no front sector openings
     if (hasSlopes0) return nullptr;
@@ -658,7 +659,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return nullptr;
   }
 
-  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false);
+  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false, usePoint);
   if (op1list.length() == 0) {
     // just in case: no back sector openings
     if (hasSlopes0 || hasSlopes1) return nullptr;
@@ -959,7 +960,7 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
    */
   static TArray<opening_t> oplist;
 
-  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING, nullptr, true);
+  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING, nullptr, true, true);
   if (oplist.length() == 0) {
     // something is very wrong here, so use sector boundaries
     floor = sector->eregions->efloor;

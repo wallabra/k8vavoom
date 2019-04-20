@@ -827,13 +827,15 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //
 //  VRenderLevelShared::SetupTwoSidedMidExtraWSurf
 //
+//  do not create side surfaces if they aren't in openings
+//
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
-                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, bool createMid)
+                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, opening_t *ops)
 {
   check(MTextr);
 
-  if (createMid) {
+  if (ops) {
     TVec wv[4];
 
     const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
@@ -841,20 +843,19 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float extrabotz1 = reg->efloor.GetPointZ(*seg->v1);
     const float extrabotz2 = reg->efloor.GetPointZ(*seg->v2);
 
-    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
-    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
-    const float botz1 = r_floor.GetPointZ(*seg->v1);
-    const float botz2 = r_floor.GetPointZ(*seg->v2);
+    // find opening for this side
+    const float exbotz = MIN(extrabotz1, extrabotz2);
+    const float extopz = MAX(extratopz1, extratopz2);
 
-    bool doIt = true;
+    for (opening_t *cop = ops; cop; cop = cop->next) {
+      if (extopz <= cop->bottom || exbotz >= cop->top) continue;
+      // ok, we are at least partially in this opening
 
-    if (MIN(extrabotz1, extrabotz1) >= MAX(topz1, topz1) ||
-        MAX(extratopz1, extratopz2) <= MIN(botz1, botz2))
-    {
-      doIt = false;
-    }
+      const float topz1 = cop->eceiling.GetPointZ(*seg->v1);
+      const float topz2 = cop->eceiling.GetPointZ(*seg->v2);
+      const float botz1 = cop->efloor.GetPointZ(*seg->v1);
+      const float botz2 = cop->efloor.GetPointZ(*seg->v2);
 
-    if (doIt) {
       wv[0].x = wv[1].x = seg->v1->x;
       wv[0].y = wv[1].y = seg->v1->y;
       wv[2].x = wv[3].x = seg->v2->x;
@@ -864,6 +865,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       wv[1].z = MIN(extratopz1, topz1);
       wv[2].z = MIN(extratopz2, topz2);
       wv[3].z = MAX(extrabotz2, botz2);
+
+      surface_t *origSurfs = sp->surfs;
 
       if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
         // degenerate side surface, no need to create it
@@ -879,9 +882,18 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
         sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
       }
 
-      if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent())) {
-        for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
+      if (sp->surfs) {
+        // join
+        surface_t *ss = sp->surfs;
+        while (ss->next) ss = ss->next;
+        ss->next = origSurfs;
+      } else {
+        sp->surfs = origSurfs;
       }
+    }
+
+    if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent())) {
+      for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
     }
   }
 
@@ -1043,25 +1055,28 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     }
 
     // middle wall
-    dseg->mid = SurfCreatorGetPSPart();
-    sp = dseg->mid;
-    sp->basereg = curreg;
+    if (isMainRegion) {
+      dseg->mid = SurfCreatorGetPSPart();
+      sp = dseg->mid;
+      sp->basereg = curreg;
 
-    VTexture *MTex = GTextureManager(sidedef->MidTexture);
-    check(MTex);
-    sp->texinfo.Tex = MTex;
-    sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-    sp->texinfo.ColourMap = 0;
-    if (MTex->Type != TEXTYPE_Null) {
-      // masked MidTexture
-      SetupTwoSidedMidWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
+      VTexture *MTex = GTextureManager(sidedef->MidTexture);
+      check(MTex);
+      sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+      sp->texinfo.ColourMap = 0;
+      if (MTex->Type != TEXTYPE_Null) {
+        // masked MidTexture
+        SetupTwoSidedMidWSurf(sub, seg, sp, MTex, r_floor, r_ceiling);
+      }
+      sp->TextureOffset = sidedef->MidTextureOffset;
     }
-    sp->TextureOffset = sidedef->MidTextureOffset;
 
     // create region sides
     if (isMainRegion) {
       // this creates sides for neightbour 3d floors
-      //opening_t *ops = SV_SectorOpenings(seg->frontsector);
+      opening_t *ops = nullptr;
+      bool opsCreated = false;
       for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
         if (!reg->extraline) continue; // no need to create extra side
 
@@ -1089,7 +1104,11 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         sp->texinfo.ColourMap = 0;
         sp->TextureOffset = extraside->MidTextureOffset;
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, (MTex->Type == TEXTYPE_Null));
+        if (!opsCreated) {
+          opsCreated = true;
+          ops = SV_SectorOpenings(seg->frontsector);
+        }
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTextr, r_floor, r_ceiling, ops);
       }
     }
   }
@@ -1276,13 +1295,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     }
 
     // masked MidTexture
-    bool nullMidTex = true;
     sp = dseg->mid;
     if (sp) {
       sp->texinfo.ColourMap = ColourMap;
       VTexture *MTex = GTextureManager(sidedef->MidTexture);
       check(MTex);
-      nullMidTex = (MTex->Type == TEXTYPE_Null);
 
       if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
           FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
@@ -1325,6 +1342,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       }
     }
 
+    opening_t *ops = nullptr;
+    bool opsCreated = false;
     // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
       sec_region_t *reg = sp->basereg;
@@ -1347,7 +1366,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTexr)*extraside->MidScaleY)+
                              extraside->MidRowOffset*(TextureOffsetTScale(MTexr)*extraside->MidScaleY);
 
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling, nullMidTex);
+        if (!opsCreated) {
+          opsCreated = true;
+          ops = SV_SectorOpenings(seg->frontsector);
+        }
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, MTexr, r_floor, r_ceiling, ops);
       } else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset)) {
         UpdateRowOffset(sub, sp, sidedef->MidRowOffset, sidedef->MidScaleY);
       }
