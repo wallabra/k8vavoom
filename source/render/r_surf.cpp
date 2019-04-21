@@ -1034,11 +1034,11 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
         MTex = GTextureManager[GTextureManager.DefaultTexture];
       }
-      sp->texinfo.saxis = segdir*(TextureSScale(MTex)*seg->sidedef->MidScaleX);
-      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
+      sp->texinfo.saxis = segdir*(TextureSScale(MTex)*sidedef->MidScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->MidScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                          seg->offset*(TextureSScale(MTex)*seg->sidedef->MidScaleX)+
-                          sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*seg->sidedef->MidScaleX);
+                          seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
+                          sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*sidedef->MidScaleX);
       sp->texinfo.Tex = MTex;
       sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
       sp->texinfo.Alpha = 1.1f;
@@ -1086,11 +1086,11 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp = dseg->top;
       sp->basereg = curreg;
 
-      sp->texinfo.saxis = segdir*(TextureSScale(TTex)*seg->sidedef->TopScaleX);
-      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*seg->sidedef->TopScaleY);
+      sp->texinfo.saxis = segdir*(TextureSScale(TTex)*sidedef->TopScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*sidedef->TopScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                          seg->offset*(TextureSScale(TTex)*seg->sidedef->TopScaleX)+
-                          sidedef->TopTextureOffset*(TextureOffsetSScale(TTex)*seg->sidedef->TopScaleX);
+                          seg->offset*(TextureSScale(TTex)*sidedef->TopScaleX)+
+                          sidedef->TopTextureOffset*(TextureOffsetSScale(TTex)*sidedef->TopScaleX);
       sp->texinfo.Tex = TTex;
       sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
       sp->texinfo.Alpha = 1.1f;
@@ -1120,11 +1120,15 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
       VTexture *BTex = GTextureManager(sidedef->BottomTexture);
       check(BTex);
-      sp->texinfo.saxis = segdir*(TextureSScale(BTex)*seg->sidedef->BotScaleX);
-      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*seg->sidedef->BotScaleY);
+      sp->texinfo.saxis = segdir*(TextureSScale(BTex)*sidedef->BotScaleX);
+      sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*sidedef->BotScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                          seg->offset*(TextureSScale(BTex)*seg->sidedef->BotScaleX)+
-                          sidedef->BotTextureOffset*(TextureOffsetSScale(BTex)*seg->sidedef->BotScaleX);
+                          seg->offset*(TextureSScale(BTex)*sidedef->BotScaleX)+
+                          sidedef->BotTextureOffset*(TextureOffsetSScale(BTex)*sidedef->BotScaleX);
+      /*
+      sp->texinfo.toffs = seg->frontsector->floor.TexZ*(TextureTScale(BTex)*sidedef->BotScaleY)+
+                          sidedef->BotRowOffset*(TextureOffsetTScale(BTex)*sidedef->BotScaleY);
+      */
       sp->texinfo.Tex = BTex;
       sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
       sp->texinfo.Alpha = 1.1f;
@@ -1214,7 +1218,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 //==========================================================================
 void VRenderLevelShared::UpdateRowOffset (subsector_t *sub, segpart_t *sp, float RowOffset, float Scale) {
   sp->texinfo.toffs += (RowOffset-sp->RowOffset)*(TextureOffsetTScale(sp->texinfo.Tex)*Scale);
-  sp->RowOffset = RowOffset*Scale;
+  sp->RowOffset = RowOffset;//*Scale;
   FlushSurfCaches(sp->surfs);
   InitSurfs(sp->surfs, &sp->texinfo, nullptr, sub);
 }
@@ -1227,7 +1231,7 @@ void VRenderLevelShared::UpdateRowOffset (subsector_t *sub, segpart_t *sp, float
 //==========================================================================
 void VRenderLevelShared::UpdateTextureOffset (subsector_t *sub, segpart_t *sp, float TextureOffset, float Scale) {
   sp->texinfo.soffs += (TextureOffset-sp->TextureOffset)*(TextureOffsetSScale(sp->texinfo.Tex)*Scale);
-  sp->TextureOffset = TextureOffset*Scale;
+  sp->TextureOffset = TextureOffset;//*Scale;
   FlushSurfCaches(sp->surfs);
   InitSurfs(sp->surfs, &sp->texinfo, nullptr, sub);
 }
@@ -1369,6 +1373,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       VTexture *BTex = GTextureManager(sidedef->BottomTexture);
       sp->texinfo.Tex = BTex;
       sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
+
+      //sidedef->BotRowOffset = 8;
 
       if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) ||
           FASI(sp->frontBotDist) != FASI(r_floor.splane->dist) ||
