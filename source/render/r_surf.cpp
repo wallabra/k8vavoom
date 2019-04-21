@@ -57,6 +57,28 @@ static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *
 
 //==========================================================================
 //
+//  AppendSurfaces
+//
+//  this actually prepends `newsurfs`, as the exact order doesn't matter
+//
+//==========================================================================
+static void AppendSurfaces (segpart_t *sp, surface_t *newsurfs) {
+  check(sp);
+  if (!newsurfs) return; // nothing to do
+  // new list will start with `newsurfs`
+  surface_t *ss = sp->surfs;
+  sp->surfs = newsurfs;
+  // shoild join?
+  if (ss) {
+    // yes
+    while (newsurfs->next) newsurfs = newsurfs->next;
+    newsurfs->next = ss;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupSky
 //
 //==========================================================================
@@ -717,7 +739,46 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::CreateMidSurfFromWV
+//
+//==========================================================================
+void VRenderLevelShared::CreateMidSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], bool doOffset) {
+  if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
+    // degenerate side surface, no need to create it
+    return;
+  }
+
+  if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
+    // degenerate side surface (thin line), cannot create it (no render support)
+    return;
+  }
+
+  TVec *wstart = wv;
+  int wcount = 4;
+  if (wv[0].z == wv[1].z) {
+    // can reduce to triangle
+    wstart = wv+1;
+    wcount = 3;
+  } else if (wv[2].z == wv[3].z) {
+    // can reduce to triangle
+    wstart = wv;
+    wcount = 3;
+  }
+
+  //k8: HACK! HACK! HACK!
+  //    move middle wall backwards a little, so it will be hidden behind up/down surfaces
+  //    this is required for sectors with 3d floors, until i wrote a proper texture clipping math
+  if (doOffset) for (unsigned f = 0; f < (unsigned)wcount; ++f) wstart[f] -= seg->normal*0.01f;
+
+  AppendSurfaces(sp, CreateWSurf(wstart, &sp->texinfo, seg, sub, wcount));
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedMidWSurf
+//
+//  create normal midtexture surface
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
@@ -728,13 +789,6 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
 
   const side_t *side = seg->sidedef;
-
-  /*
-  float topz1 = r_ceiling.GetPointZ(*seg->v1);
-  float topz2 = r_ceiling.GetPointZ(*seg->v2);
-  float botz1 = r_floor.GetPointZ(*seg->v1);
-  float botz2 = r_floor.GetPointZ(*seg->v2);
-  */
 
   const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
   const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
@@ -779,7 +833,9 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   enum { doDump = 0 };
   if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(seg->linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
 
-  //k8: HACKETY HACK!
+  //k8: HACK! HACK! HACK!
+  //    move middle wall backwards a little, so it will be hidden behind up/down surfaces
+  //    this is required for sectors with 3d floors, until i wrote a proper texture clipping math
   bool doOffset = seg->backsector->Has3DFloors();
 
   for (opening_t *cop = SV_SectorOpenings(seg->frontsector, true); cop; cop = cop->next) {
@@ -823,19 +879,15 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
     float hgts[4];
 
+    // linedef->flags&ML_CLIP_MIDTEX, side->Flags&SDF_CLIPMIDTEX
+    // this clips texture to a floor, otherwise it goes beyound it
+    // it seems that all modern OpenGL renderers just ignores clip flag, and
+    // renders all midtextures as always clipped.
     if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (side->Flags&SDF_WRAPMIDTEX)) {
-      if ((seg->linedef->flags&ML_CLIP_MIDTEX) || (side->Flags&SDF_CLIPMIDTEX)) {
-        //k8: this is totally wrong
-        hgts[0] = MAX(midbotz1, z_org-texh);
-        hgts[1] = MIN(midtopz1, z_org);
-        hgts[2] = MIN(midtopz2, z_org);
-        hgts[3] = MAX(midbotz2, z_org-texh);
-      } else {
-        hgts[0] = midbotz1;
-        hgts[1] = midtopz1;
-        hgts[2] = midtopz2;
-        hgts[3] = midbotz2;
-      }
+      hgts[0] = midbotz1;
+      hgts[1] = midtopz1;
+      hgts[2] = midtopz2;
+      hgts[3] = midbotz2;
     } else {
       if (z_org <= MAX(midbotz1, midbotz2)) continue;
       if (z_org-texh >= MAX(midtopz1, midtopz2)) continue;
@@ -863,49 +915,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
     if (doDump) { GCon->Logf("  z:(%g,%g,%g,%g)", hgts[0], hgts[1], hgts[2], hgts[3]); }
 
-    surface_t *origSurfs = sp->surfs;
-
-    //k8: HACK! HACK! HACK!
-    //    move middle wall backwards a little, so it will hide behind up/down surfaces
-    //bool doOffset = (side->BottomTexture > 0 || side->TopTexture > 0);
-    //bool doOffset = false;
-
-    //sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub);
-    if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
-      // degenerate side surface, no need to create it
-      continue;
-    }
-    if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
-      // degenerate side surface (thin line), cannot create it (no render support)
-      continue;
-    }
-
-    TVec *wstart;
-    int wcount;
-    if (wv[0].z == wv[1].z) {
-      // can reduce to triangle
-      wstart = wv+1;
-      wcount = 3;
-    } else if (wv[2].z == wv[3].z) {
-      // can reduce to triangle
-      wstart = wv;
-      wcount = 3;
-    } else {
-      wstart = wv;
-      wcount = 4;
-    }
-
-    if (doOffset) for (unsigned f = 0; f < (unsigned)wcount; ++f) wstart[f] -= seg->normal*0.01f;
-    sp->surfs = CreateWSurf(wstart, &sp->texinfo, seg, sub, wcount);
-
-    if (sp->surfs) {
-      // join
-      surface_t *ss = sp->surfs;
-      while (ss->next) ss = ss->next;
-      ss->next = origSurfs;
-    } else {
-      sp->surfs = origSurfs;
-    }
+    CreateMidSurfFromWV(sub, seg, sp, wv, doOffset);
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -919,6 +929,9 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //==========================================================================
 //
 //  VRenderLevelShared::SetupTwoSidedMidExtraWSurf
+//
+//  create 3d-floors midtexture (side) surfaces
+//  this creates surfaces not in 3d-floor sector, but in neighbouring one
 //
 //  do not create side surfaces if they aren't in openings
 //
@@ -959,30 +972,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       wv[2].z = MIN(extratopz2, topz2);
       wv[3].z = MAX(extrabotz2, botz2);
 
-      surface_t *origSurfs = sp->surfs;
-
-      if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
-        // degenerate side surface, no need to create it
-      } if (wv[0].z == wv[1].z && wv[2].z == wv[3].z) {
-        // degenerate side surface (thin line), cannot create it (no render support)
-      } if (wv[0].z == wv[1].z) {
-        // can reduce to triangle
-        sp->surfs = CreateWSurf(wv+1, &sp->texinfo, seg, sub, 3);
-      } if (wv[2].z == wv[3].z) {
-        // can reduce to triangle
-        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 3);
-      } else {
-        sp->surfs = CreateWSurf(wv, &sp->texinfo, seg, sub, 4);
-      }
-
-      if (sp->surfs) {
-        // join
-        surface_t *ss = sp->surfs;
-        while (ss->next) ss = ss->next;
-        ss->next = origSurfs;
-      } else {
-        sp->surfs = origSurfs;
-      }
+      CreateMidSurfFromWV(sub, seg, sp, wv);
     }
 
     if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTextr->isTransparent())) {
