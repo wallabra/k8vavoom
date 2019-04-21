@@ -227,7 +227,7 @@ IMPLEMENT_FUNCTION(VLevel, TraceLine) {
 #define FRACUNIT  (1<<FRACBITS)
 
 #define FL(x) ((float)(x)/(float)FRACUNIT)
-#define FX(x) (fixed_t)((x)*FRACUNIT)
+#define FX(x) ((/*fixed_t*/int)((x)*FRACUNIT))
 
 // mapblocks are used to check movement against lines and things
 #define MAPBLOCKUNITS  (128)
@@ -237,8 +237,6 @@ IMPLEMENT_FUNCTION(VLevel, TraceLine) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-typedef int fixed_t;
-
 #define MAX_ST_INTERCEPTS  (65536)
 
 static intercept_t intercepts[MAX_ST_INTERCEPTS];
@@ -324,20 +322,22 @@ extern "C" {
 //  Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightTraverseIntercepts (SightTraceInfo &Trace, sector_t *EndSector) {
-  int count = interUsed; //Trace.Intercepts.length();
+static bool SightTraverseIntercepts (SightTraceInfo &Trace, sector_t *EndSector, bool resort) {
+  int count = interUsed;
 
   if (count > 0) {
-    // calculate intercept distance
-    intercept_t *scan = intercepts;
-    for (int i = count; i--; ++scan) {
-      const float den = DotProduct(scan->line->normal, Trace.Delta);
-      const float num = scan->line->dist-DotProduct(Trace.Start, scan->line->normal);
-      scan->frac = num/den;
+    intercept_t *scan;
+    if (resort) {
+      // calculate intercept distance
+      scan = intercepts;
+      for (int i = count; i--; ++scan) {
+        const float den = DotProduct(scan->line->normal, Trace.Delta);
+        const float num = scan->line->dist-DotProduct(Trace.Start, scan->line->normal);
+        scan->frac = num/den;
+      }
+      // sort intercepts
+      timsort_r(intercepts, (size_t)count, sizeof(intercepts[0]), &compareIcept, nullptr);
     }
-
-    // sort intercepts
-    timsort_r(intercepts, (size_t)count, sizeof(intercepts[0]), &compareIcept, nullptr);
 
     // go through in order
     scan = intercepts;
@@ -378,8 +378,34 @@ static bool SightCheckLine (SightTraceInfo &Trace, line_t *ld) {
 
   // store the line for later intersection testing
   if (interUsed < MAX_ST_INTERCEPTS) {
-    intercept_t *In = &intercepts[interUsed++];//Trace.Intercepts.Alloc();
-    In->line = ld;
+    // distance
+    const float den = DotProduct(ld->normal, Trace.Delta);
+    const float num = ld->dist-DotProduct(Trace.Start, ld->normal);
+    const float frac = num/den;
+    intercept_t *icept;
+
+    // find place to put our new record
+    // this is usually faster than sorting records, as we are traversing blockmap
+    // more-or-less in order
+    if (interUsed > 0) {
+      int ipos = interUsed;
+      while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
+      // here we should insert at `ipos` position
+      if (ipos == interUsed) {
+        // as last
+        icept = &intercepts[interUsed++];
+      } else {
+        // make room
+        memmove(intercepts+ipos+1, intercepts+ipos, (interUsed-ipos)*sizeof(intercepts[0]));
+        ++interUsed;
+        icept = &intercepts[ipos];
+      }
+    } else {
+      icept = &intercepts[interUsed++];
+    }
+
+    icept->line = ld;
+    icept->frac = frac;
   }
 
   return true;
@@ -558,7 +584,7 @@ static bool SightPathTraverse (SightTraceInfo &Trace, VLevel *level, sector_t *E
   }
 
   // couldn't early out, so go through the sorted list
-  return SightTraverseIntercepts(Trace, EndSector);
+  return SightTraverseIntercepts(Trace, EndSector, false);
 }
 
 
@@ -572,7 +598,7 @@ static bool SightPathTraverse (SightTraceInfo &Trace, VLevel *level, sector_t *E
 static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
   Trace.Delta = Trace.End-Trace.Start;
   Trace.LineStart = Trace.Start;
-  return SightTraverseIntercepts(Trace, EndSector);
+  return SightTraverseIntercepts(Trace, EndSector, true);
 }
 
 
