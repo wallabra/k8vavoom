@@ -212,9 +212,12 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 
     TVec spos;
     foreach (; 0..bcc) {
+      /*k8: the blood will fly away on its own
       spos.x = Origin.x+((Random()*51-25)/10.0);
       spos.y = Origin.y+((Random()*51-25)/10.0);
       spos.z = Origin.z;
+      */
+      spos = Origin;
       float zmax = hgt+((Random()*29-14)/10.0);
       BloodAddZClamped(spos, zmax, bloodClass.default.Height);
       EntityEx bld = EntityEx(Level.Spawn(bloodClass, spos)); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
