@@ -1996,45 +1996,65 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
 //
 //==========================================================================
 void VLevel::PostLoadSegs () {
-  seg_t *destseg = &Segs[0];
-  for (int i = 0; i < NumSegs; ++i, ++destseg) {
-    int dside = destseg->side;
+  seg_t *seg = &Segs[0];
+  for (int i = 0; i < NumSegs; ++i, ++seg) {
+    int dside = seg->side;
     if (dside != 0 && dside != 1) Sys_Error("invalid seg #%d side (%d)", i, dside);
 
-    if (destseg->linedef) {
-      line_t *ldef = destseg->linedef;
+    if (seg->linedef) {
+      line_t *ldef = seg->linedef;
 
       if (ldef->sidenum[dside] < 0 || ldef->sidenum[dside] >= NumSides) {
         Sys_Error("seg #%d, ldef=%d: invalid sidenum %d (%d) (max sidenum is %d)\n", i, (int)(ptrdiff_t)(ldef-Lines), dside, ldef->sidenum[dside], NumSides-1);
       }
 
-      destseg->sidedef = &Sides[ldef->sidenum[dside]];
-      destseg->frontsector = Sides[ldef->sidenum[dside]].Sector;
+      seg->sidedef = &Sides[ldef->sidenum[dside]];
+      seg->frontsector = Sides[ldef->sidenum[dside]].Sector;
 
       if (ldef->flags&ML_TWOSIDED) {
         if (ldef->sidenum[dside^1] < 0 || ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of two-sided linedef is fucked");
-        destseg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
+        seg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
       } else if (ldef->sidenum[dside^1] >= 0) {
         if (ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of blocking two-sided linedef is fucked");
-        destseg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
+        seg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
         // not a two-sided, so clear backsector (just in case) -- nope
         //destseg->backsector = nullptr;
       } else {
-        destseg->backsector = nullptr;
+        seg->backsector = nullptr;
         ldef->flags &= ~ML_TWOSIDED; // just in case
       }
 
       if (dside) {
-        destseg->offset = destseg->v1->DistanceTo2D(*ldef->v2);
+        seg->offset = seg->v1->DistanceTo2D(*ldef->v2);
       } else {
-        destseg->offset = destseg->v1->DistanceTo2D(*ldef->v1);
+        seg->offset = seg->v1->DistanceTo2D(*ldef->v1);
       }
     }
-    destseg->length = destseg->v2->DistanceTo2D(*destseg->v1);
-    if (destseg->length < 0.001f) Sys_Error("zero-length seg #%d", i);
 
-    // calc seg's plane params
-    CalcSeg(destseg);
+    seg->length = seg->v2->DistanceTo2D(*seg->v1);
+    if (seg->length < 0.0001f) {
+      GCon->Logf(NAME_Warning, "ZERO-LENGTH %sseg #%d (flags: 0x%04x)", (seg->linedef ? "" : "mini"), i, (unsigned)seg->flags);
+      GCon->Logf(NAME_Warning, "  verts: (%g,%g,%g)-(%g,%g,%g)", seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
+      GCon->Logf(NAME_Warning, "  offset: %g", seg->offset);
+      GCon->Logf(NAME_Warning, "  length: %g", seg->length);
+      if (seg->linedef) {
+        GCon->Logf(NAME_Warning, "  linedef: %d", (int)(ptrdiff_t)(seg->linedef-Lines));
+        GCon->Logf(NAME_Warning, "  sidedef: %d (side #%d)", (int)(ptrdiff_t)(seg->sidedef-Sides), seg->side);
+        GCon->Logf(NAME_Warning, "  front sector: %d", (int)(ptrdiff_t)(seg->frontsector-Sectors));
+        GCon->Logf(NAME_Warning, "  back sector: %d", (int)(ptrdiff_t)(seg->backsector-Sectors));
+      }
+      if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
+      if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-Subsectors));
+      //Sys_Error("zero-length seg #%d", i);
+      seg->offset = 0.0f;
+      seg->length = 0.0001f;
+      // setup fake seg's plane params
+      seg->normal = TVec(1.0f, 0.0f, 0.0f);
+      seg->dist = 0.0f;
+    } else {
+      // calc seg's plane params
+      CalcSeg(seg);
+    }
   }
 }
 
