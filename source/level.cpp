@@ -2282,6 +2282,12 @@ void CalcLine (line_t *line) {
 //==========================================================================
 void CalcSeg (seg_t *seg) {
   seg->Set2Points(*seg->v1, *seg->v2);
+  if (seg->length <= 0.0f) {
+    seg->dir = TVec(1, 0, 0); // arbitrary
+  } else {
+    seg->dir = ((*seg->v2)-(*seg->v1)).normalised2D();
+    if (!seg->dir.isValid() || seg->dir.isZero()) seg->dir = TVec(1, 0, 0); // arbitrary
+  }
 }
 
 

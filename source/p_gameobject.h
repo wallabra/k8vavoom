@@ -209,7 +209,7 @@ enum {
 
 // seg flags
 enum {
-  SF_MAPPED = 0x00000001, // some segs are visible, but not all
+  SF_MAPPED = 0x00000001, // some segs of this linedef are visible, but not all
 };
 
 // Special activation types
@@ -727,6 +727,7 @@ struct seg_t : public TPlane {
 
   float offset;
   float length;
+  TVec dir; // precalced segment direction, so i don't have to do it again in surface creator
 
   side_t *sidedef;
   line_t *linedef;

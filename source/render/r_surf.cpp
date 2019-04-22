@@ -799,20 +799,10 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   const float exbotz = MIN(back_botz1, back_botz2);
   const float extopz = MAX(back_topz1, back_topz2);
 
-  TVec segdir;
-  if (seg->length <= 0.0f) {
-    GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(seg->linedef-Level->Lines));
-    segdir = TVec(1, 0, 0); // arbitrary
-  } else {
-    //segdir = (*seg->v2-*seg->v1)/seg->length;
-    //segdir = (seg->v2->sub2D(*seg->v1))/seg->length;
-    segdir = (*seg->v2-*seg->v1).normalised2D();
-  }
-
   const float texh = MTex->GetScaledHeight();
   const float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
 
-  sp->texinfo.saxis = segdir*(TextureSScale(MTex)*side->MidScaleX);
+  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*side->MidScaleX);
   sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*side->MidScaleY);
   sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                       seg->offset*(TextureSScale(MTex)*side->MidScaleX)+
@@ -1006,16 +996,6 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
   if (!linedef) return; // miniseg
   const side_t *sidedef = seg->sidedef;
 
-  TVec segdir;
-  if (seg->length <= 0.0f) {
-    GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
-    segdir = TVec(1, 0, 0); // arbitrary
-  } else {
-    //segdir = (*seg->v2-*seg->v1)/seg->length;
-    //segdir = (seg->v2->sub2D(*seg->v1))/seg->length;
-    segdir = (*seg->v2-*seg->v1).normalised2D();
-  }
-
   if (!seg->backsector) {
     if (!isMainRegion) {
       // 3d floor
@@ -1034,7 +1014,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
         MTex = GTextureManager[GTextureManager.DefaultTexture];
       }
-      sp->texinfo.saxis = segdir*(TextureSScale(MTex)*sidedef->MidScaleX);
+      sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->MidScaleX);
       sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->MidScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                           seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
@@ -1086,7 +1066,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp = dseg->top;
       sp->basereg = curreg;
 
-      sp->texinfo.saxis = segdir*(TextureSScale(TTex)*sidedef->TopScaleX);
+      sp->texinfo.saxis = seg->dir*(TextureSScale(TTex)*sidedef->TopScaleX);
       sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*sidedef->TopScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                           seg->offset*(TextureSScale(TTex)*sidedef->TopScaleX)+
@@ -1120,7 +1100,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
       VTexture *BTex = GTextureManager(sidedef->BottomTexture);
       check(BTex);
-      sp->texinfo.saxis = segdir*(TextureSScale(BTex)*sidedef->BotScaleX);
+      sp->texinfo.saxis = seg->dir*(TextureSScale(BTex)*sidedef->BotScaleX);
       sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*sidedef->BotScaleY);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                           seg->offset*(TextureSScale(BTex)*sidedef->BotScaleX)+
@@ -1179,7 +1159,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
         sp->next = dseg->extra;
         dseg->extra = sp;
 
-        sp->texinfo.saxis = segdir*(TextureSScale(MTex)*extraside->MidScaleX);
+        sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*extraside->MidScaleX);
         sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*extraside->MidScaleY);
         sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                             seg->offset*(TextureSScale(MTex)*extraside->MidScaleX)+

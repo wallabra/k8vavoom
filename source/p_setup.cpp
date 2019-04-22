@@ -147,7 +147,7 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 005.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 006.\n";
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
@@ -419,6 +419,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     *arrstrm << v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
+    *arrstrm << seg->dir;
     vint32 sidedefnum = -1;
     if (seg->sidedef) sidedefnum = (vint32)(ptrdiff_t)(seg->sidedef-Sides);
     *arrstrm << sidedefnum;
@@ -438,6 +439,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
     *arrstrm << fssnum;
     *arrstrm << seg->side;
+    *arrstrm << seg->flags;
   }
 
   // reject
@@ -594,6 +596,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
     seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
+    *arrstrm << seg->dir;
     vint32 sidedefnum = -1;
     *arrstrm << sidedefnum;
     seg->sidedef = (sidedefnum >= 0 ? Sides+sidedefnum : nullptr);
@@ -613,6 +616,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
     *arrstrm << fssnum;
     seg->front_sub = (fssnum >= 0 ? Subsectors+fssnum : nullptr);
     *arrstrm << seg->side;
+    *arrstrm << seg->flags;
   }
 
   // reject
@@ -2058,6 +2062,7 @@ void VLevel::PostLoadSegs () {
       // setup fake seg's plane params
       seg->normal = TVec(1.0f, 0.0f, 0.0f);
       seg->dist = 0.0f;
+      seg->dir = TVec(1.0f, 0.0f, 0.0f); // arbitrary
     } else {
       // calc seg's plane params
       CalcSeg(seg);
