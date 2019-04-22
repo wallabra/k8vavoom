@@ -2137,6 +2137,20 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 }
 
 
+#define UPDATE_PLANE_HIT(plane_)  do { \
+  if (!CheckPlaneHit((plane_), linestart, lineend, currhit, isSky, threshold)) { \
+    wasHit = true; \
+    float dist = (currhit-linestart).lengthSquared(); \
+    if (dist < besthdist) { \
+      besthit = currhit; \
+      bestIsSky = isSky; \
+      besthdist = dist; \
+      bestNormal = (plane_).GetNormal(); \
+    } \
+  } \
+} while (0)
+
+
 //==========================================================================
 //
 //  VLevel::CheckHitPlanes
@@ -2166,59 +2180,22 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
     // make fake floors and ceilings block view
     TSecPlaneRef bfloor, bceil;
     sector_t *hs = sector->heightsec;
-    if (hs) {
-      bfloor.set(&hs->floor, false);
-      bceil.set(&hs->ceiling, false);
-    } else {
-      bfloor.set(&sector->floor, false);
-      bceil.set(&sector->ceiling, false);
-    }
+    if (!hs) hs = sector;
+    bfloor.set(&hs->floor, false);
+    bceil.set(&hs->ceiling, false);
     // check sector floor
-    if (!CheckPlaneHit(bfloor, linestart, lineend, currhit, isSky, threshold)) {
-      wasHit = true;
-      besthit = currhit;
-      bestIsSky = isSky;
-      besthdist = (currhit-linestart).lengthSquared();
-      bestNormal = bfloor.GetNormal();
-    }
+    UPDATE_PLANE_HIT(bfloor);
     // check sector ceiling
-    if (!CheckPlaneHit(bceil, linestart, lineend, currhit, isSky, threshold)) {
-      wasHit = true;
-      float dist = (currhit-linestart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        bestIsSky = isSky;
-        besthdist = dist;
-        bestNormal = bceil.GetNormal();
-      }
-    }
+    UPDATE_PLANE_HIT(bceil);
   }
 
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    if (!(reg->efloor.splane->flags&flagmask) &&
-        !CheckPlaneHit(reg->efloor, linestart, lineend, currhit, isSky, threshold)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-linestart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        bestIsSky = isSky;
-        besthdist = dist;
-        bestNormal = reg->efloor.GetNormal();
-      }
+    if ((reg->efloor.splane->flags&flagmask) == 0) {
+      UPDATE_PLANE_HIT(reg->efloor);
     }
-    if (!(reg->eceiling.splane->flags&(unsigned)flagmask) &&
-        !CheckPlaneHit(reg->eceiling, linestart, lineend, currhit, isSky, threshold)) {
-      // hit something
-      wasHit = true;
-      float dist = (currhit-linestart).lengthSquared();
-      if (dist < besthdist) {
-        besthit = currhit;
-        bestIsSky = isSky;
-        besthdist = dist;
-        bestNormal = reg->eceiling.GetNormal();
-      }
+    if ((reg->eceiling.splane->flags&(unsigned)flagmask) == 0) {
+      UPDATE_PLANE_HIT(reg->eceiling);
     }
   }
 
