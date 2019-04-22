@@ -579,15 +579,15 @@ protected:
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();
 
-  void CreateMidSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], bool doOffset=false);
+  void CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], bool doOffset=false);
 
-  void SetupOneSidedWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
-  void SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *TTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
-  void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *BTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
-  void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
-  void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp, VTexture *MTextr,
+  void SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
+  void SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp,
                                    TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, opening_t *ops);
 
   // surf methods
