@@ -142,7 +142,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       SurfMaskedGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
     }
   } else {
-    if (r_adv_masked_wall_vertex_light && RendLev->IsAdvancedRenderer()) {
+    if (r_adv_masked_wall_vertex_light) {
       // collect vertex lighting
       //FIXME: this should be rendered in ambient pass instead
       //       also, we can subdivide surfaces for two-sided walls for

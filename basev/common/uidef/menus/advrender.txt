@@ -56,19 +56,6 @@ menudef AdvRenderOptions {
   }
 
 
-  header "Both Renderers Options";
-
-  option bool {
-    title = "Steamline Masked Walls";
-    cvar = r_steamline_masked_walls;
-    help =
-      "Render masked (two-sided, non-translucent) walls with normal pipeline."
-      "This can cause rendering glitches if such walls has translucency"
-      "(i.e. not strictly transparent/opaque pixels), but lighting will be"
-      "much better (for both lightmapped and stenciled renderers).";
-  }
-
-
   header "Stencil Shadows Options";
 
   option bool {
@@ -173,20 +160,6 @@ menudef AdvRenderOptions {
     help =
       "Limit z by the actual light radius, if your GPU can do it."
       "This can buy you some FPS by reducing fill rate.";
-  }
-
-  option bool {
-    title = "Better masked wall lighting";
-    cvar = r_adv_masked_wall_vertex_light;
-    help =
-      "Estimate lighting of masked wall using its vertices?"
-      "Currently, masked (two-sided) walls are not affected by"
-      "dynamic lighting. Until this is fixed, you can use this"
-      "option to estimate lighting in such cases."
-      "Note that this can slow down rendering for maps with alot"
-      "of two-sided walls (this includes things like emulated grass, etc.)."
-      "Please note that this doesn't mater if 'Steamline Masked Walls'"
-      "is turned on.";
   }
 
 

@@ -47,8 +47,6 @@ static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rend
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
 
-static VCvarB r_steamline_masked_walls("r_steamline_masked_walls", true, "Render masked (two-sided) walls as normal ones.", CVAR_Archive);
-
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 static VCvarB r_flood_renderer("r_flood_renderer", false, "Use new floodfill renderer?", CVAR_PreInit);
@@ -267,13 +265,10 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->Fade = Fade;
     surfs->dlightframe = sub->dlightframe;
     surfs->dlightbits = sub->dlightbits;
-    if (r_steamline_masked_walls && texinfo->Alpha == 1.0f) {
-      surfs->drawflags |= surface_t::DF_MASKED;
-    } else {
-      surfs->drawflags &= ~surface_t::DF_MASKED;
-    }
+    // alpha: 1.0 is masked wall, 1.1 is solid wall
+    if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
 
-    if (texinfo->Alpha > 1.0f || (r_steamline_masked_walls && texinfo->Alpha >= 1.0f)) {
+    if (texinfo->Alpha >= 1.0f) {
       if (PortalLevel == 0) {
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = surfs;

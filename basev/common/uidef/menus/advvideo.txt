@@ -95,6 +95,18 @@ menudef AdvVideoOptions {
     cvar = r_drawfuzz;
   }
 
+  option bool {
+    title = "Better translucent wall lighting";
+    cvar = r_adv_masked_wall_vertex_light;
+    help =
+      "Estimate lighting of translucent wall using its vertices?"
+      "Currently, translucent walls are not affected by dynamic"
+      "lighting. You can use this option to estimate lighting in"
+      "such cases."
+      "Note that this can slow down rendering for maps with alot of"
+      "translucent walls.";
+  }
+
 
   header "Dynamic Lighting";
 
