@@ -293,8 +293,8 @@ public:
       dist = DotProduct(point, normal);
     } else {
       //k8: what to do here?!
-      normal = TVec(0.0f, 0.0f, 1.0f);
-      dist = 1.0f;
+      normal = TVec(1.0f, 0.0f, 0.0f);
+      dist = 0.0f;
     }
   }
 
@@ -313,13 +313,13 @@ public:
         dist = DotProduct(point, normal);
       } else {
         //k8: what to do here?!
-        normal = TVec(0.0f, 0.0f, 1.0f);
-        dist = 1.0f;
+        normal = TVec(1.0f, 0.0f, 0.0f);
+        dist = 0.0f;
       }
     } else {
       //k8: what to do here?!
-      normal = TVec(0.0f, 0.0f, 1.0f);
-      dist = 1.0f;
+      normal = TVec(1.0f, 0.0f, 0.0f);
+      dist = 0.0f;
     }
   }
 
