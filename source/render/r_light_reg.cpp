@@ -1380,6 +1380,7 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
     other->chain = freeblocks;
     freeblocks = other;
   }
+
   return block;
 }
 
@@ -1389,8 +1390,11 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
 //  VRenderLevel::FreeSurfCache
 //
 //==========================================================================
-void VRenderLevel::FreeSurfCache (surfcache_t *block) {
-  FreeBlock(block, true);
+void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
+  if (block) {
+    FreeBlock(block, true);
+    block = nullptr;
+  }
 }
 
 

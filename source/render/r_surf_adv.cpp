@@ -33,7 +33,7 @@
 //  VAdvancedRenderLevel::InitSurfs
 //
 //==========================================================================
-void VAdvancedRenderLevel::InitSurfs (surface_t *surfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
+void VAdvancedRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *surfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
   // it's always one surface
   if (surfs && plane) {
     surfs->texinfo = texinfo;

@@ -470,7 +470,7 @@ void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
 //  VRenderLevelShared::FreeSurfCache
 //
 //==========================================================================
-void VRenderLevelShared::FreeSurfCache (surfcache_t *) {
+void VRenderLevelShared::FreeSurfCache (surfcache_t *&) {
 }
 
 

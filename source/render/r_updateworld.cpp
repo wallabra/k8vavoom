@@ -51,7 +51,7 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   if (sub->updateWorldFrame == updateWorldFrame) return;
   sub->updateWorldFrame = updateWorldFrame;
 
-  if (bbox && updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
+  //if (bbox && updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -150,7 +150,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
   if (!(bspnum&NF_SUBSECTOR)) {
     // nope, this is a normal node
     node_t *bsp = &Level->Nodes[bspnum];
-    if (updateWorldCheckVisFrame && Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
+    //if (Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
     // decide which side the view point is on
     unsigned side = bsp->PointOnSide(vieworg);
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);

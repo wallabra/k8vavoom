@@ -51,8 +51,6 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
 {
   NeedsInfiniteFarClip = false;
   mIsAdvancedRenderer = false;
-  showCreateWorldSurfProgress = true; // we want it
-  updateWorldCheckVisFrame = true; // we want it
 
   memset(cacheblocks, 0, sizeof(cacheblocks));
   memset(blockbuf, 0, sizeof(blockbuf));

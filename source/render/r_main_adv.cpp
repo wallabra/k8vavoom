@@ -92,8 +92,6 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
 {
   NeedsInfiniteFarClip = true;
   mIsAdvancedRenderer = true;
-  showCreateWorldSurfProgress = false; // just in case
-  updateWorldCheckVisFrame = false; // we don't want it
 }
 
 

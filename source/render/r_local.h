@@ -397,9 +397,7 @@ protected:
   TVec lastDLightView;
   subsector_t *lastDLightViewSub;
 
-  bool showCreateWorldSurfProgress;
-
-  bool updateWorldCheckVisFrame; // `true` for regular, `false` for advanced
+  bool inWorldCreation; // are we creating world surfaces now?
 
   // mark all updated subsectors with this; increment on each new frame
   vuint32 updateWorldFrame;
@@ -524,11 +522,11 @@ protected:
   // returns attenuation multiplier (0 means "out of cone")
   static float CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
 
-  virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
   virtual void QueueWorldSurface (surface_t*) = 0;
-  virtual void FreeSurfCache (surfcache_t*);
+  virtual void FreeSurfCache (surfcache_t *&block);
   virtual bool CacheSurface (surface_t*);
 
   // this should be called after `RenderWorld()`
@@ -592,7 +590,7 @@ protected:
 
   // surf methods
   void SetupSky ();
-  void FlushSurfCaches (surface_t*);
+  void FlushSurfCaches (surface_t *InSurfs);
   // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
   // this is used both to create initial surfaces, and to update changed surfaces
   sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, bool createSurface);
@@ -786,7 +784,7 @@ protected:
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
 
   // surf methods
-  virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) override;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
@@ -805,7 +803,7 @@ protected:
   virtual void GentlyFlushAllCaches () override;
   surfcache_t *AllocBlock (int, int);
   surfcache_t *FreeBlock (surfcache_t*, bool);
-  virtual void FreeSurfCache (surfcache_t*) override;
+  virtual void FreeSurfCache (surfcache_t *&block) override;
   virtual bool CacheSurface (surface_t*) override;
 
   // world BSP rendering
@@ -835,7 +833,7 @@ protected:
   virtual void RenderScene (const refdef_t*, const VViewClipper*) override;
 
   // surf methods
-  virtual void InitSurfs (surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) override;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 

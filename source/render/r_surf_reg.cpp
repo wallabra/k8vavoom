@@ -99,7 +99,7 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
 //  VRenderLevel::InitSurfs
 //
 //==========================================================================
-void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
+void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
   for (surface_t *surf = ASurfs; surf; surf = surf->next) {
@@ -125,7 +125,17 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surf->subsector = sub;
       surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
     } else {
+      short old_texturemins[2];
+      short old_extents[2];
+
+      // to do checking later
+      old_texturemins[0] = surf->texturemins[0];
+      old_texturemins[1] = surf->texturemins[1];
+      old_extents[0] = surf->extents[0];
+      old_extents[1] = surf->extents[1];
+
       float mins, maxs;
+
       if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxis, texinfo->soffs)) {
         // bad surface
         continue;
@@ -168,11 +178,31 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
         surf->extents[1] = (bmaxs-bmins)*16;
       }
 
-      if (!doPrecalc && showCreateWorldSurfProgress && !surf->lightmap) {
+      /*
+      if (!doPrecalc && inWorldCreation && !surf->lightmap) {
         surf->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         LightFace(surf, sub);
+      }
+      */
+
+      // reset surface cache only if something was changed
+      bool minMaxChanged =
+        recalcStaticLightmaps ||
+        old_texturemins[0] != surf->texturemins[0] ||
+        old_texturemins[1] != surf->texturemins[1] ||
+        old_extents[0] != surf->extents[0] ||
+        old_extents[1] != surf->extents[1];
+
+      if (minMaxChanged) FlushSurfCaches(surf);
+
+      if (inWorldCreation && doPrecalc) {
+        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
+        LightFace(surf, sub);
+      } else {
+        // recalculate lightmap when we'll need to
+        if (recalcStaticLightmaps || inWorldCreation) surf->drawflags |= surface_t::DF_CALC_LMAP;
       }
     }
   }
