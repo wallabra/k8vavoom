@@ -124,6 +124,7 @@ public:
   void ParseSideDef ();
   void ParseThing ();
   void ParseKey ();
+  bool CanSilentlyIgnoreKey () const;
   int CheckInt ();
   float CheckFloat ();
   bool CheckBool ();
@@ -141,6 +142,18 @@ public:
 //
 //==========================================================================
 VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump)) {
+}
+
+
+//==========================================================================
+//
+//  VUdmfParser::CanSilentlyIgnoreKey
+//
+//==========================================================================
+bool VUdmfParser::CanSilentlyIgnoreKey () const {
+  return
+    Key.startsWithCI("user_") ||
+    Key.strEquCI("comment");
 }
 
 
@@ -334,8 +347,15 @@ void VUdmfParser::ParseVertex () {
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
-         if (Key.strEquCI("x")) V.x = CheckFloat();
-    else if (Key.strEquCI("y")) V.y = CheckFloat();
+    if (Key.strEquCI("x")) {
+      V.x = CheckFloat();
+      continue;
+    }
+    if (Key.strEquCI("y")) {
+      V.y = CheckFloat();
+      continue;
+    }
+    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown vertex property '%s' with value '%s'", *Key, *Val));
   }
 }
 
@@ -506,7 +526,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       */
     }
 
-    sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
+    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
   }
 }
 
@@ -815,7 +835,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       }
     }
 
-    sc.Message(va("UDMF: unknown linedef property '%s' with value '%s'", *Key, *Val));
+    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown linedef property '%s' with value '%s'", *Key, *Val));
   }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
@@ -966,7 +986,7 @@ void VUdmfParser::ParseSideDef () {
       }
     }
 
-    sc.Message(va("UDMF: unknown sidedef property '%s' with value '%s'", *Key, *Val));
+    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sidedef property '%s' with value '%s'", *Key, *Val));
   }
 
   S.S.TopTextureOffset += XOffs;
@@ -1140,7 +1160,7 @@ void VUdmfParser::ParseThing () {
       }
     }
 
-    sc.Message(va("UDMF: unknown thing property '%s' with value '%s'", *Key, *Val));
+    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown thing property '%s' with value '%s'", *Key, *Val));
   }
 }
 
