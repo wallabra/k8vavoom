@@ -524,30 +524,17 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     } else if (seg->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(sub, secregion, dseg);
     } else {
-      if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
-        SkyBox, -1, sidedef->Light,
-        !!(sidedef->Flags&SDF_ABSLIGHT), false);
+      if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
-    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
-      SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
   } else {
     // two sided line
-    if (dseg->top) DrawSurfaces(sub, secregion, seg, dseg->top->surfs, &dseg->top->texinfo,
-      SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
-      SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    if (dseg->bot) DrawSurfaces(sub, secregion, seg, dseg->bot->surfs, &dseg->bot->texinfo,
-      SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags&SDF_ABSLIGHT), false);
-    if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
-      SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->top) DrawSurfaces(sub, secregion, seg, dseg->top->surfs, &dseg->top->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->topsky) DrawSurfaces(sub, secregion, nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->bot) DrawSurfaces(sub, secregion, seg, dseg->bot->surfs, &dseg->bot->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawSurfaces(sub, secregion, seg, sp->surfs, &sp->texinfo, SkyBox,
-        -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
+      DrawSurfaces(sub, secregion, seg, sp->surfs, &sp->texinfo, SkyBox, -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
   }
 }
@@ -724,19 +711,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
   // update world
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-#if 0
-    sub->updateWorldFrame = updateWorldFrame;
-    if (!updateWorldCheckVisFrame || !Level->HasPVS() || sub->VisFrame == currVisFrame) {
-      //k8: i don't know yet if we have to restore `r_surf_sub`, so let's play safe here
-      //auto oldrss = r_surf_sub;
-      //r_surf_sub = sub;
-      //bool updatePoly = true;
-      UpdateSubRegion(sub, sub->regions);
-      //r_surf_sub = oldrss;
-    }
-#else
     UpdateSubsector(num, nullptr); // trigger BSP updating
-#endif
   }
 
   bool addPoly = true;

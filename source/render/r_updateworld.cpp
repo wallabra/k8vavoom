@@ -48,9 +48,7 @@ VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector 
 void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
   subsector_t *sub = &Level->Subsectors[num];
 
-  if (bbox) {
-    if (sub->updateWorldFrame == updateWorldFrame) return;
-  }
+  if (sub->updateWorldFrame == updateWorldFrame) return;
   sub->updateWorldFrame = updateWorldFrame;
 
   if (bbox && updateWorldCheckVisFrame && Level->HasPVS() && sub->VisFrame != currVisFrame) return;
