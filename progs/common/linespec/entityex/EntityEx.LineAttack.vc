@@ -668,21 +668,21 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
 {
   TVec hitpoint, hitnormal;
   bool hitsky;
-  if (CheckHitPlanes(sec, true, linestart, lineend, SPF_NOBLOCKSHOOT, out hitpoint, out hitnormal, out hitsky)) {
+  if (!CheckHitPlanes(sec, checkSectorBounds:true, linestart, lineend, SPF_NOBLOCKSHOOT, out hitpoint, out hitnormal, out hitsky)) {
     if (outHitPoint) *outHitPoint = hitpoint;
     // if we are shooting floor or ceiling we are adjusting position
     // to spawn puff on floor or ceiling, not on wall
     if (!hitsky && PuffType) {
       // position a bit closer
-      hitpoint += 4.0*hitnormal;
+      //hitpoint += 1.5*hitnormal;
       // spawn bullet puffs
       //SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
       SpawnPuff(hitpoint, range, PuffType, false);
     }
-    return true;
+    return false;
   }
   if (outHitPoint) *outHitPoint = lineend;
-  return false;
+  return true;
 }
 
 
