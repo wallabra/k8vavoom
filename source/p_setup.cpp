@@ -2046,6 +2046,13 @@ void VLevel::PostLoadSegs () {
       if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
       if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-Subsectors));
       //Sys_Error("zero-length seg #%d", i);
+      if (seg->partner) {
+        if (seg->partner->partner) {
+          check(seg->partner->partner == seg);
+          seg->partner->partner = nullptr;
+        }
+        seg->partner = nullptr;
+      }
       seg->offset = 0.0f;
       seg->length = 0.0001f;
       // setup fake seg's plane params
