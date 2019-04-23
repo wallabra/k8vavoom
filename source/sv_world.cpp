@@ -371,6 +371,9 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
   }
   op.range = op.top-op.bottom;
   op.lowfloor = op.bottom;
+  op.highceiling = op.top;
+  op.elowfloor = op.efloor;
+  op.ehighceiling = op.eceiling;
   op.next = nullptr;
   if (hasSlopes) *hasSlopes = (op.efloor.isSlope() || op.eceiling.isSlope());
 }
@@ -400,6 +403,7 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
   bool slopeDetected = false;
   opening_t cop;
   cop.lowfloor = 0.0f; // for now
+  cop.highceiling = 0.0f; // for now
   //bool hadNonSolid;
   // skip base region for now
   for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
@@ -608,12 +612,12 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
           op->bottom = floorz;
           op->lowfloor = floorz;
           op->efloor.set(&linedef->frontsector->floor, false);
-          //op->lowfloorplane = &linedef->frontsector->floor;
+          op->elowfloor = op->efloor;
           // top
           op->top = bot;
-          //op->highceiling = ceilz;
+          op->highceiling = ceilz;
           op->eceiling.set(&linedef->frontsector->ceiling, false);
-          //op->highceilingplane = &linedef->frontsector->ceiling;
+          op->ehighceiling = op->eceiling;
           op->range = op->top-op->bottom;
         }
         // top opening
@@ -626,12 +630,12 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
           op->bottom = top;
           op->lowfloor = floorz;
           op->efloor.set(&linedef->frontsector->floor, false);
-          //op->lowfloorplane = &linedef->frontsector->floor;
+          op->elowfloor = op->efloor;
           // top
           op->top = ceilz;
-          //op->highceiling = ceilz;
+          op->highceiling = ceilz;
           op->eceiling.set(&linedef->frontsector->ceiling, false);
-          //op->highceilingplane = &linedef->frontsector->ceiling;
+          op->ehighceiling = op->eceiling;
           op->range = op->top-op->bottom;
         }
         return op;
@@ -675,18 +679,24 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       dop->efloor = fop.efloor;
       dop->bottom = fop.bottom;
       dop->lowfloor = bop.bottom;
+      dop->elowfloor = bop.efloor;
     } else {
       dop->efloor = bop.efloor;
       dop->bottom = bop.bottom;
       dop->lowfloor = fop.bottom;
+      dop->elowfloor = fop.efloor;
     }
     // setup ceiling
     if (fop.top <= bop.top) {
       dop->eceiling = fop.eceiling;
       dop->top = fop.top;
+      dop->highceiling = bop.top;
+      dop->ehighceiling = bop.eceiling;
     } else {
       dop->eceiling = bop.eceiling;
       dop->top = bop.top;
+      dop->highceiling = fop.top;
+      dop->ehighceiling = fop.eceiling;
     }
     dop->range = dop->top-dop->bottom;
     dop->next = nullptr;
@@ -763,18 +773,24 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       dest->efloor = op0->efloor;
       dest->bottom = op0->bottom;
       dest->lowfloor = op1->bottom;
+      dest->elowfloor = op1->efloor;
     } else {
       dest->efloor = op1->efloor;
       dest->bottom = op1->bottom;
       dest->lowfloor = op0->bottom;
+      dest->elowfloor = op0->efloor;
     }
     // ceiling
     if (op0->top <= op1->top) {
       dest->eceiling = op0->eceiling;
       dest->top = op0->top;
+      dest->highceiling = op1->top;
+      dest->eceiling = op1->eceiling;
     } else {
       dest->eceiling = op1->eceiling;
       dest->top = op1->top;
+      dest->highceiling = op0->top;
+      dest->eceiling = op0->eceiling;
     }
     dest->range = dest->top-dest->bottom;
 #ifdef VV_DUMP_OPENING_CREATION
