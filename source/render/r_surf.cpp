@@ -499,6 +499,8 @@ void VRenderLevelShared::CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   sp->texinfo.Tex = GTextureManager[skyflatnum];
   sp->texinfo.noDecals = sp->texinfo.Tex->noDecals;
   sp->texinfo.Alpha = 1.1f;
@@ -536,6 +538,8 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   sp->texinfo.Tex = GTextureManager[skyflatnum];
   sp->texinfo.noDecals = sp->texinfo.Tex->noDecals;
   sp->texinfo.Alpha = 1.1f;
@@ -573,6 +577,8 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
@@ -656,6 +662,8 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
@@ -733,6 +741,8 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
@@ -818,6 +828,8 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  FreeWSurfs(sp->surfs);
+
   const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
@@ -997,6 +1009,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp,
                                                      TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, opening_t *ops)
 {
+  FreeWSurfs(sp->surfs);
+
   const side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
   VTexture *MTex = GTextureManager(extraside->MidTexture);
@@ -1150,17 +1164,18 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
 //==========================================================================
 //
-//  CheckCommonRecreate
+//  CheckCommonRecreateEx
 //
 //==========================================================================
-static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTex, const TPlane *floor, const TPlane *ceiling) {
+static inline bool CheckCommonRecreateEx (segpart_t *sp, VTexture *NTex, const TPlane *floor, const TPlane *ceiling,
+                                          const TPlane *backfloor, const TPlane *backceiling)
+{
   if (!NTex) NTex = GTextureManager[GTextureManager.DefaultTexture];
   bool res =
     (ceiling ? FASI(sp->frontTopDist) != FASI(ceiling->dist) : false) ||
     (floor ? FASI(sp->frontBotDist) != FASI(floor->dist) : false) ||
-    (seg->backsector ?
-      (FASI(sp->backTopDist) != FASI(seg->backsector->ceiling.dist) ||
-       FASI(sp->backBotDist) != FASI(seg->backsector->floor.dist)) : false) ||
+    (backceiling ? FASI(sp->backTopDist) != FASI(backceiling->dist) : false) ||
+    (backfloor ? FASI(sp->backBotDist) != FASI(backfloor->dist) : false) ||
     FASI(sp->texinfo.Tex->SScale) != FASI(NTex->SScale) ||
     FASI(sp->texinfo.Tex->TScale) != FASI(NTex->TScale) ||
     (sp->texinfo.Tex->Type == TEXTYPE_Null) != (NTex->Type == TEXTYPE_Null) ||
@@ -1170,6 +1185,20 @@ static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTe
   sp->texinfo.Tex = NTex;
   sp->texinfo.noDecals = NTex->noDecals;
   return res;
+}
+
+
+//==========================================================================
+//
+//  CheckCommonRecreate
+//
+//==========================================================================
+static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTex, const TPlane *floor, const TPlane *ceiling) {
+  if (seg->backsector) {
+    return CheckCommonRecreateEx(sp, NTex, floor, ceiling, &seg->backsector->floor, &seg->backsector->ceiling);
+  } else {
+    return CheckCommonRecreateEx(sp, NTex, floor, ceiling, nullptr, nullptr);
+  }
 }
 
 
@@ -1278,7 +1307,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     segpart_t *sp = dseg->topsky;
     if (sp) {
       if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
-        FreeWSurfs(sp->surfs);
         SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColourMap = ColourMap;
@@ -1288,7 +1316,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->mid;
     if (sp) {
       if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        FreeWSurfs(sp->surfs);
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->MidTextureOffset, &seg->sidedef->MidRowOffset);
@@ -1303,7 +1330,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     segpart_t *sp = dseg->topsky;
     if (sp) {
       if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
-        FreeWSurfs(sp->surfs);
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColourMap = ColourMap;
@@ -1313,7 +1339,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->top;
     if (sp) {
       if (CheckTopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        FreeWSurfs(sp->surfs);
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->TopTextureOffset, &seg->sidedef->TopRowOffset);
@@ -1325,7 +1350,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->bot;
     if (sp) {
       if (CheckBopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        FreeWSurfs(sp->surfs);
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->BotTextureOffset, &seg->sidedef->BotRowOffset);
@@ -1337,7 +1361,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->mid;
     if (sp) {
       if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        FreeWSurfs(sp->surfs);
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->MidTextureOffset, &seg->sidedef->MidRowOffset);
@@ -1363,8 +1386,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       VTexture *MTex = GTextureManager(extraside->MidTexture);
       if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
-      if (CheckCommonRecreate(seg, sp, MTex, r_floor.splane, r_ceiling.splane)) {
-        FreeWSurfs(sp->surfs);
+      if (CheckCommonRecreateEx(sp, MTex, r_floor.splane, r_ceiling.splane, reg->efloor.splane, reg->eceiling.splane)) {
         if (!opsCreated) {
           opsCreated = true;
           ops = SV_SectorOpenings(seg->frontsector);
