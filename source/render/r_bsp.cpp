@@ -308,39 +308,40 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
   // handle top part
   if (TopZ > HorizonZ) {
     sec_surface_t *Ceil = (subregion->fakeceil ? subregion->fakeceil : subregion->realceil);
+    if (Ceil) {
+      // calculate light and fade
+      sec_params_t *LightParams = Ceil->esecplane.splane->LightSourceSector != -1 ?
+        &Level->Sectors[Ceil->esecplane.splane->LightSourceSector].params :
+        secregion->params;
+      int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
+      if (r_darken) lLev = light_remap[lLev];
+      vuint32 Fade = GetFade(secregion);
 
-    // calculate light and fade
-    sec_params_t *LightParams = Ceil->esecplane.splane->LightSourceSector != -1 ?
-      &Level->Sectors[Ceil->esecplane.splane->LightSourceSector].params :
-      secregion->params;
-    int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
-    if (r_darken) lLev = light_remap[lLev];
-    vuint32 Fade = GetFade(secregion);
-
-    surface_t *Surf = dseg->HorizonTop;
-    Surf->eplane = dseg->seg;
-    Surf->texinfo = &Ceil->texinfo;
-    Surf->HorizonPlane = Ceil->esecplane.splane; //FIXME: 3dfloor
-    Surf->Light = (lLev<<24)|LightParams->LightColour;
-    Surf->Fade = Fade;
-    Surf->count = 4;
-    TVec *svs = &Surf->verts[0];
-    svs[0] = *seg->v1; svs[0].z = MAX(BotZ, HorizonZ);
-    svs[1] = *seg->v1; svs[1].z = TopZ;
-    svs[2] = *seg->v2; svs[2].z = TopZ;
-    svs[3] = *seg->v2; svs[3].z = MAX(BotZ, HorizonZ);
-    if (Ceil->esecplane.splane->pic == skyflatnum) {
-      // if it's a sky, render it as a regular sky surface
-      DrawSurfaces(sub, secregion, nullptr, Surf, &Ceil->texinfo, secregion->eceiling.splane->SkyBox, -1,
-        seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
-        false);
-    } else {
-      if (PortalLevel == 0) {
-        world_surf_t &S = WorldSurfs.Alloc();
-        S.Surf = Surf;
-        S.Type = 2;
+      surface_t *Surf = dseg->HorizonTop;
+      Surf->eplane = dseg->seg;
+      Surf->texinfo = &Ceil->texinfo;
+      Surf->HorizonPlane = Ceil->esecplane.splane; //FIXME: 3dfloor
+      Surf->Light = (lLev<<24)|LightParams->LightColour;
+      Surf->Fade = Fade;
+      Surf->count = 4;
+      TVec *svs = &Surf->verts[0];
+      svs[0] = *seg->v1; svs[0].z = MAX(BotZ, HorizonZ);
+      svs[1] = *seg->v1; svs[1].z = TopZ;
+      svs[2] = *seg->v2; svs[2].z = TopZ;
+      svs[3] = *seg->v2; svs[3].z = MAX(BotZ, HorizonZ);
+      if (Ceil->esecplane.splane->pic == skyflatnum) {
+        // if it's a sky, render it as a regular sky surface
+        DrawSurfaces(sub, secregion, nullptr, Surf, &Ceil->texinfo, secregion->eceiling.splane->SkyBox, -1,
+          seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
+          false);
       } else {
-        QueueHorizonPortal(Surf);
+        if (PortalLevel == 0) {
+          world_surf_t &S = WorldSurfs.Alloc();
+          S.Surf = Surf;
+          S.Type = 2;
+        } else {
+          QueueHorizonPortal(Surf);
+        }
       }
     }
   }
@@ -348,39 +349,40 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
   // handle bottom part
   if (BotZ < HorizonZ) {
     sec_surface_t *Floor = (subregion->fakefloor ? subregion->fakefloor : subregion->realfloor);
+    if (Floor) {
+      // calculate light and fade
+      sec_params_t *LightParams = Floor->esecplane.splane->LightSourceSector != -1 ?
+        &Level->Sectors[Floor->esecplane.splane->LightSourceSector].params :
+        secregion->params;
+      int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
+      if (r_darken) lLev = light_remap[lLev];
+      vuint32 Fade = GetFade(secregion);
 
-    // calculate light and fade
-    sec_params_t *LightParams = Floor->esecplane.splane->LightSourceSector != -1 ?
-      &Level->Sectors[Floor->esecplane.splane->LightSourceSector].params :
-      secregion->params;
-    int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
-    if (r_darken) lLev = light_remap[lLev];
-    vuint32 Fade = GetFade(secregion);
-
-    surface_t *Surf = dseg->HorizonBot;
-    Surf->eplane = dseg->seg;
-    Surf->texinfo = &Floor->texinfo;
-    Surf->HorizonPlane = Floor->esecplane.splane; //FIXME: 3dfloor
-    Surf->Light = (lLev<<24)|LightParams->LightColour;
-    Surf->Fade = Fade;
-    Surf->count = 4;
-    TVec *svs = &Surf->verts[0];
-    svs[0] = *seg->v1; svs[0].z = BotZ;
-    svs[1] = *seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
-    svs[2] = *seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
-    svs[3] = *seg->v2; svs[3].z = BotZ;
-    if (Floor->esecplane.splane->pic == skyflatnum) {
-      // if it's a sky, render it as a regular sky surface
-      DrawSurfaces(sub, secregion, nullptr, Surf, &Floor->texinfo, secregion->efloor.splane->SkyBox, -1,
-        seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
-        false);
-    } else {
-      if (PortalLevel == 0) {
-        world_surf_t &S = WorldSurfs.Alloc();
-        S.Surf = Surf;
-        S.Type = 2;
+      surface_t *Surf = dseg->HorizonBot;
+      Surf->eplane = dseg->seg;
+      Surf->texinfo = &Floor->texinfo;
+      Surf->HorizonPlane = Floor->esecplane.splane; //FIXME: 3dfloor
+      Surf->Light = (lLev<<24)|LightParams->LightColour;
+      Surf->Fade = Fade;
+      Surf->count = 4;
+      TVec *svs = &Surf->verts[0];
+      svs[0] = *seg->v1; svs[0].z = BotZ;
+      svs[1] = *seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
+      svs[2] = *seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
+      svs[3] = *seg->v2; svs[3].z = BotZ;
+      if (Floor->esecplane.splane->pic == skyflatnum) {
+        // if it's a sky, render it as a regular sky surface
+        DrawSurfaces(sub, secregion, nullptr, Surf, &Floor->texinfo, secregion->efloor.splane->SkyBox, -1,
+          seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
+          false);
       } else {
-        QueueHorizonPortal(Surf);
+        if (PortalLevel == 0) {
+          world_surf_t &S = WorldSurfs.Alloc();
+          S.Surf = Surf;
+          S.Type = 2;
+        } else {
+          QueueHorizonPortal(Surf);
+        }
       }
     }
   }
@@ -604,10 +606,16 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //==========================================================================
 void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper) {
   //const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
-  const float d = (region->fakefloor ? region->fakefloor : region->realfloor)->PointDist(vieworg);
-  if (region->next && d <= 0.0f) {
-    if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next, addPoly, useClipper);
+  sec_surface_t *floor = (region->fakefloor ? region->fakefloor : region->realfloor);
+  float d;
+  if (floor) {
+    d = floor->PointDist(vieworg);
+    if (region->next && d <= 0.0f) {
+      if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
+      RenderSubRegion(sub, region->next, addPoly, useClipper);
+    }
+  } else {
+    d = 1.0f;
   }
 
   check(sub->sector != nullptr);
@@ -631,8 +639,8 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
     ++ds;
   }
 
-  RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
-  RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
+  if (region->realfloor) RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
+  if (region->realceil) RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
 
   if (region->fakefloor) RenderSecSurface(sub, secregion, region->fakefloor, secregion->efloor.splane->SkyBox);
   if (region->fakeceil) RenderSecSurface(sub, secregion, region->fakeceil, secregion->eceiling.splane->SkyBox);

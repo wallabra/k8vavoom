@@ -127,8 +127,7 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, bool createSurface) {
-  TSecPlaneRef spl(InSplane);
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane) {
   int vcount = sub->numlines;
 
   if (vcount < 3) {
@@ -139,11 +138,12 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   //check(vcount >= 3);
 
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
-  bool isSkyFlat = (spl.splane->pic == skyflatnum);
+  bool isSkyFlat = (InSplane.splane->pic == skyflatnum);
   bool recreateSurface = true;
   bool updateZ = false;
 
   // fix plane
+  TSecPlaneRef spl(InSplane);
   if (isSkyFlat && spl.GetNormalZ() < 0.0f) spl.set(&sky_plane, false);
 
   surface_t *surf = nullptr;
@@ -167,24 +167,22 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   }
 
   // this is required to calculate static lightmaps, and for other business
-  for (surface_t *ss = surf; ss; ss = ss->next) ss->subsector = sub; // this is required to calculate static lightmaps, and for other business
+  for (surface_t *ss = surf; ss; ss = ss->next) ss->subsector = sub;
 
   ssurf->esecplane = spl;
   ssurf->edist = spl.splane->dist;
 
-  if (!createSurface) return ssurf;
-
   // setup texture
   VTexture *Tex = GTextureManager(spl.splane->pic);
-  check(Tex);
-  if (fabsf(spl.GetNormalZ()) > 0.1f) {
+  if (!Tex) Tex = GTextureManager[GTextureManager.DefaultTexture];
+  if (fabsf(spl.splane->normal.z) > 0.1f) {
     float s, c;
     msincos(spl.splane->BaseAngle-spl.splane->Angle, &s, &c);
-    ssurf->texinfo.saxis = TVec(c,  s, 0)*TextureSScale(Tex)*spl.splane->XScale;
-    ssurf->texinfo.taxis = TVec(s, -c, 0)*TextureTScale(Tex)*spl.splane->YScale;
+    ssurf->texinfo.saxis = TVec(c,  s, 0)*(TextureSScale(Tex)*spl.splane->XScale);
+    ssurf->texinfo.taxis = TVec(s, -c, 0)*(TextureTScale(Tex)*spl.splane->YScale);
   } else {
-    ssurf->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(Tex)*spl.splane->YScale;
-    ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*TextureSScale(Tex)*spl.splane->XScale;
+    ssurf->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(Tex)*spl.splane->YScale);
+    ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*(TextureSScale(Tex)*spl.splane->XScale);
   }
   ssurf->texinfo.soffs = spl.splane->xoffs;
   ssurf->texinfo.toffs = spl.splane->yoffs+spl.splane->BaseYOffs;
@@ -253,9 +251,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool createSurface) {
-  if (!createSurface) return;
-
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub) {
   if (!ssurf->esecplane.splane->pic) return; // no texture? nothing to do
 
   TSecPlaneRef splane(ssurf->esecplane);
@@ -264,7 +260,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     // check for sky changes
     if ((splane.splane->pic == skyflatnum) != (RealPlane.splane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
-      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
       check(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColourMap = ColourMap; // just in case
       // nothing more to do
@@ -274,7 +270,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if (RealPlane.splane->pic == skyflatnum && RealPlane.GetNormalZ() < 0.0f) {
       if (splane.splane != &sky_plane) {
         // recreate it, just in case
-        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
         check(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColourMap = ColourMap; // just in case
         // nothing more to do
@@ -283,9 +279,6 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       splane.set(&sky_plane, false);
     }
   }
-
-  ssurf->texinfo.soffs = splane.splane->xoffs;
-  ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
 
   // if scale/angle was changed, we should update everything, and possibly rebuild the surface
   // our general surface creation function will take care of everything
@@ -300,7 +293,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       ssurf->YScale, splane.splane->YScale,
       ssurf->Angle, splane.splane->BaseAngle-splane.splane->Angle);
     */
-    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, createSurface);
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
     check(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColourMap = ColourMap; // just in case
     // nothing more to do
@@ -308,14 +301,18 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
   }
 
   ssurf->texinfo.ColourMap = ColourMap; // just in case
+  ssurf->texinfo.soffs = splane.splane->xoffs;
+  ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
+
+  //ssurf->texinfo.soffs = 10;
+  //ssurf->texinfo.toffs = 10;
 
   // ok, we still may need to update texture or z coords
   // update texture?
   VTexture *Tex = GTextureManager(splane.splane->pic);
-  if (ssurf->texinfo.Tex != Tex) {
-    ssurf->texinfo.Tex = Tex;
-    ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
-  }
+  if (!Tex) Tex = GTextureManager[GTextureManager.DefaultTexture];
+  ssurf->texinfo.Tex = Tex;
+  ssurf->texinfo.noDecals = Tex->noDecals;
 
   // update z coords?
   if (FASI(ssurf->edist) != FASI(splane.splane->dist)) {
@@ -1494,8 +1491,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->realfloor = CreateSecSurface(nullptr, sub, r_floor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
-      sreg->realceil = CreateSecSurface(nullptr, sub, r_ceiling, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
+      sreg->realfloor = (reg->regflags&sec_region_t::RF_SkipFloorSurf ? nullptr : CreateSecSurface(nullptr, sub, r_floor));
+      sreg->realceil = (reg->regflags&sec_region_t::RF_SkipCeilSurf ? nullptr : CreateSecSurface(nullptr, sub, r_ceiling));
 
       // create fake floor and ceiling
       if (ridx == 0 && sub->sector->fakefloors) {
@@ -1504,8 +1501,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
         if (!fakefloor.isFloor()) fakefloor.Flip();
         if (!fakeceil.isCeiling()) fakeceil.Flip();
-        sreg->fakefloor = CreateSecSurface(nullptr, sub, fakefloor, !(reg->regflags&sec_region_t::RF_SkipFloorSurf));
-        sreg->fakeceil = CreateSecSurface(nullptr, sub, fakeceil, !(reg->regflags&sec_region_t::RF_SkipCeilSurf));
+        sreg->fakefloor = (reg->regflags&sec_region_t::RF_SkipFloorSurf ? nullptr : CreateSecSurface(nullptr, sub, fakefloor));
+        sreg->fakeceil = (reg->regflags&sec_region_t::RF_SkipCeilSurf ? nullptr : CreateSecSurface(nullptr, sub, fakeceil));
       }
 
       sreg->count = sub->numlines;
@@ -1555,15 +1552,15 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
   }
 
-  UpdateSecSurface(region->realfloor, region->floorplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
-  UpdateSecSurface(region->realceil, region->ceilplane, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+  if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub);
+  if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
 
   if (region->fakefloor) {
     TSecPlaneRef fakefloor;
     fakefloor.set(&sub->sector->fakefloors->floorplane, false);
     if (!fakefloor.isFloor()) fakefloor.Flip();
     if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
-    UpdateSecSurface(region->fakefloor, fakefloor, sub, !(region->secregion->regflags&sec_region_t::RF_SkipFloorSurf));
+    UpdateSecSurface(region->fakefloor, fakefloor, sub);
   }
 
   if (region->fakeceil) {
@@ -1571,7 +1568,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
     if (!fakeceil.isCeiling()) fakeceil.Flip();
     if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
-    UpdateSecSurface(region->fakeceil, fakeceil, sub, !(region->secregion->regflags&sec_region_t::RF_SkipCeilSurf));
+    UpdateSecSurface(region->fakeceil, fakeceil, sub);
   }
 
   if (updatePoly && sub->poly) {

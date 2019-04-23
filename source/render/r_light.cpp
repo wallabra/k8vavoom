@@ -664,12 +664,16 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     }
   }
 
+  //FIXME: THIS IS WRONG!
   subregion_t *reg = sub->regions;
   if (!skipAmbient && reg) {
     while (reg->next) {
       //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      const float d = (reg->fakefloor ? reg->fakefloor : reg->realfloor)->PointDist(p);
-      if (d >= 0.0f) break;
+      sec_surface_t *floor = (reg->fakefloor ? reg->fakefloor : reg->realfloor);
+      if (floor) {
+        const float d = floor->PointDist(p);
+        if (d >= 0.0f) break;
+      }
       reg = reg->next;
     }
 
@@ -691,18 +695,24 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
 
     if (!IsAdvancedRenderer()) {
       // light from floor's lightmap
+      //FIXME: THIS IS WRONG!
       sec_surface_t *rfloor;
       if (reg->fakefloor) {
-        const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
-        const float realz = reg->realfloor->esecplane.GetPointZ(p);
-        if (fakez < realz) {
-          rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
+        if (reg->realfloor) {
+          const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
+          const float realz = reg->realfloor->esecplane.GetPointZ(p);
+          if (fakez < realz) {
+            rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
+          } else {
+            rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
+          }
         } else {
-          rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
+          rfloor = reg->fakefloor;
         }
       } else {
         rfloor = reg->realfloor;
       }
+      if (!rfloor) return;
       int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
       int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
       int ds, dt;

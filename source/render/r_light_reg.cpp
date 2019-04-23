@@ -951,8 +951,8 @@ void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int 
     for (int dscount = sub->numlines; dscount--; ++ds) {
       InvalidateLineLMaps(org, radius, ds);
     }
-    InvalidateSurfacesLMaps(org, radius, subregion->realfloor->surfs);
-    InvalidateSurfacesLMaps(org, radius, subregion->realceil->surfs);
+    if (subregion->realfloor) InvalidateSurfacesLMaps(org, radius, subregion->realfloor->surfs);
+    if (subregion->realceil) InvalidateSurfacesLMaps(org, radius, subregion->realceil->surfs);
     if (subregion->fakefloor) InvalidateSurfacesLMaps(org, radius, subregion->fakefloor->surfs);
     if (subregion->fakeceil) InvalidateSurfacesLMaps(org, radius, subregion->fakeceil->surfs);
   }

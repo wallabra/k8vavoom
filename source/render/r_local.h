@@ -592,8 +592,8 @@ protected:
   void FlushSurfCaches (surface_t *InSurfs);
   // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
   // this is used both to create initial surfaces, and to update changed surfaces
-  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, bool createSurface);
-  void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool createSurface); // subsector is not changed, but we need it non-const
+  sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane);
+  void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub); // subsector is not changed, but we need it non-const
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t *&);
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
