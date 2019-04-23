@@ -456,94 +456,6 @@ int VRenderLevelShared::CountSegParts (const seg_t *seg) {
 
 //==========================================================================
 //
-//  FixTexturePeg
-//
-//==========================================================================
-static inline void FixTexturePegMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
-  const line_t *linedef = seg->linedef;
-  if (linedef->flags&ML_DONTPEGBOTTOM) {
-    // bottom of texture at bottom
-    sp->texinfo.toffs = r_floor.splane->TexZ+(MTex->GetScaledHeight()*seg->sidedef->MidScaleY);
-  } else if (linedef->flags&ML_DONTPEGTOP) {
-    // top of texture at top of top region
-    sp->texinfo.toffs = seg->front_sub->sector->ceiling.TexZ;
-  } else {
-    // top of texture at top
-    sp->texinfo.toffs = r_ceiling.splane->TexZ;
-  }
-  sp->texinfo.toffs *= TextureTScale(MTex)*seg->sidedef->MidScaleY;
-  sp->texinfo.toffs += seg->sidedef->MidRowOffset*(TextureOffsetTScale(MTex)*seg->sidedef->MidScaleY);
-}
-
-
-//==========================================================================
-//
-//  FixTexturePegTop
-//
-//==========================================================================
-static inline void FixTexturePegTop (const seg_t *seg, segpart_t *sp, VTexture *TTex, const sec_plane_t *back_ceiling, float top_TexZ) {
-  if (seg->linedef->flags&ML_DONTPEGTOP) {
-    // top of texture at top
-    sp->texinfo.toffs = top_TexZ;
-  } else {
-    // bottom of texture
-    sp->texinfo.toffs = back_ceiling->TexZ+(TTex->GetScaledHeight()*seg->sidedef->MidScaleY);
-  }
-  sp->texinfo.toffs *= TextureTScale(TTex)*seg->sidedef->MidScaleY;
-  sp->texinfo.toffs += seg->sidedef->TopRowOffset*(TextureOffsetTScale(TTex)*seg->sidedef->MidScaleY);
-}
-
-
-//==========================================================================
-//
-//  FixTexturePegBot
-//
-//==========================================================================
-static inline void FixTexturePegBot (const seg_t *seg, segpart_t *sp, VTexture *BTex, const sec_plane_t *back_floor, float top_TexZ) {
-  if (seg->linedef->flags&ML_DONTPEGBOTTOM) {
-    // bottom of texture at bottom
-    // top of texture at top
-    sp->texinfo.toffs = top_TexZ;
-  } else {
-    // top of texture at top
-    sp->texinfo.toffs = back_floor->TexZ;
-  }
-  sp->texinfo.toffs *= TextureTScale(BTex)*seg->sidedef->BotScaleY;
-  sp->texinfo.toffs += seg->sidedef->BotRowOffset*(TextureOffsetTScale(BTex)*seg->sidedef->BotScaleY);
-}
-
-
-//==========================================================================
-//
-//  FixPegZOrgMid
-//
-//==========================================================================
-static inline float FixPegZOrgMid (const seg_t *seg, segpart_t *sp, VTexture *MTex, const float texh) {
-  float z_org;
-  if (seg->linedef->flags&ML_DONTPEGBOTTOM) {
-    // bottom of texture at bottom
-    // top of texture at top
-    z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
-  } else {
-    // top of texture at top
-    z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
-  }
-  //z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-  //z_org += (seg->sidedef->MidRowOffset+texh)*(seg->sidedef->MidScaleY*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale));
-  //k8: dunno why
-  if (seg->sidedef->MidRowOffset < 0) {
-    z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-  } else {
-    z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-  }
-  sp->texinfo.toffs = z_org*(TextureTScale(MTex)*seg->sidedef->MidScaleY);
-  //sp->texinfo.toffs = TextureTScale(MTex)*seg->sidedef->MidScaleY;
-  return z_org;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::CreateWorldSurfFromWV
 //
 //==========================================================================
@@ -581,62 +493,6 @@ void VRenderLevelShared::CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, se
   if (doOffset) for (unsigned f = 0; f < (unsigned)wcount; ++f) wstart[f] -= seg->normal*0.01f;
 
   AppendSurfaces(sp, CreateWSurf(wstart, &sp->texinfo, seg, sub, wcount));
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::SetupOneSidedMidWSurf
-//
-//==========================================================================
-void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
-  const side_t *sidedef = seg->sidedef;
-
-  VTexture *MTex = GTextureManager(sidedef->MidTexture);
-  // k8: one-sided line should have a midtex
-  if (!MTex) {
-    GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
-    MTex = GTextureManager[GTextureManager.DefaultTexture];
-  }
-  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->MidScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->MidScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
-                      sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*sidedef->MidScaleX);
-  sp->texinfo.Tex = MTex;
-  sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
-  sp->texinfo.Alpha = 1.1f;
-  sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
-
-  sp->TextureOffset = sidedef->MidTextureOffset;
-
-  FixTexturePegMid(seg, sp, MTex, r_floor, r_ceiling);
-
-  if (MTex->Type != TEXTYPE_Null) {
-    TVec wv[4];
-
-    wv[0].x = wv[1].x = seg->v1->x;
-    wv[0].y = wv[1].y = seg->v1->y;
-    wv[2].x = wv[3].x = seg->v2->x;
-    wv[2].y = wv[3].y = seg->v2->y;
-
-    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
-    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
-    const float botz1 = r_floor.GetPointZ(*seg->v1);
-    const float botz2 = r_floor.GetPointZ(*seg->v2);
-
-    wv[0].z = botz1;
-    wv[1].z = topz1;
-    wv[2].z = topz2;
-    wv[3].z = botz2;
-
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
-  }
-
-  sp->frontTopDist = r_ceiling.splane->dist;
-  sp->frontBotDist = r_floor.splane->dist;
-  sp->RowOffset = seg->sidedef->MidRowOffset;
 }
 
 
@@ -714,6 +570,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
   sec_plane_t *back_floor = &seg->backsector->floor;
@@ -729,7 +586,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*sidedef->TopScaleY);
   sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                       seg->offset*(TextureSScale(TTex)*sidedef->TopScaleX)+
-                      sidedef->TopTextureOffset*(TextureOffsetSScale(TTex)*sidedef->TopScaleX);
+                      sidedef->TopTextureOffset*TextureOffsetSScale(TTex);
   sp->texinfo.Tex = TTex;
   sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
   sp->texinfo.Alpha = 1.1f;
@@ -757,7 +614,15 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
       top_TexZ = back_ceiling->TexZ;
     }
 
-    FixTexturePegTop(seg, sp, TTex, back_ceiling, top_TexZ);
+    if (linedef->flags&ML_DONTPEGTOP) {
+      // top of texture at top
+      sp->texinfo.toffs = top_TexZ;
+    } else {
+      // bottom of texture
+      sp->texinfo.toffs = back_ceiling->TexZ+(TTex->GetScaledHeight()*sidedef->MidScaleY);
+    }
+    sp->texinfo.toffs *= TextureTScale(TTex)*sidedef->MidScaleY;
+    sp->texinfo.toffs += sidedef->TopRowOffset*TextureOffsetTScale(TTex);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -775,10 +640,9 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontTopDist = r_ceiling.splane->dist;
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = back_ceiling->dist;
-  sp->RowOffset = seg->sidedef->TopRowOffset;
-
   sp->backBotDist = back_floor->dist;
   sp->TextureOffset = sidedef->TopTextureOffset;
+  sp->RowOffset = sidedef->TopRowOffset;
 }
 
 
@@ -788,6 +652,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
   sec_plane_t *back_floor = &seg->backsector->floor;
@@ -799,11 +664,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*sidedef->BotScaleY);
   sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                       seg->offset*(TextureSScale(BTex)*sidedef->BotScaleX)+
-                      sidedef->BotTextureOffset*(TextureOffsetSScale(BTex)*sidedef->BotScaleX);
-  /*
-  sp->texinfo.toffs = seg->frontsector->floor.TexZ*(TextureTScale(BTex)*sidedef->BotScaleY)+
-                      sidedef->BotRowOffset*(TextureOffsetTScale(BTex)*sidedef->BotScaleY);
-  */
+                      sidedef->BotTextureOffset*TextureOffsetSScale(BTex);
   sp->texinfo.Tex = BTex;
   sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
   sp->texinfo.Alpha = 1.1f;
@@ -829,7 +690,16 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
       top_TexZ = back_ceiling->TexZ;
     }
 
-    FixTexturePegBot(seg, sp, BTex, back_floor, top_TexZ);
+    if (linedef->flags&ML_DONTPEGBOTTOM) {
+      // bottom of texture at bottom
+      // top of texture at top
+      sp->texinfo.toffs = top_TexZ;
+    } else {
+      // top of texture at top
+      sp->texinfo.toffs = back_floor->TexZ;
+    }
+    sp->texinfo.toffs *= TextureTScale(BTex)*sidedef->BotScaleY;
+    sp->texinfo.toffs += sidedef->BotRowOffset*TextureOffsetTScale(BTex);
 
     wv[0].x = wv[1].x = seg->v1->x;
     wv[0].y = wv[1].y = seg->v1->y;
@@ -847,10 +717,76 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontTopDist = r_ceiling.splane->dist;
   sp->frontBotDist = r_floor.splane->dist;
   sp->backBotDist = back_floor->dist;
-  sp->RowOffset = seg->sidedef->BotRowOffset;
-
   sp->backTopDist = back_ceiling->dist;
   sp->TextureOffset = sidedef->BotTextureOffset;
+  sp->RowOffset = sidedef->BotRowOffset;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::SetupOneSidedMidWSurf
+//
+//==========================================================================
+void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
+  const line_t *linedef = seg->linedef;
+  const side_t *sidedef = seg->sidedef;
+
+  VTexture *MTex = GTextureManager(sidedef->MidTexture);
+  // k8: one-sided line should have a midtex
+  if (!MTex) {
+    GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
+    MTex = GTextureManager[GTextureManager.DefaultTexture];
+  }
+  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->MidScaleX);
+  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->MidScaleY);
+  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
+                      seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
+                      sidedef->MidTextureOffset*TextureOffsetSScale(MTex);
+  if (linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    sp->texinfo.toffs = r_floor.splane->TexZ+(MTex->GetScaledHeight()*sidedef->MidScaleY);
+  } else if (linedef->flags&ML_DONTPEGTOP) {
+    // top of texture at top of top region
+    sp->texinfo.toffs = seg->front_sub->sector->ceiling.TexZ;
+  } else {
+    // top of texture at top
+    sp->texinfo.toffs = r_ceiling.splane->TexZ;
+  }
+  sp->texinfo.toffs *= TextureTScale(MTex)*sidedef->MidScaleY;
+  sp->texinfo.toffs += sidedef->MidRowOffset*TextureOffsetTScale(MTex);
+
+  sp->texinfo.Tex = MTex;
+  sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
+  sp->texinfo.Alpha = 1.1f;
+  sp->texinfo.Additive = false;
+  sp->texinfo.ColourMap = 0;
+
+  if (MTex->Type != TEXTYPE_Null) {
+    TVec wv[4];
+
+    wv[0].x = wv[1].x = seg->v1->x;
+    wv[0].y = wv[1].y = seg->v1->y;
+    wv[2].x = wv[3].x = seg->v2->x;
+    wv[2].y = wv[3].y = seg->v2->y;
+
+    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+    const float botz1 = r_floor.GetPointZ(*seg->v1);
+    const float botz2 = r_floor.GetPointZ(*seg->v2);
+
+    wv[0].z = botz1;
+    wv[1].z = topz1;
+    wv[2].z = topz2;
+    wv[3].z = botz2;
+
+    CreateWorldSurfFromWV(sub, seg, sp, wv);
+  }
+
+  sp->frontTopDist = r_ceiling.splane->dist;
+  sp->frontBotDist = r_floor.splane->dist;
+  sp->TextureOffset = sidedef->MidTextureOffset;
+  sp->RowOffset = sidedef->MidRowOffset;
 }
 
 
@@ -876,8 +812,7 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
-  TVec wv[4];
-
+  const line_t *linedef = seg->linedef;
   const side_t *sidedef = seg->sidedef;
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
@@ -890,6 +825,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
 
   if (MTex->Type != TEXTYPE_Null) {
+    TVec wv[4];
+
     const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
     const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
     const float back_botz1 = back_floor->GetPointZ(*seg->v1);
@@ -899,29 +836,48 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     const float exbotz = MIN(back_botz1, back_botz2);
     const float extopz = MAX(back_topz1, back_topz2);
 
-    const float texh = MTex->GetScaledHeight();
-    const float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
-
     sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->MidScaleX);
     sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->MidScaleY);
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                         seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
-                        sidedef->MidTextureOffset*(TextureOffsetSScale(MTex)*sidedef->MidScaleX);
-    //if (sidedef->MidRowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(seg->linedef-Level->Lines), sidedef->MidRowOffset, *MTex->Name, sidedef->MidScaleY);
+                        sidedef->MidTextureOffset*TextureOffsetSScale(MTex);
+    //if (sidedef->MidRowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(linedef-Level->Lines), sidedef->MidRowOffset, *MTex->Name, sidedef->MidScaleY);
+
+    const float texh = MTex->GetScaledHeight();
+    //const float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
+
+    float z_org;
+    if (linedef->flags&ML_DONTPEGBOTTOM) {
+      // bottom of texture at bottom
+      z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
+    } else {
+      // top of texture at top
+      z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
+    }
+    //z_org += sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+    //z_org += (sidedef->MidRowOffset+texh)*(sidedef->MidScaleY*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale));
+    //k8: dunno why
+    if (sidedef->MidRowOffset < 0) {
+      z_org += (sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+    } else {
+      z_org += sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+    }
+    sp->texinfo.toffs = z_org*TextureTScale(MTex);
+
     //k8: this seems to be wrong
-    if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (sidedef->Flags&SDF_WRAPMIDTEX)) {
+    if ((linedef->flags&ML_WRAP_MIDTEX) || (sidedef->Flags&SDF_WRAPMIDTEX)) {
       sp->texinfo.toffs = r_ceiling.splane->TexZ*(TextureTScale(MTex)*sidedef->MidScaleY)+
                           sidedef->MidRowOffset*TextureOffsetTScale(MTex);
     }
     //sp->texinfo.toffs = 0;
     //if (sidedef->MidRowOffset) GCon->Logf("  toffs=%g", sp->texinfo.toffs);
 
-    sp->texinfo.Alpha = seg->linedef->alpha;
-    sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
+    sp->texinfo.Alpha = linedef->alpha;
+    sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
 
-    //bool doDump = ((ptrdiff_t)(seg->linedef-Level->Lines) == 1707);
+    //bool doDump = ((ptrdiff_t)(linedef-Level->Lines) == 1707);
     enum { doDump = 0 };
-    if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(seg->linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
+    if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
 
     //k8: HACK! HACK! HACK!
     //    move middle wall backwards a little, so it will be hidden behind up/down surfaces
@@ -973,7 +929,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
       // this clips texture to a floor, otherwise it goes beyound it
       // it seems that all modern OpenGL renderers just ignores clip flag, and
       // renders all midtextures as always clipped.
-      if ((seg->linedef->flags&ML_WRAP_MIDTEX) || (sidedef->Flags&SDF_WRAPMIDTEX)) {
+      if ((linedef->flags&ML_WRAP_MIDTEX) || (sidedef->Flags&SDF_WRAPMIDTEX)) {
         hgts[0] = midbotz1;
         hgts[1] = midtopz1;
         hgts[2] = midtopz2;
@@ -1017,9 +973,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = back_ceiling->dist;
   sp->backBotDist = back_floor->dist;
-  sp->RowOffset = sidedef->MidRowOffset;
-
   sp->TextureOffset = sidedef->MidTextureOffset;
+  sp->RowOffset = sidedef->MidRowOffset;
 }
 
 
@@ -1043,28 +998,18 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   if (MTex && MTex->Type != TEXTYPE_Null && ops) {
     TVec wv[4];
 
-    //const float texh = MTex->GetScaledHeight();
-
     sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*extraside->MidScaleX);
     sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*extraside->MidScaleY);
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
                         seg->offset*(TextureSScale(MTex)*extraside->MidScaleX)+
-                        extraside->MidTextureOffset*(TextureOffsetSScale(MTex)*extraside->MidScaleX);
-    sp->texinfo.toffs = /*texh-*/reg->eceiling.splane->TexZ*(TextureTScale(MTex)*extraside->MidScaleY)+
-                        extraside->MidRowOffset*(TextureOffsetTScale(MTex)*extraside->MidScaleY);
+                        extraside->MidTextureOffset*TextureOffsetSScale(MTex);
+    sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTex)*extraside->MidScaleY)+
+                        extraside->MidRowOffset*TextureTScale(MTex);
     sp->texinfo.Tex = MTex;
     sp->texinfo.noDecals = MTex->noDecals;
     sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
     sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
     sp->texinfo.ColourMap = 0;
-    sp->TextureOffset = extraside->MidTextureOffset;
-
-    /*
-    if ((ptrdiff_t)(linedef-Level->Lines) == 49) {
-      GCon->Logf("ctexz=%g; ftexz=%g; toffs=%g; rowoffs=%g; scale=%g; cptz=%g; sectz=%g; th=%g", reg->eceiling.splane->TexZ, reg->efloor.splane->TexZ, sp->texinfo.toffs, extraside->MidRowOffset, extraside->MidScaleY, reg->eceiling.GetPointZ(*seg->v1), seg->backsector->eregions->eceiling.splane->TexZ, texh);
-      //if (reg->eceiling.splane->TexZ == 80) sp->texinfo.toffs = 56;
-    }
-    */
 
     const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
     const float extratopz2 = reg->eceiling.GetPointZ(*seg->v2);
@@ -1106,6 +1051,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = reg->eceiling.splane->dist;
   sp->backBotDist = reg->efloor.splane->dist;
+  sp->TextureOffset = extraside->MidTextureOffset;
   sp->RowOffset = extraside->MidRowOffset;
 }
 
@@ -1198,8 +1144,8 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 //
 //==========================================================================
 void VRenderLevelShared::UpdateRowOffset (subsector_t *sub, segpart_t *sp, float RowOffset, float Scale) {
-  sp->texinfo.toffs += (RowOffset-sp->RowOffset)*(TextureOffsetTScale(sp->texinfo.Tex)*Scale);
-  sp->RowOffset = RowOffset;//*Scale;
+  sp->texinfo.toffs += (RowOffset-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
+  sp->RowOffset = RowOffset;
   // do not recalculate static lightmaps
   InitSurfs(false, sp->surfs, &sp->texinfo, nullptr, sub);
 }
@@ -1211,8 +1157,8 @@ void VRenderLevelShared::UpdateRowOffset (subsector_t *sub, segpart_t *sp, float
 //
 //==========================================================================
 void VRenderLevelShared::UpdateTextureOffset (subsector_t *sub, segpart_t *sp, float TextureOffset, float Scale) {
-  sp->texinfo.soffs += (TextureOffset-sp->TextureOffset)*(TextureOffsetSScale(sp->texinfo.Tex)*Scale);
-  sp->TextureOffset = TextureOffset;//*Scale;
+  sp->texinfo.soffs += (TextureOffset-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
+  sp->TextureOffset = TextureOffset;
   // do not recalculate static lightmaps
   InitSurfs(false, sp->surfs, &sp->texinfo, nullptr, sub);
 }
@@ -1438,17 +1384,29 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 //
 //  VRenderLevelShared::SegMoved
 //
+//  called when polyobject moved
+//
 //==========================================================================
 void VRenderLevelShared::SegMoved (seg_t *seg) {
   if (!seg->drawsegs) return; // drawsegs not created yet
   if (!seg->linedef) Sys_Error("R_SegMoved: miniseg");
   if (!seg->drawsegs->mid) return; // no midsurf
 
-  VTexture *Tex = seg->drawsegs->mid->texinfo.Tex;
-  seg->drawsegs->mid->texinfo.saxis = (*seg->v2-*seg->v1)/seg->length*(TextureSScale(Tex)*seg->sidedef->MidScaleX);
+  //k8: just in case
+  if (seg->length <= 0.0f) {
+    seg->dir = TVec(1, 0, 0); // arbitrary
+  } else {
+    seg->dir = ((*seg->v2)-(*seg->v1)).normalised2D();
+    if (!seg->dir.isValid() || seg->dir.isZero()) seg->dir = TVec(1, 0, 0); // arbitrary
+  }
+
+  const side_t *sidedef = seg->sidedef;
+
+  VTexture *MTex = seg->drawsegs->mid->texinfo.Tex;
+  seg->drawsegs->mid->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->MidScaleX);
   seg->drawsegs->mid->texinfo.soffs = -DotProduct(*seg->v1, seg->drawsegs->mid->texinfo.saxis)+
-                                      seg->offset*(TextureSScale(Tex)*seg->sidedef->MidScaleX)+
-                                      seg->sidedef->MidTextureOffset*(TextureOffsetSScale(Tex)*seg->sidedef->MidScaleX);
+                                      seg->offset*(TextureSScale(MTex)*sidedef->MidScaleX)+
+                                      sidedef->MidTextureOffset*TextureOffsetSScale(MTex);
 
   // force update
   seg->drawsegs->mid->frontTopDist += 0.346f;
