@@ -34,7 +34,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarB w_update_clip_bsp;
-extern VCvarB w_update_clip_region;
+//extern VCvarB w_update_clip_region;
 extern VCvarB w_update_in_renderer;
 
 
@@ -1161,8 +1161,8 @@ static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTe
     (seg->backsector ?
       (FASI(sp->backTopDist) != FASI(seg->backsector->ceiling.dist) ||
        FASI(sp->backBotDist) != FASI(seg->backsector->floor.dist)) : false) ||
-    sp->texinfo.Tex->SScale != NTex->SScale ||
-    sp->texinfo.Tex->TScale != NTex->TScale ||
+    FASI(sp->texinfo.Tex->SScale) != FASI(NTex->SScale) ||
+    FASI(sp->texinfo.Tex->TScale) != FASI(NTex->TScale) ||
     (sp->texinfo.Tex->Type == TEXTYPE_Null) != (NTex->Type == TEXTYPE_Null) ||
     sp->texinfo.Tex->GetHeight() != NTex->GetHeight() ||
     sp->texinfo.Tex->GetWidth() != NTex->GetWidth();
@@ -1240,12 +1240,13 @@ void VRenderLevelShared::UpdateTextureOffsets (subsector_t *sub, seg_t *seg, seg
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
-void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling/*, bool ShouldClip*/) {
+void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling) {
   seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
 
-  if (w_update_clip_region /*ShouldClip*/) {
+#if 0
+  if (w_update_clip_region) {
     /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -1269,20 +1270,18 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (!ViewClip.IsRangeVisible(*seg->v1, *seg->v2)) return;
     }
   }
-
-  side_t *sidedef = seg->sidedef;
-  line_t *linedef = seg->linedef;
+#endif
 
   if (!seg->backsector) {
     // one-sided seg
     // top sky
     segpart_t *sp = dseg->topsky;
     if (sp) {
-      sp->texinfo.ColourMap = ColourMap;
       if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
         FreeWSurfs(sp->surfs);
         SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
+      sp->texinfo.ColourMap = ColourMap;
     }
 
     // midtexture
@@ -1292,7 +1291,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         FreeWSurfs(sp->surfs);
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &sidedef->MidTextureOffset, &sidedef->MidRowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->MidTextureOffset, &seg->sidedef->MidRowOffset);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1317,7 +1316,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         FreeWSurfs(sp->surfs);
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &sidedef->TopTextureOffset, &sidedef->TopRowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->TopTextureOffset, &seg->sidedef->TopRowOffset);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1329,7 +1328,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         FreeWSurfs(sp->surfs);
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &sidedef->BotTextureOffset, &sidedef->BotRowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->BotTextureOffset, &seg->sidedef->BotRowOffset);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1341,12 +1340,12 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         FreeWSurfs(sp->surfs);
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &sidedef->MidTextureOffset, &sidedef->MidRowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->MidTextureOffset, &seg->sidedef->MidRowOffset);
       }
       sp->texinfo.ColourMap = ColourMap;
       if (sp->texinfo.Tex->Type != TEXTYPE_Null) {
-        sp->texinfo.Alpha = linedef->alpha;
-        sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
+        sp->texinfo.Alpha = seg->linedef->alpha;
+        sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
       } else {
         sp->texinfo.Alpha = 1.1f;
         sp->texinfo.Additive = false;
@@ -1586,9 +1585,11 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
   }
 
   if (region->next) {
-    if (w_update_clip_region && !w_update_in_renderer /*ClipSegs*/) {
+#if 0
+    if (w_update_clip_region && !w_update_in_renderer) {
       if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
     }
+#endif
     UpdateSubRegion(sub, region->next, updatePoly);
   }
 }
