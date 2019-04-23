@@ -76,7 +76,13 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
         auto argloc = Lex.Location;
         arg = ParseExpressionPriority13();
         // omiting arguments is deprecated; use `default` instead
-        if (!arg) ParseError(argloc, "use `default` to skip optional argument");
+        if (!arg) {
+          if (VMemberBase::koraxCompatibility) {
+            if (VMemberBase::koraxCompatibilityWarnings) ParseWarning(argloc, "use `default` to skip optional argument");
+          } else {
+            ParseError(argloc, "use `default` to skip optional argument");
+          }
+        }
         bool isOutMarshall = false;
         if (Lex.Check(TK_Not)) {
           if (Lex.Token != TK_Optional) {
@@ -388,7 +394,13 @@ VExpression *VParser::ParseExpressionPriority0 () {
           Lex.NextToken();
         } else {
           // class<type> (deprecated)
-          if (Lex.Token == TK_Less) ParseError(Lex.Location, "class<name> syntax is deprecated");
+          if (Lex.Token == TK_Less) {
+            if (VMemberBase::koraxCompatibility) {
+              if (VMemberBase::koraxCompatibilityWarnings) ParseWarning(Lex.Location, "class<name> syntax is deprecated");
+            } else {
+              ParseError(Lex.Location, "class<name> syntax is deprecated");
+            }
+          }
           Lex.Expect(TK_Less);
           if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier expected"); break; }
           ClassName = Lex.Name;
@@ -1436,7 +1448,11 @@ VStatement *VParser::ParseStatement () {
           ParseError(l, "Token %s makes no sense here", VLexer::TokenNames[Lex.Token]);
           Lex.NextToken();
         } else {
-          ParseError(l, "use `{}` to create an empty statement");
+          if (VMemberBase::koraxCompatibility) {
+            if (VMemberBase::koraxCompatibilityWarnings) ParseWarning(l, "use `{}` to create an empty statement");
+          } else {
+            ParseError(l, "use `{}` to create an empty statement");
+          }
         }
         return new VEmptyStatement(l);
       } else if (Expr->IsValidTypeExpression() && Lex.Token == TK_Identifier) {
@@ -1563,7 +1579,11 @@ VExpression *VParser::ParsePrimitiveType () {
           }
         } else if (Lex.Check(TK_Less)) {
           // class<type>; deprecated
-          ParseError(Lex.Location, "class<name> syntax is deprecated");
+          if (VMemberBase::koraxCompatibility) {
+            if (VMemberBase::koraxCompatibilityWarnings) ParseWarning(Lex.Location, "class<name> syntax is deprecated");
+          } else {
+            ParseError(Lex.Location, "class<name> syntax is deprecated");
+          }
           if (Lex.Token != TK_Identifier) {
             ParseError(Lex.Location, "Invalid identifier, class name expected");
           } else {
@@ -1608,7 +1628,13 @@ VExpression *VParser::ParsePrimitiveType () {
           }
         } else {
           // array<type>; deprecated
-          if (Lex.Token == TK_Less) ParseError(Lex.Location, "array<type> syntax is deprecated");
+          if (Lex.Token == TK_Less) {
+            if (VMemberBase::koraxCompatibility) {
+              if (VMemberBase::koraxCompatibilityWarnings) ParseWarning(Lex.Location, "array<type> syntax is deprecated");
+            } else {
+              ParseError(Lex.Location, "array<type> syntax is deprecated");
+            }
+          }
           Lex.Expect(TK_Less);
           Inner = ParseTypeWithPtrs(true);
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");

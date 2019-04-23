@@ -55,6 +55,8 @@ bool VMemberBase::doAsmDump = false;
 
 bool VMemberBase::unsafeCodeAllowed = true;
 bool VMemberBase::unsafeCodeWarning = true;
+bool VMemberBase::koraxCompatibility = false;
+bool VMemberBase::koraxCompatibilityWarnings = true;
 
 void *VMemberBase::userdata; // arbitrary pointer, not used by the lexer
 VStream *(*VMemberBase::dgOpenFile) (const VStr &filename, void *userdata);

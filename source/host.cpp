@@ -177,6 +177,12 @@ void Host_Init () {
   if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
   if (GArgs.CheckParm("-developer")) developer = true;
 
+  if (GArgs.CheckParm("-vc-legacy-korax")) {
+    VMemberBase::koraxCompatibility = true;
+    VMemberBase::optDeprecatedLaxOverride = true;
+  }
+  if (GArgs.CheckParm("-vc-legacy-korax-no-warnings")) VMemberBase::koraxCompatibilityWarnings = false;
+
   if (GArgs.CheckParm("-gd-debug")) VObject::GCDebugMessagesAllowed = true;
 
   FL_ProcessPreInits();
