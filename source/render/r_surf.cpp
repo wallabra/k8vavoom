@@ -625,9 +625,9 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
       sp->texinfo.toffs = top_TexZ;
     } else {
       // bottom of texture
-      sp->texinfo.toffs = back_ceiling->TexZ+(TTex->GetScaledHeight()*sidedef->MidScaleY);
+      sp->texinfo.toffs = back_ceiling->TexZ+(TTex->GetScaledHeight()*sidedef->TopScaleY);
     }
-    sp->texinfo.toffs *= TextureTScale(TTex)*sidedef->MidScaleY;
+    sp->texinfo.toffs *= TextureTScale(TTex)*sidedef->TopScaleY;
     sp->texinfo.toffs += sidedef->TopRowOffset*TextureOffsetTScale(TTex);
 
     wv[0].x = wv[1].x = seg->v1->x;
