@@ -3581,33 +3581,34 @@ void VLevel::FloodZone (sector_t *Sec, int Zone) {
 //
 //==========================================================================
 void VLevel::FixSelfRefDeepWater () {
-  vuint8 *self_subs = (vuint8 *)Z_Calloc(NumSubsectors);
+  TArray<vuint8> self_subs;
+  self_subs.setLength(NumSubsectors);
+  memset(self_subs.ptr(), 0, NumSubsectors);
 
   for (int i = 0; i < NumSegs; ++i) {
     const seg_t *seg = &Segs[i];
 
-    //if (seg->miniseg) continue;
-    if (!seg->linedef) continue; //k8: miniseg check (i think)
+    if (!seg->linedef) continue; // miniseg?
     if (!seg->front_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
+
+    const int fsnum = (int)(ptrdiff_t)(seg->front_sub-Subsectors);
 
     sector_t *fs = seg->linedef->frontsector;
     sector_t *bs = seg->linedef->backsector;
 
     // slopes aren't interesting
     if (bs && fs == bs &&
+        (fs->SectorFlags&sector_t::SF_ExtrafloorSource) == 0 &&
         fs->floor.normal.z == 1.0f /*&& fs->ceiling.normal.z == -1.0f*/ &&
         bs->floor.normal.z == 1.0f /*&& bs->ceiling.normal.z == -1.0f*/)
     {
-      self_subs[seg->front_sub-Subsectors] |= 1;
+      self_subs[fsnum] |= 1;
     } else {
-      self_subs[seg->front_sub-Subsectors] |= 2;
+      self_subs[fsnum] |= 2;
     }
   }
 
-  int pass = 0;
-
-  do {
-    ++pass;
+  for (int pass = 0; pass < 100; ++pass) {
     int count = 0;
 
     for (int j = 0; j < NumSubsectors; ++j) {
@@ -3650,7 +3651,7 @@ void VLevel::FixSelfRefDeepWater () {
     }
 
     if (count == 0) break;
-  } while (pass < 100);
+  }
 
   for (int i = 0; i < NumSubsectors; ++i) {
     subsector_t *sub = &Subsectors[i];
@@ -3685,8 +3686,6 @@ void VLevel::FixSelfRefDeepWater () {
       }
     }
   }
-
-  Z_Free(self_subs);
 }
 
 
