@@ -1,0 +1,81 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+//**
+//**  Base class for all items that a player can carry.
+//**
+//**************************************************************************
+
+
+states {
+  // hide pickup like in Doom and Strife
+DormantPickup:
+  TNT1 A 1050
+  TNT1 A -1
+  {
+    EntityEx  A;
+
+    bInvisible = false;
+    bSpecial = true;
+    SetState(IdleState);
+
+    // spawn a teleport fog at the new spot
+    A = Spawn(ItemFog, Origin);
+    A.PlaySound('misc/spawn', CHAN_ITEM);
+  }
+  Stop
+
+  // hide for 40 secs
+HideSpecial:
+  ACLO E 1400
+  ACLO A 4 A_RestoreSpecialThing1
+  ACLO BABCBCDC 4
+  ACLO D 4 A_RestoreSpecialThing2
+  Stop
+
+  // invisible state for held items
+Held:
+  TNT1 A -1
+  Stop
+
+  // will destroy item as soon as possible
+HoldAndDestroy:
+  TNT1 A 1
+  Stop
+}
+
+
+defaultproperties {
+  Amount = 1;
+  InterHubAmount = 1;
+  MaxAmount = 1;
+  bSpecial = true;
+  PickupMessage = "You got a pickup";
+  PickupSound = 'misc/i_pkup';
+  UseSound = 'misc/invuse';
+  bNoAutoaim = false;
+  bIsHitscanWeapon = false;
+}
