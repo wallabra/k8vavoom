@@ -930,7 +930,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
 
   // get music volume for this song
   MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
-  if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
+  if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor);
 
   // find the song
   int Lump = -1;
@@ -956,10 +956,14 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   }
 
   if (Lump < 0) {
-    Lump = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
-    if (Lump < 0) Lump = W_CheckNumForFileName(Song);
-    if (Lump < 0) Lump = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
-    //if (Lump >= 0) GCon->Logf("loaded music file '%s'", *W_FullLumpName(Lump));
+    // get the lump that comes last
+    Lump = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
+    int lmp = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
+    if (Lump < lmp) Lump = lmp;
+    lmp = W_CheckNumForFileName(Song);
+    if (Lump < lmp) Lump = lmp;
+    lmp = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
+    if (Lump < lmp) Lump = lmp;
   }
 
   if (Lump < 0) {
@@ -970,7 +974,6 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (Strm->TotalSize() < 4) {
     delete Strm;
-    Strm = nullptr;
     return;
   }
 
@@ -995,17 +998,21 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   }
 
   // try to create audio codec
+  const char *codecName = nullptr;
   VAudioCodec *Codec = nullptr;
   for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next) {
     //GCon->Logf(va("Using %s to open the stream", Desc->Description));
     Codec = Desc->Creator(Strm);
+    if (Codec) codecName = Desc->Description;
   }
 
   if (StreamMusicPlayer && Codec) {
+    GCon->Logf("starting song '%s' with codec '%s'", *W_FullLumpName(Lump), codecName);
     // start playing streamed music
     StreamMusicPlayer->Play(Codec, Song, Loop);
     StreamPlaying = true;
   } else {
+    GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
     delete Strm;
   }
 }
