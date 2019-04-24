@@ -700,11 +700,19 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     }
     dop->range = dop->top-dop->bottom;
     dop->next = nullptr;
+
+    // cache it
+    if (!hasSlopes0 && !hasSlopes1) {
+      if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
+      opening_t *newop = VLevel::AllocOpening();
+      newop->copyFrom(dop);
+      linedef->oplist[NoBlockFlags] = newop;
+    }
+
     return dop;
   }
 
   // has 3d floors at least on one side, do full-featured intersection calculation
-
   static TArray<opening_t> op0list;
   static TArray<opening_t> op1list;
 

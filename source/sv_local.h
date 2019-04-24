@@ -247,11 +247,14 @@ struct opening_t {
       bottom = op->bottom;
       range = op->range;
       lowfloor = op->lowfloor;
+      highceiling = op->highceiling;
       efloor = op->efloor;
       eceiling = op->eceiling;
+      elowfloor = op->elowfloor;
+      ehighceiling = op->ehighceiling;
     } else {
       top = bottom = range = lowfloor = 0.0f;
-      efloor.splane = eceiling.splane = nullptr;
+      efloor.splane = eceiling.splane = elowfloor.splane = ehighceiling.splane = nullptr;
     }
   }
 };
