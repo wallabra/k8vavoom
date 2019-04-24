@@ -1136,28 +1136,24 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 
   sec_region_t *best = sector->eregions;
   float bestDist = p.z-secfz; // minimum distance to region floor
-  bool insideNonSolid = false;
 
   // skip base region
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    const float fz = reg->efloor.GetPointZ(p);
     // non-solid?
     if (reg->regflags&sec_region_t::RF_NonSolid) {
-      // check if point is inside, and for best floor dist
+      // for non-solid regions calculate distance to ceiling
       const float cz = reg->eceiling.GetPointZ(p);
-      if (p.z >= fz && p.z <= cz) {
-        const float fdist = p.z-fz;
-        if (fdist == 0.0f) return reg;
+      if (p.z < cz) {
+        const float fdist = cz-p.z;
         if (fdist < bestDist) {
           bestDist = fdist;
           best = reg;
-          insideNonSolid = true;
         }
       }
-    } else if (!insideNonSolid) {
-      // non-solid regions has higher precedence
-      // solid regions: we can't be inside (ignore this possibility)
+    } else {
+      // for solid regions calculate distance to floor
+      const float fz = reg->efloor.GetPointZ(p);
       if (p.z < fz) {
         const float fdist = fz-p.z;
         if (fdist < bestDist) {
