@@ -576,19 +576,24 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //  SetupTextureAxesOffset
 //
 //==========================================================================
-/*
-static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VTexture *tex) {
-  sp->texinfo.Tex = Tex;
-  sp->texinfo.noDecals = Tex->noDecals;
+static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VTexture *tex, const side_tex_params_t *tparam) {
+  texinfo->Tex = tex;
+  texinfo->noDecals = tex->noDecals;
+  // can be fixed later
+  texinfo->Alpha = 1.1f;
+  texinfo->Additive = false;
+  texinfo->ColourMap = 0;
 
-  sp->texinfo.saxis = seg->dir*(TextureSScale(Tex)*sidedef->Top.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(Tex)*sidedef->Top.ScaleY);
+  texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX);
+  texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY);
 
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(Tex)*sidedef->Top.ScaleX)+
-                      sidedef->Top.TextureOffset*TextureOffsetSScale(Tex);
+  texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
+                      seg->offset*(TextureSScale(tex)*tparam->ScaleX)+ //k8: maybe we need to *divide* to scale here?
+                      tparam->TextureOffset*TextureOffsetSScale(tex);
+
+  texinfo->toffs = 0.0f;
+  // toffs is not calculated here, as its calculation depends of texture position and pegging
 }
-*/
 
 
 //==========================================================================
@@ -611,16 +616,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     TTex = GTextureManager[skyflatnum];
   }
 
-  sp->texinfo.saxis = seg->dir*(TextureSScale(TTex)*sidedef->Top.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(TTex)*sidedef->Top.ScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(TTex)*sidedef->Top.ScaleX)+
-                      sidedef->Top.TextureOffset*TextureOffsetSScale(TTex);
-  sp->texinfo.Tex = TTex;
-  sp->texinfo.noDecals = TTex->noDecals;
-  sp->texinfo.Alpha = 1.1f;
-  sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
+  SetupTextureAxesOffset(seg, &sp->texinfo, TTex, &sidedef->Top);
 
   if (TTex->Type != TEXTYPE_Null) {
     TVec wv[4];
@@ -691,16 +687,8 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
   VTexture *BTex = GTextureManager(sidedef->BottomTexture);
   if (!BTex) BTex = GTextureManager[GTextureManager.DefaultTexture];
-  sp->texinfo.saxis = seg->dir*(TextureSScale(BTex)*sidedef->Bot.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(BTex)*sidedef->Bot.ScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(BTex)*sidedef->Bot.ScaleX)+
-                      sidedef->Bot.TextureOffset*TextureOffsetSScale(BTex);
-  sp->texinfo.Tex = BTex;
-  sp->texinfo.noDecals = BTex->noDecals;
-  sp->texinfo.Alpha = 1.1f;
-  sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
+
+  SetupTextureAxesOffset(seg, &sp->texinfo, BTex, &sidedef->Bot);
 
   if (BTex->Type != TEXTYPE_Null) {
     TVec wv[4];
@@ -771,11 +759,9 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
     MTex = GTextureManager[GTextureManager.DefaultTexture];
   }
-  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(MTex)*sidedef->Mid.ScaleX)+
-                      sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
+
+  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
+
   if (linedef->flags&ML_DONTPEGBOTTOM) {
     // bottom of texture at bottom
     sp->texinfo.toffs = r_floor.splane->TexZ+(MTex->GetScaledHeight()*sidedef->Mid.ScaleY);
@@ -788,12 +774,6 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   }
   sp->texinfo.toffs *= TextureTScale(MTex)*sidedef->Mid.ScaleY;
   sp->texinfo.toffs += sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
-
-  sp->texinfo.Tex = MTex;
-  sp->texinfo.noDecals = MTex->noDecals;
-  sp->texinfo.Alpha = 1.1f;
-  sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
 
   if (MTex->Type != TEXTYPE_Null) {
     TVec wv[4];
@@ -854,11 +834,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
-  sp->texinfo.Tex = MTex;
-  sp->texinfo.noDecals = MTex->noDecals;
-  sp->texinfo.ColourMap = 0;
-  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
+
+  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
   sec_plane_t *back_floor = &seg->backsector->floor;
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
@@ -874,11 +851,6 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     // find opening for this side
     const float exbotz = MIN(back_botz1, back_botz2);
     const float extopz = MAX(back_topz1, back_topz2);
-
-    sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                        seg->offset*(TextureSScale(MTex)*sidedef->Mid.ScaleX)+
-                        sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
-    //if (sidedef->Mid.RowOffset) GCon->Logf("line #%d: midofs=%g; tex=<%s>; scaley=%g", (int)(ptrdiff_t)(linedef-Level->Lines), sidedef->Mid.RowOffset, *MTex->Name, sidedef->Mid.ScaleY);
 
     const float texh = MTex->GetScaledHeight();
     //const float z_org = FixPegZOrgMid(seg, sp, MTex, texh);
@@ -1037,18 +1009,13 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   VTexture *MTex = GTextureManager(extraside->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
-  sp->texinfo.saxis = seg->dir*(TextureSScale(MTex)*extraside->Mid.ScaleX);
-  sp->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*extraside->Mid.ScaleY);
-  sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis)+
-                      seg->offset*(TextureSScale(MTex)*extraside->Mid.ScaleX)+
-                      extraside->Mid.TextureOffset*TextureOffsetSScale(MTex);
+  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &extraside->Mid);
+
   sp->texinfo.toffs = reg->eceiling.splane->TexZ*(TextureTScale(MTex)*extraside->Mid.ScaleY)+
                       extraside->Mid.RowOffset*TextureTScale(MTex);
-  sp->texinfo.Tex = MTex;
-  sp->texinfo.noDecals = MTex->noDecals;
+
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
-  sp->texinfo.ColourMap = 0;
 
   if (MTex->Type != TEXTYPE_Null) {
     TVec wv[4];
