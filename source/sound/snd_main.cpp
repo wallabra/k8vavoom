@@ -1045,7 +1045,7 @@ void VAudio::CmdMusic (const TArray<VStr> &Args) {
 
   if (command.ICmp("play") == 0) {
     if (Args.Num() < 3) {
-      GCon->Log("Please enter name of the song.");
+      GCon->Log(NAME_Warning, "Please enter name of the song (play).");
       return;
     }
     PlaySong(*Args[2].ToLower(), false);
@@ -1054,7 +1054,7 @@ void VAudio::CmdMusic (const TArray<VStr> &Args) {
 
   if (command.ICmp("loop") == 0) {
     if (Args.Num() < 3) {
-      GCon->Log("Please enter name of the song.");
+      GCon->Log(NAME_Warning, "Please enter name of the song (loop).");
       return;
     }
     PlaySong(*Args[2].ToLower(), true);
