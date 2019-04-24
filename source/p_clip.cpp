@@ -299,12 +299,12 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
                 z_org = MIN(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
               }
               //k8: dunno why
-              if (seg->sidedef->MidRowOffset < 0) {
-                z_org += (seg->sidedef->MidRowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+              if (seg->sidedef->Mid.RowOffset < 0) {
+                z_org += (seg->sidedef->Mid.RowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
               } else {
-                z_org += seg->sidedef->MidRowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+                z_org += seg->sidedef->Mid.RowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
               }
-              //GCon->Logf("  TScale:%f; MidRowOffset=%f; z_org=%f; texh=%f", MTex->TScale, seg->sidedef->MidRowOffset, z_org, texh);
+              //GCon->Logf("  TScale:%f; Mid.RowOffset=%f; z_org=%f; texh=%f", MTex->TScale, seg->sidedef->Mid.RowOffset, z_org, texh);
               //GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
               float floorz, ceilz;
               if (sec == fsec) {

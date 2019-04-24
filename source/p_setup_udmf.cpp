@@ -862,9 +862,9 @@ void VUdmfParser::ParseSideDef () {
   S.TopTexture = "-";
   S.MidTexture = "-";
   S.BotTexture = "-";
-  S.S.TopScaleX = S.S.TopScaleY = 1.0f;
-  S.S.BotScaleX = S.S.BotScaleY = 1.0f;
-  S.S.MidScaleX = S.S.MidScaleY = 1.0f;
+  S.S.Top.ScaleX = S.S.Top.ScaleY = 1.0f;
+  S.S.Bot.ScaleX = S.S.Bot.ScaleY = 1.0f;
+  S.S.Mid.ScaleX = S.S.Mid.ScaleY = 1.0f;
   float XOffs = 0;
   float YOffs = 0;
 
@@ -905,62 +905,62 @@ void VUdmfParser::ParseSideDef () {
     // extensions
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
       if (Key.strEquCI("offsetx_top")) {
-        S.S.TopTextureOffset = CheckFloat();
+        S.S.Top.TextureOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("offsety_top")) {
-        S.S.TopRowOffset = CheckFloat();
+        S.S.Top.RowOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("offsetx_mid")) {
-        S.S.MidTextureOffset = CheckFloat();
+        S.S.Mid.TextureOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("offsety_mid")) {
-        S.S.MidRowOffset = CheckFloat();
+        S.S.Mid.RowOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("offsetx_bottom")) {
-        S.S.BotTextureOffset = CheckFloat();
+        S.S.Bot.TextureOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("offsety_bottom")) {
-        S.S.BotRowOffset = CheckFloat();
+        S.S.Bot.RowOffset = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scalex_top")) {
-        S.S.TopScaleX = CheckFloat();
+        S.S.Top.ScaleX = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scaley_top")) {
-        S.S.TopScaleY = CheckFloat();
+        S.S.Top.ScaleY = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scalex_mid")) {
-        S.S.MidScaleX = CheckFloat();
+        S.S.Mid.ScaleX = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scaley_mid")) {
-        S.S.MidScaleY = CheckFloat();
+        S.S.Mid.ScaleY = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scalex_bottom")) {
-        S.S.BotScaleX = CheckFloat();
+        S.S.Bot.ScaleX = CheckFloat();
         continue;
       }
 
       if (Key.strEquCI("scaley_bottom")) {
-        S.S.BotScaleY = CheckFloat();
+        S.S.Bot.ScaleY = CheckFloat();
         continue;
       }
 
@@ -989,12 +989,12 @@ void VUdmfParser::ParseSideDef () {
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sidedef property '%s' with value '%s'", *Key, *Val));
   }
 
-  S.S.TopTextureOffset += XOffs;
-  S.S.MidTextureOffset += XOffs;
-  S.S.BotTextureOffset += XOffs;
-  S.S.TopRowOffset += YOffs;
-  S.S.MidRowOffset += YOffs;
-  S.S.BotRowOffset += YOffs;
+  S.S.Top.TextureOffset += XOffs;
+  S.S.Mid.TextureOffset += XOffs;
+  S.S.Bot.TextureOffset += XOffs;
+  S.S.Top.RowOffset += YOffs;
+  S.S.Mid.RowOffset += YOffs;
+  S.S.Bot.RowOffset += YOffs;
 }
 
 

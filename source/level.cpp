@@ -634,14 +634,33 @@ void VLevel::SerialiseOther (VStream &Strm) {
           vio.io(VName("TopTexture"), si->TopTexture);
           vio.io(VName("BottomTexture"), si->BottomTexture);
           vio.io(VName("MidTexture"), si->MidTexture);
-          vio.io(VName("TopTextureOffset"), si->TopTextureOffset);
-          vio.io(VName("BotTextureOffset"), si->BotTextureOffset);
-          vio.io(VName("MidTextureOffset"), si->MidTextureOffset);
-          vio.io(VName("TopRowOffset"), si->TopRowOffset);
-          vio.io(VName("BotRowOffset"), si->BotRowOffset);
-          vio.io(VName("MidRowOffset"), si->MidRowOffset);
+          vio.io(VName("TopTextureOffset"), si->Top.TextureOffset);
+          vio.io(VName("BotTextureOffset"), si->Bot.TextureOffset);
+          vio.io(VName("MidTextureOffset"), si->Mid.TextureOffset);
+          vio.io(VName("TopRowOffset"), si->Top.RowOffset);
+          vio.io(VName("BotRowOffset"), si->Bot.RowOffset);
+          vio.io(VName("MidRowOffset"), si->Mid.RowOffset);
           vio.io(VName("Flags"), si->Flags);
           vio.io(VName("Light"), si->Light);
+          /*k8: no need to save scaling, as it cannot be changed by ACS/decorate.
+                note that VC code can change it.
+                do this with flags to not break old saves. */
+          vint32 scales = 0;
+          if (!Strm.IsLoading()) {
+            if (si->Top.ScaleX != 1.0f) scales |= 0x01;
+            if (si->Top.ScaleY != 1.0f) scales |= 0x02;
+            if (si->Bot.ScaleX != 1.0f) scales |= 0x04;
+            if (si->Bot.ScaleY != 1.0f) scales |= 0x08;
+            if (si->Mid.ScaleX != 1.0f) scales |= 0x10;
+            if (si->Mid.ScaleY != 1.0f) scales |= 0x20;
+          }
+          vio.iodef(VName("Scales"), scales, 0);
+          if (scales&0x01) vio.io(VName("TopScaleX"), si->Top.ScaleX);
+          if (scales&0x02) vio.io(VName("TopScaleY"), si->Top.ScaleY);
+          if (scales&0x04) vio.io(VName("BotScaleX"), si->Bot.ScaleX);
+          if (scales&0x08) vio.io(VName("BotScaleY"), si->Bot.ScaleY);
+          if (scales&0x10) vio.io(VName("MidScaleX"), si->Mid.ScaleX);
+          if (scales&0x20) vio.io(VName("MidScaleY"), si->Mid.ScaleY);
         }
       }
     }
@@ -3069,12 +3088,13 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     strm << NumSides;
     for (int f = 0; f < NumSides; ++f) {
       side_t *side = &Sides[f];
-      strm << side->TopTextureOffset;
-      strm << side->BotTextureOffset;
-      strm << side->MidTextureOffset;
-      strm << side->TopRowOffset;
-      strm << side->BotRowOffset;
-      strm << side->MidRowOffset;
+      strm << side->Top.TextureOffset;
+      strm << side->Bot.TextureOffset;
+      strm << side->Mid.TextureOffset;
+      strm << side->Top.RowOffset;
+      strm << side->Bot.RowOffset;
+      strm << side->Mid.RowOffset;
+      //TODO: scale
       WriteTexture(strm, side->TopTexture);
       WriteTexture(strm, side->BottomTexture);
       WriteTexture(strm, side->MidTexture);

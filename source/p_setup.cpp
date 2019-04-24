@@ -1643,9 +1643,9 @@ void VLevel::CreateSides () {
   memset((void *)Sides, 0, sizeof(side_t)*(NumNewSides+1));
 
   for (int f = 0; f < NumNewSides; ++f) {
-    Sides[f].TopScaleX = Sides[f].TopScaleY = 1.0f;
-    Sides[f].BotScaleX = Sides[f].BotScaleY = 1.0f;
-    Sides[f].MidScaleX = Sides[f].MidScaleY = 1.0f;
+    Sides[f].Top.ScaleX = Sides[f].Top.ScaleY = 1.0f;
+    Sides[f].Bot.ScaleX = Sides[f].Bot.ScaleY = 1.0f;
+    Sides[f].Mid.ScaleX = Sides[f].Mid.ScaleY = 1.0f;
   }
 
   int CurrentSide = 0;
@@ -1712,12 +1712,12 @@ void VLevel::LoadSideDefs (int Lump) {
 
     if (sector < 0 || sector >= NumSectors) Host_Error("Bad sector index %d", sector);
 
-    sd->TopTextureOffset = textureoffset;
-    sd->BotTextureOffset = textureoffset;
-    sd->MidTextureOffset = textureoffset;
-    sd->TopRowOffset = rowoffset;
-    sd->BotRowOffset = rowoffset;
-    sd->MidRowOffset = rowoffset;
+    sd->Top.TextureOffset = textureoffset;
+    sd->Bot.TextureOffset = textureoffset;
+    sd->Mid.TextureOffset = textureoffset;
+    sd->Top.RowOffset = rowoffset;
+    sd->Bot.RowOffset = rowoffset;
+    sd->Mid.RowOffset = rowoffset;
     sd->Sector = &Sectors[sector];
 
     switch (sd->MidTexture) {
@@ -3403,12 +3403,12 @@ void VLevel::CreateRepBase () {
   for (int i = 0; i < NumSides; ++i) {
     side_t &S = Sides[i];
     rep_side_t &B = BaseSides[i];
-    B.TopTextureOffset = S.TopTextureOffset;
-    B.BotTextureOffset = S.BotTextureOffset;
-    B.MidTextureOffset = S.MidTextureOffset;
-    B.TopRowOffset = S.TopRowOffset;
-    B.BotRowOffset = S.BotRowOffset;
-    B.MidRowOffset = S.MidRowOffset;
+    B.Top.TextureOffset = S.Top.TextureOffset;
+    B.Bot.TextureOffset = S.Bot.TextureOffset;
+    B.Mid.TextureOffset = S.Mid.TextureOffset;
+    B.Top.RowOffset = S.Top.RowOffset;
+    B.Bot.RowOffset = S.Bot.RowOffset;
+    B.Mid.RowOffset = S.Mid.RowOffset;
     B.TopTexture = S.TopTexture;
     B.BottomTexture = S.BottomTexture;
     B.MidTexture = S.MidTexture;

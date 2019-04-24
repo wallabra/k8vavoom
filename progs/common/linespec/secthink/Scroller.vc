@@ -93,8 +93,8 @@ void InitWallOffsets (line_t *Line) {
   Type = SCROLLEV_Side;
   AffecteeSrcLine = Line;
   Affectee = Line->sidenum[0];
-  XSpeed = -XLevel.Sides[Affectee].MidTextureOffset*35.0;
-  YSpeed = XLevel.Sides[Affectee].MidRowOffset*35.0;
+  XSpeed = -XLevel.Sides[Affectee].Mid.TextureOffset*35.0;
+  YSpeed = XLevel.Sides[Affectee].Mid.RowOffset*35.0;
   SideParts = 7;
 }
 
@@ -340,16 +340,16 @@ override void Tick (float DeltaTime) {
   switch (Type) {
     case SCROLLEV_Side:
       if (SideParts&1) {
-        XLevel.Sides[Affectee].TopTextureOffset += XDelta;
-        XLevel.Sides[Affectee].TopRowOffset += YDelta;
+        XLevel.Sides[Affectee].Top.TextureOffset += XDelta;
+        XLevel.Sides[Affectee].Top.RowOffset += YDelta;
       }
       if (SideParts&2) {
-        XLevel.Sides[Affectee].MidTextureOffset += XDelta;
-        XLevel.Sides[Affectee].MidRowOffset += YDelta;
+        XLevel.Sides[Affectee].Mid.TextureOffset += XDelta;
+        XLevel.Sides[Affectee].Mid.RowOffset += YDelta;
       }
       if (SideParts&4) {
-        XLevel.Sides[Affectee].BotTextureOffset += XDelta;
-        XLevel.Sides[Affectee].BotRowOffset += YDelta;
+        XLevel.Sides[Affectee].Bot.TextureOffset += XDelta;
+        XLevel.Sides[Affectee].Bot.RowOffset += YDelta;
       }
       LineSpecialLevelInfo(Level).ClampSideOffsets(&XLevel.Sides[Affectee]);
       break;

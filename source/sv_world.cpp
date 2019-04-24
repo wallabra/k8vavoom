@@ -190,7 +190,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     toffs = sec->ceiling.TexZ;
   }
   toffs *= MTex->TScale;
-  toffs += sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
+  toffs += sidedef->Mid.RowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
 
   if (ptextop) *ptextop = toffs;
   if (ptexbot) *ptexbot = toffs-mheight;

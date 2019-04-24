@@ -3739,15 +3739,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
         //  Set
         if (Arg5&1)
         {
-          Side->TopTextureOffset = Offs;
+          Side->Top.TextureOffset = Offs;
         }
         if (Arg5&2)
         {
-          Side->MidTextureOffset = Offs;
+          Side->Mid.TextureOffset = Offs;
         }
         if (Arg5&4)
         {
-          Side->BotTextureOffset = Offs;
+          Side->Bot.TextureOffset = Offs;
         }
       }
       else
@@ -3755,15 +3755,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
         //  Add
         if (Arg5&1)
         {
-          Side->TopTextureOffset += Offs;
+          Side->Top.TextureOffset += Offs;
         }
         if (Arg5&2)
         {
-          Side->MidTextureOffset += Offs;
+          Side->Mid.TextureOffset += Offs;
         }
         if (Arg5&4)
         {
-          Side->BotTextureOffset += Offs;
+          Side->Bot.TextureOffset += Offs;
         }
       }
     }
@@ -3777,15 +3777,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
         //  Set
         if (Arg5&1)
         {
-          Side->TopRowOffset = Offs;
+          Side->Top.RowOffset = Offs;
         }
         if (Arg5&2)
         {
-          Side->MidRowOffset = Offs;
+          Side->Mid.RowOffset = Offs;
         }
         if (Arg5&4)
         {
-          Side->BotRowOffset = Offs;
+          Side->Bot.RowOffset = Offs;
         }
       }
       else
@@ -3793,15 +3793,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
         //  Add
         if (Arg5&1)
         {
-          Side->TopRowOffset += Offs;
+          Side->Top.RowOffset += Offs;
         }
         if (Arg5&2)
         {
-          Side->MidRowOffset += Offs;
+          Side->Mid.RowOffset += Offs;
         }
         if (Arg5&4)
         {
-          Side->BotRowOffset += Offs;
+          Side->Bot.RowOffset += Offs;
         }
       }
     }
@@ -3818,29 +3818,29 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
 
 final void ClampSideOffsets(side_t *Side)
 {
-  if (Side->TopTextureOffset > 32767.0 || Side->TopTextureOffset < -32768.0)
+  if (Side->Top.TextureOffset > 32767.0 || Side->Top.TextureOffset < -32768.0)
   {
-    Side->TopTextureOffset = 0.0;
+    Side->Top.TextureOffset = 0.0;
   }
-  if (Side->BotTextureOffset > 32767.0 || Side->BotTextureOffset < -32768.0)
+  if (Side->Bot.TextureOffset > 32767.0 || Side->Bot.TextureOffset < -32768.0)
   {
-    Side->BotTextureOffset = 0.0;
+    Side->Bot.TextureOffset = 0.0;
   }
-  if (Side->MidTextureOffset > 32767.0 || Side->MidTextureOffset < -32768.0)
+  if (Side->Mid.TextureOffset > 32767.0 || Side->Mid.TextureOffset < -32768.0)
   {
-    Side->MidTextureOffset = 0.0;
+    Side->Mid.TextureOffset = 0.0;
   }
-  if (Side->TopRowOffset > 32767.0 || Side->TopRowOffset < -32768.0)
+  if (Side->Top.RowOffset > 32767.0 || Side->Top.RowOffset < -32768.0)
   {
-    Side->TopRowOffset = 0.0;
+    Side->Top.RowOffset = 0.0;
   }
-  if (Side->BotRowOffset > 32767.0 || Side->BotRowOffset < -32768.0)
+  if (Side->Bot.RowOffset > 32767.0 || Side->Bot.RowOffset < -32768.0)
   {
-    Side->BotRowOffset = 0.0;
+    Side->Bot.RowOffset = 0.0;
   }
-  if (Side->MidRowOffset > 32767.0 || Side->MidRowOffset < -32768.0)
+  if (Side->Mid.RowOffset > 32767.0 || Side->Mid.RowOffset < -32768.0)
   {
-    Side->MidRowOffset = 0.0;
+    Side->Mid.RowOffset = 0.0;
   }
 }
 

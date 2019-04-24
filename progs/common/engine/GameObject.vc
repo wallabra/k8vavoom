@@ -721,21 +721,18 @@ struct line_t : TPlane {
 };
 
 
+struct side_tex_params_t {
+  float TextureOffset; // x, s axis, column
+  float RowOffset; // y, t axis, top
+  float ScaleX, ScaleY;
+};
+
+
 // the SideDef
 struct side_t {
-  // add this to the calculated texture column
-  float TopTextureOffset;
-  float BotTextureOffset;
-  float MidTextureOffset;
-
-  // add this to the calculated texture top
-  float TopRowOffset;
-  float BotRowOffset;
-  float MidRowOffset;
-
-  float TopScaleX, TopScaleY;
-  float BotScaleX, BotScaleY;
-  float MidScaleX, MidScaleY;
+  side_tex_params_t Top;
+  side_tex_params_t Bot;
+  side_tex_params_t Mid;
 
   // texture indices: we do not maintain names here
   // 0 means "no texture"; -1 means "i forgot what it is"

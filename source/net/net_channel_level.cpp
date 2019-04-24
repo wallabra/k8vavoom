@@ -169,12 +169,18 @@ void VLevelChannel::Update () {
     if (Side->TopTexture == RepSide->TopTexture &&
         Side->BottomTexture == RepSide->BottomTexture &&
         Side->MidTexture == RepSide->MidTexture &&
-        Side->TopTextureOffset == RepSide->TopTextureOffset &&
-        Side->BotTextureOffset == RepSide->BotTextureOffset &&
-        Side->MidTextureOffset == RepSide->MidTextureOffset &&
-        Side->TopRowOffset == RepSide->TopRowOffset &&
-        Side->BotRowOffset == RepSide->BotRowOffset &&
-        Side->MidRowOffset == RepSide->MidRowOffset &&
+        Side->Top.TextureOffset == RepSide->Top.TextureOffset &&
+        Side->Bot.TextureOffset == RepSide->Bot.TextureOffset &&
+        Side->Mid.TextureOffset == RepSide->Mid.TextureOffset &&
+        Side->Top.RowOffset == RepSide->Top.RowOffset &&
+        Side->Bot.RowOffset == RepSide->Bot.RowOffset &&
+        Side->Mid.RowOffset == RepSide->Mid.RowOffset &&
+        Side->Top.ScaleX == RepSide->Top.ScaleX &&
+        Side->Top.ScaleY == RepSide->Top.ScaleY &&
+        Side->Bot.ScaleX == RepSide->Bot.ScaleX &&
+        Side->Bot.ScaleY == RepSide->Bot.ScaleY &&
+        Side->Mid.ScaleX == RepSide->Mid.ScaleX &&
+        Side->Mid.ScaleY == RepSide->Mid.ScaleY &&
         Side->Flags == RepSide->Flags &&
         Side->Light == RepSide->Light)
     {
@@ -198,35 +204,65 @@ void VLevelChannel::Update () {
       Msg.WriteInt(Side->MidTexture/*, MAX_VUINT16*/);
       RepSide->MidTexture = Side->MidTexture;
     }
-    Msg.WriteBit(Side->TopTextureOffset != RepSide->TopTextureOffset);
-    if (Side->TopTextureOffset != RepSide->TopTextureOffset) {
-      Msg << Side->TopTextureOffset;
-      RepSide->TopTextureOffset = Side->TopTextureOffset;
+    Msg.WriteBit(Side->Top.TextureOffset != RepSide->Top.TextureOffset);
+    if (Side->Top.TextureOffset != RepSide->Top.TextureOffset) {
+      Msg << Side->Top.TextureOffset;
+      RepSide->Top.TextureOffset = Side->Top.TextureOffset;
     }
-    Msg.WriteBit(Side->BotTextureOffset != RepSide->BotTextureOffset);
-    if (Side->BotTextureOffset != RepSide->BotTextureOffset) {
-      Msg << Side->BotTextureOffset;
-      RepSide->BotTextureOffset = Side->BotTextureOffset;
+    Msg.WriteBit(Side->Bot.TextureOffset != RepSide->Bot.TextureOffset);
+    if (Side->Bot.TextureOffset != RepSide->Bot.TextureOffset) {
+      Msg << Side->Bot.TextureOffset;
+      RepSide->Bot.TextureOffset = Side->Bot.TextureOffset;
     }
-    Msg.WriteBit(Side->MidTextureOffset != RepSide->MidTextureOffset);
-    if (Side->MidTextureOffset != RepSide->MidTextureOffset) {
-      Msg << Side->MidTextureOffset;
-      RepSide->MidTextureOffset = Side->MidTextureOffset;
+    Msg.WriteBit(Side->Mid.TextureOffset != RepSide->Mid.TextureOffset);
+    if (Side->Mid.TextureOffset != RepSide->Mid.TextureOffset) {
+      Msg << Side->Mid.TextureOffset;
+      RepSide->Mid.TextureOffset = Side->Mid.TextureOffset;
     }
-    Msg.WriteBit(Side->TopRowOffset != RepSide->TopRowOffset);
-    if (Side->TopRowOffset != RepSide->TopRowOffset) {
-      Msg << Side->TopRowOffset;
-      RepSide->TopRowOffset = Side->TopRowOffset;
+    Msg.WriteBit(Side->Top.RowOffset != RepSide->Top.RowOffset);
+    if (Side->Top.RowOffset != RepSide->Top.RowOffset) {
+      Msg << Side->Top.RowOffset;
+      RepSide->Top.RowOffset = Side->Top.RowOffset;
     }
-    Msg.WriteBit(Side->BotRowOffset != RepSide->BotRowOffset);
-    if (Side->BotRowOffset != RepSide->BotRowOffset) {
-      Msg << Side->BotRowOffset;
-      RepSide->BotRowOffset = Side->BotRowOffset;
+    Msg.WriteBit(Side->Bot.RowOffset != RepSide->Bot.RowOffset);
+    if (Side->Bot.RowOffset != RepSide->Bot.RowOffset) {
+      Msg << Side->Bot.RowOffset;
+      RepSide->Bot.RowOffset = Side->Bot.RowOffset;
     }
-    Msg.WriteBit(Side->MidRowOffset != RepSide->MidRowOffset);
-    if (Side->MidRowOffset != RepSide->MidRowOffset) {
-      Msg << Side->MidRowOffset;
-      RepSide->MidRowOffset = Side->MidRowOffset;
+    Msg.WriteBit(Side->Mid.RowOffset != RepSide->Mid.RowOffset);
+    if (Side->Mid.RowOffset != RepSide->Mid.RowOffset) {
+      Msg << Side->Mid.RowOffset;
+      RepSide->Mid.RowOffset = Side->Mid.RowOffset;
+    }
+    Msg.WriteBit(Side->Top.ScaleX != RepSide->Top.ScaleX);
+    if (Side->Top.ScaleX != RepSide->Top.ScaleX) {
+      Msg << Side->Top.ScaleX;
+      RepSide->Top.ScaleX = Side->Top.ScaleX;
+    }
+    Msg.WriteBit(Side->Top.ScaleY != RepSide->Top.ScaleY);
+    if (Side->Top.ScaleY != RepSide->Top.ScaleY) {
+      Msg << Side->Top.ScaleY;
+      RepSide->Top.ScaleY = Side->Top.ScaleY;
+    }
+    Msg.WriteBit(Side->Bot.ScaleX != RepSide->Bot.ScaleX);
+    if (Side->Bot.ScaleX != RepSide->Bot.ScaleX) {
+      Msg << Side->Bot.ScaleX;
+      RepSide->Bot.ScaleX = Side->Bot.ScaleX;
+    }
+    Msg.WriteBit(Side->Bot.ScaleY != RepSide->Bot.ScaleY);
+    if (Side->Bot.ScaleY != RepSide->Bot.ScaleY) {
+      Msg << Side->Bot.ScaleY;
+      RepSide->Bot.ScaleY = Side->Bot.ScaleY;
+    }
+    Msg.WriteBit(Side->Mid.ScaleX != RepSide->Mid.ScaleX);
+    if (Side->Mid.ScaleX != RepSide->Mid.ScaleX) {
+      Msg << Side->Mid.ScaleX;
+      RepSide->Mid.ScaleX = Side->Mid.ScaleX;
+    }
+    Msg.WriteBit(Side->Mid.ScaleY != RepSide->Mid.ScaleY);
+    if (Side->Mid.ScaleY != RepSide->Mid.ScaleY) {
+      Msg << Side->Mid.ScaleY;
+      RepSide->Mid.ScaleY = Side->Mid.ScaleY;
     }
     Msg.WriteBit(Side->Flags != RepSide->Flags);
     if (Side->Flags != RepSide->Flags) {
@@ -518,12 +554,18 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           if (Msg.ReadBit()) Side->TopTexture = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) Side->BottomTexture = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) Side->MidTexture = Msg.ReadInt(/*MAX_VUINT16*/);
-          if (Msg.ReadBit()) Msg << Side->TopTextureOffset;
-          if (Msg.ReadBit()) Msg << Side->BotTextureOffset;
-          if (Msg.ReadBit()) Msg << Side->MidTextureOffset;
-          if (Msg.ReadBit()) Msg << Side->TopRowOffset;
-          if (Msg.ReadBit()) Msg << Side->BotRowOffset;
-          if (Msg.ReadBit()) Msg << Side->MidRowOffset;
+          if (Msg.ReadBit()) Msg << Side->Top.TextureOffset;
+          if (Msg.ReadBit()) Msg << Side->Bot.TextureOffset;
+          if (Msg.ReadBit()) Msg << Side->Mid.TextureOffset;
+          if (Msg.ReadBit()) Msg << Side->Top.RowOffset;
+          if (Msg.ReadBit()) Msg << Side->Bot.RowOffset;
+          if (Msg.ReadBit()) Msg << Side->Mid.RowOffset;
+          if (Msg.ReadBit()) Msg << Side->Top.ScaleX;
+          if (Msg.ReadBit()) Msg << Side->Top.ScaleY;
+          if (Msg.ReadBit()) Msg << Side->Bot.ScaleX;
+          if (Msg.ReadBit()) Msg << Side->Bot.ScaleY;
+          if (Msg.ReadBit()) Msg << Side->Mid.ScaleX;
+          if (Msg.ReadBit()) Msg << Side->Mid.ScaleY;
           if (Msg.ReadBit()) Side->Flags = Msg.ReadInt(/*0x000f*/);
           if (Msg.ReadBit()) Msg << Side->Light;
         }
