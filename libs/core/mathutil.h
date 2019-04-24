@@ -120,6 +120,9 @@ template <class T> constexpr __attribute__((const)) inline T MAX (const T a, con
 //template <class T> constexpr inline T MID (const T min, const T val, const T max) { return MAX(min, MIN(val, max)); }
 template <class T> constexpr __attribute__((const)) inline T MID (const T min, const T val, const T max) { return (val <= min ? min : val >= max ? max : val); }
 
+template <class T> constexpr __attribute__((const)) inline T MIN3 (const T a, const T b, const T c) { return MIN(MIN(a, b), c); }
+template <class T> constexpr __attribute__((const)) inline T MAX3 (const T a, const T b, const T c) { return MAX(MAX(a, b), c); }
+
 
 // bounding box
 enum {
