@@ -202,10 +202,10 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
   if (totalscale != 1. && !tex->bWorldPanning) y_offset /= totalscale;
 
   if (linedef->flags & ML_DONTPEGBOTTOM) {
-    *ptexbot = y_offset+MAX(linedef->frontsector->GetPlaneTexZ(sector_t::floor), linedef->backsector->GetPlaneTexZ(sector_t::floor));
+    *ptexbot = y_offset+max2(linedef->frontsector->GetPlaneTexZ(sector_t::floor), linedef->backsector->GetPlaneTexZ(sector_t::floor));
     *ptextop = *ptexbot+textureheight;
   } else {
-    *ptextop = y_offset+MIN(linedef->frontsector->GetPlaneTexZ(sector_t::ceiling), linedef->backsector->GetPlaneTexZ(sector_t::ceiling));
+    *ptextop = y_offset+min2(linedef->frontsector->GetPlaneTexZ(sector_t::ceiling), linedef->backsector->GetPlaneTexZ(sector_t::ceiling));
     *ptexbot = *ptextop-textureheight;
   }
   */
@@ -1197,9 +1197,9 @@ int SV_PointContents (sector_t *sector, const TVec &p) {
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
       // non-solid?
-      const float cz = MIN(seccz, reg->eceiling.GetPointZ(p));
+      const float cz = min2(seccz, reg->eceiling.GetPointZ(p));
       if (reg->regflags&sec_region_t::RF_NonSolid) {
-        const float fz = MAX(secfz, reg->efloor.GetPointZ(p));
+        const float fz = max2(secfz, reg->efloor.GetPointZ(p));
         // check if point is inside, and for best floor dist
         if (p.z >= fz && p.z <= cz) {
           const float fdist = p.z-fz;

@@ -656,10 +656,10 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].x = wv[3].x = seg->v2->x;
     wv[2].y = wv[3].y = seg->v2->y;
 
-    wv[0].z = MAX(back_topz1, botz1);
+    wv[0].z = max2(back_topz1, botz1);
     wv[1].z = top_topz1;
     wv[2].z = top_topz2;
-    wv[3].z = MAX(back_topz2, botz2);
+    wv[3].z = max2(back_topz2, botz2);
 
     CreateWorldSurfFromWV(sub, seg, sp, wv);
   }
@@ -728,8 +728,8 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].y = wv[3].y = seg->v2->y;
 
     wv[0].z = botz1;
-    wv[1].z = MIN(back_botz1, topz1);
-    wv[2].z = MIN(back_botz2, topz2);
+    wv[1].z = min2(back_botz1, topz1);
+    wv[2].z = min2(back_botz2, topz2);
     wv[3].z = botz2;
 
     CreateWorldSurfFromWV(sub, seg, sp, wv);
@@ -869,17 +869,17 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     const float back_botz1 = back_floor->GetPointZ(*seg->v1);
     const float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
-    const float exbotz = MIN(back_botz1, back_botz2);
-    const float extopz = MAX(back_topz1, back_topz2);
+    const float exbotz = min2(back_botz1, back_botz2);
+    const float extopz = max2(back_topz1, back_topz2);
 
     const float texh = MTex->GetScaledHeight()*sidedef->Mid.ScaleY;
     float z_org; // texture top
     if (linedef->flags&ML_DONTPEGBOTTOM) {
       // bottom of texture at bottom
-      z_org = MAX(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
+      z_org = max2(seg->frontsector->floor.TexZ, seg->backsector->floor.TexZ)+texh;
     } else {
       // top of texture at top
-      z_org = MIN(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
+      z_org = min2(seg->frontsector->ceiling.TexZ, seg->backsector->ceiling.TexZ);
     }
     FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid);
 
@@ -908,10 +908,10 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
       wv[2].x = wv[3].x = seg->v2->x;
       wv[2].y = wv[3].y = seg->v2->y;
 
-      const float topz1 = MIN(back_topz1, cop->eceiling.GetPointZ(*seg->v1));
-      const float topz2 = MIN(back_topz2, cop->eceiling.GetPointZ(*seg->v2));
-      const float botz1 = MAX(back_botz1, cop->efloor.GetPointZ(*seg->v1));
-      const float botz2 = MAX(back_botz2, cop->efloor.GetPointZ(*seg->v2));
+      const float topz1 = min2(back_topz1, cop->eceiling.GetPointZ(*seg->v1));
+      const float topz2 = min2(back_topz2, cop->eceiling.GetPointZ(*seg->v2));
+      const float botz1 = max2(back_botz1, cop->efloor.GetPointZ(*seg->v1));
+      const float botz2 = max2(back_botz2, cop->efloor.GetPointZ(*seg->v2));
 
       float midtopz1 = topz1;
       float midtopz2 = topz2;
@@ -921,13 +921,13 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
       if (doDump) { GCon->Logf(" zorg=(%g,%g); botz=(%g,%g); topz=(%g,%g)", z_org-texh, z_org, midbotz1, midbotz2, midtopz1, midtopz2); }
 
       if (sidedef->TopTexture > 0) {
-        midtopz1 = MIN(midtopz1, cop->eceiling.GetPointZ(*seg->v1));
-        midtopz2 = MIN(midtopz2, cop->eceiling.GetPointZ(*seg->v2));
+        midtopz1 = min2(midtopz1, cop->eceiling.GetPointZ(*seg->v1));
+        midtopz2 = min2(midtopz2, cop->eceiling.GetPointZ(*seg->v2));
       }
 
       if (sidedef->BottomTexture > 0) {
-        midbotz1 = MAX(midbotz1, cop->efloor.GetPointZ(*seg->v1));
-        midbotz2 = MAX(midbotz2, cop->efloor.GetPointZ(*seg->v1));
+        midbotz1 = max2(midbotz1, cop->efloor.GetPointZ(*seg->v1));
+        midbotz2 = max2(midbotz2, cop->efloor.GetPointZ(*seg->v1));
       }
 
       if (midbotz1 >= midtopz1 || midbotz2 >= midtopz2) continue;
@@ -946,8 +946,8 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
         hgts[2] = midtopz2;
         hgts[3] = midbotz2;
       } else {
-        if (z_org <= MAX(midbotz1, midbotz2)) continue;
-        if (z_org-texh >= MAX(midtopz1, midtopz2)) continue;
+        if (z_org <= max2(midbotz1, midbotz2)) continue;
+        if (z_org-texh >= max2(midtopz1, midtopz2)) continue;
         if (doDump) {
           midbotz1 = midbotz2 = 78;
           GCon->Log(" === front regions ===");
@@ -959,10 +959,10 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
           GCon->Log(" === back openings ===");
           for (opening_t *bop = SV_SectorOpenings2(seg->backsector, true); bop; bop = bop->next) DumpOpening(bop);
         }
-        hgts[0] = MAX(midbotz1, z_org-texh);
-        hgts[1] = MIN(midtopz1, z_org);
-        hgts[2] = MIN(midtopz2, z_org);
-        hgts[3] = MAX(midbotz2, z_org-texh);
+        hgts[0] = max2(midbotz1, z_org-texh);
+        hgts[1] = min2(midtopz1, z_org);
+        hgts[2] = min2(midtopz2, z_org);
+        hgts[3] = max2(midbotz2, z_org-texh);
       }
 
       wv[0].z = hgts[0];
@@ -1037,8 +1037,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float extrabotz2 = reg->efloor.GetPointZ(*seg->v2);
 
     // find opening for this side
-    const float exbotz = MIN(extrabotz1, extrabotz2);
-    const float extopz = MAX(extratopz1, extratopz2);
+    const float exbotz = min2(extrabotz1, extrabotz2);
+    const float extopz = max2(extratopz1, extratopz2);
 
     for (opening_t *cop = ops; cop; cop = cop->next) {
       if (extopz <= cop->bottom || exbotz >= cop->top) continue;
@@ -1051,8 +1051,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
       // check texture limits
       if (!wrapped) {
-        if (MAX(topz1, topz2) <= z_org-texh) continue;
-        if (MIN(botz1, botz2) >= z_org) continue;
+        if (max2(topz1, topz2) <= z_org-texh) continue;
+        if (min2(botz1, botz2) >= z_org) continue;
       }
 
       wv[0].x = wv[1].x = seg->v1->x;
@@ -1061,15 +1061,15 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       wv[2].y = wv[3].y = seg->v2->y;
 
       if (wrapped) {
-        wv[0].z = MAX(extrabotz1, botz1);
-        wv[1].z = MIN(extratopz1, topz1);
-        wv[2].z = MIN(extratopz2, topz2);
-        wv[3].z = MAX(extrabotz2, botz2);
+        wv[0].z = max2(extrabotz1, botz1);
+        wv[1].z = min2(extratopz1, topz1);
+        wv[2].z = min2(extratopz2, topz2);
+        wv[3].z = max2(extrabotz2, botz2);
       } else {
-        wv[0].z = MAX(MAX(extrabotz1, botz1), z_org-texh);
-        wv[1].z = MIN(MIN(extratopz1, topz1), z_org);
-        wv[2].z = MIN(MIN(extratopz2, topz2), z_org);
-        wv[3].z = MAX(MAX(extrabotz2, botz2), z_org-texh);
+        wv[0].z = max3(extrabotz1, botz1, z_org-texh);
+        wv[1].z = min3(extratopz1, topz1, z_org);
+        wv[2].z = min3(extratopz2, topz2, z_org);
+        wv[3].z = max3(extrabotz2, botz2, z_org-texh);
       }
 
       CreateWorldSurfFromWV(sub, seg, sp, wv);

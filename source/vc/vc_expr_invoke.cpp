@@ -2272,9 +2272,9 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
         if (!v0.isValid()) {
           v0.x = v0.y = v0.z = vmin;
         } else {
-          v0.x = MID(vmin, v0.x, vmax);
-          v0.y = MID(vmin, v0.y, vmax);
-          v0.z = MID(vmin, v0.z, vmax);
+          v0.x = midval(vmin, v0.x, vmax);
+          v0.y = midval(vmin, v0.y, vmax);
+          v0.z = midval(vmin, v0.z, vmax);
         }
         e = new VVectorExpr(v0, Loc);
       }

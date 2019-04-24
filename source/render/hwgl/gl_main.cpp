@@ -1213,7 +1213,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   bbox[3+0] = inworld.x+radius;
   bbox[3+1] = inworld.y+radius;
-  bbox[3+2] = MIN(-1.0f, inworld.z+radius); // clamp to znear
+  bbox[3+2] = min2(-1.0f, inworld.z+radius); // clamp to znear
 
   // clamp it with geometry bbox, if there is any
 #if 1
@@ -1228,12 +1228,12 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     float trbb[6] = { FLT_MAX, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX };
     for (unsigned f = 0; f < 8; ++f) {
       TVec vtx = mmat*TVec(gbb[BBoxVertexIndex[f][0]], gbb[BBoxVertexIndex[f][1]], gbb[BBoxVertexIndex[f][2]]);
-      trbb[0] = MIN(trbb[0], vtx.x);
-      trbb[1] = MIN(trbb[1], vtx.y);
-      trbb[2] = MIN(trbb[2], vtx.z);
-      trbb[3] = MAX(trbb[3], vtx.x);
-      trbb[4] = MAX(trbb[4], vtx.y);
-      trbb[5] = MAX(trbb[5], vtx.z);
+      trbb[0] = min2(trbb[0], vtx.x);
+      trbb[1] = min2(trbb[1], vtx.y);
+      trbb[2] = min2(trbb[2], vtx.z);
+      trbb[3] = max2(trbb[3], vtx.x);
+      trbb[4] = max2(trbb[4], vtx.y);
+      trbb[5] = max2(trbb[5], vtx.z);
     }
 
     if (trbb[0] >= trbb[3+0] || trbb[1] >= trbb[3+1] || trbb[2] >= trbb[3+2]) {
@@ -1242,8 +1242,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
       return 0;
     }
 
-    trbb[2] = MIN(-1.0f, trbb[2]);
-    trbb[5] = MIN(-1.0f, trbb[5]);
+    trbb[2] = min2(-1.0f, trbb[2]);
+    trbb[5] = min2(-1.0f, trbb[5]);
 
     /*
     if (trbb[0] > bbox[0] || trbb[1] > bbox[1] || trbb[2] > bbox[2] ||
@@ -1253,12 +1253,12 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
     */
 
-    bbox[0] = MAX(bbox[0], trbb[0]);
-    bbox[1] = MAX(bbox[1], trbb[1]);
-    bbox[2] = MAX(bbox[2], trbb[2]);
-    bbox[3] = MIN(bbox[3], trbb[3]);
-    bbox[4] = MIN(bbox[4], trbb[4]);
-    bbox[5] = MIN(bbox[5], trbb[5]);
+    bbox[0] = max2(bbox[0], trbb[0]);
+    bbox[1] = max2(bbox[1], trbb[1]);
+    bbox[2] = max2(bbox[2], trbb[2]);
+    bbox[3] = min2(bbox[3], trbb[3]);
+    bbox[4] = min2(bbox[4], trbb[4]);
+    bbox[5] = min2(bbox[5], trbb[5]);
     if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       glDisable(GL_SCISSOR_TEST);
@@ -1268,19 +1268,19 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     /*
     TVec bc0 = mmat*geobbox[0];
     TVec bc1 = mmat*geobbox[1];
-    TVec bmin = TVec(MIN(bc0.x, bc1.x), MIN(bc0.y, bc1.y), MIN(-1.0f, MIN(bc0.z, bc1.z)));
-    TVec bmax = TVec(MAX(bc0.x, bc1.x), MAX(bc0.y, bc1.y), MIN(-1.0f, MAX(bc0.z, bc1.z)));
+    TVec bmin = TVec(min2(bc0.x, bc1.x), min2(bc0.y, bc1.y), min2(-1.0f, min2(bc0.z, bc1.z)));
+    TVec bmax = TVec(max2(bc0.x, bc1.x), max2(bc0.y, bc1.y), min2(-1.0f, max2(bc0.z, bc1.z)));
     if (bmin.x > bbox[0] || bmin.y > bbox[1] || bmin.z > bbox[2] ||
         bmax.x < bbox[3] || bmax.y < bbox[4] || bmax.z < bbox[5])
     {
       GCon->Logf("GEOCLAMP: (%f,%f,%f)-(%f,%f,%f) : (%f,%f,%f)-(%f,%f,%f)", bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5], bmin.x, bmin.y, bmin.z, bmax.x, bmax.y, bmax.z);
     }
-    bbox[0] = MAX(bbox[0], bmin.x);
-    bbox[1] = MAX(bbox[1], bmin.y);
-    bbox[2] = MAX(bbox[2], bmin.z);
-    bbox[3] = MIN(bbox[3], bmax.x);
-    bbox[4] = MIN(bbox[4], bmax.y);
-    bbox[5] = MIN(bbox[5], bmax.z);
+    bbox[0] = max2(bbox[0], bmin.x);
+    bbox[1] = max2(bbox[1], bmin.y);
+    bbox[2] = max2(bbox[2], bmin.z);
+    bbox[3] = min2(bbox[3], bmax.x);
+    bbox[4] = min2(bbox[4], bmax.y);
+    bbox[5] = min2(bbox[5], bmax.z);
     if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
       glDisable(GL_SCISSOR_TEST);
@@ -1295,7 +1295,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     const bool zeroZ = (gl_enable_clip_control && p_glClipControl);
     const bool revZ = CanUseRevZ();
 
-    //const float ofsz0 = MIN(-1.0f, inworld.z+radius);
+    //const float ofsz0 = min2(-1.0f, inworld.z+radius);
     //const float ofsz1 = inworld.z-radius;
     const float ofsz0 = bbox[5];
     const float ofsz1 = bbox[2];
@@ -1368,10 +1368,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
-  minx = MID(0, minx, ScreenWidth-1);
-  miny = MID(0, miny, ScreenHeight-1);
-  maxx = MID(0, maxx, ScreenWidth-1);
-  maxy = MID(0, maxy, ScreenHeight-1);
+  minx = midval(0, minx, ScreenWidth-1);
+  miny = midval(0, miny, ScreenHeight-1);
+  maxx = midval(0, maxx, ScreenWidth-1);
+  maxy = midval(0, maxy, ScreenHeight-1);
 #else
   if (minx > scrx1 || miny > scry1 || maxx < vport[0] || maxy < vport[1]) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
@@ -1380,10 +1380,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
-  minx = MID(vport[0], minx, scrx1);
-  miny = MID(vport[1], miny, scry1);
-  maxx = MID(vport[0], maxx, scrx1);
-  maxy = MID(vport[1], maxy, scry1);
+  minx = midval(vport[0], minx, scrx1);
+  miny = midval(vport[1], miny, scry1);
+  maxx = midval(vport[0], maxx, scrx1);
+  maxy = midval(vport[1], maxy, scry1);
 #endif
 
   /*

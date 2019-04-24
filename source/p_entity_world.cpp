@@ -1287,7 +1287,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         float floorz = tmtrace.FloorZ;
         // [RH] If the thing is standing on something, use its current z as the floorz.
         // This is so that it does not walk off of things onto a drop off.
-        if (EntityFlags&EF_OnMobj) floorz = MAX(Origin.z, tmtrace.FloorZ);
+        if (EntityFlags&EF_OnMobj) floorz = max2(Origin.z, tmtrace.FloorZ);
 
         if ((floorz-tmtrace.DropOffZ > MaxDropoffHeight) && !(EntityFlags&EF_Blasted)) {
           // Can't move over a dropoff unless it's been blasted
@@ -1796,10 +1796,10 @@ bool VEntity::CheckSides (TVec lsPos) {
 
   // here is the bounding box of the trajectory
   float tmbbox[4];
-  tmbbox[BOXLEFT] = MIN(Origin.x, lsPos.x);
-  tmbbox[BOXRIGHT] = MAX(Origin.x, lsPos.x);
-  tmbbox[BOXTOP] = MAX(Origin.y, lsPos.y);
-  tmbbox[BOXBOTTOM] = MIN(Origin.y, lsPos.y);
+  tmbbox[BOXLEFT] = min2(Origin.x, lsPos.x);
+  tmbbox[BOXRIGHT] = max2(Origin.x, lsPos.x);
+  tmbbox[BOXTOP] = max2(Origin.y, lsPos.y);
+  tmbbox[BOXBOTTOM] = min2(Origin.y, lsPos.y);
 
   // determine which blocks to look in for blocking lines
   xl = MapBlock(tmbbox[BOXLEFT]-XLevel->BlockMapOrgX);

@@ -104,7 +104,7 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
   }
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
-  slins = MAX(slins, r_ambient.asInt());
+  slins = max2(slins, r_ambient.asInt());
   //if (slins > 255) slins = 255;
   return clampToByte(slins);
 }
@@ -129,7 +129,7 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   }
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
-  slins = MAX(slins, r_ambient.asInt());
+  slins = max2(slins, r_ambient.asInt());
   //if (slins > 255) slins = 255;
   return (surf->Light&0xffffffu)|(((vuint32)clampToByte(slins))<<24);
 }

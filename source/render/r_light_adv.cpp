@@ -903,12 +903,12 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
         zdown = 0;
       }
       if (wasHit) {
-        xbbox[0+0] = MIN(xbbox[0+0], ment->Origin.x-ment->Radius);
-        xbbox[0+1] = MIN(xbbox[0+1], ment->Origin.y-ment->Radius);
-        xbbox[0+2] = MIN(xbbox[0+2], ment->Origin.z-zup);
-        xbbox[3+0] = MAX(xbbox[3+0], ment->Origin.x+ment->Radius);
-        xbbox[3+1] = MAX(xbbox[3+1], ment->Origin.y+ment->Radius);
-        xbbox[3+2] = MAX(xbbox[3+2], ment->Origin.z+zdown);
+        xbbox[0+0] = min2(xbbox[0+0], ment->Origin.x-ment->Radius);
+        xbbox[0+1] = min2(xbbox[0+1], ment->Origin.y-ment->Radius);
+        xbbox[0+2] = min2(xbbox[0+2], ment->Origin.z-zup);
+        xbbox[3+0] = max2(xbbox[3+0], ment->Origin.x+ment->Radius);
+        xbbox[3+1] = max2(xbbox[3+1], ment->Origin.y+ment->Radius);
+        xbbox[3+2] = max2(xbbox[3+2], ment->Origin.z+zdown);
       } else {
         wasHit = true;
         xbbox[0+0] = ment->Origin.x-ment->Radius;
@@ -929,12 +929,12 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
         LitBBox[1].x, LitBBox[1].y, LitBBox[1].z,
         xbbox[0], xbbox[1], xbbox[2], xbbox[3], xbbox[4], xbbox[5]);
       */
-      LitBBox[0].x = MIN(xbbox[0+0], LitBBox[0].x);
-      LitBBox[0].y = MIN(xbbox[0+1], LitBBox[0].y);
-      LitBBox[0].z = MIN(xbbox[0+2], LitBBox[0].z);
-      LitBBox[1].x = MAX(xbbox[3+0], LitBBox[1].x);
-      LitBBox[1].y = MAX(xbbox[3+1], LitBBox[1].y);
-      LitBBox[1].z = MAX(xbbox[3+2], LitBBox[1].z);
+      LitBBox[0].x = min2(xbbox[0+0], LitBBox[0].x);
+      LitBBox[0].y = min2(xbbox[0+1], LitBBox[0].y);
+      LitBBox[0].z = min2(xbbox[0+2], LitBBox[0].z);
+      LitBBox[1].x = max2(xbbox[3+0], LitBBox[1].x);
+      LitBBox[1].y = max2(xbbox[3+1], LitBBox[1].y);
+      LitBBox[1].z = max2(xbbox[3+2], LitBBox[1].z);
       hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, LitBBox);
       if (hasScissor <= 0) {
         // something is VERY wrong (-1), or scissor is empty (0)

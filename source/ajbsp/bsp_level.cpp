@@ -178,10 +178,10 @@ static void BlockAddLine(linedef_t *L)
 	int x2 = (int) L->end->x;
 	int y2 = (int) L->end->y;
 
-	int bx1 = (MIN(x1,x2) - block_x) / 128;
-	int by1 = (MIN(y1,y2) - block_y) / 128;
-	int bx2 = (MAX(x1,x2) - block_x) / 128;
-	int by2 = (MAX(y1,y2) - block_y) / 128;
+	int bx1 = (MIN2(x1,x2) - block_x) / 128;
+	int by1 = (MIN2(y1,y2) - block_y) / 128;
+	int bx2 = (MAX2(x1,x2) - block_x) / 128;
+	int by2 = (MAX2(y1,y2) - block_y) / 128;
 
 	int bx, by;
 	int line_index = L->index;
@@ -506,10 +506,10 @@ static void FindBlockmapLimits(bbox_t *bbox)
 			double x2 = L->end->x;
 			double y2 = L->end->y;
 
-			int lx = (int)floor(MIN(x1, x2));
-			int ly = (int)floor(MIN(y1, y2));
-			int hx = (int)ceil(MAX(x1, x2));
-			int hy = (int)ceil(MAX(y1, y2));
+			int lx = (int)floor(MIN2(x1, x2));
+			int ly = (int)floor(MIN2(y1, y2));
+			int hx = (int)ceil(MAX2(x1, x2));
+			int hy = (int)ceil(MAX2(y1, y2));
 
 			if (lx < bbox->minx) bbox->minx = lx;
 			if (ly < bbox->miny) bbox->miny = ly;

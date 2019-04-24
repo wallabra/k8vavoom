@@ -2098,15 +2098,15 @@ void VLevel::PostLoadSubsectors () {
     for (int j = 0; j < ss->numlines; j++) {
       seg[j].front_sub = ss;
       // min
-      ss->bbox[0] = MIN(ss->bbox[0], seg[j].v1->x);
-      ss->bbox[0] = MIN(ss->bbox[0], seg[j].v2->x);
-      ss->bbox[1] = MIN(ss->bbox[1], seg[j].v1->y);
-      ss->bbox[1] = MIN(ss->bbox[1], seg[j].v2->y);
+      ss->bbox[0] = min2(ss->bbox[0], seg[j].v1->x);
+      ss->bbox[0] = min2(ss->bbox[0], seg[j].v2->x);
+      ss->bbox[1] = min2(ss->bbox[1], seg[j].v1->y);
+      ss->bbox[1] = min2(ss->bbox[1], seg[j].v2->y);
       // max
-      ss->bbox[2] = MAX(ss->bbox[2], seg[j].v1->x);
-      ss->bbox[2] = MAX(ss->bbox[2], seg[j].v2->x);
-      ss->bbox[3] = MAX(ss->bbox[3], seg[j].v1->y);
-      ss->bbox[3] = MAX(ss->bbox[3], seg[j].v2->y);
+      ss->bbox[2] = max2(ss->bbox[2], seg[j].v1->x);
+      ss->bbox[2] = max2(ss->bbox[2], seg[j].v2->x);
+      ss->bbox[3] = max2(ss->bbox[3], seg[j].v1->y);
+      ss->bbox[3] = max2(ss->bbox[3], seg[j].v2->y);
     }
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }

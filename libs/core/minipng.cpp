@@ -746,7 +746,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
       file.Serialise(chunkbuffer, rd);
       if (file.IsError()) rd = 0;
       stream.avail_in = (uInt)rd;
-      //stream.avail_in = (uInt)file.Read (chunkbuffer, MIN<vuint32>(chunklen,sizeof(chunkbuffer)));
+      //stream.avail_in = (uInt)file.Read (chunkbuffer, min2<vuint32>(chunklen,sizeof(chunkbuffer)));
       chunklen -= stream.avail_in;
     }
 

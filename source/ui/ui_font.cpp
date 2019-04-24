@@ -597,7 +597,7 @@ void VFont::BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool Consol
   float Scale = 1.0f/(Rescale ? MaxLum-MinLum : 255.0f);
   for (int i = 1; i < 256; ++i) {
     Luminosity[i] = (Luminosity[i]-MinLum)*Scale;
-    Luminosity[i] = MID(0.0f, Luminosity[i], 1.0f);
+    Luminosity[i] = midval(0.0f, Luminosity[i], 1.0f);
   }
 
   Translation = new rgba_t[256*TextColours.Num()];
@@ -1355,14 +1355,14 @@ vuint8 *VFontChar2::GetPixels () {
       Count -= Code+1;
       while (Code-- >= 0) {
         *pDst = Streamer<vuint8>(Strm);
-        *pDst = MIN(*pDst, maxcol);
+        *pDst = min2(*pDst, maxcol);
         ++pDst;
       }
     } else if (Code != -128) {
       Code = 1-Code;
       Count -= Code;
       vuint8 Val = Streamer<vuint8>(Strm);
-      Val = MIN(Val, maxcol);
+      Val = min2(Val, maxcol);
       while (Code-- > 0) *pDst++ = Val;
     }
   } while (Count > 0);

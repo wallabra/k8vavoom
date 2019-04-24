@@ -215,7 +215,7 @@ static void ParseTerrainScript (VScriptParser *sc) {
           // a friction of 1.0 is equivalent to ORIG_FRICTION
 
           friction = (int)(0x1EB8*(sc->Float*100))/0x80+0xD001;
-          friction = MID(0, friction, 0x10000);
+          friction = midval(0, friction, 0x10000);
 
           if (friction > 0xe800) {
             // ice

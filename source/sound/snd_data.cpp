@@ -254,17 +254,17 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       sc->ExpectString();
       int sfx = FindOrAddSound(*sc->String);
       sc->ExpectNumber();
-      S_sfx[sfx].NumChannels = MID(0, sc->Number, 255);
+      S_sfx[sfx].NumChannels = midval(0, sc->Number, 255);
     } else if (sc->Check("$pitchshift")) {
       // $pitchshift <logical name> <pitch shift amount>
       sc->ExpectString();
       int sfx = FindOrAddSound(*sc->String);
       sc->ExpectNumber();
-      S_sfx[sfx].ChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0f;
+      S_sfx[sfx].ChangePitch = ((1 << midval(0, sc->Number, 7)) - 1) / 255.0f;
     } else if (sc->Check("$pitchshiftrange")) {
       // $pitchshiftrange <pitch shift amount>
       sc->ExpectNumber();
-      CurrentChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0f;
+      CurrentChangePitch = ((1 << midval(0, sc->Number, 7)) - 1) / 255.0f;
     } else if (sc->Check("$alias")) {
       // $alias <name of alias> <name of real sound>
       sc->ExpectString();

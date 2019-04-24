@@ -155,7 +155,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   sec_params_t *LightParams = (LightSourceSector == -1 ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
-  lLev = MID(0, lLev, 255);
+  lLev = midval(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
   vuint32 Fade = GetFade(secregion);
 
@@ -313,7 +313,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       sec_params_t *LightParams = Ceil->esecplane.splane->LightSourceSector != -1 ?
         &Level->Sectors[Ceil->esecplane.splane->LightSourceSector].params :
         secregion->params;
-      int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
+      int lLev = (FixedLight ? FixedLight : min2(255, LightParams->lightlevel+ExtraLight));
       if (r_darken) lLev = light_remap[lLev];
       vuint32 Fade = GetFade(secregion);
 
@@ -325,10 +325,10 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->Fade = Fade;
       Surf->count = 4;
       TVec *svs = &Surf->verts[0];
-      svs[0] = *seg->v1; svs[0].z = MAX(BotZ, HorizonZ);
+      svs[0] = *seg->v1; svs[0].z = max2(BotZ, HorizonZ);
       svs[1] = *seg->v1; svs[1].z = TopZ;
       svs[2] = *seg->v2; svs[2].z = TopZ;
-      svs[3] = *seg->v2; svs[3].z = MAX(BotZ, HorizonZ);
+      svs[3] = *seg->v2; svs[3].z = max2(BotZ, HorizonZ);
       if (Ceil->esecplane.splane->pic == skyflatnum) {
         // if it's a sky, render it as a regular sky surface
         DrawSurfaces(sub, secregion, nullptr, Surf, &Ceil->texinfo, secregion->eceiling.splane->SkyBox, -1,
@@ -354,7 +354,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       sec_params_t *LightParams = Floor->esecplane.splane->LightSourceSector != -1 ?
         &Level->Sectors[Floor->esecplane.splane->LightSourceSector].params :
         secregion->params;
-      int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
+      int lLev = (FixedLight ? FixedLight : min2(255, LightParams->lightlevel+ExtraLight));
       if (r_darken) lLev = light_remap[lLev];
       vuint32 Fade = GetFade(secregion);
 
@@ -367,8 +367,8 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->count = 4;
       TVec *svs = &Surf->verts[0];
       svs[0] = *seg->v1; svs[0].z = BotZ;
-      svs[1] = *seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
-      svs[2] = *seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
+      svs[1] = *seg->v1; svs[1].z = min2(TopZ, HorizonZ);
+      svs[2] = *seg->v2; svs[2].z = min2(TopZ, HorizonZ);
       svs[3] = *seg->v2; svs[3].z = BotZ;
       if (Floor->esecplane.splane->pic == skyflatnum) {
         // if it's a sky, render it as a regular sky surface
@@ -811,8 +811,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
             float minz = 999999.0f;
             float maxz = -999999.0f;
             bspCalcZExtents(Level, bspnum, &minz, &maxz);
-            newbbox[2] = MIN(minz, bbox[2]);
-            newbbox[5] = MAX(maxz, bbox[5]);
+            newbbox[2] = min2(minz, bbox[2]);
+            newbbox[5] = max2(maxz, bbox[5]);
             if (cp->checkBox(newbbox)) {
               GCon->Logf("BBOX! (%f,%f) : (%f,%f) : %d", bbox[2], bbox[5], minz, maxz, (int)cp->checkBox(newbbox));
               if ((bspnum&NF_SUBSECTOR) == 0) {
@@ -920,7 +920,7 @@ struct SubInfo {
         seenMini = true;
         const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
         const float distSq = proj.length2DSquared();
-        bestMini = MIN(distSq, bestMini);
+        bestMini = min2(distSq, bestMini);
       } else {
         // normal seg
         seenSeg = true;
@@ -928,17 +928,17 @@ struct SubInfo {
         /*
         const TVec v1 = *seg->v1-origin, v2 = seg->v2-origin;
         float distSq = v1.length2DSquared();
-        minDistSq = MIN(distSq, minDistSq);
+        minDistSq = min2(distSq, minDistSq);
         float distSq = v2.length2DSquared();
-        minDistSq = MIN(distSq, minDistSq);
+        minDistSq = min2(distSq, minDistSq);
         */
         /*
         const float distSq = fabsf(DotProduct(origin, seg->normal)-seg->dist);
-        minDistSq = MIN(distSq, minDistSq);
+        minDistSq = min2(distSq, minDistSq);
         */
         const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
         const float distSq = proj.length2DSquared();
-        bestNonMini = MIN(distSq, bestNonMini);
+        bestNonMini = min2(distSq, bestNonMini);
       }
     }
     if (seenNonMini) {
@@ -946,7 +946,7 @@ struct SubInfo {
     } else if (seenMini) {
       minDistSq = bestMini;
     }
-    minDistSq = MIN(bestMini, bestNonMini);
+    minDistSq = min2(bestMini, bestNonMini);
   }
 };
 

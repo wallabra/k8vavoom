@@ -351,7 +351,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             }
             else if (sc->Check("alpha")) {
               sc->ExpectFloat();
-              P.Alpha = MID(0.0f, (float)sc->Float, 1.0f);
+              P.Alpha = midval(0.0f, (float)sc->Float, 1.0f);
             } else {
               if (sc->Check("style")) expectStyle = true;
                    if (sc->Check("copy")) P.Style = STYLE_Copy;
@@ -422,10 +422,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
       for (int x = 0; x < Width; ++x) {
         rgba_t pix = getPixel(x, y);
         if (pix.a) {
-          xmin = MIN(xmin, x);
-          ymin = MIN(ymin, y);
-          xmax = MAX(xmax, x);
-          ymax = MAX(ymax, y);
+          xmin = min2(xmin, x);
+          ymin = min2(ymin, y);
+          xmax = max2(xmax, x);
+          ymax = max2(ymax, y);
           gotPixel = true;
         }
       }
@@ -609,21 +609,21 @@ vuint8 *VMultiPatchTexture::GetPixels () {
                 Dst.a = col.a;
                 break;
               case STYLE_Add:
-                Dst.r = MIN(Dst.r+vuint8(col.r*patch->Alpha), 255);
-                Dst.g = MIN(Dst.g+vuint8(col.g*patch->Alpha), 255);
-                Dst.b = MIN(Dst.b+vuint8(col.b*patch->Alpha), 255);
+                Dst.r = min2(Dst.r+vuint8(col.r*patch->Alpha), 255);
+                Dst.g = min2(Dst.g+vuint8(col.g*patch->Alpha), 255);
+                Dst.b = min2(Dst.b+vuint8(col.b*patch->Alpha), 255);
                 Dst.a = col.a;
                 break;
               case STYLE_Subtract:
-                Dst.r = MAX(Dst.r-vuint8(col.r*patch->Alpha), 0);
-                Dst.g = MAX(Dst.g-vuint8(col.g*patch->Alpha), 0);
-                Dst.b = MAX(Dst.b-vuint8(col.b*patch->Alpha), 0);
+                Dst.r = max2(Dst.r-vuint8(col.r*patch->Alpha), 0);
+                Dst.g = max2(Dst.g-vuint8(col.g*patch->Alpha), 0);
+                Dst.b = max2(Dst.b-vuint8(col.b*patch->Alpha), 0);
                 Dst.a = col.a;
                 break;
               case STYLE_ReverseSubtract:
-                Dst.r = MAX(vuint8(col.r*patch->Alpha)-Dst.r, 0);
-                Dst.g = MAX(vuint8(col.g*patch->Alpha)-Dst.g, 0);
-                Dst.b = MAX(vuint8(col.b*patch->Alpha)-Dst.b, 0);
+                Dst.r = max2(vuint8(col.r*patch->Alpha)-Dst.r, 0);
+                Dst.g = max2(vuint8(col.g*patch->Alpha)-Dst.g, 0);
+                Dst.b = max2(vuint8(col.b*patch->Alpha)-Dst.b, 0);
                 Dst.a = col.a;
                 break;
               case STYLE_Modulate:

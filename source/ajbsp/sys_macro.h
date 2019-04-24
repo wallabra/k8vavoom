@@ -34,12 +34,12 @@
 #define M_SQRT2  1.41421356237309504880
 #endif
 
-#ifndef MAX
-#define MAX(a,b)  ((a) > (b) ? (a) : (b))
+#ifndef MAX2
+#define MAX2(a,b)  ((a) > (b) ? (a) : (b))
 #endif
 
-#ifndef MIN
-#define MIN(a,b)  ((a) < (b) ? (a) : (b))
+#ifndef MIN2
+#define MIN2(a,b)  ((a) < (b) ? (a) : (b))
 #endif
 
 #ifndef ABS

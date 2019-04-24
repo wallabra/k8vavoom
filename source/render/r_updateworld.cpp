@@ -116,13 +116,13 @@ void VRenderLevelShared::UpdateSubsector (int num, float *bbox) {
       } else if (bsp->children[0] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
         if (bsp->bbox[0][2] <= minz && bsp->bbox[0][5] >= maxz) break;
         //!GCon->Logf("  sub #%d: updating front node", num);
-        bsp->bbox[0][2] = MIN(bsp->bbox[0][2], minz);
-        bsp->bbox[0][5] = MAX(bsp->bbox[0][5], maxz);
+        bsp->bbox[0][2] = min2(bsp->bbox[0][2], minz);
+        bsp->bbox[0][5] = max2(bsp->bbox[0][5], maxz);
       } else if (bsp->children[1] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
         if (bsp->bbox[1][2] <= minz && bsp->bbox[1][5] >= maxz) break;
         //!GCon->Logf("  sub #%d: updating back node", num);
-        bsp->bbox[1][2] = MIN(bsp->bbox[1][2], minz);
-        bsp->bbox[1][5] = MAX(bsp->bbox[1][5], maxz);
+        bsp->bbox[1][2] = min2(bsp->bbox[1][2], minz);
+        bsp->bbox[1][5] = max2(bsp->bbox[1][5], maxz);
       }
     }
   }
@@ -154,8 +154,8 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
     // decide which side the view point is on
     unsigned side = bsp->PointOnSide(vieworg);
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
-    bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
-    bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
+    bbox[2] = min2(bsp->bbox[0][2], bsp->bbox[1][2]);
+    bbox[5] = max2(bsp->bbox[0][5], bsp->bbox[1][5]);
     side ^= 1;
     return UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
   } else {

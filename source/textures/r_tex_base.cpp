@@ -894,7 +894,7 @@ rgb_t VTexture::GetAverageColor (vuint32 maxout) {
   g /= (unsigned)(Width*Height);
   b /= (unsigned)(Width*Height);
 
-  unsigned int maxv = MAX(MAX(r, g), b);
+  unsigned int maxv = max3(r, g, b);
 
   if (maxv && maxout) {
     r = scaleUInt(r, maxout, maxv);

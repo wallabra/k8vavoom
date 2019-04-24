@@ -85,7 +85,7 @@
 #define ELEM(a,i) ((char *)(a) + (i) * WIDTH)
 #define LEN(n) ((n) * WIDTH)
 
-#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define min2(a,b) ((a) <= (b) ? (a) : (b))
 #define SUCCESS 0
 #define FAILURE (-1)
 
@@ -364,7 +364,7 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
 #endif
 
 		newSize++;
-		newSize = MIN(newSize, ts->a_length >> 1);
+		newSize = min2(newSize, ts->a_length >> 1);
 		if (newSize == 0) {	// (overflow) Not bloody likely!
 			newSize = minCapacity;
 		}

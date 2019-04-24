@@ -305,7 +305,7 @@ static const VReverbInfo *const DefaultEnvironments[26] =
 static void DoInt(VScriptParser *sc, int &Val, int Min, int Max)
 {
   sc->ExpectNumber();
-  Val = MID(Min, sc->Number, Max);
+  Val = midval(Min, sc->Number, Max);
 }
 
 //==========================================================================
@@ -317,7 +317,7 @@ static void DoInt(VScriptParser *sc, int &Val, int Min, int Max)
 static void DoFloat(VScriptParser *sc, float &Val, float Min, float Max)
 {
   sc->ExpectFloat();
-  Val = MID(Min, sc->Float, Max);
+  Val = midval(Min, sc->Float, Max);
 }
 
 //==========================================================================

@@ -111,12 +111,12 @@ static inline bool SetupRenderStyleAndTime (const VEntity *mobj, int &RendStyle,
     default: abort();
   }
 
-  Alpha = MID(0.0f, Alpha, 1.0f);
+  Alpha = midval(0.0f, Alpha, 1.0f);
   if (Alpha < 0.01f) return false;
 
   if (mobj->State->Time > 0) {
     TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
-    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
+    TimeFrac = midval(0.0f, TimeFrac, 1.0f);
   }
 
   return true;

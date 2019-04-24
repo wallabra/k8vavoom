@@ -528,10 +528,10 @@ int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
   // If a vertex is near a block boundary, then it will be inserted on
   // both sides of the boundary so that SelectVertexClose can find
   // it by checking in only one block.
-  fixed_t minx = MAX (MinX, vert.x - VERTEX_EPSILON);
-  fixed_t maxx = MIN (MaxX, vert.x + VERTEX_EPSILON);
-  fixed_t miny = MAX (MinY, vert.y - VERTEX_EPSILON);
-  fixed_t maxy = MIN (MaxY, vert.y + VERTEX_EPSILON);
+  fixed_t minx = MAX2 (MinX, vert.x - VERTEX_EPSILON);
+  fixed_t maxx = MIN2 (MaxX, vert.x + VERTEX_EPSILON);
+  fixed_t miny = MAX2 (MinY, vert.y - VERTEX_EPSILON);
+  fixed_t maxy = MIN2 (MaxY, vert.y + VERTEX_EPSILON);
 
   int blk[4] =
   {

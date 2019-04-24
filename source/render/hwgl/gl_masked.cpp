@@ -149,7 +149,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       //       better estimations
       int w = (surf->extents[0]>>4)+1;
       int h = (surf->extents[1]>>4)+1;
-      float radius = MIN(w, h);
+      float radius = min2(w, h);
       if (radius < 0.0f) radius = 0.0f;
       int r = 0, g = 0, b = 0;
       // sector light

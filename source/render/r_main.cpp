@@ -892,12 +892,12 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *s
     ++LitSurfaces;
     const TVec *vert = surf->verts;
     for (int vcount = surf->count; vcount--; ++vert) {
-      bbox[0].x = MIN(bbox[0].x, vert->x);
-      bbox[0].y = MIN(bbox[0].y, vert->y);
-      bbox[0].z = MIN(bbox[0].z, vert->z);
-      bbox[1].x = MAX(bbox[1].x, vert->x);
-      bbox[1].y = MAX(bbox[1].y, vert->y);
-      bbox[1].z = MAX(bbox[1].z, vert->z);
+      bbox[0].x = min2(bbox[0].x, vert->x);
+      bbox[0].y = min2(bbox[0].y, vert->y);
+      bbox[0].z = min2(bbox[0].z, vert->z);
+      bbox[1].x = max2(bbox[1].x, vert->x);
+      bbox[1].y = max2(bbox[1].y, vert->y);
+      bbox[1].z = max2(bbox[1].z, vert->z);
     }
   }
 }

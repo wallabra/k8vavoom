@@ -531,7 +531,7 @@ static void ReadThing (int num) {
       SetClassFieldByte(Ent, "RenderStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Scale")) {
       float Scale = VStr::atof(ValueString, 1);
-      Scale = MID(0.0001f, Scale, 256.0f);
+      Scale = midval(0.0001f, Scale, 256.0f);
       SetClassFieldFloat(Ent, "ScaleX", Scale);
       SetClassFieldFloat(Ent, "ScaleY", Scale);
     } else if (!VStr::ICmp(String, "Bits")) {
@@ -954,10 +954,10 @@ static void DoPowerupColour (const char *ClassName) {
     Warning("Bad powerup colour '%s' for class '%s'", ValueString, ClassName);
     return;
   }
-  r = MID(0, r, 255);
-  g = MID(0, g, 255);
-  b = MID(0, b, 255);
-  a = MID(0.0f, a, 1.0f);
+  r = midval(0, r, 255);
+  g = midval(0, g, 255);
+  b = midval(0, b, 255);
+  a = midval(0.0f, a, 1.0f);
   SetClassFieldInt(Power, "BlendColour", (r<<16)|(g<<8)|b|int(a*255)<<24);
 }
 

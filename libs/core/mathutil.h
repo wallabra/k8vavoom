@@ -101,27 +101,19 @@ static __attribute__((unused)) __attribute__((const)) inline float fastInvSqrtf 
 }
 
 
-#ifdef MIN
-# undef MIN
-#endif
-#ifdef MAX
-# undef MAX
-#endif
-#ifdef MID
-# undef MID
-#endif
 /*
-#define MIN(x, y)   ((x) <= (y) ? (x) : (y))
-#define MAX(x, y)   ((x) >= (y) ? (x) : (y))
-#define MID(min, val, max)  MAX(min, MIN(val, max))
+#define min2(x, y)   ((x) <= (y) ? (x) : (y))
+#define max2(x, y)   ((x) >= (y) ? (x) : (y))
+#define midval(min, val, max)  max2(min, min2(val, max))
 */
-template <class T> constexpr __attribute__((const)) inline T MIN (const T a, const T b) { return (a <= b ? a : b); }
-template <class T> constexpr __attribute__((const)) inline T MAX (const T a, const T b) { return (a >= b ? a : b); }
-//template <class T> constexpr inline T MID (const T min, const T val, const T max) { return MAX(min, MIN(val, max)); }
-template <class T> constexpr __attribute__((const)) inline T MID (const T min, const T val, const T max) { return (val <= min ? min : val >= max ? max : val); }
+template <class T> constexpr __attribute__((const)) inline T min2 (const T a, const T b) { return (a <= b ? a : b); }
+template <class T> constexpr __attribute__((const)) inline T max2 (const T a, const T b) { return (a >= b ? a : b); }
+//template <class T> constexpr inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr __attribute__((const)) inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
+template <class T> constexpr __attribute__((const)) inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
 
-template <class T> constexpr __attribute__((const)) inline T MIN3 (const T a, const T b, const T c) { return MIN(MIN(a, b), c); }
-template <class T> constexpr __attribute__((const)) inline T MAX3 (const T a, const T b, const T c) { return MAX(MAX(a, b), c); }
+template <class T> constexpr __attribute__((const)) inline T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
+template <class T> constexpr __attribute__((const)) inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
 
 
 // bounding box

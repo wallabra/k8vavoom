@@ -828,11 +828,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("vertwallshade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      info->VertWallShade = MID(-128, sc->Number, 127);
+      info->VertWallShade = midval(-128, sc->Number, 127);
     } else if (sc->Check("horizwallshade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      info->HorizWallShade = MID(-128, sc->Number, 127);
+      info->HorizWallShade = midval(-128, sc->Number, 127);
     } else if (sc->Check("noinfighting")) {
       info->Infighting = -1;
     } else if (sc->Check("normalinfighting")) {
@@ -1384,7 +1384,7 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0f-MID(0.0f, (float)sc->Float, 1.0f);
+      sdef->Aggressiveness = 1.0f-midval(0.0f, (float)sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       if (sc->CheckNumber()) {
         if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
@@ -1498,7 +1498,7 @@ static void ParseSkillDef (VScriptParser *sc) {
       sc->Expect("=");
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0f-MID(0.0f, (float)sc->Float, 1.0f);
+      sdef->Aggressiveness = 1.0f-midval(0.0f, (float)sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       sc->Expect("=");
       if (sc->CheckNumber()) {

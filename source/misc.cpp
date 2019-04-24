@@ -436,8 +436,8 @@ vuint32 M_ParseColour (const char *Name) {
 //
 //==========================================================================
 void M_RgbToHsv (vuint8 r, vuint8 g, vuint8 b, vuint8 &h, vuint8 &s, vuint8 &v) {
-  vuint8 min = MIN(MIN(r, g), b);
-  vuint8 max = MAX(MAX(r, g), b);
+  vuint8 min = min3(r, g, b);
+  vuint8 max = max3(r, g, b);
   v = max;
   if (max == min) {
     // gray
@@ -458,8 +458,8 @@ void M_RgbToHsv (vuint8 r, vuint8 g, vuint8 b, vuint8 &h, vuint8 &s, vuint8 &v) 
 //
 //==========================================================================
 void M_RgbToHsv (float r, float g, float b, float &h, float &s, float &v) {
-  float min = MIN(MIN(r, g), b);
-  float max = MAX(MAX(r, g), b);
+  float min = min3(r, g, b);
+  float max = max3(r, g, b);
   v = max;
   if (max == min) {
     // gray

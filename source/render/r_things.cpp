@@ -451,7 +451,7 @@ bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
   float TimeFrac = 0;
   if (mobj->State->Time > 0) {
     TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
-    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
+    TimeFrac = midval(0.0f, TimeFrac, 1.0f);
   }
 
   // draw it
@@ -509,7 +509,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
 
-  //Alpha = MID(0.0f, Alpha, 1.0f);
+  //Alpha = midval(0.0f, Alpha, 1.0f);
   //if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
   // setup lighting
@@ -947,7 +947,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
   float TimeFrac = 0;
   if (VSt->State->Time > 0) {
     TimeFrac = 1.0f-(VSt->StateTime/VSt->State->Time);
-    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
+    TimeFrac = midval(0.0f, TimeFrac, 1.0f);
   }
 
   return DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
@@ -987,7 +987,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     case STYLE_Stencil: break;
     case STYLE_AddStencil: Additive = true; break;
   }
-  //Alpha = MID(0.0f, Alpha, 1.0f);
+  //Alpha = midval(0.0f, Alpha, 1.0f);
   if (Alpha <= 0.002f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
 
@@ -1023,9 +1023,9 @@ void VRenderLevelShared::DrawPlayerSprites () {
       light = LightPoint(vieworg, cl->MO->Radius, -1);
       if (ltxr|ltxg|ltxb) {
         //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
-        int r = MAX(ltxr, (int)((light>>16)&0xff));
-        int g = MAX(ltxg, (int)((light>>8)&0xff));
-        int b = MAX(ltxb, (int)(light&0xff));
+        int r = max2(ltxr, (int)((light>>16)&0xff));
+        int g = max2(ltxg, (int)((light>>8)&0xff));
+        int b = max2(ltxb, (int)(light&0xff));
         light = (light&0xff000000u)|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b));
       }
       */

@@ -217,13 +217,13 @@ void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *max
       *maxz = 32767.0f;
       return;
     }
-    float zmin = MIN(bsec->floor.minz, bsec->floor.maxz);
-    zmin = MIN(bsec->ceiling.minz, bsec->ceiling.maxz);
-    float zmax = MAX(bsec->ceiling.minz, bsec->ceiling.maxz);
-    zmax = MAX(bsec->floor.minz, bsec->floor.maxz);
+    float zmin = min2(bsec->floor.minz, bsec->floor.maxz);
+    zmin = min2(bsec->ceiling.minz, bsec->ceiling.maxz);
+    float zmax = max2(bsec->ceiling.minz, bsec->ceiling.maxz);
+    zmax = max2(bsec->floor.minz, bsec->floor.maxz);
     if (zmax < zmin) { const float tmp = zmax; zmax = zmin; zmin = tmp; }
-    *minz = MIN(*minz, zmin);
-    *maxz = MAX(*maxz, zmax);
+    *minz = min2(*minz, zmin);
+    *maxz = max2(*maxz, zmax);
   }
 
   // cache values
@@ -250,8 +250,8 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
 
   // for one-sector degenerate maps
   if (sub->parent) {
-    bbox[0+2] = MIN(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
-    bbox[3+2] = MAX(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
+    bbox[0+2] = min2(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
+    bbox[3+2] = max2(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
   } else {
     bbox[0+2] = sub->sector->floor.minz;
     bbox[3+2] = sub->sector->ceiling.maxz;
@@ -261,8 +261,8 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   /*
   float minz, maxz;
   CalcSectorBoundingHeight(sub->sector, &minz, &maxz);
-  bbox[2] = MIN(bbox[2], minz);
-  bbox[5] = MAX(bbox[5], maxz);
+  bbox[2] = min2(bbox[2], minz);
+  bbox[5] = max2(bbox[5], maxz);
   */
 }
 
@@ -302,8 +302,8 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
     // decide which side the view point is on
     unsigned side = 0; //bsp->PointOnSide(vieworg);
     RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
-    bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
-    bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
+    bbox[2] = min2(bsp->bbox[0][2], bsp->bbox[1][2]);
+    bbox[5] = max2(bsp->bbox[0][5], bsp->bbox[1][5]);
     side ^= 1;
     return RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight); // help gcc to see tail-call
   } else {
@@ -2505,8 +2505,8 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
 
   sector_t *src = line->frontsector;
 
-  if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), MIN(src->floor.minz, src->floor.maxz), MAX(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
-  if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, MIN(dst->floor.minz, dst->floor.maxz), MAX(dst->ceiling.minz, dst->ceiling.maxz)); }
+  if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), min2(src->floor.minz, src->floor.maxz), max2(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
+  if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, min2(dst->floor.minz, dst->floor.maxz), max2(dst->ceiling.minz, dst->ceiling.maxz)); }
 
   const float floorz = src->floor.GetPointZ(dst->soundorg);
   const float ceilz = src->ceiling.GetPointZ(dst->soundorg);

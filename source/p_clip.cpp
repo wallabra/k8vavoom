@@ -293,10 +293,10 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
               if (ldef->flags&ML_DONTPEGBOTTOM) {
                 // bottom of texture at bottom
                 // top of texture at top
-                z_org = MAX(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
+                z_org = max2(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
               } else {
                 // top of texture at top
-                z_org = MIN(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
+                z_org = min2(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
               }
               //k8: dunno why
               if (seg->sidedef->Mid.RowOffset < 0) {
@@ -308,13 +308,13 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
               //GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
               float floorz, ceilz;
               if (sec == fsec) {
-                floorz = MIN(frontfz1, frontfz2);
-                ceilz = MAX(frontcz1, frontcz2);
-                //GCon->Logf("  Xsec: %f : %f", MIN(frontfz1, frontfz2), MAX(frontcz1, frontcz2));
+                floorz = min2(frontfz1, frontfz2);
+                ceilz = max2(frontcz1, frontcz2);
+                //GCon->Logf("  Xsec: %f : %f", min2(frontfz1, frontfz2), max2(frontcz1, frontcz2));
               } else {
-                floorz = MIN(backfz1, backfz2);
-                ceilz = MAX(backcz1, backcz2);
-                //GCon->Logf("  Xsec: %f : %f", MIN(backfz1, backfz2), MAX(backcz1, backcz2));
+                floorz = min2(backfz1, backfz2);
+                ceilz = max2(backcz1, backcz2);
+                //GCon->Logf("  Xsec: %f : %f", min2(backfz1, backfz2), max2(backcz1, backcz2));
               }
               //GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
               //if (z_org >= sec->ceiling.minz && z_org-texh <= sec->floor.maxz) return true; // fully covered
@@ -431,7 +431,7 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
             verts[1] = TVec(sv1.x, sv1.y, bcz1);
             verts[2] = TVec(sv2.x, sv2.y, bcz2);
             verts[3] = TVec(sv2.x, sv2.y, bfz2);
-            if (MIN(verts[0].z, verts[3].z) >= MAX(verts[1].z, verts[2].z)) return true; // definitely closed
+            if (min2(verts[0].z, verts[3].z) >= max2(verts[1].z, verts[2].z)) return true; // definitely closed
             // check (only top, bottom, and back)
             if (!Frustum->checkVerts(verts, 4, TFrustum::TopBit|TFrustum::BottomBit/*|TFrustum::BackBit*/)) {
               /*
@@ -453,13 +453,13 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
           if (lcheck) {
             // min
             float bbox[6];
-            bbox[0] = MIN(sv1.x, sv2.x);
-            bbox[1] = MIN(sv1.y, sv2.y);
-            bbox[2] = MIN(bfz1, bfz2);
+            bbox[0] = min2(sv1.x, sv2.x);
+            bbox[1] = min2(sv1.y, sv2.y);
+            bbox[2] = min2(bfz1, bfz2);
             // max
-            bbox[3+0] = MAX(sv1.x, sv2.x);
-            bbox[3+1] = MAX(sv1.y, sv2.y);
-            bbox[3+2] = MAX(bcz1, bcz2);
+            bbox[3+0] = max2(sv1.x, sv2.x);
+            bbox[3+1] = max2(sv1.y, sv2.y);
+            bbox[3+2] = max2(bcz1, bcz2);
             FixBBoxZ(bbox);
 
             if (bbox[2] >= bbox[3+2]) return true; // definitely closed
@@ -1222,11 +1222,11 @@ bool VViewClipper::CheckSegFrustum (const seg_t *seg, const unsigned mask) const
   // floor
   const float fz1 = bssec->floor.GetPointZ(sv1);
   const float fz2 = bssec->floor.GetPointZ(sv2);
-  bbox[2] = MIN(fz1, fz2);
+  bbox[2] = min2(fz1, fz2);
   // ceiling
   const float cz1 = bssec->ceiling.GetPointZ(sv1);
   const float cz2 = bssec->ceiling.GetPointZ(sv2);
-  bbox[5] = MAX(cz1, cz2);
+  bbox[5] = max2(cz1, cz2);
   FixBBoxZ(bbox);
   */
 

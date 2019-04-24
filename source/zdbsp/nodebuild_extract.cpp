@@ -460,10 +460,10 @@ int FNodeBuilder::RemoveMinisegs (MapNodeEx *nodes,
     newnode->children[0] = child0;
     newnode->children[1] = child1;
 
-    bbox[BOXTOP] = MAX(newnode->bbox[0][BOXTOP], newnode->bbox[1][BOXTOP]);
-    bbox[BOXBOTTOM] = MIN(newnode->bbox[0][BOXBOTTOM], newnode->bbox[1][BOXBOTTOM]);
-    bbox[BOXLEFT] = MIN(newnode->bbox[0][BOXLEFT], newnode->bbox[1][BOXLEFT]);
-    bbox[BOXRIGHT] = MAX(newnode->bbox[0][BOXRIGHT], newnode->bbox[1][BOXRIGHT]);
+    bbox[BOXTOP] = MAX2(newnode->bbox[0][BOXTOP], newnode->bbox[1][BOXTOP]);
+    bbox[BOXBOTTOM] = MIN2(newnode->bbox[0][BOXBOTTOM], newnode->bbox[1][BOXBOTTOM]);
+    bbox[BOXLEFT] = MIN2(newnode->bbox[0][BOXLEFT], newnode->bbox[1][BOXLEFT]);
+    bbox[BOXRIGHT] = MAX2(newnode->bbox[0][BOXRIGHT], newnode->bbox[1][BOXRIGHT]);
 
     return node;
   }

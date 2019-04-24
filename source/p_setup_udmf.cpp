@@ -750,7 +750,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
       if (Key.strEquCI("alpha")) {
         L.L.alpha = CheckFloat();
-        L.L.alpha = MID(0.0f, L.L.alpha, 1.0f);
+        L.L.alpha = midval(0.0f, L.L.alpha, 1.0f);
         continue;
       }
 

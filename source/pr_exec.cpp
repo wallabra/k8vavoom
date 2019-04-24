@@ -2675,8 +2675,8 @@ func_loop:
           case OPC_Builtin_IntMax: if (sp[-2].i < sp[-1].i) sp[-2].i = sp[-1].i; sp -= 1; break;
           case OPC_Builtin_FloatMin: if (sp[-2].f > sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
           case OPC_Builtin_FloatMax: if (sp[-2].f < sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
-          case OPC_Builtin_IntClamp: sp[-3].i = MID(sp[-2].i, sp[-3].i, sp[-1].i); sp -= 2; break;
-          case OPC_Builtin_FloatClamp: sp[-3].f = MID(sp[-2].f, sp[-3].f, sp[-1].f); sp -= 2; break;
+          case OPC_Builtin_IntClamp: sp[-3].i = midval(sp[-2].i, sp[-3].i, sp[-1].i); sp -= 2; break;
+          case OPC_Builtin_FloatClamp: sp[-3].f = midval(sp[-2].f, sp[-3].f, sp[-1].f); sp -= 2; break;
           case OPC_Builtin_FloatIsNaN: sp[-1].i = (isNaNF(sp[-1].f) ? 1 : 0); break;
           case OPC_Builtin_FloatIsInf: sp[-1].i = (isInfF(sp[-1].f) ? 1 : 0); break;
           case OPC_Builtin_FloatIsFinite: sp[-1].i = (isFiniteF(sp[-1].f) ? 1 : 0); break;
@@ -2809,9 +2809,9 @@ func_loop:
               if (!v.isValid()) {
                 v.x = v.y = v.z = vmin;
               } else {
-                v.x = MID(vmin, v.x, vmax);
-                v.y = MID(vmin, v.y, vmax);
-                v.z = MID(vmin, v.z, vmax);
+                v.x = midval(vmin, v.x, vmax);
+                v.y = midval(vmin, v.y, vmax);
+                v.z = midval(vmin, v.z, vmax);
               }
               sp -= 2;
               sp[-1].f = v.z;
@@ -2895,7 +2895,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
   {
     CurrFuncHolder cfholder(&current_func, func);
 #ifdef VMEXEC_RUNDUMP
-    enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
+    enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (max2:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
 #endif
     RunFunction(func);
   }
@@ -2930,7 +2930,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
     */
   }
 #ifdef VMEXEC_RUNDUMP
-  printIndent(); fprintf(stderr, "***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
+  printIndent(); fprintf(stderr, "***LEAVING `%s` (RETx); sp=%d, (max2:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
 #endif
 
 #ifdef CHECK_FOR_EMPTY_STACK

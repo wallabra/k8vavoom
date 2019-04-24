@@ -313,7 +313,7 @@ static void InitColourMaps () {
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
     int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
-    T->Palette[i].r = MIN(255, Gray+Gray/2);
+    T->Palette[i].r = min2(255, Gray+Gray/2);
     T->Palette[i].g = Gray;
     T->Palette[i].b = 0;
     T->Palette[i].a = 255;
@@ -326,7 +326,7 @@ static void InitColourMaps () {
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
     int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
-    T->Palette[i].r = MIN(255, Gray+Gray/2);
+    T->Palette[i].r = min2(255, Gray+Gray/2);
     T->Palette[i].g = 0;
     T->Palette[i].b = 0;
     T->Palette[i].a = 255;
@@ -339,8 +339,8 @@ static void InitColourMaps () {
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
     int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
-    T->Palette[i].r = MIN(255, Gray+Gray/2);
-    T->Palette[i].g = MIN(255, Gray+Gray/2);
+    T->Palette[i].r = min2(255, Gray+Gray/2);
+    T->Palette[i].g = min2(255, Gray+Gray/2);
     T->Palette[i].b = Gray;
     T->Palette[i].a = 255;
     T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
@@ -816,7 +816,7 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
   vuint8 b = Col&255;
   // don't remap colour 0
   for (int i = 1; i < 256; ++i) {
-    int Bright = MAX(MAX(r_palette[i].r, r_palette[i].g), r_palette[i].b);
+    int Bright = max3(r_palette[i].r, r_palette[i].g, r_palette[i].b);
     Palette[i].r = r*Bright/255;
     Palette[i].g = g*Bright/255;
     Palette[i].b = b*Bright/255;
@@ -890,9 +890,9 @@ void VTextureTranslation::AddTransString (const VStr &Str) {
 int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
   // first check for standard translation
   if (sc->CheckNumber()) {
-    if (sc->Number < 0 || sc->Number >= MAX(NumTranslationTables, GameMax)) {
-      //sc->Error(va("Translation must be in range [0, %d]", MAX(NumTranslationTables, GameMax)-1));
-      GCon->Logf(NAME_Warning, "%s: Translation must be in range [0, %d]", *sc->GetLoc().toStringNoCol(), MAX(NumTranslationTables, GameMax)-1);
+    if (sc->Number < 0 || sc->Number >= max2(NumTranslationTables, GameMax)) {
+      //sc->Error(va("Translation must be in range [0, %d]", max2(NumTranslationTables, GameMax)-1));
+      GCon->Logf(NAME_Warning, "%s: Translation must be in range [0, %d]", *sc->GetLoc().toStringNoCol(), max2(NumTranslationTables, GameMax)-1);
       sc->Number = 2; // red
     }
     return (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+sc->Number;
@@ -994,11 +994,11 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   while (!sc->Check("}")) {
     if (sc->Check("colour")) {
       sc->ExpectFloat();
-      float r = MID(0.0f, (float)sc->Float, 1.0f);
+      float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0.0f, (float)sc->Float, 1.0f);
+      float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0.0f, (float)sc->Float, 1.0f);
+      float b = midval(0.0f, (float)sc->Float, 1.0f);
       L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("radius")) {
       sc->ExpectFloat();
@@ -1068,11 +1068,11 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   while (!sc->Check("}")) {
     if (sc->Check("color")) {
       sc->ExpectFloat();
-      float r = MID(0.0f, (float)sc->Float, 1.0f);
+      float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0.0f, (float)sc->Float, 1.0f);
+      float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0.0f, (float)sc->Float, 1.0f);
+      float b = midval(0.0f, (float)sc->Float, 1.0f);
       L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("size")) {
       sc->ExpectNumber();
@@ -1173,11 +1173,11 @@ static void ParseParticleEffect (VScriptParser *sc) {
       else sc->Error("Bad type");
     } else if (sc->Check("colour")) {
       sc->ExpectFloat();
-      float r = MID(0.0f, (float)sc->Float, 1.0f);
+      float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float g = MID(0.0f, (float)sc->Float, 1.0f);
+      float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
-      float b = MID(0.0f, (float)sc->Float, 1.0f);
+      float b = midval(0.0f, (float)sc->Float, 1.0f);
       P->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("offset")) {
       sc->ExpectFloat();

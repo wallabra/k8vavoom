@@ -509,7 +509,7 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
         const float att0 = p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
         if (att0 == 1.0f || pl.PointOnSide(p1)) return att0;
         const float att1 = p1.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
-        return MAX(att0, att1);
+        return max2(att0, att1);
       }
     }
   }
@@ -535,7 +535,7 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
   // check box midpoint
   {
     const float attn = TVec((bbox[0+0]+bbox[3+0])/2.0f, (bbox[0+1]+bbox[3+1])/2.0f, (bbox[0+2]+bbox[3+2])/2.0f).CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
-    res = MAX(res, attn);
+    res = max2(res, attn);
   }
   return res;
 }
@@ -680,10 +680,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     // region's base light
     if (r_allow_ambient) {
       l = reg->secregion->params->lightlevel+ExtraLight;
-      l = MID(0.0f, l, 255.0f);
+      l = midval(0.0f, l, 255.0f);
       if (r_darken) l = light_remap[(int)l];
       if (l < r_ambient) l = r_ambient;
-      l = MID(0.0f, l, 255.0f);
+      l = midval(0.0f, l, 255.0f);
     } else {
       l = 0.0f;
     }

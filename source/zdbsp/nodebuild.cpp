@@ -134,10 +134,10 @@ DWORD FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
     D(PrintSet (2, set2));
     node.intchildren[0] = CreateNode (set1, count1, node.bbox[0]);
     node.intchildren[1] = CreateNode (set2, count2, node.bbox[1]);
-    bbox[BOXTOP] = MAX (node.bbox[0][BOXTOP], node.bbox[1][BOXTOP]);
-    bbox[BOXBOTTOM] = MIN (node.bbox[0][BOXBOTTOM], node.bbox[1][BOXBOTTOM]);
-    bbox[BOXLEFT] = MIN (node.bbox[0][BOXLEFT], node.bbox[1][BOXLEFT]);
-    bbox[BOXRIGHT] = MAX (node.bbox[0][BOXRIGHT], node.bbox[1][BOXRIGHT]);
+    bbox[BOXTOP] = MAX2 (node.bbox[0][BOXTOP], node.bbox[1][BOXTOP]);
+    bbox[BOXBOTTOM] = MIN2 (node.bbox[0][BOXBOTTOM], node.bbox[1][BOXBOTTOM]);
+    bbox[BOXLEFT] = MIN2 (node.bbox[0][BOXLEFT], node.bbox[1][BOXLEFT]);
+    bbox[BOXRIGHT] = MAX2 (node.bbox[0][BOXRIGHT], node.bbox[1][BOXRIGHT]);
     return (int)Nodes.Push (node);
   }
   else
@@ -659,7 +659,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
           frac = 1 - frac;
         }
         int penalty = int(1 / frac);
-        score = MAX(score - penalty, 1);
+        score = MAX2(score - penalty, 1);
         D(Printf ("Penalized splitter by %d for being near endpt of seg %d (%f).\n", penalty, i, frac));
       }
 
