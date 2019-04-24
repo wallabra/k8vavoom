@@ -2478,13 +2478,8 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     NonSolid,
   };
 
-#ifdef VAVOOM_K8_DEVELOPER
   static int doDump = -1;
-  if (doDump < 0) doDump = (GArgs.CheckParm("-Wno-all") || GArgs.CheckParm("-Wno-gozzo-shitty-3d") ? 0 : 1);
-#else
-  static int doDump = -1;
-  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-shitty-3d") ? 1 : 0);
-#endif
+  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-3d") ? 1 : 0);
 
   //int eftype = (line->arg2&3);
   const bool isSolid = ((line->arg2&3) == Solid);

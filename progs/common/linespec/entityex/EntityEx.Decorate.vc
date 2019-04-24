@@ -214,3 +214,4 @@ final float decorate_clamp (float val, float min, float max) {
 /*final*/ float decorate_velx { get { return Velocity.x/35.0; } }
 /*final*/ float decorate_vely { get { return Velocity.y/35.0; } }
 /*final*/ float decorate_velz { get { return Velocity.z/35.0; } }
+/*final*/ float decorate_missileMore { get { return (bTriggerHappy ? 1.0 : 0.0); } }
