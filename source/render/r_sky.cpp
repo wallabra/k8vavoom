@@ -346,7 +346,7 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
       sky[j].texture1 = Sky1Texture;
       sky[j].scrollDelta1 = Sky1ScrollDelta;
     }
-    sky[j].surf.eplane = &sky[j].plane;
+    sky[j].surf.plane = sky[j].plane;
     sky[j].surf.texinfo = &sky[j].texinfo;
     sky[j].surf.count = 4;
     sky[j].surf.Light = 0xffffffff;
@@ -452,7 +452,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   NumSkySurfs = 6;
   for (int j = 0; j < 6; j++) {
     sky[j].texture1 = s1info.surfs[j].texture;
-    sky[j].surf.eplane = &sky[j].plane;
+    sky[j].surf.plane = sky[j].plane;
     sky[j].surf.texinfo = &sky[j].texinfo;
     sky[j].surf.count = 4;
     sky[j].surf.Light = 0xffffffff;

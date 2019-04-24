@@ -195,8 +195,11 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   ssurf->YScale = spl.splane->YScale;
   ssurf->Angle = spl.splane->BaseAngle-spl.splane->Angle;
 
+  TPlane plane = *(TPlane *)spl.splane;
+  if (spl.flipped) plane.flipInPlace();
+
   if (recreateSurface) {
-    if (spl.flipped) surf->drawflags |= surface_t::DF_FLIP_PLANE; else surf->drawflags &= ~surface_t::DF_FLIP_PLANE;
+    surf->plane = plane;
     surf->count = vcount;
     const seg_t *seg = &Level->Segs[sub->firstline];
     TVec *dptr = surf->verts;
@@ -218,10 +221,9 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       // don't subdivide sky, as it cannot have lightmap
       ssurf->surfs = surf;
       surf->texinfo = &ssurf->texinfo;
-      surf->eplane = spl.splane;
     } else {
       ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
-      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, spl.splane, sub);
+      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
   } else {
     // update z coords, if necessary
@@ -234,7 +236,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
           svert->z = spl.GetPointZ(svert->x, svert->y);
           if (!changed && FASI(oldZ) != FASI(svert->z)) changed = true;
         }
-        if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, spl.splane, sub);
+        if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
       }
     }
   }
@@ -304,9 +306,6 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
   ssurf->texinfo.soffs = splane.splane->xoffs;
   ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
 
-  //ssurf->texinfo.soffs = 10;
-  //ssurf->texinfo.toffs = 10;
-
   // ok, we still may need to update texture or z coords
   // update texture?
   VTexture *Tex = GTextureManager(splane.splane->pic);
@@ -316,9 +315,12 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
 
   // update z coords?
   if (FASI(ssurf->edist) != FASI(splane.splane->dist)) {
+    TPlane plane = *(TPlane *)splane.splane;
+    if (splane.flipped) plane.flipInPlace();
     bool changed = false;
     ssurf->edist = splane.splane->dist;
     for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
+      surf->plane = plane;
       TVec *svert = surf->verts;
       for (int i = surf->count; i--; ++svert) {
         const float oldZ = svert->z;
@@ -328,7 +330,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     }
     // force lightmap recalculation
     if (changed || splane.splane->pic != skyflatnum) {
-      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, nullptr, sub);
+      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
   }
 }
@@ -426,7 +428,7 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
     // never split sky surfaces
     surf->texinfo = texinfo;
-    surf->eplane = seg;
+    surf->plane = *(TPlane *)seg;
     return surf;
   }
 
@@ -1252,24 +1254,24 @@ static inline bool CheckBopRecreate (seg_t *seg, segpart_t *sp, const TPlane *fl
 //  VRenderLevelShared::UpdateTextureOffsets
 //
 //==========================================================================
-void VRenderLevelShared::UpdateTextureOffsets (subsector_t *sub, seg_t *seg, segpart_t *sp, const float *soffs, const float *toffs) {
+void VRenderLevelShared::UpdateTextureOffsets (subsector_t *sub, seg_t *seg, segpart_t *sp, const side_tex_params_t *tparam, const TPlane *plane) {
   bool reinitSurfs = false;
 
-  if (FASI(sp->RowOffset) != FASI(*toffs)) {
+  if (FASI(sp->TextureOffset) != FASI(tparam->TextureOffset)) {
     reinitSurfs = true;
-    sp->texinfo.toffs += ((*toffs)-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
-    sp->RowOffset = *toffs;
+    sp->texinfo.soffs += (tparam->TextureOffset-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
+    sp->TextureOffset = tparam->TextureOffset;
   }
 
-  if (FASI(sp->TextureOffset) != FASI(*soffs)) {
+  if (FASI(sp->RowOffset) != FASI(tparam->RowOffset)) {
     reinitSurfs = true;
-    sp->texinfo.soffs += ((*soffs)-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
-    sp->TextureOffset = *soffs;
+    sp->texinfo.toffs += (tparam->RowOffset-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
+    sp->RowOffset = tparam->RowOffset;
   }
 
   if (reinitSurfs) {
     // do not recalculate static lightmaps
-    InitSurfs(false, sp->surfs, &sp->texinfo, nullptr, sub);
+    InitSurfs(false, sp->surfs, &sp->texinfo, (plane ? plane : seg), sub);
   }
 }
 
@@ -1328,7 +1330,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid.TextureOffset, &seg->sidedef->Mid.RowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1351,7 +1353,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (CheckTopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top.TextureOffset, &seg->sidedef->Top.RowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1362,7 +1364,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (CheckBopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot.TextureOffset, &seg->sidedef->Bot.RowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot);
       }
       sp->texinfo.ColourMap = ColourMap;
     }
@@ -1373,7 +1375,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid.TextureOffset, &seg->sidedef->Mid.RowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
       }
       sp->texinfo.ColourMap = ColourMap;
       if (sp->texinfo.Tex->Type != TEXTYPE_Null) {
@@ -1403,7 +1405,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         }
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &extraside->Mid.TextureOffset, &extraside->Mid.RowOffset);
+        UpdateTextureOffsets(sub, seg, sp, &extraside->Mid);
       }
       sp->texinfo.ColourMap = ColourMap;
     }

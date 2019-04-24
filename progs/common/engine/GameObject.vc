@@ -640,7 +640,7 @@ struct sec_surface_t {
 struct surface_t {
   surface_t *next;
   texinfo_t *texinfo;
-  TPlane *eplane;
+  TPlane plane;
   sec_plane_t *HorizonPlane;
   int Light; // light level and colour (unsigned)
   int Fade; // (unsigned)

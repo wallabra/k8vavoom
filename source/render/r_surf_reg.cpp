@@ -99,13 +99,13 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
 //  VRenderLevel::InitSurfs
 //
 //==========================================================================
-void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
+void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
   for (surface_t *surf = ASurfs; surf; surf = surf->next) {
     if (plane) {
       surf->texinfo = texinfo;
-      surf->eplane = plane;
+      surf->plane = *plane;
     }
 
     if (surf->count == 0) {

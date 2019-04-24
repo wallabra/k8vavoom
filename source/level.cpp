@@ -2942,7 +2942,7 @@ static void WriteSurface (VStream &strm, surface_t *surf, VLevel *level) {
     vuint8 present = (surf ? 1 : 0);
     strm << present;
     if (!surf) return;
-    WritePlane(strm, *surf->eplane);
+    WritePlane(strm, surf->plane);
     WriteTexInfo(strm, *surf->texinfo);
     present = (surf->HorizonPlane ? 1 : 0);
     strm << present;

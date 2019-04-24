@@ -81,13 +81,13 @@ struct surface_t {
     DF_WSURF        = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
     DF_FIX_CRACKS   = 1u<<2, // this surface must be subdivised to fix "cracks"
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
-    DF_FLIP_PLANE   = 1u<<4, // flip plane
+    //DF_FLIP_PLANE   = 1u<<4, // flip plane
     DF_NO_FACE_CULL = 1u<<5, // ignore face culling
   };
 
   surface_t *next;
   texinfo_t *texinfo;
-  TPlane *eplane;
+  TPlane plane; // was pointer
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour
   vuint32 Fade;
@@ -110,54 +110,22 @@ struct surface_t {
 
   // to use in renderer
   inline bool IsVisible (const TVec &point) const {
-    if (!(drawflags&DF_NO_FACE_CULL)) {
-      if (!(drawflags&DF_FLIP_PLANE)) {
-        return !eplane->PointOnSide(point);
-      } else {
-        // this is for gozzo shit, i don't care if it is fast or not
-        TPlane pl = *eplane;
-        pl.flipInPlace();
-        return !pl.PointOnSide(point);
-      }
-    } else {
-      if (!(drawflags&DF_FLIP_PLANE)) {
-        return (eplane->PointOnSide2(point) != 2);
-      } else {
-        // this is for gozzo shit, i don't care if it is fast or not
-        TPlane pl = *eplane;
-        pl.flipInPlace();
-        return (pl.PointOnSide2(point) != 2);
-      }
-    }
+    return (!(drawflags&DF_NO_FACE_CULL) ? !plane.PointOnSide(point) : (plane.PointOnSide2(point) != 2));
   }
 
-  inline bool PointOnSide (const TVec &point) const {
-    if (!(drawflags&DF_FLIP_PLANE)) {
-      return eplane->PointOnSide(point);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *eplane;
-      pl.flipInPlace();
-      return pl.PointOnSide(point);
-    }
+  inline int PointOnSide (const TVec &point) const {
+    return plane.PointOnSide(point);
   }
 
   inline bool SphereTouches (const TVec &center, float radius) const {
-    if (!(drawflags&DF_FLIP_PLANE)) {
-      return eplane->SphereTouches(center, radius);
-    } else {
-      // this is for gozzo shit, i don't care if it is fast or not
-      TPlane pl = *eplane;
-      pl.flipInPlace();
-      return pl.SphereTouches(center, radius);
-    }
+    return plane.SphereTouches(center, radius);
   }
 
-  inline float GetNormalZ () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->normal.z : -eplane->normal.z); }
-  inline TVec GetNormal () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->normal : -eplane->normal); }
-  inline float GetDist () const { return (!(drawflags&DF_FLIP_PLANE) ? eplane->dist : -eplane->dist); }
+  inline float GetNormalZ () const { return plane.normal.z; }
+  inline const TVec &GetNormal () const { return plane.normal; }
+  inline float GetDist () const { return plane.dist; }
 
-  inline void GetPlane (TPlane *p) const { *p = *eplane; if (drawflags&DF_FLIP_PLANE) p->flipInPlace(); }
+  inline void GetPlane (TPlane *p) const { *p = plane; }
 };
 
 

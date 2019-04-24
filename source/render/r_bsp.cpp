@@ -318,7 +318,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       vuint32 Fade = GetFade(secregion);
 
       surface_t *Surf = dseg->HorizonTop;
-      Surf->eplane = dseg->seg;
+      Surf->plane = *(TPlane *)(dseg->seg);
       Surf->texinfo = &Ceil->texinfo;
       Surf->HorizonPlane = Ceil->esecplane.splane; //FIXME: 3dfloor
       Surf->Light = (lLev<<24)|LightParams->LightColour;
@@ -359,7 +359,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       vuint32 Fade = GetFade(secregion);
 
       surface_t *Surf = dseg->HorizonBot;
-      Surf->eplane = dseg->seg;
+      Surf->plane = *(TPlane *)(dseg->seg);
       Surf->texinfo = &Floor->texinfo;
       Surf->HorizonPlane = Floor->esecplane.splane; //FIXME: 3dfloor
       Surf->Light = (lLev<<24)|LightParams->LightColour;

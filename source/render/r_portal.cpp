@@ -206,7 +206,9 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
   for (int i = 0; i < Surfs.Num(); ++i) {
     if (Surfs[i]->GetNormalZ() == 0) {
       // wall
-      seg_t *Seg = (seg_t *)Surfs[i]->eplane;
+      //seg_t *Seg = (seg_t *)Surfs[i]->eplane;
+      seg_t *Seg = Surfs[i]->seg;
+      check(Seg);
       check(Seg >= RLev->Level->Segs);
       check(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
       /*

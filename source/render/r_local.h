@@ -486,7 +486,7 @@ protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
 
-  void UpdateTextureOffsets (subsector_t *sub, seg_t *seg, segpart_t *sp, const float *sofs, const float *tofs);
+  void UpdateTextureOffsets (subsector_t *sub, seg_t *seg, segpart_t *sp, const side_tex_params_t *tparam, const TPlane *plane=nullptr);
   void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region, bool updatePoly=true);
   void UpdateSubsector (int num, float *bbox);
@@ -521,7 +521,7 @@ protected:
   // returns attenuation multiplier (0 means "out of cone")
   static float CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
 
-  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) = 0;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
   virtual void QueueWorldSurface (surface_t*) = 0;
@@ -783,7 +783,7 @@ protected:
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
 
   // surf methods
-  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) override;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) override;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
@@ -832,7 +832,7 @@ protected:
   virtual void RenderScene (const refdef_t*, const VViewClipper*) override;
 
   // surf methods
-  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) override;
+  virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) override;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
