@@ -832,7 +832,7 @@ static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *lin
     texinfo->toffs = tparam->RowOffset*TextureOffsetTScale(MTex);
   } else {
     // move origin up/down, as this texture is not wrapped
-    z_org += tparam->RowOffset*(TextureOffsetTScale(MTex)*tparam->ScaleY);
+    z_org += tparam->RowOffset*(TextureOffsetTScale(MTex)/tparam->ScaleY);
     // offset is done by origin, so we don't need to offset texture
     texinfo->toffs = 0.0f;
   }
