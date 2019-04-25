@@ -98,9 +98,17 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
   }
   surf->queueframe = currQueueFrame;
 
+  /*
   if (!(surf->drawflags&surface_t::DF_MASKED)) {
     // check for non-solid texture
     if (surf->texinfo->Alpha < 1.0f || tex->isTransparent()) surf->drawflags |= surface_t::DF_MASKED;
+  }
+  */
+  // alpha: 1.0 is masked wall, 1.1 is solid wall
+  if (surf->texinfo->Alpha < 1.0f || tex->isTransparent()) {
+    surf->drawflags |= surface_t::DF_MASKED;
+  } else {
+    surf->drawflags &= ~surface_t::DF_MASKED;
   }
 
   queue.append(surf);
@@ -282,8 +290,12 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   vuint32 sflight = (lLev<<24)|LightParams->LightColour;
 
 #if 0
-  if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40) {
-    GCon->Logf("#40: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g", lLev, LightSourceSector, SideLight, (int)AbsSideLight,
+  if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40 ||
+      (int)(ptrdiff_t)(sub->sector-Level->Sectors) == 0)
+  {
+    GCon->Logf("#%d: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g",
+      (int)(ptrdiff_t)(sub->sector-Level->Sectors),
+      lLev, LightSourceSector, SideLight, (int)AbsSideLight,
       LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)LightParams->LightColour, sflight, texinfo->Alpha);
     //lLev = 250;
     //Fade = 0xffffffff;
@@ -291,6 +303,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     lLev = 255;
     sflight = (lLev<<24)|(0xff7fff);
     */
+    sflight = 0x1fffffff;
   }
 #endif
 
@@ -302,7 +315,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->dlightframe = sub->dlightframe;
     surfs->dlightbits = sub->dlightbits;
     // alpha: 1.0 is masked wall, 1.1 is solid wall
-    if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
+    //if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
 
     if (texinfo->Alpha >= 1.0f) {
       CommonQueueSurface(surfs, 0);

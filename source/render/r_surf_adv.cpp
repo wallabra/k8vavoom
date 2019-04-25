@@ -34,11 +34,27 @@
 //
 //==========================================================================
 void VAdvancedRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *surfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
-  // it's always one surface
+  if (!texinfo && !plane) return;
+  if (texinfo && plane) {
+    for (; surfs; surfs = surfs->next) {
+      surfs->texinfo = texinfo;
+      surfs->plane = *plane;
+    }
+  } else if (texinfo) {
+    for (; surfs; surfs = surfs->next) {
+      surfs->texinfo = texinfo;
+    }
+  } else if (plane) {
+    for (; surfs; surfs = surfs->next) {
+      surfs->plane = *plane;
+    }
+  }
+  /*
   if (surfs && plane) {
     surfs->texinfo = texinfo;
     surfs->plane = *plane;
   }
+  */
 }
 
 

@@ -86,7 +86,7 @@ struct surface_t {
   };
 
   surface_t *next;
-  texinfo_t *texinfo;
+  texinfo_t *texinfo; // points to owning `sec_surface_t`
   TPlane plane; // was pointer
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour

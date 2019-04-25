@@ -103,10 +103,8 @@ void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, tex
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
   for (surface_t *surf = ASurfs; surf; surf = surf->next) {
-    if (plane) {
-      surf->texinfo = texinfo;
-      surf->plane = *plane;
-    }
+    if (texinfo) surf->texinfo = texinfo;
+    if (plane) surf->plane = *plane;
 
     if (surf->count == 0) {
       GCon->Logf(NAME_Warning, "empty surface at subsector #%d", (int)(ptrdiff_t)(sub-Level->Subsectors));

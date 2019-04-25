@@ -264,21 +264,21 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           switch (currShader) {
             case SOLID:
               ShadowsAmbient.SetLight(
-                ((surf->Light>>16)&255)*lev/255.0f,
-                ((surf->Light>>8)&255)*lev/255.0f,
-                (surf->Light&255)*lev/255.0f, 1.0f);
+                ((prevlight>>16)&255)*lev/255.0f,
+                ((prevlight>>8)&255)*lev/255.0f,
+                (prevlight&255)*lev/255.0f, 1.0f);
               break;
             case MASKED:
               ShadowsAmbientMasked.SetLight(
-                ((surf->Light>>16)&255)*lev/255.0f,
-                ((surf->Light>>8)&255)*lev/255.0f,
-                (surf->Light&255)*lev/255.0f, 1.0f);
+                ((prevlight>>16)&255)*lev/255.0f,
+                ((prevlight>>8)&255)*lev/255.0f,
+                (prevlight&255)*lev/255.0f, 1.0f);
               break;
             case BRIGHTMAP:
               ShadowsAmbientBrightmap.SetLight(
-                ((surf->Light>>16)&255)*lev/255.0f,
-                ((surf->Light>>8)&255)*lev/255.0f,
-                (surf->Light&255)*lev/255.0f, 1.0f);
+                ((prevlight>>16)&255)*lev/255.0f,
+                ((prevlight>>8)&255)*lev/255.0f,
+                (prevlight&255)*lev/255.0f, 1.0f);
               break;
           }
         }
@@ -984,10 +984,14 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   if (!gl_dbg_adv_render_textures_surface || RendLev->DrawSurfList.length() == 0) return;
 
   bool lastWasMasked = false;
-  bool firstMasked = true;
+
+  ShadowsTextureMasked.Activate();
+  ShadowsTextureMasked.SetTexture(0);
 
   ShadowsTexture.Activate();
   ShadowsTexture.SetTexture(0);
+
+  //glDisable(GL_BLEND);
 
   // no need to sort surfaces there, it is already done in ambient pass
   const texinfo_t *lastTexinfo = nullptr;
@@ -1018,10 +1022,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       if (!lastWasMasked) {
         // switch shader
         ShadowsTextureMasked.Activate();
-        if (firstMasked) {
-          ShadowsTextureMasked.SetTexture(0);
-          firstMasked = false;
-        }
         lastWasMasked = true;
         textureChanded = true; //FIXME: hold two of those
       }

@@ -241,7 +241,6 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     }
   }
 
-
   return ssurf;
 }
 
