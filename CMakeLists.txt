@@ -160,10 +160,10 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -frounding-math") # get lost!
 set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -funroll-loops")
 set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fpredictive-commoning")
 
-# and force gcc to vectrosize (whatever it is)
-set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -ftree-vectorize")
-set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fvect-cost-model=unlimited")
-set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fsimd-cost-model=unlimited")
+# and force gcc to not vectrosize (whatever it is)
+set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fno-tree-vectorize")
+set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fvect-cost-model=cheap")
+set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -fsimd-cost-model=cheap")
 
 if(NOT NO_SSE)
   if(DEBUG_FPU_CHECKS)
