@@ -3657,9 +3657,9 @@ void VLevel::FixSelfRefDeepWater () {
     subsector_t *sub = &Subsectors[i];
     sector_t *hs = sub->deepref;
     if (!hs) continue;
-    //while (hs->deepref && hs->deepref != sub->deepref) hs = hs->deepref;
-    //if (hs->deepref == sub->deepref) hs = sub->deepref;
     sector_t *ss = sub->sector;
+    // if deepref is the same as the source sector, this is pointless
+    if (hs == ss) { sub->deepref = nullptr; continue; }
     if (!ss) { if (dbg_deep_water) GCon->Logf("WTF(0)?!"); continue; }
     if (ss->deepref) {
       if (ss->deepref != hs) { if (dbg_deep_water) GCon->Logf("WTF(1) %d : %d?!", (int)(hs-Sectors), (int)(ss->deepref-Sectors)); continue; }
