@@ -824,7 +824,7 @@ void VAcsObject::LoadEnhancedObject () {
         elems[i] = LittleLong(buffer[3 + i]);
       }
       */
-#if 1
+#if 0
       // gcc wants to optimise this with SSE instructions, and for some reason it believes that buffer is aligned.
       // most of the time it is, but no guarantees are given. fuck.
       memcpy(elems, buffer+3, initsize*4);
