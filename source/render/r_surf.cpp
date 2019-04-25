@@ -412,7 +412,8 @@ void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
 //
 //==========================================================================
 surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount) {
-  if (wvcount < 3 || (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z)) return nullptr;
+  if (wvcount < 3) return nullptr;
+  if (wvcount == 4 && (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z)) return nullptr;
   if (wvcount > surface_t::MAXWVERTS) Sys_Error("cannot create huge world surface (the thing that should not be)");
 
   if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return nullptr;

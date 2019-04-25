@@ -67,7 +67,7 @@ void sector_t::DeleteAllRegions () {
   while (eregions) {
     sec_region_t *r = eregions;
     eregions = r->next;
-    delete r;
+    Z_Free(r);
   }
 }
 

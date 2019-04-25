@@ -1035,13 +1035,13 @@ void VLevel::Destroy () {
   while (openListHead) {
     opening_t *op = openListHead;
     openListHead = op->listnext;
-    delete op;
+    Z_Free(op);
   }
 
   while (openListFree) {
     opening_t *op = openListFree;
     openListFree = op->listnext;
-    delete op;
+    Z_Free(op);
   }
 
   GTextureManager.ResetMapTextures();
