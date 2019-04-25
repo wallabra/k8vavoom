@@ -26,6 +26,7 @@
 //**************************************************************************
 #include "core.h"
 
+#ifdef VAVOOM_HIDE_ENDIANNES_CONVERSIONS
 
 // fuck you, c standard!
 #ifdef VAVOOM_LITTLE_ENDIAN
@@ -49,3 +50,5 @@ vint32 LittleLong (vint32 x) { return ((vuint32)x>>24)|(((vuint32)x>>8)&0xff00U)
 float LittleFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = LittleLong(a.l); return a.f; }
 
 #endif
+
+#endif // VAVOOM_HIDE_ENDIANNES_CONVERSIONS

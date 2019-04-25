@@ -30,6 +30,8 @@
 // define this to activate zone allocator counters
 //#define VAVOOM_CORE_COUNT_ALLOCS
 
+//#define VAVOOM_HIDE_ENDIANNES_CONVERSIONS
+
 
 //#define USE_NEUMAIER_KAHAN
 #define USE_FAST_INVSQRT
