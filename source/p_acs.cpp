@@ -819,9 +819,19 @@ void VAcsObject::LoadEnhancedObject () {
       int initsize = (LittleLong(buffer[1]) - 4) / 4;
       if (initsize > ArrayStore[arraynum].Size) initsize = ArrayStore[arraynum].Size;
       int *elems = ArrayStore[arraynum].Data;
+      /*
       for (i = 0; i < initsize; i++) {
         elems[i] = LittleLong(buffer[3 + i]);
       }
+      */
+#if 1
+      // gcc wants to optimise this with SSE instructions, and for some reason it believes that buffer is aligned.
+      // most of the time it is, but no guarantees are given. fuck.
+      memcpy(elems, buffer+3, initsize*4);
+      for (i = 0; i < initsize; ++i) elems[i] = LittleLong(elems[i]);
+#else
+      for (i = 0; i < initsize; ++i) elems[i] = LittleLong(buffer[3+i]);
+#endif
     }
     buffer = (int*)NextChunk((vuint8*)buffer);
   }
