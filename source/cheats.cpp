@@ -231,7 +231,24 @@ COMMAND(my_sector_info) {
   if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
   if (!Player->MO->Sector) { GCon->Log("PLAYER MOBJ SECTOR IS UNKNOWN!"); return; }
   //if (!Player || !Player->MO || !Player->MO->Sector) return;
-  sector_t *sec = Player->MO->Sector;
+
+  sector_t *sec;
+
+  if (Args.length() > 3) {
+    int snum;
+    if (!VStr::convertInt(*Args[1], &snum)) {
+      GCon->Logf("invalid sector number: '%s'", *Args[1]);
+      return;
+    }
+    if (snum < 0 || snum >= Player->Level->XLevel->NumSectors) {
+      GCon->Logf("invalid sector number: %d (max is %d)", snum, Player->Level->XLevel->NumSectors-1);
+      return;
+    }
+    sec = &Player->Level->XLevel->Sectors[snum];
+  } else {
+    sec = Player->MO->Sector;
+  }
+
   GCon->Logf("Sector #%d; tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
     (int)(intptr_t)(sec-Player->Level->XLevel->Sectors),
     sec->tag, sec->special, sec->seqType, sec->soundtraversed, sec->Damage, sec->Sky
@@ -243,6 +260,8 @@ COMMAND(my_sector_info) {
 
   sec_region_t *reg = SV_PointRegionLight(sec, Player->MO->Origin);
   GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
+  GCon->Logf("  floor light source sector: %d", sec->floor.LightSourceSector);
+  GCon->Logf("  ceiling light source sector: %d", sec->ceiling.LightSourceSector);
 
   if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
   if (Args.length() > 2) {
