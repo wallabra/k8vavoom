@@ -1048,6 +1048,7 @@ final void SetWeapon (Weapon NewWeapon) {
     PSpriteSY = /*ReadyWeapon*/NewWeapon.PSpriteSY;
     MO.ModelVersion = /*ReadyWeapon*/NewWeapon.PlayerModelVersion;
   } else {
+    SetViewObject(none);
     PSpriteSY = 0;
     MO.ModelVersion = 0;
   }
@@ -1099,6 +1100,10 @@ final void BringUpWeapon (optional bool instant, optional bool skipSound) {
       return;
     }
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
+  } else {
+    SetViewObject(none);
+    MO.ModelVersion = 0;
+    PSpriteSY = 0;
   }
 }
 
@@ -2472,6 +2477,53 @@ void GiveDefaultDeathMatchInventory () {
     if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn'))) continue; // from a different game
     EntityEx(MO).GiveInventoryType(Cls);
   }
+}
+
+
+//==========================================================================
+//
+//  ResetInventory
+//
+//==========================================================================
+override void ResetInventory () {
+  EntityEx PP = EntityEx(MO);
+  if (!PP) return;
+  while (PP.Inventory) PP.Inventory.Destroy();
+
+  SetWeapon(none);
+  BringUpWeapon(instant:true, skipSound:true);
+
+  AddDefaultInventory();
+
+  k8ElvenGifted = false;
+  GiveElvenGifts(nullptr);
+}
+
+
+//==========================================================================
+//
+//  ResetHealth
+//
+//==========================================================================
+override void ResetHealth () {
+  EntityEx PP = EntityEx(MO);
+  if (!PP) return;
+  Health = GetRebornHealth();
+  PP.Health = Health;
+}
+
+
+//==========================================================================
+//
+//  PreraiseWeapon
+//
+//==========================================================================
+override void PreraiseWeapon () {
+  EntityEx PP = EntityEx(MO);
+  if (!PP) return;
+  if (!ReadyWeapon) return;
+  print("PRERAISE!");
+  BringUpWeapon(instant:true, skipSound:true);
 }
 
 

@@ -515,7 +515,14 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
 //==========================================================================
 void VBasePlayer::DoClientSetAngles (TAVec Angles) {
   ViewAngles = Angles;
-  ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
+  //ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
+
+  // check angles
+  if (ViewAngles.pitch > 80.0f) ViewAngles.pitch = 80.0f;
+  if (ViewAngles.pitch < -80.0f) ViewAngles.pitch = -80.0f;
+
+  if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
+  if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
 }
 
 

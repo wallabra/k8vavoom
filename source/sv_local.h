@@ -39,6 +39,19 @@ extern VLevelInfo *GLevelInfo;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// flags for SV_MapTeleport
+enum {
+  CHANGELEVEL_KEEPFACING      = 0x00000001,
+  CHANGELEVEL_RESETINVENTORY  = 0x00000002,
+  CHANGELEVEL_NOMONSTERS      = 0x00000004,
+  CHANGELEVEL_CHANGESKILL     = 0x00000008,
+  CHANGELEVEL_NOINTERMISSION  = 0x00000010,
+  CHANGELEVEL_RESETHEALTH     = 0x00000020,
+  CHANGELEVEL_PRERAISEWEAPON  = 0x00000040,
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // WARNING! keep in sync with script code!
 enum {
   CONTENTS_EMPTY,

@@ -89,19 +89,6 @@ static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// flags for SV_MapTeleport
-enum {
-  CHANGELEVEL_KEEPFACING      = 0x00000001,
-  CHANGELEVEL_RESETINVENTORY  = 0x00000002,
-  CHANGELEVEL_NOMONSTERS      = 0x00000004,
-  CHANGELEVEL_CHANGESKILL     = 0x00000008,
-  CHANGELEVEL_NOINTERMISSION  = 0x00000010,
-  CHANGELEVEL_RESETHEALTH     = 0x00000020,
-  CHANGELEVEL_PRERAISEWEAPON  = 0x00000040,
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 enum gameArchiveSegment_t {
   ASEG_MAP_HEADER = 101,
   ASEG_WORLD,
@@ -1873,11 +1860,16 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     if (flags&CHANGELEVEL_PRERAISEWEAPON) GCon->Logf("SV_MapTeleport:   PRERAISEWEAPON");
   }
 
+  TAVec plrAngles[MAXPLAYERS];
+  memset((void *)plrAngles, 0, sizeof(plrAngles));
+
   // call PreTravel event
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!GGameInfo->Players[i]) continue;
+    plrAngles[i] = GGameInfo->Players[i]->ViewAngles;
     GGameInfo->Players[i]->eventPreTravel();
   }
+
 
   // collect list of thinkers that will go to the new level
   for (VThinker *Th = GLevel->ThinkerHead; Th; Th = Th->Next) {
@@ -1913,6 +1905,9 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     }
   }
 
+  vuint8 oldNoMonsters = GGameInfo->nomonsters;
+  if (flags&CHANGELEVEL_NOMONSTERS) GGameInfo->nomonsters = 1;
+
   sv_map_travel = true;
   if (!deathmatch && BaseSlot.FindMap(mapname)) {
     // unarchive map
@@ -1921,6 +1916,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     // new map
     SV_SpawnServer(*mapname, true/*spawn thinkers*/);
   }
+
+  if (flags&CHANGELEVEL_NOMONSTERS) GGameInfo->nomonsters = oldNoMonsters;
 
   // add traveling thinkers to the new level
   for (int i = 0; i < TravelObjs.Num(); ++i) {
@@ -1977,6 +1974,22 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
 #else
   const bool doSaveGame = false;
 #endif
+
+  if (flags&(CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_KEEPFACING|CHANGELEVEL_RESETHEALTH|CHANGELEVEL_PRERAISEWEAPON)) {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      VBasePlayer *plr = GGameInfo->Players[i];
+      if (!plr) continue;
+
+      if (flags&CHANGELEVEL_KEEPFACING) {
+        plr->ViewAngles = plrAngles[i];
+        plr->eventClientSetAngles(plrAngles[i]);
+        plr->PlayerFlags &= ~VBasePlayer::PF_FixAngle;
+      }
+      if (flags&CHANGELEVEL_RESETINVENTORY) plr->eventResetInventory();
+      if (flags&CHANGELEVEL_RESETHEALTH) plr->eventResetHealth();
+      if (flags&CHANGELEVEL_PRERAISEWEAPON) plr->eventPreraiseWeapon();
+    }
+  }
 
   // launch waiting scripts
   if (!deathmatch) GLevel->Acs->CheckAcsStore();

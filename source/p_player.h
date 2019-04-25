@@ -342,6 +342,27 @@ public:
 
   bool IsCheckpointPossible () { P_PASS_SELF; EV_RET_BOOL(VName("IsCheckpointPossible")); }
 
+  void eventResetInventory () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ResetInventory"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventResetHealth () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ResetHealth"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventPreraiseWeapon () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("PreraiseWeapon"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
   void eventResetToDefaults () {
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ResetToDefaults"));

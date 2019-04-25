@@ -790,7 +790,10 @@ COMMAND(TeleportNewMap) {
 //
 //==========================================================================
 COMMAND(TeleportNewMapEx) {
-  if (Args.length() < 2) return;
+  if (Args.length() < 2) {
+    GCon->Logf("TeleportNewMapEx mapname [posidx [flags [skill]]]");
+    return;
+  }
 
   if (Source == SRC_Command) {
     ForwardToServer();
@@ -802,7 +805,11 @@ COMMAND(TeleportNewMapEx) {
   int posidx = 0, flags = 0, skill = -1;
   if (Args.length() > 2) Args[2].convertInt(&posidx);
   if (Args.length() > 3) Args[3].convertInt(&flags);
-  if (Args.length() > 4) Args[4].convertInt(&skill);
+  if (Args.length() > 4) {
+    if (Args[4].convertInt(&skill)) {
+      if (skill >= 0) flags |= CHANGELEVEL_CHANGESKILL;
+    }
+  }
 
   //GCon->Logf("TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
 
@@ -828,7 +835,7 @@ COMMAND(TeleportNewMapEx) {
   GGameInfo->RebornPosition = RebornPosition;
   mapteleport_issued = true; // this will actually change the map
   mapteleport_flags = flags;
-  mapteleport_skill = -1;
+  mapteleport_skill = skill;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
 }
 
