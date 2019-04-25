@@ -3581,6 +3581,10 @@ void VLevel::FloodZone (sector_t *Sec, int Zone) {
 //
 //==========================================================================
 void VLevel::FixSelfRefDeepWater () {
+  // in UDMF maps, there is no sense to do "classic deepwater hack", so don't bother
+  // but don't exit, because of converted doom->udmf maps, for example
+  //if (LevelFlags&LF_TextMap) return;
+
   TArray<vuint8> self_subs;
   self_subs.setLength(NumSubsectors);
   memset(self_subs.ptr(), 0, NumSubsectors);
