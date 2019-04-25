@@ -242,6 +242,7 @@ struct opening_t {
   opening_t *listnext;
 
   inline void copyFrom (const opening_t *op) {
+    if (op == this) return;
     if (op) {
       top = op->top;
       bottom = op->bottom;

@@ -793,12 +793,12 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       dest->eceiling = op0->eceiling;
       dest->top = op0->top;
       dest->highceiling = op1->top;
-      dest->eceiling = op1->eceiling;
+      dest->ehighceiling = op1->eceiling;
     } else {
       dest->eceiling = op1->eceiling;
       dest->top = op1->top;
       dest->highceiling = op0->top;
-      dest->eceiling = op0->eceiling;
+      dest->ehighceiling = op0->eceiling;
     }
     dest->range = dest->top-dest->bottom;
 #ifdef VV_DUMP_OPENING_CREATION
