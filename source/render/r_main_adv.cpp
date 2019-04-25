@@ -159,7 +159,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   }
 #endif
 
-  ClearQueues();
+  //ClearQueues(); // moved to `RenderWorld()`
 
   MarkLeaves();
 
@@ -349,4 +349,6 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   DrawParticles();
 
   DrawTranslucentPolys();
+
+  RenderPortals();
 }

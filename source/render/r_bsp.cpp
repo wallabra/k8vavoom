@@ -140,6 +140,27 @@ void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::CommonQueueSurface
+//
+//==========================================================================
+void VRenderLevelShared::CommonQueueSurface (surface_t *surf, vuint8 type) {
+  if (PortalLevel == 0) {
+    world_surf_t &S = WorldSurfs.Alloc();
+    S.Surf = surf;
+    S.Type = type;
+  } else {
+    switch (type) {
+      case 0: QueueWorldSurface(surf); break;
+      case 1: QueueSkyPortal(surf); break;
+      case 2: QueueHorizonPortal(surf); break;
+      default: Sys_Error("internal renderer error: unknown surface type %d", (int)type);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawSurfaces
 //
 //==========================================================================
@@ -152,7 +173,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   if (texinfo->Tex->Type == TEXTYPE_Null) return;
 
-  sec_params_t *LightParams = (LightSourceSector == -1 ? secregion->params : &Level->Sectors[LightSourceSector].params);
+  sec_params_t *LightParams = (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
   lLev = midval(0, lLev, 255);
@@ -258,10 +279,25 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     return;
   } // done skybox rendering
 
+  vuint32 sflight = (lLev<<24)|LightParams->LightColour;
+
+#if 0
+  if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40) {
+    GCon->Logf("#40: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g", lLev, LightSourceSector, SideLight, (int)AbsSideLight,
+      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)LightParams->LightColour, sflight, texinfo->Alpha);
+    //lLev = 250;
+    //Fade = 0xffffffff;
+    /*
+    lLev = 255;
+    sflight = (lLev<<24)|(0xff7fff);
+    */
+  }
+#endif
+
   for (; surfs; surfs = surfs->next) {
     //if (!surfs->IsVisible(vieworg)) continue;
 
-    surfs->Light = (lLev<<24)|LightParams->LightColour;
+    surfs->Light = sflight;
     surfs->Fade = Fade;
     surfs->dlightframe = sub->dlightframe;
     surfs->dlightbits = sub->dlightbits;
@@ -269,13 +305,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
 
     if (texinfo->Alpha >= 1.0f) {
-      if (PortalLevel == 0) {
-        world_surf_t &S = WorldSurfs.Alloc();
-        S.Surf = surfs;
-        S.Type = 0;
-      } else {
-        QueueWorldSurface(surfs);
-      }
+      CommonQueueSurface(surfs, 0);
     } else {
       DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
         0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
@@ -335,13 +365,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
           seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
           false);
       } else {
-        if (PortalLevel == 0) {
-          world_surf_t &S = WorldSurfs.Alloc();
-          S.Surf = Surf;
-          S.Type = 2;
-        } else {
-          QueueHorizonPortal(Surf);
-        }
+        CommonQueueSurface(Surf, 2);
       }
     }
   }
@@ -376,13 +400,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
           seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
           false);
       } else {
-        if (PortalLevel == 0) {
-          world_surf_t &S = WorldSurfs.Alloc();
-          S.Surf = Surf;
-          S.Type = 2;
-        } else {
-          QueueHorizonPortal(Surf);
-        }
+        CommonQueueSurface(Surf, 2);
       }
     }
   }
@@ -1098,22 +1116,15 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
         PortalLevel = 0;
       }
 
-      //fprintf(stderr, "WSL=%d\n", WorldSurfs.Num());
-      const int wslen = WorldSurfs.Num();
-      for (int i = 0; i < wslen; ++i) {
-        switch (WorldSurfs[i].Type) {
-          case 0:
-            QueueWorldSurface(WorldSurfs[i].Surf);
-            break;
-          case 1:
-            QueueSkyPortal(WorldSurfs[i].Surf);
-            break;
-          case 2:
-            QueueHorizonPortal(WorldSurfs[i].Surf);
-            break;
+      world_surf_t *wsurf = WorldSurfs.ptr();
+      for (int i = WorldSurfs.length(); i--; ++wsurf) {
+        switch (wsurf->Type) {
+          case 0: QueueWorldSurface(wsurf->Surf); break;
+          case 1: QueueSkyPortal(wsurf->Surf); break;
+          case 2: QueueHorizonPortal(wsurf->Surf); break;
+          default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf->Type);
         }
       }
-      //WorldSurfs.Clear();
       WorldSurfs.resetNoDtor();
     }
   } while (light_reset_surface_cache);

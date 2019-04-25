@@ -71,7 +71,7 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
 
   Drawer->SetupViewOrg();
 
-  ClearQueues();
+  //ClearQueues(); // moved to `RenderWorld()`
 
   if (times_render_highlevel) GCon->Log("========= RenderScene =========");
 
@@ -106,4 +106,6 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   DrawParticles();
 
   DrawTranslucentPolys();
+
+  RenderPortals();
 }

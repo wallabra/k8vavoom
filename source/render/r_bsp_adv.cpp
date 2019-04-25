@@ -48,7 +48,8 @@ void VAdvancedRenderLevel::QueueWorldSurface (surface_t *surf) {
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+  ClearQueues();
   RenderBspWorld(rd, Range);
   Drawer->DrawWorldAmbientPass();
-  RenderPortals();
+  //RenderPortals();
 }

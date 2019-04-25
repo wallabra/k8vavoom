@@ -81,6 +81,8 @@ extern vuint32 gf_dynlights_traced;
 
 
 void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+  ClearQueues();
+
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 
@@ -101,12 +103,14 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
     if (times_render_lowlevel) GCon->Logf("Drawer->WorldDrawing: %f (%u polys, %u vertices, %u texture changes)", stt, glWDPolyTotal, glWDVertexTotal, glWDTextureChangesTotal);
   }
 
+  /*
   if (!r_reg_disable_portals) {
     stt = -Sys_Time();
     RenderPortals();
     stt += Sys_Time();
     if (times_render_lowlevel && stt > 0.01) GCon->Logf("   RenderPortals: %f", stt);
   }
+  */
 
   if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 }
