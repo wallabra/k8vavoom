@@ -9,6 +9,7 @@ add_library(core STATIC
   crc.h
   crc.cpp
   endianness.h
+  endianness.cpp
   exception.h
   exception.cpp
   hashfunc.h

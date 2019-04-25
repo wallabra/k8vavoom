@@ -51,6 +51,17 @@ enum { GBigEndian = 0 };
 
 // endianess handling
 
+// fuck you, c standard!
+// hide this from shitptimiser
+vint16 LittleShort (vint16 x);
+vint32 LittleLong (vint32 x);
+float LittleFloat (float x);
+
+vint16 BigShort (vint16 x);
+vint32 BigLong (vint32 x);
+float BigFloat (float x);
+
+/*
 #ifdef VAVOOM_LITTLE_ENDIAN
 
 static __attribute__((unused)) inline vint16 LittleShort (vint16 x) { return x; }
@@ -72,3 +83,4 @@ static __attribute__((unused)) inline vint32 LittleLong (vint32 x) { return ((vu
 static __attribute__((unused)) inline float LittleFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = LittleLong(a.l); return a.f; }
 
 #endif
+*/
