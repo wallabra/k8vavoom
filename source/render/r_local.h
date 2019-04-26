@@ -566,9 +566,12 @@ protected:
                      texinfo_t *texinfo, VEntity *SkyBox, int LightSourceSector, int SideLight,
                      bool AbsSideLight, bool CheckSkyBoxAlways);
 
+  void ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1);
+
   void RenderHorizon (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
+  void RenderSecFlatSurfaces (subsector_t *sub, sec_region_t *secregion, sec_surface_t *flat0, sec_surface_t *flat1, VEntity *SkyBox);
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper=true);
   void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"

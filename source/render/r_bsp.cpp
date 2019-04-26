@@ -73,6 +73,40 @@ static int oldPortalDepth = -666;
 
 //==========================================================================
 //
+//  VRenderLevelShared::ChooseFlatSurfaces
+//
+//==========================================================================
+void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1) {
+  if (!flat0 || !flat1) {
+    f0 = flat0;
+    f1 = flat1;
+    return;
+  }
+
+  // check if flat1 is the same as flat0
+  if (flat0->esecplane.splane == flat1->esecplane.splane) {
+    f0 = flat0;
+    f1 = nullptr;
+    return;
+  }
+
+  // not the same, check if on the same height
+  if (flat0->esecplane.GetNormal() == flat1->esecplane.GetNormal() &&
+      flat0->esecplane.GetDist() == flat1->esecplane.GetDist())
+  {
+    f0 = flat0;
+    f1 = nullptr;
+    return;
+  }
+
+  // render both
+  f0 = flat0;
+  f1 = flat1;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SurfCheckAndQueue
 //
 //  this checks if surface is not queued twice
@@ -670,12 +704,15 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
     ++ds;
   }
 
+  sec_surface_t *fsurf0, *fsurf1;
 
-       if (region->fakefloor) RenderSecSurface(sub, secregion, region->fakefloor, secregion->efloor.splane->SkyBox);
-  else if (region->realfloor) RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
+  ChooseFlatSurfaces(fsurf0, fsurf1, region->realfloor, region->fakefloor);
+  if (fsurf0) RenderSecSurface(sub, secregion, fsurf0, secregion->efloor.splane->SkyBox);
+  if (fsurf1) RenderSecSurface(sub, secregion, fsurf1, secregion->efloor.splane->SkyBox);
 
-       if (region->fakeceil) RenderSecSurface(sub, secregion, region->fakeceil, secregion->eceiling.splane->SkyBox);
-  else if (region->realceil) RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
+  ChooseFlatSurfaces(fsurf0, fsurf1, region->realceil, region->fakeceil);
+  if (fsurf0) RenderSecSurface(sub, secregion, fsurf0, secregion->eceiling.splane->SkyBox);
+  if (fsurf1) RenderSecSurface(sub, secregion, fsurf1, secregion->eceiling.splane->SkyBox);
 
   if (region->next && d > 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
