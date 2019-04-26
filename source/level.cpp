@@ -1643,78 +1643,145 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       bool slideWithFloor = false;
       bool slideWithCeiling = false;
+      sector_t *slidesec = nullptr;
+      bool hasMidTex = true;
 
       if (sb->MidTexture <= 0 || GTextureManager(sb->MidTexture)->Type == TEXTYPE_Null) {
-        // no midtex, check if we have top/bottom textures
-        bool allowTopTex = (sb->TopTexture > 0 && sb->TopTexture != skyflatnum);
-        bool allowBotTex = (sb->BottomTexture > 0 && sb->BottomTexture != skyflatnum);
-        if (allowTopTex) {
-          VTexture *xtx = GTextureManager(sb->TopTexture);
-          allowTopTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
-        }
-        if (allowBotTex) {
-          VTexture *xtx = GTextureManager(sb->BottomTexture);
-          allowBotTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
-        }
-        // can we hit toptex?
-        if (allowTopTex) {
-          if (fsec && bsec) {
-            // if there is no ceiling height difference, toptex cannot be visible
-            if (fsec->ceiling.minz == bsec->ceiling.minz &&
-                fsec->ceiling.maxz == bsec->ceiling.maxz)
-            {
-              allowTopTex = false;
-            } else if (fsec->ceiling.minz <= bsec->ceiling.minz) {
-              // if front ceiling is lower than back ceiling, toptex cannot be visible
-              allowTopTex = false;
-            } else if (dcy1 <= min2(fceilingZ, bceilingZ)) {
-              // if decal top is lower than lowest ceiling, consider toptex invisible
-              // (i assume that we won't have animators sliding up)
-              allowTopTex = false;
-            }
-          } else {
-            // one-sided: see the last coment above
-            if (dcy1 <= fceilingZ) allowTopTex = false;
-          }
-        }
-        // can we hit bottex?
-        if (allowBotTex) {
-          if (fsec && bsec) {
-            // if there is no floor height difference, bottex cannot be visible
-            if (fsec->floor.minz == bsec->floor.minz &&
-                fsec->floor.maxz == bsec->floor.maxz)
-            {
-              allowBotTex = false;
-            } else if (fsec->floor.maxz >= bsec->floor.maxz) {
-              // if front floor is higher than back floor, bottex cannot be visible
-              allowBotTex = false;
-            } else if (!dec->animator && dcy0 >= max2(ffloorZ, bfloorZ)) {
-              // if decal bottom is higher than highest floor, consider toptex invisible
-              // (but don't do this for animated decals -- this may be sliding blood)
-              allowBotTex = false;
-            }
-          } else {
-            // one-sided: see the last coment above
-            if (!dec->animator && dcy0 >= ffloorZ) allowBotTex = false;
-          }
-        }
-        if (!allowTopTex && !allowBotTex) continue;
+        hasMidTex = false;
       }
+
+      // check if we have top/bottom textures
+      bool allowTopTex = (sb->TopTexture > 0 && sb->TopTexture != skyflatnum);
+      bool allowBotTex = (sb->BottomTexture > 0 && sb->BottomTexture != skyflatnum);
+      if (allowTopTex) {
+        VTexture *xtx = GTextureManager(sb->TopTexture);
+        allowTopTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+      }
+      if (allowBotTex) {
+        VTexture *xtx = GTextureManager(sb->BottomTexture);
+        allowBotTex = (xtx && xtx->Type != TEXTYPE_Null && !xtx->noDecals);
+      }
+      // can we hit toptex?
+      if (allowTopTex) {
+        if (fsec && bsec) {
+          // if there is no ceiling height difference, toptex cannot be visible
+          if (fsec->ceiling.minz == bsec->ceiling.minz &&
+              fsec->ceiling.maxz == bsec->ceiling.maxz)
+          {
+            allowTopTex = false;
+          } else if (fsec->ceiling.minz <= bsec->ceiling.minz) {
+            // if front ceiling is lower than back ceiling, toptex cannot be visible
+            allowTopTex = false;
+          } else if (dcy1 <= min2(fceilingZ, bceilingZ)) {
+            // if decal top is lower than lowest ceiling, consider toptex invisible
+            // (i assume that we won't have animators sliding up)
+            allowTopTex = false;
+          }
+        } else {
+          // one-sided: see the last coment above
+          if (dcy1 <= fceilingZ) allowTopTex = false;
+        }
+      }
+      // can we hit bottex?
+      if (allowBotTex) {
+        if (fsec && bsec) {
+          // if there is no floor height difference, bottex cannot be visible
+          if (fsec->floor.minz == bsec->floor.minz &&
+              fsec->floor.maxz == bsec->floor.maxz)
+          {
+            allowBotTex = false;
+          } else if (fsec->floor.maxz >= bsec->floor.maxz) {
+            // if front floor is higher than back floor, bottex cannot be visible
+            allowBotTex = false;
+          } else if (!dec->animator && dcy0 >= max2(ffloorZ, bfloorZ)) {
+            // if decal bottom is higher than highest floor, consider toptex invisible
+            // (but don't do this for animated decals -- this may be sliding blood)
+            allowBotTex = false;
+          }
+        } else {
+          // one-sided: see the last coment above
+          if (!dec->animator && dcy0 >= ffloorZ) allowBotTex = false;
+        }
+      }
+
+      // if no textures were hit, don't bother
+      if (!hasMidTex && !allowTopTex && !allowBotTex) continue;
 
       if (fsec && bsec) {
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
+        GCon->Logf("  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
 #endif
-        if (orgz > max2(ffloorZ, bfloorZ) && orgz < min2(fceilingZ, bceilingZ)) {
+        if (hasMidTex && orgz > max2(ffloorZ, bfloorZ) && orgz < min2(fceilingZ, bceilingZ)) {
           // midtexture
-          if ((li->flags&ML_DONTPEGTOP) == 0) slideWithFloor = true;
-        } else if (orgz < max2(ffloorZ, bfloorZ)) {
-          // bottom texture
-          if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
-        } else if (orgz > min2(fceilingZ, bceilingZ)) {
-          // top texture
-          if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+               if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
+          else if (li->flags&ML_DONTPEGTOP) slideWithCeiling = true;
+          else slideWithCeiling = true;
+        } else {
+          if (allowTopTex && allowBotTex) {
+            // both top and bottom
+            if (orgz < max2(ffloorZ, bfloorZ)) {
+              // bottom texture
+              if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
+            } else if (orgz > min2(fceilingZ, bceilingZ)) {
+              // top texture
+              if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+            }
+          } else if (allowBotTex) {
+            // only bottom texture
+            if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
+          } else if (allowTopTex) {
+            // only top texture
+            if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+          }
+#ifdef VAVOOM_DECALS_DEBUG
+          GCon->Logf("  2s: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+#endif
         }
+
+        // door hack
+        /*
+        if (!slideWithFloor && !slideWithCeiling) {
+          if (ffloorZ == fceilingZ || bfloorZ == bceilingZ) {
+            slideWithCeiling = (bfloorZ == ffloorZ);
+            slideWithFloor = !slideWithCeiling;
+            slidesec = (ffloorZ == fceilingZ ? fsec : bsec);
+            //GCon->Logf("DOOR HACK: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+          }
+        }
+        */
+      } else {
+#ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
+#endif
+        // one-sided
+        if (hasMidTex && orgz > ffloorZ && orgz < fceilingZ) {
+          // midtexture
+               if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
+          else if (li->flags&ML_DONTPEGTOP) slideWithCeiling = true;
+          else slideWithCeiling = true;
+          //GCon->Logf("one-sided midtex: pegbot=%d; pegtop=%d; fslide=%d; cslide=%d", (int)(!!(li->flags&ML_DONTPEGBOTTOM)), (int)(!!(li->flags&ML_DONTPEGTOP)), (int)slideWithFloor, (int)slideWithCeiling);
+        } else {
+          if (allowTopTex && allowBotTex) {
+            // both top and bottom
+            if (orgz < ffloorZ) {
+              // bottom texture
+              if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
+            } else if (orgz > fceilingZ) {
+              // top texture
+              if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+            }
+          } else if (allowBotTex) {
+            // only bottom texture
+            if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true;
+          } else if (allowTopTex) {
+            // only top texture
+            if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
+          }
+        }
+        if (slideWithFloor || slideWithCeiling) slidesec = fsec;
+#ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+#endif
       }
 
       // remove old same-typed decals, if necessary
@@ -1790,19 +1857,23 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       // setup curz and pegs
       if (slideWithFloor) {
-        decal->slidesec = bsec;
-        decal->flags |= decal_t::SlideFloor;
-        decal->curz -= decal->slidesec->floor.TexZ;
+        decal->slidesec = (slidesec ? slidesec : bsec);
+        if (decal->slidesec) {
+          decal->flags |= decal_t::SlideFloor;
+          decal->curz -= decal->slidesec->floor.TexZ;
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
+          GCon->Logf("  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
 #endif
+        }
       } else if (slideWithCeiling) {
-        decal->slidesec = bsec;
-        decal->flags |= decal_t::SlideCeil;
-        decal->curz -= decal->slidesec->ceiling.TexZ;
+        decal->slidesec = (slidesec ? slidesec : bsec);
+        if (decal->slidesec) {
+          decal->flags |= decal_t::SlideCeil;
+          decal->curz -= decal->slidesec->ceiling.TexZ;
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
+          GCon->Logf("  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
 #endif
+        }
       }
 
       if (side != seg->side) decal->flags ^= decal_t::FlipX;
