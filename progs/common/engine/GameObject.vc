@@ -665,6 +665,8 @@ struct line_t : TPlane {
 
   // precalculated v2-v1 for side checking
   TVec dir;
+  // normalised dir
+  TVec ndir;
 
   int flags;
   int SpacFlags;

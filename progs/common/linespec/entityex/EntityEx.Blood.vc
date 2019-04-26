@@ -247,6 +247,8 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 //  `dir` must be normalized.
 //  (not anymore) if zofs is not given, use default entity vertical offset.
 //
+//  `only2S` means "spawn decals only on two-sided lines"
+//
 //  if `DecalName` is given, spawn decals
 //
 //==========================================================================
@@ -286,6 +288,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
     if (in->bIsALine) {
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
+
       if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         side = 1;
         sec = li->backsector;
@@ -306,7 +309,10 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
       lineStart = lineEnd;
 
-      if (Level.CompatTrace && li->frontsector == li->backsector) continue;
+      if (Level.CompatTrace && li->frontsector == li->backsector) {
+        if (DecalName && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
+        continue;
+      }
 
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
@@ -316,18 +322,15 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (DecalName && li.alpha >= 0.6) {
-              SpawnDecal(hit_point, DecalName, side, li);
-              // and from another side
-              //if (li.alpha >= 1.0 && !(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) SpawnDecal(hit_point, DecalName, 1-side, li);
-              break; // shot continues, why not?
-            } else {
-              if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) break; // shot continues
-            }
+            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) break; // shot continues
           }
           open = open->next;
         }
-        if (open) continue;
+        // found good opening?
+        if (open) {
+          if (DecalName && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
+          continue;
+        }
 
         if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
             li->backsector->ceiling.pic == Level.Game.skyflatnum &&
@@ -347,7 +350,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         return false; // don't spawn decals on sky
       }
 
-      // Hit line
+      // hit line
       tr->hit = hit_point;
       tr->line = li;
       tr->sec = sec;
@@ -460,12 +463,6 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     if (isSmallDamage && !radiusDamage) continue;
 
     TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType);
-    /*
-    if (TraceSplat(pos, vdir, 172.0, &tr, 0)) {
-      //print("*** spawning blood decal '%s'!", bloodType);
-      SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
-    }
-    */
   }
 }
 

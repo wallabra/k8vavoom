@@ -158,15 +158,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     }
 
     // use origScale to get the original starting point
-    //float txwC = dtex->SOffset*dc->origScaleX;
-    float txhC = dtex->TOffset*dc->origScaleY;
-    float txwC = dtex->SOffset*dc->scaleX;
-    //float txhC = dtex->TOffset*dc->scaleY;
+    const float txofs = dtex->GetScaledSOffset()*dc->scaleX;
+    const float tyofs = dtex->GetScaledTOffset()*dc->origScaleY;
 
-    float txw = dtex->GetWidth()*dc->scaleX;
-    float txh = dtex->GetHeight()*dc->scaleY;
-    //float txw = dtex->GetWidth()*dc->origScaleX;
-    //float txh = dtex->GetHeight()*dc->origScaleY;
+    const float txw = dtex->GetScaledWidth()*dc->scaleX;
+    const float txh = dtex->GetScaledHeight()*dc->scaleY;
 
     if (txw < 1 || txh < 1) {
       // remove it, if it is not animated
@@ -216,27 +212,24 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       SetTexture(dtex, /*tex->ColourMap*/cmap); // this sets `tex_iw` and `tex_ih`
     }
 
-    TVec lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
-    TVec lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
-
-    TVec dir = (lv2-lv1)/dc->linelen;
-    //fprintf(stderr, "txwC=%f\n", txwC);
-    float xstofs = dc->xdist-txwC+dc->ofsX;
-    TVec v0 = lv1+dir*xstofs;
-    TVec v2 = lv1+dir*(xstofs+txw);
+    const float xstofs = dc->xdist-txofs+dc->ofsX;
+    TVec v0 = (*dc->seg->linedef->v1)+dc->seg->linedef->ndir*xstofs;
+    TVec v1 = v0+dc->seg->linedef->ndir*txw;
 
     //float dcz = dc->curz+txh2-dc->ofsY;
-    //float dcz = dc->curz+dc->ofsY-txhC;
-    //float dcz = dc->curz-txhC+dc->ofsY;
-    float dcz = dc->curz+txhC+dc->ofsY;
+    //float dcz = dc->curz+dc->ofsY-tyofs;
+    //float dcz = dc->curz-tyofs+dc->ofsY;
+    float dcz = dc->curz+tyofs+dc->ofsY;
     // fix Z, if necessary
     if (dc->flags&decal_t::SlideFloor) {
       // should slide with back floor
-      dcz += dc->bsec->floor.TexZ;
+      dcz += dc->seg->frontsector->floor.TexZ;
     } else if (dc->flags&decal_t::SlideCeil) {
       // should slide with back ceiling
-      dcz += dc->bsec->ceiling.TexZ;
+      dcz += dc->seg->frontsector->ceiling.TexZ;
     }
+
+    //GCon->Logf("rendering decal at seg #%d (ofs=%g; len=%g); ofs=%g; zofs=(%g,%g); v0=(%g,%g); v1=(%g,%g); line=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(dc->seg-GLevel->Segs), dc->seg->offset, dc->seg->length, xstofs, dcz-txh, dcz, v0.x, v0.y, v1.x, v1.y, dc->seg->linedef->v1->x, dc->seg->linedef->v1->y, dc->seg->linedef->v2->x, dc->seg->linedef->v2->y);
 
     float texx0 = (dc->flags&decal_t::FlipX ? 1.0f : 0.0f);
     float texx1 = (dc->flags&decal_t::FlipX ? 0.0f : 1.0f);
@@ -246,8 +239,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     glBegin(GL_QUADS);
       glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz-txh);
       glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz);
-      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz);
-      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz-txh);
+      glTexCoord2f(texx1, texy1); glVertex3f(v1.x, v1.y, dcz);
+      glTexCoord2f(texx1, texy0); glVertex3f(v1.x, v1.y, dcz-txh);
     glEnd();
 
     prev = dc;

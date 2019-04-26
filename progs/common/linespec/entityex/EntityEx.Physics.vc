@@ -377,10 +377,8 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
       if (DecalName && bDecals2SPass) {
         //print("tracing decal '%s' (hit)", DecalName);
         TVec spdir = Velocity.normalise();
-        float spdist = length2D(Origin-oldOrigin);
+        float spdist = length(Origin-oldOrigin);
         TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, only2S:true);
-        // and back
-        TraceSplat(Origin, -spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, only2S:true);
       }
       if (tmtrace.BlockingMobj) {
         if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
@@ -415,10 +413,8 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   if (DecalName && bDecals2SPass) {
     //print("tracing decal '%s' (pass)", DecalName);
     TVec spdir = Velocity.normalise();
-    float spdist = length2D(Origin-oldOrigin);
+    float spdist = length(Origin-oldOrigin);
     TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, only2S:true);
-    // and back
-    TraceSplat(Origin, -spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, only2S:true);
   }
 
   return oldfloorz;

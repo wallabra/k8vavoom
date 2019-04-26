@@ -234,8 +234,10 @@ struct line_t : public TPlane {
   vertex_t *v1;
   vertex_t *v2;
 
-  // precalculated v2-v1 for side checking
+  // precalculated (v2-v1).normalised2D for side checking
   TVec dir;
+  // normalised dir
+  TVec ndir;
 
   vint32 flags;
   vint32 SpacFlags;

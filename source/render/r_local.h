@@ -139,19 +139,19 @@ struct decal_t {
     FlipY = 0x0020U,
     Fullbright = 0x0100U,
     Fuzzy = 0x0200U,
-    SideDefOne = 0x0800U,
+    //SideDefOne = 0x0800U,
   };
   decal_t *next; // in this seg
   seg_t *seg;
-  sector_t *bsec; // backsector for SlideXXX
+  //sector_t *bsec; // backsector for SlideXXX
   VName dectype;
   //VName picname;
   VTextureID texture;
   vuint32 flags;
+  // z and x positions has no image offset added
   float orgz; // original z position
   float curz; // z position (offset with floor/ceiling TexZ if not midtex, see `flags`)
-  float xdist; // in pixels
-  float linelen; // so we don't have to recalculate it in renderer
+  float xdist; // offset from linedef start, in map units
   float ofsX, ofsY; // for animators
   float origScaleX, origScaleY; // for animators
   float scaleX, scaleY; // actual
