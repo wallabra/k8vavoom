@@ -1822,12 +1822,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v1 at nv2");
 #endif
-        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dcx0+txofs, dec, side, nline, flips);
+        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dcx0+txofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       } else if (li->v1 == nline->v1) {
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v1 at nv1");
 #endif
-        //PutDecalAtLine(tex, orgz, -(twdt+dcx0)+txofs, dec, 1-side, nline, flips);
+        //PutDecalAtLine(tex, orgz, -(twdt+dcx0)+txofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       }
     }
   }
@@ -1844,12 +1844,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v2 at nv1");
 #endif
-        PutDecalAtLine(tex, orgz, dcx0-linelen+txofs, dec, side, nline, flips);
+        PutDecalAtLine(tex, orgz, dcx0-linelen+txofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       } else if (li->v2 == nline->v2) {
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v2 at nv2");
 #endif
-        //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+twdt-(dcx0-linelen)+txofs, dec, 1-side, nline, flips);
+        //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+twdt-(dcx0-linelen)+txofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       }
     }
   }
