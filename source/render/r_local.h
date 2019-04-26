@@ -139,11 +139,11 @@ struct decal_t {
     FlipY = 0x0020U,
     Fullbright = 0x0100U,
     Fuzzy = 0x0200U,
-    //SideDefOne = 0x0800U,
+    SideDefOne = 0x0800U,
   };
   decal_t *next; // in this seg
   seg_t *seg;
-  //sector_t *bsec; // backsector for SlideXXX
+  sector_t *slidesec; // backsector for SlideXXX
   VName dectype;
   //VName picname;
   VTextureID texture;
