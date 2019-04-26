@@ -27,6 +27,15 @@
 //  BLOOD UTILITIES
 //**************************************************************************
 
+final bool BloodCanSplat (class!Actor BloodType) {
+  if (!BloodType) return true;
+  BloodType = class!Actor(GetClassReplacement(BloodType));
+  if (!BloodType) return true;
+  //print("cansplat for %s: %B", BloodType, !BloodType.default.bBloodDisableSplats);
+  return !BloodType.default.bBloodDisableSplats;
+}
+
+
 //==========================================================================
 //
 // GetBloodSmearDecalName
@@ -253,7 +262,7 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 //
 //==========================================================================
 final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
-                       optional name DecalName, optional bool only2S)
+                       optional name DecalName, optional bool pass2S, optional bool only2S)
 {
   intercept_t *in;
   TVec lineEnd;
@@ -310,7 +319,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       lineStart = lineEnd;
 
       if (Level.CompatTrace && li->frontsector == li->backsector) {
-        if (DecalName && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
+        if (DecalName && (pass2S || only2S) && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
         continue;
       }
 
@@ -328,7 +337,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         }
         // found good opening?
         if (open) {
-          if (DecalName && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
+          if (DecalName && (pass2S || only2S) && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
           continue;
         }
 
@@ -462,7 +471,8 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
     if (isSmallDamage && !radiusDamage) continue;
 
-    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType);
+    //print("TraceBleed: %s", bloodType);
+    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType, pass2S:true, only2S:false);
   }
 }
 
@@ -482,7 +492,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
   //Org.x = Origin.x;
   //Org.y = Origin.y;
 
-  if (specified_shootOrg) {
+  if (specified_shootOrg && BloodCanSplat(BloodType)) {
     TVec goup = Origin;
     if (Radius > 0) goup.z += Radius+4+Random()*4;
     TAVec av;
@@ -561,7 +571,7 @@ final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
 final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
   if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
 
-  if (src) {
+  if (src && BloodCanSplat(BloodType)) {
     TVec goup = Origin;
     if (Radius > 0) goup.z += Radius+4+Random()*4;
     TAVec av;

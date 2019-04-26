@@ -35,6 +35,22 @@ decalgroup BloodSplatRadius {
 }
 
 
+/*
+decal BloodSplat {
+  pic NONE
+}
+decal BloodSmear {
+  pic NONE
+}
+decal BloodSmearRadius {
+  pic NONE
+}
+decal BloodSplatRadius {
+  pic NONE
+}
+*/
+
+
 /// +++++++++++++++++////
 /// Blood Animators
 /// +++++++++++++++++////
@@ -237,6 +253,22 @@ decalgroup BloodSplatRadiusTransient {
   K8GoreBloodSuper01Transient 3
   K8GoreBloodSuper02Transient 3
 }
+
+
+/*
+decal BloodSplatTransient {
+  pic NONE
+}
+decal BloodSmearTransient {
+  pic NONE
+}
+decal BloodSmearRadiusTransient {
+  pic NONE
+}
+decal BloodSplatRadiusTransient {
+  pic NONE
+}
+*/
 
 
 /// +++++++++++++++++////
@@ -448,6 +480,22 @@ decalgroup BloodSplatRadiusGreen {
 }
 
 
+/*
+decal BloodSplatGreen {
+  pic NONE
+}
+decal BloodSmearGreen {
+  pic NONE
+}
+decal BloodSmearRadiusGreen {
+  pic NONE
+}
+decal BloodSplatRadiusGreen {
+  pic NONE
+}
+*/
+
+
 /// +++++++++++++++++////
 /// Blood Animators
 /// +++++++++++++++++////
@@ -650,6 +698,22 @@ decalgroup BloodSplatRadiusTransient_Green {
   K8GoreBloodSuper01Transient_Green 3
   K8GoreBloodSuper02Transient_Green 3
 }
+
+
+/*
+decal BloodSplatTransient_Green {
+  pic NONE
+}
+decal BloodSmearTransient_Green {
+  pic NONE
+}
+decal BloodSmearRadiusTransient_Green {
+  pic NONE
+}
+decal BloodSplatRadiusTransient_Green {
+  pic NONE
+}
+*/
 
 
 /// +++++++++++++++++////
@@ -861,6 +925,22 @@ decalgroup BloodSplatRadiusBlue {
 }
 
 
+/*
+decal BloodSplatBlue {
+  pic NONE
+}
+decal BloodSmearBlue {
+  pic NONE
+}
+decal BloodSmearRadiusBlue {
+  pic NONE
+}
+decal BloodSplatRadiusBlue {
+  pic NONE
+}
+*/
+
+
 /// +++++++++++++++++////
 /// Blood Animators
 /// +++++++++++++++++////
@@ -1063,6 +1143,22 @@ decalgroup BloodSplatRadiusTransient_Blue {
   K8GoreBloodSuper01Transient_Blue 3
   K8GoreBloodSuper02Transient_Blue 3
 }
+
+
+/*
+decal BloodSplatTransient_Blue {
+  pic NONE
+}
+decal BloodSmearTransient_Blue {
+  pic NONE
+}
+decal BloodSmearRadiusTransient_Blue {
+  pic NONE
+}
+decal BloodSplatRadiusTransient_Blue {
+  pic NONE
+}
+*/
 
 
 /// +++++++++++++++++////

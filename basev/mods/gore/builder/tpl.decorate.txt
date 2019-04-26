@@ -8,7 +8,11 @@ Actor K8Gore_Blood$(Color) : Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/
 Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
 #endif
   $(Translation)
+#ifndef TRANSIENT
+  Decal None
+#else
   Decal K8GoreBloodSplat$(Color)
+#endif
   //+Decals2SPass
   game Doom
   +FORCEXYBILLBOARD

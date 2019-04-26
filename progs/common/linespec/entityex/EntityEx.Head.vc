@@ -366,6 +366,8 @@ bool bHitOwner;
 
 // if `true`, flying projectile will leave decals on 2-sided walls it flied through
 bool bDecals2SPass;
+// if `true`, flying projectile will leave decals only on 2-sided walls it flied through
+bool bDecalsOnly2S;
 
 // params
 float Speed;
@@ -503,6 +505,7 @@ class!Actor BloodSplatterType;
 class!Actor AxeBloodType;
 int BloodColour;
 int BloodTranslation;
+bool bBloodDisableSplats; // has sense only for blood actors
 
 array!DropItemInfo DropItemList;
 

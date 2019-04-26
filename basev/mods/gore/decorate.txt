@@ -10,7 +10,7 @@ k8VaVoom { AllowBloodReplacement = true }
 // Tracer is damaged actor (can be empty)
 Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
   
-  Decal K8GoreBloodSplat
+  Decal None
   //+Decals2SPass
   game Doom
   +FORCEXYBILLBOARD
@@ -1867,7 +1867,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
 // Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-  Decal K8GoreBloodSplatGreen
+  Decal None
   //+Decals2SPass
   game Doom
   +FORCEXYBILLBOARD
@@ -3724,7 +3724,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
 // Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-  Decal K8GoreBloodSplatBlue
+  Decal None
   //+Decals2SPass
   game Doom
   +FORCEXYBILLBOARD

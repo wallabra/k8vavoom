@@ -1570,6 +1570,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   float twdt = DTex->GetScaledWidth()*dec->scaleX;
   float thgt = DTex->GetScaledHeight()*dec->scaleY;
 
+  if (twdt < 1 || thgt < 1) return;
+
   float txofs = DTex->GetScaledSOffset()*dec->scaleX;
   float tyofs = DTex->GetScaledTOffset()*dec->scaleY;
 
@@ -1882,14 +1884,6 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
     return;
   }
 
-  if (++decanimuid == 0x7fffffff) {
-    decanimuid = 1;
-    for (int f = 0; f < NumLines; ++f) {
-      line_t *ld = Lines+f;
-      if (ld->decalMark != -1) ld->decalMark = 0;
-    }
-  }
-
   int tex = dec->texid;
   VTexture *DTex = GTextureManager[tex];
   if (!DTex || DTex->Type == TEXTYPE_Null) {
@@ -1898,16 +1892,15 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
     return;
   }
 
-  // get picture size, so we can spread it over segs and linedefs
-  picinfo_t tinf;
-  GTextureManager.GetTextureInfo(tex, &tinf);
-  if (tinf.width < 1 || tinf.height < 1) {
-    // invisible picture, nothing to do
-    GCon->Logf("Decal '%s' has pic without pixels", *dec->name);
-    return;
-  }
+  //GCon->Logf("Decal '%s', texture '%s'", *dec->name, *DTex->Name);
 
-  //GCon->Logf("Picture '%s' size: %d, %d  offsets: %d, %d", *dec->pic, tinf.width, tinf.height, tinf.xoffset, tinf.yoffset);
+  if (++decanimuid == 0x7fffffff) {
+    decanimuid = 1;
+    for (int f = 0; f < NumLines; ++f) {
+      line_t *ld = Lines+f;
+      if (ld->decalMark != -1) ld->decalMark = 0;
+    }
+  }
 
   // setup flips
   vuint32 flips = 0;
@@ -1951,7 +1944,7 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
   if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
-  //GCon->Logf("oorg:(%g,%g,%g); org:(%g,%g,%g)", org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
+  //GCon->Logf("%s: oorg:(%g,%g,%g); org:(%g,%g,%g)", *dectype, org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
 
   org = li->landAlongNormal(org);
 

@@ -32,6 +32,22 @@ decalgroup BloodSplatRadius${Color} {
 }
 
 
+/*
+decal BloodSplat${Color} {
+  pic NONE
+}
+decal BloodSmear${Color} {
+  pic NONE
+}
+decal BloodSmearRadius${Color} {
+  pic NONE
+}
+decal BloodSplatRadius${Color} {
+  pic NONE
+}
+*/
+
+
 /// +++++++++++++++++////
 /// Blood Animators
 /// +++++++++++++++++////
