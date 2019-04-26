@@ -413,11 +413,11 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(curreg, ds);
   }
 
-  if (region->realfloor) RenderShadowSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
-  if (region->realceil) RenderShadowSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
+       if (region->fakefloor) RenderShadowSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
+  else if (region->realfloor) RenderShadowSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
 
-  if (region->fakefloor) RenderShadowSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
-  if (region->fakeceil) RenderShadowSecSurface(region->fakeceil, curreg->efloor.splane->SkyBox);
+       if (region->fakeceil) RenderShadowSecSurface(region->fakeceil, curreg->efloor.splane->SkyBox);
+  else if (region->realceil) RenderShadowSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {
@@ -676,11 +676,11 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(curreg, ds);
   }
 
-  if (region->realfloor) RenderLightSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
-  if (region->realceil) RenderLightSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
+       if (region->fakefloor) RenderLightSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
+  else if (region->realfloor) RenderLightSecSurface(region->realfloor, curreg->efloor.splane->SkyBox);
 
-  if (region->fakefloor) RenderLightSecSurface(region->fakefloor, curreg->efloor.splane->SkyBox);
-  if (region->fakeceil) RenderLightSecSurface(region->fakeceil, curreg->eceiling.splane->SkyBox);
+       if (region->fakeceil) RenderLightSecSurface(region->fakeceil, curreg->eceiling.splane->SkyBox);
+  else if (region->realceil) RenderLightSecSurface(region->realceil, curreg->eceiling.splane->SkyBox);
 
 #ifdef VV_LADV_STRANGE_REGION_SORTING
   if (region->next && dist > 0.0f) {

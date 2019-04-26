@@ -3718,8 +3718,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
     line_t *line = sec->lines[f];
-    if (!(!!line->frontsector && !!line->backsector)) continue;
-    //if (!line->frontsector || !line->backsector) return 0;
+    if (!line->frontsector || !line->backsector) continue;
     sector_t *bs;
     if (line->frontsector == sec) {
       // back
@@ -3740,11 +3739,12 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
     do {
       if (res&FFBugFloor) {
         // line has no bottom texture?
-        if (Sides[line->sidenum[myside]].BottomTexture != 0) { res &= ~FFBugFloor; break; }
+        if (Sides[line->sidenum[myside]].BottomTexture > 0) { res &= ~FFBugFloor; break; }
         // slope?
         if (bs->floor.normal.z != 1.0f) { res &= ~FFBugFloor; break; }
         // height?
         if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; break; }
+        //GCon->Logf("  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
     } while (0);
@@ -3922,7 +3922,7 @@ void VLevel::FixDeepWaters () {
       }
       // slopes aren't interesting
       if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
-      if (sec->floor.minz >= sec->ceiling.minz) continue;
+      if (sec->floor.minz >= sec->ceiling.minz) continue; // closed something
       vuint32 bugFlags = IsFloodBugSector(sec);
       if (bugFlags == 0) continue;
       sector_t *fsecFloor = nullptr, *fsecCeiling = nullptr;
@@ -3931,7 +3931,7 @@ void VLevel::FixDeepWaters () {
       if (fsecFloor == sec) fsecFloor = nullptr;
       if (fsecCeiling == sec) fsecCeiling = nullptr;
       if (!fsecFloor && !fsecCeiling) continue;
-      GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%s; ceiling:%s)", sidx, (fsecFloor ? "tan" : "ona"), (fsecCeiling ? "tan" : "ona"));
+      GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%d; ceiling:%d)", sidx, (fsecFloor ? (int)(ptrdiff_t)(fsecFloor-Sectors) : -1), (fsecCeiling ? (int)(ptrdiff_t)(fsecCeiling-Sectors) : -1));
       sec->othersecFloor = fsecFloor;
       sec->othersecCeiling = fsecCeiling;
       // allocate fakefloor data (engine require it to complete setup)

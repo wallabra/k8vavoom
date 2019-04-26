@@ -670,11 +670,12 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
     ++ds;
   }
 
-  if (region->realfloor) RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
-  if (region->realceil) RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
 
-  if (region->fakefloor) RenderSecSurface(sub, secregion, region->fakefloor, secregion->efloor.splane->SkyBox);
-  if (region->fakeceil) RenderSecSurface(sub, secregion, region->fakeceil, secregion->eceiling.splane->SkyBox);
+       if (region->fakefloor) RenderSecSurface(sub, secregion, region->fakefloor, secregion->efloor.splane->SkyBox);
+  else if (region->realfloor) RenderSecSurface(sub, secregion, region->realfloor, secregion->efloor.splane->SkyBox);
+
+       if (region->fakeceil) RenderSecSurface(sub, secregion, region->fakeceil, secregion->eceiling.splane->SkyBox);
+  else if (region->realceil) RenderSecSurface(sub, secregion, region->realceil, secregion->eceiling.splane->SkyBox);
 
   if (region->next && d > 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
