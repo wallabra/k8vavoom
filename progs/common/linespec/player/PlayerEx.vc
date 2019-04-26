@@ -68,7 +68,8 @@ TVec LocalQuakeHappening; // for each axis
 
 TVec MoveDir;
 
-float LastSectorDamageTime;
+// for damaging flats
+int LastSectorDamageTic;
 
 float HazardTime;
 float LastHazardTime;
@@ -744,65 +745,70 @@ final void PlayerInSpecialSector (float deltaTime) {
     IronFeet = IronFeet.Inventory;
   }
 
+  //FIXME: implement leaky suits
+  name flatDamageType = '';
+  int flatDamage = 0;
+  int flatDamageTimeout;
+  bool flatDamageExit = false;
+  bool flatDamageHitFloor = false;
+
   if (MO.Sector->special >= SECSPEC_LightFlicker && MO.Sector->special <= 255) {
     switch (MO.Sector->special) {
       case SECSPEC_DamageHellslime:
-        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 10, 'Slime'/*, spawnBlood:true*/);
+        if (!IronFeet) {
+          flatDamageType = 'Slime';
+          flatDamage = 10;
+          flatDamageTimeout = 32;
         }
         break;
       case SECSPEC_DamageSludge:
-        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 4/*, spawnBlood:true*/);
+        if (!IronFeet) {
+          flatDamageType = 'Slime';
+          flatDamage = 4;
+          flatDamageTimeout = 32;
         }
         break;
       case SECSPEC_DamageNukage:
-        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Slime'/*, spawnBlood:true*/);
+        if (!IronFeet) {
+          flatDamageType = 'Slime'; //FIXME
+          flatDamage = 5;
+          flatDamageTimeout = 32;
         }
         break;
       case SECSPEC_LightStrobeFastDamage:
       case SECSPEC_DamageSuperHellslime:
-        if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
-          if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-            LastSectorDamageTime = Level.XLevel.Time;
-            EntityEx(MO).Damage(none, none, 20, 'Slime'/*, spawnBlood:true*/);
-          }
+        //k8: it was `(P_Random() < 5 && P_Random() < 5)`
+        if (!IronFeet || P_Random() < 5) {
+          flatDamageType = 'Slime'; //FIXME
+          flatDamage = 20;
+          flatDamageTimeout = 32;
         }
         break;
       case SECSPEC_DamageSuperHellslimeExit:
         // EXIT SUPER DAMAGE! (for E1M8 finale)
-        Cheats &= ~CF_GODMODE;
-        if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 20/*, spawnBlood:true*/);
-        }
-        if (Health <= 10) Level.ExitLevel(0);
+        flatDamageType = ''; //FIXME
+        flatDamage = 20;
+        flatDamageTimeout = 32;
+        flatDamageExit = true;
         break;
       case SECSPEC_DamageLavaWimpy:
-        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
-          EntityEx(MO).HitFloorType();
-        }
+        flatDamageType = 'Fire';
+        flatDamage = 5;
+        flatDamageTimeout = 16;
+        flatDamageHitFloor = true;
         break;
       case SECSPEC_DamageLavaHefty:
-        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 8, 'Fire'/*, spawnBlood:true*/);
-          EntityEx(MO).HitFloorType();
-        }
+        flatDamageType = 'Fire';
+        flatDamage = 8;
+        flatDamageTimeout = 16;
+        flatDamageHitFloor = true;
         break;
       case SECSPEC_ScrollEastLavaDamage:
         ThrustPlayer(0.0, 1024.0, deltaTime);
-        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
-          EntityEx(MO).HitFloorType();
-        }
+        flatDamageType = 'Fire';
+        flatDamage = 5;
+        flatDamageTimeout = 16;
+        flatDamageHitFloor = true;
         break;
       case SECSPEC_DamageHazard:
         if (!IronFeet) HazardTime += 2.0*deltaTime;
@@ -818,47 +824,66 @@ final void PlayerInSpecialSector (float deltaTime) {
     // extended sector damage type
     switch (MO.Sector->special&SECSPEC_DAMAGE_MASK) {
       case 0x0100:
-        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
+        if (!IronFeet) {
+          flatDamageType = 'Fire';
+          flatDamage = 5;
+          flatDamageTimeout = 32;
         }
         break;
       case 0x0200:
-        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 10, 'Slime'/*, spawnBlood:true*/);
+        if (!IronFeet) {
+          flatDamageType = 'Slime';
+          flatDamage = 10;
+          flatDamageTimeout = 32;
         }
         break;
       case 0x0300:
         if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
-          if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-            LastSectorDamageTime = Level.XLevel.Time;
-            EntityEx(MO).Damage(none, none, 20, 'Slime'/*, spawnBlood:true*/);
-          }
+          flatDamageType = 'Slime';
+          flatDamage = 20;
+          flatDamageTimeout = 32;
         }
         break;
     }
   }
 
-  // apply any customizable damage
-  if (MO.Sector->Damage) {
-    if (MO.Sector->Damage < 20) {
-      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
+  bool updateDamageTic = false;
+
+  // apply flat damage
+  if (flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
+    if (!(Level.XLevel.TicTime%flatDamageTimeout)) {
+      auto oldCheats = Cheats;
+      scope(exit) Cheats = oldCheats;
+      updateDamageTic = true;
+      if (flatDamageExit) Cheats &= ~CF_GODMODE;
+      if (flatDamageType) {
+        EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
+      } else {
+        EntityEx(MO).Damage(none, none, flatDamage);
       }
-    } else if (MO.Sector->Damage < 50) {
-      if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
-        if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-          LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
-        }
-      }
-    } else if (Level.XLevel.Time-LastSectorDamageTime >= 1.0/35.0) {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
+      if (flatDamageHitFloor) EntityEx(MO).HitFloorType();
+      if (flatDamageExit && Health <= 10) Level.ExitLevel(0);
     }
   }
+
+  // apply any customizable damage
+  if (MO.Sector->Damage && LastSectorDamageTic < Level.XLevel.TicTime) {
+    flatDamage = MO.Sector->Damage;
+    flatDamageTimeout = 0;
+    if (MO.Sector->Damage < 20) {
+      if (!IronFeet) flatDamageTimeout = 32;
+    } else if (MO.Sector->Damage < 50) {
+      if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) flatDamageTimeout = 32;
+    } else {
+      flatDamageTimeout = 1;
+    }
+    if (flatDamageTimeout && !(Level.XLevel.TicTime%flatDamageTimeout)) {
+      updateDamageTic = true;
+      EntityEx(MO).Damage(none, none, flatDamage);
+    }
+  }
+
+  if (updateDamageTic) LastSectorDamageTic = Level.XLevel.TicTime;
 
   switch (MO.Sector->special&SECSPEC_BASE_MASK) {
     case SECSPEC_ScrollCurrent:
@@ -957,8 +982,8 @@ final void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
     }
   }
 
-  if (floorType->DamageAmount && Level.XLevel.Time-LastSectorDamageTime >= float(floorType->DamageTimeMask+1)/35.0) {
-    LastSectorDamageTime = Level.XLevel.Time;
+  if (floorType->DamageAmount && Level.XLevel.TicTime-LastSectorDamageTic >= floorType->DamageTimeMask+1) {
+    LastSectorDamageTic = Level.XLevel.TicTime;
     EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
     MO.PlaySound('world/lavasizzle', CHAN_BODY);
   }
@@ -980,40 +1005,62 @@ final void PlayerInContents (float deltaTime) {
     IronFeet = IronFeet.Inventory;
   }
 
+  name flatDamageType = '';
+  int flatDamage = 0;
+  int flatDamageTimeout;
+
   switch (MO.WaterType) {
     case CONTENTS_LAVA:
-      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
+      if (!IronFeet) {
+        flatDamageType = 'Fire';
+        flatDamage = 10;
+        flatDamageTimeout = 32;
       }
       break;
     case CONTENTS_NUKAGE:
-      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5/*, spawnBlood:true*/);
+      if (!IronFeet) {
+        flatDamageType = 'Slime'; //FIXME
+        flatDamage = 5;
+        flatDamageTimeout = 32;
       }
       break;
     case CONTENTS_SLIME:
-      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10/*, spawnBlood:true*/);
+      if (!IronFeet) {
+        flatDamageType = 'Slime';
+        flatDamage = 10;
+        flatDamageTimeout = 32;
       }
       break;
     case CONTENTS_HELLSLIME:
-      if ((!IronFeet || (P_Random() < 5)) && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 20/*, spawnBlood:true*/);
+      if (!IronFeet || P_Random() < 5) {
+        flatDamageType = 'Slime';
+        flatDamage = 20;
+        flatDamageTimeout = 32;
       }
       break;
     case CONTENTS_SLUDGE:
-      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 4/*, spawnBlood:true*/);
+      if (!IronFeet) {
+        flatDamageType = 'Slime'; //FIXME
+        flatDamage = 4;
+        flatDamageTimeout = 32;
       }
       break;
     case CONTENTS_HAZARD:
       if (!IronFeet) HazardTime += 2.0*deltaTime;
       break;
+  }
+
+
+  // apply flat damage
+  if (flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
+    if (!(Level.XLevel.TicTime%flatDamageTimeout)) {
+      if (flatDamageType) {
+        EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
+      } else {
+        EntityEx(MO).Damage(none, none, flatDamage);
+      }
+      LastSectorDamageTic = Level.XLevel.TicTime;
+    }
   }
 }
 
@@ -2412,7 +2459,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   MorphTime = 0.0;
   ExtraLight = 0;
   FixedColourmap = 0;
-  LastSectorDamageTime = 0.0;
+  LastSectorDamageTic = 0;
   LastHazardTime = 0.0;
   Rain1 = none;
   Rain2 = none;
