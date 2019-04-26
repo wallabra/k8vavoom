@@ -529,7 +529,7 @@ void Host_Frame () {
     if (incFrame) {
       ++host_framecount;
     } else {
-      GCon->Log("Frame delayed due to lengthy operation (this is perfectly ok)");
+      if (developer) GCon->Log(NAME_Dev, "Frame delayed due to lengthy operation (this is perfectly ok)");
     }
   } catch (RecoverableError &e) {
     GCon->Logf("Host_Error: %s", e.message);
