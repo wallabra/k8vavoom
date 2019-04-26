@@ -1590,7 +1590,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   else if (twdt >= 64 || thgt >= 64) dcmaxcount = 16;
   else if (twdt >= 32 || thgt >= 32) dcmaxcount = 32;
   //HACK!
-  if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = 4;
+  if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = 16;
 
   sector_t *fsec, *bsec;
   if (side == 0) {
