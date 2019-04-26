@@ -645,11 +645,11 @@ private:
 
   int SetBodyQueueTrans (int, int);
 
-  void AddDecal (TVec org, const VName &dectype, line_t *li, int level);
-  void AddDecalById (TVec org, int id, line_t *li, int level);
+  void AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level);
+  void AddDecalById (TVec org, int id, int side, line_t *li, int level);
   // called by `AddDecal()`
-  void AddOneDecal (int level, TVec org, VDecalDef *dec, line_t *li);
-  void PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, line_t *li, vuint32 flips);
+  void AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t *li);
+  void PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, int side, line_t *li, vuint32 flips);
 
   void AddAnimatedDecal (decal_t *dc);
   void RemoveAnimatedDecal (decal_t *dc); // this will also kill animator

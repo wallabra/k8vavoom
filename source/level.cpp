@@ -32,7 +32,7 @@
 #include "render/r_local.h" // for decals
 
 //#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-#define VAVOOM_DECALS_DEBUG
+//#define VAVOOM_DECALS_DEBUG
 
 extern VCvarB r_decals_enabled;
 
@@ -1545,8 +1545,13 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
 
   const float itx0 = cur->xdist-txofs;
   const float itx1 = itx0+twdt;
-  const float ity0 = cur->curz-tyofs-thgt;
-  const float ity1 = ity0+thgt;
+  const float ity1 = cur->orgz+cur->scaleY+tyofs;
+  const float ity0 = ity1-thgt;
+
+  /*
+  GCon->Logf("  my=(%g,%g)-(%g,%g)", myx0, myy0, myx1, myy1);
+  GCon->Logf("  it=(%g,%g)-(%g,%g)", itx0, ity0, itx1, ity1);
+  */
 
   return !(itx1 <= myx0 || ity1 <= myy0 || itx0 >= myx1 || ity0 >= myy1);
 }
@@ -1557,7 +1562,7 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
 //  VLevel::PutDecalAtLine
 //
 //==========================================================================
-void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, line_t *li, vuint32 flips) {
+void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, int side, line_t *li, vuint32 flips) {
   // don't process linedef twice
   if (li->decalMark == decanimuid) return;
   li->decalMark = decanimuid;
@@ -1575,15 +1580,22 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   const float dcx0 = lineofs-txofs;
   const float dcx1 = dcx0+twdt;
-  const float dcy0 = orgz-tyofs-thgt;
-  const float dcy1 = dcy0+thgt;
+  const float dcy1 = orgz+dec->scaleY+tyofs;
+  const float dcy0 = dcy1-thgt;
 
   const TVec &v1 = *li->v1;
   const TVec &v2 = *li->v2;
   const float linelen = (v2-v1).length2D();
 
+  int dcmaxcount = r_decal_onetype_max;
+       if (twdt >= 128 || thgt >= 128) dcmaxcount = 8;
+  else if (twdt >= 64 || thgt >= 64) dcmaxcount = 16;
+  else if (twdt >= 32 || thgt >= 32) dcmaxcount = 32;
+  //HACK!
+  if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = 4;
+
 #ifdef VAVOOM_DECALS_DEBUG
-  GCon->Logf("Decal '%s' at line #%d: linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tw=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), linelen, dcx0, dcx1, lineofs, txofs, twdt);
+  GCon->Logf("Decal '%s' at line #%d: linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
 #endif
 
   // check if decal is in line bounds
@@ -1610,11 +1622,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       bool slideWithFloor = false;
       bool slideWithCeiling = false;
-
-      int dcmaxcount = r_decal_onetype_max;
-           if (twdt >= 128 || thgt >= 128) dcmaxcount = 8;
-      else if (twdt >= 64 || thgt >= 64) dcmaxcount = 16;
-      else if (twdt >= 32 || thgt >= 32) dcmaxcount = 32;
 
       if (sb->MidTexture <= 0 || GTextureManager(sb->MidTexture)->Type == TEXTYPE_Null) {
         // no midtex, check if we have top/bottom textures
@@ -1689,15 +1696,19 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         decal_t *cur = seg->decals;
         while (cur) {
           // also, check if this decal is touching our one
-          if (cur->dectype == dec->name && isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) {
-            if (!first) first = cur;
-            ++count;
+          if (cur->dectype == dec->name) {
+            //GCon->Logf("seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);
+            if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) {
+              //GCon->Log("  overlap!");
+              if (!first) first = cur;
+              ++count;
+            }
           }
           if (!first) prev = cur;
           cur = cur->next;
         }
         if (count >= dcmaxcount) {
-          //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
+          //GCon->Logf("removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);
           // do removal
           decal_t *currd = first;
           if (prev) {
@@ -1732,10 +1743,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       } else {
         seg->decals = decal;
       }
-      //printf("seg: ofs=%f; end=%f; d0=%f; d1=%f\n", (float)seg->offset, (float)(seg->offset+seg->length), segd0, segd1);
       decal->seg = seg;
       decal->dectype = dec->name;
-      //decal->picname = dec->pic;
       decal->texture = tex;
       decal->orgz = decal->curz = orgz;
       decal->xdist = lineofs;
@@ -1758,6 +1767,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         decal->flags |= decal_t::SlideCeil;
         decal->curz -= seg->frontsector->ceiling.TexZ;
       }
+
+      if (side != seg->side) decal->flags ^= decal_t::FlipX;
     }
   }
 
@@ -1774,12 +1785,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v1 at nv2");
 #endif
-        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dcx0+txofs, dec, nline, flips);
+        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dcx0+txofs, dec, side, nline, flips);
       } else if (li->v1 == nline->v1) {
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v1 at nv1");
 #endif
-        PutDecalAtLine(tex, orgz, -(twdt+dcx0)+txofs, dec, nline, flips);
+        //PutDecalAtLine(tex, orgz, -(twdt+dcx0)+txofs, dec, 1-side, nline, flips);
       }
     }
   }
@@ -1796,12 +1807,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v2 at nv1");
 #endif
-        PutDecalAtLine(tex, orgz, dcx0-linelen+txofs, dec, nline, flips);
+        PutDecalAtLine(tex, orgz, dcx0-linelen+txofs, dec, side, nline, flips);
       } else if (li->v2 == nline->v2) {
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Log("  v2 at nv2");
 #endif
-        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+twdt-(dcx0-linelen)+txofs, dec, nline, flips);
+        //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+twdt-(dcx0-linelen)+txofs, dec, 1-side, nline, flips);
       }
     }
   }
@@ -1813,7 +1824,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 // VLevel::AddOneDecal
 //
 //==========================================================================
-void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, line_t *li) {
+void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t *li) {
   if (!dec || !li) return;
 
   if (level > 16) {
@@ -1823,7 +1834,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, line_t *li) {
 
   if (dec->lowername != NAME_None) {
     //GCon->Logf("adding lower decal '%s' for decal '%s' (level %d)", *dec->lowername, *dec->name, level);
-    AddDecal(org, dec->lowername, li, level+1);
+    AddDecal(org, dec->lowername, side, li, level+1);
   }
 
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
@@ -1893,7 +1904,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, line_t *li) {
   GCon->Logf("linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
 #endif
 
-  PutDecalAtLine(tex, org.z, lineofs, dec, li, flips);
+  PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips);
 }
 
 
@@ -1902,28 +1913,24 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, line_t *li) {
 // VLevel::AddDecal
 //
 //==========================================================================
-void VLevel::AddDecal (TVec org, const VName &dectype, line_t *li, int level) {
+void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level) {
   if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
   //GCon->Logf("oorg:(%g,%g,%g); org:(%g,%g,%g)", org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
 
-  //TVec oorg = org;
-  //org = P_SectorClosestPoint(sec, org);
   org = li->landAlongNormal(org);
-  //org.z = oorg.z;
-  //GCon->Logf("oorg:(%f,%f,%f); org:(%f,%f,%f)", oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
 
   static TStrSet baddecals;
 
 #ifdef VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-  VDecalDef *dec = VDecalDef::getDecal(VName("Scorch"));
+  VDecalDef *dec = VDecalDef::getDecal(VName("k8TestDecal"));
 #else
   VDecalDef *dec = VDecalDef::getDecal(dectype);
 #endif
   if (dec) {
-    //GCon->Logf("DECAL '%s'; name is '%s', texid is %d", *dectype, *dec->name, dec->texid);
-    AddOneDecal(level, org, dec, li);
+    //GCon->Logf("DECAL '%s'; name is '%s', texid is %d; org=(%g,%g,%g)", *dectype, *dec->name, dec->texid, org.x, org.y, org.z);
+    AddOneDecal(level, org, dec, side, li);
   } else {
     if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
   }
@@ -1935,44 +1942,14 @@ void VLevel::AddDecal (TVec org, const VName &dectype, line_t *li, int level) {
 // VLevel::AddDecalById
 //
 //==========================================================================
-void VLevel::AddDecalById (TVec org, int id, line_t *li, int level) {
+void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
   if (!r_decals_enabled) return;
   if (!li || id < 0) return; // just in case
 
-  /*
-  sector_t *sec = (side ? li->backsector : li->frontsector);
-  if (!sec) return; // just in case
-
-  // ignore slopes
-  if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
-
-  //TVec oorg = org;
-  org = P_SectorClosestPoint(sec, org);
-  //org.z = oorg.z;
-  //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
-
-  int sidenum = (int)(li->backsector == sec);
-  if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
-  */
   org = li->landAlongNormal(org);
 
-  //VDecalDef *dec = VDecalDef::getDecal(dectype);
-  //VDecalDef *dec = VDecalDef::getDecal(VName("K8GoreBloodSplat01"));
-  //VDecalDef *dec = VDecalDef::getDecal(VName("PlasmaScorchLower1"));
-  //VDecalDef *dec = VDecalDef::getDecal(VName("BigScorch"));
   VDecalDef *dec = VDecalDef::getDecalById(id);
-  if (dec) {
-    //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
-    //GCon->Logf("DECAL %d:<%s>: texture=<%s>; org:(%f,%f,%f)", id, *dec->name, *GTextureManager.GetTextureName(dec->texid), org.x, org.y, org.z);
-    /*
-    picinfo_t nfo;
-    GTextureManager.GetTextureInfo(dec->texid, &nfo);
-    GCon->Logf("DECAL %d:<%s>: texture=<%s>,(%dx%d),ofs(%d,%d); org:(%f,%f,%f)", id, *dec->name, *GTextureManager.GetTextureName(dec->texid), nfo.width, nfo.height, nfo.xoffset, nfo.yoffset, org.x, org.y, org.z);
-    */
-    AddOneDecal(level, org, dec, li);
-  } else {
-    //if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
-  }
+  if (dec) AddOneDecal(level, org, dec, side, li);
 }
 
 
@@ -2617,8 +2594,7 @@ IMPLEMENT_FUNCTION(VLevel, AddDecal) {
   P_GET_NAME(dectype);
   P_GET_VEC(org);
   P_GET_SELF;
-  (void)side;
-  Self->AddDecal(org, dectype, li, 0);
+  Self->AddDecal(org, dectype, side, li, 0);
 }
 
 //native final void AddDecalById (TVec org, int id, int side, line_t *li);
@@ -2628,8 +2604,7 @@ IMPLEMENT_FUNCTION(VLevel, AddDecalById) {
   P_GET_INT(id);
   P_GET_VEC(org);
   P_GET_SELF;
-  (void)side;
-  Self->AddDecalById(org, id, li, 0);
+  Self->AddDecalById(org, id, side, li, 0);
 }
 
 

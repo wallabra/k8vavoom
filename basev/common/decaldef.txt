@@ -1435,3 +1435,14 @@ generator ElectricBolt      CrossbowScorch2
 generator AssaultGun      BulletChip
 generator MiniMissile     Scorch
 generator Mauler      RailScorchLower
+
+
+
+decal k8TestDecal {
+  pic K8TESTDC
+  shade "ff 7f 00"
+  x-scale 1.0
+  y-scale 1.0
+  fullbright
+  //randomflipy
+}
