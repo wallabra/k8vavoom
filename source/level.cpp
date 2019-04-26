@@ -1654,23 +1654,17 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             if (fsec->ceiling.minz == bsec->ceiling.minz &&
                 fsec->ceiling.maxz == bsec->ceiling.maxz)
             {
-#ifdef VAVOOM_DECALS_DEBUG
-              GCon->Log("  fuck000");
-#endif
               allowTopTex = false;
             } else if (fsec->ceiling.minz <= bsec->ceiling.minz) {
-#ifdef VAVOOM_DECALS_DEBUG
-              GCon->Log("  fuck001");
-#endif
+              // if front ceiling is lower than back ceiling, toptex cannot be visible
               allowTopTex = false;
             } else if (dcy1 <= min2(fceilingZ, bceilingZ)) {
-#ifdef VAVOOM_DECALS_DEBUG
-              GCon->Log("  fuck002");
-#endif
+              // if decal top is lower than lowest ceiling, consider toptex invisible
+              // (i assume that we won't have animators sliding up)
               allowTopTex = false;
             }
           } else {
-            // one-sided
+            // one-sided: see the last coment above
             if (dcy1 <= fceilingZ) allowTopTex = false;
           }
         }
@@ -1683,13 +1677,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             {
               allowBotTex = false;
             } else if (fsec->floor.maxz >= bsec->floor.maxz) {
+              // if front floor is higher than back floor, bottex cannot be visible
               allowBotTex = false;
-            } else if (dcy0 >= max2(ffloorZ, bfloorZ)) {
+            } else if (!dec->animator && dcy0 >= max2(ffloorZ, bfloorZ)) {
+              // if decal bottom is higher than highest floor, consider toptex invisible
+              // (but don't do this for animated decals -- this may be sliding blood)
               allowBotTex = false;
             }
           } else {
-            // one-sided
-            if (dcy0 >= ffloorZ) allowBotTex = false;
+            // one-sided: see the last coment above
+            if (!dec->animator && dcy0 >= ffloorZ) allowBotTex = false;
           }
         }
         if (!allowTopTex && !allowBotTex) continue;
