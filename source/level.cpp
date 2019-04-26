@@ -42,6 +42,7 @@ VLevel *GLevel;
 VLevel *GClLevel;
 
 static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
+static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
 
 static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
 static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
@@ -1592,7 +1593,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   else if (twdt >= 64 || thgt >= 64) dcmaxcount = 16;
   else if (twdt >= 32 || thgt >= 32) dcmaxcount = 32;
   //HACK!
-  if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = 16;
+  if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = r_decal_gore_onetype_max;
 
   sector_t *fsec, *bsec;
   if (side == 0) {
