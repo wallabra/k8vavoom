@@ -1601,6 +1601,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
     bsec = li->frontsector;
   }
 
+  if (!fsec) {
+    side = 1-side;
+    fsec = bsec;
+    if (!bsec) Sys_Error("oops; something went wrong in decal code!");
+  }
+
 #ifdef VAVOOM_DECALS_DEBUG
   GCon->Logf("Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
 #endif
