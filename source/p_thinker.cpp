@@ -385,7 +385,11 @@ IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
 IMPLEMENT_FUNCTION(VThinker, NewParticle) {
   P_GET_VEC(porg);
   P_GET_SELF;
-  RET_PTR(Self->XLevel->RenderData->NewParticle(porg));
+  if (GGameInfo->IsPaused()) {
+    RET_PTR(nullptr);
+  } else {
+    RET_PTR(Self->XLevel->RenderData->NewParticle(porg));
+  }
 }
 
 IMPLEMENT_FUNCTION(VThinker, GetAmbientSound) {

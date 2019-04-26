@@ -1798,9 +1798,8 @@ COMMAND(toggle_automap) {
     return;
   }
 #ifdef CLIENT
-  if (MN_Active() || C_Active() || NUI_IsPaused()) {
-    return;
-  }
+  //if (MN_Active() || C_Active() || NUI_IsPaused()) return;
+  if (GGameInfo->IsPaused()) return;
 #endif
   am_active = !am_active;
 }

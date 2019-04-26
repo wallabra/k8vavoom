@@ -393,9 +393,8 @@ COMMAND(ToggleAlwaysRun) {
   if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
     return;
   }
-  if (MN_Active() || C_Active() || NUI_IsPaused()) {
-    return;
-  }
+  //if (MN_Active() || C_Active() || NUI_IsPaused()) return;
+  if (GGameInfo->IsPaused()) return;
 #endif
   allways_run = !allways_run;
 #ifdef CLIENT
