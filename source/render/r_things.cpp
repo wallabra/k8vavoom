@@ -1002,6 +1002,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
       VEntity *e = (VEntity *)dl->Owner;
       if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
+      if (e != cl->MO) continue;
       if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
       ltxr += (dl->colour>>16)&0xff;
       ltxg += (dl->colour>>8)&0xff;
