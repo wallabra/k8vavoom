@@ -182,9 +182,13 @@ static inline void cstPop () {
 
 
 // `ip` can be null
-static void cstDump (const vuint8 *ip) {
+static void cstDump (const vuint8 *ip, bool toStdErr=false) {
   //ip = func->Statements.Ptr();
-  fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
+  if (toStdErr) {
+    fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
+  } else {
+    GLog.Logf("\n=== VaVoomScript Call Stack (%u) ===", cstUsed);
+  }
   if (cstUsed > 0) {
     // do the best thing we can
     if (!ip && callStack[cstUsed-1].ip) ip = callStack[cstUsed-1].ip;
@@ -192,13 +196,25 @@ static void cstDump (const vuint8 *ip) {
       VMethod *func = callStack[sp-1].func;
       TLocation loc = func->FindPCLocation(sp == cstUsed ? ip : callStack[sp-1].ip);
       if (!loc.isInternal()) {
-        fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
+        if (toStdErr) {
+          fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
+        } else {
+          GLog.Logf("  %03u: %s (%s:%d)", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
+        }
       } else {
-        fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
+        if (toStdErr) {
+          fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
+        } else {
+          GLog.Logf("  %03u: %s", cstUsed-sp, *func->GetFullName());
+        }
       }
     }
   }
-  fprintf(stderr, "=============================\n\n");
+  if (toStdErr) {
+    fprintf(stderr, "=============================\n\n");
+  } else {
+    GLog.Logf("=============================\n");
+  }
 }
 
 
@@ -3099,6 +3115,16 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
 //==========================================================================
 void VObject::VMDumpCallStack () {
   cstDump(nullptr);
+}
+
+
+//==========================================================================
+//
+//  VObject::VMDumpCallStackToStdErr
+//
+//==========================================================================
+void VObject::VMDumpCallStackToStdErr () {
+  cstDump(nullptr, true);
 }
 
 

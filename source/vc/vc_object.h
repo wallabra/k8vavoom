@@ -210,6 +210,7 @@ public:
   static VFuncRes ExecuteFunction (VMethod *);
   static VFuncRes ExecuteFunctionNoArgs (VMethod *); // `self` should be on the stack
   static void VMDumpCallStack ();
+  static void VMDumpCallStackToStdErr ();
   static void DumpProfile ();
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
 
