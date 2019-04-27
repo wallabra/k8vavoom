@@ -354,6 +354,15 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 
   if (Tex->Name == "-") return 0; // "no texture"
 
+  static int devTexDump = -1;
+  if (devTexDump < 0) {
+    if (developer) {
+      devTexDump = (GArgs.CheckParm("-dev-add-texture-dump") ? 1 : 0);
+    } else {
+      devTexDump = 0;
+    }
+  }
+
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
     if (Tex->Name != NAME_None && (*Tex->Name)[0] != 0x7f) {
@@ -376,13 +385,13 @@ int VTextureManager::AddTexture (VTexture *Tex) {
         return repidx;
       }
     }
-    if (developer) GCon->Logf(NAME_Dev, "***NEW TEXTURE #%d: <%s> (%s)", Textures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
+    if (developer && devTexDump) GCon->Logf(NAME_Dev, "***NEW TEXTURE #%d: <%s> (%s)", Textures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
     Textures.Append(Tex);
     Tex->TextureTranslation = Textures.length()-1;
     AddToHash(Textures.length()-1);
     return Textures.length()-1;
   } else {
-    if (developer) GCon->Logf(NAME_Dev, "***MAP-TEXTURE #%d: <%s> (%s)", MapTextures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
+    if (developer && devTexDump) GCon->Logf(NAME_Dev, "***MAP-TEXTURE #%d: <%s> (%s)", MapTextures.length(), *Tex->Name, VTexture::TexTypeToStr(Tex->Type));
     MapTextures.Append(Tex);
     Tex->TextureTranslation = FirstMapTextureIndex+MapTextures.length()-1;
     AddToHash(FirstMapTextureIndex+MapTextures.length()-1);

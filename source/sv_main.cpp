@@ -200,7 +200,10 @@ void SV_Init () {
   ServerNetContext = new VServerNetContext();
 
   VClass *PlayerClass = VClass::FindClass("Player");
-  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer *)VObject::StaticSpawnWithReplace(PlayerClass);
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    GPlayersBase[i] = (VBasePlayer *)VObject::StaticSpawnWithReplace(PlayerClass);
+    if (developer) GCon->Logf(NAME_Dev, "spawned base player object for player #%d, with actual class <%s>", i, *GPlayersBase[i]->GetClass()->GetFullName());
+  }
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;
