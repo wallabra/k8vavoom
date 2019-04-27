@@ -63,6 +63,7 @@ static VCvarB cl_disable_jump("cl_disable_jump", false, "Disable jumping?", CVAR
 static VCvarB cl_disable_mlook("cl_disable_mlook", false, "Disable mouselook?", CVAR_Archive);
 
 extern VCvarI host_max_skip_frames;
+extern VCvarB NoExit;
 
 server_t sv;
 server_static_t svs;
@@ -76,7 +77,7 @@ int sv_load_num_players;
 bool run_open_scripts;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
-vuint8 deathmatch = false; // only if started as net death
+vuint8 deathmatch = 0; // only if started as net death
 int TimerGame = 0;
 VLevelInfo *GLevelInfo;
 int LeavePosition;
@@ -89,10 +90,11 @@ static bool mapteleport_issued = false;
 static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
 
-static VCvarB TimeLimit("TimeLimit", false, "TimeLimit mode?");
-static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
-VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?");
-VCvarI Skill("Skill", "3", "Skill level.");
+static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", CVAR_PreInit);
+VCvarB NoExit("NoExit", "0", "Disable exiting in deathmatch?", CVAR_PreInit);
+static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo|CVAR_PreInit);
+VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", CVAR_PreInit);
+VCvarI Skill("Skill", "3", "Skill level.", CVAR_PreInit);
 static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
@@ -671,6 +673,11 @@ static VName CheckRedirects (VName Map) {
 static void G_DoCompleted () {
   completed = false;
   if (sv.intermission) return;
+
+  if (NoExit && deathmatch && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+    return;
+  }
+
   if (GGameInfo->NetMode < NM_DedicatedServer &&
       (!GGameInfo->Players[0] || !(GGameInfo->Players[0]->PlayerFlags&VBasePlayer::PF_Spawned)))
   {
