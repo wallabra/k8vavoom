@@ -34,7 +34,6 @@ int VEntity::FIndex_Destroyed;
 int VEntity::FIndex_Touch;
 int VEntity::FIndex_BlastedHitLine;
 int VEntity::FIndex_CheckForPushSpecial;
-int VEntity::FIndex_ApplyFriction;
 int VEntity::FIndex_HandleFloorclip;
 int VEntity::FIndex_CrossSpecialLine;
 int VEntity::FIndex_SectorChanged;
@@ -71,7 +70,6 @@ void VEntity::InitFuncIndexes () {
   FIndex_Touch = StaticClass()->GetMethodIndex(NAME_Touch);
   FIndex_BlastedHitLine = StaticClass()->GetMethodIndex(NAME_BlastedHitLine);
   FIndex_CheckForPushSpecial = StaticClass()->GetMethodIndex(NAME_CheckForPushSpecial);
-  FIndex_ApplyFriction = StaticClass()->GetMethodIndex(NAME_ApplyFriction);
   FIndex_HandleFloorclip = StaticClass()->GetMethodIndex(NAME_HandleFloorclip);
   FIndex_CrossSpecialLine = StaticClass()->GetMethodIndex(NAME_CrossSpecialLine);
   FIndex_SectorChanged = StaticClass()->GetMethodIndex(NAME_SectorChanged);

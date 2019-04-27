@@ -163,7 +163,7 @@ bool Physics (float DeltaTime) {
   }
 
   CheckWater();
-  if (!bFloatBob || !bSpecial) UpdateVelocity();
+  if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
 
   // momentum movement
   // Handle X and Y momentums
@@ -1212,7 +1212,7 @@ override void HandleFloorclip () {
 //  ApplyFriction
 //
 //==========================================================================
-override void ApplyFriction () {
+override void ApplyFriction (float DeltaTime) {
   if (bMissile || bSkullFly) return; // no friction for missiles ever
 
   if (Origin.z > FloorZ && !bOnMobj && WaterLevel < 2 && !bFly && !bFallingFriction) {
@@ -1255,8 +1255,8 @@ override void ApplyFriction () {
     Velocity.y = 0.0;
   } else {
     // slow down
-    Velocity.x -= Velocity.x*(GetFriction()*Level.Game.frametime);
-    Velocity.y -= Velocity.y*(GetFriction()*Level.Game.frametime);
+    Velocity.x -= Velocity.x*(GetFriction()* /*Level.Game.frametime*/DeltaTime);
+    Velocity.y -= Velocity.y*(GetFriction()* /*Level.Game.frametime*/DeltaTime);
   }
 }
 

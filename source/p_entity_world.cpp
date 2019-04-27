@@ -32,9 +32,6 @@
 #include "sv_local.h"
 
 
-#define WATER_SINK_FACTOR  (3.0f)
-#define WATER_SINK_SPEED   (0.5f)
-
 /*
 static double FrameTime = 1.0f/35.0f;
 // round a little bit up to prevent "slow motion"
@@ -1646,50 +1643,6 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
 }
 
 
-//==========================================================================
-//
-//  VEntity::UpdateVelocity
-//
-//==========================================================================
-void VEntity::UpdateVelocity () {
-  /*
-  if (Origin.z <= FloorZ && !Velocity.x && !Velocity.y &&
-      !Velocity.z && !bCountKill && !(EntityFlags & EF_IsPlayer))
-  {
-    // no gravity for non-moving things on ground to prevent static objects from sliding on slopes
-    return;
-  }
-  */
-
-  //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(0): vel=(%g,%g,%g); vnz=(%g,%g,%g) (%g)", Velocity.x, Velocity.y, Velocity.z, EFloor->normal.x, EFloor->normal.y, EFloor->normal.z, GetFloorNormalZ());
-
-  // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (Sector && !(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || GetFloorNormalZ() <= 0.7f)) {
-    if (WaterLevel < 2) {
-      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
-    } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {
-      // water gravity
-      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0f*host_frametime;
-      float startvelz = Velocity.z;
-      float sinkspeed = -WATER_SINK_SPEED/(EntityFlags&EF_Corpse ? 3.0f : 1.0f);
-      if (Velocity.z < sinkspeed) {
-        Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
-      } else {
-        Velocity.z = startvelz+(Velocity.z-startvelz)*WATER_SINK_FACTOR;
-      }
-    }
-  }
-
-  // friction
-  if (Velocity.x || Velocity.y/* || Velocity.z*/) {
-    //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(1): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
-    eventApplyFriction();
-    //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(2): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
-  }
-
-  //if (EntityFlags&EF_IsPlayer) GCon->Logf("UpdateVelocity(3): vel=(%g,%g,%g)", Velocity.x, Velocity.y, Velocity.z);
-}
-
 
 //**************************************************************************
 //
@@ -2124,11 +2077,6 @@ IMPLEMENT_FUNCTION(VEntity, BounceWall) {
   P_GET_FLOAT(bouncefactor);
   P_GET_SELF;
   Self->BounceWall(overbounce, bouncefactor);
-}
-
-IMPLEMENT_FUNCTION(VEntity, UpdateVelocity) {
-  P_GET_SELF;
-  Self->UpdateVelocity();
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckOnmobj) {

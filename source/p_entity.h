@@ -281,6 +281,10 @@ class VEntity : public VThinker {
   vuint8 WaterLevel;
   vuint8 WaterType;
 
+  // variables, so it may be customised
+  float WaterSinkFactor;
+  float WaterSinkSpeed;
+
   // for player sounds
   VName SoundClass;
   VName SoundGender;
@@ -306,7 +310,6 @@ public:
   static int FIndex_Touch;
   static int FIndex_BlastedHitLine;
   static int FIndex_CheckForPushSpecial;
-  static int FIndex_ApplyFriction;
   static int FIndex_HandleFloorclip;
   static int FIndex_CrossSpecialLine;
   static int FIndex_SectorChanged;
@@ -374,10 +377,6 @@ public:
   void eventBlastedHitLine () {
     P_PASS_SELF;
     EV_RET_VOID_IDX(FIndex_BlastedHitLine);
-  }
-  void eventApplyFriction () {
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(FIndex_ApplyFriction);
   }
   void eventHandleFloorclip () {
     P_PASS_SELF;
@@ -652,7 +651,7 @@ public:
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float);
   void BounceWall (float, float);
-  void UpdateVelocity ();
+  //void UpdateVelocity (); // moved to VC
   TVec FakeZMovement ();
   VEntity *CheckOnmobj ();
   bool CheckSides (TVec);
@@ -751,7 +750,6 @@ public:
   DECLARE_FUNCTION(TestMobjZ)
   DECLARE_FUNCTION(SlideMove)
   DECLARE_FUNCTION(BounceWall)
-  DECLARE_FUNCTION(UpdateVelocity)
   DECLARE_FUNCTION(CheckOnmobj)
   DECLARE_FUNCTION(LinkToWorld)
   DECLARE_FUNCTION(UnlinkFromWorld)
