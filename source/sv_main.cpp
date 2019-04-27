@@ -674,7 +674,7 @@ static void G_DoCompleted () {
   completed = false;
   if (sv.intermission) return;
 
-  if (NoExit && deathmatch && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+  if (NoExit /*&& deathmatch*/ && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
     return;
   }
 
@@ -1468,7 +1468,7 @@ bool Host_StartTitleMap () {
 //
 //==========================================================================
 COMMAND(MaxPlayers) {
-  if (Args.Num() != 2) {
+  if (Args.Num() < 2 || Args.Num() > 3) {
     GCon->Logf("maxplayers is %d", svs.max_clients);
     return;
   }
@@ -1486,6 +1486,12 @@ COMMAND(MaxPlayers) {
   }
   svs.max_clients = n;
 
+  int dmMode = 2;
+  if (Args.length() > 2) {
+    dmMode = VStr::atoi(*Args[2]);
+    if (dmMode < 0 || dmMode > 2) dmMode = 2;
+  }
+
   if (n == 1) {
 #ifdef CLIENT
     GCmdBuf << "listen 0\n";
@@ -1496,8 +1502,8 @@ COMMAND(MaxPlayers) {
 #ifdef CLIENT
     GCmdBuf << "listen 1\n";
 #endif
-    DeathMatch = 2;
-    NoMonsters = 1;
+    DeathMatch = dmMode;
+    NoMonsters = (dmMode ? 1 : 0);
   }
 }
 
