@@ -180,4 +180,9 @@ public:
   bool Check (EToken tk);
   void Expect (EToken tk);
   void Expect (EToken tk, ECompileError error);
+
+  // check for identifier (it cannot be a keyword)
+  bool Check (const char *id, bool caseSensitive=true);
+  // expect identifier (it cannot be a keyword)
+  void Expect (const char *id, bool caseSensitive=true);
 };

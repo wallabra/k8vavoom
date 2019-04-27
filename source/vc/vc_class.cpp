@@ -102,7 +102,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , States(nullptr)
   , DefaultProperties(nullptr)
   , ParentClassName(NAME_None)
-  , DoesReplacement(false)
+  , DoesReplacement(ReplaceType::Replace_None)
   , GameExpr(nullptr)
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)
@@ -983,6 +983,47 @@ bool VClass::isNonVirtualMethod (VName Name) {
 
 //==========================================================================
 //
+//  VClass::FindBestLatestChild
+//
+//  check inheritance chains, find a child with the longest chain
+//  use `ParentClassName`, because some classes may not be defined yet
+//
+//==========================================================================
+VClass *VClass::FindBestLatestChild (VName ignoreThis) {
+  int bestChainLen = -1;
+  VClass *bestClass = nullptr;
+
+  VMemberBase **mlist = GMembers.ptr();
+  for (int count = GMembers.length(); count--; ++mlist) {
+    VMemberBase *m = *mlist;
+    if (m && m->MemberType == MEMBER_Class) {
+      VClass *c = (VClass *)m;
+      if (c == this) continue;
+      // check inheritance chain
+      int chainLen = 0;
+      while (c) {
+        if (c->Name == ignoreThis) { c = nullptr; break; } // bad chain
+        if (c->Name == Name) break;
+        if (c->ParentClassName == NAME_None) { c = nullptr; break; } // wtf?!
+        ++chainLen;
+        c = StaticFindClass(c->ParentClassName);
+      }
+      if (c) {
+        // found child
+        if (bestChainLen < chainLen) {
+          bestChainLen = chainLen;
+          bestClass = (VClass *)m;
+        }
+      }
+    }
+  }
+
+  return (bestClass ? bestClass : this);
+}
+
+
+//==========================================================================
+//
 //  VClass::Define
 //
 //==========================================================================
@@ -1032,6 +1073,7 @@ bool VClass::Define () {
     // first get actual replacement
     ParentClass = ParentClass->GetReplacement();
     if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+    if (DoesReplacement == ReplaceType::Replace_LatestChild) ParentClass = FindBestLatestChild();
     if (!ParentClass->Defined) {
       bool xdres = ParentClass->Define();
       ParentClass->DefinedAsDependency = true;
@@ -1057,7 +1099,17 @@ bool VClass::Define () {
     }
 #else
     if (DoesReplacement) {
-      ParentClass = ParentClass->GetReplacement();
+      if (DoesReplacement == ReplaceType::Replace_LatestChild) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+        if (developer) GLog.Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace latest child of class `%s` (actual is `%s`)", GetName(), *ParentClassName, ParentClass->GetName());
+#endif
+        ParentClass = ParentClass->FindBestLatestChild(Name);
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+        if (developer) GLog.Logf(NAME_Dev, "VClass::Define:   latest child is `%s`", ParentClass->GetName());
+#endif
+      } else {
+        ParentClass = ParentClass->GetReplacement();
+      }
       if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
       //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
       if (!ParentClass->Defined) {

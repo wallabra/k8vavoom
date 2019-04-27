@@ -1149,6 +1149,41 @@ void VLexer::Expect (EToken tk, ECompileError error) {
 
 //==========================================================================
 //
+//  VLexer::Check
+//
+//  check for identifier (it cannot be a keyword)
+//
+//==========================================================================
+bool VLexer::Check (const char *id, bool caseSensitive) {
+  check(id);
+  check(id[0]);
+  if (Token != TK_Identifier) return false;
+  bool ok = ((caseSensitive ? VStr::Cmp(id, *Name) : VStr::ICmp(id, *Name)) == 0);
+  if (!ok) return false;
+  NextToken();
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLexer::Expect
+//
+//  expect identifier (it cannot be a keyword)
+//
+//==========================================================================
+void VLexer::Expect (const char *id, bool caseSensitive) {
+  check(id);
+  check(id[0]);
+  if (Token != TK_Identifier) ParseError(Location, "expected `%s`, found `%s`", id, TokenNames[Token]);
+  bool ok = ((caseSensitive ? VStr::Cmp(id, *Name) : VStr::ICmp(id, *Name)) == 0);
+  if (!ok) ParseError(Location, "expected `%s`, found `%s`", id, *Name);
+  NextToken();
+}
+
+
+//==========================================================================
+//
 // VLexer::isNStrEqu
 //
 //==========================================================================

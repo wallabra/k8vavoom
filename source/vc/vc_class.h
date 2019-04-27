@@ -223,6 +223,18 @@ public:
     int frameOfsY;
   };
 
+  enum ReplaceType {
+    Replace_None = 0,
+    // decorate-style replace
+    Replace_Normal = 1,
+    // HACK: find the latest child, and replace it.
+    //       this will obviously not work if class has many children,
+    //       but still useful to replace things like `LineSpecialLevelInfo`,
+    //       because each game creates its own subclass of that.
+    //       actually, we will replace subclass with the longest subclassing chain.
+    Replace_LatestChild = 2,
+  };
+
 public:
   // persistent fields
   VClass *ParentClass;
@@ -237,7 +249,7 @@ public:
   // compiler fields
   VName ParentClassName;
   TLocation ParentClassLoc;
-  bool DoesReplacement;
+  ReplaceType DoesReplacement;
   VExpression *GameExpr;
   VExpression *MobjInfoExpr;
   VExpression *ScriptIdExpr;
@@ -367,6 +379,8 @@ public:
   //VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
   VDecorateStateAction *FindDecorateStateAction (VName);
   VName FindDecorateStateFieldTrans (VName dcname);
+
+  VClass *FindBestLatestChild (VName ignoreThis);
 
   // WARNING! method with such name should exist, or return value will be invalid
   //          this is valid only after class was postloaded

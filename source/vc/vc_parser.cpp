@@ -3690,12 +3690,12 @@ void VParser::ParseClass () {
 
   VName ParentClassName = NAME_None;
   TLocation ParentClassLoc;
-  bool doesReplacement = false;
+  VClass::ReplaceType doesReplacement = VClass::ReplaceType::Replace_None;
 
   if (Lex.Check(TK_Colon)) {
     // replaces(Name)?
     if (Lex.Token == TK_Identifier && Lex.Name == "replaces" && Lex.peekTokenType(1) == TK_LParen) {
-      doesReplacement = true;
+      doesReplacement = VClass::ReplaceType::Replace_Normal;
       Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       if (Lex.Token != TK_Identifier) {
@@ -3704,6 +3704,22 @@ void VParser::ParseClass () {
         ParentClassName = Lex.Name;
         ParentClassLoc = Lex.Location;
         Lex.NextToken();
+      }
+      // parse replacement type
+      // class LevelInfoWithWeather : replaces(lastchild of LineSpecialLevelInfo);
+      if (Lex.Check("of", false)) {
+        if (!VStr::strEquCI(*ParentClassName, "lastchild")) {
+          ParseError(ParentClassLoc, "'lastchild' expected");
+        } else {
+          if (Lex.Token != TK_Identifier) {
+            ParseError(Lex.Location, "Parent class name expected");
+          } else {
+            doesReplacement = VClass::ReplaceType::Replace_LatestChild;
+            ParentClassName = Lex.Name;
+            ParentClassLoc = Lex.Location;
+            Lex.NextToken();
+          }
+        }
       }
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
     } else {
