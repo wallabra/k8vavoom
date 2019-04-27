@@ -314,7 +314,10 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     VSt.State = state;
     VSt.StateTime = state->Time; // could be 0
     if (state->Misc1) VSt.SX = state->Misc1;
-    VSt.OfsY = state->Misc2;
+    if (state->Misc2) VSt.OfsY = state->Misc2-32;
+
+    //GCon->Logf("sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);
+
     // call action routine
     if (state->Function) {
       //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s'(%s): position=%d; stnum=%s\n", *state->Function->GetFullName(), *state->Function->Loc.toStringNoCol(), position, (stnum ? *stnum->GetFullName() : "<none>"));
