@@ -1092,7 +1092,7 @@ Actor FindMonsterEnemy () {
       if (!plr.bSpawned /*|| plr.MO.Health <= 0*/ || botmo == plr.MO) continue;
       auto act = Actor(PlayerEx(plr).Attacker);
       if (!act || !act.bMonster || act.bMissile || act.Health <= 0) continue;
-      //if (!Check_LOS(botmo, 120)) continue;
+      if (!Check_LOS(act, 120)) continue;
       if (GetCvarB('bot_developer_messages_attack')) print("  player %d offender is %C", i, act);
       float dist = botmo.DistTo2(act);
       if (plr.bIsBot) {
@@ -1127,8 +1127,10 @@ Actor FindEnemy () {
   if (!enemy && player.Attacker) {
     Actor act = Actor(player.Attacker);
     if (act && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
-      if (GetCvarB('bot_developer_messages_attack')) print("bot is retaliating to %C", act);
-      return act;
+      if (act.bIsPlayer || Check_LOS(act, 120)) {
+        if (GetCvarB('bot_developer_messages_attack')) print("bot is retaliating to %C", act);
+        return act;
+      }
     }
   }
 
