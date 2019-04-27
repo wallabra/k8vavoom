@@ -228,6 +228,10 @@ override void Init () {
 
   CreateCvar('k8SuperBulletCooldown', "0.15", "SuperBullet cooldown time, in seconds.", CVAR_ARCHIVE);
 
+
+  CreateCvar('bot_ignore_humans', "0", "Should bots ignore human players?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+
   ::Init(); // parse cvarinfo and such
 }
 

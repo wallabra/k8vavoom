@@ -42,18 +42,31 @@ const float SIDEWALK    = 192.0;
 const float SIDERUN     = 320.0;
 
 /*const float MAX_TRAVERSE_DIST     (1024*FRACUNIT) //10 meters, used within b_func.c*/
-const float AVOID_DIST        = 512.0;  //Try avoid incoming missiles once they reached this close
-const float SAFE_SELF_MISDIST = 128.0;  //Distance from self to target where it's safe to pull a rocket.
+const float MAX_TRAVERSE_DIST = 307.2; // 3 meters, used within b_func.c -> 1 meter = 102.4 units
+const float AVOID_DIST        = 512.0; // try to avoid incoming missiles once they reached this close
+const float SAFE_SELF_MISDIST = 128.0; // distance from self to target where it's safe to pull a rocket
 /*const float FRIEND_DIST         (128*FRACUNIT)  //To friend.
 const float DARK_DIST         (256*FRACUNIT)  //Distance that bot can see enemies in the dark from.
 const float WHATS_DARK          64        //light value thats classed as dark.
 const float MAX_MONSTER_TARGET_DIST   (1024*FRACUNIT) //Too high can slow down the performance, see P_mobj.c*/
 const float ENEMY_SCAN_FOV = 120.0;
+const float MAXSTEPHEIGHT = 32.0;
+const float MAXJUMPHEIGHT = 56.0;
+const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
+const float MAXDROPHEIGHT = 384.0;
 /*const float MAXMOVEHEIGHT       (32*FRACUNIT) //MAXSTEPMOVE but with jumping counted in.
 const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's due to be icked up in a combat situation.*/
 const float SHOOTFOV = 60.0;
 /*const float MAXROAM           (5*TICRATE)   //When this time is elapsed the bot will roam after something else.*/
 const float MONSTER_SCAN_RADIUS = 2048.0;
+
+const float ITEM_GIVEUP_TIME = 1.5; // if bot cannot get item for this time, ignore it
+const float ITEM_IGNORE_TIME = 10.0; // time bot should ignore item
+const float ITEM_IGNORE_TIME_DEVIATION = 3.0; // random deviation for ignore time
+
+bool lastPathCheckJump = false;
+bool lastPathCheckUse = false;
+
 
 /*
   Class definitions for botinfo, chatinfo, and
@@ -135,9 +148,11 @@ enum {
 
 Player player; // points to reference player
 Actor botmo;
+Actor ITarget;  // immediate target (where to go) (k8: currently unused)
 
 // destinations
 Actor item; // item (roam towards weapon, etc)
+float itemFirstSeenTime; // so bot can give up if it cannot reach item for some time
 bool bItemIsWeapon;
 bool bItemIsPowerup;
 Actor goal; // teamgame goal spot
@@ -173,6 +188,29 @@ float angle; // the wanted angle that the bot tries to get every tic
 // bot options
 bool boptCheckWimpyWeapon = true;
 array!Weapon weaponList;
+
+// bot will ignore item if it cannot obtain it for some time
+dictionary!(Actor, float) itemIgnoreTimeout;
+
+
+
+//==========================================================================
+//
+//  PutItemToIgnoreList
+//
+//  put item into ignore list
+//
+//==========================================================================
+final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
+  if (!item || !item.IsDestroyed()) return;
+  if (!specified_timeoutMult) timeoutMult = 1;
+  float currTime = botmo.XLevel.Time;
+  float timeout = ITEM_IGNORE_TIME+(FRandomFull()-0.5)*(ITEM_IGNORE_TIME_DEVIATION*2);
+  timeout *= timeoutMult;
+  timeout += currTime;
+  if (GetCvarB('bot_developer_messages')) print("bot gives up on %C for %s", item.Class, timeout-currTime);
+  itemIgnoreTimeout.put(item, timeout);
+}
 
 
 //==========================================================================
@@ -407,7 +445,11 @@ void CheckStuff () {
   if (item) {
     if (!item.bSpecial || item.IsDestroyed() || // somebody picked
         !CheckTo(item.Origin)) // can't reach
+    {
+      PutItemToIgnoreList(item, 0.8);
       item = none;
+      itemFirstSeenTime = 0;
+    }
   }
 
   if (missile) {
@@ -452,6 +494,17 @@ void CheckStuff () {
 //
 //==========================================================================
 void Scan () {
+  float currTime = botmo.XLevel.Time;
+
+  // check if bot tried to get current item for too long
+  if (item) {
+    if (currTime-itemFirstSeenTime > ITEM_GIVEUP_TIME) {
+      PutItemToIgnoreList(item);
+      item = none;
+      itemFirstSeenTime = 0;
+    }
+  }
+
   Entity ee;
   foreach botmo.RadiusThings(out ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
     Actor actor = Actor(ee);
@@ -463,6 +516,14 @@ void Scan () {
     if (Check_LOS(actor, 90.0)) {
       // look for special items
       if (!item && actor.bSpecial) {
+        // check if we should ignore this item
+        auto dip = itemIgnoreTimeout.find(actor);
+        if (dip) {
+          if (*dip >= currTime) continue; // ignore it
+          if (GetCvarB('bot_developer_messages')) print("bot wants %C again (%s)", actor.Class, currTime-(*dip));
+          // it is ok to obtain, remove from list
+          itemIgnoreTimeout.del(actor);
+        }
         if (CheckItem(actor)) {
           item = actor;
           bItemIsWeapon = bNewItemIsWeapon;
@@ -522,6 +583,29 @@ bool IsDangerous (sector_t *sec) {
 
 //==========================================================================
 //
+//  DistToPlane
+//
+//==========================================================================
+final float DistToPlane (const ref TPlane plane, const ref TVec point) {
+  return fabs(DotProduct(point, plane.normal));
+}
+
+
+//==========================================================================
+//
+//  PerformLastCheckActions
+//
+//==========================================================================
+void PerformLastCheckActions () {
+  if (lastPathCheckJump) player.Buttons |= BT_JUMP;
+  if (lastPathCheckUse) EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+  lastPathCheckJump = false;
+  lastPathCheckUse = false;
+}
+
+
+//==========================================================================
+//
 //  CheckPath
 //
 //  Checks for obstructions at a certain angle and distance. Returns true if
@@ -540,19 +624,30 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
   float x2 = x1+dist*bottracedir.x;
   float y2 = y1+dist*bottracedir.y;
 
-  EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+  //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
 
-  bool wantJump = false;
+  //bool lastPathCheckJump = false;
+  //bool lastPathCheckUse = false;
 
-  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES/*|PT_EARLYOUT*/) {
+  float distance_passed = 0;
+
+  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+    distance_passed = dist*in->frac;
     if (in->bIsALine) {
       sector_t *back;
       sector_t *front;
       opening_t *open;
-      float diffheight;
+      //float diffheight;
 
       line_t *ld = in->line; // this linedef
       TVec hit_point = botmo.Origin+(bottracerange*in->frac)*bottracedir;
+
+      // [CW]
+      if (distance_passed <= Player::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
+        // [FB] Use lines
+        //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+        lastPathCheckUse = true;
+      }
 
       // line is impassible
       if (!(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) return false;
@@ -578,7 +673,8 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
       // no valid openings
       if (!open) return false;
 
-      diffheight = GetPlanePointZ(ref back->floor, hit_point)-GetPlanePointZ(ref front->floor, hit_point);
+      /+
+      float diffheight = GetPlanePointZ(ref back->floor, hit_point)-GetPlanePointZ(ref front->floor, hit_point);
 
       // no cliff jumping unless we're going after something
       if (-diffheight > 32.0 && !enemy) return false;
@@ -597,14 +693,60 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
           return false;
         } else if (diffheight <= 48.0 && diffheight >= 24.0) {
           //botmo.Player.Buttons |= BT_JUMP;
-          wantJump = true;
+          lastPathCheckJump = true;
+        }
+      }
+      +/
+
+      // [FB] No cliff jumping unless we're going after something
+      if ((open->lowfloor-open->bottom) >= MAXMOVEHEIGHT &&
+          (open->lowfloor-open->bottom) <= MAXDROPHEIGHT &&
+          !(enemy && enemy == ITarget))
+      {
+        return false;
+      }
+
+      // [FB] Determine if it's wise to jump up to a floor
+      float diffheight = open->bottom-open->lowfloor;
+
+      if (diffheight > 0.0) {
+        if (diffheight >= MAXSTEPHEIGHT && diffheight <= MAXJUMPHEIGHT) {
+          if (distance_passed <= 48.0) {
+            //player.Buttons |= BT_JUMP;
+            lastPathCheckJump = true;
+          }
+          continue;
+        } else if (diffheight >= MAXJUMPHEIGHT) {
+          // CHECKME!!
+          /*if (front->SSpecial == ThrustThingZ || front->springpadzone) return true; else*/
+          return false;
         }
       }
     } else {
       Actor th = Actor(in->Thing);
       if (!th) continue;
       if (th == botmo) continue;
-      if (th.bSolid) return false;
+      //if (th.bSolid) return false;
+
+      if (th.bSolid && th != enemy) {
+        // [FB] Jump to avoid something
+        float dheight = th.Origin.z+th.Height-botmo.Origin.z;
+        if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+          //player.Buttons |= BT_JUMP;
+          lastPathCheckJump = true;
+          continue;
+        }
+        return false;
+      }
+
+      // [FB] Jump to reach something
+      float dheight = th.Origin.z+th.Height-botmo.Origin.z;
+      if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+        //player.Buttons |= BT_JUMP;
+        lastPathCheckJump = true;
+        continue;
+      }
+
       /*
       fixed_t diffheight = (th->z + th->Height) - shootthing->z;
       if (diffheight > 0) {
@@ -619,9 +761,25 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
       }
       */
     }
+
+    // [CW] Since this method is for short distances only, we should
+    //      break the procedure after certain distance is reached
+    //if (distance_passed >= MAX_TRAVERSE_DIST) break;
   }
 
-  if (!onlyCheck && wantJump) player.Buttons |= BT_JUMP;
+  if (distance_passed < 1) return false;
+
+  if (!lastPathCheckJump) {
+    auto oldCWT = botmo.bColideWithThings;
+    scope(exit) botmo.bColideWithThings = oldCWT;
+    if (!botmo.CheckPosition(botmo.Origin+bottracedir*distance_passed)) {
+      if (GetCvarB('bot_developer_messages')) print("bot CheckPosition falied at %s (distance=%s)", botmo.Origin+bottracedir*distance_passed, distance_passed);
+      return false;
+    }
+  }
+
+  if (!onlyCheck && lastPathCheckJump) { player.Buttons |= BT_JUMP; lastPathCheckJump = false; }
+  if (!onlyCheck && lastPathCheckUse) { EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail'); lastPathCheckUse = false; }
   return true;
 }
 
@@ -860,12 +1018,15 @@ Actor FindEnemy () {
   Actor target = none;
   float closest_dist = 99999.0;
 
+  bool ignoreHumans = GetCvarB('bot_ignore_humans');
+
   if (player.Level.Game.deathmatch) {
     // search for player enemies in deathmatch
     foreach (auto i; 0..MAXPLAYERS) {
       auto plr = player.Level.Game.Players[i];
       if (!plr) continue;
       if (plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+        if (ignoreHumans && !plr.bIsBot) continue;
         float temp = plr.MO.DistTo(botmo);
         if (temp < closest_dist) {
           if (Check_LOS(Actor(plr.MO), vangle)) {
@@ -886,6 +1047,77 @@ Actor FindEnemy () {
 
 //==========================================================================
 //
+//  RoamRandom
+//
+//  support function for roaming
+//  returns `true` if no further roam actions should be taken
+//
+//==========================================================================
+bool RoamRandom (out TVec dest) {
+  int r = P_Random();
+  float an = GetAngle();
+
+  if (GetCvarB('bot_developer_messages')) print("bot has nothing to do; r=%s; an=%s", r, an);
+
+  for (float dist = 256.0; dist >= 64.0; dist -= 64.0) {
+    if (CheckPath(an, dist)) {
+      posdest_valid = true;
+      posdest.x = botmo.Origin.x+dist*cos(an);
+      posdest.y = botmo.Origin.y+dist*sin(an);
+      posdest.z = botmo.Origin.z;
+      SetAngle(an);
+      break;
+    }
+
+    if (CheckPath(an+45.0, dist)) {
+      posdest_valid = true;
+      posdest.x = botmo.Origin.x+dist*cos(an+45.0);
+      posdest.y = botmo.Origin.y+dist*sin(an+45.0);
+      posdest.z = botmo.Origin.z;
+      SetAngle(an+45.0);
+      break;
+    }
+
+    // left is no good, try right
+    if (CheckPath(an-45.0, dist)) {
+      posdest_valid = true;
+      posdest.x = botmo.Origin.x+dist*cos(an-45.0);
+      posdest.y = botmo.Origin.y+dist*sin(an-45.0);
+      posdest.z = botmo.Origin.z;
+      SetAngle(an-45.0);
+      break;
+    }
+  }
+
+  if (posdest_valid) {
+    dest = posdest;
+    if (GetCvarB('bot_developer_messages')) print("bot roams to %s from %s", dest, botmo.Origin);
+  } else {
+    if (GetCvarB('bot_developer_messages')) print("bot cannot roam where it wants");
+    float wlksign = FORWARDWALK*(P_Random() > 128 ? 1 : -1);
+    an = botmo.Angles.yaw;
+    if (!CheckPath(an, wlksign)) {
+      if (CheckPath(an, -wlksign)) {
+        wlksign = -wlksign;
+      } else {
+        SetAngle(GetAngle()+45.0*FRandomFull());
+        //SetAngle(GetAngle()+45.0/3.0);
+        //player.ViewAngles.yaw = GetAngle();
+        //wlksign = 0;
+      }
+    }
+    forwardmove = wlksign;
+    // unconditionally, just for fun
+    PerformLastCheckActions();
+    return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  Roam
 //
 //  Handle non-attack/dodging movement
@@ -894,74 +1126,60 @@ Actor FindEnemy () {
 void Roam () {
   TVec dest;
 
+  float currTime = botmo.XLevel.Time;
+
   if (lastpos_valid) {
     TVec dir = lastpos-botmo.Origin;
     dir.z = 0.0;
     if (Length2D(dir) <= 32.0) lastpos_valid = false;
   }
 
-  if (item && !CheckTo(item.Origin)) item = none;
+  if (item && !CheckTo(item.Origin)) {
+    // forget for some time
+    PutItemToIgnoreList(item, 1.0/4.0);
+    item = none;
+    itemFirstSeenTime = 0;
+  }
+
+  if (item && currTime-itemFirstSeenTime > ITEM_GIVEUP_TIME) {
+    PutItemToIgnoreList(item, 0.9);
+    item = none;
+    itemFirstSeenTime = 0;
+  }
 
   // order of item response precedence
-       if (goal) dest = goal.Origin;
-  else if (lastpos_valid) dest = lastpos;
-  else if (item) dest = item.Origin;
-  else if (node) dest = node.Origin;
-  else if (posdest_valid) dest = posdest;
-  else {
+  if (goal) {
+    dest = goal.Origin;
+    if (GetCvarB('bot_developer_messages')) print("bot is going to goal at %s from %s", dest, botmo.Origin);
+  } else if (lastpos_valid) {
+    dest = lastpos;
+    if (GetCvarB('bot_developer_messages')) print("bot is going to lastpost at %s from %s", dest, botmo.Origin);
+  } else if (item) {
+    dest = item.Origin;
+    if (GetCvarB('bot_developer_messages')) print("bot is going to item at %s from %s", dest, botmo.Origin);
+  } else if (node) {
+    dest = node.Origin;
+    if (GetCvarB('bot_developer_messages')) print("bot is going to node at %s from %s", dest, botmo.Origin);
+  } else if (posdest_valid) {
+    dest = posdest;
+    if (GetCvarB('bot_developer_messages')) print("bot is going to posdest at %s from %s (dist=%s)", dest, botmo.Origin, (dest-botmo.Origin).length2D);
+    if ((dest-botmo.Origin).length2D <= botmo.Radius/3) {
+      if (GetCvarB('bot_developer_messages')) print("bot is RADIUS-CLOSE go to posdest at %s from %s", dest, botmo.Origin);
+      posdest_valid = false;
+      if (RoamRandom(dest)) return;
+    } else if (!CheckTo(dest)) {
+      if (GetCvarB('bot_developer_messages')) print("bot CANNOT go to posdest at %s from %s", dest, botmo.Origin);
+      posdest_valid = false;
+      if (RoamRandom(dest)) return;
+    }
+  } else {
     // no target, so just run around until we find something
-    int r = P_Random();
-    float an = GetAngle();
-
-    for (float dist = 256.0; dist >= 64.0; dist -= 64.0) {
-      if (CheckPath(an, dist)) {
-        posdest_valid = true;
-        posdest.x = botmo.Origin.x+dist*cos(an);
-        posdest.y = botmo.Origin.y+dist*sin(an);
-        posdest.z = botmo.Origin.z;
-        SetAngle(an);
-        break;
-      }
-
-      if (CheckPath(an+45.0, dist)) {
-        posdest_valid = true;
-        posdest.x = botmo.Origin.x+dist*cos(an+45.0);
-        posdest.y = botmo.Origin.y+dist*sin(an+45.0);
-        posdest.z = botmo.Origin.z;
-        SetAngle(an+45.0);
-        break;
-      }
-
-      // left is no good, try right
-      if (CheckPath(an-45.0, dist)) {
-        posdest_valid = true;
-        posdest.x = botmo.Origin.x+dist*cos(an-45.0);
-        posdest.y = botmo.Origin.y+dist*sin(an-45.0);
-        posdest.z = botmo.Origin.z;
-        SetAngle(an-45.0);
-        break;
-      }
-    }
-
-    if (posdest_valid) {
-      dest = posdest;
-    } else {
-      float wlksign = FORWARDWALK*(P_Random() > 128 ? 1 : -1);
-      an = botmo.Angles.yaw;
-      if (!CheckPath(an, wlksign)) {
-        if (CheckPath(an, -wlksign)) {
-          wlksign = -wlksign;
-        } else {
-          SetAngle(GetAngle()+45.0*FRandomFull());
-          //SetAngle(GetAngle()+45.0/3.0);
-          //player.ViewAngles.yaw = GetAngle();
-          //wlksign = 0;
-        }
-      }
-      forwardmove = wlksign;
-      return;
-    }
+    if (RoamRandom(dest)) return;
   }
+
+  CheckTo(dest); // to setup flags
+  // unconditionally, just for fun
+  PerformLastCheckActions();
 
   forwardmove = FORWARDRUN;
   SetAngle(AngleTo(dest));
@@ -1498,6 +1716,23 @@ void OnBeginPlay () {
 //
 //==========================================================================
 void OnSpawn () {
+  if (GetCvarB('bot_developer_messages')) print("BOT SPAWNED!");
+
+  ITarget = none;
+  Actor item = none;
+  itemFirstSeenTime = 0;
+  bItemIsWeapon = false;
+  bItemIsPowerup = false;
+  goal = none;
+  node = none;
+  prev = none;
+  posdest_valid = false;
+  enemy = none;
+  lastpos_valid = false;
+  missile = none;
+
+  ally = none;
+  itemIgnoreTimeout.reset();
 }
 
 
