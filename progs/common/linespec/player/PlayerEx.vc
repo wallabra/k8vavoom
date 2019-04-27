@@ -2001,7 +2001,8 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
       // missile with it's own obituary
       Msg = inflictor.Obituary;
     } else {
-      Weapon Wpn = PlayerEx(inflictor.Player).ReadyWeapon;
+      PlayerEx pex = (inflictor && inflictor.Player ? PlayerEx(inflictor.Player) : none);
+      Weapon Wpn = (pex ? pex.ReadyWeapon : none);
            if (Wpn && Wpn.Obituary) Msg = Wpn.Obituary; // weapon obituary message
       else if (nameicmp(DmgType, 'BFGSplash') == 0) Msg = "$ob_mpbfg_splash"; // BFG splash damage
       else if (nameicmp(DmgType, 'Railgun') == 0) Msg = "$ob_railgun"; // railgun
