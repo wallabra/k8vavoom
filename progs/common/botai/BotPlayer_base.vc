@@ -36,6 +36,8 @@
 // Main bot class
 class BotPlayerBase : GameObject;
 
+#define BOT_ALLOW_JUMPS
+
 const float FORWARDWALK = 200.0;
 const float FORWARDRUN  = 400.0;
 const float SIDEWALK    = 192.0;
@@ -168,7 +170,7 @@ Actor missile; // a threathing missile that got to be avoided
 Actor ally; // ally to tag along with
 float t_strafe;
 float t_react;
-float t_fire; // tics left until our gun will actually fire again
+float t_fire; // seconds left until our gun will actually fire again
 float t_shootcooldown;
 
 float forwardmove; // for building ucmd
@@ -251,10 +253,10 @@ void BotTick (float deltaTime) {
   Attack();
   Move(deltaTime);
 
-  Pitch();
+  //Pitch();
 
   // only walk if we're on skill 0
-  if (!MainGameInfo(player.Level.Game).botskill) {
+  if (!MainGameInfo(player.Level.Game).botskill || GetCvarB('bot_no_run')) {
     if (forwardmove == FORWARDRUN) forwardmove = FORWARDWALK;
     if (forwardmove == -FORWARDRUN) forwardmove = -FORWARDWALK;
     if (sidemove == SIDERUN) sidemove = SIDEWALK;
@@ -280,6 +282,44 @@ final float AngleTo (TVec dest) {
   TVec dir = dest-botmo.Origin;
   VectorAngles(dir, out ang);
   return ang.yaw;
+}
+
+
+//==========================================================================
+//
+//  PitchTo
+//
+//==========================================================================
+final float PitchTo (TVec dest, optional bool useRealHeight) {
+  TVec org = botmo.Origin;
+  if (useRealHeight) org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
+
+  TAVec ang;
+  TVec dir = dest-org;
+
+  VectorAngles(dir, out ang);
+  return ang.pitch;
+}
+
+
+//==========================================================================
+//
+//  PitchToEntity
+//
+//==========================================================================
+final float PitchToEntity (EntityEx ent, optional bool useRealHeight) {
+  if (!ent) return 0;
+  TVec eorig = ent.Origin;
+  if (useRealHeight) eorig.z += ent.Height*0.95-ent.FloorClip;
+
+  TVec org = botmo.Origin;
+  if (useRealHeight) org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
+
+  TAVec ang;
+  TVec dir = eorig-org;
+
+  VectorAngles(dir, out ang);
+  return ang.pitch;
 }
 
 
@@ -334,7 +374,7 @@ bool CheckSpecialItem (Actor item, out bool res) {
 //
 //==========================================================================
 bool CheckAmmoItem (Ammo ammo, out bool res) {
-  // If we have no more room for the ammo it gives
+  // if we have no more room for the ammo it gives
   Inventory AmmoItem = botmo.FindInventory(ammo.GetParentAmmo());
   if (AmmoItem && AmmoItem.Amount >= AmmoItem.MaxAmount) { res = false; return true; }
 
@@ -394,7 +434,7 @@ bool CheckItem (Actor item) {
 
   if (CheckOtherItem(item, out res)) return res;
 
-  // Guess we're okay
+  // guess we're okay
   return true;
 }
 
@@ -525,9 +565,12 @@ void Scan () {
           itemIgnoreTimeout.del(actor);
         }
         if (CheckItem(actor)) {
+          if (GetCvarB('bot_developer_messages')) print("bot wants %s", actor.Class);
           item = actor;
           bItemIsWeapon = bNewItemIsWeapon;
           bItemIsPowerup = bNewItemIsPowerup;
+        } else {
+          if (GetCvarB('bot_developer_messages')) print("bot ignores %s", actor.Class);
         }
       } else if (!missile && actor.bMissile && botmo.DistTo(actor) < AVOID_DIST) {
         missile = actor;
@@ -597,7 +640,9 @@ final float DistToPlane (const ref TPlane plane, const ref TVec point) {
 //
 //==========================================================================
 void PerformLastCheckActions () {
-  if (lastPathCheckJump) player.Buttons |= BT_JUMP;
+#ifdef BOT_ALLOW_JUMPS
+  if (lastPathCheckJump && !GetCvarB('bot_no_jump')) player.Buttons |= BT_JUMP;
+#endif
   if (lastPathCheckUse) EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
   lastPathCheckJump = false;
   lastPathCheckUse = false;
@@ -612,9 +657,11 @@ void PerformLastCheckActions () {
 //  the path is clear, and false is the path is blocked.
 //
 //==========================================================================
-bool CheckPath (float ang, float dist, optional bool onlyCheck) {
+bool CheckPath (float ang, float dist, optional bool onlyCheck, optional out float maxdist) {
   intercept_t *in;
   TVec bottracedir;
+
+  maxdist = 0;
 
   float bottracerange = dist;
   sincos(ang, out bottracedir.y, bottracedir.x);
@@ -773,13 +820,17 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck) {
     auto oldCWT = botmo.bColideWithThings;
     scope(exit) botmo.bColideWithThings = oldCWT;
     if (!botmo.CheckPosition(botmo.Origin+bottracedir*distance_passed)) {
-      if (GetCvarB('bot_developer_messages')) print("bot CheckPosition falied at %s (distance=%s)", botmo.Origin+bottracedir*distance_passed, distance_passed);
+      //!if (GetCvarB('bot_developer_messages')) print("bot CheckPosition falied at %s (distance=%s)", botmo.Origin+bottracedir*distance_passed, distance_passed);
       return false;
     }
   }
 
-  if (!onlyCheck && lastPathCheckJump) { player.Buttons |= BT_JUMP; lastPathCheckJump = false; }
+#ifdef BOT_ALLOW_JUMPS
+  if (!onlyCheck && lastPathCheckJump && !GetCvarB('bot_no_jump')) { player.Buttons |= BT_JUMP; lastPathCheckJump = false; }
+#endif
   if (!onlyCheck && lastPathCheckUse) { EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail'); lastPathCheckUse = false; }
+
+  maxdist = distance_passed;
   return true;
 }
 
@@ -829,25 +880,64 @@ final bool GoodAngle (Actor to, float vangle) {
 //
 //==========================================================================
 void BotAimProjectile (float dist, bool right, float an) {
+  if (!enemy) return; // just in case
+
   // splash weapons
   //bot->SetAngle(R_PointToAngle2(MO->x, MO->y, enemy->x, enemy->y));
+
+  // [BC] cajun prediction
+  // here goes the prediction.
+  float m = dist/875.0; //FIXME: determine current weapon's missile speed
+  float px = enemy.Origin.x+(enemy.Velocity.x*m*2.0);
+  float py = enemy.Origin.y+(enemy.Velocity.y*m*2.0);
 
   // projectile weapons
   switch (info.intelect) {
     case bsk_verypoor:
     case bsk_poor:
+      if (MainGameInfo(player.Level.Game).botskill > 3 && Random() < 0.01) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      } else {
+        // aim right at the enemy
+        SetAngle(an);
+      }
+      break;
     case bsk_low:
-      // aim right at the enemy
-      SetAngle(an);
+      if (MainGameInfo(player.Level.Game).botskill > 2 && Random() < 0.03) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      } else {
+        // aim right at the enemy
+        SetAngle(an);
+      }
       break;
     case bsk_medium:
+      if (MainGameInfo(player.Level.Game).botskill > 2 && Random() < 0.09) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      } else {
+        if (right) SetAngle(an+Random()*20.0); else SetAngle(an-Random()*20.0);
+      }
+      break;
     case bsk_high:
+      if (MainGameInfo(player.Level.Game).botskill > 1 && Random() < 0.9) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      }
+      else {
+        if (right) SetAngle(an+Random()*20.0); else SetAngle(an-Random()*20.0);
+      }
+      break;
     case bsk_excellent:
+      if (MainGameInfo(player.Level.Game).botskill > 1 && Random() < 0.3) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      } else {
+        if (right) SetAngle(an+Random()*20.0); else SetAngle(an-Random()*20.0);
+      }
+      break;
     case bsk_supreme:
-      if (right)
-        SetAngle(an+Random()*20.0);
-      else
-        SetAngle(an-Random()*20.0);
+      if (MainGameInfo(player.Level.Game).botskill > 0 && Random() < 0.1) {
+        SetAngle(AngleTo(vector(px, py, enemy.Origin.z)));
+      } else {
+        if (right) SetAngle(an+Random()*20.0); else SetAngle(an-Random()*20.0);
+      }
       break;
     default:
       Error("Unknown bot skill level: %d", info.intelect);
@@ -860,33 +950,29 @@ void BotAimProjectile (float dist, bool right, float an) {
 //
 //  BotAimInstant
 //
+//  instant weapons
+//
 //==========================================================================
 void BotAimInstant (float dist, bool right, float an) {
-  // instant weapons
+  // [CW]
+  if (info.accuracy > bsk_verypoor && info.accuracy <= bsk_high && dist <= EntityEx::MELEERANGE*2.0) {
+    SetAngle(an);
+    return;
+  }
+
+  //FIXME: Implement botskill, accuracy, and intelligence
   switch (info.accuracy) {
     case bsk_verypoor:
-      if (right)
-        SetAngle(an+Random()*60.0);
-      else
-        SetAngle(an-Random()*60.0);
+      if (right) SetAngle(an+Random()*60.0); else SetAngle(an-Random()*60.0);
       break;
     case bsk_poor:
-      if (right)
-        SetAngle(an+Random()*45.0);
-      else
-        SetAngle(an-Random()*45.0);
+      if (right) SetAngle(an+Random()*45.0); else SetAngle(an-Random()*45.0);
       break;
     case bsk_low:
-      if (right)
-        SetAngle(an+Random()*30.0);
-      else
-        SetAngle(an-Random()*30.0);
+      if (right) SetAngle(an+Random()*30.0); else SetAngle(an-Random()*30.0);
       break;
     case bsk_medium:
-      if (right)
-        SetAngle(an+Random()*15.0);
-      else
-        SetAngle(an-Random()*15.0);
+      if (right) SetAngle(an+Random()*15.0); else SetAngle(an-Random()*15.0);
       break;
     case bsk_high:
       SetAngle(an);
@@ -898,7 +984,7 @@ void BotAimInstant (float dist, bool right, float an) {
       SetAngle(AngleTo(enemy.Origin+enemy.Velocity*0.1));
       break;
     default:
-      Error("Unknown bot skill level: %d", info.accuracy);
+      Error("BotPlayer::AimInstant::Unknown bot accuracy skill level: %d", info.accuracy);
       return;
   }
 }
@@ -941,20 +1027,8 @@ void BotAim () {
   right = !!(P_Random()&1);
   an = AngleTo(enemy.Origin);
 
-  // [BC] Cajun prediction... maybe use this somewhere
-  /*
-      {
-      //Here goes the prediction.
-      dist = P_AproxDistance(MO->x - enemy->x, MO->y - enemy->y);
-      fixed_t m = (dist/FRACUNIT) / mobjinfo[MT_PLASMA].speed;
-      bot->SetAngle(R_PointToAngle2(MO->x,
-                      MO->y,
-                      enemy->x + FixedMul (enemy->momx, (m*2*FRACUNIT)),
-                      enemy->y + FixedMul (enemy->momy, (m*2*FRACUNIT))));
-      }
-  */
+  //Pitch(); // do it in attack code instead
 
-  //FIXME: implement botskill, accuracy, and intelligence
   if (BotAimSpecial(dist, right, an)) return;
 
   if (player.ReadyWeapon.bBotProjectile) {
@@ -973,10 +1047,12 @@ void BotAim () {
 Actor FindMonsterEnemy () {
   auto oldEnemy = enemy;
   scope(exit) enemy = oldEnemy;
+  // if we have no enemy, but an attacker, switch to attacker
   Actor narrowTarget = none;
-  float bestNarrowDist = 99999.0;
+  float bestNarrowDist = float.max;
   Actor roughTarget = none;
-  float bestRoughDist = 99999.0;
+  float bestRoughDist = float.max;
+
   Entity ee;
   foreach botmo.RadiusThings(ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
     if (ee == botmo) continue; // don't target self
@@ -1000,8 +1076,37 @@ Actor FindMonsterEnemy () {
       }
     }
   }
+
   if (narrowTarget) return narrowTarget;
-  return roughTarget;
+  if (roughTarget) return roughTarget;
+
+  // if no targets, and we are in coop, attack the monster than hurts the player
+  // roughTarget is for fellow bot, narrowTarget is for human player
+  if (!player.Level.Game.deathmatch) {
+    //print("looking for other player's offenders...");
+    bestNarrowDist = float.max;
+    bestRoughDist = float.max;
+    foreach (auto i; 0..MAXPLAYERS) {
+      auto plr = player.Level.Game.Players[i];
+      if (!plr) continue;
+      if (!plr.bSpawned /*|| plr.MO.Health <= 0*/ || botmo == plr.MO) continue;
+      auto act = Actor(PlayerEx(plr).Attacker);
+      if (!act || !act.bMonster || act.bMissile || act.Health <= 0) continue;
+      //if (!Check_LOS(botmo, 120)) continue;
+      if (GetCvarB('bot_developer_messages_attack')) print("  player %d offender is %C", i, act);
+      float dist = botmo.DistTo2(act);
+      if (plr.bIsBot) {
+        if (!roughTarget || dist < bestRoughDist) { roughTarget = act; bestRoughDist = dist; }
+      } else {
+        if (!narrowTarget || dist < bestNarrowDist) { narrowTarget = act; bestNarrowDist = dist; }
+      }
+    }
+
+    //print(" narrow: %C; rough: %C", narrowTarget, roughTarget);
+    return (narrowTarget ? narrowTarget : roughTarget);
+  }
+
+  return none;
 }
 
 
@@ -1017,6 +1122,15 @@ Actor FindEnemy () {
 
   Actor target = none;
   float closest_dist = 99999.0;
+
+  // if we have no enemy, but an attacker, switch to attacker
+  if (!enemy && player.Attacker) {
+    Actor act = Actor(player.Attacker);
+    if (act && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
+      if (GetCvarB('bot_developer_messages_attack')) print("bot is retaliating to %C", act);
+      return act;
+    }
+  }
 
   bool ignoreHumans = GetCvarB('bot_ignore_humans');
 
@@ -1056,11 +1170,12 @@ Actor FindEnemy () {
 bool RoamRandom (out TVec dest) {
   int r = P_Random();
   float an = GetAngle();
+  float maxdistf, maxdistl, maxdistr;
 
   if (GetCvarB('bot_developer_messages')) print("bot has nothing to do; r=%s; an=%s", r, an);
 
-  for (float dist = 256.0; dist >= 64.0; dist -= 64.0) {
-    if (CheckPath(an, dist)) {
+  for (float dist = 1024.0; dist >= 64.0; dist -= 64.0) {
+    if (CheckPath(an, dist, out maxdist:maxdistf)) {
       posdest_valid = true;
       posdest.x = botmo.Origin.x+dist*cos(an);
       posdest.y = botmo.Origin.y+dist*sin(an);
@@ -1069,7 +1184,7 @@ bool RoamRandom (out TVec dest) {
       break;
     }
 
-    if (CheckPath(an+45.0, dist)) {
+    if (CheckPath(an+45.0, dist, out maxdist:maxdistl)) {
       posdest_valid = true;
       posdest.x = botmo.Origin.x+dist*cos(an+45.0);
       posdest.y = botmo.Origin.y+dist*sin(an+45.0);
@@ -1079,12 +1194,35 @@ bool RoamRandom (out TVec dest) {
     }
 
     // left is no good, try right
-    if (CheckPath(an-45.0, dist)) {
+    if (CheckPath(an-45.0, dist, out maxdist:maxdistr)) {
       posdest_valid = true;
       posdest.x = botmo.Origin.x+dist*cos(an-45.0);
       posdest.y = botmo.Origin.y+dist*sin(an-45.0);
       posdest.z = botmo.Origin.z;
       SetAngle(an-45.0);
+      break;
+    }
+
+    // can move at least half the distance?
+    float maxd = fmax(fmax(maxdistl, maxdistr), maxdistf);
+    if (maxd >= dist*0.5) {
+      // forward?
+      if (maxdistf > maxdistl && maxdistf > maxdistr) {
+        dist = maxdistf;
+      } else if (maxdistl > maxdistr) {
+        // left
+        dist = maxdistl;
+        an -= 45;
+      } else {
+        // right
+        dist = maxdistr;
+        an += 45;
+      }
+      posdest_valid = true;
+      posdest.x = botmo.Origin.x+dist*cos(an);
+      posdest.y = botmo.Origin.y+dist*sin(an);
+      posdest.z = botmo.Origin.z;
+      SetAngle(an);
       break;
     }
   }
@@ -1300,8 +1438,6 @@ void Move (float deltaTime) {
 
   // now handle attack movement
   if (enemy) {
-    float an;
-
     bool noforward = false;
     bool noside = false;
     if (!sidemove) sidemove = SIDERUN;
@@ -1328,7 +1464,7 @@ void Move (float deltaTime) {
       }
     }
 
-    an = botmo.Angles.yaw;
+    float an = botmo.Angles.yaw;
     if (sidemove < 0.0) an -= 90.0; else an += 90.0;
 
     if (!CheckPath(an, 48.0)) {
@@ -1342,6 +1478,8 @@ void Move (float deltaTime) {
       forwardmove = -FORWARDRUN;
     }
 
+    // unconditionally, just for fun
+    PerformLastCheckActions();
     return;
   }
 
@@ -1410,7 +1548,6 @@ bool AttackSpecial () {
 //==========================================================================
 //
 //  CanAttackWithCurrentWeapon
-//
 //
 //==========================================================================
 bool CanAttackWithCurrentWeapon (optional bool ignorePending) {
@@ -1514,6 +1651,15 @@ void Attack () {
 
   // don't have an enemy to fight
   if (!enemy || enemy.Health <= 0) return;
+
+  // never attack other players in coop
+  if (enemy.bIsPlayer && !player.Level.Game.deathmatch) {
+    // reset enemy
+    if (GetCvarB('bot_developer_messages_attack')) print("bot: oops, coop enemy is another player!");
+    enemy = none;
+    return;
+  }
+
   if (!CanAttackWithCurrentWeapon(ignorePending:true)) return;
 
   //if (player.ReadyWeapon) print("CANATTACK with %C: %B", player.ReadyWeapon, player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false));
@@ -1524,11 +1670,22 @@ void Attack () {
   // set dodge time
   t_shootcooldown = 0.3+0.5*FRandomFull();
 
+  // set pitch here, so headshot checks will work as expected
+  //FIXME: allies-in-water situation should be moved to separate function
+  Pitch();
+
   if (AttackSpecial()) return;
 
   if (!t_fire) {
+    if (GetCvarB('bot_developer_messages_attack')) print("bot: attacking %s", enemy.Class);
     player.Buttons |= BT_ATTACK;
-    t_fire = 1.0/35.0*2.5;
+    //HACK: for plasmagun, do not release attack button
+    if (player.ReadyWeapon isa PlasmaRifle) {
+      //print("PLASMA!");
+      t_fire = 0;
+    } else {
+      t_fire = 1.0/35.0*2.5;
+    }
   }
 }
 
@@ -1543,10 +1700,15 @@ void Attack () {
 void Turn () {
   float distance = GetAngle()-botmo.Angles.yaw;
 
+       if (distance > 180.0) distance -= 360.0;
+  else if (distance < -180.0) distance += 360.0;
+
+  /*
   if (!enemy) {
     player.ViewAngles.yaw = GetAngle();
     return;
   }
+  */
 
   // [BC] Don't act crazy while trying to aim
   switch (info.accuracy) {
@@ -1568,6 +1730,7 @@ void Turn () {
       distance = fclamp(distance, -37.5, 37.5);
       break;
   }
+
   player.ViewAngles.yaw = AngleMod360(botmo.Angles.yaw+distance);
 }
 
@@ -1578,61 +1741,70 @@ void Turn () {
 //
 //==========================================================================
 void Pitch () {
-  if (enemy) {
-    TVec org = botmo.Origin;
-    org.z += botmo.Height*0.5-botmo.FloorClip;
-    //org.z += player.GetAttackZOfs;
+  bool doHeadshots = GetCvarB('bot_always_headshots');
+  float hsdist = 512; // average
 
-    /*
-    bool doHeadshot = (enemy.Height > 12);
-    if (doHeadshot) {
-      if (!player.Level.Game.deathmatch) {
-        if (P_Random() <= 50) doHeadshot = false;
-        doHeadshot = true;
-      } else {
-        if (P_Random() <= 180) doHeadshot = false;
+  if (!doHeadshots) {
+    switch (info.intelect) {
+      case bsk_verypoor:
+        if (FRandomFull() < 0.2) { doHeadshots = true; hsdist = 256; }
+        break;
+      case bsk_poor:
+        if (FRandomFull() < 0.3) { doHeadshots = true; hsdist = 256; }
+        break;
+      case bsk_low:
+        if (FRandomFull() < 0.4) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
+        break;
+      case bsk_medium:
+        if (FRandomFull() < 0.5) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
+        break;
+      case bsk_high:
+        if (FRandomFull() < 0.6) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+        break;
+      case bsk_excellent:
+        if (FRandomFull() < 0.8) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+        break;
+      case bsk_supreme:
+        if (FRandomFull() < 0.9) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+        break;
+    }
+  }
+
+
+  if (enemy) {
+    if (doHeadshots && botmo.DistTo2(enemy) <= hsdist) {
+      if (GetCvarB('bot_developer_messages_attack')) print("HEADSHOTTING %C", enemy);
+    } else {
+      if (GetCvarB('bot_developer_messages_attack')) print("shooting at %C", enemy);
+      doHeadshots = false;
+    }
+  } else {
+    doHeadshots = false;
+  }
+
+  botmo.Angles.pitch = 0.0;
+
+  // new code
+  // [FB] Set pitch for underwater areas
+  if (player.MO.WaterLevel > 2) {
+    if (enemy) {
+      botmo.Angles.pitch = PitchToEntity(enemy, doHeadshots);
+    } else {
+      // [FB] Follow our buddy if we're tagging along
+      if (ally || (ally && !enemy)) {
+        botmo.Angles.pitch = PitchToEntity(ally);
       }
     }
-    */
-
-    TVec eorig = enemy.Origin;
-    eorig.z += enemy.Height*0.5-enemy.FloorClip;
-    // do headshots?
-    /*
-    if (doHeadshot) {
-      eorig.z += enemy.Height-12;
-    } else {
-      eorig.z += enemy.Height/2;
-    }
-    */
-
-    TVec dir = eorig-org;
-
-    //TAVec ang;
-    //VectorAngles(dir, out ang);
-    float len = Length2D(dir);
-    if (len > 0.1) {
-      float pitch = -atan2(dir.z, len);
-      botmo.Angles.pitch = pitch;
-    }
-
-    /*
-    float dist = Length2D(dir);
-
-    if (dist < 0.01) {
-      // too close, must be above or below
-      botmo.Angles.pitch = 0.0;
-      return;
-    }
-
-    float aimslope = eorig.z/dist;
-    botmo.Angles.pitch = -atan(aimslope);
-    */
-
-    //print("AIM to %C", enemy);
   } else {
-    botmo.Angles.pitch = 0.0;
+    if (enemy) {
+      botmo.Angles.pitch = PitchToEntity(enemy, doHeadshots);
+      //print("bot: enemy at %s, bot at %s, pitch is %s (%s) (%s)", eorig, org, botmo.Angles.pitch, player.ViewAngles.pitch, enemy.Class);
+      //print("     real: enemy at %s, bot at %s (eheight=%s, bheight=%s, efclip=%s, bfclip=%s, zofs=%s)", enemy.Origin, botmo.Origin, enemy.Height, botmo.Height, enemy.FloorClip, botmo.FloorClip, player.GetAttackZOfs);
+    }
   }
+
+  //k8: if we won't do this, it won't work right
+  player.ViewAngles.pitch = botmo.Angles.pitch;
 }
 
 
@@ -1733,6 +1905,9 @@ void OnSpawn () {
 
   ally = none;
   itemIgnoreTimeout.reset();
+
+  // forgot who killed us (sometimes)
+  if (FRandomFull() < 0.7) player.Attacker = none;
 }
 
 
