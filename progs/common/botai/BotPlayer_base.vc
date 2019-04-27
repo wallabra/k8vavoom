@@ -1680,12 +1680,18 @@ void Attack () {
     if (GetCvarB('bot_developer_messages_attack')) print("bot: attacking %s", enemy.Class);
     player.Buttons |= BT_ATTACK;
     //HACK: for plasmagun, do not release attack button
-    if (player.ReadyWeapon isa PlasmaRifle) {
-      //print("PLASMA!");
-      t_fire = 0;
-    } else {
-      t_fire = 1.0/35.0*2.5;
+    if (player.ReadyWeapon) {
+      class!Weapon wpn = class!Weapon(player.ReadyWeapon.Class);
+      while (wpn) {
+        if (nameicmp(GetClassName(wpn), 'PlasmaRifle') == 0) {
+          //print("PLASMA!");
+          t_fire = 0;
+          return;
+        }
+        wpn = class!Weapon(GetClassParent(wpn));
+      }
     }
+    t_fire = 1.0/35.0*2.5;
   }
 }
 
