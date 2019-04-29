@@ -1965,6 +1965,62 @@ final void SetObjectives (int NewObjectives) {
 
 //==========================================================================
 //
+//  StrReplaceSubstitutes
+//
+//  replaces '%g', '%h', '%p', '%o', '%k'
+//
+//==========================================================================
+final string StrReplaceSubstitutes (string str, EntityEx source) {
+  auto ppos = str.strIndexOf("%");
+  if (ppos < 0) return str;
+  // we have something to process...
+  //FIXME: replace with correct gender when we'll implement player genders
+  bool isFemale = (MO ? (string(MO.SoundGender).strIndexOf("female", caseSensitive:false) >= 0) : false);
+  //print("<>::: isFemale=%B (%s : %d)", isFemale, (MO ? MO.SoundGender : '???'), (string(MO.SoundGender).strIndexOf("female", caseSensitive:false)));
+  string res;
+  while (ppos >= 0 && ppos+1 < str.length) {
+    res ~= str[0..ppos];
+    auto nch = str[ppos+1];
+    bool validMod = true;
+    switch (nch) {
+      // double percent, insert one
+      case '%': res ~= "%"; break;
+      case 'o': case 'O': res ~= PlayerName; break;
+      case 'g': res ~= (isFemale ? "she" : "he"); break;
+      case 'h': res ~= (isFemale ? "her" : "him"); break;
+      case 'p': res ~= (isFemale ? "hers" : "his"); break;
+      case 'G': res ~= (isFemale ? "She" : "He"); break;
+      case 'H': res ~= (isFemale ? "Her" : "Him"); break;
+      case 'P': res ~= (isFemale ? "Hers" : "His"); break;
+      case 'k': case 'K':
+        if (source && source.bIsPlayer && source.Player) {
+          res ~= source.Player.PlayerName;
+        } else if (Actor(source) && Actor(source).StrifeName) {
+          res ~= Actor(source).StrifeName;
+        } else if (source) {
+          res ~= string(GetClassName(source.Class));
+        } else {
+          res ~= "unknown";
+        }
+        break;
+      default:
+        validMod = false;
+    }
+    if (validMod) {
+      str = str[ppos+2..$];
+    } else {
+      res ~= "%";
+      str = str[ppos+1..$];
+    }
+    ppos = str.strIndexOf("%");
+  }
+  if (str) res ~= str;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  DisplayObituary
 //
 //==========================================================================
@@ -1993,7 +2049,7 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
   if (!Msg && source && source.bIsPlayer) {
     if (Level.Game.netgame && !Level.Game.deathmatch) {
       // killed another player in cooperative net game
-      Msg = va("$ob_friendly%d", P_Random()&3);
+      Msg = va("$ob_friendly%d", (P_Random()&3)+1); // it goes from 1 to 4, not from 0 to 3
     } else if (nameicmp(DmgType, 'Telefrag') == 0) {
       // telefrag
       Msg = "$ob_mptelefrag";
@@ -2014,15 +2070,18 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
 
   if (!Msg) Msg = "$ob_default"; // generic death
 
-  // look up string in language lump is necesary
+  // look up string in language lump if necesary
   if (StrStartsWith(Msg, "$")) Msg = GetLangString(name(Msg[1..$]));
 
   // do replacements
+  /*
   Msg = StrReplace(Msg, "%g", "he");
   Msg = StrReplace(Msg, "%h", "him");
   Msg = StrReplace(Msg, "%p", "his");
   Msg = StrReplace(Msg, "%o", PlayerName);
   Msg = StrReplace(Msg, "%k", source.Player.PlayerName);
+  */
+  Msg = StrReplaceSubstitutes(Msg, source);
 
   Level.bprint("%s", Msg);
 }
@@ -2622,6 +2681,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
   print("spawned player with class <%C>...", PP);
+  if (GetCvarS('player_default_gender')) PP.SoundGender = name(GetCvarS('player_default_gender'));
   if (mthing) PP.Origin.z += mthing->height;
   PP.LinkToWorld(properFloorCheck:true);
   PP.FriendPlayer = GetPlayerNum()+1; // players are their own friends
@@ -3855,6 +3915,7 @@ final bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
     MorphTime = 2.0;
     return false;
   }
+  if (GetCvarS('player_default_gender')) A.SoundGender = name(GetCvarS('player_default_gender'));
 
   MO.LinkToWorld(properFloorCheck:true);
   // set colour translation

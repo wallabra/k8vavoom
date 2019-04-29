@@ -675,7 +675,12 @@ bitenum {
   CVAR_CHEAT, // can not be changed if cheats are disabled
   CVAR_MODIFIED, // set each time the cvar is changed
   CVAR_FROMMOD, // came from cvarinfo
-};
+}
+
+enum {
+  CVAR_PREINIT = 0x4000, // CLI change for this cvar should be processed before initializing main game
+  CVAR_AlwaysArchive = 0x8000, // always write to config
+}
 
 native static final bool CvarExists (name Name); // is cvar exists?
 native static final int CvarGetFlags (name Name); // -1: no such var

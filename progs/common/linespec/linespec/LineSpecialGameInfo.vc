@@ -114,6 +114,8 @@ WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
 //
 //==========================================================================
 override void Init () {
+  CreateCvar('player_default_gender', "male", "Default player gender?", CVAR_ARCHIVE|CVAR_PREINIT); // preinit, so we can change it from command line
+
   CreateCvar('gm_death_infighting', "1", "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
 
   CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);

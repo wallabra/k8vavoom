@@ -943,7 +943,7 @@ final mthing_t *GetPlayerStart (int PNum, int Position) {
     if (!Best) Best = &PlayerStarts[i];
   }
 
-  if (!Best) Error("Player %d has no start spots", PNum+1);
+  if (!Best) Error("Player %d has no start spots (GetPlayerStart)", PNum+1);
   print("Player %d has no start spot for position %d", PNum+1, Position);
   return Best;
 }
