@@ -154,12 +154,12 @@ transient bool bFlashlightButtonDown;
 transient float k8NextSuperBulletTime;
 
 transient subsector_t *lastSubSector;
-transient array!int subSeen; // do not bother dropping subsector info for those
+//transient array!int subSeen; // do not bother dropping subsector info for those
 
 
 final void ClearSubSeenInfo () {
   lastSubSector = nullptr;
-  subSeen.reset();
+  //subSeen.reset();
 }
 
 
@@ -167,6 +167,7 @@ final void AddSeenSubsector () {
   if (!MO) return;
   if (!MO.SubSector) return;
   if (lastSubSector == MO.SubSector) return;
+  /*
   int ssnum = MO.SubSector-&MO.XLevel.Subsectors[0];
   if (subSeen.length != MO.XLevel.Subsectors.length) {
     subSeen.length = MO.XLevel.Subsectors.length;
@@ -174,6 +175,7 @@ final void AddSeenSubsector () {
   }
   if (subSeen[ssnum]) return;
   subSeen[ssnum] = 1;
+  */
   lastSubSector = MO.SubSector;
   foreach (auto i; 0..MAXPLAYERS) {
     PlayerEx plr = PlayerEx(Level.Game.Players[i]);

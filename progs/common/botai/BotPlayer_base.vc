@@ -45,6 +45,7 @@ array!Transition ssreachable;
 // used in pathfinder
 int validCount;
 int cameFrom;
+int unreachablePartners;
 //int goToNext;
 
 
@@ -341,8 +342,13 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
   if (!botmo) return;
   if (botmo.Health < 1 || botmo.Height < 8) return;
 
+  bool oldNode = false;
+
   int ssnum = ss-&botmo.XLevel.Subsectors[0];
-  if (ssnodes[ssnum]) return;
+  if (ssnodes[ssnum]) {
+    if (!ssnodes[ssnum].unreachablePartners) return;
+    oldNode = true;
+  }
   if (GetCvarB('bot_developer_messages_path')) print("want to drop a new node in subsector #%d", ssnum);
 
   // get subsector center
@@ -365,50 +371,65 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
     cpos = botmo.Origin;
   }
 
-  BotPathNode node = BotPathNode(botmo.Spawn(BotPathNode, cpos));
+  BotPathNode node = (oldNode ? ssnodes[ssnum] : BotPathNode(botmo.Spawn(BotPathNode, cpos)));
   if (!node) return; // something is very wrong here
   node.ssnum = ssnum;
+
+  int sscount = 0;
+  int ssreach = 0;
 
   // check reachable subsectors
   foreach (auto lidx; ss.firstline..ss.firstline+ss.numlines) {
     seg_t *seg = &botmo.XLevel.Segs[lidx];
     if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue;
     int psnum = seg.partner.front_sub-&botmo.XLevel.Subsectors[0];
-    if (ssnodes[psnum]) {
+    ++sscount;
+    BotPathNode otherNode = ssnodes[psnum];
+    if (otherNode) {
       EntityEx::PathInfo pi;
       TAVec ang;
-      TVec dir = ssnodes[psnum].Origin-node.Origin;
+      TVec dir = otherNode.Origin-node.Origin;
       float dist = dir.length2D;
-      VectorAngles(dir, out ang);
-      if (botmo.TracePath(ang.yaw, dist, out pi, allowJump:true, srcOrigin:node.Origin)) {
-        if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", psnum, ssnum);
-        auto tr = node.ssreachable.alloc();
-        tr.subnum = psnum;
-        tr.angle = pi.angle;
-        tr.needdist = pi.needdist;
-        tr.maxdist = pi.maxdist;
-        tr.needJump = pi.needJump;
-        tr.needUse = pi.needUse;
-        tr.dirxy = pi.dirxy;
-        tr.success = pi.success;
+      if (!oldNode || !node.CanReachSSByIndex(psnum)) {
+        otherNode.unreachablePartners = 1; // so it will be rechecked; just in case
+        VectorAngles(dir, out ang);
+        if (botmo.TracePath(ang.yaw, dist, out pi, allowJump:true, srcOrigin:node.Origin)) {
+          if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", psnum, ssnum);
+          auto tr = node.ssreachable.alloc();
+          tr.subnum = psnum;
+          tr.angle = pi.angle;
+          tr.needdist = pi.needdist;
+          tr.maxdist = pi.maxdist;
+          tr.needJump = pi.needJump;
+          tr.needUse = pi.needUse;
+          tr.dirxy = pi.dirxy;
+          tr.success = pi.success;
+          ++ssreach;
+        }
+      } else {
+        ++ssreach;
       }
 
-      dir = node.Origin-ssnodes[psnum].Origin;
-      VectorAngles(dir, out ang);
-      if (botmo.TracePath(ang.yaw, dist, allowJump:true, srcOrigin:ssnodes[psnum].Origin)) {
-        if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", ssnum, psnum);
-        auto tr = ssnodes[psnum].ssreachable.alloc();
-        tr.subnum = ssnum;
-        tr.angle = pi.angle;
-        tr.needdist = pi.needdist;
-        tr.maxdist = pi.maxdist;
-        tr.needJump = pi.needJump;
-        tr.needUse = pi.needUse;
-        tr.dirxy = pi.dirxy;
-        tr.success = pi.success;
+      if (!oldNode || !otherNode.CanReachSSByIndex(ssnum)) {
+        otherNode.unreachablePartners = 1; // so it will be rechecked
+        dir = node.Origin-ssnodes[psnum].Origin;
+        VectorAngles(dir, out ang);
+        if (botmo.TracePath(ang.yaw, dist, allowJump:true, srcOrigin:ssnodes[psnum].Origin)) {
+          if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", ssnum, psnum);
+          auto tr = ssnodes[psnum].ssreachable.alloc();
+          tr.subnum = ssnum;
+          tr.angle = pi.angle;
+          tr.needdist = pi.needdist;
+          tr.maxdist = pi.maxdist;
+          tr.needJump = pi.needJump;
+          tr.needUse = pi.needUse;
+          tr.dirxy = pi.dirxy;
+          tr.success = pi.success;
+        }
       }
     }
   }
+  node.unreachablePartners = (ssreach != sscount ? 1 : 0);
 
   ssnodes[ssnum] = node;
 }
