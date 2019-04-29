@@ -935,16 +935,18 @@ final void CopyMThing (mthing_t *from, mthing_t *to) {
 //  GetPlayerStart
 //
 //==========================================================================
-final mthing_t *GetPlayerStart (int PNum, int Position) {
+final mthing_t *GetPlayerStart (int PNum, int Position, optional bool failIfNotFound) {
+  ++PNum;
   mthing_t *Best = nullptr;
   foreach (int i; 0..PlayerStarts.Num; reverse) {
-    if (PlayerStarts[i].type != PNum+1) continue;
+    if (PlayerStarts[i].type != PNum) continue;
     if (PlayerStarts[i].arg1 == Position) return &PlayerStarts[i];
     if (!Best) Best = &PlayerStarts[i];
   }
-
-  if (!Best) Error("Player %d has no start spots (GetPlayerStart)", PNum+1);
-  print("Player %d has no start spot for position %d", PNum+1, Position);
+  if (failIfNotFound) {
+    if (!Best) Error("Player %d has no start spots (GetPlayerStart)", PNum);
+    print("Player %d has no start spot for position %d", PNum, Position);
+  }
   return Best;
 }
 

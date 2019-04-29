@@ -2214,6 +2214,63 @@ override void PutClientIntoServer () {
 
 //==========================================================================
 //
+//  PerformRebornSpawn
+//
+//  returns non-null if no players was spawned
+//
+//==========================================================================
+mthing_t *PerformRebornSpawn () {
+  bool spawned = false;
+  mthing_t *best = nullptr;
+  float bestDist = float.max;
+  mthing_t *bestOther = nullptr;
+  float bestOtherDist = float.max;
+  foreach (auto i; 0..Level.PlayerStarts.length) {
+    auto sp = &Level.PlayerStarts[i];
+    if (sp.type == GetPlayerNum()+1) {
+      if (sp.arg1 == Level.Game.RebornPosition) {
+        // i found her!
+        SpawnPlayer(sp, spawned);
+        spawned = true;
+        continue;
+      }
+      if (spawned) continue;
+      if (CheckSpot(sp, onlyCheck:true)) {
+        float spdist = (MO ? (MO.Origin-vector(sp.x, sp.y)).length2DSquared() : bestDist);
+        if (!best || spdist < bestDist) {
+          best = sp;
+          bestDist = spdist;
+        }
+      }
+    } else if (!spawned) {
+      // not ours, but still remember it
+      if (!best && CheckSpot(sp, onlyCheck:true)) {
+        float spdist = (MO ? (MO.Origin-vector(sp.x, sp.y)).length2DSquared() : bestOtherDist);
+        if (!bestOther || spdist < bestOtherDist) {
+          bestOther = sp;
+          bestOtherDist = spdist;
+        }
+      }
+    }
+  }
+
+  if (spawned) return nullptr;
+
+  if (!best && !bestOther) Error("Player %d has no start spots", GetPlayerNum()+1);
+
+  if (!best) {
+    print("Player %d has no start spot for position %d, using other spot position", GetPlayerNum()+1, Level.Game.RebornPosition);
+    return bestOther;
+  } else {
+    print("Player %d has no start spot for position %d", GetPlayerNum()+1, Level.Game.RebornPosition);
+  }
+
+  return best;
+}
+
+
+//==========================================================================
+//
 //  SpawnClient
 //
 //==========================================================================
@@ -2243,22 +2300,10 @@ override void SpawnClient () {
   } else if (PlayerState == PST_CHEAT_REBORN) {
     SpawnPlayer(nullptr, false);
   } else {
-    mthing_t *Best = nullptr;
-    bool Spawned = false;
-    foreach (auto i; 0..Level.PlayerStarts.length) {
-      if (Level.PlayerStarts[i].type != GetPlayerNum()+1) continue;
-      if (Level.PlayerStarts[i].arg1 == Level.Game.RebornPosition) {
-        SpawnPlayer(&Level.PlayerStarts[i], Spawned);
-        Spawned = true;
-        continue;
-      }
-      if (!Best) Best = &Level.PlayerStarts[i];
-    }
-    if (!Spawned) {
-      if (!Best) Error("Player %d has no start spots", GetPlayerNum()+1);
-      print("Player %d has no start spot for position %d", GetPlayerNum()+1, Level.Game.RebornPosition);
-      SpawnPlayer(Best, false);
-    }
+    mthing_t *best = PerformRebornSpawn();
+    // if returned non-nullptr, it means that no good spawn position was found
+    // spawn player anyway, we don't want to totally ruing a game for them
+    if (best) SpawnPlayer(best, false);
   }
 
   /* ResetPlayerOnSpawn() should take care of this
@@ -2344,16 +2389,20 @@ override void NetGameReborn () {
   } else {
     k8HealthAccum_Amount = 0;
     bool foundSpot = false;
-    if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition))) {
+    auto sp = Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition, failIfNotFound:false);
+    if (sp && CheckSpot(sp)) {
       // appropriate player start spot is open
-      SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+      SpawnPlayer(sp, false);
       foundSpot = true;
     } else {
       // try to spawn at one of the other player start spots
+      // this should not fail hard if player start spot is not found, because
+      // there can be more players allowed that we have spawn spots
       foreach (auto i; 0..MAXPLAYERS) {
-        if (CheckSpot(Level.GetPlayerStart(i, Level.Game.RebornPosition))) {
+        sp = Level.GetPlayerStart(i, Level.Game.RebornPosition, failIfNotFound:false);
+        if (sp && CheckSpot(sp)) {
           // found an open start spot
-          SpawnPlayer(Level.GetPlayerStart(i, Level.Game.RebornPosition), false);
+          SpawnPlayer(sp, false);
           foundSpot = true;
           break;
         }
@@ -2362,7 +2411,9 @@ override void NetGameReborn () {
 
     if (!foundSpot) {
       // player's going to be inside something. too bad.
-      SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+      sp = Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition);
+      CheckSpot(sp); // spawn teleport fog
+      SpawnPlayer(sp, false);
     }
   }
 
@@ -2401,16 +2452,35 @@ override void DisconnectClient () {
 void DeathMatchSpawnPlayer () {
   if (!Level.DeathmatchStarts.length) Error("oops! no deathmatch starts where they should be!");
 
-  foreach (auto j; 0..20) {
-    int i = P_Random()%Level.DeathmatchStarts.length;
-    if (CheckSpot(&Level.DeathmatchStarts[i])) {
-      SpawnPlayer(&Level.DeathmatchStarts[i], false);
+  // shuffle them
+  array!int dms;
+  dms.length = Level.DeathmatchStarts.length;
+  foreach (int didx; 0..dms.length) dms[didx] = didx;
+
+  // the famous Fisher-Yates shuffle
+  foreach (int didx; 0..dms.length-1) {
+    int swapidx = didx+round(FRandomFull()*(dms.length-didx-1));
+    if (swapidx != didx) {
+      int tmp = dms[swapidx];
+      dms[swapidx] = dms[didx];
+      dms[didx] = tmp;
+    }
+  }
+
+  foreach (int i; dms) {
+    auto sp = &Level.DeathmatchStarts[i];
+    if (CheckSpot(sp)) {
+      SpawnPlayer(sp, false);
       return;
     }
   }
 
   // no good spot, so the player will probably get stuck
-  SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), 0), false);
+  {
+    auto sp = Level.GetPlayerStart(GetPlayerNum(), 0);
+    CheckSpot(sp); // spawn teleport fog
+    SpawnPlayer(sp, false);
+  }
 }
 
 
@@ -2422,7 +2492,7 @@ void DeathMatchSpawnPlayer () {
 //  spot because something is occupying it
 //
 //==========================================================================
-bool CheckSpot (mthing_t *mthing) {
+bool CheckSpot (mthing_t *mthing, optional bool onlyCheck) {
   float x;
   float y;
   sector_t *sec;
@@ -2444,23 +2514,25 @@ bool CheckSpot (mthing_t *mthing) {
   x = mthing->x;
   y = mthing->y;
 
-  MO.bPassMobj = false;
-  if (!MO.CheckPosition(vector(x, y, Actor::ONFLOORZ))) {
-    MO.bPassMobj = true;
-    return false;
-  }
-  MO.bPassMobj = true;
-
-  if (!PlayerChunk(MO)) {
-    LineSpecialLevelInfo(Level).AddPlayerCorpse(EntityEx(MO));
+  {
+    auto oldPassMObj = MO.bPassMobj;
+    scope(exit) MO.bPassMobj = oldPassMObj;
+    MO.bPassMobj = false;
+    if (!MO.CheckPosition(vector(x, y, Actor::ONFLOORZ))) return false;
   }
 
-  // spawn a teleport fog
-  sec = Level.XLevel.PointInSector(vector(x, y, 0.0));
-  an = float(45*(mthing->angle/45));
+  if (!onlyCheck) {
+    if (!PlayerChunk(MO)) {
+      LineSpecialLevelInfo(Level).AddPlayerCorpse(EntityEx(MO));
+    }
 
-  Level.Spawn(TeleportFog, vector(x+20.0*cos(an), y+20.0*sin(an),
-    sec->floor.TexZ+LineSpecialGameInfo(Level.Game).TeleFogHeight));
+    // spawn a teleport fog
+    sec = Level.XLevel.PointInSector(vector(x, y, 0.0));
+    an = float(45*(mthing->angle/45));
+
+    Level.Spawn(TeleportFog, vector(x+20.0*cos(an), y+20.0*sin(an),
+      sec->floor.TexZ+LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  }
 
   return true;
 }

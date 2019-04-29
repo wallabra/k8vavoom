@@ -120,18 +120,25 @@ final void TeleportToPlayerStarts(Actor victim)
   float destY;
   float destAngle;
 
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!Level.Game.Players[i])
-      continue;
-    selections++;
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (!Level.Game.Players[i]) continue;
+    ++selections;
   }
-  i = P_Random() % selections;
-  destX = Level.GetPlayerStart(i, 0)->x;
-  destY = Level.GetPlayerStart(i, 0)->y;
-  destAngle = float(45 * (Level.GetPlayerStart(i, 0)->angle / 45));
-  victim.Teleport(vector(destX, destY, ONFLOORZ), destAngle, true, true,
-    false);
+  if (selections == 0) Error("no players in game; wtf?!");
+  //FIXME: this logic is flawed!
+  i = P_Random()%selections;
+  while (selections--) {
+    auto sp = Level.GetPlayerStart(i, 0, failIfNotFound:false);
+    if (sp) {
+      destX = sp->x;
+      destY = sp->y;
+      destAngle = 45.0*sp->angle/45.0;
+      victim.Teleport(vector(destX, destY, ONFLOORZ), destAngle, true, true, false);
+      return;
+    }
+    i = (i+1)%MAXPLAYERS;
+  }
+  Error("no player spawn spots in game; wtf?!");
 }
 
 //==========================================================================
