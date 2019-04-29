@@ -141,10 +141,16 @@ IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
 //
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, Error) {
-  Host_Error("%s", *PF_FormatString());
+  VObject::VMDumpCallStack();
+  if (GArgs.CheckParm("-vc-all-errors-are-fatal")) {
+    Sys_Error("%s", *PF_FormatString());
+  } else {
+    Host_Error("%s", *PF_FormatString());
+  }
 }
 
 IMPLEMENT_FUNCTION(VObject, FatalError) {
+  VObject::VMDumpCallStack();
   Sys_Error("%s", *PF_FormatString());
 }
 
