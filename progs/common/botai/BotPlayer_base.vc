@@ -65,6 +65,7 @@ const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's 
 const float SHOOTFOV = 60.0;
 /*const float MAXROAM           (5*TICRATE)   //When this time is elapsed the bot will roam after something else.*/
 const float MONSTER_SCAN_RADIUS = 2048.0;
+const float ITEM_SCAN_RADIUS = 1024.0;
 
 const float ITEM_GIVEUP_TIME = 1.5; // if bot cannot get item for this time, ignore it
 const float ITEM_IGNORE_TIME = 10.0; // time bot should ignore item
@@ -449,6 +450,13 @@ bool CheckItem (Actor item) {
 //
 //==========================================================================
 void SetEnemy () {
+  // never attack other players in coop
+  if (enemy && enemy.bIsPlayer && !player.Level.Game.deathmatch) {
+    // reset enemy
+    if (GetCvarB('bot_developer_messages_attack')) print("bot '%s': oops, coop enemy is another player!", player.PlayerName);
+    enemy = none;
+  }
+
   if (enemy && enemy.Health > 0 && player.MO && player.MO.CanSee(enemy)) {
     return;
   }
@@ -550,7 +558,7 @@ void Scan () {
   }
 
   Entity ee;
-  foreach botmo.RadiusThings(out ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
+  foreach botmo.RadiusThings(out ee, botmo.Origin, ITEM_SCAN_RADIUS) {
     Actor actor = Actor(ee);
     if (!actor) continue;
     if (!actor.bSpecial && !actor.bMissile) {
@@ -1130,7 +1138,7 @@ Actor FindEnemy () {
   // if we have no enemy, but an attacker, switch to attacker
   if (!enemy && player.Attacker) {
     Actor act = Actor(player.Attacker);
-    if (act && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
+    if (act && act != botmo && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
       if (act.bIsPlayer || Check_LOS(act, 120)) {
         if (GetCvarB('bot_developer_messages_attack')) print("bot '%s' is retaliating to %C", player.PlayerName, act);
         return act;
@@ -1138,10 +1146,9 @@ Actor FindEnemy () {
     }
   }
 
-  bool ignoreHumans = GetCvarB('bot_ignore_humans');
-
   if (player.Level.Game.deathmatch) {
     // search for player enemies in deathmatch
+    bool ignoreHumans = GetCvarB('bot_ignore_humans');
     foreach (auto i; 0..MAXPLAYERS) {
       auto plr = player.Level.Game.Players[i];
       if (!plr) continue;
@@ -1291,6 +1298,8 @@ void Roam () {
     itemFirstSeenTime = 0;
   }
 
+  //bool noRun = false;
+
   // order of item response precedence
   if (goal) {
     dest = goal.Origin;
@@ -1301,6 +1310,7 @@ void Roam () {
   } else if (item) {
     dest = item.Origin;
     if (GetCvarB('bot_developer_messages_roam') || GetCvarB('bot_developer_messages_item')) print("bot '%s' is going to item at %s from %s", player.PlayerName, dest, botmo.Origin);
+    //if (botmo.DistTo2(item) <= botmo.Radius*2) noRun = true;
   } else if (node) {
     dest = node.Origin;
     if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to node at %s from %s", player.PlayerName, dest, botmo.Origin);
@@ -1325,7 +1335,17 @@ void Roam () {
   // unconditionally, just for fun
   PerformLastCheckActions();
 
-  forwardmove = FORWARDRUN;
+  // bots are very bad at navigation, and even worser when running, so help 'em a little
+  float distDest = (dest-botmo.Origin).length2DSquared;
+  if (distDest <= 64*64) {
+    forwardmove = FORWARDWALK/2.0;
+  } else if (distDest <= 128*128) {
+    forwardmove = FORWARDWALK;
+  } else {
+    forwardmove = FORWARDRUN;
+  }
+
+  //forwardmove = (noRun ? FORWARDWALK : FORWARDRUN);
   SetAngle(AngleTo(dest));
 }
 
@@ -1465,6 +1485,7 @@ void Move (float deltaTime) {
     // check if we'd rather pick up something than fight
     if (item) {
       if (CheckWantCurrentItem()) {
+        sidemove = 0;
         Roam();
         return;
       }
@@ -1481,7 +1502,11 @@ void Move (float deltaTime) {
     if (CheckTo(enemy.Origin) && dist > player.ReadyWeapon.BotCombatDist) {
       forwardmove = FORWARDRUN;
     } else {
-      forwardmove = -FORWARDRUN;
+      if (CheckPath(an+180, 64, onlyCheck:true)) {
+        forwardmove = -FORWARDRUN;
+      } else {
+        forwardmove = FORWARDRUN;
+      }
     }
 
     // unconditionally, just for fun
@@ -1668,6 +1693,9 @@ void Attack () {
 
   if (!CanAttackWithCurrentWeapon(ignorePending:true)) return;
 
+  // it we better pickup an item, don't attack
+  if (CheckWantCurrentItem()) return;
+
   //if (player.ReadyWeapon) print("CANATTACK with %C: %B", player.ReadyWeapon, player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false));
 
   // no point in firing if we won't hit them
@@ -1756,32 +1784,35 @@ void Pitch () {
   bool doHeadshots = GetCvarB('bot_always_headshots');
   float hsdist = 512; // average
 
-  if (!doHeadshots) {
-    switch (info.intelect) {
-      case bsk_verypoor:
-        if (FRandomFull() < 0.2) { doHeadshots = true; hsdist = 256; }
-        break;
-      case bsk_poor:
-        if (FRandomFull() < 0.3) { doHeadshots = true; hsdist = 256; }
-        break;
-      case bsk_low:
-        if (FRandomFull() < 0.4) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
-        break;
-      case bsk_medium:
-        if (FRandomFull() < 0.5) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
-        break;
-      case bsk_high:
-        if (FRandomFull() < 0.6) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
-        break;
-      case bsk_excellent:
-        if (FRandomFull() < 0.8) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
-        break;
-      case bsk_supreme:
-        if (FRandomFull() < 0.9) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
-        break;
+  if (!player.ReadyWeapon || player.ReadyWeapon.bBotProjectile || !GetCvarB('k8HSEnabled')) {
+    doHeadshots = false;
+  } else {
+    if (!doHeadshots) {
+      switch (info.intelect) {
+        case bsk_verypoor:
+          if (FRandomFull() < 0.2) { doHeadshots = true; hsdist = 256; }
+          break;
+        case bsk_poor:
+          if (FRandomFull() < 0.3) { doHeadshots = true; hsdist = 256; }
+          break;
+        case bsk_low:
+          if (FRandomFull() < 0.4) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
+          break;
+        case bsk_medium:
+          if (FRandomFull() < 0.5) { doHeadshots = true; hsdist = (P_Random()&1 ? 384 : 256); }
+          break;
+        case bsk_high:
+          if (FRandomFull() < 0.6) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+          break;
+        case bsk_excellent:
+          if (FRandomFull() < 0.8) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+          break;
+        case bsk_supreme:
+          if (FRandomFull() < 0.9) { doHeadshots = true; hsdist = (P_Random()&1 ? 512 : 384); }
+          break;
+      }
     }
   }
-
 
   if (enemy) {
     if (doHeadshots && botmo.DistTo2(enemy) <= hsdist) {
@@ -1893,7 +1924,17 @@ void OnBeginPlay () {
   if (randomBot && default.BotNames.length) {
     //print("OLD USERINFO: '%s'", player.UserInfo);
     // use random bot name
-    string botName = default.BotNames[round(FRandomFull()*default.BotNames.length)%default.BotNames.length];
+    string botName;
+    foreach (; 0..100) {
+      botName = default.BotNames[round(FRandomFull()*default.BotNames.length)%default.BotNames.length];
+      bool found = false;
+      foreach (auto pidx; 0..MAXPLAYERS) {
+        auto plr = player.Level.Game.Players[pidx];
+        if (!plr) continue;
+        if (stricmp(plr.PlayerName, botName) == 0) { found = true; break; }
+      }
+      if (!found) break;
+    }
     if (player.UserInfo.strStartsWith("\\Name")) {
       auto idx = player.UserInfo.strIndexOf("\\", 1);
       idx = player.UserInfo.strIndexOf("\\", idx+1);
