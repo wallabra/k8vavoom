@@ -853,6 +853,7 @@ VStr VStr::ToUpper () const {
 static inline const char *k8memmem (const char *hay, size_t haylen, const char *need, size_t needlen) {
   if (haylen < needlen || needlen == 0) return nullptr;
   haylen -= needlen;
+  ++haylen;
   while (haylen--) {
     if (memcmp(hay, need, needlen) == 0) return hay;
     ++hay;
