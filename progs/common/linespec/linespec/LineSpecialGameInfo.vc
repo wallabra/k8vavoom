@@ -232,8 +232,10 @@ override void Init () {
 
 
   CreateCvar('bot_ignore_humans', "0", "Should bots ignore human players?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_attack', "0", "Show some bot developer messages for attack mode?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages_roam', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages_checkpos', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages_items', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages_attack', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
 
   CreateCvar('bot_no_run', "0", "Disable bot running?", 0/*CVAR_ARCHIVE*/);
   CreateCvar('bot_no_jump', "0", "Disable bot jumping?", 0/*CVAR_ARCHIVE*/);

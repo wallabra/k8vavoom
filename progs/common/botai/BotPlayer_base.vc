@@ -36,6 +36,10 @@
 // Main bot class
 class BotPlayerBase : GameObject;
 
+// random bot names
+array!string BotNames;
+
+
 #define BOT_ALLOW_JUMPS
 
 const float FORWARDWALK = 200.0;
@@ -210,7 +214,7 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
   float timeout = ITEM_IGNORE_TIME+(FRandomFull()-0.5)*(ITEM_IGNORE_TIME_DEVIATION*2);
   timeout *= timeoutMult;
   timeout += currTime;
-  if (GetCvarB('bot_developer_messages')) print("bot gives up on %C for %s", item.Class, timeout-currTime);
+  if (GetCvarB('bot_developer_messages_items')) print("bot '%s' gives up on %C for %s", player.PlayerName, item.Class, timeout-currTime);
   itemIgnoreTimeout.put(item, timeout);
 }
 
@@ -560,17 +564,17 @@ void Scan () {
         auto dip = itemIgnoreTimeout.find(actor);
         if (dip) {
           if (*dip >= currTime) continue; // ignore it
-          if (GetCvarB('bot_developer_messages')) print("bot wants %C again (%s)", actor.Class, currTime-(*dip));
+          if (GetCvarB('bot_developer_messages_items')) print("bot '%s' wants %C again (%s)", player.PlayerName, actor.Class, currTime-(*dip));
           // it is ok to obtain, remove from list
           itemIgnoreTimeout.del(actor);
         }
         if (CheckItem(actor)) {
-          if (GetCvarB('bot_developer_messages')) print("bot wants %s", actor.Class);
+          if (GetCvarB('bot_developer_messages_items')) print("bot '%s' wants %s", player.PlayerName, actor.Class);
           item = actor;
           bItemIsWeapon = bNewItemIsWeapon;
           bItemIsPowerup = bNewItemIsPowerup;
         } else {
-          if (GetCvarB('bot_developer_messages')) print("bot ignores %s", actor.Class);
+          if (GetCvarB('bot_developer_messages_items')) print("bot '%s' ignores %s", player.PlayerName, actor.Class);
         }
       } else if (!missile && actor.bMissile && botmo.DistTo(actor) < AVOID_DIST) {
         missile = actor;
@@ -820,7 +824,7 @@ bool CheckPath (float ang, float dist, optional bool onlyCheck, optional out flo
     auto oldCWT = botmo.bColideWithThings;
     scope(exit) botmo.bColideWithThings = oldCWT;
     if (!botmo.CheckPosition(botmo.Origin+bottracedir*distance_passed)) {
-      //!if (GetCvarB('bot_developer_messages')) print("bot CheckPosition falied at %s (distance=%s)", botmo.Origin+bottracedir*distance_passed, distance_passed);
+      if (GetCvarB('bot_developer_messages_checkpos')) print("bot '%s' CheckPosition falied at %s (distance=%s)", player.PlayerName, botmo.Origin+bottracedir*distance_passed, distance_passed);
       return false;
     }
   }
@@ -1093,7 +1097,7 @@ Actor FindMonsterEnemy () {
       auto act = Actor(PlayerEx(plr).Attacker);
       if (!act || !act.bMonster || act.bMissile || act.Health <= 0) continue;
       if (!Check_LOS(act, 120)) continue;
-      if (GetCvarB('bot_developer_messages_attack')) print("  player %d offender is %C", i, act);
+      if (GetCvarB('bot_developer_messages_attack')) print("  bot '%s': player %d offender is %C", player.PlayerName, i, act);
       float dist = botmo.DistTo2(act);
       if (plr.bIsBot) {
         if (!roughTarget || dist < bestRoughDist) { roughTarget = act; bestRoughDist = dist; }
@@ -1128,7 +1132,7 @@ Actor FindEnemy () {
     Actor act = Actor(player.Attacker);
     if (act && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
       if (act.bIsPlayer || Check_LOS(act, 120)) {
-        if (GetCvarB('bot_developer_messages_attack')) print("bot is retaliating to %C", act);
+        if (GetCvarB('bot_developer_messages_attack')) print("bot '%s' is retaliating to %C", player.PlayerName, act);
         return act;
       }
     }
@@ -1174,7 +1178,7 @@ bool RoamRandom (out TVec dest) {
   float an = GetAngle();
   float maxdistf, maxdistl, maxdistr;
 
-  if (GetCvarB('bot_developer_messages')) print("bot has nothing to do; r=%s; an=%s", r, an);
+  if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' has nothing to do; r=%s; an=%s", player.PlayerName, r, an);
 
   for (float dist = 1024.0; dist >= 64.0; dist -= 64.0) {
     if (CheckPath(an, dist, out maxdist:maxdistf)) {
@@ -1231,9 +1235,9 @@ bool RoamRandom (out TVec dest) {
 
   if (posdest_valid) {
     dest = posdest;
-    if (GetCvarB('bot_developer_messages')) print("bot roams to %s from %s", dest, botmo.Origin);
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' roams to %s from %s", player.PlayerName, dest, botmo.Origin);
   } else {
-    if (GetCvarB('bot_developer_messages')) print("bot cannot roam where it wants");
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' cannot roam where it wants", player.PlayerName);
     float wlksign = FORWARDWALK*(P_Random() > 128 ? 1 : -1);
     an = botmo.Angles.yaw;
     if (!CheckPath(an, wlksign)) {
@@ -1290,25 +1294,25 @@ void Roam () {
   // order of item response precedence
   if (goal) {
     dest = goal.Origin;
-    if (GetCvarB('bot_developer_messages')) print("bot is going to goal at %s from %s", dest, botmo.Origin);
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to goal at %s from %s", player.PlayerName, dest, botmo.Origin);
   } else if (lastpos_valid) {
     dest = lastpos;
-    if (GetCvarB('bot_developer_messages')) print("bot is going to lastpost at %s from %s", dest, botmo.Origin);
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to lastpost at %s from %s", player.PlayerName, dest, botmo.Origin);
   } else if (item) {
     dest = item.Origin;
-    if (GetCvarB('bot_developer_messages')) print("bot is going to item at %s from %s", dest, botmo.Origin);
+    if (GetCvarB('bot_developer_messages_roam') || GetCvarB('bot_developer_messages_item')) print("bot '%s' is going to item at %s from %s", player.PlayerName, dest, botmo.Origin);
   } else if (node) {
     dest = node.Origin;
-    if (GetCvarB('bot_developer_messages')) print("bot is going to node at %s from %s", dest, botmo.Origin);
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to node at %s from %s", player.PlayerName, dest, botmo.Origin);
   } else if (posdest_valid) {
     dest = posdest;
-    if (GetCvarB('bot_developer_messages')) print("bot is going to posdest at %s from %s (dist=%s)", dest, botmo.Origin, (dest-botmo.Origin).length2D);
+    if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to posdest at %s from %s (dist=%s)", player.PlayerName, dest, botmo.Origin, (dest-botmo.Origin).length2D);
     if ((dest-botmo.Origin).length2D <= botmo.Radius/3) {
-      if (GetCvarB('bot_developer_messages')) print("bot is RADIUS-CLOSE go to posdest at %s from %s", dest, botmo.Origin);
+      if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is RADIUS-CLOSE go to posdest at %s from %s", player.PlayerName, dest, botmo.Origin);
       posdest_valid = false;
       if (RoamRandom(dest)) return;
     } else if (!CheckTo(dest)) {
-      if (GetCvarB('bot_developer_messages')) print("bot CANNOT go to posdest at %s from %s", dest, botmo.Origin);
+      if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' CANNOT go to posdest at %s from %s", player.PlayerName, dest, botmo.Origin);
       posdest_valid = false;
       if (RoamRandom(dest)) return;
     }
@@ -1657,7 +1661,7 @@ void Attack () {
   // never attack other players in coop
   if (enemy.bIsPlayer && !player.Level.Game.deathmatch) {
     // reset enemy
-    if (GetCvarB('bot_developer_messages_attack')) print("bot: oops, coop enemy is another player!");
+    if (GetCvarB('bot_developer_messages_attack')) print("bot '%s': oops, coop enemy is another player!", player.PlayerName);
     enemy = none;
     return;
   }
@@ -1679,7 +1683,7 @@ void Attack () {
   if (AttackSpecial()) return;
 
   if (!t_fire) {
-    if (GetCvarB('bot_developer_messages_attack')) print("bot: attacking %s", enemy.Class);
+    if (GetCvarB('bot_developer_messages_attack')) print("bot '%s': attacking %s", player.PlayerName, enemy.Class);
     player.Buttons |= BT_ATTACK;
     //HACK: for plasmagun, do not release attack button
     if (player.ReadyWeapon) {
@@ -1781,9 +1785,9 @@ void Pitch () {
 
   if (enemy) {
     if (doHeadshots && botmo.DistTo2(enemy) <= hsdist) {
-      if (GetCvarB('bot_developer_messages_attack')) print("HEADSHOTTING %C", enemy);
+      if (GetCvarB('bot_developer_messages_attack')) print("bot '%s': HEADSHOTTING %C", player.PlayerName, enemy);
     } else {
-      if (GetCvarB('bot_developer_messages_attack')) print("shooting at %C", enemy);
+      if (GetCvarB('bot_developer_messages_attack')) print("bot '%s': shooting at %C", player.PlayerName, enemy);
       doHeadshots = false;
     }
   } else {
@@ -1850,20 +1854,26 @@ void OnBeginPlay () {
   int bottype = 0;
   botinfo_t *binfo;
 
-  if (strcmp(player.PlayerName, "")) {
+  bool randomBot = true;
+
+  if (player.PlayerName) {
     foreach (auto i; 0..MainGameInfo::NUMTOTALBOTS) {
       if (stricmp(MainGameInfo(player.Level.Game).botinfo[i].Name, player.PlayerName) == 0) {
         bottype = i;
+        randomBot = false;
         break;
       }
     }
-    // we've already handled the "what if there's no match" exception
-  } else {
+  }
+
+  if (randomBot) {
     // if the user doesn't input a name, don't
     // spawn one of the "special" bots, only one of the
     // normal ones.
     bottype = P_Random()%MainGameInfo::NUMBOTTYPES;
   }
+
+  //print("bottype=%s; name='%s'", bottype, player.PlayerName);
 
   binfo = &MainGameInfo(player.Level.Game).botinfo[bottype];
 
@@ -1879,6 +1889,24 @@ void OnBeginPlay () {
   info.anticip = SkillLower(binfo->anticip, 4-botskill);
   info.reaction = SkillLower(binfo->reaction, 4-botskill);
   player.UserInfo = binfo->userinfo;
+
+  if (randomBot && default.BotNames.length) {
+    //print("OLD USERINFO: '%s'", player.UserInfo);
+    // use random bot name
+    string botName = default.BotNames[round(FRandomFull()*default.BotNames.length)%default.BotNames.length];
+    if (player.UserInfo.strStartsWith("\\Name")) {
+      auto idx = player.UserInfo.strIndexOf("\\", 1);
+      idx = player.UserInfo.strIndexOf("\\", idx+1);
+      if (idx > 0) {
+        player.UserInfo = "\\Name\\"~botName~player.UserInfo[idx..$];
+      } else {
+        player.UserInfo ~= "\\Name\\"~botName;
+      }
+    } else {
+      player.UserInfo ~= "\\Name\\"~botName;
+    }
+    //print("NEW USERINFO: '%s'", player.UserInfo);
+  }
 
   if (!player.Level.Game.deathmatch) {
     info.accuracy = bsk_high;
@@ -1896,8 +1924,6 @@ void OnBeginPlay () {
 //
 //==========================================================================
 void OnSpawn () {
-  if (GetCvarB('bot_developer_messages')) print("BOT SPAWNED!");
-
   ITarget = none;
   Actor item = none;
   itemFirstSeenTime = 0;
@@ -1920,4 +1946,5 @@ void OnSpawn () {
 
 
 defaultproperties {
+#include "botnames.vc"
 }
