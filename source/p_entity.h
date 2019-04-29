@@ -647,7 +647,7 @@ public:
   bool CheckWater ();
   bool CheckPosition (TVec);
   bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool debugDump=false);
-  bool TryMove (tmtrace_t &, TVec, bool);
+  bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float);
   void BounceWall (float, float);
@@ -692,7 +692,7 @@ private:
   bool CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups=false);
   bool CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials=false);
   void BlockedByLine (line_t *);
-  void PushLine (const tmtrace_t &tmtrace);
+  void PushLine (const tmtrace_t &tmtrace, bool checkOnly);
   static TVec ClipVelocity (const TVec &, const TVec &, float);
   void SlidePathTraverse (float &, line_t* &, float, float, float);
 

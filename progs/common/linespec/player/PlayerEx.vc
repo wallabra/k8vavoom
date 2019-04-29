@@ -2401,6 +2401,7 @@ override void NetGameReborn () {
       foreach (auto i; 0..MAXPLAYERS) {
         sp = Level.GetPlayerStart(i, Level.Game.RebornPosition, failIfNotFound:false);
         if (sp && CheckSpot(sp)) {
+          print("*** FOUND OTHER PLAYER (%s) STARTING SPOT FOR PLAYER %s", i+1, GetPlayerNum()+1);
           // found an open start spot
           SpawnPlayer(sp, false);
           foundSpot = true;
@@ -2411,6 +2412,7 @@ override void NetGameReborn () {
 
     if (!foundSpot) {
       // player's going to be inside something. too bad.
+      print("*** NOT FOUND OTHER PLAYER STARTING SPOTS FOR PLAYER %s", GetPlayerNum()+1);
       sp = Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition);
       CheckSpot(sp); // spawn teleport fog
       SpawnPlayer(sp, false);

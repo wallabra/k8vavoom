@@ -949,10 +949,10 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
       }
     }
   }
+
   //if (!(tmtrace.Thing->EntityFlags & VEntity::EF_NoPassMobj) || Actor(Other).bSpecial)
   if ((((EntityFlags&EF_PassMobj) || (Other->EntityFlags&EF_ActLikeBridge)) &&
-       !(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
-       !compat_nopassover) ||
+       !(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover) ||
       (EntityFlags&EF_Missile))
   {
     // prevent some objects from overlapping
@@ -962,7 +962,10 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
     if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
-  return (noPickups ? false : eventTouch(Other));
+  //FIXME: call VC to determine blocking
+  if (noPickups) return !(Other->EntityFlags&EF_Solid); // non-solids won't block
+
+  return eventTouch(Other);
 }
 
 
@@ -1157,15 +1160,17 @@ TVec VEntity::GetDrawDelta () {
 //  Attempt to move to a new position, crossing special lines.
 //
 //==========================================================================
-bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
+bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly) {
   bool check;
   TVec oldorg(0, 0, 0);
   line_t *ld;
   sector_t *OldSec = Sector;
 
-  check = CheckRelPosition(tmtrace, newPos);
+  check = CheckRelPosition(tmtrace, newPos, checkOnly);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
+
   if (!check) {
+    // cannot fit into destination point
     VEntity *O = tmtrace.BlockingMobj;
     //GCon->Logf("HIT! %s", O->GetClass()->GetName());
 
@@ -1176,7 +1181,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         tmtrace.CeilingZ-(O->Origin.z+O->Height) < Height)
     {
       // can't step up or doesn't fit
-      PushLine(tmtrace);
+      PushLine(tmtrace, checkOnly);
       return false;
     }
 
@@ -1191,7 +1196,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   if (EntityFlags&EF_ColideWithWorld) {
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
       // doesn't fit
-      PushLine(tmtrace);
+      PushLine(tmtrace, checkOnly);
       //printf("*** WORLD(0)!\n");
       return false;
     }
@@ -1200,7 +1205,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
 
     if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) && !(EntityFlags&EF_IgnoreCeilingStep)) {
       // mobj must lower itself to fit
-      PushLine(tmtrace);
+      PushLine(tmtrace, checkOnly);
       //printf("*** WORLD(1)!\n");
       return false;
     }
@@ -1215,9 +1220,9 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = -8.0f*35.0f;
+          if (!checkOnly) Velocity.z = -8.0f*35.0f;
         }
-        PushLine(tmtrace);
+        PushLine(tmtrace, checkOnly);
         return false;
       } else if (Origin.z < tmtrace.FloorZ && tmtrace.FloorZ-tmtrace.DropOffZ > MaxStepHeight) {
         // check to make sure there's nothing in the way for the step up
@@ -1227,9 +1232,9 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = 8.0f*35.0f;
+          if (!checkOnly) Velocity.z = 8.0f*35.0f;
         }
-        PushLine(tmtrace);
+        PushLine(tmtrace, checkOnly);
         return false;
       }
     }
@@ -1243,19 +1248,19 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
               (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
               TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
           {
-            PushLine(tmtrace);
+            PushLine(tmtrace, checkOnly);
             //printf("*** WORLD(2)!\n");
             return false;
           }
         } else {
-          PushLine(tmtrace);
+          PushLine(tmtrace, checkOnly);
           //printf("*** WORLD(3)!\n");
           return false;
         }
       }
 
       if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) && tmtrace.FloorZ > Origin.z) {
-        PushLine(tmtrace);
+        PushLine(tmtrace, checkOnly);
         //printf("*** WORLD(4)!\n");
         return false;
       }
@@ -1268,7 +1273,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         }
         // check to make sure there's nothing in the way for the step up
         if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ))) {
-          PushLine(tmtrace);
+          PushLine(tmtrace, checkOnly);
           //printf("*** WORLD(5)!\n");
           return false;
         }
@@ -1317,6 +1322,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
     OldAboveFakeFloor = (EyeZ > Sector->heightsec->floor.GetPointZ(Origin));
     OldAboveFakeCeiling = (EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin));
   }
+
+  if (checkOnly) return true;
 
   // the move is ok, so link the thing into its new position
   UnlinkFromWorld();
@@ -1376,7 +1383,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
 //  VEntity::PushLine
 //
 //==========================================================================
-void VEntity::PushLine (const tmtrace_t &tmtrace) {
+void VEntity::PushLine (const tmtrace_t &tmtrace, bool checkOnly) {
+  if (checkOnly) return;
   if (EntityFlags&EF_ColideWithWorld) {
     if (EntityFlags&EF_Blasted) eventBlastedHitLine();
     int NumSpecHitTemp = tmtrace.SpecHit.Num();
@@ -2046,19 +2054,21 @@ IMPLEMENT_FUNCTION(VEntity, CheckSides) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, TryMove) {
+  P_GET_BOOL_OPT(checkOnly, false);
   P_GET_BOOL(AllowDropOff);
   P_GET_VEC(Pos);
   P_GET_SELF;
   tmtrace_t tmtrace;
-  RET_BOOL(Self->TryMove(tmtrace, Pos, AllowDropOff));
+  RET_BOOL(Self->TryMove(tmtrace, Pos, AllowDropOff, checkOnly));
 }
 
 IMPLEMENT_FUNCTION(VEntity, TryMoveEx) {
+  P_GET_BOOL_OPT(checkOnly, false);
   P_GET_BOOL(AllowDropOff);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
   P_GET_SELF;
-  RET_BOOL(Self->TryMove(*tmtrace, Pos, AllowDropOff));
+  RET_BOOL(Self->TryMove(*tmtrace, Pos, AllowDropOff, checkOnly));
 }
 
 IMPLEMENT_FUNCTION(VEntity, TestMobjZ) {
