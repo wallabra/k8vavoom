@@ -211,6 +211,7 @@ bool VObject::GImmediadeDelete = true;
 bool VObject::GGCMessagesAllowed = false;
 bool VObject::GCDebugMessagesAllowed = false;
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
+bool VObject::DumpBacktraceToStdErr = false;
 
 #ifdef VCC_STANDALONE_EXECUTOR
 static VQueueLifo<vint32> gDelayDeadObjects;

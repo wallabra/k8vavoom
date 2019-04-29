@@ -160,6 +160,7 @@ public:
   static bool GGCMessagesAllowed;
   static bool GCDebugMessagesAllowed;
   static bool (*onExecuteNetMethodCB) (VObject *obj, VMethod *func); // return `false` to do normal execution
+  static bool DumpBacktraceToStdErr;
 
 public:
   // constructors

@@ -183,6 +183,7 @@ static inline void cstPop () {
 
 // `ip` can be null
 static void cstDump (const vuint8 *ip, bool toStdErr=false) {
+  if (VObject::DumpBacktraceToStdErr) toStdErr = true; // hard override
   //ip = func->Statements.Ptr();
   if (toStdErr) {
     fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
