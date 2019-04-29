@@ -252,7 +252,6 @@ float angle; // the wanted angle that the bot tries to get every tic
 int lastThinkTic;
 
 // bot options
-bool boptCheckWimpyWeapon = true;
 array!Weapon weaponList;
 
 // bot will ignore item if it cannot obtain it for some time
@@ -264,10 +263,28 @@ array!BotPathNode ssnodes;
 // current path, numbered by subsectors
 array!int currPath;
 int validCount;
+// to avoid blocks, reset node link if we cannot move for some time
+int lastCurrFollowSS;
+TVec lastCurrFollowPos;
+float lastCurrFollowTime;
+float lastSSChangeTime; // so we can replan our route if it takes too long
 
 bool dbgDumpPathSearch;
 
 string lastMapHash;
+
+
+//==========================================================================
+//
+//  ResetCurrPath
+//
+//==========================================================================
+final void ResetCurrPath () {
+  currPath.reset();
+  lastCurrFollowSS = -1;
+  lastCurrFollowTime = 0;
+  lastSSChangeTime = 0;
+}
 
 
 //==========================================================================
@@ -540,6 +557,7 @@ final bool BuildPathTo (ref array!int path, subsector_t *ss) {
 //
 //==========================================================================
 final bool HavePathToSS (subsector_t *ss) {
+  ResetCurrPath();
   return BuildPathTo(ref currPath, ss);
 }
 
@@ -611,12 +629,14 @@ void BotTick (float deltaTime) {
 
   if (doReplan) {
     // only walk if we're on skill 0
+    /*
     if (!MainGameInfo(player.Level.Game).botskill || GetCvarB('bot_no_run')) {
       if (forwardmove == FORWARDRUN) forwardmove = FORWARDWALK;
       if (forwardmove == -FORWARDRUN) forwardmove = -FORWARDWALK;
       if (sidemove == SIDERUN) sidemove = SIDEWALK;
       if (sidemove == -SIDERUN) sidemove = -SIDEWALK;
     }
+    */
 
     player.SideMove = sidemove;
     player.ForwardMove = forwardmove;
@@ -689,6 +709,9 @@ final float PitchToEntity (EntityEx ent, optional bool useRealHeight) {
 //==========================================================================
 bool CheckWeaponItem (Weapon Wpn, out bool res) {
   if (!Wpn) return false;
+
+  // we cannot use melee weapons anyway
+  if (Wpn.bBotMelee) { res = false; return true; }
 
   // if we don't have the weapon, pick it up
   Weapon exwpn = Weapon(botmo.FindInventory(class!Inventory(Wpn.Class)));
@@ -775,7 +798,7 @@ bool CheckItem (Actor item) {
   bNewItemIsPowerup = false;
 
   if (!item) return false;
-  if (!item.bSpecial) return false;
+  if (!item.bSpecial || item.bInvisible) return false;
 
   Weapon Wpn = Weapon(item);
   if (Wpn) {
@@ -820,7 +843,7 @@ Actor FindAllyToSupport (bool allowESP) {
     }
   }
   if (target) {
-    currPath.reset();
+    ResetCurrPath();
     return target;
   }
 
@@ -832,10 +855,14 @@ Actor FindAllyToSupport (bool allowESP) {
       if (!plr.bIsBot && plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
         if (HavePathToSS(plr.MO.SubSector)) {
           if (GetCvarB('bot_developer_messages_path')) print("*** ESP activated! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
+          break;
         } else {
           if (GetCvarB('bot_developer_messages_path')) print("*** CANNOT activate ESP! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
         }
       }
+    }
+    if (currPath.length < 2) {
+      ResetCurrPath();
     }
   }
 
@@ -895,8 +922,8 @@ void SetEnemy () {
 //==========================================================================
 void CheckStuff () {
   if (item) {
-    if (!item.bSpecial || item.IsDestroyed() || // somebody picked
-        !CheckTo(item.Origin)) // can't reach
+    if (!item.bSpecial || item.bInvisible || item.IsDestroyed() /*|| // somebody picked
+        !CheckTo(item.Origin)*/) // can't reach
     {
       PutItemToIgnoreList(item, 0.8);
       item = none;
@@ -915,6 +942,7 @@ void CheckStuff () {
     }
   }
 
+  /*
   if (posdest_valid) {
     TVec dir = posdest-botmo.Origin;
     dir.z = 0.0;
@@ -930,11 +958,15 @@ void CheckStuff () {
       lastpos_valid = false;
     }
   }
+  */
 
   if (enemy) {
     if (enemy.IsDestroyed() || enemy.Health <= 0 || !enemy.bShootable) enemy = none;
   }
 }
+
+
+transient array!Actor otherItems;
 
 
 //==========================================================================
@@ -946,6 +978,16 @@ void CheckStuff () {
 //
 //==========================================================================
 void Scan () {
+  if (currPath.length) return;
+
+  if (!FindAllyToSupport(allowESP:false)) {
+    FindAllyToSupport(allowESP:true);
+    if (currPath.length) {
+      item = none;
+      return;
+    }
+  }
+
   float currTime = botmo.XLevel.Time;
 
   // check if bot tried to get current item for too long
@@ -958,9 +1000,11 @@ void Scan () {
   }
 
   Entity ee;
+  otherItems.reset();
   foreach botmo.RadiusThings(out ee, botmo.Origin, ITEM_SCAN_RADIUS) {
     Actor actor = Actor(ee);
     if (!actor) continue;
+    if (actor.bInvisible) continue;
     if (!actor.bSpecial && !actor.bMissile) {
       // not interested in this one
       continue;
@@ -976,7 +1020,7 @@ void Scan () {
           // it is ok to obtain, remove from list
           itemIgnoreTimeout.del(actor);
         }
-        if (CheckItem(actor)) {
+        if (CheckItem(actor) && HavePathToSS(actor.SubSector)) {
           if (GetCvarB('bot_developer_messages_items')) print("bot '%s' wants %s", player.PlayerName, actor.Class);
           item = actor;
           bItemIsWeapon = bNewItemIsWeapon;
@@ -986,6 +1030,29 @@ void Scan () {
         }
       } else if (!missile && actor.bMissile && botmo.DistTo(actor) < AVOID_DIST) {
         missile = actor;
+      }
+    } else if (actor.bSpecial) {
+      auto dip = itemIgnoreTimeout.find(actor);
+      if (dip) {
+        if (*dip > currTime) continue; // ignore it
+        if (GetCvarB('bot_developer_messages_items')) print("bot '%s' wants %C again (%s)", player.PlayerName, actor.Class, currTime-(*dip));
+        // it is ok to obtain, remove from list
+        itemIgnoreTimeout.del(actor);
+      }
+      Weapon wpn = Weapon(actor);
+      if (wpn) otherItems[$] = actor;
+    }
+  }
+
+  if (!item && otherItems.length) {
+    while (otherItems.length) {
+      int idx = round(FRandomFull()*otherItems.length)%otherItems.length;
+      Actor act = otherItems[idx];
+      otherItems.remove(idx);
+      if (CheckItem(act) && HavePathToSS(act.SubSector)) {
+        print("going to unseen item %C", act);
+        item = act;
+        break;
       }
     }
   }
@@ -1475,7 +1542,7 @@ Actor FindEnemy () {
 //  returns `true` if no further roam actions should be taken
 //
 //==========================================================================
-bool RoamRandom (out TVec dest) {
+void RoamRandom (out TVec dest) {
   float an = player.ViewAngles.yaw;
 
   if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' has nothing to do; an=%s", player.PlayerName, an);
@@ -1500,11 +1567,11 @@ bool RoamRandom (out TVec dest) {
       posdest_valid = false;
       posdest_set_time = 0;
       item = none;
-      return true;
+      return;
     }
   }
 
-  if (FollowPath()) return true;
+  if (FollowPath()) return;
 
   if (botmo.TracePath(an, dist, out piFwd)) {
     posdest_valid = true;
@@ -1512,7 +1579,7 @@ bool RoamRandom (out TVec dest) {
     SetAngle(piFwd.angle);
     PerformLastCheckActions(piFwd);
     forwardmove = FORWARDWALK;
-    return true;
+    return;
   }
 
   // check left and right
@@ -1550,7 +1617,7 @@ bool RoamRandom (out TVec dest) {
       SetAngle(pi.angle);
       PerformLastCheckActions(*pi);
       forwardmove = FORWARDWALK;
-      return true;
+      return;
     }
   }
 
@@ -1563,7 +1630,7 @@ bool RoamRandom (out TVec dest) {
   if (P_Random() > 127 && !GetCvarB('bot_no_jump')) player.Buttons |= BT_JUMP;
 #endif
 
-  return true;
+  return;
 }
 
 
@@ -1573,6 +1640,7 @@ bool RoamRandom (out TVec dest) {
 //
 //==========================================================================
 final bool FollowPath () {
+  float currTime = botmo.XLevel.Time;
   int ssnum = botmo.SubSector-&botmo.XLevel.Subsectors[0];
   EntityEx::PathInfo pi;
   // running by path
@@ -1583,24 +1651,38 @@ final bool FollowPath () {
       // drop it, and continue
       currPath.length -= 1;
       continue;
-      /*
-      float dist = (botmo.Origin-node.Origin).length2D;
-      if (dist < 32) {
-        // drop it, and continue
-        currPath.length -= 1;
-        continue;
-      }
-      player.ViewAngles.yaw = AngleTo(node.Origin);
-           if (dist < 64) forwardmove = 64;
-      else if (dist < 128) forwardmove = FORWARDWALK;
-      else forwardmove = FORWARDRUN;
-      botmo.TracePath(player.ViewAngles.yaw, dist, out pi, allowJump:true);
-      PerformLastCheckActions(pi);
-      return true;
-      */
     }
-    player.ViewAngles.yaw = AngleTo(node.Origin);
-    forwardmove = FORWARDRUN;
+    if (!lastCurrFollowTime || lastCurrFollowSS != node.ssnum) {
+      lastCurrFollowSS = node.ssnum;
+      lastCurrFollowTime = currTime;
+      lastCurrFollowPos = botmo.Origin;
+      lastSSChangeTime = currTime;
+    } else {
+      TVec moved = lastCurrFollowPos-botmo.Origin;
+      if (moved.length2DSquared < 8*8) {
+        if (currTime-lastCurrFollowTime > 3) {
+          print("FUCK! cannot move from subsector #%d to subsector #%d, dropping the path", ssnum, node.ssnum);
+          ResetCurrPath();
+          return false;
+        }
+      } else {
+        lastCurrFollowTime = currTime;
+        lastCurrFollowPos = botmo.Origin;
+        if (currTime-lastSSChangeTime > 5) {
+          print("DAMMIT! cannot move from subsector #%d to subsector #%d, replanning the path", ssnum, node.ssnum);
+          if (!HavePathToSS(&botmo.XLevel.Subsectors[node.ssnum])) {
+            print("  SHIT! cannot reach, dropping path");
+            ResetCurrPath();
+            return false;
+          }
+        }
+      }
+    }
+    //player.ViewAngles.yaw = AngleTo(node.Origin);
+    SetAngle(AngleTo(node.Origin));
+    float dist = (botmo.Origin-node.Origin).length2D;
+         if (dist <= 64+32) forwardmove = FORWARDWALK;
+    else forwardmove = FORWARDRUN;
     botmo.TracePath(player.ViewAngles.yaw, FORWARDRUN, out pi, allowJump:true);
     PerformLastCheckActions(pi);
     return true;
@@ -1619,7 +1701,7 @@ final bool FollowPath () {
 //==========================================================================
 void Roam () {
   if (FindAllyToSupport(allowESP:false)) {
-    currPath.reset();
+    ResetCurrPath();
   }
 
   if (FollowPath()) return;
@@ -1636,10 +1718,14 @@ void Roam () {
   */
 
   if (item && !CheckTo(item.Origin)) {
-    // forget for some time
-    PutItemToIgnoreList(item, 1.0/4.0);
-    item = none;
-    itemFirstSeenTime = 0;
+    if (!HavePathToSS(item.SubSector)) {
+      // forget for some time
+      PutItemToIgnoreList(item, 1.0/4.0);
+      item = none;
+      itemFirstSeenTime = 0;
+    } else {
+      if (FollowPath()) return;
+    }
   }
 
   if (item && currTime-itemFirstSeenTime > ITEM_GIVEUP_TIME) {
@@ -1662,7 +1748,7 @@ void Roam () {
 
   if (!destValid && lastpos_valid) {
     dest = lastpos;
-    if (!HavePathToPoint(dest) && CanGetCloserTo(dest)) {
+    if (HavePathToPoint(dest) || CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to lastpost at %s from %s", player.PlayerName, dest, botmo.Origin);
     }
@@ -1670,7 +1756,7 @@ void Roam () {
 
   if (item) {
     dest = item.Origin;
-    if (!HavePathToSS(item.SubSector) && CanGetCloserTo(dest)) {
+    if (HavePathToSS(item.SubSector) || CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam') || GetCvarB('bot_developer_messages_item')) print("bot '%s' is going to item at %s from %s", player.PlayerName, dest, botmo.Origin);
       //if (botmo.DistTo2(item) <= botmo.Radius*2) noRun = true;
@@ -1679,7 +1765,7 @@ void Roam () {
 
   if (node) {
     dest = node.Origin;
-    if (!HavePathToSS(node.SubSector) && CanGetCloserTo(dest)) {
+    if (HavePathToSS(node.SubSector) || CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to node at %s from %s", player.PlayerName, dest, botmo.Origin);
     }
@@ -1687,7 +1773,7 @@ void Roam () {
 
   if (posdest_valid) {
     dest = posdest;
-    if (!HavePathToPoint(dest) && CanGetCloserTo(dest)) {
+    if (HavePathToPoint(dest) || CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to posdest at %s from %s (dist=%s)", player.PlayerName, dest, botmo.Origin, (dest-botmo.Origin).length2D);
     }
@@ -1697,7 +1783,8 @@ void Roam () {
 
   if (!destValid) {
     // no target, so just run around until we find something
-    if (RoamRandom(dest)) return;
+    RoamRandom(dest);
+    return;
   }
 
   if (HavePathToPoint(dest)) {
@@ -1745,19 +1832,21 @@ void Roam () {
 //==========================================================================
 bool CheckWantCurrentItem () {
   if (!item) return false;
-  if (!item.bSpecial || item.IsDestroyed()) { item = none; return false; } // picked up by someone
+  if (!item.bSpecial || item.bInvisible || item.IsDestroyed()) { item = none; return false; } // picked up by someone
   if (bItemIsPowerup) return true; // always collect powerups
   if (!bItemIsWeapon) return false; // don't bother with non-weapons
-  if (!player.ReadyWeapon || !CanAttackWithCurrentWeapon()) return true; // want any weapon
   Weapon wpn = Weapon(item);
   if (!wpn) return false;
+  if (!player.ReadyWeapon || !CanAttackWithCurrentWeapon()) return true; // want any weapon
+  if (wpn.bWimpyWeapon || wpn.bBotMelee) return false;
   Weapon currWpn = Weapon(player.ReadyWeapon);
   if (!currWpn) return true; // just in case
-  if (boptCheckWimpyWeapon && currWpn.bWimpyWeapon) return true; // replace wimpy weapon
-  if (currWpn.bBotMelee) return true;
+  if (currWpn.bWimpyWeapon) return true; // replace wimpy weapon
+  if (currWpn.bBotMelee) return true; // replace melee weapon
   // assume that higher slot means "better weapon" (this is not always true, but...)
+  if (wpn.SelectionOrder && currWpn.SelectionOrder) return (wpn.SelectionOrder < currWpn.SelectionOrder);
   if (wpn.SlotNumber > 0 && currWpn.SlotNumber > 0 && wpn.SlotNumber > currWpn.SlotNumber) return true;
-  return (wpn.SelectionOrder < currWpn.SelectionOrder);
+  return true; //(wpn.SelectionOrder < currWpn.SelectionOrder);
 }
 
 
@@ -2388,6 +2477,7 @@ void OnSpawn () {
 
   ally = none;
   itemIgnoreTimeout.reset();
+  ResetCurrPath();
 
   lastThinkTic = 0;
 
