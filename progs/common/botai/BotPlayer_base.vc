@@ -56,10 +56,6 @@ const float DARK_DIST         (256*FRACUNIT)  //Distance that bot can see enemie
 const float WHATS_DARK          64        //light value thats classed as dark.
 const float MAX_MONSTER_TARGET_DIST   (1024*FRACUNIT) //Too high can slow down the performance, see P_mobj.c*/
 const float ENEMY_SCAN_FOV = 120.0;
-const float MAXSTEPHEIGHT = 32.0;
-const float MAXJUMPHEIGHT = 56.0;
-const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
-const float MAXDROPHEIGHT = 384.0;
 /*const float MAXMOVEHEIGHT       (32*FRACUNIT) //MAXSTEPMOVE but with jumping counted in.
 const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's due to be icked up in a combat situation.*/
 const float SHOOTFOV = 60.0;
@@ -70,13 +66,6 @@ const float ITEM_SCAN_RADIUS = 1024.0;
 const float ITEM_GIVEUP_TIME = 1.5; // if bot cannot get item for this time, ignore it
 const float ITEM_IGNORE_TIME = 10.0; // time bot should ignore item
 const float ITEM_IGNORE_TIME_DEVIATION = 3.0; // random deviation for ignore time
-
-const float TRACE_MAX_JUMP_DISTANCE = 64.0;
-
-/*
-bool lastPathCheckJump = false;
-bool lastPathCheckUse = false;
-*/
 
 
 /*
@@ -695,229 +684,16 @@ final float DistToPlane (const ref TPlane plane, const ref TVec point) {
 }
 
 
-struct PathInfo {
-  float angle;
-  float needdist;
-  float maxdist;
-  bool needJump;
-  bool needUse;
-  TVec dirxy;
-  bool success;
-}
-
-
 //==========================================================================
 //
 //  PerformLastCheckActions
 //
 //==========================================================================
-void PerformLastCheckActions (const ref PathInfo pi) {
+void PerformLastCheckActions (const ref EntityEx::PathInfo pi) {
 #ifdef BOT_ALLOW_JUMPS
   if (pi.needJump && !GetCvarB('bot_no_jump')) player.Buttons |= BT_JUMP;
 #endif
   if (pi.needUse) EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
-}
-
-
-//==========================================================================
-//
-//  CalcBestDist
-//
-//  FIXME: idiotic code!
-//
-//==========================================================================
-final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist) {
-  Entity::tmtrace_t tmtrace;
-  while (newdist > lastdist) {
-    float delta = fmin(newdist-lastdist, 8);
-    TVec d2 = org+dirxy*(lastdist+delta);
-    if (!botmo.CheckRelPosition(&tmtrace, d2, noPickups:true)) return;
-    //print("*** step; lastdist=%s; newdist=%s; currDist=%s", lastdist, newdist, lastdist+delta);
-    lastdist += delta;
-  }
-}
-
-
-//==========================================================================
-//
-//  CalcBestDistBack
-//
-//  FIXME: idiotic code!
-//
-//==========================================================================
-final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float newdist) {
-  Entity::tmtrace_t tmtrace;
-  float dist = newdist+8;
-  while (dist > 0.1) {
-    float delta = fmin(8, dist);
-    dist -= delta;
-    TVec d2 = org+dirxy*dist;
-    if (botmo.CheckRelPosition(&tmtrace, d2, noPickups:true)) {
-      //print("*** GOOD step; dist=%s; newdist=%s", dist, newdist);
-      lastdist = dist;
-      return;
-    }
-    //print("*** BAD step; dist=%s; newdist=%s", dist, newdist);
-  }
-  // this is wrong, but...
-  //lastdist = newdist;
-  lastdist = 0;
-}
-
-
-//==========================================================================
-//
-//  TracePath
-//
-//  Checks for obstructions at a certain angle and distance.
-//
-//  returns `false` if some obstacle was hit
-//
-//==========================================================================
-bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt) {
-  pi.maxdist = 0;
-  pi.needJump = false;
-  pi.needUse = false;
-  pi.success = false;
-
-  if (dist < 0) { ang += 180; dist = -dist; }
-  ang = AngleMod360(ang);
-  pi.needdist = dist;
-  pi.angle = ang;
-
-  float bottracerange = dist;
-  TVec bottracedir;
-  sincos(ang, out bottracedir.y, bottracedir.x);
-  bottracedir.z = 0.0;
-  pi.dirxy = bottracedir;
-  if (dist < 1) {
-    // oops
-    Entity::tmtrace_t tmtrace;
-    pi.success = botmo.CheckRelPosition(&tmtrace, botmo.Origin, noPickups:true);
-    return pi.success;
-  }
-
-  float x1 = botmo.Origin.x;
-  float y1 = botmo.Origin.y;
-  float x2 = x1+dist*bottracedir.x;
-  float y2 = y1+dist*bottracedir.y;
-
-  intercept_t *in;
-  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
-    float currDist = dist*in->frac;
-    if (in->bIsALine) {
-      // line
-      line_t *ld = in->line; // this linedef
-      TVec hit_point = botmo.Origin+(bottracerange*in->frac)*bottracedir;
-
-      if (currDist <= Player::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
-        pi.needUse = true;
-      }
-
-      // line is impassible
-      if (!(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) {
-        CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist);
-        return false;
-      }
-
-      // line isn't two sided
-      if (!ld->backsector) {
-        CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist);
-        return false;
-      }
-
-      sector_t *back;
-      sector_t *front;
-      if (!PointOnPlaneSide(botmo.Origin, *ld)) {
-        back = ld->backsector;
-        front = ld->frontsector;
-      } else {
-        back = ld->frontsector;
-        front = ld->backsector;
-      }
-
-      // sector is dangerous
-      if (IsDangerous(back)) {
-        CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist-botmo.Radius);
-        return false;
-      }
-
-      // crosses a two sided line
-      opening_t *open = FindLineOpening(ld, hit_point, botmo.Height, do3dmidtex:true);
-      // no valid openings
-      if (!open) {
-        CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist-botmo.Radius);
-        return false;
-      }
-
-      // no cliff jumping unless we're going after something
-      if (!distEnt) {
-        if (open->lowfloor-open->bottom >= MAXMOVEHEIGHT &&
-            open->lowfloor-open->bottom <= MAXDROPHEIGHT)
-        {
-          CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist-botmo.Radius);
-          return false;
-        }
-      }
-
-      // determine if it's wise to jump up to a floor
-      float diffheight = open->bottom-open->lowfloor;
-
-      if (diffheight > 0.0) {
-        if (diffheight >= MAXSTEPHEIGHT && diffheight <= MAXJUMPHEIGHT) {
-          if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
-          pi.maxdist = currDist;
-          continue;
-        }
-        if (diffheight >= MAXJUMPHEIGHT) {
-          CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist-botmo.Radius);
-          return false;
-        }
-      }
-
-      // otherwise we're going down, it is ok
-      pi.maxdist = currDist;
-    } else {
-      // thing
-      Actor th = Actor(in->Thing);
-      if (!th || th == botmo) {
-        pi.maxdist = currDist;
-        continue;
-      }
-
-      float dheight = th.Origin.z+th.Height-botmo.Origin.z;
-
-      if (th.bSolid && th != distEnt) {
-        // [FB] Jump to avoid something
-        if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
-          if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
-          pi.maxdist = currDist;
-          continue;
-        }
-        CalcBestDist(botmo.Origin, bottracedir, ref pi.maxdist, currDist-botmo.Radius);
-        return false;
-      }
-
-      // jump to reach something
-      if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
-        if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
-      }
-
-      pi.maxdist = currDist;
-    }
-  }
-
-  // we walked all the way, yay
-  CalcBestDistBack(botmo.Origin, bottracedir, ref pi.maxdist, dist);
-  //!!!if (GetCvarB('bot_developer_messages_roam')) print("   --- traced: %s of %s", pi.maxdist, dist);
-
-  if (pi.maxdist < 1) {
-    pi.maxdist = 0;
-    return false;
-  }
-
-  pi.success = true;
-  return true;
 }
 
 
@@ -928,13 +704,30 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt)
 //  Checks if an location is reachable
 //
 //==========================================================================
-bool CheckTo (TVec pos, optional out PathInfo pi) {
+bool CheckTo (TVec pos, optional out EntityEx::PathInfo pi) {
   TVec v2 = botmo.Origin-pos;
   v2.z = 0;
   if (!v2) return true;
   float dist = Length2D(v2);
   float an = GetAngle();
-  return TracePath(an, dist, pi!optional);
+  return botmo.TracePath(an, dist, pi!optional, allowJump:true);
+}
+
+
+//==========================================================================
+//
+//  CheckToEnt
+//
+//  Checks if an location is reachable
+//
+//==========================================================================
+bool CheckToEnt (Entity ent, optional out EntityEx::PathInfo pi) {
+  TVec v2 = botmo.Origin-ent.Origin;
+  v2.z = 0;
+  if (!v2) return true;
+  float dist = Length2D(v2);
+  float an = GetAngle();
+  return botmo.TracePath(an, dist, pi!optional, distEnt:ent, allowJump:true);
 }
 
 
@@ -951,8 +744,27 @@ bool CanGetCloserTo (TVec pos) {
   if (!v2) return true;
   float dist = Length2D(v2);
   float an = GetAngle();
-  PathInfo pi;
-  if (TracePath(an, dist, out pi)) return true;
+  EntityEx::PathInfo pi;
+  if (botmo.TracePath(an, dist, out pi, allowJump:true)) return true;
+  return (pi.maxdist >= 32); // at least half of a tile
+}
+
+
+//==========================================================================
+//
+//  CanGetCloserToEnt
+//
+//  Checks if we can move a little closer
+//
+//==========================================================================
+bool CanGetCloserToEnt (Entity ent) {
+  TVec v2 = botmo.Origin-ent.Origin;
+  v2.z = 0;
+  if (!v2) return true;
+  float dist = Length2D(v2);
+  float an = GetAngle();
+  EntityEx::PathInfo pi;
+  if (botmo.TracePath(an, dist, out pi, distEnt:ent, allowJump:true)) return true;
   return (pi.maxdist >= 32); // at least half of a tile
 }
 
@@ -1308,7 +1120,7 @@ bool RoamRandom (out TVec dest) {
 
   posdest_valid = false;
 
-  PathInfo piFwd, piLeft, piRight;
+  EntityEx::PathInfo piFwd, piLeft, piRight;
   float dist = 1024.0;
 
   Actor allyToSupport = FindAllyToSupport();
@@ -1330,7 +1142,7 @@ bool RoamRandom (out TVec dest) {
     }
   }
 
-  if (TracePath(an, dist, out piFwd)) {
+  if (botmo.TracePath(an, dist, out piFwd)) {
     posdest_valid = true;
     posdest = botmo.Origin+dist*piFwd.dirxy;
     SetAngle(piFwd.angle);
@@ -1340,11 +1152,11 @@ bool RoamRandom (out TVec dest) {
   }
 
   // check left and right
-  TracePath(an+45, dist, out piLeft);
-  TracePath(an-45, dist, out piRight);
+  botmo.TracePath(an+45, dist, out piLeft);
+  botmo.TracePath(an-45, dist, out piRight);
 
   // random choice
-  PathInfo *pip[3];
+  EntityEx::PathInfo *pip[3];
   pip[0] = &piFwd;
   pip[1] = &piLeft;
   pip[2] = &piRight;
@@ -1366,7 +1178,7 @@ bool RoamRandom (out TVec dest) {
 
   int idx = P_Random()%pip.length;
   foreach (auto n; 0..pip.length) {
-    PathInfo *pi = pip[n];
+    EntityEx::PathInfo *pi = pip[n];
     n = (n+1)%pip.length;
     if (pi.success || pi.maxdist > 64) {
       posdest_valid = true;
@@ -1424,7 +1236,7 @@ void Roam () {
     itemFirstSeenTime = 0;
   }
 
-  PathInfo pi;
+  EntityEx::PathInfo pi;
   bool destValid = false;
 
   // order of item response precedence
@@ -1633,7 +1445,7 @@ void Move (float deltaTime) {
 
   // now handle attack movement
   if (enemy) {
-    PathInfo pi;
+    EntityEx::PathInfo pi;
 
     if (!sidemove) sidemove = SIDERUN;
 
@@ -1664,7 +1476,7 @@ void Move (float deltaTime) {
     float an = botmo.Angles.yaw;
     if (sidemove < 0.0) an -= 90.0; else an += 90.0;
 
-    if (!TracePath(an, 48.0, out pi)) {
+    if (!botmo.TracePath(an, 48.0, out pi)) {
       // we're blocked, so go the other way!
       sidemove = -sidemove;
     }
@@ -1672,7 +1484,7 @@ void Move (float deltaTime) {
     if (CheckTo(enemy.Origin, out pi) && dist > player.ReadyWeapon.BotCombatDist) {
       forwardmove = FORWARDRUN;
     } else {
-      if (TracePath(an+180, 64, out pi)) {
+      if (botmo.TracePath(an+180, 64, out pi)) {
         forwardmove = -FORWARDRUN;
       } else {
         forwardmove = FORWARDRUN;
@@ -1862,14 +1674,14 @@ void Attack () {
     TVec hp, norm;
     if (!botmo.XLevel.TraceLine(org, eorig, out hp, out norm)) {
       // try sidemove
-      PathInfo piLeft;
-      if (TracePath(GetAngle()-90, SIDEWALK, out piLeft)) {
+      EntityEx::PathInfo piLeft;
+      if (botmo.TracePath(GetAngle()-90, SIDEWALK, out piLeft)) {
         sidemove = -SIDEWALK;
         t_react = 0.3;
         return;
       }
-      PathInfo piRight;
-      if (TracePath(GetAngle()+90, SIDEWALK, out piRight)) {
+      EntityEx::PathInfo piRight;
+      if (botmo.TracePath(GetAngle()+90, SIDEWALK, out piRight)) {
         sidemove = SIDEWALK;
         t_react = 0.3;
         return;
@@ -2162,6 +1974,8 @@ void OnSpawn () {
 
   // forgot who killed us (sometimes)
   if (FRandomFull() < 0.7) player.Attacker = none;
+
+  EntityEx(player.MO).TraceIsDangerousSectorCB = &IsDangerous;
 }
 
 

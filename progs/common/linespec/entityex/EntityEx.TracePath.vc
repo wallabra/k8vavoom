@@ -1,0 +1,258 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+const float MAXSTEPHEIGHT = 32.0;
+const float MAXJUMPHEIGHT = 56.0;
+const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
+const float MAXDROPHEIGHT = 384.0;
+const float TRACE_MAX_JUMP_DISTANCE = 64.0;
+
+
+bool delegate (sector_t *sec) TraceIsDangerousSectorCB;
+
+
+struct PathInfo {
+  float angle;
+  float needdist;
+  float maxdist;
+  bool needJump;
+  bool needUse;
+  TVec dirxy;
+  bool success;
+}
+
+
+//==========================================================================
+//
+//  CalcBestDist
+//
+//  FIXME: idiotic code!
+//
+//==========================================================================
+final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist) {
+  Entity::tmtrace_t tmtrace;
+  while (newdist > lastdist) {
+    float delta = fmin(newdist-lastdist, 8);
+    TVec d2 = org+dirxy*(lastdist+delta);
+    if (!CheckRelPosition(&tmtrace, d2, noPickups:true)) return;
+    //print("*** step; lastdist=%s; newdist=%s; currDist=%s", lastdist, newdist, lastdist+delta);
+    lastdist += delta;
+  }
+}
+
+
+//==========================================================================
+//
+//  CalcBestDistBack
+//
+//  FIXME: idiotic code!
+//
+//==========================================================================
+final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float newdist) {
+  Entity::tmtrace_t tmtrace;
+  float dist = newdist+8;
+  while (dist > 0.1) {
+    float delta = fmin(8, dist);
+    dist -= delta;
+    TVec d2 = org+dirxy*dist;
+    if (CheckRelPosition(&tmtrace, d2, noPickups:true)) {
+      //print("*** GOOD step; dist=%s; newdist=%s", dist, newdist);
+      lastdist = dist;
+      return;
+    }
+    //print("*** BAD step; dist=%s; newdist=%s", dist, newdist);
+  }
+  // this is wrong, but...
+  //lastdist = newdist;
+  lastdist = 0;
+}
+
+
+//==========================================================================
+//
+//  TracePath
+//
+//  Checks for obstructions at a certain angle and distance.
+//
+//  returns `false` if some obstacle was hit
+//
+//==========================================================================
+bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt, optional bool allowJump) {
+  pi.maxdist = 0;
+  pi.needJump = false;
+  pi.needUse = false;
+  pi.success = false;
+
+  if (dist < 0) { ang += 180; dist = -dist; }
+  ang = AngleMod360(ang);
+  pi.needdist = dist;
+  pi.angle = ang;
+
+  float bottracerange = dist;
+  TVec bottracedir;
+  sincos(ang, out bottracedir.y, bottracedir.x);
+  bottracedir.z = 0.0;
+  pi.dirxy = bottracedir;
+  if (dist < 1) {
+    // oops
+    Entity::tmtrace_t tmtrace;
+    pi.success = CheckRelPosition(&tmtrace, Origin, noPickups:true);
+    return pi.success;
+  }
+
+  float x1 = Origin.x;
+  float y1 = Origin.y;
+  float x2 = x1+dist*bottracedir.x;
+  float y2 = y1+dist*bottracedir.y;
+
+  intercept_t *in;
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+    float currDist = dist*in->frac;
+    if (in->bIsALine) {
+      // line
+      line_t *ld = in->line; // this linedef
+      TVec hit_point = Origin+(bottracerange*in->frac)*bottracedir;
+
+      if (currDist <= PlayerEx::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
+        pi.needUse = true;
+      }
+
+      // line is impassible
+      if (!(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) {
+        CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist);
+        return false;
+      }
+
+      // line isn't two sided
+      if (!ld->backsector) {
+        CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist);
+        return false;
+      }
+
+      sector_t *back;
+      sector_t *front;
+      if (!PointOnPlaneSide(Origin, *ld)) {
+        back = ld->backsector;
+        front = ld->frontsector;
+      } else {
+        back = ld->frontsector;
+        front = ld->backsector;
+      }
+
+      // sector is dangerous
+      if (TraceIsDangerousSectorCB && TraceIsDangerousSectorCB(back)) {
+        CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+        return false;
+      }
+
+      // crosses a two sided line
+      opening_t *open = FindLineOpening(ld, hit_point, Height, do3dmidtex:true);
+      // no valid openings
+      if (!open) {
+        CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+        return false;
+      }
+
+      // no cliff jumping unless we're going after something
+      if (!distEnt) {
+        if (open->lowfloor-open->bottom >= MAXMOVEHEIGHT &&
+            open->lowfloor-open->bottom <= MAXDROPHEIGHT)
+        {
+          CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+          return false;
+        }
+      }
+
+      // determine if it's wise to jump up to a floor
+      float diffheight = open->bottom-open->lowfloor;
+
+      if (diffheight > 0.0) {
+        if (diffheight >= MAXSTEPHEIGHT && diffheight <= MAXJUMPHEIGHT) {
+          if (allowJump) {
+            if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
+            pi.maxdist = currDist;
+            continue;
+          }
+          CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+          return false;
+        }
+        if (diffheight >= MAXJUMPHEIGHT) {
+          CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+          return false;
+        }
+      }
+
+      // otherwise we're going down, it is ok
+      pi.maxdist = currDist;
+    } else {
+      // thing
+      Actor th = Actor(in->Thing);
+      if (!th || th == self) {
+        pi.maxdist = currDist;
+        continue;
+      }
+
+      float dheight = th.Origin.z+th.Height-Origin.z;
+
+      if (th.bSolid && th != distEnt) {
+        // [FB] Jump to avoid something
+        if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+          if (allowJump) {
+            if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
+            pi.maxdist = currDist;
+            continue;
+          }
+        }
+        CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+        return false;
+      }
+
+      // jump to reach something
+      if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+        if (allowJump) {
+          if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
+        } else {
+          CalcBestDist(Origin, bottracedir, ref pi.maxdist, currDist-Radius);
+          return false;
+        }
+      }
+
+      pi.maxdist = currDist;
+    }
+  }
+
+  // we walked all the way, yay
+  CalcBestDistBack(Origin, bottracedir, ref pi.maxdist, dist);
+  //!!!if (GetCvarB('bot_developer_messages_roam')) print("   --- traced: %s of %s", pi.maxdist, dist);
+
+  if (pi.maxdist < 1) {
+    pi.maxdist = 0;
+    return false;
+  }
+
+  pi.success = true;
+  return true;
+}
