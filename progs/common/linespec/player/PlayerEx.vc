@@ -153,6 +153,39 @@ bool bFlashlightOn;
 transient bool bFlashlightButtonDown;
 transient float k8NextSuperBulletTime;
 
+transient subsector_t *lastSubSector;
+transient array!int subSeen; // do not bother dropping subsector info for those
+
+
+final void ClearSubSeenInfo () {
+  lastSubSector = nullptr;
+  subSeen.reset();
+}
+
+
+final void AddSeenSubsector () {
+  if (!MO) return;
+  if (!MO.SubSector) return;
+  if (lastSubSector == MO.SubSector) return;
+  int ssnum = MO.SubSector-&MO.XLevel.Subsectors[0];
+  if (subSeen.length != MO.XLevel.Subsectors.length) {
+    subSeen.length = MO.XLevel.Subsectors.length;
+    foreach (ref int ss; subSeen) ss = 0;
+  }
+  if (subSeen[ssnum]) return;
+  subSeen[ssnum] = 1;
+  lastSubSector = MO.SubSector;
+  foreach (auto i; 0..MAXPLAYERS) {
+    PlayerEx plr = PlayerEx(Level.Game.Players[i]);
+    if (!plr || !plr.bIsBot) continue;
+    plr.BotSendSubSectorChange(lastSubSector);
+  }
+}
+
+
+void BotDumpNodes () {}
+void BotTestFindPathTo (TVec dest) {}
+
 
 replication {
   reliable if (!bIsClient)
@@ -1870,6 +1903,7 @@ void PaletteFlash () {
 //==========================================================================
 override void PreTravel () {
   ::PreTravel();
+  ClearSubSeenInfo();
   SavedInventory = EntityEx(MO).Inventory;
   EntityEx(MO).Inventory = none;
   ResetACSButtons();
@@ -2208,6 +2242,7 @@ final bool GiveAmmo (class!Ammo ammo, int count) {
 //
 //==========================================================================
 override void PutClientIntoServer () {
+  ClearSubSeenInfo();
   if (bIsBot) CreateBot();
 }
 
@@ -2277,6 +2312,7 @@ mthing_t *PerformRebornSpawn () {
 override void SpawnClient () {
   bool playerWasReborn;
   EntityEx OldMO = EntityEx(MO);
+  ClearSubSeenInfo();
 
   //print("*** SPAWN CLIENT");
 
@@ -2364,6 +2400,7 @@ override void SpawnClient () {
 //==========================================================================
 override void NetGameReborn () {
   EntityEx OldMO = EntityEx(MO);
+  ClearSubSeenInfo();
 
   // remove pitch and roll angles from corpse
   MO.Angles.pitch = 0.0;
@@ -2431,6 +2468,7 @@ override void NetGameReborn () {
 //
 //==========================================================================
 override void DisconnectClient () {
+  ClearSubSeenInfo();
   DestroyBot();
   if (MO) {
     MO.Player = none;
@@ -2586,6 +2624,7 @@ final void ResetACSButtons () {
 //==========================================================================
 void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   if (!keepPlayerState) PlayerState = PST_LIVE;
+  ClearSubSeenInfo();
   Refire = 0;
   DamageFlash = 0.0;
   BonusFlash = 0.0;
@@ -2759,6 +2798,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   if (mthing) PP.Origin.z += mthing->height;
   PP.LinkToWorld(properFloorCheck:true);
   PP.FriendPlayer = GetPlayerNum()+1; // players are their own friends
+  ClearSubSeenInfo();
 
   // set colour translations for player sprites
   TranslStart = PP.TranslStart;
@@ -3103,6 +3143,7 @@ void DoClearPlayer () {
 //
 //==========================================================================
 override void PlayerBeforeExitMap () {
+  ClearSubSeenInfo();
   if (GetCvarB('k8HealthAccum_NewMapHeal')) {
     int maxhealth = GetMaxHealth();
     int oldhealth = Health;
@@ -3125,6 +3166,7 @@ override void PlayerBeforeExitMap () {
 //
 //==========================================================================
 override void PlayerExitMap (bool clusterChange) {
+  ClearSubSeenInfo();
   Inventory Item;
 
   if (clusterChange && !Level.bClusterHub && !Level.bKeepFullInventory) {
@@ -3352,6 +3394,7 @@ final void PlayerNextArtifact () {
 //
 //==========================================================================
 final void DeathPlayerTick (float deltaTime) {
+  ClearSubSeenInfo();
   MovePsprites(deltaTime);
 
   if (MO.WaterLevel > 1) MO.Velocity.z = -60.0; // drift towards bottom
@@ -3607,6 +3650,10 @@ override void PlayerTick (float deltaTime) {
     }
   } else {
     k8HealthAccum_Amount = 0;
+  }
+
+  if (!isBot && Level.Game.netgame && !Level.Game.deathmatch) {
+    if (lastSubSector != MO.SubSector) AddSeenSubsector();
   }
 
 
@@ -4814,6 +4861,15 @@ void BotOnSpawn () {
 
 //==========================================================================
 //
+//  BotSendSubSectorChange
+//
+//==========================================================================
+void BotSendSubSectorChange (subsector_t *ss) {
+}
+
+
+//==========================================================================
+//
 //  SetClientModel
 //
 //==========================================================================
@@ -4872,6 +4928,24 @@ void PlayerImpulse () {
     case 56: bReloadQueued = true; Impulse = 0; return; // so you can use this in aliases and such
     case 142: Actor(MO).DebugCheckMidTex(); Impulse = 0; return;
     case 149: bFlashlightOn = !bFlashlightOn; Impulse = 0; return; // so you can use this in aliases and such
+    case 155:
+      foreach (auto pidx; 0..MAXPLAYERS) {
+        PlayerEx plr = PlayerEx(Level.Game.Players[pidx]);
+        if (!plr || !plr.bIsBot) continue;
+        plr.BotDumpNodes();
+      }
+      Impulse = 0;
+      return;
+    case 156:
+      if (MO) {
+        foreach (auto pidx; 0..MAXPLAYERS) {
+          PlayerEx plr = PlayerEx(Level.Game.Players[pidx]);
+          if (!plr || !plr.bIsBot) continue;
+          plr.BotTestFindPathTo(MO.Origin);
+        }
+      }
+      Impulse = 0;
+      return;
   }
 
   if (Impulse >= 200 && Impulse <= 205) {

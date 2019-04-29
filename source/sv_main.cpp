@@ -1509,13 +1509,18 @@ COMMAND(MaxPlayers) {
     GCmdBuf << "listen 0\n";
 #endif
     DeathMatch = 0;
-    NoMonsters = 0;
+    NoMonsters = (GArgs.CheckParm("-nomonsters") != 0 ? 1 : 0);
   } else {
 #ifdef CLIENT
     GCmdBuf << "listen 1\n";
 #endif
     DeathMatch = dmMode;
-    NoMonsters = (dmMode ? 1 : 0);
+    if (dmMode) {
+      NoMonsters = 1;
+    } else {
+      //NoMonsters = (dmMode ? 1 : 0);
+      NoMonsters = (GArgs.CheckParm("-nomonsters") != 0 ? 1 : 0);
+    }
   }
 }
 

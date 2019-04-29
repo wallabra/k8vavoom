@@ -236,6 +236,7 @@ override void Init () {
   CreateCvar('bot_developer_messages_checkpos', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
   CreateCvar('bot_developer_messages_items', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
   CreateCvar('bot_developer_messages_attack', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvar('bot_developer_messages_path', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
 
   CreateCvar('bot_no_run', "0", "Disable bot running?", 0/*CVAR_ARCHIVE*/);
   CreateCvar('bot_no_jump', "0", "Disable bot jumping?", 0/*CVAR_ARCHIVE*/);

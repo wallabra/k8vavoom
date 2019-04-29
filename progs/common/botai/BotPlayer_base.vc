@@ -31,8 +31,69 @@
 //  procedures, such as B_CheckStuff and B_SetEnemy.
 //
 //**************************************************************************
-//class RocketLauncher : Weapon decorate;
+class BotPathNode : EntityEx;
 
+struct Transition : PathInfo {
+  int subnum;
+}
+
+int ssnum;
+
+// reachable subsectors (should be at least one, zero means "don't know yet")
+array!Transition ssreachable;
+
+// used in pathfinder
+int validCount;
+int cameFrom;
+//int goToNext;
+
+
+final bool CanReachSS (subsector_t *ss) {
+  if (!ss) return false;
+  int dsnum = ss-&XLevel.Subsectors[0];
+  if (dsnum == ssnum) return true;
+  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
+  return false;
+}
+
+
+final bool CanReachSSByIndex (int dsnum) {
+  if (dsnum < 0 || dsnum >= XLevel.Subsectors.length) return false;
+  if (dsnum == ssnum) return true;
+  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
+  return false;
+}
+
+
+final Transition *FindSSTranstion (subsector_t *ss) {
+  if (!ss) return nullptr;
+  int dsnum = ss-&XLevel.Subsectors[0];
+  if (dsnum == ssnum) return nullptr;
+  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return &tr;
+  return nullptr;
+}
+
+
+defaultproperties {
+  bSolid = false;
+  bNoSector = true; // don't use the sector links (invisible but touchable)
+  bNoBlockmap = true; // don't use the BlockLinks (inert but displayable)
+  bNoGravity = true;
+  bColideWithThings = false;
+  bColideWithWorld = false;
+  bCheckLineBlocking = false;
+  bCheckLineBlockMonsters = false;
+  bInvisible = true; // don't draw this actor
+
+  bSpecial = false;
+  bShootable = false;
+  bPickUp = false;
+  bCountItem = false;
+  bNoInteraction = true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // Main bot class
 class BotPlayerBase : GameObject;
 
@@ -196,6 +257,58 @@ array!Weapon weaponList;
 // bot will ignore item if it cannot obtain it for some time
 dictionary!(Actor, float) itemIgnoreTimeout;
 
+// nodes for subsectors
+array!BotPathNode ssnodes;
+
+// current path, numbered by subsectors
+array!int currPath;
+int validCount;
+
+bool dbgDumpPathSearch;
+
+string lastMapHash;
+
+
+//==========================================================================
+//
+//  DumpNodes
+//
+//==========================================================================
+final void DumpNodes () {
+  EntityEx mo = EntityEx(player.MO);
+  if (!mo) return;
+  print("=== NODES FOR '%s' ===", player.PlayerName);
+  foreach (int nidx, BotPathNode node; ssnodes) {
+    if (!node) continue;
+    print(" node #%s (%s) has #%d transitions", nidx, node.ssnum, node.ssreachable.length);
+    foreach (int tridx, const ref auto tr; node.ssreachable) {
+      print("  transition #%d: dest=%s; angle=%s; maxdist=%s; jump=%B; use=%B; success=%B", tridx, tr.subnum, tr.angle, tr.maxdist, tr.needJump, tr.needUse, tr.success);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  TestFindPathTo
+//
+//==========================================================================
+final void TestFindPathTo (TVec dest) {
+  EntityEx mo = EntityEx(player.MO);
+  if (!mo) return;
+  botmo = Actor(mo);
+  if (!botmo) return;
+  subsector_t *ss = botmo.XLevel.PointInSubsector(dest);
+  if (!ss) return;
+  dbgDumpPathSearch = true;
+  if (!HavePathToSS(ss)) {
+    print("bot '%s' cannot find path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
+  } else {
+    print("bot '%s' found path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
+    foreach (int sidx; currPath) print("  ss: #%d", sidx);
+  }
+  dbgDumpPathSearch = false;
+}
 
 
 //==========================================================================
@@ -219,6 +332,212 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
 
 //==========================================================================
 //
+//  CheckAndDropNodeFromTo
+//
+//==========================================================================
+final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
+  if (!ss) return;
+  botmo = Actor(player.MO);
+  if (!botmo) return;
+  if (botmo.Health < 1 || botmo.Height < 8) return;
+
+  int ssnum = ss-&botmo.XLevel.Subsectors[0];
+  if (ssnodes[ssnum]) return;
+  if (GetCvarB('bot_developer_messages_path')) print("want to drop a new node in subsector #%d", ssnum);
+
+  // get subsector center
+  TVec cpos = vector(0, 0, 0);
+  int ccount = 0;
+  foreach (auto lidx; ss.firstline..ss.firstline+ss.numlines) {
+    cpos += *botmo.XLevel.Segs[lidx].v1;
+    ++ccount;
+  }
+  if (!ccount) return; // oops
+  cpos = cpos/float(ccount);
+  cpos.z = EntityEx::ONFLOORZ;
+
+  Entity::tmtrace_t tmtrace;
+  if (botmo.CheckRelPosition(&tmtrace, cpos, noPickups:true)) {
+    cpos = tmtrace.End;
+  } else {
+    if (GetCvarB('bot_developer_messages_path')) print("oops; cannot spawn node at subsector #%d center...", ssnum);
+    if (!atBotOrigin) return;
+    cpos = botmo.Origin;
+  }
+
+  BotPathNode node = BotPathNode(botmo.Spawn(BotPathNode, cpos));
+  if (!node) return; // something is very wrong here
+  node.ssnum = ssnum;
+
+  // check reachable subsectors
+  foreach (auto lidx; ss.firstline..ss.firstline+ss.numlines) {
+    seg_t *seg = &botmo.XLevel.Segs[lidx];
+    if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue;
+    int psnum = seg.partner.front_sub-&botmo.XLevel.Subsectors[0];
+    if (ssnodes[psnum]) {
+      EntityEx::PathInfo pi;
+      TAVec ang;
+      TVec dir = ssnodes[psnum].Origin-node.Origin;
+      float dist = dir.length2D;
+      VectorAngles(dir, out ang);
+      if (botmo.TracePath(ang.yaw, dist, out pi, allowJump:true, srcOrigin:node.Origin)) {
+        if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", psnum, ssnum);
+        auto tr = node.ssreachable.alloc();
+        tr.subnum = psnum;
+        tr.angle = pi.angle;
+        tr.needdist = pi.needdist;
+        tr.maxdist = pi.maxdist;
+        tr.needJump = pi.needJump;
+        tr.needUse = pi.needUse;
+        tr.dirxy = pi.dirxy;
+        tr.success = pi.success;
+      }
+
+      dir = node.Origin-ssnodes[psnum].Origin;
+      VectorAngles(dir, out ang);
+      if (botmo.TracePath(ang.yaw, dist, allowJump:true, srcOrigin:ssnodes[psnum].Origin)) {
+        if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", ssnum, psnum);
+        auto tr = ssnodes[psnum].ssreachable.alloc();
+        tr.subnum = ssnum;
+        tr.angle = pi.angle;
+        tr.needdist = pi.needdist;
+        tr.maxdist = pi.maxdist;
+        tr.needJump = pi.needJump;
+        tr.needUse = pi.needUse;
+        tr.dirxy = pi.dirxy;
+        tr.success = pi.success;
+      }
+    }
+  }
+
+  ssnodes[ssnum] = node;
+}
+
+
+//==========================================================================
+//
+//  CheckAndDropNode
+//
+//==========================================================================
+final void CheckAndDropNode () {
+  if (!botmo.SubSector) return;
+  CheckAndDropNodeAt(botmo.SubSector, atBotOrigin:true);
+}
+
+
+//==========================================================================
+//
+//  IncValidCount
+//
+//==========================================================================
+final void IncValidCount () {
+  if (++validCount == int.max) {
+    validCount = 1;
+    foreach (ref BotPathNode node; ssnodes) if (node) node.validCount = 0;
+  }
+}
+
+
+private transient array!int nodesToCheck;
+
+
+//==========================================================================
+//
+//  BuildPathTo
+//
+//  last path node is our starting node (it is easier this way)
+//
+//==========================================================================
+final bool BuildPathTo (ref array!int path, subsector_t *ss) {
+  path.reset();
+  if (!ss) return false;
+  int snum = botmo.SubSector-&botmo.XLevel.Subsectors[0];
+  if (!ssnodes[snum]) return false;
+  int dnum = ss-&botmo.XLevel.Subsectors[0];
+  if (!ssnodes[dnum]) return false;
+  // naive search; should be replaced with a-star, for example
+  IncValidCount();
+  nodesToCheck.reset();
+  nodesToCheck[$] = snum;
+  int ntcNext = 0;
+  ssnodes[snum].validCount = validCount;
+  ssnodes[snum].cameFrom = -1;
+  if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print("looking for path from #%d to #%d (vc=%s)", snum, dnum, validCount);
+  //ssnodes[snum].goToNext = -1;
+  while (ntcNext < nodesToCheck.length) {
+    BotPathNode node = ssnodes[nodesToCheck[ntcNext++]];
+    if (node.ssnum == dnum) {
+      // path found
+      if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print(" GOT PATH from #%d to #%d", snum, dnum);
+      /*
+      int sscur = node.ssnum;
+      while (sscur >= 0) {
+        int psc = ssnodes[sscur].cameFrom;
+        if (psc >= 0) ssnodes[psc].goToNext = sscur;
+        sscur = psc;
+      }
+      sscur = snum;
+      while (sscur != dnum) {
+        node = ssnodes[sscur];
+        path[$] = node.ssnum;
+        sscur = node.goToNext;
+      }
+      */
+      int sscur = node.ssnum;
+      while (sscur >= 0) {
+        node = ssnodes[sscur];
+        if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print("  ss #%d (%d)", node.ssnum, sscur);
+        path[$] = node.ssnum;
+        sscur = node.cameFrom;
+      }
+      return true;
+    }
+    // if this node leads to some unvisited subsectors, store them as next level subsectors
+    if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print(" node at ss #%d has #%d exits", node.ssnum, node.ssreachable.length);
+    foreach (const ref auto tr; node.ssreachable) {
+      BotPathNode nextNode = ssnodes[tr.subnum];
+      if (nextNode.validCount != validCount) {
+        if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print(" added transition from #%d to #%d", node.ssnum, nextNode.ssnum);
+        nextNode.validCount = validCount;
+        nextNode.cameFrom = node.ssnum;
+        nodesToCheck[$] = nextNode.ssnum;
+      } else {
+        if (dbgDumpPathSearch /*GetCvarB('bot_developer_messages_path')*/) print(" skipped transition from #%d to #%d (%s : %s)", node.ssnum, nextNode.ssnum, nextNode.validCount, validCount);
+      }
+    }
+  }
+  // alas
+  return false;
+}
+
+
+//==========================================================================
+//
+//  HavePathToSS
+//
+//  fills currPath (or destroys it)
+//
+//==========================================================================
+final bool HavePathToSS (subsector_t *ss) {
+  return BuildPathTo(ref currPath, ss);
+}
+
+
+//==========================================================================
+//
+//  HavePathToPoint
+//
+//  fills currPath (or destroys it)
+//
+//==========================================================================
+final bool HavePathToPoint (TVec dest) {
+  subsector_t *ss = botmo.XLevel.PointInSubsector(dest);
+  return HavePathToSS(ss);
+}
+
+
+//==========================================================================
+//
 //  BotTick
 //
 //  Main bot function
@@ -227,6 +546,8 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
 void BotTick (float deltaTime) {
   botmo = Actor(player.MO);
   int currTic = botmo.XLevel.TicTime;
+
+  CheckAndDropNode();
 
   bool doReplan = (lastThinkTic != currTic);
   lastThinkTic = currTic;
@@ -458,7 +779,7 @@ bool CheckItem (Actor item) {
 //  FindAllyToSupport
 //
 //==========================================================================
-Actor FindAllyToSupport () {
+Actor FindAllyToSupport (bool allowESP) {
   if (player.Level.Game.deathmatch) return none;
   // search for player enemies in deathmatch
   //print("looking for player...");
@@ -477,7 +798,27 @@ Actor FindAllyToSupport () {
       }
     }
   }
-  return target;
+  if (target) {
+    currPath.reset();
+    return target;
+  }
+
+  if (allowESP) {
+    // use ESP to get to player, lol
+    foreach (auto i; 0..MAXPLAYERS) {
+      auto plr = player.Level.Game.Players[i];
+      if (!plr) continue;
+      if (!plr.bIsBot && plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+        if (HavePathToSS(plr.MO.SubSector)) {
+          if (GetCvarB('bot_developer_messages_path')) print("*** ESP activated! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
+        } else {
+          if (GetCvarB('bot_developer_messages_path')) print("*** CANNOT activate ESP! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
+        }
+      }
+    }
+  }
+
+  return none;
 }
 
 
@@ -508,7 +849,7 @@ void SetEnemy () {
 
   // run to human player to give some support
   if (!enemy) {
-    Actor target = FindAllyToSupport();
+    Actor target = FindAllyToSupport(allowESP:true);
     if (target && botmo.DistTo2(target) > 96) {
       SetAngle(AngleTo(target.Origin));
       player.ViewAngles.yaw = GetAngle();
@@ -1123,7 +1464,7 @@ bool RoamRandom (out TVec dest) {
   EntityEx::PathInfo piFwd, piLeft, piRight;
   float dist = 1024.0;
 
-  Actor allyToSupport = FindAllyToSupport();
+  Actor allyToSupport = FindAllyToSupport(allowESP:true);
   if (allyToSupport) {
     CheckTo(allyToSupport.Origin, out piFwd);
     if (GetCvarB('bot_developer_messages_roam')) print("bot '%s', ally to support is '%C', angle=%s; maxdist=%s", player.PlayerName, allyToSupport, piFwd.maxdist, piFwd.angle);
@@ -1141,6 +1482,8 @@ bool RoamRandom (out TVec dest) {
       return true;
     }
   }
+
+  if (FollowPath()) return true;
 
   if (botmo.TracePath(an, dist, out piFwd)) {
     posdest_valid = true;
@@ -1205,14 +1548,62 @@ bool RoamRandom (out TVec dest) {
 
 //==========================================================================
 //
+//  FollowPath
+//
+//==========================================================================
+final bool FollowPath () {
+  int ssnum = botmo.SubSector-&botmo.XLevel.Subsectors[0];
+  EntityEx::PathInfo pi;
+  // running by path
+  while (currPath.length) {
+    BotPathNode node = ssnodes[currPath[$-1]];
+    if (GetCvarB('bot_developer_messages_path')) print("going to subsector #%d (from #%d)", node.ssnum, ssnum);
+    if (ssnum == node.ssnum) {
+      // drop it, and continue
+      currPath.length -= 1;
+      continue;
+      /*
+      float dist = (botmo.Origin-node.Origin).length2D;
+      if (dist < 32) {
+        // drop it, and continue
+        currPath.length -= 1;
+        continue;
+      }
+      player.ViewAngles.yaw = AngleTo(node.Origin);
+           if (dist < 64) forwardmove = 64;
+      else if (dist < 128) forwardmove = FORWARDWALK;
+      else forwardmove = FORWARDRUN;
+      botmo.TracePath(player.ViewAngles.yaw, dist, out pi, allowJump:true);
+      PerformLastCheckActions(pi);
+      return true;
+      */
+    }
+    player.ViewAngles.yaw = AngleTo(node.Origin);
+    forwardmove = FORWARDRUN;
+    botmo.TracePath(player.ViewAngles.yaw, FORWARDRUN, out pi, allowJump:true);
+    PerformLastCheckActions(pi);
+    return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  Roam
 //
 //  Handle non-attack/dodging movement
 //
 //==========================================================================
 void Roam () {
-  TVec dest;
+  if (FindAllyToSupport(allowESP:false)) {
+    currPath.reset();
+  }
 
+  if (FollowPath()) return;
+
+  TVec dest;
   float currTime = botmo.XLevel.Time;
 
   /*
@@ -1250,7 +1641,7 @@ void Roam () {
 
   if (!destValid && lastpos_valid) {
     dest = lastpos;
-    if (CanGetCloserTo(dest)) {
+    if (!HavePathToPoint(dest) && CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to lastpost at %s from %s", player.PlayerName, dest, botmo.Origin);
     }
@@ -1258,7 +1649,7 @@ void Roam () {
 
   if (item) {
     dest = item.Origin;
-    if (CanGetCloserTo(dest)) {
+    if (!HavePathToSS(item.SubSector) && CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam') || GetCvarB('bot_developer_messages_item')) print("bot '%s' is going to item at %s from %s", player.PlayerName, dest, botmo.Origin);
       //if (botmo.DistTo2(item) <= botmo.Radius*2) noRun = true;
@@ -1267,7 +1658,7 @@ void Roam () {
 
   if (node) {
     dest = node.Origin;
-    if (CanGetCloserTo(dest)) {
+    if (!HavePathToSS(node.SubSector) && CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to node at %s from %s", player.PlayerName, dest, botmo.Origin);
     }
@@ -1275,26 +1666,26 @@ void Roam () {
 
   if (posdest_valid) {
     dest = posdest;
-    if (CanGetCloserTo(dest)) {
+    if (!HavePathToPoint(dest) && CanGetCloserTo(dest)) {
       destValid = true;
       if (GetCvarB('bot_developer_messages_roam')) print("bot '%s' is going to posdest at %s from %s (dist=%s)", player.PlayerName, dest, botmo.Origin, (dest-botmo.Origin).length2D);
     }
   }
+
+  if (FollowPath()) return;
 
   if (!destValid) {
     // no target, so just run around until we find something
     if (RoamRandom(dest)) return;
   }
 
+  if (HavePathToPoint(dest)) {
+    if (FollowPath()) return;
+  }
+
   CheckTo(dest, out pi); // to setup flags
   // unconditionally, just for fun
   PerformLastCheckActions(pi);
-  //FIXME: this is totally wrong!
-  /*
-  if (pi.maxdist < 12) {
-    if (RoamRandom(dest)) return;
-  }
-  */
 
   // bots are very bad at navigation, and even worser when running, so help 'em a little
   float distDest = (dest-botmo.Origin).length2DSquared;
@@ -1953,6 +2344,13 @@ void OnBeginPlay () {
 //
 //==========================================================================
 void OnSpawn () {
+  if (ssnodes.length != player.MO.XLevel.Subsectors.length || lastMapHash != player.MO.XLevel.MapHash) {
+    lastMapHash = player.MO.XLevel.MapHash;
+    foreach (ref BotPathNode node; ssnodes) delete node;
+    ssnodes.length = player.MO.XLevel.Subsectors.length; // clear it
+    foreach (ref BotPathNode node; ssnodes) node = none;
+  }
+
   ITarget = none;
   Actor item = none;
   itemFirstSeenTime = 0;

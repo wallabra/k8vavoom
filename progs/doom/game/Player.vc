@@ -57,6 +57,42 @@ override void DestroyBot () {
 
 //==========================================================================
 //
+//  BotSendSubSectorChange
+//
+//==========================================================================
+override void BotSendSubSectorChange (subsector_t *ss) {
+  if (!ss) return;
+  if (Bot) {
+    //print("saying bot to process subsector #%d", ss-&MO.XLevel.Subsectors[0]);
+    Bot.CheckAndDropNodeAt(ss);
+  }
+}
+
+
+//==========================================================================
+//
+//  BotDumpNodes
+//
+//==========================================================================
+override void BotDumpNodes () {
+  if (!Bot) return;
+  Bot.DumpNodes();
+}
+
+
+//==========================================================================
+//
+//  BotTestFindPathTo
+//
+//==========================================================================
+override void BotTestFindPathTo (TVec dest) {
+  if (!Bot) return;
+  Bot.TestFindPathTo(dest);
+}
+
+
+//==========================================================================
+//
 //  UserinfoChanged
 //
 //==========================================================================
