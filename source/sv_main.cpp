@@ -65,6 +65,9 @@ static VCvarB cl_disable_mlook("cl_disable_mlook", false, "Disable mouselook?", 
 extern VCvarI host_max_skip_frames;
 extern VCvarB NoExit;
 
+static VCvarB __dbg_cl_always_allow_pause("__dbg_cl_always_allow_pause", false, "Allow pausing in network games?", CVAR_PreInit);
+
+
 server_t sv;
 server_static_t svs;
 
@@ -1242,10 +1245,17 @@ COMMAND(Pause) {
     return;
   }
 
+  if (!__dbg_cl_always_allow_pause) {
+    if (GGameInfo->NetMode != NM_Standalone || svs.max_clients > 1) {
+      if (Player) Player->Printf("%s", "You cannot pause in network game, sorry.");
+      return;
+    }
+  }
+
   GGameInfo->Flags ^= VGameInfo::GIF_Paused;
   for (int i = 0; i < svs.max_clients; ++i) {
     if (GGameInfo->Players[i]) {
-      GGameInfo->Players[i]->eventClientPause(!!(GGameInfo->Flags & VGameInfo::GIF_Paused));
+      GGameInfo->Players[i]->eventClientPause(!!(GGameInfo->Flags&VGameInfo::GIF_Paused));
     }
   }
 }
@@ -1261,9 +1271,11 @@ COMMAND(Stats) {
     ForwardToServer();
     return;
   }
-  Player->Printf("Kills: %d of %d", Player->KillCount, GLevelInfo->TotalKills);
-  Player->Printf("Items: %d of %d", Player->ItemCount, GLevelInfo->TotalItems);
-  Player->Printf("Secrets: %d of %d", Player->SecretCount, GLevelInfo->TotalSecret);
+  if (Player) {
+    Player->Printf("Kills: %d of %d", Player->KillCount, GLevelInfo->TotalKills);
+    Player->Printf("Items: %d of %d", Player->ItemCount, GLevelInfo->TotalItems);
+    Player->Printf("Secrets: %d of %d", Player->SecretCount, GLevelInfo->TotalSecret);
+  }
 }
 
 
