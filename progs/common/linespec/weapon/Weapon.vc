@@ -91,6 +91,7 @@ bool bGivenAsMorphWeapon; // this weapon was given when owner morphed into somet
 bool bBotMelee; // it's a melee weapon
 bool bBotProjectile; // it's a projectile weapon
 bool bBotBfg; // it's a BFG
+bool bBotFastShoot; // this is something like Plasma Gun, do not release trigger
 
 bool bBobDisabled; // set in `A_WeaponReady()`
 

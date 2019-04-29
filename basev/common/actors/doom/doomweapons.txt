@@ -49,6 +49,7 @@ actor Chainsaw : Weapon 2005
   Weapon.UpSound "weapons/sawup"
   Weapon.ReadySound "weapons/sawidle"
   +Weapon.MeleeWeapon
+  +Weapon.BotFastShoot // keep it running
   states
   {
   Ready:
@@ -329,6 +330,7 @@ actor PlasmaRifle : DoomWeapon 2004
   Weapon.PlayerModelVersion 6
   Weapon.BotCombatDist 384
   +Weapon.Explosive
+  +Weapon.BotFastShoot // keep it running
   states
   {
   Ready:

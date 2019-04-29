@@ -451,6 +451,7 @@
     <flag name="Explosive" property="bBotProjectile" />
     <flag name="MeleeWeapon" property="bBotMelee" />
     <flag name="BFG" property="bBotBfg" />
+    <flag name="BotFastShoot" property="bBotFastShoot" />
     <flag name="CheatNotWeapon" property="bCheatNotWeapon" />
     <flag name="No_Auto_Switch" property="bNoAutoSwitch" />
     <flag name="NoAutoAim" property="bNoAutoaim" />
