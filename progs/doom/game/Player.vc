@@ -28,61 +28,54 @@ class Player : PlayerEx;
 
 BotPlayer Bot;
 
+
 //==========================================================================
 //
 //  CreateBot
 //
 //==========================================================================
-
-override void CreateBot()
-{
+override void CreateBot () {
   Bot = BotPlayer(SpawnObject(BotPlayer));
   Bot.player = self;
   Bot.OnBeginPlay();
-  bAutoAim = true;
+  bAutoAim = false;
 }
+
 
 //==========================================================================
 //
 //  DestroyBot
 //
 //==========================================================================
-
-override void DestroyBot()
-{
-  if (Bot != none)
-  {
+override void DestroyBot () {
+  if (Bot != none) {
     Bot.Destroy();
     Bot = none;
   }
 }
+
 
 //==========================================================================
 //
 //  UserinfoChanged
 //
 //==========================================================================
-
-override void UserinfoChanged()
-{
-  if (!bSpawned)
-  {
-    return;
-  }
+override void UserinfoChanged () {
+  if (!bSpawned) return;
   SetClientModel();
 }
+
 
 //==========================================================================
 //
 //  SetClientModel
 //
 //==========================================================================
-
-override void SetClientModel() {
+override void SetClientModel () {
   // k8: not yet
   MO.bFixedModel = false;
   return;
-
+  /*
   string model = Info_ValueForKey(UserInfo, "model");
 
   if (!model) {
@@ -92,62 +85,53 @@ override void SetClientModel() {
 
   MO.bFixedModel = true;
   MO.FixedModelName = va("players/%s/player.xml", model);
+  */
 }
+
 
 //==========================================================================
 //
 //  BotOnSpawn
 //
 //==========================================================================
-
-override void BotOnSpawn()
-{
+override void BotOnSpawn () {
   Bot.OnSpawn();
 }
+
 
 //==========================================================================
 //
 //  DoClearPlayer
 //
 //==========================================================================
-
-override void DoClearPlayer()
-{
-  BotPlayer b;
-
-  b = Bot;
+override void DoClearPlayer () {
+  BotPlayer b = Bot;
   ::DoClearPlayer();
   Bot = b;
 }
+
 
 //==========================================================================
 //
 //  GetRebornHealth
 //
 //==========================================================================
-
-override int GetRebornHealth()
-{
+override int GetRebornHealth () {
   return MainGameInfo(Level.Game).INITIAL_HEALTH;
 }
+
 
 //==========================================================================
 //
 //  GotAmmo
 //
 //==========================================================================
-
-override void GotAmmo(Ammo NewAmmo)
-{
-  // We were down to zero,
-  // so select a new weapon.
-  // Preferences are not user selectable.
-  if (!ReadyWeapon || ReadyWeapon.bWimpyWeapon)
-  {
+override void GotAmmo (Ammo NewAmmo) {
+  // we were down to zero, so select a new weapon
+  // preferences are not user selectable
+  if (!ReadyWeapon || ReadyWeapon.bWimpyWeapon) {
     Weapon Best = BestWeapon(class!Ammo(NewAmmo.Class));
-    if (Best && (!ReadyWeapon ||
-      Best.SelectionOrder < ReadyWeapon.SelectionOrder))
-    {
+    if (Best && (!ReadyWeapon || Best.SelectionOrder < ReadyWeapon.SelectionOrder)) {
       PendingWeapon = Best;
     }
   }
@@ -169,9 +153,7 @@ override void PlayerImpulse () {
 //  BotTick
 //
 //==========================================================================
-
-override void BotTick(float deltaTime)
-{
+override void BotTick (float deltaTime) {
   Bot.BotTick(deltaTime);
 }
 
@@ -408,33 +390,15 @@ void Cheat_Gimme () {
 //  KilledActor
 //
 //==========================================================================
-
-override void KilledActor(EntityEx Victim)
-{
-  // Check for frag changes
-  if (Victim.bIsPlayer)
-  {
-    if (bIsBot)
-    {
-      Bot.Killed(Victim);
-    }
-
-    if (Victim.Player.bIsBot)
-    {
-      Player(Victim.Player).Bot.Died(EntityEx(MO));
-    }
-
-    if (MO == Victim)
-    {
-      Frags--;
-    }
-    else
-    {
-      Frags++;
-    }
+override void KilledActor (EntityEx Victim) {
+  // check for frag changes
+  if (Victim.bIsPlayer) {
+    if (bIsBot) Bot.Killed(Victim);
+    if (Victim.Player.bIsBot) Player(Victim.Player).Bot.Died(EntityEx(MO));
+    if (MO == Victim) --Frags; else ++Frags;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
