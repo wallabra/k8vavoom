@@ -54,7 +54,7 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
   Weapon.AmmoGive2 0
   YScale 0.6
   XScale 0.8
-  Weapon.SelectionOrder 4500
+  Weapon.SelectionOrder 600 // better than shotgun and chaingun, worser than SSG
   Weapon.AmmoType1 "BDW_RifleClip"
   Weapon.AmmoType2 "BDW_RifleAmmo"
   Obituary "%o was shot down by %k's assault rifle."

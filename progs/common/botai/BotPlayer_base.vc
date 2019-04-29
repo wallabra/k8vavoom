@@ -1357,14 +1357,19 @@ void Roam () {
 //==========================================================================
 bool CheckWantCurrentItem () {
   if (!item) return false;
+  if (!item.bSpecial || item.IsDestroyed()) { item = none; return false; } // picked up by someone
   if (bItemIsPowerup) return true; // always collect powerups
   if (!bItemIsWeapon) return false; // don't bother with non-weapons
   if (!player.ReadyWeapon || !CanAttackWithCurrentWeapon()) return true; // want any weapon
   Weapon wpn = Weapon(item);
   if (!wpn) return false;
-  if (boptCheckWimpyWeapon && player.ReadyWeapon.bWimpyWeapon) return false;
-  if (player.ReadyWeapon && player.ReadyWeapon.bBotMelee) return true;
-  return true;
+  Weapon currWpn = Weapon(player.ReadyWeapon);
+  if (!currWpn) return true; // just in case
+  if (boptCheckWimpyWeapon && currWpn.bWimpyWeapon) return true; // replace wimpy weapon
+  if (currWpn.bBotMelee) return true;
+  // assume that higher slot means "better weapon" (this is not always true, but...)
+  if (wpn.SlotNumber > 0 && currWpn.SlotNumber > 0 && wpn.SlotNumber > currWpn.SlotNumber) return true;
+  return (wpn.SelectionOrder < currWpn.SelectionOrder);
 }
 
 
@@ -1643,7 +1648,7 @@ void BotSwitchWeapon () {
   if (bestwpn && !bestwpn.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) bestwpn = none;
   foreach (Weapon wpn; weaponList) {
     if (!wpn.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) continue;
-    if (!bestwpn) { bestwpn = wpn; continue; }
+    //if (!bestwpn) { bestwpn = wpn; continue; }
     if (wpn.bBotProjectile) {
       if (!enemy) continue;
       if (enemy.DistTo(botmo) <= SAFE_SELF_MISDIST) continue;
@@ -1655,6 +1660,14 @@ void BotSwitchWeapon () {
       continue;
     }
     if (bestwpn && bestwpn.bBotMelee && !wpn.bBotMelee) {
+      bestwpn = wpn;
+      continue;
+    }
+    if (!bestwpn && (enemy || !wpn.bBotProjectile)) {
+      bestwpn = wpn;
+      continue;
+    }
+    if (bestwpn && !bestwpn.bBotBfg && wpn.SelectionOrder < bestwpn.SelectionOrder) {
       bestwpn = wpn;
     }
   }
