@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+  writeln("female".strIndexOf("female"), " : ", 0);
+  writeln("female".strLastIndexOf("female"), " : ", 0);
+
+  writeln("abcdef".strIndexOf("f"), " : ", 5);
+  writeln("abcdef".strLastIndexOf("f"), " : ", 5);
+
+  writeln("abcdef".strIndexOf("a"), " : ", 0);
+  writeln("abcdef".strLastIndexOf("a"), " : ", 0);
+}
