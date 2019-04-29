@@ -818,16 +818,12 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       break;
     case IsA:
     case NotIsA:
+      //FIXME: check if both sides are class literals, and do it in compile time
       if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
-        // two classes
-        int v = (op1->Type.Class->IsChildOf(op2->Type.Class) ? 1 : 0);
-        if (Oper == NotIsA) v = !v;
-        VExpression *e = new VIntLiteral(v, Loc);
-        delete this;
-        return e->Resolve(ec);
+        Type = TYPE_Int;
       } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
-        if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
-          ParseError(Loc, "`isa` expects class or object");
+        if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference && op2->Type.Type != TYPE_Name) {
+          ParseError(Loc, "`isa` expects class/object/name");
           delete this;
           return nullptr;
         }
@@ -985,16 +981,25 @@ void VBinary::Emit (VEmitContext &ec) {
 
   if (Oper == IsA || Oper == NotIsA) {
     if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
-      FatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
+      //FatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
+      op1->Emit(ec);
+      op2->Emit(ec);
+      ec.AddStatement((Oper == IsA ? OPC_ClassIsAClass : OPC_ClassIsNotAClass), Loc);
     } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
-      if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
-        FatalError("VC: internal compiler error (VBinary::Emit:ClassObj:?)");
+      if (op2->Type.Type != TYPE_Name) {
+        if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
+          FatalError("VC: internal compiler error (VBinary::Emit:ClassObj:?)");
+        }
       }
       op1->Emit(ec);
       if (op1->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
       op2->Emit(ec);
       if (op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
-      ec.AddStatement((Oper == IsA ? OPC_ClassIsAClass : OPC_ClassIsNotAClass), Loc);
+      if (op2->Type.Type == TYPE_Name) {
+        ec.AddStatement((Oper == IsA ? OPC_ClassIsAClassName : OPC_ClassIsNotAClassName), Loc);
+      } else {
+        ec.AddStatement((Oper == IsA ? OPC_ClassIsAClass : OPC_ClassIsNotAClass), Loc);
+      }
       return;
     } else {
       FatalError("VC: internal compiler error (VBinary::Emit:?:?)");

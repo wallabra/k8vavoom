@@ -516,6 +516,9 @@ enum {
   // [-2]: classptr; [-1]: classptr
   DECLARE_OPC(ClassIsAClass, None),
   DECLARE_OPC(ClassIsNotAClass, None),
+  // [-2]: classptr; [-1]: name
+  DECLARE_OPC(ClassIsAClassName, None),
+  DECLARE_OPC(ClassIsNotAClassName, None),
 
   // builtins (k8: i'm short of opcodes, so...)
   DECLARE_OPC(Builtin, Builtin),

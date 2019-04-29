@@ -403,6 +403,14 @@ public:
     return false;
   }
 
+  inline bool IsChildOfByName (VName name) const {
+    if (name == NAME_None) return false;
+    for (const VClass *c = this; c; c = c->GetSuperClass()) {
+      if (VStr::strEquCI(*name, *c->Name)) return true;
+    }
+    return false;
+  }
+
   // accessors
   inline VClass *GetSuperClass () const { return ParentClass; }
 

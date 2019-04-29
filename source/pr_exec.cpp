@@ -2644,42 +2644,58 @@ func_loop:
         ++ip;
         PR_VM_BREAK;
 
+#define DO_ISA_CLASS(tval_, fval_)  do { \
+        if (sp[-2].p && sp[-1].p) { \
+          VClass *c = (VClass *)sp[-2].p; \
+          sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? (tval_) : (fval_)); \
+        } else if (sp[-2].p || sp[-1].p) { \
+          /* class isa none is false */ \
+          /* none isa class is false */ \
+          sp[-2].i = (fval_); \
+        } else { \
+          /* none isa none is true */ \
+          sp[-2].i = (tval_); \
+        } \
+        --sp; \
+        ++ip; \
+      } while (0)
+
       // [-2]: class
       // [-1]: class
       PR_VM_CASE(OPC_ClassIsAClass)
-        if (sp[-2].p && sp[-1].p) {
-          //VClass *c = ((VObject *)sp[-2].p)->GetClass();
-          VClass *c = (VClass *)sp[-2].p;
-          sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? 1 : 0);
-        } else if (sp[-2].p || sp[-1].p) {
-          // class isa none is false
-          // none isa class is false
-          sp[-2].i = 0;
-        } else {
-          // none isa none is true
-          sp[-2].i = 1;
-        }
-        --sp;
-        ++ip;
+        DO_ISA_CLASS(1, 0);
         PR_VM_BREAK;
 
       // [-2]: class
       // [-1]: class
       PR_VM_CASE(OPC_ClassIsNotAClass)
-        if (sp[-2].p && sp[-1].p) {
-          //VClass *c = ((VObject *)sp[-2].p)->GetClass();
-          VClass *c = (VClass *)sp[-2].p;
-          sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? 0 : 1);
-        } else if (sp[-2].p || sp[-1].p) {
-          // class !isa none is true
-          // none !isa class is true
-          sp[-2].i = 1;
-        } else {
-          // none !isa none is false
-          sp[-2].i = 0;
-        }
-        --sp;
-        ++ip;
+        DO_ISA_CLASS(0, 1);
+        PR_VM_BREAK;
+
+#define DO_ISA_CLASS_NAME(tval_, fval_)  do { \
+        VName n = VName((EName)sp[-1].i); \
+        if (VStr::strEquCI(*n, "none")) n = NAME_None; /*HACK*/ \
+        if (sp[-2].p) { \
+          VClass *c = (VClass *)sp[-2].p; \
+          sp[-2].i = (c->IsChildOfByName(n) ? (tval_) : (fval_)); \
+        } else { \
+          /* none isa none is true */ \
+          sp[-2].i = (n == NAME_None ? (tval_) : (fval_)); \
+        } \
+        --sp; \
+        ++ip; \
+      } while (0)
+
+      // [-2]: class
+      // [-1]: name
+      PR_VM_CASE(OPC_ClassIsAClassName)
+        DO_ISA_CLASS_NAME(1, 0);
+        PR_VM_BREAK;
+
+      // [-2]: class
+      // [-1]: name
+      PR_VM_CASE(OPC_ClassIsNotAClassName)
+        DO_ISA_CLASS_NAME(0, 1);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Builtin)
