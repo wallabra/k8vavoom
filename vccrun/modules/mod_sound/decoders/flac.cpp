@@ -386,7 +386,7 @@ void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t
   size_t blockGrab = 0;
   size_t blockOfs;
 
-  blockGrab = MIN(StrmSize, blockSize);
+  blockGrab = min2(StrmSize, blockSize);
   StrmWrite(buffer, 0, blockGrab);
   blockSize -= blockGrab;
   blockOfs = blockGrab;
@@ -415,7 +415,7 @@ void VFlacAudioCodec::FStream::metadata_callback (const ::FLAC__StreamMetadata *
       return;
     }
     SampleRate = metadata->data.stream_info.sample_rate;
-    NumChannels = MIN((unsigned)2, metadata->data.stream_info.channels);
+    NumChannels = min2((unsigned)2, metadata->data.stream_info.channels);
     SampleBits = metadata->data.stream_info.bits_per_sample;
     PoolSize = metadata->data.stream_info.max_blocksize*2;
 

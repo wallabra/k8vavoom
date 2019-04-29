@@ -1073,7 +1073,7 @@ bool VClass::Define () {
     // first get actual replacement
     ParentClass = ParentClass->GetReplacement();
     if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
-    if (DoesReplacement == ReplaceType::Replace_LatestChild) ParentClass = FindBestLatestChild();
+    if (DoesReplacement == ReplaceType::Replace_LatestChild) ParentClass = ParentClass->FindBestLatestChild(Name);
     if (!ParentClass->Defined) {
       bool xdres = ParentClass->Define();
       ParentClass->DefinedAsDependency = true;
