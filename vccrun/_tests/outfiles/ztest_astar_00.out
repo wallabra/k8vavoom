@@ -1,0 +1,13 @@
+solution cost: 7 (4 nodes)
+  #0: 0 (start)
+  #1: 4 (d)
+  #2: 5 (e)
+  #3: 6 (end)
+killing graph
+killing node #0 (start)
+killing node #1 (a)
+killing node #2 (b)
+killing node #3 (c)
+killing node #4 (d)
+killing node #5 (e)
+killing node #6 (end)

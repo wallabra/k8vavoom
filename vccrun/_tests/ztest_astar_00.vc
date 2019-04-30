@@ -1,0 +1,126 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class PathNode : MiAStarNodeBase;
+
+struct Link {
+  int index;
+  float cost;
+}
+
+int index;
+string Name;
+array!Link links;
+
+override void Destroy () {
+  print("killing node #%s (%s)", index, Name);
+  ::Destroy();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class PathGraph : MiAStarGraphBase;
+
+array!PathNode nodes;
+
+
+override void Destroy () {
+  print("killing graph");
+  foreach (ref auto node; nodes) delete node;
+  ::Destroy();
+}
+
+
+void appendNode (string Name, int index, int link, float cost) {
+  if (index < 0) Error("bad index");
+  if (link < 0) Error("bad link");
+  if (index < nodes.length) {
+    // new link
+    PathNode node = nodes[index];
+    foreach (ref auto lnk; node.links) {
+      if (lnk.index == link) {
+        lnk.cost = cost;
+        return;
+      }
+    }
+    // append link
+    auto lp = node.links.alloc();
+    lp.index = link;
+    lp.cost = cost;
+    node.links.sort(delegate int (const ref PathNode::Link a, const ref PathNode::Link b) {
+      return a.index-b.index;
+    });
+  } else {
+    auto node = SpawnObject(PathNode);
+    node.index = index;
+    node.Name = Name;
+    auto lp = node.links.alloc();
+    lp.index = link;
+    lp.cost = cost;
+    nodes[index] = node;
+  }
+}
+
+
+// two abstract methods, must be overriden
+/*
+  Return the least possible cost between 2 states. For example, if your pathfinding
+  is based on distance, this is simply the straight distance between 2 points on the
+  map. If you pathfinding is based on minimum time, it is the minimal travel time
+  between 2 points given the best possible terrain.
+*/
+override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
+  return fabs(PathNode(start).index-PathNode(end).index);
+}
+
+/*
+  Return the exact cost from the given state to all its neighboring states. This
+  may be called multiple times, or cached by the solver. It *must* return the same
+  exact values for every call to MicroPather::Solve(). It should generally be a simple,
+  fast function with no callbacks into the pather.
+
+  Push all neighbours with `PushAdjacentCost()`.
+*/
+override void AdjacentCost (MiAStarNodeBase node) {
+  foreach (const ref auto lnk; PathNode(node).links) {
+    if (nodes[lnk.index]) PushAdjacentCost(nodes[lnk.index], lnk.cost);
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+void main () {
+  auto graph = SpawnObject(PathGraph);
+  scope(exit) delete graph;
+
+  graph.appendNode("start", 0, link:1, cost:1.5);
+  graph.appendNode("start", 0, link:4, cost:2);
+
+  graph.appendNode("a", 1, link:0, cost:1.5);
+  graph.appendNode("a", 1, link:2, cost:2);
+
+  graph.appendNode("b", 2, link:1, cost:2);
+  graph.appendNode("b", 2, link:3, cost:3);
+
+  graph.appendNode("c", 3, link:2, cost:3);
+  graph.appendNode("c", 3, link:6, cost:4);
+
+  graph.appendNode("d", 4, link:0, cost:2);
+  graph.appendNode("d", 4, link:5, cost:3);
+
+  graph.appendNode("e", 5, link:4, cost:3);
+  graph.appendNode("e", 5, link:6, cost:2);
+
+  graph.appendNode("end", 6, link:3, cost:4);
+  graph.appendNode("end", 6, link:5, cost:2);
+
+  auto res = graph.Solve(graph.nodes[0], graph.nodes[6]);
+  if (!res) {
+    print("no solution found");
+  } else {
+    print("solution cost: %s (%s nodes)", graph.pathCost, graph.PathArrayLength);
+    foreach (auto pidx; 0..graph.PathArrayLength) {
+      print("  #%d: %d (%s)", pidx, PathNode(graph.PathArrayNode(pidx)).index, PathNode(graph.PathArrayNode(pidx)).Name);
+    }
+  }
+}
