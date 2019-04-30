@@ -130,6 +130,10 @@ const float ITEM_IGNORE_TIME = 10.0; // time bot should ignore item
 const float ITEM_IGNORE_TIME_DEVIATION = 3.0; // random deviation for ignore time
 
 
+// required for hexen
+bool boptCheckWimpyWeapon = true;
+
+
 /*
   Class definitions for botinfo, chatinfo, and
   other various bot information thingamabobers.
@@ -1842,11 +1846,15 @@ bool CheckWantCurrentItem () {
   Weapon wpn = Weapon(item);
   if (!wpn) return false;
   if (!player.ReadyWeapon || !CanAttackWithCurrentWeapon()) return true; // want any weapon
-  if (wpn.bWimpyWeapon || wpn.bBotMelee) return false;
+  if (boptCheckWimpyWeapon) {
+    if (wpn.bWimpyWeapon || wpn.bBotMelee) return false;
+  }
   Weapon currWpn = Weapon(player.ReadyWeapon);
   if (!currWpn) return true; // just in case
-  if (currWpn.bWimpyWeapon) return true; // replace wimpy weapon
-  if (currWpn.bBotMelee) return true; // replace melee weapon
+  if (boptCheckWimpyWeapon) {
+    if (currWpn.bWimpyWeapon) return true; // replace wimpy weapon
+    if (currWpn.bBotMelee) return true; // replace melee weapon
+  }
   // assume that higher slot means "better weapon" (this is not always true, but...)
   if (wpn.SelectionOrder && currWpn.SelectionOrder) return (wpn.SelectionOrder < currWpn.SelectionOrder);
   if (wpn.SlotNumber > 0 && currWpn.SlotNumber > 0 && wpn.SlotNumber > currWpn.SlotNumber) return true;
