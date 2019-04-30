@@ -335,6 +335,9 @@ class VLevel : public VGameObject {
 
   TArray<Ctl2DestLink> ControlLinks;
 
+  // array of cached subsector centers (used in VC code, no need to save/load it)
+  TArray<TVec> ssCenters;
+
   // iterator
   struct CtlLinkIter {
     VLevel *level;

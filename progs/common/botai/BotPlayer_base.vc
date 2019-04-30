@@ -373,14 +373,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
   if (GetCvarB('bot_developer_messages_path')) print("want to drop a new node in subsector #%d", ssnum);
 
   // get subsector center
-  TVec cpos = vector(0, 0, 0);
-  int ccount = 0;
-  foreach (auto lidx; ss.firstline..ss.firstline+ss.numlines) {
-    cpos += *botmo.XLevel.Segs[lidx].v1;
-    ++ccount;
-  }
-  if (!ccount) return; // oops
-  cpos = cpos/float(ccount);
+  TVec cpos = botmo.XLevel.GetSubsectorCenter(ss);
   cpos.z = EntityEx::ONFLOORZ;
 
   Entity::tmtrace_t tmtrace;

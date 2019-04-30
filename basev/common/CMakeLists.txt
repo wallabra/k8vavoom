@@ -171,22 +171,23 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     textures/-noflat-.png
     uidef/*.txt
     uidef/menus/*.txt
+
     ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
+
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/uibase/hud/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/uibase/client/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/condlg/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/finale/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/uibase/client/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/uibase/hud/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/menus/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgchoice/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgslotsl/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgselector/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgslotsl/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgtextbtn/*.vc
+
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/linespec/incomplete/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/actor/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/armor/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/basic/*.vc
@@ -197,6 +198,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/health/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/heretic/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/hexen/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/incomplete/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/linespec/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/particle/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/player/*.vc
@@ -206,13 +208,10 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/raven/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/secaction/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/lights/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/movers/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/sound/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/strife/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/weapon/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/linespec/pathfind/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
+
     #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.fs
     #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
     glshaders/*.fs

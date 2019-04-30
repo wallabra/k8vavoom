@@ -191,6 +191,9 @@ struct Ctl2DestLink {
 
 native transient private array!Ctl2DestLink ControlLinks;
 
+// array of cached subsector centers
+native transient array!TVec ssCenters;
+
 // they are static
 //native transient private opening_t *openListHead;
 //native transient private opening_t *openListFree;
@@ -368,6 +371,34 @@ final void k8LimiterUnarchiveThinkers (class!Entity thc, int allowed, ref int co
       elist[i].Destroy();
     }
   }
+}
+
+
+//==========================================================================
+//
+//  GetSubsectorCenter
+//
+//==========================================================================
+final TVec GetSubsectorCenter (const subsector_t *sub) {
+  if (!sub) Error("wut?!");
+  if (ssCenters.length != Subsectors.length) {
+    // clean it up
+    ssCenters.length = Subsectors.length;
+    foreach (ref TVec ssc; ssCenters) ssc = vector(float.max, float.max, float.max); // impossibiru
+  }
+  int ssnum = sub-&Subsectors[0];
+  TVec res = ssCenters[ssnum];
+  if (res.x != float.max) return res;
+  // calculate it
+  if (sub.numlines == 0) Error("wut?!");
+  res = vector(0, 0, 0);
+  foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
+    res += *Segs[lidx].v1;
+  }
+  res = res/float(sub.numlines);
+  res.z = GetSectorFloorPointZ(sub.sector, res); // arbitrary
+  ssCenters[ssnum] = res;
+  return res;
 }
 
 

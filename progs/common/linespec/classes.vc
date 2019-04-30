@@ -73,7 +73,6 @@ enum {
 #include "entityex/EntityEx.Decal.vc"
 #include "entityex/EntityEx.CheckFlag.vc"
 #include "entityex/EntityEx.TracePath.vc"
-#include "pathfind/pathfind.vc"
 #include "entityex/EntityEx.Defaults.vc"
 
 #include "actor/Actor.Misc.vc"

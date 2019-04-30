@@ -23,19 +23,26 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
     linespec/actor/*.vc
     linespec/armor/*.vc
     linespec/basic/*.vc
+    linespec/bridge/*.vc
+    linespec/camera/*.vc
+    linespec/dynlight/*.vc
     linespec/entityex/*.vc
     linespec/health/*.vc
     linespec/heretic/*.vc
     linespec/hexen/*.vc
     linespec/incomplete/*.vc
+    linespec/linespec/*.vc
+    linespec/particle/*.vc
     linespec/player/*.vc
+    linespec/polythink/*.vc
     linespec/portals/*.vc
     linespec/powerup/*.vc
     linespec/raven/*.vc
     linespec/secaction/*.vc
+    linespec/secthink/*.vc
+    linespec/sound/*.vc
     linespec/strife/*.vc
     linespec/weapon/*.vc
-    linespec/pathfind/*.vc
     ${OUTDIR}/engine.dat)
 add_custom_target(linespec ALL DEPENDS ${OUTDIR}/linespec.dat)
 add_dependencies(linespec vcc engine)
@@ -45,14 +52,14 @@ add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
   DEPENDS
     vcc
     uibase/*.vc
-    uibase/hud/*.vc
+    uibase/client/*.vc
     uibase/condlg/*.vc
     uibase/finale/*.vc
-    uibase/client/*.vc
+    uibase/hud/*.vc
     uibase/menus/*.vc
     uibase/wgchoice/*.vc
-    uibase/wgslotsl/*.vc
     uibase/wgselector/*.vc
+    uibase/wgslotsl/*.vc
     uibase/wgtextbtn/*.vc
     ${OUTDIR}/engine.dat)
 add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat ${OUTDIR}/newui.dat)
