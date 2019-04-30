@@ -115,4 +115,6 @@
 
 #include "timsort.h"
 
+#include "micropather.h"
+
 #endif

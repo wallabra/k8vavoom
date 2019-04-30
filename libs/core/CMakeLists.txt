@@ -60,4 +60,6 @@ add_library(core STATIC
   xxhash.h
   xxhash.c
   ntvalue.cpp
+  micropather.h
+  micropather.cpp
 )
