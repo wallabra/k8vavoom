@@ -84,6 +84,9 @@ if (ENABLE_VCCRUN)
     ../source/vc/vc_package.h
     ../source/vc/vc_package.cpp
 
+    ../source/vc/vc_zastar.h
+    ../source/vc/vc_zastar.cpp
+
     ../source/vc/vc_emit_context.h
     ../source/vc/vc_emit_context.cpp
     ../source/vc/vc_expr_base.h

@@ -379,6 +379,10 @@ REGISTER_NAME(decoDoSetFlag)
 
 REGISTER_NAME(Socket)
 
+// micro a-star interface
+REGISTER_NAME(MiAStarGraphBase)
+REGISTER_NAME(MiAStarNodeBase)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM

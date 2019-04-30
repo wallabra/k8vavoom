@@ -22,25 +22,20 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-
-#ifdef _MSC_VER
-#pragma warning( disable : 4786 ) // Debugger truncating names.
-#pragma warning( disable : 4530 ) // Exception handler isn't used
-#endif
-
 #include <memory.h>
 #include <stdio.h>
 
-//#define DEBUG_PATH
-//#define DEBUG_PATH_DEEP
-//#define TRACK_COLLISION
-//#define DEBUG_CACHING
+//#define MP_DEBUG_PATH
+//#define MP_DEBUG_PATH_DEEP
+//#define MP_TRACK_COLLISION
+//#define MP_DEBUG_CACHING
 
-#ifdef DEBUG_CACHING
+#ifdef MP_DEBUG_CACHING
 #include "../grinliz/gldebug.h"
 #endif
 
-#include "micropather.h"
+//#include "micropather.h"
+#include "core.h"
 
 using namespace micropather;
 
@@ -80,7 +75,7 @@ void OpenQueue::Push( PathNode* pNode )
   MPASSERT( pNode->inOpen == 0 );
   MPASSERT( pNode->inClosed == 0 );
 
-#ifdef DEBUG_PATH_DEEP
+#ifdef MP_DEBUG_PATH_DEEP
   printf( "Open Push: " );
   graph->PrintStateInfo( pNode->state );
   printf( " total=%.1f\n", pNode->totalCost );
@@ -118,7 +113,7 @@ PathNode* OpenQueue::Pop()
   MPASSERT( pNode->inOpen == 1 );
   pNode->inOpen = 0;
 
-#ifdef DEBUG_PATH_DEEP
+#ifdef MP_DEBUG_PATH_DEEP
   printf( "Open Pop: " );
   graph->PrintStateInfo( pNode->state );
   printf( " total=%.1f\n", pNode->totalCost );
@@ -129,7 +124,7 @@ PathNode* OpenQueue::Pop()
 
 void OpenQueue::Update( PathNode* pNode )
 {
-#ifdef DEBUG_PATH_DEEP
+#ifdef MP_DEBUG_PATH_DEEP
   printf( "Open Update: " );
   graph->PrintStateInfo( pNode->state );
   printf( " total=%.1f\n", pNode->totalCost );
@@ -168,7 +163,7 @@ class ClosedSet
 
   void Add( PathNode* pNode )
   {
-    #ifdef DEBUG_PATH_DEEP
+    #ifdef MP_DEBUG_PATH_DEEP
       printf( "Closed add: " );
       graph->PrintStateInfo( pNode->state );
       printf( " total=%.1f\n", pNode->totalCost );
@@ -182,7 +177,7 @@ class ClosedSet
 
   void Remove( PathNode* pNode )
   {
-    #ifdef DEBUG_PATH_DEEP
+    #ifdef MP_DEBUG_PATH_DEEP
       printf( "Closed remove: " );
       graph->PrintStateInfo( pNode->state );
       printf( " total=%.1f\n", pNode->totalCost );
@@ -238,7 +233,7 @@ PathNodePool::~PathNodePool()
   free( firstBlock );
   free( cache );
   free( hashTable );
-#ifdef TRACK_COLLISION
+#ifdef MP_TRACK_COLLISION
   printf( "Total collide=%d HashSize=%d HashShift=%d\n", totalCollide, HashSize(), hashShift );
 #endif
 }
@@ -268,7 +263,7 @@ void PathNodePool::GetCache( int start, int nNodes, NodeCost* nodes ) {
 
 void PathNodePool::Clear()
 {
-#ifdef TRACK_COLLISION
+#ifdef MP_TRACK_COLLISION
   // Collision tracking code.
   int collide=0;
   for( unsigned i=0; i<HashSize(); ++i ) {
@@ -569,13 +564,13 @@ void MicroPather::GoalReached( PathNode* node, void* start, void* end, MP_VECTOR
     pathCache->Add( path, costVec );
   }
 
-  #ifdef DEBUG_PATH
+  #ifdef MP_DEBUG_PATH
   printf( "Path: " );
   int counter=0;
   #endif
   for ( unsigned k=0; k<path.size(); ++k )
   {
-    #ifdef DEBUG_PATH
+    #ifdef MP_DEBUG_PATH
     graph->PrintStateInfo( path[k] );
     printf( " " );
     ++counter;
@@ -586,7 +581,7 @@ void MicroPather::GoalReached( PathNode* node, void* start, void* end, MP_VECTOR
     }
     #endif
   }
-  #ifdef DEBUG_PATH
+  #ifdef MP_DEBUG_PATH
   printf( "Cost=%.1f Checksum %d\n", node->costFromStart, checksum );
   #endif
 }
@@ -794,7 +789,7 @@ void PathCache::AddItem( const Item& item )
     if ( mem[index].Empty() ) {
       mem[index] = item;
       ++nItems;
-#ifdef DEBUG_CACHING
+#ifdef MP_DEBUG_CACHING
       GLOUTPUT(( "Add: start=%x next=%x end=%x\n", item.start, item.next, item.end ));
 #endif
       break;
@@ -858,7 +853,7 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
   // can easily be a left over path  from a previous call.
   path->clear();
 
-  #ifdef DEBUG_PATH
+  #ifdef MP_DEBUG_PATH
   printf( "Path: " );
   graph->PrintStateInfo( startNode );
   printf( " --> " );
@@ -874,12 +869,12 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
   if ( pathCache ) {
     int cacheResult = pathCache->Solve( startNode, endNode, path, cost );
     if ( cacheResult == SOLVED || cacheResult == NO_SOLUTION ) {
-    #ifdef DEBUG_CACHING
+    #ifdef MP_DEBUG_CACHING
       GLOUTPUT(( "PathCache hit. result=%s\n", cacheResult == SOLVED ? "solved" : "no_solution" ));
     #endif
       return cacheResult;
     }
-    #ifdef DEBUG_CACHING
+    #ifdef MP_DEBUG_CACHING
     GLOUTPUT(( "PathCache miss\n" ));
     #endif
   }
@@ -907,7 +902,7 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
     {
       GoalReached( node, startNode, endNode, path );
       *cost = node->costFromStart;
-      #ifdef DEBUG_PATH
+      #ifdef MP_DEBUG_PATH
       DumpStats();
       #endif
       return SOLVED;
@@ -958,7 +953,7 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
       }
     }
   }
-  #ifdef DEBUG_PATH
+  #ifdef MP_DEBUG_PATH
   DumpStats();
   #endif
   if ( pathCache ) {

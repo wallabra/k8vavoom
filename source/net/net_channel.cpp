@@ -354,6 +354,6 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
     }
   }
   // execute it
-  VObject::ExecuteFunction(Func);
+  (void)VObject::ExecuteFunction(Func);
   return true;
 }

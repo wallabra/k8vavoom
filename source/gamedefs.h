@@ -64,6 +64,7 @@
 #include "vc_object.h"
 #include "vc_decorate.h"//  Decorate scripts
 #include "vc_dehacked.h"//  DeHackEd support
+#include "vc_zastar.h"
 #include "scripts.h"  //  Script parsing
 #include "input.h"    //  Input from keyboard, mouse and joystick
 #include "video.h"    //  Graphics

@@ -35,55 +35,29 @@ distribution.
   base commit: 33a3b8403f1bc3937c9d364fe6c3977169bee3b5
 */
 
-// This probably works to remove, but isn't currently tested in STL mode.
-#define GRINLIZ_NO_STL
-
-#ifdef GRINLIZ_NO_STL
-# define MP_VECTOR micropather::MPVector
-#else
-# error "GTFO, STL!"
-#endif
+#define MP_VECTOR micropather::MPVector
 #include <float.h>
 
-#ifdef _DEBUG
-  #ifndef DEBUG
-    #define DEBUG
+/*
+  #ifndef MP_DEBUG
+    #define MP_DEBUG
   #endif
-#endif
+*/
 
 
-#if defined(DEBUG)
-#   if defined(_MSC_VER)
-#       // "(void)0," is for suppressing C4127 warning in "assert(false)", "assert(true)" and the like
-#       define MPASSERT( x )           if ( !((void)0,(x))) { __debugbreak(); } //if ( !(x)) WinDebugBreak()
-#   elif defined (ANDROID_NDK)
-#       include <android/log.h>
-#       define MPASSERT( x )           if ( !(x)) { __android_log_assert( "assert", "grinliz", "ASSERT in '%s' at %d.", __FILE__, __LINE__ ); }
-#   else
-#       include <assert.h>
-#       define MPASSERT                assert
-#   endif
+#if defined(MP_DEBUG)
+#       define MPASSERT                check
 #   else
 #       define MPASSERT( x )           {}
 #endif
 
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1400 )
-  #include <stdlib.h>
-  typedef uintptr_t   MP_UPTR;
-#elif defined (__GNUC__) && (__GNUC__ >= 3 )
-  #include <stdint.h>
-  #include <stdlib.h>
-  typedef uintptr_t   MP_UPTR;
-#else
-  // Assume not 64 bit pointers. Get a new compiler.
-  typedef unsigned MP_UPTR;
-#endif
+#include <stdint.h>
+#include <stdlib.h>
+typedef uintptr_t   MP_UPTR;
 
 namespace micropather
 {
-#ifdef GRINLIZ_NO_STL
-
   /* WARNING: vector partial replacement. Does everything needed to replace std::vector
      for micropather, but only works on Plain Old Data types. Doesn't call copy/construct/destruct
      correctly for general use.
@@ -126,7 +100,6 @@ namespace micropather
     unsigned m_size;
     T* m_buf;
   };
-#endif
 
   /**
     Used to pass the cost of states from the cliet application to MicroPather. This
@@ -177,7 +150,7 @@ namespace micropather
     virtual void AdjacentCost( void* state, MP_VECTOR< micropather::StateCost > *adjacent ) = 0;
 
     /**
-      This function is only used in DEBUG mode - it dumps output to stdout. Since void*
+      This function is only used in MP_DEBUG mode - it dumps output to stdout. Since void*
       aren't really human readable, normally you print out some concise info (like "(1,2)")
       without an ending newline.
     */
@@ -242,7 +215,7 @@ namespace micropather
       prev->next = addThis;
       prev = addThis;
     }
-    #ifdef DEBUG
+    #ifdef MP_DEBUG
     void CheckList()
     {
       MPASSERT( totalCost == FLT_MAX );
@@ -489,7 +462,7 @@ namespace micropather
 
     void GetNodeNeighbors(  PathNode* node, MP_VECTOR< NodeCost >* neighborNode );
 
-    #ifdef DEBUG
+    #ifdef MP_DEBUG
     //void DumpStats();
     #endif
 
@@ -598,7 +571,7 @@ They are standard C++ and don''t require exceptions or RTTI. (I know, a bunch
 of you like exceptions and RTTI. But it does make it less portable and slightly
 slower to use them.)
 
-Assuming you build a debug version of your project with _DEBUG or DEBUG (and
+Assuming you build a debug version of your project with MP_DEBUG (and
 everyone does) MicroPather will run extra checking in these modes.
 
 *Implement Graph Interface*
@@ -649,7 +622,7 @@ Now, the methods of Graph.
   virtual void AdjacentCost( void* state, MP_VECTOR< micropather::StateCost > *adjacent ) = 0;
 
   /**
-    This function is only used in DEBUG mode - it dumps output to stdout. Since void*
+    This function is only used in MP_DEBUG mode - it dumps output to stdout. Since void*
     aren't really human readable, normally you print out some concise info (like "(1,2)")
     without an ending newline.
   */

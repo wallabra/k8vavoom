@@ -112,6 +112,9 @@ set(VCCLIB_SOURCES
   vc/vc_modifiers.cpp
   vc/vc_parser.h
   vc/vc_parser.cpp
+
+  vc/vc_zastar.h
+  vc/vc_zastar.cpp
 )
 
 #---------------------------------------
