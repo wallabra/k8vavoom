@@ -1660,7 +1660,7 @@ final bool FollowPath () {
     } else {
       TVec moved = lastCurrFollowPos-botmo.Origin;
       if (moved.length2DSquared < 8*8) {
-        if (currTime-lastCurrFollowTime > 3) {
+        if (currTime-lastCurrFollowTime > 6) {
           print("FUCK! cannot move from subsector #%d to subsector #%d, dropping the path", ssnum, node.ssnum);
           ResetCurrPath();
           return false;
@@ -1668,7 +1668,7 @@ final bool FollowPath () {
       } else {
         lastCurrFollowTime = currTime;
         lastCurrFollowPos = botmo.Origin;
-        if (currTime-lastSSChangeTime > 5) {
+        if (currTime-lastSSChangeTime > 4) {
           print("DAMMIT! cannot move from subsector #%d to subsector #%d, replanning the path", ssnum, node.ssnum);
           if (!HavePathToSS(&botmo.XLevel.Subsectors[node.ssnum])) {
             print("  SHIT! cannot reach, dropping path");
