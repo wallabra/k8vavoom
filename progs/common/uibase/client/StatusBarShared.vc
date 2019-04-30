@@ -401,6 +401,142 @@ void SB_DrawMainPart (int sb_view) {
 }
 
 
+// global locations
+const int WI_SPACINGY = 33;
+
+// deathmatch stuff
+const int DM_MATRIXX = 202;
+const int DM_MATRIXY = 208;
+
+const int DM_TOTALSX = 329;
+const int DM_DEATHSX = 429;
+
+const int DM_SPACINGX = 40;
+
+
+//==========================================================================
+//
+//  SB_DrawDeathmatchStats
+//
+//==========================================================================
+void SB_DrawDeathmatchStats () {
+  SetFont('bigfont');
+
+  PlayerReplicationInfo RepInfo;
+
+  SetTextAlign(hcentre, vtop);
+  // draw stat titles (top line)
+  DrawText(DM_TOTALSX, DM_MATRIXY-WI_SPACINGY, "FRAGS");
+  DrawText(DM_DEATHSX, DM_MATRIXY-WI_SPACINGY, "DEATHS");
+
+  // draw stats
+  int y = DM_MATRIXY;
+
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
+    if (RepInfo.PlayerNum == ClGame.cl.ClientNum) {
+      // your face
+      int star = R_RegisterPic('stfst01');
+      picinfo_t info;
+      R_GetPicInfo(star, &info);
+      DrawPic(DM_MATRIXX-info.width-5, y-8, star);
+    }
+    SetTextAlign(hleft, vtop);
+    SetFont('smallfont');
+    DrawText(DM_MATRIXX, y+5, RepInfo.PlayerName);
+    SetTextAlign(hright, vtop);
+    SetFont('bigfont');
+    DrawText(DM_TOTALSX, y, va("%s", RepInfo.Frags));
+    DrawText(DM_DEATHSX, y, va("%s", RepInfo.Deaths));
+    //print("  f:%s d:%s -- %s", RepInfo.Frags, RepInfo.Deaths, RepInfo.PlayerName);
+    y += 24;
+  }
+}
+
+
+// net game stuff
+const int NG_STATSY = 210;
+const int NG_STATSX = (172+32/2);
+
+const int NG_SPACINGX = 64;
+
+
+//==========================================================================
+//
+//  SB_IM_DrawPercent
+//
+//==========================================================================
+void SB_IM_DrawPercent (int x, int y, int p) {
+  SetTextAlign(hright, vtop);
+  DrawText(x, y, va("%d%", p));
+}
+
+
+//==========================================================================
+//
+//  SB_DrawCoopStats
+//
+//==========================================================================
+void SB_DrawCoopStats () {
+  picinfo_t info;
+  PlayerReplicationInfo RepInfo;
+
+  int pwidth = TextWidth("%");
+
+  SetFont('bigfont');
+  SetTextAlign(hright, vtop);
+  // draw stat titles (top line)
+  DrawText(NG_STATSX+NG_SPACINGX, NG_STATSY, "kills");
+  DrawText(NG_STATSX+2*NG_SPACINGX, NG_STATSY, "items");
+  DrawText(NG_STATSX+3*NG_SPACINGX, NG_STATSY, "scrt");
+  DrawText(NG_STATSX+4*NG_SPACINGX, NG_STATSY, "frgs");
+
+  // draw stats
+  int y = NG_STATSY+TextHeight("kills");
+
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
+    int i = RepInfo.PlayerNum;
+    int x = NG_STATSX;
+
+    if (i == ClGame.cl.ClientNum) {
+      // your face
+      int star = R_RegisterPic('stfst01');
+      DrawPic(x-info.width, y, star);
+    }
+
+    x += NG_SPACINGX;
+    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.KillCount);
+    x += NG_SPACINGX;
+    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.ItemCount);
+    x += NG_SPACINGX;
+    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.SecretCount);
+    x += NG_SPACINGX;
+
+    SetTextAlign(hright, vtop);
+    DrawText(x, y+10, va("%d", RepInfo.Frags));
+
+    y += WI_SPACINGY;
+  }
+}
+
+
+//==========================================================================
+//
+//  SB_DrawNetworkStats
+//
+//==========================================================================
+void SB_DrawNetworkStats () {
+  if (ClGame.Game.NetMode <= GameInfo::NM_Standalone) return;
+
+  if (ClGame.deathmatch) {
+    SB_DrawDeathmatchStats();
+  } else {
+    SB_DrawCoopStats();
+  }
+}
+
+
+
+
 void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
 }

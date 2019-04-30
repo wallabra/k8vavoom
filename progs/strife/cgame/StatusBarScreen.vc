@@ -444,6 +444,7 @@ override void SB_Drawer (int sb_view) {
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
   SB_DrawMainPart(sb_view);
+  if (cl.MO.Health <= 0) SB_DrawNetworkStats();
   SB_DrawPause();
 }
 

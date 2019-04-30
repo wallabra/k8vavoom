@@ -1218,7 +1218,7 @@ void Scan () {
       Actor act = otherItems[idx];
       otherItems.remove(idx);
       if (CheckItem(act) && HavePathToSS(act.SubSector)) {
-        print("going to unseen item %C", act);
+        if (bot_developer_messages_items) print("going to unseen item %C", act);
         UseCurrentPath();
         item = act;
         break;

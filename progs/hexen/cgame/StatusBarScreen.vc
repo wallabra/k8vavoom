@@ -782,6 +782,7 @@ override void SB_Drawer (int sb_view) {
     scope(exit) SB_RestoreVScreen(ref sss);
     SB_DrawIcons();
   }
+  if (cl.MO.Health <= 0) SB_DrawNetworkStats();
   SB_DrawPause();
 }
 
