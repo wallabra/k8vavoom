@@ -18,6 +18,7 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
   DEPENDS
     vcc
+    botai/*.vc
     linespec/*.vc
     linespec/actor/*.vc
     linespec/armor/*.vc
