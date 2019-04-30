@@ -207,6 +207,18 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayNode) {
   }
 }
 
+// final void PathArrayPushNode (MiAStarNodeBase node);
+IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
+  P_GET_REF(VMiAStarNodeBase, node);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
+  Self->EnsureInterfaces();
+  check(Self->intr);
+  check(Self->pather);
+  Self->intr->path.push_back((void *)node);
+}
+
+
 // final void NearArrayClear ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
   P_GET_SELF;
@@ -258,6 +270,22 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNodeAndCost) {
     RET_PTR(nullptr);
   }
 }
+
+// final void NearArrayPushNode (MiAStarNodeBase node, float cost);
+IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
+  P_GET_FLOAT(cost);
+  P_GET_REF(VMiAStarNodeBase, node);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
+  Self->EnsureInterfaces();
+  check(Self->intr);
+  check(Self->pather);
+  micropather::StateCost cst;
+  cst.state = (void *)node;
+  cst.cost = cost;
+  Self->intr->near.push_back(cst);
+}
+
 
 // final int Solve (MiAStarNodeBase startState, MiAStarNodeBase endState);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {

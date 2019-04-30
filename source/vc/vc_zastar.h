@@ -110,29 +110,30 @@ public:
 
   // final void PathArrayClear ();
   DECLARE_FUNCTION(PathArrayClear)
-
   // used to retrieve solved path after calling `Solve()`
   // final int PathArrayLength ();
   DECLARE_FUNCTION(PathArrayLength)
-
   // used to retrieve solved path after calling `Solve()`
   // final MiAStarNodeBase PathArrayNode (int index);
   DECLARE_FUNCTION(PathArrayNode)
+  // force-push node to path array
+  // final void PathArrayPushNode (MiAStarNodeBase node);
+  DECLARE_FUNCTION(PathArrayPushNode)
 
   // final void NearArrayClear ();
   DECLARE_FUNCTION(NearArrayClear)
-
   // used to retrieve solved path after calling `SolveForNearStates()`
   // final int NearArrayLength ();
   DECLARE_FUNCTION(NearArrayLength)
-
   // used to retrieve solved path after calling `SolveForNearStates()`
   // final MiAStarNodeBase NearArrayNode (int index);
   DECLARE_FUNCTION(NearArrayNode)
-
   // used to retrieve solved path after calling `SolveForNearStates()`
   // final MiAStarNodeBase NearArrayNodeAndCost (int index, out float cost);
   DECLARE_FUNCTION(NearArrayNodeAndCost)
+  // force-push node to near array
+  // final void NearArrayPushNode (MiAStarNodeBase node, float cost);
+  DECLARE_FUNCTION(NearArrayPushNode)
 
   /**
     Solve for the path from start to end.

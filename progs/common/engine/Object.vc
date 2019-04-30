@@ -99,6 +99,8 @@ native final void PathArrayClear ();
 // used to retrieve solved path after calling `Solve()`
 native final int PathArrayLength ();
 native final MiAStarNodeBase PathArrayNode (int index);
+// force-push node to path array
+native final void PathArrayPushNode (MiAStarNodeBase node);
 
 // used to clear current near nodes list
 native final void NearArrayClear ();
@@ -106,6 +108,8 @@ native final void NearArrayClear ();
 native final int NearArrayLength ();
 native final MiAStarNodeBase NearArrayNode (int index);
 native final MiAStarNodeBase NearArrayNodeAndCost (int index, out float cost);
+// force-push node to near array
+native final void NearArrayPushNode (MiAStarNodeBase node, float cost);
 
 /*
   Solve for the path from start to end.
