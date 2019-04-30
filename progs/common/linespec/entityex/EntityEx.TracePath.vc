@@ -100,7 +100,7 @@ final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float new
 //  returns `false` if some obstacle was hit
 //
 //==========================================================================
-bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt, optional bool allowJump, optional TVec srcOrigin) {
+bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt, optional bool allowJump, optional bool allowDrop, optional bool ignoreMonsters, optional TVec srcOrigin) {
   pi.maxdist = 0;
   pi.needJump = false;
   pi.needUse = false;
@@ -179,7 +179,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       }
 
       // no cliff jumping unless we're going after something
-      if (!distEnt) {
+      if (!distEnt && !allowDrop) {
         if (open->lowfloor-open->bottom >= MAXMOVEHEIGHT &&
             open->lowfloor-open->bottom <= MAXDROPHEIGHT)
         {
@@ -219,24 +219,32 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
       float dheight = th.Origin.z+th.Height-srcOrigin.z;
 
-      if (th.bSolid && th != distEnt) {
-        // [FB] Jump to avoid something
+      if (th == distEnt) {
+        // jump to reach something
         if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
           if (allowJump) {
             if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
-            pi.maxdist = currDist;
-            continue;
           }
         }
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
-        return false;
+        pi.maxdist = currDist;
+        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist);
+        return true;
       }
 
-      // jump to reach something
-      if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
-        if (allowJump) {
-          if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
-        } else {
+      if (th.bSolid) {
+        bool doIgnore = th.bMissile;
+        if (!doIgnore && ignoreMonsters) {
+          doIgnore = (th.bMonster || th.bIsPlayer);
+        }
+        if (!doIgnore) {
+          // [FB] Jump to avoid something
+          if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+            if (allowJump) {
+              if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
+              pi.maxdist = currDist;
+              continue;
+            }
+          }
           CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
           return false;
         }
