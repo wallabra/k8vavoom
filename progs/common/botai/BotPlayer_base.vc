@@ -1670,11 +1670,15 @@ final bool FollowPath () {
         lastCurrFollowPos = botmo.Origin;
         if (currTime-lastSSChangeTime > 4) {
           print("DAMMIT! cannot move from subsector #%d to subsector #%d, replanning the path", ssnum, node.ssnum);
+          float lft = lastCurrFollowTime;
+          float lst = lastSSChangeTime;
           if (!HavePathToSS(&botmo.XLevel.Subsectors[node.ssnum])) {
             print("  SHIT! cannot reach, dropping path");
             ResetCurrPath();
             return false;
           }
+          lastCurrFollowTime = lft;
+          lastSSChangeTime = lst;
         }
       }
     }
