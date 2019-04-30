@@ -31,13 +31,20 @@
 //  procedures, such as B_CheckStuff and B_SetEnemy.
 //
 //**************************************************************************
-class BotPathNode : EntityEx;
+// no need to make this thinker
+class BotPathNode : Object;
 
-struct Transition : PathInfo {
+struct Transition {
   int subnum;
+  float maxdist;
+  bool needJump;
+  bool needUse;
 }
 
+Level XLevel; // level object (i.e. actual map)
+TVec Origin;
 int ssnum;
+
 
 // reachable subsectors (should be at least one, zero means "don't know yet")
 array!Transition ssreachable;
@@ -46,10 +53,22 @@ array!Transition ssreachable;
 int validCount;
 int cameFrom;
 int unreachablePartners;
-//int goToNext;
 
 
-final bool CanReachSS (subsector_t *ss) {
+static final BotPathNode CreateNew (Level axlevel) {
+  BotPathNode res = SpawnObject(BotPathNode);
+  res.XLevel = axlevel;
+  return res;
+}
+
+
+override void Destroy () {
+  ssreachable.length = 0;
+  ::Destroy();
+}
+
+
+final bool CanReachSS (GameObject::subsector_t *ss) {
   if (!ss) return false;
   int dsnum = ss-&XLevel.Subsectors[0];
   if (dsnum == ssnum) return true;
@@ -66,7 +85,7 @@ final bool CanReachSSByIndex (int dsnum) {
 }
 
 
-final Transition *FindSSTranstion (subsector_t *ss) {
+final Transition *FindSSTranstion (GameObject::subsector_t *ss) {
   if (!ss) return nullptr;
   int dsnum = ss-&XLevel.Subsectors[0];
   if (dsnum == ssnum) return nullptr;
@@ -76,21 +95,6 @@ final Transition *FindSSTranstion (subsector_t *ss) {
 
 
 defaultproperties {
-  bSolid = false;
-  bNoSector = true; // don't use the sector links (invisible but touchable)
-  bNoBlockmap = true; // don't use the BlockLinks (inert but displayable)
-  bNoGravity = true;
-  bColideWithThings = false;
-  bColideWithWorld = false;
-  bCheckLineBlocking = false;
-  bCheckLineBlockMonsters = false;
-  bInvisible = true; // don't draw this actor
-
-  bSpecial = false;
-  bShootable = false;
-  bPickUp = false;
-  bCountItem = false;
-  bNoInteraction = true;
 }
 
 
@@ -280,6 +284,18 @@ string lastMapHash;
 
 //==========================================================================
 //
+//  Destroy
+//
+//==========================================================================
+override void Destroy () {
+  foreach (ref BotPathNode node; ssnodes) delete node;
+  ssnodes.length = 0;
+  ::Destroy();
+}
+
+
+//==========================================================================
+//
 //  ResetCurrPath
 //
 //==========================================================================
@@ -304,7 +320,7 @@ final void DumpNodes () {
     if (!node) continue;
     print(" node #%s (%s) has #%d transitions", nidx, node.ssnum, node.ssreachable.length);
     foreach (int tridx, const ref auto tr; node.ssreachable) {
-      print("  transition #%d: dest=%s; angle=%s; maxdist=%s; jump=%B; use=%B; success=%B", tridx, tr.subnum, tr.angle, tr.maxdist, tr.needJump, tr.needUse, tr.success);
+      print("  transition #%d: dest=%s; maxdist=%s; jump=%B; use=%B", tridx, tr.subnum, tr.maxdist, tr.needJump, tr.needUse);
     }
   }
 }
@@ -385,9 +401,10 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
     cpos = botmo.Origin;
   }
 
-  BotPathNode node = (oldNode ? ssnodes[ssnum] : BotPathNode(botmo.Spawn(BotPathNode, cpos)));
+  BotPathNode node = (oldNode ? ssnodes[ssnum] : BotPathNode.CreateNew(botmo.XLevel));
   if (!node) return; // something is very wrong here
   node.ssnum = ssnum;
+  node.Origin = cpos;
 
   int sscount = 0;
   int ssreach = 0;
@@ -411,13 +428,9 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
           if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", psnum, ssnum);
           auto tr = node.ssreachable.alloc();
           tr.subnum = psnum;
-          tr.angle = pi.angle;
-          tr.needdist = pi.needdist;
           tr.maxdist = pi.maxdist;
           tr.needJump = pi.needJump;
           tr.needUse = pi.needUse;
-          tr.dirxy = pi.dirxy;
-          tr.success = pi.success;
           ++ssreach;
         }
       } else {
@@ -432,13 +445,9 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
           if (GetCvarB('bot_developer_messages_path')) print("subsector #%d is reachable from #%d", ssnum, psnum);
           auto tr = ssnodes[psnum].ssreachable.alloc();
           tr.subnum = ssnum;
-          tr.angle = pi.angle;
-          tr.needdist = pi.needdist;
           tr.maxdist = pi.maxdist;
           tr.needJump = pi.needJump;
           tr.needUse = pi.needUse;
-          tr.dirxy = pi.dirxy;
-          tr.success = pi.success;
         }
       }
     }
