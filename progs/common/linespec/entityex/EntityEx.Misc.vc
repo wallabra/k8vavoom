@@ -2533,20 +2533,25 @@ final void SpawnDirt (float radius) {
 //  GunShot
 //
 //===========================================================================
-final void GunShot (int accurate, TVec dir, name DmgType, bool secondary, optional name DecalName, optional float range) {
-  int damage;
-
+final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optional name DecalName,
+                    optional float range, optional float spreadYaw, optional float spreadPitch)
+{
   if (!specified_range || range <= 0) range = MISSILERANGE;
 
   // make a copy of angles because inacurate shoot will modify them
   if (!accurate) {
     TAVec angles;
     VectorAngles(dir, out angles);
-    angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
+    if (!specified_spreadYaw) {
+      angles.yaw = AngleMod360(angles.yaw+(FRandomFull()-FRandomFull())*45.0/8.0);
+    } else {
+      if (spreadYaw) angles.yaw = AngleMod360(angles.yaw+(FRandomFull()-FRandomFull())*spreadYaw);
+    }
+    if (spreadPitch) angles.pitch = AngleMod360(angles.pitch+(FRandomFull()-FRandomFull())*spreadPitch);
     AngleVector(angles, out dir);
   }
 
-  damage = 5*(P_Random()%3+1);
+  int damage = 5*(P_Random()%3+1);
   LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName!optional);
 }
 

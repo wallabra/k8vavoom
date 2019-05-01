@@ -865,8 +865,13 @@ final void A_FireShotgun () {
   }
 
   TVec dir;
-  Aim(dir, 16.0*64.0, default, noAAim);
-  foreach (auto i; 0..7) GunShot(false, dir, 'Shell', (i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+  auto tgt = Aim(dir, 16.0*64.0, default, noAAim);
+  float spinc = (tgt ? 0.1 : 0.15);
+  float spread = 0;
+  foreach (auto i; 0..7) {
+    GunShot(false, dir, 'Shell', (i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE), spreadPitch:spread);
+    spread += spinc;
+  }
 }
 
 
