@@ -326,8 +326,10 @@ void VLevel::TickWorld (float DeltaTime) {
       VBasePlayer *Player = GGameInfo->Players[i];
       if (!Player) continue;
       if (!(Player->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
+      if (Player->PlayerFlags&VBasePlayer::PF_IsBot) continue;
       VThinker *plrmo = Player->MO;
       if (plrmo && !(plrmo->GetFlags()&_OF_DelayedDestroy)) {
+        //GCon->Logf("TICK: '%s'", *Player->PlayerName);
         plrmo->Tick(DeltaTime);
       }
     }

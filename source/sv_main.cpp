@@ -40,6 +40,7 @@ static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
 static void G_DoReborn (int playernum, bool cheatReborn);
 static void G_DoCompleted ();
 
+extern VCvarB dbg_vm_disable_thinkers;
 
 static VCvarB dbg_skipframe_player_tick("dbg_skipframe_player_tick", true, "Run player ticks on skipped frames?", CVAR_PreInit);
 static VCvarB dbg_skipframe_player_block_move("dbg_skipframe_player_block_move", false, "Keep moving on skipped player frames (this is wrong)?", CVAR_PreInit);
@@ -512,6 +513,9 @@ static void SV_RunClients (bool skipFrame=false) {
 
     // pause if in menu or console and at least one tic has been run
     if ((Player->PlayerFlags&VBasePlayer::PF_Spawned) && !sv.intermission && !GGameInfo->IsPaused()) {
+      if (dbg_vm_disable_thinkers) {
+        if (Player->PlayerFlags&VBasePlayer::PF_IsBot) continue;
+      }
       SV_RunPlayerTick(Player, skipFrame);
     }
   }
