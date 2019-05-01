@@ -462,17 +462,6 @@ const int NG_SPACINGX = 64;
 
 //==========================================================================
 //
-//  SB_IM_DrawPercent
-//
-//==========================================================================
-void SB_IM_DrawPercent (int x, int y, int p) {
-  SetTextAlign(hright, vtop);
-  DrawText(x, y, va("%d%", p));
-}
-
-
-//==========================================================================
-//
 //  SB_DrawCoopStats
 //
 //==========================================================================
@@ -503,12 +492,13 @@ void SB_DrawCoopStats () {
       DrawPic(x-info.width, y, star);
     }
 
+    SetTextAlign(hright, vtop);
     x += NG_SPACINGX;
-    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.KillCount);
+    DrawText(x-pwidth, y+10, va("%d", RepInfo.KillCount));
     x += NG_SPACINGX;
-    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.ItemCount);
+    DrawText(x-pwidth, y+10, va("%d", RepInfo.ItemCount));
     x += NG_SPACINGX;
-    SB_IM_DrawPercent(x-pwidth, y+10, RepInfo.SecretCount);
+    DrawText(x-pwidth, y+10, va("%d", RepInfo.SecretCount));
     x += NG_SPACINGX;
 
     SetTextAlign(hright, vtop);
