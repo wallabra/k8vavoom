@@ -635,6 +635,14 @@ public:
     EV_RET_VOID_IDX(mtindex);
   }
 
+  bool callIsMonster () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("IsMonster"));
+    P_PASS_SELF;
+    EV_RET_BOOL_IDX(mtindex);
+  }
+
+
   bool SetState (VState *);
   void SetInitialState (VState *);
   bool AdvanceState (float);
@@ -646,7 +654,7 @@ public:
 
   bool CheckWater ();
   bool CheckPosition (TVec);
-  bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool debugDump=false);
+  bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool ignoreMonsters=false, bool ignorePlayers=false);
   bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float);

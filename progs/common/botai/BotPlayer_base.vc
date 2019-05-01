@@ -564,6 +564,22 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
 
 //==========================================================================
 //
+//  IsGoodMapPosition
+//
+//==========================================================================
+final bool IsGoodMapPosition (ref TVec pos) {
+  Entity::tmtrace_t tmtrace;
+  if (botmo.CheckRelPosition(&tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
+    pos = tmtrace.End;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+//==========================================================================
+//
 //  CheckAndDropNodeFromTo
 //
 //==========================================================================
@@ -589,10 +605,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
   TVec cpos = botmo.XLevel.GetSubsectorCenter(ss);
   cpos.z = EntityEx::ONFLOORZ;
 
-  Entity::tmtrace_t tmtrace;
-  if (botmo.CheckRelPosition(&tmtrace, cpos, noPickups:true)) {
-    cpos = tmtrace.End;
-  } else {
+  if (!IsGoodMapPosition(ref cpos)) {
     if (bot_developer_messages_crumbs) print("oops; cannot spawn node at subsector #%d center...", ssnum);
     if (!atBotOrigin) return;
     cpos = botmo.Origin;
@@ -627,8 +640,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
       // put a dummy node there
       cpos = botmo.XLevel.GetSubsectorCenter(seg.partner.front_sub);
       cpos.z = EntityEx::ONFLOORZ;
-      if (botmo.CheckRelPosition(&tmtrace, cpos, noPickups:true)) {
-        cpos = tmtrace.End;
+      if (IsGoodMapPosition(cpos)) {
         otherNode = BotPathNode.CreateNew(botmo.XLevel);
         otherNode.ssnum = ssnum;
         otherNode.Origin = cpos;

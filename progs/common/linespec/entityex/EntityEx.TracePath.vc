@@ -51,13 +51,20 @@ struct PathInfo {
 //
 //  FIXME: idiotic code!
 //
+//  does small steps from lastdist to newdist
+//
 //==========================================================================
-final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist) {
+final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist, bool ignoreMonsters) {
+  /*
+  bool cw = botmo.bColideWithWorld;
+  scope(exit) botmo.bColideWithWorld = cw;
+  botmo.bColideWithWorld = true;
+  */
   Entity::tmtrace_t tmtrace;
   while (newdist > lastdist) {
     float delta = fmin(newdist-lastdist, 8);
     TVec d2 = org+dirxy*(lastdist+delta);
-    if (!CheckRelPosition(&tmtrace, d2, noPickups:true)) return;
+    if (!CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) return;
     //print("*** step; lastdist=%s; newdist=%s; currDist=%s", lastdist, newdist, lastdist+delta);
     lastdist += delta;
   }
@@ -70,15 +77,22 @@ final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist
 //
 //  FIXME: idiotic code!
 //
+//  does small steps from newdist to lastdist
+//
 //==========================================================================
-final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float newdist) {
+final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float newdist, bool ignoreMonsters) {
+  /*
+  bool cw = botmo.bColideWithWorld;
+  scope(exit) botmo.bColideWithWorld = cw;
+  botmo.bColideWithWorld = true;
+  */
   Entity::tmtrace_t tmtrace;
   float dist = newdist+8;
   while (dist > 0.1) {
     float delta = fmin(8, dist);
     dist -= delta;
     TVec d2 = org+dirxy*dist;
-    if (CheckRelPosition(&tmtrace, d2, noPickups:true)) {
+    if (CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       //print("*** GOOD step; dist=%s; newdist=%s", dist, newdist);
       lastdist = dist;
       return;
@@ -121,7 +135,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
   if (dist < 1) {
     // oops
     Entity::tmtrace_t tmtrace;
-    pi.success = CheckRelPosition(&tmtrace, srcOrigin, noPickups:true);
+    pi.success = CheckRelPosition(&tmtrace, srcOrigin, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters);
     return pi.success;
   }
 
@@ -144,13 +158,13 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
       // line is impassible
       if (!(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) {
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist);
+        CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
         return false;
       }
 
       // line isn't two sided
       if (!ld->backsector) {
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist);
+        CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
         return false;
       }
 
@@ -166,7 +180,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
       // sector is dangerous
       if (TraceIsDangerousSectorCB && TraceIsDangerousSectorCB(back)) {
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+        CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
         return false;
       }
 
@@ -174,7 +188,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       opening_t *open = FindLineOpening(ld, hit_point, Height, do3dmidtex:true);
       // no valid openings
       if (!open) {
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+        CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
         return false;
       }
 
@@ -183,7 +197,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
         if (open->lowfloor-open->bottom >= MAXMOVEHEIGHT &&
             open->lowfloor-open->bottom <= MAXDROPHEIGHT)
         {
-          CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+          CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
           return false;
         }
       }
@@ -198,11 +212,11 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
             pi.maxdist = currDist;
             continue;
           }
-          CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+          CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
           return false;
         }
         if (diffheight >= MAXJUMPHEIGHT) {
-          CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+          CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
           return false;
         }
       }
@@ -227,7 +241,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
           }
         }
         pi.maxdist = currDist;
-        CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist);
+        CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
         return true;
       }
 
@@ -245,7 +259,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
               continue;
             }
           }
-          CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius);
+          CalcBestDist(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
           return false;
         }
       }
@@ -255,7 +269,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
   }
 
   // we walked all the way, yay
-  CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, dist);
+  CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, dist, ignoreMonsters);
   //!!!if (GetCvarB('bot_developer_messages_roam')) print("   --- traced: %s of %s", pi.maxdist, dist);
 
   if (pi.maxdist < 1) {

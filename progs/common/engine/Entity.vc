@@ -392,7 +392,7 @@ native final void StopSoundSequence ();
 native final bool CheckSides (TVec lsPos);
 native final void CheckDropOff (out float DeltaX, out float DeltaY);
 native final bool CheckPosition (TVec Pos);
-native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool debugDump);
+native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
 native final bool TryMove (TVec newPos, bool AllowDropOff, optional bool checkOnly);
 native final bool TryMoveEx (tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff, optional bool checkOnly);
 native final bool TestMobjZ ();
@@ -424,7 +424,17 @@ native final bool GetDecorateFlag (string Name);
 
 //==========================================================================
 //
-//  VEntity::UpdateVelocity
+//  IsMonster
+//
+//==========================================================================
+bool IsMonster () {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  UpdateVelocity
 //
 //  moved from native to VC code
 //

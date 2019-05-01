@@ -936,6 +936,7 @@ final void CopyMThing (mthing_t *from, mthing_t *to) {
 //
 //==========================================================================
 final mthing_t *GetPlayerStart (int PNum, int Position, optional bool failIfNotFound) {
+  if (!specified_failIfNotFound) failIfNotFound = true;
   ++PNum;
   mthing_t *Best = nullptr;
   foreach (int i; 0..PlayerStarts.Num; reverse) {

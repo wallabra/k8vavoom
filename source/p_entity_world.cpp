@@ -782,7 +782,7 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //   blocked, or blocked by a line).
 //
 //==========================================================================
-bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool debugDump) {
+bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool ignoreMonsters, bool ignorePlayers) {
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOXTOP] = Pos.y+Radius;
@@ -793,7 +793,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
   subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
   tmtrace.CeilingLine = nullptr;
 
-  tmtSetupGap(&tmtrace, newsubsec->sector, Height, debugDump);
+  tmtSetupGap(&tmtrace, newsubsec->sector, Height, false);
 
   XLevel->IncrementValidCount();
   tmtrace.SpecHit.reset(); // was `Clear()`
@@ -816,6 +816,11 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
+          if (ignoreMonsters || ignorePlayers) {
+            VEntity *ent = *It;
+            if (ignorePlayers && (ent->EntityFlags&EF_IsPlayer)) continue;
+            if (ignoreMonsters && ((EntityFlags&EF_Missile) || ent->callIsMonster())) continue;
+          }
           if (!CheckRelThing(tmtrace, *It, noPickups)) {
             // continue checking for other things in to see if we hit something
             if (!tmtrace.BlockingMobj || compat_nopassover ||
@@ -2038,13 +2043,15 @@ IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
   RET_BOOL(Self->CheckPosition(Pos));
 }
 
+// native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
 IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
-  P_GET_BOOL_OPT(debugDump, false);
+  P_GET_BOOL_OPT(ignorePlayers, false);
+  P_GET_BOOL_OPT(ignoreMonsters, false);
   P_GET_BOOL_OPT(noPickups, false);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
   P_GET_SELF;
-  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups, debugDump));
+  RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups, ignoreMonsters, ignorePlayers));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckSides) {
