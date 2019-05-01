@@ -1276,6 +1276,24 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
     delete Self->Int;
     Self->Int = nullptr;
   }
+  // first try disk file
+  if (FL_IsSafeDiskFileName(Name)) {
+    VStr diskName = FL_GetUserDataDir()+"/"+Name;
+    VStream *st = FL_OpenSysFileRead(*diskName);
+    if (st) {
+      bool ok = true;
+      VStr s;
+      if (st->TotalSize() > 0) {
+        s.setLength(st->TotalSize());
+        st->Serialise(s.getMutableCStr(), s.length());
+        ok = !st->IsError();
+      }
+      delete st;
+      if (!ok) Sys_Error("cannot read file '%s'", *Name);
+      Self->Int = new VScriptParser(*Name, *s);
+      return;
+    }
+  }
   int num = W_GetNumForFileName(Name);
   //int num = W_IterateFile(-1, *Name);
   if (num < 0) Sys_Error("file '%s' not found", *Name);

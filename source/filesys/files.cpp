@@ -2070,3 +2070,47 @@ VStr FL_GetScreenshotsDir () {
   Sys_CreateDirectory(res);
   return res;
 }
+
+
+//==========================================================================
+//
+//  FL_GetUserDataDir
+//
+//==========================================================================
+VStr FL_GetUserDataDir () {
+  VStr res = FL_GetConfigDir();
+  res += "/userdata";
+  //res += '/'; res += game_name;
+  Sys_CreateDirectory(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  isPathDelimiter
+//
+//==========================================================================
+static inline bool isPathDelimiter (const char ch) {
+  return (ch == '/' || ch == '\\');
+}
+
+
+//==========================================================================
+//
+//  FL_IsSafeDiskFileName
+//
+//==========================================================================
+bool FL_IsSafeDiskFileName (const VStr &fname) {
+  if (fname.length() == 0) return false;
+  if (isPathDelimiter(fname[fname.length()-1])) return false;
+  for (const char *s = *fname; *s; ++s) {
+    if (isPathDelimiter(*s)) {
+      // don't allow any dot-starting pathes
+      if (s[1] == '.') return false;
+    } else if (*s == ':') {
+      return false;
+    }
+  }
+  return true;
+}

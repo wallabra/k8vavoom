@@ -1242,7 +1242,7 @@ void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
   }
   if (!buf) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (debugPrint) GCon->Log(NAME_Dev, wrbuffer);
+         if (debugPrint) GCon->Log(NAME_Dev, wrbuffer);
     else if (wrname == NAME_None) GCon->Log(wrbuffer);
     else GCon->Log((EName)wrname.GetIndex(), wrbuffer);
 #endif
@@ -1253,7 +1253,7 @@ void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
       wrbuffer[sizeof(wrbuffer)-1] = 0; // just in case
     } else {
       size_t maxlen = (size_t)(wrbuffer+sizeof(wrbuffer)-sptr);
-      if (maxlen > 1) snprintf(wrbuffer, maxlen, "%s", buf);
+      if (maxlen > 1) snprintf(sptr, maxlen, "%s", buf);
     }
   }
 }

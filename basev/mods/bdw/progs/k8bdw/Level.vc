@@ -44,6 +44,21 @@ override void AfterUnarchiveThinkers () {
 
 
 override void OnEntitySpawned (Entity ent) {
+  /*
+  if (FS_FileExists("bdw.dat")) {
+    auto ct = FS_ReadFileContents("bdw.dat");
+    print("  goo: %q|", ct);
+    writeln("  zoo: ", ct, "|");
+    auto par = SpawnObject(ScriptsParser);
+    scope(exit) delete par;
+    par.OpenLumpFullName("bdw.dat");
+    print("  parse: %B", par.GetString());
+    print("  string: '%q'", par.String);
+  } else {
+    writeln("creating bdw!");
+    FS_WriteFileContents("bdw.dat", "SHITFUCK !");
+  }
+  */
   ::OnEntitySpawned(ent);
   if (ent isa BDW_CasingBase) {
     ++casingEntCounter;

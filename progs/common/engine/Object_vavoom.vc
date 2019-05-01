@@ -565,6 +565,11 @@ native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*
 // you can use result of `W_LumpFile()` with the following
 native static final int W_CheckNumForNameInFile (name Name, int File, optional EWadNamespace NS /*= WADNS_Global*/);
 
+// in userdata dir
+native static final bool FS_FileExists (string fname);
+native static final string FS_ReadFileContents (string fname); // returns empty string on error/no file
+native static final bool FS_WriteFileContents (string fname, string contents);
+
 #include "Object_vv_lumpiter.vc"
 
 

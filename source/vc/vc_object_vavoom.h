@@ -161,3 +161,7 @@
   DECLARE_FUNCTION(W_CheckNumForNameInFile)
 
   DECLARE_FUNCTION(GetCurrRefDef)
+
+  DECLARE_FUNCTION(FS_FileExists)
+  DECLARE_FUNCTION(FS_ReadFileContents)
+  DECLARE_FUNCTION(FS_WriteFileContents)

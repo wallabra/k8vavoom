@@ -57,6 +57,9 @@ VStr FL_GetConfigDir ();
 VStr FL_GetCacheDir ();
 VStr FL_GetSavesDir ();
 VStr FL_GetScreenshotsDir ();
+VStr FL_GetUserDataDir ();
+
+bool FL_IsSafeDiskFileName (const VStr &fname);
 
 
 // used to set "preinit" cvars
