@@ -94,7 +94,7 @@ static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
 
 static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", CVAR_PreInit);
-VCvarB NoExit("NoExit", "0", "Disable exiting in deathmatch?", CVAR_PreInit);
+VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", CVAR_PreInit);
 static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo|CVAR_PreInit);
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", CVAR_PreInit);
 VCvarI Skill("Skill", "3", "Skill level.", CVAR_PreInit);
