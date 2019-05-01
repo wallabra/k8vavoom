@@ -451,6 +451,8 @@ native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec r
 native static final float Random ();
 // floating random number 0.0 ... 1.0
 native static final float FRandomFull ();
+// floating random number [minv..maxv] (inclusive)
+native static final float FRandomBetween (float minv, float maxv);
 // integer random number 0 .. 255
 native static final int P_Random ();
 // generates a random seen in range [1..0xffff_ffff]

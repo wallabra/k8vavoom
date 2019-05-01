@@ -86,6 +86,7 @@ static inline __attribute__((unused)) void bjprng_raninit (BJPRNGCtx *x, vuint32
 void RandomInit (); // call this to seed with random seed
 float Random (); // [0..1)
 float RandomFull (); // [0..1]
+float RandomBetween (float minv, float maxv); // [minv..maxv]
 vuint8 P_Random (); // [0..255]
 
 

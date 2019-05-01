@@ -601,12 +601,23 @@ void RandomInit () {
 
 //==========================================================================
 //
+//  GenRandomU31
+//
+//==========================================================================
+static inline vuint32 GenRandomU31 () {
+  return bjprng_ranval(&bjprng_ctx)&0x7fffffffu;
+}
+
+
+//==========================================================================
+//
 //  Random
 //
 //==========================================================================
 float Random () {
+  // tries to be uniform by using rejecting
   for (;;) {
-    float v = ((double)bjprng_ranval(&bjprng_ctx))/((double)0xffffffffu);
+    float v = ((double)(GenRandomU31()))/((double)0x7fffffffu);
     if (!isFiniteF(v)) continue;
     if (v < 1.0f) return v;
   }
@@ -620,7 +631,30 @@ float Random () {
 //==========================================================================
 float RandomFull () {
   for (;;) {
-    float v = ((double)bjprng_ranval(&bjprng_ctx))/((double)0xffffffffu);
+    float v = ((double)(GenRandomU31()))/((double)0x7fffffffu);
+    if (!isFiniteF(v)) continue;
+    return v;
+  }
+}
+
+
+//==========================================================================
+//
+//  RandomBetween
+//
+//==========================================================================
+float RandomBetween (float minv, float maxv) {
+  if (!isFiniteF(minv)) {
+    if (!isFiniteF(maxv)) return 0.0f;
+    return maxv;
+  } else if (!isFiniteF(maxv)) {
+    return minv;
+  }
+  double range = maxv-minv;
+  if (range == 0) return minv;
+  if (range < 0) { float tmp = minv; minv = maxv; maxv = tmp; range = -range; }
+  for (;;) {
+    float v = minv+(((double)(GenRandomU31()))/((double)0x7fffffffu)*range);
     if (!isFiniteF(v)) continue;
     return v;
   }

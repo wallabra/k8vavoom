@@ -493,35 +493,71 @@ IMPLEMENT_FUNCTION(VObject, strLastIndexOf) {
 }
 
 
+#if defined(VCC_STANDALONE_EXECUTOR)
+static inline vuint32 GenRandomU31 () {
+  vuint32 rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  rn &= 0x7fffffffu;
+  return rn;
+}
+
+
+float Random () {
+  // tries to be uniform by using rejecting
+  for (;;) {
+    float v = ((double)(GenRandomU31()))/((double)0x7fffffffu);
+    if (!isFiniteF(v)) continue;
+    if (v < 1.0f) return v;
+  }
+}
+
+
+float RandomFull () {
+  for (;;) {
+    float v = ((double)(GenRandomU31()))/((double)0x7fffffffu);
+    if (!isFiniteF(v)) continue;
+    return v;
+  }
+}
+
+
+float RandomBetween (float minv, float maxv) {
+  if (!isFiniteF(minv)) {
+    if (!isFiniteF(maxv)) return 0.0f;
+    return maxv;
+  } else if (!isFiniteF(maxv)) {
+    return minv;
+  }
+  double range = maxv-minv;
+  if (range == 0) return minv;
+  if (range < 0) { float tmp = minv; minv = maxv; maxv = tmp; range = -range; }
+  for (;;) {
+    float v = minv+(((double)(GenRandomU31()))/((double)0x7fffffffu)*range);
+    if (!isFiniteF(v)) continue;
+    return v;
+  }
+}
+#endif
+
+
 //**************************************************************************
 //
 //  Random numbers
 //
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, Random) {
-#if defined(VCC_STANDALONE_EXECUTOR)
-  vuint32 rn;
-  float res;
-  for (;;) {
-    ed25519_randombytes(&rn, sizeof(rn));
-    res = (float)(rn&0x3ffff)/(float)(0x3ffff);
-    if (res < 1.0f) break;
-  }
-  RET_FLOAT(res);
-#else
   RET_FLOAT(Random());
-#endif
 }
 
 IMPLEMENT_FUNCTION(VObject, FRandomFull) {
-#if defined(VCC_STANDALONE_EXECUTOR)
-  vuint32 rn;
-  ed25519_randombytes(&rn, sizeof(rn));
-  float res = (float)(rn&0x3ffff)/(float)(0x3ffff);
-  RET_FLOAT(res);
-#else
   RET_FLOAT(RandomFull());
-#endif
+}
+
+// native static final float FRandomBetween (float minv, float maxv);
+IMPLEMENT_FUNCTION(VObject, FRandomBetween) {
+  P_GET_FLOAT(maxv);
+  P_GET_FLOAT(minv);
+  RET_FLOAT(RandomBetween(minv, maxv));
 }
 
 IMPLEMENT_FUNCTION(VObject, GenRandomSeedU32) {
