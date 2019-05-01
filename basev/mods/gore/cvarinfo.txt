@@ -5,3 +5,4 @@ user int k8GoreOpt_BloodDripSound = 1;
 user int k8GoreOpt_HeadshotSound = 0;
 user int k8GoreOpt_LimiterDebug = 0;
 user int k8GoreOpt_ForceColoredBlood = 1;
+user int k8GoreOpt_DbgReportNumber = 0;

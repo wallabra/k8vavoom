@@ -525,8 +525,10 @@ void SB_DrawCoopStats () {
 //
 //==========================================================================
 void SB_DrawNetworkStats () {
+  if (!ClGame) return;
+  if (!ClGame.GLevel) return;
   if (ClGame.Game.NetMode <= GameInfo::NM_Standalone) return;
-
+  if (!ClGame.cl || !ClGame.cl.MO || ClGame.cl.MO.Health > 0) return;
   if (ClGame.deathmatch) {
     SB_DrawDeathmatchStats();
   } else {
@@ -535,8 +537,11 @@ void SB_DrawNetworkStats () {
 }
 
 
-
-
+//==========================================================================
+//
+//  SB_DrawNetworkStats
+//
+//==========================================================================
 void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
 }

@@ -178,6 +178,7 @@ override void StatusBarStartMap () {
 //==========================================================================
 override void StatusBarDrawer (int sb_view) {
   GSBar.SB_Drawer(sb_view);
+  GSBar.SB_DrawNetworkStats();
 }
 
 
