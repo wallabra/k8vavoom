@@ -128,6 +128,7 @@ public:
   VStr GetName () const;
 
   bool IsAnyArray () const;
+  bool IsAnyIndexableArray () const;
   inline bool IsPointer () const { return (Type == TYPE_Pointer); } // useless, but nice
   inline bool IsVoidPointer () const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == TYPE_Void); }
 

@@ -236,7 +236,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     return nullptr;
   }
 
-  if (op->Type.IsAnyArray()) {
+  if (op->Type.IsAnyIndexableArray()) {
     // check bounds for static arrays
     if (!skipBoundsChecking && ind->IsIntConst() && (!ind2 || ind2->IsIntConst())) {
       if (ind->GetIntConst() < 0 || (ind2 && ind2->GetIntConst() < 0)) {

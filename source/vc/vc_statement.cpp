@@ -1293,7 +1293,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     wasError = true;
   }
 
-  if (!wasError && !arrR->Type.IsAnyArray()) {
+  if (!wasError && !arrR->Type.IsAnyIndexableArray()) {
     ParseError(var->Loc, "Array variable should be integer (got `%s`)", *varR->Type.GetName());
     wasError = true;
   }

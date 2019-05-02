@@ -736,6 +736,17 @@ bool VFieldType::IsAnyArray () const {
 
 //==========================================================================
 //
+//  VFieldType::IsAnyIndexableArray
+//
+//==========================================================================
+bool VFieldType::IsAnyIndexableArray () const {
+  return (Type == TYPE_Array || Type == TYPE_DynamicArray ||
+          Type == TYPE_SliceArray);
+}
+
+
+//==========================================================================
+//
 //  VFieldType::CanBeReplaced
 //
 //==========================================================================
