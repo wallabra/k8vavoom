@@ -381,7 +381,7 @@ Iteration:
   .removeAndNextIndex(idx) -- remove entry at the given index, move to next entry
   .isValidIndex(idx) -- returns `true` if index is valid
   .keyAtIndex(idx) -- returns pointer to current key
-  .valueAtIndex(idx) returns pointer to current value
+  .valueAtIndex(idx) -- returns pointer to current value
 
 Note that iteration order is unspecified, and you should *NEVER* modify dictionary
 while iterating (except by calling `.removeAndNextIndex()`).
@@ -389,6 +389,16 @@ while iterating (except by calling `.removeAndNextIndex()`).
 WARNING! Returned pointers can be invalidated by any dictionary mutation, so don't
          store them anywhere.
 
+Iteration example:
+
+  for (auto idx = dict.firstIndex();
+       dict.isValidIndex(idx);
+       idx = dict.nextIndex(idx))
+  {
+    auto key = dict.keyAtIndex(idx); // pointer to key
+    auto val = dict.valueAtIndex(idx); // pointer to value
+    ...
+  }
 
 
 `.` and `->`
