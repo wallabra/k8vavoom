@@ -49,8 +49,6 @@ static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable ren
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
-static VCvarB r_flood_renderer("r_flood_renderer", false, "Use new floodfill renderer?", CVAR_PreInit);
-
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
@@ -799,23 +797,6 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
 //==========================================================================
 //
-//  bspCalcZExtents
-//
-//==========================================================================
-static __attribute__((unused)) void bspCalcZExtents (VLevel *level, int bspnum, float *minz, float *maxz) {
-  if ((bspnum&NF_SUBSECTOR) == 0) {
-    node_t *bsp = &level->Nodes[bspnum];
-    bspCalcZExtents(level, bsp->children[0], minz, maxz);
-    bspCalcZExtents(level, bsp->children[1], minz, maxz);
-  } else {
-    const subsector_t *sub = &level->Subsectors[bspnum&(~NF_SUBSECTOR)];
-    if (sub->sector) level->CalcSectorBoundingHeight(sub->sector, minz, maxz);
-  }
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::RenderBSPNode
 //
 //  Renders all subsectors below a given node, traversing subtree
@@ -869,38 +850,6 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
         if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
 #else
         if (!cp->checkBox(bbox)) {
-          //HACK: this should be done in world update, but just in case it failed to do its work...
-          //      seems to be fixed
-          /*
-          float newbbox[6];
-          memcpy(newbbox, bbox, sizeof(float)*6);
-          newbbox[2] = -32767.0f;
-          newbbox[5] = +32767.0f;
-          if (cp->checkBox(newbbox)) {
-            float minz = 999999.0f;
-            float maxz = -999999.0f;
-            bspCalcZExtents(Level, bspnum, &minz, &maxz);
-            newbbox[2] = min2(minz, bbox[2]);
-            newbbox[5] = max2(maxz, bbox[5]);
-            if (cp->checkBox(newbbox)) {
-              GCon->Logf("BBOX! (%f,%f) : (%f,%f) : %d", bbox[2], bbox[5], minz, maxz, (int)cp->checkBox(newbbox));
-              if ((bspnum&NF_SUBSECTOR) == 0) {
-                node_t *bsp = &Level->Nodes[bspnum];
-                node_t *child = bsp;
-                for (bsp = bsp->parent; bsp; child = bsp, bsp = bsp->parent) {
-                  if (bsp->children[0] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
-                    bsp->bbox[0][2] = newbbox[2];
-                    bsp->bbox[0][5] = newbbox[5];
-                  } else if (bsp->children[1] == (unsigned)(ptrdiff_t)(child-Level->Nodes)) {
-                    bsp->bbox[1][2] = newbbox[2];
-                    bsp->bbox[1][5] = newbbox[5];
-                  }
-                }
-              }
-              continue;
-            }
-          }
-          */
           if (cp != &view_frustum.planes[TFrustum::Back]) {
             // this node is out of frustum, clip with it
             onlyClip = true;
@@ -947,90 +896,6 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// returns the closest point to `this` on the line segment from `a` to `b`
-static TVec projectOnLine (const TVec &p, const TVec &a, const TVec b) {
-  const TVec ab = b-a; // vector from a to b
-  // squared distance from a to b
-  const float absq = ab.dot(ab);
-  if (fabs(absq) < 0.001f) return a; // a and b are the same point (roughly)
-  const TVec ap = p-a; // vector from a to p
-  const float t = ap.dot(ab)/absq;
-  if (t < 0) return a; // "before" a on the line
-  if (t > 1) return b; // "after" b on the line
-  // projection lies "inbetween" a and b on the line
-  return a+t*ab;
-}
-
-
-struct SubInfo {
-  subsector_t *sub;
-  float minDistSq; // minimum distance to view origin (used to sort subsectors)
-  bool seenSeg;
-  float bbox[6];
-
-  SubInfo () {}
-  SubInfo (ENoInit) {}
-  SubInfo (const VLevel *Level, const TVec &origin, subsector_t *asub) {
-    sub = asub;
-    minDistSq = FLT_MAX;
-    seenSeg = false;
-    float bestMini = FLT_MAX;
-    bool seenMini = false;
-    float bestNonMini = FLT_MAX;
-    bool seenNonMini = false;
-    const seg_t *seg = &Level->Segs[asub->firstline];
-    for (unsigned i = asub->numlines; i--; ++seg) {
-      const line_t *line = seg->linedef;
-      //if (seg->PointOnSide(origin)) continue; // cannot see
-      if (!line) {
-        // miniseg
-        seenSeg = true;
-        seenMini = true;
-        const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
-        const float distSq = proj.length2DSquared();
-        bestMini = min2(distSq, bestMini);
-      } else {
-        // normal seg
-        seenSeg = true;
-        seenNonMini = true;
-        /*
-        const TVec v1 = *seg->v1-origin, v2 = seg->v2-origin;
-        float distSq = v1.length2DSquared();
-        minDistSq = min2(distSq, minDistSq);
-        float distSq = v2.length2DSquared();
-        minDistSq = min2(distSq, minDistSq);
-        */
-        /*
-        const float distSq = fabsf(DotProduct(origin, seg->normal)-seg->dist);
-        minDistSq = min2(distSq, minDistSq);
-        */
-        const TVec proj = projectOnLine(origin, *seg->v1, *seg->v2);
-        const float distSq = proj.length2DSquared();
-        bestNonMini = min2(distSq, bestNonMini);
-      }
-    }
-    if (seenNonMini) {
-      minDistSq = bestNonMini;
-    } else if (seenMini) {
-      minDistSq = bestMini;
-    }
-    minDistSq = min2(bestMini, bestNonMini);
-  }
-};
-
-extern "C" {
-  static int subinfoCmp (const void *a, const void *b, void *udata) {
-    if (a == b) return 0;
-    const SubInfo *aa = (const SubInfo *)a;
-    const SubInfo *bb = (const SubInfo *)b;
-    if (aa->minDistSq < bb->minDistSq) return -1;
-    if (aa->minDistSq > bb->minDistSq) return 1;
-    return 0;
-  }
-}
-
-
 //==========================================================================
 //
 //  VRenderLevelShared::RenderBspWorld
@@ -1058,95 +923,8 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       view_frustum.planes[5].clipflag = 0;
     }
 
-    if (r_flood_renderer && Level->NumSubsectors) {
-      GCon->Log("============");
-      // start from r_viewleaf
-      static TArray<SubInfo> queue;
-      static TArray<vuint8> addedSubs;
-      if (addedSubs.length() != Level->NumSubsectors) addedSubs.setLength(Level->NumSubsectors);
-      memset(addedSubs.ptr(), 0, Level->NumSubsectors);
-      queue.reset();
-      // start from this subsector
-      queue.append(SubInfo(Level, vieworg, r_viewleaf));
-      addedSubs[(unsigned)(ptrdiff_t)(r_viewleaf-Level->Subsectors)] = 1;
-      // add other subsectors
-      int queuenum = 0;
-      while (queuenum < queue.length()) {
-        subsector_t *currsub = queue[queuenum++].sub;
-        if (currsub->VisFrame == currVisFrame) continue; // already processed
-        currsub->VisFrame = currVisFrame; // mark as processed
-        if (!currsub->sector->linecount) continue; // skip sectors containing original polyobjs
-        //const unsigned csnum = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
-        // check clipper
-        float bbox[6];
-        Level->GetSubsectorBBox(currsub, bbox);
-        if (!view_frustum.checkBox(bbox)) continue;
-        // travel to other subsectors
-        //GCon->Log("...");
-        const seg_t *seg = &Level->Segs[currsub->firstline];
-        for (unsigned i = currsub->numlines; i--; ++seg) {
-          const line_t *line = seg->linedef;
-          if (line) {
-            // not a miniseg; check for two-sided
-            if (!(line->flags&ML_TWOSIDED)) {
-              // not a two-sided, nowhere to travel
-              continue;
-            }
-          }
-          if (!seg->partner) continue; // just in case
-          if (seg->PointOnSide(vieworg)) continue; // cannot see
-          // closed door/lift?
-          if (seg->backsector && seg->backsector != seg->frontsector &&
-              (line->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED)
-          {
-            if (VViewClipper::IsSegAClosedSomething(&view_frustum, seg)) continue;
-          }
-          // it is visible, travel to partner subsector
-          subsector_t *ps = seg->partner->front_sub;
-          if (!ps || ps == currsub) continue; // just in case
-          if (ps->VisFrame == currVisFrame) continue; // already processed
-          const unsigned psnum = (unsigned)(ptrdiff_t)(ps-Level->Subsectors);
-          if (addedSubs.ptr()[psnum]) continue; // already added
-          addedSubs.ptr()[psnum] = 1;
-          SubInfo si = SubInfo(Level, vieworg, ps);
-          if (si.seenSeg) {
-            //GCon->Log(" +++");
-            memcpy(si.bbox, bbox, sizeof(float)*6);
-            queue.append(si);
-          }
-        }
-      }
-      //GCon->Logf("found #%d subsectors", queue.length());
-
-      // sort subsectors
-      if (queue.length() > 1) {
-        timsort_r(queue.ptr()+1, queue.length()-1, sizeof(SubInfo), &subinfoCmp, nullptr);
-      }
-
-      // render subsectors using clipper
-      // no need to check frustum, it is already done
-      {
-        const SubInfo *si = queue.ptr();
-        for (int sicount = queue.length(); sicount--; ++si) {
-          //if (!ViewClip.ClipIsBBoxVisible(si->bbox)) continue;
-          const subsector_t *currsub = si->sub;
-          const int snum = (int)(ptrdiff_t)(currsub-Level->Subsectors);
-          if (!ViewClip.ClipCheckSubsector(currsub)) {
-            GCon->Logf("SKIP SUB #%d", snum);
-            continue;
-          }
-          // render it, and add to clipper
-          RenderSubsector((int)(ptrdiff_t)(currsub-Level->Subsectors), false);
-          GCon->Logf("RENDER SUB #%d (before)", snum); ViewClip.Dump();
-          ViewClip.ClipAddSubsectorSegs(currsub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
-          GCon->Logf("RENDER SUB #%d (after)", snum); ViewClip.Dump();
-        }
-      }
-      //ViewClip.Dump();
-    } else {
-      // head node is the last node output
-      RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
-    }
+    // head node is the last node output
+    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
 
     if (PortalLevel == 0) {
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
