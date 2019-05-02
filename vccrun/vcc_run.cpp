@@ -128,12 +128,14 @@ static const char *comatoze (vuint32 n) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 class VVccLog : public VLogListener {
 public:
   virtual void Serialise (const char* text, EName event) override {
     dprintf("%s", text);
   }
 };
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -146,7 +148,7 @@ static bool DebugMode = false;
 static FILE *DebugFile;
 
 static VLexer Lex;
-static VVccLog VccLog;
+//static VVccLog VccLog;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -534,7 +536,7 @@ int main (int argc, char **argv) {
   PR_WriterCB = &vmWriter;
 
   try {
-    GLog.AddListener(&VccLog);
+    //GLog.AddListener(&VccLog);
 
     int starttime;
     int endtime;
