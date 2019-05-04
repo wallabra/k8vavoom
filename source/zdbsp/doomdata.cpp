@@ -1,6 +1,6 @@
 // ////////////////////////////////////////////////////////////////////////// //
 FLevel::FLevel () {
-  memset (this, 0, sizeof(*this));
+  memset((void *)this, 0, sizeof(*this)); // shut the fuck up, gshitcc
 }
 
 
