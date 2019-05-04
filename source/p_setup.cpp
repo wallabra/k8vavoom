@@ -2865,7 +2865,7 @@ void VLevel::LoadThings2 (int Lump) {
 
 //==========================================================================
 //
-//  VLevel::LoadACScripts
+//  VLevel::LoadLoadACS
 //
 //  load libraries from 'loadacs'
 //
@@ -2899,7 +2899,10 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
   GCon->Logf(NAME_Dev, "ACS: BEHAVIOR lump: %d", Lump);
 
   // load level's BEHAVIOR lump if it has one
-  if (Lump >= 0 && W_LumpLength(Lump) > 0) Acs->LoadObject(Lump);
+  if (Lump >= 0 && W_LumpLength(Lump) > 0) {
+    GCon->Log("loading map behavior lump");
+    Acs->LoadObject(Lump);
+  }
 
   // load ACS helper scripts if needed (for Strife)
   if (GGameInfo->AcsHelper != NAME_None) {
@@ -2913,7 +2916,7 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
 
   // load user-specified default ACS libraries
   // first load all from map file and further, then all before map file
-  // this is done so autoloaded acs won't interfere with libraries
+  // this is done so autoloaded acs won't interfere with pwad libraries
   if (XMapLump >= 0) {
     // from map file and further
     for (int ScLump = W_IterateNS(W_StartIterationFromLumpFile(W_LumpFile(XMapLump)), WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
@@ -2921,6 +2924,7 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
       LoadLoadACS(ScLump, XMapLump);
     }
   }
+
   // before map file
   for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
     if (XMapLump >= 0 && W_LumpFile(ScLump) >= W_LumpFile(XMapLump)) break;

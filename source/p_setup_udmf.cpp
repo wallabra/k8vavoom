@@ -656,13 +656,6 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       continue;
     }
 
-    if (Key.strEquCI("arg0str")) {
-      //FIXME: actually, this is valid only for ACS specials
-      arg0str = CheckString();
-      hasArg0Str = true;
-      continue;
-    }
-
     // doom specific flags
     if (NS&(NS_Doom|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
       if (Key.strEquCI("passuse")) {
@@ -677,6 +670,13 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 
     // strife specific flags
     if (NS&(NS_Strife|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
+      if (Key.strEquCI("arg0str")) {
+        //FIXME: actually, this is valid only for ACS specials
+        arg0str = CheckString();
+        hasArg0Str = true;
+        continue;
+      }
+
       if (Key.strEquCI("translucent")) {
         L.L.alpha = (CheckBool() ? 0.666f : 1.0f);
         continue;
@@ -839,11 +839,11 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
-  if (hasArg0Str && ((L.L.special >= 80 && L.L.special <= 85) || L.L.special == 226)) {
-    VName sn = VName(*CheckString(), VName::AddLower); // 'cause script names are lowercased
+  if (hasArg0Str && ((L.L.special >= 80 && L.L.special <= 86) || L.L.special == 226)) {
+    VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
     if (sn.GetIndex() != NAME_None) {
       L.L.arg1 = -(int)sn.GetIndex();
-      //GCon->Logf("*** SPECIAL 80: name is (%d) '%s'", sn.GetIndex(), *sn);
+      //GCon->Logf("*** ACS NAMED LINE SPECIAL %d: name is (%d) '%s'", L.L.special, sn.GetIndex(), *sn);
     } else {
       L.L.arg1 = 0;
     }
@@ -1007,6 +1007,9 @@ void VUdmfParser::ParseThing () {
   mthing_t &T = ParsedThings.Alloc();
   memset((void *)&T, 0, sizeof(mthing_t));
 
+  VStr arg0str;
+  bool hasArg0Str = false;
+
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
@@ -1100,6 +1103,16 @@ void VUdmfParser::ParseThing () {
 
     // hexen's extensions
     if (NS&(NS_Hexen|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
+      if (Key.strEquCI("arg0str")) {
+        //FIXME: actually, this is valid only for ACS specials
+        //       this can be color name for dynamic lights too
+        //T.arg1 = M_ParseColour(*CheckString())&0xffffffu;
+        arg0str = CheckString();
+        hasArg0Str = true;
+        continue;
+      }
+
+
       if (Key.strEquCI("id")) {
         T.tid = CheckInt();
         continue;
@@ -1140,14 +1153,6 @@ void VUdmfParser::ParseThing () {
         continue;
       }
 
-      /*
-      if (Key.strEquCI("arg0str")) {
-        // this should be color name for dynamic lights
-        T.arg1 = M_ParseColour(*CheckString())&0xffffffu;
-        continue;
-      }
-      */
-
       // classes (up to, and including 16)
       if (Key.startsWithCI("class")) {
         int cls = -1;
@@ -1161,6 +1166,17 @@ void VUdmfParser::ParseThing () {
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown thing property '%s' with value '%s'", *Key, *Val));
+  }
+
+  //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
+  if (hasArg0Str && ((T.special >= 80 && T.special <= 86) || T.special == 226)) {
+    VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
+    if (sn.GetIndex() != NAME_None) {
+      T.arg1 = -(int)sn.GetIndex();
+      //GCon->Logf("*** ACS NAMED THING SPECIAL %d: name is (%d) '%s'", T.special, sn.GetIndex(), *sn);
+    } else {
+      T.arg1 = 0;
+    }
   }
 }
 
