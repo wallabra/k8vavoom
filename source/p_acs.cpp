@@ -126,7 +126,7 @@ enum {
   SCRIPTF_Net = 0x0001, // safe to "puke" in multiplayer
 };
 
-struct VAcsHeader {
+struct __attribute__((packed)) VAcsHeader {
   char Marker[4];
   vint32 InfoOffset;
   vint32 Code;
@@ -413,14 +413,16 @@ private:
 
   void BroadcastCentrePrint (const char *s) {
     if (destroyed) return; // just in case
+    if (!s || !s[0]) return; // oops
     for (int i = 0; i < svs.max_clients; ++i) {
+      //k8: check if player is spawned?
       if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCentrePrint(s);
     }
   }
 
   void StartSound (const TVec &origin, vint32 origin_id,
-    vint32 sound_id, vint32 channel, float volume, float Attenuation,
-    bool Loop, bool Local=false)
+                   vint32 sound_id, vint32 channel, float volume, float Attenuation,
+                   bool Loop, bool Local=false)
   {
     for (int i = 0; i < MAXPLAYERS; ++i) {
       if (!Level->Game->Players[i]) continue;
@@ -429,9 +431,6 @@ private:
     }
   }
 };
-
-
-//IMPLEMENT_CLASS(V, Acs)
 
 
 //==========================================================================
@@ -497,49 +496,22 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
 
   if (Lump < 0) return;
 
-  for (;;) {
-    if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
-      GCon->Log(NAME_Error, "Behavior lump too small");
-    } else {
-      VStream *Strm = W_CreateLumpReaderNum(Lump);
-      check(Strm);
-      int datasize = Strm->TotalSize();
-      check(datasize >= (int)sizeof(VAcsHeader));
-      Data = new vuint8[datasize];
-      Strm->Serialise(Data, Strm->TotalSize());
-      if (Strm->IsError()) memset(Data, 0, datasize);
-      delete Strm;
-      header = (VAcsHeader *)Data;
+  DataSize = W_LumpLength(Lump);
 
-      /*
-      // check header
-      if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
-        // try to find another lump with the same name
-        delete Data;
-        Data = nullptr;
-        int fileid = W_LumpFile(Lump);
-        VName acsobjname = W_LumpName(Lump);
-        int goodLump = -1;
-        for (Lump = W_IterateNS(Lump, WADNS_ACSLibrary); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_ACSLibrary)) {
-          //GCon->Logf(NAME_Dev, " <%s>", *W_FullLumpName(Lump));
-          if (W_LumpFile(Lump) != fileid) break;
-          if (Lump != LumpNum && W_LumpName(Lump) == acsobjname) {
-            goodLump = Lump;
-          }
-        }
-        if (goodLump < 0) {
-          GCon->Logf(NAME_Warning, "Behavior lump \"%s\" has invalid signature", *W_FullLumpName(LumpNum));
-          return;
-        }
-        Lump = goodLump;
-        GCon->Logf(NAME_Warning, "  trying another ACS object '%s' (this is harmless)", *W_FullLumpName(Lump));
-        LumpNum = Lump;
-      } else {
-        break;
-      }
-      */
-      break;
-    }
+  if (DataSize < (int)sizeof(VAcsHeader)) {
+    GCon->Log(NAME_Warning, "Behavior lump too small");
+    DataSize = 0;
+    return;
+  } else {
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
+    check(Strm);
+    int datasize = Strm->TotalSize();
+    check(datasize >= (int)sizeof(VAcsHeader));
+    Data = new vuint8[datasize];
+    Strm->Serialise(Data, Strm->TotalSize());
+    if (Strm->IsError()) memset(Data, 0, datasize);
+    delete Strm;
+    header = (VAcsHeader *)Data;
   }
 
   // determine format
@@ -547,19 +519,17 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
     case 0: Format = ACS_Old; break;
     case 'E': Format = ACS_Enhanced; break;
     case 'e': Format = ACS_LittleEnhanced; break;
-    default: GCon->Logf(NAME_Warning, "Behavior lump \"%s\" has invalid signature (format)", *W_FullLumpName(Lump)); return;
+    default: GCon->Logf(NAME_Warning, "Behavior lump \"%s\" has invalid signature (format)", *W_FullLumpName(Lump)); DataSize = 0; return;
   }
   //if (developer) GCon->Logf(NAME_Dev, "Behavior lump \"%s\" fmt id: %u; fmt=%d", *W_FullLumpName(Lump), (vuint8)header->Marker[3], Format);
-
-  DataSize = W_LumpLength(Lump);
 
   if (Format == ACS_Old) {
     vuint32 dirofs = LittleLong(header->InfoOffset);
     vuint8 *pretag = Data+dirofs-4;
 
-    Chunks = Data + DataSize;
+    Chunks = Data+DataSize;
     // check for redesigned ACSE/ACSe
-    if (dirofs >= 6 * 4 && pretag[0] == 'A' &&
+    if (dirofs >= 6*4 && pretag[0] == 'A' &&
         pretag[1] == 'C' && pretag[2] == 'S' &&
         (pretag[3] == 'e' || pretag[3] == 'E'))
     {
@@ -628,19 +598,19 @@ void VAcsObject::LoadOldObject () {
   VAcsHeader *header;
 
   //  Add to loaded objects.
-  LibraryID = Level->LoadedObjects.Append(this) << 16;
+  LibraryID = Level->LoadedObjects.Append(this)<<16;
 
   header = (VAcsHeader *)Data;
 
   //  Load script info.
-  buffer = (int*)(Data + LittleLong(header->InfoOffset));
+  buffer = (int*)(Data+LittleLong(header->InfoOffset));
   NumScripts = LittleLong(*buffer++);
   if (NumScripts == 0) return; // empty behavior lump
   Scripts = new VAcsInfo[NumScripts];
-  memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
+  memset((void *)Scripts, 0, NumScripts*sizeof(VAcsInfo));
   for (i = 0, info = Scripts; i < NumScripts; i++, info++) {
-    info->Number = LittleLong(*buffer) % 1000;
-    info->Type = LittleLong(*buffer) / 1000;
+    info->Number = LittleLong(*buffer)%1000;
+    info->Type = LittleLong(*buffer)/1000;
     buffer++;
     info->Address = OffsetToPtr(LittleLong(*buffer++));
     info->ArgCount = LittleLong(*buffer++);
@@ -655,7 +625,7 @@ void VAcsObject::LoadOldObject () {
   LowerCaseNames = new VName[NumStrings];
   for (i = 0; i < NumStrings; i++)
   {
-    Strings[i] = (char*)Data + LittleLong(buffer[i]);
+    Strings[i] = (char*)Data+LittleLong(buffer[i]);
     LowerCaseNames[i] = NAME_None;
   }
 
@@ -682,9 +652,9 @@ void VAcsObject::LoadEnhancedObject () {
   buffer = (int *)FindChunk("SPTR");
   if (buffer) {
     if (Data[3] != 0) {
-      NumScripts = LittleLong(buffer[1]) / 12;
+      NumScripts = LittleLong(buffer[1])/12;
       Scripts = new VAcsInfo[NumScripts];
-      memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
+      memset((void *)Scripts, 0, NumScripts*sizeof(VAcsInfo));
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; i++, info++) {
@@ -698,9 +668,9 @@ void VAcsObject::LoadEnhancedObject () {
         info->Name = NAME_None;
       }
     } else {
-      NumScripts = LittleLong(buffer[1]) / 8;
+      NumScripts = LittleLong(buffer[1])/8;
       Scripts = new VAcsInfo[NumScripts];
-      memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
+      memset((void *)Scripts, 0, NumScripts*sizeof(VAcsInfo));
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; i++, info++)
@@ -718,7 +688,7 @@ void VAcsObject::LoadEnhancedObject () {
   } else {
     // wutafu? no scripts!
     //FIXME: better message
-    GCon->Log(NAME_Warning, "one of ACS files has no scripts!");
+    GCon->Logf(NAME_Warning, "ACS file '%s' has no scripts (it is ok for library).", *W_FullLumpName(LumpNum));
     NumScripts = 0;
     Scripts = new VAcsInfo[1];
     memset((void *)Scripts, 0, 1*sizeof(VAcsInfo));
@@ -727,7 +697,7 @@ void VAcsObject::LoadEnhancedObject () {
   // load script flags
   buffer = (int *)FindChunk("SFLG");
   if (buffer) {
-    int count = LittleLong(buffer[1]) / 4;
+    int count = LittleLong(buffer[1])/4;
     buffer += 2;
     for (i = 0; i < count; i++, buffer++) {
       info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
@@ -740,7 +710,7 @@ void VAcsObject::LoadEnhancedObject () {
   // load script var counts
   buffer = (int*)FindChunk("SVCT");
   if (buffer) {
-    int count = LittleLong(buffer[1]) / 4;
+    int count = LittleLong(buffer[1])/4;
     buffer += 2;
     for (i = 0; i < count; i++, buffer++) {
       info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
@@ -756,8 +726,8 @@ void VAcsObject::LoadEnhancedObject () {
   // load functions
   buffer = (int*)FindChunk("FUNC");
   if (buffer) {
-    NumFunctions = LittleLong(buffer[1]) / 8;
-    Functions = (VAcsFunction*)(buffer + 2);
+    NumFunctions = LittleLong(buffer[1])/8;
+    Functions = (VAcsFunction*)(buffer+2);
     for (i = 0; i < NumFunctions; i++) {
       Functions[i].Address = LittleLong(Functions[i].Address);
     }
@@ -774,7 +744,7 @@ void VAcsObject::LoadEnhancedObject () {
     Strings = new char*[NumStrings];
     LowerCaseNames = new VName[NumStrings];
     for (i = 0; i < NumStrings; i++) {
-      Strings[i] = (char *)buffer + LittleLong(buffer[i + 3]);
+      Strings[i] = (char *)buffer+LittleLong(buffer[i+3]);
       LowerCaseNames[i] = NAME_None;
     }
   }
@@ -789,10 +759,10 @@ void VAcsObject::LoadEnhancedObject () {
   memset((void *)MapVarStore, 0, sizeof(MapVarStore));
   buffer = (int *)FindChunk("MINI");
   while (buffer) {
-    int numvars = LittleLong(buffer[1]) / 4 - 1;
+    int numvars = LittleLong(buffer[1])/4-1;
     int firstvar = LittleLong(buffer[2]);
     for (i = 0; i < numvars; i++) {
-      MapVarStore[firstvar + i] = LittleLong(buffer[3 + i]);
+      MapVarStore[firstvar+i] = LittleLong(buffer[3+i]);
     }
     buffer = (int *)NextChunk((vuint8*)buffer);
   }
@@ -800,14 +770,14 @@ void VAcsObject::LoadEnhancedObject () {
   // create arrays
   buffer = (int *)FindChunk("ARAY");
   if (buffer) {
-    NumArrays = LittleLong(buffer[1]) / 8;
+    NumArrays = LittleLong(buffer[1])/8;
     ArrayStore = new VArrayInfo[NumArrays];
-    memset((void *)ArrayStore, 0, sizeof(*ArrayStore) * NumArrays);
+    memset((void *)ArrayStore, 0, sizeof(*ArrayStore)*NumArrays);
     for (i = 0; i < NumArrays; ++i) {
-      MapVarStore[LittleLong(buffer[2 + i * 2])] = i;
-      ArrayStore[i].Size = LittleLong(buffer[3 + i * 2]);
+      MapVarStore[LittleLong(buffer[2+i*2])] = i;
+      ArrayStore[i].Size = LittleLong(buffer[3+i*2]);
       ArrayStore[i].Data = new vint32[ArrayStore[i].Size];
-      memset((void *)ArrayStore[i].Data, 0, ArrayStore[i].Size * sizeof(vint32));
+      memset((void *)ArrayStore[i].Data, 0, ArrayStore[i].Size*sizeof(vint32));
     }
   }
 
@@ -816,7 +786,7 @@ void VAcsObject::LoadEnhancedObject () {
   while (buffer) {
     int arraynum = MapVarStore[LittleLong(buffer[2])];
     if ((unsigned)arraynum < (unsigned)NumArrays) {
-      int initsize = (LittleLong(buffer[1]) - 4) / 4;
+      int initsize = (LittleLong(buffer[1])-4)/4;
       if (initsize > ArrayStore[arraynum].Size) initsize = ArrayStore[arraynum].Size;
       int *elems = ArrayStore[arraynum].Data;
       /*
@@ -853,13 +823,13 @@ void VAcsObject::LoadEnhancedObject () {
   // module. The only things that can be exported are functions and map
   // variables, which must already be present if they're exported, so this
   // is okay.
-  LibraryID = Level->LoadedObjects.Append(this) << 16;
+  LibraryID = Level->LoadedObjects.Append(this)<<16;
 
   // Tag the library ID to any map variables that are initialised with strings.
   if (LibraryID) {
     buffer = (int *)FindChunk("MSTR");
     if (buffer) {
-      for (i = 0; i < LittleLong(buffer[1]) / 4; i++) {
+      for (i = 0; i < LittleLong(buffer[1])/4; i++) {
         //MapVarStore[LittleLong(buffer[i + 2])] |= LibraryID;
         int sidx = LittleLong(buffer[i+2]);
         const char *str = (sidx < 0 || sidx >= NumStrings ? "" : Strings[sidx]);
@@ -869,8 +839,8 @@ void VAcsObject::LoadEnhancedObject () {
 
     buffer = (int *)FindChunk("ASTR");
     if (buffer) {
-      for (i = 0; i < LittleLong(buffer[1]) / 4; i++) {
-        int arraynum = MapVarStore[LittleLong(buffer[i + 2])];
+      for (i = 0; i < LittleLong(buffer[1])/4; i++) {
+        int arraynum = MapVarStore[LittleLong(buffer[i+2])];
         if ((unsigned)arraynum < (unsigned)NumArrays) {
           int *elems = ArrayStore[arraynum].Data;
           for (int j = ArrayStore[arraynum].Size; j > 0; j--, elems++) {
@@ -887,14 +857,17 @@ void VAcsObject::LoadEnhancedObject () {
   // library loading
   buffer = (int *)FindChunk("LOAD");
   if (buffer) {
-    char *parse = (char*)&buffer[2];
+    char *parse = (char *)&buffer[2];
     for (i = 0; i < LittleLong(buffer[1]); i++) {
       if (parse[i]) {
+        if (developer) GCon->Logf(NAME_Dev, "acs linked library '%s' (for object '%s')", &parse[i], *W_FullLumpName(LumpNum));
         VAcsObject *Object = nullptr;
-        int Lump = W_CheckNumForName(VName(&parse[i], VName::AddLower8), WADNS_ACSLibrary);
+        //int Lump = W_CheckNumForName(VName(&parse[i], VName::AddLower8), WADNS_ACSLibrary);
+        int Lump = W_FindACSObjectInFile(VStr(&parse[i]), W_LumpFile(LumpNum));
         if (Lump < 0) {
-          GCon->Logf(NAME_Warning, "Could not find ACS library %s.", &parse[i]);
+          GCon->Logf(NAME_Warning, "Could not find ACS library '%s'.", &parse[i]);
         } else {
+          GCon->Logf("  ACS linked library '%s' (for object '%s')", &parse[i], *W_FullLumpName(LumpNum));
           Object = Level->LoadObject(Lump);
         }
         Imports.Append(Object);
@@ -920,8 +893,7 @@ void VAcsObject::LoadEnhancedObject () {
         if (func->Address != 0 || func->ImportNum != 0)
           continue;
 
-        int libfunc = lib->FindFunctionName((char*)(buffer + 2) +
-          LittleLong(buffer[3 + j]));
+        int libfunc = lib->FindFunctionName((char*)(buffer+2)+LittleLong(buffer[3+j]));
         if (libfunc < 0)
           continue;
 
@@ -932,11 +904,11 @@ void VAcsObject::LoadEnhancedObject () {
           continue;
 
         func->Address = libfunc;
-        func->ImportNum = i + 1;
+        func->ImportNum = i+1;
         if (realfunc->ArgCount != func->ArgCount)
         {
           GCon->Logf(NAME_Warning, "ACS: Function %s in %s has %d arguments. %s expects it to have %d.",
-            (char *)(buffer + 2) + LittleLong(buffer[3 + j]),
+            (char *)(buffer+2)+LittleLong(buffer[3+j]),
             *W_LumpName(lib->LumpNum), realfunc->ArgCount,
             *W_LumpName(LumpNum), func->ArgCount);
           Format = ACS_Unknown;
@@ -981,8 +953,8 @@ void VAcsObject::LoadEnhancedObject () {
           int impNum = lib->FindMapArray(parse);
           if (impNum >= 0)
           {
-            Arrays[NumArrays + j] = &lib->ArrayStore[impNum];
-            MapVarStore[varNum] = NumArrays + j;
+            Arrays[NumArrays+j] = &lib->ArrayStore[impNum];
+            MapVarStore[varNum] = NumArrays+j;
             if (lib->ArrayStore[impNum].Size != expectedSize)
             {
               Format = ACS_Unknown;
@@ -1060,14 +1032,14 @@ void VAcsObject::UnencryptStrings()
   {
     for (int strnum = 0; strnum < LittleLong(chunk[3]); strnum++)
     {
-      int ofs = LittleLong(chunk[5 + strnum]);
-      vuint8 *data = (vuint8*)chunk + ofs + 8;
+      int ofs = LittleLong(chunk[5+strnum]);
+      vuint8 *data = (vuint8*)chunk+ofs+8;
       vuint8 last;
-      int p = (vuint8)(ofs * 157135);
+      int p = (vuint8)(ofs*157135);
       int i = 0;
       do
       {
-        last = (data[i] ^= (vuint8)(p + (i >> 1)));
+        last = (data[i] ^= (vuint8)(p+(i>>1)));
         i++;
       } while (last != 0);
     }
@@ -1136,8 +1108,7 @@ int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
     int count = LittleLong(((int*)Chunk)[2]);
     for (int i = 0; i < count; ++i)
     {
-      if (!VStr::ICmp(Name, (char*)(Chunk + 8) +
-        LittleLong(((int*)Chunk)[3 + i])))
+      if (!VStr::ICmp(Name, (char*)(Chunk+8)+LittleLong(((int*)Chunk)[3+i])))
       {
         return i;
       }
@@ -1156,13 +1127,13 @@ int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
 vuint8 *VAcsObject::FindChunk(const char *id) const
 {
   vuint8 *chunk = Chunks;
-  while (chunk && chunk < Data + DataSize)
+  while (chunk && chunk < Data+DataSize)
   {
     if (*(int*)chunk == *(int*)id)
     {
       return chunk;
     }
-    chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
+    chunk = chunk+LittleLong(((int*)chunk)[1])+8;
   }
   return nullptr;
 }
@@ -1177,14 +1148,14 @@ vuint8 *VAcsObject::FindChunk(const char *id) const
 vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
 {
   int id = *(int*)prev;
-  vuint8 *chunk = prev + LittleLong(((int*)prev)[1]) + 8;
-  while (chunk && chunk < Data + DataSize)
+  vuint8 *chunk = prev+LittleLong(((int*)prev)[1])+8;
+  while (chunk && chunk < Data+DataSize)
   {
     if (*(int*)chunk == id)
     {
       return chunk;
     }
-    chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
+    chunk = chunk+LittleLong(((int*)chunk)[1])+8;
   }
   return nullptr;
 }
@@ -1261,7 +1232,7 @@ void VAcsObject::Serialise (VStream &Strm) {
 vuint8 *VAcsObject::OffsetToPtr(int Offs)
 {
   if (Offs < 0 || Offs >= DataSize) Host_Error("Bad offset in ACS file");
-  return Data + Offs;
+  return Data+Offs;
 }
 
 //==========================================================================
@@ -1272,7 +1243,7 @@ vuint8 *VAcsObject::OffsetToPtr(int Offs)
 
 int VAcsObject::PtrToOffset(vuint8 *Ptr)
 {
-  return Ptr - Data;
+  return Ptr-Data;
 }
 
 //==========================================================================
@@ -1291,7 +1262,7 @@ VAcsInfo *VAcsObject::FindScript(int Number) const
   {
     if (Scripts[i].Number == Number)
     {
-      return Scripts + i;
+      return Scripts+i;
     }
   }
   return nullptr;
@@ -1313,7 +1284,7 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
   }
   //for (int i = 0; i < NumScripts; i++) fprintf(stderr, "#%d: index=%d; name=<%s>\n", i, Scripts[i].Number, *Scripts[i].Name); abort();
   for (int i = 0; i < NumScripts; i++) {
-    if (Scripts[i].Name.GetIndex() == nameidx) return Scripts + i;
+    if (Scripts[i].Name.GetIndex() == nameidx) return Scripts+i;
   }
   return nullptr;
 }
@@ -1330,7 +1301,7 @@ VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
-    if (Scripts[i].Name == nn) return Scripts + i;
+    if (Scripts[i].Name == nn) return Scripts+i;
   }
   return nullptr;
 }
@@ -1366,10 +1337,10 @@ VAcsFunction *VAcsObject::GetFunction(int funcnum,
   {
     return nullptr;
   }
-  VAcsFunction *Func = Functions + funcnum;
+  VAcsFunction *Func = Functions+funcnum;
   if (Func->ImportNum)
   {
-    return Imports[Func->ImportNum - 1]->GetFunction(Func->Address,
+    return Imports[Func->ImportNum-1]->GetFunction(Func->Address,
       Object);
   }
   Object = this;
@@ -2311,7 +2282,7 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 #endif
 
 #define READ_INT16(p)   (vint32)(vint16)((p)[0]|((p)[1]<<8))
-#define READ_INT32(p)   ((p)[0] | ((p)[1] << 8) | ((p)[2] << 16) | ((p)[3] << 24))
+#define READ_INT32(p)   ((p)[0]|((p)[1]<<8)|((p)[2]<<16)|((p)[3]<<24))
 #define READ_BYTE_OR_INT32  (fmt == ACS_LittleEnhanced ? *ip : READ_INT32(ip))
 #define INC_BYTE_OR_INT32 if (fmt == ACS_LittleEnhanced) ip++; else ip += 4
 #define READ_SHORT_OR_INT32  (fmt == ACS_LittleEnhanced ? READ_INT16(ip) : READ_INT32(ip))
@@ -3446,7 +3417,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       cmd = *ip;
       if (cmd >= 240)
       {
-        cmd = 240 + ((cmd - 240) << 8) + ip[1];
+        cmd = 240+((cmd-240)<<8)+ip[1];
         ip += 2;
       }
       else
@@ -3562,7 +3533,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), 0, 0, 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), 0, 0, 0, line, side, Activator);
         ip += 8;
       }
       ACSVM_BREAK;
@@ -3571,7 +3542,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), 0, 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), READ_INT32(ip+8), 0, 0, line, side, Activator);
         ip += 12;
       }
       ACSVM_BREAK;
@@ -3580,7 +3551,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), READ_INT32(ip + 12), 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), READ_INT32(ip+8), READ_INT32(ip+12), 0, line, side, Activator);
         ip += 16;
       }
       ACSVM_BREAK;
@@ -3589,7 +3560,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), READ_INT32(ip + 12), READ_INT32(ip + 16), line, side,
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), READ_INT32(ip+8), READ_INT32(ip+12), READ_INT32(ip+16), line, side,
           Activator);
         ip += 20;
       }
@@ -3893,12 +3864,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_Random)
-      sp[-2] = sp[-2] + (vint32)(Random()*(sp[-1]-sp[-2]+1));
+      sp[-2] = sp[-2]+(vint32)(Random()*(sp[-1]-sp[-2]+1));
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_RandomDirect)
-      *sp = READ_INT32(ip) + (vint32)(Random()*(READ_INT32(ip+4)-READ_INT32(ip)+1));
+      *sp = READ_INT32(ip)+(vint32)(Random()*(READ_INT32(ip+4)-READ_INT32(ip)+1));
       ip += 8;
       sp++;
       ACSVM_BREAK;
@@ -4009,17 +3980,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AndBitwise)
-      sp[-2] = sp[-2] & sp[-1];
+      sp[-2] = sp[-2]&sp[-1];
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_OrBitwise)
-      sp[-2] = sp[-2] | sp[-1];
+      sp[-2] = sp[-2]|sp[-1];
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_EorBitwise)
-      sp[-2] = sp[-2] ^ sp[-1];
+      sp[-2] = sp[-2]^sp[-1];
       sp--;
       ACSVM_BREAK;
 
@@ -4028,12 +3999,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LShift)
-      sp[-2] = sp[-2] << sp[-1];
+      sp[-2] = sp[-2]<<sp[-1];
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_RShift)
-      sp[-2] = sp[-2] >> sp[-1];
+      sp[-2] = sp[-2]>>sp[-1];
       sp--;
       ACSVM_BREAK;
 
@@ -4114,7 +4085,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_CaseGoto)
       if (sp[-1] == READ_INT32(ip)) {
-        ip = ActiveObject->OffsetToPtr(READ_INT32(ip + 4));
+        ip = ActiveObject->OffsetToPtr(READ_INT32(ip+4));
         sp--;
       } else {
         ip += 8;
@@ -4128,7 +4099,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndPrint)
       PrintStr = PrintStr.EvalEscapeSequences();
-      if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer) {
+      if (Activator && Activator->EntityFlags&VEntity::EF_IsPlayer) {
         Activator->Player->CentrePrintf("%s", *PrintStr);
       } else {
         BroadcastCentrePrint(*PrintStr);
@@ -4194,14 +4165,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SectorSound)
       Level->SectorStartSound(line ? line->frontsector : nullptr,
-        GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1] / 127.0f,
+        GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1]/127.0f,
         1.0f);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AmbientSound)
       StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-        GetName(sp[-2])), 0, sp[-1] / 127.0f, 0.0f, false);
+        GetName(sp[-2])), 0, sp[-1]/127.0f, 0.0f, false);
       sp -= 2;
       ACSVM_BREAK;
 
@@ -4237,23 +4208,23 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (line_t *line = XLevel->FindLine(sp[-2], &searcher); line != nullptr; line = XLevel->FindLine(sp[-2], &searcher)) {
           switch (sp[-1]) {
             case BLOCK_NOTHING:
-              line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_RAILING | ML_BLOCKPLAYERS);
+              line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCKPLAYERS);
               break;
             case BLOCK_CREATURES:
             default:
-              line->flags &= ~(ML_BLOCKEVERYTHING | ML_RAILING | ML_BLOCKPLAYERS);
+              line->flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCKPLAYERS);
               line->flags |= ML_BLOCKING;
               break;
             case BLOCK_EVERYTHING:
-              line->flags &= ~(ML_RAILING | ML_BLOCKPLAYERS);
-              line->flags |= ML_BLOCKING | ML_BLOCKEVERYTHING;
+              line->flags &= ~(ML_RAILING|ML_BLOCKPLAYERS);
+              line->flags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
               break;
             case BLOCK_RAILING:
-              line->flags &= ~(ML_BLOCKEVERYTHING | ML_BLOCKPLAYERS);
-              line->flags |= ML_BLOCKING | ML_RAILING;
+              line->flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCKPLAYERS);
+              line->flags |= ML_BLOCKING|ML_RAILING;
               break;
             case BLOCK_PLAYERS:
-              line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_RAILING);
+              line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING);
               line->flags |= ML_BLOCKPLAYERS;
               break;
           }
@@ -4285,7 +4256,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
-          mobj->StartSound(sound, 0, sp[-1] / 127.0f, 1.0f, false);
+          mobj->StartSound(sound, 0, sp[-1]/127.0f, 1.0f, false);
         }
         sp -= 3;
       }
@@ -4293,7 +4264,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndPrintBold)
       PrintStr = PrintStr.EvalEscapeSequences();
-      BroadcastCentrePrint(*(VStr(TEXT_COLOUR_ESCAPE) + "+" + PrintStr));
+      BroadcastCentrePrint(*(VStr(TEXT_COLOUR_ESCAPE)+"+"+PrintStr));
       SB_POP;
       ACSVM_BREAK;
 
@@ -4301,12 +4272,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ActivatorSound)
       if (Activator)
       {
-        Activator->StartSound(GetName(sp[-2]), 0, sp[-1] / 127.0f, 1.0f, false);
+        Activator->StartSound(GetName(sp[-2]), 0, sp[-1]/127.0f, 1.0f, false);
       }
       else
       {
         StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-          GetName(sp[-2])), 0, sp[-1] / 127.0f, 1.0f, false);
+          GetName(sp[-2])), 0, sp[-1]/127.0f, 1.0f, false);
       }
       sp -= 2;
       ACSVM_BREAK;
@@ -4314,7 +4285,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_LocalAmbientSound)
       if (Activator)
       {
-        Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1] / 127.0f,
+        Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1]/127.0f,
           1.0f);
       }
       sp -= 2;
@@ -4389,10 +4360,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS) {
               Plr = Activator ? Activator->Player : nullptr;
             } else {
-              Plr = Level->Game->Players[sp[-1] - 1];
+              Plr = Level->Game->Players[sp[-1]-1];
             }
                  if (Plr && (Plr->PlayerFlags&VBasePlayer::PF_Spawned)) PrintStr += Plr->PlayerName;
-            else if (Plr && !(Plr->PlayerFlags&VBasePlayer::PF_Spawned)) PrintStr += VStr("Player ") + VStr(sp[-1]);
+            else if (Plr && !(Plr->PlayerFlags&VBasePlayer::PF_Spawned)) PrintStr += VStr("Player ")+VStr(sp[-1]);
             else if (Activator) PrintStr += Activator->GetClass()->GetName();
             else PrintStr += "Unknown";
             break;
@@ -4413,34 +4384,34 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FixedMul)
-      sp[-2] = vint32((double)sp[-2] / (double)0x10000 * (double)sp[-1]);
+      sp[-2] = vint32((double)sp[-2]/(double)0x10000*(double)sp[-1]);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FixedDiv)
-      sp[-2] = vint32((double)sp[-2] / (double)sp[-1] * (double)0x10000);
+      sp[-2] = vint32((double)sp[-2]/(double)sp[-1]*(double)0x10000);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetGravity)
-      Level->Gravity = ((float)sp[-1] / (float)0x10000) *
-        DEFAULT_GRAVITY / 800.0f;
+      Level->Gravity = ((float)sp[-1]/(float)0x10000) *
+        DEFAULT_GRAVITY/800.0f;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetGravityDirect)
-      Level->Gravity = ((float)READ_INT32(ip) / (float)0x10000) *
-        DEFAULT_GRAVITY / 800.0f;
+      Level->Gravity = ((float)READ_INT32(ip)/(float)0x10000) *
+        DEFAULT_GRAVITY/800.0f;
       ip += 4;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetAirControl)
-      Level->AirControl = float(sp[-1]) / 65536.0f;
+      Level->AirControl = float(sp[-1])/65536.0f;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetAirControlDirect)
-      Level->AirControl = float(READ_INT32(ip)) / 65536.0f;
+      Level->AirControl = float(READ_INT32(ip))/65536.0f;
       ip += 4;
       ACSVM_BREAK;
 
@@ -4454,7 +4425,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
           if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
+            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             Level->Game->Players[i]->MO->eventClearInventory();
           }
@@ -4473,7 +4444,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
           if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
+            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             Level->Game->Players[i]->MO->eventGiveInventory(
               GetNameLowerCase(sp[-2]), sp[-1]);
@@ -4507,7 +4478,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
           if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
+            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             Level->Game->Players[i]->MO->eventTakeInventory(
               GetNameLowerCase(sp[-2]), sp[-1]);
@@ -4554,32 +4525,32 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_Spawn)
       //GCon->Logf("!!!!!!!! '%s'", *GetNameLowerCase(sp[-6]));
       sp[-6] = Level->eventAcsSpawnThing(GetNameLowerCase(sp[-6]),
-        TVec(float(sp[-5]) / float(0x10000),
-        float(sp[-4]) / float(0x10000),
-        float(sp[-3]) / float(0x10000)),
-        sp[-2], float(sp[-1]) * 45.0f / 32.0f);
+        TVec(float(sp[-5])/float(0x10000),
+        float(sp[-4])/float(0x10000),
+        float(sp[-3])/float(0x10000)),
+        sp[-2], float(sp[-1])*45.0f/32.0f);
       sp -= 5;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnDirect)
       *sp = Level->eventAcsSpawnThing(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()),
-        TVec(float(READ_INT32(ip + 4)) / float(0x10000),
-        float(READ_INT32(ip + 8)) / float(0x10000),
-        float(READ_INT32(ip + 12)) / float(0x10000)),
-        READ_INT32(ip + 16), float(READ_INT32(ip + 20)) * 45.0f / 32.0f);
+        TVec(float(READ_INT32(ip+4))/float(0x10000),
+        float(READ_INT32(ip+8))/float(0x10000),
+        float(READ_INT32(ip+12))/float(0x10000)),
+        READ_INT32(ip+16), float(READ_INT32(ip+20))*45.0f/32.0f);
       sp++;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpot)
       sp[-4] = Level->eventAcsSpawnSpot(GetNameLowerCase(sp[-4]),
-        sp[-3], sp[-2], float(sp[-1]) * 45.0f / 32.0f);
+        sp[-3], sp[-2], float(sp[-1])*45.0f/32.0f);
       sp -= 3;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpotDirect)
       *sp = Level->eventAcsSpawnSpot(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()),
-        READ_INT32(ip + 4), READ_INT32(ip + 8),
-        float(READ_INT32(ip + 12)) * 45.0f / 32.0f);
+        READ_INT32(ip+4), READ_INT32(ip+8),
+        float(READ_INT32(ip+12))*45.0f/32.0f);
       sp++;
       ACSVM_BREAK;
 
@@ -4594,7 +4565,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LocalSetMusic)
-      if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
+      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer))
       {
         Activator->Player->eventClientChangeMusic(GetNameLowerCase(sp[-3]));
       }
@@ -4610,7 +4581,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintFixed)
-      PrintStr += VStr(float(sp[-1]) / float(0x10000));
+      PrintStr += VStr(float(sp[-1])/float(0x10000));
       sp--;
       ACSVM_BREAK;
 
@@ -4640,8 +4611,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           ColourName = GetStr(optstart[-4]);
           Colour = -1;
         }
-        float x = (float)optstart[-3] / float(0x10000);
-        float y = (float)optstart[-2] / float(0x10000);
+        float x = (float)optstart[-3]/float(0x10000);
+        float y = (float)optstart[-2]/float(0x10000);
         float HoldTime = (float)optstart[-1]/float(0x10000);
         float Time1 = 0;
         float Time2 = 0;
@@ -4653,12 +4624,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             Time1 = (optstart < sp ? (float)optstart[0]/float(0x10000) : 0.5f);
             break;
           case HUDMSG_TYPEON:
-            Time1 = (optstart < sp ? (float)optstart[0] / float(0x10000) : 0.05f);
-            Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
+            Time1 = (optstart < sp ? (float)optstart[0]/float(0x10000) : 0.05f);
+            Time2 = (optstart < sp-1 ? (float)optstart[1]/float(0x10000) : 0.5f);
             break;
           case HUDMSG_FADEINOUT:
-            Time1 = (optstart < sp ? (float)optstart[0] / float(0x10000) : 0.5f);
-            Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
+            Time1 = (optstart < sp ? (float)optstart[0]/float(0x10000) : 0.5f);
+            Time2 = (optstart < sp-1 ? (float)optstart[1]/float(0x10000) : 0.5f);
             break;
         }
         // normalize timings
@@ -4751,16 +4722,16 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_RandomDirectB)
-      *sp = ip[0] + (vint32)(Random() * (ip[1] - ip[0] + 1));
+      *sp = ip[0]+(vint32)(Random()*(ip[1]-ip[0]+1));
       ip += 2;
       sp++;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushBytes)
       for (int i = 0; i < ip[0]; i++)
-        sp[i] = ip[i + 1];
+        sp[i] = ip[i+1];
       sp += ip[0];
-      ip += ip[0] + 1;
+      ip += ip[0]+1;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Push2Bytes)
@@ -4910,18 +4881,18 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FadeTo)
-      Level->eventAcsFadeRange(0, 0, 0, -1, (float)sp[-5] / 255.0f,
-        (float)sp[-4] / 255.0f, (float)sp[-3] / 255.0f,
-        (float)sp[-2] / 65536.0f, (float)sp[-1] / 65536.0f, Activator);
+      Level->eventAcsFadeRange(0, 0, 0, -1, (float)sp[-5]/255.0f,
+        (float)sp[-4]/255.0f, (float)sp[-3]/255.0f,
+        (float)sp[-2]/65536.0f, (float)sp[-1]/65536.0f, Activator);
       sp -= 5;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FadeRange)
-      Level->eventAcsFadeRange((float)sp[-9] / 255.0f,
-        (float)sp[-8] / 255.0f, (float)sp[-7] / 255.0f,
-        (float)sp[-6] / 65536.0f, (float)sp[-5] / 255.0f,
-        (float)sp[-4] / 255.0f, (float)sp[-3] / 255.0f,
-        (float)sp[-2] / 65536.0f, (float)sp[-1] / 65536.0f, Activator);
+      Level->eventAcsFadeRange((float)sp[-9]/255.0f,
+        (float)sp[-8]/255.0f, (float)sp[-7]/255.0f,
+        (float)sp[-6]/65536.0f, (float)sp[-5]/255.0f,
+        (float)sp[-4]/255.0f, (float)sp[-3]/255.0f,
+        (float)sp[-2]/65536.0f, (float)sp[-1]/65536.0f, Activator);
       sp -= 9;
       ACSVM_BREAK;
 
@@ -4960,7 +4931,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         else
         {
-          sp[-1] = vint32(Ent->Origin.x * 0x10000);
+          sp[-1] = vint32(Ent->Origin.x*0x10000);
         }
       }
       ACSVM_BREAK;
@@ -4974,7 +4945,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         else
         {
-          sp[-1] = vint32(Ent->Origin.y * 0x10000);
+          sp[-1] = vint32(Ent->Origin.y*0x10000);
         }
       }
       ACSVM_BREAK;
@@ -4988,7 +4959,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         else
         {
-          sp[-1] = vint32(Ent->Origin.z * 0x10000);
+          sp[-1] = vint32(Ent->Origin.z*0x10000);
         }
       }
       ACSVM_BREAK;
@@ -5000,11 +4971,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         {
           XLevel->Translations.Append(nullptr);
         }
-        Translation = XLevel->Translations[sp[-1] - 1];
+        Translation = XLevel->Translations[sp[-1]-1];
         if (!Translation)
         {
           Translation = new VTextureTranslation;
-          XLevel->Translations[sp[-1] - 1] = Translation;
+          XLevel->Translations[sp[-1]-1] = Translation;
         }
         else
         {
@@ -5147,14 +5118,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushMapArray)
-      sp[-1] = ActiveObject->GetArrayVal(*ActiveObject->MapVars[
-        READ_BYTE_OR_INT32], sp[-1]);
+      sp[-1] = ActiveObject->GetArrayVal(*ActiveObject->MapVars[READ_BYTE_OR_INT32], sp[-1]);
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignMapArray)
-      ActiveObject->SetArrayVal(*ActiveObject->MapVars[
-        READ_BYTE_OR_INT32], sp[-2], sp[-1]);
+      ActiveObject->SetArrayVal(*ActiveObject->MapVars[READ_BYTE_OR_INT32], sp[-2], sp[-1]);
       INC_BYTE_OR_INT32;
       sp -= 2;
       ACSVM_BREAK;
@@ -5162,7 +5131,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_AddMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) + sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])+sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5171,7 +5140,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_SubMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) - sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])-sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5180,7 +5149,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_MulMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) * sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])*sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5190,7 +5159,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) / sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])/sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5200,7 +5169,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) % sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])%sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5209,7 +5178,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_IncMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1]) + 1);
+        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1])+1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -5218,7 +5187,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_DecMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1]) - 1);
+        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1])-1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -5238,16 +5207,16 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Sin)
-      sp[-1] = vint32(msin(float(sp[-1]) * 360.0f / 0x10000) * 0x10000);
+      sp[-1] = vint32(msin(float(sp[-1])*360.0f/0x10000)*0x10000);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Cos)
-      sp[-1] = vint32(mcos(float(sp[-1]) * 360.0f / 0x10000) * 0x10000);
+      sp[-1] = vint32(mcos(float(sp[-1])*360.0f/0x10000)*0x10000);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_VectorAngle)
-      sp[-2] = vint32(matan(float(sp[-1]) / float(0x10000),
-        float(sp[-2]) / float(0x10000)) / 360.0f * 0x10000);
+      sp[-2] = vint32(matan(float(sp[-1])/float(0x10000),
+        float(sp[-2])/float(0x10000))/360.0f*0x10000);
       sp--;
       ACSVM_BREAK;
 
@@ -5578,36 +5547,36 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_CaseGotoSorted)
       //  The count and jump table are 4-byte aligned.
-      if (ActiveObject->PtrToOffset(ip) & 3)
+      if (ActiveObject->PtrToOffset(ip)&3)
       {
-        ip += 4 - (ActiveObject->PtrToOffset(ip) & 3);
+        ip += 4-(ActiveObject->PtrToOffset(ip)&3);
       }
       {
         int numcases = READ_INT32(ip);
-        int min = 0, max = numcases - 1;
+        int min = 0, max = numcases-1;
         while (min <= max)
         {
-          int mid = (min + max) / 2;
-          int caseval = READ_INT32(ip + 4 + mid * 8);
+          int mid = (min+max)/2;
+          int caseval = READ_INT32(ip+4+mid*8);
           if (caseval == sp[-1])
           {
-            ip = ActiveObject->OffsetToPtr(READ_INT32(ip + 8 + mid * 8));
+            ip = ActiveObject->OffsetToPtr(READ_INT32(ip+8+mid*8));
             sp--;
             ACSVM_BREAK;
           }
           else if (caseval < sp[-1])
           {
-            min = mid + 1;
+            min = mid+1;
           }
           else
           {
-            max = mid - 1;
+            max = mid-1;
           }
         }
         if (min > max)
         {
           // The case was not found, so go to the next instruction.
-          ip += 4 + numcases * 8;
+          ip += 4+numcases*8;
         }
       }
       ACSVM_BREAK;
@@ -5625,14 +5594,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorFloorZ)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        sp[-1] = Ent ? vint32(Ent->FloorZ * 0x10000) : 0;
+        sp[-1] = Ent ? vint32(Ent->FloorZ*0x10000) : 0;
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetActorAngle)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        sp[-1] = Ent ? vint32(Ent->Angles.yaw * 0x10000 / 360) &
+        sp[-1] = Ent ? vint32(Ent->Angles.yaw*0x10000/360) &
           0xffff : 0;
       }
       ACSVM_BREAK;
@@ -5641,7 +5610,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int SNum = FindSectorFromTag(sp[-3]);
         sp[-3] = SNum >= 0 ? vint32(XLevel->Sectors[SNum].floor.
-          GetPointZ(sp[-2], sp[-1]) * 0x10000) : 0;
+          GetPointZ(sp[-2], sp[-1])*0x10000) : 0;
         sp -= 2;
       }
       ACSVM_BREAK;
@@ -5650,7 +5619,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int SNum = FindSectorFromTag(sp[-3]);
         sp[-3] = SNum >= 0 ? vint32(XLevel->Sectors[SNum].ceiling.
-          GetPointZ(sp[-2], sp[-1]) * 0x10000) : 0;
+          GetPointZ(sp[-2], sp[-1])*0x10000) : 0;
         sp -= 2;
       }
       ACSVM_BREAK;
@@ -5720,13 +5689,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_PlayerInGame)
       sp[-1] = (sp[-1] < 0 || sp[-1] >= MAXPLAYERS) ? false :
         (Level->Game->Players[sp[-1]] && (Level->Game->Players[
-        sp[-1]]->PlayerFlags & VBasePlayer::PF_Spawned));
+        sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned));
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerIsBot)
       sp[-1] = (sp[-1] < 0 || sp[-1] >= MAXPLAYERS) ? false :
         Level->Game->Players[sp[-1]] && Level->Game->Players[
-        sp[-1]]->PlayerFlags & VBasePlayer::PF_Spawned &&
+        sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned &&
         Level->Game->Players[sp[-1]]->PlayerFlags &
         VBasePlayer::PF_IsBot;
       ACSVM_BREAK;
@@ -5835,11 +5804,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_SetActorAngle)
       if (!sp[-2]) {
         if (Activator) {
-          Activator->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000;
+          Activator->Angles.yaw = (float)(sp[-1]&0xffff)*360.0f/(float)0x10000;
         }
       } else {
         for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
-          Ent->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000;
+          Ent->Angles.yaw = (float)(sp[-1]&0xffff)*360.0f/(float)0x10000;
         }
       }
       sp -= 2;
@@ -5861,7 +5830,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorCeilingZ)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        sp[-1] = Ent ? vint32(Ent->CeilingZ * 0x10000) : 0;
+        sp[-1] = Ent ? vint32(Ent->CeilingZ*0x10000) : 0;
       }
       ACSVM_BREAK;
 
@@ -5869,9 +5838,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         VEntity *Ent = EntityFromTID(sp[-5], Activator);
         sp[-5] = Ent ? Ent->eventMoveThing(TVec(
-          (float)sp[-4] / (float)0x10000,
-          (float)sp[-3] / (float)0x10000,
-          (float)sp[-2] / (float)0x10000), !!sp[-1]) : 0;
+          (float)sp[-4]/(float)0x10000,
+          (float)sp[-3]/(float)0x10000,
+          (float)sp[-2]/(float)0x10000), !!sp[-1]) : 0;
         sp -= 4;
       }
       ACSVM_BREAK;
@@ -5940,7 +5909,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_PlayerClass)
       if (sp[-1] < 0 || sp[-1] >= MAXPLAYERS || !Level->Game->Players[sp[-1]] ||
-        !(Level->Game->Players[sp[-1]]->PlayerFlags & VBasePlayer::PF_Spawned))
+        !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned))
       {
         sp[-1] = -1;
       }
@@ -5985,7 +5954,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_AndMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) & sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])&sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6046,7 +6015,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_EOrMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) ^ sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])^sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6107,7 +6076,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_OrMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) | sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])|sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6168,7 +6137,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_LSMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) << sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])<<sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6229,7 +6198,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_RSMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) >> sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])>>sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6270,7 +6239,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       //sp[-3] - Position
       //sp[-2] - Flags
       //sp[-1] - Skill
-      GCmdBuf << va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
+      GCmdBuf<<va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
       sp -= 4;
       ACSVM_BREAK;
 
@@ -6280,38 +6249,38 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ReplaceTextures)
-      if (~sp[-1] & (NOT_TOP | NOT_MIDDLE | NOT_BOTTOM))
+      if (~sp[-1]&(NOT_TOP|NOT_MIDDLE|NOT_BOTTOM))
       {
         int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Wall, true);
         int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true);
         for (int i = 0; i < XLevel->NumSides; i++)
         {
-          if (!(sp[-1] & NOT_TOP) &&
+          if (!(sp[-1]&NOT_TOP) &&
             XLevel->Sides[i].TopTexture == FromTex)
           {
             XLevel->Sides[i].TopTexture = ToTex;
           }
-          if (!(sp[-1] & NOT_MIDDLE) &&
+          if (!(sp[-1]&NOT_MIDDLE) &&
             XLevel->Sides[i].MidTexture == FromTex)
           {
             XLevel->Sides[i].MidTexture = ToTex;
           }
-          if (!(sp[-1] & NOT_BOTTOM) &&
+          if (!(sp[-1]&NOT_BOTTOM) &&
             XLevel->Sides[i].BottomTexture == FromTex)
           {
             XLevel->Sides[i].BottomTexture = ToTex;
           }
         }
       }
-      if (~sp[-1] & (NOT_FLOOR | NOT_CEILING))
+      if (~sp[-1]&(NOT_FLOOR|NOT_CEILING))
       {
         int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Flat, true);
         int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Flat, true);
         for (int i = 0; i < XLevel->NumSectors; i++) {
-          if (!(sp[-1] & NOT_FLOOR) && XLevel->Sectors[i].floor.pic == FromTex) {
+          if (!(sp[-1]&NOT_FLOOR) && XLevel->Sectors[i].floor.pic == FromTex) {
             XLevel->Sectors[i].floor.pic = ToTex;
           }
-          if (!(sp[-1] & NOT_CEILING) && XLevel->Sectors[i].ceiling.pic == FromTex) {
+          if (!(sp[-1]&NOT_CEILING) && XLevel->Sectors[i].ceiling.pic == FromTex) {
             XLevel->Sectors[i].ceiling.pic = ToTex;
           }
         }
@@ -6326,7 +6295,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorPitch)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        sp[-1] = Ent ? vint32(Ent->Angles.pitch * 0x10000 / 360) &
+        sp[-1] = Ent ? vint32(Ent->Angles.pitch*0x10000/360) &
           0xffff : 0;
       }
       ACSVM_BREAK;
@@ -6337,7 +6306,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (Activator)
         {
           Activator->Angles.pitch = AngleMod180(
-            (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000);
+            (float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
         }
       }
       else
@@ -6346,7 +6315,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Ent->Angles.pitch = AngleMod180(
-            (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000);
+            (float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
         }
       }
       sp -= 2;
@@ -6414,7 +6383,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
           if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
+            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(
               GetNameLowerCase(sp[-1]));
@@ -6440,7 +6409,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
           if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
+            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(
               GetNameLowerCase(sp[-1]));
@@ -6516,7 +6485,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CheckPlayerCamera)
       if (sp[-1] < 0 || sp[-1] >= MAXPLAYERS ||
         !Level->Game->Players[sp[-1]] ||
-        !(Level->Game->Players[sp[-1]]->PlayerFlags & VBasePlayer::PF_Spawned) ||
+        !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned) ||
         !Level->Game->Players[sp[-1]]->Camera)
       {
         sp[-1] = -1;
@@ -6536,7 +6505,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
         {
           Res += Ent->eventMorphActor(GetNameLowerCase(sp[-6]),
-            GetNameLowerCase(sp[-5]), sp[-4] / 35.0f, sp[-3],
+            GetNameLowerCase(sp[-5]), sp[-4]/35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
         }
         sp[-7] = Res;
@@ -6544,7 +6513,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       else if (Activator)
       {
         sp[-7] = Activator->eventMorphActor(GetNameLowerCase(sp[-6]),
-            GetNameLowerCase(sp[-5]), sp[-4] / 35.0f, sp[-3],
+            GetNameLowerCase(sp[-5]), sp[-4]/35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
       }
       else
@@ -6590,7 +6559,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
       }
       else if (sp[-2] < MAXPLAYERS && Level->Game->Players[sp[-2]] &&
-        (Level->Game->Players[sp[-2]]->PlayerFlags & VBasePlayer::PF_Spawned))
+        (Level->Game->Players[sp[-2]]->PlayerFlags&VBasePlayer::PF_Spawned))
       {
         sp[-2] = Level->Game->Players[sp[-2]]->AcsGetInput(sp[-1]);
       }
@@ -6634,7 +6603,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         vuint32 Val = sp[-1];
         do
         {
-          PrintStr += Val & 1 ? "1" : "0";
+          PrintStr += Val&1 ? "1" : "0";
           Val >>= 1;
         }
         while (Val);

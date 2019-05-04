@@ -672,31 +672,35 @@ int VPakFileBase::FindACSObject (const VStr &fname) {
   if (afn.ExtractFileExtension().ICmp("o") == 0) afn = afn.StripExtension();
   if (afn.length() == 0) return -1;
   VName ln = VName(*afn, VName::AddLower8);
+  if (developer) GCon->Logf(NAME_Dev, "*** ACS: looking for '%s' (normalized: '%s'; shorten: '%s')", *fname, *afn, *ln);
   int rough = -1;
   int prevlen = -1;
   const int count = pakdir.files.length();
-  char sign[3];
+  char sign[4];
   for (int f = 0; f < count; ++f) {
     const VPakFileInfo &fi = pakdir.files[f];
     if (fi.lumpNamespace != WADNS_ACSLibrary) continue;
     if (fi.lumpName != ln) continue;
-    //if (LumpLength(f) < 3) continue; // why not?
-    if (fi.filesize >= 0 && fi.filesize < 3) continue; // why not?
-    //GCon->Logf("*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
+    if (fi.filesize >= 0 && fi.filesize < 12) continue; // why not? (<0 for disk mounts)
+    if (developer) GCon->Logf(NAME_Dev, "*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
     const VStr fn = fi.fileName.ExtractFileBaseName().StripExtension();
     if (fn.ICmp(afn) == 0) {
       // exact match
-      //GCon->Logf("*** ACS0: %s", *fi.fileName);
-      memset(sign, 0, 3);
-      ReadFromLump(f, sign, 0, 3);
+      if (developer) GCon->Logf(NAME_Dev, "*** ACS0: %s", *fi.fileName);
+      memset(sign, 0, 4);
+      ReadFromLump(f, sign, 0, 4);
       if (memcmp(sign, "ACS", 3) != 0) continue;
+      if (sign[3] != 0 && sign[3] != 'E' && sign[3] != 'e') continue;
+      if (developer) GCon->Logf(NAME_Dev, "*** ACS0: %s -- HIT!", *fi.fileName);
       return f;
     }
     if (rough < 0 || (fn.length() >= afn.length() && prevlen > fn.length())) {
-      //GCon->Logf("*** ACS1: %s", *fi.fileName);
-      memset(sign, 0, 3);
-      ReadFromLump(f, sign, 0, 3);
+      if (developer) GCon->Logf(NAME_Dev, "*** ACS1: %s", *fi.fileName);
+      memset(sign, 0, 4);
+      ReadFromLump(f, sign, 0, 4);
       if (memcmp(sign, "ACS", 3) != 0) continue;
+      if (sign[3] != 0 && sign[3] != 'E' && sign[3] != 'e') continue;
+      if (developer) GCon->Logf(NAME_Dev, "*** ACS1: %s -- HIT!", *fi.fileName);
       rough = f;
       prevlen = fn.length();
     }
