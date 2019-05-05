@@ -174,7 +174,7 @@ static int joyymove;
 static int impulse_cmd;
 
 
-static VCvarB allways_run("allways_run", false, "Always run?", CVAR_Archive);
+static VCvarB always_run("always_run", false, "Always run?", CVAR_Archive);
 static VCvarB artiskip("artiskip", true, "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
 
 static VCvarF cl_forwardspeed("cl_forwardspeed", "200", "Forward speed.", CVAR_Archive);
@@ -396,14 +396,14 @@ COMMAND(ToggleAlwaysRun) {
   //if (MN_Active() || C_Active() || NUI_IsPaused()) return;
   if (GGameInfo->IsPaused()) return;
 #endif
-  allways_run = !allways_run;
+  always_run = !always_run;
 #ifdef CLIENT
   if (cl) {
-    cl->Printf(allways_run ? "Always run on" : "Always run off");
+    cl->Printf(always_run ? "Always run on" : "Always run off");
   } else
 #endif
   {
-    GCon->Log(allways_run ? "Always run on" : "Always run off");
+    GCon->Log(always_run ? "Always run on" : "Always run off");
   }
 }
 
@@ -548,7 +548,7 @@ void VBasePlayer::HandleInput () {
   forward = midval(forward, -cl_backspeed, cl_forwardspeed.asFloat());
   side = midval(side, -cl_sidespeed, cl_sidespeed.asFloat());
 
-  if (allways_run || KeySpeed.IsDown()) {
+  if (always_run || KeySpeed.IsDown()) {
     forward *= cl_movespeedkey;
     side *= cl_movespeedkey;
     flyheight *= cl_movespeedkey;
