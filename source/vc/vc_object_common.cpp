@@ -200,6 +200,24 @@ IMPLEMENT_FUNCTION(VObject, VectorAngles) {
   VectorAngles(vec, *angles);
 }
 
+// native static final float VectorAngleYaw (const TVec vec);
+IMPLEMENT_FUNCTION(VObject, VectorAngleYaw) {
+  P_GET_VEC(vec);
+  RET_FLOAT(VectorAngleYaw(vec));
+}
+
+// native static final float VectorAnglePitch (const TVec vec);
+IMPLEMENT_FUNCTION(VObject, VectorAnglePitch) {
+  P_GET_VEC(vec);
+  RET_FLOAT(VectorAnglePitch(vec));
+}
+
+// native static final TVec AngleYawVector (const float yaw);
+IMPLEMENT_FUNCTION(VObject, AngleYawVector) {
+  P_GET_FLOAT(yaw);
+  RET_VEC(AngleVectorYaw(yaw));
+}
+
 IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
   P_GET_VEC(point);
   P_GET_PTR(TPlane, plane);

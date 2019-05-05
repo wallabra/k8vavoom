@@ -421,6 +421,9 @@ native static final void AngleVectors (const TAVec angles, out TVec forward, opt
 native static final void AngleVector (const TAVec angles, out TVec forward);
 // create angle vector for a vector
 native static final void VectorAngles (const TVec vec, out TAVec angles);
+native static final float VectorAngleYaw (const TVec vec);
+native static final float VectorAnglePitch (const TVec vec);
+native static final TVec AngleYawVector (const float yaw);
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
 native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);
 native static final float GetPlanePointZRev (const ref TPlane plane, const TVec point);

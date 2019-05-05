@@ -83,7 +83,7 @@ static __attribute__((unused)) __attribute__((const)) inline float smoothstepPer
 
 extern "C" {
 //k8: this is UB in shitplusplus, but i really can't care less
-static __attribute__((unused)) __attribute__((const)) inline float fastInvSqrtf (const float n) {
+static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result)) inline float fastInvSqrtf (const float n) {
   union { float f; vuint32 i; } ufi;
   const float ndiv2 = n*0.5f;
   ufi.f = n;
@@ -92,7 +92,7 @@ static __attribute__((unused)) __attribute__((const)) inline float fastInvSqrtf 
   ufi.i = 0x5f375a86u-(ufi.i>>1); // Chris Lomont says that this is more accurate constant
   // one step of newton algorithm; can be repeated to increase accuracy
   ufi.f = ufi.f*(1.5f-(ndiv2*ufi.f*ufi.f));
-#if 0 /* k8: meh, i don't care; ~0.0175 as error margin is ok for us */
+#if 1 /* k8: meh, i don't care; ~0.0175 as error margin is ok for us */
   // perform one more step; it doesn't really takes much time, but gives alot better accuracy
   ufi.f = ufi.f*(1.5f-(ndiv2*ufi.f*ufi.f));
 #endif
@@ -171,6 +171,7 @@ static __attribute__((unused)) __attribute__((const)) inline int ToPowerOf2 (int
 //float AngleMod (float angle);
 //float AngleMod180 (float angle);
 
+// returns angle normalized to the range [0 <= angle < 360]
 static __attribute__((unused)) __attribute__((pure)) inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
@@ -182,16 +183,14 @@ static __attribute__((unused)) __attribute__((pure)) inline float AngleMod (floa
   return angle;
 }
 
+// returns angle normalized to the range [-180 < angle <= 180]
 static __attribute__((unused)) __attribute__((pure)) inline float AngleMod180 (float angle) {
 #if 1
-  angle = fmodf(angle, 360.0f);
-  while (angle < -180.0f) angle += 360.0f;
-  while (angle >= 180.0f) angle -= 360.0f;
+  angle = AngleMod(angle);
 #else
-  angle += 180;
   angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
-  angle -= 180;
 #endif
+  if (angle > 180.0f) angle -= 360.0f;
   return angle;
 }
 

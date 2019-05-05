@@ -246,6 +246,13 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 
 __attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle);
 
+void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, float degrees);
+// sets axis[1] and axis[2]
+void RotateAroundDirection (TVec axis[3], float yaw);
+
+// given a normalized forward vector, create two other perpendicular vectors
+void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up);
+
 static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, TVec &forward) {
   msincos(pitch, &forward.z, &forward.x);
   forward.y = 0.0f;
@@ -255,6 +262,26 @@ static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, 
   forward.y = 0.0f;
   forward.z = -msin(pitch);
   */
+}
+
+static inline __attribute__((unused)) TVec AngleVectorYaw (const float yaw) {
+  float sy, cy;
+  msincos(yaw, &sy, &cy);
+  return TVec(cy, sy, 0.0f);
+}
+
+static inline __attribute__((unused)) float VectorAngleYaw (const TVec &vec) {
+  const float fx = vec.x;
+  const float fy = vec.y;
+  const float len2d = VSUM2(fx*fx, fy*fy);
+  return (len2d < 0.0001f ? 0.0f : matan(fy, fx));
+}
+
+static inline __attribute__((unused)) float VectorAnglePitch (const TVec &vec) {
+  const float fx = vec.x;
+  const float fy = vec.y;
+  const float len2d = VSUM2(fx*fx, fy*fy);
+  return (len2d < 0.0001f ? (vec.z > 0.0f ? 90 : 270) : -matan(vec.z, sqrtf(len2d)));
 }
 
 
@@ -328,8 +355,9 @@ public:
     SetPointDirXY(v1, v2-v1);
   }
 
+  // the normal will point out of the clock for clockwise ordered points
   void SetFromTriangle (const TVec &a, const TVec &b, const TVec &c) {
-    normal = (b-a).cross(c-a).normalised();
+    normal = (c-a).cross(b-a).normalised();
     dist = DotProduct(a, normal);
   }
 
@@ -496,6 +524,9 @@ public:
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   __attribute__((warn_unused_result)) int checkRectEx (const TVec &v0, const TVec &v1) const;
+
+  // this is the slow, general version
+  int BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const;
 };
 
 static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail");

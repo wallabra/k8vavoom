@@ -271,6 +271,124 @@ __attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &V
 }
 
 
+//==========================================================================
+//
+//  MatrixMultiply
+//
+//==========================================================================
+static void MatrixMultiply (const float in1[3][3], const float in2[3][3], float out[3][3]) {
+  out[0][0] = in1[0][0]*in2[0][0]+in1[0][1]*in2[1][0]+in1[0][2]*in2[2][0];
+  out[0][1] = in1[0][0]*in2[0][1]+in1[0][1]*in2[1][1]+in1[0][2]*in2[2][1];
+  out[0][2] = in1[0][0]*in2[0][2]+in1[0][1]*in2[1][2]+in1[0][2]*in2[2][2];
+  out[1][0] = in1[1][0]*in2[0][0]+in1[1][1]*in2[1][0]+in1[1][2]*in2[2][0];
+  out[1][1] = in1[1][0]*in2[0][1]+in1[1][1]*in2[1][1]+in1[1][2]*in2[2][1];
+  out[1][2] = in1[1][0]*in2[0][2]+in1[1][1]*in2[1][2]+in1[1][2]*in2[2][2];
+  out[2][0] = in1[2][0]*in2[0][0]+in1[2][1]*in2[1][0]+in1[2][2]*in2[2][0];
+  out[2][1] = in1[2][0]*in2[0][1]+in1[2][1]*in2[1][1]+in1[2][2]*in2[2][1];
+  out[2][2] = in1[2][0]*in2[0][2]+in1[2][1]*in2[1][2]+in1[2][2]*in2[2][2];
+}
+
+
+//==========================================================================
+//
+//  RotatePointAroundVector
+//
+//  This is not implemented very well...
+//
+//==========================================================================
+void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, float degrees) {
+  float m[3][3];
+  float im[3][3];
+  float zrot[3][3];
+  float tmpmat[3][3];
+  float rot[3][3];
+  TVec vr, vup, vf;
+
+  vf[0] = dir[0];
+  vf[1] = dir[1];
+  vf[2] = dir[2];
+
+  PerpendicularVector(vr, dir);
+  vup = CrossProduct(vr, vf);
+
+  m[0][0] = vr[0];
+  m[1][0] = vr[1];
+  m[2][0] = vr[2];
+
+  m[0][1] = vup[0];
+  m[1][1] = vup[1];
+  m[2][1] = vup[2];
+
+  m[0][2] = vf[0];
+  m[1][2] = vf[1];
+  m[2][2] = vf[2];
+
+  memcpy(im, m, sizeof(im));
+
+  im[0][1] = m[1][0];
+  im[0][2] = m[2][0];
+  im[1][0] = m[0][1];
+  im[1][2] = m[2][1];
+  im[2][0] = m[0][2];
+  im[2][1] = m[1][2];
+
+  memset(zrot, 0, sizeof(zrot));
+  zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0f;
+
+  float s, c;
+  msincos(degrees, &s, &c);
+  zrot[0][0] = c;
+  zrot[0][1] = s;
+  zrot[1][0] = -s;
+  zrot[1][1] = c;
+
+  MatrixMultiply(m, zrot, tmpmat);
+  MatrixMultiply(tmpmat, im, rot);
+
+  for (unsigned i = 0; i < 3; ++i) dst[i] = rot[i][0]*point[0]+rot[i][1]*point[1]+rot[i][2]*point[2];
+}
+
+
+//==========================================================================
+//
+//  RotateAroundDirection
+//
+//==========================================================================
+void RotateAroundDirection (TVec axis[3], float yaw) {
+  // create an arbitrary axis[1]
+  PerpendicularVector(axis[1], axis[0]);
+  // rotate it around axis[0] by yaw
+  if (yaw) {
+    TVec temp = axis[1];
+    RotatePointAroundVector(axis[1], axis[0], temp, yaw);
+  }
+  // cross to get axis[2]
+  axis[2] = CrossProduct(axis[0], axis[1]);
+}
+
+
+//==========================================================================
+//
+//  MakeNormalVectors
+//
+//  given a normalized forward vector, create two
+//  other perpendicular vectors
+//
+//==========================================================================
+void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
+  // this rotate and negate guarantees a vector not colinear with the original
+  right[1] = -forward[0];
+  right[2] = forward[1];
+  right[0] = forward[2];
+  float d = DotProduct(right, forward);
+  //VectorMA(right, -d, forward, right);
+  // (const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc): vecc = veca+scal*vecb
+  right -= forward*d;
+  right.normaliseInPlace();
+  up = CrossProduct(right, forward);
+}
+
+
 
 //==========================================================================
 //
@@ -394,6 +512,42 @@ int TPlane::checkRectEx (const TVec &v0, const TVec &v1) const {
   float bbox[6];
   CreateBBox(bbox, v0, v1);
   return checkBoxEx(bbox);
+}
+
+
+//==========================================================================
+//
+//  TPlane::BoxOnPlaneSide2
+//
+//  this is the slow, general version
+//
+//  0: Quake source says that this can't happen
+//  1: in front
+//  2: in back
+//  3: in both
+//
+//==========================================================================
+int TPlane::BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const {
+  TVec corners[2];
+
+  // create the proper leading and trailing verts for the box
+  for (int i = 0; i < 3; ++i) {
+    if (normal[i] < 0) {
+      corners[0][i] = emins[i];
+      corners[1][i] = emaxs[i];
+    } else {
+      corners[1][i] = emins[i];
+      corners[0][i] = emaxs[i];
+    }
+  }
+
+  float dist1 = DotProduct(normal, corners[0])-dist;
+  float dist2 = DotProduct(normal, corners[1])-dist;
+  int sides = (dist1 >= 0);
+  //if (dist1 >= 0) sides = 1;
+  if (dist2 < 0) sides |= 2;
+
+  return sides;
 }
 
 
