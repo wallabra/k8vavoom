@@ -1030,7 +1030,9 @@ final void FaceMovementDirection () {
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
 
-  if (IsFast()) ReactionCount = 0;
+  //print("MAPSPAWN: %C (monster=%B; missile=%B)", self, bMonster, bMissile);
+  // k8: let's hope this will work as intended
+  if (bMonster && IsFast()) ReactionCount = 0;
 
   LastLook = P_Random()%MAXPLAYERS;
 
