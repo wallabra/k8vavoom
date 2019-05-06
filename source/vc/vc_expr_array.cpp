@@ -87,7 +87,7 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, VExpression *
 //
 //==========================================================================
 VArrayElement::~VArrayElement () {
-  opscopy.release();
+  opscopy.clear();
   if (op) { delete op; op = nullptr; }
   if (ind) { delete ind; ind = nullptr; }
   if (ind2) { delete ind2; ind2 = nullptr; }
@@ -139,7 +139,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   // we need a copy for opDollar
   //VExpression *opcopy = op->SyntaxCopy();
-  opscopy.assignSyntaxCopy(op);
+  opscopy.replaceSyntaxCopy(op);
 
   op = op->Resolve(ec);
 
@@ -160,7 +160,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
       ParseError(Loc, "Only arrays can be 2d yet");
     }
     if (wasErr) {
-      opscopy.release();
+      opscopy.clear();
       delete this;
       return nullptr;
     }
@@ -218,7 +218,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
       delete this;
       return nullptr;
     }
-    VExpression *e = new VDotInvocation(opscopy.get(), mtname, Loc, 1, &indcopy);
+    VExpression *e = new VDotInvocation(opscopy.extract(), mtname, Loc, 1, &indcopy);
     delete ind2copy;
     delete this;
     return e->Resolve(ec);
@@ -226,7 +226,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   // don't need those anymore
   //delete opcopy;
-  opscopy.release();
+  opscopy.clear();
   delete indcopy;
   delete ind2copy;
 
@@ -456,7 +456,7 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
 
   // we need a copy for opDollar
   //VExpression *opcopy = op;
-  opscopy.assignNoCopy(op);
+  opscopy.replaceNoCopy(op);
   op = rop;
 
   if (op) {
@@ -469,7 +469,7 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
 
   // we don't need this anymore
   //delete opcopy;
-  opscopy.release();
+  opscopy.clear();
 
   if (!op || !ind || !sval) {
     delete this;
@@ -645,7 +645,7 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
 
   // we need a copy for opDollar
   //VExpression *opcopy = op->SyntaxCopy();
-  opscopy.assignSyntaxCopy(op);
+  opscopy.replaceSyntaxCopy(op);
 
   op = op->Resolve(ec);
   if (op) {
@@ -658,7 +658,7 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
 
   // we don't need this anymore
   //delete opcopy;
-  opscopy.release();
+  opscopy.clear();
 
   if (!op || !ind || !hi) {
     delete this;
@@ -724,7 +724,7 @@ VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val
 
   // we need a copy for opDollar
   //VExpression *opcopy = op;
-  opscopy.assignNoCopy(op);
+  opscopy.replaceNoCopy(op);
   op = rop;
 
   {
@@ -738,7 +738,7 @@ VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val
 
   // we don't need this anymore
   //delete opcopy;
-  opscopy.release();
+  opscopy.clear();
 
   if (!op || !ind || !hi || !sval) {
     delete this;

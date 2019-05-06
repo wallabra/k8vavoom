@@ -1309,14 +1309,29 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       int newArgC = NumArgs+1;
       VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
       for (int f = 0; f < NumArgs; ++f) ufcsArgs[f+1] = Args[f];
-      if (SelfExpr->Type.Type == TYPE_Pointer) selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
-      ufcsArgs[0] = selfCopy;
+      //if (SelfExpr->Type.Type == TYPE_Pointer) selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
+      //ufcsArgs[0] = selfCopy;
+      ufcsArgs[0] = SelfExpr;
       if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
         VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);
-        // don't delete `selfCopy`, it is used
+        // don't delete `SelfExpr`, it is used; but delete `selfCopy`
+        SelfExpr = nullptr;
+        delete selfCopy;
         NumArgs = 0; // also, don't delete args
         delete this;
         return call->Resolve(ec);
+      }
+      // if `SelfExpr` is a pointer, try UFCS with dereferenced pointer
+      if (SelfExpr->Type.Type == TYPE_Pointer) {
+        selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
+        ufcsArgs[0] = selfCopy;
+        if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
+          VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);
+          // don't delete `selfCopy`, it is used
+          NumArgs = 0; // also, don't delete args
+          delete this;
+          return call->Resolve(ec);
+        }
       }
     }
     ParseError(Loc, "Object reference expected at the left side of `.` (0)");

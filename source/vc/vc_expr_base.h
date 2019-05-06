@@ -40,13 +40,17 @@ public:
     AutoCopy (VExpression *ae) : e(ae ? ae->SyntaxCopy() : nullptr) {}
     ~AutoCopy () { delete e; e = nullptr; }
     inline bool isEmpty () const { return !!e; }
-    // use `release()` to delete `e`
-    inline void release () { delete e; e = nullptr; }
-    // use `get()` to extract `e` (and leave autocopy empty)
-    inline VExpression *get () { VExpression *res = e; e = nullptr; return res; }
+    // if you're used peeked autocopy, you can reset this one
+    inline void reset () { e = nullptr; }
+    // use `clear()` to delete `e`
+    inline void clear () { delete e; e = nullptr; }
+    // will not empty autocopy; USE WITH CARE!
+    inline VExpression *peek () { return e; }
+    // use `extract()` to extract `e` (and leave autocopy empty)
+    inline VExpression *extract () { VExpression *res = e; e = nullptr; return res; }
     VExpression *SyntaxCopy () { return (e ? e->SyntaxCopy() : nullptr); }
     // delete current `e`, and remember `ae->SyntaxCopy()`
-    inline void assignSyntaxCopy (VExpression *ae) {
+    inline void replaceSyntaxCopy (VExpression *ae) {
       if (!ae) { delete e; e = nullptr; return; }
       if (ae != e) {
         delete e;
@@ -56,7 +60,7 @@ public:
       }
     }
     // delete current `e`, and remember `ae` (without syntax-copying)
-    inline void assignNoCopy (VExpression *ae) {
+    inline void replaceNoCopy (VExpression *ae) {
       if (!ae) { delete e; e = nullptr; return; }
       if (ae != e) {
         delete e;

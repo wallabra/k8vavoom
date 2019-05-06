@@ -99,32 +99,33 @@ VExpression *VPointerField::SyntaxCopy () {
 //  VPointerField::TryUFCS
 //
 //==========================================================================
-VExpression *VPointerField::TryUFCS (VEmitContext &ec, VExpression *opcopy, const char *errdatatype, VMemberBase *mb) {
+VExpression *VPointerField::TryUFCS (VEmitContext &ec, AutoCopy &opcopy, const char *errdatatype, VMemberBase *mb) {
   // try UFCS
+  VExpression *pp = opcopy.extract();
   if (ec.SelfClass) {
-    VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
-    opcopy = new VPushPointed(opcopy, opcopy->Loc);
+    pp = new VPushPointed(pp, pp->Loc);
     //HACK! for classes
     if (mb->MemberType == MEMBER_Class) {
       // class
       VClass *cls = (VClass *)mb;
       VMethod *mt = cls->FindAccessibleMethod(FieldName, ec.SelfClass);
       if (mt) {
-        opcopy = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
+        VExpression *dotinv = new VDotInvocation(pp, FieldName, Loc, 0, nullptr);
         delete this;
-        return opcopy->Resolve(ec);
+        return dotinv->Resolve(ec);
       }
     }
     // normal UFCS
-    ufcsArgs[0] = opcopy;
+    VExpression *ufcsArgs[2/*VMethod::MAX_PARAMS+1*/];
+    ufcsArgs[0] = pp;
     if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
       VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
       delete this;
       return call->Resolve(ec);
     }
   }
+  delete pp;
   ParseError(Loc, "No such field `%s` in %s `%s`", *FieldName, errdatatype, *mb->GetFullName());
-  delete opcopy;
   delete this;
   return nullptr;
 }
@@ -192,12 +193,12 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
   if (type.Type == TYPE_Struct || type.Type == TYPE_Vector) {
     check(type.Struct);
     field = type.Struct->FindField(FieldName);
-    if (!field) return TryUFCS(ec, opcopy.get(), "struct", type.Struct);
+    if (!field) return TryUFCS(ec, opcopy, "struct", type.Struct);
   } else {
     check(type.Type == TYPE_Reference);
     check(type.Class);
     field = type.Class->FindField(FieldName);
-    if (!field) return TryUFCS(ec, opcopy.get(), "class", type.Class);
+    if (!field) return TryUFCS(ec, opcopy, "class", type.Class);
   }
 
   VExpression *e = new VFieldAccess(op, field, Loc, 0);
@@ -442,7 +443,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     } else {
       delete op;
       op = nullptr;
-      VPointerField *e = new VPointerField(opcopy.get(), FieldName, Loc);
+      VPointerField *e = new VPointerField(opcopy.extract(), FieldName, Loc);
       e->Flags |= oldflags&FIELD_ReadOnly;
       delete this;
       return e->Resolve(ec);
@@ -464,7 +465,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         if ((M->Flags&FUNC_Static) != 0) {
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          e = new VDotInvocation(opcopy.get(), FieldName, Loc, 0, nullptr);
+          e = new VDotInvocation(opcopy.extract(), FieldName, Loc, 0, nullptr);
         }
         delete this;
         return e->Resolve(ec);
@@ -497,7 +498,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // convert to method, 'cause why not?
     if (assType != AssType::AssTarget && ec.SelfClass && ec.SelfClass->FindMethod(FieldName)) {
       VExpression *ufcsArgs[1];
-      ufcsArgs[0] = opcopy.get();
+      ufcsArgs[0] = opcopy.extract();
       VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
       delete this;
       return call->Resolve(ec);
@@ -516,7 +517,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       // convert to method, 'cause why not?
       if (assType != AssType::AssTarget) {
         VExpression *ufcsArgs[1];
-        ufcsArgs[0] = opcopy.get();
+        ufcsArgs[0] = opcopy.extract();
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
         delete this;
         return call->Resolve(ec);
@@ -759,7 +760,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // convert to `func(op)`
     if (ec.SelfClass) {
       VExpression *ufcsArgs[1];
-      ufcsArgs[0] = opcopy.get();
+      ufcsArgs[0] = opcopy.extract();
       if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
         delete this;
