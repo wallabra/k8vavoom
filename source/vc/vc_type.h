@@ -187,11 +187,11 @@ public:
   vuint8 *Alloc (const VFieldType &Type);
 
   void SwapElements (int i0, int i1, const VFieldType &Type);
-  int CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless);
+  int CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fncmp);
   // only for flat arrays
-  bool Sort (const VFieldType &Type, VObject *self, VMethod *fnless);
+  bool Sort (const VFieldType &Type, VObject *self, VMethod *fncmp);
 
-  static int CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fnless);
+  static int CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fncmp);
 };
 
 // required for VaVoom C VM

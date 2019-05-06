@@ -1198,12 +1198,12 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
 //  VScriptArray::CallComparePtr
 //
 //==========================================================================
-int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fnless) {
+int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fncmp) {
   if (p0 == p1) return 0; // same indicies are always equal
   // self
-  if ((fnless->Flags&FUNC_Static) == 0) P_PASS_REF(self);
+  if ((fncmp->Flags&FUNC_Static) == 0) P_PASS_REF(self);
   // first arg
-  if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
+  if ((fncmp->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
     P_PASS_REF(p0);
   } else {
     switch (Type.Type) {
@@ -1228,7 +1228,7 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
     }
   }
   // second arg
-  if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) != 0) {
+  if ((fncmp->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) != 0) {
     P_PASS_REF(p1);
   } else {
     switch (Type.Type) {
@@ -1252,7 +1252,7 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
       default: abort(); // the thing that should not be
     }
   }
-  return VObject::ExecuteFunction(fnless).getInt();
+  return VObject::ExecuteFunction(fncmp).getInt();
 }
 
 
@@ -1261,13 +1261,13 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
 //  VScriptArray::CallCompare
 //
 //==========================================================================
-int VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless) {
+int VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fncmp) {
   if (i0 == i1) return 0; // same indicies are always equal
   //fprintf(stderr, "VScriptArray::CallCompare: i0=%d; i1=%d\n", i0, i1);
   int InnerSize = Type.GetSize();
   vuint8 *p0 = ArrData+i0*InnerSize;
   vuint8 *p1 = ArrData+i1*InnerSize;
-  return CallComparePtr(p0, p1, Type, self, fnless);
+  return CallComparePtr(p0, p1, Type, self, fncmp);
 }
 
 
@@ -1275,7 +1275,7 @@ struct VSASortInfo {
   VScriptArray *arr;
   VFieldType Type;
   VObject *self;
-  VMethod *fnless;
+  VMethod *fncmp;
   vuint8 *ArrData;
 };
 
@@ -1289,9 +1289,9 @@ static int vsaCompare (const void *aa, const void *bb, void *udata) {
   const vuint8 *b = (const vuint8 *)bb;
   const int i0 = ((int)(ptrdiff_t)(a-si->ArrData))/InnerSize;
   const int i1 = ((int)(ptrdiff_t)(b-si->ArrData))/InnerSize;
-  return si->arr->CallCompare(i0, i1, si->Type, si->self, si->fnless);
+  return si->arr->CallCompare(i0, i1, si->Type, si->self, si->fncmp);
   */
-  return VScriptArray::CallComparePtr((void *)aa, (void *)bb, si->Type, si->self, si->fnless);
+  return VScriptArray::CallComparePtr((void *)aa, (void *)bb, si->Type, si->self, si->fncmp);
 }
 }
 
@@ -1302,25 +1302,27 @@ static int vsaCompare (const void *aa, const void *bb, void *udata) {
 //
 //==========================================================================
 //#define SRTLOG(fmt,...)  fprintf(stderr, "VScriptArray::Sort: " fmt "\n", __VA_ARGS__)
-#define SRTLOG(fmt,...)  (void)((void)fmt, (void)__VA_ARGS__)
+#ifndef SRTLOG
+# define SRTLOG(fmt,...)  (void)((void)fmt, (void)__VA_ARGS__)
+#endif
 
 //static final void sortIntArray (ref array!int arr, bool delegate (int a, int b) dgLess, optional int count)
-bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless) {
+bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fncmp) {
   // check delegate
-  if (!fnless) {
+  if (!fncmp) {
     SRTLOG("%s", "delegate is null");
     return false;
   }
-  SRTLOG("dgname: `%s`", *fnless->GetFullName());
-  if (fnless->NumParams != 2) {
-    SRTLOG("%s (%d)", "delegate has invalid number of parameters", fnless->NumParams);
+  SRTLOG("dgname: `%s`", *fncmp->GetFullName());
+  if (fncmp->NumParams != 2) {
+    SRTLOG("%s (%d)", "delegate has invalid number of parameters", fncmp->NumParams);
     return false;
   }
-  if (fnless->ReturnType.Type != TYPE_Int && fnless->ReturnType.Type != TYPE_Bool) {
+  if (fncmp->ReturnType.Type != TYPE_Int /*&& fncmp->ReturnType.Type != TYPE_Bool*/) {
     SRTLOG("%s", "delegate has invalid return type");
     return false;
   }
-  if (!fnless->ParamTypes[0].Equals(Type) || !fnless->ParamTypes[1].Equals(Type)) {
+  if (!fncmp->ParamTypes[0].Equals(Type) || !fncmp->ParamTypes[1].Equals(Type)) {
     SRTLOG("%s", "delegate has invalid parameters type");
     return false;
   }
@@ -1343,27 +1345,27 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
     }
   }
   if (requireRef) {
-    if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0) {
+    if ((fncmp->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0) {
       SRTLOG("%s", "first delegate parameter is not `ref`");
       return false;
     }
-    if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) {
+    if ((fncmp->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) {
       SRTLOG("%s", "second delegate parameter is not `ref`");
       return false;
     }
   }
   // no optional args allowed
-  if ((fnless->ParamFlags[0]|fnless->ParamFlags[1])&FPARM_Optional) {
+  if ((fncmp->ParamFlags[0]|fncmp->ParamFlags[1])&FPARM_Optional) {
     SRTLOG("%s", "some delegate parameters are optional");
     return false;
   }
   // if we have no self, this should be a static method
-  if (!self && (fnless->Flags&FUNC_Static) == 0) {
+  if (!self && (fncmp->Flags&FUNC_Static) == 0) {
     SRTLOG("%s", "has no self, but delegate is not static");
     return false;
   }
   // check other flags
-  if (fnless->Flags&(FUNC_VarArgs|FUNC_Iterator)) {
+  if (fncmp->Flags&(FUNC_VarArgs|FUNC_Iterator)) {
     SRTLOG("%s", "delegate is iterator or vararg");
     return false;
   }
@@ -1389,7 +1391,7 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
   */
 
   if (count == 2) {
-    if (CallCompare(0, 1, Type, self, fnless) < 0) SwapElements(0, 1, Type);
+    if (CallCompare(1, 0, Type, self, fncmp) < 0) SwapElements(0, 1, Type);
     return true;
   }
 
@@ -1405,8 +1407,8 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
       auto child = 2*root+1; // left child
       if (child > end) break;
       auto swap = root;
-      if (CallCompare(swap, child, Type, self, fnless) < 0) swap = child;
-      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless) < 0) swap = child+1;
+      if (CallCompare(swap, child, Type, self, fncmp) < 0) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fncmp) < 0) swap = child+1;
       if (swap == root) break;
       SwapElements(swap, root, Type);
       root = swap;
@@ -1423,8 +1425,8 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
       auto child = 2*root+1; // left child
       if (child > end) break;
       auto swap = root;
-      if (CallCompare(swap, child, Type, self, fnless) < 0) swap = child;
-      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless) < 0) swap = child+1;
+      if (CallCompare(swap, child, Type, self, fncmp) < 0) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fncmp) < 0) swap = child+1;
       if (swap == root) break;
       SwapElements(swap, root, Type);
       root = swap;
@@ -1435,7 +1437,7 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
   si.arr = this;
   si.Type = Type;
   si.self = self;
-  si.fnless = fnless;
+  si.fncmp = fncmp;
   si.ArrData = ArrData;
   timsort_r(ArrData, (size_t)ArrNum, (size_t)Type.GetSize(), &vsaCompare, &si);
 #endif
