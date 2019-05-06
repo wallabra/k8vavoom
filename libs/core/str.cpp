@@ -361,9 +361,8 @@ int VStr::ICmp (const char *s0, const char *s1) {
     // `c0` and `c1` are equal
     if (!c0) return 0;
   }
-  if (*s0) return 1;
-  if (*s1) return -1;
-  return 0;
+  // it never came here
+  abort();
 }
 
 
