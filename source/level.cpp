@@ -707,7 +707,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
       //TODO: save static light entity
       vio.io(VName("Origin"), StaticLights[i].Origin);
       vio.io(VName("Radius"), StaticLights[i].Radius);
-      vio.io(VName("Colour"), StaticLights[i].Color); //k8: keep this as "coloUr" to not break saves
+      vio.io(VName("Color"), StaticLights[i].Color);
       vio.io(VName("Owner"), StaticLights[i].Owner);
     }
   }
