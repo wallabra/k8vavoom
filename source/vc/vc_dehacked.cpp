@@ -938,10 +938,10 @@ static void ReadCheats (int) {
 
 //==========================================================================
 //
-//  DoPowerupColour
+//  DoPowerupColor
 //
 //==========================================================================
-static void DoPowerupColour (const char *ClassName) {
+static void DoPowerupColor (const char *ClassName) {
   VClass *Power = VClass::FindClass(ClassName);
   if (!Power) {
     Warning("Can't find powerup class '%s'", ClassName);
@@ -951,14 +951,14 @@ static void DoPowerupColour (const char *ClassName) {
   int r, g, b;
   float a;
   if (sscanf(ValueString, "%d %d %d %f", &r, &g, &b, &a) != 4) {
-    Warning("Bad powerup colour '%s' for class '%s'", ValueString, ClassName);
+    Warning("Bad powerup color '%s' for class '%s'", ValueString, ClassName);
     return;
   }
   r = midval(0, r, 255);
   g = midval(0, g, 255);
   b = midval(0, b, 255);
   a = midval(0.0f, a, 1.0f);
-  SetClassFieldInt(Power, "BlendColour", (r<<16)|(g<<8)|b|int(a*255)<<24);
+  SetClassFieldInt(Power, "BlendColor", (r<<16)|(g<<8)|b|int(a*255)<<24);
 }
 
 
@@ -1005,23 +1005,23 @@ static void ReadMisc (int) {
     } else if (!VStr::ICmp(String, "Monsters Ignore Each Other")) {
       Infighting = value ? -1 : 0;
     } else if (!VStr::ICmp(String, "Powerup Color Invulnerability")) {
-      DoPowerupColour("PowerInvulnerable");
+      DoPowerupColor("PowerInvulnerable");
     } else if (!VStr::ICmp(String, "Powerup Color Berserk")) {
-      DoPowerupColour("PowerStrength");
+      DoPowerupColor("PowerStrength");
     } else if (!VStr::ICmp(String, "Powerup Color Invisibility")) {
-      DoPowerupColour("PowerInvisibility");
+      DoPowerupColor("PowerInvisibility");
     } else if (!VStr::ICmp(String, "Powerup Color Radiation Suit")) {
-      DoPowerupColour("PowerIronFeet");
+      DoPowerupColor("PowerIronFeet");
     } else if (!VStr::ICmp(String, "Powerup Color Infrared")) {
-      DoPowerupColour("PowerLightAmp");
+      DoPowerupColor("PowerLightAmp");
     } else if (!VStr::ICmp(String, "Powerup Color Tome of Power")) {
-      DoPowerupColour("PowerWeaponLevel2");
+      DoPowerupColor("PowerWeaponLevel2");
     } else if (!VStr::ICmp(String, "Powerup Color Wings of Wrath")) {
-      DoPowerupColour("PowerFlight");
+      DoPowerupColor("PowerFlight");
     } else if (!VStr::ICmp(String, "Powerup Color Speed")) {
-      DoPowerupColour("PowerSpeed");
+      DoPowerupColor("PowerSpeed");
     } else if (!VStr::ICmp(String, "Powerup Color Minotaur")) {
-      DoPowerupColour("PowerMinotaur");
+      DoPowerupColor("PowerMinotaur");
     } else if (!VStr::ICmp(String, "Rocket Explosion Style")) {
       SetClassFieldInt(GameInfoClass, "DehExplosionStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Rocket Explosion Alpha")) {

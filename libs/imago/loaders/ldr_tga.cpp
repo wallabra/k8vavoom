@@ -32,8 +32,8 @@ struct tgaHeader_t {
   vuint8 id_length;
   vuint8 pal_type;
   vuint8 img_type;
-  vuint16 first_colour;
-  vuint16 pal_colours;
+  vuint16 first_color;
+  vuint16 pal_colors;
   vuint8 pal_entry_size;
   vuint16 left;
   vuint16 top;
@@ -44,7 +44,7 @@ struct tgaHeader_t {
 
   friend VStream &operator << (VStream &strm, tgaHeader_t &h) {
     return strm << h.id_length << h.pal_type << h.img_type
-      << h.first_colour << h.pal_colours << h.pal_entry_size << h.left
+      << h.first_color << h.pal_colors << h.pal_entry_size << h.left
       << h.top << h.width << h.height << h.bpp << h.descriptor_bits;
   }
 };
@@ -94,7 +94,7 @@ VImage *imagoLoadTGA (VStream *strm) {
   strm->Seek(strm->Tell()+hdr.id_length);
 
   if (hdr.pal_type == 1) {
-    for (int i = 0; i < hdr.pal_colours; ++i) {
+    for (int i = 0; i < hdr.pal_colors; ++i) {
       switch (hdr.pal_entry_size) {
         case 16:
           if (i < 256) {
@@ -132,11 +132,11 @@ VImage *imagoLoadTGA (VStream *strm) {
 
   /* Image type:
   *    0 = no image data
-  *    1 = uncompressed colour mapped
-  *    2 = uncompressed true colour
+  *    1 = uncompressed color mapped
+  *    2 = uncompressed true color
   *    3 = grayscale
-  *    9 = RLE colour mapped
-  *   10 = RLE true colour
+  *    9 = RLE color mapped
+  *   10 = RLE true color
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {

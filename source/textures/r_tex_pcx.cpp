@@ -45,7 +45,7 @@ struct pcx_t {
   vuint8 palette[48];
 
   vint8 reserved;
-  vint8 colour_planes;
+  vint8 color_planes;
   vuint16 bytes_per_line;
   vuint16 palette_type;
 
@@ -58,7 +58,7 @@ struct pcx_t {
     Strm << h.manufacturer << h.version << h.encoding << h.bits_per_pixel
       << h.xmin << h.ymin << h.xmax << h.ymax << h.hres << h.vres;
     Strm.Serialise(h.palette, 48);
-    Strm << h.reserved << h.colour_planes << h.bytes_per_line
+    Strm << h.reserved << h.color_planes << h.bytes_per_line
       << h.palette_type << h.horz_screen_size << h.vert_screen_size;
     Strm.Serialise(h.filler, 54);
     return Strm;
@@ -81,8 +81,8 @@ VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
   if (Hdr.manufacturer != 0x0a || Hdr.encoding != 1 ||
       Hdr.version == 1 || Hdr.version > 5 || Hdr.reserved != 0 ||
       (/*Hdr.bits_per_pixel != 1 &&*/ Hdr.bits_per_pixel != 8) ||
-      //(Hdr.bits_per_pixel == 1 && Hdr.colour_planes != 1 && Hdr.colour_planes != 4) ||
-      (Hdr.bits_per_pixel == 8 && (Hdr.colour_planes != 1 || Hdr.bytes_per_line != Hdr.xmax-Hdr.xmin+1)) ||
+      //(Hdr.bits_per_pixel == 1 && Hdr.color_planes != 1 && Hdr.color_planes != 4) ||
+      (Hdr.bits_per_pixel == 8 && (Hdr.color_planes != 1 || Hdr.bytes_per_line != Hdr.xmax-Hdr.xmin+1)) ||
       (Hdr.palette_type != 1 && Hdr.palette_type != 2))
   {
     return nullptr;
@@ -155,8 +155,8 @@ vuint8 *VPcxTexture::GetPixels () {
   Strm << pcx;
 
   // we only support 8-bit pcx files
-  if (pcx.bits_per_pixel != 8) Sys_Error("No 8-bit planes\n"); // we like 8 bit colour planes
-  if (pcx.colour_planes != 1) Sys_Error("Not 8 bpp\n");
+  if (pcx.bits_per_pixel != 8) Sys_Error("No 8-bit planes\n"); // we like 8 bit color planes
+  if (pcx.color_planes != 1) Sys_Error("Not 8 bpp\n");
 
   Width = pcx.xmax-pcx.xmin+1;
   Height = pcx.ymax-pcx.ymin+1;
@@ -250,9 +250,9 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
 
   pcx_t pcx;
   pcx.manufacturer = 0x0a; // PCX id
-  pcx.version = 5; // 256 colour
+  pcx.version = 5; // 256 color
   pcx.encoding = 1; // uncompressed
-  pcx.bits_per_pixel = 8; // 256 colour
+  pcx.bits_per_pixel = 8; // 256 color
   pcx.xmin = 0;
   pcx.ymin = 0;
   pcx.xmax = width-1;
@@ -260,7 +260,7 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
   pcx.hres = width;
   pcx.vres = height;
   memset(pcx.palette, 0, sizeof(pcx.palette));
-  pcx.colour_planes = (bpp == 8 ? 1 : 3);
+  pcx.color_planes = (bpp == 8 ? 1 : 3);
   pcx.bytes_per_line = width;
   pcx.palette_type = 1; // not a grey scale
   pcx.horz_screen_size = 0;

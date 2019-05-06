@@ -60,7 +60,7 @@ struct SectorLink {
 struct rep_light_t {
   TVec Origin;
   float Radius;
-  int Colour;
+  int Color;
   Entity Owner;
 };
 

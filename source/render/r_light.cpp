@@ -72,12 +72,12 @@ void VRenderLevelShared::RefilterStaticLights () {
 //  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
-void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 colour) {
+void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color) {
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
   L.radius = radius;
-  L.colour = colour;
+  L.color = color;
   L.owner = Owner;
   L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
@@ -587,9 +587,9 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
-        lr += add*((dl.colour>>16)&255)/255.0f;
-        lg += add*((dl.colour>>8)&255)/255.0f;
-        lb += add*(dl.colour&255)/255.0f;
+        lr += add*((dl.color>>16)&255)/255.0f;
+        lg += add*((dl.color>>8)&255)/255.0f;
+        lb += add*(dl.color&255)/255.0f;
       }
     }
   }
@@ -623,9 +623,9 @@ void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, flo
           if (!RadiusCastRay(sub->sector, p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
-        lr += add*((stl->colour>>16)&255)/255.0f;
-        lg += add*((stl->colour>>8)&255)/255.0f;
-        lb += add*(stl->colour&255)/255.0f;
+        lr += add*((stl->color>>16)&255)/255.0f;
+        lg += add*((stl->color>>8)&255)/255.0f;
+        lb += add*(stl->color&255)/255.0f;
       }
     }
   }
@@ -688,10 +688,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
       l = 0.0f;
     }
 
-    int SecLightColour = reg->secregion->params->LightColour;
-    lr = ((SecLightColour>>16)&255)*l/255.0f;
-    lg = ((SecLightColour>>8)&255)*l/255.0f;
-    lb = (SecLightColour&255)*l/255.0f;
+    int SecLightColor = reg->secregion->params->LightColor;
+    lr = ((SecLightColor>>16)&255)*l/255.0f;
+    lg = ((SecLightColor>>8)&255)*l/255.0f;
+    lb = (SecLightColor&255)*l/255.0f;
 
     if (!IsAdvancedRenderer()) {
       // light from floor's lightmap

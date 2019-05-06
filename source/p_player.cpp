@@ -407,8 +407,8 @@ void VBasePlayer::SetUserInfo (const VStr &info) {
 void VBasePlayer::ReadFromUserInfo () {
   if (!sv_loading) BaseClass = VStr::atoi(*Info_ValueForKey(UserInfo, "class"));
   PlayerName = Info_ValueForKey(UserInfo, "name");
-  VStr val = Info_ValueForKey(UserInfo, "colour");
-  Colour = M_ParseColour(*val);
+  VStr val = Info_ValueForKey(UserInfo, "color");
+  Color = M_ParseColor(*val);
   eventUserinfoChanged();
 }
 
@@ -680,10 +680,10 @@ void VBasePlayer::DoClientSetServerInfo (VStr Key, VStr Value) {
 //
 //==========================================================================
 void VBasePlayer::DoClientHudMessage (const VStr &Message, VName Font, int Type,
-  int Id, int Colour, const VStr &ColourName, float x, float y,
+  int Id, int Color, const VStr &ColorName, float x, float y,
   int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
 {
-  ClGame->eventAddHudMessage(Message, Font, Type, Id, Colour, ColourName,
+  ClGame->eventAddHudMessage(Message, Font, Type, Id, Color, ColorName,
     x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
@@ -894,7 +894,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapRevealed;
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapShowThings;
   Self->ExtraLight = 0;
-  Self->FixedColourmap = 0;
+  Self->FixedColormap = 0;
   Self->CShift = 0;
   Self->PSpriteSY = 0;
   Self->PSpriteWeaponLowerPrev = 0;
@@ -1046,14 +1046,14 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage) {
   P_GET_INT(HudWidth);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
-  P_GET_STR(ColourName);
-  P_GET_INT(Colour);
+  P_GET_STR(ColorName);
+  P_GET_INT(Color);
   P_GET_INT(Id);
   P_GET_INT(Type);
   P_GET_NAME(Font);
   P_GET_STR(Message);
   P_GET_SELF;
-  Self->DoClientHudMessage(Message, Font, Type, Id, Colour, ColourName,
+  Self->DoClientHudMessage(Message, Font, Type, Id, Color, ColorName,
     x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 

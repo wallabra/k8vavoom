@@ -50,14 +50,14 @@ override void CreateChoices()
   PlayerName.ValueChanged = &ChangePlayerName;
   currY += PlayerName.Height;
 
-  int Col = ParseColour(GetCvarS('colour'));
+  int Col = ParseColor(GetCvarS('color'));
 
   ColR = NewChild(MenuChoiceSlider);
   ColR.SetOrigin(ChoicesStartX, currY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(float((Col >> 16) & 0xff) / 255.0);
-  ColR.ValueChanging = &ChangeColour;
+  ColR.ValueChanging = &ChangeColor;
   currY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
@@ -65,7 +65,7 @@ override void CreateChoices()
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(float((Col >> 8) & 0xff) / 255.0);
-  ColG.ValueChanging = &ChangeColour;
+  ColG.ValueChanging = &ChangeColor;
   currY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
@@ -73,7 +73,7 @@ override void CreateChoices()
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(float(Col & 0xff) / 255.0);
-  ColB.ValueChanging = &ChangeColour;
+  ColB.ValueChanging = &ChangeColor;
   currY += ColB.Height;
 
   R_InstallSprite("PLAY", 500);
@@ -85,7 +85,7 @@ override void CreateChoices()
   Anim.NumFrames = 4;
   Anim.TranslStart = 128;
   Anim.TranslEnd = 143;
-  Anim.Colour = Col;
+  Anim.Color = Col;
 }
 
 //==========================================================================
@@ -101,19 +101,19 @@ void ChangePlayerName(Object Sender)
 
 //==========================================================================
 //
-//  ChangeColour
+//  ChangeColor
 //
 //==========================================================================
 
-bool ChangeColour(Object Sender, float newValue)
+bool ChangeColor(Object Sender, float newValue)
 {
   float r = Sender == ColR ? newValue : ColR.Value;
   float g = Sender == ColG ? newValue : ColG.Value;
   float b = Sender == ColB ? newValue : ColB.Value;
   int Col = RGBA(int(r * 255.0), int(g * 255.0), int(b * 255.0), 255);
 
-  SetCvarS('colour', va("%x %x %x", int(r * 255.0), int(g * 255.0), int(b * 255.0)));
-  Anim.Colour = Col;
+  SetCvarS('color', va("%x %x %x", int(r * 255.0), int(g * 255.0), int(b * 255.0)));
+  Anim.Color = Col;
   return true;
 }
 

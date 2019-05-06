@@ -430,7 +430,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
   } else {
     Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha,
-      Additive, GetTranslation(thing->Translation), ColourMap, light,
+      Additive, GetTranslation(thing->Translation), ColorMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
@@ -528,8 +528,8 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   //FIXME: fake "solid color" with colored light for now
   if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-    light = (light&0xff000000)|(mobj->StencilColour&0xffffff);
-    seclight = (seclight&0xff000000)|(mobj->StencilColour&0xffffff);
+    light = (light&0xff000000)|(mobj->StencilColor&0xffffff);
+    seclight = (seclight&0xff000000)|(mobj->StencilColor&0xffffff);
   }
 
   vuint32 Fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
@@ -790,7 +790,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       //if (spr.noDepthChange) GCon->Logf("!!! %u", spr.objid);
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-                                ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
+                                ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
                                 spr.saxis, spr.taxis, spr.texorg, spr.hangup);
       /*
       glDepthFunc(odf);
@@ -925,7 +925,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   else if (aspect_ratio > 2) taxis = -(viewup*100*16/10*PSP_DISTI);
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
-    0, ColourMap, light, Fade, -viewforward,
+    0, ColorMap, light, Fade, -viewforward,
     DotProduct(dv[0], -viewforward), saxis, taxis, texorg, false);
 }
 
@@ -1004,9 +1004,9 @@ void VRenderLevelShared::DrawPlayerSprites () {
       if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
       if (e != cl->MO) continue;
       if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
-      ltxr += (dl->colour>>16)&0xff;
-      ltxg += (dl->colour>>8)&0xff;
-      ltxb += dl->colour&0xff;
+      ltxr += (dl->color>>16)&0xff;
+      ltxg += (dl->color>>8)&0xff;
+      ltxb += dl->color&0xff;
     }
   }
 
@@ -1041,7 +1041,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     //FIXME: fake "solid color" with colored light for now
     if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-      light = (light&0xff000000u)|(cl->MO->StencilColour&0xffffffu);
+      light = (light&0xff000000u)|(cl->MO->StencilColor&0xffffffu);
     }
 
     vuint32 Fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
@@ -1124,7 +1124,7 @@ void VRenderLevelShared::DrawCrosshair () {
 //
 //==========================================================================
 void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
-                        int TranslStart, int TranslEnd, int Colour)
+                        int TranslStart, int TranslEnd, int Color)
 {
   bool flip;
   int lump;
@@ -1147,5 +1147,5 @@ void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
   x2 *= fScaleX;
   y2 *= fScaleY;
 
-  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), nullptr), flip);
+  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Color), nullptr), flip);
 }

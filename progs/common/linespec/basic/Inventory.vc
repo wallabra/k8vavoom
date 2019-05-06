@@ -33,11 +33,11 @@ class Inventory : Actor abstract;
 const float BONUSADD = 0.2;
 const int DefMaxAmount = -2;
 
-// special values for powerup's blend colour
-const int INVERSECOLOUR = 0x00123456;
-const int GOLDCOLOUR    = 0x00123457;
-const int REDCOLOUR     = 0x00123458;
-const int GREENCOLOUR   = 0x00123459;
+// special values for powerup's blend color
+const int INVERSECOLOR = 0x00123456;
+const int GOLDCOLOR    = 0x00123457;
+const int REDCOLOR     = 0x00123458;
+const int GREENCOLOR   = 0x00123459;
 
 int /*[checkpoint]*/ Amount; // amount of item this instance has
 int /*[checkpoint]*/ InterHubAmount; // amount of item that can be kept between hubs or levels

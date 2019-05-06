@@ -61,14 +61,14 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
   vint32 Width;
   vint32 Height;
   vuint8 BitDepth;
-  vuint8 ColourType;
+  vuint8 ColorType;
   vuint8 Compression;
   vuint8 Filter;
   vuint8 Interlace;
   vuint32 CRC;
   Strm.SerialiseBigEndian(&Width, 4);
   Strm.SerialiseBigEndian(&Height, 4);
-  Strm << BitDepth << ColourType << Compression << Filter << Interlace;
+  Strm << BitDepth << ColorType << Compression << Filter << Interlace;
   Strm << CRC;
 
   // scan other chunks looking for grAb chunk with offsets

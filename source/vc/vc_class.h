@@ -159,7 +159,7 @@ struct VDecorateUserVarDef {
 struct VLightEffectDef {
   VName Name;
   vuint8 Type;
-  vint32 Colour;
+  vint32 Color;
   float Radius;
   float Radius2;
   float MinLight;
@@ -180,7 +180,7 @@ struct VParticleEffectDef {
   VName Name;
   vuint8 Type;
   vuint8 Type2;
-  vint32 Colour;
+  vint32 Color;
   TVec Offset;
   vint32 Count;
   float OrgRnd;

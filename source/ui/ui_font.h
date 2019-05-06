@@ -63,12 +63,12 @@ protected:
 
   static VFont *Fonts;
 
-  void BuildTranslations (const bool *ColoursUsed, rgba_t *Pal, bool ConsoleTrans, bool Rescale);
+  void BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool ConsoleTrans, bool Rescale);
   int FindChar (int) const;
 
-  static void ParseTextColours ();
+  static void ParseTextColors ();
   static void ParseFontDefs ();
-  static void MarkUsedColours (VTexture *, bool *);
+  static void MarkUsedColors (VTexture *, bool *);
 
 public:
   VFont ();
@@ -91,6 +91,6 @@ public:
   static void StaticShutdown ();
   static VFont *FindFont (VName);
   static VFont *GetFont (VName, VName);
-  static int ParseColourEscape (const char *&, int, int);
-  static int FindTextColour (VName);
+  static int ParseColorEscape (const char *&, int, int);
+  static int FindTextColor (VName);
 };

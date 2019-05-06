@@ -50,7 +50,7 @@ class VPortal;
 struct particle_t {
   // drawing info
   TVec org; // position
-  vuint32 colour; // ARGB colour
+  vuint32 color; // ARGB color
   float Size;
   // handled by refresh
   particle_t *next; // next in the list
@@ -226,7 +226,7 @@ public:
                                  float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
   virtual void FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
                                        float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
-  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 colour) = 0;
+  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color) = 0;
   virtual void ShadeRect (int x, int y, int w, int h, float darkening) = 0;
   virtual void DrawConsoleBackground (int h) = 0;
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
@@ -245,7 +245,7 @@ public:
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
-  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) = 0;
+  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;
   virtual void DrawSurfaceLight (surface_t *Surf) = 0;
 
   virtual void DrawWorldTexturesPass () = 0;
@@ -264,7 +264,7 @@ public:
                                        VTexture *Skin, VTextureTranslation *Trans,
                                        int CMap, float Alpha, float Inter,
                                        bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const TVec &Offset, const TVec &Scale,
                                     VMeshModel *Mdl, int frame, int nextframe,

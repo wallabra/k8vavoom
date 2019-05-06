@@ -38,7 +38,7 @@ class VPlayerReplicationInfo : public VThinker {
 
   vuint8 TranslStart;
   vuint8 TranslEnd;
-  vint32 Colour;
+  vint32 Color;
 
   vint32 Frags;
   vint32 Deaths;

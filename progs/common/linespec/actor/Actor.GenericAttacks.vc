@@ -226,7 +226,7 @@ final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
 //
 //===========================================================================
 final void A_CustomRailgun (int RailDamage, optional float Offset,
-                            optional string Colour1, optional string Colour2, optional int Flags,
+                            optional string Color1, optional string Color2, optional int Flags,
                             optional bool DoAim, optional float MaxDiff,
                             optional class!Actor PuffType,
                             optional float spread_xy, optional float spread_z, // not implemented
@@ -273,8 +273,8 @@ final void A_CustomRailgun (int RailDamage, optional float Offset,
   }
 
   AngleVector(Ang, out Dir);
-  int Col1 = ParseColour(Colour1);
-  int Col2 = ParseColour(Colour2);
+  int Col1 = ParseColor(Color1);
+  int Col2 = ParseColor(Color2);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags&1), !!(Flags&2),
     distance:range!optional, spawnofs_z:spawnofs_z!optional, pierceLimit:limit!optional);
 }
@@ -475,7 +475,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
     foreach (auto i; 0..MAXPLAYERS) {
       if (!Level.Game.Players[i]) continue;
       if (!Level.Game.Players[i].bSpawned) continue;
-      PlayerEx(Level.Game.Players[i]).ClientParticleExplosion(DLightColour, DLightRadius, Origin+vector(0.0, 0.0, Height*0.5));
+      PlayerEx(Level.Game.Players[i]).ClientParticleExplosion(DLightColor, DLightRadius, Origin+vector(0.0, 0.0, Height*0.5));
     }
   } else if (ExplodeEffect) {
     SendExplosion(ExplodeEffect, DLightRadius, Origin);

@@ -259,10 +259,10 @@ struct botinfo_t {
   int chatinfo;   // bot's chat strings
   int chattime;   // how long it takes us to type a line
   int chatty;     // how talkative the bot is
-  char *colour;   // colour (in form of a string)
+  char *color;   // color (in form of a string)
   char *gender;   // male/female/it :)
   char *skin;     // skin
-  int railcolour;   // railgun trail colour
+  int railcolor;   // railgun trail color
   bool revealed;    // hidden bots must be revealed
 */
   string userinfo;

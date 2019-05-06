@@ -98,7 +98,7 @@ vuint8 *VFlatTexture::GetPixels () {
     VCheckedStream Strm(lumpstream);
     for (int i = 0; i < Width*Height; ++i) {
       Strm << Pixels[i];
-      if (!Pixels[i]) Pixels[i] = r_black_colour;
+      if (!Pixels[i]) Pixels[i] = r_black_color;
     }
   }
 

@@ -258,8 +258,8 @@ void ClearHudMessages () {
 //  AddHudMessage
 //
 //==========================================================================
-void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
-  string ColourName, float x, float y, int HudWidth, int HudHeight,
+void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
+  string ColorName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
   Widget Probe;
@@ -285,14 +285,14 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   // log to console if needed.
   if (Type&HUDMSG_LOG) {
     print("\ci<------------------------------->");
-    print("%s%s", TextColourString(Colour), Message);
+    print("%s%s", TextColorString(Color), Message);
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
   //print("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
 
-  // handle colours specified by name
-  if (Type&HUDMSG_COLOURSTRING) Colour = FindTextColour(ColourName);
+  // handle colors specified by name
+  if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
 
   HUDMessage hudReuse = none;
 
@@ -326,7 +326,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
 
   Msg.ClGame = ClGame;
 
-  Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  Msg.Init(Message, Font, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location
   if (!hudReuse) {

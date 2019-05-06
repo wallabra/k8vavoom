@@ -158,31 +158,31 @@ static inline int getAMHeight () {
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
 static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
 
-// automap colours
-static vuint32 WallColour;
-static vuint32 TSWallColour;
-static vuint32 FDWallColour;
-static vuint32 CDWallColour;
-static vuint32 EXWallColour;
-static vuint32 SecretWallColour;
-static vuint32 PowerWallColour;
-static vuint32 GridColour;
-static vuint32 ThingColour;
-static vuint32 PlayerColour;
-static vuint32 MinisegColour;
+// automap colors
+static vuint32 WallColor;
+static vuint32 TSWallColor;
+static vuint32 FDWallColor;
+static vuint32 CDWallColor;
+static vuint32 EXWallColor;
+static vuint32 SecretWallColor;
+static vuint32 PowerWallColor;
+static vuint32 GridColor;
+static vuint32 ThingColor;
+static vuint32 PlayerColor;
+static vuint32 MinisegColor;
 
-static VCvarS am_colour_wall("am_colour_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
-static VCvarS am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: same-height two-sided walls.", CVAR_Archive);
-static VCvarS am_colour_fdwall("am_colour_fdwall", "a0 6c 40", "Automap color: floor level change.", CVAR_Archive);
-static VCvarS am_colour_cdwall("am_colour_cdwall", "94 94 ac", "Automap color: ceiling level change.", CVAR_Archive);
-static VCvarS am_colour_exwall("am_colour_exwall", "7b 4b 27", "Automap color: walls with extra floors.", CVAR_Archive);
-static VCvarS am_colour_secretwall("am_colour_secretwall", "ff 7f 00", "Automap color: secret walls.", CVAR_Archive);
-//static VCvarS am_colour_power("am_colour_power", "7d 83 79", "Automap color: autorevealed walls.", CVAR_Archive);
-static VCvarS am_colour_power("am_colour_power", "2f 4f 9f", "Automap color: autorevealed walls.", CVAR_Archive);
-static VCvarS am_colour_grid("am_colour_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
-static VCvarS am_colour_thing("am_colour_thing", "cf 4f 00", "Automap color: thing.", CVAR_Archive);
-static VCvarS am_colour_player("am_colour_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
-static VCvarS am_colour_miniseg("am_colour_miniseg", "7f 00 7f", "Automap color: minisegs.", CVAR_Archive);
+static VCvarS am_color_wall("am_color_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
+static VCvarS am_color_tswall("am_color_tswall", "61 64 5f", "Automap color: same-height two-sided walls.", CVAR_Archive);
+static VCvarS am_color_fdwall("am_color_fdwall", "a0 6c 40", "Automap color: floor level change.", CVAR_Archive);
+static VCvarS am_color_cdwall("am_color_cdwall", "94 94 ac", "Automap color: ceiling level change.", CVAR_Archive);
+static VCvarS am_color_exwall("am_color_exwall", "7b 4b 27", "Automap color: walls with extra floors.", CVAR_Archive);
+static VCvarS am_color_secretwall("am_color_secretwall", "ff 7f 00", "Automap color: secret walls.", CVAR_Archive);
+//static VCvarS am_color_power("am_color_power", "7d 83 79", "Automap color: autorevealed walls.", CVAR_Archive);
+static VCvarS am_color_power("am_color_power", "2f 4f 9f", "Automap color: autorevealed walls.", CVAR_Archive);
+static VCvarS am_color_grid("am_color_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
+static VCvarS am_color_thing("am_color_thing", "cf 4f 00", "Automap color: thing.", CVAR_Archive);
+static VCvarS am_color_player("am_color_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
+static VCvarS am_color_miniseg("am_color_miniseg", "7f 00 7f", "Automap color: minisegs.", CVAR_Archive);
 
 static VCvarI am_player_arrow("am_player_arrow", 0, "Type of player arrow.", CVAR_Archive);
 static VCvarB am_follow_player("am_follow_player", true, "Should automap follow player?", CVAR_Archive);
@@ -1014,8 +1014,8 @@ static bool AM_clipMline (mline_t *ml, fline_t *fl) {
 //  Classic Bresenham w/ whatever optimizations needed for speed
 //
 //==========================================================================
-static void AM_drawFline (fline_t *fl, vuint32 colour) {
-  Drawer->DrawLine(fl->a.x, fl->a.y, colour, fl->b.x, fl->b.y, colour);
+static void AM_drawFline (fline_t *fl, vuint32 color) {
+  Drawer->DrawLine(fl->a.x, fl->a.y, color, fl->b.x, fl->b.y, color);
 }
 #endif
 
@@ -1027,12 +1027,12 @@ static void AM_drawFline (fline_t *fl, vuint32 colour) {
 //  Clip lines, draw visible part sof lines.
 //
 //==========================================================================
-static void AM_drawMline (mline_t *ml, vuint32 colour) {
+static void AM_drawMline (mline_t *ml, vuint32 color) {
 #ifdef AM_DO_CLIPPING
   fline_t fl;
-  if (AM_clipMline(ml, &fl)) AM_drawFline(&fl, colour); // draws it on frame buffer using fb coords
+  if (AM_clipMline(ml, &fl)) AM_drawFline(&fl, color); // draws it on frame buffer using fb coords
 #else
-  Drawer->DrawLine(CXMTOFF(ml->a.x), CYMTOFF(ml->a.y), colour, CXMTOFF(ml->b.x), CYMTOFF(ml->b.y), colour);
+  Drawer->DrawLine(CXMTOFF(ml->a.x), CYMTOFF(ml->a.y), color, CXMTOFF(ml->b.x), CYMTOFF(ml->b.y), color);
 #endif
 }
 
@@ -1044,7 +1044,7 @@ static void AM_drawMline (mline_t *ml, vuint32 colour) {
 //  Draws flat (floor/ceiling tile) aligned grid lines.
 //
 //==========================================================================
-static void AM_drawGrid (vuint32 colour) {
+static void AM_drawGrid (vuint32 color) {
   float x, y;
   float start, end;
   mline_t ml;
@@ -1077,7 +1077,7 @@ static void AM_drawGrid (vuint32 colour) {
       AM_rotatePoint(&ml.a.x, &ml.a.y);
       AM_rotatePoint(&ml.b.x, &ml.b.y);
     }
-    AM_drawMline(&ml, colour);
+    AM_drawMline(&ml, color);
   }
 
   // figure out start of horizontal gridlines
@@ -1097,7 +1097,7 @@ static void AM_drawGrid (vuint32 colour) {
       AM_rotatePoint(&ml.a.x, &ml.a.y);
       AM_rotatePoint(&ml.b.x, &ml.b.y);
     }
-    AM_drawMline(&ml, colour);
+    AM_drawMline(&ml, color);
   }
 }
 
@@ -1110,46 +1110,46 @@ static void AM_drawGrid (vuint32 colour) {
 static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
   *cheatOnly = false;
   // locked door
-  if (line->special == LNSPEC_DoorLockedRaise && GetLockDef(line->arg4) && GetLockDef(line->arg4)->MapColour) {
-    return GetLockDef(line->arg4)->MapColour;
+  if (line->special == LNSPEC_DoorLockedRaise && GetLockDef(line->arg4) && GetLockDef(line->arg4)->MapColor) {
+    return GetLockDef(line->arg4)->MapColor;
   }
   // locked ACS special
   if ((line->special == LNSPEC_ACSLockedExecute || line->special == LNSPEC_ACSLockedExecuteDoor) &&
-      GetLockDef(line->arg5) && GetLockDef(line->arg5)->MapColour)
+      GetLockDef(line->arg5) && GetLockDef(line->arg5)->MapColor)
   {
-    return GetLockDef(line->arg5)->MapColour;
+    return GetLockDef(line->arg5)->MapColor;
   }
   // unseen automap walls
   if (!am_cheating && !(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED) &&
       (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed))
   {
-    return PowerWallColour;
+    return PowerWallColor;
   }
   // normal wall
   if (!line->backsector) {
-    return WallColour;
+    return WallColor;
   }
   // secret door
   if (line->flags&ML_SECRET) {
-    return (am_cheating || am_show_secrets ? SecretWallColour : WallColour);
+    return (am_cheating || am_show_secrets ? SecretWallColor : WallColor);
   }
   // floor level change
   if (line->backsector->floor.minz != line->frontsector->floor.minz) {
-    return FDWallColour;
+    return FDWallColor;
   }
   // ceiling level change
   if (line->backsector->ceiling.maxz != line->frontsector->ceiling.maxz) {
-    return CDWallColour;
+    return CDWallColor;
   }
   // show extra floors
   if (line->backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
       line->frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
   {
-    return EXWallColour;
+    return EXWallColor;
   }
   // something other
   *cheatOnly = true;
-  return TSWallColour;
+  return TSWallColor;
 }
 
 
@@ -1272,7 +1272,7 @@ static void AM_DrawMinisegs () {
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
     if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
-    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColour);
+    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor);
   }
 }
 
@@ -1333,7 +1333,7 @@ static void AM_DrawRenderedSubs () {
 //
 //==========================================================================
 static void AM_drawLineCharacter (const mline_t *lineguy, int lineguylines,
-  float scale, float angle, vuint32 colour, float x, float y)
+  float scale, float angle, vuint32 color, float x, float y)
 {
   float msinAngle = msin(angle);
   float mcosAngle = mcos(angle);
@@ -1365,7 +1365,7 @@ static void AM_drawLineCharacter (const mline_t *lineguy, int lineguylines,
     l.b.x += x;
     l.b.y += y;
 
-    AM_drawMline(&l, colour);
+    AM_drawMline(&l, color);
   }
 }
 
@@ -1398,7 +1398,7 @@ static void AM_drawPlayers () {
   }
 
   AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0.0f, angle,
-    PlayerColour, FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
+    PlayerColor, FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
   return;
 }
 
@@ -1408,7 +1408,7 @@ static void AM_drawPlayers () {
 //  AM_drawThings
 //
 //==========================================================================
-static void AM_drawThings (vuint32 colour) {
+static void AM_drawThings (vuint32 color) {
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
@@ -1426,7 +1426,7 @@ static void AM_drawThings (vuint32 colour) {
       angle += 90.0f-cl->ViewAngles.yaw;
     }
 
-    AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, colour, x, y);
+    AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
   }
 }
 
@@ -1441,17 +1441,17 @@ static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
   float x = lt.origin.x;
   float y = lt.origin.y;
   if (am_rotate) AM_rotatePoint(&x, &y);
-  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y-2), lt.colour, CXMTOFF(x+2), CYMTOFF(y-2), lt.colour);
-  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y-2), lt.colour, CXMTOFF(x+2), CYMTOFF(y+2), lt.colour);
-  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y+2), lt.colour, CXMTOFF(x-2), CYMTOFF(y+2), lt.colour);
-  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y+2), lt.colour, CXMTOFF(x-2), CYMTOFF(y-2), lt.colour);
+  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y-2), lt.color);
+  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y+2), lt.color);
+  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y+2), lt.color);
+  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y-2), lt.color);
   // draw circle
   float px = 0, py = 0;
   for (float angle = 0; angle <= 360; angle += 10) {
     float x0 = x+msin(angle)*lt.radius;
     float y0 = y-mcos(angle)*lt.radius;
     if (angle) {
-      Drawer->DrawLine(CXMTOFF(px), CYMTOFF(py), lt.colour, CXMTOFF(x0), CYMTOFF(y0), lt.colour);
+      Drawer->DrawLine(CXMTOFF(px), CYMTOFF(py), lt.color, CXMTOFF(x0), CYMTOFF(y0), lt.color);
     }
     px = x0;
     py = y0;
@@ -1464,7 +1464,7 @@ static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
 //  AM_drawStaticLights
 //
 //==========================================================================
-static void AM_drawStaticLights (vuint32 colour) {
+static void AM_drawStaticLights (vuint32 color) {
   if (!GClLevel->RenderData) return;
   int count = GClLevel->RenderData->GetStaticLightCount();
   for (int f = 0; f < count; ++f) {
@@ -1479,7 +1479,7 @@ static void AM_drawStaticLights (vuint32 colour) {
 //  AM_drawDynamicLights
 //
 //==========================================================================
-static void AM_drawDynamicLights (vuint32 colour) {
+static void AM_drawDynamicLights (vuint32 color) {
   if (!GClLevel->RenderData) return;
   int count = GClLevel->RenderData->GetDynamicLightCount();
   for (int f = 0; f < count; ++f) {
@@ -1674,10 +1674,10 @@ static void AM_DrawLevelStats () {
 
 //==========================================================================
 //
-//  StringToColour
+//  StringToColor
 //
 //==========================================================================
-static vuint32 StringToColour (const char *str) {
+static vuint32 StringToColor (const char *str) {
 /*
   int r, g, b;
   char *p;
@@ -1691,7 +1691,7 @@ static vuint32 StringToColour (const char *str) {
   b = strtol(p, &p, 16)&0xff;
   return alpha|(r<<16)|(g<<8)|b;
   */
-  vuint32 clr = M_ParseColour(str)&0xffffffu;
+  vuint32 clr = M_ParseColor(str)&0xffffffu;
   clr |= ((vuint32)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255))<<24;
   return clr;
 }
@@ -1727,17 +1727,17 @@ static void AM_CheckVariables () {
     mtof_zoommul = old_mtof_zoommul;
   }
 
-  WallColour = StringToColour(am_colour_wall);
-  TSWallColour = StringToColour(am_colour_tswall);
-  FDWallColour = StringToColour(am_colour_fdwall);
-  CDWallColour = StringToColour(am_colour_cdwall);
-  EXWallColour = StringToColour(am_colour_exwall);
-  SecretWallColour = StringToColour(am_colour_secretwall);
-  PowerWallColour = StringToColour(am_colour_power);
-  GridColour = StringToColour(am_colour_grid);
-  ThingColour = StringToColour(am_colour_thing);
-  PlayerColour = StringToColour(am_colour_player);
-  MinisegColour = StringToColour(am_colour_miniseg);
+  WallColor = StringToColor(am_color_wall);
+  TSWallColor = StringToColor(am_color_tswall);
+  FDWallColor = StringToColor(am_color_fdwall);
+  CDWallColor = StringToColor(am_color_cdwall);
+  EXWallColor = StringToColor(am_color_exwall);
+  SecretWallColor = StringToColor(am_color_secretwall);
+  PowerWallColor = StringToColor(am_color_power);
+  GridColor = StringToColor(am_color_grid);
+  ThingColor = StringToColor(am_color_thing);
+  PlayerColor = StringToColor(am_color_player);
+  MinisegColor = StringToColor(am_color_miniseg);
 }
 
 
@@ -1760,12 +1760,12 @@ void AM_Drawer () {
   AM_clearFB();
 
   Drawer->StartAutomap();
-  if (grid) AM_drawGrid(GridColour);
+  if (grid) AM_drawGrid(GridColor);
   AM_drawWalls();
   AM_drawPlayers();
-  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
-  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColour);
-  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColour);
+  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColor);
+  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColor);
+  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColor);
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
   if (am_cheating && am_show_rendered_nodes) AM_DrawRenderedNodes();
   if (am_cheating && am_show_rendered_subs) AM_DrawRenderedSubs();

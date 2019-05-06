@@ -95,7 +95,6 @@ enum {
   HUDMSG_FADEINOUT,
   // flags
   HUDMSG_LOG          = 0x80000000,
-  HUDMSG_COLOURSTRING = 0x40000000,
   HUDMSG_COLORSTRING  = 0x40000000,
 }
 
@@ -109,11 +108,10 @@ enum HUDMsgType {
 // flags
 enum HUDMsgFlag {
   Log          = 0x80000000,
-  ColourString = 0x40000000,
   ColorString  = 0x40000000,
 }
 
-// text colours
+// text colors
 enum {
   CR_UNDEFINED = -1,
   CR_BRICK, //A
@@ -142,7 +140,7 @@ enum {
   CR_FIRE, //X
   CR_SAPPHIRE, //Y
   CR_TEAL, //Z
-  NUM_TEXT_COLOURS
+  NUM_TEXT_COLORS
 };
 
 // status bar view type
@@ -240,7 +238,7 @@ struct SkillDef {
   array!SkillPlayerClassName PlayerClassNames;
   string ConfirmationText;
   string Key;
-  string TextColour;
+  string TextColor;
   bool bFastMonsters;
   bool bDisableCheats;
   bool bEasyBossBrain;
@@ -318,8 +316,8 @@ native static final GameObject::VAnimDoorDef *FindAnimDoor (int BaseTex);
 native static final bool IsAnimatedTexture (int Tex);
 native static final string GetLangString (name Id);
 native static final GameObject::LockDef *GetLockDef (int Lock);
-native static final int ParseColour (string Name);
-native static final string TextColourString (int Colour);
+native static final int ParseColor (string Name);
+native static final string TextColorString (int Color);
 native static final bool StartTitleMap ();
 native static final void LoadBinaryLump (name LumpName, out array!ubyte Array);
 native static final bool IsMapPresent (name MapName);
@@ -411,15 +409,15 @@ native static final void R_DrawPicFloatPartEx (float x, float y, float tx0, floa
 native static final void R_InstallSprite (string Name, int index);
 // draws a sprite
 native static final void R_DrawSpritePatch (int x, int y, int sprite,
-  int frame, int rot, int TranslStart, int TranslEnd, int Colour);
+  int frame, int rot, int TranslStart, int TranslEnd, int Color);
 // installs model
 native static final void *InstallModel (string Name);
 // draws a model
 native static final void R_DrawModelFrame (TVec origin, float angle,
   void *model, int frame, int nextframe, string skin, int TranslStart,
-  int TranslEnd, int Colour);
-// draws a coloured rectangle
-native static final void R_FillRect (int x, int y, int w, int h, int colour);
+  int TranslEnd, int Color);
+// draws a colored rectangle
+native static final void R_FillRect (int x, int y, int w, int h, int color);
 
 // returns current aspect ratio
 native static final float R_GetAspectRatio ();
@@ -535,7 +533,7 @@ enum EWadNamespace {
   Global,
   Sprites,
   Flats,
-  ColourMaps,
+  ColorMaps,
   ACSLibrary,
   NewTextures,
   Voices,

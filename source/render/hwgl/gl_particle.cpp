@@ -46,10 +46,10 @@ void VOpenGLDrawer::StartParticles () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawParticle (particle_t *p) {
-  const float r = ((p->colour>>16)&255)/255.0f;
-  const float g = ((p->colour>>8)&255)/255.0f;
-  const float b = (p->colour&255)/255.0f;
-  const float a = ((p->colour>>24)&255)/255.0f;
+  const float r = ((p->color>>16)&255)/255.0f;
+  const float g = ((p->color>>8)&255)/255.0f;
+  const float b = (p->color&255)/255.0f;
+  const float a = ((p->color>>24)&255)/255.0f;
 
   //GLint lvLoc, tcLoc;
   if (gl_smooth_particles) {

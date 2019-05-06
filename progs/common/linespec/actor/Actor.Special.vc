@@ -218,8 +218,8 @@ final void A_PrintBold (string Text, optional float Time, optional name FontName
 //
 //============================================================================
 final void A_SetBlend (string Col1, float A, int Tics, optional string Col2) {
-  int C1 = ParseColour(Col1);
-  int C2 = ParseColour(Col2);
+  int C1 = ParseColor(Col1);
+  int C2 = ParseColor(Col2);
   A = fclamp(A, 0, 1);
 
   // huh?

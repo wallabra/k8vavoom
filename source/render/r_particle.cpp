@@ -162,12 +162,12 @@ void VRenderLevelShared::DrawParticles () {
   if (!r_draw_particles) return;
   Drawer->StartParticles();
   for (particle_t *p = ActiveParticles; p; p = p->next) {
-    if (ColourMap) {
-      vuint32 Col = p->colour;
-      rgba_t TmpCol = ColourMaps[ColourMap].GetPalette()[R_LookupRGB((Col>>16)&255, (Col>>8)&255, Col&255)];
-      p->colour = (Col&0xff000000)|(TmpCol.r<<16)|(TmpCol.g<<8)|TmpCol.b;
+    if (ColorMap) {
+      vuint32 Col = p->color;
+      rgba_t TmpCol = ColorMaps[ColorMap].GetPalette()[R_LookupRGB((Col>>16)&255, (Col>>8)&255, Col&255)];
+      p->color = (Col&0xff000000)|(TmpCol.r<<16)|(TmpCol.g<<8)|TmpCol.b;
       Drawer->DrawParticle(p);
-      p->colour = Col;
+      p->color = Col;
     } else {
       Drawer->DrawParticle(p);
     }

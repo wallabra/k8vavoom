@@ -47,5 +47,5 @@ override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
 defaultproperties
 {
   EffectTime = 60.0;
-  BlendColour = RGBA(0, 255, 0, 32);
+  BlendColor = RGBA(0, 255, 0, 32);
 }

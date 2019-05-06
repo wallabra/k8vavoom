@@ -18,37 +18,37 @@ varying vec2 LightmapCoordinate;
 
 
 void main () {
-  vec4 FinalColour_1;
-  vec4 TexColour;
+  vec4 FinalColor;
+  vec4 TexColor;
 
   if (SplatAlpha <= 0.01) discard;
 
-  TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard;
+  TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < 0.01) discard;
 
-  FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-  //if (FinalColour_1.a < 0.01) discard;
-  FinalColour_1.rgb = TexColour.rgb;
+  FinalColor.a = clamp(TexColor.a*SplatAlpha, 0.0, 1.0);
+  //if (FinalColor.a < 0.01) discard;
+  FinalColor.rgb = TexColor.rgb;
 
 #ifdef REG_LIGHTMAP
   // lightmapped
   vec4 lmc = texture2D(LightMap, LightmapCoordinate);
   vec4 spc = texture2D(SpecularMap, LightmapCoordinate);
-  FinalColour_1.rgb *= lmc.rgb;
-  FinalColour_1.rgb += spc.rgb;
+  FinalColor.rgb *= lmc.rgb;
+  FinalColor.rgb += spc.rgb;
 #else
   // normal
-  FinalColour_1.rgb *= Light.rgb;
-  FinalColour_1.rgb *= Light.a;
+  FinalColor.rgb *= Light.rgb;
+  FinalColor.rgb *= Light.a;
 #endif
-  FinalColour_1.rgb = clamp(FinalColour_1.rgb, 0.0, 1.0);
+  FinalColor.rgb = clamp(FinalColor.rgb, 0.0, 1.0);
 
   $include "common/fog_calc.fs"
 
-  //if (FinalColour_1.a < 0.01) discard;
+  //if (FinalColor.a < 0.01) discard;
 
   // convert to premultiplied
-  FinalColour_1.rgb *= FinalColour_1.a;
+  FinalColor.rgb *= FinalColor.a;
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

@@ -82,7 +82,7 @@ struct fon2_header_t {
   vuint8 LastChar;
   vuint8 FixedWidth;
   vuint8 RescalePalette;
-  vuint8 ActiveColours;
+  vuint8 ActiveColors;
   vuint8 KerningFlag;
 };
 
@@ -108,7 +108,7 @@ static bool rgb_table_created;
 static char lumpname[256];
 static char destfile[1024];
 
-static bool Fon2ColoursUsed[256];
+static bool Fon2ColorsUsed[256];
 
 
 //==========================================================================
@@ -294,11 +294,11 @@ static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuin
 
 //==========================================================================
 //
-//  my_bestfit_colour
+//  my_bestfit_color
 //
 //==========================================================================
-int my_bestfit_colour (int r, int g, int b) {
-  int best_colour = 0;
+int my_bestfit_color (int r, int g, int b) {
+  int best_color = 0;
   int best_dist = 0x7fffffff;
 
   if (r < 0) r = 0; else if (r > 255) r = 255;
@@ -313,12 +313,12 @@ int my_bestfit_colour (int r, int g, int b) {
     */
     int dist = rgbDistanceSquared(r, g, b, ImgPal[i].r, ImgPal[i].g, ImgPal[i].b);
     if (dist < best_dist) {
-      best_colour = i;
+      best_color = i;
       best_dist = dist;
       if (!dist) break;
     }
   }
-  return best_colour;
+  return best_color;
 }
 
 
@@ -332,7 +332,7 @@ void SetupRGBTable () {
   for (int r = 0; r < 32; ++r) {
     for (int g = 0; g < 32; ++g) {
       for (int b = 0; b < 32; ++b) {
-        rgb_table.data[r][g][b] = my_bestfit_colour(
+        rgb_table.data[r][g][b] = my_bestfit_color(
           (int)(r*255.0/31.0+0.5),
           (int)(g*255.0/31.0+0.5),
           (int)(b*255.0/31.0+0.5));
@@ -492,7 +492,7 @@ void GrabPatch () {
   SC_MustGetNumber();
   int topoffset = sc_Number;
 
-  int TransColour = 0;
+  int TransColor = 0;
   patch_t *Patch = (patch_t *)Z_Malloc(8+4*w+w*h*4);
   Patch->width = LittleShort(w);
   Patch->height = LittleShort(h);
@@ -506,7 +506,7 @@ void GrabPatch () {
     int PrevTop = -1;
     while (y < h) {
       // skip transparent pixels
-      if (GetPixel(x1+x, y1+y) == TransColour) {
+      if (GetPixel(x1+x, y1+y) == TransColor) {
         ++y;
         continue;
       }
@@ -529,7 +529,7 @@ void GrabPatch () {
       }
       PrevTop = y;
       vuint8* Pixels = (vuint8*)Col+3;
-      while (y < h && Col->length < 255 && GetPixel(x1+x, y1+y) != TransColour) {
+      while (y < h && Col->length < 255 && GetPixel(x1+x, y1+y) != TransColor) {
         Pixels[Col->length] = GetPixel(x1+x, y1+y);
         ++Col->length;
         ++y;
@@ -732,9 +732,9 @@ void GrabFon1 () {
 int Fon2PalCmp (const void *v1, const void *v2) {
   int Idx1 = *(const int *)v1;
   int Idx2 = *(const int *)v2;
-  // move unused colours to the end
-  if (!Fon2ColoursUsed[Idx1]) return 1;
-  if (!Fon2ColoursUsed[Idx2]) return -1;
+  // move unused colors to the end
+  if (!Fon2ColorsUsed[Idx1]) return 1;
+  if (!Fon2ColorsUsed[Idx2]) return -1;
   float Lum1 = ImgPal[Idx1].r*0.299+ImgPal[Idx1].g*0.587+ImgPal[Idx1].b*0.114;
   float Lum2 = ImgPal[Idx2].r*0.299+ImgPal[Idx2].g*0.587+ImgPal[Idx2].b*0.114;
   if (Lum1 < Lum2) return -1;
@@ -754,8 +754,8 @@ void GrabFon2 () {
   // process characters
   fon2_char_t *Chars[256];
   memset(Chars, 0, sizeof(Chars));
-  memset(Fon2ColoursUsed, 0, sizeof(Fon2ColoursUsed));
-  Fon2ColoursUsed[0] = true;
+  memset(Fon2ColorsUsed, 0, sizeof(Fon2ColorsUsed));
+  Fon2ColorsUsed[0] = true;
   int CharNum = ' ';
   for (int StartY = 1; StartY < ImgHeight; ) {
     //  Find bottom line.
@@ -777,7 +777,7 @@ void GrabFon2 () {
         for (int ch = StartY; ch < EndY; ++ch) {
           for (int cw = StartX; cw < EndX; ++cw) {
             *pData = GetPixel(cw, ch);
-            Fon2ColoursUsed[*pData] = true;
+            Fon2ColorsUsed[*pData] = true;
             ++pData;
           }
         }
@@ -788,21 +788,21 @@ void GrabFon2 () {
     StartY = EndY+1;
   }
 
-  // sort colours by their luminosity
+  // sort colors by their luminosity
   int SortIdx[256];
   for (int i = 0; i < 256; ++i) SortIdx[i] = i;
   qsort(SortIdx+1, 255, sizeof(int), Fon2PalCmp);
 
-  // build palette containing only used colours
+  // build palette containing only used colors
   rgb_t Pal[256];
   vuint8 Remap[256];
-  int NumColours = 0;
+  int NumColors = 0;
   for (int i = 0; i < 256; ++i) {
     int Idx = SortIdx[i];
-    if (Fon2ColoursUsed[Idx]) {
-      Pal[NumColours] = ImgPal[Idx];
-      Remap[Idx] = NumColours;
-      ++NumColours;
+    if (Fon2ColorsUsed[Idx]) {
+      Pal[NumColors] = ImgPal[Idx];
+      Remap[Idx] = NumColors;
+      ++NumColors;
     }
   }
 
@@ -847,7 +847,7 @@ void GrabFon2 () {
 
   // allocate memory and fill in header
   int NumChars = CharNum-' ';
-  fon2_header_t *Font = (fon2_header_t*)Z_Malloc(sizeof(fon2_header_t)+NumColours*3+NumChars*2+DataSize);
+  fon2_header_t *Font = (fon2_header_t*)Z_Malloc(sizeof(fon2_header_t)+NumColors*3+NumChars*2+DataSize);
   Font->Id[0] = 'F';
   Font->Id[1] = 'O';
   Font->Id[2] = 'N';
@@ -857,7 +857,7 @@ void GrabFon2 () {
   Font->LastChar = CharNum-1;
   Font->FixedWidth = 0;
   Font->RescalePalette = 1;
-  Font->ActiveColours = NumColours-1;
+  Font->ActiveColors = NumColors-1;
   Font->KerningFlag = 0;
 
   // write widths
@@ -869,10 +869,10 @@ void GrabFon2 () {
 
   // write palette
   rgb_t *pPal = (rgb_t *)(Widths+NumChars);
-  memcpy(pPal, Pal, NumColours*3);
+  memcpy(pPal, Pal, NumColors*3);
 
   // write data
-  vint8 *pDst = (vint8 *)(pPal+NumColours);
+  vint8 *pDst = (vint8 *)(pPal+NumColors);
   for (int i = ' '; i < CharNum; ++i) {
     fon2_char_t *Chr = Chars[i];
     if (Chr) {

@@ -98,14 +98,14 @@ override void OnMouseClick (int X, int Y) {
 override void OnDraw () {
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, 0, Text, IsFocus() ? TextColourFocus : TextColour);
+  DrawText(CursorXOffs, 0, Text, IsFocus() ? TextColorFocus : TextColor);
 }
 
 
 defaultproperties
 {
   ActivateSound = 'menu/choose';
-  TextColour = CR_UNTRANSLATED;
-  TextColourFocus = CR_UNTRANSLATED;
+  TextColor = CR_UNTRANSLATED;
+  TextColorFocus = CR_UNTRANSLATED;
   submenuClass = none;
 }

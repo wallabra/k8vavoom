@@ -345,7 +345,7 @@ public:
       while (left) {
         vuint8 ch = *(const vuint8 *)esc;
         if (ch == 127) break;
-        if (ch == TEXT_COLOUR_ESCAPE) break;
+        if (ch == TEXT_COLOR_ESCAPE) break;
         if (ch < ' ') {
           if (ch != '\r' && ch != '\n' && ch != '\t' && ch != 8) break;
         }
@@ -364,7 +364,7 @@ public:
       check(len > 0);
       ++s;
       --len;
-      if (s[-1] != TEXT_COLOUR_ESCAPE) continue;
+      if (s[-1] != TEXT_COLOR_ESCAPE) continue;
       if (len == 0) break;
       if (*s == '[') {
         while (len > 0 && *s != ']') { --len; ++s; }

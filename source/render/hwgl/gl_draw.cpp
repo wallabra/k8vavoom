@@ -138,12 +138,12 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
 //  VOpenGLDrawer::FillRect
 //
 //==========================================================================
-void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 colour) {
+void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 color) {
   DrawFixedCol.Activate();
-  DrawFixedCol.SetColour(
-    (GLfloat)(((colour>>16)&255)/255.0f),
-    (GLfloat)(((colour>>8)&255)/255.0f),
-    (GLfloat)((colour&255)/255.0f), 1.0f);
+  DrawFixedCol.SetColor(
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), 1.0f);
   glBegin(GL_QUADS);
     glVertex2f(x1, y1);
     glVertex2f(x2, y1);
@@ -163,7 +163,7 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
 //==========================================================================
 void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
   DrawFixedCol.Activate();
-  DrawFixedCol.SetColour(0.0f, 0.0f, 0.0f, darkening);
+  DrawFixedCol.SetColor(0.0f, 0.0f, 0.0f, darkening);
   glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glVertex2f(x, y);
@@ -182,7 +182,7 @@ void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
 //==========================================================================
 void VOpenGLDrawer::DrawConsoleBackground (int h) {
   DrawFixedCol.Activate();
-  DrawFixedCol.SetColour(0.0f, 0.0f, 0.5f, 0.75f);
+  DrawFixedCol.SetColor(0.0f, 0.0f, 0.5f, 0.75f);
   glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -245,9 +245,9 @@ void VOpenGLDrawer::StartAutomap () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) {
-  SetColour(c1);
+  SetColor(c1);
   glVertex2f(x1, y1);
-  SetColour(c2);
+  SetColor(c2);
   glVertex2f(x2, y2);
 }
 

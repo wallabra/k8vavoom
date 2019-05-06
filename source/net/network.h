@@ -192,7 +192,7 @@ public:
   struct VBodyQueueTrInfo {
     vuint8 TranslStart;
     vuint8 TranslEnd;
-    vint32 Colour;
+    vint32 Color;
   };
 
   VLevel *Level;

@@ -18,20 +18,20 @@ $include "common/glow_vars.fs"
 
 
 void main () {
-  //vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
-  //if (TexColour.a < 0.01) discard;
+  //vec4 TexColor = texture2D(Texture, TextureCoordinate)*Light;
+  //if (TexColor.a < 0.01) discard;
 
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard; // for steamlined textures //FIXME
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < 0.01) discard; // for steamlined textures //FIXME
 
   vec4 lt = calcGlow(Light);
 #ifdef VV_SIMPLE_BRIGHTMAP
   $include "common/brightmap_calc.fs"
 #endif
-  TexColour *= lt;
+  TexColor *= lt;
 
-  vec4 FinalColour_1 = TexColour;
+  vec4 FinalColor = TexColor;
   $include "common/fog_calc.fs"
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

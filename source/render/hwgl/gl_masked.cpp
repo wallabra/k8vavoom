@@ -77,7 +77,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  SetTexture(tex->Tex, tex->ColourMap);
+  SetTexture(tex->Tex, tex->ColorMap);
 
   bool zbufferWriteDisabled = false;
   bool decalsAllowed = false;
@@ -228,7 +228,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, tex->ColourMap)) {
+    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, tex->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
       //p_glUseProgramObjectARB(SurfSimpleProgram);

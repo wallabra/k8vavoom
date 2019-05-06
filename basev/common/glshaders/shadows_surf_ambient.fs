@@ -27,14 +27,14 @@ void main () {
 //  vec4 lt = Light;
 //#endif
 #ifdef VV_AMBIENT_MASKED_WALL
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a <= 0.01) discard;
-  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a <= 0.01) discard;
+  if (TexColor.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 #endif
 #ifdef VV_AMBIENT_BRIGHTMAP_WALL
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a <= 0.01) discard;
-  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a <= 0.01) discard;
+  if (TexColor.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
   $include "common/brightmap_calc.fs"
 #endif
   gl_FragColor = lt;

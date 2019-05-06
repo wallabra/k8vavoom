@@ -859,13 +859,13 @@ void VWidget::SetTextShadow (bool State) {
 //  VWidget::DrawString
 //
 //==========================================================================
-void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, int BoldColour, float Alpha) {
+void VWidget::DrawString (int x, int y, const VStr &String, int NormalColor, int BoldColor, float Alpha) {
   if (String.length() == 0) return;
 
   int cx = x;
   int cy = y;
   int Kerning = Font->GetKerning();
-  int Colour = NormalColour;
+  int Color = NormalColor;
 
   if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
   if (HAlign == hright) cx -= Font->StringWidth(String);
@@ -876,14 +876,14 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::Utf8GetChar(SPtr);
 
-    // check for colour escape.
-    if (c == TEXT_COLOUR_ESCAPE) {
-      Colour = VFont::ParseColourEscape(SPtr, NormalColour, BoldColour);
+    // check for color escape.
+    if (c == TEXT_COLOR_ESCAPE) {
+      Color = VFont::ParseColorEscape(SPtr, NormalColor, BoldColor);
       continue;
     }
 
     int w;
-    VTexture *Tex = Font->GetChar(c, &w, Colour);
+    VTexture *Tex = Font->GetChar(c, &w, Color);
     if (Tex) {
       //fprintf(stderr, "*CHAR: %c\n", (c >= 32 && c < 127 ? (char)c : '?'));
       if (WidgetFlags&WF_TextShadowed) DrawShadowedPic(cx, cy, Tex); else DrawPic(cx, cy, Tex, Alpha);
@@ -903,7 +903,7 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
 //  VWidget::DrawText
 //
 //==========================================================================
-void VWidget::DrawText (int x, int y, const VStr &String, int NormalColour, int BoldColour, float Alpha) {
+void VWidget::DrawText (int x, int y, const VStr &String, int NormalColor, int BoldColor, float Alpha) {
   int start = 0;
   int cx = x;
   int cy = y;
@@ -918,12 +918,12 @@ void VWidget::DrawText (int x, int y, const VStr &String, int NormalColour, int 
   for (int i = 0; i < String.length(); ++i) {
     if (String[i] == '\n') {
       VStr cs(String, start, i-start);
-      DrawString(cx, cy, cs, NormalColour, BoldColour, Alpha);
+      DrawString(cx, cy, cs, NormalColor, BoldColor, Alpha);
       cy += Font->GetHeight();
       start = i+1;
     }
     if (i == String.length()-1) {
-      DrawString(cx, cy, VStr(String, start, String.Length()-start), NormalColour, BoldColour, Alpha);
+      DrawString(cx, cy, VStr(String, start, String.Length()-start), NormalColor, BoldColor, Alpha);
     }
   }
 }
@@ -1271,13 +1271,13 @@ IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
 
 IMPLEMENT_FUNCTION(VWidget, DrawText) {
   P_GET_FLOAT_OPT(Alpha, 1.0);
-  P_GET_INT_OPT(BoldColour, CR_UNTRANSLATED);
-  P_GET_INT_OPT(Colour, CR_UNTRANSLATED);
+  P_GET_INT_OPT(BoldColor, CR_UNTRANSLATED);
+  P_GET_INT_OPT(Color, CR_UNTRANSLATED);
   P_GET_STR(String);
   P_GET_INT(Y);
   P_GET_INT(X);
   P_GET_SELF;
-  Self->DrawText(X, Y, String, Colour, BoldColour, Alpha);
+  Self->DrawText(X, Y, String, Color, BoldColor, Alpha);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
@@ -1285,9 +1285,9 @@ IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
   Self->DrawCursor();
 }
 
-IMPLEMENT_FUNCTION(VWidget, FindTextColour) {
+IMPLEMENT_FUNCTION(VWidget, FindTextColor) {
   P_GET_STR(Name);
-  RET_INT(VFont::FindTextColour(*Name.ToLower()));
+  RET_INT(VFont::FindTextColor(*Name.ToLower()));
 }
 
 

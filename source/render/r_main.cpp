@@ -682,7 +682,7 @@ VRenderLevelPublic::LightInfo VRenderLevelShared::GetStaticLight (int idx) const
   LightInfo res;
   res.origin = Lights[idx].origin;
   res.radius = Lights[idx].radius;
-  res.colour = Lights[idx].colour;
+  res.color = Lights[idx].color;
   res.active = Lights[idx].active;
   return res;
 }
@@ -707,7 +707,7 @@ VRenderLevelPublic::LightInfo VRenderLevelShared::GetDynamicLight (int idx) cons
   LightInfo res;
   res.origin = DLights[idx].origin;
   res.radius = DLights[idx].radius;
-  res.colour = DLights[idx].colour;
+  res.color = DLights[idx].color;
   res.active = (res.radius > 0);
   return res;
 }
@@ -1294,22 +1294,22 @@ void VRenderLevelShared::SetupFrame () {
 
   ExtraLight = (ViewEnt && ViewEnt->Player ? ViewEnt->Player->ExtraLight*8 : 0);
   if (cl->Camera == cl->MO) {
-    ColourMap = CM_Default;
-         if (cl->FixedColourmap == INVERSECOLOURMAP) { ColourMap = CM_Inverse; FixedLight = 255; }
-    else if (cl->FixedColourmap == GOLDCOLOURMAP) { ColourMap = CM_Gold; FixedLight = 255; }
-    else if (cl->FixedColourmap == REDCOLOURMAP) { ColourMap = CM_Red; FixedLight = 255; }
-    else if (cl->FixedColourmap == GREENCOLOURMAP) { ColourMap = CM_Green; FixedLight = 255; }
-    else if (cl->FixedColourmap >= NUMCOLOURMAPS) { FixedLight = 255; }
-    else if (cl->FixedColourmap) { FixedLight = 255-(cl->FixedColourmap<<3); }
+    ColorMap = CM_Default;
+         if (cl->FixedColormap == INVERSECOLORMAP) { ColorMap = CM_Inverse; FixedLight = 255; }
+    else if (cl->FixedColormap == GOLDCOLORMAP) { ColorMap = CM_Gold; FixedLight = 255; }
+    else if (cl->FixedColormap == REDCOLORMAP) { ColorMap = CM_Red; FixedLight = 255; }
+    else if (cl->FixedColormap == GREENCOLORMAP) { ColorMap = CM_Green; FixedLight = 255; }
+    else if (cl->FixedColormap >= NUMCOLORMAPS) { FixedLight = 255; }
+    else if (cl->FixedColormap) { FixedLight = 255-(cl->FixedColormap<<3); }
     else { FixedLight = 0; }
   } else {
     FixedLight = 0;
-    ColourMap = 0;
+    ColorMap = 0;
   }
-  // inverse colourmap flash effect
+  // inverse colormap flash effect
   if (cl->ExtraLight == 255) {
     ExtraLight = 0;
-    ColourMap = CM_Inverse;
+    ColorMap = CM_Inverse;
     FixedLight = 255;
   }
 
@@ -1345,7 +1345,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 
   ExtraLight = 0;
   FixedLight = 0;
-  ColourMap = 0;
+  ColorMap = 0;
 
   Drawer->SetupView(this, rd);
   cacheframecount++;
@@ -1758,7 +1758,7 @@ void VRenderLevelShared::BuildPlayerTranslations () {
     if (!It->TranslStart || !It->TranslEnd) continue;
 
     VTextureTranslation *Tr = PlayerTranslations[It->PlayerNum];
-    if (Tr && Tr->TranslStart == It->TranslStart && Tr->TranslEnd == It->TranslEnd && Tr->Colour == It->Colour) continue;
+    if (Tr && Tr->TranslStart == It->TranslStart && Tr->TranslEnd == It->TranslEnd && Tr->Color == It->Color) continue;
 
     if (!Tr) {
       Tr = new VTextureTranslation;
@@ -1768,7 +1768,7 @@ void VRenderLevelShared::BuildPlayerTranslations () {
     // don't waste time clearing if it's the same range
     if (Tr->TranslStart != It->TranslStart || Tr->TranslEnd != It->TranslEnd) Tr->Clear();
 
-    Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Colour);
+    Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Color);
   }
 }
 
@@ -1782,7 +1782,7 @@ int R_SetMenuPlayerTrans (int Start, int End, int Col) {
   if (!Start || !End) return 0;
 
   VTextureTranslation *Tr = PlayerTranslations[MAXPLAYERS];
-  if (Tr && Tr->TranslStart == Start && Tr->TranslEnd == End && Tr->Colour == Col) {
+  if (Tr && Tr->TranslStart == Start && Tr->TranslEnd == End && Tr->Color == Col) {
     return (TRANSL_Player<<TRANSL_TYPE_SHIFT)+MAXPLAYERS;
   }
 

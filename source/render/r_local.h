@@ -304,7 +304,7 @@ public:
   struct light_t {
     TVec origin;
     float radius;
-    vuint32 colour;
+    vuint32 color;
     VEntity *owner;
     int leafnum;
     bool active; // for filtering
@@ -336,7 +336,7 @@ protected:
   // bumped light from gun blasts
   int ExtraLight;
   int FixedLight;
-  int ColourMap;
+  int ColorMap;
 
   int NumParticles;
   particle_t *Particles;
@@ -678,7 +678,7 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 colour) override;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color) override;
   virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) override;
   virtual void ClearReferences () override;
 
@@ -825,7 +825,7 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VAdvancedRenderLevel : public VRenderLevelShared {
 private:
-  vuint32 CurrLightColour;
+  vuint32 CurrLightColor;
   TArray<VEntity *> mobjAffected; // built in `ResetMobjsLightCount()`
   int LightsRendered;
 
@@ -865,7 +865,7 @@ protected:
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
-                           TVec &Pos, float Radius, float LightMin, vuint32 Colour,
+                           TVec &Pos, float Radius, float LightMin, vuint32 Color,
                            bool LimitLights,
                            TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f);
 

@@ -188,7 +188,7 @@ struct VSkillDef {
   TArray<VSkillPlayerClassName> PlayerClassNames;
   VStr ConfirmationText;
   VStr Key;
-  VStr TextColour;
+  VStr TextColor;
   vuint32 Flags;
 };
 

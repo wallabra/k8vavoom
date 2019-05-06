@@ -107,9 +107,9 @@ enum {
   PROP_VSpeed,
   PROP_RenderStyle,
   PROP_Translation,
-  PROP_BloodColour,
+  PROP_BloodColor,
   PROP_BloodType,
-  PROP_StencilColour,
+  PROP_StencilColor,
   PROP_Monster,
   PROP_Projectile,
   PROP_BounceType,
@@ -119,9 +119,9 @@ enum {
   PROP_SkipSuper,
   PROP_Args,
   PROP_LowMessage,
-  PROP_PowerupColour,
-  PROP_ColourRange,
-  PROP_DamageScreenColour,
+  PROP_PowerupColor,
+  PROP_ColorRange,
+  PROP_DamageScreenColor,
   PROP_HexenArmor,
   PROP_StartItem,
   PROP_MorphStyle,
@@ -551,17 +551,17 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_translation") {
         VPropDef &P = Lst.NewProp(PROP_Translation, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
-      } else if (PN->Name == "prop_blood_colour") {
-        VPropDef &P = Lst.NewProp(PROP_BloodColour, PN);
-        P.SetField(Lst.Class, "BloodColour");
+      } else if (PN->Name == "prop_blood_color") {
+        VPropDef &P = Lst.NewProp(PROP_BloodColor, PN);
+        P.SetField(Lst.Class, "BloodColor");
         P.SetField2(Lst.Class, "BloodTranslation");
       } else if (PN->Name == "prop_blood_type") {
         VPropDef &P = Lst.NewProp(PROP_BloodType, PN);
         P.SetField(Lst.Class, "BloodType");
         P.SetField2(Lst.Class, "BloodSplatterType");
-      } else if (PN->Name == "prop_stencil_colour") {
-        VPropDef &P = Lst.NewProp(PROP_StencilColour, PN);
-        P.SetField(Lst.Class, "StencilColour");
+      } else if (PN->Name == "prop_stencil_color") {
+        VPropDef &P = Lst.NewProp(PROP_StencilColor, PN);
+        P.SetField(Lst.Class, "StencilColor");
       } else if (PN->Name == "prop_monster") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_Monster, PN);
       } else if (PN->Name == "prop_projectile") {
@@ -584,16 +584,16 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VPropDef &P = Lst.NewProp(PROP_LowMessage, PN);
         P.SetField(Lst.Class, "LowHealth");
         P.SetField2(Lst.Class, "LowHealthMessage");
-      } else if (PN->Name == "prop_powerup_colour") {
-        VPropDef &P = Lst.NewProp(PROP_PowerupColour, PN);
-        P.SetField(Lst.Class, "BlendColour");
-      } else if (PN->Name == "prop_colour_range") {
-        VPropDef &P = Lst.NewProp(PROP_ColourRange, PN);
+      } else if (PN->Name == "prop_powerup_color") {
+        VPropDef &P = Lst.NewProp(PROP_PowerupColor, PN);
+        P.SetField(Lst.Class, "BlendColor");
+      } else if (PN->Name == "prop_color_range") {
+        VPropDef &P = Lst.NewProp(PROP_ColorRange, PN);
         P.SetField(Lst.Class, "TranslStart");
         P.SetField2(Lst.Class, "TranslEnd");
-      } else if (PN->Name == "prop_damage_screen_colour") {
-        VPropDef &P = Lst.NewProp(PROP_DamageScreenColour, PN);
-        P.SetField(Lst.Class, "DamageScreenColour");
+      } else if (PN->Name == "prop_damage_screen_color") {
+        VPropDef &P = Lst.NewProp(PROP_DamageScreenColor, PN);
+        P.SetField(Lst.Class, "DamageScreenColor");
       } else if (PN->Name == "prop_hexen_armor") {
         VPropDef &P = Lst.NewProp(PROP_HexenArmor, PN);
         P.SetField(Lst.Class, "HexenArmor");
@@ -2110,7 +2110,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_Translation:
             P.Field->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3)));
             break;
-          case PROP_BloodColour:
+          case PROP_BloodColor:
             {
               vuint32 Col = sc->ExpectColor();
               P.Field->SetInt(DefObj, Col);
@@ -2125,7 +2125,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             if (sc->Check(",")) sc->ExpectString();
             AddClassFixup(Class, "AxeBloodType", sc->String, ClassFixups);
             break;
-          case PROP_StencilColour:
+          case PROP_StencilColor:
             {
               vuint32 Col = sc->ExpectColor();
               P.Field->SetInt(DefObj, Col);
@@ -2268,7 +2268,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             sc->ExpectString();
             P.Field2->SetStr(DefObj, sc->String);
             break;
-          case PROP_PowerupColour:
+          case PROP_PowerupColor:
                  if (sc->Check("InverseMap")) P.Field->SetInt(DefObj, 0x00123456);
             else if (sc->Check("GoldMap")) P.Field->SetInt(DefObj, 0x00123457);
             else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, 0x00123458);
@@ -2291,14 +2291,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               P.Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
             }
             break;
-          case PROP_ColourRange:
+          case PROP_ColorRange:
             sc->ExpectNumber();
             P.Field->SetInt(DefObj, sc->Number);
             sc->Check(",");
             sc->ExpectNumber();
             P.Field2->SetInt(DefObj, sc->Number);
             break;
-          case PROP_DamageScreenColour:
+          case PROP_DamageScreenColor:
             //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
             {
               vuint32 Col = sc->ExpectColor();

@@ -35,7 +35,7 @@ name oldfont;
 
 array!SplitLine MsgLines;
 name MsgFont;
-int MsgColour;
+int MsgColor;
 float MsgAlpha;
 
 // calculated size of the message box
@@ -101,7 +101,7 @@ final bool IsActive () {
 //  Init
 //
 //==========================================================================
-void Init (string Message, name AFont, int Type, int AId, int Colour,
+void Init (string Message, name AFont, int Type, int AId, int Color,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
@@ -116,7 +116,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   Id = AId;
   MsgFont = AFont;
   if (!MsgFont) { MsgFont = 'smallfont'; AFont = MsgFont; }
-  MsgColour = Colour;
+  MsgColor = Color;
   HoldTime = AHoldTime;
   HoldTime = fclamp(HoldTime, 0, 100000); // 0 MEANS ALOT HERE!
   //if (HoldTime > 0) HoldTime += 0.5/35.0;
@@ -383,7 +383,7 @@ override void OnDraw () {
 //==========================================================================
 void DrawLine (int LineIdx, int x, int y, string Text) {
   float alpha = (isTextFont ? MsgAlpha : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
-  DrawText(x, y, Text, MsgColour, CR_YELLOW, alpha);
+  DrawText(x, y, Text, MsgColor, CR_YELLOW, alpha);
 }
 
 

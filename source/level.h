@@ -97,7 +97,7 @@ struct rep_polyobj_t {
 struct rep_light_t {
   TVec Origin;
   float Radius;
-  vuint32 Colour;
+  vuint32 Color;
   VEntity *Owner;
 };
 
@@ -498,7 +498,7 @@ public:
     return 0xff;
   }
 
-  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour);
+  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
@@ -603,7 +603,7 @@ private:
   int FindGLNodes (VName) const;
   int TexNumForName (const char *name, int Type, bool CMap=false, bool fromUDMF=false) const;
   int TexNumForName2 (const char *name, int Type, bool fromUDMF) const;
-  int TexNumOrColour (const char *, int, bool &, vuint32 &) const;
+  int TexNumOrColor (const char *, int, bool &, vuint32 &) const;
   void CreateSides ();
   void FinaliseLines ();
   void CreateRepBase ();

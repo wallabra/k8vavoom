@@ -176,7 +176,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
         TData = &Tex->DriverTranslated.Alloc();
         TData->Handle = 0;
         TData->Trans = Translation;
-        TData->ColourMap = CMap;
+        TData->ColorMap = CMap;
         GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture);
       }
     } else {
@@ -264,7 +264,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       // both colormap and translation
       rgba_t tmppal[256];
       const vuint8 *TrTab = Translation->GetTable();
-      const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
+      const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
       for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
       UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
     } else if (Translation) {
@@ -275,7 +275,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     } else if (CMap) {
       // only colormap
       //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette());
     } else {
       // normal uploading
       vuint8 *block = SrcTex->GetPixels();

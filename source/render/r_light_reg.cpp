@@ -82,7 +82,7 @@ static float lightmapr[GridSize*GridSize*4];
 static float lightmapg[GridSize*GridSize*4];
 static float lightmapb[GridSize*GridSize*4];
 //static bool light_hit;
-static bool is_coloured;
+static bool is_colored;
 
 
 //==========================================================================
@@ -430,9 +430,9 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   // check it for real
   const TVec *spt = lmi.surfpt;
   const float squaredist = light->radius*light->radius;
-  const float rmul = ((light->colour>>16)&255)/255.0f;
-  const float gmul = ((light->colour>>8)&255)/255.0f;
-  const float bmul = (light->colour&255)/255.0f;
+  const float rmul = ((light->color>>16)&255)/255.0f;
+  const float gmul = ((light->color>>8)&255)/255.0f;
+  const float bmul = (light->color&255)/255.0f;
 
   int w = (surf->extents[0]>>4)+1;
   int h = (surf->extents[1]>>4)+1;
@@ -449,7 +449,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
       /*
       lightmap[c] += 255.0f;
       lightmapg[c] += 255.0f;
-      is_coloured = true;
+      is_colored = true;
       lmi.light_hit = true;
       */
       continue;
@@ -461,7 +461,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
       if (!incoming.isValid()) {
         lightmap[c] += 255.0f;
         lightmapr[c] += 255.0f;
-        is_coloured = true;
+        is_colored = true;
         lmi.light_hit = true;
         continue;
       }
@@ -482,7 +482,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     // ignore really tiny lights
     if (lightmap[c] > 1) {
       lmi.light_hit = true;
-      if (light->colour != 0xffffffff) is_coloured = true;
+      if (light->color != 0xffffffff) is_colored = true;
     }
   }
 
@@ -543,7 +543,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
           // ignore really tiny lights
           if (lightmap[y*w+x] > 1) {
             lmi.light_hit = true;
-            if (light->colour != 0xffffffff) is_coloured = true;
+            if (light->color != 0xffffffff) is_colored = true;
           }
           lightmapHit[y*w+x] = 1;
           if (r_lmap_filtering == 2) goto again;
@@ -568,7 +568,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   lmi.light_hit = false;
-  is_coloured = false;
+  is_colored = false;
 
   // cast all static lights
   CalcMinMaxs(lmi, surf);
@@ -601,7 +601,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 
   // if the surface already has a static lightmap, we will reuse it,
   // otherwise we must allocate a new one
-  if (is_coloured) {
+  if (is_colored) {
     // need colored lightmap
     int sz = w*h*(int)sizeof(surf->lightmap_rgb[0]);
     if (surf->lmrgbsize != sz) {
@@ -803,7 +803,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;
 
-    vuint32 dlcolor = (!needProperTrace && dbg_adv_light_notrace_mark ? 0xffff00ffU : dl.colour);
+    vuint32 dlcolor = (!needProperTrace && dbg_adv_light_notrace_mark ? 0xffff00ffU : dl.color);
 
     const float rmul = (dlcolor>>16)&255;
     const float gmul = (dlcolor>>8)&255;
@@ -867,7 +867,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
             blocklightsg[i] += gmul*add;
             blocklightsb[i] += bmul*add;
           }
-          if (dlcolor != 0xffffffff) is_coloured = true;
+          if (dlcolor != 0xffffffff) is_colored = true;
         }
       }
     }
@@ -1068,7 +1068,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
 
-  is_coloured = false;
+  is_colored = false;
   r_light_add = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
@@ -1086,7 +1086,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   int tR = ((surf->Light>>16)&255)*t/255;
   int tG = ((surf->Light>>8)&255)*t/255;
   int tB = (surf->Light&255)*t/255;
-  if (tR != tG || tR != tB) is_coloured = true;
+  if (tR != tG || tR != tB) is_colored = true;
 
   for (int i = 0; i < size; ++i) {
     //blocklights[i] = t;
@@ -1099,8 +1099,8 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
   // add lightmap
   if (lightmap_rgb) {
-    if (!lightmap) Sys_Error("RGB lightmap without uncoloured lightmap");
-    is_coloured = true;
+    if (!lightmap) Sys_Error("RGB lightmap without uncolored lightmap");
+    is_colored = true;
     for (int i = 0; i < size; ++i) {
       //blocklights[i] += lightmap[i]<<8;
       blocklightsr[i] += lightmap_rgb[i].r<<8;
@@ -1178,7 +1178,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
     */
   }
 
-  //return is_coloured;
+  //return is_colored;
 }
 
 

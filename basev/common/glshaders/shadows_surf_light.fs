@@ -1,7 +1,7 @@
 #version 120
 $include "common/common.inc"
 
-uniform vec3 LightColour;
+uniform vec3 LightColor;
 uniform float LightRadius;
 uniform float LightMin;
 uniform sampler2D Texture;
@@ -20,9 +20,9 @@ $include "common/texture_vars.fs"
 void main () {
   if (VDist <= 0.0 || Dist <= 0.0) discard;
 
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a < 0.1) discard; //FIXME
-  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a < 0.1) discard; //FIXME
+  if (TexColor.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
@@ -39,18 +39,18 @@ void main () {
   float ClampAdd = min(attenuation/255.0, 1.0);
   attenuation = ClampAdd;
 
-  float Transp = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
+  float Transp = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
 
-  vec4 FinalColour_1;
+  vec4 FinalColor;
 #ifdef VV_DEBUG_LIGHT
-  //FinalColour_1 = vec4(1.0, 0.5, 0.5, 1.0);
-  FinalColour_1.rgb = LightColour;
-  FinalColour_1.a = 1.0;
+  //FinalColor = vec4(1.0, 0.5, 0.5, 1.0);
+  FinalColor.rgb = LightColor;
+  FinalColor.a = 1.0;
 #else
-  FinalColour_1.rgb = LightColour;
-  FinalColour_1.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
-  //if (FinalColour_1.a < 0.01) discard;
+  FinalColor.rgb = LightColor;
+  FinalColor.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
+  //if (FinalColor.a < 0.01) discard;
 #endif
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

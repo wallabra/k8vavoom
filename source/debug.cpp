@@ -32,7 +32,7 @@
 class VDebugLog : public VLogListener {
 public:
   virtual void Serialise (const char *Text, EName Event) override {
-    dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColours());
+    dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColors());
   }
 };
 

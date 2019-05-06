@@ -90,7 +90,7 @@ override void SetOrigin (int x, int y) {
 //
 //==========================================================================
 override void OnDraw () {
-  int Col = (IsFocus() ? TextColourFocus : TextColour);
+  int Col = (IsFocus() ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 3, Text, Col);
@@ -177,6 +177,6 @@ defaultproperties {
   Height = 14;
   cvarSession = '';
 
-  TextColour = CR_RED;
-  TextColourFocus = CR_YELLOW;
+  TextColor = CR_RED;
+  TextColorFocus = CR_YELLOW;
 }

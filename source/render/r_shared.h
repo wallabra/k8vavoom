@@ -38,7 +38,7 @@
 #include "drawer.h"
 
 
-// colour maps
+// color maps
 enum {
   CM_Default,
   CM_Inverse,
@@ -67,7 +67,7 @@ struct texinfo_t {
   // alpha for masked surfaces
   float Alpha;
   /*bool*/vint32 Additive;
-  vuint8 ColourMap;
+  vuint8 ColorMap;
 };
 
 
@@ -89,7 +89,7 @@ struct surface_t {
   texinfo_t *texinfo; // points to owning `sec_surface_t`
   TPlane plane; // was pointer
   sec_plane_t *HorizonPlane;
-  vuint32 Light; // light level and colour
+  vuint32 Light; // light level and color
   vuint32 Fade;
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
@@ -264,8 +264,8 @@ extern bool MirrorFlip;
 extern bool MirrorClip;
 
 extern rgba_t r_palette[256];
-extern vuint8 r_black_colour;
-extern vuint8 r_white_colour;
+extern vuint8 r_black_color;
+extern vuint8 r_white_color;
 
 #if defined(VAVOOM_HUGE_RGB_TABLE)
 # define VAVOOM_COLOR_COMPONENT_MAX  (128)
@@ -282,7 +282,7 @@ extern const vuint8 *getGammaTable (int idx);
 
 extern float PixelAspect;
 
-extern VTextureTranslation ColourMaps[CM_Max];
+extern VTextureTranslation ColorMaps[CM_Max];
 
 
 //==========================================================================

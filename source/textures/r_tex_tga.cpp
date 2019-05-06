@@ -32,8 +32,8 @@ struct TGAHeader_t {
   vuint8 id_length;
   vuint8 pal_type;
   vuint8 img_type;
-  vuint16 first_colour;
-  vuint16 pal_colours;
+  vuint16 first_color;
+  vuint16 pal_colors;
   vuint8 pal_entry_size;
   vuint16 left;
   vuint16 top;
@@ -44,7 +44,7 @@ struct TGAHeader_t {
 
   friend VStream &operator << (VStream &Strm, TGAHeader_t &h) {
     return Strm << h.id_length << h.pal_type << h.img_type
-      << h.first_colour << h.pal_colours << h.pal_entry_size << h.left
+      << h.first_color << h.pal_colors << h.pal_entry_size << h.left
       << h.top << h.width << h.height << h.bpp << h.descriptor_bits;
   }
 };
@@ -98,11 +98,11 @@ VTgaTexture::VTgaTexture (int ALumpNum, TGAHeader_t &hdr)
   // set real internal image format
   /* Image type:
   *    0 = no image data
-  *    1 = uncompressed colour mapped
-  *    2 = uncompressed true colour
+  *    1 = uncompressed color mapped
+  *    2 = uncompressed true color
   *    3 = grayscale
-  *    9 = RLE colour mapped
-  *   10 = RLE true colour
+  *    9 = RLE color mapped
+  *   10 = RLE true color
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
@@ -158,7 +158,7 @@ vuint8 *VTgaTexture::GetPixels () {
 
   if (hdr.pal_type == 1) {
     Palette = new rgba_t[256];
-    for (int i = 0; i < hdr.pal_colours; ++i) {
+    for (int i = 0; i < hdr.pal_colors; ++i) {
       vuint16 col;
       switch (hdr.pal_entry_size) {
         case 16:
@@ -181,11 +181,11 @@ vuint8 *VTgaTexture::GetPixels () {
 
   /* Image type:
   *    0 = no image data
-  *    1 = uncompressed colour mapped
-  *    2 = uncompressed true colour
+  *    1 = uncompressed color mapped
+  *    2 = uncompressed true color
   *    3 = grayscale
-  *    9 = RLE colour mapped
-  *   10 = RLE true colour
+  *    9 = RLE color mapped
+  *   10 = RLE true color
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
@@ -394,7 +394,7 @@ vuint8 *VTgaTexture::GetPixels () {
     Sys_Error("Nonsupported tga format");
   }
 
-  // for 8-bit textures remap colour 0
+  // for 8-bit textures remap color 0
   if (mFormat == TEXFMT_8Pal) {
     FixupPalette(Palette);
     if (Width > 0 && Height > 0) {
@@ -450,8 +450,8 @@ void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp,
   hdr.id_length = 0;
   hdr.pal_type = (bpp == 8 ? 1 : 0);
   hdr.img_type = (bpp == 8 ? 1 : 2);
-  hdr.first_colour = 0;
-  hdr.pal_colours = (bpp == 8 ? 256 : 0);
+  hdr.first_color = 0;
+  hdr.pal_colors = (bpp == 8 ? 256 : 0);
   hdr.pal_entry_size = (bpp == 8 ? 24 : 0);
   hdr.left = 0;
   hdr.top = 0;

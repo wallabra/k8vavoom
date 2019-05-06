@@ -34,7 +34,7 @@ string UserInfo;
 
 ubyte TranslStart;
 ubyte TranslEnd;
-int Colour;
+int Color;
 
 int Frags;
 int Deaths;
@@ -45,7 +45,7 @@ int SecretCount;
 
 replication {
   reliable if (Role == ROLE_Authority)
-    PlayerNum, PlayerName, UserInfo, TranslStart, TranslEnd, Colour,
+    PlayerNum, PlayerName, UserInfo, TranslStart, TranslEnd, Color,
     Frags, Deaths, KillCount, ItemCount, SecretCount;
 }
 

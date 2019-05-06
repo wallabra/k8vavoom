@@ -116,36 +116,36 @@ override void ClientTick (float deltaTime) {
   if (GenDelay > 0.0) return;
   GenDelay += 2.0/35.0;
 
-  int EffectColour;
-  int EffectColour2;
+  int EffectColor;
+  int EffectColor2;
   switch (Health) {
     case 1:
-      EffectColour = RGB(255, 0, 0);
-      EffectColour2 = RGB(255, 127, 127);
+      EffectColor = RGB(255, 0, 0);
+      EffectColor2 = RGB(255, 127, 127);
       break;
     case 2:
-      EffectColour = RGB(0, 200, 0);
-      EffectColour2 = RGB(127, 255, 127);
+      EffectColor = RGB(0, 200, 0);
+      EffectColor2 = RGB(127, 255, 127);
       break;
     case 3:
-      EffectColour = RGB(0,   0,   255);
-      EffectColour2 = RGB(127, 127, 255);
+      EffectColor = RGB(0,   0,   255);
+      EffectColor2 = RGB(127, 127, 255);
       break;
     case 4:
-      EffectColour = RGB(255, 255, 0);
-      EffectColour2 = RGB(255, 255, 180);
+      EffectColor = RGB(255, 255, 0);
+      EffectColor2 = RGB(255, 255, 180);
       break;
     case 5:
-      EffectColour = RGB(120, 0,   160);
-      EffectColour2 = RGB(200, 30,  255);
+      EffectColor = RGB(120, 0,   160);
+      EffectColor2 = RGB(200, 30,  255);
       break;
     case 6:
-      EffectColour = RGB(0, 0, 0);
-      EffectColour2 = RGB(50, 50, 50);
+      EffectColor = RGB(0, 0, 0);
+      EffectColor2 = RGB(50, 50, 50);
       break;
     case 7:
-      EffectColour = RGB(210, 210, 210);
-      EffectColour2 = RGB(255, 255, 255);
+      EffectColor = RGB(210, 210, 210);
+      EffectColor2 = RGB(255, 255, 255);
       break;
   }
 
@@ -163,10 +163,10 @@ override void ClientTick (float deltaTime) {
   if (p) {
     if (P_Random() < 30) {
       p->Size = 1.0;
-      p->colour = EffectColour2;
+      p->color = EffectColor2;
     } else {
       p->Size = 1.5;
-      p->colour = EffectColour;
+      p->color = EffectColor;
     }
 
     // set initial velocities

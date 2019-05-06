@@ -12,13 +12,13 @@ $include "common/texture_vars.fs"
 
 void main () {
 #ifdef VV_MASKED_FOG
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a < 0.01) discard;
-  if (TexColour.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a < 0.01) discard;
+  if (TexColor.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
 #endif
 
-  vec4 FinalColour_1;
+  vec4 FinalColor;
   $include "common/fog_calc_main.fs"
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

@@ -97,7 +97,7 @@ enum {
   STYLE_AddStencil, // solid color, additive
 };
 
-// colour tralslation types
+// color tralslation types
 enum {
   TRANSL_None, // no translation
   TRANSL_Standard, // game's standard translations
@@ -105,7 +105,7 @@ enum {
   TRANSL_Level, // ACS translations
   TRANSL_BodyQueue, // translations of dead players
   TRANSL_Decorate, // translations defined in DECORATE
-  TRANSL_Blood, // blood translations, for blood colour
+  TRANSL_Blood, // blood translations, for blood color
 
   TRANSL_Max,
 
@@ -169,7 +169,7 @@ class VEntity : public VThinker {
   float Alpha;
   int Translation;
 
-  int StencilColour;
+  int StencilColor;
 
   float FloorClip; // value to use for floor clipping
 

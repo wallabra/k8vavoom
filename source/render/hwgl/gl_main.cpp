@@ -1540,7 +1540,7 @@ void VOpenGLDrawer::EndView () {
 
   if (cl && cl->CShift) {
     DrawFixedCol.Activate();
-    DrawFixedCol.SetColour(
+    DrawFixedCol.SetColor(
       (float)((cl->CShift>>16)&255)/255.0f,
       (float)((cl->CShift>>8)&255)/255.0f,
       (float)(cl->CShift&255)/255.0f,
@@ -1654,15 +1654,15 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
 
   if (NewFade) {
     //static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
-    float fogColour[4];
+    float fogColor[4];
 
-    fogColour[0] = float((NewFade>>16)&255)/255.0f;
-    fogColour[1] = float((NewFade>>8)&255)/255.0f;
-    fogColour[2] = float(NewFade&255)/255.0f;
-    fogColour[3] = float((NewFade>>24)&255)/255.0f;
+    fogColor[0] = float((NewFade>>16)&255)/255.0f;
+    fogColor[1] = float((NewFade>>8)&255)/255.0f;
+    fogColor[2] = float(NewFade&255)/255.0f;
+    fogColor[3] = float((NewFade>>24)&255)/255.0f;
     //glFogi(GL_FOG_MODE, fogMode[r_fog&3]);
     glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogfv(GL_FOG_COLOR, fogColour);
+    glFogfv(GL_FOG_COLOR, fogColor);
     if (NewFade == FADE_LIGHT) {
       glFogf(GL_FOG_DENSITY, 0.3f);
       glFogf(GL_FOG_START, 1.0f);
@@ -1797,7 +1797,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   //p_glUseProgramObjectARB(0);
 
   DrawFixedCol.Activate();
-  DrawFixedCol.SetColour(
+  DrawFixedCol.SetColor(
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);

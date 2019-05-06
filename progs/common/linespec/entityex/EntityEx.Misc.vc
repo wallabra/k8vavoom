@@ -1139,10 +1139,10 @@ override void OnMapSpawn (mthing_t *mthing) {
   }
 
   if (bStaticLight && mthing && !TID) {
-    if (LightColour == 0xffffffff) {
+    if (LightColor == 0xffffffff) {
       Level.AddStaticLight(self, Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius);
     } else {
-      Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius, LightColour);
+      Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius, LightColor);
     }
     bStaticLightSpawned = true;
   }
@@ -1600,7 +1600,7 @@ override void ClientTick (float DeltaTime) {
       //if (dl->radius > DLightRadius) dl->radius = DLightRadius;
       dl->radius = fmin(dl->radius, DLightRadius);
       prev_rad = dl->radius;
-      dl->colour = DLightColour;
+      dl->color = DLightColor;
       dl->die = XLevel.Time+0.1;
     }
   }
@@ -1717,7 +1717,7 @@ final void DoStateEffects (float DeltaTime) {
           }
           break;
       }
-      dl->colour = L->Colour;
+      dl->color = L->Color;
       dl->minlight = L->MinLight;
       dl->bNoSelfShadow = !!L->NoSelfShadow;
       dl->die = XLevel.Time+0.1;
@@ -1733,7 +1733,7 @@ final void DoStateEffects (float DeltaTime) {
         Level.ParticleEffect(P->Count, P->Type, P->Type2,
           Origin+Forward*P->Offset.x-Right*P->Offset.y+Up*P->Offset.z,
           P->OrgRnd, P->Velocity, P->VelRnd,
-          P->Accel, P->Grav, P->Colour, P->Duration, P->Ramp);
+          P->Accel, P->Grav, P->Color, P->Duration, P->Ramp);
       }
     }
     PrevEffectState = State;
@@ -1936,11 +1936,11 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
 //  SendExplosion
 //
 //==========================================================================
-final void SendExplosion (int colour, float rad, TVec org) {
+final void SendExplosion (int color, float rad, TVec org) {
   foreach (auto i; 0..MAXPLAYERS) {
     if (!Level.Game.Players[i]) continue;
     if (!Level.Game.Players[i].bSpawned) continue;
-    PlayerEx(Level.Game.Players[i]).ClientExplosion(colour, rad, org);
+    PlayerEx(Level.Game.Players[i]).ClientExplosion(color, rad, org);
   }
 }
 
@@ -2933,7 +2933,7 @@ void RespawnResetFlags () {
   RenderStyle = default.RenderStyle;
   Alpha = default.Alpha;
   Translation = default.Translation;
-  StencilColour = default.StencilColour;
+  StencilColor = default.StencilColor;
   FloorClip = default.FloorClip;
   ScaleX = default.ScaleX;
   ScaleY = default.ScaleY;

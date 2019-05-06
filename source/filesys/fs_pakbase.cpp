@@ -38,7 +38,7 @@ bool fsys_no_dup_reports = false;
 const VPK3ResDirInfo PK3ResourceDirs[] = {
   { "sprites/", WADNS_Sprites },
   { "flats/", WADNS_Flats },
-  { "colormaps/", WADNS_ColourMaps },
+  { "colormaps/", WADNS_ColorMaps },
   { "acs/", WADNS_ACSLibrary },
   { "textures/", WADNS_NewTextures },
   { "voices/", WADNS_Voices },

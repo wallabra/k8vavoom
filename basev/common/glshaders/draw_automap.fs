@@ -1,9 +1,9 @@
 #version 120
 $include "common/common.inc"
 
-varying vec4 Colour;
+varying vec4 Color;
 
 
 void main () {
-  gl_FragColor = Colour;
+  gl_FragColor = Color;
 }

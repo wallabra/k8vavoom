@@ -349,7 +349,7 @@
 #define T_FLESH_DRIP2			107
 #define T_SPARK_DRIP			108
 
-// Text colours -------------------------------------------------------------
+// Text colors -------------------------------------------------------------
 
 #define CR_UNTRANSLATED			-1
 #define CR_BRICK				0

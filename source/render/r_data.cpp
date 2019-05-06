@@ -52,8 +52,8 @@ struct VTempClassEffects {
 // main palette
 //
 rgba_t r_palette[256];
-vuint8 r_black_colour;
-vuint8 r_white_colour;
+vuint8 r_black_color;
+vuint8 r_white_color;
 
 vuint8 r_rgbtable[VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+4];
 
@@ -68,7 +68,7 @@ TArray<VTextureTranslation *> DecorateTranslations;
 TArray<VTextureTranslation *> BloodTranslations;
 
 // they basicly work the same as translations
-VTextureTranslation ColourMaps[CM_Max];
+VTextureTranslation ColorMaps[CM_Max];
 
 // temporary variables for sprite installing
 enum { MAX_SPR_TEMP = 30 };
@@ -144,17 +144,17 @@ static void InitPalette () {
   if (W_CheckNumForName(NAME_playpal) == -1) {
     Sys_Error("Palette lump not found. Did you forgot to specify path to IWAD file?");
   }
-  // We use colour 0 as transparent colour, so we must find an alternate
-  // index for black colour. In Doom, Heretic and Strife there is another
-  // black colour, in Hexen it's almost black.
-  // I think that originaly Doom uses colour 255 as transparent colour,
-  // but utilites created by others uses the alternate black colour and
-  // these graphics can contain pixels of colour 255.
-  // Heretic and Hexen also uses colour 255 as transparent, even more - in
-  // colourmaps it's maped to colour 0. Posibly this can cause problems
+  // We use color 0 as transparent color, so we must find an alternate
+  // index for black color. In Doom, Heretic and Strife there is another
+  // black color, in Hexen it's almost black.
+  // I think that originaly Doom uses color 255 as transparent color,
+  // but utilites created by others uses the alternate black color and
+  // these graphics can contain pixels of color 255.
+  // Heretic and Hexen also uses color 255 as transparent, even more - in
+  // colormaps it's maped to color 0. Posibly this can cause problems
   // with modified graphics.
-  // Strife uses colour 0 as transparent. I already had problems with fact
-  // that colour 255 is normal colour, now there shouldn't be any problems.
+  // Strife uses color 0 as transparent. I already had problems with fact
+  // that color 255 is normal color, now there shouldn't be any problems.
   VStream *lumpstream = W_CreateLumpReaderName(NAME_playpal);
   VCheckedStream Strm(lumpstream);
   rgba_t *pal = r_palette;
@@ -179,27 +179,27 @@ static void InitPalette () {
         dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
       }
       if (dist < best_dist_black) {
-        r_black_colour = i;
+        r_black_color = i;
         best_dist_black = dist;
       }
       // white
       if (r_color_distance_algo) {
         dist = rgbDistanceSquared(pal[i].r, pal[i].g, pal[i].b, 255, 255, 255);
         if (dist < best_dist_white) {
-          r_white_colour = i;
+          r_white_color = i;
           best_dist_white = dist;
         }
       } else {
         //dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
         if (dist > best_dist_white) {
-          r_white_colour = i;
+          r_white_color = i;
           best_dist_white = dist;
         }
       }
     }
   }
-  //GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_colour, pal[r_black_colour].r, pal[r_black_colour].g, pal[r_black_colour].b,
-  //  r_white_colour, pal[r_white_colour].r, pal[r_white_colour].g, pal[r_white_colour].b);
+  //GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_color, pal[r_black_color].r, pal[r_black_color].g, pal[r_black_color].b,
+  //  r_white_color, pal[r_white_color].r, pal[r_white_color].g, pal[r_white_color].b);
 }
 
 
@@ -220,7 +220,7 @@ static void InitRgbTable () {
         const int r = (int)(ir*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
         const int g = (int)(ig*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
         const int b = (int)(ib*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
-        int best_colour = -1;
+        int best_color = -1;
         int best_dist = 0x7fffffff;
         for (int i = 1; i < 256; ++i) {
           vint32 dist;
@@ -231,14 +231,14 @@ static void InitRgbTable () {
                    (r_palette[i].g-g)*(r_palette[i].g-g)+
                    (r_palette[i].b-b)*(r_palette[i].b-b);
           }
-          if (best_colour < 0 || dist < best_dist) {
-            best_colour = i;
+          if (best_color < 0 || dist < best_dist) {
+            best_color = i;
             best_dist = dist;
             if (!dist) break;
           }
         }
-        check(best_colour > 0 && best_colour <= 255);
-        r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_colour;
+        check(best_color > 0 && best_color <= 255);
+        r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_color;
       }
     }
   }
@@ -264,8 +264,8 @@ static void InitTranslationTables () {
       Trans->Table[0] = 0;
       Trans->Palette[0] = r_palette[0];
       for (int i = 1; i < 256; ++i) {
-        // make sure that normal colours doesn't map to colour 0
-        if (Trans->Table[i] == 0) Trans->Table[i] = r_black_colour;
+        // make sure that normal colors doesn't map to color 0
+        if (Trans->Table[i] == 0) Trans->Table[i] = r_black_color;
         Trans->Palette[i] = r_palette[Trans->Table[i]];
       }
     }
@@ -289,12 +289,12 @@ static void InitTranslationTables () {
 
 //==========================================================================
 //
-//  InitColourMaps
+//  InitColorMaps
 //
 //==========================================================================
-static void InitColourMaps () {
-  // calculate inverse colourmap
-  VTextureTranslation *T = &ColourMaps[CM_Inverse];
+static void InitColorMaps () {
+  // calculate inverse colormap
+  VTextureTranslation *T = &ColorMaps[CM_Inverse];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
@@ -307,8 +307,8 @@ static void InitColourMaps () {
     T->Table[i] = R_LookupRGB(Val, Val, Val);
   }
 
-  // calculate gold colourmap
-  T = &ColourMaps[CM_Gold];
+  // calculate gold colormap
+  T = &ColorMaps[CM_Gold];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
@@ -320,8 +320,8 @@ static void InitColourMaps () {
     T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
   }
 
-  // calculate red colourmap
-  T = &ColourMaps[CM_Red];
+  // calculate red colormap
+  T = &ColorMaps[CM_Red];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
@@ -333,8 +333,8 @@ static void InitColourMaps () {
     T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
   }
 
-  // calculate green colourmap
-  T = &ColourMaps[CM_Green];
+  // calculate green colormap
+  T = &ColorMaps[CM_Green];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
@@ -560,8 +560,8 @@ void R_InitData () {
   InitRgbTable();
   // init standard translation tables
   InitTranslationTables();
-  // init colour maps
-  InitColourMaps();
+  // init color maps
+  InitColorMaps();
 }
 
 
@@ -602,7 +602,7 @@ VTextureTranslation::VTextureTranslation()
   : Crc(0)
   , TranslStart(0)
   , TranslEnd(0)
-  , Colour(0)
+  , Color(0)
 {
   Clear();
 }
@@ -652,7 +652,7 @@ void VTextureTranslation::Serialise (VStream &Strm) {
   Strm << Crc
     << TranslStart
     << TranslEnd
-    << Colour;
+    << Color;
   int CmdsSize = Commands.Num();
   Strm << STRM_INDEX(CmdsSize);
   if (Strm.IsLoading()) Commands.SetNum(CmdsSize);
@@ -686,7 +686,7 @@ void VTextureTranslation::BuildPlayerTrans (int Start, int End, int Col) {
   CalcCrc();
   TranslStart = Start;
   TranslEnd = End;
-  Colour = Col;
+  Color = Col;
 }
 
 
@@ -712,7 +712,7 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
     SrcStart = ASrcStart;
     SrcEnd = ASrcEnd;
   }
-  // check for single colour change
+  // check for single color change
   if (Start == End) {
     Table[Start] = SrcStart;
     Palette[Start] = r_palette[SrcStart];
@@ -737,10 +737,10 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
 
 //==========================================================================
 //
-//  VTextureTranslation::MapToColours
+//  VTextureTranslation::MapToColors
 //
 //==========================================================================
-void VTextureTranslation::MapToColours (int AStart, int AEnd,
+void VTextureTranslation::MapToColors (int AStart, int AEnd,
                                         int AR1, int AG1, int AB1,
                                         int AR2, int AG2, int AB2)
 {
@@ -768,7 +768,7 @@ void VTextureTranslation::MapToColours (int AStart, int AEnd,
     G2 = AG2;
     B2 = AB2;
   }
-  // check for single colour change
+  // check for single color change
   if (Start == End) {
     Palette[Start].r = R1;
     Palette[Start].g = G1;
@@ -814,7 +814,7 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
   vuint8 r = (Col>>16)&255;
   vuint8 g = (Col>>8)&255;
   vuint8 b = Col&255;
-  // don't remap colour 0
+  // don't remap color 0
   for (int i = 1; i < 256; ++i) {
     int Bright = max3(r_palette[i].r, r_palette[i].g, r_palette[i].b);
     Palette[i].r = r*Bright/255;
@@ -824,7 +824,7 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
     //Table[i] = R_LookupRGB(255, 0, 0);
   }
   CalcCrc();
-  Colour = Col;
+  Color = Col;
 }
 
 
@@ -877,7 +877,7 @@ void VTextureTranslation::AddTransString (const VStr &Str) {
     if (!CheckChar(pStr, ',')) return;
     int B2 = strtol(pStr, (char **)&pStr, 10);
     if (!CheckChar(pStr, ']')) return;
-    MapToColours(Start, End, R1, G1, B1, R2, G2, B2);
+    MapToColors(Start, End, R1, G1, B1, R2, G2, B2);
   }
 }
 
@@ -934,7 +934,7 @@ int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
 int R_GetBloodTranslation (int Col) {
   // check for duplicate blood translation
   for (int i = 0; i < BloodTranslations.Num(); ++i) {
-    if (BloodTranslations[i]->Colour == Col) {
+    if (BloodTranslations[i]->Color == Col) {
       return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+i;
     }
   }
@@ -945,7 +945,7 @@ int R_GetBloodTranslation (int Col) {
 
   // add it
   if (BloodTranslations.Num() >= MAX_BLOOD_TRANSLATIONS) {
-    Sys_Error("Too many blood colours in DECORATE scripts");
+    Sys_Error("Too many blood colors in DECORATE scripts");
   }
   BloodTranslations.Append(Tr);
   return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+BloodTranslations.Num()-1;
@@ -979,7 +979,7 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   // set default values
   L->Name = *sc->String.ToLower();
   L->Type = LightType;
-  L->Colour = 0xffffffff;
+  L->Color = 0xffffffff;
   L->Radius = 0.0f;
   L->Radius2 = 0.0f;
   L->MinLight = 0.0f;
@@ -992,14 +992,14 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   // parse light def
   sc->Expect("{");
   while (!sc->Check("}")) {
-    if (sc->Check("colour")) {
+    if (sc->Check("colour") || sc->Check("color")) {
       sc->ExpectFloat();
       float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float b = midval(0.0f, (float)sc->Float, 1.0f);
-      L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+      L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("radius")) {
       sc->ExpectFloat();
       L->Radius = sc->Float;
@@ -1053,7 +1053,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   // set default values
   L->Name = *sc->String.ToLower();
   L->Type = LightType;
-  L->Colour = 0xffffffff;
+  L->Color = 0xffffffff;
   L->Radius = 0.0f;
   L->Radius2 = 0.0f;
   L->MinLight = 0.0f;
@@ -1066,14 +1066,14 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   // parse light def
   sc->Expect("{");
   while (!sc->Check("}")) {
-    if (sc->Check("color")) {
+    if (sc->Check("color") || sc->Check("colour")) {
       sc->ExpectFloat();
       float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float b = midval(0.0f, (float)sc->Float, 1.0f);
-      L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+      L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("size")) {
       sc->ExpectNumber();
       L->Radius = IntensityToRadius(float(sc->Number));
@@ -1147,7 +1147,7 @@ static void ParseParticleEffect (VScriptParser *sc) {
   P->Name = *sc->String.ToLower();
   P->Type = 0;
   P->Type2 = 0;
-  P->Colour = 0xffffffff;
+  P->Color = 0xffffffff;
   P->Offset = TVec(0, 0, 0);
   P->Count = 0;
   P->OrgRnd = 0;
@@ -1171,14 +1171,14 @@ static void ParseParticleEffect (VScriptParser *sc) {
       else if (sc->Check("explode")) P->Type2 = 1;
       else if (sc->Check("explode2")) P->Type2 = 2;
       else sc->Error("Bad type");
-    } else if (sc->Check("colour")) {
+    } else if (sc->Check("colour") || sc->Check("color")) {
       sc->ExpectFloat();
       float r = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float g = midval(0.0f, (float)sc->Float, 1.0f);
       sc->ExpectFloat();
       float b = midval(0.0f, (float)sc->Float, 1.0f);
-      P->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+      P->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("offset")) {
       sc->ExpectFloat();
       P->Offset.x = sc->Float;
@@ -1555,7 +1555,7 @@ void R_ParseEffectDefs () {
       VLightEffectDef *SLight = R_FindLightEffect(CD.StaticLight);
       if (SLight) {
         SetClassFieldBool(Cls, "bStaticLight", true);
-        SetClassFieldInt(Cls, "LightColour", SLight->Colour);
+        SetClassFieldInt(Cls, "LightColor", SLight->Color);
         SetClassFieldFloat(Cls, "LightRadius", SLight->Radius);
         SetClassFieldVec(Cls, "LightOffset", SLight->Offset);
       } else {

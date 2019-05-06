@@ -111,25 +111,25 @@ class MarineRailgun
 //------------------------------------------------------------------------------
 pointlight DoomImpBall
 {
-  colour 0.85 0.4 0.05
+  color 0.85 0.4 0.05
   radius 134
 }
 
 pointlight DoomImpBall_X1
 {
-  colour 0.85 0.4 0.05
+  color 0.85 0.4 0.05
   radius 250
 }
 
 pointlight DoomImpBall_X2
 {
-  colour 0.85 0.4 0.05
+  color 0.85 0.4 0.05
   radius 170
 }
 
 pointlight DoomImpBall_X3
 {
-  colour 0.85 0.4 0.05
+  color 0.85 0.4 0.05
   radius 90
 }
 
@@ -145,25 +145,25 @@ class DoomImpBall
 //------------------------------------------------------------------------------
 pointlight CacodemonBall
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 126
 }
 
 pointlight CacodemonBall_X1
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 250
 }
 
 pointlight CacodemonBall_X2
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 170
 }
 
 pointlight CacodemonBall_X3
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 90
 }
 
@@ -179,35 +179,35 @@ class CacodemonBall
 //------------------------------------------------------------------------------
 pointlight LostSoul
 {
-  colour 0.7 0 0
+  color 0.7 0 0
   radius 126
   offset 0 0 28
 }
 
 pointlight LostSoul_X1
 {
-  colour 0.7 0 0
+  color 0.7 0 0
   radius 260
   offset 0 0 28
 }
 
 pointlight LostSoul_X2
 {
-  colour 0.7 0 0
+  color 0.7 0 0
   radius 195
   offset 0 0 28
 }
 
 pointlight LostSoul_X3
 {
-  colour 0.7 0 0
+  color 0.7 0 0
   radius 130
   offset 0 0 28
 }
 
 pointlight LostSoul_X4
 {
-  colour 0.7 0 0
+  color 0.7 0 0
   radius 65
   offset 0 0 28
 }
@@ -230,25 +230,25 @@ class LostSoul
 //------------------------------------------------------------------------------
 pointlight BaronBall
 {
-  colour 0.35 0.75 0.3
+  color 0.35 0.75 0.3
   radius 134
 }
 
 pointlight BaronBall_X1
 {
-  colour 0.35 0.75 0.3
+  color 0.35 0.75 0.3
   radius 250
 }
 
 pointlight BaronBall_X2
 {
-  colour 0.35 0.75 0.3
+  color 0.35 0.75 0.3
   radius 170
 }
 
 pointlight BaronBall_X3
 {
-  colour 0.35 0.75 0.3
+  color 0.35 0.75 0.3
   radius 90
 }
 
@@ -264,44 +264,44 @@ class BaronBall
 //------------------------------------------------------------------------------
 pointlight ArachnotronPlasma
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 126
 }
 
 pointlight ArachnotronPlasma_X1
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 250
 }
 
 pointlight ArachnotronPlasma_X2
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 200
 }
 
 pointlight ArachnotronPlasma_X3
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 150
 }
 
 pointlight ArachnotronPlasma_X4
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 100
 }
 
 pointlight ArachnotronPlasma_X5
 {
-  colour 0.85 0.75 0.25
+  color 0.85 0.75 0.25
   radius 50
 }
 
 particleeffect ArachnotronPlasma
 {
   type static
-  colour 1 0.75 0.25
+  color 1 0.75 0.25
   count 10
   originrandom 10
   velocity 384 384 256
@@ -325,25 +325,25 @@ class ArachnotronPlasma
 //------------------------------------------------------------------------------
 pointlight RevenantTracer
 {
-  colour 0.6 0.2 0.2
+  color 0.6 0.2 0.2
   radius 118
 }
 
 pointlight RevenantTracer_X1
 {
-  colour 0.6 0.2 0.2
+  color 0.6 0.2 0.2
   radius 240
 }
 
 pointlight RevenantTracer_X2
 {
-  colour 0.6 0.2 0.2
+  color 0.6 0.2 0.2
   radius 160
 }
 
 pointlight RevenantTracer_X3
 {
-  colour 0.6 0.2 0.2
+  color 0.6 0.2 0.2
   radius 80
 }
 
@@ -358,25 +358,25 @@ class RevenantTracer
 //------------------------------------------------------------------------------
 pointlight FatShot
 {
-  colour 1 0.1 0.1
+  color 1 0.1 0.1
   radius 134
 }
 
 pointlight FatShot_X1
 {
-  colour 1 0.1 0.1
+  color 1 0.1 0.1
   radius 250
 }
 
 pointlight FatShot_X2
 {
-  colour 1 0.1 0.1
+  color 1 0.1 0.1
   radius 170
 }
 
 pointlight FatShot_X3
 {
-  colour 1 0.1 0.1
+  color 1 0.1 0.1
   radius 90
 }
 
@@ -391,7 +391,7 @@ class FatShot
 //------------------------------------------------------------------------------
 pointlight ArchvileFire
 {
-  colour 0.75 0.6 0.2
+  color 0.75 0.6 0.2
   radius 134
 }
 
@@ -403,28 +403,28 @@ class ArchvileFire
 //------------------------------------------------------------------------------
 pointlight PainElemental_X1
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 200
   offset 0 0 28
 }
 
 pointlight PainElemental_X2
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 150
   offset 0 0 28
 }
 
 pointlight PainElemental_X3
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 100
   offset 0 0 28
 }
 
 pointlight PainElemental_X4
 {
-  colour 0.75 0.3 0
+  color 0.75 0.3 0
   radius 50
   offset 0 0 28
 }

@@ -266,8 +266,8 @@ void AddCentreMessage (string Msg) {
 //  AddHudMessage
 //
 //==========================================================================
-void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
-                    string ColourName, float x, float y, int HudWidth, int HudHeight,
+void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
+                    string ColorName, float x, float y, int HudWidth, int HudHeight,
                     float HoldTime, float Time1, float Time2)
 {
 }

@@ -558,7 +558,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("ceiling.LightSourceSector"), sec->ceiling.LightSourceSector);
       vio.io(VName("ceiling.SkyBox"), sec->ceiling.SkyBox);
       vio.io(VName("params.lightlevel"), sec->params.lightlevel);
-      vio.io(VName("params.LightColour"), sec->params.LightColour);
+      vio.io(VName("params.LightColor"), sec->params.LightColor);
       vio.io(VName("params.Fade"), sec->params.Fade);
       vio.io(VName("params.contents"), sec->params.contents);
       vio.io(VName("special"), sec->special);
@@ -707,7 +707,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
       //TODO: save static light entity
       vio.io(VName("Origin"), StaticLights[i].Origin);
       vio.io(VName("Radius"), StaticLights[i].Radius);
-      vio.io(VName("Colour"), StaticLights[i].Colour);
+      vio.io(VName("Colour"), StaticLights[i].Color); //k8: keep this as "coloUr" to not break saves
       vio.io(VName("Owner"), StaticLights[i].Owner);
     }
   }
@@ -1050,7 +1050,7 @@ void VLevel::Destroy () {
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
-void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Colour) {
+void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color) {
   //FIXME: use proper data structure instead of reallocating it again and again
   rep_light_t *OldLights = StaticLights;
   ++NumStaticLights;
@@ -1063,7 +1063,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
   L.Owner = Ent;
   L.Origin = Origin;
   L.Radius = Radius;
-  L.Colour = Colour;
+  L.Color = Color;
 }
 
 
@@ -1255,7 +1255,7 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
   }
   Tr->Clear();
   VBasePlayer *P = LevelInfo->Game->Players[Index];
-  Tr->BuildPlayerTrans(P->TranslStart, P->TranslEnd, P->Colour);
+  Tr->BuildPlayerTrans(P->TranslStart, P->TranslEnd, P->Color);
   return (TRANSL_BodyQueue<<TRANSL_TYPE_SHIFT)+Slot;
 }
 
@@ -2840,7 +2840,7 @@ static void WriteTexInfo (VStream &strm, texinfo_t &ti) {
   strm << ti.noDecals;
   strm << ti.Alpha;
   strm << ti.Additive;
-  strm << ti.ColourMap;
+  strm << ti.ColorMap;
   // texture
   if (!ti.Tex || ti.Tex->Type == TEXTYPE_Null) {
     vuint8 len = 0;
@@ -2944,7 +2944,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       WriteSectorPlane(strm, sec->ceiling);
       // params
       strm << sec->params.lightlevel;
-      strm << sec->params.LightColour;
+      strm << sec->params.LightColor;
       strm << sec->params.Fade;
       strm << sec->params.contents;
       // other sector fields
@@ -2999,7 +2999,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
         //WriteSectorPlane(strm, *reg->eceiling);
         // params
         strm << reg->params->lightlevel;
-        strm << reg->params->LightColour;
+        strm << reg->params->LightColor;
         strm << reg->params->Fade;
         strm << reg->params->contents;
         vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);
@@ -3166,7 +3166,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
         //WriteSectorPlane(strm, *reg->eceiling);
         // params
         strm << reg->params->lightlevel;
-        strm << reg->params->LightColour;
+        strm << reg->params->LightColor;
         strm << reg->params->Fade;
         strm << reg->params->contents;
         vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);

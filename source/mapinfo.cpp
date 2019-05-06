@@ -652,11 +652,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("fade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-      info->Fade = M_ParseColour(*sc->String);
+      info->Fade = M_ParseColor(*sc->String);
     } else if (sc->Check("outsidefog")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-      info->OutsideFog = M_ParseColour(*sc->String);
+      info->OutsideFog = M_ParseColor(*sc->String);
     } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
       //sc->ExpectName8();
@@ -1421,7 +1421,7 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
       sdef->Key = sc->String;
     } else if (sc->Check("TextColor")) {
       sc->ExpectString();
-      sdef->TextColour = sc->String;
+      sdef->TextColor = sc->String;
     } else {
       break;
     }
@@ -1463,7 +1463,7 @@ static void ParseSkillDef (VScriptParser *sc) {
   sdef->PlayerClassNames.Clear();
   sdef->ConfirmationText.Clean();
   sdef->Key.Clean();
-  sdef->TextColour.Clean();
+  sdef->TextColor.Clean();
   sdef->Flags = 0;
 
   if (!sc->Check("{")) { ParseSkillDefOld(sc, sdef); return; }
@@ -1546,7 +1546,7 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("TextColor")) {
       sc->Expect("=");
       sc->ExpectString();
-      sdef->TextColour = sc->String;
+      sdef->TextColor = sc->String;
     } else if (sc->Check("EasyBossBrain")) {
       sdef->Flags |= SKILLF_EasyBossBrain;
     } else if (sc->Check("EasyKey")) {

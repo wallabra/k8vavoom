@@ -51,7 +51,7 @@ public:
   struct LightInfo {
     TVec origin;
     float radius;
-    vuint32 colour;
+    vuint32 color;
     bool active;
   };
 

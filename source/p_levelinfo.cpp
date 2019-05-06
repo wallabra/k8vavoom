@@ -341,12 +341,12 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLight) {
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB) {
-  P_GET_INT(Colour);
+  P_GET_INT(Color);
   P_GET_FLOAT(Radius);
   P_GET_VEC(Origin);
   P_GET_REF(VEntity, Ent);
   P_GET_SELF;
-  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Colour);
+  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Color);
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, MoveStaticLightByOwner) {

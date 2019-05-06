@@ -70,6 +70,6 @@ override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
 defaultproperties
 {
   EffectTime = 80.0;
-  BlendColour = 0;
+  BlendColor = 0;
   bHubPower = true;
 }

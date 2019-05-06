@@ -26,7 +26,7 @@
 //**************************************************************************
 class MenuChoiceNumeric : MenuChoice;
 
-//int TextColour = CR_WHITE;
+//int TextColor = CR_WHITE;
 string Text;
 
 float Value;
@@ -107,7 +107,7 @@ void SetInitialValue (float AValue) {
 //
 //==========================================================================
 override void OnDraw () {
-  int Col = (IsFocus() ? TextColourFocus : TextColour);
+  int Col = (IsFocus() ? TextColorFocus : TextColor);
 
   /*
   if (bLeftAlign) {
@@ -122,7 +122,7 @@ override void OnDraw () {
 
   //int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   int xx = CursorXOffs+10;
-  int Col2 = (IsFocus() ? ValueColourFocus : ValueColour);
+  int Col2 = (IsFocus() ? ValueColorFocus : ValueColor);
   SetTextAlign(hleft, vtop);
   //k8: we have much better fp->str now, so there's no need to perform any string trickery here
   DrawText(xx, 0, va("%f", Value), Col2);
@@ -190,8 +190,8 @@ defaultproperties {
   MinValue = 0.0;
   MaxValue = 1.0;
 
-  TextColour = CR_RED;
-  TextColourFocus = CR_YELLOW;
-  ValueColour = CR_DARKGREEN; //CR_RED;
-  ValueColourFocus = CR_GREEN; //CR_YELLOW;
+  TextColor = CR_RED;
+  TextColorFocus = CR_YELLOW;
+  ValueColor = CR_DARKGREEN; //CR_RED;
+  ValueColorFocus = CR_GREEN; //CR_YELLOW;
 }

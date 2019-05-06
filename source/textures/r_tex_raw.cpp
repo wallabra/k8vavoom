@@ -122,9 +122,9 @@ vuint8 *VRawPicTexture::GetPixels () {
   // set up palette
   int black;
   if (PalLumpNum < 0) {
-    black = r_black_colour;
+    black = r_black_color;
   } else {
-    // load palette and find black colour for remaping
+    // load palette and find black color for remaping
     Palette = new rgba_t[256];
     VStream *lumpstream = W_CreateLumpReaderNum(PalLumpNum);
     VCheckedStream PStrm(lumpstream);

@@ -48,7 +48,7 @@ override void CreateChoices () {
         Btn.PicHandle = 0;
       }
     }
-    if (SDef->TextColour) Btn.Text = "\c["~SDef->TextColour~"]"~Btn.Text;
+    if (SDef->TextColor) Btn.Text = "\c["~SDef->TextColor~"]"~Btn.Text;
     Btn.SkillIndex = i;
     Btn.bMustConfirm = SDef->bMustConfirm;
     Btn.ConfirmationText = SDef->ConfirmationText;

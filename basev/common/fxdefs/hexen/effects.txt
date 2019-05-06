@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 pointlight BridgeBall
 {
-  colour 0.35 0.35 0.8
+  color 0.35 0.35 0.8
   radius 86
 }
 
@@ -13,7 +13,7 @@ class BridgeBall
 //------------------------------------------------------------------------------
 pointlight TelOtherFX1
 {
-  colour 0.95 0 0
+  color 0.95 0 0
   radius 86
 }
 
@@ -45,55 +45,55 @@ class TelOtherFX5
 //------------------------------------------------------------------------------
 pointlight BlastEffect_X1
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 250
 }
 
 pointlight BlastEffect_X2
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 220
 }
 
 pointlight BlastEffect_X3
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 190
 }
 
 pointlight BlastEffect_X4
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 160
 }
 
 pointlight BlastEffect_X5
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 130
 }
 
 pointlight BlastEffect_X6
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 100
 }
 
 pointlight BlastEffect_X7
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 70
 }
 
 pointlight BlastEffect_X8
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 40
 }
 
 pointlight BlastEffect_X9
 {
-  colour 0.4 0.4 0.5
+  color 0.4 0.4 0.5
   radius 10
 }
 
@@ -113,31 +113,31 @@ class BlastEffect
 //------------------------------------------------------------------------------
 pointlight PorkFX
 {
-  colour 0.6 0.5 0
+  color 0.6 0.5 0
   radius 126
 }
 
 pointlight PorkFX_X1
 {
-  colour 0.6 0.5 0
+  color 0.6 0.5 0
   radius 250
 }
 
 pointlight PorkFX_X2
 {
-  colour 0.6 0.5 0
+  color 0.6 0.5 0
   radius 190
 }
 
 pointlight PorkFX_X3
 {
-  colour 0.6 0.5 0
+  color 0.6 0.5 0
   radius 130
 }
 
 pointlight PorkFX_X4
 {
-  colour 0.6 0.5 0
+  color 0.6 0.5 0
   radius 70
 }
 
@@ -153,37 +153,37 @@ class PorkFX
 //------------------------------------------------------------------------------
 pointlight FireBomb_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 86
 }
 
 pointlight FireBomb_X2
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 72
 }
 
 pointlight FireBomb_X3
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 58
 }
 
 pointlight FireBomb_X4
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 44
 }
 
 pointlight FireBomb_X5
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 30
 }
 
 pointlight FireBomb_X6
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 15
 }
 

@@ -294,7 +294,7 @@ void VSkyPortal::DrawContents () {
   RLev->TransformFrustum();
   Drawer->SetupViewOrg();
 
-  Sky->Draw(RLev->ColourMap);
+  Sky->Draw(RLev->ColorMap);
 
   Drawer->WorldDrawing();
 }
@@ -336,7 +336,7 @@ void VSkyBoxPortal::DrawContents () {
 
   // no light flashes in the sky
   RLev->ExtraLight = 0;
-  if (RLev->ColourMap == CM_Default) RLev->FixedLight = 0;
+  if (RLev->ColorMap == CM_Default) RLev->FixedLight = 0;
 
   // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;

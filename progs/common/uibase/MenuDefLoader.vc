@@ -572,8 +572,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   opt.TextVAlign = vbottom;
   opt.Text = title;
   opt.Focusable = false;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.Height = (title ? 12 : 10);
   return opt;
 }
@@ -591,8 +591,8 @@ class MenuDefOptionBool : MenuDefOptionBase;
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
@@ -632,8 +632,8 @@ override bool parseOne (ScriptsParser par) {
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   foreach (ref auto s; list) opt.AddItem(s.caption, s.value);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
@@ -655,8 +655,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (!R_SupportsAdvancedRendering()) return none;
   auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.AddItem("Select automatically", 0);
   opt.AddItem("Lightmaps (Quake-style)", 1);
   opt.AddItem("Stencil Shadows (DooM 3-style)", 2);
@@ -716,8 +716,8 @@ override bool parseOne (ScriptsParser par) {
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceSlider(menu.NewChild(MenuChoiceSlider));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.ValueDelta = step;
   opt.MinValue = minv;
   if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
@@ -732,8 +732,8 @@ class MenuDefOptionNumeric : MenuDefOptionSlider;
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceNumeric(menu.NewChild(MenuChoiceNumeric));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.ValueDelta = step;
   opt.MinValue = minv;
   if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
@@ -783,8 +783,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   if (smclass) opt.SetSubMenuClass(smclass); else opt.SetSubMenuName(subname);
   return opt;
 }
@@ -798,8 +798,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuBigTextButton));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   if (smclass) opt.SetSubMenuClass(smclass); else opt.SetSubMenuName(subname);
   return opt;
 }
@@ -835,8 +835,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.Text = title;
   opt.SetSubMenuClass(MenuScreenSpecialControls);
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   return opt;
 }
 
@@ -848,8 +848,8 @@ class MenuDefOptionConsole : MenuDefOptionBase;
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.Text = title;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.Activated = delegate void (Object Sender) { CmdBuf_AddText("ToggleConsole\n"); };
   return opt;
 }
@@ -879,8 +879,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.Text = title;
   opt.concmd = concmd;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.Activated = delegate void (Object Sender) {
     auto btn = MenuTextButton(Sender);
     if (btn && btn.concmd) {
@@ -899,8 +899,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuCrosshairChoice(menu.NewChild(MenuCrosshairChoice));
   opt.Text = title;
   opt.cvar = cvar;
-  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
-  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   return opt;
 }
 

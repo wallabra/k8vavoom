@@ -193,12 +193,12 @@ vuint8 *VPatchTexture::GetPixels () {
         break;
       }
 
-      // read post, convert colour 0 to black if needed
+      // read post, convert color 0 to black if needed
       int count = Len;
       vuint8 *dest = Pixels+top*Width+x;
       while (count--) {
         Strm << *dest;
-        if (!dest[0] && !bNoRemap0) *dest = r_black_colour;
+        if (!dest[0] && !bNoRemap0) *dest = r_black_color;
         dest += Width;
       }
 

@@ -1582,7 +1582,7 @@ void VLevel::LoadSectors (int Lump) {
 
     // params
     ss->params.lightlevel = lightlevel;
-    ss->params.LightColour = 0x00ffffff;
+    ss->params.LightColor = 0x00ffffff;
 
     ss->special = special;
     ss->tag = tag;
@@ -1742,12 +1742,12 @@ void VLevel::LoadSideDefs (int Lump) {
           vuint32 Col;
           vuint32 Fade;
           sd->MidTexture = TexNumForName(midtexture, TEXTYPE_Wall);
-          int TmpTop = TexNumOrColour(toptexture, TEXTYPE_Wall, HaveCol, Col);
-          sd->BottomTexture = TexNumOrColour(bottomtexture, TEXTYPE_Wall, HaveFade, Fade);
+          int TmpTop = TexNumOrColor(toptexture, TEXTYPE_Wall, HaveCol, Col);
+          sd->BottomTexture = TexNumOrColor(bottomtexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
             for (int j = 0; j < NumSectors; ++j) {
               if (Sectors[j].tag == sd->TopTexture) {
-                if (HaveCol) Sectors[j].params.LightColour = Col;
+                if (HaveCol) Sectors[j].params.LightColor = Col;
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }
             }
@@ -3097,10 +3097,10 @@ int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
 
 //==========================================================================
 //
-//  VLevel::TexNumOrColour
+//  VLevel::TexNumOrColor
 //
 //==========================================================================
-int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32 &Col) const {
+int VLevel::TexNumOrColor (const char *name, int Type, bool &GotColor, vuint32 &Col) const {
   VName Name(name, VName::AddLower8);
   int i = GTextureManager.CheckNumForName(Name, Type, true);
   if (i == -1) {
@@ -3109,10 +3109,10 @@ int VLevel::TexNumOrColour (const char *name, int Type, bool &GotColour, vuint32
     TmpName[8] = 0;
     char *Stop;
     Col = strtoul(TmpName, &Stop, 16);
-    GotColour = (*Stop == 0) && (Stop >= TmpName+2) && (Stop <= TmpName+6);
+    GotColor = (*Stop == 0) && (Stop >= TmpName+2) && (Stop <= TmpName+6);
     return 0;
   }
-  GotColour = false;
+  GotColor = false;
   Col = 0;
   return i;
 }
@@ -3852,7 +3852,7 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
     sec = good[f];
     //if (ssnum == 981) GCon->Logf("yyy(%d): %d; res=%d; ff=%d", f, ssnum, (int)(ptrdiff_t)(sec-Sectors), IsFloodBugSector(sec));
     //!if (sec->params.lightlevel != res->params.lightlevel) return nullptr; //k8: ignore this?
-    //!if (sec->params.LightColour != res->params.LightColour) return nullptr; //k8: ignore this?
+    //!if (sec->params.LightColor != res->params.LightColor) return nullptr; //k8: ignore this?
     if (wantFloor) {
       // floor
       if (sec->floor.minz != res->floor.minz) return nullptr;

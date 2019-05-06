@@ -31,7 +31,7 @@ int Speed;
 int NumFrames;
 int TranslStart;
 int TranslEnd;
-int Colour;
+int Color;
 float Time;
 
 
@@ -49,7 +49,7 @@ override void Tick (float DeltaTime) {
 
 override void OnDraw () {
   int frame = int(Time*float(Speed))%NumFrames;
-  R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart, TranslEnd, Colour);
+  R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart, TranslEnd, Color);
 }
 
 

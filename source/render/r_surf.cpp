@@ -190,7 +190,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
   ssurf->texinfo.Alpha = (spl.splane->Alpha < 1.0f ? spl.splane->Alpha : 1.1f);
   ssurf->texinfo.Additive = !!(spl.splane->flags&SPF_ADDITIVE);
-  ssurf->texinfo.ColourMap = 0;
+  ssurf->texinfo.ColorMap = 0;
   ssurf->XScale = spl.splane->XScale;
   ssurf->YScale = spl.splane->YScale;
   ssurf->Angle = spl.splane->BaseAngle-spl.splane->Angle;
@@ -263,7 +263,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       // sky <-> non-sky, simply recreate it
       sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
       check(newsurf == ssurf); // sanity check
-      ssurf->texinfo.ColourMap = ColourMap; // just in case
+      ssurf->texinfo.ColorMap = ColorMap; // just in case
       // nothing more to do
       return;
     }
@@ -273,7 +273,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
         // recreate it, just in case
         sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
         check(newsurf == ssurf); // sanity check
-        ssurf->texinfo.ColourMap = ColourMap; // just in case
+        ssurf->texinfo.ColorMap = ColorMap; // just in case
         // nothing more to do
         return;
       }
@@ -296,12 +296,12 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     */
     sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
     check(newsurf == ssurf); // sanity check
-    ssurf->texinfo.ColourMap = ColourMap; // just in case
+    ssurf->texinfo.ColorMap = ColorMap; // just in case
     // nothing more to do
     return;
   }
 
-  ssurf->texinfo.ColourMap = ColourMap; // just in case
+  ssurf->texinfo.ColorMap = ColorMap; // just in case
   ssurf->texinfo.soffs = splane.splane->xoffs;
   ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
 
@@ -507,7 +507,7 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   sp->texinfo.noDecals = sp->texinfo.Tex->noDecals;
   sp->texinfo.Alpha = 1.1f;
   sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
+  sp->texinfo.ColorMap = 0;
 
   if (sp->texinfo.Tex->Type != TEXTYPE_Null) {
     TVec wv[4];
@@ -546,7 +546,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   sp->texinfo.noDecals = sp->texinfo.Tex->noDecals;
   sp->texinfo.Alpha = 1.1f;
   sp->texinfo.Additive = false;
-  sp->texinfo.ColourMap = 0;
+  sp->texinfo.ColorMap = 0;
 
   if (sp->texinfo.Tex->Type != TEXTYPE_Null) {
     TVec wv[4];
@@ -584,7 +584,7 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
   // can be fixed later
   texinfo->Alpha = 1.1f;
   texinfo->Additive = false;
-  texinfo->ColourMap = 0;
+  texinfo->ColorMap = 0;
 
   texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX);
   texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY);
@@ -1321,7 +1321,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
         SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
 
     // midtexture
@@ -1332,7 +1332,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
   } else {
     // two-sided seg
@@ -1344,7 +1344,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
 
     // top wall
@@ -1355,7 +1355,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
 
     // bottom wall
@@ -1366,7 +1366,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
 
     // masked MidTexture
@@ -1377,7 +1377,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
       if (sp->texinfo.Tex->Type != TEXTYPE_Null) {
         sp->texinfo.Alpha = seg->linedef->alpha;
         sp->texinfo.Additive = !!(seg->linedef->flags&ML_ADDITIVE);
@@ -1407,7 +1407,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       } else {
         UpdateTextureOffsets(sub, seg, sp, &extraside->Mid);
       }
-      sp->texinfo.ColourMap = ColourMap;
+      sp->texinfo.ColorMap = ColorMap;
     }
   }
 }
@@ -1692,11 +1692,11 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     } else if (hs && (hs->SectorFlags&sector_t::SF_FakeFloorOnly)) {
       if (underwater) {
         //GCon->Logf("heightsec=%hs", (heightsec ? "tan" : "ona"));
-        //tempsec->ColourMap = hs->ColourMap;
+        //tempsec->ColorMap = hs->ColorMap;
         ff->params.Fade = hs->params.Fade;
         if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
           ff->params.lightlevel = hs->params.lightlevel;
-          ff->params.LightColour = hs->params.LightColour;
+          ff->params.LightColor = hs->params.LightColor;
           /*
           if (floorlightlevel != nullptr) *floorlightlevel = GetFloorLight(hs);
           if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetFloorLight(hs);
@@ -1740,7 +1740,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     //!ff->ceilplane.dist = -hs->floor.dist/* - -hs->floor.normal.z*/;
     *(TPlane *)&ff->floorplane = *(TPlane *)&hs->floor;
     *(TPlane *)&ff->ceilplane = *(TPlane *)&hs->ceiling;
-    //ff->ColourMap = hs->ColourMap;
+    //ff->ColorMap = hs->ColorMap;
     ff->params.Fade = hs->params.Fade;
   }
 
@@ -1782,7 +1782,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
 
     if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
       ff->params.lightlevel = hs->params.lightlevel;
-      ff->params.LightColour = hs->params.LightColour;
+      ff->params.LightColor = hs->params.LightColor;
       /*
       if (floorlightlevel != nullptr) *floorlightlevel = GetFloorLight(hs);
       if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetFloorLight(hs);
@@ -1798,7 +1798,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     ff->floorplane.normal = -hs->ceiling.normal;
     ff->floorplane.dist = -hs->ceiling.dist;
     ff->params.Fade = hs->params.Fade;
-    //ff->params.ColourMap = hs->params.ColourMap;
+    //ff->params.ColorMap = hs->params.ColorMap;
 
     ff->ceilplane.pic = diffTex ? sector->ceiling.pic : hs->ceiling.pic;
     ff->floorplane.pic = hs->ceiling.pic;
@@ -1823,7 +1823,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
 
     if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
       ff->params.lightlevel  = hs->params.lightlevel;
-      ff->params.LightColour = hs->params.LightColour;
+      ff->params.LightColor = hs->params.LightColor;
     }
   }
 }

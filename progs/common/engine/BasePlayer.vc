@@ -30,13 +30,13 @@
 //**************************************************************************
 class BasePlayer : GameObject native abstract;
 
-// constants for FixedColourmap
+// constants for FixedColormap
 enum {
-  NUMCOLOURMAPS    = 32,
-  INVERSECOLOURMAP = 32,
-  GOLDCOLOURMAP    = 33,
-  REDCOLOURMAP     = 34,
-  GREENCOLOURMAP   = 35,
+  NUMCOLORMAPS    = 32,
+  INVERSECOLORMAP = 32,
+  GOLDCOLORMAP    = 33,
+  REDCOLORMAP     = 34,
+  GREENCOLORMAP   = 35,
 };
 
 const float TOCENTRE = -128.0;
@@ -72,7 +72,7 @@ ubyte BaseClass;
 ubyte PClass; // player class type
 ubyte TranslStart;
 ubyte TranslEnd;
-int Colour;
+int Color;
 
 float ClientForwardMove; // *2048 for move
 float ClientSideMove; // *2048 for move
@@ -117,9 +117,9 @@ int SecretCount;
 ubyte ExtraLight;
 
 // for lite-amp and invulnarability powers
-ubyte FixedColourmap;
+ubyte FixedColormap;
 
-// colour shifts for damage, powerups and content types
+// color shifts for damage, powerups and content types
 int CShift;
 
 // overlay view sprites (gun, etc)
@@ -151,7 +151,7 @@ private native transient Object[NUMPSPRITES] LastViewObject;
 
 replication {
   reliable if (!bIsClient)
-    Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
+    Health, Frags, Deaths, ExtraLight, FixedColormap, CShift,
     PSpriteSY, KillCount, ItemCount, SecretCount,
     ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, WorldTimer, MO, Camera, bAutomapRevealed,
@@ -210,7 +210,7 @@ native void ClientFinale (string Type);
 native void ClientChangeMusic (name Song);
 native void ClientSetServerInfo (string Key, string Value);
 native void ClientHudMessage (string Message, name Font, int Type, int Id,
-                              int Colour, string ColourName, float x, float y,
+                              int Color, string ColorName, float x, float y,
                               int HudWidth, int HudHeight, float HoldTime,
                               float Time1, float Time2);
 

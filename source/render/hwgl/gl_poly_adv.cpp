@@ -51,7 +51,7 @@ extern "C" {
     }
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-    return ((int)ta->ColourMap)-((int)tb->ColourMap);
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
   static int drawListItemCmp (const void *a, const void *b, void *udata) {
@@ -177,7 +177,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
           p_glActiveTextureARB(GL_TEXTURE0);
           // set normal texture
-          SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+          SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
           // glow
           if (gp.isActive()) {
@@ -197,7 +197,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
             !lastTexinfo ||
             lastTexinfo != currTexinfo ||
             lastTexinfo->Tex != currTexinfo->Tex ||
-            lastTexinfo->ColourMap != currTexinfo->ColourMap;
+            lastTexinfo->ColorMap != currTexinfo->ColorMap;
           lastTexinfo = currTexinfo;
 
           if (currShader != MASKED) {
@@ -215,7 +215,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
 
           if (textureChanded) {
-            SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+            SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
             ShadowsAmbientMasked.SetTex(currTexinfo);
           }
 
@@ -793,9 +793,9 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (!gl_dbg_advlight_debug) { \
     (shad_).SetLightMin(LightMin); \
   } else { \
-    Colour = gl_dbg_advlight_color; \
+    Color = gl_dbg_advlight_color; \
   } \
-  (shad_).SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f); \
+  (shad_).SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
 } while (0)
 
 
@@ -806,7 +806,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 //  setup rendering parameters for lighted surface rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) {
+void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) {
   if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
   glDepthMask(GL_FALSE); // no z-buffer writes
@@ -876,7 +876,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   }
 
   const texinfo_t *tex = surf->texinfo;
-  SetTexture(tex->Tex, tex->ColourMap);
+  SetTexture(tex->Tex, tex->ColorMap);
 
   if (spotLight) {
     if (!gl_dbg_advlight_debug) {
@@ -1014,7 +1014,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       !lastTexinfo ||
       lastTexinfo != currTexinfo ||
       lastTexinfo->Tex != currTexinfo->Tex ||
-      lastTexinfo->ColourMap != currTexinfo->ColourMap;
+      lastTexinfo->ColorMap != currTexinfo->ColorMap;
     lastTexinfo = currTexinfo;
 
     if (surf->drawflags&surface_t::DF_MASKED) {
@@ -1036,7 +1036,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     }
 
     if (textureChanded) {
-      SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+      SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
       if (lastWasMasked) ShadowsTextureMasked.SetTex(currTexinfo); else ShadowsTexture.SetTex(currTexinfo);
     }
 
@@ -1060,7 +1060,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
     if (doDecals) {
-      if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColourMap)) {
+      if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
         if (lastWasMasked) ShadowsTextureMasked.Activate(); else ShadowsTexture.Activate();
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         //glEnable(GL_BLEND);
@@ -1134,11 +1134,11 @@ void VOpenGLDrawer::DrawWorldFogPass () {
         !lastTexinfo ||
         lastTexinfo != currTexinfo ||
         lastTexinfo->Tex != currTexinfo->Tex ||
-        lastTexinfo->ColourMap != currTexinfo->ColourMap;
+        lastTexinfo->ColorMap != currTexinfo->ColorMap;
       lastTexinfo = currTexinfo;
 
       if (textureChanded) {
-        SetTexture(currTexinfo->Tex, currTexinfo->ColourMap);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsFogMasked.SetTex(currTexinfo);
       }
     } else {

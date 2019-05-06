@@ -41,7 +41,7 @@ enum valign_e {
   vcenter = vcentre,
 };
 
-// text colours, these must match the constants used in ACS
+// text colors, these must match the constants used in ACS
 enum {
   CR_UNDEFINED = -1,
   CR_BRICK, //A
@@ -70,7 +70,7 @@ enum {
   CR_FIRE, //X
   CR_SAPPHIRE, //Y
   CR_TEAL, //Z
-  NUM_TEXT_COLOURS
+  NUM_TEXT_COLORS
 };
 
 class VFont;

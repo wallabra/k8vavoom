@@ -449,11 +449,11 @@ float RDFactor;
 
 // static light parameters
 TVec LightOffset;
-int LightColour;
+int LightColor;
 float LightRadius;
 
 // dynamic light parameters
-int DLightColour;
+int DLightColor;
 float DLightRadius;
 int ExplodeEffect;
 float prev_rad;
@@ -503,7 +503,7 @@ float CameraHeight;
 class!Actor BloodType;
 class!Actor BloodSplatterType;
 class!Actor AxeBloodType;
-int BloodColour;
+int BloodColor;
 int BloodTranslation;
 bool bBloodDisableSplats; // has sense only for blood actors
 

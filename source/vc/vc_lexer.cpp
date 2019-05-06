@@ -934,7 +934,7 @@ void VLexer::ProcessChar () {
       case '\'': currCh = '\''; break;
       case '"': currCh = '"'; break;
       case '\\': currCh = '\\'; break;
-      case 'c': currCh = TEXT_COLOUR_ESCAPE; break;
+      case 'c': currCh = TEXT_COLOR_ESCAPE; break;
       case 'e': currCh = '\x1b'; break;
       case 'x': case 'X':
         {

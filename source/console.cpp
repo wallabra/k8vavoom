@@ -531,18 +531,18 @@ static void cpFlushCurrent (bool asNewline) {
 }
 
 
-// *ch should be TEXT_COLOUR_ESCAPE
+// *ch should be TEXT_COLOR_ESCAPE
 static const char *cpProcessColorEscape (const char *ch) {
-  check(*ch == TEXT_COLOUR_ESCAPE);
+  check(*ch == TEXT_COLOR_ESCAPE);
   cpLastColor.clear();
-  ++ch; // skip TEXT_COLOUR_ESCAPE
+  ++ch; // skip TEXT_COLOR_ESCAPE
   if (!ch[0]) {
     // reset
-    cpAppendChar(TEXT_COLOUR_ESCAPE);
+    cpAppendChar(TEXT_COLOR_ESCAPE);
     cpAppendChar('L'); // untranslated
     return ch;
   }
-  cpLastColor += TEXT_COLOUR_ESCAPE;
+  cpLastColor += TEXT_COLOR_ESCAPE;
   if (*ch == '[') {
     cpLastColor += *ch++;
     while (*ch && *ch != ']') cpLastColor += *ch++;
@@ -555,10 +555,10 @@ static const char *cpProcessColorEscape (const char *ch) {
 }
 
 
-// *ch should be TEXT_COLOUR_ESCAPE
+// *ch should be TEXT_COLOR_ESCAPE
 static const char *cpSkipColorEscape (const char *ch) {
-  check(*ch == TEXT_COLOUR_ESCAPE);
-  ++ch; // skip TEXT_COLOUR_ESCAPE
+  check(*ch == TEXT_COLOR_ESCAPE);
+  ++ch; // skip TEXT_COLOR_ESCAPE
   if (!ch[0]) return ch;
   if (*ch++ == '[') {
     while (*ch && *ch != ']') ++ch;
@@ -574,7 +574,7 @@ static void DoPrint (const char *buf) {
     if (*ch == '\n') {
       cpFlushCurrent(true);
       ++ch;
-    } else if (*ch == TEXT_COLOUR_ESCAPE) {
+    } else if (*ch == TEXT_COLOR_ESCAPE) {
       // new color sequence
       ch = cpProcessColorEscape(ch);
     } else if (*(const vuint8 *)ch > ' ') {
@@ -582,7 +582,7 @@ static void DoPrint (const char *buf) {
       const char *p = ch;
       int wlen = 0;
       while (*(const vuint8 *)p > ' ') {
-        if (*p == TEXT_COLOUR_ESCAPE) {
+        if (*p == TEXT_COLOR_ESCAPE) {
           p = cpSkipColorEscape(p);
         } else {
           ++wlen;
@@ -598,7 +598,7 @@ static void DoPrint (const char *buf) {
         } else {
           // a very long first word, add partially
           while (*(const vuint8 *)ch > ' ' && cpCurrLineLen < MAX_LINE_LENGTH) {
-            if (*ch == TEXT_COLOUR_ESCAPE) {
+            if (*ch == TEXT_COLOR_ESCAPE) {
               ch = cpProcessColorEscape(ch);
             } else {
               cpAppendChar(*ch++);
@@ -610,7 +610,7 @@ static void DoPrint (const char *buf) {
       } else {
         // add word to buffer
         while (*(const vuint8 *)ch > ' ') {
-          if (*ch == TEXT_COLOUR_ESCAPE) {
+          if (*ch == TEXT_COLOR_ESCAPE) {
             ch = cpProcessColorEscape(ch);
           } else {
             cpAppendChar(*ch++);
@@ -656,18 +656,18 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
   }
   if (Event == NAME_Warning) {
-    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "X");
+    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "X");
     cpPrintCurrColor();
   } else if (Event == NAME_Error) {
-    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "T"); //R T
+    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "T"); //R T
     cpPrintCurrColor();
   } else if (Event == NAME_Init) {
-    cpLastColor = VStr(TEXT_COLOUR_ESCAPE_STR "C");
+    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "C");
     cpPrintCurrColor();
   }
   DoPrint(str);
   if (logfout) {
-    VStr rc = VStr(str).RemoveColours();
+    VStr rc = VStr(str).RemoveColors();
     fprintf(logfout, "%s: %s", VName::SafeString(Event), *rc);
   }
 }

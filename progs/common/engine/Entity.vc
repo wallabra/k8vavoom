@@ -94,7 +94,7 @@ enum {
   STYLE_AddStencil, // solid color, additive
 };
 
-// colour tralslation types.
+// color tralslation types
 enum {
   TRANSL_None, // no translation
   TRANSL_Standard, // game's standard translations
@@ -102,7 +102,7 @@ enum {
   TRANSL_Level, // ACS translations
   TRANSL_BodyQueue, // translations of dead players
   TRANSL_Decorate, // translations defined in DECORATE
-  TRANSL_Blood, // blood translations, for blood colour
+  TRANSL_Blood, // blood translations, for blood color
   TRANSL_Max
 };
 
@@ -121,7 +121,7 @@ enum {
 struct LightEffectDef {
   name Name;
   ubyte Type;
-  int Colour;
+  int Color;
   float Radius;
   float Radius2;
   float MinLight;
@@ -137,7 +137,7 @@ struct ParticleEffectDef {
   name Name;
   ubyte Type;
   ubyte Type2;
-  int Colour;
+  int Color;
   TVec Offset;
   int Count;
   float OrgRnd;
@@ -229,7 +229,7 @@ ubyte RenderStyle;
 float Alpha;
 int Translation;
 
-int StencilColour;
+int StencilColor;
 
 float FloorClip; // value to use for floor clipping
 
@@ -350,7 +350,7 @@ replication {
   reliable if (Role == ROLE_Authority)
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, RenderStyle, Alpha,
-    Translation, StencilColour, ScaleX, ScaleY,
+    Translation, StencilColor, ScaleX, ScaleY,
     bFly, bNoSector, bInvisible, bFullBright,
     bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
     DispSpriteFrame, DispSpriteName,

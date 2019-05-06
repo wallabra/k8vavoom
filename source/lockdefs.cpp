@@ -56,7 +56,7 @@ static void ParseLockDefs (VScriptParser *sc) {
       }
       VLockDef *LDef = new VLockDef;
       LockDefs[Lock] = LDef;
-      LDef->MapColour = 0;
+      LDef->MapColor = 0;
       LDef->LockedSound = "misc/keytry";
 
       // skip game specifier
@@ -84,7 +84,7 @@ static void ParseLockDefs (VScriptParser *sc) {
           int g = sc->Number;
           sc->ExpectNumber();
           int b = sc->Number;
-          LDef->MapColour = 0xff000000 | (r << 16) | (g << 8) | b;
+          LDef->MapColor = 0xff000000 | (r << 16) | (g << 8) | b;
           continue;
         }
         if (sc->Check("LockedSound")) {

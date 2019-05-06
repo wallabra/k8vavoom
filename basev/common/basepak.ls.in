@@ -29,7 +29,7 @@ $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 //  Sounds
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
-//  Colour names
+//  Color names
 x11r6rgb.txt      @CMAKE_CURRENT_SOURCE_DIR@/x11r6rgb.txt
 
 //  Language strings

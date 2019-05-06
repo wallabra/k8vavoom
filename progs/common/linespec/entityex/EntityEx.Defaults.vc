@@ -33,9 +33,9 @@ defaultproperties {
   Mass = 100.0;
   MaxStepHeight = 24.0;
   LightOffset = vector(0.0, 0.0, 0.0);
-  LightColour = 0xffffffff;
+  LightColor = 0xffffffff;
   LightRadius = 128.0;
-  DLightColour = 0xffffffff;
+  DLightColor = 0xffffffff;
   DLightRadius = 200.0;
   MissileChance = 200.0;
   FloatSpeed = 140.0;

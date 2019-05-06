@@ -48,7 +48,7 @@ enum {
 enum {
   TEXFMT_8,    // paletised texture in main palette
   TEXFMT_8Pal, // paletised texture with custom palette
-  TEXFMT_RGBA, // truecolour texture
+  TEXFMT_RGBA, // truecolor texture
 };
 
 
@@ -123,7 +123,7 @@ public:
   // used to detect changed player translations
   vuint8 TranslStart;
   vuint8 TranslEnd;
-  vint32 Colour;
+  vint32 Color;
 
   // used to replicate translation tables in more efficient way
   struct VTransCmd {
@@ -146,7 +146,7 @@ public:
   void Serialise (VStream &);
   void BuildPlayerTrans (int, int, int);
   void MapToRange (int, int, int, int);
-  void MapToColours (int, int, int, int, int, int, int, int);
+  void MapToColors (int, int, int, int, int, int, int, int);
   void BuildBloodTrans (int);
   void AddTransString (const VStr &);
 
@@ -202,7 +202,7 @@ public:
       void *Data;
     };
     VTextureTranslation *Trans;
-    int ColourMap;
+    int ColorMap;
   };
 
   union {

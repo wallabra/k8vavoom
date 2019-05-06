@@ -11,21 +11,21 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a < 0.01) discard;
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a < 0.01) discard;
   if (!AllowTransparency) {
-    if (TexColour.a < 0.666) discard;
+    if (TexColor.a < 0.666) discard;
   } else {
-    if (TexColour.a < 0.01) discard;
+    if (TexColor.a < 0.01) discard;
   }
 
-  float alpha = clamp(TexColour.a*InAlpha, 0.0, 1.0);
+  float alpha = clamp(TexColor.a*InAlpha, 0.0, 1.0);
   if (alpha < 0.01) discard;
 
 
-  vec4 FinalColour_1;
-  FinalColour_1.rgb = TexColour.rgb*alpha;
-  FinalColour_1.a = alpha;
+  vec4 FinalColor;
+  FinalColor.rgb = TexColor.rgb*alpha;
+  FinalColor.a = alpha;
 
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
@@ -33,7 +33,7 @@ void main () {
 
   // Light.a == 1: fullbright
   // k8: oops, no way to do it yet (why?)
-  FinalColour_1.rgb = clamp(FinalColour_1.rgb*ambColor.rgb, 0.0, 1.0);
+  FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

@@ -198,16 +198,16 @@ IMPLEMENT_FUNCTION(VObject, GetLockDef) {
   RET_PTR(nullptr);
 }
 
-IMPLEMENT_FUNCTION(VObject, ParseColour) {
+IMPLEMENT_FUNCTION(VObject, ParseColor) {
   P_GET_STR(Name);
-  RET_INT(M_ParseColour(*Name));
+  RET_INT(M_ParseColor(*Name));
 }
 
-IMPLEMENT_FUNCTION(VObject, TextColourString) {
-  P_GET_INT(Colour);
+IMPLEMENT_FUNCTION(VObject, TextColorString) {
+  P_GET_INT(Color);
   VStr Ret;
-  Ret += TEXT_COLOUR_ESCAPE;
-  Ret += (Colour < CR_BRICK || Colour >= NUM_TEXT_COLOURS ? '-' : (char)(Colour+'A'));
+  Ret += TEXT_COLOR_ESCAPE;
+  Ret += (Color < CR_BRICK || Color >= NUM_TEXT_COLORS ? '-' : (char)(Color+'A'));
   RET_STR(Ret);
 }
 

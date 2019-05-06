@@ -27,13 +27,13 @@
 class VNetConnection;
 class VClientGameBase;
 
-// constants for FixedColourmap
+// constants for FixedColormap
 enum {
-  NUMCOLOURMAPS    = 32,
-  INVERSECOLOURMAP = 32,
-  GOLDCOLOURMAP    = 33,
-  REDCOLOURMAP     = 34,
-  GREENCOLOURMAP   = 35,
+  NUMCOLORMAPS    = 32,
+  INVERSECOLORMAP = 32,
+  GOLDCOLORMAP    = 33,
+  REDCOLORMAP     = 34,
+  GREENCOLORMAP   = 35,
 };
 
 
@@ -120,7 +120,7 @@ class VBasePlayer : public VGameObject {
   vuint8 PClass; // player class type
   vuint8 TranslStart;
   vuint8 TranslEnd;
-  vint32 Colour;
+  vint32 Color;
 
   float ClientForwardMove; // *2048 for move
   float ClientSideMove; // *2048 for move
@@ -165,9 +165,9 @@ class VBasePlayer : public VGameObject {
   vuint8 ExtraLight;
 
   // for lite-amp and invulnarability powers
-  vuint8 FixedColourmap;
+  vuint8 FixedColormap;
 
-  // colour shifts for damage, powerups and content types
+  // color shifts for damage, powerups and content types
   vuint32 CShift;
 
   // overlay view sprites (gun, etc)
@@ -499,7 +499,7 @@ public:
     EV_RET_VOID(NAME_ClientSetServerInfo);
   }
   void eventClientHudMessage (const VStr &Message, VName Font, int Type,
-                              int Id, int Colour, const VStr &ColourName, float x, float y,
+                              int Id, int Color, const VStr &ColorName, float x, float y,
                               int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
   {
     P_PASS_SELF;
@@ -507,8 +507,8 @@ public:
     P_PASS_NAME(Font);
     P_PASS_INT(Type);
     P_PASS_INT(Id);
-    P_PASS_INT(Colour);
-    P_PASS_STR(ColourName);
+    P_PASS_INT(Color);
+    P_PASS_STR(ColorName);
     P_PASS_FLOAT(x);
     P_PASS_FLOAT(y);
     P_PASS_INT(HudWidth);

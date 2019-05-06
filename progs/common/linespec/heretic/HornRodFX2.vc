@@ -26,7 +26,7 @@
 //**************************************************************************
 class HornRodFX2 : Actor;
 
-int RainColour;
+int RainColor;
 
 //==========================================================================
 //
@@ -164,7 +164,7 @@ final void A_SkullRodStorm()
   }
   x = Origin.x + Random() * 128.0 - 64.0;
   y = Origin.y + Random() * 128.0 - 64.0;
-  switch (RainColour)
+  switch (RainColor)
   {
   case 0: rain_type = RainPillar; break;
   case 1: rain_type = RainPlayer2; break;

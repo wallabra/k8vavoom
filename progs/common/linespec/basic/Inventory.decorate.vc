@@ -775,7 +775,7 @@ final void A_FireProjectile (class!Actor MissileType, optional float Angle, opti
 //
 //===========================================================================
 final void A_RailAttack (int RailDamage, optional float Offset,
-  optional bool UseAmmo, optional string Colour1, optional string Colour2,
+  optional bool UseAmmo, optional string Color1, optional string Color2,
   optional int Flags, optional float MaxDiff, optional class!Actor PuffType,
   optional float spread_xy, optional float spread_z,
   optional float range,
@@ -793,8 +793,8 @@ final void A_RailAttack (int RailDamage, optional float Offset,
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
   }
 
-  int Col1 = ParseColour(Colour1);
-  int Col2 = ParseColour(Colour2);
+  int Col1 = ParseColor(Color1);
+  int Col2 = ParseColor(Color2);
   TVec Dir;
   AngleVector(Angles, out Dir);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags&1), !!(Flags&2),

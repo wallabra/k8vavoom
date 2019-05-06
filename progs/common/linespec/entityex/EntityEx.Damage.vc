@@ -285,7 +285,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       if (showMessage && GetCvarB('k8HSShowCriticals')) {
         inflictor.Player.ClientHudMessage(
           messageText, 'smallfont', Type:0, Id:123666,
-          /*Colour:*/messageColor, /*ColourName:*/"",
+          /*Color:*/messageColor, /*ColorName:*/"",
           x:0.5, y:0.45, HudWidth:0, HudHeight:0,
           HoldTime:1.5, Time1:0.0, Time2:0.0);
       }

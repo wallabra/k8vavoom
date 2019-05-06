@@ -506,16 +506,16 @@ void VLevelChannel::Update () {
     VTextureTranslation *Tr = Level->BodyQueueTrans[i];
     if (!Tr->TranslStart) continue;
     VBodyQueueTrInfo &Rep = BodyQueueTrans[i];
-    if (Tr->TranslStart == Rep.TranslStart && Tr->TranslEnd == Rep.TranslEnd && Tr->Colour == Rep.Colour) continue;
+    if (Tr->TranslStart == Rep.TranslStart && Tr->TranslEnd == Rep.TranslEnd && Tr->Color == Rep.Color) continue;
 
     // send message
     Msg.WriteInt(CMD_BodyQueueTrans/*, CMD_MAX*/);
     Msg.WriteInt(i/*, MAX_BODY_QUEUE_TRANSLATIONS*/);
     Msg << Tr->TranslStart << Tr->TranslEnd;
-    Msg.WriteInt(Tr->Colour/*, 0x00ffffff*/);
+    Msg.WriteInt(Tr->Color/*, 0x00ffffff*/);
     Rep.TranslStart = Tr->TranslStart;
     Rep.TranslEnd = Tr->TranslEnd;
-    Rep.Colour = Tr->Colour;
+    Rep.Color = Tr->Color;
   }
 
   if (Msg.GetNumBits()) SendMessage(&Msg);
@@ -533,7 +533,7 @@ void VLevelChannel::SendStaticLights () {
     VMessageOut Msg(this);
     Msg.bReliable = true;
     Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
-    Msg << L.Origin << L.Radius << L.Colour;
+    Msg << L.Origin << L.Radius << L.Color;
     SendMessage(&Msg);
   }
 }
@@ -634,9 +634,9 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           //FIXME: owner!
           TVec Origin;
           float Radius;
-          vuint32 Colour;
-          Msg << Origin << Radius << Colour;
-          Level->RenderData->AddStaticLightRGB(nullptr, Origin, Radius, Colour);
+          vuint32 Color;
+          Msg << Origin << Radius << Color;
+          Level->RenderData->AddStaticLightRGB(nullptr, Origin, Radius, Color);
         }
         break;
       case CMD_NewLevel:
@@ -714,7 +714,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
               vuint8 G2;
               vuint8 B2;
               Msg << Start << End << R1 << G1 << B1 << R2 << G2 << B2;
-              Tr->MapToColours(Start, End, R1, G1, B1, R2, G2, B2);
+              Tr->MapToColors(Start, End, R1, G1, B1, R2, G2, B2);
             }
           }
         }

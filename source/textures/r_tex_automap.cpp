@@ -86,7 +86,7 @@ vuint8 *VAutopageTexture::GetPixels () {
   vuint8 *dst = Pixels;
   for (int i = 0; i < len; ++i, ++dst) {
     Strm << *dst;
-    if (!*dst) *dst = r_black_colour;
+    if (!*dst) *dst = r_black_color;
   }
 
   return Pixels;

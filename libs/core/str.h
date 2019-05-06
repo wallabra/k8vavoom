@@ -31,8 +31,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define TEXT_COLOUR_ESCAPE      '\034'
-#define TEXT_COLOUR_ESCAPE_STR  "\034"
+#define TEXT_COLOR_ESCAPE      '\034'
+#define TEXT_COLOR_ESCAPE_STR  "\034"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -399,7 +399,7 @@ public:
 
   VStr EvalEscapeSequences () const;
 
-  VStr RemoveColours () const;
+  VStr RemoveColors () const;
   bool MustBeSanitized () const;
   static bool MustBeSanitized (const char *str);
 

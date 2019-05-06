@@ -38,7 +38,7 @@ class MenuChoice_OnOff : MenuChoiceEnum;
 //==========================================================================
 override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
-  int Col = (IsFocus() ? TextColourFocus : TextColour);
+  int Col = (IsFocus() ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);

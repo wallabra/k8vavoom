@@ -11,17 +11,17 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 FinalColour_1;
-  vec4 TexColour;
+  vec4 FinalColor;
+  vec4 TexColor;
 
   if (SplatAlpha <= 0.01) discard;
 
-  TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard;
+  TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < 0.01) discard;
 
-  FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-  if (FinalColour_1.a < 0.01) discard;
-  FinalColour_1.rgb = TexColour.rgb;
+  FinalColor.a = clamp(TexColor.a*SplatAlpha, 0.0, 1.0);
+  if (FinalColor.a < 0.01) discard;
+  FinalColor.rgb = TexColor.rgb;
 
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
@@ -30,11 +30,11 @@ void main () {
   ambColor.r = 1.0*FullBright+(1.0-FullBright)*ambColor.r;
   ambColor.g = 1.0*FullBright+(1.0-FullBright)*ambColor.g;
   ambColor.b = 1.0*FullBright+(1.0-FullBright)*ambColor.b;
-  FinalColour_1.rgb = clamp(FinalColour_1.rgb*ambColor.rgb, 0.0, 1.0);
+  FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
 
   // convert to premultiplied
-  FinalColour_1.rgb *= FinalColour_1.a;
+  FinalColor.rgb *= FinalColor.a;
 
-  //FinalColour_1 = ambColor;
-  gl_FragColor = FinalColour_1;
+  //FinalColor = ambColor;
+  gl_FragColor = FinalColor;
 }

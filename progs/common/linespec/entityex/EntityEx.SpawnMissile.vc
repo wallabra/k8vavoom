@@ -167,7 +167,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
   }
 
   if (!bLeaveTrail && bDynamicLight) {
-    SendExplosion(DLightColour, DLightRadius, Origin);
+    SendExplosion(DLightColor, DLightRadius, Origin);
     bDynamicLight = false;
   }
   bLeaveTrail = false;

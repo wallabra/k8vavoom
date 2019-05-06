@@ -50,7 +50,7 @@ extern VCvarB r_interpolate_thing_movement;
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
 static int parseHexRGB (const VStr &str) {
-  vuint32 ppc = M_ParseColour(*str);
+  vuint32 ppc = M_ParseColor(*str);
   return (ppc&0xffffff);
 }
 
@@ -1436,7 +1436,7 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
 //==========================================================================
 static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
-  VTextureTranslation *Trans, int ColourMap, int Version, vuint32 Light,
+  VTextureTranslation *Trans, int ColorMap, int Version, vuint32 Light,
   vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
   bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isAdvanced)
 {
@@ -1632,7 +1632,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         if (true /*IsViewModel || !isAdvanced*/) {
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-            Trans, ColourMap, Md2Light, Fade, Md2Alpha, Additive,
+            Trans, ColorMap, Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency,
             !IsViewModel && isAdvanced); // for advanced renderer, we need to fill z-buffer, but not color buffer
@@ -1658,7 +1658,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Textures:
         Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Trans, ColourMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
+          Trans, ColorMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:
@@ -1692,7 +1692,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
     Interpolate = false;
   }
   DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
-    NFIdx, Trans, ColourMap, Version, Light, Fade, Alpha, Additive,
+    NFIdx, Trans, ColorMap, Version, Light, Fade, Alpha, Additive,
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
     Pass, IsAdvancedRenderer());
   return true;
@@ -1739,7 +1739,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   }
 
   DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
-    ColourMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
+    ColorMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
     InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsAdvancedRenderer());
   return true;
 }
@@ -1815,7 +1815,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   int Frame, int NextFrame,
   //const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
   const char *Skin, int TranslStart,
-  int TranslEnd, int Colour, float Inter)
+  int TranslEnd, int Color, float Inter)
 {
   //FIXME!
   /*
@@ -1857,7 +1857,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
 
   DrawModel(nullptr, nullptr, Origin, Angles, 1.0f, 1.0f, *Model->DefaultClass, FIdx,
     NFIdx, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart,
-    TranslEnd, Colour), nullptr), 0, 0, 0xffffffff, 0, 1.0f, false, false,
+    TranslEnd, Color), nullptr), 0, 0, 0xffffffff, 0, 1.0f, false, false,
     InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();

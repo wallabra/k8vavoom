@@ -20,9 +20,9 @@ $include "common/glow_vars.fs"
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < AlphaRef) discard;
-  //TexColour *= Light;
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < AlphaRef) discard;
+  //TexColor *= Light;
 
 #ifdef VV_MASKED_GLOW
   vec4 lt = calcGlow(Light);
@@ -32,18 +32,18 @@ void main () {
 #ifdef VV_MASKED_BRIGHTMAP
   $include "common/brightmap_calc.fs"
 #endif
-  TexColour *= lt;
+  TexColor *= lt;
 
   // convert to premultiplied
-  vec4 FinalColour_1;
+  vec4 FinalColor;
 #if 0
-  FinalColour_1.rgb = (TexColour.rgb*TexColour.a)*lt.a;
-  FinalColour_1.a = TexColour.a*lt.a;
+  FinalColor.rgb = (TexColor.rgb*TexColor.a)*lt.a;
+  FinalColor.a = TexColor.a*lt.a;
 #else
-  FinalColour_1.rgb = TexColour.rgb;
-  FinalColour_1.a = TexColour.a*lt.a;
+  FinalColor.rgb = TexColor.rgb;
+  FinalColor.a = TexColor.a*lt.a;
 #endif
   $include "common/fog_calc.fs"
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

@@ -131,10 +131,10 @@ int superatoi (const char *s) {
 
 //==========================================================================
 //
-//  M_LookupColourName
+//  M_LookupColorName
 //
 //==========================================================================
-vuint32 M_LookupColourName (const char *Name) {
+vuint32 M_LookupColorName (const char *Name) {
   static TMapNC<VName, vuint32> cmap; // names are lowercased
   static bool loaded = false;
   char tmpbuf[64];
@@ -358,19 +358,19 @@ int ParseHex (const char *Str) {
 
 //==========================================================================
 //
-//  M_ParseColour
+//  M_ParseColor
 //
 //==========================================================================
-vuint32 M_ParseColour (const char *Name) {
+vuint32 M_ParseColor (const char *Name) {
   if (!Name || !Name[0]) return 0xff000000U;
-  vuint32 res = M_LookupColourName(Name);
+  vuint32 res = M_LookupColorName(Name);
   if (res) return res;
   vuint8 Col[3];
   if (Name[0] == '#') {
     const size_t nlen = strlen(Name);
     // looks like an HTML-style colur
     if (nlen == 7) {
-      // #rrggbb format colour
+      // #rrggbb format color
       for (int i = 0; i < 3; ++i) {
         char Val[3];
         Val[0] = Name[i*2+1];
@@ -379,7 +379,7 @@ vuint32 M_ParseColour (const char *Name) {
         Col[i] = ParseHex(Val);
       }
     } else if (nlen == 4) {
-      // #rgb format colour
+      // #rgb format color
       for (int i = 0; i < 3; ++i) {
         char Val[3];
         Val[0] = Name[i+1];
@@ -388,7 +388,7 @@ vuint32 M_ParseColour (const char *Name) {
         Col[i] = ParseHex(Val);
       }
     } else {
-      // assume it's a bad colour value, set it to black
+      // assume it's a bad color value, set it to black
       Col[0] = 0;
       Col[1] = 0;
       Col[2] = 0;

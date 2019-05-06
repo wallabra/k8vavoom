@@ -1653,10 +1653,10 @@ final void UpdateRevealedMap () {
 //==========================================================================
 void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
                      TVec velocity, float vrnd, float acceleration, float grav,
-                     int colour, float duration, float ramp)
+                     int color, float duration, float ramp)
 {
   Level.ParticleEffect(count, type1, type2, origin, ornd, velocity, vrnd, acceleration,
-        grav, colour, duration, ramp);
+        grav, color, duration, ramp);
 }
 
 
@@ -1678,12 +1678,12 @@ void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx) {
 //  ClientExplosion
 //
 //==========================================================================
-void ClientExplosion (int colour, float rad, TVec org) {
+void ClientExplosion (int color, float rad, TVec org) {
   dlight_t *dl = Level.AllocDlight(none, org, rad+150.0);
   if (dl) {
     //dl->origin = org;
     //dl->radius = rad+150.0;
-    dl->colour = colour;
+    dl->color = color;
     dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
@@ -1695,7 +1695,7 @@ void ClientExplosion (int colour, float rad, TVec org) {
 //  ClientParticleExplosion
 //
 //==========================================================================
-void ClientParticleExplosion (int colour, float rad, TVec org) {
+void ClientParticleExplosion (int color, float rad, TVec org) {
   TVec porg;
   foreach (auto i; 0..512/*1024*/) {
     porg.x = org.x+((Random()*32.0)-16.0);
@@ -1704,7 +1704,7 @@ void ClientParticleExplosion (int colour, float rad, TVec org) {
     particle_t *p = Level.NewParticle(porg);
     if (!p) break;
     p->die = Level.XLevel.Time+5.0;
-    p->colour = LineSpecialGameInfo.default.ramp1[0];
+    p->color = LineSpecialGameInfo.default.ramp1[0];
     p->Size = 1.0;
     p->ramp = Random()*4.0;
     if (i&1) {
@@ -1723,7 +1723,7 @@ void ClientParticleExplosion (int colour, float rad, TVec org) {
   if (dl) {
     //dl->origin = org;
     //dl->radius = rad + 150.0;
-    dl->colour = colour;
+    dl->color = color;
     dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
@@ -1750,7 +1750,7 @@ void ClientSparkParticles (int Count, TVec Org, float Angle) {
 
     p->type = LineSpecialLevelInfo::pt_spark;
     p->Size = 0.5;
-    p->colour = Random() < 0.5 ? RGBA(255, 120, 0, 255) : RGBA(255, 170, 0, 255);
+    p->color = Random() < 0.5 ? RGBA(255, 120, 0, 255) : RGBA(255, 170, 0, 255);
     p->die = Level.XLevel.Time+10.0/35.0;
 
     p->vel.x = (Random()-0.5)*2.0;
@@ -1809,7 +1809,7 @@ final void AddBlendWithAlpha (out float r, out float g, out float b, out float a
 //
 //  PaletteFlash
 //
-//  Sets the new palette colour shift based upon the current values of
+//  Sets the new palette color shift based upon the current values of
 //  Player.DamageFlash and Player.BonusFlash, contents and other inventory
 //  items.
 //
@@ -1840,7 +1840,7 @@ void PaletteFlash () {
     if (DamageFlash) {
       int Amount = int(114.0*DamageFlash);
       if (Amount >= 228) Amount = 228;
-      AddBlend(r, g, b, a, (Amount<<24)|(PlayerPawn(MO).DamageScreenColour&0x00ffffff));
+      AddBlend(r, g, b, a, (Amount<<24)|(PlayerPawn(MO).DamageScreenColor&0x00ffffff));
     }
 
     if (BonusFlash) {
@@ -2162,7 +2162,7 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
     if (!p) break;
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
-    p->colour = Col1;
+    p->color = Col1;
     p->die = Level.XLevel.Time+1.0;
     p->vel.x = (Random()-0.5)*2.0;
     p->vel.y = (Random()-0.5)*2.0;
@@ -2180,7 +2180,7 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
     if (!p) break;
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
-    p->colour = Col2;
+    p->color = Col2;
     p->die = Level.XLevel.Time+1.0;
     p->vel = Up;
     p->accel = vector(0.0, 0.0, 0.0);
@@ -2633,7 +2633,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   PoisonCount = 0;
   MorphTime = 0.0;
   ExtraLight = 0;
-  FixedColourmap = 0;
+  FixedColormap = 0;
   LastSectorDamageTic = 0;
   LastHazardTime = 0.0;
   Rain1 = none;
@@ -2802,7 +2802,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   PP.FriendPlayer = GetPlayerNum()+1; // players are their own friends
   ClearSubSeenInfo();
 
-  // set colour translations for player sprites
+  // set color translations for player sprites
   TranslStart = PP.TranslStart;
   TranslEnd = PP.TranslEnd;
   PP.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
@@ -3212,7 +3212,7 @@ override void PlayerExitMap (bool clusterChange) {
   MO.Alpha = 1.0;
   EntityEx(MO).bShadow = false; // cancel invisibility
   ExtraLight = 0; // cancel gun flashes
-  FixedColourmap = 0; // cancel ir gogles
+  FixedColormap = 0; // cancel ir gogles
   DamageFlash = 0.0; // no palette changes
   BonusFlash = 0.0;
   PoisonCount = 0;
@@ -3872,7 +3872,7 @@ override void PlayerTick (float deltaTime) {
       if (fl) {
         fl.coneDirection = dir;
         fl.coneAngle = GetCvarF('k8_flashlight_angle');
-        fl.colour = flcolor|0xff_00_00_00;
+        fl.color = flcolor|0xff_00_00_00;
         fl.die = MO.XLevel.Time+(2.0/35.0);
         fl.type = DynamicLight::DLTYPE_Spot;
         //fl.minlight = 64;
@@ -3908,7 +3908,7 @@ final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, i
   if (!fl) return;
   fl.coneDirection = dir;
   fl.coneAngle = 42.0f;
-  fl.colour = color|0xff_00_00_00;
+  fl.color = color|0xff_00_00_00;
   fl.die = MO.XLevel.Time+(2.0/35.0);
   fl.type = DynamicLight::DLTYPE_Spot;
   //fl.minlight = 64;
@@ -4041,7 +4041,7 @@ final bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   if (GetCvarS('player_default_gender')) A.SoundGender = name(GetCvarS('player_default_gender'));
 
   MO.LinkToWorld(properFloorCheck:true);
-  // set colour translation
+  // set color translation
   A.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
   A.Angles = MO.Angles;
   ViewHeight = PlayerPawn(A).ViewHeight;

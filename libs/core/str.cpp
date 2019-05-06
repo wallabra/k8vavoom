@@ -1199,7 +1199,7 @@ VStr VStr::EvalEscapeSequences () const {
         case 'n': res += '\n'; break;
         case 'r': res += '\r'; break;
         case 'e': res += '\x1b'; break;
-        case 'c': res += TEXT_COLOUR_ESCAPE; break;
+        case 'c': res += TEXT_COLOR_ESCAPE; break;
         case 'x':
           val = digitInBase(*c, 16);
           if (val >= 0) {
@@ -1268,7 +1268,7 @@ bool VStr::MustBeSanitized (const char *str) {
 }
 
 
-VStr VStr::RemoveColours () const {
+VStr VStr::RemoveColors () const {
   const char *data = getData();
   if (!data) return VStr();
   const int oldlen = (int)length();
@@ -1277,7 +1277,7 @@ VStr VStr::RemoveColours () const {
   int pos = 0;
   while (pos < oldlen) {
     char c = data[pos++];
-    if (c == TEXT_COLOUR_ESCAPE) {
+    if (c == TEXT_COLOR_ESCAPE) {
       if (pos >= oldlen) break;
       c = data[pos++];
       if (!c) break;
@@ -1301,7 +1301,7 @@ VStr VStr::RemoveColours () const {
   newlen = 0;
   while (pos < oldlen) {
     char c = data[pos++];
-    if (c == TEXT_COLOUR_ESCAPE) {
+    if (c == TEXT_COLOR_ESCAPE) {
       if (pos >= oldlen) break;
       c = data[pos++];
       if (!c) break;
@@ -1591,7 +1591,7 @@ VStr VStr::quote (bool addQCh) const {
             case '\n': res += "\\n"; break;
             case '\r': res += "\\r"; break;
             case 27: res += "\\e"; break;
-            case TEXT_COLOUR_ESCAPE: res += "\\c"; break;
+            case TEXT_COLOR_ESCAPE: res += "\\c"; break;
             default:
               snprintf(hexb, sizeof(hexb), "\\x%02x", ch);
               res += hexb;
@@ -1927,7 +1927,7 @@ void VStr::Tokenise (TArray <VStr> &args) const {
             case 'n': ss += '\n'; break;
             case 'r': ss += '\r'; break;
             case 'e': ss += '\x1b'; break;
-            case 'c': ss += TEXT_COLOUR_ESCAPE; break;
+            case 'c': ss += TEXT_COLOR_ESCAPE; break;
             case '\\': case '"': case '\'': ss += str[-1]; break;
             case 'x':
               cc = 0;

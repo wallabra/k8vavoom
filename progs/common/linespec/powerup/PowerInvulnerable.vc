@@ -263,7 +263,7 @@ override void EndEffect()
 
   if (Owner.Player)
   {
-    Owner.Player.FixedColourmap = 0;
+    Owner.Player.FixedColormap = 0;
   }
 }
 

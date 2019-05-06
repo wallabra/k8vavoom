@@ -389,12 +389,12 @@ static void mainloop (int argc, char **argv) {
 
     Host_Init();
     /*
-    GCon->Logf("COLOR 'dark slate gray' is 0x%08x", M_ParseColour(" dark slate  gray "));
-    GCon->Logf("COLOR '#222' is 0x%08x", M_ParseColour("#222"));
-    GCon->Logf("COLOR '#1234ef' is 0x%08x", M_ParseColour("#1234ef"));
-    GCon->Logf("COLOR '12 34 ef' is 0x%08x", M_ParseColour("12 34 ef"));
-    GCon->Logf("COLOR '2 3 4' is 0x%08x", M_ParseColour("  2 3  4 "));
-    GCon->Logf("COLOR '255 255 255' is 0x%08x", M_ParseColour("255 255 255"));
+    GCon->Logf("COLOR 'dark slate gray' is 0x%08x", M_ParseColor(" dark slate  gray "));
+    GCon->Logf("COLOR '#222' is 0x%08x", M_ParseColor("#222"));
+    GCon->Logf("COLOR '#1234ef' is 0x%08x", M_ParseColor("#1234ef"));
+    GCon->Logf("COLOR '12 34 ef' is 0x%08x", M_ParseColor("12 34 ef"));
+    GCon->Logf("COLOR '2 3 4' is 0x%08x", M_ParseColor("  2 3  4 "));
+    GCon->Logf("COLOR '255 255 255' is 0x%08x", M_ParseColor("255 255 255"));
     */
 
 #ifdef __SWITCH__

@@ -799,7 +799,7 @@ final void A_SpawnParticle (string color1, optional int flags, optional int life
   if (lifetime <= 0) return;
   if (!specified_startalpha) startalpha = 255;
   if (startalpha <= 0) return;
-  int clr = ParseColour(color1);
+  int clr = ParseColor(color1);
   startalpha = clamp(startalpha, 0, 255);
   clr |= startalpha<<24;
   Level.ParticleEffect(
@@ -812,7 +812,7 @@ final void A_SpawnParticle (string color1, optional int flags, optional int life
     vrnd:0,
     acceleration:0,
     grav:0,
-    colour:clr,
+    color:clr,
     duration:lifetime/35.0,
     ramp:clamp(fadestep, -1, 255),
     accelV:vector(accelx, accely, accelz)

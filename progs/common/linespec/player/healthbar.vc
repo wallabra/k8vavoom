@@ -91,7 +91,7 @@ void HealthBarProcessor () {
   else if (prc < 100) color = CR_GREEN;
   else color = CR_WHITE;
 
-  ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Colour:color, ColourName:"", x:320.0, y:32.0,
+  ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Color:color, ColorName:"", x:320.0, y:32.0,
     HudWidth:640, HudHeight:512,
     HoldTime:7.0/35.0,
     Time1:health, Time2:maxHealth);

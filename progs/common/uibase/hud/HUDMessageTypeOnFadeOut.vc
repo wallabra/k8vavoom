@@ -39,11 +39,11 @@ float FadeOutTime;
 //  Init
 //
 //==========================================================================
-override void Init (string Message, name AFont, int Type, int AId, int Colour,
+override void Init (string Message, name AFont, int Type, int AId, int Color,
                     float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
                     float Time1, float Time2)
 {
-  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
+  ::Init(Message, AFont, Type, AId, Color, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
   Time1 = fclamp(Time1, 0.1, 100000);
   Time2 = fclamp(Time2, 0.01, 100000);
   HoldTime = fclamp(HoldTime, 0.01, 100000);
@@ -108,9 +108,9 @@ override void Tick (float DeltaTime) {
 override void DrawLine (int LineIdx, int x, int y, string Text) {
   if (State == 0) {
     if (LineIdx < CurrentLine) {
-      DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
+      DrawText(x, y, Text, MsgColor, CR_YELLOW, MsgAlpha);
     } else if (LineIdx == CurrentLine) {
-      DrawText(x, y, substrutf8(Text, 0, LineChars), MsgColour, CR_YELLOW, MsgAlpha);
+      DrawText(x, y, substrutf8(Text, 0, LineChars), MsgColor, CR_YELLOW, MsgAlpha);
     }
   } else {
     ::DrawLine(LineIdx, x, y, Text);

@@ -33,7 +33,7 @@ class PowerupGiver : Inventory abstract;
 class!Powerup PowerupType;
 // non-0 to override powerup's default time
 float EffectTime;
-int BlendColour;
+int BlendColor;
 name Mode;
 float Strength = -666; //k8:FIXME, i need a way to know if it is specified
 
@@ -55,7 +55,7 @@ override bool Use (bool Pickup) {
   if (pwi && Strength != -666) pwi.Strength = Strength;
 
   if (EffectTime) Pw.EffectTime = EffectTime > 0.0 ? EffectTime : -EffectTime * 35.0;
-  if (BlendColour) Pw.BlendColour = BlendColour;
+  if (BlendColor) Pw.BlendColor = BlendColor;
   if (Mode) Pw.Mode = Mode;
   Pw.bAlwaysPickup = bAlwaysPickup;
   Pw.bAdditiveTime = bAdditiveTime;

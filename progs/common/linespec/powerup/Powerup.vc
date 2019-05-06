@@ -31,7 +31,7 @@
 class Powerup : Inventory abstract;
 
 float EffectTime;
-int BlendColour;
+int BlendColor;
 name Mode;
 float Strength = 0; //k8:FIXME, i need a way to know if it is specified
 
@@ -91,10 +91,10 @@ override bool HandlePickup (Inventory Item) {
     // only increase effect time
     if (Pow.bAdditiveTime) {
       EffectTime += Pow.EffectTime;
-      BlendColour = Pow.BlendColour;
+      BlendColor = Pow.BlendColor;
     } else if (EffectTime < Pow.EffectTime) {
       EffectTime = Pow.EffectTime;
-      BlendColour = Pow.BlendColour;
+      BlendColor = Pow.BlendColor;
     }
     Item.bPickupGood = true;
     return true;
@@ -152,15 +152,15 @@ override void DoEffect () {
 
   if (EffectTime > 0.0 && Owner.Player) {
     if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
-           if (BlendColour == INVERSECOLOUR) Owner.Player.FixedColourmap = PlayerEx::INVERSECOLOURMAP;
-      else if (BlendColour == GOLDCOLOUR) Owner.Player.FixedColourmap = PlayerEx::GOLDCOLOURMAP;
-      else if (BlendColour == REDCOLOUR) Owner.Player.FixedColourmap = PlayerEx::REDCOLOURMAP;
-      else if (BlendColour == GREENCOLOUR) Owner.Player.FixedColourmap = PlayerEx::GREENCOLOURMAP;
-    } else if ((BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR ||
-                BlendColour == REDCOLOUR || BlendColour == GREENCOLOUR) &&
-               Owner.Player.FixedColourmap >= PlayerEx::NUMCOLOURMAPS)
+           if (BlendColor == INVERSECOLOR) Owner.Player.FixedColormap = PlayerEx::INVERSECOLORMAP;
+      else if (BlendColor == GOLDCOLOR) Owner.Player.FixedColormap = PlayerEx::GOLDCOLORMAP;
+      else if (BlendColor == REDCOLOR) Owner.Player.FixedColormap = PlayerEx::REDCOLORMAP;
+      else if (BlendColor == GREENCOLOR) Owner.Player.FixedColormap = PlayerEx::GREENCOLORMAP;
+    } else if ((BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR ||
+                BlendColor == REDCOLOR || BlendColor == GREENCOLOR) &&
+               Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS)
     {
-      Owner.Player.FixedColourmap = 0;
+      Owner.Player.FixedColormap = 0;
     }
   }
 }
@@ -182,8 +182,8 @@ void EndEffect () {
 //==========================================================================
 override int GetBlend () {
   if (EffectTime <= PlayerEx::BLINKTHRESHOLD && !(int(4.0*EffectTime)&1)) return 0;
-  if (BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR) return 0;
-  return BlendColour;
+  if (BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR) return 0;
+  return BlendColor;
 }
 
 

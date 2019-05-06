@@ -569,14 +569,14 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
 //  VOpenGLDrawer::BeginModelsLightPass
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, const TVec &aconeDir, const float aconeAngle) {
+void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) {
   if (spotLight) {
     ShadowsModelLightSpot.Activate();
     ShadowsModelLightSpot.SetTexture(0);
     ShadowsModelLightSpot.SetLightPos(LightPos);
     ShadowsModelLightSpot.SetLightRadius(Radius);
     ShadowsModelLightSpot.SetLightMin(LightMin);
-    ShadowsModelLightSpot.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    ShadowsModelLightSpot.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
     ShadowsModelLightSpot.SetConeDirection(coneDir);
     ShadowsModelLightSpot.SetConeAngle(coneAngle);
   } else {
@@ -585,7 +585,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     ShadowsModelLight.SetLightPos(LightPos);
     ShadowsModelLight.SetLightRadius(Radius);
     ShadowsModelLight.SetLightMin(LightMin);
-    ShadowsModelLight.SetLightColour(((Colour>>16)&255)/255.0f, ((Colour>>8)&255)/255.0f, (Colour&255)/255.0f);
+    ShadowsModelLight.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
   }
 }
 

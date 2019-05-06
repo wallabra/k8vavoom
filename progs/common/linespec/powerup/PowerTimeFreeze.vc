@@ -136,7 +136,7 @@ override void EndEffect()
 
 defaultproperties
 {
-  BlendColour = GOLDCOLOUR;
+  BlendColor = GOLDCOLOR;
   EffectTime = 12.0;
   bHubPower = true;
 }

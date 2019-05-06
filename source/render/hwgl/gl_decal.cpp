@@ -212,7 +212,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
     if (currTexId != dcTexId) {
       currTexId = dcTexId;
-      SetTexture(dtex, /*tex->ColourMap*/cmap); // this sets `tex_iw` and `tex_ih`
+      SetTexture(dtex, /*tex->ColorMap*/cmap); // this sets `tex_iw` and `tex_ih`
     }
 
     const float xstofs = dc->xdist-txofs+dc->ofsX;

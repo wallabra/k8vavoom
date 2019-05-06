@@ -74,7 +74,7 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 
 // ////////////////////////////////////////////////////////////////////////// //
 static bool parseHexRGB (const VStr &str, int *clr) {
-  vuint32 ppc = M_ParseColour(*str);
+  vuint32 ppc = M_ParseColor(*str);
   if (clr) *clr = ppc&0xffffff;
   return true;
 }
@@ -680,7 +680,7 @@ bool VDecalAnimColorChanger::parse (VScriptParser *sc) {
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
 
-    if (sc->Check("color")) {
+    if (sc->Check("color") || sc->Check("colour")) {
       sc->ExpectString();
       int destclr = 0;
       if (!parseHexRGB(sc->String, &destclr)) { sc->Error("invalid color"); return false; }

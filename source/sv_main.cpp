@@ -362,7 +362,7 @@ void SV_SendClientMessages () {
     RepInfo->UserInfo = Player->UserInfo;
     RepInfo->TranslStart = Player->TranslStart;
     RepInfo->TranslEnd = Player->TranslEnd;
-    RepInfo->Colour = Player->Colour;
+    RepInfo->Color = Player->Color;
     RepInfo->Frags = Player->Frags;
     RepInfo->Deaths = Player->Deaths;
     RepInfo->KillCount = Player->KillCount;

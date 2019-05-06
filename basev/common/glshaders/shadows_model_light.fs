@@ -2,7 +2,7 @@
 $include "common/common.inc"
 
 uniform sampler2D Texture;
-uniform vec3 LightColour;
+uniform vec3 LightColor;
 uniform float LightRadius;
 uniform float LightMin;
 uniform float InAlpha;
@@ -22,13 +22,13 @@ varying float VDist;
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  //if (TexColour.a < 0.01) discard;
-  TexColour.a *= InAlpha;
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  //if (TexColor.a < 0.01) discard;
+  TexColor.a *= InAlpha;
   if (!AllowTransparency) {
-    if (TexColour.a < 0.666) discard;
+    if (TexColor.a < 0.666) discard;
   } else {
-    if (TexColour.a < 0.01) discard;
+    if (TexColor.a < 0.01) discard;
   }
 
   float DistVPosL = dot(VPosL, VPosL);
@@ -105,7 +105,7 @@ void main () {
   float ClampAdd = min(attenuation/255.0, 1.0);
   attenuation = ClampAdd;
 
-  float ClampTrans = clamp((TexColour.a-0.1)/0.9, 0.0, 1.0);
+  float ClampTrans = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
   if (ClampTrans < 0.01) discard;
 
   /*
@@ -116,10 +116,10 @@ void main () {
   }
   */
 
-  vec4 FinalColour_1;
-  FinalColour_1.rgb = LightColour;
-  FinalColour_1.a = (ClampAdd*TexColour.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  if (FinalColour_1.a < 0.01) discard;
+  vec4 FinalColor;
+  FinalColor.rgb = LightColor;
+  FinalColor.a = (ClampAdd*TexColor.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  if (FinalColor.a < 0.01) discard;
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 pointlight ArtiTorch
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 86
   offset 0 0 1
 }
@@ -14,7 +14,7 @@ class ArtiTorch
 //------------------------------------------------------------------------------
 pointlight ArtiInvulnerability
 {
-  colour 1 1 1
+  color 1 1 1
   radius 86
   offset 0 0 1
 }

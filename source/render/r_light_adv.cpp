@@ -789,7 +789,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                const VViewClipper *Range,
-                                               TVec &Pos, float Radius, float LightMin, vuint32 Colour,
+                                               TVec &Pos, float Radius, float LightMin, vuint32 Color,
                                                bool LimitLights, TVec coneDir, float coneAngle)
 {
   if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
@@ -800,7 +800,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   if (r_advlight_opt_optimise_scissor && !LitSurfaces && !r_models) return; // no lit surfaces, nothing to do
   if (LightVisSubs.length() == 0 && !r_models) return; // just in case
 
-  CurrLightColour = Colour;
+  CurrLightColor = Color;
   // if our light is in frustum, ignore any out-of-frustum polys
   if (r_advlight_opt_frustum_full) {
     CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius-LightMin+4.0f);
@@ -816,8 +816,8 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
   if (!allowShadows && dbg_adv_light_notrace_mark) {
-    //Colour = 0xffff0000U;
-    Colour = 0xffff00ffU; // purple; it should be very noticeable
+    //Color = 0xffff0000U;
+    Color = 0xffff00ffU; // purple; it should be very noticeable
   }
 
   ++LightsRendered;
@@ -991,7 +991,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   //     circle should do the trick.
 
   // draw light
-  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, allowShadows);
+  Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, allowShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
 #if 1
   {
@@ -1010,7 +1010,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 # endif
   }
 #endif
-  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Colour, coneDir, coneAngle);
+  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight();
   ResetMobjsLightCount(false, allowShadows);
 

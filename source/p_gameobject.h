@@ -495,7 +495,7 @@ struct TSecPlaneRef {
 
 struct sec_params_t {
   vint32 lightlevel;
-  vint32 LightColour;
+  vint32 LightColor;
   vint32 Fade;
   vint32 contents;
 };

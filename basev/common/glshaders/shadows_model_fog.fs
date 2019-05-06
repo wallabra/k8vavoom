@@ -13,11 +13,11 @@ varying float Dist;
 void main () {
   if (Dist <= 0.0) discard;
 
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
   if (!AllowTransparency) {
-    if (TexColour.a < 0.666) discard;
+    if (TexColor.a < 0.666) discard;
   } else {
-    if (TexColour.a < 0.01) discard;
+    if (TexColor.a < 0.01) discard;
   }
 
 #ifdef VAVOOM_REVERSE_Z
@@ -27,25 +27,25 @@ void main () {
 #endif
   float FogFactor = (FogEnd-z)/(FogEnd-FogStart);
 
-  float ClampTrans = clamp(((TexColour.a-0.1)/0.9), 0.0, 1.0);
+  float ClampTrans = clamp(((TexColor.a-0.1)/0.9), 0.0, 1.0);
 
   float multr = 1.0-0.25*min(1, 1+sign(Dist));
   FogFactor = clamp(multr-FogFactor, 0.0, multr)*InAlpha;
 
-  vec4 FinalColour_1;
-  FinalColour_1.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  if (FinalColour_1.a < 0.01) discard;
+  vec4 FinalColor;
+  FinalColor.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  if (FinalColor.a < 0.01) discard;
 
   /*
   if (!AllowTransparency) {
-    //if (InAlpha == 1.0 && FinalColour_1.a < 0.666) discard;
-    if (TexColour.a < 0.666) discard;
+    //if (InAlpha == 1.0 && FinalColor.a < 0.666) discard;
+    if (TexColor.a < 0.666) discard;
   } else {
-    if (FinalColour_1.a < 0.01) discard;
+    if (FinalColor.a < 0.01) discard;
   }
   */
 
-  FinalColour_1.rgb = FogColour.rgb*multr;
+  FinalColor.rgb = FogColor.rgb*multr;
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

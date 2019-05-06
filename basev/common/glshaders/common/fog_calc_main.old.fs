@@ -3,6 +3,7 @@
     //!if (FinalColor.a < 0.01) discard; //k8: dunno if it worth it, but meh...
 #endif
 
+    float FogFactor_3;
 #ifdef VAVOOM_REVERSE_Z
     float z = 1.0/gl_FragCoord.w;
 #else
@@ -18,31 +19,31 @@
       FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
     }
 */
-    float FogFactor = (FogEnd-z)/(FogEnd-FogStart);
+    FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
 #ifdef VAVOOM_SIMPLE_ALPHA_FOG
-    FogFactor = 1.0-FogFactor;
+    FogFactor_3 = 1.0-FogFactor_3;
 #else
 # ifdef VAVOOM_ADV_MASKED_FOG
     //FogFactor_3 = 1.0-FogFactor_3;
 # endif
 #endif
-    FogFactor = clamp(FogFactor, 0.0, 1.0); // "smooth factor"
+    FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0); // "smooth factor"
 
-    FogFactor = clamp((FogFactor-0.1)/0.9, 0.0, 1.0);
-    float FogCoeff = FogFactor*FogFactor*(3.0-(2.0*FogFactor));
+    float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
+    float FogCoeff_0 = FogFactor*FogFactor*(3.0-(2.0*FogFactor));
 
 #ifdef VAVOOM_SIMPLE_ALPHA_FOG
     // used in advrender
     FinalColor.rgb = FogColor.rgb;
-    FinalColor.a = FogCoeff;
+    FinalColor.a = FogCoeff_0;
 #else
     // don't mess with alpha channel
     float oldAlpha = FinalColor.a;
 # ifdef VAVOOM_ADV_MASKED_FOG
     vec4 fc2 = vec4(1.0-FogColor.r, 1.0-FogColor.g, 1.0-FogColor.b, FogColor.a);
-    FinalColor = mix(fc2, FinalColor, FogCoeff);
+    FinalColor = mix(fc2, FinalColor, FogCoeff_0);
 # else
-    FinalColor = mix(FogColor, FinalColor, FogCoeff);
+    FinalColor = mix(FogColor, FinalColor, FogCoeff_0);
 # endif
     FinalColor.a = oldAlpha;
     //if (FinalColor.a < 0.01) discard; //k8: dunno if it worth it, but meh...

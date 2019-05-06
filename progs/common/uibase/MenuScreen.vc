@@ -292,11 +292,11 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   btn.Text = text;
   btn.Focusable = false;
   if (specified_color) {
-    btn.TextColour = color;
-    btn.TextColourFocus = color;
+    btn.TextColor = color;
+    btn.TextColorFocus = color;
   } else {
-    btn.TextColour = CR_ORANGE;
-    btn.TextColourFocus = CR_ORANGE;
+    btn.TextColor = CR_ORANGE;
+    btn.TextColorFocus = CR_ORANGE;
   }
   btn.Height = 12;
   currentY += btn.Height;

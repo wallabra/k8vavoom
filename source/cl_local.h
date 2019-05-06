@@ -41,7 +41,7 @@ struct dlight_t {
   float decay; // drop this each second
   float minlight; // don't add when contributing less
   /*DLType*/vint32 type;
-  vuint32 colour; // for coloured lights
+  vuint32 color; // for colored lights
   VThinker *Owner; // used to identify owner to reuse the same light
   vint32 lightid;
   TVec coneDirection;
@@ -161,7 +161,7 @@ public:
   }
 
   void eventAddHudMessage (const VStr &Message, VName Font, int Type, int Id,
-                           int Colour, const VStr &ColourName, float x, float y,
+                           int Color, const VStr &ColorName, float x, float y,
                            int HudWidth, int HudHeight, float HoldTime,
                            float Time1, float Time2)
   {
@@ -170,8 +170,8 @@ public:
     P_PASS_NAME(Font);
     P_PASS_INT(Type);
     P_PASS_INT(Id);
-    P_PASS_INT(Colour);
-    P_PASS_STR(ColourName);
+    P_PASS_INT(Color);
+    P_PASS_STR(ColorName);
     P_PASS_FLOAT(x);
     P_PASS_FLOAT(y);
     P_PASS_INT(HudWidth);

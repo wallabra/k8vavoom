@@ -32,10 +32,10 @@ int CursorXOffsHR; // for right-aligned text
 name cvarSession; // if not empty, value will be saved in it, and read back on creation
 string customHelpText;
 
-int TextColour = CR_RED;
-int TextColourFocus = CR_YELLOW;
-int ValueColour = CR_TAN;
-int ValueColourFocus = CR_YELLOW;
+int TextColor = CR_RED;
+int TextColorFocus = CR_YELLOW;
+int ValueColor = CR_TAN;
+int ValueColorFocus = CR_YELLOW;
 
 
 //==========================================================================
@@ -59,10 +59,10 @@ void FixLatchedColor () {
   if (!cvarSession) return;
   int cf = CvarGetFlags(cvarSession);
   if (cf == -1 || !(cf&CVAR_LATCH)) return;
-  if (TextColour != default.TextColour) return;
-  if (TextColourFocus != default.TextColourFocus) return;
-  TextColour = CR_SAPPHIRE;
-  TextColourFocus = CR_ICE;
+  if (TextColor != default.TextColor) return;
+  if (TextColorFocus != default.TextColorFocus) return;
+  TextColor = CR_SAPPHIRE;
+  TextColorFocus = CR_ICE;
 }
 
 

@@ -21,11 +21,11 @@ uniform vec4 Light;
 
 
 void main () {
-  //vec4 TexColour = texture2D(Texture, TextureCoordinate)*texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
-  //if (TexColour.a < 0.01) discard;
+  //vec4 TexColor = texture2D(Texture, TextureCoordinate)*texture2D(LightMap, LightmapCoordinate)+texture2D(SpecularMap, LightmapCoordinate);
+  //if (TexColor.a < 0.01) discard;
 
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard; // for steamlined masked textures //FIXME
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < 0.01) discard; // for steamlined masked textures //FIXME
 
   vec4 lt = texture2D(LightMap, LightmapCoordinate);
   lt.r = mix(lt.r, Light.r, FullBright);
@@ -35,13 +35,13 @@ void main () {
 #ifdef VV_LIGHTMAP_BRIGHTMAP
   $include "common/brightmap_calc.fs"
 #endif
-  TexColour *= lt;
-  TexColour += texture2D(SpecularMap, LightmapCoordinate);
+  TexColor *= lt;
+  TexColor += texture2D(SpecularMap, LightmapCoordinate);
 
-  TexColour = clamp(TexColour, 0.0, 1.0);
+  TexColor = clamp(TexColor, 0.0, 1.0);
 
-  vec4 FinalColour_1 = TexColour;
+  vec4 FinalColor = TexColor;
   $include "common/fog_calc.fs"
 
-  gl_FragColor = FinalColour_1;
+  gl_FragColor = FinalColor;
 }

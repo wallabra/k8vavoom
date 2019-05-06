@@ -109,7 +109,7 @@ final void A_SummonRebel()
   }
   if (Owner)
   {
-    // Rebels are the same colour as their owner
+    // Rebels are the same color as their owner
     A.Translation = Owner.Translation;
     // Set the rebel's target to whatever last hurt the player, so long as it's not
     // one of the player's other rebels.

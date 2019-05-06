@@ -790,10 +790,10 @@ final void A_FireSkullRodPL2 () self(Actor) {
   // even if it exploded immediately.
   if (Level.Game.netgame) {
     // multi-player game
-    A.RainColour = Player.GetPlayerNum();
+    A.RainColor = Player.GetPlayerNum();
   } else {
     // always use red missiles in single player games
-    A.RainColour = 2;
+    A.RainColor = 2;
   }
   if (AimTarget)
   {

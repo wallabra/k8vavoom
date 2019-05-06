@@ -1,31 +1,31 @@
 //------------------------------------------------------------------------------
 pointlight EggFX
 {
-  colour 1 1 1
+  color 1 1 1
   radius 120
 }
 
 pointlight EggFX_X1
 {
-  colour 1 1 1
+  color 1 1 1
   radius 250
 }
 
 pointlight EggFX_X2
 {
-  colour 1 1 1
+  color 1 1 1
   radius 190
 }
 
 pointlight EggFX_X3
 {
-  colour 1 1 1
+  color 1 1 1
   radius 130
 }
 
 pointlight EggFX_X4
 {
-  colour 1 1 1
+  color 1 1 1
   radius 70
 }
 
@@ -43,7 +43,7 @@ particleeffect Volcano
 {
   type static
   type2 explode2
-  colour 1 0.5 0
+  color 1 0.5 0
   count 10
   offset 0 0 20
   velocity 256 256 256
@@ -62,50 +62,50 @@ class Volcano
 //------------------------------------------------------------------------------
 pointlight VolcanoBlast
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 126
 }
 
 pointlight VolcanoBlast_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 250
 }
 
 pointlight VolcanoBlast_X2
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 210
 }
 
 pointlight VolcanoBlast_X3
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 170
 }
 
 pointlight VolcanoBlast_X4
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 130
 }
 
 pointlight VolcanoBlast_X5
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 90
 }
 
 pointlight VolcanoBlast_X6
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 50
 }
 
 particleeffect VolcanoBlast
 {
   type static
-  colour 1 0.5 0
+  color 1 0.5 0
   count 10
   originrandom 10
   velocity 256 256 256
@@ -140,7 +140,7 @@ class VolcanoTBlast
 //------------------------------------------------------------------------------
 pointlight TeleGlitter1
 {
-  colour 1 0.7 0.7
+  color 1 0.7 0.7
   radius 66
 }
 
@@ -152,7 +152,7 @@ class TeleGlitter1
 //------------------------------------------------------------------------------
 pointlight TeleGlitter2
 {
-  colour 0.75 0.75 0.8
+  color 0.75 0.75 0.8
   radius 66
 }
 
@@ -164,37 +164,37 @@ class TeleGlitter2
 //------------------------------------------------------------------------------
 pointlight ActivatedTimeBomb_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 126
 }
 
 pointlight ActivatedTimeBomb_X2
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 105
 }
 
 pointlight ActivatedTimeBomb_X3
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 84
 }
 
 pointlight ActivatedTimeBomb_X4
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 63
 }
 
 pointlight ActivatedTimeBomb_X5
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 42
 }
 
 pointlight ActivatedTimeBomb_X6
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 21
 }
 
@@ -211,13 +211,13 @@ class ActivatedTimeBomb
 //------------------------------------------------------------------------------
 pointlight Pod_X1
 {
-  colour 0.4 0.9 0.4
+  color 0.4 0.9 0.4
   radius 200
 }
 
 pointlight Pod_X2
 {
-  colour 0.4 0.9 0.4
+  color 0.4 0.9 0.4
   radius 100
 }
 

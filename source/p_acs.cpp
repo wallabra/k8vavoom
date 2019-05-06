@@ -4264,7 +4264,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndPrintBold)
       PrintStr = PrintStr.EvalEscapeSequences();
-      BroadcastCentrePrint(*(VStr(TEXT_COLOUR_ESCAPE)+"+"+PrintStr));
+      BroadcastCentrePrint(*(VStr(TEXT_COLOR_ESCAPE)+"+"+PrintStr));
       SB_POP;
       ACSVM_BREAK;
 
@@ -4605,11 +4605,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int Type = optstart[-6];
         int Id = optstart[-5];
-        int Colour = optstart[-4];
-        VStr ColourName;
+        int Color = optstart[-4];
+        VStr ColorName;
         if (Type&HUDMSG_COLORSTRING) {
-          ColourName = GetStr(optstart[-4]);
-          Colour = -1;
+          ColorName = GetStr(optstart[-4]);
+          Color = -1;
         }
         float x = (float)optstart[-3]/float(0x10000);
         float y = (float)optstart[-2]/float(0x10000);
@@ -4643,13 +4643,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
         if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {
           Activator->Player->eventClientHudMessage(PrintStr, Font,
-            Type, Id, Colour, ColourName, x, y, HudWidth,
+            Type, Id, Color, ColorName, x, y, HudWidth,
             HudHeight, HoldTime, Time1, Time2);
         } else {
           for (int i = 0; i < MAXPLAYERS; ++i) {
             if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
               Level->Game->Players[i]->eventClientHudMessage(
-                PrintStr, Font, Type, Id, Colour, ColourName,
+                PrintStr, Font, Type, Id, Color, ColorName,
                 x, y, HudWidth, HudHeight, HoldTime, Time1,
                 Time2);
             }
@@ -4996,7 +4996,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_TranslationRange2)
       if (Translation)
       {
-        Translation->MapToColours(sp[-8], sp[-7], sp[-6], sp[-5],
+        Translation->MapToColors(sp[-8], sp[-7], sp[-6], sp[-5],
           sp[-4], sp[-3], sp[-2], sp[-1]);
       }
       sp -= 8;

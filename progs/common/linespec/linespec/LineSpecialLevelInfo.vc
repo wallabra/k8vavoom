@@ -924,8 +924,8 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_LineTranslucent:
       buttonSuccess = EV_LineTranslucent(Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
-    case LNSPEC_SectorSetColour:
-      buttonSuccess = EV_SectorSetColour(Arg1, Arg2, Arg3, Arg4, Arg5);
+    case LNSPEC_SectorSetColor:
+      buttonSuccess = EV_SectorSetColor(Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
     case LNSPEC_SectorSetFade:
       buttonSuccess = EV_SectorSetFade(Arg1, Arg2, Arg3, Arg4, Arg5);
@@ -3181,11 +3181,11 @@ final bool EV_SectorSoundChange(int Arg1, int Arg2, int Arg3, int Arg4,
 
 //=========================================================================
 //
-//  EV_SectorSetColour
+//  EV_SectorSetColor
 //
 //=========================================================================
 
-final bool EV_SectorSetColour(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
+final bool EV_SectorSetColor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
   int   SecNum;
   int   Col;
@@ -3194,7 +3194,7 @@ final bool EV_SectorSetColour(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
-    XLevel.Sectors[SecNum].params.LightColour = Col;
+    XLevel.Sectors[SecNum].params.LightColor = Col;
   }
   return true;
 }
@@ -7087,12 +7087,12 @@ final void AddPlayerCorpse(EntityEx Corpse)
 //==========================================================================
 override void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
                               TVec velocity, float vrnd, float acceleration, float grav,
-                              int colour, float duration, float ramp, optional TVec accelV)
+                              int color, float duration, float ramp, optional TVec accelV)
 {
   if (duration <= 0) return;
 
   if (type1 == pt_fading) {
-    if ((colour>>>24) < 1) return; // nothing to do
+    if ((color>>>24) < 1) return; // nothing to do
   }
 
   TVec porg = origin;
@@ -7110,9 +7110,9 @@ override void ParticleEffect (int count, int type1, int type2, TVec origin, floa
       return;
       /*
       p.die = Level.XLevel.Time+duration*Random();
-      p.colour = colour;
+      p.color = color;
       if (ramp < 0) {
-        int initalpha = colour>>>24;
+        int initalpha = color>>>24;
         ramp = -initalpha; // hack!
       }
       p.ramp = ramp;
@@ -7128,7 +7128,7 @@ override void ParticleEffect (int count, int type1, int type2, TVec origin, floa
     if (!p) return;
 
     p.die = Level.XLevel.Time+duration*Random();
-    p.colour = colour;
+    p.color = color;
     p.Size = 1.0;
     if (ramp) p.ramp = Random()*ramp;
 
@@ -7184,7 +7184,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
     if (p.ramp >= 16.0)
       p.die = -1.0;
     else
-      p.colour = LineSpecialGameInfo.default.ramp1[int(p.ramp)];
+      p.color = LineSpecialGameInfo.default.ramp1[int(p.ramp)];
     p.vel.x += p.vel.x*dvel;
     p.vel.y += p.vel.y*dvel;
     p.vel.z += p.vel.z*dvel;
@@ -7197,7 +7197,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
     if (p.ramp >= 16.0)
       p.die = -1.0;
     else
-      p.colour = LineSpecialGameInfo.default.ramp2[int(p.ramp)];
+      p.color = LineSpecialGameInfo.default.ramp2[int(p.ramp)];
     p.vel.x -= p.vel.x*DeltaTime;
     p.vel.y -= p.vel.y*DeltaTime;
     p.vel.z -= p.vel.z*DeltaTime;
@@ -7207,14 +7207,14 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_fountain:
     p.vel += p.accel*DeltaTime;
-    p.colour = (p.colour&0x00ffffff)|(int(
-      float(p.colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
+    p.color = (p.color&0x00ffffff)|(int(
+      float(p.color>>24)-255.0/51.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_spark:
     p.vel += p.accel*DeltaTime;
-    p.colour = (p.colour&0x00ffffff)|(int(
-      float(p.colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
+    p.color = (p.color&0x00ffffff)|(int(
+      float(p.color>>24)-255.0/10.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_ice_chunk:
@@ -7225,7 +7225,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_rail:
     p.vel += p.accel*DeltaTime;
-    p.colour = (p.colour&0x00ffffff)|(int(float(p.colour>>24)-255.0*DeltaTime)<<24);
+    p.color = (p.color&0x00ffffff)|(int(float(p.color>>24)-255.0*DeltaTime)<<24);
     break;
   }
 }

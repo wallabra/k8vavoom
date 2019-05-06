@@ -150,8 +150,8 @@ void AddText (string Text) {
   Btn.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
   Btn.Text = Text;
   Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
+  Btn.TextColor = CR_OLIVE;
+  Btn.TextColorFocus = CR_OLIVE;
   Btn.Height = 10;
   ++NumControls;
 }

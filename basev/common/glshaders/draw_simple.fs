@@ -8,13 +8,13 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.01) discard;
+  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  if (TexColor.a < 0.01) discard;
 
   // we got a non-premultiplied color, convert it
-  vec4 FinalColour_1;
-  FinalColour_1.a = TexColour.a*clamp(Alpha, 0.0, 1.0);
-  if (FinalColour_1.a < 0.01) discard;
-  FinalColour_1.rgb = TexColour.rgb*FinalColour_1.a;
-  gl_FragColor = FinalColour_1;
+  vec4 FinalColor;
+  FinalColor.a = TexColor.a*clamp(Alpha, 0.0, 1.0);
+  if (FinalColor.a < 0.01) discard;
+  FinalColor.rgb = TexColor.rgb*FinalColor.a;
+  gl_FragColor = FinalColor;
 }

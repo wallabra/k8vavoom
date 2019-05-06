@@ -32,7 +32,7 @@ const int BAR_Y = 441;
 Player cl;
 
 int sb_pclass;
-int sb_colour;
+int sb_color;
 
 int HealthMarker;
 int sb_health;
@@ -97,7 +97,7 @@ override void StartMap()
   ::StartMap();
 
   sb_pclass = GetCvar('class');
-  sb_colour = GetCvar('colour');
+  sb_color = GetCvar('color');
 
   //
   //  COMMON BAR
@@ -112,14 +112,14 @@ override void StartMap()
       // single player game uses red life gem (the second gem)
       pic_lifegem = R_RegisterPic('lifegmf2');
     }
-    else if (!sb_colour)
+    else if (!sb_color)
     {
       pic_lifegem = R_RegisterPic('lifegem');
     }
     else
     {
       pic_lifegem = R_RegisterPic(name(va("lifegmf%d",
-        sb_colour + 1)));
+        sb_color + 1)));
     }
     break;
   case HexenDefs::PCLASS_CLERIC:
@@ -132,7 +132,7 @@ override void StartMap()
     else
     {
       pic_lifegem = R_RegisterPic(name(va("lifegmc%d",
-        sb_colour + 1)));
+        sb_color + 1)));
     }
     break;
   case HexenDefs::PCLASS_MAGE:
@@ -145,7 +145,7 @@ override void StartMap()
     else
     {
       pic_lifegem = R_RegisterPic(name(va("lifegmm%d",
-        sb_colour + 1)));
+        sb_color + 1)));
     }
     break;
   }
@@ -290,7 +290,7 @@ void SB_DrawBackground()
 //
 //==========================================================================
 
-void SB_DrawNumber9(int x, int y, int num, int colour, optional float alpha)
+void SB_DrawNumber9(int x, int y, int num, int color, optional float alpha)
 {
   int w = 9;
   int neg = num < 0;
@@ -305,14 +305,14 @@ void SB_DrawNumber9(int x, int y, int num, int colour, optional float alpha)
   // in the special case of 0, you draw 0
   if (!num)
   {
-    DrawPic(x - w, y, pic_innum[colour * 10], alpha ? alpha : 1.0);
+    DrawPic(x - w, y, pic_innum[color * 10], alpha ? alpha : 1.0);
   }
 
   // draw the new number
   while (num)
   {
     x -= w;
-    DrawPic(x, y, pic_innum[colour * 10 + num % 10], alpha ? alpha : 1.0);
+    DrawPic(x, y, pic_innum[color * 10 + num % 10], alpha ? alpha : 1.0);
     num /= 10;
   }
 

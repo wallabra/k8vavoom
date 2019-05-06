@@ -523,7 +523,7 @@ enum {
   LNSPEC_TransferHeights,
   LNSPEC_TransferFloorLight,// 210
   LNSPEC_TransferCeilingLight,
-  LNSPEC_SectorSetColour,
+  LNSPEC_SectorSetColor,
   LNSPEC_SectorSetFade,
   LNSPEC_SectorSetDamage,
   LNSPEC_TeleportLine,
@@ -593,7 +593,7 @@ struct texinfo_t {
   // alpha for masked surfaces
   native transient float Alpha;
   native transient int Additive;
-  native transient ubyte ColourMap;
+  native transient ubyte ColorMap;
 };
 
 
@@ -642,7 +642,7 @@ struct surface_t {
   texinfo_t *texinfo;
   TPlane plane;
   sec_plane_t *HorizonPlane;
-  int Light; // light level and colour (unsigned)
+  int Light; // light level and color (unsigned)
   int Fade; // (unsigned)
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
@@ -791,7 +791,7 @@ struct sec_plane_t : TPlane {
 
 struct sec_params_t {
   int lightlevel;
-  int LightColour;
+  int LightColor;
   int Fade;
   int contents;
 };
@@ -1257,7 +1257,7 @@ struct LockDef {
   array!LockGroup Locks;
   string Message;
   string RemoteMessage;
-  int MapColour;
+  int MapColor;
   name LockedSound;
 };
 
@@ -1269,7 +1269,7 @@ struct dlight_t {
   float decay; // drop this each second
   float minlight; // don't add when contributing less
   int type;
-  int colour;
+  int color;
   readonly Thinker owner;
   readonly int lightid;
   TVec coneDirection;
@@ -1283,7 +1283,7 @@ struct dlight_t {
 
 struct particle_t {
   TVec org;
-  int colour;
+  int color;
   float Size;
   particle_t *next;
   TVec vel;

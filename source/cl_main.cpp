@@ -49,11 +49,11 @@ VClientGameBase *GClGame;
 bool UserInfoSent;
 
 VCvarS cl_name("name", "PLAYER", "Player name.", CVAR_Archive | CVAR_UserInfo);
-VCvarI cl_colour("colour", "0", "Player colo(u)r.", CVAR_Archive | CVAR_UserInfo);
+VCvarI cl_color("color", "0", "Player color.", CVAR_Archive | CVAR_UserInfo);
 VCvarI cl_class("class", "0", "Player class.", CVAR_Archive | CVAR_UserInfo);
 VCvarS cl_model("model", "", "Player model.", CVAR_Archive | CVAR_UserInfo);
 
-static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-VaVoom demos)?", CVAR_Archive);
+static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-Vavoom demos)?", CVAR_Archive);
 
 IMPLEMENT_CLASS(V, ClientGameBase);
 
@@ -298,7 +298,7 @@ void CL_SetUpStandaloneClient () {
 
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
-    GClLevel->RenderData->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Colour);
+    GClLevel->RenderData->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
   }
   GClLevel->RenderData->PreRender();
 

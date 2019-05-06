@@ -96,7 +96,7 @@ Set LightmapSTSet {
 
 Set FogSet {
   uniform bool FogEnabled;
-  uniform vec4 FogColour;
+  uniform vec4 FogColor;
   uniform float FogStart;
   uniform float FogEnd;
 
@@ -104,7 +104,7 @@ Set FogSet {
     inline void SetFogFade (vuint32 Fade, float Alpha) {
       if (Fade) {
         if (loc_FogEnabled >= 0) owner->p_glUniform1iARB(loc_FogEnabled, GL_TRUE);
-        owner->p_glUniform4fARB(loc_FogColour,
+        owner->p_glUniform4fARB(loc_FogColor,
           ((Fade>>16)&255)/255.0f,
           ((Fade>>8)&255)/255.0f,
           (Fade&255)/255.0f, Alpha);
@@ -121,13 +121,13 @@ Set FogSet {
 Set SimpleFogSet {
   forbidden uniform bool FogEnabled;
 
-  uniform vec4 FogColour;
+  uniform vec4 FogColor;
   uniform float FogStart;
   uniform float FogEnd;
 
   code [[
     inline void SetFogFade (vuint32 Fade, float Alpha) {
-      owner->p_glUniform4fARB(loc_FogColour,
+      owner->p_glUniform4fARB(loc_FogColor,
         ((Fade>>16)&255)/255.0f,
         ((Fade>>8)&255)/255.0f,
         (Fade&255)/255.0f, Alpha);

@@ -43,34 +43,34 @@ override void DoEffect()
   }
 
   if (EffectTime <= PlayerEx::BLINKTHRESHOLD ||
-    Owner.Player.FixedColourmap >= PlayerEx::NUMCOLOURMAPS)
+    Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS)
   {
     ::DoEffect();
   }
   else if (!(int(2.0 * Level.XLevel.Time) & 1))
   {
-    int PrevCMap = Owner.Player.FixedColourmap;
+    int PrevCMap = Owner.Player.FixedColormap;
     ::DoEffect();
-    Owner.Player.FixedColourmap = PrevCMap;
+    Owner.Player.FixedColormap = PrevCMap;
     if (NewTorch)
     {
-      if (Owner.Player.FixedColourmap + NewTorchDelta > 7 ||
-        Owner.Player.FixedColourmap + NewTorchDelta < 1 ||
-        Owner.Player.FixedColourmap == NewTorch)
+      if (Owner.Player.FixedColormap + NewTorchDelta > 7 ||
+        Owner.Player.FixedColormap + NewTorchDelta < 1 ||
+        Owner.Player.FixedColormap == NewTorch)
       {
         NewTorch = 0;
       }
       else
       {
-        Owner.Player.FixedColourmap += NewTorchDelta;
+        Owner.Player.FixedColormap += NewTorchDelta;
       }
     }
     else
     {
       NewTorch = (P_Random() & 7) + 1;
       NewTorchDelta =
-        (NewTorch == Owner.Player.FixedColourmap) ? 0 :
-        ((NewTorch > Owner.Player.FixedColourmap) ? 1 : -1);
+        (NewTorch == Owner.Player.FixedColormap) ? 0 :
+        ((NewTorch > Owner.Player.FixedColormap) ? 1 : -1);
     }
   }
 }

@@ -20,5 +20,5 @@
   lt.rgb = min(lt.rgb, 1.0);
 
   //lt.rgb = BMColor.rgb;
-  //TexColour.rgb = vec3(1.0, 1.0, 1.0);
+  //TexColor.rgb = vec3(1.0, 1.0, 1.0);
 #endif

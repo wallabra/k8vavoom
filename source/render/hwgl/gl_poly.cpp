@@ -42,7 +42,7 @@ extern "C" {
     const texinfo_t *tb = sb->texinfo;
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-    return ((int)ta->ColourMap)-((int)tb->ColourMap);
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
   static int surfListItemCmp (const void *a, const void *b, void *udata) {
@@ -142,14 +142,14 @@ void VOpenGLDrawer::UpdateAndUploadSurfaceTexture (surface_t *surf) {
   texinfo_t *textr = surf->texinfo;
   auto Tex = textr->Tex;
   if (Tex->CheckModified()) FlushTexture(Tex);
-  auto CMap = textr->ColourMap;
+  auto CMap = textr->ColorMap;
   if (CMap) {
     VTexture::VTransData *TData = Tex->FindDriverTrans(nullptr, CMap);
     if (!TData) {
       TData = &Tex->DriverTranslated.Alloc();
       TData->Handle = 0;
       TData->Trans = nullptr;
-      TData->ColourMap = CMap;
+      TData->ColorMap = CMap;
       GenerateTexture(Tex, (GLuint*)&TData->Handle, nullptr, CMap, false);
     }
   } else if (!Tex->DriverHandle) {
@@ -204,7 +204,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   }
 
   texinfo_t *Tex = surf->texinfo;
-  SetTexture(Tex->Tex, Tex->ColourMap);
+  SetTexture(Tex->Tex, Tex->ColorMap);
 
   SurfSimple.Activate();
   SurfSimple.SetTexture(0);
@@ -265,7 +265,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       p_glActiveTextureARB(GL_TEXTURE0);
-      SetTexture(textr->Tex, textr->ColourMap);
+      SetTexture(textr->Tex, textr->ColorMap);
       SurfSimpleBrightmap.SetTex(textr);
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleBrightmap, gp);
@@ -273,7 +273,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
       }
     } else {
-      SetTexture(textr->Tex, textr->ColourMap);
+      SetTexture(textr->Tex, textr->ColorMap);
       SurfSimple.Activate();
       SurfSimple.SetTex(textr);
       if (gp.isActive()) {
@@ -318,7 +318,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColourMap)) {
+    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
       if (doBrightmap) SurfSimpleBrightmap.Activate(); else SurfSimple.Activate();
@@ -358,7 +358,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       p_glActiveTextureARB(GL_TEXTURE0);
-      SetTexture(tex->Tex, tex->ColourMap);
+      SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmapBrightmap.SetTex(tex);
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapBrightmap, gp);
@@ -366,7 +366,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
       }
     } else {
-      SetTexture(tex->Tex, tex->ColourMap);
+      SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmap.Activate();
       SurfLightmap.SetTex(tex);
       if (gp.isActive()) {
@@ -418,7 +418,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(DT_LIGHTMAP, surf, cache, tex->ColourMap)) {
+    if (RenderFinishShaderDecals(DT_LIGHTMAP, surf, cache, tex->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
       if (doBrightmap) SurfLightmapBrightmap.Activate(); else SurfLightmap.Activate();
@@ -488,7 +488,7 @@ void VOpenGLDrawer::WorldDrawing () {
         !lastTexinfo ||
         lastTexinfo != currTexinfo ||
         lastTexinfo->Tex != currTexinfo->Tex ||
-        lastTexinfo->ColourMap != currTexinfo->ColourMap;
+        lastTexinfo->ColorMap != currTexinfo->ColorMap;
       lastTexinfo = currTexinfo;
       if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo = nullptr;
     }
@@ -548,7 +548,7 @@ void VOpenGLDrawer::WorldDrawing () {
             !lastTexinfo ||
             lastTexinfo != currTexinfo ||
             lastTexinfo->Tex != currTexinfo->Tex ||
-            lastTexinfo->ColourMap != currTexinfo->ColourMap;
+            lastTexinfo->ColorMap != currTexinfo->ColorMap;
           lastTexinfo = currTexinfo;
           if (RenderLMapSurface(textureChanded, surf, cache)) lastTexinfo = nullptr;
         }
@@ -568,7 +568,7 @@ void VOpenGLDrawer::WorldDrawing () {
               !lastTexinfo ||
               lastTexinfo != currTexinfo ||
               lastTexinfo->Tex != currTexinfo->Tex ||
-              lastTexinfo->ColourMap != currTexinfo->ColourMap;
+              lastTexinfo->ColorMap != currTexinfo->ColorMap;
             lastTexinfo = currTexinfo;
             if (RenderLMapSurface(textureChanded, surf, surfList[sidx].cache)) lastTexinfo = nullptr;
           }

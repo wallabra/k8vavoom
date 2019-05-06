@@ -139,7 +139,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     // skip unused values
     if (!IsStrife) {
       Streamer<vint16>(Strm); // Step dir, unused
-      Streamer<vint16>(Strm); // Colour map, unused
+      Streamer<vint16>(Strm); // Color map, unused
     }
   }
 
@@ -299,10 +299,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               P.Blend.b = 0;
               P.Blend.a = 0;
 
-                   if (sc->Check("inverse")) P.Trans = &ColourMaps[CM_Inverse];
-              else if (sc->Check("gold")) P.Trans = &ColourMaps[CM_Gold];
-              else if (sc->Check("red")) P.Trans = &ColourMaps[CM_Red];
-              else if (sc->Check("green")) P.Trans = &ColourMaps[CM_Green];
+                   if (sc->Check("inverse")) P.Trans = &ColorMaps[CM_Inverse];
+              else if (sc->Check("gold")) P.Trans = &ColorMaps[CM_Gold];
+              else if (sc->Check("red")) P.Trans = &ColorMaps[CM_Red];
+              else if (sc->Check("green")) P.Trans = &ColorMaps[CM_Green];
               else if (sc->Check("ice")) P.Trans = &IceTranslation;
               else if (sc->Check("desaturate")) { sc->Expect(","); sc->ExpectNumber(); }
               else {
@@ -328,7 +328,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 
               if (!sc->CheckNumber()) {
                 sc->ExpectString();
-                vuint32 Col = M_ParseColour(*sc->String);
+                vuint32 Col = M_ParseColor(*sc->String);
                 P.Blend.r = (Col>>16)&0xff;
                 P.Blend.g = (Col>>8)&0xff;
                 P.Blend.b = Col&0xff;

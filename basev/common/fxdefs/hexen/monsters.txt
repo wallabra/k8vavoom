@@ -1,28 +1,28 @@
 //------------------------------------------------------------------------------
 pointlight FireDemon
 {
-  colour 1 0.7 0
+  color 1 0.7 0
   radius 126
   offset 0 0 34
 }
 
 pointlight FireDemon_X1
 {
-  colour 0.25 0.75 1
+  color 0.25 0.75 1
   radius 90
   offset 0 0 34
 }
 
 pointlight FireDemon_X2
 {
-  colour 0.25 0.75 1
+  color 0.25 0.75 1
   radius 60
   offset 0 0 34
 }
 
 pointlight FireDemon_X3
 {
-  colour 0.25 0.75 1
+  color 0.25 0.75 1
   radius 30
   offset 0 0 34
 }
@@ -48,31 +48,31 @@ class FireDemon
 //------------------------------------------------------------------------------
 pointlight FireDemonMissile
 {
-  colour 1 0.75 0.1
+  color 1 0.75 0.1
   radius 118
 }
 
 pointlight FireDemonMissile_X1
 {
-  colour 1 0.75 0.1
+  color 1 0.75 0.1
   radius 200
 }
 
 pointlight FireDemonMissile_X2
 {
-  colour 1 0.75 0.1
+  color 1 0.75 0.1
   radius 150
 }
 
 pointlight FireDemonMissile_X3
 {
-  colour 1 0.75 0.1
+  color 1 0.75 0.1
   radius 100
 }
 
 pointlight FireDemonMissile_X4
 {
-  colour 1 0.75 0.1
+  color 1 0.75 0.1
   radius 50
 }
 
@@ -88,37 +88,37 @@ class FireDemonMissile
 //------------------------------------------------------------------------------
 pointlight CentaurFX
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 134
 }
 
 pointlight CentaurFX_X1
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 250
 }
 
 pointlight CentaurFX_X2
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 200
 }
 
 pointlight CentaurFX_X3
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 150
 }
 
 pointlight CentaurFX_X4
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 100
 }
 
 pointlight CentaurFX_X5
 {
-  colour 0.15 0.45 0.9
+  color 0.15 0.45 0.9
   radius 50
 }
 
@@ -135,37 +135,37 @@ class CentaurFX
 //------------------------------------------------------------------------------
 pointlight Demon1FX1
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 126
 }
 
 pointlight Demon1FX1_X1
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 250
 }
 
 pointlight Demon1FX1_X2
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 200
 }
 
 pointlight Demon1FX1_X3
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 150
 }
 
 pointlight Demon1FX1_X4
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 100
 }
 
 pointlight Demon1FX1_X5
 {
-  colour 0.9 0.55 0
+  color 0.9 0.55 0
   radius 50
 }
 
@@ -184,43 +184,43 @@ class Demon1FX1
 //------------------------------------------------------------------------------
 pointlight Demon2FX1
 {
-  colour 0 1 0
+  color 0 1 0
   radius 126
 }
 
 pointlight Demon2FX1_X1
 {
-  colour 0 1 0
+  color 0 1 0
   radius 250
 }
 
 pointlight Demon2FX1_X2
 {
-  colour 0 1 0
+  color 0 1 0
   radius 210
 }
 
 pointlight Demon2FX1_X3
 {
-  colour 0 1 0
+  color 0 1 0
   radius 170
 }
 
 pointlight Demon2FX1_X4
 {
-  colour 0 1 0
+  color 0 1 0
   radius 130
 }
 
 pointlight Demon2FX1_X5
 {
-  colour 0 1 0
+  color 0 1 0
   radius 90
 }
 
 pointlight Demon2FX1_X6
 {
-  colour 0 1 0
+  color 0 1 0
   radius 50
 }
 
@@ -243,50 +243,50 @@ class Demon2FX1
 //------------------------------------------------------------------------------
 pointlight SerpentFX
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 126
 }
 
 pointlight SerpentFX_X1
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 250
 }
 
 pointlight SerpentFX_X2
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 210
 }
 
 pointlight SerpentFX_X3
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 170
 }
 
 pointlight SerpentFX_X4
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 130
 }
 
 pointlight SerpentFX_X5
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 90
 }
 
 pointlight SerpentFX_X6
 {
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   radius 50
 }
 
 particleeffect SerpentFX
 {
   type static
-  colour 0.15 1 0.15
+  color 0.15 1 0.15
   count 5
   velocity 16 16 64
   velocityrandom 0.5
@@ -309,37 +309,37 @@ class SerpentFX
 //------------------------------------------------------------------------------
 pointlight IceGuyFX
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 126
 }
 
 pointlight IceGuyFX_X1
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 200
 }
 
 pointlight IceGuyFX_X2
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 160
 }
 
 pointlight IceGuyFX_X3
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 120
 }
 
 pointlight IceGuyFX_X4
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 80
 }
 
 pointlight IceGuyFX_X5
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 40
 }
 
@@ -358,7 +358,7 @@ class IceGuyFX
 //------------------------------------------------------------------------------
 pointlight IceGuyFX2
 {
-  colour 0.3 0.3 0.75
+  color 0.3 0.3 0.75
   radius 90
 }
 
@@ -370,25 +370,25 @@ class IceGuyFX2
 //------------------------------------------------------------------------------
 pointlight Bishop_X1
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 86
 }
 
 pointlight Bishop_X2
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 64
 }
 
 pointlight Bishop_X3
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 42
 }
 
 pointlight Bishop_X4
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 20
 }
 
@@ -404,43 +404,43 @@ class Bishop
 //------------------------------------------------------------------------------
 pointlight BishopFX
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 126
 }
 
 pointlight BishopFX_X1
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 250
 }
 
 pointlight BishopFX_X2
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 210
 }
 
 pointlight BishopFX_X3
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 170
 }
 
 pointlight BishopFX_X4
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 130
 }
 
 pointlight BishopFX_X5
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 90
 }
 
 pointlight BishopFX_X6
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 50
 }
 
@@ -459,43 +459,43 @@ class BishopFX
 //------------------------------------------------------------------------------
 pointlight WraithFX1
 {
-  colour 1 0 0
+  color 1 0 0
   radius 126
 }
 
 pointlight WraithFX1_X1
 {
-  colour 1 0 0
+  color 1 0 0
   radius 250
 }
 
 pointlight WraithFX1_X2
 {
-  colour 1 0 0
+  color 1 0 0
   radius 210
 }
 
 pointlight WraithFX1_X3
 {
-  colour 1 0 0
+  color 1 0 0
   radius 170
 }
 
 pointlight WraithFX1_X4
 {
-  colour 1 0 0
+  color 1 0 0
   radius 130
 }
 
 pointlight WraithFX1_X5
 {
-  colour 1 0 0
+  color 1 0 0
   radius 90
 }
 
 pointlight WraithFX1_X6
 {
-  colour 1 0 0
+  color 1 0 0
   radius 50
 }
 
@@ -515,43 +515,43 @@ class WraithFX1
 //------------------------------------------------------------------------------
 pointlight DragonFireball
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 126
 }
 
 pointlight DragonFireball_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 250
 }
 
 pointlight DragonFireball_X2
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 210
 }
 
 pointlight DragonFireball_X3
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 170
 }
 
 pointlight DragonFireball_X4
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 130
 }
 
 pointlight DragonFireball_X5
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 90
 }
 
 pointlight DragonFireball_X6
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 50
 }
 
@@ -574,37 +574,37 @@ class DragonFireball
 //------------------------------------------------------------------------------
 pointlight DragonExplosion_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 250
 }
 
 pointlight DragonExplosion_X2
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 210
 }
 
 pointlight DragonExplosion_X3
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 170
 }
 
 pointlight DragonExplosion_X4
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 130
 }
 
 pointlight DragonExplosion_X5
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 90
 }
 
 pointlight DragonExplosion_X6
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 50
 }
 
@@ -625,37 +625,37 @@ class DragonExplosion
 //------------------------------------------------------------------------------
 pointlight SorcBall
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 126
 }
 
 pointlight SorcBall_X1
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 250
 }
 
 pointlight SorcBall_X2
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 200
 }
 
 pointlight SorcBall_X3
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 150
 }
 
 pointlight SorcBall_X4
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 100
 }
 
 pointlight SorcBall_X5
 {
-  colour 1 0.25 0
+  color 1 0.25 0
   radius 50
 }
 
@@ -692,13 +692,13 @@ class SorcBall3
 //------------------------------------------------------------------------------
 pointlight SorcFX1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 118
 }
 
 pointlight SorcFX1_X1
 {
-  colour 1 0.5 0
+  color 1 0.5 0
   radius 60
 }
 
@@ -711,7 +711,7 @@ class SorcFX1
 //------------------------------------------------------------------------------
 pointlight SorcFX2
 {
-  colour 0.25 0.4 1
+  color 0.25 0.4 1
   radius 118
 }
 
@@ -723,43 +723,43 @@ class SorcFX2
 //------------------------------------------------------------------------------
 pointlight SorcFX3
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 200
 }
 
 pointlight SorcFX3_X1
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 170
 }
 
 pointlight SorcFX3_X2
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 140
 }
 
 pointlight SorcFX3_X3
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 110
 }
 
 pointlight SorcFX3_X4
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 80
 }
 
 pointlight SorcFX3_X5
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 50
 }
 
 pointlight SorcFX3_X6
 {
-  colour 0 0.7 0
+  color 0 0.7 0
   radius 20
 }
 
@@ -777,37 +777,37 @@ class SorcFX3
 //------------------------------------------------------------------------------
 pointlight SorcFX4
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 118
 }
 
 pointlight SorcFX4_X1
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 250
 }
 
 pointlight SorcFX4_X2
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 200
 }
 
 pointlight SorcFX4_X3
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 150
 }
 
 pointlight SorcFX4_X4
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 100
 }
 
 pointlight SorcFX4_X5
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 50
 }
 
@@ -826,37 +826,37 @@ class SorcFX4
 //------------------------------------------------------------------------------
 pointlight Heresiarch_X1
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 250
 }
 
 pointlight Heresiarch_X2
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 210
 }
 
 pointlight Heresiarch_X3
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 170
 }
 
 pointlight Heresiarch_X4
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 130
 }
 
 pointlight Heresiarch_X5
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 90
 }
 
 pointlight Heresiarch_X6
 {
-  colour 0.6 0 0.75
+  color 0.6 0 0.75
   radius 50
 }
 
@@ -875,43 +875,43 @@ class Heresiarch
 //------------------------------------------------------------------------------
 pointlight KoraxSpirit
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 126
 }
 
 pointlight KoraxSpirit_X1
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 120
 }
 
 pointlight KoraxSpirit_X2
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 100
 }
 
 pointlight KoraxSpirit_X3
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 80
 }
 
 pointlight KoraxSpirit_X4
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 60
 }
 
 pointlight KoraxSpirit_X5
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 40
 }
 
 pointlight KoraxSpirit_X6
 {
-  colour 0.85 0.85 0.85
+  color 0.85 0.85 0.85
   radius 20
 }
 

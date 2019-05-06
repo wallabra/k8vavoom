@@ -70,7 +70,7 @@ override int GetBlend()
   {
     Amount = (Amount + 7) >> 3;
     int a = (Amount + 1) * 28;
-    return (BlendColour & 0x00ffffff) | (a << 24);
+    return (BlendColor & 0x00ffffff) | (a << 24);
   }
   return 0;
 }
@@ -78,6 +78,6 @@ override int GetBlend()
 defaultproperties
 {
   EffectTime = 1.0 / 35.0;
-  BlendColour = RGBA(255, 0, 0, 128);
+  BlendColor = RGBA(255, 0, 0, 128);
   bHubPower = true;
 }

@@ -514,7 +514,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
       PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
         LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
         vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
-        BloodColour ? BloodColour : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
+        BloodColor ? BloodColor : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
     }
   }
 

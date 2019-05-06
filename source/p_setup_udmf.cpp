@@ -381,7 +381,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   S.ceiling.MirrorAlpha = 1.0f;
   S.ceiling.LightSourceSector = -1;
   S.params.lightlevel = 160;
-  S.params.LightColour = 0x00ffffff;
+  S.params.LightColor = 0x00ffffff;
   S.seqType = -1; // default seqType
   S.Gravity = 1.0f;  // default sector gravity of 1.0
   S.Zone = -1;
@@ -491,7 +491,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       }
 
       if (Key.strEquCI("lightcolor")) {
-        S.params.LightColour = CheckColor();
+        S.params.LightColor = CheckColor();
         continue;
       }
 
@@ -1106,7 +1106,7 @@ void VUdmfParser::ParseThing () {
       if (Key.strEquCI("arg0str")) {
         //FIXME: actually, this is valid only for ACS specials
         //       this can be color name for dynamic lights too
-        //T.arg1 = M_ParseColour(*CheckString())&0xffffffu;
+        //T.arg1 = M_ParseColor(*CheckString())&0xffffffu;
         arg0str = CheckString();
         hasArg0Str = true;
         continue;
@@ -1293,12 +1293,12 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
           vuint32 Col;
           vuint32 Fade;
           sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, false, true);
-          int TmpTop = TexNumOrColour(*Src.TopTexture, TEXTYPE_Wall, HaveCol, Col);
-          sd->BottomTexture = TexNumOrColour(*Src.BotTexture, TEXTYPE_Wall, HaveFade, Fade);
+          int TmpTop = TexNumOrColor(*Src.TopTexture, TEXTYPE_Wall, HaveCol, Col);
+          sd->BottomTexture = TexNumOrColor(*Src.BotTexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
             for (int j = 0; j < NumSectors; ++j) {
               if (Sectors[j].tag == Tag) {
-                if (HaveCol) Sectors[j].params.LightColour = Col;
+                if (HaveCol) Sectors[j].params.LightColor = Col;
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }
             }

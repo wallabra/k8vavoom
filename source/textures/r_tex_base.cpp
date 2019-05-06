@@ -387,7 +387,7 @@ VTexture *VTexture::GetHighResolutionTexture () {
 void VTexture::FixupPalette (rgba_t *Palette) {
   if (Width < 1 || Height < 1) return;
   check(Pixels);
-  // find black colour for remaping
+  // find black color for remaping
   int black = 0;
   int best_dist = 0x10000;
   for (int i = 1; i < 256; ++i) {
@@ -418,7 +418,7 @@ void VTexture::FixupPalette (rgba_t *Palette) {
 //==========================================================================
 VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, int CMap) {
   for (int i = 0; i < DriverTranslated.Num(); ++i) {
-    if (DriverTranslated[i].Trans == TransTab && DriverTranslated[i].ColourMap == CMap) {
+    if (DriverTranslated[i].Trans == TransTab && DriverTranslated[i].ColorMap == CMap) {
       return &DriverTranslated[i];
     }
   }
@@ -1004,7 +1004,7 @@ void VTexture::checkerFill8 (vuint8 *dest, int width, int height) {
   if (!dest || width < 1 || height < 1) return;
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
-      *dest++ = (((x/8)^(y/8))&1 ? r_white_colour : r_black_colour);
+      *dest++ = (((x/8)^(y/8))&1 ? r_white_color : r_black_color);
     }
   }
 }
@@ -1057,7 +1057,7 @@ void VTexture::checkerFillRGBA (vuint8 *dest, int width, int height) {
 void VTexture::checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height) {
   if (!dest || pitch < 1 || height < 1) return;
   for (int y = 0; y < height; ++y) {
-    *dest = (((x/8)^(y/8))&1 ? r_white_colour : r_black_colour);
+    *dest = (((x/8)^(y/8))&1 ? r_white_color : r_black_color);
     dest += pitch;
   }
 }

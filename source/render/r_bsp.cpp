@@ -306,7 +306,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       //if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha())
       if (doRenderSurf) {
         //GCon->Logf("  SURF!");
-        surfs->Light = (lLev<<24)|LightParams->LightColour;
+        surfs->Light = (lLev<<24)|LightParams->LightColor;
         surfs->Fade = Fade;
         surfs->dlightframe = sub->dlightframe;
         surfs->dlightbits = sub->dlightbits;
@@ -319,7 +319,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     return;
   } // done skybox rendering
 
-  vuint32 sflight = (lLev<<24)|LightParams->LightColour;
+  vuint32 sflight = (lLev<<24)|LightParams->LightColor;
 
 #if 0
   if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40 ||
@@ -328,7 +328,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     GCon->Logf("#%d: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g",
       (int)(ptrdiff_t)(sub->sector-Level->Sectors),
       lLev, LightSourceSector, SideLight, (int)AbsSideLight,
-      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)LightParams->LightColour, sflight, texinfo->Alpha);
+      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)LightParams->LightColor, sflight, texinfo->Alpha);
     //lLev = 250;
     //Fade = 0xffffffff;
     /*
@@ -396,7 +396,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->plane = *(TPlane *)(dseg->seg);
       Surf->texinfo = &Ceil->texinfo;
       Surf->HorizonPlane = Ceil->esecplane.splane; //FIXME: 3dfloor
-      Surf->Light = (lLev<<24)|LightParams->LightColour;
+      Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
       TVec *svs = &Surf->verts[0];
@@ -431,7 +431,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->plane = *(TPlane *)(dseg->seg);
       Surf->texinfo = &Floor->texinfo;
       Surf->HorizonPlane = Floor->esecplane.splane; //FIXME: 3dfloor
-      Surf->Light = (lLev<<24)|LightParams->LightColour;
+      Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
       TVec *svs = &Surf->verts[0];

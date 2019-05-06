@@ -214,12 +214,12 @@ native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth
 // splits text into lines that fit in specified width by inserting newlines (trimRight default is true)
 native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text
-native final void DrawText (int X, int Y, string Text, optional int Colour,
-  optional int BoldColour, optional float Alpha);
+native final void DrawText (int X, int Y, string Text, optional int Color,
+  optional int BoldColor, optional float Alpha);
 // draws a cursor at the end of last drawn string
 native final void DrawCursor ();
-// returns colour ID for specified name
-native static final int FindTextColour (string Name);
+// returns color ID for specified name
+native static final int FindTextColor (string Name);
 
 /*
 final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }

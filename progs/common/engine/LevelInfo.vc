@@ -190,7 +190,7 @@ void RemoveMapMarker (int markerid) {
 // ////////////////////////////////////////////////////////////////////////// //
 // static lights
 native final void AddStaticLight (Entity ent, TVec origin, float radius);
-native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int colour);
+native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int color);
 native final void MoveStaticLightByOwner (Entity ent, TVec origin);
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -959,7 +959,7 @@ final mthing_t *GetPlayerStart (int PNum, int Position, optional bool failIfNotF
 //==========================================================================
 void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
                      TVec velocity, float vrnd, float acceleration, float grav,
-                     int colour, float duration, float ramp, optional TVec accelV)
+                     int color, float duration, float ramp, optional TVec accelV)
 {
 }
 

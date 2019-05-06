@@ -43,7 +43,7 @@ public:
   // texture data formats
   enum ImageType {
     IT_Pal,  // paletised
-    IT_RGBA, // truecolour
+    IT_RGBA, // truecolor
   };
 
   struct __attribute__((aligned(1), packed)) RGB;

@@ -49,14 +49,14 @@ override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, y, Text, IsFocus() ? TextColourFocus : TextColour);
+  DrawText(CursorXOffs, y, Text, IsFocus() ? TextColorFocus : TextColor);
 }
 
 
 defaultproperties {
   TextFont = 'smallfont';
-  TextColour = CR_WHITE;
-  TextColourFocus = CR_YELLOW;
+  TextColor = CR_WHITE;
+  TextColorFocus = CR_YELLOW;
   TextHAlign = hright;
   TextVAlign = vtop;
   Height = 10;

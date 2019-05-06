@@ -526,7 +526,7 @@ public:
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
 
-  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Colour, bool doShadow) override;
+  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
 
   virtual void DrawWorldTexturesPass () override;
@@ -960,7 +960,7 @@ public:
 
   inline void SelectTexture (int level) { p_glActiveTextureARB(GLenum(GL_TEXTURE0_ARB+level)); }
 
-  static inline void SetColour (vuint32 c) {
+  static inline void SetColor (vuint32 c) {
     glColor4ub((vuint8)((c>>16)&255), (vuint8)((c>>8)&255), (vuint8)(c&255), (vuint8)((c>>24)&255));
   }
 
