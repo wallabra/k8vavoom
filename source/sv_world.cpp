@@ -644,12 +644,16 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
   // check opening cache
+#ifdef VV_CACHE_LINE_OPENINGS
   op = linedef->oplist[NoBlockFlags];
   if (op) {
     // opening without floor plane means "no openings available"
     //GCon->Logf("%p: opcache %d hit!", linedef, NoBlockFlags);
     return (op->efloor.splane ? op : nullptr);
   }
+#else
+  op = nullptr;
+#endif
 
   // alas, we cannot cache openings with slopes, so don't even try
   // this is bad, but meh... i can live with it for now
@@ -667,9 +671,11 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     if (fop.top <= bop.bottom || bop.top <= fop.bottom ||
         fop.bottom >= bop.top || bop.bottom >= fop.top)
     {
+#ifdef VV_CACHE_LINE_OPENINGS
       if (hasSlopes0 || hasSlopes1) return nullptr;
       if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
       linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+#endif
       return nullptr;
     }
     // create opening
@@ -703,10 +709,12 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
     // cache it
     if (!hasSlopes0 && !hasSlopes1) {
+#ifdef VV_CACHE_LINE_OPENINGS
       if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
       opening_t *newop = VLevel::AllocOpening();
       newop->copyFrom(dop);
       linedef->oplist[NoBlockFlags] = newop;
+#endif
     }
 
     return dop;
@@ -719,18 +727,22 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false, usePoint);
   if (op0list.length() == 0) {
     // just in case: no front sector openings
+#ifdef VV_CACHE_LINE_OPENINGS
     if (hasSlopes0) return nullptr;
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+#endif
     return nullptr;
   }
 
   BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false, usePoint);
   if (op1list.length() == 0) {
     // just in case: no back sector openings
+#ifdef VV_CACHE_LINE_OPENINGS
     if (hasSlopes0 || hasSlopes1) return nullptr;
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+#endif
     return nullptr;
   }
 
@@ -842,13 +854,16 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   // no intersections?
   if (destcount == 0) {
     // oops
+#ifdef VV_CACHE_LINE_OPENINGS
     if (hasSlopes0 || hasSlopes1) return nullptr;
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
     linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
+#endif
     return nullptr;
   }
 
   // has some intersections, create cache
+#ifdef VV_CACHE_LINE_OPENINGS
   if (!hasSlopes0 && !hasSlopes1) {
     if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
 
@@ -861,7 +876,9 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     }
 
     return linedef->oplist[NoBlockFlags];
-  } else {
+  } else
+#endif
+  {
     // has slopes, cannot cache openings (oops)
     if (destcount > 1) {
       for (unsigned f = 0; f < destcount-1; ++f) {
@@ -1263,6 +1280,36 @@ float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point) {
 
 //==========================================================================
 //
+//  VLevel::ChangeOneSectorInternal
+//
+//  resets all caches and such
+//  used to "fake open" doors and move lifts in bot pathfinder
+//
+//  doesn't move things (so you *HAVE* to restore sector heights)
+//
+//==========================================================================
+void VLevel::ChangeOneSectorInternal (sector_t *sector) {
+  if (!sector) return;
+  CalcSecMinMaxs(sector);
+#ifdef VV_CACHE_LINE_OPENINGS
+  // reset opening cache
+  {
+    line_t **lptr = sector->lines;
+    for (int lcount = sector->linecount; lcount--; ++lptr) {
+      line_t *line = *lptr;
+      if (line->oplistUsed) {
+        //GCon->Logf("%p: opcache invalidated (%u)!", line, line->oplistUsed);
+        for (unsigned f = 0; f < line->oplistUsed; ++f) FreeOpeningList(line->oplist[f]);
+        line->oplistUsed = 0;
+      }
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
 //  VLevel::ChangeSectorInternal
 //
 //  jff 3/19/98 added to just check monsters on the periphery of a moving
@@ -1278,6 +1325,7 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
 
   CalcSecMinMaxs(sector);
 
+#ifdef VV_CACHE_LINE_OPENINGS
   // reset opening cache
   {
     line_t **lptr = sector->lines;
@@ -1290,6 +1338,7 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
       }
     }
   }
+#endif
 
   bool ret = false;
 
@@ -1343,6 +1392,11 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
 }
 
 
+//==========================================================================
+//
+//  VLevel::ChangeSector
+//
+//==========================================================================
 bool VLevel::ChangeSector (sector_t *sector, int crunch) {
   if (!sector || NumSectors == 0) return false; // just in case
   if (!csTouched) {

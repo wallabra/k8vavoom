@@ -370,6 +370,7 @@ private:
   inline CtlLinkIter IterControlLinks (const sector_t *src) { return CtlLinkIter(this, (src ? (int)(ptrdiff_t)(src-Sectors) : -1)); }
 
   bool ChangeSectorInternal (sector_t *sector, int crunch);
+  void ChangeOneSectorInternal (sector_t *sector);
 
 
   void xxHashLinedef (XXH32_state_t *xctx, const line_t &line) const {
@@ -721,6 +722,7 @@ private:
   DECLARE_FUNCTION(PointInSubsector)
   DECLARE_FUNCTION(TraceLine)
   DECLARE_FUNCTION(ChangeSector)
+  DECLARE_FUNCTION(ChangeOneSectorInternal)
   DECLARE_FUNCTION(AddExtraFloor)
   DECLARE_FUNCTION(SwapPlanes)
 

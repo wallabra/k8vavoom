@@ -2617,6 +2617,12 @@ IMPLEMENT_FUNCTION(VLevel, ChangeSector) {
   RET_BOOL(Self->ChangeSector(sec, crunch));
 }
 
+IMPLEMENT_FUNCTION(VLevel, ChangeOneSectorInternal) {
+  P_GET_PTR(sector_t, sec);
+  P_GET_SELF;
+  Self->ChangeOneSectorInternal(sec);
+}
+
 IMPLEMENT_FUNCTION(VLevel, AddExtraFloor) {
   P_GET_PTR(sector_t, dst);
   P_GET_PTR(line_t, line);
