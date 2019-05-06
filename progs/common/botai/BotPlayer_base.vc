@@ -31,162 +31,8 @@
 //  procedures, such as B_CheckStuff and B_SetEnemy.
 //
 //**************************************************************************
-// A-Star node
-class BotPathNode : MiAStarNodeBase;
-
-struct Transition {
-  int subnum;
-  float dist;
-  float moveCost; // +20 for "needUse", arbitrary weight
-  bool needJump;
-  bool needUse;
-}
-
-Level XLevel; // level object (i.e. actual map)
-TVec Origin;
-int ssnum;
-
-// reachable subsectors (should be at least one, zero means "don't know yet")
-array!Transition ssreachable;
-
-// `true` if this node has some impassable 2-sided walls
-// this means that this node should be re-evaluated next time the bot hits it
-// this is done so the bot can notice opened secret doors like one on MAP01, for example
-bool needRecalc;
-
-
-static final BotPathNode CreateNew (Level axlevel) {
-  BotPathNode res = SpawnObject(BotPathNode);
-  res.XLevel = axlevel;
-  return res;
-}
-
-
-override void Destroy () {
-  ssreachable.length = 0;
-  ::Destroy();
-}
-
-
-final bool CanReachSS (GameObject::subsector_t *ss) {
-  if (!ss) return false;
-  int dsnum = ss-&XLevel.Subsectors[0];
-  if (dsnum == ssnum) return true;
-  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
-  return false;
-}
-
-
-final bool CanReachSSByIndex (int dsnum) {
-  if (dsnum < 0 || dsnum >= XLevel.Subsectors.length) return false;
-  if (dsnum == ssnum) return true;
-  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
-  return false;
-}
-
-
-final Transition *FindSSTranstion (GameObject::subsector_t *ss) {
-  if (!ss) return nullptr;
-  int dsnum = ss-&XLevel.Subsectors[0];
-  if (dsnum == ssnum) return nullptr;
-  foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return &tr;
-  return nullptr;
-}
-
-
-defaultproperties {
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class BotPathGraph : MiAStarGraphBase;
-
-BotPlayerBase bot;
-int lastNodeUpdate; // if this is not equal to `bot.lastNodeUpdate`, reset cache
-int currentPos;
-
-
-final void Setup (BotPlayerBase abot) {
-  if (!abot) FatalError("something is very wrong with bot pathfinder");
-  bot = abot;
-}
-
-
-final bool IsComplete () {
-  return (currentPos >= PathArrayLength());
-}
-
-// -1: done
-final int GetNextSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos++)).ssnum;
-  return -1;
-}
-
-// -1: done
-final int GetCurrSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos)).ssnum;
-  return -1;
-}
-
-final int GetPathSSNum (int index) {
-  return BotPathNode(PathArrayNode(index)).ssnum;
-}
-
-
-// returns `false` if there is no path
-final bool BuildPath (int ssStart, int ssEnd) {
-  currentPos = 0;
-  if (ssStart < 0 || ssEnd < 0) return false; // just in case
-  BotPlayerBase abot = bot;
-  if (!abot || !abot.player || abot.player.Health <= 0) return false;
-  // we may need alive bot mobile to re-evaluate nodes
-  Actor botmo = Actor(abot.player.MO);
-  if (!botmo || botmo.Health <= 0) return false; // dead bot cannot go anywhere
-  bot = abot;
-  int sslen = abot.ssnodes.length;
-  if (!sslen || ssStart >= sslen || ssEnd >= sslen) return false;
-  // early exit: same subsector is always reachable
-  if (ssStart == ssEnd && !abot.ssnodes[ssStart]) {
-    // that node doesn't exist yet, so create it (otherwise we have nothing to return)
-    auto node = BotPathNode.CreateNew(botmo.XLevel);
-    node.Origin = botmo.XLevel.GetSubsectorCenter(&botmo.XLevel.Subsectors[ssStart]);
-    node.Origin.z = EntityEx::ONFLOORZ;
-    node.ssnum = ssStart;
-    node.needRecalc = true; // anyway
-    abot.ssnodes[ssStart] = node;
-    PathArrayClear();
-    PathArrayPushNode(node);
-    pathCost = 0;
-    return true;
-  }
-  // both nodes should present
-  if (!abot.ssnodes[ssStart] || !abot.ssnodes[ssEnd]) return false;
-  // invalidate cache, if necessary
-  if (lastNodeUpdate != bot.lastNodeUpdate) {
-    //if (GetCvarB('bot_developer_messages_crumbs')) print("invalidating path cache");
-    lastNodeUpdate = bot.lastNodeUpdate;
-    Reset();
-  }
-  // run solver
-  return Solve(abot.ssnodes[ssStart], abot.ssnodes[ssEnd]);
-}
-
-
-// estimate distance between two nodes
-// use squared distance, because it doesn't matter, so we can avoid `sqrt()` call
-override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
-  return (BotPathNode(start).Origin-BotPathNode(end).Origin).length2DSquared;
-}
-
-
-// should always generate the same set for the same node,
-// so we cannot update nodes here
-override void AdjacentCost (MiAStarNodeBase node) {
-  foreach (const ref auto tr; BotPathNode(node).ssreachable) {
-    PushAdjacentCost(bot.ssnodes[tr.subnum], tr.moveCost);
-  }
-}
-
+//#include "BotPlayer_pather_old.vc"
+#include "BotPlayer_pather.vc"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -355,8 +201,10 @@ array!Weapon weaponList;
 // bot will ignore item if it cannot obtain it for some time
 dictionary!(Actor, float) itemIgnoreTimeout;
 
+#ifdef BOT_PATHER_OLD
 // nodes for subsectors
 array!BotPathNode ssnodes;
+#endif
 int lastNodeUpdate = 1; // update when some node info changed, so planners can reset caches; never zero
 
 // current path, subsector numbers
@@ -428,8 +276,10 @@ final void UpdateCvarCache () {
 //
 //==========================================================================
 override void Destroy () {
+#ifdef BOT_PATHER_OLD
   foreach (ref BotPathNode node; ssnodes) delete node;
   ssnodes.length = 0;
+#endif
   delete pather;
   ::Destroy();
 }
@@ -441,6 +291,7 @@ override void Destroy () {
 //
 //==========================================================================
 final void DumpNodes () {
+#ifdef BOT_PATHER_OLD
   EntityEx mo = EntityEx(player.MO);
   if (!mo) return;
   print("=== NODES FOR '%s' ===", player.PlayerName);
@@ -451,6 +302,18 @@ final void DumpNodes () {
       print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
   }
+#else
+  EntityEx mo = EntityEx(player.MO);
+  if (!mo || !pather) return;
+  print("=== NODES FOR '%s' ===", player.PlayerName);
+  foreach (int nidx, BotPathNode node; pather.nodes) {
+    if (!node) continue;
+    print(" node #%s (%s) has #%d transitions (needRefresh=%B)", nidx, node.ssnum, node.ssreachable.length, node.needRefresh);
+    foreach (int tridx, const ref auto tr; node.ssreachable) {
+      print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
+    }
+  }
+#endif
 }
 
 
@@ -504,7 +367,13 @@ final bool HavePathToSS (subsector_t *ssdest) {
   if (!pather) return false;
   if (!ssdest) return false;
   if (!botmo.SubSector) return false;
+#ifdef BOT_PATHER_OLD
   return pather.BuildPath(botmo.SubSector-&botmo.XLevel.Subsectors[0], ssdest-&botmo.XLevel.Subsectors[0]);
+#else
+  TVec dest = botmo.XLevel.GetSubsectorCenter(ssdest);
+  dest.z = EntityEx::ONFLOORZ;
+  return pather.BuildPath(botmo.Origin, botmo.SubSector, dest, ssdest);
+#endif
 }
 
 
@@ -515,9 +384,13 @@ final bool HavePathToSS (subsector_t *ssdest) {
 //  doesn't invalidate current path
 //
 //==========================================================================
-final bool HavePathToPoint (TVec dest) {
-  subsector_t *ss = botmo.XLevel.PointInSubsector(dest);
-  return HavePathToSS(ss);
+final bool HavePathToPoint (TVec dest, optional subsector_t *destsub) {
+#ifdef BOT_PATHER_OLD
+  if (!destsub) destsub = botmo.XLevel.PointInSubsector(dest);
+  return HavePathToSS(destsub);
+#else
+  return pather.BuildPath(botmo.Origin, botmo.SubSector, dest, destsub);
+#endif
 }
 
 
@@ -533,7 +406,7 @@ final void TestFindPathTo (TVec dest) {
   if (!botmo) return;
   subsector_t *ss = botmo.XLevel.PointInSubsector(dest);
   if (!ss) return;
-  if (!HavePathToSS(ss)) {
+  if (!HavePathToPoint(dest, ss)) {
     print("bot '%s' cannot find path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
   } else {
     print("bot '%s' found path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
@@ -584,6 +457,7 @@ final bool IsGoodMapPosition (ref TVec pos) {
 //
 //==========================================================================
 final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
+#ifdef BOT_PATHER_OLD
   if (!ss) return;
   botmo = Actor(player.MO);
   if (!botmo) return;
@@ -723,6 +597,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
       pather.lastNodeUpdate = 0; // so the cache will be invalidated on next path building
     }
   }
+#endif
 }
 
 
@@ -732,8 +607,10 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
 //
 //==========================================================================
 final void CheckAndDropNode () {
+#ifdef BOT_PATHER_OLD
   if (!botmo.SubSector) return;
   CheckAndDropNodeAt(botmo.SubSector, atBotOrigin:true);
+#endif
 }
 
 
@@ -1036,7 +913,7 @@ Actor FindAllyToSupport (bool allowESP) {
       auto plr = player.Level.Game.Players[i];
       if (!plr) continue;
       if (!plr.bIsBot && plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
-        if (HavePathToSS(plr.MO.SubSector)) {
+        if (HavePathToPoint(plr.MO.Origin, plr.MO.SubSector)) {
           if (bot_developer_messages_path) print("*** ESP activated! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
           UseCurrentPath();
           break;
@@ -1199,7 +1076,7 @@ void Scan () {
           // it is ok to obtain, remove from list
           itemIgnoreTimeout.del(actor);
         }
-        if (CheckItem(actor) && HavePathToSS(actor.SubSector)) {
+        if (CheckItem(actor) && HavePathToPoint(actor.Origin, actor.SubSector)) {
           if (bot_developer_messages_items) print("bot '%s' wants %s", player.PlayerName, actor.Class);
           UseCurrentPath();
           item = actor;
@@ -1229,7 +1106,7 @@ void Scan () {
       int idx = round(FRandomFull()*otherItems.length)%otherItems.length;
       Actor act = otherItems[idx];
       otherItems.remove(idx);
-      if (CheckItem(act) && HavePathToSS(act.SubSector)) {
+      if (CheckItem(act) && HavePathToPoint(act.Origin, act.SubSector)) {
         if (bot_developer_messages_items) print("going to unseen item %C", act);
         UseCurrentPath();
         item = act;
@@ -1800,7 +1677,11 @@ final bool FollowPath () {
       }
 
       if (bot_run_to_subsector_center) {
+#ifdef BOT_PATHER_OLD
         BotPathNode node = ssnodes[currPath[currDestNodeIdx+1]];
+#else
+        BotPathNode node = pather.nodes[currPath[currDestNodeIdx+1]];
+#endif
 
         float dist = (botmo.Origin-node.Origin).length2D;
         bool canReach = botmo.TracePath(pangle, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true);
@@ -1808,7 +1689,11 @@ final bool FollowPath () {
 
         if (!canReach) {
           // cannot reach, try to get to current subsector center
+#ifdef BOT_PATHER_OLD
           node = ssnodes[currPath[currDestNodeIdx]];
+#else
+          node = pather.nodes[currPath[currDestNodeIdx]];
+#endif
           dist = (botmo.Origin-node.Origin).length2D;
           if (dist > botmo.Radius*6) {
             if (bot_developer_messages_path) print("bot '%s' is going to center of subsector #%d for #%s (%s left)", player.PlayerName, ssnum, currTime-lastSSChangeTime, dist-botmo.Radius*6);
@@ -1827,7 +1712,11 @@ final bool FollowPath () {
       // bot in a current node, go to the next one
       ++currDestNodeIdx;
     } else {
+#ifdef BOT_PATHER_OLD
       BotPathNode node = ssnodes[currPath[currDestNodeIdx]];
+#else
+      BotPathNode node = pather.nodes[currPath[currDestNodeIdx]];
+#endif
       // bot is not in a current node, setup timer
       if (currAlienNodeTime) {
         // more than 3 seconds away from our destination node?
@@ -1893,7 +1782,7 @@ void Roam () {
   */
 
   if (item && !CheckTo(item.Origin)) {
-    if (!HavePathToSS(item.SubSector)) {
+    if (!HavePathToPoint(item.Origin, item.SubSector)) {
       // forget for some time
       PutItemToIgnoreList(item, 1.0/4.0);
       item = none;
@@ -1932,7 +1821,7 @@ void Roam () {
 
   if (item) {
     dest = item.Origin;
-    if (HavePathToSS(item.SubSector) || CanGetCloserTo(dest)) {
+    if (HavePathToPoint(dest, item.SubSector) || CanGetCloserTo(dest)) {
       destValid = true;
       if (bot_developer_messages_roam || bot_developer_messages_items) print("bot '%s' is going to item at %s from %s", player.PlayerName, dest, botmo.Origin);
       //if (botmo.DistTo2(item) <= botmo.Radius*2) noRun = true;
@@ -1941,7 +1830,7 @@ void Roam () {
 
   if (node) {
     dest = node.Origin;
-    if (HavePathToSS(node.SubSector) || CanGetCloserTo(dest)) {
+    if (HavePathToPoint(dest, node.SubSector) || CanGetCloserTo(dest)) {
       destValid = true;
       if (bot_developer_messages_roam) print("bot '%s' is going to node at %s from %s", player.PlayerName, dest, botmo.Origin);
     }
@@ -2552,7 +2441,6 @@ void BotTick (float deltaTime) {
   //print("%s health is %s (%s)", player.PlayerName, player.Health, botmo.Health);
 
   bool doReplan = (lastThinkTic != currTic);
-  lastThinkTic = currTic;
 
   if (player.Health <= 0 || doReplan) {
     player.ForwardMove = 0.0;
@@ -2572,6 +2460,8 @@ void BotTick (float deltaTime) {
     return;
   }
 
+  lastThinkTic = currTic;
+
   int ssnum = botmo.SubSector-&botmo.XLevel.Subsectors[0];
   if (ssnum != lastSubsector) {
     lastSubsector = ssnum;
@@ -2580,6 +2470,14 @@ void BotTick (float deltaTime) {
   }
 
   if (doReplan) {
+#ifndef BOT_PATHER_OLD
+    // for new pather
+    if (!(++lastNodeUpdate)) {
+      lastNodeUpdate = 1;
+      pather.lastNodeUpdate = 0; // so the cache will be invalidated on next path building
+    }
+#endif
+
     // weed out any bad destinations/enemies
     CheckStuff();
 
@@ -2637,7 +2535,9 @@ void OnBeginPlay () {
   // create pather
   if (!pather) {
     pather = SpawnObject(BotPathGraph);
+#ifdef BOT_PATHER_OLD
     pather.Setup(self);
+#endif
   }
 
   int botskill = 4;
@@ -2728,6 +2628,7 @@ void OnBeginPlay () {
 void OnSpawn () {
   UpdateCvarCache();
 
+#ifdef BOT_PATHER_OLD
   if (ssnodes.length != player.MO.XLevel.Subsectors.length || lastMapHash != player.MO.XLevel.MapHash) {
     lastMapHash = player.MO.XLevel.MapHash;
     foreach (ref BotPathNode node; ssnodes) delete node;
@@ -2735,6 +2636,14 @@ void OnSpawn () {
     foreach (ref BotPathNode node; ssnodes) node = none;
     lastSubsector = -1;
   }
+#else
+  if (pather.nodes.length != player.MO.XLevel.Subsectors.length || lastMapHash != player.MO.XLevel.MapHash) {
+    lastMapHash = player.MO.XLevel.MapHash;
+    lastSubsector = -1;
+    pather.Setup(self);
+    print("bot '%s' created %s path nodes", player.PlayerName, pather.nodes.length);
+  }
+#endif
 
   ITarget = none;
   Actor item = none;
