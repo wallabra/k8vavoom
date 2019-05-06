@@ -540,19 +540,21 @@ bool VScriptParser::GetString () {
       String += ch;
     }
   } else if (CMode) {
-    if ((ScriptPtr[0] == '&' && ScriptPtr[1] == '&') ||
-        (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
-        (ScriptPtr[0] == '=' && ScriptPtr[1] == '=') ||
-        (ScriptPtr[0] == '!' && ScriptPtr[1] == '=') ||
-        (ScriptPtr[0] == '>' && ScriptPtr[1] == '=') ||
-        (ScriptPtr[0] == '<' && ScriptPtr[1] == '=') ||
-        (ScriptPtr[0] == '<' && ScriptPtr[1] == '<') ||
-        (ScriptPtr[0] == '>' && ScriptPtr[1] == '>') ||
-        (ScriptPtr[0] == ':' && ScriptPtr[1] == ':'))
+    if (ScriptPtr[1] == '=' && strchr("=!<>+-*/%&|^~", ScriptPtr[0])) {
+      // special double-character token
+      String += *ScriptPtr++;
+      String += *ScriptPtr++;
+    } else if ((ScriptPtr[0] == '&' && ScriptPtr[1] == '&') ||
+               (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
+               (ScriptPtr[0] == '<' && ScriptPtr[1] == '<') ||
+               (ScriptPtr[0] == '>' && ScriptPtr[1] == '>') ||
+               (ScriptPtr[0] == ':' && ScriptPtr[1] == ':'))
     {
       // special double-character token
       String += *ScriptPtr++;
       String += *ScriptPtr++;
+      // `>>>`
+      if (ScriptPtr[0] == '>') String += *ScriptPtr++;
     } else if (CharClassifier::isNumStart(ScriptPtr, AllowNumSign)) {
       // number
       if (ScriptPtr[0] == '+' || ScriptPtr[0] == '-') String += *ScriptPtr++;
