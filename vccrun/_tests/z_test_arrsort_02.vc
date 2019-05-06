@@ -1,0 +1,59 @@
+class Main : Object;
+
+struct Data {
+  string s;
+  int v;
+}
+
+
+final int cmpfn (const ref Data a, const ref Data b) {
+  //writeln("CMP: a=<", a.s, ">; b=<", b.s, ">; less=", (a.s < b.s));
+  if (a.v < b.v) return -1;
+  if (a.v > b.v) return 1;
+  return 0;
+}
+
+
+void test0 () {
+  array!Data arr;
+  arr.alloc().v = 69;
+  arr.alloc().v = 42;
+  writeln("before:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+  arr.sort(&cmpfn);
+  writeln("after:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+}
+
+
+void test1 () {
+  array!Data arr;
+  arr.alloc().v = 42;
+  arr.alloc().v = 69;
+  writeln("before:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+  arr.sort(&cmpfn);
+  writeln("after:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+}
+
+
+void test2 () {
+  array!Data arr;
+  arr.alloc().v = 42;
+  arr.alloc().v = 42;
+  writeln("before:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+  arr.sort(&cmpfn);
+  writeln("after:");
+  foreach (auto n, ref auto v; arr) writeln("  ", n, ": s=<", v.s, ">; v=", v.v);
+}
+
+
+void main () {
+  test0();
+  writeln("===");
+  test1();
+  writeln("===");
+  test2();
+}
