@@ -24,155 +24,45 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenPlayerSetup : MenuScreen;
+class MenuScreenPlayerSetupHexen : replaces(MenuScreenPlayerSetup);
 
-MenuSpriteAnim    Anim;
-MenuInputLine   PName;
-MenuChoiceSlider  ColR;
-MenuChoiceSlider  ColG;
-MenuChoiceSlider  ColB;
-MenuChoiceEnum    EPClass;
-int         PClass;
 
 //==========================================================================
 //
-//  CreateChoices
+//  CreateClasses
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  int     currentY;
-
-  R_InstallSprite("PLAY", 500);
-  R_InstallSprite("CLER", 501);
-  R_InstallSprite("MAGE", 502);
-
-  currentY = ChoicesStartY;
-
-  PName = MenuInputLine(NewChild(MenuInputLine));
-  PName.SetOrigin(ChoicesStartX + 10, ChoicesStartY);
-  PName.CursorXOffs = -10;
-  PName.Text = "Name";
-  PName.Value = GetCvarS('Name');
-  PName.ValueChanged = &ChangeName;
-  currentY += PName.Height;
-
-  EPClass = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  EPClass.SetOrigin(ChoicesStartX, currentY);
-  EPClass.Text = "Class";
-  EPClass.AddItem("fighter");
-  EPClass.AddItem("cleric");
-  EPClass.AddItem("mage");
-  EPClass.SetInitialValue(GetCvar('class'));
-  EPClass.ValueChanging = &ChangeClass;
-  currentY += EPClass.Height;
-
-  int Col = ParseColor(GetCvarS('color'));
-
-  ColR = NewChild(MenuChoiceSlider);
-  ColR.SetOrigin(ChoicesStartX, currentY);
-  ColR.Text = "Red";
-  ColR.ValueDelta = 0.1;
-  ColR.SetInitialValue(float((Col >> 16) & 0xff) / 255.0);
-  ColR.ValueChanging = &ChangeColor;
-  currentY += ColR.Height;
-
-  ColG = NewChild(MenuChoiceSlider);
-  ColG.SetOrigin(ChoicesStartX, currentY);
-  ColG.Text = "Green";
-  ColG.ValueDelta = 0.1;
-  ColG.SetInitialValue(float((Col >> 8) & 0xff) / 255.0);
-  ColG.ValueChanging = &ChangeColor;
-  currentY += ColG.Height;
-
-  ColB = NewChild(MenuChoiceSlider);
-  ColB.SetOrigin(ChoicesStartX, currentY);
-  ColB.Text = "Blue";
-  ColB.ValueDelta = 0.1;
-  ColB.SetInitialValue(float(Col & 0xff) / 255.0);
-  ColB.ValueChanging = &ChangeColor;
-  currentY += ColB.Height;
-
-  Anim = MenuSpriteAnim(NewChild(MenuSpriteAnim));
-  Anim.SetPos(260, 140);
-  Anim.SprDef = 500;
-  Anim.Speed = 8;
-  Anim.NumFrames = 4;
-  Anim.Color = Col;
-
-  PClass = int(EPClass.Value);
-  SetPClass();
+override void CreateClasses () {
+  {
+    auto cls = PClasses.alloc();
+    cls.sprite = "PLAY";
+    cls.className = "fighter";
+  }
+  {
+    auto cls = PClasses.alloc();
+    cls.sprite = "CLER";
+    cls.className = "cleric";
+  }
+  {
+    auto cls = PClasses.alloc();
+    cls.sprite = "MAGE";
+    cls.className = "mage";
+  }
 }
 
-//==========================================================================
-//
-//  ChangeName
-//
-//==========================================================================
-
-void ChangeName(Object Sender)
-{
-  SetCvarS('Name', PName.Value);
-}
-
-//==========================================================================
-//
-//  ChangeColor
-//
-//==========================================================================
-
-bool ChangeColor(Object Sender, float newValue)
-{
-  float r = Sender == ColR ? newValue : ColR.Value;
-  float g = Sender == ColG ? newValue : ColG.Value;
-  float b = Sender == ColB ? newValue : ColB.Value;
-  int Col = RGBA(int(r * 255.0), int(g * 255.0), int(b * 255.0), 255);
-
-  SetCvarS('color', va("%x %x %x", int(r * 255.0), int(g * 255.0), int(b * 255.0)));
-  Anim.Color = Col;
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeClass
-//
-//==========================================================================
-
-bool ChangeClass(Object Sender, float newValue)
-{
-  SetCvar('class', int(newValue));
-  PClass = int(newValue);
-  SetPClass();
-  return true;
-}
 
 //==========================================================================
 //
 //  SetPClass
 //
 //==========================================================================
-
-void SetPClass()
-{
-  Anim.SprDef = 500 + PClass;
-  if (PClass == HexenDefs::PCLASS_FIGHTER)
-  {
+override void SetPClass () {
+  ::SetPClass();
+  if (PClass == HexenDefs::PCLASS_FIGHTER) {
     Anim.TranslStart = 246;
     Anim.TranslEnd = 254;
-  }
-  else
-  {
+  } else {
     Anim.TranslStart = 146;
     Anim.TranslEnd = 163;
   }
-}
-
-defaultproperties
-{
-  ChoicesStartX = 64;
-  ChoicesStartY = 40;
-  SelectorType = MenuSelector_SmallRight;
-  Title = "PLAYER SETUP";
 }

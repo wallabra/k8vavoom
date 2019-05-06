@@ -1,0 +1,219 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+class MenuScreenNewNetGame : MenuScreen;
+
+MenuChoiceEnum Players;
+MenuChoiceEnum Monsters;
+MenuChoiceEnum DeathMatch;
+MenuChoiceEnum Skill;
+MenuChoiceEnum TimeLimit;
+MenuChoiceEnum Episode;
+MenuChoiceEnum Level;
+
+
+//==========================================================================
+//
+//  CreateCvarName
+//
+//==========================================================================
+name CreateCvarName (name base) {
+  return name(va("_netgame_%s_%s_", GetCvarS('game'), base));
+}
+
+
+//==========================================================================
+//
+//  CreateEpisodeList
+//
+//  return episode names (if there are any)
+//  don't add anything if there is only one episode
+//
+//==========================================================================
+void CreateEpisodeList (out array!string epnames) {
+}
+
+
+//==========================================================================
+//
+//  CreateMapList
+//
+//==========================================================================
+void CreateMapList (int episode, out array!string mapnames) {
+}
+
+
+//==========================================================================
+//
+//  GetMapName
+//
+//==========================================================================
+string GetMapName (int episode, int map) {
+  return "";
+}
+
+
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
+override void CreateChoices () {
+  MenuTextButton startGame = MenuTextButton(NewChild(MenuSmallTextButton));
+  startGame.SetOrigin(ChoicesStartX, currentY);
+  startGame.Text = "Start Game";
+  startGame.Activated = &ActivateStartNewGame;
+  currentY += startGame.Height;
+
+  Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  Players.SetOrigin(ChoicesStartX, currentY);
+  Players.customHelpText =
+    "Please note that most standard levels support only up to 4 players.\n"~
+    "If you will try to spawn more players, the game will crash.";
+  Players.Text = "Max players";
+  Players.AddItem("2");
+  Players.AddItem("3");
+  Players.AddItem("4");
+  Players.AddItem("5");
+  Players.AddItem("6");
+  Players.AddItem("7");
+  Players.AddItem("8");
+  Players.SetSessionCvar(CreateCvarName('max_players'), 2);
+  currentY += Players.Height;
+
+  Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Monsters.SetOrigin(ChoicesStartX, currentY);
+  Monsters.customHelpText = "You will probably want to turn this 'ON' for coop.";
+  Monsters.Text = "Monsters";
+  Monsters.SetSessionCvar(CreateCvarName('allow_monsters'), 0);
+  currentY += Monsters.Height;
+
+  DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  DeathMatch.SetOrigin(ChoicesStartX, currentY);
+  DeathMatch.Text = "Game type";
+  DeathMatch.AddItem("Cooperative");
+  DeathMatch.AddItem("Classic Deathmatch");
+  DeathMatch.AddItem("AltDeath Deathmatch");
+  DeathMatch.SetSessionCvar(CreateCvarName('type'), 2);
+  currentY += DeathMatch.Height;
+
+  Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  Skill.SetOrigin(ChoicesStartX, currentY);
+  Skill.Text = "Skill";
+  for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
+  Skill.SetSessionCvar(CreateCvarName('skill'), 2);
+  currentY += Skill.Height;
+
+  TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  TimeLimit.SetOrigin(ChoicesStartX, currentY);
+  TimeLimit.Text = "Time limit";
+  TimeLimit.AddItem("None");
+  TimeLimit.AddItem("5 mins");
+  TimeLimit.AddItem("10 mins");
+  TimeLimit.AddItem("15 mins");
+  TimeLimit.AddItem("20 mins");
+  TimeLimit.AddItem("25 mins");
+  TimeLimit.AddItem("30 mins");
+  TimeLimit.AddItem("35 mins");
+  TimeLimit.AddItem("40 mins");
+  TimeLimit.AddItem("45 mins");
+  TimeLimit.AddItem("50 mins");
+  TimeLimit.AddItem("55 mins");
+  TimeLimit.AddItem("1 hour");
+  TimeLimit.SetSessionCvar(CreateCvarName('time_limit'), 0);
+  currentY += TimeLimit.Height;
+
+  array!string epnames;
+  CreateEpisodeList(out epnames);
+  if (epnames.length) {
+    Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+    Episode.SetOrigin(ChoicesStartX, currentY);
+    Episode.Text = "Episode";
+    foreach (string ename; epnames) Episode.AddItem(ename);
+    Episode.SetSessionCvar(CreateCvarName('episode'), 0);
+    Episode.ValueChanging = &onEpisodeChanged;
+    currentY += Episode.Height;
+  } else {
+    Episode = none;
+  }
+
+  Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  Level.SetOrigin(ChoicesStartX, currentY);
+  Level.Text = "Level";
+  Level.SetSessionCvar(CreateCvarName('mapindex'), 0);
+  currentY += Level.Height;
+
+  onEpisodeChanged(none, (Episode ? Episode.Value : 0));
+}
+
+
+//==========================================================================
+//
+//  onEpisodeChanged
+//
+//==========================================================================
+bool onEpisodeChanged (Object Sender, float newValue) {
+  Level.ClearAndReset();
+
+  array!string maplist;
+  CreateMapList(int(newValue), out maplist);
+
+  if (maplist.length == 0) {
+    maplist[$] = "NO MAPS!";
+  } else {
+    foreach (string mname; maplist) {
+      Level.AddItem(mname);
+    }
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  ActivateStartNewGame
+//
+//==========================================================================
+void ActivateStartNewGame (Object Sender) {
+  CmdBuf_AddText("Disconnect\n");
+  string mapname = GetMapName((Episode ? int(Episode.Value) : 0), int(Level.Value));
+  if (!mapname || mapname == "NO MAPS!") Error("cannot start a map!");
+  CmdBuf_AddText("MaxPlayers %d\n", Players.Value+2);
+  CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
+  CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
+  CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value*5);
+  CmdBuf_AddText("Skill %d\n", Skill.Value);
+  CmdBuf_AddText("Map \"%q\"\n", mapname);
+}
+
+
+defaultproperties {
+  ChoicesStartX = 128;
+  ChoicesStartY = 40;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "NEW GAME";
+}

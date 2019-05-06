@@ -26,7 +26,7 @@
 //**************************************************************************
 class MenuScreenPlayerSetup : MenuScreen;
 
-array!name SkinNames;
+//array!name SkinNames;
 
 MenuInputLine PlayerName;
 MenuChoiceSlider ColR;
@@ -34,6 +34,30 @@ MenuChoiceSlider ColG;
 MenuChoiceSlider ColB;
 MenuSpriteAnim Anim;
 MenuModel Mdl;
+MenuChoiceEnum EPClass;
+int PClass;
+
+
+struct ClassInfo {
+  string sprite; // "PLAY"
+  string className;
+}
+
+array!ClassInfo PClasses;
+
+
+//==========================================================================
+//
+//  CreateClasses
+//
+//==========================================================================
+void CreateClasses () {
+  {
+    auto cls = PClasses.alloc();
+    cls.sprite = "PLAY";
+    cls.className = "Doomguy";
+  }
+}
 
 
 //==========================================================================
@@ -42,47 +66,65 @@ MenuModel Mdl;
 //
 //==========================================================================
 override void CreateChoices () {
-  void *model;
-  name SkinName;
-  string SkinDesc;
-  int i;
-  int currY = ChoicesStartY;
+  PClasses.clear();
+  CreateClasses();
+
+  if (PClasses.length == 0) {
+    auto cls = PClasses.alloc();
+    cls.sprite = "PLAY";
+    cls.className = "Doomguy";
+  }
+
+  foreach (auto idx, const ref auto pcl; PClasses) {
+    R_InstallSprite(pcl.sprite, idx+500);
+  }
+
 
   PlayerName = MenuInputLine(NewChild(MenuInputLine));
-  PlayerName.SetOrigin(ChoicesStartX+10, currY);
+  PlayerName.SetOrigin(ChoicesStartX+10, currentY);
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
   PlayerName.Value = GetCvarS('Name');
   PlayerName.ValueChanged = &ChangeName;
-  currY += PlayerName.Height;
+  currentY += PlayerName.Height;
+
+  if (PClasses.length > 1) {
+    EPClass = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+    EPClass.SetOrigin(ChoicesStartX, currentY);
+    EPClass.Text = "Class";
+    foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
+    EPClass.SetInitialValue(GetCvar('class'));
+    EPClass.ValueChanging = &ChangeClass;
+    currentY += EPClass.Height;
+  }
+
 
   int Col = ParseColor(GetCvarS('color'));
 
   ColR = NewChild(MenuChoiceSlider);
-  ColR.SetOrigin(ChoicesStartX, currY);
+  ColR.SetOrigin(ChoicesStartX, currentY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(float((Col>>16)&0xff)/255.0);
   ColR.ValueChanging = &ChangeColor;
-  currY += ColR.Height;
+  currentY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
-  ColG.SetOrigin(ChoicesStartX, currY);
+  ColG.SetOrigin(ChoicesStartX, currentY);
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(float((Col>>8)&0xff)/255.0);
   ColG.ValueChanging = &ChangeColor;
-  currY += ColG.Height;
+  currentY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
-  ColB.SetOrigin(ChoicesStartX, currY);
+  ColB.SetOrigin(ChoicesStartX, currentY);
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(float(Col&0xff)/255.0);
   ColB.ValueChanging = &ChangeColor;
-  currY += ColB.Height;
+  currentY += ColB.Height;
 
-  R_InstallSprite("PLAY", 500);
 
   Anim = MenuSpriteAnim(NewChild(MenuSpriteAnim));
   Anim.SetPos(220, 150);
@@ -93,8 +135,12 @@ override void CreateChoices () {
   Anim.TranslEnd = 127;
   Anim.Color = Col;
 
-  model = InstallModel("models/players/doomguy/player.xml");
+  /* NOT YET
+  auto model = InstallModel("models/players/doomguy/player.xml");
   if (model) {
+    name SkinName;
+    string SkinDesc;
+
     SetCvarS('model', "doomguy");
 
     Mdl = MenuModel(NewChild(MenuModel));
@@ -105,6 +151,10 @@ override void CreateChoices () {
     Mdl.TranslEnd = 127;
     Mdl.Color = Col;
   }
+  */
+
+  PClass = (EPClass ? int(EPClass.Value) : 0);
+  SetPClass();
 }
 
 
@@ -133,6 +183,29 @@ bool ChangeColor (Object Sender, float newValue) {
   Anim.Color = Col;
   if (Mdl) Mdl.Color = Col;
   return true;
+}
+
+
+//==========================================================================
+//
+//  ChangeClass
+//
+//==========================================================================
+bool ChangeClass (Object Sender, float newValue) {
+  SetCvar('class', int(newValue));
+  PClass = int(newValue);
+  SetPClass();
+  return true;
+}
+
+
+//==========================================================================
+//
+//  SetPClass
+//
+//==========================================================================
+void SetPClass () {
+  Anim.SprDef = 500+PClass;
 }
 
 

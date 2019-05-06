@@ -24,164 +24,45 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenNewNetGame : MenuScreen;
+class MenuScreenNewNetGameHeretic : replaces(MenuScreenNewNetGame);
 
-MenuChoiceEnum    Players;
-MenuChoiceEnum    Monsters;
-MenuChoiceEnum    DeathMatch;
-MenuChoiceEnum    Skill;
-MenuChoiceEnum    TimeLimit;
-MenuChoiceEnum    Episode;
-MenuChoiceEnum    Level;
 
 //==========================================================================
 //
-//  CreateChoices
+//  CreateEpisodeList
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  MenuTextButton Btn;
-  int currY = ChoicesStartY;
-  int i;
-
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currY);
-  Btn.Text = "Start Game";
-  Btn.Activated = &ActivateStartNewGame;
-  currY += Btn.Height;
-
-  Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Players.SetOrigin(ChoicesStartX, currY);
-  Players.Text = "Max players";
-  Players.AddItem("2");
-  Players.AddItem("3");
-  Players.AddItem("4");
-  Players.AddItem("5");
-  Players.AddItem("6");
-  Players.AddItem("7");
-  Players.AddItem("8");
-  Players.SetInitialValue(2);
-  currY += Players.Height;
-
-  Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Monsters.SetOrigin(ChoicesStartX, currY);
-  Monsters.Text = "Monsters";
-  currY += Monsters.Height;
-
-  DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  DeathMatch.SetOrigin(ChoicesStartX, currY);
-  DeathMatch.Text = "Game type";
-  DeathMatch.AddItem("Cooperative");
-  DeathMatch.AddItem("Deathmatch");
-  DeathMatch.SetInitialValue(1);
-  currY += DeathMatch.Height;
-
-  Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Skill.SetOrigin(ChoicesStartX, currY);
-  Skill.Text = "Skill";
-  for (i = 0; i < P_GetNumSkills(); i++)
-  {
-    Skill.AddItem(P_GetSkillDef(i)->Name);
-  }
-  Skill.SetInitialValue(2);
-  currY += Skill.Height;
-
-  TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  TimeLimit.SetOrigin(ChoicesStartX, currY);
-  TimeLimit.Text = "Time limit";
-  TimeLimit.AddItem("0");
-  TimeLimit.AddItem("5");
-  TimeLimit.AddItem("10");
-  TimeLimit.AddItem("15");
-  TimeLimit.AddItem("20");
-  TimeLimit.AddItem("25");
-  TimeLimit.AddItem("30");
-  TimeLimit.AddItem("35");
-  TimeLimit.AddItem("40");
-  TimeLimit.AddItem("45");
-  TimeLimit.AddItem("50");
-  TimeLimit.AddItem("55");
-  TimeLimit.AddItem("60");
-  currY += TimeLimit.Height;
-
-  Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Episode.SetOrigin(ChoicesStartX, currY);
-  Episode.Text = "Episode";
-  Episode.AddItem("CITY OF THE DAMNED");
-  if (WadLumpPresent('e2m1'))
-  {
-    Episode.AddItem("HELL'S MAW");
-    Episode.AddItem("THE DOME OF D'SPARIL");
-    if (WadLumpPresent('extended'))
-    {
-      Episode.AddItem("THE OSSUARY");
-      Episode.AddItem("THE STAGNANT DEMESNE");
+override void CreateEpisodeList (out array!string epnames) {
+  epnames[$] = "CITY OF THE DAMNED";
+  if (WadLumpPresent('e2m1')) {
+    epnames[$] = "HELL'S MAW";
+    epnames[$] = "THE DOME OF D'SPARIL";
+    if (WadLumpPresent('extended')) {
+      epnames[$] = "THE OSSUARY";
+      epnames[$] = "THE STAGNANT DEMESNE";
     }
   }
-  Episode.ValueChanging = &ChangeEpisode;
-  currY += Episode.Height;
-
-  Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Level.SetOrigin(ChoicesStartX, currY);
-  Level.Text = "Level";
-  currY += Level.Height;
-
-  InitMapList(0);
 }
 
+
 //==========================================================================
 //
-//  InitMapList
+//  CreateMapList
 //
 //==========================================================================
-
-void InitMapList(int epi)
-{
-  int i;
-
-  for (i = 0; i < 9; i++)
-  {
+override void CreateMapList (int episode, out array!string mapnames) {
+  foreach (auto i; 0..9) {
     //Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
-    Level.AddItem(P_GetMapName(epi*9+i));
+    mapnames[$] = P_GetMapName(episode*9+i);
   }
-  Level.Value = 0;
 }
 
-//==========================================================================
-//
-//  ChangeEpisode
-//
-//==========================================================================
-
-bool ChangeEpisode(Object Sender, float newValue)
-{
-  InitMapList(int(newValue));
-  return true;
-}
 
 //==========================================================================
 //
-//  ActivateStartNewGame
+//  GetMapName
 //
 //==========================================================================
-
-void ActivateStartNewGame(Object Sender)
-{
-  CmdBuf_AddText("Disconnect\n");
-  CmdBuf_AddText("MaxPlayers %d\n", Players.Value + 2);
-  CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
-  CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
-  CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value * 5);
-  CmdBuf_AddText("Skill %d\n", Skill.Value);
-  CmdBuf_AddText("Map E%dM%d\n", Episode.Value + 1, Level.Value + 1);
-}
-
-defaultproperties
-{
-  ChoicesStartX = 128;
-  ChoicesStartY = 40;
-  SelectorType = MenuSelector_SmallRight;
-  Title = "NEW GAME";
+override string GetMapName (int episode, int map) {
+  return va("e%dm%d", episode+1, map+1);
 }

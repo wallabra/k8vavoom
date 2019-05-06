@@ -84,6 +84,10 @@ import 'linespec';
 #include "menus/MenuScreenScreenResolution.vc"
 #include "menus/MenuScreenSpecialControls.vc"
 
+#include "menus/MenuScreenMultiplayer.vc"
+#include "menus/MenuScreenNewNetGameBase.vc"
+#include "menus/MenuScreenPlayerSetupBase.vc"
+
 #include "client/ClientGameShared.vc"
 #include "client/StatusBarShared.vc"
 #include "client/IntermissionBackground.vc"

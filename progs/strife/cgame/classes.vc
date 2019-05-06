@@ -32,9 +32,9 @@ import 'game';
 import 'uibase';
 
 #include "MenuScreenMain.vc"
-#include "MenuScreenMultiplayer.vc"
+//#include "MenuScreenMultiplayer.vc"
 #include "MenuScreenNewNetGame.vc"
-#include "MenuScreenPlayerSetup.vc"
+//#include "MenuScreenPlayerSetup.vc"
 //#include "MenuScreenOptions.vc"
 //#include "MenuScreenGameplayOptions.vc"
 #include "MenuScreenHelp.vc"

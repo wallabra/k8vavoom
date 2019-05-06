@@ -24,149 +24,42 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenNewNetGame : MenuScreen;
+class MenuScreenNewNetGameHexen : replaces(MenuScreenNewNetGame);
 
-MenuChoiceEnum    Players;
-MenuChoiceEnum    Monsters;
-MenuChoiceEnum    DeathMatch;
-MenuChoiceEnum    Skill;
-MenuChoiceEnum    TimeLimit;
-MenuChoiceEnum    Level;
 
 //==========================================================================
 //
-//  CreateChoices
+//  CreateEpisodeList
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  MenuTextButton    Btn;
-  int         i;
-  int currY = ChoicesStartY;
-
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currY);
-  Btn.Text = "Start Game";
-  Btn.Activated = &ActivateStartNewGame;
-  currY += Btn.Height;
-
-  Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Players.SetOrigin(ChoicesStartX, currY);
-  Players.Text = "Max players";
-  Players.AddItem("2");
-  Players.AddItem("3");
-  Players.AddItem("4");
-  Players.AddItem("5");
-  Players.AddItem("6");
-  Players.AddItem("7");
-  Players.AddItem("8");
-  Players.SetInitialValue(2);
-  currY += Players.Height;
-
-  Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Monsters.SetOrigin(ChoicesStartX, currY);
-  Monsters.Text = "Monsters";
-  currY += Monsters.Height;
-
-  DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  DeathMatch.SetOrigin(ChoicesStartX, currY);
-  DeathMatch.Text = "Game type";
-  DeathMatch.AddItem("Cooperative");
-  DeathMatch.AddItem("Deathmatch");
-  DeathMatch.SetInitialValue(1);
-  currY += DeathMatch.Height;
-
-  Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Skill.SetOrigin(ChoicesStartX, currY);
-  Skill.Text = "Skill";
-  for (i = 0; i < P_GetNumSkills(); i++)
-  {
-    Skill.AddItem(P_GetSkillDef(i)->Name);
-  }
-  Skill.SetInitialValue(2);
-  currY += Skill.Height;
-
-  TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  TimeLimit.SetOrigin(ChoicesStartX, currY);
-  TimeLimit.Text = "Time limit";
-  TimeLimit.AddItem("0");
-  TimeLimit.AddItem("5");
-  TimeLimit.AddItem("10");
-  TimeLimit.AddItem("15");
-  TimeLimit.AddItem("20");
-  TimeLimit.AddItem("25");
-  TimeLimit.AddItem("30");
-  TimeLimit.AddItem("35");
-  TimeLimit.AddItem("40");
-  TimeLimit.AddItem("45");
-  TimeLimit.AddItem("50");
-  TimeLimit.AddItem("55");
-  TimeLimit.AddItem("60");
-  currY += TimeLimit.Height;
-
-  Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Level.SetOrigin(ChoicesStartX, currY);
-  Level.Text = "Level";
-  currY += Level.Height;
-
-  InitMapList();
+override void CreateEpisodeList (out array!string epnames) {
 }
 
-//==========================================================================
-//
-//  InitMapList
-//
-//==========================================================================
 
-void InitMapList()
-{
-  int i;
+//==========================================================================
+//
+//  CreateMapList
+//
+//==========================================================================
+override void CreateMapList (int episode, out array!string mapnames) {
 #ifdef FIXME
-  int count = 0;
-
-  for (i = 1; i <= 99; i++)
-  {
+  foreach (auto i; 1..100) {
     int map = P_TranslateMap(i);
-
-    if (map != -1)
-    {
-      Level.EnumNames[count] = P_GetMapName(map);
-      count++;
-    }
+    if (map != -1) mapnames[$] = P_GetMapName(map);
   }
-  Level.MaxValue = count;
 #else
-  for (i = 0; i < 32; i++)
-  {
-    //Level.EnumNames[i] = P_GetMapName(i);
-    Level.AddItem(P_GetMapName(i));
-  }
+  foreach (auto i; 0..32) mapnames[$] = P_GetMapName(i);
 #endif
-  Level.Value = 0;
 }
+
 
 //==========================================================================
 //
-//  ActivateStartNewGame
+//  GetMapName
 //
 //==========================================================================
-
-void ActivateStartNewGame(Object Sender)
-{
-  CmdBuf_AddText("Disconnect\n");
-  CmdBuf_AddText("MaxPlayers %d\n", Players.Value + 2);
-  CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
-  CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
-  CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value * 5);
-  CmdBuf_AddText("Skill %d\n", int(Skill.Value));
-  CmdBuf_AddText("Map %n\n", P_GetMapLumpName(int(Level.Value)));
-}
-
-defaultproperties
-{
-  ChoicesStartX = 128;
-  ChoicesStartY = 40;
-  SelectorType = MenuSelector_SmallRight;
-  Title = "NEW GAME";
+override string GetMapName (int episode, int map) {
+  mapInfo_t *mi = P_GetMapInfo(map);
+  if (!mi) return "";
+  return string(mi->LumpName);
 }

@@ -409,6 +409,8 @@ bool SetCommonMenu (string Name) {
 //
 //==========================================================================
 MenuScreen SpawnMenu (class!MenuScreen CID) {
+  class!MenuScreen rpl = class!MenuScreen(GetClassReplacement(CID));
+  if (rpl) CID = rpl;
   MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();

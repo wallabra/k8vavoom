@@ -33,9 +33,9 @@ import 'uibase';
 import 'newui';
 
 #include "MenuScreenMain.vc"
-#include "MenuScreenMultiplayer.vc"
+//#include "MenuScreenMultiplayer.vc"
 #include "MenuScreenNewNetGame.vc"
-#include "MenuScreenPlayerSetup.vc"
+//#include "MenuScreenPlayerSetup.vc"
 #include "MenuScreenHelp.vc"
 #include "TitleScreen.vc"
 #include "StatusBarScreen.vc"

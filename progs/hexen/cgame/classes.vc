@@ -28,8 +28,8 @@ import 'game';
 import 'uibase';
 
 #include "MenuScreenMain.vc"
-#include "MenuScreenMultiplayer.vc"
-#include "MenuScreenNewNetGame.vc"
+//#include "MenuScreenMultiplayer.vc"
+//#include "MenuScreenNewNetGame.vc"
 #include "MenuScreenPlayerSetup.vc"
 #include "MenuScreenHelp.vc"
 #include "TitleScreen.vc"
