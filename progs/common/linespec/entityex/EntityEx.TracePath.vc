@@ -49,40 +49,98 @@ struct PathInfo {
 
 //==========================================================================
 //
+//  isGoodDoorLinedef
+//
+//  sec is possible door sector
+//
+//==========================================================================
+static final bool isGoodDoorLinedef (GameObject::sector_t *sec, GameObject::line_t *ld) {
+  //print("  line #%d (flags=0x%08x)...", idx, ld.flags);
+  if (!(ld.flags&GameObject::ML_TWOSIDED)) return false; // not interesting
+  if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) return false; // not interesting
+  //print("  line #%d before backsector...", idx);
+  if (ld.backsector != sec) return false;
+  //print("  line #%d before special (%d)...", idx, ld.special);
+  // door opens to four units below
+  switch (ld.special) {
+    case GameObject::LNSPEC_DoorOpen: // tag,speed,lighttag
+    case GameObject::LNSPEC_DoorRaise: // tag,speed,delay,lighttag
+    case GameObject::LNSPEC_DoorAnimated: // tag,speed,delay,lock
+      if (ld.arg1 != 0) {
+        if (ld.arg1 != sec.tag) return false;
+        //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
+      }
+      return true;
+    case GameObject::LNSPEC_DoorLockedRaise: // tag,speed,delay,lock,lighttag
+      if (ld.arg4 != 0) return false; // locked
+      if (ld.arg1 != 0) {
+        if (ld.arg1 != sec.tag) return false;
+        //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
+      }
+      return true;
+    case GameObject::LNSPEC_DoorGeneric: // tag,speed,kind,delay,lock
+      // if 128 is added to kind, tag is lighttag
+      if ((ld.arg3&0x80) == 0 && ld.arg1 != 0) {
+        if (ld.arg1 != sec.tag) return false;
+        //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
+      }
+      if ((ld.arg3&0x7f) > 1) return false; // close
+      return true;
+    //case GameObject::LNSPEC_DoorAnimatedClose: // tag,speed
+    //case GameObject::LNSPEC_DoorClose: // tag,speed,lighttag
+    //case GameObject::LNSPEC_DoorCloseWaitOpen: // tag,speed,delay,lighttag
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  isDoorSector
 //
 //  returns surrounding sector with the lowest height
 //
 //==========================================================================
-final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec) {
+final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec, optional bool ignoreHeight) {
   // if we can fit here, don't bother
-  if (sec.ceiling.minz-sec.floor.maxz >= Height) return nullptr;
+  if (!ignoreHeight && sec.ceiling.minz-sec.floor.maxz >= Height) return nullptr;
   // check if this sector has door activation lines
   float height = float.max;
   GameObject::sector_t *res = nullptr;
   GameObject::line_t *ld;
+  bool seenDoorLD = false;
   foreach (ld; sec.lines) {
-    if (!(ld.flags&GameObject::ML_TWOSIDED)) continue; // not interesting
-    if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
-    if (ld.backsector != sec) continue;
-    if (!ld.frontsector) continue;
-    if (ld.arg1 != 0) {
-      if (ld.arg1 != sec.tag) continue;
+    if (ld.flags&GameObject::ML_TWOSIDED) {
+      GameObject::sector_t *other = (ld.frontsector == sec ? ld.backsector : ld.frontsector);
+      if (other && other != sec && other.ceiling.minz < height) {
+        res = other;
+        height = other.ceiling.minz;
+      }
     }
-    bool doCheck = true;
-    switch (ld.special) {
-      case GameObject::LNSPEC_DoorOpen:
-      case GameObject::LNSPEC_DoorRaise:
-      //case GameObject::LNSPEC_DoorLockedRaise:
-      case GameObject::LNSPEC_DoorAnimated:
-        break;
-      default: doCheck = false;
-    }
-    if (!doCheck) continue;
-    // ok, this is door activation line, so this sector is a door
-    if (ld.frontsector.ceiling.minz < height) {
-      res = ld.frontsector;
-      height = res.ceiling.minz;
+    if (!seenDoorLD && isGoodDoorLinedef(sec, ld)) seenDoorLD = true;
+  }
+  return (seenDoorLD ? res : nullptr);
+}
+
+
+//==========================================================================
+//
+//  findLowestCeilingSurrounding
+//
+//  FIXME: doesn't work with slopes
+//
+//==========================================================================
+static final GameObject::sector_t *findLowestCeilingSurrounding (GameObject::sector_t *sec) {
+  float height = float.max;
+  GameObject::sector_t *res = nullptr;
+  GameObject::line_t *line;
+  foreach (line; sec.lines) {
+    if (line.flags&GameObject::ML_TWOSIDED) {
+      GameObject::sector_t *other = (line.frontsector == sec ? line.backsector : line.frontsector);
+      if (other && other != sec && other.ceiling.minz < height) {
+        res = other;
+        height = other.ceiling.minz;
+      }
     }
   }
   return res;
@@ -90,11 +148,35 @@ final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec) {
 
 
 struct FakeDoorInfo {
-  TPlane saved;
+  TPlane plane;
+  float minz, maxz;
   sector_t *sec;
+  bool saved;
 }
 
 transient array!FakeDoorInfo fakeOpenedDoors;
+
+
+//==========================================================================
+//
+//  fakeSaveOpenDoor
+//
+//  prerequisite: sector must be a door
+//
+//==========================================================================
+final bool fakeSaveOpenDoor (out FakeDoorInfo fi, GameObject::sector_t *sec, GameObject::sector_t *lowest) {
+  if (!lowest) { fi.saved = false; return false; }
+  fi.saved = true;
+  fi.sec = sec;
+  fi.plane.normal = sec.ceiling.normal;
+  fi.plane.dist = sec.ceiling.dist;
+  fi.minz = sec.ceiling.minz;
+  fi.maxz = sec.ceiling.maxz;
+  sec.ceiling.normal = lowest.ceiling.normal;
+  sec.ceiling.dist = lowest.ceiling.dist+4;
+  XLevel.ChangeOneSectorInternal(sec);
+  return true;
+}
 
 
 //==========================================================================
@@ -105,14 +187,8 @@ transient array!FakeDoorInfo fakeOpenedDoors;
 //
 //==========================================================================
 final void fakeOpenDoor (GameObject::sector_t *sec, GameObject::sector_t *lowest) {
-  if (!lowest) return;
   auto fi = fakeOpenedDoors.alloc();
-  fi.sec = sec;
-  fi.saved.normal = sec.ceiling.normal;
-  fi.saved.dist = sec.ceiling.dist;
-  sec.ceiling.normal = lowest.ceiling.normal;
-  sec.ceiling.dist = lowest.ceiling.dist;
-  XLevel.ChangeOneSectorInternal(sec);
+  if (!fakeSaveOpenDoor(out *fi, sec, lowest)) { fakeOpenedDoors.length -= 1; return; }
 }
 
 
@@ -122,10 +198,14 @@ final void fakeOpenDoor (GameObject::sector_t *sec, GameObject::sector_t *lowest
 //
 //==========================================================================
 final void restoreFakeOpenDoor (const ref FakeDoorInfo fi) {
-  GameObject::sector_t *sec = fi.sec;
-  sec.ceiling.normal = fi.saved.normal;
-  sec.ceiling.dist = fi.saved.dist;
-  XLevel.ChangeOneSectorInternal(sec);
+  if (fi.saved) {
+    GameObject::sector_t *sec = fi.sec;
+    sec.ceiling.normal = fi.plane.normal;
+    sec.ceiling.dist = fi.plane.dist;
+    sec.ceiling.minz = fi.minz;
+    sec.ceiling.maxz = fi.maxz;
+    XLevel.ChangeOneSectorInternal(sec);
+  }
 }
 
 

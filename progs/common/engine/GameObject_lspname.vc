@@ -1,0 +1,264 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+static final string LineSpecial2Str (int special) {
+  switch (special) {
+    case LNSPEC_None: return "None";
+    case LNSPEC_PolyStartLine: return "PolyStartLine";
+    case LNSPEC_PolyRotateLeft: return "PolyRotateLeft";
+    case LNSPEC_PolyRotateRight: return "PolyRotateRight";
+    case LNSPEC_PolyMove: return "PolyMove";
+    case LNSPEC_PolyExplicitLine: return "PolyExplicitLine";
+    case LNSPEC_PolyMoveTimes8: return "PolyMoveTimes8";
+    case LNSPEC_PolyDoorSwing: return "PolyDoorSwing";
+    case LNSPEC_PolyDoorSlide: return "PolyDoorSlide";
+    case LNSPEC_LineHorizon: return "LineHorizon";
+    case LNSPEC_DoorClose: return "DoorClose";
+    case LNSPEC_DoorOpen: return "DoorOpen";
+    case LNSPEC_DoorRaise: return "DoorRaise";
+    case LNSPEC_DoorLockedRaise: return "DoorLockedRaise";
+    case LNSPEC_DoorAnimated: return "DoorAnimated";
+    case LNSPEC_Autosave: return "Autosave";
+    case LNSPEC_TransferWallLight: return "TransferWallLight";
+    case LNSPEC_ThingRaise: return "ThingRaise";
+    case LNSPEC_StartConversation: return "StartConversation";
+    case LNSPEC_ThingStop: return "ThingStop";
+    case LNSPEC_FloorLowerByValue: return "FloorLowerByValue";
+    case LNSPEC_FloorLowerToLowest: return "FloorLowerToLowest";
+    case LNSPEC_FloorLowerToNearest: return "FloorLowerToNearest";
+    case LNSPEC_FloorRaiseByValue: return "FloorRaiseByValue";
+    case LNSPEC_FloorRaiseToHighest: return "FloorRaiseToHighest";
+    case LNSPEC_FloorRaiseToNearest: return "FloorRaiseToNearest";
+    case LNSPEC_StairsBuildDownNormal: return "StairsBuildDownNormal";
+    case LNSPEC_StairsBuildUpNormal: return "StairsBuildUpNormal";
+    case LNSPEC_FloorRaiseAndCrush: return "FloorRaiseAndCrush";
+    case LNSPEC_PillarBuild: return "PillarBuild";
+    case LNSPEC_PillarOpen: return "PillarOpen";
+    case LNSPEC_StairsBuildDownSync: return "StairsBuildDownSync";
+    case LNSPEC_StairsBuildUpSync: return "StairsBuildUpSync";
+    case LNSPEC_ForceField: return "ForceField";
+    case LNSPEC_ClearForceField: return "ClearForceField";
+    case LNSPEC_FloorRaiseByValueTimes8: return "FloorRaiseByValueTimes8";
+    case LNSPEC_FloorLowerByValueTimes8: return "FloorLowerByValueTimes8";
+    case LNSPEC_FloorMoveToValue: return "FloorMoveToValue";
+    case LNSPEC_CeilingWaggle: return "CeilingWaggle";
+    case LNSPEC_TeleportZombieChanger: return "TeleportZombieChanger";
+    case LNSPEC_CeilingLowerByValue: return "CeilingLowerByValue";
+    case LNSPEC_CeilingRaiseByValue: return "CeilingRaiseByValue";
+    case LNSPEC_CeilingCrushAndRaise: return "CeilingCrushAndRaise";
+    case LNSPEC_CeilingLowerAndCrush: return "CeilingLowerAndCrush";
+    case LNSPEC_CeilingCrushStop: return "CeilingCrushStop";
+    case LNSPEC_CeilingCrushRaiseAndStay: return "CeilingCrushRaiseAndStay";
+    case LNSPEC_FloorCrushStop: return "FloorCrushStop";
+    case LNSPEC_CeilingMoveToValue: return "CeilingMoveToValue";
+
+    case LNSPEC_GlassBreak: return "GlassBreak";
+    case LNSPEC_ExtraFloorLightOnly: return "ExtraFloorLightOnly";
+
+    case LNSPEC_SectorSetLink: return "SectorSetLink";
+    case LNSPEC_ScrollWall: return "ScrollWall";
+    case LNSPEC_LineSetTextureOffset: return "LineSetTextureOffset";
+    case LNSPEC_SectorChangeFlags: return "SectorChangeFlags";
+    case LNSPEC_LineSetBlocking: return "LineSetBlocking";
+
+    case LNSPEC_PolyobjMoveToSpotOverride: return "PolyobjMoveToSpotOverride";
+
+    case LNSPEC_PlatPerpetualRaise: return "PlatPerpetualRaise";
+    case LNSPEC_PlatStop: return "PlatStop";
+    case LNSPEC_PlatDownWaitUpStay: return "PlatDownWaitUpStay";
+    case LNSPEC_PlatDownByValueWaitUpStay: return "PlatDownByValueWaitUpStay";
+    case LNSPEC_PlatUpWaitDownStay: return "PlatUpWaitDownStay";
+    case LNSPEC_PlatUpByValueWaitDownStay: return "PlatUpByValueWaitDownStay";
+    case LNSPEC_FloorLowerTimes8Instant: return "FloorLowerTimes8Instant";
+    case LNSPEC_FloorRaiseTimes8Instant: return "FloorRaiseTimes8Instant";
+    case LNSPEC_FloorMoveToValueTimes8: return "FloorMoveToValueTimes8";
+    case LNSPEC_CeilingMoveToValueTimes8: return "CeilingMoveToValueTimes8";
+    case LNSPEC_Teleport: return "Teleport";
+    case LNSPEC_TeleportNoFog: return "TeleportNoFog";
+    case LNSPEC_ThrustThing: return "ThrustThing";
+    case LNSPEC_DamageThing: return "DamageThing";
+    case LNSPEC_TeleportNewMap: return "TeleportNewMap";
+    case LNSPEC_TeleportEndGame: return "TeleportEndGame";
+    case LNSPEC_TeleportOther: return "TeleportOther";
+    case LNSPEC_TeleportGroup: return "TeleportGroup";
+    case LNSPEC_TeleportSector: return "TeleportSector";
+
+    case LNSPEC_ACSExecute: return "ACSExecute";
+    case LNSPEC_ACSSuspend: return "ACSSuspend";
+    case LNSPEC_ACSTerminate: return "ACSTerminate";
+    case LNSPEC_ACSLockedExecute: return "ACSLockedExecute";
+    case LNSPEC_ACSExecuteWithResult: return "ACSExecuteWithResult";
+    case LNSPEC_ACSLockedExecuteDoor: return "ACSLockedExecuteDoor";
+
+    case LNSPEC_PolyobjMoveToSpot: return "PolyobjMoveToSpot";
+    case LNSPEC_PolyobjStop: return "PolyobjStop";
+    case LNSPEC_PolyobjMoveTo: return "PolyobjMoveTo";
+    case LNSPEC_PolyobjMoveToOverride: return "PolyobjMoveToOverride";
+
+    case LNSPEC_PolyRotateLeftOverride: return "PolyRotateLeftOverride";
+    case LNSPEC_PolyRotateRightOverride: return "PolyRotateRightOverride";
+    case LNSPEC_PolyMoveOverride: return "PolyMoveOverride";
+    case LNSPEC_PolyMoveTimes8Override: return "PolyMoveTimes8Override";
+    case LNSPEC_PillarBuildCrush: return "PillarBuildCrush";
+    case LNSPEC_FloorAndCeilingLowerByValue: return "FloorAndCeilingLowerByValue";
+    case LNSPEC_FloorAndCeilingRaiseByValue: return "FloorAndCeilingRaiseByValue";
+
+    case LNSPEC_ScrollTextureLeft: return "ScrollTextureLeft";
+    case LNSPEC_ScrollTextureRight: return "ScrollTextureRight";
+    case LNSPEC_ScrollTextureUp: return "ScrollTextureUp";
+    case LNSPEC_ScrollTextureDown: return "ScrollTextureDown";
+
+    case LNSPEC_LightForceLightning: return "LightForceLightning";
+    case LNSPEC_LightRaiseByValue: return "LightRaiseByValue";
+    case LNSPEC_LightLowerByValue: return "LightLowerByValue";
+    case LNSPEC_LightChangeToValue: return "LightChangeToValue";
+    case LNSPEC_LightFade: return "LightFade";
+    case LNSPEC_LightGlow: return "LightGlow";
+    case LNSPEC_LightFlicker: return "LightFlicker";
+    case LNSPEC_LightStrobe: return "LightStrobe";
+    case LNSPEC_LightStop: return "LightStop";
+
+    case LNSPEC_PlaneCopy: return "PlaneCopy";
+
+    case LNSPEC_ThingDamage: return "ThingDamage";
+    case LNSPEC_QuakeTremor: return "QuakeTremor";
+    case LNSPEC_LineSetIdentification: return "LineSetIdentification";
+
+    case LNSPEC_ThingMove: return "ThingMove";
+
+    case LNSPEC_ThingSetSpecial: return "ThingSetSpecial";
+    case LNSPEC_ThrustThingZ: return "ThrustThingZ";
+
+    case LNSPEC_UsePuzzleItem: return "UsePuzzleItem";
+    case LNSPEC_ThingActivate: return "ThingActivate";
+    case LNSPEC_ThingDeactivate: return "ThingDeactivate";
+    case LNSPEC_ThingRemove: return "ThingRemove";
+    case LNSPEC_ThingDestroy: return "ThingDestroy";
+    case LNSPEC_ThingProjectile: return "ThingProjectile";
+    case LNSPEC_ThingSpawn: return "ThingSpawn";
+    case LNSPEC_ThingProjectileGravity: return "ThingProjectileGravity";
+    case LNSPEC_ThingSpawnNoFog: return "ThingSpawnNoFog";
+    case LNSPEC_FloorWaggle: return "FloorWaggle";
+    case LNSPEC_ThingSpawnFacing: return "ThingSpawnFacing";
+    case LNSPEC_SectorSoundChange: return "SectorSoundChange";
+
+    case LNSPEC_SectorSetPlaneReflection: return "SectorSetPlaneReflection";
+    case LNSPEC_SectorSet3dFloor: return "SectorSet3dFloor";
+    case LNSPEC_Contents: return "Contents";
+
+    case LNSPEC_CeilingGenericCrush2: return "CeilingGenericCrush2";
+    case LNSPEC_SectorSetCeilingScale2: return "SectorSetCeilingScale2";
+    case LNSPEC_SectorSetFloorScale2: return "SectorSetFloorScale2";
+    case LNSPEC_PlaneUpNearestWaitDownStay: return "PlaneUpNearestWaitDownStay";
+    case LNSPEC_NoiseAlert: return "NoiseAlert";
+    case LNSPEC_SendToCommunicator: return "SendToCommunicator";
+    case LNSPEC_ThingProjectileIntercept: return "ThingProjectileIntercept";
+    case LNSPEC_ThingChangeTID: return "ThingChangeTID";
+    case LNSPEC_ThingHate: return "ThingHate";
+    case LNSPEC_ThingProjectileAimed: return "ThingProjectileAimed";
+    case LNSPEC_ChangeSkill: return "ChangeSkill";
+    case LNSPEC_ThingSetTranslation: return "ThingSetTranslation";
+    case LNSPEC_PlaneAlign: return "PlaneAlign";
+    case LNSPEC_LineMirror: return "LineMirror";
+    case LNSPEC_LineAlignCeiling: return "LineAlignCeiling";
+    case LNSPEC_LineAlignFloor: return "LineAlignFloor";
+    case LNSPEC_SectorSetRotation: return "SectorSetRotation";
+    case LNSPEC_SectorSetCeilingPanning: return "SectorSetCeilingPanning";
+    case LNSPEC_SectorSetFloorPanning: return "SectorSetFloorPanning";
+    case LNSPEC_SectorSetCeilingScale: return "SectorSetCeilingScale";
+    case LNSPEC_SectorSetFloorScale: return "SectorSetFloorScale";
+    case LNSPEC_StaticInit: return "StaticInit";
+    case LNSPEC_SetPlayerProperty: return "SetPlayerProperty";
+    case LNSPEC_CeilingLowerToHighestFloor: return "CeilingLowerToHighestFloor";
+    case LNSPEC_CeilingLowerInstant: return "CeilingLowerInstant";
+    case LNSPEC_CeilingRaiseInstant: return "CeilingRaiseInstant";
+    case LNSPEC_CeilingCrushRaiseAndStayA: return "CeilingCrushRaiseAndStayA";
+    case LNSPEC_CeilingCrushAndRaiseA: return "CeilingCrushAndRaiseA";
+    case LNSPEC_CeilingCrushAndRaiseSilentA: return "CeilingCrushAndRaiseSilentA";
+    case LNSPEC_CeilingRaiseByValueTimes8: return "CeilingRaiseByValueTimes8";
+    case LNSPEC_CeilingLowerByValueTimes8: return "CeilingLowerByValueTimes8";
+    case LNSPEC_FloorGeneric: return "FloorGeneric";
+    case LNSPEC_CeilingGeneric: return "CeilingGeneric";
+    case LNSPEC_DoorGeneric: return "DoorGeneric";
+    case LNSPEC_PlatGeneric: return "PlatGeneric";
+    case LNSPEC_StairsGeneric: return "StairsGeneric";
+    case LNSPEC_CeilingGenericCrush: return "CeilingGenericCrush";
+    case LNSPEC_PlatDownWaitUpStayLip: return "PlatDownWaitUpStayLip";
+    case LNSPEC_PlatPerpetualRaiseLip: return "PlatPerpetualRaiseLip";
+    case LNSPEC_LineTranslucent: return "LineTranslucent";
+    case LNSPEC_TransferHeights: return "TransferHeights";
+    case LNSPEC_TransferFloorLight: return "TransferFloorLight";
+    case LNSPEC_TransferCeilingLight: return "TransferCeilingLight";
+    case LNSPEC_SectorSetColor: return "SectorSetColor";
+    case LNSPEC_SectorSetFade: return "SectorSetFade";
+    case LNSPEC_SectorSetDamage: return "SectorSetDamage";
+    case LNSPEC_TeleportLine: return "TeleportLine";
+    case LNSPEC_SectorSetGravity: return "SectorSetGravity";
+    case LNSPEC_StairsBuildUpDoom: return "StairsBuildUpDoom";
+    case LNSPEC_SectorSetWind: return "SectorSetWind";
+    case LNSPEC_SectorSetFriction: return "SectorSetFriction";
+    case LNSPEC_SectorSetCurrent: return "SectorSetCurrent";
+    case LNSPEC_ScrollTextureBoth: return "ScrollTextureBoth";
+    case LNSPEC_ScrollTextureModel: return "ScrollTextureModel";
+    case LNSPEC_ScrollFloor: return "ScrollFloor";
+    case LNSPEC_ScrollCeiling: return "ScrollCeiling";
+    case LNSPEC_ScrollTextureOffsets: return "ScrollTextureOffsets";
+    case LNSPEC_ACSExecuteAlways: return "ACSExecuteAlways";
+    case LNSPEC_PointPushSetForce: return "PointPushSetForce";
+    case LNSPEC_FloorRaiseToNearestChange: return "FloorRaiseToNearestChange";
+    case LNSPEC_ThingSetGoal: return "ThingSetGoal";
+    case LNSPEC_FloorRaiseByValueChangeTex: return "FloorRaiseByValueChangeTex";
+    case LNSPEC_PlatToggle: return "PlatToggle";
+    case LNSPEC_LightStrobeDoom: return "LightStrobeDoom";
+    case LNSPEC_LightMinNeighbor: return "LightMinNeighbor";
+    case LNSPEC_LightMaxNeighbor: return "LightMaxNeighbor";
+    case LNSPEC_FloorTransferTrigger: return "FloorTransferTrigger";
+    case LNSPEC_FloorTransferNumeric: return "FloorTransferNumeric";
+    case LNSPEC_ChangeCamera: return "ChangeCamera";
+    case LNSPEC_FloorRaiseToLowestCeiling: return "FloorRaiseToLowestCeiling";
+    case LNSPEC_FloorRaiseByValueChange: return "FloorRaiseByValueChange";
+    case LNSPEC_FloorRaiseByTexture: return "FloorRaiseByTexture";
+    case LNSPEC_FloorLowerToLowestChange: return "FloorLowerToLowestChange";
+    case LNSPEC_FloorLowerToHighest: return "FloorLowerToHighest";
+    case LNSPEC_ExitNormal: return "ExitNormal";
+    case LNSPEC_ExitSecret: return "ExitSecret";
+    case LNSPEC_ElevatorRaiseToNearest: return "ElevatorRaiseToNearest";
+    case LNSPEC_ElevatorMoveToFloor: return "ElevatorMoveToFloor";
+    case LNSPEC_ElevatorLowerToNearest: return "ElevatorLowerToNearest";
+    case LNSPEC_HealThing: return "HealThing";
+    case LNSPEC_DoorCloseWaitOpen: return "DoorCloseWaitOpen";
+    case LNSPEC_FloorDonut: return "FloorDonut";
+    case LNSPEC_FloorAndCeilingLowerRaise: return "FloorAndCeilingLowerRaise";
+    case LNSPEC_CeilingRaiseToNearest: return "CeilingRaiseToNearest";
+    case LNSPEC_CeilingLowerToLowest: return "CeilingLowerToLowest";
+    case LNSPEC_CeilingLowerToFloor: return "CeilingLowerToFloor";
+    case LNSPEC_CeilingCrushRaiseAndStaySilentA: return "CeilingCrushRaiseAndStaySilentA";
+
+    case LNSPEC_SectorSetPortal: return "SectorSetPortal";
+    case LNSPEC_LineSetPortal: return "LineSetPortal";
+  }
+  return va("lsp#%d", special);
+}

@@ -1353,5 +1353,7 @@ native static final bool CheckHitPlanes (const sector_t *sec, bool checkSectorBo
                                          optional out bool outIsSky);
 
 
+#include "GameObject_lspname.vc"
+
 defaultproperties {
 }

@@ -112,29 +112,9 @@ final bool needOpenDoor (GameObject::sector_t *sec) {
 final bool isDoorSector (GameObject::sector_t *sec, GameObject::subsector_t *sub) {
   // check if this sector has door activation lines
   GameObject::line_t *ld;
-  print("checking sector #%s for 'doorness' (%d lines; sub #%d)...", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
+  //print("checking sector #%s for 'doorness' (%d lines; sub #%d)...", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
   foreach (int idx, ld; sec.lines) {
-    print("  line #%d (flags=0x%08x)...", idx, ld.flags);
-    if (!(ld.flags&GameObject::ML_TWOSIDED)) continue; // not interesting
-    if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
-    print("  line #%d before backsector...", idx);
-    if (ld.backsector != sec) continue;
-    print("  line #%d before arg1 (%d)...", idx, ld.arg1);
-    if (ld.arg1 != 0) {
-      if (ld.arg1 != sec.tag) continue;
-      print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
-    }
-    print("  line #%d before special (%d)...", idx, ld.special);
-    bool doCheck = true;
-    switch (ld.special) {
-      case GameObject::LNSPEC_DoorOpen:
-      case GameObject::LNSPEC_DoorRaise:
-      //case GameObject::LNSPEC_DoorLockedRaise:
-      case GameObject::LNSPEC_DoorAnimated:
-        break;
-      default: doCheck = false;
-    }
-    if (!doCheck) continue;
+    if (!EntityEx.isGoodDoorLinedef(sec, ld)) continue;
     // ok, this is door activation line, so this sector is a door
     return true;
   }
@@ -142,51 +122,33 @@ final bool isDoorSector (GameObject::sector_t *sec, GameObject::subsector_t *sub
 }
 
 
-//FIXME: doesn't work with slopes
-final GameObject::sector_t *findLowestCeilingSurrounding (GameObject::sector_t *sec) {
-  float height = float.max;
-  GameObject::sector_t *res = nullptr;
-  GameObject::sector_t *other;
-  GameObject::line_t *line;
-  foreach (line; sec.lines) {
-    if (!(line->flags&GameObject::ML_TWOSIDED)) continue;
-    if (line->frontsector == sec) {
-      if (line->backsector == sec) continue;
-      other = line->backsector;
-    } else {
-      other = line->frontsector;
-    }
-    if (!other) continue;
-
-    if (other.ceiling.minz < height) {
-      res = other;
-      height = other.ceiling.minz;
-    }
-  }
-  return res;
-}
-
-
 // prerequisite: sector must be a door
 // returns `true` if we need to restore a sector
-final bool fakeOpenDoor (GameObject::subsector_t *sub, out TPlane saved) {
+final bool fakeOpenDoor (GameObject::subsector_t *sub, out EntityEx::FakeDoorInfo fi) {
   GameObject::sector_t *sec = sub.sector;
-  auto lowest = findLowestCeilingSurrounding(sec);
+  auto lowest = EntityEx.findLowestCeilingSurrounding(sec);
   if (!lowest) return false;
+  /*
   saved.normal = sec.ceiling.normal;
   saved.dist = sec.ceiling.dist;
+  //print("cn=%s:%s  %s:%s (%s:%s)", sec.ceiling.normal, sec.ceiling.dist, lowest.ceiling.normal, lowest.ceiling.dist, sec.ceiling.minz, lowest.ceiling.minz);
   sec.ceiling.normal = lowest.ceiling.normal;
-  sec.ceiling.dist = lowest.ceiling.dist;
+  sec.ceiling.dist = lowest.ceiling.dist+4;
   bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
   return true;
+  */
+  return EntityEx(bot.player.MO).fakeSaveOpenDoor(out fi, sec, lowest);
 }
 
 
-final void restoreFakeOpenDoor (GameObject::subsector_t *sub, const ref TPlane saved) {
+final void restoreFakeOpenDoor (const ref EntityEx::FakeDoorInfo fi) {
+  /*
   GameObject::sector_t *sec = sub->sector;
   sec.ceiling.normal = saved.normal;
   sec.ceiling.dist = saved.dist;
   bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
+  */
+  EntityEx(bot.player.MO).restoreFakeOpenDoor(fi);
 }
 
 
@@ -323,11 +285,11 @@ final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
 
 
 final bool validateNode (BotPathNode node, optional bool initial) {
-  TPlane savedPlane;
+  EntityEx::FakeDoorInfo savedPlane;
   Level lev = bot.player.MO.XLevel;
   GameObject::subsector_t *sub = node.sub;
   bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
-  scope(exit) if (fakeRestore) restoreFakeOpenDoor(sub, savedPlane);
+  scope(exit) if (fakeRestore) restoreFakeOpenDoor(savedPlane);
   TVec cpos = (initial ? node.Origin : lev.GetSubsectorCenter(sub));
   // try various map positions
   if (!IsGoodMapPosition(cpos)) {
@@ -434,7 +396,7 @@ final void Setup (BotPlayerBase abot) {
 
   Reset();
 
-  TPlane savedPlane;
+  EntityEx::FakeDoorInfo savedPlane;
 
   // create nodes
   nodes.length = lev.Subsectors.length;
@@ -458,7 +420,7 @@ final void Setup (BotPlayerBase abot) {
 
     // if this sector a door, fake-open it
     bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
-    scope(exit) if (fakeRestore) restoreFakeOpenDoor(sub, savedPlane);
+    scope(exit) if (fakeRestore) restoreFakeOpenDoor(savedPlane);
 
     // check reachable subsectors
     foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {

@@ -240,13 +240,28 @@ final void DebugCheckMidTex () {
         float bcz1 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v1);
         float bcz2 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v2);
         if (bcz1 != bcz2) Error("OOPS(back ceiling)");
-        print("linedef %d: (f/b secs=%d/%d); fcz=%f; ffz=%f; bcz=%f; bfz=%f; alpha=%f",
+        print("linedef %d: (f/b secs=%d/%d); fcz=%f; ffz=%f; bcz=%f; bfz=%f; alpha=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
             tr.line-&XLevel.Lines[0],
             tr.line.frontsector-&XLevel.Sectors[0], tr.line.backsector-&XLevel.Sectors[0],
             fcz1, ffz1, bcz1, bfz1,
-            tr.line.alpha);
+            tr.line.alpha,
+            tr.line.special, LineSpecial2Str(tr.line.special),
+            tr.line.arg1, tr.line.arg2, tr.line.arg3, tr.line.arg4, tr.line.arg5);
         print("fsec(%d): ceiling=%f; floor=%f", tr.line.frontsector-&XLevel.Sectors[0], tr.line.frontsector.ceiling.minz, tr.line.frontsector.floor.maxz);
         print("bsec(%d): ceiling=%f; floor=%f", tr.line.backsector-&XLevel.Sectors[0], tr.line.backsector.ceiling.minz, tr.line.backsector.floor.maxz);
+      } else {
+        float ffz1 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v1);
+        float ffz2 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v2);
+        if (ffz1 != ffz2) Error("OOPS(front floor)");
+        float fcz1 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v1);
+        float fcz2 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v2);
+        if (fcz1 != fcz2) Error("OOPS(front ceiling)");
+        print("linedef %d: (f sec=%d); fcz=%f; ffz=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
+            tr.line-&XLevel.Lines[0],
+            tr.line.frontsector-&XLevel.Sectors[0],
+            fcz1, ffz1,
+            tr.line.special, LineSpecial2Str(tr.line.special),
+            tr.line.arg1, tr.line.arg2, tr.line.arg3, tr.line.arg4, tr.line.arg5);
       }
       foreach (auto snum; 0..2) {
         if (tr.line.sidenum[snum] < 0) continue;
