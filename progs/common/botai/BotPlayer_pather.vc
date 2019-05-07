@@ -167,7 +167,25 @@ final bool IsGoodMapPosition (ref TVec pos) {
 
 
 final void queueRefreshNode (BotPathNode node) {
+  if (node.queryCounter == queryCounter) return;
+  //print("queueRefreshNode(0): #%d", node.ssnum);
+  auto sec = node.sub.sector;
+  if (sec.floor.dist == node.myFloorDist && sec.ceiling.dist == node.myCeilDist) {
+    node.queryCounter = queryCounter;
+    return;
+  }
+  print("queueRefreshNode(1): #%d", node.ssnum);
+  if (refreshMap.find(node.ssnum)) return;
+  print("queueRefreshNode(2): #%d", node.ssnum);
+  // queue this node, and all adjacent nodes
+  print("queuing node #%d (sector #%d) for refresh", node.ssnum, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
   refreshMap.put(node.ssnum, true);
+  //node.queryCounter = queryCounter;
+  foreach (auto aidx, const ref auto tr; node.exits) {
+    nodes[tr.subnum].myFloorDist = float.max;
+    nodes[tr.subnum].queryCounter = 0;
+    queueRefreshNode(nodes[tr.subnum]);
+  }
 }
 
 
@@ -323,6 +341,31 @@ final bool refreshNode (BotPathNode node) {
 }
 
 
+final void refreshAllNodesInMap () {
+  if (cacheIsInvalid) {
+    cacheIsInvalid = false;
+    Reset();
+    print("bot '%s' reset path cache (0)", bot.player.PlayerName);
+  }
+
+  if (refreshMap.length == 0) return;
+
+  for (auto idx = refreshMap.firstIndex(); refreshMap.isValidIndex(idx); idx = refreshMap.nextIndex(idx)) {
+    int key = refreshMap.keyAtIndex(idx);
+    print("refreshing node #%d (sector #%d)", key, nodes[key].sub.sector-&bot.player.MO.XLevel.Sectors[0]);
+    refreshNode(nodes[key]);
+  }
+
+  refreshMap.reset();
+
+  if (cacheIsInvalid) {
+    cacheIsInvalid = false;
+    Reset();
+    print("bot '%s' reset path cache (1)", bot.player.PlayerName);
+  }
+}
+
+
 final void Setup (BotPlayerBase abot) {
   if (!abot) FatalError("something is very wrong with bot pathfinder");
   bot = abot;
@@ -332,6 +375,7 @@ final void Setup (BotPlayerBase abot) {
 
   Reset();
   queryCounter = 1;
+  refreshMap.reset();
 
   EntityEx::FakeDoorInfo savedPlane;
 
@@ -385,6 +429,10 @@ final void Setup (BotPlayerBase abot) {
       refreshNodeExit(node, node.exits.length-1);
     }
   }
+
+  // reset refresh map again, just in case
+  cacheIsInvalid = false;
+  refreshMap.reset();
 }
 
 
@@ -393,8 +441,10 @@ final void Setup (BotPlayerBase abot) {
 override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
   BotPathNode s = BotPathNode(start);
   BotPathNode e = BotPathNode(end);
-  refreshNode(s);
-  refreshNode(e);
+  queueRefreshNode(s);
+  queueRefreshNode(e);
+  //refreshNode(s);
+  //refreshNode(e);
   if (debugDump) print("LeastCostEstimate from %d (%B) to %d (%B); est=%s", s.ssnum, s.valid, e.ssnum, e.valid, (s.Origin-e.Origin).length2DSquared);
   if (!s.valid || !e.valid) return 999999;
   return (s.Origin-e.Origin).length2DSquared;
@@ -406,10 +456,11 @@ override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
 override void AdjacentCost (MiAStarNodeBase node) {
   BotPathNode pn = BotPathNode(node);
   if (debugDump) print("AdjacentCost for %s (%B)", pn.ssnum, pn.valid);
-  refreshNode(pn);
+  //refreshNode(pn);
+  queueRefreshNode(pn);
   if (!pn.valid) return;
   foreach (const ref auto tr; pn.exits) {
-    refreshNode(nodes[tr.subnum]);
+    //refreshNode(nodes[tr.subnum]); // already done in `queueRefreshNode()`
     if (tr.moveCost >= 0 && nodes[tr.subnum].valid) {
       if (debugDump) print("  for %s: adj is #%s (cost=%s)", pn.ssnum, tr.subnum, tr.moveCost);
       PushAdjacentCost(nodes[tr.subnum], tr.moveCost);
@@ -440,19 +491,19 @@ final bool BuildPath (TVec from, GameObject::subsector_t *fromsub, TVec dest, Ga
     return true;
   }
 
-  if (cacheIsInvalid) { Reset(); cacheIsInvalid = false; }
-  refreshNode(nodes[fromsub-&lev.Subsectors[0]]);
-  refreshNode(nodes[destsub-&lev.Subsectors[0]]);
-  if (cacheIsInvalid) { Reset(); cacheIsInvalid = false; }
+  queueRefreshNode(nodes[fromsub-&lev.Subsectors[0]]);
+  queueRefreshNode(nodes[destsub-&lev.Subsectors[0]]);
+
+  refreshAllNodesInMap();
 
   // run solver
   for (;;) {
-    cacheIsInvalid = false;
+    //cacheIsInvalid = false;
     bool res = Solve(nodes[fromsub-&lev.Subsectors[0]], nodes[destsub-&lev.Subsectors[0]]);
-    if (!cacheIsInvalid) return res;
+    if (refreshMap.length == 0 && !cacheIsInvalid) return res;
     // something was changed, result is nonsensical; reset cache and restart
-    print("bot '%s' reset path cache", abot.player.PlayerName);
-    Reset();
+    //print("bot '%s' reset path cache", abot.player.PlayerName);
+    refreshAllNodesInMap();
   }
 }
 
