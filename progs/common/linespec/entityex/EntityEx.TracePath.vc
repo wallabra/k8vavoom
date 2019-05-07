@@ -66,7 +66,9 @@ final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec) {
     if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
     if (ld.backsector != sec) continue;
     if (!ld.frontsector) continue;
-    if (ld.arg1 != 0) continue;
+    if (ld.arg1 != 0) {
+      if (ld.arg1 != sec.tag) continue;
+    }
     bool doCheck = true;
     switch (ld.special) {
       case GameObject::LNSPEC_DoorOpen:

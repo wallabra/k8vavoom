@@ -312,7 +312,7 @@ final void DumpNodes () {
   print("=== NODES FOR '%s' ===", player.PlayerName);
   foreach (int nidx, BotPathNode node; pather.nodes) {
     if (!node) continue;
-    print(" node #%s (%s) has #%d transitions (needRefresh=%B; valid=%B)", nidx, node.ssnum, node.exits.length, node.needRefresh, node.valid);
+    print(" node #%s (%s) has #%d transitions (needRefresh=%B; valid=%B; door=%B)", nidx, node.ssnum, node.exits.length, node.needRefresh, node.valid, node.door);
     foreach (int tridx, const ref auto tr; node.exits) {
       print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
@@ -410,6 +410,8 @@ final void TestFindPathTo (TVec dest) {
   if (!botmo) return;
   subsector_t *ss = botmo.XLevel.PointInSubsector(dest);
   if (!ss) return;
+  pather.debugDump = true;
+  scope(exit) pather.debugDump = false;
   if (!HavePathToPoint(dest, ss)) {
     print("bot '%s' cannot find path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
   } else {
