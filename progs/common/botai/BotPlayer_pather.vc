@@ -114,9 +114,7 @@ final bool isDoorSector (GameObject::sector_t *sec, GameObject::subsector_t *sub
   GameObject::line_t *ld;
   //print("checking sector #%s for 'doorness' (%d lines; sub #%d)...", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
   foreach (int idx, ld; sec.lines) {
-    if (!EntityEx.isGoodDoorLinedef(sec, ld)) continue;
-    // ok, this is door activation line, so this sector is a door
-    return true;
+    if (EntityEx.isGoodDoorLinedef(sec, ld)) return true;
   }
   return false;
 }
@@ -128,26 +126,11 @@ final bool fakeOpenDoor (GameObject::subsector_t *sub, out EntityEx::FakeDoorInf
   GameObject::sector_t *sec = sub.sector;
   auto lowest = EntityEx.findLowestCeilingSurrounding(sec);
   if (!lowest) return false;
-  /*
-  saved.normal = sec.ceiling.normal;
-  saved.dist = sec.ceiling.dist;
-  //print("cn=%s:%s  %s:%s (%s:%s)", sec.ceiling.normal, sec.ceiling.dist, lowest.ceiling.normal, lowest.ceiling.dist, sec.ceiling.minz, lowest.ceiling.minz);
-  sec.ceiling.normal = lowest.ceiling.normal;
-  sec.ceiling.dist = lowest.ceiling.dist+4;
-  bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
-  return true;
-  */
   return EntityEx(bot.player.MO).fakeSaveOpenDoor(out fi, sec, lowest);
 }
 
 
 final void restoreFakeOpenDoor (const ref EntityEx::FakeDoorInfo fi) {
-  /*
-  GameObject::sector_t *sec = sub->sector;
-  sec.ceiling.normal = saved.normal;
-  sec.ceiling.dist = saved.dist;
-  bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
-  */
   EntityEx(bot.player.MO).restoreFakeOpenDoor(fi);
 }
 
@@ -202,65 +185,6 @@ final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
     GameObject::subsector_t *dss = lev.PointInSubsector(res);
     if (dss == tr.sub) reached = true;
   }
-
-  // if still cannot reach, but line can be activated, check for door
-  // k8: this is done in `tracePath()` now
-  /+
-  if (!reached && ld && LineSpecialLevelInfo(botmo.Level).CheckActivation(GameObject::SPAC_Use, ld, seg.side, botmo)) {
-    bool doCheck = true;
-    name sptype;
-    switch (ld.special) {
-      case GameObject::LNSPEC_DoorOpen: sptype = 'DoorOpen'; break;
-      case GameObject::LNSPEC_DoorRaise: sptype = 'DoorRaise'; break;
-      //case GameObject::LNSPEC_DoorLockedRaise:
-      case GameObject::LNSPEC_DoorAnimated: sptype = 'DoorAnimated'; break;
-      default: doCheck = false;
-    }
-    if (doCheck) {
-      // non-zero arg means that this is a button that opens a door somewhere else; ignore it for now
-      if (ld.arg1 == 0) {
-        print("bot '%s' checking for door linedef #%d, tag=%s (%s) (ss: %s -> %s)", bot.player.PlayerName, ld-&lev.Lines[0], ld.arg1, sptype, node.ssnum, tr.subnum);
-        // back sector is door itself
-        auto fsec = ld.frontsector;
-        auto bsec = ld.backsector;
-        print("  fsec #%d: floor=%s; ceiling=%s", fsec-&lev.Sectors[0], fsec.floor.maxz, fsec.ceiling.minz);
-        print("  bsec #%d: floor=%s; ceiling=%s", bsec-&lev.Sectors[0], bsec.floor.maxz, bsec.ceiling.minz);
-        if (bsec.ceiling.minz < fsec.ceiling.minz) {
-          // fake-open door, and check path again
-          print("  fake-opening door...");
-          TPlane savedPlane;
-          bool fakeRestore = fakeOpenDoor(tr.sub, out savedPlane);
-          scope(exit) if (fakeRestore) restoreFakeOpenDoor(tr.sub, savedPlane);
-          /*
-          TPlane opl;
-          opl.normal = bsec.ceiling.normal;
-          opl.dist = bsec.ceiling.dist;
-          bsec.ceiling.normal = fsec.ceiling.normal;
-          bsec.ceiling.dist = fsec.ceiling.dist;
-          lev.ChangeOneSectorInternal(bsec);
-          scope(exit) {
-            bsec.ceiling.normal = opl.normal;
-            bsec.ceiling.dist = opl.dist;
-            lev.ChangeOneSectorInternal(bsec);
-          }
-          */
-          print("  bsec #%d: floor=%s; ceiling=%s", bsec-&lev.Sectors[0], bsec.floor.maxz, bsec.ceiling.minz);
-          // retrace path
-          reached = botmo.TracePath(yaw, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true, srcOrigin:node.Origin);
-          // if not reached, but destination is in required subsector, consider this node reachable
-          if (!reached) {
-            dir.z = 0;
-            TVec res = node.Origin+dir.normalise2D*pi.maxdist;
-            GameObject::subsector_t *dss = lev.PointInSubsector(res);
-            if (dss == tr.sub) reached = true;
-          }
-          pi.needUse = true;
-          if (reached) print("    can reach with open door");
-        }
-      }
-    }
-  }
-  +/
 
   // if reached, record this path
   if (reached) {
