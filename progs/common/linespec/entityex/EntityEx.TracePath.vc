@@ -24,6 +24,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+//#define DEBUG_TRACE_PATH_FAKEOPEN
+
 const float MAXSTEPHEIGHT = 32.0;
 const float MAXJUMPHEIGHT = 56.0;
 const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
@@ -47,6 +49,124 @@ struct PathInfo {
 
 //==========================================================================
 //
+//  isDoorSector
+//
+//  returns surrounding sector with the lowest height
+//
+//==========================================================================
+final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec) {
+  // if we can fit here, don't bother
+  if (sec.ceiling.minz-sec.floor.maxz >= Height) return nullptr;
+  // check if this sector has door activation lines
+  float height = float.max;
+  GameObject::sector_t *res = nullptr;
+  GameObject::line_t *ld;
+  foreach (ld; sec.lines) {
+    if (!(ld.flags&GameObject::ML_TWOSIDED)) continue; // not interesting
+    if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
+    if (ld.backsector != sec) continue;
+    if (!ld.frontsector) continue;
+    if (ld.arg1 != 0) continue;
+    bool doCheck = true;
+    switch (ld.special) {
+      case GameObject::LNSPEC_DoorOpen:
+      case GameObject::LNSPEC_DoorRaise:
+      //case GameObject::LNSPEC_DoorLockedRaise:
+      case GameObject::LNSPEC_DoorAnimated:
+        break;
+      default: doCheck = false;
+    }
+    if (!doCheck) continue;
+    // ok, this is door activation line, so this sector is a door
+    if (ld.frontsector.ceiling.minz < height) {
+      res = ld.frontsector;
+      height = res.ceiling.minz;
+    }
+  }
+  return res;
+}
+
+
+struct FakeDoorInfo {
+  TPlane saved;
+  sector_t *sec;
+}
+
+transient array!FakeDoorInfo fakeOpenedDoors;
+
+
+//==========================================================================
+//
+//  fakeOpenDoor
+//
+//  prerequisite: sector must be a door
+//
+//==========================================================================
+final void fakeOpenDoor (GameObject::sector_t *sec, GameObject::sector_t *lowest) {
+  if (!lowest) return;
+  auto fi = fakeOpenedDoors.alloc();
+  fi.sec = sec;
+  fi.saved.normal = sec.ceiling.normal;
+  fi.saved.dist = sec.ceiling.dist;
+  sec.ceiling.normal = lowest.ceiling.normal;
+  sec.ceiling.dist = lowest.ceiling.dist;
+  XLevel.ChangeOneSectorInternal(sec);
+}
+
+
+//==========================================================================
+//
+//  restoreFakeOpenDoor
+//
+//==========================================================================
+final void restoreFakeOpenDoor (const ref FakeDoorInfo fi) {
+  GameObject::sector_t *sec = fi.sec;
+  sec.ceiling.normal = fi.saved.normal;
+  sec.ceiling.dist = fi.saved.dist;
+  XLevel.ChangeOneSectorInternal(sec);
+}
+
+
+//==========================================================================
+//
+//  TracePathTrySideMove
+//
+//  try to "pseudoslide" along an obstacle
+//  returns `true` on success (and shifts origin)
+//
+//==========================================================================
+private final bool TracePathTrySideMove (ref TVec org, TVec dirxy, float dist, bool ignoreMonsters) {
+  /*
+  Entity::tmtrace_t tmtrace;
+  float yaw = VectorAngleYaw(dirxy);
+  TVec d2 = org+dirxy*dist;
+  TVec dirLeft = AngleYawVector(yaw+90);
+  TVec dirRight = AngleYawVector(yaw-90);
+  // sidemove by our radius
+  float sideMax = Radius*0.5; // ...and a little more
+  float sideMove = 0; // ...and a little more
+  while (sideMove < sideMax) {
+    sideMove = fmin(sideMove+1, sideMax);
+    TVec dd = d2+dirLeft*sideMove;
+    if (CheckRelPosition(&tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+      // i found her!
+      org += dirLeft*sideMove;
+      return true;
+    }
+    dd = d2+dirRight*sideMove;
+    if (CheckRelPosition(&tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+      // i found her!
+      org += dirRight*sideMove;
+      return true;
+    }
+  }
+  */
+  return false;
+}
+
+
+//==========================================================================
+//
 //  CalcBestDist
 //
 //  FIXME: idiotic code!
@@ -64,7 +184,9 @@ final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist
   while (newdist > lastdist) {
     float delta = fmin(newdist-lastdist, 8);
     TVec d2 = org+dirxy*(lastdist+delta);
-    if (!CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) return;
+    if (!CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+      if (!TracePathTrySideMove(ref org, dirxy, lastdist+delta, ignoreMonsters)) return;
+    }
     //print("*** step; lastdist=%s; newdist=%s; currDist=%s", lastdist, newdist, lastdist+delta);
     lastdist += delta;
   }
@@ -94,6 +216,11 @@ final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float new
     TVec d2 = org+dirxy*dist;
     if (CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       //print("*** GOOD step; dist=%s; newdist=%s", dist, newdist);
+      lastdist = dist;
+      return;
+    }
+    if (TracePathTrySideMove(ref org, dirxy, dist, ignoreMonsters)) {
+      //print("*** XGOOD step; dist=%s; newdist=%s", dist, newdist);
       lastdist = dist;
       return;
     }
@@ -139,6 +266,21 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
     return pi.success;
   }
 
+  fakeOpenedDoors.reset();
+  scope(exit) {
+    // close all opened doors
+    foreach (ref FakeDoorInfo fi; fakeOpenedDoors; reverse) {
+#ifdef DEBUG_TRACE_PATH_FAKEOPEN
+      print("tracepath: fakeclose door (sec=%s)", fi.sec-&XLevel.Sectors[0]);
+      print("           bsec: floor=%s, ceil=%s", fi.sec.floor.maxz, fi.sec.ceiling.minz);
+#endif
+      restoreFakeOpenDoor(ref fi);
+#ifdef DEBUG_TRACE_PATH_FAKEOPEN
+      print("           bsec: floor=%s, ceil=%s", fi.sec.floor.maxz, fi.sec.ceiling.minz);
+#endif
+    }
+  }
+
   float x1 = srcOrigin.x;
   float y1 = srcOrigin.y;
   float x2 = x1+dist*bottracedir.x;
@@ -176,6 +318,24 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       } else {
         back = ld->frontsector;
         front = ld->backsector;
+      }
+
+      // if it is a door, open it
+      if (front && back) {
+        auto lowest = isDoorSector(back);
+        if (lowest) {
+#ifdef DEBUG_TRACE_PATH_FAKEOPEN
+          print("tracepath: fakeopen door (front=%s, back=%s, lowest=%s)", front-&XLevel.Sectors[0], back-&XLevel.Sectors[0], lowest-&XLevel.Sectors[0]);
+          print("           fsec: floor=%s, ceil=%s", front.floor.maxz, front.ceiling.minz);
+          print("           bsec: floor=%s, ceil=%s", back.floor.maxz, back.ceiling.minz);
+          print("           lsec: floor=%s, ceil=%s", lowest.floor.maxz, lowest.ceiling.minz);
+#endif
+          fakeOpenDoor(back, lowest);
+#ifdef DEBUG_TRACE_PATH_FAKEOPEN
+          print("           bsec: floor=%s, ceil=%s", back.floor.maxz, back.ceiling.minz);
+#endif
+          pi.needUse = true;
+        }
       }
 
       // sector is dangerous
@@ -279,4 +439,106 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
   pi.success = true;
   return true;
+}
+
+
+//==========================================================================
+//
+//  CheckLineAttackWithCB
+//
+//  return `true` from callback to stop (and return a thing)
+//
+//==========================================================================
+final EntityEx CheckLineAttackWithCB (TVec dir, float distance, bool delegate (EntityEx th) cb) {
+  TVec dst;
+  intercept_t *in;
+  TVec lineStart;
+  TVec lineEnd;
+  TVec shootOrigin;
+  //TVec outHitPoint;
+
+  shootOrigin = Origin;
+  shootOrigin.z += Height*0.5-FloorClip;
+  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+
+  dst = shootOrigin+distance*dir;
+  lineStart = shootOrigin;
+
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+    //TVec hit_point, real_hit_point;
+    //EntityEx th;
+    if (in->bIsALine) {
+      line_t *li = in->line;
+      TVec hit_point = shootOrigin+(distance*in->frac)*dir;
+
+      sector_t *sec;
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
+        sec = li->backsector;
+      } else {
+        sec = li->frontsector;
+      }
+
+      lineEnd = hit_point;
+
+      // check for shooting floor or ceiling
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, none, nullptr)) return none;
+
+      lineStart = lineEnd;
+
+      if (Level.CompatTrace && li->frontsector == li->backsector) continue;
+
+      if (li->flags&ML_TWOSIDED) {
+        // crosses a two sided line
+        opening_t *open;
+        float opentop = 0.0;
+
+        open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
+        if (open) opentop = open->top;
+        while (open) {
+          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
+          }
+          open = open->next;
+        }
+        if (open) continue;
+        if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
+            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
+            hit_point.z > opentop)
+        {
+          // it's a sky hack wall
+          return none;
+        }
+      }
+
+      if (li->special == LNSPEC_LineHorizon) return none; // don't spawn puffs on sky
+
+      // hit line
+      // don't go any farther
+      return none;
+    } else {
+      // shoot a thing
+      EntityEx th = EntityEx(in->Thing);
+      if (!th) continue;
+      if (th == self) continue; // can't shoot self
+      if (!th.bShootable) continue; // corpse or something
+
+      // check angles to see if the thing can be aimed at
+      TVec hit_point = shootOrigin+(distance*in->frac)*dir;
+
+      if (!CalcProperThingHit(ref hit_point, th, shootOrigin, dir, distance)) continue;
+
+      if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
+      if (th.Origin.z > hit_point.z) continue; // shot under the thing
+
+      // check for physical attacks on a ghost
+      if (th.bGhost /*&& NoAttackGhosts*/) continue;
+
+      // hit thing
+      // position a bit closer
+      if (!cb) return th;
+      if (cb && cb(th)) return th;
+    }
+  }
+
+  return none;
 }

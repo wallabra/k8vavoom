@@ -25,10 +25,7 @@
 //**
 //**************************************************************************
 //
-//  This section contains the main bot AI. The
-//  main bot AI loop, B_Think, is called every tic.
-//  Also included are various bot decision-making
-//  procedures, such as B_CheckStuff and B_SetEnemy.
+//  This section contains the main bot AI.
 //
 //**************************************************************************
 //#include "BotPlayer_pather_old.vc"
@@ -204,8 +201,8 @@ dictionary!(Actor, float) itemIgnoreTimeout;
 #ifdef BOT_PATHER_OLD
 // nodes for subsectors
 array!BotPathNode ssnodes;
-#endif
 int lastNodeUpdate = 1; // update when some node info changed, so planners can reset caches; never zero
+#endif
 
 // current path, subsector numbers
 array!int currPath;
@@ -226,6 +223,13 @@ float lastSSChangeTime;
 //TVec lastCurrFollowPos;
 // `0` means "not set"
 //float lastCurrFollowTime;
+
+// do not give up moving to ally while this timeout not reached
+float currPathAllyForceTimeout;
+
+// we should not use doors and such continuously, so wait a little if we did used something
+dictionary!(int, float) lastUsedLines; // by line index
+dictionary!(EntityEx, float) lastUsedThings;
 
 // a-star planner
 BotPathGraph pather;
@@ -308,8 +312,8 @@ final void DumpNodes () {
   print("=== NODES FOR '%s' ===", player.PlayerName);
   foreach (int nidx, BotPathNode node; pather.nodes) {
     if (!node) continue;
-    print(" node #%s (%s) has #%d transitions (needRefresh=%B)", nidx, node.ssnum, node.ssreachable.length, node.needRefresh);
-    foreach (int tridx, const ref auto tr; node.ssreachable) {
+    print(" node #%s (%s) has #%d transitions (needRefresh=%B; valid=%B)", nidx, node.ssnum, node.exits.length, node.needRefresh, node.valid);
+    foreach (int tridx, const ref auto tr; node.exits) {
       print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
   }
@@ -411,6 +415,8 @@ final void TestFindPathTo (TVec dest) {
   } else {
     print("bot '%s' found path from #%s to #%s", player.PlayerName, botmo.SubSector-&botmo.XLevel.Subsectors[0], ss-&botmo.XLevel.Subsectors[0]);
     UseCurrentPath();
+    // do not give up for 20 seconds
+    currPathAllyForceTimeout = botmo.XLevel.Time+6;
     //foreach (int sidx; currPath) print("  ss: #%d", sidx);
   }
 }
@@ -720,7 +726,8 @@ final float GetAngle () {
 //
 //==========================================================================
 final float GetRealAngle () {
-  return player.ViewAngles.yaw;
+  //return player.ViewAngles.yaw;
+  return botmo.Angles.yaw;
 }
 
 
@@ -914,11 +921,11 @@ Actor FindAllyToSupport (bool allowESP) {
       if (!plr) continue;
       if (!plr.bIsBot && plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
         if (HavePathToPoint(plr.MO.Origin, plr.MO.SubSector)) {
-          if (bot_developer_messages_path) print("*** ESP activated! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
+          if (bot_developer_messages_roam) print("*** ESP activated! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
           UseCurrentPath();
           break;
         } else {
-          if (bot_developer_messages_path) print("*** CANNOT activate ESP! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
+          if (bot_developer_messages_roam) print("*** CANNOT activate ESP! src=%d, dst=%d", botmo.SubSector-&botmo.XLevel.Subsectors[0], plr.MO.SubSector-&botmo.XLevel.Subsectors[0]);
         }
       }
     }
@@ -1036,11 +1043,24 @@ transient array!Actor otherItems;
 void Scan () {
   if (currPath.length) return;
 
-  if (!FindAllyToSupport(allowESP:false)) {
-    FindAllyToSupport(allowESP:true);
-    if (currPath.length) {
-      item = none;
-      return;
+  if (currPathAllyForceTimeout > botmo.XLevel.Time) {
+    if (FindAllyToSupport(allowESP:true)) {
+      currPathAllyForceTimeout = 0;
+      print("bot '%s' found ally!", player.PlayerName);
+    } else {
+      if (currPath.length) return;
+      currPathAllyForceTimeout = 0;
+      print("bot '%s' can't find an ally!", player.PlayerName);
+    }
+  }
+
+  if (!enemy && !item) {
+    if (!FindAllyToSupport(allowESP:false)) {
+      FindAllyToSupport(allowESP:true);
+      if (currPath.length) {
+        item = none;
+        return;
+      }
     }
   }
 
@@ -1117,6 +1137,35 @@ void Scan () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+const float UseCooldown = 3; // three seconds
+
+// use delegates
+final bool checkThingUse (EntityEx th) {
+  auto tlt = lastUsedThings.find(th);
+  if (tlt && *tlt > botmo.XLevel.Time) return false; // cooldown is not complete
+  return true;
+}
+
+final void onThingUsed (EntityEx th) {
+  print("bot '%s' used thing '%C'", player.PlayerName, th);
+  lastUsedThings.put(th, botmo.XLevel.Time+UseCooldown);
+}
+
+final bool checkLineUse (line_t *ld) {
+  int lidx = ld-&botmo.XLevel.Lines[0];
+  auto tlt = lastUsedLines.find(lidx);
+  if (tlt && *tlt > botmo.XLevel.Time) return false; // cooldown is not complete
+  return true;
+}
+
+final void onLineUsed (line_t *ld) {
+  int lidx = ld-&botmo.XLevel.Lines[0];
+  print("bot '%s' used line #%s", player.PlayerName, lidx);
+  lastUsedLines.put(lidx, botmo.XLevel.Time+UseCooldown);
+}
+
+
 //==========================================================================
 //
 //  PerformLastCheckActions
@@ -1126,7 +1175,11 @@ void PerformLastCheckActions (const ref EntityEx::PathInfo pi) {
 #ifdef BOT_ALLOW_JUMPS
   if (pi.needJump && !bot_no_jump) player.Buttons |= BT_JUMP;
 #endif
-  if (pi.needUse) EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+  if (pi.needUse) {
+    //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+    EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '', // don't produce any sound on fail
+      &checkLineUse, &onLineUsed, &checkThingUse, &onThingUsed);
+  }
 }
 
 
@@ -1220,7 +1273,7 @@ final bool Check_LOS (Actor to, float vangle, optional bool skipCanSee) {
   if (vangle <= 0) return false; // looker seems to be blind
   if (vangle < 360.0) {
     // check FOV
-    if (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) > vangle/2.0) return false;
+    if (fabs(AngleMod180(AngleTo(to.Origin)-GetRealAngle())) > vangle/2.0) return false;
   }
   if (!skipCanSee && !botmo.CanSee(to)) return false; // out of sight
   return true;
@@ -1237,7 +1290,7 @@ final bool GoodAngle (Actor to, float vangle) {
   if (vangle <= 0) return false; // looker seems to be blind
   if (vangle >= 360.0) return true;
   // check FOV
-  return (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) <= vangle/2.0);
+  return (fabs(AngleMod180(AngleTo(to.Origin)-GetRealAngle())) <= vangle/2.0);
 }
 
 
@@ -1505,7 +1558,8 @@ Actor FindEnemy () {
   if (!enemy && player.Attacker) {
     Actor act = Actor(player.Attacker);
     if (act && act != botmo && act.Health > 0 && act.bShootable && (act.bMonster || act.bIsPlayer)) {
-      if (Check_LOS(act, 360)) {
+      if (!player.Level.Game.deathmatch && act.bIsPlayer) act = none;
+      if (act && Check_LOS(act, 360)) {
         if (bot_developer_messages_attack) print("bot '%s' is retaliating to %C", player.PlayerName, act);
         return act;
       }
@@ -1649,10 +1703,11 @@ final bool FollowPath () {
   if (lastSubsector == ssnum && lastSSChangeTime) {
     if (currTime-lastSSChangeTime > 4) {
       if (currDestNodeIdx < currPath.length) {
-        print("DAMMIT! bot '%s' cannot move from subsector #%d to subsector #%d in #%s, dropping the path", player.PlayerName, ssnum, currTime-lastSSChangeTime, currPath[$-1]);
+        print("DAMMIT! bot '%s' cannot move from subsector #%d to subsector #%d in %s seconds, dropping the path", player.PlayerName, ssnum, currPath[$-1], currTime-lastSSChangeTime);
       }
       ResetCurrPath();
       lastSSChangeTime = currTime;
+      SetAngle(FRandomBetween(0, 360));
       return false; // no path
     }
   } else {
@@ -1764,6 +1819,8 @@ final bool FollowPath () {
 //
 //==========================================================================
 void Roam () {
+  if (FollowPath()) return;
+
   if (FindAllyToSupport(allowESP:false)) {
     ResetCurrPath();
   }
@@ -1844,7 +1901,10 @@ void Roam () {
     }
   }
 
-  if (destValid && HavePathToPoint(dest)) UseCurrentPath();
+  if (destValid && HavePathToPoint(dest)) {
+    UseCurrentPath();
+    SetAngle(AngleTo(dest));
+  }
 
   if (FollowPath()) return;
 
@@ -2011,6 +2071,9 @@ void Move (float deltaTime) {
     }
   }
 
+  // just in case
+  if (enemy && (enemy.Health <= 0 || !enemy.bShootable || (!enemy.bMonster && !enemy.bIsPlayer))) enemy = none;
+
   // now handle attack movement
   if (enemy) {
     EntityEx::PathInfo pi;
@@ -2030,7 +2093,6 @@ void Move (float deltaTime) {
     // remember where we saw him last in case he gets away
     lastpos = enemy.Origin;
     lastpos_valid = true;
-    if (bot_developer_messages_roam) print("bot '%s': going to enemy lastpos %C", player.PlayerName, enemy);
 
     // check if we'd rather pick up something than fight
     if (item) {
@@ -2041,7 +2103,9 @@ void Move (float deltaTime) {
       }
     }
 
-    float an = botmo.Angles.yaw;
+    if (bot_developer_messages_roam) print("bot '%s': going to enemy lastpos %C", player.PlayerName, enemy);
+
+    float an = GetRealAngle();
     if (sidemove < 0.0) an -= 90.0; else an += 90.0;
 
     if (!botmo.TracePath(an, 48.0, out pi, allowJump:true)) {
@@ -2051,6 +2115,9 @@ void Move (float deltaTime) {
 
     if (CheckTo(enemy.Origin, out pi) && dist > player.ReadyWeapon.BotCombatDist) {
       forwardmove = FORWARDRUN;
+      if (!botmo.TracePath(an, 64, out pi, allowJump:true)) {
+        forwardmove = -FORWARDRUN;
+      }
     } else {
       if (botmo.TracePath(an+180, 64, out pi, allowJump:true)) {
         forwardmove = -FORWARDRUN;
@@ -2058,6 +2125,8 @@ void Move (float deltaTime) {
         forwardmove = FORWARDRUN;
       }
     }
+
+    SetAngle(AngleTo(lastpos));
 
     // unconditionally, just for fun
     PerformLastCheckActions(pi);
@@ -2199,7 +2268,10 @@ void BotSwitchWeapon () {
 //  Attack
 //
 //==========================================================================
-void Attack () {
+transient EntityEx tempPlrMO;
+
+
+void Attack (bool newTick) {
   // still reacting to something
   if (t_react) return;
   if (player.PendingWeapon) return;
@@ -2211,8 +2283,24 @@ void Attack () {
     if (player.PendingWeapon) return;
   }
 
+  bool resetEnemy = false;
+
   // don't have an enemy to fight
-  if (!enemy || enemy.Health <= 0) return;
+  if (newTick && (!enemy || enemy.Health <= 0)) {
+    // check if we have some enemy in sight for one-time shot
+    enemy = Actor(PlayerEx(player).Attacker);
+    if (enemy && enemy.bIsPlayer && !player.Level.Game.deathmatch) enemy = none; // don't retaliate to allies
+    if (!enemy || enemy.Health <= 0 || !enemy.bShootable || !enemy.bMonster) {
+      enemy = FindEnemy();
+      if (!enemy) return;
+      print("bot '%s' want to place one-time shot to '%C'", player.PlayerName, enemy);
+      resetEnemy = true;
+    } else {
+      print("bot '%s' want to retaliate to '%C'", player.PlayerName, enemy);
+    }
+    return;
+  }
+  if (!enemy) return;
 
   // never attack other players in coop
   if (enemy.bIsPlayer && !player.Level.Game.deathmatch) {
@@ -2222,15 +2310,36 @@ void Attack () {
     return;
   }
 
+  scope(exit) if (resetEnemy) enemy = none;
+
   if (!CanAttackWithCurrentWeapon(ignorePending:true)) return;
 
   // it we better pickup an item, don't attack
-  if (CheckWantCurrentItem()) return;
+  if (!resetEnemy && CheckWantCurrentItem()) return;
 
   //if (player.ReadyWeapon) print("CANATTACK with %C: %B", player.ReadyWeapon, player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false));
 
   // no point in firing if we won't hit them
-  if (!Check_LOS(enemy, SHOOTFOV)) return;
+  bool doFire = Check_LOS(enemy, SHOOTFOV);
+
+  // check if we'll shoot any ally
+  if (doFire && !player.Level.Game.deathmatch) {
+    // check all other players
+    TVec dir;
+    AngleVector(botmo.Angles, out dir);
+    foreach (auto i; 0..MAXPLAYERS) {
+      auto plr = player.Level.Game.Players[i];
+      if (!plr) continue;
+      if (plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+        tempPlrMO = EntityEx(plr.MO);
+        if (botmo.CheckLineAttackWithCB(dir, 1024, delegate bool (EntityEx th) { return (th == tempPlrMO); })) {
+          print("bot '%s' ceased fire due to '%s'", player.PlayerName, plr.PlayerName);
+          doFire = false;
+          break;
+        }
+      }
+    }
+  }
 
   {
     TVec eorig = enemy.Origin;
@@ -2240,7 +2349,7 @@ void Attack () {
     org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
 
     TVec hp, norm;
-    if (!botmo.XLevel.TraceLine(org, eorig, out hp, out norm)) {
+    if (!doFire || !botmo.XLevel.TraceLine(org, eorig, out hp, out norm)) {
       // try sidemove
       EntityEx::PathInfo piLeft;
       if (botmo.TracePath(GetAngle()-90, SIDEWALK, out piLeft, allowJump:true)) {
@@ -2260,6 +2369,8 @@ void Attack () {
       return;
     }
   }
+
+  if (!doFire) return;
 
   // set dodge time
   t_shootcooldown = 0.3+0.5*FRandomFull();
@@ -2469,18 +2580,11 @@ void BotTick (float deltaTime) {
     CheckAndDropNode();
   }
 
-  if (doReplan) {
-#ifndef BOT_PATHER_OLD
-    // for new pather
-    if (!(++lastNodeUpdate)) {
-      lastNodeUpdate = 1;
-      pather.lastNodeUpdate = 0; // so the cache will be invalidated on next path building
-    }
-#endif
+  pather.Reset(); // oops
 
+  if (doReplan) {
     // weed out any bad destinations/enemies
     CheckStuff();
-
     // destination setting
     SetEnemy();
     Scan();
@@ -2492,7 +2596,7 @@ void BotTick (float deltaTime) {
   Turn();
 
   // moving towards destination
-  Attack();
+  Attack(doReplan);
 
   if (doReplan) {
     Move(deltaTime);
@@ -2622,6 +2726,27 @@ void OnBeginPlay () {
 
 //==========================================================================
 //
+//  OnMapChanged
+//
+//==========================================================================
+void OnMapChanged () {
+  lastMapHash = player.MO.XLevel.MapHash;
+  lastSubsector = -1;
+  lastUsedLines.reset();
+  lastUsedThings.reset();
+#ifdef BOT_PATHER_OLD
+  foreach (ref BotPathNode node; ssnodes) delete node;
+  ssnodes.length = player.MO.XLevel.Subsectors.length; // clear it
+  foreach (ref BotPathNode node; ssnodes) node = none;
+#else
+  pather.Setup(self);
+  print("bot '%s' created %s path nodes", player.PlayerName, pather.nodes.length);
+#endif
+}
+
+
+//==========================================================================
+//
 //  OnSpawn
 //
 //==========================================================================
@@ -2630,18 +2755,11 @@ void OnSpawn () {
 
 #ifdef BOT_PATHER_OLD
   if (ssnodes.length != player.MO.XLevel.Subsectors.length || lastMapHash != player.MO.XLevel.MapHash) {
-    lastMapHash = player.MO.XLevel.MapHash;
-    foreach (ref BotPathNode node; ssnodes) delete node;
-    ssnodes.length = player.MO.XLevel.Subsectors.length; // clear it
-    foreach (ref BotPathNode node; ssnodes) node = none;
-    lastSubsector = -1;
+    OnMapChanged();
   }
 #else
   if (pather.nodes.length != player.MO.XLevel.Subsectors.length || lastMapHash != player.MO.XLevel.MapHash) {
-    lastMapHash = player.MO.XLevel.MapHash;
-    lastSubsector = -1;
-    pather.Setup(self);
-    print("bot '%s' created %s path nodes", player.PlayerName, pather.nodes.length);
+    OnMapChanged();
   }
 #endif
 

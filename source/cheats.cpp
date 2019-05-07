@@ -249,8 +249,9 @@ COMMAND(my_sector_info) {
     sec = Player->MO->Sector;
   }
 
-  GCon->Logf("Sector #%d; tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
+  GCon->Logf("Sector #%d (sub #%d); tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
     (int)(intptr_t)(sec-Player->Level->XLevel->Sectors),
+    (int)(intptr_t)(Player->MO->SubSector-Player->Level->XLevel->Subsectors),
     sec->tag, sec->special, sec->seqType, sec->soundtraversed, sec->Damage, sec->Sky
   );
   GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));

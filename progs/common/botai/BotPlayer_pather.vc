@@ -53,9 +53,11 @@ Level XLevel; // level object (i.e. actual map)
 TVec Origin;
 int ssnum;
 GameObject::subsector_t *sub;
+bool door; // is this subsector a door part?
+bool valid;
 
 // reachable subsectors (should be at least one, zero means "don't know yet")
-array!Transition ssreachable;
+array!Transition exits;
 
 // `true` if this node has some impassable 2-sided walls
 // this means that this node should be re-evaluated next time the bot hits it
@@ -72,7 +74,7 @@ static final BotPathNode CreateNew (Level axlevel) {
 
 
 override void Destroy () {
-  ssreachable.length = 0;
+  exits.length = 0;
   ::Destroy();
 }
 
@@ -85,11 +87,12 @@ defaultproperties {
 class BotPathGraph : MiAStarGraphBase;
 
 BotPlayerBase bot;
-int lastNodeUpdate; // if this is not equal to `bot.lastNodeUpdate`, reset cache
-int currentPos;
 
 // a-star nodes
 array!BotPathNode nodes;
+// this flag will be set if some node was refreshed
+// we need to reset cache, and look for path again
+bool cacheIsInvalid;
 
 
 override void Destroy () {
@@ -99,12 +102,283 @@ override void Destroy () {
 }
 
 
+final bool isDoorSector (GameObject::sector_t *sec) {
+  // if we can fit here, don't bother
+  //if (sec.ceiling.minz-sec.floor.maxz >= bot.player.MO.Height) return false;
+  // check if this sector has door activation lines
+  GameObject::line_t *ld;
+  foreach (ld; sec.lines) {
+    if (!(ld.flags&GameObject::ML_TWOSIDED)) continue; // not interesting
+    if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
+    if (ld.backsector != sec) continue;
+    if (ld.arg1 != 0) continue;
+    bool doCheck = true;
+    switch (ld.special) {
+      case GameObject::LNSPEC_DoorOpen:
+      case GameObject::LNSPEC_DoorRaise:
+      //case GameObject::LNSPEC_DoorLockedRaise:
+      case GameObject::LNSPEC_DoorAnimated:
+        break;
+      default: doCheck = false;
+    }
+    if (!doCheck) continue;
+    // ok, this is door activation line, so this sector is a door
+    return true;
+  }
+  return false;
+}
+
+
+//FIXME: doesn't work with slopes
+final GameObject::sector_t *findLowestCeilingSurrounding (GameObject::sector_t *sec) {
+  float height = float.max;
+  GameObject::sector_t *res = nullptr;
+  GameObject::sector_t *other;
+  GameObject::line_t *line;
+  foreach (line; sec.lines) {
+    if (!(line->flags&GameObject::ML_TWOSIDED)) continue;
+    if (line->frontsector == sec) {
+      if (line->backsector == sec) continue;
+      other = line->backsector;
+    } else {
+      other = line->frontsector;
+    }
+    if (!other) continue;
+
+    if (other.ceiling.minz < height) {
+      res = other;
+      height = other.ceiling.minz;
+    }
+  }
+  return res;
+}
+
+
+// prerequisite: sector must be a door
+// returns `true` if we need to restore a sector
+final bool fakeOpenDoor (GameObject::subsector_t *sub, out TPlane saved) {
+  GameObject::sector_t *sec = sub->sector;
+  auto lowest = findLowestCeilingSurrounding(sec);
+  if (!lowest) return false;
+  saved.normal = sec.ceiling.normal;
+  saved.dist = sec.ceiling.dist;
+  sec.ceiling.normal = lowest.ceiling.normal;
+  sec.ceiling.dist = lowest.ceiling.dist;
+  bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
+  return true;
+}
+
+
+final void restoreFakeOpenDoor (GameObject::subsector_t *sub, const ref TPlane saved) {
+  GameObject::sector_t *sec = sub->sector;
+  sec.ceiling.normal = saved.normal;
+  sec.ceiling.dist = saved.dist;
+  bot.player.MO.XLevel.ChangeOneSectorInternal(sec);
+}
+
+
+/*
+final bool canPassDoor (GameObject::sector_t *sec) {
+  return false;
+}
+*/
+
+
+final bool IsGoodMapPosition (ref TVec pos) {
+  Entity::tmtrace_t tmtrace;
+  pos.z = EntityEx::ONFLOORZ;
+  if (bot.player.MO.CheckRelPosition(&tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
+    pos = tmtrace.End;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
+  EntityEx botmo = EntityEx(bot.player.MO);
+  Level lev = botmo.XLevel;
+  auto tr = &node.exits[exitnum];
+
+  GameObject::seg_t *seg = tr.seg;
+  GameObject::line_t *ld = seg.linedef;
+  GameObject::sector_t *sec = tr.sub.sector;
+
+  tr.floorDist = sec.floor.dist;
+  tr.ceilDist = sec.ceiling.dist;
+
+  // ok, this looks like something interesting
+  int psnum = tr.subnum;
+  BotPathNode otherNode = nodes[psnum];
+
+  validateNode(otherNode, initial:!dumpReachable);
+  if (!otherNode.valid) {
+    tr.dist = -1;
+    tr.needJump = false;
+    tr.needUse = false;
+    tr.moveCost = -1;
+  }
+
+  EntityEx::PathInfo pi;
+  TVec dir = otherNode.Origin-node.Origin;
+  dir.z = 0;
+  float dist = dir.length2D;
+
+  float yaw = VectorAngleYaw(dir.normalise2D);
+  bool reached = botmo.TracePath(yaw, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true, srcOrigin:node.Origin);
+  // if not reached, but destination is in required subsector, consider this node reachable
+  if (!reached) {
+    dir.z = 0;
+    TVec res = node.Origin+dir.normalise2D*pi.maxdist;
+    GameObject::subsector_t *dss = lev.PointInSubsector(res);
+    if (dss == tr.sub) reached = true;
+  }
+
+  // if still cannot reach, but line can be activated, check for door
+  // k8: this is done in `tracePath()` now
+  /+
+  if (!reached && ld && LineSpecialLevelInfo(botmo.Level).CheckActivation(GameObject::SPAC_Use, ld, seg.side, botmo)) {
+    bool doCheck = true;
+    name sptype;
+    switch (ld.special) {
+      case GameObject::LNSPEC_DoorOpen: sptype = 'DoorOpen'; break;
+      case GameObject::LNSPEC_DoorRaise: sptype = 'DoorRaise'; break;
+      //case GameObject::LNSPEC_DoorLockedRaise:
+      case GameObject::LNSPEC_DoorAnimated: sptype = 'DoorAnimated'; break;
+      default: doCheck = false;
+    }
+    if (doCheck) {
+      // non-zero arg means that this is a button that opens a door somewhere else; ignore it for now
+      if (ld.arg1 == 0) {
+        print("bot '%s' checking for door linedef #%d, tag=%s (%s) (ss: %s -> %s)", bot.player.PlayerName, ld-&lev.Lines[0], ld.arg1, sptype, node.ssnum, tr.subnum);
+        // back sector is door itself
+        auto fsec = ld.frontsector;
+        auto bsec = ld.backsector;
+        print("  fsec #%d: floor=%s; ceiling=%s", fsec-&lev.Sectors[0], fsec.floor.maxz, fsec.ceiling.minz);
+        print("  bsec #%d: floor=%s; ceiling=%s", bsec-&lev.Sectors[0], bsec.floor.maxz, bsec.ceiling.minz);
+        if (bsec.ceiling.minz < fsec.ceiling.minz) {
+          // fake-open door, and check path again
+          print("  fake-opening door...");
+          TPlane savedPlane;
+          bool fakeRestore = fakeOpenDoor(tr.sub, out savedPlane);
+          scope(exit) if (fakeRestore) restoreFakeOpenDoor(tr.sub, savedPlane);
+          /*
+          TPlane opl;
+          opl.normal = bsec.ceiling.normal;
+          opl.dist = bsec.ceiling.dist;
+          bsec.ceiling.normal = fsec.ceiling.normal;
+          bsec.ceiling.dist = fsec.ceiling.dist;
+          lev.ChangeOneSectorInternal(bsec);
+          scope(exit) {
+            bsec.ceiling.normal = opl.normal;
+            bsec.ceiling.dist = opl.dist;
+            lev.ChangeOneSectorInternal(bsec);
+          }
+          */
+          print("  bsec #%d: floor=%s; ceiling=%s", bsec-&lev.Sectors[0], bsec.floor.maxz, bsec.ceiling.minz);
+          // retrace path
+          reached = botmo.TracePath(yaw, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true, srcOrigin:node.Origin);
+          // if not reached, but destination is in required subsector, consider this node reachable
+          if (!reached) {
+            dir.z = 0;
+            TVec res = node.Origin+dir.normalise2D*pi.maxdist;
+            GameObject::subsector_t *dss = lev.PointInSubsector(res);
+            if (dss == tr.sub) reached = true;
+          }
+          pi.needUse = true;
+          if (reached) print("    can reach with open door");
+        }
+      }
+    }
+  }
+  +/
+
+  // if reached, record this path
+  if (reached) {
+    if (dumpReachable && tr.dist < 0) print("  can reach sub #%d from sub #%d", tr.subnum, node.ssnum);
+    tr.dist = pi.maxdist;
+    tr.needJump = pi.needJump;
+    tr.needUse = pi.needUse;
+    tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
+    if (bot.IsDangerous(tr.sub.sector)) tr.moveCost *= 9;
+  } else {
+    if (dumpReachable && tr.dist >= 0) {
+      TVec res = node.Origin+dir.normalise2D*pi.maxdist;
+      GameObject::subsector_t *dss = lev.PointInSubsector(res);
+      print("cannot reach sub #%d from sub #%d (maxdist=%s; wantdist=%s; destss=%s)", tr.subnum, node.ssnum, pi.maxdist, dist, dss-&lev.Subsectors[0]);
+    }
+    tr.dist = -1;
+    tr.needJump = false;
+    tr.needUse = false;
+    tr.moveCost = -1;
+  }
+}
+
+
+final void validateNode (BotPathNode node, optional bool initial) {
+  TPlane savedPlane;
+  Level lev = bot.player.MO.XLevel;
+  GameObject::subsector_t *sub = node.sub;
+  bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
+  scope(exit) if (fakeRestore) restoreFakeOpenDoor(sub, savedPlane);
+  TVec cpos = (initial ? node.Origin : lev.GetSubsectorCenter(sub));
+  // try various map positions
+  if (!IsGoodMapPosition(cpos)) {
+    // cannot stand here, try corners
+    bool ok = false;
+    TVec center = lev.GetSubsectorCenter(sub);
+    foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
+      GameObject::seg_t *seg = &lev.Segs[lidx];
+      TVec dir = center-(*seg->v1);
+      if (dir.length2DSquared < 4*4) continue;
+      TVec dest = (*seg->v1)+(dir.normalise2D)*3.5;
+      dest.z = EntityEx::ONFLOORZ;
+      if (IsGoodMapPosition(dest)) {
+        auto dss = lev.PointInSubsector(dest);
+        if (dss == sub) {
+          ok = true;
+          cpos = dest;
+          break;
+        }
+      }
+    }
+    if (initial) {
+      node.valid = ok;
+      if (!ok) print("node #%d is not valid", node.ssnum); else node.Origin = cpos;
+    } else {
+      if (node.valid != ok || node.Origin != cpos) {
+        print("node #%d becomes %svalid", node.ssnum, (ok ? "" : "in"));
+        node.Origin = cpos;
+        node.valid = ok;
+        cacheIsInvalid = true;
+      }
+    }
+  } else {
+    if (initial) {
+      node.valid = true;
+    } else {
+      if (!node.valid || node.Origin != cpos) {
+        print("node #%d becomes valid", node.ssnum);
+        node.Origin = cpos;
+        node.valid = true;
+        cacheIsInvalid = true;
+      }
+    }
+  }
+}
+
+
 final void Setup (BotPlayerBase abot) {
   if (!abot) FatalError("something is very wrong with bot pathfinder");
   bot = abot;
   foreach (ref auto node; nodes) delete node;
   EntityEx botmo = EntityEx(bot.player.MO);
   Level lev = botmo.XLevel;
+
+  Reset();
+
+  TPlane savedPlane;
 
   // create nodes
   nodes.length = lev.Subsectors.length;
@@ -119,163 +393,92 @@ final void Setup (BotPlayerBase abot) {
     node.myFloorDist = sub.sector.floor.dist;
     node.myCeilDist = sub.sector.ceiling.dist;
     node.needRefresh = false;
+    node.door = isDoorSector(sub->sector);
+    validateNode(node, initial:true);
   }
 
   foreach (auto node; nodes) {
     GameObject::subsector_t *sub = node.sub;
+
+    // if this sector a door, fake-open it
+    bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
+    scope(exit) if (fakeRestore) restoreFakeOpenDoor(sub, savedPlane);
+
     // check reachable subsectors
     foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
       GameObject::seg_t *seg = &lev.Segs[lidx];
+      if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue; // not interesting
+
       GameObject::line_t *ld = seg.linedef;
       if (ld) {
         // not a miniseg
         if (!(ld.flags&GameObject::ML_TWOSIDED)) continue; // not interesting
         if (ld.flags&(GameObject::ML_BLOCKING|GameObject::ML_BLOCKPLAYERS|GameObject::ML_BLOCKEVERYTHING)) continue; // not interesting
-      }
-      if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue; // not interesting
-
-      // ok, this looks like something interesting
-      int psnum = seg.partner.front_sub-&lev.Subsectors[0];
-
-      BotPathNode otherNode = nodes[psnum];
-
-      EntityEx::PathInfo pi;
-      TVec dir = otherNode.Origin-node.Origin;
-      dir.z = 0;
-      float dist = dir.length2D;
-
-      float yaw = VectorAngleYaw(dir.normalise2D);
-      bool reached = botmo.TracePath(yaw, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true, srcOrigin:node.Origin);
-      // if not reached, but destination is in required subsector, consider this node reachable
-      if (!reached) {
-        dir.z = 0;
-        TVec res = node.Origin+dir.normalise2D*pi.maxdist;
-        GameObject::subsector_t *dss = lev.PointInSubsector(res);
-        if (dss == seg.partner.front_sub) reached = true;
+        node.needRefresh = true;
       }
 
-      auto tr = node.ssreachable.alloc();
+      auto tr = node.exits.alloc();
       tr.seg = seg;
       tr.sub = seg.partner.front_sub;
-      tr.subnum = seg.partner.front_sub-&lev.Subsectors[0];
-      tr.floorDist = tr.sub.sector.floor.dist;
-      tr.ceilDist = tr.sub.sector.ceiling.dist;
-      // if reached, record this path
-      if (reached) {
-        tr.dist = pi.maxdist;
-        tr.needJump = pi.needJump;
-        tr.needUse = pi.needUse;
-        tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
-        if (bot.IsDangerous(seg.partner.front_sub.sector)) tr.moveCost *= 9;
-      } else {
-        tr.dist = -1;
-        tr.needJump = false;
-        tr.needUse = false;
-        tr.moveCost = -1;
-      }
+      tr.subnum = tr.sub-&lev.Subsectors[0];
 
-      node.needRefresh = true;
+      refreshNodeExit(node, node.exits.length-1, dumpReachable:false);
     }
   }
 }
 
+
+transient array!int refreshList;
 
 final void refresh (BotPathNode node) {
   bool fullRefresh = false;
   GameObject::sector_t *sec = node.sub.sector;
-  if (sec.floor.dist == node.myFloorDist && sec.ceiling.dist == node.myCeilDist) {
-    if (!node.needRefresh) return;
-  } else {
-    print("refreshing node for subsector #%d", node.ssnum);
-    node.myFloorDist = sec.floor.dist;
-    node.myCeilDist = sec.ceiling.dist;
-    fullRefresh = true;
-  }
-
   EntityEx botmo = EntityEx(bot.player.MO);
   Level lev = botmo.XLevel;
 
-  foreach (ref auto tr; node.ssreachable) {
+  if (sec.floor.dist == node.myFloorDist && sec.ceiling.dist == node.myCeilDist) {
+    if (!node.needRefresh) return;
+  } else {
+    print("bot '%s' refreshing node for subsector #%d", bot.player.PlayerName, node.ssnum);
+    node.myFloorDist = sec.floor.dist;
+    node.myCeilDist = sec.ceiling.dist;
+    fullRefresh = true;
+    validateNode(node, initial:false);
+    if (!node.valid) return;
+  }
+
+  foreach (auto tridx, ref auto tr; node.exits) {
     sec = tr.sub.sector;
     if (!fullRefresh && sec.floor.dist == tr.floorDist && sec.ceiling.dist == tr.ceilDist) continue;
-
-    // ok, this looks like something interesting
-    int psnum = tr.subnum;
-    BotPathNode otherNode = nodes[psnum];
-
-    print("  refreshing path from node #%s to subsector #%d", node.ssnum, psnum);
-
-    EntityEx::PathInfo pi;
-    TVec dir = otherNode.Origin-node.Origin;
-    dir.z = 0;
-    float dist = dir.length2D;
-
-    float yaw = VectorAngleYaw(dir.normalise2D);
-    bool reached = botmo.TracePath(yaw, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true, srcOrigin:node.Origin);
-    // if not reached, but destination is in required subsector, consider this node reachable
-    if (!reached) {
-      dir.z = 0;
-      TVec res = node.Origin+dir.normalise2D*pi.maxdist;
-      GameObject::subsector_t *dss = lev.PointInSubsector(res);
-      if (dss == tr.sub) reached = true;
-    }
-
-    // if reached, record this path
-    if (reached) {
-      tr.dist = pi.maxdist;
-      tr.needJump = pi.needJump;
-      tr.needUse = pi.needUse;
-      tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
-      if (bot.IsDangerous(sec)) tr.moveCost *= 9;
-    } else {
-      // invalidate this path
-      tr.dist = -1;
-      tr.needJump = false;
-      tr.needUse = false;
-      tr.moveCost = -1;
-    }
-
-    tr.floorDist = sec.floor.dist;
-    tr.ceilDist = sec.ceiling.dist;
+    validateNode(nodes[tr.subnum]);
+    refreshNodeExit(node, tridx, dumpReachable:true);
+    cacheIsInvalid = true;
   }
-}
-
-
-final bool IsComplete () {
-  return (currentPos >= PathArrayLength());
-}
-
-// -1: done
-final int GetNextSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos++)).ssnum;
-  return -1;
-}
-
-// -1: done
-final int GetCurrSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos)).ssnum;
-  return -1;
-}
-
-final int GetPathSSNum (int index) {
-  return BotPathNode(PathArrayNode(index)).ssnum;
 }
 
 
 // estimate distance between two nodes
 // use squared distance, because it doesn't matter, so we can avoid `sqrt()` call
 override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
-  return (BotPathNode(start).Origin-BotPathNode(end).Origin).length2DSquared;
+  BotPathNode s = BotPathNode(start);
+  BotPathNode e = BotPathNode(end);
+  if (!s.valid || !e.valid) return 999999;
+  return (s.Origin-e.Origin).length2DSquared;
 }
 
 
 // should always generate the same set for the same node,
 // so we cannot update nodes here
 override void AdjacentCost (MiAStarNodeBase node) {
+  if (cacheIsInvalid) return; // cache is invalid, we will restart searching anyway
   BotPathNode pn = BotPathNode(node);
   refresh(pn);
-  foreach (const ref auto tr; pn.ssreachable) {
-    if (tr.moveCost >= 0) {
+  if (cacheIsInvalid) return; // cache is invalid, we will restart searching anyway
+  if (!pn.valid) return;
+  foreach (const ref auto tr; pn.exits) {
+    refresh(nodes[tr.subnum]);
+    if (cacheIsInvalid) return; // cache is invalid, we will restart searching anyway
+    if (tr.moveCost >= 0 && nodes[tr.subnum].valid) {
       PushAdjacentCost(nodes[tr.subnum], tr.moveCost);
     }
   }
@@ -294,7 +497,6 @@ final bool BuildPath (TVec from, GameObject::subsector_t *fromsub, TVec dest, Ga
   if (!fromsub) fromsub = lev.PointInSubsector(from);
   if (!destsub) destsub = lev.PointInSubsector(dest);
 
-  currentPos = 0;
   // early exit: same subsector is always reachable
   if (fromsub == destsub) {
     PathArrayClear();
@@ -302,14 +504,16 @@ final bool BuildPath (TVec from, GameObject::subsector_t *fromsub, TVec dest, Ga
     pathCost = 0;
     return true;
   }
-  // invalidate cache, if necessary
-  if (lastNodeUpdate != abot.lastNodeUpdate) {
-    //if (GetCvarB('bot_developer_messages_crumbs')) print("invalidating path cache");
-    lastNodeUpdate = abot.lastNodeUpdate;
+
+  // run solver
+  for (;;) {
+    cacheIsInvalid = false;
+    bool res = Solve(nodes[fromsub-&lev.Subsectors[0]], nodes[destsub-&lev.Subsectors[0]]);
+    if (!cacheIsInvalid) return res;
+    // something was changed, result is nonsensical; reset cache and restart
+    print("bot '%s' reset path cache", abot.player.PlayerName);
     Reset();
   }
-  // run solver
-  return Solve(nodes[fromsub-&lev.Subsectors[0]], nodes[destsub-&lev.Subsectors[0]]);
 }
 
 

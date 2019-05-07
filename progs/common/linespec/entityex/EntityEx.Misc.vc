@@ -2736,7 +2736,12 @@ final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
 //  Looks for special lines in front of the actor to activate
 //
 //==========================================================================
-final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
+final bool UseLines (float UseRange, float UseThingRange, name FailSound,
+                     optional bool delegate (line_t *ld) checkLineUseDg,
+                     optional void delegate (line_t *ld) onLineUsedDg,
+                     optional bool delegate (EntityEx th) checkThingUseDg,
+                     optional void delegate (EntityEx th) onThingUsedDg)
+{
   bool action;
   float x1;
   float y1;
@@ -2752,6 +2757,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
   x1 = Origin.x;
   y1 = Origin.y;
 
+  // check things
   x2 = x1+UseThingRange*useDir.x;
   y2 = y1+UseThingRange*useDir.y;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
@@ -2763,7 +2769,12 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
         continue;
       }
       // don't use self
-      if (in->Thing != self && UseThing(EntityEx(in->Thing))) {
+      if (in->Thing != self) {
+        EntityEx ee = EntityEx(in->Thing);
+        if (!ee) continue;
+        if (checkThingUseDg && !checkThingUseDg(ee)) continue;
+        if (!UseThing(ee)) continue;
+        if (onThingUsedDg) onThingUsedDg(ee);
         action = true;
         break;
       }
@@ -2780,15 +2791,13 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
     continue;
   }
 
+  // check lines
   x2 = x1+UseRange*useDir.x;
   y2 = y1+UseRange*useDir.y;
   bool DoSecAct = true;
   bool FoundLine = false;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES) {
-    line_t *line;
-    float pheight;
-
-    line = in->line;
+    line_t *line = in->line;
     if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))) {
       hit_point = Origin+(UseRange*in->frac)*useDir;
       if (line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
@@ -2799,27 +2808,34 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
         //open = FindOpening(open, hit_point.z, hit_point.z+Height);
         open = FindLineOpening(line, hit_point, Height);
       }
+
       if (!open || open->range <= 0.0 || (line->special && Level.CompatUseBlocking)) {
+        if (checkLineUseDg && !checkLineUseDg(line)) continue;
+
         DoSecAct = false;
 
         // let sector intercept the use
         if (Sector && Sector->ActionList && SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_Use)) {
+          if (onLineUsedDg) onLineUsedDg(line);
           break;
         }
 
         sector_t *Sec = (PointOnPlaneSide(Origin, *line) == 0 ? line->frontsector : line->backsector);
         if (Sec && Sec->ActionList && SectorAction(Sec->ActionList).TriggerAction(self, SectorAction::SECSPAC_UseWall)) {
+          if (onLineUsedDg) onLineUsedDg(line);
           break;
         }
 
-        PlaySound(FailSound, CHAN_VOICE);
+        if (FailSound) PlaySound(FailSound, CHAN_VOICE);
 
         // can't use through a wall
         break;
       }
+
       // not a special line, but keep checking
-      pheight = Origin.z+Height/2.0;
-      if (open->top < pheight || open->bottom > pheight) PlaySound(FailSound, CHAN_VOICE);
+      float pheight = Origin.z+Height/2.0;
+      if (FailSound && (open->top < pheight || open->bottom > pheight)) PlaySound(FailSound, CHAN_VOICE);
+      if (checkLineUseDg && !checkLineUseDg(line)) continue;
       FoundLine = true;
       continue;
     }
@@ -2829,11 +2845,15 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
       //k8: gozzo doesn't check this, but we'll do
       // don't use back side unless it's a two-sided line
       if (line->backsector != nullptr) continue;
+      if (checkLineUseDg && !checkLineUseDg(line)) continue;
       LineSpecialLevelInfo(Level).ActivateLine(line, self, 1, SPAC_UseBack);
+      if (onLineUsedDg) onLineUsedDg(line);
       action = true;
     } else {
       if (line->SpacFlags&(SPAC_UseBack|SPAC_Use|SPAC_UseThrough) == SPAC_UseBack) continue; // can't be used from front, skip it
+      if (checkLineUseDg && !checkLineUseDg(line)) continue;
       LineSpecialLevelInfo(Level).ActivateLine(line, self, 0, SPAC_Use);
+      if (onLineUsedDg) onLineUsedDg(line);
       action = true;
     }
 
@@ -2851,7 +2871,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
   }
 
   if (DoSecAct && Sector->ActionList) {
-    // Let sector intercept the use
+    // let sector intercept the use
     int Spac = SectorAction::SECSPAC_Use;
     if (FoundLine) Spac |= SectorAction::SECSPAC_UseWall;
     SectorAction(Sector->ActionList).TriggerAction(self, Spac);
