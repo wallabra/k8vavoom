@@ -56,8 +56,11 @@ GameObject::subsector_t *sub;
 bool door; // is this subsector a door part?
 bool valid;
 
+int queryCounter;
+
 // reachable subsectors (should be at least one, zero means "don't know yet")
 array!Transition exits;
+array!int sectorExits; // indicies in `exits` that leads to other sectors
 
 // `true` if this node has some impassable 2-sided walls
 // this means that this node should be re-evaluated next time the bot hits it
@@ -73,10 +76,12 @@ static final BotPathNode CreateNew (Level axlevel) {
 }
 
 
+/*
 override void Destroy () {
   exits.length = 0;
   ::Destroy();
 }
+*/
 
 
 defaultproperties {
@@ -94,6 +99,11 @@ array!BotPathNode nodes;
 // we need to reset cache, and look for path again
 bool cacheIsInvalid;
 
+int queryCounter;
+// nodes that need to be fully refreshed
+// key: node index, value: nobody cares
+dictionary!(int, int) refreshMap;
+
 bool debugDump;
 
 
@@ -101,6 +111,15 @@ override void Destroy () {
   foreach (ref auto node; nodes) delete node;
   nodes.length = 0;
   ::Destroy();
+}
+
+
+final void IncQueryCounter () {
+  Reset();
+  if (!(++queryCounter)) {
+    foreach (auto node; nodes) node.queryCounter = 0;
+    queryCounter = 1;
+  }
 }
 
 
@@ -147,7 +166,77 @@ final bool IsGoodMapPosition (ref TVec pos) {
 }
 
 
-final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
+final void queueRefreshNode (BotPathNode node) {
+  refreshMap.put(node.ssnum, true);
+}
+
+
+// should be called when sector heights changed
+// returns `true` if something was changed
+final bool validateNode (BotPathNode node) {
+  if (node.queryCounter == queryCounter) return false;
+  node.queryCounter = queryCounter;
+
+  auto sec = node.sub.sector;
+  bool changed = (sec.floor.dist != node.myFloorDist || sec.ceiling.dist != node.myCeilDist);
+
+  if (changed) {
+    node.myFloorDist = sec.floor.dist;
+    node.myCeilDist = sec.ceiling.dist;
+
+    EntityEx::FakeDoorInfo savedPlane;
+    Level lev = bot.player.MO.XLevel;
+
+    print("sector #%d (sub #%d) moved!", node.sub.sector-&lev.Sectors[0], node.ssnum);
+
+    GameObject::subsector_t *sub = node.sub;
+    bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
+    scope(exit) if (fakeRestore) restoreFakeOpenDoor(savedPlane);
+    TVec cpos = lev.GetSubsectorCenter(sub);
+    // try various map positions
+    if (!IsGoodMapPosition(cpos)) {
+      // cannot stand here, try corners
+      bool ok = false;
+      TVec center = lev.GetSubsectorCenter(sub);
+      foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
+        GameObject::seg_t *seg = &lev.Segs[lidx];
+        TVec dir = center-(*seg->v1);
+        if (dir.length2DSquared < 4*4) continue;
+        TVec dest = (*seg->v1)+(dir.normalise2D)*3.5;
+        dest.z = EntityEx::ONFLOORZ;
+        if (IsGoodMapPosition(dest)) {
+          auto dss = lev.PointInSubsector(dest);
+          if (dss == sub) {
+            ok = true;
+            cpos = dest;
+            break;
+          }
+        }
+      }
+      if (node.valid != ok || node.Origin != cpos) {
+        print("node #%d becomes %svalid (door:%B; sector: %s)", node.ssnum, (ok ? "" : "in"), node.door, node.sub.sector-&lev.Sectors[0]);
+        node.Origin = cpos;
+        node.valid = ok;
+        cacheIsInvalid = true;
+        return true;
+      }
+    } else {
+      if (!node.valid || node.Origin != cpos) {
+        print("node #%d becomes valid (door:%B; sector: %s)", node.ssnum, node.door, node.sub.sector-&lev.Sectors[0]);
+        node.Origin = cpos;
+        node.valid = true;
+        cacheIsInvalid = true;
+        return true;
+      }
+    }
+  }
+
+  if (changed) cacheIsInvalid = true;
+  return changed;
+}
+
+
+final bool refreshNodeExit (BotPathNode node, int exitnum) {
   EntityEx botmo = EntityEx(bot.player.MO);
   Level lev = botmo.XLevel;
   auto tr = &node.exits[exitnum];
@@ -156,6 +245,8 @@ final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
   GameObject::line_t *ld = seg.linedef;
   GameObject::sector_t *sec = tr.sub.sector;
 
+  if (sec.floor.dist == tr.floorDist && sec.ceiling.dist == tr.ceilDist) return false;
+
   tr.floorDist = sec.floor.dist;
   tr.ceilDist = sec.ceiling.dist;
 
@@ -163,12 +254,18 @@ final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
   int psnum = tr.subnum;
   BotPathNode otherNode = nodes[psnum];
 
-  if (dumpReachable) validateNode(otherNode, initial:false);
+  bool changed = validateNode(otherNode);
+
   if (!otherNode.valid) {
-    tr.dist = -1;
-    tr.needJump = false;
-    tr.needUse = false;
-    tr.moveCost = -1;
+    if (tr.dist != -1) {
+      print("invalidated exit #%d from node #%d to sub #%d due to other-invalid", exitnum, node.ssnum, tr.subnum);
+      tr.dist = -1;
+      tr.needJump = false;
+      tr.needUse = false;
+      tr.moveCost = -1;
+      cacheIsInvalid = true;
+      return true;
+    }
   }
 
   EntityEx::PathInfo pi;
@@ -188,126 +285,41 @@ final void refreshNodeExit (BotPathNode node, int exitnum, bool dumpReachable) {
 
   // if reached, record this path
   if (reached) {
-    if (dumpReachable && tr.dist < 0) print("  can reach sub #%d from sub #%d", tr.subnum, node.ssnum);
+    //if (dumpReachable && tr.dist < 0) print("  can reach sub #%d from sub #%d", tr.subnum, node.ssnum);
+    bool wasValid = (tr.dist >= 0);
+    if (!changed && (tr.dist != pi.maxdist || tr.needJump != pi.needJump || tr.needUse != pi.needUse)) changed = true;
     tr.dist = pi.maxdist;
     tr.needJump = pi.needJump;
     tr.needUse = pi.needUse;
+    float oldCost = tr.moveCost;
     tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
     if (bot.IsDangerous(tr.sub.sector)) tr.moveCost *= 9;
+    if (!changed && tr.moveCost != oldCost) changed = true;
+    if (changed && !wasValid) print("validated exit #%d from node #%d to sub #%d", exitnum, node.ssnum, tr.subnum);
   } else {
-    if (dumpReachable && tr.dist >= 0) {
-      TVec res = node.Origin+dir.normalise2D*pi.maxdist;
-      GameObject::subsector_t *dss = lev.PointInSubsector(res);
-      print("cannot reach sub #%d from sub #%d (maxdist=%s; wantdist=%s; destss=%s)", tr.subnum, node.ssnum, pi.maxdist, dist, dss-&lev.Subsectors[0]);
+    if (tr.dist != -1) {
+      tr.dist = -1;
+      tr.needJump = false;
+      tr.needUse = false;
+      tr.moveCost = -1;
+      changed = true;
+      if (changed) print("invalidated exit #%d from node #%d to sub #%d", exitnum, node.ssnum, tr.subnum);
     }
-    tr.dist = -1;
-    tr.needJump = false;
-    tr.needUse = false;
-    tr.moveCost = -1;
   }
+
+  if (changed) cacheIsInvalid = true;
+  return changed;
 }
 
 
-final bool validateNode (BotPathNode node, optional bool initial) {
-  EntityEx::FakeDoorInfo savedPlane;
-  Level lev = bot.player.MO.XLevel;
-  GameObject::subsector_t *sub = node.sub;
-  bool fakeRestore = (node.door ? fakeOpenDoor(sub, out savedPlane) : false);
-  scope(exit) if (fakeRestore) restoreFakeOpenDoor(savedPlane);
-  TVec cpos = (initial ? node.Origin : lev.GetSubsectorCenter(sub));
-  // try various map positions
-  if (!IsGoodMapPosition(cpos)) {
-    // cannot stand here, try corners
-    bool ok = false;
-    TVec center = lev.GetSubsectorCenter(sub);
-    foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
-      GameObject::seg_t *seg = &lev.Segs[lidx];
-      TVec dir = center-(*seg->v1);
-      if (dir.length2DSquared < 4*4) continue;
-      TVec dest = (*seg->v1)+(dir.normalise2D)*3.5;
-      dest.z = EntityEx::ONFLOORZ;
-      if (IsGoodMapPosition(dest)) {
-        auto dss = lev.PointInSubsector(dest);
-        if (dss == sub) {
-          ok = true;
-          cpos = dest;
-          break;
-        }
-      }
-    }
-    if (initial) {
-      node.valid = ok;
-      if (!ok) print("node #%d is not valid (door:%B)", node.ssnum, node.door); else node.Origin = cpos;
-      return true;
-    } else {
-      if (node.valid != ok || node.Origin != cpos) {
-        print("node #%d becomes %svalid (door:%B)", node.ssnum, (ok ? "" : "in"), node.door);
-        node.Origin = cpos;
-        node.valid = ok;
-        cacheIsInvalid = true;
-        return true;
-      }
-    }
-  } else {
-    if (initial) {
-      node.valid = true;
-      return true;
-    } else {
-      if (!node.valid || node.Origin != cpos) {
-        print("node #%d becomes valid (door:%B)", node.ssnum, node.door);
-        node.Origin = cpos;
-        node.valid = true;
-        cacheIsInvalid = true;
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-
-final bool refresh (BotPathNode node) {
-  bool fullRefresh = false;
-  GameObject::sector_t *sec = node.sub.sector;
-  EntityEx botmo = EntityEx(bot.player.MO);
-  Level lev = botmo.XLevel;
-
-  if (sec.floor.dist == node.myFloorDist && sec.ceiling.dist == node.myCeilDist) {
-    if (!node.needRefresh) return false;
-  } else {
-    print("bot '%s' refreshing node for subsector #%d", bot.player.PlayerName, node.ssnum);
-    node.myFloorDist = sec.floor.dist;
-    node.myCeilDist = sec.ceiling.dist;
-    fullRefresh = true;
-    validateNode(node, initial:false);
-    if (!node.valid) {
-      foreach (auto tridx, ref auto tr; node.exits) {
-        validateNode(nodes[tr.subnum]);
-      }
-      return true;
-    }
-    cacheIsInvalid = true;
-  }
-
-  bool res = fullRefresh;
-  bool doRefreshAdjacent = fullRefresh; // if doing full refresh, refresh adjacent subsectors too
-
+final bool refreshNode (BotPathNode node) {
+  if (node.queryCounter == queryCounter) return false;
+  bool changed = validateNode(node);
   foreach (auto tridx, ref auto tr; node.exits) {
-    sec = tr.sub.sector;
-    if (!fullRefresh && sec.floor.dist == tr.floorDist && sec.ceiling.dist == tr.ceilDist) continue;
-    validateNode(nodes[tr.subnum]);
-    refreshNodeExit(node, tridx, dumpReachable:true);
-    if (!doRefreshAdjacent && (sec.floor.dist != tr.floorDist || sec.ceiling.dist != tr.ceilDist)) doRefreshAdjacent = true;
-    cacheIsInvalid = true;
-    res = true;
+    if (refreshNodeExit(node, tridx)) changed = true;
   }
-
-  // refresh adjacent subsectors, if necessary
-  if (doRefreshAdjacent) {
-    foreach (auto tridx, ref auto tr; node.exits) refresh(nodes[tr.subnum]);
-  }
-
-  return res;
+  if (changed) cacheIsInvalid = true;
+  return changed;
 }
 
 
@@ -319,6 +331,7 @@ final void Setup (BotPlayerBase abot) {
   Level lev = botmo.XLevel;
 
   Reset();
+  queryCounter = 1;
 
   EntityEx::FakeDoorInfo savedPlane;
 
@@ -332,11 +345,12 @@ final void Setup (BotPlayerBase abot) {
     TVec cpos = lev.GetSubsectorCenter(sub);
     cpos.z = EntityEx::ONFLOORZ;
     node.Origin = cpos;
-    node.myFloorDist = sub.sector.floor.dist;
-    node.myCeilDist = sub.sector.ceiling.dist;
+    node.myFloorDist = float.max; //sub.sector.floor.dist;
+    node.myCeilDist = float.max; //sub.sector.ceiling.dist;
     node.needRefresh = false;
     node.door = isDoorSector(sub.sector, sub);
-    validateNode(node, initial:true);
+    node.queryCounter = 0;
+    validateNode(node);
   }
 
   foreach (auto node; nodes) {
@@ -364,7 +378,11 @@ final void Setup (BotPlayerBase abot) {
       tr.sub = seg.partner.front_sub;
       tr.subnum = tr.sub-&lev.Subsectors[0];
 
-      refreshNodeExit(node, node.exits.length-1, dumpReachable:false);
+      if (tr.sub.sector != sub.sector) {
+        node.sectorExits[$] = node.exits.length-1;
+      }
+
+      refreshNodeExit(node, node.exits.length-1);
     }
   }
 }
@@ -375,6 +393,8 @@ final void Setup (BotPlayerBase abot) {
 override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
   BotPathNode s = BotPathNode(start);
   BotPathNode e = BotPathNode(end);
+  refreshNode(s);
+  refreshNode(e);
   if (debugDump) print("LeastCostEstimate from %d (%B) to %d (%B); est=%s", s.ssnum, s.valid, e.ssnum, e.valid, (s.Origin-e.Origin).length2DSquared);
   if (!s.valid || !e.valid) return 999999;
   return (s.Origin-e.Origin).length2DSquared;
@@ -386,10 +406,10 @@ override float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end) {
 override void AdjacentCost (MiAStarNodeBase node) {
   BotPathNode pn = BotPathNode(node);
   if (debugDump) print("AdjacentCost for %s (%B)", pn.ssnum, pn.valid);
-  refresh(pn);
+  refreshNode(pn);
   if (!pn.valid) return;
   foreach (const ref auto tr; pn.exits) {
-    refresh(nodes[tr.subnum]);
+    refreshNode(nodes[tr.subnum]);
     if (tr.moveCost >= 0 && nodes[tr.subnum].valid) {
       if (debugDump) print("  for %s: adj is #%s (cost=%s)", pn.ssnum, tr.subnum, tr.moveCost);
       PushAdjacentCost(nodes[tr.subnum], tr.moveCost);
@@ -419,6 +439,11 @@ final bool BuildPath (TVec from, GameObject::subsector_t *fromsub, TVec dest, Ga
     pathCost = 0;
     return true;
   }
+
+  if (cacheIsInvalid) { Reset(); cacheIsInvalid = false; }
+  refreshNode(nodes[fromsub-&lev.Subsectors[0]]);
+  refreshNode(nodes[destsub-&lev.Subsectors[0]]);
+  if (cacheIsInvalid) { Reset(); cacheIsInvalid = false; }
 
   // run solver
   for (;;) {

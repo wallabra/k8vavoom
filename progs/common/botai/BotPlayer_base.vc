@@ -2582,7 +2582,11 @@ void BotTick (float deltaTime) {
     CheckAndDropNode();
   }
 
+#ifdef BOT_PATHER_OLD
   pather.Reset(); // oops
+#else
+  pather.IncQueryCounter();
+#endif
 
   if (doReplan) {
     // weed out any bad destinations/enemies
