@@ -447,7 +447,7 @@ native static final TVec RayLineIntersection2D (const TVec rayO, const TVec rayE
 native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec rayDir, const TVec vv1, const TVec vv2);
 
 //TODO: move to native code?
-bool LinesCross (TVec lav1, TVec lav2, TVec lbv1, TVec lbv2, optional out TVec crosspt) {
+static final bool CalcLinesIntersection (TVec lav1, TVec lav2, TVec lbv1, TVec lbv2, optional out TVec crosspt) {
   float x11 = lav1.x, y11 = lav1.y;
   float x12 = lav2.x, y12 = lav2.y;
   float x21 = lbv1.x, y21 = lbv1.y;
@@ -528,12 +528,12 @@ static final TVec PlaneProject (const ref TPlane plane, TVec v) {
 // ////////////////////////////////////////////////////////////////////////// //
 // returns number of planes created (0 for point)
 // max result is six planes: two for line, two+two axial bevels
-struct LinePlanes {
+struct CD_LinePlanes {
   TPlane[6] planes;
   int count;
 }
 
-static final void buildLinePlanes (out LinePlanes lpl, TVec a, TVec b) {
+static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   a.z = 0;
   b.z = 0;
   if (a == b) {
@@ -577,16 +577,16 @@ static final void buildLinePlanes (out LinePlanes lpl, TVec a, TVec b) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-const float CLIP_EPSILON = 0.125f;
+const float CD_CLIP_EPSILON = 0.125f;
 
-enum HitType {
-  HT_None,
-  HT_Point,
+enum CD_HitType {
+  CD_HT_None,
+  CD_HT_Point,
   // sides
-  HT_Top,
-  HT_Bottom,
-  HT_Left,
-  HT_Right,
+  CD_HT_Top,
+  CD_HT_Bottom,
+  CD_HT_Left,
+  CD_HT_Right,
 }
 
 // returns collision time, -1 if started inside, exactly 1 if no collision
@@ -594,13 +594,13 @@ enum HitType {
 // the moving thing is AABB
 // returns contact point in `contactPoint`
 // actually, `contactPoint` has little sense for non-point hits, and is somewhat arbitrary
-static final float sweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
-                                  optional out TPlane hitPlane, optional out TVec contactPoint, optional out HitType hitType)
+static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                     optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
 {
-  LinePlanes linePlanes;
-  buildLinePlanes(out linePlanes, lineA, lineB);
+  CD_LinePlanes linePlanes;
+  CD_BuildLinePlanes(out linePlanes, lineA, lineB);
 
-  hitType = HitType.HT_None;
+  hitType = CD_HitType.CD_HT_None;
 
   float ifrac = -1.0f;
   float ofrac = 1.0f;
@@ -624,14 +624,14 @@ static final float sweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend
     if (idist > 0) {
       startsOut = true;
       // if completely in front of face, no intersection with the entire brush
-      if (odist >= CLIP_EPSILON || odist >= idist) return 1.0f;
+      if (odist >= CD_CLIP_EPSILON || odist >= idist) return 1.0f;
     }
     //if (odist > 0) endsOut = true;
 
     // crosses plane
     if (idist > odist) {
       // line is entering into the brush
-      float fr = fmax(0.0f, (idist-CLIP_EPSILON)/(idist-odist));
+      float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
       if (fr > ifrac) {
         ifrac = fr;
         phit = pidx;
@@ -643,7 +643,7 @@ static final float sweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend
       }
     } else {
       // line is leaving the brush
-      float fr = fmin(1.0f, (idist+CLIP_EPSILON)/(idist-odist));
+      float fr = fmin(1.0f, (idist+CD_CLIP_EPSILON)/(idist-odist));
       if (fr < ofrac) ofrac = fr;
     }
   }
@@ -662,21 +662,21 @@ static final float sweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend
       // check what kind of hit this is
       if (!hitPlane.normal.y) {
         // left or right side of the box
-        hitType = (hitPlane.normal.x < 0 ? HitType.HT_Right : HitType.HT_Left);
+        hitType = (hitPlane.normal.x < 0 ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
         contactPoint =
           lineA.x < lineB.x ?
-            (hitType == HitType.HT_Right ? lineA : lineB) :
-            (hitType == HitType.HT_Right ? lineB : lineA);
+            (hitType == CD_HitType.CD_HT_Right ? lineA : lineB) :
+            (hitType == CD_HitType.CD_HT_Right ? lineB : lineA);
       } else if (!hitPlane.normal.x) {
         // top or down side of the box
-        hitType = (hitPlane.normal.y < 0 ? HitType.HT_Bottom : HitType.HT_Top);
+        hitType = (hitPlane.normal.y < 0 ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
         contactPoint =
           lineA.y < lineB.y ?
-            (hitType == HitType.HT_Bottom ? lineA : lineB) :
-            (hitType == HitType.HT_Bottom ? lineB : lineA);
+            (hitType == CD_HitType.CD_HT_Bottom ? lineA : lineB) :
+            (hitType == CD_HitType.CD_HT_Bottom ? lineB : lineA);
       } else {
         // point hit
-        hitType = HitType.HT_Point;
+        hitType = CD_HitType.CD_HT_Point;
         contactPoint = vector((hitPlane.normal.x < 0 ? bmax.x : bmin.x), (hitPlane.normal.y < 0 ? bmax.y : bmin.y), bmin.z);
         contactPoint += vstart+(vend-vstart)*ifrac;
       }
