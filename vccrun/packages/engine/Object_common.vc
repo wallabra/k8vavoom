@@ -336,8 +336,8 @@ native static final int round (float v) [builtin RoundF2I];
 native static final float fround (float v) [builtin RoundF2F];
 native static final int trunc (float v) [builtin TruncF2I];
 native static final float ftrunc (float v) [builtin TruncF2F];
-native static final float ceil (float v) [builtin FloatCeil];
-native static final float floor (float v) [builtin FloatFloor];
+native static final float fceil (float v) [builtin FloatCeil];
+native static final float ffloor (float v) [builtin FloatFloor];
 //native static final float frac (float v) [builtin FloatFrac];
 //native static final float fint (float v) [builtin FloatInt];
 
@@ -445,6 +445,247 @@ native static final bool IsVerticalPlane (const ref TPlane plane);
 
 native static final TVec RayLineIntersection2D (const TVec rayO, const TVec rayE, const TVec vv1, const TVec vv2);
 native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec rayDir, const TVec vv1, const TVec vv2);
+
+//TODO: move to native code?
+bool LinesCross (TVec lav1, TVec lav2, TVec lbv1, TVec lbv2, optional out TVec crosspt) {
+  float x11 = lav1.x, y11 = lav1.y;
+  float x12 = lav2.x, y12 = lav2.y;
+  float x21 = lbv1.x, y21 = lbv1.y;
+  float x22 = lbv2.x, y22 = lbv2.y;
+  float maxx1 = fmax(x11, x12), maxy1 = fmax(y11, y12);
+  float minx1 = fmin(x11, x12), miny1 = fmin(y11, y12);
+  float maxx2 = fmax(x21, x22), maxy2 = fmax(y21, y22);
+  float minx2 = fmin(x21, x22), miny2 = fmin(y21, y22);
+
+  if (minx1 > maxx2 || maxx1 < minx2 || miny1 > maxy2 || maxy1 < miny2) return false;
+
+  float dx1 = x12-x11, dy1 = y12-y11; // first line projection to x & y axes
+  float dx2 = x22-x21, dy2 = y22-y21; // second line projection to x & y axes
+  float dxx = x11-x21, dyy = y11-y21;
+
+  float mul;
+  float div = (dy2*dx1-dx2*dy1);
+  if (div == 0.0) return false; // parallel lines
+  if (div > 0.0) {
+    mul = (dx1*dyy-dy1*dxx);
+    if (mul < 0.0 || mul > div) return false; // first line crossing out of limits
+    mul = (dx2*dyy-dy2*dxx);
+    if (mul < 0.0 || mul > div) return false; // second line crossing out of limits
+  }
+
+  mul = -(dx1*dyy-dy1*dxx);
+  if (mul < 0.0 || mul > -div) return false; // first line crossing out of limits
+  mul = -(dx2*dyy-dy2*dxx);
+  if (mul < 0.0 || mul > -div) return false; // second line crossing out of limits
+
+  if (specified_crosspt) {
+    float factor = (dx2*dyy-dy2*dxx)/div;
+    crosspt = vector(x11+factor*(x21-x11), y11+factor*(y21-y11));
+  }
+
+  return true;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+// plane functions
+//TODO: move to native code?
+
+// initialises vertical plane from point and direction
+static final void PlaneForPointDir (out TPlane plane, TVec point, TVec dir) {
+  dir.z = 0;
+  if (!dir) FatalError("oops");
+  plane.normal = vector(dir.y, -dir.x).normalise2D;
+  plane.dist = DotProduct(point, plane.normal);
+}
+
+// initialises vertical plane from point and direction
+static final void PlaneForPointNormal (out TPlane plane, TVec point, TVec norm, optional bool normNormalised) {
+  norm.z = 0;
+  if (!norm) FatalError("oops");
+  plane.normal = (normNormalised ? norm : vector(norm.x, norm.y).normalise2D);
+  plane.dist = DotProduct(point, plane.normal);
+}
+
+// initialises vertical plane from two points
+static final void PlaneForLine (out TPlane plane, TVec pointA, TVec pointB) {
+  PlaneForPointDir(out plane, pointA, pointB-pointA);
+}
+
+// returns the point where the line p0-p1 intersects this plane
+static final float PlaneLineIntersect (const ref TPlane plane, TVec p0, TVec p1) {
+  auto difv = p1-p0;
+  float dd = -plane.normal.dot(difv);
+  if (!dd) return -666;
+  //return (plane.normal.dot(p0)-plane.dist)/dd;
+  return (p0.dot(plane.normal)-plane.dist)/dd;
+}
+
+static final TVec PlaneProject (const ref TPlane plane, TVec v) {
+  return v-(v-plane.normal*plane.dist).dot(plane.normal)*plane.normal;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// returns number of planes created (0 for point)
+// max result is six planes: two for line, two+two axial bevels
+struct LinePlanes {
+  TPlane[6] planes;
+  int count;
+}
+
+static final void buildLinePlanes (out LinePlanes lpl, TVec a, TVec b) {
+  a.z = 0;
+  b.z = 0;
+  if (a == b) {
+    // point, create four axial planes to represent it as a box
+    lpl.planes[0].normal = vector( 0, -1); lpl.planes[0].dist = -a.y; // top
+    lpl.planes[1].normal = vector( 0,  1); lpl.planes[1].dist = a.y; // bottom
+    lpl.planes[2].normal = vector(-1,  0); lpl.planes[2].dist = -a.x; // left
+    lpl.planes[3].normal = vector( 1,  0); lpl.planes[3].dist = a.x; // right
+    lpl.count = 4; // four planes created
+    return;
+  }
+  // horizontal line?
+  if (a.y == b.y) {
+    lpl.planes[0].normal = vector( 0, -1); lpl.planes[0].dist = -a.y; // top
+    lpl.planes[1].normal = vector( 0,  1); lpl.planes[1].dist = a.y; // bottom
+    lpl.planes[2].normal = vector(-1,  0); lpl.planes[2].dist = -fmin(a.x, b.x); // left
+    lpl.planes[3].normal = vector( 1,  0); lpl.planes[3].dist = fmax(a.x, b.x); // right
+    lpl.count = 4; // four planes created
+    return;
+  }
+  // vertical line?
+  if (a.x == b.x) {
+    lpl.planes[0].normal = vector(-1,  0); lpl.planes[0].dist = -a.x; // left
+    lpl.planes[1].normal = vector( 1,  0); lpl.planes[1].dist = a.x; // right
+    lpl.planes[2].normal = vector( 0, -1); lpl.planes[2].dist = -fmin(a.y, b.y); // top
+    lpl.planes[3].normal = vector( 0,  1); lpl.planes[3].dist = fmax(a.y, b.y); // bottom
+    lpl.count = 4; // four planes created
+    return;
+  }
+  // ok, not an ortho-axis line, create line planes the old way
+  // two line planes
+  PlaneForLine(out lpl.planes[0], a, b);
+  PlaneForLine(out lpl.planes[1], b, a);
+  // caps
+  lpl.planes[2].normal = vector(-1,  0); lpl.planes[2].dist = -fmin(a.x, b.x); // left
+  lpl.planes[3].normal = vector( 1,  0); lpl.planes[3].dist = fmax(a.x, b.x); // right
+  lpl.planes[4].normal = vector( 0, -1); lpl.planes[4].dist = -fmin(a.y, b.y); // top
+  lpl.planes[5].normal = vector( 0,  1); lpl.planes[5].dist = fmax(a.y, b.y); // bottom
+  lpl.count = 6; // six planes created
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+const float CLIP_EPSILON = 0.125f;
+
+enum HitType {
+  HT_None,
+  HT_Point,
+  // sides
+  HT_Top,
+  HT_Bottom,
+  HT_Left,
+  HT_Right,
+}
+
+// returns collision time, -1 if started inside, exactly 1 if no collision
+// in both such cases, `hitNormal` is undefined, as we have no hit plane
+// the moving thing is AABB
+// returns contact point in `contactPoint`
+// actually, `contactPoint` has little sense for non-point hits, and is somewhat arbitrary
+static final float sweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                  optional out TPlane hitPlane, optional out TVec contactPoint, optional out HitType hitType)
+{
+  LinePlanes linePlanes;
+  buildLinePlanes(out linePlanes, lineA, lineB);
+
+  hitType = HitType.HT_None;
+
+  float ifrac = -1.0f;
+  float ofrac = 1.0f;
+
+  bool startsOut = false;
+  //bool endsOut = false;
+  int phit = -1;
+  bool lastContactWasPoint = false;
+
+  foreach (auto pidx; 0..linePlanes.count) {
+    TPlane *plane = &linePlanes.planes[pidx];
+    // box
+    TVec offset = vector((plane.normal.x < 0 ? bmax.x : bmin.x), (plane.normal.y < 0 ? bmax.y : bmin.y), (plane.normal.z < 0 ? bmax.z : bmin.z));
+    // adjust the plane distance apropriately for mins/maxs
+    float dist = plane.dist-DotProduct(offset, plane.normal);
+    float idist = DotProduct(vstart, plane.normal)-dist;
+    float odist = DotProduct(vend, plane.normal)-dist;
+
+    if (idist <= 0 && odist <= 0) continue; // doesn't cross this plane, don't bother
+
+    if (idist > 0) {
+      startsOut = true;
+      // if completely in front of face, no intersection with the entire brush
+      if (odist >= CLIP_EPSILON || odist >= idist) return 1.0f;
+    }
+    //if (odist > 0) endsOut = true;
+
+    // crosses plane
+    if (idist > odist) {
+      // line is entering into the brush
+      float fr = fmax(0.0f, (idist-CLIP_EPSILON)/(idist-odist));
+      if (fr > ifrac) {
+        ifrac = fr;
+        phit = pidx;
+        lastContactWasPoint = (plane.normal.x && plane.normal.y);
+      } else if (!lastContactWasPoint && fr == ifrac && plane.normal.x && plane.normal.y) {
+        // prefer point contacts (rare case, but why not?)
+        lastContactWasPoint = true;
+        phit = pidx;
+      }
+    } else {
+      // line is leaving the brush
+      float fr = fmin(1.0f, (idist+CLIP_EPSILON)/(idist-odist));
+      if (fr < ofrac) ofrac = fr;
+    }
+  }
+
+  // all planes have been checked, and the trace was not completely outside the brush
+  if (!startsOut) {
+    // original point was inside brush
+    return -1.0f;
+  }
+
+  if (ifrac < ofrac) {
+    if (ifrac > -1) {
+      ifrac = fclamp(ifrac, 0.0f, 1.0f);
+      if (ifrac == 0 || ifrac == 1) return ifrac; // just in case
+      hitPlane = linePlanes.planes[phit];
+      // check what kind of hit this is
+      if (!hitPlane.normal.y) {
+        // left or right side of the box
+        hitType = (hitPlane.normal.x < 0 ? HitType.HT_Right : HitType.HT_Left);
+        contactPoint =
+          lineA.x < lineB.x ?
+            (hitType == HitType.HT_Right ? lineA : lineB) :
+            (hitType == HitType.HT_Right ? lineB : lineA);
+      } else if (!hitPlane.normal.x) {
+        // top or down side of the box
+        hitType = (hitPlane.normal.y < 0 ? HitType.HT_Bottom : HitType.HT_Top);
+        contactPoint =
+          lineA.y < lineB.y ?
+            (hitType == HitType.HT_Bottom ? lineA : lineB) :
+            (hitType == HitType.HT_Bottom ? lineB : lineA);
+      } else {
+        // point hit
+        hitType = HitType.HT_Point;
+        contactPoint = vector((hitPlane.normal.x < 0 ? bmax.x : bmin.x), (hitPlane.normal.y < 0 ? bmax.y : bmin.y), bmin.z);
+        contactPoint += vstart+(vend-vstart)*ifrac;
+      }
+      return ifrac;
+    }
+  }
+
+  return 1.0;
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //

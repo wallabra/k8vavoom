@@ -363,6 +363,7 @@ set(MAIN_COMMON_SOURCES
   p_entity.h
   p_entity_sight.cpp
   p_entity_world.cpp
+  #p_level_tracebox.cpp
   p_gameinfo.cpp
   p_gameinfo.h
   p_gameobject.cpp

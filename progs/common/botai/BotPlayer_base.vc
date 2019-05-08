@@ -301,7 +301,7 @@ final void DumpNodes () {
   print("=== NODES FOR '%s' ===", player.PlayerName);
   foreach (int nidx, BotPathNode node; ssnodes) {
     if (!node) continue;
-    print(" node #%s (%s) has #%d transitions", nidx, node.ssnum, node.ssreachable.length);
+    print(" node #%s (%s) has #%d transitions", nidx, node.index, node.ssreachable.length);
     foreach (int tridx, const ref auto tr; node.ssreachable) {
       print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
@@ -312,7 +312,7 @@ final void DumpNodes () {
   print("=== NODES FOR '%s' ===", player.PlayerName);
   foreach (int nidx, BotPathNode node; pather.nodes) {
     if (!node) continue;
-    print(" node #%s (%s) has #%d transitions (needRefresh=%B; valid=%B; door=%B)", nidx, node.ssnum, node.exits.length, node.needRefresh, node.valid, node.door);
+    print(" node #%s (%s) has #%d transitions (passable=%B; door=%B)", nidx, node.index, node.exits.length, node.passable, node.door);
     foreach (int tridx, const ref auto tr; node.exits) {
       print("  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
@@ -346,7 +346,7 @@ final void UseCurrentPath () {
   if (!pather) return;
   foreach (auto pidx; 0..pather.PathArrayLength) {
     auto node = BotPathNode(pather.PathArrayNode(pidx));
-    currPath[$] = node.ssnum;
+    currPath[$] = node.index;
   }
   if (currPath.length) {
     if (bot_developer_messages_planpath) {
@@ -495,7 +495,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
 
   BotPathNode node = (oldNode ? ssnodes[ssnum] : BotPathNode.CreateNew(botmo.XLevel));
   if (!node) FatalError("something is very wrong in bot breadcrumbs");
-  node.ssnum = ssnum;
+  node.index = ssnum;
   node.Origin = cpos;
   node.needRecalc = false;
 
@@ -524,7 +524,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
       cpos.z = EntityEx::ONFLOORZ;
       if (IsGoodMapPosition(cpos)) {
         otherNode = BotPathNode.CreateNew(botmo.XLevel);
-        otherNode.ssnum = ssnum;
+        otherNode.index = ssnum;
         otherNode.Origin = cpos;
         otherNode.needRecalc = false;
         ssnodes[psnum] = otherNode;
@@ -632,7 +632,7 @@ static final float AngleDiff (float afrom, float ato) {
   /*
   float a = ato-afrom;
   a += 180;
-  a = a-floor(a/360.0)*360.0;
+  a = a-ffloor(a/360.0)*360.0;
   return a-180;
   */
   //return (a+180)%360-180;
@@ -1779,7 +1779,7 @@ final bool FollowPath () {
         // more than 3 seconds away from our destination node?
         if (currTime-currAlienNodeTime > 3) {
           // yes, replan path
-          if (bot_developer_messages_path) print("bot '%s' is staying away from its destination ss #%s (at #%s) for #%s, replanning", player.PlayerName, node.ssnum, ssnum, currTime-currAlienNodeTime);
+          if (bot_developer_messages_path) print("bot '%s' is staying away from its destination ss #%s (at #%s) for #%s, replanning", player.PlayerName, node.index, ssnum, currTime-currAlienNodeTime);
           if (!HavePathToSS(&botmo.XLevel.Subsectors[currPath[$-1]])) {
             // alas, no path
             if (bot_developer_messages_path) print("bot '%s' cannot replan its path to #%d from #%s", player.PlayerName, currPath[$-1], ssnum);
@@ -1795,7 +1795,7 @@ final bool FollowPath () {
         currAlienNodeTime = currTime;
       }
 
-      if (bot_developer_messages_path) print("bot '%s' is going to subsector #%d (from #%d)", player.PlayerName, node.ssnum, ssnum);
+      if (bot_developer_messages_path) print("bot '%s' is going to subsector #%d (from #%d)", player.PlayerName, node.index, ssnum);
       float angle = AngleTo(node.Origin);
       if (fabs(AngleDiff(GetAngle(), angle)) > 25) SetAngle(angle);
       float dist = (botmo.Origin-node.Origin).length2D;
@@ -2585,7 +2585,7 @@ void BotTick (float deltaTime) {
 #ifdef BOT_PATHER_OLD
   pather.Reset(); // oops
 #else
-  pather.IncQueryCounter();
+  if (doReplan) pather.IncQueryCounter();
 #endif
 
   if (doReplan) {

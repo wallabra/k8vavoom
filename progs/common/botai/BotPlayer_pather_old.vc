@@ -39,7 +39,7 @@ struct Transition {
 
 Level XLevel; // level object (i.e. actual map)
 TVec Origin;
-int ssnum;
+int index;
 
 // reachable subsectors (should be at least one, zero means "don't know yet")
 array!Transition ssreachable;
@@ -66,7 +66,7 @@ override void Destroy () {
 final bool CanReachSS (GameObject::subsector_t *ss) {
   if (!ss) return false;
   int dsnum = ss-&XLevel.Subsectors[0];
-  if (dsnum == ssnum) return true;
+  if (dsnum == index) return true;
   foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
   return false;
 }
@@ -74,7 +74,7 @@ final bool CanReachSS (GameObject::subsector_t *ss) {
 
 final bool CanReachSSByIndex (int dsnum) {
   if (dsnum < 0 || dsnum >= XLevel.Subsectors.length) return false;
-  if (dsnum == ssnum) return true;
+  if (dsnum == index) return true;
   foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return true;
   return false;
 }
@@ -83,7 +83,7 @@ final bool CanReachSSByIndex (int dsnum) {
 final Transition *FindSSTranstion (GameObject::subsector_t *ss) {
   if (!ss) return nullptr;
   int dsnum = ss-&XLevel.Subsectors[0];
-  if (dsnum == ssnum) return nullptr;
+  if (dsnum == index) return nullptr;
   foreach (const ref auto tr; ssreachable) if (tr.subnum == dsnum) return &tr;
   return nullptr;
 }
@@ -113,18 +113,18 @@ final bool IsComplete () {
 
 // -1: done
 final int GetNextSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos++)).ssnum;
+  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos++)).index;
   return -1;
 }
 
 // -1: done
 final int GetCurrSSNum () {
-  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos)).ssnum;
+  if (currentPos < PathArrayLength()) return BotPathNode(PathArrayNode(currentPos)).index;
   return -1;
 }
 
 final int GetPathSSNum (int index) {
-  return BotPathNode(PathArrayNode(index)).ssnum;
+  return BotPathNode(PathArrayNode(index)).index;
 }
 
 
@@ -146,7 +146,7 @@ final bool BuildPath (int ssStart, int ssEnd) {
     auto node = BotPathNode.CreateNew(botmo.XLevel);
     node.Origin = botmo.XLevel.GetSubsectorCenter(&botmo.XLevel.Subsectors[ssStart]);
     node.Origin.z = EntityEx::ONFLOORZ;
-    node.ssnum = ssStart;
+    node.index = ssStart;
     node.needRecalc = true; // anyway
     abot.ssnodes[ssStart] = node;
     PathArrayClear();

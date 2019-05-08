@@ -26,7 +26,7 @@
 //**************************************************************************
 //#define DEBUG_TRACE_PATH_FAKEOPEN
 
-const float MAXSTEPHEIGHT = 32.0;
+const float MAXSTEPHEIGHT = 24.0;
 const float MAXJUMPHEIGHT = 56.0;
 const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
 const float MAXDROPHEIGHT = 384.0;
@@ -335,6 +335,11 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
   pi.angle = ang;
 
   if (!specified_srcOrigin) srcOrigin = Origin;
+
+  // increase radius a little, so exact passages won't confuse tracer
+  auto oldRad = Radius;
+  scope(exit) Radius = oldRad;
+  Radius += 3;
 
   float bottracerange = dist;
   TVec bottracedir;
