@@ -572,7 +572,9 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   // ok, not an ortho-axis line, create line planes the old way
   // two line planes
   PlaneForLine(out lpl.planes[0], a, b);
-  PlaneForLine(out lpl.planes[1], b, a);
+  //PlaneForLine(out lpl.planes[1], b, a);
+  lpl.planes[1].normal = -lpl.planes[0].normal;
+  lpl.planes[1].dist = -lpl.planes[0].dist;
   // caps
   lpl.planes[2].normal = vector(-1,  0); lpl.planes[2].dist = -fmin(a.x, b.x); // left
   lpl.planes[3].normal = vector( 1,  0); lpl.planes[3].dist = fmax(a.x, b.x); // right
@@ -595,6 +597,8 @@ enum CD_HitType {
   CD_HT_Right,
 }
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 // returns collision time, -1 if started inside, exactly 1 if no collision
 // in both such cases, `hitNormal` is undefined, as we have no hit plane
 // the moving thing is AABB

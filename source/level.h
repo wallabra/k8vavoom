@@ -448,6 +448,23 @@ public:
   static void FreeOpeningList (opening_t *&op);
 
 public:
+  // basic coldet code
+  enum CD_HitType {
+    CD_HT_None,
+    CD_HT_Point,
+    // sides
+    CD_HT_Top,
+    CD_HT_Bottom,
+    CD_HT_Left,
+    CD_HT_Right,
+  };
+
+  #define CD_CLIP_EPSILON  (0.125f)
+
+  static float SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                 TPlane *hitPlane=nullptr, TVec *contactPoint=nullptr, CD_HitType *hitType=nullptr);
+
+public:
   void IncrementValidCount ();
 
   // this saves everything except thinkers, so i can load it for further experiments
@@ -771,10 +788,13 @@ private:
   DECLARE_FUNCTION(AllActivePlayers)
 
   DECLARE_FUNCTION(LdrTexNumForName)
+
+  DECLARE_FUNCTION(CD_SweepLinedefAABB)
 };
 
 
-void CalcLine (line_t *line);
+void CalcLine (line_t *line); // this calls `CalcLineCDPlanes()`
+void CalcLineCDPlanes (line_t *line);
 void CalcSeg (seg_t *seg);
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);

@@ -289,6 +289,12 @@ struct line_t : public TPlane {
   line_t **v2lines;
   vint32 v2linesCount;
 
+  // collision detection planes
+  // first plane is usually a duplicate of a normal line plane, but idc
+  TPlane *cdPlanes;
+  vint32 cdPlanesCount;
+  TPlane cdPlanesArray[6];
+
 #ifdef VV_CACHE_LINE_OPENINGS
   //FIXME: do it better
   // used only if VV_CACHE_LINE_OPENINGS is defined

@@ -2157,12 +2157,69 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
 
 //==========================================================================
 //
+//  CalcLineCDPlanes
+//
+//  create collision detection planes (line/reverse line plane, and caps)
+//  note that this won't work for rotating polyobjects
+//  that is, for rotating polyobject, we have to recreate the planes when
+//  rotation angle changes
+//==========================================================================
+void CalcLineCDPlanes (line_t *line) {
+  if (line->v1->y == line->v2->y) {
+    // either horizontal line, or a point
+    if (line->v1->x == line->v2->x) {
+      // a point
+      line->cdPlanesCount = 4;
+      // point, create four axial planes to represent it as a box
+      line->cdPlanesArray[0].normal = TVec( 0, -1, 0); line->cdPlanesArray[0].dist = -line->v1->y; // top
+      line->cdPlanesArray[1].normal = TVec( 0,  1, 0); line->cdPlanesArray[1].dist = line->v1->y; // bottom
+      line->cdPlanesArray[2].normal = TVec(-1,  0, 0); line->cdPlanesArray[2].dist = -line->v1->x; // left
+      line->cdPlanesArray[3].normal = TVec( 1,  0, 0); line->cdPlanesArray[3].dist = line->v1->x; // right
+    } else {
+      // a horizontal line
+      line->cdPlanesCount = 4;
+      line->cdPlanesArray[0].normal = TVec( 0, -1, 0); line->cdPlanesArray[0].dist = -line->v1->y; // top
+      line->cdPlanesArray[1].normal = TVec( 0,  1, 0); line->cdPlanesArray[1].dist = line->v1->y; // bottom
+      // add left and right bevels
+      line->cdPlanesArray[2].normal = TVec(-1,  0, 0); line->cdPlanesArray[2].dist = -min2(line->v1->x, line->v2->x); // left
+      line->cdPlanesArray[3].normal = TVec( 1,  0, 0); line->cdPlanesArray[3].dist = max2(line->v1->x, line->v2->x); // right
+    }
+  } else if (line->v1->x == line->v2->x) {
+    // a vertical line
+    line->cdPlanesCount = 4;
+    line->cdPlanesArray[0].normal = TVec(-1,  0, 0); line->cdPlanesArray[0].dist = -line->v1->x; // left
+    line->cdPlanesArray[1].normal = TVec( 1,  0, 0); line->cdPlanesArray[1].dist = line->v1->x; // right
+    // add top and bottom bevels
+    line->cdPlanesArray[2].normal = TVec( 0, -1, 0); line->cdPlanesArray[2].dist = -min2(line->v1->y, line->v2->y); // top
+    line->cdPlanesArray[3].normal = TVec( 0,  1, 0); line->cdPlanesArray[3].dist = max2(line->v1->y, line->v2->y); // bottom
+  } else {
+    // ok, not an ortho-axis line, create line planes the old way
+    line->cdPlanesCount = 6;
+    // two line planes
+    line->cdPlanesArray[0].normal = line->normal;
+    line->cdPlanesArray[0].dist = line->dist;
+    line->cdPlanesArray[1].normal = -line->cdPlanesArray[0].normal;
+    line->cdPlanesArray[1].dist = -line->cdPlanesArray[0].dist;
+    // caps
+    line->cdPlanesArray[2].normal = TVec(-1,  0, 0); line->cdPlanesArray[2].dist = -min2(line->v1->x, line->v2->x); // left
+    line->cdPlanesArray[3].normal = TVec( 1,  0, 0); line->cdPlanesArray[3].dist = max2(line->v1->x, line->v2->x); // right
+    line->cdPlanesArray[4].normal = TVec( 0, -1, 0); line->cdPlanesArray[4].dist = -min2(line->v1->y, line->v2->y); // top
+    line->cdPlanesArray[5].normal = TVec( 0,  1, 0); line->cdPlanesArray[5].dist = max2(line->v1->y, line->v2->y); // bottom
+  }
+  line->cdPlanes = &line->cdPlanesArray[0];
+}
+
+
+//==========================================================================
+//
 //  CalcLine
 //
 //==========================================================================
 void CalcLine (line_t *line) {
   // calc line's slopetype
   line->dir = (*line->v2)-(*line->v1);
+  line->dir.z = 0;
+
   if (!line->dir.x) {
     line->slopetype = ST_VERTICAL;
   } else if (!line->dir.y) {
@@ -2194,6 +2251,8 @@ void CalcLine (line_t *line) {
     line->bbox[BOXBOTTOM] = line->v2->y;
     line->bbox[BOXTOP] = line->v1->y;
   }
+
+  CalcLineCDPlanes(line);
 }
 
 
@@ -2512,6 +2571,125 @@ void VLevel::AddExtraFloor (line_t *line, sector_t *dst) {
 
 //==========================================================================
 //
+//  SweepLinedefAABB
+//
+//  returns collision time, -1 if started inside, exactly 1 if no collision
+//  in both such cases, outputs are undefined, as we have no hit plane
+//  the moving thing is AABB
+//  returns contact point in `contactPoint`
+//  actually, `contactPoint` has little sense for non-point hits, and is
+//  somewhat arbitrary
+//
+//==========================================================================
+float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                TPlane *hitPlane, TVec *contactPoint, CD_HitType *hitType)
+{
+  if (!ld) return -1.0f;
+
+  if (hitType) *hitType = CD_HT_None;
+
+  float ifrac = -1.0f;
+  float ofrac = 1.0f;
+
+  bool startsOut = false;
+  //bool endsOut = false;
+  int phit = -1;
+  bool lastContactWasPoint = false;
+
+  for (int pidx = 0; pidx < ld->cdPlanesCount; ++pidx) {
+    const TPlane *plane = &ld->cdPlanesArray[pidx];
+    // box
+    // line plane normal z is always zero, so don't bother checking it
+    TVec offset = TVec((plane->normal.x < 0 ? bmax.x : bmin.x), (plane->normal.y < 0 ? bmax.y : bmin.y), /*(plane->normal.z < 0 ? bmax.z : bmin.z)*/bmin.z);
+    // adjust the plane distance apropriately for mins/maxs
+    float dist = plane->dist-DotProduct(offset, plane->normal);
+    float idist = DotProduct(vstart, plane->normal)-dist;
+    float odist = DotProduct(vend, plane->normal)-dist;
+
+    if (idist <= 0 && odist <= 0) continue; // doesn't cross this plane, don't bother
+
+    if (idist > 0) {
+      startsOut = true;
+      // if completely in front of face, no intersection with the entire brush
+      if (odist >= CD_CLIP_EPSILON || odist >= idist) return 1.0f;
+    }
+    //if (odist > 0) endsOut = true;
+
+    // crosses plane
+    if (idist > odist) {
+      // line is entering into the brush
+      float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
+      if (fr > ifrac) {
+        ifrac = fr;
+        phit = pidx;
+        lastContactWasPoint = (plane->normal.x && plane->normal.y);
+      } else if (!lastContactWasPoint && fr == ifrac && plane->normal.x && plane->normal.y) {
+        // prefer point contacts (rare case, but why not?)
+        lastContactWasPoint = true;
+        phit = pidx;
+      }
+    } else {
+      // line is leaving the brush
+      float fr = fmin(1.0f, (idist+CD_CLIP_EPSILON)/(idist-odist));
+      if (fr < ofrac) ofrac = fr;
+    }
+  }
+
+  // all planes have been checked, and the trace was not completely outside the brush
+  if (!startsOut) {
+    // original point was inside brush
+    return -1.0f;
+  }
+
+  if (ifrac < ofrac) {
+    if (ifrac > -1) {
+      ifrac = Clamp(ifrac, 0.0f, 1.0f);
+      if (ifrac == 0 || ifrac == 1) return ifrac; // just in case
+      if (hitPlane || contactPoint || hitType) {
+        const TPlane *hpl = &ld->cdPlanesArray[phit];
+        if (hitPlane) *hitPlane = *hpl;
+        if (contactPoint || hitType) {
+          CD_HitType httmp = CD_HT_None;
+          if (!hitType) hitType = &httmp;
+          // check what kind of hit this is
+          if (!hpl->normal.y) {
+            // left or right side of the box
+            *hitType = (hpl->normal.x < 0 ? CD_HT_Right : CD_HT_Left);
+            if (contactPoint) {
+              *contactPoint =
+                ld->v1->x < ld->v2->x ?
+                  (*hitType == CD_HT_Right ? *ld->v1 : *ld->v2) :
+                  (*hitType == CD_HT_Right ? *ld->v2 : *ld->v1);
+            }
+          } else if (!hpl->normal.x) {
+            // top or down side of the box
+            *hitType = (hpl->normal.y < 0 ? CD_HT_Bottom : CD_HT_Top);
+            if (contactPoint) {
+              *contactPoint =
+                ld->v1->y < ld->v2->y ?
+                  (*hitType == CD_HT_Bottom ? *ld->v1 : *ld->v2) :
+                  (*hitType == CD_HT_Bottom ? *ld->v2 : *ld->v1);
+            }
+          } else {
+            // point hit
+            *hitType = CD_HT_Point;
+            if (contactPoint) {
+              *contactPoint = TVec((hpl->normal.x < 0 ? bmax.x : bmin.x), (hpl->normal.y < 0 ? bmax.y : bmin.y), bmin.z);
+              *contactPoint += vstart+(vend-vstart)*ifrac;
+            }
+          }
+        }
+      }
+      return ifrac;
+    }
+  }
+
+  return 1.0f;
+}
+
+
+//==========================================================================
+//
 //  SwapPlanes
 //
 //==========================================================================
@@ -2727,6 +2905,23 @@ IMPLEMENT_FUNCTION(VLevel, doRecursiveSound) {
 }
 
 
+//native static final float CD_SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+//                                               optional out TPlane hitPlane, optional out TVec contactPoint,
+//                                               optional out CD_HitType hitType);
+IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
+  P_GET_PTR_OPT(CD_HitType, hitType, nullptr);
+  P_GET_PTR_OPT(TVec, contactPoint, nullptr);
+  P_GET_PTR_OPT(TPlane, hitPlane, nullptr);
+  P_GET_VEC(bmax);
+  P_GET_VEC(bmin);
+  P_GET_VEC(vend);
+  P_GET_VEC(vstart);
+  P_GET_PTR(const line_t, ld);
+  RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct StreamSection {
 public:
   VStream *strm;

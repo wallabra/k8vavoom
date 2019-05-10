@@ -233,6 +233,13 @@ native final void SectorSetLink (int controltag, int tag, int surface, int movet
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// exposed here in case i'll need it later
+native static final float CD_SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                               optional out TPlane hitPlane, optional out TVec contactPoint,
+                                               optional out CD_HitType hitType);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // polyobj functions
 native final void SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt);
 native final void AddPolyAnchorPoint (float x, float y, int tag);
