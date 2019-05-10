@@ -367,8 +367,8 @@ final void SB_SetCorrected640x480 (out SB_SavedVScreenState sss) {
   sss.scaleY = ScaleY;
   SetVirtualScreen(640, 480);
   if (Width != 640 || Height != 480) SetSize(640, 480);
-  Y = -int(480.0*R_GetAspectRatio()-480);
   ScaleY = ScaleY*R_GetAspectRatio();
+  Y = -int(480.0*ScaleY-480);
 }
 
 
