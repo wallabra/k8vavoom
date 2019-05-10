@@ -640,8 +640,8 @@ bool VLevel::RotatePolyobj (int num, float angle) {
 
   // calculate the angle
   float an = po->angle+angle;
-  float msinAn = msin(an);
-  float mcosAn = mcos(an);
+  float msinAn, mcosAn;
+  msincos(an, &msinAn, &mcosAn);
 
   if (IsForServer()) UnLinkPolyobj(po);
 

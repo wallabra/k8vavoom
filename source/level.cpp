@@ -2160,9 +2160,7 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
 //  CalcLineCDPlanes
 //
 //  create collision detection planes (line/reverse line plane, and caps)
-//  note that this won't work for rotating polyobjects
-//  that is, for rotating polyobject, we have to recreate the planes when
-//  rotation angle changes
+//
 //==========================================================================
 void CalcLineCDPlanes (line_t *line) {
   if (line->v1->y == line->v2->y) {
