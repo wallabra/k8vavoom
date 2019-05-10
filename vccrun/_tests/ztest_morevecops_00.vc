@@ -1,0 +1,20 @@
+class Main : Object;
+
+void main () {
+  TVec v0 = vector(5, 2, 7);
+  TVec v1 = vector(1, 9, 4);
+  TVec v2 = vector(7, 1, 3);
+  print("%s : %s : (1,2,4)", vecmin(v0, v1), vecmin(vector(5, 2, 7), vector(1, 9, 4)));
+  print("%s : %s : (5,1,3)", vecmin(v0, v2), vecmin(vector(5, 2, 7), vector(7, 1, 3)));
+  print("%s : %s : (5,9,7)", vecmax(v0, v1), vecmax(vector(5, 2, 7), vector(1, 9, 4)));
+  print("%s : %s : (7,2,7)", vecmax(v0, v2), vecmax(vector(5, 2, 7), vector(7, 1, 3)));
+  print("%s : %s : (5,2,7)", vecclamp(v0, vector(1, 2, 3), vector(7, 8, 9)), vecclamp(vector(5, 2, 7), vector(1, 2, 3), vector(7, 8, 9)));
+  print("%s : %s : (6,7,8)", vecclamp(v0, vector(6, 7, 8), vector(12, 13, 14)), vecclamp(vector(5, 2, 7), vector(6, 7, 8), vector(12, 13, 14)));
+}
+/*
+native static final TVec vfmin (const TVec v1, const float v) [builtin VectorMinF];
+native static final TVec vfmax (const TVec v1, const float v) [builtin VectorMaxF];
+native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
+native static final TVec vfclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
+native static final TVec vecclamp (const TVec v, const TVec vmin, const TVec vmax) [builtin VectorClampV]; // clamped value
+*/
