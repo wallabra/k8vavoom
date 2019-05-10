@@ -31,136 +31,144 @@ slist_t *slist;
 bool Master;
 
 
+//==========================================================================
+//
+//  StartSearching
+//
+//==========================================================================
 void StartSearching () {
   StartSearch(Master);
 }
 
 
+//==========================================================================
+//
+//  DrawTextBox
+//
+//==========================================================================
 void DrawTextBox (string text) {
-  int x;
-  int y;
-  int w;
-  int h;
-
-  // Horiz. & Vertically centre string and print it.
-  SetTextAlign(hcentre, vcentre);
-
-  w = (TextWidth(text) + 16) & ~15;
-  h = (TextHeight(text) + 16) & ~15;
+  // h/v center string and print it
+#ifdef FOO_BOO
+  int w = (TextWidth(text)+16)&~15;
+  int h = (TextHeight(text)+16)&~15;
   if (w > 304) w = 304;
   if (h > 184) h = 184;
-  x = (GetVirtualWidth() - w) / 2;
-  y = (GetVirtualHeight() - h) / 2;
+
+  SetTextAlign(hcentre, vcentre);
+
+  int x = (GetVirtualWidth()-w)/2;
+  int y = (GetVirtualHeight()-h)/2;
 
   FillRectWithFlat(x, y, w, h, GetClGame().MsgBoxFlat);
   GetClGame().DrawBorder(x, y, w, h);
 
   DrawText(GetVirtualWidth()/2, GetVirtualHeight(), text);
+#else
+  auto rootw = GetClGame().GRoot;
+
+  rootw.SetTextAlign(hcentre, vcentre);
+  rootw.SetFont('smallfont');
+
+  int w = (rootw.TextWidth(text)+16)&~15;
+  int h = (rootw.TextHeight(text)+16)&~15;
+  //if (w > 304) w = 304;
+  //if (h > 184) h = 184;
+
+  int x = (rootw.Width-w)/2;
+  int y = (rootw.Height-h)/2;
+
+  rootw.FillRectWithFlat(x, y, w, h, GetClGame().MsgBoxFlat);
+  GetClGame().DrawBorder(x, y, w, h);
+
+  rootw.DrawText(rootw.Width/2, rootw.Height/2, text);
+#endif
 }
 
 
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
-  int i;
-  int x;
-  int y;
-  int w;
-
   slist = GetSlist();
 
   SetTextAlign(hleft, vtop);
-  for (i = 0; i < slist->Cache.length; i++)
-  {
-    DrawText(16, 32 + 10 * i, slist->Cache[i].Name);
-    DrawText(16 + 128, 32 + 10 * i, slist->Cache[i].Map);
-    if (slist->Cache[i].MaxUsers)
-    {
-      DrawText(16 + 256, 32 + 10 * i, va("%d/%d",
-        slist->Cache[i].Users, slist->Cache[i].MaxUsers));
+  foreach (int i; 0..slist->Cache.length) {
+    DrawText(16, 32+10*i, slist->Cache[i].Name);
+    DrawText(16+128, 32+10*i, slist->Cache[i].Map);
+    if (slist->Cache[i].MaxUsers) {
+      DrawText(16+256, 32+10*i, va("%d/%d", slist->Cache[i].Users, slist->Cache[i].MaxUsers));
     }
   }
-  DrawText(8, 32 + Cursor * 10, ">");
+  DrawText(8, 32+Cursor*10, ">");
 
-  if (slist->ReturnReason)
-    DrawText(16, 116, slist->ReturnReason);
+  if (slist->ReturnReason) DrawText(16, 116, slist->ReturnReason);
 
-  if (slist->Cache.length)
-  {
-    x = 8;
-    y = 124;
-    for (i = 0; i < 20 && slist->Cache[Cursor].WadFiles[i]; i++)
-    {
-      w = TextWidth(slist->Cache[Cursor].WadFiles[i]);
-      if (x + w > 312)
-      {
+  if (slist->Cache.length && Cursor >= 0 && Cursor < slist->Cache.length) {
+    int x = 8;
+    int y = 124;
+    foreach (int i; 0..slist->Cache[Cursor].WadFiles.length) {
+      if (!slist->Cache[Cursor].WadFiles[i]) break;
+      int w = TextWidth(slist->Cache[Cursor].WadFiles[i]);
+      if (x+w > 312) {
         x = 8;
         y += 9;
-        if (y > 190)
-          break;
+        if (y > 190) break;
       }
       DrawText(x, y, slist->Cache[Cursor].WadFiles[i]);
-      x += w + 8;
+      x += w+8;
     }
   }
 
-  if (slist->bInProgress)
-  {
-    DrawTextBox("Searching...");
-  }
-  else if (!slist->Cache.length)
-  {
-    DrawTextBox("No servers found");
-  }
+       if (slist->bInProgress) DrawTextBox("Searching...");
+  else if (!slist->Cache.length) DrawTextBox("No servers found");
 }
 
-override bool OnKeyDown(int key)
-{
+
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
   slist = GetSlist();
 
-  if (slist->bInProgress)
-  {
-    return true;
-  }
+  if (slist->bInProgress) return true;
 
   key = ConvertBoundKey(key);
-  switch (key)
-  {
-  case K_DOWNARROW:
-    if (slist->Cache.length)
-    {
-      Cursor++;
-      if (Cursor >= slist->Cache.length)
-        Cursor = 0;
-      LocalSound('menu/cursor');
-    }
-    return true;
+  switch (key) {
+    case K_DOWNARROW:
+      if (slist->Cache.length) {
+        if (++Cursor >= slist->Cache.length) Cursor = 0;
+        LocalSound('menu/cursor');
+      }
+      return true;
 
-  case K_UPARROW:
-    if (slist->Cache.length)
-    {
-      Cursor--;
-      if (Cursor < 0)
-        Cursor = slist->Cache.length - 1;
-      LocalSound('menu/cursor');
-    }
-    return true;
+    case K_UPARROW:
+      if (slist->Cache.length) {
+        if (--Cursor < 0) Cursor = slist->Cache.length-1;
+        LocalSound('menu/cursor');
+      }
+      return true;
 
-  case K_ENTER:
-  case K_PADENTER:
-    if (slist->Cache.length)
-    {
-      LocalSound('menu/choose');
-      CmdBuf_AddText("connect \"%s\"\n", slist->Cache[Cursor].CName);
-    }
-    return true;
+    case K_ENTER:
+    case K_PADENTER:
+      if (slist->Cache.length) {
+        LocalSound('menu/choose');
+        CmdBuf_AddText("connect \"%q\"\n", slist->Cache[Cursor].CName);
+      }
+      return true;
 
-  case K_SPACE:
-    Cursor = 0;
-    StartSearch(Master);
-    return true;
+    case K_SPACE:
+      Cursor = 0;
+      StartSearch(Master);
+      return true;
   }
+
   return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

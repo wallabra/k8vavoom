@@ -215,7 +215,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
   vuint8 TmpByte;
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
-  if (xmit) {
+  if (xmit && Drv->CanBroadcast()) {
     VBitStreamWriter Reply(256<<3);
     TmpByte = NETPACKET_CTL;
     Reply << TmpByte;

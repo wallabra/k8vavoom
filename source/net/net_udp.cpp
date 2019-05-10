@@ -52,6 +52,7 @@ public:
   WSADATA winsockdata;
 
   static double blocktime;
+  bool mGetLocAddrCalled;
 #endif
 
   enum { MAXHOSTNAMELEN = 256 };
@@ -67,6 +68,7 @@ public:
   virtual int Read (int, vuint8 *, int, sockaddr_t*) override;
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
   virtual int Broadcast (int, const vuint8 *, int) override;
+  virtual bool CanBroadcast () override;
   virtual char *AddrToString (sockaddr_t *) override;
   virtual int StringToAddr (const char *, sockaddr_t *) override;
   virtual int GetSocketAddr (int, sockaddr_t *) override;
@@ -100,6 +102,7 @@ VUdpDriver::VUdpDriver ()
   : VNetLanDriver(0, "UDP")
 #ifdef WIN32
   , winsock_initialised(0)
+  , mGetLocAddrCalled(false)
 #endif
 {
 }
@@ -127,15 +130,17 @@ int VUdpDriver::Init () {
 #endif
 
   // determine my name & address
-#ifdef WIN32
-  auto ghres =
-#endif
-  gethostname(buff, MAXHOSTNAMELEN);
+  auto ghres = gethostname(buff, MAXHOSTNAMELEN);
 #ifdef WIN32
   if (ghres == SOCKET_ERROR) {
     GCon->Log(NAME_DevNet, "Winsock TCP/IP Initialisation failed.");
     if (--winsock_initialised == 0) WSACleanup();
     return -1;
+  }
+#else
+  if (ghres == -1) {
+    GCon->Log(NAME_DevNet, "Cannot get host name, defaulting to 'localhost'.");
+    strcpy(buff, "localhost");
   }
 #endif
   GCon->Logf(NAME_Init, "Host name: %s", buff);
@@ -143,7 +148,7 @@ int VUdpDriver::Init () {
   const char *pp = GArgs.CheckValue("-ip");
   if (pp) {
     myAddr = inet_addr(pp);
-    if (myAddr == INADDR_NONE) Sys_Error("%s is not a valid IP address", pp);
+    if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
     VStr::Cpy(Net->MyIpAddress, pp);
   } else {
 #ifdef WIN32
@@ -157,11 +162,17 @@ int VUdpDriver::Init () {
     if (myAddr == 0x7f000001)
       myAddr = ntohl(myAddr);
 #else
-    hostent *local;
-    local = gethostbyname(buff);
-    if (!local) Sys_Error("UDP_Init: Couldn't get local host by name %s,\nCheck your /etc/hosts file.", buff);
-    myAddr = *(int *)local->h_addr_list[0];
-    Net->MyIpAddress[0] = 0;
+    hostent *local = gethostbyname(buff);
+    if (!local) {
+      // do not crash, it is unfair!
+      GCon->Logf("UDP_Init: Couldn't get local host by name '%s', check your /etc/hosts file.", buff);
+      myAddr = inet_addr("127.0.0.1");
+      VStr::Cpy(Net->MyIpAddress, "127.0.0.1");
+      if (myAddr == INADDR_NONE) Sys_Error("'127.0.0.1' is not a valid IP address (why?!)");
+    } else {
+      myAddr = *(int *)local->h_addr_list[0];
+      Net->MyIpAddress[0] = 0;
+    }
 #endif
   }
 
@@ -189,7 +200,9 @@ int VUdpDriver::Init () {
     if (--winsock_initialised == 0) WSACleanup();
     return -1;
 #else
-    Sys_Error("UDP_Init: Unable to open control socket\n");
+    //Sys_Error("UDP_Init: Unable to open control socket\n");
+    GCon->Log("UDP_Init: Unable to open control socket");
+    return -1;
 #endif
   }
 
@@ -270,7 +283,15 @@ void VUdpDriver::GetLocalAddress () {
 
   if (myAddr != INADDR_ANY) return;
 
-  if (gethostname(buff, MAXHOSTNAMELEN) == SOCKET_ERROR) return;
+  if (mGetLocAddrCalled) return;
+  mGetLocAddrCalled = true;
+
+  if (gethostname(buff, MAXHOSTNAMELEN) == SOCKET_ERROR) {
+    myAddr = inet_addr("127.0.0.1");
+    VStr::Cpy(Net->MyIpAddress, "127.0.0.1");
+    if (myAddr == INADDR_NONE) Sys_Error("'127.0.0.1' is not a valid IP address (why?!)");
+    return;
+  }
 
   blocktime = Sys_Time();
   WSASetBlockingHook(FARPROC(BlockingHook));
@@ -421,6 +442,20 @@ int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr)
 
 //==========================================================================
 //
+//  VUdpDriver::CanBroadcast
+//
+//==========================================================================
+bool VUdpDriver::CanBroadcast () {
+#ifdef WIN32
+  GetLocalAddress();
+#endif
+  vuint32 addr = ntohl(myAddr);
+  return (myAddr != INADDR_ANY && ((addr>>24)&0xff) != 0x7f); // ignore localhost
+}
+
+
+//==========================================================================
+//
 //  VUdpDriver::Broadcast
 //
 //==========================================================================
@@ -428,9 +463,10 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
   int i = 1;
   if (socket != net_broadcastsocket) {
     if (net_broadcastsocket != 0) Sys_Error("Attempted to use multiple broadcasts sockets\n");
-#ifdef WIN32
-    GetLocalAddress();
-#endif
+    if (!CanBroadcast()) {
+      GCon->Log(NAME_DevNet, "Unable to make socket broadcast capable (1)");
+      return -1;
+    }
     // make this socket broadcast capable
     if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) < 0) {
       GCon->Log(NAME_DevNet, "Unable to make socket broadcast capable");

@@ -26,20 +26,18 @@
 //**************************************************************************
 class MenuScreenJoinGame:MenuScreen;
 
-MenuInputLine   JoinAt;
+MenuInputLine JoinAt;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  MenuTextButton    Btn;
-  int         currentY;
-
-  currentY = ChoicesStartY;
+override void CreateChoices() {
+  MenuTextButton Btn;
+  //int currentY;
+  //currentY = ChoicesStartY;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
@@ -67,49 +65,43 @@ override void CreateChoices()
   currentY += JoinAt.Height;
 }
 
+
 //==========================================================================
 //
 //  ActivateMasterSearch
 //
 //==========================================================================
-
-void ActivateMasterSearch(Object Sender)
-{
+void ActivateMasterSearch (Object Sender) {
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMasterList));
 }
+
 
 //==========================================================================
 //
 //  ActivateSearch
 //
 //==========================================================================
-
-void ActivateSearch(Object Sender)
-{
+void ActivateSearch (Object Sender) {
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSList));
 }
+
 
 //==========================================================================
 //
 //  ChangedJoinAt
 //
 //==========================================================================
-
-void ChangedJoinAt(Object Sender)
-{
+void ChangedJoinAt (Object Sender) {
   if (!CvarExists('__menu_join_game_at__')) {
     CreateCvar('__menu_join_game_at__', JoinAt.Value, "___saved_menu__value___", CVAR_ARCHIVE);
   } else {
     SetCvarS('__menu_join_game_at__', JoinAt.Value);
   }
-  if (JoinAt.Value)
-  {
-    CmdBuf_AddText("Connect %s\n", JoinAt.Value);
-  }
+  if (JoinAt.Value) CmdBuf_AddText("Connect %s\n", JoinAt.Value);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 64;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallLeft;

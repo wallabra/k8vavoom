@@ -157,6 +157,7 @@ public:
   virtual int CheckNewConnections () = 0;
   virtual int Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual int Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) = 0;
+  virtual bool CanBroadcast () = 0;
   virtual int Broadcast (int socket, const vuint8 *buf, int len) = 0;
   virtual char *AddrToString (sockaddr_t *addr) = 0;
   virtual int StringToAddr (const char *string, sockaddr_t *addr) = 0;
