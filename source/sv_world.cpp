@@ -1198,54 +1198,74 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 //  SV_PointContents
 //
 //==========================================================================
-int SV_PointContents (sector_t *sector, const TVec &p) {
+int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
   if (!sector) return 0;
 
   if (sector->heightsec && (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
       p.z <= sector->heightsec->floor.GetPointZ(p))
   {
+    if (dbgDump) GCon->Log("SVP: case 0");
     return CONTENTS_BOOMWATER;
   }
 
-  if (sector->SectorFlags&sector_t::SF_UnderWater) return CONTENTS_BOOMWATER;
+  if (sector->SectorFlags&sector_t::SF_UnderWater) {
+    if (dbgDump) GCon->Log("SVP: case 1");
+    return CONTENTS_BOOMWATER;
+  }
 
   const sec_region_t *best = sector->eregions;
 
   if (sector->Has3DFloors()) {
     const float secfz = sector->floor.GetPointZ(p);
     const float seccz = sector->ceiling.GetPointZ(p);
-    if (p.z < secfz || p.z > seccz) return best->params->contents;
+    if (p.z < secfz || p.z > seccz) {
+      if (dbgDump) GCon->Log("SVP: case 2");
+      return best->params->contents;
+    }
 
     // prefer regions with contents
     float bestDist = 999999.0f; // minimum distance to region floor
     // skip base region
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+      if (dbgDump) { GCon->Logf("SVP: checking region..."); DumpRegion(reg); }
+      // floor height, we'll need it anyway
+      const float fz = max2(secfz, reg->efloor.GetPointZ(p));
       // non-solid?
-      const float cz = min2(seccz, reg->eceiling.GetPointZ(p));
       if (reg->regflags&sec_region_t::RF_NonSolid) {
-        const float fz = max2(secfz, reg->efloor.GetPointZ(p));
+        // non-solid region
+        const float cz = min2(seccz, reg->eceiling.GetPointZ(p));
         // check if point is inside, and for best floor dist
         if (p.z >= fz && p.z <= cz) {
           const float fdist = p.z-fz;
+          if (dbgDump) GCon->Logf("SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
           if (fdist < bestDist) {
+            if (dbgDump) GCon->Log("SVP:   NON-SOLID HIT!");
             bestDist = fdist;
             best = reg;
           }
+        } else {
+          if (dbgDump) GCon->Logf("SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
         }
       } else {
-        // check if we are above it
-        if (p.z >= cz) {
-          const float fdist = p.z-cz;
+        // solid region, check if we are below it
+        // yes, this is just like this -- the region contents is going DOWN, not up
+        if (p.z < fz) {
+          const float fdist = fz-p.z;
+          if (dbgDump) GCon->Logf("SVP: solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, min2(seccz, reg->eceiling.GetPointZ(p)));
           if (fdist < bestDist) {
+            if (dbgDump) GCon->Log("SVP:   SOLID HIT!");
             bestDist = fdist;
             best = reg;
           }
+        } else {
+          if (dbgDump) GCon->Logf("SVP: solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fz-p.z, p.z, fz, min2(seccz, reg->eceiling.GetPointZ(p)));
         }
       }
     }
   }
 
+  if (dbgDump) { GCon->Logf("SVP: best region"); DumpRegion(best); }
   return best->params->contents;
 }
 

@@ -283,7 +283,7 @@ bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, fl
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int SV_PointContents (sector_t *sector, const TVec &p);
+int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump=false);
 
 // this is used to get region lighting
 sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump=false);

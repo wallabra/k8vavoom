@@ -264,6 +264,10 @@ COMMAND(my_sector_info) {
   GCon->Logf("  floor light source sector: %d", sec->floor.LightSourceSector);
   GCon->Logf("  ceiling light source sector: %d", sec->ceiling.LightSourceSector);
 
+  GCon->Log("=== contents ===");
+  int ct = SV_PointContents(sec, Player->MO->Origin, true);
+  GCon->Logf("contents: %d", ct);
+
   if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
   if (Args.length() > 2) {
     TSecPlaneRef floor, ceiling;
