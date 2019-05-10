@@ -1125,7 +1125,7 @@ void Scan () {
 
   if (!item && otherItems.length) {
     while (otherItems.length) {
-      int idx = round(FRandomFull()*otherItems.length)%otherItems.length;
+      int idx = roundi(FRandomFull()*otherItems.length)%otherItems.length;
       Actor act = otherItems[idx];
       otherItems.remove(idx);
       if (CheckItem(act) && HavePathToPoint(act.Origin, act.SubSector)) {
@@ -2695,7 +2695,7 @@ void OnBeginPlay () {
     // use random bot name
     string botName;
     foreach (; 0..100) {
-      botName = default.BotNames[round(FRandomFull()*default.BotNames.length)%default.BotNames.length];
+      botName = default.BotNames[roundi(FRandomFull()*default.BotNames.length)%default.BotNames.length];
       bool found = false;
       foreach (auto pidx; 0..MAXPLAYERS) {
         auto plr = player.Level.Game.Players[pidx];

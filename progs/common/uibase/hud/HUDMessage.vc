@@ -230,13 +230,13 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
       float sy = float(root.Height)/float(abs(HudHeight));
       ScaleX = sx;
       ScaleY = sy;
-      //print("  scale:(%f,%f); scaled size:(%s, %s); vsize=(%s,%s); rsize=(%s,%s)", sx, sy, round(root.Width/sx), round(root.Height/sy), GetVirtualWidth(), GetVirtualHeight(), root.Width, root.Height);
-      SetSize(round(root.Width/sx), round(root.Height/sy));
+      //print("  scale:(%f,%f); scaled size:(%s, %s); vsize=(%s,%s); rsize=(%s,%s)", sx, sy, roundi(root.Width/sx), roundi(root.Height/sy), GetVirtualWidth(), GetVirtualHeight(), root.Width, root.Height);
+      SetSize(roundi(root.Width/sx), roundi(root.Height/sy));
       //root.dumpClipRect();
       //print("============"); for (Widget ww = self; ww; ww = ww.Parent) { print("ww=%C", ww); ww.dumpClipRect(); }
     } else {
       float sx = float(root.Width)/float(abs(HudWidth));
-      int wx = GetVirtualWidth()-round(MsgX*sx)*2-32;
+      int wx = GetVirtualWidth()-roundi(MsgX*sx)*2-32;
       //print("*** wx=%d", wx);
       if (wx < 32) {
         wrapWidth = GetVirtualWidth()-32;
@@ -307,15 +307,15 @@ override void OnDraw () {
       float sx = float(root.Width)/float(abs(HudWidth));
       float sy = float(root.Height)/float(abs(HudHeight));
       /*
-      print("HUDMSG: msg=<%q>; pos=(%d,%d); fixedpos=(%d,%d); scale=(%f,%f); size=(%d,%d); hudsize=(%d,%d)", MsgLines[0].Text, x, y, round(x*sx), round(y*sy), sx, sy, Width, Height, HudWidth, HudHeight);
+      print("HUDMSG: msg=<%q>; pos=(%d,%d); fixedpos=(%d,%d); scale=(%f,%f); size=(%d,%d); hudsize=(%d,%d)", MsgLines[0].Text, x, y, roundi(x*sx), roundi(y*sy), sx, sy, Width, Height, HudWidth, HudHeight);
       dumpClipRect("self");
       root.dumpClipRect("root");
       */
-      x = round(x*sx);
-      y = round(y*sy);
+      x = roundi(x*sx);
+      y = roundi(y*sy);
       // scale this, so center will work properly
-      //msgwdt = round(msgwdt*sx);
-      //msghgt = round(msghgt*sx);
+      //msgwdt = roundi(msgwdt*sx);
+      //msghgt = roundi(msghgt*sx);
       //ScaleX = 1;
       //ScaleY = 1;
     }

@@ -2501,7 +2501,7 @@ void DeathMatchSpawnPlayer () {
 
   // the famous Fisher-Yates shuffle
   foreach (int didx; 0..dms.length-1) {
-    int swapidx = didx+round(FRandomFull()*(dms.length-didx-1));
+    int swapidx = didx+roundi(FRandomFull()*(dms.length-didx-1));
     if (swapidx != didx) {
       int tmp = dms[swapidx];
       dms[swapidx] = dms[didx];

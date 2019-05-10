@@ -710,7 +710,7 @@ bool MoveThing (TVec Pos, bool Fog) {
 float GetStateTime (state AState, float AStateTime) {
   switch (GetStateTicKind(AState)) {
     case StateTicKind.Normal: return AStateTime;
-    case StateTicKind.Random: return float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f;
+    case StateTicKind.Random: return float(GetStateArgN(AState, 0)+trunci(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f;
     default: return AStateTime;
   }
 }

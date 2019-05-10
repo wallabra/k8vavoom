@@ -529,7 +529,7 @@ override float GetStateTime (state AState, float AStateTime) {
   if (AState) {
     switch (GetStateTicKind(AState)) {
       //case StateTicKind.Normal: return AStateTime;
-      case StateTicKind.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
+      case StateTicKind.Random: AStateTime = float(GetStateArgN(AState, 0)+trunci(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
       //default: return AStateTime;
     }
     if (IsFast()) {

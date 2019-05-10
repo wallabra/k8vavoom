@@ -2832,24 +2832,101 @@ func_loop:
           case OPC_Builtin_FloatSmoothStep: sp[-3].f = smoothstep(sp[-3].f, sp[-2].f, sp[-1].f); sp -= 2; break;
           case OPC_Builtin_FloatSmoothStepPerlin: sp[-3].f = smoothstepPerlin(sp[-3].f, sp[-2].f, sp[-1].f); sp -= 2; break;
           case OPC_Builtin_NameToIIndex: break; // no, really, it is THAT easy
-          case OPC_Builtin_VectorClamp:
+          case OPC_Builtin_VectorClampF:
             {
-              TVec v(sp[-5].f, sp[-4].f, sp[-3].f);
               float vmin = sp[-2].f;
               float vmax = sp[-1].f;
-              if (!isFiniteF(vmin)) vmin = 0;
-              if (!isFiniteF(vmax)) vmax = 0;
-              if (!v.isValid()) {
-                v.x = v.y = v.z = vmin;
-              } else {
-                v.x = midval(vmin, v.x, vmax);
-                v.y = midval(vmin, v.y, vmax);
-                v.z = midval(vmin, v.z, vmax);
-              }
               sp -= 2;
+              TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+              if (v.isValid()) {
+                if (isFiniteF(vmin) && isFiniteF(vmax)) {
+                  v.x = midval(vmin, v.x, vmax);
+                  v.y = midval(vmin, v.y, vmax);
+                  v.z = midval(vmin, v.z, vmax);
+                } else if (isFiniteF(vmin)) {
+                  v.x = min2(vmin, v.x);
+                  v.y = min2(vmin, v.y);
+                  v.z = min2(vmin, v.z);
+                } else if (isFiniteF(vmax)) {
+                  v.x = max2(vmax, v.x);
+                  v.y = max2(vmax, v.y);
+                  v.z = max2(vmax, v.z);
+                }
+              }
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
+              break;
+            }
+          case OPC_Builtin_VectorClampV:
+            {
+              TVec vmax(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec vmin(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+              if (v.isValid()) {
+                if (vmin.isValid() && vmax.isValid()) {
+                  v.x = midval(vmin.x, v.x, vmax.x);
+                  v.y = midval(vmin.y, v.y, vmax.y);
+                  v.z = midval(vmin.z, v.z, vmax.z);
+                } else if (vmin.isValid()) {
+                  v.x = min2(vmin.x, v.x);
+                  v.y = min2(vmin.y, v.y);
+                  v.z = min2(vmin.z, v.z);
+                } else if (vmax.isValid()) {
+                  v.x = max2(vmax.x, v.x);
+                  v.y = max2(vmax.y, v.y);
+                  v.z = max2(vmax.z, v.z);
+                }
+              }
+              sp[-1].f = v.z;
+              sp[-2].f = v.y;
+              sp[-3].f = v.x;
+              break;
+            }
+          case OPC_Builtin_VectorMinV:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              if (v2.isValid() && isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f)) {
+                sp[-1].f = min2(sp[-1].f, v2.z);
+                sp[-2].f = min2(sp[-2].f, v2.y);
+                sp[-3].f = min2(sp[-3].f, v2.x);
+              }
+              break;
+            }
+          case OPC_Builtin_VectorMaxV:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              if (v2.isValid() && isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f)) {
+                sp[-1].f = max2(sp[-1].f, v2.z);
+                sp[-2].f = max2(sp[-2].f, v2.y);
+                sp[-3].f = max2(sp[-3].f, v2.x);
+              }
+              break;
+            }
+          case OPC_Builtin_VectorMinF:
+            {
+              float vmin = sp[-1].f;
+              sp -= 1;
+              if (isFiniteF(vmin) && isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f)) {
+                sp[-1].f = min2(vmin, sp[-1].f);
+                sp[-2].f = min2(vmin, sp[-2].f);
+                sp[-3].f = min2(vmin, sp[-3].f);
+              }
+              break;
+            }
+          case OPC_Builtin_VectorMaxF:
+            {
+              float vmax = sp[-1].f;
+              sp -= 1;
+              if (isFiniteF(vmax) && isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f)) {
+                sp[-1].f = max2(vmax, sp[-1].f);
+                sp[-2].f = max2(vmax, sp[-2].f);
+                sp[-3].f = max2(vmax, sp[-3].f);
+              }
               break;
             }
           default: cstDump(ip); Sys_Error("Unknown builtin");

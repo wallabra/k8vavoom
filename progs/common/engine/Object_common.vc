@@ -332,9 +332,9 @@ native static final void FatalError (string format, ...) [printf,1];
 // ////////////////////////////////////////////////////////////////////////// //
 // math functions (angles are in degrees)
 
-native static final int round (float v) [builtin RoundF2I];
+native static final int roundi (float v) [builtin RoundF2I];
 native static final float fround (float v) [builtin RoundF2F];
-native static final int trunc (float v) [builtin TruncF2I];
+native static final int trunci (float v) [builtin TruncF2I];
 native static final float ftrunc (float v) [builtin TruncF2F];
 native static final float fceil (float v) [builtin FloatCeil];
 native static final float ffloor (float v) [builtin FloatFloor];
@@ -347,7 +347,7 @@ native static final float flerp (float a, float b, float delta) [builtin FloatLe
 native static final int lerp (int a, int b, float delta) [builtin IntLerp];
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
-// results are undefined if edge0  edge1
+// results are undefined if edge0 >= edge1
 native static final float smoothstep (float edge0, float edge1, float x) [builtin FloatSmoothStep];
 native static final float smoothstepPerlin (float edge0, float edge1, float x) [builtin FloatSmoothStepPerlin];
 
@@ -371,7 +371,13 @@ native static final int Clamp (int Val, int Min, int Max) [builtin IntClamp]; //
 native static final int clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
 native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
 native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
-native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClamp]; // clamped value
+native static final TVec vfmin (const TVec v1, const float v) [builtin VectorMinF];
+native static final TVec vfmax (const TVec v1, const float v) [builtin VectorMaxF];
+native static final TVec vecmin (const TVec v1, const TVec v2) [builtin VectorMinV];
+native static final TVec vecmax (const TVec v1, const TVec v2) [builtin VectorMaxV];
+native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
+native static final TVec vfclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
+native static final TVec vecclamp (const TVec v, const TVec vmin, const TVec vmax) [builtin VectorClampV]; // clamped value
 native static final float sin (float angle) [builtin Sin]; // sine
 native static final float cos (float angle) [builtin Cos]; // cosine
 native static final void sincos (float angle, out float sin, out float cos) [builtin SinCos];

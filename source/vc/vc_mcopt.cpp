@@ -918,8 +918,19 @@ struct Instr {
             return;
           case OPC_Builtin_IntClamp:
           case OPC_Builtin_FloatClamp:
-          case OPC_Builtin_VectorClamp:
+          case OPC_Builtin_VectorClampF:
             spdelta = -2;
+            return;
+          case OPC_Builtin_VectorClampV:
+            spdelta = -3*2;
+            return;
+          case OPC_Builtin_VectorMinV:
+          case OPC_Builtin_VectorMaxV:
+            spdelta = -3;
+            return;
+          case OPC_Builtin_VectorMinF:
+          case OPC_Builtin_VectorMaxF:
+            spdelta = -1;
             return;
           case OPC_Builtin_FloatIsNaN:
           case OPC_Builtin_FloatIsInf:

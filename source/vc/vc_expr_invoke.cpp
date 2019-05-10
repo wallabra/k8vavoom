@@ -2054,7 +2054,7 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
 //==========================================================================
 VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
   if (!Func || Func->builtinOpc < 0) return this; // sanity check
-  TVec v0(0, 0, 0), v1(0, 0, 0);
+  TVec v0(0, 0, 0), v1(0, 0, 0), v2(0, 0, 0);
   float fv;
   VExpression *e = nullptr;
   switch (Func->builtinOpc) {
@@ -2276,22 +2276,104 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Name})) return this;
       e = new VIntLiteral(Args[0]->GetNameConst().GetIndex(), Loc);
       break;
-    case OPC_Builtin_VectorClamp: // (val, min, max)
+    case OPC_Builtin_VectorClampF: // (val, min, max)
       if (!CheckSimpleConstArgs(3, (const int []){TYPE_Vector, TYPE_Float, TYPE_Float})) return this;
       v0 = ((VVectorExpr *)Args[0])->GetConstValue();
-      {
+      if (v0.isValid()) {
         float vmin = Args[1]->GetFloatConst();
         float vmax = Args[2]->GetFloatConst();
-        if (!isFiniteF(vmin)) vmin = 0;
-        if (!isFiniteF(vmax)) vmax = 0;
-        if (!v0.isValid()) {
-          v0.x = v0.y = v0.z = vmin;
-        } else {
+        if (isFiniteF(vmin) && isFiniteF(vmax)) {
           v0.x = midval(vmin, v0.x, vmax);
           v0.y = midval(vmin, v0.y, vmax);
           v0.z = midval(vmin, v0.z, vmax);
+        } else if (isFiniteF(vmin)) {
+          v0.x = min2(vmin, v0.x);
+          v0.y = min2(vmin, v0.y);
+          v0.z = min2(vmin, v0.z);
+        } else if (isFiniteF(vmax)) {
+          v0.x = max2(vmax, v0.x);
+          v0.y = max2(vmax, v0.y);
+          v0.z = max2(vmax, v0.z);
         }
         e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorClampV: // (val, min, max)
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Vector, TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
+      v2 = ((VVectorExpr *)Args[2])->GetConstValue();
+      if (v0.isValid()) {
+        if (v1.isValid() && v2.isValid()) {
+          v0.x = midval(v1.x, v0.x, v2.x);
+          v0.y = midval(v1.y, v0.y, v2.y);
+          v0.z = midval(v1.z, v0.z, v2.z);
+        } else if (v1.isValid()) {
+          v0.x = min2(v1.x, v0.x);
+          v0.y = min2(v1.y, v0.y);
+          v0.z = min2(v1.z, v0.z);
+        } else if (v2.isValid()) {
+          v0.x = max2(v2.x, v0.x);
+          v0.y = max2(v2.y, v0.y);
+          v0.z = max2(v2.z, v0.z);
+        }
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorMinV: // (v0, v1)
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
+      if (v0.isValid() && v1.isValid()) {
+        v0.x = min2(v1.x, v0.x);
+        v0.y = min2(v1.y, v0.y);
+        v0.z = min2(v1.z, v0.z);
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorMaxV: // (v0, v1)
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
+      if (v0.isValid() && v1.isValid()) {
+        v0.x = max2(v1.x, v0.x);
+        v0.y = max2(v1.y, v0.y);
+        v0.z = max2(v1.z, v0.z);
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorMinF: // (v, f)
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Float})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      fv = Args[1]->GetFloatConst();
+      if (v0.isValid() && isFiniteF(fv)) {
+        v0.x = min2(fv, v0.x);
+        v0.y = min2(fv, v0.y);
+        v0.z = min2(fv, v0.z);
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorMaxF: // (v, f)
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Float})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      fv = Args[1]->GetFloatConst();
+      if (v0.isValid() && isFiniteF(fv)) {
+        v0.x = max2(fv, v0.x);
+        v0.y = max2(fv, v0.y);
+        v0.z = max2(fv, v0.z);
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
       }
       break;
     default: break;
