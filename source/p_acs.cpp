@@ -288,6 +288,9 @@ public:
   int HudWidth;
   int HudHeight;
   VName Font;
+  vint32 *mystack;
+  vint32 *savedsp;
+  vint32 *savedlocals;
 
 public:
   VAcs ()
@@ -307,7 +310,11 @@ public:
     , HudWidth(0)
     , HudHeight(0)
     , Font(NAME_None)
+    , mystack(nullptr)
+    , savedsp(nullptr)
+    , savedlocals(nullptr)
   {
+    mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
   }
 
   //virtual ~VAcs () override { Destroy(); } // just in case
@@ -338,9 +345,10 @@ public:
   }
   */
 
-private:
+public:
   enum { ACS_STACK_DEPTH = 4096 };
 
+private:
   enum EScriptAction {
     SCRIPT_Continue,
     SCRIPT_Stop,
@@ -2009,6 +2017,8 @@ void VAcs::Destroy () {
     */
     Level = nullptr;
     XLevel = nullptr;
+    if (mystack) { Z_Free(mystack); mystack = nullptr; }
+    savedsp = nullptr;
   }
 }
 
@@ -3302,6 +3312,61 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 } while (0) \
 
 
+/*
+#define ACS_MAX_STACKS  (32)
+static vint32 *acsStackPool[ACS_MAX_STACKS] = {0};
+static vuint32 acsStackBitmap = 0;
+static int acsStacksUsed = 0;
+
+
+struct ACSStack {
+public:
+  vint32 *stk;
+  int stkPoolIdx; // -1: not in a pool
+
+public:
+  ACSStack (bool fakeme) : stk(nullptr), stkPoolIdx(-1) {
+    if (acsStackBitmap == 0xffffffffu) {
+      // no free slots
+      //stkPoolIdx = -1;
+      stk = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
+    } else if (acsStacksUsed < ACS_MAX_STACKS) {
+      // create new slot
+      stkPoolIdx = acsStacksUsed++;
+      stk = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
+      acsStackPool[stkPoolIdx] = stk;
+      acsStackBitmap |= (1U<<(stkPoolIdx&0x1f));
+    } else {
+      // find a free slot
+      //stkPoolIdx = -1;
+      for (int f = 0; f < 32; ++f) {
+        if ((acsStackBitmap&(1U<<(stkPoolIdx&0x1f))) == 0) {
+          // i found her!
+          stkPoolIdx = f;
+          stk = acsStackPool[stkPoolIdx];
+          acsStackBitmap |= (1U<<(stkPoolIdx&0x1f));
+        }
+      }
+      check(stkPoolIdx >= 0);
+      check(stk);
+    }
+  }
+  ~ACSStack () {
+    if (stkPoolIdx < 0) {
+      Z_Free(stk);
+    } else {
+      acsStackBitmap &= ~(1U<<(stkPoolIdx&0x1f));
+    }
+    // just in case
+    stk = nullptr;
+    stkPoolIdx = -1;
+  }
+  ACSStack (const ACSStack &) = delete;
+  ACSStack &operator = (const ACSStack &) = delete;
+};
+*/
+
+
 //==========================================================================
 //
 //  VAcs::RunScript
@@ -3384,14 +3449,20 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   TArray<VStr> PrintStrStack; // string builders must be stacked
   VStr PrintStr;
   vint32 resultValue = 1;
-  vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH);
+  //vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH+256); // why not?
+  //ACSStack stack(true);
+  //check(stack.stk);
+  check(mystack);
   vint32 *optstart = nullptr;
-  vint32 *locals = LocalVars;
+  vint32 *locals = (savedlocals ? savedlocals : LocalVars);
   VAcsFunction *activeFunction = nullptr;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
   vuint8 *ip = InstructionPointer;
-  vint32 *sp = stack;
+  //vint32 *sp = stack.stk;
+  vint32 *sp = (savedsp ? savedsp : mystack);
+  //vint32 *sp = mystack;
+  //memset(mystack, 0, (ACS_STACK_DEPTH+256)*sizeof(vint32)); // just in case
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
   GCon->Logf("ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
@@ -5029,16 +5100,18 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
-        if ((sp-stack)+func->LocalCount+64 > ACS_STACK_DEPTH) {
-          // 64 is the margin for the function's working space
-          GCon->Logf(NAME_Error, "ACS: Out of stack space in script %d", number);
+        if ((sp-mystack)+func->LocalCount+128 >= ACS_STACK_DEPTH) {
+          // 128 is the margin for the function's working space
+          GCon->Logf(NAME_Error, "ACS: Out of stack space in script %d (%d slots missing)", number, (int)(ptrdiff_t)(sp-mystack)+func->LocalCount+128-ACS_STACK_DEPTH);
           action = SCRIPT_Terminate;
-          ACSVM_BREAK_STOP;
+          //ACSVM_BREAK_STOP;
+          Host_Error("ACS: Out of stack space in script %d (%d slots missing)", number, (int)(ptrdiff_t)(sp-mystack)+func->LocalCount+128-ACS_STACK_DEPTH);
         }
+        //if (func->ArgCount > func->LocalCount) Host_Error("ACS: script %d has %d locals, but %d args", number, func->LocalCount, func->ArgCount);
         auto oldlocals = locals;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
-        //!GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
+        //GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
         // make space on the stack for any other variables the function uses
         //for (i = 0; i < func->LocalCount; i++) sp[i] = 0;
         //sp += i;
@@ -5046,6 +5119,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           memset((void *)sp, 0, func->LocalCount*sizeof(sp[0]));
           sp += func->LocalCount;
         }
+        /*
+        if (sp+(sizeof(VAcsCallReturn)/sizeof(vint32))-mystack >= ACS_STACK_DEPTH) {
+          Host_Error("ACS: Out of stack space in script %d", number);
+        }
+        */
         ((VAcsCallReturn *)sp)->ReturnAddress = ActiveObject->PtrToOffset(ip);
         ((VAcsCallReturn *)sp)->ReturnFunction = activeFunction;
         ((VAcsCallReturn *)sp)->ReturnObject = ActiveObject;
@@ -6717,6 +6795,9 @@ LblFuncStop:
 #endif
   //fprintf(stderr, "VAcs::RunScript:003: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   InstructionPointer = ip;
+  savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
+  savedlocals = locals;
+
   if (action == SCRIPT_Terminate) {
     if (info->RunningScript == this) {
       info->RunningScript = nullptr;
@@ -6724,7 +6805,7 @@ LblFuncStop:
     DestroyThinker();
   }
 
-  Z_Free(stack);
+  //Z_Free(stack);
   return resultValue;
 }
 
