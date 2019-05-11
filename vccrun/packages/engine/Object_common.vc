@@ -667,8 +667,9 @@ static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec v
   if (ifrac < ofrac) {
     if (ifrac > -1) {
       ifrac = fclamp(ifrac, 0.0f, 1.0f);
-      if (ifrac == 0 || ifrac == 1) return ifrac; // just in case
+      if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
       hitPlane = linePlanes.planes[phit];
+      //print("ifrac=%s; hp(%s): %s:%s", ifrac, phit, hitPlane.normal, hitPlane.dist);
       // check what kind of hit this is
       if (!hitPlane.normal.y) {
         // left or right side of the box

@@ -2640,9 +2640,9 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
   }
 
   if (ifrac < ofrac) {
-    if (ifrac > -1) {
+    if (ifrac > -1.0f) {
       ifrac = Clamp(ifrac, 0.0f, 1.0f);
-      if (ifrac == 0 || ifrac == 1) return ifrac; // just in case
+      if (/*ifrac == 0 ||*/ ifrac == 1.0f) return ifrac; // just in case
       if (hitPlane || contactPoint || hitType) {
         const TPlane *hpl = &ld->cdPlanesArray[phit];
         if (hitPlane) *hitPlane = *hpl;
