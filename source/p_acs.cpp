@@ -875,7 +875,7 @@ void VAcsObject::LoadEnhancedObject () {
         if (Lump < 0) {
           GCon->Logf(NAME_Warning, "Could not find ACS library '%s'.", &parse[i]);
         } else {
-          GCon->Logf("  ACS linked library '%s' (for object '%s')", &parse[i], *W_FullLumpName(LumpNum));
+          GCon->Logf("  ACS linked library '%s' (%s) (for object '%s')", &parse[i], *W_FullLumpName(Lump), *W_FullLumpName(LumpNum));
           Object = Level->LoadObject(Lump);
         }
         Imports.Append(Object);

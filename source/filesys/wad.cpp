@@ -437,8 +437,11 @@ int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
 //==========================================================================
 int W_FindACSObjectInFile (VStr Name, int File) {
   if (File < 0 || File >= SearchPaths.length()) return -1;
-  int i = SearchPaths[File]->FindACSObject(Name);
-  if (i >= 0) return MAKE_HANDLE(File, i);
+  while (File >= 0) {
+    int i = SearchPaths[File]->FindACSObject(Name);
+    if (i >= 0) return MAKE_HANDLE(File, i);
+    --File;
+  }
   // not found
   return -1;
 }
