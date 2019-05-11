@@ -125,7 +125,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     }
 
     if (dumpMPT > 0) {
-      GCon->Logf("  patch #%d/%d: xorg=%d; yorg=%d; patch=%s", i, PatchCount-1, patch->XOrigin, patch->YOrigin, (patch->Tex ? *patch->Tex->Name : "(none)"));
+      GCon->Logf("  patch #%d/%d: xorg=%d; yorg=%d; patch=%s (%s)", i, PatchCount-1, patch->XOrigin, patch->YOrigin, (patch->Tex ? *patch->Tex->Name : "(none)"), (patch->Tex && patch->Tex->SourceLump >= 0 ? *W_FullLumpName(patch->Tex->SourceLump) : "<?>"));
     }
 
     if (!patch->Tex) {

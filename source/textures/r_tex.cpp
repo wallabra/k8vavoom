@@ -367,7 +367,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
   if (!inMapTextures) {
     if (Tex->Name != NAME_None && (*Tex->Name)[0] != 0x7f) {
       int repidx = -1;
-      // loop, no shinking allowed
+      // loop, no shrinking allowed
       for (auto it = firstWithName(Tex->Name, false); !it.empty(); it.next()) {
         if (it.isMapTexture()) continue; // skip map textures
         VTexture *tx = it.tex();
@@ -1259,13 +1259,16 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       wpi.name = PatchName;
 
       // check if it's already has been added
+      /*
       int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false);
       if (PIdx >= 0) {
         //patchtexlookup[i] = Textures[PIdx];
         wpi.tx = Textures[PIdx];
         check(wpi.tx);
+        if (developer) GCon->Logf(NAME_Dev, "PNAMES(%s): found texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
         continue;
       }
+      */
 
       bool isFlat = false;
       // get wad lump number
@@ -1285,6 +1288,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
         //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
         wpi.tx = VTexture::CreateTexture((isFlat ? TEXTYPE_Flat : TEXTYPE_WallPatch), LNum);
+        check(wpi.tx->SourceLump == LNum);
         if (!wpi.tx) GCon->Logf(NAME_Warning, "%s: loading patch '%s' (%d/%d) failed", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
         if (wpi.tx) AddTexture(wpi.tx);
       }
@@ -1297,7 +1301,8 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
     for (int f = 0; f < patchtexlookup.length(); ++f) {
       check(patchtexlookup[f].index == f);
       VTexture *tx = patchtexlookup[f].tx;
-      GCon->Logf(NAME_Dev, "%s:PNAME (%d/%d): name=%s; tx=%d; txname=%s", *pkname, f, patchtexlookup.length()-1, *patchtexlookup[f].name, (tx ? 1 : 0), (tx ? *tx->Name : "----"));
+      GCon->Logf(NAME_Dev, "%s:PNAME (%d/%d): name=%s; tx=%d; txname=%s (%s : %s)", *pkname, f, patchtexlookup.length()-1, *patchtexlookup[f].name, (tx ? 1 : 0), (tx ? *tx->Name : "----"),
+        (tx && tx->SourceLump >= 0 ? *W_FullLumpName(tx->SourceLump) : "<?>"), (tx ? VTexture::TexTypeToStr(tx->Type) : "(none)"));
     }
   }
 }
@@ -1388,11 +1393,18 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
         Textures[0]->Height = Tex->Height;
         Tex->Type = TEXTYPE_Null;
       }
-      // ignore empty and duplicate textures
-      if (Tex->Name == NAME_None || Tex->Name == dashName || tseen.has(Tex->Name)) { delete Tex; continue; }
+      // ignore empty textures
+      if (Tex->Name == NAME_None || Tex->Name == dashName) { delete Tex; continue; }
+      // but keep duplicate ones, because later pwads can replace some of them
       if (Tex->SourceLump < TexLump) Tex->SourceLump = TexLump;
-      tseen.put(Tex->Name, true);
-      AddTexture(Tex);
+      if (tseen.has(Tex->Name)) {
+        if (developer) GCon->Logf(NAME_Dev, "textures lump '%s': replacing texture '%s'", *W_FullLumpName(TexLump), *Tex->Name);
+        AddTexture(Tex);
+      } else {
+        if (developer) GCon->Logf(NAME_Dev, "textures lump '%s': adding texture '%s'", *W_FullLumpName(TexLump), *Tex->Name);
+        tseen.put(Tex->Name, true);
+        AddTexture(Tex);
+      }
     }
     // next one
     TexLump = W_IterateNS(TexLump, WADNS_Global);
