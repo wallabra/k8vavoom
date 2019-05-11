@@ -68,6 +68,38 @@ int hbarPicBorder = -1;
 
 //==========================================================================
 //
+//  Reset
+//
+//==========================================================================
+void Reset () {
+  ticStart = default.ticStart;
+  oldtext = default.oldtext;
+  oldfont = default.oldfont;
+  MsgLines.reset();
+  MsgFont = default.MsgFont;
+  MsgColor = default.MsgColor;
+  MsgAlpha = default.MsgAlpha;
+  MsgWidth = default.MsgWidth;
+  MsgHeight = default.MsgHeight;
+  MsgX = default.MsgX;
+  MsgY = default.MsgY;
+  HudWidth = default.HudWidth;
+  HudHeight = default.HudHeight;
+  isTextFont = default.isTextFont;
+  bCentreX = default.bCentreX;
+  isHealthBar = default.isHealthBar;
+  HoldTime = default.HoldTime;
+  Time = default.Time;
+  hbarCurr = default.hbarCurr;
+  hbarMax = default.hbarMax;
+  hbarPicBack = default.hbarPicBack;
+  hbarPicFill = default.hbarPicFill;
+  hbarPicBorder = default.hbarPicBorder;
+}
+
+
+//==========================================================================
+//
 //  HBarLoadGfx
 //
 //==========================================================================

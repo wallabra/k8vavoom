@@ -26,6 +26,8 @@
 //**************************************************************************
 class StatusBarShared : Widget;
 
+#define HUD_ALLOW_REUSE
+
 ClientGameBase ClGame;
 
 const int NUM_NOTIFY_LINES = 5;
@@ -294,16 +296,21 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   // handle colors specified by name
   if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
 
+#ifdef HUD_ALLOW_REUSE
   HUDMessage hudReuse = none;
+#endif
 
   // reuse previous message with the same ID, if possible
   if (Id && Id != 0xffffffff) {
     for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
       if (HUDMessage(Probe).Id == Id) {
         //print("*** found and destroyed old HUD message with id %d", Id);
+#ifdef HUD_ALLOW_REUSE
         if (Probe.Class == hudClass) {
           hudReuse = HUDMessage(Probe);
-        } else {
+        } else
+#endif
+        {
           delete Probe;
         }
         break;
@@ -318,9 +325,13 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
     }
   }
 
+#ifdef HUD_ALLOW_REUSE
   if (hudReuse) {
     Msg = hudReuse;
-  } else {
+    Msg.Reset();
+  } else
+#endif
+  {
     Msg = HudMsgWin.NewChild(hudClass);
   }
 
@@ -329,7 +340,10 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   Msg.Init(Message, Font, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location
-  if (!hudReuse) {
+#ifdef HUD_ALLOW_REUSE
+  if (!hudReuse)
+#endif
+  {
     Probe = HudMsgWin.FirstChild;
     while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
     if (Probe) Msg.MoveBefore(Probe);

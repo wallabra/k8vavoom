@@ -32,6 +32,18 @@ float FadeOutTime;
 
 //==========================================================================
 //
+//  Reset
+//
+//==========================================================================
+override void Reset () {
+  ::Reset();
+  State = default.State;
+  FadeOutTime = default.FadeOutTime;
+}
+
+
+//==========================================================================
+//
 //  Init
 //
 //==========================================================================
@@ -40,8 +52,10 @@ override void Init (string Message, name AFont, int Type, int AId, int Color,
                     float Time1, float Time2)
 {
   ::Init(Message, AFont, Type, AId, Color, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
-  Time1 = fclamp(Time1, 0.01, 100000);
-  HoldTime = fclamp(HoldTime, 0.01, 100000);
+  Time1 = fclamp(Time1, 0, 100000);
+  HoldTime = fclamp(HoldTime, 0, 100000);
+  if (!HoldTime) HoldTime = 1.0/35.0;
+  if (!Time1) Time1 = 1.0/35.0;
   FadeOutTime = Time1;
 }
 
@@ -65,7 +79,7 @@ override void Tick (float DeltaTime) {
       }
       break;
     case 1:
-      if (Time > FadeOutTime) {
+      if (Time > FadeOutTime || !FadeOutTime) {
         //print("  DEAD!");
         MarkDead(); //Destroy();
         return;
