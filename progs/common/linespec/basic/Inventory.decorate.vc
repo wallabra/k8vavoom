@@ -184,6 +184,7 @@ final void decorate_A_Raise (optional float raisespeed) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
   Wpn.bBobDisabled = true;
 
   if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
