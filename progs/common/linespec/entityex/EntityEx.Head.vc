@@ -763,7 +763,7 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
     if (plr && plr.bSpawned && plr.MO) return plr.MO;
   }
   if (ptr&AAPTR_NULL) return none;
-  FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
+  if (plridx < 0) FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
   return none;
 }
 
