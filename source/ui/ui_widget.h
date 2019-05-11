@@ -213,6 +213,8 @@ public:
   void SetFocus ();
 
   void DrawPic (int, int, int, float = 1.0, int = 0);
+  void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha=1.0, int Trans=0);
+  void DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha=1.0, int Trans=0);
   void DrawPic (int, int, VTexture *, float = 1.0, int = 0);
   void DrawShadowedPic (int, int, int);
   void DrawShadowedPic (int, int, VTexture *);
@@ -392,6 +394,7 @@ public:
   DECLARE_FUNCTION(SetFocus)
 
   DECLARE_FUNCTION(DrawPic)
+  DECLARE_FUNCTION(DrawPicScaled)
   DECLARE_FUNCTION(DrawShadowedPic)
   DECLARE_FUNCTION(FillRectWithFlat)
   DECLARE_FUNCTION(FillRectWithFlatRepeat)

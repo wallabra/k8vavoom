@@ -662,6 +662,41 @@ void VWidget::DrawPic (int X, int Y, int Handle, float Alpha, int Trans) {
 //  VWidget::DrawPic
 //
 //==========================================================================
+void VWidget::DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans) {
+  DrawPicScaled(X, Y, GTextureManager(Handle), scaleX, scaleY, Alpha, Trans);
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawPic
+//
+//==========================================================================
+void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha, int Trans) {
+  if (!Tex) return;
+
+  X -= (int)(Tex->GetScaledSOffset()*scaleX);
+  Y -= (int)(Tex->GetScaledTOffset()*scaleY);
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = (int)(X+Tex->GetScaledWidth()*scaleX);
+  float Y2 = (int)(Y+Tex->GetScaledHeight()*scaleY);
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Tex->GetWidth();
+  float T2 = Tex->GetHeight();
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawPic
+//
+//==========================================================================
 void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
   if (!Tex) return;
 
@@ -1171,6 +1206,19 @@ IMPLEMENT_FUNCTION(VWidget, DrawPic) {
   P_GET_INT(X);
   P_GET_SELF;
   Self->DrawPic(X, Y, Handle, Alpha, Translation);
+}
+
+//void VWidget::DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans);
+IMPLEMENT_FUNCTION(VWidget, DrawPicScaled) {
+  P_GET_INT_OPT(Translation, 0);
+  P_GET_FLOAT_OPT(Alpha, 1.0);
+  P_GET_FLOAT(scaleY);
+  P_GET_FLOAT(scaleX);
+  P_GET_INT(Handle);
+  P_GET_INT(Y);
+  P_GET_INT(X);
+  P_GET_SELF;
+  Self->DrawPicScaled(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawShadowedPic) {
