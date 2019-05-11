@@ -245,12 +245,15 @@ final void A_Countdown () {
 //  A_CountdownArg
 //
 //==========================================================================
-final void A_CountdownArg (int Index) {
+final void A_CountdownArg (int Index, optional name jumpstate) {
   if (Index <= 0 || Index > 5) return;
   if (!Args[Index-1]--) {
          if (bMissile) ExplodeMissile(none);
     else if (bShootable) Damage(none, none, Health, spawnBlood:true);
-    else SetState(FindState('Death'));
+    else {
+      if (!jumpstate) jumpstate = 'Death';
+      SetState(FindState(jumpstate));
+    }
   }
 }
 

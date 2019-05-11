@@ -38,6 +38,8 @@
     <prop_int name="BounceCount" property="BounceCount" />
     <prop_name name="BounceSound" property="BounceSound" />
     <prop_int_unsupported name="ProjectilePassHeight" />
+    <prop_int_unsupported name="WeaveIndexXY" />
+    <prop_int_unsupported name="WeaveIndexZ" />
     <!-- Sound -->
     <prop_name name="SeeSound" property="SightSound" />
     <prop_name name="AttackSound" property="AttackSound" />
