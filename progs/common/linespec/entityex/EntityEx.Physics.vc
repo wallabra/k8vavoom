@@ -1243,8 +1243,8 @@ override void ApplyFriction (float DeltaTime) {
     }
   }
 
-  if (Velocity.x > -STOPSPEED && Velocity.x < STOPSPEED &&
-      Velocity.y > -STOPSPEED && Velocity.y < STOPSPEED &&
+  if (fabs(Velocity.x) < STOPSPEED &&
+      fabs(Velocity.y) < STOPSPEED &&
       (!bIsPlayer || (!Player.ForwardMove && !Player.SideMove)))
   {
     if (bIsPlayer) {

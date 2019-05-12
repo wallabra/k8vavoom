@@ -26,16 +26,14 @@
 //**************************************************************************
 class PlayerPawn : Actor abstract;
 
-const int
+const float WALKING_SPEED = 1000;
+const float RUNNING_SPEED = 2000;
+
+
+enum {
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 8;
-
-/*
-struct WeaponSlot {
-  class!Weapon[MAX_WEAPONS_PER_SLOT+1] Weapons;
-};
-*/
-
+  MAX_WEAPONS_PER_SLOT = 8,
+}
 
 // default view height
 float ViewHeight;
@@ -57,7 +55,7 @@ int TranslStart;
 int TranslEnd;
 
 // values for Hexen armor
-float HexenArmor[5];
+float[5] HexenArmor;
 
 // jump velocity
 // MO `JumpVelZ` is used instead
@@ -102,7 +100,7 @@ class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotClasses;
 //  GetWeaponInSlot
 //
 //==========================================================================
-final class!Weapon GetWeaponInSlot (int slot, int index) {
+class!Weapon GetWeaponInSlot (int slot, int index) {
   if (slot < 0 || slot > NUM_WEAPON_SLOTS) return none;
   if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return none;
   class!Weapon wpn = weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index];
@@ -117,7 +115,7 @@ final class!Weapon GetWeaponInSlot (int slot, int index) {
 //  SetWeaponInSlot
 //
 //==========================================================================
-final void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
+void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
   if (slot < 0 || slot > NUM_WEAPON_SLOTS) return;
   if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return;
   weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index] = wpn;
@@ -129,7 +127,7 @@ final void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
 //  FindWeaponSlot
 //
 //==========================================================================
-final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
+bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
   if (WpnClass) {
     class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
     if (!wpnrep) wpnrep = WpnClass;
@@ -155,7 +153,7 @@ final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
 //  NextUsedWeaponSlot
 //
 //==========================================================================
-final void NextUsedWeaponSlot (ref int Slot, ref int Index, bool forward) {
+void NextUsedWeaponSlot (ref int Slot, ref int Index, bool forward) {
   if (Slot < 0) Slot = 0;
   if (Index < 0) Index = (forward ? -1 : 0);
   Slot %= NUM_WEAPON_SLOTS+1;
@@ -208,7 +206,7 @@ private final int CompareWeaponPosition (class!Weapon a, class!Weapon b) {
 //  TODO: we have array sorting, but only for dynarrays
 //
 //==========================================================================
-final void SortWeaponSlot (int wsidx) {
+void SortWeaponSlot (int wsidx) {
   if (wsidx < 0 || wsidx > NUM_WEAPON_SLOTS) return;
   // use insertion sort to do the work
   int i = 1;
@@ -246,7 +244,7 @@ private final void DumpWeaponSlots () {
 //  FindAndReplaceWeaponInSlot
 //
 //==========================================================================
-final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
+void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
   if (!newWpn) return;
   int nsidx = newWpn.default.SlotNumber;
   if (nsidx < 0 || nsidx > NUM_WEAPON_SLOTS) return;
@@ -468,27 +466,18 @@ override bool UseInventory (Inventory Item) {
 //
 //  AdjustSpeed
 //
+//  this clamps player speed, and applies some boosts/restrictions
+//
 //==========================================================================
 final void AdjustSpeed (ref float forward, ref float side) {
   // when the player has less than 25 health points, he's unable to run
   if (Health < RunHealth) {
-    //if (forward > 1000.0) forward = 1000.0; else if (forward < -1000.0) forward = -1000.0;
-    forward = fclamp(forward, -1000.0, 1000.0);
-    //if (side > 1000.0) side = 1000.0; else if (side < -1000.0) side = -1000.0;
-    side = fclamp(side, -1000.0, 1000.0);
+    forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
+    side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
   }
 
-  if (forward >= -1000.0 && forward < 1000.0) {
-    forward *= ForwardMove1;
-  } else {
-    forward *= ForwardMove2;
-  }
-
-  if (side >= -1000.0 && side < 1000.0) {
-    side *= SideMove1;
-  } else {
-    side *= SideMove2;
-  }
+  forward *= (forward >= -1000.0 && forward < 1000.0 ? ForwardMove1 : ForwardMove2);
+  side *= (side >= -1000.0 && side < 1000.0 ? SideMove1 : SideMove2);
 
   if (Inventory && !PlayerEx(Player).MorphTime) {
     // adjust for a player with a speed artifact
@@ -501,8 +490,8 @@ final void AdjustSpeed (ref float forward, ref float side) {
   // normal speed is |1000|, running speed is |2000|
   if (crouchfactor != 1) {
     //if (forward) print("old: f=%s; s=%s; nf=%s; ns=%s", forward, side, forward*crouchfactor, side*crouchfactor);
-    forward = fclamp(forward, -1000.0, 1000.0);
-    side = fclamp(side, -1000.0, 1000.0);
+    forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
+    side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
     forward *= crouchfactor;
     side *= crouchfactor;
   }

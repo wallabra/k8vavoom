@@ -466,4 +466,17 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: Grove Alt detected and fixed");
     return;
   }
+
+  // Hell Revealed MAP23
+  // https://forum.zdoom.org/viewtopic.php?t=60181&p=1101976#p1101976
+  if (MapHashMD5 == "16E621E46F87418F6F8DB71D68433AE0") {
+    // Arachnotrons near beginning sometimes don't spawn if imps block
+    // their one-time teleport. Make these teleports repeatable to ensure
+    // maxkills are always possible.
+    Lines[2036].flags |= ML_REPEAT_SPECIAL;
+    Lines[2038].flags |= ML_REPEAT_SPECIAL;
+    Lines[2039].flags |= ML_REPEAT_SPECIAL;
+    Lines[2040].flags |= ML_REPEAT_SPECIAL;
+    printwarn("MAPFIX: Hell Revealed MAP23 detected and fixed");
+  }
 }

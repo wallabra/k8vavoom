@@ -63,7 +63,6 @@ float Bob; // bounded/scaled total momentum
 EntityEx Attacker;
 
 float JumpTime;
-//int LocalQuakeHappening;
 TVec LocalQuakeHappening; // for each axis
 
 TVec MoveDir;
@@ -156,13 +155,25 @@ transient float k8NextSuperBulletTime;
 transient subsector_t *lastSubSector;
 //transient array!int subSeen; // do not bother dropping subsector info for those
 
+transient float lastViewOrgZForPfx; // set in `CalcHeight()`, used in `PostfixViewHeight()`
 
+
+//==========================================================================
+//
+//  ClearSubSeenInfo
+//
+//==========================================================================
 final void ClearSubSeenInfo () {
   lastSubSector = nullptr;
   //subSeen.reset();
 }
 
 
+//==========================================================================
+//
+//  AddSeenSubsector
+//
+//==========================================================================
 final void AddSeenSubsector () {
   if (!MO) return;
   if (!MO.SubSector) return;
@@ -185,8 +196,22 @@ final void AddSeenSubsector () {
 }
 
 
-void BotDumpNodes () {}
-void BotTestFindPathTo (TVec dest) {}
+//==========================================================================
+//
+//  BotDumpNodes
+//
+//==========================================================================
+void BotDumpNodes () {
+}
+
+
+//==========================================================================
+//
+//  BotTestFindPathTo
+//
+//==========================================================================
+void BotTestFindPathTo (TVec dest) {
+}
 
 
 replication {
@@ -441,12 +466,61 @@ final void ThrustPlayer (float angle, float move, float deltaTime) {
 
 //==========================================================================
 //
-//  CalcHeight
-//
-//  Calculate the walking / running height adjustment
+//  SanitizeViewOrgZ
 //
 //==========================================================================
-final void CalcHeight (float deltaTime) {
+void SanitizeViewOrgZ () {
+  if (!MO) return; // just in case
+  if (PlayerState != PST_DEAD && MO.Origin.z <= MO.FloorZ) ViewOrg.z -= MO.FloorClip;
+  if (ViewOrg.z < MO.FloorZ+4.0) ViewOrg.z = MO.FloorZ+4.0;
+  if (ViewOrg.z > MO.CeilingZ-4.0) ViewOrg.z = MO.CeilingZ-4.0;
+}
+
+
+//==========================================================================
+//
+//  ClientSetViewOrg
+//
+//==========================================================================
+override void ClientSetViewOrg (float x, float y, float z) {
+  ::ClientSetViewOrg(x, y, z);
+  lastViewOrgZForPfx = (MO ? MO.Origin.z : 0);
+}
+
+
+//==========================================================================
+//
+//  PostfixViewHeight
+//
+//  after player thinker was called, player can be moved by lift,
+//  for example. we have to "postfix" view origin to get rid of
+//  "sinking into lift" effect
+//
+//  this is called from `SetViewPos()`, which in turn is called from
+//  main world thinker
+//
+//==========================================================================
+override void PostfixViewHeight () {
+  if (!MO) return; // just in case
+
+  float zdiff = MO.Origin.z-lastViewOrgZForPfx;
+  if (!zdiff) return; // nothing to do
+  lastViewOrgZForPfx = MO.Origin.z; // in case we will be called repeatedly
+
+  ViewOrg.z += zdiff;
+  SanitizeViewOrgZ();
+}
+
+
+//==========================================================================
+//
+//  CalcHeight
+//
+//  calculate the walking / running height adjustment
+//  called from player tickers (both alive and dead)
+//
+//==========================================================================
+void CalcHeight (float deltaTime) {
   float bob = GetCvarF('movebob');
 
   if (bob > 0) {
@@ -493,10 +567,9 @@ final void CalcHeight (float deltaTime) {
     }
   }
   ViewOrg.z = MO.Origin.z+ViewHeight+bob;
+  lastViewOrgZForPfx = MO.Origin.z; // for postfixing
 
-  if (PlayerState != PST_DEAD && MO.Origin.z <= MO.FloorZ) ViewOrg.z -= MO.FloorClip;
-  if (ViewOrg.z < MO.FloorZ+4.0) ViewOrg.z = MO.FloorZ+4.0;
-  if (ViewOrg.z > MO.CeilingZ-4.0) ViewOrg.z = MO.CeilingZ-4.0;
+  SanitizeViewOrgZ();
 }
 
 
@@ -2821,6 +2894,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   ViewHeight = PP.ViewHeight;
   ViewOrg = MO.Origin;
   ViewOrg.z += ViewHeight;
+  lastViewOrgZForPfx = MO.Origin.z;
   ViewAngles = PP.Angles;
   bFixAngle = true;
 
@@ -3921,16 +3995,22 @@ final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, i
 //
 //  SetViewPos
 //
+//  called from main world thinker after all thinkers were called
+//
 //==========================================================================
 override void SetViewPos () {
   // just in a case camera entity has been destroyed
   if (!Camera) Camera = MO;
 
   if (MO != Camera) {
+    // don't do any height fixes if our camera is not a player pawn
     ViewOrg = Camera.Origin;
     ViewOrg.z += EntityEx(Camera).CameraHeight;
     ViewAngles = Camera.Angles;
   } else {
+    // fix camera height to avoid "lift sinking" effect
+    PostfixViewHeight();
+
     ViewOrg.x = MO.Origin.x;
     ViewOrg.y = MO.Origin.y;
 

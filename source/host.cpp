@@ -159,18 +159,13 @@ void Host_Init () {
   VCvar::Init();
   VCommand::Init();
 
-  /*
-  GLog.Logf(NAME_Init, "%s", "************");
-  GLog.Log(NAME_Warning, "+************+");
-  GLog.Log(NAME_Error, ":************:");
-  GLog.Log("<************>");
-  */
-
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Logf(NAME_Init, "k8vavoom Game Engine, started by Janis Legzdinsh | %s", __DATE__);
   GCon->Log(NAME_Init, "also starring Francisco Ortega, and others (k8:drop me a note!)");
   GCon->Log(NAME_Init, "Ketmar Dark: improvements, bugfixes, new bugs, segfaults, etc.");
   GCon->Log(NAME_Init, "alot of invaluable help and testing (esp. x86_64): id0");
+  GCon->Log(NAME_Init, "---------------------------------------------------------------");
+  GCon->Log(NAME_Init, "REMEMBER: BY USING FOSS SOFTWARE, YOU ARE SUPPORTING COMMUNISM!");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
 
   if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;

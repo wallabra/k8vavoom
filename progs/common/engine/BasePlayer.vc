@@ -384,6 +384,19 @@ void ClientSetViewOrg (float x, float y, float z) {
 
 //==========================================================================
 //
+//  PostfixViewHeight
+//
+//  after player thinker was called, player can be moved by lift,
+//  for example. we have to "postfix" view origin to get rid of
+//  "sinking into lift" effect
+//
+//==========================================================================
+void PostfixViewHeight () {
+}
+
+
+//==========================================================================
+//
 //  eventGetReadyWeapon
 //
 //==========================================================================
