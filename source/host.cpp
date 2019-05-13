@@ -121,6 +121,7 @@ static char CurrentLanguage[4];
 static VCvarS Language("language", "en", "Game language.", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
+static VCvarI cl_framerate("cl_framerate", "0", "Cap framerate for non-networking games?", CVAR_Archive);
 
 
 //==========================================================================
@@ -353,12 +354,20 @@ static bool FilterTime () {
   if (time < 0.004) return false;
 
   last_time = curr_time;
-  realtime += time;
+  //realtime += time;
+  // now fix "real time"
+  realtime = curr_time;
 
   const double timeDelta = realtime-oldrealtime;
+  //const double timeDelta = curr_time-oldrealtime;
 
   if (real_time) {
-    if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+    int cfr = cl_framerate;
+    if (cfr < 1 || cfr > 200) cfr = 0;
+    if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+      // capped fps
+      if (timeDelta < 1.0/(double)cfr) return false; // framerate is too high
+    } else if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
       // uncapped fps
       if (realtime <= oldrealtime) return false;
       if (timeDelta < max_fps_cap) return false;
