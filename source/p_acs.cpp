@@ -72,6 +72,7 @@ static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode
 static VCvarB acs_warning_console_commands("acs_warning_console_commands", true, "Show warning when ACS script tries to execute console command?", CVAR_Archive);
 static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump ACS uservar access?", CVAR_Archive);
 static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, "Should ACS use DooM tic granularity for delays?", CVAR_Archive);
+static VCvarB acs_enabled("acs_enabled", true, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
 
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
@@ -3379,6 +3380,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
 
   //if (info->Name != NAME_None) GCon->Logf(NAME_Dev, "ACS: running \"%s\"...", *info->Name);
+
+  if (!acs_enabled) State = ASTE_Terminating;
 
   if (State == ASTE_Terminating) {
     if (info->RunningScript == this) info->RunningScript = nullptr;
