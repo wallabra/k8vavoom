@@ -127,6 +127,9 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
   NumArgs = 0;
   int totalCount = 0;
 
+  auto oldEsc = sc->IsEscape();
+  sc->SetEscape(true);
+
   //fprintf(stderr, "***8:<%s> %s\n", *sc->String, *sc->GetLoc().toStringNoCol());
   if (!gotParen) gotParen = sc->Check("(");
   if (gotParen) {
@@ -150,6 +153,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
     }
   }
   //fprintf(stderr, "***9:<%s> %s\n", *sc->String, *sc->GetLoc().toStringNoCol());
+  sc->SetEscape(oldEsc);
 
   VMethod *Func = nullptr;
 

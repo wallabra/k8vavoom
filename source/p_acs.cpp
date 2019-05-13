@@ -4709,7 +4709,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         Time2 = NormHudTime(Time2, DelayTime);
         /*
         GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
-        GCon->Logf("  HUDMSG(id=%d): ht=%f (0x%04x); t1=%f; t2=%f; msg=%s", Id, HoldTime, optstart[-1], Time1, Time2, *PrintStr.quote());
+        GCon->Logf("  HUDMSG(id=%d): ht=%f (0x%04x); t1=%f; t2=%f; type=0x%02x, msg=%s", Id, HoldTime, optstart[-1], Time1, Time2, Type, *PrintStr.quote());
         */
 
         if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {

@@ -510,22 +510,29 @@ bool VScriptParser::GetString () {
     while (ScriptPtr < ScriptEndPtr) {
       char ch = *ScriptPtr++;
       if (ch == qch) break;
+      bool realNL = true;
       if (ch == '\r' && *ScriptPtr == '\n') {
         // convert from DOS format to UNIX format
         ch = '\n';
         ++ScriptPtr;
       } else if (Escape && ch == '\\') {
         const char c1 = *ScriptPtr;
-        if (c1 == '\\' || c1 == '\"' || c1 == '\'' || c1 == '\r' || c1 == '\n') {
+        if (c1 == '\\' || c1 == '\"' || c1 == '\'' || c1 == '\r' || c1 == '\n' || c1 == 'r' || c1 == 'n' || c1 == 'c' || c1 == 'C') {
           ch = c1;
+          switch (ch) {
+            case 'r': ch = '\r'; realNL = false; break;
+            case 'n': ch = '\n'; realNL = false; break;
+            case 'c': case 'C': ch = TEXT_COLOR_ESCAPE; break;
+          }
           ++ScriptPtr;
           if (ch == '\r') {
+            realNL = false;
             ch = '\n';
             if (*ScriptPtr == '\n') ++ScriptPtr; // convert from DOS format to UNIX format
           }
         }
       }
-      if (ch == '\n') {
+      if (realNL && ch == '\n') {
         if (CMode) {
           if (!Escape || String.length() == 0 /*|| String[String.length()-1] != '\\'*/) {
             Error("Unterminated string constant");
