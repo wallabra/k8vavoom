@@ -283,8 +283,8 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
   if (!TeleportMove(Dst, ForceTelestomp!optional)) return false;
   if (bIsPlayer && Player.MO == self) {
     Player.ViewOrg = Origin+vector(0.0, 0.0, PlayerEx(Player).ViewHeight);
-    auto pex = PlayerEx(Player);
-    if (pex) pex.lastViewOrgZForPfx = Origin.z;
+    //auto pex = PlayerEx(Player);
+    //if (pex) pex.lastViewOrgZForPfx = Origin.z;
     if (ResetPitch) Angles.pitch = 0.0;
   }
   // spawn teleport fog at source and destination

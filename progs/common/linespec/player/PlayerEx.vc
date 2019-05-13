@@ -156,6 +156,8 @@ transient subsector_t *lastSubSector;
 //transient array!int subSeen; // do not bother dropping subsector info for those
 
 transient float lastViewOrgZForPfx; // set in `CalcHeight()`, used in `PostfixViewHeight()`
+transient float lastViewOrgVH;
+transient subsector_t *lastViewOrgZSub;
 
 
 //==========================================================================
@@ -479,12 +481,28 @@ void SanitizeViewOrgZ () {
 
 //==========================================================================
 //
+//  SaveViewOrgFixInfo
+//
+//==========================================================================
+void SaveViewOrgFixInfo () {
+  if (MO) {
+    lastViewOrgZForPfx = MO.Origin.z;
+    lastViewOrgZSub = MO.SubSector;
+    lastViewOrgVH = ViewHeight;
+  } else {
+    lastViewOrgZSub = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
 //  ClientSetViewOrg
 //
 //==========================================================================
 override void ClientSetViewOrg (float x, float y, float z) {
   ::ClientSetViewOrg(x, y, z);
-  lastViewOrgZForPfx = (MO ? MO.Origin.z : 0);
+  SaveViewOrgFixInfo();
 }
 
 
@@ -502,13 +520,16 @@ override void ClientSetViewOrg (float x, float y, float z) {
 //==========================================================================
 override void PostfixViewHeight () {
   if (!MO) return; // just in case
+  if (!lastViewOrgZSub) return;
+  if (lastViewOrgZSub != MO.SubSector) return;
+  if (lastViewOrgVH != ViewHeight) return;
 
   float zdiff = MO.Origin.z-lastViewOrgZForPfx;
   if (!zdiff) return; // nothing to do
-  lastViewOrgZForPfx = MO.Origin.z; // in case we will be called repeatedly
+  lastViewOrgZSub = nullptr; // in case we will be called repeatedly
 
   ViewOrg.z += zdiff;
-  SanitizeViewOrgZ();
+  //SanitizeViewOrgZ();
 }
 
 
@@ -567,7 +588,7 @@ void CalcHeight (float deltaTime) {
     }
   }
   ViewOrg.z = MO.Origin.z+ViewHeight+bob;
-  lastViewOrgZForPfx = MO.Origin.z; // for postfixing
+  SaveViewOrgFixInfo();
 
   SanitizeViewOrgZ();
 }
@@ -2894,7 +2915,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   ViewHeight = PP.ViewHeight;
   ViewOrg = MO.Origin;
   ViewOrg.z += ViewHeight;
-  lastViewOrgZForPfx = MO.Origin.z;
+  SaveViewOrgFixInfo();
   ViewAngles = PP.Angles;
   bFixAngle = true;
 

@@ -5391,6 +5391,8 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
     if (thing.bIsPlayer && thing.Player.MO == thing)
     {
       thing.Player.ViewOrg.z += thing.Origin.z-oldZ;
+      //auto pex = PlayerEx(thing.Player);
+      //if (pex) pex.lastViewOrgZForPfx = thing.Origin.z;
 
       thing.Player.bFixAngle = true;
     }
