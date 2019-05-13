@@ -561,18 +561,6 @@ IMPLEMENT_FUNCTION(VObject, LineOpenings) {
 
 //==========================================================================
 //
-//  P_BoxOnLineSide
-//
-//==========================================================================
-IMPLEMENT_FUNCTION(VObject, P_BoxOnLineSide) {
-  P_GET_PTR(line_t, ld);
-  P_GET_PTR(float, tmbox);
-  RET_INT(P_BoxOnLineSide(tmbox, ld));
-}
-
-
-//==========================================================================
-//
 //  P_GetMidTexturePosition
 //
 // native static final bool P_GetMidTexturePosition (const line_t *line, int sideno, out float ptextop, out float ptexbot);

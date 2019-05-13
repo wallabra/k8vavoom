@@ -252,6 +252,13 @@ IMPLEMENT_FUNCTION(VObject, PointOnPlaneSide2) {
   RET_INT(plane->PointOnSide2(point));
 }
 
+IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2DV) {
+  P_GET_VEC(v2);
+  P_GET_VEC(v1);
+  P_GET_PTR(float, tmbox);
+  RET_INT(BoxOnLineSide2D(tmbox, v1, v2));
+}
+
 IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {
   P_GET_AVEC(rot);
   P_GET_VEC(vec);

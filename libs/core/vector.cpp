@@ -959,3 +959,53 @@ int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane)
   return dcount;
 #undef ON_EPSILON
 }
+
+
+//==========================================================================
+//
+//  P_BoxOnLineSide
+//
+//  check the relationship between the given box and the partition
+//  line.  Returns -1 if box is on left side, +1 if box is on right
+//  size, or 0 if the line intersects the box.
+//
+//==========================================================================
+int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) {
+  v1.z = v2.z = 0;
+  TVec dir = v2-v1;
+
+  int p1, p2;
+
+  if (!dir.y) {
+    // horizontal
+    p1 = (tmbox[BOXTOP] > v1.y);
+    p2 = (tmbox[BOXBOTTOM] > v1.y);
+    if (dir.x < 0) {
+      p1 ^= 1;
+      p2 ^= 1;
+    }
+  } else if (!dir.x) {
+    // vertical
+    p1 = (tmbox[BOXRIGHT] < v1.x);
+    p2 = (tmbox[BOXLEFT] < v1.x);
+    if (dir.y < 0) {
+      p1 ^= 1;
+      p2 ^= 1;
+    }
+  } else if (dir.y/dir.x > 0) {
+    TPlane lpl;
+    lpl.SetPointDirXY(v1, dir);
+    // positive
+    p1 = lpl.PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXTOP], 0));
+    p2 = lpl.PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], 0));
+  } else {
+    // negative
+    TPlane lpl;
+    lpl.SetPointDirXY(v1, dir);
+    p1 = lpl.PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXTOP], 0));
+    p2 = lpl.PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXBOTTOM], 0));
+  }
+
+  if (p1 == p2) return p1;
+  return -1;
+}

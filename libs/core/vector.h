@@ -850,3 +850,18 @@ static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool C
 //
 //==========================================================================
 int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane);
+
+
+// bounding box
+enum {
+  BOXTOP,
+  BOXBOTTOM,
+  BOXLEFT,
+  BOXRIGHT,
+};
+
+// considers the line to be infinite
+// check the relationship between the given box and the partition
+// line.  Returns -1 if box is on left side, +1 if box is on right
+// size, or 0 if the line intersects the box.
+int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2);

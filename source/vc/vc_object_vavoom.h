@@ -104,6 +104,8 @@
   DECLARE_FUNCTION(KBCheatClearAll)
   DECLARE_FUNCTION(KBCheatAppend)
 
+  DECLARE_FUNCTION(BoxOnLineSide2D)
+
 #ifdef SERVER
   DECLARE_FUNCTION(P_GetMapName)
   DECLARE_FUNCTION(P_GetMapIndexByLevelNum)
@@ -122,7 +124,6 @@
   // map utilites
   DECLARE_FUNCTION(SectorClosestPoint)
   DECLARE_FUNCTION(LineOpenings)
-  DECLARE_FUNCTION(P_BoxOnLineSide)
   //DECLARE_FUNCTION(FindThingGap)
   DECLARE_FUNCTION(FindOpening)
   //DECLARE_FUNCTION(PointInRegion)

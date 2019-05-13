@@ -116,14 +116,6 @@ template <class T> constexpr __attribute__((const)) inline T min3 (const T a, co
 template <class T> constexpr __attribute__((const)) inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
 
 
-// bounding box
-enum {
-  BOXTOP,
-  BOXBOTTOM,
-  BOXLEFT,
-  BOXRIGHT,
-};
-
 //==========================================================================
 //
 //  Angles

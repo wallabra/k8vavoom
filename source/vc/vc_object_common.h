@@ -55,6 +55,7 @@
   DECLARE_FUNCTION(GetPlanePointZRev)
   DECLARE_FUNCTION(PointOnPlaneSide)
   DECLARE_FUNCTION(PointOnPlaneSide2)
+  DECLARE_FUNCTION(BoxOnLineSide2DV)
   DECLARE_FUNCTION(RotateDirectionVector)
   DECLARE_FUNCTION(VectorRotateAroundZ)
   DECLARE_FUNCTION(RotateVectorAroundVector)

@@ -471,9 +471,6 @@ native static final string LoadTextLump (name Name);
 // default blockmask is `SPF_NOBLOCKING`
 native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, const ref TVec point, optional int blockmask, optional bool do3dmidtex);
 
-// returns 0 - front, 1 - back, -1 - on
-native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
-
 // used for various 3dmidtex calculations
 native static final bool P_GetMidTexturePosition (const GameObject::line_t *line, int sideno, out float ptextop, out float ptexbot);
 

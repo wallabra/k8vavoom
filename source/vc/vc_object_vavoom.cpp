@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #include "../drawer.h"
+#include "../sv_local.h"
 
 
 //**************************************************************************
@@ -111,6 +112,13 @@ IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
 IMPLEMENT_FUNCTION(VObject, R_GetBloodTranslation) {
   P_GET_INT(color);
   RET_INT(R_GetBloodTranslation(color));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2D) {
+  P_GET_PTR(line_t, ld);
+  P_GET_PTR(float, tmbox);
+  RET_INT(P_BoxOnLineSide(tmbox, ld));
 }
 
 

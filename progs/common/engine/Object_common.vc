@@ -439,6 +439,19 @@ native static final float GetPlanePointZRev (const ref TPlane plane, const TVec 
 native static final int PointOnPlaneSide (const TVec point, const ref TPlane plane);
 // returns side 0 (front), 1 (back), or 2 (on)
 native static final int PointOnPlaneSide2 (const TVec point, const ref TPlane plane);
+// bounding box
+enum {
+  BBOX_TOP,
+  BBOX_BOTTOM,
+  BBOX_LEFT,
+  BBOX_RIGHT,
+};
+// considers the line to be infinite
+// returns 0 - front, 1 - back, -1 - box crosses the line
+native static final int BoxOnLineSide2DV (const float *tmbox, const TVec v1, const TVec v2);
+#ifndef VCC_STANDALONE_EXECUTOR
+native static final int BoxOnLineSide2D (const float *tmbox, const GameObject::line_t *line);
+#endif
 // rotates a direction vector
 native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
 // rotates vector around Z axis
