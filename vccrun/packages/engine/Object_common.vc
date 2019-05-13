@@ -327,6 +327,8 @@ native static final int GetEventQueueSize ();
 native static final void Error (string format, ...) [printf,1];
 // abort with error
 native static final void FatalError (string format, ...) [printf,1];
+// this is called when assertion failed
+native static final void AssertError (string message);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -537,11 +539,14 @@ static final TVec PlaneProject (const ref TPlane plane, TVec v) {
 struct CD_LinePlanes {
   TPlane[6] planes;
   int count;
+  TVec lineA, lineB; // we'll need this later
 }
 
 static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   a.z = 0;
   b.z = 0;
+  lpl.lineA = a;
+  lpl.lineB = b;
   if (a == b) {
     // point, create four axial planes to represent it as a box
     lpl.planes[0].normal = vector( 0, -1); lpl.planes[0].dist = -a.y; // top
@@ -598,18 +603,24 @@ enum CD_HitType {
 }
 
 
+static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                     optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
+{
+  CD_LinePlanes linePlanes;
+  CD_BuildLinePlanes(out linePlanes, lineA, lineB);
+  return CD_SweepLineAABBlpl(ref linePlanes, vstart, vend, bmin, bmax, hitPlane!optional, contactPoint!optional, hitType!optional);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // returns collision time, -1 if started inside, exactly 1 if no collision
 // in both such cases, `hitNormal` is undefined, as we have no hit plane
 // the moving thing is AABB
 // returns contact point in `contactPoint`
 // actually, `contactPoint` has little sense for non-point hits, and is somewhat arbitrary
-static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
-                                     optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
+static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+                                        optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
 {
-  CD_LinePlanes linePlanes;
-  CD_BuildLinePlanes(out linePlanes, lineA, lineB);
-
   hitType = CD_HitType.CD_HT_None;
 
   float ifrac = -1.0f;
@@ -675,16 +686,16 @@ static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec v
         // left or right side of the box
         hitType = (hitPlane.normal.x < 0 ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
         contactPoint =
-          lineA.x < lineB.x ?
-            (hitType == CD_HitType.CD_HT_Right ? lineA : lineB) :
-            (hitType == CD_HitType.CD_HT_Right ? lineB : lineA);
+          linePlanes.lineA.x < linePlanes.lineB.x ?
+            (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineA : linePlanes.lineB) :
+            (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineB : linePlanes.lineA);
       } else if (!hitPlane.normal.x) {
         // top or down side of the box
         hitType = (hitPlane.normal.y < 0 ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
         contactPoint =
-          lineA.y < lineB.y ?
-            (hitType == CD_HitType.CD_HT_Bottom ? lineA : lineB) :
-            (hitType == CD_HitType.CD_HT_Bottom ? lineB : lineA);
+          linePlanes.lineA.y < linePlanes.lineB.y ?
+            (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineA : linePlanes.lineB) :
+            (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineB : linePlanes.lineA);
       } else {
         // point hit
         hitType = CD_HitType.CD_HT_Point;

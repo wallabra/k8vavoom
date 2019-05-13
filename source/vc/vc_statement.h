@@ -90,6 +90,27 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VAssertStatement : public VStatement {
+private:
+  VExpression *FatalInvoke;
+
+public:
+  VExpression *Expr;
+  VExpression *Message; // can be `nullptr`
+
+  VAssertStatement (const TLocation &ALoc, VExpression *AExpr, VExpression *AMsg);
+  virtual ~VAssertStatement () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+
+protected:
+  VAssertStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VIf : public VStatement {
 public:
   VExpression *Expr;

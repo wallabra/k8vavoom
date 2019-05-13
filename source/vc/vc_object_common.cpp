@@ -154,6 +154,12 @@ IMPLEMENT_FUNCTION(VObject, FatalError) {
   Sys_Error("%s", *PF_FormatString());
 }
 
+IMPLEMENT_FUNCTION(VObject, AssertError) {
+  P_GET_STR(msg);
+  VObject::VMDumpCallStack();
+  Sys_Error("Assertion failed: %s", *msg);
+}
+
 
 //**************************************************************************
 //

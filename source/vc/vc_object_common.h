@@ -40,6 +40,7 @@
   // error functions
   DECLARE_FUNCTION(Error)
   DECLARE_FUNCTION(FatalError)
+  DECLARE_FUNCTION(AssertError)
 
   // math functions
   DECLARE_FUNCTION(AngleMod360)

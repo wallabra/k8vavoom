@@ -1413,6 +1413,21 @@ VStatement *VParser::ParseStatement () {
       }
       ParseError(Lex.Location, "Identifier expected");
       return new VGotoStmt(VName("undefined"), l);
+    case TK_Assert:
+      {
+        Lex.NextToken();
+        Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+        VExpression *e = ParseExpression();
+        if (!e) ParseError(Lex.Location, "assert condition expression expected");
+        VExpression *msg = nullptr;
+        if (Lex.Check(TK_Comma)) {
+          msg = ParseExpression();
+          if (!msg) ParseError(Lex.Location, "assert message expected");
+        }
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        return new VAssertStatement(l, e, msg);
+      }
     case TK_Bool:
     case TK_UByte:
     case TK_Class:

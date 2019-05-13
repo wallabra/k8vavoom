@@ -65,12 +65,137 @@ bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path
 }
 
 
+
 // ////////////////////////////////////////////////////////////////////////// //
 // VEmptyStatement
 VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
 VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
 bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
 void VEmptyStatement::DoEmit (VEmitContext &) {}
+
+
+
+//==========================================================================
+//
+//  VAssertStatement::VAssertStatement
+//
+//==========================================================================
+VAssertStatement::VAssertStatement (const TLocation &ALoc, VExpression *AExpr, VExpression *AMsg)
+  : VStatement(ALoc)
+  , FatalInvoke(nullptr)
+  , Expr(AExpr)
+  , Message(AMsg)
+{
+}
+
+
+//==========================================================================
+//
+//  VAssertStatement::~VAssertStatement
+//
+//==========================================================================
+VAssertStatement::~VAssertStatement () {
+  delete Expr; Expr = nullptr;
+  delete Message; Message = nullptr;
+  delete FatalInvoke; FatalInvoke = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VAssertStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VAssertStatement::SyntaxCopy () {
+  auto res = new VAssertStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VAssertStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VAssertStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VAssertStatement *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->Message = (Message ? Message->SyntaxCopy() : nullptr);
+  res->FatalInvoke = (FatalInvoke ? FatalInvoke->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VAssertStatement::Resolve
+//
+//==========================================================================
+bool VAssertStatement::Resolve (VEmitContext &ec) {
+  check(!FatalInvoke);
+
+  // create message if necessary
+  if (!Message) {
+    VStr s = (Expr ? Expr->toString() : VStr("wtf"));
+    int val = ec.Package->FindString(*s);
+    Message = new VStringLiteral(s, val, Loc);
+  }
+
+  // find `FatalError()` method
+  VMethod *M = ec.SelfClass->FindAccessibleMethod("AssertError", ec.SelfClass, &Loc);
+  if (!M) {
+    ParseError(Loc, "`AssertError()` method not found");
+    return false;
+  }
+
+  // check method type: it should be static and final
+  if ((M->Flags&(FUNC_Static|FUNC_VarArgs|FUNC_Final)) != (FUNC_Static|FUNC_Final)) {
+    ParseError(Loc, "`AssertError()` method should be `static`");
+    return false;
+  }
+
+  // check method signature: it should return `void`, and has only one string argument
+  if (M->ReturnType.Type != TYPE_Void || M->NumParams != 1 || M->ParamTypes[0].Type != TYPE_String) {
+    ParseError(Loc, "`AssertError()` method has invalid signature");
+    return false;
+  }
+
+  // rewrite as invoke
+  VExpression *args[1];
+  args[0] = Message;
+  FatalInvoke = new VInvocation(nullptr, M, nullptr, false/*no self*/, false/*not a base*/, Loc, 1, args);
+  Message = nullptr; // it is owned by invoke now
+  //GLog.Logf("*** (%s) ***", *FatalInvoke->toString());
+
+  if (Expr) Expr = Expr->ResolveBoolean(ec);
+  if (!Expr) return false;
+  if (FatalInvoke) FatalInvoke = FatalInvoke->Resolve(ec);
+  if (!FatalInvoke) return false;
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VAssertStatement::DoEmit
+//
+//==========================================================================
+void VAssertStatement::DoEmit (VEmitContext &ec) {
+  if (!Expr || !FatalInvoke) return; // just in case
+
+  VLabel skipError = ec.DefineLabel();
+
+  // expression
+  Expr->EmitBranchable(ec, skipError, true); // jump if true
+
+  // check failed
+  FatalInvoke->Emit(ec);
+
+  // done
+  ec.MarkLabel(skipError);
+}
 
 
 
@@ -108,9 +233,9 @@ VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStat
 //
 //==========================================================================
 VIf::~VIf () {
-  if (Expr) { delete Expr; Expr = nullptr; }
-  if (TrueStatement) { delete TrueStatement; TrueStatement = nullptr; }
-  if (FalseStatement) { delete FalseStatement; FalseStatement = nullptr; }
+  delete Expr; Expr = nullptr;
+  delete TrueStatement; TrueStatement = nullptr;
+  delete FalseStatement; FalseStatement = nullptr;
 }
 
 
@@ -261,8 +386,8 @@ VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALo
 //
 //==========================================================================
 VWhile::~VWhile () {
-  if (Expr) { delete Expr; Expr = nullptr; }
-  if (Statement) { delete Statement; Statement = nullptr; }
+  delete Expr; Expr = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -407,8 +532,8 @@ VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc)
 //
 //==========================================================================
 VDo::~VDo () {
-  if (Expr) { delete Expr; Expr = nullptr; }
-  if (Statement) { delete Statement; Statement = nullptr; }
+  delete Expr; Expr = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -557,7 +682,7 @@ VFor::~VFor () {
   for (int i = 0; i < InitExpr.length(); ++i) { delete InitExpr[i]; InitExpr[i] = nullptr; }
   for (int i = 0; i < CondExpr.length(); ++i) { delete CondExpr[i]; CondExpr[i] = nullptr; }
   for (int i = 0; i < LoopExpr.length(); ++i) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
-  if (Statement) { delete Statement; Statement = nullptr; }
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -753,8 +878,8 @@ VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation 
 //
 //==========================================================================
 VForeach::~VForeach () {
-  if (Expr) { delete Expr; Expr = nullptr; }
-  if (Statement) { delete Statement; Statement = nullptr; }
+  delete Expr; Expr = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -1966,9 +2091,9 @@ VSwitch::VSwitch (const TLocation &ALoc)
 //
 //==========================================================================
 VSwitch::~VSwitch () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+  delete Expr; Expr = nullptr;
   for (int i = 0; i < Statements.length(); ++i) {
-    if (Statements[i]) { delete Statements[i]; Statements[i] = nullptr; }
+    delete Statements[i]; Statements[i] = nullptr;
   }
 }
 
@@ -2293,7 +2418,7 @@ VSwitchCase::VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation 
 //
 //==========================================================================
 VSwitchCase::~VSwitchCase () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+  delete Expr; Expr = nullptr;
 }
 
 
@@ -2605,7 +2730,7 @@ VReturn::VReturn (VExpression *AExpr, const TLocation &ALoc)
 //
 //==========================================================================
 VReturn::~VReturn () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+  delete Expr; Expr = nullptr;
 }
 
 
@@ -2725,7 +2850,7 @@ VExpressionStatement::VExpressionStatement (VExpression *AExpr)
 //
 //==========================================================================
 VExpressionStatement::~VExpressionStatement () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+  delete Expr; Expr = nullptr;
 }
 
 
@@ -2795,7 +2920,7 @@ VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
 //
 //==========================================================================
 VLocalVarStatement::~VLocalVarStatement () {
-  if (Decl) { delete Decl; Decl = nullptr; }
+  delete Decl; Decl = nullptr;
 }
 
 
@@ -2975,7 +3100,7 @@ VCompound::VCompound (const TLocation &ALoc) : VStatement(ALoc) {
 //==========================================================================
 VCompound::~VCompound () {
   for (int i = 0; i < Statements.length(); ++i) {
-    if (Statements[i]) { delete Statements[i]; Statements[i] = nullptr; }
+    delete Statements[i]; Statements[i] = nullptr;
   }
 }
 

@@ -36,6 +36,7 @@
   VC_LEXER_DEFTOKEN(Abstract,          "abstract")
   VC_LEXER_DEFTOKEN(Alias,             "alias")
   VC_LEXER_DEFTOKEN(Array,             "array")
+  VC_LEXER_DEFTOKEN(Assert,            "assert")
   VC_LEXER_DEFTOKEN(Auto,              "auto")
   VC_LEXER_DEFTOKEN(BitEnum,           "bitenum")
   VC_LEXER_DEFTOKEN(Bool,              "bool")
