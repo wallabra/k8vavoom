@@ -3284,6 +3284,35 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (node->parent) writef(strm, "  parent = %d;\n", (int)(ptrdiff_t)(node->parent-&Nodes[0]));
     writef(strm, "}\n");
   }
+
+  // write player starts
+  int psidx[8];
+  for (int f = 0; f < 8; ++f) psidx[f] = -1;
+  bool foundStart = false;
+  for (int f = 0; f < NumThings; ++f) {
+    const mthing_t *thing = &Things[f];
+    int idx = -1;
+    if (thing->type >= 1 && thing->type <= 4) idx = (thing->type-1);
+    if (thing->type >= 4001 && thing->type <= 4004) idx = (thing->type-4001+4);
+    if (idx >= 0) {
+      foundStart = true;
+      psidx[idx] = f;
+    }
+  }
+  if (foundStart) {
+    writef(strm, "\n");
+    for (int f = 0; f < 8; ++f) {
+      int idx = psidx[f];
+      if (idx < 0) continue;
+      writef(strm, "\nplayerstart\n");
+      writef(strm, "{\n");
+      writef(strm, "  player = %d;\n", idx);
+      writef(strm, "  x = %g;\n", Things[idx].x);
+      writef(strm, "  y = %g;\n", Things[idx].y);
+      writef(strm, "  angle = %d;\n", Things[idx].angle);
+      writef(strm, "}\n");
+    }
+  }
 }
 
 
