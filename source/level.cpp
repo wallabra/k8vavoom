@@ -2928,201 +2928,73 @@ IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct StreamSection {
+class DebugExportError : public VavoomError {
 public:
-  VStream *strm;
-  int tspos;
-
-public:
-  StreamSection (VStream *astrm, const char *sign) {
-    strm = astrm;
-    if (!sign) sign = "";
-    size_t slen = strlen(sign);
-    if (slen > 255) Sys_Error("invalid signature");
-    vuint8 blen = (vuint8)slen;
-    *astrm << blen;
-    if (slen) astrm->Serialise(sign, (int)slen);
-    vint32 totalSize = 0;
-    *astrm << totalSize;
-    tspos = astrm->Tell();
-  }
-
-  ~StreamSection () {
-    int cpos = strm->Tell();
-    vint32 totalSize = cpos-tspos;
-    strm->Seek(tspos-4);
-    *strm << totalSize;
-    strm->Seek(cpos);
-    strm = nullptr;
-  }
-
-  StreamSection () = delete;
-  StreamSection (const StreamSection &) = delete;
-  StreamSection &operator = (const StreamSection &) = delete;
+  explicit DebugExportError (const char *text) : VavoomError(text) {}
 };
 
 
 //==========================================================================
 //
-//  WriteTexture
+//  writef
 //
 //==========================================================================
-static void WriteTexture (VStream &strm, VTextureID v) {
-  if (v.id < 0) {
-    vuint8 len = 1;
-    strm << len;
-    char cc = '-';
-    strm.Serialise(&cc, 1);
-    vuint8 ttype = TEXTYPE_Null;
-    strm << ttype;
-    return;
-  }
-  if (v.id == 0) {
-    vuint8 len = 0;
-    strm << len;
-    return;
-  }
-  if (!GTextureManager.getIgnoreAnim(v.id)) {
-    GCon->Logf(NAME_Warning, "SAVE: trying to save inexisting texture with id #%d", v.id);
-    vuint8 len = 0;
-    strm << len;
-    return;
-  }
-  const char *txname = *GTextureManager.GetTextureName(v.id);
-  vuint8 ttype = (vuint8)GTextureManager.getIgnoreAnim(v.id)->Type;
-  if (ttype == TEXTYPE_Null) {
-    vuint8 len = 0;
-    strm << len;
-    return;
-  }
-  size_t slen = strlen(txname);
-  if (slen > 255) Sys_Error("invalid texture name (too long)");
-  vuint8 blen = (vuint8)slen;
-  strm << blen;
-  if (slen) strm.Serialise(txname, (int)slen);
-  strm << ttype;
-}
-
-
-//==========================================================================
-//
-//  WritePlane
-//
-//==========================================================================
-static void WritePlane (VStream &strm, const TPlane &plane) {
-  strm << plane.normal.x << plane.normal.y << plane.normal.z << plane.dist;
-}
-
-
-//==========================================================================
-//
-//  WriteSectorPlane
-//
-//==========================================================================
-static void WriteSectorPlane (VStream &strm, const sec_plane_t &plane) {
-  WritePlane(strm, plane);
-  strm << plane.minz << plane.maxz;
-  strm << plane.TexZ;
-  WriteTexture(strm, plane.pic);
-  strm << plane.xoffs << plane.yoffs;
-  strm << plane.XScale << plane.YScale;
-  strm << plane.Angle;
-  strm << plane.BaseAngle;
-  strm << plane.BaseYOffs;
-  strm << plane.flags;
-  strm << plane.Alpha;
-  strm << plane.MirrorAlpha;
-  strm << plane.LightSourceSector;
-}
-
-
-//==========================================================================
-//
-//  WriteTexInfo
-//
-//==========================================================================
-static void WriteTexInfo (VStream &strm, texinfo_t &ti) {
-  strm << ti.saxis.x << ti.saxis.y << ti.saxis.z << ti.soffs;
-  strm << ti.taxis.x << ti.taxis.y << ti.taxis.z << ti.toffs;
-  strm << ti.noDecals;
-  strm << ti.Alpha;
-  strm << ti.Additive;
-  strm << ti.ColorMap;
-  // texture
-  if (!ti.Tex || ti.Tex->Type == TEXTYPE_Null) {
-    vuint8 len = 0;
-    strm << len;
-  } else {
-    const char *txname = *(ti.Tex->Name);
-    vuint8 ttype = (vuint8)(ti.Tex->Type);
-    size_t slen = strlen(txname);
-    if (slen > 255) Sys_Error("invalid texture name (too long)");
-    vuint8 blen = (vuint8)slen;
-    strm << blen;
-    if (slen) strm.Serialise(txname, (int)slen);
-    strm << ttype;
+static __attribute__((format(printf, 2, 3))) void writef (VStream &strm, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (res && res[0]) {
+    strm.Serialise(res, (int)strlen(res));
+    if (strm.IsError()) throw DebugExportError("write error");
   }
 }
 
 
-//==========================================================================
-//
-//  WriteSurface
-//
-//==========================================================================
-static void WriteSurface (VStream &strm, surface_t *surf, VLevel *level) {
-  for (;;) {
-    vuint8 present = (surf ? 1 : 0);
-    strm << present;
-    if (!surf) return;
-    WritePlane(strm, surf->plane);
-    WriteTexInfo(strm, *surf->texinfo);
-    present = (surf->HorizonPlane ? 1 : 0);
-    strm << present;
-    if (surf->HorizonPlane) WriteSectorPlane(strm, *surf->HorizonPlane);
-    strm << surf->Light;
-    strm << surf->Fade;
-    // subsector
-    vint32 ssnum = (surf->subsector ? (vint32)(ptrdiff_t)(surf->subsector-level->Subsectors) : -1);
-    strm << ssnum;
-    // mins, extents
-    vint32 t0, t1;
-    t0 = surf->texturemins[0];
-    t1 = surf->texturemins[1];
-    strm << t0 << t1;
-    t0 = surf->extents[0];
-    t1 = surf->extents[1];
-    strm << t0 << t1;
-    // vertices
-    vint32 count = surf->count;
-    strm << count;
-    for (int f = 0; f < count; ++f) strm << surf->verts[f].x << surf->verts[f].y << surf->verts[f].z;
-    surf = surf->next;
-  }
-}
+// ////////////////////////////////////////////////////////////////////////// //
+struct VertexPool {
+public:
+  TMapNC<vuint64, vint32> map; // key: two floats; value: index
+  TArray<TVec> list;
 
+public:
+  VertexPool () {}
+  VertexPool (const VertexPool &) = delete;
+  VertexPool &operator = (const VertexPool &) = delete;
 
-//==========================================================================
-//
-//  WriteSegPart
-//
-//==========================================================================
-static void WriteSegPart (VStream &strm, segpart_t *sp, VLevel *level) {
-  for (;;) {
-    vuint8 present = (sp ? 1 : 0);
-    strm << present;
-    if (!sp) return;
-    strm << sp->frontTopDist;
-    strm << sp->frontBotDist;
-    strm << sp->backTopDist;
-    strm << sp->backBotDist;
-    strm << sp->TextureOffset;
-    strm << sp->RowOffset;
-    WriteTexInfo(strm, sp->texinfo);
-    WriteSurface(strm, sp->surfs, level);
-    sp = sp->next;
+  void clear () {
+    map.clear();
+    list.clear();
   }
-}
+
+  // returns index
+  vint32 put (const TVec v) {
+    union __attribute__((packed)) {
+      struct __attribute__((packed)) { float f1, f2; };
+      vuint64 i64;
+    } u;
+    static_assert(sizeof(u) == sizeof(vuint64), "oops");
+    u.f1 = v.x;
+    u.f2 = v.y;
+    auto ip = map.find(u.i64);
+    if (ip) {
+      /*
+      union __attribute__((packed)) {
+        struct __attribute__((packed)) { float f1, f2; };
+        vuint64 i64;
+      } u1;
+      u1.f1 = list[*ip].x;
+      u1.f2 = list[*ip].y;
+      GCon->Logf("looking for (%g,%g); found (%g,%g) at %d (0x%08llx  0x%08llx)", v.x, v.y, list[*ip].x, list[*ip].y, *ip, u.i64, u1.i64);
+      */
+      return *ip;
+    }
+    vint32 idx = list.length();
+    list.append(TVec(v.x, v.y));
+    map.put(u.i64, idx);
+    return idx;
+  }
+};
 
 
 //==========================================================================
@@ -3134,308 +3006,284 @@ static void WriteSegPart (VStream &strm, segpart_t *sp, VLevel *level) {
 //
 //==========================================================================
 void VLevel::DebugSaveLevel (VStream &strm) {
-  {
-    StreamSection section(&strm, "VERTEX");
-    strm << NumVertexes;
-    for (int f = 0; f < NumVertexes; ++f) {
-      strm << Vertexes[f].x << Vertexes[f].y << Vertexes[f].z;
+  writef(strm, "Namespace = \"Vavoom\";\n");
+
+  VertexPool vpool;
+
+  // collect vertices
+  for (int f = 0; f < NumLines; ++f) {
+    const line_t *line = &Lines[f];
+    vpool.put(*line->v1);
+    vpool.put(*line->v2);
+  }
+
+  // write vertices
+  writef(strm, "\n");
+  for (int f = 0; f < vpool.list.length(); ++f) {
+    writef(strm, "\nvertex // %d\n", f);
+    writef(strm, "{\n");
+    if ((int)vpool.list[f].x == vpool.list[f].x) {
+      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
+    } else {
+      writef(strm, "  x = %g;\n", vpool.list[f].x);
     }
-  }
-
-  {
-    StreamSection section(&strm, "SECTOR");
-    strm << NumSectors;
-    for (int f = 0; f < NumSectors; ++f) {
-      sector_t *sec = &Sectors[f];
-      WriteSectorPlane(strm, sec->floor);
-      WriteSectorPlane(strm, sec->ceiling);
-      // params
-      strm << sec->params.lightlevel;
-      strm << sec->params.LightColor;
-      strm << sec->params.Fade;
-      strm << sec->params.contents;
-      // other sector fields
-      strm << sec->special;
-      strm << sec->tag;
-      strm << sec->skyheight;
-      strm << sec->seqType;
-      strm << sec->blockbox[0] << sec->blockbox[1] << sec->blockbox[2] << sec->blockbox[3];
-      strm << sec->soundorg.x << sec->soundorg.y << sec->soundorg.z; // sound origin
-      // write sector line numbers
-      strm << sec->linecount;
-      for (int lnum = 0; lnum < sec->linecount; ++lnum) {
-        vint32 lidx = (sec->lines[lnum] ? (vint32)(ptrdiff_t)(sec->lines[lnum]-Lines) : -1);
-        strm << lidx;
-      }
-      // height sector
-      vint32 snum = (sec->heightsec ? (vint32)(ptrdiff_t)(sec->heightsec-Sectors) : -1);
-      strm << snum;
-      // flags
-      strm << sec->SectorFlags;
-      strm << sec->Damage;
-      strm << sec->Friction;
-      strm << sec->MoveFactor;
-      strm << sec->Gravity;
-      strm << sec->Sky;
-      strm << sec->Zone;
-      // "other" sectors
-      snum = (sec->deepref ? (vint32)(ptrdiff_t)(sec->deepref-Sectors) : -1);
-      strm << snum;
-      snum = (sec->othersecFloor ? (vint32)(ptrdiff_t)(sec->othersecFloor-Sectors) : -1);
-      strm << snum;
-      snum = (sec->othersecCeiling ? (vint32)(ptrdiff_t)(sec->othersecCeiling-Sectors) : -1);
-      strm << snum;
-      // write subsector indicies
-      vint32 sscount = 0;
-      for (subsector_t *ss = sec->subsectors; ss; ss = ss->seclink) ++sscount;
-      strm << sscount;
-      for (subsector_t *ss = sec->subsectors; ss; ss = ss->seclink) {
-        vint32 ssnum = (vint32)(ptrdiff_t)(ss-Subsectors);
-        strm << ssnum;
-      }
-      // regions, from bottom to top
-      /*
-      vint32 regcount = 0;
-      for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) ++regcount;
-      strm << regcount;
-      for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) {
-        check(reg->efloor.isValid());
-        check(reg->eceiling.isValid());
-        check(reg->params);
-        //WriteSectorPlane(strm, *reg->efloor);
-        //WriteSectorPlane(strm, *reg->eceiling);
-        // params
-        strm << reg->params->lightlevel;
-        strm << reg->params->LightColor;
-        strm << reg->params->Fade;
-        strm << reg->params->contents;
-        vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);
-        strm << elidx;
-      }
-      */
+    if ((int)vpool.list[f].y == vpool.list[f].y) {
+      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
+    } else {
+      writef(strm, "  y = %g;\n", vpool.list[f].y);
     }
+    writef(strm, "}\n");
   }
 
-  {
-    StreamSection section(&strm, "SIDE");
-    strm << NumSides;
-    for (int f = 0; f < NumSides; ++f) {
-      side_t *side = &Sides[f];
-      strm << side->Top.TextureOffset;
-      strm << side->Bot.TextureOffset;
-      strm << side->Mid.TextureOffset;
-      strm << side->Top.RowOffset;
-      strm << side->Bot.RowOffset;
-      strm << side->Mid.RowOffset;
-      //TODO: scale
-      WriteTexture(strm, side->TopTexture);
-      WriteTexture(strm, side->BottomTexture);
-      WriteTexture(strm, side->MidTexture);
-      // facing sector
-      vint32 snum = (side->Sector ? (vint32)(ptrdiff_t)(side->Sector-Sectors) : -1);
-      strm << snum;
-      strm << side->LineNum;
-      strm << side->Flags;
-      strm << side->Light;
+  // write lines
+  writef(strm, "\n");
+  for (int f = 0; f < NumLines; ++f) {
+    const line_t *line = &Lines[f];
+    writef(strm, "\nlinedef // %d\n", f);
+    writef(strm, "{\n");
+    if (line->LineTag && line->LineTag != -1) writef(strm, "  id = %d;\n", line->LineTag);
+    writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
+    writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
+    check(line->sidenum[0] >= 0);
+    writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
+    if (line->sidenum[1] >= 0) writef(strm, "  sideback = %d;\n", line->sidenum[1]);
+    // flags
+    if (line->flags&ML_BLOCKING) writef(strm, "  blocking = true;\n");
+    if (line->flags&ML_BLOCKMONSTERS) writef(strm, "  blockmonsters = true;\n");
+    if (line->flags&ML_TWOSIDED) writef(strm, "  twosided = true;\n");
+    if (line->flags&ML_DONTPEGTOP) writef(strm, "  dontpegtop = true;\n");
+    if (line->flags&ML_DONTPEGBOTTOM) writef(strm, "  dontpegbottom = true;\n");
+    if (line->flags&ML_SECRET) writef(strm, "  secret = true;\n");
+    if (line->flags&ML_SOUNDBLOCK) writef(strm, "  blocksound = true;\n");
+    if (line->flags&ML_DONTDRAW) writef(strm, "  dontdraw = true;\n");
+    if (line->flags&ML_MAPPED) writef(strm, "  mapped = true;\n");
+    if (line->flags&ML_REPEAT_SPECIAL) writef(strm, "  repeatspecial = true;\n");
+    if (line->flags&ML_MONSTERSCANACTIVATE) writef(strm, "  monsteractivate = true;\n");
+    if (line->flags&ML_BLOCKPLAYERS) writef(strm, "  blockplayers = true;\n");
+    if (line->flags&ML_BLOCKEVERYTHING) writef(strm, "  blockeverything = true;\n");
+    if (line->flags&ML_ZONEBOUNDARY) writef(strm, "  zoneboundary = true;\n");
+    if (line->flags&ML_ADDITIVE) writef(strm, "  renderstyle = \"add\";\n");
+    if (line->flags&ML_RAILING) writef(strm, "  jumpover = true;\n");
+    if (line->flags&ML_BLOCK_FLOATERS) writef(strm, "  blockfloaters = true;\n");
+    if (line->flags&ML_CLIP_MIDTEX) writef(strm, "  clipmidtex = true;\n");
+    if (line->flags&ML_WRAP_MIDTEX) writef(strm, "  wrapmidtex = true;\n");
+    if (line->flags&ML_3DMIDTEX) writef(strm, "  midtex3d = true;\n");
+    if (line->flags&ML_3DMIDTEX_IMPASS) writef(strm, "  midtex3dimpassible = true;\n");
+    if (line->flags&ML_CHECKSWITCHRANGE) writef(strm, "  checkswitchrange = true;\n");
+    if (line->flags&ML_FIRSTSIDEONLY) writef(strm, "  firstsideonly = true;\n");
+    if (line->flags&ML_BLOCKPROJECTILE) writef(strm, "  blockprojectiles = true;\n");
+    if (line->flags&ML_BLOCKUSE) writef(strm, "  blockuse = true;\n");
+    if (line->flags&ML_BLOCKSIGHT) writef(strm, "  blocksight = true;\n");
+    if (line->flags&ML_BLOCKHITSCAN) writef(strm, "  blockhitscan = true;\n");
+    if (line->flags&ML_KEEPDATA) writef(strm, "  keepdata = true;\n"); // vavoom
+    if (line->flags&ML_NODECAL) writef(strm, "  nodecal = true;\n"); // vavoom
+    // spac flags
+    if (line->SpacFlags&SPAC_Cross) writef(strm, "  playercross = true;\n");
+    if (line->SpacFlags&SPAC_Use) writef(strm, "  playeruse = true;\n");
+    if (line->SpacFlags&SPAC_MCross) writef(strm, "  monstercross = true;\n");
+    if (line->SpacFlags&SPAC_Impact) writef(strm, "  impact = true;\n");
+    if (line->SpacFlags&SPAC_Push) writef(strm, "  playerpush = true;\n");
+    if (line->SpacFlags&SPAC_PCross) writef(strm, "  missilecross = true;\n");
+    if (line->SpacFlags&SPAC_UseThrough) writef(strm, "  usethrough = true;\n"); // vavoom
+    if (line->SpacFlags&SPAC_AnyCross) writef(strm, "  anycross = true;\n");
+    if (line->SpacFlags&SPAC_MUse) writef(strm, "  monsteruse = true;\n");
+    if (line->SpacFlags&SPAC_MPush) writef(strm, "  monsterpush = true;\n"); // vavoom
+    if (line->SpacFlags&SPAC_UseBack) writef(strm, "  playeruseback = true;\n"); // vavoom
+    // other
+    if (line->alpha < 1.0f) writef(strm, "  alpha = %g;\n", line->alpha);
+    // special
+    if (line->special) writef(strm, "  special = %d;\n", line->special);
+    if (line->arg1) writef(strm, "  arg1 = %d;\n", line->arg1);
+    if (line->arg2) writef(strm, "  arg2 = %d;\n", line->arg2);
+    if (line->arg3) writef(strm, "  arg3 = %d;\n", line->arg3);
+    if (line->arg4) writef(strm, "  arg4 = %d;\n", line->arg4);
+    if (line->arg5) writef(strm, "  arg5 = %d;\n", line->arg5);
+    writef(strm, "}\n");
+  }
+
+  // write sides
+  writef(strm, "\n");
+  for (int f = 0; f < NumSides; ++f) {
+    const side_t *side = &Sides[f];
+    writef(strm, "\nsidedef // %d\n", f);
+    writef(strm, "{\n");
+    if (side->Sector) writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(side->Sector-&Sectors[0]));
+    if (side->TopTexture.id > 0) writef(strm, "  texturetop = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->TopTexture.id)).quote());
+    if (side->BottomTexture.id > 0) writef(strm, "  texturebottom = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->BottomTexture.id)).quote());
+    if (side->MidTexture.id > 0) writef(strm, "  texturemiddle = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->MidTexture.id)).quote());
+    // top
+    if (side->Top.TextureOffset) writef(strm, "  offsetx_top = %g;\n", side->Top.TextureOffset);
+    if (side->Top.RowOffset) writef(strm, "  offsety_top = %g;\n", side->Top.RowOffset);
+    if (side->Top.ScaleX != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleX);
+    if (side->Top.ScaleY != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleY);
+    // bot
+    if (side->Bot.TextureOffset) writef(strm, "  offsetx_bottom = %g;\n", side->Bot.TextureOffset);
+    if (side->Bot.RowOffset) writef(strm, "  offsety_bottom = %g;\n", side->Bot.RowOffset);
+    if (side->Bot.ScaleX != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleX);
+    if (side->Bot.ScaleY != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleY);
+    // mid
+    if (side->Mid.TextureOffset) writef(strm, "  offsetx_mid = %g;\n", side->Mid.TextureOffset);
+    if (side->Mid.RowOffset) writef(strm, "  offsety_mid = %g;\n", side->Mid.RowOffset);
+    if (side->Mid.ScaleX != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleX);
+    if (side->Mid.ScaleY != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleY);
+    // other
+    writef(strm, "  nofakecontrast = true;\n"); // vavoom, not right
+    if (side->Light) writef(strm, "  light = %d;\n", side->Light); // vavoom, not right
+    // flags
+    if (side->Flags&SDF_ABSLIGHT) writef(strm, "  lightabsolute = true;\n");
+    if (side->Flags&SDF_WRAPMIDTEX) writef(strm, "  wrapmidtex = true;\n");
+    if (side->Flags&SDF_CLIPMIDTEX) writef(strm, "  clipmidtex = true;\n");
+    writef(strm, "}\n");
+  }
+
+  // sectors
+  writef(strm, "\n");
+  for (int f = 0; f < NumSectors; ++f) {
+    const sector_t *sector = &Sectors[f];
+    writef(strm, "\nsector // %d\n", f);
+    writef(strm, "{\n");
+    if (sector->tag) writef(strm, "  id = %d;\n", sector->tag);
+    if (sector->special) writef(strm, "  id = %d;\n", sector->special);
+    if (sector->floor.normal.z == 1.0f) {
+      // normal
+      writef(strm, "  heightfloor = %g;\n", sector->floor.minz);
+    } else {
+      // slope
+      writef(strm, "  floornormal_x = %g;\n", sector->floor.normal.x); // vavoom
+      writef(strm, "  floornormal_y = %g;\n", sector->floor.normal.y); // vavoom
+      writef(strm, "  floornormal_z = %g;\n", sector->floor.normal.z); // vavoom
+      writef(strm, "  floordist = %g;\n", sector->floor.dist); // vavoom
     }
-  }
-
-  {
-    StreamSection section(&strm, "LINE");
-    strm << NumLines;
-    for (int f = 0; f < NumLines; ++f) {
-      // line plane
-      line_t *line = &Lines[f];
-      WritePlane(strm, *line);
-      // line vertices
-      vint32 vnum = (vint32)(ptrdiff_t)(line->v1-Vertexes);
-      strm << vnum;
-      vnum = (vint32)(ptrdiff_t)(line->v2-Vertexes);
-      strm << vnum;
-      // dir
-      strm << line->dir.x << line->dir.y << line->dir.z;
-      // flags
-      strm << line->flags;
-      strm << line->SpacFlags;
-      // sides
-      strm << line->sidenum[0] << line->sidenum[1];
-      // bbox
-      strm << line->bbox[0] << line->bbox[1] << line->bbox[2] << line->bbox[3];
-      // other
-      strm << line->slopetype;
-      strm << line->alpha;
-      strm << line->special;
-      strm << line->arg1 << line->arg2 << line->arg3 << line->arg4 << line->arg5;
-      strm << line->LineTag;
-      // lines connected to v1
-      strm << line->v1linesCount;
-      for (int ln = 0; ln < line->v1linesCount; ++ln) {
-        vint32 lidx = (vint32)(ptrdiff_t)(line->v1lines[ln]-Lines);
-        strm << lidx;
-      }
-      // lines connected to v2
-      strm << line->v2linesCount;
-      for (int ln = 0; ln < line->v2linesCount; ++ln) {
-        vint32 lidx = (vint32)(ptrdiff_t)(line->v2lines[ln]-Lines);
-        strm << lidx;
-      }
-      // front and back sectors
-      vint32 snum = (line->frontsector ? (vint32)(ptrdiff_t)(line->frontsector-Sectors) : -1);
-      strm << snum;
-      snum = (line->backsector ? (vint32)(ptrdiff_t)(line->backsector-Sectors) : -1);
-      strm << snum;
-      // first segment
-      vint32 sgnum = (line->firstseg ? (vint32)(ptrdiff_t)(line->firstseg-Segs) : -1);
-      strm << sgnum;
+    if (sector->ceiling.normal.z == -1.0f) {
+      // normal
+      writef(strm, "  heightceiling = %g;\n", sector->ceiling.minz);
+    } else {
+      // slope
+      writef(strm, "  ceilingnormal_x = %g;\n", sector->ceiling.normal.x); // vavoom
+      writef(strm, "  ceilingnormal_y = %g;\n", sector->ceiling.normal.y); // vavoom
+      writef(strm, "  ceilingnormal_z = %g;\n", sector->ceiling.normal.z); // vavoom
+      writef(strm, "  ceilingdist = %g;\n", sector->ceiling.dist); // vavoom
     }
+    // textures
+    writef(strm, "  texturefloor = \"%s\";\n", (sector->floor.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->floor.pic.id)).quote() : "-"));
+    writef(strm, "  textureceiling = \"%s\";\n", (sector->ceiling.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->ceiling.pic.id)).quote() : "-"));
+    //TODO: write other floor/ceiling parameters
+    // light
+    writef(strm, "  lightlevel = %d;\n", sector->params.lightlevel);
+    if ((sector->params.LightColor&0xffffff) != 0xffffff) writef(strm, "  lightcolor = 0x%06x;\n", sector->params.LightColor);
+    if (sector->params.Fade) writef(strm, "  fadecolor = 0x%08x;\n", sector->params.Fade);
+    // other
+    if (sector->Damage) writef(strm, "  damageamount = %d;\n", sector->Damage);
+    // write other crap
+    writef(strm, "}\n");
   }
 
-  {
-    StreamSection section(&strm, "SEG");
-    strm << NumSegs;
-    for (int f = 0; f < NumSegs; ++f) {
-      seg_t *seg = &Segs[f];
-      // plane
-      WritePlane(strm, *seg);
-      // vertices
-      vint32 vnum = (vint32)(ptrdiff_t)(seg->v1-Vertexes);
-      strm << vnum;
-      vnum = (vint32)(ptrdiff_t)(seg->v2-Vertexes);
-      strm << vnum;
-      strm << seg->offset;
-      strm << seg->length;
-      strm << seg->side;
-      // line
-      vint32 lidx = (seg->linedef ? (vint32)(ptrdiff_t)(seg->linedef-Lines) : -1);
-      strm << lidx;
-      // next seg in linedef (lsnext)
-      vint32 lsnidx = (seg->lsnext ? (vint32)(ptrdiff_t)(seg->lsnext-Segs) : -1);
-      strm << lsnidx;
-      // parnter seg
-      vint32 psidx = (seg->partner ? (vint32)(ptrdiff_t)(seg->partner-Segs) : -1);
-      strm << psidx;
-      // side index
-      vint32 sdidx = (seg->sidedef ? (vint32)(ptrdiff_t)(seg->sidedef-Sides) : -1);
-      strm << sdidx;
-      // front and back sectors
-      vint32 snum = (seg->frontsector ? (vint32)(ptrdiff_t)(seg->frontsector-Sectors) : -1);
-      strm << snum;
-      snum = (seg->backsector ? (vint32)(ptrdiff_t)(seg->backsector-Sectors) : -1);
-      strm << snum;
-      // front subsector
-      vint32 fss = (seg->front_sub ? (vint32)(ptrdiff_t)(seg->front_sub-Subsectors) : -1);
-      strm << fss;
-      // drawsegs
-      vint32 dscount = 0;
-      for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) ++dscount;
-      strm << dscount;
-      for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
-        check(ds->seg == seg);
-        WriteSegPart(strm, ds->top, this);
-        WriteSegPart(strm, ds->mid, this);
-        WriteSegPart(strm, ds->bot, this);
-        WriteSegPart(strm, ds->topsky, this);
-        WriteSegPart(strm, ds->extra, this);
-        WriteSurface(strm, ds->HorizonTop, this);
-        WriteSurface(strm, ds->HorizonBot, this);
-      }
+  //*// non-standard sections //*//
+  // seg vertices
+  // collect
+  vpool.clear();
+  for (int f = 0; f < NumSegs; ++f) {
+    const seg_t *seg = &Segs[f];
+    vpool.put(*seg->v1);
+    vpool.put(*seg->v2);
+  }
+  // write
+  writef(strm, "\n");
+  for (int f = 0; f < vpool.list.length(); ++f) {
+    writef(strm, "\nsegvertex // %d\n", f);
+    writef(strm, "{\n");
+    if ((int)vpool.list[f].x == vpool.list[f].x) {
+      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
+    } else {
+      writef(strm, "  x = %g;\n", vpool.list[f].x);
     }
-  }
-
-  {
-    StreamSection section(&strm, "SUBSEC");
-    strm << NumSubsectors;
-    for (int f = 0; f < NumSubsectors; ++f) {
-      subsector_t *sub = &Subsectors[f];
-      // sector
-      vint32 snum = (sub->sector ? (vint32)(ptrdiff_t)(sub->sector-Sectors) : -1);
-      strm << snum;
-      // seclink
-      vint32 slnum = (sub->seclink ? (vint32)(ptrdiff_t)(sub->seclink-Subsectors) : -1);
-      strm << slnum;
-      // segs
-      strm << sub->firstline;
-      strm << sub->numlines;
-      // parent node
-      vint32 nnum = (sub->parent ? (vint32)(ptrdiff_t)(sub->parent-Nodes) : -1);
-      strm << nnum;
-      //strm << sub->VisFrame;
-      // regions
-      vint32 regcount = 0;
-      for (subregion_t *sreg = sub->regions; sreg; sreg = sreg->next) ++regcount;
-      strm << regcount;
-      for (subregion_t *sreg = sub->regions; sreg; sreg = sreg->next) {
-        sec_region_t *reg = sreg->secregion;
-        check(reg->efloor.isValid());
-        check(reg->eceiling.isValid());
-        check(reg->params);
-        //WriteSectorPlane(strm, *reg->efloor);
-        //WriteSectorPlane(strm, *reg->eceiling);
-        // params
-        strm << reg->params->lightlevel;
-        strm << reg->params->LightColor;
-        strm << reg->params->Fade;
-        strm << reg->params->contents;
-        vint32 elidx = (reg->extraline ? (vint32)(ptrdiff_t)(reg->extraline-Lines) : -1);
-        strm << elidx;
-        // subregion things
-        WriteSectorPlane(strm, *sreg->floorplane.splane);
-        WriteSectorPlane(strm, *sreg->ceilplane.splane);
-        // surfaces; meh
-        //sec_surface_t *floor;
-        //sec_surface_t *ceil;
-        strm << sreg->count;
-        for (int dsi = 0; dsi < sreg->count; ++dsi) {
-          drawseg_t *ds = &sreg->lines[dsi];
-          vint32 sgnum = (ds->seg ? (vint32)(ptrdiff_t)(ds->seg-Segs) : -1);
-          strm << sgnum;
-          WriteSegPart(strm, ds->top, this);
-          WriteSegPart(strm, ds->mid, this);
-          WriteSegPart(strm, ds->bot, this);
-          WriteSegPart(strm, ds->topsky, this);
-          WriteSegPart(strm, ds->extra, this);
-          WriteSurface(strm, ds->HorizonTop, this);
-          WriteSurface(strm, ds->HorizonBot, this);
-        }
-      }
+    if ((int)vpool.list[f].y == vpool.list[f].y) {
+      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
+    } else {
+      writef(strm, "  y = %g;\n", vpool.list[f].y);
     }
+    writef(strm, "}\n");
   }
 
-  {
-    StreamSection section(&strm, "NODE");
-    strm << NumNodes;
-    for (int f = 0; f < NumNodes; ++f) {
-      node_t *node = &Nodes[f];
-      WritePlane(strm, *node);
-      for (int c0 = 0; c0 < 2; ++c0) {
-        for (int c1 = 0; c1 < 6; ++c1) {
-          strm << node->bbox[c0][c1];
-        }
-      }
-      strm << node->children[0];
-      strm << node->children[1];
-      vint32 nnum = (node->parent ? (vint32)(ptrdiff_t)(node->parent-Nodes) : -1);
-      strm << nnum;
-      //strm << node->VisFrame;
+  // segs
+  writef(strm, "\n");
+  for (int f = 0; f < NumSegs; ++f) {
+    const seg_t *seg = &Segs[f];
+    writef(strm, "\nseg // %d\n", f);
+    writef(strm, "{\n");
+    writef(strm, "  v1 = %d;\n", vpool.put(*seg->v1));
+    writef(strm, "  v2 = %d;\n", vpool.put(*seg->v2));
+    writef(strm, "  offset = %g;\n", seg->offset);
+    writef(strm, "  length = %g;\n", seg->length);
+    if (seg->linedef) {
+      writef(strm, "  side = %d;\n", seg->side);
+      // not a miniseg
+      check(seg->sidedef);
+      writef(strm, "  sidedef = %d;\n", (int)(ptrdiff_t)(seg->sidedef-&Sides[0]));
+      check(seg->linedef);
+      writef(strm, "  linedef = %d;\n", (int)(ptrdiff_t)(seg->linedef-&Lines[0]));
     }
+    if (seg->partner) writef(strm, "  partner = %d;\n", (int)(ptrdiff_t)(seg->partner-&Segs[0]));
+    check(seg->front_sub);
+    writef(strm, "  front_sub = %d;\n", (int)(ptrdiff_t)(seg->front_sub-&Subsectors[0]));
+    writef(strm, "}\n");
   }
 
-  {
-    //BlockMap = BlockMapLump+4;
-    StreamSection section(&strm, "BLOCKMAP");
-    strm << BlockMapWidth;
-    strm << BlockMapHeight;
-    strm << BlockMapOrgX;
-    strm << BlockMapOrgY;
-    strm << BlockMapLumpSize;
-    strm.Serialise(BlockMapLump, BlockMapLumpSize);
+  // subsectors
+  writef(strm, "\n");
+  for (int f = 0; f < NumSubsectors; ++f) {
+    const subsector_t *sub = &Subsectors[f];
+    writef(strm, "\nsubsector // %d\n", f);
+    writef(strm, "{\n");
+    check(sub->sector);
+    writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(sub->sector-&Sectors[0]));
+    writef(strm, "  firstseg = %d;\n", sub->firstline);
+    writef(strm, "  numsegs = %d;\n", sub->numlines);
+    check(sub->parent);
+    writef(strm, "  bspnode = %d;\n", (int)(ptrdiff_t)(sub->parent-&Nodes[0]));
+    writef(strm, "}\n");
   }
 
-/*
-  // !!! Used only during level loading
-  mthing_t *Things;
-  vint32 NumThings;
-*/
+  // bsp nodes
+  writef(strm, "\n");
+  for (int f = 0; f < NumNodes; ++f) {
+    const node_t *node = &Nodes[f];
+    writef(strm, "\nbspnode // %d\n", f);
+    writef(strm, "{\n");
+    // plane
+    writef(strm, "  plane_normal_x = %g;\n", node->normal.x);
+    writef(strm, "  plane_normal_y = %g;\n", node->normal.y);
+    writef(strm, "  plane_normal_z = %g;\n", node->normal.z);
+    writef(strm, "  plane_dist = %g;\n", node->dist);
+    // child 0
+    writef(strm, "  bbox_child0_min_x = %g;\n", node->bbox[0][0]);
+    writef(strm, "  bbox_child0_min_y = %g;\n", node->bbox[0][1]);
+    writef(strm, "  bbox_child0_min_z = %g;\n", node->bbox[0][2]);
+    writef(strm, "  bbox_child0_max_x = %g;\n", node->bbox[0][3]);
+    writef(strm, "  bbox_child0_max_y = %g;\n", node->bbox[0][4]);
+    writef(strm, "  bbox_child0_max_z = %g;\n", node->bbox[0][5]);
+    // child 1
+    writef(strm, "  bbox_child1_min_x = %g;\n", node->bbox[1][0]);
+    writef(strm, "  bbox_child1_min_y = %g;\n", node->bbox[1][1]);
+    writef(strm, "  bbox_child1_min_z = %g;\n", node->bbox[1][2]);
+    writef(strm, "  bbox_child1_max_x = %g;\n", node->bbox[1][3]);
+    writef(strm, "  bbox_child1_max_y = %g;\n", node->bbox[1][4]);
+    writef(strm, "  bbox_child1_max_z = %g;\n", node->bbox[1][5]);
+    // children
+    if (node->children[0]&NF_SUBSECTOR) {
+      writef(strm, "  subsector0 = %d;\n", node->children[0]&(~NF_SUBSECTOR));
+    } else {
+      writef(strm, "  node0 = %d;\n", node->children[0]);
+    }
+    if (node->children[1]&NF_SUBSECTOR) {
+      writef(strm, "  subsector1 = %d;\n", node->children[1]&(~NF_SUBSECTOR));
+    } else {
+      writef(strm, "  node1 = %d;\n", node->children[1]);
+    }
+    // parent (if any)
+    if (node->parent) writef(strm, "  parent = %d;\n", (int)(ptrdiff_t)(node->parent-&Nodes[0]));
+    writef(strm, "}\n");
+  }
 }
 
 
@@ -3451,15 +3299,22 @@ COMMAND(DebugExportLevel) {
   }
 
   // find a file name to save it to
-  VStr fname = va("%s.lvl", *Args[1]);
+  VStr fname = va("%s.udmf", *Args[1]);
   auto strm = FL_OpenFileWrite(fname, true); // as full name
   if (!strm) {
     GCon->Logf(NAME_Error, "cannot create file '%s'", *fname);
     return;
   }
 
-  GLevel->DebugSaveLevel(*strm);
-  delete strm;
-
-  GCon->Logf("Level exported to '%s'", *fname);
+  try {
+    GLevel->DebugSaveLevel(*strm);
+    delete strm;
+    GCon->Logf("Level exported to '%s'", *fname);
+  } catch (DebugExportError &werr) {
+    delete strm;
+    GCon->Logf(NAME_Error, "Cannot write level to '%s'", *fname);
+  } catch (...) {
+    delete strm;
+    throw;
+  }
 }
