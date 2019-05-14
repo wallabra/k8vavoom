@@ -2431,6 +2431,9 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 //
 //==========================================================================
 void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
+  static int doDump = -1;
+  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wvavoom-3d") || GArgs.CheckParm("-W3dfloors") ? 1 : 0);
+
   sector_t *src = line->frontsector;
 
   const float floorz = src->floor.GetPointZ(dst->soundorg);
@@ -2441,6 +2444,9 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
     flipped = true;
     GCon->Logf("Swapped planes for Vavoom 3d floor, tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
+
+  if (doDump) { GCon->Logf("Vavoom 3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz); }
+  if (doDump) { GCon->Logf("::: VAVOOM 3DF BEFORE"); dumpSectorRegions(dst); }
 
   // append link
   src->SectorFlags |= sector_t::SF_ExtrafloorSource;
@@ -2462,6 +2468,8 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   }
   reg->params = &src->params;
   reg->extraline = line;
+
+  if (doDump) { GCon->Logf("::: VAVOOM 3DF AFTER"); dumpSectorRegions(dst); }
 }
 
 
@@ -2481,7 +2489,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   };
 
   static int doDump = -1;
-  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-3d") ? 1 : 0);
+  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-3d") || GArgs.CheckParm("-W3dfloors") ? 1 : 0);
 
   //int eftype = (line->arg2&3);
   const bool isSolid = ((line->arg2&3) == Solid);

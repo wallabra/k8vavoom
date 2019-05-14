@@ -826,8 +826,8 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 //  FixMidTextureOffsetAndOrigin
 //
 //==========================================================================
-static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *linedef, const side_t *sidedef, texinfo_t *texinfo, VTexture *MTex, const side_tex_params_t *tparam) {
-  if ((linedef->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX)) {
+static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *linedef, const side_t *sidedef, texinfo_t *texinfo, VTexture *MTex, const side_tex_params_t *tparam, bool forceWrapped=false) {
+  if (forceWrapped || ((linedef->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX))) {
     // it is wrapped, so just slide it
     texinfo->toffs = tparam->RowOffset*TextureOffsetTScale(MTex);
   } else {
@@ -898,7 +898,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     for (opening_t *cop = SV_SectorOpenings(seg->frontsector, true); cop; cop = cop->next) {
       if (extopz <= cop->bottom || exbotz >= cop->top) {
         if (doDump) { GCon->Log(" SKIP opening"); DumpOpening(cop); }
-        continue;
+        //continue;
       }
       if (doDump) { GCon->Logf(" ACCEPT opening"); DumpOpening(cop); }
       // ok, we are at least partially in this opening
@@ -1010,6 +1010,33 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
+  //bool doDump = false;
+  enum { doDump = 0 };
+
+  /*
+  if (seg->frontsector-&Level->Sectors[0] == 70) {
+    doDump = true;
+    GCon->Logf("::: SECTOR #70 (back #%d) EF: texture='%s'", (seg->backsector ? (int)(ptrdiff_t)(seg->backsector-&Level->Sectors[0]) : -1), *MTex->Name);
+    GCon->Log(" === front regions ===");
+    VLevel::dumpSectorRegions(seg->frontsector);
+    GCon->Log(" === front openings ===");
+    for (opening_t *bop = SV_SectorOpenings2(seg->frontsector, true); bop; bop = bop->next) DumpOpening(bop);
+    GCon->Log(" === real openings ===");
+    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+  }
+
+  if (seg->backsector && seg->backsector-&Level->Sectors[0] == 70) {
+    doDump = true;
+    GCon->Logf("::: BACK-SECTOR #70 (front #%d) EF: texture='%s'", (seg->frontsector ? (int)(ptrdiff_t)(seg->frontsector-&Level->Sectors[0]) : -1), *MTex->Name);
+    GCon->Log(" === front regions ===");
+    VLevel::dumpSectorRegions(seg->frontsector);
+    GCon->Log(" === front openings ===");
+    for (opening_t *bop = SV_SectorOpenings2(seg->frontsector, true); bop; bop = bop->next) DumpOpening(bop);
+    GCon->Log(" === real openings ===");
+    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+  }
+  */
+
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
   const float texh = MTex->GetScaledHeight()*sidedef->Mid.ScaleY;
@@ -1021,7 +1048,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     // top of texture at top
     z_org = reg->eceiling.splane->TexZ;
   }
-  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid);
+  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid, true);
 
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
@@ -1029,7 +1056,9 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   if (MTex->Type != TEXTYPE_Null) {
     TVec wv[4];
 
-    const bool wrapped = !!((linedef->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
+    //const bool wrapped = !!((linedef->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
+    // side 3d floor midtex should always be wrapped
+    enum { wrapped = 1 };
 
     const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
     const float extratopz2 = reg->eceiling.GetPointZ(*seg->v2);
@@ -1041,13 +1070,18 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     const float extopz = max2(extratopz1, extratopz2);
 
     for (opening_t *cop = ops; cop; cop = cop->next) {
-      if (extopz <= cop->bottom || exbotz >= cop->top) continue;
+      if (extopz <= cop->bottom || exbotz >= cop->top) {
+        if (doDump) GCon->Logf("  (%g,%g): skip opening (%g,%g)", exbotz, extopz, cop->bottom, cop->top);
+        continue;
+      }
       // ok, we are at least partially in this opening
 
       float topz1 = cop->eceiling.GetPointZ(*seg->v1);
       float topz2 = cop->eceiling.GetPointZ(*seg->v2);
       float botz1 = cop->efloor.GetPointZ(*seg->v1);
       float botz2 = cop->efloor.GetPointZ(*seg->v2);
+
+      if (doDump) GCon->Logf("  (%g,%g): HIT opening (%g,%g) (%g:%g,%g:%g); ex=(%g:%g,%g:%g)", exbotz, extopz, cop->bottom, cop->top, botz1, botz2, topz1, topz2, extrabotz1, extrabotz2, extratopz1, extratopz2);
 
       // check texture limits
       if (!wrapped) {
@@ -1071,6 +1105,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
         wv[2].z = min3(extratopz2, topz2, z_org);
         wv[3].z = max3(extrabotz2, botz2, z_org-texh);
       }
+
+      if (doDump) for (int wf = 0; wf < 4; ++wf) GCon->Logf("   wf #%d: (%g,%g,%g)", wf, wv[wf].x, wv[wf].y, wv[wf].z);
 
       CreateWorldSurfFromWV(sub, seg, sp, wv);
     }
