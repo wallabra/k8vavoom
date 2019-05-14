@@ -569,11 +569,13 @@ bool CheckSpecialWeaponAmmo (ubyte Mode) {
 //==========================================================================
 final bool CheckAmmoAmount (ubyte Mode) {
   if (Mode == FIRE_Primary) {
+    if (bAmmoOptional) return true; //k8: is this right?
     int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
     //print("%C; Amount1=%s; AmmoUse1=%s", self, Amount1, AmmoUse1);
     if (Amount1 == 0 && AmmoUse1 == 0) return CheckSpecialWeaponAmmo(Mode);
     return (Amount1 >= AmmoUse1);
   } else {
+    if (bAltAmmoOptional) return true; //k8: is this right?
     int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
     if (Amount2 == 0 && AmmoUse2 == 0) return CheckSpecialWeaponAmmo(Mode);
     return (Amount2 >= AmmoUse2);
@@ -614,7 +616,7 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
     bool Good = true;
     if (bCheckAnyAmmo) {
       // for any fire mode, any ammo will do
-      if (!CheckAmmoAmount(FIRE_Primary) || !CheckAmmoAmount(FIRE_Secondary)) Good = false;
+      if (!CheckAmmoAmount(FIRE_Primary) && !CheckAmmoAmount(FIRE_Secondary)) Good = false;
     } else {
       if ((Mode == FIRE_Primary || bAltUsesBoth) && !CheckAmmoAmount(FIRE_Primary)) Good = false;
       if (Good && (Mode == FIRE_Secondary || bPrimaryUsesBoth) && !CheckAmmoAmount(FIRE_Secondary)) Good = false;

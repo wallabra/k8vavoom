@@ -266,7 +266,8 @@ private final void do_A_ReFire (optional state refirestate) {
   } else {
     //writeln("A_ReFire: nothing");
     PlayerEx(Player).Refire = 0;
-    Wpn.CheckAmmo(Wpn.FireMode, true);
+    //k8: do we need to check ammo here at all?
+    Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
   }
 }
 
