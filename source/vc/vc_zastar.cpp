@@ -224,7 +224,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayClear"); }
   if (Self->intr) {
-    Self->intr->near.clear();
+    Self->intr->mNear.clear();
   }
 }
 
@@ -233,7 +233,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayLength) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayLength"); }
   if (Self->intr) {
-    RET_INT((int)Self->intr->near.size());
+    RET_INT((int)Self->intr->mNear.size());
   } else {
     RET_INT(0);
   }
@@ -245,8 +245,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNode) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNode"); }
   if (Self->intr) {
-    if (index < 0 || index >= (int)Self->intr->near.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, max is %d", index, (int)Self->intr->near.size()); }
-    RET_PTR(Self->intr->near[(unsigned)index].state);
+    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, max is %d", index, (int)Self->intr->mNear.size()); }
+    RET_PTR(Self->intr->mNear[(unsigned)index].state);
   } else {
     VObject::VMDumpCallStack();
     Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, length is 0", index);
@@ -261,9 +261,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNodeAndCost) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNodeAndCost"); }
   if (Self->intr) {
-    if (index < 0 || index >= (int)Self->intr->near.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, max is %d", index, (int)Self->intr->near.size()); }
-    if (pcost) *pcost = Self->intr->near[(unsigned)index].cost;
-    RET_PTR(Self->intr->near[(unsigned)index].state);
+    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, max is %d", index, (int)Self->intr->mNear.size()); }
+    if (pcost) *pcost = Self->intr->mNear[(unsigned)index].cost;
+    RET_PTR(Self->intr->mNear[(unsigned)index].state);
   } else {
     VObject::VMDumpCallStack();
     Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, length is 0", index);
@@ -283,7 +283,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
   micropather::StateCost cst;
   cst.state = (void *)node;
   cst.cost = cost;
-  Self->intr->near.push_back(cst);
+  Self->intr->mNear.push_back(cst);
 }
 
 
@@ -333,22 +333,22 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::SolveForNearStates"); }
   if (!startState) {
-    if (Self->intr) Self->intr->near.clear();
+    if (Self->intr) Self->intr->mNear.clear();
     RET_BOOL(false);
     return;
   }
   Self->EnsureInterfaces();
   check(Self->intr);
   check(Self->pather);
-  Self->intr->near.clear();
-  int res = Self->pather->SolveForNearStates(startState, &Self->intr->near, maxCost);
+  Self->intr->mNear.clear();
+  int res = Self->pather->SolveForNearStates(startState, &Self->intr->mNear, maxCost);
   if (res == micropather::MicroPather::SOLVED) {
     RET_BOOL(true);
     return;
   }
   if (res == micropather::MicroPather::NO_SOLUTION) {
     // just in case
-    Self->intr->near.clear();
+    Self->intr->mNear.clear();
     RET_BOOL(false);
     return;
   }

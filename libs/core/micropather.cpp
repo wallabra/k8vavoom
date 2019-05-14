@@ -964,7 +964,7 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
 }
 
 
-int MicroPather::SolveForNearStates( void* startState, MP_VECTOR< StateCost >* near, float maxCost )
+int MicroPather::SolveForNearStates( void* startState, MP_VECTOR< StateCost >* near_, float maxCost )
 {
   /*   http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 
@@ -1046,7 +1046,7 @@ int MicroPather::SolveForNearStates( void* startState, MP_VECTOR< StateCost >* n
       }
     }
   }
-  near->clear();
+  near_->clear();
 
   for( PathNode* pNode=closedSentinel.next; pNode != &closedSentinel; pNode=pNode->next ) {
     if ( pNode->totalCost <= maxCost ) {
@@ -1054,13 +1054,13 @@ int MicroPather::SolveForNearStates( void* startState, MP_VECTOR< StateCost >* n
       sc.cost = pNode->totalCost;
       sc.state = pNode->state;
 
-      near->push_back( sc );
+      near_->push_back( sc );
     }
   }
 #ifdef DEBUG
-  for( unsigned i=0; i<near->size(); ++i ) {
-    for( unsigned k=i+1; k<near->size(); ++k ) {
-      MPASSERT( (*near)[i].state != (*near)[k].state );
+  for( unsigned i=0; i<near_->size(); ++i ) {
+    for( unsigned k=i+1; k<near_->size(); ++k ) {
+      MPASSERT( (*near_)[i].state != (*near_)[k].state );
     }
   }
 #endif

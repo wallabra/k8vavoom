@@ -36,7 +36,7 @@ class VMiAStarGraphIntr : micropather::Graph {
 private:
   VMiAStarGraphBase *vcifc;
   MP_VECTOR<void *> path;
-  MP_VECTOR<micropather::StateCost> near;
+  MP_VECTOR<micropather::StateCost> mNear;
 
   VMethod *mtLeastCostEstimate;
   VMethod *mtAdjacentCost;
