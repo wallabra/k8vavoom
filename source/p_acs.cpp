@@ -77,6 +77,9 @@ static VCvarB acs_enabled("acs_enabled", true, "DEBUG: are ACS scripts enabled?"
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
 
+#define SPECIAL_LOW_SCRIPT_NUMBER  (100000000)
+
+#define ACS_GUARD_INSTRUCTION_COUNT  (1000000)
 
 
 #define AAPTR_DEFAULT                0x00000000
@@ -1260,19 +1263,13 @@ int VAcsObject::PtrToOffset(vuint8 *Ptr)
 //  VAcsObject::FindScript
 //
 //==========================================================================
-
-VAcsInfo *VAcsObject::FindScript(int Number) const
-{
-  if (Number <= -100000) {
-    Number = -(Number+100000);
+VAcsInfo *VAcsObject::FindScript (int Number) const {
+  if (Number <= -SPECIAL_LOW_SCRIPT_NUMBER) {
+    Number = -(Number+SPECIAL_LOW_SCRIPT_NUMBER);
     return &Scripts[Number];
   }
-  for (int i = 0; i < NumScripts; i++)
-  {
-    if (Scripts[i].Number == Number)
-    {
-      return Scripts+i;
-    }
+  for (int i = 0; i < NumScripts; ++i) {
+    if (Scripts[i].Number == Number) return Scripts+i;
   }
   return nullptr;
 }
@@ -1283,9 +1280,7 @@ VAcsInfo *VAcsObject::FindScript(int Number) const
 //  VAcsObject::FindScriptByName
 //
 //==========================================================================
-
-VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
-{
+VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const {
   if (nameidx == 0) return nullptr;
   if (nameidx < 0) {
     nameidx = -nameidx;
@@ -1304,9 +1299,7 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 //  VAcsObject::FindScriptByNameStr
 //
 //==========================================================================
-
-VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
-{
+VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const {
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
@@ -1321,13 +1314,11 @@ VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
 //  VAcsObject::FindScriptNumberByName
 //
 //==========================================================================
-
-int VAcsObject::FindScriptNumberByName (const VStr &aname) const
-{
+int VAcsObject::FindScriptNumberByName (const VStr &aname) const {
   if (aname.length() == 0) return -1;
   VName nn = VName(*aname, VName::AddLower);
-  for (int i = 0; i < NumScripts; i++) {
-    if (Scripts[i].Name == nn) return -100000-i;
+  for (int i = 0; i < NumScripts; ++i) {
+    if (Scripts[i].Name == nn) return -SPECIAL_LOW_SCRIPT_NUMBER-i;
   }
   return -1;
 }
@@ -1572,14 +1563,11 @@ VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object
 //  VAcsLevel::FindScriptNumberByName
 //
 //==========================================================================
-int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object)
-{
+int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object) {
   if (aname.length() == 0) return -1;
-  for (int i = 0; i < LoadedObjects.Num(); i++)
-  {
+  for (int i = 0; i < LoadedObjects.length(); ++i) {
     int idx = LoadedObjects[i]->FindScriptNumberByName(aname);
-    if (idx <= -100000)
-    {
+    if (idx <= -SPECIAL_LOW_SCRIPT_NUMBER) {
       Object = LoadedObjects[i];
       return idx;
     }
@@ -1792,13 +1780,11 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   VAcsInfo *Info;
   if (Number >= 0) {
     Info = FindScript(Number, Object);
-  } else if (Number > -100000) {
+  } else {
+    check(Number < 0); // lol
     Info = FindScriptByName(Number, Object);
     //if (Info) GCon->Logf("ACS: Start: script=<%d>; found '%s'", Number, *Info->Name);
     //else GCon->Logf("ACS: Start: script=<%d> -- OOPS", Number);
-  } else {
-    GCon->Logf(NAME_Warning, "VAcsLevel::Start: by direct index (%d)", -(Number+100000));
-    Info = FindScript(Number, Object);
   }
 
   if (!Info) {
@@ -2255,7 +2241,7 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
     if (currtime-sttime > 3.0f) { \
       Host_Error("ACS script #%d (%s) took too long to execute", number, *info->Name); \
     } \
-    scountLeft = 1000000; \
+    scountLeft = ACS_GUARD_INSTRUCTION_COUNT; \
   } \
   if (fmt == ACS_LittleEnhanced) { \
     cmd = *ip; \
@@ -2285,7 +2271,7 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
     if (currtime-sttime > 3.0f) { \
       Host_Error("ACS script #%d (%s) took too long to execute", number, *info->Name); \
     } \
-    scountLeft = 1000000; \
+    scountLeft = ACS_GUARD_INSTRUCTION_COUNT; \
   } \
   break
 #define ACSVM_BREAK_STOP  break
@@ -3473,7 +3459,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
   // init watchcat
   double sttime = Sys_Time();
-  int scountLeft = 1000000;
+  int scountLeft = ACS_GUARD_INSTRUCTION_COUNT;
 
   do
   {
@@ -4136,7 +4122,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         --sp;
         //GCon->Logf(NAME_Warning, "UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
         WaitValue = XLevel->Acs->FindScriptNumberByName(*name, WaitObject);
-        if (WaitValue <= -100000) {
+        if (WaitValue != -1 /*<= -SPECIAL_LOW_SCRIPT_NUMBER*/) {
           if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
               !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
           {
@@ -7182,6 +7168,10 @@ COMMAND(Puke) {
 
   int Script = VStr::atoi(*Args[1]);
   if (Script == 0) return; // script 0 is special
+  if (Script < 1 || Script > 65535) {
+    GCon->Logf(NAME_Warning, "Puke: invalid script id: %d", Script);
+    return;
+  }
 
   int ScArgs[4];
   for (int i = 0; i < 4; ++i) {
