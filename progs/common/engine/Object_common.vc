@@ -603,6 +603,7 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// keep 1/8 unit away to avoid various numeric issues
 const float CD_CLIP_EPSILON = 0.125f;
 
 enum CD_HitType {

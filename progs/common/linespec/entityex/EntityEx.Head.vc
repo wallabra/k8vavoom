@@ -732,8 +732,11 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
       noAAVert = noAAim;
       EntityEx targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
       if (targ) return targ;
+      ptr |= AAPTR_NULL;
     }
     // AAPTR_PLAYER_GETCONVERSATION // no strife dialogues, so skip
+  } else {
+    if (ptr&AAPTR_PLAYER_GETTARGET) ptr |= AAPTR_NULL;
   }
   // category 2
   if (ptr&AAPTR_TARGET) return Target;
@@ -744,10 +747,12 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
       auto plr = Level.Game.Players[FriendPlayer-1];
       if (plr && plr.bSpawned && plr.MO) return plr.MO;
     }
+    ptr |= AAPTR_NULL;
   }
   if (ptr&AAPTR_LINETARGET) {
     EntityEx targ = Aim(nullptr, 2048/*16*64*/, Angles.yaw);
     if (targ) return targ;
+    ptr |= AAPTR_NULL;
   }
   // category 3
   int plridx = -1;
@@ -762,9 +767,10 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
   if (plridx >= 0 && plridx < MAXPLAYERS) {
     auto plr = Level.Game.Players[plridx];
     if (plr && plr.bSpawned && plr.MO) return plr.MO;
+    ptr |= AAPTR_NULL;
   }
   if (ptr&AAPTR_NULL) return none;
-  if (plridx < 0) FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
+  FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
   return none;
 }
 
