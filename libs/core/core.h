@@ -34,7 +34,7 @@
 
 
 //#define USE_NEUMAIER_KAHAN
-#define USE_FAST_INVSQRT
+//#define USE_FAST_INVSQRT
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
