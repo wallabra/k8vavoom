@@ -3111,19 +3111,26 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (side->TopTexture.id > 0) writef(strm, "  texturetop = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->TopTexture.id)).quote());
     if (side->BottomTexture.id > 0) writef(strm, "  texturebottom = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->BottomTexture.id)).quote());
     if (side->MidTexture.id > 0) writef(strm, "  texturemiddle = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->MidTexture.id)).quote());
-    // top
-    if (side->Top.TextureOffset) writef(strm, "  offsetx_top = %g;\n", side->Top.TextureOffset);
-    if (side->Top.RowOffset) writef(strm, "  offsety_top = %g;\n", side->Top.RowOffset);
+    // offset
+    if (side->Top.TextureOffset == side->Bot.TextureOffset && side->Top.TextureOffset == side->Mid.TextureOffset) {
+      if (side->Top.TextureOffset) writef(strm, "  offsetx = %g;\n", side->Top.TextureOffset);
+    } else {
+      if (side->Top.TextureOffset) writef(strm, "  offsetx_top = %g;\n", side->Top.TextureOffset);
+      if (side->Bot.TextureOffset) writef(strm, "  offsetx_bottom = %g;\n", side->Bot.TextureOffset);
+      if (side->Mid.TextureOffset) writef(strm, "  offsetx_mid = %g;\n", side->Mid.TextureOffset);
+    }
+    if (side->Top.RowOffset == side->Bot.RowOffset && side->Top.RowOffset == side->Mid.RowOffset) {
+      if (side->Top.RowOffset) writef(strm, "  offsety = %g;\n", side->Top.RowOffset);
+    } else {
+      if (side->Top.RowOffset) writef(strm, "  offsety_top = %g;\n", side->Top.RowOffset);
+      if (side->Bot.RowOffset) writef(strm, "  offsety_bottom = %g;\n", side->Bot.RowOffset);
+      if (side->Mid.RowOffset) writef(strm, "  offsety_mid = %g;\n", side->Mid.RowOffset);
+    }
+    // scale
     if (side->Top.ScaleX != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleX);
     if (side->Top.ScaleY != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleY);
-    // bot
-    if (side->Bot.TextureOffset) writef(strm, "  offsetx_bottom = %g;\n", side->Bot.TextureOffset);
-    if (side->Bot.RowOffset) writef(strm, "  offsety_bottom = %g;\n", side->Bot.RowOffset);
     if (side->Bot.ScaleX != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleX);
     if (side->Bot.ScaleY != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleY);
-    // mid
-    if (side->Mid.TextureOffset) writef(strm, "  offsetx_mid = %g;\n", side->Mid.TextureOffset);
-    if (side->Mid.RowOffset) writef(strm, "  offsety_mid = %g;\n", side->Mid.RowOffset);
     if (side->Mid.ScaleX != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleX);
     if (side->Mid.ScaleY != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleY);
     // other
