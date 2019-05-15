@@ -3006,7 +3006,7 @@ public:
 //
 //==========================================================================
 void VLevel::DebugSaveLevel (VStream &strm) {
-  writef(strm, "Namespace = \"Vavoom\";\n");
+  writef(strm, "Namespace = \"VavoomDebug\";\n");
 
   VertexPool vpool;
 
@@ -3143,7 +3143,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     writef(strm, "\nsector // %d\n", f);
     writef(strm, "{\n");
     if (sector->tag) writef(strm, "  id = %d;\n", sector->tag);
-    if (sector->special) writef(strm, "  id = %d;\n", sector->special);
+    if (sector->special) writef(strm, "  special = %d;\n", sector->special);
     if (sector->floor.normal.z == 1.0f) {
       // normal
       writef(strm, "  heightfloor = %g;\n", sector->floor.minz);
@@ -3179,6 +3179,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
   }
 
   //*// non-standard sections //*//
+  /*
   // seg vertices
   // collect
   vpool.clear();
@@ -3204,6 +3205,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     }
     writef(strm, "}\n");
   }
+  */
 
   // segs
   writef(strm, "\n");
@@ -3211,8 +3213,14 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     const seg_t *seg = &Segs[f];
     writef(strm, "\nseg // %d\n", f);
     writef(strm, "{\n");
+    /*
     writef(strm, "  v1 = %d;\n", vpool.put(*seg->v1));
     writef(strm, "  v2 = %d;\n", vpool.put(*seg->v2));
+    */
+    writef(strm, "  v1_x = %g;\n", seg->v1->x);
+    writef(strm, "  v1_y = %g;\n", seg->v1->y);
+    writef(strm, "  v2_x = %g;\n", seg->v2->x);
+    writef(strm, "  v2_y = %g;\n", seg->v2->y);
     writef(strm, "  offset = %g;\n", seg->offset);
     writef(strm, "  length = %g;\n", seg->length);
     if (seg->linedef) {
