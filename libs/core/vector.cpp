@@ -28,6 +28,7 @@
 
 // debug checks
 //#define FRUSTUM_BBOX_CHECKS
+#define PLANE_BOX_USE_REJECT_ACCEPT
 
 
 const TVec TVec::ZeroVector = TVec(0.0f, 0.0f, 0.0f);
@@ -394,7 +395,7 @@ void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
 //
 //  TPlane::checkBox
 //
-//  returns `false` is box is on the back of the plane (or clipflag is 0)
+//  returns `false` is box is on the back of the plane
 //  bbox:
 //    [0] is minx
 //    [1] is miny
@@ -404,15 +405,16 @@ void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
 //    [5] is maxz
 //
 //==========================================================================
+/*
 bool TPlane::checkBox (const float bbox[6]) const {
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
   check(bbox[1] <= bbox[3+1]);
   check(bbox[2] <= bbox[3+2]);
 #endif
-#ifdef FRUSTUM_BOX_OPTIMISATION
+#ifdef PLANE_BOX_USE_REJECT_ACCEPT
   // check reject point
-  return !PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]));
+  return (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist > 0.0f); // entire box on a back side?
 #else
   for (unsigned j = 0; j < 8; ++j) {
     if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
@@ -422,26 +424,28 @@ bool TPlane::checkBox (const float bbox[6]) const {
   return false;
 #endif
 }
+*/
 
 
 //==========================================================================
 //
 //  TPlane::checkBoxEx
 //
-//  0: completely outside; >0: completely inside; <0: partially inside
-//
 //==========================================================================
+/*
 int TPlane::checkBoxEx (const float bbox[6]) const {
 #ifdef FRUSTUM_BBOX_CHECKS
   check(bbox[0] <= bbox[3+0]);
   check(bbox[1] <= bbox[3+1]);
   check(bbox[2] <= bbox[3+2]);
 #endif
-#ifdef FRUSTUM_BOX_OPTIMISATION
+#ifdef PLANE_BOX_USE_REJECT_ACCEPT
   // check reject point
-  if (PointOnSide(TVec(bbox[pindex[0]], bbox[pindex[1]], bbox[pindex[2]]))) return TFrustum::OUTSIDE; // completely outside
+  float d = DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist;
+  if (d <= 0.0f) return TFrustum::OUTSIDE; // entire box on a back side
   // check accept point
-  return (PointOnSide(TVec(bbox[pindex[3+0]], bbox[pindex[3+1]], bbox[pindex[3+2]])) ? TFrustum::PARTIALLY : TFrustum::INSIDE);
+  d = DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist;
+  return (d < 0.0f ? TFrustum::PARTIALLY : TFrustum::INSIDE); // if accept point on another side (or on plane), assume intersection
 #else
   unsigned passed = 0;
   for (unsigned j = 0; j < 8; ++j) {
@@ -453,6 +457,7 @@ int TPlane::checkBoxEx (const float bbox[6]) const {
   return (passed ? (passed == 8 ? TFrustum::INSIDE : TFrustum::PARTIALLY) : TFrustum::OUTSIDE);
 #endif
 }
+*/
 
 
 //==========================================================================
@@ -606,29 +611,6 @@ void TClipBase::setupViewport (const TClipParam &cp) {
 
 
 
-#ifdef FRUSTUM_BOX_OPTIMISATION
-//==========================================================================
-//
-//  TClipPlane::setupBoxIndicies
-//
-//  setup indicies for box checking
-//
-//==========================================================================
-void TClipPlane::setupBoxIndicies () {
-  if (!clipflag) return;
-  for (unsigned j = 0; j < 3; ++j) {
-    if (normal[j] < 0) {
-      pindex[j] = j;
-      pindex[j+3] = j+3;
-    } else {
-      pindex[j] = j+3;
-      pindex[j+3] = j;
-    }
-  }
-}
-#endif
-
-
 //==========================================================================
 //
 //  TFrustum::setup
@@ -743,12 +725,8 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-    // check reject point
-#ifdef FRUSTUM_BOX_OPTIMISATION
-    if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
-      // on a back side (or on a plane)
-      return false;
-    }
+#ifdef PLANE_BOX_USE_REJECT_ACCEPT
+    if (DotProduct(cp->normal, cp->get3DBBoxRejectPoint(bbox))-cp->dist <= 0.0f) return false; // on a back side?
 #else
     bool passed = false;
     for (unsigned j = 0; j < 8; ++j) {
@@ -784,16 +762,15 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const {
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-#ifdef FRUSTUM_BOX_OPTIMISATION
+#ifdef PLANE_BOX_USE_REJECT_ACCEPT
     // check reject point
-    if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
-      // on a back side (or on a plane)
-      //check(cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
-      return OUTSIDE;
-    }
+    float d = DotProduct(cp->normal, cp->get3DBBoxRejectPoint(bbox))-cp->dist;
+    if (d <= 0.0f) return OUTSIDE; // entire box on a back side
+    // if the box is already determined to be partially inside, there is no need to check accept point anymore
     if (res == INSIDE) {
       // check accept point
-      if (cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) res = PARTIALLY;
+      d = DotProduct(cp->normal, cp->get3DBBoxAcceptPoint(bbox))-cp->dist;
+      if (d < 0.0f) res = PARTIALLY;
     }
 #else
     if (res == INSIDE) {

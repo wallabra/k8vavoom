@@ -315,14 +315,24 @@ public:
   // initialises vertical plane from point and direction
   inline void SetPointDirXY (const TVec &point, const TVec &dir) {
     normal = TVec(dir.y, -dir.x, 0.0f);
-    normal.normaliseInPlace();
-    if (normal.isValid() && !normal.isZero()) {
-      dist = DotProduct(point, normal);
+    // use some checks to avoid floating point inexactness on axial planes
+    if (!normal.x) {
+      if (!normal.y) {
+        //k8: what to do here?!
+        normal = TVec(1.0f, 0.0f, 0.0f);
+        dist = 0.0f;
+        return;
+      }
+      // vertical
+      normal.y = (normal.y < 0 ? -1.0f : 1.0f);
+    } else if (!normal.y) {
+      // horizontal
+      normal.x = (normal.x < 0 ? -1.0f : 1.0f);
     } else {
-      //k8: what to do here?!
-      normal = TVec(1.0f, 0.0f, 0.0f);
-      dist = 0.0f;
+      // sloped
+      normal.normaliseInPlace();
     }
+    dist = DotProduct(point, normal);
   }
 
   // initialises "full" plane from point and direction
@@ -404,7 +414,6 @@ public:
     return v-(v-normal*dist).dot(normal)*normal;
   }
 
-  /*
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
   inline float LineIntersectTime (const TVec &p0, const TVec &p1) const {
@@ -418,7 +427,6 @@ public:
     const float t = (dist-normal.dot(p0))/normal.dot(dif);
     return p0+(dif*t);
   }
-  */
 
   // intersection of 3 planes, Graphics Gems 1 pg 305
   // not sure if it should be `dist` or `-dist` here for vavoom planes
@@ -513,16 +521,70 @@ public:
     return DotProduct(p, normal)-dist;
   }
 
-  // returns `false` is box is on the back of the plane (or clipflag is 0)
-  __attribute__((warn_unused_result)) bool checkBox (const float *bbox) const;
+  // returns "AABB reject point"
+  // i.e. box point that is furthest from the plane
+  inline __attribute__((warn_unused_result)) TVec get3DBBoxRejectPoint (const float bbox[6]) const {
+    return TVec(
+      bbox[0+(normal.x < 0 ? 0 : 3)],
+      bbox[1+(normal.y < 0 ? 0 : 3)],
+      bbox[2+(normal.z < 0 ? 0 : 3)]);
+  }
 
-  // 0: completely outside; >0: completely inside; <0: partially inside
-  __attribute__((warn_unused_result)) int checkBoxEx (const float *bbox) const;
+  // returns "AABB accept point"
+  // i.e. box point that is closest to the plane
+  inline __attribute__((warn_unused_result)) TVec get3DBBoxAcceptPoint (const float bbox[6]) const {
+    return TVec(
+      bbox[0+(normal.x < 0 ? 3 : 0)],
+      bbox[1+(normal.y < 0 ? 3 : 0)],
+      bbox[2+(normal.z < 0 ? 3 : 0)]);
+  }
 
-  // returns `false` is rect is on the back of the plane
+  // this is for 2d line/node bboxes
+  // bounding box
+  enum {
+    BOX2D_TOP,
+    BOX2D_BOTTOM,
+    BOX2D_LEFT,
+    BOX2D_RIGHT,
+  };
+
+  inline __attribute__((warn_unused_result)) TVec get2DBBoxRejectPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const {
+    return TVec(
+      bbox2d[normal.x < 0 ? BOX2D_LEFT : BOX2D_RIGHT],
+      bbox2d[normal.y < 0 ? BOX2D_BOTTOM : BOX2D_TOP],
+      (normal.z < 0 ? minz : maxz));
+  }
+
+  inline __attribute__((warn_unused_result)) TVec get2DBBoxAcceptPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const {
+    return TVec(
+      bbox2d[normal.x < 0 ? BOX2D_RIGHT : BOX2D_LEFT],
+      bbox2d[normal.y < 0 ? BOX2D_TOP : BOX2D_BOTTOM],
+      (normal.z < 0 ? maxz : minz));
+  }
+
+  // returns `false` if the box fully is on the back side of the plane
+  inline __attribute__((warn_unused_result)) bool checkBox (const float bbox[6]) const {
+    // check reject point
+    return (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist > 0.0f); // at least partially on a front side?
+  }
+
+  // enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
+
+  // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
+  // if the box is touching the plane from inside, it is still assumed to be inside
+  inline __attribute__((warn_unused_result)) int checkBoxEx (const float bbox[6]) const {
+    // check reject point
+    float d = DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist;
+    if (d <= 0.0f) return /*TFrustum::OUTSIDE*/0; // entire box on a back side
+    // check accept point
+    d = DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist;
+    return (d < 0.0f ? /*TFrustum::PARTIALLY*/-1 : /*TFrustum::INSIDE*/1); // if accept point on another side (or on plane), assume intersection
+  }
+
+  // returns `false` if the rect is on the back side of the plane
   __attribute__((warn_unused_result)) bool checkRect (const TVec &v0, const TVec &v1) const;
 
-  // 0: completely outside; >0: completely inside; <0: partially inside
+  // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
   __attribute__((warn_unused_result)) int checkRectEx (const TVec &v0, const TVec &v1) const;
 
   // this is the slow, general version
@@ -731,13 +793,13 @@ public:
   void setupBoxIndiciesForPlane (unsigned pidx);
 
 
-  // returns `false` is point is out of frustum
+  // returns `false` if the point is out of frustum
   __attribute__((warn_unused_result)) bool checkPoint (const TVec &point, const unsigned mask=~0u) const;
 
-  // returns `false` is sphere is out of frustum
+  // returns `false` if the sphere is out of frustum
   __attribute__((warn_unused_result)) bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const;
 
-  // returns `false` is box is out of frustum (or frustum is not valid)
+  // returns `false` if the box is out of frustum (or frustum is not valid)
   // bbox:
   //   [0] is minx
   //   [1] is miny
