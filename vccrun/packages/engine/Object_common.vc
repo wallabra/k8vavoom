@@ -448,9 +448,9 @@ enum {
 };
 // considers the line to be infinite
 // returns 0 - front, 1 - back, -1 - box crosses the line
-native static final int BoxOnLineSide2DV (const float *tmbox, const TVec v1, const TVec v2);
+native static final int BoxOnLineSide2DV (const TVec bmin, const TVec bmax, const TVec v1, const TVec v2);
 #ifndef VCC_STANDALONE_EXECUTOR
-native static final int BoxOnLineSide2D (const float *tmbox, const GameObject::line_t *line);
+native static final int BoxOnLineSide2D (const TVec bmin, const TVec bmax, const ref GameObject::line_t line);
 #endif
 // rotates a direction vector
 native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
@@ -571,8 +571,13 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   }
   // horizontal line?
   if (a.y == b.y) {
-    lpl.planes[0].normal = vector( 0, -1); lpl.planes[0].dist = -a.y; // top
-    lpl.planes[1].normal = vector( 0,  1); lpl.planes[1].dist = a.y; // bottom
+    if (a.x < b.x) {
+      lpl.planes[0].normal = vector( 0, -1); lpl.planes[0].dist = -a.y; // top
+      lpl.planes[1].normal = vector( 0,  1); lpl.planes[1].dist = a.y; // bottom
+    } else {
+      lpl.planes[1].normal = vector( 0, -1); lpl.planes[1].dist = -a.y; // top
+      lpl.planes[0].normal = vector( 0,  1); lpl.planes[0].dist = a.y; // bottom
+    }
     lpl.planes[2].normal = vector(-1,  0); lpl.planes[2].dist = -fmin(a.x, b.x); // left
     lpl.planes[3].normal = vector( 1,  0); lpl.planes[3].dist = fmax(a.x, b.x); // right
     lpl.count = 4; // four planes created
@@ -580,8 +585,13 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   }
   // vertical line?
   if (a.x == b.x) {
-    lpl.planes[0].normal = vector(-1,  0); lpl.planes[0].dist = -a.x; // left
-    lpl.planes[1].normal = vector( 1,  0); lpl.planes[1].dist = a.x; // right
+    if (a.y > b.y) {
+      lpl.planes[0].normal = vector(-1,  0); lpl.planes[0].dist = -a.x; // left
+      lpl.planes[1].normal = vector( 1,  0); lpl.planes[1].dist = a.x; // right
+    } else {
+      lpl.planes[1].normal = vector(-1,  0); lpl.planes[1].dist = -a.x; // left
+      lpl.planes[0].normal = vector( 1,  0); lpl.planes[0].dist = a.x; // right
+    }
     lpl.planes[2].normal = vector( 0, -1); lpl.planes[2].dist = -fmin(a.y, b.y); // top
     lpl.planes[3].normal = vector( 0,  1); lpl.planes[3].dist = fmax(a.y, b.y); // bottom
     lpl.count = 4; // four planes created
@@ -614,6 +624,9 @@ enum CD_HitType {
   CD_HT_Bottom,
   CD_HT_Left,
   CD_HT_Right,
+  // used in tracer
+  CD_HT_Floor,
+  CD_HT_Ceiling,
 }
 
 
@@ -632,10 +645,13 @@ static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec v
 // the moving thing is AABB
 // returns contact point in `contactPoint`
 // actually, `contactPoint` has little sense for non-point hits, and is somewhat arbitrary
+// `side` indicates which line side we hit: front (0), back(1), or caps; can be -1
 static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec vstart, TVec vend, TVec bmin, TVec bmax,
-                                        optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
+                                        optional out TPlane hitPlane, optional out TVec contactPoint,
+                                        optional out CD_HitType hitType, optional out int side)
 {
   hitType = CD_HitType.CD_HT_None;
+  side = -1;
 
   float ifrac = -1.0f;
   float ofrac = 1.0f;
@@ -691,8 +707,11 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
 
   if (ifrac < ofrac) {
     if (ifrac > -1) {
+      side = phit;
+      //if (ifrac >= 1.0f) return ifrac;
+      // might be exact hit
       ifrac = fclamp(ifrac, 0.0f, 1.0f);
-      if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
+      //if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
       hitPlane = linePlanes.planes[phit];
       //print("ifrac=%s; hp(%s): %s:%s", ifrac, phit, hitPlane.normal, hitPlane.dist);
       // check what kind of hit this is

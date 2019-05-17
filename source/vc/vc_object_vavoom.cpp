@@ -115,9 +115,16 @@ IMPLEMENT_FUNCTION(VObject, R_GetBloodTranslation) {
 }
 
 
+// native static final int BoxOnLineSide2D (const TVec bmin, const TVec bmax, const ref GameObject::line_t line);
 IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2D) {
   P_GET_PTR(line_t, ld);
-  P_GET_PTR(float, tmbox);
+  P_GET_VEC(bmax);
+  P_GET_VEC(bmin);
+  float tmbox[4];
+  tmbox[BOXTOP] = bmax.y;
+  tmbox[BOXBOTTOM] = bmin.y;
+  tmbox[BOXLEFT] = bmin.x;
+  tmbox[BOXRIGHT] = bmax.x;
   RET_INT(P_BoxOnLineSide(tmbox, ld));
 }
 

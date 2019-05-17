@@ -252,10 +252,17 @@ IMPLEMENT_FUNCTION(VObject, PointOnPlaneSide2) {
   RET_INT(plane->PointOnSide2(point));
 }
 
+// native static final int BoxOnLineSide2DV (const TVec bmin, const TVec bmax, const TVec v1, const TVec v2);
 IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2DV) {
   P_GET_VEC(v2);
   P_GET_VEC(v1);
-  P_GET_PTR(float, tmbox);
+  P_GET_VEC(bmax);
+  P_GET_VEC(bmin);
+  float tmbox[4];
+  tmbox[BOXTOP] = bmax.y;
+  tmbox[BOXBOTTOM] = bmin.y;
+  tmbox[BOXLEFT] = bmin.x;
+  tmbox[BOXRIGHT] = bmax.x;
   RET_INT(BoxOnLineSide2D(tmbox, v1, v2));
 }
 
