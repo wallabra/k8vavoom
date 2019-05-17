@@ -2176,8 +2176,9 @@ void CalcLineCDPlanes (line_t *line) {
     } else {
       // a horizontal line
       line->cdPlanesCount = 4;
-      line->cdPlanesArray[0].normal = TVec( 0, -1, 0); line->cdPlanesArray[0].dist = -line->v1->y; // top
-      line->cdPlanesArray[1].normal = TVec( 0,  1, 0); line->cdPlanesArray[1].dist = line->v1->y; // bottom
+      int botidx = (line->v1->x < line->v2->x);
+      line->cdPlanesArray[1-botidx].normal = TVec( 0, -1, 0); line->cdPlanesArray[1-botidx].dist = -line->v1->y; // top
+      line->cdPlanesArray[botidx].normal = TVec( 0,  1, 0); line->cdPlanesArray[botidx].dist = line->v1->y; // bottom
       // add left and right bevels
       line->cdPlanesArray[2].normal = TVec(-1,  0, 0); line->cdPlanesArray[2].dist = -min2(line->v1->x, line->v2->x); // left
       line->cdPlanesArray[3].normal = TVec( 1,  0, 0); line->cdPlanesArray[3].dist = max2(line->v1->x, line->v2->x); // right
@@ -2185,8 +2186,9 @@ void CalcLineCDPlanes (line_t *line) {
   } else if (line->v1->x == line->v2->x) {
     // a vertical line
     line->cdPlanesCount = 4;
-    line->cdPlanesArray[0].normal = TVec(-1,  0, 0); line->cdPlanesArray[0].dist = -line->v1->x; // left
-    line->cdPlanesArray[1].normal = TVec( 1,  0, 0); line->cdPlanesArray[1].dist = line->v1->x; // right
+    int rightidx = (line->v1->y > line->v2->y);
+    line->cdPlanesArray[1-rightidx].normal = TVec(-1,  0, 0); line->cdPlanesArray[1-rightidx].dist = -line->v1->x; // left
+    line->cdPlanesArray[rightidx].normal = TVec( 1,  0, 0); line->cdPlanesArray[rightidx].dist = line->v1->x; // right
     // add top and bottom bevels
     line->cdPlanesArray[2].normal = TVec( 0, -1, 0); line->cdPlanesArray[2].dist = -min2(line->v1->y, line->v2->y); // top
     line->cdPlanesArray[3].normal = TVec( 0,  1, 0); line->cdPlanesArray[3].dist = max2(line->v1->y, line->v2->y); // bottom
