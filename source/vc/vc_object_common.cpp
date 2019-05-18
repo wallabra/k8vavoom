@@ -325,6 +325,46 @@ IMPLEMENT_FUNCTION(VObject, IsVerticalPlane) {
 }
 
 
+// native static final TVec PlaneProjectPoint (const ref TPlane plane, TVec v);
+IMPLEMENT_FUNCTION(VObject, PlaneProjectPoint) {
+  P_GET_VEC(v);
+  P_GET_PTR(TPlane, plane);
+  RET_VEC(v-(v-plane->normal*plane->dist).dot(plane->normal)*plane->normal);
+}
+
+// initialises vertical plane from point and direction
+//native static final void PlaneForPointDir (out TPlane plane, TVec point, TVec dir);
+IMPLEMENT_FUNCTION(VObject, PlaneForPointDir) {
+  P_GET_VEC(dir);
+  P_GET_VEC(point);
+  P_GET_PTR(TPlane, plane);
+  plane->SetPointDirXY(point, dir);
+}
+
+// initialises vertical plane from point and direction
+// native static final void PlaneForPointNormal (out TPlane plane, TVec point, TVec norm, optional bool normNormalised);
+IMPLEMENT_FUNCTION(VObject, PlaneForPointNormal) {
+  P_GET_BOOL_OPT(normalNormalised, false);
+  P_GET_VEC(norm);
+  P_GET_VEC(point);
+  P_GET_PTR(TPlane, plane);
+  if (normalNormalised) {
+    plane->SetPointNormal3D(point, norm);
+  } else {
+    plane->SetPointNormal3DSafe(point, norm);
+  }
+}
+
+// initialises vertical plane from two points
+// native static final void PlaneForLine (out TPlane plane, TVec pointA, TVec pointB);
+IMPLEMENT_FUNCTION(VObject, PlaneForLine) {
+  P_GET_VEC(v2);
+  P_GET_VEC(v1);
+  P_GET_PTR(TPlane, plane);
+  plane->Set2Points(v1, v2);
+}
+
+
 //**************************************************************************
 //
 //  String functions

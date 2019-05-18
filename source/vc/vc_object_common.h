@@ -64,6 +64,12 @@
   DECLARE_FUNCTION(IsSlopedFlat)
   DECLARE_FUNCTION(IsVerticalPlane)
 
+  DECLARE_FUNCTION(PlaneProjectPoint)
+
+  DECLARE_FUNCTION(PlaneForPointDir)
+  DECLARE_FUNCTION(PlaneForPointNormal)
+  DECLARE_FUNCTION(PlaneForLine)
+
   // string functions
   DECLARE_FUNCTION(strlenutf8)
   DECLARE_FUNCTION(strcmp)

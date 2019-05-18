@@ -509,50 +509,17 @@ static final bool CalcLinesIntersection (TVec lav1, TVec lav2, TVec lbv1, TVec l
 
 // ////////////////////////////////////////////////////////////////////////// //
 // plane functions
-//TODO: move to native code?
 
 // initialises vertical plane from point and direction
-static final void PlaneForPointDir (out TPlane plane, TVec point, TVec dir) {
-  dir.z = 0;
-  if (!dir) FatalError("oops");
-  if (!dir.y) {
-    if (!dir.x) { plane.normal = vector(1, 0); plane.dist = 0; return; }
-    // vertical
-    plane.normal = vector(0, fsign(-dir.x));
-  } else if (!dir.y) {
-    // horizontal
-    plane.normal = vector(fsign(dir.y), 0);
-  } else {
-    plane.normal = vector(dir.y, -dir.x).normalise2D;
-  }
-  plane.dist = DotProduct(point, plane.normal);
-}
+native static final void PlaneForPointDir (out TPlane plane, TVec point, TVec dir);
 
 // initialises vertical plane from point and direction
-static final void PlaneForPointNormal (out TPlane plane, TVec point, TVec norm, optional bool normNormalised) {
-  norm.z = 0;
-  if (!norm) FatalError("oops");
-  plane.normal = (normNormalised ? norm : vector(norm.x, norm.y).normalise2D);
-  plane.dist = DotProduct(point, plane.normal);
-}
+native static final void PlaneForPointNormal (out TPlane plane, TVec point, TVec norm, optional bool normNormalised);
 
 // initialises vertical plane from two points
-static final void PlaneForLine (out TPlane plane, TVec pointA, TVec pointB) {
-  PlaneForPointDir(out plane, pointA, pointB-pointA);
-}
+native static final void PlaneForLine (out TPlane plane, TVec pointA, TVec pointB);
 
-// returns the point where the line p0-p1 intersects this plane
-static final float PlaneLineIntersect (const ref TPlane plane, TVec p0, TVec p1) {
-  auto difv = p1-p0;
-  float dd = -plane.normal.dot(difv);
-  if (!dd) return -666;
-  //return (plane.normal.dot(p0)-plane.dist)/dd;
-  return (p0.dot(plane.normal)-plane.dist)/dd;
-}
-
-static final TVec PlaneProject (const ref TPlane plane, TVec v) {
-  return v-(v-plane.normal*plane.dist).dot(plane.normal)*plane.normal;
-}
+native static final TVec PlaneProjectPoint (const ref TPlane plane, TVec v);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
