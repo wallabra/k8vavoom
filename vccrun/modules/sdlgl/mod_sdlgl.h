@@ -361,7 +361,7 @@ public:
     GLMatrixMode_ModelView,
     GLMatrixMode_Projection,
   };
-  DECLARE_FUNCTION(glMatrixMode)
+  DECLARE_FUNCTION(set_glMatrixMode)
 
   DECLARE_FUNCTION(glPushMatrix)
   DECLARE_FUNCTION(glPopMatrix)
@@ -378,7 +378,7 @@ public:
     GLFaceCull_Front,
     GLFaceCull_Back,
   };
-  DECLARE_FUNCTION(set_glFaceCull)
+  DECLARE_FUNCTION(set_glCullFace)
 
   DECLARE_FUNCTION(glSetTexture)
   DECLARE_FUNCTION(glSetColor)

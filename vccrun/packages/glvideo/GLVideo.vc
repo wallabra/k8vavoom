@@ -254,7 +254,7 @@ enum GLMatrix {
 }
 
 // default is `GLMatrix.ModelView`
-static native final void glMatrixMode (GLMatrix mode);
+static native final GLMatrix glMatrixMode { /*get;*/ set; }
 
 static native final void glPushMatrix ();
 static native final void glPopMatrix ();
@@ -281,7 +281,7 @@ enum GLFaceCull {
   Back,
 }
 
-native final static GLFaceCull glFaceCull { /*get;*/ set; }
+static native final GLFaceCull glCullFace { /*get;*/ set; }
 
 enum GLBegin {
   Points,

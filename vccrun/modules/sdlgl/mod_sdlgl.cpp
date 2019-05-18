@@ -2947,7 +2947,7 @@ IMPLEMENT_FUNCTION(VGLVideo, glRotate) {
 }
 
 //static native final void glMatrixMode (int GLMatrix mode);
-IMPLEMENT_FUNCTION(VGLVideo, glMatrixMode) {
+IMPLEMENT_FUNCTION(VGLVideo, set_glMatrixMode) {
   P_GET_INT(mode);
   if (mInited) {
     switch (mode) {
@@ -3103,7 +3103,7 @@ IMPLEMENT_FUNCTION(VGLVideo, glSetup3D) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VGLVideo, set_glFaceCull) {
+IMPLEMENT_FUNCTION(VGLVideo, set_glCullFace) {
   P_GET_INT(mode);
   if (mInited) {
     switch (mode) {
