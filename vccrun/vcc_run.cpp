@@ -394,7 +394,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   bool gdatforced = false;
   if (paklist.length() == 0) {
-    fprintf(stderr, "forcing 'game.dat'\n");
+    //fprintf(stderr, "forcing 'game.dat'\n");
     paklist.append(":game.dat");
     gdatforced = true;
   }
@@ -414,7 +414,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
           //fprintf(stderr, "!!!001\n");
           dprintf("added pak file '%s'...\n", *pname);
         } else {
-          fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+          //fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
         }
       } else {
         if (fsysAppendPak(pname)) {
