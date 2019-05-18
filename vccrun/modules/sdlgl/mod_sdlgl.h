@@ -63,6 +63,7 @@ public:
     BlendHighlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
     BlendDstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
     InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
+    Premult, // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     //
     BlendMax,
   };
@@ -147,6 +148,7 @@ private:
   static int colorMask;
   static int alphaTestFunc;
   static float alphaFuncVal;
+  static bool in3dmode;
   friend class VOpenGLTexture;
 
 public:
@@ -240,6 +242,7 @@ private:
       else if (mBlendMode == BlendHighlight) glBlendFunc(GL_DST_COLOR, GL_ONE);
       else if (mBlendMode == BlendDstMulDstAlpha) glBlendFunc(GL_ZERO, GL_DST_ALPHA);
       else if (mBlendMode == InvModulate) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+      else if (mBlendMode == Premult) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       return ((colorARGB&0xff000000u) != 0xff000000u);
     }
   }
@@ -354,12 +357,48 @@ public:
   DECLARE_FUNCTION(setScissor)
   DECLARE_FUNCTION(copyScissor)
 
-  DECLARE_FUNCTION(glPushMatrix);
-  DECLARE_FUNCTION(glPopMatrix);
-  DECLARE_FUNCTION(glLoadIdentity);
-  DECLARE_FUNCTION(glScale);
-  DECLARE_FUNCTION(glTranslate);
-  //DECLARE_FUNCTION(glRotate);
+  enum {
+    GLMatrixMode_ModelView,
+    GLMatrixMode_Projection,
+  };
+  DECLARE_FUNCTION(glMatrixMode)
+
+  DECLARE_FUNCTION(glPushMatrix)
+  DECLARE_FUNCTION(glPopMatrix)
+  DECLARE_FUNCTION(glLoadIdentity)
+  DECLARE_FUNCTION(glScale)
+  DECLARE_FUNCTION(glTranslate)
+  DECLARE_FUNCTION(glRotate)
+
+  DECLARE_FUNCTION(glSetup2D)
+  DECLARE_FUNCTION(glSetup3D)
+
+  enum {
+    GLFaceCull_None,
+    GLFaceCull_Front,
+    GLFaceCull_Back,
+  };
+  DECLARE_FUNCTION(set_glFaceCull)
+
+  DECLARE_FUNCTION(glSetTexture)
+  DECLARE_FUNCTION(glSetColor)
+
+  enum {
+    GLBegin_Points,
+    GLBegin_Lines,
+    GLBegin_LineStrip,
+    GLBegin_LineLoop,
+    GLBegin_Triangles,
+    GLBegin_TriangleStrip,
+    GLBegin_TriangleFan,
+    GLBegin_Quads,
+    GLBegin_QuadStrip,
+    GLBegin_Polygon,
+  };
+
+  DECLARE_FUNCTION(glBegin)
+  DECLARE_FUNCTION(glEnd)
+  DECLARE_FUNCTION(glVertex)
 
   DECLARE_FUNCTION(clearScreen)
 
@@ -499,6 +538,8 @@ public:
 class VGLTexture : public VObject {
   DECLARE_CLASS(VGLTexture, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VGLTexture)
+
+  friend class VGLVideo;
 
 private:
   VOpenGLTexture *tex;

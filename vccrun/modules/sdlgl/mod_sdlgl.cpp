@@ -1719,6 +1719,7 @@ int VGLVideo::colorMask = CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
 int VGLVideo::stencilBits = 0;
 int VGLVideo::alphaTestFunc = VGLVideo::STC_Always;
 float VGLVideo::alphaFuncVal = 0.0f;
+bool VGLVideo::in3dmode = false;
 
 
 struct TimerInfo {
@@ -2141,6 +2142,9 @@ bool VGLVideo::open (const VStr &winname, int width, int height, int fullscreen)
   glOrtho(0, realw, realh, 0, -zNear, -zFar);
   mWidth = realw;
   mHeight = realh;
+
+  in3dmode = false;
+  glDisable(GL_CULL_FACE);
 
   /*
   if (realw == width && realh == height) {
@@ -2935,15 +2939,243 @@ IMPLEMENT_FUNCTION(VGLVideo, glTranslate) {
   if (mInited) glTranslatef(x, y, z);
 }
 
-// static native final void glRotate (float ax, float ay, optional float az);
-/*
+// static native final void glRotate (float angle, TVec axis);
 IMPLEMENT_FUNCTION(VGLVideo, glRotate) {
-  P_GET_FLOAT(x);
-  P_GET_FLOAT(y);
-  P_GET_FLOAT_OPT(z, 1);
-  glRotatef(x, y, z);
+  P_GET_VEC(axis);
+  P_GET_FLOAT(angle);
+  if (mInited) glRotatef(angle, axis.x, axis.y, axis.z);
 }
-*/
+
+//static native final void glMatrixMode (int GLMatrix mode);
+IMPLEMENT_FUNCTION(VGLVideo, glMatrixMode) {
+  P_GET_INT(mode);
+  if (mInited) {
+    switch (mode) {
+      case GLMatrixMode_ModelView: glMatrixMode(GL_MODELVIEW); break;
+      case GLMatrixMode_Projection: glMatrixMode(GL_PROJECTION); break;
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+//native final static void glSetup2D (optional bool bottomUp);
+IMPLEMENT_FUNCTION(VGLVideo, glSetup2D) {
+  P_GET_BOOL_OPT(bottomUp, false);
+
+  if (!mInited) return;
+
+  forceColorMask();
+  forceAlphaFunc();
+
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+  if (depthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+  realizeZFunc();
+  glDisable(GL_CULL_FACE);
+  //glDisable(GL_BLEND);
+  //glEnable(GL_LINE_SMOOTH);
+  if (smoothLine) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
+  if (stencilEnabled) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  glStencilFunc(GL_ALWAYS, 0, 0xffffffff);
+
+  glDisable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  realiseGLColor(); // this will setup blending
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  int realw = mWidth, realh = mHeight;
+  SDL_GL_GetDrawableSize(hw_window, &realw, &realh);
+
+  //glViewport(0, 0, width, height);
+  glViewport(0, 0, realw, realh);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  if (bottomUp) {
+    glOrtho(0, realw, 0, realh, -zNear, -zFar);
+  } else {
+    glOrtho(0, realw, realh, 0, -zNear, -zFar);
+  }
+  mWidth = realw;
+  mHeight = realh;
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+  in3dmode = false;
+  glDisable(GL_CULL_FACE);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+//native final static void glSetup3D (float fov, optional float aspect);
+IMPLEMENT_FUNCTION(VGLVideo, glSetup3D) {
+  P_GET_FLOAT_OPT(aspect, 1.0f);
+  P_GET_FLOAT(fov);
+  if (fov < 1) fov = 90; else if (fov > 179) fov = 179;
+  if (aspect < 0.1f) aspect = 0.1f;
+
+  if (!mInited) return;
+
+  forceColorMask();
+  forceAlphaFunc();
+
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+  if (depthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+  realizeZFunc();
+  glDisable(GL_CULL_FACE);
+  //glDisable(GL_BLEND);
+  //glEnable(GL_LINE_SMOOTH);
+  if (smoothLine) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
+  if (stencilEnabled) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  glStencilFunc(GL_ALWAYS, 0, 0xffffffff);
+
+  glDisable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  realiseGLColor(); // this will setup blending
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  int realw = mWidth, realh = mHeight;
+  SDL_GL_GetDrawableSize(hw_window, &realw, &realh);
+
+  //glViewport(0, 0, width, height);
+  glViewport(0, 0, realw, realh);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  mWidth = realw;
+  mHeight = realh;
+
+  TClipBase clip_base;
+  clip_base.setupViewport(mWidth, mHeight, fov, aspect);
+  //refdef.fovx = clip_base.fovx;
+  //refdef.fovy = clip_base.fovy;
+  //refdef.drawworld = true;
+
+  // normal projection
+  VMatrix4 ProjMat;
+  {
+    glClearDepth(1.0f);
+    depthFunc = ZFunc_LessEqual;
+    glDepthFunc(GL_LEQUAL);
+    ProjMat.SetIdentity();
+    ProjMat[0][0] = 1.0f/clip_base.fovx;
+    ProjMat[1][1] = 1.0f/clip_base.fovy;
+    ProjMat[2][3] = -1.0f;
+    ProjMat[3][3] = 0.0f;
+    /*
+    if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) {
+      ProjMat[2][2] = -1.0f;
+      ProjMat[3][2] = -2.0f;
+    } else
+    */
+    const float maxdist = 8192.0f;
+    {
+      ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
+      ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
+    }
+  }
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(ProjMat[0]);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+  in3dmode = true;
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+IMPLEMENT_FUNCTION(VGLVideo, set_glFaceCull) {
+  P_GET_INT(mode);
+  if (mInited) {
+    switch (mode) {
+      case GLFaceCull_None: glDisable(GL_CULL_FACE); break;
+      case GLFaceCull_Front: glEnable(GL_CULL_FACE); glCullFace(GL_FRONT); break;
+      case GLFaceCull_Back: glEnable(GL_CULL_FACE); glCullFace(GL_BACK); break;
+    }
+  }
+}
+
+//native final static void glSetTexture (GLTexture tx, optional bool repeat); // `none` means disable texturing
+IMPLEMENT_FUNCTION(VGLVideo, glSetTexture) {
+  P_GET_BOOL_OPT(repeat, false);
+  P_GET_REF(VGLTexture, tx);
+  if (mInited) {
+    if (tx && tx->tex) {
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, tx->tex->tid);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE));
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE));
+      //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      VGLVideo::forceGLTexFilter();
+    } else {
+      glDisable(GL_TEXTURE_2D);
+    }
+    VGLVideo::setupBlending();
+  }
+}
+
+//native final static void glSetColor (float r, float g, float b, optional float a/*=1*/);
+IMPLEMENT_FUNCTION(VGLVideo, glSetColor) {
+  P_GET_FLOAT_OPT(a, 1.0f);
+  P_GET_FLOAT(b);
+  P_GET_FLOAT(g);
+  P_GET_FLOAT(r);
+  if (mInited) glColor4f(r, g, b, a);
+}
+
+// native final static void glBegin (GLBegin mode);
+IMPLEMENT_FUNCTION(VGLVideo, glBegin) {
+  P_GET_INT(mode);
+  if (mInited) {
+    switch (mode) {
+      case GLBegin_Points: glBegin(GL_POINTS); break;
+      case GLBegin_Lines: glBegin(GL_LINES); break;
+      case GLBegin_LineStrip: glBegin(GL_LINE_STRIP); break;
+      case GLBegin_LineLoop: glBegin(GL_LINE_LOOP); break;
+      case GLBegin_Triangles: glBegin(GL_TRIANGLES); break;
+      case GLBegin_TriangleStrip: glBegin(GL_TRIANGLE_STRIP); break;
+      case GLBegin_TriangleFan: glBegin(GL_TRIANGLE_FAN); break;
+      case GLBegin_Quads: glBegin(GL_QUADS); break;
+      case GLBegin_QuadStrip: glBegin(GL_QUAD_STRIP); break;
+      case GLBegin_Polygon: glBegin(GL_POLYGON); break;
+    }
+  }
+}
+
+// native final static void glEnd ();
+IMPLEMENT_FUNCTION(VGLVideo, glEnd) {
+  if (mInited) glEnd();
+}
+
+// native final static void glVertex (TVec p, optional float s, optional float t);
+IMPLEMENT_FUNCTION(VGLVideo, glVertex) {
+  P_GET_FLOAT_OPT(t, 0.0f);
+  P_GET_FLOAT_OPT(s, 0.0f);
+  P_GET_VEC(p);
+  if (mInited) {
+    if (specified_t || specified_s) glTexCoord2f(s, t);
+    glVertex3f(p.x, p.y, p.z);
+  }
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //

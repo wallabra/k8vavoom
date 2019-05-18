@@ -36,6 +36,9 @@ enum BlendMode {
   Highlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
   DstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
   InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
+  Premult, // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+  Additive = BlendMode.Blend,
 }
 
 enum BlendFunc {
@@ -245,12 +248,61 @@ native final static bool getMousePos (out int x, out int y);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+enum GLMatrix {
+  ModelView,
+  Projection,
+}
+
+// default is `GLMatrix.ModelView`
+static native final void glMatrixMode (GLMatrix mode);
+
 static native final void glPushMatrix ();
 static native final void glPopMatrix ();
 static native final void glLoadIdentity ();
 static native final void glScale (float sx, float sy, optional float sz);
 static native final void glTranslate (float dx, float dy, optional float dz);
-//static native final void glRotate (float ax, float ay, optional float az);
+static native final void glRotate (float angle, TVec axis);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// setup projection
+// default is 2d, top-down
+// 2d setup disables face culling
+// any setup reset matrices
+native final static void glSetup2D (optional bool bottomUp);
+// default culling is `Front`
+native final static void glSetup3D (float fov, optional float aspect/*=1*/);
+// set this before calling `glSetup3D()`, read after that to see if it is in effect
+//native final static bool glUseReverseZ { get; set; }
+
+enum GLFaceCull {
+  None,
+  Front,
+  Back,
+}
+
+native final static GLFaceCull glFaceCull { /*get;*/ set; }
+
+enum GLBegin {
+  Points,
+  Lines,
+  LineStrip,
+  LineLoop,
+  Triangles,
+  TriangleStrip,
+  TriangleFan,
+  Quads,
+  QuadStrip,
+  Polygon,
+}
+
+native final static void glSetTexture (GLTexture tx, optional bool repeat); // `none` means disable texturing
+native final static void glSetColor (float r, float g, float b, optional float a/*=1*/);
+
+native final static void glBegin (GLBegin mode);
+native final static void glEnd ();
+// with optional texture coordinates
+native final static void glVertex (TVec p, optional float s, optional float t);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
