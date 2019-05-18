@@ -570,34 +570,38 @@ VStream *FSysDriverDisk::open (const VStr &fname) {
   //fprintf(stderr, "002: <%s> <%s>\n", *fname, *newname);
   if (newname.length() == 0) {
     // hack for vccrun
+    static const char *dirs[] = {
+      "./",
+      "./packages/",
+      "!",
+      "!!",
 #ifdef VCCRUN_K8BUILD
-    newname = findFileNC("./"+fname, false);
-    if (newname.length() == 0) {
-      newname = findFileNC("./packages/"+fname, false);
-      if (newname.length() == 0) {
-        VStr mydir = VStr(getBinaryPath());
-        newname = findFileNC(mydir+fname, false);
-        if (newname.length() == 0) {
-          newname = findFileNC(mydir+"packages/"+fname, false);
-          if (newname.length() == 0) {
-            newname = findFileNC("/home/ketmar/back/vavoom_dev/src/vccrun/"+fname, false);
-            if (newname.length() == 0) {
-              newname = findFileNC("/home/ketmar/back/vavoom_dev/src/vccrun/packages/"+fname, false);
-              if (newname.length() == 0) return nullptr;
-            }
-          }
-        }
-      }
-    }
-#else
-    VStr mydir = VStr(getBinaryPath());
-    newname = findFileNC(mydir+fname, false);
-    //fprintf(stderr, "<%s><%s>\n", *mydir, *fname);
-    if (newname.length() == 0) {
-      newname = findFileNC(mydir+"packages/"+fname, false);
-      if (newname.length() == 0) return nullptr;
-    }
+      "/home/ketmar/back/vavoom_dev/src/vccrun/",
+      "/home/ketmar/back/vavoom_dev/src/vccrun/packages/",
 #endif
+      nullptr
+    };
+    // look for file
+    VStr mydir;
+    for (const char **sdra = dirs; *sdra; ++sdra) {
+      const char *sdr = *sdra;
+      if (sdr[0] == '!') {
+        // binary dir
+        if (mydir.length() == 0) mydir = VStr(getBinaryPath());
+        if (sdr[1] == '!') {
+          // mydir+"packages/"
+          newname = findFileNC(mydir+"packages/"+fname, false);
+        } else {
+          // mydir
+          newname = findFileNC(mydir+fname, false);
+        }
+      } else {
+        // normal dir
+        newname = findFileNC(VStr(sdr)+fname, false);
+      }
+      if (newname.length() != 0) break;
+    }
+    if (newname.length() == 0) return nullptr;
   }
   FILE *fl = fopen(*newname, "rb");
   if (!fl) return nullptr;
