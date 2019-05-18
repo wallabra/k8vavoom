@@ -25,20 +25,28 @@
 //**
 //**************************************************************************
 #include "Object.vc"
-#include "GameObject.vc"
-#include "Level.vc"
-#include "Thinker.vc"
-#include "LevelInfo.vc"
-#include "Entity.vc"
-#include "PlayerReplicationInfo.vc"
-#include "BasePlayer.vc"
-#include "WorldInfo.vc"
-#include "GameInfo.vc"
-#include "Widget.vc"
-#include "RootWidget.vc"
-#include "ActorDisplayWindow.vc"
-#include "ClientGameBase.vc"
+#ifndef VCC_STANDALONE_EXECUTOR
+// vavoom
+# include "GameObject.vc"
+# include "Level.vc"
+# include "Thinker.vc"
+# include "LevelInfo.vc"
+# include "Entity.vc"
+# include "PlayerReplicationInfo.vc"
+# include "BasePlayer.vc"
+# include "WorldInfo.vc"
+# include "GameInfo.vc"
+# include "Widget.vc"
+# include "RootWidget.vc"
+# include "ActorDisplayWindow.vc"
+# include "ClientGameBase.vc"
+#endif
 #include "ScriptsParser.vc"
 
-#include "GLVideo.vc"
-#include "GLTexture.vc"
+#ifdef VCC_STANDALONE_EXECUTOR
+# include "vccrun/IniFile.vc"
+# include "vccrun/TextUtil.vc"
+#else
+# include "GLVideo.vc"
+# include "GLTexture.vc"
+#endif

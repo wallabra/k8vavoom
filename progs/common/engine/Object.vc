@@ -32,7 +32,7 @@ class Object native abstract transient;
 
 #include "Object_common.vc"
 #ifdef VCC_STANDALONE_EXECUTOR
-# include "Object_vccrun.vc"
+# include "vccrun/Object_vccrun.vc"
 #else
 # include "Object_vavoom.vc"
 #endif

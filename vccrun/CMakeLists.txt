@@ -188,7 +188,7 @@ if (ENABLE_VCCRUN)
   )
 
 
-  add_executable(vcc_run
+  add_executable(vccrun
     ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
     ${VCCRUN_FSYS_SOURCES}
@@ -229,9 +229,9 @@ if (ENABLE_VCCRUN)
     string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
   endif()
 
-  set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../vcc_run)
-  target_compile_definitions(vcc_run PRIVATE ${VCCRUN_DEFINES})
-  #target_link_libraries(vcc_run core ${LIBLZMA_LIBRARIES} ${VCCRUN_LINKLIBS})
-  target_link_libraries(vcc_run core ${VCCRUN_LINKLIBS})
-  add_dependencies(vcc_run core ${VCCRUN_DEPS})
+  set_target_properties(vccrun PROPERTIES OUTPUT_NAME vccrun)
+  target_compile_definitions(vccrun PRIVATE ${VCCRUN_DEFINES})
+  #target_link_libraries(vccrun core ${LIBLZMA_LIBRARIES} ${VCCRUN_LINKLIBS})
+  target_link_libraries(vccrun core ${VCCRUN_LINKLIBS})
+  add_dependencies(vccrun core ${VCCRUN_DEPS})
 endif(ENABLE_VCCRUN)

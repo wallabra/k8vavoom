@@ -52,7 +52,7 @@ option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 option(ENABLE_CLIENT   "Build client executable" ON)
 option(ENABLE_SERVER   "Build dedicated server executable (don't do that!)" OFF)
 option(ENABLE_MASTER   "Build master server (no reason to build it)" OFF)
-option(ENABLE_VCCRUN   "Build vcc_run executable" OFF)
+option(ENABLE_VCCRUN   "Build vccrun executable" OFF)
 option(ENABLE_MD2FIXER "Build fixmd2 executable (you don't need it)" OFF)
 option(ENABLE_GLVIS    "Build glvis PVS builder executable (you don't need it)" OFF)
 

@@ -515,7 +515,16 @@ static final bool CalcLinesIntersection (TVec lav1, TVec lav2, TVec lbv1, TVec l
 static final void PlaneForPointDir (out TPlane plane, TVec point, TVec dir) {
   dir.z = 0;
   if (!dir) FatalError("oops");
-  plane.normal = vector(dir.y, -dir.x).normalise2D;
+  if (!dir.y) {
+    if (!dir.x) { plane.normal = vector(1, 0); plane.dist = 0; return; }
+    // vertical
+    plane.normal = vector(0, fsign(-dir.x));
+  } else if (!dir.y) {
+    // horizontal
+    plane.normal = vector(fsign(dir.y), 0);
+  } else {
+    plane.normal = vector(dir.y, -dir.x).normalise2D;
+  }
   plane.dist = DotProduct(point, plane.normal);
 }
 
