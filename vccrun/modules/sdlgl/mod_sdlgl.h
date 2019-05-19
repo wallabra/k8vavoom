@@ -400,6 +400,19 @@ public:
   DECLARE_FUNCTION(glEnd)
   DECLARE_FUNCTION(glVertex)
 
+  enum {
+    FM_None,
+    FM_Linear,
+    FM_Exp,
+    FM_Exp2,
+  };
+
+  DECLARE_FUNCTION(set_glFogMode)
+  DECLARE_FUNCTION(set_glFogDensity)
+  DECLARE_FUNCTION(set_glFogStart)
+  DECLARE_FUNCTION(set_glFogEnd)
+  DECLARE_FUNCTION(glSetFogColor)
+
   DECLARE_FUNCTION(clearScreen)
 
   DECLARE_FUNCTION(get_stencil)

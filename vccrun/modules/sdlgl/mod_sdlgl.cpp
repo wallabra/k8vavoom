@@ -3179,6 +3179,46 @@ IMPLEMENT_FUNCTION(VGLVideo, glVertex) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+IMPLEMENT_FUNCTION(VGLVideo, set_glFogMode) {
+  P_GET_INT(mode);
+  if (mInited) {
+    switch (mode) {
+      //case FM_None:
+      case FM_Linear: glFogi(GL_FOG_MODE, GL_LINEAR); glEnable(GL_FOG); glHint(GL_FOG_HINT, GL_NICEST); break;
+      case FM_Exp: glFogi(GL_FOG_MODE, GL_EXP); glEnable(GL_FOG); glHint(GL_FOG_HINT, GL_NICEST); break;
+      case FM_Exp2: glFogi(GL_FOG_MODE, GL_EXP2); glEnable(GL_FOG); glHint(GL_FOG_HINT, GL_NICEST); break;
+      default: glDisable(GL_FOG); break;
+    }
+  }
+}
+
+IMPLEMENT_FUNCTION(VGLVideo, set_glFogDensity) {
+  P_GET_FLOAT(v);
+  if (mInited) glFogf(GL_FOG_DENSITY, v);
+}
+
+IMPLEMENT_FUNCTION(VGLVideo, set_glFogStart) {
+  P_GET_FLOAT(v);
+  if (mInited) glFogf(GL_FOG_START, v);
+}
+
+IMPLEMENT_FUNCTION(VGLVideo, set_glFogEnd) {
+  P_GET_FLOAT(v);
+  if (mInited) glFogf(GL_FOG_END, v);
+}
+
+// native final static void glSetFogColor (float r, float g, float b, optional float a);
+IMPLEMENT_FUNCTION(VGLVideo, glSetFogColor) {
+  P_GET_FLOAT_OPT(a, 0.0f);
+  P_GET_FLOAT(b);
+  P_GET_FLOAT(g);
+  P_GET_FLOAT(r);
+  GLfloat v[4] = { r, g, b, a };
+  if (mInited) glFogfv(GL_FOG_COLOR, v);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VGLVideo, get_smoothLine) {
   RET_BOOL(smoothLine);
 }

@@ -304,6 +304,19 @@ native final static void glEnd ();
 // with optional texture coordinates
 native final static void glVertex (TVec p, optional float s, optional float t);
 
+enum FogMode {
+  None,
+  Linear,
+  Exp,
+  Exp2,
+}
+
+native final static FogMode glFogMode { set; }
+native final static float glFogDensity { set; }
+native final static float glFogStart { set; }
+native final static float glFogEnd { set; }
+native final static void glSetFogColor (float r, float g, float b, optional float a);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
