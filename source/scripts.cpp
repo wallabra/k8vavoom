@@ -148,8 +148,8 @@ struct CharClassifier {
     }
   }
 };
-CharClassifier charClassifierInit;
 
+CharClassifier charClassifierInit;
 
 
 
@@ -570,6 +570,13 @@ bool VScriptParser::GetString () {
         const char ch = *ScriptPtr++;
         if (CharClassifier::isCNumTerm(ch)) { --ScriptPtr; break; }
         String += ch;
+      }
+      //fprintf(stderr, "<%s> (%d)\n", *String, CharClassifier::isCNumTerm('e'));
+      if (String.length() > 1 && (ScriptPtr[-1] == 'e' || ScriptPtr[-1] == 'E') &&
+          (ScriptPtr[0] == '+' || ScriptPtr[0] == '-' || CharClassifier::isDigit(*ScriptPtr)))
+      {
+        if (!CharClassifier::isDigit(*ScriptPtr)) String += *ScriptPtr++;
+        while (ScriptPtr < ScriptEndPtr && CharClassifier::isDigit(*ScriptPtr)) String += *ScriptPtr++;
       }
     } else if (CharClassifier::isCIdTerm(*ScriptPtr)) {
       // special single-character token
