@@ -522,7 +522,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
           case 'z': index = 2; break;
           default: abort();
         }
-        VExpression *e = new VVectorFieldAccess(op, index, Loc);
+        VExpression *e = new VVectorDirectFieldAccess(op, index, Loc);
         op = nullptr;
         delete this;
         return e->Resolve(ec);
@@ -872,10 +872,10 @@ VStr VDotField::toString () const {
 
 //==========================================================================
 //
-//  VVectorFieldAccess::VVectorFieldAccess
+//  VVectorDirectFieldAccess::VVectorDirectFieldAccess
 //
 //==========================================================================
-VVectorFieldAccess::VVectorFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc)
+VVectorDirectFieldAccess::VVectorDirectFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc)
   : VExpression(ALoc)
   , op(AOp)
   , index(AIndex)
@@ -885,21 +885,21 @@ VVectorFieldAccess::VVectorFieldAccess (VExpression *AOp, int AIndex, const TLoc
 
 //==========================================================================
 //
-//  VVectorFieldAccess::~VVectorFieldAccess
+//  VVectorDirectFieldAccess::~VVectorDirectFieldAccess
 //
 //==========================================================================
-VVectorFieldAccess::~VVectorFieldAccess () {
+VVectorDirectFieldAccess::~VVectorDirectFieldAccess () {
   delete op; op = nullptr;
 }
 
 
 //==========================================================================
 //
-//  VVectorFieldAccess::SyntaxCopy
+//  VVectorDirectFieldAccess::SyntaxCopy
 //
 //==========================================================================
-VExpression *VVectorFieldAccess::SyntaxCopy () {
-  auto res = new VVectorFieldAccess();
+VExpression *VVectorDirectFieldAccess::SyntaxCopy () {
+  auto res = new VVectorDirectFieldAccess();
   DoSyntaxCopyTo(res);
   return res;
 }
@@ -907,12 +907,12 @@ VExpression *VVectorFieldAccess::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VVectorFieldAccess::DoSyntaxCopyTo
+//  VVectorDirectFieldAccess::DoSyntaxCopyTo
 //
 //==========================================================================
-void VVectorFieldAccess::DoSyntaxCopyTo (VExpression *e) {
+void VVectorDirectFieldAccess::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
-  auto res = (VVectorFieldAccess *)e;
+  auto res = (VVectorDirectFieldAccess *)e;
   res->op = (op ? op->SyntaxCopy() : nullptr);
   res->index = index;
 }
@@ -920,10 +920,10 @@ void VVectorFieldAccess::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VVectorFieldAccess::DoResolve
+//  VVectorDirectFieldAccess::DoResolve
 //
 //==========================================================================
-VExpression *VVectorFieldAccess::DoResolve (VEmitContext &ec) {
+VExpression *VVectorDirectFieldAccess::DoResolve (VEmitContext &ec) {
   if (op) op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
   Type = VFieldType(TYPE_Float);
@@ -933,10 +933,10 @@ VExpression *VVectorFieldAccess::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VVectorFieldAccess::Emit
+//  VVectorDirectFieldAccess::Emit
 //
 //==========================================================================
-void VVectorFieldAccess::Emit (VEmitContext &ec) {
+void VVectorDirectFieldAccess::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
   ec.AddStatement(OPC_VectorDirect, index, Loc);
@@ -945,10 +945,10 @@ void VVectorFieldAccess::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VVectorFieldAccess::toString
+//  VVectorDirectFieldAccess::toString
 //
 //==========================================================================
-VStr VVectorFieldAccess::toString () const {
+VStr VVectorDirectFieldAccess::toString () const {
   return e2s(op)+"."+(index == 0 ? VStr("x") : index == 1 ? VStr("y") : index == 2 ? VStr("z") : VStr(index));
 }
 
