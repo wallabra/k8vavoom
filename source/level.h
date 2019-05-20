@@ -681,55 +681,46 @@ private:
   void doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
 
   void eventBeforeWorldTick (float deltaTime) {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("BeforeWorldTick"));
-    P_PASS_SELF;
-    P_PASS_FLOAT(deltaTime);
-    EV_RET_VOID_IDX(mtindex);
+    if (deltaTime <= 0.0f) return;
+    static VMethodProxy method("BeforeWorldTick");
+    vobjPutParam(this, deltaTime);
+    VMT_RET_VOID(method);
   }
 
   void eventAfterWorldTick (float deltaTime) {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterWorldTick"));
-    P_PASS_SELF;
-    P_PASS_FLOAT(deltaTime);
-    EV_RET_VOID_IDX(mtindex);
+    if (deltaTime <= 0.0f) return;
+    static VMethodProxy method("AfterWorldTick");
+    vobjPutParam(this, deltaTime);
+    VMT_RET_VOID(method);
   }
 
   void eventEntitySpawned (VEntity *e) {
     if (e) {
-      static int mtindex = -666;
-      if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("OnEntitySpawned"));
-      P_PASS_SELF;
-      P_PASS_REF(e);
-      EV_RET_VOID_IDX(mtindex);
+      static VMethodProxy method("OnEntitySpawned");
+      vobjPutParam(this, e);
+      VMT_RET_VOID(method);
     }
   }
 
   void eventEntityDying (VEntity *e) {
     if (e) {
-      static int mtindex = -666;
-      if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("OnEntityDying"));
-      P_PASS_SELF;
-      P_PASS_REF(e);
-      EV_RET_VOID_IDX(mtindex);
+      static VMethodProxy method("OnEntityDying");
+      vobjPutParam(this, e);
+      VMT_RET_VOID(method);
     }
   }
 
-
   void eventKnownMapBugFixer () {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("KnownMapBugFixer"));
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(mtindex);
+    static VMethodProxy method("KnownMapBugFixer");
+    vobjPutParam(this);
+    VMT_RET_VOID(method);
   }
 
 public:
   void eventAfterUnarchiveThinkers () {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterUnarchiveThinkers"));
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(mtindex);
+    static VMethodProxy method("AfterUnarchiveThinkers");
+    vobjPutParam(this);
+    VMT_RET_VOID(method);
   }
 
 private:
