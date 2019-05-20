@@ -293,7 +293,7 @@ void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint) {
 //
 //==========================================================================
 void P_InitThinkers () {
-  VThinker::FIndex_Tick = VThinker::StaticClass()->GetMethodIndex(NAME_Tick);
+  //VThinker::FIndex_Tick = VThinker::StaticClass()->GetMethodIndex(NAME_Tick);
 }
 
 

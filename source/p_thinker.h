@@ -63,8 +63,8 @@ class VThinker : public VGameObject {
   };
   vuint32 ThinkerFlags;
 
-public:
-  static int FIndex_Tick;
+//public:
+  //static int FIndex_Tick;
 
 public:
   //VThinker ();
