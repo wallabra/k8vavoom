@@ -408,6 +408,7 @@ enum {
   DECLARE_OPC(VIScaleVarDrop, None),
 
   DECLARE_OPC(VectorDirect, Byte),
+  DECLARE_OPC(VectorSwizzleDirect, Short),
 
   DECLARE_OPC(FloatToBool, None),
   DECLARE_OPC(VectorToBool, None),

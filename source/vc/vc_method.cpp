@@ -493,14 +493,14 @@ void VMethod::DumpAsm () {
         dprintf(" %s", *Package->GetStringByIndex(Instructions[s].Arg1).quote());
         break;
       case OPCARGS_FieldOffset:
-        dprintf(" %s", *Instructions[s].Member->Name);
+        if (Instructions[s].Member) dprintf(" %s", *Instructions[s].Member->Name); else dprintf(" (0)");
         break;
       case OPCARGS_VTableIndex:
         dprintf(" %s", *Instructions[s].Member->Name);
         break;
       case OPCARGS_VTableIndex_Byte:
       case OPCARGS_FieldOffset_Byte:
-        dprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2);
+        if (Instructions[s].Member) dprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2); else dprintf(" (0)%d", Instructions[s].Arg2);
         break;
       case OPCARGS_TypeSize:
       case OPCARGS_Type:
@@ -626,13 +626,21 @@ void VMethod::CompileCode () {
       case OPCARGS_String: WritePtr((void *)&(GetPackage()->GetStringByIndex(Instructions[i].Arg1))); break;
       case OPCARGS_FieldOffset:
         // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        if (Instructions[i].Member) {
+          Instructions[i].Member->Outer->PostLoad();
+          WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        } else {
+          WriteInt32(0);
+        }
         break;
       case OPCARGS_FieldOffsetS:
         // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        if (Instructions[i].Member) {
+          Instructions[i].Member->Outer->PostLoad();
+          WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        } else {
+          WriteInt16(0);
+        }
         break;
       case OPCARGS_VTableIndex:
         // make sure class virtual table has been calculated
@@ -658,14 +666,22 @@ void VMethod::CompileCode () {
         break;
       case OPCARGS_FieldOffset_Byte:
         // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        if (Instructions[i].Member) {
+          Instructions[i].Member->Outer->PostLoad();
+          WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        } else {
+          WriteInt32(0);
+        }
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_FieldOffsetS_Byte:
         // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        if (Instructions[i].Member) {
+          Instructions[i].Member->Outer->PostLoad();
+          WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        } else {
+          WriteInt16(0);
+        }
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;

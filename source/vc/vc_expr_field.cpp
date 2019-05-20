@@ -515,11 +515,11 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     if (!type.Struct) {
       // try to parse swizzle
       const char *s = *FieldName;
-      int swidx = VVectorDirectFieldAccess::ParseOneSwizzle(s);
-      if (swidx >= 0 && !s[0]) {
-        // this is something that creates a vector without a struct, and wants a field
+      if (!s[1] && (s[0] == 'x' || s[0] == 'y' || s[0] == 'z')) {
+        // field access
         if (assType != AssType::AssTarget) {
-          VExpression *e = new VVectorDirectFieldAccess(op, swidx, Loc);
+          int idx = (s[0] == 'x' ? 0 : s[0] == 'y' ? 1 : 2);
+          VExpression *e = new VVectorDirectFieldAccess(op, idx, Loc);
           op = nullptr;
           delete this;
           return e->Resolve(ec);
@@ -528,11 +528,47 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
           delete this;
           return nullptr;
         }
+      } else {
+        int swidx = VVectorSwizzleExpr::ParseSwizzles(s);
+        if (swidx >= 0) {
+          // vector swizzling
+          if (assType != AssType::AssTarget) {
+            VExpression *e = new VVectorSwizzleExpr(op, swidx, true, Loc);
+            op = nullptr;
+            delete this;
+            return e->Resolve(ec);
+          } else {
+            ParseError(Loc, "Cannot assign to local vector swizzle `%s`", *FieldName);
+            delete this;
+            return nullptr;
+          }
+        }
       }
-      // bad swizzle, ignore it
+      // bad swizzle or field access, process with normal resolution
     }
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
+      // try to parse swizzle
+      const char *s = *FieldName;
+      int swidx = VVectorSwizzleExpr::ParseSwizzles(s);
+      if (swidx >= 0) {
+        check(type.Struct);
+        // vector swizzling
+        if (assType != AssType::AssTarget) {
+          //int opflags = op->Flags;
+          op->Flags &= ~FIELD_ReadOnly;
+          op->RequestAddressOf();
+          VExpression *e = new VVectorSwizzleExpr(op, swidx, false, Loc);
+          //e->Flags |= opflags&FIELD_ReadOnly;
+          op = nullptr;
+          delete this;
+          return e->Resolve(ec);
+        } else {
+          ParseError(Loc, "Cannot assign to vector swizzle `%s`", *FieldName);
+          delete this;
+          return nullptr;
+        }
+      }
       // convert to method, 'cause why not?
       if (assType != AssType::AssTarget) {
         VExpression *ufcsArgs[1];
@@ -871,33 +907,6 @@ VStr VDotField::toString () const {
 
 //==========================================================================
 //
-//  VVectorDirectFieldAccess::ParseOneSwizzle
-//
-//  returns swizzle or -1
-//
-//==========================================================================
-int VVectorDirectFieldAccess::ParseOneSwizzle (const char *&s) {
-  if (!s) return -1;
-  while (*s && s[0] == '_') ++s;
-  if (!s[0]) return -1;
-  bool negated = (s[0] == 'm');
-  if (negated) ++s;
-  int res = (negated ? VCVSE_Negate : 0);
-  switch (s[0]) {
-    case '0': ++s; res |= VCVSE_Zero; break;
-    case '1': ++s; res |= VCVSE_One; break;
-    case 'x': ++s; res |= VCVSE_X; break;
-    case 'y': ++s; res |= VCVSE_Y; break;
-    case 'z': ++s; res |= VCVSE_Z; break;
-    default: return -1;
-  }
-  while (*s && s[0] == '_') ++s;
-  return res;
-}
-
-
-//==========================================================================
-//
 //  VVectorDirectFieldAccess::VVectorDirectFieldAccess
 //
 //==========================================================================
@@ -950,7 +959,8 @@ void VVectorDirectFieldAccess::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VVectorDirectFieldAccess::DoResolve (VEmitContext &ec) {
-  if (op) op = op->Resolve(ec);
+  // op is already resolved
+  //if (op) op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
   Type = VFieldType(TYPE_Float);
   return this;
@@ -976,6 +986,138 @@ void VVectorDirectFieldAccess::Emit (VEmitContext &ec) {
 //==========================================================================
 VStr VVectorDirectFieldAccess::toString () const {
   return e2s(op)+"."+(index == 0 ? VStr("x") : index == 1 ? VStr("y") : index == 2 ? VStr("z") : VStr(index));
+}
+
+
+
+//==========================================================================
+//
+//  VVectorDirectFieldAccess::ParseOneSwizzle
+//
+//  returns swizzle or -1
+//
+//==========================================================================
+int VVectorSwizzleExpr::ParseOneSwizzle (const char *&s) {
+  if (!s) return -1;
+  while (*s && s[0] == '_') ++s;
+  if (!s[0]) return -1;
+  bool negated = (s[0] == 'm');
+  if (negated) ++s;
+  int res = (negated ? VCVSE_Negate : 0);
+  switch (s[0]) {
+    case '0': ++s; res |= VCVSE_Zero; break;
+    case '1': ++s; res |= VCVSE_One; break;
+    case 'x': ++s; res |= VCVSE_X; break;
+    case 'y': ++s; res |= VCVSE_Y; break;
+    case 'z': ++s; res |= VCVSE_Z; break;
+    default: return -1;
+  }
+  while (*s && s[0] == '_') ++s;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::ParseSwizzles
+//
+//==========================================================================
+int VVectorSwizzleExpr::ParseSwizzles (const char *s) {
+  int sv1 = ParseOneSwizzle(s);
+  if (sv1 < 0) return -1;
+  int sv2 = (*s ? ParseOneSwizzle(s) : 0);
+  if (sv2 < 0) return -1;
+  int sv3 = (*s ? ParseOneSwizzle(s) : 0);
+  if (sv3 < 0) return -1;
+  return sv1|(sv2<<VCVSE_Shift)|(sv3<<(VCVSE_Shift*2));
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::VVectorSwizzleExpr
+//
+//==========================================================================
+VVectorSwizzleExpr::VVectorSwizzleExpr (VExpression *AOp, int ASwizzle, bool ADirect, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+  , index(ASwizzle)
+  , direct(ADirect)
+{
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::~VVectorSwizzleExpr
+//
+//==========================================================================
+VVectorSwizzleExpr::~VVectorSwizzleExpr () {
+  delete op; op = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::SyntaxCopy
+//
+//==========================================================================
+VExpression *VVectorSwizzleExpr::SyntaxCopy () {
+  auto res = new VVectorSwizzleExpr();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::DoSyntaxCopyTo
+//
+//==========================================================================
+void VVectorSwizzleExpr::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VVectorSwizzleExpr *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->index = index;
+  res->direct = direct;
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::DoResolve
+//
+//==========================================================================
+VExpression *VVectorSwizzleExpr::DoResolve (VEmitContext &ec) {
+  // op is already resolved
+  //if (op) op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  Type = VFieldType(TYPE_Vector);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::Emit
+//
+//==========================================================================
+void VVectorSwizzleExpr::Emit (VEmitContext &ec) {
+  if (!op) return;
+  op->Emit(ec);
+  // for indirect, load a vector, and then issue direct swizzle
+  if (!direct) ec.AddStatement(OPC_VFieldValue, (VField *)nullptr, Loc);
+  ec.AddStatement(OPC_VectorSwizzleDirect, index, Loc);
+}
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr::toString
+//
+//==========================================================================
+VStr VVectorSwizzleExpr::toString () const {
+  return e2s(op)+va("_swizzle(0x%04x:%c)", (unsigned)index, (direct ? 'd' : 'i'));
 }
 
 

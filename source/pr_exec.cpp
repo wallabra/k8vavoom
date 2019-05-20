@@ -1917,17 +1917,37 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VectorDirect)
-        switch (ip[1]&VVectorDirectFieldAccess::VCVSE_ElementMask) {
-          case VVectorDirectFieldAccess::VCVSE_Zero: sp[-3].f = 0; break;
-          case VVectorDirectFieldAccess::VCVSE_One: sp[-3].f = 1; break;
-          case VVectorDirectFieldAccess::VCVSE_X: break;
-          case VVectorDirectFieldAccess::VCVSE_Y: sp[-3].f = sp[-2].f; break;
-          case VVectorDirectFieldAccess::VCVSE_Z: sp[-3].f = sp[-1].f; break;
-          default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x", ip[1]); }
+        switch (ip[1]) {
+          case 0: break;
+          case 1: sp[-3].f = sp[-2].f; break;
+          case 2: sp[-3].f = sp[-1].f; break;
+          default: { cstDump(ip); Sys_Error("Invalid direct vector access index %u", (unsigned)ip[1]); }
         }
-        if (ip[1]&VVectorDirectFieldAccess::VCVSE_Negate) sp[-3].f = -sp[-3].f;
         ip += 2;
         sp -= 2;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_VectorSwizzleDirect)
+        {
+          TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+          int sw = ip[1]|(ip[2]<<8);
+          for (int spidx = 0; spidx <= 2; ++spidx) {
+            //GLog.Logf("SWD(0): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VVectorSwizzleExpr::VCVSE_ElementMask), (sw&VVectorSwizzleExpr::VCVSE_Negate));
+            switch (sw&VVectorSwizzleExpr::VCVSE_ElementMask) {
+              case VVectorSwizzleExpr::VCVSE_Zero: sp[-3+spidx].f = 0.0f; break;
+              case VVectorSwizzleExpr::VCVSE_One: sp[-3+spidx].f = 1.0f; break;
+              case VVectorSwizzleExpr::VCVSE_X: sp[-3+spidx].f = v.x; break;
+              case VVectorSwizzleExpr::VCVSE_Y: sp[-3+spidx].f = v.y; break;
+              case VVectorSwizzleExpr::VCVSE_Z: sp[-3+spidx].f = v.z; break;
+              default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x (0x%01x)", ip[1], sw&VVectorSwizzleExpr::VCVSE_Mask); }
+            }
+            if (sw&VVectorSwizzleExpr::VCVSE_Negate) sp[-3+spidx].f = -sp[-3+spidx].f;
+            //GLog.Logf("SWD(1): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VVectorSwizzleExpr::VCVSE_ElementMask), (sw&VVectorSwizzleExpr::VCVSE_Negate));
+            sw >>= VVectorSwizzleExpr::VCVSE_Shift;
+          }
+          //GLog.Logf("SWD: v=(%g,%g,%g); res=(%g,%g,%g)", v.x, v.y, v.z, sp[-3].f, sp[-2].f, sp[-1].f);
+        }
+        ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FloatToBool)

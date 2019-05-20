@@ -696,6 +696,9 @@ struct Instr {
         spdelta -= 2; // only one must left!
         return;
 
+      case OPC_VectorSwizzleDirect:
+        return;
+
       case OPC_FloatToBool:
         return;
       case OPC_VectorToBool:
@@ -1158,14 +1161,14 @@ struct Instr {
         }
         break;
       case OPCARGS_FieldOffset:
-        fprintf(stderr, " %s", *Member->Name);
+        if (Member) fprintf(stderr, " %s", *Member->Name); else fprintf(stderr, " (0)");
         break;
       case OPCARGS_VTableIndex:
         fprintf(stderr, " %s", *Member->Name);
         break;
       case OPCARGS_VTableIndex_Byte:
       case OPCARGS_FieldOffset_Byte:
-        fprintf(stderr, " %s %d", *Member->Name, Arg2);
+        if (Member) fprintf(stderr, " %s %d", *Member->Name, Arg2); else fprintf(stderr, " (0+%d)", Arg2);
         break;
       case OPCARGS_TypeSize:
       case OPCARGS_Type:
@@ -1623,7 +1626,7 @@ void VMCOptimizer::optimizeLoads () {
     switch (insn.Opcode) {
       case OPC_PushVFunc:
         // make sure class virtual table has been calculated
-        insn.Member->Outer->PostLoad();
+        if (insn.Member) insn.Member->Outer->PostLoad();
         //if (((VMethod *)insn.Member)->VTableIndex < 256) insn.Opcode = OPC_PushVFuncB;
         break;
       case OPC_VCall:
@@ -1650,8 +1653,13 @@ void VMCOptimizer::optimizeLoads () {
         // no short form for slices
         if (insn.Opcode != OPC_SliceFieldValue) {
           // make sure struct / class field offsets have been calculated
-          insn.Member->Outer->PostLoad();
-          if (((VField *)insn.Member)->Ofs <= MAX_VINT16) ++insn.Opcode;
+          if (insn.Member) {
+            insn.Member->Outer->PostLoad();
+            if (((VField *)insn.Member)->Ofs <= MAX_VINT16) ++insn.Opcode;
+          } else {
+            // always zero
+            ++insn.Opcode;
+          }
         }
         break;
       case OPC_ArrayElement:

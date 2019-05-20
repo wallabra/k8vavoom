@@ -134,9 +134,40 @@ protected:
 //  VVectorDirectFieldAccess
 //
 //  this accesses "immediate" (i.e. pure stack-pushed) vector field
+//  op must be already resolved
+//  this is created from `VDotField` resolver
 //
 //==========================================================================
 class VVectorDirectFieldAccess : public VExpression {
+public:
+  VExpression *op;
+  int index;
+
+  VVectorDirectFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc);
+  virtual ~VVectorDirectFieldAccess () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  //virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VVectorDirectFieldAccess () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VVectorSwizzleExpr
+//
+//  this accesses "immediate" (i.e. pure stack-pushed) vector field
+//  op must be already resolved
+//  this is created from `VDotField` resolver
+//
+//==========================================================================
+class VVectorSwizzleExpr : public VExpression {
 public:
   // this is used in vector swizzling
   enum VCVectorSwizzleElem {
@@ -154,13 +185,15 @@ public:
 public:
   // returns swizzle or -1
   static int ParseOneSwizzle (const char *&s);
+  static int ParseSwizzles (const char *s);
 
 public:
   VExpression *op;
-  int index; // actually, swizzle
+  int index; // actually, three swizzles
+  bool direct;
 
-  VVectorDirectFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc);
-  virtual ~VVectorDirectFieldAccess () override;
+  VVectorSwizzleExpr (VExpression *AOp, int ASwizzle, bool ADirect, const TLocation &ALoc);
+  virtual ~VVectorSwizzleExpr () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   //virtual void RequestAddressOf () override;
@@ -169,7 +202,7 @@ public:
   virtual VStr toString () const override;
 
 protected:
-  VVectorDirectFieldAccess () {}
+  VVectorSwizzleExpr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
