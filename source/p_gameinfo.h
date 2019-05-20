@@ -82,62 +82,16 @@ public:
 
   bool IsPaused ();
 
-  void eventInit () {
-    P_PASS_SELF;
-    EV_RET_VOID("Init");
-  }
-
-  void eventPostDecorateInit () {
-    P_PASS_SELF;
-    EV_RET_VOID("PostDecorateInit");
-  }
-
-  void eventInitNewGame (int skill) {
-    P_PASS_SELF;
-    P_PASS_INT(skill);
-    EV_RET_VOID("InitNewGame");
-  }
-
-  VWorldInfo *eventCreateWorldInfo () {
-    P_PASS_SELF;
-    EV_RET_REF(VWorldInfo, "CreateWorldInfo");
-  }
-
-  void eventTranslateLevel (VLevel *InLevel) {
-    P_PASS_SELF;
-    P_PASS_REF(InLevel);
-    EV_RET_VOID("TranslateLevel");
-  }
-
-  void eventSpawnWorld (VLevel *InLevel) {
-    P_PASS_SELF;
-    P_PASS_REF(InLevel);
-    EV_RET_VOID("SpawnWorld");
-  }
-
-  VName eventGetConScriptName (VName LevelName) {
-    P_PASS_SELF;
-    P_PASS_NAME(LevelName);
-    EV_RET_NAME("GetConScriptName");
-  }
-
-  void eventCmdWeaponSection (const VStr &Section) {
-    P_PASS_SELF;
-    P_PASS_STR(Section);
-    EV_RET_VOID("CmdWeaponSection");
-  }
-
-  void eventCmdSetSlot (TArray<VStr> *Args) {
-    P_PASS_SELF;
-    P_PASS_PTR(Args);
-    EV_RET_VOID("CmdSetSlot");
-  }
-
-  void eventCmdAddSlotDefault (TArray<VStr> *Args) {
-    P_PASS_SELF;
-    P_PASS_PTR(Args);
-    EV_RET_VOID("CmdAddSlotDefault");
-  }
+  void eventInit () { static VMethodProxy method("Init"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventPostDecorateInit () { static VMethodProxy method("PostDecorateInit"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventInitNewGame (int skill) { static VMethodProxy method("InitNewGame"); vobjPutParam(this, skill); VMT_RET_VOID(method); }
+  VWorldInfo *eventCreateWorldInfo () { static VMethodProxy method("CreateWorldInfo"); vobjPutParam(this); VMT_RET_REF(VWorldInfo, method); }
+  void eventTranslateLevel (VLevel *InLevel) { static VMethodProxy method("TranslateLevel"); vobjPutParam(this, InLevel); VMT_RET_VOID(method); }
+  void eventSpawnWorld (VLevel *InLevel) { static VMethodProxy method("SpawnWorld"); vobjPutParam(this, InLevel); VMT_RET_VOID(method); }
+  VName eventGetConScriptName (VName LevelName) { static VMethodProxy method("GetConScriptName"); vobjPutParam(this, LevelName); VMT_RET_NAME(method); }
+  void eventCmdWeaponSection (const VStr &Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParam(this, Section); VMT_RET_VOID(method); }
+  void eventCmdSetSlot (TArray<VStr> *Args) { static VMethodProxy method("CmdSetSlot"); vobjPutParam(this, (void *)Args); VMT_RET_VOID(method); }
+  void eventCmdAddSlotDefault (TArray<VStr> *Args) { static VMethodProxy method("CmdAddSlotDefault"); vobjPutParam(this, (void *)Args); VMT_RET_VOID(method); }
 
   DECLARE_FUNCTION(get_isPaused)
 };

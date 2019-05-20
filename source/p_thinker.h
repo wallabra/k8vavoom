@@ -104,9 +104,10 @@ public:
   DECLARE_FUNCTION(RadiusThings)
 
   void eventClientTick (float DeltaTime) {
-    P_PASS_SELF;
-    P_PASS_FLOAT(DeltaTime);
-    EV_RET_VOID(NAME_ClientTick);
+    if (DeltaTime <= 0.0f) return;
+    static VMethodProxy method("ClientTick");
+    vobjPutParam(this, DeltaTime);
+    VMT_RET_VOID(method);
   }
 };
 
