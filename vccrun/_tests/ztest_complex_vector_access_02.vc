@@ -1,0 +1,9 @@
+class Main : Object;
+
+
+void main () {
+  TVec v1 = vector(1, 2, 3);
+  writeln(v1.mz_x_1);
+  TVec v2 = v1.my_0_z;
+  writeln(v2);
+}
