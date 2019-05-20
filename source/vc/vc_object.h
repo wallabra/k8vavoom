@@ -385,6 +385,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define P_PASS_PTR(v)    PR_PushPtr(v)
 #define P_PASS_SELF      PR_PushPtr(this)
 
+/*
 // macros for calling VavoomC methods with different return types
 #define EV_RET_VOID(v)    (void)ExecuteFunction(GetVFunction(v))
 #define EV_RET_INT(v)     return ExecuteFunction(GetVFunction(v)).getInt()
@@ -394,7 +395,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define EV_RET_NAME(v)    return ExecuteFunction(GetVFunction(v)).getName()
 #define EV_RET_STR(v)     return ExecuteFunction(GetVFunction(v)).getStr()
 #define EV_RET_VEC(v)     return ExecuteFunction(GetVFunction(v)).getVector()
-//#define EV_RET_AVEC(v)    Sys_Error("Not implemented") /*ExecuteFunction(GetVFunction(v))*/
+//#define EV_RET_AVEC(v)    Sys_Error("Not implemented") / *ExecuteFunction(GetVFunction(v))* /
 #define EV_RET_REF(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getObject()
 #define EV_RET_PTR(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getClass()
 
@@ -409,6 +410,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 //#define EV_RET_AVEC_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getVector()
 #define EV_RET_REF_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getObject()
 #define EV_RET_PTR_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getClass()
+*/
 
 // macros for calling VavoomC methods with different return types
 // this is for `VMethodProxy`
