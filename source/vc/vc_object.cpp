@@ -291,6 +291,23 @@ bool VMethodProxy::Resolve (VObject *Self) {
   Class = Self->GetClass();
   Method = Class->FindAccessibleMethod(n);
   if (!Method) return false;
+  // find outer class
+  for (VMemberBase *o = Method->Outer; o; o = o->Outer) {
+    if (o->MemberType == MEMBER_Class || o->MemberType == MEMBER_DecorateClass) {
+      VClass *cls = (VClass *)o;
+      // now look into parent classes
+      while (cls) {
+        if (!cls->FindAccessibleMethod(n)) {
+          //GLog.Logf("BOO! '%s' (%s)", *n, cls->GetName());
+          break;
+        }
+        Class = cls;
+        cls = cls->ParentClass;
+      }
+      //GLog.Logf("MT `%s`: class is `%s`, real class is `%s`", MethodName, Self->GetClass()->GetName(), Class->GetName());
+    }
+  }
+  //GLog.Logf("MT.Outer: `%s`", (Method->Outer ? Method->Outer->GetName() : "<null>"));
   return !!Method;
 }
 
@@ -314,7 +331,10 @@ VFuncRes VMethodProxy::Execute (VObject *Self) {
   if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (!(Method->Flags&FUNC_Static)) {
     check(Self);
-    check(Self->IsA(Class));
+    if (!Self->IsA(Class)) {
+      //VObject::VMDumpCallStack();
+      Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), Class->GetName(), MethodName);
+    }
   }
   if (Method->VTableIndex != -1) {
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);

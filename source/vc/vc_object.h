@@ -551,7 +551,7 @@ struct VOptPutParam##tname_ { \
   bool specified; \
   type_ value; \
   VOptPutParam##tname_ () : specified(false), value(defval_) {} \
-  VOptPutParam##tname_ (type_ avalue) : specified(true), value(avalue) {} \
+  VOptPutParam##tname_ (type_ avalue, bool aspecified=true) : specified(aspecified), value(avalue) {} \
   inline operator type_ () { return value; } \
 }; \
 static __attribute__((unused)) inline void vobj_put_param (VOptPutParam##tname_ &v) { \
