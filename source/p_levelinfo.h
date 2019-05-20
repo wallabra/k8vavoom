@@ -195,209 +195,92 @@ public:
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   // final bool CheckLock (Entity user, int lock, bool door)
-  bool eventCheckLock (VEntity *user, int lock, bool door) {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("CheckLock"));
-    P_PASS_SELF;
-    P_PASS_REF(user);
-    P_PASS_INT(lock);
-    P_PASS_BOOL(door);
-    EV_RET_BOOL_IDX(mtindex);
-  }
-
-  void eventSpawnSpecials () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_SpawnSpecials);
-  }
-  void eventUpdateSpecials () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_UpdateSpecials);
-  }
-  void eventAfterUnarchiveThinkers () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_AfterUnarchiveThinkers);
-  }
-  void eventPolyThrustMobj (VEntity *A, TVec thrustDir, polyobj_t *po) {
-    P_PASS_SELF;
-    P_PASS_REF(A);
-    P_PASS_VEC(thrustDir);
-    P_PASS_PTR(po);
-    EV_RET_VOID(NAME_PolyThrustMobj);
-  }
-  void eventPolyCrushMobj (VEntity *A, polyobj_t *po) {
-    P_PASS_SELF;
-    P_PASS_REF(A);
-    P_PASS_PTR(po);
-    EV_RET_VOID(NAME_PolyCrushMobj);
-  }
-  bool eventTagBusy (int tag) {
-    P_PASS_SELF;
-    P_PASS_INT(tag);
-    EV_RET_BOOL(NAME_TagBusy);
-  }
-  bool eventPolyBusy (int polyobj) {
-    P_PASS_SELF;
-    P_PASS_INT(polyobj);
-    EV_RET_BOOL(NAME_PolyBusy);
-  }
-  int eventThingCount (int type, VName TypeName, int tid, int SectorTag) {
-    P_PASS_SELF;
-    P_PASS_INT(type);
-    P_PASS_NAME(TypeName);
-    P_PASS_INT(tid);
-    P_PASS_INT(SectorTag);
-    EV_RET_INT(NAME_ThingCount);
-  }
+  bool eventCheckLock (VEntity *user, int lock, bool door) { static VMethodProxy method("CheckLock"); vobjPutParam(this, user, lock, door); VMT_RET_BOOL(method); }
+  void eventSpawnSpecials () { static VMethodProxy method("SpawnSpecials"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventUpdateSpecials () { static VMethodProxy method("UpdateSpecials"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventAfterUnarchiveThinkers () { static VMethodProxy method("AfterUnarchiveThinkers"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventPolyThrustMobj (VEntity *A, TVec thrustDir, polyobj_t *po) { static VMethodProxy method("PolyThrustMobj"); vobjPutParam(this, A, thrustDir, po); VMT_RET_VOID(method); }
+  void eventPolyCrushMobj (VEntity *A, polyobj_t *po) { static VMethodProxy method("PolyCrushMobj"); vobjPutParam(this, A, po); VMT_RET_VOID(method); }
+  bool eventTagBusy (int tag) { static VMethodProxy method("TagBusy"); vobjPutParam(this, tag); VMT_RET_BOOL(method); }
+  bool eventPolyBusy (int polyobj) { static VMethodProxy method("PolyBusy"); vobjPutParam(this, polyobj); VMT_RET_BOOL(method); }
+  int eventThingCount (int type, VName TypeName, int tid, int SectorTag) { static VMethodProxy method("ThingCount"); vobjPutParam(this, type, TypeName, tid, SectorTag); VMT_RET_INT(method); }
   int eventExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
                                  int Arg4, int Arg5, line_t *Line, int Side, VEntity *A)
   {
-    P_PASS_SELF;
-    P_PASS_INT(Special);
-    P_PASS_INT(Arg1);
-    P_PASS_INT(Arg2);
-    P_PASS_INT(Arg3);
-    P_PASS_INT(Arg4);
-    P_PASS_INT(Arg5);
-    P_PASS_PTR(Line);
-    P_PASS_INT(Side);
-    P_PASS_REF(A);
-    EV_RET_INT(NAME_ExecuteActionSpecial);
+    static VMethodProxy method("ExecuteActionSpecial");
+    vobjPutParam(this, Special, Arg1, Arg2, Arg3, Arg4, Arg5, Line, Side, A);
+    VMT_RET_INT(method);
   }
   int eventEV_ThingProjectile (int tid, int type, int angle, int speed,
                                int vspeed, int gravity, int newtid,
                                VName TypeName, VEntity *Activator)
   {
-    P_PASS_SELF;
-    P_PASS_INT(tid);
-    P_PASS_INT(type);
-    P_PASS_INT(angle);
-    P_PASS_INT(speed);
-    P_PASS_INT(vspeed);
-    P_PASS_INT(gravity);
-    P_PASS_INT(newtid);
-    P_PASS_NAME(TypeName);
-    P_PASS_REF(Activator);
-    EV_RET_INT(NAME_EV_ThingProjectile);
+    static VMethodProxy method("EV_ThingProjectile");
+    vobjPutParam(this, tid, type, angle, speed, vspeed, gravity, newtid, TypeName, Activator);
+    VMT_RET_INT(method);
   }
   void eventStartPlaneWatcher (VEntity *it, line_t *line, int lineSide,
                                bool ceiling, int tag, int height, int special,
                                int arg1, int arg2, int arg3, int arg4, int arg5)
   {
-    P_PASS_SELF;
-    P_PASS_REF(it);
-    P_PASS_PTR(line);
-    P_PASS_INT(lineSide);
-    P_PASS_BOOL(ceiling);
-    P_PASS_INT(tag);
-    P_PASS_INT(height);
-    P_PASS_INT(special);
-    P_PASS_INT(arg1);
-    P_PASS_INT(arg2);
-    P_PASS_INT(arg3);
-    P_PASS_INT(arg4);
-    P_PASS_INT(arg5);
-    EV_RET_VOID(NAME_StartPlaneWatcher);
+    static VMethodProxy method("StartPlaneWatcher");
+    vobjPutParam(this, it, line, lineSide, ceiling, tag, height, special, arg1, arg2, arg3, arg4, arg5);
+    VMT_RET_VOID(method);
   }
-  void eventSpawnMapThing (mthing_t *mthing) {
-    P_PASS_SELF;
-    P_PASS_PTR(mthing);
-    EV_RET_VOID(NAME_SpawnMapThing);
-  }
-  void eventUpdateParticle (particle_t *p, float DeltaTime) {
-    P_PASS_SELF;
-    P_PASS_PTR(p);
-    P_PASS_FLOAT(DeltaTime);
-    EV_RET_VOID(NAME_UpdateParticle);
-  }
+  void eventSpawnMapThing (mthing_t *mthing) { static VMethodProxy method("SpawnMapThing"); vobjPutParam(this, mthing); VMT_RET_VOID(method); }
+  void eventUpdateParticle (particle_t *p, float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("UpdateParticle"); vobjPutParam(this, p, DeltaTime); VMT_RET_VOID(method); }
   //final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool forced)
   int eventAcsSpawnThing (VName Name, TVec Org, int Tid, float Angle, bool forced=false) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    P_PASS_VEC(Org);
-    P_PASS_INT(Tid);
-    P_PASS_FLOAT(Angle);
-    P_PASS_BOOL(forced);
-    EV_RET_INT(NAME_AcsSpawnThing);
+    static VMethodProxy method("AcsSpawnThing");
+    vobjPutParam(this, Name, Org, Tid, Angle, forced);
+    VMT_RET_INT(method);
   }
   int eventAcsSpawnSpot (VName Name, int SpotTid, int Tid, float Angle, bool forced=false) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    P_PASS_INT(SpotTid);
-    P_PASS_INT(Tid);
-    P_PASS_FLOAT(Angle);
-    P_PASS_BOOL(forced);
-    EV_RET_INT(NAME_AcsSpawnSpot);
+    static VMethodProxy method("AcsSpawnSpot");
+    vobjPutParam(this, Name, SpotTid, Tid, Angle, forced);
+    VMT_RET_INT(method);
   }
   int eventAcsSpawnSpotFacing (VName Name, int SpotTid, int Tid, bool forced=false) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    P_PASS_INT(SpotTid);
-    P_PASS_INT(Tid);
-    P_PASS_BOOL(forced);
-    EV_RET_INT(NAME_AcsSpawnSpotFacing);
+    static VMethodProxy method("AcsSpawnSpotFacing");
+    vobjPutParam(this, Name, SpotTid, Tid, forced);
+    VMT_RET_INT(method);
   }
   void eventSectorDamage (int Tag, int Amount, VName DamageType, VName ProtectionType, int Flags) {
-    P_PASS_SELF;
-    P_PASS_INT(Tag);
-    P_PASS_INT(Amount);
-    P_PASS_NAME(DamageType);
-    P_PASS_NAME(ProtectionType);
-    P_PASS_INT(Flags);
-    EV_RET_VOID(NAME_SectorDamage);
+    static VMethodProxy method("SectorDamage");
+    vobjPutParam(this, Tag, Amount, DamageType, ProtectionType, Flags);
+    VMT_RET_VOID(method);
   }
   int eventDoThingDamage (int Tid, int Amount, VName DmgType, VEntity *Activator) {
-    P_PASS_SELF;
-    P_PASS_INT(Tid);
-    P_PASS_INT(Amount);
-    P_PASS_NAME(DmgType);
-    P_PASS_REF(Activator);
-    EV_RET_INT(NAME_DoThingDamage);
+    static VMethodProxy method("DoThingDamage");
+    vobjPutParam(this, Tid, Amount, DmgType, Activator);
+    VMT_RET_INT(method);
   }
   void eventSetMarineWeapon (int Tid, int Weapon, VEntity *Activator) {
-    P_PASS_SELF;
-    P_PASS_INT(Tid);
-    P_PASS_INT(Weapon);
-    P_PASS_REF(Activator);
-    EV_RET_VOID(NAME_SetMarineWeapon);
+    static VMethodProxy method("SetMarineWeapon");
+    vobjPutParam(this, Tid, Weapon, Activator);
+    VMT_RET_VOID(method);
   }
   void eventSetMarineSprite (int Tid, VName SrcClass, VEntity *Activator) {
-    P_PASS_SELF;
-    P_PASS_INT(Tid);
-    P_PASS_NAME(SrcClass);
-    P_PASS_REF(Activator);
-    EV_RET_VOID(NAME_SetMarineSprite);
+    static VMethodProxy method("SetMarineSprite");
+    vobjPutParam(this, Tid, SrcClass, Activator);
+    VMT_RET_VOID(method);
   }
   void eventAcsFadeRange (float BlendR1, float BlendG1, float BlendB1,
                           float BlendA1, float BlendR2, float BlendG2, float BlendB2,
                           float BlendA2, float Duration, VEntity *Activator)
   {
-    P_PASS_SELF;
-    P_PASS_FLOAT(BlendR1);
-    P_PASS_FLOAT(BlendG1);
-    P_PASS_FLOAT(BlendB1);
-    P_PASS_FLOAT(BlendA1);
-    P_PASS_FLOAT(BlendR2);
-    P_PASS_FLOAT(BlendG2);
-    P_PASS_FLOAT(BlendB2);
-    P_PASS_FLOAT(BlendA2);
-    P_PASS_FLOAT(Duration);
-    P_PASS_REF(Activator);
-    EV_RET_VOID(NAME_AcsFadeRange);
+    static VMethodProxy method("AcsFadeRange");
+    vobjPutParam(this, BlendR1, BlendG1, BlendB1, BlendA1, BlendR2, BlendG2, BlendB2, BlendA2, Duration, Activator);
+    VMT_RET_VOID(method);
   }
   void eventAcsCancelFade (VEntity *Activator) {
-    P_PASS_SELF;
-    P_PASS_REF(Activator);
-    EV_RET_VOID(NAME_AcsCancelFade);
+    static VMethodProxy method("AcsCancelFade");
+    vobjPutParam(this, Activator);
+    VMT_RET_VOID(method);
   }
   void eventAcsRadiusQuake2 (VEntity *Activator, int tid, int intensity, int duration, int damrad, int tremrad, VName sound) {
-    P_PASS_SELF;
-    P_PASS_REF(Activator);
-    P_PASS_INT(tid);
-    P_PASS_INT(intensity);
-    P_PASS_INT(duration);
-    P_PASS_INT(damrad);
-    P_PASS_INT(tremrad);
-    P_PASS_NAME(sound);
-    EV_RET_VOID(VName("AcsRadiusQuake2"));
+    static VMethodProxy method("AcsRadiusQuake2");
+    vobjPutParam(this, Activator, tid, intensity, duration, damrad, tremrad, sound);
+    VMT_RET_VOID(method);
   }
 };
