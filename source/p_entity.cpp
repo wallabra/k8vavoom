@@ -28,6 +28,7 @@
 
 IMPLEMENT_CLASS(V, Entity);
 
+/*
 int VEntity::FIndex_OnMapSpawn;
 int VEntity::FIndex_BeginPlay;
 int VEntity::FIndex_Destroyed;
@@ -44,6 +45,7 @@ int VEntity::FIndex_CheckInventory;
 int VEntity::FIndex_GetSigilPieces;
 int VEntity::FIndex_MoveThing;
 int VEntity::FIndex_GetStateTime;
+*/
 
 
 struct SavedVObjectPtr {
@@ -63,6 +65,7 @@ static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Dis
 //  VEntity::InitFuncIndexes
 //
 //==========================================================================
+/*
 void VEntity::InitFuncIndexes () {
   FIndex_OnMapSpawn = StaticClass()->GetMethodIndex(NAME_OnMapSpawn);
   FIndex_BeginPlay = StaticClass()->GetMethodIndex(NAME_BeginPlay);
@@ -81,6 +84,7 @@ void VEntity::InitFuncIndexes () {
   FIndex_MoveThing = StaticClass()->GetMethodIndex(NAME_MoveThing);
   FIndex_GetStateTime = StaticClass()->GetMethodIndex(NAME_GetStateTime);
 }
+*/
 
 
 //==========================================================================

@@ -213,7 +213,7 @@ void SV_Init () {
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;
-  VEntity::InitFuncIndexes();
+  //VEntity::InitFuncIndexes();
 
   P_InitSwitchList();
   P_InitTerrainTypes();

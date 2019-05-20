@@ -304,6 +304,7 @@ protected:
   void CopyRegCeiling (sec_region_t *reg, bool setz=true);
 
 public:
+  /*
   static int FIndex_OnMapSpawn;
   static int FIndex_BeginPlay;
   static int FIndex_Destroyed;
@@ -320,12 +321,13 @@ public:
   static int FIndex_GetSigilPieces;
   static int FIndex_MoveThing;
   static int FIndex_GetStateTime;
+  */
 
 public:
   inline float GetFloorNormalZ () const { return EFloor.GetNormalZ(); }
   inline float GetCeilingNormalZ () const { return ECeiling.GetNormalZ(); }
 
-  static void InitFuncIndexes ();
+  //static void InitFuncIndexes ();
 
   // VObject interface
   virtual void Destroy () override;
@@ -350,192 +352,55 @@ public:
     return Ret;
   }
 
-  void eventOnMapSpawn (mthing_t *mthing) {
-    P_PASS_SELF;
-    P_PASS_PTR(mthing);
-    EV_RET_VOID_IDX(FIndex_OnMapSpawn);
+  void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParam(this, mthing); VMT_RET_VOID(method); }
+  void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventDestroyed () { static VMethodProxy method("Destroyed"); vobjPutParam(this); VMT_RET_VOID(method); }
+  bool eventTouch (VEntity *Other) { static VMethodProxy method("Touch"); vobjPutParam(this, Other); VMT_RET_BOOL(method); }
+  void eventCheckForPushSpecial (line_t *line, int side) { static VMethodProxy method("CheckForPushSpecial"); vobjPutParam(this, line, side); VMT_RET_VOID(method); }
+  void eventBlastedHitLine () { static VMethodProxy method("BlastedHitLine"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventHandleFloorclip () { static VMethodProxy method("HandleFloorclip"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventCrossSpecialLine (line_t *ld, int side) { static VMethodProxy method("CrossSpecialLine"); vobjPutParam(this, ld, side); VMT_RET_VOID(method); }
+  bool eventSectorChanged (int CrushChange) { static VMethodProxy method("SectorChanged"); vobjPutParam(this, CrushChange); VMT_RET_BOOL(method); }
+  void eventClearInventory () { static VMethodProxy method("ClearInventory"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventGiveInventory (VName ItemName, int Amount) { static VMethodProxy method("GiveInventory"); vobjPutParam(this, ItemName, Amount); VMT_RET_VOID(method); }
+  void eventTakeInventory (VName ItemName, int Amount) { static VMethodProxy method("TakeInventory"); vobjPutParam(this, ItemName, Amount); VMT_RET_VOID(method); }
+  int eventCheckInventory (VName ItemName) { static VMethodProxy method("CheckInventory"); vobjPutParam(this, ItemName); VMT_RET_INT(method); }
+  int eventUseInventoryName (VName ItemName) { static VMethodProxy method("UseInventoryName"); vobjPutParam(this, ItemName); VMT_RET_INT(method); }
+  int eventGetSigilPieces () { static VMethodProxy method("GetSigilPieces"); vobjPutParam(this); VMT_RET_INT(method); }
+  int eventGetArmorPoints () { static VMethodProxy method("GetArmorPoints"); vobjPutParam(this); VMT_RET_INT(method); }
+  int eventCheckNamedWeapon (VName Name) { static VMethodProxy method("CheckNamedWeapon"); vobjPutParam(this, Name); VMT_RET_INT(method); }
+  int eventSetNamedWeapon (VName Name) { static VMethodProxy method("SetNamedWeapon"); vobjPutParam(this, Name); VMT_RET_INT(method); }
+  int eventGetAmmoCapacity (VName Name) { static VMethodProxy method("GetAmmoCapacity"); vobjPutParam(this, Name); VMT_RET_INT(method); }
+  void eventSetAmmoCapacity (VName Name, int Amount) { static VMethodProxy method("SetAmmoCapacity"); vobjPutParam(this, Name, Amount); VMT_RET_VOID(method); }
+  bool eventMoveThing (TVec Pos, bool Fog) { static VMethodProxy method("MoveThing"); vobjPutParam(this, Pos, Fog); VMT_RET_BOOL(method); }
+  float eventGetStateTime (VState *State, float StateTime) { static VMethodProxy method("GetStateTime"); vobjPutParam(this, State, StateTime); VMT_RET_FLOAT(method); }
+  void eventSetActorProperty (int Prop, int IntVal, VStr StrVal) { static VMethodProxy method("SetActorProperty"); vobjPutParam(this, Prop, IntVal, StrVal); VMT_RET_VOID(method); }
+  int eventGetActorProperty (int Prop) { static VMethodProxy method("GetActorProperty"); vobjPutParam(this, Prop); VMT_RET_INT(method); }
+  void eventCheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) { static VMethodProxy method("CheckForSectorActions"); vobjPutParam(this, OldSec, OldAboveFakeFloor, OldAboveFakeCeiling); VMT_RET_VOID(method); }
+  bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParam(this); VMT_RET_BOOL(method); }
+  VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParam(this); VMT_RET_REF(VEntity, method); }
+  float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParam(this); VMT_RET_FLOAT(method); }
+  void eventCalcFakeZMovement (TVec &Ret, float DeltaTime) { static VMethodProxy method("CalcFakeZMovement"); vobjPutParam(this, &Ret, DeltaTime); VMT_RET_VOID(method); }
+  int eventClassifyActor () { static VMethodProxy method("ClassifyActor"); vobjPutParam(this); VMT_RET_INT(method); }
+  int eventMorphActor (VName PlayerClass, VName MonsterClass, float Duration, int Style, VName MorphFlash, VName UnmorphFlash) {
+    static VMethodProxy method("MorphActor"); vobjPutParam(this, PlayerClass, MonsterClass, Duration, Style, MorphFlash, UnmorphFlash); VMT_RET_INT(method);
   }
-  void eventBeginPlay () {
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(FIndex_BeginPlay);
-  }
-  void eventDestroyed () {
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(FIndex_Destroyed);
-  }
-  bool eventTouch (VEntity *Other) {
-    P_PASS_SELF;
-    P_PASS_REF(Other);
-    EV_RET_BOOL_IDX(FIndex_Touch);
-  }
-  void eventCheckForPushSpecial (line_t *line, int side) {
-    P_PASS_SELF;
-    P_PASS_PTR(line);
-    P_PASS_INT(side);
-    EV_RET_VOID_IDX(FIndex_CheckForPushSpecial);
-  }
-  void eventBlastedHitLine () {
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(FIndex_BlastedHitLine);
-  }
-  void eventHandleFloorclip () {
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(FIndex_HandleFloorclip);
-  }
-  void eventCrossSpecialLine (line_t *ld, int side) {
-    P_PASS_SELF;
-    P_PASS_PTR(ld);
-    P_PASS_INT(side);
-    EV_RET_VOID_IDX(FIndex_CrossSpecialLine);
-  }
-  bool eventSectorChanged (int CrushChange) {
-    P_PASS_SELF;
-    P_PASS_INT(CrushChange);
-    EV_RET_BOOL_IDX(FIndex_SectorChanged);
-  }
-  void eventClearInventory () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_ClearInventory);
-  }
-  void eventGiveInventory (VName ItemName, int Amount) {
-    P_PASS_SELF;
-    P_PASS_NAME(ItemName);
-    P_PASS_INT(Amount);
-    EV_RET_VOID_IDX(FIndex_GiveInventory);
-  }
-  void eventTakeInventory (VName ItemName, int Amount) {
-    P_PASS_SELF;
-    P_PASS_NAME(ItemName);
-    P_PASS_INT(Amount);
-    EV_RET_VOID_IDX(FIndex_TakeInventory);
-  }
-  int eventCheckInventory (VName ItemName) {
-    P_PASS_SELF;
-    P_PASS_NAME(ItemName);
-    EV_RET_INT_IDX(FIndex_CheckInventory);
-  }
-  int eventUseInventoryName (VName ItemName) {
-    P_PASS_SELF;
-    P_PASS_NAME(ItemName);
-    EV_RET_INT(NAME_UseInventoryName);
-  }
-  int eventGetSigilPieces () {
-    P_PASS_SELF;
-    EV_RET_INT_IDX(FIndex_GetSigilPieces);
-  }
-  int eventGetArmorPoints () {
-    P_PASS_SELF;
-    EV_RET_INT(NAME_GetArmorPoints);
-  }
-  int eventCheckNamedWeapon (VName Name) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    EV_RET_INT(NAME_CheckNamedWeapon);
-  }
-  int eventSetNamedWeapon (VName Name) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    EV_RET_INT (NAME_SetNamedWeapon);
-  }
-  int eventGetAmmoCapacity (VName Name) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    EV_RET_INT(NAME_GetAmmoCapacity);
-  }
-  void eventSetAmmoCapacity (VName Name, int Amount) {
-    P_PASS_SELF;
-    P_PASS_NAME(Name);
-    P_PASS_INT(Amount);
-    EV_RET_VOID(NAME_SetAmmoCapacity);
-  }
-  bool eventMoveThing (TVec Pos, bool Fog) {
-    P_PASS_SELF;
-    P_PASS_VEC(Pos);
-    P_PASS_BOOL(Fog);
-    EV_RET_BOOL_IDX(FIndex_MoveThing);
-  }
-  float eventGetStateTime (VState *State, float StateTime) {
-    P_PASS_SELF;
-    P_PASS_PTR(State);
-    P_PASS_FLOAT(StateTime);
-    EV_RET_FLOAT_IDX(FIndex_GetStateTime);
-  }
-  void eventSetActorProperty (int Prop, int IntVal, VStr StrVal) {
-    P_PASS_SELF;
-    P_PASS_INT(Prop);
-    P_PASS_INT(IntVal);
-    P_PASS_STR(StrVal);
-    EV_RET_VOID(NAME_SetActorProperty);
-  }
-  int eventGetActorProperty (int Prop) {
-    P_PASS_SELF;
-    P_PASS_INT(Prop);
-    EV_RET_INT(NAME_GetActorProperty);
-  }
-  void eventCheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) {
-    P_PASS_SELF;
-    P_PASS_PTR(OldSec);
-    P_PASS_BOOL(OldAboveFakeFloor);
-    P_PASS_BOOL(OldAboveFakeCeiling);
-    EV_RET_VOID(NAME_CheckForSectorActions);
-  }
-  bool eventSkyBoxGetAlways () {
-    P_PASS_SELF;
-    EV_RET_BOOL(NAME_SkyBoxGetAlways);
-  }
-  VEntity *eventSkyBoxGetMate () {
-    P_PASS_SELF;
-    EV_RET_REF(VEntity, NAME_SkyBoxGetMate);
-  }
-  float eventSkyBoxGetPlaneAlpha () {
-    P_PASS_SELF;
-    EV_RET_FLOAT(NAME_SkyBoxGetPlaneAlpha);
-  }
-  void eventCalcFakeZMovement (TVec &Ret, float DeltaTime) {
-    P_PASS_SELF;
-    P_PASS_PTR(&Ret);
-    P_PASS_FLOAT(DeltaTime);
-    EV_RET_VOID(NAME_CalcFakeZMovement);
-  }
-  int eventClassifyActor () {
-    P_PASS_SELF;
-    EV_RET_INT(NAME_ClassifyActor);
-  }
-  int eventMorphActor (VName PlayerClass, VName MonsterClass, float Duration,
-    int Style, VName MorphFlash, VName UnmorphFlash)
-  {
-    P_PASS_SELF;
-    P_PASS_NAME(PlayerClass);
-    P_PASS_NAME(MonsterClass);
-    P_PASS_FLOAT(Duration);
-    P_PASS_INT(Style);
-    P_PASS_NAME(MorphFlash);
-    P_PASS_NAME(UnmorphFlash);
-    EV_RET_INT(NAME_MorphActor);
-  }
-  int eventUnmorphActor (VEntity *Activator, int Force) {
-    P_PASS_SELF;
-    P_PASS_REF(Activator);
-    P_PASS_INT(Force);
-    EV_RET_INT(NAME_UnmorphActor);
-  }
-  void eventGetViewEntRenderParams (float &OutAlpha, int &OutRenderStyle) {
-    P_PASS_SELF;
-    P_PASS_PTR(&OutAlpha);
-    P_PASS_PTR(&OutRenderStyle);
-    EV_RET_VOID(NAME_GetViewEntRenderParams);
-  }
+  int eventUnmorphActor (VEntity *Activator, int Force) { static VMethodProxy method("UnmorphActor"); vobjPutParam(this, Activator, Force); VMT_RET_INT(method); }
+  void eventGetViewEntRenderParams (float &OutAlpha, int &OutRenderStyle) { static VMethodProxy method("GetViewEntRenderParams"); vobjPutParam(this, &OutAlpha, &OutRenderStyle); VMT_RET_VOID(method); }
 
-  float eventFindActivePowerupTime (VName pname) {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("FindActivePowerupTime"));
-    P_PASS_SELF;
-    P_PASS_NAME(pname);
-    EV_RET_FLOAT_IDX(mtindex);
-  }
+  float eventFindActivePowerupTime (VName pname) { static VMethodProxy method("FindActivePowerupTime"); vobjPutParam(this, pname); VMT_RET_FLOAT(method); }
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
+    static VMethodProxy method("PickActor");
+    vobjPutParam(this,
+     VOptPutParamVec(orig, specified_orig),
+     dir, dist,
+     VOptPutParamInt(actmask, specified_actmask),
+     VOptPutParamInt(wallmask, specified_wallmask)
+    );
+    VMT_RET_REF(VEntity, method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("PickActor"));
     P_PASS_SELF;
@@ -551,24 +416,35 @@ public:
     P_PASS_INT(wallmask);
     P_PASS_BOOL(specified_wallmask);
     EV_RET_REF_IDX(VEntity, mtindex);
+    */
   }
 
   VEntity *eventDoAAPtr (int aaptr) {
+    static VMethodProxy method("eventDoAAPtr"); vobjPutParam(this, aaptr); VMT_RET_REF(VEntity, method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventDoAAPtr"));
     P_PASS_SELF;
     P_PASS_INT(aaptr);
     EV_RET_REF_IDX(VEntity, mtindex);
+    */
   }
 
   VEntity *eventFindTargetForACS () {
+    static VMethodProxy method("eventFindTargetForACS"); vobjPutParam(this); VMT_RET_REF(VEntity, method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventFindTargetForACS"));
     P_PASS_SELF;
     EV_RET_REF_IDX(VEntity, mtindex);
+    */
   }
 
   bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+    static VMethodProxy method("eventSetPointerForACS");
+    vobjPutParam(this, assign_slot, tid, aptr, flags);
+    VMT_RET_BOOL(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetPointerForACS"));
     P_PASS_SELF;
@@ -577,10 +453,15 @@ public:
     P_PASS_INT(aptr);
     P_PASS_INT(flags);
     EV_RET_BOOL_IDX(mtindex);
+    */
   }
 
   //void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid)
   void eventLineAttackACS (TVec dir, float distance, int damage, VName pufftype, VName damagetype, int flags, int pufftid) {
+    static VMethodProxy method("eventLineAttackACS");
+    vobjPutParam(this, dir, distance, damage, pufftype, damagetype, flags, pufftid);
+    VMT_RET_VOID(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventLineAttackACS"));
     P_PASS_SELF;
@@ -592,54 +473,85 @@ public:
     P_PASS_INT(flags);
     P_PASS_INT(pufftid);
     EV_RET_VOID_IDX(mtindex);
+    */
   }
 
-  int eventGetArmorPointsForType (VName atype) { P_PASS_SELF; P_PASS_NAME(atype); EV_RET_INT(VName("GetArmorPointsForType")); }
+  int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParam(this, atype); VMT_RET_INT(method); }
 
   void QS_ClearEntityInventory () {
+    static VMethodProxy method("QS_ClearEntityInventory");
+    vobjPutParam(this);
+    VMT_RET_VOID(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_ClearEntityInventory"));
     P_PASS_SELF;
     EV_RET_VOID_IDX(mtindex);
+    */
   }
 
   VEntity *QS_GetEntityInventory () {
+    static VMethodProxy method("QS_GetEntityInventory");
+    vobjPutParam(this);
+    VMT_RET_REF(VEntity, method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_GetEntityInventory"));
     P_PASS_SELF;
     EV_RET_REF_IDX(VEntity, mtindex);
+    */
   }
 
   //Entity QS_SpawnEntityInventory (name className) { return none; }
   VEntity *QS_SpawnEntityInventory (VName className) {
+    static VMethodProxy method("QS_SpawnEntityInventory");
+    vobjPutParam(this, className);
+    VMT_RET_REF(VEntity, method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_SpawnEntityInventory"));
     P_PASS_SELF;
     P_PASS_NAME(className);
     EV_RET_REF_IDX(VEntity, mtindex);
+    */
   }
 
   //void QS_Save ();
   void QS_Save () {
+    static VMethodProxy method("QS_Save");
+    vobjPutParam(this);
+    VMT_RET_VOID(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Save"));
     P_PASS_SELF;
     EV_RET_VOID_IDX(mtindex);
+    */
   }
 
   //void QS_Load ();
   void QS_Load () {
+    static VMethodProxy method("QS_Load");
+    vobjPutParam(this);
+    VMT_RET_VOID(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Load"));
     P_PASS_SELF;
     EV_RET_VOID_IDX(mtindex);
+    */
   }
 
   bool callIsMonster () {
+    static VMethodProxy method("IsMonster");
+    vobjPutParam(this);
+    VMT_RET_BOOL(method);
+    /*
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("IsMonster"));
     P_PASS_SELF;
     EV_RET_BOOL_IDX(mtindex);
+    */
   }
 
 
