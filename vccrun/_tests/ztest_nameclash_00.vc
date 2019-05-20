@@ -1,0 +1,15 @@
+class Main : Object;
+
+int max = 42;
+int length = 666;
+int length2D = 69;
+
+void main () {
+  print("%s", max);
+  print("%s", self.max);
+  print("%s", max(3, max));
+  print("%s", length);
+  print("%s", length2D);
+  TVec v = vector(1, 2, 3);
+  print("%s", v.length2D);
+}
