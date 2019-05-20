@@ -195,20 +195,20 @@ public:
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   // final bool CheckLock (Entity user, int lock, bool door)
-  bool eventCheckLock (VEntity *user, int lock, bool door) { static VMethodProxy method("CheckLock"); vobjPutParam(this, user, lock, door); VMT_RET_BOOL(method); }
-  void eventSpawnSpecials () { static VMethodProxy method("SpawnSpecials"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventUpdateSpecials () { static VMethodProxy method("UpdateSpecials"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventAfterUnarchiveThinkers () { static VMethodProxy method("AfterUnarchiveThinkers"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPolyThrustMobj (VEntity *A, TVec thrustDir, polyobj_t *po) { static VMethodProxy method("PolyThrustMobj"); vobjPutParam(this, A, thrustDir, po); VMT_RET_VOID(method); }
-  void eventPolyCrushMobj (VEntity *A, polyobj_t *po) { static VMethodProxy method("PolyCrushMobj"); vobjPutParam(this, A, po); VMT_RET_VOID(method); }
-  bool eventTagBusy (int tag) { static VMethodProxy method("TagBusy"); vobjPutParam(this, tag); VMT_RET_BOOL(method); }
-  bool eventPolyBusy (int polyobj) { static VMethodProxy method("PolyBusy"); vobjPutParam(this, polyobj); VMT_RET_BOOL(method); }
-  int eventThingCount (int type, VName TypeName, int tid, int SectorTag) { static VMethodProxy method("ThingCount"); vobjPutParam(this, type, TypeName, tid, SectorTag); VMT_RET_INT(method); }
+  bool eventCheckLock (VEntity *user, int lock, bool door) { static VMethodProxy method("CheckLock"); vobjPutParamSelf(user, lock, door); VMT_RET_BOOL(method); }
+  void eventSpawnSpecials () { static VMethodProxy method("SpawnSpecials"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventUpdateSpecials () { static VMethodProxy method("UpdateSpecials"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventAfterUnarchiveThinkers () { static VMethodProxy method("AfterUnarchiveThinkers"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPolyThrustMobj (VEntity *A, TVec thrustDir, polyobj_t *po) { static VMethodProxy method("PolyThrustMobj"); vobjPutParamSelf(A, thrustDir, po); VMT_RET_VOID(method); }
+  void eventPolyCrushMobj (VEntity *A, polyobj_t *po) { static VMethodProxy method("PolyCrushMobj"); vobjPutParamSelf(A, po); VMT_RET_VOID(method); }
+  bool eventTagBusy (int tag) { static VMethodProxy method("TagBusy"); vobjPutParamSelf(tag); VMT_RET_BOOL(method); }
+  bool eventPolyBusy (int polyobj) { static VMethodProxy method("PolyBusy"); vobjPutParamSelf(polyobj); VMT_RET_BOOL(method); }
+  int eventThingCount (int type, VName TypeName, int tid, int SectorTag) { static VMethodProxy method("ThingCount"); vobjPutParamSelf(type, TypeName, tid, SectorTag); VMT_RET_INT(method); }
   int eventExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
                                  int Arg4, int Arg5, line_t *Line, int Side, VEntity *A)
   {
     static VMethodProxy method("ExecuteActionSpecial");
-    vobjPutParam(this, Special, Arg1, Arg2, Arg3, Arg4, Arg5, Line, Side, A);
+    vobjPutParamSelf(Special, Arg1, Arg2, Arg3, Arg4, Arg5, Line, Side, A);
     VMT_RET_INT(method);
   }
   int eventEV_ThingProjectile (int tid, int type, int angle, int speed,
@@ -216,7 +216,7 @@ public:
                                VName TypeName, VEntity *Activator)
   {
     static VMethodProxy method("EV_ThingProjectile");
-    vobjPutParam(this, tid, type, angle, speed, vspeed, gravity, newtid, TypeName, Activator);
+    vobjPutParamSelf(tid, type, angle, speed, vspeed, gravity, newtid, TypeName, Activator);
     VMT_RET_INT(method);
   }
   void eventStartPlaneWatcher (VEntity *it, line_t *line, int lineSide,
@@ -224,45 +224,45 @@ public:
                                int arg1, int arg2, int arg3, int arg4, int arg5)
   {
     static VMethodProxy method("StartPlaneWatcher");
-    vobjPutParam(this, it, line, lineSide, ceiling, tag, height, special, arg1, arg2, arg3, arg4, arg5);
+    vobjPutParamSelf(it, line, lineSide, ceiling, tag, height, special, arg1, arg2, arg3, arg4, arg5);
     VMT_RET_VOID(method);
   }
-  void eventSpawnMapThing (mthing_t *mthing) { static VMethodProxy method("SpawnMapThing"); vobjPutParam(this, mthing); VMT_RET_VOID(method); }
-  void eventUpdateParticle (particle_t *p, float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("UpdateParticle"); vobjPutParam(this, p, DeltaTime); VMT_RET_VOID(method); }
+  void eventSpawnMapThing (mthing_t *mthing) { static VMethodProxy method("SpawnMapThing"); vobjPutParamSelf(mthing); VMT_RET_VOID(method); }
+  void eventUpdateParticle (particle_t *p, float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("UpdateParticle"); vobjPutParamSelf(p, DeltaTime); VMT_RET_VOID(method); }
   //final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool forced)
   int eventAcsSpawnThing (VName Name, TVec Org, int Tid, float Angle, bool forced=false) {
     static VMethodProxy method("AcsSpawnThing");
-    vobjPutParam(this, Name, Org, Tid, Angle, forced);
+    vobjPutParamSelf(Name, Org, Tid, Angle, forced);
     VMT_RET_INT(method);
   }
   int eventAcsSpawnSpot (VName Name, int SpotTid, int Tid, float Angle, bool forced=false) {
     static VMethodProxy method("AcsSpawnSpot");
-    vobjPutParam(this, Name, SpotTid, Tid, Angle, forced);
+    vobjPutParamSelf(Name, SpotTid, Tid, Angle, forced);
     VMT_RET_INT(method);
   }
   int eventAcsSpawnSpotFacing (VName Name, int SpotTid, int Tid, bool forced=false) {
     static VMethodProxy method("AcsSpawnSpotFacing");
-    vobjPutParam(this, Name, SpotTid, Tid, forced);
+    vobjPutParamSelf(Name, SpotTid, Tid, forced);
     VMT_RET_INT(method);
   }
   void eventSectorDamage (int Tag, int Amount, VName DamageType, VName ProtectionType, int Flags) {
     static VMethodProxy method("SectorDamage");
-    vobjPutParam(this, Tag, Amount, DamageType, ProtectionType, Flags);
+    vobjPutParamSelf(Tag, Amount, DamageType, ProtectionType, Flags);
     VMT_RET_VOID(method);
   }
   int eventDoThingDamage (int Tid, int Amount, VName DmgType, VEntity *Activator) {
     static VMethodProxy method("DoThingDamage");
-    vobjPutParam(this, Tid, Amount, DmgType, Activator);
+    vobjPutParamSelf(Tid, Amount, DmgType, Activator);
     VMT_RET_INT(method);
   }
   void eventSetMarineWeapon (int Tid, int Weapon, VEntity *Activator) {
     static VMethodProxy method("SetMarineWeapon");
-    vobjPutParam(this, Tid, Weapon, Activator);
+    vobjPutParamSelf(Tid, Weapon, Activator);
     VMT_RET_VOID(method);
   }
   void eventSetMarineSprite (int Tid, VName SrcClass, VEntity *Activator) {
     static VMethodProxy method("SetMarineSprite");
-    vobjPutParam(this, Tid, SrcClass, Activator);
+    vobjPutParamSelf(Tid, SrcClass, Activator);
     VMT_RET_VOID(method);
   }
   void eventAcsFadeRange (float BlendR1, float BlendG1, float BlendB1,
@@ -270,17 +270,17 @@ public:
                           float BlendA2, float Duration, VEntity *Activator)
   {
     static VMethodProxy method("AcsFadeRange");
-    vobjPutParam(this, BlendR1, BlendG1, BlendB1, BlendA1, BlendR2, BlendG2, BlendB2, BlendA2, Duration, Activator);
+    vobjPutParamSelf(BlendR1, BlendG1, BlendB1, BlendA1, BlendR2, BlendG2, BlendB2, BlendA2, Duration, Activator);
     VMT_RET_VOID(method);
   }
   void eventAcsCancelFade (VEntity *Activator) {
     static VMethodProxy method("AcsCancelFade");
-    vobjPutParam(this, Activator);
+    vobjPutParamSelf(Activator);
     VMT_RET_VOID(method);
   }
   void eventAcsRadiusQuake2 (VEntity *Activator, int tid, int intensity, int duration, int damrad, int tremrad, VName sound) {
     static VMethodProxy method("AcsRadiusQuake2");
-    vobjPutParam(this, Activator, tid, intensity, duration, damrad, tremrad, sound);
+    vobjPutParamSelf(Activator, tid, intensity, duration, damrad, tremrad, sound);
     VMT_RET_VOID(method);
   }
 };

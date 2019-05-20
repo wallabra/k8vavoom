@@ -683,21 +683,21 @@ private:
   void eventBeforeWorldTick (float deltaTime) {
     if (deltaTime <= 0.0f) return;
     static VMethodProxy method("BeforeWorldTick");
-    vobjPutParam(this, deltaTime);
+    vobjPutParamSelf(deltaTime);
     VMT_RET_VOID(method);
   }
 
   void eventAfterWorldTick (float deltaTime) {
     if (deltaTime <= 0.0f) return;
     static VMethodProxy method("AfterWorldTick");
-    vobjPutParam(this, deltaTime);
+    vobjPutParamSelf(deltaTime);
     VMT_RET_VOID(method);
   }
 
   void eventEntitySpawned (VEntity *e) {
     if (e) {
       static VMethodProxy method("OnEntitySpawned");
-      vobjPutParam(this, e);
+      vobjPutParamSelf(e);
       VMT_RET_VOID(method);
     }
   }
@@ -705,21 +705,21 @@ private:
   void eventEntityDying (VEntity *e) {
     if (e) {
       static VMethodProxy method("OnEntityDying");
-      vobjPutParam(this, e);
+      vobjPutParamSelf(e);
       VMT_RET_VOID(method);
     }
   }
 
   void eventKnownMapBugFixer () {
     static VMethodProxy method("KnownMapBugFixer");
-    vobjPutParam(this);
+    vobjPutParamSelf();
     VMT_RET_VOID(method);
   }
 
 public:
   void eventAfterUnarchiveThinkers () {
     static VMethodProxy method("AfterUnarchiveThinkers");
-    vobjPutParam(this);
+    vobjPutParamSelf();
     VMT_RET_VOID(method);
   }
 

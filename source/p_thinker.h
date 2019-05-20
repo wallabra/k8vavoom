@@ -106,7 +106,7 @@ public:
   void eventClientTick (float DeltaTime) {
     if (DeltaTime <= 0.0f) return;
     static VMethodProxy method("ClientTick");
-    vobjPutParam(this, DeltaTime);
+    vobjPutParamSelf(DeltaTime);
     VMT_RET_VOID(method);
   }
 };

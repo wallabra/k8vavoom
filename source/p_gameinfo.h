@@ -82,16 +82,16 @@ public:
 
   bool IsPaused ();
 
-  void eventInit () { static VMethodProxy method("Init"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPostDecorateInit () { static VMethodProxy method("PostDecorateInit"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventInitNewGame (int skill) { static VMethodProxy method("InitNewGame"); vobjPutParam(this, skill); VMT_RET_VOID(method); }
-  VWorldInfo *eventCreateWorldInfo () { static VMethodProxy method("CreateWorldInfo"); vobjPutParam(this); VMT_RET_REF(VWorldInfo, method); }
-  void eventTranslateLevel (VLevel *InLevel) { static VMethodProxy method("TranslateLevel"); vobjPutParam(this, InLevel); VMT_RET_VOID(method); }
-  void eventSpawnWorld (VLevel *InLevel) { static VMethodProxy method("SpawnWorld"); vobjPutParam(this, InLevel); VMT_RET_VOID(method); }
-  VName eventGetConScriptName (VName LevelName) { static VMethodProxy method("GetConScriptName"); vobjPutParam(this, LevelName); VMT_RET_NAME(method); }
-  void eventCmdWeaponSection (const VStr &Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParam(this, Section); VMT_RET_VOID(method); }
-  void eventCmdSetSlot (TArray<VStr> *Args) { static VMethodProxy method("CmdSetSlot"); vobjPutParam(this, (void *)Args); VMT_RET_VOID(method); }
-  void eventCmdAddSlotDefault (TArray<VStr> *Args) { static VMethodProxy method("CmdAddSlotDefault"); vobjPutParam(this, (void *)Args); VMT_RET_VOID(method); }
+  void eventInit () { static VMethodProxy method("Init"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPostDecorateInit () { static VMethodProxy method("PostDecorateInit"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventInitNewGame (int skill) { static VMethodProxy method("InitNewGame"); vobjPutParamSelf(skill); VMT_RET_VOID(method); }
+  VWorldInfo *eventCreateWorldInfo () { static VMethodProxy method("CreateWorldInfo"); vobjPutParamSelf(); VMT_RET_REF(VWorldInfo, method); }
+  void eventTranslateLevel (VLevel *InLevel) { static VMethodProxy method("TranslateLevel"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
+  void eventSpawnWorld (VLevel *InLevel) { static VMethodProxy method("SpawnWorld"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
+  VName eventGetConScriptName (VName LevelName) { static VMethodProxy method("GetConScriptName"); vobjPutParamSelf(LevelName); VMT_RET_NAME(method); }
+  void eventCmdWeaponSection (const VStr &Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParamSelf(Section); VMT_RET_VOID(method); }
+  void eventCmdSetSlot (TArray<VStr> *Args) { static VMethodProxy method("CmdSetSlot"); vobjPutParamSelf((void *)Args); VMT_RET_VOID(method); }
+  void eventCmdAddSlotDefault (TArray<VStr> *Args) { static VMethodProxy method("CmdAddSlotDefault"); vobjPutParamSelf((void *)Args); VMT_RET_VOID(method); }
 
   DECLARE_FUNCTION(get_isPaused)
 };

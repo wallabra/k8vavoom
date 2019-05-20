@@ -330,114 +330,83 @@ public:
     return Ret;
   }
 
-  void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParam(this, mthing); VMT_RET_VOID(method); }
-  void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventDestroyed () { static VMethodProxy method("Destroyed"); vobjPutParam(this); VMT_RET_VOID(method); }
-  bool eventTouch (VEntity *Other) { static VMethodProxy method("Touch"); vobjPutParam(this, Other); VMT_RET_BOOL(method); }
-  void eventCheckForPushSpecial (line_t *line, int side) { static VMethodProxy method("CheckForPushSpecial"); vobjPutParam(this, line, side); VMT_RET_VOID(method); }
-  void eventBlastedHitLine () { static VMethodProxy method("BlastedHitLine"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventHandleFloorclip () { static VMethodProxy method("HandleFloorclip"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventCrossSpecialLine (line_t *ld, int side) { static VMethodProxy method("CrossSpecialLine"); vobjPutParam(this, ld, side); VMT_RET_VOID(method); }
-  bool eventSectorChanged (int CrushChange) { static VMethodProxy method("SectorChanged"); vobjPutParam(this, CrushChange); VMT_RET_BOOL(method); }
-  void eventClearInventory () { static VMethodProxy method("ClearInventory"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventGiveInventory (VName ItemName, int Amount) { static VMethodProxy method("GiveInventory"); vobjPutParam(this, ItemName, Amount); VMT_RET_VOID(method); }
-  void eventTakeInventory (VName ItemName, int Amount) { static VMethodProxy method("TakeInventory"); vobjPutParam(this, ItemName, Amount); VMT_RET_VOID(method); }
-  int eventCheckInventory (VName ItemName) { static VMethodProxy method("CheckInventory"); vobjPutParam(this, ItemName); VMT_RET_INT(method); }
-  int eventUseInventoryName (VName ItemName) { static VMethodProxy method("UseInventoryName"); vobjPutParam(this, ItemName); VMT_RET_INT(method); }
-  int eventGetSigilPieces () { static VMethodProxy method("GetSigilPieces"); vobjPutParam(this); VMT_RET_INT(method); }
-  int eventGetArmorPoints () { static VMethodProxy method("GetArmorPoints"); vobjPutParam(this); VMT_RET_INT(method); }
-  int eventCheckNamedWeapon (VName Name) { static VMethodProxy method("CheckNamedWeapon"); vobjPutParam(this, Name); VMT_RET_INT(method); }
-  int eventSetNamedWeapon (VName Name) { static VMethodProxy method("SetNamedWeapon"); vobjPutParam(this, Name); VMT_RET_INT(method); }
-  int eventGetAmmoCapacity (VName Name) { static VMethodProxy method("GetAmmoCapacity"); vobjPutParam(this, Name); VMT_RET_INT(method); }
-  void eventSetAmmoCapacity (VName Name, int Amount) { static VMethodProxy method("SetAmmoCapacity"); vobjPutParam(this, Name, Amount); VMT_RET_VOID(method); }
-  bool eventMoveThing (TVec Pos, bool Fog) { static VMethodProxy method("MoveThing"); vobjPutParam(this, Pos, Fog); VMT_RET_BOOL(method); }
-  float eventGetStateTime (VState *State, float StateTime) { static VMethodProxy method("GetStateTime"); vobjPutParam(this, State, StateTime); VMT_RET_FLOAT(method); }
-  void eventSetActorProperty (int Prop, int IntVal, VStr StrVal) { static VMethodProxy method("SetActorProperty"); vobjPutParam(this, Prop, IntVal, StrVal); VMT_RET_VOID(method); }
-  int eventGetActorProperty (int Prop) { static VMethodProxy method("GetActorProperty"); vobjPutParam(this, Prop); VMT_RET_INT(method); }
-  void eventCheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) { static VMethodProxy method("CheckForSectorActions"); vobjPutParam(this, OldSec, OldAboveFakeFloor, OldAboveFakeCeiling); VMT_RET_VOID(method); }
-  bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParam(this); VMT_RET_BOOL(method); }
-  VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParam(this); VMT_RET_REF(VEntity, method); }
-  float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParam(this); VMT_RET_FLOAT(method); }
-  void eventCalcFakeZMovement (TVec &Ret, float DeltaTime) { static VMethodProxy method("CalcFakeZMovement"); vobjPutParam(this, &Ret, DeltaTime); VMT_RET_VOID(method); }
-  int eventClassifyActor () { static VMethodProxy method("ClassifyActor"); vobjPutParam(this); VMT_RET_INT(method); }
+  void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParamSelf(mthing); VMT_RET_VOID(method); }
+  void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventDestroyed () { static VMethodProxy method("Destroyed"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  bool eventTouch (VEntity *Other) { static VMethodProxy method("Touch"); vobjPutParamSelf(Other); VMT_RET_BOOL(method); }
+  void eventCheckForPushSpecial (line_t *line, int side) { static VMethodProxy method("CheckForPushSpecial"); vobjPutParamSelf(line, side); VMT_RET_VOID(method); }
+  void eventBlastedHitLine () { static VMethodProxy method("BlastedHitLine"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventHandleFloorclip () { static VMethodProxy method("HandleFloorclip"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventCrossSpecialLine (line_t *ld, int side) { static VMethodProxy method("CrossSpecialLine"); vobjPutParamSelf(ld, side); VMT_RET_VOID(method); }
+  bool eventSectorChanged (int CrushChange) { static VMethodProxy method("SectorChanged"); vobjPutParamSelf(CrushChange); VMT_RET_BOOL(method); }
+  void eventClearInventory () { static VMethodProxy method("ClearInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventGiveInventory (VName ItemName, int Amount) { static VMethodProxy method("GiveInventory"); vobjPutParamSelf(ItemName, Amount); VMT_RET_VOID(method); }
+  void eventTakeInventory (VName ItemName, int Amount) { static VMethodProxy method("TakeInventory"); vobjPutParamSelf(ItemName, Amount); VMT_RET_VOID(method); }
+  int eventCheckInventory (VName ItemName) { static VMethodProxy method("CheckInventory"); vobjPutParamSelf(ItemName); VMT_RET_INT(method); }
+  int eventUseInventoryName (VName ItemName) { static VMethodProxy method("UseInventoryName"); vobjPutParamSelf(ItemName); VMT_RET_INT(method); }
+  int eventGetSigilPieces () { static VMethodProxy method("GetSigilPieces"); vobjPutParamSelf(); VMT_RET_INT(method); }
+  int eventGetArmorPoints () { static VMethodProxy method("GetArmorPoints"); vobjPutParamSelf(); VMT_RET_INT(method); }
+  int eventCheckNamedWeapon (VName Name) { static VMethodProxy method("CheckNamedWeapon"); vobjPutParamSelf(Name); VMT_RET_INT(method); }
+  int eventSetNamedWeapon (VName Name) { static VMethodProxy method("SetNamedWeapon"); vobjPutParamSelf(Name); VMT_RET_INT(method); }
+  int eventGetAmmoCapacity (VName Name) { static VMethodProxy method("GetAmmoCapacity"); vobjPutParamSelf(Name); VMT_RET_INT(method); }
+  void eventSetAmmoCapacity (VName Name, int Amount) { static VMethodProxy method("SetAmmoCapacity"); vobjPutParamSelf(Name, Amount); VMT_RET_VOID(method); }
+  bool eventMoveThing (TVec Pos, bool Fog) { static VMethodProxy method("MoveThing"); vobjPutParamSelf(Pos, Fog); VMT_RET_BOOL(method); }
+  float eventGetStateTime (VState *State, float StateTime) { static VMethodProxy method("GetStateTime"); vobjPutParamSelf(State, StateTime); VMT_RET_FLOAT(method); }
+  void eventSetActorProperty (int Prop, int IntVal, VStr StrVal) { static VMethodProxy method("SetActorProperty"); vobjPutParamSelf(Prop, IntVal, StrVal); VMT_RET_VOID(method); }
+  int eventGetActorProperty (int Prop) { static VMethodProxy method("GetActorProperty"); vobjPutParamSelf(Prop); VMT_RET_INT(method); }
+  void eventCheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) { static VMethodProxy method("CheckForSectorActions"); vobjPutParamSelf(OldSec, OldAboveFakeFloor, OldAboveFakeCeiling); VMT_RET_VOID(method); }
+  bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
+  VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+  float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
+  void eventCalcFakeZMovement (TVec &Ret, float DeltaTime) { static VMethodProxy method("CalcFakeZMovement"); vobjPutParamSelf(&Ret, DeltaTime); VMT_RET_VOID(method); }
+  int eventClassifyActor () { static VMethodProxy method("ClassifyActor"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int eventMorphActor (VName PlayerClass, VName MonsterClass, float Duration, int Style, VName MorphFlash, VName UnmorphFlash) {
-    static VMethodProxy method("MorphActor"); vobjPutParam(this, PlayerClass, MonsterClass, Duration, Style, MorphFlash, UnmorphFlash); VMT_RET_INT(method);
+    static VMethodProxy method("MorphActor"); vobjPutParamSelf(PlayerClass, MonsterClass, Duration, Style, MorphFlash, UnmorphFlash); VMT_RET_INT(method);
   }
-  int eventUnmorphActor (VEntity *Activator, int Force) { static VMethodProxy method("UnmorphActor"); vobjPutParam(this, Activator, Force); VMT_RET_INT(method); }
-  void eventGetViewEntRenderParams (float &OutAlpha, int &OutRenderStyle) { static VMethodProxy method("GetViewEntRenderParams"); vobjPutParam(this, &OutAlpha, &OutRenderStyle); VMT_RET_VOID(method); }
+  int eventUnmorphActor (VEntity *Activator, int Force) { static VMethodProxy method("UnmorphActor"); vobjPutParamSelf(Activator, Force); VMT_RET_INT(method); }
+  void eventGetViewEntRenderParams (float &OutAlpha, int &OutRenderStyle) { static VMethodProxy method("GetViewEntRenderParams"); vobjPutParamSelf(&OutAlpha, &OutRenderStyle); VMT_RET_VOID(method); }
 
-  float eventFindActivePowerupTime (VName pname) { static VMethodProxy method("FindActivePowerupTime"); vobjPutParam(this, pname); VMT_RET_FLOAT(method); }
+  float eventFindActivePowerupTime (VName pname) { static VMethodProxy method("FindActivePowerupTime"); vobjPutParamSelf(pname); VMT_RET_FLOAT(method); }
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
     static VMethodProxy method("PickActor");
-    vobjPutParam(this,
-     VOptPutParamVec(orig, specified_orig),
-     dir, dist,
-     VOptPutParamInt(actmask, specified_actmask),
-     VOptPutParamInt(wallmask, specified_wallmask)
+    vobjPutParamSelf(
+      VOptPutParamVec(orig, specified_orig),
+      dir, dist,
+      VOptPutParamInt(actmask, specified_actmask),
+      VOptPutParamInt(wallmask, specified_wallmask)
     );
     VMT_RET_REF(VEntity, method);
   }
 
-  VEntity *eventDoAAPtr (int aaptr) { static VMethodProxy method("eventDoAAPtr"); vobjPutParam(this, aaptr); VMT_RET_REF(VEntity, method); }
+  VEntity *eventDoAAPtr (int aaptr) { static VMethodProxy method("eventDoAAPtr"); vobjPutParamSelf(aaptr); VMT_RET_REF(VEntity, method); }
 
-  VEntity *eventFindTargetForACS () { static VMethodProxy method("eventFindTargetForACS"); vobjPutParam(this); VMT_RET_REF(VEntity, method); }
+  VEntity *eventFindTargetForACS () { static VMethodProxy method("eventFindTargetForACS"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
 
   bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
     static VMethodProxy method("eventSetPointerForACS");
-    vobjPutParam(this, assign_slot, tid, aptr, flags);
+    vobjPutParamSelf(assign_slot, tid, aptr, flags);
     VMT_RET_BOOL(method);
   }
 
   //void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid)
   void eventLineAttackACS (TVec dir, float distance, int damage, VName pufftype, VName damagetype, int flags, int pufftid) {
     static VMethodProxy method("eventLineAttackACS");
-    vobjPutParam(this, dir, distance, damage, pufftype, damagetype, flags, pufftid);
+    vobjPutParamSelf(dir, distance, damage, pufftype, damagetype, flags, pufftid);
     VMT_RET_VOID(method);
   }
 
-  int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParam(this, atype); VMT_RET_INT(method); }
+  int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParamSelf(atype); VMT_RET_INT(method); }
 
-  void QS_ClearEntityInventory () {
-    static VMethodProxy method("QS_ClearEntityInventory");
-    vobjPutParam(this);
-    VMT_RET_VOID(method);
-  }
+  void QS_ClearEntityInventory () { static VMethodProxy method("QS_ClearEntityInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  VEntity *QS_GetEntityInventory () { static VMethodProxy method("QS_GetEntityInventory"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+  VEntity *QS_SpawnEntityInventory (VName className) { static VMethodProxy method("QS_SpawnEntityInventory"); vobjPutParamSelf(className); VMT_RET_REF(VEntity, method); }
 
-  VEntity *QS_GetEntityInventory () {
-    static VMethodProxy method("QS_GetEntityInventory");
-    vobjPutParam(this);
-    VMT_RET_REF(VEntity, method);
-  }
+  void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
-  //Entity QS_SpawnEntityInventory (name className) { return none; }
-  VEntity *QS_SpawnEntityInventory (VName className) {
-    static VMethodProxy method("QS_SpawnEntityInventory");
-    vobjPutParam(this, className);
-    VMT_RET_REF(VEntity, method);
-  }
-
-  //void QS_Save ();
-  void QS_Save () {
-    static VMethodProxy method("QS_Save");
-    vobjPutParam(this);
-    VMT_RET_VOID(method);
-  }
-
-  //void QS_Load ();
-  void QS_Load () {
-    static VMethodProxy method("QS_Load");
-    vobjPutParam(this);
-    VMT_RET_VOID(method);
-  }
-
-  bool callIsMonster () {
-    static VMethodProxy method("IsMonster");
-    vobjPutParam(this);
-    VMT_RET_BOOL(method);
-  }
-
+  bool callIsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
   bool SetState (VState *);
   void SetInitialState (VState *);

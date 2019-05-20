@@ -531,6 +531,8 @@ template<typename T, typename... Args> static __attribute__((unused)) inline voi
 template<typename... Args> static __attribute__((unused)) inline void vobjGetParam (Args&... args) {
   vobj_get_param(args...);
 }
+
+#define vobjGetParamSelf(...)  ThisClass *Self; vobjGetParam(Self, ##__VA_ARGS__)
 #endif
 
 
@@ -592,6 +594,8 @@ template<typename T, typename... Args> static __attribute__((unused)) inline voi
 template<typename... Args> static __attribute__((unused)) inline void vobjPutParam (Args... args) {
   vobj_put_param(args...);
 }
+
+#define vobjPutParamSelf(...)  vobjPutParam(this, ##__VA_ARGS__)
 #endif
 
 

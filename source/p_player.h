@@ -325,38 +325,38 @@ public:
   DECLARE_FUNCTION(QS_GetStr);
   DECLARE_FUNCTION(QS_GetFloat);
 
-  bool IsCheckpointPossible () { static VMethodProxy method("IsCheckpointPossible"); vobjPutParam(this); VMT_RET_BOOL(method); }
+  bool IsCheckpointPossible () { static VMethodProxy method("IsCheckpointPossible"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
   // player events
-  void eventPutClientIntoServer () { static VMethodProxy method("PutClientIntoServer"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventSpawnClient () { static VMethodProxy method("SpawnClient"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventNetGameReborn () { static VMethodProxy method("NetGameReborn"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventDisconnectClient () { static VMethodProxy method("DisconnectClient"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventUserinfoChanged () { static VMethodProxy method("UserinfoChanged"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPlayerExitMap (bool clusterChange) { static VMethodProxy method("PlayerExitMap"); vobjPutParam(this, clusterChange); VMT_RET_VOID(method); }
-  void eventPlayerBeforeExitMap () { static VMethodProxy method("PlayerBeforeExitMap"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPlayerTick (float deltaTime) { static VMethodProxy method("PlayerTick"); vobjPutParam(this, deltaTime); VMT_RET_VOID(method); }
-  void eventClientTick (float deltaTime) { static VMethodProxy method("ClientTick"); vobjPutParam(this, deltaTime); VMT_RET_VOID(method); }
-  void eventSetViewPos () { static VMethodProxy method("SetViewPos"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPreTravel () { static VMethodProxy method("PreTravel"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventUseInventory (const VStr &Inv) { static VMethodProxy method("UseInventory"); vobjPutParam(this, Inv); VMT_RET_VOID(method); }
-  bool eventCheckDoubleFiringSpeed () { static VMethodProxy method("CheckDoubleFiringSpeed"); vobjPutParam(this); VMT_RET_BOOL(method); }
+  void eventPutClientIntoServer () { static VMethodProxy method("PutClientIntoServer"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventSpawnClient () { static VMethodProxy method("SpawnClient"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventNetGameReborn () { static VMethodProxy method("NetGameReborn"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventDisconnectClient () { static VMethodProxy method("DisconnectClient"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventUserinfoChanged () { static VMethodProxy method("UserinfoChanged"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPlayerExitMap (bool clusterChange) { static VMethodProxy method("PlayerExitMap"); vobjPutParamSelf(clusterChange); VMT_RET_VOID(method); }
+  void eventPlayerBeforeExitMap () { static VMethodProxy method("PlayerBeforeExitMap"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPlayerTick (float deltaTime) { static VMethodProxy method("PlayerTick"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
+  void eventClientTick (float deltaTime) { static VMethodProxy method("ClientTick"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
+  void eventSetViewPos () { static VMethodProxy method("SetViewPos"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPreTravel () { static VMethodProxy method("PreTravel"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventUseInventory (const VStr &Inv) { static VMethodProxy method("UseInventory"); vobjPutParamSelf(Inv); VMT_RET_VOID(method); }
+  bool eventCheckDoubleFiringSpeed () { static VMethodProxy method("CheckDoubleFiringSpeed"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
-  void eventResetInventory () { static VMethodProxy method("ResetInventory"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventResetHealth () { static VMethodProxy method("ResetHealth"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventPreraiseWeapon () { static VMethodProxy method("PreraiseWeapon"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventResetToDefaults () { static VMethodProxy method("ResetToDefaults"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventOnSaveLoaded () { static VMethodProxy method("eventOnSaveLoaded"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void eventOnBeforeSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnBeforeSave"); vobjPutParam(this, autosave, checkpoint); VMT_RET_VOID(method); }
-  void eventOnAfterSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnAfterSave"); vobjPutParam(this, autosave, checkpoint); VMT_RET_VOID(method); }
+  void eventResetInventory () { static VMethodProxy method("ResetInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventResetHealth () { static VMethodProxy method("ResetHealth"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventPreraiseWeapon () { static VMethodProxy method("PreraiseWeapon"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventResetToDefaults () { static VMethodProxy method("ResetToDefaults"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventOnSaveLoaded () { static VMethodProxy method("eventOnSaveLoaded"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventOnBeforeSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnBeforeSave"); vobjPutParamSelf(autosave, checkpoint); VMT_RET_VOID(method); }
+  void eventOnAfterSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnAfterSave"); vobjPutParamSelf(autosave, checkpoint); VMT_RET_VOID(method); }
 
-  void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParam(this); VMT_RET_VOID(method); }
-  void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   // cheats
   void eventCheat_VScriptCommand (TArray<VStr> &args) {
     static VMethodProxy method("Cheat_VScriptCommand");
-    vobjPutParam(this, (void *)&args);
+    vobjPutParamSelf((void *)&args);
     VMT_RET_VOID(method);
   }
 
@@ -365,72 +365,72 @@ public:
                               int Channel, float Volume, float Attenuation, bool Loop)
   {
     static VMethodProxy method("ClientStartSound");
-    vobjPutParam(this, SoundId, Org, OriginId, Channel, Volume, Attenuation, Loop);
+    vobjPutParamSelf(SoundId, Org, OriginId, Channel, Volume, Attenuation, Loop);
     VMT_RET_VOID(method);
   }
   void eventClientStopSound (int OriginId, int Channel) {
     static VMethodProxy method("ClientStopSound");
-    vobjPutParam(this, OriginId, Channel);
+    vobjPutParamSelf(OriginId, Channel);
     VMT_RET_VOID(method);
   }
   void eventClientStartSequence (TVec Origin, int OriginId, VName Name, int ModeNum) {
     static VMethodProxy method("ClientStartSequence");
-    vobjPutParam(this, Origin, OriginId, Name, ModeNum);
+    vobjPutParamSelf(Origin, OriginId, Name, ModeNum);
     VMT_RET_VOID(method);
   }
   void eventClientAddSequenceChoice (int OriginId, VName Choice) {
     static VMethodProxy method("ClientAddSequenceChoice");
-    vobjPutParam(this, OriginId, Choice);
+    vobjPutParamSelf(OriginId, Choice);
     VMT_RET_VOID(method);
   }
   void eventClientStopSequence (int OriginId) {
     static VMethodProxy method("ClientStopSequence");
-    vobjPutParam(this, OriginId);
+    vobjPutParamSelf(OriginId);
     VMT_RET_VOID(method);
   }
   void eventClientPrint (const VStr &Str) {
     static VMethodProxy method("ClientPrint");
-    vobjPutParam(this, Str);
+    vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
   }
   void eventClientCentrePrint (const VStr &Str) {
     static VMethodProxy method("ClientCentrePrint");
-    vobjPutParam(this, Str);
+    vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
   }
   void eventClientSetAngles (TAVec Angles) {
     static VMethodProxy method("ClientSetAngles");
-    vobjPutParam(this, Angles);
+    vobjPutParamSelf(Angles);
     VMT_RET_VOID(method);
   }
   void eventClientIntermission (VName NextMap) {
     static VMethodProxy method("ClientIntermission");
-    vobjPutParam(this, NextMap);
+    vobjPutParamSelf(NextMap);
     VMT_RET_VOID(method);
   }
   void eventClientPause (bool Paused) {
     static VMethodProxy method("ClientPause");
-    vobjPutParam(this, Paused);
+    vobjPutParamSelf(Paused);
     VMT_RET_VOID(method);
   }
   void eventClientSkipIntermission () {
     static VMethodProxy method("ClientSkipIntermission");
-    vobjPutParam(this);
+    vobjPutParamSelf();
     VMT_RET_VOID(method);
   }
   void eventClientFinale (const VStr &Type) {
     static VMethodProxy method("ClientFinale");
-    vobjPutParam(this, Type);
+    vobjPutParamSelf(Type);
     VMT_RET_VOID(method);
   }
   void eventClientChangeMusic (VName Song) {
     static VMethodProxy method("ClientChangeMusic");
-    vobjPutParam(this, Song);
+    vobjPutParamSelf(Song);
     VMT_RET_VOID(method);
   }
   void eventClientSetServerInfo (const VStr &Key, const VStr &Value) {
     static VMethodProxy method("ClientSetServerInfo");
-    vobjPutParam(this, Key, Value);
+    vobjPutParamSelf(Key, Value);
     VMT_RET_VOID(method);
   }
   void eventClientHudMessage (const VStr &Message, VName Font, int Type,
@@ -438,31 +438,31 @@ public:
                               int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
   {
     static VMethodProxy method("ClientHudMessage");
-    vobjPutParam(this, Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+    vobjPutParamSelf(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
     VMT_RET_VOID(method);
   }
 
   // client to server events
   void eventServerImpulse (int AImpulse) {
     static VMethodProxy method("ServerImpulse");
-    vobjPutParam(this, AImpulse);
+    vobjPutParamSelf(AImpulse);
     VMT_RET_VOID(method);
   }
   void eventServerSetUserInfo (const VStr &Info) {
     static VMethodProxy method("ServerSetUserInfo");
-    vobjPutParam(this, Info);
+    vobjPutParamSelf(Info);
     VMT_RET_VOID(method);
   }
 
   VEntity *eventGetReadyWeapon () {
     static VMethodProxy method("eventGetReadyWeapon");
-    vobjPutParam(this);
+    vobjPutParamSelf();
     VMT_RET_REF(VEntity, method);
   }
 
   void eventSetReadyWeapon (VEntity *ent, bool instant) {
     static VMethodProxy method("eventSetReadyWeapon");
-    vobjPutParam(this, ent, instant);
+    vobjPutParamSelf(ent, instant);
     VMT_RET_VOID(method);
   }
 };

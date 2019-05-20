@@ -71,7 +71,7 @@ void VThinker::SerialiseOther (VStream &Strm) {
 void VThinker::Tick (float DeltaTime) {
   if (DeltaTime <= 0.0f) return;
   static VMethodProxy method("Tick");
-  vobjPutParam(this, DeltaTime);
+  vobjPutParamSelf(DeltaTime);
   VMT_RET_VOID(method);
 }
 
