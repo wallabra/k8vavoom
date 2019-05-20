@@ -317,21 +317,24 @@ VExpression *VParser::ParseExpressionPriority0 () {
     case TK_False: Lex.NextToken(); return new VIntLiteral(0, l);
     case TK_True: Lex.NextToken(); return new VIntLiteral(1, l);
     case TK_Dollar: Lex.NextToken(); return new VDollar(l);
-    case TK_Vector:
+    case TK_Vector: // everything is optional
       {
         Lex.NextToken();
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
-        VExpression *op1 = ParseExpressionPriority13();
-        Lex.Expect(TK_Comma);
-        VExpression *op2 = ParseExpressionPriority13();
-        // third is optional
-        VExpression *op3;
-        if (Lex.Check(TK_Comma)) {
-          op3 = ParseExpressionPriority13();
-        } else {
-          op3 = new VFloatLiteral(0, l);
+        VExpression *op1 = nullptr;
+        VExpression *op2 = nullptr;
+        VExpression *op3 = nullptr;
+        if (!Lex.Check(TK_RParen)) {
+          op1 = ParseExpressionPriority13();
+          if (Lex.Check(TK_Comma)) {
+            op2 = ParseExpressionPriority13();
+            if (Lex.Check(TK_Comma)) op3 = ParseExpressionPriority13();
+          }
+          Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         }
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        if (!op1) op1 = new VFloatLiteral(0, l);
+        if (!op2) op2 = new VFloatLiteral(0, l);
+        if (!op3) op3 = new VFloatLiteral(0, l);
         return new VVectorExpr(op1, op2, op3, l);
       }
     case TK_LParen:
