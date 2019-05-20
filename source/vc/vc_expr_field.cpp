@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #include "vc_local.h"
+#include "vc_shared.h"
 
 // builtin codes
 #define BUILTIN_OPCODE_INFO

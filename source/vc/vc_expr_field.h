@@ -169,20 +169,6 @@ protected:
 //==========================================================================
 class VVectorSwizzleExpr : public VExpression {
 public:
-  // this is used in vector swizzling
-  enum VCVectorSwizzleElem {
-    VCVSE_Zero = 0,
-    VCVSE_One = 1,
-    VCVSE_X = 2,
-    VCVSE_Y = 3,
-    VCVSE_Z = 4,
-    VCVSE_Negate = 0x08,
-    VCVSE_Mask = 0x0f,
-    VCVSE_ElementMask = 0x07,
-    VCVSE_Shift = 4,
-  };
-
-public:
   // returns swizzle or -1
   static int ParseOneSwizzle (const char *&s);
   static int ParseSwizzles (const char *s);

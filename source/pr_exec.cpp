@@ -42,6 +42,8 @@
 # endif
 #endif
 
+#include "vc/vc_shared.h"
+
 // builtin codes
 #define BUILTIN_OPCODE_INFO
 #include "progdefs.h"
@@ -1932,18 +1934,18 @@ func_loop:
           TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
           int sw = ip[1]|(ip[2]<<8);
           for (int spidx = 0; spidx <= 2; ++spidx) {
-            //GLog.Logf("SWD(0): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VVectorSwizzleExpr::VCVSE_ElementMask), (sw&VVectorSwizzleExpr::VCVSE_Negate));
-            switch (sw&VVectorSwizzleExpr::VCVSE_ElementMask) {
-              case VVectorSwizzleExpr::VCVSE_Zero: sp[-3+spidx].f = 0.0f; break;
-              case VVectorSwizzleExpr::VCVSE_One: sp[-3+spidx].f = 1.0f; break;
-              case VVectorSwizzleExpr::VCVSE_X: sp[-3+spidx].f = v.x; break;
-              case VVectorSwizzleExpr::VCVSE_Y: sp[-3+spidx].f = v.y; break;
-              case VVectorSwizzleExpr::VCVSE_Z: sp[-3+spidx].f = v.z; break;
-              default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x (0x%01x)", ip[1], sw&VVectorSwizzleExpr::VCVSE_Mask); }
+            //GLog.Logf("SWD(0): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VCVSE_ElementMask), (sw&VCVSE_Negate));
+            switch (sw&VCVSE_ElementMask) {
+              case VCVSE_Zero: sp[-3+spidx].f = 0.0f; break;
+              case VCVSE_One: sp[-3+spidx].f = 1.0f; break;
+              case VCVSE_X: sp[-3+spidx].f = v.x; break;
+              case VCVSE_Y: sp[-3+spidx].f = v.y; break;
+              case VCVSE_Z: sp[-3+spidx].f = v.z; break;
+              default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x (0x%01x)", ip[1], sw&VCVSE_Mask); }
             }
-            if (sw&VVectorSwizzleExpr::VCVSE_Negate) sp[-3+spidx].f = -sp[-3+spidx].f;
-            //GLog.Logf("SWD(1): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VVectorSwizzleExpr::VCVSE_ElementMask), (sw&VVectorSwizzleExpr::VCVSE_Negate));
-            sw >>= VVectorSwizzleExpr::VCVSE_Shift;
+            if (sw&VCVSE_Negate) sp[-3+spidx].f = -sp[-3+spidx].f;
+            //GLog.Logf("SWD(1): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VCVSE_ElementMask), (sw&VCVSE_Negate));
+            sw >>= VCVSE_Shift;
           }
           //GLog.Logf("SWD: v=(%g,%g,%g); res=(%g,%g,%g)", v.x, v.y, v.z, sp[-3].f, sp[-2].f, sp[-1].f);
         }
