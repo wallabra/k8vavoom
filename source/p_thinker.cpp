@@ -37,8 +37,6 @@
 #include "sv_local.h"
 
 
-//int VThinker::FIndex_Tick;
-
 IMPLEMENT_CLASS(V, Thinker)
 
 
@@ -71,12 +69,6 @@ void VThinker::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VThinker::Tick (float DeltaTime) {
-  /*
-  P_PASS_SELF;
-  P_PASS_FLOAT(DeltaTime);
-  if (DeltaTime <= 0.0f) return;
-  EV_RET_VOID_IDX(FIndex_Tick);
-  */
   if (DeltaTime <= 0.0f) return;
   static VMethodProxy method("Tick");
   vobjPutParam(this, DeltaTime);

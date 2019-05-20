@@ -28,26 +28,6 @@
 
 IMPLEMENT_CLASS(V, Entity);
 
-/*
-int VEntity::FIndex_OnMapSpawn;
-int VEntity::FIndex_BeginPlay;
-int VEntity::FIndex_Destroyed;
-int VEntity::FIndex_Touch;
-int VEntity::FIndex_BlastedHitLine;
-int VEntity::FIndex_CheckForPushSpecial;
-int VEntity::FIndex_HandleFloorclip;
-int VEntity::FIndex_CrossSpecialLine;
-int VEntity::FIndex_SectorChanged;
-int VEntity::FIndex_RoughCheckThing;
-int VEntity::FIndex_GiveInventory;
-int VEntity::FIndex_TakeInventory;
-int VEntity::FIndex_CheckInventory;
-int VEntity::FIndex_GetSigilPieces;
-int VEntity::FIndex_MoveThing;
-int VEntity::FIndex_GetStateTime;
-*/
-
-
 struct SavedVObjectPtr {
   VObject **ptr;
   VObject *saved;
@@ -58,33 +38,6 @@ struct SavedVObjectPtr {
 
 static VCvarB _decorate_dont_warn_about_invalid_labels("_decorate_dont_warn_about_invalid_labels", false, "Don't do this!", CVAR_Archive|CVAR_PreInit);
 static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Disable states processing (for debug)?", CVAR_PreInit);
-
-
-//==========================================================================
-//
-//  VEntity::InitFuncIndexes
-//
-//==========================================================================
-/*
-void VEntity::InitFuncIndexes () {
-  FIndex_OnMapSpawn = StaticClass()->GetMethodIndex(NAME_OnMapSpawn);
-  FIndex_BeginPlay = StaticClass()->GetMethodIndex(NAME_BeginPlay);
-  FIndex_Destroyed = StaticClass()->GetMethodIndex(NAME_Destroyed);
-  FIndex_Touch = StaticClass()->GetMethodIndex(NAME_Touch);
-  FIndex_BlastedHitLine = StaticClass()->GetMethodIndex(NAME_BlastedHitLine);
-  FIndex_CheckForPushSpecial = StaticClass()->GetMethodIndex(NAME_CheckForPushSpecial);
-  FIndex_HandleFloorclip = StaticClass()->GetMethodIndex(NAME_HandleFloorclip);
-  FIndex_CrossSpecialLine = StaticClass()->GetMethodIndex(NAME_CrossSpecialLine);
-  FIndex_SectorChanged = StaticClass()->GetMethodIndex(NAME_SectorChanged);
-  FIndex_RoughCheckThing = StaticClass()->GetMethodIndex(NAME_RoughCheckThing);
-  FIndex_GiveInventory = StaticClass()->GetMethodIndex(NAME_GiveInventory);
-  FIndex_TakeInventory = StaticClass()->GetMethodIndex(NAME_TakeInventory);
-  FIndex_CheckInventory = StaticClass()->GetMethodIndex(NAME_CheckInventory);
-  FIndex_GetSigilPieces = StaticClass()->GetMethodIndex(NAME_GetSigilPieces);
-  FIndex_MoveThing = StaticClass()->GetMethodIndex(NAME_MoveThing);
-  FIndex_GetStateTime = StaticClass()->GetMethodIndex(NAME_GetStateTime);
-}
-*/
 
 
 //==========================================================================

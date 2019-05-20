@@ -213,7 +213,6 @@ void SV_Init () {
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;
-  //VEntity::InitFuncIndexes();
 
   P_InitSwitchList();
   P_InitTerrainTypes();
@@ -293,7 +292,6 @@ void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint) {
 //
 //==========================================================================
 void P_InitThinkers () {
-  //VThinker::FIndex_Tick = VThinker::StaticClass()->GetMethodIndex(NAME_Tick);
 }
 
 

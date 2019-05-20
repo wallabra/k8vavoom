@@ -304,30 +304,8 @@ protected:
   void CopyRegCeiling (sec_region_t *reg, bool setz=true);
 
 public:
-  /*
-  static int FIndex_OnMapSpawn;
-  static int FIndex_BeginPlay;
-  static int FIndex_Destroyed;
-  static int FIndex_Touch;
-  static int FIndex_BlastedHitLine;
-  static int FIndex_CheckForPushSpecial;
-  static int FIndex_HandleFloorclip;
-  static int FIndex_CrossSpecialLine;
-  static int FIndex_SectorChanged;
-  static int FIndex_RoughCheckThing;
-  static int FIndex_GiveInventory;
-  static int FIndex_TakeInventory;
-  static int FIndex_CheckInventory;
-  static int FIndex_GetSigilPieces;
-  static int FIndex_MoveThing;
-  static int FIndex_GetStateTime;
-  */
-
-public:
   inline float GetFloorNormalZ () const { return EFloor.GetNormalZ(); }
   inline float GetCeilingNormalZ () const { return ECeiling.GetNormalZ(); }
-
-  //static void InitFuncIndexes ();
 
   // VObject interface
   virtual void Destroy () override;
@@ -400,60 +378,16 @@ public:
      VOptPutParamInt(wallmask, specified_wallmask)
     );
     VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("PickActor"));
-    P_PASS_SELF;
-    if (!specified_orig) orig = TVec(0, 0, 0);
-    P_PASS_VEC(orig);
-    P_PASS_BOOL(specified_orig);
-    P_PASS_VEC(dir);
-    P_PASS_FLOAT(dist);
-    if (!specified_actmask) actmask = 0;
-    P_PASS_INT(actmask);
-    P_PASS_BOOL(specified_actmask);
-    if (!specified_wallmask) wallmask = 0;
-    P_PASS_INT(wallmask);
-    P_PASS_BOOL(specified_wallmask);
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
   }
 
-  VEntity *eventDoAAPtr (int aaptr) {
-    static VMethodProxy method("eventDoAAPtr"); vobjPutParam(this, aaptr); VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventDoAAPtr"));
-    P_PASS_SELF;
-    P_PASS_INT(aaptr);
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
-  }
+  VEntity *eventDoAAPtr (int aaptr) { static VMethodProxy method("eventDoAAPtr"); vobjPutParam(this, aaptr); VMT_RET_REF(VEntity, method); }
 
-  VEntity *eventFindTargetForACS () {
-    static VMethodProxy method("eventFindTargetForACS"); vobjPutParam(this); VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventFindTargetForACS"));
-    P_PASS_SELF;
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
-  }
+  VEntity *eventFindTargetForACS () { static VMethodProxy method("eventFindTargetForACS"); vobjPutParam(this); VMT_RET_REF(VEntity, method); }
 
   bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
     static VMethodProxy method("eventSetPointerForACS");
     vobjPutParam(this, assign_slot, tid, aptr, flags);
     VMT_RET_BOOL(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetPointerForACS"));
-    P_PASS_SELF;
-    P_PASS_INT(assign_slot);
-    P_PASS_INT(tid);
-    P_PASS_INT(aptr);
-    P_PASS_INT(flags);
-    EV_RET_BOOL_IDX(mtindex);
-    */
   }
 
   //void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid)
@@ -461,19 +395,6 @@ public:
     static VMethodProxy method("eventLineAttackACS");
     vobjPutParam(this, dir, distance, damage, pufftype, damagetype, flags, pufftid);
     VMT_RET_VOID(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventLineAttackACS"));
-    P_PASS_SELF;
-    P_PASS_VEC(dir);
-    P_PASS_FLOAT(distance);
-    P_PASS_INT(damage);
-    P_PASS_NAME(pufftype);
-    P_PASS_NAME(damagetype);
-    P_PASS_INT(flags);
-    P_PASS_INT(pufftid);
-    EV_RET_VOID_IDX(mtindex);
-    */
   }
 
   int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParam(this, atype); VMT_RET_INT(method); }
@@ -482,24 +403,12 @@ public:
     static VMethodProxy method("QS_ClearEntityInventory");
     vobjPutParam(this);
     VMT_RET_VOID(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_ClearEntityInventory"));
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(mtindex);
-    */
   }
 
   VEntity *QS_GetEntityInventory () {
     static VMethodProxy method("QS_GetEntityInventory");
     vobjPutParam(this);
     VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_GetEntityInventory"));
-    P_PASS_SELF;
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
   }
 
   //Entity QS_SpawnEntityInventory (name className) { return none; }
@@ -507,13 +416,6 @@ public:
     static VMethodProxy method("QS_SpawnEntityInventory");
     vobjPutParam(this, className);
     VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_SpawnEntityInventory"));
-    P_PASS_SELF;
-    P_PASS_NAME(className);
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
   }
 
   //void QS_Save ();
@@ -521,12 +423,6 @@ public:
     static VMethodProxy method("QS_Save");
     vobjPutParam(this);
     VMT_RET_VOID(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Save"));
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(mtindex);
-    */
   }
 
   //void QS_Load ();
@@ -534,24 +430,12 @@ public:
     static VMethodProxy method("QS_Load");
     vobjPutParam(this);
     VMT_RET_VOID(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Load"));
-    P_PASS_SELF;
-    EV_RET_VOID_IDX(mtindex);
-    */
   }
 
   bool callIsMonster () {
     static VMethodProxy method("IsMonster");
     vobjPutParam(this);
     VMT_RET_BOOL(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("IsMonster"));
-    P_PASS_SELF;
-    EV_RET_BOOL_IDX(mtindex);
-    */
   }
 
 

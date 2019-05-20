@@ -358,9 +358,6 @@ public:
     static VMethodProxy method("Cheat_VScriptCommand");
     vobjPutParam(this, (void *)&args);
     VMT_RET_VOID(method);
-    //P_PASS_SELF;
-    //P_PASS_PTR((void *)&args);
-    //EV_RET_VOID(VName("Cheat_VScriptCommand"));
   }
 
   // server to client events
@@ -370,152 +367,71 @@ public:
     static VMethodProxy method("ClientStartSound");
     vobjPutParam(this, SoundId, Org, OriginId, Channel, Volume, Attenuation, Loop);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_INT(SoundId);
-    P_PASS_VEC(Org);
-    P_PASS_INT(OriginId);
-    P_PASS_INT(Channel);
-    P_PASS_FLOAT(Volume);
-    P_PASS_FLOAT(Attenuation);
-    P_PASS_BOOL(Loop);
-    EV_RET_VOID(NAME_ClientStartSound);
-    */
   }
   void eventClientStopSound (int OriginId, int Channel) {
     static VMethodProxy method("ClientStopSound");
     vobjPutParam(this, OriginId, Channel);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_INT(OriginId);
-    P_PASS_INT(Channel);
-    EV_RET_VOID(NAME_ClientStopSound);
-    */
   }
   void eventClientStartSequence (TVec Origin, int OriginId, VName Name, int ModeNum) {
     static VMethodProxy method("ClientStartSequence");
     vobjPutParam(this, Origin, OriginId, Name, ModeNum);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_VEC(Origin);
-    P_PASS_INT(OriginId);
-    P_PASS_NAME(Name);
-    P_PASS_INT(ModeNum);
-    EV_RET_VOID(NAME_ClientStartSequence);
-    */
   }
   void eventClientAddSequenceChoice (int OriginId, VName Choice) {
     static VMethodProxy method("ClientAddSequenceChoice");
     vobjPutParam(this, OriginId, Choice);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_INT(OriginId);
-    P_PASS_NAME(Choice);
-    EV_RET_VOID(NAME_ClientAddSequenceChoice);
-    */
   }
   void eventClientStopSequence (int OriginId) {
     static VMethodProxy method("ClientStopSequence");
     vobjPutParam(this, OriginId);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_INT(OriginId);
-    EV_RET_VOID(NAME_ClientStopSequence);
-    */
   }
   void eventClientPrint (const VStr &Str) {
     static VMethodProxy method("ClientPrint");
     vobjPutParam(this, Str);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Str);
-    EV_RET_VOID(NAME_ClientPrint);
-    */
   }
   void eventClientCentrePrint (const VStr &Str) {
     static VMethodProxy method("ClientCentrePrint");
     vobjPutParam(this, Str);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Str);
-    EV_RET_VOID(NAME_ClientCentrePrint);
-    */
   }
   void eventClientSetAngles (TAVec Angles) {
     static VMethodProxy method("ClientSetAngles");
     vobjPutParam(this, Angles);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_AVEC(Angles);
-    EV_RET_VOID(NAME_ClientSetAngles);
-    */
   }
   void eventClientIntermission (VName NextMap) {
     static VMethodProxy method("ClientIntermission");
     vobjPutParam(this, NextMap);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_NAME(NextMap);
-    EV_RET_VOID(NAME_ClientIntermission);
-    */
   }
   void eventClientPause (bool Paused) {
     static VMethodProxy method("ClientPause");
     vobjPutParam(this, Paused);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_BOOL(Paused);
-    EV_RET_VOID(NAME_ClientPause);
-    */
   }
   void eventClientSkipIntermission () {
     static VMethodProxy method("ClientSkipIntermission");
     vobjPutParam(this);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_ClientSkipIntermission);
-    */
   }
   void eventClientFinale (const VStr &Type) {
     static VMethodProxy method("ClientFinale");
     vobjPutParam(this, Type);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Type);
-    EV_RET_VOID(NAME_ClientFinale);
-    */
   }
   void eventClientChangeMusic (VName Song) {
     static VMethodProxy method("ClientChangeMusic");
     vobjPutParam(this, Song);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_NAME(Song);
-    EV_RET_VOID(NAME_ClientChangeMusic);
-    */
   }
   void eventClientSetServerInfo (const VStr &Key, const VStr &Value) {
     static VMethodProxy method("ClientSetServerInfo");
     vobjPutParam(this, Key, Value);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Key);
-    P_PASS_STR(Value);
-    EV_RET_VOID(NAME_ClientSetServerInfo);
-    */
   }
   void eventClientHudMessage (const VStr &Message, VName Font, int Type,
                               int Id, int Color, const VStr &ColorName, float x, float y,
@@ -524,23 +440,6 @@ public:
     static VMethodProxy method("ClientHudMessage");
     vobjPutParam(this, Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Message);
-    P_PASS_NAME(Font);
-    P_PASS_INT(Type);
-    P_PASS_INT(Id);
-    P_PASS_INT(Color);
-    P_PASS_STR(ColorName);
-    P_PASS_FLOAT(x);
-    P_PASS_FLOAT(y);
-    P_PASS_INT(HudWidth);
-    P_PASS_INT(HudHeight);
-    P_PASS_FLOAT(HoldTime);
-    P_PASS_FLOAT(Time1);
-    P_PASS_FLOAT(Time2);
-    EV_RET_VOID(NAME_ClientHudMessage);
-    */
   }
 
   // client to server events
@@ -548,46 +447,22 @@ public:
     static VMethodProxy method("ServerImpulse");
     vobjPutParam(this, AImpulse);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_INT(AImpulse);
-    EV_RET_VOID(NAME_ServerImpulse);
-    */
   }
   void eventServerSetUserInfo (const VStr &Info) {
     static VMethodProxy method("ServerSetUserInfo");
     vobjPutParam(this, Info);
     VMT_RET_VOID(method);
-    /*
-    P_PASS_SELF;
-    P_PASS_STR(Info);
-    EV_RET_VOID(NAME_ServerSetUserInfo);
-    */
   }
 
   VEntity *eventGetReadyWeapon () {
     static VMethodProxy method("eventGetReadyWeapon");
     vobjPutParam(this);
     VMT_RET_REF(VEntity, method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventGetReadyWeapon"));
-    P_PASS_SELF;
-    EV_RET_REF_IDX(VEntity, mtindex);
-    */
   }
 
   void eventSetReadyWeapon (VEntity *ent, bool instant) {
     static VMethodProxy method("eventSetReadyWeapon");
     vobjPutParam(this, ent, instant);
     VMT_RET_VOID(method);
-    /*
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetReadyWeapon"));
-    P_PASS_SELF;
-    P_PASS_REF(ent);
-    P_PASS_BOOL(instant);
-    EV_RET_VOID_IDX(mtindex);
-    */
   }
 };
