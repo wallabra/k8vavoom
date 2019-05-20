@@ -1916,6 +1916,17 @@ func_loop:
         sp -= 2;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_VectorDirect)
+        switch (ip[1]) {
+          case 0: break; // nothing to do, `x` is pushed first
+          case 1: sp[-3].f = sp[-2].f; break;
+          case 2: sp[-3].f = sp[-1].f; break;
+          default: { cstDump(ip); Sys_Error("Invalid direct vector access index %d", ip[1]); }
+        }
+        ip += 2;
+        sp -= 2;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_FloatToBool)
         sp[-1].i = (sp[-1].f != 0 && isFiniteF(sp[-1].f));
         ++ip;

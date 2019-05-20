@@ -129,6 +129,33 @@ protected:
 
 //==========================================================================
 //
+//  VVectorFieldAccess
+//
+//  this accesses "immediate" (i.e. pure stack-pushed) vector field
+//
+//==========================================================================
+class VVectorFieldAccess : public VExpression {
+public:
+  VExpression *op;
+  int index;
+
+  VVectorFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc);
+  virtual ~VVectorFieldAccess () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  //virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VVectorFieldAccess () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VDelegateVal
 //
 //==========================================================================

@@ -512,8 +512,23 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector) {
     VFieldType type = op->Type;
     // `auto v = vector(a, b, c)` is vector without struct, for example, hence the check
+    if (!type.Struct && (FieldName == "x" || FieldName == "y" || FieldName == "z")) {
+      // this is something that creates a vector without a struct, and wants a field
+      int index;
+      switch ((*FieldName)[0]) {
+        case 'x': index = 0; break;
+        case 'y': index = 1; break;
+        case 'z': index = 2; break;
+        default: abort();
+      }
+      VExpression *e = new VVectorFieldAccess(op, index, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    }
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
+      GLog.Logf("*** struct '%s': field '%s' not found!", (type.Struct ? *type.Struct->Name : "<>"), *FieldName);
       // convert to method, 'cause why not?
       if (assType != AssType::AssTarget) {
         VExpression *ufcsArgs[1];
@@ -846,6 +861,90 @@ void VDotField::Emit (VEmitContext &ec) {
 //==========================================================================
 VStr VDotField::toString () const {
   return e2s(op)+"."+VStr(FieldName);
+}
+
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::VVectorFieldAccess
+//
+//==========================================================================
+VVectorFieldAccess::VVectorFieldAccess (VExpression *AOp, int AIndex, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+  , index(AIndex)
+{
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::~VVectorFieldAccess
+//
+//==========================================================================
+VVectorFieldAccess::~VVectorFieldAccess () {
+  delete op; op = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::SyntaxCopy
+//
+//==========================================================================
+VExpression *VVectorFieldAccess::SyntaxCopy () {
+  auto res = new VVectorFieldAccess();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::DoSyntaxCopyTo
+//
+//==========================================================================
+void VVectorFieldAccess::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VVectorFieldAccess *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->index = index;
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::DoResolve
+//
+//==========================================================================
+VExpression *VVectorFieldAccess::DoResolve (VEmitContext &ec) {
+  if (op) op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  Type = VFieldType(TYPE_Float);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::Emit
+//
+//==========================================================================
+void VVectorFieldAccess::Emit (VEmitContext &ec) {
+  if (!op) return;
+  op->Emit(ec);
+  ec.AddStatement(OPC_VectorDirect, index, Loc);
+}
+
+
+//==========================================================================
+//
+//  VVectorFieldAccess::toString
+//
+//==========================================================================
+VStr VVectorFieldAccess::toString () const {
+  return e2s(op)+"."+(index == 0 ? VStr("x") : index == 1 ? VStr("y") : index == 2 ? VStr("z") : VStr(index));
 }
 
 

@@ -692,6 +692,10 @@ struct Instr {
         spdelta = -2;
         return;
 
+      case OPC_VectorDirect:
+        spdelta -= 2; // only one must left!
+        return;
+
       case OPC_FloatToBool:
         return;
       case OPC_VectorToBool:
