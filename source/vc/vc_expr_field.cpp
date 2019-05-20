@@ -452,6 +452,24 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   if (op->Type.Type == TYPE_Reference) {
     if (op->Type.Class) {
+      // field first
+      VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
+      if (field) {
+        VExpression *e;
+        // "normal" access: call delegate (if it is operand-less)
+        /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+          fprintf(stderr, "*** FLD! %s\n", *field->Name);
+          e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
+        } else*/ {
+          // generate field access
+          e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+          //!!!e->Flags |= op->Flags&FIELD_ReadOnly;
+          op = nullptr;
+        }
+        delete this;
+        return e->Resolve(ec);
+      }
+
       //!if (op->Type.Class && op->Type.Class != ec.SelfClass && !op->Type.Class->Defined) op->Type.Class->Define();
       VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass, &Loc);
       if (M) {
@@ -473,23 +491,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
       // we never ever need opcopy here
       //opcopy.release();
-
-      VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
-      if (field) {
-        VExpression *e;
-        // "normal" access: call delegate (if it is operand-less)
-        /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-          fprintf(stderr, "*** FLD! %s\n", *field->Name);
-          e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
-        } else*/ {
-          // generate field access
-          e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
-          //!!!e->Flags |= op->Flags&FIELD_ReadOnly;
-          op = nullptr;
-        }
-        delete this;
-        return e->Resolve(ec);
-      }
 
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) return DoPropertyResolve(ec, Prop, assType);

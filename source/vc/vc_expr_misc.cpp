@@ -274,6 +274,21 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       return e->Resolve(ec);
     }
 
+    // fields first
+    VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
+    if (field) {
+      //if (VStr(*Name).startsWith("user_")) fprintf(stderr, "***ROUTED TO FIELD: '%s' (class:%s)\n", *Name, ec.SelfClass->GetName());
+      VExpression *e;
+      // "normal" access: call delegate (if it is operand-less)
+      /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+        e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
+      } else*/ {
+        e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      }
+      delete this;
+      return e->Resolve(ec);
+    }
+
     VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
@@ -288,20 +303,6 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       } else {
         //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
         e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
-      }
-      delete this;
-      return e->Resolve(ec);
-    }
-
-    VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
-    if (field) {
-      //if (VStr(*Name).startsWith("user_")) fprintf(stderr, "***ROUTED TO FIELD: '%s' (class:%s)\n", *Name, ec.SelfClass->GetName());
-      VExpression *e;
-      // "normal" access: call delegate (if it is operand-less)
-      /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-        e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
-      } else*/ {
-        e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
       }
       delete this;
       return e->Resolve(ec);
