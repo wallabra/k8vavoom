@@ -116,70 +116,41 @@ class VClientGameBase : public VObject {
 public:
   //VClientGameBase () : serverinfo(E_NoInit) {}
 
-  void eventPostSpawn () { P_PASS_SELF; EV_RET_VOID(VName("PostSpawn")); }
-  void eventRootWindowCreated () { P_PASS_SELF; EV_RET_VOID(NAME_RootWindowCreated); }
-  void eventConnected () { P_PASS_SELF; EV_RET_VOID(NAME_Connected); }
-  void eventDisconnected () { P_PASS_SELF; EV_RET_VOID(NAME_Disconnected); }
-  void eventDemoPlaybackStarted () { P_PASS_SELF; EV_RET_VOID(NAME_DemoPlaybackStarted); }
-  void eventDemoPlaybackStopped () { P_PASS_SELF; EV_RET_VOID(NAME_DemoPlaybackStopped); }
-  void eventOnHostEndGame () { P_PASS_SELF; EV_RET_VOID(NAME_OnHostEndGame); }
-  void eventOnHostError () { P_PASS_SELF; EV_RET_VOID(NAME_OnHostError); }
-  void eventStatusBarStartMap () { P_PASS_SELF; EV_RET_VOID(NAME_StatusBarStartMap); }
-  void eventStatusBarDrawer (int sb_type) { P_PASS_SELF; P_PASS_INT(sb_type); EV_RET_VOID(NAME_StatusBarDrawer); }
-  void eventStatusBarUpdateWidgets (float DeltaTime) { P_PASS_SELF; P_PASS_FLOAT(DeltaTime); EV_RET_VOID(NAME_StatusBarUpdateWidgets); }
-  void eventIintermissionStart () { P_PASS_SELF; EV_RET_VOID(NAME_IintermissionStart); }
-  void eventStartFinale (VName FinaleType) { P_PASS_SELF; P_PASS_NAME(FinaleType); EV_RET_VOID(NAME_StartFinale); }
-  bool eventFinaleResponder (event_t *event) { P_PASS_SELF; P_PASS_PTR(event); EV_RET_BOOL(NAME_FinaleResponder); }
-  void eventDeactivateMenu () { P_PASS_SELF; EV_RET_VOID(NAME_DeactivateMenu); }
-  bool eventMenuResponder (event_t *event) { P_PASS_SELF; P_PASS_PTR(event); EV_RET_BOOL(NAME_MenuResponder); }
-  bool eventMenuActive () { P_PASS_SELF; EV_RET_BOOL(NAME_MenuActive); }
-  void eventSetMenu (const VStr &Name) { P_PASS_SELF; P_PASS_STR(Name); EV_RET_VOID(NAME_SetMenu); }
+  void eventPostSpawn () { static VMethodProxy method("PostSpawn"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventRootWindowCreated () { static VMethodProxy method("RootWindowCreated"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventConnected () { static VMethodProxy method("Connected"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventDisconnected () { static VMethodProxy method("Disconnected"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventDemoPlaybackStarted () { static VMethodProxy method("DemoPlaybackStarted"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventDemoPlaybackStopped () { static VMethodProxy method("DemoPlaybackStopped"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventOnHostEndGame () { static VMethodProxy method("OnHostEndGame"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventOnHostError () { static VMethodProxy method("OnHostError"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventStatusBarStartMap () { static VMethodProxy method("StatusBarStartMap"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventStatusBarDrawer (int sb_type) { static VMethodProxy method("StatusBarDrawer"); vobjPutParam(this, sb_type); VMT_RET_VOID(method); }
+  void eventStatusBarUpdateWidgets (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("StatusBarUpdateWidgets"); vobjPutParam(this, DeltaTime); VMT_RET_VOID(method); }
+  void eventIintermissionStart () { static VMethodProxy method("IintermissionStart"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void eventStartFinale (VName FinaleType) { static VMethodProxy method("StartFinale"); vobjPutParam(this, FinaleType); VMT_RET_VOID(method); }
+  bool eventFinaleResponder (event_t *event) { static VMethodProxy method("FinaleResponder"); vobjPutParam(this, event); VMT_RET_BOOL(method); }
+  void eventDeactivateMenu () { static VMethodProxy method("DeactivateMenu"); vobjPutParam(this); VMT_RET_VOID(method); }
+  bool eventMenuResponder (event_t *event) { static VMethodProxy method("MenuResponder"); vobjPutParam(this, event); VMT_RET_BOOL(method); }
+  bool eventMenuActive () { static VMethodProxy method("MenuActive"); vobjPutParam(this); VMT_RET_BOOL(method); }
+  void eventSetMenu (const VStr &Name) { static VMethodProxy method("SetMenu"); vobjPutParam(this, Name); VMT_RET_VOID(method); }
 
-  void eventMessageBoxDrawer () { P_PASS_SELF; EV_RET_VOID(NAME_MessageBoxDrawer); }
-  bool eventMessageBoxResponder (event_t *event) { P_PASS_SELF; P_PASS_PTR(event); EV_RET_BOOL(NAME_MessageBoxResponder); }
-  bool eventMessageBoxActive () { P_PASS_SELF; EV_RET_BOOL(NAME_MessageBoxActive); }
+  void eventMessageBoxDrawer () { static VMethodProxy method("MessageBoxDrawer"); vobjPutParam(this); VMT_RET_VOID(method); }
+  bool eventMessageBoxResponder (event_t *event) { static VMethodProxy method("MessageBoxResponder"); vobjPutParam(this, event); VMT_RET_BOOL(method); }
+  bool eventMessageBoxActive () { static VMethodProxy method("MessageBoxActive"); vobjPutParam(this); VMT_RET_BOOL(method); }
 
-  void eventDrawViewBorder (int x, int y, int w, int h) {
-    P_PASS_SELF;
-    P_PASS_INT(x);
-    P_PASS_INT(y);
-    P_PASS_INT(w);
-    P_PASS_INT(h);
-    EV_RET_VOID(NAME_DrawViewBorder);
-  }
-
-  void eventAddNotifyMessage (const VStr &Str) {
-    P_PASS_SELF;
-    P_PASS_STR(Str);
-    EV_RET_VOID(NAME_AddNotifyMessage);
-  }
-
-  void eventAddCentreMessage (const VStr &Msg) {
-    P_PASS_SELF;
-    P_PASS_STR(Msg);
-    EV_RET_VOID(NAME_AddCentreMessage);
-  }
+  void eventDrawViewBorder (int x, int y, int w, int h) { static VMethodProxy method("DrawViewBorder"); vobjPutParam(this, x, y, w, h); VMT_RET_VOID(method); }
+  void eventAddNotifyMessage (const VStr &Str) { static VMethodProxy method("AddNotifyMessage"); vobjPutParam(this, Str); VMT_RET_VOID(method); }
+  void eventAddCentreMessage (const VStr &Msg) { static VMethodProxy method("AddCentreMessage"); vobjPutParam(this, Msg); VMT_RET_VOID(method); }
 
   void eventAddHudMessage (const VStr &Message, VName Font, int Type, int Id,
                            int Color, const VStr &ColorName, float x, float y,
                            int HudWidth, int HudHeight, float HoldTime,
                            float Time1, float Time2)
   {
-    P_PASS_SELF;
-    P_PASS_STR(Message);
-    P_PASS_NAME(Font);
-    P_PASS_INT(Type);
-    P_PASS_INT(Id);
-    P_PASS_INT(Color);
-    P_PASS_STR(ColorName);
-    P_PASS_FLOAT(x);
-    P_PASS_FLOAT(y);
-    P_PASS_INT(HudWidth);
-    P_PASS_INT(HudHeight);
-    P_PASS_FLOAT(HoldTime);
-    P_PASS_FLOAT(Time1);
-    P_PASS_FLOAT(Time2);
-    EV_RET_VOID(NAME_AddHudMessage);
+    static VMethodProxy method("AddHudMessage");
+    vobjPutParam(this, Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+    VMT_RET_VOID(method);
   }
 };
 
