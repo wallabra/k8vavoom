@@ -1,0 +1,12 @@
+class Main : Object;
+
+
+void main () {
+  TVec v1 = vector(1, 42, 666);
+  TVec v2 = vector(4, 5, 6);
+  float t = 0.5;
+  //TVec v = (v1+(v2-v1)*t);
+  //float n = (v1+(v2-v1)*t).x;
+  //float n = (v2-v1).x;
+  writeln((v1+(v2-v1)*t).x, " : ", (v1+(v2-v1)*t).y, " : ", (v1+(v2-v1)*t).z);
+}
