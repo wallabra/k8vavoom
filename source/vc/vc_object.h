@@ -118,6 +118,7 @@ class VObject : public VInterface {
 
   // friends
   friend class FObjectIterator;
+  friend class VMethodProxy;
 
 #if defined(VCC_STANDALONE_EXECUTOR)
 # define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  false
@@ -305,6 +306,31 @@ template<class T, class U> T *CastChecked (U *Src) {
 }
 
 
+//==========================================================================
+//
+//  VMethodProxy
+//
+//==========================================================================
+class VMethodProxy {
+private:
+  const char *MethodName;
+  VMethod *Method;
+  VClass *Class;
+
+public:
+  VMethodProxy ();
+  VMethodProxy (const char *AMethod);
+
+  // returns `false` if method not found
+  bool Resolve (VObject *Self);
+  void ResolveChecked (VObject *Self);
+
+  VFuncRes Execute (VObject *Self);
+  // this doesn't check is `Self` isa `Class`
+  VFuncRes ExecuteNoCheck (VObject *Self);
+};
+
+
 /*----------------------------------------------------------------------------
   Object iterators.
 ----------------------------------------------------------------------------*/
@@ -384,6 +410,20 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define EV_RET_REF_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getObject()
 #define EV_RET_PTR_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getClass()
 
+// macros for calling VavoomC methods with different return types
+// this is for `VMethodProxy`
+#define VMT_RET_VOID(v)    (void)(v).Execute(this)
+#define VMT_RET_INT(v)     return (v).Execute(this).getInt()
+#define VMT_RET_BYTE(v)    return (v).Execute(this).getInt()
+#define VMT_RET_FLOAT(v)   return (v).Execute(this).getFloat()
+#define VMT_RET_BOOL(v)    return !!(v).Execute(this).getInt()
+#define VMT_RET_NAME(v)    return (v).Execute(this).getName()
+#define VMT_RET_STR(v)     return (v).Execute(this).getStr()
+#define VMT_RET_VEC(v)     return (v).Execute(this).getVector()
+//#define VMT_RET_AVEC(v)    Sys_Error("Not implemented") /*(v).ExecuteFunction(this)*/
+#define VMT_RET_REF(t, v)  return (t *)(v).Execute(this).getObject()
+#define VMT_RET_PTR(t, v)  return (t *)(v).Execute(this).getClass()
+
 // parameter get macros; parameters must be retrieved in backwards order
 #define P_GET_INT(v)     vint32 v = PR_Pop()
 #define P_GET_BYTE(v)    vuint8 v = PR_Pop()
@@ -443,7 +483,41 @@ static __attribute__((unused)) inline void vobj_get_param (bool &n) { n = !!PR_P
 static __attribute__((unused)) inline void vobj_get_param (VStr &n) { n = PR_PopStr(); }
 static __attribute__((unused)) inline void vobj_get_param (VName &n) { n = PR_PopName(); }
 static __attribute__((unused)) inline void vobj_get_param (int *&n) { n = (int *)PR_PopPtr(); }
+static __attribute__((unused)) inline void vobj_get_param (TVec &n) { n = PR_Popv(); }
+static __attribute__((unused)) inline void vobj_get_param (TAVec &n) { n = PR_Popav(); }
 template<class C> static __attribute__((unused)) inline void vobj_get_param (C *&n) { n = (C *)PR_PopPtr(); }
+
+#define VC_DEFINE_OPTPARAM(tname_,type_,defval_,pop_) \
+struct VOptParam##tname_ { \
+  bool specified; \
+  type_ value; \
+  VOptParam##tname_ (type_ adefault=defval_) : specified(false), value(adefault) {} \
+  inline operator type_ () { return value; } \
+}; \
+static __attribute__((unused)) inline void vobj_get_param (VOptParam##tname_ &n) { \
+  n.specified = !!PR_Pop(); \
+  if (n.specified) n.value = pop_(); else (void)pop_(); \
+}
+
+VC_DEFINE_OPTPARAM(Int, int, 0, PR_Pop) // VOptParamInt
+VC_DEFINE_OPTPARAM(Float, float, 0.0f, PR_Popf) // VOptParamFloat
+VC_DEFINE_OPTPARAM(Double, double, 0.0, PR_Popf) // VOptParamDouble
+VC_DEFINE_OPTPARAM(Bool, bool, false, !!PR_Pop) // VOptParamBool
+VC_DEFINE_OPTPARAM(Str, VStr, VStr::EmptyString, PR_PopStr) // VOptParamStr
+VC_DEFINE_OPTPARAM(Name, VName, NAME_None, PR_PopName) // VOptParamName
+VC_DEFINE_OPTPARAM(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), PR_Popv) // VOptParamVec
+VC_DEFINE_OPTPARAM(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Popav) // VOptParamAVec
+
+template<class C> struct VOptParamPtr {
+  bool specified;
+  C *value;
+  VOptParamPtr (C *adefault=nullptr) : specified(false), value(adefault) {}
+};
+template<class C> static __attribute__((unused)) inline void vobj_get_param (VOptParamPtr<C> &n) {
+  n.specified = !!PR_Pop();
+  if (n.specified) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
+}
+
 
 template<typename T, typename... Args> static __attribute__((unused)) inline void vobj_get_param (T &n, Args&... args) {
   vobj_get_param(args...);

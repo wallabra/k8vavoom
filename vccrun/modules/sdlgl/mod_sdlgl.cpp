@@ -3135,10 +3135,15 @@ IMPLEMENT_FUNCTION(VGLVideo, glSetTexture) {
 
 //native final static void glSetColor (float r, float g, float b, optional float a/*=1*/);
 IMPLEMENT_FUNCTION(VGLVideo, glSetColor) {
+  VOptParamFloat a(1.0f);
+  float r, g, b;
+  vobjGetParam(r, g, b, a);
+  /*
   P_GET_FLOAT_OPT(a, 1.0f);
   P_GET_FLOAT(b);
   P_GET_FLOAT(g);
   P_GET_FLOAT(r);
+  */
   if (mInited) glColor4f(r, g, b, a);
 }
 

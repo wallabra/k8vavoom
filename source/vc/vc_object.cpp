@@ -248,6 +248,101 @@ void VScriptIterator::Finished () {
 }
 
 
+
+//==========================================================================
+//
+//  VMethodProxy::VMethodProxy
+//
+//==========================================================================
+VMethodProxy::VMethodProxy ()
+  : MethodName(nullptr)
+  , Method(nullptr)
+  , Class(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::VMethodProxy
+//
+//==========================================================================
+VMethodProxy::VMethodProxy (const char *AMethod)
+  : MethodName(AMethod)
+  , Method(nullptr)
+  , Class(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::Resolve
+//
+//  returns `false` if method not found
+//
+//==========================================================================
+bool VMethodProxy::Resolve (VObject *Self) {
+  if (Method) return true;
+  if (!Self || !MethodName || !MethodName[0]) return false;
+  // if there is no such name, there is no such method
+  VName n = VName(MethodName, VName::Find);
+  if (n == NAME_None) return false;
+  Class = Self->GetClass();
+  Method = Class->FindAccessibleMethod(n);
+  if (!Method) return false;
+  return !!Method;
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::ResolveChecked
+//
+//==========================================================================
+void VMethodProxy::ResolveChecked (VObject *Self) {
+  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::Execute
+//
+//==========================================================================
+VFuncRes VMethodProxy::Execute (VObject *Self) {
+  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (!(Method->Flags&FUNC_Static)) {
+    check(Self);
+    check(Self->IsA(Class));
+  }
+  if (Method->VTableIndex != -1) {
+    return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
+  } else {
+    return VObject::ExecuteFunction(Method);
+  }
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::ExecuteNoCheck
+//
+//  this doesn't check is `Self` isa `Class`
+//
+//==========================================================================
+VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
+  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (Method->VTableIndex != -1) {
+    check(Self);
+    return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
+  } else {
+    return VObject::ExecuteFunction(Method);
+  }
+}
+
+
+
 //==========================================================================
 //
 //  VObject::VObject

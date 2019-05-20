@@ -412,7 +412,13 @@ public:
   }
 
   // cheats
-  void eventCheat_VScriptCommand (TArray<VStr> &args) { P_PASS_SELF; P_PASS_PTR((void *)&args); EV_RET_VOID(VName("Cheat_VScriptCommand")); }
+  void eventCheat_VScriptCommand (TArray<VStr> &args) {
+    static VMethodProxy method("Cheat_VScriptCommand");
+    P_PASS_SELF;
+    P_PASS_PTR((void *)&args);
+    VMT_RET_VOID(method);
+    //EV_RET_VOID(VName("Cheat_VScriptCommand"));
+  }
 
   // server to client events
   void eventClientStartSound (int SoundId, TVec Org, int OriginId,
