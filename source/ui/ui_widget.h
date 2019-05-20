@@ -234,122 +234,29 @@ public:
   static VWidget *CreateNewWidget (VClass *, VWidget *);
 
   // events
-  void OnCreate () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnCreate);
-  }
-  void OnDestroy () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnDestroy);
-  }
-  virtual void OnChildAdded (VWidget *Child) {
-    P_PASS_SELF;
-    P_PASS_REF(Child);
-    EV_RET_VOID(NAME_OnChildAdded);
-  }
-  virtual void OnChildRemoved (VWidget *Child) {
-    P_PASS_SELF;
-    P_PASS_REF(Child);
-    EV_RET_VOID(NAME_OnChildRemoved);
-  }
-  virtual void OnConfigurationChanged () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnConfigurationChanged);
-  }
-  virtual void OnVisibilityChanged (bool NewVisibility) {
-    P_PASS_SELF;
-    P_PASS_BOOL(NewVisibility);
-    EV_RET_VOID(NAME_OnVisibilityChanged);
-  }
-  virtual void OnEnableChanged (bool bNewEnable) {
-    P_PASS_SELF;
-    P_PASS_BOOL(bNewEnable);
-    EV_RET_VOID(NAME_OnEnableChanged);
-  }
-  virtual void OnFocusableChanged (bool bNewFocusable) {
-    P_PASS_SELF;
-    P_PASS_BOOL(bNewFocusable);
-    EV_RET_VOID(NAME_OnFocusableChanged);
-  }
-  virtual void OnFocusReceived () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnFocusReceived);
-  }
-  virtual void OnFocusLost () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnFocusLost);
-  }
-  virtual void OnDraw () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnDraw);
-  }
-  virtual void OnPostDraw () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnPostDraw);
-  }
-  virtual void Tick (float DeltaTime) {
-    P_PASS_SELF;
-    P_PASS_FLOAT(DeltaTime);
-    EV_RET_VOID(NAME_Tick);
-  }
-  virtual bool OnKeyDown (int Key) {
-    P_PASS_SELF;
-    P_PASS_INT(Key);
-    EV_RET_BOOL(NAME_OnKeyDown);
-  }
-  virtual bool OnKeyUp (int Key) {
-    P_PASS_SELF;
-    P_PASS_INT(Key);
-    EV_RET_BOOL(NAME_OnKeyUp);
-  }
-  virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) {
-    P_PASS_SELF;
-    P_PASS_INT(OldX);
-    P_PASS_INT(OldY);
-    P_PASS_INT(NewX);
-    P_PASS_INT(NewY);
-    EV_RET_BOOL(NAME_OnMouseMove);
-  }
-  virtual void OnMouseEnter () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnMouseEnter);
-  }
-  virtual void OnMouseLeave () {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_OnMouseEnter);
-  }
-  virtual bool OnMouseDown (int X, int Y, int Button) {
-    P_PASS_SELF;
-    P_PASS_INT(X);
-    P_PASS_INT(Y);
-    P_PASS_INT(Button);
-    EV_RET_BOOL(NAME_OnMouseDown);
-  }
-  virtual bool OnMouseUp (int X, int Y, int Button) {
-    P_PASS_SELF;
-    P_PASS_INT(X);
-    P_PASS_INT(Y);
-    P_PASS_INT(Button);
-    EV_RET_BOOL(NAME_OnMouseUp);
-  }
-  virtual void OnMouseClick (int X, int Y) {
-    P_PASS_SELF;
-    P_PASS_INT(X);
-    P_PASS_INT(Y);
-    EV_RET_VOID(NAME_OnMouseClick);
-  }
-  virtual void OnMMouseClick (int X, int Y) {
-    P_PASS_SELF;
-    P_PASS_INT(X);
-    P_PASS_INT(Y);
-    EV_RET_VOID(NAME_OnMMouseClick);
-  }
-  virtual void OnRMouseClick (int X, int Y) {
-    P_PASS_SELF;
-    P_PASS_INT(X);
-    P_PASS_INT(Y);
-    EV_RET_VOID(NAME_OnRMouseClick);
-  }
+  void OnCreate () { static VMethodProxy method("OnCreate"); vobjPutParam(this); VMT_RET_VOID(method); }
+  void OnDestroy () { static VMethodProxy method("OnDestroy"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnChildAdded (VWidget *Child) { static VMethodProxy method("OnChildAdded"); vobjPutParam(this, Child); VMT_RET_VOID(method); }
+  virtual void OnChildRemoved (VWidget *Child) { static VMethodProxy method("OnChildRemoved"); vobjPutParam(this, Child); VMT_RET_VOID(method); }
+  virtual void OnConfigurationChanged () { static VMethodProxy method("OnConfigurationChanged"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnVisibilityChanged (bool NewVisibility) { static VMethodProxy method("OnVisibilityChanged"); vobjPutParam(this, NewVisibility); VMT_RET_VOID(method); }
+  virtual void OnEnableChanged (bool bNewEnable) { static VMethodProxy method("OnEnableChanged"); vobjPutParam(this, bNewEnable); VMT_RET_VOID(method); }
+  virtual void OnFocusableChanged (bool bNewFocusable) { static VMethodProxy method("OnFocusableChanged"); vobjPutParam(this, bNewFocusable); VMT_RET_VOID(method); }
+  virtual void OnFocusReceived () { static VMethodProxy method("OnFocusReceived"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnFocusLost () { static VMethodProxy method("OnFocusLost"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnDraw () { static VMethodProxy method("OnDraw"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParam(this, DeltaTime); VMT_RET_VOID(method); }
+  virtual bool OnKeyDown (int Key) { static VMethodProxy method("OnKeyDown"); vobjPutParam(this, Key); VMT_RET_BOOL(method); }
+  virtual bool OnKeyUp (int Key) { static VMethodProxy method("OnKeyUp"); vobjPutParam(this, Key); VMT_RET_BOOL(method); }
+  virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) { static VMethodProxy method("OnMouseMove"); vobjPutParam(this, OldX, OldY, NewX, NewY); VMT_RET_BOOL(method); }
+  virtual void OnMouseEnter () { static VMethodProxy method("OnMouseEnter"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual void OnMouseLeave () { static VMethodProxy method("OnMouseLeave"); vobjPutParam(this); VMT_RET_VOID(method); }
+  virtual bool OnMouseDown (int X, int Y, int Button) { static VMethodProxy method("OnMouseDown"); vobjPutParam(this, X, Y, Button); VMT_RET_BOOL(method); }
+  virtual bool OnMouseUp (int X, int Y, int Button) { static VMethodProxy method("OnMouseUp"); vobjPutParam(this, X, Y, Button); VMT_RET_BOOL(method); }
+  virtual void OnMouseClick (int X, int Y) { static VMethodProxy method("OnMouseClick"); vobjPutParam(this, X, Y); VMT_RET_VOID(method); }
+  virtual void OnMMouseClick (int X, int Y) { static VMethodProxy method("OnMMouseClick"); vobjPutParam(this, X, Y); VMT_RET_VOID(method); }
+  virtual void OnRMouseClick (int X, int Y) { static VMethodProxy method("OnRMouseClick"); vobjPutParam(this, X, Y); VMT_RET_VOID(method); }
 
   // script natives
   DECLARE_FUNCTION(NewChild)
