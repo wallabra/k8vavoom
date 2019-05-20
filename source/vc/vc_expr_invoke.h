@@ -151,6 +151,9 @@ protected:
 //
 //  VCastOrInvocation
 //
+//  parser creates this for `id(...)`
+//  it will be resolved to actual cast or invocation node
+//
 //==========================================================================
 class VCastOrInvocation : public VInvocationBase {
 public:
