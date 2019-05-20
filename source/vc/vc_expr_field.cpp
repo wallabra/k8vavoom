@@ -514,17 +514,23 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // `auto v = vector(a, b, c)` is vector without struct, for example, hence the check
     if (!type.Struct && (FieldName == "x" || FieldName == "y" || FieldName == "z")) {
       // this is something that creates a vector without a struct, and wants a field
-      int index;
-      switch ((*FieldName)[0]) {
-        case 'x': index = 0; break;
-        case 'y': index = 1; break;
-        case 'z': index = 2; break;
-        default: abort();
+      if (assType != AssType::AssTarget) {
+        int index;
+        switch ((*FieldName)[0]) {
+          case 'x': index = 0; break;
+          case 'y': index = 1; break;
+          case 'z': index = 2; break;
+          default: abort();
+        }
+        VExpression *e = new VVectorFieldAccess(op, index, Loc);
+        op = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      } else {
+        ParseError(Loc, "Cannot assign to local vector field `%s`", *FieldName);
+        delete this;
+        return nullptr;
       }
-      VExpression *e = new VVectorFieldAccess(op, index, Loc);
-      op = nullptr;
-      delete this;
-      return e->Resolve(ec);
     }
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
