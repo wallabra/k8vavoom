@@ -512,6 +512,7 @@ template<class C> struct VOptParamPtr {
   bool specified;
   C *value;
   VOptParamPtr (C *adefault=nullptr) : specified(false), value(adefault) {}
+  inline operator C* () { return value; }
 };
 template<class C> static __attribute__((unused)) inline void vobj_get_param (VOptParamPtr<C> &n) {
   n.specified = !!PR_Pop();
@@ -527,6 +528,67 @@ template<typename T, typename... Args> static __attribute__((unused)) inline voi
 
 template<typename... Args> static __attribute__((unused)) inline void vobjGetParam (Args&... args) {
   vobj_get_param(args...);
+}
+#endif
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#if !defined(IN_VCC)
+static __attribute__((unused)) inline void vobj_put_param (const int v) { PR_Push(v); }
+static __attribute__((unused)) inline void vobj_put_param (const float v) { PR_Pushf(v); }
+static __attribute__((unused)) inline void vobj_put_param (const double v) { PR_Pushf(v); }
+static __attribute__((unused)) inline void vobj_put_param (const bool v) { PR_Push(!!v); }
+static __attribute__((unused)) inline void vobj_put_param (const VStr v) { PR_PushStr(v); }
+static __attribute__((unused)) inline void vobj_put_param (const VName v) { PR_PushName(v); }
+static __attribute__((unused)) inline void vobj_put_param (const TVec v) { PR_Pushv(v); }
+static __attribute__((unused)) inline void vobj_put_param (const TAVec v) { PR_Pushav(v); }
+//static __attribute__((unused)) inline void vobj_put_param (VObject *v) { PR_PushPtr((void *)v); }
+//static __attribute__((unused)) inline void vobj_put_param (const VObject *v) { PR_PushPtr((void *)v); }
+template<class C> static __attribute__((unused)) inline void vobj_put_param (C *v) { PR_PushPtr((void *)v); }
+
+#define VC_DEFINE_OPTPARAM_PUT(tname_,type_,defval_,push_) \
+struct VOptPutParam##tname_ { \
+  bool specified; \
+  type_ value; \
+  VOptPutParam##tname_ () : specified(false), value(defval_) {} \
+  VOptPutParam##tname_ (type_ avalue) : specified(true), value(avalue) {} \
+  inline operator type_ () { return value; } \
+}; \
+static __attribute__((unused)) inline void vobj_put_param (VOptPutParam##tname_ &v) { \
+  push_(v.value); \
+  PR_Push(!!v.specified); \
+}
+
+VC_DEFINE_OPTPARAM_PUT(Int, int, 0, PR_Push) // VOptPutParamInt
+VC_DEFINE_OPTPARAM_PUT(Float, float, 0.0f, PR_Pushf) // VOptPutParamFloat
+VC_DEFINE_OPTPARAM_PUT(Double, double, 0.0, PR_Pushf) // VOptPutParamDouble
+VC_DEFINE_OPTPARAM_PUT(Bool, bool, false, PR_Push) // VOptPutParamBool
+VC_DEFINE_OPTPARAM_PUT(Str, VStr, VStr::EmptyString, PR_PushStr) // VOptPutParamStr
+VC_DEFINE_OPTPARAM_PUT(Name, VName, NAME_None, PR_PushName) // VOptPutParamName
+VC_DEFINE_OPTPARAM_PUT(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), PR_Pushv) // VOptPutParamVec
+VC_DEFINE_OPTPARAM_PUT(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Pushav) // VOptPutParamAVec
+
+template<class C> struct VOptPutParamPtr {
+  bool specified;
+  C *value;
+  VOptPutParamPtr () : specified(false), value(nullptr) {}
+  VOptPutParamPtr (C *avalue) : specified(true), value(avalue) {}
+  inline operator C* () { return value; }
+};
+template<class C> static __attribute__((unused)) inline void vobj_put_param (VOptPutParamPtr<C> v) {
+  PR_PushPtr((void *)v.value);
+  PR_Push(!!v.specified);
+}
+
+
+template<typename T, typename... Args> static __attribute__((unused)) inline void vobj_put_param (T v, Args... args) {
+  vobj_put_param(v);
+  vobj_put_param(args...);
+}
+
+
+template<typename... Args> static __attribute__((unused)) inline void vobjPutParam (Args... args) {
+  vobj_put_param(args...);
 }
 #endif
 
