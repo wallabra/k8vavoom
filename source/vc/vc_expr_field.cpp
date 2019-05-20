@@ -512,25 +512,24 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector) {
     VFieldType type = op->Type;
     // `auto v = vector(a, b, c)` is vector without struct, for example, hence the check
-    if (!type.Struct && (FieldName == "x" || FieldName == "y" || FieldName == "z")) {
-      // this is something that creates a vector without a struct, and wants a field
-      if (assType != AssType::AssTarget) {
-        int index;
-        switch ((*FieldName)[0]) {
-          case 'x': index = 0; break;
-          case 'y': index = 1; break;
-          case 'z': index = 2; break;
-          default: abort();
+    if (!type.Struct) {
+      // try to parse swizzle
+      const char *s = *FieldName;
+      int swidx = VVectorDirectFieldAccess::ParseOneSwizzle(s);
+      if (swidx >= 0 && !s[0]) {
+        // this is something that creates a vector without a struct, and wants a field
+        if (assType != AssType::AssTarget) {
+          VExpression *e = new VVectorDirectFieldAccess(op, swidx, Loc);
+          op = nullptr;
+          delete this;
+          return e->Resolve(ec);
+        } else {
+          ParseError(Loc, "Cannot assign to local vector field `%s`", *FieldName);
+          delete this;
+          return nullptr;
         }
-        VExpression *e = new VVectorDirectFieldAccess(op, index, Loc);
-        op = nullptr;
-        delete this;
-        return e->Resolve(ec);
-      } else {
-        ParseError(Loc, "Cannot assign to local vector field `%s`", *FieldName);
-        delete this;
-        return nullptr;
       }
+      // bad swizzle, ignore it
     }
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
@@ -868,6 +867,33 @@ VStr VDotField::toString () const {
   return e2s(op)+"."+VStr(FieldName);
 }
 
+
+
+//==========================================================================
+//
+//  VVectorDirectFieldAccess::ParseOneSwizzle
+//
+//  returns swizzle or -1
+//
+//==========================================================================
+int VVectorDirectFieldAccess::ParseOneSwizzle (const char *&s) {
+  if (!s) return -1;
+  while (*s && s[0] == '_') ++s;
+  if (!s[0]) return -1;
+  bool negated = (s[0] == 'm');
+  if (negated) ++s;
+  int res = (negated ? VCVSE_Negate : 0);
+  switch (s[0]) {
+    case '0': ++s; res |= VCVSE_Zero; break;
+    case '1': ++s; res |= VCVSE_One; break;
+    case 'x': ++s; res |= VCVSE_X; break;
+    case 'y': ++s; res |= VCVSE_Y; break;
+    case 'z': ++s; res |= VCVSE_Z; break;
+    default: return -1;
+  }
+  while (*s && s[0] == '_') ++s;
+  return res;
+}
 
 
 //==========================================================================

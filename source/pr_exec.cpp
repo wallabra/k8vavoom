@@ -1917,12 +1917,15 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VectorDirect)
-        switch (ip[1]) {
-          case 0: break; // nothing to do, `x` is pushed first
-          case 1: sp[-3].f = sp[-2].f; break;
-          case 2: sp[-3].f = sp[-1].f; break;
-          default: { cstDump(ip); Sys_Error("Invalid direct vector access index %d", ip[1]); }
+        switch (ip[1]&VVectorDirectFieldAccess::VCVSE_ElementMask) {
+          case VVectorDirectFieldAccess::VCVSE_Zero: sp[-3].f = 0; break;
+          case VVectorDirectFieldAccess::VCVSE_One: sp[-3].f = 1; break;
+          case VVectorDirectFieldAccess::VCVSE_X: break;
+          case VVectorDirectFieldAccess::VCVSE_Y: sp[-3].f = sp[-2].f; break;
+          case VVectorDirectFieldAccess::VCVSE_Z: sp[-3].f = sp[-1].f; break;
+          default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x", ip[1]); }
         }
+        if (ip[1]&VVectorDirectFieldAccess::VCVSE_Negate) sp[-3].f = -sp[-3].f;
         ip += 2;
         sp -= 2;
         PR_VM_BREAK;
