@@ -528,7 +528,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
-      GLog.Logf("*** struct '%s': field '%s' not found!", (type.Struct ? *type.Struct->Name : "<>"), *FieldName);
       // convert to method, 'cause why not?
       if (assType != AssType::AssTarget) {
         VExpression *ufcsArgs[1];
