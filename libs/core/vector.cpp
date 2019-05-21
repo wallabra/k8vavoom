@@ -640,7 +640,8 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
     // is using `0.1f` tolerance, and it should be lower than that
     //planes[4].SetPointNormal3D(fp.origin/*+fp.vforward*0.02f*/, fp.vforward);
     // disregard that; our `zNear` is `1.0f`, so just use it
-    planes[4].SetPointNormal3D(fp.origin+fp.vforward, fp.vforward);
+    // k8: better be safe than sorry
+    planes[4].SetPointNormal3D(fp.origin+fp.vforward*0.125f, fp.vforward);
     // sanity check: camera shouldn't be in frustum
     //check(planes[4].PointOnSide(fp.origin));
     planes[4].clipflag = 1U<<4;
