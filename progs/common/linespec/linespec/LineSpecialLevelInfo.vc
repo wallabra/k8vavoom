@@ -1503,9 +1503,7 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     // find a two sided line around the pool whose other side isn't the pillar
     for (i = 0; i < s2.lines.length; i++)
     {
-      if ((!s2->lines[i]->flags&ML_TWOSIDED) ||
-        (s2->lines[i]->backsector == s1))
-        continue;
+      if (!(s2->lines[i]->flags&ML_TWOSIDED) || (s2->lines[i]->backsector == s1)) continue;
       s3 = s2->lines[i]->backsector;
       if (!s3) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
@@ -5566,7 +5564,7 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
       bool Splash, optional float maxdist, optional Entity emitter)
 {
   // wake up all monsters in this sector
-  if (!sec || sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1) return; // already flooded
+  if (!sec || (sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1)) return; // already flooded
 
   recSoundSectorEntities.clear();
   XLevel.doRecursiveSound(*Game.validcount, ref recSoundSectorEntities, sec, soundblocks, soundtarget, maxdist, (emitter ? emitter.Origin : vector(0, 0, 0)));

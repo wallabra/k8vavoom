@@ -738,7 +738,7 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
 
   if (Target) {
     if (!bNoFear) {
-      if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened) {
+      if ((Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) || bFrightened) {
         deltax = -deltax;
         deltay = -deltay;
       }

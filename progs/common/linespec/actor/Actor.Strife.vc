@@ -607,7 +607,7 @@ final void A_InquisitorCheckLand () {
   EntityEx onmo = EntityEx(CheckOnmobj());
 
   if (((onmo && onmo.TestMobjZ()) || !onmo) && TestMobjZ()) {
-    if (Velocity.x == 0.0 && Velocity.y == 0.0 || Origin.z <= FloorZ ||
+    if ((Velocity.x == 0.0 && Velocity.y == 0.0) || Origin.z <= FloorZ ||
         (fabs(Velocity.x) > 6.0*35.0 && fabs(Velocity.y) > 6.0*35.0) ||
         ReactionCount < 0 || Origin.z >= Target.Origin.z+Height/6.0)
     {

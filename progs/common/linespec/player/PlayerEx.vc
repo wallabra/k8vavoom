@@ -718,7 +718,7 @@ final void MovePlayer (float deltaTime) {
         }
       }
     }
-    if (Buttons&BT_JUMP && MO.Velocity.z < 160) MO.Velocity.z += 30;
+    if ((Buttons&BT_JUMP) && MO.Velocity.z < 160) MO.Velocity.z += 30;
     float limit = (Buttons&BT_SPEED ? 400 : 200);
     MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     //print("VZ=%s; FH=%s; fvwd=%s", MO.Velocity.z, FlyHeight, vforward);
@@ -1950,7 +1950,7 @@ void PaletteFlash () {
     }
 
     //FIXME add hazard flash.
-    if (HazardTime > 16.0 || int(4.0*HazardTime)&1) {
+    if (HazardTime > 16.0 || (int(4.0*HazardTime)&1)) {
       AddBlend(r, g, b, a, RGBA(0, 255, 0, 32));
     }
   }

@@ -845,7 +845,7 @@ void FloorBounceMissile () {
 
   vdot = DotProduct(Velocity, EFloor.spGetNormal());
 
-  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
+  if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
     Velocity -= 2.0*(vdot*EFloor.spGetNormal());
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
@@ -905,7 +905,7 @@ final void CeilingBounceMissile () {
 
   vdot = DotProduct(Velocity, ECeiling.spGetNormal());
 
-  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
+  if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
     Velocity -= 2.0*(vdot*ECeiling.spGetNormal());
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
@@ -1237,7 +1237,7 @@ override void ApplyFriction (float DeltaTime) {
     if (Velocity.x > 0.25*35.0 || Velocity.x < -0.25*35.0 ||
         Velocity.y > 0.25*35.0 || Velocity.y < -0.25*35.0)
     {
-      if (Sector && FloorZ > GetPlanePointZ(ref Sector->floor, Origin) || DropOffZ != FloorZ) {
+      if ((Sector && FloorZ > GetPlanePointZ(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
         return;
       }
     }

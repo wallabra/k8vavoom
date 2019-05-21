@@ -416,8 +416,7 @@ void TranslateLine(line_t *line)
   {
     line->flags |= ML_MONSTERSCANACTIVATE;
   }
-  if ((line->flags & ML_SECRET) && line->SpacFlags & (SPAC_Use |
-    SPAC_UseThrough))
+  if ((line->flags & ML_SECRET) && (line->SpacFlags&(SPAC_Use|SPAC_UseThrough)))
   {
     line->flags &= ~ML_MONSTERSCANACTIVATE;
   }

@@ -54,7 +54,7 @@ void TouchWhirlwind(Actor Other)
     (Random() - Random()) * 45.0 / 2.0);
   Other.Velocity.x += (Random() - Random()) * 4.0 * 35.0;
   Other.Velocity.y += (Random() - Random()) * 4.0 * 35.0;
-  if (XLevel.TicTime & 16 && !Other.bBoss)
+  if ((XLevel.TicTime&16) && !Other.bBoss)
   {
     randVal = Random() * 4.0;
     if (randVal > 2.5)

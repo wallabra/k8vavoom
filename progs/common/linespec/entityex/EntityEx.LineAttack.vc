@@ -857,7 +857,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
                             (bIsPlayer && PlayerEx(Player).ReadyWeapon && PlayerEx(Player).ReadyWeapon.bBloodSplatter);
 
     // spawn bullet puffs or blood spots, depending on target type
-    if (PuffType && PuffType.default.bPuffOnActors || th.bNoBlood || th.bInvulnerable || th.bDormant) {
+    if ((PuffType && PuffType.default.bPuffOnActors) || th.bNoBlood || th.bInvulnerable || th.bDormant) {
       SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
     }
     if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
@@ -975,7 +975,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if (li->flags&ML_TWOSIDED && PointOnPlaneSide(shootOrigin, *li)) {
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         sec = li->backsector;
       } else {
         sec = li->frontsector;

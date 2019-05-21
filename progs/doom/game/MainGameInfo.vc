@@ -751,7 +751,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       line->arg5 = ((OldSpec&0x0c00)>>10)|((OldSpec&0x0060)>>3)|((OldSpec&0x1000)>>8);
     }
-    if (line->flags&ML_MONSTERSCANACTIVATE && line->SpacFlags == SPAC_Cross) {
+    if ((line->flags&ML_MONSTERSCANACTIVATE) && line->SpacFlags == SPAC_Cross) {
       // in Boom, anything can activate such a line so set the proper type here
       line->SpacFlags = SPAC_AnyCross;
     }
