@@ -586,9 +586,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
     // scared monsters attack less frequently
     // k8: i cannot get this logic; let's hope i put parens at the right place
-    if ((!Target.bIsPlayer || !(PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) &&
-         (!bFrightened || P_Random() < 43))
-    {
+    if (((!Target.bIsPlayer || !(PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) && !bFrightened) || P_Random() < 43) {
       // check for melee attack
       if (AMeleeState && CheckMeleeRange()) {
         if (AttackSound) PlaySound(AttackSound, CHAN_WEAPON);
