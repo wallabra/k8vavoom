@@ -344,19 +344,29 @@ void VUnary::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
 
 //==========================================================================
 //
+//  VUnary::getOpName
+//
+//==========================================================================
+const char *VUnary::getOpName () const {
+  switch (Oper) {
+    case Plus: return "+";
+    case Minus: return "-";
+    case Not: return "!";
+    case BitInvert: return "~";
+    case TakeAddress: return "&";
+  }
+  return "wtf?!";
+}
+
+
+//==========================================================================
+//
 // VUnary::toString
 //
 //==========================================================================
 VStr VUnary::toString () const {
   VStr res;
-  switch (Oper) {
-    case Plus: res += "+"; break;
-    case Minus: res += "-"; break;
-    case Not: res += "!"; break;
-    case BitInvert: res += "~"; break;
-    case TakeAddress: res += "&"; break;
-    default: break;
-  }
+  res += getOpName();
   res += "(";
   res += e2s(op);
   res += ")";
@@ -496,7 +506,25 @@ VExpression *VUnaryMutator::AddDropResult () {
 
 //==========================================================================
 //
-// VUnaryMutator::toString
+//  VUnaryMutator::getOpName
+//
+//==========================================================================
+const char *VUnaryMutator::getOpName () const {
+  switch (Oper) {
+    case PreInc: return "++(pre)";
+    case PreDec: return "--(pre)";
+    case PostInc: return "++(post)";
+    case PostDec: return "--(post)";
+    case Inc: return "(++)";
+    case Dec: return "(--)";
+  }
+  return "wtf?!";
+}
+
+
+//==========================================================================
+//
+//  VUnaryMutator::toString
 //
 //==========================================================================
 VStr VUnaryMutator::toString () const {
@@ -631,17 +659,32 @@ bool VBinary::needParens (EBinOp me, EBinOp inner) {
 //
 //==========================================================================
 VExpression *VBinary::DoResolve (VEmitContext &ec) {
-  // "a == b == c" and such should not compile
-  if (op1 && op2 && IsComparison()) {
-    if (op1->IsBinaryMath() && ((VBinary *)op1)->IsComparison()) {
-      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", ((VBinary *)op1)->getOpName(), getOpName());
-      delete this;
-      return nullptr;
+  if (op1 && op2) {
+    // "a == b == c" and such should not compile
+    if (IsComparison()) {
+      if (op1->IsBinaryMath() && ((VBinary *)op1)->IsComparison()) {
+        ParseError(Loc, "doing `%s` with `%s` is probably not what you want", ((VBinary *)op1)->getOpName(), getOpName());
+        delete this;
+        return nullptr;
+      }
+      if (op2->IsBinaryMath() && ((VBinary *)op2)->IsComparison()) {
+        ParseError(Loc, "doing `%s` with `%s` is probably not what you want", getOpName(), ((VBinary *)op2)->getOpName());
+        delete this;
+        return nullptr;
+      }
     }
-    if (op2->IsBinaryMath() && ((VBinary *)op2)->IsComparison()) {
-      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", getOpName(), ((VBinary *)op2)->getOpName());
-      delete this;
-      return nullptr;
+    // `!a & b` is not what you want
+    if (IsBitLogic()) {
+      if (op1->IsUnaryMath() && ((VUnary *)op1)->Oper == VUnary::Not) {
+        ParseError(Loc, "doing `%s` with `%s` is probably not what you want", ((VUnary *)op1)->getOpName(), getOpName());
+        delete this;
+        return nullptr;
+      }
+      if (op2->IsUnaryMath() && ((VUnary *)op2)->Oper == VUnary::Not) {
+        ParseError(Loc, "doing `%s` with `%s` is probably not what you want", getOpName(), ((VUnary *)op2)->getOpName());
+        delete this;
+        return nullptr;
+      }
     }
   }
 
@@ -1242,10 +1285,45 @@ void VBinaryLogical::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
+//  VBinaryLogical::IsBinaryLogical
+//
+//==========================================================================
+bool VBinaryLogical::IsBinaryLogical () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VBinaryLogical::DoResolve
 //
 //==========================================================================
 VExpression *VBinaryLogical::DoResolve (VEmitContext &ec) {
+  if (op1 && op2) {
+    // "a & b && c" is not what you want
+    if (op1->IsBinaryMath() && ((VBinary *)op1)->IsBitLogic()) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", ((VBinary *)op1)->getOpName(), getOpName());
+      delete this;
+      return nullptr;
+    }
+    if (op2->IsBinaryMath() && ((VBinary *)op2)->IsBitLogic()) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", getOpName(), ((VBinary *)op2)->getOpName());
+      delete this;
+      return nullptr;
+    }
+    // `a && b || c`, `a || b && c`
+    if (op1->IsBinaryLogical() && ((VBinaryLogical *)op1)->Oper != Oper) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want (precedence)", ((VBinaryLogical *)op1)->getOpName(), getOpName());
+      delete this;
+      return nullptr;
+    }
+    if (op2->IsBinaryLogical() && ((VBinaryLogical *)op2)->Oper != Oper) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want (precedence)", getOpName(), ((VBinaryLogical *)op2)->getOpName());
+      delete this;
+      return nullptr;
+    }
+  }
+
   if (op1) op1 = op1->ResolveBoolean(ec);
   if (op2) op2 = op2->ResolveBoolean(ec);
   if (!op1 || !op2) {
@@ -1330,18 +1408,29 @@ void VBinaryLogical::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) 
 
 //==========================================================================
 //
-// VBinaryLogical::toString
+//  VBinaryLogical::getOpName
+//
+//==========================================================================
+const char *VBinaryLogical::getOpName () const {
+  switch (Oper) {
+    case And: return "&&";
+    case Or: return "||";
+  }
+  return "wtf?!";
+}
+
+
+//==========================================================================
+//
+//  VBinaryLogical::toString
 //
 //==========================================================================
 VStr VBinaryLogical::toString () const {
   VStr res("(");
   res += e2s(op1);
-  res += ")";
-  switch (Oper) {
-    case And: res += " && "; break;
-    case Or: res += " || "; break;
-  }
-  res += "(";
+  res += ") ";
+  res += getOpName();
+  res += " (";
   res += e2s(op2);
   res += ")";
   return res;

@@ -78,6 +78,8 @@ public:
 
   virtual bool IsUnaryMath () const override;
 
+  const char *getOpName () const;
+
   virtual VStr toString () const override;
 
 protected:
@@ -114,6 +116,8 @@ public:
   virtual VExpression *AddDropResult () override;
 
   virtual bool IsUnaryMutator () const override;
+
+  const char *getOpName () const;
 
   virtual VStr toString () const override;
 
@@ -172,6 +176,7 @@ public:
   const char *getOpName () const;
 
   inline bool IsComparison () const { return (Oper >= Equals); }
+  inline bool IsBitLogic () const { return (Oper >= And && Oper <= Or); }
 
 protected:
   VBinary () {}
@@ -204,6 +209,9 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual void EmitBranchable (VEmitContext &, VLabel, bool) override;
+
+  const char *getOpName () const;
+  virtual bool IsBinaryLogical () const override;
 
   virtual VStr toString () const override;
 

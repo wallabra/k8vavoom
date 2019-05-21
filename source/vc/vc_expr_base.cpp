@@ -491,6 +491,7 @@ bool VExpression::IsParens () const { return false; }
 bool VExpression::IsUnaryMath () const { return false; }
 bool VExpression::IsUnaryMutator () const { return false; }
 bool VExpression::IsBinaryMath () const { return false; }
+bool VExpression::IsBinaryLogical () const { return false; }
 bool VExpression::IsSingleName () const { return false; }
 bool VExpression::IsDoubleName () const { return false; }
 bool VExpression::IsDotField () const { return false; }

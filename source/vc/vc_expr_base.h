@@ -139,6 +139,7 @@ public:
   virtual bool IsUnaryMath () const;
   virtual bool IsUnaryMutator () const;
   virtual bool IsBinaryMath () const;
+  virtual bool IsBinaryLogical () const;
   virtual bool IsSingleName () const;
   virtual bool IsDoubleName () const;
   virtual bool IsDotField () const;
