@@ -139,6 +139,7 @@ public:
     LShift,
     RShift,
     URShift,
+    StrCat,
     And,
     XOr,
     Or,
@@ -148,7 +149,6 @@ public:
     LessEquals,
     Greater,
     GreaterEquals,
-    StrCat,
     IsA,
     NotIsA,
   };
@@ -168,6 +168,10 @@ public:
   virtual VStr toString () const override;
 
   static bool needParens (EBinOp me, EBinOp inner);
+
+  const char *getOpName () const;
+
+  inline bool IsComparison () const { return (Oper >= Equals); }
 
 protected:
   VBinary () {}

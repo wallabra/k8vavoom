@@ -631,6 +631,20 @@ bool VBinary::needParens (EBinOp me, EBinOp inner) {
 //
 //==========================================================================
 VExpression *VBinary::DoResolve (VEmitContext &ec) {
+  // "a == b == c" and such should not compile
+  if (op1 && op2 && IsComparison()) {
+    if (op1->IsBinaryMath() && ((VBinary *)op1)->IsComparison()) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", ((VBinary *)op1)->getOpName(), getOpName());
+      delete this;
+      return nullptr;
+    }
+    if (op2->IsBinaryMath() && ((VBinary *)op2)->IsComparison()) {
+      ParseError(Loc, "doing `%s` with `%s` is probably not what you want", getOpName(), ((VBinary *)op2)->getOpName());
+      delete this;
+      return nullptr;
+    }
+  }
+
   if (op1) op1 = op1->Resolve(ec);
   if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }
@@ -1106,7 +1120,7 @@ void VBinary::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
-// VBinary::IsBinaryMath
+//  VBinary::IsBinaryMath
 //
 //==========================================================================
 bool VBinary::IsBinaryMath () const {
@@ -1116,7 +1130,39 @@ bool VBinary::IsBinaryMath () const {
 
 //==========================================================================
 //
-// VBinary::toString
+//  VBinary::getOpName
+//
+//==========================================================================
+const char *VBinary::getOpName () const {
+  switch (Oper) {
+    case Add: return "+";
+    case Subtract: return "-";
+    case Multiply: return "*";
+    case Divide: return "/";
+    case Modulus: return "%";
+    case LShift: return "<<";
+    case RShift: return ">>";
+    case URShift: return ">>>";
+    case StrCat: return "~";
+    case And: return "&";
+    case XOr: return "^";
+    case Or: return "|";
+    case Equals: return "==";
+    case NotEquals: return "!=";
+    case Less: return "<";
+    case LessEquals: return "<=";
+    case Greater: return ">";
+    case GreaterEquals: return ">=";
+    case IsA: return "isa";
+    case NotIsA: return "!isa";
+  }
+  return "<wtf?!>";
+}
+
+
+//==========================================================================
+//
+//  VBinary::toString
 //
 //==========================================================================
 VStr VBinary::toString () const {
@@ -1128,28 +1174,9 @@ VStr VBinary::toString () const {
     res += e2s(op1);
     if (needParens(Oper, ((const VBinary *)op1)->Oper)) res += ")";
   }
-  switch (Oper) {
-    case Add: res += "+"; break;
-    case Subtract: res += "-"; break;
-    case Multiply: res += "*"; break;
-    case Divide: res += "/"; break;
-    case Modulus: res += "%"; break;
-    case LShift: res += "<<"; break;
-    case RShift: res += ">>"; break;
-    case URShift: res += ">>>"; break;
-    case And: res += "&"; break;
-    case XOr: res += "^"; break;
-    case Or: res += "|"; break;
-    case Equals: res += " == "; break;
-    case NotEquals: res += " != "; break;
-    case Less: res += " < "; break;
-    case LessEquals: res += " <= "; break;
-    case Greater: res += " > "; break;
-    case GreaterEquals: res += " >= "; break;
-    case StrCat: res += "~"; break;
-    case IsA: res += " isa "; break;
-    case NotIsA: res += " !isa "; break;
-  }
+  if (Oper >= Equals) res += " ";
+  res += getOpName();
+  if (Oper >= Equals) res += " ";
   if (!op2 || !op2->IsBinaryMath()) {
     res += e2s(op2);
   } else {
