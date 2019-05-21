@@ -115,8 +115,7 @@ override bool OnKeyDown (int key) {
       case K_JOY1:
         waitingDeletion = false;
         bEnteringText = false;
-        if (key == K_JOY1 && !EnterText)
-          EnterText = va("saved game %d", SlotNum);
+        if (key == K_JOY1 && !EnterText) EnterText = va("saved game %d", SlotNum);
         if (EnterText) {
           Text = EnterText;
           CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);

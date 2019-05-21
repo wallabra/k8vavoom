@@ -52,8 +52,9 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
       // Player was saved using chaos device
       return -1;
     }
-    else
+    else {
       damage = 10000; // Something's gonna die
+    }
   }
   else
   {

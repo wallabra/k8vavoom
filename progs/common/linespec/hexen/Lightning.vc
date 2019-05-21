@@ -135,21 +135,24 @@ final void A_LightningClip()
 
   if (Class == GetClassReplacement(LightningFloor))
   {
-    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z >= LightningLink.FloorZ)
+    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z >= LightningLink.FloorZ) {
       Origin.z = LightningLink.FloorZ;
-    else
+    } else {
       Origin.z = FloorZ;
-    if (LightningLink)
+    }
+    if (LightningLink) {
       targ = LightningLink.Tracer;
-    else
+    } else {
       targ = none;
+    }
   }
   else if (Class == GetClassReplacement(LightningCeiling))
   {
-    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z <= LightningLink.CeilingZ)
+    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z <= LightningLink.CeilingZ) {
       Origin.z = LightningLink.CeilingZ - Height;
-    else
+    } else {
       Origin.z = CeilingZ - Height;
+    }
     targ = Tracer;
   }
   if (Class == GetClassReplacement(LightningFloor))

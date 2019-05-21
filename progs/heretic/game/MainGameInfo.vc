@@ -494,8 +494,7 @@ void TranslateThing(mthing_t *mthing)
   // translate the spawn flags to Hexen format.
   flags = mthing->options;
   mthing->options = (flags & 0xf) | 0x7e0;
-  if (flags & 0x10)
-    mthing->options &= ~HereticLevelInfo::MTF_GSINGLE;
+  if (flags & 0x10) mthing->options &= ~HereticLevelInfo::MTF_GSINGLE;
 }
 
 //==========================================================================

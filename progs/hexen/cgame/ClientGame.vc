@@ -295,8 +295,7 @@ override void menu_quit()
 
 override void QuitResponse(int ch)
 {
-  if (ch != K_y)
-    return;
+  if (ch != K_y) return;
 
   CmdBuf_AddText("Quit\n");
 }
@@ -336,17 +335,10 @@ override void DrawBorder(int x, int y, int w, int h)
     InitBorder();
   }
 
-  for (i = 0; i < w; i += 16)
-    GRoot.DrawPic(x + i, y - 4, pic_bordt);
-
-  for (i = 0; i < w; i += 16)
-    GRoot.DrawPic(x + i, y + h, pic_bordb);
-
-  for (i = 0; i < h; i += 16)
-    GRoot.DrawPic(x - 4, y + i, pic_bordl);
-
-  for (i = 0; i < h; i += 16)
-    GRoot.DrawPic(x + w, y + i, pic_bordr);
+  for (i = 0; i < w; i += 16) GRoot.DrawPic(x + i, y - 4, pic_bordt);
+  for (i = 0; i < w; i += 16) GRoot.DrawPic(x + i, y + h, pic_bordb);
+  for (i = 0; i < h; i += 16) GRoot.DrawPic(x - 4, y + i, pic_bordl);
+  for (i = 0; i < h; i += 16) GRoot.DrawPic(x + w, y + i, pic_bordr);
 
   // Draw beveled edge.
   GRoot.DrawPic(x - 4, y - 4, pic_bordtl);

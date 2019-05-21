@@ -40,8 +40,7 @@ override void A_CastSorcererSpell()
   float z;
 
   // Put sorcerer into throw spell animation
-  if (Target.Health > 0)
-    Target.SetState(Target.FindState('Attack2'));
+  if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
 
   z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
   mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));

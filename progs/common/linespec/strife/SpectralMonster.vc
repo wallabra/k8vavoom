@@ -50,8 +50,7 @@ final void A_Spectre2Attack()
 {
   EntityEx A;
 
-  if (!Target)
-    return;
+  if (!Target) return;
 
   A_FaceTarget();
 
@@ -69,8 +68,7 @@ final void A_Spectre3Attack()
   EntityEx spread;
   int i;
 
-  if (!Target)
-    return;
+  if (!Target) return;
 
   A_FaceTarget();
 
@@ -105,8 +103,7 @@ final void A_Spectre4Attack()
 {
   EntityEx A;
 
-  if (!Target)
-    return;
+  if (!Target) return;
 
   A_FaceTarget();
 
@@ -123,8 +120,7 @@ final void A_Spectre5Attack()
 {
   EntityEx A;
 
-  if (!Target)
-    return;
+  if (!Target) return;
 
   A_FaceTarget();
 
@@ -181,8 +177,7 @@ final void A_AlienSpectreDeath()
   else if (Class == AlienSpectre2)
   {
     //  Bishop's specter
-    if (!Target)
-      return;
+    if (!Target) return;
 
     Target.Player.cprint("$txt_killed_bishop");
     Target.GiveInventoryType(QuestItem21);
@@ -192,8 +187,7 @@ final void A_AlienSpectreDeath()
   else if (Class == AlienSpectre3)
   {
     //  Oracle's specter
-    if (!Target)
-      return;
+    if (!Target) return;
 
     Actor A;
 
@@ -228,8 +222,7 @@ final void A_AlienSpectreDeath()
   else if (Class == AlienSpectre4)
   {
     //  Macil's specter
-    if (!Target)
-      return;
+    if (!Target) return;
 
     Target.Player.cprint("$txt_killed_macil");
     Target.GiveInventoryType(QuestItem24);
@@ -247,8 +240,7 @@ final void A_AlienSpectreDeath()
   else if (Class == AlienSpectre5)
   {
     //  Loremaster's specter
-    if (!Target)
-      return;
+    if (!Target) return;
 
     Target.Player.cprint("$txt_killed_loremaster");
     Target.GiveInventoryType(QuestItem26);
@@ -277,24 +269,16 @@ final void A_AlienSpectreDeath()
 
 final void A_EntityAttack()
 {
-  float r;
-
-  if (!Target)
-    return;
+  if (!Target) return;
 
   A_FaceTarget();
 
-  r = Random();
-  if (r < 0.25)
-    A_Spectre3Attack();
-  else if (r < 0.375)
-    A_SpotLightning();
-  else if (r < 0.5)
-    A_Spectre4Attack();
-  else if (r < 0.625)
-    A_Spectre5Attack();
-  else
-    A_Spectre2Attack();
+  float r = Random();
+       if (r < 0.25) A_Spectre3Attack();
+  else if (r < 0.375) A_SpotLightning();
+  else if (r < 0.5) A_Spectre4Attack();
+  else if (r < 0.625) A_Spectre5Attack();
+  else A_Spectre2Attack();
 }
 
 //==========================================================================
@@ -339,8 +323,7 @@ final void A_SubEntityDeath()
   }
 
   // victory!
-  if (!Target)
-    return;
+  if (!Target) return;
 
   if (Target.FindInventory(QuestItem25))
   {

@@ -65,8 +65,7 @@ final void A_ShedShard()
   FrostMissile mo;
   int spermcount = Special2;
 
-  if (spermcount <= 0)
-    return; // No sperm left
+  if (spermcount <= 0) return; // No sperm left
   Special2 = 0;
   spermcount--;
 

@@ -60,7 +60,10 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
     hit_point = shootOrigin+dir*dist;
     // calculated coordinate is outside the actor's bounding box
     if (fabs(hit_point.x-th.Origin.x) > th.Radius ||
-        fabs(hit_point.y-th.Origin.y) > th.Radius) return false;
+        fabs(hit_point.y-th.Origin.y) > th.Radius)
+    {
+      return false;
+    }
   } else if (hit_point.z < th.Origin.z) {
     // trace enters below actor
     if (dir.z <= 0) return false; // going down: can't hit
@@ -71,7 +74,10 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
     hit_point = shootOrigin+dir*dist;
     // calculated coordinate is outside the actor's bounding box
     if (fabs(hit_point.x-th.Origin.x) > th.Radius ||
-        fabs(hit_point.y-th.Origin.y) > th.Radius) return false;
+        fabs(hit_point.y-th.Origin.y) > th.Radius)
+    {
+      return false;
+    }
   }
   return true;
 }

@@ -1409,8 +1409,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   Rtn = false;
   if (!Arg1)
   {
-    if (!Line || !Line->backsector)
-      return false;
+    if (!Line || !Line->backsector) return false;
 
     if (!Line->backsector->FloorData)
     {
@@ -1429,8 +1428,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       Sec = &XLevel.Sectors[SecNum];
 
       // ALREADY MOVING?  IF SO, KEEP GOING...
-      if (Sec->FloorData)
-        continue;
+      if (Sec->FloorData) continue;
 
       // new floor thinker
       Rtn = true;
@@ -1493,8 +1491,7 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     if (!s1) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
     // ALREADY MOVING?  IF SO, KEEP GOING...
-    if (s1->FloorData)
-      continue;
+    if (s1->FloorData) continue;
 
     s2 = getNextSector(s1->lines[0], s1); // s2 is pool's sector
     if (!s2) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
@@ -1633,21 +1630,16 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       {
         SecLine = Sec->lines[i];
 
-        if (!(SecLine->flags&ML_TWOSIDED))
-          continue;
+        if (!(SecLine->flags&ML_TWOSIDED)) continue;
 
         TSec = SecLine->frontsector;
-        if (Sec != TSec)
-          continue;
+        if (Sec != TSec) continue;
         TSec = SecLine->backsector;
-        if (!TSec)
-          continue; //jff 5/7/98 if no backside, continue
-        if (!IgnTxt && TSec->floor.pic != Texture)
-          continue;
+        if (!TSec) continue; //jff 5/7/98 if no backside, continue
+        if (!IgnTxt && TSec->floor.pic != Texture) continue;
 
         Height += StairSize;
-        if (TSec->FloorData)
-          continue;
+        if (TSec->FloorData) continue;
 
         Sec = TSec;
         //  SecNum = TSec - XLevel.Sectors;
@@ -1753,8 +1745,7 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
   if (!Arg1)
   {
-    if (!Line || !Line->backsector)
-      return false;
+    if (!Line || !Line->backsector) return false;
 
     //  Activate all <type> plats that are in stasis.
     if ((Type == Platform::PLATEV_PerpetualRaise ||
@@ -1799,8 +1790,7 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
     {
       Sec = &XLevel.Sectors[SecNum];
-      if (Sec->FloorData)
-        continue;
+      if (Sec->FloorData) continue;
 
       // Find lowest & highest floors around sector
       Rtn = 1;
@@ -1853,8 +1843,7 @@ final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
     Sec = &XLevel.Sectors[SecNum];
-    if (Sec->FloorData || Sec->CeilingData)
-      continue; // already moving
+    if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
     pillar = Spawn(Pillar);
     pillar.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Crush);
@@ -1880,8 +1869,7 @@ final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
     Sec = &XLevel.Sectors[SecNum];
-    if (Sec->FloorData || Sec->CeilingData)
-      continue; // already moving
+    if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
     pillar = Spawn(Pillar);
     pillar.InitOpen(Sec, Arg1, Arg2, Arg3, Arg4, Arg5);
@@ -1921,8 +1909,7 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     Sec = &XLevel.Sectors[SecNum];
 
     //  Skip if already busy.
-    if (Sec->FloorData || Sec->CeilingData)
-      continue;
+    if (Sec->FloorData || Sec->CeilingData) continue;
 
     //  New elevator thinker
     Rtn = true;
@@ -2473,8 +2460,7 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
     Sec = &XLevel.Sectors[SecNum];
-    if (Sec->LightingData)
-      continue;
+    if (Sec->LightingData) continue;
 
     Ret = true;
     Flash = Spawn(Strobe);
@@ -2507,10 +2493,8 @@ final int EV_TagLightTurnOn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     for (j = 0; j < Sec.lines.length; j++)
     {
       TSec = getNextSector(Sec->lines[j], Sec);
-      if (!TSec)
-        continue;
-      if (TSec->params.lightlevel > Max)
-        Max = TSec->params.lightlevel;
+      if (!TSec) continue;
+      if (TSec->params.lightlevel > Max) Max = TSec->params.lightlevel;
     }
     Sec->params.lightlevel = Max;
   }
@@ -2542,10 +2526,8 @@ final int EV_TurnTagLightsOff(int Arg1, int Arg2, int Arg3, int Arg4,
     for (i = 0; i < Sec.lines.length; i++)
     {
       TSec = getNextSector(Sec->lines[i], Sec);
-      if (!TSec)
-        continue;
-      if (TSec->params.lightlevel < Min)
-        Min = TSec->params.lightlevel;
+      if (!TSec) continue;
+      if (TSec->params.lightlevel < Min) Min = TSec->params.lightlevel;
     }
     Sec->params.lightlevel = Min;
   }
@@ -2680,8 +2662,7 @@ final bool EV_LightStop(int Tag)
   {
     if (L.Sector->tag == Tag)
     {
-      if (L.Sector->LightingData == L)
-        L.Sector->LightingData = none;
+      if (L.Sector->LightingData == L) L.Sector->LightingData = none;
       L.Destroy();
     }
   }
@@ -3257,8 +3238,7 @@ final bool EV_SectorSetGravity(int Arg1, int Arg2, int Arg3, int Arg4,
   float SecGrav;
   bool  Ret;
 
-  if (Arg3 > 99)
-    Arg3 = 99;
+  if (Arg3 > 99) Arg3 = 99;
 
   SecGrav = float(Arg2)+float(Arg3)*0.01;
   Ret = false;
@@ -3292,10 +3272,8 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
   OldFriction = (0x1EB8*Arg2)/0x80+0xD001;
 
   // killough 8/28/98: prevent odd situations
-  if (OldFriction > 0x10000)
-    OldFriction = 0x10000;
-  if (OldFriction < 0)
-    OldFriction = 0;
+  if (OldFriction > 0x10000) OldFriction = 0x10000;
+  if (OldFriction < 0) OldFriction = 0;
 
   // The following check might seem odd. At the time of movement,
   // the move distance is multiplied by 'friction/0x10000', so a
@@ -3303,15 +3281,15 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
 
   // [RH] Twiddled these values so that momentum on ice (with
   //    friction 0xf900) is the same as in Heretic/Hexen.
-  if (OldFriction >= 0xe800)  // ice
-//    movefactor = ((0x10092 - friction)*(0x70))/0x158;
+  if (OldFriction >= 0xe800) { // ice
+    //movefactor = ((0x10092 - friction)*(0x70))/0x158;
     OldMoveFactor = ((0x10092-OldFriction)*1024)/4352+568;
-  else
+  } else {
     OldMoveFactor = ((OldFriction-0xDB34)*(0xA))/0x80;
+  }
 
   // killough 8/28/98: prevent odd situations
-  if (OldMoveFactor < 32)
-    OldMoveFactor = 32;
+  if (OldMoveFactor < 32) OldMoveFactor = 32;
 
   Friction = (1.0-float(OldFriction)/float(0x10000))*35.0;
   MoveFactor = float(OldMoveFactor)/float(0x10000);
@@ -4962,10 +4940,8 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
     for (i = 0; i < sec.lines.length; i++)
     {
       secline = sec->lines[i];
-      if (secline->special != LNSPEC_ForceField)
-        continue;
-      if (!(secline->flags&ML_TWOSIDED))
-        continue;
+      if (secline->special != LNSPEC_ForceField) continue;
+      if (!(secline->flags&ML_TWOSIDED)) continue;
 
       XLevel.Sides[secline->sidenum[0]].MidTexture = 0;
       XLevel.Sides[secline->sidenum[1]].MidTexture = 0;
@@ -5672,16 +5648,13 @@ final bool EV_LineSearchForPuzzleItem(int Arg1, int Arg2, int Arg3, int Arg4,
 {
   Inventory Item;
 
-  if (!A)
-    return false;
-  if (!A.bIsPlayer)
-    return false;
+  if (!A) return false;
+  if (!A.bIsPlayer) return false;
 
   // Search player's inventory for puzzle items
   for (Item = A.Inventory; Item; Item = Item.Inventory)
   {
-    if (!PuzzleItem(Item))
-      continue;
+    if (!PuzzleItem(Item)) continue;
     if (PuzzleItem(Item).PuzzleItemNumber == Arg1)
     {
       // A puzzle item was found for the line
@@ -5795,9 +5768,9 @@ final void SpawnPushers()
         {
           if (PointPuller(thing) || PointPusher(thing))
           {
-            for (s = 0; s < XLevel.Sectors.length; s++)
-              if (&XLevel.Sectors[s] == thing.Sector)
-                break;
+            for (s = 0; s < XLevel.Sectors.length; s++) {
+              if (&XLevel.Sectors[s] == thing.Sector) break;
+            }
             P = Spawn(Pusher);
             P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr,
               l->arg3, 0, thing, s);
@@ -5850,8 +5823,7 @@ final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   {
     for (P = Collection; P; P = P.AdjustLink)
     {
-      if (P.Affectee == secnum)
-        break;
+      if (P.Affectee == secnum) break;
     }
     if (!P)
     {
@@ -6342,8 +6314,7 @@ override void PolyCrushMobj(Entity Other, polyobj_t *po)
       }
       else
       {
-        if (CanDestroy)
-          Other.Destroy();
+        if (CanDestroy) Other.Destroy();
       }
     }
   }
@@ -7181,10 +7152,11 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_explode:
     p.ramp += time2;
-    if (p.ramp >= 16.0)
+    if (p.ramp >= 16.0) {
       p.die = -1.0;
-    else
+    } else {
       p.color = LineSpecialGameInfo.default.ramp1[int(p.ramp)];
+    }
     p.vel.x += p.vel.x*dvel;
     p.vel.y += p.vel.y*dvel;
     p.vel.z += p.vel.z*dvel;
@@ -7194,10 +7166,11 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_explode2:
     p.ramp += time3;
-    if (p.ramp >= 16.0)
+    if (p.ramp >= 16.0) {
       p.die = -1.0;
-    else
+    } else {
       p.color = LineSpecialGameInfo.default.ramp2[int(p.ramp)];
+    }
     p.vel.x -= p.vel.x*DeltaTime;
     p.vel.y -= p.vel.y*DeltaTime;
     p.vel.z -= p.vel.z*DeltaTime;
@@ -7207,14 +7180,12 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_fountain:
     p.vel += p.accel*DeltaTime;
-    p.color = (p.color&0x00ffffff)|(int(
-      float(p.color>>24)-255.0/51.0*35.0*DeltaTime)<<24);
+    p.color = (p.color&0x00ffffff)|(int(float(p.color>>24)-255.0/51.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_spark:
     p.vel += p.accel*DeltaTime;
-    p.color = (p.color&0x00ffffff)|(int(
-      float(p.color>>24)-255.0/10.0*35.0*DeltaTime)<<24);
+    p.color = (p.color&0x00ffffff)|(int(float(p.color>>24)-255.0/10.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_ice_chunk:

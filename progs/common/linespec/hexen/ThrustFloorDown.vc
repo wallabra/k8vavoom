@@ -86,10 +86,11 @@ final void A_ThrustRaise()
     // Reached it's target height
     FloorClip = 0.0;
     bRaised = true;
-    if (bBloody)
+    if (bBloody) {
       SetState(FindState('BloodyUp'));
-    else
+    } else {
       SetState(FindState('Up'));
+    }
   }
 
   // Lose the dirt clump
@@ -100,8 +101,7 @@ final void A_ThrustRaise()
   }
 
   // Spawn some dirt
-  if (P_Random() < 40)
-    SpawnDirt(Radius);
+  if (P_Random() < 40) SpawnDirt(Radius);
   RaiseSpeed += 1.0;  // Increase raise speed
 }
 
@@ -122,10 +122,11 @@ final void A_ThrustLower()
   else
   {
     bRaised = false;
-    if (bBloody)
+    if (bBloody) {
       SetState(FindState('BloodyDown'));
-    else
+    } else {
       SetState(FindState('Down'));
+    }
   }
 }
 
@@ -156,8 +157,7 @@ final void A_ThrustImpale()
   {
     float blockdist;
 
-    if (!EntityEx(Other).bShootable)
-      continue;
+    if (!EntityEx(Other).bShootable) continue;
 
     blockdist = Other.Radius + Radius;
     if (fabs(Other.Origin.x - Origin.x) >= blockdist ||
@@ -167,8 +167,7 @@ final void A_ThrustImpale()
       continue; // didn't hit it
     }
 
-    if (Other == self)
-      continue; // don't clip against self
+    if (Other == self) continue; // don't clip against self
 
     EntityEx(Other).Damage(self, self, 10001, forced:true, spawnBlood:true);
     bBloody = true; // Mark thrust thing as bloody
@@ -234,10 +233,11 @@ override bool Activate(EntityEx Activator)
   {
     PlaySound('ThrustSpikeLower', CHAN_VOICE);
     bInvisible = false;
-    if (bBloody)
+    if (bBloody) {
       SetState(FindState('BloodyRaise'));
-    else
+    } else {
       SetState(FindState('Raise'));
+    }
   }
   return true;
 }
@@ -253,10 +253,11 @@ override bool Deactivate(EntityEx Activator)
   if (bRaised)
   {
     PlaySound('ThrustSpikeRaise', CHAN_VOICE);
-    if (bBloody)
+    if (bBloody) {
       SetState(FindState('BloodyLower'));
-    else
+    } else {
       SetState(FindState('Lower'));
+    }
   }
   return true;
 }

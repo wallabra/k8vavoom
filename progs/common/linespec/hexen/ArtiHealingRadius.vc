@@ -49,10 +49,8 @@ override bool Use(bool Pickup)
 
   foreach AllThinkers(PlayerPawn, P)
   {
-    if (!P.bIsPlayer)
-      continue;
-    if (P.Health <= 0)
-      continue;
+    if (!P.bIsPlayer) continue;
+    if (P.Health <= 0) continue;
     dist = Owner.DistTo(P);
     if (dist > HEAL_RADIUS_DIST)
     {

@@ -132,18 +132,12 @@ final Actor ActiveMinotaur()
 
   foreach AllThinkers(Minotaur, mo)
   {
-    if (!mo.bSummonedMonster)
-      continue;
-    if (mo.Health <= 0)
-      continue;
-    if (!mo.bMonster)
-      continue; // for morphed minotaurs
-    if (mo.bCorpse)
-      continue;
-    if ((XLevel.Time - mo.StartTime) >= PowerMinotaur.default.EffectTime)
-      continue;
-    if (mo.Tracer == Tracer)
-      return mo;
+    if (!mo.bSummonedMonster) continue;
+    if (mo.Health <= 0) continue;
+    if (!mo.bMonster) continue; // for morphed minotaurs
+    if (mo.bCorpse) continue;
+    if ((XLevel.Time - mo.StartTime) >= PowerMinotaur.default.EffectTime) continue;
+    if (mo.Tracer == Tracer) return mo;
   }
   return none;
 }

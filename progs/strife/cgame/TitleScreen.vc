@@ -171,8 +171,7 @@ override void OnDraw()
 
 void OnHostEndGame()
 {
-  if (demosequence != -1)
-    AdvanceDemo();
+  if (demosequence != -1) AdvanceDemo();
   ForceTitle();
 }
 

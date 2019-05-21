@@ -48,9 +48,7 @@ override bool TryPickup(EntityEx Toucher)
 override bool SpecialDropAction(EntityEx Dropper)
 {
   LineSpecialLevelInfo(Level).NoiseAlert(Dropper.Target, Dropper.Target);
-  if (Dropper.Target.bIsPlayer)
-    Dropper.Target.Player.cprint("You Fool!  You\'ve set off the alarm.");
-
+  if (Dropper.Target.bIsPlayer) Dropper.Target.Player.cprint("You Fool!  You\'ve set off the alarm.");
   Destroy();
   return true;
 }

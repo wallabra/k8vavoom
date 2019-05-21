@@ -172,8 +172,7 @@ final void A_SkullRodStorm()
   case 3: rain_type = RainPlayer4; break;
   }
   A = Spawn(rain_type, vector(x, y, ONCEILINGZ));
-  if(Sector->bHasExtrafloors && Origin.z <= CeilingZ)
-    A.Origin.z = CeilingZ - A.Height;
+  if(Sector->bHasExtrafloors && Origin.z <= CeilingZ) A.Origin.z = CeilingZ - A.Height;
   A.Target = Target;
   A.Velocity.x = 0.00001; // Force collision detection
   A.Velocity.z = -A.Speed;

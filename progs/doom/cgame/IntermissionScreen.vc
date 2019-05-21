@@ -967,19 +967,11 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       i = RepInfo.PlayerNum;
       if (dm_Frags[i] != RepInfo.Frags) {
-        if (RepInfo.Frags < 0)
-          dm_Frags[i]--;
-        else
-          dm_Frags[i]++;
-
+        if (RepInfo.Frags < 0) dm_Frags[i]--; else dm_Frags[i]++;
         stillticking = true;
       }
       if (dm_Deaths[i] != RepInfo.Deaths) {
-        if (RepInfo.Deaths < 0)
-          dm_Deaths[i]--;
-        else
-          dm_Deaths[i]++;
-
+        if (RepInfo.Deaths < 0) dm_Deaths[i]--; else dm_Deaths[i]++;
         stillticking = true;
       }
     }

@@ -194,8 +194,7 @@ final void A_SorcBallOrbit()
   float dist = Target.Radius - (Radius * 2.0);
   float prevangle = Special1f;
 
-  if (Target.Health <= 0)
-    SetState(FindState('Pain'));
+  if (Target.Health <= 0) SetState(FindState('Pain'));
 
   baseangle = Actor(Target).Special1f;
   angle = AngleMod360(baseangle + BallAngleOffset);
@@ -236,8 +235,7 @@ final void A_SorcBallOrbit()
     if (Actor(Target).SpecialCID == Class)
     {
       // Put sorcerer into special throw spell anim
-      if (Target.Health > 0)
-        Target.SetState(Target.FindState('Attack1'));
+      if (Target.Health > 0) Target.SetState(Target.FindState('Attack1'));
 
       PlaySound('SorcererSpellCast', CHAN_VOICE, 1.0, ATTN_NONE);
 
@@ -252,8 +250,7 @@ final void A_SorcBallOrbit()
         // Done rapid firing
         Target.Args[3] = SORC_STOPPED;
         // Back to orbit balls
-        if (Target.Health > 0)
-          Target.SetState(Target.FindState('Attack2'));
+        if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
       }
       else
       {

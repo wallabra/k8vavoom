@@ -40,8 +40,7 @@ override void A_CastSorcererSpell()
   float ang1, ang2;
 
   // Put sorcerer into throw spell animation
-  if (Target.Health > 0)
-    Target.SetState(Target.FindState('Attack2'));
+  if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
 
   ang1 = AngleMod360(Angles.yaw - 45.0);
   ang2 = AngleMod360(Angles.yaw + 45.0);
@@ -49,19 +48,15 @@ override void A_CastSorcererSpell()
   {
     // Spawn 2 at a time
     mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
-    if (mo)
-      mo.Target = Target;
+    if (mo) mo.Target = Target;
     mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang2, 4.0);
-    if (mo)
-      mo.Target = Target;
+    if (mo) mo.Target = Target;
   }
   else
   {
-    if (P_Random() < 128)
-      ang1 = ang2;
+    if (P_Random() < 128) ang1 = ang2;
     mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
-    if (mo)
-      mo.Target = Target;
+    if (mo) mo.Target = Target;
   }
 
   Target.Args[3] = SORC_STOPPED;
