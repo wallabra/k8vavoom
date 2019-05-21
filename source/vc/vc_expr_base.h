@@ -96,8 +96,9 @@ public:
   virtual VExpression *DoResolve (VEmitContext &ec) = 0; // tho shon't call this twice, neither thrice!
   VExpression *Resolve (VEmitContext &ec); // this will usually just call `DoResolve()`
   VExpression *ResolveBoolean (VEmitContext &ec); // actually, *TO* boolean
+  VExpression *CoerceToBool (VEmitContext &ec); // expression *MUST* be already resolved
   VExpression *ResolveFloat (VEmitContext &ec); // actually, *TO* float
-  VExpression *CoerceToFloat (); // expression *MUST* be already resolved
+  VExpression *CoerceToFloat (VEmitContext &ec); // expression *MUST* be already resolved
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentValue (VEmitContext &ec);
@@ -107,7 +108,7 @@ public:
   // if `nullptr` is returned, both `this` and `val` should be destroyed
   virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved);
   // this coerces ints to floats, and fixes `none`\`nullptr` type
-  static void CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expression *MUST* be already resolved
+  static void CoerceTypes (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expression *MUST* be already resolved
   virtual void RequestAddressOf ();
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);

@@ -158,38 +158,44 @@ VExpression *VExpression::Resolve (VEmitContext &ec) {
 VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
   VExpression *e = Resolve(ec);
   if (!e) return nullptr;
-  switch (e->Type.Type) {
+  return e->CoerceToBool(ec);
+}
+
+
+//==========================================================================
+//
+//  VExpression::CoerceToBool
+//
+//==========================================================================
+VExpression *VExpression::CoerceToBool (VEmitContext &ec) {
+  switch (Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Bool:
       break;
     case TYPE_Float:
-      e = (new VFloatToBool(e, true))->Resolve(ec);
-      break;
+      return (new VFloatToBool(this, true))->Resolve(ec);
     case TYPE_Name:
-      e = (new VNameToBool(e, true))->Resolve(ec);
-      break;
+      return (new VNameToBool(this, true))->Resolve(ec);
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
     case TYPE_State:
-      e = (new VPointerToBool(e, true))->Resolve(ec);
-      break;
+      return (new VPointerToBool(this, true))->Resolve(ec);
     case TYPE_String:
-      e = (new VStringToBool(e, true))->Resolve(ec);
+      return (new VStringToBool(this, true))->Resolve(ec);
       break;
     case TYPE_Delegate:
-      e = (new VDelegateToBool(e, true))->Resolve(ec);
+      return (new VDelegateToBool(this, true))->Resolve(ec);
       break;
     case TYPE_Vector:
-      e = (new VVectorToBool(e, true))->Resolve(ec);
-      break;
+      return (new VVectorToBool(this, true))->Resolve(ec);
     default:
-      ParseError(e->Loc, "Expression type mismatch, boolean expression expected, got `%s`", *e->Type.GetName());
-      delete e;
+      ParseError(Loc, "Expression type mismatch, boolean expression expected, got `%s`", *Type.GetName());
+      delete this;
       return nullptr;
   }
-  return e;
+  return this;
 }
 
 
@@ -225,17 +231,15 @@ VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
 //  Expression MUST be already resolved here.
 //
 //==========================================================================
-VExpression *VExpression::CoerceToFloat () {
+VExpression *VExpression::CoerceToFloat (VEmitContext &ec) {
   if (Type.Type == TYPE_Float) return this; // nothing to do
   if (Type.Type == TYPE_Int || Type.Type == TYPE_Byte) {
     if (IsIntConst()) {
       VExpression *e = new VFloatLiteral((float)GetIntConst(), Loc);
       delete this;
-      return e; // no need to resolve it
+      return e->Resolve(ec);
     }
-    //HACK: `VScalarToFloat()` resolver does nothing special (except constant folding),
-    //      so we can skip resolving here
-    return new VScalarToFloat(this, true);
+    return (new VScalarToFloat(this, true))->Resolve(ec);
   }
   ParseError(Loc, "Expression type mismatch, float expression expected");
   delete this;
@@ -248,7 +252,8 @@ VExpression *VExpression::CoerceToFloat () {
 //  workerCoerceOp1None
 //
 //==========================================================================
-static bool workerCoerceOp1None (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
+static bool workerCoerceOp1None (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
+  if (!op1 || !op2) return false;
   if (op1->IsNoneLiteral() && !op2->IsNoneLiteral() && !op2->IsNullLiteral()) {
     switch (op2->Type.Type) {
       case TYPE_Reference:
@@ -262,7 +267,8 @@ static bool workerCoerceOp1None (VExpression *&op1, VExpression *&op2, bool coer
         if (coerceNoneDelegate) {
           VNoneDelegateLiteral *nl = new VNoneDelegateLiteral(op1->Loc);
           delete op1;
-          op1 = nl;
+          op1 = nl->Resolve(ec); //???
+          if (!op1) return false;
         }
         return true;
     }
@@ -277,7 +283,8 @@ static bool workerCoerceOp1None (VExpression *&op1, VExpression *&op2, bool coer
 //  workerCoerceOp1Null
 //
 //==========================================================================
-static bool workerCoerceOp1Null (VExpression *&op1, VExpression *&op2) {
+static bool workerCoerceOp1Null (VEmitContext &ec, VExpression *&op1, VExpression *&op2) {
+  if (!op1 || !op2) return false;
   if (op1->IsNullLiteral() && !op2->IsNoneLiteral() && !op2->IsNullLiteral()) {
     switch (op2->Type.Type) {
       case TYPE_Pointer:
@@ -297,16 +304,16 @@ static bool workerCoerceOp1Null (VExpression *&op1, VExpression *&op2) {
 //  this coerces ints to floats, and fixes `none`/`nullptr` type
 //
 //==========================================================================
-void VExpression::CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
+void VExpression::CoerceTypes (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
   if (!op1 || !op2) return; // oops
   // if one operand is vector, and other operand is integer, coerce integer to float
   // this is required for float vs scalar operators
   if (op1->Type.Type == TYPE_Vector && (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte)) {
-    op2 = op2->CoerceToFloat();
+    op2 = op2->CoerceToFloat(ec);
     return;
   }
   if (op2->Type.Type == TYPE_Vector && (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte)) {
-    op1 = op1->CoerceToFloat();
+    op1 = op1->CoerceToFloat(ec);
     return;
   }
   // coerce to float
@@ -314,16 +321,16 @@ void VExpression::CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerce
       (op1->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Int ||
        op1->Type.Type == TYPE_Byte || op2->Type.Type == TYPE_Byte))
   {
-    op1 = op1->CoerceToFloat();
-    op2 = op2->CoerceToFloat();
+    op1 = op1->CoerceToFloat(ec);
+    op2 = op2->CoerceToFloat(ec);
     return;
   }
   // coerce `none`
-  if (workerCoerceOp1None(op1, op2, coerceNoneDelegate)) return;
-  if (workerCoerceOp1None(op2, op1, coerceNoneDelegate)) return;
+  if (workerCoerceOp1None(ec, op1, op2, coerceNoneDelegate)) return;
+  if (workerCoerceOp1None(ec, op2, op1, coerceNoneDelegate)) return;
   // coerce `nullptr`
-  if (workerCoerceOp1Null(op1, op2)) return;
-  if (workerCoerceOp1Null(op2, op1)) return;
+  if (workerCoerceOp1Null(ec, op1, op2)) return;
+  if (workerCoerceOp1Null(ec, op2, op1)) return;
 }
 
 

@@ -744,7 +744,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   }
 
   // coerce both types if it is possible
-  VExpression::CoerceTypes(op1, op2, false); // don't coerce "none delegate"
+  VExpression::CoerceTypes(ec, op1, op2, false); // don't coerce "none delegate"
   if (!op1 || !op2) { delete this; return nullptr; }
 
   // decorate coercion to float
@@ -1324,8 +1324,35 @@ VExpression *VBinaryLogical::DoResolve (VEmitContext &ec) {
     }
   }
 
-  if (op1) op1 = op1->ResolveBoolean(ec);
-  if (op2) op2 = op2->ResolveBoolean(ec);
+  //if (op1) op1 = op1->ResolveBoolean(ec);
+  //if (op2) op2 = op2->ResolveBoolean(ec);
+
+  // do resolving in two steps:
+  // first, resolve to perform some checks
+  // second, coerce to bool
+  if (op1) op1 = op1->Resolve(ec);
+  if (op2) op2 = op2->Resolve(ec);
+
+  if (!op1 || !op2) {
+    delete this;
+    return nullptr;
+  }
+
+  // perform some more checks
+  if (op1->IsIntConst() && (op1->GetIntConst() != 0 && op1->GetIntConst() != 1)) {
+    ParseError(Loc, "suspicious `%s` (first operand looks strange)", getOpName());
+    delete this;
+    return nullptr;
+  }
+  if (op2->IsIntConst() && (op2->GetIntConst() != 0 && op2->GetIntConst() != 1)) {
+    ParseError(Loc, "suspicious `%s` (second operand looks strange)", getOpName());
+    delete this;
+    return nullptr;
+  }
+
+  // convert to booleans
+  op1 = op1->CoerceToBool(ec);
+  op2 = op2->CoerceToBool(ec);
   if (!op1 || !op2) {
     delete this;
     return nullptr;
