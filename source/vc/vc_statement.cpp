@@ -34,6 +34,7 @@ VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
 bool VStatement::IsCompound () const { return false; }
+bool VStatement::IsEmptyStatement () const { return false; }
 bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
@@ -81,7 +82,7 @@ bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path
 //==========================================================================
 bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
   if (!body) return true;
-  if (body->IsCompound()) return true;
+  if (body->IsCompound() || body->IsEmptyStatement()) return true;
   if (condLoc.GetLine() != body->Loc.GetLine()) {
     ParseError(condLoc, "please, use `{}` for multiline statements");
     return false;
@@ -97,6 +98,7 @@ VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
 VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
 bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
 void VEmptyStatement::DoEmit (VEmitContext &) {}
+bool VEmptyStatement::IsEmptyStatement () const { return true; }
 
 
 

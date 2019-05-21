@@ -44,6 +44,7 @@ public:
   virtual void EmitFinalizer (VEmitContext &ec);
 
   virtual bool IsCompound () const;
+  virtual bool IsEmptyStatement () const;
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;
   virtual bool IsGoto () const; // any, including `goto case` and `goto default`
@@ -87,6 +88,8 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
+
+  virtual bool IsEmptyStatement () const override;
 
 protected:
   VEmptyStatement () {}
