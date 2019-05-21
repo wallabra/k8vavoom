@@ -803,7 +803,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip) {
+void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigned AClipflags, bool onlyClip) {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ViewClip.ClipIsFull()) return;
 #endif
@@ -828,36 +828,14 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, unsigned 
         if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
         //k8: this check is always true, because view origin is outside of frustum (oops)
         //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
-#if defined(FRUSTUM_BOX_OPTIMISATION)
-        // check reject point
-        if (cp->PointOnSide(TVec(bbox[cp->pindex[0]], bbox[cp->pindex[1]], bbox[cp->pindex[2]]))) {
-          // completely outside of any plane means "invisible"
-          check(cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]])));
+        auto crs = cp->checkBoxEx(bbox);
+        if (crs == 1) clipflags ^= cp->clipflag; // if it is on a front side of this plane, don't bother checking with it anymore
+        else if (crs == 0) {
+          // it is enough to hit at least one "outside" to be completely outside
+          // add this box to clipper, why not
+          if (clip_use_1d_clipper) ViewClip.ClipAddBBox(bbox);
           return;
         }
-        // is node entirely on screen?
-        // k8: don't do this: frustum test are cheap, and we can hit false positive easily
-        /*
-        if (!cp->PointOnSide(TVec(bbox[cp->pindex[3+0]], bbox[cp->pindex[3+1]], bbox[cp->pindex[3+2]]))) {
-          // yes, don't check this plane
-          clipflags ^= cp->clipflag;
-        }
-        */
-#elif 0
-        int cres = cp->checkBoxEx(bbox);
-        if (cres == TFrustum::OUTSIDE) return;
-        // k8: don't do this: frustum test are cheap, and we can hit false positive easily
-        if (cres == TFrustum::INSIDE) clipflags ^= cp->clipflag; // don't check this plane anymore
-#else
-        if (!cp->checkBox(bbox)) {
-          if (cp != &view_frustum.planes[TFrustum::Back]) {
-            // this node is out of frustum, clip with it
-            onlyClip = true;
-            break;
-          }
-          return;
-        }
-#endif
       }
     }
   }

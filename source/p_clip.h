@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 #define VAVOOM_CLIPPER_USE_FLOAT
-#define VAVOOM_CLIPPER_USE_REAL_ANGLES
+//#define VAVOOM_CLIPPER_USE_REAL_ANGLES
 
 #ifdef VAVOOM_CLIPPER_USE_FLOAT
 # define  VVC_matan  matan
@@ -39,9 +39,14 @@
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # define PointToClipAngle  PointToRealAngle
+# define PointToClipAngleZeroOrigin  PointToRealAngleZeroOrigin
 # define VV_CLIPPER_FULL_CHECK
 #else
 # define PointToClipAngle  PointToPseudoAngle
+# define PointToClipAngleZeroOrigin  PointToPseudoAngleZeroOrigin
+# ifdef VV_CLIPPER_FULL_CHECK
+#  error "oops"
+# endif
 #endif
 
 
@@ -85,39 +90,32 @@ private:
   void RemoveClipRangeAngle (VFloat From, VFloat To);
 
 public:
-  inline VFloat PointToRealAngle (const float x, const float y) const {
-    VFloat Ret = VVC_matan(y-Origin.y, x-Origin.x);
+  static inline VFloat PointToRealAngleZeroOrigin (const float dx, const float dy) {
+    VFloat Ret = VVC_matan(dy, dx);
     if (Ret < (VFloat)0) Ret += (VFloat)360;
     return Ret;
   }
 
-  inline VFloat PointToRealAngle (const TVec &Pt) const {
-    VFloat Ret = VVC_matan(Pt.y-Origin.y, Pt.x-Origin.x);
-    if (Ret < (VFloat)0) Ret += (VFloat)360;
-    return Ret;
-  }
+  inline VFloat PointToRealAngle (const float x, const float y) const { return PointToRealAngleZeroOrigin(y-Origin.y, x-Origin.x); }
+  inline VFloat PointToRealAngle (const TVec &p) const { return PointToRealAngle(p.x, p.y); }
 
-  //-----------------------------------------------------------------------------
-  //
-  // ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the
-  // line from p1 to p2. The pseudoangle has the property that the ordering of
+  // returns the pseudoangle between the line p1 to (infinity, p1.y) and the
+  // line from p1 to p2. the pseudoangle has the property that the ordering of
   // points by true angle around p1 and ordering of points by pseudoangle are the
-  // same.
-  //
-  // For clipping exact angles are not needed. Only the ordering matters.
-  // This is about as fast as the fixed point R_PointToAngle2 but without
-  // the precision issues associated with that function.
-  //
-  //-----------------------------------------------------------------------------
-  inline VFloat PointToPseudoAngle (float x, float y) const {
-    VFloat dx = x-Origin.x;
-    VFloat dy = y-Origin.y;
-    if (dx == 0 && dy == 0) return 0;
+  // same. for clipping exact angles are not needed, only the ordering matters.
+  // k8: i found this code in GZDoom.
+  static inline VFloat PointToPseudoAngleZeroOrigin (float dx, float dy) {
+    if (dx == 0 && dy == 0) return 1;
     VFloat res = dy/(fabsf(dx)+fabsf(dy));
-    if (dx < 0) res = 2.0f-res;
-    return res;
+    #if PSEUDOANGLE_FROM_ZERO
+    res = (dx < 0 ? 2-res : res)+1;
+    return res+(res < 1 ? 3 : -1);
+    #else
+    return (dx < 0 ? 2-res : res)+1;
+    #endif
   }
 
+  inline VFloat PointToPseudoAngle (float x, float y) const { return PointToPseudoAngleZeroOrigin(x-Origin.x, y-Origin.y); }
   inline VFloat PointToPseudoAngle (const TVec &p) const { return PointToPseudoAngle(p.x, p.y); }
 
 public:
@@ -186,6 +184,8 @@ public:
   bool ClipLightCheckSeg (const seg_t *seg, bool asShadow) const;
 #endif
 
+  void ClipAddLine (const TVec v1, const TVec v2);
+  void ClipAddBBox (const float BBox[6]);
   void ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror=nullptr, bool clipAll=false);
 
 #ifdef CLIENT

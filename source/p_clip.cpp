@@ -27,17 +27,20 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-//#define VV_CLIPPER_USE_DIAMONDS
-
 //#define XXX_CLIPPER_DEBUG
 #define XXX_CLIPPER_MANY_DUMPS
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # define MIN_ANGLE  ((VFloat)0)
 # define MAX_ANGLE  ((VFloat)360)
+# define ANGLE_180  ((VFloat)180)
 #else
-# define MIN_ANGLE  ((VFloat)-1)
-# define MAX_ANGLE  ((VFloat)3)
+# define MIN_ANGLE  ((VFloat)0)
+# define MAX_ANGLE  ((VFloat)4)
+# define ANGLE_180  ((VFloat)2)
+# ifdef VV_CLIPPER_FULL_CHECK
+#  error "oops"
+# endif
 #endif
 
 
@@ -652,7 +655,6 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   if (!clip_frustum) return;
   if (!clip_frustum_init_range) return;
 
-#ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # if 0
     float fov = RAD2DEGF(atanf(fovx)*2.0f);
     float frangle;
@@ -705,9 +707,6 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
       ClipTail->Next = nullptr;
     }
 # else
-  VFloat d1 = (VFloat)0;
-  VFloat d2 = (VFloat)0;
-
   TVec Pts[4];
   TVec TransPts[4];
   Pts[0] = TVec(fovx, fovy, 1.0f);
@@ -718,70 +717,98 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   //k8: i don't think that we need to normalize it, but...
   //clipforward.normaliseInPlace();
 
+#if defined(VAVOOM_CLIPPER_USE_REAL_ANGLES) || 1
+  // pseudoangles are not linear
+  const VFloat fwdAngle = viewangles.yaw;
+  VFloat d1 = (VFloat)0;
+  VFloat d2 = (VFloat)0;
+#else
+  // PSEUDO!
+  const VFloat fwdAngle = PointToClipAngleZeroOrigin(clipforward.x*1024, clipforward.y*1024);
+  VFloat d1 = (VFloat)0;
+  VFloat d2 = (VFloat)0;
+  if (dbg_clip_dump_added_ranges) GCon->Logf("fwdAngle=%g (%g : %g)", fwdAngle, viewangles.yaw, PointToRealAngleZeroOrigin(clipforward.x*1024, clipforward.y*1024));
+#endif
+
   for (unsigned i = 0; i < 4; ++i) {
     TransPts[i].x = VSUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
     TransPts[i].y = VSUM3(Pts[i].x*viewright.y, Pts[i].y*viewup.y, /*Pts[i].z* */viewforward.y);
     TransPts[i].z = VSUM3(Pts[i].x*viewright.z, Pts[i].y*viewup.z, /*Pts[i].z* */viewforward.z);
 
     if (DotProduct(TransPts[i], clipforward) <= 0.01f) { // was 0.0f
-#ifdef VV_CLIPPER_USE_DIAMONDS
-      GCon->Log("diamond hit!");
-      // use 180 degree clip, because why not?
-      d1 = -90;
-      d2 = 90;
-      break;
-#else
       // player can see behind, use back frustum plane to clip
       return;
-#endif
     }
 
-    VFloat a = VVC_matan(TransPts[i].y, TransPts[i].x);
-    if (a < (VFloat)0) a += (VFloat)360;
-    VFloat d = VVC_AngleMod180(a-viewangles.yaw);
+#if 1
+    // pseudoangles are not linear
+    VFloat d = VVC_AngleMod180(PointToRealAngleZeroOrigin(TransPts[i].x, TransPts[i].y)-fwdAngle);
+#else
+    VFloat a = PointToClipAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024);
+    VFloat d = a-fwdAngle;
+# ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+    // this gives us [-180..180] range
+    d = VVC_AngleMod180(d);
+# else
+    if (dbg_clip_dump_added_ranges) GCon->Logf("  i=%d; d=%g (%g : %g)", i, d, PointToRealAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024), AngleMod180(PointToRealAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024)));
+    // emulate [-180..180] range
+    while (d < MIN_ANGLE) d += MAX_ANGLE;
+    if (d > ANGLE_180) d -= ANGLE_180;
+# endif
+#endif
 
     if (d1 > d) d1 = d;
     if (d2 < d) d2 = d;
   }
 
-  VFloat a1 = VVC_AngleMod(viewangles.yaw+d1);
-  VFloat a2 = VVC_AngleMod(viewangles.yaw+d2);
-
-  if (a1 > a2) {
-    if (dbg_clip_dump_added_ranges) GCon->Logf("  clip frustum: %f : %f", a2, a1);
-    ClipHead = NewClipNode();
-    ClipTail = ClipHead;
-    ClipHead->From = a2;
-    ClipHead->To = a1;
-    ClipHead->Prev = nullptr;
-    ClipHead->Next = nullptr;
-  } else {
-    if (dbg_clip_dump_added_ranges) {
-      GCon->Logf("  clip frustum: %f : %f", 0.0, a1);
-      GCon->Logf("  clip frustum: %f : %f", a1, 360.0);
-    }
-    ClipHead = NewClipNode();
-    ClipHead->From = 0;
-    ClipHead->To = a1;
-    ClipTail = NewClipNode();
-    ClipTail->From = a2;
-    ClipTail->To = (VFloat)360;
-    ClipHead->Prev = nullptr;
-    ClipHead->Next = ClipTail;
-    ClipTail->Prev = ClipHead;
-    ClipTail->Next = nullptr;
-  }
+  if (d1 != d2) {
+    VFloat a1 = fwdAngle+d1;
+    VFloat a2 = fwdAngle+d2;
+#if 1
+    // pseudoangles are not linear
+    a1 = VVC_AngleMod(a1);
+    a2 = VVC_AngleMod(a2);
+# ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
+    float s, c;
+    msincos(a1, &s, &c);
+    TVec axy1(c, s);
+    msincos(a2, &s, &c);
+    TVec axy2(c, s);
+    a1 = PointToClipAngleZeroOrigin(axy1.x, axy1.y);
+    a2 = PointToClipAngleZeroOrigin(axy2.x, axy2.y);
 # endif
 #else
-  TVec fwd;
-  AngleVector(TAVec(0, viewangles.yaw-90), fwd);
-  TVec v0 = Origin+fwd*42;
-  AngleVector(TAVec(0, viewangles.yaw+90), fwd);
-  TVec v1 = Origin+fwd*42;
-  check(!ClipHead);
-  check(!ClipTail);
-  AddClipRangeAngle(PointToClipAngle(v0), PointToClipAngle(v1));
+# ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+    a1 = VVC_AngleMod(a1);
+    a2 = VVC_AngleMod(a2);
+# else
+    while (a1 < 0) a1 += MAX_ANGLE; while (a1 >= MAX_ANGLE) a1 -= MAX_ANGLE;
+    while (a2 < 0) a2 += MAX_ANGLE; while (a2 >= MAX_ANGLE) a2 -= MAX_ANGLE;
+# endif
 #endif
+
+    if (a1 > a2) {
+      ClipHead = NewClipNode();
+      ClipTail = ClipHead;
+      ClipHead->From = a2;
+      ClipHead->To = a1;
+      ClipHead->Prev = nullptr;
+      ClipHead->Next = nullptr;
+    } else {
+      ClipHead = NewClipNode();
+      ClipHead->From = 0;
+      ClipHead->To = a1;
+      ClipTail = NewClipNode();
+      ClipTail->From = a2;
+      ClipTail->To = MAX_ANGLE;
+      ClipHead->Prev = nullptr;
+      ClipHead->Next = ClipTail;
+      ClipTail->Prev = ClipHead;
+      ClipTail->Next = nullptr;
+    }
+    if (dbg_clip_dump_added_ranges) { GCon->Log("=== FRUSTUM ==="); Dump(); GCon->Log("---"); }
+  }
+# endif
 }
 
 
@@ -873,11 +900,8 @@ void VViewClipper::Dump () const {
 //
 //==========================================================================
 void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
-#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
-  if (From < (VFloat)(VFloat)0) From = (VFloat)0; else if (From >= (VFloat)360) From = (VFloat)360;
-  if (To < (VFloat)0) To = (VFloat)0; else if (To >= (VFloat)360) To = (VFloat)360;
-  //check(From <= To || (From > To && To == (VFloat)360));
-#endif
+  if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From >= MAX_ANGLE) From = MAX_ANGLE;
+  if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To >= MAX_ANGLE) To = MAX_ANGLE;
 
   if (ClipIsEmpty()) {
     ClipHead = NewClipNode();
@@ -1079,34 +1103,6 @@ bool VViewClipper::IsRangeVisibleAngle (const VFloat From, const VFloat To) cons
 inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const TVec &origin) {
   enum { MIN_X, MIN_Y, MIN_Z, MAX_X, MAX_Y, MAX_Z };
 
-#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
-  static const vuint8 checkcoord[12][4] = {
-    { MAX_Y,MIN_X,MAX_X,MIN_Y },
-    { MAX_Y,MIN_X,MAX_X,MIN_X },
-    { MAX_Y,MIN_Y,MAX_X,MIN_X },
-    { MIN_X },
-    { MAX_X,MIN_X,MAX_X,MIN_Y },
-    { MIN_X },
-    { MAX_Y,MIN_Y,MAX_Y,MIN_X },
-    { MIN_X },
-    { MAX_X,MIN_X,MAX_Y,MIN_Y },
-    { MAX_X,MIN_Y,MAX_Y,MIN_Y },
-    { MAX_X,MIN_Y,MAX_Y,MIN_X }
-  };
-
-  // find the corners of the box that define the edges from current viewpoint
-  const float ox = origin.x, oy = origin.y;
-  const unsigned boxpos = (ox <= bbox[MIN_X] ? 0 : ox < bbox[MAX_X] ? 1 : 2)+
-                          (oy >= bbox[MAX_Y] ? 0 : oy > bbox[MIN_Y] ? 4 : 8);
-
-  if (boxpos == 5) return true;
-  check(boxpos != 3 && boxpos != 7);
-
-  const vuint8 *check = checkcoord[boxpos];
-  v1 = TVec(bbox[check[0]], bbox[check[1]], 0.0f);
-  v2 = TVec(bbox[check[2]], bbox[check[3]], 0.0f);
-
-#else
   if (bbox[0] <= origin.x && bbox[3] >= origin.x &&
       bbox[1] <= origin.y && bbox[4] >= origin.y &&
       (!clip_check_bbox_z || (bbox[2] <= origin.z && bbox[5] >= origin.z)))
@@ -1163,7 +1159,6 @@ inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const
     }
   }
   v1.z = v2.z = 0.0f;
-#endif
 
   return false;
 }
@@ -1257,6 +1252,43 @@ bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const {
   TVec v1, v2;
   if (CreateBBVerts(v1, v2, bbox, Origin)) return true;
   return IsRangeVisible(v1, v2);
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipAddLine
+//
+//==========================================================================
+void VViewClipper::ClipAddLine (const TVec v1, const TVec v2) {
+  if (v1.x == v2.x && v1.y == v2.y) return;
+  TPlane pl;
+  pl.SetPointDirXY(v1, v2-v1); // for boxes, this doesn't even do sqrt
+  // viewer is in back side or on plane?
+  const int orgside = pl.PointOnSide2(Origin);
+  if (orgside) return; // origin is on plane, or on back
+  AddClipRange(v2, v1);
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipAddBBox
+//
+//==========================================================================
+void VViewClipper::ClipAddBBox (const float bbox[6]) {
+  if (bbox[0] >= bbox[0+3] || bbox[1] >= bbox[1+3]) return;
+  // if we are inside this bbox, don't add it
+  if (bbox[0] <= Origin.x && bbox[0+3] >= Origin.x &&
+      bbox[1] <= Origin.y && bbox[1+3] >= Origin.y)
+  {
+    // viewer is inside the box
+    return;
+  }
+  ClipAddLine(TVec(bbox[0+0], bbox[1+0]), TVec(bbox[0+3], bbox[1+0]));
+  ClipAddLine(TVec(bbox[0+0], bbox[1+3]), TVec(bbox[0+3], bbox[1+3]));
+  ClipAddLine(TVec(bbox[0+0], bbox[1+0]), TVec(bbox[0+0], bbox[1+3]));
+  ClipAddLine(TVec(bbox[0+3], bbox[1+0]), TVec(bbox[0+3], bbox[1+3]));
 }
 
 
