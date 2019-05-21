@@ -755,11 +755,12 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     if (!cond) sc->Error("invalid `if` expression");
     VStatement *ts = ParseActionStatement(sc, Class, State);
     if (!ts) sc->Error("invalid `if` true branch");
+    auto elseloc = sc->GetLoc();
     if (sc->Check("else")) {
       VStatement *fs = ParseActionStatement(sc, Class, State);
-      if (fs) return new VIf(cond, ts, fs, stloc);
+      if (fs) return new VIf(cond, ts, fs, stloc, elseloc, false);
     }
-    return new VIf(cond, ts, stloc);
+    return new VIf(cond, ts, stloc, false);
   }
 
   // return

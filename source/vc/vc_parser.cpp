@@ -1246,9 +1246,10 @@ VStatement *VParser::ParseStatement () {
         if (!e) ParseError(Lex.Location, "If expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         VStatement *STrue = ParseStatement();
+        auto falseLoc = Lex.Location;
         if (Lex.Check(TK_Else)) {
           VStatement *SFalse = ParseStatement();
-          return new VIf(e, STrue, SFalse, l);
+          return new VIf(e, STrue, SFalse, l, falseLoc);
         } else {
           return new VIf(e, STrue, l);
         }

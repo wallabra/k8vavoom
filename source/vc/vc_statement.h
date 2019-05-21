@@ -43,6 +43,7 @@ public:
   void Emit (VEmitContext &);
   virtual void EmitFinalizer (VEmitContext &ec);
 
+  virtual bool IsCompound () const;
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;
   virtual bool IsGoto () const; // any, including `goto case` and `goto default`
@@ -66,6 +67,9 @@ public:
 
   // returns `false` if statement not found (and `path` is not modified)
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path);
+
+  // this checks for `if (...)\nstat;`
+  bool CheckCondIndent (const TLocation &condLoc, VStatement *body);
 
 protected:
   VStatement () {}
@@ -116,9 +120,11 @@ public:
   VExpression *Expr;
   VStatement *TrueStatement;
   VStatement *FalseStatement;
+  TLocation ElseLoc;
+  bool doIndentCheck;
 
-  VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc);
-  VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement, const TLocation &ALoc);
+  VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc, bool ADoIndentCheck=true);
+  VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement, const TLocation &ALoc, const TLocation &AElseLoc, bool ADoIndentCheck=true);
   virtual ~VIf () override;
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
@@ -592,6 +598,8 @@ public:
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const override;
+
+  virtual bool IsCompound () const override;
 
 protected:
   VCompound () {}

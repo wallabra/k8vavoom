@@ -33,6 +33,7 @@ VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
 VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
+bool VStatement::IsCompound () const { return false; }
 bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
@@ -55,6 +56,12 @@ bool VStatement::IsGotoInAllowed () const { return true; }
 bool VStatement::IsGotoOutAllowed () const { return true; }
 bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const { return true; }
 
+
+//==========================================================================
+//
+//  VStatement::BuildPathTo
+//
+//==========================================================================
 bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) {
     path.append(this);
@@ -62,6 +69,24 @@ bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path
   } else {
     return false;
   }
+}
+
+
+//==========================================================================
+//
+//  VStatement::CheckCondIndent
+//
+//  this checks for `if (...)\nstat;`
+//
+//==========================================================================
+bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
+  if (!body) return true;
+  if (body->IsCompound()) return true;
+  if (condLoc.GetLine() != body->Loc.GetLine()) {
+    ParseError(condLoc, "please, use `{}` for multiline statements");
+    return false;
+  }
+  return true;
 }
 
 
@@ -204,11 +229,13 @@ void VAssertStatement::DoEmit (VEmitContext &ec) {
 //  VIf::VIf
 //
 //==========================================================================
-VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc)
+VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc, bool ADoIndentCheck)
   : VStatement(ALoc)
   , Expr(AExpr)
   , TrueStatement(ATrueStatement)
   , FalseStatement(nullptr)
+  , ElseLoc(ALoc)
+  , doIndentCheck(ADoIndentCheck)
 {
 }
 
@@ -218,11 +245,14 @@ VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc)
 //  VIf::VIf
 //
 //==========================================================================
-VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement, const TLocation &ALoc)
+VIf::VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement,
+          const TLocation &ALoc, const TLocation &AElseLoc, bool ADoIndentCheck)
   : VStatement(ALoc)
   , Expr(AExpr)
   , TrueStatement(ATrueStatement)
   , FalseStatement(AFalseStatement)
+  , ElseLoc(AElseLoc)
+  , doIndentCheck(ADoIndentCheck)
 {
 }
 
@@ -262,6 +292,7 @@ void VIf::DoSyntaxCopyTo (VStatement *e) {
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
   res->TrueStatement = (TrueStatement ? TrueStatement->SyntaxCopy() : nullptr);
   res->FalseStatement = (FalseStatement ? FalseStatement->SyntaxCopy() : nullptr);
+  res->ElseLoc = ElseLoc;
 }
 
 
@@ -282,7 +313,14 @@ void VIf::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VIf::Resolve (VEmitContext &ec) {
+  if (doIndentCheck) {
+    // indent check
+    if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) return false;
+    if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) return false;
+  }
+
   bool Ret = true;
+  // resolve
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) Ret = false;
   if (!TrueStatement->Resolve(ec)) Ret = false;
@@ -432,6 +470,9 @@ void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VWhile::Resolve (VEmitContext &ec) {
+  // indent check
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
+
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) Ret = false;
@@ -578,6 +619,9 @@ void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VDo::Resolve (VEmitContext &ec) {
+  // indent check
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
+
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) Ret = false;
@@ -732,6 +776,9 @@ void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VFor::Resolve (VEmitContext &ec) {
+  // indent check
+  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+
   bool Ret = true;
 
   for (int i = 0; i < InitExpr.length(); ++i) {
@@ -924,6 +971,9 @@ void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeach::Resolve (VEmitContext &ec) {
+  // indent check
+  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveIterator(ec);
   if (!Expr) Ret = false;
@@ -1119,6 +1169,9 @@ void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeachIota::Resolve (VEmitContext &ec) {
+  // indent check
+  if (statement && !CheckCondIndent(Loc, statement)) return false;
+
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1403,6 +1456,9 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeachArray::Resolve (VEmitContext &ec) {
+  // indent check
+  if (statement && !CheckCondIndent(Loc, statement)) return false;
+
   if (arr && arr->IsAnyInvocation()) FatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
   // we will rewrite 'em later
@@ -1775,6 +1831,9 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeachScripted::Resolve (VEmitContext &ec) {
+  // indent check
+  if (statement && !CheckCondIndent(Loc, statement)) return false;
+
   /* if iterator is invocation, rewrite it to:
    *   {
    *     firstargtype it;
@@ -3107,6 +3166,16 @@ VCompound::~VCompound () {
 
 //==========================================================================
 //
+//  VCompound::IsCompound
+//
+//==========================================================================
+bool VCompound::IsCompound () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VCompound::SyntaxCopy
 //
 //==========================================================================
@@ -3307,6 +3376,9 @@ void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VCompoundScopeExit::Resolve (VEmitContext &ec) {
+  // indent check
+  if (Body && !CheckCondIndent(Loc, Body)) return false;
+
   if (Body) {
     if (!Body->Resolve(ec)) return false;
   }
