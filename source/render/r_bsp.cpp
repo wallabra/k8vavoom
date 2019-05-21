@@ -833,7 +833,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
         else if (crs == 0) {
           // it is enough to hit at least one "outside" to be completely outside
           // add this box to clipper, why not
-          if (clip_use_1d_clipper) ViewClip.ClipAddBBox(bbox);
+          // k8: nope; this glitches
+          //if (clip_use_1d_clipper) ViewClip.ClipAddBBox(bbox);
           return;
         }
       }
