@@ -1,0 +1,4 @@
+Error: ztest_indenting_00.vc:7: please, use `{}` for multiline statements
+Error: ztest_indenting_00.vc:15: please, use `{}` for multiline statements
+Error: ztest_indenting_00.vc:18: please, use `{}` for multiline statements
+FATAL: Confused by previous errors, bailing out
