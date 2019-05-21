@@ -1,0 +1,5 @@
+Error: ztest_suspicious_logic_00.vc:6: suspicious `&&` (second operand looks strange)
+Error: ztest_suspicious_logic_00.vc:7: suspicious `||` (second operand looks strange)
+Error: ztest_suspicious_logic_00.vc:8: suspicious `||` (first operand looks strange)
+Error: ztest_suspicious_logic_00.vc:9: suspicious `&&` (first operand looks strange)
+FATAL: Confused by previous errors, bailing out

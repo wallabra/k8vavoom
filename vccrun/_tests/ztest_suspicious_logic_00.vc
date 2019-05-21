@@ -1,0 +1,11 @@
+//FAIL
+class Main : Object;
+
+void main () {
+  int a, b, c;
+  c = (a>>8)&&0xff;
+  c = (a>>8)||0xff;
+  c = 0x10||(a>>8);
+  c = 0x10&&(a>>8);
+  c = (a>>8)&&1;
+}
