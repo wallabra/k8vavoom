@@ -1,0 +1,2 @@
+Error: ztest_equ_equ.vc:7: doing `==` with `==` is probably not what you want
+FATAL: Confused by previous errors, bailing out
