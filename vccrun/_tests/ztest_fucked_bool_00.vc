@@ -1,0 +1,12 @@
+//FAIL
+class Main : Object;
+
+
+void main () {
+  int a, b, c;
+  if (!a & b) print("wtf?!");
+  if (a & b && c) print("wtf?!");
+  if (a && b & c) print("wtf?!");
+  if (a && b || c) print("wtf?!");
+  if (a || b && c) print("wtf?!");
+}

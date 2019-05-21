@@ -1,0 +1,6 @@
+Error: ztest_fucked_bool_00.vc:7: doing `!` with `&` is probably not what you want
+Error: ztest_fucked_bool_00.vc:8: doing `&` with `&&` is probably not what you want
+Error: ztest_fucked_bool_00.vc:9: doing `&&` with `&` is probably not what you want
+Error: ztest_fucked_bool_00.vc:10: doing `&&` with `||` is probably not what you want (precedence)
+Error: ztest_fucked_bool_00.vc:11: doing `||` with `&&` is probably not what you want (precedence)
+FATAL: Confused by previous errors, bailing out
