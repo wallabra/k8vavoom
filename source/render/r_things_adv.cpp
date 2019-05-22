@@ -421,3 +421,30 @@ void VAdvancedRenderLevel::RenderMobjsFog () {
     RenderThingFog(*ent);
   }
 }
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::RenderTranslucentWallsAmbient
+//
+//  translucency simply "taints" (aka "shades") lighting, so we can
+//  (and should) overlay them on ambient light buffer
+//
+//  dynamic light should be modified by translucent surfaces too, but
+//  i'll do it later (maybe)
+//
+//==========================================================================
+void VAdvancedRenderLevel::RenderTranslucentWallsAmbient () {
+  if (traspFirst >= traspUsed) return;
+  trans_sprite_t *twi = &trans_sprites[traspFirst];
+  Drawer->BeginTranslucentPolygonAmbient();
+  for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
+    if (twi->type) continue; // not a wall
+    if (twi->Alpha >= 1.0f) continue; // not a translucent
+    check(twi->surf);
+    Drawer->DrawTranslucentPolygonAmbient(twi->surf, twi->Alpha, twi->Additive);
+  }
+  Drawer->EndTranslucentPolygonAmbient();
+  // we don't need to render translucent walls anymore
+  traspUsed = traspFirst;
+}

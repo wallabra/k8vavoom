@@ -171,6 +171,8 @@ ShaderList basedir="basev/common/glshaders" {
   Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";
   Shader [advanced] ShadowsAmbientMasked both="shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
   Shader [advanced] ShadowsAmbientBrightmap both="shadows_surf_ambient" { define "VV_AMBIENT_BRIGHTMAP_WALL"; }
+  Shader [advanced] ShadowsAmbientTrans both="shadows_surf_ambient_trans";
+  Shader [advanced] ShadowsAmbientTransBrightmap both="shadows_surf_ambient_trans" { define "VV_AMBIENT_BRIGHTMAP_WALL"; }
   /*
   Shader [advanced] ShadowsAmbientGlow both="shadows_surf_ambient" { defines { "VV_AMBIENT_GLOW" } }
   Shader [advanced] ShadowsAmbientMaskedGlow both="shadows_surf_ambient" { defines { "VV_AMBIENT_MASKED_WALL", "VV_AMBIENT_GLOW" } }

@@ -850,6 +850,8 @@ protected:
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
+  void RenderTranslucentWallsAmbient ();
+
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);

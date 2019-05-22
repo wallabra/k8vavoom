@@ -196,6 +196,11 @@ public:
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
+
+  virtual void BeginTranslucentPolygonAmbient () = 0;
+  virtual void EndTranslucentPolygonAmbient () = 0;
+  virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) = 0;
+
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex, float Alpha,
                                   bool Additive, VTextureTranslation *Translation, int CMap,
                                   vuint32 light, vuint32 Fade, const TVec &normal, float pdist, const TVec &saxis,

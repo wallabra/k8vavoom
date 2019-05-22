@@ -502,7 +502,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 
   if (seg->PointOnSide(vieworg)) {
     // viewer is in back side or on plane
-    // gozzo 3d floors should be rendered regardless from orientation
+    // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
     if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Tex->isTransparent())) {
       side_t *sidedef = seg->sidedef;

@@ -486,6 +486,7 @@ private:
   TVec coneDir;
   float coneAngle;
   bool spotLight;
+  GLint savedDepthMask; // used in various begin/end methods
 
 protected:
   VGLShader *shaderHead;
@@ -534,7 +535,12 @@ public:
   virtual void EndFogPass () override;
 
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
-  virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
+  virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) override;
+
+  virtual void BeginTranslucentPolygonAmbient () override;
+  virtual void EndTranslucentPolygonAmbient () override;
+  virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) override;
+
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                   float Alpha, bool Additive,
                                   VTextureTranslation *Translation, int CMap,

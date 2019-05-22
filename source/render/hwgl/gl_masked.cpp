@@ -440,3 +440,117 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     p_glActiveTextureARB(GL_TEXTURE0);
   }
 }
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::BeginTranslucentPolygonAmbient
+//
+//==========================================================================
+void VOpenGLDrawer::BeginTranslucentPolygonAmbient () {
+  glEnable(GL_BLEND);
+  glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndTranslucentPolygonAmbient
+//
+//==========================================================================
+void VOpenGLDrawer::EndTranslucentPolygonAmbient () {
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  glDepthMask(savedDepthMask); // restore z-buffer writes
+  glDisable(GL_TEXTURE_2D);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawTranslucentPolygonAmbient
+//
+//==========================================================================
+void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) {
+  if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
+  if (surf->count < 3) {
+    if (developer) GCon->Logf(NAME_Dev, "trying to render translucent surface with %d vertices", surf->count);
+    return;
+  }
+
+  texinfo_t *tex = surf->texinfo;
+
+  if (!tex->Tex) return;
+
+  GlowParams gp;
+  CalcGlow(gp, surf);
+
+  bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
+
+  if (doBrightmap) {
+    ShadowsAmbientTransBrightmap.Activate();
+    ShadowsAmbientTransBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
+    ShadowsAmbientTransBrightmap.SetTexture(0);
+    ShadowsAmbientTransBrightmap.SetTextureBM(1);
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SetTexture(tex->Tex->Brightmap, 0);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    p_glActiveTextureARB(GL_TEXTURE0);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientTransBrightmap, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientTransBrightmap);
+    }
+    ShadowsAmbientTransBrightmap.SetTex(tex);
+  } else {
+    ShadowsAmbientTrans.Activate();
+    ShadowsAmbientTrans.SetTexture(0);
+    //ShadowsAmbientTrans.SetFogType();
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientTrans, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientTrans);
+    }
+    ShadowsAmbientTrans.SetTex(tex);
+  }
+
+  SetTexture(tex->Tex, tex->ColorMap);
+
+  if (Additive) {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else {
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    //p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  }
+
+  //GCon->Logf("sl=0x%08x", (unsigned)surf->Light);
+  if (doBrightmap) {
+    ShadowsAmbientTransBrightmap.SetLight(
+      ((surf->Light>>16)&255)*255.0f,
+      ((surf->Light>>8)&255)*255.0f,
+      (surf->Light&255)*255.0f, Alpha);
+  } else {
+    ShadowsAmbientTrans.SetLight(
+      ((surf->Light>>16)&255)*255.0f,
+      ((surf->Light>>8)&255)*255.0f,
+      (surf->Light&255)*255.0f, Alpha);
+  }
+
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+  glBegin(GL_POLYGON);
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+  glEnd();
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+  if (doBrightmap) {
+    p_glActiveTextureARB(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    p_glActiveTextureARB(GL_TEXTURE0);
+  }
+}
