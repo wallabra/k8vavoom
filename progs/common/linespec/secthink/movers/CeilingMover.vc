@@ -214,8 +214,8 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       else if (Arg5 == 2) bStopOnCrush = true;
       break;
     case CEILEV_Generic:
-      Crush = (Arg5&16) ? 20 : 0;
-      Direction = (Arg5&8) ? 1 : -1;
+      Crush = (Arg5&16 ? 20 : 0);
+      Direction = (Arg5&8 ? 1 : -1);
       // target heights
       switch (Arg4) {
         case 1: DestHeight = Level.FindHighestCeilingSurrounding(Sector, &Spot); break;

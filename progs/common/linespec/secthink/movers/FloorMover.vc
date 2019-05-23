@@ -258,8 +258,8 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       SeqName = LineSpecialLevelInfo(Level).DefaultFloorAltSound;
       break;
     case FLOOREV_Generic:
-      Direction = (Arg5&8) ? 1 : -1;
-      Crush = (Arg4&16) ? 20 : 0;
+      Direction = (Arg5&8 ? 1 : -1);
+      Crush = (Arg4&16 ? 20 : 0);
       switch (Arg4) {
         case 1: DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot); break;
         case 2: DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot); break;

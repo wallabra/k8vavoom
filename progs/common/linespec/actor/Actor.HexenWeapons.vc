@@ -499,7 +499,7 @@ final void A_SnoutAttack () self(Actor) {
   EntityEx AimTarget = AimLineAttack(out vforward, angles, MELEERANGE);
   LineSpecialLevelInfo(Level).bPuffSpawned = false;
   LineAttack(vforward, MELEERANGE, damage, SnoutPuff);
-  PlaySound((P_Random()&1) ? 'PigActive2' : 'PigActive1', CHAN_VOICE);
+  PlaySound((P_Random()&1 ? 'PigActive2' : 'PigActive1'), CHAN_VOICE);
   if (AimTarget) {
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
     if (LineSpecialLevelInfo(Level).bPuffSpawned) {
