@@ -27,7 +27,12 @@ void main () {
   lt.g = clamp(lt.g*TexColor.g*lta, 0.0, 1.0);
   lt.b = clamp(lt.b*TexColor.b*lta, 0.0, 1.0);
   */
+  //lt.rgb = clamp(lt.rgb*TexColor.rgb*lta, 0.0, 1.0);
   lt.rgb = clamp(lt.rgb*TexColor.rgb*lta, 0.0, 1.0);
+  lt.a = lta;
+  //lt.rgb = vec3(1, 0, 0);
+  //lt.a = 1.0;
+  //lt.a = clamp(lta+0.7, 0.0, 1.0);
   //lt.a = 1.0;
 
   gl_FragColor = lt;

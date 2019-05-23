@@ -170,6 +170,9 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   RenderMobjsAmbient();
 
+  Drawer->BeginTranslucentPolygonAmbient();
+  RenderTranslucentWallsAmbient();
+
   Drawer->BeginShadowVolumesPass();
 
   linetrace_t Trace;
@@ -336,6 +339,12 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   if (dbg_adv_show_light_seg_info) {
     GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
   }
+
+  // do it here, after all lighting was processed
+  /*
+  Drawer->BeginTranslucentPolygonAmbient();
+  RenderTranslucentWallsAmbient();
+  */
 
   Drawer->DrawWorldTexturesPass();
   RenderMobjsTextures();

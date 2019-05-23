@@ -449,9 +449,19 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 //==========================================================================
 void VOpenGLDrawer::BeginTranslucentPolygonAmbient () {
   glEnable(GL_BLEND);
-  glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
+  //glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
   glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_TEXTURE_2D);
+  glDisable(GL_STENCIL_TEST);
+  glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+  p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_KEEP);
+  p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_KEEP, GL_KEEP);
+  glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glEnable(GL_CULL_FACE);
+  RestoreDepthFunc();
+  //glDisable(GL_BLEND);
 }
 
 
@@ -463,7 +473,7 @@ void VOpenGLDrawer::BeginTranslucentPolygonAmbient () {
 void VOpenGLDrawer::EndTranslucentPolygonAmbient () {
   glDisable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthMask(savedDepthMask); // restore z-buffer writes
+  //glDepthMask(savedDepthMask); // restore z-buffer writes
   glDisable(GL_TEXTURE_2D);
 }
 
@@ -506,7 +516,6 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     } else {
       VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientTransBrightmap);
     }
-    ShadowsAmbientTransBrightmap.SetTex(tex);
   } else {
     ShadowsAmbientTrans.Activate();
     ShadowsAmbientTrans.SetTexture(0);
@@ -516,10 +525,10 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     } else {
       VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientTrans);
     }
-    ShadowsAmbientTrans.SetTex(tex);
   }
 
   SetTexture(tex->Tex, tex->ColorMap);
+  if (doBrightmap) ShadowsAmbientTransBrightmap.SetTex(tex); else ShadowsAmbientTrans.SetTex(tex);
 
   if (Additive) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -529,7 +538,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   }
 
-  //GCon->Logf("sl=0x%08x", (unsigned)surf->Light);
+  //GCon->Logf("sl=0x%08x (%g : %d)", (unsigned)surf->Light, Alpha, (int)Additive);
   if (doBrightmap) {
     ShadowsAmbientTransBrightmap.SetLight(
       ((surf->Light>>16)&255)*255.0f,

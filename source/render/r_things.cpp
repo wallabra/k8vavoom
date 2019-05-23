@@ -797,8 +797,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       */
     } else {
       // masked polygon
-      //if (!RendLev->IsAdvancedRenderer())
-      {
+      if (!IsAdvancedRenderer()) {
         check(spr.surf);
         if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
         Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
