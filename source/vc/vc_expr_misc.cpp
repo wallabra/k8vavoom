@@ -903,6 +903,16 @@ VConditional::~VConditional () {
 
 //==========================================================================
 //
+//  VConditional::IsTernary
+//
+//==========================================================================
+bool VConditional::IsTernary () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VConditional::SyntaxCopy
 //
 //==========================================================================
@@ -933,6 +943,26 @@ void VConditional::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VConditional::DoResolve (VEmitContext &ec) {
+  if (op) {
+    if (op->IsParens()) {
+      VExpression *e = ((VExprParens *)op)->op;
+      if (e->IsBinaryMath() && !((VBinary *)e)->IsComparison()) {
+        ParseError(Loc, "I don't like this syntax; please, either remove parens, or use them properly; thank you.");
+        delete this;
+        return nullptr;
+      }
+    }
+    //VExpression *ce = (op->IsParens() ? ((VExprParens *)op)->op : op);
+    if (op->IsBinaryMath()) {
+      VBinary *b = (VBinary *)op;
+      if (!b->IsComparison() && b->op1 && b->op2 && (b->op1->IsParens() || b->op2->IsParens())) {
+        ParseError(Loc, "Your idea of how ternaries are working is probably wrong; please, use parens to make your intent clear.");
+        delete this;
+        return nullptr;
+      }
+    }
+  }
+
   if (op) op = op->ResolveBoolean(ec);
   if (op1) op1 = op1->Resolve(ec);
   if (op2) op2 = op2->Resolve(ec);

@@ -181,6 +181,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual bool IsTernary () const override;
+
   virtual VStr toString () const override;
 
 protected:
