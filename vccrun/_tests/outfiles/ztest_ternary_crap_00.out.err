@@ -1,0 +1,3 @@
+Error: ztest_ternary_crap_00.vc:6: Your idea of how ternaries are working is probably wrong; please, use parens to make your intent clear.
+Error: ztest_ternary_crap_00.vc:10: I don't like this syntax; please, either remove parens, or use them properly; thank you.
+FATAL: Confused by previous errors, bailing out
