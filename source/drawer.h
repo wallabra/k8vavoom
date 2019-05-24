@@ -288,9 +288,6 @@ public:
                                   bool Interpolate, bool AllowTransparency) = 0;
   virtual void GetRealWindowSize (int *rw, int *rh) = 0;
 
-  // copy current FBO to secondary FBO
-  virtual void CopyToSecondaryFBO () = 0;
-
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
 

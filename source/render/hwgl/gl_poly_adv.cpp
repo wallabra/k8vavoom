@@ -927,55 +927,17 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   //glBlendEquation(GL_FUNC_ADD);
 
   // copy ambient light texture to FBO, so we can use it to light decals
-  if (p_glBlitFramebuffer) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ambLightFBO);
-    p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-  } else {
-    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+  mainFBO.blitTo(&ambLightFBO, 0, 0, mainFBO.mWidth, mainFBO.mHeight, 0, 0, ambLightFBO.mWidth, ambLightFBO.mHeight, GL_NEAREST);
+  mainFBO.activate();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
-    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-    //glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE/*GL_TRUE*/);
-    p_glUseProgramObjectARB(0);
-
-    glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBegin(GL_QUADS);
-      glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-      glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
-      glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
-      glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
-    glEnd();
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-    glPopAttrib();
-  }
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glEnable(GL_CULL_FACE);
+  RestoreDepthFunc();
 
 
   glBlendFunc(GL_DST_COLOR, GL_ZERO);

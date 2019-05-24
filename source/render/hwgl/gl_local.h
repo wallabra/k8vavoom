@@ -479,6 +479,35 @@ public:
 
   friend class VGLShader;
 
+  class FBO {
+    friend class VOpenGLDrawer;
+  private:
+    class VOpenGLDrawer *mOwner;
+    GLuint mFBO;
+    GLuint mColorTid;
+    GLuint mDepthStencilTid;
+    bool mHasDepthStencil;
+    int mWidth, mHeight;
+
+  public:
+    FBO ();
+    ~FBO ();
+
+    void create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil=false);
+    void destroy ();
+
+    void activate ();
+    void deactivate ();
+
+    // this blits only color info
+    // restore active FBO manually after calling this
+    // it also can reset shader program
+    // if `dest` is nullptr, blit to screen buffer (not yet)
+    void blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLenum filter);
+  };
+
+  friend class FBO;
+
 #include "gl_shaddef.hi"
 
 private:
@@ -595,8 +624,6 @@ public:
 
   // advanced drawing.
   virtual bool SupportsAdvancedRendering () override;
-
-  virtual void CopyToSecondaryFBO () override;
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;
@@ -748,16 +775,9 @@ protected:
   bool hasNPOT;
   bool hasBoundsTest; // GL_EXT_depth_bounds_test
 
-  GLuint mainFBO;
-  GLuint mainFBOColorTid;
-  GLuint mainFBODepthStencilTid;
-
-  GLuint secondFBO; // for transition effects
-  GLuint secondFBOColorTid;
-
-  // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
-  GLuint ambLightFBO;
-  GLuint ambLightFBOColorTid;
+  FBO mainFBO;
+  //FBO secondFBO; // for transition effects, color only
+  FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
 
   GLint maxTexSize;
   bool texturesGenerated;

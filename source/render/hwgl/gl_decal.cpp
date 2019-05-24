@@ -200,7 +200,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
           if (!tex1set) {
             tex1set = true;
             p_glActiveTextureARB(GL_TEXTURE0+1);
-            glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
+            glBindTexture(GL_TEXTURE_2D, ambLightFBO.mColorTid);
             p_glActiveTextureARB(GL_TEXTURE0);
           }
           SurfAdvDecal.SetFullBright(dc->flags&decal_t::Fullbright ? 1.0f : 0.0f);

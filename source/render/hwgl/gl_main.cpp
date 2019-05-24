@@ -268,6 +268,9 @@ void VOpenGLDrawer::VGLShader::Unload () {
 VOpenGLDrawer::VOpenGLDrawer ()
   : VDrawer()
   , shaderHead(nullptr)
+  , mainFBO()
+  //, secondFBO()
+  , ambLightFBO()
   , texturesGenerated(false)
   , lastgamma(0)
   , CurrentFade(0)
@@ -276,16 +279,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
   useReverseZ = false;
   hasNPOT = false;
   hasBoundsTest = false;
-
-  mainFBO = 0;
-  mainFBOColorTid = 0;
-  mainFBODepthStencilTid = 0;
-
-  secondFBO = 0;
-  secondFBOColorTid = 0;
-
-  ambLightFBO = 0;
-  ambLightFBOColorTid = 0;
 
   tmpImgBuf0 = nullptr;
   tmpImgBuf1 = nullptr;
@@ -426,40 +419,10 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 void VOpenGLDrawer::DeinitResolution () {
   // unload shaders
   DestroyShaders();
-
-  // delete old FBOs
-  if (mainFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (mainFBOColorTid) glDeleteTextures(1, &mainFBOColorTid);
-    if (mainFBODepthStencilTid) glDeleteTextures(1, &mainFBODepthStencilTid);
-    glDeleteFramebuffers(1, &mainFBO);
-    mainFBO = 0;
-    mainFBOColorTid = 0;
-    mainFBODepthStencilTid = 0;
-  }
-
-  if (secondFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (secondFBOColorTid) glDeleteTextures(1, &secondFBOColorTid);
-    glDeleteFramebuffers(1, &secondFBO);
-    secondFBO = 0;
-    secondFBOColorTid = 0;
-  }
-
-  if (ambLightFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (ambLightFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
-    glDeleteFramebuffers(1, &ambLightFBO);
-    ambLightFBO = 0;
-    ambLightFBOColorTid = 0;
-  }
+  // destroy FBOs
+  mainFBO.destroy();
+  //secondFBO.destroy();
+  ambLightFBO.destroy();
 }
 
 
@@ -794,72 +757,10 @@ void VOpenGLDrawer::InitResolution () {
   //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
 
   // allocate main FBO object
-  glGenFramebuffers(1, &mainFBO);
-  if (mainFBO == 0) Sys_Error("OpenGL: cannot create main FBO");
-  glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-
-  // attach 2D texture to this FBO
-  glGenTextures(1, &mainFBOColorTid);
-  if (mainFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
-  glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f); // 1 is minimum, i.e. "off"
-
-  // empty texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mainFBOColorTid, 0);
-
-  // attach stencil texture to this FBO
-  glGenTextures(1, &mainFBODepthStencilTid);
-  if (mainFBODepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
-  glBindTexture(GL_TEXTURE_2D, mainFBODepthStencilTid);
-
-  GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
-  // there is (almost) no reason to use fp depth buffer without reverse z
-  // besides, stenciled shadows are glitchy for "forward" fp depth buffer (i don't know why, and too lazy to investigate)
-  // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
-  if (major >= 3 && gl_enable_fp_zbuffer) {
-    depthStencilFormat = GL_DEPTH32F_STENCIL8;
-    GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
-  }
-
-  (void)glGetError();
-  /*
-  if (!useReverseZ) {
-    if (major >= 3 && gl_enable_fp_zbuffer) GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
-    //glTexImage2D(GL_TEXTURE_2D, 0, (major >= 3 && gl_enable_fp_zbuffer ? GL_DEPTH32F_STENCIL8 : GL_DEPTH_STENCIL), ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-  } else {
-    // reversed z
-    //glTexImage2D(GL_TEXTURE_2D, 0, (useReverseZ ? GL_DEPTH32F_STENCIL8 : GL_DEPTH_STENCIL), ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-  }
-  */
-  glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-  if (glGetError() != 0) {
-    if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
-      GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-      if (glGetError() != 0) Sys_Error("OpenGL initialization error");
-    } else {
-      Sys_Error("OpenGL initialization error");
-    }
-  }
+  mainFBO.create(this, ScreenWidth, ScreenHeight, true); // create depthstencil
   GCon->Logf(NAME_Init, "OpenGL: reverse z is %s", (useReverseZ ? "enabled" : "disabled"));
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mainFBODepthStencilTid, 0);
 
-  {
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed");
-  }
-
-
+  mainFBO.activate();
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
@@ -870,34 +771,13 @@ void VOpenGLDrawer::InitResolution () {
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   stencilBufferDirty = false;
 
-
   // allocate ambient FBO object
-  glGenFramebuffers(1, &ambLightFBO);
-  if (ambLightFBO == 0) Sys_Error("OpenGL: cannot create ambient FBO");
-  glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
-
-  // attach 2D texture to this FBO
-  glGenTextures(1, &ambLightFBOColorTid);
-  if (ambLightFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
-  glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f); // 1 is minimum, i.e. "off"
-
-  // empty texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ambLightFBOColorTid, 0);
+  ambLightFBO.create(this, ScreenWidth, ScreenHeight); // create depthstencil
 
 
-
+  // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
@@ -996,10 +876,9 @@ void VOpenGLDrawer::Setup2D () {
 //==========================================================================
 void VOpenGLDrawer::StartUpdate (bool allowClear) {
   //glFinish();
-
   VRenderLevelShared::ResetPortalPool();
 
-  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+  mainFBO.activate();
 
   if (allowClear && clear) glClear(GL_COLOR_BUFFER_BIT);
 
@@ -1024,131 +903,103 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 //
 //==========================================================================
 void VOpenGLDrawer::FinishUpdate () {
-  if (mainFBO) {
-    if (p_glBlitFramebuffer) {
-      glBindTexture(GL_TEXTURE_2D, 0);
+  //FIXME: move this to FBO object
+  if (p_glBlitFramebuffer) {
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // default FBO
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.mFBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // default FBO
 
-      int realw, realh;
-      GetRealWindowSize(&realw, &realh);
+    int realw, realh;
+    GetRealWindowSize(&realw, &realh);
 
-      if (realw == ScreenWidth && realh == ScreenHeight) {
-        glViewport(0, 0, ScreenWidth, ScreenHeight);
-        p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-      } else {
-        glViewport(0, 0, realw, realh);
-        p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-        glViewport(0, 0, ScreenWidth, ScreenHeight);
-      }
-
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (realw == ScreenWidth && realh == ScreenHeight) {
+      glViewport(0, 0, ScreenWidth, ScreenHeight);
+      p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-
-      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-      glDisable(GL_DEPTH_TEST);
-      glDisable(GL_CULL_FACE);
-      glDisable(GL_BLEND);
-      glDisable(GL_STENCIL_TEST);
-      glDisable(GL_SCISSOR_TEST);
-      glEnable(GL_TEXTURE_2D);
-      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-      p_glUseProgramObjectARB(0);
-
-      int realw, realh;
-      GetRealWindowSize(&realw, &realh);
-
-      if (realw == ScreenWidth && realh == ScreenHeight) {
-        // copy texture by drawing full quad
-        //glViewport(0, 0, ScreenWidth, ScreenHeight);
-        glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBegin(GL_QUADS);
-          glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-          glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
-          glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
-          glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
-        glEnd();
-      } else {
-        glViewport(0, 0, realw, realh);
-        glOrtho(0, realw, realh, 0, -99999, 99999);
-        glClear(GL_COLOR_BUFFER_BIT); // just in case
-
-        if (texture_filter > 0) {
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        } else {
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        }
-
-        // scale it properly
-        float scaleX = float(realw)/float(ScreenWidth);
-        float scaleY = float(realh)/float(ScreenHeight);
-        float scale = (scaleX <= scaleY ? scaleX : scaleY);
-        int newWidth = (int)(ScreenWidth*scale);
-        int newHeight = (int)(ScreenHeight*scale);
-        int x0 = (realw-newWidth)/2;
-        int y0 = (realh-newHeight)/2;
-        int x1 = x0+newWidth;
-        int y1 = y0+newHeight;
-        //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, ScreenWidth, ScreenHeight, newWidth, newHeight, x0, y0, x1, y1);
-        glBegin(GL_QUADS);
-          glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
-          glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
-          glTexCoord2f(1.0f, 0.0f); glVertex2i(x1, y1);
-          glTexCoord2f(0.0f, 0.0f); glVertex2i(x0, y1);
-        glEnd();
-
-        glViewport(0, 0, ScreenWidth, ScreenHeight);
-        glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-      }
+      glViewport(0, 0, realw, realh);
+      p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      glViewport(0, 0, ScreenWidth, ScreenHeight);
     }
 
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    //glFlush();
+    glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  } else {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    p_glUseProgramObjectARB(0);
+
+    int realw, realh;
+    GetRealWindowSize(&realw, &realh);
+
+    if (realw == ScreenWidth && realh == ScreenHeight) {
+      // copy texture by drawing full quad
+      //glViewport(0, 0, ScreenWidth, ScreenHeight);
+      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
+      glEnd();
+    } else {
+      glViewport(0, 0, realw, realh);
+      glOrtho(0, realw, realh, 0, -99999, 99999);
+      glClear(GL_COLOR_BUFFER_BIT); // just in case
+
+      if (texture_filter > 0) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
+
+      // scale it properly
+      float scaleX = float(realw)/float(ScreenWidth);
+      float scaleY = float(realh)/float(ScreenHeight);
+      float scale = (scaleX <= scaleY ? scaleX : scaleY);
+      int newWidth = (int)(ScreenWidth*scale);
+      int newHeight = (int)(ScreenHeight*scale);
+      int x0 = (realw-newWidth)/2;
+      int y0 = (realh-newHeight)/2;
+      int x1 = x0+newWidth;
+      int y1 = y0+newHeight;
+      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, ScreenWidth, ScreenHeight, newWidth, newHeight, x0, y0, x1, y1);
+      glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(x1, y1);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(x0, y1);
+      glEnd();
+
+      glViewport(0, 0, ScreenWidth, ScreenHeight);
+      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+    }
   }
+
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  //glFlush();
 }
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::BeginDirectUpdate
-//
-//==========================================================================
-/*
-void VOpenGLDrawer::BeginDirectUpdate () {
-  glFinish();
-  glDrawBuffer(GL_FRONT);
-  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-*/
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::EndDirectUpdate
-//
-//==========================================================================
-/*
-void VOpenGLDrawer::EndDirectUpdate () {
-  glDrawBuffer(GL_BACK);
-  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-}
-*/
 
 
 //==========================================================================
@@ -1565,24 +1416,14 @@ void VOpenGLDrawer::EndView () {
 //
 //==========================================================================
 void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
-  if (mainFBO == 0) {
-    void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, ScreenWidth, ScreenHeight, GL_RGB, GL_UNSIGNED_BYTE, dst);
-    *bpp = 24;
-    *bot2top = true;
-    return dst;
-  } else {
-    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    *bpp = 24;
-    *bot2top = true;
-    return dst;
-  }
+  glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
+  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  *bpp = 24;
+  *bot2top = true;
+  return dst;
 }
 
 
@@ -1607,39 +1448,23 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
     readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
   }
 
-  if (mainFBO == 0) {
-    glReadBuffer(GL_BACK);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glReadPixels(0, ScreenHeight-Height, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Dest);
-    //rgba_t *Temp = new rgba_t[Width];
-    rgba_t *Temp = (rgba_t *)readBackTempBuf;
-    for (int i = 0; i < Height/2; ++i) {
-      memcpy(Temp, Dest+i*Width, Width*sizeof(rgba_t));
-      memcpy(Dest+i*Width, Dest+(Height-1-i)*Width, Width*sizeof(rgba_t));
-      memcpy(Dest+(Height-1-i)*Width, Temp, Width*sizeof(rgba_t));
-    }
-    //delete[] Temp;
-    //Temp = nullptr;
+  glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
+  rgba_t *temp = (rgba_t *)readBackTempBuf;
+  check(temp);
+  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  if (Width <= ScreenWidth) {
+    size_t blen = Width*sizeof(rgba_t);
+    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
   } else {
-    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
-    rgba_t *temp = (rgba_t *)readBackTempBuf;
-    check(temp);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    if (Width <= ScreenWidth) {
-      size_t blen = Width*sizeof(rgba_t);
-      for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
-    } else {
-      size_t blen = ScreenWidth*sizeof(rgba_t);
-      size_t restlen = Width*sizeof(rgba_t)-blen;
-      for (int y = 0; y < Height; ++y) {
-        memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
-        memset((void *)(Dest+y*Width+ScreenWidth), 0, restlen);
-      }
+    size_t blen = ScreenWidth*sizeof(rgba_t);
+    size_t restlen = Width*sizeof(rgba_t)-blen;
+    for (int y = 0; y < Height; ++y) {
+      memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
+      memset((void *)(Dest+y*Width+ScreenWidth), 0, restlen);
     }
-    //delete[] temp;
   }
 }
 
@@ -1679,93 +1504,6 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
     glDisable(GL_FOG);
   }
   CurrentFade = NewFade;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::CopyToSecondaryFBO
-//
-//  copy main FBO texture to secondary FBO
-//
-//==========================================================================
-void VOpenGLDrawer::CopyToSecondaryFBO () {
-  if (!mainFBO) return;
-
-  if (!secondFBO) {
-    // allocate secondary FBO object
-    glGenFramebuffers(1, &secondFBO);
-    if (secondFBO == 0) Sys_Error("OpenGL: cannot create secondary FBO");
-    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
-
-    // attach 2D texture to this FBO
-    glGenTextures(1, &secondFBOColorTid);
-    if (secondFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
-    glBindTexture(GL_TEXTURE_2D, secondFBOColorTid);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-    //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
-
-    // empty texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondFBOColorTid, 0);
-  }
-
-
-  if (p_glBlitFramebuffer) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, secondFBO);
-    p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-  } else {
-    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
-    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-    //glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE/*GL_TRUE*/);
-    p_glUseProgramObjectARB(0);
-
-    glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBegin(GL_QUADS);
-      glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-      glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
-      glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
-      glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
-    glEnd();
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-    glPopAttrib();
-  }
 }
 
 
@@ -2086,4 +1824,225 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   if (glGetError() != 0) Sys_Error("Failed to link program '%s' for unknown reason", progname);
 
   return Program;
+}
+
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::FBO
+//
+//==========================================================================
+VOpenGLDrawer::FBO::FBO ()
+  : mOwner(nullptr)
+  , mFBO(0)
+  , mColorTid(0)
+  , mDepthStencilTid(0)
+  , mHasDepthStencil(false)
+  , mWidth(0)
+  , mHeight(0)
+{
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::~FBO
+//
+//==========================================================================
+VOpenGLDrawer::FBO::~FBO () {
+  destroy();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::destroy
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::destroy () {
+  if (!mOwner) return;
+
+  mOwner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+  if (mHasDepthStencil) mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+  mOwner->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDeleteTextures(1, &mColorTid);
+  if (mHasDepthStencil) glDeleteTextures(1, &mDepthStencilTid);
+  mOwner->glDeleteFramebuffers(1, &mFBO);
+  mFBO = 0;
+  mColorTid = 0;
+  mDepthStencilTid = 0;
+  mHasDepthStencil = false;
+  mWidth = 0;
+  mHeight = 0;
+  mOwner = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::create
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil) {
+  destroy();
+  check(aowner);
+  check(awidth > 0);
+  check(aheight > 0);
+
+  // allocate FBO object
+  aowner->glGenFramebuffers(1, &mFBO);
+  if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO");
+  aowner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+
+  // attach 2D texture to this FBO
+  glGenTextures(1, &mColorTid);
+  if (mColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for FBO");
+  glBindTexture(GL_TEXTURE_2D, mColorTid);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  if (aowner->anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f); // 1 is minimum, i.e. "off"
+
+  // empty texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, awidth, aheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  aowner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTid, 0);
+
+  // attach stencil texture to this FBO
+  if (createDepthStencil) {
+    glGenTextures(1, &mDepthStencilTid);
+    if (mDepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
+    glBindTexture(GL_TEXTURE_2D, mDepthStencilTid);
+
+    GLint major, minor;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+    GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
+    // there is (almost) no reason to use fp depth buffer without reverse z
+    // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
+    if (major >= 3 && gl_enable_fp_zbuffer) {
+      depthStencilFormat = GL_DEPTH32F_STENCIL8;
+      GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
+    }
+
+    (void)glGetError();
+
+    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+    if (glGetError() != 0) {
+      if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
+        GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+        if (glGetError() != 0) Sys_Error("OpenGL initialization error");
+      } else {
+        Sys_Error("OpenGL initialization error");
+      }
+    }
+    aowner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
+
+    {
+      GLenum status = aowner->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+      if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed");
+    }
+  }
+
+  mHasDepthStencil = createDepthStencil;
+  mWidth = awidth;
+  mHeight = aheight;
+  mOwner = aowner;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::activate
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::activate () {
+  if (mOwner) mOwner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::deactivate
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::deactivate () {
+  if (mOwner) mOwner->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::blitTo
+//
+//  this blits only color info
+//  restore active FBO manually after calling this
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                                 GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLenum filter)
+{
+  if (!mOwner || !dest || !dest->mOwner) return;
+
+  if (mOwner->p_glBlitFramebuffer) {
+    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
+    mOwner->p_glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
+  } else {
+    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+
+    mOwner->glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
+    glBindTexture(GL_TEXTURE_2D, mColorTid);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    mOwner->p_glUseProgramObjectARB(0);
+
+    const float mywf = (float)mWidth;
+    const float myhf = (float)mHeight;
+
+    const float mytx0 = (float)srcX0/mywf;
+    const float myty0 = (float)srcY0/myhf;
+    const float mytx1 = (float)srcX1/mywf;
+    const float myty1 = (float)srcY1/myhf;
+
+    glOrtho(0, dest->mWidth, dest->mHeight, 0, -666, 666);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, /*GL_LINEAR*/filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, /*GL_LINEAR*/filter);
+    glBegin(GL_QUADS);
+      glTexCoord2f(mytx0, myty1); glVertex2i(dstX0, dstY0);
+      glTexCoord2f(mytx1, myty1); glVertex2i(dstX1, dstY0);
+      glTexCoord2f(mytx1, myty0); glVertex2i(dstX1, dstY1);
+      glTexCoord2f(mytx0, myty0); glVertex2i(dstX0, dstY1);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glPopAttrib();
+  }
 }
