@@ -473,6 +473,13 @@ void VSdlInputDevice::ReadInput () {
             VObject::PostEvent(vev);
             break;
           //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
+          case SDL_WINDOWEVENT_RESIZED:
+            // this seems to be called on videomode change; but this is not reliable
+            //GCon->Logf("SDL: resized to %dx%d", ev.window.data1, ev.window.data2);
+            break;
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
+            //GCon->Logf("SDL: size changed to %dx%d", ev.window.data1, ev.window.data2);
+            break;
         }
         break;
       case SDL_QUIT:
