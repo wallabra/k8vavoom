@@ -101,6 +101,8 @@ VCvarI gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for deb
 
 VCvarB gl_dbg_wireframe("gl_dbg_wireframe", false, "Render wireframe level?", CVAR_PreInit);
 
+VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", false, "Always blit FBOs using texture mapping?", CVAR_PreInit);
+
 VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_sprite("r_brightmaps_sprite", true, "Allow sprite brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_additive("r_brightmaps_additive", true, "Are brightmaps additive, or max?", CVAR_Archive);
@@ -904,7 +906,7 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 //==========================================================================
 void VOpenGLDrawer::FinishUpdate () {
   //FIXME: move this to FBO object
-  if (p_glBlitFramebuffer) {
+  if (p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.mFBO);
@@ -1990,7 +1992,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 {
   if (!mOwner || !dest || !dest->mOwner) return;
 
-  if (mOwner->p_glBlitFramebuffer) {
+  if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
     mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
     mOwner->p_glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
