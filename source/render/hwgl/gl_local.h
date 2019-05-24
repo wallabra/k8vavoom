@@ -480,7 +480,7 @@ public:
   friend class VGLShader;
 
   class FBO {
-    friend class VOpenGLDrawer;
+    //friend class VOpenGLDrawer;
   private:
     class VOpenGLDrawer *mOwner;
     GLuint mFBO;
@@ -493,6 +493,12 @@ public:
     FBO ();
     ~FBO ();
 
+    inline bool isValid () const { return (mOwner != nullptr); }
+    inline int getWidth () const { return mWidth; }
+    inline int getHeight () const { return mHeight; }
+
+    inline GLuint getColorTid () const { return mColorTid; }
+
     void create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil=false);
     void destroy ();
 
@@ -504,6 +510,8 @@ public:
     // it also can reset shader program
     // if `dest` is nullptr, blit to screen buffer (not yet)
     void blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLenum filter);
+
+    void blitToScreen ();
   };
 
   friend class FBO;

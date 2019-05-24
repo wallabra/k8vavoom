@@ -529,10 +529,10 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   //glDisable(GL_BLEND);
 
   p_glActiveTextureARB(GL_TEXTURE0+1);
-  glBindTexture(GL_TEXTURE_2D, ambLightFBO.mColorTid);
+  glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
   p_glActiveTextureARB(GL_TEXTURE0);
   ShadowsModelTextures.SetAmbLightTexture(1);
-  ShadowsModelTextures.SetScreenSize((float)ScreenWidth, (float)ScreenHeight);
+  ShadowsModelTextures.SetScreenSize((float)mainFBO.getWidth(), (float)mainFBO.getHeight());
 
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);

@@ -927,7 +927,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   //glBlendEquation(GL_FUNC_ADD);
 
   // copy ambient light texture to FBO, so we can use it to light decals
-  mainFBO.blitTo(&ambLightFBO, 0, 0, mainFBO.mWidth, mainFBO.mHeight, 0, 0, ambLightFBO.mWidth, ambLightFBO.mHeight, GL_NEAREST);
+  mainFBO.blitTo(&ambLightFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, ambLightFBO.getWidth(), ambLightFBO.getHeight(), GL_NEAREST);
   mainFBO.activate();
 
   glDepthMask(GL_FALSE); // no z-buffer writes

@@ -905,101 +905,10 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 //
 //==========================================================================
 void VOpenGLDrawer::FinishUpdate () {
-  //FIXME: move this to FBO object
-  if (p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.mFBO);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // default FBO
-
-    int realw, realh;
-    GetRealWindowSize(&realw, &realh);
-
-    if (realw == ScreenWidth && realh == ScreenHeight) {
-      glViewport(0, 0, ScreenWidth, ScreenHeight);
-      p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, ScreenWidth, ScreenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    } else {
-      glViewport(0, 0, realw, realh);
-      p_glBlitFramebuffer(0, 0, ScreenWidth, ScreenHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-      glViewport(0, 0, ScreenWidth, ScreenHeight);
-    }
-
-    glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  } else {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    p_glUseProgramObjectARB(0);
-
-    int realw, realh;
-    GetRealWindowSize(&realw, &realh);
-
-    if (realw == ScreenWidth && realh == ScreenHeight) {
-      // copy texture by drawing full quad
-      //glViewport(0, 0, ScreenWidth, ScreenHeight);
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
-      glEnd();
-    } else {
-      glViewport(0, 0, realw, realh);
-      glOrtho(0, realw, realh, 0, -99999, 99999);
-      glClear(GL_COLOR_BUFFER_BIT); // just in case
-
-      if (texture_filter > 0) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      } else {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      }
-
-      // scale it properly
-      float scaleX = float(realw)/float(ScreenWidth);
-      float scaleY = float(realh)/float(ScreenHeight);
-      float scale = (scaleX <= scaleY ? scaleX : scaleY);
-      int newWidth = (int)(ScreenWidth*scale);
-      int newHeight = (int)(ScreenHeight*scale);
-      int x0 = (realw-newWidth)/2;
-      int y0 = (realh-newHeight)/2;
-      int x1 = x0+newWidth;
-      int y1 = y0+newHeight;
-      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, ScreenWidth, ScreenHeight, newWidth, newHeight, x0, y0, x1, y1);
-      glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(x1, y1);
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(x0, y1);
-      glEnd();
-
-      glViewport(0, 0, ScreenWidth, ScreenHeight);
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
-    }
-  }
-
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  mainFBO.blitToScreen();
+  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
   glBindTexture(GL_TEXTURE_2D, 0);
+  mainFBO.activate();
   //glFlush();
 }
 
@@ -1418,9 +1327,9 @@ void VOpenGLDrawer::EndView () {
 //
 //==========================================================================
 void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
-  glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
+  glBindTexture(GL_TEXTURE_2D, mainFBO.getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
+  void *dst = Z_Malloc(mainFBO.getWidth()*mainFBO.getHeight()*3);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
   glBindTexture(GL_TEXTURE_2D, 0);
   *bpp = 24;
@@ -1450,7 +1359,7 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
     readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
   }
 
-  glBindTexture(GL_TEXTURE_2D, mainFBO.mColorTid);
+  glBindTexture(GL_TEXTURE_2D, mainFBO.getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
   rgba_t *temp = (rgba_t *)readBackTempBuf;
@@ -2044,6 +1953,93 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+
+    glPopAttrib();
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::blitToScreen
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::blitToScreen () {
+  if (!mOwner) return;
+
+  mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen FBO
+
+  int realw, realh;
+  mOwner->GetRealWindowSize(&realw, &realh);
+
+  if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    if (realw == mWidth && realh == mHeight) {
+      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    } else {
+      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
+  } else {
+    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+    glViewport(0, 0, realw, realh);
+
+    glBindTexture(GL_TEXTURE_2D, mColorTid);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(0, realw, realh, 0, -666, 666);
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    mOwner->p_glUseProgramObjectARB(0);
+
+    if (realw == mWidth && realh == mHeight) {
+      // copy texture by drawing full quad
+      //glOrtho(0, mWidth, mHeight, 0, -666, 666);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(mWidth, 0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(mWidth, mHeight);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, mHeight);
+      glEnd();
+    } else {
+      //glOrtho(0, realw, realh, 0, -99999, 99999);
+      //glClear(GL_COLOR_BUFFER_BIT); // just in case
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+      // scale it properly
+      float scaleX = float(realw)/float(mWidth);
+      float scaleY = float(realh)/float(mHeight);
+      float scale = (scaleX <= scaleY ? scaleX : scaleY);
+      int newWidth = (int)(mWidth*scale);
+      int newHeight = (int)(mHeight*scale);
+      int x0 = (realw-newWidth)/2;
+      int y0 = (realh-newHeight)/2;
+      int x1 = x0+newWidth;
+      int y1 = y0+newHeight;
+      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, ScreenWidth, ScreenHeight, newWidth, newHeight, x0, y0, x1, y1);
+      glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(x1, y1);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(x0, y1);
+      glEnd();
+    }
 
     glPopAttrib();
   }
