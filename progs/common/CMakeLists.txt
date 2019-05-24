@@ -3,16 +3,21 @@ set(OUTDIR ${CMAKE_BINARY_DIR}/basev/common/progs)
 add_custom_command(OUTPUT ${OUTDIR}/engine.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/engine/classes.vc ${OUTDIR}/engine.dat
-  DEPENDS vcc engine/*.vc)
+  DEPENDS
+    vcc
+    engine/*.vc)
 add_custom_target(engine ALL DEPENDS ${OUTDIR}/engine.dat)
 add_dependencies(engine vcc)
 
 add_custom_command(OUTPUT ${OUTDIR}/newui.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/newui/classes.vc ${OUTDIR}/newui.dat
-  DEPENDS vcc newui/*.vc ${OUTDIR}/engine.dat)
+  DEPENDS
+    vcc
+    newui/*.vc
+    ${OUTDIR}/engine.dat)
 add_custom_target(newui ALL DEPENDS ${OUTDIR}/newui.dat)
-add_dependencies(newui vcc)
+add_dependencies(newui vcc engine)
 
 add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
@@ -40,6 +45,8 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
     linespec/raven/*.vc
     linespec/secaction/*.vc
     linespec/secthink/*.vc
+    linespec/secthink/lights/*.vc
+    linespec/secthink/movers/*.vc
     linespec/sound/*.vc
     linespec/strife/*.vc
     linespec/weapon/*.vc
@@ -63,4 +70,4 @@ add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
     uibase/wgtextbtn/*.vc
     ${OUTDIR}/engine.dat)
 add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat ${OUTDIR}/newui.dat)
-add_dependencies(uibase vcc engine linespec)
+add_dependencies(uibase vcc engine linespec newui)

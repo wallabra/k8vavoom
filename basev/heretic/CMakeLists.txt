@@ -10,14 +10,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/fonta63.lmp
     palette.pcx
     basepak.ls.in
-    animdefs.txt
-    lockdefs.txt
-    mapinfo.txt
-    skyboxes.txt
-    sndinfo.txt
-    sndseq.txt
-    sprite_rename.txt
-    terrain.txt
+    *.txt
     ${CMAKE_SOURCE_DIR}/progs/heretic/cgame/*.vc
     ${CMAKE_SOURCE_DIR}/progs/heretic/game/*.vc
   )

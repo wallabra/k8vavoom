@@ -4,12 +4,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
-    decaldef.txt
-    decorate.txt
-    gldefs.txt
-    sndinfo.txt
-    cvarinfo.txt
-    modmenu.txt
+    *.txt
     actors/*.txt
     actors/gl/*.gl
     loadvcs.txt

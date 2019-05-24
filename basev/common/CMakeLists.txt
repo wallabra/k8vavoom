@@ -4,163 +4,35 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
+    *.txt
     confont.pcx
-    decorate.txt
-    decaldef.txt
     default.cfg
-    in_epi1.txt
-    in_epi2.txt
-    in_epi3.txt
-    in_htc1.txt
-    in_htc2.txt
-    in_htc3.txt
     language.en
-    line_specials.txt
-    lockdefs.txt
-    reverbs.txt
     startup.vs
-    terrain.txt
-    textcolo.txt
     vavoom_decorate_defs.xml
-    vfxdefs.txt
-    x11r6rgb.txt
-    actors/constants.txt
-    actors/nativeclasses.txt
+
+    actors/*.txt
     actors/doom/*
-    actors/heretic/beast.txt
-    actors/heretic/chicken.txt
-    actors/heretic/clink.txt
-    actors/heretic/dsparil.txt
-    actors/heretic/hereticammo.txt
-    actors/heretic/hereticarmor.txt
-    actors/heretic/hereticartifacts.txt
-    actors/heretic/hereticdecorations.txt
-    actors/heretic/hereticimp.txt
-    actors/heretic/heretickeys.txt
-    actors/heretic/hereticmisc.txt
-    actors/heretic/hereticplayer.txt
-    actors/heretic/hereticweaps.txt
-    actors/heretic/ironlich.txt
-    actors/heretic/knight.txt
-    actors/heretic/mummy.txt
-    actors/heretic/snake.txt
-    actors/heretic/wizard.txt
-    actors/hexen/bats.txt
-    actors/hexen/bishop.txt
-    actors/hexen/blastradius.txt
-    actors/hexen/centaur.txt
-    actors/hexen/clericboss.txt
-    actors/hexen/clericflame.txt
-    actors/hexen/clericholy.txt
-    actors/hexen/clericmace.txt
-    actors/hexen/clericstaff.txt
-    actors/hexen/clericplayer.txt
-    actors/hexen/demons.txt
-    actors/hexen/dragon.txt
-    actors/hexen/ettin.txt
-    actors/hexen/fighteraxe.txt
-    actors/hexen/fighterboss.txt
-    actors/hexen/fighterfist.txt
-    actors/hexen/fighterhammer.txt
-    actors/hexen/fighterplayer.txt
-    actors/hexen/fighterquietus.txt
-    actors/hexen/firedemon.txt
-    actors/hexen/flame.txt
-    actors/hexen/flechette.txt
-    actors/hexen/fog.txt
-    actors/hexen/heresiarch.txt
-    actors/hexen/hexenarmor.txt
-    actors/hexen/hexendecorations.txt
-    actors/hexen/hexenkeys.txt
-    actors/hexen/hexenspecialdecs.txt
-    actors/hexen/iceguy.txt
-    actors/hexen/korax.txt
-    actors/hexen/mageboss.txt
-    actors/hexen/magecone.txt
-    actors/hexen/magelightning.txt
-    actors/hexen/mageplayer.txt
-    actors/hexen/magestaff.txt
-    actors/hexen/magewand.txt
-    actors/hexen/mana.txt
-    actors/hexen/pig.txt
-    actors/hexen/puzzleitems.txt
-    actors/hexen/scriptprojectiles.txt
-    actors/hexen/serpent.txt
-    actors/hexen/speedboots.txt
-    actors/hexen/spike.txt
-    actors/hexen/summon.txt
-    actors/hexen/teleportother.txt
-    actors/hexen/wraith.txt
-    actors/raven/artiegg.txt
-    actors/raven/minotaur.txt
-    actors/raven/ravenambient.txt
-    actors/raven/ravenartifacts.txt
-    actors/raven/ravenhealth.txt
-    actors/shared/blood.txt
-    actors/shared/debris.txt
-    actors/shared/fountain.txt
-    actors/shared/pickups.txt
-    actors/shared/sharedmisc.txt
-    actors/shared/soundsequence.txt
-    actors/shared/splashes.txt
-    actors/strife/acolyte.txt
-    actors/strife/alienspectres.txt
-    actors/strife/beggars.txt
-    actors/strife/coin.txt
-    actors/strife/crusader.txt
-    actors/strife/entityboss.txt
-    actors/strife/inquisitor.txt
-    actors/strife/loremaster.txt
-    actors/strife/macil.txt
-    actors/strife/merchants.txt
-    actors/strife/peasants.txt
-    actors/strife/programmer.txt
-    actors/strife/questitems.txt
-    actors/strife/ratbuddy.txt
-    actors/strife/reaver.txt
-    actors/strife/rebels.txt
-    actors/strife/sentinel.txt
-    actors/strife/sigil.txt
-    actors/strife/spectral.txt
-    actors/strife/stalker.txt
-    actors/strife/strifeammo.txt
-    actors/strife/strifearmor.txt
-    actors/strife/strifebishop.txt
-    actors/strife/strifehumanoid.txt
-    actors/strife/strifeitems.txt
-    actors/strife/strifekeys.txt
-    actors/strife/strifeplayer.txt
-    actors/strife/strifestuff.txt
-    actors/strife/strifeweapons.txt
-    actors/strife/templar.txt
-    actors/strife/thingstoblowup.txt
-    actors/strife/zombie.txt
-    fxdefs/common/effects.txt
-    fxdefs/doom/decorations.txt
-    fxdefs/doom/monsters.txt
-    fxdefs/doom/pickups.txt
-    fxdefs/doom/weapons.txt
-    fxdefs/heretic/decorations.txt
-    fxdefs/heretic/effects.txt
-    fxdefs/heretic/monsters.txt
-    fxdefs/heretic/pickups.txt
-    fxdefs/heretic/weapons.txt
-    fxdefs/hexen/decorations.txt
-    fxdefs/hexen/effects.txt
-    fxdefs/hexen/monsters.txt
-    fxdefs/hexen/pickups.txt
-    fxdefs/hexen/projectiles.txt
-    fxdefs/hexen/weapons.txt
-    fxdefs/raven/minotaur.txt
-    fxdefs/raven/pickups.txt
-    fxdefs/strife/decorations.txt
-    fxdefs/strife/monsters.txt
-    fxdefs/strife/weapons.txt
+    actors/heretic/*.txt
+    actors/hexen/*.txt
+    actors/raven/*.txt
+    actors/shared/*.txt
+    actors/strife/*.txt
+
+    fxdefs/common/*.txt
+    fxdefs/doom/*.txt
+    fxdefs/heretic/*.txt
+    fxdefs/hexen/*.txt
+    fxdefs/raven/*.txt
+    fxdefs/strife/*.txt
+
     graphics/*.png
     graphics/*.lmp
     graphics/progbar/*.png
     graphics/healthbar/*.png
+
     sounds/*
+
     sprites/iceca0.png
     sprites/icecb0.png
     sprites/icecc0.png
@@ -168,12 +40,15 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     sprites/tnt1a0.lmp
     sprites/unkna0.png
     sprites/dogs/*
+
     textures/-noflat-.png
+
     uidef/*.txt
     uidef/menus/*.txt
 
     ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/engine/vccrun/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc
 
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc
@@ -208,12 +83,12 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/raven/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/secaction/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/lights/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/secthink/movers/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/sound/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/strife/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/weapon/*.vc
 
-    #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.fs
-    #${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
     glshaders/*.fs
     glshaders/*.vs
     glshaders/common/*.fs

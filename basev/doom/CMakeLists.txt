@@ -10,14 +10,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     basepak.ls.in
     bigfont.pcx
     #animated.lmp
-    animdefs.txt
-    dehinfo.txt
-    lockdefs.txt
-    mapinfo.txt
+    *.txt
     palette.pcx
-    skyboxes.txt
-    sndinfo.txt
-    sndseq.txt
     ${CMAKE_SOURCE_DIR}/progs/doom/cgame/*.vc
     ${CMAKE_SOURCE_DIR}/progs/doom/game/*.vc
   )

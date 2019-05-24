@@ -4,8 +4,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chex.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
-    decorate.txt
-    loadvcs.txt
+    *.txt
     language.en
     actors/chex/*
     progs/chex/*

@@ -4,9 +4,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skeehud.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
-    cvarinfo.txt
-    loadvcc.txt
-    modmenu.txt
+    *.txt
     progs/*
     progs/skulldashhud/*
   )

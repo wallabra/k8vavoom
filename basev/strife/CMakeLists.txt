@@ -14,14 +14,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/croshai3.lmp
     basepak.ls.in
     bigfont.pcx
-    animdefs.txt
-    lockdefs.txt
-    mapinfo.txt
-    skyboxes.txt
-    sndinfo.txt
-    sndseq.txt
-    sprite_rename.txt
-    terrain.txt
+    *.txt
     ${CMAKE_CURRENT_BINARY_DIR}/strfhelp.o
     ${CMAKE_SOURCE_DIR}/progs/strife/cgame/*.vc
     ${CMAKE_SOURCE_DIR}/progs/strife/game/*.vc
