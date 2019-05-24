@@ -266,7 +266,7 @@ struct SocketObj {
       // put the x509 credentials to the current session
       gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, xcred);
 
-      gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t)fd);
+      gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t)(uintptr_t)fd);
     }
 #endif
     return true;
