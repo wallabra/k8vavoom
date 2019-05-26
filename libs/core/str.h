@@ -559,7 +559,7 @@ public:
 
   static inline __attribute__((pure)) char upcase1251 (char ch) {
     if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
-    if ((vuint8)ch >= 224 && (vuint8)ch <= 255) return (vuint8)ch-32;
+    if ((vuint8)ch >= 224 /*&& (vuint8)ch <= 255*/) return (vuint8)ch-32;
     if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
     if ((vuint8)ch == 162 || (vuint8)ch == 179) return (vuint8)ch-1;
     return ch;

@@ -240,7 +240,7 @@ VStr &VStr::operator += (double v) { char buf[32]; (void)d2s_buffered(v, buf); r
 
 // ////////////////////////////////////////////////////////////////////////// //
 VStr &VStr::utf8Append (vuint32 code) {
-  if (code < 0 || code > 0x10FFFF) return operator+=('?');
+  if (code > 0x10FFFF) return operator+=('?');
   if (code <= 0x7f) return operator+=((char)(code&0xff));
   if (code <= 0x7FF) {
     operator+=((char)(0xC0|(code>>6)));
