@@ -1094,12 +1094,14 @@ void VAudio::CmdMusic (const TArray<VStr> &Args) {
 //==========================================================================
 VSoundSeqNode::VSoundSeqNode (int AOriginId, const TVec &AOrigin, int ASequence, int AModeNum)
   : Sequence(ASequence)
+  , SequencePtr(nullptr)
   , OriginId(AOriginId)
   , Origin(AOrigin)
   , CurrentSoundID(0)
   , DelayTime(0.0f)
   , Volume(1.0f) // Start at max volume
   , Attenuation(1.0f)
+  , StopSound(0)
   , DidDelayOnce(0)
   , ModeNum(AModeNum)
   , Prev(nullptr)
@@ -1131,7 +1133,7 @@ VSoundSeqNode::VSoundSeqNode (int AOriginId, const TVec &AOrigin, int ASequence,
 VSoundSeqNode::~VSoundSeqNode () {
   if (ParentSeq && ParentSeq->ChildSeq == this) {
     // re-activate parent sequence
-    ++ParentSeq->SequencePtr;
+    if (ParentSeq->SequencePtr) ++ParentSeq->SequencePtr;
     ParentSeq->ChildSeq = nullptr;
     ParentSeq = nullptr;
   }
@@ -1163,6 +1165,11 @@ void VSoundSeqNode::Update (float DeltaTime) {
   if (DelayTime) {
     DelayTime -= DeltaTime;
     if (DelayTime <= 0.0f) DelayTime = 0.0f;
+    return;
+  }
+
+  if (!SequencePtr) {
+    delete this;
     return;
   }
 
