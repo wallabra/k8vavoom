@@ -164,6 +164,8 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
 //
 //==========================================================================
 void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
+  if (!mobj) return; // just in case
+
   // make room
   if (traspUsed == traspSize) {
     if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
@@ -184,7 +186,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.type = 2;
   spr.TimeFrac = TimeFrac;
   spr.lump = -1; // has no sense
-  spr.objid = (mobj ? mobj->GetUniqueId() : 0);
+  spr.objid = mobj->GetUniqueId();
   spr.prio = 0; // normal priority
   spr.hangup = 0;
 }

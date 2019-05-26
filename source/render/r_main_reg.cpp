@@ -48,6 +48,7 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
   , c_subdivides(0)
   , c_seg_div(0)
   , freeblocks(nullptr)
+  , invalidateRelight(false)
 {
   NeedsInfiniteFarClip = false;
   mIsAdvancedRenderer = false;

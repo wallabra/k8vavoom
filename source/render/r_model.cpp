@@ -1876,9 +1876,9 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
                             const TVec &Origin, float Angle)
 {
   bool Interpolate = true;
+  if (!State) return false;
   VClassModelScript *Cls = FindClassModelByName(State->Outer->Name);
   if (!Cls) return false;
-  if (!State) return false;
   int FIdx = FindFrame(*Cls, State->getMFI(), Inter);
   if (FIdx == -1) return false;
   float InterpFrac;

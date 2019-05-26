@@ -479,6 +479,22 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   ResetVisFrameCount();
   ResetDLightFrameCount();
+
+  ColorMap = 0;
+  skyheight = 0;
+  memset((void *)(&dlinfo[0]), 0, sizeof(dlinfo));
+  CurrLightRadius = 0;
+  CurrLightInFrustum = false;
+  CurrLightBit = 0;
+  CurrLightsNumber = 0;
+  CurrShadowsNumber = 0;
+  AllLightsNumber = 0;
+  AllShadowsNumber = 0;
+  HasLightIntersection = false;
+  LitSurfaces = 0;
+  HasBackLit = false;
+  doShadows = false;
+  MirrorClipSegs = false;
 }
 
 

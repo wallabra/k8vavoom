@@ -362,15 +362,18 @@ static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
 
        if (Rot >= '0' && Rot <= '9') rotation = Rot-'0';
   else if (Rot >= 'a') rotation = Rot-'a'+10;
+  else if (Rot >= 'A') rotation = Rot-'A'+10;
   else rotation = 17;
 
   VTexture *Tex = GTextureManager[lumpnr];
   if ((vuint32)frame >= 30 || (vuint32)rotation > 16) {
     //Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
     GCon->Logf("ERROR:InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
-    for (int r = 0; r < 16; ++r) {
-      sprtemp[frame].lump[r] = -1;
-      sprtemp[frame].flip[r] = false;
+    if ((vuint32)frame < MAX_SPR_TEMP) {
+      for (int r = 0; r < 16; ++r) {
+        sprtemp[frame].lump[r] = -1;
+        sprtemp[frame].flip[r] = false;
+      }
     }
     return;
   }
@@ -1435,7 +1438,7 @@ static void ParseGlow (VScriptParser *sc) {
     // not implemented gozzo feature (in gozzo too)
     if (sc->Check("Texture")) {
       sc->GetString();
-      while (sc->Check(",")) sc->GetString();
+      while (sc->Check(",")) sc->ExpectString();
       continue;
     }
     // texture list
