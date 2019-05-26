@@ -150,7 +150,7 @@ void TIWadFile::Close()
 {
   fclose(handle);
   handle = NULL;
-  delete lumpinfo;
+  delete[] lumpinfo;
   lumpinfo = NULL;
 }
 
@@ -222,7 +222,7 @@ void TOWadFile::Close()
   fwrite(&header, 1, sizeof(header), handle);
   fclose(handle);
   handle = NULL;
-  delete lumpinfo;
+  delete[] lumpinfo;
   lumpinfo = NULL;
 }
 

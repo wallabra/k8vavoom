@@ -44,6 +44,8 @@ char *xstrdupNull (const char *s) {
 
 char *xstrcat (const char *s0, const char *s1) {
   if (!s0 && !s1) return xalloc(1);
+  if (!s0) s0 = "";
+  if (!s1) s1 = "";
   if (!s0[0] && !s1[0]) return xalloc(1);
   char *res = xalloc(strlen(s0)+strlen(s1)+1);
   strcpy(res, s0);

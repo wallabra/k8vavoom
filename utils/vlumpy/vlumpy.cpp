@@ -796,6 +796,7 @@ void GrabFon2 () {
   // build palette containing only used colors
   rgb_t Pal[256];
   vuint8 Remap[256];
+  memset(Remap, 0, sizeof(Remap)); //k8: why not?
   int NumColors = 0;
   for (int i = 0; i < 256; ++i) {
     int Idx = SortIdx[i];
@@ -811,7 +812,7 @@ void GrabFon2 () {
     fon2_char_t* Chr = Chars[i];
     if (!Chr) continue;
     for (int j = 0; j < Chr->Width*Chr->Height; ++j) {
-      Chr->Data[j] = Remap[Chr->Data[j]];
+      Chr->Data[j] = Remap[(vuint8)(Chr->Data[j]&0xff)];
     }
   }
 
