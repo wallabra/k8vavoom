@@ -74,7 +74,7 @@ void RG32::mill () {
     unsigned y = (i*7)%19;
     unsigned r = ((i*(i+1))/2)%32;
     unsigned x = a[y]^(a[((y+1)%19)]|(~a[(y+2)%19]));
-    A[i] = (x>>r)|(x<<(32-r));
+    A[i] = (x>>r)|(x<<((32-r)&0x1f));
   }
   for (unsigned i = 0; i < 19; ++i) {
     unsigned y = i;
