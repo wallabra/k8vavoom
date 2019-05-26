@@ -13,6 +13,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
     models/tracer/*
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3)
+add_dependencies(bdw_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
   DESTINATION ${DATADIR}/basev/mods/bdw)
