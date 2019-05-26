@@ -344,6 +344,7 @@ IMPLEMENT_FUNCTION(VThinker, Spawn) {
   P_GET_VEC_OPT(AOrigin, TVec(0, 0, 0));
   P_GET_PTR(VClass, Class);
   P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::Spawn()`"); }
   VEntity *SelfEnt = Cast<VEntity>(Self);
   // if spawner is entity, default to it's origin and angles
   if (SelfEnt) {
@@ -351,9 +352,10 @@ IMPLEMENT_FUNCTION(VThinker, Spawn) {
     if (!specified_AAngles) AAngles = SelfEnt->Angles;
   }
   if (!Class) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
+  if (!Self->XLevel) { VObject::VMDumpCallStack(); Sys_Error("empty XLevel self in `Thinker::Spawn()`"); }
   VThinker *th = Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace);
   check(th);
-  th->SpawnTime = (Self->XLevel ? Self->XLevel->Time : 0);
+  th->SpawnTime = Self->XLevel->Time;
   RET_REF(th);
 }
 

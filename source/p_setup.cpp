@@ -592,7 +592,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
     seg->v1 = Vertexes+v1num;
     vint32 v2num = -1;
     *arrstrm << v2num;
-    if (v2num < 0 || v1num >= NumVertexes) { delete arrstrm; GCon->Log("cache file corrupted (seg v2)"); return false; }
+    if (v2num < 0 || v2num >= NumVertexes) { delete arrstrm; GCon->Log("cache file corrupted (seg v2)"); return false; }
     seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;

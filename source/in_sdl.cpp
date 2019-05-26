@@ -640,6 +640,7 @@ void VSdlInputDevice::PostJoystick () {
     event.data1 = 0;
     event.data2 = joy_x;
     event.data3 = joy_y;
+    event.modflags = curmodflags;
     VObject::PostEvent(event);
 
     joy_oldx = joy_x;

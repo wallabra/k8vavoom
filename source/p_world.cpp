@@ -487,9 +487,10 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 //
 //==========================================================================
 void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
+  if (!Self) return;
   if (dbg_use_buggy_thing_traverser) {
     // original
-    for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
+    for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); It; ++It) {
       const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
       if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
       const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
@@ -507,7 +508,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     // better original
     for (int dy = -1; dy < 2; ++dy) {
       for (int dx = -1; dx < 2; ++dx) {
-        for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); Self && It; ++It) {
+        for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); It; ++It) {
           const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
           if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
           const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
@@ -537,7 +538,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     static const int deltas[3] = { 0, -1, 1 };
     for (int dy = 0; dy < 3; ++dy) {
       for (int dx = 0; dx < 3; ++dx) {
-        for (VBlockThingsIterator It(Self->XLevel, mapx+deltas[dx], mapy+deltas[dy]); Self && It; ++It) {
+        for (VBlockThingsIterator It(Self->XLevel, mapx+deltas[dx], mapy+deltas[dy]); It; ++It) {
           if (vptSeenThings.has(*It)) continue;
           // [RH] don't check a corner to corner crossection for hit
           // instead, check against the actual bounding box
