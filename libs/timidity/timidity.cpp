@@ -36,7 +36,7 @@ ControlMode*		ctl;
 static int read_config_file(const char* name)
 {
 	FILE* fp;
-	char tmp[1024], *w[MAXWORDS], *cp;
+	char tmp[1024], *w[(MAXWORDS)+1], *cp;
 	ToneBank *bank=0;
 	int i, j, k, line = 0, words;
 	static int rcf_count = 0;
@@ -65,14 +65,15 @@ static int read_config_file(const char* name)
 		/* Originally the TiMidity++ extensions were prefixed like this */
 		if (strcmp(w[0], "#extension") == 0)
 		{
-			words = -1;
+			w[words=0]=strtok(0," \t\n\r\240");
+			//words = -1;
 		}
 		else if (*w[0] == '#')
 		{
 			continue;
 		}
 
-		while (w[words] != NULL && *w[words] != '#' && (words < MAXWORDS))
+		while (w[words] != NULL && *w[words] != '#' && words < (MAXWORDS)-1)
 		{
 			w[++words]=strtok(0," \t\n\r\240");
 		}
