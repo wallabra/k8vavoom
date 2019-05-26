@@ -47,6 +47,9 @@ VDemoPlaybackNetConnection::VDemoPlaybackNetConnection (VNetContext *AContext, V
   , NextPacketTime(0)
   , bTimeDemo(ATimeDemo)
   , Strm(AStrm)
+  , td_lastframe(0)
+  , td_startframe(0)
+  , td_starttime(0)
 {
   AutoAck = true;
   *Strm << NextPacketTime;
