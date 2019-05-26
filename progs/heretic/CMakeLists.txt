@@ -12,7 +12,7 @@ add_custom_command(OUTPUT ${OUTDIR}/game.dat
     ${COMMON_PROGS_DIR}/newui.dat
     ${COMMON_PROGS_DIR}/uibase.dat)
 add_custom_target(heretic_game ALL DEPENDS ${OUTDIR}/game.dat)
-add_dependencies(heretic_game vcc linespec)
+add_dependencies(heretic_game vcc engine linespec uibase)
 
 add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/cgame/classes.vc ${OUTDIR}/cgame.dat
@@ -25,4 +25,4 @@ add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
     ${COMMON_PROGS_DIR}/newui.dat
     ${COMMON_PROGS_DIR}/uibase.dat)
 add_custom_target(heretic_cgame ALL DEPENDS ${OUTDIR}/cgame.dat)
-add_dependencies(heretic_cgame vcc heretic_game uibase)
+add_dependencies(heretic_cgame vcc engine linespec uibase heretic_game)
