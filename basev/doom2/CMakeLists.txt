@@ -8,6 +8,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/doom2/cgame.vc
   )
 add_custom_target(doom2_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
+add_dependencies(doom2_basepak doom2_cgame)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/doom2)

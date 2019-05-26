@@ -69,5 +69,5 @@ add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
     uibase/wgslotsl/*.vc
     uibase/wgtextbtn/*.vc
     ${OUTDIR}/engine.dat)
-add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat ${OUTDIR}/newui.dat)
+add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat)
 add_dependencies(uibase vcc engine linespec newui)

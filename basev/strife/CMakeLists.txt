@@ -21,6 +21,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   )
 add_custom_target(strife_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/strfhelp.o
   ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
+add_dependencies(strife_basepak strife_game strife_cgame)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/strife)

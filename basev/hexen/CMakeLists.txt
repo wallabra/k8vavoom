@@ -15,6 +15,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/hexen/game/*.vc
   )
 add_custom_target(hexen_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
+add_dependencies(hexen_basepak hexen_game hexen_cgame)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/hexen)

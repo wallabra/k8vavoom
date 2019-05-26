@@ -15,6 +15,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/heretic/game/*.vc
   )
 add_custom_target(heretic_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
+add_dependencies(heretic_basepak heretic_game heretic_cgame)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/heretic)
