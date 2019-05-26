@@ -49,6 +49,7 @@ bool VLexer::tablesInited = false;
 //==========================================================================
 VLexer::VLexer ()
   : sourceOpen(false)
+  , currCh(0)
   , src(nullptr)
   , Token(TK_NoToken)
   , Number(0)
@@ -882,7 +883,7 @@ void VLexer::ProcessNumberToken () {
         if (currCh != '_') {
           int d = VStr::digitInBase(currCh, 10/*xbase*/); // it is decimal for both types
           if (d < 0) break;
-          if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number exponent");
+          if (nbpos >= sizeof(numbuf)-1) { ParseError(Location, "Invalid floating number exponent"); nbpos = (unsigned)(sizeof(numbuf)-1); }
           numbuf[nbpos++] = currCh;
         }
         NextChr();
@@ -891,7 +892,7 @@ void VLexer::ProcessNumberToken () {
     // skip optional 'f'
     if (currCh == 'f') NextChr();
     if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid floating number");
-    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number");
+    if (nbpos >= sizeof(numbuf)-1) { ParseError(Location, "Invalid floating number"); nbpos = (unsigned)(sizeof(numbuf)-1); }
     numbuf[nbpos++] = 0;
 #ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
     fprintf(stderr, "*** COLLECTED FLOAT: <%s>\n", numbuf);
@@ -900,7 +901,7 @@ void VLexer::ProcessNumberToken () {
     Number = (int)Float;
   } else {
     if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid integer number");
-    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid integer number");
+    if (nbpos >= sizeof(numbuf)-1) { ParseError(Location, "Invalid integer number"); nbpos = (unsigned)(sizeof(numbuf)-1); }
     numbuf[nbpos++] = 0;
 #ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
     fprintf(stderr, "*** COLLECTED INT(1): <%s>\n", numbuf);
@@ -1054,7 +1055,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
 //==========================================================================
 void VLexer::ProcessSpecialToken () {
   Token = TK_NoToken;
-  char tkbuf[8]; // way too much
+  char tkbuf[9]; // way too much
   size_t tkbpos = 0;
   for (;;) {
     tkbuf[tkbpos] = currCh;
@@ -1075,7 +1076,7 @@ void VLexer::ProcessSpecialToken () {
     // new token found, eat one char and repeat
     Token = ntk;
     NextChr();
-    if (++tkbpos >= sizeof(tkbuf)) FatalError("VC: something is very wrong with the lexer");
+    if (++tkbpos >= (size_t)(sizeof(tkbuf)-1)) FatalError("VC: something is very wrong with the lexer");
   }
 }
 

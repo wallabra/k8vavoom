@@ -463,7 +463,6 @@ class VDictFind : public VExpression {
 public:
   VExpression *sexpr;
   VExpression *keyexpr;
-  bool doClear;
 
   // `asexpr` should be already resolved
   VDictFind (VExpression *asexpr, VExpression *akeyexpr, const TLocation &aloc);

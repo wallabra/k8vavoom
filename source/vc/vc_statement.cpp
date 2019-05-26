@@ -295,6 +295,7 @@ void VIf::DoSyntaxCopyTo (VStatement *e) {
   res->TrueStatement = (TrueStatement ? TrueStatement->SyntaxCopy() : nullptr);
   res->FalseStatement = (FalseStatement ? FalseStatement->SyntaxCopy() : nullptr);
   res->ElseLoc = ElseLoc;
+  res->doIndentCheck = doIndentCheck;
 }
 
 
@@ -1605,7 +1606,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
       loopLoad->RequestAddressOf();
       if (isConst || (arr->Flags&FIELD_ReadOnly)) {
         loopLoad->Flags |= FIELD_ReadOnly;
-        varaddr->Flags |= FIELD_ReadOnly;
+        if (varaddr) varaddr->Flags |= FIELD_ReadOnly;
       }
     }
   } else {
@@ -2141,6 +2142,7 @@ bool VForeachScripted::BuildPathTo (const VStatement *dest, TArray<VStatement *>
 //==========================================================================
 VSwitch::VSwitch (const TLocation &ALoc)
   : VStatement(ALoc)
+  , Expr(nullptr)
   , HaveDefault(false)
 {
 }

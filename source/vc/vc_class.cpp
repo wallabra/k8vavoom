@@ -151,6 +151,7 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , States(nullptr)
   , DefaultProperties(nullptr)
   , ParentClassName(NAME_None)
+  , DoesReplacement(ReplaceType::Replace_None)
   , GameExpr(nullptr)
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)

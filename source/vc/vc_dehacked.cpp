@@ -1417,7 +1417,7 @@ void ProcessDehackedFiles () {
       S = Lbl->State;
       pState = &StatesClass->NetStates;
       while (*pState && *pState != S) pState = &(*pState)->NetNext;
-      if (!pState) sc->Error("Bad state");
+      if (!pState[0]) sc->Error("Bad state");
     }
     // number of states
     sc->ExpectNumber();

@@ -29,6 +29,27 @@
 
 //==========================================================================
 //
+//  VParser::VParser
+//
+//==========================================================================
+VParser::VParser (VLexer &ALex, VPackage *APackage)
+  : Lex(ALex)
+  , Package(APackage)
+  , currFunc(nullptr)
+  , currClass(nullptr)
+  , currSwitch(nullptr)
+  , CheckForLocal(false)
+  , anonLocalCount(0)
+  , lastCompoundStart()
+  , inCompound(false)
+  , lastCompoundEnd()
+  , hasCompoundEnd(false)
+{
+}
+
+
+//==========================================================================
+//
 //  VParser::ErrorFieldTypeExpected
 //
 //==========================================================================
@@ -205,6 +226,8 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
       // name
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Invalid identifier, variable name expected");
+        delete SE2;
+        delete SE;
         delete e.TypeExpr;
         e.TypeExpr = nullptr;
         continue;
@@ -3854,6 +3877,7 @@ void VParser::ParseClass () {
         ParseError(Lex.Location, "Constant expression expected");
       } else if (Class->ScriptIdExpr) {
         ParseError(Lex.Location, "Only one script ID allowed");
+        delete e;
       } else {
         Class->ScriptIdExpr = e;
       }
@@ -3866,6 +3890,7 @@ void VParser::ParseClass () {
         ParseError(Lex.Location, "Constant expression expected");
       } else if (Class->GameExpr) {
         ParseError(Lex.Location, "Only one game expression allowed");
+        delete e;
       } else {
         Class->GameExpr = e;
       }
@@ -4003,6 +4028,7 @@ void VParser::ParseClass () {
       }
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");
+        delete Type;
         continue;
       }
       VField *fi = new VField(Lex.Name, Class, Lex.Location);
@@ -4088,6 +4114,8 @@ void VParser::ParseClass () {
 
         if (Lex.Token != TK_Identifier) {
           delete e;
+          delete SE2;
+          delete FieldType;
           ParseError(Lex.Location, "Field name expected");
           continue;
         }
@@ -4098,6 +4126,8 @@ void VParser::ParseClass () {
 
         if (Class->FindField(FieldName)) {
           delete e;
+          delete SE2;
+          delete FieldType;
           ParseError(Lex.Location, "Redeclared field `%s`", *FieldName);
           continue;
         }

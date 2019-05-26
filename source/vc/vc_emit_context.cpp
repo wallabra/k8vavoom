@@ -91,11 +91,8 @@ VEmitContext::VAutoFin::~VAutoFin () {
 //
 //==========================================================================
 VEmitContext::VAutoFin::VAutoFin (const VAutoFin &src) {
-  if (&src != this) {
-    if (src.fin) src.fin->incRef();
-    if (fin) fin->decRef();
-    fin = src.fin;
-  }
+  if (src.fin) src.fin->incRef();
+  fin = src.fin;
 }
 
 
@@ -144,11 +141,8 @@ VEmitContext::VAutoBreakCont::~VAutoBreakCont () {
 //
 //==========================================================================
 VEmitContext::VAutoBreakCont::VAutoBreakCont (const VAutoBreakCont &src) {
-  if (&src != this) {
-    if (src.bc) src.bc->incRef();
-    if (bc) bc->decRef();
-    bc = src.bc;
-  }
+  if (src.bc) src.bc->incRef();
+  bc = src.bc;
 }
 
 

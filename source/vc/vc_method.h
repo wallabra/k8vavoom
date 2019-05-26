@@ -163,15 +163,15 @@ public:
   VFieldType ReturnType;
   vint32 NumParams;
   vint32 ParamsSize;
-  VFieldType ParamTypes[MAX_PARAMS];
-  vuint8 ParamFlags[MAX_PARAMS];
+  VFieldType ParamTypes[MAX_PARAMS+1];
+  vuint8 ParamFlags[MAX_PARAMS+1];
   TArray<FInstruction> Instructions;
   VMethod *SuperMethod;
   VMethod *ReplCond;
 
   // compiler fields
   VExpression *ReturnTypeExpr;
-  VMethodParam Params[MAX_PARAMS]; // param name will be serialized
+  VMethodParam Params[MAX_PARAMS+1]; // param name will be serialized
   VStatement *Statement;
   VName SelfTypeName;
   vint32 lmbCount; // number of defined lambdas, used to create lambda names

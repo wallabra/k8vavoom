@@ -127,7 +127,7 @@ VExpression *VDynCastWithVar::DoResolve (VEmitContext &ec) {
 void VDynCastWithVar::Emit (VEmitContext &ec) {
   if (what) what->Emit(ec);
   if (destclass) destclass->Emit(ec);
-  ec.AddStatement((what->Type.Type == TYPE_Class ? OPC_DynamicClassCastIndirect : OPC_DynamicCastIndirect), Loc);
+  ec.AddStatement((what && what->Type.Type == TYPE_Class ? OPC_DynamicClassCastIndirect : OPC_DynamicCastIndirect), Loc);
 }
 
 

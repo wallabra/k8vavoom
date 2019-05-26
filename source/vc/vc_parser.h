@@ -100,6 +100,6 @@ private:
   void ParseClass ();
 
 public:
-  VParser (VLexer &ALex, VPackage *APackage) : Lex(ALex), Package(APackage) {}
+  VParser (VLexer &ALex, VPackage *APackage);
   void Parse ();
 };

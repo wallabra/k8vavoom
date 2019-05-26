@@ -43,6 +43,7 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocati
   , opscopy(nullptr)
   , genStringAssign(false)
   , sval(nullptr)
+  , resolvingInd2(false)
   , op(AOp)
   , ind(AInd)
   , ind2(nullptr)
@@ -117,6 +118,7 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VArrayElement *)e;
   res->genStringAssign = genStringAssign;
   res->sval = (sval ? sval->SyntaxCopy() : nullptr);
+  res->resolvingInd2 = resolvingInd2;
   res->op = (op ? op->SyntaxCopy() : nullptr);
   res->ind = (ind ? ind->SyntaxCopy() : nullptr);
   res->ind2 = (ind2 ? ind2->SyntaxCopy() : nullptr);
@@ -2153,7 +2155,8 @@ void VDictClearOrReset::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictClearOrReset::DoResolve (VEmitContext &ec) {
-  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+  if (!sexpr) { delete this; return nullptr; }
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr->Flags&FIELD_ReadOnly) != 0) {
     ParseError(Loc, "Cannot change read-only dictionary");
     delete this;
     return nullptr;
@@ -2231,7 +2234,8 @@ void VDictRehash::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictRehash::DoResolve (VEmitContext &ec) {
-  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+  if (!sexpr) { delete this; return nullptr; }
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr->Flags&FIELD_ReadOnly) != 0) {
     ParseError(Loc, "Cannot change read-only dictionary");
     delete this;
     return nullptr;
@@ -2493,7 +2497,9 @@ void VDictPut::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictPut::DoResolve (VEmitContext &ec) {
-  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+  if (!sexpr) { delete this; return nullptr; }
+
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr->Flags&FIELD_ReadOnly) != 0) {
     ParseError(Loc, "Cannot change read-only dictionary");
     delete this;
     return nullptr;
