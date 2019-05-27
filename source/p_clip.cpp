@@ -27,7 +27,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-//#define XXX_CLIPPER_DEBUG
 #define XXX_CLIPPER_MANY_DUMPS
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
@@ -194,12 +193,6 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 }
 
 
-// debug
-#ifdef XXX_CLIPPER_DEBUG
-static const VLevel *currLevel;
-#endif
-
-
 //==========================================================================
 //
 //  VViewClipper::IsSegAClosedSomething
@@ -207,7 +200,7 @@ static const VLevel *currLevel;
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) {
+bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) {
   if (!clip_platforms) return false;
   if (!seg->backsector) return false;
 
@@ -235,260 +228,158 @@ bool VViewClipper::IsSegAClosedSomething (/*const VViewClipper &clip*/const TFru
 
   if (fsec == bsec) return false; // self-referenced sector
 
-  // only apply this to sectors without slopes
-  /*k8: why?
-  if (ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
-      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f)
-  */
+  bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
+  bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
+  bool hasMidTex = !GTextureManager.IsEmptyTexture(seg->sidedef->MidTexture);
+  if (hasTopTex || // a seg without top texture isn't a door
+      hasBotTex || // a seg without bottom texture isn't an elevator/plat
+      hasMidTex) // a seg without mid texture isn't a polyobj door
   {
-    bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
-    bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
-    bool hasMidTex = !GTextureManager.IsEmptyTexture(seg->sidedef->MidTexture);
-    if (hasTopTex || // a seg without top texture isn't a door
-        hasBotTex || // a seg without bottom texture isn't an elevator/plat
-        hasMidTex) // a seg without mid texture isn't a polyobj door
-    {
-      /*
-      const TVec vv1 = *ldef->v1;
-      const TVec vv2 = *ldef->v2;
-      */
+    int fcpic, ffpic;
+    int bcpic, bfpic;
 
-      int fcpic, ffpic;
-      int bcpic, bfpic;
+    TPlane ffplane, fcplane;
+    TPlane bfplane, bcplane;
 
-      TPlane ffplane, fcplane;
-      TPlane bfplane, bcplane;
-
-      CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
-      CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
+    CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
+    CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
 
 
-      const TVec vv1 = *seg->v1;
-      const TVec vv2 = *seg->v2;
+    const TVec vv1 = *seg->v1;
+    const TVec vv2 = *seg->v2;
 
-      const float frontcz1 = fcplane.GetPointZ(vv1);
-      const float frontcz2 = fcplane.GetPointZ(vv2);
-      //check(frontcz1 == frontcz2);
-      const float frontfz1 = ffplane.GetPointZ(vv1);
-      const float frontfz2 = ffplane.GetPointZ(vv2);
-      //check(frontfz1 == frontfz2);
+    const float frontcz1 = fcplane.GetPointZ(vv1);
+    const float frontcz2 = fcplane.GetPointZ(vv2);
+    const float frontfz1 = ffplane.GetPointZ(vv1);
+    const float frontfz2 = ffplane.GetPointZ(vv2);
 
-      const float backcz1 = bcplane.GetPointZ(vv1);
-      const float backcz2 = bcplane.GetPointZ(vv2);
-      //check(backcz1 == backcz2);
-      const float backfz1 = bfplane.GetPointZ(vv1);
-      const float backfz2 = bfplane.GetPointZ(vv2);
-      //check(backfz1 == backfz2);
+    const float backcz1 = bcplane.GetPointZ(vv1);
+    const float backcz2 = bcplane.GetPointZ(vv2);
+    const float backfz1 = bfplane.GetPointZ(vv1);
+    const float backfz2 = bfplane.GetPointZ(vv2);
 
-      if (clip_midsolid && hasMidTex) {
-        const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
-        if (midSolid) {
-          const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
-          //const sector_t *secb = (seg->side ? ldef->backsector : ldef->frontsector);
-          if (!sec->Has3DFloors()) {
-            VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
-            if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
-              //TODO
-            } else {
-              // here we should check if midtex covers the whole height, as it is not tiled vertically
-              const float texh = MTex->GetScaledHeight();
-              float z_org;
-              if (ldef->flags&ML_DONTPEGBOTTOM) {
-                // bottom of texture at bottom
-                // top of texture at top
-                z_org = max2(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
-              } else {
-                // top of texture at top
-                z_org = min2(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
-              }
-              //k8: dunno why
-              if (seg->sidedef->Mid.RowOffset < 0) {
-                z_org += (seg->sidedef->Mid.RowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-              } else {
-                z_org += seg->sidedef->Mid.RowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-              }
-              //GCon->Logf("  TScale:%f; Mid.RowOffset=%f; z_org=%f; texh=%f", MTex->TScale, seg->sidedef->Mid.RowOffset, z_org, texh);
-              //GCon->Logf("  fsec: %f : %f", sec->floor.maxz, sec->ceiling.minz);
-              float floorz, ceilz;
-              if (sec == fsec) {
-                floorz = min2(frontfz1, frontfz2);
-                ceilz = max2(frontcz1, frontcz2);
-                //GCon->Logf("  Xsec: %f : %f", min2(frontfz1, frontfz2), max2(frontcz1, frontcz2));
-              } else {
-                floorz = min2(backfz1, backfz2);
-                ceilz = max2(backcz1, backcz2);
-                //GCon->Logf("  Xsec: %f : %f", min2(backfz1, backfz2), max2(backcz1, backcz2));
-              }
-              //GCon->Logf("  bsec: %f : %f", secb->floor.maxz, secb->ceiling.minz);
-              //if (z_org >= sec->ceiling.minz && z_org-texh <= sec->floor.maxz) return true; // fully covered
-              if (z_org >= ceilz && z_org-texh <= floorz) return true; // fully covered
-            }
-          }
+    if (clip_midsolid && hasMidTex) {
+      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+      if (midSolid) {
+        const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
+        VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
+        // here we should check if midtex covers the whole height, as it is not tiled vertically (if not wrapped)
+        const float texh = MTex->GetScaledHeight();
+        float z_org;
+        if (ldef->flags&ML_DONTPEGBOTTOM) {
+          // bottom of texture at bottom
+          // top of texture at top
+          z_org = max2(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
+        } else {
+          // top of texture at top
+          z_org = min2(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
+        }
+        //k8: dunno why
+        if (seg->sidedef->Mid.RowOffset < 0) {
+          z_org += (seg->sidedef->Mid.RowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+        } else {
+          z_org += seg->sidedef->Mid.RowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+        }
+        float floorz, ceilz;
+        if (sec == fsec) {
+          floorz = min2(frontfz1, frontfz2);
+          ceilz = max2(frontcz1, frontcz2);
+        } else {
+          floorz = min2(backfz1, backfz2);
+          ceilz = max2(backcz1, backcz2);
+        }
+        if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
+          if (z_org-texh <= floorz) return true; // fully covered, as it is wrapped
+        } else {
+          // non-wrapped
+          if (z_org >= ceilz && z_org-texh <= floorz) return true; // fully covered
         }
       }
-
-      // taken from Zandronum
-      // now check for closed sectors
-
-      // closed door
-      if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
-        // preserve a kind of transparent door/lift special effect:
-        if (!hasTopTex) return false;
-        // properly render skies (consider door "open" if both ceilings are sky):
-        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-        return true;
-      }
-
-      if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
-        // preserve a kind of transparent door/lift special effect:
-        if (!hasBotTex) return false;
-        // properly render skies (consider door "open" if both ceilings are sky):
-        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-        return true;
-      }
-
-      // if door is closed because back is shut
-      if (backcz1 <= backfz1 && backcz2 <= backfz2) {
-        // preserve a kind of transparent door/lift special effect:
-        if (backcz1 < frontcz1 || backcz2 < frontcz2) {
-          if (!hasTopTex) return false;
-        }
-        if (backfz1 > frontfz1 || backfz2 > frontfz2) {
-          if (!hasBotTex) return false;
-        }
-        // properly render skies
-        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-        if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
-        return true;
-      }
-
-#ifdef XXX_CLIPPER_DEBUG_X
-        if (currLevel) {
-          const unsigned lnum = (unsigned)(ptrdiff_t)(ldef-currLevel->Lines);
-          const unsigned snum = (unsigned)(ptrdiff_t)(seg-currLevel->Segs);
-          if (lnum == 9) {
-            //if (snum == 2019) return false;
-            GCon->Logf("=== LINEDEF %u; seg %u ===", lnum, snum);
-            GCon->Logf("  ldef sectors: %u : %u", (unsigned)(ptrdiff_t)(ldef->frontsector-currLevel->Sectors), (unsigned)(ptrdiff_t)(ldef->backsector-currLevel->Sectors));
-            GCon->Logf("  seg  sectors: %u : %u", (unsigned)(ptrdiff_t)(seg->front_sub->sector-currLevel->Sectors), (unsigned)(ptrdiff_t)(seg->partner->front_sub->sector-currLevel->Sectors));
-            return true;
-          }
-        }
-#endif
-
-      if (clip_height && /*clip_frustum &&*/ (hasTopTex || hasBotTex) &&
-          seg->partner && seg->partner != seg &&
-          seg->partner->front_sub && seg->partner->front_sub != seg->front_sub &&
-          (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
-      {
-        /*
-        const side_t *otherside = seg->partner->sidedef;
-
-        if (GTextureManager.IsEmptyTexture(otherside->TopTexture) &&
-            GTextureManager.IsEmptyTexture(otherside->BottomTexture) &&
-            GTextureManager.IsEmptyTexture(otherside->MidTexture))
-        {
-          return false;
-        }
-        */
-
-#ifdef XXX_CLIPPER_DEBUG
-        if (currLevel) {
-          const unsigned lnum = (unsigned)(ptrdiff_t)(ldef-currLevel->Lines);
-          const unsigned snum = (unsigned)(ptrdiff_t)(seg-currLevel->Segs);
-          if (/*lnum == 21 || lnum == 41 || lnum == 125*/snum == 2013) {
-            //if (snum == 2019) return false;
-            GCon->Logf("=== LINEDEF %u; seg %u ===", lnum, snum);
-            GCon->Logf("  ldef sectors: %u : %u", (unsigned)(ptrdiff_t)(ldef->frontsector-currLevel->Sectors), (unsigned)(ptrdiff_t)(ldef->backsector-currLevel->Sectors));
-            GCon->Logf("  seg  sectors: %u : %u", (unsigned)(ptrdiff_t)(seg->front_sub->sector-currLevel->Sectors), (unsigned)(ptrdiff_t)(seg->partner->front_sub->sector-currLevel->Sectors));
-            return true;
-          }
-        }
-#endif
-        //return true;
-        // here we can check if midtex is in frustum; if it doesn't,
-        // we can add this seg to clipper.
-        // this way, we can clip alot of things when camera looks at
-        // floor/ceiling, and we can clip away too high/low windows.
-        //const TFrustum &Frustum = clip.GetFrustum();
-        bool lcheck = false;
-        if (lorg) {
-          if (!ldef->SphereTouches(*lorg, *lrad)) return true;
-          lcheck = true;
-        }
-        if ((Frustum && Frustum->isValid()) || lcheck) {
-          // create bounding box for linked subsector
-          const subsector_t *bss = seg->partner->front_sub;
-          const sector_t *bssec = bss->sector;
-          const TVec sv1 = *seg->v1;
-          const TVec sv2 = *seg->v2;
-
-          const float bfz1 = bssec->floor.GetPointZ(sv1);
-          const float bfz2 = bssec->floor.GetPointZ(sv2);
-          const float bcz1 = bssec->ceiling.GetPointZ(sv1);
-          const float bcz2 = bssec->ceiling.GetPointZ(sv2);
-
-          if (Frustum && Frustum->isValid()) {
-            TVec verts[4];
-            verts[0] = TVec(sv1.x, sv1.y, bfz1);
-            verts[1] = TVec(sv1.x, sv1.y, bcz1);
-            verts[2] = TVec(sv2.x, sv2.y, bcz2);
-            verts[3] = TVec(sv2.x, sv2.y, bfz2);
-            if (min2(verts[0].z, verts[3].z) >= max2(verts[1].z, verts[2].z)) return true; // definitely closed
-            // check (only top, bottom, and back)
-            if (!Frustum->checkVerts(verts, 4, TFrustum::TopBit|TFrustum::BottomBit/*|TFrustum::BackBit*/)) {
-              /*
-              if (!hasMidTex) GCon->Logf("NO MIDTEX");
-              else GCon->Logf("SOLID for '%s': %s", *GTextureManager[seg->sidedef->MidTexture]->Name, (GTextureManager[seg->sidedef->MidTexture]->isTransparent() ? "ona" : "tan"));
-              GCon->Logf("verts: (%f,%f,%f)-(%f,%f,%f)-(%f,%f,%f)-(%f,%f,%f)",
-                verts[0].x, verts[0].y, verts[0].z,
-                verts[1].x, verts[1].y, verts[1].z,
-                verts[2].x, verts[2].y, verts[2].z,
-                verts[3].x, verts[3].y, verts[3].z);
-              GCon->Logf("front: floor=(%f,%f); ceil=(%f,%f)", frontfz1, frontfz2, frontcz1, frontcz2);
-              GCon->Logf("back : floor=(%f,%f); ceil=(%f,%f)", backfz1, backfz2, backcz1, backcz2);
-              */
-              return true;
-            }
-          }
-
-          // check if light can see midtex
-          if (lcheck) {
-            // min
-            float bbox[6];
-            bbox[0] = min2(sv1.x, sv2.x);
-            bbox[1] = min2(sv1.y, sv2.y);
-            bbox[2] = min2(bfz1, bfz2);
-            // max
-            bbox[3+0] = max2(sv1.x, sv2.x);
-            bbox[3+1] = max2(sv1.y, sv2.y);
-            bbox[3+2] = max2(bcz1, bcz2);
-            FixBBoxZ(bbox);
-
-            if (bbox[2] >= bbox[3+2]) return true; // definitely closed
-
-            if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
-          }
-        }
-      }
-      // still unsure; check if midtex is transparent
-      //if (midSolid) return true; // texture is not transparent, block
     }
-  }
-#if 0
-   else {
-    // sloped
-    /*
-    if (((fsec->floor.maxz > bsec->ceiling.minz && fsec->ceiling.maxz < bsec->floor.minz) ||
-         (fsec->floor.minz > bsec->ceiling.maxz && fsec->ceiling.minz < bsec->floor.maxz)) ||
-        ((bsec->floor.maxz > fsec->ceiling.minz && bsec->ceiling.maxz < fsec->floor.minz) ||
-         (bsec->floor.minz > fsec->ceiling.maxz && bsec->ceiling.minz < fsec->floor.maxz)))
-    {
+
+    // taken from Zandronum
+    // now check for closed sectors
+
+    // closed door
+    if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (!hasTopTex) return false;
+      // properly render skies (consider door "open" if both ceilings are sky):
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
       return true;
     }
-    */
+
+    if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (!hasBotTex) return false;
+      // properly render skies (consider door "open" if both ceilings are sky):
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+      return true;
+    }
+
+    // if door is closed because back is shut
+    if (backcz1 <= backfz1 && backcz2 <= backfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (backcz1 < frontcz1 || backcz2 < frontcz2) {
+        if (!hasTopTex) return false;
+      }
+      if (backfz1 > frontfz1 || backfz2 > frontfz2) {
+        if (!hasBotTex) return false;
+      }
+      // properly render skies
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+      if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
+      return true;
+    }
+
+    if (clip_height && (hasTopTex || hasBotTex) &&
+        (lorg || (Frustum && Frustum->isValid())) &&
+        seg->partner && seg->partner != seg &&
+        seg->partner->front_sub && seg->partner->front_sub != seg->front_sub &&
+        (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
+    {
+      // here we can check if midtex is in frustum; if it doesn't,
+      // we can add this seg to clipper.
+      // this way, we can clip alot of things when camera looks at
+      // floor/ceiling, and we can clip away too high/low windows.
+
+      // midhole quad
+      TVec verts[4];
+      verts[0] = TVec(vv1.x, vv1.y, max2(frontfz1, backfz1));
+      verts[1] = TVec(vv1.x, vv1.y, min2(frontcz1, backcz1));
+      verts[2] = TVec(vv2.x, vv2.y, min2(frontcz2, backcz2));
+      verts[3] = TVec(vv2.x, vv2.y, max2(frontfz2, backfz2));
+
+      if (min2(verts[0].z, verts[3].z) >= max2(verts[1].z, verts[2].z)) return true; // definitely closed
+
+      if (Frustum && Frustum->isValid()) {
+        // check (only top, bottom, and back)
+        if (!Frustum->checkVerts(verts, 4/*, TFrustum::TopBit|TFrustum::BottomBit*/ /*|TFrustum::BackBit*/)) {
+          return true;
+        }
+      }
+
+      // check if light can touch midtex
+      if (lorg) {
+        // checking light
+        if (!ldef->SphereTouches(*lorg, *lrad)) return true;
+        // min
+        float bbox[6];
+        bbox[0] = min2(vv1.x, vv2.x);
+        bbox[1] = min2(vv1.y, vv2.y);
+        bbox[2] = min2(min2(min2(frontfz1, backfz1), frontfz2), backfz2);
+        // max
+        bbox[3+0] = max2(vv1.x, vv2.x);
+        bbox[3+1] = max2(vv1.y, vv2.y);
+        bbox[3+2] = max2(max2(max2(frontcz1, backcz1), frontcz2), backcz2);
+        FixBBoxZ(bbox);
+
+        if (bbox[2] >= bbox[3+2]) return true; // definitely closed
+
+        if (!CheckSphereVsAABB(bbox, *lorg, *lrad)) return true; // cannot see midtex, can block
+      }
+    }
   }
-#endif
 
   return false;
 }
@@ -566,9 +457,6 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float ar
   ClipTail = nullptr;
   Origin = AOrigin;
   Level = ALevel;
-#ifdef XXX_CLIPPER_DEBUG
-  currLevel = ALevel;
-#endif
   ClipResetFrustumPlanes();
   ClearClipNodesCalled = true;
   Radius = aradius;
@@ -1407,9 +1295,6 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   // for 2-sided line, determine if it can be skipped
   if (!clipAll && seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-#ifdef XXX_CLIPPER_DEBUG
-    currLevel = Level;
-#endif
     if (!IsSegAClosedSomething(&Frustum, seg)) return;
   }
 
@@ -1659,9 +1544,6 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-#ifdef XXX_CLIPPER_DEBUG
-    currLevel = Level;
-#endif
     if (!IsSegAClosedSomething(/*&Frustum*/nullptr, seg, &Origin, &Radius)) return;
   }
 
