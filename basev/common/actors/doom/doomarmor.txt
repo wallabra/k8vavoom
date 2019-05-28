@@ -1,3 +1,6 @@
+// k8: 'cmon, FIRST armor sprites should be fullbright, as sprite indicates.
+//     also, fixed green armor timing
+
 //------------------------------------------------------------------------------
 actor GreenArmor : BasicArmorPickup 2018
 {
@@ -10,8 +13,8 @@ actor GreenArmor : BasicArmorPickup 2018
   states
   {
   Spawn:
-    ARM1 A 6
-    ARM1 B 7 Bright
+    ARM1 A 6 Bright
+    ARM1 B 6
     Loop
   }
 }
@@ -28,8 +31,8 @@ actor BlueArmor : BasicArmorPickup 2019
   states
   {
   Spawn:
-    ARM2 A 6
-    ARM2 B 6 Bright
+    ARM2 A 6 Bright
+    ARM2 B 6
     Loop
   }
 }
