@@ -25,13 +25,34 @@ menudef MouseOptions {
   }
 
   option bool {
+    title = "Horisontal mouse look";
+    cvar = mouse_look_horisontal;
+  }
+
+  option bool {
+    title = "Vertical mouse look";
+    cvar = mouse_look_vertical;
+  }
+
+  option bool {
     title = "Invert mouse";
     cvar = invert_mouse;
   }
 
   option bool {
-    title = "Look spring";
-    cvar = lookspring;
+    title = "Mouse lookspring";
+    cvar = lookspring_mouse;
+    help =
+      "Vertical look will return to center when"
+      "you'll release mouse look key.";
+  }
+
+  option bool {
+    title = "Keyboard lookspring";
+    cvar = lookspring_keyboard;
+    help =
+      "Vertical look will return to center when"
+      "you'll release view up/down key.";
   }
 
   option bool {

@@ -196,9 +196,12 @@ static VCvarF cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", C
 static VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.5", "Horizontal mouse sensitivity.", CVAR_Archive);
 static VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.5", "Vertical mouse sensitivity.", CVAR_Archive);
 static VCvarB mouse_look("mouse_look", true, "Allow mouselook?", CVAR_Archive);
+static VCvarB mouse_look_horisontal("mouse_look_horisontal", true, "Allow horisontal mouselook?", CVAR_Archive);
+static VCvarB mouse_look_vertical("mouse_look_vertical", true, "Allow vertical mouselook?", CVAR_Archive);
 static VCvarB invert_mouse("invert_mouse", false, "Invert mouse?", CVAR_Archive);
 static VCvarB lookstrafe("lookstrafe", false, "Allow lookstrafe?", CVAR_Archive);
-static VCvarB lookspring("lookspring", false, "Allow lookspring?", CVAR_Archive);
+static VCvarB lookspring_mouse("lookspring_mouse", false, "Allow lookspring for mouselook key?", CVAR_Archive);
+static VCvarB lookspring_keyboard("lookspring_keyboard", false, "Allow lookspring for keyboard view keys?", CVAR_Archive);
 
 static VCvarF m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
 static VCvarF m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);
@@ -449,7 +452,19 @@ void VBasePlayer::StopPitchDrift () {
 void VBasePlayer::AdjustAngles () {
   float speed = host_frametime*(KeySpeed.IsDown() ? cl_anglespeedkey : 1.0f);
 
-  if (KeyMouseLook.IsJustUp() && lookspring) StartPitchDrift();
+  bool mlookJustUp = KeyMouseLook.IsJustUp();
+  bool mlookIsDown = KeyMouseLook.IsDown();
+  bool klookAnyDown = KeyLookUp.IsDown() || KeyLookDown.IsDown();
+  bool klookJustUp = !klookAnyDown && (KeyLookUp.IsJustUp() || KeyLookDown.IsJustUp());
+
+  if (lookspring_mouse) {
+    if (!lookspring_keyboard) klookAnyDown = false;
+    if (mlookJustUp && !klookAnyDown) StartPitchDrift();
+  }
+  if (lookspring_keyboard) {
+    if (!lookspring_mouse) mlookIsDown = false;
+    if (klookJustUp && !mlookIsDown) StartPitchDrift();
+  }
   KeyMouseLook.ClearEdges();
 
   // yaw
@@ -459,7 +474,7 @@ void VBasePlayer::AdjustAngles () {
     if (joyxmove > 0) ViewAngles.yaw -= joy_yaw*speed;
     if (joyxmove < 0) ViewAngles.yaw += joy_yaw*speed;
   }
-  if (!KeyStrafe.IsDown() && (!lookstrafe || (!mouse_look && !KeyMouseLook.IsDown()))) ViewAngles.yaw -= mousex*m_yaw;
+  if (mouse_look_horisontal && !KeyStrafe.IsDown() && (!lookstrafe || (!mouse_look && !KeyMouseLook.IsDown()))) ViewAngles.yaw -= mousex*m_yaw;
   ViewAngles.yaw = AngleMod(ViewAngles.yaw);
 
   // pitch
@@ -468,7 +483,7 @@ void VBasePlayer::AdjustAngles () {
   ViewAngles.pitch -= cl_pitchspeed*up*speed;
   ViewAngles.pitch += cl_pitchspeed*down*speed;
   if (up || down || KeyMouseLook.IsDown()) StopPitchDrift();
-  if ((mouse_look || KeyMouseLook.IsDown()) && !KeyStrafe.IsDown()) ViewAngles.pitch -= mousey*m_pitch;
+  if (mouse_look_vertical && (mouse_look || KeyMouseLook.IsDown()) && !KeyStrafe.IsDown()) ViewAngles.pitch -= mousey*m_pitch;
 
   // centre look
   if (KeyLookCentre.IsDown() || KeyFlyCentre.IsDown()) StartPitchDrift();
