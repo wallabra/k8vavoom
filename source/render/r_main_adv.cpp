@@ -339,8 +339,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   }
 
   Drawer->DrawWorldTexturesPass();
-  RenderTranslucentWallsDecals();
   RenderMobjsTextures();
+  RenderTranslucentWallsDecals();
 
   Drawer->DrawWorldFogPass();
   RenderMobjsFog();
