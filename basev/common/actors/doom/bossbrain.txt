@@ -25,9 +25,9 @@ actor BossBrain 88
     BBRN B 36 A_BrainPain
     Goto Spawn
   Death:
-    BBRN A 100 A_BrainScream
-    BBRN AA 10
-    BBRN A -1 A_BrainDie
+    BBRN B 100 A_BrainScream
+    BBRN BB 10
+    BBRN B -1 A_BrainDie
     Stop
   }
 }
