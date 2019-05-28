@@ -437,13 +437,35 @@ void VAdvancedRenderLevel::RenderMobjsFog () {
 void VAdvancedRenderLevel::RenderTranslucentWallsAmbient () {
   if (traspFirst >= traspUsed) return;
   trans_sprite_t *twi = &trans_sprites[traspFirst];
-  //Drawer->BeginTranslucentPolygonAmbient();
+  Drawer->BeginTranslucentPolygonAmbient();
   for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
     if (twi->type) continue; // not a wall
     if (twi->Alpha >= 1.0f) continue; // not a translucent
     //GCon->Log("!!!");
     check(twi->surf);
     Drawer->DrawTranslucentPolygonAmbient(twi->surf, twi->Alpha, twi->Additive);
+  }
+  //Drawer->EndTranslucentPolygonAmbient();
+  // we don't need to render translucent walls anymore
+  //traspUsed = traspFirst;
+}
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::RenderTranslucentWallsDecals
+//
+//==========================================================================
+void VAdvancedRenderLevel::RenderTranslucentWallsDecals () {
+  if (traspFirst >= traspUsed) return;
+  trans_sprite_t *twi = &trans_sprites[traspFirst];
+  //Drawer->BeginTranslucentPolygonAmbient();
+  for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
+    if (twi->type) continue; // not a wall
+    if (twi->Alpha >= 1.0f) continue; // not a translucent
+    //GCon->Log("!!!");
+    check(twi->surf);
+    Drawer->DrawTranslucentPolygonDecals(twi->surf, twi->Alpha, twi->Additive);
   }
   //Drawer->EndTranslucentPolygonAmbient();
   // we don't need to render translucent walls anymore

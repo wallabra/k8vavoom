@@ -575,8 +575,10 @@ public:
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) override;
 
   virtual void BeginTranslucentPolygonAmbient () override;
-  virtual void EndTranslucentPolygonAmbient () override;
   virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) override;
+
+  virtual void BeginTranslucentPolygonDecals () override;
+  virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) override;
 
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                   float Alpha, bool Additive,

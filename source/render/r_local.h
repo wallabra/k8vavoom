@@ -851,6 +851,7 @@ protected:
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
   void RenderTranslucentWallsAmbient ();
+  void RenderTranslucentWallsDecals ();
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);

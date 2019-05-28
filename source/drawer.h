@@ -198,8 +198,10 @@ public:
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
 
   virtual void BeginTranslucentPolygonAmbient () = 0;
-  virtual void EndTranslucentPolygonAmbient () = 0;
   virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) = 0;
+
+  virtual void BeginTranslucentPolygonDecals () = 0;
+  virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex, float Alpha,
                                   bool Additive, VTextureTranslation *Translation, int CMap,

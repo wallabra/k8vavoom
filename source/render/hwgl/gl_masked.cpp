@@ -470,12 +470,14 @@ void VOpenGLDrawer::BeginTranslucentPolygonAmbient () {
 //  VOpenGLDrawer::EndTranslucentPolygonAmbient
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::EndTranslucentPolygonAmbient () {
   glDisable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //glDepthMask(savedDepthMask); // restore z-buffer writes
   glDisable(GL_TEXTURE_2D);
 }
+*/
 
 
 //==========================================================================
@@ -562,4 +564,64 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     glBindTexture(GL_TEXTURE_2D, 0);
     p_glActiveTextureARB(GL_TEXTURE0);
   }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::BeginTranslucentPolygonDecals
+//
+//==========================================================================
+void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
+  glEnable(GL_BLEND);
+  //glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glEnable(GL_CULL_FACE);
+  RestoreDepthFunc();
+  //glDisable(GL_BLEND);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawTranslucentPolygonDecals
+//
+//==========================================================================
+void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) {
+  //if (!Additive && Alpha < 0.3f) return; //k8: dunno
+  if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
+  if (surf->count < 3) return;
+
+  texinfo_t *tex = surf->texinfo;
+
+  if (!tex->Tex) return;
+
+  //r_decals_wall_masked
+  bool doDecals = (r_decals_enabled && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
+  if (!doDecals) return;
+
+  // fill stencil buffer for decals
+  RenderPrepareShaderDecals(surf);
+
+  ShadowsSurfTransDecals.Activate();
+  ShadowsSurfTransDecals.SetTexture(0);
+  glDisable(GL_BLEND);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+  SetTexture(tex->Tex, tex->ColorMap);
+
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+  glBegin(GL_POLYGON);
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+  glEnd();
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+  // draw decals
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  (void)RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, tex->ColorMap);
 }

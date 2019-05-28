@@ -169,8 +169,6 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   BuildVisibleObjectsList();
 
   RenderMobjsAmbient();
-
-  Drawer->BeginTranslucentPolygonAmbient();
   RenderTranslucentWallsAmbient();
 
   Drawer->BeginShadowVolumesPass();
@@ -340,13 +338,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
   }
 
-  // do it here, after all lighting was processed
-  /*
-  Drawer->BeginTranslucentPolygonAmbient();
-  RenderTranslucentWallsAmbient();
-  */
-
   Drawer->DrawWorldTexturesPass();
+  RenderTranslucentWallsDecals();
   RenderMobjsTextures();
 
   Drawer->DrawWorldFogPass();
