@@ -109,8 +109,10 @@ static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused
 template <class T> constexpr __attribute__((const)) inline T min2 (const T a, const T b) { return (a <= b ? a : b); }
 template <class T> constexpr __attribute__((const)) inline T max2 (const T a, const T b) { return (a >= b ? a : b); }
 //template <class T> constexpr inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-template <class T> constexpr __attribute__((const)) inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
-template <class T> constexpr __attribute__((const)) inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
+//template <class T> constexpr __attribute__((const)) inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
+//template <class T> constexpr __attribute__((const)) inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
+template <class T> constexpr __attribute__((const)) inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr __attribute__((const)) inline T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
 
 template <class T> constexpr __attribute__((const)) inline T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
 template <class T> constexpr __attribute__((const)) inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
