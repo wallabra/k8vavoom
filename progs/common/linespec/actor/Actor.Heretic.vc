@@ -543,7 +543,7 @@ final void A_GenWizard () {
 //  A_StaffAttack
 //
 //===========================================================================
-final void A_StaffAttack (int damage, class!Actor PuffType) self(Actor) {
+final void A_StaffAttack (int damage, class!Actor PuffType) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -568,7 +568,7 @@ final void A_StaffAttack (int damage, class!Actor PuffType) self(Actor) {
 //  A_GauntletAttack
 //
 //===========================================================================
-final void A_GauntletAttack (int power) self(Actor) {
+final void A_GauntletAttack (int power) {
   int damage;
   float slope;
   int randVal;
@@ -641,7 +641,7 @@ final void A_GauntletAttack (int power) self(Actor) {
 //  A_FireGoldWandPL1
 //
 //===========================================================================
-final void A_FireGoldWandPL1 () self(Actor) {
+final void A_FireGoldWandPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -663,7 +663,7 @@ final void A_FireGoldWandPL1 () self(Actor) {
 //  A_FireGoldWandPL2
 //
 //===========================================================================
-final void A_FireGoldWandPL2 () self(Actor) {
+final void A_FireGoldWandPL2 () {
   TAVec angles;
   TVec dir;
 
@@ -692,7 +692,7 @@ final void A_FireGoldWandPL2 () self(Actor) {
 //  A_FireCrossbowPL1
 //
 //===========================================================================
-final void A_FireCrossbowPL1 () self(Actor) {
+final void A_FireCrossbowPL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -710,7 +710,7 @@ final void A_FireCrossbowPL1 () self(Actor) {
 //  A_FireCrossbowPL2
 //
 //===========================================================================
-final void A_FireCrossbowPL2 () self(Actor) {
+final void A_FireCrossbowPL2 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -730,7 +730,7 @@ final void A_FireCrossbowPL2 () self(Actor) {
 //  A_FireBlasterPL1
 //
 //===========================================================================
-final void A_FireBlasterPL1 () self(Actor) {
+final void A_FireBlasterPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -752,7 +752,7 @@ final void A_FireBlasterPL1 () self(Actor) {
 //  A_FireSkullRodPL1
 //
 //===========================================================================
-final void A_FireSkullRodPL1 () self(Actor) {
+final void A_FireSkullRodPL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -775,7 +775,7 @@ final void A_FireSkullRodPL1 () self(Actor) {
 //  counter for the sound looping.
 //
 //===========================================================================
-final void A_FireSkullRodPL2 () self(Actor) {
+final void A_FireSkullRodPL2 () {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -809,7 +809,7 @@ final void A_FireSkullRodPL2 () self(Actor) {
 //  A_FireMacePL1
 //
 //===========================================================================
-final void A_FireMacePL1 () self(Actor) {
+final void A_FireMacePL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -845,7 +845,7 @@ final void A_FireMacePL1 () self(Actor) {
 //  A_FireMacePL2
 //
 //===========================================================================
-final void A_FireMacePL2 () self(Actor) {
+final void A_FireMacePL2 () {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -906,7 +906,7 @@ final void A_SpawnMace () {
 //  A_BeakRaise
 //
 //===========================================================================
-final void A_BeakRaise () self(Actor) {
+final void A_BeakRaise () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -923,7 +923,7 @@ final void A_BeakRaise () self(Actor) {
 //  A_BeakAttackPL1
 //
 //===========================================================================
-final void A_BeakAttackPL1 () self(Actor) {
+final void A_BeakAttackPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -949,7 +949,7 @@ final void A_BeakAttackPL1 () self(Actor) {
 //  A_BeakAttackPL2
 //
 //===========================================================================
-final void A_BeakAttackPL2 () self(Actor) {
+final void A_BeakAttackPL2 () {
   TVec dir;
 
   if (!bIsPlayer) return;

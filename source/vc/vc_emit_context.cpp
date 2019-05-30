@@ -357,10 +357,24 @@ VEmitContext::VEmitContext (VMemberBase *Member)
     //    hello, OOM on any moderately sized mod. yay.
     //CurrentFunc->Instructions.Resize(1024);
     FuncRetType = CurrentFunc->ReturnType;
+    /*
     if (CurrentFunc->SelfTypeName != NAME_None) {
       SelfClass = VMemberBase::StaticFindClass(CurrentFunc->SelfTypeName);
-      if (!SelfClass) ParseError(CurrentFunc->Loc, "No such class %s", *CurrentFunc->SelfTypeName);
+      if (!SelfClass) {
+        ParseError(CurrentFunc->Loc, "No such class `%s`", *CurrentFunc->SelfTypeName);
+      } else {
+        if (CM) {
+          VClass *cc = (VClass *)CM;
+          while (cc && cc->Name != CurrentFunc->SelfTypeName) cc = cc->ParentClass;
+               if (!cc) ParseError(CurrentFunc->Loc, "Forced self `%s` for class `%s`, which is not super (method `%s`)", *CurrentFunc->SelfTypeName, ((VClass *)CM)->GetName(), CurrentFunc->GetName());
+          else if (CM == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (method `%s`)", *CurrentFunc->SelfTypeName, CurrentFunc->GetName());
+          else GLog.Logf("%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, ((VClass *)CM)->GetName(), CurrentFunc->GetName());
+        } else {
+          ParseError(CurrentFunc->Loc, "Forced self `%s` for nothing (wtf?!) (method `%s`)", *CurrentFunc->SelfTypeName, CurrentFunc->GetName());
+        }
+      }
     }
+    */
   }
 }
 

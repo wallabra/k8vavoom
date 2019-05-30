@@ -173,7 +173,7 @@ public:
   VExpression *ReturnTypeExpr;
   VMethodParam Params[MAX_PARAMS+1]; // param name will be serialized
   VStatement *Statement;
-  VName SelfTypeName;
+  //VName SelfTypeName; //k8: was used for `self(Class)`, not needed
   vint32 lmbCount; // number of defined lambdas, used to create lambda names
   // native vararg method can have `printf` attribute
   vint32 printfFmtArgIdx; // -1 if no, or local index

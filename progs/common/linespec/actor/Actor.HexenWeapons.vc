@@ -33,7 +33,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FPunchAttack
 //
 //==========================================================================
-final void A_FPunchAttack () self(Actor) {
+final void A_FPunchAttack () {
   TVec vforward;
   TAVec angles;
 
@@ -77,7 +77,7 @@ final void A_FPunchAttack () self(Actor) {
 //  A_FAxeAttack
 //
 //==========================================================================
-final void A_FAxeAttack () self(Actor) {
+final void A_FAxeAttack () {
   int useMana;
   TAVec angles;
   TVec vforward;
@@ -127,7 +127,7 @@ final void A_FAxeAttack () self(Actor) {
 //  A_FHammerAttack
 //
 //============================================================================
-final void A_FHammerAttack () self(Actor) {
+final void A_FHammerAttack () {
   TAVec angles;
   TVec vforward;
 
@@ -168,7 +168,7 @@ final void A_FHammerAttack () self(Actor) {
 //  A_FHammerThrow
 //
 //============================================================================
-final void A_FHammerThrow () self(Actor) {
+final void A_FHammerThrow () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -186,7 +186,7 @@ final void A_FHammerThrow () self(Actor) {
 //  A_FSwordAttack
 //
 //============================================================================
-final void A_FSwordAttack () self(Actor) {
+final void A_FSwordAttack () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -207,7 +207,7 @@ final void A_FSwordAttack () self(Actor) {
 //  A_CMaceAttack
 //
 //===========================================================================
-final void A_CMaceAttack () self(Actor) {
+final void A_CMaceAttack () {
   TVec vforward;
 
   if (!bIsPlayer) return;
@@ -232,7 +232,7 @@ final void A_CMaceAttack () self(Actor) {
 //  A_CStaffInitBlink
 //
 //==========================================================================
-final void A_CStaffInitBlink () self(Actor) {
+final void A_CStaffInitBlink () {
   if (!bIsPlayer) return;
 
   Special1 = (P_Random()>>1)+20;
@@ -244,7 +244,7 @@ final void A_CStaffInitBlink () self(Actor) {
 //  A_CStaffCheckBlink
 //
 //==========================================================================
-final void A_CStaffCheckBlink () self(Actor) {
+final void A_CStaffCheckBlink () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -263,7 +263,7 @@ final void A_CStaffCheckBlink () self(Actor) {
 //  A_CStaffCheck
 //
 //==========================================================================
-final void A_CStaffCheck () self(Actor) {
+final void A_CStaffCheck () {
   TAVec angles;
   TVec vforward;
 
@@ -299,7 +299,7 @@ final void A_CStaffCheck () self(Actor) {
 //  A_CStaffAttack
 //
 //==========================================================================
-final void A_CStaffAttack () self(Actor) {
+final void A_CStaffAttack () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -322,7 +322,7 @@ final void A_CStaffAttack () self(Actor) {
 //  A_CFlameAttack
 //
 //============================================================================
-final void A_CFlameAttack () self(Actor) {
+final void A_CFlameAttack () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -341,7 +341,7 @@ final void A_CFlameAttack () self(Actor) {
 //  A_CHolyAttack
 //
 //============================================================================
-final void A_CHolyAttack () self(Actor) {
+final void A_CHolyAttack () {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -364,7 +364,7 @@ final void A_CHolyAttack () self(Actor) {
 //  A_FireConePL1
 //
 //==========================================================================
-final void A_FireConePL1 () self(Actor) {
+final void A_FireConePL1 () {
   int conedone = false;
   TVec Dir;
 
@@ -420,7 +420,7 @@ final void A_LightningReady () {
 //  A_MLightningAttack
 //
 //==========================================================================
-final void A_MLightningAttack () self(Actor) {
+final void A_MLightningAttack () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -464,7 +464,7 @@ final void MStaffSpawn (float angle) {
 //  A_MStaffAttack
 //
 //==========================================================================
-final void A_MStaffAttack () self(Actor) {
+final void A_MStaffAttack () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -486,7 +486,7 @@ final void A_MStaffAttack () self(Actor) {
 //  A_SnoutAttack
 //
 //==========================================================================
-final void A_SnoutAttack () self(Actor) {
+final void A_SnoutAttack () {
   TVec vforward;
 
   if (!bIsPlayer) return;

@@ -32,7 +32,7 @@ class PhoenixRodPowered : PhoenixRod;
 //
 //===========================================================================
 
-final void A_InitPhoenixPL2() self(Actor)
+final void A_InitPhoenixPL2()
 {
   if (!bIsPlayer)
   {
@@ -51,7 +51,7 @@ final void A_InitPhoenixPL2() self(Actor)
 //
 //===========================================================================
 
-final void A_FirePhoenixPL2() self(Actor)
+final void A_FirePhoenixPL2()
 {
   Actor A;
   TVec dir;
@@ -95,7 +95,7 @@ final void A_FirePhoenixPL2() self(Actor)
 //
 //===========================================================================
 
-final void A_ShutdownPhoenixPL2() self(Actor)
+final void A_ShutdownPhoenixPL2()
 {
   if (!bIsPlayer)
   {

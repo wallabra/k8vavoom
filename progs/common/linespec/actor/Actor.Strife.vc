@@ -708,7 +708,7 @@ final void A_SpawnEntity () {
 //  A_AttackAlert
 //
 //==========================================================================
-final void A_AttackAlert (EntityEx target, EntityEx emitter) self(Actor) {
+final void A_AttackAlert (EntityEx target, EntityEx emitter) {
   Entity looker;
 
   if (emitter.LastHeard) return;
@@ -742,7 +742,7 @@ final void A_AttackAlert (EntityEx target, EntityEx emitter) self(Actor) {
 //  A_JabDagger
 //
 //==========================================================================
-final void A_JabDagger () self(Actor) {
+final void A_JabDagger () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -779,7 +779,7 @@ final void A_JabDagger () self(Actor) {
 //  A_ShowElectricFlash
 //
 //==========================================================================
-final void A_ShowElectricFlash () self(Actor) {
+final void A_ShowElectricFlash () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -795,7 +795,7 @@ final void A_ShowElectricFlash () self(Actor) {
 //  A_FireArrow
 //
 //==========================================================================
-final void A_FireArrow (class!Actor Proj) self(Actor) {
+final void A_FireArrow (class!Actor Proj) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -816,7 +816,7 @@ final void A_FireArrow (class!Actor Proj) self(Actor) {
 //  A_FireMiniMissile
 //
 //==========================================================================
-final void A_FireMiniMissile () self(Actor) {
+final void A_FireMiniMissile () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -836,7 +836,7 @@ final void A_FireMiniMissile () self(Actor) {
 //  A_FireGrenade
 //
 //==========================================================================
-final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) self(Actor) {
+final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -872,7 +872,7 @@ final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) 
 //  A_FireFlamer
 //
 //==========================================================================
-final void A_FireFlamer () self(Actor) {
+final void A_FireFlamer () {
   EntityEx A;
 
   if (!bIsPlayer) return;
@@ -895,7 +895,7 @@ final void A_FireFlamer () self(Actor) {
 //  A_FireMauler1
 //
 //==========================================================================
-final void A_FireMauler1 () self(Actor) {
+final void A_FireMauler1 () {
   TAVec rot;
   TVec aimDir;
 
@@ -926,7 +926,7 @@ final void A_FireMauler1 () self(Actor) {
 //  A_FireMauler2Pre
 //
 //==========================================================================
-final void A_FireMauler2Pre () self(Actor) {
+final void A_FireMauler2Pre () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -943,7 +943,7 @@ final void A_FireMauler2Pre () self(Actor) {
 //  A_FireMauler2
 //
 //==========================================================================
-final void A_FireMauler2 () self(Actor) {
+final void A_FireMauler2 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
