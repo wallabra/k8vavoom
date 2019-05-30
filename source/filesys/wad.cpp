@@ -800,7 +800,7 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
       int e = VStr::digitInBase(name[1], 10);
       int m = VStr::digitInBase(name[3], 10);
       if (e < 0 || m < 0) continue;
-      if (e >= 1 && e <= 5 && m >= 1 && m <= 9) {
+      if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
         int n = e*10+m;
         if (!doom1 || n < found) {
           doom1ch = name[0];
