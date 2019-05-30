@@ -209,8 +209,8 @@ if (ENABLE_VCCRUN)
     modules/dfmap/mod_dfmap.h
     modules/dfmap/mod_dfmap.cpp
     # file reader
-    modules/mod_textread.h
-    modules/mod_textread.cpp
+    modules/mod_filerider.h
+    modules/mod_filerider.cpp
     # socket
     ${MODSOCK_SRC}
     # sound system

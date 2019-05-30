@@ -45,7 +45,7 @@
 
 #ifdef VCC_STANDALONE_EXECUTOR
 # include "vccrun/IniFile.vc"
-# include "vccrun/TextUtil.vc"
+# include "vccrun/FileRider.vc"
 #else
 # include "GLVideo.vc"
 # include "GLTexture.vc"

@@ -23,8 +23,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+// k8: no, file name is not a typo
+
+// ////////////////////////////////////////////////////////////////////////// //
 // this can be used to read binary files, but it is not recommended
-class TextReader : Object native;
+class FileReader : Object native;
 
 enum {
   SeekStart,
@@ -34,17 +37,16 @@ enum {
 
 native private readonly void *fstream;
 
-
 // returns `none` on error
-native final static TextReader Open (string filename);
+native final static FileReader Open (string filename);
 
 // closes the file, but won't destroy the object
 native final void close ();
 
 // returns success flag (false means "error")
 // whence is one of SeekXXX; default is SeekStart
-// return code is not absolutely reliable (actual seek may be delayed)
-native final bool seek (int ofs, optional int whence);
+// return code is not fully reliable (actual seek may be delayed)
+native final bool seek (int ofs, optional int whence/*=SeekStart*/);
 
 // returns 8-bit char or -1 on EOF/error
 native final int getch ();
@@ -54,7 +56,7 @@ native final int getch ();
 // returns empty string on EOF/error
 // if `exact` is `true`, out of data means "error"
 // default is "not exact"
-native final string readBuf (int size, optional bool exact);
+native final string readBuf (int size, optional bool exact/*=false*/);
 
 // returns name of the opened file (it may be empty)
 native final string fileName { get; }
@@ -64,14 +66,14 @@ native final bool isOpen { get; }
 
 // `true` if something was error'd
 // there is no reason to continue after an error (and this is UB)
-// closed file is always returns `true`
+// closed file always returns `true`
 native final bool error { get; }
 
 // get file size
 native final int size { get; }
 
 // get current position
-native final int position { get; }
+native final int position { get; set; }
 
 
 // convenient functions

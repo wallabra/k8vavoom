@@ -13,14 +13,14 @@
  * GNU General Public License for more details.
  *
  **************************************************************************/
-#include "mod_textread.h"
+#include "mod_filerider.h"
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, TextReader);
+IMPLEMENT_CLASS(V, FileReader);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VTextReader::Destroy () {
+void VFileReader::Destroy () {
   delete fstream; fstream = nullptr;
   Super::Destroy();
 }
@@ -28,20 +28,21 @@ void VTextReader::Destroy () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // returns `none` on error
-//native final static TextReader Open (string filename);
-IMPLEMENT_FUNCTION(VTextReader, Open) {
-  P_GET_STR(fname);
+//native final static FileReader Open (string filename);
+IMPLEMENT_FUNCTION(VFileReader, Open) {
+  VStr fname;
+  vobjGetParam(fname);
   if (fname.isEmpty()) { RET_REF(nullptr); return; }
   VStream *fs = fsysOpenFile(fname);
   if (!fs) { RET_REF(nullptr); return; }
-  VTextReader *res = (VTextReader *)StaticSpawnObject(StaticClass());
+  VFileReader *res = (VFileReader *)StaticSpawnObject(StaticClass());
   res->fstream = fs;
   RET_REF(res);
 }
 
 // closes the file, but won't destroy the object
 //native void close ();
-IMPLEMENT_FUNCTION(VTextReader, close) {
+IMPLEMENT_FUNCTION(VFileReader, close) {
   P_GET_SELF;
   if (Self && Self->fstream) {
     delete Self->fstream;
@@ -52,10 +53,10 @@ IMPLEMENT_FUNCTION(VTextReader, close) {
 // returns success flag (false means "error")
 // whence is one of SeekXXX; default is SeekStart
 //native bool seek (int ofs, optional int whence);
-IMPLEMENT_FUNCTION(VTextReader, seek) {
-  P_GET_INT_OPT(whence, SeekStart);
-  P_GET_INT(ofs);
-  P_GET_SELF;
+IMPLEMENT_FUNCTION(VFileReader, seek) {
+  int ofs;
+  VOptParamInt whence(SeekStart);
+  vobjGetParamSelf(ofs, whence);
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_BOOL(false); return; }
   switch (whence) {
     case SeekCur: ofs += Self->fstream->Tell(); break;
@@ -68,7 +69,7 @@ IMPLEMENT_FUNCTION(VTextReader, seek) {
 
 // returns 8-bit char or -1 on EOF/error
 //native int getch ();
-IMPLEMENT_FUNCTION(VTextReader, getch) {
+IMPLEMENT_FUNCTION(VFileReader, getch) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(-1); return; }
   vuint8 b;
@@ -82,23 +83,23 @@ IMPLEMENT_FUNCTION(VTextReader, getch) {
 // returns empty string on EOF/error
 // if `exact` is `true`, out of data means "error"
 // default is "not exact"
-//native string readBuf (int size, optional bool exact);
-IMPLEMENT_FUNCTION(VTextReader, readBuf) {
-  P_GET_BOOL_OPT(exact, false);
-  P_GET_INT(size);
-  P_GET_SELF;
-  if (!Self || !Self->fstream || Self->fstream->IsError() || size < 1) { RET_STR(VStr()); return; }
+//native string readBuf (int size, optional bool exact/*=false*/);
+IMPLEMENT_FUNCTION(VFileReader, readBuf) {
+  int size;
+  VOptParamBool exact(false);
+  vobjGetParamSelf(size, exact);
+  if (!Self || !Self->fstream || Self->fstream->IsError() || size < 1) { RET_STR(VStr::EmptyString); return; }
   VStr res;
   if (!exact) {
     int left = Self->fstream->TotalSize()-Self->fstream->Tell();
-    if (left < 1) { RET_STR(VStr()); return; }
+    if (left < 1) { RET_STR(VStr::EmptyString); return; }
     if (size > left) size = left;
   }
   res.setLength(size);
   Self->fstream->Serialize(res.GetMutableCharPointer(0), size);
   if (Self->fstream->IsError()) {
-    fprintf(stderr, "ERRORED!\n");
-    RET_STR(VStr());
+    //fprintf(stderr, "ERRORED!\n");
+    RET_STR(VStr::EmptyString);
     return;
   }
   RET_STR(res);
@@ -106,14 +107,14 @@ IMPLEMENT_FUNCTION(VTextReader, readBuf) {
 
 // returns name of the opened file (it may be empty)
 //native string fileName { get; }
-IMPLEMENT_FUNCTION(VTextReader, get_fileName) {
+IMPLEMENT_FUNCTION(VFileReader, get_fileName) {
   P_GET_SELF;
-  RET_STR(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->GetName() : VStr());
+  RET_STR(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->GetName() : VStr::EmptyString);
 }
 
 // is this object open (if object is error'd, it is not open)
 //native bool isOpen { get; }
-IMPLEMENT_FUNCTION(VTextReader, get_isOpen) {
+IMPLEMENT_FUNCTION(VFileReader, get_isOpen) {
   P_GET_SELF;
   RET_BOOL(Self && Self->fstream && !Self->fstream->IsError());
 }
@@ -121,28 +122,39 @@ IMPLEMENT_FUNCTION(VTextReader, get_isOpen) {
 // `true` if something was error'd
 // there is no reason to continue after an error (and this is UB)
 //native bool error { get; }
-IMPLEMENT_FUNCTION(VTextReader, get_error) {
+IMPLEMENT_FUNCTION(VFileReader, get_error) {
   P_GET_SELF;
   RET_BOOL(Self && Self->fstream ? Self->fstream->IsError() : true);
 }
 
 // get file size
 //native int size { get; }
-IMPLEMENT_FUNCTION(VTextReader, get_size) {
+IMPLEMENT_FUNCTION(VFileReader, get_size) {
   P_GET_SELF;
   RET_INT(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->TotalSize() : 0);
 }
 
 // get current position
 //native int position { get; }
-IMPLEMENT_FUNCTION(VTextReader, get_position) {
+IMPLEMENT_FUNCTION(VFileReader, get_position) {
   P_GET_SELF;
   RET_INT(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->Tell() : 0);
 }
 
+// set current position
+//native void position { set; }
+IMPLEMENT_FUNCTION(VFileReader, set_position) {
+  int ofs;
+  vobjGetParamSelf(ofs);
+  if (Self && Self->fstream && !Self->fstream->IsError()) {
+    if (ofs < 0) ofs = 0;
+    Self->fstream->Seek(ofs);
+  }
+}
+
 
 // convenient functions
-IMPLEMENT_FUNCTION(VTextReader, readU8) {
+IMPLEMENT_FUNCTION(VFileReader, readU8) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b;
@@ -151,7 +163,7 @@ IMPLEMENT_FUNCTION(VTextReader, readU8) {
   RET_INT(b);
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readU16) {
+IMPLEMENT_FUNCTION(VFileReader, readU16) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
@@ -160,7 +172,7 @@ IMPLEMENT_FUNCTION(VTextReader, readU16) {
   RET_INT(b[0]|(b[1]<<8));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readU32) {
+IMPLEMENT_FUNCTION(VFileReader, readU32) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
@@ -169,7 +181,7 @@ IMPLEMENT_FUNCTION(VTextReader, readU32) {
   RET_INT(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readI8) {
+IMPLEMENT_FUNCTION(VFileReader, readI8) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vint8 b;
@@ -178,7 +190,7 @@ IMPLEMENT_FUNCTION(VTextReader, readI8) {
   RET_INT((vint32)b);
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readI16) {
+IMPLEMENT_FUNCTION(VFileReader, readI16) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
@@ -187,7 +199,7 @@ IMPLEMENT_FUNCTION(VTextReader, readI16) {
   RET_INT((vint32)(vint16)(b[0]|(b[1]<<8)));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readI32) {
+IMPLEMENT_FUNCTION(VFileReader, readI32) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
@@ -196,7 +208,7 @@ IMPLEMENT_FUNCTION(VTextReader, readI32) {
   RET_INT(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readU16BE) {
+IMPLEMENT_FUNCTION(VFileReader, readU16BE) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
@@ -205,7 +217,7 @@ IMPLEMENT_FUNCTION(VTextReader, readU16BE) {
   RET_INT(b[1]|(b[0]<<8));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readU32BE) {
+IMPLEMENT_FUNCTION(VFileReader, readU32BE) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
@@ -214,7 +226,7 @@ IMPLEMENT_FUNCTION(VTextReader, readU32BE) {
   RET_INT(b[3]|(b[2]<<8)|(b[1]<<16)|(b[0]<<24));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readI16BE) {
+IMPLEMENT_FUNCTION(VFileReader, readI16BE) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
@@ -223,7 +235,7 @@ IMPLEMENT_FUNCTION(VTextReader, readI16BE) {
   RET_INT((vint32)(vint16)(b[1]|(b[0]<<8)));
 }
 
-IMPLEMENT_FUNCTION(VTextReader, readI32BE) {
+IMPLEMENT_FUNCTION(VFileReader, readI32BE) {
   P_GET_SELF;
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];

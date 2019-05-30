@@ -13,16 +13,16 @@
  * GNU General Public License for more details.
  *
  **************************************************************************/
-#ifndef VCCMOD_TEXTREAD_HEADER_FILE
-#define VCCMOD_TEXTREAD_HEADER_FILE
+#ifndef VCCMOD_FILERIDER_HEADER_FILE
+#define VCCMOD_FILERIDER_HEADER_FILE
 
 #include "../vcc_run.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VTextReader : public VObject {
-  DECLARE_CLASS(VTextReader, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VTextReader)
+class VFileReader : public VObject {
+  DECLARE_CLASS(VFileReader, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VFileReader)
 
 public:
   enum {
@@ -38,8 +38,9 @@ public:
   virtual void Destroy () override;
 
 public:
-  DECLARE_FUNCTION(Open)
   DECLARE_FUNCTION(Destroy)
+
+  DECLARE_FUNCTION(Open)
   DECLARE_FUNCTION(close)
   DECLARE_FUNCTION(seek)
   DECLARE_FUNCTION(getch)
@@ -50,6 +51,7 @@ public:
   DECLARE_FUNCTION(get_error)
   DECLARE_FUNCTION(get_size)
   DECLARE_FUNCTION(get_position)
+  DECLARE_FUNCTION(set_position)
 
   // convenient functions
   DECLARE_FUNCTION(readU8)
