@@ -512,13 +512,18 @@ VC_DEFINE_OPTPARAM(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Popav) // VOptParamA
 
 template<class C> struct VOptParamPtr {
   bool specified;
+  bool popDummy;
   C *value;
-  VOptParamPtr (C *adefault=nullptr) : specified(false), value(adefault) {}
+  VOptParamPtr () : specified(false), popDummy(true), value(nullptr) {}
+  VOptParamPtr (bool aPopDummy, C *adefault=nullptr) : specified(false), popDummy(aPopDummy), value(adefault) {}
+  VOptParamPtr (C *adefault) : specified(false), popDummy(false), value(adefault) {}
   inline operator C* () { return value; }
 };
 template<class C> static __attribute__((unused)) inline void vobj_get_param (VOptParamPtr<C> &n) {
   n.specified = !!PR_Pop();
-  if (n.specified) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
+  // optional ref pushes pointer to dummy object, so why not?
+  //if (n.specified || !n.value) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
+  if (n.specified || n.popDummy) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
 }
 
 
