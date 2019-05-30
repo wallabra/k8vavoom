@@ -1,0 +1,3 @@
+Error: ztest_vec_assop_01.vc:7: Type mismatch, types `int` and `vector` are not compatible
+Error: ztest_vec_assop_01.vc:8: Type mismatch, types `float` and `vector` are not compatible
+FATAL: Confused by previous errors, bailing out

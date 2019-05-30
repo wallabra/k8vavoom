@@ -1,3 +1,2 @@
 Error: ztest_struct_dg_06.vc:20: Type mismatch, types `delegate` and `int` are not compatible
-Error: ztest_struct_dg_06.vc:20: Expression type mismatch (int : delegate)
 FATAL: Confused by previous errors, bailing out

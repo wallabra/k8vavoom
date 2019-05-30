@@ -1,0 +1,10 @@
+class Main : Object;
+
+
+void main () {
+  TVec v0 = vector(1, 2, 3);
+  v0 *= 42.0;
+  writeln(v0);
+  v0 /= 42;
+  writeln(v0);
+}
