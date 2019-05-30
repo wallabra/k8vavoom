@@ -164,7 +164,33 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
     op1->RequestAddressOf();
     op2->RequestAddressOf();
   } else {
-    op2->Type.CheckMatch(false, Loc, op1->RealType);
+    if (op1->Type.Type == TYPE_Vector && (Oper == AddAssign || Oper == MinusAssign || Oper == MultiplyAssign || Oper == DivideAssign)) {
+      switch (op2->Type.Type) {
+        case TYPE_Int:
+        case TYPE_Byte:
+        case TYPE_Float:
+          if (Oper == MultiplyAssign || Oper == DivideAssign) {
+            op2 = op2->CoerceToFloat(ec);
+          } else {
+            goto dodefvec;
+          }
+          break;
+        case TYPE_Vector:
+          break;
+        default:
+         dodefvec:
+          if (!op2->Type.CheckMatch(false, Loc, op1->RealType)) {
+            delete this;
+            return nullptr;
+          }
+          break;
+      }
+    } else {
+      if (!op2->Type.CheckMatch(false, Loc, op1->RealType)) {
+        delete this;
+        return nullptr;
+      }
+    }
     op1->RequestAddressOf();
   }
 
@@ -178,6 +204,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VAssignment::Emit (VEmitContext &ec) {
+  if (!op1 || !op2) return; // just in case
   switch (Oper) {
     case Assign:
       op1->Emit(ec);
@@ -209,9 +236,7 @@ void VAssignment::Emit (VEmitContext &ec) {
         check(op1->RealType.Struct->IsA(op2->RealType.Struct));
         ec.AddStatement(OPC_TypeDeepCopy, op2->RealType, Loc);
       } else {
-        //fprintf(stderr, "***OP1: %s\n", *op1->toString());
-        //fprintf(stderr, "***OP2: %s\n", *op2->toString());
-        ParseError(Loc, "Expression type mismatch (%s : %s)", *op1->RealType.GetName(), *op2->RealType.GetName());
+        ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       }
       break;
 
@@ -240,7 +265,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteAddVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FAddVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VAddVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case MinusAssign:
@@ -268,7 +293,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteSubVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FSubVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VSubVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case MultiplyAssign:
@@ -295,7 +320,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteMulVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FMulVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VScaleVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case DivideAssign:
@@ -312,7 +337,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteDivVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FDivVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VIScaleVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case ModAssign:
@@ -328,7 +353,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ModVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteModVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case AndAssign:
@@ -344,7 +369,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_AndVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteAndVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case OrAssign:
@@ -358,7 +383,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteOrVarDrop, Loc);
       //FIXME This is wrong!
       else if (op1->RealType.Type == TYPE_Bool && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case XOrAssign:
@@ -370,7 +395,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_XOrVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteXOrVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case LShiftAssign:
@@ -382,7 +407,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_LShiftVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteLShiftVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case RShiftAssign:
@@ -394,7 +419,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_RShiftVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteRShiftVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case URShiftAssign:
@@ -406,7 +431,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_URShiftVarDrop, Loc);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteRShiftVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     case CatAssign:
@@ -417,7 +442,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       op1->Emit(ec);
       op2->Emit(ec);
            if (op1->RealType.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_CatAssignVarDrop, Loc);
-      else ParseError(Loc, "Expression type mismatch");
+      else ParseError(Loc, "Expression type mismatch (`%s` and `%s`)", *op1->Type.GetName(), *op2->Type.GetName());
       break;
 
     default:
