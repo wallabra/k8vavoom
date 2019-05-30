@@ -554,25 +554,28 @@ static int SocketConnect (SockType type, const VStr &host, int port, SocketOptio
 // returns 0 on error, or positive socket id
 //native static final int SocketConnectUDP (string host, int port, optional ref SocketOptions opts);
 IMPLEMENT_FUNCTION(VObject, SocketConnectUDP) {
-  P_GET_PTR_OPT_NOSP(SocketOptions, opts);
-  P_GET_INT(port);
-  P_GET_STR(host);
+  VStr host;
+  int port;
+  VOptParamPtr<SocketOptions> opts;
+  vobjGetParam(host, port, opts);
   RET_INT(SocketConnect(SockType::UDP, host, port, *opts));
 }
 
 //native static final int SocketConnectTCP (string host, int port, optional ref SocketOptions opts);
 IMPLEMENT_FUNCTION(VObject, SocketConnectTCP) {
-  P_GET_PTR_OPT_NOSP(SocketOptions, opts);
-  P_GET_INT(port);
-  P_GET_STR(host);
+  VStr host;
+  int port;
+  VOptParamPtr<SocketOptions> opts;
+  vobjGetParam(host, port, opts);
   RET_INT(SocketConnect(SockType::TCP, host, port, *opts));
 }
 
 //native static final int SocketConnectTLS (string host, int port, optional ref SocketOptions opts);
 IMPLEMENT_FUNCTION(VObject, SocketConnectTLS) {
-  P_GET_PTR_OPT_NOSP(SocketOptions, opts);
-  P_GET_INT(port);
-  P_GET_STR(host);
+  VStr host;
+  int port;
+  VOptParamPtr<SocketOptions> opts;
+  vobjGetParam(host, port, opts);
   RET_INT(SocketConnect(SockType::TLS, host, port, *opts));
 }
 
@@ -582,9 +585,9 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectTLS) {
 // immediate disconnect means "don't do shutdown, use SO_LIGER 0"
 //native static final bool SocketDisconnect (int sockid, optional bool immediate);
 IMPLEMENT_FUNCTION(VObject, SocketDisconnect) {
-  P_GET_BOOL_OPT(immed, false);
-  //(void)immed;
-  P_GET_INT(sockid);
+  int sockid;
+  VOptParamBool immed(false);
+  vobjGetParam(sockid, immed);
   //int sid = 0;
   {
     MyThreadLocker lock(&mainLock);
@@ -603,8 +606,9 @@ IMPLEMENT_FUNCTION(VObject, SocketDisconnect) {
 // for most queries, returns -1 for invalid sockid
 //native static final int SocketGetIOCTL (int sockid, SockIOCTL opcode);
 IMPLEMENT_FUNCTION(VObject, SocketGetIOCTL) {
-  P_GET_INT(opcode);
-  P_GET_INT(sockid);
+  int sockid;
+  int opcode;
+  vobjGetParam(sockid, opcode);
   {
     MyThreadLocker lock(&mainLock);
     SocketObj *so = findSocket(sockid);
@@ -649,9 +653,10 @@ IMPLEMENT_FUNCTION(VObject, SocketGetIOCTL) {
 
 //native static final bool SocketSetIOCTL (int sockid, SockIOCTL opcode, optional int arg);
 IMPLEMENT_FUNCTION(VObject, SocketSetIOCTL) {
-  P_GET_INT_OPT(arg, 0);
-  P_GET_INT(opcode);
-  P_GET_INT(sockid);
+  int sockid;
+  int opcode;
+  VOptParamInt arg(0);
+  vobjGetParam(sockid, opcode, arg);
   {
     MyThreadLocker lock(&mainLock);
     SocketObj *so = findSocket(sockid);
@@ -660,15 +665,15 @@ IMPLEMENT_FUNCTION(VObject, SocketSetIOCTL) {
     switch (opcode) {
       case RecvTimeout: // and reset timer
         so->timeLastRecv = Sys_Time();
-        so->toRecv = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg);
+        so->toRecv = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg.value);
         return;
       case SendTimeout: // and reset timer
         so->timeLastSend = Sys_Time();
-        so->toSend = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg);
+        so->toSend = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg.value);
         return;
       case ConnectTimeout: // and reset timer
         so->timeLastSend = Sys_Time();
-        so->toConnect = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg);
+        so->toConnect = (arg < 0 ? -1 : arg == 0 ? 30*1000 : arg.value);
         return;
       case RecvQMax: RET_BOOL(so->rbuf.setMax(arg)); return;
       case SendQMax: RET_BOOL(so->sbuf.setMax(arg)); return;
@@ -684,8 +689,9 @@ IMPLEMENT_FUNCTION(VObject, SocketSetIOCTL) {
 // note that sockid will be destroyed after dispatching `ev_socket` event
 //native static final bool SocketSendStr (int sockid, string data);
 IMPLEMENT_FUNCTION(VObject, SocketSendStr) {
-  P_GET_STR(data);
-  P_GET_INT(sockid);
+  int sockid;
+  VStr data;
+  vobjGetParam(sockid, data);
   {
     MyThreadLocker lock(&mainLock);
     SocketObj *so = findSocket(sockid);
@@ -698,29 +704,30 @@ IMPLEMENT_FUNCTION(VObject, SocketSendStr) {
 
 //native static final bool SocketSendBuf (int sockid, const ref array!ubyte data, optional int ofs, optional int len);
 IMPLEMENT_FUNCTION(VObject, SocketSendBuf) {
-  P_GET_INT_OPT(len, -1);
-  P_GET_INT_OPT(ofs, 0);
-  P_GET_PTR(TArray<vuint8>, data);
-  P_GET_INT(sockid);
-  if (specified_len && len < 0) { RET_BOOL(false); return; }
+  int sockid;
+  VOptParamPtr< TArray<vuint8> > data;
+  VOptParamInt ofs(0);
+  VOptParamInt len(-1);
+  vobjGetParam(sockid, data, ofs, len);
+  if (len.specified && len < 0) { RET_BOOL(false); return; }
   if (ofs < 0) {
     // from back
     ofs = -ofs;
     if (ofs < 0) { RET_BOOL(false); return; }
-    if (ofs > data->length()) { RET_BOOL(false); return; }
-    ofs = data->length()-ofs;
+    if (ofs > data.value->length()) { RET_BOOL(false); return; }
+    ofs = data.value->length()-ofs;
   }
-  if (ofs > data->length()) { RET_BOOL(false); return; }
-  if (!specified_len) len = data->length()-ofs;
+  if (ofs > data.value->length()) { RET_BOOL(false); return; }
+  if (!len.specified) len = data.value->length()-ofs;
   if (len < 0) { RET_BOOL(false); return; }
-  if (len > data->length()-ofs) { RET_BOOL(false); return; }
+  if (len > data.value->length()-ofs) { RET_BOOL(false); return; }
   {
     MyThreadLocker lock(&mainLock);
     SocketObj *so = findSocket(sockid);
     if (!so) { RET_BOOL(false); return; }
     if (so->fd < 0 || !so->isAlive()) { RET_BOOL(false); return; }
     if (len == 0) { RET_BOOL(true); return; } // don't send zero datagrams (we can't do it anyway)
-    RET_BOOL(so->sbuf.put(data->ptr()+ofs, (size_t)len));
+    RET_BOOL(so->sbuf.put(data.value->ptr()+ofs, (size_t)len));
   }
 }
 
@@ -729,8 +736,9 @@ IMPLEMENT_FUNCTION(VObject, SocketSendBuf) {
 // you can check for errors using `IsAlive` IOCTL request
 //native static final string SocketRecvStr (int sockid, optional int maxlen);
 IMPLEMENT_FUNCTION(VObject, SocketRecvStr) {
-  P_GET_INT_OPT(maxlen, 0x7fffffff);
-  P_GET_INT(sockid);
+  int sockid;
+  VOptParamInt maxlen(0x7fffffff);
+  vobjGetParam(sockid, maxlen);
   if (maxlen < 1) { RET_STR(VStr::EmptyString); return; }
   if (maxlen > 1024*1024) maxlen = 1024*1024; // arbitrary limit
   {
@@ -749,23 +757,24 @@ IMPLEMENT_FUNCTION(VObject, SocketRecvStr) {
 // append data to buffer; returns number of appended bytes or 0 on error/empty queue
 //native static final int SocketRecvBuf (int sockid, ref array!ubyte data, optional int maxlen);
 IMPLEMENT_FUNCTION(VObject, SocketRecvBuf) {
-  P_GET_INT_OPT(maxlen, 0x7fffffff);
-  P_GET_PTR(TArray<vuint8>, data);
-  P_GET_INT(sockid);
+  int sockid;
+  VOptParamPtr< TArray<vuint8> > data;
+  VOptParamInt maxlen(0x7fffffff);
+  vobjGetParam(sockid, data, maxlen);
   if (maxlen < 1) { RET_INT(0); return; }
   if (maxlen > 1024*1024) maxlen = 1024*1024; // arbitrary limit
-  if (data->length() >= 16*1024*1024) { RET_INT(0); return; }
+  if (data.value->length() >= 16*1024*1024) { RET_INT(0); return; }
   {
     MyThreadLocker lock(&mainLock);
     SocketObj *so = findSocket(sockid);
     if (!so) { RET_INT(0); return; }
     if (so->rbuf.isEmpty()) { RET_INT(0); return; }
     if ((size_t)maxlen > so->rbuf.used) maxlen = (int)so->rbuf.used;
-    if (maxlen > 16*1024*1024-data->length()) maxlen = 16*1024*1024-data->length();
-    int olen = data->length();
-    data->SetNumWithReserve(olen+maxlen);
-    if (!so->rbuf.get(data->ptr()+olen, (size_t)maxlen)) data->setLength(olen, false); // don't resize
-    RET_INT(data->length()-olen);
+    if (maxlen > 16*1024*1024-data.value->length()) maxlen = 16*1024*1024-data.value->length();
+    int olen = data.value->length();
+    data.value->SetNumWithReserve(olen+maxlen);
+    if (!so->rbuf.get(data.value->ptr()+olen, (size_t)maxlen)) data.value->setLength(olen, false); // don't resize
+    RET_INT(data.value->length()-olen);
   }
 }
 
