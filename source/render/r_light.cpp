@@ -643,6 +643,8 @@ void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, flo
 void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane) {
   bool skipAmbient = false;
 
+  float glowL = 0.0f, glowR = 0.0f, glowG = 0.0f, glowB = 0.0f;
+
   // glowing flats
   if (r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
@@ -655,11 +657,12 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
         l = 255;
         */
         //return gtex->glowing|0xff000000u;
-        skipAmbient = true;
-        l = 255.0f;
-        lr = (gtex->glowing>>16)&0xff;
-        lg = (gtex->glowing>>8)&0xff;
-        lb = gtex->glowing&0xff;
+        //skipAmbient = true;
+        //glowL = 255.0f;
+        glowL = (120.0f-hgt)*255.0f/120.0f;
+        glowR = (gtex->glowing>>16)&0xff;
+        glowG = (gtex->glowing>>8)&0xff;
+        glowB = gtex->glowing&0xff;
       }
     }
   }
@@ -693,55 +696,71 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     lg = ((SecLightColor>>8)&255)*l/255.0f;
     lb = (SecLightColor&255)*l/255.0f;
 
-    if (!IsAdvancedRenderer()) {
-      // light from floor's lightmap
-      //FIXME: THIS IS WRONG!
-      sec_surface_t *rfloor;
-      if (reg->fakefloor) {
-        if (reg->realfloor) {
-          const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
-          const float realz = reg->realfloor->esecplane.GetPointZ(p);
-          if (fakez < realz) {
-            rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
+    do {
+      if (!IsAdvancedRenderer()) {
+        // light from floor's lightmap
+        //FIXME: THIS IS WRONG!
+        sec_surface_t *rfloor;
+        if (reg->fakefloor) {
+          if (reg->realfloor) {
+            const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
+            const float realz = reg->realfloor->esecplane.GetPointZ(p);
+            if (fakez < realz) {
+              rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
+            } else {
+              rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
+            }
           } else {
-            rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
+            rfloor = reg->fakefloor;
           }
         } else {
-          rfloor = reg->fakefloor;
+          rfloor = reg->realfloor;
         }
-      } else {
-        rfloor = reg->realfloor;
-      }
-      if (!rfloor) return;
-      int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
-      int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
-      int ds, dt;
-      for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
-        if (surf->lightmap == nullptr) continue;
-        if (surf->count < 3) continue; // wtf?!
-        if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
+        if (!rfloor) break; // outer `do`
+        int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
+        int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+        int ds, dt;
+        for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
+          if (surf->lightmap == nullptr) continue;
+          if (surf->count < 3) continue; // wtf?!
+          if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
 
-        ds = s-surf->texturemins[0];
-        dt = t-surf->texturemins[1];
+          ds = s-surf->texturemins[0];
+          dt = t-surf->texturemins[1];
 
-        if (ds > surf->extents[0] || dt > surf->extents[1]) continue;
+          if (ds > surf->extents[0] || dt > surf->extents[1]) continue;
 
-        if (surf->lightmap_rgb) {
-          l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
-          const rgb_t *rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
-          lr += rgbtmp->r;
-          lg += rgbtmp->g;
-          lb += rgbtmp->b;
-        } else {
-          int ltmp = surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
-          l += ltmp;
-          lr += ltmp;
-          lg += ltmp;
-          lb += ltmp;
+          if (surf->lightmap_rgb) {
+            l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+            const rgb_t *rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+            lr += rgbtmp->r;
+            lg += rgbtmp->g;
+            lb += rgbtmp->b;
+          } else {
+            int ltmp = surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+            l += ltmp;
+            lr += ltmp;
+            lg += ltmp;
+            lb += ltmp;
+          }
+          break;
         }
-        break;
       }
-    }
+    } while (0);
+  }
+
+  // mix with glow
+  if (glowL) {
+    //GCon->Logf("00: glow=(%g,%g,%g,%g); light=(%g,%g,%g,%g)", glowL, glowR, glowG, glowB, l, lr, lg, lb);
+    glowL *= 0.8f;
+    l *= 0.8f;
+    const float llfrac = l/255.0f;
+    const float glfrac = glowL/255.0f;
+    lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f);
+    lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f);
+    lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f);
+    l = clampval(l+glowL, 0.0f, 255.0f);
+    //GCon->Logf("01: glow=(%g,%g,%g,%g); light=(%g,%g,%g,%g)", glowL, glowR, glowG, glowB, l, lr, lg, lb);
   }
 }
 
