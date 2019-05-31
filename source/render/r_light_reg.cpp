@@ -312,7 +312,7 @@ void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool l
       for (int i = 0; i < 6; ++i) {
         // calculate texture point
         //*spt = lmi.texorg+lmi.textoworld[0]*us+lmi.textoworld[1]*ut;
-        *spt = lmi.calcPoint(us, ut);
+        *spt = lmi.calcTexPoint(us, ut);
         if (lowres) break;
         //const TVec fms = facemid-(*spt);
         //if (length2DSquared(fms) < 0.1f) break; // same point, got it
@@ -840,7 +840,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
         if (dist < minlight) {
           // check spotlight cone
           if (lmi.spotLight) {
-            //spt = lmi.calcPoint(starts+s*step, startt+t*step);
+            //spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
               attn = spt->CalcSpotlightAttMult(dl.origin, lmi.coneDir, lmi.coneAngle);
               if (attn == 0.0f) continue;
@@ -850,7 +850,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           if (add <= 0.0f) continue;
           // do more dynlight clipping
           if (needProperTrace) {
-            //if (!lmi.spotLight) spt = lmi.calcPoint(starts+s*step, startt+t*step);
+            //if (!lmi.spotLight) spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dl.origin) > 2*2) {
               if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dl.origin, *spt, SPF_NOBLOCKSIGHT, surfsector)) continue;
             }
