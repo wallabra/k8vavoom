@@ -520,9 +520,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->Cluster = sc->Number;
-      if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef)
-      {
-        //  Add empty cluster def if it doesn't exist yet.
+      if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef) {
+        // add empty cluster def if it doesn't exist yet
         VClusterDef &C = ClusterDefs.Alloc();
         C.Cluster = info->Cluster;
         C.Flags = 0;
@@ -1195,7 +1194,7 @@ static void ParseClusterDef (VScriptParser *sc) {
   for (;;) {
     /*
     if (sc->GetString()) {
-      GCon->Logf("::: CLUSTER(%d): <%s>", (newFormat ? 1 : 0), *sc->String);
+      GCon->Logf(":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String);
       sc->UnGet();
     }
     */
