@@ -30,6 +30,7 @@
 #include "render/r_shared.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // switches to C mode
 struct SCParseModeSaver {
   VScriptParser *sc;
@@ -73,10 +74,12 @@ struct SpawnEdFixup {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 VName P_TranslateMap (int map);
 static void ParseMapInfo (VScriptParser *sc);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 static char miWarningBuf[16384];
 
 __attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarning (VScriptParser *sc, const char *fmt, ...) {
@@ -102,6 +105,7 @@ __attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarn
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 static mapInfo_t DefaultMap;
 static TArray<mapInfo_t> MapInfo;
 static TArray<FMapSongInfo> MapSongList;
@@ -119,6 +123,11 @@ static TMapDtor<int, SpawnEdFixup> SpawnNumFixups; // keyed by num
 static TMapDtor<int, SpawnEdFixup> DoomEdNumFixups; // keyed by num
 
 
+//==========================================================================
+//
+//  P_SetupMapinfoPlayerClasses
+//
+//==========================================================================
 void P_SetupMapinfoPlayerClasses () {
   if (GArgs.CheckParm("-nomapinfoplayerclasses") != 0) return;
   //if (GArgs.CheckParm("-mapinfoplayerclasses") == 0) return;
@@ -178,6 +187,11 @@ static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, in
 }
 
 
+//==========================================================================
+//
+//  processNumFixups
+//
+//==========================================================================
 static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, SpawnEdFixup> &fixups) {
   //GCon->Logf("fixing '%s'... (%d)", errname, fixups.count());
 #if 0
@@ -542,13 +556,6 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (sc->Check("{")) {
         info->NextMap = "endgamec";
         sc->SkipBracketed(true); // bracket eaten
-        /*
-        for (;;) {
-          if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
-          if (sc->Check("}")) break;
-          sc->GetString();
-        }
-        */
       } else if (newFormat && sc->Check(",")) {
         sc->ExpectString();
         // check for more commas?
@@ -558,9 +565,6 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       info->SecretMap = ParseNextMapName(sc, HexenMode);
     } else if (sc->Check("sky1")) {
       if (newFormat) sc->Expect("=");
-      //auto ocm = sc->IsCMode();
-      //!sc->SetCMode(true); // we need this to properly parse commas
-      //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName();
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
       VName skbname = R_HasNamedSkybox(sc->String);
@@ -602,9 +606,6 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //sc->SetCMode(ocm);
     } else if (sc->Check("sky2")) {
       if (newFormat) sc->Expect("=");
-      //auto ocm = sc->IsCMode();
-      //!sc->SetCMode(true); // we need this to properly parse commas
-      //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName8();
       //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
       //info->SkyBox = NAME_None; //k8:required or not???
@@ -636,14 +637,10 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->ExpectFloatWithSign();
       if (sc->Check(",")) sc->ExpectFloatWithSign();
       if (sc->Check(",")) sc->ExpectFloatWithSign();
-    } else if (sc->Check("doublesky")) {
-      info->Flags |= MAPINFOF_DoubleSky;
-    } else if (sc->Check("lightning")) {
-      info->Flags |= MAPINFOF_Lightning;
-    } else if (sc->Check("forcenoskystretch")) {
-      info->Flags |= MAPINFOF_ForceNoSkyStretch;
-    } else if (sc->Check("skystretch")) {
-      info->Flags &= ~MAPINFOF_ForceNoSkyStretch;
+    } else if (sc->Check("doublesky")) { info->Flags |= MAPINFOF_DoubleSky;
+    } else if (sc->Check("lightning")) { info->Flags |= MAPINFOF_Lightning;
+    } else if (sc->Check("forcenoskystretch")) { info->Flags |= MAPINFOF_ForceNoSkyStretch;
+    } else if (sc->Check("skystretch")) { info->Flags &= ~MAPINFOF_ForceNoSkyStretch;
     } else if (sc->Check("fadetable")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
@@ -674,34 +671,19 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectFloat();
       info->AirControl = sc->Float;
-    } else if (sc->Check("map07special")) {
-      info->Flags |= MAPINFOF_Map07Special;
-    } else if (sc->Check("baronspecial")) {
-      info->Flags |= MAPINFOF_BaronSpecial;
-    } else if (sc->Check("cyberdemonspecial")) {
-      info->Flags |= MAPINFOF_CyberDemonSpecial;
-    } else if (sc->Check("spidermastermindspecial")) {
-      info->Flags |= MAPINFOF_SpiderMastermindSpecial;
-    } else if (sc->Check("minotaurspecial")) {
-      info->Flags |= MAPINFOF_MinotaurSpecial;
-    } else if (sc->Check("dsparilspecial")) {
-      info->Flags |= MAPINFOF_DSparilSpecial;
-    } else if (sc->Check("ironlichspecial")) {
-      info->Flags |= MAPINFOF_IronLichSpecial;
-    } else if (sc->Check("specialaction_exitlevel")) {
-      info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor|MAPINFOF_SpecialActionLowerFloor);
-    } else if (sc->Check("specialaction_opendoor")) {
-      info->Flags &= ~MAPINFOF_SpecialActionLowerFloor;
-      info->Flags |= MAPINFOF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_lowerfloor")) {
-      info->Flags |= MAPINFOF_SpecialActionLowerFloor;
-      info->Flags &= ~MAPINFOF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_killmonsters")) {
-      info->Flags |= MAPINFOF_SpecialActionKillMonsters;
-    } else if (sc->Check("intermission")) {
-      info->Flags &= ~MAPINFOF_NoIntermission;
-    } else if (sc->Check("nointermission")) {
-      info->Flags |= MAPINFOF_NoIntermission;
+    } else if (sc->Check("map07special")) { info->Flags |= MAPINFOF_Map07Special;
+    } else if (sc->Check("baronspecial")) { info->Flags |= MAPINFOF_BaronSpecial;
+    } else if (sc->Check("cyberdemonspecial")) { info->Flags |= MAPINFOF_CyberDemonSpecial;
+    } else if (sc->Check("spidermastermindspecial")) { info->Flags |= MAPINFOF_SpiderMastermindSpecial;
+    } else if (sc->Check("minotaurspecial")) { info->Flags |= MAPINFOF_MinotaurSpecial;
+    } else if (sc->Check("dsparilspecial")) { info->Flags |= MAPINFOF_DSparilSpecial;
+    } else if (sc->Check("ironlichspecial")) { info->Flags |= MAPINFOF_IronLichSpecial;
+    } else if (sc->Check("specialaction_exitlevel")) { info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor|MAPINFOF_SpecialActionLowerFloor);
+    } else if (sc->Check("specialaction_opendoor")) { info->Flags &= ~MAPINFOF_SpecialActionLowerFloor; info->Flags |= MAPINFOF_SpecialActionOpenDoor;
+    } else if (sc->Check("specialaction_lowerfloor")) { info->Flags |= MAPINFOF_SpecialActionLowerFloor; info->Flags &= ~MAPINFOF_SpecialActionOpenDoor;
+    } else if (sc->Check("specialaction_killmonsters")) { info->Flags |= MAPINFOF_SpecialActionKillMonsters;
+    } else if (sc->Check("intermission")) { info->Flags &= ~MAPINFOF_NoIntermission;
+    } else if (sc->Check("nointermission")) { info->Flags |= MAPINFOF_NoIntermission;
     } else if (sc->Check("titlepatch")) {
       //FIXME: quoted string is a textual level name
       if (newFormat) sc->Expect("=");
@@ -715,110 +697,51 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->SuckTime = sc->Number;
-    } else if (sc->Check("nosoundclipping")) {
-      // ignored
-    } else if (sc->Check("allowmonstertelefrags")) {
-      info->Flags |= MAPINFOF_AllowMonsterTelefrags;
-    } else if (sc->Check("noallies")) {
-      info->Flags |= MAPINFOF_NoAllies;
-    } else if (sc->Check("fallingdamage")) {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage);
-      info->Flags |= MAPINFOF_FallingDamage;
-    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) {
-      info->Flags &= ~(MAPINFOF_FallingDamage|MAPINFOF_StrifeFallingDamage);
-      info->Flags |= MAPINFOF_OldFallingDamage;
-    } else if (sc->Check("strifefallingdamage")) {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_FallingDamage);
-      info->Flags |= MAPINFOF_StrifeFallingDamage;
-    } else if (sc->Check("nofallingdamage")) {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage|MAPINFOF_FallingDamage);
-    } else if (sc->Check("monsterfallingdamage")) {
-      info->Flags |= MAPINFOF_MonsterFallingDamage;
-    } else if (sc->Check("nomonsterfallingdamage")) {
-      info->Flags &= ~MAPINFOF_MonsterFallingDamage;
-    } else if (sc->Check("deathslideshow")) {
-      info->Flags |= MAPINFOF_DeathSlideShow;
-    } else if (sc->Check("allowfreelook")) {
-      info->Flags &= ~MAPINFOF_NoFreelook;
-    } else if (sc->Check("nofreelook")) {
-      info->Flags |= MAPINFOF_NoFreelook;
-    } else if (sc->Check("allowjump")) {
-      info->Flags &= ~MAPINFOF_NoJump;
-    } else if (sc->Check("nojump")) {
-      info->Flags |= MAPINFOF_NoJump;
-    } else if (sc->Check("nocrouch")) {
-      info->Flags |= MAPINFOF2_NoCrouch;
-    } else if (sc->Check("resethealth")) {
-      info->Flags |= MAPINFOF2_ResetHealth;
-    } else if (sc->Check("resetinventory")) {
-      info->Flags |= MAPINFOF2_ResetInventory;
-    } else if (sc->Check("resetitems")) {
-      info->Flags |= MAPINFOF2_ResetItems;
-    } else if (sc->Check("noautosequences")) {
-      info->Flags |= MAPINFOF_NoAutoSndSeq;
-    } else if (sc->Check("activateowndeathspecials")) {
-      info->Flags |= MAPINFOF_ActivateOwnSpecial;
-    } else if (sc->Check("killeractivatesdeathspecials")) {
-      info->Flags &= ~MAPINFOF_ActivateOwnSpecial;
-    } else if (sc->Check("missilesactivateimpactlines")) {
-      info->Flags |= MAPINFOF_MissilesActivateImpact;
-    } else if (sc->Check("missileshootersactivetimpactlines")) {
-      info->Flags &= ~MAPINFOF_MissilesActivateImpact;
-    } else if (sc->Check("filterstarts")) {
-      info->Flags |= MAPINFOF_FilterStarts;
-    } else if (sc->Check("infiniteflightpowerup")) {
-      info->Flags |= MAPINFOF_InfiniteFlightPowerup;
-    } else if (sc->Check("noinfiniteflightpowerup")) {
-      info->Flags &= ~MAPINFOF_InfiniteFlightPowerup;
-    } else if (sc->Check("clipmidtextures")) {
-      info->Flags |= MAPINFOF_ClipMidTex;
-    } else if (sc->Check("wrapmidtextures")) {
-      info->Flags |= MAPINFOF_WrapMidTex;
-    } else if (sc->Check("keepfullinventory")) {
-      info->Flags |= MAPINFOF_KeepFullInventory;
-    } else if (sc->Check("compat_shorttex")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatShortTex);
-    } else if (sc->Check("compat_stairs")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatStairs);
-    } else if (sc->Check("compat_limitpain")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatLimitPain);
-    } else if (sc->Check("compat_nopassover")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatNoPassOver);
-    } else if (sc->Check("compat_notossdrops")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatNoTossDrops);
-    } else if (sc->Check("compat_useblocking")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatUseBlocking);
-    } else if (sc->Check("compat_nodoorlight")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatNoDoorLight);
-    } else if (sc->Check("compat_ravenscroll")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatRavenScroll);
-    } else if (sc->Check("compat_soundtarget")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatSoundTarget);
-    } else if (sc->Check("compat_dehhealth")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatDehHealth);
-    } else if (sc->Check("compat_trace")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatTrace);
-    } else if (sc->Check("compat_dropoff")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatDropOff);
-    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatBoomScroll);
-    } else if (sc->Check("compat_invisibility")) {
-      DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
-    /*
-    } else if (sc->Check("compat_sectorsounds")) {
-      GCon->Logf("WARNING: %s: mapdef 'compat_sectorsounds' is not supported yet", *sc->GetLoc().toStringNoCol());
-      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
-      sc->Check("=");
-      sc->CheckNumber();
-    } else if (sc->Check("compat_missileclip")) {
-      GCon->Logf("WARNING: %s: mapdef 'compat_missileclip' is not supported yet", *sc->GetLoc().toStringNoCol());
-      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
-      sc->Check("=");
-      sc->CheckNumber();
-    */
+    } else if (sc->Check("nosoundclipping")) { // ignored
+    } else if (sc->Check("allowmonstertelefrags")) { info->Flags |= MAPINFOF_AllowMonsterTelefrags;
+    } else if (sc->Check("noallies")) { info->Flags |= MAPINFOF_NoAllies;
+    } else if (sc->Check("fallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage); info->Flags |= MAPINFOF_FallingDamage;
+    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) { info->Flags &= ~(MAPINFOF_FallingDamage|MAPINFOF_StrifeFallingDamage); info->Flags |= MAPINFOF_OldFallingDamage;
+    } else if (sc->Check("strifefallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_FallingDamage); info->Flags |= MAPINFOF_StrifeFallingDamage;
+    } else if (sc->Check("nofallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage|MAPINFOF_FallingDamage);
+    } else if (sc->Check("monsterfallingdamage")) { info->Flags |= MAPINFOF_MonsterFallingDamage;
+    } else if (sc->Check("nomonsterfallingdamage")) { info->Flags &= ~MAPINFOF_MonsterFallingDamage;
+    } else if (sc->Check("deathslideshow")) { info->Flags |= MAPINFOF_DeathSlideShow;
+    } else if (sc->Check("allowfreelook")) { info->Flags &= ~MAPINFOF_NoFreelook;
+    } else if (sc->Check("nofreelook")) { info->Flags |= MAPINFOF_NoFreelook;
+    } else if (sc->Check("allowjump")) { info->Flags &= ~MAPINFOF_NoJump;
+    } else if (sc->Check("nojump")) { info->Flags |= MAPINFOF_NoJump;
+    } else if (sc->Check("nocrouch")) { info->Flags |= MAPINFOF2_NoCrouch;
+    } else if (sc->Check("resethealth")) { info->Flags |= MAPINFOF2_ResetHealth;
+    } else if (sc->Check("resetinventory")) { info->Flags |= MAPINFOF2_ResetInventory;
+    } else if (sc->Check("resetitems")) { info->Flags |= MAPINFOF2_ResetItems;
+    } else if (sc->Check("noautosequences")) { info->Flags |= MAPINFOF_NoAutoSndSeq;
+    } else if (sc->Check("activateowndeathspecials")) { info->Flags |= MAPINFOF_ActivateOwnSpecial;
+    } else if (sc->Check("killeractivatesdeathspecials")) { info->Flags &= ~MAPINFOF_ActivateOwnSpecial;
+    } else if (sc->Check("missilesactivateimpactlines")) { info->Flags |= MAPINFOF_MissilesActivateImpact;
+    } else if (sc->Check("missileshootersactivetimpactlines")) { info->Flags &= ~MAPINFOF_MissilesActivateImpact;
+    } else if (sc->Check("filterstarts")) { info->Flags |= MAPINFOF_FilterStarts;
+    } else if (sc->Check("infiniteflightpowerup")) { info->Flags |= MAPINFOF_InfiniteFlightPowerup;
+    } else if (sc->Check("noinfiniteflightpowerup")) { info->Flags &= ~MAPINFOF_InfiniteFlightPowerup;
+    } else if (sc->Check("clipmidtextures")) { info->Flags |= MAPINFOF_ClipMidTex;
+    } else if (sc->Check("wrapmidtextures")) { info->Flags |= MAPINFOF_WrapMidTex;
+    } else if (sc->Check("keepfullinventory")) { info->Flags |= MAPINFOF_KeepFullInventory;
+    } else if (sc->Check("compat_shorttex")) { DoCompatFlag(sc, info, MAPINFOF2_CompatShortTex);
+    } else if (sc->Check("compat_stairs")) { DoCompatFlag(sc, info, MAPINFOF2_CompatStairs);
+    } else if (sc->Check("compat_limitpain")) { DoCompatFlag(sc, info, MAPINFOF2_CompatLimitPain);
+    } else if (sc->Check("compat_nopassover")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoPassOver);
+    } else if (sc->Check("compat_notossdrops")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoTossDrops);
+    } else if (sc->Check("compat_useblocking")) { DoCompatFlag(sc, info, MAPINFOF2_CompatUseBlocking);
+    } else if (sc->Check("compat_nodoorlight")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoDoorLight);
+    } else if (sc->Check("compat_ravenscroll")) { DoCompatFlag(sc, info, MAPINFOF2_CompatRavenScroll);
+    } else if (sc->Check("compat_soundtarget")) { DoCompatFlag(sc, info, MAPINFOF2_CompatSoundTarget);
+    } else if (sc->Check("compat_dehhealth")) { DoCompatFlag(sc, info, MAPINFOF2_CompatDehHealth);
+    } else if (sc->Check("compat_trace")) { DoCompatFlag(sc, info, MAPINFOF2_CompatTrace);
+    } else if (sc->Check("compat_dropoff")) { DoCompatFlag(sc, info, MAPINFOF2_CompatDropOff);
+    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) { DoCompatFlag(sc, info, MAPINFOF2_CompatBoomScroll);
+    } else if (sc->Check("compat_invisibility")) { DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
     } else if (sc->CheckStartsWith("compat_")) {
       GCon->Logf(NAME_Warning, "%s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
-      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
     } else if (sc->Check("evenlighting")) {
@@ -832,12 +755,9 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->HorizWallShade = midval(-128, sc->Number, 127);
-    } else if (sc->Check("noinfighting")) {
-      info->Infighting = -1;
-    } else if (sc->Check("normalinfighting")) {
-      info->Infighting = 0;
-    } else if (sc->Check("totalinfighting")) {
-      info->Infighting = 1;
+    } else if (sc->Check("noinfighting")) { info->Infighting = -1;
+    } else if (sc->Check("normalinfighting")) { info->Infighting = 0;
+    } else if (sc->Check("totalinfighting")) { info->Infighting = 1;
     } else if (sc->Check("specialaction")) {
       if (newFormat) sc->Expect("=");
       VMapSpecialAction &A = info->SpecialActions.Alloc();
@@ -885,87 +805,40 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->InterMusic = *sc->String.ToLower();
-    } else if (sc->Check("cd_start_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
-    } else if (sc->Check("cd_end1_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
-    } else if (sc->Check("cd_end2_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
-    } else if (sc->Check("cd_end3_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
-    } else if (sc->Check("cd_intermission_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
-    } else if (sc->Check("cd_title_track")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
-    }
+    } else if (sc->Check("cd_start_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
+    } else if (sc->Check("cd_end1_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
+    } else if (sc->Check("cd_end2_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
+    } else if (sc->Check("cd_end3_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
+    } else if (sc->Check("cd_intermission_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
+    } else if (sc->Check("cd_title_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
     // these are stubs for now.
-    else if (sc->Check("cdid")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("noinventorybar")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("airsupply")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("sndseq")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("sndinfo")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("soundinfo")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("allowcrouch")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("pausemusicinmenus")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("bordertexture")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("f1")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("allowrespawn")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("teamdamage")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("fogdensity")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("outsidefogdensity")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("skyfog")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("teamplayon")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("teamplayoff")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("checkswitchrange")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("nocheckswitchrange")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("translator")) {
-      skipUnimplementedCommand(sc, true);
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("unfreezesingleplayerconversations")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("smoothlighting")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("lightmode")) {
-      skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("Grinding_PolyObj")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("UsePlayerStartZ")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("spawnwithweaponraised")) {
-      skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("noautosavehint")) {
-      skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("cdid")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("noinventorybar")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("airsupply")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("sndseq")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("sndinfo")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("soundinfo")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("allowcrouch")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("pausemusicinmenus")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("bordertexture")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("f1")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("allowrespawn")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("teamdamage")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("fogdensity")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("outsidefogdensity")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("skyfog")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("teamplayon")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("teamplayoff")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("checkswitchrange")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("nocheckswitchrange")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("translator")) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("unfreezesingleplayerconversations")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("smoothlighting")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("lightmode")) { skipUnimplementedCommand(sc, true);
+    } else if (sc->Check("Grinding_PolyObj")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("UsePlayerStartZ")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("spawnwithweaponraised")) { skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("noautosavehint")) { skipUnimplementedCommand(sc, false);
     } else {
       if (newFormat) {
         if (sc->Check("}")) break;
@@ -987,6 +860,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 }
 
 
+//==========================================================================
+//
+//  ParseNameOrLookup
+//
+//==========================================================================
 static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name, vuint32 *flags, bool newStyle) {
   if (sc->Check("lookup")) {
     if (sc->IsCMode()) sc->Check(",");
@@ -1004,12 +882,10 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
       if (lookupFlag == MAPINFOF_LookupName) return;
       if (newStyle) {
         while (!sc->AtEnd()) {
-          //if (sc->Check("}")) break;
           if (!sc->Check(",")) break;
-          //sc->Expect(",");
-          //if (sc->Check(",")) continue;
           sc->ExpectString();
           while (!sc->QuotedString) {
+            if (sc->String == "}") { sc->UnGet(); break; } // stray comma
             if (sc->String != ",") { sc->UnGet(); sc->Error("comma expected"); break; }
             sc->ExpectString();
           }
@@ -1033,6 +909,12 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
   }
 }
 
+
+//==========================================================================
+//
+//  ParseNameOrLookup
+//
+//==========================================================================
 static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name, vint32 *flags, bool newStyle) {
   vuint32 lf = (vuint32)lookupFlag;
   vuint32 flg = (vuint32)*flags;
@@ -1192,12 +1074,7 @@ static void ParseClusterDef (VScriptParser *sc) {
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   for (;;) {
-    /*
-    if (sc->GetString()) {
-      GCon->Logf(":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String);
-      sc->UnGet();
-    }
-    */
+    //if (sc->GetString()) { GCon->Logf(":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String); sc->UnGet(); }
     if (sc->Check("hub")) {
       CDef->Flags |= CLUSTERF_Hub;
     } else if (sc->Check("entertext")) {
