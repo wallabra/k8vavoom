@@ -867,10 +867,17 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 //==========================================================================
 static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name, vuint32 *flags, bool newStyle) {
   if (sc->Check("lookup")) {
-    if (sc->IsCMode()) sc->Check(",");
+    if (sc->GetString()) {
+      if (sc->QuotedString || sc->String != ",") sc->UnGet();
+    }
+    //if (newStyle) sc->Check(",");
     *flags |= lookupFlag;
     sc->ExpectString();
-    *name = sc->String.ToLower();
+    if (sc->String.length() > 1 && sc->String[0] == '$') {
+      *name = VStr(*sc->String+1).ToLower();
+    } else {
+      *name = sc->String.ToLower();
+    }
   } else {
     sc->ExpectString();
     if (sc->String.Length() > 1 && sc->String[0] == '$') {
