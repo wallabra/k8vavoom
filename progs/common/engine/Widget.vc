@@ -24,6 +24,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#define VC_USE_PROPER_SCALING
+
 class Widget : Object native;
 
 struct ClipRect {
@@ -518,31 +520,30 @@ static void DrawEmptyScreen () {
 //  DrawFullScreenPic
 //
 //==========================================================================
-static void DrawFullScreenPic (int Handle) {
+static void DrawFullScreenPic (int Handle, optional bool dontRestoreVScreen, optional out int xofs, optional out int yofs, optional out float scale) {
   picinfo_t pinf;
   R_GetPicInfo(Handle, &pinf);
   if (pinf.width < 1 || pinf.height < 1) {
     DrawEmptyScreen();
+    xofs = 0;
+    yofs = 0;
   } else {
     auto ovw = GetVirtualWidth();
     auto ovh = GetVirtualHeight();
-    scope(exit) SetVirtualScreen(ovw, ovh);
+    scope(exit) if (!dontRestoreVScreen) SetVirtualScreen(ovw, ovh);
     // in case our picture has strange size
     R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
 #ifdef VC_USE_PROPER_SCALING
     int rw = GetRealScreenWidth();
     int rh = GetRealScreenHeight();
     float scaleX = float(rw)/float(pinf.width);
-    float scaleY = float(rh)/float(pinf.height);
-    if (scaleX <= scaleY) {
-      //int newHeight = int(pinf.height/scaleX);
-      SetVirtualScreen(pinf.width, int(rh/scaleX));
-      R_DrawPic(0, 0, Handle);
-    } else {
-      //int newWidth = int(pinf.width*scaleY);
-      SetVirtualScreen(int(rw/scaleY), pinf.height);
-      R_DrawPic(0, 0, Handle);
-    }
+    float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
+    scale = (scaleX <= scaleY ? scaleX : scaleY);
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    //print("scaleX=%s; scaleY=%s; vsize=(%s,%s); psize=(%s,%s); ratio=%s", scaleX, scaleY, GetVirtualWidth(), GetVirtualHeight(), pinf.width, pinf.height, R_GetAspectRatio());
+    xofs = (GetVirtualWidth()-pinf.width)/2;
+    yofs = (GetVirtualHeight()-pinf.height)/2;
+    R_DrawPic(xofs, yofs, Handle);
 #else
     if (pinf.width >= 320 && pinf.height >= 200) {
       SetVirtualScreen(pinf.width, pinf.height);
@@ -555,6 +556,11 @@ static void DrawFullScreenPic (int Handle) {
 }
 
 
+//==========================================================================
+//
+//  DrawPicFS320
+//
+//==========================================================================
 final void DrawPicFS320 (float X, float Y, int Handle, optional float alpha) {
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();

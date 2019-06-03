@@ -311,22 +311,37 @@ void ParseScript (name ScriptName) {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
-  //  Counter for general background animation
+  // counter for general background animation
   btime += DeltaTime;
-
   for (int i = 0; i < Anims.Num; ++i) {
     if (btime >= Anims[i].NextTime) {
       Anims[i].Ctr++;
       if (Anims[i].Ctr >= Anims[i].Pics.Num) {
         if (Anims[i].bOnce) {
-          Anims[i].Ctr = Anims[i].Pics.Num - 1;
+          Anims[i].Ctr = Anims[i].Pics.Num-1;
         } else {
           Anims[i].Ctr = 0;
         }
       }
-      Anims[i].NextTime = btime + Anims[i].Period;
+      Anims[i].NextTime = btime+Anims[i].Period;
     }
   }
+}
+
+
+//==========================================================================
+//
+//  DrawPicEx
+//
+//==========================================================================
+final void DrawPicEx (float x, float y, int handle, int xofs, int yofs) {
+  if (handle <= 0) return;
+  //int rx = int(x*(GetVirtualWidth()/320.0));
+  //int ry = int(y*(GetVirtualHeight()/200.0));
+  int rx = int(x+xofs);
+  int ry = int(y+yofs);
+  //print("xy=(%s,%s); rxy=(%s,%s); h=%s", x, y, rx, ry, handle);
+  R_DrawPic(rx, ry, handle);
 }
 
 
@@ -341,6 +356,7 @@ override void OnDraw () {
     auto ovw = GetVirtualWidth();
     auto ovh = GetVirtualHeight();
     scope(exit) SetVirtualScreen(ovw, ovh);
+    /*
     picinfo_t pinf;
     R_GetPicInfo(BackgroundPic, &pinf);
     if (pinf.width >= 320 && pinf.height >= 200) {
@@ -350,23 +366,35 @@ override void OnDraw () {
     }
     R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_404040);
     R_DrawPic(0, 0, BackgroundPic);
+    */
+    int xofs, yofs;
+    float scale;
+    DrawFullScreenPic(BackgroundPic, dontRestoreVScreen:true, out xofs:xofs, out yofs:yofs, out scale:scale);
+    /*
+    {
+      picinfo_t pinf;
+      R_GetPicInfo(BackgroundPic, &pinf);
+      print("pinf:(%s,%s); vs:(%s,%s); ofs:(%s,%s); scale=%s", pinf.width, pinf.height, GetVirtualWidth(), GetVirtualHeight(), xofs, yofs, scale);
+    }
+    */
     if (Anims.length) {
-      SetVirtualScreen(640, 480);
-      for (int i = 0; i < Anims.Num; ++i) {
-        if (!CheckCond(Anims[i].Cond, Anims[i].MapName1, Anims[i].MapName2)) continue;
-        if (Anims[i].Ctr >= 0) DrawPic(Anims[i].X, Anims[i].Y, Anims[i].Pics[Anims[i].Ctr]);
+      //SetVirtualScreen(640, 480);
+      foreach (const ref auto anim; Anims) {
+        if (!CheckCond(anim.Cond, anim.MapName1, anim.MapName2)) continue;
+        if (anim.Ctr >= 0) DrawPicEx(anim.X, anim.Y, anim.Pics[anim.Ctr], xofs, yofs);
       }
     }
+    //print("State=%s; spots=%s", State, Spots.length);
     if (State > STATE_Default && Spots.length) {
-      SetVirtualScreen(640, 480);
-      for (int i = 0; i < Spots.Num; ++i) {
+      //SetVirtualScreen(640, 480);
+      foreach (int i, const ref auto spot; Spots) {
         // flash level we are leaving now
-        if (Spots[i].Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (int(2.0 * btime) & 1)) continue;
-        if (IsVisited(Spots[i].Map)) DrawPic(Spots[i].X, Spots[i].Y, SplatPic);
-        if (Spots[i].Map == ClGame.im.EnterMap && (State == STATE_Done ||
-            (State == STATE_NextLoc && (int(32.0 * btime) & 31) < 20)))
+        if (spot.Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (int(2.0*btime)&1)) continue;
+        if (IsVisited(spot.Map)) DrawPicEx(spot.X, spot.Y, SplatPic, xofs, yofs);
+        if (spot.Map == ClGame.im.EnterMap &&
+            (State == STATE_Done || (State == STATE_NextLoc && (int(32.0*btime)&31) < 20)))
         {
-          DrawPointer(i);
+          DrawPointer(i, xofs, yofs);
         }
       }
     }
@@ -381,7 +409,7 @@ override void OnDraw () {
 //  DrawPointer
 //
 //==========================================================================
-void DrawPointer (int n) {
+final private void DrawPointer (int n, int xofs, int yofs) {
   int i;
   int left;
   int top;
@@ -394,10 +422,10 @@ void DrawPointer (int n) {
   i = 0;
   do {
     R_GetPicInfo(PointerPics[i], &info);
-    left = Spots[n].X - info.xoffset;
-    top = Spots[n].Y - info.yoffset;
-    right = left + info.width;
-    bottom = top + info.height;
+    left = Spots[n].X-info.xoffset;
+    top = Spots[n].Y-info.yoffset;
+    right = left+info.width;
+    bottom = top+info.height;
 
     if (left >= 0 && right < Width && top >= 0 && bottom < Height) {
       fits = true;
@@ -407,10 +435,10 @@ void DrawPointer (int n) {
   } while (!fits && i != PointerPics.Num);
 
   if (fits && i < PointerPics.Num) {
-    DrawPic(Spots[n].X, Spots[n].Y, PointerPics[i]);
+    DrawPicEx(Spots[n].X, Spots[n].Y, PointerPics[i], xofs, yofs);
   } else {
     // DEBUG
-    dprint("Could not place patch on level %d", n + 1);
+    dprint("Could not place patch on level %d", n+1);
   }
 }
 

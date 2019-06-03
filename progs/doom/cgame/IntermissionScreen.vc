@@ -378,8 +378,8 @@ void IM_InitAnimatedBack () {
   }
   if (!Background) return;
 
+  //print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
   /*
-  print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
   print("  LeaveMap=%n; LeaveCluster=%d; LeaveName=%s; LeaveTitlePatch=%n; ExitPic=%n", ClGame.im.LeaveMap, ClGame.im.LeaveCluster, ClGame.im.LeaveName, ClGame.im.LeaveTitlePatch, ClGame.im.ExitPic);
   print("  EnterMap=%n; EnterCluster=%d; EnterName=%s; EnterTitlePatch=%n; EnterPic=%n", ClGame.im.EnterMap, ClGame.im.EnterCluster, ClGame.im.EnterName, ClGame.im.EnterTitlePatch, ClGame.im.EnterPic);
   print("  InterMusic=%n", ClGame.im.InterMusic);
@@ -401,9 +401,9 @@ void IM_InitAnimatedBack () {
     }
     //print("  BgPic1: %n (present=%d)", BgPic, WadLumpPresent(BgPic));
   }
-  Background.Init(BgPic, interstate ?
+  Background.Init(BgPic, (interstate != IMS_Stats && interstate != IMS_Done ?
     IntermissionBackground::STATE_NextLoc :
-    IntermissionBackground::STATE_Default, ClientGameShared(ClGame));
+    IntermissionBackground::STATE_PrevLoc/*STATE_Default*/), ClientGameShared(ClGame));
 }
 
 
