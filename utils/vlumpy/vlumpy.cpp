@@ -1013,7 +1013,7 @@ void ParseScript (const char *name) {
 
     if (!OutputOpened) {
       DefaultExtension(destfile, sizeof(destfile), ".wad");
-      char Ext[8];
+      char Ext[64];
       ExtractFileExtension(destfile, Ext, sizeof(Ext));
       if (!stricmp(Ext, ".zip") || !stricmp(Ext, ".pk3")) {
         Zip = zipOpen(destfile, APPEND_STATUS_CREATE);
