@@ -546,17 +546,13 @@ static void LoadTGA(const char *filename)
 //
 //==========================================================================
 
-void LoadImage(const char *name)
-{
-  char  ext[8];
+void LoadImage(const char *name) {
+  char ext[8];
 
-  ExtractFileExtension(name, ext);
-  if (!strcmp(ext, "pcx"))
-    LoadPCX(name);
-  else if (!strcmp(ext, "tga"))
-    LoadTGA(name);
-  else
-    Error("Unknown extension");
+  ExtractFileExtension(name, ext, sizeof(ext));
+       if (!strcmp(ext, ".pcx")) LoadPCX(name);
+  else if (!strcmp(ext, ".tga")) LoadTGA(name);
+  else Error("Unknown extension");
 }
 
 //==========================================================================

@@ -232,7 +232,7 @@ static void AddWadFile (const char *name) {
 static void AddWad (const char *name) {
   if (Zip) Error("$wad cannot be used for ZIP file");
   char *filename = fn(name);
-  DefaultExtension(filename, ".wad");
+  DefaultExtension(filename, 256, ".wad"); // arbitrary limit
   AddWadFile(filename);
 }
 
@@ -248,7 +248,7 @@ static void AddMap (const char *name) {
   if (Zip) Error("$map cannot be used for ZIP file");
 
   char *filename = fn(name);
-  DefaultExtension(filename, ".wad");
+  DefaultExtension(filename, 256, ".wad"); // arbitrary limit
   AddWadFile(filename);
 
   StripExtension(filename);
@@ -968,7 +968,8 @@ void SortFileList (TArray<DiskFile> &flist) {
 //
 //==========================================================================
 void ParseScript (const char *name) {
-  ExtractFilePath(name, basepath);
+  ExtractFilePath(name, basepath, sizeof(basepath));
+  if (strlen(basepath)+1 > sizeof(srcpath)) Error("Path too long");
   strcpy(srcpath, basepath);
 
   SC_Open(name);
@@ -978,7 +979,7 @@ void ParseScript (const char *name) {
     StripExtension(destfile);
     destpath[0] = 0;
   } else {
-    ExtractFilePath(destfile, destpath);
+    ExtractFilePath(destfile, destpath, sizeof(destpath));
   }
 
   bool OutputOpened = false;
@@ -1011,10 +1012,10 @@ void ParseScript (const char *name) {
     }
 
     if (!OutputOpened) {
-      DefaultExtension(destfile, ".wad");
+      DefaultExtension(destfile, sizeof(destfile), ".wad");
       char Ext[8];
-      ExtractFileExtension(destfile, Ext);
-      if (!stricmp(Ext, "zip") || !stricmp(Ext, "pk3")) {
+      ExtractFileExtension(destfile, Ext, sizeof(Ext));
+      if (!stricmp(Ext, ".zip") || !stricmp(Ext, ".pk3")) {
         Zip = zipOpen(destfile, APPEND_STATUS_CREATE);
         if (!Zip) Error("Failed to open ZIP file");
       } else {
@@ -1102,7 +1103,7 @@ void ParseScript (const char *name) {
       AddToZip(lumpname, data, size);
       Z_Free(data);
     } else {
-      ExtractFileBase(sc_String, lumpname);
+      ExtractFileBase(sc_String, lumpname, sizeof(lumpname));
       if (strlen(lumpname) > 8) SC_ScriptError("Lump name too long");
       void *data;
       int size = LoadFile(fn(sc_String), &data);

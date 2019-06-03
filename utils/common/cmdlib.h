@@ -22,11 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef CMDLIB_H
 #define CMDLIB_H
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "../../libs/core/core.h"
 
@@ -41,26 +38,17 @@
 
 namespace VavoomUtils {
 
-// MACROS ------------------------------------------------------------------
+void Error (const char *error, ...) __attribute__((noreturn)) __attribute__((format(printf, 1, 2)));
 
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void Error(const char *error, ...) __attribute__ ((noreturn))
-  __attribute__ ((format(printf, 1, 2)));
-
-void DefaultPath(char *path, const char *basepath);
-void DefaultExtension(char *path, const char *extension);
-void StripFilename(char *path);
-void StripExtension(char *path);
-void ExtractFilePath(const char *path, char *dest);
-void ExtractFileBase(const char *path, char *dest);
-void ExtractFileExtension(const char *path, char *dest);
-void FixFileSlashes(char *path);
-int LoadFile(const char *name, void **bufferptr);
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
+void DefaultPath (char *path, size_t pathsize, const char *basepath);
+void DefaultExtension (char *path, size_t pathsize, const char *extension);
+void StripFilename (char *path);
+void StripExtension (char *path);
+void ExtractFilePath (const char *path, char *dest, size_t destsize);
+void ExtractFileBase (const char *path, char *dest, size_t destsize);
+void ExtractFileExtension (const char *path, char *dest, size_t destsize); // with dot
+void FixFileSlashes (char *path);
+int LoadFile (const char *name, void **bufferptr);
 
 } // namespace VavoomUtils
 

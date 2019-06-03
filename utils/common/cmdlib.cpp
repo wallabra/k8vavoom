@@ -22,240 +22,206 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "cmdlib.h"
 
 namespace VavoomUtils {
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+//==========================================================================
+//
+//  isSlash
+//
+//==========================================================================
+static inline bool isSlash (const char ch) {
+#ifdef _WIN32
+  return (ch == '/' || ch == '\\' || ch == ':');
+#else
+  return (ch == '/');
+#endif
+}
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+//==========================================================================
+//
+//  isAbsolutePath
+//
+//==========================================================================
+static inline bool isAbsolutePath (const char *s) {
+  if (!s || !s[0]) return false;
+#ifdef _WIN32
+  return (s[0] == '/' || s[0] == '\\' || s[1] == ':');
+#else
+  return (s[0] == '/');
+#endif
+}
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-//static int    empty_ptr;
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  Error
 //
 //==========================================================================
-
-void Error(const char *error, ...)
-{
-  va_list   argptr;
-
+__attribute__((noreturn)) __attribute__((format(printf, 1, 2))) void Error (const char *error, ...) {
+  va_list argptr;
   va_start(argptr, error);
   vfprintf(stderr, error, argptr);
   va_end(argptr);
-
   exit(1);
 }
+
 
 //==========================================================================
 //
 //  DefaultPath
 //
 //==========================================================================
-
-void DefaultPath(char *path, const char *basepath)
-{
-  char  temp[128];
-
-  if (path[0] == '/')
-    return;         // absolute path location
+void DefaultPath (char *path, size_t pathsize, const char *basepath) {
+  static char temp[16384];
+  if (isAbsolutePath(path)) return; // absolute path location
+  if (pathsize > 8192) pathsize = 8192;
+  if (strlen(path)+strlen(basepath) >= pathsize) Error("path too long");
   strcpy(temp, path);
   strcpy(path, basepath);
   strcat(path, temp);
 }
 
+
 //==========================================================================
 //
 //  DefaultExtension
 //
+//  if path doesn't have an .EXT, append extension
+//  (extension should include the leading dot)
+//
 //==========================================================================
-
-void DefaultExtension(char *path, const char *extension)
-{
-  char  *src;
-
-  //
-  // if path doesn't have a .EXT, append extension
-  // (extension should include the .)
-  //
-  src = path + strlen(path) - 1;
-
-  while (*src != '/' && src != path)
-  {
-    if (*src == '.')
-    {
-      return;     // it has an extension
-    }
-    src--;
+void DefaultExtension (char *path, size_t pathsize, const char *extension) {
+  if (!extension || !extension[0]) return;
+  size_t plen = strlen(path);
+  char *src = path+plen-1;
+  while (src != path && !isSlash(*src)) {
+    if (*src == '.') return; // it has an extension
+    --src;
   }
-
+  if (plen+strlen(extension)+1 > pathsize) Error("path too long");
   strcat(path, extension);
 }
+
 
 //==========================================================================
 //
 //  StripFilename
 //
 //==========================================================================
-
-void StripFilename(char *path)
-{
-  int      length;
-
-  length = int(strlen(path) - 1);
-  while (length > 0 && path[length] != '/')
-    length--;
+void StripFilename (char *path) {
+  int length = int(strlen(path)-1);
+  while (length > 0 && !isSlash(path[length])) --length;
   path[length] = 0;
 }
+
 
 //==========================================================================
 //
 //  StripExtension
 //
 //==========================================================================
-
-void StripExtension(char *path)
-{
-  char  *search;
-
-  search = path + strlen(path) - 1;
-  while (*search != '/' && search != path)
-  {
-    if (*search == '.')
-    {
+void StripExtension (char *path) {
+  char *search = path+strlen(path)-1;
+  while (!isSlash(*search) && search != path) {
+    if (*search == '.') {
       *search = 0;
       return;
     }
-    search--;
+    --search;
   }
 }
+
 
 //==========================================================================
 //
 //  ExtractFilePath
 //
 //==========================================================================
-
-void ExtractFilePath(const char *path, char *dest)
-{
-  const char  *src;
-
-  src = path + strlen(path) - 1;
-
-  //
+void ExtractFilePath (const char *path, char *dest, size_t destsize) {
+  const char *src = path+strlen(path)-1;
   // back up until a \ or the start
-  //
-  while (src != path && *(src-1) != '/')
-    src--;
-
-  memcpy(dest, path, src - path);
-  dest[src - path] = 0;
+  while (src != path && !isSlash(src[-1])) --src;
+  if ((size_t)(src-path)+1 > destsize) Error("path too long");
+  memcpy(dest, path, src-path);
+  dest[src-path] = 0;
 }
+
 
 //==========================================================================
 //
 //  ExtractFileBase
 //
 //==========================================================================
-
-void ExtractFileBase(const char *path, char *dest)
-{
-  const char  *src;
-
-  src = path + strlen(path) - 1;
-
-  //
+void ExtractFileBase (const char *path, char *dest, size_t destsize) {
+  const char *src = path+strlen(path)-1;
   // back up until a \ or the start
-  //
-  while (src != path && *(src-1) != '/')
-    src--;
-
-  while (*src && *src != '.')
-  {
+  while (src != path && !isSlash(src[-1])) --src;
+  while (*src && *src != '.') {
+    if (destsize == 0) Error("path too long");
     *dest++ = *src++;
+    --destsize;
   }
+  if (destsize == 0) Error("path too long");
   *dest = 0;
 }
+
 
 //==========================================================================
 //
 //  ExtractFileExtension
 //
 //==========================================================================
-
-void ExtractFileExtension(const char *path, char *dest)
-{
-  const char  *src;
-
-  src = path + strlen(path) - 1;
-
-  //
+void ExtractFileExtension (const char *path, char *dest, size_t destsize) {
+  const char *src = path+strlen(path)-1;
   // back up until a . or the start
-  //
-  while (src != path && *(src-1) != '.')
-    src--;
-  if (src == path)
-  {
-    *dest = 0;    // no extension
+  while (src != path && src[-1] != '.') {
+    if (isSlash(src[-1])) {
+      if (destsize == 0) Error("path too long");
+      *dest = 0; // no extension
+      return;
+    }
+    --src;
+  }
+  if (src == path) {
+    if (destsize == 0) Error("path too long");
+    *dest = 0; // no extension
     return;
   }
-
+  --src; // take dot
+  if (strlen(src)+1 > destsize) Error("path too long");
   strcpy(dest, src);
 }
+
 
 //==========================================================================
 //
 //  FixFileSlashes
 //
 //==========================================================================
-
-void FixFileSlashes(char *path)
-{
-  while (*path)
-  {
-    if (*path == '\\')
-      *path = '/';
-    path++;
+void FixFileSlashes (char *path) {
+  while (*path) {
+    if (*path == '\\') *path = '/';
+    ++path;
   }
 }
+
 
 //==========================================================================
 //
 //  LoadFile
 //
 //==========================================================================
-
-int LoadFile(const char *name, void **bufferptr)
-{
-  FILE    *f;
-  int     length;
-  int     count;
-  void    *buffer;
+int LoadFile (const char *name, void **bufferptr) {
+  FILE *f;
+  int length;
+  int count;
+  void *buffer;
 
   f = fopen(name, "rb");
-  if (!f)
-  {
-    Error("Couldn't open file \"%s\".", name);
-  }
+  if (!f) Error("Couldn't open file \"%s\".", name);
 
   fseek(f, 0, SEEK_END);
   length = ftell(f);
@@ -266,8 +232,7 @@ int LoadFile(const char *name, void **bufferptr)
   count = int(fread(buffer, 1, length, f));
   fclose (f);
 
-  if (count != length)
-  {
+  if (count != length) {
     Z_Free(buffer);
     Error("Couldn't read file \"%s\".", name);
   }

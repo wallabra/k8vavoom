@@ -757,7 +757,8 @@ void TVisBuilder::Run (const char *srcfile, const char *gwafile) {
   char bakext[8];
 
   strcpy(filename, srcfile);
-  DefaultExtension(filename, ".wad");
+  DefaultExtension(filename, sizeof(filename), ".wad");
+  if (strlen(filename)+1 > sizeof(destfile)) Error("file name too long");
   strcpy(destfile, filename);
   inwad.Open(filename);
   mainwad = &inwad;
