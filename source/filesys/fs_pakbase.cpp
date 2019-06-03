@@ -669,7 +669,7 @@ int VPakFileBase::CheckNumForFileName (const VStr &fileName) {
 //==========================================================================
 int VPakFileBase::FindACSObject (const VStr &fname) {
   VStr afn = fname.ExtractFileBaseName();
-  if (afn.ExtractFileExtension().ICmp("o") == 0) afn = afn.StripExtension();
+  if (afn.ExtractFileExtension().strEquCI(".o")) afn = afn.StripExtension();
   if (afn.length() == 0) return -1;
   VName ln = VName(*afn, VName::AddLower8);
   if (developer) GCon->Logf(NAME_Dev, "*** ACS: looking for '%s' (normalized: '%s'; shorten: '%s')", *fname, *afn, *ln);

@@ -687,10 +687,10 @@ int fsysAppendPak (const VStr &fname, int pakid) {
   VStream *fl = fsysOpenFile(fname, pakid);
   if (!fl) {
     VStr ext = fname.extractFileExtension();
-    if (ext.equ1251CI("pk3")) {
+    if (ext.equ1251CI(".pk3")) {
       fn = fname.stripExtension()+".wad";
       fl = fsysOpenFile(fn, pakid);
-    } else if (ext.equ1251CI("wad")) {
+    } else if (ext.equ1251CI(".wad")) {
       fn = fname.stripExtension()+".pk3";
       fl = fsysOpenFile(fn, pakid);
     }
@@ -834,10 +834,10 @@ static bool isPrefixEqu (const VStr &p0, const VStr &p1) {
   if (p0.length() == p1.length() && p0.equ1251CI(p1)) return true;
   VStr ext0 = p0.extractFileExtension();
   VStr ext1 = p0.extractFileExtension();
-  if (ext0.equ1251CI("pk3")) ext0 = "wad";
-  if (ext1.equ1251CI("pk3")) ext1 = "wad";
-  VStr s0 = p0.stripExtension()+"."+ext0;
-  VStr s1 = p1.stripExtension()+"."+ext1;
+  if (ext0.equ1251CI(".pk3")) ext0 = ".wad";
+  if (ext1.equ1251CI(".pk3")) ext1 = ".wad";
+  VStr s0 = p0.stripExtension()+ext0;
+  VStr s1 = p1.stripExtension()+ext1;
   return (s0.length() == s1.length() && s0.equ1251CI(s1));
 }
 

@@ -91,6 +91,7 @@ VStr W_RealLumpName (int lump); // without pak prefix
 VStr W_FullPakNameForLump (int lump);
 VStr W_FullPakNameByFile (int fidx); // pass result of `W_LumpFile()`
 int W_LumpFile (int lump);
+bool W_IsAuxLump (int lump); // -1 is not aux ;-)
 
 // this is used to resolve animated ranges
 // returns handle or -1

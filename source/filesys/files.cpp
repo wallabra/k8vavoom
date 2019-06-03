@@ -534,11 +534,11 @@ static void tempMount (const PWadFile &pwf) {
       //GCon->Logf(NAME_Init, "TEMPMOUNT: WAD: %s", *pwf.fname);
       W_AddAuxiliaryStream(strm, WAuxFileType::Wad);
     } else {
-      VStr ext = pwf.fname.ExtractFileExtension().ToLower();
-      if (ext == "pk3") {
+      VStr ext = pwf.fname.ExtractFileExtension();
+      if (ext.strEquCI(".pk3")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: PK3: %s", *pwf.fname);
         W_AddAuxiliaryStream(strm, WAuxFileType::Pk3);
-      } else if (ext == "zip") {
+      } else if (ext.strEquCI(".zip")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: ZIP: %s", *pwf.fname);
         W_AddAuxiliaryStream(strm, WAuxFileType::Zip);
       }
@@ -701,8 +701,8 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
     GCon->Logf(NAME_Warning,"cannot add file \"%s\"", *fname);
     return;
   }
-  VStr ext = fname.ExtractFileExtension().ToLower();
-  if (ext == "pk3" || ext == "zip") {
+  VStr ext = fname.ExtractFileExtension();
+  if (ext.strEquCI(".pk3") || ext.strEquCI(".zip")) {
     AddZipFile(fname);
   } else {
     if (allowFail) {
@@ -885,9 +885,9 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       //fprintf(stderr, "  <%s>\n", *test);
       if (test[0] == '_' || test[0] == '.') continue; // skip it
-      VStr ext = test.ExtractFileExtension().ToLower();
-           if (ext == "wad") WadFiles.Append(test);
-      else if (ext == "pk3") ZipFiles.Append(test);
+      VStr ext = test.ExtractFileExtension();
+           if (ext.strEquCI(".wad")) WadFiles.Append(test);
+      else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
     }
     Sys_CloseDir(dirit);
     qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
@@ -924,9 +924,9 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
       for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
         //fprintf(stderr, "  <%s>\n", *test);
         if (test[0] == '_' || test[0] == '.') continue; // skip it
-        VStr ext = test.ExtractFileExtension().ToLower();
-             if (ext == "wad") WadFiles.Append(test);
-        else if (ext == "pk3") ZipFiles.Append(test);
+        VStr ext = test.ExtractFileExtension();
+             if (ext.strEquCI(".wad")) WadFiles.Append(test);
+        else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
       }
       Sys_CloseDir(dirit);
       qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
@@ -1125,24 +1125,58 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   } else {
     if (games.length() != 1) {
       // try to select DooM or DooM II automatically
-      if (true) {
+      {
         bool oldReport = fsys_no_dup_reports;
         fsys_no_dup_reports = true;
         W_CloseAuxiliary();
         for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
         //GCon->Log("**********************************");
-        VStr mname = W_FindMapInAuxuliaries(nullptr);
-        W_CloseAuxiliary();
-        fsys_no_dup_reports = oldReport;
-        if (!mname.isEmpty()) {
-          //GCon->Logf("MNAME: <%s>", *mname);
-          // found map, find DooM or DooM II game definition
-          VStr gamename = (mname[0] == 'm' ? "doom2" : "doom");
-          for (int gi = 0; gi < games.length(); ++gi) {
-            version_t &G = games[gi];
-            if (G.param.Cmp(gamename) == 0) {
-              selectedGame = gi;
-              break;
+        // try "GAMEINFO" first
+        VStr iwadGI;
+        auto gilump = W_CheckNumForName("gameinfo");
+        if (W_IsAuxLump(gilump)) {
+          VScriptParser *gsc = new VScriptParser(W_FullLumpName(gilump), W_CreateLumpReaderNum(gilump));
+          gsc->SetCMode(true);
+          while (gsc->GetString()) {
+            if (gsc->QuotedString) continue; // just in case
+            if (gsc->String.strEquCI("iwad")) {
+              gsc->Check("=");
+              if (gsc->GetString()) iwadGI = gsc->String;
+              continue;
+            }
+          }
+          iwadGI = iwadGI.ExtractFileBaseName();
+          if (iwadGI.length()) {
+            if (!iwadGI.ExtractFileExtension().strEquCI(".wad")) iwadGI += ".wad";
+            for (int gi = 0; gi < games.length() && selectedGame < 0; ++gi) {
+              version_t &gmi = games[gi];
+              for (int f = 0; f < gmi.MainWads.length(); ++f) {
+                VStr gw = gmi.MainWads[f].extractFileBaseName();
+                if (gw.strEquCI(iwadGI)) {
+                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *gmi.param);
+                  selectedGame = gi;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        // try to guess from map name
+        if (selectedGame < 0) {
+          VStr mname = W_FindMapInAuxuliaries(nullptr);
+          W_CloseAuxiliary();
+          fsys_no_dup_reports = oldReport;
+          if (!mname.isEmpty()) {
+            //GCon->Logf("MNAME: <%s>", *mname);
+            // found map, find DooM or DooM II game definition
+            VStr gamename = (mname[0] == 'm' ? "doom2" : "doom");
+            for (int gi = 0; gi < games.length(); ++gi) {
+              version_t &G = games[gi];
+              if (G.param.Cmp(gamename) == 0) {
+                GCon->Logf(NAME_Init, "Detected game is '%s' (from map lump '%s')", *G.param, *mname);
+                selectedGame = gi;
+                break;
+              }
             }
           }
         }
@@ -1158,7 +1192,11 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
               VStr gw = gmi.MainWads[f].extractFileBaseName();
               if (mw.ICmp(gw) == 0) { okwad = true; break; }
             }
-            if (okwad) { selectedGame = gi; break; }
+            if (okwad) {
+              GCon->Logf(NAME_Init, "Detected game is '%s' (from iwad)", *gmi.param);
+              selectedGame = gi;
+              break;
+            }
           }
         }
       }
@@ -1168,7 +1206,11 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           VStr mainWadPath;
           for (int f = 0; f < gmi.MainWads.length(); ++f) {
             mainWadPath = FindMainWad(gmi.MainWads[f]);
-            if (!mainWadPath.isEmpty()) { selectedGame = gi; break; }
+            if (!mainWadPath.isEmpty()) {
+              GCon->Logf(NAME_Init, "Detected game is '%s' (iwad search)", *gmi.param);
+              selectedGame = gi;
+              break;
+            }
           }
           if (selectedGame >= 0) break;
         }

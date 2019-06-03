@@ -64,9 +64,9 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
 
   wadfiles.Append(FileName);
 
-  VStr ext = FileName.ExtractFileExtension().ToLower();
+  VStr ext = FileName.ExtractFileExtension();
   VWadFile *Wad = new VWadFile;
-  if (ext != "wad" && ext != "gwa") {
+  if (!ext.strEquCI(".wad") && !ext.strEquCI(".gwa")) {
     Wad->OpenSingleLump(FileName);
   } else {
     Wad->Open(FileName, FixVoices, nullptr, GwaDir);
@@ -74,7 +74,7 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
   SearchPaths.Append(Wad);
 
 #ifdef VAVOOM_USE_GWA
-  if (ext == "wad") {
+  if (ext.strEquCI(".wad")) {
     VStr gl_name;
 
     bool FoundGwa = false;
@@ -293,15 +293,6 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
     int i = SearchPaths[wi]->CheckNumForName(Name, NS);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
-
-  /*
-  // k8: try "name.lmp"
-  VStr xname = VStr(*Name)+".lmp";
-  for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
-    int i = SearchPaths[wi]->CheckNumForFileName(xname);
-    if (i >= 0) return MAKE_HANDLE(wi, i);
-  }
-  */
 
   // not found
   return -1;
@@ -860,4 +851,16 @@ bool W_IsIWADLump (int lump) {
   int fidx = FILE_INDEX(lump);
   if (fidx < 0 || fidx >= SearchPaths.length()) return false;
   return SearchPaths[fidx]->iwad;
+}
+
+
+//==========================================================================
+//
+//  W_IsAuxLump
+//
+//==========================================================================
+bool W_IsAuxLump (int lump) {
+  if (lump < 0 || !AuxiliaryIndex) return false;
+  int fidx = FILE_INDEX(lump);
+  return (fidx >= AuxiliaryIndex);
 }

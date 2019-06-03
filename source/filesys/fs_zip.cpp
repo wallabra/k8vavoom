@@ -241,7 +241,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
 
   //files = new VPakFileInfo[NumFiles];
 
-  bool isPK3 = (PakFileName.ExtractFileExtension().ICmp("pk3") == 0);
+  bool isPK3 = PakFileName.ExtractFileExtension().strEquCI(".pk3");
   bool canHasPrefix = true;
   if (isPK3) canHasPrefix = false; // do not remove prefixes in pk3
   //GCon->Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);
