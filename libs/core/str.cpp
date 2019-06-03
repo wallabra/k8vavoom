@@ -1332,7 +1332,7 @@ VStr VStr::ExtractFilePath () const {
 }
 
 
-VStr VStr::ExtractFileName() const {
+VStr VStr::ExtractFileName () const {
   const char *data = getData();
   const char *src = data+length();
 #if !defined(_WIN32)
@@ -1344,7 +1344,7 @@ VStr VStr::ExtractFileName() const {
 }
 
 
-VStr VStr::ExtractFileBase () const {
+VStr VStr::ExtractFileBase (bool doSysError) const {
   int i = int(length());
 
   if (i == 0) return VStr();
@@ -1361,7 +1361,10 @@ VStr VStr::ExtractFileBase () const {
   int start = i;
   int length = 0;
   while (data[i] && data[i] != '.') {
-    if (++length == 9) Sys_Error("Filename base of %s >8 chars", data);
+    if (++length == 9) {
+      if (doSysError) Sys_Error("Filename base of %s >8 chars", data);
+      break;
+    }
     ++i;
   }
   return VStr(*this, start, length);
@@ -1390,7 +1393,7 @@ VStr VStr::ExtractFileExtension () const {
   const char *src = data+length();
   while (src != data) {
     char ch = src[-1];
-    if (ch == '.') return VStr(src);
+    if (ch == '.') return VStr(src-1);
 #if !defined(_WIN32)
     if (ch == '/') return VStr();
 #else

@@ -405,9 +405,9 @@ public:
 
   VStr ExtractFilePath () const;
   VStr ExtractFileName () const;
-  VStr ExtractFileBase () const;
+  VStr ExtractFileBase (bool doSysError=true) const; // this tries to get only name w/o extension, and calls `Sys_Error()` on too long names
   VStr ExtractFileBaseName () const;
-  VStr ExtractFileExtension () const;
+  VStr ExtractFileExtension () const; // with a dot
   VStr StripExtension () const;
   VStr DefaultPath (const VStr &basepath) const;
   VStr DefaultExtension (const VStr &extension) const;
@@ -415,7 +415,7 @@ public:
 
   inline VStr extractFilePath () const { return ExtractFilePath(); }
   inline VStr extractFileName () const { return ExtractFileName(); }
-  inline VStr extractFileBase () const { return ExtractFileBase(); }
+  inline VStr extractFileBase (bool doSysError=true) const { return ExtractFileBase(doSysError); }
   inline VStr extractFileBaseName () const { return ExtractFileBaseName(); }
   inline VStr extractFileExtension () const { return ExtractFileExtension(); }
   inline VStr stripExtension () const { return StripExtension(); }
