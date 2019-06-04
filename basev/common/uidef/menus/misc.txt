@@ -64,10 +64,7 @@ menudef MiscOptions {
       "ZDBSP",
     }
     help =
-      "Internal node builder."
-      "AJBSP is slow, but reliable."
-      "ZDBSP is fast, but it breaks PVS calculations."
-      "It is currently not recommended to use ZDBSP.";
+      "Internal node builder.";
   }
 
   option bool {
@@ -89,23 +86,23 @@ menudef MiscOptions {
     title = "Allow PWAD z-nodes";
     cvar = nodes_allow_compressed;
     help =
-      "Load prebuild GL Nodes?"
+      "Load prebuilt GL Nodes?"
       "GL Node loader is buggy, and may not work."
       "If turned off, the engine will use internal node builder."
-      "If in doubt, set this to 'OFF'";
+      "If in doubt, set this to 'OFF'.";
   }
 
-  option bool {
+  option bool [__k8vavoom_developer_version > 0] {
     title = "Build (rough) PVS";
-    cvar = loader_build_pvs;
+    cvar = pvs_build_on_loading;
     help =
       "Build simple PVS set."
       "This rarely speeds up rendering, but can take alot of time to build.";
   }
 
-  option numeric {
+  option numeric [__k8vavoom_developer_version > 0] {
     title = "PVS threads";
-    cvar = loader_pvs_builder_threads;
+    cvar = pvs_threads;
     step = 1;
     min = 0;
     max = 16;

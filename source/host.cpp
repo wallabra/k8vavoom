@@ -60,6 +60,14 @@ VCvarB developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/
 VCvarB developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #endif
 
+#ifdef VAVOOM_K8_DEVELOPER
+# define CVAR_K8_DEV_VALUE  true
+#else
+# define CVAR_K8_DEV_VALUE  false
+#endif
+VCvarB k8vavoom_developer_version("__k8vavoom_developer_version", CVAR_K8_DEV_VALUE, "Don't even think about this.", CVAR_Rom);
+
+
 int host_frametics = 0; // used only in non-realtime mode
 double host_frametime = 0;
 double host_framefrac = 0; // unused frame time left from previous `SV_Ticker()` in realtime mode
