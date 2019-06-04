@@ -31,7 +31,7 @@
 #include "r_shared.h"
 #include "fmd2defs.h"
 
-#define MAX_SPRITE_MODELS 10*1024
+#define MAX_SPRITE_MODELS  (10*1024)
 
 // was 0.1
 #define FUZZY_ALPHA  (0.7f)
@@ -442,7 +442,7 @@ private:
 
 protected:
   void NewBSPVisibilityFrame ();
-  bool CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub);
+  bool CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel);
   bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
   void ResetVisFrameCount ();

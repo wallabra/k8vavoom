@@ -24,11 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//**
-//**  Rendering main loop and setup functions, utility functions (BSP,
-//**  geometry, trigonometry). See tables.c, too.
-//**
-//**************************************************************************
 #include <limits.h>
 #include <float.h>
 
@@ -43,6 +38,7 @@ extern VCvarB r_advlight_opt_optimise_scissor;
 extern VCvarB dbg_clip_dump_added_ranges;
 
 static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
+static VCvarB r_lightflood_check_plane_angles("r_lightflood_check_plane_angles", true, "Check seg planes angles in light floodfill?", CVAR_Archive);
 
 
 void R_FreeSkyboxData ();
@@ -107,10 +103,10 @@ VCvarF fov("fov", "90", "Field of vision.");
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
-static TArray<VTextureTranslation*> CachedTranslations;
+static TArray<VTextureTranslation *> CachedTranslations;
 
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
-static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
+static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:lightmap; 2:stenciled).", CVAR_Archive);
 
 int r_precache_textures_override = -1;
 
@@ -772,10 +768,26 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
 
 //==========================================================================
 //
-//  VRenderLevelShared::CheckBSPVisibilitySub
+//  PlaneAngles2D
 //
 //==========================================================================
-bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub) {
+static float PlaneAngles2D (const TPlane *from, const TPlane *to) {
+  float afrom = VectorAngleYaw(from->normal);
+  float ato = VectorAngleYaw(to->normal);
+  return AngleMod(AngleMod(ato-afrom+180)-180);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CheckBSPVisibilitySub
+//
+//  `firsttravel` is used to reject invisible segs
+//  it is set before first recursive call, and all segs whose planes are
+//  angled with 190 or more relative to this first seg are rejected
+//
+//==========================================================================
+bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel) {
   const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
   // rendered means "visible"
   if (BspVis[csubidx>>3]&(1<<(csubidx&7))) return true;
@@ -813,8 +825,10 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
     }
     // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
+    // check plane angles
+    if (r_lightflood_check_plane_angles && firsttravel && PlaneAngles2D(firsttravel, seg) >= 190.0f) continue;
     // ok, it is touching, recurse
-    if (CheckBSPVisibilitySub(org, radius, seg->partner->front_sub)) {
+    if (CheckBSPVisibilitySub(org, radius, seg->partner->front_sub, (firsttravel ? firsttravel : seg))) {
       //GCon->Logf("RECURSE HIT!");
       return true;
     }
@@ -868,7 +882,7 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
     bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
     memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
   }
-  return CheckBSPVisibilitySub(org, radius, sub);
+  return CheckBSPVisibilitySub(org, radius, sub, nullptr);
 }
 
 

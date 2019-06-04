@@ -24,11 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//**
-//**  Rendering main loop and setup functions, utility functions (BSP,
-//**  geometry, trigonometry). See tables.c, too.
-//**
-//**************************************************************************
 #include "gamedefs.h"
 #include "r_local.h"
 
