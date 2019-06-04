@@ -627,6 +627,7 @@ final void CheckAndDropNode () {
 //  AngleDiff
 //
 //==========================================================================
+/+
 static final float AngleDiff (float afrom, float ato) {
   return AngleMod360(ato-afrom+180)-180;
   /*
@@ -637,6 +638,7 @@ static final float AngleDiff (float afrom, float ato) {
   */
   //return (a+180)%360-180;
 }
++/
 
 
 //==========================================================================
