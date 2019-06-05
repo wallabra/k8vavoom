@@ -270,12 +270,39 @@ VStr VLanguage::Find (VName Key, bool *found) const {
   for (const char *s = *Key; *s; ++s) {
     if (*s >= 'A' && *s <= 'Z') {
       // found uppercase letter, try lowercase name
-      VName loname = VName(*VStr(*Key).toLowerCase());
-      Found = table->Find(loname);
-      if (Found) {
-        if (found) *found = true;
-        return Found->Value;
+      VName loname = VName(*Key, VName::FindLower);
+      if (loname != NAME_None) {
+        Found = table->Find(loname);
+        if (Found) {
+          if (found) *found = true;
+          return Found->Value;
+        }
       }
+      break;
+    }
+  }
+  if (found) *found = false;
+  return VStr();
+}
+
+
+//==========================================================================
+//
+//  VLanguage::Find
+//
+//==========================================================================
+VStr VLanguage::Find (const char *s, bool *found) const {
+  if (!s) s = "";
+  if (!s[0]) {
+    if (found) *found = true;
+    return VStr();
+  }
+  VName loname = VName(s, VName::FindLower);
+  if (loname != NAME_None) {
+    VLangEntry *Found = table->Find(loname);
+    if (Found) {
+      if (found) *found = true;
+      return Found->Value;
     }
   }
   if (found) *found = false;
@@ -298,12 +325,37 @@ VStr VLanguage::operator [] (VName Key) const {
 
 //==========================================================================
 //
+//  VLanguage::operator[]
+//
+//==========================================================================
+VStr VLanguage::operator [] (const char *s) const {
+  bool found = false;
+  VStr res = Find(s, &found);
+  if (found) return res;
+  return (s ? VStr(s) : VStr::EmptyString);
+}
+
+
+//==========================================================================
+//
 //  VLanguage::HasTranslation
 //
 //==========================================================================
 bool VLanguage::HasTranslation (VName s) const {
   bool found = false;
-  VStr res = Find(s, &found);
+  (void)Find(s, &found);
+  return found;
+}
+
+
+//==========================================================================
+//
+//  VLanguage::HasTranslation
+//
+//==========================================================================
+bool VLanguage::HasTranslation (const char *s) const {
+  bool found = false;
+  (void)Find(s, &found);
   return found;
 }
 

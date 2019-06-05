@@ -43,9 +43,13 @@ public:
   void LoadStrings (const char *LangId);
 
   VStr Find (VName, bool *found=nullptr) const;
+  VStr Find (const char *s, bool *found=nullptr) const;
+
   VStr operator [] (VName) const;
+  VStr operator [] (const char *s) const;
 
   bool HasTranslation (VName s) const;
+  bool HasTranslation (const char *s) const;
 
   VName GetStringId (const VStr &);
   void ReplaceString (VName, const VStr &);
