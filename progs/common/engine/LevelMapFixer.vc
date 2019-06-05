@@ -469,7 +469,7 @@ void KnownMapBugFixer () {
 
   // Hell Revealed MAP23
   // https://forum.zdoom.org/viewtopic.php?t=60181&p=1101976#p1101976
-  if (MapHashMD5 == "16E621E46F87418F6F8DB71D68433AE0") {
+  if (MapHashMD5 == "16e621e46f87418f6f8db71d68433ae0") {
     // Arachnotrons near beginning sometimes don't spawn if imps block
     // their one-time teleport. Make these teleports repeatable to ensure
     // maxkills are always possible.
@@ -478,5 +478,16 @@ void KnownMapBugFixer () {
     Lines[2039].flags |= ML_REPEAT_SPECIAL;
     Lines[2040].flags |= ML_REPEAT_SPECIAL;
     printwarn("MAPFIX: Hell Revealed MAP23 detected and fixed");
+  }
+
+  // Venom MAP01, swap sides
+  if (MapHashMD5 == "36e85e1b6d8a6d7f11dfebd17a8d03d1") {
+    int sn0 = Lines[1238].sidenum[0];
+    int sn1 = Lines[1238].sidenum[1];
+    Sides[sn1].Top = Sides[sn0].Top;
+    Sides[sn1].Bot = Sides[sn0].Bot;
+    Sides[sn1].TopTexture = Sides[sn0].TopTexture;
+    Sides[sn1].BottomTexture = Sides[sn0].BottomTexture;
+    printwarn("MAPFIX: Venom MAP01 detected and fixed");
   }
 }
