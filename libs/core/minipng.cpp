@@ -115,24 +115,34 @@ bool PNGHandle::loadIDAT () {
 }
 
 
-// as we will premultiply it all again, just make all transparent pixels that we cannot restore black, 'cause why not?
-PalEntry PNGHandle::getPixel (int x, int y) const {
+PalEntry PNGHandle::getPixelPremulted (int x, int y) const {
+  return getPixel(x, y).premulted();
+}
+
+
+PalEntry PNGHandle::getPixel (int x, int y, bool keepTransparent) const {
   const vuint8 *a = pixaddr(x, y);
   if (!a) return PalEntry::Transparent();
+  vuint8 alpha;
   switch (colortype) {
     case ColorGrayscale:
-      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent();
-      return PalEntry::RGBA(255, 255, 255, a[0]).premulted();
+      alpha = (hasTrans && trans[a[0]] == 0 ? 0 : 255);
+      if (!keepTransparent && alpha == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(a[0], a[0], a[0], alpha);
     case ColorRGB:
-      if (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB) return PalEntry::Transparent();
-      return PalEntry::RGB(a[0], a[1], a[2]); // opaque
+      alpha = (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB ? 0 : 255);
+      if (!keepTransparent && alpha == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(a[0], a[1], a[2], alpha);
     case ColorPaletted:
-      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent();
-      return PalEntry::RGB(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2]); // opaque
+      alpha = (hasTrans && trans[a[0]] == 0 ? 0 : 255);
+      if (!keepTransparent && alpha == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2], alpha);
     case ColorGrayscaleAlpha:
-      return PalEntry::RGBA(a[0], a[0], a[0], a[1]).premulted();
+      if (!keepTransparent && a[1] == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(a[0], a[0], a[0], a[1]);
     case ColorRGBA:
-      return PalEntry::RGBA(a[0], a[1], a[2], a[3]).premulted();
+      if (!keepTransparent && a[3] == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
   }
   return PalEntry::Transparent();
 }

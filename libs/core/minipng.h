@@ -193,7 +193,8 @@ struct PNGHandle {
   bool loadIDAT ();
 
   // returns premultiplied pixel value
-  PalEntry getPixel (int x, int y) const;
+  PalEntry getPixel (int x, int y, bool keepTransparent=false) const;
+  PalEntry getPixelPremulted (int x, int y) const;
 
 private:
   PNGHandle (VStream *file);
