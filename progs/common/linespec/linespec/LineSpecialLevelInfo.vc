@@ -319,10 +319,10 @@ override void SpawnSpecials () {
 //  ActivateLine
 //
 //==========================================================================
-final bool ActivateLine (line_t *Line, EntityEx A, int Side, int ActivationType) {
+final bool ActivateLine (line_t *Line, EntityEx A, int Side, int ActivationType, optional out bool buttonSuccess) {
   int lineActivation;
   bool repeat;
-  bool buttonSuccess;
+  //bool buttonSuccess;
   bool changeBack;
 
   if (!CheckActivation(ActivationType, Line, Side, A)) return false;
@@ -334,11 +334,11 @@ final bool ActivateLine (line_t *Line, EntityEx A, int Side, int ActivationType)
   if ((lineActivation&(SPAC_Use|SPAC_Impact|SPAC_UseThrough)) && buttonSuccess) {
     ubyte Quest;
     ChangeSwitchTexture(Line->sidenum[0], repeat,
-      Line->special == LNSPEC_ExitNormal ||
-      Line->special == LNSPEC_ExitSecret ||
-      Line->special == LNSPEC_TeleportNewMap ||
-      Line->special == LNSPEC_TeleportEndGame
-      ? 'switches/exitbutn' : 'switches/normbutn', Quest);
+      (Line->special == LNSPEC_ExitNormal ||
+       Line->special == LNSPEC_ExitSecret ||
+       Line->special == LNSPEC_TeleportNewMap ||
+       Line->special == LNSPEC_TeleportEndGame
+       ? 'switches/exitbutn' : 'switches/normbutn'), Quest);
   }
   if (changeBack) XLevel.Sides[Line->sidenum[1]].MidTexture = XLevel.Sides[Line->sidenum[0]].MidTexture;
   if (!repeat && buttonSuccess) Line->special = 0; // clear the special on non-retriggerable lines
