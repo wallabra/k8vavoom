@@ -1294,7 +1294,7 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
   }
   // first try disk file
   if (FL_IsSafeDiskFileName(Name)) {
-    VStr diskName = FL_GetUserDataDir()+"/"+Name;
+    VStr diskName = FL_GetUserDataDir(false)+"/"+Name;
     VStream *st = FL_OpenSysFileRead(*diskName);
     if (st) {
       bool ok = true;

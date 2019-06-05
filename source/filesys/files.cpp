@@ -2119,11 +2119,11 @@ VStr FL_GetScreenshotsDir () {
 //  FL_GetUserDataDir
 //
 //==========================================================================
-VStr FL_GetUserDataDir () {
+VStr FL_GetUserDataDir (bool shouldCreate) {
   VStr res = FL_GetConfigDir();
   res += "/userdata";
   //res += '/'; res += game_name;
-  Sys_CreateDirectory(res);
+  if (shouldCreate) Sys_CreateDirectory(res);
   return res;
 }
 

@@ -281,7 +281,7 @@ IMPLEMENT_FUNCTION(VObject, W_CheckNumForNameInFile) {
 IMPLEMENT_FUNCTION(VObject, FS_FileExists) {
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_BOOL(false); return; }
-  VStr diskName = FL_GetUserDataDir()+"/"+fname;
+  VStr diskName = FL_GetUserDataDir(false)+"/"+fname;
   VStream *st = FL_OpenSysFileRead(*diskName);
   RET_BOOL(!!st);
   delete st;
@@ -291,7 +291,7 @@ IMPLEMENT_FUNCTION(VObject, FS_FileExists) {
 IMPLEMENT_FUNCTION(VObject, FS_ReadFileContents) {
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_STR(VStr::EmptyString); return; }
-  VStr diskName = FL_GetUserDataDir()+"/"+fname;
+  VStr diskName = FL_GetUserDataDir(false)+"/"+fname;
   VStream *st = FL_OpenSysFileRead(*diskName);
   if (!st) { RET_STR(VStr::EmptyString); return; }
   VStr s;
@@ -309,7 +309,7 @@ IMPLEMENT_FUNCTION(VObject, FS_WriteFileContents) {
   P_GET_STR(contents);
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_BOOL(false); return; }
-  VStr diskName = FL_GetUserDataDir()+"/"+fname;
+  VStr diskName = FL_GetUserDataDir(true)+"/"+fname;
   VStream *st = FL_OpenSysFileWrite(*diskName);
   if (!st) { RET_BOOL(false); return; }
   if (contents.length()) st->Serialise(*contents, contents.length());
