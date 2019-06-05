@@ -2230,7 +2230,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                   DI.Amount = max2(0, sc->Number);
                 }
               }
-              GetClassDropItems(Class).Insert(0, DI);
+              if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
+                GetClassDropItems(Class).Clear();
+              } else {
+                GetClassDropItems(Class).Insert(0, DI);
+              }
             }
             break;
           case PROP_States:
@@ -2343,7 +2347,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 DI.Amount = sc->Number;
                 if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
               }
-              DropItems.Insert(0, DI);
+              if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
+                DropItems.Clear();
+              } else {
+                DropItems.Insert(0, DI);
+              }
             }
             break;
           case PROP_MorphStyle:
