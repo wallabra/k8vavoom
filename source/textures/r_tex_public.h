@@ -279,7 +279,7 @@ public:
   virtual ~VTexture ();
 
   // this won't add texture to texture hash
-  static VTexture *CreateTexture (int Type, int LumpNum);
+  static VTexture *CreateTexture (int Type, int LumpNum, bool setName=true);
 
   // WARNING! this converts texture to RGBA!
   // DO NOT USE! DEBUG ONLY!

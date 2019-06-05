@@ -78,7 +78,7 @@ typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 //  VTexture::CreateTexture
 //
 //==========================================================================
-VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
+VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
   static const struct {
     VTexCreateFunc Create;
     int Type;
@@ -100,13 +100,15 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
   bool doSeek = false;
 
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
-    if (TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any || Type == TEXTYPE_Any) {
+    if (Type == TEXTYPE_Any || TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any) {
       if (doSeek) Strm.Seek(0); else doSeek = true;
       VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
-        if (Tex->Name == NAME_None) {
-          Tex->Name = W_LumpName(LumpNum);
-          if (Tex->Name == NAME_None) Tex->Name = VName(*W_RealLumpName(LumpNum));
+        if (setName) {
+          if (Tex->Name == NAME_None) {
+            Tex->Name = W_LumpName(LumpNum);
+            if (Tex->Name == NAME_None) Tex->Name = VName(*W_RealLumpName(LumpNum));
+          }
         }
         Tex->Type = Type;
         return Tex;

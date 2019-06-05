@@ -153,7 +153,7 @@ void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
-  if (!Tex || Tex->Type == TEXTYPE_Null || Tex->Width < 1 || Tex->Height < 1) return;
+  if (!Tex || /*Tex->Type == TEXTYPE_Null ||*/ Tex->Width < 1 || Tex->Height < 1) return;
   SetTexture(Tex, 0); // default colormap
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

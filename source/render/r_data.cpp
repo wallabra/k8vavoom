@@ -1363,7 +1363,7 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
     //if (iwad && doWarn) GCon->Logf(NAME_Warning, "IWAD PASS! '%s'", *img);
 
     basetex->nofullbright = nofb;
-    delete basetex->Brightmap;
+    delete basetex->Brightmap; // it is safe to remove it, as each brightmap texture is unique
     basetex->Brightmap = nullptr;
 
     int lmp = W_CheckNumForFileName(bmap);
@@ -1397,12 +1397,13 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 
     if (thiswad && W_LumpFile(lmp) != W_LumpFile(basetex->SourceLump)) return;
 
-    VTexture *bm = VTexture::CreateTexture(TEXTYPE_Any, lmp);
+    VTexture *bm = VTexture::CreateTexture(TEXTYPE_Any, lmp, false); // don't set name
     if (!bm) {
       GCon->Logf(NAME_Warning, "cannot load brightmap texture '%s'", *bmap);
       return;
     }
     bm->nofullbright = nofb; // just in case
+    bm->Name = VName(*(W_RealLumpName(lmp).ExtractFileBaseName().StripExtension()), VName::AddLower);
 
     if (bm->GetWidth() != basetex->GetWidth() || bm->GetHeight() != basetex->GetHeight()) {
       if (doWarn) {
@@ -1415,7 +1416,7 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
     }
 
     basetex->Brightmap = bm;
-    if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s' (%p)", *basetex->Name, *bm->Name, basetex);
+    if (doLoadDump) GCon->Logf(NAME_Warning, "texture '%s' got brightmap '%s' (%p : %p) (lump %d:%s)", *basetex->Name, *bm->Name, basetex, bm, lmp, *W_FullLumpName(lmp));
   }
 #else
   (void)img;
