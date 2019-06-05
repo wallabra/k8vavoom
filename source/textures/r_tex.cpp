@@ -1288,9 +1288,11 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
         //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
         wpi.tx = VTexture::CreateTexture((isFlat ? TEXTYPE_Flat : TEXTYPE_WallPatch), LNum);
-        check(wpi.tx->SourceLump == LNum);
         if (!wpi.tx) GCon->Logf(NAME_Warning, "%s: loading patch '%s' (%d/%d) failed", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
-        if (wpi.tx) AddTexture(wpi.tx);
+        if (wpi.tx) {
+          check(wpi.tx->SourceLump == LNum);
+          AddTexture(wpi.tx);
+        }
       }
     }
     // next one
