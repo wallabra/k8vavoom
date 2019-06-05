@@ -143,7 +143,21 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
 void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
   if (!Tex) return;
   SetTexture(Tex, 0);
-  if (Tex->Brightmap) SetTexture(Tex->Brightmap, 0);
+  if (Tex->Brightmap) SetBrightmapTexture(Tex->Brightmap);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetBrightmapTexture
+//
+//==========================================================================
+void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
+  if (!Tex || Tex->Type == TEXTYPE_Null || Tex->Width < 1 || Tex->Height < 1) return;
+  SetTexture(Tex, 0); // default colormap
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  SetupTextureFiltering(r_brightmaps_filter ? 4 : 0); // trilinear or none
 }
 
 

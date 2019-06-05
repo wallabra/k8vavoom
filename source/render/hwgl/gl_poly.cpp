@@ -259,11 +259,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       SurfSimpleBrightmap.SetTexture(0);
       SurfSimpleBrightmap.SetTextureBM(1);
       p_glActiveTextureARB(GL_TEXTURE0+1);
-      SetTexture(textr->Tex->Brightmap, 0);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      SetBrightmapTexture(textr->Tex->Brightmap);
       p_glActiveTextureARB(GL_TEXTURE0);
       SetTexture(textr->Tex, textr->ColorMap);
       SurfSimpleBrightmap.SetTex(textr);
@@ -354,9 +350,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       SurfLightmapBrightmap.SetSpecularMap(2);
       SurfLightmapBrightmap.SetTextureBM(3);
       p_glActiveTextureARB(GL_TEXTURE0+3);
-      SetTexture(tex->Tex->Brightmap, 0);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      SetBrightmapTexture(tex->Tex->Brightmap);
       p_glActiveTextureARB(GL_TEXTURE0);
       SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmapBrightmap.SetTex(tex);

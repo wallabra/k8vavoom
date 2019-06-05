@@ -95,6 +95,14 @@ menudef VideoOptions {
   }
 
   option bool {
+    title = "Filter Brightmaps";
+    cvar = r_brightmaps_filter;
+    help =
+      "Perform bilinear filtering on brightmaps."
+      "This may look better, as brightmaps are supposed to glow.";
+  }
+
+  option bool {
     title = "Glowing Flats";
     cvar = r_glow_flat;
     help =

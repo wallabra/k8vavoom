@@ -55,11 +55,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     SurfMaskedBrightmapGlow.SetTexture(0);
     SurfMaskedBrightmapGlow.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
-    SetTexture(tex->Tex->Brightmap, 0);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    SetBrightmapTexture(tex->Tex->Brightmap);
     p_glActiveTextureARB(GL_TEXTURE0);
     if (gp.isActive()) {
       VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedBrightmapGlow, gp);
@@ -280,12 +276,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     SurfMaskedBrightmap.SetTexture(0);
     SurfMaskedBrightmap.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
-    SetTexture(Tex->Brightmap, 0);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
-    //SetupTextureFiltering(sprite_filter);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    SetBrightmapTexture(Tex->Brightmap);
     p_glActiveTextureARB(GL_TEXTURE0);
   } else {
     SurfMasked.Activate();
@@ -507,11 +498,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     ShadowsAmbientTransBrightmap.SetTexture(0);
     ShadowsAmbientTransBrightmap.SetTextureBM(1);
     p_glActiveTextureARB(GL_TEXTURE0+1);
-    SetTexture(tex->Tex->Brightmap, 0);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    SetBrightmapTexture(tex->Tex->Brightmap);
     p_glActiveTextureARB(GL_TEXTURE0);
     if (gp.isActive()) {
       VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientTransBrightmap, gp);

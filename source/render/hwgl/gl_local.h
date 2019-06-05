@@ -446,6 +446,7 @@ extern VCvarB gl_dbg_wireframe;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 extern VCvarB r_brightmaps_additive;
+extern VCvarB r_brightmaps_filter;
 extern VCvarB r_glow_flat;
 
 
@@ -850,6 +851,7 @@ protected:
   void FlushTexture(VTexture*);
   void DeleteTexture(VTexture*);
   void SetTexture(VTexture*, int);
+  void SetBrightmapTexture (VTexture*);
   void SetSpriteLump(VTexture*, VTextureTranslation*, int, bool asPicture);
   void SetPic(VTexture*, VTextureTranslation*, int);
   void SetPicModel(VTexture*, VTextureTranslation*, int);

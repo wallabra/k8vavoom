@@ -106,6 +106,7 @@ VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", false, "Alwa
 VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_sprite("r_brightmaps_sprite", true, "Allow sprite brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_additive("r_brightmaps_additive", true, "Are brightmaps additive, or max?", CVAR_Archive);
+VCvarB r_brightmaps_filter("r_brightmaps_filter", true, "Do bilinear filtering on brightmaps?", CVAR_Archive);
 
 VCvarB r_glow_flat("r_glow_flat", true, "Allow glowing flats?", CVAR_Archive);
 
