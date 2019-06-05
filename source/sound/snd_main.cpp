@@ -947,6 +947,18 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
 
+#if 0
+  // this is done in mapinfo
+  VStr xsong;
+  if (Song[0] == '$') {
+    VName sn = VName(Song+1, VName::FindLower);
+    if (sn != NAME_None) {
+      xsong = GLanguage[sn];
+      if (!xsong.strEquCI(Song+1)) Song = *xsong;
+    }
+  }
+#endif
+
   // find the song
   int Lump = -1;
   if (snd_external_music) {

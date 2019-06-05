@@ -665,6 +665,13 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //info->SongLump = sc->Name8;
       sc->ExpectName();
       info->SongLump = sc->Name;
+      const char *nn = *sc->Name;
+      if (nn[0] == '$') {
+        ++nn;
+        if (nn[0] && GLanguage.HasTranslation(nn)) {
+          info->SongLump = VName(*GLanguage[nn], VName::AddLower);
+        }
+      }
     } else if (sc->Check("cdtrack")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
