@@ -340,6 +340,11 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
       }
     }
   }
+
+  if (Tex < 0) Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Any, false);
+
+  if (Tex < 0) Tex = GTextureManager.AddPatch(name, TEXTYPE_WallPatch, true);
+
   if (Tex < 0) {
     miWarning(sc, "sky '%s' not found; replaced with 'sky1'", *name);
     Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_SkyMap, true);
@@ -348,6 +353,7 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
     return Tex;
     //return GTextureManager.DefaultTexture;
   }
+
   forceList.put(loname, Tex);
   miWarning(sc, "force-loaded sky '%s'", *name);
   return Tex;
