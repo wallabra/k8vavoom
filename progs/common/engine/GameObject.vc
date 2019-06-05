@@ -699,6 +699,8 @@ struct line_t : TPlane {
   int arg4;
   int arg5;
 
+  int locknumber;
+
   int LineTag;
   int HashFirst;
   int HashNext;

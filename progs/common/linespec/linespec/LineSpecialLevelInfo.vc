@@ -364,6 +364,7 @@ final bool CheckActivation (int activationType, line_t *line, int Side, EntityEx
     // let missiles use regular player teleports
     lineActivation |= SPAC_PCross;
   }
+
   // BOOM's generalized line types that allow monster use can actually be activated by anything except projectiles
   if (lineActivation&SPAC_AnyCross) lineActivation |= SPAC_Cross|SPAC_MCross;
   if (!(lineActivation&activationType)) {
@@ -371,6 +372,9 @@ final bool CheckActivation (int activationType, line_t *line, int Side, EntityEx
     if (activationType == SPAC_Push && (lineActivation&SPAC_MPush) && !A.bIsPlayer && A.bActivatePushWall) return true;
     if (activationType != SPAC_MCross || !(lineActivation&SPAC_Cross)) return false;
   }
+
+  if (line.locknumber && !CheckLock(A, line.locknumber, door:true)) return false;
+
   if (A && !A.bIsPlayer && !A.bMissile &&
       !(line->flags&ML_MONSTERSCANACTIVATE) &&
       (activationType != SPAC_MCross || !(lineActivation&SPAC_MCross)))

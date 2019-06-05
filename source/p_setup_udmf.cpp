@@ -541,6 +541,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   memset((void *)&L, 0, sizeof(VParsedLine));
   L.V1Index = -1;
   L.V2Index = -1;
+  L.L.locknumber = 0;
   L.L.alpha = 1.0f;
   L.L.LineTag = bExtended ? -1 : 0;
   L.L.sidenum[0] = -1;
@@ -831,6 +832,11 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       if (Key.strEquCI("midtex3d")) {
         //GCon->Logf(NAME_Warning, "%s: UDMF: `midtex3d` is not fully implemented", *sc.GetLoc().toStringNoCol());
         Flag(L.L.flags, ML_3DMIDTEX);
+        continue;
+      }
+
+      if (Key.strEquCI("locknumber")) {
+        L.L.locknumber = CheckInt();
         continue;
       }
     }

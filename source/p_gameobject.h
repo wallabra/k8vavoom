@@ -273,6 +273,8 @@ struct line_t : public TPlane {
   vint32 arg4;
   vint32 arg5;
 
+  vint32 locknumber;
+
   vint32 LineTag;
   vint32 HashFirst;
   vint32 HashNext;

@@ -607,6 +607,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("arg5"), li->arg5);
         vio.io(VName("LineTag"), li->LineTag);
         vio.io(VName("alpha"), li->alpha);
+        vio.iodef(VName("locknumber"), li->locknumber, 0);
         if (Strm.IsLoading()) {
           // for now, mark partially mapped lines as fully mapped
           if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
@@ -3100,6 +3101,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (line->arg3) writef(strm, "  arg3 = %d;\n", line->arg3);
     if (line->arg4) writef(strm, "  arg4 = %d;\n", line->arg4);
     if (line->arg5) writef(strm, "  arg5 = %d;\n", line->arg5);
+    if (line->locknumber) writef(strm, "  locknumber = %d;\n", line->locknumber);
     writef(strm, "}\n");
   }
 
