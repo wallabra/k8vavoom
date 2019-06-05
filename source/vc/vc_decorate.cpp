@@ -2224,10 +2224,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               if (HaveChance) {
                 DI.Chance = float(sc->Number)/255.0f;
                 if (sc->Check(",")) {
-                  sc->ExpectNumber();
-                  DI.Amount = sc->Number;
-                } else if (sc->CheckNumber()) {
-                  DI.Amount = sc->Number;
+                  sc->ExpectNumberWithSign();
+                  DI.Amount = max2(0, sc->Number);
+                } else if (sc->CheckNumberWithSign()) {
+                  DI.Amount = max2(0, sc->Number);
                 }
               }
               GetClassDropItems(Class).Insert(0, DI);
