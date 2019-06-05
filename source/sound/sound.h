@@ -25,8 +25,7 @@
 //**
 //**************************************************************************
 
-enum seqtype_t
-{
+enum seqtype_t {
   SEQ_Door,
   SEQ_Platform,
   SEQ_Environment,
@@ -38,25 +37,23 @@ struct seq_info_t;
 struct VReverbInfo;
 #endif
 
-enum ESoundType
-{
-  SNDTYPE_World = 0,
-  SNDTYPE_Point = 1,
-  SNDTYPE_Surround =2,
+enum ESoundType {
+  SNDTYPE_World    = 0,
+  SNDTYPE_Point    = 1,
+  SNDTYPE_Surround = 2,
 
   SNDTYPE_Continuous = 4,
-  SNDTYPE_Random = 8,
-  SNDTYPE_Periodic = 12,
+  SNDTYPE_Random     = 8,
+  SNDTYPE_Periodic   = 12,
 };
 
-struct FAmbientSound
-{
-  vuint32   Type;   // type of ambient sound
-  float   PeriodMin;  // # of tics between repeats
-  float   PeriodMax;  // max # of tics for random ambients
-  float   Volume;   // relative volume of sound
-  float   Attenuation;
-  VName   Sound;    // Logical name of sound to play
+struct FAmbientSound {
+  vuint32 Type; // type of ambient sound
+  float PeriodMin; // # of tics between repeats
+  float PeriodMax; // max # of tics for random ambients
+  float Volume; // relative volume of sound
+  float Attenuation;
+  VName Sound; // logical name of sound to play
 };
 
 // rolloff information.
@@ -66,74 +63,78 @@ struct FRolloffInfo {
   union { float MaxDistance; float RolloffFactor; };
 };
 
-//
-//  VSoundManager
-//
-//  Handles list of registered sound and sound sequences.
-//
-class VSoundManager
-{
+
+// handles list of registered sound and sound sequences
+class VSoundManager {
 public:
-  //  The complete set of sound effects
+  // the complete set of sound effects
   TArray<sfxinfo_t> S_sfx;
-  TArray<seq_info_t>  SeqInfo;
+  TArray<seq_info_t> SeqInfo;
 
-  VSoundManager();
-  ~VSoundManager();
-  void Init();
-  int GetSoundID(VName);
-  int GetSoundID(const char*);
-  int ResolveSound(int);
-  int ResolveEntitySound(VName, VName, VName);
-  bool IsSoundPresent(VName, VName, VName);
-  bool LoadSound(int);
-  void DoneWithLump(int);
-  float GetMusicVolume(VName);
-  FAmbientSound *GetAmbientSound(int);
+public:
+  VSoundManager ();
+  ~VSoundManager ();
+  void Init ();
+  int GetSoundID (VName);
+  int GetSoundID (const char*);
+  int ResolveSound (int);
+  int ResolveEntitySound (VName, VName, VName);
+  bool IsSoundPresent (VName, VName, VName);
+  bool LoadSound (int);
+  void DoneWithLump (int);
+  float GetMusicVolume (const char *SongName);
+  FAmbientSound *GetAmbientSound (int);
 
-  void SetSeqTrans(VName, int, int);
-  VName GetSeqTrans(int, int);
-  VName GetSeqSlot(VName);
-  int FindSequence(VName);
+  void SetSeqTrans (VName, int, int);
+  VName GetSeqTrans (int, int);
+  VName GetSeqSlot (VName);
+  int FindSequence (VName);
 
-  void GetSoundLumpNames(TArray<FReplacedString>&);
-  void ReplaceSoundLumpNames(TArray<FReplacedString>&);
+  void GetSoundLumpNames (TArray<FReplacedString> &);
+  void ReplaceSoundLumpNames (TArray<FReplacedString> &);
 
 #if defined(VAVOOM_REVERB)
-  VReverbInfo *FindEnvironment(int);
+  VReverbInfo *FindEnvironment (int);
 #endif
 
+public:
+  struct VMusicAlias {
+    VName origName;
+    VName newName;
+    int fileid;
+  };
+
+  TArray<VMusicAlias> MusicAliases;
+
 private:
-  struct FPlayerSound
-  {
-    int   ClassId;
-    int   GenderId;
-    int   RefId;
-    int   SoundId;
+  struct FPlayerSound {
+    int ClassId;
+    int GenderId;
+    int RefId;
+    int SoundId;
   };
 
   enum { NUM_AMBIENT_SOUNDS = 256 };
 
-  struct VMusicVolume
-  {
-    VName   SongName;
-    float   Volume;
+  struct VMusicVolume {
+    VName SongName;
+    float Volume;
   };
 
-  TArray<VName>     PlayerClasses;
-  TArray<VName>     PlayerGenders;
-  TArray<FPlayerSound>  PlayerSounds;
-  int           NumPlayerReserves;
-  float         CurrentChangePitch;
-  FRolloffInfo  CurrentDefaultRolloff;
+  TArray<VName> PlayerClasses;
+  TArray<VName> PlayerGenders;
+  TArray<FPlayerSound> PlayerSounds;
+  int NumPlayerReserves;
+  float CurrentChangePitch;
+  FRolloffInfo CurrentDefaultRolloff;
   FAmbientSound *AmbientSounds[NUM_AMBIENT_SOUNDS];
-  TArray<VMusicVolume>  MusicVolumes;
-  int           SeqTrans[64 * 3];
+  TArray<VMusicVolume> MusicVolumes;
+  int SeqTrans[64*3];
 #if defined(VAVOOM_REVERB)
   VReverbInfo *Environments;
 #endif
 
-  void ParseSndinfo(VScriptParser*);
+  void ParseSndinfo (VScriptParser *sc, int fileid);
   int AddSoundLump(VName, int);
   int AddSound(VName, int);
   int FindSound(VName);

@@ -908,12 +908,12 @@ void VAudio::UpdateSounds () {
 
 //==========================================================================
 //
-//  VAudio::PlaySong
+//  FindMusicLump
 //
 //==========================================================================
-void VAudio::PlaySong (const char *Song, bool Loop) {
+static int FindMusicLump (const char *songName) {
   static const char *Exts[] = {
-    "ogg", "opus", "flac", "mp3", "wav",
+    "opus", "ogg", "flac", "mp3", "wav",
     "mid", "mus",
     "mod", "xm", "it", "s3m", "stm",
     //"669", "amf", "dsm", "far", "gdm", "imf", "it", "m15", "med", "mod", "mtm",
@@ -921,16 +921,31 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     //"gym", "hes", "kss", "nsf", "nsfe", "sap", "sgc", "spc", "vgm",
     nullptr
   };
-  static const char *ExtraExts[] = { "ogg", "opus", "flac", "mp3", nullptr };
+
+  if (!songName || !songName[0] || VStr::ICmp(songName, "none") == 0) return -1;
+  int Lump = -1;
+  VName sn8 = VName(songName, VName::FindLower8);
+  if (sn8 != NAME_None) Lump = W_CheckNumForName(sn8, WADNS_Music);
+  int lmp = W_FindLumpByFileNameWithExts(va("music/%s", songName), Exts);
+  if (Lump < lmp) Lump = lmp;
+  lmp = W_CheckNumForFileName(songName);
+  if (Lump < lmp) Lump = lmp;
+  return lmp;
+}
+
+
+//==========================================================================
+//
+//  VAudio::PlaySong
+//
+//==========================================================================
+void VAudio::PlaySong (const char *Song, bool Loop) {
+  static const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
 
   if (!Song || !Song[0]) return;
 
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
-
-  // get music volume for this song
-  MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
-  if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor);
 
   // find the song
   int Lump = -1;
@@ -945,8 +960,13 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
       XmlStrm = nullptr;
       for (VXmlNode *N = Doc->Root.FirstChild; N; N = N->NextSibling) {
         if (N->Name != "song") continue;
-        if (N->GetAttribute("name") != Song) continue;
-        Lump = W_CheckNumForFileName(N->GetAttribute("file"));
+        if (!N->GetAttribute("name").strEquCI(Song)) continue;
+        const VStr &fname = N->GetAttribute("file");
+        if (fname.length() == 0 || fname.strEquCI("none")) {
+          delete Doc;
+          return;
+        }
+        Lump = W_CheckNumForFileName(fname);
         if (Lump >= 0) break;
       }
       delete Doc;
@@ -957,22 +977,37 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
 
   if (Lump < 0) {
     // get the lump that comes last
-    Lump = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
-    int lmp = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
-    if (Lump < lmp) Lump = lmp;
-    lmp = W_CheckNumForFileName(Song);
-    if (Lump < lmp) Lump = lmp;
-    lmp = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
-    if (Lump < lmp) Lump = lmp;
+    Lump = FindMusicLump(Song);
+    // look for replacement
+    VSoundManager::VMusicAlias *mal = nullptr;
+    for (int f = GSoundManager->MusicAliases.length()-1; f >= 0; --f) {
+      if (VStr::ICmp(*GSoundManager->MusicAliases[f].origName, Song) == 0) {
+        mal = &GSoundManager->MusicAliases[f];
+        break;
+      }
+    }
+    if (mal && (Lump < 0 || mal->fileid >= W_LumpFile(Lump))) {
+      if (mal->newName == NAME_None) return; // replaced with nothing
+      int l2 = FindMusicLump(*mal->newName);
+      if (Lump < 0 || (l2 >= 0 && mal->fileid >= W_LumpFile(l2))) {
+        Lump = l2;
+        Song = *mal->newName;
+      }
+    }
   }
 
   if (Lump < 0) {
-    GCon->Logf("Can't find song \"%s\"", Song);
+    GCon->Logf(NAME_Warning, "Can't find song \"%s\"", Song);
     return;
   }
 
+  // get music volume for this song
+  MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
+  if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor);
+
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (Strm->TotalSize() < 4) {
+    GCon->Logf(NAME_Warning, "Lump '%s' for song \"%s\" is too small (%d)", *W_FullLumpName(Lump), Song, Strm->TotalSize());
     delete Strm;
     return;
   }

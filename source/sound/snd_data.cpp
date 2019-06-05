@@ -202,7 +202,7 @@ void VSoundManager::Init () {
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo) {
       GCon->Logf(NAME_Init, "loading SNDINFO from '%s'...", *W_FullLumpName(Lump));
-      ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), W_LumpFile(Lump));
     }
   }
 
@@ -233,7 +233,7 @@ void VSoundManager::Init () {
 //  VSoundManager::ParseSndinfo
 //
 //==========================================================================
-void VSoundManager::ParseSndinfo (VScriptParser *sc) {
+void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
   TArray<int> list;
 
   while (!sc->AtEnd()) {
@@ -474,6 +474,16 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
         VMusicVolume &V = MusicVolumes.Alloc();
         V.SongName = SongName;
         V.Volume = sc->Float;
+      }
+    } else if (sc->Check("$musicalias")) {
+      sc->ExpectName();
+      VName SongName = sc->Name;
+      sc->ExpectName();
+      if (SongName != NAME_None && VStr::ICmp(*SongName, "none") != 0) {
+        VMusicAlias &als = MusicAliases.alloc();
+        als.origName = SongName;
+        als.newName = (sc->Name == NAME_None || VStr::ICmp(*sc->Name, "none") == 0 ? NAME_None : sc->Name);
+        als.fileid = fileid;
       }
     } else if (sc->Check("$ifdoom") || sc->Check("$ifheretic") ||
                sc->Check("$ifhexen") || sc->Check("$ifstrife") ||
@@ -905,8 +915,11 @@ void VSoundManager::DoneWithLump (int sound_id) {
 //  VSoundManager::GetMusicVolume
 //
 //==========================================================================
-float VSoundManager::GetMusicVolume (VName SongName) {
-  for (int i = 0; i < MusicVolumes.Num(); ++i) if (MusicVolumes[i].SongName == SongName) return MusicVolumes[i].Volume;
+float VSoundManager::GetMusicVolume (const char *SongName) {
+  if (!SongName || !SongName[0]) return 1.0f;
+  for (int i = 0; i < MusicVolumes.Num(); ++i) {
+    if (VStr::ICmp(*MusicVolumes[i].SongName, SongName) == 0) return MusicVolumes[i].Volume;
+  }
   return 1.0f;
 }
 
