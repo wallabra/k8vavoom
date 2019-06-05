@@ -2811,8 +2811,8 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
 
     // hack for idiotic mod authors (hello, LCA!)
     if (Func->ParamTypes[i].Type == TYPE_Int && Func->Params[i].Name == "ChannelNameOrNumber") {
-      if (Args[i]->IsStrConst() || Args[i]->IsNameConst()) {
-        VStr s = (Args[i]->IsStrConst() ? Args[i]->GetStrConst(ec.Package) : VStr(Args[i]->GetNameConst()));
+      if (Args[i]->IsStrConst() || Args[i]->IsNameConst() || Args[i]->IsDecorateSingleName()) {
+        VStr s = (Args[i]->IsDecorateSingleName() ? *((VDecorateSingleName *)Args[i])->Name : Args[i]->IsStrConst() ? Args[i]->GetStrConst(ec.Package) : VStr(Args[i]->GetNameConst()));
         int v = 0;
         if (!VStr::convertInt(*s, &v)) {
           // convert digits
