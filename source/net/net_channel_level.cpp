@@ -641,15 +641,6 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           if (PrevFloorDist != Sec->floor.dist || PrevCeilDist != Sec->ceiling.dist) {
             //GCon->Logf("updating sector #%d", (int)(ptrdiff_t)(Sec-&GClLevel->Sectors[0]));
             CalcSecMinMaxs(Sec);
-/*
-#ifdef CLIENT
-            // update regions, otherwise renderer will glitch (nope)
-            if (GClLevel && GClLevel->RenderData) {
-              GCon->Logf("updating sector #%d", (int)(ptrdiff_t)(Sec-&GClLevel->Sectors[0]));
-              GClLevel->RenderData->UpdateSectorRegions(Sec, true);
-            }
-#endif
-*/
           }
         }
         break;
