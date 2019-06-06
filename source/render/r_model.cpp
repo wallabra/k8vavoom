@@ -1581,8 +1581,13 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
         break;
       case RPASS_Fog:
-        // noshadow model is rendered as "normal", so it doesn't need fog
-        if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
+        /*
+        // noshadow model is rendered as "noshadow", so it doesn't need fog
+        if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) {
+          //if (gl_dbg_log_model_rendering) GCon->Logf("  SKIP FOG FOR MODEL(%s): class='%s'; alpha=%f; noshadow=%d", passname, *Cls.Name, Md2Alpha, (int)SubMdl.NoShadow);
+          continue;
+        }
+        */
         break;
       case RPASS_NonShadow:
         //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;

@@ -11,7 +11,7 @@ varying float Dist;
 
 
 void main () {
-  if (Dist <= 0.0) discard;
+  //if (Dist <= 0.0) discard; // wtf?!
 
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   if (!AllowTransparency) {
@@ -20,6 +20,8 @@ void main () {
     if (TexColor.a < 0.01) discard;
   }
 
+  vec4 FinalColor = TexColor;
+#ifdef VAVOOM_UNUSED
 #ifdef VAVOOM_REVERSE_Z
   float z = 1.0/gl_FragCoord.w;
 #else
@@ -32,7 +34,6 @@ void main () {
   float multr = 1.0-0.25*min(1, 1+sign(Dist));
   FogFactor = clamp(multr-FogFactor, 0.0, multr)*InAlpha;
 
-  vec4 FinalColor;
   FinalColor.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
   if (FinalColor.a < 0.01) discard;
 
@@ -46,6 +47,10 @@ void main () {
   */
 
   FinalColor.rgb = FogColor.rgb*multr;
+  //FinalColor.rgb = vec3(1, 0, 0);
+#endif
+
+  $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColor;
 }

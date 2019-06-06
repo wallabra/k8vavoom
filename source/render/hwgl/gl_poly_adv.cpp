@@ -1046,10 +1046,17 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 
   if (RendLev->DrawSurfList.length() == 0) return;
 
-  int activated = -1; // -1: none; 0: normal; 1: masked
-  bool fadeSet[2] = { false, false };
-  vuint32 lastFade[2] = { 0, 0 }; //RendLev->DrawSurfList[0]->Fade;
-  bool maskedFirst = true;
+  enum {
+    ShaderNone = -1,
+    ShaderSolid = 0,
+    ShaderMasked = 1,
+    ShaderMax,
+  };
+
+  int activated = ShaderNone;
+  bool fadeSet[ShaderMax] = { false, false };
+  vuint32 lastFade[ShaderMax] = { 0, 0 }; //RendLev->DrawSurfList[0]->Fade;
+  bool firstMasked = true;
 
   /*
   ShadowsFog.SetTexture(0);
@@ -1074,15 +1081,15 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     if (currTexinfo->Alpha < 1.0f) continue;
 
     if (surf->drawflags&surface_t::DF_MASKED) {
-      if (activated != 1) {
-        activated = 1;
+      if (activated != ShaderMasked) {
+        activated = ShaderMasked;
         ShadowsFogMasked.Activate();
-        if (maskedFirst) {
+        if (firstMasked) {
           ShadowsFogMasked.SetTexture(0);
-          maskedFirst = false;
+          firstMasked = false;
         }
       }
-      if (!fadeSet[activated] && lastFade[activated] != surf->Fade) {
+      if (!fadeSet[activated] || lastFade[activated] != surf->Fade) {
         fadeSet[activated] = true;
         lastFade[activated] = surf->Fade;
         ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
@@ -1100,11 +1107,11 @@ void VOpenGLDrawer::DrawWorldFogPass () {
         ShadowsFogMasked.SetTex(currTexinfo);
       }
     } else {
-      if (activated != 0) {
-        activated = 0;
+      if (activated != ShaderSolid) {
+        activated = ShaderSolid;
         ShadowsFog.Activate();
       }
-      if (!fadeSet[activated] && lastFade[activated] != surf->Fade) {
+      if (!fadeSet[activated] || lastFade[activated] != surf->Fade) {
         fadeSet[activated] = true;
         lastFade[activated] = surf->Fade;
         ShadowsFog.SetFogFade(surf->Fade, 1.0f);
@@ -1119,7 +1126,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
   }
 
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
 }
 
 
