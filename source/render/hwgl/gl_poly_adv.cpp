@@ -1137,6 +1137,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 //==========================================================================
 void VOpenGLDrawer::EndFogPass () {
   glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
   // back to normal z-buffering
   glDepthMask(GL_TRUE); // allow z-buffer writes
   RestoreDepthFunc();
