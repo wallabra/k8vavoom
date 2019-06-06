@@ -1591,7 +1591,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_NonShadow:
         //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
-        if (Md2Alpha < 1.0f || Additive || SubMdl.NoShadow) continue;
+        if (Md2Alpha < 1.0f || Additive /*|| SubMdl.NoShadow*/) continue;
         break;
     }
 
