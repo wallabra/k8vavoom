@@ -223,36 +223,17 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         //GCon->Logf("STATIC DROP: visibility check");
         continue;
       }
-      /*
-      // check potential visibility (this should be moved to sight check for precise pvs, but...)
-      if (hasPVS) {
-        subsector_t *sub = Level->PointInSubsector(stlight->origin);
-        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-        if (!(dyn_facevis[stlight->leafnum>>3]&(1<<(stlight->leafnum&7)))) continue;
-      }
 
-      if (rlightraduisSightSq) {
-        if (/ *dlenSq* /Delta.length2DSquared() > rlightraduisSightSq) {
-          // check some more rays
-          if (!RadiusCastRay(stlight->origin, vieworg, stlight->radius, / *true* /r_dynamic_clip_more)) continue;
-        }
-      }
-      */
-
-      if (r_advlight_sort_static) {
-        StLightInfo &sli = visstatlights[visstatlightCount++];
-        sli.stlight = stlight;
-        sli.distSq = distSq;
-      } else {
-        VEntity *own = (stlight->owner && stlight->owner->IsA(VEntity::StaticClass()) ? stlight->owner : nullptr);
-        vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
-        RenderLightShadows(own, flags, RD, Range, stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : stlight->radius), 0.0f, stlight->color, true);
-      }
+      StLightInfo &sli = visstatlights[visstatlightCount++];
+      sli.stlight = stlight;
+      sli.distSq = distSq;
     }
 
     // sort lights, so nearby ones will be rendered first
     if (visstatlightCount > 0) {
-      timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
+      if (r_advlight_sort_static) {
+        timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
+      }
       for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
         VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
         vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
@@ -290,35 +271,16 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
         }
       }
 
-      /*
-      if (r_advlight_flood_check && !CheckBSPVisibility(l->origin, l->radius)) {
-        //GCon->Logf("DYNAMIC DROP: visibility check");
-        continue;
-      }
-      */
-      /*
-      if (rlightraduisSightSq) {
-        if (/ *dlenSq* /Delta.length2DSquared() > rlightraduisSightSq) {
-          // check some more rays
-          if (!RadiusCastRay(l->origin, vieworg, l->radius, / *true* /r_dynamic_clip_more)) continue;
-        }
-      }
-      */
-
-      if (r_advlight_sort_dynamic) {
-        DynLightInfo &dli = visdynlights[visdynlightCount++];
-        dli.l = l;
-        dli.distSq = distSq;
-      } else {
-        VEntity *own = (l->Owner && l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)l->Owner : nullptr);
-        if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) l->flags |= dlight_t::NoSelfShadow;
-        RenderLightShadows(own, l->flags, RD, Range, l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : l->radius), l->minlight, l->color, true, l->coneDirection, l->coneAngle);
-      }
+      DynLightInfo &dli = visdynlights[visdynlightCount++];
+      dli.l = l;
+      dli.distSq = distSq;
     }
 
     // sort lights, so nearby ones will be rendered first
     if (visdynlightCount > 0) {
-      timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+      if (r_advlight_sort_dynamic) {
+        timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+      }
       for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
         VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
         if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
