@@ -32,14 +32,12 @@
 #include "r_local.h"
 
 
+#if 0
 VCvarB w_update_clip_bsp("w_update_clip_bsp", true, "Perform BSP clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
 //VCvarB w_update_clip_region("w_update_clip_region", true, "Perform region clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
-#if 0
 VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector updates in renderer?", CVAR_PreInit/*|CVAR_Archive*/);
-#endif
 
 
-#if 0
 //==========================================================================
 //
 //  VRenderLevelShared::UpdateSubsector

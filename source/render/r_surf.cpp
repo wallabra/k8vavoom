@@ -33,9 +33,9 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#if 0
 extern VCvarB w_update_clip_bsp;
 //extern VCvarB w_update_clip_region;
-#if 0
 extern VCvarB w_update_in_renderer;
 #endif
 
