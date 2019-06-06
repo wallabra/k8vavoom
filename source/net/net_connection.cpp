@@ -73,19 +73,19 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
 //
 //==========================================================================
 VNetConnection::~VNetConnection () {
-  GCon->Log(NAME_Dev, va("Closing connection %s", *GetAddress()));
+  GCon->Logf(NAME_Dev, va("Closing connection %s", *GetAddress()));
   //GCon->Logf("NET: deleting #%d channels...", OpenChannels.length());
   while (OpenChannels.length()) {
     int idx = OpenChannels.length()-1;
     if (OpenChannels[idx]) {
       delete OpenChannels[idx];
       if (OpenChannels.length() == idx+1) {
-        GCon->Logf("NET: channel #%d failed to remove itself, initialing manual remove...", idx);
+        GCon->Logf(NAME_DevNet, "channel #%d failed to remove itself, initialing manual remove...", idx);
         OpenChannels[idx] = nullptr;
         OpenChannels.SetNum(idx);
       }
     } else {
-      GCon->Logf("NET: channel #%d is empty", idx);
+      GCon->Logf(NAME_DevNet, "channel #%d is empty", idx);
       OpenChannels.SetNum(idx);
     }
   }
@@ -251,7 +251,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
           Chan->OpenAcked = true;
         } else {
-          GCon->Logf("Channel %d is not open", Msg.ChanIndex);
+          GCon->Logf(NAME_DevNet, "Channel %d is not open", Msg.ChanIndex);
           continue;
         }
       }
@@ -284,7 +284,7 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
     case CHANNEL_Thinker: return new VThinkerChannel(this, Index, OpenedLocally);
     case CHANNEL_ObjectMap: return new VObjectMapChannel(this, Index, OpenedLocally);
     default:
-      GCon->Logf("Unknown channel type %d for channel %d", Type, Index);
+      GCon->Logf(NAME_DevNet, "Unknown channel type %d for channel %d", Type, Index);
       return nullptr;
   }
 }
@@ -404,7 +404,7 @@ void VNetConnection::Tick () {
 
   // see if this connection has timed out
   if (!IsLocalConnection() && Driver->NetTime-NetCon->LastMessageTime > VNetworkPublic::MessageTimeOut) {
-    if (State != NETCON_Closed) GCon->Logf("Channel timed out");
+    if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out");
     State = NETCON_Closed;
   } else {
     // run tick for all of the open channels

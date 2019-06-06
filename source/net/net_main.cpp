@@ -291,7 +291,7 @@ void VNetwork::Slist () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log("Looking for Vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for Vavoom servers...");
     PrintSlistHeader();
   }
 
@@ -378,7 +378,7 @@ void VNetwork::MasterList () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log("Looking for Vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for Vavoom servers...");
     PrintSlistHeader();
   }
 
@@ -461,8 +461,8 @@ void VNetwork::MasterList_Poll () {
 
   // could not connect to the master server
   if (!SlistSilent) {
-    GCon->Log("Could not connect to the master server.");
-    GCon->Log("");
+    GCon->Log(NAME_DevNet, "Could not connect to the master server.");
+    GCon->Log(NAME_DevNet, "");
   }
 
   SlistInProgress = false;
@@ -478,8 +478,8 @@ void VNetwork::MasterList_Poll () {
 //
 //==========================================================================
 void VNetwork::PrintSlistHeader () {
-  GCon->Log("Server          Map             Users");
-  GCon->Log("--------------- --------------- -----");
+  GCon->Log(NAME_DevNet, "Server          Map             Users");
+  GCon->Log(NAME_DevNet, "--------------- --------------- -----");
   SlistLastShown = 0;
 }
 
@@ -493,9 +493,9 @@ void VNetwork::PrintSlist () {
   int n;
   for (n = SlistLastShown; n < HostCacheCount; ++n) {
     if (HostCache[n].MaxUsers) {
-      GCon->Logf("%-15s %-15s %2d/%2d", *HostCache[n].Name, *HostCache[n].Map, HostCache[n].Users, HostCache[n].MaxUsers);
+      GCon->Logf(NAME_DevNet, "%-15s %-15s %2d/%2d", *HostCache[n].Name, *HostCache[n].Map, HostCache[n].Users, HostCache[n].MaxUsers);
     } else {
-      GCon->Logf("%-15s %-15s", *HostCache[n].Name, *HostCache[n].Map);
+      GCon->Logf(NAME_DevNet, "%-15s %-15s", *HostCache[n].Name, *HostCache[n].Map);
     }
   }
   SlistLastShown = n;
@@ -509,11 +509,11 @@ void VNetwork::PrintSlist () {
 //==========================================================================
 void VNetwork::PrintSlistTrailer () {
   if (HostCacheCount) {
-    GCon->Log("== end list ==");
+    GCon->Log(NAME_DevNet, "== end list ==");
   } else {
-    GCon->Log("No Vavoom servers found.");
+    GCon->Log(NAME_DevNet, "No Vavoom servers found.");
   }
-  GCon->Log("");
+  GCon->Log(NAME_DevNet, "");
 }
 
 
@@ -606,9 +606,9 @@ VSocketPublic *VNetwork::Connect (const char *InHost) {
   if (host.IsEmpty()) {
     if (HostCacheCount != 1) return nullptr;
     host = HostCache[0].CName;
-    GCon->Log("Connecting to...");
-    GCon->Logf("%s @ %s", *HostCache[0].Name, *host);
-    GCon->Log("");
+    GCon->Log(NAME_DevNet, "Connecting to...");
+    GCon->Logf(NAME_DevNet, "%s @ %s", *HostCache[0].Name, *host);
+    GCon->Log(NAME_DevNet, "");
   }
 
   if (HostCacheCount) {
@@ -763,7 +763,7 @@ VNetLanDriver::VNetLanDriver (int Level, const char *AName)
 COMMAND(Listen) {
   VNetwork *Net = (VNetwork *)GNet;
   if (Args.Num() != 2) {
-    GCon->Logf("\"listen\" is \"%d\"", Net->Listening ? 1 : 0);
+    GCon->Logf(NAME_DevNet, "\"listen\" is \"%d\"", Net->Listening ? 1 : 0);
     return;
   }
   Net->Listening = (VStr::atoi(*Args[1]) ? true : false);
@@ -785,13 +785,13 @@ COMMAND(Port) {
 
   VNetwork *Net = (VNetwork *)GNet;
   if (Args.Num() != 2) {
-    GCon->Logf("\"port\" is \"%d\"", Net->HostPort);
+    GCon->Logf(NAME_DevNet, "\"port\" is \"%d\"", Net->HostPort);
     return;
   }
 
   n = VStr::atoi(*Args[1]);
   if (n < 1 || n > 65534) {
-    GCon->Log("Bad value, must be between 1 and 65534");
+    GCon->Log(NAME_Error, "Bad value, must be between 1 and 65534");
     return;
   }
 

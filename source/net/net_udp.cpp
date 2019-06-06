@@ -165,7 +165,7 @@ int VUdpDriver::Init () {
     hostent *local = gethostbyname(buff);
     if (!local) {
       // do not crash, it is unfair!
-      GCon->Logf("UDP_Init: Couldn't get local host by name '%s', check your /etc/hosts file.", buff);
+      GCon->Logf(NAME_Warning, "UDP_Init: Couldn't get local host by name '%s', check your /etc/hosts file.", buff);
       myAddr = inet_addr("127.0.0.1");
       VStr::Cpy(Net->MyIpAddress, "127.0.0.1");
       if (myAddr == INADDR_NONE) Sys_Error("'127.0.0.1' is not a valid IP address (why?!)");
@@ -201,7 +201,7 @@ int VUdpDriver::Init () {
     return -1;
 #else
     //Sys_Error("UDP_Init: Unable to open control socket\n");
-    GCon->Log("UDP_Init: Unable to open control socket");
+    GCon->Log(NAME_Warning, "UDP_Init: Unable to open control socket");
     return -1;
 #endif
   }

@@ -342,7 +342,8 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   if (Drv->Connect(newsock, &sendaddr) == -1) goto ErrorReturn;
 
   // send the connection request
-  GCon->Log("trying..."); SCR_Update();
+  GCon->Log(NAME_DevNet, "trying...");
+  SCR_Update();
   start_time = Net->NetTime;
 
   for (reps = 0; reps < 3; ++reps) {
@@ -384,20 +385,21 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
       }
     } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
     if (ret) break;
-    GCon->Log("still trying..."); SCR_Update();
+    GCon->Log(NAME_DevNet, "still trying...");
+    SCR_Update();
     start_time = Net->SetNetTime();
   }
 
   if (ret == 0) {
     reason = "No Response";
-    GCon->Log(reason);
+    GCon->Log(NAME_DevNet, reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
   if (ret == -1) {
     reason = "Network Error";
-    GCon->Log(reason);
+    GCon->Log(NAME_DevNet, reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -405,14 +407,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   *msg << msgtype;
   if (msgtype == CCREP_REJECT) {
     *msg << reason;
-    GCon->Log(reason);
+    GCon->Log(NAME_DevNet, reason);
     VStr::NCpy(Net->ReturnReason, *reason, 31);
     goto ErrorReturn;
   }
 
   if (msgtype != CCREP_ACCEPT) {
     reason = "Bad Response";
-    GCon->Log(reason);
+    GCon->Log(NAME_DevNet, reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -424,13 +426,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   sock->Address = Drv->GetNameFromAddr(&sendaddr);
 
-  GCon->Log("Connection accepted");
+  GCon->Log(NAME_DevNet, "Connection accepted");
   sock->LastMessageTime = Net->SetNetTime();
 
   // switch the connection to the specified address
   if (Drv->Connect(newsock, &sock->Addr) == -1) {
     reason = "Connect to Game failed";
-    GCon->Log(reason);
+    GCon->Log(NAME_DevNet, reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -657,12 +659,12 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
 
   // see if we can resolve the host name
   if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-    GCon->Logf("Could not resolve server name");
+    GCon->Log(NAME_DevNet, "Could not resolve server name");
     return;
   }
 
   if (Drv->net_acceptsocket == -1) {
-    GCon->Logf("Listen socket not open");
+    GCon->Log(NAME_DevNet, "Listen socket not open");
     return;
   }
 
@@ -699,12 +701,12 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
 
   // see if we can resolve the host name
   if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-    GCon->Logf("Could not resolve server name");
+    GCon->Log(NAME_DevNet, "Could not resolve server name");
     return;
   }
 
   if (Drv->net_acceptsocket == -1) {
-    GCon->Logf("Listen socket not open");
+    GCon->Log(NAME_DevNet, "Listen socket not open");
     return;
   }
 
@@ -749,7 +751,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     sockaddr_t sendaddr;
     // see if we can resolve the host name
     if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-      GCon->Logf("Could not resolve server name");
+      GCon->Log(NAME_DevNet, "Could not resolve server name");
       return false;
     }
     // send the query request
@@ -948,7 +950,7 @@ bool VDatagramSocket::IsLocalConnection () {
 //
 //==========================================================================
 static void PrintStats (VSocket *) {
-  GCon->Logf("%s", ""); // shut up, gcc, this is empty line!
+  GCon->Logf(NAME_DevNet, "%s", ""); // shut up, gcc, this is empty line!
 }
 
 
@@ -962,16 +964,16 @@ COMMAND(NetStats) {
 
   VNetworkLocal *Net = (VNetworkLocal*)GNet;
   if (Args.Num() == 1) {
-    GCon->Logf("unreliable messages sent   = %d", Net->UnreliableMessagesSent);
-    GCon->Logf("unreliable messages recv   = %d", Net->UnreliableMessagesReceived);
-    GCon->Logf("reliable messages sent     = %d", Net->MessagesSent);
-    GCon->Logf("reliable messages received = %d", Net->MessagesReceived);
-    GCon->Logf("packetsSent                = %d", Net->packetsSent);
-    GCon->Logf("packetsReSent              = %d", Net->packetsReSent);
-    GCon->Logf("packetsReceived            = %d", Net->packetsReceived);
-    GCon->Logf("receivedDuplicateCount     = %d", Net->receivedDuplicateCount);
-    GCon->Logf("shortPacketCount           = %d", Net->shortPacketCount);
-    GCon->Logf("droppedDatagrams           = %d", Net->droppedDatagrams);
+    GCon->Logf(NAME_DevNet, "unreliable messages sent   = %d", Net->UnreliableMessagesSent);
+    GCon->Logf(NAME_DevNet, "unreliable messages recv   = %d", Net->UnreliableMessagesReceived);
+    GCon->Logf(NAME_DevNet, "reliable messages sent     = %d", Net->MessagesSent);
+    GCon->Logf(NAME_DevNet, "reliable messages received = %d", Net->MessagesReceived);
+    GCon->Logf(NAME_DevNet, "packetsSent                = %d", Net->packetsSent);
+    GCon->Logf(NAME_DevNet, "packetsReSent              = %d", Net->packetsReSent);
+    GCon->Logf(NAME_DevNet, "packetsReceived            = %d", Net->packetsReceived);
+    GCon->Logf(NAME_DevNet, "receivedDuplicateCount     = %d", Net->receivedDuplicateCount);
+    GCon->Logf(NAME_DevNet, "shortPacketCount           = %d", Net->shortPacketCount);
+    GCon->Logf(NAME_DevNet, "droppedDatagrams           = %d", Net->droppedDatagrams);
   } else if (Args[1] == "*") {
     for (s = Net->ActiveSockets; s; s = s->Next) PrintStats(s);
   } else {
