@@ -251,6 +251,7 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   bbox[3+0] = sub->bbox[2];
   bbox[3+1] = sub->bbox[3];
 
+#if 0
   // for one-sector degenerate maps
   if (sub->parent) {
     /*
@@ -264,6 +265,10 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
     bbox[0+2] = sub->sector->floor.minz;
     bbox[3+2] = sub->sector->ceiling.maxz;
   }
+#else
+  bbox[0+2] = sub->sector->floor.minz;
+  bbox[3+2] = sub->sector->ceiling.maxz;
+#endif
   FixBBoxZ(bbox);
 
   /*
