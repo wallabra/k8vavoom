@@ -1155,6 +1155,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
                 if (gw.strEquCI(iwadGI)) {
                   GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *gmi.param);
                   selectedGame = gi;
+                  W_CloseAuxiliary();
                   break;
                 }
               }
