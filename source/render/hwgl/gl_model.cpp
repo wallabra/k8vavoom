@@ -858,8 +858,8 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glVertexAttribPointerARB(ShadowsModelFog.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelFog.loc_TexCoord);
 
-  ShadowsModelFog.SetViewOrigin(vieworg);
-  ShadowsModelFog.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+  //k8:not there:ShadowsModelFog.SetViewOrigin(vieworg);
+  //k8:not there:ShadowsModelFog.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelFog.SetAllowTransparency(AllowTransparency);
 
   glEnable(GL_ALPHA_TEST);
