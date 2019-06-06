@@ -396,6 +396,7 @@ void VNetConnection::Tick () {
   // the ACK so just mark all outgoing messages as ACK-ed
   if (AutoAck) {
     for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+      if (!OpenChannels[i]) continue; // k8: just in case
       for (VMessageOut *Msg = OpenChannels[i]->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
       OpenChannels[i]->OpenAcked = true;
       OpenChannels[i]->ReceivedAck();
@@ -403,18 +404,34 @@ void VNetConnection::Tick () {
   }
 
   // see if this connection has timed out
-  if (!IsLocalConnection() && Driver->NetTime-NetCon->LastMessageTime > VNetworkPublic::MessageTimeOut) {
-    if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out");
-    State = NETCON_Closed;
-  } else {
+  bool connTimedOut = false;
+
+  if (!IsLocalConnection() && (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)) {
+    double currTime = Sys_Time();
+    double tout = VNetworkPublic::MessageTimeOut;
+    if (tout < 50) tout = 50;
+    tout /= 1000.0f;
+    if (currTime-Driver->NetTime-NetCon->LastMessageTime > tout) {
+      if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
+        (currTime-Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
+        Driver->MessagesSent, Driver->packetsSent,
+        Driver->MessagesReceived, Driver->packetsReceived);
+      State = NETCON_Closed;
+      connTimedOut = true;
+    }
+  }
+
+  if (!connTimedOut) {
     // run tick for all of the open channels
-    for (int i = OpenChannels.Num()-1; i >= 0; --i) OpenChannels[i]->Tick();
+    for (int i = OpenChannels.Num()-1; i >= 0; --i) if (OpenChannels[i]) OpenChannels[i]->Tick();
     // if general channel has been closed, then this connection is closed
     if (!Channels[CHANIDX_General]) State = NETCON_Closed;
   }
 
   // flush any remaining data or send keepalive
   Flush();
+
+  //GCon->Logf(NAME_DevNet, "***: (time delta=%g); sent: %d (%d); recv: %d (%d)", (Sys_Time()-Driver->NetTime-NetCon->LastMessageTime)*1000.0f, Driver->MessagesSent, Driver->packetsSent, Driver->MessagesReceived, Driver->packetsReceived);
 }
 
 
