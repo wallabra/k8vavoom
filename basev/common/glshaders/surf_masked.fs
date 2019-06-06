@@ -36,7 +36,7 @@ void main () {
 
   // convert to premultiplied
   vec4 FinalColor;
-#if 0
+#if 1
   FinalColor.rgb = (TexColor.rgb*TexColor.a)*lt.a;
   FinalColor.a = TexColor.a*lt.a;
 #else
