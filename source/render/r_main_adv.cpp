@@ -29,7 +29,9 @@
 
 
 extern VCvarF r_lights_radius;
+#if 0
 extern VCvarB w_update_in_renderer;
+#endif
 extern VCvarI r_max_lights;
 
 static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visible static lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);

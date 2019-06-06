@@ -49,7 +49,9 @@ extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
 extern VCvarB r_glow_flat;
+#if 0
 extern VCvarB w_update_in_renderer;
+#endif
 
 extern VCvarB gl_dbg_wireframe;
 
@@ -471,9 +473,17 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
   if (needToRender) {
     // update world
+#if 0
     if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
       UpdateSubsector(num, nullptr); // trigger BSP updating
     }
+#else
+    if (sub->updateWorldFrame != updateWorldFrame) {
+      sub->updateWorldFrame = updateWorldFrame;
+      // skip sectors containing original polyobjs
+      if (sub->sector->linecount) UpdateSubRegion(sub, sub->regions);
+    }
+#endif
 
     bool addPoly = true;
     RenderShadowSubRegion(sub, sub->regions, addPoly);

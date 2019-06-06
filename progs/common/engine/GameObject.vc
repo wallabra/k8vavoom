@@ -1069,14 +1069,15 @@ struct subregion_t {
 // the visible walls that define (all or some) sides of a convex BSP leaf
 struct subsector_t {
   sector_t *sector;
-  native transient subsector_t *seclink;
+  native transient subsector_t *seclink; // next subsector for this sector
   int numlines;
   int firstline;
   polyobj_t *poly;
 
   native transient node_t *parent;
-  int VisFrame; // unsigned
-  int updateWorldFrame; // unsigned
+  native transient int parentChild; // our child index in parent node
+  native transient int VisFrame; // unsigned
+  native transient int updateWorldFrame; // unsigned
 
   sector_t *deepref;
 
@@ -1113,6 +1114,7 @@ struct node_t : TPlane {
 
   native transient node_t *parent;
   int VisFrame; // unsigned
+  int index;
 };
 
 

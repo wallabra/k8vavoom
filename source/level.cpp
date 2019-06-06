@@ -185,6 +185,7 @@ float VLevel::CalcSkyHeight () const {
 //  our zero height, as camera cannot see through top/bottom textures.
 //
 //==========================================================================
+/*
 void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz) {
   float tmp0, tmp1;
   if (!minz) minz = &tmp0;
@@ -234,6 +235,7 @@ void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *max
   sector->LastMinZ = *minz;
   sector->LastMaxZ = *maxz;
 }
+*/
 
 
 //==========================================================================
@@ -251,8 +253,13 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
 
   // for one-sector degenerate maps
   if (sub->parent) {
+    /*
+    // this is not right
     bbox[0+2] = min2(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
     bbox[3+2] = max2(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
+    */
+    bbox[0+2] = sub->parent->bbox[sub->parentChild][0+2];
+    bbox[3+2] = sub->parent->bbox[sub->parentChild][3+2];
   } else {
     bbox[0+2] = sub->sector->floor.minz;
     bbox[3+2] = sub->sector->ceiling.maxz;
@@ -276,12 +283,13 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
 void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
   subsector_t *sub = &Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
-  /*
+
   bbox[2] = sub->sector->floor.minz;
   bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
-  */
-  CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
-  if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
+
+  //CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
+  //if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
+
   FixBBoxZ(bbox);
 }
 
@@ -303,10 +311,10 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
     // decide which side the view point is on
     unsigned side = 0; //bsp->PointOnSide(vieworg);
     RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
+    side ^= 1;
+    RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
     bbox[2] = min2(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = max2(bsp->bbox[0][5], bsp->bbox[1][5]);
-    side ^= 1;
-    return RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight); // help gcc to see tail-call
   } else {
     // leaf node (subsector)
     UpdateSubsectorBBox(bspnum&(~NF_SUBSECTOR), bbox, skyheight);
@@ -2727,6 +2735,8 @@ void SwapPlanes (sector_t *s) {
 //
 //==========================================================================
 void CalcSecMinMaxs (sector_t *sector) {
+  if (!sector) return; // k8: just in case
+
   float minz;
   float maxz;
 
@@ -2768,6 +2778,43 @@ void CalcSecMinMaxs (sector_t *sector) {
     }
     sector->ceiling.minz = minz;
     sector->ceiling.maxz = maxz;
+  }
+
+  /*
+  VLevel *level = GLevel;
+  if (!level) {
+    level = GClLevel;
+    if (!level) return;
+  }
+  */
+
+  // update BSP
+  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
+    node_t *node = sub->parent;
+    if (!node) continue;
+    int childnum = sub->parentChild;
+    if (node->bbox[childnum][2] <= sector->floor.minz && node->bbox[childnum][5] >= sector->ceiling.maxz) continue;
+    // fix bounding boxes
+    float currMinZ = min2(node->bbox[childnum][2], sector->floor.minz);
+    float currMaxZ = max2(node->bbox[childnum][5], sector->ceiling.maxz);
+    if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    node->bbox[childnum][2] = currMinZ;
+    node->bbox[childnum][5] = currMaxZ;
+    for (; node->parent; node = node->parent) {
+      node_t *pnode = node->parent;
+           if (pnode->children[0] == node->index) childnum = 0;
+      else if (pnode->children[1] == node->index) childnum = 1;
+      else Sys_Error("invalid BSP tree");
+      const float parCMinZ = pnode->bbox[childnum][2];
+      const float parCMaxZ = pnode->bbox[childnum][5];
+      if (parCMinZ <= currMinZ && parCMaxZ >= currMaxZ) continue; // we're done here
+      pnode->bbox[childnum][2] = min2(parCMinZ, currMinZ);
+      pnode->bbox[childnum][5] = max2(parCMaxZ, currMaxZ);
+      FixBBoxZ(pnode->bbox[childnum]);
+      currMinZ = min2(min2(parCMinZ, pnode->bbox[childnum^1][2]), currMinZ);
+      currMaxZ = max2(max2(parCMaxZ, pnode->bbox[childnum^1][5]), currMaxZ);
+      if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    }
   }
 }
 

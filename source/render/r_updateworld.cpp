@@ -34,9 +34,12 @@
 
 VCvarB w_update_clip_bsp("w_update_clip_bsp", true, "Perform BSP clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
 //VCvarB w_update_clip_region("w_update_clip_region", true, "Perform region clipping on world updates?", CVAR_PreInit/*|CVAR_Archive*/);
+#if 0
 VCvarB w_update_in_renderer("w_update_in_renderer", true, "Perform world sector updates in renderer?", CVAR_PreInit/*|CVAR_Archive*/);
+#endif
 
 
+#if 0
 //==========================================================================
 //
 //  VRenderLevelShared::UpdateSubsector
@@ -163,6 +166,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
     return UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
   }
 }
+#endif
 
 
 //==========================================================================
@@ -171,7 +175,6 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Range) {
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   // update fake sectors
   /*
@@ -192,11 +195,14 @@ void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Ra
     }
   }
 
+#if 0
   if (!w_update_in_renderer) {
     ViewClip.ClearClipNodes(vieworg, Level);
     ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
     if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
 
+    float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
     UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output
   }
+#endif
 }

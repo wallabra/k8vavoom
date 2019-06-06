@@ -35,7 +35,9 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarB w_update_clip_bsp;
 //extern VCvarB w_update_clip_region;
+#if 0
 extern VCvarB w_update_in_renderer;
+#endif
 
 
 //**************************************************************************
@@ -1660,7 +1662,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
       if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
     }
 #endif
-    UpdateSubRegion(sub, region->next, updatePoly);
+    return UpdateSubRegion(sub, region->next, updatePoly);
   }
 }
 

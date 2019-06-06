@@ -489,8 +489,8 @@ protected:
   void UpdateTextureOffsets (subsector_t *sub, seg_t *seg, segpart_t *sp, const side_tex_params_t *tparam, const TPlane *plane=nullptr);
   void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region, bool updatePoly=true);
-  void UpdateSubsector (int num, float *bbox);
-  void UpdateBSPNode (int bspnum, float *bbox);
+  //void UpdateSubsector (int num, float *bbox);
+  //void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
 
   void UpdateSubsectorBBox (int num, float *bbox);

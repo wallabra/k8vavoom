@@ -477,7 +477,7 @@ public:
   // we have to look at neighbour sector to get height.
   // note that if neighbour sector is closed door too, we can safely use
   // our zero height, as camera cannot see through top/bottom textures.
-  void CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz);
+  //void CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz);
 
   void UpdateSubsectorBBox (int num, float *bbox, const float skyheight);
   void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);
@@ -790,7 +790,7 @@ void CalcSeg (seg_t *seg);
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
 void SwapPlanes (sector_t *);
-void CalcSecMinMaxs (sector_t *sector);
+void CalcSecMinMaxs (sector_t *sector); // also, update BSP bounding boxes
 
 extern VLevel *GLevel;
 extern VLevel *GClLevel;

@@ -800,12 +800,13 @@ struct subregion_t {
 // the visible walls that define (all or some) sides of a convex BSP leaf
 struct subsector_t {
   sector_t *sector;
-  subsector_t *seclink;
+  subsector_t *seclink; // next subsector for this sector
   vint32 numlines;
   vint32 firstline;
   polyobj_t *poly;
 
   node_t *parent;
+  vuint32 parentChild; // our child index in parent node
   vuint32 VisFrame;
   vuint32 updateWorldFrame;
 
@@ -834,7 +835,6 @@ enum {
 // BSP node
 struct node_t : public TPlane {
   // bounding box for each child
-  // [0] is min, [1] is max
   // (x,y,z) triples (min and max)
   float bbox[2][6];
 
@@ -843,6 +843,7 @@ struct node_t : public TPlane {
 
   node_t *parent;
   vuint32 VisFrame;
+  vuint32 index;
 };
 
 

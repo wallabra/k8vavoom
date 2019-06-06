@@ -56,7 +56,9 @@ VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", fals
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
 extern VCvarB r_draw_adjacent_subsector_things;
+#if 0
 extern VCvarB w_update_in_renderer;
+#endif
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
@@ -780,9 +782,17 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
   RenderMarkAdjSubsectorsThings(num);
 
   // update world
+#if 0
   if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
     UpdateSubsector(num, nullptr); // trigger BSP updating
   }
+#else
+  if (sub->updateWorldFrame != updateWorldFrame) {
+    sub->updateWorldFrame = updateWorldFrame;
+    // skip sectors containing original polyobjs
+    if (sub->sector->linecount) UpdateSubRegion(sub, sub->regions);
+  }
+#endif
 
   bool addPoly = true;
   RenderSubRegion(sub, sub->regions, addPoly, useClipper);

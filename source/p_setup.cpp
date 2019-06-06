@@ -1062,6 +1062,8 @@ load_again:
   PostLoadSegs();
   PostLoadSubsectors();
 
+  for (int nidx = 0; nidx < NumNodes; ++nidx) Nodes[nidx].index = nidx;
+
   // create blockmap
   if (!BlockMapLump) {
     GCon->Logf("creating BLOCKMAP...");
@@ -3368,6 +3370,11 @@ void VLevel::LinkNode (int BSPNum, node_t *pParent) const {
     int num = (BSPNum == -1 ? 0 : BSPNum&(~NF_SUBSECTOR));
     if (num < 0 || num >= NumSubsectors) Host_Error("ss %i with numss = %i", num, NumSubsectors);
     Subsectors[num].parent = pParent;
+    if (pParent) {
+      Subsectors[num].parentChild = ((int)pParent->children[0] == BSPNum ? 0 : 1);
+    } else {
+      Subsectors[num].parentChild = -1;
+    }
   } else {
     if (BSPNum < 0 || BSPNum >= NumNodes) Host_Error("bsp %i with numnodes = %i", NumNodes, NumNodes);
     node_t *bsp = &Nodes[BSPNum];
