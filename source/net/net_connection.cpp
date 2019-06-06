@@ -440,7 +440,8 @@ void VNetConnection::SetUpFatPVS () {
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
   VLevel *Level = Context->GetLevel();
 
-  LeafPvs = Level->LeafPVS(Owner->MO->SubSector);
+  //LeafPvs = Level->LeafPVS(Owner->MO->SubSector);
+  LeafPvs = nullptr;
 
   // re-allocate PVS buffer if needed
   if (UpdatePvsSize != (Level->NumSubsectors+7)/8) {
@@ -454,7 +455,10 @@ void VNetConnection::SetUpFatPVS () {
 
   // build view PVS using view clipper
   memset(UpdatePvs, 0, UpdatePvsSize);
+  //GCon->Logf("FATPVS: view=(%g,%g,%g)", Owner->ViewOrg.x, Owner->ViewOrg.y, Owner->ViewOrg.z);
   Clipper.ClearClipNodes(Owner->ViewOrg, Level);
+  //Clipper.check2STextures = false;
+  Clipper.RepSectors = (Channels[CHANIDX_Level] ? ((VLevelChannel *)Channels[CHANIDX_Level])->Sectors : nullptr);
   SetUpPvsNode(Level->NumNodes-1, dummy_bbox);
 }
 
@@ -475,7 +479,7 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     int SubNum = 0;
     subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
+    if (LeafPvs && !(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
     if (!Clipper.ClipCheckSubsector(Sub)) return;
     Clipper.ClipAddSubsectorSegs(Sub);
     UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
@@ -490,18 +494,17 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     // recursively divide front space
     SetUpPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
     // possibly divide back space
-    if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1])) return;
-    SetUpPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
-    return;
+    //if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1])) return;
+    return SetUpPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
+  } else {
+    int SubNum = BspNum&~NF_SUBSECTOR;
+    subsector_t *Sub = &Level->Subsectors[SubNum];
+    if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (LeafPvs && !(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
+    if (!Clipper.ClipCheckSubsector(Sub)) return;
+    Clipper.ClipAddSubsectorSegs(Sub);
+    UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
   }
-
-  int SubNum = BspNum&~NF_SUBSECTOR;
-  subsector_t *Sub = &Level->Subsectors[SubNum];
-  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-  if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
-  if (!Clipper.ClipCheckSubsector(Sub)) return;
-  Clipper.ClipAddSubsectorSegs(Sub);
-  UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
 }
 
 
@@ -512,7 +515,7 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
 //==========================================================================
 int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
   //return true; //k8: this returns "always visible" for sector: more data, no door glitches
-  int ss = Subsector-Context->GetLevel()->Subsectors;
+  int ss = (int)(ptrdiff_t)(Subsector-Context->GetLevel()->Subsectors);
   return UpdatePvs[ss/8]&(1<<(ss&7));
 }
 

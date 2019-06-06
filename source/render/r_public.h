@@ -77,6 +77,8 @@ public:
 
   virtual int GetDynamicLightCount () const = 0;
   virtual LightInfo GetDynamicLight (int idx) const = 0;
+
+  virtual void UpdateSectorRegions (sector_t *sector, bool forced) = 0;
 };
 
 

@@ -1669,6 +1669,23 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
 
 //==========================================================================
 //
+//  VRenderLevelShared::UpdateSectorRegions
+//
+//  unused for now
+//
+//==========================================================================
+void VRenderLevelShared::UpdateSectorRegions (sector_t *sector, bool forced) {
+  if (!sector) return; // just in case
+  forcedUpdate = true;
+  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
+    UpdateSubRegion(sub, sub->regions);
+  }
+  forcedUpdate = false;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CopyPlaneIfValid
 //
 //==========================================================================

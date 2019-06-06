@@ -154,6 +154,23 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
 
 //==========================================================================
 //
+//  CopyHeightServer
+//
+//==========================================================================
+static inline void CopyHeightServer (VLevel *level, rep_sector_t *repsecs, const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) {
+  *cpic = sec->ceiling.pic;
+  *fpic = sec->floor.pic;
+  *fplane = *(TPlane *)&sec->floor;
+  *cplane = *(TPlane *)&sec->ceiling;
+
+  int snum = (int)(ptrdiff_t)(sec-&level->Sectors[0]);
+  if (repsecs[snum].floor_dist < sec->floor.dist) fplane->dist = repsecs[snum].floor_dist;
+  if (repsecs[snum].ceil_dist < sec->ceiling.dist) cplane->dist = repsecs[snum].ceil_dist;
+}
+
+
+//==========================================================================
+//
 //  IsGoodSegForPoly
 //
 //==========================================================================
@@ -190,6 +207,152 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
   }
 
   return true;
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::IsSegAClosedSomethingServer
+//
+//  prerequisite: has front and back sectors, has linedef
+//
+//==========================================================================
+bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *repsecs, const seg_t *seg) {
+  if (!clip_platforms) return false;
+  if (!seg->backsector) return false;
+
+  if (!seg->partner || seg->partner == seg) return false;
+
+  const line_t *ldef = seg->linedef;
+
+  if (ldef->alpha < 1.0f) return false; // skip translucent walls
+  //k8: this was checked by caller
+  //if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
+  //k8: this was checked by caller
+  //if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
+  // just in case
+  if ((ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) != ML_TWOSIDED) return true;
+
+  // mirrors and horizons always block the view
+  switch (ldef->special) {
+    case LNSPEC_LineHorizon:
+    case LNSPEC_LineMirror:
+      return true;
+  }
+
+  const sector_t *fsec = ldef->frontsector;
+  const sector_t *bsec = ldef->backsector;
+
+  if (fsec == bsec) return false; // self-referenced sector
+
+  bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
+  bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
+  bool hasMidTex = !GTextureManager.IsEmptyTexture(seg->sidedef->MidTexture);
+  if (hasTopTex || // a seg without top texture isn't a door
+      hasBotTex || // a seg without bottom texture isn't an elevator/plat
+      hasMidTex) // a seg without mid texture isn't a polyobj door
+  {
+    int fcpic, ffpic;
+    int bcpic, bfpic;
+
+    TPlane ffplane, fcplane;
+    TPlane bfplane, bcplane;
+
+    CopyHeightServer(level, repsecs, fsec, &ffplane, &fcplane, &ffpic, &fcpic);
+    CopyHeightServer(level, repsecs, bsec, &bfplane, &bcplane, &bfpic, &bcpic);
+
+
+    const TVec vv1 = *seg->v1;
+    const TVec vv2 = *seg->v2;
+
+    const float frontcz1 = fcplane.GetPointZ(vv1);
+    const float frontcz2 = fcplane.GetPointZ(vv2);
+    const float frontfz1 = ffplane.GetPointZ(vv1);
+    const float frontfz2 = ffplane.GetPointZ(vv2);
+
+    const float backcz1 = bcplane.GetPointZ(vv1);
+    const float backcz2 = bcplane.GetPointZ(vv2);
+    const float backfz1 = bfplane.GetPointZ(vv1);
+    const float backfz2 = bfplane.GetPointZ(vv2);
+
+    /*
+    if (clip_midsolid && hasMidTex) {
+      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+      if (midSolid) {
+        const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
+        VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
+        // here we should check if midtex covers the whole height, as it is not tiled vertically (if not wrapped)
+        const float texh = MTex->GetScaledHeight();
+        float z_org;
+        if (ldef->flags&ML_DONTPEGBOTTOM) {
+          // bottom of texture at bottom
+          // top of texture at top
+          z_org = max2(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
+        } else {
+          // top of texture at top
+          z_org = min2(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
+        }
+        //k8: dunno why
+        if (seg->sidedef->Mid.RowOffset < 0) {
+          z_org += (seg->sidedef->Mid.RowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+        } else {
+          z_org += seg->sidedef->Mid.RowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
+        }
+        float floorz, ceilz;
+        if (sec == fsec) {
+          floorz = min2(frontfz1, frontfz2);
+          ceilz = max2(frontcz1, frontcz2);
+        } else {
+          floorz = min2(backfz1, backfz2);
+          ceilz = max2(backcz1, backcz2);
+        }
+        if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
+          if (z_org-texh <= floorz) return true; // fully covered, as it is wrapped
+        } else {
+          // non-wrapped
+          if (z_org >= ceilz && z_org-texh <= floorz) return true; // fully covered
+        }
+      }
+    }
+    */
+
+    // taken from Zandronum
+    // now check for closed sectors
+
+    // closed door
+    if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (!hasTopTex) return false;
+      // properly render skies (consider door "open" if both ceilings are sky):
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+      return true;
+    }
+
+    if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (!hasBotTex) return false;
+      // properly render skies (consider door "open" if both ceilings are sky):
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+      return true;
+    }
+
+    // if door is closed because back is shut
+    if (backcz1 <= backfz1 && backcz2 <= backfz2) {
+      // preserve a kind of transparent door/lift special effect:
+      if (backcz1 < frontcz1 || backcz2 < frontcz2) {
+        if (!hasTopTex) return false;
+      }
+      if (backfz1 > frontfz1 || backfz2 > frontfz2) {
+        if (!hasBotTex) return false;
+      }
+      // properly render skies
+      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+      if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 
@@ -396,6 +559,7 @@ VViewClipper::VViewClipper ()
   , ClipHead(nullptr)
   , ClipTail(nullptr)
   , ClearClipNodesCalled(false)
+  , RepSectors(nullptr)
 {
 }
 
@@ -1295,7 +1459,11 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   // for 2-sided line, determine if it can be skipped
   if (!clipAll && seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
-    if (!IsSegAClosedSomething(&Frustum, seg)) return;
+    if (!RepSectors) {
+      if (!IsSegAClosedSomething(&Frustum, seg)) return;
+    } else {
+      if (!IsSegAClosedSomethingServer(Level, RepSectors, seg)) return;
+    }
   }
 
 #if defined(XXX_CLIPPER_MANY_DUMPS)

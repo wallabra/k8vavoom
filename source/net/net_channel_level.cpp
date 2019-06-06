@@ -278,11 +278,25 @@ void VLevelChannel::Update () {
 
   for (int i = 0; i < Level->NumSectors; ++i) {
     sector_t *Sec = &Level->Sectors[i];
+    //bool forced = false;
+
     if (!Connection->SecCheckFatPVS(Sec) &&
         !(Sec->SectorFlags&sector_t::SF_ExtrafloorSource) &&
         !(Sec->SectorFlags&sector_t::SF_TransferSource))
     {
-      continue;
+      // inner door sector is invisible if closed
+      // this may miss door update, so force updating
+      // TODO: better solution is checking both remembered and current height in clipper
+      // DONE!
+      /*
+      if (Sec->floor.minz == Sec->ceiling.maxz) {
+        //GCon->Logf("*** closed sector #%d changed, and not visible; force update", (int)(ptrdiff_t)(Sec-&Level->Sectors[0]));
+        //forced = true;
+      } else
+      */
+      {
+        continue;
+      }
     }
 
     VEntity *FloorSkyBox = Sec->floor.SkyBox;
@@ -314,7 +328,7 @@ void VLevelChannel::Update () {
     bool FadeChanged = RepSec->Fade != Sec->params.Fade;
     bool SkyChanged = RepSec->Sky != Sec->Sky;
     bool MirrorChanged = RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha ||
-      RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
+                         RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
     if (RepSec->floor_pic == Sec->floor.pic &&
         RepSec->ceil_pic == Sec->ceiling.pic &&
         !FloorChanged && !CeilChanged && !LightChanged && !FadeChanged &&
@@ -322,6 +336,18 @@ void VLevelChannel::Update () {
     {
       continue;
     }
+
+    //if (forced) GCon->Logf("*** closed sector #%d changed, and not visible; force update", (int)(ptrdiff_t)(Sec-&Level->Sectors[0]));
+    /*
+    if (!Connection->SecCheckFatPVS(Sec) &&
+        !(Sec->SectorFlags&sector_t::SF_ExtrafloorSource) &&
+        !(Sec->SectorFlags&sector_t::SF_TransferSource)) {
+      GCon->Logf("*** sector #%d changed, but not visible", (int)(ptrdiff_t)(Sec-&Level->Sectors[0]));
+      continue;
+    } else {
+      GCon->Logf("!!! sector #%d changed", (int)(ptrdiff_t)(Sec-&Level->Sectors[0]));
+    }
+    */
 
     Msg.WriteInt(CMD_Sector/*, CMD_MAX*/);
     Msg.WriteInt(i/*, Level->NumSectors*/);
@@ -573,8 +599,8 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
       case CMD_Sector:
         {
           sector_t *Sec = &Level->Sectors[Msg.ReadInt(/*Level->NumSectors*/)];
-          float PrevFloorDist = Sec->floor.dist;
-          float PrevCeilDist = Sec->ceiling.dist;
+          const float PrevFloorDist = Sec->floor.dist;
+          const float PrevCeilDist = Sec->ceiling.dist;
           if (Msg.ReadBit()) Sec->floor.pic = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) Sec->ceiling.pic = Msg.ReadInt(/*MAX_VUINT16*/);
           if (Msg.ReadBit()) {
@@ -612,7 +638,19 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
             Msg << Sec->floor.MirrorAlpha;
             Msg << Sec->ceiling.MirrorAlpha;
           }
-          if (PrevFloorDist != Sec->floor.dist || PrevCeilDist != Sec->ceiling.dist) CalcSecMinMaxs(Sec);
+          if (PrevFloorDist != Sec->floor.dist || PrevCeilDist != Sec->ceiling.dist) {
+            //GCon->Logf("updating sector #%d", (int)(ptrdiff_t)(Sec-&GClLevel->Sectors[0]));
+            CalcSecMinMaxs(Sec);
+/*
+#ifdef CLIENT
+            // update regions, otherwise renderer will glitch (nope)
+            if (GClLevel && GClLevel->RenderData) {
+              GCon->Logf("updating sector #%d", (int)(ptrdiff_t)(Sec-&GClLevel->Sectors[0]));
+              GClLevel->RenderData->UpdateSectorRegions(Sec, true);
+            }
+#endif
+*/
+          }
         }
         break;
       case CMD_PolyObj:

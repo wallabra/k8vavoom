@@ -430,6 +430,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , bspVisRadiusFrame(0)
   , pspart(nullptr)
   , pspartsLeft(0)
+  , forcedUpdate(false)
 {
   currDLightFrame = 0;
   currQueueFrame = 0;

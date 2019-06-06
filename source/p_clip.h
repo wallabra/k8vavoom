@@ -119,6 +119,9 @@ public:
   inline VFloat PointToPseudoAngle (const TVec &p) const { return PointToPseudoAngle(p.x, p.y); }
 
 public:
+  rep_sector_t *RepSectors; // non-null for server
+
+public:
   VViewClipper ();
   ~VViewClipper ();
 
@@ -206,4 +209,5 @@ private:
 
 public:
   static bool IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg=nullptr, const float *lrad=nullptr);
+  static bool IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *repsecs, const seg_t *seg);
 };
