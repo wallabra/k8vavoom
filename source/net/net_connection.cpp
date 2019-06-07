@@ -472,6 +472,7 @@ void VNetConnection::SendCommand (VStr Str) {
 void VNetConnection::SetUpFatPVS () {
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
   VLevel *Level = Context->GetLevel();
+  if (!Level) return;
 
   //LeafPvs = Level->LeafPVS(Owner->MO->SubSector);
   LeafPvs = nullptr;
@@ -503,6 +504,7 @@ void VNetConnection::SetUpFatPVS () {
 //==========================================================================
 void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   VLevel *Level = Context->GetLevel();
+  check(Level);
 #ifdef VV_CLIPPER_FULL_CHECK
   if (Clipper.ClipIsFull()) return;
 #endif
@@ -547,6 +549,8 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
 //
 //==========================================================================
 int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
+  VLevel *Level = Context->GetLevel();
+  if (!Level) return 0;
   //return true; //k8: this returns "always visible" for sector: more data, no door glitches
   int ss = (int)(ptrdiff_t)(Subsector-Context->GetLevel()->Subsectors);
   return UpdatePvs[ss/8]&(1<<(ss&7));
@@ -559,6 +563,8 @@ int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
 //
 //==========================================================================
 bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
+  VLevel *Level = Context->GetLevel();
+  if (!Level) return false;
   for (subsector_t *Sub = Sec->subsectors; Sub; Sub = Sub->seclink) {
     if (CheckFatPVS(Sub)) return true;
   }
@@ -627,6 +633,23 @@ void VNetConnection::UpdateLevel () {
 void VNetConnection::SendServerInfo () {
   if (!ObjMapSent) return;
 
+  GCon->Log(NAME_DevNet, "sending server info...");
+  // this will load level on client side
+  ((VLevelChannel *)Channels[CHANIDX_Level])->SetLevel(GLevel);
+  ((VLevelChannel *)Channels[CHANIDX_Level])->SendNewLevel();
+  LevelInfoSent = true;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::LoadedNewLevel
+//
+//==========================================================================
+void VNetConnection::LoadedNewLevel () {
+  GCon->Log(NAME_DevNet, "LEVEL RESET");
+  ObjMapSent = false;
+  LevelInfoSent = false;
   // this will load level on client side
   ((VLevelChannel *)Channels[CHANIDX_Level])->SetLevel(GLevel);
   ((VLevelChannel *)Channels[CHANIDX_Level])->SendNewLevel();

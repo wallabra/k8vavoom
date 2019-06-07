@@ -116,6 +116,7 @@ void VLevelChannel::SendNewLevel () {
     VMessageOut Msg(this);
     Msg.bReliable = true;
     Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
+    Msg.WriteInt(NETWORK_PROTO_VERSION);
     VStr MapName = *Level->MapName;
     check(!Msg.IsLoading());
     Msg << svs.serverinfo << MapName;
@@ -133,7 +134,7 @@ void VLevelChannel::SendNewLevel () {
     SendMessage(&Msg);
   }
 
-  GCon->Log(NAME_DevNet, "VLevelChannel::SendNewLevel");
+  //GCon->Log(NAME_DevNet, "VLevelChannel::SendNewLevel");
 }
 
 
@@ -701,6 +702,11 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_NewLevel:
 #ifdef CLIENT
+        {
+          int ver = Msg.ReadInt();
+          if (Msg.IsError()) Host_Error("Cannot read network protocol version");
+          if (ver != NETWORK_PROTO_VERSION) Host_Error("Invalid network protocol version: expected %d, got %d", ver, NETWORK_PROTO_VERSION);
+        }
         CL_ParseServerInfo(Msg);
 #endif
         break;

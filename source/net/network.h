@@ -40,6 +40,11 @@ enum {
   NETPACKET_CTL  = 0x80,
 };
 
+// sent with `CMD_NewLevel`
+enum {
+  NETWORK_PROTO_VERSION = 1,
+};
+
 //FIXME!
 //TODO!
 // separate messages from packets, so we can fragment and reassemble one message with several packets
@@ -345,6 +350,7 @@ public:
   bool IsRelevant (VThinker *Th);
   void UpdateLevel ();
   void SendServerInfo ();
+  void LoadedNewLevel ();
 
 private:
   void SetUpPvsNode (int, float *);

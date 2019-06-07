@@ -943,7 +943,19 @@ void SV_SendServerInfoToClients () {
     VBasePlayer *Player = GGameInfo->Players[i];
     if (!Player) continue;
     Player->Level = GLevelInfo;
-    if (Player->Net) Player->Net->SendServerInfo();
+    if (Player->Net) {
+      Player->Net->LoadedNewLevel();
+      Player->Net->SendServerInfo();
+    } else {
+      //GCon->Logf("SERVER: player #%d has no network connection", i);
+    }
+  }
+
+  if (GDemoRecordingContext) {
+    for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+      GDemoRecordingContext->ClientConnections[f]->LoadedNewLevel();
+      GDemoRecordingContext->ClientConnections[f]->SendServerInfo();
+    }
   }
 }
 
@@ -1031,7 +1043,10 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   // set up world state
   Host_ResetSkipFrames();
 
-  if (!spawn_thinkers) return;
+  if (!spawn_thinkers) {
+    SV_SendServerInfoToClients(); // anyway
+    return;
+  }
 
   // P_SpawnSpecials
   // after the map has been loaded, scan for specials that spawn thinkers
