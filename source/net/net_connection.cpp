@@ -27,6 +27,8 @@
 #include "gamedefs.h"
 #include "network.h"
 
+//#define VAVOOM_NET_RECV_DEBUG_EXTRA
+
 
 static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?", CVAR_PreInit);
 
@@ -192,6 +194,9 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   bool NeedsAck = false;
 
+#ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
+  GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d; seq=%u)", Packet.GetPos(), Packet.GetNum(), Sequence);
+#endif
   while (!Packet.AtEnd()) {
     // read a flag to see if it's an ACK or a message
     bool IsAck = Packet.ReadBit();
@@ -239,10 +244,21 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
       // read data
       int Length = Packet.ReadInt(/*MAX_MSGLEN*8*/);
+#ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
+      GCon->Logf(NAME_DevNet, "SERBITS: len=%d; pos=%d; num=%d; left=%d", Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos()-Length);
+#endif
       Msg.SetData(Packet, Length);
       if (Packet.IsError()) {
-        GCon->Logf(NAME_DevNet, "Packet is missing message data");
+        GCon->Logf(NAME_DevNet, "Packet (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) is missing message data (len=%d; pos=%d; num=%d)",
+          Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
+          Length, Packet.GetPos(), Packet.GetNum());
         break;
+      } else {
+#ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
+        GCon->Logf(NAME_DevNet, "*** Packet (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
+          Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
+          Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos());
+#endif
       }
 
       VChannel *Chan = Channels[Msg.ChanIndex];
