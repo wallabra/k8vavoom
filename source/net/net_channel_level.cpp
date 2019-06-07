@@ -132,6 +132,8 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
     SendMessage(&Msg);
   }
+
+  GCon->Log(NAME_DevNet, "VLevelChannel::SendNewLevel");
 }
 
 
@@ -141,9 +143,12 @@ void VLevelChannel::SendNewLevel () {
 //
 //==========================================================================
 void VLevelChannel::Update () {
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update: enter");
 
+  VMessageOut Msg(this, true);
+  //Msg.bReliable = true; // autoreliable
+
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Lines");
   for (int i = 0; i < Level->NumLines; ++i) {
     line_t *Line = &Level->Lines[i];
     //if (!Connection->SecCheckFatPVS(Line->sector)) continue;
@@ -151,6 +156,7 @@ void VLevelChannel::Update () {
     rep_line_t *RepLine = &Lines[i];
     if (Line->alpha == RepLine->alpha) continue;
 
+    Msg.SetMark();
     Msg.WriteInt(CMD_Line/*, CMD_MAX*/);
     Msg.WriteInt(i/*, Level->NumLines*/);
     Msg.WriteBit(Line->alpha != RepLine->alpha);
@@ -159,8 +165,10 @@ void VLevelChannel::Update () {
       Msg.WriteBit(!!(Line->flags&ML_ADDITIVE));
       RepLine->alpha = Line->alpha;
     }
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
   }
 
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sides");
   for (int i = 0; i < Level->NumSides; ++i) {
     side_t *Side = &Level->Sides[i];
     if (!Connection->SecCheckFatPVS(Side->Sector)) continue;
@@ -187,6 +195,9 @@ void VLevelChannel::Update () {
       continue;
     }
 
+    //GCon->Logf(NAME_DevNet, "VLevelChannel::Update: Side #%d (pos=%d; max=%d; err=%d)", i, Msg.GetPos(), Msg.GetNum(), (int)Msg.IsError());
+
+    Msg.SetMark();
     Msg.WriteInt(CMD_Side/*, CMD_MAX*/);
     Msg.WriteInt(i/*, Level->NumSides*/);
     Msg.WriteBit(Side->TopTexture != RepSide->TopTexture);
@@ -274,8 +285,10 @@ void VLevelChannel::Update () {
       Msg << Side->Light;
       RepSide->Light = Side->Light;
     }
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
   }
 
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sectors");
   for (int i = 0; i < Level->NumSectors; ++i) {
     sector_t *Sec = &Level->Sectors[i];
     //bool forced = false;
@@ -349,6 +362,7 @@ void VLevelChannel::Update () {
     }
     */
 
+    Msg.SetMark();
     Msg.WriteInt(CMD_Sector/*, CMD_MAX*/);
     Msg.WriteInt(i/*, Level->NumSectors*/);
     Msg.WriteBit(RepSec->floor_pic != Sec->floor.pic);
@@ -414,6 +428,7 @@ void VLevelChannel::Update () {
       Msg << Sec->floor.MirrorAlpha;
       Msg << Sec->ceiling.MirrorAlpha;
     }
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
 
     RepSec->floor_pic = Sec->floor.pic;
     RepSec->floor_dist = Sec->floor.dist;
@@ -441,6 +456,7 @@ void VLevelChannel::Update () {
     RepSec->Fade = Sec->params.Fade;
   }
 
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Polys");
   for (int i = 0; i < Level->NumPolyObjs; ++i) {
     polyobj_t *Po = &Level->PolyObjs[i];
     if (!Connection->CheckFatPVS(Po->subsector)) continue;
@@ -453,6 +469,7 @@ void VLevelChannel::Update () {
       continue;
     }
 
+    Msg.SetMark();
     Msg.WriteInt(CMD_PolyObj/*, CMD_MAX*/);
     Msg.WriteInt(i/*, Level->NumPolyObjs*/);
     Msg.WriteBit(RepPo->startSpot.x != Po->startSpot.x);
@@ -461,6 +478,7 @@ void VLevelChannel::Update () {
     if (RepPo->startSpot.y != Po->startSpot.y) Msg << Po->startSpot.y;
     Msg.WriteBit(RepPo->angle != Po->angle);
     if (RepPo->angle != Po->angle) Msg << Po->angle;
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
 
     RepPo->startSpot = Po->startSpot;
     RepPo->angle = Po->angle;
@@ -482,11 +500,13 @@ void VLevelChannel::Update () {
     if (CamEnt == RepCam.Camera && Cam.TexNum == RepCam.TexNum && Cam.FOV == RepCam.FOV) continue;
 
     // send message
+    Msg.SetMark();
     Msg.WriteInt(CMD_CamTex/*, CMD_MAX*/);
     Msg.WriteInt(i/*, 0xff*/);
     Connection->ObjMap->SerialiseObject(Msg, *(VObject**)&CamEnt);
     Msg.WriteInt(Cam.TexNum/*, 0xffff*/);
     Msg.WriteInt(Cam.FOV/*, 360*/);
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
 
     // update replication info
     RepCam.Camera = CamEnt;
@@ -494,6 +514,7 @@ void VLevelChannel::Update () {
     RepCam.FOV = Cam.FOV;
   }
 
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Trans");
   for (int i = 0; i < Level->Translations.Num(); ++i) {
     // grow replication array if needed
     if (Translations.Num() == i) Translations.Alloc();
@@ -512,6 +533,7 @@ void VLevelChannel::Update () {
     if (Eq) continue;
 
     // send message
+    Msg.SetMark();
     Msg.WriteInt(CMD_LevelTrans/*, CMD_MAX*/);
     Msg.WriteInt(i/*, MAX_LEVEL_TRANSLATIONS*/);
     Msg.WriteInt(Tr->Commands.Num()/*, 0xff*/);
@@ -523,8 +545,10 @@ void VLevelChannel::Update () {
       else if (C.Type == 1) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
       Rep[j] = C;
     }
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
   }
 
+  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Bodies");
   for (int i = 0; i < Level->BodyQueueTrans.Num(); ++i) {
     // grow replication array if needed
     if (BodyQueueTrans.Num() == i) BodyQueueTrans.Alloc().TranslStart = 0;
@@ -535,16 +559,23 @@ void VLevelChannel::Update () {
     if (Tr->TranslStart == Rep.TranslStart && Tr->TranslEnd == Rep.TranslEnd && Tr->Color == Rep.Color) continue;
 
     // send message
+    Msg.SetMark();
     Msg.WriteInt(CMD_BodyQueueTrans/*, CMD_MAX*/);
     Msg.WriteInt(i/*, MAX_BODY_QUEUE_TRANSLATIONS*/);
     Msg << Tr->TranslStart << Tr->TranslEnd;
     Msg.WriteInt(Tr->Color/*, 0x00ffffff*/);
+    if (Msg.NeedSplit()) Msg.SendSplitMessage();
+
     Rep.TranslStart = Tr->TranslStart;
     Rep.TranslEnd = Tr->TranslEnd;
     Rep.Color = Tr->Color;
   }
 
-  if (Msg.GetNumBits()) SendMessage(&Msg);
+  if (Msg.GetNumBits()) {
+    //GCon->Logf(NAME_DevNet, "VLevelChannel::Update: sending... (pos=%d; max=%d; err=%d)", Msg.GetPos(), Msg.GetNum(), (int)Msg.IsError());
+    SendMessage(&Msg);
+    //GCon->Log(NAME_DevNet, "VLevelChannel::Update: sent.");
+  }
 }
 
 

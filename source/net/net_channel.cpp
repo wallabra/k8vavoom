@@ -157,7 +157,15 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
 void VChannel::SendMessage (VMessageOut *AMsg) {
   VMessageOut *Msg = AMsg;
   if (Msg->IsError()) {
-    GCon->Logf(NAME_DevNet, "Overflowed message");
+    GCon->Logf(NAME_DevNet, "Overflowed message (len=%d bits, %d bytes)", Msg->GetNum(), (Msg->GetNum()+7)/8);
+    const char *chanName = "thinker";
+    switch (Msg->ChanIndex) {
+      case CHANIDX_General: chanName = "general"; break;
+      case CHANIDX_Player: chanName = "player"; break;
+      case CHANIDX_Level: chanName = "level"; break;
+    }
+    GCon->Logf(NAME_DevNet, "  chan=%d(%s) (type=%d), reliable=%d, open=%d; closed=%d; rack=%d; seq=%d; time=%g; pid=%u",
+      Msg->ChanIndex, chanName, Msg->ChanType, (int)Msg->bReliable, (int)Msg->bOpen, (int)Msg->bClose, (int)Msg->bReceivedAck, Msg->Sequence, Msg->Time, Msg->PacketId);
     //abort();
     return;
   }

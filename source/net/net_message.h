@@ -53,8 +53,7 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageOut : public VBitStreamWriter {
 public:
-  VMessageOut (VChannel *);
-
+  VChannel *mChannel;
   VMessageOut *Next;
   vuint8 ChanType;
   vint32 ChanIndex;
@@ -65,6 +64,14 @@ public:
   vuint32 Sequence; // reliable message sequence ID
   double Time; // time this message has been sent
   vuint32 PacketId; // packet in which this message was sent
+  int markPos;
+
+public:
+  VMessageOut (VChannel *AChannel, bool aAllowExpand=false);
+
+  inline void SetMark () { markPos = GetNumBits(); }
+  bool NeedSplit () const;
+  void SendSplitMessage ();
 };
 
 

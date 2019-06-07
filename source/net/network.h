@@ -40,10 +40,14 @@ enum {
   NETPACKET_CTL  = 0x80,
 };
 
+//FIXME!
+//TODO!
+// separate messages from packets, so we can fragment and reassemble one message with several packets
+// without this, it is impossible to not hit packet limit
 enum {
-  MAX_MSGLEN              = 1024, // max length of a message
-  MAX_PACKET_HEADER_BITS  = /*40*/41, //k8: 41 for 32-bit sequence number
-  MAX_PACKET_TRAILER_BITS = 1, //k8: or 7?
+  MAX_MSGLEN              = /*1024*/1280-40/*+1024*/, // max length of a message
+  MAX_PACKET_HEADER_BITS  = /*40*/42, //k8: 41 for 32-bit sequence number, 1 is reserved
+  MAX_PACKET_TRAILER_BITS = /*1*/7, //k8: or 7? was 1
   MAX_MESSAGE_HEADER_BITS = /*63*/118, //k8: isack(1), chanindex(41), reliable(1), open(1), close(1), seq(41), chantype(11), len(21)
   OUT_MESSAGE_SIZE        = MAX_MSGLEN*8-MAX_PACKET_HEADER_BITS-MAX_MESSAGE_HEADER_BITS-MAX_PACKET_TRAILER_BITS,
 };

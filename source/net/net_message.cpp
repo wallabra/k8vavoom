@@ -51,17 +51,106 @@ VMessageIn::VMessageIn (vuint8 *Src, vint32 Length)
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
-VMessageOut::VMessageOut (VChannel *AChannel)
-  : VBitStreamWriter(OUT_MESSAGE_SIZE)
+VMessageOut::VMessageOut (VChannel *AChannel, bool aAllowExpand)
+  : VBitStreamWriter(OUT_MESSAGE_SIZE, aAllowExpand) // allow expand
+  , mChannel(AChannel)
   , Next(nullptr)
   , ChanType(AChannel->Type)
   , ChanIndex(AChannel->Index)
-  , bReliable(false)
+  , bReliable(/*false*/aAllowExpand)
   , bOpen(false)
   , bClose(false)
   , bReceivedAck(false)
   , Sequence(0)
   , Time(0)
   , PacketId(0)
+  , markPos(0)
 {
+}
+
+
+//==========================================================================
+//
+//  VMessageOut::Reset
+//
+//==========================================================================
+/*
+void VMessageOut::Reset () {
+  Sequence = 0;
+  Time = 0;
+  PacketId = 0;
+  Clear();
+}
+*/
+
+
+//==========================================================================
+//
+//  VMessageOut::NeedSplit
+//
+//==========================================================================
+bool VMessageOut::NeedSplit () const {
+  if (bError) {
+    //GCon->Log(NAME_DevNet, "SHIT!");
+    return false;
+  }
+  //GCon->Logf(NAME_DevNet, "split check: markPos=%d; pos=%d; max=%d; expanded=%d", markPos, Pos, Max, (int)IsExpanded());
+  return (markPos > 0 && IsExpanded());
+}
+
+
+//==========================================================================
+//
+//  VMessageOut::Reset
+//
+//==========================================================================
+void VMessageOut::SendSplitMessage () {
+  check(bReliable);
+  check(mChannel);
+  if (IsError() || !NeedSplit()) return; // just in case
+  if (Pos-markPos > OUT_MESSAGE_SIZE) { bError = true; return; } // oops
+  check(!bOpen);
+  check(!bClose);
+
+  //GCon->Logf(NAME_DevNet, "SPLIT! max=%d, size=%d, markPos=%d, extra=%d", Max, Pos, markPos, Pos-markPos);
+
+  // send message part
+  VMessageOut tmp(mChannel);
+  tmp.ChanType = ChanType;
+  tmp.ChanIndex = ChanIndex;
+  tmp.bReliable = bReliable;
+  tmp.bOpen = bOpen;
+  tmp.bClose = bClose;
+  tmp.SerialiseBits(Data.Ptr(), markPos);
+  mChannel->SendMessage(&tmp);
+
+  // remove sent bits
+  const int bitsLeft = Pos-markPos;
+  TArray<vuint8> oldData;
+  //oldData.setLength((bitsLeft+7)/8+16);
+  //TODO: make this faster
+  Pos = markPos;
+  vuint8 currByte = 0;
+  vuint8 currMask = 1;
+  for (int f = 0; f < bitsLeft; ++f) {
+    if (ReadBitInternal()) currByte |= currMask;
+    currMask <<= 1;
+    if (currMask == 0) {
+      oldData.append(currByte);
+      currByte = 0;
+      currMask = 1;
+    }
+  }
+  oldData.append(currByte);
+
+  Data.setLength((Max+7)/8+256);
+  memset(Data.ptr(), 0, Data.length());
+  Pos = 0;
+  for (int f = 0; f < bitsLeft; ++f) {
+    WriteBit(!!(oldData[f/8]&(1<<(f%8))));
+  }
+
+  markPos = 0;
+
+  //GCon->Logf(NAME_DevNet, "  max=%d, size=%d; left=%d", Max, Pos, bitsLeft);
 }
