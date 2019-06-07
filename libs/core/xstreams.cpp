@@ -672,13 +672,47 @@ void VPagedMemoryStream::CopyTo (VStream *strm) {
 //  VBitStreamWriter::VBitStreamWriter
 //
 //==========================================================================
-VBitStreamWriter::VBitStreamWriter (vint32 AMax)
+VBitStreamWriter::VBitStreamWriter (vint32 AMax, bool allowExpand)
   : Max(AMax)
   , Pos(0)
+  , bAllowExpand(allowExpand)
 {
   bLoading = false;
-  Data.SetNum((AMax+7)>>3);
-  memset(Data.Ptr(), 0, (Max+7)>>3);
+  int sz = (AMax+7)/8+(allowExpand ? 256 : 0);
+  Data.SetNum(sz);
+  memset(Data.Ptr(), 0, sz);
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::WriteBit
+//
+//==========================================================================
+void VBitStreamWriter::WriteBit (bool Bit) {
+  if (bError) return;
+  if (Pos+1 > Max) {
+    if (!bAllowExpand) { bError = true; return; }
+    if ((Pos+7)/8+1 > Data.length()) {
+      if (!Expand()) { bError = true; return; }
+    }
+  }
+  if (Bit) Data.ptr()[Pos>>3] |= 1<<(Pos&7);
+  ++Pos;
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::Expand
+//
+//==========================================================================
+bool VBitStreamWriter::Expand () {
+  if (!bAllowExpand) return false;
+  auto oldSize = Data.length();
+  Data.SetNum(oldSize+1024);
+  memset(((vuint8 *)(Data.Ptr()))+oldSize, 0, Data.length()-oldSize);
+  return true;
 }
 
 
@@ -702,7 +736,16 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   check(Length > 0);
 
   if (Pos+Length > Max) {
-    bError = true;
+    if (!bAllowExpand) { bError = true; return; }
+    // do it slow
+    const vuint8 *sb = (const vuint8 *)Src;
+    while (Length > 0) {
+      vuint8 currByte = *sb++;
+      for (int f = 0; f < 8 && Length > 0; ++f, --Length) {
+        WriteBit(!!(currByte&0x80));
+        currByte <<= 1;
+      }
+    }
     return;
   }
 

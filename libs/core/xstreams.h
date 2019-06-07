@@ -153,9 +153,23 @@ protected:
   TArray<vuint8> Data;
   vint32 Max;
   vint32 Pos;
+  bool bAllowExpand;
+
+protected:
+  bool Expand ();
+
+  inline bool ReadBitInternal () {
+    if (Pos >= Data.length()*8) {
+      bError = true;
+      return false;
+    }
+    bool Ret = !!(Data.ptr()[Pos>>3]&(1<<(Pos&7)));
+    ++Pos;
+    return Ret;
+  }
 
 public:
-  VBitStreamWriter (vint32);
+  VBitStreamWriter (vint32, bool allowExpand=false);
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
@@ -164,26 +178,40 @@ public:
   inline int GetNumBits () const { return Pos; }
   inline int GetNumBytes () const { return (Pos+7)>>3; }
 
+  inline void Clear () { bError = false; Pos = 0; }
+
+  inline bool IsExpanded () const { return (Pos > Max); }
+
+  void WriteBit (bool Bit);
+  /*
   inline void WriteBit (bool Bit) {
-    if (Pos+1 > Max) {
-      bError = true;
-      return;
+    if (bError) return;
+    if (Pos+1 > / *Max* /Data.length()*8) {
+      if (!Expand()) {
+        bError = true;
+        return;
+      }
     }
-    if (Bit) Data[Pos>>3] |= 1<<(Pos&7);
+    if (Bit) Data.ptr()[Pos>>3] |= 1<<(Pos&7);
     ++Pos;
   }
+  */
 
   static inline int CalcIntBits (vuint32 Val) {
     int res = 1; // sign bit
     if (Val&0x80000000u) Val ^= 0xffffffffu;
-    vuint32 mask = 0x0f;
+    //vuint32 mask = 0x0f;
     while (Val) {
       res += 5; // continute bit, 4 data bits
-      Val &= ~mask;
-      mask <<= 4;
+      //Val &= ~mask;
+      //mask <<= 4;
+      Val >>= 4;
     }
     return res+1; // and stop bit
   }
+
+  inline int GetPos () const { return Pos; }
+  inline int GetNum () const { return Max; }
 };
 
 
@@ -211,7 +239,7 @@ public:
       bError = true;
       return false;
     }
-    bool Ret = !!(Data[Pos>>3]&(1<<(Pos&7)));
+    bool Ret = !!(Data.ptr()[Pos>>3]&(1<<(Pos&7)));
     ++Pos;
     return Ret;
   }
