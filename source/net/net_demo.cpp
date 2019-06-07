@@ -92,6 +92,9 @@ VDemoPlaybackNetConnection::~VDemoPlaybackNetConnection () {
 //
 //==========================================================================
 int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
+  //Driver->SetNetTime();
+  //LastMessageTime = Driver->NetTime;
+
   // decide if it is time to grab the next message
   if (Owner->MO) { // always grab until fully connected
     if (bTimeDemo) {
@@ -141,6 +144,7 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 //
 //==========================================================================
 void VDemoPlaybackNetConnection::SendRawMessage (VMessageOut &) {
+  //Driver->SetNetTime();
 }
 
 
@@ -165,6 +169,7 @@ VDemoRecordingNetConnection::VDemoRecordingNetConnection (VSocketPublic *Sock, V
 //
 //==========================================================================
 int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
+  //Driver->SetNetTime();
   int r = VNetConnection::GetRawPacket(Data);
   if (r == 1 && cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
@@ -196,6 +201,8 @@ bool VDemoRecordingSocket::IsLocalConnection () {
 //
 //==========================================================================
 int VDemoRecordingSocket::GetMessage (TArray<vuint8> &) {
+  //LastMessageTime = Sys_Time();
+  LastMessageTime = GNet->NetTime;
   return 0;
 }
 
@@ -206,6 +213,8 @@ int VDemoRecordingSocket::GetMessage (TArray<vuint8> &) {
 //
 //==========================================================================
 int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
+  //LastMessageTime = Sys_Time();
+  LastMessageTime = GNet->NetTime;
   if (cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
     float Time = (GClLevel ? GClLevel->Time : 0.0);

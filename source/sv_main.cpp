@@ -329,6 +329,19 @@ void SV_Shutdown () {
 //==========================================================================
 void SV_Clear () {
   if (GLevel) {
+    for (int i = 0; i < svs.max_clients; ++i) {
+      VBasePlayer *Player = GGameInfo->Players[i];
+      if (!Player) continue;
+      if (Player->Net) Player->Net->ResetLevel();
+    }
+
+    if (GDemoRecordingContext) {
+      for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+        //GDemoRecordingContext->ClientConnections[f]->Driver->SetNetTime();
+        GDemoRecordingContext->ClientConnections[f]->ResetLevel();
+      }
+    }
+
     GLevel->ConditionalDestroy();
     GLevel = nullptr;
     VObject::CollectGarbage();
@@ -375,6 +388,7 @@ void SV_SendClientMessages () {
 
   if (GDemoRecordingContext) {
     for (int i = 0; i < GDemoRecordingContext->ClientConnections.length(); ++i) {
+      //GDemoRecordingContext->ClientConnections[i]->Driver->SetNetTime();
       GDemoRecordingContext->ClientConnections[i]->NeedsUpdate = true;
     }
     GDemoRecordingContext->Tick();
@@ -953,6 +967,7 @@ void SV_SendServerInfoToClients () {
 
   if (GDemoRecordingContext) {
     for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+      //GDemoRecordingContext->ClientConnections[f]->Driver->SetNetTime();
       GDemoRecordingContext->ClientConnections[f]->LoadedNewLevel();
       GDemoRecordingContext->ClientConnections[f]->SendServerInfo();
     }

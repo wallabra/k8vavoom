@@ -219,6 +219,7 @@ public:
   void Update ();
   void SendNewLevel ();
   void SendStaticLights ();
+  void ResetLevel ();
   virtual void ParsePacket (VMessageIn &) override;
 };
 
@@ -351,6 +352,7 @@ public:
   void UpdateLevel ();
   void SendServerInfo ();
   void LoadedNewLevel ();
+  void ResetLevel ();
 
 private:
   void SetUpPvsNode (int, float *);

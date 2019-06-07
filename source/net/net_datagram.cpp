@@ -962,7 +962,7 @@ static void PrintStats (VSocket *) {
 COMMAND(NetStats) {
   VSocket *s;
 
-  VNetworkLocal *Net = (VNetworkLocal*)GNet;
+  VNetworkLocal *Net = (VNetworkLocal *)GNet;
   if (Args.Num() == 1) {
     GCon->Logf(NAME_DevNet, "unreliable messages sent   = %d", Net->UnreliableMessagesSent);
     GCon->Logf(NAME_DevNet, "unreliable messages recv   = %d", Net->UnreliableMessagesReceived);

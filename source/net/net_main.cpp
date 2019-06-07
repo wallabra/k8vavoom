@@ -239,6 +239,7 @@ void VNetwork::Shutdown () {
 //==========================================================================
 double VNetwork::SetNetTime () {
   NetTime = Sys_Time();
+  //GCon->Logf("*** VNetwork::SetNetTime: %g ***", NetTime);
   return NetTime;
 }
 

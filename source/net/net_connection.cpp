@@ -422,14 +422,15 @@ void VNetConnection::Tick () {
   // see if this connection has timed out
   bool connTimedOut = false;
 
-  if (!IsLocalConnection() && (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)) {
-    double currTime = Sys_Time();
+  if (!IsLocalConnection() /*&& (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)*/) {
+    //double currTime = Sys_Time();
+    if (!((VLevelChannel *)Channels[CHANIDX_Level])->Level) NetCon->LastMessageTime = Driver->NetTime;
     double tout = VNetworkPublic::MessageTimeOut;
     if (tout < 50) tout = 50;
     tout /= 1000.0f;
-    if (currTime-Driver->NetTime-NetCon->LastMessageTime > tout) {
+    if (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime > tout) {
       if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
-        (currTime-Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
+        (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
         Driver->MessagesSent, Driver->packetsSent,
         Driver->MessagesReceived, Driver->packetsReceived);
       State = NETCON_Closed;
@@ -447,7 +448,7 @@ void VNetConnection::Tick () {
   // flush any remaining data or send keepalive
   Flush();
 
-  //GCon->Logf(NAME_DevNet, "***: (time delta=%g); sent: %d (%d); recv: %d (%d)", (Sys_Time()-Driver->NetTime-NetCon->LastMessageTime)*1000.0f, Driver->MessagesSent, Driver->packetsSent, Driver->MessagesReceived, Driver->packetsReceived);
+  //GCon->Logf(NAME_DevNet, "***: (time delta=%g); sent: %d (%d); recv: %d (%d)", (/*Sys_Time()-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f, Driver->MessagesSent, Driver->packetsSent, Driver->MessagesReceived, Driver->packetsReceived);
 }
 
 
@@ -595,32 +596,34 @@ bool VNetConnection::IsRelevant (VThinker *Th) {
 //
 //==========================================================================
 void VNetConnection::UpdateLevel () {
-  SetUpFatPVS();
+  if (((VLevelChannel *)Channels[CHANIDX_Level])->Level) {
+    SetUpFatPVS();
 
-  ((VLevelChannel *)Channels[CHANIDX_Level])->Update();
+    ((VLevelChannel *)Channels[CHANIDX_Level])->Update();
 
-  // mark all entity channels as not updated in this frame
-  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
-    VChannel *Chan = OpenChannels[i];
-    if (Chan->Type == CHANNEL_Thinker) ((VThinkerChannel *)Chan)->UpdatedThisFrame = false;
-  }
-
-  // update mobjs in sight
-  for (TThinkerIterator<VThinker> Th(Context->GetLevel()); Th; ++Th) {
-    if (!IsRelevant(*Th)) continue;
-    VThinkerChannel *Chan = ThinkerChannels.FindPtr(*Th);
-    if (!Chan) {
-      Chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
-      if (!Chan) continue;
-      Chan->SetThinker(*Th);
+    // mark all entity channels as not updated in this frame
+    for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+      VChannel *Chan = OpenChannels[i];
+      if (Chan->Type == CHANNEL_Thinker) ((VThinkerChannel *)Chan)->UpdatedThisFrame = false;
     }
-    Chan->Update();
-  }
 
-  // close entity channels that were not updated in this frame
-  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
-    VChannel *Chan = OpenChannels[i];
-    if (Chan->Type == CHANNEL_Thinker && !((VThinkerChannel*)Chan)->UpdatedThisFrame) Chan->Close();
+    // update mobjs in sight
+    for (TThinkerIterator<VThinker> Th(Context->GetLevel()); Th; ++Th) {
+      if (!IsRelevant(*Th)) continue;
+      VThinkerChannel *Chan = ThinkerChannels.FindPtr(*Th);
+      if (!Chan) {
+        Chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
+        if (!Chan) continue;
+        Chan->SetThinker(*Th);
+      }
+      Chan->Update();
+    }
+
+    // close entity channels that were not updated in this frame
+    for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+      VChannel *Chan = OpenChannels[i];
+      if (Chan->Type == CHANNEL_Thinker && !((VThinkerChannel *)Chan)->UpdatedThisFrame) Chan->Close();
+    }
   }
 }
 
@@ -654,4 +657,20 @@ void VNetConnection::LoadedNewLevel () {
   ((VLevelChannel *)Channels[CHANIDX_Level])->SetLevel(GLevel);
   ((VLevelChannel *)Channels[CHANIDX_Level])->SendNewLevel();
   LevelInfoSent = true;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::ResetLevel
+//
+//==========================================================================
+void VNetConnection::ResetLevel () {
+  if (!((VLevelChannel *)Channels[CHANIDX_Level])->Level) return;
+  // close entity channels
+  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+    VChannel *Chan = OpenChannels[i];
+    if (Chan->Type == CHANNEL_Thinker) Chan->Close();
+  }
+  ((VLevelChannel *)Channels[CHANIDX_Level])->ResetLevel();
 }

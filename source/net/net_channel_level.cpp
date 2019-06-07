@@ -43,6 +43,8 @@ enum {
   CMD_LevelTrans,
   CMD_BodyQueueTrans,
 
+  CMD_ResetLevel,
+
   CMD_MAX
 };
 
@@ -102,6 +104,29 @@ void VLevelChannel::SetLevel (VLevel *ALevel) {
     memcpy(Sectors, Level->BaseSectors, sizeof(rep_sector_t)*Level->NumSectors);
     PolyObjs = new rep_polyobj_t[Level->NumPolyObjs];
     memcpy(PolyObjs, Level->BasePolyObjs, sizeof(rep_polyobj_t)*Level->NumPolyObjs);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevelChannel::ResetLevel
+//
+//==========================================================================
+void VLevelChannel::ResetLevel () {
+  if (Level) {
+    delete[] Lines;
+    delete[] Sides;
+    delete[] Sectors;
+    delete[] PolyObjs;
+    Lines = nullptr;
+    Sides = nullptr;
+    Sectors = nullptr;
+    PolyObjs = nullptr;
+    CameraTextures.Clear();
+    Translations.Clear();
+    BodyQueueTrans.Clear();
+    Level = nullptr;
   }
 }
 
@@ -802,6 +827,9 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           Tr->BuildPlayerTrans(TrStart, TrEnd, Col);
         }
         break;
+      case CMD_ResetLevel:
+         ResetLevel();
+         break;
       default:
         Sys_Error("Invalid level update command %d", Cmd);
     }
