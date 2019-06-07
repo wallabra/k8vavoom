@@ -172,6 +172,36 @@ void CL_ReadFromServer () {
 
 //==========================================================================
 //
+//  SendKeepaliveInternal
+//
+//==========================================================================
+static void SendKeepaliveInternal (double currTime, bool forced) {
+  /*
+  if (!GDemoRecordingContext) {
+    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+    //if (cls.demoplayback) return;
+    if (!cl->Net) return;
+  }
+  */
+  if (currTime < 0) currTime = 0;
+  if (LastKeepAliveTime > currTime) LastKeepAliveTime = currTime; // wtf?!
+  if (!forced && currTime-LastKeepAliveTime < 1.0/35.0) return;
+  LastKeepAliveTime = currTime;
+  // write out a nop
+  /*
+  if (GDemoRecordingContext) {
+    for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+      GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
+      //GDemoRecordingContext->ClientConnections[f]->Flush();
+    }
+  }
+  */
+  if (cl->Net) cl->Net->Flush();
+}
+
+
+//==========================================================================
+//
 //  CL_KeepaliveMessage
 //
 //  when the client is taking a long time to load stuff, send keepalive
@@ -179,14 +209,25 @@ void CL_ReadFromServer () {
 //
 //==========================================================================
 void CL_KeepaliveMessage () {
-  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-  if (cls.demoplayback) return;
-  if (!cl->Net) return;
+  //if (!GDemoRecordingContext)
+  {
+    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+    if (cls.demoplayback) return;
+    if (!cl->Net) return;
+  }
+  SendKeepaliveInternal(Sys_Time(), false);
+  /*
   double currTime = Sys_Time();
   if (currTime-LastKeepAliveTime < 1.0/35.0) return;
   LastKeepAliveTime = currTime;
   // write out a nop
-  cl->Net->Flush();
+  if (GDemoRecordingContext) {
+    for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+      GDemoRecordingContext->ClientConnections[f]->Flush();
+    }
+  }
+  if (cl->Net) cl->Net->Flush();
+  */
 }
 
 
@@ -198,15 +239,21 @@ void CL_KeepaliveMessage () {
 //
 //==========================================================================
 void CL_KeepaliveMessageEx (double currTime, bool forced) {
-  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-  if (cls.demoplayback) return;
-  if (!cl->Net) return;
+  //if (!GDemoRecordingContext)
+  {
+    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+    if (cls.demoplayback) return;
+    if (!cl->Net) return;
+  }
+  SendKeepaliveInternal(currTime, forced);
+  /*
   if (currTime < 0) currTime = 0;
   if (LastKeepAliveTime > currTime) LastKeepAliveTime = currTime; // wtf?!
   if (!forced && currTime-LastKeepAliveTime < 1.0/35.0) return;
   LastKeepAliveTime = currTime;
   // write out a nop
   cl->Net->Flush();
+  */
 }
 
 

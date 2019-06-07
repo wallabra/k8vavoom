@@ -408,34 +408,41 @@ static void CheckForSkip () {
   static bool triedToSkip;
   bool skip = false;
 
-  for (int i = 0; i < MAXPLAYERS; ++i) {
-    player = GGameInfo->Players[i];
-    if (player) {
-      if (player->Buttons&BT_ATTACK) {
-        if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
-        player->PlayerFlags |= VBasePlayer::PF_AttackDown;
-      } else {
-        player->PlayerFlags &= ~VBasePlayer::PF_AttackDown;
-      }
-      if (player->Buttons&BT_USE) {
-        if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) skip = true;
-        player->PlayerFlags |= VBasePlayer::PF_UseDown;
-      } else {
-        player->PlayerFlags &= ~VBasePlayer::PF_UseDown;
+  /*
+  if (GDemoRecordingContext) {
+    skip = true;
+  } else
+  */
+  {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      player = GGameInfo->Players[i];
+      if (player) {
+        if (player->Buttons&BT_ATTACK) {
+          if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
+          player->PlayerFlags |= VBasePlayer::PF_AttackDown;
+        } else {
+          player->PlayerFlags &= ~VBasePlayer::PF_AttackDown;
+        }
+        if (player->Buttons&BT_USE) {
+          if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) skip = true;
+          player->PlayerFlags |= VBasePlayer::PF_UseDown;
+        } else {
+          player->PlayerFlags &= ~VBasePlayer::PF_UseDown;
+        }
       }
     }
-  }
 
-  if (deathmatch && sv.intertime < 140) {
-    // wait for 4 seconds before allowing a skip
-    if (skip) {
-      triedToSkip = true;
-      skip = false;
-    }
-  } else {
-    if (triedToSkip) {
-      skip = true;
-      triedToSkip = false;
+    if (deathmatch && sv.intertime < 140) {
+      // wait for 4 seconds before allowing a skip
+      if (skip) {
+        triedToSkip = true;
+        skip = false;
+      }
+    } else {
+      if (triedToSkip) {
+        skip = true;
+        triedToSkip = false;
+      }
     }
   }
 
@@ -532,9 +539,39 @@ static void SV_RunClients (bool skipFrame=false) {
     }
   }
 
+  //GCon->Logf("*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
+    if (GDemoRecordingContext) {
+      if (cls.demorecording) {
+        CL_KeepaliveMessage();
+        for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+          //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
+          //GDemoRecordingContext->ClientConnections[f]->Flush();
+          GDemoRecordingContext->ClientConnections[f]->Intermission(true);
+        }
+      }
+      /*
+      for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+        //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
+        //GDemoRecordingContext->ClientConnections[f]->Flush();
+        GDemoRecordingContext->ClientConnections[f]->ResetLevel();
+      }
+      */
+    }
     CheckForSkip();
     ++sv.intertime;
+  }
+
+  if (!sv.intermission) {
+    if (GDemoRecordingContext) {
+      if (cls.demorecording) {
+        for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
+          //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
+          //GDemoRecordingContext->ClientConnections[f]->Flush();
+          GDemoRecordingContext->ClientConnections[f]->Intermission(false);
+        }
+      }
+    }
   }
 }
 

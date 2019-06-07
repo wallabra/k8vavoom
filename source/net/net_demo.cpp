@@ -50,6 +50,7 @@ VDemoPlaybackNetConnection::VDemoPlaybackNetConnection (VNetContext *AContext, V
   , td_lastframe(0)
   , td_startframe(0)
   , td_starttime(0)
+  , inIntermission(false)
 {
   AutoAck = true;
   *Strm << NextPacketTime;
@@ -106,9 +107,22 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     } else if (GClLevel->Time < NextPacketTime) {
       return 0; // don't need another message yet
     }
+  } else {
+    /*
+    if (GClLevel) {
+      GCon->Logf("no owner (level: %s; ltime=%g)", *GClLevel->MapName, GClLevel->Time);
+    } else {
+      GCon->Logf("no owner");
+    }
+    */
+    if (GClLevel && GClLevel->Time == 0.0f && NextPacketTime != 0.0f) {
+      //GCon->Logf("no owner (level: %s; ltime=%g; NextPacketTime=%g)", *GClLevel->MapName, GClLevel->Time, NextPacketTime);
+      //return 0;
+    }
   }
 
   if (Strm->AtEnd()) {
+    //GCon->Logf("*** EOF ***");
     State = NETCON_Closed;
     return 0;
   }
@@ -126,7 +140,10 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     return 0;
   }
 
-  if (!Strm->AtEnd()) *Strm << NextPacketTime;
+  if (!Strm->AtEnd()) {
+    *Strm << NextPacketTime;
+    //GCon->Logf("*** NEXTPKT: %g", NextPacketTime);
+  }
 
   /*
   static float ptt = 0;
@@ -148,6 +165,17 @@ void VDemoPlaybackNetConnection::SendRawMessage (VMessageOut &) {
 }
 
 
+//==========================================================================
+//
+//  VDemoPlaybackNetConnection::Intermission
+//
+//==========================================================================
+void VDemoPlaybackNetConnection::Intermission (bool active) {
+  //if (inIntermission == active) return;
+  //inIntermission = active;
+}
+
+
 #ifdef CLIENT
 
 //==========================================================================
@@ -157,7 +185,26 @@ void VDemoPlaybackNetConnection::SendRawMessage (VMessageOut &) {
 //==========================================================================
 VDemoRecordingNetConnection::VDemoRecordingNetConnection (VSocketPublic *Sock, VNetContext *AContext, VBasePlayer *AOwner)
   : VNetConnection(Sock, AContext, AOwner)
+  , inIntermission(false)
 {
+}
+
+
+//==========================================================================
+//
+//  VDemoPlaybackNetConnection::Intermission
+//
+//==========================================================================
+void VDemoRecordingNetConnection::Intermission (bool active) {
+  if (inIntermission == active) return;
+  inIntermission = active;
+  /*
+  GCon->Logf("**** IMISS=%d", (int)active);
+  if (cls.demorecording) {
+    float Time = (active ? -4.0f : -6.0f);
+    *cls.demofile << Time;
+  }
+  */
 }
 
 
@@ -173,7 +220,7 @@ int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
   int r = VNetConnection::GetRawPacket(Data);
   if (r == 1 && cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
-    float Time = (GClLevel ? GClLevel->Time : 0.0);
+    float Time = (GClLevel ? GClLevel->Time : 0.0f);
     *cls.demofile << Time;
     vint32 MsgSize = Data.Num();
     *cls.demofile << MsgSize;
@@ -216,8 +263,17 @@ int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
   //LastMessageTime = Sys_Time();
   LastMessageTime = GNet->NetTime;
   if (cls.demorecording) {
+    /*
+    if (cl) {
+      if (GClLevel) {
+        GCon->Logf("SRV: no owner (level: %s; ltime=%g)", *GClLevel->MapName, GClLevel->Time);
+      } else {
+        GCon->Logf("SRV: no owner");
+      }
+    }
+    */
     // dumps the current net message, prefixed by the length and view angles
-    float Time = (GClLevel ? GClLevel->Time : 0.0);
+    float Time = (GClLevel ? GClLevel->Time : 0.0f);
     *cls.demofile << Time;
     *cls.demofile << MsgSize;
     if (cl) {

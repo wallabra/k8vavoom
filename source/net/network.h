@@ -353,6 +353,8 @@ public:
   void SendServerInfo ();
   void LoadedNewLevel ();
   void ResetLevel ();
+  // for demo playback
+  virtual void Intermission (bool active);
 
 private:
   void SetUpPvsNode (int, float *);
@@ -432,23 +434,32 @@ public:
   int td_lastframe; // to meter out one message a frame
   int td_startframe;  // host_framecount at start
   double td_starttime; // realtime at second frame of timedemo
+  bool inIntermission;
 
+public:
   VDemoPlaybackNetConnection (VNetContext *, VBasePlayer *, VStream *, bool);
   virtual ~VDemoPlaybackNetConnection () override;
 
   // VNetConnection interface
   virtual int GetRawPacket (TArray<vuint8> &) override;
   virtual void SendRawMessage (VMessageOut &) override;
+
+  virtual void Intermission (bool active) override;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VDemoRecordingNetConnection : public VNetConnection {
 public:
+  bool inIntermission;
+
+public:
   VDemoRecordingNetConnection (VSocketPublic *, VNetContext *, VBasePlayer *);
 
   // VNetConnection interface
   virtual int GetRawPacket (TArray<vuint8> &) override;
+
+  virtual void Intermission (bool active) override;
 };
 
 

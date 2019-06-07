@@ -364,7 +364,14 @@ void VNetConnection::PrepareOut (int Length) {
 //==========================================================================
 void VNetConnection::Flush () {
   Driver->SetNetTime();
-  if (!Out.GetNumBits() && Driver->NetTime-LastSendTime < 5.0) return;
+
+  if (!Out.GetNumBits()) {
+    //&& Driver->NetTime-LastSendTime < 5.0) return;
+    double tout = VNetworkPublic::MessageTimeOut;
+    if (tout < 50) tout = 50;
+    tout /= 1000.0f;
+    if (Driver->NetTime-LastSendTime < tout/2.0f) return;
+  }
 
   // prepare out for keepalive messages
   if (!Out.GetNumBits()) PrepareOut(0);
@@ -422,19 +429,24 @@ void VNetConnection::Tick () {
   // see if this connection has timed out
   bool connTimedOut = false;
 
-  if (!IsLocalConnection() /*&& (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)*/) {
+  // `AutoAck == true` means "demo recording"
+  if (!AutoAck && !IsLocalConnection() /*&& (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)*/) {
     //double currTime = Sys_Time();
-    if (!((VLevelChannel *)Channels[CHANIDX_Level])->Level) NetCon->LastMessageTime = Driver->NetTime;
-    double tout = VNetworkPublic::MessageTimeOut;
-    if (tout < 50) tout = 50;
-    tout /= 1000.0f;
-    if (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime > tout) {
-      if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
-        (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
-        Driver->MessagesSent, Driver->packetsSent,
-        Driver->MessagesReceived, Driver->packetsReceived);
-      State = NETCON_Closed;
-      connTimedOut = true;
+    if (!((VLevelChannel *)Channels[CHANIDX_Level])->Level) {
+      NetCon->LastMessageTime = Driver->NetTime;
+      //GCon->Logf(NAME_DevNet, "::: NO LEVEL :::");
+    } else {
+      double tout = VNetworkPublic::MessageTimeOut;
+      if (tout < 50) tout = 50;
+      tout /= 1000.0f;
+      if (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime > tout) {
+        if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
+          (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
+          Driver->MessagesSent, Driver->packetsSent,
+          Driver->MessagesReceived, Driver->packetsReceived);
+        State = NETCON_Closed;
+        connTimedOut = true;
+      }
     }
   }
 
@@ -673,4 +685,14 @@ void VNetConnection::ResetLevel () {
     if (Chan->Type == CHANNEL_Thinker) Chan->Close();
   }
   ((VLevelChannel *)Channels[CHANIDX_Level])->ResetLevel();
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::Intermission
+//
+//==========================================================================
+void VNetConnection::Intermission (bool active) {
+  (void)active;
 }
