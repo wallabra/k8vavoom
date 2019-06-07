@@ -1732,6 +1732,8 @@ final void DoStateEffects (float DeltaTime) {
     if (Particles.Num > 0 && GetCvarB('r_particle_effects')) {
       foreach (auto i; 0..Particles.length) {
         ParticleEffectDef *P = Particles[i];
+        if (!P) continue;
+        if (!Level) { print("WTF?! no level in particle effect!"); break; }
         Level.ParticleEffect(P->Count, P->Type, P->Type2,
           Origin+Forward*P->Offset.x-Right*P->Offset.y+Up*P->Offset.z,
           P->OrgRnd, P->Velocity, P->VelRnd,
