@@ -217,6 +217,9 @@ public:
   }
 
   static inline int CalcIntBits (vuint32 n) { return VBitStreamWriter::CalcIntBits(n); }
+
+  inline int GetPos () const { return Pos; }
+  inline int GetNum () const { return Num; }
 };
 
 
