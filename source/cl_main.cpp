@@ -617,22 +617,22 @@ COMMAND(StopDemo) {
 
 //==========================================================================
 //
-//  COMMAND Record
+//  COMMAND RecordDemo
 //
-//  record <demoname> <map>
+//  RecordDemo <demoname> <map>
 //
 //==========================================================================
-COMMAND(Record) {
+COMMAND(RecordDemo) {
   if (Source != SRC_Command) return;
 
   int c = Args.Num();
   if (c != 2 && c != 3) {
-    GCon->Log("record <demoname> [<map>]");
+    GCon->Log("RecordDemo <demoname> [<map>]");
     return;
   }
 
   if (Args[1] == "?" || Args[1].ICmp("-h") == 0 || Args[1].ICmp("-help") == 0  || Args[1].ICmp("--help") == 0) {
-    GCon->Log("record <demoname> [<map>]");
+    GCon->Log("RecordDemo <demoname> [<map>]");
     return;
   }
 
@@ -642,13 +642,13 @@ COMMAND(Record) {
   }
 
   if (c == 2 && GGameInfo->NetMode == NM_Client) {
-    GCon->Log("Can not record - already connected to server");
-    GCon->Log("Client demo recording must be started before connecting");
+    GCon->Log("Can not record demo -- already connected to server.");
+    GCon->Log("Client demo recording must be started before connecting.");
     return;
   }
 
   if (cls.demorecording) {
-    GCon->Log("Already recording a demo");
+    GCon->Log("Already recording a demo.");
     return;
   }
 
