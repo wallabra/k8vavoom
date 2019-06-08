@@ -780,6 +780,18 @@ static float PlaneAngles2D (const TPlane *from, const TPlane *to) {
 
 //==========================================================================
 //
+//  PlaneAngles2DFlipTo
+//
+//==========================================================================
+static float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) {
+  float afrom = VectorAngleYaw(from->normal);
+  float ato = VectorAngleYaw(-to->normal);
+  return AngleMod(AngleMod(ato-afrom+180)-180);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CheckBSPVisibilitySub
 //
 //  `firsttravel` is used to reject invisible segs
@@ -826,7 +838,9 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
     // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
     // check plane angles
-    if (r_lightflood_check_plane_angles && firsttravel && PlaneAngles2D(firsttravel, seg) >= 180.0f) continue;
+    if (r_lightflood_check_plane_angles && firsttravel) {
+      if (PlaneAngles2D(firsttravel, seg) >= 180.0f && PlaneAngles2DFlipTo(firsttravel, seg) >= 180.0f) continue;
+    }
     // ok, it is touching, recurse
     if (CheckBSPVisibilitySub(org, radius, seg->partner->front_sub, (firsttravel ? firsttravel : seg))) {
       //GCon->Logf("RECURSE HIT!");
