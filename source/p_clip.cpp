@@ -210,6 +210,66 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 }
 
 
+// sorry for this, but i want to avoid some copy-pasting
+
+
+#define CLIPPER_CHECK_CLOSED_SECTOR()  do { \
+  /* now check for closed sectors */ \
+  /* inspired by Zandronum code (actually, most sourceports has this, Zandronum was just a port i looked at) */ \
+ \
+  /* closed door */ \
+  if (backcz1 <= frontfz1 && backcz2 <= frontfz2) { \
+    /* properly render skies (consider door "open" if both ceilings are sky) */ \
+    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
+    /* preserve a kind of transparent door/lift special effect */ \
+    if (!hasTopTex) return false; \
+    if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+    return true; \
+  } \
+ \
+  if (frontcz1 <= backfz1 && frontcz2 <= backfz2) { \
+    /* properly render skies (consider door "open" if both ceilings are sky) */ \
+    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
+    /* preserve a kind of transparent door/lift special effect */ \
+    if (!hasBotTex) return false; \
+    if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+    return true; \
+  } \
+ \
+  /* if door is closed because back is shut */ \
+  if (backcz1 <= backfz1 && backcz2 <= backfz2) { \
+    /*  properly render skies */ \
+    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
+    if (bfpic == skyflatnum && ffpic == skyflatnum) return false; \
+    /* preserve a kind of transparent door/lift special effect */ \
+    if (backcz1 < frontcz1 || backcz2 < frontcz2) { \
+      if (!hasTopTex) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+    } \
+    if (backfz1 > frontfz1 || backfz2 > frontfz2) { \
+      if (!hasBotTex) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+    } \
+    return true; \
+  } \
+} while (0)
+
+
+#define CLIPPER_CALC_FCHEIGHTS  \
+  const TVec vv1 = *seg->v1; \
+  const TVec vv2 = *seg->v2; \
+ \
+  const float frontcz1 = fcplane.GetPointZ(vv1); \
+  const float frontcz2 = fcplane.GetPointZ(vv2); \
+  const float frontfz1 = ffplane.GetPointZ(vv1); \
+  const float frontfz2 = ffplane.GetPointZ(vv2); \
+ \
+  const float backcz1 = bcplane.GetPointZ(vv1); \
+  const float backcz2 = bcplane.GetPointZ(vv2); \
+  const float backfz1 = bfplane.GetPointZ(vv1); \
+  const float backfz2 = bfplane.GetPointZ(vv2); \
+
+
 //==========================================================================
 //
 //  VViewClipper::IsSegAClosedSomethingServer
@@ -226,10 +286,6 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
   const line_t *ldef = seg->linedef;
 
   if (ldef->alpha < 1.0f) return false; // skip translucent walls
-  //k8: this was checked by caller
-  //if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
-  //k8: this was checked by caller
-  //if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
   // just in case
   if ((ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) != ML_TWOSIDED) return true;
 
@@ -261,95 +317,9 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
     CopyHeightServer(level, repsecs, fsec, &ffplane, &fcplane, &ffpic, &fcpic);
     CopyHeightServer(level, repsecs, bsec, &bfplane, &bcplane, &bfpic, &bcpic);
 
+    CLIPPER_CALC_FCHEIGHTS
 
-    const TVec vv1 = *seg->v1;
-    const TVec vv2 = *seg->v2;
-
-    const float frontcz1 = fcplane.GetPointZ(vv1);
-    const float frontcz2 = fcplane.GetPointZ(vv2);
-    const float frontfz1 = ffplane.GetPointZ(vv1);
-    const float frontfz2 = ffplane.GetPointZ(vv2);
-
-    const float backcz1 = bcplane.GetPointZ(vv1);
-    const float backcz2 = bcplane.GetPointZ(vv2);
-    const float backfz1 = bfplane.GetPointZ(vv1);
-    const float backfz2 = bfplane.GetPointZ(vv2);
-
-    /*
-    if (clip_midsolid && hasMidTex) {
-      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
-      if (midSolid) {
-        const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
-        VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
-        // here we should check if midtex covers the whole height, as it is not tiled vertically (if not wrapped)
-        const float texh = MTex->GetScaledHeight();
-        float z_org;
-        if (ldef->flags&ML_DONTPEGBOTTOM) {
-          // bottom of texture at bottom
-          // top of texture at top
-          z_org = max2(fsec->floor.TexZ, bsec->floor.TexZ)+texh;
-        } else {
-          // top of texture at top
-          z_org = min2(fsec->ceiling.TexZ, bsec->ceiling.TexZ);
-        }
-        //k8: dunno why
-        if (seg->sidedef->Mid.RowOffset < 0) {
-          z_org += (seg->sidedef->Mid.RowOffset+texh)*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-        } else {
-          z_org += seg->sidedef->Mid.RowOffset*(!MTex->bWorldPanning ? 1.0f : 1.0f/MTex->TScale);
-        }
-        float floorz, ceilz;
-        if (sec == fsec) {
-          floorz = min2(frontfz1, frontfz2);
-          ceilz = max2(frontcz1, frontcz2);
-        } else {
-          floorz = min2(backfz1, backfz2);
-          ceilz = max2(backcz1, backcz2);
-        }
-        if ((ldef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&SDF_WRAPMIDTEX)) {
-          if (z_org-texh <= floorz) return true; // fully covered, as it is wrapped
-        } else {
-          // non-wrapped
-          if (z_org >= ceilz && z_org-texh <= floorz) return true; // fully covered
-        }
-      }
-    }
-    */
-
-    // taken from Zandronum
-    // now check for closed sectors
-
-    // closed door
-    if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (!hasTopTex) return false;
-      // properly render skies (consider door "open" if both ceilings are sky):
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      return true;
-    }
-
-    if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (!hasBotTex) return false;
-      // properly render skies (consider door "open" if both ceilings are sky):
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      return true;
-    }
-
-    // if door is closed because back is shut
-    if (backcz1 <= backfz1 && backcz2 <= backfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (backcz1 < frontcz1 || backcz2 < frontcz2) {
-        if (!hasTopTex) return false;
-      }
-      if (backfz1 > frontfz1 || backfz2 > frontfz2) {
-        if (!hasBotTex) return false;
-      }
-      // properly render skies
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
-      return true;
-    }
+    CLIPPER_CHECK_CLOSED_SECTOR();
   }
 
   return false;
@@ -407,19 +377,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
     CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
 
-
-    const TVec vv1 = *seg->v1;
-    const TVec vv2 = *seg->v2;
-
-    const float frontcz1 = fcplane.GetPointZ(vv1);
-    const float frontcz2 = fcplane.GetPointZ(vv2);
-    const float frontfz1 = ffplane.GetPointZ(vv1);
-    const float frontfz2 = ffplane.GetPointZ(vv2);
-
-    const float backcz1 = bcplane.GetPointZ(vv1);
-    const float backcz2 = bcplane.GetPointZ(vv2);
-    const float backfz1 = bfplane.GetPointZ(vv1);
-    const float backfz2 = bfplane.GetPointZ(vv2);
+    CLIPPER_CALC_FCHEIGHTS
 
     if (clip_midsolid && hasMidTex) {
       const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
@@ -460,44 +418,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
       }
     }
 
-    // taken from Zandronum
-    // now check for closed sectors
-
-    // closed door
-    if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (!hasTopTex) return false;
-        if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false;
-      // properly render skies (consider door "open" if both ceilings are sky):
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      return true;
-    }
-
-    if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (!hasBotTex) return false;
-      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;
-      // properly render skies (consider door "open" if both ceilings are sky):
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      return true;
-    }
-
-    // if door is closed because back is shut
-    if (backcz1 <= backfz1 && backcz2 <= backfz2) {
-      // preserve a kind of transparent door/lift special effect:
-      if (backcz1 < frontcz1 || backcz2 < frontcz2) {
-        if (!hasTopTex) return false;
-        if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false;
-      }
-      if (backfz1 > frontfz1 || backfz2 > frontfz2) {
-        if (!hasBotTex) return false;
-        if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;
-      }
-      // properly render skies
-      if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
-      if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
-      return true;
-    }
+    CLIPPER_CHECK_CLOSED_SECTOR();
 
     if (clip_height && (hasTopTex || hasBotTex) &&
         (lorg || (Frustum && Frustum->isValid())) &&
