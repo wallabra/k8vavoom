@@ -297,6 +297,10 @@ void KnownMapBugFixer () {
   // Nerve: MAP04
   if (MapHashMD5 == "ff635fb9a2f076566299910f8c78f707") {
     Sectors[868].special = 0;
+    // missing bottom texture
+    Sides[Lines[2234].sidenum[1]].BottomTexture = LdrTexNumForName("GSTONE1", TEXTYPE_Wall);
+    Sides[Lines[3765].sidenum[1]].BottomTexture = LdrTexNumForName("GSTONE1", TEXTYPE_Wall);
+    Sides[Lines[3768].sidenum[1]].BottomTexture = LdrTexNumForName("GSTONE1", TEXTYPE_Wall);
     printwarn("MAPFIX: Nerve: MAP04 detected and fixed");
     return;
   }
