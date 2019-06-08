@@ -166,7 +166,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   BuildVisibleObjectsList();
 
   RenderMobjsAmbient();
-  RenderTranslucentWallsAmbient();
+  if (r_advrender_translucent_as_light) RenderTranslucentWallsAmbient();
 
   Drawer->BeginShadowVolumesPass();
 
