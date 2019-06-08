@@ -503,7 +503,9 @@ void VLevel::BuildNodesZD () {
     for (int i = 0; i < segCount; ++i, ++destseg) {
       const ZDBSP::MapSegGLEx &zseg = segs[i];
 
-      if (zseg.v1 == zseg.v2) Sys_Error("ZDBSP: seg #%d has same vertices (%d)", i, (int)zseg.v1);
+      if (zseg.v1 == zseg.v2) {
+        GCon->Logf(NAME_Error, "ZDBSP: seg #%d has same vertices (%d)", i, (int)zseg.v1);
+      }
 
       destseg->v1 = &Vertexes[zseg.v1];
       destseg->v2 = &Vertexes[zseg.v2];
