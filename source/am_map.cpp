@@ -1178,19 +1178,32 @@ static void AM_drawWalls () {
     if (line->exFlags&ML_EX_CHECK_MAPPED) {
       line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
       if (!(line->flags&ML_MAPPED)) {
-        line->flags |= ML_MAPPED;
-        bool seenMapped = false;
-        for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
-          if (!(seg->flags&SF_MAPPED)) {
-            line->flags &= ~ML_MAPPED;
-            break;
+        int unseenSides[2] = {0, 0};
+        int seenSides[2] = {0, 0};
+        do {
+          int defSide;
+               if (line->sidenum[0] >= 0) defSide = (line->sidenum[1] >= 0 ? -1 : 0);
+          else if (line->sidenum[1] >= 0) defSide = 1;
+          else break;
+          for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
+            int side = defSide;
+            if (side < 0) side = (int)(seg->sidedef == &GClLevel->Sides[line->sidenum[1]]);
+            if (seg->flags&SF_MAPPED) ++seenSides[side]; else ++unseenSides[side];
           }
-          seenMapped = true;
+        } while (0);
+        // if any line side is fully seen, this line is fully mapped
+        // that is, we should have some seen segs, and no unseen segs for a side to consider it "fully seen"
+        if ((unseenSides[0] == 0 && seenSides[0] != 0) || (unseenSides[1] == 0 && seenSides[1] != 0)) {
+          // fully mapped
+          line->flags |= ML_MAPPED;
+        } else if (seenSides[0]|seenSides[1]) { // not a typo!
+          // partially mapped, because some segs were seen
+          line->exFlags |= ML_EX_PARTIALLY_MAPPED;
         }
-        if (seenMapped && !(line->flags&ML_MAPPED)) line->exFlags |= ML_EX_PARTIALLY_MAPPED;
       }
     }
 
+    // just in case
     if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
 
     // fully mapped or automap revealed?
