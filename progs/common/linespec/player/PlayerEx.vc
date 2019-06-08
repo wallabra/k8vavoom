@@ -639,7 +639,7 @@ void CrouchMove (int direction) {
 //  MovePlayer
 //
 //==========================================================================
-final void MovePlayer (float deltaTime) {
+void MovePlayer (float deltaTime) {
   float forward;
   float side;
   float fly;
@@ -737,7 +737,7 @@ final void MovePlayer (float deltaTime) {
 //  CheckWaterJump
 //
 //==========================================================================
-final void CheckWaterJump () {
+void CheckWaterJump () {
   TVec start;
   TVec end;
   TVec vforward;
@@ -771,16 +771,13 @@ final void CheckWaterJump () {
 //  WaterMove
 //
 //==========================================================================
-final void WaterMove (float deltaTime) {
+void WaterMove (float deltaTime) {
   float forward;
   float side;
   TVec vforward;
   TVec vright;
   TVec vup;
   TVec wishvel;
-
-  // do not let the player control movement if not onground
-  onground = (MO.Origin.z <= MO.FloorZ) || EntityEx(MO).bOnMobj;
 
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
 
@@ -832,7 +829,7 @@ final void WaterMove (float deltaTime) {
 //  WaterJump
 //
 //==========================================================================
-final void WaterJump () {
+void WaterJump () {
   if (!EntityEx(MO).ReactionTime || !MO.WaterLevel) {
     EntityEx(MO).bWaterJump = false;
     EntityEx(MO).ReactionTime = 0.0;
@@ -849,7 +846,7 @@ final void WaterJump () {
 //  Called every tic frame that the player origin is in a special sector.
 //
 //==========================================================================
-final void PlayerInSpecialSector (float deltaTime) {
+void PlayerInSpecialSector (float deltaTime) {
   float speed;
   float finean;
 
@@ -1098,7 +1095,7 @@ final void PlayerInSpecialSector (float deltaTime) {
 //  PlayerOnSpecialFlat
 //
 //============================================================================
-final void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
+void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
   if (!floorType) return;
   if (MO.Origin.z != MO.FloorZ) return; // player is not touching the floor
 
@@ -1124,7 +1121,7 @@ final void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
 //  PlayerInContents
 //
 //==========================================================================
-final void PlayerInContents (float deltaTime) {
+void PlayerInContents (float deltaTime) {
   if (!MO.WaterLevel) return;
 
   // search for iron feet power; any subclass will do
@@ -1199,7 +1196,7 @@ final void PlayerInContents (float deltaTime) {
 //  SetPlayerRunState
 //
 //==========================================================================
-final void SetPlayerRunState () {
+void SetPlayerRunState () {
   if (MO.State == EntityEx(MO).IdleState && EntityEx(MO).SeeState) {
     MO.SetState(EntityEx(MO).SeeState);
   }
@@ -1217,7 +1214,7 @@ final void SetPlayerRunState () {
 //  SetWeapon
 //
 //==========================================================================
-final void SetWeapon (Weapon NewWeapon) {
+void SetWeapon (Weapon NewWeapon) {
   ReadyWeapon = NewWeapon;
   PendingWeapon = none;
   if (NewWeapon) {
@@ -1238,7 +1235,7 @@ final void SetWeapon (Weapon NewWeapon) {
 //  Starts bringing the pending weapon up from the bottom of the screen.
 //
 //===========================================================================
-final void BringUpWeapon (optional bool instant, optional bool skipSound) {
+void BringUpWeapon (optional bool instant, optional bool skipSound) {
   //print("BringUpWeapon: %C (instant=%B: skipSound=%B)", ReadyWeapon, instant, skipSound);
   if (!skipSound && ReadyWeapon && ReadyWeapon.UpSound) {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
@@ -1291,7 +1288,7 @@ final void BringUpWeapon (optional bool instant, optional bool skipSound) {
 //  Player died, so put the weapon away.
 //
 //===========================================================================
-final void DropWeapon () {
+void DropWeapon () {
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
@@ -1307,7 +1304,7 @@ final void DropWeapon () {
 //  Called at start of level for each player.
 //
 //===========================================================================
-final void SetupPsprites () {
+void SetupPsprites () {
   // remove all psprites
   foreach (auto i; 0..NUMPSPRITES) {
     SetViewObject(none);
@@ -1416,7 +1413,7 @@ void ReloadWeapon () {
 //  do it (read: not in the middle of an attack).
 //
 //==========================================================================
-final void ChangeWeapon (int newweapon) {
+void ChangeWeapon (int newweapon) {
   if (MorphTime) return;
   Weapon NewWpn = GetSlotChangeWeapon(newweapon);
   if (NewWpn && NewWpn != ReadyWeapon &&
@@ -1433,7 +1430,7 @@ final void ChangeWeapon (int newweapon) {
 //  PrevWeapon
 //
 //==========================================================================
-final void PrevWeapon () {
+void PrevWeapon () {
   if (MorphTime) return;
   Weapon Wpn = GetPrevWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
   if (Wpn && Wpn != ReadyWeapon) {
@@ -1448,7 +1445,7 @@ final void PrevWeapon () {
 //  NextWeapon
 //
 //==========================================================================
-final void NextWeapon () {
+void NextWeapon () {
   if (MorphTime) return;
   Weapon Wpn = GetNextWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
   if (Wpn && Wpn != ReadyWeapon) {
@@ -1465,7 +1462,7 @@ final void NextWeapon () {
 //  Returns best weapon to use
 //
 //==========================================================================
-final Weapon BestWeapon (optional class!Ammo AmmoType) {
+Weapon BestWeapon (optional class!Ammo AmmoType) {
   if (!MO) return none;
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
   Weapon Best = none;
@@ -1496,7 +1493,7 @@ final Weapon BestWeapon (optional class!Ammo AmmoType) {
 //  ChoosePowered
 //
 //==========================================================================
-final Weapon ChoosePowered (Weapon Wpn) {
+Weapon ChoosePowered (Weapon Wpn) {
   if (!Wpn) return none;
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
   if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp) {
@@ -1511,7 +1508,7 @@ final Weapon ChoosePowered (Weapon Wpn) {
 //  GetSlotChangeWeapon
 //
 //==========================================================================
-final Weapon GetSlotChangeWeapon (int Slot) {
+Weapon GetSlotChangeWeapon (int Slot) {
   if (Slot < 0 || Slot > PlayerPawn::NUM_WEAPON_SLOTS) return ReadyWeapon;
   auto pawn = PlayerPawn(MO);
   if (!pawn) return ReadyWeapon;
@@ -1558,7 +1555,7 @@ final Weapon GetSlotChangeWeapon (int Slot) {
 //  CycleWeaponWithDir
 //
 //==========================================================================
-final Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
+Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   auto pawn = PlayerPawn(MO);
   if (!pawn) return Current;
 
@@ -1604,7 +1601,7 @@ final Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
 //  GetPrevWeapon
 //
 //==========================================================================
-final Weapon GetPrevWeapon (Weapon Current) {
+Weapon GetPrevWeapon (Weapon Current) {
   return CycleWeaponWithDir(Current, forward:false);
 }
 
@@ -1614,7 +1611,7 @@ final Weapon GetPrevWeapon (Weapon Current) {
 //  GetNextWeapon
 //
 //==========================================================================
-final Weapon GetNextWeapon (Weapon Current) {
+Weapon GetNextWeapon (Weapon Current) {
   return CycleWeaponWithDir(Current, forward:true);
 }
 
@@ -1628,7 +1625,7 @@ final Weapon GetNextWeapon (Weapon Current) {
 //  Returns true if the puzzle item was used on a line or a thing.
 //
 //==========================================================================
-final bool UsePuzzleItem (int PuzzleItemType) {
+bool UsePuzzleItem (int PuzzleItemType) {
   float x1, y1, x2, y2;
   TVec PuzzleUseDir;
   intercept_t* in;
@@ -1697,7 +1694,7 @@ final bool UsePuzzleItem (int PuzzleItemType) {
 //  AddRevealedMap
 //
 //==========================================================================
-final bool AddRevealedMap () {
+bool AddRevealedMap () {
   bAutomapRevealed = true;
   foreach (auto i; 0..RevealedMaps.length) {
     if (RevealedMaps[i] == Level.XLevel.MapName) return false; // already revealed
@@ -1713,7 +1710,7 @@ final bool AddRevealedMap () {
 //  RemoveRevealedMap
 //
 //==========================================================================
-final void RemoveRevealedMap () {
+void RemoveRevealedMap () {
   bAutomapRevealed = false;
   foreach (auto i; 0..RevealedMaps.length) {
     if (RevealedMaps[i] == Level.XLevel.MapName) {
@@ -1729,7 +1726,7 @@ final void RemoveRevealedMap () {
 //  UpdateRevealedMap
 //
 //==========================================================================
-final void UpdateRevealedMap () {
+void UpdateRevealedMap () {
   bAutomapRevealed = false;
   foreach (auto i; 0..RevealedMaps.length) {
     if (RevealedMaps[i] == Level.XLevel.MapName) {
@@ -2085,7 +2082,7 @@ void ClientFinaleType (int Type) {
 //  SetObjectives
 //
 //==========================================================================
-final void SetObjectives (int NewObjectives) {
+void SetObjectives (int NewObjectives) {
   if (!NewObjectives) return;
   // check if log text lump exists in wad file
   if (!WadLumpPresent(name(va("log%d", NewObjectives)))) return;
@@ -2100,7 +2097,7 @@ final void SetObjectives (int NewObjectives) {
 //  replaces '%g', '%h', '%p', '%o', '%k'
 //
 //==========================================================================
-final string StrReplaceSubstitutes (string str, EntityEx source) {
+string StrReplaceSubstitutes (string str, EntityEx source) {
   auto ppos = str.strIndexOf("%");
   if (ppos < 0) return str;
   // we have something to process...
@@ -2299,7 +2296,7 @@ void ClientVoice (int VoiceNum) {
 //  Returns false if the ammo can't be picked up at all
 //
 //==========================================================================
-final bool GiveAmmo (class!Ammo ammo, int count) {
+bool GiveAmmo (class!Ammo ammo, int count) {
   int oldammo;
 
   if (!ammo) return false;
@@ -2700,7 +2697,7 @@ void SetUpPlayerClass () {
 //  reset ACS button update timers and values
 //
 //==========================================================================
-final void ResetACSButtons () {
+void ResetACSButtons () {
   AcsCurrButtonsPressed = 0;
   AcsCurrButtons = 0;
   AcsButtons = 0;
@@ -3075,7 +3072,7 @@ void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional b
 //  AddElvenGift
 //
 //===========================================================================
-final bool AddElvenGift (name Klass) {
+bool AddElvenGift (name Klass) {
   class!Thinker th = class!Thinker(FindClass(Klass));
   if (th) {
     Actor act = Actor(Level.Spawn(th));
@@ -3328,7 +3325,7 @@ override void PlayerExitMap (bool clusterChange) {
 //  InventoryLeft
 //
 //==========================================================================
-final void InventoryLeft () {
+void InventoryLeft () {
   if (!bInventoryAlwaysOpen) {
     if (!InventoryTime) {
       InventoryTime = 5.0;
@@ -3352,7 +3349,7 @@ final void InventoryLeft () {
 //  InventoryRight
 //
 //==========================================================================
-final void InventoryRight () {
+void InventoryRight () {
   if (!bInventoryAlwaysOpen) {
     if (!InventoryTime) {
       InventoryTime = 5.0;
@@ -3376,7 +3373,7 @@ final void InventoryRight () {
 //  InventoryUse
 //
 //==========================================================================
-final void InventoryUse () {
+void InventoryUse () {
   // flag to denote that it's okay to use an artifact
        if (InventoryTime) InventoryTime = 0.0;
   else if (InvPtr) EntityEx(MO).UseInventory(InvPtr);
@@ -3388,7 +3385,7 @@ final void InventoryUse () {
 //  InventoryTick
 //
 //==========================================================================
-final void InventoryTick (float deltaTime) {
+void InventoryTick (float deltaTime) {
   // turn inventory off after a certain amount of time
   if (InventoryTime) {
     InventoryTime -= deltaTime;
@@ -3403,7 +3400,7 @@ final void InventoryTick (float deltaTime) {
 //  AdjustInvFirst
 //
 //==========================================================================
-final void AdjustInvFirst () {
+void AdjustInvFirst () {
   Inventory Item;
 
   if (!InvPtr) {
@@ -3439,7 +3436,7 @@ final void AdjustInvFirst () {
 //  InventoryThrow
 //
 //==========================================================================
-final EntityEx InventoryThrow () {
+EntityEx InventoryThrow () {
   if (!InvPtr) return none;
   return EntityEx(MO).DropInventory(InvPtr);
 }
@@ -3450,7 +3447,7 @@ final EntityEx InventoryThrow () {
 //  UseFlyPower
 //
 //==========================================================================
-final void UseFlyPower () {
+void UseFlyPower () {
   PlayerUseArtifactType(ArtiFly);
 }
 
@@ -3460,7 +3457,7 @@ final void UseFlyPower () {
 //  PlayerUseArtifactType
 //
 //==========================================================================
-final void PlayerUseArtifactType (class!Inventory arti) {
+void PlayerUseArtifactType (class!Inventory arti) {
   Inventory Item = EntityEx(MO).FindInventory(arti);
   if (Item) EntityEx(MO).UseInventory(Item);
 }
@@ -3471,7 +3468,7 @@ final void PlayerUseArtifactType (class!Inventory arti) {
 //  PlayerNextArtifact
 //
 //==========================================================================
-final void PlayerNextArtifact () {
+void PlayerNextArtifact () {
   if (!InvPtr) return;
   Inventory NewPtr = InvPtr.PrevInv();
   if (!NewPtr) {
@@ -3490,7 +3487,7 @@ final void PlayerNextArtifact () {
 //  Fall on your face when dying. Decrease POV height to floor height.
 //
 //==========================================================================
-final void DeathPlayerTick (float deltaTime) {
+void DeathPlayerTick (float deltaTime) {
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
 
@@ -4096,7 +4093,7 @@ override void ClientTick (float deltaTime) {
 //  AdjustPlayerAngle
 //
 //==========================================================================
-final void AdjustPlayerAngle (EntityEx AimTarget) {
+void AdjustPlayerAngle (EntityEx AimTarget) {
   float angle;
   float difference;
 
@@ -4116,7 +4113,7 @@ final void AdjustPlayerAngle (EntityEx AimTarget) {
 //  UndoPlayerMorph
 //
 //==========================================================================
-final bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
+bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   Actor A;
 
   if (EntityEx(MO).bInvulnerable && (self != Activator || !(MorphStyle&EntityEx::MORPH_WHENINVULNERABLE))) {
@@ -4199,7 +4196,7 @@ final bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
 //  ActivateMorphWeapon
 //
 //===========================================================================
-final void ActivateMorphWeapon () {
+void ActivateMorphWeapon () {
   class!Weapon WpnClass = PlayerPawn(MO).MorphWeapon;
   Weapon Wpn;
   if (WpnClass) {
@@ -4241,7 +4238,7 @@ final void ActivateMorphWeapon () {
 //  PostMorphWeapon
 //
 //===========================================================================
-final void PostMorphWeapon (Weapon weapon) {
+void PostMorphWeapon (Weapon weapon) {
   SetWeapon(weapon);
   ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
   SetViewObject(ReadyWeapon);
@@ -4259,7 +4256,7 @@ final void PostMorphWeapon (Weapon weapon) {
 //  AddVisitedMap
 //
 //==========================================================================
-final void AddVisitedMap (name Map) {
+void AddVisitedMap (name Map) {
   foreach (auto i; 0..MAX_MAPS_VISITED) {
     if (MapsVisited[i] == Map) return;
     if (!MapsVisited[i]) { MapsVisited[i] = Map; return; }
@@ -4857,7 +4854,7 @@ bool IsWeaponAlwaysExtremeDeath () {
 //  Zoom the player's FOV
 //
 //==========================================================================
-final void SetFOV (int New_FOV) {
+void SetFOV (int New_FOV) {
   SetCvar('FOV', New_FOV);
 }
 
