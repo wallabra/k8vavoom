@@ -77,7 +77,7 @@ VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textur
 VCvarB r_decals_wall_masked("r_decals_wall_masked", true, "Render decals on masked walls?", CVAR_Archive);
 VCvarB r_decals_wall_alpha("r_decals_wall_alpha", true, "Render decals on translucent walls?", CVAR_Archive);
 
-VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", true, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
+//VCvarB r_adv_masked_wall_vertex_light("r_adv_masked_wall_vertex_light", false, "Estimate lighting of masked wall using its vertices?", CVAR_Archive);
 
 VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);

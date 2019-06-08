@@ -116,7 +116,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (surf->lightmap != nullptr || (!RendLev->IsAdvancedRenderer() && surf->dlightframe == RendLev->currDLightFrame)) {
+  if (Alpha == 1.0f && !Additive && (surf->lightmap != nullptr || (!RendLev->IsAdvancedRenderer() && surf->dlightframe == RendLev->currDLightFrame))) {
     RendLev->BuildLightMap(surf);
     int w = (surf->extents[0]>>4)+1;
     int h = (surf->extents[1]>>4)+1;
@@ -136,6 +136,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       SurfMaskedGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
     }
   } else {
+    /* k8: this seems to be stupid
     if (r_adv_masked_wall_vertex_light) {
       // collect vertex lighting
       //FIXME: this should be rendered in ambient pass instead
@@ -176,7 +177,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       } else {
         SurfMaskedGlow.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
       }
-    } else {
+    } else
+    */
+    {
       const float lev = getSurfLightLevel(surf);
       if (doBrightmap) {
         SurfMaskedBrightmapGlow.SetLight(

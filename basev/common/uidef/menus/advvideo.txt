@@ -95,6 +95,7 @@ menudef AdvVideoOptions {
     cvar = r_drawfuzz;
   }
 
+  /*
   option bool {
     title = "Better translucent wall lighting";
     cvar = r_adv_masked_wall_vertex_light;
@@ -106,6 +107,7 @@ menudef AdvVideoOptions {
       "Note that this can slow down rendering for maps with alot of"
       "translucent walls.";
   }
+  */
 
 
   header "Dynamic Lighting";
