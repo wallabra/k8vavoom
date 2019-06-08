@@ -41,8 +41,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   texinfo_t *tex = surf->texinfo;
-
-  if (!tex->Tex || (!gl_dbg_adv_render_textures_surface && RendLev->IsAdvancedRenderer())) return;
+  if (!tex->Tex) return;
 
   GlowParams gp;
   CalcGlow(gp, surf);
@@ -93,8 +92,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     if (Additive) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     } else {
-      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
     // translucent things should not modify z-buffer
     if (Additive || Alpha < 1.0f) {
@@ -523,8 +521,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    //p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   //GCon->Logf("sl=0x%08x (%g : %d)", (unsigned)surf->Light, Alpha, (int)Additive);

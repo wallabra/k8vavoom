@@ -32,7 +32,8 @@ void main () {
 #ifdef VV_MASKED_BRIGHTMAP
   $include "common/brightmap_calc.fs"
 #endif
-  TexColor *= lt;
+  //TexColor *= lt;
+  TexColor.rgb *= lt.rgb;
 
   // convert to premultiplied
   vec4 FinalColor;

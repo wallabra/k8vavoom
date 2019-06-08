@@ -20,20 +20,12 @@ void main () {
 #ifdef VV_AMBIENT_BRIGHTMAP_WALL
   $include "common/brightmap_calc.fs"
 #endif
-  float lta = lt.a;
-  //lt.rgb = TexColor.rgb*lt.a;
-  /*
-  lt.r = clamp(lt.r*TexColor.r*lta, 0.0, 1.0);
-  lt.g = clamp(lt.g*TexColor.g*lta, 0.0, 1.0);
-  lt.b = clamp(lt.b*TexColor.b*lta, 0.0, 1.0);
-  */
-  //lt.rgb = clamp(lt.rgb*TexColor.rgb*lta, 0.0, 1.0);
-  lt.rgb = clamp(lt.rgb*TexColor.rgb*lta, 0.0, 1.0);
-  lt.a = lta;
-  //lt.rgb = vec3(1, 0, 0);
-  //lt.a = 1.0;
-  //lt.a = clamp(lta+0.7, 0.0, 1.0);
-  //lt.a = 1.0;
 
-  gl_FragColor = lt;
+  TexColor.rgb *= lt.rgb;
+  // convert to premultiplied
+  vec4 FinalColor;
+  FinalColor.rgb = (TexColor.rgb*TexColor.a)*lt.a;
+  FinalColor.a = TexColor.a*lt.a;
+
+  gl_FragColor = clamp(FinalColor, 0.0, 1.0);
 }
