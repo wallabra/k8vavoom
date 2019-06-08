@@ -116,9 +116,10 @@ void VPortal::Draw (bool UseStencil) {
 
   if (!Drawer->StartPortal(this, UseStencil)) {
     // all portal polygons are clipped away
-    //GCon->Logf("portal is clipped away");
+    //GCon->Logf("portal is clipped away (stencil:%d)", (int)UseStencil);
     return;
   }
+  //GCon->Logf("doing portal (stencil:%d)", (int)UseStencil);
 
   // save renderer settings
   TVec SavedViewOrg = vieworg;

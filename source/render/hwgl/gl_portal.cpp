@@ -38,10 +38,10 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     ClearStencilBuffer();
     NoteStencilBufferDirty();
 
-    if (/*!Portal->stackedSector*/true) {
+    if (Portal->stackedSector) {
       // doesn't work for now
       // k8: why?
-      if (RendLev->NeedsInfiniteFarClip) return false;
+      //if (RendLev->NeedsInfiniteFarClip) return false;
 
       // disable drawing
       SurfZBuf.Activate();
