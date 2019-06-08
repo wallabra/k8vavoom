@@ -467,6 +467,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
       // preserve a kind of transparent door/lift special effect:
       if (!hasTopTex) return false;
+        if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false;
       // properly render skies (consider door "open" if both ceilings are sky):
       if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
       return true;
@@ -475,6 +476,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
       // preserve a kind of transparent door/lift special effect:
       if (!hasBotTex) return false;
+      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;
       // properly render skies (consider door "open" if both ceilings are sky):
       if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
       return true;
@@ -485,9 +487,11 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
       // preserve a kind of transparent door/lift special effect:
       if (backcz1 < frontcz1 || backcz2 < frontcz2) {
         if (!hasTopTex) return false;
+        if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false;
       }
       if (backfz1 > frontfz1 || backfz2 > frontfz2) {
         if (!hasBotTex) return false;
+        if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;
       }
       // properly render skies
       if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
