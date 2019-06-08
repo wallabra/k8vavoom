@@ -36,6 +36,8 @@
 #include "gamedefs.h"
 #include "network.h"
 
+static VCvarB demo_flush_each_packet("demo_flush_each_packet", false, "Flush file after each written demo packet?", CVAR_PreInit|CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -226,7 +228,7 @@ int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     *cls.demofile << MsgSize;
     *cls.demofile << cl->ViewAngles;
     cls.demofile->Serialise(Data.Ptr(), Data.Num());
-    cls.demofile->Flush();
+    if (demo_flush_each_packet) cls.demofile->Flush();
   }
   return r;
 }
@@ -283,7 +285,7 @@ int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
       *cls.demofile << A;
     }
     cls.demofile->Serialise(Msg, MsgSize);
-    cls.demofile->Flush();
+    if (demo_flush_each_packet) cls.demofile->Flush();
   }
   return 1;
 }
