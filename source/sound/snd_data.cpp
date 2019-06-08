@@ -950,7 +950,7 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
   while (!sc->AtEnd()) {
     sc->ExpectString();
     if (**sc->String == ':' || **sc->String == '[') {
-      if (inSequence) sc->Error("SN_InitSequenceScript: Nested Script Error");
+      if (inSequence) sc->Error("SNDSEQ: Nested Script Error");
       for (SeqId = 0; SeqId < SeqInfo.Num(); ++SeqId) {
         if (SeqInfo[SeqId].Name == *sc->String+1) {
           Z_Free(SeqInfo[SeqId].Data);
@@ -973,7 +973,13 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
       }
       continue; // parse the next command
     }
+
     if (!inSequence) {
+      if (sc->String.strEquCI("end")) {
+        // some defective zdoom wads has this
+        sc->Message("`end` directive outside of sequence");
+        continue;
+      }
       sc->Error("String outside sequence");
       continue;
     }
@@ -984,11 +990,13 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
       AssignSeqTranslations(sc, SeqId, SEQ_Door);
       continue;
     }
+
     if (sc->Check("platform")) {
       // platform <number>...
       AssignSeqTranslations(sc, SeqId, SEQ_Platform);
       continue;
     }
+
     if (sc->Check("environment")) {
       // environment <number>...
       AssignSeqTranslations(sc, SeqId, SEQ_Environment);
