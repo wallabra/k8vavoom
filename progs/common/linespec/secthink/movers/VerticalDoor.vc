@@ -311,9 +311,8 @@ override void Tick (float deltaTime) {
 void EV_LightTurnOnPartway (int Tag, float Frac) {
   Frac = fclamp(Frac, 0, 1);
   // search all sectors for ones with same tag as activating line
-  int i = -1;
-  for (i = XLevel.FindSectorFromTag(Tag, i); i >= 0; i = XLevel.FindSectorFromTag(Tag, i)) {
-    sector_t *sector = &XLevel.Sectors[i];
+  sector_t *sector;
+  for (int hidx = XLevel.FindSectorFromTag(out sector, Tag); hidx >= 0; hidx = XLevel.FindSectorFromTag(out sector, Tag, hidx)) {
     int bright = 0;
     int min = sector->params.lightlevel;
     foreach (auto j; 0..sector.lines.length) {

@@ -224,7 +224,7 @@ enum {
   SPAC_Push       = 0x0010, // when player pushes line
   SPAC_PCross     = 0x0020, // when projectile crosses line
   SPAC_UseThrough = 0x0040, // SPAC_USE, but passes it through
-  //  SPAC_PTouch is remapped as SPAC_Impact | SPAC_PCross
+  // SPAC_PTouch is remapped as (SPAC_Impact|SPAC_PCross)
   SPAC_AnyCross   = 0x0080,
   SPAC_MUse       = 0x0100, // when monster uses line
   SPAC_MPush      = 0x0200, // when monster pushes line
@@ -232,11 +232,31 @@ enum {
 };
 
 
-struct TagListHashItem {
-  int Tag;
-  int HashFirst;
-  int HashNext;
+struct TagHash;
+
+/*
+struct TagHashIter {
+  TagHash *th;
+  int tag;
+  int index;
 };
+*/
+
+TagHash *tagHashAlloc ();
+void tagHashClear (TagHash *th);
+void tagHashFree (TagHash *&th);
+void tagHashPut (TagHash *th, int tag, void *ptr);
+bool tagHashCheckTag (const TagHash *th, int tag, const void *ptr);
+/*
+bool tagHashFirst (TagHashIter *it, TagHash *th, int tag);
+bool tagHashNext (TagHashIter *it);
+void *tagHashCurrent (const TagHashIter *it);
+*/
+// returns -1 when finished
+int tagHashFirst (const TagHash *th, int tag);
+int tagHashNext (const TagHash *th, int index, int tag);
+void *tagHashPtr (const TagHash *th, int index);
+int tagHashTag (const TagHash *th, int index);
 
 
 struct line_t : public TPlane {
@@ -282,13 +302,16 @@ struct line_t : public TPlane {
 
   vint32 locknumber;
 
-  /*
-  TagListHashItem *tagHash;
-  vint32 tagHashCount;
-  */
-  vint32 LineTag;
-  vint32 HashFirst;
-  vint32 HashNext;
+  TArray<vint32> moreTags; // except `lineTag`
+  vint32 lineTag;
+
+  inline bool IsTagEqual (int tag) const {
+    if (!tag || tag == -1) return false;
+    if (lineTag == tag) return true;
+    //return tagHashCheckTag(tagHash, tag, this);
+    for (int f = 0; f < moreTags.length(); ++f) if (moreTags[f] == tag) return true;
+    return false;
+  }
 
   seg_t *firstseg; // linked by lsnext
 
@@ -608,9 +631,16 @@ struct sector_t {
 
   vint32 special;
 
-  vint32 tag;
-  vint32 HashFirst;
-  vint32 HashNext;
+  TArray<vint32> moreTags; // except `lineTag`
+  vint32 sectorTag;
+
+  inline bool IsTagEqual (int tag) const {
+    if (!tag || tag == -1) return false;
+    if (sectorTag == tag) return true;
+    //return tagHashCheckTag(tagHash, tag, this);
+    for (int f = 0; f < moreTags.length(); ++f) if (moreTags[f] == tag) return true;
+    return false;
+  }
 
   float skyheight;
 

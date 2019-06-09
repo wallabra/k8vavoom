@@ -72,7 +72,7 @@ static void UploadSectorsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
     //CopyName8ZD(zsec.data.ceilingpic, GTextureManager.GetTextureName(pSrc->ceiling.pic));
     //zsec.data.lightlevel = pSrc->params.lightlevel;
     zsec.data.special = pSrc->special;
-    zsec.data.tag = pSrc->tag;
+    zsec.data.tag = pSrc->sectorTag;
     zsec.origindex = i;
     zlvl.Sectors.Push(zsec);
   }

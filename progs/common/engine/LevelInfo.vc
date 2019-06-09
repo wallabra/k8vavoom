@@ -299,10 +299,11 @@ void PolyCrushMobj (Entity A, polyobj_t *po) {
 //==========================================================================
 bool TagBusy (int tag) {
   int sectorIndex;
-  for (sectorIndex = XLevel.FindSectorFromTag(tag, -1); sectorIndex >= 0;
-       sectorIndex = XLevel.FindSectorFromTag(tag, sectorIndex))
+  sector_t *sector;
+  for (sectorIndex = XLevel.FindSectorFromTag(out sector, tag); sectorIndex >= 0;
+       sectorIndex = XLevel.FindSectorFromTag(out sector, tag, sectorIndex))
   {
-    if (XLevel.Sectors[sectorIndex].FloorData || XLevel.Sectors[sectorIndex].CeilingData) {
+    if (sector.FloorData || sector.CeilingData) {
       return true;
     }
   }

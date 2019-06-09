@@ -309,6 +309,10 @@ class VLevel : public VGameObject {
   decal_t *decanimlist;
   vint32 decanimuid;
 
+  //vint32 tagHashesSaved; // for savegame compatibility
+  TagHash *lineTags;
+  TagHash *sectorTags;
+
   TArray<vint32> sectorlinkStart;
   TArray<SectorLink> sectorlinks;
 
@@ -322,7 +326,7 @@ class VLevel : public VGameObject {
 
   // sectors with fake floors/ceilings, so world updater can skip iterating over all of them
   TArray<vint32> FakeFCSectors;
-  TArray<vint32> TaggedSectors;
+  //TArray<vint32> TaggedSectors;
 
   // this is used to keep control->dest 3d floor links
   // [0..NumSectors) is entry point, then follow next index (-1 means 'end')
@@ -486,6 +490,7 @@ public:
   void GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const;
 
 public:
+  virtual void PostCtor () override;
   virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;
   virtual void Destroy () override;
@@ -552,7 +557,7 @@ public:
   msecnode_t *DelSecnode (msecnode_t *);
   void DelSectorList ();
 
-  int FindSectorFromTag (int tag, int start=-1);
+  int FindSectorFromTag (sector_t *&sector, int tag, int start=-1);
   line_t *FindLine (int, int *);
   void SectorSetLink (int controltag, int tag, int surface, int movetype);
 

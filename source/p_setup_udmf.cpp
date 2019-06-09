@@ -139,6 +139,8 @@ public:
   void Flag (int &Field, int Mask);
   void Flag (vuint32 &Field, int Mask);
 
+  void ParseMoreIds (TArray<vint32> &ids);
+
   vuint32 CheckColor ();
 };
 
@@ -301,6 +303,27 @@ void VUdmfParser::Flag (vuint32 &Field, int Mask) {
 
 //==========================================================================
 //
+//  VUdmfParser::ParseMoreIds
+//
+//==========================================================================
+void VUdmfParser::ParseMoreIds (TArray<vint32> &idlist) {
+  VStr idstr = CheckString();
+  TArray<VStr> list;
+  idstr.SplitOnBlanks(list);
+  for (int f = 0; f < list.length(); ++f) {
+    VStr s = list[f];
+    while (s.length() && (vuint8)s[0] <= ' ') s.chopLeft(1);
+    while (s.length() && (vuint8)s[s.length()-1] <= ' ') s.chopRight(1);
+    if (s.length() == 0) continue;
+    int n = VStr::atoi(*s);
+    if (!n || n == -1) continue;
+    idlist.append(n);
+  }
+}
+
+
+//==========================================================================
+//
 //  VUdmfParser::Parse
 //
 //==========================================================================
@@ -451,7 +474,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
     }
 
     if (Key.strEquCI("id")) {
-      S.tag = CheckInt();
+      S.sectorTag = CheckInt();
       continue;
     }
 
@@ -542,6 +565,11 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("ceilingplane_c")) { cval[2] = CheckFloat(); cpvalid[2] = true; continue; }
       if (Key.strEquCI("ceilingplane_d")) { cval[3] = CheckFloat(); cpvalid[3] = true; continue; }
 
+      if (Key.strEquCI("moreids")) {
+        ParseMoreIds(S.moreTags);
+        continue;
+      }
+
       /*
       if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
         if (Key.strEquCI("lightfloor")) {
@@ -599,7 +627,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   L.V2Index = -1;
   L.L.locknumber = 0;
   L.L.alpha = 1.0f;
-  L.L.LineTag = bExtended ? -1 : 0;
+  L.L.lineTag = (bExtended ? -1 : 0);
   L.L.sidenum[0] = -1;
   L.L.sidenum[1] = -1;
   if (MInfo.Flags&MAPINFOF_ClipMidTex) L.L.flags |= ML_CLIP_MIDTEX;
@@ -614,7 +642,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     ParseKey();
 
     if (Key.strEquCI("id")) {
-      L.L.LineTag = CheckInt();
+      L.L.lineTag = CheckInt();
       continue;
     }
 
@@ -893,6 +921,11 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 
       if (Key.strEquCI("locknumber")) {
         L.L.locknumber = CheckInt();
+        continue;
+      }
+
+      if (Key.strEquCI("moreids")) {
+        ParseMoreIds(L.L.moreTags);
         continue;
       }
     }
@@ -1373,7 +1406,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
           sd->BottomTexture = TexNumOrColor(*Src.BotTexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
             for (int j = 0; j < NumSectors; ++j) {
-              if (Sectors[j].tag == Tag) {
+              if (Sectors[j].IsTagEqual(Tag)) {
                 if (HaveCol) Sectors[j].params.LightColor = Col;
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }

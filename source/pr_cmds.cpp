@@ -1220,7 +1220,7 @@ IMPLEMENT_FUNCTION(VObject, IsLineTagEqual) {
   int tag;
   vobjGetParam(line, tag);
   if (!line) { RET_BOOL(false); return; }
-  RET_BOOL(line->LineTag == tag);
+  RET_BOOL(line->IsTagEqual(tag));
 }
 
 
@@ -1230,7 +1230,7 @@ IMPLEMENT_FUNCTION(VObject, IsSectorTagEqual) {
   int tag;
   vobjGetParam(sector, tag);
   if (!sector) { RET_BOOL(false); return; }
-  RET_BOOL(sector->tag == tag);
+  RET_BOOL(sector->IsTagEqual(tag));
 }
 
 #endif // !VCC_STANDALONE_EXECUTOR

@@ -31,6 +31,214 @@
 IMPLEMENT_CLASS(V, GameObject)
 
 
+#define TAG_HASH_MAX_BUCKETS  (4096)
+
+struct TagHashBucket {
+  int tag;
+  void *ptr;
+  int next;
+};
+
+
+struct TagHash {
+  TArray<TagHashBucket> buckets;
+  int first[TAG_HASH_MAX_BUCKETS];
+};
+
+
+//==========================================================================
+//
+//  tagHashAlloc
+//
+//==========================================================================
+TagHash *tagHashAlloc () {
+  TagHash *th = (TagHash *)Z_Calloc(sizeof(TagHash));
+  for (int f = 0; f < TAG_HASH_MAX_BUCKETS; ++f) th->first[f] = -1;
+  return th;
+}
+
+
+//==========================================================================
+//
+//  tagHashClear
+//
+//==========================================================================
+void tagHashClear (TagHash *th) {
+  if (!th) return;
+  for (int f = 0; f < TAG_HASH_MAX_BUCKETS; ++f) th->first[f] = -1;
+  th->buckets.reset();
+}
+
+
+//==========================================================================
+//
+//  tagHashFree
+//
+//==========================================================================
+void tagHashFree (TagHash *&th) {
+  if (th) {
+    th->buckets.clear();
+    Z_Free(th);
+    th = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  tagHashPut
+//
+//==========================================================================
+void tagHashPut (TagHash *th, int tag, void *ptr) {
+  if (!th || !ptr || !tag || tag == -1) return;
+  // check for existing ptr
+  int lastBIdx = -1;
+  const int hash = ((vuint32)tag)%TAG_HASH_MAX_BUCKETS;
+  for (int hidx = th->first[hash]; hidx >= 0; hidx = th->buckets[hidx].next) {
+    TagHashBucket &bk = th->buckets[hidx];
+    if (bk.tag == tag && bk.ptr == ptr) return;
+    lastBIdx = hidx;
+  }
+  // append new bucket
+  TagHashBucket &bk = th->buckets.alloc();
+  bk.tag = tag;
+  bk.ptr = ptr;
+  bk.next = -1;
+  if (lastBIdx == -1) {
+    check(th->first[hash] == -1);
+    th->first[hash] = th->buckets.length()-1;
+  } else {
+    check(th->first[hash] != -1);
+    check(th->buckets[lastBIdx].next == -1);
+    th->buckets[lastBIdx].next = th->buckets.length()-1;
+  }
+}
+
+
+//==========================================================================
+//
+//  tagHashCheckTag
+//
+//==========================================================================
+bool tagHashCheckTag (TagHash *th, int tag, const void *ptr) {
+  if (!th || !ptr || !tag || tag == -1) return false;
+  const int hash = ((vuint32)tag)%TAG_HASH_MAX_BUCKETS;
+  for (int hidx = th->first[hash]; hidx >= 0; hidx = th->buckets[hidx].next) {
+    TagHashBucket &bk = th->buckets[hidx];
+    if (bk.tag == tag && bk.ptr == ptr) return true;
+  }
+  return false;
+}
+
+
+/*
+//==========================================================================
+//
+//  tagHashFirst
+//
+//==========================================================================
+bool tagHashFirst (TagHashIter *it, TagHash *th, int tag) {
+  if (!it || !th || tag == 0) {
+    if (it) memset((void *)it, 0, sizeof(*it));
+    return false;
+  }
+  const int hash = ((vuint32)tag)%TAG_HASH_MAX_BUCKETS;
+  int hidx = th->first[hash];
+  while (hidx >= 0 && th->buckets[hidx].tag != tag) hidx = th->buckets[hidx].next;
+  if (hidx < 0) {
+    memset((void *)it, 0, sizeof(*it));
+    return false;
+  }
+  it->th = th;
+  it->tag = tag;
+  it->index = hidx;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  tagHashNext
+//
+//==========================================================================
+bool tagHashNext (TagHashIter *it) {
+  if (!it || !it->th) return false;
+  const tag = th->tag;
+  int hidx = th->index;
+  if (hidx >= 0) {
+    hidx = th->buckets[hidx].next;
+    while (hidx >= 0 && th->buckets[hidx].tag != tag) hidx = th->buckets[hidx].next;
+  }
+  if (hidx < 0) {
+    memset((void *)it, 0, sizeof(*it));
+    return false;
+  }
+  it->index = hidx;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  tagHashCurrent
+//
+//==========================================================================
+void *tagHashCurrent (TagHashIter *it) {
+  return (it && it->th ? it->th->buckets[it->index].ptr : nullptr);
+}
+*/
+
+
+//==========================================================================
+//
+//  tagHashFirst
+//
+//==========================================================================
+int tagHashFirst (const TagHash *th, int tag) {
+  if (!th || !tag || tag == -1) return -1;
+  const int hash = ((vuint32)tag)%TAG_HASH_MAX_BUCKETS;
+  int hidx = th->first[hash];
+  while (hidx >= 0 && th->buckets[hidx].tag != tag) hidx = th->buckets[hidx].next;
+  return hidx;
+}
+
+
+//==========================================================================
+//
+//  tagHashNext
+//
+//==========================================================================
+int tagHashNext (const TagHash *th, int index, int tag) {
+  if (!th || index < 0 || !tag) return -1;
+  index = th->buckets[index].next;
+  while (index >= 0 && th->buckets[index].tag != tag) index = th->buckets[index].next;
+  return index;
+}
+
+
+//==========================================================================
+//
+//  tagHashPtr
+//
+//==========================================================================
+void *tagHashPtr (const TagHash *th, int index) {
+  if (!th || index < 0 || index >= th->buckets.length()) return nullptr;
+  return (void *)(th->buckets[index].ptr);
+}
+
+
+//==========================================================================
+//
+//  tagHashTag
+//
+//==========================================================================
+int tagHashTag (const TagHash *th, int index) {
+  if (!th || index < 0 || index >= th->buckets.length()) return -1;
+  return th->buckets[index].tag;
+}
+
+
+
 //==========================================================================
 //
 //  sector_t::Has3DFloors

@@ -740,9 +740,9 @@ final void CopyPlaneBetweenSectors (Level InLevel, sector_t *dst, sector_t *src,
 //===========================================================================
 final void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bool IsCeiling) {
   if (srctag <= 0 || !dst) return; // just in case
-  int secnum = InLevel.FindSectorFromTag(srctag, -1);
-  if (secnum == -1) return; // no source sector
-  CopyPlaneBetweenSectors(InLevel, &InLevel.Sectors[secnum], dst, IsCeiling);
+  sector_t *sector;
+  if (InLevel.FindSectorFromTag(out sector, srctag) < 0) return; // no source sector
+  CopyPlaneBetweenSectors(InLevel, sector, dst, IsCeiling);
 }
 
 
@@ -753,11 +753,8 @@ final void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srct
 //===========================================================================
 final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   sector_t *dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  int secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
-  if (secnum == -1) return;
-
-  sector_t *src = &InLevel.Sectors[secnum];
-
+  sector_t *src;
+  if (InLevel.FindSectorFromTag(out src, mthing->arg1) < 0) return; // no source sector
   if (!IsCeiling) {
     dst->floor.normal = src->floor.normal;
     dst->floor.dist = src->floor.dist;
@@ -877,9 +874,10 @@ void MakeHeightSec (Level InLevel, line_t *line) {
   if (line->arg2&8) sec.bUnderWater = true;
   if (line->arg2&16) sec.bIgnoreHeightSec = true;
   if (line->arg2&32) sec.bNoFakeLight = true;
-  for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s  >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
-    InLevel.Sectors[s].heightsec = sec;
-    InLevel.SetHeightSector(&InLevel.Sectors[s], sec, line->arg2);
+  sector_t *ss2;
+  for (int hidx = InLevel.FindSectorFromTag(out ss2, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out ss2, line->arg1, hidx)) {
+    ss2.heightsec = sec;
+    InLevel.SetHeightSector(ss2, sec, line->arg2);
   }
 }
 
@@ -919,7 +917,8 @@ void SetSectorFriction (Level InLevel, int tag, int amount, bool alterFlag) {
   float Friction = (1.0-float(OldFriction)/float(0x10000))*35.0;
   float MoveFactor = float(OldMoveFactor)/float(0x10000);
 
-  for (int s = InLevel.FindSectorFromTag(tag, -1); s >= 0; s = InLevel.FindSectorFromTag(tag, s)) {
+  sector_t *fricsec;
+  for (int hidx = InLevel.FindSectorFromTag(out fricsec, tag); hidx >= 0; hidx = InLevel.FindSectorFromTag(out fricsec, tag, hidx)) {
     // killough 8/28/98:
     //
     // Instead of spawning thinkers, which are slow and expensive,
@@ -930,14 +929,14 @@ void SetSectorFriction (Level InLevel, int tag, int amount, bool alterFlag) {
     // drag on CPU. New code adjusts friction of sector only once
     // at level startup, and then uses this friction value.
 
-    InLevel.Sectors[s].Friction = Friction;
-    InLevel.Sectors[s].MoveFactor = MoveFactor;
+    fricsec.Friction = Friction;
+    fricsec.MoveFactor = MoveFactor;
     if (alterFlag) {
       // when used inside a script, the sectors' friction flags can be enabled and disabled at will
       if (OldFriction == 0xe800) {
-        InLevel.Sectors[s].special &= ~SECSPEC_FRICTION_MASK;
+        fricsec.special &= ~SECSPEC_FRICTION_MASK;
       } else {
-        InLevel.Sectors[s].special |= SECSPEC_FRICTION_MASK;
+        fricsec.special |= SECSPEC_FRICTION_MASK;
       }
     }
   }
@@ -952,23 +951,24 @@ void SetSectorFriction (Level InLevel, int tag, int amount, bool alterFlag) {
 void StaticInit (Level InLevel, line_t *line) {
   float Grav;
   int Dmg;
+  sector_t *sec;
 
   switch (line->arg2) {
     case 0:
       Grav = Length((*line->v2)-(*line->v1))/100.0;
-      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
-        InLevel.Sectors[s].Gravity = Grav;
+      for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
+        sec.Gravity = Grav;
       }
       break;
     case 2:
       Dmg = int(Length((*line->v2)-(*line->v1)));
-      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
-        InLevel.Sectors[s].Damage = Dmg;
+      for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
+        sec.Damage = Dmg;
       }
       break;
     case 255:
-      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
-        InLevel.Sectors[s].Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
+      for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
+        sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
       }
       break;
   }
@@ -1137,21 +1137,27 @@ override void SpawnWorld (Level InLevel) {
         line->special = 0;
         break;
       case LNSPEC_TransferFloorLight:
-        for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-             SecNum >= 0;
-             SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
         {
-          InLevel.SetFloorLightSector(&InLevel.Sectors[SecNum], line->frontsector);
+          sector_t *sec;
+          for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1);
+               hidx >= 0;
+               hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx))
+          {
+            InLevel.SetFloorLightSector(sec, line->frontsector);
+          }
         }
         line->special = 0;
         line->frontsector->bTransferSource = true;
         break;
       case LNSPEC_TransferCeilingLight:
-        for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-             SecNum >= 0;
-             SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
         {
-          InLevel.SetCeilingLightSector(&InLevel.Sectors[SecNum], line->frontsector);
+          sector_t *sec;
+          for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1);
+               hidx >= 0;
+               hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx))
+          {
+            InLevel.SetCeilingLightSector(sec, line->frontsector);
+          }
         }
         line->special = 0;
         line->frontsector->bTransferSource = true;

@@ -199,7 +199,15 @@ static void UploadSectors (VLevel *Level) {
   for (int i = 0; i < Level->NumSectors; ++i, ++pSrc) {
     ajbsp::sector_t *sector = ajbsp::NewSector();
     memset(sector, 0, sizeof(*sector));
-    sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000 ? 1 : 0);
+    sector->coalesce = (pSrc->sectorTag >= 900 && pSrc->sectorTag < 1000 ? 1 : 0);
+    if (!sector->coalesce) {
+      for (int f = 0; f < pSrc->moreTags.length(); ++f) {
+        if (pSrc->moreTags[f] >= 900 && pSrc->moreTags[f] < 1000) {
+          sector->coalesce = 1;
+          break;
+        }
+      }
+    }
     // sector indices never change
     sector->index = i;
     sector->warned_facing = -1;

@@ -262,7 +262,10 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 //==========================================================================
 void VLevel::ClearAllLevelData () {
   if (Sectors) {
-    for (int i = 0; i < NumSectors; ++i) Sectors[i].DeleteAllRegions();
+    for (int i = 0; i < NumSectors; ++i) {
+      Sectors[i].DeleteAllRegions();
+      Sectors[i].moreTags.clear();
+    }
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
@@ -272,6 +275,7 @@ void VLevel::ClearAllLevelData () {
     line_t *ld = Lines+f;
     delete[] ld->v1lines;
     delete[] ld->v2lines;
+    ld->moreTags.clear();
   }
 
   delete[] Vertexes;
@@ -1587,7 +1591,7 @@ void VLevel::LoadSectors (int Lump) {
     ss->params.LightColor = 0x00ffffff;
 
     ss->special = special;
-    ss->tag = tag;
+    ss->sectorTag = tag;
 
     ss->seqType = -1; // default seqType
     ss->Gravity = 1.0f;  // default sector gravity of 1.0
@@ -1748,7 +1752,7 @@ void VLevel::LoadSideDefs (int Lump) {
           sd->BottomTexture = TexNumOrColor(bottomtexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
             for (int j = 0; j < NumSectors; ++j) {
-              if (Sectors[j].tag == sd->TopTexture) {
+              if (Sectors[j].IsTagEqual(sd->TopTexture)) {
                 if (HaveCol) Sectors[j].params.LightColor = Col;
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }
@@ -1801,7 +1805,7 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->sidenum[1] = side1 == 0xffff ? -1 : side1;
 
     ld->alpha = 1.0f;
-    ld->LineTag = -1;
+    ld->lineTag = -1;
 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
@@ -1855,7 +1859,7 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->sidenum[1] = (side1 == 0xffff ? -1 : side1);
 
     ld->alpha = 1.0f;
-    ld->LineTag = -1;
+    ld->lineTag = -1;
 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
@@ -3462,6 +3466,7 @@ void VLevel::CreateRepBase () {
 //
 //==========================================================================
 void VLevel::HashSectors () {
+  /*
   // clear hash; count number of sectors with fake something
   for (int i = 0; i < NumSectors; ++i) Sectors[i].HashFirst = Sectors[i].HashNext = -1;
   // create hash: process sectors in backward order so that they get processed in original order
@@ -3471,6 +3476,14 @@ void VLevel::HashSectors () {
       Sectors[i].HashNext = Sectors[HashIndex].HashFirst;
       Sectors[HashIndex].HashFirst = i;
     }
+  }
+  */
+  GCon->Log("hashing sectors...");
+  tagHashClear(sectorTags);
+  for (int i = 0; i < NumSectors; ++i) {
+    GCon->Logf("sector #%d: tag=%d; moretags=%d", i, Sectors[i].sectorTag, Sectors[i].moreTags.length());
+    tagHashPut(sectorTags, Sectors[i].sectorTag, &Sectors[i]);
+    for (int cc = 0; cc < Sectors[i].moreTags.length(); ++cc) tagHashPut(sectorTags, Sectors[i].moreTags[cc], &Sectors[i]);
   }
 }
 
@@ -3482,7 +3495,8 @@ void VLevel::HashSectors () {
 //==========================================================================
 void VLevel::BuildSectorLists () {
   // count number of fake and tagged sectors
-  int fcount = 0, tcount = 0;
+  int fcount = 0;
+  int tcount = 0;
   const int scount = NumSectors;
 
   TArray<int> interesting;
@@ -3493,7 +3507,8 @@ void VLevel::BuildSectorLists () {
   for (int i = 0; i < scount; ++i, ++sec) {
     bool intr = false;
     // tagged?
-    if (sec->tag) { ++tcount; intr = true; }
+    if (sec->sectorTag) { ++tcount; /*intr = true;*/ }
+    else for (int cc = 0; cc < sec->moreTags.length(); ++cc) if (sec->moreTags[cc]) { ++tcount; /*intr = true;*/ break; }
     // with fakes?
          if (sec->deepref) { ++fcount; intr = true; }
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) { ++fcount; intr = true; }
@@ -3505,14 +3520,14 @@ void VLevel::BuildSectorLists () {
   GCon->Logf("%d tagged sectors, %d sectors with fakes, %d total sectors", tcount, fcount, scount);
 
   FakeFCSectors.setLength(fcount);
-  TaggedSectors.setLength(tcount);
+  //!TaggedSectors.setLength(tcount);
   fcount = tcount = 0;
 
   for (int i = 0; i < intrcount; ++i) {
     const int idx = interesting[i];
     sec = &Sectors[idx];
     // tagged?
-    if (sec->tag) TaggedSectors[tcount++] = idx;
+    //!if (sec->tag) TaggedSectors[tcount++] = idx;
     // with fakes?
          if (sec->deepref) FakeFCSectors[fcount++] = idx;
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) FakeFCSectors[fcount++] = idx;
@@ -3527,6 +3542,7 @@ void VLevel::BuildSectorLists () {
 //
 //==========================================================================
 void VLevel::HashLines () {
+  /*
   // clear hash
   for (int i = 0; i < NumLines; ++i) Lines[i].HashFirst = -1;
   // create hash: process lines in backward order so that they get processed in original order
@@ -3534,6 +3550,12 @@ void VLevel::HashLines () {
     vuint32 HashIndex = (vuint32)Lines[i].LineTag%(vuint32)NumLines;
     Lines[i].HashNext = Lines[HashIndex].HashFirst;
     Lines[HashIndex].HashFirst = i;
+  }
+  */
+  tagHashClear(lineTags);
+  for (int i = 0; i < NumLines; ++i) {
+    tagHashPut(lineTags, Lines[i].lineTag, &Lines[i]);
+    for (int cc = 0; cc < Lines[i].moreTags.length(); ++cc) tagHashPut(lineTags, Lines[i].moreTags[cc], &Lines[i]);
   }
 }
 

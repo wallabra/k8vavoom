@@ -45,7 +45,7 @@ bool bCeiling;
 void Start (Entity it, line_t *line, int lineSide, bool ceiling, int tag,
             int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
 {
-  int secnum;
+  //int secnum;
   sec_plane_t *plane;
 
   Special = special;
@@ -59,9 +59,8 @@ void Start (Entity it, line_t *line, int lineSide, bool ceiling, int tag,
   LineSide = lineSide;
   bCeiling = ceiling;
 
-  secnum = XLevel.FindSectorFromTag(tag, -1);
-  if (secnum >= 0) {
-    Sector = &XLevel.Sectors[secnum];
+  if (XLevel.FindSectorFromTag(out Sector, tag) >= 0) {
+    //Sector = &XLevel.Sectors[secnum];
     if (bCeiling) {
       plane = &Sector->ceiling;
     } else {

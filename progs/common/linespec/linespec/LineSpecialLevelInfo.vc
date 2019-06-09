@@ -1140,7 +1140,6 @@ override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
 final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
                      line_t *Line, Entity Thing, optional bool delayOctics)
 {
-  int SecNum;
   sector_t *Sec;
   VerticalDoor Door;
   int RetCode = false;
@@ -1164,8 +1163,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
     Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, delayOctics!optional);
     RetCode = true;
   } else {
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
-      Sec = &XLevel.Sectors[SecNum];
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
       if (Sec->CeilingData) continue;
       // add new door thinker
       RetCode = true;
@@ -1245,7 +1243,6 @@ final void SpawnDoorRaiseIn5Mins (sector_t *sec) {
 //
 //==========================================================================
 final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, line_t *Line, Entity E) {
-  int SecNum;
   int Rtn;
   sector_t *Sec;
   TextureChangeDoor Door;
@@ -1270,8 +1267,7 @@ final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5
       Rtn = true;
     }
   } else {
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
-      Sec = &XLevel.Sectors[SecNum];
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
       if (Sec->CeilingData) continue;
       foreach (auto i; 0..Sec.lines.length) {
         Line = Sec->lines[i];
@@ -1304,7 +1300,6 @@ final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5
 //
 //==========================================================================
 final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line) {
-  int SecNum;
   int Rtn;
   sector_t *Sec;
   CeilingMover Ceiling;
@@ -1339,8 +1334,7 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
       }
     }
 
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
-      Sec = &XLevel.Sectors[SecNum];
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
       if (Sec->CeilingData) continue;
       // new ceiling thinker
       Rtn = true;
@@ -1375,12 +1369,10 @@ final int EV_CeilingCrushStop (line_t *line, int Arg1, int Arg2, int Arg3, int A
 //
 //==========================================================================
 final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
-  int SectorIndex;
   sector_t *Sector;
   CeilingWaggle Waggle;
   bool RetCode = false;
-  for (SectorIndex = XLevel.FindSectorFromTag(Arg1, -1); SectorIndex >= 0; SectorIndex = XLevel.FindSectorFromTag(Arg1, SectorIndex)) {
-    Sector = &XLevel.Sectors[SectorIndex];
+  for (int hidx = XLevel.FindSectorFromTag(out Sector, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sector, Arg1, hidx)) {
     if (Sector->CeilingData) continue; // already busy with another thinker
     RetCode = true;
     Waggle = Spawn(CeilingWaggle);
@@ -1407,7 +1399,6 @@ final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Ar
 final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int Type, line_t *Line)
 {
-  int     SecNum;
   int     Rtn;
   sector_t *Sec;
   FloorMover  Floor;
@@ -1428,11 +1419,9 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
   else
   {
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+         hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
     {
-      Sec = &XLevel.Sectors[SecNum];
-
       // ALREADY MOVING?  IF SO, KEEP GOING...
       if (Sec->FloorData) continue;
 
@@ -1483,17 +1472,16 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   sector_t *s1;
   sector_t *s2;
   sector_t *s3;
-  int     secnum;
   int     rtn;
   int     i;
   FloorMover  Floor;
 
   rtn = 0;
   // do function on all sectors with same tag as linedef
-  for (secnum = XLevel.FindSectorFromTag(Arg1, -1); secnum >= 0;
-    secnum = XLevel.FindSectorFromTag(Arg1, secnum))
+  // s1 is pillar's sector
+  for (int hidx = XLevel.FindSectorFromTag(out s1, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out s1, Arg1, hidx))
   {
-    s1 = &XLevel.Sectors[secnum]; // s1 is pillar's sector
     if (!s1) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
     // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -1532,16 +1520,14 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int       SectorIndex;
   sector_t *Sector;
   FloorWaggle   Waggle;
   bool      RetCode;
 
   RetCode = false;
-  for (SectorIndex = XLevel.FindSectorFromTag(Arg1, -1); SectorIndex >= 0;
-    SectorIndex = XLevel.FindSectorFromTag(Arg1, SectorIndex))
+  for (int hidx = XLevel.FindSectorFromTag(out Sector, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sector, Arg1, hidx))
   {
-    Sector = &XLevel.Sectors[SectorIndex];
     if (Sector->FloorData)
     {
       // Already busy with another thinker
@@ -1566,15 +1552,14 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //  Build a staircase!
 //
+//  FIXME: split this to several functions, because "compat" sux
+//
 //==========================================================================
 
 final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   bool Generic, line_t *Line)
 {
-  int     SecNum;
   float   Height;
-  int     i;
-  int     j;
   int     Ok;
   int     Texture;
   int     Rtn;
@@ -1604,70 +1589,76 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
   StairSize = float(Arg3*Direction);
   Rtn = 0;
-  for (SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, -1) : 1; SecNum >= 0;
-    SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, SecNum) : -1)
-  {
-    Sec = Arg1 ? &XLevel.Sectors[SecNum] : Line->backsector;
+  int hidx = (Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1) : 1);
+  int SecNum = (hidx < 0 ? -1 : Sec-&XLevel.Sectors[0]);
+  /*
+  for (int hidx = Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1) : 1; hidx >= 0;
+       hidx = Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1, hidx) : -1)
+  */
+  while (SecNum >= 0 && SecNum < XLevel.Sectors.length) {
+    int stag = XLevel.Sectors[SecNum].sectorTag;
+    //Sec = Arg1 ? &XLevel.Sectors[SecNum] : Line->backsector;
+    if (!Arg1) {
+      Sec = Line->backsector;
+    } else {
+      Sec = &XLevel.Sectors[SecNum];
+    }
+
+    //OldSecNum = /*SecNum*/Sec-&XLevel.Sectors[0]; //jff 3/4/98 preserve loop index
+    //int SecNum = OldSecNum;
+    OldSecNum = SecNum;
 
     // ALREADY MOVING?  IF SO, KEEP GOING...
-    if (Sec->FloorData)
-    {
-      continue;
-    }
+    if (!Sec->FloorData) {
+      // new floor thinker
+      Rtn = 1;
+      Height = GetPlanePointZ(ref Sec->floor, vector(0.0, 0.0, 0.0))+StairSize;
+      Floor = Spawn(FloorMover);
+      Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
 
-    // new floor thinker
-    Rtn = 1;
-    Height = GetPlanePointZ(ref Sec->floor, vector(0.0, 0.0, 0.0)) +
-      StairSize;
-    Floor = Spawn(FloorMover);
-    Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
+      Texture = Sec->floor.pic;
 
-    Texture = Sec->floor.pic;
-    OldSecNum = SecNum; //jff 3/4/98 preserve loop index
+      // Find next sector to raise
+      // 1. Find 2-sided line with same sector side[0]
+      // 2. Other side is the next sector to raise
+      // 3. Unless already moving, or different texture, then stop building
+      do {
+        Ok = false;
+        foreach (int i; 0..Sec.lines.length) {
+          SecLine = Sec->lines[i];
+          if (!(SecLine->flags&ML_TWOSIDED)) continue;
+          TSec = SecLine->frontsector;
+          if (Sec != TSec) continue;
+          TSec = SecLine->backsector;
+          if (!TSec) continue; //jff 5/7/98 if no backside, continue
+          if (!IgnTxt && TSec->floor.pic != Texture) continue;
 
-    // Find next sector to raise
-    // 1. Find 2-sided line with same sector side[0]
-    // 2. Other side is the next sector to raise
-    // 3. Unless already moving, or different texture, then stop building
-    do
-    {
-      Ok = false;
-      for (i = 0; i < Sec.lines.length; i++)
-      {
-        SecLine = Sec->lines[i];
+          Height += StairSize;
+          if (TSec->FloorData) continue;
 
-        if (!(SecLine->flags&ML_TWOSIDED)) continue;
-
-        TSec = SecLine->frontsector;
-        if (Sec != TSec) continue;
-        TSec = SecLine->backsector;
-        if (!TSec) continue; //jff 5/7/98 if no backside, continue
-        if (!IgnTxt && TSec->floor.pic != Texture) continue;
-
-        Height += StairSize;
-        if (TSec->FloorData) continue;
-
-        Sec = TSec;
-        //  SecNum = TSec - XLevel.Sectors;
-        for (j = 0; j < XLevel.Sectors.length; j++)
-        {
-          if (TSec == &XLevel.Sectors[j])
-          {
-            SecNum = j;
-            break;
+          Sec = TSec;
+          //  SecNum = TSec - XLevel.Sectors;
+          foreach (int j; 0..XLevel.Sectors.length) {
+            if (TSec == &XLevel.Sectors[j]) {
+              SecNum = j;
+              break;
+            }
           }
+          Floor = Spawn(FloorMover);
+          Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
+          Ok = true;
+          break;
         }
-        Floor = Spawn(FloorMover);
-        Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic,
-          Height);
-        Ok = true;
-        break;
+      } while (Ok);
+      if (!Level.CompatStairs || SecNum == OldSecNum) {
+        SecNum = OldSecNum; //jff 3/4/98 restore loop index
       }
-    }
-    while (Ok);
-    if (!Level.CompatStairs)
-    {
-      SecNum = OldSecNum; //jff 3/4/98 restore loop index
+      // next sector
+      if (!Arg1) break;
+      ++SecNum;
+      if (SecNum < 0 || SecNum > XLevel.Sectors.length) break;
+      if (!stag) break;
+      while (SecNum < XLevel.Sectors.length && XLevel.Sectors[SecNum].sectorTag != stag) ++SecNum;
     }
   }
   return Rtn;
@@ -1687,17 +1678,14 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 final int EV_BuildStairs(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int StairsType)
 {
-  int       SecNum;
   sector_t *Sec;
   StairStepMover  StairStep;
   StairStepMover  StairQueueHead;
 
   StairQueueHead = none;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
-
     // ALREADY MOVING?  IF SO, KEEP GOING...
     if (Sec->FloorData)
     {
@@ -1743,7 +1731,6 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int Type, line_t *Line)
 {
   Platform  Plat;
-  int     SecNum;
   int     Rtn;
   sector_t *Sec;
 
@@ -1792,10 +1779,9 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       }
     }
 
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+         hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
     {
-      Sec = &XLevel.Sectors[SecNum];
       if (Sec->FloorData) continue;
 
       // Find lowest & highest floors around sector
@@ -1839,16 +1825,14 @@ final int EV_StopPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   bool Crush)
 {
-  int     SecNum;
   sector_t *Sec;
   Pillar    pillar;
   int     Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
     pillar = Spawn(Pillar);
@@ -1865,16 +1849,14 @@ final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
 final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
-  int     SecNum;
   sector_t *Sec;
   Pillar    pillar;
   int     Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
     pillar = Spawn(Pillar);
@@ -1898,7 +1880,6 @@ final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int Type, line_t *Line)
 {
-  int     SecNum;
   int     Rtn;
   sector_t *Sec;
   Elevator  Elev;
@@ -1909,11 +1890,9 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
-
     //  Skip if already busy.
     if (Sec->FloorData || Sec->CeilingData) continue;
 
@@ -2457,15 +2436,13 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     Ret;
-  int     SecNum;
   sector_t *Sec;
   Strobe    Flash;
 
   Ret = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     if (Sec->LightingData) continue;
 
     Ret = true;
@@ -2485,16 +2462,14 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
 
 final int EV_TagLightTurnOn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
-  int     SecNum;
   sector_t *Sec;
   int     j;
   sector_t *TSec;
   int     Max;
 
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Max = 0;
     for (j = 0; j < Sec.lines.length; j++)
     {
@@ -2518,16 +2493,14 @@ final int EV_TagLightTurnOn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final int EV_TurnTagLightsOff(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int     SecNum;
   sector_t *Sec;
   int     i;
   int     Min;
   sector_t *TSec;
 
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Min = Sec->params.lightlevel;
     for (i = 0; i < Sec.lines.length; i++)
     {
@@ -2550,14 +2523,12 @@ final bool EV_LightRaiseByValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   sector_t *Sec;
-  int     SecNum;
   bool    Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Sec->params.lightlevel += Arg2;
     if (Sec->params.lightlevel > 255)
     {
@@ -2578,14 +2549,12 @@ final bool EV_LightLowerByValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   sector_t *Sec;
-  int     SecNum;
   bool    Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Sec->params.lightlevel -= Arg2;
     if (Sec->params.lightlevel < 0)
     {
@@ -2606,14 +2575,12 @@ final bool EV_LightChangeToValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   sector_t *Sec;
-  int     SecNum;
   bool    Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Sec->params.lightlevel = Arg2;
     if (Sec->params.lightlevel < 0)
     {
@@ -2639,14 +2606,12 @@ final bool EV_SpawnLight(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 {
   LightEffect Light;
   sector_t *Sec;
-  int     SecNum;
   bool    Rtn;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Light = Spawn(LightEffect);
     Light.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
     Rtn = true;
@@ -2762,14 +2727,14 @@ final void SpawnTextureBothScroller(line_t *Line)
 
 final void SpawnScrollCeiling(line_t *Line)
 {
-  Scroller  Scroll;
-  int     SecNum;
-
-  for (SecNum = XLevel.FindSectorFromTag(Line->arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Line->arg1, SecNum))
+  Scroller Scroll;
+  sector_t *sec;
+  for (int hidx = XLevel.FindSectorFromTag(out sec, Line->arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out sec, Line->arg1, hidx))
   {
+    int secnum = sec-&XLevel.Sectors[0];
     Scroll = Spawn(Scroller);
-    Scroll.InitGen(Scroller::SCROLLEV_Ceiling, Line, SecNum);
+    Scroll.InitGen(Scroller::SCROLLEV_Ceiling, Line, secnum);
   }
 }
 
@@ -2781,24 +2746,24 @@ final void SpawnScrollCeiling(line_t *Line)
 
 final void SpawnScrollFloor(line_t *Line)
 {
-  Scroller  Scroll;
-  int     SecNum;
-
-  for (SecNum = XLevel.FindSectorFromTag(Line->arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Line->arg1, SecNum))
+  Scroller Scroll;
+  sector_t *sec;
+  for (int hidx = XLevel.FindSectorFromTag(out sec, Line->arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out sec, Line->arg1, hidx))
   {
+    int secnum = sec-&XLevel.Sectors[0];
     if (Line->arg3 != 1)
     {
       //  Scroll the floor texture
       Scroll = Spawn(Scroller);
-      Scroll.InitGen(Scroller::SCROLLEV_Floor, Line, SecNum);
+      Scroll.InitGen(Scroller::SCROLLEV_Floor, Line, secnum);
     }
 
     if (Line->arg3 > 0)
     {
       //  Carry objects on the floor
       Scroll = Spawn(Scroller);
-      Scroll.InitGen(Scroller::SCROLLEV_Carry, Line, SecNum);
+      Scroll.InitGen(Scroller::SCROLLEV_Carry, Line, secnum);
     }
   }
 }
@@ -3040,13 +3005,13 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
     return;
   }
 
-  int     SecNum;
-
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  sector_t *sec;
+  for (int hidx = XLevel.FindSectorFromTag(out sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out sec, Arg1, hidx))
   {
+    int secnum = sec-&XLevel.Sectors[0];
     Sc = Spawn(Scroller);
-    Sc.InitScripted(Type, Arg2, Arg3, SecNum);
+    Sc.InitScripted(Type, Arg2, Arg3, secnum);
   }
 }
 
@@ -3065,7 +3030,6 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
 final bool EV_FloorTransferTrigger(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, line_t *Line)
 {
-  int     SecNum;
   bool    Rtn;
   sector_t *Sec;
 
@@ -3075,10 +3039,9 @@ final bool EV_FloorTransferTrigger(int Arg1, int Arg2, int Arg3, int Arg4,
   }
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Rtn = true;
 
     Sec->floor.pic = Line->frontsector->floor.pic;
@@ -3097,16 +3060,14 @@ final bool EV_FloorTransferTrigger(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_FloorTransferNumeric(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int     SecNum;
   bool    Rtn;
   sector_t *Sec;
   sector_t *MdlSec;
 
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1, -1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec = &XLevel.Sectors[SecNum];
     Rtn = true;
 
     MdlSec = FindModelFloorSector(Sec, GetPlanePointZ(ref Sec->floor,
@@ -3135,7 +3096,7 @@ final bool EV_FloorTransferNumeric(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSoundChange(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int secNum;
+  sector_t *Sec;
   bool rtn;
 
   if (!Arg1)
@@ -3143,10 +3104,10 @@ final bool EV_SectorSoundChange(int Arg1, int Arg2, int Arg3, int Arg4,
     return false;
   }
   rtn = false;
-  for (secNum = XLevel.FindSectorFromTag(Arg1, -1); secNum >= 0;
-    secNum = XLevel.FindSectorFromTag(Arg1, secNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[secNum].seqType = Arg2;
+    Sec.seqType = Arg2;
     rtn = true;
   }
   return rtn;
@@ -3160,14 +3121,12 @@ final bool EV_SectorSoundChange(int Arg1, int Arg2, int Arg3, int Arg4,
 
 final bool EV_SectorSetColor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
-  int   SecNum;
-  int   Col;
-
-  Col = RGBA(Arg2, Arg3, Arg4, 0);
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  sector_t *Sec;
+  int Col = RGBA(Arg2, Arg3, Arg4, 0);
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[SecNum].params.LightColor = Col;
+    Sec.params.LightColor = Col;
   }
   return true;
 }
@@ -3180,14 +3139,12 @@ final bool EV_SectorSetColor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 
 final bool EV_SectorSetFade(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
-  int   SecNum;
-  int   Fade;
-
-  Fade = RGBA(Arg2, Arg3, Arg4, 255);
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  sector_t *Sec;
+  int Fade = RGBA(Arg2, Arg3, Arg4, 255);
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[SecNum].params.Fade = Fade;
+    Sec.params.Fade = Fade;
   }
   return true;
 }
@@ -3201,18 +3158,13 @@ final bool EV_SectorSetFade(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final bool EV_SectorSetDamage(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int   SecNum;
-  bool  Rtn;
-
-  if (!Arg1)
+  sector_t *Sec;
+  if (!Arg1) return false;
+  bool Rtn = false;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    return false;
-  }
-  Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
-  {
-    XLevel.Sectors[SecNum].Damage = Arg2;
+    Sec.Damage = Arg2;
     //FIXME Arg3 is MOD
     Rtn = true;
   }
@@ -3228,18 +3180,18 @@ final bool EV_SectorSetDamage(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetGravity(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int   SecNum;
   float SecGrav;
-  bool  Ret;
+  bool Ret;
+  sector_t *Sec;
 
   if (Arg3 > 99) Arg3 = 99;
 
   SecGrav = float(Arg2)+float(Arg3)*0.01;
   Ret = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[SecNum].Gravity = SecGrav;
+    Sec.Gravity = SecGrav;
     Ret = true;
   }
   return Ret;
@@ -3254,7 +3206,6 @@ final bool EV_SectorSetGravity(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int     s;
   int     OldFriction;
   int     OldMoveFactor;
   float   Friction;
@@ -3289,8 +3240,9 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
   MoveFactor = float(OldMoveFactor)/float(0x10000);
 
   Ret = false;
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
     // killough 8/28/98:
     //
@@ -3302,17 +3254,17 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
     // drag on CPU. New code adjusts friction of sector only once
     // at level startup, and then uses this friction value.
 
-    XLevel.Sectors[s].Friction = Friction;
-    XLevel.Sectors[s].MoveFactor = MoveFactor;
+    Sec.Friction = Friction;
+    Sec.MoveFactor = MoveFactor;
     // When used inside a script, the sectors' friction flags
     // can be enabled and disabled at will.
     if (OldFriction == 0xe800)
     {
-      XLevel.Sectors[s].special &= ~SECSPEC_FRICTION_MASK;
+      Sec.special &= ~SECSPEC_FRICTION_MASK;
     }
     else
     {
-      XLevel.Sectors[s].special |= SECSPEC_FRICTION_MASK;
+      Sec.special |= SECSPEC_FRICTION_MASK;
     }
     Ret = true;
   }
@@ -3328,7 +3280,6 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorChangeFlags(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int   SecNum;
   bool  Rtn;
 
   if (!Arg1)
@@ -3336,10 +3287,10 @@ final bool EV_SectorChangeFlags(int Arg1, int Arg2, int Arg3, int Arg4,
     return false;
   }
   Rtn = false;
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    sector_t *Sec = &XLevel.Sectors[SecNum];
     if (Arg3&SECF_SILENT)
     {
       Sec->bSilent = false;
@@ -3370,15 +3321,15 @@ final bool EV_SectorChangeFlags(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetFloorPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XOffs = float(Arg2)+float(Arg3)/100.0;
   float YOffs = float(Arg4)+float(Arg5)/100.0;
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[s].floor.xoffs = XOffs;
-    XLevel.Sectors[s].floor.yoffs = YOffs;
-    ClampSecPlaneOffsets(&XLevel.Sectors[s].floor);
+    Sec.floor.xoffs = XOffs;
+    Sec.floor.yoffs = YOffs;
+    ClampSecPlaneOffsets(&Sec.floor);
   }
   return true;
 }
@@ -3392,15 +3343,15 @@ final bool EV_SectorSetFloorPanning(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetCeilingPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XOffs = float(Arg2)+float(Arg3)/100.0;
   float YOffs = float(Arg4)+float(Arg5)/100.0;
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[s].ceiling.xoffs = XOffs;
-    XLevel.Sectors[s].ceiling.yoffs = YOffs;
-    ClampSecPlaneOffsets(&XLevel.Sectors[s].ceiling);
+    Sec.ceiling.xoffs = XOffs;
+    Sec.ceiling.yoffs = YOffs;
+    ClampSecPlaneOffsets(&Sec.ceiling);
   }
   return true;
 }
@@ -3414,12 +3365,12 @@ final bool EV_SectorSetCeilingPanning(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetRotation(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    XLevel.Sectors[s].floor.Angle = float(Arg2);
-    XLevel.Sectors[s].ceiling.Angle = float(Arg3);
+    Sec.floor.Angle = float(Arg2);
+    Sec.ceiling.Angle = float(Arg3);
   }
   return true;
 }
@@ -3433,7 +3384,6 @@ final bool EV_SectorSetRotation(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetFloorScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XScale = float(Arg2)+float(Arg3)/100.0;
   float YScale = float(Arg4)+float(Arg5)/100.0;
   if (XScale)
@@ -3444,16 +3394,17 @@ final bool EV_SectorSetFloorScale(int Arg1, int Arg2, int Arg3, int Arg4,
   {
     YScale = 1.0/YScale;
   }
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
     if (XScale)
     {
-      XLevel.Sectors[s].floor.XScale = XScale;
+      Sec.floor.XScale = XScale;
     }
     if (YScale)
     {
-      XLevel.Sectors[s].floor.YScale = YScale;
+      Sec.floor.YScale = YScale;
     }
   }
   return true;
@@ -3468,7 +3419,6 @@ final bool EV_SectorSetFloorScale(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetCeilingScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XScale = float(Arg2)+float(Arg3)/100.0;
   float YScale = float(Arg4)+float(Arg5)/100.0;
   if (XScale)
@@ -3479,16 +3429,17 @@ final bool EV_SectorSetCeilingScale(int Arg1, int Arg2, int Arg3, int Arg4,
   {
     YScale = 1.0/YScale;
   }
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
     if (XScale)
     {
-      XLevel.Sectors[s].ceiling.XScale = XScale;
+      Sec.ceiling.XScale = XScale;
     }
     if (YScale)
     {
-      XLevel.Sectors[s].ceiling.YScale = YScale;
+      Sec.ceiling.YScale = YScale;
     }
   }
   return true;
@@ -3503,7 +3454,6 @@ final bool EV_SectorSetCeilingScale(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetFloorScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XScale = float(Arg2)/float(0x10000);
   float YScale = float(Arg3)/float(0x10000);
   if (XScale)
@@ -3514,16 +3464,17 @@ final bool EV_SectorSetFloorScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   {
     YScale = 1.0/YScale;
   }
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
     if (XScale)
     {
-      XLevel.Sectors[s].floor.XScale = XScale;
+      Sec.floor.XScale = XScale;
     }
     if (YScale)
     {
-      XLevel.Sectors[s].floor.YScale = YScale;
+      Sec.floor.YScale = YScale;
     }
   }
   return true;
@@ -3538,7 +3489,6 @@ final bool EV_SectorSetFloorScale2(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_SectorSetCeilingScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int s;
   float XScale = float(Arg2)/float(0x10000);
   float YScale = float(Arg3)/float(0x10000);
   if (XScale)
@@ -3549,16 +3499,17 @@ final bool EV_SectorSetCeilingScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   {
     YScale = 1.0/YScale;
   }
-  for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
-    s = XLevel.FindSectorFromTag(Arg1, s))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
     if (XScale)
     {
-      XLevel.Sectors[s].ceiling.XScale = XScale;
+      Sec.ceiling.XScale = XScale;
     }
     if (YScale)
     {
-      XLevel.Sectors[s].ceiling.YScale = YScale;
+      Sec.ceiling.YScale = YScale;
     }
   }
   return true;
@@ -4923,14 +4874,12 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     i;
-  int     secnum;
   sector_t *sec;
   line_t *secline;
 
-  for (secnum = XLevel.FindSectorFromTag(Arg1, -1); secnum >= 0;
-    secnum = XLevel.FindSectorFromTag(Arg1, secnum))
+  for (int hidx = XLevel.FindSectorFromTag(out sec, Arg1); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out sec, Arg1, hidx))
   {
-    sec = &XLevel.Sectors[secnum];
     for (i = 0; i < sec.lines.length; i++)
     {
       secline = sec->lines[i];
@@ -4965,7 +4914,6 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int     count;
   EntityEx  A;
   int     SecTag;
-  int     SecNum;
   sector_t *Sec;
   bool    SrcFog;
   bool    KeepOrient;
@@ -5024,10 +4972,9 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
   else if (SecTag)
   {
-    for (SecNum = XLevel.FindSectorFromTag(SecTag, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(SecTag, SecNum))
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, SecTag); hidx >= 0;
+         hidx = XLevel.FindSectorFromTag(out Sec, SecTag, hidx))
     {
-      Sec = &XLevel.Sectors[SecNum];
       foreach AllThinkers(EntityEx, A)
       {
         if (!TeleportDest(A))
@@ -5223,7 +5170,6 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
   EntityEx  destOrigin;
   bool    didSomething;
   bool    floorz;
-  int     secnum;
   sector_t *sec;
   EntityEx  A;
 
@@ -5247,11 +5193,9 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
   didSomething = false;
   floorz = !TeleportDest2(destOrigin);
 
-  for (secnum = XLevel.FindSectorFromTag(tag, -1); secnum >= 0;
-    secnum = XLevel.FindSectorFromTag(tag, secnum))
+  for (int hidx = XLevel.FindSectorFromTag(out sec, tag); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out sec, tag, hidx))
   {
-    sec = &XLevel.Sectors[secnum];
-
     msecnode_t*Node = sec->TouchingThingList;
     while (Node)
     {
@@ -5703,9 +5647,9 @@ final void SpawnPushers()
 {
   int     i;
   line_t *l;
-  int     s;
   Pusher    P;
   EntityEx  thing;
+  sector_t *Sec;
 
   for (i = 0; i < XLevel.Lines.length; i++)
   {
@@ -5713,22 +5657,20 @@ final void SpawnPushers()
     switch (l->special)
     {
     case LNSPEC_SectorSetWind: // wind
-      for (s = XLevel.FindSectorFromTag(l->arg1, -1); s >= 0;
-        s = XLevel.FindSectorFromTag(l->arg1, s))
+      for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
+           hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
         P = Spawn(Pusher);
-        P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : nullptr, l->arg2,
-          l->arg3, none, s);
+        P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
 
     case LNSPEC_SectorSetCurrent: // current
-      for (s = XLevel.FindSectorFromTag(l->arg1, -1); s >= 0;
-        s = XLevel.FindSectorFromTag(l->arg1, s))
+      for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
+           hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
         P = Spawn(Pusher);
-        P.Init(Pusher::PUSHER_Current, l->arg4 ? l : nullptr, l->arg2,
-          l->arg3, none, s);
+        P.Init(Pusher::PUSHER_Current, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
 
@@ -5736,10 +5678,11 @@ final void SpawnPushers()
       if (l->arg1)
       {
         // [RH] Find thing by sector
-        for (s = XLevel.FindSectorFromTag(l->arg1, -1); s >= 0;
-          s = XLevel.FindSectorFromTag(l->arg1, s))
+        for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
+             hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
         {
-          thing = GetPushThing(s);
+          int ssnum = Sec-&XLevel.Sectors[0];
+          thing = GetPushThing(ssnum);
           if (thing)
           {
             // No MT_P* means no effect
@@ -5747,8 +5690,7 @@ final void SpawnPushers()
             if (!l->arg2 || l->arg2 == thing.TID)
             {
               P = Spawn(Pusher);
-              P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr,
-                l->arg3, 0, thing, s);
+              P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, ssnum);
             }
           }
         }
@@ -5757,17 +5699,17 @@ final void SpawnPushers()
       {
         // [RH] Find thing by tid
         for (thing = EntityEx(FindMobjFromTID(l->arg2, none));
-          thing;
-          thing = EntityEx(FindMobjFromTID(l->arg2, thing)))
+             thing;
+             thing = EntityEx(FindMobjFromTID(l->arg2, thing)))
         {
           if (PointPuller(thing) || PointPusher(thing))
           {
+            int s;
             for (s = 0; s < XLevel.Sectors.length; s++) {
               if (&XLevel.Sectors[s] == thing.Sector) break;
             }
             P = Spawn(Pusher);
-            P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr,
-              l->arg3, 0, thing, s);
+            P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, s);
           }
         }
       }
@@ -5790,7 +5732,6 @@ final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int   angle;
   Pusher  Collection;
   Pusher  P;
-  int   secnum;
 
   if (Line || Arg4)
   {
@@ -5812,9 +5753,11 @@ final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
 
   // Now create pushers for any sectors that don't already have them.
-  for (secnum = XLevel.FindSectorFromTag(tag, -1); secnum >= 0;
-    secnum = XLevel.FindSectorFromTag(tag, secnum))
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, tag); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, tag, hidx))
   {
+    int secnum = Sec-&XLevel.Sectors[0];
     for (P = Collection; P; P = P.AdjustLink)
     {
       if (P.Affectee == secnum) break;
@@ -5870,13 +5813,10 @@ final bool EV_LineTranslucent(int Arg1, int Arg2, int Arg3, int Arg4,
 int EV_SectorSetPlaneReflection(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  int     SecNum;
-
-  for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
-  {
-    XLevel.Sectors[SecNum].floor.MirrorAlpha = float(255-Arg2)/255.0;
-    XLevel.Sectors[SecNum].ceiling.MirrorAlpha = float(255-Arg3)/255.0;
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
+    Sec.floor.MirrorAlpha = float(255-Arg2)/255.0;
+    Sec.ceiling.MirrorAlpha = float(255-Arg3)/255.0;
   }
   return 1;
 }
@@ -6460,11 +6400,9 @@ override void SectorDamage(int Tag, int Amount, name DamageType,
 {
   class!Inventory ProtectClass = class!Inventory(FindClassNoCase(ProtectionType));
 
-  int SecNum = -1;
-  for (SecNum = XLevel.FindSectorFromTag(Tag, -1); SecNum >= 0;
-    SecNum = XLevel.FindSectorFromTag(Tag, SecNum))
-  {
-    sector_t *Sec = &XLevel.Sectors[SecNum];
+  sector_t *Sec;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Tag); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Tag, hidx)) {
+    //sector_t *Sec = &XLevel.Sectors[SecNum];
     Entity Ent;
     Entity Next;
 

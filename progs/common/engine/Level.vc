@@ -167,6 +167,10 @@ native readonly private int NextSoundOriginID;
 native readonly private void *__decanimlist;
 native readonly private int __decanimuid;
 
+native readonly private void *__lineTags;
+native readonly private void *__sectorTags;
+
+
 // don't mark as native, so serializer will do the work for us
 /*native*/ array!int sectorlinkStart; // can be less than sectors; indexed by sector index
 /*native*/ array!SectorLink sectorlinks;
@@ -178,7 +182,7 @@ native transient private int csTouchCount;
 native transient private int *csTouched; // for ChangeSector; Z_Malloc'ed, NumSectors elements
 
 native transient private array!int FakeFCSectors;
-native transient private array!int TaggedSectors;
+//native transient private array!int TaggedSectors;
 
 // this is used to keep control->dest 3d floor links
 // [0..NumSectors) is entry point, then follow next index (-1 means 'end')
@@ -224,8 +228,8 @@ native final void SetFloorLightSector (sector_t *Sector, sector_t *SrcSector);
 native final void SetCeilingLightSector (sector_t *Sector, sector_t *SrcSector);
 native final void SetHeightSector (sector_t *Sector, sector_t *SrcSector, int Flags);
 
-// return next sector # that line tag refers to
-native final int FindSectorFromTag (int tag, optional int start);
+// returns `-1` on end
+native final int FindSectorFromTag (out sector_t *Sector, int tag, optional int start);
 native final line_t *FindLine (int lineTag, int *searchPosition);
 
 // support for linked sectors

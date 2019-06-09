@@ -65,6 +65,17 @@ VLevelScriptThinker::~VLevelScriptThinker () {
 
 //==========================================================================
 //
+//  VLevel::PostCtor
+//
+//==========================================================================
+void VLevel::PostCtor () {
+  lineTags = tagHashAlloc();
+  sectorTags = tagHashAlloc();
+}
+
+
+//==========================================================================
+//
 //  VLevel::IncrementValidCount
 //
 //==========================================================================
@@ -575,7 +586,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("params.Fade"), sec->params.Fade);
       vio.io(VName("params.contents"), sec->params.contents);
       vio.io(VName("special"), sec->special);
-      vio.io(VName("tag"), sec->tag);
+      vio.io(VName("tag"), sec->sectorTag);
       vio.io(VName("seqType"), sec->seqType);
       vio.io(VName("SectorFlags"), sec->SectorFlags);
       vio.io(VName("SoundTarget"), sec->SoundTarget);
@@ -590,8 +601,35 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("Gravity"), sec->Gravity);
       vio.io(VName("Sky"), sec->Sky);
       if (Strm.IsLoading()) {
+        // load additional tags
+        sec->moreTags.clear();
+        int moreTagCount = 0;
+        vio.iodef(VName("moreTagCount"), moreTagCount, 0);
+        if (moreTagCount < 0 || moreTagCount > 32767) Host_Error("invalid lindef");
+        char tmpbuf[64];
+        for (int mtf = 0; mtf < moreTagCount; ++mtf) {
+          snprintf(tmpbuf, sizeof(tmpbuf), "moreTag%d", mtf);
+          int mtag = 0;
+          vio.io(VName(tmpbuf), mtag);
+          if (!mtag || mtag == -1) continue;
+          bool found = false;
+          for (int cc = 0; cc < sec->moreTags.length(); ++cc) if (sec->moreTags[cc] == mtag) { found = true; break; }
+          if (found) continue;
+          sec->moreTags.append(mtag);
+        }
+        // setup sector bounds
         CalcSecMinMaxs(sec);
         sec->ThingList = nullptr;
+      } else {
+        // save more tags
+        int moreTagCount = sec->moreTags.length();
+        vio.io(VName("moreTagCount"), moreTagCount);
+        char tmpbuf[64];
+        for (int mtf = 0; mtf < moreTagCount; ++mtf) {
+          snprintf(tmpbuf, sizeof(tmpbuf), "moreTag%d", mtf);
+          int mtag = sec->moreTags[mtf];
+          vio.io(VName(tmpbuf), mtag);
+        }
       }
     }
     if (Strm.IsLoading()) HashSectors();
@@ -618,15 +656,41 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("arg3"), li->arg3);
         vio.io(VName("arg4"), li->arg4);
         vio.io(VName("arg5"), li->arg5);
-        vio.io(VName("LineTag"), li->LineTag);
+        vio.io(VName("LineTag"), li->lineTag);
         vio.io(VName("alpha"), li->alpha);
         vio.iodef(VName("locknumber"), li->locknumber, 0);
         if (Strm.IsLoading()) {
+          // load additional tags
+          li->moreTags.clear();
+          int moreTagCount = 0;
+          vio.iodef(VName("moreTagCount"), moreTagCount, 0);
+          if (moreTagCount < 0 || moreTagCount > 32767) Host_Error("invalid lindef");
+          char tmpbuf[64];
+          for (int mtf = 0; mtf < moreTagCount; ++mtf) {
+            snprintf(tmpbuf, sizeof(tmpbuf), "moreTag%d", mtf);
+            int mtag = 0;
+            vio.io(VName(tmpbuf), mtag);
+            if (!mtag || mtag == -1) continue;
+            bool found = false;
+            for (int cc = 0; cc < li->moreTags.length(); ++cc) if (li->moreTags[cc] == mtag) { found = true; break; }
+            if (found) continue;
+            li->moreTags.append(mtag);
+          }
           // for now, mark partially mapped lines as fully mapped
           if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
             li->flags |= ML_MAPPED;
           }
           li->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+        } else {
+          // save more tags
+          int moreTagCount = li->moreTags.length();
+          vio.io(VName("moreTagCount"), moreTagCount);
+          char tmpbuf[64];
+          for (int mtf = 0; mtf < moreTagCount; ++mtf) {
+            snprintf(tmpbuf, sizeof(tmpbuf), "moreTag%d", mtf);
+            int mtag = li->moreTags[mtf];
+            vio.io(VName(tmpbuf), mtag);
+          }
         }
       }
 
@@ -880,6 +944,9 @@ void VLevel::ClearReferences () {
 void VLevel::Destroy () {
   decanimlist = nullptr; // why not?
 
+  tagHashFree(lineTags);
+  tagHashFree(sectorTags);
+
   if (csTouched) Z_Free(csTouched);
   csTouchCount = 0;
   csTouched = nullptr;
@@ -932,7 +999,10 @@ void VLevel::Destroy () {
 
   if (Sectors) {
     // delete regions
-    for (int i = 0; i < NumSectors; ++i) Sectors[i].DeleteAllRegions();
+    for (int i = 0; i < NumSectors; ++i) {
+      Sectors[i].DeleteAllRegions();
+      Sectors[i].moreTags.clear();
+    }
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
@@ -954,6 +1024,7 @@ void VLevel::Destroy () {
     line_t *ld = Lines+f;
     delete[] ld->v1lines;
     delete[] ld->v2lines;
+    ld->moreTags.clear();
   }
 
   delete[] Vertexes;
@@ -1279,7 +1350,24 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
 //  VLevel::FindSectorFromTag
 //
 //==========================================================================
-int VLevel::FindSectorFromTag (int tag, int start) {
+int VLevel::FindSectorFromTag (sector_t *&sector, int tag, int start) {
+   //k8: just in case
+  if (tag == 0 || NumSubsectors < 1) {
+    sector = nullptr;
+    return -1;
+  }
+
+  if (start < 0) {
+    // first
+    start = tagHashFirst(sectorTags, tag);
+  } else {
+    // next
+    start = tagHashNext(sectorTags, start, tag);
+  }
+  sector = (sector_t *)tagHashPtr(sectorTags, start);
+  return start;
+
+  /*
   if (tag == 0 || NumSectors < 1) return -1; //k8: just in case
   for (int i = start < 0 ? Sectors[(vuint32)tag%(vuint32)NumSectors].HashFirst : Sectors[start].HashNext;
        i >= 0;
@@ -1288,6 +1376,7 @@ int VLevel::FindSectorFromTag (int tag, int start) {
     if (Sectors[i].tag == tag) return i;
   }
   return -1;
+  */
 }
 
 
@@ -1297,6 +1386,20 @@ int VLevel::FindSectorFromTag (int tag, int start) {
 //
 //==========================================================================
 line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
+  if (!searchPosition) return nullptr;
+  //k8: should zero tag be allowed here?
+  if (!lineTag || lineTag == -1 || NumLines < 1) { *searchPosition = -1; return nullptr; }
+
+  if (*searchPosition < 0) {
+    // first
+    *searchPosition = tagHashFirst(lineTags, lineTag);
+  } else {
+    // next
+    *searchPosition = tagHashNext(lineTags, *searchPosition, lineTag);
+  }
+  return (line_t *)tagHashPtr(lineTags, *searchPosition);
+
+  /*
   if (NumLines > 0) {
     for (int i = *searchPosition < 0 ? Lines[(vuint32)lineTag%(vuint32)NumLines].HashFirst : Lines[*searchPosition].HashNext;
          i >= 0;
@@ -1310,6 +1413,7 @@ line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
   }
   *searchPosition = -1;
   return nullptr;
+  */
 }
 
 
@@ -1327,8 +1431,12 @@ void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) 
     GCon->Logf(NAME_Warning, "UNIMPLEMENTED: setting sector link: controltag=%d; tag=%d; surface=%d; movetype=%d", controltag, tag, surface, movetype);
     return;
   }
-  for (int csi = FindSectorFromTag(controltag); csi >= 0; csi = FindSectorFromTag(controltag, csi)) {
-    for (int lsi = FindSectorFromTag(tag); lsi >= 0; lsi = FindSectorFromTag(tag, lsi)) {
+  sector_t *ccsector;
+  for (int cshidx = FindSectorFromTag(ccsector, controltag); cshidx >= 0; cshidx = FindSectorFromTag(ccsector, controltag, cshidx)) {
+    const int csi = (int)(ptrdiff_t)(ccsector-&Sectors[0]);
+    sector_t *sssector;
+    for (int lshidx = FindSectorFromTag(sssector, tag); lshidx >= 0; lshidx = FindSectorFromTag(sssector, tag, lshidx)) {
+      const int lsi = (int)(ptrdiff_t)(sssector-&Sectors[0]);
       if (lsi == csi) continue;
       if (csi < sectorlinkStart.length()) {
         int f = sectorlinkStart[csi];
@@ -2900,11 +3008,17 @@ IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
   if (Self->RenderData) Self->RenderData->SetupFakeFloors(Sector);
 }
 
+// native final int FindSectorFromTag (out sector_t *Sector, int tag, optional int start);
 IMPLEMENT_FUNCTION(VLevel, FindSectorFromTag) {
   P_GET_INT_OPT(start, -1);
   P_GET_INT(tag);
+  P_GET_PTR(sector_t *, osectorp);
   P_GET_SELF;
-  RET_INT(Self->FindSectorFromTag(tag, start));
+  sector_t *sector;
+  start = Self->FindSectorFromTag(sector, tag, start);
+  if (osectorp) *osectorp = sector;
+  RET_INT(start);
+  //RET_INT(Self->FindSectorFromTag(tag, start));
 }
 
 IMPLEMENT_FUNCTION(VLevel, FindLine) {
@@ -3096,7 +3210,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     const line_t *line = &Lines[f];
     writef(strm, "\nlinedef // %d\n", f);
     writef(strm, "{\n");
-    if (line->LineTag && line->LineTag != -1) writef(strm, "  id = %d;\n", line->LineTag);
+    if (line->lineTag && line->lineTag != -1) writef(strm, "  id = %d;\n", line->lineTag);
     writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
     writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
     check(line->sidenum[0] >= 0);
@@ -3205,7 +3319,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     const sector_t *sector = &Sectors[f];
     writef(strm, "\nsector // %d\n", f);
     writef(strm, "{\n");
-    if (sector->tag) writef(strm, "  id = %d;\n", sector->tag);
+    if (sector->sectorTag) writef(strm, "  id = %d;\n", sector->sectorTag);
     if (sector->special) writef(strm, "  special = %d;\n", sector->special);
     if (sector->floor.normal.z == 1.0f) {
       // normal
