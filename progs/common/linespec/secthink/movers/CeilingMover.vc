@@ -87,7 +87,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector->CeilingData = self;
 
   Type = InType;
-  Tag = Sector->tag;
+  Tag = Sector->sectorTag;
   Crush = false;
   Speed = float(Arg2)*35.0/8.0;
   Spot = *Sector->lines[0]->v1;

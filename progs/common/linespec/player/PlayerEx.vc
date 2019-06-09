@@ -1037,8 +1037,8 @@ void PlayerInSpecialSector (float deltaTime) {
 
   switch (MO.Sector->special&SECSPEC_BASE_MASK) {
     case SECSPEC_ScrollCurrent:
-      speed = float((MO.Sector->tag-100)%10)/16.0*35.0;
-      finean = float((MO.Sector->tag-100)/10)*45.0;
+      speed = float((MO.Sector->sectorTag-100)%10)/16.0*35.0;
+      finean = float((MO.Sector->sectorTag-100)/10)*45.0;
       MO.Velocity.x += speed*cos(finean);
       MO.Velocity.y += speed*sin(finean);
       break;

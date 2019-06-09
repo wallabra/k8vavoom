@@ -441,7 +441,7 @@ void InitDonut2 (sector_t *InSector, sector_t *OtherSector, int Arg3) {
 //==========================================================================
 bool CrushStop (int InTag) {
   if (Type != FLOOREV_RaiseAndCrush) return false;
-  if (Sector->tag != InTag) return false;
+  if (!IsSectorTagEqual(Sector, InTag)) return false;
   // completely remove the crushing floor
   SectorStopSequence(Sector);
   Finished();

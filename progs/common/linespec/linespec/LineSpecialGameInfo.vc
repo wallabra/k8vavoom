@@ -351,7 +351,7 @@ final void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
-    if (line->LineTag != mthing->arg1) continue;
+    if (!IsLineTagEqual(line, mthing->arg1)) continue;
 
     sec = (PointOnPlaneSide(p1, *line) == 0 ? line->frontsector : line->backsector);
     if (sec == nullptr) continue;
@@ -660,7 +660,7 @@ final void SetSlopes (Level InLevel) {
     line_t *line = &InLevel.Lines[i];
     if (line.special == LNSPEC_PlaneAlign) {
       line.special = 0;
-      line.LineTag = InLevel.Lines[i].arg3;
+      line.lineTag = InLevel.Lines[i].arg3;
       if (line.backsector) {
         // args[0] is for floor, args[1] is for ceiling
         //
@@ -776,7 +776,7 @@ final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) 
 final void SpawnExtraFloors (Level InLevel, line_t *line) {
   int tag = line->arg1+(line->arg1&8 ? 0 : line->arg5);
   foreach (auto j; 0..InLevel.Sectors.length) {
-    if (InLevel.Sectors[j].tag == tag) {
+    if (IsSectorTagEqual(&InLevel.Sectors[j], tag)) {
       InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
     }
   }
@@ -992,25 +992,25 @@ override void SpawnWorld (Level InLevel) {
       switch (line->special) {
         case LNSPEC_LineSetIdentification:
           line->special = 0;
-          line->LineTag = line->arg1+(line->arg5<<8);
+          line->lineTag = line->arg1+(line->arg5<<8);
           line->flags |= line->arg2<<16;
           break;
         case LNSPEC_LineTranslucent:
-          line->LineTag = line->arg1;
+          line->lineTag = line->arg1;
           line->flags |= line->arg4<<16;
           break;
         case LNSPEC_TeleportLine:
         case LNSPEC_ScrollTextureModel:
-          line->LineTag = line->arg1;
+          line->lineTag = line->arg1;
           break;
         case LNSPEC_PolyStartLine:
-          line->LineTag = line->arg4;
+          line->lineTag = line->arg4;
           break;
         case LNSPEC_PolyExplicitLine:
-          line->LineTag = line->arg5;
+          line->lineTag = line->arg5;
           break;
         case LNSPEC_StaticInit:
-          if (line->arg2 == 3) line->LineTag = line->arg1;
+          if (line->arg2 == 3) line->lineTag = line->arg1;
           break;
       }
     }
@@ -1122,7 +1122,7 @@ override void SpawnWorld (Level InLevel) {
             sec.floor.flags ^= SPF_NOBLOCKSHOOT;
           }
           // set line tag
-          if (line->arg2&8) line->LineTag = line->arg5;
+          if (line->arg2&8) line->lineTag = line->arg5;
           if (line->arg4 < 255) {
             float secalpha = clamp(line->arg4, 0, 255)/255.0;
             sec.floor.Alpha = secalpha;
@@ -1195,7 +1195,7 @@ override void SpawnWorld (Level InLevel) {
         alpha = fclamp(float(line->arg2)/255.0, 0, 255);
         if (line->arg1) {
           foreach (auto j; 0..InLevel.Lines.length) {
-            if (InLevel.Lines[j].LineTag == line->arg1) {
+            if (IsLineTagEqual(&InLevel.Lines[j], line->arg1)) {
               InLevel.Lines[j].alpha = alpha;
               if (line->arg3 == 1) InLevel.Lines[j].flags |= ML_ADDITIVE;
             }

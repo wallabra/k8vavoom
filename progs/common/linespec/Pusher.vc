@@ -124,7 +124,7 @@ void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int
 //
 //==========================================================================
 int CheckForSectorMatch (int type, int tag) {
-  if (Type == type && XLevel.Sectors[Affectee].tag == tag) return Affectee;
+  if (Type == type && IsSectorTagEqual(&XLevel.Sectors[Affectee], tag)) return Affectee;
   return -1;
 }
 

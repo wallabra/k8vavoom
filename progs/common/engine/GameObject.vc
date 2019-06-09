@@ -657,6 +657,13 @@ struct surface_t {
 //
 //==========================================================================
 
+struct TagListHashItem {
+  int Tag;
+  int HashFirst;
+  int HashNext;
+};
+
+
 // LineDef
 struct line_t : TPlane {
   // vertices, from v1 to v2
@@ -701,9 +708,10 @@ struct line_t : TPlane {
 
   int locknumber;
 
-  int LineTag;
+  int lineTag;
   int HashFirst;
   int HashNext;
+  //TagListHashItem[] tagHash;
 
   seg_t *firstseg; // linked by lsnext
 
@@ -913,7 +921,8 @@ struct sector_t {
   sector_t *deepref; // deep water hack
 
   int special;
-  int tag;
+
+  int sectorTag;
   int HashFirst;
   int HashNext;
 

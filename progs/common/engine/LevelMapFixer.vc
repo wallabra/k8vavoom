@@ -166,14 +166,14 @@ void KnownMapBugFixer () {
     Sides[Lines[127].sidenum[0]].TopTexture = LdrTexNumForName("STONE", TEXTYPE_Wall);
     Sides[Lines[128].sidenum[0]].TopTexture = LdrTexNumForName("STONE", TEXTYPE_Wall);
     // remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
-    Sectors[19].tag = 0;
-    Sectors[20].tag = 0;
-    Sectors[23].tag = 0;
-    Sectors[28].tag = 0;
-    Sectors[33].tag = 0;
-    Sectors[34].tag = 0;
-    Sectors[83].tag = 0;
-    Sectors[85].tag = 0;
+    Sectors[19].sectorTag = 0;
+    Sectors[20].sectorTag = 0;
+    Sectors[23].sectorTag = 0;
+    Sectors[28].sectorTag = 0;
+    Sectors[33].sectorTag = 0;
+    Sectors[34].sectorTag = 0;
+    Sectors[83].sectorTag = 0;
+    Sectors[85].sectorTag = 0;
     printwarn("MAPFIX: Doom II: MAP04 detected and fixed");
     return;
   }
@@ -181,8 +181,8 @@ void KnownMapBugFixer () {
   // Doom II: MAP05
   if (MapHashMD5 == "9e061ad7fbcd7fad968c976cb4aa3b9d") {
     // fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
-    Sectors[4].tag = 0;
-    Sectors[153].tag = 0;
+    Sectors[4].sectorTag = 0;
+    Sectors[153].sectorTag = 0;
     printwarn("MAPFIX: Doom II: MAP05 detected and fixed");
     return;
   }
@@ -264,7 +264,7 @@ void KnownMapBugFixer () {
   // TNT:Evilution: MAP15
   if (MapHashMD5 == "dfc18b92bf3e8142b8684ecd8bd2ef06") {
     // raise up sector with its counterpart so 100% kills becomes possible
-    Sectors[330].tag = 11;
+    Sectors[330].sectorTag = 11;
     printwarn("MAPFIX: TNT:Evilution: MAP15 detected and fixed");
     return;
   }

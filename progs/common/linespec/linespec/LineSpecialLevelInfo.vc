@@ -2666,7 +2666,7 @@ final bool EV_LightStop(int Tag)
 
   foreach AllThinkers(Lighting, L)
   {
-    if (L.Sector->tag == Tag)
+    if (IsSectorTagEqual(L.Sector, Tag))
     {
       if (L.Sector->LightingData == L) L.Sector->LightingData = none;
       L.Destroy();
@@ -2905,7 +2905,7 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
         continue;
       }
       //  Check if line has a correct tag.
-      if (Scroll.AffecteeSrcLine->LineTag != LineId)
+      if (!IsLineTagEqual(Scroll.AffecteeSrcLine, LineId))
       {
         continue;
       }
@@ -2929,25 +2929,13 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
 
     foreach AllThinkers(Scroller, Scroll)
     {
-      if (Scroll.Type != Scroller::SCROLLEV_Side)
-      {
-        continue;
-      }
+      if (Scroll.Type != Scroller::SCROLLEV_Side) continue;
       //  Check if line has a correct tag.
-      if (Scroll.AffecteeSrcLine->LineTag != LineId)
-      {
-        continue;
-      }
+      if (!IsLineTagEqual(Scroll.AffecteeSrcLine, LineId)) continue;
       //  Check if it's the correct side.
-      if (Scroll.AffecteeSrcLine->sidenum[WhichSide] != Scroll.Affectee)
-      {
-        continue;
-      }
+      if (Scroll.AffecteeSrcLine->sidenum[WhichSide] != Scroll.Affectee) continue;
       //  Check if it's scrolling the same wall parts
-      if (Scroll.SideParts != Where)
-      {
-        continue;
-      }
+      if (Scroll.SideParts != Where) continue;
       //  Found it.
       Scroll.AdjustTextureBoth(XSpeed, YSpeed);
       FoundScrollers[FoundScrollers.Num] = Scroll;
@@ -3035,7 +3023,7 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
   bool Found = false;
   foreach AllThinkers(Scroller, Sc)
   {
-    if (Sc.Type == Type && Sc.Sector->tag == Arg1)
+    if (Sc.Type == Type && IsSectorTagEqual(Sc.Sector, Arg1))
     {
       Sc.SetSpeed(Arg2, Arg3);
       Found = true;
@@ -5014,7 +5002,7 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     for (A = EntityEx(FindMobjFromTID(Arg1, none)); A;
       A = EntityEx(FindMobjFromTID(Arg1, A)))
     {
-      if (SecTag == 0 || A.Sector->tag == SecTag)
+      if (SecTag == 0 || IsSectorTagEqual(A.Sector, SecTag))
       {
         count++;
       }
@@ -5031,7 +5019,7 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       {
         A = EntityEx(FindMobjFromTID(Arg1, A));
       }
-      while (A && SecTag != 0 && A.Sector->tag != SecTag);
+      while (A && SecTag != 0 && !IsSectorTagEqual(A.Sector, SecTag));
     }
   }
   else if (SecTag)
@@ -6419,7 +6407,7 @@ final int DoThingCount(class!EntityEx moType, int tid, int SectorTag)
         //  Don't count things in somebody's inventory
         continue;
       }
-      if (SectorTag != -1 && Ent.Sector->tag != SectorTag)
+      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag))
       {
         //  Wrong sector tag.
         continue;
@@ -6450,7 +6438,7 @@ final int DoThingCount(class!EntityEx moType, int tid, int SectorTag)
         //  Don't count things in somebody's inventory
         continue;
       }
-      if (SectorTag != -1 && Ent.Sector->tag != SectorTag)
+      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag))
       {
         //  Wrong sector tag.
         continue;

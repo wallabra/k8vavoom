@@ -232,6 +232,13 @@ enum {
 };
 
 
+struct TagListHashItem {
+  int Tag;
+  int HashFirst;
+  int HashNext;
+};
+
+
 struct line_t : public TPlane {
   // vertices, from v1 to v2
   vertex_t *v1;
@@ -275,6 +282,10 @@ struct line_t : public TPlane {
 
   vint32 locknumber;
 
+  /*
+  TagListHashItem *tagHash;
+  vint32 tagHashCount;
+  */
   vint32 LineTag;
   vint32 HashFirst;
   vint32 HashNext;
@@ -596,6 +607,7 @@ struct sector_t {
   sector_t *deepref; // deep water hack
 
   vint32 special;
+
   vint32 tag;
   vint32 HashFirst;
   vint32 HashNext;

@@ -172,7 +172,7 @@ final void A_CheckTerrain () {
     if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageInstantDeath) {
       Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
     } else if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_ScrollCurrent) {
-      int anglespeed = Sector->tag-100;
+      int anglespeed = Sector->sectorTag-100;
       float speed = float(anglespeed%10)/16.0*35.0;
       float finean = float(anglespeed/10)*45.0;
       Velocity.x += speed*cos(finean);

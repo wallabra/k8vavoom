@@ -1214,6 +1214,25 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 
 #endif // CLIENT
 
+//native static bool IsLineTagEqual (const line_t *line, int tag);
+IMPLEMENT_FUNCTION(VObject, IsLineTagEqual) {
+  line_t *line;
+  int tag;
+  vobjGetParam(line, tag);
+  if (!line) { RET_BOOL(false); return; }
+  RET_BOOL(line->LineTag == tag);
+}
+
+
+//native static bool IsSectorTagEqual (const sector_t *sector, int tag);
+IMPLEMENT_FUNCTION(VObject, IsSectorTagEqual) {
+  sector_t *sector;
+  int tag;
+  vobjGetParam(sector, tag);
+  if (!sector) { RET_BOOL(false); return; }
+  RET_BOOL(sector->tag == tag);
+}
+
 #endif // !VCC_STANDALONE_EXECUTOR
 
 

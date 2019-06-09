@@ -92,6 +92,9 @@
 
   DECLARE_FUNCTION(TranslateKey)
 
+  DECLARE_FUNCTION(IsLineTagEqual)
+  DECLARE_FUNCTION(IsSectorTagEqual)
+
 #include "../neoui/vc_object_neoui.h"
 #endif // CLIENT
 

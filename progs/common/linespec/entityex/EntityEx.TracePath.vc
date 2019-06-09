@@ -67,21 +67,21 @@ static final bool isGoodDoorLinedef (GameObject::sector_t *sec, GameObject::line
     case GameObject::LNSPEC_DoorRaise: // tag,speed,delay,lighttag
     case GameObject::LNSPEC_DoorAnimated: // tag,speed,delay,lock
       if (ld.arg1 != 0) {
-        if (ld.arg1 != sec.tag) return false;
+        if (!IsSectorTagEqual(sec, ld.arg1)) return false;
         //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
       }
       return true;
     case GameObject::LNSPEC_DoorLockedRaise: // tag,speed,delay,lock,lighttag
       if (ld.arg4 != 0) return false; // locked
       if (ld.arg1 != 0) {
-        if (ld.arg1 != sec.tag) return false;
+        if (!IsSectorTagEqual(sec, ld.arg1)) return false;
         //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
       }
       return true;
     case GameObject::LNSPEC_DoorGeneric: // tag,speed,kind,delay,lock
       // if 128 is added to kind, tag is lighttag
       if ((ld.arg3&0x80) == 0 && ld.arg1 != 0) {
-        if (ld.arg1 != sec.tag) return false;
+        if (!IsSectorTagEqual(sec, ld.arg1)) return false;
         //print(" ...sector #%s for 'doorness' (%d lines; sub #%d): good tag", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
       }
       if ((ld.arg3&0x7f) > 1) return false; // close

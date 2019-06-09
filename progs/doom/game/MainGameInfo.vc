@@ -609,7 +609,7 @@ void TranslateLine (Level InLevel, line_t *line) {
   line->flags &= 0x01ff;
 
   // for BOOM compatibility all lines needs to have it's ID same as tag
-  if (OldTag) line->LineTag = OldTag;
+  if (OldTag) line->lineTag = OldTag;
 
   if (!line->special) return;
 
