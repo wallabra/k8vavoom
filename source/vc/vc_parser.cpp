@@ -1266,7 +1266,7 @@ VStatement *VParser::ParseStatement () {
         Lex.NextToken();
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         VExpression *e = ParseExpression();
-        if (!e) ParseError(Lex.Location, "If expression expected");
+        if (!e) ParseError(Lex.Location, "`if` expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         VStatement *STrue = ParseStatement();
         auto falseLoc = Lex.Location;
@@ -1282,7 +1282,7 @@ VStatement *VParser::ParseStatement () {
         Lex.NextToken();
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         VExpression *Expr = ParseExpression();
-        if (!Expr) ParseError(Lex.Location, "Wile loop expression expected");
+        if (!Expr) ParseError(Lex.Location, "`while` loop expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         VStatement *Statement = ParseStatement();
         return new VWhile(Expr, Statement, l);
@@ -1294,7 +1294,7 @@ VStatement *VParser::ParseStatement () {
         Lex.Expect(TK_While, ERR_BAD_DO_STATEMENT);
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         VExpression *Expr = ParseExpression();
-        if (!Expr) ParseError(Lex.Location, "Do loop expression expected");
+        if (!Expr) ParseError(Lex.Location, "`do` loop expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         return new VDo(Expr, Statement, l);

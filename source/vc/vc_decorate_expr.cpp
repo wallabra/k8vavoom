@@ -650,6 +650,14 @@ static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class)
 //
 //==========================================================================
 static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
+  if (sc->Check("A_SetUserVar") || sc->Check("A_SetUserVarFloat") ||
+      sc->Check("A_SetUserArray") || sc->Check("A_SetUserArrayFloat"))
+  {
+    VStr FuncName = sc->String;
+    VExpression *asse = CheckParseSetUserVarExpr(sc, Class, FuncName);
+    if (!asse) sc->Error("error in decorate");
+    return asse;
+  }
   return ParseExpressionPriority13(sc, Class);
 }
 
@@ -722,6 +730,126 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     }
     return new VExpressionStatement(new VDropResult(callExpr));
   }
+}
+
+
+//==========================================================================
+//
+//  CheckUnsafeStatement
+//
+//==========================================================================
+static void CheckUnsafeStatement (VScriptParser *sc, const char *msg) {
+  if (GArgs.CheckParm("-decorate-allow-unsafe") || GArgs.CheckParm("--decorate-allow-unsafe")) return;
+  GCon->Logf(NAME_Error, "Unsafe decorate statement found.");
+  GCon->Logf(NAME_Error, "You can allow unsafe statements with \"-decorate-allow-unsafe\", but it is not recommeded.");
+  GCon->Logf(NAME_Error, "The engine can crash or hang with such mods.");
+  sc->Error(msg);
+}
+
+
+// forward declaration
+static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VState *State);
+
+
+//==========================================================================
+//
+//  ParseStatementFor
+//
+//==========================================================================
+static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *State) {
+  CheckUnsafeStatement(sc, "`for` is not allowed");
+
+  auto stloc = sc->GetLoc();
+
+  sc->Expect("(");
+
+  VFor *forstmt = new VFor(stloc);
+
+  // parse init expr(s)
+  if (!sc->Check(";")) {
+    for (;;) {
+      VExpression *expr = ParseExpression(sc, Class);
+      if (!expr) break;
+      forstmt->InitExpr.append(new VDropResult(expr));
+      // here should be a comma or a semicolon
+      if (!sc->Check(",")) break;
+    }
+    sc->Expect(";");
+  }
+
+  // parse cond expr(s)
+  VExpression *lastCondExpr = nullptr;
+  if (!sc->Check(";")) {
+    for (;;) {
+      VExpression *expr = ParseExpression(sc, Class);
+      if (!expr) break;
+      if (lastCondExpr) forstmt->CondExpr.append(new VDropResult(lastCondExpr));
+      lastCondExpr = expr;
+      // here should be a comma or a semicolon
+      if (!sc->Check(",")) break;
+    }
+    sc->Expect(";");
+  }
+  if (lastCondExpr) forstmt->CondExpr.append(lastCondExpr);
+
+  // parse loop expr(s)
+  if (!sc->Check(")")) {
+    for (;;) {
+      VExpression *expr = ParseExpression(sc, Class);
+      if (!expr) break;
+      forstmt->LoopExpr.append(new VDropResult(expr));
+      // here should be a comma or a right paren
+      if (!sc->Check(",")) break;
+    }
+    sc->Expect(")");
+  }
+
+  VStatement *body = ParseActionStatement(sc, Class, State);
+  forstmt->Statement = body;
+  return forstmt;
+}
+
+
+//==========================================================================
+//
+//  ParseStatementWhile
+//
+//==========================================================================
+static VStatement *ParseStatementWhile (VScriptParser *sc, VClass *Class, VState *State) {
+  CheckUnsafeStatement(sc, "`while` is not allowed");
+
+  auto stloc = sc->GetLoc();
+
+  sc->Expect("(");
+  VExpression *cond = ParseExpression(sc, Class);
+  if (!cond) sc->Error("`while` loop expression expected");
+  sc->Expect(")");
+
+  VStatement *body = ParseActionStatement(sc, Class, State);
+
+  return new VWhile(cond, body, stloc);
+}
+
+
+//==========================================================================
+//
+//  ParseStatementDo
+//
+//==========================================================================
+static VStatement *ParseStatementDo (VScriptParser *sc, VClass *Class, VState *State) {
+  CheckUnsafeStatement(sc, "`do` is not allowed");
+
+  auto stloc = sc->GetLoc();
+
+  VStatement *body = ParseActionStatement(sc, Class, State);
+
+  sc->Expect("while");
+  sc->Expect("(");
+  VExpression *cond = ParseExpression(sc, Class);
+  if (!cond) sc->Error("`do` loop expression expected");
+  sc->Expect(")");
+
+  return new VDo(cond, body, stloc);
 }
 
 
@@ -844,9 +972,9 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     }
   }
 
-  if (sc->Check("for")) sc->Error("`for` is not supported");
-  if (sc->Check("while")) sc->Error("`while` is not supported");
-  if (sc->Check("do")) sc->Error("`do` is not supported");
+  if (sc->Check("for")) return ParseStatementFor(sc, Class, State);
+  if (sc->Check("while")) return ParseStatementWhile(sc, Class, State);
+  if (sc->Check("do")) return ParseStatementDo(sc, Class, State);
 
   VStatement *res = ParseFunCallAsStmt(sc, Class, State);
   sc->Expect(";");
