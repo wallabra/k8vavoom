@@ -2774,8 +2774,11 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
         EntityEx ee = EntityEx(in->Thing);
         if (!ee) continue;
         if (checkThingUseDg && !checkThingUseDg(ee)) continue;
+        if (!UseThing(ee)) {
+          if (ee.bSolid) hitLineOrThing = true;
+          continue;
+        }
         hitLineOrThing = true;
-        if (!UseThing(ee)) continue;
         if (onThingUsedDg) onThingUsedDg(ee);
         action = true;
         anythingUsed = true;
@@ -2799,15 +2802,14 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   y2 = y1+UseRange*useDir.y;
   bool DoSecAct = true;
   bool FoundLine = false;
-  bool tooHighSound = false;
   bool buttonSuccess;
   int useType, useSide;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES) {
     line_t *line = in->line;
-    hitLineOrThing = true;
 
     if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))) {
       TVec hitPoint = Origin+(UseRange*in->frac)*useDir;
+
       if (line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
         // gozzo does this
         open = nullptr;
@@ -2837,6 +2839,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
         }
 
         //!if (FailSound) PlaySound(FailSound, CHAN_VOICE);
+        hitLineOrThing = true;
 
         // can't use through a wall
         break;
@@ -2846,7 +2849,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
       float pheight = Origin.z+Height/2.0;
       if (FailSound && (open->top < pheight || open->bottom > pheight)) {
         //PlaySound(FailSound, CHAN_VOICE);
-        tooHighSound = true; //k8: dunno
+        hitLineOrThing = true;
       }
       if (checkLineUseDg && !checkLineUseDg(line)) continue;
       FoundLine = true;
@@ -2855,6 +2858,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
 
     // check side, set use type
     if (PointOnPlaneSide(Origin, *line) == 1) {
+      // back side
       if (!(line->SpacFlags&SPAC_UseBack)) continue;
       //k8: gozzo doesn't check this, but we'll do
       // don't use back side unless it's a two-sided line
@@ -2862,6 +2866,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
       useType = SPAC_UseBack;
       useSide = 1;
     } else {
+      // front side
       if (line->SpacFlags&(SPAC_UseBack|SPAC_Use|SPAC_UseThrough) == SPAC_UseBack) continue; // can't be used from front, skip it
       if (checkLineUseDg && !checkLineUseDg(line)) continue;
       useType = SPAC_Use;
@@ -2869,6 +2874,10 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
     }
     // check delegate callback
     if (checkLineUseDg && !checkLineUseDg(line)) continue;
+
+    // check height here?
+    hitLineOrThing = true;
+
     // k8: there was no check; why?
     if (LineSpecialLevelInfo(Level).ActivateLine(line, self, useSide, useType, out buttonSuccess)) {
       if (onLineUsedDg) onLineUsedDg(line);
