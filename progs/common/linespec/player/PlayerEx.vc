@@ -814,11 +814,8 @@ void WaterMove (float deltaTime) {
   float wishvz = wishvel.z;
   if (!forward && !side /*&& !cmd.upmove*/ && !(Buttons&BT_JUMP)) {
     //wishvel.z -= 60.0; // drift towards bottom
-    if (MO.WaterLevel < 2) {
-      wishvel.z -= 60.0; // drift towards bottom
-    } else {
-      wishvel.z -= 6;
-    }
+    //wishvel.z -= (MO.WaterLevel < 2 ? 60 : 6);
+    wishvel.z -= 6;
   }
   //else wishvel.z += cmd.upmove;
 
@@ -835,8 +832,8 @@ void WaterMove (float deltaTime) {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
       if (MO.Velocity.z > 0) MO.Velocity.z -= 10;
     }
-    // if we are not moving forward, do not sink too fast
-    if (!forward) {
+    // if we are not moving vertically, do not sink too fast
+    if (/*!forward*/!wishvz) {
       if (MO.Velocity.z < -20) MO.Velocity.z = fmin(-20, MO.Velocity.z+20);
     } else {
       float limit = (Buttons&BT_SPEED ? 140 : 140*2);
