@@ -1219,7 +1219,11 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   NumVertexes = Parser.ParsedVertexes.length();
   Vertexes = new vertex_t[NumVertexes];
   //memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t)*NumVertexes);
-  for (int f = 0; f < NumVertexes; ++f) Vertexes[f] = TVec(Parser.ParsedVertexes[f].x, Parser.ParsedVertexes[f].y);
+  bool hasVertexHeights = false;
+  for (int f = 0; f < NumVertexes; ++f) {
+    Vertexes[f] = TVec(Parser.ParsedVertexes[f].x, Parser.ParsedVertexes[f].y);
+    hasVertexHeights = hasVertexHeights || Parser.ParsedVertexes[f].hasFloorZ || Parser.ParsedVertexes[f].hasCeilingZ;
+  }
 
   // check for duplicate vertices
   TMapNC<VertexInfo, int> vmap; // value: in parsed array
@@ -1246,7 +1250,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   }
   HashSectors();
 
-  // copy line defs
+  // copy linedefs
   NumLines = Parser.ParsedLines.Num();
   Lines = new line_t[NumLines];
   for (int i = 0; i < NumLines; ++i) {
@@ -1277,7 +1281,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
     GGameInfo->eventTranslateLevel(this);
   }
 
-  // copy side defs
+  // copy sidedefs
   NumSides = Parser.ParsedSides.Num();
   CreateSides();
   side_t *sd = Sides;
@@ -1343,4 +1347,122 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   NumThings = Parser.ParsedThings.Num();
   Things = new mthing_t[NumThings];
   memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
+
+  // create slopes from vertex heights
+  if (hasVertexHeights && NumSectors > 0) {
+    // create list of lines for each sector
+    struct SecLines {
+      line_t *lines[3];
+      VUdmfParser::VParsedLine *ulines[3];
+      int idx[3];
+      bool invalid;
+    };
+    SecLines *seclines = new SecLines[NumSectors];
+    memset((void *)seclines, 0, sizeof(SecLines)*NumSectors);
+
+    int goodSectorCount = 0;
+    for (int i = 0; i < NumLines; ++i) {
+      line_t *line = &Lines[i];
+      for (int sideidx = 0; sideidx < 2; ++sideidx) {
+        if (line->sidenum[sideidx] < 0) continue;
+        sector_t *sector = Sides[line->sidenum[sideidx]].Sector;
+        if (!sector) continue; // just in case
+        int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
+        check(snum >= 0 && snum < NumSectors);
+        SecLines *sl = &seclines[snum];
+        if (sl->invalid) continue;
+        int slidx = 0;
+        for (; slidx < 3; ++slidx) if (!sl->lines[slidx]) break;
+        if (slidx == 3) { check(goodSectorCount > 0); --goodSectorCount; sl->invalid = true; continue; }
+        sl->lines[slidx] = line;
+        sl->ulines[slidx] = &Parser.ParsedLines[i];
+        sl->idx[slidx] = i;
+        if (slidx == 2) ++goodSectorCount;
+      }
+    }
+    check(goodSectorCount >= 0);
+
+    // if we don't have good sectors, there is no reason to process anything
+    if (goodSectorCount) {
+      for (int lineindex = 0; lineindex < NumLines; ++lineindex) {
+        line_t *line = &Lines[lineindex];
+        VUdmfParser::VParsedLine &uline = Parser.ParsedLines[lineindex];
+        VUdmfParser::VParsedVertex &v1 = Parser.ParsedVertexes[uline.V1Index];
+        VUdmfParser::VParsedVertex &v2 = Parser.ParsedVertexes[uline.V2Index];
+
+        if (v1.hasFloorZ || v2.hasFloorZ || v1.hasCeilingZ || v2.hasCeilingZ) {
+          for (int sideidx = 0; sideidx < 2; ++sideidx) {
+            if (line->sidenum[sideidx] < 0) continue;
+            sector_t *sector = Sides[line->sidenum[sideidx]].Sector;
+            int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
+            check(snum >= 0 && snum < NumSectors);
+            SecLines *sl = &seclines[snum];
+            if (sl->invalid) continue;
+            if (!sl->lines[0] || !sl->lines[1] || !sl->lines[2]) continue;
+            // get three points
+            int verts[4] = {-1, -1, -1, -1};
+            int vtcount = 0;
+            for (int lidx = 0; lidx < 3; ++lidx) {
+              // try first vertex
+              bool good = true;
+              for (int vtidx = 0; vtidx < vtcount; ++vtidx) if (sl->ulines[lidx]->V1Index == verts[vtidx]) { good = false; break; }
+              if (good) {
+                verts[vtcount++] = sl->ulines[lidx]->V1Index;
+                if (vtcount == 4) break;
+              }
+              // try second vertex
+              good = true;
+              for (int vtidx = 0; vtidx < vtcount; ++vtidx) if (sl->ulines[lidx]->V2Index == verts[vtidx]) { good = false; break; }
+              if (good) {
+                verts[vtcount++] = sl->ulines[lidx]->V2Index;
+                if (vtcount == 4) break;
+              }
+            }
+            if (vtcount != 3) continue; // something is wrong
+            // ok, looks like a good triangular sector
+            if (v1.hasFloorZ || v2.hasFloorZ) {
+              // floor
+              // check if it is already sloped
+              if (sector->floor.normal.z != 1.0f) continue;
+              TVec tvs[3];
+              for (int f = 0; f < 3; ++f) {
+                VUdmfParser::VParsedVertex *pv = &Parser.ParsedVertexes[verts[f]];
+                tvs[f].x = pv->x;
+                tvs[f].y = pv->y;
+                tvs[f].z = (pv->hasFloorZ ? pv->floorz : sector->floor.dist);
+              }
+              TPlane pl;
+              pl.SetFromTriangle(tvs[0], tvs[1], tvs[2]);
+              // sanity check
+              if (fabs(pl.normal.z) > 0.01f) {
+                // flip, if necessary
+                if (pl.normal.z < 0) pl.flipInPlace();
+                *((TPlane *)&sector->floor) = pl;
+              }
+            }
+            if (v1.hasCeilingZ || v2.hasCeilingZ) {
+              // ceiling
+              // check if it is already sloped
+              if (sector->ceiling.normal.z != 1.0f) continue;
+              TVec tvs[3];
+              for (int f = 0; f < 3; ++f) {
+                VUdmfParser::VParsedVertex *pv = &Parser.ParsedVertexes[verts[f]];
+                tvs[f].x = pv->x;
+                tvs[f].y = pv->y;
+                tvs[f].z = (pv->hasCeilingZ ? pv->ceilingz : -sector->ceiling.dist);
+              }
+              TPlane pl;
+              pl.SetFromTriangle(tvs[0], tvs[1], tvs[2]);
+              // sanity check
+              if (fabs(pl.normal.z) > 0.01f) {
+                // flip, if necessary
+                if (pl.normal.z > 0) pl.flipInPlace();
+                *((TPlane *)&sector->ceiling) = pl;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
