@@ -137,6 +137,9 @@ name MapsVisited[MAX_MAPS_VISITED];
 float FOV; // current Field Of Vision
 float DesiredFOV; // desired Field Of Vision
 
+ubyte LastWaterLevel;
+
+
 bool /*[checkpoint]*/ k8ElvenGifted; // always set to `true` in checkpoints
 transient float k8BossesDetected = 666; // seconds; <0: waiting; 0: show message; >0: detected
 transient float k8ElvenGiftMessageTime = 666; // seconds; <0: waiting; 0: show message; >0: detected
@@ -770,6 +773,14 @@ void CheckWaterJump () {
 //
 //  WaterMove
 //
+//  this is called if WaterLevel is > 1
+//
+//  water levels:
+//    0: not submerged at all (e.g. standing on solid ground or on shallow TERRAIN-based water)
+//    1: less than half submerged ("ankle deep")
+//    2: at least half submerged ("waist deep")
+//    3: entirely submerged (completely underwater)
+//
 //==========================================================================
 void WaterMove (float deltaTime) {
   float forward;
@@ -778,6 +789,19 @@ void WaterMove (float deltaTime) {
   TVec vright;
   TVec vup;
   TVec wishvel;
+
+  auto lastwaterlevel = LastWaterLevel;
+  LastWaterLevel = MO.WaterLevel;
+
+  // if we just fell into water, and we have too big vertical velocity, clamp it
+  if (lastwaterlevel != MO.WaterLevel) {
+    //print("***WATER: prev=%s; curr=%s; velz=%s", LastWaterLevel, MO.WaterLevel, MO.Velocity.z);
+    if (!lastwaterlevel && MO.Velocity.z < -20) {
+      MO.Velocity.z = fmax(MO.Velocity.z, MO.Velocity.z+(MO.WaterLevel < 3 ? 100 : 100));
+      if (MO.Velocity.z >= -20) LastWaterLevel = 0; // repeat it
+    }
+  }
+  //else print("**WZ=%s", MO.Velocity.z);
 
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
 
@@ -3488,6 +3512,8 @@ void PlayerNextArtifact () {
 //
 //==========================================================================
 void DeathPlayerTick (float deltaTime) {
+  scope(exit) LastWaterLevel = (MO ? MO.WaterLevel : 0);
+
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
 
@@ -3710,6 +3736,7 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //
 //==========================================================================
 override void PlayerTick (float deltaTime) {
+
   bool isBot = bIsBot;
 
   if (isBot) {
@@ -3822,7 +3849,12 @@ override void PlayerTick (float deltaTime) {
     if (Actor(MO).ReactionTime <= 0.0) Actor(MO).ReactionTime = 0.0;
     if (Actor(MO).bWaterJump) WaterJump();
   } else {
-    if (MO.WaterLevel > 1) WaterMove(deltaTime); else MovePlayer(deltaTime);
+    if (MO.WaterLevel > 1) {
+      WaterMove(deltaTime);
+    } else {
+      LastWaterLevel = 0;
+      MovePlayer(deltaTime);
+    }
     if (EntityEx(MO).FindInventory(PowerSpeed) &&
         !(Level.XLevel.TicTime&1) && Length(MO.Velocity) > 12.0*35.0)
     {
