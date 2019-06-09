@@ -59,7 +59,7 @@ int LightTag;
 //  Init
 //
 //==========================================================================
-void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int InType) {
+void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int InType, optional bool delayOctics) {
   float Height;
   TVec Spot;
 
@@ -68,7 +68,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
   Type = InType;
   Speed = float(Arg2)*35.0/8.0;
-  TopWait = float(Arg3)/35.0;
+  TopWait = float(Arg3)/(delayOctics ? 8.0 : 35.0);
   switch (Type) {
     case DOOREV_Close:
       if (Sector.lines.length == 0) break;

@@ -1137,7 +1137,9 @@ override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
 //  Move a door up/down
 //
 //==========================================================================
-final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line, Entity Thing) {
+final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
+                     line_t *Line, Entity Thing, optional bool delayOctics)
+{
   int SecNum;
   sector_t *Sec;
   VerticalDoor Door;
@@ -1159,7 +1161,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
 
     // new door thinker
     Door = Spawn(VerticalDoor);
-    Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
+    Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, delayOctics!optional);
     RetCode = true;
   } else {
     for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
@@ -1168,7 +1170,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
       // add new door thinker
       RetCode = true;
       Door = Spawn(VerticalDoor);
-      Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
+      Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, delayOctics!optional);
     }
   }
   return RetCode;
@@ -1182,27 +1184,27 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
 //  Boom's generic doors.
 //
 //==========================================================================
-final int EV_GenericDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, line_t *Line, Entity Thing) {
+final int EV_GenericDoor (int dtag, int speed, int kind, int delay, int lock, line_t *Line, Entity Thing) {
   int Tag;
   int LightTag;
 
   // check for locked door
-  if (Arg5 && !CheckLock(Thing, Arg5, true)) return false;
+  if (lock && !CheckLock(Thing, lock, true)) return false;
 
   // check for Boom's local door light special
-  if (Arg3&128) {
+  if (kind&128) {
     Tag = 0;
-    LightTag = Arg1;
+    LightTag = dtag;
   } else {
-    Tag = Arg1;
+    Tag = dtag;
     LightTag = 0;
   }
 
-  switch (Arg3&127) {
-    case 0: return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0, VerticalDoor::DOOREV_Raise, Line, Thing);
-    case 1: return EV_DoDoor(Tag, Arg2, LightTag, 0, 0, VerticalDoor::DOOREV_Open, Line, Thing);
-    case 2: return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0, VerticalDoor::DOOREV_CloseWaitOpen, Line, Thing);
-    case 3: return EV_DoDoor(Tag, Arg2, LightTag, 0, 0, VerticalDoor::DOOREV_Close, Line, Thing);
+  switch (kind&127) {
+    case 0: return EV_DoDoor(Tag, speed, delay, LightTag, 0, VerticalDoor::DOOREV_Raise, Line, Thing, delayOctics:true);
+    case 1: return EV_DoDoor(Tag, speed, LightTag, 0, 0, VerticalDoor::DOOREV_Open, Line, Thing);
+    case 2: return EV_DoDoor(Tag, speed, delay, LightTag, 0, VerticalDoor::DOOREV_CloseWaitOpen, Line, Thing);
+    case 3: return EV_DoDoor(Tag, speed, LightTag, 0, 0, VerticalDoor::DOOREV_Close, Line, Thing, delayOctics:true);
   }
 
   return false;
