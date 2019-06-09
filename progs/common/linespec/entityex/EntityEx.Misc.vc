@@ -2775,7 +2775,9 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
         if (!ee) continue;
         if (checkThingUseDg && !checkThingUseDg(ee)) continue;
         if (!UseThing(ee)) {
-          if (ee.bSolid) hitLineOrThing = true;
+          if (!hitLineOrThing) {
+            if (ee.bSolid && !ee.bCorpse && !ee.bMissile && !ee.bMonster && !ee.bInvisible) hitLineOrThing = true;
+          }
           continue;
         }
         hitLineOrThing = true;
