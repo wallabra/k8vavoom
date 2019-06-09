@@ -229,27 +229,28 @@ final void DebugCheckMidTex () {
     bool ok = P_GetMidTexturePosition(tr.line, tr.side, out top, out bot);
     print("DebugCheckMidTex(%B): hitpoint=%s; top=%s; bot=%s; flags=0x%08x", ok, tr.hit, top, bot, (tr.line ? tr.line->flags : 0));
     if (tr.line) {
-      if (tr.line.frontsector && tr.line.backsector &&
+      //tr.line.alpha = 1.0;
+      if (tr.line.frontsector && tr.line.backsector /*&&
           tr.line.frontsector.floor.normal.z == 1 && tr.line.frontsector.ceiling.normal.z == -1 &&
-          tr.line.backsector.floor.normal.z == 1 && tr.line.backsector.ceiling.normal.z == -1)
+          tr.line.backsector.floor.normal.z == 1 && tr.line.backsector.ceiling.normal.z == -1*/)
       {
         //print("linedef #%d", tr.line-&XLevel.Lines[0]);
         float ffz1 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v1);
         float ffz2 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v2);
-        if (ffz1 != ffz2) Error("OOPS(front floor)");
+        //if (ffz1 != ffz2) Error("OOPS(front floor)");
         float fcz1 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v1);
         float fcz2 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v2);
-        if (fcz1 != fcz2) Error("OOPS(front ceiling)");
+        //if (fcz1 != fcz2) Error("OOPS(front ceiling)");
         float bfz1 = tr.line.backsector.floor.GetPlanePointZ(*tr.line.v1);
         float bfz2 = tr.line.backsector.floor.GetPlanePointZ(*tr.line.v2);
-        if (bfz1 != bfz2) Error("OOPS(back floor)");
+        //if (bfz1 != bfz2) Error("OOPS(back floor)");
         float bcz1 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v1);
         float bcz2 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v2);
-        if (bcz1 != bcz2) Error("OOPS(back ceiling)");
-        print("linedef %d: (f/b secs=%d/%d); fcz=%f; ffz=%f; bcz=%f; bfz=%f; alpha=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
+        //if (bcz1 != bcz2) Error("OOPS(back ceiling)");
+        print("linedef %d: (f/b secs=%d/%d); ffz=(%f:%f); fcz=(%f:%f); bfz=(%f:%f); bcz=(%f:%f); alpha=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
             tr.line-&XLevel.Lines[0],
             tr.line.frontsector-&XLevel.Sectors[0], tr.line.backsector-&XLevel.Sectors[0],
-            fcz1, ffz1, bcz1, bfz1,
+            ffz1, ffz2, fcz1, fcz2, bfz1, bfz2, bcz1, bcz2,
             tr.line.alpha,
             tr.line.special, LineSpecial2Str(tr.line.special),
             tr.line.arg1, tr.line.arg2, tr.line.arg3, tr.line.arg4, tr.line.arg5);
@@ -258,14 +259,14 @@ final void DebugCheckMidTex () {
       } else {
         float ffz1 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v1);
         float ffz2 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v2);
-        if (ffz1 != ffz2) Error("OOPS(front floor)");
+        //if (ffz1 != ffz2) Error("OOPS(front floor)");
         float fcz1 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v1);
         float fcz2 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v2);
-        if (fcz1 != fcz2) Error("OOPS(front ceiling)");
-        print("linedef %d: (f sec=%d); fcz=%f; ffz=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
+        //if (fcz1 != fcz2) Error("OOPS(front ceiling)");
+        print("linedef %d: (f sec=%d); ffz=(%f:%f); fcz=(%f:%f); special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
             tr.line-&XLevel.Lines[0],
             tr.line.frontsector-&XLevel.Sectors[0],
-            fcz1, ffz1,
+            ffz1, ffz2, fcz1, fcz2,
             tr.line.special, LineSpecial2Str(tr.line.special),
             tr.line.arg1, tr.line.arg2, tr.line.arg3, tr.line.arg4, tr.line.arg5);
       }
