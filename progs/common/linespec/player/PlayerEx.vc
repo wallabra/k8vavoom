@@ -739,16 +739,19 @@ void MovePlayer (float deltaTime) {
 //
 //  CheckWaterJump
 //
+//  check for a jump-out-of-water
+//
 //==========================================================================
 void CheckWaterJump () {
   TVec start;
   TVec end;
-  TVec vforward;
+  TVec vforward, vright, vup;
   TVec HitPoint;
   TVec HitNormal;
 
-  // check for a jump-out-of-water
-  AngleVector(MO.Angles, out vforward);
+  AngleVectors(MO.Angles, out vforward, out vright, out vup);
+  vforward = (vforward*ForwardMove+vright*SideMove).Normalise;
+
   start = MO.Origin;
   start.z += MO.Height*0.5+8.0;
   vforward.z = 0.0;
@@ -758,7 +761,7 @@ void CheckWaterJump () {
     // solid at waist
     start.z = MO.Origin.z+MO.Height;
     end = start+vforward*24.0;
-    MoveDir = HitNormal*-50.0;
+    MoveDir = HitNormal*(-50.0);
     if (Level.XLevel.TraceLine(start, end, HitPoint, HitNormal)) {
       // open at eye level
       EntityEx(MO).bWaterJump = true;
