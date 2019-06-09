@@ -207,7 +207,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (doDecals) RenderPrepareShaderDecals(surf);
 
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-  glBegin(GL_POLYGON);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
   for (int i = 0; i < surf->count; ++i) {
     if (doBrightmap) {
       SurfMaskedBrightmapGlow.SetTexCoord(

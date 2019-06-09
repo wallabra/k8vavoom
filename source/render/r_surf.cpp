@@ -888,7 +888,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     sp->texinfo.Alpha = linedef->alpha;
     sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
 
-    //bool doDump = ((ptrdiff_t)(linedef-Level->Lines) == 1707);
+    //bool doDump = ((ptrdiff_t)(linedef-Level->Lines) == 139);
     enum { doDump = 0 };
     if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
     //if (linedef->alpha < 1.0f) GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors));
@@ -930,7 +930,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
       if (sidedef->BottomTexture > 0) {
         midbotz1 = max2(midbotz1, cop->efloor.GetPointZ(*seg->v1));
-        midbotz2 = max2(midbotz2, cop->efloor.GetPointZ(*seg->v1));
+        midbotz2 = max2(midbotz2, cop->efloor.GetPointZ(*seg->v2));
       }
 
       if (midbotz1 >= midtopz1 || midbotz2 >= midtopz2) continue;
@@ -952,7 +952,6 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
         if (z_org <= max2(midbotz1, midbotz2)) continue;
         if (z_org-texh >= max2(midtopz1, midtopz2)) continue;
         if (doDump) {
-          midbotz1 = midbotz2 = 78;
           GCon->Log(" === front regions ===");
           VLevel::dumpSectorRegions(seg->frontsector);
           GCon->Log(" === front openings ===");
@@ -973,7 +972,10 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
       wv[2].z = hgts[2];
       wv[3].z = hgts[3];
 
-      if (doDump) { GCon->Logf("  z:(%g,%g,%g,%g)", hgts[0], hgts[1], hgts[2], hgts[3]); }
+      if (doDump) {
+        GCon->Logf("  z:(%g,%g,%g,%g)", hgts[0], hgts[1], hgts[2], hgts[3]);
+        for (int wc = 0; wc < 4; ++wc) GCon->Logf("  wc #%d: (%g,%g,%g)", wc, wv[wc].x, wv[wc].y, wv[wc].z);
+      }
 
       CreateWorldSurfFromWV(sub, seg, sp, wv, doOffset);
     }
