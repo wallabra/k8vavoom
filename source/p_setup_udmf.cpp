@@ -403,6 +403,11 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   S.Gravity = 1.0f;  // default sector gravity of 1.0
   S.Zone = -1;
 
+  bool fpvalid[4] = {false, false, false, false};
+  float fval[4] = {0,0,0,0};
+  bool cpvalid[4] = {false, false, false, false};
+  float cval[4] = {0,0,0,0};
+
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
@@ -527,6 +532,16 @@ void VUdmfParser::ParseSector (VLevel *Level) {
         continue;
       }
 
+      if (Key.strEquCI("floorplane_a")) { fval[0] = CheckFloat(); fpvalid[0] = true; continue; }
+      if (Key.strEquCI("floorplane_b")) { fval[1] = CheckFloat(); fpvalid[1] = true; continue; }
+      if (Key.strEquCI("floorplane_c")) { fval[2] = CheckFloat(); fpvalid[2] = true; continue; }
+      if (Key.strEquCI("floorplane_d")) { fval[3] = CheckFloat(); fpvalid[3] = true; continue; }
+
+      if (Key.strEquCI("ceilingplane_a")) { cval[0] = CheckFloat(); cpvalid[0] = true; continue; }
+      if (Key.strEquCI("ceilingplane_b")) { cval[1] = CheckFloat(); cpvalid[1] = true; continue; }
+      if (Key.strEquCI("ceilingplane_c")) { cval[2] = CheckFloat(); cpvalid[2] = true; continue; }
+      if (Key.strEquCI("ceilingplane_d")) { cval[3] = CheckFloat(); cpvalid[3] = true; continue; }
+
       /*
       if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
         if (Key.strEquCI("lightfloor")) {
@@ -544,6 +559,30 @@ void VUdmfParser::ParseSector (VLevel *Level) {
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
+  }
+
+  // setup slopes with floor/ceiling planes
+
+  // floor
+  if (fpvalid[0] && fpvalid[1] && fpvalid[2] && fpvalid[3]) {
+    TPlane pl;
+    pl.normal = TVec(fval[0], fval[1], fval[2]).normalised();
+    if (pl.normal.isValid() && !pl.normal.isZero() && fabs(pl.normal.z) > 0.01f) {
+      pl.dist = -fval[3];
+      if (pl.normal.z < 0) pl.flipInPlace();
+      *((TPlane *)&S.floor) = pl;
+    }
+  }
+
+  // ceiling
+  if (cpvalid[0] && cpvalid[1] && cpvalid[2] && cpvalid[3]) {
+    TPlane pl;
+    pl.normal = TVec(cval[0], cval[1], cval[2]).normalised();
+    if (pl.normal.isValid() && !pl.normal.isZero() && fabs(pl.normal.z) > 0.01f) {
+      pl.dist = -cval[3];
+      if (pl.normal.z > 0) pl.flipInPlace();
+      *((TPlane *)&S.ceiling) = pl;
+    }
   }
 }
 
@@ -1173,6 +1212,15 @@ void VUdmfParser::ParseThing () {
 
       if (Key.strEquCI("arg4")) {
         T.arg5 = CheckInt();
+        continue;
+      }
+
+      if (Key.strEquCI("renderstyle")) {
+        VStr s = CheckString();
+        while (s.length() && (vuint8)s[0] <= ' ') s.chopLeft(1);
+        while (s.length() && (vuint8)s[s.length()-1] <= ' ') s.chopRight(1);
+        if (s.length() == 0) continue;
+        sc.Message(va("UDMF: `renderstyle` property with value \"%s\" is not supported yet", *s));
         continue;
       }
 
