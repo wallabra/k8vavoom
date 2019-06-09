@@ -926,11 +926,12 @@ static int FindMusicLump (const char *songName) {
   int Lump = -1;
   VName sn8 = VName(songName, VName::FindLower8);
   if (sn8 != NAME_None) Lump = W_CheckNumForName(sn8, WADNS_Music);
-  int lmp = W_FindLumpByFileNameWithExts(va("music/%s", songName), Exts);
-  if (Lump < lmp) Lump = lmp;
-  lmp = W_CheckNumForFileName(songName);
-  if (Lump < lmp) Lump = lmp;
-  return lmp;
+  // if there is no 8-char lump, try harder
+  if (Lump < 0) {
+    Lump = max2(Lump, W_FindLumpByFileNameWithExts(va("music/%s", songName), Exts));
+    Lump = max2(Lump, W_CheckNumForFileName(songName));
+  }
+  return Lump;
 }
 
 
@@ -944,8 +945,15 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
 
   if (!Song || !Song[0]) return;
 
+  bool wasPlaying = StreamPlaying;
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
+
+  if (Song[0] == '*' && !Song[1]) {
+    // this looks like common "stop song" action
+    if (wasPlaying) GCon->Log("stopped current song");
+    return;
+  }
 
 #if 0
   // this is done in mapinfo
