@@ -101,6 +101,13 @@ public:
     int SectorIndex;
   };
 
+  struct VParsedVertex {
+    float x, y;
+    float floorz, ceilingz;
+    bool hasFloorZ;
+    bool hasCeilingZ;
+  };
+
   VScriptParser sc;
   bool bExtended;
   vuint8 NS;
@@ -109,7 +116,7 @@ public:
   int ValInt;
   float ValFloat;
   VStr Val;
-  TArray<vertex_t> ParsedVertexes;
+  TArray<VParsedVertex> ParsedVertexes;
   TArray<sector_t> ParsedSectors;
   TArray<VParsedLine> ParsedLines;
   TArray<VParsedSide> ParsedSides;
@@ -342,17 +349,27 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
 //==========================================================================
 void VUdmfParser::ParseVertex () {
   // allocate a new vertex
-  vertex_t &V = ParsedVertexes.Alloc();
-  V = TVec(0, 0, 0);
+  VParsedVertex &v = ParsedVertexes.Alloc();
+  memset(&v, 0, sizeof(VParsedVertex));
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
     if (Key.strEquCI("x")) {
-      V.x = CheckFloat();
+      v.x = CheckFloat();
       continue;
     }
     if (Key.strEquCI("y")) {
-      V.y = CheckFloat();
+      v.y = CheckFloat();
+      continue;
+    }
+    if (Key.strEquCI("zfloor")) {
+      v.floorz = CheckFloat();
+      v.hasFloorZ = true;
+      continue;
+    }
+    if (Key.strEquCI("zceiling")) {
+      v.ceilingz = CheckFloat();
+      v.hasCeilingZ = true;
       continue;
     }
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown vertex property '%s' with value '%s'", *Key, *Val));
@@ -1199,9 +1216,10 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   if (Parser.bExtended) LevelFlags |= LF_Extended;
 
   // copy vertexes
-  NumVertexes = Parser.ParsedVertexes.Num();
+  NumVertexes = Parser.ParsedVertexes.length();
   Vertexes = new vertex_t[NumVertexes];
-  memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t)*NumVertexes);
+  //memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t)*NumVertexes);
+  for (int f = 0; f < NumVertexes; ++f) Vertexes[f] = TVec(Parser.ParsedVertexes[f].x, Parser.ParsedVertexes[f].y);
 
   // check for duplicate vertices
   TMapNC<VertexInfo, int> vmap; // value: in parsed array
