@@ -3478,10 +3478,10 @@ void VLevel::HashSectors () {
     }
   }
   */
-  GCon->Log("hashing sectors...");
+  //GCon->Log("hashing sectors...");
   tagHashClear(sectorTags);
   for (int i = 0; i < NumSectors; ++i) {
-    GCon->Logf("sector #%d: tag=%d; moretags=%d", i, Sectors[i].sectorTag, Sectors[i].moreTags.length());
+    //GCon->Logf("sector #%d: tag=%d; moretags=%d", i, Sectors[i].sectorTag, Sectors[i].moreTags.length());
     tagHashPut(sectorTags, Sectors[i].sectorTag, &Sectors[i]);
     for (int cc = 0; cc < Sectors[i].moreTags.length(); ++cc) tagHashPut(sectorTags, Sectors[i].moreTags[cc], &Sectors[i]);
   }
