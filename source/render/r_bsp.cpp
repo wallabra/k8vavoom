@@ -113,7 +113,7 @@ void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *
 //
 //==========================================================================
 void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
-  check(surf);
+  if (!surf || !surf->subsector || surf->count < 3) return; // why not?
 
   VTexture *tex = surf->texinfo->Tex;
   if (!tex || tex->Type == TEXTYPE_Null) return;
@@ -122,8 +122,8 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
     if (surf->seg) {
       //abort();
       GCon->Logf(NAME_Warning, "subsector %d, seg %d surface queued for rendering twice",
-        (int)(ptrdiff_t)(surf->seg-Level->Segs),
-        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
+        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors),
+        (int)(ptrdiff_t)(surf->seg-Level->Segs));
     } else {
       GCon->Logf(NAME_Warning, "subsector %d surface queued for rendering twice",
         (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
