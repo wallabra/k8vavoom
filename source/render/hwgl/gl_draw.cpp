@@ -203,6 +203,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
   VTexture *Tex, VTextureTranslation *Translation, bool flip)
 {
   SetSpriteLump(Tex, Translation, CM_Default, true);
+  SetupTextureFiltering(sprite_filter);
 
   float s1, s2;
   if (flip) {
