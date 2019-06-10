@@ -780,7 +780,7 @@ static void G_DoCompleted () {
 //  COMMAND TestFinale
 //
 //==========================================================================
-COMMAND(TestFinale) {
+COMMAND_WITH_AC(TestFinale) {
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -798,6 +798,32 @@ COMMAND(TestFinale) {
   }
 
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC TestFinale
+//
+//==========================================================================
+COMMAND_AC(TestFinale) {
+  //if (aidx != 1) return VStr::EmptyString;
+  TArray<VStr> list;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    list.append(VStr("EndGameBunny"));
+    list.append(VStr("EndGameCast"));
+    list.append(VStr("EndGameChess"));
+    list.append(VStr("EndGameDemon"));
+    list.append(VStr("EndGamePic1"));
+    list.append(VStr("EndGamePic2"));
+    list.append(VStr("EndGamePic3"));
+    list.append(VStr("EndGameStrife"));
+    list.append(VStr("EndGameUnderwater"));
+    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else {
+    return VStr::EmptyString;
+  }
 }
 
 
