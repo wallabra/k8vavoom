@@ -162,6 +162,8 @@ public:
   virtual ~VPortal ();
   virtual bool NeedsDepthBuffer () const;
   virtual bool IsSky () const;
+  virtual bool IsMirror () const;
+  virtual bool IsStack () const;
   virtual bool MatchSky (class VSky *) const;
   virtual bool MatchSkyBox (VEntity *) const;
   virtual bool MatchMirror (TPlane *) const;

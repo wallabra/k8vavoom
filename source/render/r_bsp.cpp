@@ -43,11 +43,14 @@ VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
 static VCvarI r_maxmirrors("r_maxmirrors", "1", "Maximum allowed mirrors.", CVAR_Archive);
 VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal depth (-1: infinite)", CVAR_Archive);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
-static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering (SLOW)?", CVAR_Archive);
+static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering?", CVAR_Archive);
+static VCvarB r_allow_other_portals("r_allow_other_portals", false, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
+
+//static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
@@ -259,7 +262,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
     VPortal *Portal = nullptr;
     if (SkyBox) {
-      for (int i = 0; i < Portals.Num(); ++i) {
+      for (int i = 0; i < Portals.length(); ++i) {
         if (Portals[i] && Portals[i]->MatchSkyBox(SkyBox)) {
           Portal = Portals[i];
           break;
@@ -267,8 +270,10 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
       if (!Portal) {
         if (IsStack) {
-          Portal = new VSectorStackPortal(this, SkyBox);
-          Portals.Append(Portal);
+          if (r_allow_other_portals) {
+            Portal = new VSectorStackPortal(this, SkyBox);
+            Portals.Append(Portal);
+          }
         } else {
 #if !defined(VRBSP_DISABLE_SKY_PORTALS)
           if (!r_disable_sky_portals) {
@@ -279,7 +284,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         }
       }
     } else {
-      for (int i = 0; i < Portals.Num(); ++i) {
+      for (int i = 0; i < Portals.length(); ++i) {
         if (Portals[i] && Portals[i]->MatchSky(Sky)) {
           Portal = Portals[i];
           break;
@@ -465,7 +470,7 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
     if (!dseg->mid) return;
 
     VPortal *Portal = nullptr;
-    for (int i = 0; i < Portals.Num(); ++i) {
+    for (int i = 0; i < Portals.length(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(seg)) {
         Portal = Portals[i];
         break;
@@ -617,7 +622,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 
   if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.splane->MirrorAlpha < 1.0f) {
     VPortal *Portal = nullptr;
-    for (int i = 0; i < Portals.Num(); ++i) {
+    for (int i = 0; i < Portals.length(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(plane.splane)) {
         Portal = Portals[i];
         break;
@@ -919,7 +924,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
       VPortal *BestSky = nullptr;
       int BestSkyIndex = -1;
-      for (int i = 0; i < Portals.Num(); ++i) {
+      for (int i = 0; i < Portals.length(); ++i) {
         if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
           BestSky = Portals[i];
           BestSkyIndex = i;
@@ -960,13 +965,13 @@ void VRenderLevelShared::RenderPortals () {
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
       //GCon->Logf("portal settings changed, resetting portal info...");
-      for (int i = 0; i < Portals.Num(); ++i) {
+      for (int i = 0; i < Portals.length(); ++i) {
         if (Portals[i]) {
           delete Portals[i];
           Portals[i] = nullptr;
         }
       }
-      Portals.Clear();
+      Portals.reset();
       // save cvars
       oldMaxMirrors = r_maxmirrors;
       oldPortalDepth = r_max_portal_depth;
@@ -978,21 +983,33 @@ void VRenderLevelShared::RenderPortals () {
 
   ++PortalLevel;
 
+#if 0
+  if (/*dbg_dump_portal_list &&*/ PortalLevel == 1) {
+    for (int f = 0; f < Portals.length(); ++f) {
+      if (Portals[f]) GCon->Logf("PORTAL #%d: %s", f, *shitppTypeNameObj(*Portals[f]));
+    }
+  }
+#endif
+
   if (r_max_portal_depth < 0 || PortalLevel <= r_max_portal_depth) {
     //FIXME: disable decals for portals
     //       i should rewrite decal rendering, so we can skip stencil buffer
     //       (or emulate stencil buffer with texture and shaders)
     bool oldDecalsEnabled = r_decals_enabled;
     r_decals_enabled = false;
-    for (int i = 0; i < Portals.Num(); ++i) {
-      if (Portals[i] && Portals[i]->Level == PortalLevel) Portals[i]->Draw(true);
+    for (int i = 0; i < Portals.length(); ++i) {
+      if (Portals[i] && Portals[i]->Level == PortalLevel) {
+        if (r_allow_other_portals || Portals[i]->IsMirror()) {
+          Portals[i]->Draw(true);
+        }
+      }
     }
     r_decals_enabled = oldDecalsEnabled;
   } else {
     if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
   }
 
-  for (int i = 0; i < Portals.Num(); ++i) {
+  for (int i = 0; i < Portals.length(); ++i) {
     if (Portals[i] && Portals[i]->Level == PortalLevel) {
       delete Portals[i];
       Portals[i] = nullptr;
@@ -1000,5 +1017,5 @@ void VRenderLevelShared::RenderPortals () {
   }
 
   --PortalLevel;
-  if (PortalLevel == 0) Portals.Clear();
+  if (PortalLevel == 0) Portals.reset();
 }

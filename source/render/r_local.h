@@ -216,6 +216,7 @@ public:
   VEntity *Viewport;
 
   VSectorStackPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { stackedSector = true; }
+  virtual bool IsStack () const override;
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
 };
@@ -227,6 +228,7 @@ public:
   TPlane *Plane;
 
   VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) { stackedSector = false; }
+  virtual bool IsMirror () const override;
   virtual bool MatchMirror (TPlane *) const override;
   virtual void DrawContents () override;
 };
