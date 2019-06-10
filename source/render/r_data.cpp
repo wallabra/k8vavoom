@@ -34,6 +34,8 @@
 
 extern VCvarB dbg_show_missing_classes;
 static VCvarI r_color_distance_algo("r_color_distance_algo", "1", "What algorithm use to calculate color distance?\n  0: standard\n  1: advanced.", CVAR_Archive);
+// there is no sense to store this in config, because config is loaded after brightmaps
+static VCvarB x_brightmaps_ignore_iwad("x_brightmaps_ignore_iwad", false, "Ignore \"iwad\" option when *loading* brightmaps?", CVAR_PreInit);
 
 
 struct VTempSpriteEffectDef {
@@ -1354,6 +1356,8 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
       if (doWarn) GCon->Logf(NAME_Warning, "texture '%s' not found, cannot attach brightmap", *img);
       return;
     }
+
+    if (x_brightmaps_ignore_iwad) iwad = false;
 
     if (iwad && !W_IsIWADLump(basetex->SourceLump)) {
       // oops
