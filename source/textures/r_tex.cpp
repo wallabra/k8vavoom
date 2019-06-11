@@ -688,13 +688,20 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
 //  Calls R_CheckTextureNumForName, aborts with error message.
 //
 //==========================================================================
-int VTextureManager::NumForName (VName Name, int Type, bool bOverload) {
+int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bAllowLoadAsMapTexture) {
   static TStrSet numForNameWarned;
   if (Name == NAME_None) return 0;
   if (IsDummyTextureName(Name)) return 0;
   int i = CheckNumForName(Name, Type, bOverload);
   if (i == -1) {
-    if (!numForNameWarned.put(*Name)) {
+    if (!numForNameWarned.has(*Name)) {
+      if (bAllowLoadAsMapTexture) {
+        auto lock = LockMapLocalTextures();
+        i = GTextureManager.AddFileTextureChecked(Name, Type);
+        if (i == -1) i = GTextureManager.AddFileTextureChecked(VName(*Name, VName::AddLower), Type);
+        if (i != -1) return i;
+        numForNameWarned.put(*Name);
+      }
       GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d)", *Name, (int)Type, (int)bOverload);
     }
     i = DefaultTexture;

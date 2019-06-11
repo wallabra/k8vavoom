@@ -459,7 +459,7 @@ public:
   int FindPatchByName (VName Name); // used in multipatch texture builder
   int FindWallByName (VName Name, bool bOverload=true); // used to find wall texture (but can return non-wall)
   int FindFlatByName (VName Name, bool bOverload=true); // used to find flat texture (but can return non-flat)
-  int NumForName (VName Name, int Type, bool bOverload=false);
+  int NumForName (VName Name, int Type, bool bOverload=false, bool bAllowLoadAsMapTexture=false);
   int FindTextureByLumpNum (int);
   VName GetTextureName (int TexNum);
   float TextureWidth (int TexNum);
