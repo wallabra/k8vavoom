@@ -457,6 +457,9 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
     sky[j].surf.count = 4;
     sky[j].surf.Light = 0xffffffff;
 
+    // it is better to have checkers than to segfault
+    if (!GTextureManager[sky[j].texture1]) sky[j].texture1 = GTextureManager.DefaultTexture;
+
     //  Precache texture
     Drawer->PrecacheTexture(GTextureManager[sky[j].texture1]);
 
@@ -484,6 +487,9 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 {
   int Num1 = -1;
   int Num2 = -1;
+  // it is better to have checkers than to segfault
+  if (!GTextureManager[Sky1Texture]) Sky1Texture = GTextureManager.DefaultTexture;
+  if (Sky2Texture >= 0 && !GTextureManager[Sky2Texture]) Sky2Texture = GTextureManager.DefaultTexture;
   VName Name1(NAME_None);
   VName Name2(NAME_None);
   //  Check if we want to replace old sky with a skybox. We can't do
@@ -528,6 +534,7 @@ void VSky::Draw(int ColorMap)
   }
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::InitSky
@@ -535,32 +542,28 @@ void VSky::Draw(int ColorMap)
 //  Called at level load.
 //
 //==========================================================================
-
-void VRenderLevelShared::InitSky()
-{
+void VRenderLevelShared::InitSky () {
   if (CurrentSky1Texture == Level->LevelInfo->Sky1Texture &&
-    CurrentSky2Texture == Level->LevelInfo->Sky2Texture &&
-    CurrentDoubleSky == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky) &&
-    CurrentLightning == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_Lightning))
+      CurrentSky2Texture == Level->LevelInfo->Sky2Texture &&
+      CurrentDoubleSky == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky) &&
+      CurrentLightning == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_Lightning))
   {
     return;
   }
+
   CurrentSky1Texture = Level->LevelInfo->Sky1Texture;
   CurrentSky2Texture = Level->LevelInfo->Sky2Texture;
   CurrentDoubleSky = !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky);
   CurrentLightning = !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_Lightning);
 
-  if (Level->LevelInfo->SkyBox != NAME_None)
-  {
+  if (Level->LevelInfo->SkyBox != NAME_None) {
     BaseSky.InitSkyBox(Level->LevelInfo->SkyBox, NAME_None);
-  }
-  else
-  {
+  } else {
     BaseSky.Init(CurrentSky1Texture, CurrentSky2Texture,
       Level->LevelInfo->Sky1ScrollDelta,
       Level->LevelInfo->Sky2ScrollDelta, CurrentDoubleSky,
-      !!(Level->LevelInfo->LevelInfoFlags &
-      VLevelInfo::LIF_ForceNoSkyStretch), true, CurrentLightning);
+      !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_ForceNoSkyStretch),
+      true, CurrentLightning);
   }
 }
 
