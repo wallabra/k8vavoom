@@ -1959,9 +1959,15 @@ void PaletteFlash () {
     }
 
     if (BonusFlash) {
-      int Amount = int(256.0*BonusFlash);
-      if (Amount >= 128) Amount = 128;
-      AddBlend(r, g, b, a, RGBA(215, 186, 68, Amount));
+      float maxBonusFlashTime = GetCvarF('k8BonusFlashMaxTime');
+      if (maxBonusFlashTime > 0) BonusFlash = fmin(BonusFlash, maxBonusFlashTime);
+      if (BonusFlash > 0) {
+        int Amount = int(256.0*BonusFlash);
+        if (Amount >= 128) Amount = 128;
+        AddBlend(r, g, b, a, RGBA(215, 186, 68, Amount));
+      } else {
+        BonusFlash = 0;
+      }
     }
 
     if (PoisonCount) {

@@ -181,6 +181,8 @@ override void Init () {
   CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8BerserkTint', "", "Berserk powerup tint color..", CVAR_ARCHIVE);
 
+  CreateCvar('k8BonusFlashMaxTime', "0", "Maximum bonus flash time, in sectonds (<=0 is unlimited; one bonus is 0.2).", CVAR_ARCHIVE);
+
   CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 
   CreateCvar('k8TraceDebug', "0", "Line trace debug mode", 0);
