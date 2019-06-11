@@ -485,7 +485,7 @@ void SetOrigin (int x, int y) { SetPos(x, y); }
 //  k8: this should be moved elsewhere, but meh...
 //
 //==========================================================================
-static void SetDefaultVirtualScreenSize () {
+static final void SetDefaultVirtualScreenSize () {
   int rw = GetRealScreenWidth();
   int rh = GetRealScreenHeight();
   int vw = (rw >= 1280 ? rw/2 : 640);
@@ -506,7 +506,7 @@ static void SetDefaultVirtualScreenSize () {
 //  called when there is no title pic (not yet)
 //
 //==========================================================================
-static void DrawEmptyScreen () {
+static final void DrawEmptyScreen () {
   //SetVirtualScreen(320, 200);
   //R_FillRect(0, 0, 320, 200, 0xff_303030);
   auto ovw = GetVirtualWidth();
@@ -520,7 +520,7 @@ static void DrawEmptyScreen () {
 //  DrawFullScreenPic
 //
 //==========================================================================
-static void DrawFullScreenPic (int Handle, optional bool dontRestoreVScreen, optional out int xofs, optional out int yofs, optional out float scale) {
+static final void DrawFullScreenPic (int Handle, optional bool dontRestoreVScreen, optional out int xofs, optional out int yofs, optional out float scale, optional bool dontClearScreen) {
   picinfo_t pinf;
   R_GetPicInfo(Handle, &pinf);
   if (pinf.width < 1 || pinf.height < 1) {
@@ -532,7 +532,7 @@ static void DrawFullScreenPic (int Handle, optional bool dontRestoreVScreen, opt
     auto ovh = GetVirtualHeight();
     scope(exit) if (!dontRestoreVScreen) SetVirtualScreen(ovw, ovh);
     // in case our picture has strange size
-    R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+    if (!dontClearScreen) R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
 #ifdef VC_USE_PROPER_SCALING
     int rw = GetRealScreenWidth();
     int rh = GetRealScreenHeight();
@@ -558,16 +558,215 @@ static void DrawFullScreenPic (int Handle, optional bool dontRestoreVScreen, opt
 
 //==========================================================================
 //
+//  DrawFullScreenPicFinale
+//
+//==========================================================================
+static final void DrawFullScreenPicFinale (int Handle, optional bool dontClearScreen) {
+#ifndef VC_USE_PROPER_SCALING
+  DrawFullScreenPic(Handle, dontClearScreen:dontClearScreen!optional);
+  //if (!dontClearScreen) R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+  //DrawPicFS320(xofs320, yofs200, Handle);
+#else
+  picinfo_t pinf;
+  R_GetPicInfo(Handle, &pinf);
+  if (pinf.width < 1 || pinf.height < 1) {
+    DrawEmptyScreen();
+  } else {
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    if (!dontClearScreen) R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
+    float scaleX = float(rw)/float(pinf.width);
+    float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
+    float scale = (scaleX >= scaleY ? scaleX : scaleY);
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    //print("scaleX=%s; scaleY=%s; vsize=(%s,%s); psize=(%s,%s); ratio=%s", scaleX, scaleY, GetVirtualWidth(), GetVirtualHeight(), pinf.width, pinf.height, R_GetAspectRatio());
+    float xofs = (GetVirtualWidth()-pinf.width)/2.0;
+    float yofs = (GetVirtualHeight()-pinf.height);
+    //yofs = (GetVirtualHeight()-pinf.height)/2;
+    //print("ofs=(%s,%s)", xofs, yofs);
+    R_DrawPicFloat(xofs, yofs, Handle);
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  DrawFullScreenPicFinale320
+//
+//==========================================================================
+static final void DrawFullScreenPicFinale320 (float xofs320, float yofs200, int Handle, optional bool dontClearScreen, optional bool scaleOffsets) {
+#ifndef VC_USE_PROPER_SCALING
+  //DrawFullScreenPic(Handle, dontClearScreen:dontClearScreen!optional);
+  if (!dontClearScreen) R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+  DrawPicFS320(xofs320, yofs200, Handle);
+#else
+  picinfo_t pinf;
+  R_GetPicInfo(Handle, &pinf);
+  if (pinf.width < 1 || pinf.height < 1) {
+    DrawEmptyScreen();
+  } else {
+    int pwidth = 320; //pinf.width;
+    int pheight = 200; //pinf.height;
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    if (!dontClearScreen) R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
+    float scaleX = float(rw)/float(pwidth);
+    float scaleY = float(rh/R_GetAspectRatio())/float(pheight);
+    float scale = (scaleX >= scaleY ? scaleX : scaleY);
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    //print("scaleX=%s; scaleY=%s; vsize=(%s,%s); psize=(%s,%s); ratio=%s", scaleX, scaleY, GetVirtualWidth(), GetVirtualHeight(), pinf.width, pinf.height, R_GetAspectRatio());
+    float xofs = (GetVirtualWidth()-pwidth)/2.0;
+    float yofs = (GetVirtualHeight()-pheight);
+    //yofs = (GetVirtualHeight()-pheight)/2;
+    //print("ofs=(%s,%s)", xofs, yofs);
+    if (scaleOffsets) {
+      xofs320 *= GetVirtualWidth()/320.0;
+      yofs200 *= GetVirtualHeight()/200.0;
+    }
+    R_DrawPicFloat(xofs+xofs320, yofs+yofs200, Handle);
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  DrawFullScreenPicFinale320Ofs
+//
+//==========================================================================
+static final void DrawFullScreenPicFinale320Ofs (float xofs320, float yofs200, int Handle) {
+#ifndef VC_USE_PROPER_SCALING
+  //DrawFullScreenPic(Handle, dontClearScreen:dontClearScreen!optional);
+  DrawPicFS320(xofs320, yofs200, Handle);
+#else
+  picinfo_t pinf;
+  R_GetPicInfo(Handle, &pinf);
+  if (pinf.width < 1 || pinf.height < 1) {
+    DrawEmptyScreen();
+  } else {
+    int pwidth = 320; //pinf.width;
+    int pheight = 200; //pinf.height;
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
+    float scaleX = float(rw)/float(pwidth);
+    float scaleY = float(rh/R_GetAspectRatio())/float(pheight);
+    float scale = (scaleX <= scaleY ? scaleX : scaleY);
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    //print("scaleX=%s; scaleY=%s; vsize=(%s,%s); psize=(%s,%s); ratio=%s", scaleX, scaleY, GetVirtualWidth(), GetVirtualHeight(), pinf.width, pinf.height, R_GetAspectRatio());
+    float xofs = (GetVirtualWidth()-pwidth)/2.0;
+    float yofs = (GetVirtualHeight()-pheight)/2.0;
+    //yofs = (GetVirtualHeight()-pheight)/2;
+    //print("ofs=(%s,%s)", xofs, yofs);
+    xofs320 *= GetVirtualWidth()/320.0;
+    yofs200 *= GetVirtualHeight()/200.0;
+    R_DrawPicFloat(xofs+xofs320, yofs+yofs200, Handle);
+  }
+#endif
+}
+
+
+#ifndef VC_USE_PROPER_SCALING
+//==========================================================================
+//
 //  DrawPicFS320
 //
 //==========================================================================
-final void DrawPicFS320 (float X, float Y, int Handle, optional float alpha) {
+static final void DrawPicFS320 (float X, float Y, int Handle, optional float alpha) {
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();
   scope(exit) SetVirtualScreen(ovw, ovh);
   SetVirtualScreen(320, 200);
   R_DrawPicFloat(X, Y, Handle, alpha!optional);
   //DrawPic(X, Y, Handle);
+}
+#endif
+
+//==========================================================================
+//
+//  DrawPicFS320HScroll2
+//
+//==========================================================================
+static final void DrawPicFS320HScroll2 (float fracofs, int Handle1, int Handle2, optional float alpha) {
+#ifndef VC_USE_PROPER_SCALING
+  float scrolled = (1.0-fclamp(fracofs, 0, 1))*320.0;
+  DrawPicFS320(scrolled, 0, Handle2, alpha!optional);
+  DrawPicFS320(scrolled-320, 0, Handle1, alpha!optional);
+#else
+  picinfo_t pinf;
+  R_GetPicInfo(Handle1, &pinf);
+  if (pinf.width < 1 || pinf.height < 1) {
+    DrawEmptyScreen();
+  } else {
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    // nope, this is scroller
+    //R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
+    float scaleX = float(rw)/float(pinf.width);
+    float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
+    float scale = scaleY;
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    float yofs = (GetVirtualHeight()-pinf.height);
+    float picwdt = pinf.width*2-GetVirtualWidth(); // offset limit
+    float xofs0 = -picwdt*fclamp(fracofs, 0, 1);
+    R_DrawPicFloat(xofs0, yofs, Handle1, alpha!optional);
+    R_DrawPicFloat(xofs0+pinf.width, yofs, Handle2, alpha!optional);
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  DrawPicFS200VScroll2
+//
+//==========================================================================
+static final void DrawPicFS200VScroll2 (float fracofs, int Handle1, int Handle2, optional float alpha) {
+#ifndef VC_USE_PROPER_SCALING
+  float scrolled = (1.0-fclamp(fracofs, 0, 1))*200.0;
+  DrawPicFS320(0, scrolled, Handle2, alpha!optional);
+  DrawPicFS320(0, scrolled-200, Handle1, alpha!optional);
+#else
+  picinfo_t pinf;
+  R_GetPicInfo(Handle1, &pinf);
+  if (pinf.width < 1 || pinf.height < 1) {
+    DrawEmptyScreen();
+  } else {
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    // nope, this is scroller
+    //R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
+    float scaleX = float(rw)/float(pinf.width);
+    float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
+    float scale = scaleX;
+    SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
+    float xofs = (GetVirtualWidth()-pinf.width)/2;
+    float pichgt = pinf.height*2-GetVirtualHeight(); // offset limit
+    float yofs0 = -pichgt*fclamp(fracofs, 0, 1);
+    R_DrawPicFloat(xofs, yofs0, Handle1, alpha!optional);
+    R_DrawPicFloat(xofs, yofs0+pinf.height, Handle2, alpha!optional);
+  }
+#endif
 }
 
 
