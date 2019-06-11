@@ -113,6 +113,7 @@ public:
   }
 
   bool has (const VStr &key) {
+    if (!mDataSize) return false;
     vuint32 hash = TSTRSET_HASH(*key, key.Length());
     vuint32 bnum = hash%mDataSize;
     for (vuint32 n = mDataSize; n > 0; --n) {
@@ -124,6 +125,7 @@ public:
   }
 
   bool get (const VStr &key, bool defval=false) {
+    if (!mDataSize) return defval;
     vuint32 hash = TSTRSET_HASH(*key, key.Length());
     vuint32 bnum = hash%mDataSize;
     for (vuint32 n = mDataSize; n > 0; --n) {
