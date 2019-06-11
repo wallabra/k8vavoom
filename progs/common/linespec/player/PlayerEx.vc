@@ -3066,6 +3066,9 @@ void ShowElvenGiftMessage () {
 //
 //===========================================================================
 void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional bool forced) {
+  // do not do this on titlemap
+  if (nameicmp(Level.XLevel.MapName, 'titlemap') == 0) return;
+
   //print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
   k8ElvenGiftMessageTime = 666;
   if (forced || GetCvarB('k8ElvenGift')) {
