@@ -724,10 +724,10 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("nofreelook")) { info->Flags |= MAPINFOF_NoFreelook;
     } else if (sc->Check("allowjump")) { info->Flags &= ~MAPINFOF_NoJump;
     } else if (sc->Check("nojump")) { info->Flags |= MAPINFOF_NoJump;
-    } else if (sc->Check("nocrouch")) { info->Flags |= MAPINFOF2_NoCrouch;
-    } else if (sc->Check("resethealth")) { info->Flags |= MAPINFOF2_ResetHealth;
-    } else if (sc->Check("resetinventory")) { info->Flags |= MAPINFOF2_ResetInventory;
-    } else if (sc->Check("resetitems")) { info->Flags |= MAPINFOF2_ResetItems;
+    } else if (sc->Check("nocrouch")) { info->Flags2 |= MAPINFOF2_NoCrouch;
+    } else if (sc->Check("resethealth")) { info->Flags2 |= MAPINFOF2_ResetHealth;
+    } else if (sc->Check("resetinventory")) { info->Flags2 |= MAPINFOF2_ResetInventory;
+    } else if (sc->Check("resetitems")) { info->Flags2 |= MAPINFOF2_ResetItems;
     } else if (sc->Check("noautosequences")) { info->Flags |= MAPINFOF_NoAutoSndSeq;
     } else if (sc->Check("activateowndeathspecials")) { info->Flags |= MAPINFOF_ActivateOwnSpecial;
     } else if (sc->Check("killeractivatesdeathspecials")) { info->Flags &= ~MAPINFOF_ActivateOwnSpecial;
