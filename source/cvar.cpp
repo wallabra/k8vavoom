@@ -598,7 +598,7 @@ void VCvar::WriteVariablesToFile (FILE *f) {
         if (cvar->Flags&CVAR_Latch) fprintf(f, " latch");
         fprintf(f, " %s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       } else {
-        fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+        fprintf(f, "%s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       }
     }
   }
