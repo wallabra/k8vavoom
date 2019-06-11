@@ -39,6 +39,7 @@ extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
 static const double max_fps_cap = 0.004; // no more than 250 FPS
+extern bool sv_skipOneTitlemap;
 
 
 // state updates, number of tics/second
@@ -275,6 +276,7 @@ void Host_Init () {
       //GCmdBuf.Insert(mcmd);
       VCommand::cliPreCmds += mcmd;
       fsys_warp_cmd = VStr();
+      sv_skipOneTitlemap = true;
 #ifndef CLIENT
       wasWarp = true;
 #endif
@@ -285,6 +287,7 @@ void Host_Init () {
     //GCmdBuf.Insert(fsys_warp_cmd);
     VCommand::cliPreCmds += fsys_warp_cmd;
     if (!fsys_warp_cmd.endsWith("\n")) VCommand::cliPreCmds += '\n';
+    sv_skipOneTitlemap = true;
 #ifndef CLIENT
     wasWarp = true;
 #endif
@@ -302,6 +305,7 @@ void Host_Init () {
     VCommand::cliPreCmds += "Map \"";
     VCommand::cliPreCmds += VStr(*P_TranslateMap(1)).quote();
     VCommand::cliPreCmds += "\"\n";
+    sv_skipOneTitlemap = true;
   }
 #endif
 

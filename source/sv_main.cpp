@@ -29,6 +29,8 @@
 #include "sv_local.h"
 #include "cl_local.h"
 
+bool sv_skipOneTitlemap = false;
+
 /*
 static double FrameTime = 1.0f/35.0f;
 // round a little bit up to prevent "slow motion"
@@ -1542,6 +1544,8 @@ bool Host_StartTitleMap () {
   static bool loadingTitlemap = false;
 
   if (GArgs.CheckParm("-notitlemap") != 0) return false;
+  if (sv_skipOneTitlemap) { sv_skipOneTitlemap = false; return false; }
+
   if (loadingTitlemap) {
     // it is completely fucked, ignore it
     static bool titlemapWarned = false;

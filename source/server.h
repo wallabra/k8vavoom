@@ -57,3 +57,4 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr); // in "sv_main.cp
 
 extern server_t sv;
 extern server_static_t svs;
+extern bool sv_skipOneTitlemap;
