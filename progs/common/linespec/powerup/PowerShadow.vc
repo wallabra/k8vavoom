@@ -26,81 +26,65 @@
 //**************************************************************************
 class PowerShadow : PowerInvisibility;
 
-int       ShadowStage;
+int ShadowStage;
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
-//  If player already has it, picking it up again makes him completely
-// ivisible.
+//  if player already has it, picking it up again makes him completely
+//  ivisible
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (ShadowStage == 0 && Item.Class == Class)
-  {
+override bool HandlePickup (Inventory Item) {
+  if (ShadowStage == 0 && Item.Class == Class) {
     Powerup Pow = Powerup(Item);
-    //  Permanent powerups can be always picked up.
-    if (!Pow.EffectTime)
-    {
+    // permanent powerups can be always picked up
+    if (!Pow.EffectTime) {
       Item.bPickupGood = true;
       return true;
     }
-    //  Only increase effect time.
-    if (EffectTime < Pow.EffectTime)
-    {
-      EffectTime = Pow.EffectTime;
-    }
-    //  Go to stage 2
+    // only increase effect time
+    if (EffectTime < Pow.EffectTime) EffectTime = Pow.EffectTime;
+    // go to stage 2
     ShadowStage = 1;
     Item.bPickupGood = true;
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  Owner.RenderStyle = ShadowStage == 0 ? STYLE_Translucent : STYLE_None;
-  Owner.Alpha = ShadowStage == 0 ? 0.25 : 0.0;
+override void InitEffect () {
+  Owner.RenderStyle = (ShadowStage == 0 ? STYLE_Translucent : STYLE_None);
+  Owner.Alpha = (ShadowStage == 0 ? 0.25 : 0.0);
   EntityEx(Owner).bShadow = true;
 }
+
 
 //==========================================================================
 //
 //  GetViewEntRenderParams
 //
 //==========================================================================
-
-override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
-{
-  if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-    (int(4.0 * EffectTime) & 1))
-  {
+override void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle) {
+  if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
     OutRenderStyle = STYLE_Translucent;
     OutAlpha = 0.4;
   }
-  if (Inventory)
-  {
-    Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
-  }
+  if (Inventory) Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 55.0;
   bHubPower = true;
 }

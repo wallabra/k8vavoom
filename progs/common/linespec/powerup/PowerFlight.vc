@@ -26,72 +26,56 @@
 //**************************************************************************
 class PowerFlight : Powerup;
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  //  Flight expires in multiplayer of when in current level it's not
-  // infinite.
-  if (!Level.Game.netgame && Level.bInfiniteFlightPowerup)
-  {
-    EffectTime += DeltaTime;
-  }
-
+override void Tick (float DeltaTime) {
+  // flight expires in multiplayer, or when in current level it's not infinite
+  if (!Level.Game.netgame && Level.bInfiniteFlightPowerup) EffectTime += DeltaTime;
   ::Tick(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
+override void InitEffect () {
   Owner.bFly = true;
   Owner.bNoGravity = true;
-  if (Owner.Origin.z <= Owner.FloorZ)
-  {
+  if (Owner.Origin.z <= Owner.FloorZ) {
     // thrust the player in the air a bit
     PlayerEx(Owner.Player).FlyHeight = 10.0;
   }
-  if (Owner.Velocity.z <= -35.0 * 35.0)
-  {
+  if (Owner.Velocity.z <= -35.0*35.0) {
     // stop falling scream
     Owner.StopSound(CHAN_VOICE);
   }
 }
+
 
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (!Owner)
-  {
-    return;
-  }
-
-  if (!Owner.bIsPlayer || !PlayerEx(Owner.Player).bFly)
-  {
-    if (Owner.Origin.z != Owner.FloorZ)
-    {
-//FIXME   player->centreing = true;
+override void EndEffect () {
+  if (!Owner) return;
+  if (!Owner.bIsPlayer || !PlayerEx(Owner.Player).bFly) {
+    if (Owner.Origin.z != Owner.FloorZ) {
+      //FIXME   player->centreing = true;
     }
     Owner.bFly = false;
     Owner.bNoGravity = false;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 60.0;
   bHubPower = true;
 }

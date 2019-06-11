@@ -26,35 +26,31 @@
 //**************************************************************************
 class PowerFrightener : Powerup;
 
+
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  if (Owner && Owner.Player)
-  {
+override void InitEffect () {
+  if (Owner && Owner.Player) {
     PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_FRIGHTENING;
   }
 }
+
 
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (Owner && Owner.Player)
-  {
+override void EndEffect () {
+  if (Owner && Owner.Player) {
     PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_FRIGHTENING;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 60.0;
 }

@@ -26,47 +26,37 @@
 //**************************************************************************
 class PowerLightAmp : Powerup;
 
+
 //==========================================================================
 //
 //  DoEffect
 //
 //==========================================================================
-
-override void DoEffect()
-{
+override void DoEffect () {
   ::DoEffect();
-  if (Owner && Owner.bIsPlayer &&
-    Owner.Player.FixedColormap  < PlayerEx::NUMCOLORMAPS)
-  {
-    if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-      (int(4.0 * EffectTime) & 1))
-    {
+  if (Owner && Owner.bIsPlayer && Owner.Player.FixedColormap < PlayerEx::NUMCOLORMAPS) {
+    if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
       // almost full bright
       Owner.Player.FixedColormap = 1;
-    }
-    else
-    {
+    } else {
       Owner.Player.FixedColormap = 0;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (Owner && Owner.bIsPlayer &&
-    Owner.Player.FixedColormap  < PlayerEx::NUMCOLORMAPS)
-  {
+override void EndEffect () {
+  if (Owner && Owner.bIsPlayer && Owner.Player.FixedColormap < PlayerEx::NUMCOLORMAPS) {
     Owner.Player.FixedColormap = 0;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 120.0;
 }

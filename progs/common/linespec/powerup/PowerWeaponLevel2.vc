@@ -26,18 +26,14 @@
 //**************************************************************************
 class PowerWeaponLevel2 : Powerup;
 
+
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  if (!Owner.bIsPlayer)
-  {
-    return;
-  }
+override void InitEffect () {
+  if (!Owner.bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
   if (!Wpn) return;
@@ -55,33 +51,28 @@ override void InitEffect()
   }
 }
 
+
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (!Owner || !Owner.bIsPlayer)
-  {
-    return;
-  }
+override void EndEffect () {
+  if (!Owner || !Owner.bIsPlayer) return;
 
   PlayerEx P = PlayerEx(Owner.Player);
-  if (P.ReadyWeapon && P.ReadyWeapon.bPoweredUp)
-  {
+  if (P.ReadyWeapon && P.ReadyWeapon.bPoweredUp) {
     P.ReadyWeapon.EndPowerup();
   }
   //  Make sure pending weapon is not a powered-up version of a weapon.
   if (P.PendingWeapon && P.PendingWeapon.bPoweredUp &&
-    P.PendingWeapon.SisterWeapon)
+      P.PendingWeapon.SisterWeapon)
   {
     P.PendingWeapon = P.PendingWeapon.SisterWeapon;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 40.0;
 }

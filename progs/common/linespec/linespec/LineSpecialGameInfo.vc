@@ -178,7 +178,8 @@ override void Init () {
 
   CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8BerserkTint', "", "Berserk powerup tint color..", CVAR_ARCHIVE);
 
   CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 
@@ -229,6 +230,7 @@ override void Init () {
   CreateCvar('k8_flashlight_angle', "20", "Flashlight cone angle.", CVAR_ARCHIVE);
 
   CreateCvar('k8SuperBulletCooldown', "0.15", "SuperBullet cooldown time, in seconds.", CVAR_ARCHIVE);
+
 
 
   CreateCvar('bot_ignore_humans', "0", "Should bots ignore human players?", 0/*CVAR_ARCHIVE*/);

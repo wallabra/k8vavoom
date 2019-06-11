@@ -26,26 +26,18 @@
 //**************************************************************************
 class PowerSpeed : Powerup;
 
+
 //==========================================================================
 //
 //  GetSpeedFactor
 //
 //==========================================================================
-
-override float GetSpeedFactor()
-{
-  if (Inventory)
-  {
-    return Speed * Inventory.GetSpeedFactor();
-  }
-  else
-  {
-    return Speed;
-  }
+override float GetSpeedFactor () {
+  return Speed*(Inventory ? Inventory.GetSpeedFactor() : 1.0);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Speed = 1.5;
   EffectTime = 45.0;
 }

@@ -27,90 +27,66 @@
 class PowerMorph : Powerup;
 
 class!PlayerPawn PlayerClass;
-int         MorphStyle;
-class!Actor    MorphFlash;
-class!Actor    UnmorphFlash;
-PlayerEx      OwnerPlayer;
+int MorphStyle;
+class!Actor MorphFlash;
+class!Actor UnmorphFlash;
+PlayerEx OwnerPlayer;
+
 
 //===========================================================================
 //
 //  InitEffect
 //
 //===========================================================================
-
-override void InitEffect()
-{
-  if (Owner && Owner.bIsPlayer && PlayerClass)
-  {
-    //  Remember the identity of the player
+override void InitEffect () {
+  if (Owner && Owner.bIsPlayer && PlayerClass) {
+    // remember the identity of the player
     OwnerPlayer = PlayerEx(Owner.Player);
-    if (EntityEx(Owner).MorphPlayer(PlayerClass, -1.0 /* INDEFINITELY */,
-      MorphStyle, MorphFlash, UnmorphFlash, EntityEx(Owner)))
-    {
-      //  Replace the new owner in our owner; safe because we are not
-      // attached to anything yet
+    if (EntityEx(Owner).MorphPlayer(PlayerClass, -1.0/*INDEFINITELY*/, MorphStyle, MorphFlash, UnmorphFlash, EntityEx(Owner))) {
+      // replace the new owner in our owner; safe because we are not attached to anything yet
       Owner = OwnerPlayer.MO;
-      //  Let the caller know the "real" owner has changed (to the
-      // morphed actor)
+      // let the caller know the "real" owner has changed (to the morphed actor)
       bCreateCopyMoved = true;
-    }
-    else
-    {
-      // Let the caller know that the activation failed (can fail the
-      // pickup if appropriate)
+    } else {
+      // let the caller know that the activation failed (can fail the pickup if appropriate)
       bInitEffectFailed = true;
     }
   }
 }
+
 
 //===========================================================================
 //
 //  EndEffect
 //
 //===========================================================================
+override void EndEffect () {
+  // abort if owner already destroyed
+  if (!Owner) return;
+  // abort if owner already unmorphed
+  if (!OwnerPlayer) return;
 
-override void EndEffect()
-{
-  //  Abort if owner already destroyed
-  if (!Owner)
-  {
-    return;
-  }
+  // abort if owner is dead; their Die() method will take care of any required unmorphing on death
+  if (OwnerPlayer.Health <= 0) return;
 
-  //  Abort if owner already unmorphed
-  if (!OwnerPlayer)
-  {
-    return;
-  }
-
-  //  Abort if owner is dead; their Die() method will
-  // take care of any required unmorphing on death.
-  if (OwnerPlayer.Health <= 0)
-  {
-    return;
-  }
-
-  //  Unmorph if possible
+  // unmorph if possible
   float SavedMorphTime = OwnerPlayer.MorphTime;
   OwnerPlayer.UndoPlayerMorph(false, OwnerPlayer);
 
-  //  Abort if unmorph failed; in that case, set the usual retry timer and
-  // return.
-  if (OwnerPlayer.MorphTime)
-  {
-    //  Transfer retry timeout to the powerup's timer.
+  // abort if unmorph failed; in that case, set the usual retry timer and return
+  if (OwnerPlayer.MorphTime) {
+    // transfer retry timeout to the powerup's timer
     EffectTime = OwnerPlayer.MorphTime;
-    //  Reload negative morph tics. Use actual value; it may be in use
-    // for animation.
+    // reload negative morph tics. Use actual value; it may be in use for animation
     OwnerPlayer.MorphTime = SavedMorphTime;
-    //  Try again some time later
+    // try again some time later
     return;
   }
 
-  //  Unmorph suceeded
+  // unmorph suceeded
   OwnerPlayer = none;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

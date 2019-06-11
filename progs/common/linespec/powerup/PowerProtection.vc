@@ -26,18 +26,16 @@
 //**************************************************************************
 class PowerProtection : Powerup;
 
+
 //==========================================================================
 //
 //  AbsorbDamage
 //
 //==========================================================================
-
-override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
-{
+override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
   float dmg_factor;
 
-  if (damage > 0)
-  {
+  if (damage > 0) {
     foreach (auto i; 0..DamageFactors.length) {
       if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
           (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
@@ -46,38 +44,28 @@ override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
         break;
       }
     }
-    NewDamage = int(float(damage) * dmg_factor > 0.0 ? dmg_factor : 1.0);
-    if (NewDamage == 0)
-    {
+    NewDamage = int(float(damage)*dmg_factor > 0.0 ? dmg_factor : 1.0);
+    if (NewDamage == 0) {
       // don't allow zero damage as result of an underflow
       NewDamage = 1;
     }
 
-    if (Owner && dmg_factor > 1.0)
-    {
-      Owner.PlaySound(ActiveSound, CHAN_VOICE);
-    }
+    if (Owner && dmg_factor > 1.0) Owner.PlaySound(ActiveSound, CHAN_VOICE);
   }
 
-  if (Inventory)
-  {
-    Inventory.AbsorbDamage(damage, DmgType, NewDamage);
-  }
+  if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
 }
+
 
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  if (Owner)
-  {
+override void InitEffect () {
+  if (Owner) {
     Owner.PlaySound(SightSound, CHAN_VOICE);
-
-    // Set some special flags for protecting the Owner
+    // set some special flags for protecting the Owner
     EntityEx(Owner).bNoRadiusDamage = true;
     EntityEx(Owner).bNoMorph = true;
     EntityEx(Owner).bDontSquash = true;
@@ -88,19 +76,16 @@ override void InitEffect()
   }
 }
 
+
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (Owner)
-  {
+override void EndEffect () {
+  if (Owner) {
     Owner.PlaySound(DeathSound, CHAN_VOICE);
-
-    // Remove flags from Owner...
+    // remove flags from Owner
     EntityEx(Owner).bNoRadiusDamage = false;
     EntityEx(Owner).bNoMorph = false;
     EntityEx(Owner).bDontSquash = false;
@@ -111,7 +96,7 @@ override void EndEffect()
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 25.0;
 }

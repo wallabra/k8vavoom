@@ -26,107 +26,82 @@
 //**************************************************************************
 class PowerTimeFreezer : Powerup;
 
+
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  if (Owner && Owner.Player)
-  {
-    int i;
-
+override void InitEffect () {
+  if (Owner && Owner.Player) {
     Owner.PlaySound(SightSound, CHAN_VOICE);
 
-    // Give the player and his teammates the power to move when time is frozen.
+    // give the player and his teammates the power to move when time is frozen
     PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_TIMEFREEZE;
-    for (i = 0; i < MAXPLAYERS; i++)
-    {
+    foreach (int i; 0..MAXPLAYERS) {
       if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned &&
-        Level.Game.Players[i].MO && EntityEx(Level.Game.Players[i].MO).IsTeammate(EntityEx(Owner)))
+          Level.Game.Players[i].MO && EntityEx(Level.Game.Players[i].MO).IsTeammate(EntityEx(Owner)))
       {
         PlayerEx(Level.Game.Players[i]).Cheats |= PlayerEx::CF_TIMEFREEZE;
       }
     }
-    // When this powerup is in effect, pause the music and stop sounds.
+    // when this powerup is in effect, pause the music and stop sounds
     CmdBuf_AddText("music pause");
     StopAllSounds();
 
-    // [RH] The effect ends one tic after the counter hits zero, so make
-    // sure we start at an odd count.
-    EffectTime += float(!(int(EffectTime) & 1));
-    if (!(int(EffectTime) & 1))
-    {
-      EffectTime += 1.0;
-    }
-    // Make sure the effect starts and ends on an even tic.
-    if (!(int(XLevel.Time) & 1))
-    {
+    // [RH] the effect ends one tic after the counter hits zero, so make sure we start at an odd count
+    EffectTime += float(!(int(EffectTime)&1));
+    if (!(int(EffectTime)&1)) EffectTime += 1.0;
+    // make sure the effect starts and ends on an even tic
+    if (!(int(XLevel.Time)&1)) {
       Level.bFrozen = true;
-    }
-    else
-    {
+    } else {
       EffectTime += 1.0;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  DoEffect
 //
 //==========================================================================
-
-override void DoEffect()
-{
+override void DoEffect () {
   ::DoEffect();
-  // [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
-  // will get thrown off.
-  if (int(XLevel.Time) & 1)
-  {
-
-    return;
-  }
+  // [RH] do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer will get thrown off
+  if (int(XLevel.Time)&1) return;
   // [RH] The "blinking" can't check against EffectTics exactly or it will
   // never happen, because InitEffect ensures that EffectTics will always
   // be odd when level.time is even.
-  if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0 * EffectTime) & 1))
-  {
+  if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
     Level.bFrozen = true;
-  }
-  else
-  {
+  } else {
     Level.bFrozen = false;
   }
 }
+
 
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  // Allow other actors to move about freely once again.
+override void EndEffect () {
+  // allow other actors to move about freely once again
   Level.bFrozen = false;
 
-  // Also, turn the music back on.
+  // also, turn the music back on
   CmdBuf_AddText("music resume");
 
-  // Nothing more to do if there's no owner.
-  if (Owner && Owner.Player)
-  {
-    int i;
+  // nothing more to do if there's no owner
+  if (Owner && Owner.Player) {
     Owner.PlaySound(DeathSound, CHAN_VOICE);
 
     PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_TIMEFREEZE;
-    for (i = 0; i < MAXPLAYERS; i++)
-    {
+    foreach (int i; 0..MAXPLAYERS) {
       if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned &&
-        Level.Game.Players[i].MO && EntityEx(Level.Game.Players[i].MO).IsTeammate(EntityEx(Owner)))
+          Level.Game.Players[i].MO && EntityEx(Level.Game.Players[i].MO).IsTeammate(EntityEx(Owner)))
       {
         PlayerEx(Level.Game.Players[i]).Cheats &= ~PlayerEx::CF_TIMEFREEZE;
       }
@@ -134,8 +109,8 @@ override void EndEffect()
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   BlendColor = GOLDCOLOR;
   EffectTime = 12.0;
   bHubPower = true;

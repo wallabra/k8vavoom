@@ -26,49 +26,35 @@
 //**************************************************************************
 class PowerMask : PowerIronFeet;
 
+
 //==========================================================================
 //
 //  DoEffect
 //
 //==========================================================================
-
-override void DoEffect()
-{
+override void DoEffect () {
   ::DoEffect();
-
-  if (!Owner)
-  {
-    return;
-  }
-
-  if (!(Level.XLevel.TicTime & 0x3f))
-  {
-    Owner.PlaySound('misc/mask', CHAN_VOICE);
-  }
+  if (!Owner) return;
+  if (!(Level.XLevel.TicTime&0x3f)) Owner.PlaySound('misc/mask', CHAN_VOICE);
 }
+
 
 //==========================================================================
 //
 //  AbsorbDamage
 //
 //==========================================================================
-
-override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
-{
-  if (nameicmp(DmgType, 'Fire') == 0)
-  {
-    // If the player wears an environmental suit it's not
-    // damaged by fire damage
+override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+  if (nameicmp(DmgType, 'Fire') == 0) {
+    // if the player wears an environmental suit it's not damaged by fire damage
     NewDamage = 0;
-  }
-  else
-  {
+  } else {
     ::AbsorbDamage(damage, DmgType, NewDamage);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 80.0;
   BlendColor = 0;
   bHubPower = true;

@@ -26,40 +26,36 @@
 //**************************************************************************
 class PowerRegeneration : Powerup;
 
+
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-override void InitEffect()
-{
-  if (Owner && Owner.Player)
-  {
+override void InitEffect () {
+  if (Owner && Owner.Player) {
     Owner.PlaySound(SightSound, CHAN_VOICE);
-    // Give the player the power to regnerate lost life.
+    // give the player the power to regnerate lost life.
     PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_REGENERATION;
   }
 }
+
 
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-override void EndEffect()
-{
-  if (Owner && Owner.Player)
-  {
+override void EndEffect () {
+  if (Owner && Owner.Player) {
     Owner.PlaySound(DeathSound, CHAN_VOICE);
-    // Take away the regeneration power.
+    // take away the regeneration power
     PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_REGENERATION;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 120.0;
   //TODO: Strength
 }

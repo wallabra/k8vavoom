@@ -25,11 +25,10 @@
 //**
 //**************************************************************************
 //FIXME implement this!
-
 class PowerTargeter : Powerup;
 
-defaultproperties
-{
+
+defaultproperties {
   EffectTime = 160.0;
   bHubPower = true;
 }

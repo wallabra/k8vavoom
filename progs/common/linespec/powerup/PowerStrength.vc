@@ -26,58 +26,59 @@
 //**************************************************************************
 class PowerStrength : Powerup;
 
+transient string lastBlendColorString;
+
+
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  //  Setting effect time to 0 will cause powerup pickup handler to reset
-  // effect time so we get the red flash again.
-  if (Item.Class == Class)
-  {
-    EffectTime = 0.0;
-  }
+override bool HandlePickup (Inventory Item) {
+  // setting effect time to 0 will cause powerup pickup handler to reset
+  // effect time so we get the red flash again
+  if (Item.Class == Class) EffectTime = 0.0;
   return ::HandlePickup(Item);
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  //  Strength counts up to diminish fade.
-  EffectTime += 2.0 * DeltaTime;
+override void Tick (float DeltaTime) {
+  // strength counts up to diminish fade
+  EffectTime += 2.0*DeltaTime;
   ::Tick(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  GetBlend
 //
 //==========================================================================
-
-override int GetBlend()
-{
+override int GetBlend () {
+  string cs = GetCvarS('k8BerserkTint');
+  if (cs != lastBlendColorString) {
+    lastBlendColorString = cs;
+    BlendColor = (cs ? ParseColor(cs) : RGBA(255, 0, 0, 128));
+    BlendColor = (BlendColor&0xff_ff_ff)|0x80_00_00;
+  }
   // slowly fade the berzerk out
-  int Amount = 12 - int(EffectTime / 2.0);
-  if (Amount > 0)
-  {
-    Amount = (Amount + 7) >> 3;
-    int a = (Amount + 1) * 28;
-    return (BlendColor & 0x00ffffff) | (a << 24);
+  int Amount = 12-int(EffectTime/2.0);
+  if (Amount > 0) {
+    Amount = (Amount+7)>>3;
+    int a = (Amount+1)*28;
+    return (BlendColor&0x00ffffff)|(a<<24);
   }
   return 0;
 }
 
-defaultproperties
-{
-  EffectTime = 1.0 / 35.0;
+
+defaultproperties {
+  EffectTime = 1.0/35.0;
   BlendColor = RGBA(255, 0, 0, 128);
   bHubPower = true;
 }

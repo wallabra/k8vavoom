@@ -54,7 +54,7 @@ override bool Use (bool Pickup) {
   auto pwi = PowerInvisibility(Pw);
   if (pwi && Strength != -666) pwi.Strength = Strength;
 
-  if (EffectTime) Pw.EffectTime = EffectTime > 0.0 ? EffectTime : -EffectTime * 35.0;
+  if (EffectTime) Pw.EffectTime = (EffectTime > 0.0 ? EffectTime : -EffectTime*35.0);
   if (BlendColor) Pw.BlendColor = BlendColor;
   if (Mode) Pw.Mode = Mode;
   Pw.bAlwaysPickup = bAlwaysPickup;
