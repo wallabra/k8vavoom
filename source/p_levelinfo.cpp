@@ -28,20 +28,20 @@
 #include "sv_local.h"
 
 
-VCvarB  compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
-VCvarB  compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
-VCvarB  compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
-VCvarB  compat_nopassover("compat_nopassover", false, "Compatibility: nopassover", 0);
-VCvarB  compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
-VCvarB  compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
-VCvarB  compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
-VCvarB  compat_ravenscroll("compat_ravenscroll", false, "Compatibility: ravenscroll", 0);
-VCvarB  compat_soundtarget("compat_soundtarget", false, "Compatibility: soundtarget", 0);
-VCvarB  compat_dehhealth("compat_dehhealth", false, "Compatibility: dehhealth", 0);
-VCvarB  compat_trace("compat_trace", false, "Compatibility: trace", 0);
-VCvarB  compat_dropoff("compat_dropoff", false, "Compatibility: dropoff", 0);
-VCvarB  compat_boomscroll("compat_boomscroll", false, "Compatibility: boomscroll", 0);
-VCvarB  compat_invisibility("compat_invisibility", false, "Compatibility: invisibility", 0);
+VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
+VCvarB compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
+VCvarB compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
+VCvarB compat_nopassover("compat_nopassover", false, "Compatibility: nopassover", 0);
+VCvarB compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
+VCvarB compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
+VCvarB compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
+VCvarB compat_ravenscroll("compat_ravenscroll", false, "Compatibility: ravenscroll", 0);
+VCvarB compat_soundtarget("compat_soundtarget", false, "Compatibility: soundtarget", 0);
+VCvarB compat_dehhealth("compat_dehhealth", false, "Compatibility: dehhealth", 0);
+VCvarB compat_trace("compat_trace", false, "Compatibility: trace", 0);
+VCvarB compat_dropoff("compat_dropoff", false, "Compatibility: dropoff", 0);
+VCvarB compat_boomscroll("compat_boomscroll", false, "Compatibility: boomscroll", 0);
+VCvarB compat_invisibility("compat_invisibility", false, "Compatibility: invisibility", 0);
 
 
 IMPLEMENT_CLASS(V, LevelInfo)
@@ -58,6 +58,7 @@ static VCvarF sv_aircontrol("sv_aircontrol", "0.00390625", "Air control value.",
 void VLevelInfo::PostCtor () {
   Super::PostCtor();
   Level = this;
+  //GCon->Logf("** falling damage: flags=0x%08x", (unsigned)LevelInfoFlags);
 }
 
 
@@ -98,6 +99,7 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
   SpecialActions = Info.SpecialActions;
 
   // copy flags from mapinfo
+  //GCon->Logf("*** level info flags: 0x%08x", (unsigned)Info.Flags);
   LevelInfoFlags = Info.Flags;
   LevelInfoFlags2 = Info.Flags2;
 

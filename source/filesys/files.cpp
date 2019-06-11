@@ -52,6 +52,9 @@ int fsys_detected_mod = AD_NONE;
 
 static bool fsys_onlyOneBaseFile = false;
 
+GameOptions game_options;
+
+
 struct AuxFile {
   VStr name;
   bool optional;
@@ -68,6 +71,7 @@ struct version_t {
   bool FixVoices;
   VStr warp;
   TArray<VStr> filters;
+  GameOptions options;
 };
 
 
@@ -1100,6 +1104,11 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
         if (!sc->String.isEmpty()) dst.filters.append(VStr("filter/")+sc->String.toLowerCase());
         continue;
       }
+      if (sc->Check("ashexen")) {
+        sc->ExpectString();
+        dst.options.hexenGame = true;
+        continue;
+      }
       break;
     }
     sc->Expect("end");
@@ -1223,6 +1232,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   }
 
   version_t &gmi = games[selectedGame];
+  game_options = gmi.options;
 
   // look for the main wad file
   VStr mainWadPath;

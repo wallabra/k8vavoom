@@ -72,6 +72,13 @@ void FL_CollectPreinits ();
 void FL_ProcessPreInits ();
 
 
+struct GameOptions {
+  bool hexenGame;
+
+  GameOptions () : hexenGame(false) {}
+};
+
+
 //extern bool fl_devmode;
 extern VStr fl_basedir;
 extern VStr fl_savedir;
@@ -87,3 +94,5 @@ extern bool fsys_hasMapPwads; // or paks
 extern bool fsys_DisableBloodReplacement;
 
 extern VCvarS game_name;
+
+extern GameOptions game_options;

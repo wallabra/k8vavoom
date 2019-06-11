@@ -1015,6 +1015,7 @@ final void PlayerLandedOnThing () {
 //
 //==========================================================================
 final void FallingDamage () {
+  //print("fdam: %B %B %B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   int damage;
   float dist;
 

@@ -1016,12 +1016,12 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   }
 
   if (HexenMode) {
-    info->Flags |= MAPINFOF_NoIntermission |
-      MAPINFOF_FallingDamage |
-      MAPINFOF_MonsterFallingDamage |
-      MAPINFOF_NoAutoSndSeq |
-      MAPINFOF_ActivateOwnSpecial |
-      MAPINFOF_MissilesActivateImpact |
+    info->Flags |= MAPINFOF_NoIntermission|
+      MAPINFOF_FallingDamage|
+      MAPINFOF_MonsterFallingDamage|
+      MAPINFOF_NoAutoSndSeq|
+      MAPINFOF_ActivateOwnSpecial|
+      MAPINFOF_MissilesActivateImpact|
       MAPINFOF_InfiniteFlightPowerup;
   }
 

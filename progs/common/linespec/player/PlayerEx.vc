@@ -513,12 +513,12 @@ override void ClientSetViewOrg (float x, float y, float z) {
 //
 //  PostfixViewHeight
 //
-//  after player thinker was called, player can be moved by lift,
+//  after player thinker was called, player can be moved by a lift,
 //  for example. we have to "postfix" view origin to get rid of
-//  "sinking into lift" effect
+//  "sinking into lift" effect.
 //
 //  this is called from `SetViewPos()`, which in turn is called from
-//  main world thinker
+//  main world thinker.
 //
 //==========================================================================
 override void PostfixViewHeight () {
@@ -2911,6 +2911,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
   print("spawned player with class <%C>...", PP);
+  //print("falling damage: normal=%B; old=%B; strife=%B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   if (GetCvarS('player_default_gender')) PP.SoundGender = name(GetCvarS('player_default_gender'));
   if (mthing) PP.Origin.z += mthing->height;
   PP.LinkToWorld(properFloorCheck:true);
