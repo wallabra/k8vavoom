@@ -42,6 +42,14 @@ This will not only inherit class `Foo` from `Boo`, but most `SpawnObject(Boo)` c
 will spawn `Foo` instead.
 
 
+There can be the case when you don't know the exact name of the class you want to
+replace, you just want to replace one of the subclasses of it. This may sound strange,
+but imagine some mod that wants to replace `LineSpecialLevelInfo` class, for example,
+which (LineSpecialLevelInfo) is subclasses in each game. To do this, you can use:
+
+  class Foo : replaces(lastchild of Boo);
+
+
 
 Default field values
 ====================
@@ -59,7 +67,7 @@ Or, you can simply assign default value in field declaration:
 
 Note that while it is technically the same now, and you can use complex
 expressions with "inline" form, support for this (complex expressions) will
-be dropped somewhere in the future. I.e. don't do this:
+be dropped in the future. I.e. don't do this:
 
   int flda = 666;
   int fldb = 42;
@@ -67,20 +75,19 @@ be dropped somewhere in the future. I.e. don't do this:
 
 Initializing `fldc` *will* break without further notice. You've been warned.
 
-Also, redeclaring field in subclass will actually redeclare it, not
-change its default value.
+Redeclaring field in subclass is forbidden, and compiler will complain.
 
-Of course, you *can* use complex expressions it in `defaultproperties` part,
+Of course, you *can* use complex expressions in `defaultproperties` part,
 it is allowed. Yes, contrary to Unreal Script, `defaultproperties` doesn't
 meant to be easily machine-parsable, and can contain arbitrary VC code.
 Just note that it is NOT a constructor, it is executed only once by the
 complier, and not all classes might be properly defined at that time. So
-don't use *very* complex code there: restrict yourself to calculating some
+don't use very complex code there: restrict yourself to calculating some
 tables and such.
 
 You can access default values with `default.name` syntax. Most of the
 time things like `ClassName.default.field` and `obj.default.field` are
-working as you expect.
+working as you may expect.
 
 
 Field and method protection
@@ -96,21 +103,21 @@ You can also mark fields as `readonly`. It is not really useful for
 VC code (as you cannot do anything with such fields, not even assign
 default values to them).
 
-Changing field protection is not supported: you'll just get a new field.
+Changing field protection is not supported.
 
 
 
-Method types
+Method kinds
 ============
 
-VC has several types of methods. There are `final static` methods, `final`
+VC has several kinds of methods. There are `final static` methods, `final`
 methods, and "normal" (aka "virtual") methods.
 
 `final static` is your usual `static` method from C++. Note that it *must*
 be `final` for now.
 
 `final` method locks you from overriding it in subclasses. Note that you
-can "seal" a method at any point in the class hierarchy, but doing it on
+can "seal" a method at any point in the class hierarchy, but doing this on
 introduction will "devirtualize" such method, and the code will be slightly
 faster.
 
@@ -199,7 +206,7 @@ You can assign inline delegates to delegate fields:
 
   myDelegateField = delegate int (float n) { return int(n*666); };
 
-Note that inline delegates are neither closures, nor nested functions,
+Note that inline delegates neither closures, nor nested functions,
 so you cannot access outer function locals from inline delegate.
 
 
@@ -268,7 +275,7 @@ object, even if it isn't. Still confused? Just look at the example:
 
   float time = 10.msecs;
 
-I.e. if compiler will not find a property/method specified, it will try
+I.e. if the compiler will not find a property/method specified, it will try
 to rewrite your code as a function call. In the example, as integer doesn't
 have `.msecs` property, but there is `msecs` method that accepts integers,
 compiler will rewrite your code to: `msecs(10)`.
@@ -295,18 +302,27 @@ so comparing names are much faster than comparing strings. Use names for various
 long-lived identifiers. To create a name, use single quotes.
 
 Strings in VC are... strings.
+
 You can use string in conditionals: any non-empty string will be treated as `true`.
+
 String has built-in `.length` property.
+
 You can get substring by slicing: `s[lo..hi]` will return substring from `lo` up to
 (but not including) `hi` character. Note that VC doesn't care about encoding, so be
 careful with multibyte encodings.
+
 You can concatenate strings with `~` operator: `newstr = s0~s1;`.
+
 You can use `$` as substiture for `.length` in string indexing.
+
 You can replace substring with `s[lo..hi] = "newstr";`, which is the same as:
   s = s[0..lo]~"newstr"~s[hi..$];
+
 Getting string character with `s[n]` will return integer.
+
 Setting string character with `s[n]` accepts integers, one-char strings, and
 one-char names.
+
 To make your life slightly easier, `==` and `!=` can compare integers with one-char
 strings, and one-char names. I.e. you can write `if (s[n] == "a")` and it will work.
 
@@ -328,19 +344,20 @@ To make room in an array, use `.insert(idx[, count])` built-in method.
 
 To remove items from an array, use `.remove(idx[, count])` built-in method.
 
-You can swap two array elements with build-in `.swap(idx0, idx1)` method.
+You can swap two array elements with built-in `.swap(idx0, idx1)` method.
 
 You can "reset" array (set it's length to zero without deallocating the undelying
-storage) with `.reset()` method.
+storage) with `.reset()` method. This may be useful if you want to reuse your
+dynamic array without triggering alot of allocations.
 
 You can sort array with build-in `.sort()` method. This methods accepts one arument,
 which should be compare delegate:
 
   int delegate ([ref] type a, [ref] type b);
 
-This delegate should return negative number if "a < b", positive number if "a > b", and
-zero if "a == b". This is important to return consistent results, because sorting
-algorithm is stable (timsort).
+This delegate should return negative number if "a < b", positive number
+if "a > b", and zero if "a == b". It is important to return consistent results,
+because sorting algorithm is stable (timsort).
 
 You can allocate new array member and return pointer to it with `.alloc()` method.
 Be very careful, though, as returned pointer can be invalidated by any array length
@@ -587,10 +604,13 @@ Recommended syntax for static arrays is:
 insted of C-like `int name[42];`.
 Note that C-like syntax may be dropped in the future.
 
+*WARNING*: Such declarations doesn't work for locals yet, so use C-like form for
+           locals. This will be eventually fixed.
 
 
-Switch without breaks
-=====================
+
+Switch cases without breaks
+===========================
 
 If you want to omit `break` in switch case, you should use `goto case;` statement
 instead. VC compiler checks if you have a proper case termination statement, and
@@ -600,3 +620,59 @@ You can use `goto case;` anywhere inside a branch. There is also support for bot
 `goto case <value>;` and `goto default`.
 
 Note that last case/default branch can omit proper termination.
+
+
+
+Limited automatic cleanup
+=========================
+
+If you want to do some cleanup on leaving scope, you can use `scope(exit)` operator.
+Let me explain it with the sample code:
+
+  void foo () {
+    auto reshandle = AquireSomeResource();
+    scope(exit) FreeResource(reshandle);
+    if (!DoSomethingWith(reshandle)) return;
+    DoSomethingElseWith(reshandle);
+  }
+
+Here, `FreeResource(reshandle);` will be automatically called before leaving the
+function, so you don't have to manually insert such calls before each `return`
+statement.
+
+Note that cleanup code is called before leaving the *scope*. I.e. the code
+
+  foreach (auto i; 0..3) {
+    scope(exit) writeln(i);
+  }
+
+will print "0", "1", and "2".
+
+Also note that cleanup handlers won't be called on system/host errors.
+
+
+
+Struct assignment
+=================
+
+While you cannot pass structs by value, you can assign structs. Note that this
+does "deep copy", i.e. if your struct contains dynamic arrays or dictionaries,
+they will be cloned, not simply referenced.
+
+
+
+Vector swizzling
+================
+
+VC supports vector swizzling. Let me show you some examples (again):
+
+  TVec v0 = vector(1, 2, 3);
+  TVec v1 = v0.yzx; // v1 is `vector(2, 3, 1)` now
+  TVec v2 = v0.zx; // v2 is `vector(3, 1, 0)` now -- note the last `0`
+  TVec v3 = v0._mx_y_mz; // v3 is `vector(-1, 2, -3)
+  TVec v4 = v0._1_m1_0; // cryptic way to write `vector(1, -1, 0)`
+
+I.e. you can create new vectors by arbitrary combination of old vector elements.
+Underscore can delimit element names, and it is ignored by the compiler.
+You can prefix element name with `m` to negate it. You can use literals
+`0` and `1` (but not other digits).
