@@ -1,5 +1,5 @@
 
-                                  JL
+                             JL and others
 
                                presents
 
@@ -10,8 +10,6 @@
             ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
              #    ##    ##    #      ####     ####   ##       ##
 
-                                                    Version 1.33
-
 Contents:
     0. Disclaimer
     1. Introduction
@@ -21,9 +19,9 @@ Contents:
     5. Command line parameters
     6. Differences from original game
     7. Version history
-    8. Licensing
-    9. Special Thanks
-   10. Links
+    8. Special Thanks
+    9. Links
+
 
 *****************************************************************************
 0. Disclaimer
@@ -35,30 +33,26 @@ Contents:
     that this code may have on you, your computer, your sanity, your dog,
     and anything else that you can think of. Use it at your own risk."
 
+
 *****************************************************************************
 1. Introduction
 *****************************************************************************
 
-    Vavoom is a source port based on the sources of Doom, Heretic, Hexen and
-  "a little bit" from Quake. Supported platforms are Windows and LINUX.
-  A dedicated server also can be compiled on OpenBSD and possibly on other
-  UNIX systems, but this may require some changes.
+    Vavoom is a source port based on the sources of Doom, Heretic, Hexen,
+  "a little bit" from Quake, (G)ZDoom, and others. Supported platforms are
+  Windows and GNU/Linux. A dedicated server also can be compiled on OpenBSD
+  and possibly on other UNIX systems, but this may require some changes.
     If you find any bugs, feel free to report them.
+
 
 *****************************************************************************
 2. Requirements
 *****************************************************************************
 
 Vavoom System Requirements:
-     - Pentium processor or better
-     - 32 MB RAM
-     - Optional: Sound card
-     - Optional: CD-ROM
-     - Windows version: DirectX 9 (http://www.microsoft.com/directx)
-
-*** IMPORTANT! ***
- Vavoom requires a floating point processor.
- Systems that do not have an FPU installed will not run Vavoom -- at all.
+     - Pentium IV processor or better
+     - 256 MB RAM
+     - GPU with support for OpenGL 2.1 and GLSL 1.20
 
   To play Vavoom you need the main wad file from one of the following games:
      - Doom shareware
@@ -72,63 +66,42 @@ Vavoom System Requirements:
      - Hexen
      - Strife shareware
      - Strife
+     - Freedoom
   If you have multiple IWADs, you can use command line params -doom, -doom2,
 -tnt, -plutonia, -heretic, -hexen or -strife to look for IWADs only for that
 game. Hexen requires a wad file from version 1.1.
+
 
 *****************************************************************************
 3. Installation
 *****************************************************************************
 
 ==============================================================================
-3.1 Installing Windows binaries
-==============================================================================
-
-  First choose a directory, where you will place Vavoom - an existing Doom,
-Heretic and/or Hexen directory or new directory. If you decide to create a
-new directory, you must copy here the main game wad file. Then unarchive here
-the binaries.
-
-==============================================================================
-3.2 Linux/UNIX installation
+3.1 GNU/Linux / UNIX installation
 ==============================================================================
 
 In order to compile and run Vavoom under Linux, you need the following:
 
 Compiler and tools:
-    * GNU C++ Compiler, (every LINUX user must have them)
+    * GNU C++ Compiler, (every GNU/Linux user must have them)
     * CMake (http://cmake.org)
 Libraries:
-    * zlib (http://www.zlib.net)
-    * libpng (http://www.libpng.org)
-    * libjpeg (http://www.ijg.org)
-    * Allegro 4.0 (http://alleg.sourceforge.net)
-  or
-    * SDL 1.2 (http://www.libsdl.org) and SDL_mixer 1.2
-      (http://www.libsdl.org/projects/SDL_mixer/).
+    * SDL 2 (http://www.libsdl.org)
+    * OpenAL-Soft (https://kcat.strangesoft.net/openal.html)
     * OpenGL: OpenGL implementation from your video card's manufacturer
       or MESA (http://www.mesa3d.org) and X-Windows development libraries.
-    * AllegroGL (http://allegrogl.sourceforge.net) if you want to use OpenGL
-      with Allegro driver.
 Optional:
-    * OpenAL (http://www.openal.org), the source must be checked out from the
-      CVS repository. You will find info on this on OpenAL website or at Creative
-      developer centre (http://developer.creative.com).
-    * libvorbis (http://www.vorbis.com)
+    * libvorbis (https://xiph.org/vorbis/)
+    * libopus (https://opus-codec.org)
     * libmad (http://www.underbit.com/products/mad/)
-    * mikmod (http://mikmod.raphnet.net/)
     * FLAC (http://flac.sourceforge.net/)
-    * libmodplug (http://modplug-xmms.sourceforge.net/)
 
   And of course the Vavoom sources.
 
 Step by step:
 -------------
 
-  1. Unpack the Vavoom source package and change directory to it:
-
-    tar xvjf vavoom-1.31.tar.bz2
-    cd vavoom-1.31
+  1. Get the Vavoom sources (via git, or in some other way).
 
   2. Run the CMake:
 
@@ -138,15 +111,6 @@ Step by step:
 
     -DCMAKE_INSTALL_PREFIX=PATH  - specify prefix of installation. Default is
                                    /usr/local
-    -DWITH_ALLEGRO=Y             - use Allegro for hardware API. This is the
-                                   default.
-    -DWITH_SDL=Y                 - use SDL for hardware API.
-    -DWITH_OPENGL=N              - compile without OpenGL support.
-    -DWITH_OPENAL=Y              - compile without OpenAL support.
-    -DBINDIR=PATH                - specify directory for binary files, relative
-                                   to prefix. Default is bin
-    -DDATADIR=PATH               - specify directory for data files, relative
-                                   to prefix. Default is share/vavoom
 
   3. Run make in the main directory.
 
@@ -172,58 +136,14 @@ a symbolic link to it:
 
   Also make sure that the file/symbolic link name is in lower case.
 
-  6. If using allegro, run the Allegro setup utility, setup your sound and music
-card, save the changes and then copy allegro.cfg into Vavoom directory.
-
-==============================================================================
-3.3 Other source code compiling information for developers
-==============================================================================
-
-For Windows you need:
-  Compiler and tools:
-      * MinGW and MSYS (http://www.mingw.org).
-  Libraries:
-      * zlib (http://www.zlib.net)
-      * libpng (http://www.libpng.org)
-      * libjpeg (http://www.ijg.org)
-      * DirectX 9 SDK (http://www.microsoft.com/directx)
-      * EAX 2.0 SDK (http://developer.creative.com/).
-      * OpenAL SDK (http://developer.creative.com), you must create directory
-        AL in your compilers include directory and copy OpenAL include files here.
-      * libvorbis (http://www.vorbis.com)
-      * libmad (http://www.underbit.com/products/mad/)
-      * mikmod (http://mikmod.raphnet.net/)
-      * FLAC (http://flac.sourceforge.net/)
-      * libmodplug (http://modplug-xmms.sourceforge.net/)
-
-==============================================================================
-3.4 Timidity patches
-==============================================================================
-
- You can get Timidity patches to use with Vavoom from here:
-
-  http://www.doomworld.com/idgames/index.php?id=13928
-
- or from here:
-
-  http://www.doomworld.com/idgames/index.php?id=12527
-
- To allow Vavoom to use the patch files, you need to edit the timidity.cfg,
-look for and replace the
-
-  dir d:\doom\misc\patches
-
-line to point to the directory where you unarchived the pack, then move the
-timidity.cfg file to the same directory where Vavoom executable is located.
-
- Then make sure to enable Timidity playback in the launher or inside the
-sound options menu in-game.
 
 *****************************************************************************
 4. Starting a net game
 *****************************************************************************
 
-  Vavoom supports only TCP/IP.
+  WARNING! Network code is not finished. It should be fairly stable, but in
+           its current form it doesn't support some features, may crash, and
+           better played over LAN.
 
   The default socket port is 26000. It can be changed in the console with
 the command "port <port>".
@@ -264,6 +184,7 @@ not running, for dedicated servers it's only executed on command line.
   Shuts down the current server and spawns a new one in the specified map. As
 you understand all the clients are dropped.
 
+
 *****************************************************************************
 5. Command line parameters
 *****************************************************************************
@@ -278,12 +199,6 @@ them with the + symbol, they will be executed after executing basev/startup.vs.
 Graphics
 --------
 
--OPENGL selects OpenGL driver
--opengl
-
--D3D selects Direct3D driver
--d3d
-
 -PARTICLES specifies the number of particles to use, default is 2048, but you
 can't have less than 512 (i.e. you can't disable them)
 -particles <count>
@@ -297,20 +212,8 @@ Sound
 -NOSFX disables sound
 -nosfx
 
--3DSOUND enables 3D sound, Windows version only
--3dsound
-
 -NOMUSIC disables music
 -nomusic
-
--NOCDAUDIO disables CD music
--nocdaudio
-
--CDDEV specifies CD device file, default /dev/cdrom, LINUX version only
--cddev <file>
-
--OPENAL enabled OpenAL driver.
--openal
 
 Input
 -----
@@ -366,9 +269,6 @@ Custom games and development
 -GAME specifies custom game
 -game <directory>
 
--DEVGAME like -game, but also sets Vavoom in development mode
--devgame <directory>
-
 -FILE specifies additional files
 -file <file1> [<file2> ...]
 
@@ -378,30 +278,18 @@ Custom games and development
 Debugging
 ---------
 
--DEBUG creates a debug file basev/debug.txt on Windows,
-       ~/.vavoom/debug.txt on Unix-like systems with all the console messages.
--debug
+-LOGFILE writes console log to the specified file.
+-logfile <filename>
 
--STARTTIME sets start time, it doesn't work in the LINUX version or
-           dedicated servers
--starttime <time>
-
--RHIDE prints debug file to stderr
--rhide
-
--DEBUG_DECORATE prints additional debugging messages when loading DECORATE files.
--debug_decorate
 
 *****************************************************************************
 6. Differences from the original game
 *****************************************************************************
 
     - Support higher (and lower ;-) resolutions.
-    - 16 and 32 bit colours for all the drivers, 24 bit for OpenGL and Direct3D.
-    - Polygon-based software rendering.
     - OpenGL rendering.
-    - Direct3D rendering.
     - Lightmapped lighting.
+    - Optional shadow volumes (like Doom 3).
     - Static light sources with sight checking (i.e. true shadows).
     - Dynamic lighting.
     - Colored lighting.
@@ -417,12 +305,10 @@ Debugging
     - Translucency.
     - Console. Call it with the '`' key (also known as tilde). Special keys are:
         - Tab to complete a command, press it again for the next matching command;
-        - Shift + Tab for reverse order;
         - PageUp/PageDown to scroll lines up/down;
         - Separate multiple commands by separating them with semi-colon ';';
         - Up/Down for the last 16 commands history.
-    - CD audio.
-    - 3 crosshairs.
+    - Several crosshairs.
     - Fullscreen stats also in Doom.
     - Controls can be redefined in-game.
     - Pure client/server architecture with in-game joining.
@@ -430,785 +316,24 @@ Debugging
     - 3D floors.
     - Possibility to use wall textures on floors/ceilings and flats on walls.
     - Support for tall patches and scaled textures.
-    - glBSP plugin.
-    - glVIS plugin.
     - Support for Skyboxes
-    - WAV and FLAC sounds, MP3, OGG, mod-style and game emulation music.
+    - WAV and FLAC sounds, MP3, Opus, Vorbis, mod-style music.
     - Possibility of using Timidity for MIDI and MUS playback.
     - High Resolution textures.
     - Definition of new in-game controls using KEYCONF script.
     - Custom object and weapon definitions using DECORATE script.
-    - Stencil shadows.
     - A lots more.
 
-*****************************************************************************
-7. Version history
-*****************************************************************************
-
-==============================================================================
-Version 1.1
-==============================================================================
-
-* Replaced immediate console command execution with command buffer (like in
- Quake).
-* Replaced old message with 5 notify messages.
-* Created switches script.
-* All games can have extended level structure with ACS scripts.
-* Reworked all sound, music and CD-audio stuff.
-* Created new sound script with more info than SNDINFO, this one replaces
- builtin table of sounds.
-* Fixed problem with long sound lumps.
-* Added function S_PlayTillDone for Doom quit sounds.
-* Windows version now supports 3D sound (if Your hardware supports it).
-* No more builtin sound sequence list - now registering all sequences from
- script.
-* CD now works on Windows and also on Linux (thanks to sources if Quake).
-* Some other bugfixes and improvements.
-
-==============================================================================
-Version 1.2
-==============================================================================
-
-* Some structures are replaced with C++ classes, which makes coding easier.
-* Functions, that takes most of the execution time (R_DrawColumn, R_DrawSpan
- and RunFunction) now are in assembler (DOS and LINUX versions only).
-* Improved dehacked support. Now it handles everything, that it can. It is
- also added to makeinfo utility, which means that now you can create PROGS
- with changes of dehacked patch.
-* Removed some command line params (-playdemo, -record, -width, -height, ..).
- Most of them are replaced with console commands that can be specified in
- command line by adding + before them (like in Quake).
-* Some bug fixes.
-
-==============================================================================
-Version 1.3
-==============================================================================
-
-* DOS network drivers ported to DJGPP and moved into main executable.
-* Fixed chat.
-* Fixed multiplayer intermission.
-* Totally rewrote network protocol. Added multicast server. This means that
- all client messages are sent only to server and server forwards them to
- other players. Why that's for? Whel, in the beginning, when I tried to run
- 4 players on IPX, it seemed that it runs one tic per second. By adding
- -extratics situation got a little bit better, but not by much. Now 4 players
- on IPX really can play. No need to use -dup option so I decided to remove it.
- -extratics option was removed, when I added ACK mechanism.
-
-==============================================================================
-Version 1.4 BETA
-==============================================================================
-
-* Added almost all Quake network drivers.
-* Client/server architecture. As You understand, this is a really BIG change.
-* Removed support for old demos. New demos is not done yet :-(
-* Real random numbers.
-* Net game launching from console.
-
-==============================================================================
-Version 1.4
-==============================================================================
-
-* In-game joining (also in single player).
-* Fixed savegames, intermission, floor texture changes, other minor bugs.
-
-==============================================================================
-Version 1.5 BETA
-==============================================================================
-
-* Replacing fixed point with floating point, in progs everything is replaced,
- in executable some drawing functions still use them because conversation from
- float to int is very expensive.
-* Fixed bug with framerate bigger than 35 FPS (caused delays between input
- and actual action)
-* Improved Windows keyboard input
-* I hope that I fixed problem with sound in Windows version
-* Added screen resolution menu
-* Server's mobj baseline is now saved in save game
-
-==============================================================================
-Version 1.5
-==============================================================================
-
-* Dedicated server application.
-* Multiplayer menus.
-* Fixed some bugs in DOS/LINUX prog execution asm.
-* Changed network protocol.
-
-==============================================================================
-Version 1.5.1
-==============================================================================
-
-* Some changes to compile it on OpenBSD
-
-==============================================================================
-Version 1.6
-==============================================================================
-
-* Added vectors, are used a lots.
-* Splited progs into 2 parts - server progs and client progs.
-* In a lots of places time is measured in seconds, not tics. Speed now is in
- pixels per second.
-* Quake style key bindings.
-* Angles are handled by client.
-* Togglable mouse look, lookspring
-* Client position is sent using floats, no more screen jiggle.
-
-==============================================================================
-Version 1.666 BETA 1
-==============================================================================
-
-* New polygon based software renderer
-* Wider look range
-* Tilted death view.
-* Skyboxes
-* 16 bit colours
-* Early OpenGL rendering
-* Added builtins for retrieving texture/flat num from name. To use them open
- file builtins.c in directory common and in section of common builtins add
- the following lines:
-
-    extern int CheckTextureNumForName(string name);
-    extern int TextureNumForName(string name);
-    extern int CheckFlatNumForName(string name);
-    extern int FlatNumForName(string name);
-
-  If texture or flat is not found, Check... functions returns -1, but
- functions without Check will abort program with error message.
-
-==============================================================================
-Version 1.666 BETA 2
-==============================================================================
-
-* Disabled testing of lighting effects, in Hexen MAP01 it took 62% of
- execution time.
-* Support for different sprite types.
-* For key bindings added command for key-up event. This allows such commands
- as "bind PADDIVIDE "fov 45" "fov 90"".
-* Fixed drawing of translucent sprites
-* Fixed Z-buffering.
-* Fixed translated sprites.
-* Fully functional OpenGL driver, selectable from command line.
-
-==============================================================================
-Version 1.666
-==============================================================================
-
-* Direct3D rendering, also selectable from command line.
-* Basic support for decals. Not available yet.
-* OpenGL driver for DOS version ;-).
-* Fixed crashing in clipping because of roundoffs.
-* Fixed crashing when starting a net game.
-* Puffs are correctly spawned on floors and ceilings.
-* Reworked menus.
-* New demos.
-
-==============================================================================
-Version 1.7 BETA 1
-==============================================================================
-
-* Removed dehacked support from engine. Will not come back. ;-(
-* Sloped floors and ceilings. ;-)
-* Most of the timing is in seconds.
-* Switched from mobjinfo table to object spawn functions. You can easily add
- new object params.
-* Partialy redesigned VavoomC compiler. The new features are:
-    - pointers to pointers;
-    - indirect function calls;
-    - C++ style structure inheritance;
-    - special type for vectors, operators with vectors;
-    - support for Borland preprocessor;
-    - varargs for builtin printing functions.
-* Partially moved menus to progs. In one of the next betas I will move the
- rest of the menu code and also intermission and finale.
-* Level identification by name.
-* Sprite name list is sent from server. Disabled character cast in Doom 2
- finale. Client doesnt need server progs anymore.
-* Testing support for Strife.
-* Possibility to use wall textures on floors/ceilings and flats on walls.
-* Reworked memory manager to have less memory leaks.
-* Translucent walls.
-* Terrain type script.
-* Center messages.
-* Translation tables loaded from wad file.
-* Correct player colours.
-
-==============================================================================
-Version 1.7 BETA 2
-==============================================================================
-
-* In Doom/Doom2 walking over/under other things.
-* 3D floors!
-* Translucent floors.
-* Palette colour shifts. Currently used only for contents but soon all PLAYPAL
- entries will be replaced with colour shifts.
-* Underwater effect.
-* Increased anims limit for retail Strife.
-* Config not saved on error.
-
-==============================================================================
-Version 1.7 BETA 3
-==============================================================================
-
-* Removed limitation for switches.
-* In compiler possibility to define multi-dimensional arrays and structures.
-* Use Hexen map format as default, for old format do internal translation.
- Tried to do this compatible with ZDoom, maps converted with zwadconv runs
- fine.
-
-==============================================================================
-Version 1.7 BETA 4
-==============================================================================
-
-* New OpenGL driver for LINUX.
-* Scanline world drawing.
-* Improved performance of OpenGL and Direct3D drivers. Removed all stuff that
- slows it down.
-* Fixed Hexen hubs, made them available for all games. Cluster 0 is treated as
- "no cluster", all maps in it are treated as in different clusters.
-
-==============================================================================
-Version 1.7 BETA 5
-==============================================================================
-
-* Finished moving menus to progs.
-* Moved intermissions and finales to progs.
-* Translucent crosshair (cvar croshair_trans in range 0-100)
-
-==============================================================================
-Version 1.7
-==============================================================================
-
-* Dynamic lighting.
-* Draw entire polygon, not by splitting into triangles, faster.
-* Lighting of sprites in data level, even more faster.
-* Other bug fixes and improvements.
-* In glBSP fixed polyobj finding.
-* A different algorithm for glVIS, more precise, but slower.
-
-==============================================================================
-Version 1.8
-==============================================================================
-
-* Optimized glVIS utility, now it's faster.
-* Network message functions in progs. For nonrecognized server commands
- engine calls progs function to handle it. In other words you can extend
- network protocol.
-* Particles.
-* Lightmapped lighting.
-* Mipmapping.
-* Sorted edge rasterization.
-* Static light sources.
-* 32 bpp colours.
-* Colored lighting.
-* Console alias saved in config.
-* Progs virtual machine now allocates local vars from progs stack.
-
-==============================================================================
-Version 1.9
-==============================================================================
-
-* Support for md2 models.
-* Some renaming, game data directory now is called basev and VavoomC files
- now haves extension vc.
-* Translucent 3D floors.
-* Mipmapping for OpenGL and Direct3D
-* Multitexture support in OpenGL.
-* Automap works in OpenGL and Direct3D
-* Configurable automap colours.
-* Reworked filesystem. Now Vavoom uses a filesystem similar to Quake.
-* Some client/server improvements.
-* Up to 8 sounds per entity.
-
-==============================================================================
-Version 1.10
-==============================================================================
-
-* glBSP plugin.
-* glVIS plugin.
-* Windowed mode for Windows OpenGL version.
-* vcc now haves a built-in preprocessor, no need for external compiler
- anymore.
-* Made VavoomC language object-oriented. All the basic features: classes and
- methods (currently all methods are virtual), as well as support for class
- references (not yet used in actual code).
-* Support for all format TGA model skins.
-* Some new extensions to the MAPINFO script (see vavmref.txt).
-* Added skybox script.
-* Floatification of angles - now represented as floats and measured in
- degrees.
-* glVIS now also builds REJECT data (if GL-nodes are in wad file, not in gwa).
-* Gamma controls for OpenGL and Direct3D.
-* Specular highlights.
-
-==============================================================================
-Version 1.11
-==============================================================================
-
-* A lots of work on progs - references, defaultproperties (replaces C++ style
- constructors in previous version), dynamic type casting, fixed some bugs and
- more.
-* Script code patching - somewhat faster.
-* Some fixes for net games.
-* Added Skulltag bots.
-* Removed some limitations.
-* Most of the Hexen action specials are now available in all games.
-
-==============================================================================
-Version 1.11.1
-==============================================================================
-
-* Fixed some serious bugs.
-* SDL port for Linux.
-
-==============================================================================
-Version 1.11.2
-==============================================================================
-
-* Fixed "slow motion" bug.
-* Fixed a bug in Direct3D driver that caused system to lock up.
-* Fixed a bug that allowed you to play Hexen only with fighter.
-* Fixed some small bugs in Heretic and Hexen status bars.
-* Fixed 32-bit software rendering in Windows version.
-* In Windows version added support for 16 joystick buttons.
-* Improved DirectSound3D settings.
-* Some other little bug fixes and improvements.
-
-==============================================================================
-Version 1.12
-==============================================================================
-
-* Support for DeepSea tall patches.
-* Support for scaled textures (like in ZDoom).
-* Support for EDGE 3D floors.
-* Line-to-line teleporters.
-* Linedef special for translucent lines.
-
-VavoomC:
-* Removed support for uint type.
-* Removed support for C-style type casting, use dynamic cast instead.
-* New type - name: The name of an item in Vavoom (such as the name of a
- function, state, class, etc). Names are stored as a 16-bit index into the
- global name table.
-* New type - bool. It's implemented as a bitfield. That means that in structs
- and classes a list of sequential bool properties will be merged into a single
- 32 bit integer so it's a good idea to group them together.
-* Changed states syntax. Function pointer replaced with state code.
-* Some other changes.
-
-==============================================================================
-Version 1.13
-==============================================================================
-
-* EAX Support.
-* Slightly improved Strife support.
-* A working version of the DDF to VavoomC converter.
-
-==============================================================================
-Version 1.14
-==============================================================================
-
-* Fixed a bug in Doom that crashed with static light objects.
-* Some fixes in level loading code.
-* A slight improvement on flickering in single player.
-* Fixed join game menu.
-* Switched to floating-point time.
-* Added OpenAL driver.
-* Updated models.
-
-==============================================================================
-Version 1.15 BETA 1
-==============================================================================
-
-* 2 pass scripts compiling has been partially implemented.
-* VavoomC now has new, UnrealScript-like, class definition style.
-* Fixed some problems with huge maps.
-* Fixed screenshots.
-* Slope creation with vertex heights.
-* ZDoom's sloping specials.
-* Support for coloured sector light.
-* Configurable entity limit.
-* Support for old aspect ratio (console variable old_aspect).
-
-==============================================================================
-Version 1.15
-==============================================================================
-
-* Fully switched to UnrealScript like class definition style.
-* Network game fixes.
-
-==============================================================================
-Version 1.15.1
-==============================================================================
-
-* Moving 3D floors.
-* Greatly improved Strife support: implemented many line specials, fully
- working conversations, inventory system and more.
-* In OpenGL and Direct3D drivers added a fix for overflow problem.
-* Secret level info saved in a savegame.
-* A fix for "feet in ground" problem (console vars r_fix_sprite_offsets and
- r_sprite_fix_delta).
-
-==============================================================================
-Version 1.15.2
-==============================================================================
-
-* Several bug fixes, improved Strife support.
-
-==============================================================================
-Version 1.15.3
-==============================================================================
-
-* Windowed mode for all Windows renderers.
-* Mouse wheel support.
-* Improved old sky rendering.
-* Added SDL patches (with some modifications).
-* Updated to latest glBSP version.
-* Added support for version 3.0 GL-Nodes in engine and glVIS.
-* Even more improved Strife support.
-* Several other small bug fixes.
-
-==============================================================================
-Version 1.16
-==============================================================================
-
-* Fully working Strife support.
-* Implemented all sector specials in all games.
-* Support for hi-res texture replacements.
-* Added support for enhanced ACS script lumps. Several extended pcodes are
- still missing.
-
-==============================================================================
-Version 1.16.1
-==============================================================================
-
-* Fixed several serious bugs.
-
-==============================================================================
-Version 1.17
-==============================================================================
-
-* Reorganized line specials. Almost all existing line specials are now
- available in all games. Also added a lots of new ones.
-* Partial support of Boom level editing features.
-* OpenGL driver using AllegroGL library for Linux.
-* Improved fullscreen stats.
-* Fixed multiple Strife bugs and made some other improvements.
-* Saving a network game.
-
-==============================================================================
-Version 1.18
-==============================================================================
-
-* autoconf's configure script.
-* Updated models.
-* New texture manager.
-* Added support for overloaded textures.
-* Support for PNG files in WAD file.
-* More complete Boom support.
-* Basic network packet compression.
-* Other small fixes.
-
-==============================================================================
-Version 1.19
-==============================================================================
-
-* Replaced DirectMusic driver with new driver that uses MMSystem.
-* Added support for WAV and FLACC format samples.
-* Added support for Vorbis, MP3, FLACC and tracker module format music.
-* Midi emulation with Timidity.
-* Parsing of all MAPINFO, SNDINFO and SNDSEQ scripts.
-* Added support for version 5 GL nodes.
-* Added support for SNDINFO and SNDSEQ extensions.
-* Renamed sounds to ZDoom names.
-
-==============================================================================
-Version 1.19.1
-==============================================================================
-
-* Fixed multiple bugs (some were quite serious).
-
-==============================================================================
-Version 1.20
-==============================================================================
-
-* Implemented support for modular progs, a lots of other changes in compiler
- and in VavoomC language.
-* A lots of changes and improvements in the core of the engine.
-* Ported to FreeBSD, Solaris 10, BeOS and Darwin (PowerPC).
-* In UNIX systems savegames, config files and some gwa files are stored in home
- directory.
-* Fixed anisotropic texture filtering in OpenGL.
-* Fixed multiple bugs in Strife.
-* Fixed doublesky.
-* Fixed two network vulnerabilities.
-* Added lighting effects to Strife.
-* Implemented previous / next weapon commands.
-
-==============================================================================
-Version 1.21
-==============================================================================
-
-* A lots of work to make it work on 64-bit systems.
-* Removed old zone memory allocator, now uses standard libc methods.
-* Many changes to the internal architecture.
-* Added support for TGA high-resolution textures.
-* Improvements to monster behaviour, physics and automap.
-* Build system improvements, changed installation procedure on Unix systems.
-* Implemented support for specification of additional directories where to look
- for IWAD files.
-* Fixed usage of sound sequences in all games.
-* Added support for dynamic strings in VavoomC.
-* Changed default virtual screen resolution to 640x480.
-* Use Timidity on Unix systems by default.
-
-==============================================================================
-Version 1.21.1
-==============================================================================
-
-* Fixed crash in glVIS.
-* Fixed crash when traveling to already visited map.
-
-==============================================================================
-Version 1.21.2
-==============================================================================
-
-* Fixed problem with latest version of glBSP.
-* Some fixes for 64-bit systems.
-* Changed build system to use automake.
-* Fixed empty spaces in status bar.
-* Fixed problem with DoomBuilder config file for Heretic.
-* Fixed DeHackEd support.
-* Fixed Windows MIDI driver to use MIDI device selected in control panel and
- to properly set music volume.
-
-==============================================================================
-Version 1.22
-==============================================================================
-
-* Added support for PK3 (ZIP) files.
-* Rewrote most of the vcc, added code optimisations.
-* Changed directory for high-resolution textures to hirestex.
-* Added support for many MAPINFO extensions.
-* Added support for latest SNDSEQ extensions.
-* Added placeable ambient sound and sound sequence objects.
-* Added support for language scripts.
-* Added support for ANIMDEFS extensions (except camera textures).
-* Some improvements in network protocol.
-
-==============================================================================
-Version 1.22.1
-==============================================================================
-
-* Implemented switching to windowed mode on run-time.
-* Implemented support for custom episode definitions in MAPINFO.
-* Added support for HI_START/HI_END high resolution textures and HIERSTEX
- scripts.
-* Implemented support for JPEG textures.
-* Changed old aspect ratio to be on by default.
-* Implemented simpler support for skybox replacements of the normal sky.
-* Implemented propper support for enhanced music files.
-* Added console variables to disable hi-res textures and external music.
-* Updated ACS support.
-* Some rendering improvements.
-* Fixed many bugs.
-
-==============================================================================
-Version 1.23
-==============================================================================
-
-* Implemented support for model definition files.
-* Added dehacked support to the engine.
-* Implemented support for TARRAIN script.
-* Implemented support for LOADACS script.
-* Rewrote the whole game network protocol.
-* Fixed wrong wad markers for high-resolution textures.
-* Implemented switching of the game language.
-* Added some new features to the VavoomC language such as restricted class
- types, access of default values of an object or class, C# style properties.
-* Multiple bug fixes.
-
-==============================================================================
-Version 1.23.1
-==============================================================================
-
-* Implemented support for fog effects.
-* Multiple bug fixes.
-
-==============================================================================
-Version 1.24
-==============================================================================
-
-* Added some new features to the VavoomC language such as byte types, dynamic
- arrays, iterators, non-native static methods.
-* Some improvements in network update.
-* Added support for EDGE's sprites with 16 rotations.
-* Added internal blockmap builder, similar to Boom. For levels without blockmap
- it will be generated automaticly.
-* Implemented support for ZDoom's compressed GL nodes.
-* Added support for texture offsets in PNG textures.
-* Added support for ZDoom's sloping thing types.
-
-==============================================================================
-Version 1.25
-==============================================================================
-
-* Merged a lots of common progs code.
-* New style state definitions.
-* Implemented a new inventory system.
-* Rewrote graphical launcher using wxWidgets, now available on Linux.
-* Added support for LOCKDEFS script.
-* Updated glBSP to the latest version.
-* Fixed many bugs, other improvements.
-
-==============================================================================
-Version 1.26
-==============================================================================
-
-* Rewrote most of the menu system, added very basic support for mouse.
-* Implemented support for FON1 and FON2 format fonts, coloured text, FONTDEFS
- and TEXTCOLO scripts.
-* Use glBSP to build nodes internally (if needed). Building of GWA files is
- now optional.
-* Implemented support for ACS HUD messages.
-* Added support for additive translucency.
-* Added stealth Doom monsters.
-* Implemented support for camera textures.
-* Implemented support for ambient sounds defined in SNDINFO using $ambient
- command.
-* Added support for swimable Boom water.
-* Implemented support for padding, scaling, rotating and aligning sector floors
- and ceilings.
-* Implemented particle fountains and sparks.
-* Implemented support for monster patrol points.
-* Added support for TITLEMAP.
-* Initial DECORATE support. Old style decorations, projectiles and pickups
- work fine, support for actor definitions is very limited, many simple objects
- will work but anything more complex won't.
-* Implemented support for custom player colours.
-* Implemented support for many (around 25) line specials.
-* Implemented most of the missing ACS commands.
-* Impemented scripted marines.
-* Fixed many bugs, other small things.
-
-==============================================================================
-Version 1.27
-==============================================================================
-
-* Dropped DOS support.
-* Switched to CMake build system.
-* Fully working DECORATE support.
-* Effect definitions usinf VFXDEFS script.
-* Added sprite renaming that allows use of actors from other games by just
- providing needed states without worying about conflicting names.
-* Added better check for things from registered version being used in shareware
- version of the IWAD.
-* Added support for obituaries.
-* Added support for generic freeze death.
-* Partial support for KEYCONF scripts.
-* Implemented sector action triggers.
-* Added invisible bridges.
-* Implemented ACS fade effects.
-* Switched Direct3D renderer to use DirectX 9.
-* Fixed screen colour of invulnerability powerups.
-* Many bug fixes.
-
-==============================================================================
-Version 1.27.1
-==============================================================================
-
-* A lots of bug fixes.
-
-==============================================================================
-Version 1.28
-==============================================================================
-
-* Implemented support for many line specials and extended flags.
-* Added support for multiple different skies in a level.
-* Added support for advanced skyboxes and sector stacks.
-* Added support for mirrors and reflective floors and ceilings.
-* Added support for additive translucency for 3D floors.
-* Added secret trigger and hate target classes.
-* Implemented many of the missing MAPINFO properties.
-* Added separate texture offsets for top, middle and bottom wall textures.
-* Implement support for custom skill definitions.
-* Implemented support for UDMF format maps.
-
-==============================================================================
-Version 1.29
-==============================================================================
-
-* Added support for Vavoom master server.
-* Improvements to model skin support.
-* Fixed monster infighting.
-* Fixed net game getting stuck when a packet sent from client is lost.
-* Added support for intermission background scripts.
-* Added support for mouse controllable menu controls.
-* Added support for all finale types in all games.
-* Added support for DeHackEd exlosion style for rockets.
-* Added support for different blood colours.
-* Added support for voodoo dolls.
-* Most of the actor classes moved to DECORATE.
-* Added support for model frame interpolation.
-* Added support for compiling progs in the engine, progs now are in source
- form in PK3 file.
-
-==============================================================================
-Version 1.30
-==============================================================================
-
-* Improved speed of DECORATE parser.
-* Some gameplay speed optimisations.
-* Some improvements to networking.
-* Fixed demo recording in single player.
-* Added suppport for maps with more than 32k sidedefs.
-* Added support for maps that don't have node lumps present at all.
-* Added support for most of the new ACS commands, additions of new features
- to the existing ones.
-* Added support for "return" ACS script type.
-* Added "allowprotction" flag to terrain types.
-* Morph system enhancements.
-* Added support for text format texture definition scripts.
-* Many bug fixes and improvements.
-
-==============================================================================
-Version 1.31
-==============================================================================
-
-* Added support for writing screenshots in PNG and JPG formats.
-* Auto-aim can be turned off.
-* Implemented saving of the game into a single file.
-* Added basic model frame interpolation.
-* Support for basic parsing of GLDEFS variants.
-* Implemented multiple missing DECORATE features.
-* Many bug fixes.
-
-==============================================================================
-Version 1.32
-==============================================================================
-
-* Added advanced renderer which is able to do Doom 3 style shadows. OpenGL
- version only.
-* If available, use GLSL shaders for all OpenGL rendering.
-* Multiple bug fixes.
-
-==============================================================================
-Version 1.33
-==============================================================================
-
-* Removed software renderer.
-* Inventory bar for the Doom statusbar.
-* Improvements to DECORATE.
-* Multiple bug fixes
 
 *****************************************************************************
-8. Licensing
+7. Licensing
 *****************************************************************************
 
     Vavoom is distributed under terms of GNU General Public Licence.
 
+
 *****************************************************************************
-9. Special Thanks
+8. Special Thanks
 *****************************************************************************
 
 id Software /   These are the people who developed Doom and Quake, they later
@@ -1241,44 +366,24 @@ Pascal
 vd Heiden
 (CodeImp)
 
-Randy Heit      Developer of the ZDoom sourceport, which Vavoom uses features
-                from.
+Randy Heit      Developers of the (G)ZDoom sourceport, which Vavoom uses
+Graf Zahl       features from.
 
 Rachael
 Alexanderson
-(Eruanna) Webmaster and administrator of the DRD Team SVN Builds, which host
-Nigel Rowand    Vavoom SVN builds.
+(Eruanna)       Webmaster and administrator of the DRD Team SVN Builds, which
+Nigel Rowand    once hosted Vavoom SVN builds.
 (Enjay)
 
+
 *****************************************************************************
-10. Links
+9. Links
 *****************************************************************************
 
-  The Vavoom homepage:
+  The original Vavoom homepage:
     http://vavoom-engine.com/
 
-  Vavoom forums:
-    http://vavoom-engine.com/forums/
-
-  Vavoom wiki:
-    http://vavoom-engine.com/wiki/
-
-  The Vavoom SourceForge project page:
-    http://sourceforge.net/projects/vavoom/
-
-  The Vavoom SVN Builds:
-    http://svn.drdteam.org/
-
-  The homepage for glBSP:
-    http://glbsp.sourceforge.net/
-
-  The homepage for glVIS:
-    http://vavoom-engine.com/glvis.php
-
-  The BOOM homepage:
-    http://www.teamtnt.com/boompubl/boom2.htm
-
-  The ZDoom homepage:
+  The GZDoom homepage:
     http://zdoom.org/
 
   The home of ID-Software:
@@ -1292,27 +397,13 @@ Nigel Rowand    Vavoom SVN builds.
 
   Doom related pages:
     http://www.doomworld.com/
-    http://www.new-doom.com/
-    http://www.classicdoom.com/
-    http://www.drdteam.org/
-    http://doom.wikia.com/
-
-  Raven games related page:
-    http://www.ravengames.com/
-    http://www.ravenforums.com/
-    http://www.ravencomunity.com/
-    http://www.ravenclans.com/
-    http://www.raven-games.com/
+    http://doomwiki.org/
 
   Korax' Heritage:
     http://www.korax-heritage.com/
-
-  All questions, bug reports, etc. should be posted on the Vavoom Engine forums:
-    http://vavoom-engine.com/forums/
-  or sent to:
-    vavoom@vavoom-engine.com
 
 
 Have a lots of fun!
 
 Janis Legzdinsh
+Ketmar Dark
