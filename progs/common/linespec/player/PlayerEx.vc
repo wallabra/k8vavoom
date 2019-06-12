@@ -1373,7 +1373,7 @@ void MovePsprites (float deltaTime) {
 //===========================================================================
 void FireWeapon (optional state firestate) {
   bReloadQueued = false;
-  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
+  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:true)) return;
 
   //print("FireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
@@ -1396,7 +1396,7 @@ void FireWeapon (optional state firestate) {
 //===========================================================================
 void AltFireWeapon (optional state firestate) {
   bReloadQueued = false;
-  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
+  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, AutoSwitch:true)) return;
 
   //print("AltFireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
@@ -1504,7 +1504,7 @@ Weapon BestWeapon (optional class!Ammo AmmoType) {
     if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp) continue;
     if (!Powered && Wpn.bPoweredUp) continue;
     // make sure it has enough ammo
-    if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false)) continue;
+    if (!Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) continue;
     // good one
     Best = Wpn;
   }
@@ -1554,7 +1554,7 @@ Weapon GetSlotChangeWeapon (int Slot) {
             class!Weapon swc = pawn.GetWeaponInSlot(Slot, nwidx);
             if (!swc) continue;
             Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-            if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+            if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
           }
         }
       }
@@ -1567,7 +1567,7 @@ Weapon GetSlotChangeWeapon (int Slot) {
     if (!slotwpn) continue;
     //if (slotwpn) print("   wpn #%d: %C", i, slotwpn);
     Weapon Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
   }
 
   return ReadyWeapon;
@@ -1612,7 +1612,7 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
     if (Current && Current.Class == swc) continue;
     Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
     if (Wpn) {
-      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+      if (Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
     }
   }
 
@@ -3221,7 +3221,7 @@ void AddDefaultInventory () {
     }
     if (!Item.TryPickup(EntityEx(MO))) {
       Item.Destroy();
-    } else if (Weapon(Item) && Weapon(Item).CheckAmmo(Weapon::FIRE_Either, false)) {
+    } else if (Weapon(Item) && Weapon(Item).CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) {
       SetWeapon(Weapon(Item));
       Weapon(Item).bBobDisabled = true;
     }

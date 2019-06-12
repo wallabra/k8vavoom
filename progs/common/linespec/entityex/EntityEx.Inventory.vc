@@ -486,7 +486,7 @@ override int SetNamedWeapon (name Name) {
   }
 
   // check if weapon has enough ammo
-  if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return false;
+  if (!Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return false;
 
   PlayerEx(Player).PendingWeapon = Wpn;
   return true;

@@ -114,7 +114,7 @@ final void A_FAxeAttack () {
 
   if (useMana == 2) {
     Wpn.DepleteAmmo(Wpn.FireMode, false);
-    if (!Wpn.CheckAmmo(Wpn.FireMode, false, true)) {
+    if (!Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:false, RequireAmmo:true)) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('NoMoreMana'));
     }
@@ -156,7 +156,7 @@ final void A_FHammerAttack () {
     }
   }
 
-  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true)) {
+  if (!Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:false, RequireAmmo:true)) {
     // don't spawn a hammer if the player doesn't have enough mana
     Special1 = false;
   }

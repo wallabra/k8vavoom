@@ -708,7 +708,7 @@ void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
       DoJump(Jump);
     } else {
       // we need to reload; however, don't reload if we're out of ammo
-      Wpn.CheckAmmo(Weapon::FIRE_Either, false, false);
+      Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false, RequireAmmo:true); //k8: don't require ammo here?
     }
 
     if (!DoIncrement) Wpn.ReloadCounter = ReloadCounter;

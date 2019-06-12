@@ -343,7 +343,7 @@ final void decorate_A_GunFlash (optional name newstate, optional int flags) {
 final void A_CheckReload () {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, true);
+  if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true);
 }
 
 
