@@ -167,6 +167,22 @@ final Inventory FindInventory (class!Inventory ItemClass) {
 
 //==========================================================================
 //
+//  FindInfiniteAmmoPowerup
+//
+//==========================================================================
+final PowerInfiniteAmmo FindInfiniteAmmoPowerup () {
+  auto InfiniteAmmo = Inventory;
+  while (InfiniteAmmo) {
+    auto pwi = PowerInfiniteAmmo(InfiniteAmmo);
+    if (pwi) return pwi;
+    InfiniteAmmo = InfiniteAmmo.Inventory;
+  }
+  return none;
+}
+
+
+//==========================================================================
+//
 //  GiveInventoryType
 //
 //==========================================================================

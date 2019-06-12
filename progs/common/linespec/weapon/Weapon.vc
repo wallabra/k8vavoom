@@ -593,6 +593,11 @@ final bool CheckAmmoAmount (ubyte Mode) {
 //==========================================================================
 bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
   // search for infinite ammo power; any subclass will do
+  if (EntityEx(Owner).FindInfiniteAmmoPowerup()) {
+    // don't waste ammo if we have an infinite ammo powerup
+    return true;
+  }
+  /*
   Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
   while (InfiniteAmmo) {
     if (PowerInfiniteAmmo(InfiniteAmmo)) break;
@@ -603,6 +608,7 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
     // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
+  */
 
   if (Mode == FIRE_Either) {
     if (CheckAmmo(FIRE_Primary, false, RequireAmmo!optional) ||
@@ -689,6 +695,11 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
 //==========================================================================
 final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int DehackedUse) {
   // search for infinite ammo power; any subclass will do
+  if (EntityEx(Owner).FindInfiniteAmmoPowerup()) {
+    // don't waste ammo if we have an infinite ammo powerup
+    return true;
+  }
+  /*
   Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
   while (InfiniteAmmo) {
     if (PowerInfiniteAmmo(InfiniteAmmo)) break;
@@ -699,6 +710,7 @@ final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int Deha
     // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
+  */
 
   // default parameter values
   if (!specified_CheckEnough) CheckEnough = true;

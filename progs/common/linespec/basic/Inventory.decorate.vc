@@ -47,7 +47,7 @@ final void A_JumpIfNoAmmo (state Label) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
 
-  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true)) {
+  if (!Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:false, RequireAmmo:true)) {
     PlayerEx(Player).SetViewObject(Wpn);
     DoJump(Label);
   }

@@ -124,11 +124,14 @@ final void A_TakeInventory (class!Inventory ItemType, optional int Amount, optio
   // process TIF_NOTAKEINFINITE
   if (flags&1) {
     if (ItemType isa Ammo) {
+      /*
       Inventory InfiniteAmmo = dest.Inventory;
       while (InfiniteAmmo) {
         if (PowerInfiniteAmmo(InfiniteAmmo)) return;
         InfiniteAmmo = InfiniteAmmo.Inventory;
       }
+      */
+      if (dest.FindInfiniteAmmoPowerup()) return;
     }
   }
   DoTakeInventory(ItemType, Amount, dest);
