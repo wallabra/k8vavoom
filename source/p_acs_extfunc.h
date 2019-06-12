@@ -104,7 +104,7 @@
   ACS_EXTFUNC(GetActorPowerupTics)
   ACS_EXTFUNC(ChangeActorAngle) // implemented
   ACS_EXTFUNC(ChangeActorPitch) // 80; implemented
-  ACS_EXTFUNC(GetArmorInfo)
+  ACS_EXTFUNC(GetArmorInfo) // partially implemented
   ACS_EXTFUNC(DropInventory)
   ACS_EXTFUNC(PickActor) // implemented
   ACS_EXTFUNC(IsPointerEqual)

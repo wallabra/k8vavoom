@@ -510,6 +510,15 @@ native final float QS_GetFloat (string fieldname, optional float defvalue);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+string GetCurrentArmorClassName () { return "None"; }
+int GetCurrentArmorSaveAmount () { return 0; }
+float GetCurrentArmorSavePercent () { return 0; }
+int GetCurrentArmorMaxAbsorb () { return 0; }
+int GetCurrentArmorFullAbsorb () { return 0; }
+int GetCurrentArmorActualSaveAmount () { return 0; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // if commands starts with `Cheat_`, is void, and has no args, it is console command
 // if commands starts with `Cheat_`, ends with '_AC', is void, and is

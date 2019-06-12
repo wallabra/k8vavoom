@@ -465,4 +465,11 @@ public:
     vobjPutParamSelf(ent, instant);
     VMT_RET_VOID(method);
   }
+
+  VStr GetCurrentArmorClassName () { static VMethodProxy method("GetCurrentArmorClassName"); vobjPutParamSelf(); VMT_RET_STR(method); }
+  int GetCurrentArmorSaveAmount () { static VMethodProxy method("GetCurrentArmorSaveAmount"); vobjPutParamSelf(); VMT_RET_INT(method); }
+  float GetCurrentArmorSavePercent () { static VMethodProxy method("GetCurrentArmorSavePercent"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
+  int GetCurrentArmorMaxAbsorb () { static VMethodProxy method("GetCurrentArmorMaxAbsorb"); vobjPutParamSelf(); VMT_RET_INT(method); }
+  int GetCurrentArmorFullAbsorb () { static VMethodProxy method("GetCurrentArmorFullAbsorb"); vobjPutParamSelf(); VMT_RET_INT(method); }
+  int GetCurrentArmorActualSaveAmount () { static VMethodProxy method("GetCurrentArmorActualSaveAmount"); vobjPutParamSelf(); VMT_RET_INT(method); }
 };

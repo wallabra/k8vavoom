@@ -5227,6 +5227,91 @@ override Entity eventGetReadyWeapon () {
 }
 
 
+//==========================================================================
+//
+//  GetCurrentArmor
+//
+//==========================================================================
+BasicArmor GetCurrentArmor () {
+  if (!MO) return none;
+  return BasicArmor(EntityEx(MO).FindInventory(BasicArmor));
+}
+
+
+//==========================================================================
+//
+//  GetCurrentArmorClassName
+//
+//==========================================================================
+override string GetCurrentArmorClassName () {
+  auto armor = GetCurrentArmor();
+  return (armor ? string(armor.GetArmorName()) : "None");
+}
+
+
+//k8: basically, this is wrong, because
+
+//==========================================================================
+//
+//  GetCurrentArmorSaveAmount
+//
+//==========================================================================
+override int GetCurrentArmorSaveAmount () {
+  auto armor = GetCurrentArmor();
+  return (armor ? armor.Amount : 0);
+}
+
+
+//==========================================================================
+//
+//  GetCurrentArmorSavePercent
+//
+//==========================================================================
+override float GetCurrentArmorSavePercent () {
+  auto armor = GetCurrentArmor();
+  return (armor ? armor.SavePercent : 0);
+}
+
+
+//==========================================================================
+//
+//  GetCurrentArmorMaxAbsorb
+//
+//==========================================================================
+override int GetCurrentArmorMaxAbsorb () {
+  // this is for HexenArmor, and it is not implemented yet
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  GetCurrentArmorFullAbsorb
+//
+//==========================================================================
+override int GetCurrentArmorFullAbsorb () {
+  // this is for HexenArmor, and it is not implemented yet
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  GetCurrentArmorActualSaveAmount
+//
+//==========================================================================
+override int GetCurrentArmorActualSaveAmount () {
+  auto armor = GetCurrentArmor();
+  if (!armor) return 0;
+  auto bonus = BasicArmorBonus(armor);
+  if (bonus) return bonus.SaveAmount;
+  auto pickup = BasicArmorPickup(armor);
+  if (pickup) return pickup.SaveAmount;
+  // i don't know what is it
+  return 0;
+}
+
+
 defaultproperties {
   InvSize = 6;
   PrevViewHeight = -666;

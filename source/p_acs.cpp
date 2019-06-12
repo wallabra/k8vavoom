@@ -103,6 +103,17 @@ static bool acsReportedBadOpcodes[65536];
 #define AAPTR_ANY_PLAYER  (AAPTR_PLAYER1|AAPTR_PLAYER2|AAPTR_PLAYER3|AAPTR_PLAYER4|AAPTR_PLAYER5|AAPTR_PLAYER6|AAPTR_PLAYER7|AAPTR_PLAYER8)
 
 
+// GetArmorInfo
+enum {
+  ARMORINFO_CLASSNAME,
+  ARMORINFO_SAVEAMOUNT,
+  ARMORINFO_SAVEPERCENT,
+  ARMORINFO_MAXABSORB,
+  ARMORINFO_MAXFULLABSORB,
+  ARMORINFO_ACTUALSAVEAMOUNT,
+  ARMORINFO_MAX,
+};
+
 enum {
   // PAF_FORCETID,
   // PAF_RETURNTID
@@ -2422,6 +2433,31 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         VName atype = GetNameLowerCase(args[0]);
         if (atype == NAME_None || atype == "none") return 0;
         return plr->MO->eventGetArmorPointsForType(atype);
+      }
+      return 0;
+
+    // str GetArmorInfo (int infotype)
+    // int GetArmorInfo (int infotype)
+    // fixed GetArmorInfo (int infotype)
+    case ACSF_GetArmorInfo:
+      if (argCount > 0) {
+        if (!Activator || (Activator->EntityFlags&VEntity::EF_IsPlayer) == 0 || !Activator->Player) {
+          // what to do here?
+          if (args[0] == ARMORINFO_CLASSNAME) return ActiveObject->Level->PutNewString("None");
+          return 0;
+        }
+        VBasePlayer *plr = Activator->Player;
+        switch (args[0]) {
+          case ARMORINFO_CLASSNAME: return ActiveObject->Level->PutNewString(*plr->GetCurrentArmorClassName());
+          case ARMORINFO_SAVEAMOUNT: return plr->GetCurrentArmorSaveAmount();
+          case ARMORINFO_SAVEPERCENT: return (int)(plr->GetCurrentArmorSavePercent()*65536.0f);
+          case ARMORINFO_MAXABSORB: return plr->GetCurrentArmorMaxAbsorb();
+          case ARMORINFO_MAXFULLABSORB: return plr->GetCurrentArmorFullAbsorb();
+          case ARMORINFO_ACTUALSAVEAMOUNT: return plr->GetCurrentArmorActualSaveAmount();
+          default: GCon->Logf(NAME_Warning, "ACS: GetArmorInfo got invalid requiest #%d", args[0]); break;
+        }
+      } else {
+        Host_Error("ACS: GetArmorInfo requires argument");
       }
       return 0;
 
