@@ -267,6 +267,28 @@ double Sys_Time () {
 
 //==========================================================================
 //
+//  Sys_Time_CPU
+//
+//==========================================================================
+double Sys_Time_CPU () {
+#ifdef __linux__
+  static bool initialized = false;
+  static time_t secbase = 0;
+  struct timespec ts;
+  if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0) Sys_Error("clock_gettime failed");
+  if (!initialized) {
+    initialized = true;
+    secbase = ts.tv_sec;
+  }
+  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0;
+#else
+  return Sys_Time();
+#endif
+}
+
+
+//==========================================================================
+//
 //  Sys_Yield
 //
 //==========================================================================
@@ -600,6 +622,16 @@ double Sys_Time () {
   return curtime;
 }
 #endif
+
+
+//==========================================================================
+//
+//  Sys_Time_CPU
+//
+//==========================================================================
+double Sys_Time_CPU () {
+  return Sys_Time();
+}
 
 
 //==========================================================================
