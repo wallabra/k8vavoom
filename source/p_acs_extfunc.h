@@ -37,7 +37,7 @@
   ACS_EXTFUNC(GetActorVelZ) // implemented
   ACS_EXTFUNC(SetActivator) // implemented
   ACS_EXTFUNC(SetActivatorToTarget) // implemented
-  ACS_EXTFUNC(GetActorViewHeight)
+  ACS_EXTFUNC(GetActorViewHeight) // implemented
   ACS_EXTFUNC(GetChar) // implemented
   ACS_EXTFUNC(GetAirSupply) // ignored
   ACS_EXTFUNC(SetAirSupply) // ignored

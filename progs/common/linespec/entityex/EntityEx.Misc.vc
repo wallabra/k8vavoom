@@ -3445,6 +3445,27 @@ final float GetPlanePointZRevFlag (const ref TPlane plane, const ref TVec point,
 }
 
 
+//==========================================================================
+//
+//  GetViewHeight
+//
+//==========================================================================
+override float GetViewHeight () {
+  if (bIsPlayer) {
+    auto plr = PlayerEx(Player);
+    if (plr) return plr.ViewHeight;
+  }
+  // check for camera
+  foreach (auto playnum; 0..MAXPLAYERS) {
+    auto plr = BasePlayer(Level.Game.Players[playnum]);
+    if (!plr) continue;
+    if (plr.Camera == self) return CameraHeight;
+  }
+  // defaults to actor half-height
+  return ::GetViewHeight();
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 states {
 DehackedDormantPickup:

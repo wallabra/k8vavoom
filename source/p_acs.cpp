@@ -2461,6 +2461,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // fixed GetActorViewHeight (int tid)
+    case ACSF_GetActorViewHeight:
+      if (argCount >= 1) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent) return (int)(Ent->GetViewHeight()*65536.0f);
+      }
+      return 0;
+
+
     // bool ACS_NamedTerminate (string script, int map) -- always returns `true`
     case ACSF_ACS_NamedTerminate:
       if (argCount >= 2) {

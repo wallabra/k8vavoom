@@ -408,6 +408,8 @@ public:
 
   bool callIsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
+  float GetViewHeight () { static VMethodProxy method("GetViewHeight"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
+
   bool SetState (VState *);
   void SetInitialState (VState *);
   bool AdvanceState (float);
