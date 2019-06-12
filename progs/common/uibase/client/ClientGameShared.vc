@@ -748,6 +748,10 @@ void ControlResponse (int key, int msgtype) {
   if (key != K_ESCAPE) {
     kb_down = CurrentCtl.CommandOn;
     kb_up = CurrentCtl.CommandOff;
+    // old keyconf can register binding like 'addmenukey "Reload" +d_reload'
+    // there is prolly '-d_reload' too, so force it here
+    if (kb_down && !kb_up && kb_down[0] == "+" && kb_down.strIndexOf(";") < 0) kb_up = "-"~kb_down[1..$];
+    if (kb_up == " " || kb_up == ";") kb_up = "";
     IN_GetBindingKeys(kb_down, &key1, &key2, strifeMode);
     if (ControlColumn == 0) {
       IN_SetBinding(key1, "", "", strifeMode);
