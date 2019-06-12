@@ -597,18 +597,6 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
     // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
-  /*
-  Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
-  while (InfiniteAmmo) {
-    if (PowerInfiniteAmmo(InfiniteAmmo)) break;
-    InfiniteAmmo = InfiniteAmmo.Inventory;
-  }
-
-  if (InfiniteAmmo) {
-    // don't waste ammo if we have an infinite ammo powerup
-    return true;
-  }
-  */
 
   if (Mode == FIRE_Either) {
     if (CheckAmmo(FIRE_Primary, false, RequireAmmo!optional) ||
@@ -699,18 +687,6 @@ final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int Deha
     // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
-  /*
-  Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
-  while (InfiniteAmmo) {
-    if (PowerInfiniteAmmo(InfiniteAmmo)) break;
-    InfiniteAmmo = InfiniteAmmo.Inventory;
-  }
-
-  if (InfiniteAmmo) {
-    // don't waste ammo if we have an infinite ammo powerup
-    return true;
-  }
-  */
 
   // default parameter values
   if (!specified_CheckEnough) CheckEnough = true;
