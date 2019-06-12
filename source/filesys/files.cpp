@@ -1225,6 +1225,10 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           if (selectedGame >= 0) break;
         }
       }
+      if (selectedGame >= 0) {
+        game_name = *games[selectedGame].param;
+        GCon->Logf(NAME_Init, "detected game: \"%s\"", *games[selectedGame].param);
+      }
     } else {
       selectedGame = 0;
     }
