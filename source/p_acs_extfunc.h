@@ -92,16 +92,16 @@
   ACS_EXTFUNC(StrRight) // implemented
   ACS_EXTFUNC(StrMid) // implemented
   ACS_EXTFUNC(GetActorClass) // implemented
-  ACS_EXTFUNC(GetWeapon)
-  ACS_EXTFUNC(SoundVolume)
-  ACS_EXTFUNC(PlayActorSound)
+  ACS_EXTFUNC(GetWeapon) // implemented
+  ACS_EXTFUNC(SoundVolume) // ignored
+  ACS_EXTFUNC(PlayActorSound) // ignored
   ACS_EXTFUNC(SpawnDecal)
   ACS_EXTFUNC(CheckFont)
   ACS_EXTFUNC(DropItem)
   ACS_EXTFUNC(CheckFlag) // implemented
   ACS_EXTFUNC(SetLineActivation) // implemented
   ACS_EXTFUNC(GetLineActivation) // implemented
-  ACS_EXTFUNC(GetActorPowerupTics)
+  ACS_EXTFUNC(GetActorPowerupTics) // implemented
   ACS_EXTFUNC(ChangeActorAngle) // implemented
   ACS_EXTFUNC(ChangeActorPitch) // 80; implemented
   ACS_EXTFUNC(GetArmorInfo) // partially implemented
