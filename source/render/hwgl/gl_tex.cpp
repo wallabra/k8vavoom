@@ -424,6 +424,14 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
     memcpy(image, data, w*h*4);
     VTexture::SmoothEdges(image, w, h);
     //VTexture::filterFringe((rgba_t *)image, w, h);
+    /*
+    rgba_t *clr = (rgba_t *)image;
+    for (int ofs = 0; ofs < w*h; ++ofs, ++clr) {
+      clr->r = clampToByte((int)((float)clr->r*(clr->a/255.0f)));
+      clr->g = clampToByte((int)((float)clr->g*(clr->a/255.0f)));
+      clr->b = clampToByte((int)((float)clr->b*(clr->a/255.0f)));
+    }
+    */
   }
 
   VTexture::AdjustGamma((rgba_t *)image, w*h);

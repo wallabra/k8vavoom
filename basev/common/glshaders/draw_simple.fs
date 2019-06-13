@@ -13,8 +13,9 @@ void main () {
 
   // we got a non-premultiplied color, convert it
   vec4 FinalColor;
-  FinalColor.a = TexColor.a*clamp(Alpha, 0.0, 1.0);
+  FinalColor.a = clamp(TexColor.a*Alpha, 0.0, 1.0);
   if (FinalColor.a < 0.01) discard;
-  FinalColor.rgb = TexColor.rgb*FinalColor.a;
+  // this is used with non-premultiplied blending in the engine
+  FinalColor.rgb = TexColor.rgb; //*FinalColor.a;
   gl_FragColor = FinalColor;
 }

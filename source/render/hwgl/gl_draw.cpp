@@ -46,14 +46,21 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(Alpha);
-  if (Alpha < 1.0f) glEnable(GL_BLEND);
+  /*if (Alpha < 1.0f)*/ {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+  }
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
-  if (Alpha < 1.0f) glDisable(GL_BLEND);
+  /*if (Alpha < 1.0f)*/ {
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+  }
 }
 
 
@@ -94,12 +101,17 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
 }
 
 
@@ -122,6 +134,9 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &oldWT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
@@ -130,6 +145,8 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   glEnd();
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, oldWS);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, oldWT);
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
 }
 
 
@@ -218,12 +235,17 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1, 0); glVertex2f(x1, y1);
     glTexCoord2f(s2, 0); glVertex2f(x2, y1);
     glTexCoord2f(s2, texh); glVertex2f(x2, y2);
     glTexCoord2f(s1, texh); glVertex2f(x1, y2);
   glEnd();
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
 }
 
 
