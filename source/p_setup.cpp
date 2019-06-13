@@ -1807,8 +1807,8 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->alpha = 1.0f;
     ld->lineTag = -1;
 
-    if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
-    if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
+    if (MInfo.Flags&VLevelInfo::LIF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
+    if (MInfo.Flags&VLevelInfo::LIF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
 }
 
@@ -1861,8 +1861,8 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->alpha = 1.0f;
     ld->lineTag = -1;
 
-    if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
-    if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
+    if (MInfo.Flags&VLevelInfo::LIF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
+    if (MInfo.Flags&VLevelInfo::LIF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
 }
 

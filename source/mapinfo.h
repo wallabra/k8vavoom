@@ -25,64 +25,6 @@
 //**
 //**************************************************************************
 
-//WARNING! must be the same as level flags!
-enum {
-  MAPINFOF_DoubleSky                 = 0x00000001, // parallax sky: sky2 behind sky1
-  MAPINFOF_Lightning                 = 0x00000002, // use of lightning on the level flashes from sky1 to sky2
-  MAPINFOF_Map07Special              = 0x00000004,
-  MAPINFOF_BaronSpecial              = 0x00000008,
-  MAPINFOF_CyberDemonSpecial         = 0x00000010,
-  MAPINFOF_SpiderMastermindSpecial   = 0x00000020,
-  MAPINFOF_MinotaurSpecial           = 0x00000040,
-  MAPINFOF_DSparilSpecial            = 0x00000080,
-  MAPINFOF_IronLichSpecial           = 0x00000100,
-  MAPINFOF_SpecialActionOpenDoor     = 0x00000200,
-  MAPINFOF_SpecialActionLowerFloor   = 0x00000400,
-  MAPINFOF_SpecialActionKillMonsters = 0x00000800,
-  MAPINFOF_NoIntermission            = 0x00001000,
-  MAPINFOF_AllowMonsterTelefrags     = 0x00002000,
-  MAPINFOF_NoAllies                  = 0x00004000,
-  MAPINFOF_DeathSlideShow            = 0x00008000,
-  MAPINFOF_ForceNoSkyStretch         = 0x00010000,
-  MAPINFOF_LookupName                = 0x00020000,
-  MAPINFOF_FallingDamage             = 0x00040000,
-  MAPINFOF_OldFallingDamage          = 0x00080000,
-  MAPINFOF_StrifeFallingDamage       = 0x00100000,
-  MAPINFOF_MonsterFallingDamage      = 0x00200000,
-  MAPINFOF_NoFreelook                = 0x00400000,
-  MAPINFOF_NoJump                    = 0x00800000,
-  MAPINFOF_NoAutoSndSeq              = 0x01000000,
-  MAPINFOF_ActivateOwnSpecial        = 0x02000000,
-  MAPINFOF_MissilesActivateImpact    = 0x04000000,
-  MAPINFOF_FilterStarts              = 0x08000000,
-  MAPINFOF_InfiniteFlightPowerup     = 0x10000000,
-  MAPINFOF_ClipMidTex                = 0x20000000,
-  MAPINFOF_WrapMidTex                = 0x40000000,
-  MAPINFOF_KeepFullInventory         = 0x80000000,
-
-  MAPINFOF2_CompatShortTex           = 0x00000001,
-  MAPINFOF2_CompatStairs             = 0x00000002,
-  MAPINFOF2_CompatLimitPain          = 0x00000004,
-  MAPINFOF2_CompatNoPassOver         = 0x00000008,
-  MAPINFOF2_CompatNoTossDrops        = 0x00000010,
-  MAPINFOF2_CompatUseBlocking        = 0x00000020,
-  MAPINFOF2_CompatNoDoorLight        = 0x00000040,
-  MAPINFOF2_CompatRavenScroll        = 0x00000080,
-  MAPINFOF2_CompatSoundTarget        = 0x00000100,
-  MAPINFOF2_CompatDehHealth          = 0x00000200,
-  MAPINFOF2_CompatTrace              = 0x00000400,
-  MAPINFOF2_CompatDropOff            = 0x00000800,
-  MAPINFOF2_CompatBoomScroll         = 0x00001000,
-  MAPINFOF2_CompatInvisibility       = 0x00002000,
-  MAPINFOF2_LaxMonsterActivation     = 0x00004000,
-  MAPINFOF2_HaveMonsterActivation    = 0x00008000,
-
-  MAPINFOF2_NoCrouch                 = 0x00080000,
-  MAPINFOF2_ResetHealth              = 0x00100000,
-  MAPINFOF2_ResetInventory           = 0x00200000,
-  MAPINFOF2_ResetItems               = 0x00400000,
-};
-
 struct VMapSpecialAction {
   VName TypeName;
   vint32 Special;
@@ -108,8 +50,8 @@ struct mapInfo_t {
   vuint32 OutsideFog;
   float Gravity; // map gravity
   float AirControl; // air control in this map.
-  vuint32 Flags;
-  vuint32 Flags2;
+  vuint32 Flags; // for values, see `VLevelInfo::LIF_XXX`
+  vuint32 Flags2; // for values, see `VLevelInfo::LIF2_XXX`
   VName TitlePatch;
   vint32 ParTime;
   vint32 SuckTime;
@@ -123,7 +65,7 @@ struct mapInfo_t {
   VName EnterPic;
   VName InterMusic;
 
-  inline VStr GetName() const { return (Flags&MAPINFOF_LookupName ? GLanguage[*Name] : Name); }
+  VStr GetName () const;
 };
 
 enum {

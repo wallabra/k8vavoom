@@ -125,6 +125,16 @@ static TMapDtor<int, SpawnEdFixup> DoomEdNumFixups; // keyed by num
 
 //==========================================================================
 //
+//  mapInfo_t::GetName
+//
+//==========================================================================
+VStr mapInfo_t::GetName () const {
+  return (Flags&VLevelInfo::LIF_LookupName ? GLanguage[*Name] : Name);
+}
+
+
+//==========================================================================
+//
 //  P_SetupMapinfoPlayerClasses
 //
 //==========================================================================
@@ -448,7 +458,7 @@ static void SetMapDefaults (mapInfo_t &Info) {
   Info.InterMusic = NAME_None;
 
   if (GGameInfo->Flags & VGameInfo::GIF_DefaultLaxMonsterActivation) {
-    Info.Flags2 |= MAPINFOF2_LaxMonsterActivation;
+    Info.Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
   }
 }
 
@@ -643,10 +653,10 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->ExpectFloatWithSign();
       if (sc->Check(",")) sc->ExpectFloatWithSign();
       if (sc->Check(",")) sc->ExpectFloatWithSign();
-    } else if (sc->Check("doublesky")) { info->Flags |= MAPINFOF_DoubleSky;
-    } else if (sc->Check("lightning")) { info->Flags |= MAPINFOF_Lightning;
-    } else if (sc->Check("forcenoskystretch")) { info->Flags |= MAPINFOF_ForceNoSkyStretch;
-    } else if (sc->Check("skystretch")) { info->Flags &= ~MAPINFOF_ForceNoSkyStretch;
+    } else if (sc->Check("doublesky")) { info->Flags |= VLevelInfo::LIF_DoubleSky;
+    } else if (sc->Check("lightning")) { info->Flags |= VLevelInfo::LIF_Lightning;
+    } else if (sc->Check("forcenoskystretch")) { info->Flags |= VLevelInfo::LIF_ForceNoSkyStretch;
+    } else if (sc->Check("skystretch")) { info->Flags &= ~VLevelInfo::LIF_ForceNoSkyStretch;
     } else if (sc->Check("fadetable")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
@@ -684,19 +694,19 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectFloat();
       info->AirControl = sc->Float;
-    } else if (sc->Check("map07special")) { info->Flags |= MAPINFOF_Map07Special;
-    } else if (sc->Check("baronspecial")) { info->Flags |= MAPINFOF_BaronSpecial;
-    } else if (sc->Check("cyberdemonspecial")) { info->Flags |= MAPINFOF_CyberDemonSpecial;
-    } else if (sc->Check("spidermastermindspecial")) { info->Flags |= MAPINFOF_SpiderMastermindSpecial;
-    } else if (sc->Check("minotaurspecial")) { info->Flags |= MAPINFOF_MinotaurSpecial;
-    } else if (sc->Check("dsparilspecial")) { info->Flags |= MAPINFOF_DSparilSpecial;
-    } else if (sc->Check("ironlichspecial")) { info->Flags |= MAPINFOF_IronLichSpecial;
-    } else if (sc->Check("specialaction_exitlevel")) { info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor|MAPINFOF_SpecialActionLowerFloor);
-    } else if (sc->Check("specialaction_opendoor")) { info->Flags &= ~MAPINFOF_SpecialActionLowerFloor; info->Flags |= MAPINFOF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_lowerfloor")) { info->Flags |= MAPINFOF_SpecialActionLowerFloor; info->Flags &= ~MAPINFOF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_killmonsters")) { info->Flags |= MAPINFOF_SpecialActionKillMonsters;
-    } else if (sc->Check("intermission")) { info->Flags &= ~MAPINFOF_NoIntermission;
-    } else if (sc->Check("nointermission")) { info->Flags |= MAPINFOF_NoIntermission;
+    } else if (sc->Check("map07special")) { info->Flags |= VLevelInfo::LIF_Map07Special;
+    } else if (sc->Check("baronspecial")) { info->Flags |= VLevelInfo::LIF_BaronSpecial;
+    } else if (sc->Check("cyberdemonspecial")) { info->Flags |= VLevelInfo::LIF_CyberDemonSpecial;
+    } else if (sc->Check("spidermastermindspecial")) { info->Flags |= VLevelInfo::LIF_SpiderMastermindSpecial;
+    } else if (sc->Check("minotaurspecial")) { info->Flags |= VLevelInfo::LIF_MinotaurSpecial;
+    } else if (sc->Check("dsparilspecial")) { info->Flags |= VLevelInfo::LIF_DSparilSpecial;
+    } else if (sc->Check("ironlichspecial")) { info->Flags |= VLevelInfo::LIF_IronLichSpecial;
+    } else if (sc->Check("specialaction_exitlevel")) { info->Flags &= ~(VLevelInfo::LIF_SpecialActionOpenDoor|VLevelInfo::LIF_SpecialActionLowerFloor);
+    } else if (sc->Check("specialaction_opendoor")) { info->Flags &= ~VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags |= VLevelInfo::LIF_SpecialActionOpenDoor;
+    } else if (sc->Check("specialaction_lowerfloor")) { info->Flags |= VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags &= ~VLevelInfo::LIF_SpecialActionOpenDoor;
+    } else if (sc->Check("specialaction_killmonsters")) { info->Flags |= VLevelInfo::LIF_SpecialActionKillMonsters;
+    } else if (sc->Check("intermission")) { info->Flags &= ~VLevelInfo::LIF_NoIntermission;
+    } else if (sc->Check("nointermission")) { info->Flags |= VLevelInfo::LIF_NoIntermission;
     } else if (sc->Check("titlepatch")) {
       //FIXME: quoted string is a textual level name
       if (newFormat) sc->Expect("=");
@@ -711,48 +721,48 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->ExpectNumber();
       info->SuckTime = sc->Number;
     } else if (sc->Check("nosoundclipping")) { // ignored
-    } else if (sc->Check("allowmonstertelefrags")) { info->Flags |= MAPINFOF_AllowMonsterTelefrags;
-    } else if (sc->Check("noallies")) { info->Flags |= MAPINFOF_NoAllies;
-    } else if (sc->Check("fallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage); info->Flags |= MAPINFOF_FallingDamage;
-    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) { info->Flags &= ~(MAPINFOF_FallingDamage|MAPINFOF_StrifeFallingDamage); info->Flags |= MAPINFOF_OldFallingDamage;
-    } else if (sc->Check("strifefallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_FallingDamage); info->Flags |= MAPINFOF_StrifeFallingDamage;
-    } else if (sc->Check("nofallingdamage")) { info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage|MAPINFOF_FallingDamage);
-    } else if (sc->Check("monsterfallingdamage")) { info->Flags |= MAPINFOF_MonsterFallingDamage;
-    } else if (sc->Check("nomonsterfallingdamage")) { info->Flags &= ~MAPINFOF_MonsterFallingDamage;
-    } else if (sc->Check("deathslideshow")) { info->Flags |= MAPINFOF_DeathSlideShow;
-    } else if (sc->Check("allowfreelook")) { info->Flags &= ~MAPINFOF_NoFreelook;
-    } else if (sc->Check("nofreelook")) { info->Flags |= MAPINFOF_NoFreelook;
-    } else if (sc->Check("allowjump")) { info->Flags &= ~MAPINFOF_NoJump;
-    } else if (sc->Check("nojump")) { info->Flags |= MAPINFOF_NoJump;
-    } else if (sc->Check("nocrouch")) { info->Flags2 |= MAPINFOF2_NoCrouch;
-    } else if (sc->Check("resethealth")) { info->Flags2 |= MAPINFOF2_ResetHealth;
-    } else if (sc->Check("resetinventory")) { info->Flags2 |= MAPINFOF2_ResetInventory;
-    } else if (sc->Check("resetitems")) { info->Flags2 |= MAPINFOF2_ResetItems;
-    } else if (sc->Check("noautosequences")) { info->Flags |= MAPINFOF_NoAutoSndSeq;
-    } else if (sc->Check("activateowndeathspecials")) { info->Flags |= MAPINFOF_ActivateOwnSpecial;
-    } else if (sc->Check("killeractivatesdeathspecials")) { info->Flags &= ~MAPINFOF_ActivateOwnSpecial;
-    } else if (sc->Check("missilesactivateimpactlines")) { info->Flags |= MAPINFOF_MissilesActivateImpact;
-    } else if (sc->Check("missileshootersactivetimpactlines")) { info->Flags &= ~MAPINFOF_MissilesActivateImpact;
-    } else if (sc->Check("filterstarts")) { info->Flags |= MAPINFOF_FilterStarts;
-    } else if (sc->Check("infiniteflightpowerup")) { info->Flags |= MAPINFOF_InfiniteFlightPowerup;
-    } else if (sc->Check("noinfiniteflightpowerup")) { info->Flags &= ~MAPINFOF_InfiniteFlightPowerup;
-    } else if (sc->Check("clipmidtextures")) { info->Flags |= MAPINFOF_ClipMidTex;
-    } else if (sc->Check("wrapmidtextures")) { info->Flags |= MAPINFOF_WrapMidTex;
-    } else if (sc->Check("keepfullinventory")) { info->Flags |= MAPINFOF_KeepFullInventory;
-    } else if (sc->Check("compat_shorttex")) { DoCompatFlag(sc, info, MAPINFOF2_CompatShortTex);
-    } else if (sc->Check("compat_stairs")) { DoCompatFlag(sc, info, MAPINFOF2_CompatStairs);
-    } else if (sc->Check("compat_limitpain")) { DoCompatFlag(sc, info, MAPINFOF2_CompatLimitPain);
-    } else if (sc->Check("compat_nopassover")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoPassOver);
-    } else if (sc->Check("compat_notossdrops")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoTossDrops);
-    } else if (sc->Check("compat_useblocking")) { DoCompatFlag(sc, info, MAPINFOF2_CompatUseBlocking);
-    } else if (sc->Check("compat_nodoorlight")) { DoCompatFlag(sc, info, MAPINFOF2_CompatNoDoorLight);
-    } else if (sc->Check("compat_ravenscroll")) { DoCompatFlag(sc, info, MAPINFOF2_CompatRavenScroll);
-    } else if (sc->Check("compat_soundtarget")) { DoCompatFlag(sc, info, MAPINFOF2_CompatSoundTarget);
-    } else if (sc->Check("compat_dehhealth")) { DoCompatFlag(sc, info, MAPINFOF2_CompatDehHealth);
-    } else if (sc->Check("compat_trace")) { DoCompatFlag(sc, info, MAPINFOF2_CompatTrace);
-    } else if (sc->Check("compat_dropoff")) { DoCompatFlag(sc, info, MAPINFOF2_CompatDropOff);
-    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) { DoCompatFlag(sc, info, MAPINFOF2_CompatBoomScroll);
-    } else if (sc->Check("compat_invisibility")) { DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
+    } else if (sc->Check("allowmonstertelefrags")) { info->Flags |= VLevelInfo::LIF_AllowMonsterTelefrags;
+    } else if (sc->Check("noallies")) { info->Flags |= VLevelInfo::LIF_NoAllies;
+    } else if (sc->Check("fallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_FallingDamage;
+    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_FallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_OldFallingDamage;
+    } else if (sc->Check("strifefallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_FallingDamage); info->Flags |= VLevelInfo::LIF_StrifeFallingDamage;
+    } else if (sc->Check("nofallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage|VLevelInfo::LIF_FallingDamage);
+    } else if (sc->Check("monsterfallingdamage")) { info->Flags |= VLevelInfo::LIF_MonsterFallingDamage;
+    } else if (sc->Check("nomonsterfallingdamage")) { info->Flags &= ~VLevelInfo::LIF_MonsterFallingDamage;
+    } else if (sc->Check("deathslideshow")) { info->Flags |= VLevelInfo::LIF_DeathSlideShow;
+    } else if (sc->Check("allowfreelook")) { info->Flags &= ~VLevelInfo::LIF_NoFreelook;
+    } else if (sc->Check("nofreelook")) { info->Flags |= VLevelInfo::LIF_NoFreelook;
+    } else if (sc->Check("allowjump")) { info->Flags &= ~VLevelInfo::LIF_NoJump;
+    } else if (sc->Check("nojump")) { info->Flags |= VLevelInfo::LIF_NoJump;
+    } else if (sc->Check("nocrouch")) { info->Flags2 |= VLevelInfo::LIF2_NoCrouch;
+    } else if (sc->Check("resethealth")) { info->Flags2 |= VLevelInfo::LIF2_ResetHealth;
+    } else if (sc->Check("resetinventory")) { info->Flags2 |= VLevelInfo::LIF2_ResetInventory;
+    } else if (sc->Check("resetitems")) { info->Flags2 |= VLevelInfo::LIF2_ResetItems;
+    } else if (sc->Check("noautosequences")) { info->Flags |= VLevelInfo::LIF_NoAutoSndSeq;
+    } else if (sc->Check("activateowndeathspecials")) { info->Flags |= VLevelInfo::LIF_ActivateOwnSpecial;
+    } else if (sc->Check("killeractivatesdeathspecials")) { info->Flags &= ~VLevelInfo::LIF_ActivateOwnSpecial;
+    } else if (sc->Check("missilesactivateimpactlines")) { info->Flags |= VLevelInfo::LIF_MissilesActivateImpact;
+    } else if (sc->Check("missileshootersactivetimpactlines")) { info->Flags &= ~VLevelInfo::LIF_MissilesActivateImpact;
+    } else if (sc->Check("filterstarts")) { info->Flags |= VLevelInfo::LIF_FilterStarts;
+    } else if (sc->Check("infiniteflightpowerup")) { info->Flags |= VLevelInfo::LIF_InfiniteFlightPowerup;
+    } else if (sc->Check("noinfiniteflightpowerup")) { info->Flags &= ~VLevelInfo::LIF_InfiniteFlightPowerup;
+    } else if (sc->Check("clipmidtextures")) { info->Flags |= VLevelInfo::LIF_ClipMidTex;
+    } else if (sc->Check("wrapmidtextures")) { info->Flags |= VLevelInfo::LIF_WrapMidTex;
+    } else if (sc->Check("keepfullinventory")) { info->Flags |= VLevelInfo::LIF_KeepFullInventory;
+    } else if (sc->Check("compat_shorttex")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatShortTex);
+    } else if (sc->Check("compat_stairs")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatStairs);
+    } else if (sc->Check("compat_limitpain")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatLimitPain);
+    } else if (sc->Check("compat_nopassover")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoPassOver);
+    } else if (sc->Check("compat_notossdrops")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoTossDrops);
+    } else if (sc->Check("compat_useblocking")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatUseBlocking);
+    } else if (sc->Check("compat_nodoorlight")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoDoorLight);
+    } else if (sc->Check("compat_ravenscroll")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatRavenScroll);
+    } else if (sc->Check("compat_soundtarget")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatSoundTarget);
+    } else if (sc->Check("compat_dehhealth")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDehHealth);
+    } else if (sc->Check("compat_trace")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatTrace);
+    } else if (sc->Check("compat_dropoff")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropOff);
+    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll);
+    } else if (sc->Check("compat_invisibility")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility);
     } else if (sc->CheckStartsWith("compat_")) {
       GCon->Logf(NAME_Warning, "%s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
       sc->Check("=");
@@ -799,11 +809,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       info->RedirectType = *sc->String.ToLower();
       info->RedirectMap = ParseNextMapName(sc, HexenMode);
     } else if (sc->Check("strictmonsteractivation")) {
-      info->Flags2 &= ~MAPINFOF2_LaxMonsterActivation;
-      info->Flags2 |= MAPINFOF2_HaveMonsterActivation;
+      info->Flags2 &= ~VLevelInfo::LIF2_LaxMonsterActivation;
+      info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
     } else if (sc->Check("laxmonsteractivation")) {
-      info->Flags2 |= MAPINFOF2_LaxMonsterActivation;
-      info->Flags2 |= MAPINFOF2_HaveMonsterActivation;
+      info->Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
+      info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
     } else if (sc->Check("interpic") || sc->Check("exitpic")) {
       if (newFormat) sc->Expect("=");
       //sc->ExpectName8();
@@ -867,7 +877,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     info->Sky2Texture = info->Sky1Texture;
   }
 
-  if (info->Flags&MAPINFOF_DoubleSky) {
+  if (info->Flags&VLevelInfo::LIF_DoubleSky) {
     GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
   }
 }
@@ -899,7 +909,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     } else {
       *flags &= ~lookupFlag;
       *name = sc->String;
-      if (lookupFlag == MAPINFOF_LookupName) return;
+      if (lookupFlag == VLevelInfo::LIF_LookupName) return;
       if (newStyle) {
         while (!sc->AtEnd()) {
           if (!sc->Check(",")) break;
@@ -1016,13 +1026,13 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   }
 
   if (HexenMode) {
-    info->Flags |= MAPINFOF_NoIntermission|
-      MAPINFOF_FallingDamage|
-      MAPINFOF_MonsterFallingDamage|
-      MAPINFOF_NoAutoSndSeq|
-      MAPINFOF_ActivateOwnSpecial|
-      MAPINFOF_MissilesActivateImpact|
-      MAPINFOF_InfiniteFlightPowerup;
+    info->Flags |= VLevelInfo::LIF_NoIntermission|
+      VLevelInfo::LIF_FallingDamage|
+      VLevelInfo::LIF_MonsterFallingDamage|
+      VLevelInfo::LIF_NoAutoSndSeq|
+      VLevelInfo::LIF_ActivateOwnSpecial|
+      VLevelInfo::LIF_MissilesActivateImpact|
+      VLevelInfo::LIF_InfiniteFlightPowerup;
   }
 
   // set saved par time
@@ -1033,7 +1043,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   }
 
   // map name must follow the number
-  ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags, false);
+  ParseNameOrLookup(sc, VLevelInfo::LIF_LookupName, &info->Name, &info->Flags, false);
 
   // set song lump name from SNDINFO script
   for (int i = 0; i < MapSongList.Num(); ++i) {
@@ -1972,7 +1982,7 @@ bool IsMapPresent (VName MapName) {
 COMMAND(MapList) {
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (IsMapPresent(MapInfo[i].LumpName)) {
-      GCon->Log(VStr(MapInfo[i].LumpName)+" - "+(MapInfo[i].Flags&MAPINFOF_LookupName ? GLanguage[*MapInfo[i].Name] : MapInfo[i].Name));
+      GCon->Log(VStr(MapInfo[i].LumpName)+" - "+(MapInfo[i].Flags&VLevelInfo::LIF_LookupName ? GLanguage[*MapInfo[i].Name] : MapInfo[i].Name));
     }
   }
 }

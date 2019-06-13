@@ -111,7 +111,7 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
   if (CInfo->Flags&CLUSTERF_Hub) LevelInfoFlags2 |= LIF2_ClusterHub;
 
   // no auto sequences flag sets all sectors to use sequence 0 by default
-  if (Info.Flags&MAPINFOF_NoAutoSndSeq) {
+  if (Info.Flags&VLevelInfo::LIF_NoAutoSndSeq) {
     for (int i = 0; i < XLevel->NumSectors; ++i) XLevel->Sectors[i].seqType = 0;
   }
 }

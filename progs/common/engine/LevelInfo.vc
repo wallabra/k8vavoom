@@ -34,6 +34,70 @@ struct MapSpecialAction {
   int Args[5];
 };
 
+// k8: this duplicates list of bools in levelinfo.
+//     i am too lazy to replace mapinfo flag fields with bools.
+enum {
+  LIF_DoubleSky                 = 0x00000001, // parallax sky: sky2 behind sky1
+  LIF_Lightning                 = 0x00000002, // use of lightning on the level flashes from sky1 to sky2
+  LIF_Map07Special              = 0x00000004,
+  LIF_BaronSpecial              = 0x00000008,
+  LIF_CyberDemonSpecial         = 0x00000010,
+  LIF_SpiderMastermindSpecial   = 0x00000020,
+  LIF_MinotaurSpecial           = 0x00000040,
+  LIF_DSparilSpecial            = 0x00000080,
+  LIF_IronLichSpecial           = 0x00000100,
+  LIF_SpecialActionOpenDoor     = 0x00000200,
+  LIF_SpecialActionLowerFloor   = 0x00000400,
+  LIF_SpecialActionKillMonsters = 0x00000800,
+  LIF_NoIntermission            = 0x00001000,
+  LIF_AllowMonsterTelefrags     = 0x00002000,
+  LIF_NoAllies                  = 0x00004000,
+  LIF_DeathSlideShow            = 0x00008000,
+  LIF_ForceNoSkyStretch         = 0x00010000,
+  LIF_LookupName                = 0x00020000,
+  LIF_FallingDamage             = 0x00040000,
+  LIF_OldFallingDamage          = 0x00080000,
+  LIF_StrifeFallingDamage       = 0x00100000,
+  LIF_MonsterFallingDamage      = 0x00200000,
+  LIF_NoFreelook                = 0x00400000,
+  LIF_NoJump                    = 0x00800000,
+  LIF_NoAutoSndSeq              = 0x01000000,
+  LIF_ActivateOwnSpecial        = 0x02000000,
+  LIF_MissilesActivateImpact    = 0x04000000,
+  LIF_FilterStarts              = 0x08000000,
+  LIF_InfiniteFlightPowerup     = 0x10000000,
+  LIF_ClipMidTex                = 0x20000000,
+  LIF_WrapMidTex                = 0x40000000,
+  LIF_KeepFullInventory         = 0x80000000,
+};
+
+enum {
+  LIF2_CompatShortTex        = 0x00000001,
+  LIF2_CompatStairs          = 0x00000002,
+  LIF2_CompatLimitPain       = 0x00000004,
+  LIF2_CompatNoPassOver      = 0x00000008,
+  LIF2_CompatNoTossDrops     = 0x00000010,
+  LIF2_CompatUseBlocking     = 0x00000020,
+  LIF2_CompatNoDoorLight     = 0x00000040,
+  LIF2_CompatRavenScroll     = 0x00000080,
+  LIF2_CompatSoundTarget     = 0x00000100,
+  LIF2_CompatDehHealth       = 0x00000200,
+  LIF2_CompatTrace           = 0x00000400,
+  LIF2_CompatDropOff         = 0x00000800,
+  LIF2_CompatBoomScroll      = 0x00001000,
+  LIF2_CompatInvisibility    = 0x00002000,
+  LIF2_LaxMonsterActivation  = 0x00004000,
+  LIF2_HaveMonsterActivation = 0x00008000,
+  LIF2_ClusterHub            = 0x00010000,
+  LIF2_BegunPlay             = 0x00020000,
+  LIF2_Frozen                = 0x00040000,
+  LIF2_NoCrouch              = 0x00080000,
+  LIF2_ResetHealth           = 0x00100000,
+  LIF2_ResetInventory        = 0x00200000,
+  LIF2_ResetItems            = 0x00400000,
+};
+
+
 native readonly GameInfo Game;
 native readonly WorldInfo World;
 

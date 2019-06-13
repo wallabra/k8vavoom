@@ -56,8 +56,8 @@ class VLevelInfo : public VThinker {
   VName SongLump;
 
   enum {
-    LIF_DoubleSky                 = 0x00000001u,
-    LIF_Lightning                 = 0x00000002u,
+    LIF_DoubleSky                 = 0x00000001u, // parallax sky: sky2 behind sky1
+    LIF_Lightning                 = 0x00000002u, // use of lightning on the level flashes from sky1 to sky2
     LIF_Map07Special              = 0x00000004u,
     LIF_BaronSpecial              = 0x00000008u,
     LIF_CyberDemonSpecial         = 0x00000010u,
