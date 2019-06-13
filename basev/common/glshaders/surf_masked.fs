@@ -38,8 +38,8 @@ void main () {
   // convert to premultiplied
   vec4 FinalColor;
 #if 1
-  FinalColor.rgb = clamp((TexColor.rgb*TexColor.a)*lt.a, 0.0, 1.0);
   FinalColor.a = TexColor.a*lt.a;
+  FinalColor.rgb = clamp(TexColor.rgb*FinalColor.a, 0.0, 1.0);
 #else
   FinalColor.rgb = TexColor.rgb;
   FinalColor.a = TexColor.a*lt.a;
