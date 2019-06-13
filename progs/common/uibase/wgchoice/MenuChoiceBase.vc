@@ -40,6 +40,29 @@ int ValueColorFocus = CR_YELLOW;
 
 //==========================================================================
 //
+//  FixFractionalValue
+//
+//  used in sliders to fix fractional values
+//
+//==========================================================================
+static final float FixFractionalValue (float value, float delta) {
+  float mult = 1;
+  delta = fabs(delta);
+  if (!delta) delta = 1;
+  while (delta < 1) { mult *= 10; delta *= 10; }
+  if (fabs(value*mult-ftrunc(value*mult)) < 0.0001) {
+    //print("nvfixT: %s -> %s", value*mult, ftrunc(value*mult));
+    value = ftrunc(value*mult)/mult;
+  } else if (fabs(value*mult-fround(value*mult)) < 0.0001) {
+    //print("nvfixR: %s -> %s", value*mult, fround(value*mult));
+    value = fround(value*mult)/mult;
+  }
+  return value;
+}
+
+
+//==========================================================================
+//
 //  getHelp
 //
 //==========================================================================

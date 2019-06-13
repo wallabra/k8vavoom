@@ -89,6 +89,8 @@ override void SetOrigin (int x, int y) {
 //
 //==========================================================================
 bool SetNewValue (float newValue) {
+  // hack for fractional values, why not?
+  newValue = FixFractionalValue(newValue, ValueDelta);
   if (ValueChanging) {
     if (!ValueChanging(self, newValue)) return false;
   }
@@ -182,18 +184,7 @@ override void OnDraw () {
   SetTextAlign(hleft, vtop);
   string sv;
   if (fabs(Value) < 0.000001) sv = "0";
-  else {
-    sv = va("%f", Value);
-    /*
-         if (sv.globmatch("0.9999*")) sv = va("0.%s", int(Value*10)%10+1);
-    else if (sv.globmatch("0.0000*")) sv = va("0.%s", int(Value*10)%10);
-    else if (sv.globmatch("0.5555*")) sv = "0.5";
-    else if (sv.globmatch("*.9999*")) sv = va("%d", int(Value)+1);
-    else if (sv.globmatch("*.0000*")) sv = va("%d", int(Value));
-    else if (sv.globmatch("*.5555*")) sv = va("%d.5", int(Value));
-    else sv = va("%f", Value);
-    */
-  }
+  else sv = va("%f", Value);
   DrawText(xt+3, 3, sv, CR_BLACK);
 }
 
@@ -250,8 +241,7 @@ override void OnRMouseClick (int X, int Y) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   Width = 360;
   Height = 16-2;
   CursorXOffs = 200;
