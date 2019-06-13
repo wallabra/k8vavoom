@@ -46,21 +46,15 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(Alpha);
-  /*if (Alpha < 1.0f)*/ {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
-  }
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
-  /*if (Alpha < 1.0f)*/ {
-    glDisable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
-  }
+  //glDisable(GL_BLEND);
 }
 
 
@@ -76,14 +70,14 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   DrawShadow.Activate();
   DrawShadow.SetTexture(0);
   DrawShadow.SetAlpha(shade);
-  glEnable(GL_BLEND);
+  //glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
 }
 
 
@@ -101,8 +95,7 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
@@ -110,8 +103,7 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
-  glDisable(GL_BLEND);
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+  //glDisable(GL_BLEND);
 }
 
 
@@ -134,8 +126,7 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &oldWT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
@@ -145,8 +136,7 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   glEnd();
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, oldWS);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, oldWT);
-  glDisable(GL_BLEND);
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+  //glDisable(GL_BLEND);
 }
 
 
@@ -181,14 +171,16 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
 void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
   DrawFixedCol.Activate();
   DrawFixedCol.SetColor(0.0f, 0.0f, 0.0f, darkening);
-  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  //glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glVertex2f(x, y);
     glVertex2f(x+w, y);
     glVertex2f(x+w, y+h);
     glVertex2f(x, y+h);
   glEnd();
-  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  //glDisable(GL_BLEND);
 }
 
 
@@ -200,14 +192,16 @@ void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
 void VOpenGLDrawer::DrawConsoleBackground (int h) {
   DrawFixedCol.Activate();
   DrawFixedCol.SetColor(0.0f, 0.0f, 0.5f, 0.75f);
-  glEnable(GL_BLEND);
+  //glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBegin(GL_QUADS);
     glVertex2f(0, 0);
     glVertex2f(ScreenWidth, 0);
     glVertex2f(ScreenWidth, h);
     glVertex2f(0, h);
   glEnd();
-  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  //glDisable(GL_BLEND);
 }
 
 
@@ -235,8 +229,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+  //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
     glTexCoord2f(s1, 0); glVertex2f(x1, y1);
@@ -244,8 +237,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
     glTexCoord2f(s2, texh); glVertex2f(x2, y2);
     glTexCoord2f(s1, texh); glVertex2f(x1, y2);
   glEnd();
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
 }
 
 
@@ -254,10 +246,16 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
 //  VOpenGLDrawer::StartAutomap
 //
 //==========================================================================
-void VOpenGLDrawer::StartAutomap () {
+void VOpenGLDrawer::StartAutomap (bool asOverlay) {
   DrawAutomap.Activate();
   glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_BLEND);
+  if (asOverlay) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  } else {
+    glDisable(GL_BLEND);
+    //glEnable(GL_BLEND);
+  }
   glBegin(GL_LINES);
 }
 
@@ -282,6 +280,7 @@ void VOpenGLDrawer::DrawLine (float x1, float y1, vuint32 c1, float x2, float y2
 //==========================================================================
 void VOpenGLDrawer::EndAutomap () {
   glEnd();
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_LINE_SMOOTH);
 }

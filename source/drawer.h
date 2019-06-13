@@ -240,7 +240,7 @@ public:
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
 
   // automap
-  virtual void StartAutomap () = 0;
+  virtual void StartAutomap (bool asOverlay) = 0;
   virtual void DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) = 0;
   virtual void EndAutomap () = 0;
 

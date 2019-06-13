@@ -1763,16 +1763,12 @@ void AM_Drawer () {
   AM_Check();
   if (!automapactive) return;
 
-  if (am_overlay) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-    //glColor4f(1, 1, 1, (am_overlay_alpha < 0.1f ? 0.1f : am_overlay_alpha > 1.0f ? 1.0f : am_overlay_alpha));
-  }
+  //if (am_overlay) glColor4f(1, 1, 1, (am_overlay_alpha < 0.1f ? 0.1f : am_overlay_alpha > 1.0f ? 1.0f : am_overlay_alpha));
 
   AM_CheckVariables();
   AM_clearFB();
 
-  Drawer->StartAutomap();
+  Drawer->StartAutomap(am_overlay);
   if (grid) AM_drawGrid(GridColor);
   AM_drawWalls();
   AM_drawPlayers();
@@ -1792,12 +1788,7 @@ void AM_Drawer () {
   //if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
   if (use_marks) AM_drawMarks();
 
-  if (am_overlay) {
-    glDisable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    //glColor4f(1, 1, 1, 1);
-  }
+  //if (am_overlay) glColor4f(1, 1, 1, 1);
 }
 
 

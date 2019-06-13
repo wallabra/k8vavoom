@@ -338,7 +338,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
     for (int i = 0; i < Width*Height; ++i, ++Data, ++NewData) {
       *NewData = (*Data ? Pal[*Data] : rgba_t::Transparent());
     }
-    VTexture::filterFringe(databuf, w, h);
+    VTexture::FilterFringe(databuf, w, h);
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
@@ -369,7 +369,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
       *NewData = Pal[Data->idx];
       NewData->a = Data->a;
     }
-    VTexture::filterFringe(databuf, w, h);
+    VTexture::FilterFringe(databuf, w, h);
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
@@ -423,15 +423,8 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   } else {
     memcpy(image, data, w*h*4);
     VTexture::SmoothEdges(image, w, h);
-    //VTexture::filterFringe((rgba_t *)image, w, h);
-    /*
-    rgba_t *clr = (rgba_t *)image;
-    for (int ofs = 0; ofs < w*h; ++ofs, ++clr) {
-      clr->r = clampToByte((int)((float)clr->r*(clr->a/255.0f)));
-      clr->g = clampToByte((int)((float)clr->g*(clr->a/255.0f)));
-      clr->b = clampToByte((int)((float)clr->b*(clr->a/255.0f)));
-    }
-    */
+    //VTexture::FilterFringe((rgba_t *)image, w, h);
+    //VTexture::PremultiplyImage((rgba_t *)image, w, h);
   }
 
   VTexture::AdjustGamma((rgba_t *)image, w*h);

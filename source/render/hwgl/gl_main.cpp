@@ -814,6 +814,8 @@ void VOpenGLDrawer::InitResolution () {
 
   if (glGetError() != 0) Sys_Error("OpenGL initialization error");
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   mInitialized = true;
 
@@ -867,7 +869,9 @@ void VOpenGLDrawer::Setup2D () {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 }
 
@@ -1252,7 +1256,9 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glCullFace(GL_FRONT);
 
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_ALPHA_TEST);
   if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
   //k8: there is no reason to not do it
@@ -1308,7 +1314,7 @@ void VOpenGLDrawer::EndView () {
       (float)((cl->CShift>>8)&255)/255.0f,
       (float)(cl->CShift&255)/255.0f,
       (float)((cl->CShift>>24)&255)/255.0f);
-    glEnable(GL_BLEND);
+    //glEnable(GL_BLEND);
 
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -1317,7 +1323,7 @@ void VOpenGLDrawer::EndView () {
     glVertex2f(0, ScreenHeight);
     glEnd();
 
-    glDisable(GL_BLEND);
+    //glDisable(GL_BLEND);
   }
 }
 

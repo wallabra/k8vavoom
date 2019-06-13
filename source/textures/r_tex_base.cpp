@@ -938,10 +938,10 @@ void VTexture::ResizeCanvas (int newwdt, int newhgt) {
 
 //==========================================================================
 //
-//  VTexture::filterFringe
+//  VTexture::FilterFringe
 //
 //==========================================================================
-void VTexture::filterFringe (rgba_t *pic, int wdt, int hgt) {
+void VTexture::FilterFringe (rgba_t *pic, int wdt, int hgt) {
 #define GETPIX(dest,_sx,_sy)  do { \
   int sx = (_sx), sy = (_sy); \
   if (sx >= 0 && sy >= 0 && sx < wdt && sy < hgt) { \
@@ -981,6 +981,21 @@ void VTexture::filterFringe (rgba_t *pic, int wdt, int hgt) {
   }
 
 #undef GETPIX
+}
+
+
+//==========================================================================
+//
+//  VTexture::PremultiplyImage
+//
+//==========================================================================
+void VTexture::PremultiplyImage (rgba_t *pic, int wdt, int hgt) {
+  if (!pic || wdt < 1 || hgt < 1) return;
+  for (int ofs = wdt*hgt; ofs--; ++pic) {
+    pic->r = clampToByte((int)((float)pic->r*(pic->a/255.0f)));
+    pic->g = clampToByte((int)((float)pic->g*(pic->a/255.0f)));
+    pic->b = clampToByte((int)((float)pic->b*(pic->a/255.0f)));
+  }
 }
 
 

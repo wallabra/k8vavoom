@@ -109,5 +109,5 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
 //==========================================================================
 void VOpenGLDrawer::EndParticles () {
   glEnd();
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
 }

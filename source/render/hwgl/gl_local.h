@@ -629,7 +629,7 @@ public:
     VTextureTranslation*, bool) override;
 
   // automap
-  virtual void StartAutomap () override;
+  virtual void StartAutomap (bool asOverlay) override;
   virtual void DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) override;
   virtual void EndAutomap () override;
 

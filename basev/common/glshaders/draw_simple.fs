@@ -15,7 +15,6 @@ void main () {
   vec4 FinalColor;
   FinalColor.a = clamp(TexColor.a*Alpha, 0.0, 1.0);
   if (FinalColor.a < 0.01) discard;
-  // this is used with non-premultiplied blending in the engine
-  FinalColor.rgb = TexColor.rgb; //*FinalColor.a;
+  FinalColor.rgb = TexColor.rgb*FinalColor.a;
   gl_FragColor = FinalColor;
 }

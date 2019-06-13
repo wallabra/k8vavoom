@@ -264,7 +264,6 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   if (Additive) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
 
@@ -312,14 +311,11 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   }
 
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
-  if (Additive) {
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  }
+  if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   //glPopMatrix();
   if (is_view_model) glDepthRange(0.0f, 1.0f);
@@ -425,7 +421,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
   if (Alpha < 1.0f && !ForceDepth) glDepthMask(GL_TRUE);
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);
@@ -524,7 +520,6 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   glEnable(GL_BLEND);
   //glShadeModel(GL_SMOOTH);
   glDisable(GL_ALPHA_TEST);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //glDisable(GL_BLEND);
 
@@ -878,7 +873,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glDisableVertexAttribArrayARB(ShadowsModelFog.loc_TexCoord);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);

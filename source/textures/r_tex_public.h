@@ -263,7 +263,8 @@ protected:
   void ConvertPixelsToShaded ();
 
 public:
-  static void filterFringe (rgba_t *pic, int wdt, int hgt);
+  static void FilterFringe (rgba_t *pic, int wdt, int hgt);
+  static void PremultiplyImage (rgba_t *pic, int wdt, int hgt);
 
   // use `153` to calculate glow color
   rgb_t GetAverageColor (vuint32 maxout);
