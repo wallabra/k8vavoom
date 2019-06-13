@@ -113,6 +113,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   glDisable(GL_CULL_FACE);
   glDisable(GL_ALPHA_TEST); // just in case
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
   if (gl_decal_debug_nostencil) glDisable(GL_STENCIL_TEST);
   if (gl_decal_debug_noalpha) glDisable(GL_BLEND);
 
