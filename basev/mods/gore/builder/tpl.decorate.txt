@@ -373,7 +373,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 #ifdef TRANSIENT
   //!Alpha 0.6
@@ -610,7 +610,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -848,7 +848,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   Decal K8GoreBloodSplat$(Color)
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -928,7 +928,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   -Decals2SPass
   //Decal K8GoreBloodSplat$(Color)
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {

@@ -358,7 +358,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
@@ -570,7 +570,7 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -783,7 +783,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   Decal K8GoreBloodSplat
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -863,7 +863,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   -Decals2SPass
   //Decal K8GoreBloodSplat
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -1285,7 +1285,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
@@ -1494,7 +1494,7 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -1708,7 +1708,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   Decal K8GoreBloodSplatTransient
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -1788,7 +1788,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   -Decals2SPass
   //Decal K8GoreBloodSplatTransient
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -2215,7 +2215,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
@@ -2427,7 +2427,7 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -2640,7 +2640,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   Decal K8GoreBloodSplatGreen
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -2720,7 +2720,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   -Decals2SPass
   //Decal K8GoreBloodSplatGreen
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -3142,7 +3142,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
@@ -3351,7 +3351,7 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -3565,7 +3565,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   Decal K8GoreBloodSplatTransient_Green
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -3645,7 +3645,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   -Decals2SPass
   //Decal K8GoreBloodSplatTransient_Green
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -4072,7 +4072,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //Alpha 0.9
   Mass 99999
@@ -4284,7 +4284,7 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -4497,7 +4497,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   Decal K8GoreBloodSplatBlue
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -4577,7 +4577,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   -Decals2SPass
   //Decal K8GoreBloodSplatBlue
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -4999,7 +4999,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
   //!Alpha 0.6
   //Alpha 0.7
@@ -5208,7 +5208,7 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -5422,7 +5422,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   Decal K8GoreBloodSplatTransient_Blue
   +Decals2SPass
   DamageFactor "TeleportRemover", 100.0
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
@@ -5502,7 +5502,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   -Decals2SPass
   //Decal K8GoreBloodSplatTransient_Blue
   //+Decals2SPass
-  //!Renderstyle Translucent
+  Renderstyle Dark
   //!Alpha 0.99
 
   States {
