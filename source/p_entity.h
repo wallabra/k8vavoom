@@ -95,6 +95,8 @@ enum {
   STYLE_Add, // draw additive
   STYLE_Stencil, // solid color
   STYLE_AddStencil, // solid color, additive
+  // special style for sprites only
+  STYLE_Dark,
 };
 
 // color tralslation types

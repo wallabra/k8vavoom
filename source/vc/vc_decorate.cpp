@@ -2094,6 +2094,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
               else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
+              else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
               else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
               else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
               else if (sc->Check("Subtract")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME

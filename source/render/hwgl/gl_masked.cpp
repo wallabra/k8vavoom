@@ -268,6 +268,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   TVec texpt(0, 0, 0);
 
   bool doBrightmap = (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
+  bool styleDark = (Alpha >= 1000.0f);
+  if (styleDark) Alpha -= 1666.0f;
 
   if (doBrightmap) {
     //GCon->Logf("BRMAP for '%s' (%s)", *Tex->Name, *Tex->Brightmap->Name);
@@ -332,6 +334,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     //glDisable(GL_BLEND);
     //glEnable(GL_BLEND);
   }
+
+  //glEnable(GL_BLEND);
+  if (styleDark) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
 
   //GCon->Logf("SPRITE: light=0x%08x; fade=0x%08x", light, Fade);
   //Fade ^= 0x00ffffff;
@@ -421,6 +426,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
     if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
+  if (styleDark) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   if (doBrightmap) {
     p_glActiveTextureARB(GL_TEXTURE0+1);

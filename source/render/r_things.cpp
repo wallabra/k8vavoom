@@ -425,13 +425,13 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       else if (thing->Health <= 0) priority = -110;
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
-    DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha, Additive,
+    DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
       thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
       DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
       , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
   } else {
-    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha,
+    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
       Additive, GetTranslation(thing->Translation), ColorMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/thing->ScaleX,

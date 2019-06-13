@@ -86,6 +86,7 @@ static inline bool SetupRenderStyleAndTime (const VEntity *mobj, int &RendStyle,
       Alpha = 1.0f;
       break;
     case STYLE_Translucent:
+    case STYLE_Dark:
       //Alpha = mobj->Alpha;
       break;
     case STYLE_Fuzzy:
