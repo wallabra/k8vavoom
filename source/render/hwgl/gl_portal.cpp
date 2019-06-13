@@ -124,7 +124,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
   glDisable(GL_TEXTURE_2D);
 
   if (UseStencil) {
-    if (/*!Portal->stackedSector*/true) {
+    if (!Portal->stackedSector) {
       glDisable(GL_BLEND);
       if (gl_dbg_render_stack_portal_bounds && Portal->stackedSector) {
         p_glUseProgramObjectARB(0);
