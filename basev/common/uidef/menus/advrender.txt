@@ -24,7 +24,7 @@ menudef AdvRenderOptions {
       "or visual glitches will occur.";
   }
 
-  option bool {
+  option bool [__k8vavoom_developer_version > 0] {
     title = "Allow other portals";
     cvar = r_allow_other_portals;
     help =
