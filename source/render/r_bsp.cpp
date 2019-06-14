@@ -300,12 +300,14 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     if (!Portal) return;
     //GCon->Log("----");
     int doRenderSurf = -1;
-    do {
+    for (; surfs; surfs = surfs->next) {
+      /*k8: ?
       if (!surfs->IsVisible(vieworg)) {
         // viewer is in back side or on plane
         //GCon->Logf("  SURF SKIP!");
         continue;
       }
+      */
       Portal->Surfs.Append(surfs);
       if (doRenderSurf < 0) {
         doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
@@ -321,8 +323,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
           0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
           false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
       }
-      surfs = surfs->next;
-    } while (surfs);
+    }
     return;
   } // done skybox rendering
 
@@ -481,11 +482,7 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
       Portals.Append(Portal);
     }
 
-    surface_t *surfs = dseg->mid->surfs;
-    do {
-      Portal->Surfs.Append(surfs);
-      surfs = surfs->next;
-    } while (surfs);
+    for (surface_t *surfs = dseg->mid->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
   } else {
     if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
       secregion->eceiling.splane->SkyBox, -1, seg->sidedef->Light,
@@ -633,11 +630,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
       Portals.Append(Portal);
     }
 
-    surface_t *surfs = ssurf->surfs;
-    do {
-      Portal->Surfs.Append(surfs);
-      surfs = surfs->next;
-    } while (surfs);
+    for (surface_t *surfs = ssurf->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
 
     if (plane.splane->MirrorAlpha <= 0.0f) return;
     // k8: is this right?
