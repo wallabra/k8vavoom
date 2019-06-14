@@ -569,6 +569,7 @@ protected:
                      texinfo_t *texinfo, VEntity *SkyBox, int LightSourceSector, int SideLight,
                      bool AbsSideLight, bool CheckSkyBoxAlways);
 
+  void GetFlatSetToRender (subsector_t *sub, subregion_t *region, sec_surface_t *surfs[4]);
   void ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1);
 
   void RenderHorizon (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);

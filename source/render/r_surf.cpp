@@ -1751,6 +1751,8 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
   //if (!underwater && diffTex) ff->floorplane = hs->floor;
   //return;
 
+  //GCon->Logf("sector=%d; hs=%d", (int)(ptrdiff_t)(sector-&Level->Sectors[0]), (int)(ptrdiff_t)(hs-&Level->Sectors[0]));
+
   // replace floor and ceiling height with control sector's heights
   if (diffTex && !(hs->SectorFlags&sector_t::SF_FakeCeilingOnly)) {
     if (CopyPlaneIfValid(&ff->floorplane, &hs->floor, &sector->ceiling)) {

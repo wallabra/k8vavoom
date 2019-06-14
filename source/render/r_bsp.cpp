@@ -110,6 +110,44 @@ void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *
 
 //==========================================================================
 //
+//  VRenderLevelShared::GetFlatSetToRender
+//
+//  this chooses from zero to four subsector floor/ceiling surfaces
+//  this is required to properly render Boom transfer heights
+//  first two elements are floors, second two elements are ceilings
+//  any element can be `nullptr`
+//
+//==========================================================================
+void VRenderLevelShared::GetFlatSetToRender (subsector_t *sub, subregion_t *region, sec_surface_t *surfs[4]) {
+  // if "clip fake planes" is not set, don't render real floor/ceiling if they're clipped away
+  bool realFloorClipped = false;
+  bool realCeilingClipped = false;
+
+  const sector_t *hs = (sub->sector ? sub->sector->heightsec : nullptr);
+  if (hs && !(hs->SectorFlags&sector_t::SF_ClipFakePlanes)) {
+    // check for clipped real floor and ceiling
+    if (sub->sector->floor.minz > hs->floor.minz) realFloorClipped = true;
+    if (sub->sector->ceiling.maxz < hs->ceiling.maxz) realCeilingClipped = true;
+  }
+
+  if (!realFloorClipped) {
+    ChooseFlatSurfaces(surfs[0], surfs[1], region->realfloor, region->fakefloor);
+  } else {
+    surfs[0] = region->fakefloor;
+    surfs[1] = nullptr;
+  }
+
+  if (!realCeilingClipped) {
+    ChooseFlatSurfaces(surfs[2], surfs[3], region->realceil, region->fakeceil);
+  } else {
+    surfs[2] = region->fakeceil;
+    surfs[3] = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SurfCheckAndQueue
 //
 //  this checks if surface is not queued twice
@@ -702,15 +740,14 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
     ++ds;
   }
 
-  sec_surface_t *fsurf0, *fsurf1;
+  sec_surface_t *fsurf[4];
+  GetFlatSetToRender(sub, region, fsurf);
 
-  ChooseFlatSurfaces(fsurf0, fsurf1, region->realfloor, region->fakefloor);
-  if (fsurf0) RenderSecSurface(sub, secregion, fsurf0, secregion->efloor.splane->SkyBox);
-  if (fsurf1) RenderSecSurface(sub, secregion, fsurf1, secregion->efloor.splane->SkyBox);
+  if (fsurf[0]) RenderSecSurface(sub, secregion, fsurf[0], secregion->efloor.splane->SkyBox);
+  if (fsurf[1]) RenderSecSurface(sub, secregion, fsurf[1], secregion->efloor.splane->SkyBox);
 
-  ChooseFlatSurfaces(fsurf0, fsurf1, region->realceil, region->fakeceil);
-  if (fsurf0) RenderSecSurface(sub, secregion, fsurf0, secregion->eceiling.splane->SkyBox);
-  if (fsurf1) RenderSecSurface(sub, secregion, fsurf1, secregion->eceiling.splane->SkyBox);
+  if (fsurf[2]) RenderSecSurface(sub, secregion, fsurf[2], secregion->eceiling.splane->SkyBox);
+  if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
 
   if (region->next && d > 0.0f) {
     if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
