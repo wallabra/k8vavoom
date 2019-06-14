@@ -702,7 +702,6 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       }
     }
   }
-
 }
 
 
@@ -805,6 +804,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     //TODO: we can use clipper to check if destination subsector is occluded
     bool needProperTrace = (doCheckTrace && xnfo > 0);
     if (dl.flags&dlight_t::NoShadow) needProperTrace = false;
+    if (!r_allow_shadows) needProperTrace = false;
 
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;

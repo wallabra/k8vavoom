@@ -113,6 +113,11 @@ menudef AdvVideoOptions {
   header "Dynamic Lighting";
 
   option bool {
+    title = "Dynamic/stencil shadows";
+    cvar = r_allow_shadows;
+  }
+
+  option bool {
     title = "Dynamic lights";
     cvar = r_dynamic;
   }

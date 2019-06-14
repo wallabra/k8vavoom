@@ -923,6 +923,7 @@ extern VCvarB r_advrender_translucent_as_light;
 
 extern VCvarI aspect_ratio;
 extern VCvarB r_interpolate_frames;
+extern VCvarB r_allow_shadows;
 
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;

@@ -823,6 +823,8 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
+  if (!r_allow_shadows) allowShadows = false;
+
   if (!allowShadows && dbg_adv_light_notrace_mark) {
     //Color = 0xffff0000U;
     Color = 0xffff00ffU; // purple; it should be very noticeable
