@@ -274,6 +274,18 @@ public:
   virtual void Serialise (void *buf, int len) override;
 };
 
+// owns afl
+class VStdFileStreamRead : public VStdFileStream {
+public:
+  VStdFileStreamRead (FILE *afl, const VStr &aname=VStr()) : VStdFileStream(afl, aname, false) {}
+};
+
+// owns afl
+class VStdFileStreamWrite : public VStdFileStream {
+public:
+  VStdFileStreamWrite (FILE *afl, const VStr &aname=VStr()) : VStdFileStream(afl, aname, true) {}
+};
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // doesn't own srcstream by default

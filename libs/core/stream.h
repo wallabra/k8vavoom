@@ -129,6 +129,9 @@ public:
   // serialise integers in particular byte order
   void SerialiseLittleEndian (void *Val, int Len);
   void SerialiseBigEndian (void *Val, int Len);
+
+  void writef (const char *text, ...) __attribute__((format(printf, 2, 3)));
+  void vawritef (const char *text, va_list ap);
 };
 
 // stream serialisation operators

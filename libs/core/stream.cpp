@@ -449,3 +449,51 @@ VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
   }
   return Strm;
 }
+
+
+//==========================================================================
+//
+//  VStream::vawritef
+//
+//==========================================================================
+void VStream::vawritef (const char *text, va_list ap) {
+  static const char *errorText = "ERROR CREATING STRING!";
+  if (bError) return;
+
+  char buf[512];
+  va_list apcopy;
+
+  va_copy(apcopy, ap);
+  int size = vsnprintf(buf, sizeof(buf), text, apcopy);
+  va_end(apcopy);
+
+  if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
+
+  if (size >= (int)sizeof(buf)-1) {
+    char *dynbuf = (char *)malloc(size+32);
+    if (!dynbuf) { Serialise(errorText, (int)strlen(errorText)); return; }
+    va_copy(apcopy, ap);
+    size = vsnprintf(dynbuf, size+32, text, apcopy);
+    va_end(apcopy);
+    if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
+    Serialise(dynbuf, size);
+    free(dynbuf);
+  } else {
+    Serialise(buf, size);
+  }
+}
+
+
+//==========================================================================
+//
+//  VStream::writef
+//
+//==========================================================================
+__attribute__((format(printf, 2, 3))) void VStream::writef (const char *text, ...) {
+  if (bError) return;
+
+  va_list ap;
+  va_start(ap, text);
+  vawritef(text, ap);
+  va_end(ap);
+}
