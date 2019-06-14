@@ -1640,6 +1640,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     if (!fakefloor.isFloor()) fakefloor.Flip();
     if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
     UpdateSecSurface(region->fakefloor, fakefloor, sub);
+    //region->fakefloor->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
   }
 
   if (region->fakeceil) {
@@ -1648,6 +1649,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     if (!fakeceil.isCeiling()) fakeceil.Flip();
     if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
     UpdateSecSurface(region->fakeceil, fakeceil, sub);
+    //region->fakeceil->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
   }
 
   if (updatePoly && sub->poly) {
@@ -1709,21 +1711,45 @@ bool VRenderLevelShared::CopyPlaneIfValid (sec_plane_t *dest, const sec_plane_t 
 //
 //  killough 4/11/98, 4/13/98: fix bugs, add 'back' parameter
 //
+//  k8: this whole thing is a fuckin' mess. it should be rewritten.
+//  we can simply create fakes, and let the renderer to the rest (i think).
+//
 //==========================================================================
 void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
-  const sector_t *hs = sector->heightsec;
-  sector_t *heightsec = r_viewleaf->sector->heightsec;
-  bool underwater = /*r_fakingunderwater ||*/
-    //(heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg));
-    (hs && vieworg.z <= hs->floor.GetPointZ(vieworg));
-  bool diffTex = !!(hs && hs->SectorFlags&sector_t::SF_ClipFakePlanes);
-
   // replace sector being drawn with a copy to be hacked
   fakefloor_t *ff = sector->fakefloors;
   if (!ff) return; //k8:just in case
+
+  const sector_t *hs = sector->heightsec;
+  sector_t *viewhs = r_viewleaf->sector->heightsec;
+  /*
+  bool underwater = / *r_fakingunderwater ||* /
+    //(viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
+    (hs && vieworg.z <= hs->floor.GetPointZ(vieworg));
+  */
+  //bool underwater = (viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
+  bool underwater = (hs && vieworg.z <= hs->floor.GetPointZ(vieworg));
+  bool underwaterView = (viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
+  bool diffTex = !!(hs && hs->SectorFlags&sector_t::SF_ClipFakePlanes);
+
   ff->floorplane = sector->floor;
   ff->ceilplane = sector->ceiling;
   ff->params = sector->params;
+  /*
+  if (!underwater && diffTex && (hs->SectorFlags&sector_t::SF_FakeFloorOnly)) {
+    ff->floorplane = hs->floor;
+    ff->floorplane.pic = GTextureManager.DefaultTexture;
+    return;
+  }
+  */
+  /*
+    ff->ceilplane.normal = -hs->floor.normal;
+    ff->ceilplane.dist = -hs->floor.dist;
+    ff->ceilplane.pic = GTextureManager.DefaultTexture;
+    return;
+  */
+  //if (!underwater && diffTex) ff->floorplane = hs->floor;
+  //return;
 
   // replace floor and ceiling height with control sector's heights
   if (diffTex && !(hs->SectorFlags&sector_t::SF_FakeCeilingOnly)) {
@@ -1732,7 +1758,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       //GCon->Logf("opic=%d; fpic=%d", sector->floor.pic.id, hs->floor.pic.id);
     } else if (hs && (hs->SectorFlags&sector_t::SF_FakeFloorOnly)) {
       if (underwater) {
-        //GCon->Logf("heightsec=%hs", (heightsec ? "tan" : "ona"));
+        //GCon->Logf("viewhs=%s", (viewhs ? "tan" : "ona"));
         //tempsec->ColorMap = hs->ColorMap;
         ff->params.Fade = hs->params.Fade;
         if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
@@ -1742,8 +1768,18 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
           if (floorlightlevel != nullptr) *floorlightlevel = GetFloorLight(hs);
           if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetFloorLight(hs);
           */
-          //ff->floorplane = (heightsec ? heightsec->floor : sector->floor);
+          //ff->floorplane = (viewhs ? viewhs->floor : sector->floor);
         }
+        ff->ceilplane = hs->floor;
+        ff->ceilplane.flipInPlace();
+        //ff->ceilplane.normal = -hs->floor.normal;
+        //ff->ceilplane.dist = -hs->floor.dist;
+        //ff->ceilplane.pic = GTextureManager.DefaultTexture;
+        //ff->ceilplane.pic = hs->floor.pic;
+      } else {
+        ff->floorplane = hs->floor;
+        //ff->floorplane.pic = hs->floor.pic;
+        //ff->floorplane.pic = GTextureManager.DefaultTexture;
       }
       return;
     }
@@ -1752,9 +1788,12 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       //ff->floorplane.normal = hs->floor.normal;
       //ff->floorplane.dist = hs->floor.dist;
       //GCon->Logf("  000");
-      *(TPlane *)&ff->floorplane = *(TPlane *)&hs->floor;
+      if (!underwater) *(TPlane *)&ff->floorplane = *(TPlane *)&hs->floor;
+      //*(TPlane *)&ff->floorplane = *(TPlane *)&sector->floor;
+      //CopyPlaneIfValid(&ff->floorplane, &hs->floor, &sector->ceiling);
     }
   }
+
 
   if (hs && !(hs->SectorFlags&sector_t::SF_FakeFloorOnly)) {
     if (diffTex) {
@@ -1774,21 +1813,21 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
   //float orgflorz = sector->floor.GetPointZ(viewx, viewy);
   float orgceilz = sector->ceiling.GetPointZ(vieworg);
 
-  if (underwater /*||(heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))*/) {
+  if (underwater /*||(viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg))*/) {
     //!ff->floorplane.normal = sector->floor.normal;
     //!ff->floorplane.dist = sector->floor.dist;
     //!ff->ceilplane.normal = -hs->floor.normal;
     //!ff->ceilplane.dist = -hs->floor.dist/* - -hs->floor.normal.z*/;
-    *(TPlane *)&ff->floorplane = *(TPlane *)&hs->floor;
+    *(TPlane *)&ff->floorplane = *(TPlane *)&sector->floor;
     *(TPlane *)&ff->ceilplane = *(TPlane *)&hs->ceiling;
     //ff->ColorMap = hs->ColorMap;
-    ff->params.Fade = hs->params.Fade;
+    if (underwaterView) ff->params.Fade = hs->params.Fade;
   }
 
   // killough 11/98: prevent sudden light changes from non-water sectors:
-  if ((underwater /*&& !back*/) || (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))) {
+  if ((underwater /*&& !back*/) || underwaterView) {
     // head-below-floor hack
-    ff->floorplane.pic = diffTex ? sector->floor.pic : hs->floor.pic;
+    ff->floorplane.pic = (diffTex ? sector->floor.pic : hs->floor.pic);
     ff->floorplane.xoffs = hs->floor.xoffs;
     ff->floorplane.yoffs = hs->floor.yoffs;
     ff->floorplane.XScale = hs->floor.XScale;
@@ -1796,9 +1835,15 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     ff->floorplane.Angle = hs->floor.Angle;
     ff->floorplane.BaseAngle = hs->floor.BaseAngle;
     ff->floorplane.BaseYOffs = hs->floor.BaseYOffs;
+    //ff->floorplane = hs->floor;
+    //*(TPlane *)&ff->floorplane = *(TPlane *)&sector->floor;
+    //ff->floorplane.dist -= 42;
+    //ff->floorplane.dist += 9;
 
     ff->ceilplane.normal = -hs->floor.normal;
     ff->ceilplane.dist = -hs->floor.dist/* - -hs->floor.normal.z*/;
+    //ff->ceilplane.pic = GTextureManager.DefaultTexture;
+    //GCon->Logf("!!!");
     if (hs->ceiling.pic == skyflatnum) {
       ff->floorplane.normal = -ff->ceilplane.normal;
       ff->floorplane.dist = -ff->ceilplane.dist/* - ff->ceilplane.normal.z*/;
@@ -1811,7 +1856,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       ff->ceilplane.BaseAngle = ff->floorplane.BaseAngle;
       ff->ceilplane.BaseYOffs = ff->floorplane.BaseYOffs;
     } else {
-      ff->ceilplane.pic = diffTex ? hs->floor.pic : hs->ceiling.pic;
+      ff->ceilplane.pic = (diffTex ? sector->floor.pic : hs->ceiling.pic);
       ff->ceilplane.xoffs = hs->ceiling.xoffs;
       ff->ceilplane.yoffs = hs->ceiling.yoffs;
       ff->ceilplane.XScale = hs->ceiling.XScale;
@@ -1821,7 +1866,9 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       ff->ceilplane.BaseYOffs = hs->ceiling.BaseYOffs;
     }
 
-    if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
+    // k8: why underwaterView? because of kdizd bugs
+    //     this seems to be totally wrong, though
+    if (!(hs->SectorFlags&sector_t::SF_NoFakeLight) && /*underwaterView*/viewhs) {
       ff->params.lightlevel = hs->params.lightlevel;
       ff->params.LightColor = hs->params.LightColor;
       /*
@@ -1830,7 +1877,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       */
     }
   } else if (((hs && vieworg.z > hs->ceiling.GetPointZ(vieworg)) || //k8: dunno, it was `floor` there, and it seems to be a typo
-              (heightsec && vieworg.z > heightsec->ceiling.GetPointZ(vieworg))) &&
+              (viewhs && vieworg.z > viewhs->ceiling.GetPointZ(vieworg))) &&
              orgceilz > refceilz && !(hs->SectorFlags&sector_t::SF_FakeFloorOnly))
   {
     // above-ceiling hack
@@ -1862,8 +1909,10 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       ff->floorplane.Angle = hs->floor.Angle;
     }
 
-    if (!(hs->SectorFlags&sector_t::SF_NoFakeLight)) {
-      ff->params.lightlevel  = hs->params.lightlevel;
+    // k8: why underwaterView? because of kdizd bugs
+    //     this seems to be totally wrong, though
+    if (!(hs->SectorFlags&sector_t::SF_NoFakeLight) && viewhs) {
+      ff->params.lightlevel = hs->params.lightlevel;
       ff->params.LightColor = hs->params.LightColor;
     }
   }
@@ -1929,8 +1978,7 @@ void VRenderLevelShared::UpdateFloodBug (sector_t *sector) {
 //==========================================================================
 void VRenderLevelShared::SetupFakeFloors (sector_t *sector) {
   if (!sector->deepref) {
-    sector_t *HeightSec = sector->heightsec;
-    if (HeightSec->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
+    if (sector->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
   }
 
   if (!sector->fakefloors) sector->fakefloors = new fakefloor_t;

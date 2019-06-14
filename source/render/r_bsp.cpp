@@ -88,7 +88,7 @@ void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *
 
   // check if flat1 is the same as flat0
   if (flat0->esecplane.splane == flat1->esecplane.splane) {
-    f0 = flat0;
+    f0 = flat1; // flat1 is fake, use it, because it may have different texture
     f1 = nullptr;
     return;
   }
@@ -97,7 +97,7 @@ void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *
   if (flat0->esecplane.GetNormal() == flat1->esecplane.GetNormal() &&
       flat0->esecplane.GetDist() == flat1->esecplane.GetDist())
   {
-    f0 = flat0;
+    f0 = flat1; // flat1 is fake, use it, because it may have different texture
     f1 = nullptr;
     return;
   }
