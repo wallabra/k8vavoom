@@ -2017,7 +2017,7 @@ char *vavarg (const char *text, va_list ap) {
   va_copy(apcopy, ap);
   int size = vsnprintf(vbuf.buf, vbuf.bufsize, text, apcopy);
   va_end(apcopy);
-  if (size >= 0 && size >= (int)vbuf.bufsize) {
+  if (size >= 0 && size >= (int)vbuf.bufsize-1) {
     vabufs[bufnum].ensureSize((size_t)size);
     va_copy(apcopy, ap);
     vsnprintf(vbuf.buf, vbuf.bufsize, text, apcopy);
