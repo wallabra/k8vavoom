@@ -238,7 +238,7 @@ extern "C" {
 //  VCommand::WriteAlias
 //
 //==========================================================================
-void VCommand::WriteAlias (FILE *fl) {
+void VCommand::WriteAlias (VStream *st) {
   // count items
   size_t acount = 0;
   for (VAlias *a = Alias; a; a = a->Next) ++acount;
@@ -251,12 +251,12 @@ void VCommand::WriteAlias (FILE *fl) {
   if (acount > 1) timsort_r(list, acount, sizeof(list[0]), &vapcmp, nullptr);
   // write list
   for (size_t f = 0; f < acount; ++f) {
-    fprintf(fl, "alias %s \"%s\"\n", *list[f]->Name, *list[f]->CmdLine.quote());
+    st->writef("alias %s \"%s\"\n", *list[f]->Name, *list[f]->CmdLine.quote());
   }
   delete [] list;
   /*
   for (VAlias *a = Alias; a; a = a->Next) {
-    fprintf(fl, "alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
+    st->writef("alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
   }
   */
 }

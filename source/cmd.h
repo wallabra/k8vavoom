@@ -89,7 +89,7 @@ public:
 
   static void Init ();
   static void InsertCLICommands (); // should be called after loading startup scripts
-  static void WriteAlias (FILE *);
+  static void WriteAlias (VStream *st);
   static void Shutdown ();
   static void ProcessKeyConf ();
 

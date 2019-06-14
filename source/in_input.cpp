@@ -62,7 +62,7 @@ public:
   virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) override;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) override;
   virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) override;
-  virtual void WriteBindings (FILE *f) override;
+  virtual void WriteBindings (VStream *st) override;
 
   virtual int TranslateKey (int ch) override;
 
@@ -582,13 +582,13 @@ void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save
 //  Writes lines containing "bind key value"
 //
 //==========================================================================
-void VInput::WriteBindings (FILE *f) {
-  fprintf(f, "UnbindAll\n");
+void VInput::WriteBindings (VStream *st) {
+  st->writef("UnbindAll\n");
   for (int i = 1; i < 256; ++i) {
     if (!KeyBindingsSave[i]) continue;
-    if (!KeyBindingsAll[i].IsEmpty()) fprintf(f, "bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsAll[i].cmdDown.quote(), *KeyBindingsAll[i].cmdUp.quote());
-    if (!KeyBindingsStrife[i].IsEmpty()) fprintf(f, "bind strife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsStrife[i].cmdDown.quote(), *KeyBindingsStrife[i].cmdUp.quote());
-    if (!KeyBindingsNonStrife[i].IsEmpty()) fprintf(f, "bind notstrife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsNonStrife[i].cmdDown.quote(), *KeyBindingsNonStrife[i].cmdUp.quote());
+    if (!KeyBindingsAll[i].IsEmpty()) st->writef("bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsAll[i].cmdDown.quote(), *KeyBindingsAll[i].cmdUp.quote());
+    if (!KeyBindingsStrife[i].IsEmpty()) st->writef("bind strife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsStrife[i].cmdDown.quote(), *KeyBindingsStrife[i].cmdUp.quote());
+    if (!KeyBindingsNonStrife[i].IsEmpty()) st->writef("bind notstrife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsNonStrife[i].cmdDown.quote(), *KeyBindingsNonStrife[i].cmdUp.quote());
   }
 }
 

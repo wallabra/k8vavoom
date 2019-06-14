@@ -74,7 +74,7 @@ public:
   virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) = 0;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0; // for current game mode
   virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) = 0;
-  virtual void WriteBindings (FILE *f) = 0;
+  virtual void WriteBindings (VStream *st) = 0;
 
   virtual int TranslateKey (int ch) = 0;
 
