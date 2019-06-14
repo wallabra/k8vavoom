@@ -419,8 +419,15 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
     // check for slopes
     if (!slopeDetected) slopeDetected = (reg->efloor.isSlope() || reg->eceiling.isSlope());
     // border points
-    const float fz = (usePoint ? reg->efloor.GetPointZ(point) : reg->efloor.splane->minz);
-    const float cz = (usePoint ? reg->eceiling.GetPointZ(point) : reg->eceiling.splane->maxz);
+    float fz = reg->efloor.splane->minz;
+    float cz = reg->eceiling.splane->maxz;
+    if (usePoint) {
+      fz = max2(fz, reg->efloor.GetPointZ(point));
+      cz = min2(cz, reg->eceiling.GetPointZ(point));
+    }
+    // k8: just in case
+    //if (fz > cz && (reg->efloor.isSlope() || reg->eceiling.isSlope())) { float tmp = fz; fz = cz; cz = tmp; }
+    if (fz > cz) fz = cz;
     cop.efloor = reg->efloor;
     cop.bottom = fz;
     cop.eceiling = reg->eceiling;
