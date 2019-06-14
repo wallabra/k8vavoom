@@ -127,25 +127,29 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
     // check transferred (k8: do we need more checks here?)
     const sector_t *hs = sec->heightsec;
     if (!hs) return;
-    if ((hs->SectorFlags&sector_t::SF_IgnoreHeightSec) != 0) return;
+    if (hs->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
 
     if (hs->SectorFlags&sector_t::SF_ClipFakePlanes) {
-      if (!CopyPlaneIfValid(fplane, &hs->floor, &sec->ceiling)) {
-        if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) return;
+      if (sec->floor.dist > hs->floor.dist) {
+        if (!CopyPlaneIfValid(fplane, &hs->floor, &sec->ceiling)) {
+          if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) return;
+        }
+        *fpic = hs->floor.pic;
       }
-      *fpic = hs->floor.pic;
-      if (!CopyPlaneIfValid(cplane, &hs->ceiling, &sec->floor)) {
-        return;
+      if (-sec->ceiling.dist < -hs->ceiling.dist) {
+        if (!CopyPlaneIfValid(cplane, &hs->ceiling, &sec->floor)) {
+          return;
+        }
+        *cpic = hs->ceiling.pic;
       }
-      *cpic = hs->ceiling.pic;
     } else {
       if (hs->SectorFlags&sector_t::SF_FakeCeilingOnly) {
-        *cplane = *(TPlane *)&hs->ceiling;
+        if (-sec->ceiling.dist < -hs->ceiling.dist) *cplane = *(TPlane *)&hs->ceiling;
       } else if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) {
-        *fplane = *(TPlane *)&hs->floor;
+        if (sec->floor.dist > hs->floor.dist) *fplane = *(TPlane *)&hs->floor;
       } else {
-        *cplane = *(TPlane *)&hs->ceiling;
-        *fplane = *(TPlane *)&hs->floor;
+        if (-sec->ceiling.dist < -hs->ceiling.dist) *cplane = *(TPlane *)&hs->ceiling;
+        if (sec->floor.dist > hs->floor.dist) *fplane = *(TPlane *)&hs->floor;
       }
     }
   }
