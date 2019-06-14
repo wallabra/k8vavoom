@@ -29,8 +29,7 @@
 
 //#include <SDL.h>
 
-#include "libs/core/src/core.h"
-#include "fsys/files.h"
+#include "libs/core.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

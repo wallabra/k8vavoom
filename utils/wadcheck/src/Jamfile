@@ -12,4 +12,3 @@ LinkLibraries wadcheck :
 
 
 SubInclude TOP src libs ;
-SubInclude TOP src fsys ;
