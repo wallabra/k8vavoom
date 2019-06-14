@@ -62,4 +62,6 @@ add_library(core STATIC
   ntvalue.cpp
   micropather.h
   micropather.cpp
+  cvarsys.h
+  cvarsys.cpp
 )

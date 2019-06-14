@@ -117,4 +117,6 @@
 
 #include "micropather.h"
 
+#include "cvarsys.h"
+
 #endif
