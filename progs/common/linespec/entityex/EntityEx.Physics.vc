@@ -135,14 +135,15 @@ bool Physics (float DeltaTime) {
     int CountY = 0;
     SectorThinker SecThink;
     for (SecThink = SectorThinker(Sector->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
-      if (!Scroller(SecThink)) continue;
-      float scrollx = Scroller(SecThink).CarryScrollX;
-      float scrolly = Scroller(SecThink).CarryScrollY;
+      auto sth = Scroller(SecThink);
+      if (!sth) continue;
+      float scrollx = sth.CarryScrollX;
+      float scrolly = sth.CarryScrollY;
       if (!scrollx && !scrolly) continue;
-      if (bNoGravity && (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec))) continue;
+      if (bNoGravity && (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec)) continue;
       float height = GetPlanePointZ(ref Sector->floor, Origin);
       if (Origin.z > height) {
-        if (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec)) continue;
+        if (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec) continue;
         float waterheight = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
         if (waterheight > height && Origin.z >= waterheight) continue;
       }
@@ -265,6 +266,10 @@ bool Physics (float DeltaTime) {
 }
 
 
+float CarryAccumX = 0;
+float CarryAccumY = 0;
+float CarryAccumTime = 0;
+
 //==========================================================================
 //
 //  XYMovement
@@ -313,21 +318,26 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   xmove = Velocity.x*DeltaTime;
   ymove = Velocity.y*DeltaTime;
 
-  // Carrying sectors didn't work with low speeds in BOOM. This is because
-  // BOOM relied on the speed being fast enough to accumulate despite
-  // friction. If the speed is too low, then its movement will get
-  // cancelled, and it won't accumulate to the desired speed.
-  float CarryStopSpeed = (2.0/3.0)*DeltaTime;
-  if (fabs(ScrollX) > CarryStopSpeed) {
-    ScrollX *= CARRYFACTOR;
-    Velocity.x += ScrollX/DeltaTime;
+  if (ScrollX || ScrollY) {
+    // scroll is already deltatime-corrected
+
+    // Carrying sectors didn't work with low speeds in BOOM. This is because
+    // BOOM relied on the speed being fast enough to accumulate despite
+    // friction. If the speed is too low, then its movement will get
+    // cancelled, and it won't accumulate to the desired speed.
+    float CarryStopSpeed = CARRYSTOPSPEED*DeltaTime;
+    if (fabs(ScrollX) > CarryStopSpeed) {
+      ScrollX *= CARRYFACTOR*DeltaTime;
+      Velocity.x += ScrollX/DeltaTime;
+    }
+    if (fabs(ScrollY) > CarryStopSpeed) {
+      ScrollY *= CARRYFACTOR*DeltaTime;
+      Velocity.y += ScrollY/DeltaTime;
+    }
+
+    xmove += ScrollX;
+    ymove += ScrollY;
   }
-  if (fabs(ScrollY) > CarryStopSpeed) {
-    ScrollY *= CARRYFACTOR;
-    Velocity.y += ScrollY/DeltaTime;
-  }
-  xmove += ScrollX;
-  ymove += ScrollY;
 
   if (!xmove && !ymove) {
     if (bSkullFly) {
