@@ -723,8 +723,9 @@ VCvar **VCvar::getSortedList () {
 //  VCvar::WriteVariablesToFile
 //
 //==========================================================================
-void VCvar::WriteVariablesToFile (FILE *f, bool saveDefaultValues) {
-  if (!f) return;
+void VCvar::WriteVariablesToStream (VStream *st, bool saveDefaultValues) {
+  if (!st) return;
+  if (st->IsLoading()) return; // wtf?!
   vuint32 count = countCVars();
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
@@ -735,14 +736,15 @@ void VCvar::WriteVariablesToFile (FILE *f, bool saveDefaultValues) {
         if (cvar->StringValue.Cmp(cvar->DefaultString) == 0) continue;
       }
       if (cvar->Flags&CVAR_FromMod) {
-        fprintf(f, "cvarinfovar");
-        if (cvar->Flags&CVAR_ServerInfo) fprintf(f, " server"); else fprintf(f, " user");
-        if (cvar->Flags&CVAR_Cheat) fprintf(f, " cheat");
-        if (cvar->Flags&CVAR_Latch) fprintf(f, " latch");
-        fprintf(f, " %s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+        st->writef("cvarinfovar");
+        if (cvar->Flags&CVAR_ServerInfo) st->writef(" server"); else st->writef(" user");
+        if (cvar->Flags&CVAR_Cheat) st->writef(" cheat");
+        if (cvar->Flags&CVAR_Latch) st->writef(" latch");
+        st->writef(" %s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       } else {
-        fprintf(f, "%s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+        st->writef("%s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       }
+      if (st->IsError()) break;
     }
   }
   delete[] list;

@@ -116,7 +116,7 @@ public:
   static void Set (const char *var_name, const VStr &value);
 
   static bool Command (const TArray<VStr> &Args);
-  static void WriteVariablesToFile (FILE *f, bool saveDefaultValues=false);
+  static void WriteVariablesToStream (VStream *st, bool saveDefaultValues=false);
 
   static void Unlatch ();
 
