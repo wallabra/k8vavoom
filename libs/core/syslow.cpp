@@ -241,10 +241,12 @@ bool Sys_DirExists (const VStr &path) {
 //
 //  Sys_Time
 //
+//  return valud should not be zero
+//
 //==========================================================================
 double Sys_Time () {
-#ifdef __linux__
   static bool initialized = false;
+#ifdef __linux__
   static time_t secbase = 0;
   struct timespec ts;
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
@@ -252,15 +254,17 @@ double Sys_Time () {
     initialized = true;
     secbase = ts.tv_sec;
   }
-  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0;
+  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
 #else
   struct timeval tp;
   struct timezone tzp;
   static int secbase = 0;
-
   gettimeofday(&tp, &tzp);
-  if (!secbase) secbase = tp.tv_sec;
-  return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0;
+  if (!initialized) {
+    initialized = true;
+    secbase = tp.tv_sec;
+  }
+  return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0+1.0;
 #endif
 }
 
@@ -268,6 +272,8 @@ double Sys_Time () {
 //==========================================================================
 //
 //  Sys_Time_CPU
+//
+//  return valud should not be zero
 //
 //==========================================================================
 double Sys_Time_CPU () {
@@ -280,7 +286,7 @@ double Sys_Time_CPU () {
     initialized = true;
     secbase = ts.tv_sec;
   }
-  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0;
+  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
 #else
   return Sys_Time();
 #endif
@@ -530,7 +536,7 @@ double Sys_Time () {
     // meh; do nothing on wraparound, this should only happen once
   }
   shitdozeLastTime = currtime;
-  return shitdozeCurrTime/1000.0;
+  return shitdozeCurrTime/1000.0+1.0;
 }
 
 
@@ -619,7 +625,7 @@ double Sys_Time () {
     lastcurtime = curtime;
   }
 
-  return curtime;
+  return curtime+1.0;
 }
 #endif
 
