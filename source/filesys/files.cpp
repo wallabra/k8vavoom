@@ -1510,7 +1510,7 @@ void FL_Init () {
   } else {
 #if !defined(_WIN32)
     const char *HomeDir = getenv("HOME");
-    if (HomeDir && HomeDir[0]) fl_savedir = VStr(HomeDir) + "/.vavoom";
+    if (HomeDir && HomeDir[0]) fl_savedir = VStr(HomeDir)+"/.k8vavoom";
 #else
     fl_savedir = ".";
 #endif
@@ -1530,6 +1530,9 @@ void FL_Init () {
       "/switch/vavoom/iwads",
       "/switch/vavoom",
 #elif !defined(_WIN32)
+      "~/.k8vavoom/iwads",
+      "~/.k8vavoom/iwad",
+      "~/.k8vavoom",
       "~/.vavoom/iwads",
       "~/.vavoom/iwad",
       "~/.vavoom",
@@ -2072,7 +2075,7 @@ VStr FL_GetConfigDir () {
 #if !defined(_WIN32)
   const char *HomeDir = getenv("HOME");
   if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.vavoom";
+    res = VStr(HomeDir)+"/.k8vavoom";
     Sys_CreateDirectory(res);
   } else {
     //res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);

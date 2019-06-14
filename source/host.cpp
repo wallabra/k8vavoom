@@ -150,17 +150,10 @@ void Host_Init () {
   GLog.AddListener(&DedLog);
 #endif
 
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir) {
-    Sys_CreateDirectory(va("%s/.vavoom", HomeDir));
-    OpenDebugFile(va("%s/.vavoom/debug.txt", HomeDir));
-  } else {
-    OpenDebugFile("basev/debug.txt");
+  {
+    VStr cfgdir = FL_GetConfigDir();
+    OpenDebugFile(va("%s/debug.txt", *cfgdir));
   }
-#else
-  OpenDebugFile("basev/debug.txt");
-#endif
 
   // seed the random-number generator
   RandomInit();
