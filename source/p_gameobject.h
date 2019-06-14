@@ -677,10 +677,10 @@ struct sector_t {
     SF_HasExtrafloors   = 0x0001, // this sector has extrafloors
     SF_ExtrafloorSource = 0x0002, // this sector is a source of an extrafloor
     SF_TransferSource   = 0x0004, // source of an heightsec or transfer light
-    SF_FakeFloorOnly    = 0x0008, // when used as heightsec in R_FakeFlat, only copies floor
+    SF_FakeFloorOnly    = 0x0008, // do not draw fake ceiling
     SF_ClipFakePlanes   = 0x0010, // as a heightsec, clip planes to target sector's planes
     SF_NoFakeLight      = 0x0020, // heightsec does not change lighting
-    SF_IgnoreHeightSec  = 0x0040, // heightsec is only for triggering sector actions
+    SF_IgnoreHeightSec  = 0x0040, // heightsec is only for triggering sector actions (i.e. don't draw them)
     SF_UnderWater       = 0x0080, // sector is underwater
     SF_Silent           = 0x0100, // actors don't make noise in this sector
     SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
