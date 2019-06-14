@@ -531,6 +531,9 @@ int main (int argc, char **argv) {
   GLogErrorToStderr = true;
   GLogWarningToStderr = true;
 
+  VCvar::Init();
+  VCvar::HostInitComplete();
+
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
   PR_WriterCB = &vmWriter;
