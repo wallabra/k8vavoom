@@ -178,6 +178,7 @@
   // cvar functions
   DECLARE_FUNCTION(CvarExists)
   DECLARE_FUNCTION(CvarGetFlags)
+  DECLARE_FUNCTION(GetCvarDefault)
   DECLARE_FUNCTION(CreateCvar)
   DECLARE_FUNCTION(GetCvar)
   DECLARE_FUNCTION(SetCvar)

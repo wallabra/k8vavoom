@@ -965,6 +965,7 @@ enum {
 native static final bool CvarExists (name Name); // is cvar exists?
 native static final int CvarGetFlags (name Name); // -1: no such var
 native static final string GetCvarHelp (name Name); // get cvar help text
+native static final string GetCvarDefault (name Name); // get cvar default value
 native static final void CreateCvar (name Name, string defaultValue, string helpText, optional int flags); // create a new cvar
 native static final int GetCvar (name Name); // read int value
 native static final void SetCvar (name Name, int value); // set cvar int value

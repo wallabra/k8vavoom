@@ -1181,6 +1181,16 @@ IMPLEMENT_FUNCTION(VObject, CvarGetFlags) {
   RET_INT(VCvar::GetVarFlags(*name));
 }
 
+IMPLEMENT_FUNCTION(VObject, GetCvarDefault) {
+  P_GET_NAME(name);
+  VCvar *cvar = VCvar::FindVariable(*name);
+  if (!cvar) {
+    RET_STR(VStr::EmptyString);
+  } else {
+    RET_STR(VStr(cvar->GetDefault()));
+  }
+}
+
 IMPLEMENT_FUNCTION(VObject, CreateCvar) {
   P_GET_INT_OPT(flags, 0);
   P_GET_STR(help);
