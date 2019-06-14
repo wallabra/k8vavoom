@@ -697,7 +697,8 @@ private:
     if (r_glow_flat && surf->seg && surf->subsector) {
       // check for glowing textures
       const sector_t *sec = surf->subsector->sector;
-      if (sec) {
+      //FIXME: check actual view height here
+      if (sec /*&& !sec->heightsec*/) {
         if (sec->floor.pic) {
           VTexture *gtex = GTextureManager(sec->floor.pic);
           if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
@@ -754,13 +755,16 @@ private:
   static inline float getSurfLightLevel (const surface_t *surf) {
     if (r_glow_flat && surf && !surf->seg && surf->subsector) {
       const sector_t *sec = surf->subsector->sector;
-      if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
-        VTexture *gtex = GTextureManager(sec->floor.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
-      }
-      if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
-        VTexture *gtex = GTextureManager(sec->ceiling.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
+      //FIXME: check actual view height here
+      if (sec && !sec->heightsec) {
+        if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
+          VTexture *gtex = GTextureManager(sec->floor.pic);
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
+        }
+        if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
+          VTexture *gtex = GTextureManager(sec->ceiling.pic);
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
+        }
       }
     }
     if (!surf || !r_allow_ambient) return 0;
