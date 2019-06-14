@@ -226,13 +226,18 @@ void InitGen (int InType, line_t *SrcLine, int InAffectee) {
   Sector = &XLevel.Sectors[Affectee];
   if (SrcLine->arg2&4) {
     // the line housing the special controls the direction and speed of scrolling
-    XSpeed = (SrcLine->v2->x-SrcLine->v1->x)*35.0/32.0;
-    YSpeed = (SrcLine->v2->y-SrcLine->v1->y)*35.0/32.0;
+    XSpeed = (SrcLine->v2->x-SrcLine->v1->x);
+    YSpeed = (SrcLine->v2->y-SrcLine->v1->y);
   } else {
     // the speed and direction are parameters to the special
-    XSpeed = float(SrcLine->arg4-128)*35.0/32.0;
-    YSpeed = float(SrcLine->arg5-128)*35.0/32.0;
+    XSpeed = float(SrcLine->arg4-128);
+    YSpeed = float(SrcLine->arg5-128);
   }
+  // speed is map units per second
+  //print("XYSpeed=%s,%s", XSpeed, YSpeed);
+  XSpeed = XSpeed*35.0/32.0;
+  YSpeed = YSpeed*35.0/32.0;
+  //print("U-XYSpeed=%s,%s", XSpeed, YSpeed);
 
   if (Type == SCROLLEV_Carry) {
     AddAffector();
