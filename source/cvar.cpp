@@ -28,6 +28,7 @@
 #include "net/network.h"
 #include "sv_local.h"
 
+#if 0
 #define USE_SIMPLE_HASHFN
 
 bool VCvar::Initialised = false;
@@ -607,6 +608,78 @@ void VCvar::WriteVariablesToFile (FILE *f) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VCvarI &VCvarI::operator = (const VCvarB &v) { Set(v.asBool() ? 1 : 0); return *this; }
+VCvarI &VCvarI::operator = (const VCvarI &v) { Set(v.IntValue); return *this; }
+
+VCvarF &VCvarF::operator = (const VCvarB &v) { Set(v.asBool() ? 1.0f : 0.0f); return *this; }
+VCvarF &VCvarF::operator = (const VCvarI &v) { Set((float)v.asInt()); return *this; }
+VCvarF &VCvarF::operator = (const VCvarF &v) { Set(v.FloatValue); return *this; }
+
+VCvarB &VCvarB::operator = (const VCvarB &v) { Set(v.BoolValue ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarI &v) { Set(v.asInt() ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarF &v) { Set(v.asFloat() ? 1 : 0); return *this; }
+#endif
+
+
+//==========================================================================
+//
+//  cv_userInfoSet
+//
+//==========================================================================
+static void cv_userInfoSet (VCvar *cvar) {
+#ifdef CLIENT
+  if (cvar->GetFlags()&CVAR_UserInfo) {
+    Info_SetValueForKey(cls.userinfo, cvar->GetName(), *cvar->asStr());
+    if (cl) {
+      if (GGameInfo->NetMode == NM_TitleMap ||
+          GGameInfo->NetMode == NM_Standalone ||
+          GGameInfo->NetMode == NM_ListenServer)
+      {
+        VCommand::ExecuteString(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr()+"\"\n", VCommand::SRC_Client, cl);
+      } else if (cl->Net) {
+        cl->Net->SendCommand(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr()+"\"\n");
+      }
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  cv_serverInfoSet
+//
+//==========================================================================
+static void cv_serverInfoSet (VCvar *cvar) {
+#ifdef SERVER
+  if (cvar->GetFlags()&CVAR_ServerInfo) {
+    Info_SetValueForKey(svs.serverinfo, cvar->GetName(), *cvar->asStr());
+    if (GGameInfo && GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
+      for (int i = 0; i < MAXPLAYERS; ++i) {
+        if (GGameInfo->Players[i]) {
+          GGameInfo->Players[i]->eventClientSetServerInfo(cvar->GetName(), cvar->asStr());
+        }
+      }
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  CVars_Init
+//
+//==========================================================================
+void CVars_Init () {
+  VCvar::Init();
+  VCvar::AddAllVarsToAutocomplete(&VCommand::AddToAutoComplete);
+  VCvar::UserInfoSetCB = &cv_userInfoSet;
+  VCvar::ServerInfoSetCB = &cv_serverInfoSet;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // COMMAND CvarList
 //
 // This is slightly more complicated, as we want nicely sorted list.
@@ -618,9 +691,9 @@ COMMAND(CvarList) {
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
     if (showValues) {
-      GCon->Logf("%s = \"%s\"", cvar->Name, *VStr(cvar->StringValue).quote());
+      GCon->Logf("%s = \"%s\"", cvar->GetName(), *VStr(cvar->asStr()).quote());
     } else {
-      GCon->Logf("%s: %s", cvar->Name, cvar->HelpString);
+      GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
     }
   }
   GCon->Logf("%u variables.", count);
@@ -696,16 +769,3 @@ COMMAND(CvarInfoVar) {
     VCvar::CreateNew(*vname, vvalue, "cvarinfo variable", flags);
   }
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-VCvarI &VCvarI::operator = (const VCvarB &v) { Set(v.asBool() ? 1 : 0); return *this; }
-VCvarI &VCvarI::operator = (const VCvarI &v) { Set(v.IntValue); return *this; }
-
-VCvarF &VCvarF::operator = (const VCvarB &v) { Set(v.asBool() ? 1.0f : 0.0f); return *this; }
-VCvarF &VCvarF::operator = (const VCvarI &v) { Set((float)v.asInt()); return *this; }
-VCvarF &VCvarF::operator = (const VCvarF &v) { Set(v.FloatValue); return *this; }
-
-VCvarB &VCvarB::operator = (const VCvarB &v) { Set(v.BoolValue ? 1 : 0); return *this; }
-VCvarB &VCvarB::operator = (const VCvarI &v) { Set(v.asInt() ? 1 : 0); return *this; }
-VCvarB &VCvarB::operator = (const VCvarF &v) { Set(v.asFloat() ? 1 : 0); return *this; }

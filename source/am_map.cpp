@@ -1705,7 +1705,7 @@ static vuint32 StringToColor (const char *str) {
   return alpha|(r<<16)|(g<<8)|b;
   */
   vuint32 clr = M_ParseColor(str)&0xffffffu;
-  clr |= ((vuint32)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255))<<24;
+  clr |= ((vuint32)((am_overlay_alpha < 0.0f ? 0.1f : am_overlay_alpha > 1.0f ? 1.0f : am_overlay_alpha)*255))<<24;
   return clr;
 }
 

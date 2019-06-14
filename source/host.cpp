@@ -166,7 +166,7 @@ void Host_Init () {
   VName::StaticInit();
   VObject::StaticInit();
 
-  VCvar::Init();
+  CVars_Init();
   VCommand::Init();
 
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
@@ -310,6 +310,7 @@ void Host_Init () {
 #endif
 
   host_initialised = true;
+  VCvar::HostInitComplete();
 }
 
 

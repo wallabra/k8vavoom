@@ -25,6 +25,9 @@
 //**
 //**************************************************************************
 
+void CVars_Init ();
+
+#if 0
 enum {
   CVAR_Archive    = 0x0001, // Set to cause it to be saved to config.cfg
   CVAR_UserInfo   = 0x0002, // Added to userinfo  when changed
@@ -186,3 +189,4 @@ public:
   VCvarB &operator = (const VCvarI &v);
   VCvarB &operator = (const VCvarF &v);
 };
+#endif
