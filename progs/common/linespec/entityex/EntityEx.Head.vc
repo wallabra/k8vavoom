@@ -66,7 +66,8 @@ const int MONS_LOOK_LIMIT   = 64;
 
 // factor to scale scrolling effect into mobj-carrying properties = 3/32
 // (this is so scrolling floors and objects on them can move at same speed)
-const float CARRYFACTOR = 0.09375;
+const float CARRYFACTOR = 3.0/32.0; //0.09375; //1.0/18.3; //2065; //k8: old value is 0.09375, and it is wrong
+const float CARRYSTOPSPEED = 2.0/3.0;
 const float CROUCHSPEED = 1.0/12.0;
 
 enum {
