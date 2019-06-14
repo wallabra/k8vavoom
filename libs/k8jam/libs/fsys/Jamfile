@@ -1,0 +1,12 @@
+SubDir TOP src libs fsys ;
+
+#SubDirHdrs $(TOP) src ;
+SubDirHdrs $(TOP) src liblzma api ;
+
+Library libfsys.a :
+  src/files.cpp
+  src/fs_dirpak.cpp
+  src/fs_pakbase.cpp
+  src/fs_wad.cpp
+  src/fs_zip.cpp
+;

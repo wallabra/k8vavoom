@@ -1,0 +1,14 @@
+SubDir TOP src ;
+
+Main pngtest :
+  main_pngtest.cpp
+;
+LinkLibraries pngtest :
+  libfsys.a
+  libcore.a
+  $(STATIC_LZMA_LIB)
+  $(STATIC_ZLIB_LIB)
+;
+
+
+SubInclude TOP src libs ;

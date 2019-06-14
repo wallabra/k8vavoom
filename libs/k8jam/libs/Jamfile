@@ -1,0 +1,6 @@
+SubDir TOP src libs ;
+
+SubInclude TOP src libs core ;
+SubInclude TOP src libs lzma ;
+SubInclude TOP src libs zlib ;
+SubInclude TOP src libs fsys ;

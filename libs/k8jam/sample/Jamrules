@@ -1,0 +1,14 @@
+softinclude $(TOP)/Jamrules.configure ;
+
+set-profile ;
+set-target-locations ;
+
+unfuck-gcc ;
+CFLAGS.all += -Wno-ignored-attributes ;
+
+DEFINES += IN_WADCHECK ;
+
+
+softinclude $(TOP)/Jamrules.local ;
+softinclude $(TOP)/Jamrules.libs ;
+softinclude $(TOP)/Jamrules.install ;
