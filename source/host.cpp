@@ -34,6 +34,9 @@
 # include "render/r_local.h"
 #endif
 
+#include "cvar.h"
+
+
 extern int fsys_warp_n0;
 extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
