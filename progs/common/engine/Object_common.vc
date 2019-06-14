@@ -48,6 +48,8 @@ native static final float GC_LastCollectDuration { get; } // in seconds
 native static final float GC_LastCollectTime { get; } // in seconds
 native static final bool GC_MessagesAllowed { get; set; }
 
+final int UniqueId { get { return __ObjectUniqueId; } }
+
 #include "RTTI.vc"
 
 
