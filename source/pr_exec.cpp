@@ -188,9 +188,9 @@ static void cstDump (const vuint8 *ip, bool toStdErr=false) {
   if (VObject::DumpBacktraceToStdErr) toStdErr = true; // hard override
   //ip = func->Statements.Ptr();
   if (toStdErr) {
-    fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
+    fprintf(stderr, "\n\n=== VavoomScript Call Stack (%u) ===\n", cstUsed);
   } else {
-    GLog.Logf("\n=== VaVoomScript Call Stack (%u) ===", cstUsed);
+    GLog.Logf("\n=== VavoomScript Call Stack (%u) ===", cstUsed);
   }
   if (cstUsed > 0) {
     // do the best thing we can

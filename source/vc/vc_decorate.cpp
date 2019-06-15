@@ -2944,22 +2944,22 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
       ParseOldDecoration(sc, OLDDEC_Projectile);
     } else if (sc->Check("damagetype")) {
       ParseDamageType(sc);
-    } else if (sc->Check("k8VaVoom")) {
-      // special k8VaVoom section
+    } else if (sc->Check("k8vavoom")) {
+      // special k8vavoom section
       sc->Expect("{");
       while (!sc->Check("}")) {
         if (sc->Check("basepak")) {
           sc->Expect("=");
                if (sc->Check("true") || sc->Check("tan")) thisIsBasePak = true;
           else if (sc->Check("false") || sc->Check("ona")) thisIsBasePak = false;
-          else sc->Error("boolean expected for k8VaVoom command 'basepak'");
+          else sc->Error("boolean expected for k8vavoom command 'basepak'");
         } else if (sc->Check("AllowBloodReplacement")) {
           sc->Expect("=");
                if (sc->Check("true") || sc->Check("tan")) bloodOverrideAllowed = true;
           else if (sc->Check("false") || sc->Check("ona")) bloodOverrideAllowed = false;
-          else sc->Error("boolean expected for k8VaVoom command 'AllowBloodReplacement'");
+          else sc->Error("boolean expected for k8vavoom command 'AllowBloodReplacement'");
         } else {
-          sc->Error(va("invalid k8VaVoom command '%s'", *sc->String));
+          sc->Error(va("invalid k8vavoom command '%s'", *sc->String));
         }
       }
     } else {

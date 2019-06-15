@@ -210,7 +210,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   // doing it twice is required for some broken setups. oops.
   SetVSync(true); // first time
 
-  hw_window = SDL_CreateWindow("k8VaVoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
+  hw_window = SDL_CreateWindow("k8vavoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
   if (!hw_window) {
     GCon->Logf("SDL2: cannot create SDL2 window.");
     return false;

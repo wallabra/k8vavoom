@@ -544,7 +544,7 @@ enum {
   NUM_OPCODES
 };
 
-static_assert(NUM_OPCODES < 256, "VaVoomC: too many opcodes!");
+static_assert(NUM_OPCODES < 256, "VavoomC: too many opcodes!");
 
 
 #endif

@@ -21,7 +21,7 @@
 //**
 //**************************************************************************
 //**
-//** k8Vavoom master server
+//** k8vavoom master server
 //**
 //**************************************************************************
 
@@ -208,7 +208,7 @@ static void ReadNet () {
 //
 //==========================================================================
 int main (int argc, const char **argv) {
-  printf("k8Vavoom master server at port %d.\n", MASTER_SERVER_PORT);
+  printf("k8vavoom master server at port %d.\n", MASTER_SERVER_PORT);
 
 #ifdef _WIN32
   WSADATA winsockdata;
