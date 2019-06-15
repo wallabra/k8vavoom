@@ -188,35 +188,35 @@ static void cstDump (const vuint8 *ip, bool toStdErr=false) {
   if (VObject::DumpBacktraceToStdErr) toStdErr = true; // hard override
   //ip = func->Statements.Ptr();
   if (toStdErr) {
-    fprintf(stderr, "\n\n=== VavoomScript Call Stack (%u) ===\n", cstUsed);
+    fprintf(stderr, "\n\n=== Vavoom C call stack (%u) ===\n", cstUsed);
   } else {
-    GLog.Logf("\n=== VavoomScript Call Stack (%u) ===", cstUsed);
+    GLog.Logf(NAME_Error, "%s", "");
+    GLog.Logf(NAME_Error, "*** Vavoom C code crashed!");
+    GLog.Logf(NAME_Error, "=== Vavoom C call stack (%u) ===", cstUsed);
   }
   if (cstUsed > 0) {
     // do the best thing we can
     if (!ip && callStack[cstUsed-1].ip) ip = callStack[cstUsed-1].ip;
+    const char *outs;
     for (vuint32 sp = cstUsed; sp > 0; --sp) {
       VMethod *func = callStack[sp-1].func;
       TLocation loc = func->FindPCLocation(sp == cstUsed ? ip : callStack[sp-1].ip);
       if (!loc.isInternal()) {
-        if (toStdErr) {
-          fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
-        } else {
-          GLog.Logf("  %03u: %s (%s:%d)", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
-        }
+        outs = va("  %03u: %s (%s:%d)", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
       } else {
-        if (toStdErr) {
-          fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
-        } else {
-          GLog.Logf("  %03u: %s", cstUsed-sp, *func->GetFullName());
-        }
+        outs = va("  %03u: %s", cstUsed-sp, *func->GetFullName());
+      }
+      if (toStdErr) {
+        fprintf(stderr, "%s\n", outs);
+      } else {
+        GLog.Logf(NAME_Error, "%s", outs);
       }
     }
   }
   if (toStdErr) {
     fprintf(stderr, "=============================\n\n");
   } else {
-    GLog.Logf("=============================\n");
+    GLog.Logf(NAME_Error, "=============================");
   }
 }
 
