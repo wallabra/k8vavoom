@@ -1555,60 +1555,52 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
 //  FIXME: split this to several functions, because "compat" sux
 //
 //==========================================================================
-
-final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  bool Generic, line_t *Line)
+final int EV_BuildStairsOld (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
+                             bool Generic, line_t *Line)
 {
-  float   Height;
-  int     Ok;
-  int     Texture;
-  int     Rtn;
+  float Height;
+  int Ok;
+  int Texture;
+  int Rtn;
   sector_t *Sec;
   sector_t *TSec;
-  FloorMover  Floor;
+  FloorMover Floor;
   line_t *SecLine;
-  int     Direction;
-  float   StairSize;
-  bool    IgnTxt;
-  int     OldSecNum;
+  int Direction;
+  float StairSize;
+  bool IgnTxt;
+  int OldSecNum;
 
-  if (!Arg1 && (!Line || !Line->backsector))
-  {
-    return false;
-  }
+  if (!Arg1 && (!Line || !Line->backsector)) return false;
 
-  if (Generic)
-  {
-    Direction = Arg4&1 ? 1 : -1;
+  if (Generic) {
+    Direction = (Arg4&1 ? 1 : -1);
     IgnTxt = !!(Arg4&2);
-  }
-  else
-  {
+  } else {
     Direction = 1;
     IgnTxt = false;
   }
+
   StairSize = float(Arg3*Direction);
   Rtn = 0;
-  int hidx = (Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1) : 1);
-  int SecNum = (hidx < 0 ? -1 : Sec-&XLevel.Sectors[0]);
-  /*
-  for (int hidx = Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1) : 1; hidx >= 0;
-       hidx = Arg1 ? XLevel.FindSectorFromTag(out Sec, Arg1, hidx) : -1)
-  */
-  while (SecNum >= 0 && SecNum < XLevel.Sectors.length) {
-    int stag = XLevel.Sectors[SecNum].sectorTag;
-    //Sec = Arg1 ? &XLevel.Sectors[SecNum] : Line->backsector;
-    if (!Arg1) {
-      Sec = Line->backsector;
-    } else {
-      Sec = &XLevel.Sectors[SecNum];
+
+  int SecNum;
+  if (Arg1) {
+    foreach (SecNum; 0..XLevel.Sectors.length) {
+      if (IsSectorTagEqual(&XLevel.Sectors[SecNum], Arg1)) break;
     }
+  } else {
+    SecNum = 1;
+  }
+
+  while (SecNum >= 0 && SecNum < XLevel.Sectors.length) {
+    Sec = (Arg1 ? &XLevel.Sectors[SecNum] : Line->backsector);
 
     //OldSecNum = /*SecNum*/Sec-&XLevel.Sectors[0]; //jff 3/4/98 preserve loop index
     //int SecNum = OldSecNum;
     OldSecNum = SecNum;
 
-    // ALREADY MOVING?  IF SO, KEEP GOING...
+    // ALREADY MOVING? IF SO, KEEP GOING...
     if (!Sec->FloorData) {
       // new floor thinker
       Rtn = 1;
@@ -1637,7 +1629,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
           if (TSec->FloorData) continue;
 
           Sec = TSec;
-          //  SecNum = TSec - XLevel.Sectors;
+          // SecNum = TSec-XLevel.Sectors;
           foreach (int j; 0..XLevel.Sectors.length) {
             if (TSec == &XLevel.Sectors[j]) {
               SecNum = j;
@@ -1650,15 +1642,15 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
           break;
         }
       } while (Ok);
-      if (!Level.CompatStairs || SecNum == OldSecNum) {
-        SecNum = OldSecNum; //jff 3/4/98 restore loop index
-      }
-      // next sector
-      if (!Arg1) break;
+    }
+    if (!Level.CompatStairs) SecNum = OldSecNum; //jff 3/4/98 restore loop index
+    // next sector
+    if (!Arg1) break;
+    ++SecNum;
+    if (SecNum < 0 || SecNum > XLevel.Sectors.length) break;
+    while (SecNum < XLevel.Sectors.length) {
+      if (IsSectorTagEqual(&XLevel.Sectors[SecNum], Arg1)) break;
       ++SecNum;
-      if (SecNum < 0 || SecNum > XLevel.Sectors.length) break;
-      if (!stag) break;
-      while (SecNum < XLevel.Sectors.length && XLevel.Sectors[SecNum].sectorTag != stag) ++SecNum;
     }
   }
   return Rtn;
