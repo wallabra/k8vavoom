@@ -543,6 +543,7 @@ static void SV_RunClients (bool skipFrame=false) {
 
   //GCon->Logf("*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
+#ifdef CLIENT
     if (GDemoRecordingContext) {
       if (cls.demorecording) {
         CL_KeepaliveMessage();
@@ -560,11 +561,13 @@ static void SV_RunClients (bool skipFrame=false) {
       }
       */
     }
+#endif
     CheckForSkip();
     ++sv.intertime;
   }
 
   if (!sv.intermission) {
+#ifdef CLIENT
     if (GDemoRecordingContext) {
       if (cls.demorecording) {
         for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
@@ -574,6 +577,7 @@ static void SV_RunClients (bool skipFrame=false) {
         }
       }
     }
+#endif
   }
 }
 
