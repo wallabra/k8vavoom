@@ -132,7 +132,7 @@ void Sys_Error (const char *error, ...) {
   fputc('\n', stderr);
 */
 #endif
-  GLog.WriteLine("Sys_Error: %s", buf);
+  GLog.WriteLine(NAME_Error, "Sys_Error: %s", buf);
   //throw VavoomError(buf);
   abort(); // abort here, so we can drop back to gdb
 }
