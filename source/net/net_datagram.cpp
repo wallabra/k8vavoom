@@ -29,9 +29,9 @@
 //**
 //**************************************************************************
 //
-// This is the network info/connection protocol. It is used to find Vavoom
+// This is the network info/connection protocol. It is used to find k8vavoom
 // servers, get info about them, and connect to them. Once connected, the
-// Vavoom game protocol (documented elsewhere) is used.
+// k8vavoom game protocol (documented elsewhere) is used.
 //
 //
 // CCREQ_CONNECT

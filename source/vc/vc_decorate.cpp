@@ -201,7 +201,7 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
       GLog.Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
       return;
     }
-    // old Vavoom method
+    // old k8vavoom method
     oldcls->Replacement = newcls;
     newcls->Replacee = oldcls;
   } else {
@@ -1008,7 +1008,7 @@ static void ParseClass (VScriptParser *sc) {
   sc->ExpectString();
   VClass *Class = VClass::FindClass(*sc->String);
   if (!Class) sc->Error("Class not found");
-  // I don't care about parent class name because in Vavoom it can be different
+  // I don't care about parent class name because in k8vavoom it can be different
   sc->Expect("extends");
   sc->ExpectString();
   sc->Expect("native");

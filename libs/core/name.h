@@ -139,7 +139,7 @@ public:
   static void DebugDumpHashStats ();
 };
 
-static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for VaVoom C
+static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for Vavoom C
 
 static_assert(__builtin_offsetof(VName::VNameEntry, rc)+sizeof(int) == __builtin_offsetof(VName::VNameEntry, Name), "VNameEntry layout failure");
 

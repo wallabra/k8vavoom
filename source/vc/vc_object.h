@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 //**
-//**  Vavoom object base class.
+//**  k8vavoom object base class.
 //**
 //**************************************************************************
 
@@ -95,8 +95,8 @@ struct event_t {
 enum EObjectFlags {
   // object Destroy has already been called
   _OF_Destroyed      = 0x00000001,
-  // for VaVoom: this thinker is marked for deletion on a next tick
-  //             tick processor will take care of calling `Destroy()` on it
+  // for k8vavoom: this thinker is marked for deletion on a next tick
+  //               tick processor will take care of calling `Destroy()` on it
   // for VccRun: you can call `CollectGarbage(true)` to destroy that objects
   _OF_DelayedDestroy = 0x00000002,
   // this object is going to be destroyed; only GC will set this flag, and
@@ -140,7 +140,7 @@ public:
 
 private:
   // internal per-object variables
-  VMethod **vtable; // VaVoom C VMT
+  VMethod **vtable; // Vavoom C VMT
   vint32 Index; // index of object into table
   vuint32 UniqueId; // monotonically increasing
   vuint32 ObjectFlags; // private EObjectFlags used by object manager
@@ -253,7 +253,7 @@ public:
 #endif
 
 public:
-  // event queue API; as it is used both in VaVoom and in vccrun, and with common `event_t` struct,
+  // event queue API; as it is used both in k8vavoom and in vccrun, and with common `event_t` struct,
   // there is no reason to not have it here
 
   // returns `false` if queue is full

@@ -54,7 +54,7 @@ public:
     FF_KEEPSPRITE = 0x04000, // sprite number can be replaced, so we need to store this flag
   };
 
-  enum { VaVoom, D2DF };
+  enum { Vavoom, D2DF };
 
   enum TicKind {
     TCK_Normal,

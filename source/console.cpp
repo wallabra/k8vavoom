@@ -122,7 +122,7 @@ void C_Init () {
 #if defined(_WIN32)
   if (!logfout) logfout = fopen("conlog.log", "w");
 #elif defined(__SWITCH__) && !defined(SWITCH_NXLINK)
-  if (!logfout) logfout = fopen("/switch/vavoom/conlog.log", "w");
+  if (!logfout) logfout = fopen("/switch/k8vavoom/conlog.log", "w");
 #endif
 
   memset((void *)&clines[0], 0, sizeof(clines));

@@ -193,9 +193,9 @@ VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
     }
   }
 #elif defined(__SWITCH__)
-  // try "/switch/vavoom/gzdoom.sf2"
+  // try "/switch/k8vavoom/gzdoom.sf2"
   if (!sf2_data) {
-    VStr gzsf2 = "/switch/vavoom/gzdoom.sf2";
+    VStr gzsf2 = "/switch/k8vavoom/gzdoom.sf2";
     sf2_data = Timidity_LoadSF2(*gzsf2);
     if (sf2_data && lastSF2Used != gzsf2) {
       GCon->Log("TIMIDITY: loaded SF2: 'gzdoom.sf2'");

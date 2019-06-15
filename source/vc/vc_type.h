@@ -194,7 +194,7 @@ public:
   static int CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fncmp);
 };
 
-// required for VaVoom C VM
+// required for Vavoom C VM
 static_assert(sizeof(VScriptArray) <= sizeof(void *)*3, "oops");
 
 
@@ -299,7 +299,7 @@ public:
   void Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/);
 };
 
-// required for VaVoom C VM
+// required for Vavoom C VM
 static_assert(sizeof(VScriptDict) == sizeof(void *), "oops");
 
 VStream &operator << (VStream &strm, VScriptDict &dc);

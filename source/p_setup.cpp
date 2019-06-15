@@ -947,7 +947,7 @@ load_again:
     if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes) {
       gl_lumpnum = FindGLNodes(MapLumpName);
       if (gl_lumpnum < lumpnum) {
-        GCon->Logf("no GL nodes found, VaVoom will use internal node builder");
+        GCon->Logf("no GL nodes found, k8vavoom will use internal node builder");
         NeedNodesBuild = true;
       } else {
         //glNodesFound = true;
@@ -2269,7 +2269,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   BaseStrm->Serialise(hdr, 4);
   if (BaseStrm->IsError()) {
     delete BaseStrm;
-    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "error reading GL nodes (k8vavoom will use internal node builder)");
     return false;
   }
 
@@ -2280,7 +2280,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     // ok
   } else {
     delete BaseStrm;
-    GCon->Logf(NAME_Warning, "invalid GL nodes signature (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "invalid GL nodes signature (k8vavoom will use internal node builder)");
     return false;
   }
 
@@ -2290,7 +2290,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   BaseStrm->Serialise(TmpData, BaseStrm->TotalSize()-4);
   if (BaseStrm->IsError()) {
     delete BaseStrm;
-    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "error reading GL nodes (k8vavoom will use internal node builder)");
     return false;
   }
 
@@ -2316,7 +2316,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     default:
       delete Strm;
       delete DataStrm;
-      GCon->Logf(NAME_Warning, "this obsolete version of GL nodes is disabled (VaVoom will use internal node builder)");
+      GCon->Logf(NAME_Warning, "this obsolete version of GL nodes is disabled (k8vavoom will use internal node builder)");
       return false;
   }
 
@@ -2325,7 +2325,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   if (!nodes_allow_compressed) {
     delete Strm;
     delete DataStrm;
-    GCon->Logf(NAME_Warning, "this new version of GL nodes is disabled (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "this new version of GL nodes is disabled (k8vavoom will use internal node builder)");
     return false;
   }
 
@@ -2337,7 +2337,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     if (Strm->IsError()) {
       delete Strm;
       delete DataStrm;
-      GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
+      GCon->Logf(NAME_Warning, "error reading GL nodes (k8vavoom will use internal node builder)");
       return false;
     }
 

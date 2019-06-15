@@ -2551,7 +2551,7 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 //
 //  VLevel::AddExtraFloorSane
 //
-//  vavoom
+//  k8vavoom
 //
 //==========================================================================
 void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
@@ -2566,10 +2566,10 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
 
   if (floorz < ceilz) {
     flipped = true;
-    GCon->Logf("Swapped planes for Vavoom 3d floor, tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
+    GCon->Logf("Swapped planes for k8vavoom 3d floor, tag: %d, floorz: %g, ceilz: %g", line->arg1, ceilz, floorz);
   }
 
-  if (doDump) { GCon->Logf("Vavoom 3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz); }
+  if (doDump) { GCon->Logf("k8vavoom 3d floor for tag %d (dst #%d, src #%d) (floorz=%g; ceilz=%g)", line->arg1, (int)(ptrdiff_t)(dst-Sectors), (int)(ptrdiff_t)(src-Sectors), floorz, ceilz); }
   if (doDump) { GCon->Logf("::: VAVOOM 3DF BEFORE"); dumpSectorRegions(dst); }
 
   // append link
@@ -3244,8 +3244,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (line->flags&ML_BLOCKUSE) writef(strm, "  blockuse = true;\n");
     if (line->flags&ML_BLOCKSIGHT) writef(strm, "  blocksight = true;\n");
     if (line->flags&ML_BLOCKHITSCAN) writef(strm, "  blockhitscan = true;\n");
-    if (line->flags&ML_KEEPDATA) writef(strm, "  keepdata = true;\n"); // vavoom
-    if (line->flags&ML_NODECAL) writef(strm, "  nodecal = true;\n"); // vavoom
+    if (line->flags&ML_KEEPDATA) writef(strm, "  keepdata = true;\n"); // k8vavoom
+    if (line->flags&ML_NODECAL) writef(strm, "  nodecal = true;\n"); // k8vavoom
     // spac flags
     if (line->SpacFlags&SPAC_Cross) writef(strm, "  playercross = true;\n");
     if (line->SpacFlags&SPAC_Use) writef(strm, "  playeruse = true;\n");
@@ -3253,11 +3253,11 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (line->SpacFlags&SPAC_Impact) writef(strm, "  impact = true;\n");
     if (line->SpacFlags&SPAC_Push) writef(strm, "  playerpush = true;\n");
     if (line->SpacFlags&SPAC_PCross) writef(strm, "  missilecross = true;\n");
-    if (line->SpacFlags&SPAC_UseThrough) writef(strm, "  usethrough = true;\n"); // vavoom
+    if (line->SpacFlags&SPAC_UseThrough) writef(strm, "  usethrough = true;\n"); // k8vavoom
     if (line->SpacFlags&SPAC_AnyCross) writef(strm, "  anycross = true;\n");
     if (line->SpacFlags&SPAC_MUse) writef(strm, "  monsteruse = true;\n");
-    if (line->SpacFlags&SPAC_MPush) writef(strm, "  monsterpush = true;\n"); // vavoom
-    if (line->SpacFlags&SPAC_UseBack) writef(strm, "  playeruseback = true;\n"); // vavoom
+    if (line->SpacFlags&SPAC_MPush) writef(strm, "  monsterpush = true;\n"); // k8vavoom
+    if (line->SpacFlags&SPAC_UseBack) writef(strm, "  playeruseback = true;\n"); // k8vavoom
     // other
     if (line->alpha < 1.0f) writef(strm, "  alpha = %g;\n", line->alpha);
     // special
@@ -3304,8 +3304,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (side->Mid.ScaleX != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleX);
     if (side->Mid.ScaleY != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleY);
     // other
-    writef(strm, "  nofakecontrast = true;\n"); // vavoom, not right
-    if (side->Light) writef(strm, "  light = %d;\n", side->Light); // vavoom, not right
+    writef(strm, "  nofakecontrast = true;\n"); // k8vavoom, not right
+    if (side->Light) writef(strm, "  light = %d;\n", side->Light); // k8vavoom, not right
     // flags
     if (side->Flags&SDF_ABSLIGHT) writef(strm, "  lightabsolute = true;\n");
     if (side->Flags&SDF_WRAPMIDTEX) writef(strm, "  wrapmidtex = true;\n");
@@ -3326,20 +3326,20 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       writef(strm, "  heightfloor = %g;\n", sector->floor.minz);
     } else {
       // slope
-      writef(strm, "  floornormal_x = %g;\n", sector->floor.normal.x); // vavoom
-      writef(strm, "  floornormal_y = %g;\n", sector->floor.normal.y); // vavoom
-      writef(strm, "  floornormal_z = %g;\n", sector->floor.normal.z); // vavoom
-      writef(strm, "  floordist = %g;\n", sector->floor.dist); // vavoom
+      writef(strm, "  floornormal_x = %g;\n", sector->floor.normal.x); // k8vavoom
+      writef(strm, "  floornormal_y = %g;\n", sector->floor.normal.y); // k8vavoom
+      writef(strm, "  floornormal_z = %g;\n", sector->floor.normal.z); // k8vavoom
+      writef(strm, "  floordist = %g;\n", sector->floor.dist); // k8vavoom
     }
     if (sector->ceiling.normal.z == -1.0f) {
       // normal
       writef(strm, "  heightceiling = %g;\n", sector->ceiling.minz);
     } else {
       // slope
-      writef(strm, "  ceilingnormal_x = %g;\n", sector->ceiling.normal.x); // vavoom
-      writef(strm, "  ceilingnormal_y = %g;\n", sector->ceiling.normal.y); // vavoom
-      writef(strm, "  ceilingnormal_z = %g;\n", sector->ceiling.normal.z); // vavoom
-      writef(strm, "  ceilingdist = %g;\n", sector->ceiling.dist); // vavoom
+      writef(strm, "  ceilingnormal_x = %g;\n", sector->ceiling.normal.x); // k8vavoom
+      writef(strm, "  ceilingnormal_y = %g;\n", sector->ceiling.normal.y); // k8vavoom
+      writef(strm, "  ceilingnormal_z = %g;\n", sector->ceiling.normal.z); // k8vavoom
+      writef(strm, "  ceilingdist = %g;\n", sector->ceiling.dist); // k8vavoom
     }
     // textures
     writef(strm, "  texturefloor = \"%s\";\n", (sector->floor.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->floor.pic.id)).quote() : "-"));

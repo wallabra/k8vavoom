@@ -138,12 +138,12 @@ public:
   friend class TIterator;
 
 public:
-  // this is for VaVoom C VM
+  // this is for k8vavoom C VM
   inline bool isValidIIdx (vint32 index) const {
     return (index >= 0 && index <= mLastEntry);
   }
 
-  // this is for VaVoom C VM
+  // this is for k8vavoom C VM
   inline vint32 getFirstIIdx () const {
     if (mFirstEntry < 0) return -1;
     vint32 index = mFirstEntry;

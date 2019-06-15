@@ -269,7 +269,7 @@ static void ParseTerrainScript (VScriptParser *sc) {
     } else if (sc->Check("ifdoom") || sc->Check("ifheretic") ||
                sc->Check("ifhexen") || sc->Check("ifstrife") || sc->Check("endif"))
     {
-      GCon->Logf(NAME_Warning, "%s: Vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
+      GCon->Logf(NAME_Warning, "%s: k8vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
     } else {
       sc->Error(va("Unknown command (%s)", *sc->String));
     }

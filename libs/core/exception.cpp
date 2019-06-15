@@ -124,7 +124,7 @@ void Sys_Error (const char *error, ...) {
   if (SysErrorCB) SysErrorCB(buf);
 
 #if defined(WIN32)
-  MessageBox(NULL, buf, "VaVoom Fatal Error", MB_OK);
+  MessageBox(NULL, buf, "k8vavoom Fatal Error", MB_OK);
 /*
 #else //if defined(VCC_STANDALONE_EXECUTOR)
   fputs("FATAL: ", stderr);

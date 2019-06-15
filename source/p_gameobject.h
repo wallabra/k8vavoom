@@ -569,7 +569,7 @@ struct sec_region_t {
 
   // flags are here to implement shitty gozzo 3d shit
   enum {
-    RF_SaneRegion    = 1u<<0, // sane Vavoom-style region; only one, only first
+    RF_SaneRegion    = 1u<<0, // sane k8vavoom-style region; only one, only first
     RF_NonSolid      = 1u<<1,
     // ignore this region in gap/opening processing
     // this flags affects collision detection

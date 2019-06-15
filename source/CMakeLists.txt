@@ -40,7 +40,7 @@ endfunction()
 
 #---------------------------------------
 #
-# VaVoom C compiler sources
+# k8vavoom C compiler sources
 #
 #---------------------------------------
 set(VCCLIB_SOURCES
@@ -587,8 +587,8 @@ if(ENABLE_CLIENT)
   ###   #  CMake doesn't support automatic building of resource files so
   ###   # we must add a custom command and add object files to the list
   ###   # of source files
-  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
+  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/k8vavoom.rc)
+  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/k8vavoom.o)
   ###   ### add_custom_command(OUTPUT ${RC_OBJ}
   ###   ###   DEPENDS ${RC_SRC}
   ###   ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
@@ -632,35 +632,35 @@ if(ENABLE_CLIENT)
   endif()
 
 
-  add_executable(vavoom ${MAIN_SOURCES})
+  add_executable(k8vavoom ${MAIN_SOURCES})
   if(ENABLE_WRAPPERS)
-    set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom.bin)
+    set_target_properties(k8vavoom PROPERTIES OUTPUT_NAME ../k8vavoom.bin)
   else(ENABLE_WRAPPERS)
-    set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom)
+    set_target_properties(k8vavoom PROPERTIES OUTPUT_NAME ../k8vavoom)
   endif(ENABLE_WRAPPERS)
   if (MAIN_COMPILE_FLAGS)
-    set_target_properties(vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
+    set_target_properties(k8vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
   endif (MAIN_COMPILE_FLAGS)
   #message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
-  target_link_libraries(vavoom ${MAIN_LIBS})
-  #add_dependencies(vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
-  add_dependencies(vavoom core timidity ${VAVOOM_MAIN_DEPS})
+  target_link_libraries(k8vavoom ${MAIN_LIBS})
+  #add_dependencies(k8vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
+  add_dependencies(k8vavoom core timidity ${VAVOOM_MAIN_DEPS})
 
-  install(TARGETS vavoom DESTINATION ${BINDIR})
+  install(TARGETS k8vavoom DESTINATION ${BINDIR})
 
   #
   # Icon
   #
-  install(FILES ../res/vavoom.png DESTINATION ${DATADIR})
+  install(FILES ../res/k8vavoom.png DESTINATION ${DATADIR})
 
   if(ENABLE_WRAPPERS)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
-exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom.bin\" \"\$\@\" -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
+exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/k8vavoom.bin\" \"\$\@\" -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom DESTINATION ${BINDIR})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom DESTINATION ${BINDIR})
   endif(ENABLE_WRAPPERS)
 endif(ENABLE_CLIENT)
 
@@ -677,8 +677,8 @@ if(ENABLE_SERVER)
   ###   #  CMake doesn't support automatic building of resource files so
   ###   # we must add a custom command and add object files to the list
   ###   # of source files
-  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
+  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/k8vavoom.rc)
+  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/k8vavoom_sv.o)
   ###   ### add_custom_command(OUTPUT ${RC_OBJ}
   ###   ###   DEPENDS ${RC_SRC}
   ###   ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
@@ -690,28 +690,28 @@ if(ENABLE_SERVER)
   ### endif(WIN32)
   set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_ded.cpp)
 
-  add_executable(vavoom-dedicated ${SERVER_SOURCES})
+  add_executable(k8vavoom-dedicated ${SERVER_SOURCES})
   if(ENABLE_WRAPPERS)
-    set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated.bin)
+    set_target_properties(k8vavoom-dedicated PROPERTIES OUTPUT_NAME ../k8vavoom-dedicated.bin)
   else(ENABLE_WRAPPERS)
-    set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated)
+    set_target_properties(k8vavoom-dedicated PROPERTIES OUTPUT_NAME ../k8vavoom-dedicated)
   endif(ENABLE_WRAPPERS)
-  set_target_properties(vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
+  set_target_properties(k8vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
   #FIXME: create separate from MAIN_LIBS link list
-  #target_link_libraries(vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
-  target_link_libraries(vavoom-dedicated core ${MAIN_LIBS} ${NET_LIBRARIES})
-  #add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
-  add_dependencies(vavoom-dedicated core ${VAVOOM_MAIN_DEPS})
+  #target_link_libraries(k8vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
+  target_link_libraries(k8vavoom-dedicated core ${MAIN_LIBS} ${NET_LIBRARIES})
+  #add_dependencies(k8vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
+  add_dependencies(k8vavoom-dedicated core ${VAVOOM_MAIN_DEPS})
 
-  install(TARGETS vavoom-dedicated DESTINATION ${BINDIR})
+  install(TARGETS k8vavoom-dedicated DESTINATION ${BINDIR})
 
   if(ENABLE_WRAPPERS)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom-dedicated
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
-exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom-dedicated.bin\" \"\$\@\" -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
+exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/k8vavoom-dedicated.bin\" \"\$\@\" -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated DESTINATION ${BINDIR})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom-dedicated DESTINATION ${BINDIR})
   endif(ENABLE_WRAPPERS)
 endif(ENABLE_SERVER)

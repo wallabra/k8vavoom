@@ -5,7 +5,7 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-project(vavoom)
+project(k8vavoom)
 
 option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
@@ -282,7 +282,7 @@ endif(WITH_WINE)
 ## message(STATUS "cxxflags(dbg): ${CMAKE_CXX_FLAGS_DEBUG}")
 
 if(NOT DEFINED DATADIR)
-  set(DATADIR share/vavoom)
+  set(DATADIR share/k8vavoom)
 endif(NOT DEFINED DATADIR)
 if(NOT DEFINED BINDIR)
   set(BINDIR bin)
@@ -661,9 +661,9 @@ endif(NO_MEMRCHR)
 
 
 message(STATUS "=== COMPONENTS ===")
-message(STATUS "  VaVoom Client: " ${ENABLE_CLIENT})
-message(STATUS "  VaVoom Server: " ${ENABLE_SERVER})
-message(STATUS "  VaVoom Master: " ${ENABLE_MASTER})
+message(STATUS "  Vavoom Client: " ${ENABLE_CLIENT})
+message(STATUS "  Vavoom Server: " ${ENABLE_SERVER})
+message(STATUS "  Vavoom Master: " ${ENABLE_MASTER})
 message(STATUS "  VccRun       : " ${ENABLE_VCCRUN})
 message(STATUS "  strtodEx     : " ${WITH_STRTODEX})
 if(ENABLE_VCCRUN)

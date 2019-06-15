@@ -149,7 +149,7 @@ static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
 //  G_LoadVCMods
 //
 //  loading mods, take list from modlistfile
-//  load user-specified VaVoom C script files
+//  load user-specified Vavoom C script files
 //
 //==========================================================================
 void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
@@ -162,14 +162,14 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
     //vcmodCurrFile = W_LumpFile(ScLump);
     vcmodCurrFileLump = ScLump;
     VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
-    GCon->Logf(NAME_Init, "parsing VaVoom C mod list from '%s'...", *W_FullLumpName(ScLump));
+    GCon->Logf(NAME_Init, "parsing Vavoom C mod list from '%s'...", *W_FullLumpName(ScLump));
     while (!sc->AtEnd()) {
       sc->ExpectString();
       //fprintf(stderr, "  <%s>\n", *sc->String.quote());
       while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
       while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
       if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
-      GCon->Logf(NAME_Init, "loading %s VaVoom C mod '%s'...", modtypestr, *sc->String);
+      GCon->Logf(NAME_Init, "loading %s Vavoom C mod '%s'...", modtypestr, *sc->String);
       VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
     }
     delete sc;
@@ -187,7 +187,7 @@ void SV_Init () {
 
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
 
-  // load user-specified VaVoom C script files
+  // load user-specified Vavoom C script files
   G_LoadVCMods("loadvcs", "server");
 
   GGameInfo = (VGameInfo *)VObject::StaticSpawnWithReplace(VClass::FindClass("MainGameInfo"));

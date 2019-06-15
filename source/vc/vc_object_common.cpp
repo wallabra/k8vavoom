@@ -1008,7 +1008,7 @@ IMPLEMENT_FUNCTION(VObject, AllClassStates) {
 //
 //==========================================================================
 // default `skipReplacement` is:
-//   `true` for VaVoom and VCC
+//   `true` for k8vavoom and VCC
 //   `false` for vccrun
 // native static final spawner Object SpawnObject (class cid, optional bool skipReplacement);
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {

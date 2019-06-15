@@ -380,7 +380,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// VaVoom C wrapper
+// Vavoom C wrapper
 class VGLTexture : public VObject {
   DECLARE_CLASS(VGLTexture, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VGLTexture)

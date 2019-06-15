@@ -185,7 +185,7 @@ static void signal_handler (int s) {
     case SIGQUIT: throw VavoomError("Quited");
 #endif
 #ifdef SIGNOFP
-    case SIGNOFP: throw VavoomError("VAVOOM requires a floating-point processor");
+    case SIGNOFP: throw VavoomError("k8vavoom requires a floating-point processor");
 #endif
     default: throw VavoomError("Terminated by signal");
   }
@@ -212,7 +212,7 @@ static void signal_handler (int s) {
 //==========================================================================
 int main (int argc, char **argv) {
   try {
-    printf("Vavoom dedicated server " VERSION_TEXT "\n");
+    printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");

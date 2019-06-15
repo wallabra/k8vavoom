@@ -34,7 +34,7 @@
 //==========================================================================
 VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   : VMemberBase(MEMBER_State, AName, AOuter, ALoc)
-  , Type(VaVoom)
+  , Type(Vavoom)
   , TicType(TicKind::TCK_Normal)
   , SpriteName(NAME_None)
   , Frame(0)
@@ -156,7 +156,7 @@ void VState::Emit () {
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
       if (Function->Flags&FUNC_VarArgs) ParseError(Loc, "State method must not have varargs");
-      if (Type == VaVoom) {
+      if (Type == Vavoom) {
         if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
       }
     }

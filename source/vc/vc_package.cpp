@@ -774,7 +774,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
   }
 
 # if !defined(VCC_STANDALONE_EXECUTOR)
-  // we need to do this, 'cause VaVoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
+  // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
   if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
@@ -941,7 +941,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   }
 
 # if !defined(VCC_STANDALONE_EXECUTOR)
-  // we need to do this, 'cause VaVoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
+  // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
   if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {

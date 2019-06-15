@@ -33,7 +33,7 @@
 #include "gamedefs.h"
 
 static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", false, "Use old and buggy thing traverser (for debug)?", 0);
-static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original VaVoom buggy thing coldet (for debug)?", 0);
+static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original Vavoom buggy thing coldet (for debug)?", 0);
 
 
 #define FRACBITS  (16)

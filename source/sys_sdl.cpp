@@ -344,7 +344,7 @@ static void mainloop (int argc, char **argv) {
 
     // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
     if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
-    //SDL_WM_SetCaption("VaVoom", "VaVoom");
+    //SDL_WM_SetCaption("k8vavoom", "k8vavoom");
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

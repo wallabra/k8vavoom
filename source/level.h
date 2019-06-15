@@ -575,7 +575,7 @@ public:
   void AddExtraFloor (line_t *line, sector_t *dst);
 
 private:
-  void AddExtraFloorSane (line_t *line, sector_t *dst); // vavoom
+  void AddExtraFloorSane (line_t *line, sector_t *dst); // k8vavoom
   void AddExtraFloorShitty (line_t *line, sector_t *dst); // gozzo
 
 public:

@@ -181,7 +181,7 @@ void Adler32_Finish(u32_t *crc);
 void InitBlockmap();
 
 // build the blockmap and write the data into the BLOCKMAP lump
-// returns `true` if blockmap was overflowed, and need to be rebuild by VaVoom
+// returns `true` if blockmap was overflowed, and need to be rebuild by k8vavoom
 bool PutBlockmap (VStream &strm);
 
 // utility routines...

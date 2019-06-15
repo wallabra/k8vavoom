@@ -126,7 +126,7 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
     int lv1idx = (int)(ptrdiff_t)(pSrc->v1-Level->Vertexes);
     int lv2idx = (int)(ptrdiff_t)(pSrc->v2-Level->Vertexes);
-    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("VAVOOM: invalid linedef vertexes");
+    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("invalid linedef vertexes");
     if (vmap[lv1idx] < 0) vmap[lv1idx] = vcount++;
     if (vmap[lv2idx] < 0) vmap[lv2idx] = vcount++;
   }
@@ -149,7 +149,7 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
 
   pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
-    if (!pSrc->v1 || !pSrc->v2) Sys_Error("VAVOOM: linedef without vertexes");
+    if (!pSrc->v1 || !pSrc->v2) Sys_Error("linedef without vertexes");
 
     ZDBSP::IntLineDef zline;
     zline.origindex = i;
@@ -165,7 +165,7 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
 
     int lv1idx = (int)(ptrdiff_t)(pSrc->v1-Level->Vertexes);
     int lv2idx = (int)(ptrdiff_t)(pSrc->v2-Level->Vertexes);
-    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("VAVOOM: invalid linedef vertexes");
+    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("invalid linedef vertexes");
     check(vmap[lv1idx] >= 0);
     check(vmap[lv2idx] >= 0);
     zline.v1 = vmap[lv1idx];

@@ -176,7 +176,7 @@ int VUdpDriver::Init () {
 #endif
   }
 
-  // if the Vavoom hostname isn't set, set it to the machine name
+  // if the k8vavoom hostname isn't set, set it to the machine name
   if (VStr::Cmp(Net->HostName, "UNNAMED") == 0) {
 #ifdef WIN32
     char *p;

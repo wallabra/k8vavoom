@@ -596,18 +596,6 @@ static int cmpfuncCINoExt (const void *v1, const void *v2) {
 //
 //==========================================================================
 const TArray<VStr> &GetWadPk3List () {
-  /*
-  TArray<VStr> res;
-  for (int f = 0; f < wpklist.length(); ++f) {
-    VStr fname = wpklist[f].path;
-    //if (fname == "/opt/vavoom/share/vavoom/doomu.wad") fname = "/usr/local/share/vavoom/doomu.wad";
-    if (!fullpath && !wpklist[f].isSystem) fname = fname.extractFileName();
-    res.append(fname);
-  }
-  // and sort it
-  //qsort(res.Ptr(), res.length(), sizeof(VStr), cmpfuncCI);
-  return res;
-  */
   return wpklist;
 }
 
@@ -1396,7 +1384,7 @@ void FL_Init () {
 
   doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
 
-  //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
+  //GCon->Logf(NAME_Init, "=== INITIALIZING k8vavoom ===");
 
        if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
   else if (GArgs.CheckParm("-slow") != 0) fastparm = -1;
@@ -1466,13 +1454,14 @@ void FL_Init () {
   } else {
     static const char *defaultBaseDirs[] = {
 #ifdef __SWITCH__
-      "/switch/vavoom",
+      "/switch/k8vavoom",
       ".",
 #elif !defined(_WIN32)
-      "/opt/vavoom/share/vavoom",
-      "/usr/local/share/vavoom",
-      "/usr/share/vavoom",
-      "!/../share/vavoom",
+      "/opt/vavoom/share/k8vavoom",
+      "/opt/k8vavoom/share/k8vavoom",
+      "/usr/local/share/k8vavoom",
+      "/usr/share/k8vavoom",
+      "!/../share/k8vavoom",
       ".",
 #else
       "!/share",
@@ -1527,8 +1516,8 @@ void FL_Init () {
       ".",
       "!/.",
 #ifdef __SWITCH__
-      "/switch/vavoom/iwads",
-      "/switch/vavoom",
+      "/switch/k8vavoom/iwads",
+      "/switch/k8vavoom",
 #elif !defined(_WIN32)
       "~/.k8vavoom/iwads",
       "~/.k8vavoom/iwad",
@@ -1536,10 +1525,11 @@ void FL_Init () {
       "~/.vavoom/iwads",
       "~/.vavoom/iwad",
       "~/.vavoom",
-      "/opt/vavoom/share/vavoom",
-      "/usr/local/share/vavoom",
-      "/usr/share/vavoom",
-      "!/../share/vavoom",
+      "/opt/vavoom/share/k8vavoom",
+      "/opt/k8vavoom/share/k8vavoom",
+      "/usr/local/share/k8vavoom",
+      "/usr/share/k8vavoom",
+      "!/../share/k8vavoom",
 #else
       "~",
       "!/iwads",

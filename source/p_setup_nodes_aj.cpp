@@ -250,10 +250,10 @@ static void UploadLinedefs (VLevel *Level) {
     //if (line == nullptr) Sys_Error("AJBSP: out of memory!");
 
     // upload vertexes
-    if (!pSrc->v1 || !pSrc->v2) Sys_Error("VAVOOM: linedef without vertexes");
+    if (!pSrc->v1 || !pSrc->v2) Sys_Error("linedef without vertexes");
     int lv1idx = (int)(ptrdiff_t)(pSrc->v1-Level->Vertexes);
     int lv2idx = (int)(ptrdiff_t)(pSrc->v2-Level->Vertexes);
-    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("VAVOOM: invalid linedef vertexes");
+    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("invalid linedef vertexes");
     // check if we already have v1
     if (vertmap[lv1idx] < 0) {
       // add new one
@@ -328,8 +328,8 @@ static void UploadThings (VLevel *Level) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct CopyInfo {
-  TArray<int> ajseg2vv; // index: ajbsp seg number; value: new vavoom seg number
-  TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new vavoom vertex index
+  TArray<int> ajseg2vv; // index: ajbsp seg number; value: new k8vavoom seg number
+  TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new k8vavoom vertex index
 };
 
 
@@ -695,7 +695,7 @@ void VLevel::BuildNodesAJ () {
         RejectMatrix = new vuint8[RejectMatrixSize];
         memcpy(RejectMatrix, arr.ptr(), RejectMatrixSize);
         // check if it's an all-zeroes lump, in which case it's useless and can be discarded
-        // k8: don't do it, or VaVoom will try to rebuild/reload it
+        // k8: don't do it, or k8vavoom will try to rebuild/reload it
       }
       delete xms;
     }

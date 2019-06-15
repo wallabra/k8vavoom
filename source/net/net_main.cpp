@@ -296,7 +296,7 @@ void VNetwork::Slist () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log(NAME_DevNet, "Looking for Vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers...");
     PrintSlistHeader();
   }
 
@@ -383,7 +383,7 @@ void VNetwork::MasterList () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log(NAME_DevNet, "Looking for Vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers...");
     PrintSlistHeader();
   }
 
@@ -516,7 +516,7 @@ void VNetwork::PrintSlistTrailer () {
   if (HostCacheCount) {
     GCon->Log(NAME_DevNet, "== end list ==");
   } else {
-    GCon->Log(NAME_DevNet, "No Vavoom servers found.");
+    GCon->Log(NAME_DevNet, "No k8vavoom servers found.");
   }
   GCon->Log(NAME_DevNet, "");
 }

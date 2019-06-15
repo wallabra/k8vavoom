@@ -341,6 +341,7 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
 
   // Vavoom's namespace?
        if (Namespace.strEquCI("Vavoom")) { NS = NS_Vavoom; bExtended = true; }
+  else if (Namespace.strEquCI("k8vavoom")) { NS = NS_Vavoom; bExtended = true; }
   // standard namespaces?
   else if (Namespace.strEquCI("Doom")) NS = NS_Doom;
   else if (Namespace.strEquCI("Heretic")) NS = NS_Heretic;

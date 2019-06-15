@@ -79,7 +79,7 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
   const TVec *vt = surf->verts;
   for (int i = surf->count; i--; ++vt) {
     if (!vt->isValid()) {
-      GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL VAVOOM BUG!");
+      GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL K8VAVOOM BUG!");
       surf->count = 0;
       outmins = outmaxs = 0.0f;
       return false;

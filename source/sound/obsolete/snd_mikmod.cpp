@@ -92,12 +92,12 @@ bool      VMikModAudioCodec::MikModInitialised;
 MDRIVER     VMikModAudioCodec::Driver =
 {
   nullptr,
-  (CHAR*)"vavoom",
-  (CHAR*)"vavoom output driver",
+  (CHAR*)"k8vavoom",
+  (CHAR*)"k8vavoom output driver",
   0,
   255,
 #if (LIBMIKMOD_VERSION > 0x030106)
-  (CHAR*)"vavoom",
+  (CHAR*)"k8vavoom",
 #  if (LIBMIKMOD_VERSION >= 0x030200)
   (CHAR*)"",
 #  endif  /* libmikmod-3.2.x */

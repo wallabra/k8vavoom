@@ -748,7 +748,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (!op1 || !op2) { delete this; return nullptr; }
 
   // decorate coercion to float
-  // k8: no need to do it, as VaVoom C now does such coercion for all code
+  // k8: no need to do it, as Vavoom C now does such coercion for all code
   /*
   if (ec.Package->Name == NAME_decorate) {
     if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {

@@ -53,7 +53,7 @@ VCvarI cl_color("color", "0", "Player color.", CVAR_Archive | CVAR_UserInfo);
 VCvarI cl_class("class", "0", "Player class.", CVAR_Archive | CVAR_UserInfo);
 VCvarS cl_model("model", "", "Player model.", CVAR_Archive | CVAR_UserInfo);
 
-static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-Vavoom demos)?", CVAR_Archive);
+static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-k8vavoom demos)?", CVAR_Archive);
 
 IMPLEMENT_CLASS(V, ClientGameBase);
 
@@ -68,7 +68,7 @@ static double LastKeepAliveTime = 0.0;
 //==========================================================================
 void CL_Init () {
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
-  // load user-specified VaVoom C script files
+  // load user-specified Vavoom C script files
   G_LoadVCMods("loadvcc", "client");
   //!TLocation::ClearSourceFiles();
   ClientNetContext = new VClientNetContext();
@@ -509,7 +509,7 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
   magic[4] = 0;
   if (VStr::Cmp(magic, "VDEM")) {
     delete Strm;
-    GCon->Logf("ERROR: '%s' is not a Vavoom demo.", *name);
+    GCon->Logf("ERROR: '%s' is not a k8vavoom demo.", *name);
     return;
   }
 
