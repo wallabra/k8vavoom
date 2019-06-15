@@ -35,11 +35,11 @@
 //
 //
 // CCREQ_CONNECT
-//    string    "VAVOOM"
+//    string    "K8VAVOOM"
 //    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
 //
 // CCREQ_SERVER_INFO
-//    string    "VAVOOM"
+//    string    "K8VAVOOM"
 //    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
 //
 //
@@ -221,7 +221,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Reply << TmpByte;
     TmpByte = CCREQ_SERVER_INFO;
     Reply << TmpByte;
-    VStr GameName("VAVOOM");
+    VStr GameName("K8VAVOOM");
     Reply << GameName;
     TmpByte = NET_PROTOCOL_VERSION;
     Reply << TmpByte;
@@ -353,7 +353,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     MsgOut << TmpByte;
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
-    VStr GameName("VAVOOM");
+    VStr GameName("K8VAVOOM");
     MsgOut << GameName;
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
@@ -509,7 +509,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
     msg << gamename;
-    if (gamename != "VAVOOM") return nullptr;
+    if (gamename != "K8VAVOOM") return nullptr;
 
     VBitStreamWriter MsgOut(MAX_MSGLEN<<3);
     TmpByte = NETPACKET_CTL;
@@ -540,7 +540,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (command != CCREQ_CONNECT) return nullptr;
 
   msg << gamename;
-  if (gamename != "VAVOOM") return nullptr;
+  if (gamename != "K8VAVOOM") return nullptr;
 
   /*
   if (MSG_ReadByte() != NET_PROTOCOL_VERSION) {
@@ -800,7 +800,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         Reply << TmpByte;
         TmpByte = CCREQ_SERVER_INFO;
         Reply << TmpByte;
-        VStr GameName("VAVOOM");
+        VStr GameName("K8VAVOOM");
         Reply << GameName;
         TmpByte = NET_PROTOCOL_VERSION;
         Reply << TmpByte;
