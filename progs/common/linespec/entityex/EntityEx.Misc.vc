@@ -3407,8 +3407,8 @@ final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional 
   } else {
     TVec Dir;
     //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
-    bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = false;
-    Weapon Wpn = PlayerEx(self).ReadyWeapon;
+    bool noAAim = !PlayerEx(Player).bAutoAim, noAAVert = false;
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
     noAAVert = noAAim;
     Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
