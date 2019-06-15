@@ -782,6 +782,21 @@ static void G_DoCompleted () {
 
 
 //==========================================================================
+static const char *knownFinalesList[] = {
+  "EndGameBunny",
+  "EndGameCast",
+  "EndGameChess",
+  "EndGameDemon",
+  "EndGamePic1",
+  "EndGamePic2",
+  "EndGamePic3",
+  "EndGameStrife",
+  "EndGameUnderwater",
+  nullptr,
+};
+
+
+//==========================================================================
 //
 //  COMMAND TestFinale
 //
@@ -794,10 +809,19 @@ COMMAND_WITH_AC(TestFinale) {
 
   if (Args.length() != 2) return;
 
+  // normalise finale name
+  VStr fname = Args[1];
+  for (const char **fin = knownFinalesList; *fin; ++fin) {
+    if (fname.strEquCI(*fin)) {
+      fname = VStr(*fin);
+      break;
+    }
+  }
+
   if (GGameInfo->NetMode == NM_Standalone && !deathmatch) {
     for (int i = 0; i < svs.max_clients; ++i) {
       if (GGameInfo->Players[i]) {
-        GGameInfo->Players[i]->eventClientFinale(Args[1]);
+        GGameInfo->Players[i]->eventClientFinale(fname);
       }
     }
     sv.intermission = 2;
@@ -813,19 +837,10 @@ COMMAND_WITH_AC(TestFinale) {
 //
 //==========================================================================
 COMMAND_AC(TestFinale) {
-  //if (aidx != 1) return VStr::EmptyString;
   TArray<VStr> list;
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   if (aidx == 1) {
-    list.append(VStr("EndGameBunny"));
-    list.append(VStr("EndGameCast"));
-    list.append(VStr("EndGameChess"));
-    list.append(VStr("EndGameDemon"));
-    list.append(VStr("EndGamePic1"));
-    list.append(VStr("EndGamePic2"));
-    list.append(VStr("EndGamePic3"));
-    list.append(VStr("EndGameStrife"));
-    list.append(VStr("EndGameUnderwater"));
+    for (const char **fin = knownFinalesList; *fin; ++fin) list.append(VStr(*fin));
     return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
   } else {
     return VStr::EmptyString;
