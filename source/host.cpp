@@ -41,7 +41,6 @@ extern int fsys_warp_n0;
 extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
-static const double max_fps_cap = 0.004; // no more than 250 FPS
 extern bool sv_skipOneTitlemap;
 
 
@@ -76,8 +75,7 @@ int host_frametics = 0; // used only in non-realtime mode
 double host_frametime = 0;
 double host_framefrac = 0; // unused frame time left from previous `SV_Ticker()` in realtime mode
 double host_time = 0;
-double realtime = 0;
-double oldrealtime = 0;
+double systime = 0; // current `Sys_Time()`; used for consistency, updated in `FilterTime()`
 int host_framecount = 0;
 
 bool host_initialised = false;
@@ -104,13 +102,13 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
-static VCvarF host_framerate("dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!", CVAR_PreInit);
+static VCvarF dbg_frametime("dbg_frametime", "0", "If greater than 0.004, this is what be used instead of one Doom tic; DEBUG CVAR, DON'T USE!", CVAR_PreInit);
 //k8: this was `3`; why 3? looks like arbitrary number
 VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 
-static double last_time;
+static double last_time; // last time `FilterTime()` was returned `true`
 
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
 VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", CVAR_PreInit); // checkparm of -respawn
@@ -339,7 +337,7 @@ static void Host_GetConsoleCommands () {
 //
 //==========================================================================
 void Host_ResetSkipFrames () {
-  last_time = Sys_Time();
+  last_time = systime = Sys_Time();
   host_frametics = 0;
   host_frametime = 0;
   host_framefrac = 0;
@@ -355,47 +353,53 @@ void Host_ResetSkipFrames () {
 //
 //==========================================================================
 static bool FilterTime () {
-  double curr_time = Sys_Time();
-  double time = curr_time-last_time;
+  const double curr_time = Sys_Time();
+  // add fractional frame time left from previous tick, so we won't miss it
+  // this gives higher framerate around `cl_framerate 39`, but the game feels much better
+  double timeDelta = curr_time-last_time+host_framefrac;
+  //double timeDelta = curr_time-last_time;
 
-  //GCon->Logf("*** FilterTime; lasttime=%f; ctime=%f; time=%f", last_time, curr_time, time);
+  // update it here, it is used as a substitute for `Sys_Time()` in demo and other code
+  systime = curr_time;
 
-  if (time < 0.004) return false;
-
-  last_time = curr_time;
-  //realtime += time;
-  // now fix "real time"
-  realtime = curr_time;
-
-  const double timeDelta = realtime-oldrealtime;
-  //const double timeDelta = curr_time-oldrealtime;
-
-  if (real_time) {
-    int cfr = cl_framerate;
-    if (cfr < 1 || cfr > 200) cfr = 0;
-    if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
-      // capped fps
-      if (timeDelta < 1.0/(double)cfr) return false; // framerate is too high
-    } else if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
-      // uncapped fps
-      if (realtime <= oldrealtime) return false;
-      if (timeDelta < max_fps_cap) return false;
+  if (dbg_frametime < max_fps_cap_float) {
+    if (real_time) {
+      int cfr = cl_framerate;
+      if (cfr < 1 || cfr > 200) cfr = 0;
+      if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+        // capped fps
+        //GCon->Logf("*** FilterTime; lasttime=%g; ctime=%g; time=%g; cfr=%d; dt=%g", last_time, curr_time, time, cfr, 1.0/(double)cfr);
+        if (timeDelta < 1.0/(double)cfr) return false; // framerate is too high
+        //GCon->Logf("   OK! td=%g : %g (cfr=%g; over=%g)", timeDelta, time, 1.0/(double)cfr, timeDelta-(1.0/(double)cfr));
+      } else if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+        // uncapped fps
+        if (timeDelta < max_fps_cap_double) return false;
+      } else {
+        // capped fps
+        if (timeDelta < 1.0/90.0) return false; // framerate is too high
+      }
     } else {
-      // capped fps
-      if (timeDelta < 1.0/90.0) return false; // framerate is too high
+      if (timeDelta < 1.0/35.0) return false; // framerate is too high
     }
+    //timeDelta += host_framefrac;
   } else {
-    if (timeDelta < 1.0/35.0) return false; // framerate is too high
+    // force ticker time per Doom tick
+    if (timeDelta < 1.0/35.0) return false;
+    timeDelta = dbg_frametime;
   }
 
-  host_frametime = realtime-oldrealtime+host_framefrac;
+  // here we can advance our "last success call" mark
+  last_time = curr_time;
+  //if (host_framefrac >= max_fps_cap_double*0.5) GCon->Logf("FRAC=%g", host_framefrac);
+
+  host_frametime = timeDelta;
   host_framefrac = 0;
 
   int ticlimit = host_max_skip_frames;
   if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
 
-  if (host_framerate > 0) {
-    host_frametime = host_framerate;
+  if (dbg_frametime > 0) {
+    host_frametime = dbg_frametime;
   } else {
     // don't allow really long or short frames
     double tld = (ticlimit+1)/(double)TICRATE;
@@ -403,24 +407,33 @@ static bool FilterTime () {
       if (developer) GCon->Logf(NAME_Dev, "*** FRAME TOO LONG: %f (capped to %f)", host_frametime, tld);
       host_frametime = tld;
     }
-    if (host_frametime < max_fps_cap) host_frametime = max_fps_cap; // just in case
+    if (host_frametime < max_fps_cap_double) host_frametime = max_fps_cap_double; // just in case
   }
 
-  int thistime;
-  static int lasttime;
-
-  thistime = (int)(realtime*TICRATE);
-  host_frametics = thistime-lasttime;
-  if (!real_time && host_frametics < 1) return false; // no tics to run
-  if (host_frametics > ticlimit) {
-         if (host_show_skip_limit) GCon->Logf(NAME_Warning, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
-    else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
-    host_frametics = ticlimit; // don't run too slow
+  if (!real_time) {
+    // try to use original Doom framerate
+    //k8: this logic seems totally wrong
+    static int last_tics = 0;
+    int this_tic = (int)(systime*TICRATE);
+    host_frametics = this_tic-last_tics;
+    if (host_frametics < 1) return false; // no tics to run
+    if (host_frametics > ticlimit) {
+           if (host_show_skip_limit) GCon->Logf(NAME_Warning, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+      else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+      host_frametics = ticlimit; // don't run too slow
+    }
+    if (host_frametics > 1 && host_show_skip_frames) GCon->Logf(NAME_Warning, "processing %d ticframes", host_frametics);
+    last_tics = this_tic;
+  } else {
+    // "free" framerate; `host_frametics` doesn't matter here
+    host_frametics = (int)(timeDelta*TICRATE); // use it as a temporary variable
+    if (host_frametics > ticlimit) {
+           if (host_show_skip_limit) GCon->Logf(NAME_Warning, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+      else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+      host_frametics = ticlimit; // don't run too slow
+    }
+    if (host_frametics > 1 && host_show_skip_frames) GCon->Logf(NAME_Warning, "processing %d ticframes", host_frametics);
   }
-  if (host_frametics > 1 && host_show_skip_frames) GCon->Logf(NAME_Warning, "processing %d ticframes", host_frametics);
-
-  oldrealtime = realtime;
-  lasttime = thistime;
 
   return true;
 }
@@ -490,7 +503,7 @@ void Host_Frame () {
     GNet->Poll();
 
     // if we perfomed load/save, frame time will be near zero, so do nothing
-    if (host_frametime >= max_fps_cap) {
+    if (host_frametime >= max_fps_cap_double) {
       incFrame = true;
 
 #ifdef CLIENT

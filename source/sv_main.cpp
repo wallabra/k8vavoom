@@ -37,6 +37,26 @@ static double FrameTime = 1.0f/35.0f;
 *(vuint64 *)&FrameTime += 1;
 */
 static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+int main () {
+  double FrameTime = 1.0/35.0;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  // round a little bit up to prevent "slow motion"
+  *(uint64_t *)&FrameTime += 1;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  *(uint64_t *)&FrameTime += 1;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  printf("---\n");
+  FrameTime = 0x1.d41d41d41d41dp-6;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  FrameTime = 0x1.d41d41d41d41ep-6;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  return 0;
+}
+*/
 
 
 static void G_DoReborn (int playernum, bool cheatReborn);
@@ -582,28 +602,6 @@ static void SV_RunClients (bool skipFrame=false) {
 }
 
 
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-int main () {
-  double FrameTime = 1.0/35.0;
-  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
-  // round a little bit up to prevent "slow motion"
-  *(uint64_t *)&FrameTime += 1;
-  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
-  *(uint64_t *)&FrameTime += 1;
-  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
-  printf("---\n");
-  FrameTime = 0x1.d41d41d41d41dp-6;
-  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
-  FrameTime = 0x1.d41d41d41d41ep-6;
-  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
-  return 0;
-}
-*/
-
-
 //==========================================================================
 //
 //  SV_Ticker
@@ -623,8 +621,9 @@ void SV_Ticker () {
 
   //saved_frametime = host_frametime;
 
-  if (host_frametime < 0.004) {
+  if (host_frametime < max_fps_cap_double) {
     host_framefrac += host_frametime;
+    host_frametime = 0;
     return;
   }
 
@@ -663,11 +662,19 @@ void SV_Ticker () {
     bool frameSkipped = false;
     bool wasPaused = false;
     // do main actions
-    while (!sv.intermission && !completed && host_frametime >= 0.004) {
-      double oldft = host_frametime;
-      if (split_frame && host_frametime > FrameTime) host_frametime = (double)(float)(1.0f/35.0f);
-      if (frameSkipped) VObject::CollectGarbage();
-      GGameInfo->frametime = (split_frame && host_frametime > FrameTime ? (float)(1.0f/35.0f) : (float)host_frametime);
+    double frametimeleft = host_frametime;
+    int lastTick = GLevel->TicTime;
+    while (!sv.intermission && !completed && frametimeleft >= max_fps_cap_double) {
+      if (GLevel->TicTime != lastTick) {
+        lastTick = GLevel->TicTime;
+        VObject::CollectGarbage();
+      }
+      // calculate frame time
+      // do small steps, it seems to work better this way
+      double currframetime = (split_frame && frametimeleft >= FrameTime*0.4 ? 1.0/35.0*0.4 : frametimeleft);
+      if (currframetime > frametimeleft) currframetime = frametimeleft;
+      // do it this way, because of rounding
+      GGameInfo->frametime = currframetime;
       host_frametime = GGameInfo->frametime;
       if (GGameInfo->IsPaused()) {
         // no need to do anything more if the game is paused
@@ -687,19 +694,16 @@ void SV_Ticker () {
         LeavePosition = 0;
         completed = true;
       }
-      host_frametime = oldft-GGameInfo->frametime; // next step
+      frametimeleft -= host_frametime /*currframetime*/; // next step
       frameSkipped = true;
     }
     if (completed) G_DoCompleted();
     // remember fractional frame time
-    if (wasPaused) {
-      host_frametime = saved_frametime;
-    } else {
-      if (!sv.intermission && !completed && host_frametime > 0 && host_frametime < 0.004) {
-        host_framefrac += host_frametime;
-        host_frametime = saved_frametime-host_frametime;
-      } else {
-        host_frametime = saved_frametime;
+    host_frametime = saved_frametime;
+    if (!wasPaused) {
+      if (!sv.intermission && !completed && frametimeleft > 0 && frametimeleft < max_fps_cap_double) {
+        host_framefrac += frametimeleft;
+        host_frametime -= frametimeleft;
       }
     }
   }

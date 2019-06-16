@@ -32,14 +32,6 @@
 #include "sv_local.h"
 
 
-/*
-static double FrameTime = 1.0f/35.0f;
-// round a little bit up to prevent "slow motion"
-*(vuint64 *)&FrameTime += 1;
-*/
-static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
 #ifdef CLIENT

@@ -42,9 +42,14 @@ extern VCvarB developer;
 extern bool host_initialised;
 extern bool host_request_exit;
 
+
+// no more than 250 FPS
+#define max_fps_cap_double  (0.004)
+#define max_fps_cap_float   (0.004f)
+
 extern int host_frametics;
 extern double host_frametime;
 extern double host_framefrac;
-extern double host_time;
-extern double realtime;
+extern double host_time; // used in UI and network heartbits; accumulates frame times
+extern double systime; // current `Sys_Time()`; used for consistency, updated in `FilterTime()`
 extern int host_framecount;
