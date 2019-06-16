@@ -816,6 +816,8 @@ public:
 
   __attribute__((warn_unused_result)) bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
   __attribute__((warn_unused_result)) int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const;
+
+  __attribute__((warn_unused_result)) int checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask=~0u) const;
 };
 
 

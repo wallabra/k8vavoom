@@ -859,6 +859,35 @@ int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsi
 }
 
 
+//==========================================================================
+//
+//  TFrustum::checkQuadEx
+//
+//==========================================================================
+int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const {
+  if (!planeCount || !mask) return true;
+  int res = INSIDE;
+  const TClipPlane *cp = &planes[0];
+  for (unsigned i = planeCount; i--; ++cp) {
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
+    float d1 = DotProduct(cp->normal, v1)-cp->dist;
+    float d2 = DotProduct(cp->normal, v2)-cp->dist;
+    float d3 = DotProduct(cp->normal, v3)-cp->dist;
+    float d4 = DotProduct(cp->normal, v4)-cp->dist;
+    // if everything is on the back side, we're done here
+    if (d1 < 0 && d2 < 0 && d3 < 0 && d4 < 0) return OUTSIDE;
+    // if we're already hit "partial" case, no need to perform further checks
+    if (res == INSIDE) {
+      // if everything on the front side, go on
+      if (d1 >= 0 && d2 >= 0 && d3 >= 0 && d4 >= 0) continue;
+      // both sides touched
+      res = PARTIALLY;
+    }
+  }
+  return res;
+}
+
+
 
 //==========================================================================
 //
