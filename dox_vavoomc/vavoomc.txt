@@ -350,7 +350,7 @@ You can "reset" array (set it's length to zero without deallocating the undelyin
 storage) with `.reset()` method. This may be useful if you want to reuse your
 dynamic array without triggering alot of allocations.
 
-You can sort array with build-in `.sort()` method. This methods accepts one arument,
+You can sort array with built-in `.sort()` method. This methods accepts one arument,
 which should be compare delegate:
 
   int delegate ([ref] type a, [ref] type b);
@@ -362,6 +362,18 @@ because sorting algorithm is stable (timsort).
 You can allocate new array member and return pointer to it with `.alloc()` method.
 Be very careful, though, as returned pointer can be invalidated by any array length
 mutation!
+
+You can change dynamic array size by manipulating `.length` property, like this:
+
+  arr.length += 2;
+
+or:
+
+  arr.length -= 1;
+
+Note that decrementing length with `-=` won't trigger reallocation, while setting
+length directly will reallocate the underlying storage. I.e. to remove last array
+element without triggering allocation, use `arr.length -= 1;` syntax.
 
 
 
@@ -451,15 +463,15 @@ name substitute.
 
 Here, both `blood` and `gore` will refer to `blood` field.
 
-Alias can be aliased by itself, therefore creating a "chain" of aliases. Aliases are
-inheritable. Alias resolving is done as a first step of name resolving.
+Alias can be aliased by another alias, therefore creating a "chain" of aliases. Aliases
+are inheritable. Alias resolving is done as a first step of name resolving.
 
 
 
 Slices and pointers
 ===================
 
-VaVoom C supports pointer, and pointer indexing. This is absolutely unsafe, of course,
+VaVoom C supports pointers, and pointer indexing. This is absolutely unsafe, of course,
 and at least pointer indexing can be disabled via compiler variable. Yet native classes
 may require it, so I introduced so-called "slices". This is just a pointer/length pair,
 so VM can do bounds checking on pointer indexing. You cannot create slices in VaVoom C
@@ -467,6 +479,11 @@ code, so as long as native code does its job ok, VC code can use slices instead 
 pointers and still be considered safe. Of course, you can pass slices to functions.
 Slice declaraion is: `type[]` -- i.e. it looks like an array, but without dimensions.
 You can "slice a slice", to create a smaller view onto slice contents.
+
+TL;DR: Some fields of native objects looks like dynamic arrays, and should be used like
+       dynamic arrays. Currently you cannot declare slice in VC code, so if you didn't
+       understood a word in the previous paragraph, don't bother trying, it doesn't
+       worth it. ;-)
 
 
 
