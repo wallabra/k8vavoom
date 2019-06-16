@@ -894,7 +894,7 @@ native static final iterator AllClassStates (class BaseClass, out state State);
 // misc
 
 // default `skipReplacement` is:
-//   `true` for VaVoom and VCC
+//   `false` for VaVoom and VCC
 //   `false` for vccrun
 native static final spawner Object SpawnObject (class cid, optional bool skipReplacement);
 

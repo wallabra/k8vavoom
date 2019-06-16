@@ -36,7 +36,7 @@ BotPlayer Bot;
 
 override void CreateBot()
 {
-  Bot = BotPlayer(SpawnObject(BotPlayer));
+  Bot = BotPlayer(SpawnObject(BotPlayer, skipReplacement:false));
   Bot.player = self;
   Bot.OnBeginPlay();
   bAutoAim = true;
