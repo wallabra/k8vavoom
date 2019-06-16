@@ -3615,6 +3615,7 @@ void VLevel::FixSelfRefDeepWater () {
 
     if (!seg->linedef) continue; // miniseg?
     if (!seg->front_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
+    if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
 
     const int fsnum = (int)(ptrdiff_t)(seg->front_sub-Subsectors);
 
