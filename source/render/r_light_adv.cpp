@@ -331,8 +331,12 @@ void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *sec
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
+#if 1
   // k8: this drops some segs that may leak without proper frustum culling
+  // k8: this seems to be unnecessary now
+  // k8: yet leave it there in the hope that it will reduce GPU overdrawing
   if (!LightClip.CheckSegFrustum(sub, seg)) return;
+#endif
 
   //line_t *linedef = seg->linedef;
   //side_t *sidedef = seg->sidedef;
