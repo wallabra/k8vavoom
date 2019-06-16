@@ -1301,7 +1301,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     if (totalKeepSprite || FChar == '#') {
       // frame letter is irrelevant
       State->Frame = VState::FF_DONTCHANGE;
-    } else if (FChar < 'A' || FChar > ']') {
+    } else if (FChar < 'A' || FChar > '^') {
       if (FChar < 33 || FChar > 127) {
         sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FChar&0xff)));
       } else {
@@ -1456,7 +1456,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (totalKeepSprite || FSChar == '#') {
         // frame letter is irrelevant
         frm = VState::FF_DONTCHANGE;
-      } else if (FSChar < 'A' || FSChar > ']') {
+      } else if (FSChar < 'A' || FSChar > '^') {
         if (FSChar < 33 || FSChar > 127) {
           sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FSChar&0xff)));
         } else {
@@ -2513,7 +2513,7 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
       } else if (cc == '*') {
         if (!GotState) sc->Error("* must come after a frame");
         States[States.Num()-1]->Frame |= VState::FF_FULLBRIGHT;
-      } else if (cc < 'A' || cc > ']') {
+      } else if (cc < 'A' || cc > '^') {
         sc->Error("Frames must be A-Z, [, \\, or ]");
       } else {
         GotState = true;

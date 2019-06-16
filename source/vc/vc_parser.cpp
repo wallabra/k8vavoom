@@ -2462,7 +2462,7 @@ void VParser::ParseStates (VClass *InClass) {
 
     // check first frame
     char FChar = VStr::ToUpper(Lex.String[0]);
-    if (FChar < '0' || FChar < 'A' || FChar > ']') ParseError(Lex.Location, "Frames must be 0-9, A-Z, [, \\ or ]");
+    if (FChar < '0' || FChar < 'A' || FChar > '^') ParseError(Lex.Location, "Frames must be 0-9, A-Z, [, \\ or ]");
     s->Frame = FChar-'A';
     FramesString = Lex.String;
     FramesLoc = Lex.Location;
@@ -2598,7 +2598,7 @@ void VParser::ParseStates (VClass *InClass) {
 
     for (int i = 1; i < VStr::Length(*FramesString); ++i) {
       char FSChar = VStr::ToUpper((*FramesString)[i]);
-      if (FSChar < 'A' || FSChar > ']') ParseError(Lex.Location, "Frames must be A-Z, [, \\ or ]");
+      if (FSChar < 'A' || FSChar > '^') ParseError(Lex.Location, "Frames must be A-Z, [, \\ or ]");
       // create a new state
       snprintf(StateName, sizeof(StateName), "S_%d", StateIdx++);
       VState *s2 = new VState(StateName, InClass, TmpLoc);
