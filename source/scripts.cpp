@@ -994,10 +994,19 @@ void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
 //
 //==========================================================================
 bool VScriptParser::CheckNumberWithSign () {
-  if (Check("-")) {
-    ExpectNumber();
-    Number = -Number;
-    return true;
+  char *savedPtr = TokStartPtr;
+  int savedLine = TokStartLine;
+  bool neg = Check("-");
+  bool pos = !neg && Check("+");
+  if (neg || pos) {
+    if (CheckNumber()) {
+      if (neg) Number = -Number;
+      return true;
+    }
+    // unget minus
+    ScriptPtr = savedPtr;
+    Line = savedLine;
+    return false;
   } else {
     return CheckNumber();
   }
@@ -1092,10 +1101,19 @@ void VScriptParser::ExpectFloat () {
 //
 //==========================================================================
 bool VScriptParser::CheckFloatWithSign () {
-  if (Check("-")) {
-    ExpectFloat();
-    Float = -Float;
-    return true;
+  char *savedPtr = TokStartPtr;
+  int savedLine = TokStartLine;
+  bool neg = Check("-");
+  bool pos = !neg && Check("+");
+  if (neg || pos) {
+    if (CheckFloat()) {
+      if (neg) Float = -Float;
+      return true;
+    }
+    // unget minus
+    ScriptPtr = savedPtr;
+    Line = savedLine;
+    return false;
   } else {
     return CheckFloat();
   }
