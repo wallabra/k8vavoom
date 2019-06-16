@@ -605,7 +605,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
   // k8: this drops some segs that may leak without proper frustum culling
-  if (!ViewClip.CheckSegFrustum(seg)) return;
+  if (!ViewClip.CheckSegFrustum(sub, seg)) return;
 
   //FIXME this marks all lines
   // mark the segment as visible for auto map

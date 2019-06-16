@@ -856,7 +856,7 @@ protected:
   void RenderTranslucentWallsDecals ();
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
-  void RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg);
+  void RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
   void RenderShadowSubsector (int num);

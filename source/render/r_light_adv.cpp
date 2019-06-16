@@ -300,7 +300,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t *dseg) {
+void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
 
@@ -330,6 +330,9 @@ void VAdvancedRenderLevel::RenderShadowLine (sec_region_t *secregion, drawseg_t 
   if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+
+  // k8: this drops some segs that may leak without proper frustum culling
+  if (!LightClip.CheckSegFrustum(sub, seg)) return;
 
   //line_t *linedef = seg->linedef;
   //side_t *sidedef = seg->sidedef;
@@ -406,13 +409,13 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
     addPoly = false;
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      RenderShadowLine(curreg, (*polySeg)->drawsegs);
+      RenderShadowLine(sub, curreg, (*polySeg)->drawsegs);
     }
   }
 
   {
     drawseg_t *ds = region->lines;
-    for (int count = sub->numlines; count--; ++ds) RenderShadowLine(curreg, ds);
+    for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, curreg, ds);
   }
 
   sec_surface_t *fsurf[4];
