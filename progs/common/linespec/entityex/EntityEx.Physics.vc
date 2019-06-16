@@ -94,7 +94,6 @@ bool Physics (float DeltaTime) {
     if (Velocity || !bNoBlockmap) {
       // move, and unlink from blockmap
       UnlinkFromWorld();
-      //bIntrJustMoved = false; // disable movement interpolation
       // it is safe to change this flag here
       bNoBlockmap = true;
       // it is safe to change origin here
@@ -107,18 +106,20 @@ bool Physics (float DeltaTime) {
         tmtrace_t tmtrace;
         GetFloorAndCeiling(out tmtrace);
         Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
-        PrevOrigin.z = Origin.z;
       }
     } else if (bStickToFloor || bStickToCeiling) {
       tmtrace_t tmtrace;
       GetFloorAndCeiling(out tmtrace);
       Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
-      PrevOrigin.z = Origin.z;
     }
+    bIntrJustMoved = false; // disable movement interpolation
     return true;
   }
 
-  if (bStickToFloor || bStickToCeiling) Velocity.z = 0;
+  if (bStickToFloor || bStickToCeiling) {
+    bIntrJustMoved = false; // disable movement interpolation
+    Velocity.z = 0;
+  }
 
   float oldfloorz;
   float CummX = 0.0;
