@@ -1008,14 +1008,14 @@ IMPLEMENT_FUNCTION(VObject, AllClassStates) {
 //
 //==========================================================================
 // default `skipReplacement` is:
-//   `true` for k8vavoom and VCC
+//   `false` for k8vavoom and VCC
 //   `false` for vccrun
 // native static final spawner Object SpawnObject (class cid, optional bool skipReplacement);
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {
 #ifdef VCC_STANDALONE_EXECUTOR
   P_GET_BOOL_OPT(skipReplacement, false);
 #else
-  P_GET_BOOL_OPT(skipReplacement, true);
+  P_GET_BOOL_OPT(skipReplacement, /*true*/false);
 #endif
   P_GET_PTR(VClass, Class);
   if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
