@@ -1389,16 +1389,17 @@ override void Tick (float deltaTime) {
 
   TVec lastOrg = Origin;
   bool lastInterp = bIntrJustMoved;
-  bIntrJustMoved = true; // teleports and others will reset it
+  float lmdur = XLevel.Time-LastMoveTime;
+  if (lastInterp && (lmdur <= 0 || LastMoveDuration <= 0 || lmdur >= LastMoveDuration)) lastInterp = false;
+  bIntrJustMoved = true; // teleports and force origin changes will reset it
 
   // physics is already interpolated
   if (!Physics(deltaTime)) return;
 
   if (bIntrJustMoved) {
     if (lastInterp) {
-      TVec delta = Origin-lastOrg;
-      if (delta) PrevOrigin += delta;
-      bIntrJustMoved = true;
+      //if (!bIsPlayer && Origin-lastOrg) print("***DELTA %s (vel=%s)", Origin-lastOrg, Velocity);
+      PrevOrigin += Origin-lastOrg;
     } else {
       bIntrJustMoved = false;
     }
@@ -1412,39 +1413,29 @@ override void Tick (float deltaTime) {
     bool stateChange = (State && StateTime-deltaTime <= 0);
     lastOrg = Origin;
     lastInterp = bIntrJustMoved;
-    bIntrJustMoved = true; // teleports and others will reset it
+    bIntrJustMoved = true; // teleports and force origin changes will reset it
     if (!AdvanceState(deltaTime)) {
       // freed itself
       //if (self isa PlayerPawn) print("*** *** PLAYERPAWN(%C): TICK! 001", self);
       return;
     }
+    // interpolation check
     if (stateChange && bIntrJustMoved) {
-      TVec delta = Origin-lastOrg;
-      if (delta && StateTime > 0 /*&& delta.lengthSquared < 256*256*/) {
-        // if we have some velocity, don't interpolate (but ignore gravity)
-        /*
-        bool noVelocity = false;
-        if (!Velocity.x && !Velocity.y) {
-          if (Velocity.z) {
-            // check if it is on a floor/on a ceiling
-                 if (Velocity.z > 0 && Origin.z == FloorZ) noVelocity = true;
-            else if (Velocity.z < 0 && Origin.z == CeilingZ) noVelocity = true;
-          } else {
-            noVelocity = true;
-          }
-        }
-        if (noVelocity)
-        */
-        if (true) {
-          PrevOrigin = lastOrg;
-          LastMoveTime = XLevel.Time;
-          LastMoveDuration = StateTime;
-        } else {
-          bIntrJustMoved = false;
-        }
+      if (lastInterp && lmdur > 0 && LastMoveDuration > 0 && lmdur < LastMoveDuration) {
+        // this should not happen, but...
+        //if (!bIsPlayer && Origin-lastOrg) print("XXXXX lmdur=%s; ltime=%s; LastMoveTime=%s; LastMoveDuration=%s", lmdur, XLevel.Time, LastMoveTime, LastMoveDuration);
+        PrevOrigin += Origin-lastOrg;
+        LastMoveDuration += StateTime;
       } else {
-        //print("%C: interpolation aborted by state change; delta=%s; StateTime=%s; Velocity=%s", self, delta, StateTime, Velocity);
-        bIntrJustMoved = false;
+        /*
+        if (!bIsPlayer && Origin-lastOrg) {
+          print("MOVED by %s; vel=%s; pcd=%s; xpcd=%s; lasti=%B; intrp=%B", Origin-lastOrg, Velocity, Origin-PrevOrigin, lastOrg-PrevOrigin, lastInterp, bIntrJustMoved);
+          print("      lmdur=%s; ltime=%s; LastMoveTime=%s; LastMoveDuration=%s", lmdur, XLevel.Time, LastMoveTime, LastMoveDuration);
+        }
+        */
+        PrevOrigin = lastOrg;
+        LastMoveTime = XLevel.Time;
+        LastMoveDuration = StateTime;
       }
     } else {
       bIntrJustMoved = lastInterp;
