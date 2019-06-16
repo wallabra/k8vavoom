@@ -133,7 +133,8 @@ public:
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask=~0u) const;
-  bool CheckSegFrustum (const seg_t *seg, const unsigned mask=~0u) const;
+  // we have to pass subsector here, because of polyobjects
+  bool CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask=~0u) const;
 
   void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float aradius=0.0f);
 

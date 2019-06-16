@@ -1173,48 +1173,16 @@ int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub, const unsigned 
 //  VViewClipper::CheckSegFrustum
 //
 //==========================================================================
-bool VViewClipper::CheckSegFrustum (const seg_t *seg, const unsigned mask) const {
-  if (!seg || !seg->front_sub || !Frustum.isValid() || !mask) return true;
-  const TVec sv1 = *seg->v1;
-  const TVec sv2 = *seg->v2;
-  float bbox[6];
-  Level->GetSubsectorBBox(seg->front_sub, bbox);
-  //const sector_t *bssec = seg->front_sub->sector;
-  if (sv1.x < sv2.x) {
-    bbox[0] = sv1.x;
-    bbox[3] = sv2.x;
-  } else {
-    bbox[0] = sv2.x;
-    bbox[3] = sv1.x;
-  }
-  if (sv1.y < sv2.y) {
-    bbox[1] = sv1.y;
-    bbox[4] = sv2.y;
-  } else {
-    bbox[1] = sv2.y;
-    bbox[4] = sv1.y;
-  }
-  /*
-  // floor
-  const float fz1 = bssec->floor.GetPointZ(sv1);
-  const float fz2 = bssec->floor.GetPointZ(sv2);
-  bbox[2] = min2(fz1, fz2);
-  // ceiling
-  const float cz1 = bssec->ceiling.GetPointZ(sv1);
-  const float cz2 = bssec->ceiling.GetPointZ(sv2);
-  bbox[5] = max2(cz1, cz2);
-  FixBBoxZ(bbox);
-  */
-
-  if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
-      bbox[1] <= Origin.y && bbox[4] >= Origin.y &&
-      bbox[2] <= Origin.z && bbox[5] >= Origin.z)
-  {
-    // viewer is inside the box
-    return true;
-  }
-
-  return Frustum.checkBox(bbox, clip_frustum_check_mask&mask);
+bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask) const {
+  //const subsector_t *sub = seg->front_sub;
+  if (!seg || !sub || !Frustum.isValid() || !mask) return true;
+  const sector_t *sector = sub->sector;
+  if (!sector) return true; // just in case
+  TVec sv0(seg->v1->x, seg->v1->y, sector->floor.GetPointZ(*seg->v1));
+  TVec sv1(seg->v1->x, seg->v1->y, sector->ceiling.GetPointZ(*seg->v1));
+  TVec sv2(seg->v2->x, seg->v2->y, sector->ceiling.GetPointZ(*seg->v2));
+  TVec sv3(seg->v2->x, seg->v2->y, sector->floor.GetPointZ(*seg->v2));
+  return Frustum.checkQuadEx(sv0, sv1, sv2, sv3, mask);
 }
 
 
