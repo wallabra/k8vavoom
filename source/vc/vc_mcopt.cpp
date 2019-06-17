@@ -42,20 +42,25 @@
 #define VCMCOPT_DEBUG_RETURN_CHECKER
 #define VCMCOPT_DEBUG_RETURN_CHECKER_EXTRA
 
-//#define VCMCOPT_DEBUG_DEAD_JUMP_KILLER
-//#define VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
+#define VCMCOPT_DEBUG_DEAD_JUMP_KILLER
+#define VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
 
-//#define VCMCOPT_DEBUG_REDUNANT_JUMPS
-//#define VCMCOPT_NOTIFY_REDUNANT_JUMPS
+#define VCMCOPT_DEBUG_REDUNANT_JUMPS
+#define VCMCOPT_NOTIFY_REDUNANT_JUMPS
 
-//#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_CHAINS
-//#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
+#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_CHAINS
+#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
 
-//#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_JUMP
-//#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
+#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_JUMP
+#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
 
-//#define VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
-//#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+#define VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+
+#define VCMCOPT_DEBUG_DEADWHILE_SIMPLIFIER
+#define VCMCOPT_NOTIFY_DEADWHILE_SIMPLIFIER
+
+#define VCMCOPT_NOTIFY_OPTIMISING_STEP
 
 #endif
 
@@ -1550,6 +1555,10 @@ void VMCOptimizer::optimizeAll () {
 #ifdef VCMOPT_DISABLE_OPTIMIZER
   return;
 #else
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+    fprintf(stderr, "  === XXXBEFORE ===\n");
+    disasmAll();
+#endif
 #if defined(VCMCOPT_DUMP_FUNC_NAMES) || defined(VCMCOPT_DISASM_FINAL_RESULT) || defined(VCMCOPT_DISASM_FINAL_RESULT_ANYWAY)
   bool shown = false;
   shown =
@@ -1713,6 +1722,9 @@ void VMCOptimizer::optimizeJumps () {
 // remove unreachable branches (those after ret/goto, and not a jump target)
 // codegen can generate those, and optimizer can left those
 bool VMCOptimizer::removeDeadBranches () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::removeDeadBranches\n");
+#endif
   bool res = false;
 #ifdef VCMCOPT_DEBUG_DEAD_JUMP_KILLER
   bool firstRemove = true;
@@ -1743,6 +1755,9 @@ bool VMCOptimizer::removeDeadBranches () {
 // ////////////////////////////////////////////////////////////////////////// //
 // remove `goto $+1;`
 bool VMCOptimizer::removeRedunantJumps () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::removeRedunantJumps\n");
+#endif
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -1787,12 +1802,16 @@ bool VMCOptimizer::removeRedunantJumps () {
 // ////////////////////////////////////////////////////////////////////////// //
 // replace `brn op1; op1: goto op2;` with `brn op2;`
 bool VMCOptimizer::simplifyIfJumps () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::simplifyIfJumps\n");
+#endif
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
     Instr *it = jit;
     jit = jit->jpnext;
     // don't touch self-jumps
+    //printf("it=%p; self=%d\n", it, (int)it->isSelfJump());
     if (it->isSelfJump()) continue;
     // get target instruction
     Instr *tgt = getInstrAt(it->getBranchDest());
@@ -1831,6 +1850,7 @@ bool VMCOptimizer::simplifyIfJumps () {
     }
     // from this point on, target must be `goto`
     if (!tgt->isGoto()) continue;
+    if (it->getBranchDest() == tgt->getBranchDest()) continue; // `for (;;) {}`
     // change destination
     res = true;
 #ifdef VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
@@ -1858,6 +1878,9 @@ bool VMCOptimizer::simplifyIfJumps () {
 // ////////////////////////////////////////////////////////////////////////// //
 // replace `If[Not]Goto $+2; Goto m;` to `If[!Not]Goto m;`, and remove `Goto m;`
 bool VMCOptimizer::simplifyIfJumpJump () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::simplifyIfJumpJump\n");
+#endif
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -1913,6 +1936,9 @@ bool VMCOptimizer::simplifyIfJumpJump () {
 // ////////////////////////////////////////////////////////////////////////// //
 // if we have `PushNumber; If[Not]Goto m;`, remove if, and remove possible "else" branch
 bool VMCOptimizer::removeDeadIfs () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::removeDeadIfs\n");
+#endif
   Instr *jit = jplistHead;
   while (jit) {
     Instr *it = jit;
@@ -2029,6 +2055,9 @@ bool VMCOptimizer::removeDeadIfs () {
 //   cond
 //   If[Not]Goto start
 bool VMCOptimizer::removeDeadWhiles () {
+#ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
+  fprintf(stderr, "VMCOptimizer::removeDeadWhiles\n");
+#endif
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -2059,6 +2088,12 @@ bool VMCOptimizer::removeDeadWhiles () {
       // check if we can remove `push`
       if (!canRemoveRange(itprev->idx, itprev->idx, it, jdm1)) continue; // alas, cannot remove `push`
       res = true;
+#ifdef VCMCOPT_DEBUG_DEADWHILE_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADWHILE_SIMPLIFIER
+        fprintf(stderr, "converting lone `goto` (%d)\n", it->idx);
+#endif
       // convert opcode
       it->Opcode = OPC_Goto;
       // and remove push
@@ -2069,6 +2104,12 @@ bool VMCOptimizer::removeDeadWhiles () {
       // the hard case: remove the whole `while`
       // check if we can remove it (starting from the first jump, and down to check)
       if (!canRemoveRange(jdm1->idx, it->idx)) continue; // alas, cannot remove
+#ifdef VCMCOPT_DEBUG_DEADWHILE_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADWHILE_SIMPLIFIER
+        fprintf(stderr, "removing range (%d:%d)\n", jdm1->idx, it->idx);
+#endif
       killRange(jdm1->idx, it->idx);
       // and don't continue, 'cause we can possibly lost `jit`
       return true;
