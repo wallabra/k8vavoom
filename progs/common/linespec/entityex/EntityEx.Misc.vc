@@ -1416,6 +1416,7 @@ override void Tick (float deltaTime) {
   // cycle through states, calling action functions at transitions
   if (StateTime != -1.0) {
     bool stateChange = (State && StateTime-deltaTime <= 0);
+    TAVec lastAngles = Angles;
     lastOrg = Origin;
     bIntrJustMoved = true; // teleports and force origin changes will reset it
     if (!AdvanceState(deltaTime)) {
@@ -1434,6 +1435,7 @@ override void Tick (float deltaTime) {
         // possibly moved, set new interpolation state
         // if mobj is not moved, the engine will take care of it
         PrevOrigin = lastOrg;
+        PrevAngles = lastAngles;
         LastMoveTime = XLevel.Time;
         LastMoveDuration = StateTime;
       }

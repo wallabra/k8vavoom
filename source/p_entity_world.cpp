@@ -1099,25 +1099,6 @@ void VEntity::BlockedByLine (line_t *ld) {
 //==========================================================================
 TVec VEntity::GetDrawOrigin () {
   TVec sprorigin = Origin+GetDrawDelta();
-#if 0
-  // movement interpolation
-  if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
-    float ctt = XLevel->Time-LastMoveTime;
-    if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
-      TVec delta = (Origin-PrevOrigin);
-      if (/*delta.lengthSquared() < 32.0f*32.0f*/!delta.isZero()) {
-        sprorigin = PrevOrigin;
-        delta *= ctt/LastMoveDuration;
-        //if (!delta.isZero()) GCon->Logf("%s: dur=%f; ctt=%f; t=%f; delta=(%f,%f,%f); full=(%f,%f,%f)", *GetClass()->GetFullName(), LastMoveDuration, ctt, ctt/LastMoveDuration, delta.x, delta.y, delta.z, (PrevOrigin-sprorigin).x, (PrevOrigin-sprorigin).y, (PrevOrigin-sprorigin).z);
-        sprorigin += delta;
-      } else {
-        MoveFlags &= ~VEntity::MVF_JustMoved;
-      }
-    } else {
-      MoveFlags &= ~VEntity::MVF_JustMoved;
-    }
-  }
-#endif
   sprorigin.z -= FloorClip;
   return sprorigin;
 }
@@ -1132,21 +1113,52 @@ TVec VEntity::GetDrawDelta () {
 #ifdef CLIENT
   // movement interpolation
   if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
-    float ctt = XLevel->Time-LastMoveTime;
+    const float ctt = XLevel->Time-LastMoveTime;
     if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
       TVec delta = (Origin-PrevOrigin);
       if (/*delta.lengthSquared() < 32.0f*32.0f*/!delta.isZero()) {
         delta *= ctt/LastMoveDuration;
         return (PrevOrigin+delta)-Origin;
       } else {
-        MoveFlags &= ~VEntity::MVF_JustMoved;
+        // reset if angles are equal
+        if (PrevAngles.yaw == Angles.yaw) MoveFlags &= ~VEntity::MVF_JustMoved;
       }
     } else {
+      // unconditional reset
       MoveFlags &= ~VEntity::MVF_JustMoved;
     }
   }
 #endif
   return TVec(0.0f, 0.0f, 0.0f);
+}
+
+
+//==========================================================================
+//
+//  VEntity::GetDrawAngles
+//
+//==========================================================================
+TAVec VEntity::GetDrawAngles () {
+#ifdef CLIENT
+  // movement interpolation
+  if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
+    const float ctt = XLevel->Time-LastMoveTime;
+    if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
+      float deltaYaw = AngleDiff(AngleMod(PrevAngles.yaw), AngleMod(Angles.yaw));
+      if (deltaYaw) {
+        deltaYaw *= ctt/LastMoveDuration;
+        return TAVec(Angles.pitch, AngleMod(PrevAngles.yaw+deltaYaw), Angles.roll);
+      } else {
+        // reset if origins are equal
+        if ((Origin-PrevOrigin).isZero()) MoveFlags &= ~VEntity::MVF_JustMoved;
+      }
+    } else {
+      // unconditional reset
+      MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
+  }
+#endif
+  return Angles;
 }
 
 

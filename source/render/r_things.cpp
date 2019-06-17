@@ -264,7 +264,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     case SPR_ORIENTED:
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
-      AngleVectors(thing->Angles, sprforward, sprright, sprup);
+      AngleVectors(thing->/*Angles*/GetDrawAngles(), sprforward, sprright, sprup);
       if (spr_type != SPR_ORIENTED) {
         /*
         const float pitch = thing->Angles.pitch;
@@ -368,10 +368,10 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     //FIXME must use sprforward here?
     float ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
     if (sprframe->lump[0] == sprframe->lump[1]) {
-      ang = AngleMod(ang-thing->Angles.yaw+180.0f+45.0f/2.0f);
+      ang = AngleMod(ang-thing->/*Angles*/GetDrawAngles().yaw+180.0f+45.0f/2.0f);
     } else {
       ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
-      ang = AngleMod(ang-thing->Angles.yaw+180.0f+45.0f/4.0f);
+      ang = AngleMod(ang-thing->/*Angles*/GetDrawAngles().yaw+180.0f+45.0f/4.0f);
     }
     vuint32 rot = (vuint32)(ang*16.0f/360.0f)&15;
     lump = sprframe->lump[rot];

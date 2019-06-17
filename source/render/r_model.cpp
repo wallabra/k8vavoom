@@ -1774,14 +1774,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
     VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
     if (!Mdl) return false;
     return DrawAliasModel(Ent, sprorigin,
-      Ent->Angles, Ent->ScaleX, Ent->ScaleY, Mdl,
+      Ent->/*Angles*/GetDrawAngles(), Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
     return DrawAliasModel(Ent, Ent->GetClass()->Name, sprorigin,
-      Ent->Angles, Ent->ScaleX, Ent->ScaleY,
+      Ent->/*Angles*/GetDrawAngles(), Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
       Alpha, Additive, false, Inter, Interpolate, Pass);

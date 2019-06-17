@@ -270,6 +270,7 @@ bool Interpolate () {
 
   UnlinkFromWorld();
   PrevOrigin = Origin;
+  PrevAngles = Angles;
   LastMoveTime = XLevel.Time;
   bIntrJustMoved = true; // enable movement interpolation
   if (Args[2]&1) {

@@ -928,13 +928,14 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
 
   //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, tomove.Angles, Angles.pitch, newa.pitch);
 
-  tomove.PrevOrigin = tomove.Origin;
-  tomove.LastMoveTime = XLevel.Time;
+  tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
+  //tomove.PrevOrigin = tomove.Origin;
+  //tomove.PrevAngles = tomove.Angles;
+  //tomove.LastMoveTime = XLevel.Time;
   tomove.UnlinkFromWorld();
   tomove.Origin = dest;
   tomove.Angles = newa;
   tomove.LinkToWorld();
-  tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
 
        if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
   else if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;

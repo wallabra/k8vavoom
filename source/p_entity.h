@@ -326,6 +326,8 @@ public:
   // this returns only interpolated delta (from current origin to previous origin!)
   // used in dynamic light rendering
   TVec GetDrawDelta ();
+  // return interpolated angles
+  TAVec GetDrawAngles ();
 
   inline VEntity *GetTopOwner () {
     VEntity *Ret = this;
