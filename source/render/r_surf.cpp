@@ -1955,6 +1955,17 @@ void VRenderLevelShared::UpdateFloodBug (sector_t *sector) {
   if (!sector) return; // just in case
   fakefloor_t *ff = sector->fakefloors;
   if (!ff) return; // just in case
+  //GCon->Logf("UpdateFloodBug: sector #%d (bridge: %s)", (int)(ptrdiff_t)(sector-&Level->Sectors[0]), (sector->SectorFlags&sector_t::SF_HangingBridge ? "tan" : "ona"));
+  if (sector->SectorFlags&sector_t::SF_HangingBridge) {
+    sector_t *sursec = sector->othersecFloor;
+    ff->floorplane = sursec->floor;
+    // ceiling must be current sector's floor, flipped
+    ff->ceilplane = sector->floor;
+    ff->ceilplane.flipInPlace();
+    ff->params = sursec->params;
+    //GCon->Logf("  floor: (%g,%g,%g : %g)", ff->floorplane.normal.x, ff->floorplane.normal.y, ff->floorplane.normal.z, ff->floorplane.dist);
+    return;
+  }
   // replace sector being drawn with a copy to be hacked
   ff->floorplane = sector->floor;
   ff->ceilplane = sector->ceiling;

@@ -197,6 +197,19 @@ menudef MiscOptions {
       "If in doubt, turn this ON. Yes, 'ON'!";
   }
 
+  option bool {
+    title = "Fix Hanging Bridges";
+    cvar = deepwater_hacks_bridges;
+    textColor = PURPLE;
+    help =
+      "This tries to fix 'Hanging Bridges'."
+      "Vanilla floodfill bug sometimes exploited to create bridges"
+      "that looks like hanging over the lower sector floor. Those"
+      "bridges are still 2D, but they are looking 3D."
+      "It may cause rendering glitches, but such cases are rare."
+      "If in doubt, turn this ON. Yes, 'ON'!";
+  }
+
 
   header "Particle FX options";
 

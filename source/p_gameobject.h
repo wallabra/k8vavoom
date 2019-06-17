@@ -685,6 +685,7 @@ struct sector_t {
     SF_Silent           = 0x0100, // actors don't make noise in this sector
     SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
     SF_FakeCeilingOnly  = 0x0400, // when used as heightsec in R_FakeFlat, only copies ceiling
+    SF_HangingBridge    = 0x0800, // fake hanging bridge
   };
   vuint32 SectorFlags;
 

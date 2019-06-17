@@ -960,6 +960,7 @@ struct sector_t {
   bool bSilent;           // actors don't make noise in this sector
   bool bNoFallingDamage;  // no falling damage in this sector
   bool bFakeCeilingOnly;  // when used as heightsec in R_FakeFlat, only copies ceiling
+  bool bHangingBridge;    // fake hanging bridge
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;
