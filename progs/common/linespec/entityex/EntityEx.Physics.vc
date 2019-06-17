@@ -269,10 +269,6 @@ bool Physics (float DeltaTime) {
 }
 
 
-float CarryAccumX = 0;
-float CarryAccumY = 0;
-float CarryAccumTime = 0;
-
 //==========================================================================
 //
 //  XYMovement
