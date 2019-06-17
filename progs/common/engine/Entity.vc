@@ -204,6 +204,7 @@ TVec Origin;
 
 // for smooth movement
 native transient TVec PrevOrigin;
+native transient TAVec PrevAngles;
 native transient float LastMoveTime;
 native transient float LastMoveDuration;
 native transient bool bIntrJustMoved;

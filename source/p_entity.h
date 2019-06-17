@@ -143,6 +143,7 @@ class VEntity : public VThinker {
 
   // for smooth movement
   TVec PrevOrigin;
+  TAVec PrevAngles;
   float LastMoveTime;
   float LastMoveDuration;
   enum {
