@@ -82,6 +82,9 @@ enum { MaxDynArrayLength = 1024*1024*512 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+enum { BreakCheckLimit = 65536 }; // arbitrary
+static unsigned breakCheckCount = 0;
+volatile unsigned vmAbortBySignal = 0;
 VStack *pr_stackPtr;
 
 static VMethod *current_func = nullptr;
@@ -244,6 +247,14 @@ static void cstDump (const vuint8 *ip, bool toStdErr=false) {
 # define PR_VM_BREAK     break
 # define PR_VM_DEFAULT   default:
 #endif
+
+#define VM_CHECK_SIGABORT  do { \
+  if ((breakCheckCount--) == 0) { \
+    if (vmAbortBySignal) { cstDump(ip); Host_Error("VC VM execution aborted"); } \
+    breakCheckCount = BreakCheckLimit; \
+  } \
+} while (0)
+
 
 #define ReadU8(ip)     (*(vuint8 *)(ip))
 #define ReadInt16(ip)  (*(vint16 *)(ip))
@@ -531,6 +542,8 @@ static void RunFunction (VMethod *func) {
   enterIndent(); printIndent(); fprintf(stderr, "ENTERING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-local_vars));
 #endif
 
+  VM_CHECK_SIGABORT;
+
   // the main execution loop
   for (;;) {
 func_loop:
@@ -697,10 +710,12 @@ func_loop:
         return;
 
       PR_VM_CASE(OPC_GotoB)
+        VM_CHECK_SIGABORT;
         ip += ip[1];
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GotoNB)
+        VM_CHECK_SIGABORT;
         ip -= ip[1];
         PR_VM_BREAK;
 
@@ -711,15 +726,18 @@ func_loop:
       */
 
       PR_VM_CASE(OPC_Goto)
+        VM_CHECK_SIGABORT;
         ip += ReadInt32(ip+1);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IfGotoB)
+        VM_CHECK_SIGABORT;
         if (sp[-1].i) ip += ip[1]; else ip += 2;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IfGotoNB)
+        VM_CHECK_SIGABORT;
         if (sp[-1].i) ip -= ip[1]; else ip += 2;
         --sp;
         PR_VM_BREAK;
@@ -732,16 +750,19 @@ func_loop:
       */
 
       PR_VM_CASE(OPC_IfGoto)
+        VM_CHECK_SIGABORT;
         if (sp[-1].i) ip += ReadInt32(ip+1); else ip += 5;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IfNotGotoB)
+        VM_CHECK_SIGABORT;
         if (!sp[-1].i) ip += ip[1]; else ip += 2;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IfNotGotoNB)
+        VM_CHECK_SIGABORT;
         if (!sp[-1].i) ip -= ip[1]; else ip += 2;
         --sp;
         PR_VM_BREAK;
@@ -754,6 +775,7 @@ func_loop:
       */
 
       PR_VM_CASE(OPC_IfNotGoto)
+        VM_CHECK_SIGABORT;
         if (!sp[-1].i) ip += ReadInt32(ip+1); else ip += 5;
         --sp;
         PR_VM_BREAK;

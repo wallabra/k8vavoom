@@ -5060,6 +5060,7 @@ void PlayerImpulse () {
   if (Impulse <= PlayerPawn::NUM_WEAPON_SLOTS) { ChangeWeapon(Impulse); Impulse = 0; return; }
 
   switch (Impulse) {
+    //^C test:case 222: for (;;) { /*print("boo");*/ } return;
     case 13: InventoryLeft(); Impulse = 0; return;
     case 14: InventoryRight(); Impulse = 0; return;
     case 15: InventoryUse(); Impulse = 0; return;

@@ -285,6 +285,7 @@ char *Sys_ConsoleInput ()
 #ifdef USE_SIGNAL_HANDLER
 
 static void signal_handler (int s) {
+  vmAbortBySignal += 1;
   // ignore future instances of this signal
   signal(s, SIG_IGN);
   stack_trace();
@@ -325,6 +326,7 @@ static volatile int sigReceived = 0;
 
 static void signal_handler (int s) {
   sigReceived = 1;
+  vmAbortBySignal += 1;
 }
 
 #endif

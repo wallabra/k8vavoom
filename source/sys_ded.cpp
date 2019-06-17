@@ -153,6 +153,7 @@ void Sys_Shutdown () {
 #ifdef USE_SIGNAL_HANDLER
 
 static void signal_handler (int s) {
+  vmAbortBySignal += 1;
   // Ignore future instances of this signal.
   signal(s, SIG_IGN);
 
@@ -198,6 +199,7 @@ static volatile int sigReceived = 0;
 
 static void signal_handler (int s) {
   sigReceived = 1;
+  vmAbortBySignal += 1;
 }
 
 #endif
