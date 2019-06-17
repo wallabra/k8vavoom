@@ -44,8 +44,6 @@ static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "S
 static VCvarB r_model_autorotating("r_model_autorotating", true, "Allow model autorotation?", CVAR_Archive);
 static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model autobobbing?", CVAR_Archive);
 
-extern VCvarB r_interpolate_thing_movement;
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1

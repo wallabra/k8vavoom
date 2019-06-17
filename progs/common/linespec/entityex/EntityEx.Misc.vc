@@ -427,7 +427,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   bool onfloor = (Origin.z == FloorZ);
 
   // fix interpolation coordinates on exit
-  scope(exit) if (bIntrJustMoved) PrevOrigin.z += Origin.z-OldZ;
+  scope(exit) if (bIntrJustMoved) LastMoveOrigin.z += Origin.z-OldZ;
 
   // "no interaction" and "no blockmap" just moving
   if (bNoInteraction || bNoBlockmap) {
@@ -1404,7 +1404,7 @@ override void Tick (float deltaTime) {
     // if "just moved" flag was set, shift last origin by physics origin change
     if (lastInterp) {
       //if (!bIsPlayer && Origin-lastOrg) print("***DELTA %s (vel=%s)", Origin-lastOrg, Velocity);
-      PrevOrigin += Origin-lastOrg;
+      LastMoveOrigin += Origin-lastOrg;
     } else {
       bIntrJustMoved = false;
     }
@@ -1434,8 +1434,8 @@ override void Tick (float deltaTime) {
       {
         // possibly moved, set new interpolation state
         // if mobj is not moved, the engine will take care of it
-        PrevOrigin = lastOrg;
-        PrevAngles = lastAngles;
+        LastMoveOrigin = lastOrg;
+        LastMoveAngles = lastAngles;
         LastMoveTime = XLevel.Time;
         LastMoveDuration = StateTime;
       }

@@ -87,7 +87,8 @@ extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
 extern VCvarB r_decals_wall_alpha;
 
-VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Dump built list of visible things?", CVAR_Archive);
+VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Interpolate mobj movement?", CVAR_Archive);
+VCvarB r_interpolate_thing_angles("r_interpolate_thing_angles", true, "Interpolate mobj rotation?", CVAR_Archive);
 
 
 //==========================================================================

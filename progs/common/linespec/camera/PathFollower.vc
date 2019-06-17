@@ -269,8 +269,8 @@ bool Interpolate () {
   if ((Args[2]&8) && Time > 0.0) TempOrg = Origin;
 
   UnlinkFromWorld();
-  PrevOrigin = Origin;
-  PrevAngles = Angles;
+  LastMoveOrigin = Origin;
+  LastMoveAngles = Angles;
   LastMoveTime = XLevel.Time;
   bIntrJustMoved = true; // enable movement interpolation
   if (Args[2]&1) {

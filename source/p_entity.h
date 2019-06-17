@@ -142,8 +142,8 @@ class VEntity : public VThinker {
   TVec Origin;
 
   // for smooth movement
-  TVec PrevOrigin;
-  TAVec PrevAngles;
+  TVec LastMoveOrigin;
+  TAVec LastMoveAngles;
   float LastMoveTime;
   float LastMoveDuration;
   enum {

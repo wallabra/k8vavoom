@@ -203,8 +203,8 @@ struct tmtrace_t {
 TVec Origin;
 
 // for smooth movement
-native transient TVec PrevOrigin;
-native transient TAVec PrevAngles;
+native transient TVec LastMoveOrigin;
+native transient TAVec LastMoveAngles;
 native transient float LastMoveTime;
 native transient float LastMoveDuration;
 native transient bool bIntrJustMoved;
@@ -835,7 +835,7 @@ void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 final void SetOrigin (TVec NewOrigin, optional bool properFloorCheck) {
   UnlinkFromWorld();
   Origin = NewOrigin;
-  PrevOrigin = NewOrigin;
+  LastMoveOrigin = NewOrigin;
   bIntrJustMoved = false;
   LinkToWorld(properFloorCheck:properFloorCheck!optional);
 }

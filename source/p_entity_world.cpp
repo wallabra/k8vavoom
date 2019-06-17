@@ -36,6 +36,7 @@
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
 #ifdef CLIENT
 extern VCvarB r_interpolate_thing_movement;
+extern VCvarB r_interpolate_thing_angles;
 #endif
 
 
@@ -390,9 +391,6 @@ void VEntity::UnlinkFromWorld () {
 //==========================================================================
 void VEntity::LinkToWorld (bool properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
-
-  //!PrevOrigin = Origin;
-  //!MoveFlags &= ~MVF_JustMoved;
 
   // link into subsector
   subsector_t *ss = XLevel->PointInSubsector(Origin);
@@ -1115,13 +1113,13 @@ TVec VEntity::GetDrawDelta () {
   if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
     const float ctt = XLevel->Time-LastMoveTime;
     if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
-      TVec delta = (Origin-PrevOrigin);
-      if (/*delta.lengthSquared() < 32.0f*32.0f*/!delta.isZero()) {
+      TVec delta = Origin-LastMoveOrigin;
+      if (!delta.isZero()) {
         delta *= ctt/LastMoveDuration;
-        return (PrevOrigin+delta)-Origin;
+        return (LastMoveOrigin+delta)-Origin;
       } else {
         // reset if angles are equal
-        if (PrevAngles.yaw == Angles.yaw) MoveFlags &= ~VEntity::MVF_JustMoved;
+        if (LastMoveAngles.yaw == Angles.yaw) MoveFlags &= ~VEntity::MVF_JustMoved;
       }
     } else {
       // unconditional reset
@@ -1141,16 +1139,16 @@ TVec VEntity::GetDrawDelta () {
 TAVec VEntity::GetDrawAngles () {
 #ifdef CLIENT
   // movement interpolation
-  if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
+  if (r_interpolate_thing_angles && (MoveFlags&MVF_JustMoved)) {
     const float ctt = XLevel->Time-LastMoveTime;
     if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
-      float deltaYaw = AngleDiff(AngleMod(PrevAngles.yaw), AngleMod(Angles.yaw));
+      float deltaYaw = AngleDiff(AngleMod(LastMoveAngles.yaw), AngleMod(Angles.yaw));
       if (deltaYaw) {
         deltaYaw *= ctt/LastMoveDuration;
-        return TAVec(Angles.pitch, AngleMod(PrevAngles.yaw+deltaYaw), Angles.roll);
+        return TAVec(Angles.pitch, AngleMod(LastMoveAngles.yaw+deltaYaw), Angles.roll);
       } else {
         // reset if origins are equal
-        if ((Origin-PrevOrigin).isZero()) MoveFlags &= ~VEntity::MVF_JustMoved;
+        if ((Origin-LastMoveOrigin).isZero()) MoveFlags &= ~VEntity::MVF_JustMoved;
       }
     } else {
       // unconditional reset
@@ -1341,14 +1339,6 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   Origin = newPos;
 
   LinkToWorld();
-
-  // for interpolator
-  // nope, it is done on a script side
-  /*
-  PrevOrigin = oldorg;
-  LastMoveTime = XLevel->Time;
-  MoveFlags |= MVF_JustMoved;
-  */
 
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;

@@ -153,6 +153,12 @@ menudef VideoOptions {
     help = "Interpolate thing/monster movement?";
   }
 
+  option bool {
+    title = "Sprite Rotation Interpolation";
+    cvar = r_interpolate_thing_angles;
+    help = "Interpolate thing/monster rotation?";
+  }
+
 
   header "Visual Hacks";
 
