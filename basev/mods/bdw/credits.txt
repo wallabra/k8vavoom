@@ -1,0 +1,2 @@
+some graphics and some basic code was taken from Brutal Doom
+some more graphics and some code ideas was taken from BDLite

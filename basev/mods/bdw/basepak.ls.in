@@ -15,3 +15,4 @@ sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
 modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
 loadvcs.txt   @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
+credits.txt   @CMAKE_CURRENT_SOURCE_DIR@/credits.txt

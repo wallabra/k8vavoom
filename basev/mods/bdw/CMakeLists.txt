@@ -11,6 +11,15 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
     progs/k8bdw/*
     models/*
     models/tracer/*
+    sounds/weapons/*
+    sprites/*
+    sprites/ammo/*
+    sprites/casing/*
+    sprites/decals/*
+    sprites/muzzle/*
+    sprites/water/*
+    sprites/weapons/arifle/*
+    sprites/weapons/shotgun/*
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3)
 add_dependencies(bdw_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)
