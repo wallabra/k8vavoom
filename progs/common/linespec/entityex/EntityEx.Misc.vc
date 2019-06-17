@@ -426,6 +426,9 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   float OldZ = Origin.z;
   bool onfloor = (Origin.z == FloorZ);
 
+  // fix interpolation coordinates on exit
+  scope(exit) if (bIntrJustMoved) PrevOrigin.z += Origin.z-OldZ;
+
   // "no interaction" and "no blockmap" just moving
   if (bNoInteraction || bNoBlockmap) {
     //k8: always move?
@@ -1396,7 +1399,9 @@ override void Tick (float deltaTime) {
   // physics is already interpolated
   if (!Physics(deltaTime)) return;
 
+  // if not teleported, "just moved" flag is not reset
   if (bIntrJustMoved) {
+    // if "just moved" flag was set, shift last origin by physics origin change
     if (lastInterp) {
       //if (!bIsPlayer && Origin-lastOrg) print("***DELTA %s (vel=%s)", Origin-lastOrg, Velocity);
       PrevOrigin += Origin-lastOrg;
@@ -1405,34 +1410,29 @@ override void Tick (float deltaTime) {
     }
   } else {
     //print("%C: interpolation aborted by physics", self);
+    lastInterp = false;
   }
 
   // cycle through states, calling action functions at transitions
   if (StateTime != -1.0) {
-    //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK! 000", self);
     bool stateChange = (State && StateTime-deltaTime <= 0);
     lastOrg = Origin;
-    lastInterp = bIntrJustMoved;
     bIntrJustMoved = true; // teleports and force origin changes will reset it
     if (!AdvanceState(deltaTime)) {
       // freed itself
-      //if (self isa PlayerPawn) print("*** *** PLAYERPAWN(%C): TICK! 001", self);
       return;
     }
     // interpolation check
     if (stateChange && bIntrJustMoved) {
-      if (lastInterp && lmdur > 0 && LastMoveDuration > 0 && lmdur < LastMoveDuration) {
-        // this should not happen, but...
-        //if (!bIsPlayer && Origin-lastOrg) print("XXXXX lmdur=%s; ltime=%s; LastMoveTime=%s; LastMoveDuration=%s", lmdur, XLevel.Time, LastMoveTime, LastMoveDuration);
-        PrevOrigin += Origin-lastOrg;
+      /*
+      if (lastInterp) {
+        // this should not happen
         LastMoveDuration += StateTime;
-      } else {
-        /*
-        if (!bIsPlayer && Origin-lastOrg) {
-          print("MOVED by %s; vel=%s; pcd=%s; xpcd=%s; lasti=%B; intrp=%B", Origin-lastOrg, Velocity, Origin-PrevOrigin, lastOrg-PrevOrigin, lastInterp, bIntrJustMoved);
-          print("      lmdur=%s; ltime=%s; LastMoveTime=%s; LastMoveDuration=%s", lmdur, XLevel.Time, LastMoveTime, LastMoveDuration);
-        }
-        */
+      } else
+      */
+      {
+        // possibly moved, set new interpolation state
+        // if mobj is not moved, the engine will take care of it
         PrevOrigin = lastOrg;
         LastMoveTime = XLevel.Time;
         LastMoveDuration = StateTime;
@@ -1441,6 +1441,8 @@ override void Tick (float deltaTime) {
       bIntrJustMoved = lastInterp;
     }
   } else {
+    // endless state
+
     // check for nightmare respawn
     if (!bAlwaysRespawn) {
       if (!bMonster || bDormant || bNeverRespawn) return;

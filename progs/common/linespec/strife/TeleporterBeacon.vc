@@ -118,7 +118,7 @@ final void A_SummonRebel()
       A.Target = Owner.Target;
     }
   }
-  A.SetState (A.SeeState);
+  A.SetState(A.SeeState);
   A.Angles = Angles;
 
   Spawn(TeleportFog, A.Origin);

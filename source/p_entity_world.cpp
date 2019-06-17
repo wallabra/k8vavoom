@@ -1331,9 +1331,12 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   LinkToWorld();
 
   // for interpolator
+  // nope, it is done on a script side
+  /*
   PrevOrigin = oldorg;
   LastMoveTime = XLevel->Time;
   MoveFlags |= MVF_JustMoved;
+  */
 
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;

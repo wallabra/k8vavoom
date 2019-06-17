@@ -83,12 +83,16 @@ final void ClampNormalVelocity () {
 //
 //  Physics
 //
+//  returns `false` if mobj is destroyed
+//  actually, `false` means "stop processing current tick code", so you
+//  can return `false` for this reason too
+//
 //==========================================================================
 bool Physics (float DeltaTime) {
   ClampNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
-  // idiotic gozzo does it like this; fuck!
+  // GZDoom does it like this, so we should do it this way too
   if (bNoInteraction) {
     // `bNoTimeFreeze` is checked in `Tick()`
     if (Velocity || !bNoBlockmap) {
@@ -105,23 +109,27 @@ bool Physics (float DeltaTime) {
       if (bStickToFloor || bStickToCeiling) {
         tmtrace_t tmtrace;
         GetFloorAndCeiling(out tmtrace);
+        // no need to reling for z change
         Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
+        bIntrJustMoved = false; // disable movement interpolation
       }
     } else if (bStickToFloor || bStickToCeiling) {
       tmtrace_t tmtrace;
       GetFloorAndCeiling(out tmtrace);
+      // no need to reling for z change
       Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
+      bIntrJustMoved = false; // disable movement interpolation
     }
-    bIntrJustMoved = false; // disable movement interpolation
     return true;
   }
 
+  // check flat sticking
   if (bStickToFloor || bStickToCeiling) {
     bIntrJustMoved = false; // disable movement interpolation
     Velocity.z = 0;
   }
 
-  float oldfloorz;
+  // process boom transporters
   float CummX = 0.0;
   float CummY = 0.0;
 
@@ -169,9 +177,9 @@ bool Physics (float DeltaTime) {
   CheckWater();
   if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
 
-  // momentum movement
-  // Handle X and Y momentums
-  oldfloorz = XYMovement(DeltaTime, CummX, CummY);
+  // momentum (velocity) movement
+  // handle X and Y momentums
+  float oldfloorz = XYMovement(DeltaTime, CummX, CummY);
   if (IsDestroyed()) return false; // mobj was removed
 
   if (bFloatBob) {
@@ -200,11 +208,13 @@ bool Physics (float DeltaTime) {
 
   // k8: thingy bridges should be checked even if we have zero vertical velocity.
   //     the following code looks like optimization attempt, and it introduced a bug:
-  //     if player (or monster, i think) moved into step-like thing while standing on
-  //     a floor, that thing will be ignored. meh, just always check things, 'cause
-  //     why not?
+  //     if a player (or a monster, i think) moved into step-like thing while
+  //     standing on a floor, that thing will be ignored. meh, just always check
+  //     things, 'cause why not?
   EntityEx onmo = EntityEx(CheckOnmobj());
-  if (onmo || Velocity.z || (Origin.z != FloorZ && (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
+  if (onmo || Velocity.z ||
+      (Origin.z != FloorZ &&
+       (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
   {
     if (bPassMobj && !bMissile && !Level.CompatNoPassOver) {
       // handle Z momentum and gravity
@@ -257,7 +267,9 @@ bool Physics (float DeltaTime) {
   if (bStickToFloor || bStickToCeiling) {
     tmtrace_t tmtrace;
     GetFloorAndCeiling(out tmtrace);
+    // no need to reling for z change
     Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
+    bIntrJustMoved = false; // disable movement interpolation
   }
 
   // move static light, if there is any
@@ -273,20 +285,17 @@ bool Physics (float DeltaTime) {
 //
 //  XYMovement
 //
+//  returns old floor z
+//
 //==========================================================================
 final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
-  float ptryx;
-  float ptryy;
-  float xmove;
-  float ymove;
-  int special;
   float oldfloorz = FloorZ;
 
   FixNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
   if (bWindThrust && Sector) {
-    special = Sector->special&SECSPEC_BASE_MASK;
+    int special = Sector->special&SECSPEC_BASE_MASK;
     switch (special) {
       case SECSPEC_WindEastSlow:
       case SECSPEC_WindEastMedium:
@@ -314,8 +323,8 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   Velocity.x = fclamp(Velocity.x, -MAXMOVE, MAXMOVE);
   Velocity.y = fclamp(Velocity.y, -MAXMOVE, MAXMOVE);
 
-  xmove = Velocity.x*DeltaTime;
-  ymove = Velocity.y*DeltaTime;
+  float xmove = Velocity.x*DeltaTime;
+  float ymove = Velocity.y*DeltaTime;
 
   if (ScrollX || ScrollY) {
     // scroll is already deltatime-corrected
@@ -377,8 +386,8 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   //int Step = 1;
   TVec oldOrigin = Origin;
   foreach (; 0..Steps) {
-    ptryx = Origin.x+StepXMove;
-    ptryy = Origin.y+StepYMove;
+    float ptryx = Origin.x+StepXMove;
+    float ptryy = Origin.y+StepYMove;
 
     tmtrace_t tmtrace;
     if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), true)) {
@@ -390,9 +399,10 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
         TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S);
       }
       if (tmtrace.BlockingMobj) {
-        if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
+        //if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
         HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
       } else {
+        /*
         if (GetCvarB('k8ExplodeMissleTest')) {
           print("LINE! (%d)", tmtrace.SpecHit.Length);
           if (!tmtrace.BlockingLine) print("*** BUT NO LINE!");
@@ -403,6 +413,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             if (tmtrace.CeilingLine == tmtrace.FloorLine && tmtrace.FloorLine) print("      FLOOR AND CEILING LINE IS THE SAME!");
           }
         }
+        */
         /*
         if (!tmtrace.BlockingLine && !tmtrace.AnyBlockingLine) {
           tmtrace_t tr2;
@@ -444,8 +455,9 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   FixNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
-       if (Mass.isinf) Mass = 10000;
-  else if (Mass < 0) Mass = 0;
+  if (Mass.isinf) Mass = 10000;
+  //else if (Mass < 0) Mass = 0;
+  Mass = fclamp(Mass, 0, 10000);
 
   bool hasGravity = (!bNoGravity && Sector);
 
@@ -455,7 +467,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   if (hasGravity && Origin.z > FloorZ) {
     float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
     if (grav.isinf) grav = 1000;
-    float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
+    //float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
+    float xmass = fmax(1, Mass);
     //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
 
     if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ) {

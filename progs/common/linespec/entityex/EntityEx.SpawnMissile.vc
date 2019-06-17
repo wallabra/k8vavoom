@@ -111,11 +111,12 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
 
   //k8:TODO: this should be strictly client-side
   if (line && DecalName) {
-    if (GetCvarB('k8ExplodeMissleTest')) print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", DecalName, PointOnPlaneSide(Origin, *line), PointOnPlaneSide(Origin-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
+    //if (GetCvarB('k8ExplodeMissleTest')) print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", DecalName, PointOnPlaneSide(Origin, *line), PointOnPlaneSide(Origin-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
     //TVec v1, v2;
     TVec dir = Normalise(savedVelocity);
     trsplat_t tr;
     // trace without z offset
+    /*
     if (GetCvarB('k8ExplodeMissleTest')) {
       if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) {
         auto side = PointOnPlaneSide(Origin-savedVelocity, *line); // move out a little, just in case
@@ -125,9 +126,11 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
         print("  MISSILE SPLAT TRACER FAILED!");
       }
     }
+    */
     //if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) SpawnDecal(tr.hit, DecalName, tr.side, tr.line);
     TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0, DecalName);
   } else {
+    /*
     if (GetCvarB('k8ExplodeMissleTest')) {
       if (Victim) print("MISSILE VICTIM: <%n>", GetClassName(Victim.Class));
       else if (DecalName) {
@@ -137,6 +140,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
         print("MISSILE WITHOUT DECAL (%n) %n %n", GetClassName(Class), DecalName, self.default.DecalName);
       }
     }
+    */
   }
 
   if (bDehExplosion) {
@@ -525,7 +529,7 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
   if (!A) return none;
   if (!A.DecalName) A.DecalName = type.default.DecalName;
   if (specified_decalType && decalType) {
-    if (GetCvarB('k8ExplodeMissleTest')) print("missile decal set to <%n>", decalType);
+    //if (GetCvarB('k8ExplodeMissleTest')) print("missile decal set to <%n>", decalType);
     A.DecalName = decalType;
   }
 
