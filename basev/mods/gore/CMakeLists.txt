@@ -10,6 +10,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
     models/blood/*
     progs/k8gore/*
     sprites/gore/*
+    graphics/decals/*
+    graphics/BloodDecals/*
   )
 add_custom_target(gore_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3)
 add_dependencies(gore_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)

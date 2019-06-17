@@ -1,3 +1,10 @@
+#ifdef TRANSIENT
+# undef NEWDECALS
+# define OLDDECALS
+#endif
+
+
+#ifdef OLDDECALS
 /// +++++++++++++++++////
 /// Blood Base
 /// +++++++++++++++++////
@@ -307,3 +314,359 @@ decalgroup K8GoreBloodSuper${Color} {
   K8GoreBloodSuper01${Color} 6
   K8GoreBloodSuper02${Color} 6
 }
+#endif
+
+
+//==========================================================================
+//
+//  NEW DECALS
+//
+//==========================================================================
+#ifdef NEWDECALS
+STRETCHER BloodStretcher${Color} {
+  StretchTime 10
+  GoalY 2
+}
+
+SLIDER BloodSlider${Color} {
+  SlideTime 10
+  DistY -132
+}
+
+COMBINER BloodSmearer${Color} {
+  BloodStretcher
+  BloodSlider
+}
+
+
+DECAL BloodSplat01${Color} {
+  Pic BSPLAT01
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.26
+  Y-Scale 0.26
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat02${Color} {
+  Pic BSPLAT02
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.28
+  Y-Scale 0.28
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat03${Color} {
+  Pic BSPLAT03
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.26
+  Y-Scale 0.26
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat04${Color} {
+  Pic BSPLAT04
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.28
+  Y-Scale 0.28
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat05${Color} {
+  Pic BSPLAT05
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.26
+  Y-Scale 0.26
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat06${Color} {
+  Pic BSPLAT06
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.3
+  Y-Scale 0.6
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat07${Color} {
+  Pic BSPLAT07
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.28
+  Y-Scale 0.28
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat08${Color} {
+  Pic BSPLAT08
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.26
+  Y-Scale 0.26
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat09${Color} {
+  Pic BSPLAT09
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.28
+  Y-Scale 0.28
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat10${Color} {
+  Pic BSPLAT10
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.26
+  Y-Scale 0.26
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat11${Color} {
+  Pic BSPLAT11
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.64
+  Y-Scale 0.64
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat12${Color} {
+  Pic BSPLAT12
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.68
+  Y-Scale 0.68
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat13${Color} {
+  Pic BSPLAT13
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.68
+  Y-Scale 0.68
+  RandomFlipX
+  RandomFlipY
+}
+
+DECAL BloodSplat14${Color} {
+  Pic BSPLAT14
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  X-Scale 0.64
+  Y-Scale 0.64
+  RandomFlipX
+  RandomFlipY
+}
+
+
+DECALGROUP BloodSplat${Color} {
+  BloodSplat01${Color} 6
+  BloodSplat02${Color} 6
+  BloodSplat03${Color} 6
+  BloodSplat04${Color} 6
+  BloodSplat05${Color} 6
+  BloodSplat06${Color} 6
+  BloodSplat07${Color} 6
+  BloodSplat08${Color} 6
+  BloodSplat09${Color} 6
+  BloodSplat10${Color} 6
+  BloodSplat11${Color} 6
+  BloodSplat12${Color} 6
+  BloodSplat13${Color} 6
+  BloodSplat14${Color} 6
+}
+
+
+DECAL BloodSmear1${Color} {
+  Pic BSMEAR01
+  X-Scale 0.46
+  Y-Scale 0.46
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  RandomFlipX
+  RandomFlipY
+  Animator BloodSmearer${Color}
+}
+
+DECAL BloodSmear2${Color} {
+  Pic BSMEAR02
+  X-Scale 0.44
+  Y-Scale 0.44
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  RandomFlipX
+  RandomFlipY
+  Animator BloodSmearer${Color}
+}
+
+
+DECALGROUP BloodSmear${Color} {
+  BloodSmear1${Color} 6
+  BloodSmear2${Color} 6
+}
+#endif

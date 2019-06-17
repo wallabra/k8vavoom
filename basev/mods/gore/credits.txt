@@ -1,0 +1,2 @@
+some graphics and some basic code was taken from Brutal Doom
+blooddecal graphics and decal code was take from Complex Doom
