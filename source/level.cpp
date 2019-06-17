@@ -3513,6 +3513,11 @@ COMMAND(DebugExportLevel) {
   }
 
   // find a file name to save it to
+  if (!FL_IsSafeDiskFileName(Args[1])) {
+    GCon->Logf(NAME_Error, "unsafe file name '%s'", *Args[1]);
+    return;
+  }
+
   VStr fname = va("%s.udmf", *Args[1]);
   auto strm = FL_OpenFileWrite(fname, true); // as full name
   if (!strm) {

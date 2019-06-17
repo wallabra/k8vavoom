@@ -2834,6 +2834,11 @@ COMMAND_WITH_AC(ExportTexture) {
 
   // find a file name to save it to
   VStr fname = va("%s.png", *tx->Name);
+  if (!FL_IsSafeDiskFileName(fname)) {
+    GCon->Logf(NAME_Error, "unsafe file name '%s'", *fname);
+    return;
+  }
+
   auto strm = FL_OpenFileWrite(fname, true); // as full name
   if (!strm) {
     GCon->Logf(NAME_Error, "cannot create file '%s'", *fname);

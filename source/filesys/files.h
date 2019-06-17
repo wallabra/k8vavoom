@@ -59,6 +59,7 @@ VStr FL_GetSavesDir ();
 VStr FL_GetScreenshotsDir ();
 VStr FL_GetUserDataDir (bool shouldCreate);
 
+// reject absolute names, names with ".", and names with ".."
 bool FL_IsSafeDiskFileName (const VStr &fname);
 
 
