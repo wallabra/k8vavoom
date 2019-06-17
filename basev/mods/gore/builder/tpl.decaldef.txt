@@ -601,10 +601,12 @@ DECALGROUP BloodSplat${Color} {
   K8Gore_NewBloodSplat08${Color} 6
   K8Gore_NewBloodSplat09${Color} 6
   K8Gore_NewBloodSplat10${Color} 6
+  /*
   K8Gore_NewBloodSplat11${Color} 6
   K8Gore_NewBloodSplat12${Color} 6
   K8Gore_NewBloodSplat13${Color} 6
   K8Gore_NewBloodSplat14${Color} 6
+  */
   //BloodSmear${Color} 1
 }
 

@@ -148,10 +148,12 @@ DECALGROUP BloodSplat {
   K8Gore_NewBloodSplat08 6
   K8Gore_NewBloodSplat09 6
   K8Gore_NewBloodSplat10 6
+  /*
   K8Gore_NewBloodSplat11 6
   K8Gore_NewBloodSplat12 6
   K8Gore_NewBloodSplat13 6
   K8Gore_NewBloodSplat14 6
+  */
   //BloodSmear 1
 }
 
@@ -613,10 +615,12 @@ DECALGROUP BloodSplatGreen {
   K8Gore_NewBloodSplat08Green 6
   K8Gore_NewBloodSplat09Green 6
   K8Gore_NewBloodSplat10Green 6
+  /*
   K8Gore_NewBloodSplat11Green 6
   K8Gore_NewBloodSplat12Green 6
   K8Gore_NewBloodSplat13Green 6
   K8Gore_NewBloodSplat14Green 6
+  */
   //BloodSmearGreen 1
 }
 
@@ -1078,10 +1082,12 @@ DECALGROUP BloodSplatBlue {
   K8Gore_NewBloodSplat08Blue 6
   K8Gore_NewBloodSplat09Blue 6
   K8Gore_NewBloodSplat10Blue 6
+  /*
   K8Gore_NewBloodSplat11Blue 6
   K8Gore_NewBloodSplat12Blue 6
   K8Gore_NewBloodSplat13Blue 6
   K8Gore_NewBloodSplat14Blue 6
+  */
   //BloodSmearBlue 1
 }
 
