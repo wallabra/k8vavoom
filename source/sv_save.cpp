@@ -1353,7 +1353,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   // load collected VAcs objects contents
   for (vint32 f = 0; f < Loader->AcsExports.length(); ++f) Loader->AcsExports[f]->Serialise(*Loader);
 
-  // `LinkToWorld()` will fix our z position
+  // `LinkToWorld()` in `VEntity::SerialiseOther()` will find the correct floor
 
   /*
   for (int i = 0; i < elist.length(); ++i) {

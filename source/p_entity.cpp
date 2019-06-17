@@ -48,9 +48,10 @@ static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Dis
 void VEntity::SerialiseOther (VStream &Strm) {
   Super::SerialiseOther(Strm);
   if (Strm.IsLoading()) {
+    //CHECKME: k8: is this right? voodoo dolls?
     if (EntityFlags&EF_IsPlayer) Player->MO = this;
     SubSector = nullptr; // must mark as not linked
-    LinkToWorld(true);
+    LinkToWorld(true); // proper floor check
   }
 }
 
