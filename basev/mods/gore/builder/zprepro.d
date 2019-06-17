@@ -34,7 +34,7 @@ string[] processFile (string fname) {
             ifstack ~= IfState(false, true, false);
             return true;
           }
-          if (arg.length == 0) assert(0, "ifdef arg?");
+          if (arg.length == 0) assert(0, "#ifdef arg?");
           ifstack ~= IfState(false, (arg in defs ? (cmd == "ifndef") : (cmd == "ifdef")), true);
           return true;
         }
@@ -51,6 +51,22 @@ string[] processFile (string fname) {
         if (cmd == "endif") {
           if (ifstack.length == 0) assert(0, "#endif without #if");
           ifstack.length -= 1;
+          return true;
+        }
+        // define
+        if (cmd == "define") {
+          // in ignore part?
+          if (ifstack.length > 0 && (ifstack[$-1].skip || !ifstack[$-1].active)) return true; // skip it
+          if (arg.length == 0) assert(0, "#define arg?");
+          defs[arg] = true;
+          return true;
+        }
+        // undef
+        if (cmd == "undef") {
+          // in ignore part?
+          if (ifstack.length > 0 && (ifstack[$-1].skip || !ifstack[$-1].active)) return true; // skip it
+          if (arg.length == 0) assert(0, "#undef arg?");
+          defs.remove(arg);
           return true;
         }
         assert(0, "invalid preprocessor command: "~cmd);
