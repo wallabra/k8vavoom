@@ -303,4 +303,26 @@ static __attribute__((unused)) __attribute__((pure)) inline double neumsum3D (do
 }
 
 
+// simple exponential running average
+struct RunningAverageExp {
+protected:
+  float fadeoff; // = 0.1f; // 10%
+  float currValue; // = 0;
+
+public:
+  RunningAverageExp () : fadeoff(0.1f), currValue(0.0f) {}
+  RunningAverageExp (float aFadeoff) : fadeoff(aFadeoff), currValue(0.0f) {}
+
+  inline void reset () { currValue = 0.0f; }
+
+  inline float getFadeoff () const { return fadeoff; }
+  inline void setFadeoff (float aFadeoff) { fadeoff = aFadeoff; }
+
+  inline void update (float newValue) { currValue = fadeoff*newValue+(1.0f-fadeoff)*currValue; }
+
+  inline float getValue () const { return currValue; }
+  inline void setValue (float aValue) { currValue = aValue; }
+};
+
+
 #endif
