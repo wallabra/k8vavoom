@@ -426,6 +426,9 @@ public:
   bool IsAbsolutePath () const;
   inline bool isAbsolutePath () const { return IsAbsolutePath(); }
 
+  // reject absolute names, names with ".", and names with "..", and names ends with path delimiter
+  bool isSafeDiskFileName () const;
+
   static inline int Length (const char *s) { return (s ? (int)strlen(s) : 0); }
   static inline int length (const char *s) { return (s ? (int)strlen(s) : 0); }
   static int Utf8Length (const char *s, int len=-1);
@@ -642,6 +645,16 @@ public:
     if ((ch&0xE0) == 0xC0) return 2;
     return -1; // invalid
   }
+
+  static inline bool isPathDelimiter (const char ch) {
+    #ifdef _WIN32
+      return (ch == '/' || ch == '\\' || ch == ':');
+    #else
+      return (ch == '/');
+    #endif
+  }
+
+  static bool isSafeDiskFileName (const VStr &fname) { return fname.isSafeDiskFileName(); }
 
 public:
   static const vuint16 cp1251[128];

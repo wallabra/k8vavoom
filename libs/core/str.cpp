@@ -1974,6 +1974,29 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 }
 
 
+//==========================================================================
+//
+//  VStr::isSafeDiskFileName
+//
+//==========================================================================
+bool VStr::isSafeDiskFileName () const {
+  if (length() == 0) return false;
+  const char *s = getCStr();
+  if (isPathDelimiter(s[0])) return false;
+  for (; *s; ++s) {
+#ifdef _WIN32
+    if (*s == ':') return false;
+#endif
+    if (isPathDelimiter(*s)) {
+      // don't allow any dot-starting pathes
+      if (s[1] == '.' || !s[1]) return false;
+    }
+  }
+  return true;
+}
+
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 enum { VA_BUFFER_COUNT = 32 };
 
