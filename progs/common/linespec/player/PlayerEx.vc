@@ -814,11 +814,16 @@ void WaterMove (float deltaTime) {
   PlayerPawn(MO).AdjustSpeed(forward, side);
 
   wishvel = vforward*forward+vright*side;
+  //print("wishvel=%s; waterlevel=%s", wishvel, LastWaterLevel);
   float wishvz = wishvel.z;
   if (!forward && !side /*&& !cmd.upmove*/ && !(Buttons&BT_JUMP)) {
     //wishvel.z -= 60.0; // drift towards bottom
     //wishvel.z -= (MO.WaterLevel < 2 ? 60 : 6);
     wishvel.z -= 6;
+  }
+  if (LastWaterLevel < 3) {
+    wishvz = 0;
+    wishvel.z = 0;
   }
   //else wishvel.z += cmd.upmove;
 
