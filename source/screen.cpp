@@ -514,14 +514,14 @@ void SCR_Update (bool fullUpdate) {
 
   if (!fullUpdate) return;
 
-  Drawer->StartUpdate();
-
-  bool skipAllRendering = false;
+  bool updateStarted = false;
 
   // do buffered drawing
   if (cl && cls.signon && cl->MO && !GClGame->intermission) {
     if (GLevel->TicTime >= serverStartRenderFramesTic) {
       //k8: always render level, so automap will be updated in all cases
+      updateStarted = true;
+      Drawer->StartUpdate();
       if (automapactive <= 0 || am_always_update) R_RenderPlayerView();
       Drawer->Setup2D(); // restore 2D projection
       if (automapactive) AM_Drawer();
@@ -532,23 +532,23 @@ void SCR_Update (bool fullUpdate) {
       }
     } else {
       //GCon->Logf("render: tic=%d; starttic=%d", GLevel->TicTime, serverStartRenderFramesTic);
-      Drawer->Setup2D(); // restore 2D projection
-      skipAllRendering = true;
+      return; // skip all rendering
     }
-  } else {
-    Drawer->Setup2D(); // restore 2D projection
   }
 
-  if (!skipAllRendering) {
-    // draw user interface
-    GRoot->DrawWidgets();
-    // menu drawing
-    MN_Drawer();
-    // console drawing
-    C_Drawer();
-    // various on-screen statistics
-    DrawFPS();
+  if (!updateStarted) {
+    Drawer->StartUpdate();
+    Drawer->Setup2D(); // setup 2D projection
   }
+
+  // draw user interface
+  GRoot->DrawWidgets();
+  // menu drawing
+  MN_Drawer();
+  // console drawing
+  C_Drawer();
+  // various on-screen statistics
+  DrawFPS();
 
   // page flip or blit buffer
   Drawer->Update();
