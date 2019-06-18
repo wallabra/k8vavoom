@@ -85,6 +85,11 @@
 struct tmtrace_t;
 struct cptrace_t;
 
+#ifdef CLIENT
+extern VCvarB r_interpolate_thing_angles_models;
+extern VCvarB r_interpolate_thing_angles_sprites;
+#endif
+
 enum {
   STYLE_None, // do not draw
   STYLE_Normal, // normal; just copy the image to the screen
@@ -327,7 +332,21 @@ public:
   // used in dynamic light rendering
   TVec GetDrawDelta ();
   // return interpolated angles
-  TAVec GetDrawAngles ();
+  TAVec GetInterpolatedDrawAngles ();
+  inline TAVec GetModelDrawAngles () {
+    #ifdef CLIENT
+      return (r_interpolate_thing_angles_models && (MoveFlags&MVF_JustMoved) ? GetInterpolatedDrawAngles() : Angles);
+    #else
+      return Angles;
+    #endif
+  }
+  inline TAVec GetSpriteDrawAngles () {
+    #ifdef CLIENT
+      return (r_interpolate_thing_angles_sprites && (MoveFlags&MVF_JustMoved) ? GetInterpolatedDrawAngles() : Angles);
+    #else
+      return Angles;
+    #endif
+  }
 
   inline VEntity *GetTopOwner () {
     VEntity *Ret = this;

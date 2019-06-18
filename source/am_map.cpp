@@ -1432,7 +1432,7 @@ static void AM_drawThings (vuint32 color) {
 
     float x = FTOM(MTOF(mobj->Origin.x));
     float y = FTOM(MTOF(mobj->Origin.y));
-    float angle = mobj->/*Angles*/GetDrawAngles().yaw;
+    float angle = mobj->/*Angles*/GetInterpolatedDrawAngles().yaw; // anyway
 
     if (am_rotate) {
       AM_rotatePoint(&x, &y);

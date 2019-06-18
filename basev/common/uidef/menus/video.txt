@@ -148,15 +148,27 @@ menudef VideoOptions {
   }
 
   option bool {
-    title = "Sprite Movement Interpolation";
+    title = "Sprite/3D Model Movement Interpolation";
     cvar = r_interpolate_thing_movement;
     help = "Interpolate thing/monster movement?";
   }
 
   option bool {
     title = "Sprite Rotation Interpolation";
-    cvar = r_interpolate_thing_angles;
-    help = "Interpolate thing/monster rotation?";
+    cvar = r_interpolate_thing_angles_sprites;
+    help =
+      "Interpolate thing/monster rotation for sprites?"
+      "This is separated from interpolation for 3D models,"
+      "because some sprites looks funny when interpolated."
+      "Think of Baron of Hell attack, when he instantly"
+      "turns to the player: it looks goofy when he raises"
+      "his hand, and then turns to the player.";
+  }
+
+  option bool {
+    title = "3D Model Rotation Interpolation";
+    cvar = r_interpolate_thing_angles_models;
+    help = "Interpolate thing/monster rotation for 3D models?";
   }
 
 

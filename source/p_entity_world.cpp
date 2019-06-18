@@ -35,8 +35,9 @@
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
 #ifdef CLIENT
-extern VCvarB r_interpolate_thing_movement;
-extern VCvarB r_interpolate_thing_angles;
+VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Interpolate mobj movement?", CVAR_Archive);
+VCvarB r_interpolate_thing_angles_models("r_interpolate_thing_angles_models", true, "Interpolate mobj rotation for 3D models?", CVAR_Archive);
+VCvarB r_interpolate_thing_angles_sprites("r_interpolate_thing_angles_sprites", false, "Interpolate mobj rotation for sprites?", CVAR_Archive);
 #endif
 
 
@@ -1133,13 +1134,13 @@ TVec VEntity::GetDrawDelta () {
 
 //==========================================================================
 //
-//  VEntity::GetDrawAngles
+//  VEntity::GetInterpolatedDrawAngles
 //
 //==========================================================================
-TAVec VEntity::GetDrawAngles () {
+TAVec VEntity::GetInterpolatedDrawAngles () {
 #ifdef CLIENT
   // movement interpolation
-  if (r_interpolate_thing_angles && (MoveFlags&MVF_JustMoved)) {
+  if (MoveFlags&MVF_JustMoved) {
     const float ctt = XLevel->Time-LastMoveTime;
     if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
       float deltaYaw = AngleDiff(AngleMod(LastMoveAngles.yaw), AngleMod(Angles.yaw));
