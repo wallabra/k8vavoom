@@ -516,38 +516,42 @@ void SCR_Update (bool fullUpdate) {
 
   Drawer->StartUpdate();
 
+  bool skipAllRendering = false;
+
   // do buffered drawing
-  if (cl && cls.signon && cl->MO) {
-    switch (GClGame->intermission) {
-      case 0:
-        //k8: always render level, so automap will be updated in all cases
-        if (automapactive <= 0 || am_always_update) {
-          R_RenderPlayerView();
-          Drawer->Setup2D(); // restore 2D projection
-        }
-        if (automapactive) AM_Drawer();
-        if (GGameInfo->NetMode != NM_TitleMap) {
-          if (!automapactive && draw_world_timer) AM_DrawWorldTimer();
-          CT_Drawer();
-          SB_Drawer();
-        }
-        break;
+  if (cl && cls.signon && cl->MO && !GClGame->intermission) {
+    if (GLevel->TicTime >= serverStartRenderFramesTic) {
+      //k8: always render level, so automap will be updated in all cases
+      if (automapactive <= 0 || am_always_update) R_RenderPlayerView();
+      Drawer->Setup2D(); // restore 2D projection
+      if (automapactive) AM_Drawer();
+      if (GGameInfo->NetMode != NM_TitleMap) {
+        if (!automapactive && draw_world_timer) AM_DrawWorldTimer();
+        CT_Drawer();
+        SB_Drawer();
+      }
+    } else {
+      //GCon->Logf("render: tic=%d; starttic=%d", GLevel->TicTime, serverStartRenderFramesTic);
+      Drawer->Setup2D(); // restore 2D projection
+      skipAllRendering = true;
     }
+  } else {
+    Drawer->Setup2D(); // restore 2D projection
   }
 
-  // draw user interface
-  GRoot->DrawWidgets();
+  if (!skipAllRendering) {
+    // draw user interface
+    GRoot->DrawWidgets();
+    // menu drawing
+    MN_Drawer();
+    // console drawing
+    C_Drawer();
+    // various on-screen statistics
+    DrawFPS();
+  }
 
-  // menu drawing
-  MN_Drawer();
-
-  // console drawing
-  C_Drawer();
-
-  DrawFPS();
-  //DrawCycles();
-
-  Drawer->Update(); // page flip or blit buffer
+  // page flip or blit buffer
+  Drawer->Update();
 }
 
 

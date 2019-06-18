@@ -30,6 +30,7 @@
 #include "cl_local.h"
 
 bool sv_skipOneTitlemap = false;
+int serverStartRenderFramesTic = -1;
 
 /*
 static double FrameTime = 1.0f/35.0f;
@@ -1076,6 +1077,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   mapteleport_flags = 0;
   mapteleport_skill = -1;
   run_open_scripts = spawn_thinkers;
+  serverStartRenderFramesTic = -1;
 
   if (GGameInfo->NetMode != NM_None) {
     //fprintf(stderr, "SV_SpawnServer!!!\n");
@@ -1148,6 +1150,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
 
   if (!spawn_thinkers) {
     SV_SendServerInfoToClients(); // anyway
+    if (GGameInfo->NetMode == NM_Standalone) serverStartRenderFramesTic = GLevel->TicTime+4; // arbitrary number
     return;
   }
 
@@ -1169,6 +1172,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     // start open scripts
     GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
   }
+  serverStartRenderFramesTic = GLevel->TicTime+4; // arbitrary number
 
   GCon->Log(NAME_Dev, "Server spawned");
 }
