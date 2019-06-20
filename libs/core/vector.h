@@ -307,9 +307,13 @@ public:
   inline void SetAndNormalise (const TVec &Anormal, float Adist) {
     normal = Anormal;
     dist = Adist;
-    const float mag = normal.invlength();
-    normal *= mag;
-    dist *= mag;
+    Normalise();
+    if (!normal.isValid() || normal.isZero()) {
+      //k8: what to do here?!
+      normal = TVec(1.0f, 0.0f, 0.0f);
+      dist = 0.0f;
+      return;
+    }
   }
 
   // initialises vertical plane from point and direction
@@ -376,6 +380,8 @@ public:
   inline void Normalise () {
     const float mag = normal.invlength();
     normal *= mag;
+    // multiply by mag too, because we're doing "dot-dist", so
+    // if our vector becomes smaller, our dist should become smaller too
     dist *= mag;
   }
 
