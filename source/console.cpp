@@ -383,14 +383,14 @@ bool C_Responder (event_t *ev) {
 
     // scroll lines up
     case K_PAGEUP:
-      for (int i = 0; i < (GInput->ShiftDown ? 1 : 5); ++i) {
+      for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
         if (last_line > 1) --last_line;
       }
       return true;
 
     // scroll lines down
     case K_PAGEDOWN:
-      for (int i = 0; i < (GInput->ShiftDown ? 1 : 5); ++i) {
+      for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
         if (last_line < num_lines) ++last_line;
       }
       return true;
