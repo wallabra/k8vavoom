@@ -822,6 +822,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
       if (!(ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX))) continue; // solid line
       // check if we can touch midtex, 'cause why not?
       const sector_t *bsec = seg->backsector;
+      if (!bsec) continue;
       if (org.z+radius <= bsec->floor.minz ||
           org.z-radius >= bsec->ceiling.maxz)
       {

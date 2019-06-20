@@ -182,8 +182,8 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
   const line_t *ldef = seg->linedef;
   if (!ldef) return true;
 
-  if (ldef->flags&ML_3DMIDTEX) return true; // 3dmidtex never blocks anything
-  if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
+  if (!(ldef->flags&ML_TWOSIDED)) return true; // one-sided wall always blocks everything
+  if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
   // mirrors and horizons always block the view
   switch (ldef->special) {
@@ -290,8 +290,8 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
   const line_t *ldef = seg->linedef;
 
   if (ldef->alpha < 1.0f) return false; // skip translucent walls
-  // just in case
-  if ((ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) != ML_TWOSIDED) return true;
+  if (!(ldef->flags&ML_TWOSIDED)) return true; // one-sided wall always blocks everything
+  if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
   // mirrors and horizons always block the view
   switch (ldef->special) {
@@ -346,12 +346,8 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
   const line_t *ldef = seg->linedef;
 
   if (ldef->alpha < 1.0f) return false; // skip translucent walls
-  //k8: this was checked by caller
-  //if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
-  //k8: this was checked by caller
-  //if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
-  // just in case
-  if ((ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) != ML_TWOSIDED) return true;
+  if (!(ldef->flags&ML_TWOSIDED)) return true; // one-sided wall always blocks everything
+  if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
   // mirrors and horizons always block the view
   switch (ldef->special) {
@@ -1355,7 +1351,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
   // for 2-sided line, determine if it can be skipped
-  if (!clipAll && seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
+  if (!clipAll && seg->backsector && (ldef->flags&ML_TWOSIDED)) {
     if (!RepSectors) {
       if (!IsSegAClosedSomething(&Frustum, seg)) return;
     } else {
@@ -1608,7 +1604,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
   if (!MirrorCheck(Mirror, *v1, *v2)) return;
 
   // for 2-sided line, determine if it can be skipped
-  if (seg->backsector && (ldef->flags&(ML_TWOSIDED|ML_3DMIDTEX)) == ML_TWOSIDED) {
+  if (seg->backsector && (ldef->flags&ML_TWOSIDED)) {
     if (!IsSegAClosedSomething(/*&Frustum*/nullptr, seg, &Origin, &Radius)) return;
   }
 
