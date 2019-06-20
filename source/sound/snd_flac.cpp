@@ -40,6 +40,8 @@ public:
     int SampleRate;
     void *Data;
     size_t DataSize;
+    vuint32 lastSeenFrame;
+    bool loopDetected;
 
     FStream (VStream &InStream);
     void StrmWrite (const FLAC__int32 *const Buf[], size_t Offs, size_t Len);
@@ -125,11 +127,13 @@ void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     return;
   }
   if (!Strm->process_until_end_of_stream()) {
-    GCon->Logf("Failed to process FLAC file");
-    Z_Free(Strm->Data);
-    Sfx.Data = nullptr;
-    delete Strm;
-    return;
+    if (!Strm->loopDetected || Strm->DataSize == 0) {
+      GCon->Logf("Failed to process FLAC file");
+      Z_Free(Strm->Data);
+      Sfx.Data = nullptr;
+      delete Strm;
+      return;
+    }
   }
   Sfx.SampleRate = Strm->SampleRate;
   Sfx.SampleBits = Strm->SampleBits;
@@ -150,6 +154,8 @@ VFlacSampleLoader::FStream::FStream (VStream &InStream)
   , SampleRate(0)
   , Data(0)
   , DataSize(0)
+  , lastSeenFrame(0)
+  , loopDetected(0)
 {
   Strm.Seek(0);
   BytesLeft = Strm.TotalSize();
@@ -164,6 +170,7 @@ VFlacSampleLoader::FStream::FStream (VStream &InStream)
 ::FLAC__StreamDecoderReadStatus VFlacSampleLoader::FStream::read_callback (FLAC__byte buffer[], size_t *bytes) {
   if (*bytes > 0) {
     if (!BytesLeft) return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+    if (loopDetected) return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
     if (*bytes > BytesLeft) *bytes = BytesLeft;
     Strm.Serialise(buffer, *bytes);
     BytesLeft -= *bytes;
@@ -180,6 +187,14 @@ VFlacSampleLoader::FStream::FStream (VStream &InStream)
 //
 //==========================================================================
 ::FLAC__StreamDecoderWriteStatus VFlacSampleLoader::FStream::write_callback (const ::FLAC__Frame *frame, const FLAC__int32 *const buffer[]) {
+  if ((vuint32)frame->header.number.frame_number+1 <= lastSeenFrame) {
+    GCon->Logf(NAME_Warning, "FLAC: looped sample detected (%u:%u : %u) (%s)", (vuint32)frame->header.number.frame_number, lastSeenFrame, (vuint32)frame->header.number.sample_number, *Strm.GetName());
+    loopDetected = true;
+    //return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
+    return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+  }
+  lastSeenFrame = (vuint32)frame->header.number.frame_number+1;
+
   void *Temp = Data;
   Data = Z_Malloc(DataSize+frame->header.blocksize*SampleBits/8);
   memcpy(Data, Temp, DataSize);
@@ -255,7 +270,7 @@ VFlacAudioCodec::~VFlacAudioCodec () {
 //  VFlacAudioCodec::Decode
 //
 //==========================================================================
-int VFlacAudioCodec::Decode(short *Data, int NumSamples) {
+int VFlacAudioCodec::Decode (short *Data, int NumSamples) {
   Stream->StrmBuf = Data;
   Stream->StrmSize = NumSamples;
 
