@@ -1224,34 +1224,52 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
   if (p.z <= secfz) return sector->eregions;
   //const float seccz = sector->ceiling.GetPointZ(p);
 
+  sec_region_t *last = nullptr;
+  bool wasHit = false;
+  float lastz = 0.0f;
   sec_region_t *best = sector->eregions;
   float bestDist = p.z-secfz; // minimum distance to region floor
 
   // skip base region
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    const float fz = reg->efloor.GetPointZ(p);
+    if (!last || fz > lastz) last = reg;
     // non-solid?
     if (reg->regflags&sec_region_t::RF_NonSolid) {
       // for non-solid regions calculate distance to ceiling
       const float cz = reg->eceiling.GetPointZ(p);
-      if (p.z < cz) {
+      if (dbgDump) { GCon->Logf("SPRL: non-solid: z=%g; cz=%g; dist=%g; best=%g", p.z, cz, cz-p.z, bestDist); DumpRegion(reg); }
+      if (p.z <= cz) {
         const float fdist = cz-p.z;
         if (fdist < bestDist) {
+          wasHit = true;
           bestDist = fdist;
           best = reg;
         }
       }
     } else {
       // for solid regions calculate distance to floor
-      const float fz = reg->efloor.GetPointZ(p);
-      if (p.z < fz) {
+      //const float fz = reg->efloor.GetPointZ(p);
+      if (dbgDump) { GCon->Logf("SPRL: solid: z=%g; fz=%g; dist=%g; best=%g", p.z, fz, fz-p.z, bestDist); DumpRegion(reg); }
+      if (p.z <= fz) {
         const float fdist = fz-p.z;
         if (fdist < bestDist) {
+          wasHit = true;
           bestDist = fdist;
           best = reg;
         }
       }
     }
+  }
+
+  if (!wasHit && last) {
+    if (dbgDump) { GCon->Logf("SPRL: USING LAST"); DumpRegion(last); }
+    best = last;
+  }
+
+  if (dbgDump) {
+    GCon->Logf("params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
   }
 
   return best;
@@ -1291,11 +1309,17 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     // prefer regions with contents
     float bestDist = 999999.0f; // minimum distance to region floor
     // skip base region
+    /*
+    const sec_region_t *last = nullptr;
+    float lastz = 0.0f;
+    bool wasHit = false;
+    */
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
       if (dbgDump) { GCon->Logf("SVP: checking region..."); DumpRegion(reg); }
       // floor height, we'll need it anyway
       const float fz = max2(secfz, reg->efloor.GetPointZ(p));
+      //if (!last || fz > lastz) last = reg;
       // non-solid?
       if (reg->regflags&sec_region_t::RF_NonSolid) {
         // non-solid region
@@ -1308,6 +1332,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
             if (dbgDump) GCon->Log("SVP:   NON-SOLID HIT!");
             bestDist = fdist;
             best = reg;
+            //wasHit = true;
           }
         } else {
           if (dbgDump) GCon->Logf("SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
@@ -1322,12 +1347,19 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
             if (dbgDump) GCon->Log("SVP:   SOLID HIT!");
             bestDist = fdist;
             best = reg;
+            //wasHit = true;
           }
         } else {
           if (dbgDump) GCon->Logf("SVP: solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fz-p.z, p.z, fz, min2(seccz, reg->eceiling.GetPointZ(p)));
         }
       }
     }
+    /*
+    if (!wasHit && last) {
+      if (dbgDump) { GCon->Logf("SVP: best region is last"); DumpRegion(last); }
+      best = last;
+    }
+    */
   }
 
   if (dbgDump) { GCon->Logf("SVP: best region"); DumpRegion(best); }

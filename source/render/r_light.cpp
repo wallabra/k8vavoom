@@ -26,6 +26,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "r_local.h"
+#include "../sv_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -642,43 +643,34 @@ void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, flo
 //==========================================================================
 void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane) {
   bool skipAmbient = false;
+  bool glowAllowed = true;
 
-  float glowL = 0.0f, glowR = 0.0f, glowG = 0.0f, glowB = 0.0f;
-
-  // glowing flats
-  if (r_glow_flat && sub->sector) {
-    const sector_t *sec = sub->sector;
-    const float hgt = p.z-sub->sector->floor.GetPointZ(p);
-    if (sec->floor.pic && hgt >= 0.0f && hgt < 120.0f) {
-      VTexture *gtex = GTextureManager(sec->floor.pic);
-      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        /*
-        if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
-        l = 255;
-        */
-        //return gtex->glowing|0xff000000u;
-        //skipAmbient = true;
-        //glowL = 255.0f;
-        glowL = (120.0f-hgt)*255.0f/120.0f;
-        glowR = (gtex->glowing>>16)&0xff;
-        glowG = (gtex->glowing>>8)&0xff;
-        glowB = gtex->glowing&0xff;
-      }
-    }
-  }
-
-  //FIXME: THIS IS WRONG!
-  subregion_t *reg = sub->regions;
-  if (!skipAmbient && reg) {
-    while (reg->next) {
+  //FIXME: this is slightly wrong (and slow)
+  if (!skipAmbient && sub->regions) {
+    subregion_t *reg = sub->regions;
+    float bestdist = 999999.0f;
+    for (subregion_t *r = sub->regions; r; r = r->next) {
       //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      sec_surface_t *floor = (reg->fakefloor ? reg->fakefloor : reg->realfloor);
+      sec_surface_t *floor = r->fakefloor;
       if (floor) {
         const float d = floor->PointDist(p);
-        if (d >= 0.0f) break;
+        if (d >= 0.0f && d < bestdist) {
+          bestdist = d;
+          reg = r;
+        }
       }
-      reg = reg->next;
+      floor = r->realfloor;
+      if (floor) {
+        const float d = floor->PointDist(p);
+        if (d >= 0.0f && d < bestdist) {
+          bestdist = d;
+          reg = r;
+        }
+      }
     }
+
+    // allow glow only for bottom regions
+    glowAllowed = (reg->secregion == sub->sector->eregions);
 
     // region's base light
     if (r_allow_ambient) {
@@ -749,18 +741,40 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     } while (0);
   }
 
-  // mix with glow
-  if (glowL) {
-    //GCon->Logf("00: glow=(%g,%g,%g,%g); light=(%g,%g,%g,%g)", glowL, glowR, glowG, glowB, l, lr, lg, lb);
-    glowL *= 0.8f;
-    l *= 0.8f;
-    const float llfrac = l/255.0f;
-    const float glfrac = glowL/255.0f;
-    lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f);
-    lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f);
-    lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f);
-    l = clampval(l+glowL, 0.0f, 255.0f);
-    //GCon->Logf("01: glow=(%g,%g,%g,%g); light=(%g,%g,%g,%g)", glowL, glowR, glowG, glowB, l, lr, lg, lb);
+  // glowing flats
+  if (glowAllowed && r_glow_flat && sub->sector) {
+    const sector_t *sec = sub->sector;
+    if (sec->floor.pic) {
+      VTexture *gtex = GTextureManager(sec->floor.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+        if (hgt >= 0.0f && hgt < 120.0f) {
+          /*
+          if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
+          l = 255;
+          */
+          //return gtex->glowing|0xff000000u;
+          //skipAmbient = true;
+          //glowL = 255.0f;
+          float glowL = (120.0f-hgt)*255.0f/120.0f;
+          float glowR = (gtex->glowing>>16)&0xff;
+          float glowG = (gtex->glowing>>8)&0xff;
+          float glowB = gtex->glowing&0xff;
+
+          // mix with glow
+          //glowL *= 0.8f;
+          if (glowL > 1.0f) {
+            //l *= 0.8f;
+            const float llfrac = (l/255.0f)*0.8f;
+            const float glfrac = (glowL/255.0f)*0.8f;
+            lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f);
+            lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f);
+            lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f);
+            l = clampval(l+glowL, 0.0f, 255.0f);
+          }
+        }
+      }
+    }
   }
 }
 

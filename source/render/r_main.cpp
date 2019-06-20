@@ -1638,10 +1638,10 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 //  VRenderLevelShared::GetFade
 //
 //==========================================================================
-vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
+vuint32 VRenderLevelShared::GetFade (sec_region_t *reg) {
   if (r_fog_test) return 0xff000000|(int(255*r_fog_r)<<16)|(int(255*r_fog_g)<<8)|int(255*r_fog_b);
-  if (Reg->params->Fade) return Reg->params->Fade;
-  if (Level->LevelInfo->OutsideFog && Reg->eceiling.splane->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
+  if (reg->params->Fade) return reg->params->Fade;
+  if (Level->LevelInfo->OutsideFog && reg->eceiling.splane->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
   if (Level->LevelInfo->Fade) return Level->LevelInfo->Fade;
   if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
   if (r_fade_light) return FADE_LIGHT; // simulate light fading using dark fog

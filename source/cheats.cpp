@@ -282,6 +282,8 @@ COMMAND(my_sector_info) {
     gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
     if (gap) GCon->Logf("=== PT2: %p", gap);
     */
+    GCon->Log("=== light ===");
+    (void)SV_PointRegionLight(sec, Player->MO->Origin, true);
   }
 }
 
