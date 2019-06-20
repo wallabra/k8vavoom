@@ -413,7 +413,7 @@ static void AM_restoreScaleAndLoc () {
 //
 //==========================================================================
 static void AM_minOutWindowScale () {
-  scale_mtof = min_scale_mtof;
+  scale_mtof = (amWholeScale ? min_scale_mtof : min2(0.01f, min_scale_mtof));
   scale_ftom = 1.0f/scale_mtof;
   AM_activateNewScale();
 }
@@ -787,7 +787,7 @@ static void AM_changeWindowScale () {
   // change the scaling multipliers
   scale_mtof = scale_mtof*mtof_zoommul;
   scale_ftom = 1.0f/scale_mtof;
-       if (scale_mtof < min_scale_mtof) AM_minOutWindowScale();
+       if (scale_mtof < (amWholeScale ? min_scale_mtof : min2(0.01f, min_scale_mtof))) AM_minOutWindowScale();
   else if (scale_mtof > max_scale_mtof) AM_maxOutWindowScale();
   else AM_activateNewScale();
 }
