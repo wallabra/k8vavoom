@@ -833,7 +833,7 @@ void ParseDecalDef (VScriptParser *sc) {
         int lmp = W_CheckNumForFileName(sc->String);
         if (lmp >= 0) {
           if (scsp >= MaxStack) {
-            sc->Error(va("mapinfo include nesting too deep"));
+            sc->Error(va("decal include nesting too deep"));
             error = true;
             break;
           }

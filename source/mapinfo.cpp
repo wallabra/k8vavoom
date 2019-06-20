@@ -372,18 +372,80 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
 
 //==========================================================================
 //
+//  LoadMapInfoLump
+//
+//==========================================================================
+static void LoadMapInfoLump (int Lump, bool doFixups=true) {
+  GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
+  ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+  if (doFixups) {
+    processNumFixups("DoomEdNum", true, DoomEdNumFixups);
+    processNumFixups("SpawnNum", false, SpawnNumFixups);
+  }
+}
+
+
+//==========================================================================
+//
+//  LoadAllMapInfoLumpsInFile
+//
+//  do this scanning fuckery, because some idiotic tools
+//  loves duplicate lumps
+//==========================================================================
+static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
+  if (miLump < 0 && zmiLump < 0) return;
+  VName milname;
+  if (zmiLump >= 0) {
+    milname = VName("zmapinfo", VName::Add);
+  } else {
+    check(miLump >= 0);
+    zmiLump = miLump;
+    milname = NAME_mapinfo;
+  }
+  check(zmiLump >= 0);
+  int currFile = W_LumpFile(zmiLump);
+  bool wasLoaded = false;
+  for (; zmiLump >= 0; zmiLump = W_IterateNS(zmiLump, WADNS_Global)) {
+    if (W_LumpFile(zmiLump) != currFile) break;
+    if (W_LumpName(zmiLump) == milname) {
+      wasLoaded = true;
+      LoadMapInfoLump(zmiLump, false); // no fixups yet
+    }
+  }
+  // do fixups if somethig was loaded
+  if (wasLoaded) {
+    processNumFixups("DoomEdNum", true, DoomEdNumFixups);
+    processNumFixups("SpawnNum", false, SpawnNumFixups);
+  }
+}
+
+
+//==========================================================================
+//
 //  InitMapInfo
 //
 //==========================================================================
 void InitMapInfo () {
+  // use "zmapinfo" if it is present
+  int lastMapinfoFile = -1; // not seen yet
+  int lastMapinfoLump = -1; // not seen yet
+  int lastZMapinfoLump = -1; // not seen yet
+  VName nameZMI = VName("zmapinfo", VName::Add);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_mapinfo) {
-      GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
-      ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+    int currFile = W_LumpFile(Lump);
+    // if we hit another file, load last seen [z]mapinfo lump
+    if (currFile != lastMapinfoFile) {
+      LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
+      // reset/update remembered lump indicies
+      lastMapinfoFile = currFile;
+      lastMapinfoLump = lastZMapinfoLump = -1; // not seen yet
     }
-    processNumFixups("DoomEdNum", true, DoomEdNumFixups);
-    processNumFixups("SpawnNum", false, SpawnNumFixups);
+    // remember last seen [z]mapinfo lump
+    if (lastMapinfoLump < 0 && W_LumpName(Lump) == NAME_mapinfo) lastMapinfoLump = Lump;
+    if (lastZMapinfoLump < 0 && W_LumpName(Lump) == nameZMI) lastZMapinfoLump = Lump;
   }
+  // load last seen mapinfos
+  LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
   mapinfoParsed = true;
 
   for (int i = 0; i < MapInfo.Num(); ++i) {

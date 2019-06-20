@@ -1657,7 +1657,9 @@ void FL_Init () {
     if (doStartMap && !mapinfoFound) {
       //GCon->Logf("::: %d : %d", nextfid, W_NextMountFileId());
       for (; nextfid < W_NextMountFileId(); ++nextfid) {
-        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
+        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0 ||
+            W_CheckNumForNameInFile(VName("zmapinfo", VName::Add), nextfid) >= 0)
+        {
           GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
           mapinfoFound = true;
           fsys_hasMapPwads = true;
@@ -1673,7 +1675,9 @@ void FL_Init () {
       }
     } else if (!fsys_hasMapPwads) {
       for (; nextfid < W_NextMountFileId(); ++nextfid) {
-        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
+        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0 ||
+            W_CheckNumForNameInFile(VName("zmapinfo", VName::Add), nextfid) >= 0)
+        {
           fsys_hasMapPwads = true;
           break;
         }
