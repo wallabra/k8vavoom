@@ -171,9 +171,11 @@ void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, tex
         GCon->Logf(NAME_Warning, "Subsector %d got too big T surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
         surf->texturemins[1] = 0;
         surf->extents[1] = 256;
+        //GCon->Logf("AXIS=(%g,%g,%g)", texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z);
       } else {
         surf->texturemins[1] = bmins*16;
         surf->extents[1] = (bmaxs-bmins)*16;
+        //GCon->Logf("AXIS=(%g,%g,%g)", texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z);
       }
 
       /*
