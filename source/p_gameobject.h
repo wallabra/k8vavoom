@@ -686,6 +686,7 @@ struct sector_t {
     SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
     SF_FakeCeilingOnly  = 0x0400, // when used as heightsec in R_FakeFlat, only copies ceiling
     SF_HangingBridge    = 0x0800, // fake hanging bridge
+    SF_Has3DMidTex      = 0x1000, // has any 3dmidtex linedef?
   };
   vuint32 SectorFlags;
 

@@ -1874,16 +1874,16 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
 //
 //==========================================================================
 void VLevel::FinaliseLines () {
-  line_t *Line = Lines;
-  for (int i = 0; i < NumLines; ++i, ++Line) {
+  line_t *ldef = Lines;
+  for (int lleft = NumLines; lleft--; ++ldef) {
     // calculate line's plane, slopetype, etc
-    CalcLine(Line);
+    CalcLine(ldef);
     // set up sector references
-    Line->frontsector = Sides[Line->sidenum[0]].Sector;
-    if (Line->sidenum[1] != -1) {
-      Line->backsector = Sides[Line->sidenum[1]].Sector;
+    ldef->frontsector = Sides[ldef->sidenum[0]].Sector;
+    if (ldef->sidenum[1] != -1) {
+      ldef->backsector = Sides[ldef->sidenum[1]].Sector;
     } else {
-      Line->backsector = nullptr;
+      ldef->backsector = nullptr;
     }
   }
 }
@@ -3534,6 +3534,25 @@ void VLevel::BuildSectorLists () {
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) FakeFCSectors[fcount++] = idx;
     else if (sec->othersecFloor || sec->othersecCeiling) FakeFCSectors[fcount++] = idx;
   }
+
+  // set "has 3d midtex" flag for sectors
+  // do it here for now...
+  {
+    line_t *ldef = Lines;
+    for (int lleft = NumLines; lleft--; ++ldef) {
+      if (ldef->flags&ML_3DMIDTEX) {
+        //GCon->Logf("linedef #%d has 3dmidtex", (int)(ptrdiff_t)(ldef-&Lines[0]));
+        if (ldef->frontsector) {
+          //GCon->Logf("sector #%d has 3dmidtex", (int)(ptrdiff_t)(ldef->frontsector-&Sectors[0]));
+          ldef->frontsector->SectorFlags |= sector_t::SF_Has3DMidTex;
+        }
+        if (ldef->backsector) {
+          //GCon->Logf("sector #%d has 3dmidtex", (int)(ptrdiff_t)(ldef->backsector-&Sectors[0]));
+          ldef->backsector->SectorFlags |= sector_t::SF_Has3DMidTex;
+        }
+      }
+    }
+  }
 }
 
 
@@ -3555,8 +3574,9 @@ void VLevel::HashLines () {
   */
   tagHashClear(lineTags);
   for (int i = 0; i < NumLines; ++i) {
-    tagHashPut(lineTags, Lines[i].lineTag, &Lines[i]);
-    for (int cc = 0; cc < Lines[i].moreTags.length(); ++cc) tagHashPut(lineTags, Lines[i].moreTags[cc], &Lines[i]);
+    line_t *ldef = &Lines[i];
+    tagHashPut(lineTags, ldef->lineTag, &Lines[i]);
+    for (int cc = 0; cc < ldef->moreTags.length(); ++cc) tagHashPut(lineTags, ldef->moreTags[cc], ldef);
   }
 }
 

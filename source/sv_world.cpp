@@ -381,19 +381,49 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
 
 //==========================================================================
 //
+//  Insert3DMidtex
+//
+//==========================================================================
+static void Insert3DMidtex (TArray<opening_t> &dest, const sector_t *sector, const line_t *linedef) {
+  if (!(linedef->flags&ML_3DMIDTEX)) return;
+  // for 3dmidtex, create solid from midtex bottom to midtex top
+  //   from floor to midtex bottom
+  //   from midtex top to ceiling
+  float cz, fz;
+  if (!P_GetMidTexturePosition(linedef, 0, &cz, &fz)) return;
+  if (fz > cz) return; // k8: is this right?
+  opening_t op;
+  op.efloor = sector->eregions->efloor;
+  op.bottom = fz;
+  op.eceiling = sector->eregions->eceiling;
+  op.top = cz;
+  // flip floor and ceiling if they are pointing outside a region
+  // i.e. they should point *inside*
+  // we will use this fact to create correct "empty" openings
+  if (op.efloor.GetNormalZ() < 0.0f) op.efloor.Flip();
+  if (op.eceiling.GetNormalZ() > 0.0f) op.eceiling.Flip();
+  // inserter will join regions
+  InsertOpening(dest, op);
+}
+
+
+//==========================================================================
+//
 //  BuildSectorOpenings
 //
 //  this function doesn't like regions with floors that has different flags
 //
 //==========================================================================
-static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint, bool skipNonSolid=false) {
+static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, sector_t *sector, const TVec point, unsigned NoBlockFlags, bool *hasSlopes, bool linkList, bool usePoint, bool skipNonSolid=false) {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
-  if (!sector->Has3DFloors()) {
+  if (!sector->Has3DFloors() /*|| !(sector->SectorFlags&sector_t::SF_Has3DMidTex)*/ && (!xldef || !(xldef->flags&ML_3DMIDTEX))) {
     opening_t &op = dest.alloc();
     GetBaseSectorOpening(op, sector, point, hasSlopes, usePoint);
     return;
   }
+  //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
+
   /* build list of closed regions (it doesn't matter if region is non-solid, as long as it satisfies flag mask).
      that list has all intersecting regions joined.
      then cut those solids from main empty region.
@@ -441,6 +471,22 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
     InsertOpening(solids, cop);
   }
   if (hasSlopes) *hasSlopes = slopeDetected;
+  // add 3dmidtex, if there are any
+  if (xldef && (xldef->flags&ML_3DMIDTEX)) {
+    Insert3DMidtex(solids, sector, xldef);
+  } else if (usePoint && sector->SectorFlags&sector_t::SF_Has3DMidTex) {
+    //FIXME: we need to know a radius here
+    /*
+    GCon->Logf("!!!!!");
+    line_t *const *lparr = sector->lines;
+    for (int lct = sector->linecount; lct--; ++lparr) {
+      const line_t *ldf = *lparr;
+      Insert3DMidtex(solids, sector, ldf);
+    }
+    */
+  }
+  //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
+
   // if we have no openings, or openings are out of bounds, just use base sector region
   const float secfz = (usePoint ? sector->floor.GetPointZ(point) : sector->floor.minz);
   const float seccz = (usePoint ? sector->ceiling.GetPointZ(point) : sector->ceiling.maxz);
@@ -544,7 +590,7 @@ static void BuildSectorOpenings (TArray<opening_t> &dest, sector_t *sector, cons
 opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
   check(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
   check(oplist.length() > 0);
   return oplist.ptr();
 }
@@ -561,7 +607,7 @@ opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
   /*
   check(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, false, false, skipNonSolid);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, nullptr, false, false, skipNonSolid);
   check(oplist.length() > 0);
   if (oplist.length() > MAX_OPENINGS) Host_Error("too many sector openings");
   opening_t *dest = openings;
@@ -575,7 +621,7 @@ opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
   */
   check(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, nullptr, true, false, skipNonSolid);
   check(oplist.length() > 0);
   return oplist.ptr();
 }
@@ -593,17 +639,21 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
   NoBlockFlags &= (SPF_MAX_OPENINGS-1);
 
+#ifdef VV_CACHE_LINE_OPENINGS
   opening_t *op = nullptr;
-  int opsused = 0;
+#endif
 
   //FIXME: this is wrong, it should insert opening into full list instead!
   //       move opening scan to separate function with top/bot limits instead
+  //bool thisIs3DMidTex = (do3dmidtex && (linedef->flags&ML_3DMIDTEX) && linedef->frontsector && linedef->backsector);
+  /*
   if (do3dmidtex && (linedef->flags&ML_3DMIDTEX)) {
     // for 3dmidtex, create two gaps:
     //   from floor to midtex bottom
     //   from midtex top to ceiling
     float top, bot;
     if (P_GetMidTexturePosition(linedef, 0, &top, &bot)) {
+      int opsused = 0;
       float floorz = linedef->frontsector->floor.GetPointZ(point);
       float ceilz = linedef->frontsector->ceiling.GetPointZ(point);
       if (floorz < ceilz) {
@@ -649,6 +699,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       }
     }
   }
+  */
 
   // check opening cache
 #ifdef VV_CACHE_LINE_OPENINGS
@@ -659,7 +710,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return (op->efloor.splane ? op : nullptr);
   }
 #else
-  op = nullptr;
+  //op = nullptr;
 #endif
 
   // alas, we cannot cache openings with slopes, so don't even try
@@ -667,11 +718,16 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
   bool hasSlopes0 = false, hasSlopes1 = false;
 
+
   // fast algo for two sectors without 3d floors
   if (!linedef->frontsector->Has3DFloors() &&
-      !linedef->backsector->Has3DFloors())
+      !linedef->backsector->Has3DFloors() &&
+      //!thisIs3DMidTex &&
+      !((linedef->frontsector->SectorFlags|linedef->backsector->SectorFlags)&sector_t::SF_Has3DMidTex))
   {
     opening_t fop, bop;
+    //if (linedef->frontsector-&GLevel->Sectors[0] == 0) GCon->Logf("!!!!! 0:0");
+    //if (linedef->backsector-&GLevel->Sectors[0] == 0) GCon->Logf("!!!!! 1:0");
     GetBaseSectorOpening(fop, linedef->frontsector, point, &hasSlopes0, usePoint);
     GetBaseSectorOpening(bop, linedef->backsector, point, &hasSlopes1, usePoint);
     // no intersection?
@@ -731,7 +787,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   static TArray<opening_t> op0list;
   static TArray<opening_t> op1list;
 
-  BuildSectorOpenings(op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false, usePoint);
+  BuildSectorOpenings(linedef, op0list, linedef->frontsector, point, NoBlockFlags, &hasSlopes0, false, usePoint);
+  //if (thisIs3DMidTex) Insert3DMidtex(op0list, linedef->frontsector, linedef);
   if (op0list.length() == 0) {
     // just in case: no front sector openings
 #ifdef VV_CACHE_LINE_OPENINGS
@@ -742,7 +799,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     return nullptr;
   }
 
-  BuildSectorOpenings(op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false, usePoint);
+  BuildSectorOpenings(linedef, op1list, linedef->backsector, point, NoBlockFlags, &hasSlopes1, false, usePoint);
+  //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
   if (op1list.length() == 0) {
     // just in case: no back sector openings
 #ifdef VV_CACHE_LINE_OPENINGS
@@ -1056,7 +1114,7 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
    */
   static TArray<opening_t> oplist;
 
-  BuildSectorOpenings(oplist, sector, point, SPF_NOBLOCKING, nullptr, true, true);
+  BuildSectorOpenings(nullptr, oplist, sector, point, SPF_NOBLOCKING, nullptr, true, true);
   if (oplist.length() == 0) {
     // something is very wrong here, so use sector boundaries
     floor = sector->eregions->efloor;

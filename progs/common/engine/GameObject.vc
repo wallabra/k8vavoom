@@ -961,6 +961,7 @@ struct sector_t {
   bool bNoFallingDamage;  // no falling damage in this sector
   bool bFakeCeilingOnly;  // when used as heightsec in R_FakeFlat, only copies ceiling
   bool bHangingBridge;    // fake hanging bridge
+  bool bHas3DMidTex;      // has any 3dmidtex linedef?
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;
