@@ -949,7 +949,10 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
 
-  if (Song[0] == '*' && !Song[1]) {
+  if ((Song[0] == '*' && !Song[1]) ||
+      VStr::strEquCI(Song, "none") ||
+      VStr::strEquCI(Song, "null"))
+  {
     // this looks like common "stop song" action
     if (wasPlaying) GCon->Log("stopped current song");
     return;
