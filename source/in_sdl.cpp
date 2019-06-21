@@ -602,23 +602,21 @@ static inline int SwitchJoyToKey(int b) {
 //
 //==========================================================================
 void VSdlInputDevice::StartupJoystick () {
-#ifndef __SWITCH__
-  // always enable joystick on the switch
-  if (!GArgs.CheckParm("-joystick")) return;
-#endif
+  if (GArgs.CheckParm("-nojoystick")) return;
 
   if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
-    GCon->Log(NAME_Init, "sdl init joystick failed.");
+    GCon->Log(NAME_Init, "SDL: joystick initialisation failed.");
     return;
   }
-  //else {
-  //  SDL_JoystickEventState(SDL_IGNORE);
-  //  // we are on our own now...
-  //}
+
   joystick = SDL_JoystickOpen(0);
-  if (!joystick) return;
+  if (!joystick) {
+    GCon->Log(NAME_Init, "SDL: no joysticks found.");
+    return;
+  }
 
   joy_num_buttons = SDL_JoystickNumButtons(joystick);
+  GCon->Logf(NAME_Init, "SDL: found joystick with %d buttons.", joy_num_buttons);
   joystick_started = true;
   memset(joy_oldb, 0, sizeof(joy_oldb));
   memset(joy_newb, 0, sizeof(joy_newb));
