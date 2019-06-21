@@ -22,12 +22,7 @@ menudef ClipperOptions {
   option bool { title = "Enable frustum"; cvar = clip_frustum; }
   option bool { title = "Top/bottom frustum door/lifts"; cvar = clip_height; }
   option bool { title = "Frustum BSP"; cvar = clip_frustum_bsp; }
+  option bool { title = "Frustum BSP segs"; cvar = clip_frustum_bsp_segs; }
   option bool { title = "Init range with frustum"; cvar = clip_frustum_init_range; }
-  //option bool { title = "Frustum bboxes"; cvar = clip_frustum_bbox; }
-  //option bool { title = "Frustum regions"; cvar = clip_frustum_region; }
-  //option bool { title = "Segments"; cvar = clip_frustum_seg; }
-  //option bool { title = "Subsectors"; cvar = clip_frustum_sub; }
   option bool { title = "Frustum mirrors"; cvar = clip_frustum_mirror; }
-
-  //option bool { title = ""; cvar = clip_frustum_check_mask; }
 }
