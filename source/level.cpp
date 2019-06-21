@@ -429,6 +429,9 @@ static bool writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg=n
 }
 
 
+#define EXTSAVE_NUMSEC_MAGIC  (-0x7fefefea)
+
+
 //==========================================================================
 //
 //  VLevel::SerialiseOther
@@ -455,6 +458,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
   // decals
   if (Strm.IsLoading()) decanimlist = nullptr;
 
+  // decals
   if (segsHashOK) {
     vuint32 dctotal = 0;
     if (Strm.IsLoading()) {
@@ -541,11 +545,25 @@ void VLevel::SerialiseOther (VStream &Strm) {
     }
   }
 
+  // hack, to keep compatibility
+  bool extSaveVer = !Strm.IsLoading();
+
+  // write "extended save" flag
+  if (!Strm.IsLoading()) {
+    vint32 scflag = EXTSAVE_NUMSEC_MAGIC;
+    Strm << STRM_INDEX(scflag);
+  }
+
   // sectors
   {
     vint32 cnt = NumSectors;
+    // check "extended save" magic
     Strm << STRM_INDEX(cnt);
     if (Strm.IsLoading()) {
+      if (cnt == EXTSAVE_NUMSEC_MAGIC) {
+        extSaveVer = true;
+        Strm << STRM_INDEX(cnt);
+      }
       if (cnt != NumSectors) Host_Error("invalid number of sectors");
     }
 
@@ -635,6 +653,55 @@ void VLevel::SerialiseOther (VStream &Strm) {
     if (Strm.IsLoading()) HashSectors();
   }
 
+  // extended info section
+  vint32 hasSegVisibility = 1;
+  if (extSaveVer) {
+    VNTValueIOEx vio(&Strm);
+    vio.io(VName("extflags.hassegvis"), hasSegVisibility);
+  } else {
+    hasSegVisibility = 0;
+  }
+
+  // seg visibility
+  bool segvisLoaded = false;
+  if (hasSegVisibility) {
+    //if (Strm.IsLoading()) GCon->Log("loading seg mapping...");
+    vint32 dcSize = 0;
+    int dcStartPos = Strm.Tell();
+    if (segsHashOK) {
+      Strm << dcSize; // will be fixed later for writer
+      vint32 segCount = NumSegs;
+      Strm << segCount;
+      if (segCount == NumSegs && segCount > 0) {
+        seg_t *seg = &Segs[0];
+        for (i = NumSegs; i--; ++seg) {
+          VNTValueIOEx vio(&Strm);
+          vio.io(VName("seg.flags"), seg->flags);
+        }
+        segvisLoaded = !Strm.IsError();
+        // fix size, if necessary
+        if (!Strm.IsLoading()) {
+          auto currPos = Strm.Tell();
+          Strm.Seek(dcStartPos);
+          dcSize = currPos-(dcStartPos+4);
+          Strm << dcSize;
+          Strm.Seek(currPos);
+        }
+      } else {
+        check(Strm.IsLoading());
+        if (dcSize < 0) Host_Error("invalid segmap size");
+        GCon->Logf("segcount doesn't match for seg mapping (this is harmless)");
+        Strm.Seek(dcStartPos+4+dcSize);
+      }
+    } else {
+      check(Strm.IsLoading());
+      Strm << dcSize; // will be fixed later for writer
+      if (dcSize < 0) Host_Error("invalid segmap size");
+      GCon->Logf("seg hash doesn't match for seg mapping (this is harmless)");
+      Strm.Seek(dcStartPos+4+dcSize);
+    }
+  }
+
   // lines
   {
     vint32 cnt = NumLines;
@@ -676,11 +743,13 @@ void VLevel::SerialiseOther (VStream &Strm) {
             if (found) continue;
             li->moreTags.append(mtag);
           }
-          // for now, mark partially mapped lines as fully mapped
-          if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
-            li->flags |= ML_MAPPED;
+          // mark partially mapped lines as fully mapped if segvis map is not loaded
+          if (!segvisLoaded) {
+            if (li->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED)) {
+              li->flags |= ML_MAPPED;
+            }
+            li->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
           }
-          li->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
         } else {
           // save more tags
           int moreTagCount = li->moreTags.length();
