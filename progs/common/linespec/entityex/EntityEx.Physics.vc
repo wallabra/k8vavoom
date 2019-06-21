@@ -488,8 +488,11 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 
   // check for smooth step up
   if (bIsPlayer && Origin.z < FloorZ) {
-    PlayerEx(Player).ViewHeight -= FloorZ-Origin.z;
-    PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(Player).ViewHeight)*4.0;
+    // but if we're on slope floor, don't do that
+    if (EFloor.spGetNormalZ == 1.0) {
+      PlayerEx(Player).ViewHeight -= FloorZ-Origin.z;
+      PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(Player).ViewHeight)*4.0;
+    }
   }
 
   // adjust height
