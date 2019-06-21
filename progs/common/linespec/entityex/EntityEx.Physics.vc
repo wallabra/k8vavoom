@@ -1248,8 +1248,11 @@ override void HandleFloorclip () {
 override void ApplyFriction (float DeltaTime) {
   if (bMissile || bSkullFly) return; // no friction for missiles ever
 
-  if (Origin.z > FloorZ && !bOnMobj && WaterLevel < 2 && !bFly && !bFallingFriction) {
+  //k8: no, really? no friction while knee-dip in the water? i don't think so
+  //    was: `WaterLevel < 2`
+  if (Origin.z > FloorZ && !bOnMobj && WaterLevel == 0 && !bFly && !bFallingFriction) {
     // no friction when airborne
+    //print("AIRBORNE!");
     return;
   }
 
