@@ -1300,6 +1300,11 @@ IMPLEMENT_FUNCTION(VWidget, TextHeight) {
   RET_INT(Self->Font->TextHeight(text));
 }
 
+IMPLEMENT_FUNCTION(VWidget, FontHeight) {
+  P_GET_SELF;
+  RET_INT(Self->Font->GetHeight());
+}
+
 IMPLEMENT_FUNCTION(VWidget, SplitText) {
   P_GET_BOOL_OPT(trimRight, true);
   P_GET_INT(MaxWidth);

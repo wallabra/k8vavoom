@@ -313,6 +313,7 @@ public:
   DECLARE_FUNCTION(SetTextShadow)
   DECLARE_FUNCTION(TextWidth)
   DECLARE_FUNCTION(TextHeight)
+  DECLARE_FUNCTION(FontHeight)
   DECLARE_FUNCTION(SplitText)
   DECLARE_FUNCTION(SplitTextWithNewlines)
   DECLARE_FUNCTION(DrawText)
