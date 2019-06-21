@@ -476,8 +476,10 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     float angle = DotProduct(incoming, surf->GetNormal());
     angle = 0.5f+0.5f*angle;
 
-    const float add = (light->radius-dist)*angle;
-    if (add < 0) continue;
+    float add = (light->radius-dist)*angle;
+    if (add <= 0.0f) continue;
+    // without this, lights with huge radius will overbright everything
+    if (add > 255.0f) add = 255.0f;
 
     if (doMidFilter) { wasAnyHit = true; lightmapHit[c] = 1; }
 
@@ -539,8 +541,10 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
           float angle = DotProduct(incoming, surf->GetNormal());
           angle = 0.5f+0.5f*angle;
 
-          const float add = (light->radius-dist)*angle*0.75f;
-          if (add < 0) continue;
+          float add = (light->radius-dist)*angle*0.75f;
+          if (add <= 0.0f) continue;
+          // without this, lights with huge radius will overbright everything
+          if (add > 255.0f) add = 255.0f;
 
           lightmap[y*w+x] += add;
           lightmapr[y*w+x] += add*rmul;
@@ -854,6 +858,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           }
           float add = (rad-dist)*attn;
           if (add <= 0.0f) continue;
+          // without this, lights with huge radius will overbright everything
+          if (add > 255.0f) add = 255.0f;
           // do more dynlight clipping
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
