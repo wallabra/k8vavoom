@@ -221,36 +221,54 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
   /* now check for closed sectors */ \
   /* inspired by Zandronum code (actually, most sourceports has this, Zandronum was just a port i looked at) */ \
  \
+  /* properly render skies (consider door "open" if both ceilings are sky) */ \
+  if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
   /* closed door */ \
   if (backcz1 <= frontfz1 && backcz2 <= frontfz2) { \
-    /* properly render skies (consider door "open" if both ceilings are sky) */ \
-    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
     /* preserve a kind of transparent door/lift special effect */ \
-    if (!hasTopTex) return false; \
-    if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+    if (seg->frontsector == fsec) { \
+      /* we are looking at toptex */ \
+      if (!hasTopTex) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+    } else { \
+      /* we are looking at bottex */ \
+      if (!hasBotTex) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+    } \
     return true; \
   } \
  \
   if (frontcz1 <= backfz1 && frontcz2 <= backfz2) { \
-    /* properly render skies (consider door "open" if both ceilings are sky) */ \
-    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
     /* preserve a kind of transparent door/lift special effect */ \
-    if (!hasBotTex) return false; \
-    if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+    if (seg->frontsector == bsec) { \
+      /* we are looking at toptex */ \
+      if (!hasTopTex) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+    } else { \
+      /* we are looking at bottex */ \
+      if (!hasBotTex) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+    } \
+    /*if (!hasBotTex) return false;*/ \
+    /*if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;*/ \
     return true; \
   } \
  \
   /* if door is closed because back is shut */ \
   if (backcz1 <= backfz1 && backcz2 <= backfz2) { \
-    /*  properly render skies */ \
-    if (bcpic == skyflatnum && fcpic == skyflatnum) return false; \
+    /* properly render skies */ \
     if (bfpic == skyflatnum && ffpic == skyflatnum) return false; \
     /* preserve a kind of transparent door/lift special effect */ \
-    if (backcz1 < frontcz1 || backcz2 < frontcz2) { \
+    if (seg->frontsector == bsec) { \
+      /* we are inside a closed sector, oops */ \
+      return true; \
+    } \
+    /* we are in front sector */ \
+    if (backcz1 <= frontcz1 || backcz2 <= frontcz2) { \
       if (!hasTopTex) return false; \
       if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
     } \
-    if (backfz1 > frontfz1 || backfz2 > frontfz2) { \
+    if (backfz1 >= frontfz1 || backfz2 >= frontfz2) { \
       if (!hasBotTex) return false; \
       if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
     } \
