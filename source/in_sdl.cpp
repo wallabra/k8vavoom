@@ -76,6 +76,7 @@ private:
   int joy_oldb[MAX_JOYSTICK_BUTTONS];
 
   void StartupJoystick ();
+  void ShutdownJoystick ();
   void PostJoystick ();
 
   void HideRealMouse ();
@@ -239,12 +240,8 @@ VSdlInputDevice::VSdlInputDevice ()
 //
 //==========================================================================
 VSdlInputDevice::~VSdlInputDevice () {
-  // on
-  SDL_ShowCursor(1);
-  if (joystick_started) {
-    SDL_JoystickClose(joystick);
-    SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-  }
+  SDL_ShowCursor(1); // on
+  ShutdownJoystick();
 }
 
 
@@ -596,28 +593,71 @@ static inline int SwitchJoyToKey(int b) {
 
 //==========================================================================
 //
+//  VSdlInputDevice::ShutdownJoystick
+//
+//==========================================================================
+void VSdlInputDevice::ShutdownJoystick () {
+  if (joystick) { SDL_JoystickClose(joystick); joystick = nullptr; }
+  if (joystick_started) { SDL_QuitSubSystem(SDL_INIT_JOYSTICK); joystick_started = false; }
+}
+
+
+//==========================================================================
+//
 //  VSdlInputDevice::StartupJoystick
 //
 //  Initialises joystick
 //
 //==========================================================================
 void VSdlInputDevice::StartupJoystick () {
-  if (GArgs.CheckParm("-nojoystick")) return;
+  ShutdownJoystick();
 
-  if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
-    GCon->Log(NAME_Init, "SDL: joystick initialisation failed.");
+  if (GArgs.CheckParm("-nojoystick") || GArgs.CheckParm("-nojoy")) {
+    GCon->Log(NAME_Init, "SDL: skipping joystick initialisation due to user request");
     return;
   }
 
-  joystick = SDL_JoystickOpen(0);
+  int joynum = 0;
+  for (int jparm = GArgs.CheckParmFrom("-joy", -1, true); jparm; jparm = GArgs.CheckParmFrom("-joy", jparm, true)) {
+    const char *jarg = GArgs[jparm];
+    //GCon->Logf("***%d:<%s>", jparm, jarg);
+    check(jarg); // just in case
+    jarg += 4;
+    if (!jarg[0]) continue;
+    int n = -1;
+    if (!VStr::convertInt(jarg, &n)) continue;
+    if (n < 0) continue;
+    joynum = n;
+  }
+  GCon->Logf(NAME_Init, "SDL: will try to use joystick #%d", joynum);
+
+
+  if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
+    GCon->Log(NAME_Init, "SDL: joystick initialisation failed");
+    return;
+  }
+  joystick_started = true;
+
+  int joycount = SDL_NumJoysticks();
+  if (joycount < 0) {
+    GCon->Log(NAME_Init, "SDL: joystick initialisation failed (cannot get number of joysticks)");
+  }
+
+  if (joycount == 0) {
+    GCon->Log(NAME_Init, "SDL: no joysticks found");
+    return;
+  }
+
+  GCon->Logf(NAME_Init, "SDL: %d joystick%s found", joycount, (joycount == 1 ? "" : "s"));
+
+  joystick = SDL_JoystickOpen(joynum);
   if (!joystick) {
-    GCon->Log(NAME_Init, "SDL: no joysticks found.");
+    GCon->Logf(NAME_Init, "SDL: cannot initialise joystick #%d", joynum);
     return;
   }
 
   joy_num_buttons = SDL_JoystickNumButtons(joystick);
-  GCon->Logf(NAME_Init, "SDL: found joystick with %d buttons.", joy_num_buttons);
-  joystick_started = true;
+  GCon->Logf(NAME_Init, "SDL: found joystick with %d buttons", joy_num_buttons);
   memset(joy_oldb, 0, sizeof(joy_oldb));
   memset(joy_newb, 0, sizeof(joy_newb));
 }
@@ -631,7 +671,7 @@ void VSdlInputDevice::StartupJoystick () {
 void VSdlInputDevice::PostJoystick () {
   event_t event;
 
-  if (!joystick_started) return;
+  if (!joystick_started || !joystick) return;
 
   if (joy_oldx != joy_x || joy_oldy != joy_y) {
     event.type = ev_joystick;
