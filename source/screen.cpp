@@ -532,7 +532,8 @@ void SCR_Update (bool fullUpdate) {
       }
     } else {
       //GCon->Logf("render: tic=%d; starttic=%d", GLevel->TicTime, serverStartRenderFramesTic);
-      return; // skip all rendering
+      //return; // skip all rendering
+      // k8: nope, we still need to render console
     }
   }
 
