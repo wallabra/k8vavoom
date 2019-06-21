@@ -53,10 +53,14 @@ public:
 
   // returns the position of the given parameter in the arg list (0 if not found)
   // if `takeFirst` is true, take first found, otherwise take last found
-  int CheckParm (const char *check, bool takeFirst=true) const;
+  int CheckParm (const char *check, bool takeFirst=true, bool startsWith=false) const;
+
   // returns the value of the given parameter in the arg list, or `nullptr`
   // if `takeFirst` is true, take first found, otherwise take last found
-  const char *CheckValue (const char *check, bool takeFirst=true) const;
+  const char *CheckValue (const char *check, bool takeFirst=true, bool startsWith=false) const;
+
+  // returns the position of the given parameter in the arg list (0 if not found)
+  int CheckParmFrom (const char *check, int stidx=-1, bool startsWith=false) const;
 
   // return `true` if given index is valid, and arg starts with '-' or '+'
   bool IsCommand (int idx) const;

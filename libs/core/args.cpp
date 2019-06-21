@@ -101,6 +101,7 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
   Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
   memset(Argv, 0, sizeof(char*)*MAXARGVS);
   Argv[0] = xstrdup(GetBinaryDir());
+  if (Argc < 1) Argc = 1;
   for (int f = 1; f < argc; ++f) if (argv[f] && argv[f][0]) Argv[f] = xstrdup(argv[f]);
 #ifdef __SWITCH__
   // add static response file if it exists
@@ -332,11 +333,45 @@ void VArgs::FindResponseFile () {
 //  Returns the argument number (1 to argc - 1) or 0 if not present
 //
 //==========================================================================
-int VArgs::CheckParm (const char *check, bool takeFirst) const {
+int VArgs::CheckParm (const char *check, bool takeFirst, bool startsWith) const {
+  if (Argc <= 1) return 0;
+
+  int i, end, dir;
   if (takeFirst) {
-    for (int i = 1; i < Argc; ++i) if (!VStr::ICmp(check, Argv[i])) return i;
+    i = 1;
+    end = Argc;
+    dir = 1;
   } else {
-    for (int i = Argc-1; i > 0; --i) if (!VStr::ICmp(check, Argv[i])) return i;
+    i = Argc-1;
+    end = 0;
+    dir = -1;
+  }
+  while (i != end) {
+    if (!startsWith) {
+      if (VStr::strEquCI(Argv[i], check)) return i;
+    } else {
+      if (VStr::startsWithCI(Argv[i], check)) return i;
+    }
+    i += dir;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  VArgs::CheckParmFrom
+//
+//==========================================================================
+int VArgs::CheckParmFrom (const char *check, int stidx, bool startsWith) const {
+  if (stidx == 0) return 0;
+  if (stidx < 0) stidx = 0;
+  for (++stidx; stidx < Argc; ++stidx) {
+    if (!startsWith) {
+      if (VStr::strEquCI(Argv[stidx], check)) return stidx;
+    } else {
+      if (VStr::startsWithCI(Argv[stidx], check)) return stidx;
+    }
   }
   return 0;
 }
@@ -347,8 +382,8 @@ int VArgs::CheckParm (const char *check, bool takeFirst) const {
 //  VArgs::CheckValue
 //
 //==========================================================================
-const char *VArgs::CheckValue (const char *check, bool takeFirst) const {
-  int a = CheckParm(check, takeFirst);
+const char *VArgs::CheckValue (const char *check, bool takeFirst, bool startsWith) const {
+  int a = CheckParm(check, takeFirst, startsWith);
   if (a && a < Argc-1 && Argv[a+1][0] != '-' && Argv[a+1][0] != '+') return Argv[a+1];
   return nullptr;
 }
