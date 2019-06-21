@@ -392,6 +392,13 @@ public:
 
   float eventFindActivePowerupTime (VName pname) { static VMethodProxy method("FindActivePowerupTime"); vobjPutParamSelf(pname); VMT_RET_FLOAT(method); }
 
+  // bool eventDropItem (name itemName, int amount, float chance)
+  bool eventDropItem (VName itemName, int amout, float chance) {
+    static VMethodProxy method("eventDropItem");
+    vobjPutParamSelf(itemName, amout, chance);
+    VMT_RET_BOOL(method);
+  }
+
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
     static VMethodProxy method("PickActor");

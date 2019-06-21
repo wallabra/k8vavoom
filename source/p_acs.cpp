@@ -55,6 +55,7 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 #ifdef CLIENT
+# include "ui/ui.h"
 # include "cl_local.h"
 #endif
 #include "p_acs.h"
@@ -3299,6 +3300,38 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_SetHUDClipRect:
       GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
       return 0;
+    case ACSF_SetHUDWrapWidth:
+      GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SetHUDWrapWidth", argCount);
+      return 0;
+
+    case ACSF_CheckFont:
+      if (argCount > 0) {
+#ifdef CLIENT
+        VName FontName = GetNameLowerCase(args[0]);
+        VFont *fnt = VFont::GetFont(FontName, FontName);
+        return (fnt ? 1 : 0);
+#else
+        //FIXME
+        //TODO
+        return 1;
+#endif
+      }
+      return 0;
+
+    case ACSF_DropItem:
+      if (argCount >= 2) {
+        VName itemName = GetNameLowerCase(args[1]);
+        if (itemName == NAME_None || itemName == "null" || itemName == "none") return 0;
+        int tid = args[0];
+        int amount = (argCount > 2 ? args[2] : 0);
+        float chance = (argCount > 3 ? (float)(args[3])/256.0f : 1.0f);
+        int res = 0;
+        for (VEntity *mobj = Level->FindMobjFromTID(tid, nullptr); mobj; mobj = Level->FindMobjFromTID(tid, mobj)) {
+          if (mobj->eventDropItem(itemName, amount, chance)) ++res;
+        }
+        return res;
+      }
+      return 0;
 
     case ACSF_GetPolyobjX:
     case ACSF_GetPolyobjY:
@@ -3314,6 +3347,20 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0x7FFFFFFF; // doesn't exist
 
     case ACSF_SpawnParticle:
+      return 0;
+
+    case ACSF_SoundSequenceOnActor:
+      GCon->Logf(NAME_Warning, "ignored ACSF `SoundSequenceOnActor`");
+      return 0;
+    case ACSF_SoundSequenceOnSector:
+      GCon->Logf(NAME_Warning, "ignored ACSF `SoundSequenceOnSector`");
+      return 0;
+    case ACSF_SoundSequenceOnPolyobj:
+      GCon->Logf(NAME_Warning, "ignored ACSF `SoundSequenceOnPolyobj`");
+      return 0;
+
+    case ACSF_SpawnDecal:
+      GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SpawnDecal", argCount);
       return 0;
   }
 

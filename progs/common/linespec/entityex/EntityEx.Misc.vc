@@ -1261,6 +1261,22 @@ void PlayActiveSound () {
 
 //==========================================================================
 //
+//  eventDropItem
+//
+//  for ACS
+//
+//==========================================================================
+override bool eventDropItem (name itemName, int amount, float chance) {
+  if (!itemName) return false;
+  class!EntityEx ee = class!EntityEx(FindClassNoCase(itemName));
+  if (!ee) return false;
+  DropItem(ee, amount, chance);
+  return true;
+}
+
+
+//==========================================================================
+//
 //  DropItem
 //
 //==========================================================================

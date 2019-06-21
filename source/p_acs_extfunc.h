@@ -53,9 +53,9 @@
   ACS_EXTFUNC(CheckActorClass) // implemented
   ACS_EXTFUNC(SetUserArray) // implemented
   ACS_EXTFUNC(GetUserArray) // implemented
-  ACS_EXTFUNC(SoundSequenceOnActor)
-  ACS_EXTFUNC(SoundSequenceOnSector)
-  ACS_EXTFUNC(SoundSequenceOnPolyobj)
+  ACS_EXTFUNC(SoundSequenceOnActor) // ignored
+  ACS_EXTFUNC(SoundSequenceOnSector) // ignored
+  ACS_EXTFUNC(SoundSequenceOnPolyobj) // ignored
   ACS_EXTFUNC(GetPolyobjX) // implemented
   ACS_EXTFUNC(GetPolyobjY) // implemented
   ACS_EXTFUNC(CheckSight)
@@ -74,8 +74,8 @@
   ACS_EXTFUNC(Sqrt) // implemented
   ACS_EXTFUNC(FixedSqrt) // implemented
   ACS_EXTFUNC(VectorLength) // implemented
-  ACS_EXTFUNC(SetHUDClipRect)
-  ACS_EXTFUNC(SetHUDWrapWidth)
+  ACS_EXTFUNC(SetHUDClipRect) // ignored
+  ACS_EXTFUNC(SetHUDWrapWidth) // ignored
   ACS_EXTFUNC(SetCVar) // implemented
   ACS_EXTFUNC(GetUserCVar) // implemented
   ACS_EXTFUNC(SetUserCVar) // implemented
@@ -95,9 +95,9 @@
   ACS_EXTFUNC(GetWeapon) // implemented
   ACS_EXTFUNC(SoundVolume) // ignored
   ACS_EXTFUNC(PlayActorSound) // ignored
-  ACS_EXTFUNC(SpawnDecal)
-  ACS_EXTFUNC(CheckFont)
-  ACS_EXTFUNC(DropItem)
+  ACS_EXTFUNC(SpawnDecal) // ignored
+  ACS_EXTFUNC(CheckFont) // implemented partially
+  ACS_EXTFUNC(DropItem) // implemented
   ACS_EXTFUNC(CheckFlag) // implemented
   ACS_EXTFUNC(SetLineActivation) // implemented
   ACS_EXTFUNC(GetLineActivation) // implemented
