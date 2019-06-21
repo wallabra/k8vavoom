@@ -66,6 +66,7 @@ extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
 extern VCvarB clip_use_1d_clipper;
+extern VCvarB clip_frustum_bsp_segs;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -604,11 +605,10 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 */
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-#if 0
   // k8: this drops some segs that may leak without proper frustum culling
   // k8: this seems to be unnecessary now
-  if (!ViewClip.CheckSegFrustum(sub, seg)) return;
-#endif
+  // k8: reenabled, because why not?
+  if (clip_frustum_bsp_segs && !ViewClip.CheckSegFrustum(sub, seg)) return;
 
   //FIXME this marks all lines
   // mark the segment as visible for auto map
