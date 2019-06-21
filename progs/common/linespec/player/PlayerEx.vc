@@ -821,9 +821,11 @@ void WaterMove (float deltaTime) {
     //wishvel.z -= (MO.WaterLevel < 2 ? 60 : 6);
     wishvel.z -= 6;
   }
-  if (LastWaterLevel < 3) {
+  // prevent bunny-hopping while hovering on water
+  if (LastWaterLevel < 2) {
     wishvz = 0;
     wishvel.z = 0;
+    MO.Velocity.z = fmin(0, MO.Velocity.z);
   }
   //else wishvel.z += cmd.upmove;
 
@@ -832,10 +834,16 @@ void WaterMove (float deltaTime) {
 
   if (forward || side) SetPlayerRunState();
 
+  bool doNormalJump = false;
   if (Buttons&BT_JUMP) {
-         if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = 100.0;
-    else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
-    else MO.Velocity.z = 50.0;
+    // jump if standing on a floor
+    if (LastWaterLevel < 3 && !bFly && MO.Origin.z <= MO.FloorZ) {
+      doNormalJump = true;
+    } else if (LastWaterLevel >= 3) {
+           if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = 100.0;
+      else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
+      else MO.Velocity.z = 50.0;
+    }
   } else {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
       if (MO.Velocity.z > 0) MO.Velocity.z -= 10;
@@ -850,6 +858,13 @@ void WaterMove (float deltaTime) {
   }
 
   CheckWaterJump();
+
+  // do real jump here, but only if we aren't jumping out of water
+  if (doNormalJump && !EntityEx(MO).bWaterJump) {
+    MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*(Cheats&CF_HIGHJUMP ? 2.0 : 1.0))*1.1;
+    EntityEx(MO).bOnMobj = false;
+    //JumpTime = 0.5;
+  }
 }
 
 
@@ -3867,7 +3882,7 @@ override void PlayerTick (float deltaTime) {
     if (MO.WaterLevel > 1) {
       WaterMove(deltaTime);
     } else {
-      LastWaterLevel = 0;
+      LastWaterLevel = 0; // yes, zero
       MovePlayer(deltaTime);
     }
     if (EntityEx(MO).FindInventory(PowerSpeed) &&
