@@ -113,15 +113,15 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // masked
     ShadowsAmbientMasked.Activate();
     ShadowsAmbientMasked.SetTexture(0);
-    ShadowsAmbientMasked.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-    ShadowsAmbientMasked.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+    ShadowsAmbientMasked.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
+    ShadowsAmbientMasked.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
     // brightmap
     ShadowsAmbientBrightmap.Activate();
     ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     ShadowsAmbientBrightmap.SetTexture(0);
     ShadowsAmbientBrightmap.SetTextureBM(1);
-    ShadowsAmbientBrightmap.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-    ShadowsAmbientBrightmap.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+    ShadowsAmbientBrightmap.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
+    ShadowsAmbientBrightmap.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
 
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
@@ -129,8 +129,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
       ShadowsAmbient.Activate();
-      ShadowsAmbient.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0);
-      ShadowsAmbient.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0);
+      ShadowsAmbient.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
+      ShadowsAmbient.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     // other passes can skip surface sorting

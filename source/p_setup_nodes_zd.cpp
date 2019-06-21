@@ -245,17 +245,17 @@ static void CopyNodeZD (int NodeIndex, const ZDBSP::MapNodeEx &SrcNode, node_t *
 
   Node->bbox[0][0] = SrcNode.bbox[0][ZDBSP::BOXLEFT]; // minx
   Node->bbox[0][1] = SrcNode.bbox[0][ZDBSP::BOXBOTTOM]; // miny
-  Node->bbox[0][2] = -32768.0;
+  Node->bbox[0][2] = -32768.0f;
   Node->bbox[0][3] = SrcNode.bbox[0][ZDBSP::BOXRIGHT]; // maxx
   Node->bbox[0][4] = SrcNode.bbox[0][ZDBSP::BOXTOP]; // maxy
-  Node->bbox[0][5] = 32768.0;
+  Node->bbox[0][5] = 32768.0f;
 
   Node->bbox[1][0] = SrcNode.bbox[1][ZDBSP::BOXLEFT]; // minx
   Node->bbox[1][1] = SrcNode.bbox[1][ZDBSP::BOXBOTTOM]; // miny
-  Node->bbox[1][2] = -32768.0;
+  Node->bbox[1][2] = -32768.0f;
   Node->bbox[1][3] = SrcNode.bbox[1][ZDBSP::BOXRIGHT]; // maxx
   Node->bbox[1][4] = SrcNode.bbox[1][ZDBSP::BOXTOP]; // maxy
-  Node->bbox[1][5] = 32768.0;
+  Node->bbox[1][5] = 32768.0f;
 
   Node->children[0] = SrcNode.children[0];
   Node->children[1] = SrcNode.children[1];

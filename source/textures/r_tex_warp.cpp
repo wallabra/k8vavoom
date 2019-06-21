@@ -38,8 +38,8 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
   , SrcTex(ASrcTex)
   , GenTime(0)
   , Speed(aspeed)
-  , WarpXScale(1.0)
-  , WarpYScale(1.0)
+  , WarpXScale(1.0f)
+  , WarpYScale(1.0f)
   , XSin1(nullptr)
   , XSin2(nullptr)
   , YSin1(nullptr)
@@ -133,10 +133,10 @@ vuint8 *VWarpTexture::GetPixels () {
 
   // precalculate sine values
   for (int x = 0; x < Width; ++x) {
-    XSin1[x] = msin(GenTime*44+x/WarpXScale*5.625+95.625)*8*WarpYScale+8*WarpYScale*Height;
+    XSin1[x] = msin(GenTime*44+x/WarpXScale*5.625f+95.625f)*8*WarpYScale+8*WarpYScale*Height;
   }
   for (int y = 0; y < Height; ++y) {
-    YSin1[y] = msin(GenTime*50+y/WarpYScale*5.625)*8*WarpXScale+8*WarpXScale*Width;
+    YSin1[y] = msin(GenTime*50+y/WarpYScale*5.625f)*8*WarpXScale+8*WarpXScale*Width;
   }
 
   if (mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal) {
@@ -246,12 +246,12 @@ vuint8 *VWarp2Texture::GetPixels () {
 
   // precalculate sine values
   for (int y = 0; y < Height; ++y) {
-    XSin1[y] = msin(y/WarpYScale*5.625+GenTime*313.895+39.55)*2*WarpXScale;
-    YSin1[y] = y+(2*Height+msin(y/WarpYScale*5.625+GenTime*118.337+30.76)*2)*WarpYScale;
+    XSin1[y] = msin(y/WarpYScale*5.625f+GenTime*313.895f+39.55f)*2*WarpXScale;
+    YSin1[y] = y+(2*Height+msin(y/WarpYScale*5.625f+GenTime*118.337f+30.76f)*2)*WarpYScale;
   }
   for (int x = 0; x < Width; ++x) {
-    XSin2[x] = x+(2*Width+msin(x/WarpXScale*11.25+GenTime*251.116+13.18)*2)*WarpXScale;
-    YSin2[x] = msin(x/WarpXScale*11.25+GenTime*251.116+52.73)*2*WarpYScale;
+    XSin2[x] = x+(2*Width+msin(x/WarpXScale*11.25f+GenTime*251.116f+13.18f)*2)*WarpXScale;
+    YSin2[x] = msin(x/WarpXScale*11.25f+GenTime*251.116f+52.73f)*2*WarpYScale;
   }
 
   if (mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal) {

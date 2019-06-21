@@ -1265,7 +1265,7 @@ load_again:
     GCon->Logf("Nodes            %f", NodesTime);
     GCon->Logf("Block map        %f", BlockMapTime);
     GCon->Logf("Reject           %f", RejectTime);
-    if (BuildPVSTime >= 0.1) GCon->Logf("PVS build        %f", BuildPVSTime);
+    if (BuildPVSTime >= 0.1f) GCon->Logf("PVS build        %f", BuildPVSTime);
     //GCon->Logf("ACS              %f", AcsTime);
     //GCon->Logf("Group lines      %f", GroupLinesTime);
     //GCon->Logf("Flood zones      %f", FloodZonesTime);

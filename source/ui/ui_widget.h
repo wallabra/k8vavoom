@@ -164,7 +164,7 @@ public:
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
   inline void SetScale (float NewScaleX, float NewScaleY) { SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY); }
-  void SetConfiguration(int, int, int, int, float = 1.0, float = 1.0);
+  void SetConfiguration(int, int, int, int, float = 1.0f, float = 1.0f);
 
   // visibility methods
   void SetVisibility (bool);
@@ -212,10 +212,10 @@ public:
   bool IsFocus (bool Recurse = true) const;
   void SetFocus ();
 
-  void DrawPic (int, int, int, float = 1.0, int = 0);
-  void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha=1.0, int Trans=0);
-  void DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha=1.0, int Trans=0);
-  void DrawPic (int, int, VTexture *, float = 1.0, int = 0);
+  void DrawPic (int, int, int, float = 1.0f, int = 0);
+  void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
+  void DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
+  void DrawPic (int, int, VTexture *, float = 1.0f, int = 0);
   void DrawShadowedPic (int, int, int);
   void DrawShadowedPic (int, int, VTexture *);
   void FillRectWithFlat (int, int, int, int, VName);

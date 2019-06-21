@@ -83,7 +83,7 @@ particle_t *VRenderLevelShared::NewParticle (const TVec &porg) {
     const float maxdistSq = r_particle_max_distance*r_particle_max_distance;
     const float distSq = lengthSquared(porg-cl->ViewOrg);
     if (distSq >= maxdistSq) return nullptr;
-    if (distSq >= maxdistSq*0.25) {
+    if (distSq >= maxdistSq*0.25f) {
       static TFrustum frustum;
       static TFrustumParam fp;
       if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {

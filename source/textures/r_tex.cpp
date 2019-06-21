@@ -1851,7 +1851,7 @@ void P_InitAnimated () {
     }
 
     ad.CurrentFrame = ad.NumFrames-1; // so we'll "animate" to the first frame
-    ad.Time = 0.0001; // force 1st game tic to animate
+    ad.Time = 0.0001f; // force 1st game tic to animate
     ad.allowDecals = (Type == 3);
     AnimDefs.Append(ad);
   }
@@ -1941,13 +1941,13 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   }
 
   bool vanilla = false;
-  float vanillaTics = 8;
+  float vanillaTics = 8.0f;
   if (sc->Check("vanilla")) {
     vanilla = true;
     if (sc->Check("tics")) {
       sc->ExpectFloat();
       vanillaTics = sc->Float;
-      if (vanillaTics < 0.1) vanillaTics = 0.1; // this is tics
+      if (vanillaTics < 0.1f) vanillaTics = 0.1f; // this is tics
     }
   }
 
@@ -2058,7 +2058,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     if (sc->Check("tics")) {
       sc->ExpectFloat();
       fd.BaseTime = sc->Float;
-      if (fd.BaseTime < 0.1) fd.BaseTime = 0.1; // this is tics
+      if (fd.BaseTime < 0.1f) fd.BaseTime = 0.1f; // this is tics
       fd.RandomRange = 0;
     } else if (sc->Check("rand")) {
       sc->ExpectNumber(true);
@@ -2095,7 +2095,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   if (!ignore && FrameDefs.length() > ad.StartFrameDef) {
     ad.NumFrames = FrameDefs.length()-ad.StartFrameDef;
     ad.CurrentFrame = (ad.Type != ANIM_Random ? ad.NumFrames-1 : (int)(Random()*ad.NumFrames));
-    ad.Time = 0.0001; // force 1st game tic to animate
+    ad.Time = 0.0001f; // force 1st game tic to animate
     AnimDefs.Append(ad);
   } else if (!ignore && !optional) {
     // report something here

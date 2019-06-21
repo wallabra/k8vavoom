@@ -75,5 +75,5 @@ public:
 };
 
 
-//inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
-//inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0/360.0); }
+//inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0f/256.0f; }
+//inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0f/360.0f); }

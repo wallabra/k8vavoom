@@ -636,7 +636,7 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
     }
   } else {
     // use weighted sample
-    if (sx <= 1.0 && sy <= 1.0) {
+    if (sx <= 1.0f && sy <= 1.0f) {
       // magnify both width and height: use weighted sample of 4 pixels
       int i0, i1, j0, j1;
       float alpha, beta;
@@ -664,9 +664,9 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
           dst = dataout+(i*widthout+j)*4;
 
           for (k = 0; k < 4; ++k) {
-            s1 = *src00++ *(1.0-beta)+ *src01++ *beta;
-            s2 = *src10++ *(1.0-beta)+ *src11++ *beta;
-            *dst++ = vuint8(s1*(1.0-alpha)+s2*alpha);
+            s1 = *src00++ *(1.0f-beta)+ *src01++ *beta;
+            s2 = *src10++ *(1.0f-beta)+ *src11++ *beta;
+            *dst++ = vuint8(s1*(1.0f-alpha)+s2*alpha);
           }
         }
       }

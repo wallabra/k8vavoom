@@ -2621,11 +2621,11 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           VName name = GetName(args[1]);
           if (name != NAME_None) {
             int chan = (argCount > 2 ? args[2] : 4)&7;
-            float volume = (argCount > 3 ? (double)args[3]/(double)0x10000 : 1.0);
+            float volume = (argCount > 3 ? (double)args[3]/(double)0x10000 : 1.0f);
             if (volume <= 0) return 0;
             if (volume > 1) volume = 1;
             bool looping = (argCount > 4 ? !!args[4] : false);
-            float attenuation = (argCount > 5 ? (double)args[5]/(double)0x10000 : 1.0);
+            float attenuation = (argCount > 5 ? (double)args[5]/(double)0x10000 : 1.0f);
             bool local = (argCount > 6 ? !!args[6] : false);
             if (local) attenuation = 0;
             Ent->StartSound(name, chan, volume, attenuation, looping, local);

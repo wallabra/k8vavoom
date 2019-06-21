@@ -553,17 +553,17 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
 
   Node->bbox[0][0] = SrcNode->r.bounds.minx;
   Node->bbox[0][1] = SrcNode->r.bounds.miny;
-  Node->bbox[0][2] = -32768.0;
+  Node->bbox[0][2] = -32768.0f;
   Node->bbox[0][3] = SrcNode->r.bounds.maxx;
   Node->bbox[0][4] = SrcNode->r.bounds.maxy;
-  Node->bbox[0][5] = 32768.0;
+  Node->bbox[0][5] = 32768.0f;
 
   Node->bbox[1][0] = SrcNode->l.bounds.minx;
   Node->bbox[1][1] = SrcNode->l.bounds.miny;
-  Node->bbox[1][2] = -32768.0;
+  Node->bbox[1][2] = -32768.0f;
   Node->bbox[1][3] = SrcNode->l.bounds.maxx;
   Node->bbox[1][4] = SrcNode->l.bounds.maxy;
-  Node->bbox[1][5] = 32768.0;
+  Node->bbox[1][5] = 32768.0f;
 
   { // fuck you, shitcc!
          if (SrcNode->r.node) Node->children[0] = SrcNode->r.node->index;

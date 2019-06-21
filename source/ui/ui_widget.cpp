@@ -744,7 +744,7 @@ void VWidget::DrawShadowedPic (int X, int Y, VTexture *Tex) {
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->DrawPicShadow(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, 0.625);
+    Drawer->DrawPicShadow(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, 0.625f);
   }
 
   DrawPic(X, Y, Tex);
@@ -1111,8 +1111,8 @@ IMPLEMENT_FUNCTION(VWidget, SetScale) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetConfiguration) {
-  P_GET_FLOAT_OPT(NewScaleY, 1.0);
-  P_GET_FLOAT_OPT(NewScaleX, 1.0);
+  P_GET_FLOAT_OPT(NewScaleY, 1.0f);
+  P_GET_FLOAT_OPT(NewScaleX, 1.0f);
   P_GET_INT(NewHeight);
   P_GET_INT(NewWidth);
   P_GET_INT(NewY);
@@ -1200,7 +1200,7 @@ IMPLEMENT_FUNCTION(VWidget, SetFocus) {
 
 IMPLEMENT_FUNCTION(VWidget, DrawPic) {
   P_GET_INT_OPT(Translation, 0);
-  P_GET_FLOAT_OPT(Alpha, 1.0);
+  P_GET_FLOAT_OPT(Alpha, 1.0f);
   P_GET_INT(Handle);
   P_GET_INT(Y);
   P_GET_INT(X);
@@ -1211,7 +1211,7 @@ IMPLEMENT_FUNCTION(VWidget, DrawPic) {
 //void VWidget::DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans);
 IMPLEMENT_FUNCTION(VWidget, DrawPicScaled) {
   P_GET_INT_OPT(Translation, 0);
-  P_GET_FLOAT_OPT(Alpha, 1.0);
+  P_GET_FLOAT_OPT(Alpha, 1.0f);
   P_GET_FLOAT(scaleY);
   P_GET_FLOAT(scaleX);
   P_GET_INT(Handle);
@@ -1318,7 +1318,7 @@ IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawText) {
-  P_GET_FLOAT_OPT(Alpha, 1.0);
+  P_GET_FLOAT_OPT(Alpha, 1.0f);
   P_GET_INT_OPT(BoldColor, CR_UNTRANSLATED);
   P_GET_INT_OPT(Color, CR_UNTRANSLATED);
   P_GET_STR(String);

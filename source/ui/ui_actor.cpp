@@ -71,13 +71,13 @@ void VActorDisplayWindow::SetState (VState *AState) {
 //==========================================================================
 void VActorDisplayWindow::OnDraw () {
   // draw the current frame in the middle of the screen
-  float TimeFrac = 0.0;
-  if (StateTime > 0.0) {
-    TimeFrac = 1.0 - CastTime / StateTime;
+  float TimeFrac = 0.0f;
+  if (StateTime > 0.0f) {
+    TimeFrac = 1.0f-CastTime/StateTime;
     TimeFrac = midval(0.0f, TimeFrac, 1.0f);
   }
   if (!R_DrawStateModelFrame(CastState, CastState->NextState ? CastState->NextState : CastState,
-     TimeFrac, TVec(-128.0, 0.0, -48.0), 0.0))
+     TimeFrac, TVec(-128.0f, 0.0f, -48.0f), 0.0f))
   {
     auto ow = VirtualWidth, oh = VirtualHeight;
     SCR_SetVirtualScreen(320, 200);

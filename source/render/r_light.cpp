@@ -236,7 +236,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   float radsq = (radius < 1 ? 64*64 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
-  const float radsqhalf = radsq*0.25;
+  const float radsqhalf = radsq*0.25f;
 
   // if this is player's dlight, never drop it
   bool isPlr = false;

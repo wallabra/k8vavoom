@@ -587,7 +587,7 @@ void VFont::BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool Console
   float MinLum = 1000000.0f;
   float MaxLum = 0.0f;
   for (int i = 1; i < 256; ++i) {
-    Luminosity[i] = Pal[i].r*0.299+Pal[i].g*0.587+Pal[i].b*0.114;
+    Luminosity[i] = Pal[i].r*0.299f+Pal[i].g*0.587f+Pal[i].b*0.114f;
     if (ColorsUsed[i]) {
       if (MinLum > Luminosity[i]) MinLum = Luminosity[i];
       if (MaxLum < Luminosity[i]) MaxLum = Luminosity[i];
@@ -620,9 +620,9 @@ void VFont::BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool Console
 
       // linearly interpolate between colors
       float v = ((float)(ILum-TDef.LumFrom)/(float)(TDef.LumTo-TDef.LumFrom));
-      int r = (int)((1.0-v)*TDef.From.r+v*TDef.To.r);
-      int g = (int)((1.0-v)*TDef.From.g+v*TDef.To.g);
-      int b = (int)((1.0-v)*TDef.From.b+v*TDef.To.b);
+      int r = (int)((1.0f-v)*TDef.From.r+v*TDef.To.r);
+      int g = (int)((1.0f-v)*TDef.From.g+v*TDef.To.g);
+      int b = (int)((1.0f-v)*TDef.From.b+v*TDef.To.b);
       pOut[i].r = clampToByte(r);
       pOut[i].g = clampToByte(g);
       pOut[i].b = clampToByte(b);

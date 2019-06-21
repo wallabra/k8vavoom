@@ -44,8 +44,8 @@ static VCvarI hud_font_color_centered("hud_font_color_centered", "11", "Secondar
 //VField *VBasePlayer::fldPendingWeapon = nullptr;
 //VField *VBasePlayer::fldReadyWeapon = nullptr;
 
-#define WEAPONBOTTOM  (128.0)
-#define WEAPONTOP     (32.0)
+#define WEAPONBOTTOM  (128.0f)
+#define WEAPONTOP     (32.0f)
 
 
 struct SavedVObjectPtr {

@@ -69,8 +69,8 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
   // read scaling
   vuint8 TmpSScale = Streamer<vuint8>(Strm);
   vuint8 TmpTScale = Streamer<vuint8>(Strm);
-  SScale = (TmpSScale ? TmpSScale/8.0 : 1.0);
-  TScale = (TmpTScale ? TmpTScale/8.0 : 1.0);
+  SScale = (TmpSScale ? TmpSScale/8.0f : 1.0f);
+  TScale = (TmpTScale ? TmpTScale/8.0f : 1.0f);
 
   // read dimensions
   Width = Streamer<vint16>(Strm);
@@ -104,7 +104,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     patch->Blend.b = 0;
     patch->Blend.a = 0;
     patch->Style = STYLE_Copy;
-    patch->Alpha = 1.0;
+    patch->Alpha = 1.0f;
 
     // read patch index and find patch texture
     vint16 PatchIdx = Streamer<vint16>(Strm);
@@ -269,7 +269,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         P.Blend.b = 0;
         P.Blend.a = 0;
         P.Style = STYLE_Copy;
-        P.Alpha = 1.0;
+        P.Alpha = 1.0f;
 
         if (sc->Check("{")) {
           while (!sc->Check("}")) {
@@ -542,7 +542,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     int y1 = (patch->YOrigin < 0 ? 0 : patch->YOrigin);
     int y2 = y1+(patch->Rot&1 ? PWidth : PHeight);
     if (y2 > Height) y2 = Height;
-    float IAlpha = 1.0-patch->Alpha;
+    float IAlpha = 1.0f-patch->Alpha;
     if (IAlpha < 0) IAlpha = 0; else if (IAlpha > 1) IAlpha = 1;
 
     //GCon->Logf("Texture '%s'; patch #%d; patchtex '%s'", *Name, i, *PatchTex->Name);
@@ -636,8 +636,8 @@ vuint8 *VMultiPatchTexture::GetPixels () {
                 if (col.a == 255) {
                   Dst = col;
                 } else {
-                  float a = col.a/255.0;
-                  float ia = (255.0-col.a)/255.0;
+                  float a = col.a/255.0f;
+                  float ia = (255.0f-col.a)/255.0f;
                   Dst.r = vuint8(Dst.r*ia+col.r*a);
                   Dst.g = vuint8(Dst.g*ia+col.g*a);
                   Dst.b = vuint8(Dst.b*ia+col.b*a);

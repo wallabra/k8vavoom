@@ -687,8 +687,8 @@ private:
 } while (0)
 
 #define VV_GLDRAWER_DEACTIVATE_GLOW(shad_)  do { \
-    shad_.SetGlowColorFloor(0.0, 0.0, 0.0, 0.0); \
-    shad_.SetGlowColorCeiling(0.0, 0.0, 0.0, 0.0); \
+    shad_.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f); \
+    shad_.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f); \
 } while (0)
 
   inline void CalcGlow (GlowParams &gp, const surface_t *surf) const {
@@ -759,11 +759,11 @@ private:
       if (sec && !sec->heightsec) {
         if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
           VTexture *gtex = GTextureManager(sec->floor.pic);
-          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0f;
         }
         if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
           VTexture *gtex = GTextureManager(sec->ceiling.pic);
-          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0;
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0f;
         }
       }
     }
