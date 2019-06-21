@@ -2570,82 +2570,94 @@ bool R_IsAnimatedTexture (int texid) {
 //
 //==========================================================================
 #ifdef CLIENT
+static float lastSurfAnimGameTime = 0;
+
 void R_AnimateSurfaces () {
-  // animate flats and textures
-  for (int i = 0; i < AnimDefs.length(); ++i) {
-    AnimDef_t &ad = AnimDefs[i];
-    ad.Time -= host_frametime;
-    for (int trycount = 128; trycount > 0; --trycount) {
-      if (ad.Time > 0.0) break;
+  if (!GClLevel) {
+    lastSurfAnimGameTime = 0;
+    return;
+  }
+  const float dtime = GClLevel->Time-lastSurfAnimGameTime;
+  // if less than zero, it means that we're started a new map; do not animate
+  if (dtime > 0.0f) {
+    // animate flats and textures
+    for (int i = 0; i < AnimDefs.length(); ++i) {
+      AnimDef_t &ad = AnimDefs[i];
+      //ad.Time -= host_frametime;
+      ad.Time -= dtime;
+      for (int trycount = 128; trycount > 0; --trycount) {
+        if (ad.Time > 0.0f) break;
 
-      bool validAnimation = true;
-      if (ad.NumFrames > 1) {
-        switch (ad.Type) {
-          case ANIM_Forward:
-            ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
-            break;
-          case ANIM_Backward:
-            ad.CurrentFrame = (ad.CurrentFrame+ad.NumFrames-1)%ad.NumFrames;
-            break;
-          case ANIM_OscillateUp:
-            if (++ad.CurrentFrame >= ad.NumFrames-1) {
-              ad.Type = ANIM_OscillateDown;
-              ad.CurrentFrame = ad.NumFrames-1;
-            }
-            break;
-          case ANIM_OscillateDown:
-            if (--ad.CurrentFrame <= 0) {
-              ad.Type = ANIM_OscillateUp;
+        bool validAnimation = true;
+        if (ad.NumFrames > 1) {
+          switch (ad.Type) {
+            case ANIM_Forward:
+              ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
+              break;
+            case ANIM_Backward:
+              ad.CurrentFrame = (ad.CurrentFrame+ad.NumFrames-1)%ad.NumFrames;
+              break;
+            case ANIM_OscillateUp:
+              if (++ad.CurrentFrame >= ad.NumFrames-1) {
+                ad.Type = ANIM_OscillateDown;
+                ad.CurrentFrame = ad.NumFrames-1;
+              }
+              break;
+            case ANIM_OscillateDown:
+              if (--ad.CurrentFrame <= 0) {
+                ad.Type = ANIM_OscillateUp;
+                ad.CurrentFrame = 0;
+              }
+              break;
+            case ANIM_Random:
+              if (ad.NumFrames > 1) ad.CurrentFrame = (int)(Random()*ad.NumFrames);
+              break;
+            default:
+              fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
+              validAnimation = false;
               ad.CurrentFrame = 0;
-            }
-            break;
-          case ANIM_Random:
-            if (ad.NumFrames > 1) ad.CurrentFrame = (int)(Random()*ad.NumFrames);
-            break;
-          default:
-            fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
-            validAnimation = false;
-            ad.CurrentFrame = 0;
-            break;
-        }
-      } else {
-        ad.CurrentFrame = 0;
-      }
-      if (!validAnimation) continue;
-
-      const FrameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.range ? 0 : ad.CurrentFrame)];
-
-      ad.Time += fd.BaseTime/35.0;
-      if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
-
-      if (!ad.range) {
-        // simple case
-        VTexture *atx = GTextureManager[ad.Index];
-        if (atx) {
-          atx->noDecals = (ad.allowDecals == 0);
-          atx->animNoDecals = (ad.allowDecals == 0);
-          atx->animated = true;
-          // protect against missing textures
-          if (fd.Index != -1) {
-            atx->TextureTranslation = fd.Index;
+              break;
           }
+        } else {
+          ad.CurrentFrame = 0;
         }
-      } else {
-        // range animation, hard case; see... "explanation" at the top of this file
-        FrameDef_t *fdp = &FrameDefs[ad.StartFrameDef];
-        for (int currfdef = 0; currfdef < ad.NumFrames; ++currfdef, ++fdp) {
-          VTexture *atx = GTextureManager[fdp->Index];
-          if (!atx) continue;
-          atx->noDecals = (ad.allowDecals == 0);
-          atx->animNoDecals = (ad.allowDecals == 0);
-          atx->animated = true;
-          int afdidx = ad.StartFrameDef+(currfdef+ad.CurrentFrame)%ad.NumFrames;
-          if (FrameDefs[afdidx].Index < 1) continue;
-          atx->TextureTranslation = FrameDefs[afdidx].Index;
+        if (!validAnimation) continue;
+
+        const FrameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.range ? 0 : ad.CurrentFrame)];
+
+        ad.Time += fd.BaseTime/35.0f;
+        if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0f); // random tics
+
+        if (!ad.range) {
+          // simple case
+          VTexture *atx = GTextureManager[ad.Index];
+          if (atx) {
+            atx->noDecals = (ad.allowDecals == 0);
+            atx->animNoDecals = (ad.allowDecals == 0);
+            atx->animated = true;
+            // protect against missing textures
+            if (fd.Index != -1) {
+              atx->TextureTranslation = fd.Index;
+            }
+          }
+        } else {
+          // range animation, hard case; see... "explanation" at the top of this file
+          FrameDef_t *fdp = &FrameDefs[ad.StartFrameDef];
+          for (int currfdef = 0; currfdef < ad.NumFrames; ++currfdef, ++fdp) {
+            VTexture *atx = GTextureManager[fdp->Index];
+            if (!atx) continue;
+            atx->noDecals = (ad.allowDecals == 0);
+            atx->animNoDecals = (ad.allowDecals == 0);
+            atx->animated = true;
+            int afdidx = ad.StartFrameDef+(currfdef+ad.CurrentFrame)%ad.NumFrames;
+            if (FrameDefs[afdidx].Index < 1) continue;
+            atx->TextureTranslation = FrameDefs[afdidx].Index;
+          }
         }
       }
     }
   }
+  lastSurfAnimGameTime = GClLevel->Time;
 }
 #endif
 
