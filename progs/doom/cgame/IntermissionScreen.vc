@@ -73,7 +73,7 @@ const float SHOWNEXTLOCDELAY = 4.0;
 const int NUMEPISODES = 3;
 const int NUMMAPS     = 9;
 
-const float TEXTSPEED = 0.1;
+const float TEXTSPEED = 0.2; // was:0.1;
 const float TEXTWAIT  = 7.0;
 
 int LeaveTitlePic;
@@ -1149,9 +1149,30 @@ void IM_InitText () {
 }
 
 
+//==========================================================================
+//
+//  IM_GetCurrTextLength
+//
+//==========================================================================
 final int IM_GetCurrTextLength () {
   if (imDrawWholeText) return HubText.length;
   return clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
+}
+
+
+//==========================================================================
+//
+//  IM_GetNextCharTimeLeft
+//
+//==========================================================================
+final float IM_GetNextCharTimeLeft () {
+  if (imDrawWholeText) return 0.0;
+  float ctm = intertime-0.3;
+  if (ctm <= 0.0) return 0.0;
+  int ccn = int(ctm/TEXTSPEED);
+  ctm -= ccn*TEXTSPEED;
+  ctm /= TEXTSPEED;
+  return ctm;
 }
 
 
@@ -1179,7 +1200,23 @@ void IM_DrawText () {
     //writeln(HubText);
     //writeln("text size: ", hubTextWidth, "x", hubTextHeight);
   }
-  DrawText((GetVirtualWidth()-hubTextWidth)/2, (GetVirtualHeight()-hubTextHeight)/2, HubText[0..count]);
+  //print("nctleft=%s; ncc=%s", IM_GetNextCharTimeLeft(), count);
+  if (HubText.length) {
+    int tx = (GetVirtualWidth()-hubTextWidth)/2;
+    int ty = (GetVirtualHeight()-hubTextHeight)/2;
+    DrawText(tx, ty, HubText[0..count]);
+    if (count+1 <= HubText.length) {
+      auto cc = HubText[count];
+      if (cc != " " && cc != "\n" && cc != "\r") {
+        int currLineStart = 0;
+        foreach (auto sidx; 0..count) if (HubText[sidx] == "\n") { ty += FontHeight(); currLineStart = sidx+1; }
+        float ncalpha = IM_GetNextCharTimeLeft();
+        if (currLineStart < count) tx += TextWidth(HubText[currLineStart..count]);
+        DrawText(tx, ty, HubText[count..count+1], Alpha:ncalpha);
+      }
+      //print("ncalpha=%s; ncc=%s", ncalpha, count);
+    }
+  }
 }
 
 
