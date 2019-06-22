@@ -612,12 +612,15 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 
   //FIXME this marks all lines
   // mark the segment as visible for auto map
-  //linedef->flags |= ML_MAPPED;
+#if 0
+  linedef->flags |= ML_MAPPED;
+#else
   if (!(linedef->flags&ML_MAPPED)) {
     // this line is at least partially mapped; let automap drawer do the rest
     linedef->exFlags |= ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED;
   }
   seg->flags |= SF_MAPPED;
+#endif
 
   side_t *sidedef = seg->sidedef;
 
