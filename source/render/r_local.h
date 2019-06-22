@@ -572,6 +572,9 @@ protected:
   void GetFlatSetToRender (subsector_t *sub, subregion_t *region, sec_surface_t *surfs[4]);
   void ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1);
 
+  // used in `RenderSubRegion()` and other similar methods
+  static bool NeedToRenderNextSubFirst (const subregion_t *region);
+
   void RenderHorizon (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);

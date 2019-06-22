@@ -30,10 +30,11 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+// with this defined, it glitches
+// you can see it on map01, for example, by firing imp fireball
 //#define VV_LADV_CLIPCHECK_REGIONS_LIGHT
 //#define VV_LADV_CLIPCHECK_REGIONS_SHADOW
 
-//k8: i don't know what Janis wanted to with this
 #define VV_LADV_STRANGE_REGION_SORTING
 
 
@@ -390,20 +391,11 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
-  if (!LightClip.ClipLightCheckRegion(region->next, sub, true)) return;
+  if (!LightClip.ClipLightCheckRegion(region, sub, true)) return;
 #endif
 
-#ifdef VV_LADV_STRANGE_REGION_SORTING
-  //const float dist = DotProduct(CurrLightPos, region->efloor->secplane->normal)-region->efloor->secplane->dist;
-  sec_surface_t *floor = (region->fakefloor ? region->fakefloor : region->realfloor);
-  float dist;
-  if (floor) {
-    dist = floor->PointDist(CurrLightPos);
-    if (region->next && dist <= 0.0f) RenderShadowSubRegion(sub, region->next, addPoly);
-  } else {
-    dist = 1.0f;
-  }
-#endif
+  const bool nextFirst = NeedToRenderNextSubFirst(region);
+  if (nextFirst) RenderShadowSubRegion(sub, region->next, addPoly);
 
   sec_region_t *curreg = region->secregion;
 
@@ -430,11 +422,7 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
   if (fsurf[2]) RenderShadowSecSurface(fsurf[2], curreg->efloor.splane->SkyBox);
   if (fsurf[3]) RenderShadowSecSurface(fsurf[3], curreg->eceiling.splane->SkyBox);
 
-#ifdef VV_LADV_STRANGE_REGION_SORTING
-  if (region->next && dist > 0.0f) return RenderShadowSubRegion(sub, region->next, addPoly);
-#else
-  if (region->next) return RenderShadowSubRegion(sub, region->next, addPoly);
-#endif
+  if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next, addPoly);
 }
 
 
@@ -658,20 +646,11 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
 #ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
-  if (!LightClip.ClipLightCheckRegion(region->next, sub, false)) return;
+  if (!LightClip.ClipLightCheckRegion(region, sub, false)) return;
 #endif
 
-#ifdef VV_LADV_STRANGE_REGION_SORTING
-  //const float dist = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
-  float dist;
-  sec_surface_t *floor = (region->fakefloor ? region->fakefloor : region->realfloor);
-  if (floor) {
-    dist = floor->PointDist(CurrLightPos);
-    if (region->next && dist <= 0.0f) RenderLightSubRegion(sub, region->next, addPoly);
-  } else {
-    dist = 1.0f;
-  }
-#endif
+  const bool nextFirst = NeedToRenderNextSubFirst(region);
+  if (nextFirst) RenderLightSubRegion(sub, region->next, addPoly);
 
   sec_region_t *curreg = region->secregion;
 
@@ -698,11 +677,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
   if (fsurf[2]) RenderLightSecSurface(fsurf[2], curreg->eceiling.splane->SkyBox);
   if (fsurf[3]) RenderLightSecSurface(fsurf[3], curreg->eceiling.splane->SkyBox);
 
-#ifdef VV_LADV_STRANGE_REGION_SORTING
-  if (region->next && dist > 0.0f) return RenderLightSubRegion(sub, region->next, addPoly);
-#else
-  if (region->next) return RenderLightSubRegion(sub, region->next, addPoly);
-#endif
+  if (!nextFirst && region->next) return RenderLightSubRegion(sub, region->next, addPoly);
 }
 
 

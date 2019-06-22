@@ -50,6 +50,8 @@ static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable ren
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
+static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregions in renderer?", CVAR_Archive);
+
 //static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
@@ -705,6 +707,29 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 
 //==========================================================================
 //
+//  VRenderLevelShared::NeedToRenderNextSubFirst
+//
+//  k8: i don't know what Janis wanted to with this
+//
+//==========================================================================
+bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) {
+  if (!region->next || !r_ordered_subregions) return false;
+  const sec_surface_t *floor = region->fakefloor;
+  if (floor) {
+    const float d = floor->PointDist(vieworg);
+    if (d <= 0.0f) return true;
+  }
+  floor = region->realfloor;
+  if (floor) {
+    const float d = floor->PointDist(vieworg);
+    if (d <= 0.0f) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::RenderSubRegion
 //
 //  Determine floor/ceiling planes.
@@ -714,18 +739,8 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
   if (!ViewClip.ClipCheckRegion(region, sub)) return;
 
-  //const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
-  sec_surface_t *floor = (region->fakefloor ? region->fakefloor : region->realfloor);
-  float d;
-  if (floor) {
-    d = floor->PointDist(vieworg);
-    if (region->next && d <= 0.0f) {
-      //if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
-      RenderSubRegion(sub, region->next, addPoly);
-    }
-  } else {
-    d = 1.0f;
-  }
+  const bool nextFirst = NeedToRenderNextSubFirst(region);
+  if (nextFirst) RenderSubRegion(sub, region->next, addPoly);
 
   check(sub->sector != nullptr);
 
@@ -757,10 +772,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
   if (fsurf[2]) RenderSecSurface(sub, secregion, fsurf[2], secregion->eceiling.splane->SkyBox);
   if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
 
-  if (region->next && d > 0.0f) {
-    //if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
-    return RenderSubRegion(sub, region->next, addPoly);
-  }
+  if (!nextFirst && region->next) return RenderSubRegion(sub, region->next, addPoly);
 }
 
 
