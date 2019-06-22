@@ -577,9 +577,9 @@ protected:
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderSecFlatSurfaces (subsector_t *sub, sec_region_t *secregion, sec_surface_t *flat0, sec_surface_t *flat1, VEntity *SkyBox);
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper=true);
+  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
   void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
-  void RenderSubsector (int num, bool useClipper=true);
+  void RenderSubsector (int num);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();

@@ -560,7 +560,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     return;
   }
 
-  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && clip_frustum_bsp && view_frustum.planes[5].isValid()) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && /*clip_frustum_bsp &&*/ view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror
     if (view_frustum.planes[5].PointOnSide(*seg->v1) && view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
   }
@@ -711,15 +711,17 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly, bool useClipper) {
+void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
+  if (!ViewClip.ClipCheckRegion(region, sub)) return;
+
   //const float d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
   sec_surface_t *floor = (region->fakefloor ? region->fakefloor : region->realfloor);
   float d;
   if (floor) {
     d = floor->PointDist(vieworg);
     if (region->next && d <= 0.0f) {
-      if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
-      RenderSubRegion(sub, region->next, addPoly, useClipper);
+      //if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
+      RenderSubRegion(sub, region->next, addPoly);
     }
   } else {
     d = 1.0f;
@@ -756,8 +758,8 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
   if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
 
   if (region->next && d > 0.0f) {
-    if (useClipper && !ViewClip.ClipCheckRegion(region->next, sub)) return;
-    RenderSubRegion(sub, region->next, addPoly, useClipper);
+    //if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
+    return RenderSubRegion(sub, region->next, addPoly);
   }
 }
 
@@ -793,7 +795,7 @@ void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
 //  VRenderLevelShared::RenderSubsector
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
+void VRenderLevelShared::RenderSubsector (int num) {
   subsector_t *sub = &Level->Subsectors[num];
   //r_sub = sub;
 
@@ -801,17 +803,17 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 
   if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
     if (r_draw_adjacent_subsector_things) {
-      if (!useClipper || ViewClip.ClipCheckSubsector(sub)) {
+      if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
         RenderMarkAdjSubsectorsThings(num);
-        if (useClipper && clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
       }
-    } else if (useClipper && clip_use_1d_clipper) {
+    } else if (clip_use_1d_clipper) {
       ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
     }
     return;
   }
 
-  if (useClipper && !ViewClip.ClipCheckSubsector(sub)) return;
+  if (!ViewClip.ClipCheckSubsector(sub)) return;
 
   if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
   sub->VisFrame = currVisFrame;
@@ -836,11 +838,11 @@ void VRenderLevelShared::RenderSubsector (int num, bool useClipper) {
 #endif
 
   bool addPoly = true;
-  RenderSubRegion(sub, sub->regions, addPoly, useClipper);
+  RenderSubRegion(sub, sub->regions, addPoly);
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
-  if (useClipper && clip_use_1d_clipper) {
+  if (clip_use_1d_clipper) {
     ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
   }
 }
