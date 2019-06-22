@@ -311,3 +311,20 @@ COMMAND(my_clear_automap) {
   }
   GCon->Logf("automap cleared");
 }
+
+
+//==========================================================================
+//
+//  my_vm_profile
+//
+//==========================================================================
+COMMAND(my_vm_profile) {
+  /*
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  */
+  VObject::DumpProfile();
+  if (Args.length() > 1) VObject::ClearProfiles();
+}

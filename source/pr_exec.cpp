@@ -125,9 +125,11 @@ void PR_OnAbort () {
 //  PR_Profile1
 //
 //==========================================================================
+/*
 extern "C" void PR_Profile1 () {
   ++(current_func->Profile1);
 }
+*/
 
 
 //==========================================================================
@@ -135,16 +137,21 @@ extern "C" void PR_Profile1 () {
 //  PR_Profile2
 //
 //==========================================================================
+/*
 extern "C" void PR_Profile2 () {
   if (current_func && (!(current_func->Flags&FUNC_Native))) ++(current_func->Profile2);
 }
+*/
+
 
 //==========================================================================
 //
 //  PR_Profile2_end
 //
 //==========================================================================
+/*
 extern "C" void PR_Profile2_end () {}
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -499,10 +506,8 @@ static void RunFunction (VMethod *func) {
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
-#if defined(VCC_STANDALONE_EXECUTOR)
   ++(current_func->Profile1);
   ++(current_func->Profile2);
-#endif
 
   //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
 
@@ -3323,10 +3328,11 @@ void VObject::DumpProfileInternal (int type) {
     }
   }
   if (!totalcount) return;
+  const char *ptypestr = (type < 0 ? "native" : type > 0 ? "script" : "all");
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    GCon->Logf("====== PROFILE ======");
+    GCon->Logf("====== PROFILE (%s) ======", ptypestr);
 #else
-    fprintf(stderr, "====== PROFILE ======\n");
+    fprintf(stderr, "====== PROFILE (%s) ======\n", ptypestr);
 #endif
   for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
     VMethod *Func = (VMethod *)VMemberBase::GMembers[profsort[i]];
@@ -3340,5 +3346,19 @@ void VObject::DumpProfileInternal (int type) {
       (double)Func->Profile2*100.0/(double)totalcount,
       (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
 #endif
+  }
+}
+
+
+//==========================================================================
+//
+//  VObject::ClearProfiles
+//
+//==========================================================================
+void VObject::ClearProfiles () {
+  for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
+    if (VMemberBase::GMembers[i]->MemberType != MEMBER_Method) continue;
+    VMethod *Func = (VMethod *)VMemberBase::GMembers[i];
+    Func->Profile1 = Func->Profile2 = 0;
   }
 }
