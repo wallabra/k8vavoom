@@ -426,7 +426,9 @@ static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
 //
 //==========================================================================
 void InitMapInfo () {
-  // use "zmapinfo" if it is present
+  // use "zmapinfo" if it is present?
+  bool zmapinfoAllowed = !(GArgs.CheckParm("-nozmapinfo") || GArgs.CheckParm("-nozmap"));
+  if (!zmapinfoAllowed) GCon->Logf(NAME_Init, "zmapinfo parsing disabled by user");
   int lastMapinfoFile = -1; // not seen yet
   int lastMapinfoLump = -1; // not seen yet
   int lastZMapinfoLump = -1; // not seen yet
@@ -442,7 +444,7 @@ void InitMapInfo () {
     }
     // remember last seen [z]mapinfo lump
     if (lastMapinfoLump < 0 && W_LumpName(Lump) == NAME_mapinfo) lastMapinfoLump = Lump;
-    if (lastZMapinfoLump < 0 && W_LumpName(Lump) == nameZMI) lastZMapinfoLump = Lump;
+    if (zmapinfoAllowed && lastZMapinfoLump < 0 && W_LumpName(Lump) == nameZMI) lastZMapinfoLump = Lump;
   }
   // load last seen mapinfos
   LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
