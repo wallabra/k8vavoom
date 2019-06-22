@@ -54,7 +54,7 @@ final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
 //
 //==========================================================================
 final void FixNormalVelocity () {
-  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+  if (!(Velocity.x.isfinite && Velocity.y.isfinite && Velocity.z.isfinite)) {
     print("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
     Velocity = vector(0, 0, 0);
   }
@@ -68,12 +68,12 @@ final void FixNormalVelocity () {
 //
 //==========================================================================
 final void ClampNormalVelocity () {
-  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+  if (!(Velocity.x.isfinite && Velocity.y.isfinite && Velocity.z.isfinite)) {
     print("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
     Velocity = vector(0, 0, 0);
   } else {
     // why not?
-    Velocity = vclamp(Velocity, -MAXMOVE, MAXMOVE);
+    Velocity = vclamp(Velocity, -MAXMOVE*4, MAXMOVE*4);
   }
   Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
 }
@@ -89,7 +89,7 @@ final void ClampNormalVelocity () {
 //
 //==========================================================================
 bool Physics (float DeltaTime) {
-  ClampNormalVelocity();
+  //ClampNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
   // GZDoom does it like this, so we should do it this way too
@@ -291,8 +291,8 @@ bool Physics (float DeltaTime) {
 final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   float oldfloorz = FloorZ;
 
-  FixNormalVelocity();
-  scope(exit) ClampNormalVelocity();
+  //FixNormalVelocity();
+  //scope(exit) ClampNormalVelocity();
 
   if (bWindThrust && Sector) {
     int special = Sector->special&SECSPEC_BASE_MASK;
@@ -452,8 +452,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   float OldZ = Origin.z;
 
   //print("*** vz=%s", Velocity.z);
-  FixNormalVelocity();
-  scope(exit) ClampNormalVelocity();
+  //FixNormalVelocity();
+  //scope(exit) ClampNormalVelocity();
 
   if (Mass.isinf) Mass = 10000;
   //else if (Mass < 0) Mass = 0;
@@ -1256,7 +1256,7 @@ override void ApplyFriction (float DeltaTime) {
     return;
   }
 
-  FixNormalVelocity();
+  //FixNormalVelocity();
 
   // clip velocity
   if (Origin.z <= FloorZ) {
