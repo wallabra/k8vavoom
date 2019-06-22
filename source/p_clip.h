@@ -28,21 +28,19 @@
 //#define VAVOOM_CLIPPER_USE_REAL_ANGLES
 
 #ifdef VAVOOM_CLIPPER_USE_FLOAT
-# define  VVC_matan  matan
-# define  VVC_AngleMod  AngleMod
-# define  VVC_AngleMod180  AngleMod180
+# define VVC_matan        matan
+# define VVC_AngleMod     AngleMod
+# define VVC_AngleMod180  AngleMod180
 #else
-# define  VVC_matan  matand
-# define  VVC_AngleMod  AngleModD
-# define  VVC_AngleMod180  AngleMod180D
+# define VVC_matan        matand
+# define VVC_AngleMod     AngleModD
+# define VVC_AngleMod180  AngleMod180D
 #endif
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
-# define PointToClipAngle  PointToRealAngle
 # define PointToClipAngleZeroOrigin  PointToRealAngleZeroOrigin
 # define VV_CLIPPER_FULL_CHECK
 #else
-# define PointToClipAngle  PointToPseudoAngle
 # define PointToClipAngleZeroOrigin  PointToPseudoAngleZeroOrigin
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
@@ -90,33 +88,26 @@ private:
   void RemoveClipRangeAngle (VFloat From, VFloat To);
 
 public:
+  // we need them both!
   static inline VFloat PointToRealAngleZeroOrigin (const float dx, const float dy) {
-    VFloat Ret = VVC_matan(dy, dx);
-    if (Ret < (VFloat)0) Ret += (VFloat)360;
-    return Ret;
+    VFloat res = VVC_matan(dy, dx);
+    if (res < (VFloat)0) res += (VFloat)360;
+    return res;
   }
-
-  inline VFloat PointToRealAngle (const float x, const float y) const { return PointToRealAngleZeroOrigin(y-Origin.y, x-Origin.x); }
-  inline VFloat PointToRealAngle (const TVec &p) const { return PointToRealAngle(p.x, p.y); }
 
   // returns the pseudoangle between the line p1 to (infinity, p1.y) and the
   // line from p1 to p2. the pseudoangle has the property that the ordering of
   // points by true angle around p1 and ordering of points by pseudoangle are the
   // same. for clipping exact angles are not needed, only the ordering matters.
-  // k8: i found this code in GZDoom.
-  static inline VFloat PointToPseudoAngleZeroOrigin (float dx, float dy) {
-    if (dx == 0 && dy == 0) return 1;
-    VFloat res = dy/(fabsf(dx)+fabsf(dy));
-    #if PSEUDOANGLE_FROM_ZERO
-    res = (dx < 0 ? 2-res : res)+1;
-    return res+(res < 1 ? 3 : -1);
-    #else
+  // k8: i found this code in GZDoom, and changed it a little, to make it return [0..4]
+  static inline VFloat PointToPseudoAngleZeroOrigin (const float dx, const float dy) {
+    if (dx == 0 && dy == 0) return 0+1;
+    const VFloat res = dy/(fabsf(dx)+fabsf(dy));
     return (dx < 0 ? 2-res : res)+1;
-    #endif
   }
 
-  inline VFloat PointToPseudoAngle (float x, float y) const { return PointToPseudoAngleZeroOrigin(x-Origin.x, y-Origin.y); }
-  inline VFloat PointToPseudoAngle (const TVec &p) const { return PointToPseudoAngle(p.x, p.y); }
+  inline VFloat PointToClipAngle (const float x, const float y) const { return PointToClipAngleZeroOrigin(x-Origin.x, y-Origin.y); }
+  inline VFloat PointToClipAngle (const TVec &p) const { return PointToClipAngle(p.x, p.y); }
 
 public:
   rep_sector_t *RepSectors; // non-null for server

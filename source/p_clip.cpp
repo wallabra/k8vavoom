@@ -27,16 +27,14 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-#define XXX_CLIPPER_MANY_DUMPS
+//#define XXX_CLIPPER_MANY_DUMPS
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # define MIN_ANGLE  ((VFloat)0)
 # define MAX_ANGLE  ((VFloat)360)
-# define ANGLE_180  ((VFloat)180)
 #else
 # define MIN_ANGLE  ((VFloat)0)
 # define MAX_ANGLE  ((VFloat)4)
-# define ANGLE_180  ((VFloat)2)
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
 # endif
@@ -651,58 +649,6 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   if (!clip_frustum) return;
   if (!clip_frustum_init_range) return;
 
-# if 0
-    float fov = RAD2DEGF(atanf(fovx)*2.0f);
-    float frangle;
-
-    /*
-    float tilt = 45.0f-fabsf(AngleMod180(viewangles.pitch)-90.0f);
-
-    if (tilt > 90.0f) {
-      frangle = 180.0f;
-    } else {
-      float range = 64.0f/(fov-(/ *widescreen* /0 ? -4.0f : 10.0f));
-      if (range > 1.0f) range = 1.0f;
-      float floatangle = (float)tilt*range;
-      frangle = 270.0f-floatangle;
-    }
-    GCon->Logf("fovx=%f; fov=%f; frangle=%f; tilt=%f; pitch=%f", fovx, fov, frangle, tilt, viewangles.pitch);
-    */
-    float tilt = AngleMod180(fabsf(viewangles.pitch));
-    if (tilt > 90.0f) return;
-    float range = 64.0f/(fov-(/*widescreen*/0 ? -4.0f : 10.0f));
-    if (range > 1.0f) range = 1.0f;
-    float floatangle = tilt*range;
-    //frangle = fov+floatangle;
-    frangle = fov+tilt;
-
-    float a0 = AngleMod(viewangles.yaw-frangle*0.5f);
-    float a1 = AngleMod(viewangles.yaw+frangle*0.5f);
-
-    //GCon->Logf("fovx=%f; fov=%f; tilt=%f; pitch=%f; range=%f; floatangle=%f; frangle=%f; (%f : %f); %f", fovx, fov, tilt, viewangles.pitch, range, floatangle, frangle, a0, a1, viewangles.yaw);
-
-    if (a0 > a1) {
-      ClipHead = NewClipNode();
-      ClipTail = ClipHead;
-      ClipHead->From = a1;
-      ClipHead->To = a0;
-      ClipHead->Prev = nullptr;
-      ClipHead->Next = nullptr;
-    } else {
-      ClipHead = NewClipNode();
-      ClipHead->From = MIN_ANGLE;
-      ClipHead->To = a0;
-
-      ClipTail = NewClipNode();
-      ClipTail->From = a1;
-      ClipTail->To = MAX_ANGLE;
-
-      ClipHead->Prev = nullptr;
-      ClipHead->Next = ClipTail;
-      ClipTail->Prev = ClipHead;
-      ClipTail->Next = nullptr;
-    }
-# else
   TVec Pts[4];
   TVec TransPts[4];
   Pts[0] = TVec(fovx, fovy, 1.0f);
@@ -713,18 +659,10 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   //k8: i don't think that we need to normalize it, but...
   //clipforward.normaliseInPlace();
 
-#if defined(VAVOOM_CLIPPER_USE_REAL_ANGLES) || 1
-  // pseudoangles are not linear
+  // pseudoangles are not linear, so use real angles here
   const VFloat fwdAngle = viewangles.yaw;
   VFloat d1 = (VFloat)0;
   VFloat d2 = (VFloat)0;
-#else
-  // PSEUDO!
-  const VFloat fwdAngle = PointToClipAngleZeroOrigin(clipforward.x*1024, clipforward.y*1024);
-  VFloat d1 = (VFloat)0;
-  VFloat d2 = (VFloat)0;
-  if (dbg_clip_dump_added_ranges) GCon->Logf("fwdAngle=%g (%g : %g)", fwdAngle, viewangles.yaw, PointToRealAngleZeroOrigin(clipforward.x*1024, clipforward.y*1024));
-#endif
 
   for (unsigned i = 0; i < 4; ++i) {
     TransPts[i].x = VSUM3(Pts[i].x*viewright.x, Pts[i].y*viewup.x, /*Pts[i].z* */viewforward.x);
@@ -736,22 +674,8 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
       return;
     }
 
-#if 1
     // pseudoangles are not linear
     VFloat d = VVC_AngleMod180(PointToRealAngleZeroOrigin(TransPts[i].x, TransPts[i].y)-fwdAngle);
-#else
-    VFloat a = PointToClipAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024);
-    VFloat d = a-fwdAngle;
-# ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
-    // this gives us [-180..180] range
-    d = VVC_AngleMod180(d);
-# else
-    if (dbg_clip_dump_added_ranges) GCon->Logf("  i=%d; d=%g (%g : %g)", i, d, PointToRealAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024), AngleMod180(PointToRealAngleZeroOrigin(TransPts[i].x*1024, TransPts[i].y*1024)));
-    // emulate [-180..180] range
-    while (d < MIN_ANGLE) d += MAX_ANGLE;
-    if (d > ANGLE_180) d -= ANGLE_180;
-# endif
-#endif
 
     if (d1 > d) d1 = d;
     if (d2 < d) d2 = d;
@@ -760,27 +684,16 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   if (d1 != d2) {
     VFloat a1 = fwdAngle+d1;
     VFloat a2 = fwdAngle+d2;
-#if 1
-    // pseudoangles are not linear
     a1 = VVC_AngleMod(a1);
     a2 = VVC_AngleMod(a2);
-# ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
-    float s, c;
-    msincos(a1, &s, &c);
-    TVec axy1(c, s);
-    msincos(a2, &s, &c);
-    TVec axy2(c, s);
-    a1 = PointToClipAngleZeroOrigin(axy1.x, axy1.y);
-    a2 = PointToClipAngleZeroOrigin(axy2.x, axy2.y);
-# endif
-#else
-# ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
-    a1 = VVC_AngleMod(a1);
-    a2 = VVC_AngleMod(a2);
-# else
-    while (a1 < 0) a1 += MAX_ANGLE; while (a1 >= MAX_ANGLE) a1 -= MAX_ANGLE;
-    while (a2 < 0) a2 += MAX_ANGLE; while (a2 >= MAX_ANGLE) a2 -= MAX_ANGLE;
-# endif
+#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
+    // convert to pseudoangles
+    float py1, px1;
+    msincos(a1, &py1, &px1);
+    float py2, px2;
+    msincos(a2, &py2, &px2);
+    a1 = PointToPseudoAngleZeroOrigin(px1, py1);
+    a2 = PointToPseudoAngleZeroOrigin(px2, py2);
 #endif
 
     if (a1 > a2) {
@@ -804,7 +717,6 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     }
     if (dbg_clip_dump_added_ranges) { GCon->Log("=== FRUSTUM ==="); Dump(); GCon->Log("---"); }
   }
-# endif
 }
 
 
