@@ -883,7 +883,10 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
           // add this box to clipper, why not
           // k8: nope; this glitches
           //if (clip_use_1d_clipper) ViewClip.ClipAddBBox(bbox);
-          return;
+          if (!clip_use_1d_clipper) return;
+          onlyClip = true;
+          break;
+          //return;
         }
       }
     }
@@ -894,12 +897,12 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     // nope
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the view point is on
+    const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
+    unsigned side = (unsigned)(dist <= 0.0f);
+    // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
+    if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
     if (!onlyClip) {
       //int side = bsp->PointOnSide(vieworg);
-      const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
-      unsigned side = (unsigned)(dist <= 0.0f);
-      // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
-      if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
       if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
       // recursively divide front space (toward the viewer)
       RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
@@ -907,8 +910,9 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
       side ^= 1;
       return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
     } else {
-      RenderBSPNode(bsp->children[0], bsp->bbox[0], clipflags, true);
-      return RenderBSPNode(bsp->children[1], bsp->bbox[1], clipflags, true);
+      RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
+      side ^= 1;
+      return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
     }
   } else {
     if (onlyClip) {
