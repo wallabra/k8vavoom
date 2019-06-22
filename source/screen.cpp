@@ -515,10 +515,11 @@ void SCR_Update (bool fullUpdate) {
   if (!fullUpdate) return;
 
   bool updateStarted = false;
+  bool allowClear = true;
 
   // do buffered drawing
   if (cl && cls.signon && cl->MO && !GClGame->intermission) {
-    if (GLevel->TicTime >= serverStartRenderFramesTic) {
+    if (GLevel->TicTime > serverStartRenderFramesTic) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;
       Drawer->StartUpdate();
@@ -534,11 +535,12 @@ void SCR_Update (bool fullUpdate) {
       //GCon->Logf("render: tic=%d; starttic=%d", GLevel->TicTime, serverStartRenderFramesTic);
       //return; // skip all rendering
       // k8: nope, we still need to render console
+      allowClear = false;
     }
   }
 
   if (!updateStarted) {
-    Drawer->StartUpdate();
+    Drawer->StartUpdate(allowClear);
     Drawer->Setup2D(); // setup 2D projection
   }
 
