@@ -195,12 +195,6 @@ fader K8GoreBloodSplat_FaderAnim {
 
 
 
-decalgroup K8GoreBloodSuper {
-  //K8GoreBloodSuper01 6
-  //K8GoreBloodSuper02 6
-}
-
-
 DECAL K8Gore_NewBloodSplatFade01 {
   Pic BSPLAT01
   shade "50 00 00"
@@ -316,6 +310,22 @@ decalgroup K8GoreBloodSplat {
   K8Gore_NewBloodSplatFade09 6
   K8Gore_NewBloodSplatFade10 6
 }
+
+
+decalgroup K8GoreBloodSuper {
+  K8Gore_NewBloodSplatFade01 6
+  K8Gore_NewBloodSplatFade02 6
+  K8Gore_NewBloodSplatFade03 6
+  K8Gore_NewBloodSplatFade04 6
+  K8Gore_NewBloodSplatFade05 6
+  K8Gore_NewBloodSplatFade06 6
+  K8Gore_NewBloodSplatFade07 6
+  K8Gore_NewBloodSplatFade08 6
+  K8Gore_NewBloodSplatFade09 6
+  K8Gore_NewBloodSplatFade10 6
+}
+
+
 
 
 
@@ -750,12 +760,6 @@ fader K8GoreBloodSplat_FaderAnimGreen {
 
 
 
-decalgroup K8GoreBloodSuperGreen {
-  //K8GoreBloodSuper01Green 6
-  //K8GoreBloodSuper02Green 6
-}
-
-
 DECAL K8Gore_NewBloodSplatFade01Green {
   Pic BSPLAT01
   shade "00 50 00"
@@ -871,6 +875,22 @@ decalgroup K8GoreBloodSplatGreen {
   K8Gore_NewBloodSplatFade09Green 6
   K8Gore_NewBloodSplatFade10Green 6
 }
+
+
+decalgroup K8GoreBloodSuperGreen {
+  K8Gore_NewBloodSplatFade01Green 6
+  K8Gore_NewBloodSplatFade02Green 6
+  K8Gore_NewBloodSplatFade03Green 6
+  K8Gore_NewBloodSplatFade04Green 6
+  K8Gore_NewBloodSplatFade05Green 6
+  K8Gore_NewBloodSplatFade06Green 6
+  K8Gore_NewBloodSplatFade07Green 6
+  K8Gore_NewBloodSplatFade08Green 6
+  K8Gore_NewBloodSplatFade09Green 6
+  K8Gore_NewBloodSplatFade10Green 6
+}
+
+
 
 
 
@@ -1305,12 +1325,6 @@ fader K8GoreBloodSplat_FaderAnimBlue {
 
 
 
-decalgroup K8GoreBloodSuperBlue {
-  //K8GoreBloodSuper01Blue 6
-  //K8GoreBloodSuper02Blue 6
-}
-
-
 DECAL K8Gore_NewBloodSplatFade01Blue {
   Pic BSPLAT01
   shade "00 00 50"
@@ -1426,6 +1440,22 @@ decalgroup K8GoreBloodSplatBlue {
   K8Gore_NewBloodSplatFade09Blue 6
   K8Gore_NewBloodSplatFade10Blue 6
 }
+
+
+decalgroup K8GoreBloodSuperBlue {
+  K8Gore_NewBloodSplatFade01Blue 6
+  K8Gore_NewBloodSplatFade02Blue 6
+  K8Gore_NewBloodSplatFade03Blue 6
+  K8Gore_NewBloodSplatFade04Blue 6
+  K8Gore_NewBloodSplatFade05Blue 6
+  K8Gore_NewBloodSplatFade06Blue 6
+  K8Gore_NewBloodSplatFade07Blue 6
+  K8Gore_NewBloodSplatFade08Blue 6
+  K8Gore_NewBloodSplatFade09Blue 6
+  K8Gore_NewBloodSplatFade10Blue 6
+}
+
+
 
 
 

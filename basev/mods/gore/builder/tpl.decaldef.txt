@@ -628,12 +628,6 @@ fader K8GoreBloodSplat_FaderAnim${Color} {
 
 
 
-decalgroup K8GoreBloodSuper${Color} {
-  //K8GoreBloodSuper01${Color} 6
-  //K8GoreBloodSuper02${Color} 6
-}
-
-
 DECAL K8Gore_NewBloodSplatFade01${Color} {
   Pic BSPLAT01
 #ifndef BLUE
@@ -849,4 +843,20 @@ decalgroup K8GoreBloodSplat${Color} {
   K8Gore_NewBloodSplatFade09${Color} 6
   K8Gore_NewBloodSplatFade10${Color} 6
 }
+
+
+decalgroup K8GoreBloodSuper${Color} {
+  K8Gore_NewBloodSplatFade01${Color} 6
+  K8Gore_NewBloodSplatFade02${Color} 6
+  K8Gore_NewBloodSplatFade03${Color} 6
+  K8Gore_NewBloodSplatFade04${Color} 6
+  K8Gore_NewBloodSplatFade05${Color} 6
+  K8Gore_NewBloodSplatFade06${Color} 6
+  K8Gore_NewBloodSplatFade07${Color} 6
+  K8Gore_NewBloodSplatFade08${Color} 6
+  K8Gore_NewBloodSplatFade09${Color} 6
+  K8Gore_NewBloodSplatFade10${Color} 6
+}
+
+
 #endif
