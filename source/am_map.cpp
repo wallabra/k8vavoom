@@ -156,6 +156,7 @@ static inline int getAMHeight () {
 
 
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
+static VCvarF am_back_darken("am_back_darken", "0", "Overlay automap darken factor", CVAR_Archive);
 static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
 
 // automap colors
@@ -904,6 +905,12 @@ static void AM_clearFB () {
       }
     } else {
       Drawer->FillRect(0, 0, ScreenWidth, ScreenHeight, 0);
+    }
+  } else if (automapactive < 0) {
+    if (am_back_darken >= 1.0f) {
+      Drawer->FillRect(0, 0, ScreenWidth, ScreenHeight, 0);
+    } else {
+      Drawer->ShadeRect(0, 0, ScreenWidth, ScreenHeight, am_back_darken);
     }
   }
 }

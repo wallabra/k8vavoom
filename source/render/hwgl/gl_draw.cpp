@@ -253,6 +253,7 @@ void VOpenGLDrawer::StartAutomap (bool asOverlay) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   } else {
+    // non-overlay
     glDisable(GL_BLEND);
     //glEnable(GL_BLEND);
   }
