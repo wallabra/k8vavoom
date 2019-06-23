@@ -193,7 +193,6 @@ final void A_Recoil (float Force) {
 //
 //===========================================================================
 final void A_Punch () {
-
   if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn) {
