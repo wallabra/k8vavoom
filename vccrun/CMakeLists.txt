@@ -126,10 +126,10 @@ if (ENABLE_VCCRUN)
     ../source/vc/vc_parser.cpp
 
     ../source/vc/vc_executor.cpp
+    ../source/vc/vc_api_common.cpp
   )
 
   set(VCCRUN_RUNTIME_SOURCES
-    ../source/pr_cmds.cpp
     ../source/scripts.h
     ../source/scripts.cpp
   )

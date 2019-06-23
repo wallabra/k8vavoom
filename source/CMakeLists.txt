@@ -119,6 +119,7 @@ set(VCCLIB_SOURCES
   vc/vc_zastar.h
   vc/vc_zastar.cpp
 
+  vc/vc_api_common.cpp
   vc/vc_executor.cpp
 )
 
