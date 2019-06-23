@@ -81,6 +81,19 @@ static bool parseHexRGB (const VStr &str, int *clr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+DecalFloatVal DecalFloatVal::clone () {
+  DecalFloatVal res;
+  res.value = (rnd ? RandomBetween(rndMin, rndMax) : value);
+  return res;
+}
+
+
+void DecalFloatVal::genValue () {
+  if (rnd) value = RandomBetween(rndMin, rndMax);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VDecalDef::addToList (VDecalDef *dc) {
   if (!dc) return;
   if (dc->name == NAME_None) { delete dc; return; }
@@ -166,10 +179,48 @@ VDecalDef::~VDecalDef () {
 }
 
 
+void VDecalDef::genValues () {
+  if (useCommonScale) {
+    commonScale.genValue();
+    scaleX.value = scaleY.value = commonScale.value;
+  } else {
+    scaleX.genValue();
+    scaleY.genValue();
+  }
+  alpha.genValue();
+  addAlpha.genValue();
+}
+
+
 void VDecalDef::fixup () {
   if (animname == NAME_None) return;
   animator = VDecalAnim::find(animname);
   if (!animator) GCon->Logf(NAME_Warning, "decal '%s': animator '%s' not found!", *name, *animname);
+}
+
+
+void VDecalDef::parseNumOrRandom (VScriptParser *sc, DecalFloatVal *value, bool withSign) {
+  if (sc->Check("random")) {
+    // `random(min, max)`
+    value->rnd = true;
+    if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
+    value->rndMin = sc->Float;
+    if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
+    value->rndMax = sc->Float;
+    if (value->rndMin > value->rndMax) { const float tmp = value->rndMin; value->rndMin = value->rndMax; value->rndMax = tmp; }
+    if (value->rndMin == value->rndMax) {
+      value->value = value->rndMin;
+      value->rnd = false;
+    } else {
+      value->value = RandomBetween(value->rndMin, value->rndMax); // just in case
+    }
+  } else {
+    // normal
+    value->rnd = false;
+    if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
+    value->value = sc->Float;
+    value->rndMin = value->rndMax = value->value; // just in case
+  }
 }
 
 
@@ -238,8 +289,10 @@ bool VDecalDef::parse (VScriptParser *sc) {
       continue;
     }
 
-    if (sc->Check("x-scale")) { sc->ExpectFloat(); scaleX = sc->Float; continue; }
-    if (sc->Check("y-scale")) { sc->ExpectFloat(); scaleY = sc->Float; continue; }
+    if (sc->Check("x-scale")) { parseNumOrRandom(sc, &scaleX); continue; }
+    if (sc->Check("y-scale")) { parseNumOrRandom(sc, &scaleY); continue; }
+
+    if (sc->Check("scale")) { useCommonScale = true; parseNumOrRandom(sc, &commonScale); continue; }
 
     if (sc->Check("flipx")) { flipX = FlipAlways; continue; }
     if (sc->Check("flipy")) { flipY = FlipAlways; continue; }
@@ -249,8 +302,8 @@ bool VDecalDef::parse (VScriptParser *sc) {
 
     if (sc->Check("solid")) { alpha = 1; continue; }
 
-    if (sc->Check("translucent")) { sc->ExpectFloat(); alpha = sc->Float; continue; }
-    if (sc->Check("add")) { sc->ExpectFloat(); addAlpha = sc->Float; continue; }
+    if (sc->Check("translucent")) { parseNumOrRandom(sc, &alpha); continue; }
+    if (sc->Check("add")) { parseNumOrRandom(sc, &addAlpha); continue; }
 
     if (sc->Check("fuzzy")) { fuzzy = true; continue; }
     if (sc->Check("fullbright")) { fullbright = true; continue; }
@@ -445,8 +498,8 @@ VDecalAnimFader::~VDecalAnimFader () {
 VDecalAnim *VDecalAnimFader::clone () {
   VDecalAnimFader *res = new VDecalAnimFader();
   res->name = name;
-  res->startTime = startTime;
-  res->actionTime = actionTime;
+  res->startTime = startTime.clone();
+  res->actionTime = actionTime.clone();
   res->timePassed = timePassed;
   return res;
 }
@@ -454,23 +507,23 @@ VDecalAnim *VDecalAnimFader::clone () {
 
 void VDecalAnimFader::doIO (VStream &Strm) {
   Strm << timePassed;
-  Strm << startTime;
-  Strm << actionTime;
+  Strm << startTime.value;
+  Strm << actionTime.value;
 }
 
 
 bool VDecalAnimFader::animate (decal_t *decal, float timeDelta) {
   if (decal->origAlpha <= 0 || decal->alpha <= 0) return false;
   timePassed += timeDelta;
-  if (timePassed < startTime) return true; // not yet
-  if (timePassed >= startTime+actionTime || actionTime <= 0) {
+  if (timePassed < startTime.value) return true; // not yet
+  if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
     //GCon->Logf("decal %p completely faded away", decal);
     decal->alpha = 0;
     return false;
   }
-  float dtx = timePassed-startTime;
+  float dtx = timePassed-startTime.value;
   float aleft = decal->origAlpha;
-  decal->alpha = aleft-aleft*dtx/actionTime;
+  decal->alpha = aleft-aleft*dtx/actionTime.value;
   //GCon->Logf("decal %p: dtx=%f; origA=%f; a=%f", decal, dtx, decal->origAlpha, decal->alpha);
   return (decal->alpha > 0);
 }
@@ -482,17 +535,13 @@ bool VDecalAnimFader::parse (VScriptParser *sc) {
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
   name = VName(*sc->String);
   sc->Expect("{");
-
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
-
-    if (sc->Check("decaystart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }
-    if (sc->Check("decaytime")) { sc->ExpectFloat(); actionTime = sc->Float; continue; }
-
+    if (sc->Check("decaystart")) { VDecalDef::parseNumOrRandom(sc, &startTime); continue; }
+    if (sc->Check("decaytime")) { VDecalDef::parseNumOrRandom(sc, &actionTime); continue; }
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
-
   return false;
 }
 
@@ -506,10 +555,10 @@ VDecalAnimStretcher::~VDecalAnimStretcher () {
 VDecalAnim *VDecalAnimStretcher::clone () {
   VDecalAnimStretcher *res = new VDecalAnimStretcher();
   res->name = name;
-  res->goalX = goalX;
-  res->goalY = goalY;
-  res->startTime = startTime;
-  res->actionTime = actionTime;
+  res->goalX = goalX.clone();
+  res->goalY = goalY.clone();
+  res->startTime = startTime.clone();
+  res->actionTime = actionTime.clone();
   res->timePassed = timePassed;
   return res;
 }
@@ -517,10 +566,10 @@ VDecalAnim *VDecalAnimStretcher::clone () {
 
 void VDecalAnimStretcher::doIO (VStream &Strm) {
   Strm << timePassed;
-  Strm << goalX;
-  Strm << goalY;
-  Strm << startTime;
-  Strm << actionTime;
+  Strm << goalX.value;
+  Strm << goalY.value;
+  Strm << startTime.value;
+  Strm << actionTime.value;
 }
 
 
@@ -528,20 +577,20 @@ bool VDecalAnimStretcher::animate (decal_t *decal, float timeDelta) {
   if (decal->origScaleX <= 0 || decal->origScaleY <= 0) { decal->alpha = 0; return false; }
   if (decal->scaleX <= 0 || decal->scaleY <= 0) { decal->alpha = 0; return false; }
   timePassed += timeDelta;
-  if (timePassed < startTime) return true; // not yet
-  if (timePassed >= startTime+actionTime || actionTime <= 0) {
-    if ((decal->scaleX = goalX) <= 0) { decal->alpha = 0; return false; }
-    if ((decal->scaleY = goalY) <= 0) { decal->alpha = 0; return false; }
+  if (timePassed < startTime.value) return true; // not yet
+  if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
+    if ((decal->scaleX = goalX.value) <= 0) { decal->alpha = 0; return false; }
+    if ((decal->scaleY = goalY.value) <= 0) { decal->alpha = 0; return false; }
     return false;
   }
-  float dtx = timePassed-startTime;
+  float dtx = timePassed-startTime.value;
   {
-    float aleft = goalX-decal->origScaleX;
-    if ((decal->scaleX = decal->origScaleX+aleft*dtx/actionTime) <= 0) { decal->alpha = 0; return false; }
+    float aleft = goalX.value-decal->origScaleX;
+    if ((decal->scaleX = decal->origScaleX+aleft*dtx/actionTime.value) <= 0) { decal->alpha = 0; return false; }
   }
   {
-    float aleft = goalY-decal->origScaleY;
-    if ((decal->scaleY = decal->origScaleY+aleft*dtx/actionTime) <= 0) { decal->alpha = 0; return false; }
+    float aleft = goalY.value-decal->origScaleY;
+    if ((decal->scaleY = decal->origScaleY+aleft*dtx/actionTime.value) <= 0) { decal->alpha = 0; return false; }
   }
   return true;
 }
@@ -553,15 +602,12 @@ bool VDecalAnimStretcher::parse (VScriptParser *sc) {
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
   name = VName(*sc->String);
   sc->Expect("{");
-
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
-
-    if (sc->Check("goalx")) { sc->ExpectFloat(); goalX = sc->Float; continue; }
-    if (sc->Check("goaly")) { sc->ExpectFloat(); goalY = sc->Float; continue; }
-    if (sc->Check("stretchstart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }
-    if (sc->Check("stretchtime")) { sc->ExpectFloat(); actionTime = sc->Float; continue; }
-
+    if (sc->Check("goalx")) { VDecalDef::parseNumOrRandom(sc, &goalX); continue; }
+    if (sc->Check("goaly")) { VDecalDef::parseNumOrRandom(sc, &goalY); continue; }
+    if (sc->Check("stretchstart")) { VDecalDef::parseNumOrRandom(sc, &startTime); continue; }
+    if (sc->Check("stretchtime")) { VDecalDef::parseNumOrRandom(sc, &actionTime); continue; }
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
@@ -578,10 +624,10 @@ VDecalAnimSlider::~VDecalAnimSlider () {
 VDecalAnim *VDecalAnimSlider::clone () {
   VDecalAnimSlider *res = new VDecalAnimSlider();
   res->name = name;
-  res->distX = distX;
-  res->distY = distY;
-  res->startTime = startTime;
-  res->actionTime = actionTime;
+  res->distX = distX.clone();
+  res->distY = distY.clone();
+  res->startTime = startTime.clone();
+  res->actionTime = actionTime.clone();
   res->timePassed = timePassed;
   return res;
 }
@@ -589,24 +635,24 @@ VDecalAnim *VDecalAnimSlider::clone () {
 
 void VDecalAnimSlider::doIO (VStream &Strm) {
   Strm << timePassed;
-  Strm << distX;
-  Strm << distY;
-  Strm << startTime;
-  Strm << actionTime;
+  Strm << distX.value;
+  Strm << distY.value;
+  Strm << startTime.value;
+  Strm << actionTime.value;
 }
 
 
 bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
   timePassed += timeDelta;
-  if (timePassed < startTime) return true; // not yet
-  if (timePassed >= startTime+actionTime || actionTime <= 0) {
-    decal->ofsX = distX;
-    decal->ofsY = distY;
+  if (timePassed < startTime.value) return true; // not yet
+  if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
+    decal->ofsX = distX.value;
+    decal->ofsY = distY.value;
     return false;
   }
-  float dtx = timePassed-startTime;
-  decal->ofsX = distX*dtx/actionTime;
-  decal->ofsY = distY*dtx/actionTime;
+  float dtx = timePassed-startTime.value;
+  decal->ofsX = distX.value*dtx/actionTime.value;
+  decal->ofsY = distY.value*dtx/actionTime.value;
   return true;
 }
 
@@ -617,15 +663,12 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
   name = VName(*sc->String);
   sc->Expect("{");
-
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
-
-    if (sc->Check("distx")) { sc->ExpectFloatWithSign(); distX = sc->Float; continue; }
-    if (sc->Check("disty")) { sc->ExpectFloatWithSign(); distY = sc->Float; continue; }
-    if (sc->Check("slidestart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }
-    if (sc->Check("slidetime")) { sc->ExpectFloat(); actionTime = sc->Float; continue; }
-
+    if (sc->Check("distx")) { VDecalDef::parseNumOrRandom(sc, &distX, true); continue; }
+    if (sc->Check("disty")) { VDecalDef::parseNumOrRandom(sc, &distY, true); continue; }
+    if (sc->Check("slidestart")) { VDecalDef::parseNumOrRandom(sc, &startTime); continue; }
+    if (sc->Check("slidetime")) { VDecalDef::parseNumOrRandom(sc, &actionTime); continue; }
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
@@ -645,8 +688,8 @@ VDecalAnim *VDecalAnimColorChanger::clone () {
   res->dest[0] = dest[0];
   res->dest[1] = dest[1];
   res->dest[2] = dest[2];
-  res->startTime = startTime;
-  res->actionTime = actionTime;
+  res->startTime = startTime.clone();
+  res->actionTime = actionTime.clone();
   res->timePassed = timePassed;
   return res;
 }
@@ -657,8 +700,8 @@ void VDecalAnimColorChanger::doIO (VStream &Strm) {
   Strm << dest[0];
   Strm << dest[1];
   Strm << dest[2];
-  Strm << startTime;
-  Strm << actionTime;
+  Strm << startTime.value;
+  Strm << actionTime.value;
 }
 
 
@@ -689,8 +732,8 @@ bool VDecalAnimColorChanger::parse (VScriptParser *sc) {
       dest[2] = (destclr&0xff)/255.0f;
       continue;
     }
-    if (sc->Check("fadestart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }
-    if (sc->Check("fadetime")) { sc->ExpectFloat(); actionTime = sc->Float; continue; }
+    if (sc->Check("fadestart")) { VDecalDef::parseNumOrRandom(sc, &startTime); continue; }
+    if (sc->Check("fadetime")) { VDecalDef::parseNumOrRandom(sc, &actionTime); continue; }
 
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;

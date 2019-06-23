@@ -32,6 +32,21 @@ class VDecalAnim;
 class VDecalGroup;
 
 
+struct DecalFloatVal {
+  float value;
+  bool rnd;
+  float rndMin, rndMax;
+
+  DecalFloatVal () : value(0.0f), rnd(false), rndMin(0.0f), rndMax(0.0f) {}
+  DecalFloatVal (float aval) : value(aval), rnd(false), rndMin(aval), rndMax(aval) {}
+  //DecalFloatVal (const DecalFloatVal &) = delete;
+  //DecalFloatVal &operator = (const DecalFloatVal &) = delete;
+  DecalFloatVal clone ();
+
+  void genValue ();
+};
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // linked list of all known decals
 class VDecalDef {
@@ -62,20 +77,26 @@ public:
   //VName pic;
   int texid;
   int id;
-  float scaleX, scaleY;
+  //float scaleX, scaleY;
+  DecalFloatVal scaleX, scaleY;
   int flipX, flipY; // FlipXXX constant
-  float alpha; // decal alpha
-  float addAlpha; // alpha for additive translucency (not supported yet)
+  DecalFloatVal alpha; // decal alpha
+  DecalFloatVal addAlpha; // alpha for additive translucency (not supported yet)
   bool fuzzy; // draw decal with "fuzzy" effect (not supported yet)
   bool fullbright;
   VName lowername;
   VDecalAnim *animator; // decal animator (can be nullptr)
   // this is used in animators
   //float ofsX, ofsY;
+protected:
+  bool useCommonScale;
+  DecalFloatVal commonScale;
 
 public:
-  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) {}
+  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr), useCommonScale(false) {}
   ~VDecalDef ();
+
+  void genValues ();
 
 public:
   static VDecalDef *find (const VStr &aname);
@@ -87,6 +108,9 @@ public:
   static VDecalDef *getDecalById (int id);
 
   static bool hasDecal (const VName &aname);
+
+public:
+  static void parseNumOrRandom (VScriptParser *sc, DecalFloatVal *value, bool withSign=false);
 
 private:
   static VDecalDef *listHead;
@@ -162,6 +186,7 @@ class VDecalAnim {
 public:
   enum { TypeId = 0 };
 
+public:
 private:
   VDecalAnim *next; // animDefHead
 
@@ -216,7 +241,7 @@ public:
 
 public:
   // animator properties
-  float startTime, actionTime; // in seconds
+  DecalFloatVal startTime, actionTime; // in seconds
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimFader::TypeId; }
@@ -226,7 +251,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimFader () : VDecalAnim(), startTime(0), actionTime(0) {}
+  VDecalAnimFader () : VDecalAnim(), startTime(), actionTime() {}
   virtual ~VDecalAnimFader ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -246,8 +271,8 @@ public:
 
 public:
   // animator properties
-  float goalX, goalY;
-  float startTime, actionTime; // in seconds
+  DecalFloatVal goalX, goalY;
+  DecalFloatVal startTime, actionTime; // in seconds
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimStretcher::TypeId; }
@@ -257,7 +282,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimStretcher () : VDecalAnim(), goalX(1), goalY(1), startTime(0), actionTime(0) {}
+  VDecalAnimStretcher () : goalX(), goalY(), startTime(), actionTime() {}
   virtual ~VDecalAnimStretcher ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -277,8 +302,8 @@ public:
 
 public:
   // animator properties
-  float distX, distY;
-  float startTime, actionTime; // in seconds
+  DecalFloatVal distX, distY;
+  DecalFloatVal startTime, actionTime; // in seconds
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimSlider::TypeId; }
@@ -288,7 +313,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimSlider () : VDecalAnim(), distX(0), distY(0), startTime(0), actionTime(0) {}
+  VDecalAnimSlider () : VDecalAnim(), distX(), distY(), startTime(), actionTime() {}
   virtual ~VDecalAnimSlider ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -309,7 +334,7 @@ public:
 public:
   // animator properties
   float dest[3];
-  float startTime, actionTime; // in seconds
+  DecalFloatVal startTime, actionTime; // in seconds
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimColorChanger::TypeId; }
@@ -319,7 +344,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimColorChanger () : VDecalAnim(), startTime(0), actionTime(0) { dest[0] = dest[1] = dest[2] = 0; }
+  VDecalAnimColorChanger () : VDecalAnim(), startTime(), actionTime() { dest[0] = dest[1] = dest[2] = 0; }
   virtual ~VDecalAnimColorChanger ();
 
   // this does deep clone, so we can attach it to the actual decal object

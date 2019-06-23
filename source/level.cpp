@@ -1719,11 +1719,11 @@ static __attribute__((unused)) const char *lif2str (int flags) {
 //
 //==========================================================================
 static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cur, VTexture *DTex) {
-  const float twdt = DTex->GetScaledWidth()*dec->scaleX;
-  const float thgt = DTex->GetScaledHeight()*dec->scaleY;
+  const float twdt = DTex->GetScaledWidth()*dec->scaleX.value;
+  const float thgt = DTex->GetScaledHeight()*dec->scaleY.value;
 
-  const float txofs = DTex->GetScaledSOffset()*dec->scaleX;
-  const float tyofs = DTex->GetScaledTOffset()*dec->scaleY;
+  const float txofs = DTex->GetScaledSOffset()*dec->scaleX.value;
+  const float tyofs = DTex->GetScaledTOffset()*dec->scaleY.value;
 
   const float myx0 = dcx0;
   const float myx1 = myx0+twdt;
@@ -1759,17 +1759,17 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   //GCon->Logf("decal '%s' at linedef %d", *GTextureManager[tex]->Name, (int)(ptrdiff_t)(li-Lines));
 
-  float twdt = DTex->GetScaledWidth()*dec->scaleX;
-  float thgt = DTex->GetScaledHeight()*dec->scaleY;
+  float twdt = DTex->GetScaledWidth()*dec->scaleX.value;
+  float thgt = DTex->GetScaledHeight()*dec->scaleY.value;
 
   if (twdt < 1 || thgt < 1) return;
 
-  float txofs = DTex->GetScaledSOffset()*dec->scaleX;
-  float tyofs = DTex->GetScaledTOffset()*dec->scaleY;
+  float txofs = DTex->GetScaledSOffset()*dec->scaleX.value;
+  float tyofs = DTex->GetScaledTOffset()*dec->scaleY.value;
 
   const float dcx0 = lineofs-txofs;
   const float dcx1 = dcx0+twdt;
-  const float dcy1 = orgz+dec->scaleY+tyofs;
+  const float dcy1 = orgz+dec->scaleY.value+tyofs;
   const float dcy0 = dcy1-thgt;
 
   const TVec &v1 = *li->v1;
@@ -2036,10 +2036,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       decal->orgz = decal->curz = orgz;
       decal->xdist = lineofs;
       decal->ofsX = decal->ofsY = 0;
-      decal->scaleX = decal->origScaleX = dec->scaleX;
-      decal->scaleY = decal->origScaleY = dec->scaleY;
-      decal->alpha = decal->origAlpha = dec->alpha;
-      decal->addAlpha = dec->addAlpha;
+      decal->scaleX = decal->origScaleX = dec->scaleX.value;
+      decal->scaleY = decal->origScaleY = dec->scaleY.value;
+      decal->alpha = decal->origAlpha = dec->alpha.value;
+      decal->addAlpha = dec->addAlpha.value;
       decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
       if (decal->animator) AddAnimatedDecal(decal);
 
@@ -2136,13 +2136,16 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
     AddDecal(org, dec->lowername, side, li, level+1);
   }
 
-  if (dec->scaleX <= 0 || dec->scaleY <= 0) {
+  //HACK!
+  dec->genValues();
+
+  if (dec->scaleX.value <= 0 || dec->scaleY.value <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
     return;
   }
 
   // actually, we should check animator here, but meh...
-  if (dec->alpha <= 0.004f) {
+  if (dec->alpha.value <= 0.004f) {
     GCon->Logf("Decal '%s' has zero alpha", *dec->name);
     return;
   }
