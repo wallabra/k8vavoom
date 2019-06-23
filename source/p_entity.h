@@ -521,7 +521,7 @@ public:
 public:
   void LinkToWorld (bool properFloorCheck=false);
   void UnlinkFromWorld ();
-  bool CanSee (VEntity *Ent, bool forShooting=false);
+  bool CanSee (VEntity *Ent, bool forShooting=false, bool alwaysBetter=false);
   inline bool CanShoot (VEntity *Ent) { return CanSee(Ent, true); }
 
   void StartSound (VName Sound, vint32 Channel, float Volume, float Attenuation, bool Loop, bool Local=false);
@@ -561,6 +561,7 @@ public:
   DECLARE_FUNCTION(LinkToWorld)
   DECLARE_FUNCTION(UnlinkFromWorld)
   DECLARE_FUNCTION(CanSee)
+  DECLARE_FUNCTION(CanSeeAdv)
   DECLARE_FUNCTION(CanShoot)
   DECLARE_FUNCTION(RoughBlockSearch)
   DECLARE_FUNCTION(SetDecorateFlag)

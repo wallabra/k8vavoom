@@ -2118,6 +2118,13 @@ IMPLEMENT_FUNCTION(VEntity, CanSee) {
   RET_BOOL(Self->CanSee(Other, disableBetterSight));
 }
 
+IMPLEMENT_FUNCTION(VEntity, CanSeeAdv) {
+  P_GET_REF(VEntity, Other);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
+  RET_BOOL(Self->CanSee(Other, false, true));
+}
+
 IMPLEMENT_FUNCTION(VEntity, CanShoot) {
   P_GET_REF(VEntity, Other);
   P_GET_SELF;

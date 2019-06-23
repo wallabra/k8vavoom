@@ -49,10 +49,10 @@ static VCvarB dbg_disable_cansee("dbg_disable_cansee", false, "Disable CanSee pr
 //  Returns true if a straight line between t1 and t2 is unobstructed.
 //
 //==========================================================================
-bool VEntity::CanSee (VEntity *Other, bool forShooting) {
+bool VEntity::CanSee (VEntity *Other, bool forShooting, bool alwaysBetter) {
   if (dbg_disable_cansee) return false;
 
-  if (!Other) return false;
+  if (!Other || !Other->Sector || !Other->SubSector) return false;
   if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
   if (Other->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
 
@@ -85,8 +85,10 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting) {
   // same subsector? obviously visible
   if (SubSector == Other->SubSector) return true;
 
+  if (alwaysBetter) forShooting = false;
+
   TVec dirF, dirR;
-  if (compat_better_sight) {
+  if (!forShooting && (compat_better_sight || alwaysBetter)) {
     //YawVectorRight(Angles.yaw, dirR);
     TVec dirU;
     TAVec ang;
@@ -97,6 +99,6 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting) {
   } else {
     dirR = TVec::ZeroVector;
   }
-  if (forShooting) dirR = TVec::ZeroVector;
-  return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector);
+  if (forShooting) dirR = TVec::ZeroVector; // just in case, lol
+  return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector, alwaysBetter);
 }

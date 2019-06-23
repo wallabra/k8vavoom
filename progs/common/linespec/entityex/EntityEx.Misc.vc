@@ -152,7 +152,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
 
     if (dist >= BombDistance) continue; // out of range
 
-    if (Other.CanSee(self, disableBetterSight:true)) {
+    if (Other.CanSeeAdv(self)) {
       float dist2;
 
       // OK to damage, target is in direct path

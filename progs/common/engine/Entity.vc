@@ -416,6 +416,8 @@ native final void LinkToWorld (optional bool properFloorCheck);
 native final void UnlinkFromWorld ();
 
 native final bool CanSee (Entity Other, optional bool disableBetterSight/*=false*/);
+// always "better sight", used for radius damage
+native final bool CanSeeAdv (Entity Other);
 native final bool CanShoot (Entity Other);
 
 native final iterator RoughBlockSearch (out Entity EntPtr, int Distance);

@@ -610,7 +610,8 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //
 //==========================================================================
 bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,
-                         const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector) {
+                         const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector,
+                         bool alwaysBetter) {
   if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo Trace;
@@ -649,7 +650,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   Trace.LineBlockMask = ML_BLOCKEVERYTHING|ML_BLOCKSIGHT;
   Trace.CheckBaseRegion = !skipBaseRegion;
 
-  if (orgdirRight.isZero() || (radius < 4.0f && height < 4.0f && myheight < 4.0f)) {
+  if ((radius < 4.0f && height < 4.0f && myheight < 4.0f) || (!alwaysBetter && orgdirRight.isZero())) {
     Trace.Start = org;
     Trace.Start.z += myheight*0.75f;
     Trace.End = dest;

@@ -549,7 +549,8 @@ public:
   // `Sector` can be `nullptr`
   // if `orgdirRight` is zero vector, don't do extra checks
   bool CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,
-                   const TVec &dest, float radius, float height, bool skipBaseRegion=false, sector_t *DestSector=nullptr);
+                   const TVec &dest, float radius, float height, bool skipBaseRegion=false, sector_t *DestSector=nullptr,
+                   bool alwaysBetter=false);
   bool CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector=nullptr);
 
   void SetCameraToTexture (VEntity *, VName, int);
