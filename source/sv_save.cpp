@@ -240,7 +240,7 @@ public:
     } else if (Struct->Name == "line_t") {
       Ptr = (TmpIdx >= 0 ? &GLevel->Lines[TmpIdx] : nullptr);
     } else {
-      dprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
+      devprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
       Ptr = nullptr;
     }
   }
@@ -357,7 +357,7 @@ public:
     } else if (Struct->Name == "line_t") {
       TmpIdx = (Ptr ? (int)((line_t *)Ptr-GLevel->Lines) : -1);
     } else {
-      dprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
+      devprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
       TmpIdx = -1;
     }
     *this << STRM_INDEX(TmpIdx);

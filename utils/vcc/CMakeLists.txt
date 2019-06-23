@@ -2,6 +2,8 @@ set(VC_COMPILER_SOURCES
   ../../source/common.h
 
   ../../source/vc/vc_local.h
+  ../../source/vc/vc_public.h
+  ../../source/vc/vc_progs.h
 
   ../../source/vc/vc_location.h
   ../../source/vc/vc_location.cpp

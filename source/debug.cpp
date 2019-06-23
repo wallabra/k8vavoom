@@ -32,7 +32,7 @@
 class VDebugLog : public VLogListener {
 public:
   virtual void Serialise (const char *Text, EName Event) override {
-    dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColors());
+    devprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColors());
   }
 };
 
@@ -70,10 +70,10 @@ void OpenDebugFile (const char *name) {
 
 //==========================================================================
 //
-//  dprintf
+//  devprintf
 //
 //==========================================================================
-int dprintf (const char *s, ...) {
+int devprintf (const char *s, ...) {
   va_list v;
 
 #ifdef CLOSEDDF

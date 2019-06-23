@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 
-#include "../libs/core/core.h"
+//#include "../libs/core/core.h"
 
 //#define Random()  ((float)(rand()&0x7fff)/(float)0x8000)
 /*
@@ -44,54 +44,15 @@ float Random () {
 
 //#define OPCODE_STATS
 
-#include "convars.h"
-#include "filesys/fsys.h"
+//#include "convars.h"
+//#include "filesys/fsys.h"
 
-
-#include "../source/common.h"
-#include "vcc_netobj.h"
-#include "../source/vc/vc_location.h"
-#include "../source/vc/vc_type.h"
-#include "../source/vc/vc_member.h"
-#include "../source/progdefs.h"
-#include "../source/progs.h"
-#include "../source/vc/vc_field.h"
-#include "../source/vc/vc_property.h"
-#include "../source/vc/vc_method.h"
-#include "../source/vc/vc_constant.h"
-#include "../source/vc/vc_struct.h"
-#include "../source/vc/vc_state.h"
-#include "../source/vc/vc_class.h"
-#include "../source/vc/vc_package.h"
-#include "../source/vc/vc_emit_context.h"
-#include "../source/vc/vc_expr_base.h"
-#include "../source/vc/vc_expr_literal.h"
-#include "../source/vc/vc_expr_unary_binary.h"
-#include "../source/vc/vc_expr_cast.h"
-#include "../source/vc/vc_expr_type.h"
-#include "../source/vc/vc_expr_field.h"
-#include "../source/vc/vc_expr_array.h"
-#include "../source/vc/vc_expr_invoke.h"
-#include "../source/vc/vc_expr_assign.h"
-#include "../source/vc/vc_expr_local.h"
-#include "../source/vc/vc_expr_misc.h"
-#include "../source/vc/vc_statement.h"
-#include "../source/vc/vc_error.h"
-#include "../source/vc/vc_lexer.h"
-#include "../source/vc/vc_modifiers.h"
-#include "../source/vc/vc_parser.h"
-#include "../source/vc/vc_object.h"
-#include "../source/vc/vc_zastar.h"
-
+//#include "vcc_netobj.h"
+#include "vcc_run_vc.h"
+#include "../source/vc/vc_public.h"
 #include "../source/scripts.h"
+//#include "../source/misc.h"
 
-#include "../source/misc.h"
-
-
-extern int dprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
-extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
-
-void Host_Error (const char *error, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
 //extern VStream *OpenFile (const VStr &Name);
 

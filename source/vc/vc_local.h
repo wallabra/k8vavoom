@@ -27,32 +27,38 @@
 #ifndef VAVOOM_VAVOOMC_LOCAL_HEADER
 #define VAVOOM_VAVOOMC_LOCAL_HEADER
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# include "gamedefs.h"
-# include "../progdefs.h"
-# include "vc_emit_context.h"
-# include "vc_expr_base.h"
-# include "vc_expr_literal.h"
-# include "vc_expr_unary_binary.h"
-# include "vc_expr_cast.h"
-# include "vc_expr_type.h"
-# include "vc_expr_field.h"
-# include "vc_expr_array.h"
-# include "vc_expr_invoke.h"
-# include "vc_expr_assign.h"
-# include "vc_expr_local.h"
-# include "vc_expr_misc.h"
-# include "vc_statement.h"
-# include "vc_error.h"
-# include "vc_lexer.h"
-# include "vc_modifiers.h"
-# include "vc_parser.h"
+#if defined(IN_VCC)
+# include "../../utils/vcc/vcc_vc.h"
+#elif defined(VCC_STANDALONE_EXECUTOR)
+# include "../../vccrun/vcc_run_vc.h"
 #else
-# if defined(IN_VCC)
-#  include "../../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../../vccrun/vcc_run.h"
-# endif
+# include "../../libs/core/core.h"
+#endif
+
+#include "../common.h"
+#include "../progdefs.h"
+#include "vc_public.h"
+#include "vc_emit_context.h"
+#include "vc_expr_base.h"
+#include "vc_expr_literal.h"
+#include "vc_expr_unary_binary.h"
+#include "vc_expr_cast.h"
+#include "vc_expr_type.h"
+#include "vc_expr_field.h"
+#include "vc_expr_array.h"
+#include "vc_expr_invoke.h"
+#include "vc_expr_assign.h"
+#include "vc_expr_local.h"
+#include "vc_expr_misc.h"
+#include "vc_statement.h"
+//#include "vc_error.h"
+#include "vc_lexer.h"
+#include "vc_modifiers.h"
+#include "vc_parser.h"
+#include "vc_zastar.h"
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "../gamedefs.h"
 #endif
 
 

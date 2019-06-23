@@ -26,13 +26,14 @@
 #include <time.h>
 
 #include "vcc.h"
+#include "../../source/vc/vc_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VVccLog : public VLogListener {
 public:
   virtual void Serialise (const char* text, EName event) override {
-    dprintf("%s", text);
+    devprintf("%s", text);
   }
 };
 
@@ -102,10 +103,10 @@ static VVccLog VccLog;
 
 //==========================================================================
 //
-//  dprintf
+//  devprintf
 //
 //==========================================================================
-__attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
+__attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
   if (!DebugMode) return 0;
 
   va_list argPtr;
@@ -195,7 +196,7 @@ static void Init () {
 //==========================================================================
 static void DisplayUsage () {
   printf("\n");
-  printf("VCC Version 1.%d. Copyright (c) 2000-2001 by JL, 2018 by Ketmar Dark. (" __DATE__ " " __TIME__ ")\n", PROG_VERSION);
+  printf("VCC Copyright (c) 2000-2001 by JL, 2018,2019 by Ketmar Dark. (" __DATE__ " " __TIME__ ")\n");
   printf("Usage: vcc [options] source[.c] object[.dat]\n");
   //printf("    -d<file>     Output debugging information into specified file\n");
   //printf("    -a<function> Output function's ASM statements into debug file\n");
@@ -253,7 +254,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   if (count == 1) DisplayUsage();
 
   SourceFileName = SourceFileName.FixFileSlashes();
-  dprintf("Main source file: %s\n", *SourceFileName);
+  devprintf("Main source file: %s\n", *SourceFileName);
 }
 
 
@@ -274,16 +275,16 @@ int main (int argc, char **argv) {
     VParser Parser(Lex, CurrentPackage);
     Parser.Parse();
     int parsetime = time(0);
-    dprintf("Parsed in %02d:%02d\n", (parsetime-starttime)/60, (parsetime-starttime)%60);
+    devprintf("Parsed in %02d:%02d\n", (parsetime-starttime)/60, (parsetime-starttime)%60);
     CurrentPackage->Emit();
     int compiletime = time(0);
-    dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
+    devprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
     CurrentPackage->WriteObject(*ObjectFileName);
     //DumpAsm();
     //VName::StaticExit(); //k8: no reason to do this
     endtime = time(0);
-    dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
-    dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
+    devprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
+    devprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
     //VMemberBase::StaticExit(); //k8: no reason to do this
   } catch (VException& e) {
     FatalError("%s", e.What());

@@ -28,6 +28,7 @@
 #include <time.h>
 
 #include "vcc_run.h"
+#include "../source/vc/vc_local.h"
 
 #include "modules/mod_sound/sound.h"
 
@@ -132,7 +133,7 @@ static const char *comatoze (vuint32 n) {
 class VVccLog : public VLogListener {
 public:
   virtual void Serialise (const char* text, EName event) override {
-    dprintf("%s", text);
+    devprintf("%s", text);
   }
 };
 */
@@ -165,10 +166,10 @@ static void vmWriter (const char *buf, bool debugPrint, VName wrname) {
 
 //==========================================================================
 //
-//  dprintf
+//  devprintf
 //
 //==========================================================================
-__attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
+__attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
   if (!DebugMode) return 0;
   va_list argPtr;
   FILE* fp = stderr; //(DebugFile ? DebugFile : stdout);
@@ -248,7 +249,7 @@ static void PC_DumpAsm (const char* name) {
     fname = strstr(buf, ".")+1;
     fname[-1] = 0;
   } else {
-    dprintf("Dump ASM: Bad name %s\n", name);
+    devprintf("Dump ASM: Bad name %s\n", name);
     return;
   }
 
@@ -265,7 +266,7 @@ static void PC_DumpAsm (const char* name) {
     }
   }
 
-  dprintf("Dump ASM: %s not found!\n", name);
+  devprintf("Dump ASM: %s not found!\n", name);
 }
 
 
@@ -287,7 +288,7 @@ static void DumpAsm () {
 //==========================================================================
 static void DisplayUsage () {
   printf("\n");
-  printf("VCC Version 1.%d. Copyright (c) 2000-2001 by JL, 2018 by Ketmar Dark. (" __DATE__ " " __TIME__ "; opcodes: %d)\n", PROG_VERSION, NUM_OPCODES);
+  printf("VCCRUN Copyright (c) 2000-2001 by JL, 2018,2019 by Ketmar Dark. (" __DATE__ " " __TIME__ "; opcodes: %d)\n", NUM_OPCODES);
   printf("Usage: vcc [options] source[.c] [object[.dat]]\n");
   printf("    -d<file>     Output debugging information into specified file\n");
   printf("    -a<function> Output function's ASM statements into debug file\n");
@@ -412,20 +413,20 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         VStream *pstm = fsysOpenFile(pname);
         if (pstm && fsysAppendPak(pstm)) {
           //fprintf(stderr, "!!!001\n");
-          dprintf("added pak file '%s'...\n", *pname);
+          devprintf("added pak file '%s'...\n", *pname);
         } else {
           //fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
         }
       } else {
         if (fsysAppendPak(pname)) {
-          dprintf("added pak file '%s'...\n", *pname);
+          devprintf("added pak file '%s'...\n", *pname);
         } else {
           if (!gdatforced) fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
         }
       }
     } else if (type == '/') {
       if (fsysAppendDir(pname)) {
-        dprintf("added pak directory '%s'...\n", *pname);
+        devprintf("added pak directory '%s'...\n", *pname);
       } else {
         if (!gdatforced) fprintf(stderr, "CAN'T add pak directory '%s'!\n", *pname);
       }
@@ -453,7 +454,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   }
 
   SourceFileName = SourceFileName.fixSlashes();
-  dprintf("Main source file: %s\n", *SourceFileName);
+  devprintf("Main source file: %s\n", *SourceFileName);
 }
 
 
@@ -498,7 +499,7 @@ static int checkArg (VMethod *mmain) {
     if (mmain->NumParams != 1) return -1;
     if (mmain->ParamFlags[0] == 0) {
       VFieldType atp = mmain->ParamTypes[0];
-      dprintf("  ptype0: %s\n", *atp.GetName());
+      devprintf("  ptype0: %s\n", *atp.GetName());
       if (atp.Type == TYPE_SliceArray) {
         atp = atp.GetArrayInnerType();
         if (atp.Type != TYPE_String) return -1;
@@ -513,7 +514,7 @@ static int checkArg (VMethod *mmain) {
       }
     } else if ((mmain->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
       VFieldType atp = mmain->ParamTypes[0];
-      dprintf("  ptype1: %s\n", *atp.GetName());
+      devprintf("  ptype1: %s\n", *atp.GetName());
       if (atp.Type != TYPE_DynamicArray) return -1;
       atp = atp.GetArrayInnerType();
       if (atp.Type != TYPE_String) return -1;
@@ -557,7 +558,7 @@ int main (int argc, char **argv) {
 
     VPackage *CurrentPackage = new VPackage(VName("vccrun"));
 
-    dprintf("Compiling '%s'...\n", *SourceFileName);
+    devprintf("Compiling '%s'...\n", *SourceFileName);
 
     VStream *strm = OpenFile(SourceFileName);
     if (!strm) {
@@ -565,25 +566,25 @@ int main (int argc, char **argv) {
     }
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
-    dprintf("Total memory used: %u\n", VExpression::TotalMemoryUsed);
+    devprintf("Total memory used: %u\n", VExpression::TotalMemoryUsed);
     //DumpAsm();
     endtime = time(0);
-    dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
+    devprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
     // free compiler memory
     VMemberBase::StaticCompilerShutdown();
-    dprintf("Peak compiler memory usage: %s bytes.\n", comatoze(VExpression::PeakMemoryUsed));
-    dprintf("Released compiler memory  : %s bytes.\n", comatoze(VExpression::TotalMemoryFreed));
+    devprintf("Peak compiler memory usage: %s bytes.\n", comatoze(VExpression::PeakMemoryUsed));
+    devprintf("Released compiler memory  : %s bytes.\n", comatoze(VExpression::TotalMemoryFreed));
     if (VExpression::CurrMemoryUsed != 0) {
-      dprintf("Compiler leaks %s bytes (this is harmless).\n", comatoze(VExpression::CurrMemoryUsed));
+      devprintf("Compiler leaks %s bytes (this is harmless).\n", comatoze(VExpression::CurrMemoryUsed));
     }
 
     VScriptArray scargs(scriptArgs);
     VClass *mklass = VClass::FindClass("Main");
     if (mklass && !compileOnly) {
-      dprintf("Found class 'Main'\n");
+      devprintf("Found class 'Main'\n");
       VMethod *mmain = mklass->FindAccessibleMethod("main");
       if (mmain) {
-        dprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
+        devprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
         int atp = checkArg(mmain);
         if (atp < 0) FatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
         auto sss = pr_stackPtr;

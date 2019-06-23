@@ -29,6 +29,9 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 #if defined(IN_VCC)
+#define PROG_MAGIC    "VPRG"
+#define PROG_VERSION  (53)
+
 struct dprograms_t {
   char magic[4]; // "VPRG"
   int version;
@@ -555,52 +558,52 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 //
 //==========================================================================
 void VPackage::Emit () {
-  dprintf("Importing packages\n");
+  devprintf("Importing packages\n");
   for (int i = 0; i < PackagesToLoad.Num(); ++i) {
-    dprintf("  importing package '%s'...\n", *PackagesToLoad[i].Name);
+    devprintf("  importing package '%s'...\n", *PackagesToLoad[i].Name);
     PackagesToLoad[i].Pkg = StaticLoadPackage(PackagesToLoad[i].Name, PackagesToLoad[i].Loc);
   }
 
   if (vcErrorCount) BailOut();
 
-  dprintf("Defining constants\n");
+  devprintf("Defining constants\n");
   for (int i = 0; i < ParsedConstants.Num(); ++i) {
-    dprintf("  defining constant '%s'...\n", *ParsedConstants[i]->Name);
+    devprintf("  defining constant '%s'...\n", *ParsedConstants[i]->Name);
     ParsedConstants[i]->Define();
   }
 
-  dprintf("Defining structs\n");
+  devprintf("Defining structs\n");
   for (int i = 0; i < ParsedStructs.Num(); ++i) {
-    dprintf("  defining struct '%s'...\n", *ParsedStructs[i]->Name);
+    devprintf("  defining struct '%s'...\n", *ParsedStructs[i]->Name);
     ParsedStructs[i]->Define();
   }
 
-  dprintf("Defining classes\n");
+  devprintf("Defining classes\n");
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    dprintf("  defining class '%s'...\n", *ParsedClasses[i]->Name);
+    devprintf("  defining class '%s'...\n", *ParsedClasses[i]->Name);
     ParsedClasses[i]->Define();
   }
 
   for (int i = 0; i < ParsedDecorateImportClasses.Num(); ++i) {
-    dprintf("  defining decorate import class '%s'...\n", *ParsedDecorateImportClasses[i]->Name);
+    devprintf("  defining decorate import class '%s'...\n", *ParsedDecorateImportClasses[i]->Name);
     ParsedDecorateImportClasses[i]->Define();
   }
 
   if (vcErrorCount) BailOut();
 
-  dprintf("Defining struct members\n");
+  devprintf("Defining struct members\n");
   for (int i = 0; i < ParsedStructs.Num(); ++i) {
     ParsedStructs[i]->DefineMembers();
   }
 
-  dprintf("Defining class members\n");
+  devprintf("Defining class members\n");
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
     ParsedClasses[i]->DefineMembers();
   }
 
   if (vcErrorCount) BailOut();
 
-  dprintf("Emiting classes\n");
+  devprintf("Emiting classes\n");
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
     ParsedClasses[i]->Emit();
   }
@@ -619,7 +622,7 @@ void VPackage::WriteObject (const VStr &name) {
   FILE *f;
   dprograms_t progs;
 
-  dprintf("Writing object\n");
+  devprintf("Writing object\n");
 
   f = fopen(*name, "wb");
   if (!f) FatalError("Can't open file \"%s\".", *name);
@@ -697,21 +700,21 @@ void VPackage::WriteObject (const VStr &name) {
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
   // print statistics
-  dprintf("            count   size\n");
-  dprintf("Header     %6d %6ld\n", 1, (long int)sizeof(progs));
-  dprintf("Names      %6d %6d\n", Writer.Names.Num(), progs.ofs_strings - progs.ofs_names);
+  devprintf("            count   size\n");
+  devprintf("Header     %6d %6ld\n", 1, (long int)sizeof(progs));
+  devprintf("Names      %6d %6d\n", Writer.Names.Num(), progs.ofs_strings - progs.ofs_names);
 #if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  dprintf("Strings    %6d %6d\n", StringInfo.Num(), Strings.Num());
+  devprintf("Strings    %6d %6d\n", StringInfo.Num(), Strings.Num());
 #else
-  dprintf("Strings    %6d\n", StringInfo.Num());
+  devprintf("Strings    %6d\n", StringInfo.Num());
 #endif
-  dprintf("Builtins   %6d\n", NumBuiltins);
-  //dprintf("Mobj info  %6d %6d\n", VClass::GMobjInfos.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
-  //dprintf("Script Ids %6d %6d\n", VClass::GScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
-  dprintf("Imports    %6d %6d\n", Writer.Imports.Num(), progs.ofs_exportinfo - progs.ofs_imports);
-  dprintf("Exports    %6d %6d\n", Writer.Exports.Num(), progs.ofs_exportdata - progs.ofs_exportinfo);
-  dprintf("Type data  %6d %6d\n", Writer.Exports.Num(), Writer.Tell() - progs.ofs_exportdata);
-  dprintf("TOTAL SIZE       %7d\n", Writer.Tell());
+  devprintf("Builtins   %6d\n", NumBuiltins);
+  //devprintf("Mobj info  %6d %6d\n", VClass::GMobjInfos.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
+  //devprintf("Script Ids %6d %6d\n", VClass::GScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
+  devprintf("Imports    %6d %6d\n", Writer.Imports.Num(), progs.ofs_exportinfo - progs.ofs_imports);
+  devprintf("Exports    %6d %6d\n", Writer.Exports.Num(), progs.ofs_exportdata - progs.ofs_exportinfo);
+  devprintf("Type data  %6d %6d\n", Writer.Exports.Num(), Writer.Tell() - progs.ofs_exportdata);
+  devprintf("TOTAL SIZE       %7d\n", Writer.Tell());
 #endif
 
   // write header
@@ -722,11 +725,11 @@ void VPackage::WriteObject (const VStr &name) {
   for (int i = 1; i < (int)sizeof(progs)/4; ++i) Writer << ((int *)&progs)[i];
 
 #ifdef OPCODE_STATS
-  dprintf("\n-----------------------------------------------\n\n");
+  devprintf("\n-----------------------------------------------\n\n");
   for (int i = 0; i < NUM_OPCODES; ++i) {
-    dprintf("%-16s %d\n", StatementInfo[i].name, StatementInfo[i].usecount);
+    devprintf("%-16s %d\n", StatementInfo[i].name, StatementInfo[i].usecount);
   }
-  dprintf("%d opcodes\n", NUM_OPCODES);
+  devprintf("%d opcodes\n", NUM_OPCODES);
 #endif
 
   fclose(f);
@@ -979,7 +982,7 @@ static const char *pkgImportFiles[] = {
 
 void VPackage::LoadObject (TLocation l) {
 #if defined(IN_VCC)
-  dprintf("Loading package %s\n", *Name);
+  devprintf("Loading package %s\n", *Name);
 
   // load PROGS from a specified file
   VStream *f = fsysOpenFile(va("%s.dat", *Name));
@@ -994,14 +997,14 @@ void VPackage::LoadObject (TLocation l) {
   ParseError(l, "Can't find package %s", *Name);
 
 #elif defined(VCC_STANDALONE_EXECUTOR)
-  dprintf("Loading package '%s'...\n", *Name);
+  devprintf("Loading package '%s'...\n", *Name);
 
   for (int i = 0; i < GPackagePath.Num(); ++i) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
-      dprintf("  <%s>\n", *mainVC);
+      devprintf("  <%s>\n", *mainVC);
       VStream *Strm = fsysOpenFile(mainVC);
-      if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { devprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
@@ -1010,7 +1013,7 @@ void VPackage::LoadObject (TLocation l) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
       VStream *Strm = fsysOpenFile(mainVC);
-      if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { devprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
@@ -1018,7 +1021,7 @@ void VPackage::LoadObject (TLocation l) {
   /*
   VStr mainVC = va("packages/%s.dat", *Name);
   VStream *Strm = (tnum ? fsysOpenFile(mainVC) : fsysOpenDiskFile(mainVC));
-  if (Strm) { dprintf("  '%s'\n", *mainVC); LoadBinaryObject(Strm, mainVC, l); return; }
+  if (Strm) { devprintf("  '%s'\n", *mainVC); LoadBinaryObject(Strm, mainVC, l); return; }
   */
 
   ParseError(l, "Can't find package %s", *Name);

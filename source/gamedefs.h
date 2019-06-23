@@ -48,22 +48,9 @@
 #include "system.h"   //  System specific routines
 #include "filesys/files.h"    //  File I/O routines
 #include "filesys/wad.h"    //  WAD file I/O routines
-#include "progs.h"    //  Progs
-#include "vc_location.h"
-#include "vc_type.h"
-#include "vc_member.h"
-#include "vc_field.h"
-#include "vc_property.h"
-#include "vc_method.h"
-#include "vc_constant.h"
-#include "vc_struct.h"
-#include "vc_state.h"
-#include "vc_class.h"
-#include "vc_package.h"
-#include "vc_object.h"
+#include "vc_public.h"
 #include "vc_decorate.h"//  Decorate scripts
 #include "vc_dehacked.h"//  DeHackEd support
-#include "vc_zastar.h"
 #include "scripts.h"  //  Script parsing
 #include "input.h"    //  Input from keyboard, mouse and joystick
 #include "video.h"    //  Graphics

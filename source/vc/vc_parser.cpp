@@ -4365,7 +4365,7 @@ void VParser::ParseClass () {
 //
 //==========================================================================
 void VParser::Parse () {
-  dprintf("Parsing\n");
+  devprintf("Parsing\n");
   anonLocalCount = 0;
   inCompound = false;
   hasCompoundEnd = false;

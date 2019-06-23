@@ -24,7 +24,28 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#ifndef VCCRUN_VC_HEADER_FILE
+#define VCCRUN_VC_HEADER_FILE
 
-void OpenDebugFile (const char *name);
-// Print into debug file
-int devprintf (const char *s, ...) __attribute__((format(printf, 1, 2)));
+#include <stdio.h>
+
+#include "../libs/core/core.h"
+#include "../source/common.h"
+
+#include "vcc_netobj.h"
+
+#include "convars.h"
+#include "filesys/fsys.h"
+
+#include "../source/misc.h"
+
+
+extern int devprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
+extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
+
+void Host_Error (const char *error, ...) __attribute__((noreturn, format(printf, 1, 2)));
+
+//extern VStream *OpenFile (const VStr &Name);
+
+
+#endif

@@ -24,15 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# include "gamedefs.h"
-#else
-# if defined(IN_VCC)
-#  include "../../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../../vccrun/vcc_run.h"
-# endif
-#endif
+#include "vc_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

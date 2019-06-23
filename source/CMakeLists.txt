@@ -45,6 +45,8 @@ endfunction()
 #---------------------------------------
 set(VCCLIB_SOURCES
   vc/vc_local.h
+  vc/vc_public.h
+  vc/vc_progs.h
 
   vc/vc_location.h
   vc/vc_location.cpp
@@ -392,7 +394,6 @@ set(MAIN_COMMON_SOURCES
   pr_cmds.cpp
   pr_exec.cpp
   progdefs.h
-  progs.h
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
   ntvalueioex.cpp

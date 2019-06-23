@@ -161,7 +161,7 @@ void Sys_Quit (const char *EndText) {
   if (continue_stack_trace && ((unsigned long)__builtin_frame_address((X)) != 0L) && ((X) < MAX_STACK_ADDR)) \
   { \
     stack_addr[(X)]= __builtin_return_address((X)); \
-    dprintf("stack %d %8p frame %d %8p\n", \
+    devprintf("stack %d %8p frame %d %8p\n", \
       (X), __builtin_return_address((X)), (X), __builtin_frame_address((X))); \
   } \
   else if (continue_stack_trace) \
@@ -186,7 +186,7 @@ static void stack_trace () {
   // clean the stack addresses if necessary
   for (i = 0; i < MAX_STACK_ADDR; ++i) stack_addr[i] = 0;
 
-  dprintf("STACK TRACE:\n\n");
+  devprintf("STACK TRACE:\n\n");
 
   handle_stack_address(0);
   handle_stack_address(1);
@@ -303,7 +303,7 @@ static void signal_handler (int s) {
     case SIGQUIT: __Context::ErrToThrow = "Quited"; break;
     default: __Context::ErrToThrow = "Terminated by signal";
   }
-  dprintf("signal: %s\n", __Context::ErrToThrow);
+  devprintf("signal: %s\n", __Context::ErrToThrow);
   longjmp(__Context::Env, 1);
 #else
   switch (s) {
@@ -414,7 +414,7 @@ static void mainloop (int argc, char **argv) {
     }
   } catch (VavoomError &e) {
     //printf("\n%s\n", e.message);
-    //dprintf("\n\nERROR: %s\n", e.message);
+    //devprintf("\n\nERROR: %s\n", e.message);
     GCon->Logf("\n\nERROR: %s", e.message);
     Host_Shutdown();
     SDL_Quit();
@@ -454,7 +454,7 @@ int main (int argc, char **argv) {
     try {
       mainloop(argc, argv);
     } catch (...) {
-      //dprintf("\n\nExiting due to external exception\n");
+      //devprintf("\n\nExiting due to external exception\n");
       //fprintf(stderr, "\nExiting due to external exception\n");
       GCon->Logf("\nExiting due to external exception");
       Host_Shutdown();

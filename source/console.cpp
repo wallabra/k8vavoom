@@ -647,7 +647,7 @@ static void DoPrint (const char *buf) {
 //
 //==========================================================================
 static void ConSerialise (const char *str, EName Event, bool fromGLog) {
-  //dprintf("%s: %s\n", VName::SafeString(Event), *rc);
+  //devprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
   if (!fromGLog) { GLog.WriteLine(Event, "%s", str); return; }
   if (!str) str = "";

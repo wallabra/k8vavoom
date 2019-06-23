@@ -24,16 +24,17 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if defined(IN_VCC)
+# include "../../utils/vcc/vcc_vc.h"
+#elif defined(VCC_STANDALONE_EXECUTOR)
+# include "../../vccrun/vcc_run_vc.h"
+#else
 # include "gamedefs.h"
 # include "net/network.h"
-#else
-# if defined(IN_VCC)
-#  include "../../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../../vccrun/vcc_run.h"
-# endif
 #endif
+
+#include "vc_public.h"
+
 
 #define VC_GARBAGE_COLLECTOR_CHECKS
 //#define VC_GARBAGE_COLLECTOR_LOGS_BASE
@@ -210,7 +211,9 @@ bool VObject::GImmediadeDelete = true;
 #endif
 bool VObject::GGCMessagesAllowed = false;
 bool VObject::GCDebugMessagesAllowed = false;
+#if !defined(IN_VCC)
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
+#endif
 bool VObject::DumpBacktraceToStdErr = false;
 
 #ifdef VCC_STANDALONE_EXECUTOR
@@ -249,6 +252,7 @@ void VScriptIterator::Finished () {
 
 
 
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VMethodProxy::VMethodProxy
@@ -360,6 +364,7 @@ VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
     return VObject::ExecuteFunction(Method);
   }
 }
+#endif
 
 
 
@@ -1033,6 +1038,7 @@ void VObject::Serialise (VStream &strm) {
 }
 
 
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VObject::ExecuteNetMethod
@@ -1042,6 +1048,7 @@ bool VObject::ExecuteNetMethod (VMethod *func) {
   if (onExecuteNetMethodCB) return onExecuteNetMethodCB(this, func);
   return false;
 }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -406,7 +406,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           //Strm << *(int *)Data;
           *(void **)Data = nullptr;
         } else {
-          dprintf("I/O Error: don't know how to serialise pointer type `%s`\n", *Type.GetName());
+          devprintf("I/O Error: don't know how to serialise pointer type `%s`\n", *Type.GetName());
         }
         */
       }
@@ -528,7 +528,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       break;
     case TYPE_SliceArray:
       //FIXME:SLICE
-      dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
+      devprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
     case TYPE_Dictionary:
       {

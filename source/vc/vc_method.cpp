@@ -26,6 +26,9 @@
 //**************************************************************************
 #include "vc_local.h"
 #include "vc_mcopt.cpp"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "../debug.h"
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -441,92 +444,92 @@ void VMethod::DumpAsm () {
   while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
   VPackage *Package = (VPackage *)PM;
 
-  dprintf("--------------------------------------------\n");
-  dprintf("Dump ASM function %s.%s (%d instructions)\n\n", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
+  devprintf("--------------------------------------------\n");
+  devprintf("Dump ASM function %s.%s (%d instructions)\n\n", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
   if (Flags&FUNC_Native) {
     //  Builtin function
-    dprintf("Builtin function.\n");
+    devprintf("Builtin function.\n");
     return;
   }
   for (int s = 0; s < Instructions.Num(); ++s) {
     // opcode
     int st = Instructions[s].Opcode;
-    dprintf("%6d: %s", s, StatementInfo[st].name);
+    devprintf("%6d: %s", s, StatementInfo[st].name);
     switch (StatementInfo[st].Args) {
       case OPCARGS_None:
         break;
       case OPCARGS_Member:
         // name of the object
-        dprintf(" %s", *Instructions[s].Member->GetFullName());
+        devprintf(" %s", *Instructions[s].Member->GetFullName());
         break;
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
       //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
-        dprintf(" %6d", Instructions[s].Arg1);
+        devprintf(" %6d", Instructions[s].Arg1);
         break;
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
-        dprintf(" %6d, %6d", Instructions[s].Arg1, Instructions[s].Arg2);
+        devprintf(" %6d, %6d", Instructions[s].Arg1, Instructions[s].Arg2);
         break;
       case OPCARGS_NameBranchTarget:
-        dprintf(" '%s', %6d", *VName(EName(Instructions[s].Arg1)), Instructions[s].Arg2);
+        devprintf(" '%s', %6d", *VName(EName(Instructions[s].Arg1)), Instructions[s].Arg2);
         break;
       case OPCARGS_Byte:
       case OPCARGS_Short:
-        dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
+        devprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
         break;
       case OPCARGS_Int:
         if (Instructions[s].Arg1IsFloat) {
-          dprintf(" %f", *(const float *)&Instructions[s].Arg1);
+          devprintf(" %f", *(const float *)&Instructions[s].Arg1);
         } else {
-          dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
+          devprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
         }
         break;
       case OPCARGS_Name:
         // name
-        dprintf(" \'%s\'", *Instructions[s].NameArg);
+        devprintf(" \'%s\'", *Instructions[s].NameArg);
         break;
       case OPCARGS_String:
         // string
-        dprintf(" %s", *Package->GetStringByIndex(Instructions[s].Arg1).quote());
+        devprintf(" %s", *Package->GetStringByIndex(Instructions[s].Arg1).quote());
         break;
       case OPCARGS_FieldOffset:
-        if (Instructions[s].Member) dprintf(" %s", *Instructions[s].Member->Name); else dprintf(" (0)");
+        if (Instructions[s].Member) devprintf(" %s", *Instructions[s].Member->Name); else devprintf(" (0)");
         break;
       case OPCARGS_VTableIndex:
-        dprintf(" %s", *Instructions[s].Member->Name);
+        devprintf(" %s", *Instructions[s].Member->Name);
         break;
       case OPCARGS_VTableIndex_Byte:
       case OPCARGS_FieldOffset_Byte:
-        if (Instructions[s].Member) dprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2); else dprintf(" (0)%d", Instructions[s].Arg2);
+        if (Instructions[s].Member) devprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2); else devprintf(" (0)%d", Instructions[s].Arg2);
         break;
       case OPCARGS_TypeSize:
       case OPCARGS_Type:
       case OPCARGS_A2DDimsAndSize:
-        dprintf(" %s", *Instructions[s].TypeArg.GetName());
+        devprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
       case OPCARGS_TypeDD:
-        dprintf(" %s!(%s,%s)", StatementDictDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName(), *Instructions[s].TypeArg1.GetName());
+        devprintf(" %s!(%s,%s)", StatementDictDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName(), *Instructions[s].TypeArg1.GetName());
         break;
       case OPCARGS_TypeAD:
-        dprintf(" %s!(%s)", StatementDynArrayDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName());
+        devprintf(" %s!(%s)", StatementDynArrayDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName());
         break;
       case OPCARGS_Builtin:
-        dprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
+        devprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
         break;
       case OPCARGS_Member_Int:
-        dprintf(" %s (%d)", *Instructions[s].Member->GetFullName(), Instructions[s].Arg2);
+        devprintf(" %s (%d)", *Instructions[s].Member->GetFullName(), Instructions[s].Arg2);
         break;
       case OPCARGS_Type_Int:
-        dprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
+        devprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
         break;
       case OPCARGS_ArrElemType_Int:
-        dprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
+        devprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
         break;
     }
-    dprintf("\n");
+    devprintf("\n");
   }
 }
 

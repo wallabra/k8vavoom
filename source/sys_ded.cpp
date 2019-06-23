@@ -281,12 +281,12 @@ int main (int argc, char **argv) {
     }
   } catch (VavoomError &e) {
     Host_Shutdown();
-    dprintf("\n\nERROR: %s\n", e.message);
+    devprintf("\n\nERROR: %s\n", e.message);
     fprintf(stderr, "\n%s\n", e.message);
     exit(1);
   } catch (...) {
     Host_Shutdown();
-    dprintf("\n\nExiting due to external exception\n");
+    devprintf("\n\nExiting due to external exception\n");
     fprintf(stderr, "\nExiting due to external exception\n");
     throw;
   }
