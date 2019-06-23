@@ -1437,8 +1437,9 @@ static void AM_drawThings (vuint32 color) {
       if (mobj->RenderStyle == STYLE_None) continue;
     }
 
-    float x = FTOM(MTOF(mobj->Origin.x));
-    float y = FTOM(MTOF(mobj->Origin.y));
+    TVec morg = mobj->GetDrawOrigin();
+    float x = FTOM(MTOF(morg.x));
+    float y = FTOM(MTOF(morg.y));
     float angle = mobj->/*Angles*/GetInterpolatedDrawAngles().yaw; // anyway
 
     if (am_rotate) {
