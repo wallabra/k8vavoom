@@ -204,7 +204,7 @@ override void Tick (float DeltaTime) {
         // If speed <= 0, you're outside the effective radius. You also have
         // to be able to see the push/pull source point.
 
-        if ((speed > 0.0) && thing.CanSee(Source)) {
+        if ((speed > 0.0) && thing.CanSee(Source, disableBetterSight:true)) {
           float pushangle = atan2(sy-thing.Origin.y, sx-thing.Origin.x);
           if (PointPusher(Source)) pushangle += 180.0; // away
           float s, c;

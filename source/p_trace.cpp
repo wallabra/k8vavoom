@@ -609,7 +609,8 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight, const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector) {
+bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,
+                         const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector) {
   if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo Trace;

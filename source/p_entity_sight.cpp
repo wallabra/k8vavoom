@@ -49,7 +49,7 @@ static VCvarB dbg_disable_cansee("dbg_disable_cansee", false, "Disable CanSee pr
 //  Returns true if a straight line between t1 and t2 is unobstructed.
 //
 //==========================================================================
-bool VEntity::CanSee (VEntity *Other) {
+bool VEntity::CanSee (VEntity *Other, bool forShooting) {
   if (dbg_disable_cansee) return false;
 
   if (!Other) return false;
@@ -97,5 +97,6 @@ bool VEntity::CanSee (VEntity *Other) {
   } else {
     dirR = TVec::ZeroVector;
   }
+  if (forShooting) dirR = TVec::ZeroVector;
   return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector);
 }

@@ -1155,7 +1155,7 @@ final void A_BishopSpawnBlur () {
   if (!--Special1) {
     Velocity.x = 0.0;
     Velocity.y = 0.0;
-    if (P_Random() > 96 || (GetCvar('alternate_monster_attacks') && !CanSee(Target))) {
+    if (P_Random() > 96 || (GetCvar('alternate_monster_attacks') && !CanSee(Target, disableBetterSight:true))) {
       SetState(SeeState);
     } else {
       SetState(MissileState);
@@ -1340,7 +1340,7 @@ final void A_SerpentCheckForAttack () {
 //==========================================================================
 final void A_SerpentChooseAttack () {
   if (MissileState) {
-    if (!Target || (GetCvar('alternate_monster_attacks') && !CanSee(Target)) || CheckMeleeRange()) return;
+    if (!Target || (GetCvar('alternate_monster_attacks') && !CanSee(Target, disableBetterSight:true)) || CheckMeleeRange()) return;
     SetState(MissileState);
   }
 }

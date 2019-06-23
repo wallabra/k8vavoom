@@ -268,7 +268,7 @@ final void A_M_Refire () {
   }
   // check if target went out of the range or sight, with small chance to
   // stop shooting even if target is not dead.
-  if ((!MissileState && !CheckMeleeRange()) || !CanSee(Target) || P_Random() < 4) {
+  if ((!MissileState && !CheckMeleeRange()) || !CanSee(Target, disableBetterSight:true) || P_Random() < 4) {
     SetState(GetStatePlus(State, 1));
   }
 }

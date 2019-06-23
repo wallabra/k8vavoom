@@ -45,7 +45,7 @@ final bool CheckMeleeRange () {
     if (Target.Origin.z+Target.Height < Origin.z) return false;
   }
 
-  if (!CanSee(Target)) return false;
+  if (!CanShoot(Target)) return false;
 
   return true;
 }
@@ -67,7 +67,7 @@ final bool CheckMeleeRange2 () {
   // attacker is higher?
   if (Origin.z > Target.Origin.z+Target.Height) return false;
 
-  if (!CanSee(Target)) return false;
+  if (!CanShoot(Target)) return false;
 
   return true;
 }
@@ -79,9 +79,13 @@ final bool CheckMeleeRange2 () {
 //
 //==========================================================================
 final bool CheckMissileRange () {
-  if (!CanSee(Target)) return false;
+  if (!Target || Target.IsDestroyed()) return false;
+  // moved down, to avoid visibility checks if target is too far away
+  //if (!CanSee(Target)) return false;
 
   if (bJustHit) {
+    // moved here to make checks faster
+    if (!CanShoot(Target)) return false;
     // the target just hit the enemy, so fight back!
     bJustHit = false;
     return true;
@@ -107,6 +111,9 @@ final bool CheckMissileRange () {
 
   if (Random()*256.0 < dist) return false;
   //print("  *** MISSILE");
+
+  // moved here to make checks faster
+  if (!CanShoot(Target)) return false;
 
   return true;
 }

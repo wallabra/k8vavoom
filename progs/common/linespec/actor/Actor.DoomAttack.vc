@@ -159,7 +159,7 @@ final void A_CPosRefire () {
 
   if (P_Random() < 40) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target)) SetState(SeeState);
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) SetState(SeeState);
 }
 
 
@@ -176,7 +176,7 @@ final void A_SpidRefire () {
 
   if (P_Random() < 10) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target)) SetState(SeeState);
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) SetState(SeeState);
 }
 
 
@@ -997,5 +997,5 @@ final void A_SentinelRefire () {
 
   if (P_Random() < 30) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target) || P_Random() < 40) SetState(SeeState);
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true) || P_Random() < 40) SetState(SeeState);
 }

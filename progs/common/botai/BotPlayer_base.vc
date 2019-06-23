@@ -1279,7 +1279,7 @@ final bool Check_LOS (Actor to, float vangle, optional bool skipCanSee) {
     // check FOV
     if (fabs(AngleMod180(AngleTo(to.Origin)-GetRealAngle())) > vangle/2.0) return false;
   }
-  if (!skipCanSee && !botmo.CanSee(to)) return false; // out of sight
+  if (!skipCanSee && !botmo.CanSee(to, disableBetterSight:true)) return false; // out of sight
   return true;
 }
 

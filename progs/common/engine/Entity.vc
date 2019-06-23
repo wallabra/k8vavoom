@@ -415,7 +415,8 @@ native final Entity CheckOnmobj ();
 native final void LinkToWorld (optional bool properFloorCheck);
 native final void UnlinkFromWorld ();
 
-native final bool CanSee (Entity Other);
+native final bool CanSee (Entity Other, optional bool disableBetterSight/*=false*/);
+native final bool CanShoot (Entity Other);
 
 native final iterator RoughBlockSearch (out Entity EntPtr, int Distance);
 

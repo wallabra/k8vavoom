@@ -2111,10 +2111,18 @@ IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanSee) {
+  P_GET_BOOL_OPT(disableBetterSight, false);
   P_GET_REF(VEntity, Other);
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
-  RET_BOOL(Self->CanSee(Other));
+  RET_BOOL(Self->CanSee(Other, disableBetterSight));
+}
+
+IMPLEMENT_FUNCTION(VEntity, CanShoot) {
+  P_GET_REF(VEntity, Other);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
+  RET_BOOL(Self->CanShoot(Other));
 }
 
 IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {

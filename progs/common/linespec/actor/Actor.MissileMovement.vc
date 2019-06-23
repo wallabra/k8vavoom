@@ -54,12 +54,12 @@ final void A_SeekerMissile (int Threshold, int TurnMax, optional int flags,
       if (IsTeammate(link)) continue;
       if (!CanSeek(link)) continue;
       if (bScreenSeeker) {
-        if (CanSee(link)) {
+        if (CanSee(link, disableBetterSight:true)) {
           float angle = AngleMod360(atan2(link.Origin.y-Target.Origin.y, link.Origin.x-Target.Origin.x)-Target.Angles.yaw);
           if (angle <= 226.0*360.0/256.0 || angle >= 30.0*360.0/256.0) continue;
         }
       } else {
-        if (!CanSee(link)) continue;
+        if (!CanSee(link, disableBetterSight:true)) continue;
       }
       Tracer = link;
       break;
@@ -172,7 +172,7 @@ final void decorate_A_Fire (optional int Height) {
   if (!Target || !Tracer) return;
 
   // don't move it if the vile lost sight
-  if (!Target.CanSee(Tracer)) return;
+  if (!Target.CanSee(Tracer, disableBetterSight:true)) return;
 
   UnlinkFromWorld();
   Origin.x = Tracer.Origin.x+24.0*cos(Tracer.Angles.yaw);

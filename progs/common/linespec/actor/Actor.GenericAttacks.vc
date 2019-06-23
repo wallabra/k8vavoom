@@ -867,7 +867,7 @@ final void A_MonsterRefire (int prob, state jump) {
 
   if (P_Random() < prob) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target)) DoJump(jump);
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) DoJump(jump);
 }
 
 

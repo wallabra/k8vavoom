@@ -707,7 +707,7 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
       }
 
       // sight check
-      if (!(flags&RGF_NOSIGHT) && !CanSee(ent)) continue;
+      if (!(flags&RGF_NOSIGHT) && !CanSee(ent, disableBetterSight:true)) continue;
     }
 
     // it is ok to give an item

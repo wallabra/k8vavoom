@@ -679,7 +679,7 @@ final bool CheckForResurrect (bool UseVileStates) {
         continue; // not actually touching
       }
 
-      if (!CanSee(Other)) continue; // can't see, possibly in other region
+      if (!CanSee(Other, disableBetterSight:true)) continue; // can't see, possibly in other region
 
       if (!EntityEx(Other).DoThingRaise()) continue;
 
@@ -1147,7 +1147,7 @@ final void A_CheckProximity (state Label, name classname, float distance, option
     if (dist > distance) continue;
     // check LOS
     if (flags&CPXF_CHECKSIGHT) {
-      if (!tgt.CanSee(ent)) continue;
+      if (!tgt.CanSee(ent, disableBetterSight:true)) continue;
     }
     // count things
     --count;

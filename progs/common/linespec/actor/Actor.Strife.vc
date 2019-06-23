@@ -399,7 +399,7 @@ final void A_TemplarAttack () {
 //
 //==========================================================================
 final bool CrusaderCheckFlameRange () {
-  if (CanSee(Target) && ReactionCount == 0) return (DistTo2(Target) < 264.0);
+  if (ReactionCount == 0 && CanSee(Target, disableBetterSight:true)) return (DistTo2(Target) < 264.0);
   return false;
 }
 
@@ -462,7 +462,7 @@ final void A_CrusaderSweepRight () {
 //
 //==========================================================================
 final void A_CrusaderRefire () {
-  if (!Target || Target.Health <= 0 || !CanSee(Target)) {
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) {
     SetState(SeeState);
   }
 }
@@ -485,7 +485,7 @@ final void A_CrusaderDeath () {
 //
 //==========================================================================
 final bool InquisitorCheckDistance () {
-  return (ReactionCount == 0 && Target && CanSee(Target) && DistTo2(Target) < 264.0);
+  return (ReactionCount == 0 && Target && CanSee(Target, disableBetterSight:true) && DistTo2(Target) < 264.0);
 }
 
 
@@ -498,7 +498,7 @@ final void A_InquisitorDecide () {
   if (Origin.z != FloorZ) return;
 
   PlaySound('inquisitor/active', CHAN_VOICE);
-  if (!Target || !CanSee(Target)) return;
+  if (!Target || !CanSee(Target, disableBetterSight:true)) return;
 
   A_FaceTarget();
   if (!InquisitorCheckDistance()) SetState(FindState('Grenade'));
