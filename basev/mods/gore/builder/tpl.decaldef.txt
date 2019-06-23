@@ -716,4 +716,326 @@ decalgroup BloodSplatRadius${Color} {
   BloodSmear${Color} 1
 }
 
+
+fader K8GoreBloodSplat_FaderAnim${Color} {
+  DecayStart random 10 20
+  DecayTime random 10 40
+}
+
+
+
+decalgroup K8GoreBloodSuper${Color} {
+  //K8GoreBloodSuper01${Color} 6
+  //K8GoreBloodSuper02${Color} 6
+}
+
+
+DECAL K8Gore_NewBloodSplatFade01${Color} {
+  Pic BSPLAT01
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade02${Color} {
+  Pic BSPLAT02
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade03${Color} {
+  Pic BSPLAT03
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade04${Color} {
+  Pic BSPLAT04
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade05${Color} {
+  Pic BSPLAT05
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade06${Color} {
+  Pic BSPLAT06
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.26 0.34
+  Y-Scale random 0.56 0.64
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade07${Color} {
+  Pic BSPLAT07
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade08${Color} {
+  Pic BSPLAT08
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade09${Color} {
+  Pic BSPLAT09
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade10${Color} {
+  Pic BSPLAT10
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade11${Color} {
+  Pic BSPLAT11
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade12${Color} {
+  Pic BSPLAT12
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade13${Color} {
+  Pic BSPLAT13
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+DECAL K8Gore_NewBloodSplatFade14${Color} {
+  Pic BSPLAT14
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnim${Color}
+}
+
+
+decalgroup K8GoreBloodSplat${Color} {
+  K8Gore_NewBloodSplatFade01${Color} 6
+  K8Gore_NewBloodSplatFade02${Color} 6
+  K8Gore_NewBloodSplatFade03${Color} 6
+  K8Gore_NewBloodSplatFade04${Color} 6
+  K8Gore_NewBloodSplatFade05${Color} 6
+  K8Gore_NewBloodSplatFade06${Color} 6
+  K8Gore_NewBloodSplatFade07${Color} 6
+  K8Gore_NewBloodSplatFade08${Color} 6
+  K8Gore_NewBloodSplatFade09${Color} 6
+  K8Gore_NewBloodSplatFade10${Color} 6
+}
 #endif
