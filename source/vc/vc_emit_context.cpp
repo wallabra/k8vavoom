@@ -30,35 +30,35 @@
 VStatementInfo StatementInfo[NUM_OPCODES] = {
 #define DECLARE_OPC(name, args)   { #name, OPCARGS_##args, 0}
 #define OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 };
 
 VStatementBuiltinInfo StatementBuiltinInfo[] = {
 #define BUILTIN_OPCODE_INFO
 #define DECLARE_OPC_BUILTIN(name)  { #name }
-#include "../progdefs.h"
+#include "vc_progdefs.h"
   { nullptr },
 };
 
 VStatementBuiltinInfo StatementDictDispatchInfo[] = {
 #define DICTDISPATCH_OPCODE_INFO
 #define DECLARE_OPC_DICTDISPATCH(name)  { #name }
-#include "../progdefs.h"
+#include "vc_progdefs.h"
   { nullptr },
 };
 
 VStatementBuiltinInfo StatementDynArrayDispatchInfo[] = {
 #define DYNARRDISPATCH_OPCODE_INFO
 #define DECLARE_OPC_DYNARRDISPATCH(name)  { #name }
-#include "../progdefs.h"
+#include "vc_progdefs.h"
   { nullptr },
 };
 
 #define DICTDISPATCH_OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 
 #define DYNARRDISPATCH_OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

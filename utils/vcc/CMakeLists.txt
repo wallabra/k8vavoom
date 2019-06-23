@@ -4,6 +4,7 @@ set(VC_COMPILER_SOURCES
   ../../source/vc/vc_local.h
   ../../source/vc/vc_public.h
   ../../source/vc/vc_progs.h
+  ../../source/vc/vc_progdefs.h
 
   ../../source/vc/vc_location.h
   ../../source/vc/vc_location.cpp

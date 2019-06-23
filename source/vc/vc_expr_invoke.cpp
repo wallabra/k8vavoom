@@ -31,13 +31,13 @@
 
 // builtin codes
 #define BUILTIN_OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 
 #define DICTDISPATCH_OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 
 #define DYNARRDISPATCH_OPCODE_INFO
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 
 
 //==========================================================================

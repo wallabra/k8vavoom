@@ -33,27 +33,28 @@
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
-# include "progdefs.h"
+# include "vc_progdefs.h"
 #else
 # if defined(IN_VCC)
-#  include "../utils/vcc/vcc.h"
+#  include "../../utils/vcc/vcc.h"
 # elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../vccrun/vcc_run_vc.h"
-#  include "vc/vc_public.h"
+#  include "../../vccrun/vcc_run_vc.h"
+#  include "vc_public.h"
+#  include "vc_progdefs.h"
 # endif
 #endif
 
-#include "vc/vc_shared.h"
+#include "vc_shared.h"
 
 // builtin codes
 #define BUILTIN_OPCODE_INFO
-#include "progdefs.h"
+#include "vc_progdefs.h"
 
 #define DICTDISPATCH_OPCODE_INFO
-#include "progdefs.h"
+#include "vc_progdefs.h"
 
 #define DYNARRDISPATCH_OPCODE_INFO
-#include "progdefs.h"
+#include "vc_progdefs.h"
 
 
 #define MAX_PROG_STACK  (10000)
@@ -558,7 +559,7 @@ func_loop:
     static void *vm_labels[] = {
 # define DECLARE_OPC(name, args) &&Lbl_OPC_ ## name
 # define OPCODE_INFO
-# include "progdefs.h"
+# include "vc_progdefs.h"
     0 };
 #endif
 

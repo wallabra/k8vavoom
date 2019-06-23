@@ -36,7 +36,7 @@
 #endif
 
 #include "../common.h"
-#include "../progdefs.h"
+#include "vc_progdefs.h"
 #include "vc_public.h"
 #include "vc_emit_context.h"
 #include "vc_expr_base.h"

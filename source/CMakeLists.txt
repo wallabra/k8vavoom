@@ -47,6 +47,7 @@ set(VCCLIB_SOURCES
   vc/vc_local.h
   vc/vc_public.h
   vc/vc_progs.h
+  vc/vc_progdefs.h
 
   vc/vc_location.h
   vc/vc_location.cpp
@@ -117,6 +118,8 @@ set(VCCLIB_SOURCES
 
   vc/vc_zastar.h
   vc/vc_zastar.cpp
+
+  vc/vc_executor.cpp
 )
 
 #---------------------------------------
@@ -392,8 +395,6 @@ set(MAIN_COMMON_SOURCES
   p_worldinfo.cpp
   p_worldinfo.h
   pr_cmds.cpp
-  pr_exec.cpp
-  progdefs.h
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
   ntvalueioex.cpp
@@ -504,7 +505,6 @@ set(SERVER_COMMON_SOURCES
   p_world.cpp
   p_worldinfo.cpp
   pr_cmds.cpp
-  pr_exec.cpp
   ${TEXTURELIB_SOURCES}
   ntvalueioex.h
   ntvalueioex.cpp
