@@ -1,6 +1,6 @@
 
 
-=== VaVoomScript Call Stack (2) ===
+=== Vavoom C call stack (2) ===
   000: vccrun.Main.test (ztest_stkdump_00.vc:11)
   001: vccrun.Main.main (ztest_stkdump_00.vc:15)
 =============================
