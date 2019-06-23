@@ -13,8 +13,9 @@
 DECAL K8Gore_NewBloodSplat01 {
   Pic BSPLAT01
   shade "50 00 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -22,8 +23,9 @@ DECAL K8Gore_NewBloodSplat01 {
 DECAL K8Gore_NewBloodSplat02 {
   Pic BSPLAT02
   shade "50 00 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -31,8 +33,9 @@ DECAL K8Gore_NewBloodSplat02 {
 DECAL K8Gore_NewBloodSplat03 {
   Pic BSPLAT03
   shade "50 00 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -40,8 +43,9 @@ DECAL K8Gore_NewBloodSplat03 {
 DECAL K8Gore_NewBloodSplat04 {
   Pic BSPLAT04
   shade "50 00 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -49,8 +53,9 @@ DECAL K8Gore_NewBloodSplat04 {
 DECAL K8Gore_NewBloodSplat05 {
   Pic BSPLAT05
   shade "50 00 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -58,8 +63,10 @@ DECAL K8Gore_NewBloodSplat05 {
 DECAL K8Gore_NewBloodSplat06 {
   Pic BSPLAT06
   shade "50 00 00"
-  X-Scale 0.3
-  Y-Scale 0.6
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.26 0.34
+  Y-Scale random 0.56 0.64
   RandomFlipX
   RandomFlipY
 }
@@ -67,8 +74,9 @@ DECAL K8Gore_NewBloodSplat06 {
 DECAL K8Gore_NewBloodSplat07 {
   Pic BSPLAT07
   shade "50 00 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -76,8 +84,9 @@ DECAL K8Gore_NewBloodSplat07 {
 DECAL K8Gore_NewBloodSplat08 {
   Pic BSPLAT08
   shade "50 00 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -85,8 +94,9 @@ DECAL K8Gore_NewBloodSplat08 {
 DECAL K8Gore_NewBloodSplat09 {
   Pic BSPLAT09
   shade "50 00 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -94,8 +104,9 @@ DECAL K8Gore_NewBloodSplat09 {
 DECAL K8Gore_NewBloodSplat10 {
   Pic BSPLAT10
   shade "50 00 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -103,8 +114,9 @@ DECAL K8Gore_NewBloodSplat10 {
 DECAL K8Gore_NewBloodSplat11 {
   Pic BSPLAT11
   shade "50 00 00"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -112,8 +124,9 @@ DECAL K8Gore_NewBloodSplat11 {
 DECAL K8Gore_NewBloodSplat12 {
   Pic BSPLAT12
   shade "50 00 00"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -121,8 +134,9 @@ DECAL K8Gore_NewBloodSplat12 {
 DECAL K8Gore_NewBloodSplat13 {
   Pic BSPLAT13
   shade "50 00 00"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -130,8 +144,9 @@ DECAL K8Gore_NewBloodSplat13 {
 DECAL K8Gore_NewBloodSplat14 {
   Pic BSPLAT14
   shade "50 00 00"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -160,25 +175,23 @@ DECALGROUP BloodSplat {
 
 STRETCHER K8Gore_NewBloodStretcher1 {
   StretchStart 0
-  StretchTime 15
-  GoalX 0.45
-  GoalY 0.7
+  StretchTime random 12 18
+  GoalX random 0.35 0.55
+  GoalY random 0.6 0.8
 }
 
 STRETCHER K8Gore_NewBloodStretcher2 {
   StretchStart 0
-  StretchTime 20
-  GoalX 0.45
-  GoalY 0.8
+  StretchTime random 16 20
+  GoalX random 0.35 0.55 //0.45
+  GoalY random 0.6 0.85 //0.8
 }
 
-/*
 SLIDER K8Gore_NewBloodSlider {
-  SlideTime 22
+  SlideTime random 17 24 // 22
   //DistY -132
-  DistY -4
+  DistY random 4 8
 }
-*/
 
 COMBINER K8Gore_NewBloodSmearer1 {
   K8Gore_NewBloodStretcher1
@@ -189,14 +202,15 @@ COMBINER K8Gore_NewBloodSmearer1 {
 COMBINER K8Gore_NewBloodSmearer2 {
   K8Gore_NewBloodStretcher2
   //K8Gore_NewBloodStretcher2
-  //K8Gore_NewBloodSlider
+  K8Gore_NewBloodSlider
 }
 
 
 DECAL K8Gore_NewBloodSmear1 {
   Pic BSMEAR01
-  X-Scale 0.46
-  Y-Scale 0.46
+  //X-Scale 0.46
+  //Y-Scale 0.46
+  Scale random 0.42 0.48
   shade "50 00 00"
   RandomFlipX
   RandomFlipY
@@ -205,8 +219,9 @@ DECAL K8Gore_NewBloodSmear1 {
 
 DECAL K8Gore_NewBloodSmear2 {
   Pic BSMEAR02
-  X-Scale 0.44
-  Y-Scale 0.44
+  //X-Scale 0.44
+  //Y-Scale 0.44
+  Scale random 0.42 0.48
   shade "50 00 00"
   RandomFlipX
   RandomFlipY
@@ -480,8 +495,9 @@ decalgroup K8GoreBloodSuperTransient {
 DECAL K8Gore_NewBloodSplat01Green {
   Pic BSPLAT01
   shade "00 50 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -489,8 +505,9 @@ DECAL K8Gore_NewBloodSplat01Green {
 DECAL K8Gore_NewBloodSplat02Green {
   Pic BSPLAT02
   shade "00 50 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -498,8 +515,9 @@ DECAL K8Gore_NewBloodSplat02Green {
 DECAL K8Gore_NewBloodSplat03Green {
   Pic BSPLAT03
   shade "00 50 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -507,8 +525,9 @@ DECAL K8Gore_NewBloodSplat03Green {
 DECAL K8Gore_NewBloodSplat04Green {
   Pic BSPLAT04
   shade "00 50 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -516,8 +535,9 @@ DECAL K8Gore_NewBloodSplat04Green {
 DECAL K8Gore_NewBloodSplat05Green {
   Pic BSPLAT05
   shade "00 50 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -525,8 +545,10 @@ DECAL K8Gore_NewBloodSplat05Green {
 DECAL K8Gore_NewBloodSplat06Green {
   Pic BSPLAT06
   shade "00 50 00"
-  X-Scale 0.3
-  Y-Scale 0.6
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.26 0.34
+  Y-Scale random 0.56 0.64
   RandomFlipX
   RandomFlipY
 }
@@ -534,8 +556,9 @@ DECAL K8Gore_NewBloodSplat06Green {
 DECAL K8Gore_NewBloodSplat07Green {
   Pic BSPLAT07
   shade "00 50 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -543,8 +566,9 @@ DECAL K8Gore_NewBloodSplat07Green {
 DECAL K8Gore_NewBloodSplat08Green {
   Pic BSPLAT08
   shade "00 50 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -552,8 +576,9 @@ DECAL K8Gore_NewBloodSplat08Green {
 DECAL K8Gore_NewBloodSplat09Green {
   Pic BSPLAT09
   shade "00 50 00"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -561,8 +586,9 @@ DECAL K8Gore_NewBloodSplat09Green {
 DECAL K8Gore_NewBloodSplat10Green {
   Pic BSPLAT10
   shade "00 50 00"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -570,8 +596,9 @@ DECAL K8Gore_NewBloodSplat10Green {
 DECAL K8Gore_NewBloodSplat11Green {
   Pic BSPLAT11
   shade "00 50 00"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -579,8 +606,9 @@ DECAL K8Gore_NewBloodSplat11Green {
 DECAL K8Gore_NewBloodSplat12Green {
   Pic BSPLAT12
   shade "00 50 00"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -588,8 +616,9 @@ DECAL K8Gore_NewBloodSplat12Green {
 DECAL K8Gore_NewBloodSplat13Green {
   Pic BSPLAT13
   shade "00 50 00"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -597,8 +626,9 @@ DECAL K8Gore_NewBloodSplat13Green {
 DECAL K8Gore_NewBloodSplat14Green {
   Pic BSPLAT14
   shade "00 50 00"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -627,25 +657,23 @@ DECALGROUP BloodSplatGreen {
 
 STRETCHER K8Gore_NewBloodStretcher1Green {
   StretchStart 0
-  StretchTime 15
-  GoalX 0.45
-  GoalY 0.7
+  StretchTime random 12 18
+  GoalX random 0.35 0.55
+  GoalY random 0.6 0.8
 }
 
 STRETCHER K8Gore_NewBloodStretcher2Green {
   StretchStart 0
-  StretchTime 20
-  GoalX 0.45
-  GoalY 0.8
+  StretchTime random 16 20
+  GoalX random 0.35 0.55 //0.45
+  GoalY random 0.6 0.85 //0.8
 }
 
-/*
 SLIDER K8Gore_NewBloodSliderGreen {
-  SlideTime 22
+  SlideTime random 17 24 // 22
   //DistY -132
-  DistY -4
+  DistY random 4 8
 }
-*/
 
 COMBINER K8Gore_NewBloodSmearer1Green {
   K8Gore_NewBloodStretcher1Green
@@ -656,14 +684,15 @@ COMBINER K8Gore_NewBloodSmearer1Green {
 COMBINER K8Gore_NewBloodSmearer2Green {
   K8Gore_NewBloodStretcher2Green
   //K8Gore_NewBloodStretcher2Green
-  //K8Gore_NewBloodSliderGreen
+  K8Gore_NewBloodSliderGreen
 }
 
 
 DECAL K8Gore_NewBloodSmear1Green {
   Pic BSMEAR01
-  X-Scale 0.46
-  Y-Scale 0.46
+  //X-Scale 0.46
+  //Y-Scale 0.46
+  Scale random 0.42 0.48
   shade "00 50 00"
   RandomFlipX
   RandomFlipY
@@ -672,8 +701,9 @@ DECAL K8Gore_NewBloodSmear1Green {
 
 DECAL K8Gore_NewBloodSmear2Green {
   Pic BSMEAR02
-  X-Scale 0.44
-  Y-Scale 0.44
+  //X-Scale 0.44
+  //Y-Scale 0.44
+  Scale random 0.42 0.48
   shade "00 50 00"
   RandomFlipX
   RandomFlipY
@@ -947,8 +977,9 @@ decalgroup K8GoreBloodSuperTransient_Green {
 DECAL K8Gore_NewBloodSplat01Blue {
   Pic BSPLAT01
   shade "00 00 50"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -956,8 +987,9 @@ DECAL K8Gore_NewBloodSplat01Blue {
 DECAL K8Gore_NewBloodSplat02Blue {
   Pic BSPLAT02
   shade "00 00 50"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -965,8 +997,9 @@ DECAL K8Gore_NewBloodSplat02Blue {
 DECAL K8Gore_NewBloodSplat03Blue {
   Pic BSPLAT03
   shade "00 00 50"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -974,8 +1007,9 @@ DECAL K8Gore_NewBloodSplat03Blue {
 DECAL K8Gore_NewBloodSplat04Blue {
   Pic BSPLAT04
   shade "00 00 50"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -983,8 +1017,9 @@ DECAL K8Gore_NewBloodSplat04Blue {
 DECAL K8Gore_NewBloodSplat05Blue {
   Pic BSPLAT05
   shade "00 00 50"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -992,8 +1027,10 @@ DECAL K8Gore_NewBloodSplat05Blue {
 DECAL K8Gore_NewBloodSplat06Blue {
   Pic BSPLAT06
   shade "00 00 50"
-  X-Scale 0.3
-  Y-Scale 0.6
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.26 0.34
+  Y-Scale random 0.56 0.64
   RandomFlipX
   RandomFlipY
 }
@@ -1001,8 +1038,9 @@ DECAL K8Gore_NewBloodSplat06Blue {
 DECAL K8Gore_NewBloodSplat07Blue {
   Pic BSPLAT07
   shade "00 00 50"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -1010,8 +1048,9 @@ DECAL K8Gore_NewBloodSplat07Blue {
 DECAL K8Gore_NewBloodSplat08Blue {
   Pic BSPLAT08
   shade "00 00 50"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -1019,8 +1058,9 @@ DECAL K8Gore_NewBloodSplat08Blue {
 DECAL K8Gore_NewBloodSplat09Blue {
   Pic BSPLAT09
   shade "00 00 50"
-  X-Scale 0.28
-  Y-Scale 0.28
+  //X-Scale 0.28
+  //Y-Scale 0.28
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -1028,8 +1068,9 @@ DECAL K8Gore_NewBloodSplat09Blue {
 DECAL K8Gore_NewBloodSplat10Blue {
   Pic BSPLAT10
   shade "00 00 50"
-  X-Scale 0.26
-  Y-Scale 0.26
+  //X-Scale 0.26
+  //Y-Scale 0.26
+  Scale random 0.20 0.34
   RandomFlipX
   RandomFlipY
 }
@@ -1037,8 +1078,9 @@ DECAL K8Gore_NewBloodSplat10Blue {
 DECAL K8Gore_NewBloodSplat11Blue {
   Pic BSPLAT11
   shade "00 00 50"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -1046,8 +1088,9 @@ DECAL K8Gore_NewBloodSplat11Blue {
 DECAL K8Gore_NewBloodSplat12Blue {
   Pic BSPLAT12
   shade "00 00 50"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -1055,8 +1098,9 @@ DECAL K8Gore_NewBloodSplat12Blue {
 DECAL K8Gore_NewBloodSplat13Blue {
   Pic BSPLAT13
   shade "00 00 50"
-  X-Scale 0.68
-  Y-Scale 0.68
+  //X-Scale 0.68
+  //Y-Scale 0.68
+  Scale random 0.62 0.72
   RandomFlipX
   RandomFlipY
 }
@@ -1064,8 +1108,9 @@ DECAL K8Gore_NewBloodSplat13Blue {
 DECAL K8Gore_NewBloodSplat14Blue {
   Pic BSPLAT14
   shade "00 00 50"
-  X-Scale 0.64
-  Y-Scale 0.64
+  //X-Scale 0.64
+  //Y-Scale 0.64
+  Scale random 0.50 0.68
   RandomFlipX
   RandomFlipY
 }
@@ -1094,25 +1139,23 @@ DECALGROUP BloodSplatBlue {
 
 STRETCHER K8Gore_NewBloodStretcher1Blue {
   StretchStart 0
-  StretchTime 15
-  GoalX 0.45
-  GoalY 0.7
+  StretchTime random 12 18
+  GoalX random 0.35 0.55
+  GoalY random 0.6 0.8
 }
 
 STRETCHER K8Gore_NewBloodStretcher2Blue {
   StretchStart 0
-  StretchTime 20
-  GoalX 0.45
-  GoalY 0.8
+  StretchTime random 16 20
+  GoalX random 0.35 0.55 //0.45
+  GoalY random 0.6 0.85 //0.8
 }
 
-/*
 SLIDER K8Gore_NewBloodSliderBlue {
-  SlideTime 22
+  SlideTime random 17 24 // 22
   //DistY -132
-  DistY -4
+  DistY random 4 8
 }
-*/
 
 COMBINER K8Gore_NewBloodSmearer1Blue {
   K8Gore_NewBloodStretcher1Blue
@@ -1123,14 +1166,15 @@ COMBINER K8Gore_NewBloodSmearer1Blue {
 COMBINER K8Gore_NewBloodSmearer2Blue {
   K8Gore_NewBloodStretcher2Blue
   //K8Gore_NewBloodStretcher2Blue
-  //K8Gore_NewBloodSliderBlue
+  K8Gore_NewBloodSliderBlue
 }
 
 
 DECAL K8Gore_NewBloodSmear1Blue {
   Pic BSMEAR01
-  X-Scale 0.46
-  Y-Scale 0.46
+  //X-Scale 0.46
+  //Y-Scale 0.46
+  Scale random 0.42 0.48
   shade "00 00 50"
   RandomFlipX
   RandomFlipY
@@ -1139,8 +1183,9 @@ DECAL K8Gore_NewBloodSmear1Blue {
 
 DECAL K8Gore_NewBloodSmear2Blue {
   Pic BSMEAR02
-  X-Scale 0.44
-  Y-Scale 0.44
+  //X-Scale 0.44
+  //Y-Scale 0.44
+  Scale random 0.42 0.48
   shade "00 00 50"
   RandomFlipX
   RandomFlipY
