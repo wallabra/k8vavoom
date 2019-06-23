@@ -485,24 +485,8 @@ final bool StepMove () {
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/float(steps*i)), origy+(deltay/float(steps*i)), Origin.z), dropoff);
-    if (!try_ok) {
-      //k8: if not player, and cannot move, try smaller radius to unstuck ourselves
-      /*
-      if (i == 1 && !bIsPlayer && Radius == oldRadius && oldRadius >= 12) {
-        Radius -= 5;
-        if (!CheckPosition(Origin)) {
-          print("MONSTER UNSTUCK: success!");
-          break;
-        } else {
-          print("MONSTER UNSTUCK: failed!");
-        }
-      } else {
-        break;
-      }
-      */
-      break;
-    }
+    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/float(steps*i)), origy+(deltay/float(steps*i)), Origin.z), AllowDropOff:dropoff);
+    if (!try_ok) break;
   }
   //Radius = oldRadius;
 
@@ -518,7 +502,7 @@ final bool StepMove () {
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(tryx, tryy, Origin.z), dropoff);
+    try_ok = TryMoveEx(&tmtrace, vector(tryx, tryy, Origin.z), AllowDropOff:dropoff);
   }
 
   if (!try_ok) {

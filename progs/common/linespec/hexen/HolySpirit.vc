@@ -244,7 +244,7 @@ void CHolyWeave()
   WeaveXY = (WeaveXY + (P_Random() % 5)) & 63;
   newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
   newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-  TryMove(vector(newX, newY, Origin.z), false);
+  TryMove(vector(newX, newY, Origin.z), AllowDropOff:false);
   Origin.z -= Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
   WeaveZ = (WeaveZ + (P_Random() % 5)) & 63;
   Origin.z += Level.Game.FloatBobOffsets[WeaveZ] * 2.0;

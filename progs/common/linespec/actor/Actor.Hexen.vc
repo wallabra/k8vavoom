@@ -436,7 +436,7 @@ final void A_KSpiritWeave () {
   WeaveXY = (WeaveXY+(P_Random()%5))&63;
   newX += cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
   newY += sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
-  TryMove(vector(newX, newY, Origin.z), false);
+  TryMove(vector(newX, newY, Origin.z), AllowDropOff:false);
   float savedz = Origin.z;
   Origin.z -= Level.Game.FloatBobOffsets[WeaveZ]*2.0;
   // check to make sure there's nothing in the way of the float
@@ -491,7 +491,7 @@ final void CHolyTailFollow (float dist) {
   if (child) {
     float an = atan2(child.Origin.y-Origin.y, Origin.x-child.Origin.x);
     float oldDistance = DistTo(child);
-    if (child.TryMove(vector(Origin.x+dist*cos(an), Origin.y+dist*sin(an), child.Origin.z), false)) {
+    if (child.TryMove(vector(Origin.x+dist*cos(an), Origin.y+dist*sin(an), child.Origin.z), AllowDropOff:false)) {
       float newDistance = DistTo2(child)-1.0;
       if (oldDistance < 1.0) {
         if (child.Origin.z < Origin.z) {
@@ -533,7 +533,7 @@ final void A_CHolyTail () {
       return;
     } else if (TryMove(vector(
                          parent.Origin.x-14.0*cos(parent.Angles.yaw),
-                         parent.Origin.y-14.0*sin(parent.Angles.yaw), Origin.z), false))
+                         parent.Origin.y-14.0*sin(parent.Angles.yaw), Origin.z), AllowDropOff:false))
     {
       Origin.z = parent.Origin.z-5.0;
     }

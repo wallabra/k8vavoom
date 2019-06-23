@@ -109,7 +109,7 @@ override void Tick (float DeltaTime) {
     bool changexy = xfrac || yfrac;
     foreach (auto i; 0..Count) {
       if (changexy) {
-        if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true)) {
+        if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), AllowDropOff:true)) {
           // blocked move
           if (tmtrace.BlockingMobj) {
             BlasterHitMobj(tmtrace.BlockingMobj);

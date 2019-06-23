@@ -390,7 +390,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     float ptryy = Origin.y+StepYMove;
 
     tmtrace_t tmtrace;
-    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), true)) {
+    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
       // blocked move
       if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
         //print("tracing decal '%s' (hit)", DecalName);
@@ -700,8 +700,8 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
   } else if (bSlide) {
     // try to slide along it
     // slide against mobj
-         if (TryMove(vector(Origin.x, ptryy, Origin.z), true)) Velocity.x = 0.0;
-    else if (TryMove(vector(ptryx, Origin.y, Origin.z), true)) Velocity.y = 0.0;
+         if (TryMove(vector(Origin.x, ptryy, Origin.z), AllowDropOff:true)) Velocity.x = 0.0;
+    else if (TryMove(vector(ptryx, Origin.y, Origin.z), AllowDropOff:true)) Velocity.y = 0.0;
     else { Velocity.x = 0.0; Velocity.y = 0.0; }
   } else {
     Velocity.x = 0.0;

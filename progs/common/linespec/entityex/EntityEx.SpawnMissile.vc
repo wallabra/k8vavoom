@@ -65,7 +65,7 @@ final bool CheckMissileSpawn () {
   LinkToWorld();
 
   tmtrace_t tmtrace;
-  if (!TryMoveEx(&tmtrace, Origin, false)) {
+  if (!TryMoveEx(&tmtrace, Origin, AllowDropOff:false)) {
     // don't explode ripping missiles that spawn inside another thing
     if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {
       if (CountsAsKill()) {

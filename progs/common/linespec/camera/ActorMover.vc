@@ -99,7 +99,7 @@ override bool Interpolate () {
   if (Tracer == none) return true;
 
   if (::Interpolate()) {
-    if (!Tracer.TryMove(Origin, true)) return false;
+    if (!Tracer.TryMove(Origin, AllowDropOff:true)) return false;
     if (Args[2]&2) Tracer.Angles.yaw = Angles.yaw;
     if (Args[2]&4) Tracer.Angles.pitch = Angles.pitch;
     return true;

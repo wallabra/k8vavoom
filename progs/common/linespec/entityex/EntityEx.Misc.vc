@@ -2273,7 +2273,7 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   }
 
   // check for movements
-  if (!newSkull.TryMove(newSkull.Origin+vector(cosa, sina, 8.0), false)) {
+  if (!newSkull.TryMove(newSkull.Origin+vector(cosa, sina, 8.0), AllowDropOff:false)) {
     // kill it immediately
     newSkull.Damage(self, self, 10000, forced:true);
     return;

@@ -615,7 +615,7 @@ void CrouchMove (int direction) {
   float savedheight = plrmo.Height; //HACK! we'd better use `GetHeight()` here, but...
   float defaultheight = plrmo.GetRealHeight; // ...this saves `Height` to `RealHeight` too
   plrmo.Height = defaultheight*newcrf; // we'd better use `SetHeight()` here
-  if (!plrmo.TryMove(plrmo.Origin, false)) {
+  if (!plrmo.TryMove(plrmo.Origin, AllowDropOff:false)) {
     // nope, restore player height
     plrmo.Height = savedheight;
     return;

@@ -83,7 +83,7 @@ final void A_SummonRebel()
 
   A = Spawn(Rebel1, Origin + vector((Random() - 0.5) * 64.0,
     (Random() - 0.5) * 64.0, 0.0));
-  if (!A.TryMove(A.Origin, false))
+  if (!A.TryMove(A.Origin, AllowDropOff:false))
   {
     A.Destroy();
     return;
