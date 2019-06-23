@@ -396,6 +396,7 @@ set(MAIN_COMMON_SOURCES
   p_worldinfo.cpp
   p_worldinfo.h
   pr_cmds.cpp
+  vc_api_vavoom.h
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
   ntvalueioex.cpp

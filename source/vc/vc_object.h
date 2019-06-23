@@ -350,11 +350,11 @@ public:
 #include "vc_object_common.h"
 
 #if defined(VCC_STANDALONE_EXECUTOR)
-# include "vc_object_vccrun.h"
+# include "../../vccrun/vc_api_vccrun.h"
 #elif defined(IN_VCC)
-# include "vc_object_vcc.h"
+# include "../../utils/vcc/vc_api_vcc.h"
 #else
-# include "vc_object_vavoom.h"
+# include "../vc_api_vavoom.h"
 #endif
 
 public:

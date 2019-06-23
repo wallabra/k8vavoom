@@ -1350,11 +1350,10 @@ int VObject::VKeyFromName (const VStr &kn) {
 #include "vc_object_evqueue.cpp"
 
 #include "vc_object_common.cpp"
-
 #if defined(VCC_STANDALONE_EXECUTOR)
-# include "vc_object_vccrun.cpp"
+# include "../../vccrun/vc_api_vccrun.cpp"
 #elif defined(IN_VCC)
-# include "vc_object_vcc.cpp"
+# include "../../utils/vcc/vc_api_vcc.cpp"
 #else
-# include "vc_object_vavoom.cpp"
+# include "../vc_api_vavoom.cpp"
 #endif

@@ -201,6 +201,7 @@ if (ENABLE_VCCRUN)
     vcc_run.h
     vcc_netobj.h
     vcc_netobj.cpp
+    vc_api_vccrun.h
     # ini
     modules/mod_ini.h
     modules/mod_ini.cpp

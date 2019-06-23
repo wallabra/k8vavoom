@@ -74,6 +74,7 @@ add_executable(vcc
   ${VC_COMPILER_SOURCES}
   vcc.cpp
   vcc.h
+  vc_api_vcc.h
 )
 set_target_properties(vcc PROPERTIES OUTPUT_NAME ../bin/vcc)
 #set_target_properties(vcc PROPERTIES COMPILE_FLAGS IN_VCC)

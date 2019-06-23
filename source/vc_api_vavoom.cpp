@@ -24,8 +24,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "../drawer.h"
-#include "../sv_local.h"
+#ifdef CLIENT
+# include "drawer.h"
+#endif
+#include "sv_local.h"
 
 
 //**************************************************************************

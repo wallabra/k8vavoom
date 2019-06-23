@@ -24,4 +24,4 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "vc_object_vavoom.h"
+#include "../../source/vc_api_vavoom.h"
