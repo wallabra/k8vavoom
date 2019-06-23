@@ -192,7 +192,7 @@ final void A_Recoil (float Force) {
 //  A_Punch
 //
 //===========================================================================
-final void A_Punch () {
+final void A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
   if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn) {
@@ -208,7 +208,15 @@ final void A_Punch () {
   TAVec aimAngles = Angles;
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist');
+  EntityEx hitEntity;
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist', out hitEntity:hitEntity);
+
+  if (alertIfHit && hitEntity) {
+    //print("FIST HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.default.Health);
+    if (!noAlertIfKilled || hitEntity.Health > 0) {
+      LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+    }
+  }
 
   // turn to face target
   if (AimTarget) {

@@ -737,7 +737,8 @@ final int LineAttack (TVec dir, float distance, int LADamage,
                       class!EntityEx PuffType, optional bool NoAttackGhosts,
                       optional TVec *outHitPoint, optional name DmgType,
                       optional bool secondary, optional name decalType,
-                      optional int pufftid, optional bool disableRandomZ)
+                      optional int pufftid, optional bool disableRandomZ,
+                      optional out EntityEx hitEntity)
 {
   TVec dst;
   intercept_t *in;
@@ -748,6 +749,8 @@ final int LineAttack (TVec dir, float distance, int LADamage,
   //print("LineAttack: self=<%C>", self);
 
   //Entity e; print("%f", e.Height);
+
+  hitEntity = none;
 
   shootOrigin = Origin;
   shootOrigin.z += Height*0.5-FloorClip;
@@ -891,6 +894,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     }
 
     // don't go any farther
+    hitEntity = th;
     return false;
   }
 
