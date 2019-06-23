@@ -187,6 +187,13 @@ void VDecalDef::genValues () {
     scaleX.genValue();
     scaleY.genValue();
   }
+
+  switch (scaleSpecial) {
+    case ScaleX_Is_Y_Multiply: scaleX.value = scaleY.value*scaleMultiply; break;
+    case ScaleY_Is_X_Multiply: scaleY.value = scaleX.value*scaleMultiply; break;
+    default: break;
+  }
+
   alpha.genValue();
   addAlpha.genValue();
 }
@@ -289,8 +296,29 @@ bool VDecalDef::parse (VScriptParser *sc) {
       continue;
     }
 
-    if (sc->Check("x-scale")) { parseNumOrRandom(sc, &scaleX); continue; }
-    if (sc->Check("y-scale")) { parseNumOrRandom(sc, &scaleY); continue; }
+    if (sc->Check("x-scale")) {
+      if (sc->Check("multiply")) {
+        sc->Expect("y-scale");
+        sc->ExpectFloat();
+        scaleSpecial = ScaleX_Is_Y_Multiply;
+        scaleMultiply = sc->Float;
+      } else {
+        parseNumOrRandom(sc, &scaleX);
+      }
+      continue;
+    }
+
+    if (sc->Check("y-scale")) {
+      if (sc->Check("multiply")) {
+        sc->Expect("x-scale");
+        sc->ExpectFloat();
+        scaleSpecial = ScaleY_Is_X_Multiply;
+        scaleMultiply = sc->Float;
+      } else {
+        parseNumOrRandom(sc, &scaleY);
+      }
+      continue;
+    }
 
     if (sc->Check("scale")) { useCommonScale = true; parseNumOrRandom(sc, &commonScale); continue; }
 

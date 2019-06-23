@@ -2138,6 +2138,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
 
   //HACK!
   dec->genValues();
+  //GCon->Logf("decal '%s': scale=(%g:%g)", *dec->name, dec->scaleX.value, dec->scaleY.value);
 
   if (dec->scaleX.value <= 0 || dec->scaleY.value <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);

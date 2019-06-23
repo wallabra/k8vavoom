@@ -92,8 +92,20 @@ protected:
   bool useCommonScale;
   DecalFloatVal commonScale;
 
+  enum {
+    Scale_No_Special,
+    ScaleX_Is_Y_Multiply,
+    ScaleY_Is_X_Multiply,
+  };
+  int scaleSpecial;
+  float scaleMultiply;
+
 public:
-  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr), useCommonScale(false) {}
+  VDecalDef ()
+    : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1)
+    , scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0)
+    , fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr)
+    , useCommonScale(false), scaleSpecial(Scale_No_Special), scaleMultiply(1) {}
   ~VDecalDef ();
 
   void genValues ();
