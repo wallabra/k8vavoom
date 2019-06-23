@@ -14,6 +14,8 @@ actor Fist : Weapon
   Weapon.PlayerModelVersion 1
   +Weapon.Wimpy_Weapon
   +Weapon.MeleeWeapon
+  //k8: `A_Punch()` will alert monsters if something was hit
+  +Weapon.NoAlert
   states
   {
   Ready:
@@ -27,7 +29,8 @@ actor Fist : Weapon
     Loop
   Fire:
     PUNG B 4
-    PUNG C 4 A_Punch
+    // alert if hit something, but don't alert if killed it
+    PUNG C 4 A_Punch(true, true)
     PUNG D 5
     PUNG C 4
     PUNG B 5 A_ReFire
