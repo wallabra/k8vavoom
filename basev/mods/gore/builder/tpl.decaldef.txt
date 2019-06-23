@@ -337,7 +337,7 @@ DECAL K8Gore_NewBloodSplat01${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -356,7 +356,7 @@ DECAL K8Gore_NewBloodSplat02${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -375,7 +375,7 @@ DECAL K8Gore_NewBloodSplat03${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -394,7 +394,7 @@ DECAL K8Gore_NewBloodSplat04${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -413,7 +413,7 @@ DECAL K8Gore_NewBloodSplat05${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -433,7 +433,7 @@ DECAL K8Gore_NewBloodSplat06${Color} {
 #endif
   //X-Scale 0.3
   //Y-Scale 0.6
-  X-Scale random 0.20 0.40
+  X-Scale random 0.22 0.40
   Y-Scale multiply X-Scale 2
   RandomFlipX
   RandomFlipY
@@ -453,7 +453,7 @@ DECAL K8Gore_NewBloodSplat07${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -472,7 +472,7 @@ DECAL K8Gore_NewBloodSplat08${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -491,7 +491,7 @@ DECAL K8Gore_NewBloodSplat09${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -510,7 +510,7 @@ DECAL K8Gore_NewBloodSplat10${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
 }
@@ -642,7 +642,7 @@ DECAL K8Gore_NewBloodSplatFade01${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -662,7 +662,7 @@ DECAL K8Gore_NewBloodSplatFade02${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -682,7 +682,7 @@ DECAL K8Gore_NewBloodSplatFade03${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -702,7 +702,7 @@ DECAL K8Gore_NewBloodSplatFade04${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -722,7 +722,7 @@ DECAL K8Gore_NewBloodSplatFade05${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -743,7 +743,7 @@ DECAL K8Gore_NewBloodSplatFade06${Color} {
 #endif
   //X-Scale 0.3
   //Y-Scale 0.6
-  X-Scale random 0.20 0.40
+  X-Scale random 0.22 0.40
   Y-Scale multiply X-Scale 2
   RandomFlipX
   RandomFlipY
@@ -764,7 +764,7 @@ DECAL K8Gore_NewBloodSplatFade07${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -784,7 +784,7 @@ DECAL K8Gore_NewBloodSplatFade08${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -804,7 +804,7 @@ DECAL K8Gore_NewBloodSplatFade09${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.28
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
@@ -824,7 +824,7 @@ DECAL K8Gore_NewBloodSplatFade10${Color} {
   shade "00 $(Shade) 00"
 #endif
   //Scale 0.26
-  Scale random 0.15 0.37
+  Scale random 0.22 0.37
   RandomFlipX
   RandomFlipY
   animator K8GoreBloodSplat_FaderAnim${Color}
