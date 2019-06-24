@@ -825,7 +825,13 @@ void VRenderLevelShared::RenderSubsector (int num) {
     return;
   }
 
-  if (!ViewClip.ClipCheckSubsector(sub)) return;
+  if (!ViewClip.ClipCheckSubsector(sub)) {
+    // just in case, because why not?
+    if (clip_use_1d_clipper) {
+      ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+    }
+    return;
+  }
 
   if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
   sub->VisFrame = currVisFrame;

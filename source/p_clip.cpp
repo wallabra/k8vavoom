@@ -48,10 +48,10 @@ extern VCvarB r_draw_pobj;
 enum { r_draw_pobj = true };
 #endif
 
+static VCvarB clip_enabled("clip_enabled", true, "Do 1D geometry cliping optimizations?", CVAR_PreInit);
 static VCvarB clip_bbox("clip_bbox", true, "Clip BSP bboxes with 1D clipper?", CVAR_PreInit);
 static VCvarB clip_check_bbox_z("clip_check_bbox_z", false, "Consider bbox height when cliping BSP bboxes with 1D clipper?", CVAR_PreInit);
 static VCvarB clip_subregion("clip_subregion", true, "Clip subregions?", CVAR_PreInit);
-static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?", CVAR_PreInit);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?", CVAR_PreInit);
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?", CVAR_PreInit);
 VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_PreInit);
@@ -63,6 +63,8 @@ VCvarB clip_frustum_bsp_segs("clip_frustum_bsp_segs", true, "Clip segs in BSP re
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit, "Which frustum planes we should check?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "19", "Which frustum planes we should check?", CVAR_PreInit);
 VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "255", "Which frustum planes we should check?", CVAR_PreInit);
+
+static VCvarB clip_add_backface_segs("clip_add_backface_segs", true, "Add backfaced segs to 1D clipper (this prevents some clipping bugs, but makes \"noclip\" less usable)?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
@@ -1264,7 +1266,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 
   // viewer is in back side or on plane?
   const int orgside = seg->PointOnSide2(Origin);
-  if (orgside) return; // origin is on plane, or on back
+  if (orgside == 2) return; // origin is on plane
+  // add differently oriented segs too
+  if (orgside && !clip_add_backface_segs) return;
 
   if (clip_skip_slopes_1side) {
     // do not clip with slopes, if it has no midtex
@@ -1277,8 +1281,8 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     }
   }
 
-  const TVec &v1 = *seg->v1;
-  const TVec &v2 = *seg->v2;
+  const TVec &v1 = (!orgside ? *seg->v1 : *seg->v2);
+  const TVec &v2 = (!orgside ? *seg->v2 : *seg->v1);
 
   if (!MirrorCheck(Mirror, v1, v2)) return;
 
@@ -1290,6 +1294,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
       if (!IsSegAClosedSomethingServer(Level, RepSectors, seg)) return;
     }
   }
+
 
 #if defined(XXX_CLIPPER_MANY_DUMPS)
   if (dbg_clip_dump_added_ranges) {

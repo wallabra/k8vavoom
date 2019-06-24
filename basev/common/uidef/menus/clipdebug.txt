@@ -8,6 +8,7 @@ menudef ClipperOptions {
   option bool { title = "BSP BBox 1D clipping"; cvar = clip_bbox; }
   option bool { title = "BSP BBox 1D Z clipping"; cvar = clip_check_bbox_z; }
   option bool { title = "Clip with polyobj"; cvar = clip_with_polyobj; }
+  option bool { title = "Add backfaced segs to 1D clipper"; cvar = clip_add_backface_segs; }
 
   header "Other";
 
