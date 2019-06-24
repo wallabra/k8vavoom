@@ -38,6 +38,8 @@ enum /*cheat_t*/ {
   CF_BUDDHA            = 1<<7, // Normal play, but never looses last 1% of health
 };
 
+enum FlashlightLightId = 3_669_666;
+
 const float USERANGE      = 64.0;
 const float USETHINGRANGE = 64.0; //128.0; //k8:why so far?
 
@@ -530,6 +532,9 @@ override void PostfixViewHeight () {
   float zdiff = MO.Origin.z-lastViewOrgZForPfx;
   if (!zdiff) return; // nothing to do
   lastViewOrgZSub = nullptr; // in case we will be called repeatedly
+
+  // fix flashlight origin, so it won't jerk on lifts
+  if (bFlashlightOn) MO.ShiftDlightHeight(FlashlightLightId, zdiff);
 
   ViewOrg.z += zdiff;
   //SanitizeViewOrgZ();
@@ -4022,7 +4027,7 @@ override void PlayerTick (float deltaTime) {
       //florg.z += MO.Height*0.5-MO.FloorClip;
       //florg.z += GetAttackZOfs();
       florg.z += ViewHeight;
-      dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 666);
+      dlight_t *fl = MO.AllocDlight(MO, florg, flradius, FlashlightLightId);
       if (fl) {
         fl.coneDirection = dir;
         fl.coneAngle = GetCvarF('k8_flashlight_angle');

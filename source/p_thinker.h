@@ -94,6 +94,7 @@ public:
   DECLARE_FUNCTION(bprint)
 
   DECLARE_FUNCTION(AllocDlight)
+  DECLARE_FUNCTION(ShiftDlightHeight)
   DECLARE_FUNCTION(NewParticle)
   DECLARE_FUNCTION(GetAmbientSound)
 

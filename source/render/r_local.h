@@ -690,6 +690,7 @@ public:
   virtual void ClearReferences () override;
 
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
+  virtual dlight_t *FindDlightById (int lightid) override;
   virtual void DecayLights (float) override;
   virtual void RemoveOwnedLight (VThinker *Owner) override;
 

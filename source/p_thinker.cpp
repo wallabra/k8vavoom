@@ -35,6 +35,7 @@
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
+#include "cl_local.h" // for dlight_t
 
 
 IMPLEMENT_CLASS(V, Thinker)
@@ -380,6 +381,22 @@ IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
   P_GET_REF(VThinker, Owner);
   P_GET_SELF;
   RET_PTR(Self->XLevel->RenderData->AllocDlight(Owner, lorg, radius, lightid));
+}
+
+//native final bool ShiftDlightHeight (int lightid, float zdelta);
+IMPLEMENT_FUNCTION(VThinker, ShiftDlightHeight) {
+  int lightid;
+  float zdelta;
+  vobjGetParamSelf(lightid, zdelta);
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VThinker::ShiftDlightOrigin"); }
+  dlight_t *dl = Self->XLevel->RenderData->FindDlightById(lightid);
+  if (dl) {
+    //GCon->Logf("fixing dlight with id %d, delta=%g", lightid, zdelta);
+    dl->origin.z += zdelta;
+    RET_BOOL(true);
+  } else {
+    RET_BOOL(false);
+  }
 }
 
 IMPLEMENT_FUNCTION(VThinker, NewParticle) {

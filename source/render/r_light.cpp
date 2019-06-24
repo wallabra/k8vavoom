@@ -405,6 +405,22 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
 //==========================================================================
 //
+//  VRenderLevelShared::FindDlightById
+//
+//==========================================================================
+dlight_t *VRenderLevelShared::FindDlightById (int lightid) {
+  if (lightid <= 0) return nullptr;
+  dlight_t *dl = DLights;
+  for (int i = MAX_DLIGHTS; i--; ++dl) {
+    if (dl->die < Level->Time || dl->radius <= 0.0f) continue;
+    if (dl->lightid == lightid) return dl;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DecayLights
 //
 //==========================================================================

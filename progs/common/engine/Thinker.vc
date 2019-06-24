@@ -115,7 +115,11 @@ override native void Destroy (); // this just marks thinker to be deleted on a n
 // broadcast message (print to all clients)
 native final void bprint (string format, ...) [printf,1];
 
+// WARNING! don't store returned dlight pointer, it may become invalid
+//          after next call to `AllocDlight()`!
 native final dlight_t *AllocDlight (Thinker Owner, TVec origin, /*optional*/ float radius, optional int lightid); // can return `nullptr`
+// returns `true` if dlight was found
+native final bool ShiftDlightHeight (int lightid, float zdelta);
 native final particle_t *NewParticle (TVec origin); // can return `nullptr`
 native static final FAmbientSound *GetAmbientSound (int Idx); // can return `nullptr`
 

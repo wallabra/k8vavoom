@@ -67,6 +67,7 @@ public:
   virtual void ClearReferences () = 0;
 
   virtual dlight_t *AllocDlight (VThinker*, const TVec &lorg, float radius, int lightid=-1) = 0;
+  virtual dlight_t *FindDlightById (int lightid) = 0;
   virtual void DecayLights (float) = 0;
   virtual void RemoveOwnedLight (VThinker *Owner) = 0;
 
