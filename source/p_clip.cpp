@@ -658,7 +658,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   Pts[1] = TVec(fovx, -fovy, 1.0f);
   Pts[2] = TVec(-fovx, fovy, 1.0f);
   Pts[3] = TVec(-fovx, -fovy, 1.0f);
-  TVec clipforward = TVec(viewforward.x, viewforward.y, 0.0f);
+  TVec clipforward(viewforward.x, viewforward.y, 0.0f);
   //k8: i don't think that we need to normalize it, but...
   //clipforward.normaliseInPlace();
 
@@ -685,6 +685,9 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
   }
 
   if (d1 != d2) {
+    // this prevents some clipping bugs (i hope) with zdbsp
+    d1 -= 2;
+    d2 += 2;
     VFloat a1 = fwdAngle+d1;
     VFloat a2 = fwdAngle+d2;
     a1 = VVC_AngleMod(a1);
