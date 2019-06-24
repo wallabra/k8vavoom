@@ -34,7 +34,7 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-#define HORIZON_SURF_SIZE (sizeof(surface_t) + sizeof(TVec) * 3)
+#define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(TVec)*3)
 
 //#define VRBSP_DISABLE_SKY_PORTALS
 
@@ -51,6 +51,8 @@ static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable ren
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregions in renderer?", CVAR_Archive);
+
+VCvarB r_bsp_skip_back("r_bsp_skip_back", true, "Do not render back part of BSP tree?", CVAR_Archive);
 
 //static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
@@ -922,8 +924,9 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     // decide which side the view point is on
     const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
     unsigned side = (unsigned)(dist <= 0.0f);
+    bool onPlane = (fabsf(dist) < 0.1f);
     // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
-    if (dist == 0.0f) side = bsp->PointOnSide(vieworg+viewforward*2);
+    if (onPlane) side = bsp->PointOnSide(vieworg+viewforward*2);
     if (!onlyClip) {
       //int side = bsp->PointOnSide(vieworg);
       if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
@@ -934,8 +937,11 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
       return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
     } else {
       RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
-      side ^= 1;
-      return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
+      // we can skip back nodes if we're not on a plane
+      if (onPlane || !r_bsp_skip_back) {
+        side ^= 1;
+        return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
+      }
     }
   } else {
     if (onlyClip) {
