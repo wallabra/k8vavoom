@@ -315,13 +315,76 @@ menudef GameplayOptions {
   // headshots gore effects moved to gore mod
 
 
-  header "Elven Gifts";
+  header "Ammo King Mode";
 
   option bool {
     title = "Ammo King";
     cvar = k8AmmoKing;
-    help = "MORE AMMO! EVEN MORE AMMO!";
+    help =
+      "MORE AMMO! EVEN MORE AMMO!"
+      ""
+      "Overrides ammo limits."
+      "Note that default limits will be used if they're higher.";
   }
+
+  option slider {
+    title = "Max Shells with Headshots";
+    cvar = k8AmmoKing_MaxShells_HS;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Shells w/o Headshots";
+    cvar = k8AmmoKing_MaxShells_Normal;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Bullets with Headshots";
+    cvar = k8AmmoKing_MaxBullets_HS;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Bullets w/o Headshots";
+    cvar = k8AmmoKing_MaxBullets_Normal;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Rockets";
+    cvar = k8AmmoKing_MaxRockets;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Cells";
+    cvar = k8AmmoKing_MaxCells;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+  option slider {
+    title = "Max Other Types";
+    cvar = k8AmmoKing_MaxOther;
+    step = 1;
+    min = 1;
+    max = 999;
+  }
+
+
+  header "Elven Gifts";
 
   option bool {
     title = "Elven Gift";

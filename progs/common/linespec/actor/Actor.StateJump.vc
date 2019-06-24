@@ -171,8 +171,10 @@ final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, opt
     Inventory Item = tgt.FindInventory(itp);
     //if (!Item) Item = tgt.FindInventory(GetClassReplacement(itp));
     if (Item) {
+      Ammo ammo = Ammo(Item);
+      int maxam = (ammo ? ammo.k8GetAmmoKingMax() : Item.MaxAmount);
       if ((Amount > 0 && Item.Amount >= Amount) ||
-          (Amount == 0 && Item.Amount >= Item.MaxAmount))
+          (Amount == 0 && Item.Amount >= maxam))
       {
         //print("%C: A_JumpIfInventory: found item %C (%C); amount=%d (max=%d) (req=%d); state=%s", self, Item, itp, Item.Amount, Item.MaxAmount, Amount, Label);
         DoJump(Label);
@@ -202,8 +204,10 @@ final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Lab
     Inventory Item = tgt.Target.FindInventory(class!Inventory(ItemType));
     if (Item)
     {
+      Ammo ammo = Ammo(Item);
+      int maxam = (ammo ? ammo.k8GetAmmoKingMax() : Item.MaxAmount);
       if ((Amount > 0 && Item.Amount >= Amount) ||
-          (Amount == 0 && Item.Amount >= Item.MaxAmount))
+          (Amount == 0 && Item.Amount >= maxam))
       {
         DoJump(Label);
       }

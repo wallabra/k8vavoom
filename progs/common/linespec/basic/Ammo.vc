@@ -59,6 +59,15 @@ bool k8IsLoadedAmmo () {
 }
 
 
+enum AmmoKingType {
+  Shells,
+  Bullets,
+  Rockets,
+  Cells,
+  Other,
+}
+
+
 //==========================================================================
 //
 //  k8GetAmmoKingMax
@@ -66,30 +75,59 @@ bool k8IsLoadedAmmo () {
 //==========================================================================
 int k8GetAmmoKingMax () {
   if (!GetCvarB('k8AmmoKing')) return MaxAmount;
-  int amax = 666;
-  bool isSpecial = false;
+
+  AmmoKingType at = AmmoKingType.Other;
+  bool isBDW = false;
+
   switch (GetClassName(Class)) {
-    case 'BDW_RifleClip':
-    case 'BDW_ShotgunShell':
-      isSpecial = true;
-      break;
     // loaded ammo
     case 'BDW_RifleAmmo':
     case 'BDW_ShotgunAmmo':
       return MaxAmount;
+    case 'BDW_RifleClip':
+      isBDW = true;
+      at = AmmoKingType.Bullets;
+      break;
+    case 'BDW_ShotgunShell':
+      isBDW = true;
+      at = AmmoKingType.Shells;
+      break;
+    default:
+      switch (GetClassName(GetClassReplacee(Class))) {
+        case 'Clip':
+          at = AmmoKingType.Bullets;
+          break;
+        case 'Shell':
+          at = AmmoKingType.Shells;
+          break;
+        case 'RocketAmmo':
+          at = AmmoKingType.Rockets;
+          break;
+        case 'Cell':
+          at = AmmoKingType.Cells;
+          break;
+      }
+      break;
   }
-  if (!isSpecial) {
-    switch (GetClassName(GetClassReplacee(Class))) {
-      case 'Clip':
-      case 'Shell':
-        isSpecial = true;
-        break;
-    }
+
+
+  int res;
+  switch (at) {
+    case AmmoKingType.Shells: res = GetCvarI(GetCvarB('k8HSEnabled') ? 'k8AmmoKing_MaxShells_HS' : 'k8AmmoKing_MaxShells_Normal'); break;
+    case AmmoKingType.Bullets: res = GetCvarI(GetCvarB('k8HSEnabled') ? 'k8AmmoKing_MaxBullets_HS' : 'k8AmmoKing_MaxBullets_Normal'); break;
+    case AmmoKingType.Rockets: res = GetCvarI('k8AmmoKing_MaxRockets'); break;
+    case AmmoKingType.Cells: res = GetCvarI('k8AmmoKing_MaxCells'); break;
+    case AmmoKingType.Other: res = GetCvarI('k8AmmoKing_MaxOther'); break;
+    default: res = 0;
   }
-  if (isSpecial) {
-    if (GetCvarB('k8HSEnabled')) amax = 444; // headshots ARE powerful!
+
+  if (isBDW) {
+    //print("k8GetAmmoKingMax: class=%C; repl=%C; type=%d; res=%d; ma=%d; return=%d; bdw=%B", self, GetClassReplacee(Class), at, res, MaxAmount, res, isBDW);
+    return res;
   }
-  return max(amax, MaxAmount);
+  //print("k8GetAmmoKingMax: class=%C; repl=%C; type=%d; res=%d; ma=%d; return=%d; bdw=%B", self, GetClassReplacee(Class), at, res, MaxAmount, max(res, MaxAmount), isBDW);
+
+  return max(res, MaxAmount);
 }
 
 
@@ -109,7 +147,6 @@ override bool HandlePickup (Inventory Item) {
       // extra ammo in baby mode and nightmare mode
       ReceiveAmount = int(float(ReceiveAmount)*Level.World.GetAmmoFactor());
     }
-
 
     //Amount += ReceiveAmount;
     //if (Amount > /*MaxAmount*/k8GetAmmoKingMax()) Amount = /*MaxAmount*/k8GetAmmoKingMax();

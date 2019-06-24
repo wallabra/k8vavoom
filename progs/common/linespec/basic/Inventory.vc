@@ -341,9 +341,10 @@ bool TryPickup (EntityEx Toucher) {
 //==========================================================================
 bool HandlePickup (Inventory Item) {
   if (Item.Class == Class) {
-    if (Amount < MaxAmount) {
-      Amount += Item.Amount;
-      if (Amount > MaxAmount) Amount = MaxAmount;
+    // ammo has its own handler, so just use `MaxAmount` here
+    int maxam = MaxAmount;
+    if (Amount < maxam) {
+      Amount = min(Amount+max(0, Item.Amount), maxam);
       Item.bPickupGood = true;
     }
     return true;

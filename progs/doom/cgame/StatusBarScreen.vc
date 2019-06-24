@@ -425,9 +425,16 @@ override void SB_DrawMainBar () {
 void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoClass) {
   Inventory Item = EntityEx(cl.MO).FindInventory(AmmoClass);
   // ammo count
-  SB_DrawSmallNum(CountX, CountY, Item ? Item.Amount : 0);
+  SB_DrawSmallNum(CountX, CountY, (Item ? Item.Amount : 0));
   // max ammo count
-  SB_DrawSmallNum(MaxX, MaxY, Item ? Item.MaxAmount : AmmoClass.default.MaxAmount);
+  int maxam;
+  if (Item) {
+    Ammo ammo = Ammo(Item);
+    maxam = (ammo ? ammo.k8GetAmmoKingMax() : Item.MaxAmount);
+  } else {
+    maxam = AmmoClass.default.MaxAmount;
+  }
+  SB_DrawSmallNum(MaxX, MaxY, maxam);
 }
 
 

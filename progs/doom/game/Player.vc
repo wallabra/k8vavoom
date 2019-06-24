@@ -371,7 +371,7 @@ void Cheat_Gimme () {
           gotit = true;
         }
       }
-      if (AmmoItem) { AmmoItem.Amount = AmmoItem.MaxAmount; gotit = true; }
+      if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
     }
     if (gotit) cprint("You got ammo!");
   }

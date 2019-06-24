@@ -791,8 +791,8 @@ bool CheckWeaponItem (Weapon Wpn, out bool res) {
   if (!Wpn.CanPickupForAmmo(exwpn)) { res = false; return true; }
 
   // if we have no more room for the ammo it gives
-  auto ammo1 = (Wpn.AmmoType1 ? botmo.FindInventory(Wpn.AmmoType1) : none);
-  if (ammo1 && ammo1.Amount == ammo1.MaxAmount) { res = false; return true; }
+  auto ammo1 = Ammo(Wpn.AmmoType1 ? botmo.FindInventory(Wpn.AmmoType1) : none);
+  if (ammo1 && ammo1.Amount == ammo1./*MaxAmount*/k8GetAmmoKingMax()) { res = false; return true; }
 
   // can't pick it up because we have it and it's not a dropped weapon
   if (!Wpn.bDropped) { res = false; return true; }
@@ -825,8 +825,8 @@ bool CheckSpecialItem (Actor item, out bool res) {
 //==========================================================================
 bool CheckAmmoItem (Ammo ammo, out bool res) {
   // if we have no more room for the ammo it gives
-  Inventory AmmoItem = botmo.FindInventory(ammo.GetParentAmmo());
-  if (AmmoItem && AmmoItem.Amount >= AmmoItem.MaxAmount) { res = false; return true; }
+  Ammo AmmoItem = Ammo(botmo.FindInventory(ammo.GetParentAmmo()));
+  if (AmmoItem && AmmoItem.Amount >= AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) { res = false; return true; }
 
   res = true;
   return true;

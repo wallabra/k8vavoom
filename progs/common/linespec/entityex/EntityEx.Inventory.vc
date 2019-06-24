@@ -508,7 +508,10 @@ override int GetAmmoCapacity (name Name) {
   // if we have this ammo, return current max amount, otherwise return
   // default for this ammo type
   Inventory Item = FindInventory(AmmoType);
-  return (Item ? Item.MaxAmount : AmmoType.default.MaxAmount);
+  if (!Item) return AmmoType.default.MaxAmount;
+  Ammo ammo = Ammo(Item);
+  if (ammo) return ammo.k8GetAmmoKingMax();
+  return Item.MaxAmount;
 }
 
 
@@ -535,7 +538,12 @@ override void SetAmmoCapacity (name Name, int Amount) {
   Item.MaxAmount = Amount;
 
   // we also should make sure that the current amount doesn't exceed the new limit
-  if (Item.Amount > Item.MaxAmount) Item.Amount = Item.MaxAmount;
+  Ammo ammo = Ammo(Item);
+  if (ammo) {
+    if (ammo.Amount > ammo.k8GetAmmoKingMax()) ammo.Amount = ammo.k8GetAmmoKingMax();
+  } else {
+    if (Item.Amount > Item.MaxAmount) Item.Amount = Item.MaxAmount;
+  }
 }
 
 

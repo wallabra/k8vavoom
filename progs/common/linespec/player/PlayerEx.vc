@@ -2369,14 +2369,16 @@ bool GiveAmmo (class!Ammo ammo, int count) {
 
   if (!count) return false;
 
-  if (AmmoItem.Amount == AmmoItem.MaxAmount) return false;
+  int maxam = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
+  if (AmmoItem.Amount == maxam) return false;
 
   // extra ammo in baby mode and nightmare mode
-  count = int(float(count)*Level.World.GetAmmoFactor());
+  count = max(0, int(float(count)*Level.World.GetAmmoFactor()));
 
   oldammo = AmmoItem.Amount;
-  AmmoItem.Amount += count;
-  if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
+  //AmmoItem.Amount += count;
+  //if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
+  AmmoItem.Amount = min(AmmoItem.Amount+count, maxam);
 
   if (oldammo <= 0) GotAmmo(AmmoItem);
 
