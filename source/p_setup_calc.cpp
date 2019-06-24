@@ -46,7 +46,7 @@ static VCvarI loader_pvs_builder_threads("pvs_threads", "0", "Number of threads 
 static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
 static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);
 
-VCvarI nodes_builder("nodes_builder", "1", "Which internal node builder to use (0:ajbsp; 1:zdbsp)?", CVAR_Archive);
+VCvarI nodes_builder("nodes_builder", "0", "Which internal node builder to use (0:ajbsp; 1:zdbsp)?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
