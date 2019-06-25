@@ -181,6 +181,7 @@ struct AmmoInfo {
   Ammo ammo;
   int wslot;
   int widx;
+  bool active;
 }
 
 
@@ -625,6 +626,7 @@ override void SB_DrawFullscreenStats () {
             ai.ammo = wammo;
             ai.wslot = tmpslot;
             ai.widx = tmpindex;
+            ai.active = (wpn == cl.ReadyWeapon);
           }
         }
       }
@@ -644,15 +646,16 @@ override void SB_DrawFullscreenStats () {
         foreach (const ref AmmoInfo ai; alist) {
           //SB_DrawTallNum(xpos, ypos, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
           //DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
+          float alpha = fmin(1.0, fsalpha+(ai.active ? 0.4 : 0.05));
           int ico = R_RegisterPic(ai.ammo.IconName);
           if (ico) {
             R_GetPicInfo(ico, &pi);
-            DrawPic(xpos+(30-pi.width)/2, ypos, ico, fsalpha);
+            DrawPic(xpos+(30-pi.width)/2, ypos, ico, alpha);
           }
           int maxam = ai.ammo.k8GetAmmoKingMax();
           int am = ai.ammo.Amount;
           int aclr = (am < maxam ? (am < maxam/4 ? CR_UNTRANSLATED : CR_GREEN) : CR_YELLOW);
-          DrawText(xpos, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, fsalpha);
+          DrawText(xpos, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, alpha);
           //DrawText(xpos+(30/2), ypos+4, va("%d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
           xpos += 30;
         }
