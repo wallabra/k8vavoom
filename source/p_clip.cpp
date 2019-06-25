@@ -381,10 +381,13 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
       return true;
   }
 
+  if (ldef->sidenum[0] < 0 || ldef->sidenum[1] < 0) return true; // one-sided
+
   const sector_t *fsec = ldef->frontsector;
   const sector_t *bsec = ldef->backsector;
 
   if (fsec == bsec) return false; // self-referenced sector
+  if (!fsec || !bsec) return true; // one-sided
 
   bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
   bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
@@ -407,7 +410,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     if (clip_midsolid && hasMidTex) {
       const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
       if (midSolid) {
-        const sector_t *sec = (!seg->side ? ldef->backsector : ldef->frontsector);
+        const sector_t *sec = seg->backsector; //(!seg->side ? ldef->backsector : ldef->frontsector);
         VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
         // here we should check if midtex covers the whole height, as it is not tiled vertically (if not wrapped)
         const float texh = MTex->GetScaledHeight();
@@ -1283,10 +1286,15 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   if (!clipAll && !ldef) return; // miniseg
 
   // viewer is in back side or on plane?
-  const int orgside = seg->PointOnSide2(Origin);
+  int orgside = seg->PointOnSide2(Origin);
   if (orgside == 2) return; // origin is on plane
   // add differently oriented segs too
-  if (orgside && !clip_add_backface_segs) return;
+  if (orgside) {
+    if (!clip_add_backface_segs) return;
+    // if we have a partner seg, use it, so midtex clipper can do it right
+    // without this, fake walls clips out everything
+    if (seg->partner) {seg = seg->partner; orgside = 0; }
+  }
 
   if (clip_skip_slopes_1side) {
     // do not clip with slopes, if it has no midtex
