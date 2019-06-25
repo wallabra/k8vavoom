@@ -26,6 +26,7 @@
 //**************************************************************************
 #define VAVOOM_CLIPPER_USE_FLOAT
 //#define VAVOOM_CLIPPER_USE_REAL_ANGLES
+#define VAVOOM_CLIPPER_USE_PSEUDO_INT
 
 #ifdef VAVOOM_CLIPPER_USE_FLOAT
 # define VVC_matan        matan
@@ -47,6 +48,11 @@
 # endif
 #endif
 
+// sanitise defines
+#if defined(VAVOOM_CLIPPER_USE_PSEUDO_INT) && !defined(VAVOOM_CLIPPER_USE_REAL_ANGLES)
+# undef VAVOOM_CLIPPER_USE_PSEUDO_INT
+#endif
+
 
 class VViewClipper {
 public:
@@ -56,11 +62,20 @@ public:
   typedef double VFloat;
 #endif
 
+#ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+  static_assert(sizeof(unsigned int) == 4, "Oops! `unsigned int` should be at least 32 bits!");
+  typedef unsigned int FromTo;
+  typedef double Angle2FixIn;
+#else
+  typedef VFloat FromTo;
+  typedef VFloat Angle2FixIn;
+#endif
+
 private:
   //struct VClipNode;
   struct VClipNode {
-    VFloat From;
-    VFloat To;
+    FromTo From;
+    FromTo To;
     VClipNode *Prev;
     VClipNode *Next;
   };
@@ -76,20 +91,20 @@ private:
 
   VClipNode *NewClipNode ();
   void RemoveClipNode (VClipNode *Node);
-  void DoAddClipRange (VFloat From, VFloat To);
+  void DoAddClipRange (FromTo From, FromTo To);
 
-  bool DoIsRangeVisible (const VFloat From, const VFloat To) const;
+  bool DoIsRangeVisible (const FromTo From, const FromTo To) const;
 
-  bool IsRangeVisibleAngle (const VFloat From, const VFloat To) const;
+  bool IsRangeVisibleAngle (const FromTo From, const FromTo To) const;
 
-  void AddClipRangeAngle (const VFloat From, const VFloat To);
+  void AddClipRangeAngle (const FromTo From, const FromTo To);
 
-  void DoRemoveClipRange (VFloat From, VFloat To);
-  void RemoveClipRangeAngle (VFloat From, VFloat To);
+  void DoRemoveClipRange (FromTo From, FromTo To);
+  void RemoveClipRangeAngle (const FromTo From, const FromTo To);
 
-public:
+protected:
   // we need them both!
-  static inline VFloat PointToRealAngleZeroOrigin (const float dx, const float dy) {
+  static inline VFloat PointToRealAngleZeroOrigin (const VFloat dx, const VFloat dy) {
     VFloat res = VVC_matan(dy, dx);
     if (res < (VFloat)0) res += (VFloat)360;
     return res;
@@ -100,14 +115,20 @@ public:
   // points by true angle around p1 and ordering of points by pseudoangle are the
   // same. for clipping exact angles are not needed, only the ordering matters.
   // k8: i found this code in GZDoom, and changed it a little, to make it return [0..4]
-  static inline VFloat PointToPseudoAngleZeroOrigin (const float dx, const float dy) {
+  static inline FromTo PointToPseudoAngleZeroOrigin (const Angle2FixIn dx, const Angle2FixIn dy) {
     if (dx == 0 && dy == 0) return 0+1;
+#ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+    double res = dy/(fabs(dx)+fabs(dy));
+    res = (dx < 0 ? 2-res : res)+1;
+    return (FromTo)(res*0x3ffffffu);
+#else
     const VFloat res = dy/(fabsf(dx)+fabsf(dy));
     return (dx < 0 ? 2-res : res)+1;
+#endif
   }
 
-  inline VFloat PointToClipAngle (const float x, const float y) const { return PointToClipAngleZeroOrigin(x-Origin.x, y-Origin.y); }
-  inline VFloat PointToClipAngle (const TVec &p) const { return PointToClipAngle(p.x, p.y); }
+  //inline FromTo PointToClipAngle (const float x, const float y) const { return PointToClipAngleZeroOrigin(x-Origin.x, y-Origin.y); }
+  inline FromTo PointToClipAngle (const TVec &p) const { return PointToClipAngleZeroOrigin(p.x-Origin.x, p.y-Origin.y); }
 
 public:
   rep_sector_t *RepSectors; // non-null for server

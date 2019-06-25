@@ -33,8 +33,13 @@
 # define MIN_ANGLE  ((VFloat)0)
 # define MAX_ANGLE  ((VFloat)360)
 #else
-# define MIN_ANGLE  ((VFloat)0)
-# define MAX_ANGLE  ((VFloat)4)
+# ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+#  define MIN_ANGLE  (0)
+#  define MAX_ANGLE  (0x3ffffffu)
+# else
+#  define MIN_ANGLE  ((VFloat)0)
+#  define MAX_ANGLE  ((VFloat)4)
+# endif
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
 # endif
@@ -698,23 +703,26 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     msincos(a1, &py1, &px1);
     float py2, px2;
     msincos(a2, &py2, &px2);
-    a1 = PointToPseudoAngleZeroOrigin(px1, py1);
-    a2 = PointToPseudoAngleZeroOrigin(px2, py2);
+    auto na1 = PointToPseudoAngleZeroOrigin(px1, py1);
+    auto na2 = PointToPseudoAngleZeroOrigin(px2, py2);
+#else
+    auto na1 = a1;
+    auto na2 = a2;
 #endif
 
-    if (a1 > a2) {
+    if (na1 > na2) {
       ClipHead = NewClipNode();
       ClipTail = ClipHead;
-      ClipHead->From = a2;
-      ClipHead->To = a1;
+      ClipHead->From = na2;
+      ClipHead->To = na1;
       ClipHead->Prev = nullptr;
       ClipHead->Next = nullptr;
     } else {
       ClipHead = NewClipNode();
       ClipHead->From = 0;
-      ClipHead->To = a1;
+      ClipHead->To = na1;
       ClipTail = NewClipNode();
-      ClipTail->From = a2;
+      ClipTail->From = na2;
       ClipTail->To = MAX_ANGLE;
       ClipHead->Prev = nullptr;
       ClipHead->Next = ClipTail;
@@ -803,7 +811,11 @@ void VViewClipper::Dump () const {
 #endif
   GCon->Logf(" empty: %d", (int)ClipIsEmpty());
   for (VClipNode *node = ClipHead; node; node = node->Next) {
+#ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+    GCon->Logf("  node: (0x%08x : 0x%08x)", node->From, node->To);
+#else
     GCon->Logf("  node: (%f : %f)", node->From, node->To);
+#endif
   }
 }
 
@@ -813,9 +825,9 @@ void VViewClipper::Dump () const {
 //  VViewClipper::DoAddClipRange
 //
 //==========================================================================
-void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
-  if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From >= MAX_ANGLE) From = MAX_ANGLE;
-  if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To >= MAX_ANGLE) To = MAX_ANGLE;
+void VViewClipper::DoAddClipRange (FromTo From, FromTo To) {
+  if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
+  if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
 
   if (ClipIsEmpty()) {
     ClipHead = NewClipNode();
@@ -911,7 +923,7 @@ void VViewClipper::DoAddClipRange (VFloat From, VFloat To) {
 //  VViewClipper::AddClipRange
 //
 //==========================================================================
-void VViewClipper::AddClipRangeAngle (const VFloat From, const VFloat To) {
+void VViewClipper::AddClipRangeAngle (const FromTo From, const FromTo To) {
   if (From > To) {
     DoAddClipRange(MIN_ANGLE, To);
     DoAddClipRange(From, MAX_ANGLE);
@@ -928,7 +940,10 @@ void VViewClipper::AddClipRangeAngle (const VFloat From, const VFloat To) {
 //  NOT TESTED!
 //
 //==========================================================================
-void VViewClipper::DoRemoveClipRange (VFloat From, VFloat To) {
+void VViewClipper::DoRemoveClipRange (FromTo From, FromTo To) {
+  if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
+  if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
+
   if (ClipHead) {
     // check to see if range contains any old ranges
     VClipNode *node = ClipHead;
@@ -973,7 +988,7 @@ void VViewClipper::DoRemoveClipRange (VFloat From, VFloat To) {
 //  VViewClipper::RemoveClipRange
 //
 //==========================================================================
-void VViewClipper::RemoveClipRangeAngle (VFloat From, VFloat To) {
+void VViewClipper::RemoveClipRangeAngle (const FromTo From, const FromTo To) {
   if (From > To) {
     DoRemoveClipRange(MIN_ANGLE, To);
     DoRemoveClipRange(From, MAX_ANGLE);
@@ -988,7 +1003,7 @@ void VViewClipper::RemoveClipRangeAngle (VFloat From, VFloat To) {
 //  VViewClipper::DoIsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
+bool VViewClipper::DoIsRangeVisible (const FromTo From, const FromTo To) const {
   for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
@@ -1001,7 +1016,7 @@ bool VViewClipper::DoIsRangeVisible (const VFloat From, const VFloat To) const {
 //  VViewClipper::IsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::IsRangeVisibleAngle (const VFloat From, const VFloat To) const {
+bool VViewClipper::IsRangeVisibleAngle (const FromTo From, const FromTo To) const {
   if (From > To) return (DoIsRangeVisible(MIN_ANGLE, To) || DoIsRangeVisible(From, MAX_ANGLE));
   return DoIsRangeVisible(From, To);
 }
