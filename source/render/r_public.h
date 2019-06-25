@@ -100,8 +100,10 @@ void R_RenderPlayerView ();
 VTextureTranslation *R_GetCachedTranslation (int, VLevel *);
 
 // r_things
+// ignoreVScr: draw on framebuffer, ignore virutal screen
 void R_DrawSpritePatch (float x, float y, int sprite, int frame=0, int rot=0,
-                        int TranslStart=0, int TranslEnd=0, int Color=0, float scale=1.0f);
+                        int TranslStart=0, int TranslEnd=0, int Color=0, float scale=1.0f,
+                        bool ignoreVScr=false);
 void R_InitSprites ();
 
 //  2D graphics

@@ -184,12 +184,14 @@ static VCvarB am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archi
 static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CVAR_Archive);
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
-static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", CVAR_Cheat);
-static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", CVAR_Cheat);
-static VCvarB am_show_static_lights("am_show_static_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
-static VCvarB am_show_dynamic_lights("am_show_dynamic_lights", false, "Show static lights on automap (cheating should be turned on).", CVAR_Cheat);
-static VCvarB am_show_rendered_nodes("am_show_rendered_nodes", false, "Show rendered BSP nodes on automap (cheating should be turned on).", CVAR_Cheat);
-static VCvarB am_show_rendered_subs("am_show_rendered_subs", false, "Show rendered subsectors on automap (cheating should be turned on).", CVAR_Cheat);
+static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", 0);
+static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", 0);
+static VCvarB am_show_static_lights("am_show_static_lights", false, "Show static lights on automap (cheating should be turned on).", 0);
+static VCvarB am_show_dynamic_lights("am_show_dynamic_lights", false, "Show static lights on automap (cheating should be turned on).", 0);
+static VCvarB am_show_rendered_nodes("am_show_rendered_nodes", false, "Show rendered BSP nodes on automap (cheating should be turned on).", 0);
+static VCvarB am_show_rendered_subs("am_show_rendered_subs", false, "Show rendered subsectors on automap (cheating should be turned on).", 0);
+
+static VCvarB am_render_thing_sprites("am_render_thing_sprites", true, "Render sprites instead of triangles for automap things?", 0);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
@@ -1498,20 +1500,35 @@ static void AM_drawThings () {
     else if (mobj->EntityFlags&VEntity::EF_Solid) color = SolidThingColor;
     else color = ThingColor;
 
-    AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
-
-    /*
-    {
+    vint32 sprIdx = -1;
+    if (am_render_thing_sprites) {
+      static TMapNC<VClass *, vint32> spawnSprIndex;
       // check state
       VClass *cls = mobj->GetClass();
-      VStateLabel *lbl = cls->FindStateLabel("Spawn");
-      if (lbl && lbl->State) {
-        if (R_AreSpritesPresent(lbl->State->SpriteIndex)) {
-          GCon->Logf("found spawn sprite for '%s'", cls->GetName());
+      auto spip = spawnSprIndex.find(cls);
+      if (spip) {
+        sprIdx = *spip;
+      } else {
+        // find id
+        VStateLabel *lbl = cls->FindStateLabel("Spawn");
+        if (lbl && lbl->State) {
+          if (R_AreSpritesPresent(lbl->State->SpriteIndex)) {
+            GCon->Logf("found spawn sprite for '%s'", cls->GetName());
+            sprIdx = lbl->State->SpriteIndex;
+          }
         }
+        spawnSprIndex.put(cls, sprIdx);
       }
     }
-    */
+
+    if (sprIdx > 0) {
+      x = morg.x;
+      y = morg.y;
+      if (am_rotate) AM_rotatePoint(&x, &y);
+      R_DrawSpritePatch(CXMTOFF(x), CYMTOFF(y), sprIdx, 0, 0, 0, 0, 0, scale_mtof, true); // draw, ignore vscr
+    } else {
+      AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
+    }
   }
 }
 

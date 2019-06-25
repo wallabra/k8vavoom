@@ -1134,7 +1134,8 @@ void VRenderLevelShared::DrawCrosshair () {
 //
 //==========================================================================
 void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
-                        int TranslStart, int TranslEnd, int Color, float scale)
+                        int TranslStart, int TranslEnd, int Color, float scale,
+                        bool ignoreVScr)
 {
   bool flip;
   int lump;
@@ -1152,10 +1153,12 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
   float x2 = x1+Tex->GetWidth()*scale;
   float y2 = y1+Tex->GetHeight()*scale;
 
-  x1 *= fScaleX;
-  y1 *= fScaleY;
-  x2 *= fScaleX;
-  y2 *= fScaleY;
+  if (!ignoreVScr) {
+    x1 *= fScaleX;
+    y1 *= fScaleY;
+    x2 *= fScaleX;
+    y2 *= fScaleY;
+  }
 
   Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Color), nullptr), flip);
 }
