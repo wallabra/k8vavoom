@@ -107,7 +107,7 @@ public:
   static float GetFloat (const char *var_name);
   static bool GetBool (const char *var_name);
   static const char *GetCharp (const char *var_name);
-  static VStr GetString (const char *var_name);
+  static const VStr &GetString (const char *var_name);
   static const char *GetHelp (const char *var_name); // returns nullptr if there is no such cvar
   static int GetVarFlags (const char *var_name); // -1: not found
 

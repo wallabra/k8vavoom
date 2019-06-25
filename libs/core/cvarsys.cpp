@@ -548,9 +548,9 @@ const char *VCvar::GetCharp (const char *var_name) {
 //  VCvar::GetString
 //
 //==========================================================================
-VStr VCvar::GetString (const char *var_name) {
+const VStr &VCvar::GetString (const char *var_name) {
   VCvar *var = FindVariable(var_name);
-  if (!var) return VStr();
+  if (!var) return VStr::EmptyString;
   return var->StringValue;
 }
 
