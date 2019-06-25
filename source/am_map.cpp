@@ -1499,6 +1499,19 @@ static void AM_drawThings () {
     else color = ThingColor;
 
     AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
+
+    /*
+    {
+      // check state
+      VClass *cls = mobj->GetClass();
+      VStateLabel *lbl = cls->FindStateLabel("Spawn");
+      if (lbl && lbl->State) {
+        if (R_AreSpritesPresent(lbl->State->SpriteIndex)) {
+          GCon->Logf("found spawn sprite for '%s'", cls->GetName());
+        }
+      }
+    }
+    */
   }
 }
 

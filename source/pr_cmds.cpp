@@ -568,15 +568,16 @@ IMPLEMENT_FUNCTION(VObject, R_InstallSprite) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawSpritePatch) {
-  P_GET_INT(Color);
-  P_GET_INT(TranslEnd);
-  P_GET_INT(TranslStart);
-  P_GET_INT(rot);
-  P_GET_INT(frame);
+  P_GET_FLOAT_OPT(Scale, 1.0f);
+  P_GET_INT_OPT(Color, 0);
+  P_GET_INT_OPT(TranslEnd, 0);
+  P_GET_INT_OPT(TranslStart, 0);
+  P_GET_INT_OPT(rot, 0);
+  P_GET_INT_OPT(frame, 0);
   P_GET_INT(sprite);
-  P_GET_INT(y);
-  P_GET_INT(x);
-  R_DrawSpritePatch(x, y, sprite, frame, rot, TranslStart, TranslEnd, Color);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  R_DrawSpritePatch(x, y, sprite, frame, rot, TranslStart, TranslEnd, Color, Scale);
 }
 
 

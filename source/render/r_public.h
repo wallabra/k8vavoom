@@ -100,7 +100,8 @@ void R_RenderPlayerView ();
 VTextureTranslation *R_GetCachedTranslation (int, VLevel *);
 
 // r_things
-void R_DrawSpritePatch (int, int, int, int, int, int = 0, int = 0, int = 0);
+void R_DrawSpritePatch (float x, float y, int sprite, int frame=0, int rot=0,
+                        int TranslStart=0, int TranslEnd=0, int Color=0, float scale=1.0f);
 void R_InitSprites ();
 
 //  2D graphics

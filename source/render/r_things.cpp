@@ -1133,8 +1133,8 @@ void VRenderLevelShared::DrawCrosshair () {
 //  R_DrawSpritePatch
 //
 //==========================================================================
-void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
-                        int TranslStart, int TranslEnd, int Color)
+void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
+                        int TranslStart, int TranslEnd, int Color, float scale)
 {
   bool flip;
   int lump;
@@ -1145,12 +1145,12 @@ void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
   VTexture *Tex = GTextureManager[lump];
   if (!Tex) return; // just in case
 
-  Tex->GetWidth();
+  (void)Tex->GetWidth();
 
-  float x1 = x-Tex->SOffset;
-  float y1 = y-Tex->TOffset;
-  float x2 = x1+Tex->GetWidth();
-  float y2 = y1+Tex->GetHeight();
+  float x1 = x-Tex->SOffset*scale;
+  float y1 = y-Tex->TOffset*scale;
+  float x2 = x1+Tex->GetWidth()*scale;
+  float y2 = y1+Tex->GetHeight()*scale;
 
   x1 *= fScaleX;
   y1 *= fScaleY;

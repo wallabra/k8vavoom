@@ -81,7 +81,7 @@ void VActorDisplayWindow::OnDraw () {
   {
     auto ow = VirtualWidth, oh = VirtualHeight;
     SCR_SetVirtualScreen(320, 200);
-    R_DrawSpritePatch(160, 170, CastState->SpriteIndex, CastState->Frame, 0);
+    R_DrawSpritePatch(160, 170, CastState->SpriteIndex, CastState->Frame);
     //SCR_SetVirtualScreen(640, 480);
     SCR_SetVirtualScreen(ow, oh);
   }

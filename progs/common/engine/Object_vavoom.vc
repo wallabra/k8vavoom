@@ -408,8 +408,9 @@ native static final void R_DrawPicFloatPartEx (float x, float y, float tx0, floa
 // installs a sprite model
 native static final void R_InstallSprite (string Name, int index);
 // draws a sprite
-native static final void R_DrawSpritePatch (int x, int y, int sprite,
-  int frame, int rot, int TranslStart, int TranslEnd, int Color);
+native static final void R_DrawSpritePatch (float x, float y, int sprite,
+  optional int frame, optional int rot, optional int TranslStart, optional int TranslEnd,
+  optional int Color, optional float scale/*=1*/);
 // installs model
 native static final void *InstallModel (string Name);
 // draws a model
