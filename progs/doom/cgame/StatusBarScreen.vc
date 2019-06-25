@@ -654,7 +654,13 @@ override void SB_DrawFullscreenStats () {
           }
           int maxam = ai.ammo.k8GetAmmoKingMax();
           int am = ai.ammo.Amount;
-          int aclr = (am < maxam ? (am < maxam/4 ? CR_UNTRANSLATED : CR_GREEN) : CR_YELLOW);
+          int aclr;
+               if (am >= maxam) aclr = CR_WHITE;
+          else if (am > maxam-maxam/3) aclr = CR_GREEN;
+          else if (am > maxam/2) aclr = CR_ORANGE;
+          else if (am > maxam/3) aclr = CR_YELLOW;
+          else aclr = CR_RED;
+          //aclr = (am < maxam ? (am < maxam/4 ? CR_UNTRANSLATED : CR_GREEN) : CR_YELLOW);
           DrawText(xpos, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, alpha);
           //DrawText(xpos+(30/2), ypos+4, va("%d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
           xpos += 30;
