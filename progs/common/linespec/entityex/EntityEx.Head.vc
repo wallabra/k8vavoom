@@ -264,7 +264,7 @@ bool bThruGhost; // missile will pass through ghosts
 bool bRip; // missile rips through solid targets
 bool bPushable; // can be pushed by other moving mobjs
 bool bBloodlessImpact; // don't spawn blood when hitting a thing
-bool bMonster;
+//bool bMonster; // moved to `Entity`
 bool bNoDeathmatch;
 bool bTeleport; // don't cross lines or look at heights
 bool bSpawnFloat; // spawn random float z
@@ -848,14 +848,4 @@ bool IsBloodAllowed () {
   if (bMonster && Health >= 10_000) return false; // this looks like something stationary, skip it
 
   return true;
-}
-
-
-//==========================================================================
-//
-//  IsMonster
-//
-//==========================================================================
-override bool IsMonster () {
-  return bMonster;
 }

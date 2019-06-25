@@ -224,43 +224,50 @@ class VEntity : public VThinker {
 
   // flags
   enum {
-    EF_Solid             = 0x00000001, // blocks
-    EF_NoSector          = 0x00000002, // don't use the sector links (invisible but touchable)
-    EF_NoBlockmap        = 0x00000004, // don't use the blocklinks (inert but displayable)
-    EF_IsPlayer          = 0x00000008, // player or player-bot
-    EF_FixedModel        = 0x00000010, // internal renderer flag
-    EF_NoGravity         = 0x00000020, // don't apply gravity every tic
-    EF_PassMobj          = 0x00000040, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
-    EF_ColideWithThings  = 0x00000080,
-    EF_ColideWithWorld   = 0x00000100,
-    EF_CheckLineBlocking = 0x00000200,
-    EF_CheckLineBlockMonsters = 0x00000400,
-    EF_DropOff           = 0x00000800, // allow jumps from high places
-    EF_Float             = 0x00001000, // allow moves to any height, no gravity
-    EF_Fly               = 0x00002000, // fly mode is active
-    EF_Blasted           = 0x00004000, // missile will pass through ghosts
-    EF_CantLeaveFloorpic = 0x00008000, // stay within a certain floor type
-    EF_FloorClip         = 0x00010000, // if feet are allowed to be clipped
-    EF_IgnoreCeilingStep = 0x00020000, // continue walk without lowering itself
-    EF_IgnoreFloorStep   = 0x00040000, // continue walk ignoring floor height changes
-    EF_AvoidingDropoff   = 0x00080000, // used to move monsters away from dropoffs
-    EF_OnMobj            = 0x00100000, // mobj is resting on top of another mobj
-    EF_Corpse            = 0x00200000, // don't stop moving halfway off a step
-    EF_FullBright        = 0x00400000, // make current state full bright
-    EF_Invisible         = 0x00800000, // don't draw this actor
-    EF_Missile           = 0x01000000, // don't hit same species, explode on block
-    EF_DontOverlap       = 0x02000000, // prevent some things from overlapping.
-    EF_KillOnUnarchive   = 0x04000000, // remove this entity on loading game
-    EF_ActLikeBridge     = 0x08000000, // always allow objects to pass.
-    EF_NoDropOff         = 0x10000000, // can't drop off under any circumstances
-    EF_Bright            = 0x20000000, // always render full bright
-    EF_CanJump           = 0x40000000, // this entity can jump to high places
-    EF_StepMissile       = 0x80000000, // missile can "walk" up steps
+    EF_Solid                  = 1u<<0u, // blocks
+    EF_NoSector               = 1u<<1u, // don't use the sector links (invisible but touchable)
+    EF_NoBlockmap             = 1u<<2u, // don't use the blocklinks (inert but displayable)
+    EF_IsPlayer               = 1u<<3u, // player or player-bot
+    EF_FixedModel             = 1u<<4u, // internal renderer flag
+    EF_NoGravity              = 1u<<5u, // don't apply gravity every tic
+    EF_PassMobj               = 1u<<6u, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
+    EF_ColideWithThings       = 1u<<8u,
+    EF_ColideWithWorld        = 1u<<8u,
+    EF_CheckLineBlocking      = 1u<<9u,
+    EF_CheckLineBlockMonsters = 1u<<10u,
+    EF_DropOff                = 1u<<11u, // allow jumps from high places
+    EF_Float                  = 1u<<12u, // allow moves to any height, no gravity
+    EF_Fly                    = 1u<<13u, // fly mode is active
+    EF_Blasted                = 1u<<14u, // missile will pass through ghosts
+    EF_CantLeaveFloorpic      = 1u<<15u, // stay within a certain floor type
+    EF_FloorClip              = 1u<<16u, // if feet are allowed to be clipped
+    EF_IgnoreCeilingStep      = 1u<<17u, // continue walk without lowering itself
+    EF_IgnoreFloorStep        = 1u<<18u, // continue walk ignoring floor height changes
+    EF_AvoidingDropoff        = 1u<<19u, // used to move monsters away from dropoffs
+    EF_OnMobj                 = 1u<<20u, // mobj is resting on top of another mobj
+    EF_Corpse                 = 1u<<21u, // don't stop moving halfway off a step
+    EF_FullBright             = 1u<<22u, // make current state full bright
+    EF_Invisible              = 1u<<23u, // don't draw this actor
+    EF_Missile                = 1u<<24u, // don't hit same species, explode on block
+    EF_DontOverlap            = 1u<<25u, // prevent some things from overlapping.
+    EF_KillOnUnarchive        = 1u<<26u, // remove this entity on loading game
+    EF_ActLikeBridge          = 1u<<27u, // always allow objects to pass.
+    EF_NoDropOff              = 1u<<28u, // can't drop off under any circumstances
+    EF_Bright                 = 1u<<29u, // always render full bright
+    EF_CanJump                = 1u<<30u, // this entity can jump to high places
+    EF_StepMissile            = 1u<<31u, // missile can "walk" up steps
   };
   vuint32 EntityFlags;
 
   int Health;
   int InitialHealth;
+
+  // extra flags
+  enum {
+    EFEX_Monster  = 1u<<0u, // is this a monster?
+    EFEX_Rendered = 1u<<1u, // was this thing rendered? (used in automap)
+  };
+  vuint32 FlagsEx;
 
   // for movement checking
   float Radius;
@@ -437,7 +444,8 @@ public:
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
-  bool callIsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
+  //bool callIsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
+  bool callIsMonster () const { return !!(FlagsEx&EFEX_Monster); }
 
   float GetViewHeight () { static VMethodProxy method("GetViewHeight"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
 

@@ -303,6 +303,10 @@ bool bStepMissile; // missile can "walk" up steps
 int Health;
 int InitialHealth;
 
+// extrla flags
+bool bMonster; // moved from `EntityEx`
+bool bWasRendered; // used in automap
+
 // for movement checking
 float Radius;
 // WARNING: for PlayerPawn, you should use `SetHeight()` method
@@ -424,16 +428,6 @@ native final iterator RoughBlockSearch (out Entity EntPtr, int Distance);
 
 native final void SetDecorateFlag (string Name, bool Value);
 native final bool GetDecorateFlag (string Name);
-
-
-//==========================================================================
-//
-//  IsMonster
-//
-//==========================================================================
-bool IsMonster () {
-  return false;
-}
 
 
 //==========================================================================
