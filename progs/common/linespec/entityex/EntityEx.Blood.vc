@@ -133,7 +133,7 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 
 //==========================================================================
 //
-//  BloodSetZClamped
+//  BloodAddZClamped
 //
 //  set spos.z to spos.z+delta, but not higher than ceiling
 //  delta will be clamped to [0..)
@@ -248,6 +248,20 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 
 //==========================================================================
 //
+//  IsGootLineForBloodSplat
+//
+//==========================================================================
+bool IsGood2SLineForBloodSplat (const line_t *li) {
+  // alpha check for various special fx (additive lines are mostly used for fx too)
+  return
+    li.special != LNSPEC_LineHorizon &&
+    li.alpha > 0.6 &&
+    !(li.flags&ML_ADDITIVE);
+}
+
+
+//==========================================================================
+//
 //  TraceSplat
 //
 //  trace line to the wall, so we can spawn decal on it.
@@ -264,14 +278,8 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
 final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
                        optional name DecalName, optional bool pass2S, optional bool only2S)
 {
-  intercept_t *in;
-  TVec lineEnd;
   TVec outHitPoint;
   trsplat_t temptr;
-  int side;
-  sector_t *sec;
-  TVec hit_point, real_hit_point;
-  line_t *li;
 
   TVec shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
@@ -292,11 +300,14 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   tr->didhit = false;
   tr->mobj = none;
 
+  intercept_t *in;
+  int side; // declared here, so VM don't need to clear it in the loop
+  sector_t *sec; // declared here, so VM don't need to clear it in the loop
   TVec lineStart = shootOrigin;
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
     if (in->bIsALine) {
-      li = in->line;
-      hit_point = shootOrigin+(distance*in->frac)*dir;
+      line_t *li = in->line;
+      TVec hit_point = shootOrigin+(distance*in->frac)*dir;
 
       if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         side = 1;
@@ -306,7 +317,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
         sec = li->frontsector;
       }
 
-      lineEnd = hit_point;
+      TVec lineEnd = hit_point;
 
       // check for shooting floor or ceiling
       if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
@@ -319,36 +330,50 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       lineStart = lineEnd;
 
       if (Level.CompatTrace && li->frontsector == li->backsector) {
-        if (DecalName && (pass2S || only2S) && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
+        if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
+          SpawnDecal(hit_point, DecalName, side, li);
+        }
         continue;
       }
 
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
-        float opentop = 0.0;
+        float opentop = -float.max;
 
-        opening_t *open = LineOpenings(li, hit_point);
-        if (open) opentop = open->top;
-        while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKING))) break; // shot continues
+        opening_t *open = nullptr;
+        // no need to scan openings for blocking line
+        if (!(li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING))) {
+          open = LineOpenings(li, hit_point);
+          if (open) opentop = open->top;
+          while (open) {
+            if (open->bottom <= hit_point.z-12 && open->top >= hit_point.z+12) {
+              break; // shot continues
+            }
+            open = open->next;
           }
-          open = open->next;
-        }
-        // found good opening?
-        if (open) {
-          if (DecalName && (pass2S || only2S) && li.special != LNSPEC_LineHorizon && li.alpha >= 0.6) SpawnDecal(hit_point, DecalName, side, li);
-          continue;
+          // found good opening?
+          if (open) {
+            // alpha check for various special fx (additive lines are mostly used for fx too)
+            if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
+              SpawnDecal(hit_point, DecalName, side, li);
+            }
+            continue;
+          }
         }
 
         if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
-            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
-            hit_point.z > opentop)
+            li->backsector->ceiling.pic == Level.Game.skyflatnum)
         {
-          // it's a sky hack wall
-          tr->hit = hit_point;
-          tr->didhit = true;
-          return false;
+          if (!open) {
+            open = LineOpenings(li, hit_point);
+            if (open) opentop = open->top;
+          }
+          if (hit_point.z > opentop) {
+            // it's a sky hack wall
+            tr->hit = hit_point;
+            tr->didhit = true;
+            return false;
+          }
         }
       }
 
@@ -368,12 +393,14 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
       if (DecalName && !only2S) SpawnDecal(hit_point, DecalName, side, li);
 
-      // don't go any farther
-      return true;
+      // don't go any farther if not two-sided
+      if (!(li->flags&ML_TWOSIDED)) return true;
+      // two-sided, go through it if it is not blocking
+      if (li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) return true;
     }
   }
 
-  lineEnd = dst;
+  TVec lineEnd = dst;
   if (!ShootCheckPlanes(XLevel.PointInSector(dst), line:default, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
     // process floor and ceiling here
     tr->hit = outHitPoint;
