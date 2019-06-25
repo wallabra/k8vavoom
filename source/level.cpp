@@ -2975,8 +2975,10 @@ void CalcSecMinMaxs (sector_t *sector) {
   */
 
   // update BSP
+  //GCon->Logf(" :: sector %d", (int)(ptrdiff_t)(sector-GLevel->Sectors));
   for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
     node_t *node = sub->parent;
+    //GCon->Logf("  sub %d; pc=%d; nodeparent=%d; next=%d", (int)(ptrdiff_t)(sub-GLevel->Subsectors), sub->parentChild, (int)(ptrdiff_t)(node-GLevel->Nodes), (sub->seclink ? (int)(ptrdiff_t)(sub->seclink-GLevel->Subsectors) : -1));
     if (!node) continue;
     int childnum = sub->parentChild;
     if (node->bbox[childnum][2] <= sector->floor.minz && node->bbox[childnum][5] >= sector->ceiling.maxz) continue;

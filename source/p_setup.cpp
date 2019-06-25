@@ -148,7 +148,7 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 006.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 007.\n";
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
@@ -390,12 +390,6 @@ void VLevel::SaveCachedData (VStream *strm) {
   GCon->Logf("cache: writing %d subsectors", NumSubsectors);
   for (int f = 0; f < NumSubsectors; ++f) {
     subsector_t *ss = Subsectors+f;
-    vint32 snum = -1;
-    if (ss->sector) snum = (vint32)(ptrdiff_t)(ss->sector-Sectors);
-    *arrstrm << snum;
-    vint32 slinknum = -1;
-    if (ss->seclink) slinknum = (vint32)(ptrdiff_t)(ss->seclink-Subsectors);
-    *arrstrm << slinknum;
     *arrstrm << ss->numlines;
     *arrstrm << ss->firstline;
   }
@@ -403,12 +397,14 @@ void VLevel::SaveCachedData (VStream *strm) {
   // sectors
   *arrstrm << NumSectors;
   GCon->Logf("cache: writing %d sectors", NumSectors);
+  /* this will be rebuilt
   for (int f = 0; f < NumSectors; ++f) {
     sector_t *sector = &Sectors[f];
     vint32 ssnum = -1;
     if (sector->subsectors) ssnum = (vint32)(ptrdiff_t)(sector->subsectors-Subsectors);
     *arrstrm << ssnum;
   }
+  */
 
   // segs
   *arrstrm << NumSegs;
@@ -561,12 +557,6 @@ bool VLevel::LoadCachedData (VStream *strm) {
   memset((void *)Subsectors, 0, NumSubsectors*sizeof(subsector_t));
   for (int f = 0; f < NumSubsectors; ++f) {
     subsector_t *ss = &Subsectors[f];
-    vint32 snum = -1;
-    *arrstrm << snum;
-    ss->sector = (snum >= 0 ? Sectors+snum : nullptr);
-    vint32 slinknum = -1;
-    *arrstrm << slinknum;
-    ss->seclink = (slinknum >= 0 ? Subsectors+slinknum : nullptr);
     *arrstrm << ss->numlines;
     *arrstrm << ss->firstline;
   }
@@ -575,12 +565,14 @@ bool VLevel::LoadCachedData (VStream *strm) {
   GCon->Logf("cache: reading %d sectors", NumSectors);
   *arrstrm << checkSecNum;
   if (checkSecNum != NumSectors) { delete arrstrm; GCon->Logf("cache file corrupted (sectors)"); return false; }
+  /* this will be rebuilt
   for (int f = 0; f < NumSectors; ++f) {
     sector_t *sector = &Sectors[f];
     vint32 ssnum = -1;
     *arrstrm << ssnum;
     sector->subsectors = (ssnum >= 0 ? Subsectors+ssnum : nullptr);
   }
+  */
 
   // segs
   *arrstrm << NumSegs;
@@ -1169,7 +1161,10 @@ load_again:
 
   double MinMaxTime = -Sys_Time();
   // we need this for client
-  for (int i = 0; i < NumSectors; i++) CalcSecMinMaxs(&Sectors[i]);
+  for (int i = 0; i < NumSectors; ++i) {
+    //GCon->Logf("MINMAX: %d/%d %3d%%", i, NumSectors, 100*i/NumSectors);
+    CalcSecMinMaxs(&Sectors[i]);
+  }
   MinMaxTime += Sys_Time();
 
   double WallShadesTime = -Sys_Time();
@@ -1254,28 +1249,29 @@ load_again:
   if (true /*|| show_level_load_times*/) {
     GCon->Logf("-------");
     GCon->Logf("Level loadded in %f", TotalTime);
-    //GCon->Logf("Initialisation   %f", InitTime);
-    //GCon->Logf("Vertexes         %f", VertexTime);
-    //GCon->Logf("Sectors          %f", SectorsTime);
-    //GCon->Logf("Lines            %f", LinesTime);
-    //GCon->Logf("Things           %f", ThingsTime);
-    //GCon->Logf("Translation      %f", TranslTime);
-    //GCon->Logf("Sides            %f", SidesTime);
-    //GCon->Logf("Lines 2          %f", Lines2Time);
-    GCon->Logf("Nodes            %f", NodesTime);
-    GCon->Logf("Block map        %f", BlockMapTime);
-    GCon->Logf("Reject           %f", RejectTime);
-    if (BuildPVSTime >= 0.1f) GCon->Logf("PVS build        %f", BuildPVSTime);
-    //GCon->Logf("ACS              %f", AcsTime);
-    //GCon->Logf("Group lines      %f", GroupLinesTime);
-    //GCon->Logf("Flood zones      %f", FloodZonesTime);
-    //GCon->Logf("Conversations    %f", ConvTime);
-    GCon->Logf("Spawn world      %f", SpawnWorldTime);
-    GCon->Logf("Polyobjs         %f", InitPolysTime);
-    GCon->Logf("Sector minmaxs   %f", MinMaxTime);
-    GCon->Logf("Wall shades      %f", WallShadesTime);
-    GCon->Logf("Linedef VV list  %f", LineVVListTime);
-    GCon->Logf("Decal processing %f", DecalProcessingTime);
+    //GCon->Logf("Initialisation   %g", InitTime);
+    //GCon->Logf("Vertexes         %g", VertexTime);
+    //GCon->Logf("Sectors          %g", SectorsTime);
+    //GCon->Logf("Lines            %g", LinesTime);
+    //GCon->Logf("Things           %g", ThingsTime);
+    //GCon->Logf("Translation      %g", TranslTime);
+    //GCon->Logf("Sides            %g", SidesTime);
+    //GCon->Logf("Lines 2          %g", Lines2Time);
+    GCon->Logf("Nodes            %g", NodesTime);
+    GCon->Logf("Block map        %g", BlockMapTime);
+    GCon->Logf("Reject           %g", RejectTime);
+    if (BuildPVSTime >= 0.1f) GCon->Logf("PVS build        %g", BuildPVSTime);
+    //GCon->Logf("ACS              %g", AcsTime);
+    //GCon->Logf("Group lines      %g", GroupLinesTime);
+    //GCon->Logf("Flood zones      %g", FloodZonesTime);
+    //GCon->Logf("Conversations    %g", ConvTime);
+    GCon->Logf("Spawn world      %g", SpawnWorldTime);
+    GCon->Logf("Polyobjs         %g", InitPolysTime);
+    GCon->Logf("Sector minmaxs   %g", MinMaxTime);
+    GCon->Logf("Wall shades      %g", WallShadesTime);
+    GCon->Logf("Linedef VV list  %g", LineVVListTime);
+    GCon->Logf("Decal processing %g", DecalProcessingTime);
+    GCon->Logf("Sector min/max   %g", MinMaxTime);
     //GCon->Logf("%s", ""); // shut up, gcc!
   }
 
@@ -2084,6 +2080,12 @@ void VLevel::PostLoadSegs () {
 //
 //==========================================================================
 void VLevel::PostLoadSubsectors () {
+  // this can be called with already linked sector<->subsectors, so don't assume anything
+  for (int snum = 0; snum < NumSectors; ++snum) Sectors[snum].subsectors = nullptr;
+  for (int i = 0; i < NumSubsectors; ++i) Subsectors[i].seclink = nullptr;
+
+  TArray<int> orphanSubs;
+
   subsector_t *ss = Subsectors;
   for (int i = 0; i < NumSubsectors; ++i, ++ss) {
     if (ss->firstline < 0 || ss->firstline >= NumSegs) Host_Error("Bad seg index %d", ss->firstline);
@@ -2091,14 +2093,20 @@ void VLevel::PostLoadSubsectors () {
 
     // look up sector number for each subsector
     seg_t *seg = &Segs[ss->firstline];
+    ss->sector = nullptr;
     for (int j = 0; j < ss->numlines; ++j) {
       if (seg[j].linedef) {
+        check(seg[j].sidedef);
+        check(seg[j].sidedef->Sector);
         ss->sector = seg[j].sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
         break;
       }
     }
+
+    if (!ss->sector) orphanSubs.append(i);
+
     // calculate bounding box
     ss->bbox[0] = ss->bbox[1] = 999999.0f;
     ss->bbox[2] = ss->bbox[3] = -999999.0f;
@@ -2117,9 +2125,18 @@ void VLevel::PostLoadSubsectors () {
     }
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
+
   for (int f = 0; f < NumSegs; ++f) {
     if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
   }
+
+  for (int oidx = 0; oidx < orphanSubs.length(); ++oidx) {
+    ss = Subsectors+orphanSubs[oidx];
+    check(!ss->sector);
+    check(!ss->seclink);
+    GCon->Logf(NAME_Error, "subsector %d contains only minisegs", orphanSubs[oidx]);
+  }
+  if (orphanSubs.length()) Host_Error("map has %d subsector%s contains only minisegs", orphanSubs.length(), (orphanSubs.length() == 1 ? "" : "s"));
 }
 
 
