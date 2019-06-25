@@ -191,7 +191,7 @@ static VCvarB am_show_dynamic_lights("am_show_dynamic_lights", false, "Show stat
 static VCvarB am_show_rendered_nodes("am_show_rendered_nodes", false, "Show rendered BSP nodes on automap (cheating should be turned on).", 0);
 static VCvarB am_show_rendered_subs("am_show_rendered_subs", false, "Show rendered subsectors on automap (cheating should be turned on).", 0);
 
-static VCvarB am_render_thing_sprites("am_render_thing_sprites", true, "Render sprites instead of triangles for automap things?", CVAR_Archive);
+static VCvarB am_render_thing_sprites("am_render_thing_sprites", false, "Render sprites instead of triangles for automap things?", CVAR_Archive);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
