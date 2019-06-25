@@ -164,7 +164,17 @@ static VCvarS am_color_secretwall("am_color_secretwall", "ff 7f 00", "Automap co
 //static VCvarS am_color_power("am_color_power", "7d 83 79", "Automap color: autorevealed walls.", CVAR_Archive);
 static VCvarS am_color_power("am_color_power", "2f 4f 9f", "Automap color: autorevealed walls.", CVAR_Archive);
 static VCvarS am_color_grid("am_color_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
-static VCvarS am_color_thing("am_color_thing", "cf 4f 00", "Automap color: thing.", CVAR_Archive);
+
+static VCvarS am_color_thing("am_color_thing", "00 c0 00", "Automap color: thing.", CVAR_Archive);
+static VCvarS am_color_solid("am_color_solid", "e0 e0 e0", "Automap color: solid thing.", CVAR_Archive);
+static VCvarS am_color_monster("am_color_monster", "ff 00 00", "Automap color: monster.", CVAR_Archive);
+static VCvarS am_color_missile("am_color_missile", "cf 4f 00", "Automap color: missile.", CVAR_Archive);
+static VCvarS am_color_dead("am_color_dead", "80 80 80", "Automap color: dead thing.", CVAR_Archive);
+static VCvarS am_color_invisible("am_color_invisible", "f0 00 f0", "Automap color: invisible thing.", CVAR_Archive);
+
+//static VCvarS am_color_light_static("am_color_light_static", "ff ff ff", "Automap color: static light.", CVAR_Archive);
+//static VCvarS am_color_light_dynamic("am_color_light_dynamic", "00 ff ff", "Automap color: dynamic light.", CVAR_Archive);
+
 static VCvarS am_color_player("am_color_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
 static VCvarS am_color_miniseg("am_color_miniseg", "7f 00 7f", "Automap color: minisegs.", CVAR_Archive);
 
@@ -208,6 +218,8 @@ public:
     }
     return color;
   }
+
+  inline operator vuint32 () { return getColor(); }
 };
 
 // cached colors
@@ -220,6 +232,11 @@ static ColorCV SecretWallColor(&am_color_secretwall);
 static ColorCV PowerWallColor(&am_color_power);
 static ColorCV GridColor(&am_color_grid);
 static ColorCV ThingColor(&am_color_thing);
+static ColorCV InvisibleThingColor(&am_color_invisible);
+static ColorCV SolidThingColor(&am_color_solid);
+static ColorCV MonsterColor(&am_color_monster);
+static ColorCV MissileColor(&am_color_missile);
+static ColorCV DeadColor(&am_color_dead);
 static ColorCV PlayerColor(&am_color_player);
 static ColorCV MinisegColor(&am_color_miniseg);
 
@@ -1151,33 +1168,33 @@ static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
   if (!am_cheating && !(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED) &&
       (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed))
   {
-    return PowerWallColor.getColor();
+    return PowerWallColor;
   }
   // normal wall
   if (!line->backsector) {
-    return WallColor.getColor();
+    return WallColor;
   }
   // secret door
   if (line->flags&ML_SECRET) {
-    return (am_cheating || am_show_secrets ? SecretWallColor.getColor() : WallColor.getColor());
+    return (am_cheating || am_show_secrets ? SecretWallColor : WallColor);
   }
   // floor level change
   if (line->backsector->floor.minz != line->frontsector->floor.minz) {
-    return FDWallColor.getColor();
+    return FDWallColor;
   }
   // ceiling level change
   if (line->backsector->ceiling.maxz != line->frontsector->ceiling.maxz) {
-    return CDWallColor.getColor();
+    return CDWallColor;
   }
   // show extra floors
   if (line->backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
       line->frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
   {
-    return EXWallColor.getColor();
+    return EXWallColor;
   }
   // something other
   *cheatOnly = true;
-  return TSWallColor.getColor();
+  return TSWallColor;
 }
 
 
@@ -1313,7 +1330,7 @@ static void AM_DrawMinisegs () {
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
     if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
-    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor.getColor());
+    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor);
   }
 }
 
@@ -1439,7 +1456,7 @@ static void AM_drawPlayers () {
   }
 
   AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0.0f, angle,
-    PlayerColor.getColor(), FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
+    PlayerColor, FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
   return;
 }
 
@@ -1450,14 +1467,18 @@ static void AM_drawPlayers () {
 //
 //==========================================================================
 static void AM_drawThings () {
-  vuint32 color = ThingColor.getColor();
+  bool invisible = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
     if (am_cheating <= 2) {
       if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
       if (mobj->RenderStyle == STYLE_None) continue;
+    } else {
+      invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || (mobj->RenderStyle == STYLE_None));
     }
+
+    //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
 
     TVec morg = mobj->GetDrawOrigin();
     float x = FTOM(MTOF(morg.x));
@@ -1468,6 +1489,14 @@ static void AM_drawThings () {
       AM_rotatePoint(&x, &y);
       angle += 90.0f-cl->ViewAngles.yaw;
     }
+
+    vuint32 color;
+         if (invisible) color = InvisibleThingColor;
+    else if (mobj->EntityFlags&VEntity::EF_Corpse) color = DeadColor;
+    else if (mobj->FlagsEx&VEntity::EFEX_Monster) color = MonsterColor;
+    else if (mobj->EntityFlags&VEntity::EF_Missile) color = MissileColor;
+    else if (mobj->EntityFlags&VEntity::EF_Solid) color = SolidThingColor;
+    else color = ThingColor;
 
     AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
   }
@@ -1507,7 +1536,7 @@ static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
 //  AM_drawStaticLights
 //
 //==========================================================================
-static void AM_drawStaticLights (vuint32 color) {
+static void AM_drawStaticLights () {
   if (!GClLevel->RenderData) return;
   int count = GClLevel->RenderData->GetStaticLightCount();
   for (int f = 0; f < count; ++f) {
@@ -1522,7 +1551,7 @@ static void AM_drawStaticLights (vuint32 color) {
 //  AM_drawDynamicLights
 //
 //==========================================================================
-static void AM_drawDynamicLights (vuint32 color) {
+static void AM_drawDynamicLights () {
   if (!GClLevel->RenderData) return;
   int count = GClLevel->RenderData->GetDynamicLightCount();
   for (int f = 0; f < count; ++f) {
@@ -1762,12 +1791,12 @@ void AM_Drawer () {
   AM_clearFB();
 
   Drawer->StartAutomap(am_overlay);
-  if (grid) AM_drawGrid(GridColor.getColor());
+  if (grid) AM_drawGrid(GridColor);
   AM_drawWalls();
   AM_drawPlayers();
   if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings();
-  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColor.getColor());
-  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColor.getColor());
+  if (am_cheating && am_show_static_lights) AM_drawStaticLights();
+  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights();
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
   if (am_cheating && am_show_rendered_nodes) AM_DrawRenderedNodes();
   if (am_cheating && am_show_rendered_subs) AM_DrawRenderedSubs();
