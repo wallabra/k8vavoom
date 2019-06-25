@@ -26,8 +26,8 @@
 //**************************************************************************
 class BackpackItem : Inventory abstract;
 
-// a depleeted backpack will not give any ammo
-bool bDepleeted;
+// a depleted backpack will not give any ammo
+bool bDepleted;
 
 
 //==========================================================================
@@ -48,7 +48,7 @@ override bool HandlePickup (Inventory Item) {
       //print("ammo=%C (%C); max=%d (%d) (now: %d)", AmmoItem, ait, amax, AmmoItem.MaxAmount, oldammo);
       if (oldammo >= amax) continue;
       int num = ait.default.BackpackAmount;
-      if (!num || BackpackItem(Item).bDepleeted) continue;
+      if (!num || BackpackItem(Item).bDepleted) continue;
       if (!Item.bIgnoreSkill) {
         // extra ammo in baby mode and nightmare mode
         num = int(float(num)*Level.World.GetAmmoFactor());
@@ -94,7 +94,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
     if (AmmoItem.MaxAmount < AmmoItem.BackpackMaxAmount) AmmoItem.MaxAmount = AmmoItem.BackpackMaxAmount;
     if (oldammo >= amax) continue;
     int num = AmmoItem.default.BackpackAmount;
-    if (!num || bDepleeted) continue;
+    if (!num || bDepleted) continue;
     if (!bIgnoreSkill) {
       // extra ammo in baby mode and nightmare mode
       num = int(float(num)*Level.World.GetAmmoFactor());
@@ -136,9 +136,9 @@ override void DetachedFromOwner () {
 //
 //==========================================================================
 override Inventory CreateTossable () {
-  // set depleeted flag to prevent cheating
+  // set depleted flag to prevent cheating
   Inventory Copy = ::CreateTossable();
-  BackpackItem(Copy).bDepleeted = true;
+  BackpackItem(Copy).bDepleted = true;
   return Copy;
 }
 
