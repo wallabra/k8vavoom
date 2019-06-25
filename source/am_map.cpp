@@ -96,11 +96,6 @@
 #define CXMTOFF(x)  (MTOFF((x)-m_x)-f_x)
 #define CYMTOFF(y)  (f_h-MTOFF((y)-m_y)+f_y)
 
-// the following is crap
-#define LINE_NEVERSEE  ML_DONTDRAW
-
-#define NUMALIAS  (3) // number of antialiased lines
-
 #define FRACBITS  (16)
 #define FRACUNIT  (1<<FRACBITS)
 
@@ -160,18 +155,6 @@ static VCvarF am_back_darken("am_back_darken", "0", "Overlay automap darken fact
 static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
 
 // automap colors
-static vuint32 WallColor;
-static vuint32 TSWallColor;
-static vuint32 FDWallColor;
-static vuint32 CDWallColor;
-static vuint32 EXWallColor;
-static vuint32 SecretWallColor;
-static vuint32 PowerWallColor;
-static vuint32 GridColor;
-static vuint32 ThingColor;
-static vuint32 PlayerColor;
-static vuint32 MinisegColor;
-
 static VCvarS am_color_wall("am_color_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
 static VCvarS am_color_tswall("am_color_tswall", "61 64 5f", "Automap color: same-height two-sided walls.", CVAR_Archive);
 static VCvarS am_color_fdwall("am_color_fdwall", "a0 6c 40", "Automap color: floor level change.", CVAR_Archive);
@@ -202,6 +185,44 @@ static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
 
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
+
+// cached color from cvar
+struct ColorCV {
+protected:
+  VCvarS *cvar;
+  vuint32 color;
+  VStr oldval; // as `VStr` are COWs, comparing the same string to itself is cheap
+  float oldAlpha;
+
+public:
+  ColorCV (VCvarS *acvar) : cvar(acvar), color(0), oldval(VStr::EmptyString), oldAlpha(-666.0f) {}
+
+  inline vuint32 getColor () {
+    const VStr &nval = cvar->asStr();
+    if (nval != oldval || am_overlay_alpha != oldAlpha) {
+      oldval = nval;
+      oldAlpha = am_overlay_alpha;
+      color = M_ParseColor(*nval)&0xffffffu;
+      color |= ((vuint32)((oldAlpha < 0.0f ? 0.1f : oldAlpha > 1.0f ? 1.0f : oldAlpha)*255))<<24u;
+      //GCon->Logf("updated automap color from '%s'", cvar->GetName());
+    }
+    return color;
+  }
+};
+
+// cached colors
+static ColorCV WallColor(&am_color_wall);
+static ColorCV TSWallColor(&am_color_tswall);
+static ColorCV FDWallColor(&am_color_fdwall);
+static ColorCV CDWallColor(&am_color_cdwall);
+static ColorCV EXWallColor(&am_color_exwall);
+static ColorCV SecretWallColor(&am_color_secretwall);
+static ColorCV PowerWallColor(&am_color_power);
+static ColorCV GridColor(&am_color_grid);
+static ColorCV ThingColor(&am_color_thing);
+static ColorCV PlayerColor(&am_color_player);
+static ColorCV MinisegColor(&am_color_miniseg);
+
 
 static int grid = 0;
 
@@ -1130,33 +1151,33 @@ static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
   if (!am_cheating && !(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED) &&
       (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed))
   {
-    return PowerWallColor;
+    return PowerWallColor.getColor();
   }
   // normal wall
   if (!line->backsector) {
-    return WallColor;
+    return WallColor.getColor();
   }
   // secret door
   if (line->flags&ML_SECRET) {
-    return (am_cheating || am_show_secrets ? SecretWallColor : WallColor);
+    return (am_cheating || am_show_secrets ? SecretWallColor.getColor() : WallColor.getColor());
   }
   // floor level change
   if (line->backsector->floor.minz != line->frontsector->floor.minz) {
-    return FDWallColor;
+    return FDWallColor.getColor();
   }
   // ceiling level change
   if (line->backsector->ceiling.maxz != line->frontsector->ceiling.maxz) {
-    return CDWallColor;
+    return CDWallColor.getColor();
   }
   // show extra floors
   if (line->backsector->SectorFlags&sector_t::SF_HasExtrafloors ||
       line->frontsector->SectorFlags&sector_t::SF_HasExtrafloors)
   {
-    return EXWallColor;
+    return EXWallColor.getColor();
   }
   // something other
   *cheatOnly = true;
-  return TSWallColor;
+  return TSWallColor.getColor();
 }
 
 
@@ -1171,7 +1192,7 @@ static void AM_drawWalls () {
   line_t *line = &GClLevel->Lines[0];
   for (unsigned i = GClLevel->NumLines; i--; ++line) {
     if (!am_cheating) {
-      if (line->flags&LINE_NEVERSEE) continue;
+      if (line->flags&ML_DONTDRAW) continue;
       if (!(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED)) {
         if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
       }
@@ -1292,7 +1313,7 @@ static void AM_DrawMinisegs () {
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
     if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
-    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor);
+    AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor.getColor());
   }
 }
 
@@ -1418,7 +1439,7 @@ static void AM_drawPlayers () {
   }
 
   AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0.0f, angle,
-    PlayerColor, FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
+    PlayerColor.getColor(), FTOM(MTOF(cl->ViewOrg.x)), FTOM(MTOF(cl->ViewOrg.y)));
   return;
 }
 
@@ -1428,7 +1449,8 @@ static void AM_drawPlayers () {
 //  AM_drawThings
 //
 //==========================================================================
-static void AM_drawThings (vuint32 color) {
+static void AM_drawThings () {
+  vuint32 color = ThingColor.getColor();
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
@@ -1695,31 +1717,6 @@ static void AM_DrawLevelStats () {
 
 //==========================================================================
 //
-//  StringToColor
-//
-//==========================================================================
-static vuint32 StringToColor (const char *str) {
-/*
-  int r, g, b;
-  char *p;
-
-  vuint32 alpha = clampToByte((int)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255));
-  alpha <<= 24;
-  //const vuint32 alpha = 0xff000000U;
-
-  r = strtol(str, &p, 16)&0xff;
-  g = strtol(p, &p, 16)&0xff;
-  b = strtol(p, &p, 16)&0xff;
-  return alpha|(r<<16)|(g<<8)|b;
-  */
-  vuint32 clr = M_ParseColor(str)&0xffffffu;
-  clr |= ((vuint32)((am_overlay_alpha < 0.0f ? 0.1f : am_overlay_alpha > 1.0f ? 1.0f : am_overlay_alpha)*255))<<24;
-  return clr;
-}
-
-
-//==========================================================================
-//
 //  AM_CheckVariables
 //
 //==========================================================================
@@ -1747,18 +1744,6 @@ static void AM_CheckVariables () {
 
     mtof_zoommul = old_mtof_zoommul;
   }
-
-  WallColor = StringToColor(am_color_wall);
-  TSWallColor = StringToColor(am_color_tswall);
-  FDWallColor = StringToColor(am_color_fdwall);
-  CDWallColor = StringToColor(am_color_cdwall);
-  EXWallColor = StringToColor(am_color_exwall);
-  SecretWallColor = StringToColor(am_color_secretwall);
-  PowerWallColor = StringToColor(am_color_power);
-  GridColor = StringToColor(am_color_grid);
-  ThingColor = StringToColor(am_color_thing);
-  PlayerColor = StringToColor(am_color_player);
-  MinisegColor = StringToColor(am_color_miniseg);
 }
 
 
@@ -1777,12 +1762,12 @@ void AM_Drawer () {
   AM_clearFB();
 
   Drawer->StartAutomap(am_overlay);
-  if (grid) AM_drawGrid(GridColor);
+  if (grid) AM_drawGrid(GridColor.getColor());
   AM_drawWalls();
   AM_drawPlayers();
-  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColor);
-  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColor);
-  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColor);
+  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings();
+  if (am_cheating && am_show_static_lights) AM_drawStaticLights(ThingColor.getColor());
+  if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights(ThingColor.getColor());
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
   if (am_cheating && am_show_rendered_nodes) AM_DrawRenderedNodes();
   if (am_cheating && am_show_rendered_subs) AM_DrawRenderedSubs();
