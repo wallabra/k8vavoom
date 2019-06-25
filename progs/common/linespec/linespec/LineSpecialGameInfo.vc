@@ -172,6 +172,7 @@ override void Init () {
   CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill/headkill?", CVAR_ARCHIVE);
 
   CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8AmmoKing_AllowBackpack', "0", "Enable backpack effect in Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8AmmoKing_MaxShells_Normal', "200", "Maximum shells in ammo king, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8AmmoKing_MaxShells_HS', "100", "Maximum shells in ammo king, with headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8AmmoKing_MaxBullets_Normal', "666", "Maximum bullets in ammo king mode, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);

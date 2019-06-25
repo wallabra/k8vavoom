@@ -78,6 +78,12 @@ int k8GetAmmoKingMax () {
 
   AmmoKingType at = AmmoKingType.Other;
   bool isBDW = false;
+  bool hasBackpack = false;
+
+  if (Owner && Owner.bIsPlayer) {
+    PlayerEx plr = PlayerEx(Owner.Player);
+    hasBackpack = (plr && plr.bHasBackpack);
+  }
 
   switch (GetClassName(Class)) {
     // loaded ammo
@@ -120,6 +126,8 @@ int k8GetAmmoKingMax () {
     case AmmoKingType.Other: res = GetCvarI('k8AmmoKing_MaxOther'); break;
     default: res = 0;
   }
+
+  if (hasBackpack && GetCvarB('k8AmmoKing_AllowBackpack')) res *= 2;
 
   if (isBDW) {
     //print("k8GetAmmoKingMax: class=%C; repl=%C; type=%d; res=%d; ma=%d; return=%d; bdw=%B", self, GetClassReplacee(Class), at, res, MaxAmount, res, isBDW);

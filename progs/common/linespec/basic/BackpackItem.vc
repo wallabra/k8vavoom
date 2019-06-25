@@ -112,21 +112,58 @@ override Inventory CreateCopy (EntityEx Toucher) {
 
 //==========================================================================
 //
+//  AttachToOwner
+//
+//==========================================================================
+override void AttachToOwner (EntityEx NewOwner) {
+  ::AttachToOwner(NewOwner);
+  if (NewOwner && NewOwner.bIsPlayer) {
+    PlayerEx plr = PlayerEx(Owner.Player);
+    if (plr) {
+      plr.bHasBackpack = true;
+      print("player %C got a backpack!", plr);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  DetachedFromOwner
 //
 //==========================================================================
 override void DetachedFromOwner () {
+  if (Owner && Owner.bIsPlayer) {
+    PlayerEx plr = PlayerEx(Owner.Player);
+    if (plr) {
+      plr.bHasBackpack = true;
+      print("player %C lost a backpack!", plr);
+    }
+  }
   // backpack has been removed, reset all ammo maximal amounts to default
   Inventory AmmoItem;
   for (AmmoItem = EntityEx(Owner).Inventory; AmmoItem; AmmoItem = AmmoItem.Inventory) {
-    if (GetClassParent(AmmoItem.Class) != Ammo) continue; // not an ammo
-    if (AmmoItem.MaxAmount != Ammo(AmmoItem).BackpackMaxAmount) {
+    // only direct descendants (k8: why?)
+    //if (GetClassParent(AmmoItem.Class) != Ammo) continue; // not an ammo
+    Ammo ammo = Ammo(AmmoItem);
+    if (!ammo) continue; // not an ammo
+    // this is for ammo king mode
+    int maxam = ammo.k8GetAmmoKingMax();
+    int amount = ammo.Amount;
+    if (amount > maxam) {
+      amount = maxam;
+      ammo.Amount = amount;
+    }
+    if (ammo.MaxAmount != Ammo(ammo).BackpackMaxAmount) {
       // maximal amount doesn't match what backpack should give
       continue;
     }
-    AmmoItem.MaxAmount = AmmoItem.default.MaxAmount;
-    if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
+    ammo.MaxAmount = ammo.default.MaxAmount;
+    maxam = ammo.k8GetAmmoKingMax();
+    if (amount > maxam) ammo.Amount = maxam;
   }
+  // just in case
+  ::DetachedFromOwner();
 }
 
 

@@ -327,6 +327,12 @@ menudef GameplayOptions {
       "Note that default limits will be used if they're higher.";
   }
 
+  option bool {
+    title = "Ammo King Backpack";
+    cvar = k8AmmoKing_AllowBackpack;
+    help = "Allow backpack doubling effect in Ammo King mode?";
+  }
+
   option slider {
     title = "Max Shells with Headshots";
     cvar = k8AmmoKing_MaxShells_HS;

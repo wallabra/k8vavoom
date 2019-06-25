@@ -108,6 +108,9 @@ bool bFly; // player is flying
 bool bInventoryAlwaysOpen; // inventory bar is always open
 bool bAutoAim; // auto aiming enabled? (weapon can override this)
 
+// used in ammo king ammo amount getter
+bool bHasBackpack;
+
 int PoisonCount; // screen flash for poison damage
 float LastPoisonTime;
 EntityEx Poisoner; // none for non-player mobjs
