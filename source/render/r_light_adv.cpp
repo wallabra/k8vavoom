@@ -328,7 +328,7 @@ void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *sec
        if (D1 > CurrLightRadius && D2 < -CurrLightRadius) v2 += (v2-v1)*D1/(D1-D2);
   else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
 
-  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
+  if (!LightClip.IsRangeVisible(v2, v1)) return;
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
@@ -597,7 +597,7 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
        if (D1 > CurrLightRadius && D2 < -CurrLightRadius) v2 += (v2-v1)*D1/(D1-D2);
   else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
 
-  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
+  if (!LightClip.IsRangeVisible(v2, v1)) return;
 */
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 

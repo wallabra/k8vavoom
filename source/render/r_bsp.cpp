@@ -589,7 +589,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
            if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
       else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
 
-      if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
+      if (!ViewClip.IsRangeVisible(v2, v1)) return;
     }
   } else {
     // clip sectors that are behind rendered segs
@@ -604,7 +604,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
          if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
     else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
 
-    if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
+    if (!ViewClip.IsRangeVisible(v2, v1)) return;
   }
 */
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
