@@ -28,6 +28,7 @@ class MenuScreenHelp : MenuScreenHelpBase;
 
 
 override void CreateChoices () {
+  pages[$] = 'titlepic'; // so i can view titlepic
   pages[$] = (IsAnyDoom2 ? 'help' : 'help1');
   if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) pages[$] = 'help2';
 }
