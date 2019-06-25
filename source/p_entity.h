@@ -445,7 +445,7 @@ public:
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   //bool callIsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
-  bool callIsMonster () const { return !!(FlagsEx&EFEX_Monster); }
+  inline bool callIsMonster () const { return !!(FlagsEx&EFEX_Monster); }
 
   float GetViewHeight () { static VMethodProxy method("GetViewHeight"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
 

@@ -784,6 +784,8 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
 //
 //  used for "better things rendering"
 //
+//  TODO: this should be replaced with "touching subsectors" list instead
+//
 //==========================================================================
 void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
@@ -815,6 +817,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
+  // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
   if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
     if (r_draw_adjacent_subsector_things) {
       if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {

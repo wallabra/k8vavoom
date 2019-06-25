@@ -486,6 +486,9 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     // skip things in subsectors that are not visible
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
+    // mark as visible, why not?
+    // use bsp visibility, to not mark "adjacent" things
+    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
   }
 
   float Alpha = mobj->Alpha;
@@ -571,6 +574,8 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 //
 //  this should be called after `RenderWorld()`
 //
+//  this is not called for "regular" renderer
+//
 //==========================================================================
 void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleObjects.reset();
@@ -613,6 +618,9 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (Alpha < 0.01f) continue; // no reason to render it, it is invisible
 
     if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
+    // mark as visible, why not?
+    // use bsp visibility, to not mark "adjacent" things
+    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
     visibleObjects.append(mobj);
   }
 
