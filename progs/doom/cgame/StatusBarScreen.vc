@@ -649,7 +649,10 @@ override void SB_DrawFullscreenStats () {
             R_GetPicInfo(ico, &pi);
             DrawPic(xpos+(30-pi.width)/2, ypos, ico, fsalpha);
           }
-          DrawText(xpos, ypos+4, va("%3d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
+          int maxam = ai.ammo.k8GetAmmoKingMax();
+          int am = ai.ammo.Amount;
+          int aclr = (am < maxam ? (am < maxam/4 ? CR_UNTRANSLATED : CR_GREEN) : CR_YELLOW);
+          DrawText(xpos, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, fsalpha);
           //DrawText(xpos+(30/2), ypos+4, va("%d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
           xpos += 30;
         }
