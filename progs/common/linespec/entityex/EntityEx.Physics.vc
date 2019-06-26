@@ -576,10 +576,23 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
       {
         // hack to prevent missiles exploding against the sky
         // does not handle sky floors
-             if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
-        else if (bExplodeOnSky) ExplodeMissile(none);
-        else Destroy();
-        return;
+        float pf = tmtrace->CeilingLine->frontsector->floor.maxz;
+        float pb = tmtrace->CeilingLine->backsector->floor.maxz;
+        bool hitsky = true;
+        if (pf != pb) {
+          int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace->CeilingLine);
+          if (!siden) {
+            hitsky = (pf < pb && tmtrace.End.z > pb);
+          } else {
+            hitsky = (pb < pf && tmtrace.End.z > pf);
+          }
+        }
+        if (hitsky) {
+               if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+          else if (bExplodeOnSky) ExplodeMissile(none);
+          else Destroy();
+          return;
+        }
       }
 
       if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
@@ -604,10 +617,23 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
     {
       // hack to prevent missiles exploding against the sky
       // does not handle sky floors
-           if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
-      else if (bExplodeOnSky) ExplodeMissile(none);
-      else Destroy();
-      return;
+      float pf = tmtrace->CeilingLine->frontsector->floor.maxz;
+      float pb = tmtrace->CeilingLine->backsector->floor.maxz;
+      bool hitsky = true;
+      if (pf != pb) {
+        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace->CeilingLine);
+        if (!siden) {
+          hitsky = (pf < pb && tmtrace.End.z > pb);
+        } else {
+          hitsky = (pb < pf && tmtrace.End.z > pf);
+        }
+      }
+      if (hitsky) {
+             if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+        else if (bExplodeOnSky) ExplodeMissile(none);
+        else Destroy();
+        return;
+      }
     }
 
     if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
@@ -630,6 +656,11 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
       if (!hitline) {
         if (wasBlockAll) hitline = blockall; else hitline = tmtrace->SpecHit[0];
       }
+    }
+    // wtf?!
+    if (!hitline) {
+      Destroy();
+      return;
     }
     ExplodeMissile(none, hitline);
   } else if (bSlide || forceSlide) {
