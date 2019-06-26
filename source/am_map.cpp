@@ -556,7 +556,7 @@ static void AM_changeWindowLoc () {
   m_x2 = m_x+m_w;
   m_y2 = m_y+m_h;
 
-  AM_ScrollParchment (m_x-oldmx, oldmy-m_y);
+  AM_ScrollParchment(m_x-oldmx, oldmy-m_y);
 }
 
 
@@ -714,7 +714,7 @@ static void AM_Check () {
   if (am_active != !!automapactive) {
     if (am_active) AM_Start(); else AM_Stop();
   }
-  if (automapactive) automapactive = (am_overlay ? -1 : 1);
+  if (am_active) automapactive = (am_overlay ? -1 : 1);
 }
 
 
