@@ -153,6 +153,77 @@ static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct LoadingTiming {
+  const char *name;
+  double time;
+  int msecs;
+};
+
+#define MAX_LOADING_TIMINGS  (64)
+static LoadingTiming loadingTimings[MAX_LOADING_TIMINGS];
+static unsigned int loadingTimingsCount = 0;
+
+
+//==========================================================================
+//
+//  ResetLoadingTimings
+//
+//==========================================================================
+static void ResetLoadingTimings () {
+  loadingTimingsCount = 0;
+}
+
+
+//==========================================================================
+//
+//  AddLoadingTiming
+//
+//==========================================================================
+static void AddLoadingTiming (const char *name, double time) {
+  if (!name || !name[0]) return;
+  if (loadingTimingsCount == MAX_LOADING_TIMINGS) return;
+  LoadingTiming *tm = &loadingTimings[loadingTimingsCount++];
+  tm->name = name;
+  tm->time = time;
+  if (time < 0) {
+    tm->msecs = 0;
+  } else {
+    tm->msecs = (int)(time*1000+0.5);
+  }
+}
+
+
+//==========================================================================
+//
+//  DumpLoadingTimings
+//
+//==========================================================================
+static void DumpLoadingTimings () {
+  if (loadingTimingsCount == 0) return;
+  size_t maxLabelLength = 0;
+  for (unsigned int f = 0; f < loadingTimingsCount; ++f) {
+    const LoadingTiming &lt = loadingTimings[f];
+    if (lt.msecs == 0) continue;
+    size_t sl = strlen(lt.name);
+    if (maxLabelLength < sl) maxLabelLength = sl;
+  }
+  if (maxLabelLength == 0) return; // nothing to do
+  if (maxLabelLength > 64) return; // just in case
+  GCon->Log("-------");
+  char buf[256];
+  for (unsigned int f = 0; f < loadingTimingsCount; ++f) {
+    const LoadingTiming &lt = loadingTimings[f];
+    if (lt.msecs == 0) continue;
+    memset(buf, 32, sizeof(buf));
+    strcpy(buf, lt.name);
+    buf[strlen(lt.name)] = 32;
+    snprintf(buf+maxLabelLength+1, sizeof(buf)-maxLabelLength-1, "%3d.%03d", lt.msecs/1000, lt.msecs%1000);
+    GCon->Log(buf);
+  }
+}
+
+
 //==========================================================================
 //
 //  VLevel::FixKnownMapErrors
@@ -711,6 +782,7 @@ void VLevel::LoadMap (VName AMapName) {
   csTouched = nullptr;
 
 load_again:
+  ResetLoadingTimings();
   GTextureManager.ResetMapTextures();
 
   pobj_allow_several_in_subsector_override = 0;
@@ -959,6 +1031,9 @@ load_again:
   double TranslTime = 0;
   double SidesTime = 0;
   double DecalProcessingTime = 0;
+  double FloodFixTime = 0;
+  double SectorListTime = 0;
+  double MapHashingTime = 0;
 
   {
     auto texLock = GTextureManager.LockMapLocalTextures();
@@ -1005,10 +1080,10 @@ load_again:
     }
   }
 
-  //double Lines2Time = -Sys_Time();
+  double Lines2Time = -Sys_Time();
   FixKnownMapErrors();
   bool forceNodeRebuildFromFixer = !!(LevelFlags&LF_ForceRebuildNodes);
-  //Lines2Time += Sys_Time();
+  Lines2Time += Sys_Time();
 
   //HACK! fix things skill settings
   SetupThingsFromMapinfo();
@@ -1213,14 +1288,19 @@ load_again:
 
   // do it here, so it won't touch sloped floors
   // it will set `othersec` for sectors too
+  FloodFixTime = -Sys_Time();
   FixDeepWaters();
+  FloodFixTime += Sys_Time();
 
   // this must be called after deepwater fixes
+  SectorListTime = -Sys_Time();
   BuildSectorLists();
+  SectorListTime += Sys_Time();
 
   // calculate xxHash32 of various map parts
 
   // hash of linedefs, sidedefs, sectors (in this order)
+  MapHashingTime = -Sys_Time();
   {
     //GCon->Logf("*** LSSHash: 0x%08x (%d:%d:%d)", LSSHash, NumLines, NumSides, NumSectors);
     XXH32_state_t *lssXXHash = XXH32_createState();
@@ -1243,37 +1323,40 @@ load_again:
     XXH32_freeState(segXXHash);
     //GCon->Logf("*** SegHash: 0x%08x", SegHash);
   }
+  MapHashingTime += Sys_Time();
 
 
   TotalTime += Sys_Time();
-  if (true /*|| show_level_load_times*/) {
-    GCon->Logf("-------");
-    GCon->Logf("Level loadded in %f", TotalTime);
-    //GCon->Logf("Initialisation   %g", InitTime);
-    //GCon->Logf("Vertexes         %g", VertexTime);
-    //GCon->Logf("Sectors          %g", SectorsTime);
-    //GCon->Logf("Lines            %g", LinesTime);
-    //GCon->Logf("Things           %g", ThingsTime);
-    //GCon->Logf("Translation      %g", TranslTime);
-    //GCon->Logf("Sides            %g", SidesTime);
-    //GCon->Logf("Lines 2          %g", Lines2Time);
-    GCon->Logf("Nodes            %g", NodesTime);
-    GCon->Logf("Block map        %g", BlockMapTime);
-    GCon->Logf("Reject           %g", RejectTime);
-    if (BuildPVSTime >= 0.1f) GCon->Logf("PVS build        %g", BuildPVSTime);
-    //GCon->Logf("ACS              %g", AcsTime);
-    //GCon->Logf("Group lines      %g", GroupLinesTime);
-    //GCon->Logf("Flood zones      %g", FloodZonesTime);
-    //GCon->Logf("Conversations    %g", ConvTime);
-    GCon->Logf("Spawn world      %g", SpawnWorldTime);
-    GCon->Logf("Polyobjs         %g", InitPolysTime);
-    GCon->Logf("Sector minmaxs   %g", MinMaxTime);
-    GCon->Logf("Wall shades      %g", WallShadesTime);
-    GCon->Logf("Linedef VV list  %g", LineVVListTime);
-    GCon->Logf("Decal processing %g", DecalProcessingTime);
-    GCon->Logf("Sector min/max   %g", MinMaxTime);
-    //GCon->Logf("%s", ""); // shut up, gcc!
-  }
+
+  AddLoadingTiming("Level loaded in", TotalTime);
+  AddLoadingTiming("Initialisation", InitTime);
+  AddLoadingTiming("Vertexes", VertexTime);
+  AddLoadingTiming("Sectors", SectorsTime);
+  AddLoadingTiming("Lines", LinesTime);
+  AddLoadingTiming("Things", ThingsTime);
+  AddLoadingTiming("Translation", TranslTime);
+  AddLoadingTiming("Sides", SidesTime);
+  AddLoadingTiming("Error fixing", Lines2Time);
+  AddLoadingTiming("Nodes", NodesTime);
+  AddLoadingTiming("Blockmap", BlockMapTime);
+  AddLoadingTiming("ACS loading", AcsTime);
+  AddLoadingTiming("Group lines", GroupLinesTime);
+  AddLoadingTiming("Flood zones", FloodZonesTime);
+  AddLoadingTiming("Conversations", ConvTime);
+  AddLoadingTiming("Reject", RejectTime);
+  if (BuildPVSTime >= 0.1f) AddLoadingTiming("PVS building", BuildPVSTime);
+  AddLoadingTiming("Spawn world", SpawnWorldTime);
+  AddLoadingTiming("Polyobjs", InitPolysTime);
+  AddLoadingTiming("Sector minmaxs", MinMaxTime);
+  AddLoadingTiming("Wall shades", WallShadesTime);
+  AddLoadingTiming("Linedef VV list", LineVVListTime);
+  AddLoadingTiming("Decal processing", DecalProcessingTime);
+  AddLoadingTiming("Sector min/max", MinMaxTime);
+  AddLoadingTiming("Floodbug fixing", FloodFixTime);
+  AddLoadingTiming("Sector lists", SectorListTime);
+  AddLoadingTiming("Map hashing", MapHashingTime);
+
+  DumpLoadingTimings();
 
   mapTextureWarns.clear();
 
