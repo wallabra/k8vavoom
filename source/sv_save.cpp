@@ -2106,7 +2106,10 @@ void SV_AutoSaveOnLevelExit () {
 //
 //==========================================================================
 COMMAND(Save) {
-  if (Args.Num() != 3) return;
+  if (Args.Num() != 3) {
+    GCon->Log("usage: save slotindex description");
+    return;
+  }
 
   if (!CheckIfSaveIsAllowed()) return;
 
