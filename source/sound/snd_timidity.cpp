@@ -62,6 +62,8 @@ protected:
   static VStr patchesPath;
   static VStr sf2Path;
   static bool autoloadSF2;
+  static bool needRestart;
+  static bool diskScanned;
 
 protected:
   static bool NeedRestart ();
@@ -98,7 +100,7 @@ static VCvarS snd_timidity_patches("snd_timidity_patches", "/usr/share/timidity"
 #if defined(_WIN32)
 # define CVAR_AUTOSF2  true
 #else
-# define CVAR_AUTOSF2  false
+# define CVAR_AUTOSF2  true
 #endif
 static VCvarB snd_timidity_autoload_sf2("snd_timidity_autoload_sf2", CVAR_AUTOSF2, "Automatically load SF2 from binary directory.", CVAR_Archive|CVAR_PreInit);
 static VCvarS snd_timidity_sf2_file("snd_timidity_sf2_file", "", "Timidity SF2 soundfont file.", CVAR_Archive|CVAR_PreInit);
@@ -111,6 +113,8 @@ int TimidityManager::timidityInitialised = -1;
 VStr TimidityManager::patchesPath = VStr::EmptyString;
 VStr TimidityManager::sf2Path = VStr::EmptyString;
 bool TimidityManager::autoloadSF2 = false;
+bool TimidityManager::needRestart = false;
+bool TimidityManager::diskScanned = false;
 
 
 //==========================================================================
@@ -130,7 +134,7 @@ int TimidityManager::ctl_msg (int type, int verbosity_level, const char *fmt, ..
   size_t slen = strlen(Buf);
   while (slen > 0 && (Buf[slen-1] == '\r' || Buf[slen-1] == '\n')) --slen;
   Buf[slen] = 0;
-  GCon->Log(Buf);
+  if (Buf[0]) GCon->Log(Buf);
   va_end(ap);
   return 0;
 }
@@ -143,6 +147,7 @@ int TimidityManager::ctl_msg (int type, int verbosity_level, const char *fmt, ..
 //==========================================================================
 bool TimidityManager::NeedRestart () {
   return
+    needRestart ||
     patchesPath != snd_timidity_patches.asStr() ||
     sf2Path != snd_timidity_sf2_file.asStr() ||
     autoloadSF2 != snd_timidity_autoload_sf2.asBool();
@@ -158,6 +163,7 @@ void TimidityManager::UpdateCvarCache () {
   patchesPath = snd_timidity_patches.asStr();
   sf2Path = snd_timidity_sf2_file.asStr();
   autoloadSF2 = snd_timidity_autoload_sf2.asBool();
+  needRestart = false;
 }
 
 
@@ -191,6 +197,8 @@ bool TimidityManager::InitTimidity () {
   check(!patches);
   check(!sf2_data);
 
+  if (autoloadSF2 != snd_timidity_autoload_sf2.asBool()) diskScanned = false;
+
   UpdateCvarCache();
 
   // register our control mode
@@ -212,36 +220,134 @@ bool TimidityManager::InitTimidity () {
   }
 
   // try to find sf2 in binary dir
-  if (!sf2_data && snd_timidity_autoload_sf2) {
-    auto dir = Sys_OpenDir(GArgs[0]);
-    if (dir) {
-      TArray<VStr> failedSF2;
+  if (!sf2_data && snd_timidity_autoload_sf2 && !diskScanned) {
+    diskScanned = true;
+    TArray<VStr> failedBanks;
+    TArray<VStr> allBanks;
+
+    static const char *sfpathes[] = {
+      "!",
+#if !defined(__SWITCH__)
+      "!/sf2",
+      "!/dls",
+      "!/soundfonts",
+#endif
+#if defined(_WIN32)
+      "!/share",
+      "!/share/sf2",
+      "!/share/dls",
+      "!/share/soundfonts",
+#endif
+#if !defined(_WIN32) && !defined(__SWITCH__)
+      "~/.k8vavoom",
+      "~/.k8vavoom/sf2",
+      "~/.k8vavoom/dls",
+      "~/.k8vavoom/soundfonts",
+
+      "/opt/vavoom/sf2",
+      "/opt/vavoom/dls",
+      "/opt/vavoom/soundfonts",
+
+      "/opt/vavoom/share",
+      "/opt/vavoom/share/sf2",
+      "/opt/vavoom/share/dls",
+      "/opt/vavoom/share/soundfonts",
+
+      "/opt/vavoom/share/k8vavoom",
+      "/opt/vavoom/share/k8vavoom/sf2",
+      "/opt/vavoom/share/k8vavoom/dls",
+      "/opt/vavoom/share/k8vavoom/soundfonts",
+
+      "/usr/local/share/k8vavoom",
+      "/usr/local/share/k8vavoom/sf2",
+      "/usr/local/share/k8vavoom/dls",
+      "/usr/local/share/k8vavoom/soundfonts",
+
+      "/usr/share/k8vavoom",
+      "/usr/share/k8vavoom/sf2",
+      "/usr/share/k8vavoom/dls",
+      "/usr/share/k8vavoom/soundfonts",
+
+      "!/../share",
+      "!/../share/sf2",
+      "!/../share/dls",
+      "!/../share/soundfonts",
+
+      "!/../share/k8vavoom",
+      "!/../share/k8vavoom/sf2",
+      "!/../share/k8vavoom/dls",
+      "!/../share/k8vavoom/soundfonts",
+#endif
+#if defined(__SWITCH__)
+      "/switch/k8vavoom",
+      "/switch/k8vavoom/sf2",
+      "/switch/k8vavoom/dls",
+      "/switch/k8vavoom/soundfonts",
+#endif
+      nullptr,
+    };
+
+    // collect banks
+    for (const char **sfdir = sfpathes; *sfdir; ++sfdir) {
+      VStr dirname = VStr(*sfdir);
+      if (dirname.isEmpty()) continue;
+      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = VStr(GArgs[0])+dirname; }
+#if !defined(_WIN32) && !defined(__SWITCH__)
+      else if (dirname[0] == '~') {
+        const char *home = getenv("HOME");
+        if (!home || !home[0]) continue;
+        dirname.chopLeft(1);
+        dirname = VStr(home)+dirname;
+      }
+#endif
+      //GCon->Logf("Timidity: scanning '%s'...", *dirname);
+      auto dir = Sys_OpenDir(dirname);
       for (;;) {
         auto fname = Sys_ReadDir(dir);
         if (fname.isEmpty()) break;
-        if (fname.extractFileExtension().strEquCI(".sf2")) {
-          sf2name = VStr(GArgs[0])+"/"+fname;
-          sf2_data = Timidity_LoadSF2(*sf2name);
-          if (sf2_data) {
-            GCon->Logf("TIMIDITY: autoloaded SF2: '%s'", *sf2name);
+        VStr ext = fname.extractFileExtension();
+             if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) allBanks.append(dirname+"/"+fname);
+      }
+      Sys_CloseDir(dir);
+    }
+
+    // try to load a bank
+    for (int f = 0; f < allBanks.length(); ++f) {
+      sf2name = allBanks[f];
+      if (sf2name.extractFileExtension().strEquCI(".sf2")) {
+        // sf2
+        sf2_data = Timidity_LoadSF2(*sf2name);
+        if (sf2_data) {
+          GCon->Logf("TIMIDITY: autoloaded SF2: '%s'", *sf2name);
+          break;
+        }
+      } else {
+        // dls
+        FILE *fl = fopen(*sf2name, "rb");
+        if (fl) {
+          patches = Timidity_LoadDLS(fl);
+          fclose(fl);
+          if (patches) {
+            GCon->Logf("TIMIDITY: autoloaded DLS: '%s'", *sf2name);
             break;
-          } else {
-            failedSF2.append(sf2name);
           }
         }
       }
-      Sys_CloseDir(dir);
-      if (!sf2_data && failedSF2.length()) {
-        for (int f = 0; f < failedSF2.length(); ++f) {
-          GCon->Logf("TIMIDITY: SF2 autoloading failed for '%s'", *failedSF2[f]);
-        }
+      // oops
+      failedBanks.append(sf2name);
+      sf2name.clear();
+    }
+
+    if (!sf2_data && !patches && failedBanks.length()) {
+      for (int f = 0; f < failedBanks.length(); ++f) {
+        GCon->Logf("TIMIDITY: autoloading failed for '%s'", *failedBanks[f]);
       }
     }
   }
 
 #if defined(__SWITCH__)
   // try "/switch/k8vavoom/gzdoom.sf2"
-  if (!sf2_data) {
+  if (!sf2_data && !patches) {
     sf2name = "/switch/k8vavoom/gzdoom.sf2";
     sf2_data = Timidity_LoadSF2(*sf2name);
     if (sf2_data && lastSF2Used != sf2name) {
@@ -251,7 +357,7 @@ bool TimidityManager::InitTimidity () {
 #endif
 
   // load patches if no sf2 was loaded
-  if (!sf2_data) {
+  if (!sf2_data && !patches) {
     if (Timidity_ReadConfig() != 0) {
 #ifdef _WIN32
       VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
@@ -259,21 +365,24 @@ bool TimidityManager::InitTimidity () {
       if (f) {
         patches = Timidity_LoadDLS(f);
         fclose(f);
-        if (patches) GCon->Logf("TIMIDITY: Loaded gm.dls");
+        if (patches) GCon->Logf("TIMIDITY: loaded 'gm.dls'");
       }
       if (!patches) {
-        GCon->Logf("Timidity init failed");
+        GCon->Logf(NAME_Warning, "Timidity init failed");
         Timidity_Close();
         timidityInitialised = 0;
         return false;
       }
 #else
-      GCon->Logf("Timidity init failed");
+      GCon->Logf(NAME_Warning, "Timidity init failed");
       timidityInitialised = 0;
       Timidity_Close();
       return false;
 #endif
+    } else {
+      needRestart = true;
     }
+    //k8: dunno if we need a restart for DLS patchsets
   }
 
   timidityInitialised = 1;
