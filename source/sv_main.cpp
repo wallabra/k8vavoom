@@ -1152,8 +1152,14 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   Host_ResetSkipFrames();
 
   if (!spawn_thinkers) {
+    // usually loading a save
     SV_SendServerInfoToClients(); // anyway
-    if (GGameInfo->NetMode == NM_Standalone) serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
+    if (GLevel->scriptThinkers.length() || AcsHasScripts(GLevel->Acs)) {
+      serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
+      GCon->Log("---");
+      if (AcsHasScripts(GLevel->Acs)) GCon->Log("Found some ACS scripts");
+      if (GLevel->scriptThinkers.length()) GCon->Logf("ACS thinkers: %d", GLevel->scriptThinkers.length());
+    }
     return;
   }
 
@@ -1175,7 +1181,13 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     // start open scripts
     GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
   }
-  serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
+  // delay rendering if we have ACS scripts
+  if (GLevel->scriptThinkers.length() || AcsHasScripts(GLevel->Acs)) {
+    serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
+    GCon->Log("---");
+    if (AcsHasScripts(GLevel->Acs)) GCon->Log("Found some ACS scripts");
+    if (GLevel->scriptThinkers.length()) GCon->Logf("ACS thinkers: %d", GLevel->scriptThinkers.length());
+  }
 
   GCon->Log(NAME_Dev, "Server spawned");
 }
