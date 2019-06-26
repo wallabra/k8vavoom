@@ -33,6 +33,23 @@ ControlMode*		ctl;
 
 #define MAXWORDS 10
 
+static int strEquCI (const char *s0, const char *s1) {
+  if (s0 == s1) return 1;
+  if (!s0) s0 = "";
+  if (!s1) s1 = "";
+  while (*s0 && (unsigned char)(*s0) <= ' ') ++s0;
+  while (*s0 && *s1) {
+    char c0 = *s0++;
+    if (c0 >= 'A' && c0 <= 'Z') c0 = c0-'A'+'a';
+    char c1 = *s1++;
+    if (c1 >= 'A' && c1 <= 'Z') c1 = c1-'A'+'a';
+    if (c0 != c1) return 0;
+  }
+  while (*s0 && (unsigned char)(*s0) <= ' ') ++s0;
+  return (*s0 || *s1 ? 0 : 1);
+}
+
+
 static int read_config_file(const char* name)
 {
 	FILE* fp;
@@ -63,7 +80,7 @@ static int read_config_file(const char* name)
 		}
 
 		/* Originally the TiMidity++ extensions were prefixed like this */
-		if (strcmp(w[0], "#extension") == 0)
+		if (strEquCI(w[0], "#extension"))
 		{
 			w[words=0]=strtok(0," \t\n\r\240");
 			//words = -1;
@@ -86,11 +103,11 @@ static int read_config_file(const char* name)
 		* Unfortunately the documentation for these extensions is often quite
 		* vague, gramatically strange or completely absent.
 		*/
-		if (	!strcmp(w[0], "comm")      /* "comm" program second        */
-			||  !strcmp(w[0], "HTTPproxy") /* "HTTPproxy" hostname:port    */
-			||  !strcmp(w[0], "FTPproxy")  /* "FTPproxy" hostname:port     */
-			||  !strcmp(w[0], "mailaddr")  /* "mailaddr" your-mail-address */
-			||  !strcmp(w[0], "opt")       /* "opt" timidity-options       */)
+		if (strEquCI(w[0], "comm") ||      /* "comm" program second        */
+		    strEquCI(w[0], "HTTPproxy") || /* "HTTPproxy" hostname:port    */
+		    strEquCI(w[0], "FTPproxy") ||  /* "FTPproxy" hostname:port     */
+		    strEquCI(w[0], "mailaddr") ||  /* "mailaddr" your-mail-address */
+		    strEquCI(w[0], "opt")          /* "opt" timidity-options       */)
 		{
 			/*
 			* + "comm" sets some kind of comment -- the documentation is too
@@ -103,7 +120,7 @@ static int read_config_file(const char* name)
 			* they can safely remain no-ops.
 			*/
 		}
-		else if (!strcmp(w[0], "timeout")) /* "timeout" program second */
+		else if (strEquCI(w[0], "timeout")) /* "timeout" program second */
 		{
 			/*
 			* Specifies a timeout value of the program. A number of seconds
@@ -112,8 +129,8 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"timeout\" in TiMidity config.\n");
 		}
-		else if (!strcmp(w[0], "copydrumset")  /* "copydrumset" drumset */
-				|| !strcmp(w[0], "copybank")) /* "copybank" bank       */
+		else if (strEquCI(w[0], "copydrumset") || /* "copydrumset" drumset */
+		         strEquCI(w[0], "copybank")) /* "copybank" bank       */
 		{
 			/*
 			* Copies all the settings of the specified drumset or bank to
@@ -122,7 +139,7 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"%s\" in TiMidity config.\n", w[0]);
 		}
-		else if (!strcmp(w[0], "undef")) /* "undef" progno */
+		else if (strEquCI(w[0], "undef")) /* "undef" progno */
 		{
 			/*
 			* Undefines the tone "progno" of the current tone bank (or
@@ -130,7 +147,7 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"undef\" in TiMidity config.\n");
 		}
-		else if (!strcmp(w[0], "altassign")) /* "altassign" prog1 prog2 ... */
+		else if (strEquCI(w[0], "altassign")) /* "altassign" prog1 prog2 ... */
 		{
 			/*
 			* Sets the alternate assign for drum set. Whatever that's
@@ -138,8 +155,8 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"altassign\" in TiMidity config.\n");
 		}
-		else if (!strcmp(w[0], "soundfont")
-			|| !strcmp(w[0], "font"))
+		else if (strEquCI(w[0], "soundfont") ||
+		         strEquCI(w[0], "font"))
 		{
 			/*
 			* I can't find any documentation for these, but I guess they're
@@ -153,7 +170,7 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implmement \"%s\" in TiMidity config.\n", w[0]);
 		}
-		else if (!strcmp(w[0], "progbase"))
+		else if (strEquCI(w[0], "progbase"))
 		{
 			/*
 			* The documentation for this makes absolutely no sense to me, but
@@ -162,7 +179,7 @@ static int read_config_file(const char* name)
 			*/
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"progbase\" in TiMidity config.\n");
 		}
-		else if (!strcmp(w[0], "map")) /* "map" name set1 elem1 set2 elem2 */
+		else if (strEquCI(w[0], "map")) /* "map" name set1 elem1 set2 elem2 */
 		{
 			/*
 			* This extension is the one we will need to implement, as it is
@@ -173,7 +190,7 @@ static int read_config_file(const char* name)
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"FIXME: Implement \"map\" in TiMidity config.\n");
 		}
 		/* Standard TiMidity config */
-		else if (!strcmp(w[0], "dir"))
+		else if (strEquCI(w[0], "dir"))
 		{
 			if (words < 2)
 			{
@@ -186,7 +203,7 @@ static int read_config_file(const char* name)
 				add_to_pathlist(w[i]);
 			}
 		}
-		else if (!strcmp(w[0], "source"))
+		else if (strEquCI(w[0], "source"))
 		{
 			if (words < 2)
 			{
@@ -201,7 +218,7 @@ static int read_config_file(const char* name)
 				rcf_count--;
 			}
 		}
-		else if (!strcmp(w[0], "default"))
+		else if (strEquCI(w[0], "default"))
 		{
 			if (words != 2)
 			{
@@ -213,7 +230,7 @@ static int read_config_file(const char* name)
 			strncpy(def_instr_name, w[1], 255);
 			def_instr_name[255] = '\0';
 		}
-		else if (!strcmp(w[0], "drumset"))
+		else if (strEquCI(w[0], "drumset"))
 		{
 			if (words < 2)
 			{
@@ -241,7 +258,7 @@ static int read_config_file(const char* name)
 			}
 			bank = master_drumset[i];
 		}
-		else if (!strcmp(w[0], "bank"))
+		else if (strEquCI(w[0], "bank"))
 		{
 			if (words < 2)
 			{
@@ -316,7 +333,7 @@ static int read_config_file(const char* name)
 				}
 				*cp++ = 0;
 
-				if (!strcmp(w[j], "amp"))
+				if (strEquCI(w[j], "amp"))
 				{
 					k = atoi(cp);
 
@@ -329,7 +346,7 @@ static int read_config_file(const char* name)
 					}
 					bank->tone[i].amp = k;
 				}
-				else if (!strcmp(w[j], "note"))
+				else if (strEquCI(w[j], "note"))
 				{
 					k = atoi(cp);
 
@@ -342,17 +359,17 @@ static int read_config_file(const char* name)
 					}
 					bank->tone[i].note = k;
 				}
-				else if (!strcmp(w[j], "pan"))
+				else if (strEquCI(w[j], "pan"))
 				{
-					if (!strcmp(cp, "center"))
+					if (strEquCI(cp, "center"))
 					{
 						k = 64;
 					}
-					else if (!strcmp(cp, "left"))
+					else if (strEquCI(cp, "left"))
 					{
 						k = 0;
 					}
-					else if (!strcmp(cp, "right"))
+					else if (strEquCI(cp, "right"))
 					{
 						k = 127;
 					}
@@ -372,13 +389,13 @@ static int read_config_file(const char* name)
 					}
 					bank->tone[i].pan = k;
 				}
-				else if (!strcmp(w[j], "keep"))
+				else if (strEquCI(w[j], "keep"))
 				{
-					if (!strcmp(cp, "env"))
+					if (strEquCI(cp, "env"))
 					{
 						bank->tone[i].strip_envelope = 0;
 					}
-					else if (!strcmp(cp, "loop"))
+					else if (strEquCI(cp, "loop"))
 					{
 						bank->tone[i].strip_loop = 0;
 					}
@@ -389,17 +406,17 @@ static int read_config_file(const char* name)
 						return -2;
 					}
 				}
-				else if (!strcmp(w[j], "strip"))
+				else if (strEquCI(w[j], "strip"))
 				{
-					if (!strcmp(cp, "env"))
+					if (strEquCI(cp, "env"))
 					{
 						bank->tone[i].strip_envelope = 1;
 					}
-					else if (!strcmp(cp, "loop"))
+					else if (strEquCI(cp, "loop"))
 					{
 						bank->tone[i].strip_loop = 1;
 					}
-					else if (!strcmp(cp, "tail"))
+					else if (strEquCI(cp, "tail"))
 					{
 						bank->tone[i].strip_tail = 1;
 					}
