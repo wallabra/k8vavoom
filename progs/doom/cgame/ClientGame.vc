@@ -310,6 +310,8 @@ override void QuitResponse (int ch) {
   messageToPrint = true;
   WaitForQuit = true;
   QuitSound = quitsounds[P_Random()&7];
+  StopLocalSounds();
+  CmdBuf_AddText("Music stop\n");
   LocalSound(QuitSound);
 }
 
