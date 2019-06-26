@@ -149,6 +149,7 @@ extern VLevelScriptThinker *AcsCreateEmptyThinker ();
 //FIXME
 extern void AcsSuspendScript (VAcsLevel *acslevel, int number, int map);
 extern void AcsTerminateScript (VAcsLevel *acslevel, int number, int map);
+extern bool AcsHasScripts (VAcsLevel *acslevel);
 
 
 //==========================================================================

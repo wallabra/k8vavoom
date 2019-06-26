@@ -2002,6 +2002,20 @@ void AcsTerminateScript (VAcsLevel *acslevel, int number, int map) {
 
 //==========================================================================
 //
+//  AcsHasScripts
+//
+//==========================================================================
+bool AcsHasScripts (VAcsLevel *acslevel) {
+  if (!acslevel) return false;
+  for (int i = 0; i < acslevel->LoadedObjects.length(); ++i) {
+    if (acslevel->LoadedObjects[i]->GetNumScripts() > 0) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VAcs::Destroy
 //
 //==========================================================================
