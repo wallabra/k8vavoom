@@ -582,7 +582,7 @@ protected:
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
   void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
   void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
-  void RenderSubsector (int num);
+  void RenderSubsector (int num, bool onlyClip);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();

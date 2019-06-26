@@ -439,42 +439,41 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!LightClip.ClipLightCheckSubsector(sub, true)) return;
+  if (LightClip.ClipLightCheckSubsector(sub, true)) {
+    // if our light is in frustum, out-of-frustum subsectors are not interesting
+    //FIXME: pass "need frustum check" flag to other functions
+    bool needToRender = true;
+    if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
+      // this subsector is invisible, check if it is in frustum
+      float bbox[6];
+      // min
+      bbox[0] = sub->bbox[0];
+      bbox[1] = sub->bbox[1];
+      bbox[2] = sub->sector->floor.minz;
+      // max
+      bbox[3] = sub->bbox[2];
+      bbox[4] = sub->bbox[3];
+      bbox[5] = sub->sector->ceiling.maxz;
+      FixBBoxZ(bbox);
+      needToRender = view_frustum.checkBox(bbox);
+    }
 
-  // if our light is in frustum, out-of-frustum subsectors are not interesting
-  //FIXME: pass "need frustum check" flag to other functions
-  bool needToRender = true;
-  if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
-    // this subsector is invisible, check if it is in frustum
-    float bbox[6];
-    // min
-    bbox[0] = sub->bbox[0];
-    bbox[1] = sub->bbox[1];
-    bbox[2] = sub->sector->floor.minz;
-    // max
-    bbox[3] = sub->bbox[2];
-    bbox[4] = sub->bbox[3];
-    bbox[5] = sub->sector->ceiling.maxz;
-    FixBBoxZ(bbox);
-    needToRender = view_frustum.checkBox(bbox);
-  }
-
-  if (needToRender) {
-    // update world
+    if (needToRender) {
+      // update world
 #if 0
-    if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-      UpdateSubsector(num, nullptr); // trigger BSP updating
-    }
+      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
+        UpdateSubsector(num, nullptr); // trigger BSP updating
+      }
 #else
-    if (sub->updateWorldFrame != updateWorldFrame) {
-      sub->updateWorldFrame = updateWorldFrame;
-      // skip sectors containing original polyobjs
-      if (sub->sector->linecount) UpdateSubRegion(sub, sub->regions);
-    }
+      if (sub->updateWorldFrame != updateWorldFrame) {
+        sub->updateWorldFrame = updateWorldFrame;
+        UpdateSubRegion(sub, sub->regions);
+      }
 #endif
 
-    bool addPoly = true;
-    RenderShadowSubRegion(sub, sub->regions, addPoly);
+      bool addPoly = true;
+      RenderShadowSubRegion(sub, sub->regions, addPoly);
+    }
   }
 
   // add subsector's segs to the clipper
@@ -695,11 +694,24 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (!(LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7)))) return;
-  if (!LightClip.ClipLightCheckSubsector(sub, false)) return;
+  if (LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7))) {
+    if (LightClip.ClipLightCheckSubsector(sub, false)) {
+      // update world
+#if 0
+      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
+        UpdateSubsector(num, nullptr); // trigger BSP updating
+      }
+#else
+      if (sub->updateWorldFrame != updateWorldFrame) {
+        sub->updateWorldFrame = updateWorldFrame;
+        UpdateSubRegion(sub, sub->regions);
+      }
+#endif
 
-  bool addPoly = true;
-  RenderLightSubRegion(sub, sub->regions, addPoly);
+      bool addPoly = true;
+      RenderLightSubRegion(sub, sub->regions, addPoly);
+    }
+  }
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes

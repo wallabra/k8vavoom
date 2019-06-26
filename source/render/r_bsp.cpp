@@ -52,8 +52,6 @@ static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false
 
 static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregions in renderer?", CVAR_Archive);
 
-VCvarB r_bsp_skip_back("r_bsp_skip_back", true, "Do not render back part of BSP tree?", CVAR_Archive);
-
 //static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
@@ -811,57 +809,58 @@ void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
 //  VRenderLevelShared::RenderSubsector
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubsector (int num) {
+void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   subsector_t *sub = &Level->Subsectors[num];
-  //r_sub = sub;
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
-  if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
-    if (r_draw_adjacent_subsector_things) {
-      if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
-        RenderMarkAdjSubsectorsThings(num);
-        if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+  // render it if we're not in "only clip" mode
+  if (!onlyClip) {
+    // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
+    if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
+      if (r_draw_adjacent_subsector_things) {
+        if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
+          RenderMarkAdjSubsectorsThings(num);
+          if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        }
+      } else if (clip_use_1d_clipper) {
+        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
       }
-    } else if (clip_use_1d_clipper) {
-      ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+      return;
     }
-    return;
-  }
 
-  if (!ViewClip.ClipCheckSubsector(sub)) {
-    // just in case, because why not?
-    if (clip_use_1d_clipper) {
-      ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+    if (!ViewClip.ClipCheckSubsector(sub)) {
+      // just in case, because why not? (this adds backfaced segs too)
+      if (clip_use_1d_clipper) {
+        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+      }
+      return;
     }
-    return;
-  }
 
-  if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
-  sub->VisFrame = currVisFrame;
+    if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
+    sub->VisFrame = currVisFrame;
 
-  // mark this subsector as rendered
-  BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
+    // mark this subsector as rendered
+    BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
 
-  // mark thing subsectors
-  RenderMarkAdjSubsectorsThings(num);
+    // mark thing subsectors
+    RenderMarkAdjSubsectorsThings(num);
 
-  // update world
+    // update world
 #if 0
-  if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-    UpdateSubsector(num, nullptr); // trigger BSP updating
-  }
+    if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
+      UpdateSubsector(num, nullptr); // trigger BSP updating
+    }
 #else
-  if (sub->updateWorldFrame != updateWorldFrame) {
-    sub->updateWorldFrame = updateWorldFrame;
-    // skip sectors containing original polyobjs
-    if (sub->sector->linecount) UpdateSubRegion(sub, sub->regions);
-  }
+    if (sub->updateWorldFrame != updateWorldFrame) {
+      sub->updateWorldFrame = updateWorldFrame;
+      UpdateSubRegion(sub, sub->regions);
+    }
 #endif
 
-  bool addPoly = true;
-  RenderSubRegion(sub, sub->regions, addPoly);
+    bool addPoly = true;
+    RenderSubRegion(sub, sub->regions, addPoly);
+  }
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
@@ -879,19 +878,19 @@ void VRenderLevelShared::RenderSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigned AClipflags, bool onlyClip) {
+void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigned clipflags, bool onlyClip) {
+ tailcall:
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ViewClip.ClipIsFull()) return;
 #endif
 
   if (bspnum == -1) {
-    RenderSubsector(0);
+    RenderSubsector(0, onlyClip);
     return;
   }
 
   if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
 
-  unsigned clipflags = AClipflags;
   if (!onlyClip) {
     // cull the clipping planes if not trivial accept
     if (clipflags && clip_frustum && clip_frustum_bsp) {
@@ -927,34 +926,18 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     // decide which side the view point is on
     const float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
     unsigned side = (unsigned)(dist <= 0.0f);
-    bool onPlane = (fabsf(dist) < 0.1f);
-    // if we are on a plane, do forward node first (this doesn't really matter, but why not?)
-    if (onPlane) side = bsp->PointOnSide(vieworg+viewforward*2);
-    if (!onlyClip) {
-      //int side = bsp->PointOnSide(vieworg);
-      if (bsp->children[side]&NF_SUBSECTOR) bsp->VisFrame = currVisFrame;
-      // recursively divide front space (toward the viewer)
-      RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
-      // possibly divide back space (away from the viewer)
-      side ^= 1;
-      return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags);
-    } else {
-      RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
-      // we can skip back nodes if we're not on a plane
-      if (onPlane || !r_bsp_skip_back) {
-        side ^= 1;
-        return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, true);
-      }
-    }
+    // mark this node as rendered (if we're going to render it)
+    if (!onlyClip && (bsp->children[side]&NF_SUBSECTOR)) bsp->VisFrame = currVisFrame;
+    // recursively divide front space (towards the viewer)
+    RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, onlyClip);
+    // recursively divide back space (away from the viewer)
+    side ^= 1;
+    //return RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, onlyClip);
+    bspnum = bsp->children[side];
+    bbox = bsp->bbox[side];
+    goto tailcall;
   } else {
-    if (onlyClip) {
-      if (clip_use_1d_clipper) {
-        subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
-        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr), true);
-      }
-    } else {
-      return RenderSubsector(bspnum&(~NF_SUBSECTOR));
-    }
+    return RenderSubsector(bspnum&(~NF_SUBSECTOR), onlyClip);
   }
 }
 
