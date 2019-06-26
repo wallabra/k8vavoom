@@ -198,8 +198,8 @@ static int update_signal(MidiSong* song, int v)
 static void mix_mystery_signal(MidiSong* song, sample_t* sp, int32* lp, int v, int count)
 {
 	Voice *vp = song->voice + v;
-	final_volume_t 
-		left = vp->left_mix, 
+	final_volume_t
+		left = vp->left_mix,
 		right = vp->right_mix;
 	int cc;
 	sample_t s;
@@ -258,7 +258,7 @@ static void mix_mystery_signal(MidiSong* song, sample_t* sp, int32* lp, int v, i
 static void mix_centre_signal(MidiSong* song, sample_t* sp, int32* lp, int v, int count)
 {
 	Voice *vp = song->voice + v;
-	final_volume_t 
+	final_volume_t
 		left = vp->left_mix;
 	int cc;
 	sample_t s;
@@ -313,7 +313,7 @@ static void mix_centre_signal(MidiSong* song, sample_t* sp, int32* lp, int v, in
 static void mix_single_signal(MidiSong* song, sample_t* sp, int32* lp, int v, int count)
 {
 	Voice *vp = song->voice + v;
-	final_volume_t 
+	final_volume_t
 		left = vp->left_mix;
 	int cc;
 	sample_t s;
@@ -366,8 +366,8 @@ static void mix_single_signal(MidiSong* song, sample_t* sp, int32* lp, int v, in
 
 static void mix_mystery(MidiSong* song, sample_t* sp, int32* lp, int v, int count)
 {
-	final_volume_t 
-		left = song->voice[v].left_mix, 
+	final_volume_t
+		left = song->voice[v].left_mix,
 		right = song->voice[v].right_mix;
 	sample_t s;
 
@@ -382,7 +382,7 @@ static void mix_mystery(MidiSong* song, sample_t* sp, int32* lp, int v, int coun
 
 static void mix_centre(MidiSong* song, sample_t* sp, int32* lp, int v, int count)
 {
-	final_volume_t 
+	final_volume_t
 		left=song->voice[v].left_mix;
 	sample_t s;
 
@@ -462,7 +462,7 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 			{
 				return;
 			}
-			s = *sp++;	
+			s = *sp++;
 			lp[0] += left * s;
 			lp[1] += left * s;
 			lp += 2;

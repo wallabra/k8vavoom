@@ -95,7 +95,7 @@ static void select_sample(MidiSong* song, int v, Instrument* ip, int vel)
 		sp++;
 	}
 
-	/* 
+	/*
 		No suitable sample found! We'll select the sample whose root
 		frequency is closest to the one we want. (Actually we should
 		probably convert the low, high, and root frequencies to MIDI note
@@ -138,7 +138,7 @@ static void recompute_freq(MidiSong* song, int v)
 	{
 		/* This instrument has vibrato. Invalidate any precomputed
 			sample_increments. */
-	
+
 		int i = VIBRATO_SAMPLE_INCREMENTS;
 		while (i--)
 		{
@@ -222,7 +222,7 @@ static void recompute_amp(MidiSong* song, int v)
 	//	127.0 * vol_table[song->channel[chan].volume] *
 	//	127.0 * vol_table[song->channel[chan].expression]); /* 21 bits */
 	tempamp= (song->voice[v].velocity *
-		song->channel[chan].volume * 
+		song->channel[chan].volume *
 		song->channel[chan].expression); /* 21 bits */
 
 	/* TODO: use fscale */
@@ -269,10 +269,10 @@ static void start_note(MidiSong* song, const MidiEvent* e, int i)
 		}
 		if (ip->samples != 1)
 		{
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, 
+			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 				"Strange: percussion instrument with %d samples!", ip->samples);
 		}
-	
+
 		if (ip->sample->note_to_use) /* Do we have a fixed pitch? */
 		{
 			song->voice[i].orig_frequency=freq_table[(int)(ip->sample->note_to_use)];
@@ -280,7 +280,7 @@ static void start_note(MidiSong* song, const MidiEvent* e, int i)
 		else
 		{
 			song->voice[i].orig_frequency=freq_table[this_note & 0x7F];
-		}      
+		}
 		/* drums are supposed to have only one sample */
 		song->voice[i].sample = ip->sample;
 	}
@@ -374,7 +374,7 @@ static void note_on(MidiSong* song)
 		{
 			lowest=i; /* Can't get a lower volume than silence */
 		}
-		else if (song->voice[i].channel == e->channel && 
+		else if (song->voice[i].channel == e->channel &&
 				(song->voice[i].note == e->a || song->channel[song->voice[i].channel].mono))
 		{
 			kill_note(song, i);

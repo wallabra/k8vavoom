@@ -708,7 +708,7 @@ static void ReadPdta(Sf2Data* font, RIFF_Chunk* list)
 
 static void LoadSf2Data(Sf2Data* font)
 {
-	if (font->Riff->subtype != FOURCC_sfbk)  
+	if (font->Riff->subtype != FOURCC_sfbk)
 	{
 		throw ErrBadFile();
 	}
@@ -1157,7 +1157,7 @@ static Instrument* LoadPreset(MidiSong* song, Sf2Data* font, int PresetIndex, bo
 							}
 							else
 							{
-								OrigKey = 60; 
+								OrigKey = 60;
 							}
 							AddGenerators(InstrGenData, PresetGenData);
 
@@ -1269,10 +1269,10 @@ static Instrument* LoadPreset(MidiSong* song, Sf2Data* font, int PresetIndex, bo
 Instrument* load_instrument_sf2(MidiSong* song, int Bank, int Instr, bool Drum)
 {
 	if (!song->sf2_font)
-	{ 
-		return NULL; 
+	{
+		return NULL;
 	}
-	int PresetIndex; 
+	int PresetIndex;
 
 	if (Drum)
 	{
@@ -1289,7 +1289,7 @@ Instrument* load_instrument_sf2(MidiSong* song, int Bank, int Instr, bool Drum)
 
 	if (PresetIndex < 0)
 	{
-		return NULL; 
+		return NULL;
 	}
 
 	return LoadPreset(song, song->sf2_font, PresetIndex, Drum, Instr);

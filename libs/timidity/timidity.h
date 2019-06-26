@@ -22,8 +22,9 @@
 #ifndef TIMIDITY_H
 #define TIMIDITY_H
 
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdint.h>
 
 namespace LibTimidity
 {
@@ -35,7 +36,7 @@ namespace LibTimidity
 #define DEFAULT_PROGRAM 0
 
 /* 9 here is MIDI channel 10, which is the standard percussion channel.
-   Some files (notably C:\WINDOWS\CANYON.MID) think that 16 is one too. 
+   Some files (notably C:\WINDOWS\CANYON.MID) think that 16 is one too.
    On the other hand, some files know that 16 is not a drum channel and
    try to play music on it. This is now a runtime option, so this isn't
    a critical choice anymore. */
@@ -293,12 +294,21 @@ namespace LibTimidity
 
 #define SINE_CYCLE_LENGTH 1024
 
+/*
 typedef unsigned int uint32;
-typedef int int32; 
+typedef int int32;
 typedef unsigned short uint16;
 typedef short int16;
 typedef unsigned char uint8;
 typedef char int8;
+*/
+typedef uint32_t uint32;
+typedef int32_t int32;
+typedef uint16_t uint16;
+typedef int16_t int16;
+typedef uint8_t uint8;
+typedef int8_t int8;
+
 
 typedef int16 sample_t;
 typedef int32 final_volume_t;
@@ -321,7 +331,7 @@ struct Sample
 	int32		envelope_rate[6], envelope_offset[6];
 	float		volume;
 	sample_t*	data;
-	int32 		tremolo_sweep_increment, tremolo_phase_increment, 
+	int32 		tremolo_sweep_increment, tremolo_phase_increment,
 				vibrato_sweep_increment, vibrato_control_ratio;
 	uint8		tremolo_depth, vibrato_depth,
 				modes;
@@ -351,7 +361,7 @@ struct ToneBank
 struct Channel
 {
 	int
-		bank, program, volume, sustain, panning, pitchbend, expression, 
+		bank, program, volume, sustain, panning, pitchbend, expression,
 		mono, /* one note only on this channel -- not implemented yet */
 		pitchsens;
 	float

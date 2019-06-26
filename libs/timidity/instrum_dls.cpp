@@ -1025,7 +1025,7 @@ static void load_region_dls(MidiSong* song, DLS_Data *patches, Sample *sample, D
 		if (sample->panning < 0) panval = 0; else if (sample->panning > 128) panval = 127;
 		sample->panning = panval;
 
-		//ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
+		//ctl->cmsg(CMSG_INFO, VERB_NORMAL,
 		//	"%d, Rate=%d LV=%d HV=%d Low=%d Hi=%d Root=%d Pan=%d Attack=%f Hold=%f Sustain=%d Decay=%f Release=%f\n", index, sample->sample_rate, rgn->header->RangeVelocity.usLow, rgn->header->RangeVelocity.usHigh, sample->low_freq, sample->high_freq, sample->root_freq, sample->panning, attack, hold, sustain, decay, release);
 		/*
 		printf("%d, Rate=%d LV=%d HV=%d Low=%d Hi=%d Root=%d Pan=%d Attack=%f Hold=%f Sustain=%d Decay=%f Release=%f\n", index, sample->sample_rate, rgn->header->RangeVelocity.usLow, rgn->header->RangeVelocity.usHigh, sample->low_freq, sample->high_freq, sample->root_freq, sample->panning, attack, hold, sustain, decay, release);

@@ -281,7 +281,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 							case 6:
 								if (nrpn)
 								{
-									ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+									ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 										"(Data entry (MSB) for NRPN %02x,%02x: %ld)",
 										rpn_msb[lastchan], rpn_lsb[lastchan],
 										b);
@@ -299,7 +299,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 									MIDIEVENT(song->at, ME_PITCH_SENS, lastchan, 2, 0);
 
 								default:
-									ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+									ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 										"(Data entry (MSB) for RPN %02x,%02x: %ld)",
 										rpn_msb[lastchan], rpn_lsb[lastchan],
 										b);
@@ -308,7 +308,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 								break;
 
 							default:
-								ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+								ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 									"(Control %d: %d)", a, b);
 								break;
 						}
@@ -332,7 +332,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 					b &= 0x7F;
 					MIDIEVENT(song->at, ME_PITCHWHEEL, lastchan, a, b);
 
-				default: 
+				default:
 					ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 						"*** Can't happen: status 0x%02X, channel 0x%02X",
 						laststatus, lastchan);
@@ -543,7 +543,7 @@ static MidiEvent* groom_list(MidiSong* song, int32 divisions, int32* eventsp, in
 					}
 					if (song->tonebank[meep->event.a]) /* Is this a defined tone bank? */
 						new_value = meep->event.a;
-					else 
+					else
 					{
 						ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 							"Tone bank %d is undefined", meep->event.a);
@@ -650,19 +650,19 @@ past_riff:
 
 	if (len > 6)
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL, 
-			"%s: MIDI file header size %ld bytes", 
+		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+			"%s: MIDI file header size %ld bytes",
 			current_filename, len);
 		midi_skip(song, len - 6); /* skip the excess */
 	}
 
 	if (format < 0 || format > 2)
 	{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			"%s: Unknown MIDI file format %d", current_filename, format);
 		return 0;
 	}
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, 
+	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		"Format: %d  Tracks: %d  Divisions: %d", format, tracks, divisions);
 
 	/* Put a do-nothing event first in the list for easier processing */

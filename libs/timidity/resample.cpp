@@ -46,7 +46,7 @@ static sample_t* rs_plain(MidiSong* song, int v, int32* countptr)
 	Voice* vp = &song->voice[v];
 	sample_t* dest = song->resample_buffer;
 	sample_t* src = vp->sample->data;
-	int32 
+	int32
 		ofs = vp->sample_offset,
 		incr = vp->sample_increment,
 		le = vp->sample->data_length,
@@ -74,7 +74,7 @@ static sample_t* rs_plain(MidiSong* song, int v, int32* countptr)
 		count -= i;
 	}
 
-	while (i--) 
+	while (i--)
 	{
 		RESAMPLATION;
 		ofs += incr;
@@ -95,10 +95,10 @@ static sample_t* rs_loop(MidiSong* song, Voice* vp, int32 count)
 {
 	/* Play sample until end-of-loop, skip back and continue. */
 	INTERPVARS;
-	int32 
-		ofs = vp->sample_offset, 
+	int32
+		ofs = vp->sample_offset,
 		incr = vp->sample_increment,
-		le = vp->sample->loop_end, 
+		le = vp->sample->loop_end,
 		ll = le - vp->sample->loop_start;
 	sample_t* dest = song->resample_buffer;
 	sample_t* src = vp->sample->data;
@@ -117,7 +117,7 @@ static sample_t* rs_loop(MidiSong* song, Voice* vp, int32 count)
 		/* Precalc how many times we should go through the loop */
 		i = (le - ofs) / incr + 1;
 
-		if (i > count) 
+		if (i > count)
 		{
 			i = count;
 			count = 0;
@@ -141,7 +141,7 @@ static sample_t* rs_loop(MidiSong* song, Voice* vp, int32 count)
 static sample_t* rs_bidir(MidiSong* song, Voice* vp, int32 count)
 {
 	INTERPVARS;
-	int32 
+	int32
 		ofs = vp->sample_offset,
 		incr = vp->sample_increment,
 		le = vp->sample->loop_end,
@@ -150,7 +150,7 @@ static sample_t* rs_bidir(MidiSong* song, Voice* vp, int32 count)
 	sample_t* src = vp->sample->data;
 
 	int32
-		le2 = le << 1, 
+		le2 = le << 1,
 		ls2 = ls << 1,
 		i;
 
@@ -163,7 +163,7 @@ static sample_t* rs_bidir(MidiSong* song, Voice* vp, int32 count)
 		when doing bidirectional looping.  I have yet to see a case
 		where both ofs <= ls AND incr < 0, however. */
 		i = (ls - ofs) / incr + 1;
-		if (i > count) 
+		if (i > count)
 		{
 			i = count;
 			count = 0;
@@ -287,7 +287,7 @@ static int32 update_vibrato(Voice* vp, int sign)
 		(double)(OUTPUT_RATE)),
 		FRACTION_BITS);
 
-	pb=(int)((sine(vp->vibrato_phase * 
+	pb=(int)((sine(vp->vibrato_phase *
 		(SINE_CYCLE_LENGTH/(2*VIBRATO_SAMPLE_INCREMENTS)))
 		* (double)(depth) * VIBRATO_AMPLITUDE_TUNING));
 
@@ -322,12 +322,12 @@ static sample_t* rs_vib_plain(MidiSong* song, int v, int32* countptr)
 	Voice* vp = &song->voice[v];
 	sample_t* dest = song->resample_buffer;
 	sample_t* src = vp->sample->data;
-	int32 
+	int32
 		le = vp->sample->data_length,
-		ofs = vp->sample_offset, 
-		incr = vp->sample_increment, 
+		ofs = vp->sample_offset,
+		incr = vp->sample_increment,
 		count = *countptr;
-	int 
+	int
 		cc = vp->vibrato_control_counter;
 
 	/* This has never been tested */
@@ -378,9 +378,9 @@ static sample_t* rs_vib_loop(MidiSong* song, Voice* vp, int32 count)
 {
 	/* Play sample until end-of-loop, skip back and continue. */
 	INTERPVARS;
-	int32 
-		ofs=vp->sample_offset, 
-		incr=vp->sample_increment, 
+	int32
+		ofs=vp->sample_offset,
+		incr=vp->sample_increment,
 		le=vp->sample->loop_end,
 		ll=le - vp->sample->loop_start;
 	sample_t* dest = song->resample_buffer;
@@ -442,10 +442,10 @@ static sample_t* rs_vib_loop(MidiSong* song, Voice* vp, int32 count)
 static sample_t* rs_vib_bidir(MidiSong* song, Voice* vp, int32 count)
 {
 	INTERPVARS;
-	int32 
-		ofs = vp->sample_offset, 
+	int32
+		ofs = vp->sample_offset,
 		incr = vp->sample_increment,
-		le = vp->sample->loop_end, 
+		le = vp->sample->loop_end,
 		ls = vp->sample->loop_start;
 	sample_t* dest = song->resample_buffer;
 	sample_t* src = vp->sample->data;

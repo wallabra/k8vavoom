@@ -17,8 +17,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   instrum.c 
-   
+   instrum.c
+
    Code to load and unload GUS-compatible instrument patches.
 
 */
@@ -159,12 +159,12 @@ static void reverse_data(int16* sp, int32 ls, int32 le)
 	}
 }
 
-/* 
+/*
    If panning or note_to_use != -1, it will be used for all samples,
-   instead of the sample-specific values in the instrument file. 
+   instead of the sample-specific values in the instrument file.
 
    For note_to_use, any value <0 or >127 will be forced to 0.
- 
+
    For other parameters, 1 means yes, 0 means no, other values are
    undefined.
 
@@ -229,9 +229,9 @@ static Instrument* load_instrument(MidiSong* song, const char *name, int percuss
 	}
 
 	//	instruments. To some patch makers, 0 means 1
-	if (PatchHdr.NumInstruments != 1 && PatchHdr.NumInstruments != 0) 
+	if (PatchHdr.NumInstruments != 1 && PatchHdr.NumInstruments != 0)
 	{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle patches with %d instruments", PatchHdr.NumInstruments);
 		return 0;
 	}
@@ -239,7 +239,7 @@ static Instrument* load_instrument(MidiSong* song, const char *name, int percuss
 	//	layers. What's a layer?
 	if (InstrHdr.NumLayers != 1 && InstrHdr.NumLayers != 0)
 	{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle instruments with %d layers", InstrHdr.NumLayers);
 		return 0;
 	}
@@ -342,7 +342,7 @@ fail:
 			all looped patches probably breaks something else. We do it
 			anyway. */
 
-		if (sp->modes & MODES_LOOPING) 
+		if (sp->modes & MODES_LOOPING)
 		{
 			sp->modes |= MODES_SUSTAIN;
 		}
@@ -353,7 +353,7 @@ fail:
 				MODES_PINGPONG | MODES_REVERSE)))
 		{
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain");
-			sp->modes &=~(MODES_SUSTAIN | MODES_LOOPING | 
+			sp->modes &=~(MODES_SUSTAIN | MODES_LOOPING |
 				MODES_PINGPONG | MODES_REVERSE);
 		}
 
@@ -371,16 +371,16 @@ fail:
 				/* No loop? Then what's there to sustain? No envelope needed
 				either... */
 				sp->modes &= ~(MODES_SUSTAIN|MODES_ENVELOPE);
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 					" - No loop, removing sustain and envelope");
 			}
 			else if (!memcmp(SmplHdr.EnvelopeRate, "??????", 6) ||
-				SmplHdr.EnvelopeOffset[5] >= 100) 
+				SmplHdr.EnvelopeOffset[5] >= 100)
 			{
 				/* Envelope rates all maxed out? Envelope end at a high "offset"?
 				That's a weird envelope. Take it out. */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 					" - Weirdness, removing envelope");
 			}
 			else if (!(sp->modes & MODES_SUSTAIN))
@@ -390,7 +390,7 @@ fail:
 				envelope either... at least the Gravis ones. They're mostly
 				drums.  I think. */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 					" - No sustain, removing envelope");
 			}
 		}
@@ -543,7 +543,7 @@ static int fill_bank(MidiSong* song, int dr, int b)
 
 	if (!bank)
 	{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			"Huh. Tried to load instruments in non-existent %s %d",
 			(dr) ? "drumset" : "tone bank", b);
 		return 0;
@@ -569,7 +569,7 @@ static int fill_bank(MidiSong* song, int dr, int b)
 			{
 				ctl->cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
 					"No instrument mapped to %s %d, program %d%s",
-					(dr)? "drum set" : "tone bank", b, i, 
+					(dr)? "drum set" : "tone bank", b, i,
 					(b != 0) ? "" : " - this instrument will not be heard");
 
 				if (b != 0)
@@ -595,22 +595,22 @@ static int fill_bank(MidiSong* song, int dr, int b)
 				errors++;
 			}
 			else if (!(bank->instrument[i] =
-				load_instrument(song, bank->tone[i].name, 
+				load_instrument(song, bank->tone[i].name,
 					(dr) ? 1 : 0,
 					bank->tone[i].pan,
 					bank->tone[i].amp,
-					(bank->tone[i].note!=-1) ? 
+					(bank->tone[i].note!=-1) ?
 					bank->tone[i].note :
 					((dr) ? i : -1),
 					(bank->tone[i].strip_loop!=-1) ?
 					bank->tone[i].strip_loop :
 					((dr) ? 1 : -1),
-					(bank->tone[i].strip_envelope != -1) ? 
+					(bank->tone[i].strip_envelope != -1) ?
 					bank->tone[i].strip_envelope :
 					((dr) ? 1 : -1),
 					bank->tone[i].strip_tail)))
 			{
-				ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+				ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 					"Couldn't load instrument %s (%s %d, program %d)",
 					bank->tone[i].name,
 					(dr)? "drum set" : "tone bank", b, i);
