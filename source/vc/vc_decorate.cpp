@@ -1214,7 +1214,13 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     if (TmpName.ICmp("Stop") == 0) {
       if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) sc->Error("Stop before first state");
       // see above for the reason to introduce this dummy state
+      // nope, zdoom wiki says that this should make state "invisible"
+      //FIXME: for now, this is not working right
       if (!LastState) {
+        GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
+        GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
+        GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
+        /*
         VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
         States.Append(dummyState);
         dummyState->SpriteName = "tnt1";
@@ -1231,13 +1237,34 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         PrevState = dummyState;
         LastState = dummyState;
         //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+        */
       }
-      LastState->NextState = nullptr;
-      /*
+      if (LastState) LastState->NextState = nullptr;
+
       // if we have no defined states for latest labels, simply redirect labels to nowhere
-      for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) Class->StateLabelDefs[i].State = nullptr;
+      // this will make `FindStateLabel()` to return `nullptr`, effectively removing the state
+      for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+        GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
+        Class->StateLabelDefs[i].State = nullptr;
+      }
       NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-      */
+
+      check(NewLabelsStart == Class->StateLabelDefs.Num());
+      PrevState = nullptr; // new execution chain
+      if (!sc->Crossed && sc->Check(";")) {}
+      continue;
+    }
+
+    // special "removestate" command (k8vavoom specific)
+    // this removes the inherited state
+    if (TmpName.ICmp("RemoveState") == 0) {
+      if (LastState) sc->Error("cannot remove non-empty state");
+      for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+        //GLog.Logf(NAME_Init, "%s: removed state '%s'", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
+        Class->StateLabelDefs[i].State = nullptr;
+      }
+      NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+
       check(NewLabelsStart == Class->StateLabelDefs.Num());
       PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
