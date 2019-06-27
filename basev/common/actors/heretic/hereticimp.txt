@@ -84,7 +84,8 @@ actor HereticImpLeader : HereticImp 5
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     IMPX DE 6 A_FaceTarget
     IMPX F 6 A_CustomComboAttack("HereticImpBall", 32, Random(5, 12), "himp/leaderattack")

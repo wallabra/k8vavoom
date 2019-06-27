@@ -7,7 +7,8 @@ actor MarineFist : ScriptedMarine 9101
   Melee:
     Goto Super::Melee.Fist
   Missile:
-    Stop
+    //Stop
+    RemoveState
   }
 }
 
@@ -20,7 +21,8 @@ actor MarineBerserk : ScriptedMarine 9102
   Melee:
     Goto Super::Melee.Berserk
   Missile:
-    Stop
+    //Stop
+    RemoveState
   }
 }
 
@@ -33,7 +35,8 @@ actor MarineChainsaw : ScriptedMarine 9103
   Melee:
     Goto Super::Melee.Chainsaw
   Missile:
-    Stop
+    //Stop
+    RemoveState
   }
 }
 
@@ -44,7 +47,8 @@ actor MarinePistol : ScriptedMarine 9104
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Pistol
   }
@@ -57,7 +61,8 @@ actor MarineShotgun : ScriptedMarine 9105
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Shotgun
   }
@@ -70,7 +75,8 @@ actor MarineSSG : ScriptedMarine 9106
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.SSG
   }
@@ -83,7 +89,8 @@ actor MarineChaingun : ScriptedMarine 9107
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Chaingun
   }
@@ -96,7 +103,8 @@ actor MarineRocket : ScriptedMarine 9108
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Rocket
   }
@@ -109,7 +117,8 @@ actor MarinePlasma : ScriptedMarine 9109
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Plasma
   }
@@ -122,7 +131,8 @@ actor MarineRailgun : ScriptedMarine 9110
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Railgun
   }
@@ -135,7 +145,8 @@ actor MarineBFG : ScriptedMarine 9111
   states
   {
   Melee:
-    Stop
+    //Stop
+    RemoveState
   Missile:
     Goto Super::Missile.Bfg
   }

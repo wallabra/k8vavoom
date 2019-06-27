@@ -180,6 +180,7 @@ actor Berserk : CustomInventory 2023
     TNT1 A 0 A_JumpIfCVarFalse("k8BerserkSwitch", "DoneIt")
     TNT1 A 0 A_SelectWeapon("Fist")
   DoneIt:
+    TNT1 A 0 // prevent warnings
     Stop
   }
 }
