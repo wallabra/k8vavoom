@@ -65,7 +65,7 @@ __attribute__((noreturn)) __attribute__((format(printf, 1, 2))) void Error (cons
   va_start(argptr, error);
   vfprintf(stderr, error, argptr);
   va_end(argptr);
-  exit(1);
+  Z_Exit(1);
 }
 
 

@@ -272,7 +272,7 @@ static __attribute__((noreturn)) void usage () {
     "  wadcheck [--db dbfilename] wad/pk3\n"
     "use `--long` option to show matches on separate lines\n"
     "");
-  exit(1);
+  Z_Exit(1);
 }
 
 
@@ -376,5 +376,6 @@ int main (int argc, char **argv) {
 
   //W_AddFile("/home/ketmar/DooMz/wads/doom2.wad");
 
+  Z_ShuttingDown();
   return 0;
 }

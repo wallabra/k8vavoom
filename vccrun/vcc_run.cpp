@@ -622,6 +622,7 @@ int main (int argc, char **argv) {
   }
   VObject::StaticExit();
 
+  Z_ShuttingDown();
   return ret.getInt();
 }
 

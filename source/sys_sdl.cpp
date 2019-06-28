@@ -461,6 +461,7 @@ int main (int argc, char **argv) {
       throw;
     }
   }
+  Z_ShuttingDown();
 #ifdef _WIN32
   return 0;
 #elif defined(__SWITCH__)

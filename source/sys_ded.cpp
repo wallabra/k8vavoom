@@ -129,7 +129,7 @@ char *Sys_ConsoleInput () {
 //==========================================================================
 void Sys_Quit (const char *msg) {
   Host_Shutdown();
-  exit(0);
+  Z_Exit(0);
 }
 
 
@@ -283,7 +283,7 @@ int main (int argc, char **argv) {
     Host_Shutdown();
     devprintf("\n\nERROR: %s\n", e.message);
     fprintf(stderr, "\n%s\n", e.message);
-    exit(1);
+    Z_Exit(1);
   } catch (...) {
     Host_Shutdown();
     devprintf("\n\nExiting due to external exception\n");
@@ -291,5 +291,6 @@ int main (int argc, char **argv) {
     throw;
   }
 
+  Z_ShuttingDown();
   return 0;
 }

@@ -70,6 +70,9 @@ set(VC_COMPILER_SOURCES
   ../../source/vc/vc_parser.cpp
 )
 
+#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -O3" )
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -O3" )
+
 add_executable(vcc
   ${VC_COMPILER_SOURCES}
   vcc.cpp

@@ -215,7 +215,7 @@ void Host_Init () {
 
   // "compile only"
   if (GArgs.CheckParm("-c") != 0) {
-    exit(0);
+    Z_Exit(0);
   }
 
 #ifdef CLIENT
@@ -828,4 +828,7 @@ void Host_Shutdown () {
 #ifdef CLIENT
   C_Shutdown(); // save log
 #endif
+
+  // prevent shitdoze crashes
+  Z_ShuttingDown();
 }

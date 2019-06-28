@@ -201,7 +201,7 @@ static void DisplayUsage () {
   printf("    -D<name>        Define macro\n");
   printf("    -I<directory>   Include files directory\n");
   printf("    -P<directory>   Package import files directory\n");
-  exit(1);
+  Z_Exit(1);
 }
 
 
@@ -288,5 +288,6 @@ int main (int argc, char **argv) {
     FatalError("%s", e.What());
   }
 
+  Z_ShuttingDown();
   return 0;
 }

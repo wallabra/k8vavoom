@@ -1146,5 +1146,6 @@ int main (int argc, char *argv[]) {
     Error("%s", E.message);
   }
 
+  Z_ShuttingDown();
   return 0;
 }

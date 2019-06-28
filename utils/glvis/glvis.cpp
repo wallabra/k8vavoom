@@ -122,7 +122,7 @@ static void ShowUsage () {
   fprintf(stderr, "    -x<LEVELNAME> specifies a level to exclude, can be used multiple times\n");
   fprintf(stderr, "    -r<LEVELNAME> specifies a level to apply \"inversed\" processing mode, can be used multiple times\n");
   fprintf(stderr, "    -noreject     don't create reject\n");
-  exit(1);
+  Z_Exit(1);
 }
 
 
@@ -167,9 +167,9 @@ int main (int argc, char *argv[]) {
         case 'f': GLVis.fastvis = true; break;
         case 'v': GLVis.verbose = true; break;
         case 't': GLVis.testlevel = arg[2]-'0'; break;
-        case 'm': if (!getXXArg(arg)) exit(1); break;
-        case 'x': if (!getXXArg(arg)) exit(1); break;
-        case 'r': if (!getXXArg(arg)) exit(1); break;
+        case 'm': if (!getXXArg(arg)) Z_Exit(1); break;
+        case 'x': if (!getXXArg(arg)) Z_Exit(1); break;
+        case 'r': if (!getXXArg(arg)) Z_Exit(1); break;
         case 'n':
           if (strcmp(arg, "-noreject") == 0 || strcmp(arg, "--noreject") == 0) {
             GLVis.no_reject = true;
@@ -180,12 +180,12 @@ int main (int argc, char *argv[]) {
           ShowUsage();
       }
     } else {
-      if (srcfile) { fprintf(stderr, "FATAL: too many file names!\n"); exit(1); }
+      if (srcfile) { fprintf(stderr, "FATAL: too many file names!\n"); Z_Exit(1); }
       srcfile = arg;
     }
   }
 
-  if (!srcfile || !srcfile[0]) { fprintf(stderr, "FATAL: file name?\n"); exit(1); }
+  if (!srcfile || !srcfile[0]) { fprintf(stderr, "FATAL: file name?\n"); Z_Exit(1); }
 
   show_progress = !silent_mode;
 #if defined __unix__ && !defined __STRICT_ANSI__
