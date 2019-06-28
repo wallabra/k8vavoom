@@ -119,6 +119,12 @@ void Z_ShuttingDown () {
 }
 
 
+__attribute__((noreturn)) void Z_Exit (int exitcode) {
+  Z_ShuttingDown();
+  exit(exitcode);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

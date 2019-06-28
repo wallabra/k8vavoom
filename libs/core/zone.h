@@ -44,6 +44,9 @@ extern int zone_free_call_count;
 // so call this function before returning from `main()`.
 void Z_ShuttingDown ();
 
+// this calls `Z_ShuttingDown()`
+__attribute__((noreturn)) void Z_Exit (int exitcode);
+
 
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
 void *Z_Malloc (size_t size);
