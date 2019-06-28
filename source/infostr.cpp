@@ -32,7 +32,7 @@
 #include "infostr.h"
 
 
-#define MAX_INFO_STRING  (1024)
+#define MAX_INFO_STRING  (1000*1000)
 
 
 //==========================================================================
