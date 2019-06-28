@@ -704,5 +704,5 @@ VStr Sys_GetUserName () {
   if (!GetUserNameA(buf, &len)) buf[0] = 0;
   buf[sizeof(buf)-1] = 0; // just in case
   return sys_NormalizeUserName(buf);
-);
+}
 #endif
