@@ -135,6 +135,7 @@ public:
   ~VStr () { clear(); }
 
   void makeImmutable ();
+  VStr &makeImmutableRetSelf ();
 
   // clears the string
   inline void Clean () { decref(); }

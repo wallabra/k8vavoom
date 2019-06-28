@@ -50,3 +50,7 @@ double Sys_Time ();
 void Sys_Yield ();
 
 int Sys_GetCPUCount ();
+
+// returns system user name suitable for using as player name
+// never returns empty string
+VStr Sys_GetUserName ();

@@ -538,6 +538,12 @@ void VStr::makeImmutable () {
 }
 
 
+VStr &VStr::makeImmutableRetSelf () {
+  makeImmutable();
+  return *this;
+}
+
+
 void VStr::makeMutable () {
   if (!dataptr || store()->rc == 1) return; // nothing to do
   // allocate new string

@@ -253,6 +253,23 @@ void VCvar::Set (const VStr &AValue) {
 
 //==========================================================================
 //
+//  VCvar::SetAsDefault
+//
+//==========================================================================
+void VCvar::SetDefault (const VStr &value) {
+  if (value.strEqu(DefaultString)) return;
+  if (defstrOwned) {
+    delete[] const_cast<char *>(DefaultString);
+  }
+  char *tmp = new char[value.length()+1];
+  VStr::Cpy(tmp, *value);
+  DefaultString = tmp;
+  defstrOwned = true;
+}
+
+
+//==========================================================================
+//
 //  VCvar::DoSet
 //
 //  does the actual value assignement

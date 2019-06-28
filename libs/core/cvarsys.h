@@ -68,6 +68,7 @@ public:
   void Set (int value);
   void Set (float value);
   void Set (const VStr &value);
+  void SetDefault (const VStr &value);
 
   // this clears modified flag on call
   inline bool IsModified () {

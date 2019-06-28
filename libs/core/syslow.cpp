@@ -56,12 +56,29 @@ void operator delete [] (void *p) throw () {
 #endif
 
 
+static VStr sys_NormalizeUserName (const char *s) {
+  if (!s) return VStr("PLAYER").makeImmutableRetSelf();
+  while (*s && (unsigned char)(*s) <= ' ') ++s;
+  if (!s[0]) return VStr("PLAYER").makeImmutableRetSelf();
+  VStr res;
+  while (*s) {
+    char ch = *s++;
+    if ((unsigned char)ch <= ' ' || ch >= 127) ch = '_';
+    res += ch;
+  }
+  while (res.length() && (unsigned char)(res[res.length()-1]) <= ' ') res.chopRight(1);
+  if (res.length() == 0) return VStr("PLAYER").makeImmutableRetSelf();
+  return res;
+}
+
+
 #ifndef WIN32
 // normal OS
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <pwd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -322,6 +339,20 @@ int Sys_GetCPUCount () {
   return res;
 }
 
+
+//==========================================================================
+//
+//  Sys_GetUserName
+//
+//==========================================================================
+VStr Sys_GetUserName () {
+#ifndef __SWITCH__
+  uid_t uid = geteuid();
+  struct passwd *pw = getpwuid(uid);
+  if (pw) return sys_NormalizeUserName(pw->pw_name);
+#endif
+  return sys_NormalizeUserName(nullptr);
+}
 
 #else
 // shitdoze
@@ -659,4 +690,19 @@ int Sys_GetCPUCount () {
   if (res > 64) return 64; // arbitrary limit
   return res;
 }
+
+
+//==========================================================================
+//
+//  Sys_GetUserName
+//
+//==========================================================================
+VStr Sys_GetUserName () {
+  char buf[32];
+  DWORD len;
+  memset(buf, 0, sizeof(buf));
+  if (!GetUserNameA(buf, &len)) buf[0] = 0;
+  buf[sizeof(buf)-1] = 0; // just in case
+  return sys_NormalizeUserName(buf);
+);
 #endif
