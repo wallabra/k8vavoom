@@ -310,6 +310,7 @@ extern "C" {
       p->visbits = p->mightsee;
     }
     nfo->deletePortalSee();
+    Z_ThreadDone();
     return MYTHREAD_RET_VALUE;
   }
 }

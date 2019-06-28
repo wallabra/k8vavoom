@@ -78,7 +78,7 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
   const int MAX_FRAMES = 65536;
 
   TArray<short> Data;
-  short *buf = (short *)malloc(MAX_FRAMES*2*2);
+  short *buf = (short *)Z_Malloc(MAX_FRAMES*2*2);
   if (!buf) return; // oops
   do {
     int SamplesDecoded = Codec->Decode(buf, MAX_FRAMES);
@@ -97,7 +97,7 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
       break;
     }
   } while (!Codec->Finished());
-  free(buf);
+  Z_Free(buf);
 
   int realLen = Data.length();
   if (realLen < 1) return;
@@ -332,7 +332,7 @@ int VAudioPublic::snd_max_distance = 1200;
 
 //==========================================================================
 //
-//  streamPlayerThread
+//  audioUpdateThread
 //
 //==========================================================================
 static MYTHREAD_RET_TYPE audioUpdateThread (void *aobjptr) {
@@ -357,6 +357,7 @@ static MYTHREAD_RET_TYPE audioUpdateThread (void *aobjptr) {
   }
   audio->SoundDevice->RemoveCurrentThread();
   mythread_mutex_unlock(&audio->stpPingLock);
+  Z_ThreadDone();
   return MYTHREAD_RET_VALUE;
 }
 

@@ -160,8 +160,7 @@ static void ccmdPrependChar (char ch) {
   if (ccmdBufUsed >= 1024*1024*32) Sys_Error("Command buffer overflow!");
   if (ccmdBufUsed+1 > ccmdBufSize) {
     size_t newsize = ((ccmdBufUsed+1)|0xffffU)+1;
-    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
-    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBuf = (char *)Z_Realloc(ccmdBuf, newsize);
     ccmdBufSize = newsize;
   }
   if (ccmdBufUsed) memmove(ccmdBuf+1, ccmdBuf, ccmdBufUsed);
@@ -176,7 +175,7 @@ void ccmdPrepend (const char *str) {
   if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
   if (ccmdBufUsed+slen > ccmdBufSize) {
     size_t newsize = ((ccmdBufUsed+slen)|0xffffU)+1;
-    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
+    ccmdBuf = (char *)Z_Realloc(ccmdBuf, newsize);
     if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
     ccmdBufSize = newsize;
   }
@@ -246,8 +245,7 @@ static inline void ccmdAppendChar (char ch) {
   if (ccmdBufUsed >= 1024*1024*32) Sys_Error("Command buffer overflow!");
   if (ccmdBufUsed+1 > ccmdBufSize) {
     size_t newsize = ((ccmdBufUsed+1)|0xffffU)+1;
-    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
-    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBuf = (char *)Z_Realloc(ccmdBuf, newsize);
     ccmdBufSize = newsize;
   }
   ccmdBuf[ccmdBufUsed++] = ch;
@@ -260,8 +258,7 @@ void ccmdAppend (const char *str) {
   if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
   if (ccmdBufUsed+slen > ccmdBufSize) {
     size_t newsize = ((ccmdBufUsed+slen)|0xffffU)+1;
-    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
-    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBuf = (char *)Z_Realloc(ccmdBuf, newsize);
     ccmdBufSize = newsize;
   }
   memcpy(ccmdBuf+ccmdBufUsed, str, slen);
@@ -379,8 +376,7 @@ static void PutCharInternal (char ch, bool doDump) {
   if (ch == '\r') return;
 
   if (cbufcursize != cbufmaxsize) {
-    cbuf = (char *)realloc(cbuf, cbufmaxsize);
-    if (!cbuf) Sys_Error("Out of memory for console buffer");
+    cbuf = (char *)Z_Realloc(cbuf, cbufmaxsize);
     //FIXME
     cbufHead = 0;
     cbufTail = 1;

@@ -1026,6 +1026,7 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
     // send scheduled events
     for (int f = 0; f < dsevids.length(); ++f) sockmodPostEventCB(dsevids[f].code, dsevids[f].sid, dsevids[f].data, dsevids[f].wantAck);
   }
+  Z_ThreadDone();
   return MYTHREAD_RET_VALUE;
 }
 

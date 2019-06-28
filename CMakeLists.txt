@@ -127,6 +127,10 @@ if(WITH_STRTODEX)
   add_definitions(-DVCORE_ALLOW_STRTODEX=1)
 endif(WITH_STRTODEX)
 
+# for mi-malloc
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-invalid-memory-model")
+
+
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.9)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wimplicit-fallthrough")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wshadow=local")

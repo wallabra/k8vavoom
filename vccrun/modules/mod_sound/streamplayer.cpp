@@ -291,6 +291,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
   fprintf(stderr, "STP: streaming thread complete.\n");
 #endif
+  Z_ThreadDone();
   return MYTHREAD_RET_VALUE;
 }
 

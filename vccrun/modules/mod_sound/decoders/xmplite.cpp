@@ -124,7 +124,7 @@ bool VXMPAudioCodec::loadModuleData () {
   auto modsz = Strm->TotalSize();
   if (modsz < 32 || modsz > 1024*1024*512) return false; // alas
   Strm->Seek(0);
-  modData = (vuint8 *)malloc(modsz);
+  modData = (vuint8 *)Z_Malloc(modsz);
   if (!modData) return false;
   modDataSize = modsz;
   Strm->Serialize(modData, modsz);
@@ -139,7 +139,7 @@ bool VXMPAudioCodec::loadModuleData () {
 //
 //==========================================================================
 void VXMPAudioCodec::unloadModuleData () {
-  if (modData) free(modData);
+  if (modData) Z_Free(modData);
   modData = nullptr;
   modDataSize = 0;
 }
