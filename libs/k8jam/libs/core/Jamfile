@@ -29,8 +29,11 @@ Library libcore.a :
   src/xml.cpp
   src/xstreams.cpp
   src/zipstreams.cpp
-  src/xxhash.c
+  src/xxhash.cpp
   src/ntvalue.cpp
   src/cvarsys.cpp
   src/micropather.cpp
+  src/zone.cpp
+  # mi-malloc
+  src/mimalloc/static.c
 ;
