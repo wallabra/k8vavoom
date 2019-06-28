@@ -39,6 +39,12 @@ extern int zone_free_call_count;
 #endif
 
 
+// shitdoze, for some idiotic shitdoze reason, calls our `delete` on
+// a thing it allocated with standard `new`. this causes segfault in mi-malloc.
+// so call this function before returning from `main()`.
+void Z_ShuttingDown ();
+
+
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
 void *Z_Malloc (size_t size);
 

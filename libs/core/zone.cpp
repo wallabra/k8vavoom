@@ -42,6 +42,8 @@ int zone_realloc_call_count = 0;
 int zone_free_call_count = 0;
 #endif
 
+static bool zShuttingDown = false;
+
 #ifdef VAVOOM_USE_MIMALLOC
 # define malloc_fn   mi_malloc
 # define realloc_fn  mi_realloc
@@ -95,9 +97,11 @@ void *Z_Calloc (size_t size) {
 
 
 void Z_Free (void *ptr) {
+  if (zShuttingDown) return; // shitdoze hack
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_free_call_count;
 #endif
+  //fprintf(stderr, "Z_FREE! (%p)\n", ptr);
   if (ptr) free_fn(ptr);
 }
 
@@ -107,6 +111,11 @@ void Z_ThreadDone () {
 #if defined(VAVOOM_USE_MIMALLOC)
   mi_thread_done();
 #endif
+}
+
+
+void Z_ShuttingDown () {
+  zShuttingDown = true;
 }
 
 
@@ -126,12 +135,14 @@ void *operator new[] (size_t size) noexcept(false) {
 }
 
 void operator delete (void *p) {
-  //fprintf(stderr, "delete\n");
+  if (zShuttingDown) return; // shitdoze hack
+  //fprintf(stderr, "delete (%p)\n", p);
   Z_Free(p);
 }
 
 
 void operator delete[] (void *p) {
-  //fprintf(stderr, "delete[]\n");
+  if (zShuttingDown) return; // shitdoze hack
+  //fprintf(stderr, "delete[] (%p)\n", p);
   Z_Free(p);
 }

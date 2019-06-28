@@ -261,9 +261,15 @@ static bool _mi_heap_done(void) {
 // to set up the thread local keys.
 // --------------------------------------------------------
 
+//k8: no need to do this
+#ifdef MI_USE_PTHREADS
+# undef MI_USE_PTHREADS
+#endif
+/*
 #ifndef _WIN32
 #define MI_USE_PTHREADS
 #endif
+*/
 
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // nothing to do as it is done in DllMain
@@ -285,7 +291,8 @@ static bool _mi_heap_done(void) {
     if (value!=NULL) mi_thread_done();
   }
 #else
-  #pragma message("define a way to call mi_thread_done when a thread is done")
+  //k8: no need to do this
+  //#pragma message("define a way to call mi_thread_done when a thread is done")
 #endif
 
 // Set up handlers so `mi_thread_done` is called automatically
@@ -395,7 +402,6 @@ static void mi_process_done(void) {
 }
 
 
-
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // Windows DLL: easy to hook into process_init and thread_done
   #include <windows.h>
@@ -412,19 +418,20 @@ static void mi_process_done(void) {
     return TRUE;
   }
 
-#elif defined(__cplusplus)
-  // C++: use static initialization to detect process start
-  static bool _mi_process_init(void) {
-    mi_process_init();
-    return (mi_main_thread_id != 0);
-  }
-  static bool mi_initialized = _mi_process_init();
-
 #elif defined(__GNUC__) || defined(__clang__)
   // GCC,Clang: use the constructor attribute
   static void __attribute__((constructor)) _mi_process_init(void) {
     mi_process_init();
   }
+
+#elif defined(__cplusplus)
+  // C++: use static initialization to detect process start
+  static bool _mi_process_init(void) {
+    mi_process_init();
+    return (mi_main_thread_id != 0);
+    //return (_mi_thread_id() != 0);
+  }
+  bool mi_initialized___ = _mi_process_init();
 
 #elif defined(_MSC_VER)
   // MSVC: use data section magic for static libraries

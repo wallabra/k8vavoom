@@ -73,13 +73,14 @@ add_library(core STATIC
   mimalloc/mimalloc-internal.h
   mimalloc/mimalloc-types.h
   mimalloc/mimalloc.h
-  mimalloc/stats.c
-  mimalloc/os.c
-  mimalloc/segment.c
-  mimalloc/page.c
-  mimalloc/alloc.c
-  mimalloc/alloc-aligned.c
-  mimalloc/heap.c
-  mimalloc/options.c
-  mimalloc/init.c
+  ## mimalloc/stats.c
+  ## mimalloc/os.c
+  ## mimalloc/segment.c
+  ## mimalloc/page.c
+  ## mimalloc/alloc.c
+  ## mimalloc/alloc-aligned.c
+  ## mimalloc/heap.c
+  ## mimalloc/options.c
+  ## mimalloc/init.c
+  mimalloc/static.c
 )

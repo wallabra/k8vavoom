@@ -343,7 +343,7 @@ static mi_segment_t* mi_segment_alloc( size_t required, mi_page_kind_t page_kind
 
   mi_assert_internal((uintptr_t)segment % MI_SEGMENT_SIZE == 0);
 
-  memset(segment, 0, info_size);
+  memset((void *)segment, 0, info_size);
   if (mi_option_is_enabled(mi_option_secure)) {
     // in secure mode, we set up a protected page in between the segment info
     // and the page data
@@ -478,7 +478,7 @@ static void mi_segment_page_clear(mi_segment_t* segment, mi_page_t* page, mi_sta
   // zero the page data
   uint8_t idx = page->segment_idx; // don't clear the index
   bool is_reset = page->is_reset;  // don't clear the reset flag
-  memset(page, 0, sizeof(*page));
+  memset((void *)page, 0, sizeof(*page));
   page->segment_idx = idx;
   page->segment_in_use = false;
   page->is_reset = is_reset;

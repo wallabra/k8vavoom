@@ -148,7 +148,7 @@ static inline uintptr_t mi_atomic_exchange(volatile uintptr_t* p, uintptr_t exch
   return atomic_exchange_explicit((volatile atomic_uintptr_t*)p, exchange, memory_order_relaxed);
 }
 
-#if defined(__cplusplus)
+#if defined(__cplusplus_fuck_stl)
   #include <thread>
   static inline void mi_atomic_yield(void) {
     std::this_thread::yield();

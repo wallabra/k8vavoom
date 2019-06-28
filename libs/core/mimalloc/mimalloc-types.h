@@ -11,6 +11,9 @@ terms of the MIT license. A copy of the license can be found in the file
 #include <stdlib.h>   // size_t etc.
 #include <stddef.h>   // ptrdiff_t
 #include <stdint.h>   // uintptr_t, uint16_t, etc
+#ifdef __cplusplus
+# include <string.h>   // uintptr_t, uint16_t, etc
+#endif
 
 // ------------------------------------------------------
 // Variants
@@ -157,6 +160,16 @@ typedef union mi_thread_free_u {
     uintptr_t head:30;
 #endif
   };
+#ifdef __cplusplus
+  inline mi_thread_free_u &operator = (const mi_thread_free_u &other) {
+    if (this != &other) memcpy((void *)this, (const void *)&other, sizeof(*this));
+    return *this;
+  }
+  inline mi_thread_free_u &operator = (volatile const mi_thread_free_u &other) {
+    if ((const void *)this != (const void *)&other) memcpy((void *)this, (const void *)&other, sizeof(*this));
+    return *this;
+  }
+#endif
 } mi_thread_free_t;
 
 #define MI_TF_PTR_SHIFT (2)

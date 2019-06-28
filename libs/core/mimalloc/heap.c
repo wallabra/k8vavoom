@@ -10,6 +10,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #include "mimalloc-atomic.h"
 
 #include <string.h>  // memset, memcpy
+#include <stdint.h>
 
 
 /* -----------------------------------------------------------
@@ -84,7 +85,7 @@ typedef enum mi_collect_e {
 static bool mi_heap_page_collect(mi_heap_t* heap, mi_page_queue_t* pq, mi_page_t* page, void* arg_collect, void* arg2 ) {
   UNUSED(arg2);
   UNUSED(heap);
-  mi_collect_t collect = (mi_collect_t)arg_collect;
+  mi_collect_t collect = (mi_collect_t)(uintptr_t)arg_collect;
   _mi_page_free_collect(page);
   if (mi_page_all_free(page)) {
     // no more used blocks, free the page. TODO: should we retire here and be less aggressive?
@@ -477,7 +478,7 @@ static bool mi_heap_visit_areas_page(mi_heap_t* heap, mi_page_queue_t* pq, mi_pa
 // Visit all heap pages as areas
 static bool mi_heap_visit_areas(const mi_heap_t* heap, mi_heap_area_visit_fun* visitor, void* arg) {
   if (visitor == NULL) return false;
-  return mi_heap_visit_pages((mi_heap_t*)heap, &mi_heap_visit_areas_page, visitor, arg);
+  return mi_heap_visit_pages((mi_heap_t*)heap, &mi_heap_visit_areas_page, (void *)visitor, arg);
 }
 
 // Just to pass arguments

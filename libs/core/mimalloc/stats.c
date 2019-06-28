@@ -351,6 +351,7 @@ static double mi_clock_end(double start) {
 #include <psapi.h>
 //#pragma comment(lib,"psapi.lib")
 
+/*
 static double filetime_secs(const FILETIME* ftime) {
   ULARGE_INTEGER i;
   i.LowPart = ftime->dwLowDateTime;
@@ -358,6 +359,7 @@ static double filetime_secs(const FILETIME* ftime) {
   double secs = (double)(i.QuadPart) * 1.0e-7; // FILETIME is in 100 nano seconds
   return secs;
 }
+*/
 static void mi_process_info(double* utime, double* stime, size_t* peak_rss, size_t* page_faults, size_t* page_reclaim) {
   /*k8: nope
   FILETIME ct;
