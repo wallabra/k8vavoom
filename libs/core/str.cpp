@@ -2007,13 +2007,13 @@ struct VaBuffer {
   char initbuf[32768];
 
   VaBuffer () : buf(initbuf), bufsize(sizeof(initbuf)), alloced(false) {}
-  ~VaBuffer () { if (alloced) free(buf); buf = nullptr; alloced = false; bufsize = 0; }
+  ~VaBuffer () { if (alloced) Z_Free(buf); buf = nullptr; alloced = false; bufsize = 0; }
 
   void ensureSize (size_t size) {
     size = ((size+1)|0x1fff)+1;
     if (size <= bufsize) return;
     if (size > 1024*1024*2) Sys_Error("`va` buffer too big");
-    char *newbuf = (char *)(alloced ? realloc(buf, size) : malloc(size));
+    char *newbuf = (char *)(alloced ? Z_Realloc(buf, size) : Z_Malloc(size));
     if (!newbuf) Sys_Error("out of memory for `va` buffer");
     buf = newbuf;
     bufsize = size;

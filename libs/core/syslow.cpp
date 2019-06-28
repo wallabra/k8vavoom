@@ -32,13 +32,6 @@
 
 #include "core.h"
 
-// k8: ah, let it be here, why not...
-#ifdef VAVOOM_CORE_COUNT_ALLOCS
-int zone_malloc_call_count = 0;
-int zone_realloc_call_count = 0;
-int zone_free_call_count = 0;
-#endif
-
 
 /*
   static void *operator new (size_t size);
@@ -48,6 +41,8 @@ int zone_free_call_count = 0;
 */
 #include <new>
 
+#if 0
+moved to zone
 void *operator new [] (std::size_t s) noexcept(false) /*throw(std::bad_alloc)*/ {
   //fprintf(stderr, "new[]\n");
   return Z_Calloc(s);
@@ -58,6 +53,7 @@ void operator delete [] (void *p) throw () {
   //fprintf(stderr, "delete[]\n");
   Z_Free(p);
 }
+#endif
 
 
 #ifndef WIN32
@@ -169,7 +165,7 @@ void *Sys_OpenDir (const VStr &path, bool wantDirs) {
   if (path.isEmpty()) return nullptr;
   DIR *dh = opendir(*path);
   if (!dh) return nullptr;
-  auto res = (DirInfo *)malloc(sizeof(DirInfo));
+  auto res = (DirInfo *)Z_Malloc(sizeof(DirInfo));
   if (!res) { closedir(dh); return nullptr; }
   memset((void *)res, 0, sizeof(DirInfo));
   res->dh = dh;
@@ -219,7 +215,7 @@ void Sys_CloseDir (void *adir) {
     DirInfo *dh = (DirInfo *)adir;
     if (dh->dh) closedir(dh->dh);
     dh->path.clear();
-    free((void *)dh);
+    Z_Free((void *)dh);
   }
 }
 
@@ -446,14 +442,14 @@ bool Sys_CreateDirectory (const VStr &path) {
 //==========================================================================
 void *Sys_OpenDir (const VStr &dirname, bool wantDirs) {
   if (dirname.isEmpty()) return nullptr;
-  auto sd = (ShitdozeDir *)malloc(sizeof(ShitdozeDir));
+  auto sd = (ShitdozeDir *)Z_Malloc(sizeof(ShitdozeDir));
   if (!sd) return nullptr;
   memset((void *)sd, 0, sizeof(ShitdozeDir));
   VStr path = dirname;
   if (path.length() == 0) path = "./";
   if (path[path.length()-1] != '/' && path[path.length()-1] != '\\' && path[path.length()-1] != ':') path += "/";
   sd->dir_handle = FindFirstFile(va("%s*.*", *path), &sd->dir_buf);
-  if (sd->dir_handle == INVALID_HANDLE_VALUE) { free(sd); return nullptr; }
+  if (sd->dir_handle == INVALID_HANDLE_VALUE) { Z_Free(sd); return nullptr; }
   sd->gotName = true;
   sd->path = path;
   sd->wantDirs = wantDirs;
@@ -496,7 +492,7 @@ void Sys_CloseDir (void *adir) {
     auto sd = (ShitdozeDir *)adir;
     FindClose(sd->dir_handle);
     sd->path.clear();
-    free(sd);
+    Z_Free(sd);
   }
 }
 

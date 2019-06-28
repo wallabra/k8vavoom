@@ -470,14 +470,14 @@ void VStream::vawritef (const char *text, va_list ap) {
   if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
 
   if (size >= (int)sizeof(buf)-1) {
-    char *dynbuf = (char *)malloc(size+32);
+    char *dynbuf = (char *)Z_Malloc(size+32);
     if (!dynbuf) { Serialise(errorText, (int)strlen(errorText)); return; }
     va_copy(apcopy, ap);
     size = vsnprintf(dynbuf, size+32, text, apcopy);
     va_end(apcopy);
     if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
     Serialise(dynbuf, size);
-    free(dynbuf);
+    Z_Free(dynbuf);
   } else {
     Serialise(buf, size);
   }

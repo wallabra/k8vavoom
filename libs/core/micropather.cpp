@@ -210,7 +210,7 @@ PathNodePool::PathNodePool( unsigned _allocate, unsigned _typicalAdjacent )
 
   cacheCap = allocate * _typicalAdjacent;
   cacheSize = 0;
-  cache = (NodeCost*)malloc(cacheCap * sizeof(NodeCost));
+  cache = (NodeCost*)Z_Malloc(cacheCap * sizeof(NodeCost));
 
   // Want the behavior that if the actual number of states is specified, the cache
   // will be at least that big.
@@ -219,7 +219,7 @@ PathNodePool::PathNodePool( unsigned _allocate, unsigned _typicalAdjacent )
   while( HashSize() < allocate )
     ++hashShift;
 #endif
-  hashTable = (PathNode**)calloc( HashSize(), sizeof(PathNode*) );
+  hashTable = (PathNode**)Z_Calloc( HashSize() * sizeof(PathNode*) );
 
   blocks = firstBlock = NewBlock();
 //  printf( "HashSize=%d allocate=%d\n", HashSize(), allocate );
@@ -230,9 +230,9 @@ PathNodePool::PathNodePool( unsigned _allocate, unsigned _typicalAdjacent )
 PathNodePool::~PathNodePool()
 {
   Clear();
-  free( firstBlock );
-  free( cache );
-  free( hashTable );
+  Z_Free( firstBlock );
+  Z_Free( cache );
+  Z_Free( hashTable );
 #ifdef MP_TRACK_COLLISION
   printf( "Total collide=%d HashSize=%d HashShift=%d\n", totalCollide, HashSize(), hashShift );
 #endif
@@ -278,7 +278,7 @@ void PathNodePool::Clear()
   while( b ) {
     Block* temp = b->nextBlock;
     if ( b != firstBlock ) {
-      free( b );
+      Z_Free( b );
     }
     b = temp;
   }
@@ -302,7 +302,7 @@ void PathNodePool::Clear()
 
 PathNodePool::Block* PathNodePool::NewBlock()
 {
-  Block* block = (Block*) calloc( 1, sizeof(Block) + sizeof(PathNode)*(allocate-1) );
+  Block* block = (Block*) Z_Calloc(sizeof(Block) + sizeof(PathNode)*(allocate-1) );
   block->nextBlock = 0;
 
   nAvailable += allocate;

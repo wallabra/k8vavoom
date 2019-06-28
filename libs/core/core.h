@@ -27,6 +27,8 @@
 #ifndef VAVOOM_CORE_HEADER
 #define VAVOOM_CORE_HEADER
 
+#define VAVOOM_USE_MIMALLOC
+
 // define this to activate zone allocator counters
 //#define VAVOOM_CORE_COUNT_ALLOCS
 
@@ -69,6 +71,7 @@
 # define VSUM3D(value0,value1,value2)         ((value0)+(value1)+(value2))
 #endif
 
+#include "mimalloc/mimalloc.h"
 
 #include "mythreadlite.h"
 

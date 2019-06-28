@@ -21,6 +21,8 @@
 #include <stdlib.h>		// malloc, free
 #include <string.h>		// memcpy, memmove
 #include "timsort.h"
+#include "zone.h" // zone memory allocation
+
 
 #include <stdint.h>
 #if INTPTR_MAX == INT32_MAX
@@ -196,7 +198,7 @@ static int timsort_init(struct timsort *ts, void *a, size_t len,
 	ts->tmp_length = (len < 2 * INITIAL_TMP_STORAGE_LENGTH ?
 			  len >> 1 : INITIAL_TMP_STORAGE_LENGTH);
 	if (ts->tmp_length) {
-		ts->tmp = malloc(ts->tmp_length * width);
+		ts->tmp = Z_Malloc(ts->tmp_length * width);
 		err |= ts->tmp == NULL;
 	} else {
 		ts->tmp = NULL;
@@ -275,7 +277,7 @@ static int timsort_init(struct timsort *ts, void *a, size_t len,
 	 */
 	//stackLen = (len < 120 ? 5 : len < 1542 ? 10 : len < 119151 ? 19 : 40);
 
-	ts->run = malloc(ts->stackLen * sizeof(ts->run[0]));
+	ts->run = Z_Malloc(ts->stackLen * sizeof(ts->run[0]));
 	err |= ts->run == NULL;
 #else
 	ts->stackLen = MAX_STACK;
@@ -291,9 +293,9 @@ static int timsort_init(struct timsort *ts, void *a, size_t len,
 
 static void timsort_deinit(struct timsort *ts)
 {
-	free(ts->tmp);
+	Z_Free(ts->tmp);
 #ifdef MALLOC_STACK
-	free(ts->run);
+	Z_Free(ts->run);
 #endif
 }
 
@@ -369,9 +371,9 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
 			newSize = minCapacity;
 		}
 
-		free(ts->tmp);
+		Z_Free(ts->tmp);
 		ts->tmp_length = newSize;
-		ts->tmp = malloc(ts->tmp_length * width);
+		ts->tmp = Z_Malloc(ts->tmp_length * width);
 	}
 
 	return ts->tmp;

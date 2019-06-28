@@ -53,7 +53,7 @@ VLog::VLog ()
 {
   // initial allocation, so we will have something to use on OOM
   logbufsize = INITIAL_BUFFER_SIZE;
-  logbuf = (char *)malloc(logbufsize);
+  logbuf = (char *)Z_Malloc(logbufsize);
   if (!logbuf) { fprintf(stderr, "FATAL: out of memory for initial log buffer!\n"); abort(); } //FIXME
 }
 
@@ -66,7 +66,7 @@ VLog::VLog ()
 void VLog::AddListener (VLogListener *lst) {
   if (!lst) return;
   //if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
-  Listener *ls = (Listener *)malloc(sizeof(Listener));
+  Listener *ls = (Listener *)Z_Malloc(sizeof(Listener));
   if (!ls) { fprintf(stderr, "FATAL: out of memory for log listener list!\n"); abort(); }
   ls->ls = lst;
   ls->next = nullptr;
@@ -99,7 +99,7 @@ void VLog::RemoveListener (VLogListener *lst) {
   if (lastCurr) {
     // i found her!
     if (lastPrev) lastPrev = lastCurr->next; else Listeners = lastCurr->next;
-    free(lastCurr);
+    Z_Free(lastCurr);
   }
 }
 
@@ -153,7 +153,7 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
       // not enough room, try again
       if (size > 0x1fffff-4) size = 0x1fffff-4;
       size = ((size+4)|0x1fff)+1;
-      char *newlogbuf = (char *)realloc(logbuf, (size_t)size);
+      char *newlogbuf = (char *)Z_Realloc(logbuf, (size_t)size);
       if (!newlogbuf) {
         //FIXME
         fprintf(stderr, "FATAL: out of memory for log buffer (new=%d; old=%d)!\n", size, logbufsize);
@@ -171,7 +171,7 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
   } else {
     if (logbufsize < 4) {
       logbufsize = 0x1fff+1;
-      logbuf = (char *)realloc(logbuf, (size_t)logbufsize);
+      logbuf = (char *)Z_Realloc(logbuf, (size_t)logbufsize);
       if (!logbuf) {
         //FIXME
         fprintf(stderr, "FATAL: out of memory for log buffer (new=%d)!\n", logbufsize);

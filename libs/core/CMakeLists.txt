@@ -1,4 +1,6 @@
 add_library(core STATIC
+  mimalloc/mimalloc.h
+
   propp.h
   args.cpp
   args.h
@@ -42,6 +44,7 @@ add_library(core STATIC
   xml.h
   xml.cpp
   zone.h
+  zone.cpp
   minipng.h
   minipng.cpp
   syslow.h
@@ -64,4 +67,19 @@ add_library(core STATIC
   micropather.cpp
   cvarsys.h
   cvarsys.cpp
+
+  # mimalloc
+  mimalloc/mimalloc-atomic.h
+  mimalloc/mimalloc-internal.h
+  mimalloc/mimalloc-types.h
+  mimalloc/mimalloc.h
+  mimalloc/stats.c
+  mimalloc/os.c
+  mimalloc/segment.c
+  mimalloc/page.c
+  mimalloc/alloc.c
+  mimalloc/alloc-aligned.c
+  mimalloc/heap.c
+  mimalloc/options.c
+  mimalloc/init.c
 )
