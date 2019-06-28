@@ -61,7 +61,7 @@ add_library(core STATIC
   strtod_plan9.h
   strtod_plan9.c
   xxhash.h
-  xxhash.c
+  xxhash.cpp
   ntvalue.cpp
   micropather.h
   micropather.cpp

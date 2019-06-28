@@ -102,6 +102,14 @@ void Z_Free (void *ptr) {
 }
 
 
+// call this when exiting a thread function, to reclaim thread heaps
+void Z_ThreadDone () {
+#if defined(VAVOOM_USE_MIMALLOC)
+  mi_thread_done();
+#endif
+}
+
+
 #ifdef __cplusplus
 }
 #endif

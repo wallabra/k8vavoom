@@ -268,6 +268,7 @@ static bool _mi_heap_done(void) {
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // nothing to do as it is done in DllMain
 #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
+# if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
   // use thread local storage keys to detect thread ending
   #include <windows.h>
   #include <fibersapi.h>
@@ -275,6 +276,7 @@ static bool _mi_heap_done(void) {
   static void NTAPI mi_fls_done(PVOID value) {
     if (value!=NULL) mi_thread_done();
   }
+# endif
 #elif defined(MI_USE_PTHREADS)
   // use pthread locol storage keys to detect thread ending
   #include <pthread.h>
@@ -294,7 +296,9 @@ static void mi_process_setup_auto_thread_done(void) {
   #if defined(_WIN32) && defined(MI_SHARED_LIB)
     // nothing to do as it is done in DllMain
   #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
+   #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
     mi_fls_key = FlsAlloc(&mi_fls_done);
+   #endif
   #elif defined(MI_USE_PTHREADS)
     pthread_key_create(&mi_pthread_key, &mi_pthread_done);
   #endif
@@ -323,7 +327,9 @@ void mi_thread_init(void) mi_attr_noexcept
   #if defined(_WIN32) && defined(MI_SHARED_LIB)
     // nothing to do as it is done in DllMain
   #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
+   #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
     FlsSetValue(mi_fls_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_fls_done` is called
+   #endif
   #elif defined(MI_USE_PTHREADS)
     pthread_setspecific(mi_pthread_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_pthread_done` is called
   #endif

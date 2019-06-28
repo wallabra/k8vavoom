@@ -98,23 +98,28 @@
 #  endif
 #endif
 
+#define XXH_STATIC_LINKING_ONLY
 
 /* *************************************
 *  Includes & Memory related functions
 ***************************************/
 /*! Modify the local functions below should you wish to use some other memory routines
 *   for malloc(), free() */
-#include <stdlib.h>
+#include "core.h"
+//#include <stdlib.h>
 static void* XXH_malloc(size_t s) { return Z_Malloc(s); }
 static void  XXH_free  (void* p)  { Z_Free(p); }
 /*! and for memcpy() */
-#include <string.h>
+//#include <string.h>
 static void* XXH_memcpy(void* dest, const void* src, size_t size) { return memcpy(dest,src,size); }
 
 #include <assert.h>   /* assert */
 
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#include "xxhash.h"
 
 
 /* *************************************
@@ -1028,3 +1033,7 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 }
 
 #endif  /* XXH_NO_LONG_LONG */
+
+#ifdef __cplusplus
+}
+#endif

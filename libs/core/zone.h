@@ -50,6 +50,9 @@ void *Z_Calloc (size_t size);
 
 void Z_Free (void *ptr);
 
+// call this when exiting a thread function, to reclaim thread heaps
+void Z_ThreadDone ();
+
 
 #ifdef __cplusplus
 }

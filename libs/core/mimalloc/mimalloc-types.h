@@ -54,6 +54,10 @@ terms of the MIT license. A copy of the license can be found in the file
 # error "don't do this!"
 #endif
 
+// k8: we'll call `mi_thread_done()` manually
+#ifdef MI_USE_FLS
+# undef MI_USE_FLS
+#endif
 
 // ------------------------------------------------------
 // Platform specific values

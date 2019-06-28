@@ -349,7 +349,7 @@ static double mi_clock_end(double start) {
 #if defined(_WIN32)
 #include <windows.h>
 #include <psapi.h>
-#pragma comment(lib,"psapi.lib")
+//#pragma comment(lib,"psapi.lib")
 
 static double filetime_secs(const FILETIME* ftime) {
   ULARGE_INTEGER i;
@@ -359,6 +359,7 @@ static double filetime_secs(const FILETIME* ftime) {
   return secs;
 }
 static void mi_process_info(double* utime, double* stime, size_t* peak_rss, size_t* page_faults, size_t* page_reclaim) {
+  /*k8: nope
   FILETIME ct;
   FILETIME ut;
   FILETIME st;
@@ -371,6 +372,13 @@ static void mi_process_info(double* utime, double* stime, size_t* peak_rss, size
   GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
   *peak_rss = (size_t)info.PeakWorkingSetSize;
   *page_faults = (size_t)info.PageFaultCount;
+  *page_reclaim = 0;
+  */
+
+  *utime = 0;
+  *stime = 0;
+  *peak_rss = 0;
+  *page_faults = 0;
   *page_reclaim = 0;
 }
 

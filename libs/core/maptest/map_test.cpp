@@ -32,6 +32,7 @@
 typedef unsigned int vuint32;
 
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,12 +58,21 @@ static void fatal (const char *msg) {
 }
 
 
-void Sys_Error (const char *msg) { fatal(msg); }
+void Sys_Error (const char *error, ...) {
+  va_list argptr;
+  static char buf[16384]; //WARNING! not thread-safe!
+
+  va_start(argptr,error);
+  vsnprintf(buf, sizeof(buf), error, argptr);
+  va_end(argptr);
+
+  fatal(buf);
+}
 
 
-#include "common.h"
-#include "zone.h"
-#include "map.h"
+#include "../common.h"
+#include "../zone.h"
+#include "../map.h"
 
 //int zone_malloc_call_count;
 //int zone_realloc_call_count;

@@ -642,7 +642,8 @@ public:
     }
 
     // need to resize elements table?
-    if ((vuint32)mBucketsUsed >= (bhigh+1)*LoadFactorPrc/100) {
+    // if elements table is empty, `allocEntry()` will take care of it
+    if (mEBSize && (vuint32)mBucketsUsed >= (bhigh+1)*LoadFactorPrc/100) {
       vuint32 newsz = (vuint32)mEBSize;
       //if (Length(mEntries) <> newsz) then raise Exception.Create('internal error in hash table (resize)');
       //if (newsz <= 1024*1024*1024) then newsz *= 2 else raise Exception.Create('hash table too big');
