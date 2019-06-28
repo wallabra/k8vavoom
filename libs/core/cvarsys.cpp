@@ -323,6 +323,36 @@ void VCvar::Init () {
 
 //==========================================================================
 //
+//  VCvar::SendAllUserInfos
+//
+//==========================================================================
+void VCvar::SendAllUserInfos () {
+  if (!UserInfoSetCB) return;
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      if (cvar->Flags&CVAR_UserInfo) UserInfoSetCB(cvar);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VCvar::SendAllServerInfos
+//
+//==========================================================================
+void VCvar::SendAllServerInfos () {
+  if (!ServerInfoSetCB) return;
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      if (cvar->Flags&CVAR_ServerInfo) ServerInfoSetCB(cvar);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VCvar::dumpHashStats
 //
 //==========================================================================

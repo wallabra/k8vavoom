@@ -95,6 +95,9 @@ public:
   static void Init ();
   static void Shutdown ();
 
+  static void SendAllUserInfos ();
+  static void SendAllServerInfos ();
+
   static bool HasVar (const char *var_name);
   static bool HasModVar (const char *var_name);
   static bool HasModUserVar (const char *var_name); // non-server
