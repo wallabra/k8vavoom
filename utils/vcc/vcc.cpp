@@ -126,9 +126,7 @@ __attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
 //==========================================================================
 void* Malloc (size_t size) {
   if (!size) return nullptr;
-  void *ptr = Z_Malloc(size);
-  if (!ptr) FatalError("Couldn't alloc %d bytes", (int)size);
-  memset(ptr, 0, size);
+  void *ptr = Z_Calloc(size);
   return ptr;
 }
 
@@ -139,7 +137,7 @@ void* Malloc (size_t size) {
 //
 //==========================================================================
 void Free (void* ptr) {
-  if (ptr) Z_Free(ptr);
+  Z_Free(ptr);
 }
 
 
