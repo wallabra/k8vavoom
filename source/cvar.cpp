@@ -80,6 +80,8 @@ void CVars_Init () {
   VCvar::AddAllVarsToAutocomplete(&VCommand::AddToAutoComplete);
   VCvar::UserInfoSetCB = &cv_userInfoSet;
   VCvar::ServerInfoSetCB = &cv_serverInfoSet;
+  VCvar::SendAllUserInfos();
+  VCvar::SendAllServerInfos();
 }
 
 
