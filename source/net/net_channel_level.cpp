@@ -37,6 +37,8 @@ enum {
   CMD_PolyObj,
   CMD_StaticLight,
   CMD_NewLevel,
+  CMD_ServerInfo,
+  CMD_ServerInfoEnd,
   CMD_PreRender,
   CMD_Line,
   CMD_CamTex,
@@ -61,7 +63,15 @@ VLevelChannel::VLevelChannel (VNetConnection *AConnection, vint32 AIndex, vuint8
   , Sides(nullptr)
   , Sectors(nullptr)
 {
+  serverInfoBuf.clear();
+  severInfoPacketCount = 0;
+  severInfoCurrPacket = -1;
+  csi.mapname.clear();
+  csi.sinfo.clear();
+  csi.maxclients = 1;
+  csi.deathmatch = 0;
 }
+
 
 //==========================================================================
 //
@@ -127,6 +137,13 @@ void VLevelChannel::ResetLevel () {
     Translations.Clear();
     BodyQueueTrans.Clear();
     Level = nullptr;
+    serverInfoBuf.clear();
+    severInfoPacketCount = 0;
+    severInfoCurrPacket = -1;
+    csi.mapname.clear();
+    csi.sinfo.clear();
+    csi.maxclients = 1;
+    csi.deathmatch = 0;
   }
 }
 
@@ -137,6 +154,7 @@ void VLevelChannel::ResetLevel () {
 //
 //==========================================================================
 void VLevelChannel::SendNewLevel () {
+  VStr sinfo = svs.serverinfo;
   {
     VMessageOut Msg(this);
     Msg.bReliable = true;
@@ -144,10 +162,41 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteInt(NETWORK_PROTO_VERSION);
     VStr MapName = *Level->MapName;
     check(!Msg.IsLoading());
-    Msg << svs.serverinfo << MapName;
+    //Msg << svs.serverinfo << MapName;
+    Msg << MapName;
     Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
     Msg.WriteInt(deathmatch/*, 256*/);
+    Msg.WriteInt((int)((sinfo.length()+999)/1000)); // number of packets in server info
     SendMessage(&Msg);
+  }
+
+  // send server info
+  if (sinfo.length()) {
+    int pktnum = 0;
+    while (sinfo.length() > 0) {
+      VMessageOut Msg(this);
+      Msg.bReliable = true;
+      Msg.WriteInt(CMD_ServerInfo/*, CMD_MAX*/);
+      Msg.WriteInt(pktnum); // sequence number
+      VStr s = sinfo;
+      if (s.length() > 1000) {
+        s.chopRight(s.length()-1000);
+        sinfo.chopLeft(1000);
+      } else {
+        sinfo.clear();
+      }
+      Msg << s;
+      SendMessage(&Msg);
+      ++pktnum;
+    }
+
+    {
+      VMessageOut Msg(this);
+      Msg.bReliable = true;
+      Msg.WriteInt(CMD_ServerInfoEnd/*, CMD_MAX*/);
+      Msg.WriteInt(pktnum); // sequence number
+      SendMessage(&Msg);
+    }
   }
 
   SendStaticLights();
@@ -732,10 +781,52 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           if (Msg.IsError()) Host_Error("Cannot read network protocol version");
           if (ver != NETWORK_PROTO_VERSION) Host_Error("Invalid network protocol version: expected %d, got %d", ver, NETWORK_PROTO_VERSION);
         }
-        CL_ParseServerInfo(Msg);
+        Msg << csi.mapname;
+        csi.maxclients = Msg.ReadInt();
+        csi.deathmatch = Msg.ReadInt();
+        if (Msg.IsError() || csi.maxclients < 1 || csi.maxclients > MAXPLAYERS) Host_Error("Invalid level handshake sequence");
+        // prepare serveinfo buffer
+        serverInfoBuf.clear();
+        severInfoPacketCount = Msg.ReadInt();
+        if (Msg.IsError() || severInfoPacketCount < 0 || severInfoPacketCount > 1024) Host_Error("Invalid server info size");
+        severInfoCurrPacket = (severInfoPacketCount ? 0 : -2);
+        //CL_ParseServerInfo(Msg);
+#endif
+        break;
+      case CMD_ServerInfo:
+#ifdef CLIENT
+        if (severInfoCurrPacket < 0) Host_Error("Invalid level handshake sequence");
+        if (severInfoCurrPacket >= severInfoPacketCount) Host_Error("Invalid level handshake sequence");
+        {
+          int sq = Msg.ReadInt();
+          if (Msg.IsError() || sq != severInfoCurrPacket) Host_Error("Invalid level handshake sequence");
+          VStr s;
+          Msg << s;
+          if (Msg.IsError()) Host_Error("Invalid level handshake sequence");
+          serverInfoBuf += s;
+          ++severInfoCurrPacket;
+        }
+#endif
+        break;
+      case CMD_ServerInfoEnd:
+#ifdef CLIENT
+        if (severInfoCurrPacket == -2) Host_Error("Invalid level handshake sequence");
+        {
+          int sq = Msg.ReadInt();
+          if (Msg.IsError() || sq != severInfoPacketCount) Host_Error("Invalid level handshake sequence");
+          severInfoCurrPacket = -2;
+        }
+        csi.sinfo = serverInfoBuf;
+        serverInfoBuf.clear();
+        CL_ParseServerInfo(&csi);
+        csi.mapname.clear();
+        csi.sinfo.clear();
 #endif
         break;
       case CMD_PreRender:
+#ifdef CLIENT
+        if (severInfoCurrPacket != -2) Host_Error("Invalid level handshake sequence");
+#endif
         Level->RenderData->PreRender();
 #ifdef CLIENT
         if (cls.signon) Host_Error("Client_Spawn command already sent");

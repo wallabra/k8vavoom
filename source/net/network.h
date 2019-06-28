@@ -42,7 +42,7 @@ enum {
 
 // sent with `CMD_NewLevel`
 enum {
-  NETWORK_PROTO_VERSION = 1,
+  NETWORK_PROTO_VERSION = 2,
 };
 
 //FIXME!
@@ -212,6 +212,11 @@ public:
   TArray<VCameraTextureInfo> CameraTextures;
   TArray<TArray<VTextureTranslation::VTransCmd> > Translations;
   TArray<VBodyQueueTrInfo> BodyQueueTrans;
+
+  VStr serverInfoBuf;
+  int severInfoPacketCount;
+  int severInfoCurrPacket;
+  ClientServerInfo csi;
 
   VLevelChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VLevelChannel () override;

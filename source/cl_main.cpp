@@ -424,18 +424,23 @@ void CL_ReadFromServerInfo () {
 //  CL_DoLoadLevel
 //
 //==========================================================================
-void CL_ParseServerInfo (VMessageIn &msg) {
+void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
+  check(sinfo);
   CL_Clear();
 
-  msg << GClGame->serverinfo;
+  //msg << GClGame->serverinfo;
+  GClGame->serverinfo = sinfo->sinfo;
   CL_ReadFromServerInfo();
 
-  VStr TmpStr;
-  msg << TmpStr;
-  VName MapName = *TmpStr;
+  //VStr TmpStr;
+  //msg << TmpStr;
+  //VName MapName = *TmpStr;
+  VName MapName = *sinfo->mapname;
 
-  GClGame->maxclients = msg.ReadInt(/*MAXPLAYERS + 1*/);
-  GClGame->deathmatch = msg.ReadInt(/*256*/);
+  //GClGame->maxclients = msg.ReadInt(/*MAXPLAYERS + 1*/);
+  //GClGame->deathmatch = msg.ReadInt(/*256*/);
+  GClGame->maxclients = sinfo->maxclients;
+  GClGame->deathmatch = sinfo->deathmatch;
 
   const mapInfo_t &LInfo = P_GetMapInfo(MapName);
   GCon->Log("---------------------------------------");

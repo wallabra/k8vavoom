@@ -156,11 +156,14 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct ClientServerInfo;
+
 void CL_DecayLights ();
 
 void CL_KeepaliveMessage ();
 void CL_KeepaliveMessageEx (double currTime, bool forced=false);
-void CL_ParseServerInfo (class VMessageIn &msg);
+//void CL_ParseServerInfo (class VMessageIn &msg);
+void CL_ParseServerInfo (const ClientServerInfo *sinfo);
 void CL_ReadFromServerInfo ();
 void CL_StopRecording ();
 

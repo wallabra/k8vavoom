@@ -35,6 +35,14 @@
 class VChannel;
 
 
+struct ClientServerInfo {
+  VStr mapname;
+  VStr sinfo;
+  int maxclients;
+  int deathmatch;
+};
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageIn : public VBitStreamReader {
 public:
