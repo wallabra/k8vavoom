@@ -44,7 +44,7 @@ static MemInfo *allocInfoTail = nullptr;
 
 
 static void *AllocMem (size_t sz) {
-  MemInfo *mi = (MemInfo *)malloc(sz+sizeof(MemInfo));
+  MemInfo *mi = (MemInfo *)Z_Malloc(sz+sizeof(MemInfo));
   mi->ptr = (vuint8 *)(mi+1)+sizeof(size_t);
   mi->size = sz-sizeof(size_t);
   mi->prev = allocInfoTail;
@@ -60,7 +60,7 @@ static void FreeMem (void *p) {
   MemInfo *mi = ((MemInfo *)p)-1;
   if (mi->prev) mi->prev->next = mi->next; else allocInfoHead = mi->next;
   if (mi->next) mi->next->prev = mi->prev; else allocInfoTail = mi->prev;
-  free(mi);
+  Z_Free(mi);
 }
 
 

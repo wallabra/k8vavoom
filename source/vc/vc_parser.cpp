@@ -4335,7 +4335,7 @@ void VParser::ParseClass () {
         // append it to the list
         if (defallot == defcount) {
           defallot += 1024;
-          defstats = (VStatement **)realloc(defstats, defallot*sizeof(VStatement *));
+          defstats = (VStatement **)Z_Realloc(defstats, defallot*sizeof(VStatement *));
           if (!defstats) Sys_Error("VC: out of memory!");
         }
         defstats[defcount++] = st;
@@ -4351,7 +4351,7 @@ void VParser::ParseClass () {
   }
 
   ParseDefaultProperties(Class, !skipDefaultProperties, defcount, defstats);
-  if (defstats) free(defstats);
+  if (defstats) Z_Free(defstats);
 
   currClass = oldcc;
 
