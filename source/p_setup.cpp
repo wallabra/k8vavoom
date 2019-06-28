@@ -3047,8 +3047,9 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
 //
 //==========================================================================
 static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceLoad) {
-  if (!name || !name[0]) return (CMap ? 0 : GTextureManager.DefaultTexture); // just in case
+  if (!name || !name[0]) return 0; //(CMap ? 0 : GTextureManager.DefaultTexture); // just in case
   if (name[0] == '-' && !name[1]) return 0; // just in case
+  if (VStr::strEquCI(name, "aashitty") || VStr::strEquCI(name, "aastinky")) return 0;
   int i = -1;
 
   //GCon->Logf("texForceLoad(*): <%s>", name);
