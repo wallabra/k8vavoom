@@ -589,7 +589,7 @@ void DestroyImage()
 {
   if (ImgData)
   {
-    delete ImgData;
+    delete[] ImgData;
     ImgData = NULL;
   }
 }
