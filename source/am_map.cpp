@@ -1866,11 +1866,87 @@ void AM_Drawer () {
 }
 
 
+//==========================================================================
+//
+//  AM_GetMaxMarks
+//
+//  automap marks API
+//
+//==========================================================================
+int AM_GetMaxMarks () {
+  return AM_NUMMARKPOINTS;
+}
+
+
+//==========================================================================
+//
+//  AM_IsMarkActive
+//
+//==========================================================================
+bool AM_IsMarkActive (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS ? markpoints[index].isActive() : false);
+}
+
+
+//==========================================================================
+//
+//  AM_GetMarkX
+//
+//==========================================================================
+float AM_GetMarkX (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].x : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  AM_GetMarkY
+//
+//==========================================================================
+float AM_GetMarkY (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].y : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  AM_ClearMakrs
+//
+//==========================================================================
+void AM_ClearMakrs () {
+  (void)AM_clearMarks();
+}
+
+
+//==========================================================================
+//
+//  AM_SetMarkXY
+//
+//==========================================================================
+void AM_SetMarkXY (int index, float x, float y) {
+  if (index < 0 || index >= AM_NUMMARKPOINTS) return;
+  MarkPoint &mp = markpoints[index];
+  mp.x = x;
+  mp.y = y;
+  mp.activate();
+}
+
+
+//==========================================================================
+//
+//  COMMAND Iddt
+//
+//==========================================================================
 COMMAND(Iddt) {
   am_cheating = (am_cheating+1)%3;
 }
 
 
+//==========================================================================
+//
+//  COMMAND toggle_automap
+//
+//==========================================================================
 COMMAND(toggle_automap) {
   if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
     return;

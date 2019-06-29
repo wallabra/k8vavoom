@@ -655,11 +655,19 @@ void VLevel::SerialiseOther (VStream &Strm) {
 
   // extended info section
   vint32 hasSegVisibility = 1;
+  vint32 hasAutomapMarks =
+    #ifdef CLIENT
+      1;
+    #else
+      0;
+    #endif
   if (extSaveVer) {
     VNTValueIOEx vio(&Strm);
     vio.io(VName("extflags.hassegvis"), hasSegVisibility);
+    vio.io(VName("extflags.hasmapmarks"), hasAutomapMarks);
   } else {
     hasSegVisibility = 0;
+    hasAutomapMarks = 0;
   }
 
   // seg visibility
@@ -701,6 +709,50 @@ void VLevel::SerialiseOther (VStream &Strm) {
       if (dcSize < 0) Host_Error("invalid segmap size");
       GCon->Logf("seg hash doesn't match for seg mapping (this is harmless)");
       Strm.Seek(dcStartPos+4+dcSize);
+    }
+  }
+
+  // automap marks
+  if (hasAutomapMarks) {
+    int number =
+    #ifdef CLIENT
+      AM_GetMaxMarks();
+    #else
+      0;
+    #endif
+    Strm << STRM_INDEX(number);
+    if (number < 0 || number > 1024) Host_Error("invalid automap marks data");
+    if (Strm.IsLoading()) {
+      // load automap marks
+      for (int markidx = 0; markidx < number; ++markidx) {
+        VNTValueIOEx vio(&Strm);
+        float x = 0, y = 0;
+        vint32 active = 0;
+        vio.io(VName("mark.active"), active);
+        vio.io(VName("mark.x"), x);
+        vio.io(VName("mark.y"), y);
+        // do not replace user marks
+        #ifdef CLIENT
+        if (active && !AM_IsMarkActive(markidx) && isFiniteF(x)) {
+          AM_SetMarkXY(markidx, x, y);
+        }
+        #endif
+      }
+    } else {
+      // save automap marks
+      #ifdef CLIENT
+      for (int markidx = 0; markidx < number; ++markidx) {
+        VNTValueIOEx vio(&Strm);
+        float x = AM_GetMarkX(markidx), y = AM_GetMarkY(markidx);
+        vint32 active = (AM_IsMarkActive(markidx) ? 1 : 0);
+        vio.io(VName("mark.active"), active);
+        vio.io(VName("mark.x"), x);
+        vio.io(VName("mark.y"), y);
+        // do not replace user marks
+      }
+      #else
+      check(number == 0);
+      #endif
     }
   }
 

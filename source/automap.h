@@ -33,5 +33,15 @@ void AM_DrawWorldTimer ();
 // called to force the automap to quit if the level is completed while it is up
 void AM_Stop ();
 
+// automap marks API
+int AM_GetMaxMarks ();
+// for saving
+bool AM_IsMarkActive (int index);
+float AM_GetMarkX (int index);
+float AM_GetMarkY (int index);
+// for loading
+void AM_ClearMakrs ();
+void AM_SetMarkXY (int index, float x, float y);
+
 extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay
 extern VCvarB am_always_update;
