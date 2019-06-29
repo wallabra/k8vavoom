@@ -226,6 +226,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Invulnerability";
   aclist[$] = "Keys";
   aclist[$] = "LiteAmp";
+  aclist[$] = "NoKeys";
   aclist[$] = "Powers";
   aclist[$] = "Suit";
   aclist[$] = "Weapons";
@@ -259,7 +260,28 @@ void Cheat_Gimme () {
 
   if (Cmd_CheckParm("ElvenGifts")) {
     GiveElvenGifts(forced:true);
-    return;
+    //return;
+  }
+
+  if (MO && Cmd_CheckParm("NoKeys")) {
+    bool gotit = false;
+    bool again = true;
+    int count = 0;
+    foreach AllClasses(Key, Cls) {
+      class!Key repl = class!Key(GetClassReplacement(Cls));
+      if (repl && repl != Cls) continue;
+      auto st = FindClassState(Cls, 'Spawn');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      auto inv = EntityEx(MO).FindInventory(Cls);
+      if (inv) {
+        again = true;
+        print("removed key '%C'", inv);
+        EntityEx(MO).RemoveInventory(inv);
+        ++count;
+      }
+    }
+    if (count > 0) cprint("Removed %s key%s!", count, (count != 1 ? "s" : ""));
   }
 
   // all
