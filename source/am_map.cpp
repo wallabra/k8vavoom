@@ -1661,83 +1661,7 @@ void AM_DrawWorldTimer () {
     T_DrawText(560, 18, dayBuffer, CR_UNTRANSLATED);
     if (days >= 5) T_DrawText(550, 28, "YOU FREAK!!!", CR_UNTRANSLATED);
   }
-
-  /*
-  worldTimer = (int)GLevel->Time;
-  days = worldTimer/86400;
-  worldTimer -= days*86400;
-  hours = worldTimer/3600;
-  worldTimer -= hours*3600;
-  minutes = worldTimer/60;
-  worldTimer -= minutes*60;
-  seconds = worldTimer;
-
-  T_SetFont(SmallFont);
-  T_SetAlign(hleft, vtop);
-  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d", hours, minutes, seconds);
-  T_DrawText(560, 8+10, timeBuffer, CR_UNTRANSLATED);
-  */
 }
-
-
-//===========================================================================
-//
-//  AM_DrawDeathmatchStats
-//
-//===========================================================================
-#if 0
-static void AM_DrawDeathmatchStats () {
-/*
-  int i, k, m;
-  int order[MAXPLAYERS];
-  char textBuffer[80];
-  int yPosition;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    order[i] = -1;
-  }
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!GPlayersBase[i])
-    {
-      continue;
-    }
-    for (k = 0; k < MAXPLAYERS; k++)
-    {
-      if (order[k] == -1)
-      {
-        order[k] = i;
-        break;
-      }
-      else if (GPlayersBase[i]->Frags > GPlayersBase[order[k]]->Frags)
-      {
-        for (m = MAXPLAYERS - 1; m > k; m--)
-        {
-          order[m] = order[m-1];
-        }
-        order[k] = i;
-        break;
-      }
-    }
-  }
-  yPosition = 15;
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (order[i] == -1)
-    {
-      break;
-    }
-    T_SetFont(font_small);
-    T_SetAlign(hleft, vtop);
-    T_DrawText(8, yPosition, *GPlayersBase[order[i]]->PlayerName);
-    snprintf(textBuffer, sizeof(textBuffer), "%d", GPlayersBase[order[i]]->Frags);
-    T_DrawText(80, yPosition, textBuffer);
-    yPosition += 10;
-  }
-*/
-}
-#endif
 
 
 //===========================================================================
@@ -1837,7 +1761,6 @@ void AM_Drawer () {
   T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
   T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
-  //if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
   if (use_marks) AM_drawMarks();
 
   //if (am_overlay) glColor4f(1, 1, 1, 1);
