@@ -677,6 +677,8 @@ void VLevel::SerialiseOther (VStream &Strm) {
         for (i = NumSegs; i--; ++seg) {
           VNTValueIOEx vio(&Strm);
           vio.io(VName("seg.flags"), seg->flags);
+          // recheck linedef if we have some mapped segs on it
+          if (seg->linedef && (seg->flags&SF_MAPPED)) seg->linedef->exFlags |= (ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
         }
         segvisLoaded = !Strm.IsError();
         // fix size, if necessary
