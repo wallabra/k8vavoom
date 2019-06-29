@@ -135,16 +135,20 @@ template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_r
 #define M_PI  (0x1.921fb54442d18p+1)
 #endif
 
-//#define _DEG2RAD  (0.017453292519943296)
-#define _DEG2RAD  (0x1.1df46a2529d39p-6)
-//#define _RAD2DEG  (57.2957795130823209)
-#define _RAD2DEG  (0x1.ca5dc1a63c1f8p+5)
+//#define DEG2RAD_MULT_D  (0.017453292519943296)
+//#define RAD2DEG_MULT_D  (57.2957795130823209)
 
-#define DEG2RADD(a)  ((double)(a)*(double)_DEG2RAD)
-#define RAD2DEGD(a)  ((double)(a)*(double)_RAD2DEG)
+#define DEG2RAD_MULT_D  (0x1.1df46a2529d39p-6)
+#define RAD2DEG_MULT_D  (0x1.ca5dc1a63c1f8p+5)
 
-#define DEG2RADF(a)  ((float)(a)*(float)_DEG2RAD)
-#define RAD2DEGF(a)  ((float)(a)*(float)_RAD2DEG)
+#define DEG2RAD_MULT_F  (0x1.1df46ap-6f)
+#define RAD2DEG_MULT_F  (0x1.ca5dc2p+5f)
+
+#define DEG2RADD(a)  ((double)(a)*(double)DEG2RAD_MULT_D)
+#define RAD2DEGD(a)  ((double)(a)*(double)RAD2DEG_MULT_D)
+
+#define DEG2RADF(a)  ((float)(a)*(float)DEG2RAD_MULT_F)
+#define RAD2DEGF(a)  ((float)(a)*(float)RAD2DEG_MULT_F)
 
 
 //int mlog2 (int val);
@@ -235,7 +239,17 @@ static __attribute__((unused)) inline void sincosf_dumb (float x, float *vsin, f
   *vcos = cosf(x);
 }
 
+static __attribute__((unused)) inline void sincosd_dumb (double x, double *vsin, double *vcos) {
+  *vsin = sin(x);
+  *vcos = cos(x);
+}
+
 #define sincosf sincosf_dumb
+#define sincosd sincosd_dumb
+
+#else
+
+#define sincosd sincos
 
 #endif
 
@@ -247,6 +261,7 @@ static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_
 static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
 static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
 static __attribute__((unused)) inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
+static __attribute__((unused)) inline void msincosd (const double angle, double *vsin, double *vcos) { return sincosd(DEG2RADD(angle), vsin, vcos); }
 
 
 static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
