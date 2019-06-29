@@ -1139,6 +1139,14 @@ bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const {
   if (ClipIsFull()) return false;
 #endif
 
+  if (bbox[0] <= Origin.x && bbox[3] >= Origin.x &&
+      bbox[1] <= Origin.y && bbox[4] >= Origin.y &&
+      bbox[2] <= Origin.z && bbox[5] >= Origin.z)
+  {
+    // viewer is inside the box
+    return 1;
+  }
+
   TVec v1, v2;
   if (CreateBBVerts(v1, v2, bbox, Origin)) return true;
   return IsRangeVisible(v1, v2);
@@ -1219,6 +1227,11 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
   }
 #endif
   if (dbg_clip_dump_sub_checks) Dump();
+
+  float bbox[6];
+  Level->GetSubsectorBBox(sub, bbox);
+  if (!ClipIsBBoxVisible(bbox)) return false;
+
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     //k8: q: i am not sure here, but why don't check both sides?
