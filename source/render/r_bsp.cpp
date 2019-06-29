@@ -830,37 +830,32 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       return;
     }
 
-    if (!ViewClip.ClipCheckSubsector(sub)) {
-      // just in case, because why not? (this adds backfaced segs too)
-      if (clip_use_1d_clipper) {
-        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
-      }
-      return;
-    }
+    // is this subsector potentially visible?
+    if (ViewClip.ClipCheckSubsector(sub)) {
+      if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
+      sub->VisFrame = currVisFrame;
 
-    if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
-    sub->VisFrame = currVisFrame;
+      // mark this subsector as rendered
+      BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
 
-    // mark this subsector as rendered
-    BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
+      // mark thing subsectors
+      RenderMarkAdjSubsectorsThings(num);
 
-    // mark thing subsectors
-    RenderMarkAdjSubsectorsThings(num);
-
-    // update world
+      // update world
 #if 0
-    if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-      UpdateSubsector(num, nullptr); // trigger BSP updating
-    }
+      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
+        UpdateSubsector(num, nullptr); // trigger BSP updating
+      }
 #else
-    if (sub->updateWorldFrame != updateWorldFrame) {
-      sub->updateWorldFrame = updateWorldFrame;
-      UpdateSubRegion(sub, sub->regions);
-    }
+      if (sub->updateWorldFrame != updateWorldFrame) {
+        sub->updateWorldFrame = updateWorldFrame;
+        UpdateSubRegion(sub, sub->regions);
+      }
 #endif
 
-    bool addPoly = true;
-    RenderSubRegion(sub, sub->regions, addPoly);
+      bool addPoly = true;
+      RenderSubRegion(sub, sub->regions, addPoly);
+    }
   }
 
   // add subsector's segs to the clipper
