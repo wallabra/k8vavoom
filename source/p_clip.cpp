@@ -1228,9 +1228,13 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
 #endif
   if (dbg_clip_dump_sub_checks) Dump();
 
-  float bbox[6];
-  Level->GetSubsectorBBox(sub, bbox);
-  if (!ClipIsBBoxVisible(bbox)) return false;
+  /*
+  if (checkBBox) {
+    float bbox[6];
+    Level->GetSubsectorBBox(sub, bbox);
+    if (!ClipIsBBoxVisible(bbox)) return false;
+  }
+  */
 
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
