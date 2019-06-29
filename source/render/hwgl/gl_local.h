@@ -622,7 +622,7 @@ public:
     float, VTexture*) override;
   virtual void FillRectWithFlatRepeat(float, float, float, float, float, float, float,
     float, VTexture*) override;
-  virtual void FillRect(float, float, float, float, vuint32) override;
+  virtual void FillRect(float, float, float, float, vuint32, float alpha=1.0f) override;
   virtual void ShadeRect(int, int, int, int, float) override;
   virtual void DrawConsoleBackground(int) override;
   virtual void DrawSpriteLump(float, float, float, float, VTexture*,

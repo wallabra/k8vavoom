@@ -233,7 +233,7 @@ public:
                                  float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
   virtual void FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
                                        float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
-  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color) = 0;
+  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
   virtual void ShadeRect (int x, int y, int w, int h, float darkening) = 0;
   virtual void DrawConsoleBackground (int h) = 0;
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,

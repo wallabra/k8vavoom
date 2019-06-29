@@ -57,8 +57,9 @@
 #define AMSTR_GRIDON   "Grid ON"
 #define AMSTR_GRIDOFF  "Grid OFF"
 
-#define AMSTR_MARKEDSPOT    "Marked Spot"
-#define AMSTR_MARKSCLEARED  "All Marks Cleared"
+#define AMSTR_MARKEDSPOT     "Marked Spot"
+#define AMSTR_MARKSCLEARED   "All Marks Cleared"
+#define AMSTR_MARKEDSPOTDEL  "Removed Mark Spot"
 
 //#define AM_STARTKEY      K_TAB
 #define AM_PANUPKEY      K_UPARROW
@@ -72,6 +73,7 @@
 #define AM_FOLLOWKEY     'h'
 #define AM_GRIDKEY       'g'
 #define AM_MARKKEY       'm'
+#define AM_NEXTMARKKEY   'n'
 #define AM_CLEARMARKKEY  'c'
 
 // how much the automap moves window per tic in frame-buffer coordinates
@@ -84,7 +86,8 @@
 // pulls out to 0.5x in 1 second
 #define M_ZOOMOUT  (1.0f/1.02f)
 
-#define AM_NUMMARKPOINTS  (10)
+#define AM_NUMMARKPOINTS       (10)
+#define AM_NUMMARKPOINTS_NUMS  (10)
 
 // translates between frame-buffer and map distances
 #define FTOM(x)   ((float)(x)*scale_ftom)
@@ -118,6 +121,20 @@ struct fline_t {
 struct mpoint_t {
   float x;
   float y;
+};
+
+
+struct MarkPoint {
+  float x;
+  float y;
+  bool active;
+
+  MarkPoint () : x(0), y(0), active(false) {}
+
+  inline bool isActive () const { return active; }
+  inline void setActive (bool v) { active = v; }
+  inline void activate () { setActive(true); }
+  inline void deactivate () { setActive(false); }
 };
 
 struct mline_t {
@@ -171,6 +188,8 @@ static VCvarS am_color_monster("am_color_monster", "ff 00 00", "Automap color: m
 static VCvarS am_color_missile("am_color_missile", "cf 4f 00", "Automap color: missile.", CVAR_Archive);
 static VCvarS am_color_dead("am_color_dead", "80 80 80", "Automap color: dead thing.", CVAR_Archive);
 static VCvarS am_color_invisible("am_color_invisible", "f0 00 f0", "Automap color: invisible thing.", CVAR_Archive);
+
+static VCvarS am_color_current_mark("am_color_current_mark", "00 ff 00", "Automap color: current map mark.", CVAR_Archive);
 
 //static VCvarS am_color_light_static("am_color_light_static", "ff ff ff", "Automap color: static light.", CVAR_Archive);
 //static VCvarS am_color_light_dynamic("am_color_light_dynamic", "00 ff ff", "Automap color: dynamic light.", CVAR_Archive);
@@ -241,6 +260,7 @@ static ColorCV MissileColor(&am_color_missile);
 static ColorCV DeadColor(&am_color_dead);
 static ColorCV PlayerColor(&am_color_player);
 static ColorCV MinisegColor(&am_color_miniseg);
+static ColorCV CurrMarkColor(&am_color_current_mark);
 
 
 static int grid = 0;
@@ -304,10 +324,10 @@ static float start_scale_mtof = INITSCALEMTOF;
 
 static mpoint_t oldplr;
 
-static bool use_marks = false;
-static int marknums[10]; // numbers used for marking by the automap
-static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
-static int markpointnum = 0; // next point to be assigned
+static bool mapMarksAllowed = false;
+static int marknums[AM_NUMMARKPOINTS_NUMS] = {0}; // numbers used for marking by the automap
+static MarkPoint markpoints[AM_NUMMARKPOINTS]; // where the points are
+static int markActive = -1;
 
 static int mappic = 0;
 static int mapheight = 64;
@@ -567,14 +587,28 @@ static void AM_changeWindowLoc () {
 //  adds a marker at the current location
 //
 //==========================================================================
-static bool AM_addMark () {
-  if (marknums[0] != -1) {
-    markpoints[markpointnum].x = m_x+m_w/2.0f;
-    markpoints[markpointnum].y = m_y+m_h/2.0f;
-    markpointnum = (markpointnum+1)%AM_NUMMARKPOINTS;
-    return true;
+static int AM_addMark () {
+  if (!mapMarksAllowed) return -1;
+  // if the player just deleted a mark, reuse its slot
+  if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && !markpoints[markActive].isActive()) {
+    MarkPoint &mp = markpoints[markActive];
+    mp.x = m_x+m_w/2.0f;
+    mp.y = m_y+m_h/2.0f;
+    mp.activate();
+    return markActive;
   }
-  return false;
+  // find empty mark slot
+  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
+    MarkPoint &mp = markpoints[mn];
+    if (!mp.isActive()) {
+      if (markActive == mn) markActive = -1;
+      mp.x = m_x+m_w/2.0f;
+      mp.y = m_y+m_h/2.0f;
+      mp.activate();
+      return mn;
+    }
+  }
+  return -1;
 }
 
 
@@ -584,9 +618,14 @@ static bool AM_addMark () {
 //
 //==========================================================================
 static bool AM_clearMarks () {
-  for (int i = AM_NUMMARKPOINTS-1; i >= 0; --i) markpoints[i].x = -1.0f; //FIXME: means empty
-  markpointnum = 0;
-  return marknums[0] != -1;
+  bool res = false;
+  markActive = -1;
+  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
+    MarkPoint &mp = markpoints[mn];
+    res = (res || mp.isActive());
+    mp.deactivate();
+  }
+  return res;
 }
 
 
@@ -628,10 +667,11 @@ static void AM_initVariables () {
 //==========================================================================
 static void AM_loadPics () {
   if (W_CheckNumForName(NAME_ammnum0) >= 0) {
-    for (int i = 0; i < 10; ++i) {
+    mapMarksAllowed = true;
+    for (int i = 0; i < AM_NUMMARKPOINTS_NUMS; ++i) {
       marknums[i] = GTextureManager.AddPatch(va("ammnum%d", i), TEXTYPE_Pic, true); // silent
+      if (marknums[i] <= 0) { mapMarksAllowed = false; break; }
     }
-    use_marks = true;
   }
   mappic = GTextureManager.AddPatch(NAME_autopage, TEXTYPE_Autopage, true); // silent
   mapheight = (mappic > 0 ? (int)GTextureManager.TextureHeight(mappic) : 64);
@@ -655,7 +695,7 @@ static void AM_LevelInit () {
   f_w = ScreenWidth;
   f_h = ScreenHeight-(screen_size < 11 ? SB_RealHeight() : 0);
 
-  AM_clearMarks();
+  (void)AM_clearMarks();
   mapxstart = mapystart = 0;
 
   AM_findMinMaxBoundaries();
@@ -782,10 +822,32 @@ bool AM_Responder (event_t *ev) {
         cl->Printf(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
         break;
       case AM_MARKKEY:
-        if (use_marks && AM_addMark()) cl->Printf("%s %d", AMSTR_MARKEDSPOT, markpointnum); else rc = false;
+        if (mapMarksAllowed /*&& (ev->modflags&bShift)*/) {
+          int mnum = AM_addMark();
+          if (mnum >= 0) cl->Printf("%s %d", AMSTR_MARKEDSPOT, mnum);
+        }
+        break;
+      case AM_NEXTMARKKEY:
+        if (mapMarksAllowed /*&& (ev->modflags&bShift)*/) {
+          ++markActive;
+          if (markActive < 0) markActive = 0;
+          // find next active mark
+          while (markActive < AM_NUMMARKPOINTS) {
+            if (markpoints[markActive].isActive()) break;
+            ++markActive;
+          }
+          if (markActive >= AM_NUMMARKPOINTS) markActive = -1;
+        }
         break;
       case AM_CLEARMARKKEY:
-        if (use_marks && AM_clearMarks()) cl->Printf(AMSTR_MARKSCLEARED); else rc = false;
+        if (mapMarksAllowed && ev->modflags&bShift) {
+          if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && markpoints[markActive].isActive()) {
+            markpoints[markActive].deactivate();
+            cl->Printf("%s %d", AMSTR_MARKEDSPOTDEL, markActive);
+          } else {
+            if (AM_clearMarks()) cl->Printf(AMSTR_MARKSCLEARED);
+          }
+        }
         break;
       default:
         rc = false;
@@ -1597,10 +1659,14 @@ static void AM_drawDynamicLights () {
 //
 //==========================================================================
 static void AM_drawMarks () {
+  if (!mapMarksAllowed) return;
+
   for (int i = 0; i < AM_NUMMARKPOINTS; ++i) {
-    if (markpoints[i].x == -1.0f) continue; // FIXME
-    int w = LittleShort(GTextureManager.TextureWidth(marknums[i]));
-    int h = LittleShort(GTextureManager.TextureHeight(marknums[i]));
+    MarkPoint &mp = markpoints[i];
+    if (!mp.isActive()) continue;
+
+    //int w = LittleShort(GTextureManager.TextureWidth(marknums[i]));
+    //int h = LittleShort(GTextureManager.TextureHeight(marknums[i]));
 
     mpoint_t pt;
     pt.x = markpoints[i].x;
@@ -1608,12 +1674,40 @@ static void AM_drawMarks () {
 
     if (am_rotate) AM_rotatePoint(&pt.x, &pt.y);
 
-    int fx = (int)(CXMTOF(pt.x)/fScaleX);
-    int fy = (int)((CYMTOF(pt.y)-3.0f)/fScaleX);
+    float fx = (CXMTOF(pt.x)/fScaleX);
+    float fy = (CYMTOF(pt.y)/fScaleX);
     //fx = (int)(CXMTOF(markpoints[i].x)*fScaleXI);
     //fy = (int)(CYMTOF(markpoints[i].y)*fScaleXI);
-    if (fx >= f_x && fx <= f_w-w && fy >= f_y && fy <= f_h-h && marknums[i] != -1) {
-      R_DrawPic(fx, fy, marknums[i]);
+    /*
+    if (fx >= f_x && fx <= f_w-w && fy >= f_y && fy <= f_h-h) {
+      R_DrawPicFloat(fx, fy, marknums[i]);
+    }
+    */
+
+    const char *numstr = va("%d", i);
+    // calc size
+    int wdt = 0;
+    int hgt = 0;
+    for (const char *s = numstr; *s; ++s) {
+      int w = LittleShort(GTextureManager.TextureWidth(marknums[*s-'0']));
+      int h = LittleShort(GTextureManager.TextureHeight(marknums[*s-'0']));
+      wdt += w;
+      if (hgt < h) hgt = h;
+    }
+
+    // center it on the screen
+    fx -= wdt/2;
+    fy -= hgt/2;
+
+    if (i == markActive) {
+      Drawer->FillRect((fx-1)*fScaleX, (fy-1)*fScaleY, (fx+wdt+2)*fScaleX, (fy+hgt+2)*fScaleY, CurrMarkColor, 0.5f);
+    }
+
+    // render it
+    for (const char *s = numstr; *s; ++s) {
+      R_DrawPicFloat(fx, fy, marknums[*s-'0']);
+      int w = LittleShort(GTextureManager.TextureWidth(marknums[*s-'0']));
+      fx += w;
     }
   }
 }
@@ -1761,7 +1855,7 @@ void AM_Drawer () {
   T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
   T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
-  if (use_marks) AM_drawMarks();
+  if (mapMarksAllowed) AM_drawMarks();
 
   //if (am_overlay) glColor4f(1, 1, 1, 1);
 }

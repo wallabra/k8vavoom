@@ -145,18 +145,21 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
 //  VOpenGLDrawer::FillRect
 //
 //==========================================================================
-void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 color) {
+void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha) {
+  if (alpha < 0.0f) return;
   DrawFixedCol.Activate();
+  if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   DrawFixedCol.SetColor(
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
-    (GLfloat)((color&255)/255.0f), 1.0f);
+    (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
   glBegin(GL_QUADS);
     glVertex2f(x1, y1);
     glVertex2f(x2, y1);
     glVertex2f(x2, y2);
     glVertex2f(x1, y2);
   glEnd();
+  if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 

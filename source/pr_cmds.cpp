@@ -621,12 +621,13 @@ IMPLEMENT_FUNCTION(VObject, R_DrawModelFrame) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_FillRect) {
-  P_GET_INT(coulor);
-  P_GET_INT(height);
-  P_GET_INT(width);
-  P_GET_INT(y);
-  P_GET_INT(x);
-  if (Drawer) Drawer->FillRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, coulor);
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(color);
+  P_GET_FLOAT(height);
+  P_GET_FLOAT(width);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  if (Drawer) Drawer->FillRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, color, alpha);
 }
 
 
