@@ -525,9 +525,11 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
 
     for (surface_t *surfs = dseg->mid->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
   } else {
-    if (dseg->mid) DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
-      secregion->eceiling.splane->SkyBox, -1, seg->sidedef->Light,
-      !!(seg->sidedef->Flags&SDF_ABSLIGHT), false);
+    if (dseg->mid) {
+      DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
+                   secregion->eceiling.splane->SkyBox, -1, seg->sidedef->Light,
+                   !!(seg->sidedef->Flags&SDF_ABSLIGHT), false);
+    }
   }
 }
 
@@ -612,7 +614,6 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   // k8: reenabled, because why not?
   if (clip_frustum_bsp_segs && !ViewClip.CheckSegFrustum(sub, seg)) return;
 
-  //FIXME this marks all lines
   // mark the segment as visible for auto map
 #if 0
   linedef->flags |= ML_MAPPED;
@@ -742,7 +743,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderSubRegion(sub, region->next, addPoly);
 
-  check(sub->sector != nullptr);
+  //check(sub->sector != nullptr);
 
   subregion_t *subregion = region;
   sec_region_t *secregion = region->secregion;

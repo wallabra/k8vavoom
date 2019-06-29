@@ -238,7 +238,7 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
         Range.AddClipRange(*Seg->v2, *Seg->v1);
       }
     } else {
-      // subsector
+      // floor/ceiling
       for (int j = 0; j < Surfs[i]->count; ++j) {
         TVec v1, v2;
         if ((Surfs[i]->GetNormalZ() < 0) != Revert) {
@@ -452,6 +452,12 @@ void VMirrorPortal::DrawContents () {
   viewright -= 2*Dist*Plane->normal;
   Dist = DotProduct(viewup, Plane->normal);
   viewup -= 2*Dist*Plane->normal;
+
+  // k8: i added this, but i don't know if it is required
+  viewforward.normaliseInPlace();
+  viewright.normaliseInPlace();
+  viewup.normaliseInPlace();
+
   VectorsAngles(viewforward, (MirrorFlip ? -viewright : viewright), viewup, viewangles);
 
   refdef_t rd = RLev->refdef;
@@ -460,10 +466,10 @@ void VMirrorPortal::DrawContents () {
 
   // use "far plane" (it is unused by default)
   const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
-  view_frustum.planes[5] = *Plane;
-  view_frustum.planes[5].clipflag = 0x20U;
-  //view_frustum.setupBoxIndiciesForPlane(5);
   const unsigned planeCount = view_frustum.planeCount;
+  view_frustum.planes[5] = *Plane;
+  view_frustum.planes[5].clipflag = TFrustum::ForwardBit; //0x20U;
+  //view_frustum.setupBoxIndiciesForPlane(5);
   view_frustum.planeCount = 6;
 
   RLev->RenderScene(&rd, &Range);

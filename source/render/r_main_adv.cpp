@@ -160,7 +160,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   MarkLeaves();
 
-  if (!r_disable_world_update) UpdateWorld(RD, Range);
+  if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
   BuildVisibleObjectsList();
@@ -168,133 +168,136 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   RenderMobjsAmbient();
   if (r_advrender_translucent_as_light) RenderTranslucentWallsAmbient();
 
-  Drawer->BeginShadowVolumesPass();
+  //FIXME: mirrors can use stencils, and advlight too...
+  if (!MirrorLevel) {
+    Drawer->BeginShadowVolumesPass();
 
-  linetrace_t Trace;
-  TVec Delta;
+    linetrace_t Trace;
+    TVec Delta;
 
-  CurrLightsNumber = 0;
-  CurrShadowsNumber = 0;
-  AllLightsNumber = 0;
-  AllShadowsNumber = 0;
+    CurrLightsNumber = 0;
+    CurrShadowsNumber = 0;
+    AllLightsNumber = 0;
+    AllShadowsNumber = 0;
 
-  const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
-  //const bool hasPVS = Level->HasPVS();
+    const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
+    //const bool hasPVS = Level->HasPVS();
 
-  static TFrustum frustum;
-  static TFrustumParam fp;
+    static TFrustum frustum;
+    static TFrustumParam fp;
 
-  TPlane backPlane;
-  backPlane.SetPointNormal3D(vieworg, viewforward);
+    TPlane backPlane;
+    backPlane.SetPointNormal3D(vieworg, viewforward);
 
-  LightsRendered = 0;
+    LightsRendered = 0;
 
-  if (!FixedLight && r_static_lights && r_max_lights != 0) {
-    if (!staticLightsFiltered) RefilterStaticLights();
+    if (!FixedLight && r_static_lights && r_max_lights != 0) {
+      if (!staticLightsFiltered) RefilterStaticLights();
 
-    // sort lights by distance to player, so faraway lights won't disable nearby ones
-    static TArray<StLightInfo> visstatlights;
-    if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
-    unsigned visstatlightCount = 0;
+      // sort lights by distance to player, so faraway lights won't disable nearby ones
+      static TArray<StLightInfo> visstatlights;
+      if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
+      unsigned visstatlightCount = 0;
 
-    light_t *stlight = Lights.ptr();
-    for (int i = Lights.length(); i--; ++stlight) {
-      //if (!Lights[i].radius) continue;
-      if (!stlight->active || stlight->radius < 8) continue;
+      light_t *stlight = Lights.ptr();
+      for (int i = Lights.length(); i--; ++stlight) {
+        //if (!Lights[i].radius) continue;
+        if (!stlight->active || stlight->radius < 8) continue;
 
-      // don't do lights that are too far away
-      Delta = stlight->origin-vieworg;
-      const float distSq = Delta.lengthSquared();
+        // don't do lights that are too far away
+        Delta = stlight->origin-vieworg;
+        const float distSq = Delta.lengthSquared();
 
-      // if the light is behind a view, drop it if it is further than light radius
-      if (distSq >= stlight->radius*stlight->radius) {
-        if (distSq > rlightraduisSq || backPlane.PointOnSide(stlight->origin)) continue; // too far away
-        if (fp.needUpdate(vieworg, viewangles)) {
-          fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
-          frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+        // if the light is behind a view, drop it if it is further than light radius
+        if (distSq >= stlight->radius*stlight->radius) {
+          if (distSq > rlightraduisSq || backPlane.PointOnSide(stlight->origin)) continue; // too far away
+          if (fp.needUpdate(vieworg, viewangles)) {
+            fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+            frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+          }
+          if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
+            // out of frustum
+            continue;
+          }
         }
-        if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
-          // out of frustum
+
+        if (r_advlight_flood_check && !CheckBSPVisibility(stlight->origin, stlight->radius)) {
+          //GCon->Logf("STATIC DROP: visibility check");
           continue;
         }
+
+        StLightInfo &sli = visstatlights[visstatlightCount++];
+        sli.stlight = stlight;
+        sli.distSq = distSq;
       }
 
-      if (r_advlight_flood_check && !CheckBSPVisibility(stlight->origin, stlight->radius)) {
-        //GCon->Logf("STATIC DROP: visibility check");
-        continue;
-      }
-
-      StLightInfo &sli = visstatlights[visstatlightCount++];
-      sli.stlight = stlight;
-      sli.distSq = distSq;
-    }
-
-    // sort lights, so nearby ones will be rendered first
-    if (visstatlightCount > 0) {
-      if (r_advlight_sort_static) {
-        timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
-      }
-      for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
-        VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
-        vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
-        //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
-        RenderLightShadows(own, flags, RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true);
-      }
-    }
-  }
-
-  int rlStatic = LightsRendered;
-
-  if (!FixedLight && r_dynamic && r_max_lights != 0) {
-    static TArray<DynLightInfo> visdynlights;
-    if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
-    unsigned visdynlightCount = 0;
-
-    dlight_t *l = DLights;
-    for (int i = MAX_DLIGHTS; i--; ++l) {
-      if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
-
-      // don't do lights that are too far away
-      Delta = l->origin-vieworg;
-      const float distSq = Delta.lengthSquared();
-
-      // if the light is behind a view, drop it if it is further than light radius
-      if (distSq >= l->radius*l->radius) {
-        if (distSq > rlightraduisSq || backPlane.PointOnSide(l->origin)) continue; // too far away
-        if (fp.needUpdate(vieworg, viewangles)) {
-          fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
-          frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+      // sort lights, so nearby ones will be rendered first
+      if (visstatlightCount > 0) {
+        if (r_advlight_sort_static) {
+          timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
         }
-        if (!frustum.checkSphere(l->origin, l->radius)) {
-          // out of frustum
-          continue;
+        for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
+          VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
+          vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
+          //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
+          RenderLightShadows(own, flags, RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true);
         }
       }
-
-      DynLightInfo &dli = visdynlights[visdynlightCount++];
-      dli.l = l;
-      dli.distSq = distSq;
     }
 
-    // sort lights, so nearby ones will be rendered first
-    if (visdynlightCount > 0) {
-      if (r_advlight_sort_dynamic) {
-        timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+    int rlStatic = LightsRendered;
+
+    if (!FixedLight && r_dynamic && r_max_lights != 0) {
+      static TArray<DynLightInfo> visdynlights;
+      if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
+      unsigned visdynlightCount = 0;
+
+      dlight_t *l = DLights;
+      for (int i = MAX_DLIGHTS; i--; ++l) {
+        if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
+
+        // don't do lights that are too far away
+        Delta = l->origin-vieworg;
+        const float distSq = Delta.lengthSquared();
+
+        // if the light is behind a view, drop it if it is further than light radius
+        if (distSq >= l->radius*l->radius) {
+          if (distSq > rlightraduisSq || backPlane.PointOnSide(l->origin)) continue; // too far away
+          if (fp.needUpdate(vieworg, viewangles)) {
+            fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+            frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+          }
+          if (!frustum.checkSphere(l->origin, l->radius)) {
+            // out of frustum
+            continue;
+          }
+        }
+
+        DynLightInfo &dli = visdynlights[visdynlightCount++];
+        dli.l = l;
+        dli.distSq = distSq;
       }
-      for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
-        VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
-        if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
-        RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle);
+
+      // sort lights, so nearby ones will be rendered first
+      if (visdynlightCount > 0) {
+        if (r_advlight_sort_dynamic) {
+          timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+        }
+        for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
+          VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
+          if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
+          RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle);
+        }
       }
     }
-  }
 
-  if (dbg_adv_show_light_count) {
-    GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, rlStatic, LightsRendered-rlStatic);
-  }
+    if (dbg_adv_show_light_count) {
+      GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, rlStatic, LightsRendered-rlStatic);
+    }
 
-  if (dbg_adv_show_light_seg_info) {
-    GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
+    if (dbg_adv_show_light_seg_info) {
+      GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
+    }
   }
 
   Drawer->DrawWorldTexturesPass();
