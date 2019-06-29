@@ -115,20 +115,41 @@ protected:
   // points by true angle around p1 and ordering of points by pseudoangle are the
   // same. for clipping exact angles are not needed, only the ordering matters.
   // k8: i found this code in GZDoom, and changed it a little, to make it return [0..4]
+#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
   static inline FromTo PointToPseudoAngleZeroOrigin (const Angle2FixIn dx, const Angle2FixIn dy) {
     if (dx == 0 && dy == 0) return 0+1;
-#ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
-    double res = dy/(fabs(dx)+fabs(dy));
-    res = (dx < 0 ? 2-res : res)+1;
-    return (FromTo)(res*0x3ffffffu);
-#else
-    const VFloat res = dy/(fabsf(dx)+fabsf(dy));
-    return (dx < 0 ? 2-res : res)+1;
+    #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+      double res = dy/(fabs(dx)+fabs(dy));
+      res = (dx < 0 ? 2-res : res)+1;
+      return (FromTo)(res*0x3ffffffu);
+    #else
+      const VFloat res = dy/(fabsf(dx)+fabsf(dy));
+      return (dx < 0 ? 2-res : res)+1;
+    #endif
+  }
 #endif
+
+  static inline FromTo AngleToClipperAngle (const VFloat angle) {
+    #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
+      #ifdef VAVOOM_CLIPPER_USE_FLOAT
+        return AngleMod(angle);
+      #else
+        return AngleModD(angle);
+      #endif
+    #else
+      #if defined(VAVOOM_CLIPPER_USE_PSEUDO_INT) || !defined(VAVOOM_CLIPPER_USE_FLOAT)
+        double py, px;
+        msincosd(angle, &py, &px);
+        return PointToPseudoAngleZeroOrigin(px, py);
+      #else
+        float py, px;
+        msincos(angle, &py, &px);
+        return PointToPseudoAngleZeroOrigin(px, py);
+      #endif
+    #endif
   }
 
-  //inline FromTo PointToClipAngle (const float x, const float y) const { return PointToClipAngleZeroOrigin(x-Origin.x, y-Origin.y); }
-  inline FromTo PointToClipAngle (const TVec &p) const { return PointToClipAngleZeroOrigin(p.x-Origin.x, p.y-Origin.y); }
+  inline FromTo PointToClipAngle (const TVec &p) const { return PointToClipAngleZeroOrigin((Angle2FixIn)p.x-(Angle2FixIn)Origin.x, (Angle2FixIn)p.y-(Angle2FixIn)Origin.y); }
 
 public:
   rep_sector_t *RepSectors; // non-null for server

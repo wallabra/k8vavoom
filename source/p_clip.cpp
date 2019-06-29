@@ -698,20 +698,10 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
     d2 += 2;
     VFloat a1 = fwdAngle+d1;
     VFloat a2 = fwdAngle+d2;
-    a1 = VVC_AngleMod(a1);
-    a2 = VVC_AngleMod(a2);
-#ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
-    // convert to pseudoangles
-    float py1, px1;
-    msincos(a1, &py1, &px1);
-    float py2, px2;
-    msincos(a2, &py2, &px2);
-    auto na1 = PointToPseudoAngleZeroOrigin(px1, py1);
-    auto na2 = PointToPseudoAngleZeroOrigin(px2, py2);
-#else
-    auto na1 = a1;
-    auto na2 = a2;
-#endif
+    //a1 = VVC_AngleMod(a1);
+    //a2 = VVC_AngleMod(a2);
+    auto na1 = AngleToClipperAngle(a1);
+    auto na2 = AngleToClipperAngle(a2);
 
     if (na1 > na2) {
       ClipHead = NewClipNode();
