@@ -172,9 +172,7 @@ void VOpenALDevice::RemoveCurrentThread () {
 //
 //==========================================================================
 int VOpenALDevice::SetChannels (int InNumChannels) {
-  int NumChannels = MAX_VOICES;
-  if (NumChannels > InNumChannels) NumChannels = InNumChannels;
-  return NumChannels;
+  return clampval(InNumChannels, 1, (int)MAX_VOICES);
 }
 
 
