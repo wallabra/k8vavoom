@@ -528,9 +528,8 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (LeafPvs && !(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
-    if (!Clipper.ClipCheckSubsector(Sub)) return;
+    if (Clipper.ClipCheckSubsector(Sub)) UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
     Clipper.ClipAddSubsectorSegs(Sub);
-    UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
     return;
   }
 
@@ -549,9 +548,8 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (LeafPvs && !(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
-    if (!Clipper.ClipCheckSubsector(Sub)) return;
+    if (Clipper.ClipCheckSubsector(Sub)) UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
     Clipper.ClipAddSubsectorSegs(Sub);
-    UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
   }
 }
 
