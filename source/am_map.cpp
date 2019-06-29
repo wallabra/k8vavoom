@@ -1219,14 +1219,19 @@ static void AM_drawGrid (vuint32 color) {
 static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
   *cheatOnly = false;
   // locked door
-  if (line->special == LNSPEC_DoorLockedRaise && GetLockDef(line->arg4) && GetLockDef(line->arg4)->MapColor) {
-    return GetLockDef(line->arg4)->MapColor;
+  if (line->special == LNSPEC_DoorLockedRaise) {
+    VLockDef *ld = GetLockDef(line->arg4);
+    if (ld && ld->MapColor) return ld->MapColor;
   }
   // locked ACS special
-  if ((line->special == LNSPEC_ACSLockedExecute || line->special == LNSPEC_ACSLockedExecuteDoor) &&
-      GetLockDef(line->arg5) && GetLockDef(line->arg5)->MapColor)
-  {
-    return GetLockDef(line->arg5)->MapColor;
+  if (line->special == LNSPEC_ACSLockedExecute || line->special == LNSPEC_ACSLockedExecuteDoor) {
+    VLockDef *ld = GetLockDef(line->arg5);
+    if (ld && ld->MapColor) return ld->MapColor;
+  }
+  // UDMF locked lines
+  if (line->locknumber) {
+    VLockDef *ld = GetLockDef(line->locknumber);
+    if (ld && ld->MapColor) return ld->MapColor;
   }
   // unseen automap walls
   if (!am_cheating && !(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED) &&
@@ -1281,7 +1286,7 @@ static void AM_drawWalls () {
 
     bool cheatOnly = false;
     vuint32 clr = AM_getLineColor(line, &cheatOnly);
-    if (cheatOnly && !am_cheating) continue; //FIXME: should we draw this lines if automap powerup is active?
+    if (cheatOnly && !am_cheating) continue; //FIXME: should we draw these lines if automap powerup is active?
 
     // check if we need to re-evaluate line visibility, and do it
     if (line->exFlags&ML_EX_CHECK_MAPPED) {
