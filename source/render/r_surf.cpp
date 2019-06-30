@@ -61,20 +61,18 @@ static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *
 //
 //  AppendSurfaces
 //
-//  this actually prepends `newsurfs`, as the exact order doesn't matter
-//
 //==========================================================================
 static void AppendSurfaces (segpart_t *sp, surface_t *newsurfs) {
   check(sp);
   if (!newsurfs) return; // nothing to do
   // new list will start with `newsurfs`
   surface_t *ss = sp->surfs;
-  sp->surfs = newsurfs;
-  // shoild join?
   if (ss) {
-    // yes
-    while (newsurfs->next) newsurfs = newsurfs->next;
-    newsurfs->next = ss;
+    // append
+    while (ss->next) ss = ss->next;
+    ss->next = newsurfs;
+  } else {
+    sp->surfs = newsurfs;
   }
 }
 
