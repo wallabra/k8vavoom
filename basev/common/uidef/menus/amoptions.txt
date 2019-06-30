@@ -45,11 +45,16 @@ menudef AutomapOptions {
     help = "Show various stats on automap?";
   }
 
-  option bool {
-    title = "Textured automap";
-    cvar = am_textured;
+  option enum {
+    title = "Automap type";
+    cvar = am_draw_type;
+    list {
+      "Lines",
+      "Floor textures",
+      "Ceiling textures",
+    }
     help =
-      "Draw textured automap?"
+      "Automap rendering type."
       "This can be toggled with 'T' key when automap is active.";
   }
 
