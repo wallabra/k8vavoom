@@ -406,8 +406,18 @@ final void A_LightInverse () {
 //  A_Saw
 //
 //===========================================================================
-final void A_Saw () {
-  decorate_A_Saw();
+final void A_Saw (optional bool alertIfHit, optional bool noAlertIfKilled) {
+  decorate_A_Saw(alertIfHit:alertIfHit!optional, noAlertIfKilled:noAlertIfKilled!optional);
+}
+
+
+//===========================================================================
+//
+//  A_Saw
+//
+//===========================================================================
+final void decorate_A_SawEx8 (optional bool alertIfHit, optional bool noAlertIfKilled) {
+  decorate_A_Saw(alertIfHit:alertIfHit!optional, noAlertIfKilled:noAlertIfKilled!optional);
 }
 
 
@@ -419,12 +429,9 @@ final void A_Saw () {
 final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   optional int SawDamage, optional class!Actor PuffType,
   optional int flags, optional float range, optional float spread_xy, optional float spread_z,
-  optional float lifesteal, optional float lifestealmax, optional string armorbonustype)
+  optional float lifesteal, optional float lifestealmax, optional string armorbonustype,
+  optional bool alertIfHit, optional bool noAlertIfKilled)
 {
-  //float angle;
-  //int damage;
-  //TAVec aimAng;
-  //EntityEx AimTarget;
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -461,7 +468,15 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
   EntityEx AimTarget = AimLineAttack(dir, aimAng, range/*SAWRANGE*/);
-  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw');
+  EntityEx hitEntity;
+  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw', out hitEntity:hitEntity);
+
+  if (alertIfHit && hitEntity) {
+    //print("SAW HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.default.Health);
+    if (!noAlertIfKilled || hitEntity.Health > 0) {
+      LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+    }
+  }
 
   if (!AimTarget) {
     // miss

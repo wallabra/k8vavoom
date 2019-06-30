@@ -309,7 +309,7 @@ class Actor extends Thinker
   //
   //  Weapon attack functions
   //
-  action native A_Punch();
+  action native A_Punch(optional bool alertIfHit, optional bool noAlertIfKilled);
   action native A_FireAssaultGun();
 
   //
@@ -474,6 +474,7 @@ class Inventory extends Actor
   //
   //  Weapon attack functions
   //
+  action native A_SawEx8(optional bool alertIfHit, optional bool noAlertIfKilled);
   action native A_Saw(optional string fullsound, optional string hitsound,
     optional eval int damage, optional class<Actor> pufftype);
   action native A_CustomPunch(eval int PunchDamage, optional eval bool NoRandom,
