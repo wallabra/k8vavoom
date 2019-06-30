@@ -41,8 +41,6 @@ extern int fsys_warp_n0;
 extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
-extern bool sv_skipOneTitlemap;
-
 
 // state updates, number of tics/second
 #define TICRATE  (35)
@@ -262,6 +260,7 @@ void Host_Init () {
   if (fsys_warp_n0 >= 0 && fsys_warp_n1 < 0) {
     VName maplump = P_TranslateMapEx(fsys_warp_n0);
     if (maplump != NAME_None) {
+      Host_CLIMapStartFound();
       GCon->Logf("WARP: %d translated to '%s'", fsys_warp_n0, *maplump);
       fsys_warp_n0 = -1;
       VStr mcmd = "map ";
@@ -270,7 +269,6 @@ void Host_Init () {
       //GCmdBuf.Insert(mcmd);
       VCommand::cliPreCmds += mcmd;
       fsys_warp_cmd = VStr();
-      sv_skipOneTitlemap = true;
 #ifndef CLIENT
       wasWarp = true;
 #endif
@@ -279,9 +277,9 @@ void Host_Init () {
 
   if (/*fsys_warp_n0 >= 0 &&*/ fsys_warp_cmd.length()) {
     //GCmdBuf.Insert(fsys_warp_cmd);
+    Host_CLIMapStartFound();
     VCommand::cliPreCmds += fsys_warp_cmd;
     if (!fsys_warp_cmd.endsWith("\n")) VCommand::cliPreCmds += '\n';
-    sv_skipOneTitlemap = true;
 #ifndef CLIENT
     wasWarp = true;
 #endif
@@ -294,12 +292,12 @@ void Host_Init () {
 
 #ifndef CLIENT
   if (GGameInfo->NetMode == NM_None && !wasWarp) {
+    Host_CLIMapStartFound();
     //GCmdBuf << "MaxPlayers 4\n";
     //GCmdBuf << "Map " << *P_TranslateMap(1) << "\n";
     VCommand::cliPreCmds += "Map \"";
     VCommand::cliPreCmds += VStr(*P_TranslateMap(1)).quote();
     VCommand::cliPreCmds += "\"\n";
-    sv_skipOneTitlemap = true;
   }
 #endif
 

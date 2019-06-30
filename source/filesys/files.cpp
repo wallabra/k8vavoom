@@ -1714,6 +1714,11 @@ void FL_Init () {
   } else if (doStartMap && fsys_warp_cmd.isEmpty() && mapinfoFound) {
     fsys_warp_cmd = "__k8_run_first_map";
   }
+
+  // look for "+map"
+  if (fsys_warp_cmd.length() == 0) {
+    if (GArgs.CheckParm("+map") != 0) Host_CLIMapStartFound();
+  }
 }
 
 

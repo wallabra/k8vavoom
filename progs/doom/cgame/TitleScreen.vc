@@ -45,6 +45,15 @@ int page_pic;
 void AdvanceDemo () {
   if (StartTitleMap()) return;
 
+  if (IsAutoloadingMapFromCLI()) {
+    if (demosequence == -1) {
+      demosequence = 0;
+      page_pic = R_RegisterPic('titlepic');
+      pagetime = 60.0;
+    }
+    return;
+  }
+
   ++demosequence;
   if (!IsAnyDoom2) {
     demosequence %= (WadLumpPresent('e4m1') ? 7 : 6);
@@ -183,5 +192,5 @@ defaultproperties {
   Focusable = true;
   Width = 320;
   Height = 200;
-  demosequence = -1;  // -1 = don't play demos
+  demosequence = -1;
 }

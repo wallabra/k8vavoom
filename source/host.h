@@ -34,6 +34,10 @@ const char *Host_GetCoreDump ();
 bool Host_StartTitleMap ();
 VStr Host_GetConfigDir ();
 
+// called if CLI arguments contains some map selections command
+void Host_CLIMapStartFound ();
+bool Host_IsCLIMapStartFound ();
+
 // call this after saving/loading/map loading, so we won't unnecessarily skip frames
 void Host_ResetSkipFrames ();
 

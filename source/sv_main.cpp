@@ -137,6 +137,8 @@ static VServerNetContext *ServerNetContext;
 
 static double LastMasterUpdate;
 
+static bool cliMapStartFound = false;
+
 
 struct VCVFSSaver {
   void *userdata;
@@ -1082,6 +1084,8 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   run_open_scripts = spawn_thinkers;
   serverStartRenderFramesTic = -1;
 
+  cliMapStartFound = false;
+
   if (GGameInfo->NetMode != NM_None) {
     //fprintf(stderr, "SV_SpawnServer!!!\n");
     // level change
@@ -1579,14 +1583,37 @@ COMMAND(Map) {
 
 //==========================================================================
 //
+//  Host_CLIMapStartFound
+//
+//  called if CLI arguments contains some map selections command
+//
+//==========================================================================
+void Host_CLIMapStartFound () {
+  cliMapStartFound = true;
+}
+
+
+//==========================================================================
+//
+//  Host_IsCLIMapStartFound
+//
+//==========================================================================
+bool Host_IsCLIMapStartFound () {
+  return cliMapStartFound;
+}
+
+
+//==========================================================================
+//
 //  Host_StartTitleMap
 //
 //==========================================================================
 bool Host_StartTitleMap () {
+  if (cliMapStartFound) return false;
+
   static bool loadingTitlemap = false;
 
   if (GArgs.CheckParm("-notitlemap") != 0) return false;
-  if (sv_skipOneTitlemap) { sv_skipOneTitlemap = false; return false; }
 
   if (loadingTitlemap) {
     // it is completely fucked, ignore it

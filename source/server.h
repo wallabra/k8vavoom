@@ -57,7 +57,6 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr); // in "sv_main.cp
 
 extern server_t sv;
 extern server_static_t svs;
-extern bool sv_skipOneTitlemap;
 // after spawning a server, skip several rendering frames, so
 // ACS fadein effects works better
 // this is GLevel->TicTime value at which we should start rendering

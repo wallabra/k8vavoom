@@ -45,8 +45,14 @@ int advisor_pic;
 
 void AdvanceDemo()
 {
-  if (StartTitleMap())
-  {
+  if (StartTitleMap()) return;
+
+  if (IsAutoloadingMapFromCLI()) {
+    if (demosequence == -1) {
+      demosequence = 0;
+      page_pic = R_RegisterPic('title');
+      pagetime = 60.0;
+    }
     return;
   }
 

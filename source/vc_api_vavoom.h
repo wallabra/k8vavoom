@@ -51,6 +51,7 @@
   DECLARE_FUNCTION(ParseColor)
   DECLARE_FUNCTION(TextColorString)
   DECLARE_FUNCTION(StartTitleMap)
+  DECLARE_FUNCTION(IsAutoloadingMapFromCLI)
   DECLARE_FUNCTION(LoadBinaryLump)
   DECLARE_FUNCTION(IsMapPresent)
 

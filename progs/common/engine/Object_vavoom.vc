@@ -319,6 +319,7 @@ native static final GameObject::LockDef *GetLockDef (int Lock);
 native static final int ParseColor (string Name);
 native static final string TextColorString (int Color);
 native static final bool StartTitleMap ();
+native static final bool IsAutoloadingMapFromCLI ();
 native static final void LoadBinaryLump (name LumpName, out array!ubyte Array);
 native static final bool IsMapPresent (name MapName);
 
