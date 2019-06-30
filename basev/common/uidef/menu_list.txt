@@ -4,6 +4,7 @@ menus {
   "menus/gameplay.txt",
   "menus/healthaccum.txt",
   "menus/hudoptions.txt",
+  "menus/amoptions.txt",
   "menus/misc.txt",
   "menus/mouse.txt",
   "menus/options.txt",

@@ -1,0 +1,111 @@
+// HUD options menu
+menudef AutomapOptions {
+  //selector = MenuSelector_SmallRight;
+  Title = "AUTOMAP OPTIONS";
+
+  option bool {
+    title = "Default scale is small";
+    cvar = am_default_whole;
+    help = "Choose default automap scale so you can see most of the map?";
+  }
+
+  option bool {
+    title = "Overlay automap";
+    cvar = am_overlay;
+    help = "Draw automap as overlay instead of separate screen?";
+  }
+
+  option slider {
+    title = "Overlay transparency";
+    cvar = am_overlay_alpha;
+    step = 0.1;
+    min = 0;
+    max = 1;
+    help = "Automap overlay transparency.";
+  }
+
+  option slider {
+    title = "Overlay background darken";
+    cvar = am_back_darken;
+    step = 0.1;
+    min = 0;
+    max = 1;
+    help = "Amount of background darkening when automap is overlayed.";
+  }
+
+  option bool {
+    title = "Show parchment";
+    cvar = am_show_parchment;
+    help = "Draw automap parchment (if any) in non-overlay mode?";
+  }
+
+  option bool {
+    title = "Show stats on automap";
+    cvar = am_show_stats;
+    help = "Show various stats on automap?";
+  }
+
+  option bool {
+    title = "Textured automap";
+    cvar = am_textured;
+    help =
+      "Draw textured automap?"
+      "This can be toggled with 'T' key when automap is active.";
+  }
+
+  option slider {
+    title = "Texture transparency";
+    cvar = am_texture_alpha;
+    step = 0.1;
+    min = 0;
+    max = 1;
+    help = "Automap texture transparency";
+  }
+
+  option bool {
+    title = "Imprecise automap";
+    cvar = am_full_lines;
+    help =
+      "Draw full line even when only part of it was seen?"
+      "If turned 'OFF', automap will use per-segment visibility.";
+  }
+
+  option bool {
+    title = "Follow player";
+    cvar = am_follow_player;
+    help =
+      "Should automap follow the player?"
+      "This can be toggled with 'H' key when automap is active.";
+  }
+
+  option bool {
+    title = "Rotating automap";
+    cvar = am_rotate;
+    help = "Should automap rotate around the player?";
+  }
+
+  option bool {
+    title = "Automap grid";
+    cvar = am_draw_grid;
+    help = "Draw grid on automap?";
+  }
+
+  option enum {
+    title = "Player arrow";
+    cvar = am_player_arrow;
+    list {
+      "Doom Arrow",
+      "Heretic Sword",
+    }
+    help = "Player arrow type.";
+  }
+
+  option bool {
+    title = "Mark secret walls";
+    cvar = am_show_secrets;
+    help =
+      "Mark secret walls on automap?"
+      "WARNING! Technically this is cheating, but you"
+      "can use this without turning on cheats.";
+  }
+}

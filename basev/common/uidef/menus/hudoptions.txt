@@ -3,6 +3,7 @@ menudef HUDOptions {
   //selector = MenuSelector_SmallRight;
   Title = "HUD OPTIONS";
 
+
   header "HUD Messages";
 
   option bool {
@@ -189,7 +190,7 @@ menudef HUDOptions {
     cvar = r_statusbar_draw;
     help =
       "You can turn off statusbar if some mod does it's own,"
-      "and k8VaVoom is not able to detect it.";
+      "and k8vavoom is not able to detect it.";
   }
 
   option bool {

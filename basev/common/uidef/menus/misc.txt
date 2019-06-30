@@ -21,17 +21,6 @@ menudef MiscOptions {
   }
 
   option bool {
-    title = "Overlay automap";
-    cvar = am_overlay;
-    help = "Draw automap as overlay instead of separate screen?";
-  }
-
-  option bool {
-    title = "Show stats on automap";
-    cvar = am_show_stats;
-  }
-
-  option bool {
     title = "Allow vanilla cheatcodes";
     cvar = allow_vanilla_cheats;
     help = "Turn this on to allow IDXXX cheatcodes from Vanilla DooM.";

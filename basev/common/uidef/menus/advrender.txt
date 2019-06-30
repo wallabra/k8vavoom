@@ -19,7 +19,7 @@ menudef AdvRenderOptions {
     cvar = r_allow_mirrors;
     help =
       "Allow rendering mirror portals?"
-      "Note that portal rendering in k8VaVoom is somewhat slow."
+      "Note that portal rendering in k8vavoom is somewhat slow."
       "Please note that you have to restart/reload level after changing this,"
       "or visual glitches will occur.";
   }

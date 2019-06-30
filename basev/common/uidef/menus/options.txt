@@ -40,6 +40,11 @@ menudef OptionsMenu {
   }
 
   option submenu {
+    title = "Automap Options";
+    submenu = AutomapOptions;
+  }
+
+  option submenu {
     title = "Sound Options";
     submenu = SoundOptions;
   }
