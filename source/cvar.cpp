@@ -72,12 +72,23 @@ static void cv_serverInfoSet (VCvar *cvar) {
 
 //==========================================================================
 //
+//  cv_created
+//
+//==========================================================================
+static void cv_created (VCvar *cvar, const VStr &oldValue) {
+  VCommand::AddToAutoComplete(cvar->GetName());
+}
+
+
+//==========================================================================
+//
 //  CVars_Init
 //
 //==========================================================================
 void CVars_Init () {
   VCvar::Init();
   VCvar::AddAllVarsToAutocomplete(&VCommand::AddToAutoComplete);
+  VCvar::ChangedCB = &cv_created; // this adds to autocompletion
   VCvar::UserInfoSetCB = &cv_userInfoSet;
   VCvar::ServerInfoSetCB = &cv_serverInfoSet;
   VCvar::SendAllUserInfos();
