@@ -172,6 +172,7 @@ static inline int getAMHeight () {
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
 static VCvarF am_back_darken("am_back_darken", "0", "Overlay automap darken factor", CVAR_Archive);
 static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
+static VCvarB am_draw_grid("am_draw_grid", false, "Draw automap grid?", CVAR_Archive);
 
 // automap colors
 static VCvarS am_color_wall("am_color_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
@@ -267,8 +268,6 @@ static ColorCV PlayerColor(&am_color_player);
 static ColorCV MinisegColor(&am_color_miniseg);
 static ColorCV CurrMarkColor(&am_color_current_mark);
 
-
-static int grid = 0;
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
 static int amWholeScale = -1; // -1: unknown
@@ -823,8 +822,8 @@ bool AM_Responder (event_t *ev) {
         cl->Printf(am_follow_player ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF);
         break;
       case AM_GRIDKEY:
-        grid = !grid;
-        cl->Printf(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
+        am_draw_grid = !am_draw_grid;
+        cl->Printf(am_draw_grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
         break;
       case AM_MARKKEY:
         if (mapMarksAllowed /*&& (ev->modflags&bShift)*/) {
@@ -1170,7 +1169,7 @@ static void AM_drawGrid (vuint32 color) {
 
   // calculate a minimum for how long the grid lines should be, so they
   // cover the screen at any rotation
-  minlen = sqrtf (m_w*m_w+m_h*m_h);
+  minlen = sqrtf(m_w*m_w+m_h*m_h);
   extx = (minlen-m_w)/2;
   exty = (minlen-m_h)/2;
 
@@ -1951,7 +1950,7 @@ void AM_Drawer () {
   AM_clearFB();
 
   Drawer->StartAutomap(am_overlay);
-  if (grid) AM_drawGrid(GridColor);
+  if (am_draw_grid) AM_drawGrid(GridColor);
   if (am_textured) {
     Drawer->EndAutomap();
     AM_drawFloors();
