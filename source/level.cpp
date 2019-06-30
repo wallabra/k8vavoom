@@ -443,9 +443,15 @@ void VLevel::SerialiseOther (VStream &Strm) {
   line_t *li;
   side_t *si;
 
-  // reset subsector update frame
   if (Strm.IsLoading()) {
-    for (unsigned f = 0; f < (unsigned)NumSubsectors; ++f) Subsectors[f].updateWorldFrame = 0;
+    for (unsigned f = 0; f < (unsigned)NumSubsectors; ++f) {
+      // reset subsector update frame
+      Subsectors[f].updateWorldFrame = 0;
+      // clear seen subsectors
+      Subsectors[f].miscFlags &= ~subsector_t::SSMF_Rendered;
+    }
+    // clear seen segs on loading
+    for (i = 0; i < NumSegs; ++i) Segs[i].flags &= ~SF_MAPPED;
   }
 
   // write/check various numbers, so we won't load invalid save accidentally
@@ -862,6 +868,20 @@ void VLevel::SerialiseOther (VStream &Strm) {
     if (Strm.IsLoading()) HashLines();
   }
 
+  // restore subsector "rendered" flag
+  if (Strm.IsLoading()) {
+    if (segvisLoaded) {
+      // segment visibility info present
+      for (i = 0; i < NumSegs; ++i) {
+        if (Segs[i].front_sub && (Segs[i].flags&SF_MAPPED)) {
+          Segs[i].front_sub->miscFlags |= subsector_t::SSMF_Rendered;
+        }
+      }
+    } else {
+      // no segment visibility info, do nothing
+    }
+  }
+
   // polyobjs
   {
     vint32 cnt = NumPolyObjs;
@@ -886,11 +906,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
       }
       vio.io(VName("SpecialData"), PolyObjs[i].SpecialData);
     }
-  }
-
-  // clear seen segs on loading
-  if (Strm.IsLoading()) {
-    for (i = 0; i < NumSegs; ++i) Segs[i].flags &= ~SF_MAPPED;
   }
 
   // static lights

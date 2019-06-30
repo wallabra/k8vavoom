@@ -28,47 +28,6 @@
 #include "r_tex.h"
 
 
-//==========================================================================
-//
-//  sRGBungamma
-//
-//  inverse of sRGB "gamma" function. (approx 2.2)
-//
-//==========================================================================
-static double sRGBungamma (int ic) {
-  const double c = ic/255.0;
-  if (c <= 0.04045) return c/12.92;
-  return pow((c+0.055)/1.055, 2.4);
-}
-
-
-//==========================================================================
-//
-//  sRGBungamma
-//
-//  sRGB "gamma" function (approx 2.2)
-//
-//==========================================================================
-static int sRGBgamma (double v) {
-  if (v <= 0.0031308) v *= 12.92; else v = 1.055*pow(v, 1.0/2.4)-0.055;
-  return int(v*255+0.5);
-}
-
-
-//==========================================================================
-//
-//  colorIntensity
-//
-//==========================================================================
-static vuint8 colorIntensity (int r, int g, int b) {
-  // sRGB luminance(Y) values
-  const double rY = 0.212655;
-  const double gY = 0.715158;
-  const double bY = 0.072187;
-  return clampToByte(sRGBgamma(rY*sRGBungamma(r)+gY*sRGBungamma(g)+bY*sRGBungamma(b)));
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 

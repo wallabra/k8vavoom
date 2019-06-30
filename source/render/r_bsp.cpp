@@ -812,7 +812,6 @@ void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
 //==========================================================================
 void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   subsector_t *sub = &Level->Subsectors[num];
-
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
   // render it if we're not in "only clip" mode
@@ -832,6 +831,9 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 
     // is this subsector potentially visible?
     if (ViewClip.ClipCheckSubsector(sub)) {
+      // mark as rendered
+      sub->miscFlags |= subsector_t::SSMF_Rendered;
+
       if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
       sub->VisFrame = currVisFrame;
 

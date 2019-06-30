@@ -40,8 +40,10 @@ bool AM_IsMarkActive (int index);
 float AM_GetMarkX (int index);
 float AM_GetMarkY (int index);
 // for loading
-void AM_ClearMakrs ();
+void AM_ClearMarks ();
 void AM_SetMarkXY (int index, float x, float y);
+
+void AM_ClearAutomap ();
 
 extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay
 extern VCvarB am_always_update;

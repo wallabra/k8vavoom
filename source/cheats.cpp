@@ -300,15 +300,7 @@ COMMAND(my_clear_automap) {
   }
   if (!Player) { GCon->Log("NO PLAYER!"); return; }
   if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
-  for (int i = 0; i < GClLevel->NumLines; ++i) {
-    line_t &line = GClLevel->Lines[i];
-    line.flags &= ~ML_MAPPED;
-    line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
-  }
-  for (int i = 0; i < GClLevel->NumSegs; ++i) {
-    seg_t &seg = GClLevel->Segs[i];
-    seg.flags &= ~SF_MAPPED;
-  }
+  AM_ClearAutomap();
   GCon->Logf("automap cleared");
 }
 

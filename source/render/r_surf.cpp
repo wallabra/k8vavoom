@@ -252,7 +252,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub) {
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool ignoreColorMap) {
   if (!ssurf->esecplane.splane->pic) return; // no texture? nothing to do
 
   TSecPlaneRef splane(ssurf->esecplane);
@@ -281,6 +281,8 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     }
   }
 
+  enum { USS_Normal, USS_Force, USS_IgnoreCMap, USS_ForceIgnoreCMap };
+
   // if scale/angle was changed, we should update everything, and possibly rebuild the surface
   // our general surface creation function will take care of everything
   if (FASI(ssurf->XScale) != FASI(splane.splane->XScale) ||
@@ -296,12 +298,12 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     */
     sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
     check(newsurf == ssurf); // sanity check
-    ssurf->texinfo.ColorMap = ColorMap; // just in case
+    ssurf->texinfo.ColorMap = (!ignoreColorMap ? ColorMap : 0); // just in case
     // nothing more to do
     return;
   }
 
-  ssurf->texinfo.ColorMap = ColorMap; // just in case
+  if (!ignoreColorMap) ssurf->texinfo.ColorMap = ColorMap; // just in case
   ssurf->texinfo.soffs = splane.splane->xoffs;
   ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
 
@@ -1557,6 +1559,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     TSecPlaneRef main_floor = sub->sector->eregions->efloor;
     TSecPlaneRef main_ceiling = sub->sector->eregions->eceiling;
 
+    subregion_t *lastsreg = sub->regions;
+
     int ridx = 0;
     for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next, ++ridx) {
       if (sregLeft == 0) Sys_Error("out of subregions in surface creator");
@@ -1599,8 +1603,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         }
       }
 
+      /*
       sreg->next = sub->regions;
       sub->regions = sreg;
+      */
+      // proper append
+      sreg->next = nullptr;
+      if (lastsreg) lastsreg->next = sreg; else sub->regions = sreg;
+      lastsreg = sreg;
 
       ++sreg;
       --sregLeft;
@@ -1666,6 +1676,27 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     }
 #endif
     return UpdateSubRegion(sub, region->next, updatePoly);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::UpdateSubsectorFloorSurfaces
+//
+//==========================================================================
+void VRenderLevelShared::UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced) {
+  if (!sub) return;
+  if (!forced && sub->updateWorldFrame == updateWorldFrame) return;
+  for (subregion_t *region = sub->regions; region; region = region->next) {
+    if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, true); // ignore colormap
+    if (region->fakefloor) {
+      TSecPlaneRef fakefloor;
+      fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+      if (!fakefloor.isFloor()) fakefloor.Flip();
+      if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
+      UpdateSecSurface(region->fakefloor, fakefloor, sub, true); // ignore colormap
+    }
   }
 }
 

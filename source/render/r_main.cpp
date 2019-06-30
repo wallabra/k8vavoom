@@ -1542,17 +1542,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   IncUpdateWorldFrame();
 
-  if (dbg_autoclear_automap) {
-    line_t *line = &Level->Lines[0];
-    for (int i = Level->NumLines; i--; ++line) {
-      line->flags &= ~ML_MAPPED;
-      line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
-    }
-    seg_t *seg = &Level->Segs[0];
-    for (int i = GClLevel->NumSegs; i--; ++seg) {
-      seg->flags &= ~SF_MAPPED;
-    }
-  }
+  if (dbg_autoclear_automap) AM_ClearAutomap();
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);

@@ -142,6 +142,7 @@ Set SimpleFogSet {
 ShaderList basedir="basev/common/glshaders" {
   Shader DrawFixedCol both="draw_fixed_col";
   Shader DrawSimple both="draw_simple";
+  Shader DrawSimpleLight both="draw_simple" { define "LIGHTING"; }
   Shader DrawShadow vertex="draw_simple" fragment="draw_shadow";
   Shader DrawAutomap both="draw_automap";
 

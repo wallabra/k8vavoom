@@ -125,6 +125,8 @@ public:
   // `surfplane` is used to light masked surfaces
   virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) = 0;
 
+  virtual void UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced=false) = 0;
+
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 
   virtual bool IsNodeRendered (const node_t *node) const = 0;
@@ -133,6 +135,8 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct texinfo_t;
+
 class VDrawer {
 public:
   enum {
@@ -238,6 +242,8 @@ public:
   virtual void DrawConsoleBackground (int h) = 0;
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
+
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) = 0;
 
   // automap
   virtual void StartAutomap (bool asOverlay) = 0;

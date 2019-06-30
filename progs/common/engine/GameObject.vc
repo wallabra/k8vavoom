@@ -1091,6 +1091,9 @@ struct subsector_t {
   int dlightframe;
 
   native transient subregion_t *regions;
+
+  // misc flags
+  bool bRendered;
 };
 
 

@@ -33,6 +33,7 @@
 #include "drawer.h"
 #ifdef CLIENT
 # include "neoui/neoui.h"
+# include "render/r_local.h"
 #endif
 
 // there is no need to do this anymore: OpenGL will do it for us
@@ -75,6 +76,7 @@
 #define AM_MARKKEY       'm'
 #define AM_NEXTMARKKEY   'n'
 #define AM_CLEARMARKKEY  'c'
+#define AM_TOGGLETEXKEY  't'
 
 // how much the automap moves window per tic in frame-buffer coordinates
 // moves 140 pixels in 1 second
@@ -214,6 +216,9 @@ static VCvarB am_render_thing_sprites("am_render_thing_sprites", false, "Render 
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
+
+static VCvarF am_texture_alpha("am_texture_alpha", "0.6", "Automap texture alpha", CVAR_Archive);
+static VCvarB am_textured("am_textured", false, "Textured automap?", CVAR_Archive);
 
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
 
@@ -849,6 +854,9 @@ bool AM_Responder (event_t *ev) {
           }
         }
         break;
+      case AM_TOGGLETEXKEY:
+        am_textured = !am_textured;
+        break;
       default:
         rc = false;
         break;
@@ -1359,6 +1367,91 @@ static void AM_drawWalls () {
 
 //==========================================================================
 //
+//  AM_mapxy2fbxy
+//
+//==========================================================================
+static inline void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) {
+  if (am_rotate) AM_rotatePoint(&x, &y);
+  if (destx) *destx = CXMTOFF(x);
+  if (desty) *desty = CYMTOFF(y);
+}
+
+
+//==========================================================================
+//
+//  AM_drawFloors
+//
+//==========================================================================
+static void AM_drawFloors () {
+#ifdef CLIENT
+  if (!Drawer || !Drawer->RendLev) return;
+  float alpha = (am_overlay ? clampval(am_texture_alpha.asFloat(), 0.0f, 1.0f) : 1.0f);
+  if (alpha <= 0.0f) return;
+  TArray<TVec> verts;
+  //GCon->Logf("bounds=(%g,%g)-(%g,%g)", m_x, m_y, m_x2, m_y2);
+  bool hidden = false;
+  subsector_t *sub = &GClLevel->Subsectors[0];
+  for (unsigned i = GClLevel->NumSubsectors; i--; ++sub) {
+    if (!sub->sector) continue;
+    if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
+    if (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered)) {
+      // check for "allmap" powerup
+      if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
+      hidden = true;
+    } else {
+      hidden = false;
+    }
+    // first subregion is main sector subregion
+    subregion_t *reg = sub->regions;
+    if (!reg) continue; // just in case
+    // get floor
+    sec_surface_t *floor = reg->realfloor;
+    if (!floor) {
+      floor = reg->fakefloor;
+      if (!floor) continue;
+    }
+    if (!floor->texinfo.Tex) continue; // just in case
+    // check bounding box
+    {
+      //GCon->Logf("  sub #%d: bounds=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(sub-&GClLevel->Subsectors[0]), sub->bbox[0], sub->bbox[1], sub->bbox[2], sub->bbox[3]);
+      if ((sub->bbox[2+0] < m_x && sub->bbox[2+1] < m_y) ||
+          (sub->bbox[0+0] > m_x2 && sub->bbox[0+1] > m_y2))
+      {
+        continue;
+      }
+    }
+    // calculate lighting
+    const float lev = clampval(sub->sector->params.lightlevel/255.0f, 0.0f, 1.0f);
+    const vuint32 light = sub->sector->params.LightColor;
+    TVec vlight(
+      ((light>>16)&255)*lev/255.0f,
+      ((light>>8)&255)*lev/255.0f,
+      (light&255)*lev/255.0f);
+    // draw hidden parts bluish
+    if (hidden) {
+      float intensity = colorIntensity((light>>16)&255, (light>>8)&255, light&255)/255.0f;
+      vlight = TVec(0.1f, 0.1f, intensity);
+    }
+    // update textures (why not? this updates floor animation)
+    Drawer->RendLev->UpdateSubsectorFloorSurfaces(sub);
+    // ok, we can render surfaces
+    for (surface_t *surf = floor->surfs; surf; surf = surf->next) {
+      if (surf->count < 3) continue;
+      verts.reset();
+      float sx, sy;
+      for (int vn = 0; vn < surf->count; ++vn) {
+        AM_mapxy2fbxy(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);
+        verts.append(TVec(sx, sy, 0));
+      }
+      Drawer->DrawTexturedPoly(&floor->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
 //  AM_DrawSimpleLine
 //
 //==========================================================================
@@ -1536,6 +1629,7 @@ static void AM_drawPlayers () {
 //
 //==========================================================================
 static void AM_drawThings () {
+  bool inSpriteMode = false;
   bool invisible = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
@@ -1592,10 +1686,23 @@ static void AM_drawThings () {
       x = morg.x;
       y = morg.y;
       if (am_rotate) AM_rotatePoint(&x, &y);
+      if (!inSpriteMode) {
+        inSpriteMode = true;
+        Drawer->EndAutomap();
+      }
       R_DrawSpritePatch(CXMTOFF(x), CYMTOFF(y), sprIdx, 0, 0, 0, 0, 0, scale_mtof, true); // draw, ignore vscr
     } else {
+      if (inSpriteMode) {
+        inSpriteMode = false;
+        Drawer->StartAutomap(am_overlay);
+      }
       AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
     }
+  }
+  // restore automap rendering mode
+  if (inSpriteMode) {
+    inSpriteMode = false;
+    Drawer->StartAutomap(am_overlay);
   }
 }
 
@@ -1845,9 +1952,16 @@ void AM_Drawer () {
 
   Drawer->StartAutomap(am_overlay);
   if (grid) AM_drawGrid(GridColor);
+  if (am_textured) {
+    Drawer->EndAutomap();
+    AM_drawFloors();
+    Drawer->StartAutomap(am_overlay);
+  }
   AM_drawWalls();
   AM_drawPlayers();
-  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings();
+  if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) {
+    AM_drawThings();
+  }
   if (am_cheating && am_show_static_lights) AM_drawStaticLights();
   if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights();
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
@@ -1910,10 +2024,10 @@ float AM_GetMarkY (int index) {
 
 //==========================================================================
 //
-//  AM_ClearMakrs
+//  AM_ClearMarks
 //
 //==========================================================================
-void AM_ClearMakrs () {
+void AM_ClearMarks () {
   (void)AM_clearMarks();
 }
 
@@ -1929,6 +2043,27 @@ void AM_SetMarkXY (int index, float x, float y) {
   mp.x = x;
   mp.y = y;
   mp.activate();
+}
+
+
+//==========================================================================
+//
+//  AM_ClearAutomap
+//
+//==========================================================================
+void AM_ClearAutomap () {
+  if (!GClLevel) return;
+  for (int i = 0; i < GClLevel->NumLines; ++i) {
+    line_t &line = GClLevel->Lines[i];
+    line.flags &= ~ML_MAPPED;
+    line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+  }
+  for (int i = 0; i < GClLevel->NumSegs; ++i) {
+    GClLevel->Segs[i].flags &= ~SF_MAPPED;
+  }
+  for (unsigned f = 0; f < (unsigned)GClLevel->NumSubsectors; ++f) {
+    GClLevel->Subsectors[f].miscFlags &= ~subsector_t::SSMF_Rendered;
+  }
 }
 
 

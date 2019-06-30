@@ -108,3 +108,44 @@ static inline __attribute__((unused)) __attribute__((const)) vint32 scaleInt (vi
 static inline __attribute__((unused)) __attribute__((const)) vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) {
   return (vuint32)(((vuint64)a*b)/c);
 }
+
+
+//==========================================================================
+//
+//  sRGBungamma
+//
+//  inverse of sRGB "gamma" function. (approx 2.2)
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result)) double sRGBungamma (int ic) {
+  const double c = ic/255.0;
+  if (c <= 0.04045) return c/12.92;
+  return pow((c+0.055)/1.055, 2.4);
+}
+
+
+//==========================================================================
+//
+//  sRGBungamma
+//
+//  sRGB "gamma" function (approx 2.2)
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result)) int sRGBgamma (double v) {
+  if (v <= 0.0031308) v *= 12.92; else v = 1.055*pow(v, 1.0/2.4)-0.055;
+  return int(v*255+0.5);
+}
+
+
+//==========================================================================
+//
+//  colorIntensity
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result)) vuint8 colorIntensity (int r, int g, int b) {
+  // sRGB luminance(Y) values
+  const double rY = 0.212655;
+  const double gY = 0.715158;
+  const double bY = 0.072187;
+  return clampToByte(sRGBgamma(rY*sRGBungamma(r)+gY*sRGBungamma(g)+bY*sRGBungamma(b)));
+}

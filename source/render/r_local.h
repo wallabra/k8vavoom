@@ -484,6 +484,8 @@ public:
 
   virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
 
+  virtual void UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced=false) override;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -604,7 +606,9 @@ protected:
   // `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
   // this is used both to create initial surfaces, and to update changed surfaces
   sec_surface_t *CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane);
-  void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub); // subsector is not changed, but we need it non-const
+  // subsector is not changed, but we need it non-const
+  //enum { USS_Normal, USS_Force, USS_IgnoreCMap, USS_ForceIgnoreCMap };
+  void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool ignoreColorMap=false);
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t *&);
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);

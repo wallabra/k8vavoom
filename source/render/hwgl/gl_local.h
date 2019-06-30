@@ -627,6 +627,7 @@ public:
   virtual void DrawConsoleBackground(int) override;
   virtual void DrawSpriteLump(float, float, float, float, VTexture*,
     VTextureTranslation*, bool) override;
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) override;
 
   // automap
   virtual void StartAutomap (bool asOverlay) override;

@@ -838,11 +838,16 @@ struct subregion_t {
 //  Subsector
 //
 //==========================================================================
-
 // a subsector; references a sector
 // basically, this is a list of LineSegs, indicating
 // the visible walls that define (all or some) sides of a convex BSP leaf
 struct subsector_t {
+public:
+  enum {
+    SSMF_Rendered = 1u<<0u,
+  };
+
+public:
   sector_t *sector;
   subsector_t *seclink; // next subsector for this sector
   vint32 numlines;
@@ -862,6 +867,8 @@ struct subsector_t {
   vuint32 dlightbits; // bitmask of active dynamic lights
   vuint32 dlightframe; // `dlightbits` validity counter
   subregion_t *regions;
+
+  vuint32 miscFlags; // SSMF_xxx
 };
 
 

@@ -288,3 +288,47 @@ void VOpenGLDrawer::EndAutomap () {
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_LINE_SMOOTH);
 }
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawTexturedPoly
+//
+//==========================================================================
+void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha,
+                                      int vcount, const TVec *verts, const TVec *origverts)
+{
+  if (!tinfo || !tinfo->Tex || vcount < 3 || alpha < 0.0f) return;
+  SetTexture(tinfo->Tex, CM_Default);
+  DrawSimpleLight.Activate();
+  DrawSimpleLight.SetTexture(0);
+  DrawSimpleLight.SetAlpha(alpha);
+  DrawSimpleLight.SetLight(light.x, light.y, light.z, 1.0f);
+  //GLboolean oldblend = false;
+  if (alpha < 1.0f) {
+    //glGetBooleanv(GL_BLEND, &oldblend);
+    //glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+  }
+  glBegin(GL_TRIANGLE_FAN);
+  if (origverts) {
+    for (; vcount--; ++verts, ++origverts) {
+      glTexCoord2f(
+        (DotProduct(*origverts, tinfo->saxis)+tinfo->soffs)*tex_iw,
+        (DotProduct(*origverts, tinfo->taxis)+tinfo->toffs)*tex_ih);
+      glVertex2f(verts->x, verts->y);
+    }
+  } else {
+    for (; vcount--; ++verts) {
+      glTexCoord2f(
+        (DotProduct(*verts, tinfo->saxis)+tinfo->soffs)*tex_iw,
+        (DotProduct(*verts, tinfo->taxis)+tinfo->toffs)*tex_ih);
+      glVertex2f(verts->x, verts->y);
+    }
+  }
+  glEnd();
+  if (alpha < 1.0f) {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+    //if (oldblend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+  }
+}
