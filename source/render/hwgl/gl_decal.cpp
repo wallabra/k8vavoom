@@ -160,6 +160,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       continue;
     }
 
+    // check decal flags
+    if ((dc->flags&decal_t::NoMidTex) && (surf->typeFlags&surface_t::TF_MIDDLE)) { dc = dc->next; continue; }
+    if ((dc->flags&decal_t::NoTopTex) && (surf->typeFlags&surface_t::TF_TOP)) { dc = dc->next; continue; }
+    if ((dc->flags&decal_t::NoBotTex) && (surf->typeFlags&surface_t::TF_BOTTOM)) { dc = dc->next; continue; }
+
     // use origScale to get the original starting point
     float txofs = dtex->GetScaledSOffset()*dc->scaleX;
     float tyofs = dtex->GetScaledTOffset()*dc->origScaleY;

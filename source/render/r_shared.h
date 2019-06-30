@@ -85,6 +85,14 @@ struct surface_t {
     DF_NO_FACE_CULL = 1u<<5, // ignore face culling
   };
 
+  enum {
+    TF_TOP     = 1u<<0,
+    TF_BOTTOM  = 1u<<1,
+    TF_MIDDLE  = 1u<<2,
+    TF_FLOOR   = 1u<<3,
+    TF_CEILING = 1u<<4,
+  };
+
   surface_t *next;
   texinfo_t *texinfo; // points to owning `sec_surface_t`
   TPlane plane; // was pointer
@@ -93,6 +101,7 @@ struct surface_t {
   vuint32 Fade;
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
+  vuint32 typeFlags; // TF_xxx
   // not exposed to VC
   int lmsize, lmrgbsize; // to track static lightmap memory
   vuint8 *lightmap;

@@ -646,6 +646,12 @@ struct surface_t {
   int Fade; // (unsigned)
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
+  // type flags
+  bool bTopTexture;
+  bool bBottomTexture;
+  bool bMiddleTexture;
+  bool bFloorTexture;
+  bool bCeilingTexture;
   // this has more fields in C++, but they aren't exposed
   // so never copy this struct, and never keep it anywhere as value
 };

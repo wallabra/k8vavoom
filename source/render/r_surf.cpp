@@ -166,8 +166,13 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     ssurf->surfs = nullptr; // just in case
   }
 
+  vuint32 typeFlags = (spl.GetNormalZ() > 0.0f ? surface_t::TF_FLOOR : surface_t::TF_CEILING);
+
   // this is required to calculate static lightmaps, and for other business
-  for (surface_t *ss = surf; ss; ss = ss->next) ss->subsector = sub;
+  for (surface_t *ss = surf; ss; ss = ss->next) {
+    ss->subsector = sub;
+    ss->typeFlags = typeFlags;
+  }
 
   ssurf->esecplane = spl;
   ssurf->edist = spl.splane->dist;
@@ -413,7 +418,7 @@ void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
 //  this is used to create world/wall surface
 //
 //==========================================================================
-surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount) {
+surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount, vuint32 typeFlags) {
   if (wvcount < 3) return nullptr;
   if (wvcount == 4 && (wv[1].z <= wv[0].z && wv[2].z <= wv[3].z)) return nullptr;
   if (wvcount > surface_t::MAXWVERTS) Sys_Error("cannot create huge world surface (the thing that should not be)");
@@ -425,6 +430,7 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
   surf->seg = seg;
   surf->next = nullptr;
   surf->count = wvcount;
+  surf->typeFlags = typeFlags;
   memcpy(surf->verts, wv, wvcount*sizeof(TVec));
 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
@@ -460,7 +466,7 @@ int VRenderLevelShared::CountSegParts (const seg_t *seg) {
 //  VRenderLevelShared::CreateWorldSurfFromWV
 //
 //==========================================================================
-void VRenderLevelShared::CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], bool doOffset) {
+void VRenderLevelShared::CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], vuint32 typeFlags, bool doOffset) {
   if (wv[0].z == wv[1].z && wv[1].z == wv[2].z && wv[2].z == wv[3].z) {
     // degenerate surface, no need to create it
     return;
@@ -493,7 +499,7 @@ void VRenderLevelShared::CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, se
   //    this is required for sectors with 3d floors, until i wrote a proper texture clipping math
   if (doOffset) for (unsigned f = 0; f < (unsigned)wcount; ++f) wstart[f] -= seg->normal*0.01f;
 
-  AppendSurfaces(sp, CreateWSurf(wstart, &sp->texinfo, seg, sub, wcount));
+  AppendSurfaces(sp, CreateWSurf(wstart, &sp->texinfo, seg, sub, wcount, typeFlags));
 }
 
 
@@ -526,7 +532,7 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
     wv[1].z = wv[2].z = skyheight;
     wv[3].z = topz2;
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, 0); // sky texture, no type flags
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -565,7 +571,7 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
     wv[1].z = wv[2].z = skyheight;
     wv[3].z = topz2;
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, 0); // sky texture, no type flags
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -663,7 +669,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = top_topz2;
     wv[3].z = max2(back_topz2, botz2);
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP);
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -734,7 +740,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = min2(back_botz2, topz2);
     wv[3].z = botz2;
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM);
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -797,7 +803,7 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = topz2;
     wv[3].z = botz2;
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -977,7 +983,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
         for (int wc = 0; wc < 4; ++wc) GCon->Logf("  wc #%d: (%g,%g,%g)", wc, wv[wc].x, wv[wc].y, wv[wc].z);
       }
 
-      CreateWorldSurfFromWV(sub, seg, sp, wv, doOffset);
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE, doOffset);
     }
   } else {
     // empty midtexture
@@ -1113,7 +1119,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
       if (doDump) for (int wf = 0; wf < 4; ++wf) GCon->Logf("   wf #%d: (%g,%g,%g)", wf, wv[wf].x, wv[wf].y, wv[wf].z);
 
-      CreateWorldSurfFromWV(sub, seg, sp, wv);
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
     }
 
     if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTex->isTransparent())) {

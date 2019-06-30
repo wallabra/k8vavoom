@@ -344,11 +344,13 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const
   ++c_subdivides;
 
   vuint32 drawflags = surf->drawflags;
+  vuint32 typeFlags = surf->typeFlags;
   surface_t *next = surf->next;
   Z_Free(surf);
 
   surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(TVec));
   back->drawflags = drawflags;
+  back->typeFlags = typeFlags;
   back->subsector = sub;
   back->seg = seg;
   back->count = clip.vcount[1];
@@ -356,6 +358,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(TVec));
   front->drawflags = drawflags;
+  front->typeFlags = typeFlags;
   front->subsector = sub;
   front->seg = seg;
   front->count = clip.vcount[0];
@@ -406,6 +409,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const 
 
   surface_t *news = NewWSurf();
   news->drawflags = surf->drawflags;
+  news->typeFlags = surf->typeFlags;
   news->subsector = sub;
   news->seg = seg;
   news->count = clip.vcount[0];

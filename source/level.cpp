@@ -1967,11 +1967,30 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       // if no textures were hit, don't bother
       if (!hasMidTex && !allowTopTex && !allowBotTex) continue;
 
+      vuint32 disabledTextures = 0;
+      //FIXME: animators are often used to slide blood decals down
+      //       until i'll implement proper bounding for animated decals,
+      //       just allow bottom textures here
+      //  later: don't do it yet, cropping sliding blood is ugly, but acceptable
+      /*if (!dec->animator)*/ {
+        if (!allowBotTex || min2(dcy0, dcy1) >= max2(ffloorZ, bfloorZ)) disabledTextures |= decal_t::NoBotTex;
+      }
+      if (!allowTopTex || max2(dcy0, dcy1) <= min2(fceilingZ, bceilingZ)) disabledTextures |= decal_t::NoTopTex;
+      if (!hasMidTex) {
+        disabledTextures |= decal_t::NoMidTex;
+      } else {
+        if (min2(dcy0, dcy1) >= max2(ffloorZ, bfloorZ) || max2(dcy0, dcy1) <= min2(fceilingZ, bceilingZ)) {
+          // touching midtex
+        } else {
+          disabledTextures |= decal_t::NoMidTex;
+        }
+      }
+
       if (fsec && bsec) {
 #ifdef VAVOOM_DECALS_DEBUG
         GCon->Logf("  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
 #endif
-        if (hasMidTex && orgz > max2(ffloorZ, bfloorZ) && orgz < min2(fceilingZ, bceilingZ)) {
+        if (hasMidTex && orgz >= max2(ffloorZ, bfloorZ) && orgz <= min2(fceilingZ, bceilingZ)) {
           // midtexture
                if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
           else if (li->flags&ML_DONTPEGTOP) slideWithCeiling = true;
@@ -2014,7 +2033,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         GCon->Logf("  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
 #endif
         // one-sided
-        if (hasMidTex && orgz > ffloorZ && orgz < fceilingZ) {
+        if (hasMidTex && orgz >= ffloorZ && orgz <= fceilingZ) {
           // midtexture
                if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
           else if (li->flags&ML_DONTPEGTOP) slideWithCeiling = true;
@@ -2114,6 +2133,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       // setup misc flags
       decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
+      decal->flags |= disabledTextures;
 
       // setup curz and pegs
       if (slideWithFloor) {

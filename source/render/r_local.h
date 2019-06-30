@@ -140,6 +140,9 @@ struct decal_t {
     Fullbright = 0x0100U,
     Fuzzy = 0x0200U,
     SideDefOne = 0x0800U,
+    NoMidTex = 0x1000U, // don't render on middle texture
+    NoTopTex = 0x2000U, // don't render on top texture
+    NoBotTex = 0x4000U, // don't render on bottom texture
   };
   decal_t *next; // in this seg
   seg_t *seg;
@@ -589,7 +592,7 @@ protected:
   void RenderBspWorld (const refdef_t*, const VViewClipper*);
   void RenderPortals ();
 
-  void CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], bool doOffset=false);
+  void CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], vuint32 typeFlags, bool doOffset=false);
 
   void SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, segpart_t *sp, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
@@ -611,7 +614,7 @@ protected:
   void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, bool ignoreColorMap=false);
   surface_t *NewWSurf ();
   void FreeWSurfs (surface_t *&);
-  surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount=4);
+  surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount, vuint32 typeFlags);
   int CountSegParts (const seg_t *);
   void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, sec_region_t *curreg, bool isMainRegion);
   void CreateWorldSurfaces ();
