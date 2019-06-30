@@ -61,7 +61,8 @@ static void ParseLockDefs (VScriptParser *sc) {
 
       // skip game specifier
       if (sc->Check("Doom") || sc->Check("Heretic") ||
-          sc->Check("Hexen") || sc->Check("Strife"))
+          sc->Check("Hexen") || sc->Check("Strife") ||
+          sc->Check("Chex"))
       {
       }
 
