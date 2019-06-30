@@ -60,6 +60,10 @@ protected:
   vuint32 lnhash; // hash of lo-cased variable name
 
 public:
+  // called on any change, before other callbacks
+  void (*MeChangedCB) (VCvar *cvar, const VStr &oldValue);
+
+public:
   VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags=CVAR_None);
   VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags=CVAR_None);
 
@@ -153,8 +157,10 @@ private:
   static bool Cheating;
 
 public:
-  // called on any change, before other callbacks
+  // called on any change, before other callbacks, but after cvar callback
   static void (*ChangedCB) (VCvar *cvar, const VStr &oldValue);
+  // called when new cvar is created
+  static void (*CreatedCB) (VCvar *cvar);
 
   // the following callbacks are called only after `Init() was called`
   // called when cvar with `CVAR_UserInfo` changed

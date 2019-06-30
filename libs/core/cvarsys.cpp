@@ -29,7 +29,8 @@
 #define USE_SIMPLE_HASHFN
 
 
-void (*VCvar::ChangedCB) (VCvar *cvar, const VStr &oldValue);
+void (*VCvar::ChangedCB) (VCvar *cvar, const VStr &oldValue) = nullptr;
+void (*VCvar::CreatedCB) (VCvar *cvar) = nullptr;
 void (*VCvar::UserInfoSetCB) (VCvar *cvar) = nullptr;
 void (*VCvar::ServerInfoSetCB) (VCvar *cvar) = nullptr;
 
@@ -129,6 +130,7 @@ VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AF
   , FloatValue(0)
   , BoolValue(false)
   , nextInBucket(nullptr)
+  , MeChangedCB(nullptr)
 {
   if (!DefaultString) DefaultString = ""; // 'cause why not?
 
@@ -155,6 +157,7 @@ VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AF
   , FloatValue(0)
   , BoolValue(false)
   , nextInBucket(nullptr)
+  , MeChangedCB(nullptr)
 {
   char *Tmp = new char[ADefault.Length()+1];
   VStr::Cpy(Tmp, *ADefault);
@@ -183,6 +186,7 @@ VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AF
 //==========================================================================
 VCvar *VCvar::insertIntoHash () {
   if (!this->Name || !this->Name[0]) return nullptr;
+  if (CreatedCB) CreatedCB(this);
   vuint32 nhash = cvnamehash(this->Name);
   this->lnhash = nhash;
   VCvar *prev = nullptr;
@@ -310,6 +314,7 @@ void VCvar::DoSet (const VStr &AValue) {
 
   if (!validFloat && validInt) FloatValue = IntValue; // let's hope it fits
 
+  if (MeChangedCB) MeChangedCB(this, oldValue);
   if (ChangedCB) ChangedCB(this, oldValue);
 
   if (Initialised) {
