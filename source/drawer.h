@@ -125,7 +125,7 @@ public:
   // `surfplane` is used to light masked surfaces
   virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) = 0;
 
-  virtual void UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced=false) = 0;
+  virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 

@@ -487,7 +487,7 @@ public:
 
   virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
 
-  virtual void UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced=false) override;
+  virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
 protected:
   VRenderLevelShared (VLevel *ALevel);

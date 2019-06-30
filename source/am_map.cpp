@@ -219,7 +219,7 @@ static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
 
 static VCvarF am_texture_alpha("am_texture_alpha", "0.6", "Automap texture alpha", CVAR_Archive);
-static VCvarB am_textured("am_textured", false, "Textured automap?", CVAR_Archive);
+static VCvarI am_draw_type("am_draw_type", "0", "Automap rendering type (0:lines; 1:floors; 2:ceilings)", CVAR_Archive);
 
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
 
@@ -854,7 +854,7 @@ bool AM_Responder (event_t *ev) {
         }
         break;
       case AM_TOGGLETEXKEY:
-        am_textured = !am_textured;
+        am_draw_type = (am_draw_type+1)%3;
         break;
       default:
         rc = false;
@@ -1378,14 +1378,45 @@ static inline void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) 
 
 //==========================================================================
 //
+//  AM_getFlatSurface
+//
+//==========================================================================
+static sec_surface_t *AM_getFlatSurface (subregion_t *reg, bool doFloors) {
+  if (!reg) return nullptr;
+  sec_surface_t *flatsurf;
+  if (doFloors) {
+    // get floor
+    flatsurf = reg->realfloor;
+    if (!flatsurf) {
+      flatsurf = reg->fakefloor;
+    } else if (reg->fakefloor && reg->fakefloor->esecplane.GetDist() < flatsurf->esecplane.GetDist()) {
+      flatsurf = reg->fakefloor;
+    }
+  } else {
+    // get ceiling
+    flatsurf = reg->realceil;
+    if (!flatsurf) {
+      flatsurf = reg->fakeceil;
+    } else if (reg->fakeceil && reg->fakeceil->esecplane.GetDist() > flatsurf->esecplane.GetDist()) {
+      flatsurf = reg->fakeceil;
+    }
+  }
+  return flatsurf;
+}
+
+
+//==========================================================================
+//
 //  AM_drawFloors
 //
 //==========================================================================
 static void AM_drawFloors () {
 #ifdef CLIENT
-  if (!Drawer || !Drawer->RendLev) return;
+  if (!Drawer || !Drawer->RendLev || (am_draw_type&3) == 0) return;
+  bool doFloors = !!(am_draw_type&1);
   float alpha = (am_overlay ? clampval(am_texture_alpha.asFloat(), 0.0f, 1.0f) : 1.0f);
   if (alpha <= 0.0f) return;
+  VTexture *skytex = GTextureManager.getIgnoreAnim(skyflatnum);
   TArray<TVec> verts;
   //GCon->Logf("bounds=(%g,%g)-(%g,%g)", m_x, m_y, m_x2, m_y2);
   bool hidden = false;
@@ -1403,13 +1434,14 @@ static void AM_drawFloors () {
     // first subregion is main sector subregion
     subregion_t *reg = sub->regions;
     if (!reg) continue; // just in case
-    // get floor
-    sec_surface_t *floor = reg->realfloor;
-    if (!floor) {
-      floor = reg->fakefloor;
-      if (!floor) continue;
+    // get flat surface
+    sec_surface_t *flatsurf = AM_getFlatSurface(reg, doFloors);
+    if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) continue; // just in case
+    // if this is a sky, and we're rendering ceiling, render floor instead
+    if (!doFloors && flatsurf->texinfo.Tex == skytex) {
+      flatsurf = AM_getFlatSurface(reg, true);
+      if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) continue; // just in case
     }
-    if (!floor->texinfo.Tex) continue; // just in case
     // check bounding box
     {
       //GCon->Logf("  sub #%d: bounds=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(sub-&GClLevel->Subsectors[0]), sub->bbox[0], sub->bbox[1], sub->bbox[2], sub->bbox[3]);
@@ -1432,9 +1464,9 @@ static void AM_drawFloors () {
       vlight = TVec(0.1f, 0.1f, intensity);
     }
     // update textures (why not? this updates floor animation)
-    Drawer->RendLev->UpdateSubsectorFloorSurfaces(sub);
+    Drawer->RendLev->UpdateSubsectorFlatSurfaces(sub, doFloors, !doFloors);
     // ok, we can render surfaces
-    for (surface_t *surf = floor->surfs; surf; surf = surf->next) {
+    for (surface_t *surf = flatsurf->surfs; surf; surf = surf->next) {
       if (surf->count < 3) continue;
       verts.reset();
       float sx, sy;
@@ -1442,7 +1474,7 @@ static void AM_drawFloors () {
         AM_mapxy2fbxy(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);
         verts.append(TVec(sx, sy, 0));
       }
-      Drawer->DrawTexturedPoly(&floor->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
+      Drawer->DrawTexturedPoly(&flatsurf->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
     }
   }
 #endif
@@ -1951,7 +1983,7 @@ void AM_Drawer () {
 
   Drawer->StartAutomap(am_overlay);
   if (am_draw_grid) AM_drawGrid(GridColor);
-  if (am_textured) {
+  if (am_draw_type&3) {
     Drawer->EndAutomap();
     AM_drawFloors();
     Drawer->StartAutomap(am_overlay);

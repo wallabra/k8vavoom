@@ -1646,8 +1646,6 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
   }
 
   if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub);
-  if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
-
   if (region->fakefloor) {
     TSecPlaneRef fakefloor;
     fakefloor.set(&sub->sector->fakefloors->floorplane, false);
@@ -1657,6 +1655,7 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
     //region->fakefloor->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
   }
 
+  if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
   if (region->fakeceil) {
     TSecPlaneRef fakeceil;
     fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
@@ -1691,17 +1690,29 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region,
 //  VRenderLevelShared::UpdateSubsectorFloorSurfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSubsectorFloorSurfaces (subsector_t *sub, bool forced) {
-  if (!sub) return;
+void VRenderLevelShared::UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced) {
+  if (!sub || (!dofloors && !doceils)) return;
   if (!forced && sub->updateWorldFrame == updateWorldFrame) return;
   for (subregion_t *region = sub->regions; region; region = region->next) {
-    if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, true); // ignore colormap
-    if (region->fakefloor) {
-      TSecPlaneRef fakefloor;
-      fakefloor.set(&sub->sector->fakefloors->floorplane, false);
-      if (!fakefloor.isFloor()) fakefloor.Flip();
-      if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
-      UpdateSecSurface(region->fakefloor, fakefloor, sub, true); // ignore colormap
+    if (dofloors) {
+      if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, true); // ignore colormap
+      if (region->fakefloor) {
+        TSecPlaneRef fakefloor;
+        fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+        if (!fakefloor.isFloor()) fakefloor.Flip();
+        if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
+        UpdateSecSurface(region->fakefloor, fakefloor, sub, true); // ignore colormap
+      }
+    }
+    if (doceils) {
+      if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
+      if (region->fakeceil) {
+        TSecPlaneRef fakeceil;
+        fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+        if (!fakeceil.isCeiling()) fakeceil.Flip();
+        if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
+        UpdateSecSurface(region->fakeceil, fakeceil, sub);
+      }
     }
   }
 }
