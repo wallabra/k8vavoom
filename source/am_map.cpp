@@ -1308,6 +1308,10 @@ static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
 static void AM_drawWalls () {
   line_t *line = &GClLevel->Lines[0];
   for (unsigned i = GClLevel->NumLines; i--; ++line) {
+    // do not send the line to GPU if it is not visible
+    // simplified check with line bounding box
+    if (!AM_isBBox2dVisible(line->bbox2d)) continue;
+
     if (!am_cheating) {
       if (line->flags&ML_DONTDRAW) continue;
       if (!(line->flags&ML_MAPPED) && !(line->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) {
@@ -1351,16 +1355,30 @@ static void AM_drawWalls () {
     // just in case
     if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
 
-    // do not send the line to GPU if it is not visible
-    // simplified check with line bounding box
-    if (AM_isBBox2dVisible(line->bbox2d)) {
-      // fully mapped or automap revealed?
-      if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
+    // fully mapped or automap revealed?
+    if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
+      mline_t l;
+      l.a.x = line->v1->x;
+      l.a.y = line->v1->y;
+      l.b.x = line->v2->x;
+      l.b.y = line->v2->y;
+
+      if (am_rotate) {
+        AM_rotatePoint(&l.a.x, &l.a.y);
+        AM_rotatePoint(&l.b.x, &l.b.y);
+      }
+
+      AM_drawMline(&l, clr);
+    } else {
+      // render segments
+      for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
+        if (!(seg->flags&SF_MAPPED)) continue;
+
         mline_t l;
-        l.a.x = line->v1->x;
-        l.a.y = line->v1->y;
-        l.b.x = line->v2->x;
-        l.b.y = line->v2->y;
+        l.a.x = seg->v1->x;
+        l.a.y = seg->v1->y;
+        l.b.x = seg->v2->x;
+        l.b.y = seg->v2->y;
 
         if (am_rotate) {
           AM_rotatePoint(&l.a.x, &l.a.y);
@@ -1368,24 +1386,6 @@ static void AM_drawWalls () {
         }
 
         AM_drawMline(&l, clr);
-      } else {
-        // render segments
-        for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
-          if (!(seg->flags&SF_MAPPED)) continue;
-
-          mline_t l;
-          l.a.x = seg->v1->x;
-          l.a.y = seg->v1->y;
-          l.b.x = seg->v2->x;
-          l.b.y = seg->v2->y;
-
-          if (am_rotate) {
-            AM_rotatePoint(&l.a.x, &l.a.y);
-            AM_rotatePoint(&l.b.x, &l.b.y);
-          }
-
-          AM_drawMline(&l, clr);
-        }
       }
     }
   }
@@ -1565,10 +1565,10 @@ static void AM_DrawRenderedNodes () {
 
 //==========================================================================
 //
-//  AM_DrawRenderedSubs
+//  AM_DrawSubsectorSegs
 //
 //==========================================================================
-static void AM_DrawRenderedSubs (const subsector_t *sub, vuint32 color, bool drawMinisegs) {
+static void AM_DrawSubsectorSegs (const subsector_t *sub, vuint32 color, bool drawMinisegs) {
   if (!sub) return;
   const seg_t *seg = &GClLevel->Segs[sub->firstline];
   for (unsigned i = sub->numlines; i--; ++seg) {
@@ -1592,10 +1592,10 @@ static void AM_DrawRenderedSubs () {
     if (mysub == sub) continue;
     if (!AM_isSubVisible(sub)) continue;
     if (!Drawer->RendLev->IsSubsectorRendered(sub)) continue;
-    AM_DrawRenderedSubs(sub, 0xff00ffff, true);
+    AM_DrawSubsectorSegs(sub, 0xff00ffff, true);
   }
 
-  if (mysub) AM_DrawRenderedSubs(mysub, (Drawer->RendLev->IsSubsectorRendered(mysub) ? 0xff00ff00 : 0xffff0000), true);
+  if (mysub) AM_DrawSubsectorSegs(mysub, (Drawer->RendLev->IsSubsectorRendered(mysub) ? 0xff00ff00 : 0xffff0000), true);
 }
 
 
