@@ -216,20 +216,29 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
         fabs(Other.Origin.y-org.y) >= blockdist)
     {
       // didn't hit it
+      //print("TELEPORT CHECK: %C (%s) didin't touch %C (%s) (blockdist=%s; dist=%s)", self, self.Radius, Other, Other.Radius, blockdist, Other.Origin.xy-org.xy);
       continue;
     }
 
     // don't clip against self
     if (Other == self) continue;
 
+    //print("TELEPORT CHECK: %C (%s) possibly touch %C (%s) (blockdist=%s; dist=%s)", self, self.Radius, Other, Other.Radius, blockdist, Other.Origin.xy-org.xy);
     // z-check
     if ((bPassMobj || Other.bActLikeBridge) && !Level.CompatNoPassOver &&
         (!bDontOverlap || !Other.bDontOverlap))
     {
-      if (Other.Origin.z > org.z+Height) continue;
-      if (Other.Origin.z+Other.Height < org.z) continue;
+      if (Other.Origin.z > org.z+Height) {
+        //print("  *: otherz=%s; z=%s; z+h=%s", Other.Origin.z, org.z, org.z+Height);
+        continue;
+      }
+      if (Other.Origin.z+Other.Height < org.z) {
+        //print("  *: otherz=%s; z=%s; o+h=%s", Other.Origin.z, org.z, Other.Origin.z+Height);
+        continue;
+      }
     }
 
+    //print("TELEPORT CHECK: %C (%s) really touch %C (%s)", self, self.Radius, Other, Other.Radius);
     // check if allowed to stomp things
     if ((!ForceTelestomp && !bTelestomp && !Level.bAllowMonsterTelefrags) || Other.bNoTeleFrag) {
       return false;

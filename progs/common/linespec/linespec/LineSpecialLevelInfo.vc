@@ -4962,17 +4962,16 @@ final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     SecTag = Arg2;
     SrcFog = !Arg3;
     KeepOrient = false;
-  }
-  else
-  {
+  } else {
     SecTag = Arg3;
     SrcFog = false;
     KeepOrient = !Arg2;
   }
 
   if (Special == LNSPEC_TeleportNoStop) {
-    KeepOrient = true;
+    KeepOrient = false;
     KeepVelocity = true;
+    fog = true;
   }
 
   if (Arg1) {
@@ -5001,6 +5000,7 @@ final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   if (!A) return false;
 
   DstOrg = A.Origin;
+
   // Lee Killough's changes for silent teleporters from BOOM
   if (KeepOrient && Line) {
     // Get the angle between the exit thing and source linedef.
@@ -5012,13 +5012,19 @@ final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     OldVel = thing.Velocity;
   }
 
-  if (KeepOrient) OldVel = thing.Velocity;
+  if (KeepVelocity) OldVel = thing.Velocity;
 
-  if (!TeleportDest2(A)) DstOrg.z = EntityEx::ONFLOORZ;
+  // k8: yeah, it seems that for `KeepVelocity` we need to force floor destination
+  if (KeepVelocity || !TeleportDest2(A)) DstOrg.z = EntityEx::ONFLOORZ;
 
   if (thing.Teleport(DstOrg, A.Angles.yaw, fog, SrcFog, KeepOrient)) {
     if (KeepVelocity) {
-      //if (Special == LNSPEC_TeleportNoStop) print("154: DONE: thing=%C", thing);
+      /*
+      if (Special == LNSPEC_TeleportNoStop) {
+        print("154: DONE: thing=%C; ovel=%s; vel=%s; avel=%s", thing, OldVel, thing.Velocity, A.Velocity);
+        print("  radius=%s; height=%s; bPassMobj=%B; az=%s; tz=%s", thing.Radius, thing.Height, thing.bPassMobj, DstOrg.z, thing.Origin.z);
+      }
+      */
       thing.Velocity = OldVel;
       return true;
     }
