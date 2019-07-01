@@ -73,8 +73,10 @@ const float SHOWNEXTLOCDELAY = 4.0;
 const int NUMEPISODES = 3;
 const int NUMMAPS     = 9;
 
-const float TEXTSPEED = 0.2; // was:0.1;
-const float TEXTWAIT  = 7.0;
+const float TEXTSPEED = 0.1;
+const int TEXTFADEINCHARS = 6;
+// we will wait for keypress after hub text
+//const float TEXTWAIT  = 7.0;
 
 int LeaveTitlePic;
 int EnterTitlePic;
@@ -1076,20 +1078,22 @@ void IM_UpdateNoState (float DeltaTime) {
 
 //==========================================================================
 //
-//
+//  intermission text (like one after DooM II MAP06, for example)
 //
 //==========================================================================
 
 // specifies current state
 float intertime;
-
-float HubCount;
-string HubText;
-
 name TextFlat;
 int TextPic;
 
-bool imDrawWholeText;
+float HubTotalTime;
+int HubTotalChars;
+string HubText;
+// delimited to lines, inited in `IM_InitText()`
+array!string cookedHubText;
+
+bool hubTextTypingComplete;
 int hubTextHeight;
 int hubTextWidth;
 
@@ -1100,7 +1104,8 @@ int hubTextWidth;
 //
 //==========================================================================
 void IM_InitText () {
-  imDrawWholeText = false;
+  cookedHubText.clear();
+  hubTextTypingComplete = false;
 
   if (ClGame.deathmatch || !ClGame.im.Text) {
     CmdBuf_AddText("TeleportNewMap\n");
@@ -1114,9 +1119,33 @@ void IM_InitText () {
   } else {
     HubText = ClGame.im.Text;
   }
-  HubCount = float(HubText.length)*TEXTSPEED+TEXTWAIT;
 
-  hubTextHeight = -1; // later
+  hubTextHeight = -1; // will be calculated on the first draw
+  {
+    int lastLineStart = 0;
+    foreach (int cpos; 0..HubText.length) {
+      auto cc = HubText[cpos];
+      if (cc == "\n") {
+        string s = HubText[lastLineStart..cpos];
+        while (s && s[$-1] <= " ") s = s[0..$-1];
+        if (cookedHubText.length || s) cookedHubText[$] = s;
+        lastLineStart = cpos+1;
+      }
+    }
+    if (lastLineStart < HubText.length) {
+      string s = HubText[lastLineStart..$];
+      while (s && s[$-1] <= " ") s = s[0..$-1];
+      cookedHubText[$] = s;
+    }
+    while (cookedHubText.length && !cookedHubText[$-1]) cookedHubText.length -= 1;
+    //print("%s lines", cookedHubText.length);
+    HubTotalChars = TEXTFADEINCHARS;
+    foreach (ref string s; cookedHubText) {
+      if (!s) s = " ";
+      HubTotalChars += s.length;
+    }
+    HubTotalTime = float(HubTotalChars)*TEXTSPEED;
+  }
 
   TextFlat = '';
   TextPic = 0;
@@ -1151,28 +1180,11 @@ void IM_InitText () {
 
 //==========================================================================
 //
-//  IM_GetCurrTextLength
+//  IM_IsHubTextDone
 //
 //==========================================================================
-final int IM_GetCurrTextLength () {
-  if (imDrawWholeText) return HubText.length;
-  return clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
-}
-
-
-//==========================================================================
-//
-//  IM_GetNextCharTimeLeft
-//
-//==========================================================================
-final float IM_GetNextCharTimeLeft () {
-  if (imDrawWholeText) return 0.0;
-  float ctm = intertime-0.3;
-  if (ctm <= 0.0) return 0.0;
-  int ccn = int(ctm/TEXTSPEED);
-  ctm -= ccn*TEXTSPEED;
-  ctm /= TEXTSPEED;
-  return ctm;
+final bool IM_IsHubTextDone () {
+  return (hubTextTypingComplete || intertime >= HubTotalTime);
 }
 
 
@@ -1188,33 +1200,48 @@ void IM_DrawText () {
   else if (TextFlat) FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
   else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
-  // draw some of the text onto the screen
-  //int count = clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
-  int count = IM_GetCurrTextLength();
-
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
   if (hubTextHeight < 0) {
-    hubTextHeight = max(8, TextHeight(HubText));
-    hubTextWidth = max(8, TextWidth(HubText));
-    //writeln(HubText);
-    //writeln("text size: ", hubTextWidth, "x", hubTextHeight);
+    //hubTextHeight = max(8, TextHeight(HubText));
+    //hubTextWidth = max(8, TextWidth(HubText));
+    hubTextHeight = max(0, FontHeight()*cookedHubText.length);
+    hubTextWidth = 0;
+    foreach (string s; cookedHubText) hubTextWidth = max(hubTextWidth, TextWidth(s));
+    // add spaces to last line, so last chars will correctly fade in
+    if (cookedHubText.length) {
+      foreach (; 0..TEXTFADEINCHARS) cookedHubText[$-1] ~= " ";
+    }
   }
-  //print("nctleft=%s; ncc=%s", IM_GetNextCharTimeLeft(), count);
-  if (HubText.length) {
+
+  if (cookedHubText.length || HubTotalTime <= 0.0f) {
     int tx = (GetVirtualWidth()-hubTextWidth)/2;
     int ty = (GetVirtualHeight()-hubTextHeight)/2;
-    DrawText(tx, ty, HubText[0..count]);
-    if (count+1 <= HubText.length) {
-      auto cc = HubText[count];
-      if (cc != " " && cc != "\n" && cc != "\r") {
-        int currLineStart = 0;
-        foreach (auto sidx; 0..count) if (HubText[sidx] == "\n") { ty += FontHeight(); currLineStart = sidx+1; }
-        float ncalpha = IM_GetNextCharTimeLeft();
-        if (currLineStart < count) tx += TextWidth(HubText[currLineStart..count]);
-        DrawText(tx, ty, HubText[count..count+1], Alpha:ncalpha);
+    int fh = FontHeight();
+    if (hubTextTypingComplete) {
+      // draw whole text
+      foreach (string s; cookedHubText) {
+        DrawText(tx, ty, s);
+        ty += fh;
       }
-      //print("ncalpha=%s; ncc=%s", ncalpha, count);
+    } else {
+      // fadein effect
+      int currchar = int(float(HubTotalChars)*fclamp(intertime/HubTotalTime, 0.0f, 1.0f));
+      float cwdt = 0;
+      int typedChars = 0;
+      foreach (string s; cookedHubText) {
+        int cx = tx;
+        foreach (int cpos; 0..s.length) {
+          int w = TextWidth(s[cpos..cpos+1]);
+          // three chars fadein
+          float alpha = fclamp((intertime-typedChars*TEXTSPEED)/(TEXTSPEED*TEXTFADEINCHARS), 0.0f, 1.0f);
+          DrawText(cx, ty, s[cpos..cpos+1], Alpha:alpha);
+          cx += w;
+          if (++typedChars > currchar) break;
+        }
+        if (typedChars > currchar) break;
+        ty += fh;
+      }
     }
   }
 }
@@ -1227,16 +1254,25 @@ void IM_DrawText () {
 //==========================================================================
 void IM_UpdateText (float DeltaTime) {
   intertime += DeltaTime;
-  if (ClGame.skipintermission && !imDrawWholeText && IM_GetCurrTextLength() < HubText.length) {
-    imDrawWholeText = true;
-    ClGame.skipintermission = false;
-    return;
+  if (ClGame.skipintermission) {
+    // check if player pressed a key to show the whole text
+    // check for second keypress
+    if (hubTextTypingComplete) {
+      ClGame.skipintermission = false;
+      CmdBuf_AddText("TeleportNewMap\n");
+      interstate = IMS_Done;
+      if (Background) Background.State = IntermissionBackground::STATE_Done;
+      return;
+    }
+    // check for first keypress
+    if (intertime > 0.5) {
+      hubTextTypingComplete = true;
+      ClGame.skipintermission = false;
+      return;
+    }
   }
-  if (ClGame.skipintermission || intertime > HubCount) {
-    ClGame.skipintermission = false;
-    CmdBuf_AddText("TeleportNewMap\n");
-    interstate = IMS_Done;
-    if (Background) Background.State = IntermissionBackground::STATE_Done;
+  if (IM_IsHubTextDone()) {
+    hubTextTypingComplete = true;
   }
 }
 
