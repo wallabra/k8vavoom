@@ -260,6 +260,8 @@ override void SpawnSpecials () {
   // init line effects
   foreach (i; 0..XLevel.Lines.length) {
     line_t *line = &XLevel.Lines[i];
+    if (!line.special) continue;
+    bool notinteresting = false;
     switch (line.special) {
       case LNSPEC_ScrollTextureLeft:
         SpawnWallScroller(line, 1, 0);
@@ -294,10 +296,12 @@ override void SpawnSpecials () {
       case LNSPEC_ScrollFloor:
         SpawnScrollFloor(line);
         line.special = 0;
+        notinteresting = true;
         break;
       case LNSPEC_ScrollCeiling:
         SpawnScrollCeiling(line);
         line.special = 0;
+        notinteresting = true;
         break;
       case LNSPEC_ScrollTextureOffsets:
         SpawnWallOffsetsScroller(line);
@@ -307,7 +311,32 @@ override void SpawnSpecials () {
       case LNSPEC_TransferWallLight:
         SpawnTransferWallLight(line);
         line.special = 0;
+        notinteresting = true;
         break;
+    }
+    // FIXME: if this line has special, and it has midtex, and it is a closed sector, then move midtex to toptex
+    //        found in some Boom maps like Icarus
+    //        i should write a proper fix for this!
+    if (!line.special && !notinteresting && line.sidenum[0] >= 0 && line.sidenum[1] >= 0) {
+      // ok, it is two-sided; check for closed sector
+      bool frontClosed = (line.frontsector.floor.normal.z == 1 && line.frontsector.ceiling.normal.z == -1 &&
+                          line.frontsector.floor.minz == line.frontsector.ceiling.minz);
+      bool backClosed = (line.backsector.floor.normal.z == 1 && line.backsector.ceiling.normal.z == -1 &&
+                         line.backsector.floor.minz == line.backsector.ceiling.minz);
+      if (frontClosed != backClosed && (frontClosed || backClosed)) {
+        // ok, some sector is closed, check if we need to transfer texture
+        int sdidx = (backClosed ? 0 : 1);
+        side_t *fside = &XLevel.Sides[line.sidenum[sdidx]];
+        if (!fside.TopTexture && fside.MidTexture && !fside.BottomTexture) {
+          //print("ldef #%s: toptex=%s; csn=%s; midtex=%s; bottex=%s", line-&XLevel.Lines[0], fside.TopTexture, sdidx, fside.MidTexture, fside.BottomTexture);
+          fside.TopTexture = fside.MidTexture;
+          fside.Top = fside.Mid;
+          fside.MidTexture = 0;
+          // remove ceiling sky texture, if any
+          sector_t *bsec = (backClosed ? line.backsector : line.frontsector);
+          if (bsec.ceiling.pic == Level.Game.skyflatnum) bsec.ceiling.pic = bsec.floor.pic;
+        }
+      }
     }
   }
 

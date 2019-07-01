@@ -4043,42 +4043,6 @@ void VLevel::FixDeepWaters () {
     sec->othersecCeiling = nullptr;
   }
 
-  // FIXME: if this line has special, and it has midtex, and it is a closed sector, then move midtex to toptex
-  //        found in some Boom maps like Icarus
-  //        i should write a proper fix for this!
-  {
-    line_t *line = &Lines[0];
-    for (int lidx = NumLines; lidx--; ++line) {
-      if (!line->special) continue;
-      if (line->special >= LNSPEC_ScrollTextureLeft && line->special <= LNSPEC_ScrollTextureDown &&
-          line->sidenum[0] >= 0 && line->sidenum[1] >= 0)
-      {
-        // ok, it is two-sided; check for closed sector
-        bool frontClosed = (line->frontsector->floor.normal.z == 1 && line->frontsector->ceiling.normal.z == -1 &&
-                            line->frontsector->floor.minz == line->frontsector->ceiling.minz);
-        bool backClosed = (line->backsector->floor.normal.z == 1 && line->backsector->ceiling.normal.z == -1 &&
-                           line->backsector->floor.minz == line->backsector->ceiling.minz);
-        if (frontClosed != backClosed && (frontClosed || backClosed)) {
-          // ok, some sector is closed, check if we need to transfer texture
-          int sdidx = (backClosed ? 0 : 1);
-          side_t *fside = &Sides[line->sidenum[sdidx]];
-          if (!fside->TopTexture && fside->MidTexture && !fside->BottomTexture) {
-            //GCon->Logf("ldef #%d: toptex=%d; csn=%d; midtex=%d; bottex=%d", (int)(ptrdiff_t)(line-&Lines[0]), fside->TopTexture.id, sdidx, fside->MidTexture.id, fside->BottomTexture.id);
-            fside->TopTexture = fside->MidTexture;
-            fside->Top = fside->Mid;
-            //fside->BottomTexture = fside->MidTexture;
-            //fside->Bot = fside->Mid;
-            fside->MidTexture = 0;
-            // remove ceiling sky texture, if any
-            sector_t *bsec = (backClosed ? line->backsector : line->frontsector);
-            if (bsec->ceiling.pic == skyflatnum) bsec->ceiling.pic = bsec->floor.pic;
-          }
-        }
-      }
-    }
-  }
-
-
   if (deepwater_hacks && !(LevelFlags&LF_ForceNoDeepwaterFix)) FixSelfRefDeepWater();
 
   bool oldFixFloor = deepwater_hacks_floor;
