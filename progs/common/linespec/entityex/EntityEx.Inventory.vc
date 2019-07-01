@@ -533,6 +533,10 @@ override void SetAmmoCapacity (name Name, int Amount) {
   Inventory Item = FindInventory(AmmoType);
   if (!Item) {
     Item = GiveInventoryType(AmmoType);
+    if (!Item) {
+      print("cannot give ammo of type `%C` (%s)", AmmoType, Name);
+      return;
+    }
     Item.Amount = 0;
   }
   Item.MaxAmount = Amount;
