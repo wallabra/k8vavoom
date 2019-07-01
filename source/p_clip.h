@@ -233,7 +233,7 @@ public:
   // debug
   void Dump () const;
 
-private:
+public:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool clipAll=false);
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror, bool asShadow);

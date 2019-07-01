@@ -585,7 +585,9 @@ protected:
   void RenderLine (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderSecFlatSurfaces (subsector_t *sub, sec_region_t *secregion, sec_surface_t *flat0, sec_surface_t *flat1, VEntity *SkyBox);
   void RenderSecSurface (subsector_t *sub, sec_region_t *secregion, sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
+  void AddPolyObjToClipper (VViewClipper &clip, subsector_t *sub);
+  void RenderPolyObj (subsector_t *sub);
+  void RenderSubRegion (subsector_t *sub, subregion_t *region);
   void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
   void RenderSubsector (int num, bool onlyClip);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
@@ -866,10 +868,13 @@ protected:
   void RenderTranslucentWallsAmbient ();
   void RenderTranslucentWallsDecals ();
 
+  void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
+
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
   void RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
+  void RenderShadowPolyObj (subsector_t *sub);
+  void RenderShadowSubRegion (subsector_t *sub, subregion_t *region);
   void RenderShadowSubsector (int num);
   void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
 
@@ -877,7 +882,8 @@ protected:
                           VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderLightLine (sec_region_t *secregion, drawseg_t *dseg);
   void RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox);
-  void RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly);
+  void RenderLightPolyObj (subsector_t *sub);
+  void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,

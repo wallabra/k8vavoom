@@ -1300,7 +1300,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     if (!clip_add_backface_segs) return;
     // if we have a partner seg, use it, so midtex clipper can do it right
     // without this, fake walls clips out everything
-    if (seg->partner) {seg = seg->partner; orgside = 0; }
+    if (seg->partner) { seg = seg->partner; orgside = 0; }
   }
 
   if (clip_skip_slopes_1side) {

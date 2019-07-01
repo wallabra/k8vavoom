@@ -731,37 +731,67 @@ bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::AddPolyObjToClipper
+//
+//  we have to do this separately, because for now we have to add
+//  invisible segs to clipper too
+//  i don't yet know why
+//
+//==========================================================================
+void VRenderLevelShared::AddPolyObjToClipper (VViewClipper &clip, subsector_t *sub) {
+  if (sub && sub->poly && r_draw_pobj && clip_use_1d_clipper) {
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      seg_t *seg = (*polySeg)->drawsegs->seg;
+      if (seg->linedef) {
+        clip.CheckAddClipSeg(seg, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RenderPolyObj
+//
+//  render the polyobj in the subsector, and optionally add it to clipper
+//  this blocks view with polydoors
+//
+//==========================================================================
+void VRenderLevelShared::RenderPolyObj (subsector_t *sub) {
+  if (sub && sub->poly && r_draw_pobj) {
+    subregion_t *region = sub->regions;
+    sec_region_t *secregion = region->secregion;
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      RenderLine(sub, secregion, region, (*polySeg)->drawsegs);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::RenderSubRegion
 //
 //  Determine floor/ceiling planes.
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
-  if (!ViewClip.ClipCheckRegion(region, sub)) return;
-
-  const bool nextFirst = NeedToRenderNextSubFirst(region);
-  if (nextFirst) RenderSubRegion(sub, region->next, addPoly);
-
-  //check(sub->sector != nullptr);
-
-  subregion_t *subregion = region;
+void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region) {
   sec_region_t *secregion = region->secregion;
 
-  if (addPoly && sub->poly && r_draw_pobj) {
-    // render the polyobj in the subsector first
-    addPoly = false;
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      RenderLine(sub, secregion, subregion, (*polySeg)->drawsegs);
-    }
-  }
+  const bool nextFirst = NeedToRenderNextSubFirst(region);
+  if (nextFirst) RenderSubRegion(sub, region->next);
 
-  int count = sub->numlines;
-  drawseg_t *ds = region->lines;
-  while (count--) {
-    RenderLine(sub, secregion, subregion, ds);
-    ++ds;
+  if (ViewClip.ClipCheckRegion(region, sub)) {
+    int count = sub->numlines;
+    drawseg_t *ds = region->lines;
+    while (count--) {
+      RenderLine(sub, secregion, region, ds);
+      ++ds;
+    }
   }
 
   sec_surface_t *fsurf[4];
@@ -773,7 +803,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region,
   if (fsurf[2]) RenderSecSurface(sub, secregion, fsurf[2], secregion->eceiling.splane->SkyBox);
   if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
 
-  if (!nextFirst && region->next) return RenderSubRegion(sub, region->next, addPoly);
+  if (!nextFirst && region->next) return RenderSubRegion(sub, region->next);
 }
 
 
@@ -855,8 +885,11 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       }
 #endif
 
-      bool addPoly = true;
-      RenderSubRegion(sub, sub->regions, addPoly);
+      // render the polyobj in the subsector first, and add it to clipper
+      // this blocks view with polydoors
+      RenderPolyObj(sub);
+      AddPolyObjToClipper(ViewClip, sub);
+      RenderSubRegion(sub, sub->regions);
     }
   }
 

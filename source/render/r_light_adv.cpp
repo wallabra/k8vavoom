@@ -50,6 +50,7 @@ extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
 extern VCvarB r_glow_flat;
+extern VCvarB clip_use_1d_clipper;
 #if 0
 extern VCvarB w_update_in_renderer;
 #endif
@@ -383,46 +384,76 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 
 //==========================================================================
 //
+//  VAdvancedRenderLevel::AddPolyObjToLightClipper
+//
+//  we have to do this separately, because for now we have to add
+//  invisible segs to clipper too
+//  i don't yet know why
+//
+//==========================================================================
+void VAdvancedRenderLevel::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow) {
+  if (sub && sub->poly && r_draw_pobj && clip_use_1d_clipper) {
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      seg_t *seg = (*polySeg)->drawsegs->seg;
+      if (seg->linedef) {
+        clip.CheckAddClipSeg(seg, nullptr/*mirror*/, asShadow);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::RenderShadowPolyObj
+//
+//==========================================================================
+void VAdvancedRenderLevel::RenderShadowPolyObj (subsector_t *sub) {
+  if (sub && sub->poly && r_draw_pobj) {
+    subregion_t *region = sub->regions;
+    sec_region_t *secregion = region->secregion;
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      RenderShadowLine(sub, secregion, (*polySeg)->drawsegs);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VAdvancedRenderLevel::RenderShadowSubRegion
 //
 //  Determine floor/ceiling planes.
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
-#ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
-  if (!LightClip.ClipLightCheckRegion(region, sub, true)) return;
-#endif
+void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
 
   const bool nextFirst = NeedToRenderNextSubFirst(region);
-  if (nextFirst) RenderShadowSubRegion(sub, region->next, addPoly);
+  if (nextFirst) RenderShadowSubRegion(sub, region->next);
 
-  sec_region_t *curreg = region->secregion;
+  sec_region_t *secregion = region->secregion;
 
-  if (addPoly && sub->poly && r_draw_pobj) {
-    // render the polyobj in the subsector first
-    addPoly = false;
-    seg_t **polySeg = sub->poly->segs;
-    for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      RenderShadowLine(sub, curreg, (*polySeg)->drawsegs);
-    }
-  }
-
+#ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
+  if (LightClip.ClipLightCheckRegion(region, sub, true))
+#endif
   {
     drawseg_t *ds = region->lines;
-    for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, curreg, ds);
+    for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
   }
 
   sec_surface_t *fsurf[4];
   GetFlatSetToRender(sub, region, fsurf);
 
-  if (fsurf[0]) RenderShadowSecSurface(fsurf[0], curreg->efloor.splane->SkyBox);
-  if (fsurf[1]) RenderShadowSecSurface(fsurf[1], curreg->efloor.splane->SkyBox);
+  if (fsurf[0]) RenderShadowSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
+  if (fsurf[1]) RenderShadowSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
 
-  if (fsurf[2]) RenderShadowSecSurface(fsurf[2], curreg->efloor.splane->SkyBox);
-  if (fsurf[3]) RenderShadowSecSurface(fsurf[3], curreg->eceiling.splane->SkyBox);
+  if (fsurf[2]) RenderShadowSecSurface(fsurf[2], secregion->efloor.splane->SkyBox);
+  if (fsurf[3]) RenderShadowSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
 
-  if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next, addPoly);
+  if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next);
 }
 
 
@@ -471,8 +502,11 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
       }
 #endif
 
-      bool addPoly = true;
-      RenderShadowSubRegion(sub, sub->regions, addPoly);
+      // render the polyobj in the subsector first, and add it to clipper
+      // this blocks view with polydoors
+      RenderShadowPolyObj(sub);
+      AddPolyObjToLightClipper(LightClip, sub, true);
+      RenderShadowSubRegion(sub, sub->regions);
     }
   }
 
@@ -637,46 +671,52 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 
 //==========================================================================
 //
+//  VAdvancedRenderLevel::RenderLightPolyObj
+//
+//==========================================================================
+void VAdvancedRenderLevel::RenderLightPolyObj (subsector_t *sub) {
+  if (sub && sub->poly && r_draw_pobj) {
+    subregion_t *region = sub->regions;
+    sec_region_t *secregion = region->secregion;
+    seg_t **polySeg = sub->poly->segs;
+    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+      RenderLightLine(secregion, (*polySeg)->drawsegs);
+    }
+  }
+}
+
+//==========================================================================
+//
 //  VAdvancedRenderLevel::RenderLightSubRegion
 //
 //  Determine floor/ceiling planes.
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region, bool &addPoly) {
-#ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
-  if (!LightClip.ClipLightCheckRegion(region, sub, false)) return;
-#endif
-
+void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region) {
   const bool nextFirst = NeedToRenderNextSubFirst(region);
-  if (nextFirst) RenderLightSubRegion(sub, region->next, addPoly);
+  if (nextFirst) RenderLightSubRegion(sub, region->next);
 
-  sec_region_t *curreg = region->secregion;
+  sec_region_t *secregion = region->secregion;
 
-  if (addPoly && sub->poly && r_draw_pobj) {
-    // render the polyobj in the subsector first
-    addPoly = false;
-    seg_t **polySeg = sub->poly->segs;
-    for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      RenderLightLine(curreg, (*polySeg)->drawsegs);
-    }
-  }
-
+#ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
+  if (LightClip.ClipLightCheckRegion(region, sub, false))
+#endif
   {
     drawseg_t *ds = region->lines;
-    for (int count = sub->numlines; count--; ++ds) RenderLightLine(curreg, ds);
+    for (int count = sub->numlines; count--; ++ds) RenderLightLine(secregion, ds);
   }
 
   sec_surface_t *fsurf[4];
   GetFlatSetToRender(sub, region, fsurf);
 
-  if (fsurf[0]) RenderLightSecSurface(fsurf[0], curreg->efloor.splane->SkyBox);
-  if (fsurf[1]) RenderLightSecSurface(fsurf[1], curreg->efloor.splane->SkyBox);
+  if (fsurf[0]) RenderLightSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
+  if (fsurf[1]) RenderLightSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
 
-  if (fsurf[2]) RenderLightSecSurface(fsurf[2], curreg->eceiling.splane->SkyBox);
-  if (fsurf[3]) RenderLightSecSurface(fsurf[3], curreg->eceiling.splane->SkyBox);
+  if (fsurf[2]) RenderLightSecSurface(fsurf[2], secregion->eceiling.splane->SkyBox);
+  if (fsurf[3]) RenderLightSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
 
-  if (!nextFirst && region->next) return RenderLightSubRegion(sub, region->next, addPoly);
+  if (!nextFirst && region->next) return RenderLightSubRegion(sub, region->next);
 }
 
 
@@ -708,8 +748,11 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
       }
 #endif
 
-      bool addPoly = true;
-      RenderLightSubRegion(sub, sub->regions, addPoly);
+      // render the polyobj in the subsector first, and add it to clipper
+      // this blocks view with polydoors
+      RenderLightPolyObj(sub);
+      AddPolyObjToLightClipper(LightClip, sub, false);
+      RenderLightSubRegion(sub, sub->regions);
     }
   }
 
