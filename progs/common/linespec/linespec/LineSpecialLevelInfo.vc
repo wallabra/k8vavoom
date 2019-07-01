@@ -5218,82 +5218,70 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
 // [RH] Modified to support different source and destination ids.
 //
 //==========================================================================
-final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
-  int id, bool reverse)
+final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
+                                  int id, bool reverse)
 {
   int searcher;
   line_t *l;
 
-  if (side || thing.bNoTeleport || !line)
-  {
-    return false;
-  }
+  if (side || thing.bNoTeleport || !line) return false;
 
   searcher = -1;
-  for (l = XLevel.FindLine(id, &searcher); l;
-    l = XLevel.FindLine(id, &searcher))
-  {
-    TVec SrcXAxis;
-    TVec SrcYAxis;
+  for (l = XLevel.FindLine(id, &searcher); l; l = XLevel.FindLine(id, &searcher)) {
+    if (l == line || !l->backsector) continue;
+
+    // get the thing's position along the source linedef
+    TVec SrcXAxis = Normalise((*line->v2)-(*line->v1));
+    TVec SrcYAxis = -line->normal;
+    float pos = DotProduct(SrcXAxis, thing.Origin-(*line->v1));
+    float oldZ = thing.Origin.z;
+
+    // interpolate position across the exit linedef
     TVec DstXAxis;
     TVec DstYAxis;
     TVec newPos;
-    TVec TempV;
-    TAVec TempA;
-    float pos;
-    float TempX;
-    float TempY;
-    float oldZ;
-
-    if (l == line || !l->backsector)
-    {
-      continue;
-    }
-
-    // Get the thing's position along the source linedef
-    SrcXAxis = Normalise((*line->v2)-(*line->v1));
-    SrcYAxis = -line->normal;
-    pos = DotProduct(SrcXAxis, thing.Origin-(*line->v1));
-    oldZ = thing.Origin.z;
-
-    // Interpolate position across the exit linedef
-    if (reverse)
-    {
-      DstXAxis = Normalise((*l->v2)-(*l->v1));
+    if (reverse) {
+      DstXAxis = Normalise2D((*l->v2)-(*l->v1));
       DstYAxis = -l->normal;
       newPos = *l->v1+pos*DstXAxis;
       newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(l->frontsector, newPos);
-    }
-    else
-    {
-      DstXAxis = Normalise((*l->v1)-(*l->v2));
+    } else {
+      DstXAxis = Normalise2D((*l->v1)-(*l->v2));
       DstYAxis = l->normal;
       newPos = *l->v2+pos*DstXAxis;
+      // if we are exactly at new line, move forward a little
+      // this is required for Boom endless transporters to work
+      if (PointOnPlaneSide2(newPos, ref *l)) {
+        // if we cannot move with transporter, try a line normal
+        // this is not quite right, but for now this is the best i can do
+        {
+          TVec move = l->normal*0.125;
+          while (PointOnPlaneSide2(newPos, ref *l) == 2) {
+            newPos += move;
+            //print("  np=%s; spx=%s", newPos, PointOnPlaneSide2(newPos, ref *l));
+          }
+        }
+      }
       newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(l->backsector, newPos);
     }
 
-    // Attempt to teleport, aborting if blocked
-    if (!thing.TeleportMove(newPos))
-    {
-      return false;
-    }
+    // attempt to teleport, aborting if blocked
+    if (!thing.TeleportMove(newPos)) return false;
 
-    // Rotate thing's orientation according to difference in linedef angles
-    TempV.x = DotProduct(DstXAxis, SrcXAxis);
-    TempV.y = DotProduct(DstYAxis, SrcXAxis);
-    TempV.z = 0.0;
+    // rotate thing's orientation according to difference in linedef angles
+    TVec TempV = vector(DotProduct(DstXAxis, SrcXAxis), DotProduct(DstYAxis, SrcXAxis));
+    TAVec TempA;
     VectorAngles(TempV, out TempA);
     thing.Angles.yaw = AngleMod360(thing.Angles.yaw-TempA.yaw);
 
-    // Rotate thing's momentum to come out of exit just like it entered
-    TempX = DotProduct(thing.Velocity, SrcXAxis);
-    TempY = DotProduct(thing.Velocity, SrcYAxis);
+    // rotate thing's momentum to come out of exit just like it entered
+    float TempX = DotProduct(thing.Velocity, SrcXAxis);
+    float TempY = DotProduct(thing.Velocity, SrcYAxis);
     thing.Velocity.x = TempX*DstXAxis.x+TempY*DstYAxis.x;
     thing.Velocity.y = TempX*DstXAxis.y+TempY*DstYAxis.y;
 
-    // Adjust a player's view, in case there has been a height change
-    if (thing.bIsPlayer && thing.Player.MO == thing)
-    {
+    // adjust a player's view, in case there has been a height change
+    if (thing.bIsPlayer && thing.Player.MO == thing) {
       thing.Player.ViewOrg.z += thing.Origin.z-oldZ;
       //auto pex = PlayerEx(thing.Player);
       //if (pex) pex.lastViewOrgZForPfx = thing.Origin.z;
@@ -5302,8 +5290,10 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
     }
     return true;
   }
+
   return false;
 }
+
 
 //**************************************************************************
 //

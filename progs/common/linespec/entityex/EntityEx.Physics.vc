@@ -50,6 +50,25 @@ final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
 
 //==========================================================================
 //
+//  GetFloorAndCeilingEx
+//
+//==========================================================================
+final void GetFloorAndCeilingEx (out tmtrace_t tmtrace, optional bool collideWorld, optional bool collideThings) {
+  bool oldWithThings = bColideWithThings;
+  bool oldWithWorld = bColideWithWorld;
+  scope(exit) {
+    bColideWithThings = oldWithThings;
+    bColideWithWorld = oldWithWorld;
+  }
+  bColideWithThings = collideWorld;
+  bColideWithWorld = collideThings;
+  // find new position
+  CheckRelPosition(&tmtrace, Origin);
+}
+
+
+//==========================================================================
+//
 //  FixNormalVelocity
 //
 //==========================================================================
