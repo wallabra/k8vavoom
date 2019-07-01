@@ -26,8 +26,16 @@
 //**************************************************************************
 #include "gamedefs.h"
 
+
 IMPLEMENT_CLASS(V, Entity);
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+static VCvarB _decorate_dont_warn_about_invalid_labels("_decorate_dont_warn_about_invalid_labels", false, "Don't do this!", CVAR_Archive|CVAR_PreInit);
+static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Disable states processing (for debug)?", CVAR_PreInit);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct SavedVObjectPtr {
   VObject **ptr;
   VObject *saved;
@@ -36,8 +44,17 @@ struct SavedVObjectPtr {
 };
 
 
-static VCvarB _decorate_dont_warn_about_invalid_labels("_decorate_dont_warn_about_invalid_labels", false, "Don't do this!", CVAR_Archive|CVAR_PreInit);
-static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Disable states processing (for debug)?", CVAR_PreInit);
+// ////////////////////////////////////////////////////////////////////////// //
+struct SetStateGuard {
+public:
+  VEntity *ent;
+public:
+  // constructor increases invocation count
+  SetStateGuard (VEntity *aent) : ent(aent) { ent->incSetStateInvocation(); }
+  ~SetStateGuard () { ent->decSetStateInvocation(); ent = nullptr; }
+  SetStateGuard (const SetStateGuard &src) = delete;
+  inline SetStateGuard &operator = (const SetStateGuard &src) = delete;
+};
 
 
 //==========================================================================
@@ -139,9 +156,9 @@ void VEntity::RemoveFromTIDList () {
 
 //==========================================================================
 //
-//  VEntity::SetState
+//  VEntity::SetStateInternal
 //
-//  Returns true if the actor is still present.
+//  returns true if the actor is still present
 //
 //==========================================================================
 bool VEntity::SetState (VState *InState) {
@@ -155,7 +172,8 @@ bool VEntity::SetState (VState *InState) {
     return false;
   }
 
-  int watchcatCount = 1024;
+  SetStateGuard guard(this);
+
   do {
     if (!st) {
       // remove mobj
@@ -167,9 +185,9 @@ bool VEntity::SetState (VState *InState) {
       return false;
     }
 
-    if (--watchcatCount <= 0) {
+    if (incSetStateWatchCat() > 512) {
       //k8: FIXME!
-      GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
+      GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s'!", *GetClass()->GetFullName());
       break;
     }
 

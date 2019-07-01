@@ -309,6 +309,11 @@ class VEntity : public VThinker {
 
   VName DecalName;
 
+  // `SetState()` guard
+  // high 16 bits is `SetState()` invocation count
+  // low 16 bits is watchcat
+  vuint32 setStateInCount;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
@@ -317,6 +322,20 @@ protected:
 
   void CopyRegFloor (sec_region_t *reg, bool setz=true);
   void CopyRegCeiling (sec_region_t *reg, bool setz=true);
+
+  inline vuint32 incSetStateWatchCat () { return ((++setStateInCount)&0xffffu); }
+  inline vuint32 getSetStateWatchCat () { return (setStateInCount&0xffffu); }
+
+  inline void incSetStateInvocation () { setStateInCount += 0x00010000u; }
+  // this resets watchcat when invocation count reaches zero
+  inline void decSetStateInvocation () {
+    if (((setStateInCount -= 0x00010000u)&0xffff0000u) == 0) {
+      setStateInCount = 0;
+      //GCon->Log("WATCHCAT RESET!");
+    }
+  }
+
+  friend struct SetStateGuard;
 
 public:
   inline float GetFloorNormalZ () const { return EFloor.GetNormalZ(); }

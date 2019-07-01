@@ -350,6 +350,9 @@ Entity Owner;
 
 name DecalName;
 
+// internal C++ field
+readonly private native int setStateInCount;
+
 
 replication {
   reliable if (Role == ROLE_Authority)
