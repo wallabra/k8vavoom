@@ -259,53 +259,54 @@ override void SpawnSpecials () {
 
   // init line effects
   foreach (i; 0..XLevel.Lines.length) {
-    switch (XLevel.Lines[i].special) {
+    line_t *line = &XLevel.Lines[i];
+    switch (line.special) {
       case LNSPEC_ScrollTextureLeft:
-        SpawnWallScroller(&XLevel.Lines[i], 1, 0);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnWallScroller(line, 1, 0);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollTextureRight:
-        SpawnWallScroller(&XLevel.Lines[i], -1, 0);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnWallScroller(line, -1, 0);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollTextureUp:
-        SpawnWallScroller(&XLevel.Lines[i], 0, 1);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnWallScroller(line, 0, 1);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollTextureDown:
-        SpawnWallScroller(&XLevel.Lines[i], 0, -1);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnWallScroller(line, 0, -1);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollTextureBoth:
-        SpawnTextureBothScroller(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnTextureBothScroller(line);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollTextureModel:
-        SpawnScrollTextureModel(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnScrollTextureModel(line);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_ScrollFloor:
-        SpawnScrollFloor(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
+        SpawnScrollFloor(line);
+        line.special = 0;
         break;
       case LNSPEC_ScrollCeiling:
-        SpawnScrollCeiling(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
+        SpawnScrollCeiling(line);
+        line.special = 0;
         break;
       case LNSPEC_ScrollTextureOffsets:
-        SpawnWallOffsetsScroller(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
-        XLevel.Lines[i].flags |= ML_NODECAL;
+        SpawnWallOffsetsScroller(line);
+        line.special = 0;
+        line.flags |= ML_NODECAL;
         break;
       case LNSPEC_TransferWallLight:
-        SpawnTransferWallLight(&XLevel.Lines[i]);
-        XLevel.Lines[i].special = 0;
+        SpawnTransferWallLight(line);
+        line.special = 0;
         break;
     }
   }
@@ -5628,15 +5629,13 @@ final EntityEx GetPushThing(int s)
 
 final void SpawnPushers()
 {
-  int     i;
-  line_t *l;
   Pusher    P;
   EntityEx  thing;
   sector_t *Sec;
 
-  for (i = 0; i < XLevel.Lines.length; i++)
+  foreach (int i; 0..XLevel.Lines.length)
   {
-    l = &XLevel.Lines[i];
+    line_t *l = &XLevel.Lines[i];
     switch (l->special)
     {
     case LNSPEC_SectorSetWind: // wind
