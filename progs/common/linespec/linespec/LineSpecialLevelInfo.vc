@@ -5240,30 +5240,31 @@ final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
     TVec DstXAxis;
     TVec DstYAxis;
     TVec newPos;
+    sector_t *lsector;
     if (reverse) {
-      DstXAxis = Normalise2D((*l->v2)-(*l->v1));
+      DstXAxis = (*l->v2)-(*l->v1);
       DstYAxis = -l->normal;
-      newPos = *l->v1+pos*DstXAxis;
-      newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(l->frontsector, newPos);
+      newPos = *l->v1;
+      lsector = l->frontsector;
     } else {
-      DstXAxis = Normalise2D((*l->v1)-(*l->v2));
+      DstXAxis = (*l->v1)-(*l->v2);
       DstYAxis = l->normal;
-      newPos = *l->v2+pos*DstXAxis;
-      // if we are exactly at new line, move forward a little
-      // this is required for Boom endless transporters to work
-      if (PointOnPlaneSide2(newPos, ref *l)) {
-        // if we cannot move with transporter, try a line normal
-        // this is not quite right, but for now this is the best i can do
-        {
-          TVec move = l->normal*0.125;
-          while (PointOnPlaneSide2(newPos, ref *l) == 2) {
-            newPos += move;
-            //print("  np=%s; spx=%s", newPos, PointOnPlaneSide2(newPos, ref *l));
-          }
-        }
-      }
-      newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(l->backsector, newPos);
+      newPos = *l->v2;
+      lsector = l->backsector;
     }
+    DstXAxis = Normalise2D(DstXAxis);
+    newPos += pos*DstXAxis;
+    // k8: if we are exactly at new line, move forward a little
+    //     this is required for Boom endless transporters to work
+    if (PointOnPlaneSide2(newPos, ref *l)) {
+      // k8: if we cannot move inside a sector with a transporter, try a line normal
+      //     this is not quite right, but for now this is the best i can do
+      TVec move = DstYAxis*0.125;
+      while (PointOnPlaneSide2(newPos, ref *l) == 2) {
+        newPos += move;
+      }
+    }
+    newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(lsector, newPos);
 
     // attempt to teleport, aborting if blocked
     if (!thing.TeleportMove(newPos)) return false;
