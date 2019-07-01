@@ -6465,31 +6465,31 @@ override void SpawnMapThing (mthing_t *mthing) {
   int spawnMask;
   class!EntityEx moClass, oldClass;
 
-  if (mthing->type <= 0) return;
+  if (!mthing || mthing.type <= 0) return;
 
   //if (mthing.tid == 54 || mthing.tid == 43) writeln("*** TREE! ***");
   //print("SPAWN MAP THING: %s; type=%s; org=(%s,%s); height=%s; opts=0x%08x; skill=0x%08x", mthing.tid, mthing.type, mthing.x, mthing.y, mthing.height, mthing.options, mthing.SkillClassFilter);
 
   // count deathmatch start positions
-  if (mthing->type == 11) {
+  if (mthing.type == 11) {
     DeathmatchStarts.length += 1;
     CopyMThing(mthing, &DeathmatchStarts[$-1]);
     return;
   }
 
-  if (bCheckStrifeStartSpots && mthing->type >= 118 && mthing->type <= 127) {
+  if (bCheckStrifeStartSpots && mthing.type >= 118 && mthing.type <= 127) {
     // map start spots, i.e. player starts
-    mthing->arg1 = mthing->type-117;
-    mthing->type = 1;
+    mthing.arg1 = mthing.type-117;
+    mthing.type = 1;
   }
 
   // check for player starts 1 to 4
   bool IsPlayerStart = false;
-  if (mthing->type >= 1 && mthing->type <= 4) IsPlayerStart = true;
+  if (mthing.type >= 1 && mthing.type <= 4) IsPlayerStart = true;
   // Check for player starts 5 to 8
-  if (mthing->type >= ExtPlayersBase && mthing->type < ExtPlayersBase+4) {
+  if (mthing.type >= ExtPlayersBase && mthing.type < ExtPlayersBase+4) {
     // change type to range 5-8
-    mthing->type = 5+mthing->type-ExtPlayersBase;
+    mthing.type = 5+mthing.type-ExtPlayersBase;
     IsPlayerStart = true;
   }
 
@@ -6498,14 +6498,14 @@ override void SpawnMapThing (mthing_t *mthing) {
          if (Game.netgame == false) spawnMask = MTF_GSINGLE;
     else if (Game.deathmatch) spawnMask = MTF_GDEATHMATCH;
     else spawnMask = MTF_GCOOP;
-    if (!(mthing->options&spawnMask)) return;
+    if (!(mthing.options&spawnMask)) return;
 
     // check current skill with spawn flags
-    if (!(mthing->SkillClassFilter&World.GetSpawnFilter())) return;
+    if (!(mthing.SkillClassFilter&World.GetSpawnFilter())) return;
 
     // check current character classes with spawn flags
     spawnMask = GetPClassSpawnFlags();
-    if (spawnMask && !(mthing->SkillClassFilter&spawnMask)) return; // not for current class
+    if (spawnMask && !(mthing.SkillClassFilter&spawnMask)) return; // not for current class
   }
 
   if (IsPlayerStart) {
@@ -6516,41 +6516,41 @@ override void SpawnMapThing (mthing_t *mthing) {
   }
 
   // sector's sound sequence types
-  if (mthing->type >= 1400 && mthing->type < 1410) {
-    XLevel.PointInSector(vector(mthing->x, mthing->y, 0.0))->seqType = mthing->type-1400;
+  if (mthing.type >= 1400 && mthing.type < 1410) {
+    XLevel.PointInSector(vector(mthing.x, mthing.y, 0.0)).seqType = mthing.type-1400;
     return;
   }
-  if (mthing->type == 1411) {
-    int SeqType = (mthing->arg1 == 255 ? -1 : mthing->arg1);
+  if (mthing.type == 1411) {
+    int SeqType = (mthing.arg1 == 255 ? -1 : mthing.arg1);
     if (SeqType > 63) {
       print("Sound sequence %d out of range", SeqType);
     } else {
-      XLevel.PointInSector(vector(mthing->x, mthing->y, 0.0))->seqType = SeqType;
+      XLevel.PointInSector(vector(mthing.x, mthing.y, 0.0)).seqType = SeqType;
     }
     return;
   }
 
   // zdoom music changers
-  if (mthing->type >= 14101 && mthing->type <= 14165) {
+  if (mthing.type >= 14101 && mthing.type <= 14165) {
     Spawn(SecMusicChangerBase, default, default, mthing, false);
     return;
   }
 
   // remap old ambient sound types to the generic one
-  if (mthing->type >= 14001 && mthing->type <= 14064) {
-    mthing->arg1 = mthing->type-14000;
-    mthing->type = 14065;
+  if (mthing.type >= 14001 && mthing.type <= 14064) {
+    mthing.arg1 = mthing.type-14000;
+    mthing.type = 14065;
   }
 
   // find which type to spawn
-  moClass = class!EntityEx(FindClassFromEditorId(mthing->type, LineSpecialGameInfo(Game).GameFilterFlag));
+  moClass = class!EntityEx(FindClassFromEditorId(mthing.type, LineSpecialGameInfo(Game).GameFilterFlag));
   if (!moClass) {
     // can't find thing type
-    if (mthing->type == 9200) {
+    if (mthing.type == 9200) {
       auto dcs = Spawn(Unknown, default, default, mthing, false);
       dcs.bSolid = false;
       TAVec agl;
-      agl.yaw = AngleMod360(mthing->angle+180); // turn it to the wall
+      agl.yaw = AngleMod360(mthing.angle+180); // turn it to the wall
       TVec dir;
       AngleVector(agl, dir);
       //print("  dir0=%v (a=%f)", dir, agl.yaw);
@@ -6560,14 +6560,14 @@ override void SpawnMapThing (mthing_t *mthing) {
       // trace without z offset
       if (dcs.TraceSplat(dcs.Origin-dir, dir, 64.0+4, &tr, 0)) {
         //print("  spawning!");
-        dcs.SpawnDecalById(tr.hit, mthing->arg1+mthing->arg2*256, tr.side, tr.line);
+        dcs.SpawnDecalById(tr.hit, mthing.arg1+mthing.arg2*256, tr.side, tr.line);
       } else {
-        print("(INFO): cannot spawn decal at (%f,%f); angle=%d; id=%d", mthing->x, mthing->y, mthing->angle, mthing->arg1+mthing->arg2*256);
+        print("(INFO): cannot spawn decal at (%f,%f); angle=%d; id=%d", mthing.x, mthing.y, mthing.angle, mthing.arg1+mthing.arg2*256);
       }
       dcs.Destroy();
       return;
     }
-    print("SpawnMapThing: Unknown type %d at (%f, %f)", mthing->type, mthing->x, mthing->y);
+    print("SpawnMapThing: Unknown type %d at (%f, %f)", mthing.type, mthing.x, mthing.y);
     moClass = Unknown;
   } else {
     oldClass = moClass;
@@ -6576,7 +6576,7 @@ override void SpawnMapThing (mthing_t *mthing) {
 
     // if actor has no sprites, also map it to the unknown thing
     if (FindClassState(moClass, 'Spawn') && !AreStateSpritesPresent(FindClassState(moClass, 'Spawn'))) {
-      print("SpawnMapThing: %C of type %d at (%f, %f), has no frames", moClass, mthing.type, mthing->x, mthing->y);
+      print("SpawnMapThing: %C of type %d at (%f, %f), has no frames", moClass, mthing.type, mthing.x, mthing.y);
       moClass = Unknown;
     }
   }
@@ -6588,7 +6588,7 @@ override void SpawnMapThing (mthing_t *mthing) {
 
   // spawn it
   auto thg = Spawn(moClass, default, default, mthing, false);
-  //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing->type, thg.Height, moClass.default.Height, thg.Origin);
+  //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing.type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 }
 
