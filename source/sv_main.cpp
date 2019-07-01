@@ -83,7 +83,7 @@ static VCvarB sv_ignore_reset_items("sv_ignore_reset_items", false, "Ignore \"re
 static VCvarB sv_force_pistol_start("sv_force_pistol_start", false, "Start each new map with default weapons?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB sv_force_health_reset("sv_force_health_reset", false, "Start each new map with default health?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 
-static VCvarB sv_transporters_absolute("sv_transporters_absolute", true, "Use absolute movement instead of velocity for Boom transporters?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_transporters_absolute("sv_transporters_absolute", false, "Use absolute movement instead of velocity for Boom transporters?", CVAR_ServerInfo|CVAR_Latch|CVAR_Archive|CVAR_PreInit);
 
 static VCvarB mod_allow_server_cvars("mod_allow_server_cvars", false, "Allow server cvars from CVARINFO?", CVAR_Archive|CVAR_PreInit);
 

@@ -191,6 +191,7 @@ bool Physics (float DeltaTime) {
       if (CountX > 1) CummX /= float(CountX);
       if (CountY > 1) CummY /= float(CountY);
     }
+    //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
   }
 
   CheckWater();
@@ -347,6 +348,11 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
 
   if (ScrollX || ScrollY) {
     // scroll is already deltatime-corrected
+    /*
+    print("%C: scroll=(%s,%s); cst=%s; newscroll=(%s,%s); deltav=(%s,%s); v=%s; ss=%s", self, ScrollX, ScrollY, CARRYSTOPSPEED*DeltaTime,
+      ScrollX*(CARRYFACTOR*DeltaTime), ScrollY*(CARRYFACTOR*DeltaTime),
+      ScrollX/DeltaTime, ScrollY/DeltaTime, Velocity, STOPSPEED);
+    */
 
     // Carrying sectors didn't work with low speeds in BOOM. This is because
     // BOOM relied on the speed being fast enough to accumulate despite
@@ -362,6 +368,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
         ScrollY *= CARRYFACTOR*DeltaTime;
         Velocity.y += ScrollY/DeltaTime;
       }
+      //print("   nv=%s", Velocity);
     }
 
     xmove += ScrollX;

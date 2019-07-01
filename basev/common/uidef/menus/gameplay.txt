@@ -67,7 +67,7 @@ menudef GameplayOptions {
   }
 
   option bool {
-    title = "Velocity-based transporters";
+    title = "NON-Velocity-based transporters";
     cvar = sv_transporters_absolute;
     help =
       "Use velocity-based transporters?"
