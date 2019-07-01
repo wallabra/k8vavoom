@@ -66,6 +66,17 @@ menudef GameplayOptions {
       "you can turn them into normal ones with this toggle.";
   }
 
+  option bool {
+    title = "Velocity-based transporters";
+    cvar = sv_transporters_absolute;
+    help =
+      "Use velocity-based transporters?"
+      "This can glitch for small transporter speeds, and also"
+      "doesn't maintain the same speed as a scolling floor."
+      "If your pwad is not working right, try to toggle this.";
+  }
+
+
   //TODO
   //if (GameName == "hexen") CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
 

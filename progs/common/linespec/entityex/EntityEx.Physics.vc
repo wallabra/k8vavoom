@@ -333,14 +333,16 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     // BOOM relied on the speed being fast enough to accumulate despite
     // friction. If the speed is too low, then its movement will get
     // cancelled, and it won't accumulate to the desired speed.
-    float CarryStopSpeed = CARRYSTOPSPEED*DeltaTime;
-    if (fabs(ScrollX) > CarryStopSpeed) {
-      ScrollX *= CARRYFACTOR*DeltaTime;
-      Velocity.x += ScrollX/DeltaTime;
-    }
-    if (fabs(ScrollY) > CarryStopSpeed) {
-      ScrollY *= CARRYFACTOR*DeltaTime;
-      Velocity.y += ScrollY/DeltaTime;
+    if (!GetCvarB('sv_transporters_absolute')) {
+      float CarryStopSpeed = CARRYSTOPSPEED*DeltaTime;
+      if (fabs(ScrollX) > CarryStopSpeed) {
+        ScrollX *= CARRYFACTOR*DeltaTime;
+        Velocity.x += ScrollX/DeltaTime;
+      }
+      if (fabs(ScrollY) > CarryStopSpeed) {
+        ScrollY *= CARRYFACTOR*DeltaTime;
+        Velocity.y += ScrollY/DeltaTime;
+      }
     }
 
     xmove += ScrollX;
