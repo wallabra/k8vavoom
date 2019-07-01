@@ -922,12 +922,12 @@ static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool C
 int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane);
 
 
-// bounding box
+// 2d bounding box
 enum {
-  BOXTOP,
-  BOXBOTTOM,
-  BOXLEFT,
-  BOXRIGHT,
+  BOX2D_TOP,
+  BOX2D_BOTTOM,
+  BOX2D_LEFT,
+  BOX2D_RIGHT,
 };
 
 // considers the line to be infinite

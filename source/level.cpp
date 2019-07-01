@@ -256,11 +256,11 @@ void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *max
 //==========================================================================
 void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   // min
-  bbox[0+0] = sub->bbox[0];
-  bbox[0+1] = sub->bbox[1];
+  bbox[0+0] = sub->bbox2d[BOX2D_LEFT];
+  bbox[0+1] = sub->bbox2d[BOX2D_BOTTOM];
   // max
-  bbox[3+0] = sub->bbox[2];
-  bbox[3+1] = sub->bbox[3];
+  bbox[3+0] = sub->bbox2d[BOX2D_RIGHT];
+  bbox[3+1] = sub->bbox2d[BOX2D_TOP];
 
 #if 0
   // for one-sector degenerate maps
@@ -2521,19 +2521,19 @@ void CalcLine (line_t *line) {
 
   // calc line's bounding box
   if (line->v1->x < line->v2->x) {
-    line->bbox[BOXLEFT] = line->v1->x;
-    line->bbox[BOXRIGHT] = line->v2->x;
+    line->bbox2d[BOX2D_LEFT] = line->v1->x;
+    line->bbox2d[BOX2D_RIGHT] = line->v2->x;
   } else {
-    line->bbox[BOXLEFT] = line->v2->x;
-    line->bbox[BOXRIGHT] = line->v1->x;
+    line->bbox2d[BOX2D_LEFT] = line->v2->x;
+    line->bbox2d[BOX2D_RIGHT] = line->v1->x;
   }
 
   if (line->v1->y < line->v2->y) {
-    line->bbox[BOXBOTTOM] = line->v1->y;
-    line->bbox[BOXTOP] = line->v2->y;
+    line->bbox2d[BOX2D_BOTTOM] = line->v1->y;
+    line->bbox2d[BOX2D_TOP] = line->v2->y;
   } else {
-    line->bbox[BOXBOTTOM] = line->v2->y;
-    line->bbox[BOXTOP] = line->v1->y;
+    line->bbox2d[BOX2D_BOTTOM] = line->v2->y;
+    line->bbox2d[BOX2D_TOP] = line->v1->y;
   }
 
   CalcLineCDPlanes(line);

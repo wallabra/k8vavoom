@@ -985,16 +985,16 @@ int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) {
 
   if (!dir.y) {
     // horizontal
-    p1 = (tmbox[BOXTOP] > v1.y);
-    p2 = (tmbox[BOXBOTTOM] > v1.y);
+    p1 = (tmbox[BOX2D_TOP] > v1.y);
+    p2 = (tmbox[BOX2D_BOTTOM] > v1.y);
     if (dir.x < 0) {
       p1 ^= 1;
       p2 ^= 1;
     }
   } else if (!dir.x) {
     // vertical
-    p1 = (tmbox[BOXRIGHT] < v1.x);
-    p2 = (tmbox[BOXLEFT] < v1.x);
+    p1 = (tmbox[BOX2D_RIGHT] < v1.x);
+    p2 = (tmbox[BOX2D_LEFT] < v1.x);
     if (dir.y < 0) {
       p1 ^= 1;
       p2 ^= 1;
@@ -1003,14 +1003,14 @@ int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) {
     TPlane lpl;
     lpl.SetPointDirXY(v1, dir);
     // positive
-    p1 = lpl.PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXTOP], 0));
-    p2 = lpl.PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], 0));
+    p1 = lpl.PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_TOP], 0));
+    p2 = lpl.PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_BOTTOM], 0));
   } else {
     // negative
     TPlane lpl;
     lpl.SetPointDirXY(v1, dir);
-    p1 = lpl.PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXTOP], 0));
-    p2 = lpl.PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXBOTTOM], 0));
+    p1 = lpl.PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_TOP], 0));
+    p2 = lpl.PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_BOTTOM], 0));
   }
 
   if (p1 == p2) return p1;

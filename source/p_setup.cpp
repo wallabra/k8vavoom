@@ -2191,20 +2191,16 @@ void VLevel::PostLoadSubsectors () {
     if (!ss->sector) orphanSubs.append(i);
 
     // calculate bounding box
-    ss->bbox[0] = ss->bbox[1] = 999999.0f;
-    ss->bbox[2] = ss->bbox[3] = -999999.0f;
+    ss->bbox2d[BOX2D_LEFT] = ss->bbox2d[BOX2D_BOTTOM] = 999999.0f;
+    ss->bbox2d[BOX2D_RIGHT] = ss->bbox2d[BOX2D_TOP] = -999999.0f;
     for (int j = 0; j < ss->numlines; j++) {
       seg[j].front_sub = ss;
       // min
-      ss->bbox[0] = min2(ss->bbox[0], seg[j].v1->x);
-      ss->bbox[0] = min2(ss->bbox[0], seg[j].v2->x);
-      ss->bbox[1] = min2(ss->bbox[1], seg[j].v1->y);
-      ss->bbox[1] = min2(ss->bbox[1], seg[j].v2->y);
+      ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg[j].v1->x, seg[j].v2->x));
+      ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg[j].v1->y, seg[j].v2->y));
       // max
-      ss->bbox[2] = max2(ss->bbox[2], seg[j].v1->x);
-      ss->bbox[2] = max2(ss->bbox[2], seg[j].v2->x);
-      ss->bbox[3] = max2(ss->bbox[3], seg[j].v1->y);
-      ss->bbox[3] = max2(ss->bbox[3], seg[j].v2->y);
+      ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg[j].v1->x, seg[j].v2->x));
+      ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg[j].v1->y, seg[j].v2->y));
     }
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
@@ -2316,11 +2312,11 @@ void VLevel::LoadNodes (int Lump) {
 
     for (int j = 0; j < 2; ++j) {
       no->children[j] = children[j];
-      no->bbox[j][0] = bbox[j][BOXLEFT];
-      no->bbox[j][1] = bbox[j][BOXBOTTOM];
+      no->bbox[j][0] = bbox[j][BOX2D_LEFT];
+      no->bbox[j][1] = bbox[j][BOX2D_BOTTOM];
       no->bbox[j][2] = -32768.0f;
-      no->bbox[j][3] = bbox[j][BOXRIGHT];
-      no->bbox[j][4] = bbox[j][BOXTOP];
+      no->bbox[j][3] = bbox[j][BOX2D_RIGHT];
+      no->bbox[j][4] = bbox[j][BOX2D_TOP];
       no->bbox[j][5] = 32768.0f;
     }
   }
@@ -2608,11 +2604,11 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 
       for (int j = 0; j < 2; ++j) {
         no->children[j] = children[j];
-        no->bbox[j][0] = bbox[j][BOXLEFT];
-        no->bbox[j][1] = bbox[j][BOXBOTTOM];
+        no->bbox[j][0] = bbox[j][BOX2D_LEFT];
+        no->bbox[j][1] = bbox[j][BOX2D_BOTTOM];
         no->bbox[j][2] = -32768.0f;
-        no->bbox[j][3] = bbox[j][BOXRIGHT];
-        no->bbox[j][4] = bbox[j][BOXTOP];
+        no->bbox[j][3] = bbox[j][BOX2D_RIGHT];
+        no->bbox[j][4] = bbox[j][BOX2D_TOP];
         no->bbox[j][5] = 32768.0f;
       }
     }
@@ -3340,8 +3336,8 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
 //
 //==========================================================================
 inline void VLevel::ClearBox (float *box) const {
-  box[BOXTOP] = box[BOXRIGHT] = -99999.0f;
-  box[BOXBOTTOM] = box[BOXLEFT] = 99999.0f;
+  box[BOX2D_TOP] = box[BOX2D_RIGHT] = -99999.0f;
+  box[BOX2D_BOTTOM] = box[BOX2D_LEFT] = 99999.0f;
 }
 
 
@@ -3351,10 +3347,10 @@ inline void VLevel::ClearBox (float *box) const {
 //
 //==========================================================================
 inline void VLevel::AddToBox (float *box, float x, float y) const {
-       if (x < box[BOXLEFT]) box[BOXLEFT] = x;
-  else if (x > box[BOXRIGHT]) box[BOXRIGHT] = x;
-       if (y < box[BOXBOTTOM]) box[BOXBOTTOM] = y;
-  else if (y > box[BOXTOP]) box[BOXTOP] = y;
+       if (x < box[BOX2D_LEFT]) box[BOX2D_LEFT] = x;
+  else if (x > box[BOX2D_RIGHT]) box[BOX2D_RIGHT] = x;
+       if (y < box[BOX2D_BOTTOM]) box[BOX2D_BOTTOM] = y;
+  else if (y > box[BOX2D_TOP]) box[BOX2D_TOP] = y;
 }
 
 
@@ -3442,24 +3438,24 @@ void VLevel::GroupLines () const {
     }
 
     // set the soundorg to the middle of the bounding box
-    sector->soundorg = TVec((bbox[BOXRIGHT]+bbox[BOXLEFT])/2.0f, (bbox[BOXTOP]+bbox[BOXBOTTOM])/2.0f, 0);
+    sector->soundorg = TVec((bbox[BOX2D_RIGHT]+bbox[BOX2D_LEFT])/2.0f, (bbox[BOX2D_TOP]+bbox[BOX2D_BOTTOM])/2.0f, 0);
 
     // adjust bounding box to map blocks
-    block = MapBlock(bbox[BOXTOP]-BlockMapOrgY+MAXRADIUS);
+    block = MapBlock(bbox[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS);
     block = block >= BlockMapHeight ? BlockMapHeight-1 : block;
-    sector->blockbox[BOXTOP] = block;
+    sector->blockbox[BOX2D_TOP] = block;
 
-    block = MapBlock(bbox[BOXBOTTOM]-BlockMapOrgY-MAXRADIUS);
+    block = MapBlock(bbox[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS);
     block = block < 0 ? 0 : block;
-    sector->blockbox[BOXBOTTOM] = block;
+    sector->blockbox[BOX2D_BOTTOM] = block;
 
-    block = MapBlock(bbox[BOXRIGHT]-BlockMapOrgX+MAXRADIUS);
+    block = MapBlock(bbox[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS);
     block = block >= BlockMapWidth ? BlockMapWidth-1 : block;
-    sector->blockbox[BOXRIGHT] = block;
+    sector->blockbox[BOX2D_RIGHT] = block;
 
-    block = MapBlock(bbox[BOXLEFT]-BlockMapOrgX-MAXRADIUS);
+    block = MapBlock(bbox[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS);
     block = block < 0 ? 0 : block;
-    sector->blockbox[BOXLEFT] = block;
+    sector->blockbox[BOX2D_LEFT] = block;
   }
   delete[] SecLineCount;
   SecLineCount = nullptr;

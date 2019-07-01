@@ -478,12 +478,12 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
       // this subsector is invisible, check if it is in frustum
       float bbox[6];
       // min
-      bbox[0] = sub->bbox[0];
-      bbox[1] = sub->bbox[1];
+      bbox[0] = sub->bbox2d[BOX2D_LEFT];
+      bbox[1] = sub->bbox2d[BOX2D_BOTTOM];
       bbox[2] = sub->sector->floor.minz;
       // max
-      bbox[3] = sub->bbox[2];
-      bbox[4] = sub->bbox[3];
+      bbox[3] = sub->bbox2d[BOX2D_RIGHT];
+      bbox[4] = sub->bbox2d[BOX2D_TOP];
       bbox[5] = sub->sector->ceiling.maxz;
       FixBBoxZ(bbox);
       needToRender = view_frustum.checkBox(bbox);

@@ -111,28 +111,28 @@ int P_BoxOnLineSide (float *tmbox, line_t *ld) {
 
   switch (ld->slopetype) {
     case ST_HORIZONTAL:
-      p1 = tmbox[BOXTOP] > ld->v1->y;
-      p2 = tmbox[BOXBOTTOM] > ld->v1->y;
+      p1 = tmbox[BOX2D_TOP] > ld->v1->y;
+      p2 = tmbox[BOX2D_BOTTOM] > ld->v1->y;
       if (ld->dir.x < 0) {
         p1 ^= 1;
         p2 ^= 1;
       }
       break;
     case ST_VERTICAL:
-      p1 = tmbox[BOXRIGHT] < ld->v1->x;
-      p2 = tmbox[BOXLEFT] < ld->v1->x;
+      p1 = tmbox[BOX2D_RIGHT] < ld->v1->x;
+      p2 = tmbox[BOX2D_LEFT] < ld->v1->x;
       if (ld->dir.y < 0) {
         p1 ^= 1;
         p2 ^= 1;
       }
       break;
     case ST_POSITIVE:
-      p1 = ld->PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXTOP], 0));
-      p2 = ld->PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], 0));
+      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_TOP], 0));
+      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_BOTTOM], 0));
       break;
     case ST_NEGATIVE:
-      p1 = ld->PointOnSide(TVec(tmbox[BOXRIGHT], tmbox[BOXTOP], 0));
-      p2 = ld->PointOnSide(TVec(tmbox[BOXLEFT], tmbox[BOXBOTTOM], 0));
+      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_TOP], 0));
+      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_BOTTOM], 0));
       break;
   }
 

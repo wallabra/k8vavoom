@@ -463,13 +463,13 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
     if ((*tempSeg)->v1->y > topY) topY = (*tempSeg)->v1->y;
     if ((*tempSeg)->v1->y < bottomY) bottomY = (*tempSeg)->v1->y;
   }
-  po->bbox[BOXRIGHT] = MapBlock(rightX-BlockMapOrgX);
-  po->bbox[BOXLEFT] = MapBlock(leftX-BlockMapOrgX);
-  po->bbox[BOXTOP] = MapBlock(topY-BlockMapOrgY);
-  po->bbox[BOXBOTTOM] = MapBlock(bottomY-BlockMapOrgY);
+  po->bbox2d[BOX2D_RIGHT] = MapBlock(rightX-BlockMapOrgX);
+  po->bbox2d[BOX2D_LEFT] = MapBlock(leftX-BlockMapOrgX);
+  po->bbox2d[BOX2D_TOP] = MapBlock(topY-BlockMapOrgY);
+  po->bbox2d[BOX2D_BOTTOM] = MapBlock(bottomY-BlockMapOrgY);
   // add the polyobj to each blockmap section
-  for (int j = po->bbox[BOXBOTTOM]*BlockMapWidth; j <= po->bbox[BOXTOP]*BlockMapWidth; j += BlockMapWidth) {
-    for (int i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i) {
+  for (int j = po->bbox2d[BOX2D_BOTTOM]*BlockMapWidth; j <= po->bbox2d[BOX2D_TOP]*BlockMapWidth; j += BlockMapWidth) {
+    for (int i = po->bbox2d[BOX2D_LEFT]; i <= po->bbox2d[BOX2D_RIGHT]; ++i) {
       if (i >= 0 && i < BlockMapWidth && j >= 0 && j < BlockMapHeight*BlockMapWidth) {
         polyblock_t **link = &PolyBlockMap[j+i];
         if (!(*link)) {
@@ -508,9 +508,9 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
 //==========================================================================
 void VLevel::UnLinkPolyobj (polyobj_t *po) {
   // remove the polyobj from each blockmap section
-  for (int j = po->bbox[BOXBOTTOM]; j <= po->bbox[BOXTOP]; ++j) {
+  for (int j = po->bbox2d[BOX2D_BOTTOM]; j <= po->bbox2d[BOX2D_TOP]; ++j) {
     int index = j*BlockMapWidth;
-    for (int i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i) {
+    for (int i = po->bbox2d[BOX2D_LEFT]; i <= po->bbox2d[BOX2D_RIGHT]; ++i) {
       if (i >= 0 && i < BlockMapWidth && j >= 0 && j < BlockMapHeight) {
         polyblock_t *link = PolyBlockMap[index+i];
         while (link != nullptr && link->polyobj != po) {
@@ -708,10 +708,10 @@ bool VLevel::PolyCheckMobjBlocking (seg_t *seg, polyobj_t *po) {
 
   ld = seg->linedef;
 
-  top = MapBlock(ld->bbox[BOXTOP]-BlockMapOrgY+MAXRADIUS);
-  bottom = MapBlock(ld->bbox[BOXBOTTOM]-BlockMapOrgY-MAXRADIUS);
-  left = MapBlock(ld->bbox[BOXLEFT]-BlockMapOrgX-MAXRADIUS);
-  right = MapBlock(ld->bbox[BOXRIGHT]-BlockMapOrgX+MAXRADIUS);
+  top = MapBlock(ld->bbox2d[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS);
+  bottom = MapBlock(ld->bbox2d[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS);
+  left = MapBlock(ld->bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS);
+  right = MapBlock(ld->bbox2d[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS);
 
   blocked = false;
 
@@ -731,15 +731,15 @@ bool VLevel::PolyCheckMobjBlocking (seg_t *seg, polyobj_t *po) {
           if (mobj->EntityFlags&(VEntity::EF_Solid|VEntity::EF_Corpse)) {
             bool isSolid = !!(mobj->EntityFlags&VEntity::EF_Solid);
 
-            tmbbox[BOXTOP] = mobj->Origin.y+mobj->Radius;
-            tmbbox[BOXBOTTOM] = mobj->Origin.y-mobj->Radius;
-            tmbbox[BOXLEFT] = mobj->Origin.x-mobj->Radius;
-            tmbbox[BOXRIGHT] = mobj->Origin.x+mobj->Radius;
+            tmbbox[BOX2D_TOP] = mobj->Origin.y+mobj->Radius;
+            tmbbox[BOX2D_BOTTOM] = mobj->Origin.y-mobj->Radius;
+            tmbbox[BOX2D_LEFT] = mobj->Origin.x-mobj->Radius;
+            tmbbox[BOX2D_RIGHT] = mobj->Origin.x+mobj->Radius;
 
-            if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-                tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-                tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
-                tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+            if (tmbbox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
+                tmbbox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
+                tmbbox[BOX2D_TOP] <= ld->bbox2d[BOX2D_BOTTOM] ||
+                tmbbox[BOX2D_BOTTOM] >= ld->bbox2d[BOX2D_TOP])
             {
               continue;
             }

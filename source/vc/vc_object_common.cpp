@@ -259,10 +259,10 @@ IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2DV) {
   P_GET_VEC(bmax);
   P_GET_VEC(bmin);
   float tmbox[4];
-  tmbox[BOXTOP] = bmax.y;
-  tmbox[BOXBOTTOM] = bmin.y;
-  tmbox[BOXLEFT] = bmin.x;
-  tmbox[BOXRIGHT] = bmax.x;
+  tmbox[BOX2D_TOP] = bmax.y;
+  tmbox[BOX2D_BOTTOM] = bmin.y;
+  tmbox[BOX2D_LEFT] = bmin.x;
+  tmbox[BOX2D_RIGHT] = bmax.x;
   RET_INT(BoxOnLineSide2D(tmbox, v1, v2));
 }
 

@@ -683,7 +683,7 @@ struct line_t : TPlane {
   int[2] sidenum;
 
   // neat. another bounding box, for the extent of the LineDef
-  float[4] bbox;
+  float[4] bbox2d;
 
   // to aid move clipping
   int slopetype;
@@ -1048,7 +1048,7 @@ struct polyobj_t {
   TVec *prevPts; // use to restore the old point values
   float angle;
   int tag; // reference tag assigned in HereticEd
-  int[4] bbox;
+  int[4] bbox2d;
   int validcount;
   bool bCrush; // should the polyobj attempt to crush mobjs?
   bool bHurtOnTouch;
@@ -1091,7 +1091,7 @@ struct subsector_t {
   sector_t *deepref;
 
   //k8: i love bounding boxes! (this one doesn't store z, though)
-  float[4] bbox;
+  float[4] bbox2d;
 
   int dlightbits;
   int dlightframe;

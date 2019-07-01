@@ -278,7 +278,7 @@ struct line_t : public TPlane {
   vint32 sidenum[2];
 
   // neat. another bounding box, for the extent of the LineDef
-  float bbox[4];
+  float bbox2d[4];
 
   // to aid move clipping
   vint32 slopetype;
@@ -749,7 +749,7 @@ struct polyobj_t {
   vertex_t *prevPts; // use to restore the old point values
   float angle;
   vint32 tag; // reference tag assigned in HereticEd
-  vint32 bbox[4];
+  vint32 bbox2d[4];
   vint32 validcount;
   enum {
     PF_Crush        = 0x01, // should the polyobj attempt to crush mobjs?
@@ -862,7 +862,7 @@ public:
   sector_t *deepref; // for deepwater
 
   //k8: i love bounding boxes! (this one doesn't store z, though)
-  float bbox[4];
+  float bbox2d[4];
 
   vuint32 dlightbits; // bitmask of active dynamic lights
   vuint32 dlightframe; // `dlightbits` validity counter

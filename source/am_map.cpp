@@ -1220,6 +1220,30 @@ static void AM_drawGrid (vuint32 color) {
 
 //==========================================================================
 //
+//  AM_isBBox2dVisible
+//
+//==========================================================================
+static inline bool AM_isBBox2dVisible (const float bbox2d[4]) {
+  return
+    m_x2 >= bbox2d[BOX2D_LEFT] && m_y2 >= bbox2d[BOX2D_BOTTOM] &&
+    m_x <= bbox2d[BOX2D_RIGHT] && m_y <= bbox2d[BOX2D_TOP];
+}
+
+
+//==========================================================================
+//
+//  AM_isSubVisible
+//
+//  check bounding box
+//
+//==========================================================================
+static inline bool AM_isSubVisible (const subsector_t *sub) {
+  return (sub && AM_isBBox2dVisible(sub->bbox2d));
+}
+
+
+//==========================================================================
+//
 //  AM_getLineColor
 //
 //==========================================================================
@@ -1286,7 +1310,7 @@ static void AM_drawWalls () {
   for (unsigned i = GClLevel->NumLines; i--; ++line) {
     if (!am_cheating) {
       if (line->flags&ML_DONTDRAW) continue;
-      if (!(line->flags&ML_MAPPED) && !(line->exFlags&ML_EX_PARTIALLY_MAPPED)) {
+      if (!(line->flags&ML_MAPPED) && !(line->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) {
         if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
       }
     }
@@ -1327,30 +1351,16 @@ static void AM_drawWalls () {
     // just in case
     if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
 
-    // fully mapped or automap revealed?
-    if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
-      mline_t l;
-      l.a.x = line->v1->x;
-      l.a.y = line->v1->y;
-      l.b.x = line->v2->x;
-      l.b.y = line->v2->y;
-
-      if (am_rotate) {
-        AM_rotatePoint(&l.a.x, &l.a.y);
-        AM_rotatePoint(&l.b.x, &l.b.y);
-      }
-
-      AM_drawMline(&l, clr);
-    } else {
-      // render segments
-      for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
-        if (!(seg->flags&SF_MAPPED)) continue;
-
+    // do not send the line to GPU if it is not visible
+    // simplified check with line bounding box
+    if (AM_isBBox2dVisible(line->bbox2d)) {
+      // fully mapped or automap revealed?
+      if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
         mline_t l;
-        l.a.x = seg->v1->x;
-        l.a.y = seg->v1->y;
-        l.b.x = seg->v2->x;
-        l.b.y = seg->v2->y;
+        l.a.x = line->v1->x;
+        l.a.y = line->v1->y;
+        l.b.x = line->v2->x;
+        l.b.y = line->v2->y;
 
         if (am_rotate) {
           AM_rotatePoint(&l.a.x, &l.a.y);
@@ -1358,6 +1368,24 @@ static void AM_drawWalls () {
         }
 
         AM_drawMline(&l, clr);
+      } else {
+        // render segments
+        for (const seg_t *seg = line->firstseg; seg; seg = seg->lsnext) {
+          if (!(seg->flags&SF_MAPPED)) continue;
+
+          mline_t l;
+          l.a.x = seg->v1->x;
+          l.a.y = seg->v1->y;
+          l.b.x = seg->v2->x;
+          l.b.y = seg->v2->y;
+
+          if (am_rotate) {
+            AM_rotatePoint(&l.a.x, &l.a.y);
+            AM_rotatePoint(&l.b.x, &l.b.y);
+          }
+
+          AM_drawMline(&l, clr);
+        }
       }
     }
   }
@@ -1424,6 +1452,7 @@ static void AM_drawFloors () {
   for (unsigned i = GClLevel->NumSubsectors; i--; ++sub) {
     if (!sub->sector) continue;
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
+    if (!AM_isSubVisible(sub)) continue;
     if (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered)) {
       // check for "allmap" powerup
       if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
@@ -1441,15 +1470,6 @@ static void AM_drawFloors () {
     if (!doFloors && flatsurf->texinfo.Tex == skytex) {
       flatsurf = AM_getFlatSurface(reg, true);
       if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) continue; // just in case
-    }
-    // check bounding box
-    {
-      //GCon->Logf("  sub #%d: bounds=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(sub-&GClLevel->Subsectors[0]), sub->bbox[0], sub->bbox[1], sub->bbox[2], sub->bbox[3]);
-      if ((sub->bbox[2+0] < m_x && sub->bbox[2+1] < m_y) ||
-          (sub->bbox[0+0] > m_x2 && sub->bbox[0+1] > m_y2))
-      {
-        continue;
-      }
     }
     // calculate lighting
     const float lev = clampval(sub->sector->params.lightlevel/255.0f, 0.0f, 1.0f);
@@ -1570,6 +1590,7 @@ static void AM_DrawRenderedSubs () {
   const subsector_t *sub = &GClLevel->Subsectors[0];
   for (unsigned scount = GClLevel->NumSubsectors; scount--; ++sub) {
     if (mysub == sub) continue;
+    if (!AM_isSubVisible(sub)) continue;
     if (!Drawer->RendLev->IsSubsectorRendered(sub)) continue;
     AM_DrawRenderedSubs(sub, 0xff00ffff, true);
   }
