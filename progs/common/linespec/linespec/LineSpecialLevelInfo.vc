@@ -427,6 +427,7 @@ final bool CheckActivation (int activationType, line_t *line, int Side, EntityEx
             case LNSPEC_PlatDownWaitUpStay:
             case LNSPEC_Teleport:
             case LNSPEC_TeleportNoFog:
+            case LNSPEC_TeleportNoStop:
             case LNSPEC_PlatDownWaitUpStayLip:
             case LNSPEC_TeleportLine:
               noway = false;
@@ -443,6 +444,7 @@ final bool CheckActivation (int activationType, line_t *line, int Side, EntityEx
             break;
           case LNSPEC_Teleport:
           case LNSPEC_TeleportNoFog:
+          case LNSPEC_TeleportNoStop:
             noway = false;
         }
         break;
@@ -578,7 +580,7 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_TeleportZombieChanger:
       if (Side == 0) {
         // only teleport when crossing the front side of a line
-        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, true);
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, fog:true);
         A.SetState(A.FindState('Pain'));
       }
       break;
@@ -651,13 +653,19 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_Teleport:
       if (Side == 0) {
         // only teleport when crossing the front side of a line
-        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, true);
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, fog:true);
       }
       break;
     case LNSPEC_TeleportNoFog:
       if (Side == 0) {
         // only teleport when crossing the front side of a line
-        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, false);
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, fog:false);
+      }
+      break;
+    case LNSPEC_TeleportNoStop:
+      if (Side == 0) {
+        // only teleport when crossing the front side of a line
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, fog:true, keepMomentum:true, Special:Special);
       }
       break;
     case LNSPEC_ThrustThing:
@@ -4928,34 +4936,29 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
 //  EV_Teleport
 //
 //==========================================================================
-
-final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx thing, line_t *Line, bool fog)
+final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
+                        EntityEx thing, line_t *Line, bool fog,
+                        optional bool keepMomentum, optional int Special)
 {
-  int     i;
-  int     count;
-  EntityEx  A;
-  int     SecTag;
+  //int i;
+  //int count;
+  EntityEx A;
+  int SecTag;
   sector_t *Sec;
-  bool    SrcFog;
-  bool    KeepOrient;
-  TVec    DstOrg;
-  float   Angle;
-  TVec    OldVel;
+  bool SrcFog;
+  bool KeepOrient;
+  bool KeepVelocity;
+  TVec DstOrg;
+  float Angle;
+  TVec OldVel;
 
-  if (!thing)
-  {
-    // Teleport function called with an invalid mobj
-    return false;
-  }
-  if (thing.bNoTeleport)
-  {
-    return false;
-  }
+  if (!thing) return false; // teleport function called with an invalid mobj
+  if (thing.bNoTeleport) return false;
+
+  //if (Special == LNSPEC_TeleportNoStop) print("154: thing=%C", thing);
 
   A = none;
-  if (fog)
-  {
+  if (fog || Special == LNSPEC_TeleportNoStop) {
     SecTag = Arg2;
     SrcFog = !Arg3;
     KeepOrient = false;
@@ -4966,93 +4969,71 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     SrcFog = false;
     KeepOrient = !Arg2;
   }
-  if (Arg1)
-  {
-    count = 0;
-    for (A = EntityEx(FindMobjFromTID(Arg1, none)); A;
-      A = EntityEx(FindMobjFromTID(Arg1, A)))
-    {
-      if (SecTag == 0 || IsSectorTagEqual(A.Sector, SecTag))
-      {
-        count++;
-      }
+
+  if (Special == LNSPEC_TeleportNoStop) {
+    KeepOrient = true;
+    KeepVelocity = true;
+  }
+
+  if (Arg1) {
+    int count = 0;
+    for (A = EntityEx(FindMobjFromTID(Arg1, none)); A; A = EntityEx(FindMobjFromTID(Arg1, A))) {
+      if (SecTag == 0 || IsSectorTagEqual(A.Sector, SecTag)) ++count;
     }
-    if (count == 0)
-    {
-      return false;
-    }
+    if (count == 0) return false;
     count = 1+(P_Random()%count);
     A = none;
-    for (i = 0; i < count; i++)
-    {
-      do
-      {
-        A = EntityEx(FindMobjFromTID(Arg1, A));
-      }
-      while (A && SecTag != 0 && !IsSectorTagEqual(A.Sector, SecTag));
+    foreach (int i; 0..count) {
+      do { A = EntityEx(FindMobjFromTID(Arg1, A)); } while (A && SecTag != 0 && !IsSectorTagEqual(A.Sector, SecTag));
     }
-  }
-  else if (SecTag)
-  {
+  } else if (SecTag) {
     for (int hidx = XLevel.FindSectorFromTag(out Sec, SecTag); hidx >= 0;
          hidx = XLevel.FindSectorFromTag(out Sec, SecTag, hidx))
     {
-      foreach AllThinkers(EntityEx, A)
-      {
-        if (!TeleportDest(A))
-        {
-          //  Not a teleportman
-          continue;
-        }
-        if (A.Sector != Sec)
-        {
-          //  Wrong sector
-          continue;
-        }
+      foreach AllThinkers(EntityEx, A) {
+        if (!TeleportDest(A)) continue; // not a teleportman
+        if (A.Sector != Sec) continue; // wrong sector
         break;
       }
-      if (A)
-      {
-        break;
-      }
+      if (A) break;
     }
   }
-  if (!A)
-  {
-    return false;
-  }
+  if (!A) return false;
 
   DstOrg = A.Origin;
   // Lee Killough's changes for silent teleporters from BOOM
-  if (KeepOrient && Line)
-  {
+  if (KeepOrient && Line) {
     // Get the angle between the exit thing and source linedef.
     // Rotate 180 degrees, so that walking perpendicularly across
     // teleporter linedef causes thing to exit in the direction
     // indicated by the exit thing.
     Angle = atan2(Line->normal.y, Line->normal.x)-A.Angles.yaw+180.0;
-
     // Momentum of thing crossing teleporter linedef
     OldVel = thing.Velocity;
   }
-  if (!TeleportDest2(A))
-  {
-    DstOrg.z = EntityEx::ONFLOORZ;
-  }
-  if (thing.Teleport(DstOrg, A.Angles.yaw, fog, SrcFog, KeepOrient))
-  {
-    // Lee Killough's changes for silent teleporters from BOOM
-    if (!fog && Line && KeepOrient)
-    {
-      // Rotate thing according to difference in angles
-      thing.Angles.yaw = AngleMod360(thing.Angles.yaw+Angle);
 
-      // Rotate thing's momentum to come out of exit just like it entered
+  if (KeepOrient) OldVel = thing.Velocity;
+
+  if (!TeleportDest2(A)) DstOrg.z = EntityEx::ONFLOORZ;
+
+  if (thing.Teleport(DstOrg, A.Angles.yaw, fog, SrcFog, KeepOrient)) {
+    if (KeepVelocity) {
+      //if (Special == LNSPEC_TeleportNoStop) print("154: DONE: thing=%C", thing);
+      thing.Velocity = OldVel;
+      return true;
+    }
+    // Lee Killough's changes for silent teleporters from BOOM
+    if (!fog && Line && KeepOrient) {
+      // rotate thing according to difference in angles
+      thing.Angles.yaw = AngleMod360(thing.Angles.yaw+Angle);
+      // rotate thing's momentum to come out of exit just like it entered
       thing.Velocity.x = OldVel.x*cos(Angle)-OldVel.y*sin(Angle);
       thing.Velocity.y = OldVel.y*cos(Angle)+OldVel.x*sin(Angle);
     }
     return true;
   }
+
+  //if (Special == LNSPEC_TeleportNoStop) print("154: CANNOT: thing=%C", thing);
   return false;
 }
 

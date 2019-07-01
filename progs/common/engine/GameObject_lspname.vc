@@ -98,6 +98,7 @@ static final string LineSpecial2Str (int special) {
     case LNSPEC_CeilingMoveToValueTimes8: return "CeilingMoveToValueTimes8";
     case LNSPEC_Teleport: return "Teleport";
     case LNSPEC_TeleportNoFog: return "TeleportNoFog";
+    case LNSPEC_TeleportNoStop: return "TeleportNoStop";
     case LNSPEC_ThrustThing: return "ThrustThing";
     case LNSPEC_DamageThing: return "DamageThing";
     case LNSPEC_TeleportNewMap: return "TeleportNewMap";

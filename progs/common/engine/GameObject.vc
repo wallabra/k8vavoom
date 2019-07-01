@@ -476,6 +476,7 @@ enum {
   LNSPEC_ThingSpawnFacing,
   LNSPEC_SectorSoundChange,// 140
 
+  LNSPEC_TeleportNoStop = 154,
   LNSPEC_SectorSetPlaneReflection = 159,
   LNSPEC_SectorSet3dFloor,// 160
   LNSPEC_Contents,

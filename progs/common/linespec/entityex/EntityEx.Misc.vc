@@ -955,7 +955,8 @@ override void CrossSpecialLine (line_t *ld, int side) {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_PCross);
     } else if (ld->special == LNSPEC_Teleport ||
                ld->special == LNSPEC_TeleportNoFog ||
-               ld->special == LNSPEC_TeleportLine)
+               ld->special == LNSPEC_TeleportLine ||
+               ld->special == LNSPEC_TeleportNoStop)
     {
       // teleport hack
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_MCross);
