@@ -864,10 +864,10 @@ COMMAND_AC(TestFinale) {
 //
 //  COMMAND TeleportNewMap
 //
-//  mapname [leaveposition]
+//  TeleportNewMap [mapname leaveposition] | [forced]
 //
 //==========================================================================
-COMMAND(TeleportNewMap) {
+COMMAND_WITH_AC(TeleportNewMap) {
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -879,7 +879,7 @@ COMMAND(TeleportNewMap) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
     LeavePosition = VStr::atoi(*Args[2]);
   } else if (sv.intermission != 1) {
-    return;
+    if (Args.length() != 2 || !Args[1].startsWithCI("force")) return;
   }
 
   if (!deathmatch) {
@@ -905,6 +905,8 @@ COMMAND(TeleportNewMap) {
   mapteleport_skill = -1;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
 }
+
+COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "forced")
 
 
 //==========================================================================
