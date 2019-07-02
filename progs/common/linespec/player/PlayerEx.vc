@@ -2875,6 +2875,37 @@ override void ResetInventory () {
 
 //==========================================================================
 //
+//  RemoveKeysVerbose
+//
+//==========================================================================
+override void RemoveKeysVerbose (optional bool verbose) {
+  EntityEx PP = EntityEx(MO);
+  if (!PP) return;
+  if (!specified_verbose) verbose = true;
+
+  bool again = true;
+  int count = 0;
+  class!Inventory Cls;
+  foreach AllClasses(Key, Cls) {
+    class!Key repl = class!Key(GetClassReplacement(Cls));
+    if (repl && repl != Cls) continue;
+    auto st = FindClassState(Cls, 'Spawn');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue; // no sprites
+    auto inv = PP.FindInventory(Cls);
+    if (inv) {
+      again = true;
+      if (verbose) print("removed key '%C'", inv);
+      PP.RemoveInventory(inv);
+      ++count;
+    }
+  }
+  if (verbose && count > 0) cprint("Removed %s key%s!", count, (count != 1 ? "s" : ""));
+}
+
+
+//==========================================================================
+//
 //  ResetHealth
 //
 //==========================================================================
