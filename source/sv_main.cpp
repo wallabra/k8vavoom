@@ -1042,21 +1042,6 @@ COMMAND_AC(TeleportNewMapEx) {
 
 //==========================================================================
 //
-//  COMMAND ListMaps
-//
-//==========================================================================
-COMMAND(ListMaps) {
-  int mapcount = P_GetNumMaps();
-  for (int f = 0; f < mapcount; ++f) {
-    VName mlump = P_GetMapLumpName(f);
-    VStr name = P_GetMapName(f);
-    if (mlump != NAME_None) GCon->Logf("  %s -- %s", *mlump, *name);
-  }
-}
-
-
-//==========================================================================
-//
 //  G_DoReborn
 //
 //==========================================================================
