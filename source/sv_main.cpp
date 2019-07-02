@@ -912,6 +912,26 @@ COMMAND_WITH_AC(TeleportNewMap) {
 COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "forced")
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct TeleportMapExFlag {
+  const char *name;
+  int value;
+  bool reset;
+};
+
+static TeleportMapExFlag TMEFlags[] = {
+  { "KeepFacing", CHANGELEVEL_KEEPFACING, false },
+  { "KeepKeys", CHANGELEVEL_REMOVEKEYS, true },
+  { "ResetInventory", CHANGELEVEL_RESETINVENTORY, false },
+  { "NoMonsters", CHANGELEVEL_NOMONSTERS, false },
+  //{ "ChangeSkill", CHANGELEVEL_CHANGESKILL, false },
+  { "NoIntermission", CHANGELEVEL_NOINTERMISSION, false },
+  { "ResetHealth", CHANGELEVEL_RESETHEALTH, false },
+  { "PreraiseWeapon", CHANGELEVEL_PRERAISEWEAPON, false },
+  { nullptr, 0, false },
+};
+
+
 //==========================================================================
 //
 //  COMMAND TeleportNewMapEx
@@ -919,7 +939,7 @@ COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "forced")
 //  mapname posidx flags [skill]
 //
 //==========================================================================
-COMMAND(TeleportNewMapEx) {
+COMMAND_WITH_AC(TeleportNewMapEx) {
   if (Args.length() < 2) {
     GCon->Logf("TeleportNewMapEx mapname [posidx [flags [skill]]]");
     return;
@@ -932,13 +952,32 @@ COMMAND(TeleportNewMapEx) {
 
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
 
-  int posidx = 0, flags = 0, skill = -1;
-  if (Args.length() > 2) Args[2].convertInt(&posidx);
-  if (Args.length() > 3) Args[3].convertInt(&flags);
-  if (Args.length() > 4) {
-    if (Args[4].convertInt(&skill)) {
-      if (skill >= 0) flags |= CHANGELEVEL_CHANGESKILL;
+  int posidx = 0;
+  if (Args.length() > 2) {
+    if (!Args[2].convertInt(&posidx)) {
+      GCon->Logf(NAME_Warning, "TeleportNewMapEx: invalid position index '%s'", *Args[2]);
+      return;
     }
+  }
+
+  int flags = CHANGELEVEL_REMOVEKEYS, skill = -1;
+  for (int f = 3; f < Args.length(); ++f) {
+    bool found = false;
+    for (const TeleportMapExFlag *tff = TMEFlags; tff->name; ++tff) {
+      if (Args[f].strEquCI(tff->name)) {
+        found = true;
+        if (tff->reset) flags &= ~tff->value; else flags |= tff->value;
+        break;
+      }
+    }
+    // if not found, try numeric conversion for skill
+    if (found) continue;
+    if (Args[f].convertInt(&skill)) {
+      if (skill >= 0) flags |= CHANGELEVEL_CHANGESKILL;
+      continue;
+    }
+    GCon->Logf(NAME_Warning, "TeleportNewMapEx: invalid flag '%s'", *Args[f]);
+    return;
   }
 
   //GCon->Logf("TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
@@ -967,6 +1006,28 @@ COMMAND(TeleportNewMapEx) {
   mapteleport_flags = flags;
   mapteleport_skill = skill;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC TeleportNewMapEx
+//
+//==========================================================================
+COMMAND_AC(TeleportNewMapEx) {
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx >= 3) {
+    // flags
+    TArray<VStr> list;
+    for (const TeleportMapExFlag *tff = TMEFlags; tff->name; ++tff) {
+      // check for duplicate
+      bool found = false;
+      for (int f = 1; f < args.length(); ++f) if (args[f].strEquCI(tff->name)) { found = true; break; }
+      if (!found) list.append(tff->name);
+    }
+    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  }
+  return VStr::EmptyString;
 }
 
 
