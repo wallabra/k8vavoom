@@ -868,6 +868,8 @@ COMMAND_AC(TestFinale) {
 //
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMap) {
+  int flags = 0;
+
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -880,6 +882,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
     LeavePosition = VStr::atoi(*Args[2]);
   } else if (sv.intermission != 1) {
     if (Args.length() != 2 || !Args[1].startsWithCI("force")) return;
+    flags = CHANGELEVEL_REMOVEKEYS;
   }
 
   if (!deathmatch) {
@@ -901,7 +904,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
   RebornPosition = LeavePosition;
   GGameInfo->RebornPosition = RebornPosition;
   mapteleport_issued = true;
-  mapteleport_flags = 0;
+  mapteleport_flags = flags;
   mapteleport_skill = -1;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
 }
