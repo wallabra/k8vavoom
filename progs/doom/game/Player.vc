@@ -255,7 +255,7 @@ const int
   GIMME_ALL             = 0xffffffff;
 
 void Cheat_Gimme () {
-  int i1 = 0;
+  int gimmeFlags = 0;
   class!Inventory Cls;
 
   if (Cmd_CheckParm("ElvenGifts")) {
@@ -264,45 +264,28 @@ void Cheat_Gimme () {
   }
 
   if (MO && Cmd_CheckParm("NoKeys")) {
-    bool gotit = false;
-    bool again = true;
-    int count = 0;
-    foreach AllClasses(Key, Cls) {
-      class!Key repl = class!Key(GetClassReplacement(Cls));
-      if (repl && repl != Cls) continue;
-      auto st = FindClassState(Cls, 'Spawn');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
-      auto inv = EntityEx(MO).FindInventory(Cls);
-      if (inv) {
-        again = true;
-        print("removed key '%C'", inv);
-        EntityEx(MO).RemoveInventory(inv);
-        ++count;
-      }
-    }
-    if (count > 0) cprint("Removed %s key%s!", count, (count != 1 ? "s" : ""));
+    RemoveKeysVerbose();
   }
 
   // all
-  if (Cmd_CheckParm("All")) i1 |= GIMME_ALL;
+  if (Cmd_CheckParm("All")) gimmeFlags |= GIMME_ALL;
 
   // powers
-  if (Cmd_CheckParm("Powers")) i1 |= GIMME_POWERS;
-  if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul")) i1 |= GIMME_INVULNERABILITY;
-  if (Cmd_CheckParm("Bersek")) i1 |= GIMME_STRENGTH;
-  if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis")) i1 |= GIMME_INVISIBILITY;
-  if (Cmd_CheckParm("Suit")) i1 |= GIMME_IRONFEET;
-  if (Cmd_CheckParm("AllMap")) i1 |= GIMME_ALLMAP;
-  if (Cmd_CheckParm("LiteAmp") || Cmd_CheckParm("LightAmp")) i1 |= GIMME_INFRARED;
+  if (Cmd_CheckParm("Powers")) gimmeFlags |= GIMME_POWERS;
+  if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul")) gimmeFlags |= GIMME_INVULNERABILITY;
+  if (Cmd_CheckParm("Bersek")) gimmeFlags |= GIMME_STRENGTH;
+  if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis")) gimmeFlags |= GIMME_INVISIBILITY;
+  if (Cmd_CheckParm("Suit")) gimmeFlags |= GIMME_IRONFEET;
+  if (Cmd_CheckParm("AllMap")) gimmeFlags |= GIMME_ALLMAP;
+  if (Cmd_CheckParm("LiteAmp") || Cmd_CheckParm("LightAmp")) gimmeFlags |= GIMME_INFRARED;
 
   // health
-  if (Cmd_CheckParm("Health")) i1 |= GIMME_HEALTH;
-  if (Cmd_CheckParm("Health2")) i1 |= GIMME_HEALTH2;
+  if (Cmd_CheckParm("Health")) gimmeFlags |= GIMME_HEALTH;
+  if (Cmd_CheckParm("Health2")) gimmeFlags |= GIMME_HEALTH2;
 
   // armor
-  if (Cmd_CheckParm("Armor")) i1 |= GIMME_ARMOR;
-  if (Cmd_CheckParm("Armor2")) i1 |= GIMME_ARMOR2;
+  if (Cmd_CheckParm("Armor")) gimmeFlags |= GIMME_ARMOR;
+  if (Cmd_CheckParm("Armor2")) gimmeFlags |= GIMME_ARMOR2;
 
   // weapons
   if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
@@ -414,30 +397,30 @@ void Cheat_Gimme () {
   }
 
   // powers
-  if (i1&GIMME_INVULNERABILITY) { EntityEx(MO).GiveInventoryType(InvulnerabilitySphere); cprint("You got Invulnerability!"); }
-  if (i1&GIMME_STRENGTH) { EntityEx(MO).GiveInventoryType(PowerStrength); cprint("You got Strength!"); }
-  if (i1&GIMME_INVISIBILITY) { EntityEx(MO).GiveInventoryType(PowerInvisibility); cprint("You got Invisibility!"); }
-  if (i1&GIMME_IRONFEET) { EntityEx(MO).GiveInventoryType(PowerIronFeet); cprint("You got EnviroSuit!"); }
-  if (i1&GIMME_INFRARED) { EntityEx(MO).GiveInventoryType(PowerLightAmp); cprint("You got Light Amplifier!"); }
+  if (gimmeFlags&GIMME_INVULNERABILITY) { EntityEx(MO).GiveInventoryType(InvulnerabilitySphere); cprint("You got Invulnerability!"); }
+  if (gimmeFlags&GIMME_STRENGTH) { EntityEx(MO).GiveInventoryType(PowerStrength); cprint("You got Strength!"); }
+  if (gimmeFlags&GIMME_INVISIBILITY) { EntityEx(MO).GiveInventoryType(PowerInvisibility); cprint("You got Invisibility!"); }
+  if (gimmeFlags&GIMME_IRONFEET) { EntityEx(MO).GiveInventoryType(PowerIronFeet); cprint("You got EnviroSuit!"); }
+  if (gimmeFlags&GIMME_INFRARED) { EntityEx(MO).GiveInventoryType(PowerLightAmp); cprint("You got Light Amplifier!"); }
 
   // items
-  if (i1&GIMME_ALLMAP) { EntityEx(MO).GiveInventoryType(Allmap); cprint("You got Computer Map!"); }
+  if (gimmeFlags&GIMME_ALLMAP) { EntityEx(MO).GiveInventoryType(Allmap); cprint("You got Computer Map!"); }
 
   // health
-  if ((i1&GIMME_HEALTH) && Health < 100) {
+  if ((gimmeFlags&GIMME_HEALTH) && Health < 100) {
     Health = 100;
     MO.Health = 100;
   }
-  if (i1&GIMME_HEALTH2) {
+  if (gimmeFlags&GIMME_HEALTH2) {
     Health = 200;
     MO.Health = 200;
   }
 
-  if (i1&(GIMME_HEALTH|GIMME_HEALTH2)) cprint("You got health!");
+  if (gimmeFlags&(GIMME_HEALTH|GIMME_HEALTH2)) cprint("You got health!");
 
   // armor
-  if (i1&GIMME_ARMOR) { EntityEx(MO).GiveInventoryType(GreenArmor); cprint("You got Green Armor!"); }
-  if (i1&GIMME_ARMOR2) { EntityEx(MO).GiveInventoryType(BlueArmor); cprint("You got Blue Armor!"); }
+  if (gimmeFlags&GIMME_ARMOR) { EntityEx(MO).GiveInventoryType(GreenArmor); cprint("You got Green Armor!"); }
+  if (gimmeFlags&GIMME_ARMOR2) { EntityEx(MO).GiveInventoryType(BlueArmor); cprint("You got Blue Armor!"); }
 
   //cprint("YOU GOT IT");
 }
