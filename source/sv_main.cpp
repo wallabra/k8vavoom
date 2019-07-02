@@ -1016,7 +1016,16 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
 //==========================================================================
 COMMAND_AC(TeleportNewMapEx) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
-  if (aidx >= 3) {
+  if (aidx == 1) {
+    int mapcount = P_GetNumMaps();
+    TArray<VStr> list;
+    list.resize(mapcount);
+    for (int f = 0; f < mapcount; ++f) {
+      VName mlump = P_GetMapLumpName(f);
+      if (mlump != NAME_None) list.append(*mlump);
+    }
+    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else if (aidx >= 3) {
     // flags
     TArray<VStr> list;
     for (const TeleportMapExFlag *tff = TMEFlags; tff->name; ++tff) {
@@ -1028,6 +1037,21 @@ COMMAND_AC(TeleportNewMapEx) {
     if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
   }
   return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  COMMAND ListMaps
+//
+//==========================================================================
+COMMAND(ListMaps) {
+  int mapcount = P_GetNumMaps();
+  for (int f = 0; f < mapcount; ++f) {
+    VName mlump = P_GetMapLumpName(f);
+    VStr name = P_GetMapName(f);
+    if (mlump != NAME_None) GCon->Logf("  %s -- %s", *mlump, *name);
+  }
 }
 
 
