@@ -142,6 +142,21 @@ void TCmd ## name::Run()
 #define COMMAND_AC(name) \
 VStr TCmd ## name::AutoCompleteArg (const TArray<VStr> &args, int aidx)
 
+// usage:
+//   COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "forced")
+#define COMMAND_AC_SIMPLE_LIST(name,...) \
+VStr TCmd ## name::AutoCompleteArg (const TArray<VStr> &args, int aidx) { \
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr()); \
+  if (aidx == 1) { \
+    static const char *acstrings[] = { __VA_ARGS__ , nullptr }; \
+    TArray<VStr> list; \
+    for (const char **ssp = acstrings; *ssp; ++ssp) list.append(VStr(*ssp)); \
+    return AutoCompleteFromList(prefix, list, true); /* return unchanged as empty */ \
+  } else { \
+    return VStr::EmptyString; \
+  } \
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // a command buffer
