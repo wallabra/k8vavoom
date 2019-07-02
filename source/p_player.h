@@ -344,6 +344,7 @@ public:
 
   void eventResetInventory () { static VMethodProxy method("ResetInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventResetHealth () { static VMethodProxy method("ResetHealth"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventRemoveKeys () { static VMethodProxy method("RemoveKeys"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventPreraiseWeapon () { static VMethodProxy method("PreraiseWeapon"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventResetToDefaults () { static VMethodProxy method("ResetToDefaults"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventOnSaveLoaded () { static VMethodProxy method("eventOnSaveLoaded"); vobjPutParamSelf(); VMT_RET_VOID(method); }
