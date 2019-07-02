@@ -1975,7 +1975,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   const bool doSaveGame = false;
 #endif
 
-  if (flags&(CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_KEEPFACING|CHANGELEVEL_RESETHEALTH|CHANGELEVEL_PRERAISEWEAPON)) {
+  if (flags&(CHANGELEVEL_KEEPFACING|CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_RESETHEALTH|CHANGELEVEL_PRERAISEWEAPON|CHANGELEVEL_REMOVEKEYS)) {
     for (int i = 0; i < MAXPLAYERS; ++i) {
       VBasePlayer *plr = GGameInfo->Players[i];
       if (!plr) continue;
@@ -1988,6 +1988,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
       if (flags&CHANGELEVEL_RESETINVENTORY) plr->eventResetInventory();
       if (flags&CHANGELEVEL_RESETHEALTH) plr->eventResetHealth();
       if (flags&CHANGELEVEL_PRERAISEWEAPON) plr->eventPreraiseWeapon();
+      if (flags&CHANGELEVEL_REMOVEKEYS) plr->eventRemoveKeys();
     }
   }
 
