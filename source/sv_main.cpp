@@ -1611,7 +1611,7 @@ COMMAND(AddBot) {
 //  Map
 //
 //==========================================================================
-COMMAND(Map) {
+COMMAND_WITH_AC(Map) {
   VStr mapname;
 
   if (Args.Num() != 2) {
@@ -1655,6 +1655,26 @@ COMMAND(Map) {
 #ifdef CLIENT
   if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
+}
+
+//==========================================================================
+//
+//  COMMAND_AC Map
+//
+//==========================================================================
+COMMAND_AC(Map) {
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    int mapcount = P_GetNumMaps();
+    TArray<VStr> list;
+    list.resize(mapcount);
+    for (int f = 0; f < mapcount; ++f) {
+      VName mlump = P_GetMapLumpName(f);
+      if (mlump != NAME_None) list.append(*mlump);
+    }
+    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  }
+  return VStr::EmptyString;
 }
 
 
