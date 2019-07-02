@@ -230,6 +230,13 @@ extern "C" {
     if (a == b) return 0;
     return a->Name.ICmp(b->Name);
   }
+
+  static int vstrptrcmpci (const void *aa, const void *bb, void *udata) {
+    const VStr *a = (const VStr *)aa;
+    const VStr *b = (const VStr *)bb;
+    if (a == b) return 0;
+    return a->ICmp(*b);
+  }
 }
 
 
@@ -340,7 +347,7 @@ void VCommand::AddToAutoComplete (const char *string) {
 //  VCommand::AutoCompleteFromList
 //
 //==========================================================================
-VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty) {
+VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty, bool doSortHint) {
   if (list.length() == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix);
 
   VStr bestmatch;
@@ -380,11 +387,31 @@ VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &li
     // show all possible matches
     if (onShowCompletionMatch) {
       onShowCompletionMatch(true, "=== possible matches ===");
-      for (int f = 0; f < list.length(); ++f) {
-        VStr mt = list[f];
-        if (mt.length() < prefix.length()) continue;
-        if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
-        onShowCompletionMatch(false, mt);
+      bool skipPrint = false;
+      if (doSortHint && list.length() > 1) {
+        bool needSorting = false;
+        for (int f = 1; f < list.length(); ++f) if (list[f-1].ICmp(list[f]) > 0) { needSorting = true; break; }
+        if (needSorting) {
+          TArray<VStr> sortedlist;
+          sortedlist.resize(list.length());
+          for (int f = 0; f < list.length(); ++f) sortedlist.append(list[f]);
+          timsort_r(sortedlist.ptr(), sortedlist.length(), sizeof(VStr), &vstrptrcmpci, nullptr);
+          for (int f = 0; f < sortedlist.length(); ++f) {
+            VStr mt = sortedlist[f];
+            if (mt.length() < prefix.length()) continue;
+            if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+            onShowCompletionMatch(false, mt);
+          }
+          skipPrint = true;
+        }
+      }
+      if (!skipPrint) {
+        for (int f = 0; f < list.length(); ++f) {
+          VStr mt = list[f];
+          if (mt.length() < prefix.length()) continue;
+          if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+          onShowCompletionMatch(false, mt);
+        }
       }
     }
     return (unchangedAsEmpty ? VStr::EmptyString : prefix);

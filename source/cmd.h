@@ -102,7 +102,7 @@ public:
   // if longest prefix is the same as input prefix, show all matches
   // case-insensitive
   // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
-  static VStr AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false);
+  static VStr AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
 
   static void ExecuteString (const VStr &, ECmdSource, VBasePlayer *);
   static void ForwardToServer ();
