@@ -443,6 +443,7 @@ extern VCvarB gl_dbg_render_stack_portal_bounds;
 extern VCvarB gl_use_stencil_quad_clear;
 extern VCvarI gl_dbg_use_zpass;
 extern VCvarB gl_dbg_wireframe;
+extern VCvarB gl_prefill_zbuffer;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 extern VCvarB r_brightmaps_additive;
@@ -529,6 +530,8 @@ private:
   VTexture *texturedPolyLastTex;
   float texturedPolyLastAlpha;
   TVec texturedPolyLastLight;
+  // list of surfaces with masked textures, for z-prefill
+  TArray<surface_t *> zfillMasked;
 
 protected:
   VGLShader *shaderHead;
@@ -562,6 +565,7 @@ public:
 
   // polygon drawing
   virtual void WorldDrawing () override;
+  virtual void DrawWorldZBufferPass () override;
   virtual void DrawWorldAmbientPass () override;
 
   virtual void BeginShadowVolumesPass () override;

@@ -62,6 +62,63 @@ extern "C" {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DrawWorldZBufferPass
+//
+//  fill GPU z buffer, so we can limit overdraw later
+//
+//  TODO: walls with masked textures should be rendered with another shader
+//
+//==========================================================================
+void VOpenGLDrawer::DrawWorldZBufferPass () {
+  if (!RendLev->DrawSurfList.length()) return;
+  SurfZBuf.Activate();
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+  //zfillMasked.reset();
+  surface_t **surfptr = RendLev->DrawSurfList.ptr();
+  for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
+    const surface_t *surf = *surfptr;
+    if (surf->count < 3) continue;
+    if (surf->drawflags&surface_t::DF_MASKED) continue;
+
+    // don't render translucent surfaces
+    // they should not end up here, but...
+    const texinfo_t *currTexinfo = surf->texinfo;
+    if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
+    if (currTexinfo->Alpha < 1.0f) continue;
+
+    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+
+    /*
+    if (surf->drawflags&surface_t::DF_MASKED) {
+      zfillMasked.append((surface_t *)surf;
+    } else
+    */
+    {
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+    }
+  }
+
+  // render masked walls
+  /*
+  if (zfillMasked.length()) {
+    const surface_t **surfp = zfillMasked.ptr();
+    for (int f = zfillMasked.length(); f--; ++surfp) {
+      const surface_t *surf = *surfp;
+    }
+  }
+  */
+
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawWorldAmbientPass
 //
 //  this renders sector ambient light based on sector light level
@@ -109,6 +166,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     };
     unsigned currShader = SOLID;
 
+    if (gl_prefill_zbuffer) {
+      DrawWorldZBufferPass();
+      //glDepthFunc(GL_EQUAL);
+    }
+
     // setup samplers for all shaders
     // masked
     ShadowsAmbientMasked.Activate();
@@ -133,6 +195,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       ShadowsAmbient.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
+    // do not sort surfaces by texture here, because
+    // textures will be put later, and BSP sorted them by depth for us
     // other passes can skip surface sorting
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
 
@@ -300,6 +364,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
     }
   }
+
+  // restore depth function
+  //if (gl_prefill_zbuffer) RestoreDepthFunc();
 
   p_glActiveTextureARB(GL_TEXTURE0+1);
   glBindTexture(GL_TEXTURE_2D, 0);

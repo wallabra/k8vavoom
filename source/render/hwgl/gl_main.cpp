@@ -93,6 +93,9 @@ VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", fa
 
 VCvarB gl_use_stencil_quad_clear("gl_use_stencil_quad_clear", false, "Draw quad to clear stencil buffer instead of 'glClear'?", CVAR_Archive|CVAR_PreInit);
 
+// this is not working yet
+VCvarB gl_prefill_zbuffer("gl_prefill_zbuffer", false, "Fill z-buffer first, to reduce overdraw?", CVAR_PreInit/*|CVAR_Archive*/);
+
 // 1: normal; 2: 1-skewed
 VCvarI gl_dbg_use_zpass("gl_dbg_use_zpass", "0", "DO NOT USE!", CVAR_PreInit);
 

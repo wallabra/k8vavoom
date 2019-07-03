@@ -467,6 +467,11 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // draw surfaces without lightmaps
   if (RendLev->DrawSurfList.length()) {
+    if (gl_prefill_zbuffer) {
+      DrawWorldZBufferPass();
+      //glDepthFunc(GL_EQUAL);
+    }
+
     // sort by texture, to minimise texture switches
     if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
 
@@ -573,4 +578,7 @@ void VOpenGLDrawer::WorldDrawing () {
       }
     }
   }
+
+  // restore depth function
+  //if (gl_prefill_zbuffer) RestoreDepthFunc();
 }
