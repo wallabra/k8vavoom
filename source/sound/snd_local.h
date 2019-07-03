@@ -93,6 +93,9 @@ struct sfxinfo_t {
   int SampleBits;
   vuint32 DataSize;
   void *Data;
+
+  // last used time
+  double luTime;
 };
 
 struct seq_info_t {

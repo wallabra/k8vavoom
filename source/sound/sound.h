@@ -68,12 +68,19 @@ struct FRolloffInfo {
 class VSoundManager {
 public:
   // the complete set of sound effects
-  TArray<sfxinfo_t> S_sfx;
+  TArray<sfxinfo_t> S_sfx; // 0 is reserved
   TArray<seq_info_t> SeqInfo;
+  TMap<VStr, int> sfxMap; // name is lowercased
+
+protected:
+  TMap<VStr, bool> sfxMissingReported; // name is lowercased
+
+  void SoundJustUsed (int idx);
 
 public:
   VSoundManager ();
   ~VSoundManager ();
+
   void Init ();
   int GetSoundID (VName);
   int GetSoundID (const char*);
@@ -92,6 +99,9 @@ public:
 
   void GetSoundLumpNames (TArray<FReplacedString> &);
   void ReplaceSoundLumpNames (TArray<FReplacedString> &);
+
+  // call this when loading a new map
+  void CleanupSounds ();
 
 #if defined(VAVOOM_REVERB)
   VReverbInfo *FindEnvironment (int);

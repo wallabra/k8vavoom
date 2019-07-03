@@ -1152,8 +1152,11 @@ void SV_SendServerInfoToClients () {
 //
 //==========================================================================
 void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
+  if (GSoundManager) GSoundManager->CleanupSounds();
+
   GCon->Log("===============================================");
   GCon->Logf("Spawning server with \"%s\"", mapname);
+
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_issued = false;
   mapteleport_flags = 0;

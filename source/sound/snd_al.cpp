@@ -228,7 +228,7 @@ bool VOpenALDevice::LoadSound (int sound_id) {
 
   if (Buffers[sound_id]) return true;
 
-  // check, that sound lump is loaded
+  // check that sound lump is loaded
   if (!GSoundManager->LoadSound(sound_id)) return false; // missing sound
 
   // clear error code

@@ -413,7 +413,7 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   // find actual sound ID to use
   int sound_id = GSoundManager->ResolveSound(InSoundId);
 
-  if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return; // k8: just in case
+  if (sound_id < 1 || sound_id >= GSoundManager->S_sfx.length()) return; // k8: just in case
   if (GSoundManager->S_sfx[sound_id].VolumeAmp <= 0) return; // nothing to see here, come along
 
   // if it's a looping sound and it's still playing, then continue playing the existing one

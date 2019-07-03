@@ -30,6 +30,8 @@
 #define VV_ALLOW_SFX_TRUNCATION
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
+static VCvarB snd_free_played_sounds("snd_free_played_sounds", false, "Immediately unload started sound?", CVAR_PreInit|CVAR_Archive);
+static bool lastFreePlayedSounds = false;
 
 
 #ifdef CLIENT
@@ -558,7 +560,13 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   S.Rolloff = CurrentDefaultRolloff;
   S.LumpNum = Lump;
   S.Link = -1;
-  return S_sfx.Append(S);
+  int id = S_sfx.Append(S);
+  // put into sound map
+  if (TagName != NAME_None) {
+    VStr s = VStr(TagName).toLowerCase();
+    sfxMap.put(s, id);
+  }
+  return id;
 }
 
 
@@ -573,7 +581,6 @@ int VSoundManager::AddSound (VName TagName, int Lump) {
   if (id > 0) {
     // if the sound has already been defined, change the old definition
     sfxinfo_t *sfx = &S_sfx[id];
-
     //if (sfx->bPlayerReserve)
     //{
     //  SC_ScriptError("Sounds that are reserved for players cannot be reassigned");
@@ -605,8 +612,11 @@ int VSoundManager::AddSound (VName TagName, int Lump) {
 //
 //==========================================================================
 int VSoundManager::FindSound (VName TagName) {
-  for (int i = 0; i < S_sfx.Num(); ++i) if (!VStr::ICmp(*S_sfx[i].TagName, *TagName)) return i;
-  return 0;
+  if (TagName == NAME_None) return 0;
+  //for (int i = 1; i < S_sfx.Num(); ++i) if (!VStr::ICmp(*S_sfx[i].TagName, *TagName)) return i;
+  VStr s = VStr(TagName).toLowerCase();
+  auto ip = sfxMap.find(s);
+  return (ip ? *ip : 0);
 }
 
 
@@ -731,19 +741,21 @@ int VSoundManager::LookupPlayerSound (int ClassId, int GenderId, int RefId) {
 //
 //==========================================================================
 int VSoundManager::GetSoundID (VName Name) {
-  /*
-  for (int i = 0; i < S_sfx.Num(); i++)
-  {
-    if (!VStr::ICmp(*S_sfx[i].TagName, *Name))
-    {
-      return i;
+  //if (Name == NAME_None) return 0;
+  //return GetSoundID(*Name);
+
+  if (Name == NAME_None) return 0;
+  if (VStr::ICmp(*Name, "None") == 0 || VStr::ICmp(*Name, "Null") == 0 || VStr::ICmp(*Name, "nil") == 0) return 0;
+
+  int res = FindSound(Name);
+  if (!res) {
+    VStr s = VStr(Name).toLowerCase();
+    if (!sfxMissingReported.has(s)) {
+      sfxMissingReported.put(s, true);
+      GCon->Logf("WARNING! Can't find sound named '%s'", *Name);
     }
   }
-  GCon->Logf("WARNING! Can't find sound %s", *Name);
-  return 0;
-  */
-  if (Name == NAME_None) return 0;
-  return GetSoundID(*Name);
+  return res;
 }
 
 
@@ -754,39 +766,15 @@ int VSoundManager::GetSoundID (VName Name) {
 //==========================================================================
 int VSoundManager::GetSoundID (const char *name) {
   if (!name || !name[0] || VStr::ICmp(name, "None") == 0 || VStr::ICmp(name, "Null") == 0 || VStr::ICmp(name, "nil") == 0) return 0;
-  for (int i = 0; i < S_sfx.Num(); ++i) {
-    if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
-  }
 
-#if 0
-  //k8: i added this, and i will remove this -- this is wrong, and will glitch in network/demos
-  if (strchr(name, '/') != nullptr) {
-    VStr vs = VStr(name);
-    int lump = W_CheckNumForFileName(vs+".flac");
-    //if (lump < 0) lump = W_CheckNumForFileName(vs+".flac");
-    if (lump < 0) lump = W_CheckNumForFileName(vs+".wav");
-    if (lump < 0) lump = W_CheckNumForFileName(vs+".ogg");
-    if (lump < 0) lump = W_CheckNumForFileName(vs+".mp3");
-    if (lump < 0) lump = W_CheckNumForFileName(vs);
-    if (lump >= 0) {
-      //GCon->Logf("sound '%s' is %s", name, *W_FullLumpName(lump));
-      //FIXME: this is totally wrong for network/demo!
-      //       new sounds won't be loaded on playback (or loaded in wrong order),
-      //       so it will all be broken. alas.
-      int id = AddSoundLump(VName(name), lump);
-      S_sfx[id].Data = nullptr;
-      if (LoadSound(id)) {
-        GCon->Logf("loaded sound '%s' (lump %d, id %d)", name, lump, id);
-        return id;
-      }
-    }
-  }
-#endif
+  VStr s = VStr(name).toLowerCase();
+  auto ip = sfxMap.find(s);
+  if (ip) return *ip;
 
-  static TMap<VName, bool> reportMap;
-  VName sname = VName(name);
-  if (!reportMap.has(sname)) {
-    reportMap.put(sname, true);
+  //for (int i = 1; i < S_sfx.Num(); ++i) if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
+
+  if (!sfxMissingReported.has(s)) {
+    sfxMissingReported.put(s, true);
     GCon->Logf("WARNING! Can't find sound named '%s'", name);
   }
 
@@ -826,7 +814,7 @@ int VSoundManager::ResolveEntitySound (VName ClassName, VName GenderName, VName 
 //==========================================================================
 int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
   int sound_id = InSoundId;
-  while (sound_id >= 0 && sound_id < S_sfx.length() && S_sfx[sound_id].Link != -1) {
+  while (sound_id > 0 && sound_id < S_sfx.length() && S_sfx[sound_id].Link != -1) {
          if (S_sfx[sound_id].bPlayerReserve) sound_id = LookupPlayerSound(ClassID, GenderID, sound_id);
     else if (S_sfx[sound_id].bRandomHeader) sound_id = S_sfx[sound_id].Sounds[rand()%S_sfx[sound_id].Link];
     else sound_id = S_sfx[sound_id].Link;
@@ -858,21 +846,63 @@ bool VSoundManager::IsSoundPresent (VName ClassName, VName GenderName, VName Sou
 
 //==========================================================================
 //
+//  VSoundManager::SoundJustUsed
+//
+//==========================================================================
+void VSoundManager::SoundJustUsed (int idx) {
+  if (idx < 1 || idx >= S_sfx.length()) return;
+  sfxinfo_t &sfx = S_sfx[idx];
+  sfx.luTime = Sys_Time();
+  //TODO: maintain sorted list here
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::CleanupSounds
+//
+//  unload all sounds used more than five minutes ago
+//
+//==========================================================================
+void VSoundManager::CleanupSounds () {
+  double currTime = Sys_Time();
+  int count = 0;
+  for (int f = 1; f < S_sfx.length(); ++f) {
+    sfxinfo_t &sfx = S_sfx[f];
+    if (!sfx.UseCount && sfx.Data && currTime-sfx.luTime > 15.0*60.0) {
+      Z_Free(sfx.Data);
+      sfx.Data = nullptr;
+      ++count;
+    }
+  }
+  if (count) GCon->Logf("Sound: %d sound%s freed.", count, (count != 1 ? "s" : ""));
+}
+
+
+//==========================================================================
+//
 //  VSoundManager::LoadSound
 //
 //==========================================================================
 bool VSoundManager::LoadSound (int sound_id) {
   static const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
+
+  if (sound_id < 1 || sound_id >= S_sfx.length()) return false;
+
   if (!S_sfx[sound_id].Data) {
+    // do not try to load sound that already failed once
+    if (soundsWarned.has(*S_sfx[sound_id].TagName)) return false;
+
     int Lump = S_sfx[sound_id].LumpNum;
-    if (S_sfx[sound_id].LumpNum < 0) {
-      if (!soundsWarned.put(*S_sfx[sound_id].TagName)) {
-        GCon->Logf(NAME_Dev, "Sound %s lump not found", *S_sfx[sound_id].TagName);
-      }
+    if (Lump < 0) {
+      soundsWarned.put(*S_sfx[sound_id].TagName);
+      GCon->Logf(NAME_Warning, "Sound '%s' lump not found", *S_sfx[sound_id].TagName);
       return false;
     }
+
     int FileLump = W_FindLumpByFileNameWithExts(va("sound/%s", *W_LumpName(Lump)), Exts);
     if (Lump < FileLump) Lump = FileLump;
+
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     for (VSampleLoader *Ldr = VSampleLoader::List; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
       Strm->Seek(0);
@@ -884,13 +914,15 @@ bool VSoundManager::LoadSound (int sound_id) {
     }
     delete Strm;
     if (!S_sfx[sound_id].Data) {
-      if (!soundsWarned.put(*S_sfx[sound_id].TagName)) {
-        GCon->Logf(NAME_Dev, "Failed to load sound %s", *S_sfx[sound_id].TagName);
-      }
+      soundsWarned.put(*S_sfx[sound_id].TagName);
+      GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
       return false;
     }
+    //GCon->Logf("SND: loaded sound '%s' (rc=%d)", *S_sfx[sound_id].TagName, S_sfx[sound_id].UseCount+1);
   }
+
   ++S_sfx[sound_id].UseCount;
+  SoundJustUsed(sound_id);
   return true;
 }
 
@@ -901,12 +933,37 @@ bool VSoundManager::LoadSound (int sound_id) {
 //
 //==========================================================================
 void VSoundManager::DoneWithLump (int sound_id) {
-  sfxinfo_t &sfx = S_sfx[sound_id];
-  if (!sfx.Data || !sfx.UseCount) Sys_Error("Empty lump");
-  --sfx.UseCount;
-  if (sfx.UseCount) return; // still used
-  Z_Free(sfx.Data);
-  sfx.Data = nullptr;
+  if (sound_id > 0 && sound_id < S_sfx.length()) {
+    sfxinfo_t &sfx = S_sfx[sound_id];
+    if (!sfx.Data || !sfx.UseCount) Sys_Error("Empty lump");
+    --sfx.UseCount;
+    //GCon->Logf("SND: done with sound '%s' (rc=%d)", *S_sfx[sound_id].TagName, S_sfx[sound_id].UseCount);
+    if (sfx.UseCount == 0) {
+      if (snd_free_played_sounds) {
+        //GCon->Logf("SND: unloaded sound '%s'", *S_sfx[sound_id].TagName);
+        Z_Free(sfx.Data);
+        sfx.Data = nullptr;
+      }
+    }
+  }
+
+  // free all loaded sounds if necessary
+  if (lastFreePlayedSounds != snd_free_played_sounds.asBool()) {
+    lastFreePlayedSounds = snd_free_played_sounds.asBool();
+    if (lastFreePlayedSounds) {
+      int count = 0;
+      for (int f = 1; f < S_sfx.length(); ++f) {
+        sfxinfo_t &sfx = S_sfx[f];
+        //GCon->Logf("%d: <%s> rc=%d; %g", f, *sfx.TagName, sfx.UseCount, Sys_Time()-sfx.luTime);
+        if (sfx.UseCount == 0 && sfx.Data) {
+          Z_Free(sfx.Data);
+          sfx.Data = nullptr;
+          ++count;
+        }
+      }
+      if (count) GCon->Logf("Sound: %d sound%s freed.", count, (count != 1 ? "s" : ""));
+    }
+  }
 }
 
 
