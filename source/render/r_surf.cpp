@@ -1625,6 +1625,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (inWorldCreation) R_PBarUpdate("Lighting", Level->NumSubsectors-i, Level->NumSubsectors);
   }
 
+  InitialWorldUpdate();
+
   if (inWorldCreation) R_PBarUpdate("Lighting", Level->NumSubsectors, Level->NumSubsectors, true);
 
   inWorldCreation = false;

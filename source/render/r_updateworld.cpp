@@ -173,7 +173,6 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
 //
 //==========================================================================
 void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Range) {
-
   // update fake sectors
   /*
   for (int i = 0; i < Level->NumSectors; ++i) {
@@ -203,4 +202,28 @@ void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Ra
     UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output
   }
 #endif
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::InitialWorldUpdate
+//
+//==========================================================================
+void VRenderLevelShared::InitialWorldUpdate () {
+  subsector_t *sub = &Level->Subsectors[0];
+  for (int scount = Level->NumSubsectors; scount--; ++sub) {
+    if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
+    UpdateSubRegion(sub, sub->regions);
+  }
+
+  {
+    const vint32 *fksip = Level->FakeFCSectors.ptr();
+    for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
+      sector_t *sec = &Level->Sectors[*fksip];
+           if (sec->deepref) UpdateDeepWater(sec);
+      else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
+      else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
+    }
+  }
 }

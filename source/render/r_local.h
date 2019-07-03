@@ -500,6 +500,7 @@ protected:
   //void UpdateSubsector (int num, float *bbox);
   //void UpdateBSPNode (int bspnum, float *bbox);
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
+  void InitialWorldUpdate ();
 
   void UpdateSubsectorBBox (int num, float *bbox);
   void RecalcWorldBBoxes (int bspnum, float *bbox);
