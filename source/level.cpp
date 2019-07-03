@@ -356,7 +356,7 @@ void VLevel::RecalcWorldBBoxes () {
 //  DecalIO
 //
 //==========================================================================
-static void DecalIO (VStream &Strm, decal_t *dc) {
+static void DecalIO (VStream &Strm, decal_t *dc, VLevel *level) {
   if (!dc) return;
   {
     VNTValueIOEx vio(&Strm);
@@ -403,6 +403,22 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
       vio.io("FFFuck1", s);
     }
     */
+    vint32 slsec = (Strm.IsLoading() ? -666 : (dc->slidesec ? (int)(ptrdiff_t)(dc->slidesec-&level->Sectors[0]) : -1));
+    vio.iodef(VName("slidesec"), slsec, -666);
+    if (Strm.IsLoading()) {
+      if (slsec == -666) {
+        // fix backsector
+        if ((dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) && !dc->slidesec) {
+          line_t *lin = dc->seg->linedef;
+          if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
+          int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
+          dc->slidesec = (bsidenum ? dc->seg->backsector : dc->seg->frontsector);
+          GCon->Logf("Save loader: fixed backsector for decal");
+        }
+      } else {
+        dc->slidesec = (slsec < 0 || slsec >= level->NumSectors ? nullptr : &level->Sectors[slsec]);
+      }
+    }
     if (vio.IsError()) Host_Error("error in decal i/o");
   }
   VDecalAnim::Serialise(Strm, dc->animator);
@@ -489,18 +505,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
           decal_t *dc = new decal_t;
           memset((void *)dc, 0, sizeof(decal_t));
           dc->seg = &Segs[f];
-          DecalIO(Strm, dc);
+          DecalIO(Strm, dc, this);
           if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
             delete dc->animator;
             delete dc;
           } else {
-            // fix backsector
-            if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
-              line_t *lin = Segs[f].linedef;
-              if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
-              int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
-              dc->slidesec = (bsidenum ? dc->seg->backsector : dc->seg->frontsector);
-            }
             // add to decal list
             if (decal) decal->next = dc; else Segs[f].decals = dc;
             if (dc->animator) {
@@ -525,7 +534,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
         Strm << dcount;
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) {
-          DecalIO(Strm, decal);
+          DecalIO(Strm, decal, this);
           ++dctotal;
         }
       }
