@@ -119,7 +119,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Dynamic lights";
-    cvar = r_dynamic;
+    cvar = r_dynamic_lights;
   }
 
   option bool {
