@@ -39,8 +39,6 @@
 
 
 extern VCvarB r_darken;
-extern VCvarI r_ambient;
-extern VCvarB r_allow_ambient;
 extern VCvarB r_allow_subtractive_lights;
 extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_more;

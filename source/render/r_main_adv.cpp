@@ -247,7 +247,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
     int rlStatic = LightsRendered;
 
-    if (!FixedLight && r_dynamic && r_max_lights != 0) {
+    if (!FixedLight && r_dynamic_lights && r_max_lights != 0) {
       static TArray<DynLightInfo> visdynlights;
       if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
       unsigned visdynlightCount = 0;

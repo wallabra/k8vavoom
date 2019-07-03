@@ -768,11 +768,9 @@ private:
         }
       }
     }
-    if (!surf || !r_allow_ambient) return 0;
-    int slins = (surf->Light>>24)&0xff;
+    if (!surf) return 0;
+    int slins = (r_allow_ambient ? (surf->Light>>24)&0xff : clampToByte(r_ambient));
     if (slins < r_ambient) slins = clampToByte(r_ambient);
-    //slins = max2(slins, r_ambient);
-    //if (slins > 255) slins = 255;
     return float(slins)/255.0f;
   }
 

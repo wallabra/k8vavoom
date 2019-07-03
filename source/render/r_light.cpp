@@ -33,7 +33,7 @@
 VCvarB r_darken("r_darken", true, "Darken level to better match original DooM?", CVAR_Archive);
 VCvarI r_ambient("r_ambient", "0", "Minimal ambient light.", CVAR_Archive);
 VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
-VCvarB r_dynamic("r_dynamic", true, "Allow dynamic lights?", CVAR_Archive);
+VCvarB r_dynamic_lights("r_dynamic_lights", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip_pvs("r_dynamic_clip_pvs", false, "Clip dynamic lights with PVS?", CVAR_Archive);
 VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
@@ -41,7 +41,7 @@ VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Arc
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
 
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
-VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
+VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", false, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
 
@@ -190,7 +190,7 @@ void VRenderLevelShared::PushDlights () {
   //???:if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
   (void)IncDLightFrameCount();
 
-  if (!r_dynamic) return;
+  if (!r_dynamic_lights) return;
 
   dlight_t *l = DLights;
   for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
@@ -567,7 +567,7 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
 //
 //==========================================================================
 void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane) {
-  if (r_dynamic && sub->dlightframe == currDLightFrame) {
+  if (r_dynamic_lights && sub->dlightframe == currDLightFrame) {
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1U<<i))) continue;
@@ -696,7 +696,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
       if (l < r_ambient) l = r_ambient;
       l = midval(0.0f, l, 255.0f);
     } else {
-      l = 0.0f;
+      l = midval(0.0f, (float)r_ambient.asInt(), 255.0f);
     }
 
     int SecLightColor = reg->secregion->params->LightColor;
