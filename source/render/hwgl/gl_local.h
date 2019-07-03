@@ -424,7 +424,7 @@ typedef void (APIENTRY *glBlendFuncSeparate_t) (GLenum sfactorRGB, GLenum dfacto
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
 extern VCvarB gl_sort_textures;
-extern VCvarI r_ambient;
+extern VCvarI r_ambient_min;
 extern VCvarB r_allow_ambient;
 extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
@@ -769,8 +769,8 @@ private:
       }
     }
     if (!surf) return 0;
-    int slins = (r_allow_ambient ? (surf->Light>>24)&0xff : clampToByte(r_ambient));
-    if (slins < r_ambient) slins = clampToByte(r_ambient);
+    int slins = (r_allow_ambient ? (surf->Light>>24)&0xff : clampToByte(r_ambient_min));
+    if (slins < r_ambient_min) slins = clampToByte(r_ambient_min);
     return float(slins)/255.0f;
   }
 

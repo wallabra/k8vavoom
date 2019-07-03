@@ -31,7 +31,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_darken("r_darken", true, "Darken level to better match original DooM?", CVAR_Archive);
-VCvarI r_ambient("r_ambient", "0", "Minimal ambient light.", CVAR_Archive);
+VCvarI r_ambient_min("r_ambient_min", "0", "Minimal ambient light.", CVAR_Archive);
 VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
 VCvarB r_dynamic_lights("r_dynamic_lights", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
@@ -693,10 +693,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
       l = reg->secregion->params->lightlevel+ExtraLight;
       l = midval(0.0f, l, 255.0f);
       if (r_darken) l = light_remap[(int)l];
-      if (l < r_ambient) l = r_ambient;
+      if (l < r_ambient_min) l = r_ambient_min;
       l = midval(0.0f, l, 255.0f);
     } else {
-      l = midval(0.0f, (float)r_ambient.asInt(), 255.0f);
+      l = midval(0.0f, (float)r_ambient_min.asInt(), 255.0f);
     }
 
     int SecLightColor = reg->secregion->params->LightColor;

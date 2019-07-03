@@ -152,7 +152,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       // sector light
       if (r_allow_ambient) {
         int slins = (surf->Light>>24)&0xff;
-        if (slins < r_ambient) slins = clampToByte(r_ambient);
+        if (slins < r_ambient_min) slins = clampToByte(r_ambient_min);
         int lr = (surf->Light>>16)&255;
         int lg = (surf->Light>>8)&255;
         int lb = surf->Light&255;

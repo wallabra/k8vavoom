@@ -213,7 +213,7 @@ menudef VideoOptions {
 
   option slider {
     title = "Minimum ambient light";
-    cvar = r_ambient;
+    cvar = r_ambient_min;
     help = "If level is too dark, you can set minimum light level.";
     step = 16;
     min = 0;
