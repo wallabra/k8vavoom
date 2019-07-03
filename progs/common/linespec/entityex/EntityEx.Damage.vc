@@ -115,6 +115,30 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   bool headshot = false;
   bool showHeadshots = false;
   if (debugme) showHeadshots = GetCvarB('k8HSShowHeadshots');
+  int refire = PlayerEx(plr.Player).Refire;
+  // set `refire` to:
+  //   -666: totally fucked
+  //      0: not fucked
+  //      1: slightly fucked
+  //      2: more fucked
+  //      3: even more fucked
+  if (refire > 0) {
+    //print("refire0: %s", refire);
+         if (refire > 20) refire = -666; // totally fucked
+    else if (refire > 16) refire = 3;
+    else if (refire > 8) refire = 2;
+    else {
+      int rnd = P_Random();
+           if (rnd > 200+(refire == 1 ? 10 : refire > 3 ? -10 : 0)) refire = -666; // totally fucked
+      else if (rnd > 164) refire = 1; // slightly fucked
+      else refire = 0; // not fucked
+    }
+    //print("refire1: %s", refire);
+  }
+
+  if (refire < 0) return damage; // totally fucked
+  if (refire > 0 && P_Random() >= 255/refire) return damage; // oops
+  //print("refire2: %s", refire);
 
   if (vicHgt <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
@@ -140,7 +164,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
   // precision shot is headshot near thing vertical center
   int precisionShot = 0; // 0: nope; -2: very far; -1: too far; 1: almost
-  if (headshot && vicRadius > 0) {
+  if (headshot && vicRadius > 0 && refire < 2) {
     //print("HITXY=(%s,%s)", hitpos.x, hitpos.y);
     float hc = fmin(fabs(hitpos.x), fabs(hitpos.y));
     float r3 = vicRadius/3;
@@ -155,6 +179,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   float mult = GetCvarF('k8HSDistMult');
   if (mult < 0.1) mult = 1.1;
   if (mult > 4) mult = 4;
+  if (refire > 1) mult *= refire-1; // divide in half for more fucked refire
 
   float len = 10000;
   if (headshot) {
@@ -176,6 +201,12 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
+    // decrease critical chance for refiring
+    switch (refire) {
+      case 1: critChance -= critChance/8; break; // slightly
+      case 2: critChance -= critChance/4; break; // more
+      case 3: critChance /= 2; break; // even more
+    }
 
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
