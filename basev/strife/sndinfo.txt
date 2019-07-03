@@ -20,6 +20,7 @@ $playersounddup player  male  *pain25   *pain100
 $playersound  player  male  *death    dspldeth
 $playersound  player  male  *xdeath   dsplxdth
 $playersound  player  male  *gibbed   dsslop
+$playersound  player  male  *splat    dsslop
 
 // Use *pain in a script to play any of the pain sounds
 $random *pain         { *pain100  *pain75  *pain50  *pain25 }
@@ -361,10 +362,11 @@ world/quake           dsquake
 misc/pcrush           dspcrush
 
 misc/gibbed           dsslop
-human/imonfire          dsburnme
-misc/disruptordeath       dsdsrptr
+misc/fallingsplat     dsslop
+human/imonfire        dsburnme
+misc/disruptordeath   dsdsrptr
 
-misc/missileinflight      dsrflite
+misc/missileinflight  dsrflite
 
 // Effects
 

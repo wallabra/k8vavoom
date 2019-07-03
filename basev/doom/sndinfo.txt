@@ -19,6 +19,7 @@ $playersounddup player  male  *pain25   *pain100
 $playersound  player  male  *death    dspldeth
 $playersound  player  male  *xdeath   dspdiehi
 $playersound  player  male  *gibbed   dsslop
+$playersound  player  male  *splat    dsslop
 $playersound  player  male  *grunt    dsoof
 $playersounddup player  male  *land   *grunt
 $playersound  player  male  *jump   dsjump
@@ -83,7 +84,8 @@ weapons/railgf          railgf1
 //
 //==========================================================================
 
-misc/gibbed           dsslop
+misc/gibbed        dsslop
+misc/fallingsplat  dsslop
 
 //  Zombieman
 $random grunt/sight       { grunt/sight1  grunt/sight2  grunt/sight3 }
