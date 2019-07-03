@@ -1433,6 +1433,20 @@ static sec_surface_t *AM_getFlatSurface (subregion_t *reg, bool doFloors) {
 }
 
 
+#ifdef CLIENT
+extern "C" {
+  static int ssurfCmp (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const sec_surface_t *a = *(const sec_surface_t **)aa;
+    const sec_surface_t *b = *(const sec_surface_t **)bb;
+    const auto atx = (uintptr_t)(a->texinfo.Tex);
+    const auto btx = (uintptr_t)(b->texinfo.Tex);
+    return (atx < btx ? -1 : atx > btx ? 1 : 0);
+  }
+}
+#endif
+
+
 //==========================================================================
 //
 //  AM_drawFloors
@@ -1445,9 +1459,10 @@ static void AM_drawFloors () {
   float alpha = (am_overlay ? clampval(am_texture_alpha.asFloat(), 0.0f, 1.0f) : 1.0f);
   if (alpha <= 0.0f) return;
   VTexture *skytex = GTextureManager.getIgnoreAnim(skyflatnum);
-  TArray<TVec> verts;
-  //GCon->Logf("bounds=(%g,%g)-(%g,%g)", m_x, m_y, m_x2, m_y2);
-  bool hidden = false;
+  static TArray<TVec> verts;
+  static TArray<sec_surface_t *> ssurfs;
+  ssurfs.reset();
+  // collect visible surfaces
   subsector_t *sub = &GClLevel->Subsectors[0];
   for (unsigned i = GClLevel->NumSubsectors; i--; ++sub) {
     if (!sub->sector) continue;
@@ -1456,9 +1471,6 @@ static void AM_drawFloors () {
     if (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered)) {
       // check for "allmap" powerup
       if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
-      hidden = true;
-    } else {
-      hidden = false;
     }
     // first subregion is main sector subregion
     subregion_t *reg = sub->regions;
@@ -1471,32 +1483,48 @@ static void AM_drawFloors () {
       flatsurf = AM_getFlatSurface(reg, true);
       if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) continue; // just in case
     }
-    // calculate lighting
-    const float lev = clampval(sub->sector->params.lightlevel/255.0f, 0.0f, 1.0f);
-    const vuint32 light = sub->sector->params.LightColor;
-    TVec vlight(
-      ((light>>16)&255)*lev/255.0f,
-      ((light>>8)&255)*lev/255.0f,
-      (light&255)*lev/255.0f);
-    // draw hidden parts bluish
-    if (hidden) {
-      float intensity = colorIntensity((light>>16)&255, (light>>8)&255, light&255)/255.0f;
-      vlight = TVec(0.1f, 0.1f, intensity);
-    }
+    if (!flatsurf->surfs) continue;
+    check(flatsurf->surfs->subsector == sub);
     // update textures (why not? this updates floor animation)
     Drawer->RendLev->UpdateSubsectorFlatSurfaces(sub, doFloors, !doFloors);
-    // ok, we can render surfaces
-    for (surface_t *surf = flatsurf->surfs; surf; surf = surf->next) {
-      if (surf->count < 3) continue;
-      verts.reset();
-      float sx, sy;
-      for (int vn = 0; vn < surf->count; ++vn) {
-        AM_mapxy2fbxy(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);
-        verts.append(TVec(sx, sy, 0));
+    ssurfs.append(flatsurf);
+  }
+  if (ssurfs.length() == 0) return; // nothing to do
+  // sort surfaces by texture
+  timsort_r(ssurfs.ptr(), ssurfs.length(), sizeof(sec_surface_t *), &ssurfCmp, nullptr);
+  // render surfaces
+  Drawer->BeginTexturedPolys();
+  {
+    const sec_surface_t *const *css = ssurfs.ptr();
+    for (int csscount = ssurfs.length(); csscount--; ++css) {
+      const subsector_t *subsec = (*css)->surfs->subsector;
+      const sector_t *sector = subsec->sector;
+      // calculate lighting
+      const float lev = clampval(sector->params.lightlevel/255.0f, 0.0f, 1.0f);
+      const vuint32 light = sector->params.LightColor;
+      TVec vlight(
+        ((light>>16)&255)*lev/255.0f,
+        ((light>>8)&255)*lev/255.0f,
+        (light&255)*lev/255.0f);
+      // draw hidden parts bluish
+      if (am_cheating < 1 && !(subsec->miscFlags&subsector_t::SSMF_Rendered)) {
+        const float intensity = colorIntensity((light>>16)&255, (light>>8)&255, light&255)/255.0f;
+        vlight = TVec(0.1f, 0.1f, intensity);
       }
-      Drawer->DrawTexturedPoly(&flatsurf->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
+      // render surfaces
+      for (surface_t *surf = (*css)->surfs; surf; surf = surf->next) {
+        if (surf->count < 3) continue;
+        verts.reset();
+        float sx, sy;
+        for (int vn = 0; vn < surf->count; ++vn) {
+          AM_mapxy2fbxy(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);
+          verts.append(TVec(sx, sy, 0));
+        }
+        Drawer->DrawTexturedPoly(&(*css)->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
+      }
     }
   }
+  Drawer->EndTexturedPolys();
 #endif
 }
 

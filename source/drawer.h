@@ -243,6 +243,8 @@ public:
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
 
+  virtual void BeginTexturedPolys () = 0;
+  virtual void EndTexturedPolys () = 0;
   virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) = 0;
 
   // automap

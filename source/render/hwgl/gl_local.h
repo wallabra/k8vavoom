@@ -525,6 +525,10 @@ private:
   float coneAngle;
   bool spotLight;
   GLint savedDepthMask; // used in various begin/end methods
+  // for `DrawTexturedPoly()` API
+  VTexture *texturedPolyLastTex;
+  float texturedPolyLastAlpha;
+  TVec texturedPolyLastLight;
 
 protected:
   VGLShader *shaderHead;
@@ -627,6 +631,9 @@ public:
   virtual void DrawConsoleBackground(int) override;
   virtual void DrawSpriteLump(float, float, float, float, VTexture*,
     VTextureTranslation*, bool) override;
+
+  virtual void BeginTexturedPolys () override;
+  virtual void EndTexturedPolys () override;
   virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) override;
 
   // automap

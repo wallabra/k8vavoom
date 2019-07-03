@@ -292,24 +292,61 @@ void VOpenGLDrawer::EndAutomap () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::BeginTexturedPolys
+//
+//==========================================================================
+void VOpenGLDrawer::BeginTexturedPolys () {
+  texturedPolyLastTex = nullptr;
+  texturedPolyLastAlpha = 1.0f;
+  texturedPolyLastLight = TVec(1.0f, 1.0f, 1.0f);
+  DrawSimpleLight.Activate();
+  DrawSimpleLight.SetTexture(0);
+  DrawSimpleLight.SetAlpha(texturedPolyLastAlpha);
+  DrawSimpleLight.SetLight(texturedPolyLastLight.x, texturedPolyLastLight.y, texturedPolyLastLight.z, 1.0f);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndTexturedPolys
+//
+//==========================================================================
+void VOpenGLDrawer::EndTexturedPolys () {
+  texturedPolyLastTex = nullptr;
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawTexturedPoly
 //
 //==========================================================================
 void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha,
                                       int vcount, const TVec *verts, const TVec *origverts)
 {
-  if (!tinfo || !tinfo->Tex || vcount < 3 || alpha < 0.0f) return;
-  SetTexture(tinfo->Tex, CM_Default);
-  DrawSimpleLight.Activate();
-  DrawSimpleLight.SetTexture(0);
-  DrawSimpleLight.SetAlpha(alpha);
-  DrawSimpleLight.SetLight(light.x, light.y, light.z, 1.0f);
+  if (!tinfo || !tinfo->Tex || vcount < 3 || alpha < 0.0f || tinfo->Tex->Type == TEXTYPE_Null) return;
+  if (tinfo->Tex != texturedPolyLastTex) {
+    texturedPolyLastTex = tinfo->Tex;
+    SetTexture(texturedPolyLastTex, CM_Default);
+  }
+  if (alpha != texturedPolyLastAlpha) {
+    texturedPolyLastAlpha = alpha;
+    DrawSimpleLight.SetAlpha(alpha);
+  }
+  if (light != texturedPolyLastLight) {
+    texturedPolyLastLight = light;
+    DrawSimpleLight.SetLight(light.x, light.y, light.z, 1.0f);
+  }
+  /*
   //GLboolean oldblend = false;
   if (alpha < 1.0f) {
     //glGetBooleanv(GL_BLEND, &oldblend);
     //glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   }
+  */
   glBegin(GL_TRIANGLE_FAN);
   if (origverts) {
     for (; vcount--; ++verts, ++origverts) {
@@ -327,8 +364,10 @@ void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float 
     }
   }
   glEnd();
+  /*
   if (alpha < 1.0f) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // non-premultiplied
     //if (oldblend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
   }
+  */
 }
