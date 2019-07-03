@@ -59,13 +59,22 @@ HelpText helpText;
 enum WidthThreshold = 380;
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  OnDestroy
+//
+//==========================================================================
 override void OnDestroy () {
   delete helpText;
   ::OnDestroy();
 }
 
 
+//==========================================================================
+//
+//  CreateMenu
+//
+//==========================================================================
 void CreateMenu () {
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
   helpText.text = "";
@@ -89,6 +98,11 @@ void CreateMenu () {
 }
 
 
+//==========================================================================
+//
+//  OnChildAdded
+//
+//==========================================================================
 override void OnChildAdded (Widget Child) {
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
     if (Items.Num > 128) FatalError("Too many menu items");
@@ -98,6 +112,11 @@ override void OnChildAdded (Widget Child) {
 }
 
 
+//==========================================================================
+//
+//  CreateTitle
+//
+//==========================================================================
 void CreateTitle () {
   if (Title) {
     if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
@@ -110,6 +129,11 @@ void CreateTitle () {
 }
 
 
+//==========================================================================
+//
+//  ChangeTitle
+//
+//==========================================================================
 void ChangeTitle (string newtitle) {
   //if (!titleItem) return; // no title, cannot insert it now
   //if (!newtitle) newtitle = " "; //FIXME
@@ -119,6 +143,11 @@ void ChangeTitle (string newtitle) {
 }
 
 
+//==========================================================================
+//
+//  DrawBackButton
+//
+//==========================================================================
 void DrawBackButton () {
   // draw the back button on the top left corner of the menu screen
   if (!BackButton) {
@@ -129,10 +158,20 @@ void DrawBackButton () {
 }
 
 
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
 void CreateChoices () {
 }
 
 
+//==========================================================================
+//
+//  FixTitleWidthClosePos
+//
+//==========================================================================
 void FixTitleWidthClosePos () {
   //print("FixTitleWidthClosePos: %C", Class);
   if (titleItem) {
@@ -144,14 +183,23 @@ void FixTitleWidthClosePos () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  SetLastHelp
+//
+//==========================================================================
 void SetLastHelp (string help) {
   if (Items.length) Items[$-1].customHelpText = help;
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// should be called from `CreateChoices()` (and `currentY` must be set)
+//==========================================================================
+//
+//  CreateOnOffCvar
+//
+//  should be called from `CreateChoices()` (and `currentY` must be set)
+//
+//==========================================================================
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
   if (Width > WidthThreshold) {
@@ -170,7 +218,13 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
 }
 
 
-// should be called from `CreateChoices()` (and `currentY` must be set)
+//==========================================================================
+//
+//  CreateEnumCvar
+//
+//  should be called from `CreateChoices()` (and `currentY` must be set)
+//
+//==========================================================================
 MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   optional string item0, optional string item1, optional string item2,
   optional string item3, optional string item4, optional string item5,
@@ -226,7 +280,13 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
 }
 
 
-// should be called from `CreateChoices()` (and `currentY` must be set)
+//==========================================================================
+//
+//  CreateFloatSliderCvar
+//
+//  should be called from `CreateChoices()` (and `currentY` must be set)
+//
+//==========================================================================
 MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
   if (Items.length > 0 && Items[$-1] !isa MenuChoiceSlider && Items[$-1].Height == 10) {
     Items[$-1].Height = 8;
@@ -254,7 +314,13 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 }
 
 
-// should be called from `CreateChoices()` (and `currentY` must be set)
+//==========================================================================
+//
+//  CreateFloatNumericCvar
+//
+//  should be called from `CreateChoices()` (and `currentY` must be set)
+//
+//==========================================================================
 MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta, optional float min, optional float max) {
   auto slider = MenuChoiceNumeric(NewChild(MenuChoiceNumeric));
   if (Width > WidthThreshold) {
@@ -276,8 +342,14 @@ MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta,
 }
 
 
-// should be called from `CreateChoices()` (and `currentY` must be set)
-// default color: CR_ORANGE
+//==========================================================================
+//
+//  CreateChoiceSubHeader
+//
+//  should be called from `CreateChoices()` (and `currentY` must be set)
+//  default color: CR_ORANGE
+//
+//==========================================================================
 MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.TextHAlign = hcenter;
@@ -304,6 +376,11 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
 }
 
 
+//==========================================================================
+//
+//  CreateSubMenuText
+//
+//==========================================================================
 MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
@@ -315,6 +392,11 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
 }
 
 
+//==========================================================================
+//
+//  CreateSubMenuBigText
+//
+//==========================================================================
 MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuBigTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
@@ -326,6 +408,11 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 }
 
 
+//==========================================================================
+//
+//  CreateSubMenuTextNamed
+//
+//==========================================================================
 MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
@@ -337,6 +424,11 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
 }
 
 
+//==========================================================================
+//
+//  CreateSubMenuBigTextNamed
+//
+//==========================================================================
 MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
   auto btn = MenuTextButton(NewChild(MenuBigTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
@@ -348,13 +440,23 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  CreateSelector
+//
+//==========================================================================
 void CreateSelector () {
   if (SelectorType) Selector = NewChild(SelectorType);
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  CalcTotalHeight
+//
+//  ////////////////////////////////////////////////////////////////////////// //
+//
+//==========================================================================
 final int CalcTotalHeight () {
   int res = 0;
   for (int n = 0; n < Items.Length; ++n) {
@@ -365,6 +467,11 @@ final int CalcTotalHeight () {
 }
 
 
+//==========================================================================
+//
+//  GetItemYS
+//
+//==========================================================================
 final int GetItemYS (int idx) {
   if (idx < 0) return 0;
   if (idx >= Items.Length) return CalcTotalHeight();
@@ -372,6 +479,11 @@ final int GetItemYS (int idx) {
 }
 
 
+//==========================================================================
+//
+//  GetItemYE
+//
+//==========================================================================
 final int GetItemYE (int idx) {
   if (idx < 0) return 0;
   if (idx >= Items.Length) return CalcTotalHeight();
@@ -379,6 +491,11 @@ final int GetItemYE (int idx) {
 }
 
 
+//==========================================================================
+//
+//  GetItemYH
+//
+//==========================================================================
 final int GetItemYH (int idx) {
   if (idx < 0) return 0;
   if (idx >= Items.Length) return 0;
@@ -386,6 +503,11 @@ final int GetItemYH (int idx) {
 }
 
 
+//==========================================================================
+//
+//  FixTopIndex
+//
+//==========================================================================
 final void FixTopIndex () {
   if (Items.Num == 0) return;
   if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
@@ -404,6 +526,11 @@ final void FixTopIndex () {
 }
 
 
+//==========================================================================
+//
+//  CursorMoved
+//
+//==========================================================================
 void CursorMoved () {
   if (Items.Num == 0) return;
   FixTopIndex();
@@ -417,6 +544,11 @@ void CursorMoved () {
 }
 
 
+//==========================================================================
+//
+//  SetDefaultChoice
+//
+//==========================================================================
 void SetDefaultChoice () {
   // default cursor position
   ChildrenOfsY = 0;
@@ -436,12 +568,23 @@ void SetDefaultChoice () {
 }
 
 
+//==========================================================================
+//
+//  GetChoiceForSaving
+//
+//==========================================================================
 int GetChoiceForSaving () {
   return (CursorPos+(-ChildrenOfsY)*10000);
 }
 
 
-// should be called after menu is fully created, and default choice set
+//==========================================================================
+//
+//  SetSavedChoice
+//
+//  should be called after menu is fully created, and default choice set
+//
+//==========================================================================
 void SetSavedChoice (int saval) {
   int idx = saval%10000;
   int top = saval/10000;
@@ -455,6 +598,11 @@ void SetSavedChoice (int saval) {
 }
 
 
+//==========================================================================
+//
+//  CyclePrevChoice
+//
+//==========================================================================
 void CyclePrevChoice () {
   if (Items.Num < 2) return;
   CursorPrev = CursorPos;
@@ -465,6 +613,11 @@ void CyclePrevChoice () {
 }
 
 
+//==========================================================================
+//
+//  CycleNextChoice
+//
+//==========================================================================
 void CycleNextChoice () {
   if (Items.Num < 2) return;
   CursorPrev = CursorPos;
@@ -475,6 +628,11 @@ void CycleNextChoice () {
 }
 
 
+//==========================================================================
+//
+//  DoHome
+//
+//==========================================================================
 void DoHome () {
   if (Items.Num < 2) return;
   CursorPrev = CursorPos;
@@ -485,6 +643,11 @@ void DoHome () {
 }
 
 
+//==========================================================================
+//
+//  DoEnd
+//
+//==========================================================================
 void DoEnd () {
   if (Items.Num < 2) return;
   CursorPrev = CursorPos;
@@ -495,6 +658,11 @@ void DoEnd () {
 }
 
 
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
 override bool OnKeyDown (int key) {
   key = ConvertBoundKey(key);
   switch (key) {
@@ -541,8 +709,14 @@ override bool OnKeyDown (int key) {
 }
 
 
-// fade all the screen buffer, so that the menu is more readable,
-// especially now that we use the small hudfont in the menus
+//==========================================================================
+//
+//  OnDraw
+//
+//  fade all the screen buffer, so that the menu is more readable,
+//  especially now that we use the small hudfont in the menus
+//
+//==========================================================================
 override void OnDraw () {
   ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
 }
