@@ -31,6 +31,7 @@
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
 static VCvarB snd_free_played_sounds("snd_free_played_sounds", false, "Immediately unload started sound?", CVAR_PreInit|CVAR_Archive);
+static VCvarB snd_free_old_sounds("snd_free_old_sounds", false, "Free old sounds on map change?", CVAR_PreInit|CVAR_Archive);
 static bool lastFreePlayedSounds = false;
 
 
@@ -865,6 +866,7 @@ void VSoundManager::SoundJustUsed (int idx) {
 //
 //==========================================================================
 void VSoundManager::CleanupSounds () {
+  if (!snd_free_old_sounds) return;
   double currTime = Sys_Time();
   int count = 0;
   for (int f = 1; f < S_sfx.length(); ++f) {

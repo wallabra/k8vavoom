@@ -75,9 +75,20 @@ menudef SoundOptions {
     cvar = snd_free_played_sounds;
     help =
       "Immediately free loaded sounds?"
-      "This uses less memory, but the engine has to"
-      "reload (and possibly redecode) sound each time"
-      "it needs to be played."
+      "This uses less memory, but the engine must reload"
+      "(and possibly redecode) any sound each time a sound"
+      "needs to be played."
+      "The music is always streaming, so this setting"
+      "won't affect it."
+      "Leave this 'OFF' if unsure.";
+  }
+
+  option bool {
+    title = "Free old sounds on map change";
+    cvar = snd_free_old_sounds;
+    help =
+      "Free sounds that was used more than 15 minutes ago"
+      "when a new map is loaded?"
       "Leave this 'OFF' if unsure.";
   }
 }
