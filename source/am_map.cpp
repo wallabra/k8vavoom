@@ -220,6 +220,7 @@ static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchme
 
 static VCvarF am_texture_alpha("am_texture_alpha", "0.6", "Automap texture alpha", CVAR_Archive);
 static VCvarI am_draw_type("am_draw_type", "0", "Automap rendering type (0:lines; 1:floors; 2:ceilings)", CVAR_Archive);
+static VCvarB am_draw_texture_lines("am_draw_texture_lines", true, "Draw automap lines on textured automap?", CVAR_Archive);
 
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
 
@@ -2036,8 +2037,10 @@ void AM_Drawer () {
     Drawer->EndAutomap();
     AM_drawFloors();
     Drawer->StartAutomap(am_overlay);
+    if (am_draw_texture_lines) AM_drawWalls();
+  } else {
+    AM_drawWalls();
   }
-  AM_drawWalls();
   AM_drawPlayers();
   if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) {
     AM_drawThings();
