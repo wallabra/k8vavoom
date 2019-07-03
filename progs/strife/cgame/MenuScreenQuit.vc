@@ -55,10 +55,10 @@ override void CreateChoices () {
 
 //==========================================================================
 //
-//  DrawBackButton
+//  CreateBackButton
 //
 //==========================================================================
-override void DrawBackButton () {
+override void CreateBackButton () {
 }
 
 

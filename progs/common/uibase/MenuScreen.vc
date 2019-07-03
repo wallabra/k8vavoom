@@ -79,7 +79,7 @@ void CreateMenu () {
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
   helpText.text = "";
   CreateTitle();
-  DrawBackButton();
+  CreateBackButton();
   currentY = ChoicesStartY;
   CreateChoices();
   CreateSelector();
@@ -104,8 +104,9 @@ void CreateMenu () {
 //
 //==========================================================================
 override void OnChildAdded (Widget Child) {
+  // do not add "close" button to item list
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
-    if (Items.Num > 128) FatalError("Too many menu items");
+    if (Items.Num > 1024) FatalError("Too many menu items");
     Items[Items.Length] = MenuChoice(Child);
   }
   ::OnChildAdded(Child);
@@ -145,13 +146,14 @@ void ChangeTitle (string newtitle) {
 
 //==========================================================================
 //
-//  DrawBackButton
+//  CreateBackButton
+//
+//  create the back button on the top left corner of the menu screen
 //
 //==========================================================================
-void DrawBackButton () {
-  // draw the back button on the top left corner of the menu screen
+void CreateBackButton () {
   if (!BackButton) {
-    /*MenuChoice_BackButton*/ BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
+    BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
     BackButton.Width = BackButton.CalcTextWidth()+8;
     BackButton.SetOrigin(Width-20, 1);
   }

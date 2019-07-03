@@ -102,7 +102,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
   helpText.text = "";
   CreateTitle();
-  DrawBackButton();
+  CreateBackButton();
   currentY = ChoicesStartY;
 
   CreateMenuItemsFromList(mdef.options);

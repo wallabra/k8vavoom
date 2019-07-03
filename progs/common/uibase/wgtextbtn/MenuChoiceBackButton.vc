@@ -26,6 +26,8 @@
 //**************************************************************************
 class MenuChoice_BackButton : MenuTextButton;
 
+bool drawAlways;
+
 
 //==========================================================================
 //
@@ -33,9 +35,11 @@ class MenuChoice_BackButton : MenuTextButton;
 //
 //==========================================================================
 override void OnDraw () {
-  SetFont('bigfont');
-  int Col = IsFocus() ? CR_YELLOW : CR_UNTRANSLATED;
-  DrawText(0, 0, Text, Col);
+  if (drawAlways || GetCvarB('ui_mouse')) {
+    SetFont('bigfont');
+    int Col = (IsFocus() ? CR_YELLOW : CR_UNTRANSLATED);
+    DrawText(0, 0, Text, Col);
+  }
 }
 
 

@@ -123,11 +123,12 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 
 //==========================================================================
 //
-//  DrawBackButton
+//  CreateBackButton
+//
+//  don't create back button on conversation windows
 //
 //==========================================================================
-override void DrawBackButton () {
-  // don't draw back button on conversation windows
+override void CreateBackButton () {
 }
 
 
