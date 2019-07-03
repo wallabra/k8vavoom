@@ -294,7 +294,7 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
   if (tidstart == 0) {
     // do several random hits, then linear search
     for (int rndtry = 1024; rndtry; --rndtry) {
-      do { tidstart = rand()&0x7fff; } while (tidstart == 0);
+      do { tidstart = GenRandomU31()&0x7fff; } while (tidstart == 0);
       if (!IsTIDUsed(tidstart)) return tidstart;
     }
     // fallback to linear search

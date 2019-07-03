@@ -82,10 +82,13 @@ struct sfxinfo_t {
   FRolloffInfo Rolloff;
   float Attenuation; // multiplies the attenuation passed to S_Sound
   int UseCount;
-  int Link;
-  int *Sounds; // for random sounds, Link is count
+  // for "$alias", link is index of "real" sound
+  int Link; // usually `-1`
+  int *Sounds; // for random sounds, Link is count (and bRandomHeader is set)
 
+  // if set, this is a list of random sounds, `Link` is count, `Sounds` is index array
   bool bRandomHeader;
+  // set for "$playersounddup", `Link` is some number of something reserved (TODO: figure this out)
   bool bPlayerReserve;
   bool bSingular;
 

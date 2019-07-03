@@ -735,6 +735,9 @@ native static final float FRandomBetween (float minv, float maxv);
 native static final int P_Random ();
 // generates a random seen in range [1..0xffff_ffff]
 native static final int GenRandomSeedU32 ();
+// this is faster than `GenRandomSeedU32()`
+// generates a random number in range [0..0x7fff_ffff]
+native static final int GenRandomU31 ();
 
 // http://burtleburtle.net/bob/rand/smallprng.html
 struct BJPRNGCtx {

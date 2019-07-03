@@ -82,8 +82,7 @@ public:
   ~VSoundManager ();
 
   void Init ();
-  int GetSoundID (VName);
-  int GetSoundID (const char*);
+  int GetSoundID (VName Name);
   int ResolveSound (int);
   int ResolveEntitySound (VName, VName, VName);
   bool IsSoundPresent (VName, VName, VName);

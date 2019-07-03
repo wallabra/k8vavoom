@@ -1274,7 +1274,7 @@ void VSoundSeqNode::Update (float DeltaTime) {
       SequencePtr += 3;
       break;
     case SSCMD_DelayRand:
-      DelayTime = (SequencePtr[1]+rand()%(SequencePtr[2]-SequencePtr[1]))/35.0f;
+      DelayTime = (SequencePtr[1]+GenRandomU31()%(SequencePtr[2]-SequencePtr[1]))/35.0f;
       SequencePtr += 3;
       CurrentSoundID = 0;
       break;
@@ -1287,7 +1287,7 @@ void VSoundSeqNode::Update (float DeltaTime) {
       SequencePtr += 2;
       break;
     case SSCMD_VolumeRand:
-      Volume = (SequencePtr[1]+rand()%(SequencePtr[2]-SequencePtr[1]))/10000.0f;
+      Volume = (SequencePtr[1]+GenRandomU31()%(SequencePtr[2]-SequencePtr[1]))/10000.0f;
       SequencePtr += 3;
       break;
     case SSCMD_Attenuation:
@@ -1298,7 +1298,7 @@ void VSoundSeqNode::Update (float DeltaTime) {
       if (SeqChoices.Num() == 0) {
         ++SequencePtr;
       } else if (!ChildSeq) {
-        int Choice = rand()%SeqChoices.Num();
+        int Choice = GenRandomU31()%SeqChoices.Num();
         ChildSeq = new VSoundSeqNode(OriginId, Origin, SeqChoices[Choice], ModeNum);
         ChildSeq->ParentSeq = this;
         ChildSeq->Volume = Volume;

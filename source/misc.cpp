@@ -44,7 +44,7 @@ static VLogHostError LogHostError;
 FOutputDevice *GLogSysError = &LogSysError;
 FOutputDevice *GLogHostError = &LogHostError;
 
-static BJPRNGCtx bjprng_ctx;
+BJPRNGCtx g_bjprng_ctx;
 
 
 //==========================================================================
@@ -595,17 +595,7 @@ void M_HsvToRgb (float h, float s, float v, float &r, float &g, float &b) {
 void RandomInit () {
   vint32 rn;
   do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
-  bjprng_raninit(&bjprng_ctx, rn);
-}
-
-
-//==========================================================================
-//
-//  GenRandomU31
-//
-//==========================================================================
-static inline vuint32 GenRandomU31 () {
-  return bjprng_ranval(&bjprng_ctx)&0x7fffffffu;
+  bjprng_raninit(&g_bjprng_ctx, rn);
 }
 
 
@@ -658,14 +648,4 @@ float RandomBetween (float minv, float maxv) {
     if (!isFiniteF(v)) continue;
     return v;
   }
-}
-
-
-//==========================================================================
-//
-//  P_Random
-//
-//==========================================================================
-vuint8 P_Random () {
-  return bjprng_ranval(&bjprng_ctx)&0xff;
 }

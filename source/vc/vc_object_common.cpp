@@ -644,13 +644,16 @@ IMPLEMENT_FUNCTION(VObject, GenRandomSeedU32) {
   RET_INT(rn);
 }
 
+IMPLEMENT_FUNCTION(VObject, GenRandomU31) {
+  RET_INT(GenRandomU31());
+}
+
 IMPLEMENT_FUNCTION(VObject, P_Random) {
 #if defined(VCC_STANDALONE_EXECUTOR)
   vuint8 b;
   ed25519_randombytes(&b, sizeof(b));
   RET_INT(b);
 #else
-  //RET_INT(rand()&0xff);
   RET_INT(P_Random());
 #endif
 }
