@@ -69,4 +69,15 @@ menudef SoundOptions {
     min = 1;
     max = 4;
   }
+
+  option bool {
+    title = "Free played sounds";
+    cvar = snd_free_played_sounds;
+    help =
+      "Immediately free loaded sounds?"
+      "This uses less memory, but the engine has to"
+      "reload (and possibly redecode) sound each time"
+      "it needs to be played."
+      "Leave this 'OFF' if unsure.";
+  }
 }
