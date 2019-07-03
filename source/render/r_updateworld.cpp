@@ -216,14 +216,4 @@ void VRenderLevelShared::InitialWorldUpdate () {
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
     UpdateSubRegion(sub, sub->regions);
   }
-
-  {
-    const vint32 *fksip = Level->FakeFCSectors.ptr();
-    for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
-      sector_t *sec = &Level->Sectors[*fksip];
-           if (sec->deepref) UpdateDeepWater(sec);
-      else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
-      else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
-    }
-  }
 }
