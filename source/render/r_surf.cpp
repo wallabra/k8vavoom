@@ -1155,67 +1155,66 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
   if (!seg->linedef) return; // miniseg
 
-  if (!seg->backsector) {
-    if (isMainRegion) {
-      // middle wall
-      dseg->mid = SurfCreatorGetPSPart();
-      sp = dseg->mid;
-      sp->basereg = curreg;
-      SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
+  if (!isMainRegion) return;
 
-      // sky above line
-      dseg->topsky = SurfCreatorGetPSPart();
-      sp = dseg->topsky;
-      sp->basereg = curreg;
-      if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
-    }
+  if (!seg->backsector) {
+    // one sided line
+    // middle wall
+    dseg->mid = SurfCreatorGetPSPart();
+    sp = dseg->mid;
+    sp->basereg = curreg;
+    SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
+
+    // sky above line
+    dseg->topsky = SurfCreatorGetPSPart();
+    sp = dseg->topsky;
+    sp->basereg = curreg;
+    if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
   } else {
     // two sided line
-    if (isMainRegion) {
-      // top wall
-      dseg->top = SurfCreatorGetPSPart();
-      sp = dseg->top;
-      sp->basereg = curreg;
-      SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
+    // top wall
+    dseg->top = SurfCreatorGetPSPart();
+    sp = dseg->top;
+    sp->basereg = curreg;
+    SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
 
-      // sky above top
-      dseg->topsky = SurfCreatorGetPSPart();
-      dseg->topsky->basereg = curreg;
-      if (IsSky(r_ceiling.splane) && !IsSky(&seg->backsector->ceiling)) {
-        sp = dseg->topsky;
-        SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    // sky above top
+    dseg->topsky = SurfCreatorGetPSPart();
+    dseg->topsky->basereg = curreg;
+    if (IsSky(r_ceiling.splane) && !IsSky(&seg->backsector->ceiling)) {
+      sp = dseg->topsky;
+      SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    }
+
+    // bottom wall
+    dseg->bot = SurfCreatorGetPSPart();
+    sp = dseg->bot;
+    sp->basereg = curreg;
+    SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
+
+    // middle wall
+    dseg->mid = SurfCreatorGetPSPart();
+    sp = dseg->mid;
+    sp->basereg = curreg;
+    SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
+
+    // create region sides
+    // this creates sides for neightbour 3d floors
+    opening_t *ops = nullptr;
+    bool opsCreated = false;
+    for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
+      if (!reg->extraline) continue; // no need to create extra side
+
+      sp = SurfCreatorGetPSPart();
+      sp->basereg = reg;
+      sp->next = dseg->extra;
+      dseg->extra = sp;
+
+      if (!opsCreated) {
+        opsCreated = true;
+        ops = SV_SectorOpenings(seg->frontsector);
       }
-
-      // bottom wall
-      dseg->bot = SurfCreatorGetPSPart();
-      sp = dseg->bot;
-      sp->basereg = curreg;
-      SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
-
-      // middle wall
-      dseg->mid = SurfCreatorGetPSPart();
-      sp = dseg->mid;
-      sp->basereg = curreg;
-      SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
-
-      // create region sides
-      // this creates sides for neightbour 3d floors
-      opening_t *ops = nullptr;
-      bool opsCreated = false;
-      for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
-        if (!reg->extraline) continue; // no need to create extra side
-
-        sp = SurfCreatorGetPSPart();
-        sp->basereg = reg;
-        sp->next = dseg->extra;
-        dseg->extra = sp;
-
-        if (!opsCreated) {
-          opsCreated = true;
-          ops = SV_SectorOpenings(seg->frontsector);
-        }
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
-      }
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
     }
   }
 }
