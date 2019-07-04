@@ -2791,7 +2791,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
 
   sector_t *src = line->frontsector;
 
-  if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), min2(src->floor.minz, src->floor.maxz), max2(src->ceiling.minz, src->ceiling.maxz), line->arg2, (int)isSolid); }
+  if (doDump) { GCon->Logf("src sector #%d: floor=%s; ceiling=%s; (%g,%g); type=0x%02x, flags=0x%04x (solid=%d)", (int)(ptrdiff_t)(src-Sectors), getTexName(src->floor.pic), getTexName(src->ceiling.pic), min2(src->floor.minz, src->floor.maxz), max2(src->ceiling.minz, src->ceiling.maxz), line->arg2, line->arg3, (int)isSolid); }
   if (doDump) { GCon->Logf("dst sector #%d: soundorg=(%g,%g,%g); fc=(%g,%g)", (int)(ptrdiff_t)(dst-Sectors), dst->soundorg.x, dst->soundorg.y, dst->soundorg.z, min2(dst->floor.minz, dst->floor.maxz), max2(dst->ceiling.minz, dst->ceiling.maxz)); }
 
   const float floorz = src->floor.GetPointZ(dst->soundorg);
@@ -2839,7 +2839,8 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   reg->params = &src->params;
   reg->extraline = line;
   if (!isSolid) {
-    //reg.extraline = nullptr; //FIXME!
+    // if "restrict light inside" is set, this seems to be a legacy/3dge water
+    if ((line->arg2&3) == Swimmable && (line->arg3&2)) reg->extraline = nullptr; //FIXME!
     reg->regflags |= sec_region_t::RF_NonSolid;
   }
 
