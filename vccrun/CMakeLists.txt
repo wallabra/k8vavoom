@@ -219,6 +219,7 @@ if (ENABLE_VCCRUN)
     ${MODSOCK_SRC}
     # sound system
     ${VCCRUN_SOUND_SOURCES}
+    ../source/misc.cpp
   )
 
   set(VCCRUN_LINKLIBS ${VCCRUN_LINKLIBS} ${NET_LIBRARIES})

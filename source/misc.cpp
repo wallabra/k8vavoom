@@ -24,9 +24,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#if defined(VCC_STANDALONE_EXECUTOR)
+# include "../libs/core/core.h"
+# include "misc.h"
+#else
+# include "gamedefs.h"
+#endif
 
 
+BJPRNGCtx g_bjprng_ctx;
+
+
+#if !defined(VCC_STANDALONE_EXECUTOR)
 class VLogSysError : public FOutputDevice {
 public:
   virtual void Serialise (const char *V, EName Event) override;
@@ -43,8 +52,6 @@ static VLogHostError LogHostError;
 
 FOutputDevice *GLogSysError = &LogSysError;
 FOutputDevice *GLogHostError = &LogHostError;
-
-BJPRNGCtx g_bjprng_ctx;
 
 
 //==========================================================================
@@ -428,6 +435,7 @@ vuint32 M_ParseColor (const char *Name) {
   }
   return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);
 }
+#endif
 
 
 //==========================================================================

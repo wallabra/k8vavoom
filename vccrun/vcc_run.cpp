@@ -532,6 +532,7 @@ int main (int argc, char **argv) {
   GLogErrorToStderr = true;
   GLogWarningToStderr = true;
 
+  RandomInit();
   VCvar::Init();
   VCvar::HostInitComplete();
 
