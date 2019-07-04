@@ -1499,7 +1499,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     // get and verify frame number
     int Md2Frame = F.Index;
     if ((unsigned)Md2Frame >= (unsigned)SubMdl.Model->Frames.length()) {
-      GCon->Logf(NAME_Dev, "no such frame %d in model '%s'", Md2Frame, *SubMdl.Model->Name);
+      if (developer) GCon->Logf(NAME_Dev, "no such frame %d in model '%s'", Md2Frame, *SubMdl.Model->Name);
       Md2Frame = (Md2Frame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
       // stop further warnings
       F.Index = Md2Frame;
@@ -1508,7 +1508,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     // get and verify next frame number
     int Md2NextFrame = NF.Index;
     if ((unsigned)Md2NextFrame >= (unsigned)SubMdl.Model->Frames.length()) {
-      GCon->Logf(NAME_Dev, "no such next frame %d in model '%s'", Md2NextFrame, *SubMdl.Model->Name);
+      if (developer) GCon->Logf(NAME_Dev, "no such next frame %d in model '%s'", Md2NextFrame, *SubMdl.Model->Name);
       Md2NextFrame = (Md2NextFrame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
       // stop further warnings
       NF.Index = Md2NextFrame;

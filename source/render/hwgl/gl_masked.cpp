@@ -35,10 +35,7 @@
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
   if (!surf->plvisible) return; // viewer is in back side or on plane
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render masked surface with %d vertices", surf->count);
-    return;
-  }
+  if (surf->count < 3) return;
 
   texinfo_t *tex = surf->texinfo;
   if (!tex->Tex) return;
@@ -481,10 +478,7 @@ void VOpenGLDrawer::EndTranslucentPolygonAmbient () {
 //==========================================================================
 void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) {
   if (!surf->plvisible) return; // viewer is in back side or on plane
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render translucent surface with %d vertices", surf->count);
-    return;
-  }
+  if (surf->count < 3) return;
 
   texinfo_t *tex = surf->texinfo;
 

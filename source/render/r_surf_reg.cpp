@@ -434,7 +434,7 @@ void VRenderLevel::PreRender () {
 
   CreateWorldSurfaces();
 
-  GCon->Logf(/*NAME_Dev,*/ "%d subdivides", c_subdivides);
-  GCon->Logf(/*NAME_Dev,*/ "%d seg subdivides", c_seg_div);
-  GCon->Logf(/*NAME_Dev,*/ "%dk light mem", light_mem/1024);
+  GCon->Logf("%d subdivides", c_subdivides);
+  GCon->Logf("%d seg subdivides", c_seg_div);
+  GCon->Logf("%dk light mem", light_mem/1024);
 }

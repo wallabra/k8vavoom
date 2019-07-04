@@ -67,10 +67,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 {
   int sidx[4];
 
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render sky surface with %d vertices", surf->count);
-    return;
-  }
+  if (surf->count < 3) return;
 
   SetFade(surf->Fade);
   sidx[0] = 0;
@@ -164,10 +161,7 @@ void VOpenGLDrawer::UpdateAndUploadSurfaceTexture (surface_t *surf) {
 //
 //==========================================================================
 void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render horizon surface with %d vertices", surf->count);
-    return;
-  }
+  if (surf->count < 3) return;
 
   const float Dist = 4096.0f;
   TVec v[4];
@@ -281,11 +275,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     ++glWDTextureChangesTotal;
   }
 
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render simple surface with %d vertices", surf->count);
-    return false;
-  }
-
+  if (surf->count < 3) return false;
 
   float lev = getSurfLightLevel(surf);
   if (doBrightmap) {
@@ -372,10 +362,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     ++glWDTextureChangesTotal;
   }
 
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render lmap surface with %d vertices", surf->count);
-    return false;
-  }
+  if (surf->count < 3) return false;
 
   float lev = getSurfLightLevel(surf);
   float fullBright = 0.0f;
@@ -453,10 +440,7 @@ void VOpenGLDrawer::WorldDrawing () {
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) {
-        if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
-        continue;
-      }
+      if (surf->count < 3) continue;
       //glBegin(GL_POLYGON);
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);

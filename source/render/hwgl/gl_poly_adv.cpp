@@ -145,10 +145,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) {
-        if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
-        continue;
-      }
+      if (surf->count < 3) continue;
       //glBegin(GL_POLYGON);
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
@@ -211,10 +208,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
       const surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) {
-        if (developer) GCon->Logf(NAME_Dev, "trying to render simple ambient surface with %d vertices", surf->count);
-        continue;
-      }
+      if (surf->count < 3) continue;
 
       // don't render translucent surfaces
       // they should not end up here, but...
@@ -933,10 +927,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   if (gl_dbg_wireframe) return;
   if (!surf->plvisible) return; // viewer is in back side or on plane
-  if (surf->count < 3) {
-    if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", surf->count);
-    return;
-  }
+  if (surf->count < 3) return;
 
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColorMap);
@@ -1024,10 +1015,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
     if (!surf->plvisible) continue; // viewer is in back side or on plane
-    if (surf->count < 3) {
-      if (developer) GCon->Logf(NAME_Dev, "trying to render texture surface with %d vertices", surf->count);
-      continue;
-    }
+    if (surf->count < 3) continue;
 
     // don't render translucent surfaces
     // they should not end up here, but...
@@ -1136,10 +1124,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     surface_t *surf = *surfptr;
     if (!surf->Fade) continue;
     if (!surf->plvisible) continue; // viewer is in back side or on plane
-    if (surf->count < 3) {
-      if (developer) GCon->Logf(NAME_Dev, "trying to render fog surface with %d vertices", surf->count);
-      continue;
-    }
+    if (surf->count < 3) continue;
 
     // don't render translucent surfaces
     // they should not end up here, but...
