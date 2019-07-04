@@ -293,6 +293,7 @@ COMMAND(my_sector_info) {
 //  my_clear_automap
 //
 //==========================================================================
+#ifdef CLIENT
 COMMAND(my_clear_automap) {
   if (Source == SRC_Command) {
     ForwardToServer();
@@ -303,6 +304,7 @@ COMMAND(my_clear_automap) {
   AM_ClearAutomap();
   GCon->Logf("automap cleared");
 }
+#endif
 
 
 //==========================================================================
