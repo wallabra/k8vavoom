@@ -42,6 +42,10 @@ struct spec_trans_t {
 };
 
 spec_trans_t spec_trans_tab[NUM_SPECIALS];
+// "special" is original special
+// arg1 is ignored
+array!spec_trans_t trans_3d_floors;
+
 
 enum { NUMTOTALBOTS = 12 };
 enum { NUMBOTTYPES = 12 };
@@ -540,6 +544,9 @@ void InitTranslationTables () {
   SetLineTrans(271, 0, -1, 255, 0, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
   SetLineTrans(272, 0, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
 
+  // Doom Legacy water
+  SetLineTrans(301, LNSPEC_SectorSet3dFloor, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
+
   SetLineTrans(333, LNSPEC_StaticInit, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(334, LNSPEC_StaticInit, -1, 1, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(335, LNSPEC_StaticInit, -1, 2, 0, 0, 0, SPAC_Cross, false);
@@ -562,6 +569,47 @@ void InitTranslationTables () {
   SetLineTrans(391, LNSPEC_PlaneAlign, 2, 2, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(392, LNSPEC_PlaneAlign, 2, 1, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(393, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
+
+  // 3d floors
+  // https://zdoom.org/wiki/Sector_Set3dFloor
+  Set3DFloorTrans(281, 1, 0, 255);
+  Set3DFloorTrans(289, 1, 1, 255);
+  Set3DFloorTrans(300, 1, 1, 127);
+  Set3DFloorTrans(301, 2, 2, 127);
+  Set3DFloorTrans(302, 3, 6, 127);
+  Set3DFloorTrans(303, 3, -666, -666);
+  Set3DFloorTrans(304, 2, 2, 255);
+  Set3DFloorTrans(305, 3, 2, -666);
+  Set3DFloorTrans(306, 1, -666, -666);
+  Set3DFloorTrans(332, 4, -666, -666);
+  Set3DFloorTrans(400, 1, 0, 255);
+  Set3DFloorTrans(401, 1, 16, 255);
+  Set3DFloorTrans(402, 1, 32, 255);
+  Set3DFloorTrans(403, 2, 2, 255);
+  Set3DFloorTrans(404, 2, 2, 204);
+  Set3DFloorTrans(405, 2, 2, 153);
+  Set3DFloorTrans(406, 2, 2, 102);
+  Set3DFloorTrans(407, 2, 2, 51);
+  Set3DFloorTrans(408, 2, 2, -666);
+  Set3DFloorTrans(413, 1, 8, 255);
+  Set3DFloorTrans(414, 1, 8, 204);
+  Set3DFloorTrans(415, 1, 8, 153);
+  Set3DFloorTrans(416, 1, 8, 102);
+  Set3DFloorTrans(417, 1, 8, 51);
+}
+
+
+//==========================================================================
+//
+//  Set3DFloorTrans
+//
+//==========================================================================
+void Set3DFloorTrans (int oldspecial, int arg2, int arg3, int arg4) {
+  auto trs = trans_3d_floors.alloc();
+  trs.special = oldspecial;
+  trs.arg2 = arg2;
+  trs.arg3 = arg3;
+  trs.arg4 = arg4;
 }
 
 
@@ -758,12 +806,14 @@ void TranslateLine (Level InLevel, line_t *line) {
     return;
   }
 
+  //k8: do we really need this?
+  /*
   switch (OldSpec) {
     // Doom Legacy 3D floors
     case 281:
     case 289:
     case 300:
-    //case 301:
+    case 301:
     // EDGE 3D floors
     case 400:
     case 401:
@@ -786,47 +836,88 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       break;
   }
+  */
+  // front sector is not set yet
+  foreach (const ref auto trs; trans_3d_floors) {
+    if (trs.special == OldSpec) {
+      line->special = LNSPEC_SectorSet3dFloor;
+      if (trs.arg2 != -666) line->arg2 = trs.arg2;
+      if (trs.arg3 != -666) line->arg3 = trs.arg3;
+      if (trs.arg4 != -666) line->arg4 = trs.arg4;
+      return;
+    }
+  }
+
   switch (OldSpec) {
+#ifdef OLD_3DFLOOR_TRANSLATOR
     case 281:
     case 289:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       return;
     case 300:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->floor.Alpha = 0.5;
         line->frontsector->ceiling.Alpha = 0.5;
       }
       return;
     // Doesn't work
-    /*case 301:
-      line->special = 160;
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.translucency = 50;
-      line->frontsector->ceiling.translucency = 50;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-      return;*/
+    case 301:
+      //print("LEGACY WATER at linedef #%s", line-&InLevel.Lines[0]);
+      //k8: this is half-working (we should not render upper texture while underwater)
+      //    it seems to be a bug in 3d floor surface creation code
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 2;
+      line->arg3 = 2;
+      line->arg4 = 127;
+      /*
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.5;
+        line->frontsector->ceiling.Alpha = 0.5;
+        line->frontsector->ceiling.flags = 2;
+        line->frontsector->floor.flags = 2;
+      }
+      */
+      return;
     // EDGE 3D floors
     case 400:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 1;
+      line->arg3 = 0;
+      line->arg4 = 255;
       return;
     case 401:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 1;
+      line->arg3 = 16;
+      line->arg4 = 255;
       return;
     case 402:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 1;
+      line->arg3 = 32;
+      line->arg4 = 255;
       return;
     case 403:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 2;
+      line->arg3 = 2;
+      line->arg4 = 255;
+      /*
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->ceiling.flags = 7;
         line->frontsector->floor.flags = 7;
       }
+      */
       return;
     case 404:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 2;
+      line->arg3 = 2;
+      line->arg4 = 204;
+      /*
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->floor.Alpha = 0.8;
@@ -834,9 +925,14 @@ void TranslateLine (Level InLevel, line_t *line) {
         line->frontsector->ceiling.flags = 7;
         line->frontsector->floor.flags = 7;
       }
+      */
       return;
     case 405:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
+      line->arg2 = 2;
+      line->arg3 = 2;
+      line->arg4 = 153;
+      /*
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->floor.Alpha = 0.6;
@@ -844,9 +940,10 @@ void TranslateLine (Level InLevel, line_t *line) {
         line->frontsector->ceiling.flags = 7;
         line->frontsector->floor.flags = 7;
       }
+      */
       return;
     case 406:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->floor.Alpha = 0.4;
@@ -856,7 +953,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 407:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->floor.Alpha = 0.2;
@@ -866,7 +963,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 408:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->params.contents = CONTENTS_WATER;
         line->frontsector->floor.Alpha = 0.0;
@@ -876,10 +973,10 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 413:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       return;
     case 414:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->floor.Alpha = 0.8;
         line->frontsector->ceiling.Alpha = 0.8;
@@ -888,7 +985,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 415:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->floor.Alpha = 0.6;
         line->frontsector->ceiling.Alpha = 0.6;
@@ -897,7 +994,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 416:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->floor.Alpha = 0.4;
         line->frontsector->ceiling.Alpha = 0.4;
@@ -906,7 +1003,7 @@ void TranslateLine (Level InLevel, line_t *line) {
       }
       return;
     case 417:
-      line->special = 160;
+      line->special = LNSPEC_SectorSet3dFloor;
       if (line->frontsector) {
         line->frontsector->floor.Alpha = 0.2;
         line->frontsector->ceiling.Alpha = 0.2;
@@ -914,6 +1011,7 @@ void TranslateLine (Level InLevel, line_t *line) {
         line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
       }
       return;
+#endif
 
     //EDGE plane-copy
     case 394: // Slope_FrontFloorToTaggedSlope
