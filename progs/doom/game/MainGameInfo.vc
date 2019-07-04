@@ -26,7 +26,7 @@
 //**************************************************************************
 class MainGameInfo : LineSpecialGameInfo;
 
-const int NUM_SPECIALS = 394;
+//const int NUM_SPECIALS = 394;
 
 struct spec_trans_t {
   int special;
@@ -41,11 +41,10 @@ struct spec_trans_t {
   int not_destroy;
 };
 
-spec_trans_t spec_trans_tab[NUM_SPECIALS];
-// "special" is original special
+dictionary!(int, spec_trans_t) spec_trans_tab; //[NUM_SPECIALS];
 // arg1 is ignored
-array!spec_trans_t trans_3d_floors;
-
+// key is old special
+dictionary!(int, spec_trans_t) trans_3d_floors;
 
 enum { NUMTOTALBOTS = 12 };
 enum { NUMBOTTYPES = 12 };
@@ -605,11 +604,12 @@ void InitTranslationTables () {
 //
 //==========================================================================
 void Set3DFloorTrans (int oldspecial, int arg2, int arg3, int arg4) {
-  auto trs = trans_3d_floors.alloc();
-  trs.special = oldspecial;
+  spec_trans_t trs;
+  trs.special = LNSPEC_SectorSet3dFloor;
   trs.arg2 = arg2;
   trs.arg3 = arg3;
   trs.arg4 = arg4;
+  trans_3d_floors.put(oldspecial, trs);
 }
 
 
@@ -622,16 +622,18 @@ void SetLineTrans (int i, int special, int arg1, int arg2, int arg3,
   int arg4, int arg5, int spac, int repeat, optional int monst,
   optional int not_destroy)
 {
-  spec_trans_tab[i].special = special;
-  spec_trans_tab[i].arg1 = arg1;
-  spec_trans_tab[i].arg2 = arg2;
-  spec_trans_tab[i].arg3 = arg3;
-  spec_trans_tab[i].arg4 = arg4;
-  spec_trans_tab[i].arg5 = arg5;
-  spec_trans_tab[i].spac = spac;
-  spec_trans_tab[i].repeat = repeat;
-  spec_trans_tab[i].monst = monst;
-  spec_trans_tab[i].not_destroy = not_destroy;
+  spec_trans_t trs;
+  trs.special = special;
+  trs.arg1 = arg1;
+  trs.arg2 = arg2;
+  trs.arg3 = arg3;
+  trs.arg4 = arg4;
+  trs.arg5 = arg5;
+  trs.spac = spac;
+  trs.repeat = repeat;
+  trs.monst = monst;
+  trs.not_destroy = not_destroy;
+  spec_trans_tab.put(i, trs);
 }
 
 
@@ -838,9 +840,10 @@ void TranslateLine (Level InLevel, line_t *line) {
   }
   */
   // front sector is not set yet
-  foreach (const ref auto trs; trans_3d_floors) {
-    if (trs.special == OldSpec) {
-      line->special = LNSPEC_SectorSet3dFloor;
+  {
+    auto trs = trans_3d_floors.find(OldSpec);
+    if (trs) {
+      line->special = trs.special;
       if (trs.arg2 != -666) line->arg2 = trs.arg2;
       if (trs.arg3 != -666) line->arg3 = trs.arg3;
       if (trs.arg4 != -666) line->arg4 = trs.arg4;
@@ -1045,32 +1048,33 @@ void TranslateLine (Level InLevel, line_t *line) {
       return;
   }
 
-  if (line->special >= NUM_SPECIALS) {
+  auto trsp = spec_trans_tab.find(OldSpec);
+  if (!trsp) {
     line->special = 0;
     line->arg1 = 0;
     return;
   }
 
   // special
-  line->special = spec_trans_tab[OldSpec].special;
+  line->special = trsp.special;
   // args
-  line->arg1 = (spec_trans_tab[OldSpec].arg1 == -1 ? OldTag : spec_trans_tab[OldSpec].arg1);
-  line->arg2 = (spec_trans_tab[OldSpec].arg2 == -1 ? OldTag : spec_trans_tab[OldSpec].arg2);
-  line->arg3 = (spec_trans_tab[OldSpec].arg3 == -1 ? OldTag : spec_trans_tab[OldSpec].arg3);
-  line->arg4 = (spec_trans_tab[OldSpec].arg4 == -1 ? OldTag : spec_trans_tab[OldSpec].arg4);
-  line->arg5 = (spec_trans_tab[OldSpec].arg5 == -1 ? OldTag : spec_trans_tab[OldSpec].arg5);
+  line->arg1 = (trsp.arg1 == -1 ? OldTag : trsp.arg1);
+  line->arg2 = (trsp.arg2 == -1 ? OldTag : trsp.arg2);
+  line->arg3 = (trsp.arg3 == -1 ? OldTag : trsp.arg3);
+  line->arg4 = (trsp.arg4 == -1 ? OldTag : trsp.arg4);
+  line->arg5 = (trsp.arg5 == -1 ? OldTag : trsp.arg5);
 
   // activation flags
-  if ((OldFlags&0x0200) != 0 && spec_trans_tab[OldSpec].spac == SPAC_Use) {
+  if ((OldFlags&0x0200) != 0 && trsp.spac == SPAC_Use) {
     line->SpacFlags = SPAC_UseThrough;
   } else {
-    line->SpacFlags = spec_trans_tab[OldSpec].spac;
+    line->SpacFlags = trsp.spac;
   }
-  if (spec_trans_tab[OldSpec].repeat) line->flags |= ML_REPEAT_SPECIAL;
-  if (spec_trans_tab[OldSpec].monst) line->flags |= ML_MONSTERSCANACTIVATE;
+  if (trsp.repeat) line->flags |= ML_REPEAT_SPECIAL;
+  if (trsp.monst) line->flags |= ML_MONSTERSCANACTIVATE;
   if ((line->flags&ML_SECRET) && (line->SpacFlags&(SPAC_Use|SPAC_UseThrough)) != 0) line->flags &= ~ML_MONSTERSCANACTIVATE;
   // check to see if we want thinkers destroyed or not
-  if (spec_trans_tab[OldSpec].not_destroy) line->flags |= ML_KEEPDATA;
+  if (trsp.not_destroy) line->flags |= ML_KEEPDATA;
 }
 
 
