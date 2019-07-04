@@ -175,6 +175,7 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
     return;
   }
   surf->queueframe = currQueueFrame;
+  surf->plvisible = surf->IsVisible(vieworg);
 
   /*
   if (!(surf->drawflags&surface_t::DF_MASKED)) {

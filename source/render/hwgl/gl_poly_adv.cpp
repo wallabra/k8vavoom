@@ -87,7 +87,7 @@ void VOpenGLDrawer::DrawWorldZBufferPass () {
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
     if (currTexinfo->Alpha < 1.0f) continue;
 
-    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+    if (!surf->plvisible) continue; // viewer is in back side or on plane
 
     /*
     if (surf->drawflags&surface_t::DF_MASKED) {
@@ -132,7 +132,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = RendLev->DrawHorizonList.ptr();
     for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
@@ -144,7 +144,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
         continue;
@@ -210,7 +210,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
       const surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render simple ambient surface with %d vertices", surf->count);
         continue;
@@ -932,7 +932,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   if (gl_dbg_wireframe) return;
-  if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
+  if (!surf->plvisible) return; // viewer is in back side or on plane
   if (surf->count < 3) {
     if (developer) GCon->Logf(NAME_Dev, "trying to render light surface with %d vertices", surf->count);
     return;
@@ -1023,7 +1023,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   surface_t **surfptr = RendLev->DrawSurfList.ptr();
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
-    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+    if (!surf->plvisible) continue; // viewer is in back side or on plane
     if (surf->count < 3) {
       if (developer) GCon->Logf(NAME_Dev, "trying to render texture surface with %d vertices", surf->count);
       continue;
@@ -1135,7 +1135,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
     surface_t *surf = *surfptr;
     if (!surf->Fade) continue;
-    if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+    if (!surf->plvisible) continue; // viewer is in back side or on plane
     if (surf->count < 3) {
       if (developer) GCon->Logf(NAME_Dev, "trying to render fog surface with %d vertices", surf->count);
       continue;

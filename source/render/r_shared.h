@@ -114,7 +114,8 @@ struct surface_t {
   short texturemins[2];
   short extents[2];
   surfcache_t *CacheSurf;
-  vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
+  int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
+  //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   TVec verts[1]; // dynamic array
 
   // to use in renderer

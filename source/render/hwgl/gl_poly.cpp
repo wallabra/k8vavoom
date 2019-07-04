@@ -440,7 +440,7 @@ void VOpenGLDrawer::WorldDrawing () {
     surface_t **surfptr = RendLev->DrawHorizonList.ptr();
     for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
@@ -452,7 +452,7 @@ void VOpenGLDrawer::WorldDrawing () {
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) {
         if (developer) GCon->Logf(NAME_Dev, "trying to render sky portal surface with %d vertices", surf->count);
         continue;
@@ -483,7 +483,7 @@ void VOpenGLDrawer::WorldDrawing () {
     surface_t **surfptr = RendLev->DrawSurfList.ptr();
     for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo) continue; // just in case
       bool textureChanded =
@@ -544,7 +544,7 @@ void VOpenGLDrawer::WorldDrawing () {
       if (!gl_sort_textures) {
         for (surfcache_t *cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
-          if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+          if (!surf->plvisible) continue; // viewer is in back side or on plane
           const texinfo_t *currTexinfo = surf->texinfo;
           bool textureChanded =
             !lastTexinfo ||
@@ -558,7 +558,7 @@ void VOpenGLDrawer::WorldDrawing () {
         surfListClear();
         for (surfcache_t *cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
-          if (!surf->IsVisible(vieworg)) continue; // viewer is in back side or on plane
+          if (!surf->plvisible) continue; // viewer is in back side or on plane
           surfListAppend(surf, cache);
         }
         if (surfListUsed > 0) {
