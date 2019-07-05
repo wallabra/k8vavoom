@@ -49,11 +49,15 @@ extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
 extern VCvarB r_glow_flat;
 extern VCvarB clip_use_1d_clipper;
+extern VCvarB r_dbg_always_draw_flats;
 #if 0
 extern VCvarB w_update_in_renderer;
 #endif
 
 extern VCvarB gl_dbg_wireframe;
+
+static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", true, "Clip (1D) shadow regions?", CVAR_PreInit);
+static VCvarB clip_adv_regions_light("clip_adv_regions_light", true, "Clip (1D) light regions?", CVAR_PreInit);
 
 
 /*
@@ -434,22 +438,25 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
 
   sec_region_t *secregion = region->secregion;
 
-#ifdef VV_LADV_CLIPCHECK_REGIONS_SHADOW
-  if (LightClip.ClipLightCheckRegion(region, sub, true))
-#endif
-  {
+  bool drawFloors = true;
+  if (!clip_adv_regions_shadow || LightClip.ClipLightCheckRegion(region, sub, true)) {
     drawseg_t *ds = region->lines;
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
+  } else {
+    // if there is no polyobj here, we can skip rendering floors
+    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
   }
 
-  sec_surface_t *fsurf[4];
-  GetFlatSetToRender(sub, region, fsurf);
+  if (drawFloors || r_dbg_always_draw_flats) {
+    sec_surface_t *fsurf[4];
+    GetFlatSetToRender(sub, region, fsurf);
 
-  if (fsurf[0]) RenderShadowSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
-  if (fsurf[1]) RenderShadowSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
+    if (fsurf[0]) RenderShadowSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
+    if (fsurf[1]) RenderShadowSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
 
-  if (fsurf[2]) RenderShadowSecSurface(fsurf[2], secregion->efloor.splane->SkyBox);
-  if (fsurf[3]) RenderShadowSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
+    if (fsurf[2]) RenderShadowSecSurface(fsurf[2], secregion->efloor.splane->SkyBox);
+    if (fsurf[3]) RenderShadowSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
+  }
 
   if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next);
 }
@@ -697,22 +704,25 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 
   sec_region_t *secregion = region->secregion;
 
-#ifdef VV_LADV_CLIPCHECK_REGIONS_LIGHT
-  if (LightClip.ClipLightCheckRegion(region, sub, false))
-#endif
-  {
+  bool drawFloors = true;
+  if (!clip_adv_regions_light || LightClip.ClipLightCheckRegion(region, sub, false)) {
     drawseg_t *ds = region->lines;
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(secregion, ds);
+  } else {
+    // if there is no polyobj here, we can skip rendering floors
+    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
   }
 
-  sec_surface_t *fsurf[4];
-  GetFlatSetToRender(sub, region, fsurf);
+  if (drawFloors || r_dbg_always_draw_flats) {
+    sec_surface_t *fsurf[4];
+    GetFlatSetToRender(sub, region, fsurf);
 
-  if (fsurf[0]) RenderLightSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
-  if (fsurf[1]) RenderLightSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
+    if (fsurf[0]) RenderLightSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
+    if (fsurf[1]) RenderLightSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
 
-  if (fsurf[2]) RenderLightSecSurface(fsurf[2], secregion->eceiling.splane->SkyBox);
-  if (fsurf[3]) RenderLightSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
+    if (fsurf[2]) RenderLightSecSurface(fsurf[2], secregion->eceiling.splane->SkyBox);
+    if (fsurf[3]) RenderLightSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
+  }
 
   if (!nextFirst && region->next) return RenderLightSubRegion(sub, region->next);
 }

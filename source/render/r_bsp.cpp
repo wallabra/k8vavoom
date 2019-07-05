@@ -58,6 +58,8 @@ VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", fals
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
 
+VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", false, "Draw flat surfaces even if region is not visible (this is pobj hack)?", 0/*CVAR_Archive*/);
+
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
 extern VCvarB r_draw_adjacent_subsector_things;
@@ -69,6 +71,7 @@ extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
 extern VCvarB clip_use_1d_clipper;
 extern VCvarB clip_frustum_bsp_segs;
+extern VCvarB r_dbg_always_draw_flats;
 
 // to clear portals
 static bool oldMirrors = true;
@@ -794,6 +797,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderSubRegion(sub, region->next);
 
+  bool drawFloors = true;
   if (ViewClip.ClipCheckRegion(region, sub)) {
     int count = sub->numlines;
     drawseg_t *ds = region->lines;
@@ -801,16 +805,21 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
       RenderLine(sub, secregion, region, ds);
       ++ds;
     }
+  } else {
+    // if there is no polyobj here, we can skip rendering floors
+    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
   }
 
-  sec_surface_t *fsurf[4];
-  GetFlatSetToRender(sub, region, fsurf);
+  if (drawFloors || r_dbg_always_draw_flats) {
+    sec_surface_t *fsurf[4];
+    GetFlatSetToRender(sub, region, fsurf);
 
-  if (fsurf[0]) RenderSecSurface(sub, secregion, fsurf[0], secregion->efloor.splane->SkyBox);
-  if (fsurf[1]) RenderSecSurface(sub, secregion, fsurf[1], secregion->efloor.splane->SkyBox);
+    if (fsurf[0]) RenderSecSurface(sub, secregion, fsurf[0], secregion->efloor.splane->SkyBox);
+    if (fsurf[1]) RenderSecSurface(sub, secregion, fsurf[1], secregion->efloor.splane->SkyBox);
 
-  if (fsurf[2]) RenderSecSurface(sub, secregion, fsurf[2], secregion->eceiling.splane->SkyBox);
-  if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
+    if (fsurf[2]) RenderSecSurface(sub, secregion, fsurf[2], secregion->eceiling.splane->SkyBox);
+    if (fsurf[3]) RenderSecSurface(sub, secregion, fsurf[3], secregion->eceiling.splane->SkyBox);
+  }
 
   if (!nextFirst && region->next) return RenderSubRegion(sub, region->next);
 }
