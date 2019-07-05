@@ -653,7 +653,6 @@ private:
   sector_t *FindGoodFloodSector (sector_t *sec, bool wantFloor);
 
   void BuildDecalsVVList ();
-  void BuildDecalsVVListOld ();
 
   // map loading helpers
   int FindGLNodes (VName) const;
@@ -688,8 +687,8 @@ private:
   }
 
   // post-loading routines
-  void GroupLines () const;
-  void LinkNode (int, node_t *) const;
+  void GroupLines ();
+  void LinkNode (int, node_t *);
   void FloodZones ();
   void FloodZone (sector_t *, int);
 

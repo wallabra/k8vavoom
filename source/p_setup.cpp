@@ -62,7 +62,6 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
-static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", CVAR_PreInit/*|CVAR_Archive*/);
 
 static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit/*|CVAR_Archive*/);
 
@@ -1269,11 +1268,7 @@ load_again:
 
   //GCon->Logf("Building Lidedef VV list...");
   double LineVVListTime = -Sys_Time();
-  if (dbg_use_old_decal_pp) {
-    BuildDecalsVVListOld();
-  } else {
-    BuildDecalsVVList();
-  }
+  BuildDecalsVVList();
   LineVVListTime += Sys_Time();
 
   // end of map lump processing
@@ -1465,54 +1460,6 @@ void VLevel::BuildDecalsVVList () {
 
   delete [] wkhit;
   delete [] wklist;
-}
-
-
-//==========================================================================
-//
-//  VLevel::BuildDecalsVVListOld
-//
-//  build v1 and v2 lists (for decals)
-//
-//==========================================================================
-void VLevel::BuildDecalsVVListOld () {
-  for (int i = 0; i < NumLines; ++i) {
-    line_t *ld = Lines+i;
-    ld->decalMark = 0;
-    ld->v1linesCount = ld->v2linesCount = 0;
-    ld->v1lines = ld->v2lines = nullptr;
-    for (int vn = 0; vn < 2; ++vn) {
-      // count number of lines
-      TVec v = *(vn == 0 ? ld->v1 : ld->v2);
-      v.z = 0;
-      int count = 0;
-      for (int f = 0; f < NumLines; ++f) {
-        if (f == i) continue;
-        line_t *l2 = Lines+f;
-        TVec l2v1 = *l2->v1, l2v2 = *l2->v2;
-        l2v1.z = l2v2.z = 0;
-        if (l2v1 == v || l2v2 == v) ++count;
-      }
-      if (count) {
-        line_t **list = new line_t *[count];
-        count = 0;
-        for (int f = 0; f < NumLines; ++f) {
-          if (f == i) continue;
-          line_t *l2 = Lines+f;
-          TVec l2v1 = *l2->v1, l2v2 = *l2->v2;
-          l2v1.z = l2v2.z = 0;
-          if (l2v1 == v || l2v2 == v) list[count++] = l2;
-        }
-        if (vn == 0) {
-          ld->v1linesCount = count;
-          ld->v1lines = list;
-        } else {
-          ld->v2linesCount = count;
-          ld->v2lines = list;
-        }
-      }
-    }
-  }
 }
 
 
@@ -3366,55 +3313,54 @@ void VLevel::PostProcessForDecals () {
 //  finds block bounding boxes for sectors
 //
 //==========================================================================
-void VLevel::GroupLines () const {
-  line_t **linebuffer;
-  int total;
-  line_t *li;
-  sector_t *sector;
-  float bbox2d[4];
-  int block;
-
+void VLevel::GroupLines () {
   LinkNode(NumNodes-1, nullptr);
 
-  // count number of lines in each sector
-  li = Lines;
-  total = 0;
-  for (int i = 0; i < NumLines; ++i, ++li) {
+  // clear counts, just in case
+  for (auto &&sector : allSectors()) sector.linecount = 0;
+
+  // count number of lines, and number of lines in each sector
+  int total = 0;
+  for (auto &&line : allLines()) {
     ++total;
-    ++li->frontsector->linecount;
-    if (li->backsector && li->backsector != li->frontsector) {
-      ++li->backsector->linecount;
+    ++line.frontsector->linecount;
+    if (line.backsector && line.backsector != line.frontsector) {
       ++total;
+      ++line.backsector->linecount;
     }
   }
 
   // build line tables for each sector
-  linebuffer = new line_t*[total];
-  sector = Sectors;
-  for (int i = 0; i < NumSectors; ++i, ++sector) {
-    sector->lines = linebuffer;
-    linebuffer += sector->linecount;
+  line_t **linebuffer = new line_t*[total];
+  for (auto &&sec : allSectors()) {
+    sec.lines = linebuffer;
+    linebuffer += sec.linecount;
   }
 
   // assign lines for each sector
-  int *SecLineCount = new int[NumSectors];
-  memset(SecLineCount, 0, sizeof(int)*NumSectors);
-  li = Lines;
-  for (int i = 0; i < NumLines; ++i, ++li) {
-    if (li->frontsector) {
-      li->frontsector->lines[SecLineCount[li->frontsector-Sectors]++] = li;
+  TArray<int> SecLineCount;
+  SecLineCount.setLength(NumSectors);
+  memset(SecLineCount.ptr(), 0, sizeof(int)*SecLineCount.length());
+
+  for (auto &&line : allLines()) {
+    if (line.frontsector) {
+      line.frontsector->lines[SecLineCount[(int)(ptrdiff_t)(line.frontsector-Sectors)]++] = &line;
     }
-    if (li->backsector && li->backsector != li->frontsector) {
-      li->backsector->lines[SecLineCount[li->backsector-Sectors]++] = li;
+    if (line.backsector && line.backsector != line.frontsector) {
+      line.backsector->lines[SecLineCount[(int)(ptrdiff_t)(line.backsector-Sectors)]++] = &line;
     }
   }
 
-  sector = Sectors;
+  sector_t *sector = Sectors;
   for (int i = 0; i < NumSectors; ++i, ++sector) {
     if (SecLineCount[i] != sector->linecount) Sys_Error("GroupLines: miscounted");
+
+    float bbox2d[4];
+    int block;
+
     ClearBox2D(bbox2d);
     for (int j = 0; j < sector->linecount; ++j) {
-      li = sector->lines[j];
+      line_t *li = sector->lines[j];
       AddToBox2D(bbox2d, li->v1->x, li->v1->y);
       AddToBox2D(bbox2d, li->v2->x, li->v2->y);
     }
@@ -3423,24 +3369,18 @@ void VLevel::GroupLines () const {
     sector->soundorg = TVec((bbox2d[BOX2D_RIGHT]+bbox2d[BOX2D_LEFT])/2.0f, (bbox2d[BOX2D_TOP]+bbox2d[BOX2D_BOTTOM])/2.0f, 0);
 
     // adjust bounding box to map blocks
-    block = MapBlock(bbox2d[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS);
-    block = block >= BlockMapHeight ? BlockMapHeight-1 : block;
+    block = clampval(MapBlock(bbox2d[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS), 0, BlockMapHeight-1);
     sector->blockbox[BOX2D_TOP] = block;
 
-    block = MapBlock(bbox2d[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS);
-    block = block < 0 ? 0 : block;
+    block = clampval(MapBlock(bbox2d[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS), 0, BlockMapHeight-1);
     sector->blockbox[BOX2D_BOTTOM] = block;
 
-    block = MapBlock(bbox2d[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS);
-    block = block >= BlockMapWidth ? BlockMapWidth-1 : block;
+    block = clampval(MapBlock(bbox2d[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS), 0, BlockMapWidth-1);
     sector->blockbox[BOX2D_RIGHT] = block;
 
-    block = MapBlock(bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS);
-    block = block < 0 ? 0 : block;
+    block = clampval(MapBlock(bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS), 0, BlockMapWidth-1);
     sector->blockbox[BOX2D_LEFT] = block;
   }
-  delete[] SecLineCount;
-  SecLineCount = nullptr;
 }
 
 
@@ -3449,7 +3389,7 @@ void VLevel::GroupLines () const {
 //  VLevel::LinkNode
 //
 //==========================================================================
-void VLevel::LinkNode (int BSPNum, node_t *pParent) const {
+void VLevel::LinkNode (int BSPNum, node_t *pParent) {
   if (BSPNum&NF_SUBSECTOR) {
     int num = (BSPNum == -1 ? 0 : BSPNum&(~NF_SUBSECTOR));
     if (num < 0 || num >= NumSubsectors) Host_Error("ss %i with numss = %i", num, NumSubsectors);
