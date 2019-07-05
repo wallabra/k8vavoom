@@ -225,12 +225,15 @@ struct event_t {
   inline void setBubbling () { flags |= EFlag_Bubbling; }
 
   inline bool isCtrlDown () const { return !!(modflags&bCtrl); }
-  inline bool isAltDown () const { return !!(modflags&bCtrl); }
+  inline bool isAltDown () const { return !!(modflags&bAlt); }
   inline bool isShiftDown () const { return !!(modflags&bShift); }
   inline bool isHyperDown () const { return !!(modflags&bHyper); }
+
   inline bool isLMBDown () const { return !!(modflags&bLMB); }
   inline bool isMMBDown () const { return !!(modflags&bMMB); }
   inline bool isRMBDown () const { return !!(modflags&bRMB); }
+
+  inline bool isMBDown (int index) const { return (index >= 0 && index <= 2 ? !!(modflags&(bLMB<<(index&0x0f))) : false); }
 
   inline bool isLCtrlDown () const { return !!(modflags&bCtrlLeft); }
   inline bool isLAltDown () const { return !!(modflags&bAltLeft); }
