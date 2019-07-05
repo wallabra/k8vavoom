@@ -35,18 +35,16 @@
 #include <string.h>
 #include "../libs/core/hashfunc.h"
 
-struct VectorInfo {
+struct __attribute__((packed)) VectorInfo {
   float xy[2];
-  unsigned aidx;
+  //unsigned aidx;
   unsigned lidx; // linedef index
   VectorInfo *next;
-
-  //inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
-  //inline bool operator != (const VectorInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
 
   inline bool operator == (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
   inline bool operator != (const VectorInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
 };
+static_assert(sizeof(VectorInfo) == sizeof(float)*2+sizeof(unsigned)*1+sizeof(void *), "oops");
 
 static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
 
@@ -1384,69 +1382,56 @@ void VLevel::BuildDecalsVVList () {
       const TVec *vertex = (vn == 0 ? ld->v1 : ld->v2);
       vi->xy[0] = vertex->x;
       vi->xy[1] = vertex->y;
-      vi->aidx = aidx;
+      //vi->aidx = aidx;
       vi->lidx = i;
       vi->next = nullptr;
       auto vaidxp = vmap.find(*vi);
       if (vaidxp) {
-        check(*vaidxp != vi->aidx);
+        //check(*vaidxp != vi->aidx);
         VectorInfo *cv = &va[*vaidxp];
         while (cv->next) {
-          check(cv->aidx < aidx);
+          //check(cv->aidx < aidx);
           if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(0)!");
           cv = cv->next;
         }
         if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(1)!");
         cv->next = vi;
       } else {
-        vmap.put(*vi, vi->aidx);
+        vmap.put(*vi, /*vi->*/aidx);
       }
     }
   }
 
-  line_t **wklist = new line_t *[NumLines*2];
-  vuint8 *wkhit = new vuint8[NumLines];
+  TArray<line_t *> wklist;
+  wklist.setLength(NumLines*2);
+
+  TArray<vuint8> wkhit;
+  wkhit.setLength(NumLines);
 
   // fill linedef lists
   ld = Lines;
   for (unsigned i = 0; i < (unsigned)NumLines; ++i, ++ld) {
     for (unsigned vn = 0; vn < 2; ++vn) {
-      unsigned count = 0;
-      memset(wkhit, 0, NumLines*sizeof(wkhit[0]));
+      memset(wkhit.ptr(), 0, wkhit.length()*sizeof(wkhit.ptr()[0]));
       wkhit[i] = 1;
-      /*
-      for (int curvn = 0; curvn < 2; ++curvn) {
-        VectorInfo *vi = &va[i*2+curvn];
-        auto vaidxp = vmap.find(*vi);
-        if (!vaidxp) Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
-        VectorInfo *cv = &va[*vaidxp];
-        while (cv) {
-          if (!wkhit[cv->lidx]) {
-            if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(2)!");
-            wkhit[cv->lidx] = 1;
-            wklist[count++] = Lines+cv->lidx;
-          }
-          cv = cv->next;
+
+      unsigned count = 0;
+      VectorInfo *vi = &va[i*2+vn];
+      auto vaidxp = vmap.find(*vi);
+      if (!vaidxp) Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
+      VectorInfo *cv = &va[*vaidxp];
+      while (cv) {
+        if (!wkhit[cv->lidx]) {
+          if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(2)!");
+          wkhit[cv->lidx] = 1;
+          wklist[count++] = &Lines[cv->lidx];
         }
+        cv = cv->next;
       }
-      */
-      {
-        VectorInfo *vi = &va[i*2+vn];
-        auto vaidxp = vmap.find(*vi);
-        if (!vaidxp) Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
-        VectorInfo *cv = &va[*vaidxp];
-        while (cv) {
-          if (!wkhit[cv->lidx]) {
-            if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(2)!");
-            wkhit[cv->lidx] = 1;
-            wklist[count++] = Lines+cv->lidx;
-          }
-          cv = cv->next;
-        }
-      }
+
       if (count > 0) {
         line_t **list = new line_t *[count];
-        memcpy(list, wklist, count*sizeof(wklist[0]));
+        memcpy(list, wklist.ptr(), count*sizeof(line_t *));
         if (vn == 0) {
           ld->v1linesCount = count;
           ld->v1lines = list;
@@ -1457,9 +1442,6 @@ void VLevel::BuildDecalsVVList () {
       }
     }
   }
-
-  delete [] wkhit;
-  delete [] wklist;
 }
 
 
