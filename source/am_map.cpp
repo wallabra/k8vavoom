@@ -855,13 +855,14 @@ bool AM_Responder (event_t *ev) {
         cl->Printf(am_draw_grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
         break;
       case AM_MARKKEY:
-        if (mapMarksAllowed /*&& (ev->modflags&bShift)*/) {
+      case K_INSERT:
+        if (mapMarksAllowed) {
           int mnum = AM_addMark();
           if (mnum >= 0) cl->Printf("%s %d", AMSTR_MARKEDSPOT, mnum);
         }
         break;
       case AM_NEXTMARKKEY:
-        if (mapMarksAllowed /*&& (ev->modflags&bShift)*/) {
+        if (mapMarksAllowed) {
           ++markActive;
           if (markActive < 0) markActive = 0;
           // find next active mark
@@ -873,7 +874,8 @@ bool AM_Responder (event_t *ev) {
         }
         break;
       case AM_CLEARMARKKEY:
-        if (mapMarksAllowed && ev->modflags&bShift) {
+      case K_DELETE:
+        if (mapMarksAllowed && (ev->isShiftDown() || ev->keycode == K_DELETE)) {
           if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && markpoints[markActive].isActive()) {
             markpoints[markActive].deactivate();
             cl->Printf("%s %d", AMSTR_MARKEDSPOTDEL, markActive);
