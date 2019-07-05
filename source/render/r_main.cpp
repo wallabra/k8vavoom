@@ -1572,10 +1572,7 @@ again:
 
   if (dbg_clip_dump_added_ranges) GCon->Logf("=== RENDER SCENE: (%f,%f,%f); (yaw=%f; pitch=%f)", vieworg.x, vieworg.y, vieworg.x, viewangles.yaw, viewangles.pitch);
 
-  double stt = -Sys_Time();
   RenderScene(&refdef, nullptr);
-  stt += Sys_Time();
-  if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
 
   if (dbg_clip_dump_added_ranges) ViewClip.Dump();
 

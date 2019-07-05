@@ -86,10 +86,7 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 
-  double stt = -Sys_Time();
   RenderBspWorld(rd, Range);
-  stt += Sys_Time();
-  if (times_render_lowlevel) GCon->Logf("RenderBspWorld: %f", stt);
   if (light_reset_surface_cache != 0) return;
 
   glWDPolyTotal = 0;
@@ -97,20 +94,10 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   glWDTextureChangesTotal = 0;
   if (!r_reg_disable_world) {
     //GCon->Logf("vfz: %f", viewforward.z);
-    stt = -Sys_Time();
     Drawer->WorldDrawing();
-    stt += Sys_Time();
-    if (times_render_lowlevel) GCon->Logf("Drawer->WorldDrawing: %f (%u polys, %u vertices, %u texture changes)", stt, glWDPolyTotal, glWDVertexTotal, glWDTextureChangesTotal);
   }
 
-  /*
-  if (!r_reg_disable_portals) {
-    stt = -Sys_Time();
-    RenderPortals();
-    stt += Sys_Time();
-    if (times_render_lowlevel && stt > 0.01) GCon->Logf("   RenderPortals: %f", stt);
-  }
-  */
+  //if (!r_reg_disable_portals) RenderPortals();
 
   if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 }

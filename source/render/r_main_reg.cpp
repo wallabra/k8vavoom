@@ -31,6 +31,7 @@ static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rende
 #if 0
 extern VCvarB w_update_in_renderer;
 #endif
+extern VCvarB r_disable_world_update;
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 
@@ -71,35 +72,18 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
 
   //ClearQueues(); // moved to `RenderWorld()`
 
-  if (times_render_highlevel) GCon->Log("========= RenderScene =========");
-
-  double stt = -Sys_Time();
   MarkLeaves();
-  stt += Sys_Time();
-  if (times_render_highlevel) GCon->Logf("MarkLeaves: %f", stt);
 
-  if (!r_disable_world_update) {
-    stt = -Sys_Time();
-    UpdateWorld(RD, Range);
-    stt += Sys_Time();
-    if (times_render_highlevel) GCon->Logf("UpdateWorld: %f", stt);
-  }
+  if (!r_disable_world_update) UpdateWorld(RD, Range);
 
-  stt = -Sys_Time();
   RenderWorld(RD, Range);
   if (light_reset_surface_cache != 0) return;
-  stt += Sys_Time();
-  if (times_render_highlevel) GCon->Logf("RenderWorld: %f", stt);
 
-
-  stt = -Sys_Time();
   if (!r_reg_disable_things) {
     //k8: no need to build list here, as things only processed once
     //BuildVisibleObjectsList();
     RenderMobjs(RPASS_Normal);
   }
-  stt += Sys_Time();
-  if (times_render_highlevel) GCon->Logf("RenderMobjs: %f", stt);
 
   DrawParticles();
 

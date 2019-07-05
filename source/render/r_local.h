@@ -735,10 +735,6 @@ public:
   static void MarkPortalPool (PPMark *mark);
   static void RestorePortalPool (PPMark *mark);
   static vuint8 *AllocPortalPool (int size);
-
-  static VCvarB times_render_highlevel;
-  static VCvarB times_render_lowlevel;
-  static VCvarB r_disable_world_update;
 };
 
 
