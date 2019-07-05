@@ -43,7 +43,7 @@ VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
 static VCvarI r_maxmirrors("r_maxmirrors", "1", "Maximum allowed mirrors.", CVAR_Archive);
 VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal depth (-1: infinite)", CVAR_Archive);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
-static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering?", CVAR_Archive);
+static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_other_portals("r_allow_other_portals", false, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
