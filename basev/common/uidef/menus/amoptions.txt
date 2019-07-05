@@ -45,6 +45,16 @@ menudef AutomapOptions {
     help = "Show various stats on automap?";
   }
 
+  option bool {
+    title = "Show keys on automap";
+    cvar = am_draw_keys;
+    help =
+      "Show keys on automap?"
+      "This will show key icons in subsectors you've seen."
+      "I don't think that this is a cheat. But if you aren't"
+      "agree, you can turn this option off.";
+  }
+
   option enum {
     title = "Automap type";
     cvar = am_draw_type;
