@@ -608,6 +608,30 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
 
 //==========================================================================
 //
+//  IsTransDoorHack
+//
+//  HACK: sector with height of 1, and only middle
+//  masked texture is "transparent door"
+//
+//==========================================================================
+static inline bool IsTransDoorHack (const seg_t *seg) {
+  const sector_t *secs[2] = { seg->frontsector, seg->backsector };
+  // check for slopes
+  if (secs[0]->floor.normal.z != 1.0f || secs[0]->ceiling.normal.z != -1.0f) return false;
+  if (secs[1]->floor.normal.z != 1.0f || secs[1]->ceiling.normal.z != -1.0f) return false;
+  // check for door
+  if (secs[0]->floor.minz != secs[1]->floor.minz) return false;
+  // check for middle texture
+  const side_t *sidedef = seg->sidedef;
+  VTexture *mt = GTextureManager(sidedef->MidTexture);
+  if (!mt || mt->Type == TEXTYPE_Null || !mt->isTransparent()) return false;
+  // ok, looks like it
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedTopWSurf
 //
 //==========================================================================
@@ -624,6 +648,14 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   if (!TTex) TTex = GTextureManager[GTextureManager.DefaultTexture];
   if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
     TTex = GTextureManager[skyflatnum];
+  }
+
+  // HACK: sector with height of 1, and only middle masked texture is "transparent door"
+  //       also, invert "upper unpegged" flag for this case
+  int peghack = 0;
+  if (TTex->Type == TEXTYPE_Null && IsTransDoorHack(seg)) {
+    TTex = GTextureManager(sidedef->MidTexture);
+    peghack = ML_DONTPEGTOP;
   }
 
   SetupTextureAxesOffset(seg, &sp->texinfo, TTex, &sidedef->Top);
@@ -649,7 +681,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
       top_TexZ = back_ceiling->TexZ;
     }
 
-    if (linedef->flags&ML_DONTPEGTOP) {
+    if ((linedef->flags&ML_DONTPEGTOP)^peghack) {
       // top of texture at top
       sp->texinfo.toffs = top_TexZ;
     } else {
