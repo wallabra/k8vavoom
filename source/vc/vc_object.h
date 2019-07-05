@@ -78,16 +78,167 @@ public: \
   void TClass::exec##Func()
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// keys and buttons
+enum {
+  K_ESCAPE = 27,
+  K_ENTER = 13,
+  K_TAB = 9,
+  K_BACKSPACE = 8,
+
+  K_SPACE = 32,
+
+  K_N0 = 48, K_N1, K_N2, K_N3, K_N4, K_N5, K_N6, K_N7, K_N8, K_N9,
+
+  K_a = 97, K_b, K_c, K_d, K_e, K_f,  K_g, K_h, K_i, K_j, K_k, K_l,
+  K_m, K_n, K_o, K_p, K_q, K_r, K_s, K_t, K_u, K_v, K_w, K_x, K_y, K_z,
+
+  K_FIRST_CONTROL_KEYCODE = 0x80,
+
+  K_UPARROW = 0x80, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW,
+  K_INSERT, K_DELETE, K_HOME, K_END, K_PAGEUP, K_PAGEDOWN,
+
+  K_PAD0, K_PAD1, K_PAD2, K_PAD3, K_PAD4, K_PAD5, K_PAD6, K_PAD7, K_PAD8, K_PAD9,
+
+  K_NUMLOCK,
+  K_PADDIVIDE, K_PADMULTIPLE,
+  K_PADMINUS, K_PADPLUS,
+  K_PADENTER, K_PADDOT,
+
+  K_CAPSLOCK,
+  K_BACKQUOTE,
+
+  K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12,
+
+  K_LSHIFT, K_RSHIFT,
+  K_LCTRL, K_RCTRL,
+  K_LALT, K_RALT,
+
+  K_LWIN, K_RWIN,
+  K_MENU,
+
+  K_PRINTSCRN,
+  K_SCROLLLOCK,
+  K_PAUSE,
+
+  K_MOUSE1, K_MOUSE2, K_MOUSE3, K_MOUSE4, K_MOUSE5,
+  K_MOUSE6, K_MOUSE7, K_MOUSE8, K_MOUSE9,
+  K_MWHEELUP, K_MWHEELDOWN,
+
+  K_JOY1, K_JOY2, K_JOY3, K_JOY4, K_JOY5, K_JOY6, K_JOY7, K_JOY8, K_JOY9,
+  K_JOY10, K_JOY11, K_JOY12, K_JOY13, K_JOY14, K_JOY15, K_JOY16,
+
+  K_MOUSE_FIRST = K_MOUSE1,
+  K_MOUSE_LAST = K_MWHEELDOWN,
+
+  K_MOUSE_BUTTON_FIRST = K_MOUSE1,
+  K_MOUSE_BUTTON_LAST = K_MOUSE9,
+
+  K_JOY_FIRST = K_JOY1,
+  K_JOY_LAST = K_JOY16,
+
+  K_KEYCODE_MAX,
+};
+
+static_assert(K_KEYCODE_MAX < 256, "too many keycodes");
+
+
+// input event types
+enum {
+  ev_keydown,
+  ev_keyup,
+  ev_mouse,
+  ev_joystick,
+  // extended events for vcc_run
+  ev_uimouse,
+  ev_winfocus, // data1: focused
+  // only for vccrun
+  ev_timer, // data1: timer id
+  ev_closequery,
+  // socket library
+  ev_socket,
+  // for neoUI library
+  ev_neoui = 69,
+  ev_user = 666,
+};
+
+
+enum {
+  EFlag_Eaten = 1U<<0,
+  EFlag_Cancelled = 1U<<1,
+  EFlag_Bubbling = 1U<<2, // this event is "bubbling up"
+};
+
+
+enum {
+  bCtrl = 1U<<0,
+  bAlt = 1U<<1,
+  bShift = 1U<<2,
+  bHyper = 1U<<3,
+  bLMB = 1U<<4,
+  bMMB = 1U<<5,
+  bRMB = 1U<<6,
+  bCtrlLeft = 1U<<7,
+  bAltLeft = 1U<<8,
+  bShiftLeft = 1U<<9,
+  bCtrlRight = 1U<<10,
+  bAltRight = 1U<<11,
+  bShiftRight = 1U<<12,
+};
+
+
 // event structure
 struct event_t {
   vint32 type; // event type
-  vint32 data1; // keys / mouse / joystick buttons
-  vint32 data2; // mouse / joystick x move
-  vint32 data3; // mouse / joystick y move
+  // unions are actually aliases
+  union {
+    vint32 data1; // keys / mouse / joystick buttons
+    vint32 keycode; // ev_keyXXX
+    vint32 focused; // ev_winfocus
+    vint32 timerid; // ev_timer
+    vint32 sockev; // ev_socket
+  };
+  union {
+    vint32 data2; // mouse / joystick x move
+    vint32 dx; // ev_mouse
+    vint32 x; // ev_uimouse
+    vint32 sockid; // ev_socket
+  };
+  union {
+    vint32 data3; // mouse / joystick y move
+    vint32 dy; // ev_mouse
+    vint32 y; // ev_uimouse
+    vint32 sockdata; // ev_socket
+  };
   vuint32 flags; // EFlag_XXX
   VObject *obj;
   VObject *dest;
   vuint32 modflags;
+
+  inline bool isEaten () const { return !!(flags&EFlag_Eaten); }
+  inline void setEaten () { flags|= EFlag_Eaten; }
+
+  inline bool isCancelled () const { return !!(flags&EFlag_Cancelled); }
+  inline void setCancelled () { flags |= EFlag_Cancelled; }
+
+  inline bool isBubbling () const { return !!(flags&EFlag_Bubbling); }
+  inline void setBubbling () { flags |= EFlag_Bubbling; }
+
+  inline bool isCtrlDown () const { return !!(modflags&bCtrl); }
+  inline bool isAltDown () const { return !!(modflags&bCtrl); }
+  inline bool isShiftDown () const { return !!(modflags&bShift); }
+  inline bool isHyperDown () const { return !!(modflags&bHyper); }
+  inline bool isLMBDown () const { return !!(modflags&bLMB); }
+  inline bool isMMBDown () const { return !!(modflags&bMMB); }
+  inline bool isRMBDown () const { return !!(modflags&bRMB); }
+
+  inline bool isLCtrlDown () const { return !!(modflags&bCtrlLeft); }
+  inline bool isLAltDown () const { return !!(modflags&bAltLeft); }
+  inline bool isLShiftDown () const { return !!(modflags&bShiftLeft); }
+
+  inline bool isRCtrlDown () const { return !!(modflags&bCtrlRight); }
+  inline bool isRAltDown () const { return !!(modflags&bAltRight); }
+  inline bool isRShiftDown () const { return !!(modflags&bShiftRight); }
 };
 
 
@@ -709,109 +860,3 @@ template<typename... Args> static __attribute__((unused)) inline void vobjPutPar
 
 #define vobjPutParamSelf(...)  vobjPutParam(this, ##__VA_ARGS__)
 #endif
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// keys and buttons
-enum {
-  K_ESCAPE = 27,
-  K_ENTER = 13,
-  K_TAB = 9,
-  K_BACKSPACE = 8,
-
-  K_SPACE = 32,
-
-  K_N0 = 48, K_N1, K_N2, K_N3, K_N4, K_N5, K_N6, K_N7, K_N8, K_N9,
-
-  K_a = 97, K_b, K_c, K_d, K_e, K_f,  K_g, K_h, K_i, K_j, K_k, K_l,
-  K_m, K_n, K_o, K_p, K_q, K_r, K_s, K_t, K_u, K_v, K_w, K_x, K_y, K_z,
-
-  K_FIRST_CONTROL_KEYCODE = 0x80,
-
-  K_UPARROW = 0x80, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW,
-  K_INSERT, K_DELETE, K_HOME, K_END, K_PAGEUP, K_PAGEDOWN,
-
-  K_PAD0, K_PAD1, K_PAD2, K_PAD3, K_PAD4, K_PAD5, K_PAD6, K_PAD7, K_PAD8, K_PAD9,
-
-  K_NUMLOCK,
-  K_PADDIVIDE, K_PADMULTIPLE,
-  K_PADMINUS, K_PADPLUS,
-  K_PADENTER, K_PADDOT,
-
-  K_CAPSLOCK,
-  K_BACKQUOTE,
-
-  K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12,
-
-  K_LSHIFT, K_RSHIFT,
-  K_LCTRL, K_RCTRL,
-  K_LALT, K_RALT,
-
-  K_LWIN, K_RWIN,
-  K_MENU,
-
-  K_PRINTSCRN,
-  K_SCROLLLOCK,
-  K_PAUSE,
-
-  K_MOUSE1, K_MOUSE2, K_MOUSE3, K_MOUSE4, K_MOUSE5,
-  K_MOUSE6, K_MOUSE7, K_MOUSE8, K_MOUSE9,
-  K_MWHEELUP, K_MWHEELDOWN,
-
-  K_JOY1, K_JOY2, K_JOY3, K_JOY4, K_JOY5, K_JOY6, K_JOY7, K_JOY8, K_JOY9,
-  K_JOY10, K_JOY11, K_JOY12, K_JOY13, K_JOY14, K_JOY15, K_JOY16,
-
-  K_MOUSE_FIRST = K_MOUSE1,
-  K_MOUSE_LAST = K_MWHEELDOWN,
-
-  K_MOUSE_BUTTON_FIRST = K_MOUSE1,
-  K_MOUSE_BUTTON_LAST = K_MOUSE9,
-
-  K_JOY_FIRST = K_JOY1,
-  K_JOY_LAST = K_JOY16,
-
-  K_KEYCODE_MAX,
-};
-
-static_assert(K_KEYCODE_MAX < 256, "too many keycodes");
-
-// input event types
-enum {
-  ev_keydown,
-  ev_keyup,
-  ev_mouse,
-  ev_joystick,
-  // extended events for vcc_run
-  ev_uimouse,
-  ev_winfocus, // data1: focused
-  // only for vccrun
-  ev_timer, // data1: timer id
-  ev_closequery,
-  // socket library
-  ev_socket,
-  // for neoUI library
-  ev_neoui = 69,
-  ev_user = 666,
-};
-
-enum {
-  EFlag_Eaten = 1U<<0,
-  EFlag_Cancelled = 1U<<1,
-  EFlag_Bubbling = 1U<<2, // this event is "bubbling up"
-};
-
-enum {
-  bCtrl = 1U<<0,
-  bAlt = 1U<<1,
-  bShift = 1U<<2,
-  bHyper = 1U<<3,
-  bLMB = 1U<<4,
-  bMMB = 1U<<5,
-  bRMB = 1U<<6,
-  bCtrlLeft = 1U<<7,
-  bAltLeft = 1U<<8,
-  bShiftLeft = 1U<<9,
-  bCtrlRight = 1U<<10,
-  bAltRight = 1U<<11,
-  bShiftRight = 1U<<12,
-};
