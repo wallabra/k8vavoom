@@ -3332,46 +3332,28 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
 
 //==========================================================================
 //
-//  VLevel::ClearBox
-//
-//==========================================================================
-inline void VLevel::ClearBox (float *box) const {
-  box[BOX2D_TOP] = box[BOX2D_RIGHT] = -99999.0f;
-  box[BOX2D_BOTTOM] = box[BOX2D_LEFT] = 99999.0f;
-}
-
-
-//==========================================================================
-//
-//  VLevel::AddToBox
-//
-//==========================================================================
-inline void VLevel::AddToBox (float *box, float x, float y) const {
-       if (x < box[BOX2D_LEFT]) box[BOX2D_LEFT] = x;
-  else if (x > box[BOX2D_RIGHT]) box[BOX2D_RIGHT] = x;
-       if (y < box[BOX2D_BOTTOM]) box[BOX2D_BOTTOM] = y;
-  else if (y > box[BOX2D_TOP]) box[BOX2D_TOP] = y;
-}
-
-
-//==========================================================================
-//
 //  VLevel::PostProcessForDecals
 //
 //==========================================================================
 void VLevel::PostProcessForDecals () {
   GCon->Logf(NAME_Dev, "postprocessing level for faster decals...");
 
-  for (int i = 0; i < NumLines; ++i) Lines[i].firstseg = nullptr;
+  for (auto &&line : allLines()) line.firstseg = nullptr;
 
   GCon->Logf(NAME_Dev, "postprocessing level for faster decals: assigning segs...");
   // collect segments, so we won't go thru the all segs in decal spawner
-  for (int sidx = 0; sidx < NumSegs; ++sidx) {
-    seg_t *seg = &Segs[sidx];
-    line_t *li = seg->linedef;
+  for (auto &&seg : allSegs()) {
+    line_t *li = seg.linedef;
     if (!li) continue;
-    seg->lsnext = li->firstseg;
-    li->firstseg = seg;
+    //seg.lsnext = li->firstseg;
+    //li->firstseg = &seg;
+    seg_t *cs = li->firstseg;
+    if (cs) {
+      while (cs->lsnext) cs = cs->lsnext;
+      cs->lsnext = &seg;
+    } else {
+      li->firstseg = &seg;
+    }
   }
 }
 
@@ -3385,11 +3367,11 @@ void VLevel::PostProcessForDecals () {
 //
 //==========================================================================
 void VLevel::GroupLines () const {
-  line_t ** linebuffer;
+  line_t **linebuffer;
   int total;
   line_t *li;
   sector_t *sector;
-  float bbox[4];
+  float bbox2d[4];
   int block;
 
   LinkNode(NumNodes-1, nullptr);
@@ -3430,30 +3412,30 @@ void VLevel::GroupLines () const {
   sector = Sectors;
   for (int i = 0; i < NumSectors; ++i, ++sector) {
     if (SecLineCount[i] != sector->linecount) Sys_Error("GroupLines: miscounted");
-    ClearBox(bbox);
+    ClearBox2D(bbox2d);
     for (int j = 0; j < sector->linecount; ++j) {
       li = sector->lines[j];
-      AddToBox(bbox, li->v1->x, li->v1->y);
-      AddToBox(bbox, li->v2->x, li->v2->y);
+      AddToBox2D(bbox2d, li->v1->x, li->v1->y);
+      AddToBox2D(bbox2d, li->v2->x, li->v2->y);
     }
 
     // set the soundorg to the middle of the bounding box
-    sector->soundorg = TVec((bbox[BOX2D_RIGHT]+bbox[BOX2D_LEFT])/2.0f, (bbox[BOX2D_TOP]+bbox[BOX2D_BOTTOM])/2.0f, 0);
+    sector->soundorg = TVec((bbox2d[BOX2D_RIGHT]+bbox2d[BOX2D_LEFT])/2.0f, (bbox2d[BOX2D_TOP]+bbox2d[BOX2D_BOTTOM])/2.0f, 0);
 
     // adjust bounding box to map blocks
-    block = MapBlock(bbox[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS);
+    block = MapBlock(bbox2d[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS);
     block = block >= BlockMapHeight ? BlockMapHeight-1 : block;
     sector->blockbox[BOX2D_TOP] = block;
 
-    block = MapBlock(bbox[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS);
+    block = MapBlock(bbox2d[BOX2D_BOTTOM]-BlockMapOrgY-MAXRADIUS);
     block = block < 0 ? 0 : block;
     sector->blockbox[BOX2D_BOTTOM] = block;
 
-    block = MapBlock(bbox[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS);
+    block = MapBlock(bbox2d[BOX2D_RIGHT]-BlockMapOrgX+MAXRADIUS);
     block = block >= BlockMapWidth ? BlockMapWidth-1 : block;
     sector->blockbox[BOX2D_RIGHT] = block;
 
-    block = MapBlock(bbox[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS);
+    block = MapBlock(bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS);
     block = block < 0 ? 0 : block;
     sector->blockbox[BOX2D_LEFT] = block;
   }

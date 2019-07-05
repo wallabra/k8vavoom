@@ -590,6 +590,36 @@ public:
   static bool CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
                               TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold=0.0f);
 
+public:
+  #define VL_ITERATOR(arrname_,itername_,itertype_) \
+    class arrname_##Iterator { \
+      friend class VLevel; \
+    private: \
+      const VLevel *level; \
+    private: \
+      arrname_##Iterator (const VLevel *alevel) : level(alevel) {} \
+    public: \
+      inline itertype_ *begin () { return &level->arrname_[0]; } \
+      inline const itertype_ *begin () const { return &level->arrname_[0]; } \
+      inline itertype_ *end () { return &level->arrname_[level->Num##arrname_]; } \
+      inline const itertype_ *end () const { return &level->arrname_[level->Num##arrname_]; } \
+    }; \
+    \
+    inline arrname_##Iterator itername_ () { return arrname_##Iterator(this); } \
+    inline const arrname_##Iterator itername_ () const { return arrname_##Iterator(this); }
+
+  // iterators: `for (auto &&it : XXX())` (`it` is a reference!)
+  VL_ITERATOR(Vertexes, allVertices, vertex_t)
+  VL_ITERATOR(Sectors, allSectors, sector_t)
+  VL_ITERATOR(Sides, allSides, side_t)
+  VL_ITERATOR(Lines, allLines, line_t)
+  VL_ITERATOR(Segs, allSegs, seg_t)
+  VL_ITERATOR(Subsectors, allSubsectors, subsector_t)
+  VL_ITERATOR(Nodes, allNodes, node_t)
+  VL_ITERATOR(Things, allThings, mthing_t)
+
+  #undef VL_ITERATOR
+
 private:
   // map loaders
   void LoadVertexes (int, int, int&);
@@ -645,11 +675,21 @@ private:
   void HashLines ();
   void BuildSectorLists ();
 
+  static inline void ClearBox2D (float box2d[4]) {
+    box2d[BOX2D_TOP] = box2d[BOX2D_RIGHT] = -999999.0f;
+    box2d[BOX2D_BOTTOM] = box2d[BOX2D_LEFT] = 999999.0f;
+  }
+
+  static inline void AddToBox2D (float box2d[4], const float x, const float y) {
+         if (x < box2d[BOX2D_LEFT]) box2d[BOX2D_LEFT] = x;
+    else if (x > box2d[BOX2D_RIGHT]) box2d[BOX2D_RIGHT] = x;
+         if (y < box2d[BOX2D_BOTTOM]) box2d[BOX2D_BOTTOM] = y;
+    else if (y > box2d[BOX2D_TOP]) box2d[BOX2D_TOP] = y;
+  }
+
   // post-loading routines
   void GroupLines () const;
   void LinkNode (int, node_t *) const;
-  void ClearBox (float *) const;
-  void AddToBox (float *, float, float) const;
   void FloodZones ();
   void FloodZone (sector_t *, int);
 
