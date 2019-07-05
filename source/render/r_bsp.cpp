@@ -178,14 +178,10 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
   surf->queueframe = currQueueFrame;
   surf->plvisible = surf->IsVisible(vieworg);
 
-  /*
-  if (!(surf->drawflags&surface_t::DF_MASKED)) {
-    // check for non-solid texture
-    if (surf->texinfo->Alpha < 1.0f || tex->isTransparent()) surf->drawflags |= surface_t::DF_MASKED;
-  }
-  */
   // alpha: 1.0 is masked wall, 1.1 is solid wall
-  if (surf->texinfo->Alpha < 1.0f || tex->isTransparent()) {
+  if (surf->texinfo->Alpha < 1.0f ||
+      ((surf->typeFlags&(surface_t::TF_MIDDLE|surface_t::TF_TOPHACK)) != 0 && tex->isTransparent()))
+  {
     surf->drawflags |= surface_t::DF_MASKED;
   } else {
     surf->drawflags &= ~surface_t::DF_MASKED;

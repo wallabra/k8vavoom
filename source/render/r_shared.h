@@ -91,6 +91,7 @@ struct surface_t {
     TF_MIDDLE  = 1u<<2,
     TF_FLOOR   = 1u<<3,
     TF_CEILING = 1u<<4,
+    TF_TOPHACK = 1u<<5,
   };
 
   surface_t *next;

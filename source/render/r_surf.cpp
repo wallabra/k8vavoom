@@ -38,6 +38,7 @@ extern VCvarB w_update_clip_bsp;
 //extern VCvarB w_update_clip_region;
 extern VCvarB w_update_in_renderer;
 #endif
+static VCvarB r_hack_transtop("r_hack_transtop", true, "Allow \"Transparent Top Texture\" hack?", CVAR_PreInit|CVAR_Archive);
 
 
 //**************************************************************************
@@ -653,7 +654,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   // HACK: sector with height of 1, and only middle masked texture is "transparent door"
   //       also, invert "upper unpegged" flag for this case
   int peghack = 0;
-  if (TTex->Type == TEXTYPE_Null && IsTransDoorHack(seg)) {
+  if (r_hack_transtop && TTex->Type == TEXTYPE_Null && IsTransDoorHack(seg)) {
     TTex = GTextureManager(sidedef->MidTexture);
     peghack = ML_DONTPEGTOP;
   }
@@ -701,7 +702,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = top_topz2;
     wv[3].z = max2(back_topz2, botz2);
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP);
+    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|(peghack ? surface_t::TF_TOPHACK : 0));
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
