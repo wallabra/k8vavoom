@@ -663,9 +663,13 @@ private:
   void FinaliseLines ();
   void CreateRepBase ();
   void CreateBlockMap ();
+
+  enum { BSP_AJ, BSP_ZD };
+  int GetNodesBuilder () const; // valid only after `LevelFlags` are set
   void BuildNodesAJ ();
   void BuildNodesZD ();
   void BuildNodes ();
+
   bool CreatePortals (void *pvsinfo);
   void SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsinfo);
   bool LeafFlow (int leafnum, void *pvsinfo);

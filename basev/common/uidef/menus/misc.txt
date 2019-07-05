@@ -47,13 +47,17 @@ menudef MiscOptions {
 
   option enum {
     title = "Internal Node Builder";
-    cvar = nodes_builder;
+    cvar = nodes_builder_type;
     list {
+      "Auto",
       "AJBSP",
       "ZDBSP",
     }
     help =
-      "Internal node builder.";
+      "Internal node builder."
+      "Auto will use ZDBSP for UDMF, and AJBSP for others."
+      "Both node builders has their advantages."
+      "If unsure, leave it as 'AUTO', and let the engine to decide.";
   }
 
   option bool {
