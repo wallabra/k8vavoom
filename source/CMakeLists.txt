@@ -259,9 +259,9 @@ set(NETSUB_SOURCES
 #
 #---------------------------------------
 set(AJBSP_SOURCES
-  ajbsp/bsp_level.cpp
-  ajbsp/bsp_node.cpp
-  ajbsp/bsp_util.cpp
+  bsp/ajbsp/bsp_level.cpp
+  bsp/ajbsp/bsp_node.cpp
+  bsp/ajbsp/bsp_util.cpp
   #ajbsp/lib_util.cpp
 )
 
@@ -272,13 +272,13 @@ set(AJBSP_SOURCES
 #
 #---------------------------------------
 set(ZDBSP_SOURCES
-  zdbsp/nodebuild.cpp
-  zdbsp/nodebuild_events.cpp
-  zdbsp/nodebuild_extract.cpp
-  zdbsp/nodebuild_gl.cpp
-  zdbsp/nodebuild_utility.cpp
-  zdbsp/nodebuild_classify_nosse2.cpp
-  zdbsp/zdbsp_extr.cpp
+  bsp/zdbsp/nodebuild.cpp
+  bsp/zdbsp/nodebuild_events.cpp
+  bsp/zdbsp/nodebuild_extract.cpp
+  bsp/zdbsp/nodebuild_gl.cpp
+  bsp/zdbsp/nodebuild_utility.cpp
+  bsp/zdbsp/nodebuild_classify_nosse2.cpp
+  bsp/zdbsp/zdbsp_extr.cpp
 )
 
 

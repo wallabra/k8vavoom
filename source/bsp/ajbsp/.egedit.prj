@@ -1,0 +1,140 @@
+ProjectOptions: {
+  mainfile: "w_rawdef.h",
+  curfile: "bsp_node.cpp",
+  runargs: null,
+  rdmdargs: null,
+  compilecmd: [],
+  runcmd: [],
+  files: [
+    {
+      name: "LICENSE.txt",
+      tabsize: 2,
+      nohighlight: true,
+      history: {}
+    },{
+      name: "README.md",
+      tabsize: 2,
+      nohighlight: true,
+      history: {}
+    },{
+      name: "/home/ketmar/back/vavoom_dev/src/source/p_gameobject.h",
+      cx: 5,
+      cy: 575,
+      topline: 547,
+      tabsize: 2,
+      lastAccess: 8,
+      history: {}
+    },{
+      name: "/home/ketmar/back/vavoom_dev/src/source/p_setup.cpp",
+      cy: 771,
+      topline: 746,
+      bookmarks: [
+        798,240
+      ],
+      tabsize: 2,
+      lastAccess: 6,
+      history: {}
+    },{
+      name: "_unused/bsp_wad_unused.cpp",
+      cy: 1344,
+      topline: 1316,
+      tabsize: 2,
+      lastAccess: 7,
+      history: {}
+    },{
+      name: "/home/ketmar/back/vavoom_dev/src/source/p_nodebuild.cpp",
+      cy: 711,
+      topline: 683,
+      bookmarks: [
+        721,559,753,444
+      ],
+      tabsize: 2,
+      lastAccess: 5,
+      history: {}
+    },{
+      name: "bsp.h",
+      cx: 4,
+      cy: 562,
+      topline: 528,
+      visualtabs: true,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "bsp_level.cpp",
+      cx: 13,
+      cy: 965,
+      topline: 932,
+      visualtabs: true,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "bsp_node.cpp",
+      cy: 137,
+      topline: 107,
+      visualtabs: true,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "bsp_util.cpp",
+      cy: 681,
+      topline: 653,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "main.h",
+      cx: 2,
+      cy: 92,
+      topline: 77,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "sys_endian.h",
+      cx: 8,
+      cy: 105,
+      topline: 71,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "sys_macro.h",
+      cx: 56,
+      cy: 8,
+      tabsize: 2,
+      history: {}
+    },{
+      name: "sys_type.h",
+      tabsize: 2,
+      history: {}
+    },{
+      name: "w_rawdef.h",
+      tabsize: 2,
+      history: {}
+    },{
+      name: "_unused/lib_util.cpp",
+      tabsize: 2,
+      history: {}
+    },{
+      name: "_unused/lib_util.h",
+      tabsize: 2,
+      history: {}
+    },{
+      name: "_unused/main.cpp",
+      tabsize: 2,
+      lastAccess: 1,
+      history: {}
+    }
+  ],
+  history: {
+    "dlg-srr-edsearch": [
+      "\\bfmr\\b","\\b(New[A-Z])","\\bLine\\b","\\bStrm\\b","\\bSeg\\b","\\bSrcSeg\\b","\\bseg\\b","glBSP","\\bparnters\\b","\\bglbsp_","2va","\\bajvx2vvvx\\b","\\bajseg2vvseg\\b","\\bSetUp","1","\\bLevel\\->NumSegs\\b","\\bss\\b","\\bSrcSub\\b"
+    ],
+    "dlg-global-grep": [
+      "STANDALO","lev_doing_normal","hexen","FatalError","Adler32_Begin","num_normal_vert","coalesce","two_sided","ref_count","LINEFLAG_TWO_SIDED","num_gl_vert","num_new_vert","IS_GL","cur_info","FreeLevel","opt_verbosity","floor_tex","floor_h","\\blight\\b","\\bspecial\\b","\\btag\\b","LookupSector","\\b[xy]_offset\\b","CheckLimits","\"\\s\\s+","num_old_vert","Forcing","zero p_length","LookupLinedef"
+    ],
+    "dlg-linenum-lnum": [
+      "187","213","231","250","305","311","365","464","578","589","592","600","624","482","369","351","260","287","349","329","438","622","680","59","386","347","58","350","443","530","602","243","665","675","500","2446","290","493","440","385"
+    ],
+    "dlg-srr-edreplace": [
+      "fmt","ajbsp:\\1","ajbsp::\\1","line","xms","seg","destseg","srcseg","AJBSP","partners","ajbsp::","2vv","ajvx2vv","ajseg2vv","Upload","2","dsnum","destss","srcss"
+    ]
+  }
+}

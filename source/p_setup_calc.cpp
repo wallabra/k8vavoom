@@ -30,7 +30,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "filesys/fwaddefs.h"
-#include "ajbsp/bsp.h"
+#include "bsp/ajbsp/bsp.h"
 
 #ifdef CLIENT
 # include "drawer.h"

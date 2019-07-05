@@ -28,8 +28,8 @@
 //**    Build nodes using zdbsp.
 //**
 //**************************************************************************
-//#include "zdbsp/xs_Float.h"
-#include "zdbsp/nodebuild.h"
+//#include "bsp/zdbsp/xs_Float.h"
+#include "bsp/zdbsp/nodebuild.h"
 
 
 static inline int toFix (double val) {
