@@ -562,6 +562,8 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
     if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Tex->isTransparent())) {
+      // mark subsector as rendered
+      sub->miscFlags |= subsector_t::SSMF_Rendered;
       side_t *sidedef = seg->sidedef;
       //GCon->Logf("00: extra for seg #%d (line #%d)", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
       for (; sp; sp = sp->next) {
@@ -634,6 +636,8 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   }
   seg->flags |= SF_MAPPED;
 #endif
+  // mark subsector as rendered
+  sub->miscFlags |= subsector_t::SSMF_Rendered;
 
   side_t *sidedef = seg->sidedef;
 
@@ -877,9 +881,6 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 
     // is this subsector potentially visible?
     if (ViewClip.ClipCheckSubsector(sub)) {
-      // mark as rendered
-      sub->miscFlags |= subsector_t::SSMF_Rendered;
-
       if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
       sub->VisFrame = currVisFrame;
 
