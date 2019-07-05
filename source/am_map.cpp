@@ -224,6 +224,9 @@ static VCvarB am_draw_texture_lines("am_draw_texture_lines", true, "Draw automap
 
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
 
+static VCvarB am_draw_keys("am_draw_keys", true, "Draw keys on automap?", CVAR_Archive);
+
+
 // cached color from cvar
 struct ColorCV {
 protected:
@@ -406,6 +409,31 @@ static const mline_t thintriangle_guy[] =
 };
 #undef R
 #define NUMTHINTRIANGLEGUYLINES  (sizeof(thintriangle_guy)/sizeof(mline_t))
+
+
+static TMapNC<VClass *, int> spawnSprIndex;
+
+
+//==========================================================================
+//
+//  getSpriteIndex
+//
+//==========================================================================
+static int getSpriteIndex (VClass *cls) {
+  vint32 sprIdx = -1;
+  auto spip = spawnSprIndex.find(cls);
+  if (spip) return *spip;
+  // find id
+  VStateLabel *lbl = cls->FindStateLabel("Spawn");
+  if (lbl && lbl->State) {
+    if (R_AreSpritesPresent(lbl->State->SpriteIndex)) {
+      //GCon->Logf("found spawn sprite for '%s'", cls->GetName());
+      sprIdx = lbl->State->SpriteIndex;
+    }
+  }
+  spawnSprIndex.put(cls, sprIdx);
+  return sprIdx;
+}
 
 
 //==========================================================================
@@ -1715,24 +1743,10 @@ static void AM_drawThings () {
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-    if (am_cheating <= 2) {
-      if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
-      if (mobj->RenderStyle == STYLE_None) continue;
-    } else {
-      invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || (mobj->RenderStyle == STYLE_None));
-    }
+    invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None);
+    if (invisible && am_cheating <= 2) continue;
 
     //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
-
-    TVec morg = mobj->GetDrawOrigin();
-    float x = FTOM(MTOF(morg.x));
-    float y = FTOM(MTOF(morg.y));
-    float angle = mobj->/*Angles*/GetInterpolatedDrawAngles().yaw; // anyway
-
-    if (am_rotate) {
-      AM_rotatePoint(&x, &y);
-      angle += 90.0f-cl->ViewAngles.yaw;
-    }
 
     vuint32 color;
          if (invisible) color = InvisibleThingColor;
@@ -1742,30 +1756,13 @@ static void AM_drawThings () {
     else if (mobj->EntityFlags&VEntity::EF_Solid) color = SolidThingColor;
     else color = ThingColor;
 
-    vint32 sprIdx = -1;
-    if (am_render_thing_sprites) {
-      static TMapNC<VClass *, vint32> spawnSprIndex;
-      // check state
-      VClass *cls = mobj->GetClass();
-      auto spip = spawnSprIndex.find(cls);
-      if (spip) {
-        sprIdx = *spip;
-      } else {
-        // find id
-        VStateLabel *lbl = cls->FindStateLabel("Spawn");
-        if (lbl && lbl->State) {
-          if (R_AreSpritesPresent(lbl->State->SpriteIndex)) {
-            GCon->Logf("found spawn sprite for '%s'", cls->GetName());
-            sprIdx = lbl->State->SpriteIndex;
-          }
-        }
-        spawnSprIndex.put(cls, sprIdx);
-      }
-    }
+    int sprIdx = (am_render_thing_sprites ? getSpriteIndex(mobj->GetClass()) : -1);
+
+    TVec morg = mobj->GetDrawOrigin();
 
     if (sprIdx > 0) {
-      x = morg.x;
-      y = morg.y;
+      float x = morg.x;
+      float y = morg.y;
       if (am_rotate) AM_rotatePoint(&x, &y);
       if (!inSpriteMode) {
         inSpriteMode = true;
@@ -1777,14 +1774,70 @@ static void AM_drawThings () {
         inSpriteMode = false;
         Drawer->StartAutomap(am_overlay);
       }
+
+      float x = FTOM(MTOF(morg.x));
+      float y = FTOM(MTOF(morg.y));
+      float angle = mobj->/*Angles*/GetInterpolatedDrawAngles().yaw; // anyway
+
+      if (am_rotate) {
+        AM_rotatePoint(&x, &y);
+        angle += 90.0f-cl->ViewAngles.yaw;
+      }
       AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
     }
   }
+
   // restore automap rendering mode
-  if (inSpriteMode) {
-    inSpriteMode = false;
-    Drawer->StartAutomap(am_overlay);
+  if (inSpriteMode) Drawer->StartAutomap(am_overlay);
+}
+
+
+//==========================================================================
+//
+//  AM_drawKeys
+//
+//==========================================================================
+static void AM_drawKeys () {
+  static VClass *keyClass = nullptr;
+  if (!keyClass) {
+    keyClass = VClass::FindClass("Key");
+    if (!keyClass) return; // the thing that should not be
   }
+
+  bool inSpriteMode = false;
+  for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
+    VEntity *mobj = *Ent;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None) continue;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
+
+    // check for seen subsector
+    if (!mobj->SubSector) continue;
+    if (!(mobj->SubSector->miscFlags&subsector_t::SSMF_Rendered)) continue;
+    //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
+
+    // check if this is a key
+    VClass *cls = mobj->GetClass();
+    if (!cls->IsChildOf(keyClass)) continue;
+
+    // check if it has a spawn sprite
+    int sprIdx = getSpriteIndex(cls);
+    if (sprIdx < 0) continue;
+
+    // ok, this looks like a valid key, render it
+    TVec morg = mobj->GetDrawOrigin();
+    float x = morg.x;
+    float y = morg.y;
+    if (am_rotate) AM_rotatePoint(&x, &y);
+    if (!inSpriteMode) {
+      inSpriteMode = true;
+      Drawer->EndAutomap();
+    }
+    R_DrawSpritePatch(CXMTOFF(x), CYMTOFF(y), sprIdx, 0, 0, 0, 0, 0, scale_mtof, true); // draw, ignore vscr
+  }
+
+  // restore automap rendering mode
+  if (inSpriteMode) Drawer->StartAutomap(am_overlay);
 }
 
 
@@ -2045,6 +2098,7 @@ void AM_Drawer () {
   if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) {
     AM_drawThings();
   }
+  if (am_draw_keys) AM_drawKeys();
   if (am_cheating && am_show_static_lights) AM_drawStaticLights();
   if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights();
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
