@@ -2182,14 +2182,19 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       line_t *nline = *ngb;
       if (li->v1 == nline->v2) {
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Log("  v1 at nv2");
+        GCon->Logf("  v1 at nv2 (%d)", (int)(ptrdiff_t)(nline-Lines));
 #endif
-        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
+        // find out correct side
+        int nside =
+          (nline->frontsector == fsec || nline->backsector == bsec) ? 0 :
+          (nline->backsector == fsec || nline->frontsector == bsec) ? 1 :
+          -1;
+        if (nside != -1) PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips);
       } else if (li->v1 == nline->v1) {
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Log("  v1 at nv1");
+        GCon->Logf("  v1 at nv1 (%d)", (int)(ptrdiff_t)(nline-Lines));
 #endif
-        //PutDecalAtLine(tex, orgz, ?, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
+        //PutDecalAtLine(tex, orgz, dstxofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       }
     }
   }
@@ -2197,19 +2202,24 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   if (dcx1 > linelen) {
     // to the right
 #ifdef VAVOOM_DECALS_DEBUG
-    GCon->Logf("Decal '%s' at line #%d: going to the right; ofs=%g", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1);
+    GCon->Logf("Decal '%s' at line #%d: going to the right; left=%g", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1-linelen);
 #endif
     line_t **ngb = li->v2lines;
     for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
       if (li->v2 == nline->v1) {
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Log("  v2 at nv1");
+        GCon->Logf("  v2 at nv1 (%d)", (int)(ptrdiff_t)(nline-Lines));
 #endif
-        PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
+        // find out correct side
+        int nside =
+          (nline->frontsector == fsec || nline->backsector == bsec) ? 0 :
+          (nline->backsector == fsec || nline->frontsector == bsec) ? 1 :
+          -1;
+        if (nside != -1) PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips);
       } else if (li->v2 == nline->v2) {
 #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Log("  v2 at nv2");
+        GCon->Logf("  v2 at nv2 (%d)", (int)(ptrdiff_t)(nline-Lines));
 #endif
         //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+(dstxofs-linelen), dec, (nline->frontsector == fsec ? 0 : 1), nline, flips);
       }
