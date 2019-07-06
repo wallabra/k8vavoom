@@ -256,6 +256,10 @@ override void Init () {
   CreateCvar('bot_no_jump', "0", "Disable bot jumping?", 0/*CVAR_ARCHIVE*/);
   CreateCvar('bot_always_headshots', "0", "Should bot always try do to a headshot?", 0/*CVAR_ARCHIVE*/);
 
+
+  CreateCvar('trans_debug_log', "0", "Show translation debug log?", CVAR_ARCHIVE);
+
+
   ::Init(); // parse cvarinfo and such
 }
 
