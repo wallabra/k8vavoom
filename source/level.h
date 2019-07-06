@@ -692,7 +692,7 @@ private:
 
   // post-loading routines
   void GroupLines ();
-  void LinkNode (int, node_t *);
+  void LinkNode (int BSPNum, node_t *pParent);
   void FloodZones ();
   void FloodZone (sector_t *, int);
 
