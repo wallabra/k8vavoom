@@ -2793,7 +2793,7 @@ void VDictNextIndex::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   idxexpr->Emit(ec);
   ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(),
-    (doRemove ? OPC_DictDispatch_NextIndex : OPC_DictDispatch_DelAndNextIndex), Loc);
+    (doRemove ? OPC_DictDispatch_DelAndNextIndex : OPC_DictDispatch_NextIndex), Loc);
 }
 
 
