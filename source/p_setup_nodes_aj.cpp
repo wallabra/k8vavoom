@@ -28,6 +28,9 @@
 //**    Build nodes using ajbsp.
 //**
 //**************************************************************************
+static VCvarB ajbsp_roundoff_tree("__ajbsp_roundoff_tree", false, "Roundoff vertices in AJBSP?", CVAR_PreInit);
+
+
 namespace ajbsp {
   //extern bool lev_doing_hexen;
   extern int num_old_vert;
@@ -665,6 +668,12 @@ void VLevel::BuildNodesAJ () {
   if (ret == build_result_e::BUILD_OK) {
     ajbsp::ClockwiseBspTree();
     ajbsp::CheckLimits();
+    //k8: this seems to be unnecessary for GL nodes
+    //ajbsp::NormaliseBspTree(); // remove all the mini-segs
+    if (ajbsp_roundoff_tree) {
+      GCon->Log("AJBSP: rounding off bsp tree");
+      ajbsp::RoundOffBspTree();
+    }
     ajbsp::SortSegs();
     ajbsp_Progress(-1, -1);
 
@@ -676,8 +685,6 @@ void VLevel::BuildNodesAJ () {
     CopyGLVerts(this, nfo);
     CopySegs(this, nfo);
     CopySubsectors(this, nfo);
-
-    ajbsp::NormaliseBspTree(); // remove all the mini-segs
     CopyNodes(this, root_node);
 
     // reject
