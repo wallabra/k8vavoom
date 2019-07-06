@@ -36,6 +36,8 @@ enum { GBigEndian = 0 };
     defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
 # define VAVOOM_BIG_ENDIAN
 enum { GBigEndian = 1 };
+//static_assert(false, "sorry, big-endian architectures aren't supported yet!");
+# error "sorry, big-endian architectures aren't supported yet!"
 #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
     defined(__LITTLE_ENDIAN__) || \
     defined(__ARMEL__) || \
