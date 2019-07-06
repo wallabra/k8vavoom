@@ -887,6 +887,8 @@ int VObject::GetObjectsCount () {
 //
 //==========================================================================
 void VObject::SerialiseFields (VStream &Strm) {
+  static int debugDump = -1;
+  if (debugDump < 0) debugDump = (GArgs.CheckParm("-vc-io-debug") ? 1 : 0);
   //GetClass()->SerialiseObject(Strm, this);
   if (Strm.IsLoading()) {
     // reading
@@ -917,6 +919,7 @@ void VObject::SerialiseFields (VStream &Strm) {
         if (fldseen.put(fldname, true)) {
           GLog.WriteLine(NAME_Warning, "duplicate saved field `%s` in class `%s`", *fldname, GetClass()->GetName());
         }
+        if (debugDump) GLog.WriteLine("VC I/O: loading field `%s` of class `%s`...",  *fldname, GetClass()->GetName());
         VField *fld = *fpp;
         VField::SerialiseFieldValue(Strm, (vuint8 *)this+fld->Ofs, fld->Type);
       }

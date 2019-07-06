@@ -509,6 +509,8 @@ void VStruct::SkipSerialisedObject (VStream &Strm) {
 //
 //==========================================================================
 void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
+  static int debugDump = -1;
+  if (debugDump < 0) debugDump = (GArgs.CheckParm("-vc-io-debug") ? 1 : 0);
   if (Strm.IsLoading()) {
     // reading
     // read field count
@@ -538,6 +540,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
         if (fldseen.put(fldname, true)) {
           GLog.WriteLine(NAME_Warning, "duplicate saved field `%s` in struct `%s`", *fldname, *Name);
         }
+        if (debugDump) GLog.WriteLine("VC I/O: loading field `%s` of struct `%s`...",  *fldname, *Name);
         VField *fld = *fpp;
         VField::SerialiseFieldValue(Strm, Data+fld->Ofs, fld->Type);
       }
