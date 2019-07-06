@@ -336,6 +336,17 @@ struct CopyInfo {
 };
 
 
+static inline float ajRoundOffVertex (double v) {
+#if 1
+  vint32 iv = (vint32)(v*65536.0);
+  float res = (((double)iv)/65536.0);
+  return res;
+#else
+  return v;
+#endif
+}
+
+
 //==========================================================================
 //
 //  CopyGLVerts
@@ -368,7 +379,7 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
     if (!vert->is_used) continue;
     vertex_t *pDst = &Level->Vertexes[Level->NumVertexes];
-    *pDst = TVec(vert->x, vert->y, 0);
+    *pDst = TVec(ajRoundOffVertex(vert->x), ajRoundOffVertex(vert->y), 0);
     if (!vert->is_new) {
       // old
       if (nfo.ajvx2vv[vert->index] >= 0) Sys_Error("AJBSP: invalid old vector index (0)");
