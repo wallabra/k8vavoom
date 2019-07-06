@@ -45,32 +45,7 @@ namespace ajbsp {
   extern int num_segs;
   extern int num_subsecs;
   extern int num_nodes;
-
-  //static vuint32 GetTypeHash (const seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
-  //static vuint32 GetTypeHash (const vertex_t *vx) { return (vuint32)(ptrdiff_t)vx; }
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-static char message_buf[1024];
-
-
-// Lump order in a map WAD: each map needs a couple of lumps
-// to provide a complete scene geometry description.
-enum {
-  ML_LABEL, // A separator, name, ExMx or MAPxx
-  ML_THINGS,  // Monsters, items..
-  ML_LINEDEFS, // LineDefs, from editing
-  ML_SIDEDEFS, // SideDefs, from editing
-  ML_VERTEXES, // Vertices, edited and BSP splits generated
-  ML_SEGS, // LineSegs, from LineDefs split by BSP
-  ML_SSECTORS, // SubSectors, list of LineSegs
-  ML_NODES, // BSP nodes
-  ML_SECTORS, // Sectors, from editing
-  ML_REJECT, // LUT, sector-sector visibility
-  ML_BLOCKMAP, // LUT, motion clipping, walls/grid element
-  ML_BEHAVIOR, // ACS scripts
-};
 
 
 //==========================================================================
@@ -91,14 +66,12 @@ static void stripNL (char *str) {
 //
 //==========================================================================
 __attribute__((noreturn)) __attribute__((format(printf,1,2))) void ajbsp_FatalError (const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
-  va_end(args);
-  stripNL(message_buf);
-
-  Sys_Error("AJBSP: %s", message_buf);
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  stripNL(res);
+  Sys_Error("AJBSP: %s", res);
 }
 
 
@@ -108,14 +81,12 @@ __attribute__((noreturn)) __attribute__((format(printf,1,2))) void ajbsp_FatalEr
 //
 //==========================================================================
 __attribute__((format(printf,1,2))) void ajbsp_PrintMsg (const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
-  va_end(args);
-  stripNL(message_buf);
-
-  GCon->Logf("AJBSP: %s", message_buf);
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  stripNL(res);
+  GCon->Logf("AJBSP: %s", res);
 }
 
 
@@ -126,15 +97,12 @@ __attribute__((format(printf,1,2))) void ajbsp_PrintMsg (const char *fmt, ...) {
 //==========================================================================
 __attribute__((format(printf,1,2))) void ajbsp_PrintVerbose (const char *fmt, ...) {
   if (!nodes_show_warnings) return;
-
-  va_list args;
-
-  va_start(args, fmt);
-  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
-  va_end(args);
-  stripNL(message_buf);
-
-  GCon->Logf("AJBSP: %s", message_buf);
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  stripNL(res);
+  GCon->Logf("AJBSP: %s", res);
 }
 
 
@@ -145,15 +113,12 @@ __attribute__((format(printf,1,2))) void ajbsp_PrintVerbose (const char *fmt, ..
 //==========================================================================
 __attribute__((format(printf,1,2))) void ajbsp_PrintDetail (const char *fmt, ...) {
   if (!nodes_show_warnings) return;
-
-  va_list args;
-
-  va_start(args, fmt);
-  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
-  va_end(args);
-  stripNL(message_buf);
-
-  GCon->Logf("AJBSP: %s", message_buf);
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  stripNL(res);
+  GCon->Logf("AJBSP: %s", res);
 }
 
 
@@ -181,13 +146,30 @@ void ajbsp_PrintMapName (const char *name) {
 //
 //==========================================================================
 void ajbsp_Progress (int curr, int total) {
-  //GCon->Logf("AJBSP: %d/%d", curr, total);
 #ifdef CLIENT
   if (total <= 0) {
     R_PBarUpdate("BSP", 42, 42, true); // final update
   } else {
     R_PBarUpdate("BSP", curr, total);
   }
+#endif
+}
+
+
+//==========================================================================
+//
+//  ajRoundOffVertex
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline float ajRoundoffVertex (double v) {
+#if 1
+  vint32 iv = (vint32)(v*65536.0);
+  float res = (((double)iv)/65536.0);
+  return res;
+#else
+  return v;
 #endif
 }
 
@@ -236,54 +218,61 @@ static void UploadSidedefs (VLevel *Level) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct __attribute__((packed)) VertexInfo {
+  float xy[2];
+  int index; // vertex index in AJBSP
+
+  VertexInfo () {}
+  VertexInfo (const TVec &v, int aindex=0) { xy[0] = ajRoundoffVertex(v.x); xy[1] = ajRoundoffVertex(v.y); index = aindex; }
+
+  inline bool operator == (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
+  inline bool operator != (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
+};
+static_assert(sizeof(VertexInfo) == sizeof(float)*2+sizeof(int), "oops");
+
+static inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+
+
+//==========================================================================
+//
+//  ajUploadVertex
+//
+//==========================================================================
+static int ajUploadVertex (TMap<VertexInfo, int> &vmap, VLevel *Level, const TVec *v) {
+  VertexInfo vi(*v, ajbsp::num_vertices);
+  auto pp = vmap.find(vi);
+  if (pp) return *pp;
+  check(vi.index == ajbsp::num_vertices);
+  vmap.put(vi, vi.index);
+  ajbsp::vertex_t *vert = ajbsp::NewVertex();
+  memset(vert, 0, sizeof(*vert));
+  vert->x = vi.xy[0];
+  vert->y = vi.xy[1];
+  vert->index = (int)(ptrdiff_t)(v-Level->Vertexes);
+  vert->is_new = 0;
+  vert->is_used = 1;
+  return vi.index;
+}
+
+
 //==========================================================================
 //
 //  UploadLinedefs
 //
+//  ..and vertices
+//
 //==========================================================================
 static void UploadLinedefs (VLevel *Level) {
-  TArray<int> vertmap;
-  vertmap.SetNum(Level->NumVertexes);
-  for (int f = 0; f < Level->NumVertexes; ++f) vertmap[f] = -1;
-
+  TMap<VertexInfo, int> vmap;
   const line_t *pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
     ajbsp::linedef_t *line = ajbsp::NewLinedef();
     memset(line, 0, sizeof(*line));
     //if (line == nullptr) Sys_Error("AJBSP: out of memory!");
-
-    // upload vertexes
     if (!pSrc->v1 || !pSrc->v2) Sys_Error("linedef without vertexes");
-    int lv1idx = (int)(ptrdiff_t)(pSrc->v1-Level->Vertexes);
-    int lv2idx = (int)(ptrdiff_t)(pSrc->v2-Level->Vertexes);
-    if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("invalid linedef vertexes");
-    // check if we already have v1
-    if (vertmap[lv1idx] < 0) {
-      // add new one
-      vertmap[lv1idx] = ajbsp::num_vertices;
-      ajbsp::vertex_t *Vert = ajbsp::NewVertex();
-      memset(Vert, 0, sizeof(*Vert));
-      Vert->x = pSrc->v1->x;
-      Vert->y = pSrc->v1->y;
-      Vert->index = lv1idx;
-      Vert->is_new = 0;
-      Vert->is_used = 1;
-    }
-    // check if we already have v2
-    if (vertmap[lv2idx] < 0) {
-      // add new one
-      vertmap[lv2idx] = ajbsp::num_vertices;
-      ajbsp::vertex_t *Vert = ajbsp::NewVertex();
-      memset(Vert, 0, sizeof(*Vert));
-      Vert->x = pSrc->v2->x;
-      Vert->y = pSrc->v2->y;
-      Vert->index = lv2idx;
-      Vert->is_new = 0;
-      Vert->is_used = 1;
-    }
-
-    line->start = ajbsp::LookupVertex(vertmap[lv1idx]);
-    line->end = ajbsp::LookupVertex(vertmap[lv2idx]);
+    line->start = ajbsp::LookupVertex(ajUploadVertex(vmap, Level, pSrc->v1));
+    line->end = ajbsp::LookupVertex(ajUploadVertex(vmap, Level, pSrc->v2));
     line->start->is_used = 1;
     line->end->is_used = 1;
     line->zero_len = (fabs(line->start->x-line->end->x) < DIST_EPSILON) && (fabs(line->start->y-line->end->y) < DIST_EPSILON);
@@ -305,7 +294,6 @@ static void UploadLinedefs (VLevel *Level) {
     line->self_ref = (line->left && line->right && line->left->sector == line->right->sector);
     line->index = i;
   }
-
   ajbsp::num_old_vert = ajbsp::num_vertices;
 }
 
@@ -334,17 +322,6 @@ struct CopyInfo {
   TArray<int> ajseg2vv; // index: ajbsp seg number; value: new k8vavoom seg number
   TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new k8vavoom vertex index
 };
-
-
-static inline float ajRoundOffVertex (double v) {
-#if 1
-  vint32 iv = (vint32)(v*65536.0);
-  float res = (((double)iv)/65536.0);
-  return res;
-#else
-  return v;
-#endif
-}
 
 
 //==========================================================================
@@ -379,7 +356,7 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
     if (!vert->is_used) continue;
     vertex_t *pDst = &Level->Vertexes[Level->NumVertexes];
-    *pDst = TVec(ajRoundOffVertex(vert->x), ajRoundOffVertex(vert->y), 0);
+    *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
     if (!vert->is_new) {
       // old
       if (nfo.ajvx2vv[vert->index] >= 0) Sys_Error("AJBSP: invalid old vector index (0)");
@@ -433,11 +410,8 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     nfo.ajseg2vv[i] = -1;
 
     ajbsp::seg_t *srcseg = ajbsp::LookupSeg(i);
-    // ignore degenerate segs (but keep minisegs)
-    if (/*!srcseg->linedef ||*/ srcseg->is_degenerate) {
-      //GCon->Logf("skipped miniseg #%d", i);
-      continue;
-    }
+    // ignore degenerate segs
+    if (srcseg->is_degenerate) continue;
     if (srcseg->index != i) Host_Error("AJBSP: seg #%d has invalid index %d", i, srcseg->index);
 
     const int dsnum = Level->NumSegs++;
@@ -475,7 +449,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   }
   GCon->Logf("AJBSP: copied %d of %d used segs", Level->NumSegs, ajbsp::num_segs);
 
-  // setup partners (we need 'em for self-referencing deep water)
+  // setup partners
   if (firstPartner == -1) {
     check(lastPartner == -1);
     GCon->Logf(NAME_Dev, "AJBSP: no partner segs found");
@@ -543,17 +517,6 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   node_t *Node = &Nodes[NodeIndex];
   ++NodeIndex;
 
-  /*
-  GCon->Logf("#%d: (%d,%d)-(%d,%d) : (%d,%d)-(%d,%d) : d=(%f,%f)",
-    NodeIndex,
-    SrcNode->r.bounds.minx, SrcNode->r.bounds.miny,
-    SrcNode->r.bounds.maxx, SrcNode->r.bounds.maxy,
-    SrcNode->l.bounds.minx, SrcNode->l.bounds.miny,
-    SrcNode->l.bounds.maxx, SrcNode->l.bounds.maxy,
-    (float)SrcNode->dx, (float)SrcNode->dy
-  );
-  */
-
   TVec org = TVec(SrcNode->dbl_x, SrcNode->dbl_y, 0);
   TVec dir = TVec(SrcNode->dbl_dx, SrcNode->dbl_dy, 0);
   if (SrcNode->too_long) { dir.x /= 2.0f; dir.y /= 2.0f; }
@@ -565,6 +528,7 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   }
   Node->SetPointDirXY(org, dir);
 
+  //TODO: check if i should convert AJBSP bounding boxes to floats
   Node->bbox[0][0] = SrcNode->r.bounds.minx;
   Node->bbox[0][1] = SrcNode->r.bounds.miny;
   Node->bbox[0][2] = -32768.0f;
@@ -644,7 +608,7 @@ void VLevel::BuildNodesAJ () {
   ajbsp::num_real_lines = 0;
 
   // set up map data from loaded data
-  //UploadVertices(this); // vertices will be uploaded with linedefs
+  // vertices will be uploaded with linedefs
   UploadSectors(this);
   UploadSidedefs(this);
   UploadLinedefs(this);
@@ -677,6 +641,7 @@ void VLevel::BuildNodesAJ () {
   ajbsp::FreeSuper(seg_list);
 
   if (ret == build_result_e::BUILD_OK) {
+    GCon->Log("AJBSP: finalising the tree...");
     ajbsp::ClockwiseBspTree();
     ajbsp::CheckLimits();
     //k8: this seems to be unnecessary for GL nodes
@@ -690,6 +655,7 @@ void VLevel::BuildNodesAJ () {
 
     GCon->Logf("AJBSP: built with %d nodes, %d subsectors, %d segs, %d vertexes", ajbsp::num_nodes, ajbsp::num_subsecs, ajbsp::num_segs, ajbsp::num_vertices);
     if (root_node && root_node->r.node && root_node->l.node) GCon->Logf("AJBSP: heights of subtrees: %d/%d", ajbsp::ComputeBspHeight(root_node->r.node), ajbsp::ComputeBspHeight(root_node->l.node));
+
     GCon->Logf("AJBSP: copying built data");
     // copy nodes into internal structures
     CopyInfo nfo;
@@ -725,7 +691,7 @@ void VLevel::BuildNodesAJ () {
     BlockMapLumpSize = 0;
   }
 
-  // free any memory used by glBSP
+  // free any memory used by AJBSP
   ajbsp::FreeLevel();
   ajbsp::FreeQuickAllocCuts();
   ajbsp::FreeQuickAllocSupers();
