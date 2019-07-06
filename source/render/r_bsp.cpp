@@ -152,16 +152,17 @@ void VRenderLevelShared::GetFlatSetToRender (subsector_t *sub, subregion_t *regi
 
 //==========================================================================
 //
-//  VRenderLevelShared::SurfCheckAndQueue
+//  VRenderLevelShared::SurfPrepareForRender
 //
-//  this checks if surface is not queued twice
+//  checks if surface is not queued twice, sets various flags
+//  returns `false` if the surface should not be queued
 //
 //==========================================================================
-void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
-  if (!surf || !surf->subsector || surf->count < 3) return; // why not?
+bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
+  if (!surf || !surf->subsector || surf->count < 3) return false;
 
   VTexture *tex = surf->texinfo->Tex;
-  if (!tex || tex->Type == TEXTYPE_Null) return;
+  if (!tex || tex->Type == TEXTYPE_Null) return false;
 
   if (surf->queueframe == currQueueFrame) {
     if (surf->seg) {
@@ -173,8 +174,9 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
       GCon->Logf(NAME_Warning, "subsector %d surface queued for rendering twice",
         (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
     }
-    return;
+    return false;
   }
+
   surf->queueframe = currQueueFrame;
   surf->plvisible = surf->IsVisible(vieworg);
 
@@ -187,7 +189,19 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
     surf->drawflags &= ~surface_t::DF_MASKED;
   }
 
-  queue.append(surf);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::SurfCheckAndQueue
+//
+//  this checks if surface is not queued twice
+//
+//==========================================================================
+void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
+  if (SurfPrepareForRender(surf)) queue.append(surf);
   //GCon->Logf("frame %u: queued surface with texinfo %p", currQueueFrame, surf->texinfo);
 }
 

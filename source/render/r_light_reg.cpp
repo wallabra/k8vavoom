@@ -1417,7 +1417,8 @@ void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
 //
 //==========================================================================
 bool VRenderLevel::CacheSurface (surface_t *surface) {
-  if (surface->count < 3) return false; // wtf?!
+  // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
+  if (!SurfPrepareForRender(surface)) return true;
 
   int bnum;
 
@@ -1445,7 +1446,13 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   if (!cache) {
     cache = AllocBlock(smax, tmax);
     // in rare case of surface cache overflow, just skip the light
-    if (!cache) return false; // alas
+    if (!cache) {
+      // alas
+      // as this surface is not queued, reset queue frame counter
+      // this is required to re-queue surface as non-lightmapped
+      surface->queueframe = 0;
+      return false;
+    }
     surface->CacheSurf = cache;
     cache->owner = &surface->CacheSurf;
     cache->surf = surface;

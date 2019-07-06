@@ -559,6 +559,9 @@ protected:
   void InitSky ();
   void AnimateSky (float);
 
+  // checks if surface is not queued twice, sets various flags
+  // returns `false` if the surface should not be queued
+  bool SurfPrepareForRender (surface_t *surf);
   // this checks if surface is not queued twice
   void SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf);
 
