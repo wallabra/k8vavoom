@@ -98,6 +98,10 @@ private:
   void setNameContent (const VName InName);
 
 public:
+  // debul
+  inline int dbgGetRef () const { return (dataptr ? store()->rc : 0); }
+
+public:
   // some utilities
   static bool convertInt (const char *s, int *outv, bool loose=false);
   static bool convertFloat (const char *s, float *outv, const float *defval=nullptr);
