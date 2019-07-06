@@ -368,14 +368,13 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-2]: keyptr
     // [-1]: valptr
     case OPC_DictDispatch_Put:
-      {
-        ht = (VScriptDict *)sp[-3].p;
-        if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
-        VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType, true); // calc hash
-        VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType, false); // no hash
-        sp[-3].i = (ht->put(e, v) ? 1 : 0);
-        sp -= 2;
-      }
+      // strings are increfed by loading opcode, so it is ok
+      ht = (VScriptDict *)sp[-3].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType, true); // calc hash
+      VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType, false); // no hash
+      sp[-3].i = (ht->put(e, v) ? 1 : 0);
+      sp -= 2;
       return;
     // delete
     // [-2]: VScriptDict
