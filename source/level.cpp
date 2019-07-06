@@ -300,13 +300,23 @@ void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
   subsector_t *sub = &Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  bbox[2] = sub->sector->floor.minz;
-  bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
-
-  //CalcSectorBoundingHeight(sub->sector, &bbox[2], &bbox[5]);
-  //if (IsSky(&sub->sector->ceiling)) bbox[5] = skyheight;
+  float ssbbox[6];
+  GetSubsectorBBox(sub, ssbbox);
+  FixBBoxZ(ssbbox);
+  ssbbox[2] = min2(ssbbox[2], sub->sector->floor.minz);
+  ssbbox[5] = max2(ssbbox[5], (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz));
+  FixBBoxZ(ssbbox);
 
   FixBBoxZ(bbox);
+  for (unsigned f = 0; f < 3; ++f) {
+    bbox[0+f] = min2(bbox[0+f], ssbbox[0+f]);
+    bbox[3+f] = max2(bbox[3+f], ssbbox[3+f]);
+  }
+  FixBBoxZ(bbox);
+
+  //bbox[2] = sub->sector->floor.minz;
+  //bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
+  //FixBBoxZ(bbox);
 }
 
 
@@ -325,12 +335,17 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
     // nope, this is a normal node
     node_t *bsp = &Nodes[bspnum];
     // decide which side the view point is on
-    unsigned side = 0; //bsp->PointOnSide(vieworg);
-    RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
-    side ^= 1;
-    RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
-    bbox[2] = min2(bsp->bbox[0][2], bsp->bbox[1][2]);
-    bbox[5] = max2(bsp->bbox[0][5], bsp->bbox[1][5]);
+    for (unsigned side = 0; side < 2; ++side) {
+      RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
+      FixBBoxZ(bsp->bbox[side]);
+      for (unsigned f = 0; f < 3; ++f) {
+        bbox[0+f] = min2(bbox[0+f], bsp->bbox[side][0+f]);
+        bbox[3+f] = max2(bbox[3+f], bsp->bbox[side][3+f]);
+      }
+      FixBBoxZ(bbox);
+    }
+    //bbox[2] = min2(bsp->bbox[0][2], bsp->bbox[1][2]);
+    //bbox[5] = max2(bsp->bbox[0][5], bsp->bbox[1][5]);
   } else {
     // leaf node (subsector)
     UpdateSubsectorBBox(bspnum&(~NF_SUBSECTOR), bbox, skyheight);
@@ -344,7 +359,7 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
 //
 //==========================================================================
 void VLevel::RecalcWorldBBoxes () {
-  if (NumSectors == 0) return; // just in case
+  if (NumSectors == 0 || NumSubsectors == 0 || NumNodes == 0) return; // just in case
   const float skyheight = CalcSkyHeight();
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
   RecalcWorldNodeBBox(NumNodes-1, dummy_bbox, skyheight);

@@ -486,6 +486,7 @@ public:
 
   void UpdateSubsectorBBox (int num, float *bbox, const float skyheight);
   void RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight);
+  // this also fixes 2d node bounding boxes (those can be wrong due to integers in ajbsp)
   void RecalcWorldBBoxes ();
 
   void GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const;
