@@ -359,7 +359,7 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
 //
 //==========================================================================
 void VLevel::RecalcWorldBBoxes () {
-  if (NumSectors == 0 || NumSubsectors == 0 || NumNodes == 0) return; // just in case
+  if (NumSectors == 0 || NumSubsectors == 0) return; // just in case
   const float skyheight = CalcSkyHeight();
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
   RecalcWorldNodeBBox(NumNodes-1, dummy_bbox, skyheight);
