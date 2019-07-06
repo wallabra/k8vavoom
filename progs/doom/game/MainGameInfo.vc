@@ -1052,6 +1052,16 @@ void TranslateLine (Level InLevel, line_t *line) {
   if (!trsp) {
     line->special = 0;
     line->arg1 = 0;
+    {
+      print("=================================================");
+      print("***TRANS: linedef #%s, special %d -- NOT FOUND!", line-&InLevel.Lines[0], OldSpec);
+      print("%s items in translation table", spec_trans_tab.length);
+      for (auto idx = spec_trans_tab.firstIndex(); spec_trans_tab.isValidIndex(idx); idx = spec_trans_tab.nextIndex(idx)) {
+        auto key = spec_trans_tab.keyAtIndex(idx); // pointer to key
+        auto val = spec_trans_tab.valueAtIndex(idx); // pointer to value
+        print("idx=%s; key=%s; value.special=%s", idx, key, val.special);
+      }
+    }
     return;
   }
 
