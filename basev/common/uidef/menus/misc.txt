@@ -46,7 +46,7 @@ menudef MiscOptions {
   header "Internal Node Builder";
 
   option enum {
-    title = "Internal Node Builder";
+    title = "Internal Nodes Builder";
     cvar = nodes_builder_type;
     list {
       "Auto",
@@ -54,10 +54,36 @@ menudef MiscOptions {
       "ZDBSP",
     }
     help =
-      "Internal node builder."
-      "Auto will use ZDBSP for UDMF, and AJBSP for others."
-      "Both node builders has their advantages."
-      "If unsure, leave it as 'AUTO', and let the engine to decide.";
+      "Internal nodes builder."
+      "If set to 'Auto', the engine will select the nodes builder"
+      "that should did its best on a given map."
+      "If unsure, leave it as 'Auto'.";
+  }
+
+  option enum [__k8vavoom_developer_version > 0] {
+    title = "Normal Nodes Builder";
+    cvar = nodes_builder_normal;
+    list {
+      "Auto",
+      "AJBSP",
+      "ZDBSP",
+    }
+    help =
+      "Nodes builder for normal (non-UDMF) maps."
+      "DO NOT set to 'Auto'!";
+  }
+
+  option enum [__k8vavoom_developer_version > 0] {
+    title = "UDMF Nodes Builder";
+    cvar = nodes_builder_udmf;
+    list {
+      "Auto",
+      "AJBSP",
+      "ZDBSP",
+    }
+    help =
+      "Nodes builder for UDMF maps."
+      "DO NOT set to 'Auto'!";
   }
 
   option bool {
