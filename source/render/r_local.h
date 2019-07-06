@@ -502,9 +502,6 @@ protected:
   void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
   void InitialWorldUpdate ();
 
-  void UpdateSubsectorBBox (int num, float *bbox);
-  void RecalcWorldBBoxes (int bspnum, float *bbox);
-
   void UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
                               VEntity *SkyBox, bool CheckSkyBoxAlways);
   void UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg);
