@@ -47,12 +47,35 @@ static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but 
 static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);
 
 VCvarI nodes_builder_type("nodes_builder_type", "0", "Which internal node builder to use (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
+// default nodes builder for UDMF is still AJBSP, because it seems that i fixed UDMF bugs
+static VCvarI nodes_builder_normal("nodes_builder_normal", "1", "Which internal node builder to use for non-UDMF maps (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
+static VCvarI nodes_builder_udmf("nodes_builder_udmf", "1", "Which internal node builder to use for UDMF maps (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 #include "p_setup_nodes_aj.cpp"
 #include "p_setup_nodes_zd.cpp"
 #include "p_setup_pvs.cpp"
+
+
+//==========================================================================
+//
+//  VLevel::GetNodesBuilder
+//
+//  valid only after `LevelFlags` are set
+//
+//==========================================================================
+int VLevel::GetNodesBuilder () const {
+  int nbt = nodes_builder_type;
+  if (nbt <= 0) nbt = (LevelFlags&LF_TextMap ? nodes_builder_udmf : nodes_builder_normal);
+  if (nbt == 2) return BSP_ZD;
+  switch (nbt) {
+    case 1: return BSP_AJ;
+    case 2: return BSP_ZD;
+  }
+  // something strange, use old heuristic
+  return (LevelFlags&LF_TextMap ? BSP_ZD : BSP_AJ);
+}
 
 
 //==========================================================================

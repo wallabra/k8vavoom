@@ -222,19 +222,6 @@ static void DumpLoadingTimings () {
 
 //==========================================================================
 //
-//  VLevel::GetNodesBuilder
-//
-//  valid only after `LevelFlags` are set
-//
-//==========================================================================
-int VLevel::GetNodesBuilder () const {
-  if (nodes_builder_type == 0) return (LevelFlags&LF_TextMap ? BSP_ZD : BSP_AJ);
-  return (nodes_builder_type != 2 ? BSP_AJ : BSP_ZD);
-}
-
-
-//==========================================================================
-//
 //  VLevel::FixKnownMapErrors
 //
 //==========================================================================
