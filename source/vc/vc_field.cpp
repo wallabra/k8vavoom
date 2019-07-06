@@ -285,6 +285,8 @@ void VField::SkipSerialisedValue (VStream &Strm) {
 //
 //==========================================================================
 void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type) {
+  static int ignoreArrayErrors = -1;
+  if (ignoreArrayErrors < 0) ignoreArrayErrors = (GArgs.CheckParm("-vc-io-lax-arrays") ? 1 : 0);
   vuint8 tp = Type.Type;
   Strm << tp;
   if (Strm.IsLoading()) {
@@ -490,7 +492,13 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         vint32 isz = -1;
         Strm << STRM_INDEX(isz);
         if (tp != IntType.Type) Host_Error("I/O Error: invalid array element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
-        if (isz != InnerSize) Host_Error("I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
+        if (isz != InnerSize) {
+          if (ignoreArrayErrors) {
+            GLog.WriteLine(NAME_Warning, "I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
+          } else {
+            Host_Error("I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
+          }
+        }
         for (int i = 0; i < Type.GetArrayDim(); ++i) {
           if (i < n) {
             SerialiseFieldValue(Strm, Data+i*InnerSize, IntType);
@@ -518,7 +526,13 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           vint32 isz = -1;
           Strm << STRM_INDEX(isz);
           if (tp != IntType.Type) Host_Error("I/O Error: invalid dynarray element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
-          if (isz != InnerSize) Host_Error("I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
+          if (isz != InnerSize) {
+            if (ignoreArrayErrors) {
+              GLog.WriteLine(NAME_Warning, "I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
+            } else {
+              Host_Error("I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
+            }
+          }
         } else {
           Strm << STRM_INDEX(InnerSize);
         }
