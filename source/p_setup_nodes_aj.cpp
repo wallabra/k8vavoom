@@ -540,9 +540,9 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   );
   */
 
-  TVec org = TVec(SrcNode->x, SrcNode->y, 0);
-  TVec dir = TVec(SrcNode->dx, SrcNode->dy, 0);
-  if (SrcNode->too_long) { dir.x /= 2; dir.y /= 2; }
+  TVec org = TVec(SrcNode->dbl_x, SrcNode->dbl_y, 0);
+  TVec dir = TVec(SrcNode->dbl_dx, SrcNode->dbl_dy, 0);
+  if (SrcNode->too_long) { dir.x /= 2.0f; dir.y /= 2.0f; }
   // check if `Length()` and `SetPointDirXY()` are happy
   if (dir.x == 0 && dir.y == 0) {
     //Host_Error("AJBSP: invalid BSP node (zero direction)");
