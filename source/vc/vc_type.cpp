@@ -1539,7 +1539,12 @@ vuint32 VScriptDictElem::calcHash () const {
 //==========================================================================
 void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype, bool calcHash) {
   e.clear();
-  e.value = ptr;
+  if (atype.Type != TYPE_String && isSimpleType(atype)) {
+    // for x86_64, pointer size is not equal to integer size, for example
+    memcpy(&e.value, &ptr, (size_t)atype.GetSize());
+  } else {
+    e.value = ptr;
+  }
   e.type = atype;
   e.setDestroy(false);
   //if (calcHash) e.updateHashCache();
