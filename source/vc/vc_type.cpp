@@ -1485,16 +1485,20 @@ vuint32 GetTypeHash (VScriptDictElem &e) {
 //
 //==========================================================================
 vuint32 VScriptDictElem::calcHash () const {
+  /*
   if (type.Type == TYPE_String) {
     VStr *s = (VStr *)&value;
     //fprintf(stderr, "GetTypeHash: str=<%s>; hash=0x%08x\n", *s->quote(), joaatHashBuf(s->getCStr(), (size_t)s->length()));
     return joaatHashBuf(s->getCStr(), (size_t)s->length());
   }
+  */
   //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", value, *type.GetName(), type.GetSize());
   switch (type.Type) {
     case TYPE_Int:
-    case TYPE_Byte:
     case TYPE_Float:
+      return hashU32((vuint32)(*(const vuint32 *)&value));
+    case TYPE_Byte:
+      return (vuint8)(*(const vuint8 *)&value);
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
@@ -1507,13 +1511,15 @@ vuint32 VScriptDictElem::calcHash () const {
     case TYPE_Bool:
       return 0;
     case TYPE_Name:
-      return hashU32((vuint32)(*(vuint32 *)&value));
+      return hashU32((vuint32)(*(const vuint32 *)&value));
     case TYPE_String:
       {
         VStr *s = (VStr *)&value;
         return joaatHashBuf(s->getCStr(), (size_t)s->length());
       }
     case TYPE_Delegate:
+      //FIXME
+      //TODO
       return 0;
     //case TYPE_Struct: //TODO: hash individual fields
     //case TYPE_DynamicArray:
@@ -1546,14 +1552,17 @@ void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VField
 //
 //==========================================================================
 bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
-  if (value == e.value || &e == this) return true;
+  if (&e == this) return true;
   //if ((flags&Flag_Hashed) && (e.flags&Flag_Hashed) && hash != e.hash) return false;
   if (type.Type == TYPE_String) {
     if (e.type.Type != TYPE_String) return false; // just in case
     return *((VStr *)&value) == *((VStr *)&e.value);
   }
-  if (isSimpleType(type)) return false; // covered by the previous `value` comparison
   if (!type.Equals(e.type)) return false; // sanity check
+  if (isSimpleType(type)) {
+    // for x86_64, pointer size is not equal to integer size, for example
+    return (memcmp(&value, &e.value, (size_t)type.GetSize()) == 0);
+  }
   return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type);
 }
 
@@ -1597,7 +1606,9 @@ void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
     dest->value = nullptr; // just in case
     *((VStr *)&dest->value) = *((VStr *)&value);
   } else if (isSimpleType(type)) {
-    dest->value = (void *)value;
+    //dest->value = (void *)value;
+    // for x86_64, pointer size is not equal to integer size, for example
+    memcpy(&dest->value, &value, (size_t)type.GetSize());
   } else {
     // complex copy
     int sz = type.GetSize();
