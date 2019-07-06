@@ -2021,27 +2021,27 @@ build_result_e BuildNodes(superblock_t *seg_list,
 
 	if (best->side == 0)
 	{
-		node->x  = best->linedef->start->x;
-		node->y  = best->linedef->start->y;
-		node->dx = best->linedef->end->x - node->x;
-		node->dy = best->linedef->end->y - node->y;
+		node->dbl_x  = best->linedef->start->x;
+		node->dbl_y  = best->linedef->start->y;
+		node->dbl_dx = best->linedef->end->x - node->dbl_x;
+		node->dbl_dy = best->linedef->end->y - node->dbl_y;
 	}
 	else  /* left side */
 	{
-		node->x  = best->linedef->end->x;
-		node->y  = best->linedef->end->y;
-		node->dx = best->linedef->start->x - node->x;
-		node->dy = best->linedef->start->y - node->y;
+		node->dbl_x  = best->linedef->end->x;
+		node->dbl_y  = best->linedef->end->y;
+		node->dbl_dx = best->linedef->start->x - node->dbl_x;
+		node->dbl_dy = best->linedef->start->y - node->dbl_y;
 	}
 
 	/* check for really long partition (overflows dx,dy in NODES) */
 	if (best->p_length >= 30000)
 	{
-		if (node->dx && node->dy && ((node->dx & 1) || (node->dy & 1)))
+		if (node->dbl_dx != 0 && node->dbl_dy != 0 && (((int)node->dbl_dx & 1) || ((int)node->dbl_dy & 1)))
 		{
 			MinorIssue("Loss of accuracy on VERY long node: "
-					"(%d,%d) -> (%d,%d)\n", node->x, node->y,
-					node->x + node->dx, node->y + node->dy);
+					"(%g,%g) -> (%g,%g)\n", node->dbl_x, node->dbl_y,
+					node->dbl_x + node->dbl_dx, node->dbl_y + node->dbl_dy);
 		}
 
 		node->too_long = 1;
