@@ -372,12 +372,16 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         surfs->Fade = Fade;
         surfs->dlightframe = sub->dlightframe;
         surfs->dlightbits = sub->dlightbits;
+        /*
         surfs->queueframe = currQueueFrame;
         surfs->plvisible = surfs->IsVisible(vieworg);
-        if (surfs->plvisible) {
-          DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
-            0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
-            false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
+        */
+        if (SurfPrepareForRender(surfs)) {
+          if (surfs->plvisible) {
+            DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
+              0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
+              false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
+          }
         }
       }
     }
@@ -417,12 +421,14 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     if (texinfo->Alpha >= 1.0f) {
       CommonQueueSurface(surfs, 0);
     } else if (surfs->queueframe != currQueueFrame) {
-      surfs->queueframe = currQueueFrame;
-      surfs->plvisible = surfs->IsVisible(vieworg);
-      if (surfs->plvisible) {
-        DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
-          0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
-          TVec(), 0, TVec(), TVec(), TVec());
+      //surfs->queueframe = currQueueFrame;
+      //surfs->plvisible = surfs->IsVisible(vieworg);
+      if (SurfPrepareForRender(surfs)) {
+        if (surfs->plvisible) {
+          DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
+            0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
+            TVec(), 0, TVec(), TVec(), TVec());
+        }
       }
     }
   }
