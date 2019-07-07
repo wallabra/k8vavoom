@@ -377,15 +377,10 @@ static VStr SV_GetSavesDir () {
 
 //==========================================================================
 //
-//  GetSaveSlotBaseFileName
-//
-//  if slot is < 0, this is autosave slot
-//  QUICKSAVE_SLOT is quicksave slot
-//  returns empty string for invalid slot
+//  GetModListHash
 //
 //==========================================================================
-static VStr GetSaveSlotBaseFileName (int slot) {
-  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return VStr();
+static vuint32 GetModListHash () {
   VStr modlist;
   // get list of loaded modules
   auto wadlist = GetWadPk3List();
@@ -402,29 +397,53 @@ static VStr GetSaveSlotBaseFileName (int slot) {
   VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
 #else
   vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
-  VStr shahex = VStr::buf2hex(&xxhashval, 4);
+  //VStr shahex = VStr::buf2hex(&xxhashval, 4);
+  return xxhashval;
 #endif
-  if (slot == QUICKSAVE_SLOT) return shahex+VStr("_quicksave");
-  if (slot < 0) return VStr(va("%s_autosave_%02d", *shahex, -slot));
-  return VStr(va("%s_normsave_%02d", *shahex, slot+1));
 }
 
 
 //==========================================================================
 //
-//  GetSaveSlotFileName
+//  GetSaveSlotDirectoryPrefix
 //
-//  see above about slot values meaning
+//==========================================================================
+static VStr GetSaveSlotCommonDirectoryPrefix () {
+  vuint32 hash = GetModListHash();
+  VStr pfx = VStr::buf2hex(&hash, 4);
+  //pfx += "/";
+  return pfx;
+}
+
+
+//==========================================================================
+//
+//  isBadSlotIndex
+//
+//  checking for "bad" index is more common
+//
+//==========================================================================
+static inline bool isBadSlotIndex (int slot) {
+  return (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63));
+}
+
+
+//==========================================================================
+//
+//  GetSaveSlotBaseFileName
+//
+//  if slot is < 0, this is autosave slot
+//  QUICKSAVE_SLOT is quicksave slot
 //  returns empty string for invalid slot
 //
 //==========================================================================
-/*
-static VStr GetSaveSlotFileName (int slot) {
-  VStr bfn = GetSaveSlotBaseFileName(slot);
-  if (bfn.isEmpty()) return bfn;
-  return SV_GetSavesDir()+"/"+bfn;
+static VStr GetSaveSlotBaseFileName (int slot) {
+  if (isBadSlotIndex(slot)) return VStr();
+  VStr pfx = GetSaveSlotCommonDirectoryPrefix();
+  if (slot == QUICKSAVE_SLOT) return pfx+"/quicksave";
+  if (slot < 0) return pfx+va("/autosave_%02d", -slot);
+  return pfx+va("/normsave_%02d", slot+1);
 }
-*/
 
 
 //==========================================================================
@@ -435,22 +454,89 @@ static VStr GetSaveSlotFileName (int slot) {
 //
 //==========================================================================
 static VStream *SV_OpenSlotFileRead (int slot) {
-  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return nullptr;
-  auto svdir = SV_GetSavesDir();
+  if (isBadSlotIndex(slot)) return nullptr;
+  // search save subdir
+  auto svdir = SV_GetSavesDir()+"/"+GetSaveSlotCommonDirectoryPrefix();
   auto dir = Sys_OpenDir(svdir);
-  if (!dir) return nullptr;
-  auto svpfx = GetSaveSlotBaseFileName(slot);
-  for (;;) {
-    VStr fname = Sys_ReadDir(dir);
-    if (fname.isEmpty()) break;
-    VStr flow = fname.toLowerCase();
-    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) {
-      Sys_CloseDir(dir);
-      return FL_OpenSysFileRead(svdir+"/"+fname);
+  if (dir) {
+    auto svpfx = GetSaveSlotBaseFileName(slot).extractFileName();
+    for (;;) {
+      VStr fname = Sys_ReadDir(dir);
+      if (fname.isEmpty()) break;
+      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+        Sys_CloseDir(dir);
+        return FL_OpenSysFileRead(svdir+"/"+fname);
+      }
     }
+    Sys_CloseDir(dir);
   }
-  Sys_CloseDir(dir);
+  // for backwards compatibility, remove after several releases
+  svdir = SV_GetSavesDir();
+  dir = Sys_OpenDir(svdir);
+  if (dir) {
+    auto svpfx = GetSaveSlotCommonDirectoryPrefix();
+    svpfx += "_";
+    svpfx += GetSaveSlotBaseFileName(slot).extractFileName();
+    for (;;) {
+      VStr fname = Sys_ReadDir(dir);
+      if (fname.isEmpty()) break;
+      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+        Sys_CloseDir(dir);
+        return FL_OpenSysFileRead(svdir+"/"+fname);
+      }
+    }
+    Sys_CloseDir(dir);
+  }
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  removeSlotSaveFiles
+//
+//  user can rename file to different case
+//  kill 'em all!
+//
+//==========================================================================
+static bool removeSlotSaveFiles (int slot, const VStr &fignore) {
+  TArray<VStr> tokill;
+  if (isBadSlotIndex(slot)) return false;
+  // search save subdir
+  auto svdir = SV_GetSavesDir()+"/"+GetSaveSlotCommonDirectoryPrefix();
+  auto dir = Sys_OpenDir(svdir);
+  if (dir) {
+    auto svpfx = GetSaveSlotBaseFileName(slot).extractFileName();
+    for (;;) {
+      VStr fname = Sys_ReadDir(dir);
+      if (fname.isEmpty()) break;
+      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+        VStr fn = svdir+"/"+fname;
+        if (fn != fignore) tokill.append(fn);
+      }
+    }
+    Sys_CloseDir(dir);
+  }
+  // for backwards compatibility, remove after several releases
+  svdir = SV_GetSavesDir();
+  dir = Sys_OpenDir(svdir);
+  if (dir) {
+    auto svpfx = GetSaveSlotCommonDirectoryPrefix();
+    svpfx += "_";
+    svpfx += GetSaveSlotBaseFileName(slot).extractFileName();
+    for (;;) {
+      VStr fname = Sys_ReadDir(dir);
+      if (fname.isEmpty()) break;
+      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+        VStr fn = svdir+"/"+fname;
+        if (fn != fignore) tokill.append(fn);
+      }
+    }
+    Sys_CloseDir(dir);
+  }
+  if (tokill.length() > 4) return false; // something is VERY wrong here!
+  for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
+  return true;
 }
 
 
@@ -463,24 +549,11 @@ static VStream *SV_OpenSlotFileRead (int slot) {
 //
 //==========================================================================
 static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
-  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return nullptr;
+  if (isBadSlotIndex(slot)) return nullptr;
   if (slot == QUICKSAVE_SLOT) descr = VStr();
-  auto svdir = SV_GetSavesDir();
-  FL_CreatePath(svdir); // just in case
-  auto dir = Sys_OpenDir(svdir);
-  if (!dir) return nullptr;
-  // scan
-  auto svpfx = GetSaveSlotBaseFileName(slot);
-  TArray<VStr> tokill;
-  for (;;) {
-    VStr fname = Sys_ReadDir(dir);
-    if (fname.isEmpty()) break;
-    VStr flow = fname.toLowerCase();
-    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) tokill.append(svdir+"/"+fname);
-  }
-  Sys_CloseDir(dir);
-  // remove old saves
-  for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
+  //removeSlotSaveFiles(slot);
+  auto svpfx = SV_GetSavesDir()+"/"+GetSaveSlotBaseFileName(slot);
+  FL_CreatePath(svpfx.extractFilePath()); // just in case
   // normalize description
   VStr newdesc;
   for (int f = 0; f < descr.length(); ++f) {
@@ -497,10 +570,11 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
   while (newdesc.length() && newdesc[0] == '_') newdesc.chopLeft(1);
   while (newdesc.length() && newdesc[newdesc.length()-1] == '_') newdesc.chopRight(1);
   // finalize file name
-  svpfx = svdir+"/"+svpfx;
   if (newdesc.length()) { svpfx += "_"; svpfx += newdesc; }
   svpfx += ".vsg";
-  return FL_OpenSysFileWrite(svpfx);
+  VStream *res = FL_OpenSysFileWrite(svpfx);
+  if (res) removeSlotSaveFiles(slot, svpfx);
+  return res;
 }
 
 
@@ -511,24 +585,8 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
 //
 //==========================================================================
 static bool SV_DeleteSlotFile (int slot) {
-  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return false;
-  auto svdir = SV_GetSavesDir();
-  auto dir = Sys_OpenDir(svdir);
-  if (!dir) return false;
-  // scan
-  auto svpfx = GetSaveSlotBaseFileName(slot);
-  TArray<VStr> tokill;
-  for (;;) {
-    VStr fname = Sys_ReadDir(dir);
-    if (fname.isEmpty()) break;
-    VStr flow = fname.toLowerCase();
-    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) tokill.append(svdir+"/"+fname);
-  }
-  Sys_CloseDir(dir);
-  if (tokill.length() == 0) return false;
-  // remove old saves
-  for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
-  return true;
+  if (isBadSlotIndex(slot)) return false;
+  return removeSlotSaveFiles(slot, VStr::EmptyString);
 }
 #endif
 
