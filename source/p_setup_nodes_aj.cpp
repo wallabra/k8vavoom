@@ -319,9 +319,21 @@ static void UploadThings (VLevel *Level) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct CopyInfo {
-  TArray<int> ajseg2vv; // index: ajbsp seg number; value: new k8vavoom seg number
-  //TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new k8vavoom vertex index
+  TMap<vuint64, int> ajvidx; // for `AJVertexIndex()`, created in `CopyGLVerts()`
 };
+
+
+//==========================================================================
+//
+//  AJVertexIndex
+//
+//==========================================================================
+static inline int AJVertexIndex (CopyInfo &nfo, const ajbsp::vertex_t *v) {
+  check(v != nullptr);
+  auto ip = nfo.ajvidx.find((vuint64)(uintptr_t)v);
+  if (!ip) Sys_Error("AJBSP: found unknown vertex");
+  return *ip;
+}
 
 
 //==========================================================================
@@ -330,7 +342,9 @@ struct CopyInfo {
 //
 //==========================================================================
 static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
+  const int oldvnum = Level->NumVertexes;
   delete[] Level->Vertexes;
+  nfo.ajvidx.reset();
 
   Level->Vertexes = new vertex_t[ajbsp::num_vertices];
   Level->NumVertexes = ajbsp::num_vertices;
@@ -338,6 +352,7 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 
   for (int i = 0; i < ajbsp::num_vertices; ++i) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
+    nfo.ajvidx.put((vuint64)(uintptr_t)vert, i); // for `AJVertexIndex()`
     vertex_t *pDst = &Level->Vertexes[i];
     *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
   }
@@ -347,14 +362,16 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     auto ajline = ajbsp::LookupLinedef(i);
     line_t *ld = &Level->Lines[i];
 
-    int v1idx = ajbsp::GetVertexIndex(ajline->start);
+    int v1idx = AJVertexIndex(nfo, ajline->start);
     if (v1idx < 0 || v1idx >= ajbsp::num_vertices) Sys_Error("AJBSP: invalid line #%d v1 index", i);
     ld->v1 = &Level->Vertexes[v1idx];
 
-    int v2idx = ajbsp::GetVertexIndex(ajline->end);
+    int v2idx = AJVertexIndex(nfo, ajline->end);
     if (v2idx < 0 || v2idx >= ajbsp::num_vertices) Sys_Error("AJBSP: invalid line #%d v1 index", i);
     ld->v2 = &Level->Vertexes[v2idx];
   }
+
+  GCon->Logf("AJBSP: copied %d vertices (old number is %d)", Level->NumVertexes, oldvnum);
 }
 
 
@@ -366,42 +383,22 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   Level->NumSegs = 0;
   delete[] Level->Segs;
+  Level->NumSegs = ajbsp::num_segs;
   Level->Segs = new seg_t[ajbsp::num_segs]; //k8: this may overallocate, but i don't care
   memset((void *)Level->Segs, 0, sizeof(seg_t)*ajbsp::num_segs);
 
-  int *partners = new int[ajbsp::num_segs]; // indicies for `ajbsp::LookupSeg()`
-
-  nfo.ajseg2vv.SetNum(ajbsp::num_segs);
-  int firstPartner = -1, lastPartner = -1;
-
   for (int i = 0; i < ajbsp::num_segs; ++i) {
-    nfo.ajseg2vv[i] = -1;
-
     ajbsp::seg_t *srcseg = ajbsp::LookupSeg(i);
-    // ignore degenerate segs
-    if (srcseg->is_degenerate) continue;
+    if (srcseg->is_degenerate) Sys_Error("AJBSP: seg #%d is degenerate (the thing that should not be!)", i);
     if (srcseg->index != i) Host_Error("AJBSP: seg #%d has invalid index %d", i, srcseg->index);
 
-    const int dsnum = Level->NumSegs++;
-    nfo.ajseg2vv[i] = dsnum;
+    seg_t *destseg = &Level->Segs[i];
 
-    seg_t *destseg = &Level->Segs[dsnum];
-    partners[dsnum] = -1;
-    if (srcseg->partner) {
-      if (/*!srcseg->partner->linedef ||*/ srcseg->partner->is_degenerate) {
-        GCon->Logf("AJBSP: seg #%d has degenerate partner, ignored", i);
-      } else {
-        partners[dsnum] = srcseg->partner->index;
-        if (firstPartner < 0) firstPartner = dsnum;
-        lastPartner = dsnum;
-      }
-    }
-
-    destseg->partner = nullptr;
+    destseg->partner = (srcseg->partner ? &Level->Segs[srcseg->partner->index] : nullptr);
     destseg->front_sub = nullptr;
 
-    auto v1mp = ajbsp::GetVertexIndex(srcseg->start);
-    auto v2mp = ajbsp::GetVertexIndex(srcseg->end);
+    auto v1mp = AJVertexIndex(nfo, srcseg->start);
+    auto v2mp = AJVertexIndex(nfo, srcseg->end);
     if (v1mp < 0 || v2mp < 0) Sys_Error("AJBSP: vertex not found for seg #%d", i);
     if (v1mp == v2mp) Sys_Error("AJBSP: seg #%d has same start and end vertex (%d:%d) (%d:%d)", i, v1mp, srcseg->start->index, v2mp, srcseg->end->index);
     if (v1mp >= Level->NumVertexes || v2mp >= Level->NumVertexes) Sys_Error("AJBSP: invalid vertices not found for seg #%d", i);
@@ -416,28 +413,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
       destseg->linedef = &Level->Lines[srcseg->linedef->index];
     }
   }
-  GCon->Logf("AJBSP: copied %d of %d used segs", Level->NumSegs, ajbsp::num_segs);
-
-  // setup partners
-  if (firstPartner == -1) {
-    check(lastPartner == -1);
-    GCon->Logf(NAME_Dev, "AJBSP: no partner segs found");
-  } else {
-    check(firstPartner >= 0 && firstPartner < Level->NumSegs);
-    check(lastPartner >= 0 && lastPartner < Level->NumSegs);
-    GCon->Logf(NAME_Dev, "AJBSP: partner segs range: [%d..%d] of %d", firstPartner, lastPartner, Level->NumSegs);
-    for (int i = firstPartner; i <= lastPartner; ++i) {
-      if (partners[i] == -1) continue; // no partner for this seg
-      seg_t *destseg = &Level->Segs[i];
-      if (partners[i] >= nfo.ajseg2vv.length()) { GCon->Logf("ERROR: cannot find partner! (%d, max is %d)", partners[i], nfo.ajseg2vv.length()-1); continue; }
-      if (partners[i] < 0) Host_Error("ERROR: cannot find partner! (%d)", partners[i]);
-      int psidx = nfo.ajseg2vv[partners[i]];
-      if (psidx < 0 || psidx >= Level->NumSegs) Host_Error("GLBSP: invalid partner seg index %d (max is %d)", psidx, Level->NumSegs);
-      destseg->partner = &Level->Segs[psidx];
-    }
-  }
-
-  delete[] partners;
+  GCon->Logf("AJBSP: copied %d segs", Level->NumSegs);
 }
 
 
@@ -448,26 +424,29 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
 //==========================================================================
 static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
   Level->NumSubsectors = ajbsp::num_subsecs;
-  delete [] Level->Subsectors;
+  delete[] Level->Subsectors;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
   memset((void *)Level->Subsectors, 0, sizeof(subsector_t)*Level->NumSubsectors);
   for (int i = 0; i < Level->NumSubsectors; ++i) {
     ajbsp::subsec_t *srcss = ajbsp::LookupSubsec(i);
-    int ajidx = srcss->seg_list->index;
+    const int ajfsegidx = srcss->seg_list->index; // exactly the same as k8vavoom index
 
     subsector_t *destss = &Level->Subsectors[i];
     destss->numlines = srcss->seg_count;
 
-    auto flidx = nfo.ajseg2vv[ajidx];
-    if (flidx < 0) Host_Error("AJBSP: subsector #%d starts with miniseg or degenerate seg", i);
-    destss->firstline = flidx;
-    // check sector numbers
-    for (int j = 0; j < destss->numlines; ++j) {
-      auto i2idx = nfo.ajseg2vv[ajidx+j];
-      if (i2idx < 0) Host_Error("AJBSP: subsector #%d contains miniseg or degenerate seg #%d (%d)", i, ajidx+j, j);
-      if (i2idx != destss->firstline+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs", i);
+    if (destss->numlines < 0) Sys_Error("AJBSP: invalid subsector #%d data (numlines)", i);
+    if (destss->numlines == 0) {
+      destss->firstline = 0; // doesn't matter
+    } else {
+      destss->firstline = ajfsegidx;
+      // check segments
+      for (int j = 0; j < destss->numlines; ++j) {
+        const ajbsp::seg_t *xseg = ajbsp::LookupSeg(ajfsegidx+j);
+        if (xseg->index != ajfsegidx+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs (expected %d, got %d)", i, ajfsegidx+j, xseg->index);
+      }
     }
   }
+  GCon->Logf("AJBSP: copied %d subsectors", Level->NumSubsectors);
 }
 
 
@@ -533,7 +512,7 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
 //==========================================================================
 static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
   Level->NumNodes = ajbsp::num_nodes;
-  delete [] Level->Nodes;
+  delete[] Level->Nodes;
   Level->Nodes = new node_t[Level->NumNodes];
   memset((void *)Level->Nodes, 0, sizeof(node_t)*Level->NumNodes);
   if (root_node) {
@@ -541,6 +520,7 @@ static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
     CopyNode(NodeIndex, root_node, Level->Nodes);
     if (NodeIndex != ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (1)");
   }
+  GCon->Logf("AJBSP: copied %d nodes", Level->NumNodes);
 }
 
 
@@ -589,17 +569,22 @@ void VLevel::BuildNodesAJ () {
   GCon->Logf("AJBSP: copied %d original vertexes out of %d", ajbsp::num_vertices, NumVertexes);
   GCon->Logf("AJBSP: building nodes (%s mode)", (nodes_fast_mode ? "fast" : "normal"));
 
+  GCon->Logf("AJBSP: detecting overlapped vertices...");
   ajbsp::DetectOverlappingVertices();
+  GCon->Logf("AJBSP: detecting overlapped linedefs...");
   ajbsp::DetectOverlappingLines();
-
+  GCon->Logf("AJBSP: caclulating wall tips...");
   ajbsp::CalculateWallTips();
 
   //k8: always try polyobjects, why not?
+  GCon->Logf("AJBSP: detecting polyobjects...");
   /*if (lev_doing_hexen)*/ ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
 
   //if (cur_info->window_fx) ajbsp::DetectWindowEffects();
+  GCon->Logf("AJBSP: building blockmap...");
   ajbsp::InitBlockmap();
 
+  GCon->Logf("AJBSP: building nodes...");
   // create initial segs
   ajbsp::superblock_t *seg_list = ajbsp::CreateSegs();
   ajbsp::node_t *root_node;
@@ -639,7 +624,7 @@ void VLevel::BuildNodesAJ () {
       xms->BeginWrite();
       ajbsp::PutReject(*xms);
 
-      delete [] RejectMatrix;
+      delete[] RejectMatrix;
       RejectMatrix = nullptr;
 
       RejectMatrixSize = xms->TotalSize();
@@ -655,7 +640,7 @@ void VLevel::BuildNodesAJ () {
 
     // blockmap
     // k8: ajbsp blockmap builder (or reader) seems to not work on switch; don't use it at all
-    delete [] BlockMapLump;
+    delete[] BlockMapLump;
     BlockMapLump = nullptr;
     BlockMapLumpSize = 0;
   }
