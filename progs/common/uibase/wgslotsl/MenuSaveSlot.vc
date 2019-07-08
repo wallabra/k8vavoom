@@ -118,24 +118,21 @@ override bool OnKeyDown (int key) {
         if (key == K_JOY1 && !EnterText) EnterText = va("saved game %d", SlotNum);
         if (EnterText) {
           Text = EnterText;
-          CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
+          CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
           GetClGame().ForceMenuOff();
         }
         break;
 
       case K_BACKSPACE:
-        if (EnterText) {
-          EnterText = EnterText[0..$-1];
-        } else {
-          waitingDeletion = false;
-        }
+        waitingDeletion = false;
+        if (EnterText) EnterText = EnterText[0..$-1];
         break;
 
       default:
-        if (key >= 32 && key < 128 && key != 34) {
+        if (EnterText.length < SLOTTEXTLEN-1) {
           string tk = TranslateKey(key);
-          if (tk && tk != "\"") {
-            if (EnterText.length < SLOTTEXTLEN-1) EnterText ~= TranslateKey(key);
+          if (tk && tk[0] >= 32 && tk[0] < 128) {
+            EnterText ~= tk;
           }
         }
         break;
@@ -187,7 +184,7 @@ override void OnMouseClick (int X, int Y) {
     bEnteringText = false;
     if (EnterText) {
       Text = EnterText;
-      CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
+      CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
       GetClGame().ForceMenuOff();
     }
   }

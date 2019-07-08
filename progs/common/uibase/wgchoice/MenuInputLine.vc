@@ -64,8 +64,6 @@ override void OnDraw () {
 
 
 override bool OnKeyDown (int key) {
-  int Len;
-
   if (bEnteringText) {
     switch (key) {
       case K_ESCAPE:
@@ -80,12 +78,14 @@ override bool OnKeyDown (int key) {
         OnValueChanged();
         break;
       case K_BACKSPACE:
-        if (EnterText.length) EnterText = EnterText[0..$-1];
+        if (EnterText) EnterText = EnterText[0..$-1];
         break;
       default:
-        if (key >= 32 && key < 128) {
-          Len = EnterText.length;
-          if (Len < 30) EnterText ~= TranslateKey(key);
+        if (EnterText.length < 30) {
+          string cc = TranslateKey(key);
+          if (cc && cc[0] >= 32 && cc[0] < 128) {
+            EnterText ~= cc;
+          }
         }
         break;
     }
