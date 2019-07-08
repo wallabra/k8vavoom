@@ -387,7 +387,7 @@ VStr PF_FormatString () {
               }
               break;
             case TYPE_String:
-              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill, (fspec == 'q'));
+              pbuf.putStr(*(VStr *)&params[pi].p, width, toRight, zeroFill, (fspec == 'q'));
               ((VStr*)&params[pi].p)->Clean();
               break;
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
