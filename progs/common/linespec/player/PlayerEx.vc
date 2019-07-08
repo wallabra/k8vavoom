@@ -4612,24 +4612,35 @@ void Cheat_RemoveAllEntities () {
     return;
   }
 
-  name wantname = name(Cmd_GetArgV(1));
+  string wantstr = Cmd_GetArgV(1);
+  name wantname = name(wantstr);
+  bool isglob = false;
 
   // find which type to remove
   auto moClass = class!EntityEx(FindClassNoCase(wantname));
   if (!moClass) {
-    // Can't find thing type
-    print("RemoveAllEntities: unknown class '%s'", Cmd_GetArgV(1));
-    return;
+    if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+        wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+    {
+      // can't find thing type
+      print("RemoveAllEntities: unknown class '%s'", Cmd_GetArgV(1));
+      return;
+    }
+    isglob = true;
   }
 
   array!EntityEx elist;
 
   EntityEx ent;
   foreach MO.AllThinkers(EntityEx, out ent) {
-    name cname = GetClassName(ent.Class);
-    if (nameicmp(cname, wantname) != 0) continue;
     if (ent.Owner) continue;
     if (ent.bIsPlayer) continue;
+    if (isglob) {
+      if (!globmatch(string(GetClassName(ent.Class)), wantstr, caseSensitive:false)) continue;
+    } else {
+      name cname = GetClassName(ent.Class);
+      if (nameicmp(cname, wantname) != 0) continue;
+    }
     elist[$] = ent;
   }
 
@@ -4690,7 +4701,7 @@ void Cheat_CountEntities () {
 
   name wantname = name(Cmd_GetArgV(1));
 
-  // find which type to remove
+  // find which type to count
   auto moClass = class!EntityEx(FindClassNoCase(wantname));
   if (!moClass) {
     // Can't find thing type
@@ -4714,6 +4725,52 @@ void Cheat_CountEntities () {
   } else {
     print("CountEntities: %s %s of class '%s' found", count, (count != 1 ? "entities" : "entity"), wantname);
   }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountAllEntities
+//
+//==========================================================================
+struct CountAllEntsInfo {
+  name Name;
+  int Count;
+}
+
+void Cheat_CountAllEntities () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  name wantname = name(Cmd_GetArgV(1));
+
+  dictionary!(name, int) ctr;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    auto cp = ctr.find(cname);
+    if (cp) {
+      *cp += 1;
+    } else {
+      ctr.put(cname, 1);
+    }
+  }
+
+  // sort by count
+  array!CountAllEntsInfo order;
+  for (auto idx = ctr.firstIndex(); ctr.isValidIndex(idx); idx = ctr.nextIndex(idx)) {
+    auto nfo = order.alloc();
+    nfo.Name = ctr.keyAtIndex(idx);
+    nfo.Count = *ctr.valueAtIndex(idx);
+  }
+
+  order.sort(delegate int (const ref CountAllEntsInfo a, const ref CountAllEntsInfo b) { return b.Count-a.Count; });
+  print("============== %s entity classes found ==============", order.length);
+  foreach (const ref auto nfo; order) print("  %6d -- %s", nfo.Count, nfo.Name);
 }
 
 
