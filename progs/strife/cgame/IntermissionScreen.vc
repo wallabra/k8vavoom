@@ -147,7 +147,7 @@ void IM_InitHubText()
 
   if (ClGame.im.TextMusic)
   {
-    CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
+    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
   }
   else
   {

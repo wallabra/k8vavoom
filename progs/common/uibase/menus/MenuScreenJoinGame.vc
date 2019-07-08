@@ -97,7 +97,7 @@ void ChangedJoinAt (Object Sender) {
   } else {
     SetCvarS('__menu_join_game_at__', JoinAt.Value);
   }
-  if (JoinAt.Value) CmdBuf_AddText("Connect %s\n", JoinAt.Value);
+  if (JoinAt.Value) CmdBuf_AddText("Connect \"%q\"\n", JoinAt.Value);
 }
 
 

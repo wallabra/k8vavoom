@@ -259,7 +259,7 @@ void Start () {
 
     // intermission music
     if (ClGame.im.InterMusic) {
-      CmdBuf_AddText(va("music loop %n\n", ClGame.im.InterMusic));
+      CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
     }
     else {
 #ifdef FIXME
@@ -1159,7 +1159,7 @@ void IM_InitText () {
   intertime = 0.0;
 
   if (ClGame.im.TextMusic) {
-    CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
+    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
   } else {
     if (checkForDoom2()) {
 #ifdef FIXME

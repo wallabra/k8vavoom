@@ -170,7 +170,7 @@ void InitPic (name PicName) {
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
 #else
-  CmdBuf_AddText(va("music loop %n\n", ClGame.DefaultFinaleMusic));
+  CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
 #endif
 }
 
@@ -185,7 +185,7 @@ void InitUnderwater () {
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
 #else
-  CmdBuf_AddText(va("music loop %n\n", ClGame.DefaultFinaleMusic));
+  CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
 #endif
 }
 
@@ -215,7 +215,7 @@ void InitDemonScroll () {
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
 #else
-  CmdBuf_AddText(va("music loop %n\n", ClGame.DefaultFinaleMusic));
+  CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
 #endif
 }
 

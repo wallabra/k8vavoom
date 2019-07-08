@@ -868,7 +868,7 @@ void NewGame (int SkillLevel) {
 
   CmdBuf_AddText("Disconnect\n");
   CmdBuf_AddText("MaxPlayers 1\n");
-  CmdBuf_AddText("Map %n\n", MenuStartMap);
+  CmdBuf_AddText("Map \"%q\"\n", MenuStartMap);
 
   ForceMenuOff();
 }

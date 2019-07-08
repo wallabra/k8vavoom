@@ -346,7 +346,7 @@ void IM_InitStats () {
   oldintertime = (im_episode > 3 ? 35.0 : 10.0);
   im_sounds = 0;
   if (ClGame.im.InterMusic) {
-    CmdBuf_AddText(va("music loop %n\n", ClGame.im.InterMusic));
+    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
   } else {
 #ifdef FIXME
     S_StartSong("MUS_INTR", P_GetCDIntermissionTrack(), true);
@@ -633,7 +633,7 @@ void IM_InitText () {
   intertime = 0.0;
   oldintertime = HubCount;
   if (ClGame.im.TextMusic) {
-    CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
+    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
   } else {
 #ifdef FIXME
     S_StartSong("mus_cptd", P_GetCDEnd1Track(), true);
