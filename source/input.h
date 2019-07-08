@@ -76,7 +76,10 @@ public:
   virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) = 0;
   virtual void WriteBindings (VStream *st) = 0;
 
-  virtual int TranslateKey (int ch) = 0;
+  // returns translated ASCII char, or unchanged keycode
+  // it is safe to call this with any keycode
+  // note that only ASCII chars are supported
+  virtual int TranslateKey (int keycode) = 0;
 
   virtual int KeyNumForName (const VStr &Name) = 0;
   virtual VStr KeyNameForNum (int KeyNr) = 0;
