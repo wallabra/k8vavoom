@@ -605,7 +605,6 @@ public:
       inline itertype_ *end () { return &level->arrname_[level->Num##arrname_]; } \
       inline const itertype_ *end () const { return &level->arrname_[level->Num##arrname_]; } \
     }; \
-    \
     inline arrname_##Iterator itername_ () { return arrname_##Iterator(this); } \
     inline const arrname_##Iterator itername_ () const { return arrname_##Iterator(this); }
 
@@ -619,7 +618,49 @@ public:
   VL_ITERATOR(Nodes, allNodes, node_t)
   VL_ITERATOR(Things, allThings, mthing_t)
 
+  inline VertexesIterator allVertexes () { return VertexesIterator(this); }
+  inline const VertexesIterator allVertexes () const { return VertexesIterator(this); }
+
   #undef VL_ITERATOR
+
+  #define VL_ITERATOR_INDEX(arrname_,itername_,itertype_) \
+    class arrname_##IndexIterator { \
+      friend class VLevel; \
+    private: \
+      const VLevel *level; \
+      int idx; \
+    private: \
+      arrname_##IndexIterator (const VLevel *alevel, bool asEnd=false) : level(alevel), idx(asEnd ? alevel->Num##arrname_ : 0) {} \
+      arrname_##IndexIterator (const arrname_##IndexIterator &it) : level(it.level), idx(it.idx) {} \
+    public: \
+      inline bool operator == (const arrname_##IndexIterator &b) const { return (idx == b.idx); } \
+      inline bool operator != (const arrname_##IndexIterator &b) const { return (idx != b.idx); } \
+      inline arrname_##IndexIterator operator * () const { return arrname_##IndexIterator(*this); } /* required for iterator */ \
+      inline void operator ++ () { ++idx; } /* this is enough for iterator */ \
+      inline arrname_##IndexIterator begin () { return arrname_##IndexIterator(level); } \
+      inline arrname_##IndexIterator begin () const { return arrname_##IndexIterator(level); } \
+      inline arrname_##IndexIterator end () { return arrname_##IndexIterator(level, true); } \
+      inline arrname_##IndexIterator end () const { return arrname_##IndexIterator(level, true); } \
+      inline itertype_ *value () { return &level->arrname_[idx]; } \
+      inline const itertype_ *value () const { return &level->arrname_[idx]; } \
+      inline int index () const { return idx; } \
+    }; \
+    inline arrname_##IndexIterator itername_ () { return arrname_##IndexIterator(this); } \
+    inline arrname_##IndexIterator itername_ () const { return arrname_##IndexIterator(this); } \
+
+  VL_ITERATOR_INDEX(Vertexes, allVerticesIdx, vertex_t)
+  VL_ITERATOR_INDEX(Sectors, allSectorsIdx, sector_t)
+  VL_ITERATOR_INDEX(Sides, allSidesIdx, side_t)
+  VL_ITERATOR_INDEX(Lines, allLinesIdx, line_t)
+  VL_ITERATOR_INDEX(Segs, allSegsIdx, seg_t)
+  VL_ITERATOR_INDEX(Subsectors, allSubsectorsIdx, subsector_t)
+  VL_ITERATOR_INDEX(Nodes, allNodesIdx, node_t)
+  VL_ITERATOR_INDEX(Things, allThingsIdx, mthing_t)
+
+  inline VertexesIndexIterator allVertexesIdx () { return VertexesIndexIterator(this); }
+  inline VertexesIndexIterator allVertexesIdx () const { return VertexesIndexIterator(this); }
+
+  #undef VL_ITERATOR_INDEX
 
 private:
   // map loaders

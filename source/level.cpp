@@ -353,12 +353,35 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight
 }
 
 
+/*
+#define ITER_CHECKER(arrname_,itname_,typename_) \
+  { \
+    int count = 0; \
+    for (auto &&it : itname_()) { \
+      check(it.index() == count); \
+      typename_ *tp = it.value(); \
+      check(tp == &arrname_[count]); \
+      ++count; \
+    } \
+  }
+*/
+
 //==========================================================================
 //
 //  VLevel::RecalcWorldBBoxes
 //
 //==========================================================================
 void VLevel::RecalcWorldBBoxes () {
+  /*
+  ITER_CHECKER(Vertexes, allVerticesIdx, vertex_t)
+  ITER_CHECKER(Sectors, allSectorsIdx, sector_t)
+  ITER_CHECKER(Sides, allSidesIdx, side_t)
+  ITER_CHECKER(Lines, allLinesIdx, line_t)
+  ITER_CHECKER(Segs, allSegsIdx, seg_t)
+  ITER_CHECKER(Subsectors, allSubsectorsIdx, subsector_t)
+  ITER_CHECKER(Nodes, allNodesIdx, node_t)
+  ITER_CHECKER(Things, allThingsIdx, mthing_t)
+  */
   if (NumSectors == 0 || NumSubsectors == 0) return; // just in case
   const float skyheight = CalcSkyHeight();
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
