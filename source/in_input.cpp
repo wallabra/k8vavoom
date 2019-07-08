@@ -128,14 +128,14 @@ private:
 
   const VStr &getBinding (bool down, int idx);
 
-  static const char ShiftXForm[];
+  static const char ShiftXForm[128];
 };
 
 VInputPublic *GInput;
 
 
 // key shifting
-const char VInput::ShiftXForm[] = {
+const char VInput::ShiftXForm[128] = {
   0,
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
   11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -599,8 +599,15 @@ void VInput::WriteBindings (VStream *st) {
 //
 //==========================================================================
 int VInput::TranslateKey (int ch) {
-  int Tmp = ch;
-  return (ShiftDown ? ShiftXForm[Tmp] : Tmp);
+  switch (ch) {
+    case K_PADDIVIDE: return '/';
+    case K_PADMULTIPLE: return '*';
+    case K_PADMINUS: return '-';
+    case K_PADPLUS: return '+';
+    case K_PADDOT: return '.';
+  }
+  if (ch <= 0 || ch > 127) return ch;
+  return (ShiftDown ? ShiftXForm[ch] : ch);
 }
 
 
