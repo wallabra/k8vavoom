@@ -2212,23 +2212,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   const float dstxofs = dcx0+txofs;
 
-  // 1971, 2593
-  if ((int)(ptrdiff_t)(li-Lines) == 1971) {
-    GCon->Logf("*** 1971 ***: v1c=%d; v2c=%d; (%g,%g)-(%g,%g)", li->v1linesCount, li->v2linesCount, li->v1->x, li->v1->y, li->v2->x, li->v2->y);
-    GCon->Logf(" v1:");
-    line_t **ngb = li->v1lines;
-    for (int ngbCount = li->v1linesCount; ngbCount--; ++ngb) {
-      line_t *nline = *ngb;
-      GCon->Logf("  %d (%g,%g)-(%g,%g)", (int)(ptrdiff_t)(nline-Lines), nline->v1->x, nline->v1->y, nline->v2->x, nline->v2->y);
-    }
-    GCon->Logf(" v2:");
-    ngb = li->v2lines;
-    for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
-      line_t *nline = *ngb;
-      GCon->Logf("  %d (%g,%g)-(%g,%g)", (int)(ptrdiff_t)(nline-Lines), nline->v1->x, nline->v1->y, nline->v2->x, nline->v2->y);
-    }
-  }
-
   // if our decal is not completely at linedef, spread it to adjacent linedefs
   if (dcx0 < 0) {
     // to the left
