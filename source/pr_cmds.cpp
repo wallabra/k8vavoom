@@ -700,7 +700,11 @@ IMPLEMENT_FUNCTION(VObject, StopLocalSounds) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, TranslateKey) {
   P_GET_INT(ch);
-  RET_STR(VStr((char)GInput->TranslateKey(ch)));
+  if (!GInput) { RET_STR(VStr::EmptyString); return; }
+  ch = GInput->TranslateKey(ch);
+  //FIXME: i18n
+  if (ch < 1 || ch > 127) { RET_STR(VStr::EmptyString); return; }
+  RET_STR(VStr((char)ch));
 }
 
 
