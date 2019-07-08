@@ -320,7 +320,7 @@ static void UploadThings (VLevel *Level) {
 // ////////////////////////////////////////////////////////////////////////// //
 struct CopyInfo {
   TArray<int> ajseg2vv; // index: ajbsp seg number; value: new k8vavoom seg number
-  TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new k8vavoom vertex index
+  //TArray<int> ajvx2vv; // index: ajbsp vertex->index; value: new k8vavoom vertex index
 };
 
 
@@ -330,63 +330,31 @@ struct CopyInfo {
 //
 //==========================================================================
 static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
-  // copy new vertices, build linedef vertex translation table
-  int oldmaxverts = Level->NumVertexes;
-  vertex_t *oldvx = Level->Vertexes;
-  //fprintf(stderr, "num_vertices=%d; num_old_vert=%d; num_new_vert=%d\n", ajbsp::num_vertices, ajbsp::num_old_vert, ajbsp::num_new_vert);
-  if (ajbsp::num_old_vert+ajbsp::num_new_vert != ajbsp::num_vertices) Sys_Error("AJBSP: vertex count desync");
+  delete[] Level->Vertexes;
 
-  int maxverts = ajbsp::num_old_vert+ajbsp::num_new_vert; // same as `ajbsp::num_vertices`
-  nfo.ajvx2vv.SetNum(maxverts*2+8);
-  for (int f = 0; f < nfo.ajvx2vv.length(); ++f) nfo.ajvx2vv[f] = -1;
+  Level->Vertexes = new vertex_t[ajbsp::num_vertices];
+  Level->NumVertexes = ajbsp::num_vertices;
+  memset((void *)Level->Vertexes, 0, sizeof(vertex_t)*ajbsp::num_vertices);
 
-  TArray<int> vxmap; // index: old vertex index; value: new vertex index
-  vxmap.SetNum(maxverts);
-  for (int f = 0; f < maxverts; ++f) vxmap[f] = -1;
-
-  // new vertexes will get new indexes too
-  int newindex = maxverts;
-
-  Level->NumVertexes = 0;
-  Level->Vertexes = new vertex_t[maxverts]; //k8: this may overallocate, but i don't care
-  memset((void *)Level->Vertexes, 0, sizeof(vertex_t)*maxverts);
-  int oldcount = 0;
-  int newcount = 0;
   for (int i = 0; i < ajbsp::num_vertices; ++i) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
-    if (!vert->is_used) continue;
-    vertex_t *pDst = &Level->Vertexes[Level->NumVertexes];
+    vertex_t *pDst = &Level->Vertexes[i];
     *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
-    if (!vert->is_new) {
-      // old
-      if (nfo.ajvx2vv[vert->index] >= 0) Sys_Error("AJBSP: invalid old vector index (0)");
-      if (vert->index < 0 || vert->index >= oldmaxverts) Sys_Error("AJBSP: invalid old vector index (1)");
-      if (vxmap[vert->index] >= 0) Sys_Error("AJBSP: duplicate old vertex index");
-      vxmap[vert->index] = Level->NumVertexes;
-      ++oldcount;
-    } else {
-      // new
-      vert->index = newindex++;
-      if (nfo.ajvx2vv[vert->index] >= 0) Sys_Error("AJBSP: invalid new vector index (0)");
-      ++newcount;
-    }
-    nfo.ajvx2vv[vert->index] = Level->NumVertexes;
-    ++pDst;
-    ++Level->NumVertexes;
   }
-  GCon->Logf("AJBSP: copied %d of %d used vertexes (%d original, %d new)", Level->NumVertexes, maxverts, oldcount, newcount);
 
-  // update pointers to vertexes in lines
+  // fix lines
   for (int i = 0; i < Level->NumLines; ++i) {
+    auto ajline = ajbsp::LookupLinedef(i);
     line_t *ld = &Level->Lines[i];
-    int v1idx = (int)(ptrdiff_t)(ld->v1-oldvx);
-    int v2idx = (int)(ptrdiff_t)(ld->v2-oldvx);
-    if (v1idx < 0 || v1idx >= oldmaxverts || v2idx < 0 || v2idx >= oldmaxverts) Sys_Error("AJBSP: invalid old vertex index");
-    if (vxmap[v1idx] < 0 || vxmap[v2idx] < 0) Sys_Error("AJBSP: invalid new vertex index");
-    ld->v1 = &Level->Vertexes[vxmap[v1idx]];
-    ld->v2 = &Level->Vertexes[vxmap[v2idx]];
+
+    int v1idx = ajbsp::GetVertexIndex(ajline->start);
+    if (v1idx < 0 || v1idx >= ajbsp::num_vertices) Sys_Error("AJBSP: invalid line #%d v1 index", i);
+    ld->v1 = &Level->Vertexes[v1idx];
+
+    int v2idx = ajbsp::GetVertexIndex(ajline->end);
+    if (v2idx < 0 || v2idx >= ajbsp::num_vertices) Sys_Error("AJBSP: invalid line #%d v1 index", i);
+    ld->v2 = &Level->Vertexes[v2idx];
   }
-  delete[] oldvx;
 }
 
 
@@ -397,7 +365,7 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 //==========================================================================
 static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   Level->NumSegs = 0;
-  delete [] Level->Segs;
+  delete[] Level->Segs;
   Level->Segs = new seg_t[ajbsp::num_segs]; //k8: this may overallocate, but i don't care
   memset((void *)Level->Segs, 0, sizeof(seg_t)*ajbsp::num_segs);
 
@@ -432,10 +400,11 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     destseg->partner = nullptr;
     destseg->front_sub = nullptr;
 
-    auto v1mp = nfo.ajvx2vv[srcseg->start->index];
-    auto v2mp = nfo.ajvx2vv[srcseg->end->index];
+    auto v1mp = ajbsp::GetVertexIndex(srcseg->start);
+    auto v2mp = ajbsp::GetVertexIndex(srcseg->end);
     if (v1mp < 0 || v2mp < 0) Sys_Error("AJBSP: vertex not found for seg #%d", i);
     if (v1mp == v2mp) Sys_Error("AJBSP: seg #%d has same start and end vertex (%d:%d) (%d:%d)", i, v1mp, srcseg->start->index, v2mp, srcseg->end->index);
+    if (v1mp >= Level->NumVertexes || v2mp >= Level->NumVertexes) Sys_Error("AJBSP: invalid vertices not found for seg #%d", i);
     destseg->v1 = &Level->Vertexes[v1mp];
     destseg->v2 = &Level->Vertexes[v2mp];
 
