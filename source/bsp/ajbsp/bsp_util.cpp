@@ -480,6 +480,17 @@ void DetectPolyobjSectors(void)
 
 
 /* ----- analysis routines ----------------------------- */
+// k8: `0.0001` is arbitrary number
+static inline int cmpVertex (const vertex_t *A, const vertex_t *B) {
+	const double xdiff = (A->x-B->x);
+	if (fabs(xdiff) > 0.0001) return (xdiff < 0 ? -1 : 1);
+
+	const double ydiff = (A->y-B->y);
+	if (fabs(ydiff) > 0.0001) return (ydiff < 0 ? -1 : 1);
+
+  return 0;
+}
+
 extern "C" {
 static int VertexCompare(const void *p1, const void *p2, void *udata)
 {
@@ -500,6 +511,9 @@ static int VertexCompare(const void *p1, const void *p2, void *udata)
 	return (int)A->y - (int)B->y;
 	*/
 
+	return cmpVertex(A, B);
+
+	/*
 	if (A->x < B->x) return -1;
 	if (A->x > B->x) return 1;
 
@@ -507,6 +521,7 @@ static int VertexCompare(const void *p1, const void *p2, void *udata)
 	if (A->y > B->y) return 1;
 
 	return 0;
+	*/
 }
 }
 
@@ -632,6 +647,9 @@ static int LineStartCompare(const void *p1, const void *p2, void *udata)
 	return (int)C->y - (int)D->y;
 	*/
 
+	return cmpVertex(C, D);
+
+	/*
 	if (C->x < D->x) return -1;
 	if (C->x > D->x) return 1;
 
@@ -639,6 +657,7 @@ static int LineStartCompare(const void *p1, const void *p2, void *udata)
 	if (C->y > D->y) return 1;
 
 	return 0;
+	*/
 }
 }
 
@@ -668,6 +687,9 @@ static int LineEndCompare(const void *p1, const void *p2)
 	return (int)C->y - (int)D->y;
 	*/
 
+	return cmpVertex(C, D);
+
+	/*
 	if (C->x < D->x) return -1;
 	if (C->x > D->x) return 1;
 
@@ -675,6 +697,7 @@ static int LineEndCompare(const void *p1, const void *p2)
 	if (C->y > D->y) return 1;
 
 	return 0;
+	*/
 }
 
 
