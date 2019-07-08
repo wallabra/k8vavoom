@@ -144,18 +144,17 @@ bool TILine::Key (const event_t &ev) {
       break;
   }
 
-  int ch = ev.data1;
-  if (ch >= ' ' && ch < 128) {
-    ch = GInput->TranslateKey(ch);
-    AddChar((char)ch);
-  } else if (ch == K_BACKSPACE) {
-    if (ev.modflags&bCtrl) {
-      DelWord();
-    } else {
-      DelChar();
+  if (ev.keycode == K_BACKSPACE) {
+    if (ev.isCtrlDown()) DelWord(); else DelChar();
+  } else if (ev.keycode == K_ENTER || ev.keycode == K_PADENTER) {
+    return true;
+  } else {
+    int ch = GInput->TranslateKey(ev.keycode);
+    if (ch >= ' ' && ch < 128) {
+      AddChar((char)ch);
+      return true; // ate the key
     }
-  } else if (ch != K_ENTER && ch != K_PADENTER) {
-    return false; // did not eat key
   }
-  return true; // ate the key
+
+  return false; // did not eat key
 }
