@@ -597,7 +597,7 @@ public:
       friend class VLevel; \
     private: \
       const VLevel *level; \
-    private: \
+    public: \
       arrname_##Iterator (const VLevel *alevel) : level(alevel) {} \
     public: \
       inline itertype_ *begin () { return &level->arrname_[0]; } \
@@ -629,7 +629,7 @@ public:
     private: \
       const VLevel *level; \
       int idx; \
-    private: \
+    public: \
       arrname_##IndexIterator (const VLevel *alevel, bool asEnd=false) : level(alevel), idx(asEnd ? alevel->Num##arrname_ : 0) {} \
       arrname_##IndexIterator (const arrname_##IndexIterator &it) : level(it.level), idx(it.idx) {} \
     public: \
