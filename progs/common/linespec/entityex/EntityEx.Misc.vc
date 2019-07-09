@@ -168,7 +168,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       if (damage <= 0) continue;
       //print("000: %C: damage=%s; BombDamage=%s; RDFactor=%s; BombDistance=%s; flt=%s", Other, damage, BombDamage, RDFactor, BombDistance, dmgfloat);
 
-      Other.SpawnExploBloodAtHead(damage, Source);
+      if (damage > 1) Other.SpawnExploBloodAtHead(damage, Source);
       if (DoDamage) {
         Other.Damage(self, Source, damage, BombDmgType);
       } else {
