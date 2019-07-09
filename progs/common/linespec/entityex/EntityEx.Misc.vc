@@ -162,7 +162,11 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         dist2 = fclamp(dist-float(damagedistance), 0.0, dist);
       }
 
-      int damage = int(((float(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
+      float dmgfloat = ((float(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance);
+      int damage = int(dmgfloat);
+      if (!damage && dmgfloat > 0.2) damage = 1;
+      if (damage <= 0) continue;
+      //print("000: %C: damage=%s; BombDamage=%s; RDFactor=%s; BombDistance=%s; flt=%s", Other, damage, BombDamage, RDFactor, BombDistance, dmgfloat);
 
       Other.SpawnExploBloodAtHead(damage, Source);
       if (DoDamage) {
