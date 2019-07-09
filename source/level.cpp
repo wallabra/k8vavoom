@@ -2517,12 +2517,12 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
 
 //==========================================================================
 //
-//  CalcLineCDPlanes
+//  VLevel::CalcLineCDPlanes
 //
 //  create collision detection planes (line/reverse line plane, and caps)
 //
 //==========================================================================
-void CalcLineCDPlanes (line_t *line) {
+void VLevel::CalcLineCDPlanes (line_t *line) {
   if (line->v1->y == line->v2->y) {
     // either horizontal line, or a point
     if (line->v1->x == line->v2->x) {
@@ -2572,10 +2572,10 @@ void CalcLineCDPlanes (line_t *line) {
 
 //==========================================================================
 //
-//  CalcLine
+//  VLevel::CalcLine
 //
 //==========================================================================
-void CalcLine (line_t *line) {
+void VLevel::CalcLine (line_t *line) {
   // calc line's slopetype
   line->dir = (*line->v2)-(*line->v1);
   line->dir.z = 0;
@@ -2618,12 +2618,12 @@ void CalcLine (line_t *line) {
 
 //==========================================================================
 //
-//  CalcSegLenOfs
+//  VLevel::CalcSegLenOfs
 //
-// only length and offset
+//  only length and offset
 //
 //==========================================================================
-void CalcSegLenOfs (seg_t *seg) {
+void VLevel::CalcSegLenOfs (seg_t *seg) {
   if (seg->linedef) {
     const line_t *ldef = seg->linedef;
     if (seg->side) {
@@ -2639,10 +2639,10 @@ void CalcSegLenOfs (seg_t *seg) {
 
 //==========================================================================
 //
-//  CalcSeg
+//  VLevel::CalcSeg
 //
 //==========================================================================
-void CalcSeg (seg_t *seg) {
+void VLevel::CalcSeg (seg_t *seg) {
   seg->Set2Points(*seg->v1, *seg->v2);
   bool valid = (seg->length >= 0.0001f);
   if (valid) {
@@ -2662,18 +2662,18 @@ void CalcSeg (seg_t *seg) {
     if (!seg->dir.isValid() || seg->dir.isZero2D()) valid = false;
   }
   if (!valid) {
-    GCon->Logf(NAME_Warning, "ZERO-LENGTH %sseg #%d (flags: 0x%04x)!", (seg->linedef ? "" : "mini"), (int)(ptrdiff_t)(seg-GClLevel->Segs), (unsigned)seg->flags);
+    GCon->Logf(NAME_Warning, "ZERO-LENGTH %sseg #%d (flags: 0x%04x)!", (seg->linedef ? "" : "mini"), (int)(ptrdiff_t)(seg-Segs), (unsigned)seg->flags);
     GCon->Logf(NAME_Warning, "  verts: (%g,%g,%g)-(%g,%g,%g)", seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
     GCon->Logf(NAME_Warning, "  offset: %g", seg->offset);
     GCon->Logf(NAME_Warning, "  length: %g", seg->length);
     if (seg->linedef) {
-      GCon->Logf(NAME_Warning, "  linedef: %d", (int)(ptrdiff_t)(seg->linedef-GClLevel->Lines));
-      GCon->Logf(NAME_Warning, "  sidedef: %d (side #%d)", (int)(ptrdiff_t)(seg->sidedef-GClLevel->Sides), seg->side);
-      GCon->Logf(NAME_Warning, "  front sector: %d", (int)(ptrdiff_t)(seg->frontsector-GClLevel->Sectors));
-      if (seg->backsector) GCon->Logf(NAME_Warning, "  back sector: %d", (int)(ptrdiff_t)(seg->backsector-GClLevel->Sectors));
+      GCon->Logf(NAME_Warning, "  linedef: %d", (int)(ptrdiff_t)(seg->linedef-Lines));
+      GCon->Logf(NAME_Warning, "  sidedef: %d (side #%d)", (int)(ptrdiff_t)(seg->sidedef-Sides), seg->side);
+      GCon->Logf(NAME_Warning, "  front sector: %d", (int)(ptrdiff_t)(seg->frontsector-Sectors));
+      if (seg->backsector) GCon->Logf(NAME_Warning, "  back sector: %d", (int)(ptrdiff_t)(seg->backsector-Sectors));
     }
-    if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-GClLevel->Segs));
-    if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-GClLevel->Subsectors));
+    if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
+    if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-Subsectors));
 
     seg->dir = TVec(1, 0, 0); // arbitrary
     seg->flags |= SF_ZEROLEN;
