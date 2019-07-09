@@ -149,8 +149,9 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
     }
 
     float dist = fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius);
+    print("000: %C: dist=%s; BombDistance=%s", self, dist, BombDistance);
 
-    if (dist >= BombDistance) continue; // out of range
+    if (dist >= BombDistance && int(dist) > int(BombDistance)) continue; // out of range
 
     if (Other.CanSeeAdv(self)) {
       float dist2;
@@ -162,24 +163,31 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         dist2 = fclamp(dist-float(damagedistance), 0.0, dist);
       }
 
+      // k8: zero damage should still push a player to make mikoveyors work
+      //     actually, it deals 1 damage in vanilla, but meh, i won't bother emulating it
       float dmgfloat = ((float(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance);
       int damage = int(dmgfloat);
-      if (!damage && dmgfloat > 0.2) damage = 1;
-      if (damage <= 0) continue;
       //print("000: %C: damage=%s; BombDamage=%s; RDFactor=%s; BombDistance=%s; flt=%s", Other, damage, BombDamage, RDFactor, BombDistance, dmgfloat);
+      if (damage < 0) damage = 0;
+      //if (damage <= 0) continue;
 
-      if (damage > 1) Other.SpawnExploBloodAtHead(damage, Source);
-      if (DoDamage) {
-        Other.Damage(self, Source, damage, BombDmgType);
-      } else {
-        Other.bBlasted = true;
+      if (damage > 0) {
+        if (damage > 1) Other.SpawnExploBloodAtHead(damage, Source);
+        if (DoDamage) {
+          Other.Damage(self, Source, damage, BombDmgType);
+        } else {
+          Other.bBlasted = true;
+        }
       }
 
       if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust)) {
-        float Thrust = float(damage)*0.5;
+        float Thrust = dmgfloat*0.5;
         if (specified_fullthrustdistance && fullthrustdistance != 0 && dist <= fullthrustdistance) {
           Thrust = BombDamage*RDFactor*0.5;
         }
+        //k8: this is purely experimental, and prolly not right at all
+        //    but with `10` it is more-or-less of the vanilla speed
+        Thrust = fmax((Other.bIsPlayer ? 10 : 0.0), Thrust);
         float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin-Origin;
