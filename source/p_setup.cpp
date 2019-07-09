@@ -1944,8 +1944,8 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
   VStream *lumpstream = W_CreateLumpReaderNum(Lump);
   VCheckedStream Strm(lumpstream);
   if (Format == 3) Strm.Seek(4);
-  seg_t *li = Segs;
-  for (int i = 0; i < NumSegs; ++i, ++li) {
+  seg_t *seg = Segs;
+  for (int i = 0; i < NumSegs; ++i, ++seg) {
     vuint32 v1num;
     vuint32 v2num;
     vint16 linedef; // -1 for minisegs
@@ -1969,49 +1969,48 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
     if (v1num&GLVertFlag) {
       v1num ^= GLVertFlag;
       if (v1num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %d", v1num);
-      li->v1 = &GLVertexes[v1num];
+      seg->v1 = &GLVertexes[v1num];
     } else {
       if (v1num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d (04)", v1num);
-      li->v1 = &Vertexes[v1num];
+      seg->v1 = &Vertexes[v1num];
     }
     if (v2num&GLVertFlag) {
       v2num ^= GLVertFlag;
       if (v2num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %d", v2num);
-      li->v2 = &GLVertexes[v2num];
+      seg->v2 = &GLVertexes[v2num];
     } else {
       if (v2num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d (05)", v2num);
-      li->v2 = &Vertexes[v2num];
+      seg->v2 = &Vertexes[v2num];
     }
 
     if (linedef >= 0) {
       line_t *ldef = &Lines[linedef];
-      li->linedef = ldef;
-      li->sidedef = &Sides[ldef->sidenum[side]];
-      li->frontsector = Sides[ldef->sidenum[side]].Sector;
+      seg->linedef = ldef;
+      seg->sidedef = &Sides[ldef->sidenum[side]];
+      seg->frontsector = Sides[ldef->sidenum[side]].Sector;
 
-      //if (ldef->flags&ML_TWOSIDED) li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+      //if (ldef->flags&ML_TWOSIDED) seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
       if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
-        li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+        seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
       } else {
-        li->backsector = nullptr;
+        seg->backsector = nullptr;
         ldef->flags &= ~ML_TWOSIDED;
       }
 
       if (side) {
-        li->offset = li->v1->DistanceTo2D(*ldef->v2);
+        seg->offset = seg->v1->DistanceTo2D(*ldef->v2);
       } else {
-        li->offset = li->v1->DistanceTo2D(*ldef->v1);
+        seg->offset = seg->v1->DistanceTo2D(*ldef->v1);
       }
-      li->length = li->v2->DistanceTo2D(*li->v1);
-      if (li->length < 0.001f) Sys_Error("zero-length seg #%d", i);
-      li->side = side;
+      seg->length = seg->v2->DistanceTo2D(*seg->v1);
+      //if (seg->length < 0.0001f) Sys_Error("zero-length seg #%d", i);
+      seg->side = side;
     }
 
     // assign partner (we need it for self-referencing deep water)
-    li->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
+    seg->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
 
-    // calc seg's plane params
-    CalcSeg(li);
+    // `PostLoadSegs()` will do the rest
   }
 }
 
@@ -2024,8 +2023,9 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
 //
 //==========================================================================
 void VLevel::PostLoadSegs () {
-  seg_t *seg = &Segs[0];
-  for (int i = 0; i < NumSegs; ++i, ++seg) {
+  for (auto &&it : allSegsIdx()) {
+    int i = it.index();
+    seg_t *seg = it.value();
     int dside = seg->side;
     if (dside != 0 && dside != 1) Sys_Error("invalid seg #%d side (%d)", i, dside);
 
@@ -2051,46 +2051,10 @@ void VLevel::PostLoadSegs () {
         seg->backsector = nullptr;
         ldef->flags &= ~ML_TWOSIDED; // just in case
       }
-
-      if (dside) {
-        seg->offset = seg->v1->DistanceTo2D(*ldef->v2);
-      } else {
-        seg->offset = seg->v1->DistanceTo2D(*ldef->v1);
-      }
     }
 
-    seg->length = seg->v2->DistanceTo2D(*seg->v1);
-    if (seg->length < 0.0001f) {
-      GCon->Logf(NAME_Warning, "ZERO-LENGTH %sseg #%d (flags: 0x%04x)", (seg->linedef ? "" : "mini"), i, (unsigned)seg->flags);
-      GCon->Logf(NAME_Warning, "  verts: (%g,%g,%g)-(%g,%g,%g)", seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
-      GCon->Logf(NAME_Warning, "  offset: %g", seg->offset);
-      GCon->Logf(NAME_Warning, "  length: %g", seg->length);
-      if (seg->linedef) {
-        GCon->Logf(NAME_Warning, "  linedef: %d", (int)(ptrdiff_t)(seg->linedef-Lines));
-        GCon->Logf(NAME_Warning, "  sidedef: %d (side #%d)", (int)(ptrdiff_t)(seg->sidedef-Sides), seg->side);
-        GCon->Logf(NAME_Warning, "  front sector: %d", (int)(ptrdiff_t)(seg->frontsector-Sectors));
-        if (seg->backsector) GCon->Logf(NAME_Warning, "  back sector: %d", (int)(ptrdiff_t)(seg->backsector-Sectors));
-      }
-      if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
-      if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-Subsectors));
-      //Sys_Error("zero-length seg #%d", i);
-      if (seg->partner) {
-        if (seg->partner->partner) {
-          check(seg->partner->partner == seg);
-          seg->partner->partner = nullptr;
-        }
-        seg->partner = nullptr;
-      }
-      seg->offset = 0.0f;
-      seg->length = 0.0001f;
-      // setup fake seg's plane params
-      seg->normal = TVec(1.0f, 0.0f, 0.0f);
-      seg->dist = 0.0f;
-      seg->dir = TVec(1.0f, 0.0f, 0.0f); // arbitrary
-    } else {
-      // calc seg's plane params
-      CalcSeg(seg);
-    }
+    CalcSegLenOfs(seg);
+    CalcSeg(seg); // this will check for zero-length segs
   }
 }
 
@@ -2452,12 +2416,12 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         vuint8 side;
         *Strm << side;
 
-        seg_t *li = Segs+Subsectors[i].firstline+j;
+        seg_t *seg = Segs+Subsectors[i].firstline+j;
 
         // assign partner (we need it for self-referencing deep water)
-        li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
+        seg->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
 
-        li->v1 = &Vertexes[v1];
+        seg->v1 = &Vertexes[v1];
         // v2 will be set later
 
         if (linedef != 0xffffffffu) {
@@ -2466,35 +2430,35 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 
           line_t *ldef = &Lines[linedef];
 
-          li->linedef = ldef;
+          seg->linedef = ldef;
           /*
-          li->sidedef = &Sides[ldef->sidenum[side]];
-          li->frontsector = Sides[ldef->sidenum[side]].Sector;
+          seg->sidedef = &Sides[ldef->sidenum[side]];
+          seg->frontsector = Sides[ldef->sidenum[side]].Sector;
 
           if (/ *(ldef->flags&ML_TWOSIDED) != 0 &&* / ldef->sidenum[side^1] >= 0) {
-            li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+            seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
           } else {
-            li->backsector = nullptr;
+            seg->backsector = nullptr;
             ldef->flags &= ~ML_TWOSIDED;
           }
 
           if (side) {
-            check(li);
-            check(li->v1);
+            check(seg);
+            check(seg->v1);
             check(ldef->v2);
-            li->offset = Length(*li->v1 - *ldef->v2);
+            seg->offset = Length(*seg->v1 - *ldef->v2);
           } else {
-            check(li);
-            check(li->v1);
+            check(seg);
+            check(seg->v1);
             check(ldef->v1);
-            li->offset = Length(*li->v1 - *ldef->v1);
+            seg->offset = Length(*seg->v1 - *ldef->v1);
           }
-          li->side = side;
+          seg->side = side;
           */
         } else {
-          li->linedef = nullptr;
-          li->sidedef = nullptr;
-          li->frontsector = li->backsector = (Segs+Subsectors[i].firstline)->frontsector;
+          seg->linedef = nullptr;
+          seg->sidedef = nullptr;
+          seg->frontsector = seg->backsector = (Segs+Subsectors[i].firstline)->frontsector;
         }
       }
     }
@@ -2564,34 +2528,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     }
   }
 
-  /*
-  {
-    seg_t *li = Segs;
-    for (int i = 0; i < NumSegs; ++i, ++li) {
-      // calc seg's plane params
-      li->length = Length(*li->v2 - *li->v1);
-      CalcSeg(li);
-    }
-  }
-
-  {
-    subsector_t *ss = Subsectors;
-    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
-      // look up sector number for each subsector
-      seg_t *seg = &Segs[ss->firstline];
-      for (int j = 0; j < ss->numlines; ++j) {
-        if (seg[j].linedef) {
-          ss->sector = seg[j].sidedef->Sector;
-          ss->seclink = ss->sector->subsectors;
-          ss->sector->subsectors = ss;
-          break;
-        }
-      }
-      for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-      if (!ss->sector) Host_Error("Subsector %d without sector", i);
-    }
-  }
-  */
+  // `PostLoadSegs()` and `PostLoadSubsectors()` will do the rest
 
   // create dummy VIS data
   // k8: no need to do this, main loader will take care of it

@@ -879,7 +879,8 @@ private:
 
 void CalcLine (line_t *line); // this calls `CalcLineCDPlanes()`
 void CalcLineCDPlanes (line_t *line);
-void CalcSeg (seg_t *seg);
+void CalcSegLenOfs (seg_t *seg); // only length and offset
+void CalcSeg (seg_t *seg); // plane, direction, but length and offset should be already set
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
 void SwapPlanes (sector_t *);
