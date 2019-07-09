@@ -975,6 +975,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
           // k8: nope; this glitches
           //if (clip_use_1d_clipper) ViewClip.ClipAddBBox(bbox);
           if (!clip_use_1d_clipper) return;
+          if (cp->clipflag&TFrustum::FarBit) return; // clipped with forward plane
           onlyClip = true;
           break;
           //return;
@@ -1034,7 +1035,12 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     }
 
     // head node is the last node output
-    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 0x3f : 0x1f));
+    {
+      unsigned clipflags = 0;
+      const TClipPlane *cp = &view_frustum.planes[0];
+      for (unsigned i = view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
+      RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(MirrorClip ? 0x3f : 0x1f)*/);
+    }
 
     if (PortalLevel == 0) {
       // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
