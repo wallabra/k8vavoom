@@ -186,6 +186,7 @@ public:
   virtual void GetMousePosition (int *mx, int *my) = 0;
 
   // rendring stuff
+  virtual bool UseFrustumFarClip () = 0;
   virtual void SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) = 0;
   virtual void SetupViewOrg () = 0;
   virtual void WorldDrawing () = 0;

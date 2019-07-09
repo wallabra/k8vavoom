@@ -788,8 +788,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
       newpmat[2][2] = -1.0f;
       newpmat[3][2] = -2.0f;
     } else {
-      newpmat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
-      newpmat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
+      newpmat[2][2] = -(gl_maxdist+1.0f)/(gl_maxdist-1.0f);
+      newpmat[3][2] = -2.0f*gl_maxdist/(gl_maxdist-1.0f);
     }
     */
 

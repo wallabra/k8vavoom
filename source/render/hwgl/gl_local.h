@@ -444,6 +444,7 @@ extern VCvarB gl_use_stencil_quad_clear;
 extern VCvarI gl_dbg_use_zpass;
 extern VCvarB gl_dbg_wireframe;
 extern VCvarB gl_prefill_zbuffer;
+extern VCvarF gl_maxdist;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 extern VCvarB r_brightmaps_additive;
@@ -556,6 +557,7 @@ public:
   void FinishUpdate ();
 
   // rendering stuff
+  virtual bool UseFrustumFarClip () override;
   virtual void SetupView (VRenderLevelDrawer *, const refdef_t *) override;
   virtual void SetupViewOrg () override;
   virtual void EndView () override;
@@ -844,7 +846,7 @@ protected:
   static VCvarB clear;
   static VCvarB blend_sprites;
   static VCvarB ext_anisotropy;
-  static VCvarF maxdist;
+  //static VCvarF maxdist;
   //static VCvarB model_lighting;
   static VCvarB specular_highlights;
   static VCvarI multisampling_sample;

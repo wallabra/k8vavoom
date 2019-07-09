@@ -39,6 +39,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
+VCvarF gl_maxdist("gl_maxdist", "8192", "Max view distance (too big values will cause z-buffer issues).", CVAR_Archive);
 
 static VCvarB gl_enable_fp_zbuffer("gl_enable_fp_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Allow using \"reverse z\" trick?", CVAR_Archive|CVAR_PreInit);
@@ -55,7 +56,6 @@ VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotrop
 VCvarB VOpenGLDrawer::clear("gl_clear", true, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", CVAR_Archive|CVAR_PreInit);
-VCvarF VOpenGLDrawer::maxdist("gl_maxdist", "8192", "Max view distance (too big values will cause z-buffer issues).", CVAR_Archive);
 //VCvarB VOpenGLDrawer::model_lighting("gl_model_lighting", true, "Light models?", CVAR_Archive); //k8: this doesn't work with shaders, alas
 VCvarB VOpenGLDrawer::specular_highlights("gl_specular_highlights", true, "Specular highlights type.", CVAR_Archive);
 VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "1", "Multisampling mode.", CVAR_Archive);
@@ -1202,6 +1202,18 @@ void VOpenGLDrawer::ResetScissor () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::UseFrustumFarClip
+//
+//==========================================================================
+bool VOpenGLDrawer::UseFrustumFarClip () {
+  if (CanUseRevZ()) return false;
+  if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetupView
 //
 //==========================================================================
@@ -1227,8 +1239,8 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
       ProjMat[2][2] = -1.0f;
       ProjMat[3][2] = -2.0f;
     } else {
-      ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
-      ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
+      ProjMat[2][2] = -(gl_maxdist+1.0f)/(gl_maxdist-1.0f);
+      ProjMat[3][2] = -2.0f*gl_maxdist/(gl_maxdist-1.0f);
     }
   } else {
     // reversed
