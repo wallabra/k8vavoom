@@ -1637,27 +1637,9 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const 
 
   // build source text
   bool needToAddRevZ = CanUseRevZ();
-  /*
-  if (CanUseRevZ()) {
-    if (ssrc.length() && ssrc[0] == '#') {
-      // skip first line (this should be "#version")
-      int epos = 0;
-      while (epos < ssrc.length() && ssrc[epos] != '\n') ++epos;
-      if (epos < ssrc.length()) ++epos; // skip eol
-      VStr ns = ssrc.mid(0, epos);
-      ns += "#define VAVOOM_REVERSE_Z\n";
-      ssrc.chopLeft(epos);
-      ns += ssrc;
-      ssrc = ns;
-    } else {
-      VStr ns = "#define VAVOOM_REVERSE_Z\n";
-      ns += ssrc;
-      ssrc = ns;
-    }
-  }
-  */
+  bool needToAddDefines = (needToAddRevZ || defines.length() > 0);
 
-  // process $include
+  // process $include, add defines
   //FIXME: nested "$include", and proper directive parsing
   VStr res;
   while (ssrc.length()) {
@@ -1673,9 +1655,9 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const 
     // add "reverse z" define
     VStr cmd = getDirective(line);
     if (cmd.length() == 0) {
-      if (needToAddRevZ) {
+      if (needToAddDefines) {
         if (isVersionLine(line)) { res += line; continue; }
-        res += "#define VAVOOM_REVERSE_Z\n";
+        if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
         // add other defines
         for (int didx = 0; didx < defines.length(); ++didx) {
           const VStr &def = defines[didx];
@@ -1684,7 +1666,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const 
           res += def;
           res += "\n";
         }
-        needToAddRevZ = false;
+        needToAddDefines = false;
       }
       res += line;
       continue;
