@@ -3911,6 +3911,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
     }
 
     newA = Spawn(moType, A.Origin);
+    //print("proj %C: org=%s; A=%C", newA, A.Origin, A);
     //print("%C: *** special:%B; gravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, gravity, newA.bNoGravity, newA.Gravity);
     if (newA.SightSound) newA.PlaySound(newA.SightSound, CHAN_VOICE);
 
@@ -6526,6 +6527,7 @@ override void SpawnMapThing (mthing_t *mthing) {
     XLevel.PointInSector(vector(mthing.x, mthing.y, 0.0)).seqType = mthing.type-1400;
     return;
   }
+
   if (mthing.type == 1411) {
     int SeqType = (mthing.arg1 == 255 ? -1 : mthing.arg1);
     if (SeqType > 63) {
@@ -6596,6 +6598,8 @@ override void SpawnMapThing (mthing_t *mthing) {
   auto thg = Spawn(moClass, default, default, mthing, false);
   //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing.type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
+
+  //if (mthing.type == 9001 && mthing.tid == 55) print("SPAWN MAP THING: %s; type=%s; org=(%s,%s); height=%s; opts=0x%08x; skill=0x%08x; thorg=%s", mthing.tid, mthing.type, mthing.x, mthing.y, mthing.height, mthing.options, mthing.SkillClassFilter, thg.Origin);
 }
 
 
