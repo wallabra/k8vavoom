@@ -195,7 +195,9 @@ bool Physics (float DeltaTime) {
   }
 
   CheckWater();
-  if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
+  if (!bFloatBob || !bSpecial) {
+    UpdateVelocity(DeltaTime);
+  }
 
   // momentum (velocity) movement
   // handle X and Y momentums
@@ -816,6 +818,7 @@ final bool HitFloor () {
   }
 
   Origin.z = FloorZ;
+
   if (vdot < -0.1) {
     // spawn splashes, etc
     HitFloorType();
@@ -1316,6 +1319,19 @@ override void ApplyFriction (float DeltaTime) {
   }
 
   //FixNormalVelocity();
+
+  // vanilla hack: floor with height -32768 teleports entity to ceiling
+  if (bIsPlayer && Sector && Sector.floor.maxz <= -32768) {
+    if (Origin.z <= -32768) {
+      //print("!!!! z=%s; fz=%s %C : %s", Origin.z, FloorZ, self, self.UniqueId);
+      Origin.z = Sector.ceiling.minz-Height;
+      // find out new floor plane
+      if (Sector.bHasExtrafloors) GetFloorAndCeiling(nullptr);
+      Origin.z = CeilingZ-Height;
+      Velocity.z = 0;
+    }
+    return; // assume airborne
+  }
 
   // clip velocity
   if (Origin.z <= FloorZ) {

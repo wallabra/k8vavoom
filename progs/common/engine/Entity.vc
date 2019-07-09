@@ -448,19 +448,21 @@ void UpdateVelocity (float DeltaTime) {
   }
   */
 
-  // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (Sector && !bNoGravity && (Origin.z > FloorZ || EFloor.spGetNormalZ() <= 0.7f)) {
-    if (WaterLevel < 2) {
-      Velocity.z -= Gravity*Level.Gravity*Sector.Gravity*DeltaTime;
-    } else if (!bIsPlayer || Health <= 0) {
-      // water gravity
-      Velocity.z -= Gravity*Level.Gravity*Sector.Gravity/10.0*DeltaTime;
-      float startvelz = Velocity.z;
-      float sinkspeed = -WaterSinkSpeed/(bCorpse ? 3.0 : 1.0);
-      if (Velocity.z < sinkspeed) {
-        Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
-      } else {
-        Velocity.z = startvelz+(Velocity.z-startvelz)*WaterSinkFactor;
+  if (Sector) {
+    // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
+    if (/*Sector &&*/ !bNoGravity && (Origin.z > FloorZ || EFloor.spGetNormalZ() <= 0.7f)) {
+      if (WaterLevel < 2) {
+        Velocity.z -= Gravity*Level.Gravity*Sector.Gravity*DeltaTime;
+      } else if (!bIsPlayer || Health <= 0) {
+        // water gravity
+        Velocity.z -= Gravity*Level.Gravity*Sector.Gravity/10.0*DeltaTime;
+        float startvelz = Velocity.z;
+        float sinkspeed = -WaterSinkSpeed/(bCorpse ? 3.0 : 1.0);
+        if (Velocity.z < sinkspeed) {
+          Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
+        } else {
+          Velocity.z = startvelz+(Velocity.z-startvelz)*WaterSinkFactor;
+        }
       }
     }
   }
