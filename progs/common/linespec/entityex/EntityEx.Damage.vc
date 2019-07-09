@@ -554,6 +554,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   // player specific
   if (bIsPlayer) {
+    //print("%C: dmg=%s; invul=%B", self, damage, bInvulnerable);
     if (!forced && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
 
     // end of game hell hack

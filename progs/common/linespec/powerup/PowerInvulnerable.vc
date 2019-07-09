@@ -35,6 +35,46 @@ int PrevTicTime;
 
 //==========================================================================
 //
+//  PowerupActivateFor
+//
+//  used to make all player avatars invulnerable
+//
+//==========================================================================
+void PowerupActivateFor (EntityEx ent, bool doActivate) {
+  if (!ent) return;
+  if (doActivate) {
+    ent.bInvulnerable = true;
+    if (Mode == 'Reflective') ent.bReflective = true;
+  } else {
+    ent.bInvulnerable = false;
+         if (Mode == 'Reflective') ent.bReflective = false;
+    else if (Mode == 'Ghost') ent.bNonShootable = false;
+  }
+}
+
+
+//==========================================================================
+//
+//  ProcessVoodoDolls
+//
+//  used to make all player avatars invulnerable
+//
+//==========================================================================
+final void ProcessVoodoDolls (bool imm) {
+  if (!Owner) return;
+  if (Owner.bIsPlayer && Owner.Player) {
+    PlayerPawn ent;
+    foreach AllThinkers(PlayerPawn, out ent) {
+      if (ent.Player == Owner.Player) PowerupActivateFor(ent, imm);
+    }
+  } else {
+    PowerupActivateFor(EntityEx(Owner), imm);
+  }
+}
+
+
+//==========================================================================
+//
 //  InitEffect
 //
 //==========================================================================
@@ -42,8 +82,9 @@ override void InitEffect () {
   // if we don't have any specific mode, set it to the default of the player class
   if (!Mode && Owner.bIsPlayer) Mode = PlayerPawn(Owner).InvulnerabilityMode;
 
-  EntityEx(Owner).bInvulnerable = true;
-  if (Mode == 'Reflective') EntityEx(Owner).bReflective = true;
+  //EntityEx(Owner).bInvulnerable = true;
+  //if (Mode == 'Reflective') EntityEx(Owner).bReflective = true;
+  ProcessVoodoDolls(true);
 }
 
 
@@ -152,6 +193,19 @@ override void DoEffect () {
 override void EndEffect () {
   if (!Owner) return;
 
+  ProcessVoodoDolls(false);
+  if (Mode == 'Ghost') {
+    // don't mess with translucency if invisibility is active
+    if (!EntityEx(Owner).bShadow) {
+      Owner.RenderStyle = STYLE_Normal;
+      Owner.Alpha = 1.0;
+    }
+  } else if (Mode == 'Initial') {
+    Owner.RenderStyle = STYLE_Normal;
+    Owner.Alpha = 1.0;
+  }
+
+  /*
   EntityEx(Owner).bInvulnerable = false;
   if (Mode == 'Reflective') {
     EntityEx(Owner).bReflective = false;
@@ -166,6 +220,7 @@ override void EndEffect () {
     Owner.RenderStyle = STYLE_Normal;
     Owner.Alpha = 1.0;
   }
+  */
 
   if (Owner.Player) Owner.Player.FixedColormap = 0;
 }
