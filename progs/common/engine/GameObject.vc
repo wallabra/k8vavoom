@@ -196,12 +196,6 @@ enum {
   SPF_MAX_OPENINGS = 16,
 };
 
-/*
-enum {
-  SPF_EX_ALLOCATED = 1<<0,
-  SPF_EX_FLOOR     = 1<<1,
-};
-*/
 
 const int SKY_FROM_SIDE = 0x8000;
 
@@ -1033,6 +1027,7 @@ struct seg_t : TPlane {
 
   //int flags; // SF_xxx
   bool bMapped; // some segs of this linedef are visible, but not all
+  bool bZeroLen;
 
   native transient readonly drawseg_t *drawsegs;
   native transient readonly void/*decal_t*/ *decals;

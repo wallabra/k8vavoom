@@ -102,14 +102,6 @@ enum {
   SPF_MAX_OPENINGS = 16,
 };
 
-/*
-enum {
-  SPF_EX_ALLOCATED = 1u<<0,
-  SPF_EX_FLOOR     = 1u<<1,
-};
-*/
-
-
 //==========================================================================
 //
 //  Vertex
@@ -167,68 +159,63 @@ enum {
 
 // LineDef attributes
 enum {
-  ML_BLOCKING            = 0x00000001, // solid, is an obstacle
-  ML_BLOCKMONSTERS       = 0x00000002, // blocks monsters only
-  ML_TWOSIDED            = 0x00000004, // backside will not be present at all
-  ML_DONTPEGTOP          = 0x00000008, // upper texture unpegged
-  ML_DONTPEGBOTTOM       = 0x00000010, // lower texture unpegged
-  ML_SECRET              = 0x00000020, // don't map as two sided: IT'S A SECRET!
-  ML_SOUNDBLOCK          = 0x00000040, // don't let sound cross two of these
-  ML_DONTDRAW            = 0x00000080, // don't draw on the automap
-  ML_MAPPED              = 0x00000100, // set if already drawn in automap
-  ML_REPEAT_SPECIAL      = 0x00000200, // special is repeatable
-  ML_ADDITIVE            = 0x00000400, // additive translucency
-  ML_MONSTERSCANACTIVATE = 0x00002000, // monsters (as well as players) can activate the line
-  ML_BLOCKPLAYERS        = 0x00004000, // blocks players only
-  ML_BLOCKEVERYTHING     = 0x00008000, // line blocks everything
-  ML_ZONEBOUNDARY        = 0x00010000, // boundary of reverb zones
-  ML_RAILING             = 0x00020000,
-  ML_BLOCK_FLOATERS      = 0x00040000,
-  ML_CLIP_MIDTEX         = 0x00080000, // automatic for every Strife line
-  ML_WRAP_MIDTEX         = 0x00100000,
-  ML_3DMIDTEX            = 0x00200000, // not implemented
-  ML_CHECKSWITCHRANGE    = 0x00400000, // not implemented
-  ML_FIRSTSIDEONLY       = 0x00800000, // actiavte only when crossed from front side
-  ML_BLOCKPROJECTILE     = 0x01000000,
-  ML_BLOCKUSE            = 0x02000000, // blocks all use actions through this line
-  ML_BLOCKSIGHT          = 0x04000000, // blocks monster line of sight
-  ML_BLOCKHITSCAN        = 0x08000000, // blocks hitscan attacks
-  ML_3DMIDTEX_IMPASS     = 0x10000000, // (not implemented) [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
-  ML_KEEPDATA            = 0x20000000, // keep FloorData or CeilingData after activating them
-                                       // used to simulate original Heretic behaviour
-  ML_NODECAL             = 0x40000000, // don't spawn decals on this linedef
+  ML_BLOCKING            = 0x00000001u, // solid, is an obstacle
+  ML_BLOCKMONSTERS       = 0x00000002u, // blocks monsters only
+  ML_TWOSIDED            = 0x00000004u, // backside will not be present at all
+  ML_DONTPEGTOP          = 0x00000008u, // upper texture unpegged
+  ML_DONTPEGBOTTOM       = 0x00000010u, // lower texture unpegged
+  ML_SECRET              = 0x00000020u, // don't map as two sided: IT'S A SECRET!
+  ML_SOUNDBLOCK          = 0x00000040u, // don't let sound cross two of these
+  ML_DONTDRAW            = 0x00000080u, // don't draw on the automap
+  ML_MAPPED              = 0x00000100u, // set if already drawn in automap
+  ML_REPEAT_SPECIAL      = 0x00000200u, // special is repeatable
+  ML_ADDITIVE            = 0x00000400u, // additive translucency
+  ML_MONSTERSCANACTIVATE = 0x00002000u, // monsters (as well as players) can activate the line
+  ML_BLOCKPLAYERS        = 0x00004000u, // blocks players only
+  ML_BLOCKEVERYTHING     = 0x00008000u, // line blocks everything
+  ML_ZONEBOUNDARY        = 0x00010000u, // boundary of reverb zones
+  ML_RAILING             = 0x00020000u,
+  ML_BLOCK_FLOATERS      = 0x00040000u,
+  ML_CLIP_MIDTEX         = 0x00080000u, // automatic for every Strife line
+  ML_WRAP_MIDTEX         = 0x00100000u,
+  ML_3DMIDTEX            = 0x00200000u, // not implemented
+  ML_CHECKSWITCHRANGE    = 0x00400000u, // not implemented
+  ML_FIRSTSIDEONLY       = 0x00800000u, // actiavte only when crossed from front side
+  ML_BLOCKPROJECTILE     = 0x01000000u,
+  ML_BLOCKUSE            = 0x02000000u, // blocks all use actions through this line
+  ML_BLOCKSIGHT          = 0x04000000u, // blocks monster line of sight
+  ML_BLOCKHITSCAN        = 0x08000000u, // blocks hitscan attacks
+  ML_3DMIDTEX_IMPASS     = 0x10000000u, // (not implemented) [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+  ML_KEEPDATA            = 0x20000000u, // keep FloorData or CeilingData after activating them
+                                        // used to simulate original Heretic behaviour
+  ML_NODECAL             = 0x40000000u, // don't spawn decals on this linedef
 };
 
 enum {
   ML_SPAC_SHIFT = 10,
-  ML_SPAC_MASK = 0x00001c00,
+  ML_SPAC_MASK = 0x00001c00u,
 };
 
 // extra flags
 enum {
-  ML_EX_PARTIALLY_MAPPED = 0x00000001, // some segs are visible, but not all
-  ML_EX_CHECK_MAPPED     = 0x00000002, // check if all segs are mapped (done in automap drawer
-};
-
-// seg flags
-enum {
-  SF_MAPPED = 0x00000001, // some segs of this linedef are visible, but not all
+  ML_EX_PARTIALLY_MAPPED = 1u<<0, // some segs are visible, but not all
+  ML_EX_CHECK_MAPPED     = 1u<<1, // check if all segs are mapped (done in automap drawer
 };
 
 // Special activation types
 enum {
-  SPAC_Cross      = 0x0001, // when player crosses line
-  SPAC_Use        = 0x0002, // when player uses line
-  SPAC_MCross     = 0x0004, // when monster crosses line
-  SPAC_Impact     = 0x0008, // when projectile hits line
-  SPAC_Push       = 0x0010, // when player pushes line
-  SPAC_PCross     = 0x0020, // when projectile crosses line
-  SPAC_UseThrough = 0x0040, // SPAC_USE, but passes it through
+  SPAC_Cross      = 0x0001u, // when player crosses line
+  SPAC_Use        = 0x0002u, // when player uses line
+  SPAC_MCross     = 0x0004u, // when monster crosses line
+  SPAC_Impact     = 0x0008u, // when projectile hits line
+  SPAC_Push       = 0x0010u, // when player pushes line
+  SPAC_PCross     = 0x0020u, // when projectile crosses line
+  SPAC_UseThrough = 0x0040u, // SPAC_USE, but passes it through
   // SPAC_PTouch is remapped as (SPAC_Impact|SPAC_PCross)
-  SPAC_AnyCross   = 0x0080,
-  SPAC_MUse       = 0x0100, // when monster uses line
-  SPAC_MPush      = 0x0200, // when monster pushes line
-  SPAC_UseBack    = 0x0400, // can be used from the backside
+  SPAC_AnyCross   = 0x0080u,
+  SPAC_MUse       = 0x0100u, // when monster uses line
+  SPAC_MPush      = 0x0200u, // when monster pushes line
+  SPAC_UseBack    = 0x0400u, // can be used from the backside
 };
 
 
@@ -269,9 +256,9 @@ struct line_t : public TPlane {
   // normalised dir
   TVec ndir;
 
-  vint32 flags;
-  vint32 SpacFlags;
-  vint32 exFlags; //ML_EX_xxx
+  vuint32 flags;
+  vuint32 SpacFlags;
+  vuint32 exFlags; //ML_EX_xxx
 
   // visual appearance: SideDefs
   // sidenum[1] will be -1 if one sided
@@ -390,7 +377,7 @@ struct side_t {
 //
 //==========================================================================
 enum {
-  SKY_FROM_SIDE = 0x8000
+  SKY_FROM_SIDE = 0x8000u,
 };
 
 
@@ -674,19 +661,19 @@ struct sector_t {
 
   // flags
   enum {
-    SF_HasExtrafloors   = 0x0001, // this sector has extrafloors
-    SF_ExtrafloorSource = 0x0002, // this sector is a source of an extrafloor
-    SF_TransferSource   = 0x0004, // source of an heightsec or transfer light
-    SF_FakeFloorOnly    = 0x0008, // do not draw fake ceiling
-    SF_ClipFakePlanes   = 0x0010, // as a heightsec, clip planes to target sector's planes
-    SF_NoFakeLight      = 0x0020, // heightsec does not change lighting
-    SF_IgnoreHeightSec  = 0x0040, // heightsec is only for triggering sector actions (i.e. don't draw them)
-    SF_UnderWater       = 0x0080, // sector is underwater
-    SF_Silent           = 0x0100, // actors don't make noise in this sector
-    SF_NoFallingDamage  = 0x0200, // no falling damage in this sector
-    SF_FakeCeilingOnly  = 0x0400, // when used as heightsec in R_FakeFlat, only copies ceiling
-    SF_HangingBridge    = 0x0800, // fake hanging bridge
-    SF_Has3DMidTex      = 0x1000, // has any 3dmidtex linedef?
+    SF_HasExtrafloors   = 0x0001u, // this sector has extrafloors
+    SF_ExtrafloorSource = 0x0002u, // this sector is a source of an extrafloor
+    SF_TransferSource   = 0x0004u, // source of an heightsec or transfer light
+    SF_FakeFloorOnly    = 0x0008u, // do not draw fake ceiling
+    SF_ClipFakePlanes   = 0x0010u, // as a heightsec, clip planes to target sector's planes
+    SF_NoFakeLight      = 0x0020u, // heightsec does not change lighting
+    SF_IgnoreHeightSec  = 0x0040u, // heightsec is only for triggering sector actions (i.e. don't draw them)
+    SF_UnderWater       = 0x0080u, // sector is underwater
+    SF_Silent           = 0x0100u, // actors don't make noise in this sector
+    SF_NoFallingDamage  = 0x0200u, // no falling damage in this sector
+    SF_FakeCeilingOnly  = 0x0400u, // when used as heightsec in R_FakeFlat, only copies ceiling
+    SF_HangingBridge    = 0x0800u, // fake hanging bridge
+    SF_Has3DMidTex      = 0x1000u, // has any 3dmidtex linedef?
   };
   vuint32 SectorFlags;
 
@@ -781,6 +768,12 @@ struct PolyAnchorPoint_t {
 //  LineSeg
 //
 //==========================================================================
+// seg flags
+enum {
+  SF_MAPPED  = 1u<<0, // some segs of this linedef are visible, but not all
+  SF_ZEROLEN = 1u<<1, // zero-length seg (it has some fake length)
+};
+
 struct seg_t : public TPlane {
   vertex_t *v1;
   vertex_t *v2;
@@ -805,7 +798,7 @@ struct seg_t : public TPlane {
   // side of line (for light calculations: 0 or 1)
   vint32 side;
 
-  vint32 flags; // SF_xxx
+  vuint32 flags; // SF_xxx
 
   drawseg_t *drawsegs;
   decal_t *decals;
