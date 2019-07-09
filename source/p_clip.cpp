@@ -63,7 +63,7 @@ VCvarB clip_frustum("clip_frustum", true, "Clip geometry with frustum?", CVAR_Pr
 VCvarB clip_frustum_mirror("clip_frustum_mirror", true, "Clip mirrored geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_init_range("clip_frustum_init_range", true, "Init clipper range with frustum?", CVAR_PreInit);
 // set to false, because 1d clipper can clip bboxes too, and node bsp z is miscalculated for some map trickery
-VCvarB clip_frustum_bsp("clip_frustum_bsp", false, "Clip BSP geometry with frustum?", CVAR_PreInit);
+VCvarB clip_frustum_bsp("clip_frustum_bsp", true, "Clip BSP geometry with frustum?", CVAR_PreInit);
 VCvarB clip_frustum_bsp_segs("clip_frustum_bsp_segs", true, "Clip segs in BSP rendering with frustum?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", TFrustum::LeftBit|TFrustum::RightBit|TFrustum::BackBit, "Which frustum planes we should check?", CVAR_PreInit);
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "19", "Which frustum planes we should check?", CVAR_PreInit);
