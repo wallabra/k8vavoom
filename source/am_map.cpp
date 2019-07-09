@@ -1520,7 +1520,7 @@ static void amFlatsCheckSubsector (int num) {
   sec_surface_t *flatsurf = AM_getFlatSurface(reg, amDoFloors);
   if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
   // if this is a sky, and we're rendering ceiling, render floor instead
-  if (!amDoFloors && flatsurf->texinfo.Tex == amSkyTex) {
+  if (/*!amDoFloors &&*/ flatsurf->texinfo.Tex == amSkyTex) {
     flatsurf = AM_getFlatSurface(reg, true);
     if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
   }
@@ -1593,6 +1593,7 @@ static void AM_drawFlats () {
   if (alpha <= 0.0f) return;
 
   // collect surfaces
+  amDoFloors = ((am_draw_type&3) == 1);
   amFlatsCollectSurfaces();
   if (amSurfList.length() == 0) return; // nothing to do
 
