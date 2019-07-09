@@ -135,13 +135,13 @@ public:
   inline __attribute__((warn_unused_result)) float distanceTo2D (const TVec &v) const { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
 
   inline void normaliseInPlace () { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
-  inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; }
+  inline void normalise2DInPlace () { const float invlen = invlength2D(); x *= invlen; y *= invlen; z = 0.0f; }
 
   inline __attribute__((warn_unused_result)) TVec Normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
   inline __attribute__((warn_unused_result)) TVec normalised () const { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
 
-  inline __attribute__((warn_unused_result)) TVec Normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
-  inline __attribute__((warn_unused_result)) TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, z); }
+  inline __attribute__((warn_unused_result)) TVec Normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
+  inline __attribute__((warn_unused_result)) TVec normalised2D () const { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
 
   inline __attribute__((warn_unused_result)) float Dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
   inline __attribute__((warn_unused_result)) float dot (const TVec &v2) const { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
