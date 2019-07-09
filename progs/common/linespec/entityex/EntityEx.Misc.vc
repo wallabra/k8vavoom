@@ -149,7 +149,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
     }
 
     float dist = fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius);
-    print("000: %C: dist=%s; BombDistance=%s", self, dist, BombDistance);
+    //print("000: %C: dist=%s; BombDistance=%s", self, dist, BombDistance);
 
     if (dist >= BombDistance && int(dist) > int(BombDistance)) continue; // out of range
 
@@ -187,7 +187,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         }
         //k8: this is purely experimental, and prolly not right at all
         //    but with `10` it is more-or-less of the vanilla speed
-        Thrust = fmax((Other.bIsPlayer ? 10 : 0.0), Thrust);
+        Thrust = fmax(/*(Other.bIsPlayer ? 10 : 0.0)*/10, Thrust);
         float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin-Origin;
