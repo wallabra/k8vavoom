@@ -40,6 +40,9 @@ extern VCvarB dbg_clip_dump_added_ranges;
 static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
 static VCvarB r_lightflood_check_plane_angles("r_lightflood_check_plane_angles", true, "Check seg planes angles in light floodfill?", CVAR_Archive);
 
+static VCvarB r_clip_maxdist("r_clip_maxdist", true, "Clip with max view distance? This can speedup huge levels, trading details for speed.", CVAR_Archive);
+extern VCvarF gl_maxdist;
+
 
 void R_FreeSkyboxData ();
 
@@ -1306,7 +1309,12 @@ void R_DrawViewBorder () {
 //==========================================================================
 void VRenderLevelShared::TransformFrustum () {
   //view_frustum.setup(clip_base, vieworg, viewangles, false/*no back plane*/, -1.0f/*no forward plane*/);
-  view_frustum.setup(clip_base, TFrustumParam(vieworg, viewangles, viewforward, viewright, viewup), true/*create back plane*/, -1.0f/*no forward plane*/);
+  bool useFrustumFar = (gl_maxdist >= 1.0f);
+  if (useFrustumFar && !r_clip_maxdist) {
+    useFrustumFar = (Drawer ? Drawer->UseFrustumFarClip() : false);
+  }
+  view_frustum.setup(clip_base, TFrustumParam(vieworg, viewangles, viewforward, viewright, viewup), true/*create back plane*/,
+    (useFrustumFar ? gl_maxdist : -1.0f/*no forward plane*/));
 }
 
 
