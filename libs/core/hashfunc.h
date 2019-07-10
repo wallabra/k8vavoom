@@ -176,5 +176,6 @@ static __attribute__((unused)) inline vuint32 joaatHashBufCI (const void *buf, s
 static __attribute__((unused)) inline vuint32 GetTypeHash (int n) { return hashU32((vuint32)n); }
 static __attribute__((unused)) inline vuint32 GetTypeHash (vuint32 n) { return hashU32(n); }
 static __attribute__((unused)) inline vuint32 GetTypeHash (vuint64 n) { return hashU32((vuint32)n)^hashU32((vuint32)(n>>32)); }
+static __attribute__((unused)) inline vuint32 GetTypeHash (const void *n) { return GetTypeHash((uintptr_t)n); }
 
 #endif
