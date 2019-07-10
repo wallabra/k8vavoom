@@ -1944,6 +1944,14 @@ static void DebugShowSegs(superblock_t *seg_list)
 #endif
 
 
+//k8
+static inline float ajRoundoffVertex (double v) {
+  vint32 iv = (vint32)(v*65536.0);
+  float res = (((double)iv)/65536.0);
+  return res;
+}
+
+
 build_result_e BuildNodes(superblock_t *seg_list,
 						  node_t ** N, subsec_t ** S,
 						  int depth, const bbox_t *bbox)
@@ -2021,27 +2029,29 @@ build_result_e BuildNodes(superblock_t *seg_list,
 
 	if (best->side == 0)
 	{
-		node->dbl_x  = best->linedef->start->x;
-		node->dbl_y  = best->linedef->start->y;
-		node->dbl_dx = best->linedef->end->x - node->dbl_x;
-		node->dbl_dy = best->linedef->end->y - node->dbl_y;
+		node->xs  = ajRoundoffVertex(best->linedef->start->x);
+		node->ys  = ajRoundoffVertex(best->linedef->start->y);
+		node->xe = ajRoundoffVertex(best->linedef->end->x);
+		node->ye = ajRoundoffVertex(best->linedef->end->y);
 	}
 	else  /* left side */
 	{
-		node->dbl_x  = best->linedef->end->x;
-		node->dbl_y  = best->linedef->end->y;
-		node->dbl_dx = best->linedef->start->x - node->dbl_x;
-		node->dbl_dy = best->linedef->start->y - node->dbl_y;
+		node->xs  = ajRoundoffVertex(best->linedef->end->x);
+		node->ys  = ajRoundoffVertex(best->linedef->end->y);
+		node->xe = ajRoundoffVertex(best->linedef->start->x);
+		node->ye = ajRoundoffVertex(best->linedef->start->y);
 	}
 
 	/* check for really long partition (overflows dx,dy in NODES) */
 	if (best->p_length >= 30000)
 	{
-		if (node->dbl_dx != 0 && node->dbl_dy != 0 && (((int)node->dbl_dx & 1) || ((int)node->dbl_dy & 1)))
+		float ndx = node->xe - node->xs;
+		float ndy = node->ye - node->ys;
+		if (ndx != 0 && ndy != 0 && (((int)ndx & 1) || ((int)ndy & 1)))
 		{
 			MinorIssue("Loss of accuracy on VERY long node: "
-					"(%g,%g) -> (%g,%g)\n", node->dbl_x, node->dbl_y,
-					node->dbl_x + node->dbl_dx, node->dbl_y + node->dbl_dy);
+					"(%g,%g) -> (%g,%g)\n", node->xs, node->ys,
+					node->xe, node->ye);
 		}
 
 		node->too_long = 1;

@@ -164,13 +164,9 @@ void ajbsp_Progress (int curr, int total) {
 //
 //==========================================================================
 static inline float ajRoundoffVertex (double v) {
-#if 1
   vint32 iv = (vint32)(v*65536.0);
   float res = (((double)iv)/65536.0);
   return res;
-#else
-  return v;
-#endif
 }
 
 
@@ -465,9 +461,10 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   node_t *Node = &Nodes[NodeIndex];
   ++NodeIndex;
 
-  TVec org = TVec(SrcNode->dbl_x, SrcNode->dbl_y, 0);
-  TVec dir = TVec(SrcNode->dbl_dx, SrcNode->dbl_dy, 0);
-  if (SrcNode->too_long) { dir.x /= 2.0f; dir.y /= 2.0f; }
+  TVec org = TVec(SrcNode->xs, SrcNode->ys, 0);
+  TVec dir = TVec(SrcNode->xe-SrcNode->xs, SrcNode->ye-SrcNode->ys, 0);
+  //k8: this seems to be unnecessary
+  //if (SrcNode->too_long) { dir.x /= 2.0f; dir.y /= 2.0f; }
   // check if `Length()` and `SetPointDirXY()` are happy
   if (dir.x == 0 && dir.y == 0) {
     //Host_Error("AJBSP: invalid BSP node (zero direction)");

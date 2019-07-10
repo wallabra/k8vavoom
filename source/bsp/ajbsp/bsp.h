@@ -477,10 +477,10 @@ child_t;
 
 typedef struct node_s
 {
-	//int x, y;     // starting point
-	//int dx, dy;   // offset to ending point
-	double dbl_x, dbl_y;     // starting point
-	double dbl_dx, dbl_dy;   // offset to ending point
+	//int x, y;   // starting point
+	//int dx, dy; // offset to ending point
+	float xs, ys; // starting point (rounded to 16.16)
+	float xe, ye; // ending point (rounded to 16.16)
 
 	// right & left children
 	child_t r;
