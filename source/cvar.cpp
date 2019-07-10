@@ -27,6 +27,7 @@
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
+#include "cvar.h"
 
 
 //==========================================================================
@@ -70,25 +71,88 @@ static void cv_serverInfoSet (VCvar *cvar) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+//static TMapNC<VCvar *, CvarChangeHandler> chMap;
+//static TMapNC<VStr, CvarChangeHandler> chMapPending;
+static TMapNC<VCvar *, bool> acAdded; // already added to autocompletion list?
+
+
+//==========================================================================
+//
+//  Cvars_RegisterChangeHandler
+//
+//  pass `nullptr` as handler to remove
+//  duplicate registration will be ignored
+//  (i.e. removal will remove all dupes)
+//
+//==========================================================================
+/*
+void Cvars_RegisterChangeHandler (VStr cvname, CvarChangeHandler handler) {
+  if (cvname.length() == 0) return;
+  VCvar *cv = VCvar::FindVariable(*cvname);
+  if (cv) {
+    // existing one, put to hash
+    if (handler) chMap.put(cv, handler); else chMap.del(cv);
+    // remove from pending hash
+    if (chMapPending.length()) {
+      VStr lo = cvname.toLowerCase();
+      chMapPending.del(lo);
+    }
+  } else {
+    // alas, there is no such variable; put it into "pending" hashtable
+    VStr lo = cvname.toLowerCase();
+    if (handler) chMapPending.put(lo, handler); else chMapPending.del(lo);
+  }
+}
+*/
+
+
+//==========================================================================
+//
+//  cv_changed
+//
+//==========================================================================
+/*
+static void cv_changed (VCvar *cvar, const VStr &oldValue) {
+}
+*/
+
+
 //==========================================================================
 //
 //  cv_created
 //
 //==========================================================================
-static void cv_created (VCvar *cvar, const VStr &oldValue) {
-  VCommand::AddToAutoComplete(cvar->GetName());
+static void cv_created (VCvar *cvar) {
+  if (!acAdded.find(cvar)) {
+    acAdded.put(cvar, true);
+    VCommand::AddToAutoComplete(cvar->GetName());
+  }
+  // move from pending hash to normal
+  /*
+  if (chMapPending.length()) {
+    VStr lo = VStr(cv->GetName()).toLowerCase();
+    auto hp = chMapPending.find(lo);
+    if (hp) {
+      chMap.put(cvar, *hp);
+      chMapPending.del(lo);
+    }
+  }
+  cv_changed(cvar, cvar->asStr());
+  */
 }
 
 
 //==========================================================================
 //
-//  CVars_Init
+//  Cvars_Init
 //
 //==========================================================================
-void CVars_Init () {
+void Cvars_Init () {
   VCvar::Init();
   VCvar::AddAllVarsToAutocomplete(&VCommand::AddToAutoComplete);
-  VCvar::ChangedCB = &cv_created; // this adds to autocompletion
+  VCvar::CreatedCB = &cv_created; // this adds to autocompletion
+  //VCvar::ChangedCB = &cv_changed;
   VCvar::UserInfoSetCB = &cv_userInfoSet;
   VCvar::ServerInfoSetCB = &cv_serverInfoSet;
   VCvar::SendAllUserInfos();

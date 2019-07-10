@@ -46,6 +46,7 @@ VCommand::ECmdSource VCommand::Source;
 VBasePlayer *VCommand::Player;
 
 TArray<VStr> VCommand::AutoCompleteTable;
+static TMapNC<VStr, bool> AutoCompleteTableBSet; // quicksearch
 
 VCommand *VCommand::Cmds = nullptr;
 VCommand::VAlias *VCommand::Alias = nullptr;
@@ -281,6 +282,7 @@ void VCommand::Shutdown () {
     a = Next;
   }
   AutoCompleteTable.Clear();
+  AutoCompleteTableBSet.clear();
   Args.Clear();
   Original.Clean();
 }
@@ -327,11 +329,18 @@ void VCommand::ProcessKeyConf () {
 void VCommand::AddToAutoComplete (const char *string) {
   if (!string || !string[0] || string[0] == '_') return;
 
+  VStr vs(string);
+  VStr vslow = vs.toLowerCase();
+
+  if (AutoCompleteTableBSet.has(vslow)) return;
+  /*
   for (int i = 0; i < AutoCompleteTable.length(); ++i) {
     if (AutoCompleteTable[i].ICmp(string) == 0) return; //Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
   }
+  */
 
-  AutoCompleteTable.Append(VStr(string));
+  AutoCompleteTableBSet.put(vslow, true);
+  AutoCompleteTable.Append(vs);
 
   // alphabetic sort
   for (int i = AutoCompleteTable.Num()-1; i && AutoCompleteTable[i-1].ICmp(AutoCompleteTable[i]) > 0; --i) {

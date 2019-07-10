@@ -24,5 +24,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#ifndef VAVOOM_ENGINE_CVAR_HEADER
+#define VAVOOM_ENGINE_CVAR_HEADER
 
-void CVars_Init ();
+
+void Cvars_Init ();
+
+
+//typedef void (*CvarChangeHandler) (VCvar *cvar, const VStr &oldValue);
+
+// pass `nullptr` as handler to remove
+// duplicate registration will be ignored (i.e. removal will remove all dupes)
+//void Cvars_RegisterChangeHandler (VStr cvname, CvarChangeHandler handler);
+
+
+#endif
