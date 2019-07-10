@@ -24,22 +24,31 @@
 //**************************************************************************
 class Level_K8BDW : replaces(Level);
 
-const int DefaultMaxAllowedEntities = 1024;
+const int DefaultMaxAllowedEntities = 1000;
 
 int casingEntCounter;
 int casingSkipDeathCounter;
 
+int cvCasingMaxEntities = -1;
 
-final private int k8casing_GetMaxAmount () {
-  int allowed = GetCvar('K8BDWOpt_MaxCasingEntities');
-  if (allowed < 0) allowed = DefaultMaxAllowedEntities;
-  return allowed;
+
+final void bdwCasingUpdateCvarCache () {
+  cvCasingMaxEntities = GetCvar('k8GoreOpt_MaxBloodEntities');
+  if (cvCasingMaxEntities < 0) cvCasingMaxEntities = DefaultMaxAllowedBloodEntities;
+}
+
+
+override void BeforeWorldTick (float DeltaTime) {
+  bdwCasingUpdateCvarCache();
+  ::BeforeWorldTick(DeltaTime);
+  //print("BEFORE: %s", DeltaTime);
 }
 
 
 override void AfterUnarchiveThinkers () {
+  bdwCasingUpdateCvarCache();
   ::AfterUnarchiveThinkers();
-  k8LimiterUnarchiveThinkers(BDW_CasingBase, k8casing_GetMaxAmount(), ref casingEntCounter, ref casingSkipDeathCounter, GetCvar('k8GoreOpt_LimiterDebug'));
+  k8LimiterUnarchiveThinkers(BDW_CasingBase, cvCasingMaxEntities, ref casingEntCounter, ref casingSkipDeathCounter, GetCvar('k8GoreOpt_LimiterDebug'));
 }
 
 
@@ -61,8 +70,9 @@ override void OnEntitySpawned (Entity ent) {
   */
   ::OnEntitySpawned(ent);
   if (ent isa BDW_CasingBase) {
+    if (cvCasingMaxEntities < 0) bdwCasingUpdateCvarCache();
     ++casingEntCounter;
-    int allowed = k8casing_GetMaxAmount();
+    int allowed = cvCasingMaxEntities;
     if (casingEntCounter > allowed) {
       k8LimiterCleanup(BDW_CasingBase, allowed, ref casingEntCounter, ref casingSkipDeathCounter, GetCvar('k8GoreOpt_LimiterDebug'));
     }
