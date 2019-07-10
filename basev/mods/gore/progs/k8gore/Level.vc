@@ -23,7 +23,6 @@
 //**
 //**************************************************************************
 //#define K8GORE_DEBUG
-
 class Level_K8Gore : replaces(Level);
 
 const int DefaultMaxAllowedBloodEntities = 1500;
@@ -32,26 +31,26 @@ int bloodEntCounter;
 int bloodSkipDeathCounter;
 
 #ifdef K8GORE_DEBUG
-bool cvDebugDump;
+bool cvBloodDebugDump;
 #endif
-bool cvLimiterDebugDump;
-bool cvColoredBlood;
-int cvMaxEntities = -1;
+bool cvBloodLimiterDebugDump;
+bool cvBloodColoredBlood;
+int cvBloodMaxEntities = -1;
 
 
-final void updateCvarCache () {
+final void goreBloodUpdateCvarCache () {
 #ifdef K8GORE_DEBUG
-  cvDebugDump = GetCvarB('k8GoreOpt_DbgReportNumber');
+  cvBloodDebugDump = GetCvarB('k8GoreOpt_DbgReportNumber');
 #endif
-  cvLimiterDebugDump = GetCvarB('K8BDWOpt_LimiterDebug');
-  cvColoredBlood = GetCvarB('k8GoreOpt_ForceColoredBlood');
-  cvMaxEntities = GetCvar('k8GoreOpt_MaxBloodEntities');
-  if (cvMaxEntities < 0) cvMaxEntities = DefaultMaxAllowedBloodEntities;
+  cvBloodLimiterDebugDump = GetCvarB('K8BDWOpt_LimiterDebug');
+  cvBloodColoredBlood = GetCvarB('k8GoreOpt_ForceColoredBlood');
+  cvBloodMaxEntities = GetCvar('k8GoreOpt_MaxBloodEntities');
+  if (cvBloodMaxEntities < 0) cvBloodMaxEntities = DefaultMaxAllowedBloodEntities;
 }
 
 
 override void BeforeWorldTick (float DeltaTime) {
-  updateCvarCache();
+  goreBloodUpdateCvarCache();
   ::BeforeWorldTick(DeltaTime);
   //print("BEFORE: %s", DeltaTime);
 }
@@ -60,27 +59,27 @@ override void BeforeWorldTick (float DeltaTime) {
 
 
 override void AfterUnarchiveThinkers () {
-  updateCvarCache();
+  goreBloodUpdateCvarCache();
   ::AfterUnarchiveThinkers();
-  k8LimiterUnarchiveThinkers(K8Gore_BloodBase, cvMaxEntities, ref bloodEntCounter, ref bloodSkipDeathCounter, cvLimiterDebugDump);
+  k8LimiterUnarchiveThinkers(K8Gore_BloodBase, cvBloodMaxEntities, ref bloodEntCounter, ref bloodSkipDeathCounter, cvBloodLimiterDebugDump);
 }
 
 
 override void OnEntitySpawned (Entity ent) {
-  if (cvMaxEntities < 0) updateCvarCache();
+  if (cvBloodMaxEntities < 0) goreBloodUpdateCvarCache();
   ::OnEntitySpawned(ent);
   //print("SPAWNED: %C", ent);
   if (ent isa K8Gore_BloodBase) {
 #ifdef K8GORE_DEBUG
-    if (cvDebugDump) print("SPAWNED: %C (%d current)", ent, bloodEntCounter);
+    if (cvBloodDebugDump) print("SPAWNED: %C (%d current)", ent, bloodEntCounter);
 #endif
     ++bloodEntCounter;
-    int allowed = cvMaxEntities;
+    int allowed = cvBloodMaxEntities;
     if (bloodEntCounter > allowed) {
-      k8LimiterCleanup(K8Gore_BloodBase, allowed, ref bloodEntCounter, ref bloodSkipDeathCounter, cvLimiterDebugDump);
+      k8LimiterCleanup(K8Gore_BloodBase, allowed, ref bloodEntCounter, ref bloodSkipDeathCounter, cvBloodLimiterDebugDump);
     }
   }
-  if (cvColoredBlood) {
+  if (cvBloodColoredBlood) {
     EntityEx ee = EntityEx(ent);
     if (ee isa Cacodemon) {
       ee.BloodType = K8Gore_BloodBlue;
@@ -101,16 +100,18 @@ override void OnEntityDying (Entity ent) {
   ::OnEntityDying(ent);
   //print("DYING: %C", ent);
   if (ent isa K8Gore_BloodBase) {
-    if (cvMaxEntities < 0) updateCvarCache();
+#ifdef K8GORE_DEBUG
+    if (cvBloodMaxEntities < 0) goreBloodUpdateCvarCache();
+#endif
     if (bloodSkipDeathCounter) {
       --bloodSkipDeathCounter;
 #ifdef K8GORE_DEBUG
-      if (cvDebugDump) print("DYING SKIP: %C (%d left; %d left to skip)", ent, bloodEntCounter, bloodSkipDeathCounter);
+      if (cvBloodDebugDump) print("DYING SKIP: %C (%d left; %d left to skip)", ent, bloodEntCounter, bloodSkipDeathCounter);
 #endif
     } else {
       --bloodEntCounter;
 #ifdef K8GORE_DEBUG
-      if (cvDebugDump) print("DYING: %C (%d left)", ent, bloodEntCounter);
+      if (cvBloodDebugDump) print("DYING: %C (%d left)", ent, bloodEntCounter);
 #endif
     }
   }
