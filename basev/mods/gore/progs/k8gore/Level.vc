@@ -22,6 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+//#define K8GORE_DEBUG
+
 class Level_K8Gore : replaces(Level);
 
 const int DefaultMaxAllowedBloodEntities = 1024*2;
@@ -50,7 +52,9 @@ override void OnEntitySpawned (Entity ent) {
   ::OnEntitySpawned(ent);
   //print("SPAWNED: %C", ent);
   if (ent isa K8Gore_BloodBase) {
+#ifdef K8GORE_DEBUG
     if (GetCvar('k8GoreOpt_DbgReportNumber')) print("SPAWNED: %C (%d current)", ent, bloodEntCounter);
+#endif
     ++bloodEntCounter;
     int allowed = k8gore_GetMaxAmount();
     if (bloodEntCounter > allowed) {
@@ -80,10 +84,14 @@ override void OnEntityDying (Entity ent) {
   if (ent isa K8Gore_BloodBase) {
     if (bloodSkipDeathCounter) {
       --bloodSkipDeathCounter;
+#ifdef K8GORE_DEBUG
       if (GetCvar('k8GoreOpt_DbgReportNumber')) print("DYING SKIP: %C (%d left; %d left to skip)", ent, bloodEntCounter, bloodSkipDeathCounter);
+#endif
     } else {
       --bloodEntCounter;
+#ifdef K8GORE_DEBUG
       if (GetCvar('k8GoreOpt_DbgReportNumber')) print("DYING: %C (%d left)", ent, bloodEntCounter);
+#endif
     }
   }
 }
