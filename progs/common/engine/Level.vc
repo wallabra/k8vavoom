@@ -340,25 +340,18 @@ final void k8LimiterCleanup (class!Entity thc, int allowed, ref int counter, ref
     if (elist.length > allowed) {
       elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
       // destroy half of list, from older
-      int toremove = 2048;
-      if (allowed <= 256) {
-        toremove = elist.length/3;
-      } else {
-        /*if (toremove < elist.length/4)*/ toremove = elist.length/3;
-        //if (toremove < 256) toremove = 256;
-        if (allowed >= 3000 && toremove < 2048) toremove = 2048;
-        toremove = min(toremove, elist.length);
-      }
-      if (elist.length-toremove > allowed) toremove = clamp(elist.length-allowed, 0, elist.length);
-      if (toremove < 1) return;
-      if (debugmsg) print("REMOVING %s blood entities out of %s (%s allowed)", toremove, elist.length, allowed);
+      int toremove = (elist.length-allowed);
+      toremove += allowed/3;
+      if (toremove <= 0) toremove = elist.length-allowed;
+      toremove = min(toremove, elist.length); // just in case
+      if (debugmsg) print("REMOVING %s entities %C out of %s (%s allowed, %s left)", toremove, thc, elist.length, allowed, elist.length-toremove);
       counter -= toremove;
       deathCounter += toremove;
       foreach (auto i; 0..toremove) {
         //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
         elist[i].Destroy();
       }
-      if (debugmsg) print("%s blood entities removed out of %s", deathCounter, elist.length);
+      if (debugmsg) print("%s entities %C removed out of %s", deathCounter, thc, elist.length);
     }
   }
 }
