@@ -158,15 +158,26 @@ void ajbsp_Progress (int curr, int total) {
 
 //==========================================================================
 //
+//  ajRoundOffVertexI32
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline vint32 ajRoundoffVertexI32 (double v) {
+  return (vint32)(v*65536.0);
+}
+
+
+//==========================================================================
+//
 //  ajRoundOffVertex
 //
 //  round vertex coordinates
 //
 //==========================================================================
 static inline float ajRoundoffVertex (double v) {
-  vint32 iv = (vint32)(v*65536.0);
-  float res = (((double)iv)/65536.0);
-  return res;
+  vint32 iv = ajRoundoffVertexI32(v);
+  return (float)(((double)iv)/65536.0);
 }
 
 
@@ -216,18 +227,27 @@ static void UploadSidedefs (VLevel *Level) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct __attribute__((packed)) VertexInfo {
-  float xy[2];
+private:
+  //float xy[2];
+  vint32 xy[2];
   int index; // vertex index in AJBSP
 
+public:
   VertexInfo () {}
-  VertexInfo (const TVec &v, int aindex=0) { xy[0] = ajRoundoffVertex(v.x); xy[1] = ajRoundoffVertex(v.y); index = aindex; }
+  VertexInfo (const TVec &v, int aindex) { xy[0] = ajRoundoffVertexI32(v.x); xy[1] = ajRoundoffVertexI32(v.y); index = aindex; }
 
   inline bool operator == (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
   inline bool operator != (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
-};
-static_assert(sizeof(VertexInfo) == sizeof(float)*2+sizeof(int), "oops");
 
-static inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+  inline int getIndex () const { return index; }
+  inline float getX () const { return (float)(((double)xy[0])/65536.0); }
+  inline float getY () const { return (float)(((double)xy[1])/65536.0); }
+  inline const void *getHashData () const { return (const void *)(&xy[0]); }
+  inline size_t getHashDataSize () const { return sizeof(xy); }
+};
+static_assert(sizeof(VertexInfo) == sizeof(/*float*/vint32)*2+sizeof(int), "oops");
+
+static inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.getHashData(), vi.getHashDataSize()); }
 
 
 //==========================================================================
@@ -239,16 +259,16 @@ static int ajUploadVertex (TMap<VertexInfo, int> &vmap, VLevel *Level, const TVe
   VertexInfo vi(*v, ajbsp::num_vertices);
   auto pp = vmap.find(vi);
   if (pp) return *pp;
-  check(vi.index == ajbsp::num_vertices);
-  vmap.put(vi, vi.index);
+  check(vi.getIndex() == ajbsp::num_vertices);
+  vmap.put(vi, vi.getIndex());
   ajbsp::vertex_t *vert = ajbsp::NewVertex();
   memset(vert, 0, sizeof(*vert));
-  vert->x = vi.xy[0];
-  vert->y = vi.xy[1];
+  vert->x = vi.getX();
+  vert->y = vi.getY();
   vert->index = (int)(ptrdiff_t)(v-Level->Vertexes);
   vert->is_new = 0;
   vert->is_used = 1;
-  return vi.index;
+  return vi.getIndex();
 }
 
 
@@ -315,7 +335,7 @@ static void UploadThings (VLevel *Level) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct CopyInfo {
-  TMap<vuint64, int> ajvidx; // for `AJVertexIndex()`, created in `CopyGLVerts()`
+  TMap<const void *, int> ajvidx; // for `AJVertexIndex()`, created in `CopyGLVerts()`
 };
 
 
@@ -326,7 +346,7 @@ struct CopyInfo {
 //==========================================================================
 static inline int AJVertexIndex (CopyInfo &nfo, const ajbsp::vertex_t *v) {
   check(v != nullptr);
-  auto ip = nfo.ajvidx.find((vuint64)(uintptr_t)v);
+  auto ip = nfo.ajvidx.find(v);
   if (!ip) Sys_Error("AJBSP: found unknown vertex");
   return *ip;
 }
@@ -348,7 +368,7 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 
   for (int i = 0; i < ajbsp::num_vertices; ++i) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
-    nfo.ajvidx.put((vuint64)(uintptr_t)vert, i); // for `AJVertexIndex()`
+    nfo.ajvidx.put(vert, i); // for `AJVertexIndex()`
     vertex_t *pDst = &Level->Vertexes[i];
     *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
   }
@@ -396,7 +416,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     auto v1mp = AJVertexIndex(nfo, srcseg->start);
     auto v2mp = AJVertexIndex(nfo, srcseg->end);
     if (v1mp < 0 || v2mp < 0) Sys_Error("AJBSP: vertex not found for seg #%d", i);
-    if (v1mp == v2mp) Sys_Error("AJBSP: seg #%d has same start and end vertex (%d:%d) (%d:%d)", i, v1mp, srcseg->start->index, v2mp, srcseg->end->index);
+    if (v1mp == v2mp) GCon->Logf(NAME_Error, "AJBSP: seg #%d has same start and end vertex (%d:%d) (%d:%d)", i, v1mp, srcseg->start->index, v2mp, srcseg->end->index);
     if (v1mp >= Level->NumVertexes || v2mp >= Level->NumVertexes) Sys_Error("AJBSP: invalid vertices not found for seg #%d", i);
     destseg->v1 = &Level->Vertexes[v1mp];
     destseg->v2 = &Level->Vertexes[v2mp];
