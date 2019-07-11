@@ -710,7 +710,19 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("skybox")){
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-      info->SkyBox = *sc->String;
+      info->Sky1ScrollDelta = 0;
+      info->Sky2ScrollDelta = 0;
+      VName skbname = R_HasNamedSkybox(sc->String);
+      if (skbname != NAME_None) {
+        info->SkyBox = skbname;
+        info->Sky1Texture = GTextureManager.DefaultTexture;
+        info->Sky2Texture = GTextureManager.DefaultTexture;
+      } else {
+        GCon->Logf(NAME_Warning, "%s:MAPINFO: skybox '%s' not found!", *sc->GetLoc().toStringNoCol(), *sc->String);
+        info->SkyBox = NAME_None;
+        info->Sky1Texture = loadSkyTexture(sc, VName(*sc->String, VName::AddLower8));
+        info->Sky2Texture = info->Sky1Texture;
+      }
     } else if (sc->Check("skyrotate")){
       GCon->Logf(NAME_Warning, "%s:MAPINFO: \"skyrotate\" command is not supported yet", *sc->GetLoc().toStringNoCol());
       if (newFormat) sc->Expect("=");
