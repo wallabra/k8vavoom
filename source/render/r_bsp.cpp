@@ -213,6 +213,12 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
     surf->drawflags |= surface_t::DF_MASKED;
   } else {
     surf->drawflags &= ~surface_t::DF_MASKED;
+    // this is for transparent floors
+    if (tex->isTransparent() && (surf->typeFlags&(surface_t::TF_FLOOR|surface_t::TF_CEILING)) &&
+        surf->subsector && surf->subsector->sector->HasAnyExtraFloors())
+    {
+      surf->drawflags |= surface_t::DF_MASKED;
+    }
   }
 
   return true;

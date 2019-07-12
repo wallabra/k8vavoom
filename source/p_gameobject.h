@@ -715,7 +715,9 @@ struct sector_t {
   sector_t *othersecCeiling;
 
 
-  bool Has3DFloors () const;
+  inline bool Has3DFloors () const { return !!eregions->next; }
+  inline bool HasAnyExtraFloors () const { return (!!eregions->next) || (!!heightsec); }
+
   // should be called for new sectors to setup base region
   void CreateBaseRegion ();
   void DeleteAllRegions ();
