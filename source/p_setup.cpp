@@ -1763,20 +1763,23 @@ void VLevel::LoadSideDefs (int Lump) {
 
       case LNSPEC_StaticInit:
         {
-          bool HaveCol;
-          bool HaveFade;
-          vuint32 Col;
-          vuint32 Fade;
+          bool HaveCol = false;
+          bool HaveFade = false;
+          vuint32 Col = 0;
+          vuint32 Fade = 0;
           sd->MidTexture = TexNumForName(midtexture, TEXTYPE_Wall);
           int TmpTop = TexNumOrColor(toptexture, TEXTYPE_Wall, HaveCol, Col);
           sd->BottomTexture = TexNumOrColor(bottomtexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
+            //GCon->Logf("*** fade=0x%08x (%s); light=0x%08x (%s)", Col, toptexture, Fade, bottomtexture);
             for (int j = 0; j < NumSectors; ++j) {
               if (Sectors[j].IsTagEqual(sd->TopTexture)) {
                 if (HaveCol) Sectors[j].params.LightColor = Col;
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }
             }
+          } else {
+            //GCon->Logf("*** FUCKED fade=(%s); light=(%s)", toptexture, bottomtexture);
           }
           sd->TopTexture = TmpTop;
         }
@@ -3085,16 +3088,20 @@ int VLevel::TexNumOrColor (const char *name, int Type, bool &GotColor, vuint32 &
   VName Name(name, VName::AddLower8);
   int i = GTextureManager.CheckNumForName(Name, Type, true);
   if (i == -1) {
-    char TmpName[9];
-    memcpy(TmpName, name, 8);
-    TmpName[8] = 0;
-    char *Stop;
-    Col = strtoul(TmpName, &Stop, 16);
-    GotColor = (*Stop == 0) && (Stop >= TmpName+2) && (Stop <= TmpName+6);
-    return 0;
+    char tmpname[9];
+    strncpy(tmpname, name, 8);
+    tmpname[8] = 0;
+    Col = M_ParseColor(tmpname, true); // return zero if invalid
+    if (Col == 0) {
+      if (tmpname[0] == '#') tmpname[7] = 0; else tmpname[6] = 0;
+      Col = M_ParseColor(tmpname, true); // return zero if invalid
+    }
+    GotColor = (Col != 0);
+    i = 0;
+  } else {
+    GotColor = false;
+    Col = 0;
   }
-  GotColor = false;
-  Col = 0;
   return i;
 }
 
