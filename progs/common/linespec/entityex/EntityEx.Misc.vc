@@ -1100,34 +1100,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     else if (bFloatBob) z = mthing->height;
     else z = ONFLOORZ;
 
-    /*
-    if (mthing.height > 0 && mthing.height != Height) {
-      print("%C: thing id %s; old height is %s; new height is %s", Class, mthing.type, Height, mthing.height);
-      Height = mthing.height;
-    }
-    */
-
-    //if (mthing.type == 9001 && mthing.tid == 55) print("  ***TH: z=%s (hgt=%s); org=%s; ofz=%s", z, mthing.height, Origin, ONFLOORZ);
     SetOrigin2(vector(x, y, z), moreHeight:mthing.height);
-    //k8: until i'll find out if height should be relative or not, this hack will make Silent Steel 1.1 map05 turret work
-    if (XLevel.bExtended || XLevel.bTextMap) {
-      if (mthing.type == 9001 && mthing.tid == 55 && mthing.height == 56) {
-        printwarn("*** Silent Steel v1.1 hack activated!");
-        Origin.z = mthing.height;
-      }
-    }
-    //if (mthing.height) Origin.z = mthing.height;
-    //if (mthing.type == 9001 && mthing.tid == 55) print("  ***TH: z=%s (hgt=%s); org=%s; floorz=%s", z, mthing.height, Origin, FloorZ);
-    /*
-    if (mthing->height) {
-      //print("thing id %s; height=%s", mthing.type, mthing.height);
-           if (z == ONFLOORZ) Origin.z += mthing->height;
-      else if (z == ONCEILINGZ) Origin.z -= mthing->height;
-    }
-    */
-
-    //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>", mthing.type, Origin, mthing.x, mthing.y);
-    //if (mthing.type == 43 || mthing.type == 54) print("TREE (%d) spawned at %v <%f,%f>, height=%f", mthing.type, Origin, mthing.x, mthing.y, Height);
 
     // no need to to this, it is already linked in `SetOrigin2()`
     //LinkToWorld(properFloorCheck:(bMonster || bIsPlayer));
