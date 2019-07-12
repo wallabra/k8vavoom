@@ -451,7 +451,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     if (clip_height && (hasTopTex || hasBotTex) &&
         (lorg || (Frustum && Frustum->isValid())) &&
         seg->partner && seg->partner != seg &&
-        seg->partner->front_sub && seg->partner->front_sub != seg->front_sub &&
+        seg->partner->frontsub && seg->partner->frontsub != seg->frontsub &&
         (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
     {
       // here we can check if midtex is in frustum; if it doesn't,
@@ -1115,7 +1115,7 @@ int VViewClipper::CheckSubsectorFrustum (subsector_t *sub, const unsigned mask) 
 //
 //==========================================================================
 bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask) const {
-  //const subsector_t *sub = seg->front_sub;
+  //const subsector_t *sub = seg->frontsub;
   if (!seg || !sub || !Frustum.isValid() || !mask) return true;
   const sector_t *sector = sub->sector;
   if (!sector) return true; // just in case

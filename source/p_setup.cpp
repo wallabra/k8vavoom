@@ -506,7 +506,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     if (seg->partner) partnum = (vint32)(ptrdiff_t)(seg->partner-Segs);
     *arrstrm << partnum;
     vint32 fssnum = -1;
-    if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
+    if (seg->frontsub) fssnum = (vint32)(ptrdiff_t)(seg->frontsub-Subsectors);
     *arrstrm << fssnum;
     *arrstrm << seg->side;
     *arrstrm << seg->flags;
@@ -680,7 +680,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
     seg->partner = (partnum >= 0 ? Segs+partnum : nullptr);
     vint32 fssnum = -1;
     *arrstrm << fssnum;
-    seg->front_sub = (fssnum >= 0 ? Subsectors+fssnum : nullptr);
+    seg->frontsub = (fssnum >= 0 ? Subsectors+fssnum : nullptr);
     *arrstrm << seg->side;
     *arrstrm << seg->flags;
   }
@@ -2101,7 +2101,7 @@ void VLevel::PostLoadSubsectors () {
     ss->bbox2d[BOX2D_LEFT] = ss->bbox2d[BOX2D_BOTTOM] = 999999.0f;
     ss->bbox2d[BOX2D_RIGHT] = ss->bbox2d[BOX2D_TOP] = -999999.0f;
     for (int j = 0; j < ss->numlines; j++) {
-      seg[j].front_sub = ss;
+      seg[j].frontsub = ss;
       // min
       ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg[j].v1->x, seg[j].v2->x));
       ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg[j].v1->y, seg[j].v2->y));
@@ -2113,7 +2113,7 @@ void VLevel::PostLoadSubsectors () {
   }
 
   for (int f = 0; f < NumSegs; ++f) {
-    if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
+    if (!Segs[f].frontsub) GCon->Logf("Seg %d: frontsub is not set!", f);
   }
 
   for (int oidx = 0; oidx < orphanSubs.length(); ++oidx) {
@@ -3649,10 +3649,10 @@ void VLevel::FixSelfRefDeepWater () {
     const seg_t *seg = &Segs[i];
 
     if (!seg->linedef) continue; // miniseg?
-    if (!seg->front_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
-    if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
+    if (!seg->frontsub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
+    if (seg->frontsub->sector->linecount == 0) continue; // original polyobj sector
 
-    const int fsnum = (int)(ptrdiff_t)(seg->front_sub-Subsectors);
+    const int fsnum = (int)(ptrdiff_t)(seg->frontsub-Subsectors);
 
     sector_t *fs = seg->linedef->frontsector;
     sector_t *bs = seg->linedef->backsector;
@@ -3685,7 +3685,7 @@ void VLevel::FixSelfRefDeepWater () {
       for (int ssi = 0; ssi < sub->numlines; ++ssi) {
         // this is how back_sub set
         seg = &Segs[sub->firstline+ssi];
-        subsector_t *back_sub = (seg->partner ? seg->partner->front_sub : nullptr);
+        subsector_t *back_sub = (seg->partner ? seg->partner->frontsub : nullptr);
         if (!back_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
 
         int k = (int)(back_sub-Subsectors);
@@ -3699,7 +3699,7 @@ void VLevel::FixSelfRefDeepWater () {
 
       if (Xseg) {
         //sub->deep_ref = Xseg->back_sub->deep_ref ? Xseg->back_sub->deep_ref : Xseg->back_sub->sector;
-        subsector_t *Xback_sub = (Xseg->partner ? Xseg->partner->front_sub : nullptr);
+        subsector_t *Xback_sub = (Xseg->partner ? Xseg->partner->frontsub : nullptr);
         if (!Xback_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
         sub->deepref = (Xback_sub->deepref ? Xback_sub->deepref : Xback_sub->sector);
 #ifdef DEBUG_DEEP_WATERS

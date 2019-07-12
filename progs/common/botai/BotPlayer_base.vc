@@ -511,16 +511,16 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
       if (!(ld.flags&ML_TWOSIDED)) continue; // not interesting
       if (ld.flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING)) continue; // not interesting
     }
-    if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue; // not interesting
+    if (!seg.partner || seg.partner.frontsub == seg.frontsub) continue; // not interesting
 
     // ok, this looks like something interesting
-    int psnum = seg.partner.front_sub-&botmo.XLevel.Subsectors[0];
+    int psnum = seg.partner.frontsub-&botmo.XLevel.Subsectors[0];
     if (bot_developer_messages_crumbs) print("  crumb: src=%d; dest=%d", ssnum, psnum);
 
     BotPathNode otherNode = ssnodes[psnum];
     if (!otherNode) {
       // put a dummy node there
-      cpos = botmo.XLevel.GetSubsectorCenter(seg.partner.front_sub);
+      cpos = botmo.XLevel.GetSubsectorCenter(seg.partner.frontsub);
       cpos.z = EntityEx::ONFLOORZ;
       if (IsGoodMapPosition(cpos)) {
         otherNode = BotPathNode.CreateNew(botmo.XLevel);
@@ -552,7 +552,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
           dir.z = 0;
           TVec res = node.Origin+dir.normalise2D*pi.maxdist;
           subsector_t *dss = botmo.XLevel.PointInSubsector(res);
-          if (dss == seg.partner.front_sub) reached = true;
+          if (dss == seg.partner.frontsub) reached = true;
         }
         if (reached) {
           if (bot_developer_messages_crumbs) print("  subsector #%d is reachable from #%d", psnum, ssnum);
@@ -562,7 +562,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
           tr.needJump = pi.needJump;
           tr.needUse = pi.needUse;
           tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
-          if (IsDangerous(seg.partner.front_sub.sector)) tr.moveCost *= 9;
+          if (IsDangerous(seg.partner.frontsub.sector)) tr.moveCost *= 9;
         } else {
           if (bot_developer_messages_crumbs) print("  crumb: ignored %s->%s (dest=%s)", ssnum, psnum, pi.maxdist);
         }
@@ -590,7 +590,7 @@ final void CheckAndDropNodeAt (subsector_t *ss, optional bool atBotOrigin) {
           tr.needJump = pi.needJump;
           tr.needUse = pi.needUse;
           tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
-          if (IsDangerous(seg.front_sub.sector)) tr.moveCost *= 9;
+          if (IsDangerous(seg.frontsub.sector)) tr.moveCost *= 9;
         } else {
           if (bot_developer_messages_crumbs) print("  crumb: ignored %s->%s (dest=%s)", psnum, ssnum, pi.maxdist);
         }

@@ -1021,7 +1021,7 @@ struct seg_t : TPlane {
   readonly sector_t *backsector;
 
   readonly seg_t *partner; // from glnodes
-  readonly subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
+  readonly subsector_t *frontsub; // front subsector (we need this for self-referencing deep water)
 
   // side of line (for light calculations: 0 or 1)
   readonly int side;

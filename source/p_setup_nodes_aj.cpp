@@ -411,7 +411,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     seg_t *destseg = &Level->Segs[i];
 
     destseg->partner = (srcseg->partner ? &Level->Segs[srcseg->partner->index] : nullptr);
-    destseg->front_sub = nullptr;
+    destseg->frontsub = nullptr;
 
     auto v1mp = AJVertexIndex(nfo, srcseg->start);
     auto v2mp = AJVertexIndex(nfo, srcseg->end);

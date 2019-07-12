@@ -414,7 +414,7 @@ final void Setup (BotPlayerBase abot) {
     // create exits
     foreach (auto lidx; sub.firstline..sub.firstline+sub.numlines) {
       auto seg = &lev.Segs[lidx];
-      if (!seg.partner || seg.partner.front_sub == seg.front_sub) continue; // not interesting
+      if (!seg.partner || seg.partner.frontsub == seg.frontsub) continue; // not interesting
 
       GameObject::line_t *ld = seg.linedef;
       if (ld) {
@@ -425,7 +425,7 @@ final void Setup (BotPlayerBase abot) {
 
       auto tr = node.exits.alloc();
       tr.seg = seg;
-      tr.sub = seg.partner.front_sub;
+      tr.sub = seg.partner.frontsub;
       tr.subnum = tr.sub-&lev.Subsectors[0];
 
       //if (tr.sub.sector != sub.sector) node.sectorExits[$] = node.exits.length-1;

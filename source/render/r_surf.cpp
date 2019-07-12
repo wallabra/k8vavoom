@@ -810,7 +810,7 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     sp->texinfo.toffs = r_floor.splane->TexZ+(MTex->GetScaledHeight()*sidedef->Mid.ScaleY);
   } else if (linedef->flags&ML_DONTPEGTOP) {
     // top of texture at top of top region
-    sp->texinfo.toffs = seg->front_sub->sector->ceiling.TexZ;
+    sp->texinfo.toffs = seg->frontsub->sector->ceiling.TexZ;
   } else {
     // top of texture at top
     sp->texinfo.toffs = r_ceiling.splane->TexZ;

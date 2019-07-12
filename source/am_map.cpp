@@ -1681,7 +1681,7 @@ static void AM_DrawMinisegs () {
   const seg_t *seg = &GClLevel->Segs[0];
   for (unsigned i = GClLevel->NumSegs; i--; ++seg) {
     if (seg->linedef) continue; // not a miniseg
-    if (seg->front_sub->sector->linecount == 0) continue; // original polyobj sector
+    if (seg->frontsub->sector->linecount == 0) continue; // original polyobj sector
     AM_DrawSimpleLine(seg->v1->x, seg->v1->y, seg->v2->x, seg->v2->y, MinisegColor);
   }
 }

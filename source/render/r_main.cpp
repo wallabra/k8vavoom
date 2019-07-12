@@ -836,7 +836,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
       if (VViewClipper::IsSegAClosedSomething(nullptr/*no frustum*/, seg, &org, &radius)) continue;
     } // minisegs are portals
     // we should have partner seg
-    if (!seg->partner || seg->partner == seg || seg->partner->front_sub == currsub) continue;
+    if (!seg->partner || seg->partner == seg || seg->partner->frontsub == currsub) continue;
     // check if this seg is touching our sphere
     {
       float distSq = DotProduct(org, seg->normal)-seg->dist;
@@ -850,7 +850,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
       if (PlaneAngles2D(firsttravel, seg) >= 180.0f && PlaneAngles2DFlipTo(firsttravel, seg) >= 180.0f) continue;
     }
     // ok, it is touching, recurse
-    if (CheckBSPVisibilitySub(org, radius, seg->partner->front_sub, (firsttravel ? firsttravel : seg))) {
+    if (CheckBSPVisibilitySub(org, radius, seg->partner->frontsub, (firsttravel ? firsttravel : seg))) {
       //GCon->Logf("RECURSE HIT!");
       return true;
     }

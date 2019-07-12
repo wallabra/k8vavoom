@@ -797,7 +797,7 @@ struct seg_t : public TPlane {
   sector_t *backsector;
 
   seg_t *partner; // from glnodes
-  struct subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
+  struct subsector_t *frontsub; // front subsector (we need this for self-referencing deep water)
 
   // side of line (for light calculations: 0 or 1)
   vint32 side;

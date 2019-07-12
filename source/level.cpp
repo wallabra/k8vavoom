@@ -893,8 +893,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       writef(strm, "  linedef = %d;\n", (int)(ptrdiff_t)(seg->linedef-&Lines[0]));
     }
     if (seg->partner) writef(strm, "  partner = %d;\n", (int)(ptrdiff_t)(seg->partner-&Segs[0]));
-    check(seg->front_sub);
-    writef(strm, "  front_sub = %d;\n", (int)(ptrdiff_t)(seg->front_sub-&Subsectors[0]));
+    check(seg->frontsub);
+    writef(strm, "  frontsub = %d;\n", (int)(ptrdiff_t)(seg->frontsub-&Subsectors[0]));
     writef(strm, "}\n");
   }
 
@@ -1646,8 +1646,8 @@ void VLevel::SerialiseOther (VStream &Strm) {
     if (segvisLoaded) {
       // segment visibility info present
       for (i = 0; i < NumSegs; ++i) {
-        if (Segs[i].front_sub && (Segs[i].flags&SF_MAPPED)) {
-          Segs[i].front_sub->miscFlags |= subsector_t::SSMF_Rendered;
+        if (Segs[i].frontsub && (Segs[i].flags&SF_MAPPED)) {
+          Segs[i].frontsub->miscFlags |= subsector_t::SSMF_Rendered;
         }
       }
     } else {
@@ -2665,7 +2665,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
     // for two-sided lines, put decal on segs for both sectors
     for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
       if (!seg->linedef) continue; // ignore minisegs (just in case)
-      if (seg->front_sub->sector->linecount == 0) continue; // ignore original polyobj sectors (just in case)
+      if (seg->frontsub->sector->linecount == 0) continue; // ignore original polyobj sectors (just in case)
       if (seg->flags&SF_ZEROLEN) continue; // invalid seg
       check(seg->linedef == li);
 
@@ -3403,7 +3403,7 @@ void VLevel::CalcSeg (seg_t *seg) {
       if (seg->backsector) GCon->Logf(NAME_Warning, "  back sector: %d", (int)(ptrdiff_t)(seg->backsector-Sectors));
     }
     if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
-    if (seg->front_sub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->front_sub-Subsectors));
+    if (seg->frontsub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->frontsub-Subsectors));
 
     seg->dir = TVec(1, 0, 0); // arbitrary
     seg->flags |= SF_ZEROLEN;
