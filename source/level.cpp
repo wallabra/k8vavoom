@@ -296,7 +296,7 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
 //  VLevel::UpdateSubsectorBBox
 //
 //==========================================================================
-void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
+void VLevel::UpdateSubsectorBBox (int num, float bbox[6], const float skyheight) {
   subsector_t *sub = &Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -325,7 +325,7 @@ void VLevel::UpdateSubsectorBBox (int num, float *bbox, const float skyheight) {
 //  VLevel::RecalcWorldNodeBBox
 //
 //==========================================================================
-void VLevel::RecalcWorldNodeBBox (int bspnum, float *bbox, const float skyheight) {
+void VLevel::RecalcWorldNodeBBox (int bspnum, float bbox[6], const float skyheight) {
   if (bspnum == -1) {
     UpdateSubsectorBBox(0, bbox, skyheight);
     return;
