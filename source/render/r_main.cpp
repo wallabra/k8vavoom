@@ -42,6 +42,7 @@ static VCvarB r_lightflood_check_plane_angles("r_lightflood_check_plane_angles",
 
 static VCvarB r_clip_maxdist("r_clip_maxdist", true, "Clip with max view distance? This can speedup huge levels, trading details for speed.", CVAR_Archive);
 extern VCvarF gl_maxdist;
+extern VCvarB r_disable_world_update;
 
 
 void R_FreeSkyboxData ();
@@ -608,7 +609,7 @@ VRenderLevelShared::~VRenderLevelShared () {
 //==========================================================================
 bool VRenderLevelShared::IsNodeRendered (const node_t *node) const {
   if (!node) return false;
-  return (node->VisFrame == currVisFrame);
+  return (node->visframe == currVisFrame);
 }
 
 
@@ -630,12 +631,8 @@ bool VRenderLevelShared::IsSubsectorRendered (const subsector_t *sub) const {
 //==========================================================================
 void VRenderLevelShared::ResetVisFrameCount () {
   currVisFrame = 1;
-  for (unsigned nidx = 0; nidx < (unsigned)Level->NumNodes; ++nidx) {
-    Level->Nodes[nidx].VisFrame = 0;
-  }
-  for (unsigned nidx = 0; nidx < (unsigned)Level->NumSubsectors; ++nidx) {
-    Level->Subsectors[nidx].VisFrame = 0;
-  }
+  for (auto &&it : Level->allNodes()) it.visframe = 0;
+  for (auto &&it : Level->allSubsectors()) it.VisFrame = 0;
 }
 
 
@@ -646,9 +643,9 @@ void VRenderLevelShared::ResetVisFrameCount () {
 //==========================================================================
 void VRenderLevelShared::ResetDLightFrameCount () {
   currDLightFrame = 1;
-  for (unsigned idx = 0; idx < (unsigned)Level->NumSubsectors; ++idx) {
-    Level->Subsectors[idx].dlightframe = 0;
-    Level->Subsectors[idx].dlightbits = 0;
+  for (auto &&it : Level->allSubsectors()) {
+    it.dlightframe = 0;
+    it.dlightbits = 0;
   }
 }
 
@@ -660,7 +657,7 @@ void VRenderLevelShared::ResetDLightFrameCount () {
 //==========================================================================
 void VRenderLevelShared::ResetUpdateWorldFrame () {
   updateWorldFrame = 1;
-  for (unsigned f = 0; f < (unsigned)Level->NumSubsectors; ++f) Level->Subsectors[f].updateWorldFrame = 0;
+  for (auto &&it : Level->allSubsectors()) it.updateWorldFrame = 0;
 }
 
 
@@ -1443,8 +1440,8 @@ void VRenderLevelShared::MarkLeaves () {
         sub->VisFrame = currvisframe;
         node_t *node = sub->parent;
         while (node) {
-          if (node->VisFrame == currvisframe) break;
-          node->VisFrame = currvisframe;
+          if (node->visframe == currvisframe) break;
+          node->visframe = currvisframe;
           node = node->parent;
         }
       }
@@ -1467,8 +1464,8 @@ void VRenderLevelShared::MarkLeaves () {
           if (cvb&1) {
             sub->VisFrame = currvisframe;
             node_t *node = sub->parent;
-            while (node && node->VisFrame != currvisframe) {
-              node->VisFrame = currvisframe;
+            while (node && node->visframe != currvisframe) {
+              node->visframe = currvisframe;
               node = node->parent;
             }
           }
@@ -1483,8 +1480,8 @@ void VRenderLevelShared::MarkLeaves () {
           if (cvb&1) {
             sub->VisFrame = currvisframe;
             node_t *node = sub->parent;
-            while (node && node->VisFrame != currvisframe) {
-              node->VisFrame = currvisframe;
+            while (node && node->visframe != currvisframe) {
+              node->visframe = currvisframe;
               node = node->parent;
             }
           }
@@ -1499,8 +1496,8 @@ void VRenderLevelShared::MarkLeaves () {
         sub->VisFrame = currvisframe;
         node_t *node = sub->parent;
         while (node) {
-          if (node->VisFrame == currvisframe) break;
-          node->VisFrame = currvisframe;
+          if (node->visframe == currvisframe) break;
+          node->visframe = currvisframe;
           node = node->parent;
         }
       }
@@ -1516,8 +1513,8 @@ void VRenderLevelShared::MarkLeaves () {
       sub->VisFrame = currvisframe;
       node_t *node = sub->parent;
       while (node) {
-        if (node->VisFrame == currvisframe) break;
-        node->VisFrame = currvisframe;
+        if (node->visframe == currvisframe) break;
+        node->visframe = currvisframe;
         node = node->parent;
       }
     }
@@ -1551,6 +1548,8 @@ void VRenderLevelShared::RenderPlayerView () {
   IncUpdateWorldFrame();
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
+
+  if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateWorld(/*rd, Range*/);
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);

@@ -499,7 +499,7 @@ protected:
 
   //void UpdateSubsector (int num, float *bbox);
   //void UpdateBSPNode (int bspnum, float *bbox);
-  void UpdateWorld (const refdef_t *rd, const VViewClipper *Range);
+  void UpdateWorld (/*const refdef_t *rd, const VViewClipper *Range*/);
   void InitialWorldUpdate ();
 
   void UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
@@ -534,6 +534,7 @@ protected:
   virtual void FreeSurfCache (surfcache_t *&block);
   virtual bool CacheSurface (surface_t*);
 
+  void PrepareWorldRender (const refdef_t*, const VViewClipper*);
   // this should be called after `RenderWorld()`
   void BuildVisibleObjectsList ();
 

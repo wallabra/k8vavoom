@@ -33,7 +33,7 @@ extern VCvarF r_lights_radius;
 extern VCvarB w_update_in_renderer;
 #endif
 extern VCvarI r_max_lights;
-extern VCvarB r_disable_world_update;
+//extern VCvarB r_disable_world_update;
 
 static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visible static lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort visible dynamic lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
@@ -158,10 +158,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 #endif
 
   //ClearQueues(); // moved to `RenderWorld()`
-
-  MarkLeaves();
-
-  if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
+  //MarkLeaves();
+  //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
   BuildVisibleObjectsList();

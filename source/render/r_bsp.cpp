@@ -80,6 +80,19 @@ static int oldPortalDepth = -666;
 
 //==========================================================================
 //
+//  VRenderLevelShared::PrepareWorldRender
+//
+//==========================================================================
+void VRenderLevelShared::PrepareWorldRender (const refdef_t *rd, const VViewClipper *Range) {
+  ClearQueues();
+  MarkLeaves();
+  // this is done in `VRenderLevelShared::RenderPlayerView()`
+  //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(rd, Range);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::ChooseFlatSurfaces
 //
 //==========================================================================
@@ -900,21 +913,26 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   // render it if we're not in "only clip" mode
   if (!onlyClip) {
     // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
-    if (Level->HasPVS() && sub->VisFrame != currVisFrame) {
-      if (r_draw_adjacent_subsector_things) {
-        if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
-          RenderMarkAdjSubsectorsThings(num);
-          if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+    if (Level->HasPVS()) {
+      if (sub->VisFrame != currVisFrame) {
+        if (r_draw_adjacent_subsector_things) {
+          if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
+            RenderMarkAdjSubsectorsThings(num);
+            if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+          }
+        } else if (clip_use_1d_clipper) {
+          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
         }
-      } else if (clip_use_1d_clipper) {
-        ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        return;
       }
-      return;
+    } else {
+      // if we have no PVS, and already hit this subsector somehow, do nothing
+      if (sub->VisFrame == currVisFrame) return;
     }
 
     // is this subsector potentially visible?
     if (ViewClip.ClipCheckSubsector(sub)) {
-      if (sub->parent) sub->parent->VisFrame = currVisFrame; // for one-sector degenerate maps
+      if (sub->parent) sub->parent->visframe = currVisFrame; // check is here for one-sector degenerate maps
       sub->VisFrame = currVisFrame;
 
       // mark this subsector as rendered
@@ -926,12 +944,12 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       // update world
 #if 0
       if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        UpdateSubsector(num, nullptr); // trigger BSP updating
+        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
       }
 #else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
-        UpdateSubRegion(sub, sub->regions);
+        if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
 #endif
 

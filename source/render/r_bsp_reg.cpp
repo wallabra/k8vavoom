@@ -81,7 +81,7 @@ extern vuint32 gf_dynlights_traced;
 
 
 void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  ClearQueues();
+  PrepareWorldRender(rd, Range);
 
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;

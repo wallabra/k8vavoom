@@ -50,6 +50,7 @@ extern VCvarB r_chasecam;
 extern VCvarB r_glow_flat;
 extern VCvarB clip_use_1d_clipper;
 extern VCvarB r_dbg_always_draw_flats;
+extern VCvarB r_disable_world_update;
 #if 0
 extern VCvarB w_update_in_renderer;
 #endif
@@ -494,12 +495,12 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
       // update world
 #if 0
       if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        UpdateSubsector(num, nullptr); // trigger BSP updating
+        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
       }
 #else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
-        UpdateSubRegion(sub, sub->regions);
+        if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
 #endif
 
@@ -739,12 +740,12 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
       // update world
 #if 0
       if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        UpdateSubsector(num, nullptr); // trigger BSP updating
+        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
       }
 #else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
-        UpdateSubRegion(sub, sub->regions);
+        if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
 #endif
 

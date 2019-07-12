@@ -31,7 +31,7 @@ static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rende
 #if 0
 extern VCvarB w_update_in_renderer;
 #endif
-extern VCvarB r_disable_world_update;
+//extern VCvarB r_disable_world_update;
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 
@@ -71,10 +71,8 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   Drawer->SetupViewOrg();
 
   //ClearQueues(); // moved to `RenderWorld()`
-
-  MarkLeaves();
-
-  if (!r_disable_world_update) UpdateWorld(RD, Range);
+  //MarkLeaves();
+  //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
   if (light_reset_surface_cache != 0) return;

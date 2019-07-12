@@ -151,7 +151,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
   if (!(bspnum&NF_SUBSECTOR)) {
     // nope, this is a normal node
     node_t *bsp = &Level->Nodes[bspnum];
-    //if (Level->HasPVS() && bsp->VisFrame != currVisFrame) return;
+    //if (Level->HasPVS() && bsp->visframe != currVisFrame) return;
     // decide which side the view point is on
     unsigned side = bsp->PointOnSide(vieworg);
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
@@ -172,7 +172,7 @@ void VRenderLevelShared::UpdateBSPNode (int bspnum, float *bbox) {
 //  VRenderLevelShared::UpdateWorld
 //
 //==========================================================================
-void VRenderLevelShared::UpdateWorld (const refdef_t *rd, const VViewClipper *Range) {
+void VRenderLevelShared::UpdateWorld (/*const refdef_t *rd, const VViewClipper *Range*/) {
   // update fake sectors
   /*
   for (int i = 0; i < Level->NumSectors; ++i) {
