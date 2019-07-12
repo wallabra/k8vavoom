@@ -211,8 +211,7 @@ float VLevel::CalcSkyHeight () const {
 //
 //==========================================================================
 void VLevel::UpdateSectorHeightCache (sector_t *sector) {
-  if (!sector) return;
-  if (sector->ZExtentsCacheId == validcountSZCache) return;
+  if (!sector || sector->ZExtentsCacheId == validcountSZCache) return;
 
   sector->ZExtentsCacheId = validcountSZCache;
 
@@ -223,12 +222,15 @@ void VLevel::UpdateSectorHeightCache (sector_t *sector) {
   sector_t *const *nbslist = sector->nbsecs;
   for (int nbc = sector->nbseccount; nbc--; ++nbslist) {
     const sector_t *bsec = *nbslist;
+    /*
+    // self-referencing deepwater is usually deeper than the surrounding sector
     if (bsec == sector) {
       //FIXME: this is deepwater, make in infinitely high
       minz = -32767.0f;
       maxz = 32767.0f;
       break;
     }
+    */
     float zmin = min2(bsec->floor.minz, bsec->ceiling.maxz);
     float zmax = max2(bsec->floor.minz, bsec->ceiling.maxz);
     minz = min2(minz, zmin);
@@ -237,6 +239,36 @@ void VLevel::UpdateSectorHeightCache (sector_t *sector) {
 
   sector->LastMinZ = minz;
   sector->LastMaxZ = maxz;
+
+  // update BSP
+  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
+    node_t *node = sub->parent;
+    //GCon->Logf("  sub %d; pc=%d; nodeparent=%d; next=%d", (int)(ptrdiff_t)(sub-Subsectors), sub->parentChild, (int)(ptrdiff_t)(node-Nodes), (sub->seclink ? (int)(ptrdiff_t)(sub->seclink-Subsectors) : -1));
+    if (!node) continue;
+    int childnum = sub->parentChild;
+    if (node->bbox[childnum][2] <= minz && node->bbox[childnum][5] >= maxz) continue;
+    // fix bounding boxes
+    float currMinZ = min2(node->bbox[childnum][2], minz);
+    float currMaxZ = max2(node->bbox[childnum][5], maxz);
+    if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    node->bbox[childnum][2] = currMinZ;
+    node->bbox[childnum][5] = currMaxZ;
+    for (; node->parent; node = node->parent) {
+      node_t *pnode = node->parent;
+           if (pnode->children[0] == node->index) childnum = 0;
+      else if (pnode->children[1] == node->index) childnum = 1;
+      else Sys_Error("invalid BSP tree");
+      const float parCMinZ = pnode->bbox[childnum][2];
+      const float parCMaxZ = pnode->bbox[childnum][5];
+      if (parCMinZ <= currMinZ && parCMaxZ >= currMaxZ) continue; // we're done here
+      pnode->bbox[childnum][2] = min2(parCMinZ, currMinZ);
+      pnode->bbox[childnum][5] = max2(parCMaxZ, currMaxZ);
+      FixBBoxZ(pnode->bbox[childnum]);
+      currMinZ = min2(min2(parCMinZ, pnode->bbox[childnum^1][2]), currMinZ);
+      currMaxZ = max2(max2(parCMaxZ, pnode->bbox[childnum^1][5]), currMaxZ);
+      if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    }
+  }
 }
 
 
@@ -257,35 +289,7 @@ void VLevel::GetSubsectorBBox (subsector_t *sub, float bbox[6]) {
   UpdateSectorHeightCache(sector);
   bbox[0+2] = sector->LastMinZ;
   bbox[3+2] = sector->LastMaxZ;
-
-/*
-#if 0
-  // for one-sector degenerate maps
-  if (sub->parent) {
-    / *
-    // this is not right
-    bbox[0+2] = min2(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
-    bbox[3+2] = max2(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
-    * /
-    bbox[0+2] = sub->parent->bbox[sub->parentChild][0+2];
-    bbox[3+2] = sub->parent->bbox[sub->parentChild][3+2];
-  } else {
-    bbox[0+2] = sub->sector->floor.minz;
-    bbox[3+2] = sub->sector->ceiling.maxz;
-  }
-#else
-  bbox[0+2] = sub->sector->floor.minz;
-  bbox[3+2] = sub->sector->ceiling.maxz;
-#endif
-*/
-  FixBBoxZ(bbox);
-
-  /*
-  float minz, maxz;
-  CalcSectorBoundingHeight(sub->sector, &minz, &maxz);
-  bbox[2] = min2(bbox[2], minz);
-  bbox[5] = max2(bbox[5], maxz);
-  */
+  //FixBBoxZ(bbox);
 }
 
 
@@ -354,38 +358,7 @@ void VLevel::CalcSecMinMaxs (sector_t *sector) {
   }
 
   sector->ZExtentsCacheId = 0; // force update
-  UpdateSectorHeightCache(sector);
-
-  // update BSP
-  //GCon->Logf(" :: sector %d", (int)(ptrdiff_t)(sector-Sectors));
-  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
-    node_t *node = sub->parent;
-    //GCon->Logf("  sub %d; pc=%d; nodeparent=%d; next=%d", (int)(ptrdiff_t)(sub-Subsectors), sub->parentChild, (int)(ptrdiff_t)(node-Nodes), (sub->seclink ? (int)(ptrdiff_t)(sub->seclink-Subsectors) : -1));
-    if (!node) continue;
-    int childnum = sub->parentChild;
-    if (node->bbox[childnum][2] <= sector->floor.minz && node->bbox[childnum][5] >= sector->ceiling.maxz) continue;
-    // fix bounding boxes
-    float currMinZ = min2(node->bbox[childnum][2], sector->floor.minz);
-    float currMaxZ = max2(node->bbox[childnum][5], sector->ceiling.maxz);
-    if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
-    node->bbox[childnum][2] = currMinZ;
-    node->bbox[childnum][5] = currMaxZ;
-    for (; node->parent; node = node->parent) {
-      node_t *pnode = node->parent;
-           if (pnode->children[0] == node->index) childnum = 0;
-      else if (pnode->children[1] == node->index) childnum = 1;
-      else Sys_Error("invalid BSP tree");
-      const float parCMinZ = pnode->bbox[childnum][2];
-      const float parCMaxZ = pnode->bbox[childnum][5];
-      if (parCMinZ <= currMinZ && parCMaxZ >= currMaxZ) continue; // we're done here
-      pnode->bbox[childnum][2] = min2(parCMinZ, currMinZ);
-      pnode->bbox[childnum][5] = max2(parCMaxZ, currMaxZ);
-      FixBBoxZ(pnode->bbox[childnum]);
-      currMinZ = min2(min2(parCMinZ, pnode->bbox[childnum^1][2]), currMinZ);
-      currMaxZ = max2(max2(parCMaxZ, pnode->bbox[childnum^1][5]), currMaxZ);
-      if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
-    }
-  }
+  UpdateSectorHeightCache(sector); // this also updates BSP bounding boxes
 }
 
 
