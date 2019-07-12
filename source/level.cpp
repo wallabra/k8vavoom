@@ -268,7 +268,7 @@ void VLevel::UpdateSectorHeightCache (sector_t *sector) {
   float maxz = sector->ceiling.maxz;
   if (minz > maxz) { const float tmp = minz; minz = maxz; maxz = tmp; }
 
-  if (!lastLooseBBoxHeight) {
+  if (!lastLooseBBoxHeight && sector->linecount) {
     sector_t *const *nbslist = sector->nbsecs;
     for (int nbc = sector->nbseccount; nbc--; ++nbslist) {
       const sector_t *bsec = *nbslist;
@@ -992,7 +992,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
 //==========================================================================
 void VLevel::UpdateSubsectorBBox (int num, float bbox[6], const float skyheight) {
   subsector_t *sub = &Subsectors[num];
-  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+  // nope, don't ignore it
+  //if (sub->sector->linecount == 0) return; // original polyobj sector
 
   float ssbbox[6];
   GetSubsectorBBox(sub, ssbbox);
