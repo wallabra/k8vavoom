@@ -28,9 +28,6 @@
 #include "r_local.h"
 
 static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rendering of things (regular renderer).", 0/*CVAR_Archive*/);
-#if 0
-extern VCvarB w_update_in_renderer;
-#endif
 //extern VCvarB r_disable_world_update;
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp

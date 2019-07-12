@@ -33,11 +33,6 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#if 0
-extern VCvarB w_update_clip_bsp;
-//extern VCvarB w_update_clip_region;
-extern VCvarB w_update_in_renderer;
-#endif
 static VCvarB r_hack_transtop("r_hack_transtop", true, "Allow \"Transparent Top Texture\" hack?", CVAR_PreInit|CVAR_Archive);
 
 
@@ -1365,33 +1360,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
 
   if (!seg->linedef) return; // miniseg
 
-#if 0
-  if (w_update_clip_region) {
-    /*
-    k8: i don't know what Janis wanted to accomplish with this, but it actually
-        makes clipping WORSE due to limited precision
-    // clip sectors that are behind rendered segs
-    TVec v1 = *seg->v1;
-    TVec v2 = *seg->v2;
-    TVec r1 = vieworg-v1;
-    TVec r2 = vieworg-v2;
-    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
-    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
-
-    // there might be a better method of doing this, but this one works for now...
-         if (D1 > 0.0f && D2 < 0.0f) v2 += (v2-v1)*D1/(D1-D2);
-    else if (D2 > 0.0f && D1 < 0.0f) v1 += (v1-v2)*D2/(D2-D1);
-
-    if (!ViewClip.IsRangeVisible(v2, v1)) return;
-    */
-    if (!seg->PointOnSide(vieworg)) {
-      if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
-    } else {
-      if (!ViewClip.IsRangeVisible(*seg->v1, *seg->v2)) return;
-    }
-  }
-#endif
-
   if (!seg->backsector) {
     // one-sided seg
     // top sky
@@ -1670,51 +1638,57 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 //  VRenderLevelShared::UpdateSubRegion
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region, bool updatePoly) {
-  TSecPlaneRef r_floor = region->floorplane;
-  TSecPlaneRef r_ceiling = region->ceilplane;
+void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region) {
+  if (!region || !sub) return;
 
-  drawseg_t *ds = region->lines;
-  for (int count = sub->numlines; count--; ++ds) {
-    UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
-  }
-
-  if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub);
-  if (region->fakefloor) {
-    TSecPlaneRef fakefloor;
-    fakefloor.set(&sub->sector->fakefloors->floorplane, false);
-    if (!fakefloor.isFloor()) fakefloor.Flip();
-    if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
-    UpdateSecSurface(region->fakefloor, fakefloor, sub);
-    //region->fakefloor->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
-  }
-
-  if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
-  if (region->fakeceil) {
-    TSecPlaneRef fakeceil;
-    fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
-    if (!fakeceil.isCeiling()) fakeceil.Flip();
-    if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
-    UpdateSecSurface(region->fakeceil, fakeceil, sub);
-    //region->fakeceil->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
-  }
-
-  if (updatePoly && sub->poly) {
+  // polyobj cannot be in subsector with 3d floors, so update it once
+  if (sub->poly) {
     // update the polyobj
-    updatePoly = false;
     seg_t **polySeg = sub->poly->segs;
     for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      UpdateDrawSeg(sub, (*polySeg)->drawsegs, r_floor, r_ceiling/*, ClipSegs*/);
+      UpdateDrawSeg(sub, (*polySeg)->drawsegs, region->floorplane, region->ceilplane);
     }
   }
 
-  if (region->next) {
-#if 0
-    if (w_update_clip_region && !w_update_in_renderer) {
-      if (!ViewClip.ClipCheckRegion(region->next, sub)) return;
+  for (; region; region = region->next) {
+    TSecPlaneRef r_floor = region->floorplane;
+    TSecPlaneRef r_ceiling = region->ceilplane;
+
+    drawseg_t *ds = region->lines;
+    for (int count = sub->numlines; count--; ++ds) {
+      UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
     }
-#endif
-    return UpdateSubRegion(sub, region->next, updatePoly);
+
+    if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub);
+    if (region->fakefloor) {
+      TSecPlaneRef fakefloor;
+      fakefloor.set(&sub->sector->fakefloors->floorplane, false);
+      if (!fakefloor.isFloor()) fakefloor.Flip();
+      if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
+      UpdateSecSurface(region->fakefloor, fakefloor, sub);
+      //region->fakefloor->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
+    }
+
+    if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub);
+    if (region->fakeceil) {
+      TSecPlaneRef fakeceil;
+      fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
+      if (!fakeceil.isCeiling()) fakeceil.Flip();
+      if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
+      UpdateSecSurface(region->fakeceil, fakeceil, sub);
+      //region->fakeceil->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
+    }
+
+    /* polyobj cannot be in 3d floor
+    if (updatePoly && sub->poly) {
+      // update the polyobj
+      updatePoly = false;
+      seg_t **polySeg = sub->poly->segs;
+      for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
+        UpdateDrawSeg(sub, (*polySeg)->drawsegs, r_floor, r_ceiling);
+      }
+    }
+    */
   }
 }
 

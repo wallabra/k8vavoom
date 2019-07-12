@@ -29,9 +29,6 @@
 
 
 extern VCvarF r_lights_radius;
-#if 0
-extern VCvarB w_update_in_renderer;
-#endif
 extern VCvarI r_max_lights;
 //extern VCvarB r_disable_world_update;
 

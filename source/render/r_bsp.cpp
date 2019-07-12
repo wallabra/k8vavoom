@@ -61,9 +61,6 @@ VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", false, "Draw flat surf
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
 extern VCvarB r_draw_adjacent_subsector_things;
-#if 0
-extern VCvarB w_update_in_renderer;
-#endif
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
@@ -942,17 +939,10 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       RenderMarkAdjSubsectorsThings(num);
 
       // update world
-#if 0
-      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
-      }
-#else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
         if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
-#endif
-
       // render the polyobj in the subsector first, and add it to clipper
       // this blocks view with polydoors
       RenderPolyObj(sub);

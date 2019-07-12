@@ -51,9 +51,6 @@ extern VCvarB r_glow_flat;
 extern VCvarB clip_use_1d_clipper;
 extern VCvarB r_dbg_always_draw_flats;
 extern VCvarB r_disable_world_update;
-#if 0
-extern VCvarB w_update_in_renderer;
-#endif
 
 extern VCvarB gl_dbg_wireframe;
 
@@ -493,17 +490,10 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
     if (needToRender) {
       // update world
-#if 0
-      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
-      }
-#else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
         if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
-#endif
-
       // render the polyobj in the subsector first, and add it to clipper
       // this blocks view with polydoors
       RenderShadowPolyObj(sub);
@@ -738,17 +728,10 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
   if (LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7))) {
     if (LightClip.ClipLightCheckSubsector(sub, false)) {
       // update world
-#if 0
-      if (w_update_in_renderer && sub->updateWorldFrame != updateWorldFrame) {
-        if (!r_disable_world_update) UpdateSubsector(num, nullptr); // trigger BSP updating
-      }
-#else
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;
         if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
-#endif
-
       // render the polyobj in the subsector first, and add it to clipper
       // this blocks view with polydoors
       RenderLightPolyObj(sub);
