@@ -736,6 +736,7 @@ void DetectOverlappingLines(void)
 				linedef_t *B = lev_linedefs[array[j]];
 
 				B->overlap = A->overlap ? A->overlap : A;
+				ajbsp_PrintDetail("Linedefs #%d and #%d are overlapping\n", array[i], array[j]);
 
 				count++;
 			}
