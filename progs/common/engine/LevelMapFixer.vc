@@ -495,23 +495,15 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: Venom MAP01 detected and fixed");
   }
 
-  //k8: until i'll find out why this mapspot ends up in wrong sector, this hack will make SS:R 1.1 map05 turret work
-  if (MapHashMD5 == "00b2077327e4f724f43d6f2f81cd47c4") {
+  //k8: until i'll find out why this mapspot ends up in wrong sector, this hack will make SS:R map05 turret work
+  if (MapHashMD5 == "00b2077327e4f724f43d6f2f81cd47c4" ||
+      MapHashMD5 == "72a7f91eaa76187cc57bd6a017f49e96")
+  {
+    bool isV11 = (MapHashMD5 == "00b2077327e4f724f43d6f2f81cd47c4");
     foreach (ref auto th; Things) {
       if (th.type == 9001 && th.tid == 55) {
-        printwarn("MAPFIX: Silent Steel: Remastered v1.1 MAP05 detected and fixed");
-        th.y -= 1; // move this mapspot down a little, so it ends up in back sector
-        break;
-      }
-    }
-  }
-
-  //k8: until i'll find out why this mapspot ends up in wrong sector, this hack will make SS:R 1.0 map05 turret work
-  if (MapHashMD5 == "72a7f91eaa76187cc57bd6a017f49e96") {
-    foreach (ref auto th; Things) {
-      if (th.type == 9001 && th.tid == 55) {
-        printwarn("MAPFIX: Silent Steel: Remastered v1.0 MAP05 detected and fixed");
-        th.y += 1; // move this mapspot up a little, so it ends up in front sector
+        printwarn("MAPFIX: Silent Steel: Remastered v1.%s MAP05 detected and fixed", (isV11 ? 1 : 0));
+        th.y += (isV11 ? -1 : 1); // move this mapspot down a little, so it ends up in back sector
         break;
       }
     }

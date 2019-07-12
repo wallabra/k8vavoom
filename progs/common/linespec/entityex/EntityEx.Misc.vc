@@ -1101,6 +1101,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     else z = ONFLOORZ;
 
     SetOrigin2(vector(x, y, z), moreHeight:mthing.height);
+    //if (mthing.type == 9001 && mthing.tid == 55) printwarn("*** MapSpot sector: %s", Sector-&XLevel.Sectors[0]);
 
     // no need to to this, it is already linked in `SetOrigin2()`
     //LinkToWorld(properFloorCheck:(bMonster || bIsPlayer));
