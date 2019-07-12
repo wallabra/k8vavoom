@@ -102,6 +102,8 @@ server_static_t svs;
 
 // increment every time a check is made
 int validcount = 1;
+// for sector height cache
+int validcountSZCache = 1;
 
 bool sv_loading = false;
 bool sv_map_travel = false;

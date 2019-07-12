@@ -471,6 +471,7 @@ public:
 
 public:
   void IncrementValidCount ();
+  void IncrementSZValidCount ();
 
   // this saves everything except thinkers, so i can load it for further experiments
   void DebugSaveLevel (VStream &strm);

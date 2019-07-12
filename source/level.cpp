@@ -82,8 +82,22 @@ void VLevel::PostCtor () {
 void VLevel::IncrementValidCount () {
   if (++validcount == 0x7fffffff) {
     validcount = 1;
-    line_t *ld = &Lines[0];
-    for (int count = NumLines; count--; ++ld) ld->validcount = 0;
+    for (auto &&it : allLines()) it.validcount = 0;
+    for (auto &&it : allSectors()) it.validcount = 0;
+    for (auto &&it : allPolyObjs()) it.validcount = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::IncrementSZValidCount
+//
+//==========================================================================
+void VLevel::IncrementSZValidCount () {
+  if (++validcountSZCache == 0x7fffffff) {
+    validcountSZCache = 1;
+    for (auto &&it : allSectors()) it.ZExtentsCacheId = 0;
   }
 }
 

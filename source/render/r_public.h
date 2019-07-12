@@ -121,4 +121,5 @@ bool R_ModelNoSelfShadow (VName clsName);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-extern int validcount;
+extern int validcount; // defined in "sv_main.cpp"
+extern int validcountSZCache; // defined in "sv_main.cpp"
