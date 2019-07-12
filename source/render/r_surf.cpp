@@ -1800,6 +1800,12 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
   fakefloor_t *ff = sector->fakefloors;
   if (!ff) return; //k8:just in case
 
+  // sector_t::SF_ClipFakePlanes: improved texture control
+  //   the real floor and ceiling will be drawn with the real sector's flats
+  //   the fake floor and ceiling (from either side) will be drawn with the control sector's flats
+  //   the real floor and ceiling will be drawn even when in the middle part, allowing lifts into and out of deep water to render correctly (not possible in Boom)
+  //   this flag does not work properly with sloped floors, and, if flag 2 is not set, with sloped ceilings either
+
   const sector_t *hs = sector->heightsec;
   sector_t *viewhs = r_viewleaf->sector->heightsec;
   /*
@@ -1996,6 +2002,19 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     if (!(hs->SectorFlags&sector_t::SF_NoFakeLight) && viewhs) {
       ff->params.lightlevel = hs->params.lightlevel;
       ff->params.LightColor = hs->params.LightColor;
+    }
+  } else {
+    if (diffTex) {
+      ff->floorplane = hs->floor;
+      ff->ceilplane = hs->floor;
+      if (vieworg.z < hs->floor.GetPointZ(vieworg)) {
+        // fake floor is actually a ceiling now
+        ff->floorplane.flipInPlace();
+      }
+      if (vieworg.z > hs->ceiling.GetPointZ(vieworg)) {
+        // fake ceiling is actually a floor now
+        ff->ceilplane.flipInPlace();
+      }
     }
   }
 }

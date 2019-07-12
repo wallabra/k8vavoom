@@ -85,8 +85,19 @@ static int oldPortalDepth = -666;
 //==========================================================================
 void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1) {
   if (!flat0 || !flat1) {
-    f0 = flat0;
-    f1 = flat1;
+    if (flat0) {
+      check(!flat1);
+      f0 = flat0;
+      f1 = nullptr;
+    } else if (flat1) {
+      check(!flat0);
+      f0 = flat1;
+      f1 = nullptr;
+    } else {
+      check(!flat0);
+      check(!flat1);
+      f0 = f1 = nullptr;
+    }
     return;
   }
 
@@ -126,6 +137,12 @@ void VRenderLevelShared::GetFlatSetToRender (subsector_t *sub, subregion_t *regi
   // if "clip fake planes" is not set, don't render real floor/ceiling if they're clipped away
   bool realFloorClipped = false;
   bool realCeilingClipped = false;
+
+  // sector_t::SF_ClipFakePlanes: improved texture control
+  //   the real floor and ceiling will be drawn with the real sector's flats
+  //   the fake floor and ceiling (from either side) will be drawn with the control sector's flats
+  //   the real floor and ceiling will be drawn even when in the middle part, allowing lifts into and out of deep water to render correctly (not possible in Boom)
+  //   this flag does not work properly with sloped floors, and, if flag 2 is not set, with sloped ceilings either
 
   const sector_t *hs = (sub->sector ? sub->sector->heightsec : nullptr);
   if (hs && !(hs->SectorFlags&sector_t::SF_ClipFakePlanes)) {
