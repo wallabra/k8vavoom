@@ -191,8 +191,38 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
   int nodenum = NumNodes-1;
   do {
     const node_t *node = Nodes+nodenum;
-    nodenum = node->children[node->PointOnSide(point)];
-  } while (!(nodenum&NF_SUBSECTOR));
+    const float dist = node->Distance(point);
+    //k8: hack for back subsector
+    if (dist == 0.0f && node->splitldef && (node->splitldef->flags&ML_TWOSIDED) &&
+        node->splitldef->frontsector != node->splitldef->backsector)
+    {
+      // if we are exactly on a two-sided linedef, choose node that leads to back sector
+      // this is what vanilla does, and some map authors rely on that fact
+      /*
+      GCon->Logf("ldef=(%g,%g,%g:%g); node=(%g,%g,%g:%g)",
+        node->splitldef->normal.x, node->splitldef->normal.y, node->splitldef->normal.z, node->splitldef->dist,
+        node->normal.x, node->normal.y, node->normal.z, node->dist);
+      */
+      const line_t *ldef = node->splitldef;
+      // compare plane distance signs to find out the right node
+      bool sameSign;
+      if (node->dist == ldef->dist) {
+        // special case: zero distance
+        if (ldef->dist == 0.0f) {
+          // don't bother with z, it is always zero
+          sameSign = ((node->normal.x < 0.0f) == (ldef->normal.x < 0.0f) && (node->normal.y < 0.0f) == (ldef->normal.y < 0.0f));
+        } else {
+          sameSign = true;
+        }
+      } else {
+        sameSign = ((node->dist < 0.0f) == (ldef->dist < 0.0f));
+      }
+      // if the sign is same, back sector is child #1, otherwise it is child #0
+      nodenum = node->children[(sameSign ? 1 : 0)];
+    } else {
+      nodenum = node->children[/*node->PointOnSide(point)*/(unsigned)(dist <= 0.0f)];
+    }
+  } while ((nodenum&NF_SUBSECTOR) == 0);
   return &Subsectors[nodenum&~NF_SUBSECTOR];
 }
 
