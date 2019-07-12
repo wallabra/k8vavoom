@@ -967,6 +967,7 @@ void StaticInit (Level InLevel, line_t *line) {
   int Dmg;
   sector_t *sec;
 
+  if (!line->arg1) return; // zero sector tag sux
   switch (line->arg2) {
     case 0:
       Grav = Length((*line->v2)-(*line->v1))/100.0;
@@ -974,13 +975,30 @@ void StaticInit (Level InLevel, line_t *line) {
         sec.Gravity = Grav;
       }
       break;
+    /* this is processed in level setup
+    case 1:
+      // sets the light or fog color in a sector
+      // an RRGGBB hex format color used as an upper texture name will set the light color; a lower texture will set the fog color
+      print("StaticInit(1): upper=%s; lower=%s", InLevel.Sides[line.sidenum[0]].TopTexture, InLevel.Sides[line.sidenum[0]].BottomTexture);
+      for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
+      }
+      break;
+    */
     case 2:
       Dmg = int(Length((*line->v2)-(*line->v1)));
       for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
         sec.Damage = Dmg;
       }
       break;
+    //case 3: // defines a sector link with line IDs instead of tags, as in Eternity
     case 255:
+      // uses the line's upper texture as the sky in any tagged sectors (that is, the sky flat
+      // will be replaced with that texture instead of the sky indicated in MAPINFO).
+      // if flip is set to 1, the texture will be flipped, as is normal behavior for Doom skies.
+      // offsets and scrolling of the texture are transferred to the sky as well.
+      // scrolling, however, is only at a tiny fraction of the wall texture's scrolling speed.
+      // this corresponds to the MBF sky transfer linetypes (271 and 272).
+      // Note: the line's lower texture, if set and of the same dimensions as the upper texture, will be used during lightning flashes.
       for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
         sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
       }
