@@ -195,6 +195,8 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   static int doOldRepl = -1;
   if (doOldRepl < 0) doOldRepl = (GArgs.CheckParm("-vc-decorate-old-replacement") ? 1 : 0);
 
+  static int dumpReplaces = -1;
+  if (dumpReplaces < 0) dumpReplaces = (GArgs.CheckParm("-vc-decorate-dump-replaces") ? 1 : 0);
 
   if (doOldRepl) {
     if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
@@ -230,6 +232,7 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
       currFileRepls.put(oldcls, true);
     }
     if (repl != newcls) {
+      if (dumpReplaces) GCon->Logf(NAME_Init, "DECORATE: class `%s` replaced with class `%s`", repl->GetName(), newcls->GetName());
       repl->Replacement = newcls;
       newcls->Replacee = repl;
     }
@@ -1768,7 +1771,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       }
     }
     if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ActorClass)) {
-      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      if (GArgs.CheckParm("-vc-decorate-nonactor-replace")) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` is not an actor class", *sc->String));
       } else {
