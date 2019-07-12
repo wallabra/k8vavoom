@@ -316,7 +316,7 @@ native static final GameObject::VAnimDoorDef *FindAnimDoor (int BaseTex);
 native static final bool IsAnimatedTexture (int Tex);
 native static final string GetLangString (name Id);
 native static final GameObject::LockDef *GetLockDef (int Lock);
-native static final int ParseColor (string Name);
+native static final int ParseColor (string Name, optional bool retZeroIfInvalid/*=false*/);
 native static final string TextColorString (int Color);
 native static final bool StartTitleMap ();
 native static final bool IsAutoloadingMapFromCLI ();

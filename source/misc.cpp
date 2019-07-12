@@ -365,11 +365,29 @@ int ParseHex (const char *Str) {
 
 //==========================================================================
 //
+//  tryHex
+//
+//==========================================================================
+static int tryHexByte (const char *s) {
+  if (!s || !s[0]) return -1;
+  int res = 0;
+  while (*s) {
+    int d = VStr::digitInBase(*s, 16);
+    if (d < 0) return -1;
+    res = (res*16)+d;
+    if (res > 255) return -1;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  M_ParseColor
 //
 //==========================================================================
-vuint32 M_ParseColor (const char *Name) {
-  if (!Name || !Name[0]) return 0xff000000U;
+vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
+  if (!Name || !Name[0]) return (retZeroIfInvalid ? 0U : 0xff000000U);
   vuint32 res = M_LookupColorName(Name);
   if (res) return res;
   vuint8 Col[3];
@@ -383,7 +401,9 @@ vuint32 M_ParseColor (const char *Name) {
         Val[0] = Name[i*2+1];
         Val[1] = Name[i*2+2];
         Val[2] = 0;
-        Col[i] = ParseHex(Val);
+        int v = tryHexByte(Val);
+        if (v < 0) return (retZeroIfInvalid ? 0U : 0xff000000U);
+        Col[i] = clampToByte(v);
       }
     } else if (nlen == 4) {
       // #rgb format color
@@ -392,13 +412,18 @@ vuint32 M_ParseColor (const char *Name) {
         Val[0] = Name[i+1];
         Val[1] = Name[i+1];
         Val[2] = 0;
-        Col[i] = ParseHex(Val);
+        int v = tryHexByte(Val);
+        if (v < 0) return (retZeroIfInvalid ? 0U : 0xff000000U);
+        Col[i] = clampToByte(v);
       }
     } else {
       // assume it's a bad color value, set it to black
+      /*
       Col[0] = 0;
       Col[1] = 0;
       Col[2] = 0;
+      */
+      return (retZeroIfInvalid ? 0U : 0xff000000U);
     }
   } else {
     bool warnColor = false;
@@ -409,7 +434,7 @@ vuint32 M_ParseColor (const char *Name) {
       while (*s && (*s <= ' ' || *s == '"' || *s == '\'')) ++s;
       if (!s[0] || VStr::digitInBase(s[0], 16) < 0) {
         GCon->Logf(NAME_Warning, "Invalid color <%s> (0)", Name);
-        return 0xff000000U; // black
+        return (retZeroIfInvalid ? 0U : 0xff000000U);
       }
       // parse hex
       int digCount = 0;
@@ -419,7 +444,7 @@ vuint32 M_ParseColor (const char *Name) {
         int d = VStr::digitInBase(s[0], 16);
         if (d < 0) {
           GCon->Logf(NAME_Warning, "Invalid color <%s> (1)", Name);
-          return 0xff000000U; // black
+          return (retZeroIfInvalid ? 0U : 0xff000000U);
         }
         n = n*16+d;
         if (n > 0xffffff) n = 0xffff;

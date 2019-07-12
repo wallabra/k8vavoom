@@ -184,8 +184,9 @@ IMPLEMENT_FUNCTION(VObject, GetLockDef) {
 }
 
 IMPLEMENT_FUNCTION(VObject, ParseColor) {
+  P_GET_BOOL_OPT(retZeroIfInvalid, false);
   P_GET_STR(Name);
-  RET_INT(M_ParseColor(*Name));
+  RET_INT(M_ParseColor(*Name, retZeroIfInvalid));
 }
 
 IMPLEMENT_FUNCTION(VObject, TextColorString) {
