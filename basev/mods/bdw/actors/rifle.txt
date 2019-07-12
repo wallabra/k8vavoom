@@ -43,7 +43,7 @@ Actor BDW_RifleClipBox : BDW_RifleClip Replaces Clipbox {
 
 // heretic
 Actor (optional) K8BDW_GoldWandAmmo : BDW_RifleClip Replaces GoldWandAmmo {}
-Actor (optional) K8DBW_GoldWandHefty : BDW_RifleClipBox Replaces GoldWandHefty {}
+Actor (optional) K8BDW_GoldWandHefty : BDW_RifleClipBox Replaces GoldWandHefty {}
 
 
 Actor BDW_Rifle : Weapon Replaces Chaingun {
@@ -270,4 +270,4 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
 
 
 Actor (optional) K8BDW_GoldWandRifle : BDW_Rifle Replaces GoldWand {}
-Actor (optional) K8DBW_GoldWandPoweredRifle : BDW_Rifle Replaces GoldWandPowered {}
+Actor (optional) K8BDW_GoldWandPoweredRifle : BDW_Rifle Replaces GoldWandPowered {}
