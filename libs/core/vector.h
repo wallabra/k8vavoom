@@ -482,6 +482,11 @@ public:
     return (DotProduct(point, normal)-dist < 0.1f);
   }
 
+  // returns side 0 (front) or 1 (back, or on plane)
+  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point, const float thre) const {
+    return (DotProduct(point, normal)-dist < thre);
+  }
+
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
   inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
