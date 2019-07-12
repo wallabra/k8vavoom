@@ -93,6 +93,8 @@ extern bool fsys_hasPwads; // or paks
 extern bool fsys_hasMapPwads; // or paks
 
 extern bool fsys_DisableBloodReplacement;
+extern bool fsys_IgnoreZScript;
+extern bool fsys_DisableBDW;
 
 extern VCvarS game_name;
 

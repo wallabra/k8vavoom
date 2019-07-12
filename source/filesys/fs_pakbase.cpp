@@ -386,6 +386,8 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       fn != "voices.wad" &&
       true;
   }
+  vuint32 squareChecked = 0u;
+  if (GArgs.CheckParm("-ignore-square")) squareChecked = ~0u;
   lumpmap.clear();
   filemap.clear();
   //bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
@@ -396,6 +398,25 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
     VName lmp = fi.lumpName;
     fi.nextLump = -1; // just in case
     if (lmp != NAME_None && fi.lumpNamespace == WADNS_Global && VStr::Cmp(*lmp, "zscript") == 0) {
+      if (!fsys_IgnoreZScript && !squareChecked) {
+        for (int cc = 0; cc < files.length(); ++cc) {
+               if (files[cc].fileName.strEquCI("SQU-SWE1.txt")) squareChecked |= 0b0001u;
+          else if (files[cc].fileName.strEquCI("GAMEINFO.sq")) squareChecked |= 0b0010u;
+          else if (files[cc].fileName.strEquCI("acs/sqcommon.o")) squareChecked |= 0b0100u;
+          else if (files[cc].fileName.strEquCI("acs/sq_jump.o")) squareChecked |= 0b1000u;
+        }
+        if (squareChecked == 0b1111u) {
+          fsys_IgnoreZScript = true;
+          fsys_DisableBDW = true;
+          GCon->Logf(NAME_Init, "Detected Adventures Of Square");
+        } else {
+          squareChecked = ~0u;
+        }
+      }
+      if (fsys_IgnoreZScript) {
+        fi.lumpName = NAME_None;
+        continue;
+      }
 #ifdef VAVOOM_K8_DEVELOPER
       if (GArgs.CheckParm("-ignore-zscript") != 0)
 #else
@@ -405,11 +426,19 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         GCon->Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
         fi.lumpName = NAME_None;
         lmp = NAME_None;
+        fsys_IgnoreZScript = true;
+        continue;
       } else {
         Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
       }
     }
     if (lmp != NAME_None) {
+      if (fsys_IgnoreZScript) {
+        if (fi.fileName.startsWithCI("zscript")) {
+          fi.lumpName = NAME_None;
+          continue;
+        }
+      }
       auto lsidp = lastSeenLump.find(lmp);
       if (!lsidp) {
         // new lump

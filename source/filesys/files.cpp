@@ -42,6 +42,9 @@ bool fsys_skipDehacked = false;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
 bool fsys_DisableBloodReplacement = false; // for custom modes
+bool fsys_IgnoreZScript = false;
+bool fsys_DisableBDW = false;
+
 
 int fsys_warp_n0 = -1;
 int fsys_warp_n1 = -1;
@@ -1697,7 +1700,7 @@ void FL_Init () {
   CustomModeLoadPwads(CM_POST_PWADS);
 
   fsys_report_added_paks = reportIWads;
-  if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
+  if (!fsys_DisableBDW && GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
   if (GArgs.CheckParm("-skeehud") != 0 || fsys_detected_mod == AD_SKULLDASHEE) {
     if (fsys_detected_mod == AD_SKULLDASHEE) GCon->Logf(NAME_Init, "SkullDash EE detected, loading HUD");
     AddGameDir("basev/mods/skeehud");
