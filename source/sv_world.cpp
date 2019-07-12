@@ -1524,5 +1524,6 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
     memset(csTouched, 0, NumSectors*sizeof(csTouched[0]));
     csTouchCount = 1;
   }
+  IncrementSZValidCount();
   return ChangeSectorInternal(sector, crunch);
 }

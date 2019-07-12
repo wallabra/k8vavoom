@@ -706,14 +706,14 @@ struct sector_t {
 
   vint32 Zone; // reverb zone id
 
-  vint32 ZExtentsCached;
+  vint32 ZExtentsCacheId;
   float LastMinZ, LastMaxZ;
-  float LastFloorZ, LastCeilingZ;
 
   // this is used to check for "floor holes" that should be filled to emulate original flat floodfill bug
   // if sector has more than one neighbour, this is `nullptr`
   sector_t *othersecFloor;
   sector_t *othersecCeiling;
+
 
   bool Has3DFloors () const;
   // should be called for new sectors to setup base region

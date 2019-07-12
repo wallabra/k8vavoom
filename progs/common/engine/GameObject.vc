@@ -991,9 +991,8 @@ struct sector_t {
 
   int Zone; // reverb zone id
 
-  int ZExtentsCached;
+  int ZExtentsCacheId;
   float LastMinZ, LastMaxZ;
-  float LastFloorZ, LastCeilingZ;
 
   // this is used to check for "floor holes" that should be filled to emulate original flat floodfill bug
   // if sector has more than one neighbour, this is `nullptr`

@@ -746,7 +746,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           }
           if (PrevFloorDist != Sec->floor.dist || PrevCeilDist != Sec->ceiling.dist) {
             //GCon->Logf("updating sector #%d", (int)(ptrdiff_t)(Sec-&GClLevel->Sectors[0]));
-            CalcSecMinMaxs(Sec);
+            Level->CalcSecMinMaxs(Sec);
           }
         }
         break;

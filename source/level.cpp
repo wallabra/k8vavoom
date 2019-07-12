@@ -202,7 +202,7 @@ float VLevel::CalcSkyHeight () const {
 
 //==========================================================================
 //
-//  VLevel::CalcSectorBoundingHeight
+//  VLevel::UpdateSectorHeightCache
 //
 //  some sectors (like doors) has floor and ceiling on the same level, so
 //  we have to look at neighbour sector to get height.
@@ -210,57 +210,34 @@ float VLevel::CalcSkyHeight () const {
 //  our zero height, as camera cannot see through top/bottom textures.
 //
 //==========================================================================
-/*
-void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *maxz) {
-  float tmp0, tmp1;
-  if (!minz) minz = &tmp0;
-  if (!maxz) maxz = &tmp1;
+void VLevel::UpdateSectorHeightCache (sector_t *sector) {
+  if (!sector) return;
+  if (sector->ZExtentsCacheId == validcountSZCache) return;
 
-  if (sector->ZExtentsCached && sector->LastFloorZ == sector->floor.minz && sector->LastCeilingZ == sector->ceiling.maxz) {
-    *minz = sector->LastMinZ;
-    *maxz = sector->LastMaxZ;
-    return;
-  }
+  sector->ZExtentsCacheId = validcountSZCache;
 
-  *minz = sector->floor.minz;
-  *maxz = sector->ceiling.maxz;
+  float minz = sector->floor.minz;
+  float maxz = sector->ceiling.maxz;
+  if (minz > maxz) { const float tmp = minz; minz = maxz; maxz = tmp; }
 
-  if (!sector->linecount) {
-    // skip sectors containing original polyobjs
-    *maxz = *minz;
-  }
-  if (*maxz < *minz) { const float tmp = *minz; *minz = *maxz; *maxz = tmp; }
-
-  // check if we have two-sided lines in this sector
-  line_t *const *lines = sector->lines;
-  for (unsigned count = sector->linecount; count--; ++lines) {
-    const line_t *line = *lines;
-    if (!(line->flags&ML_TWOSIDED)) continue;
-    // get neighbour sector
-    const sector_t *bsec = (sector == line->frontsector ? line->backsector : line->frontsector);
+  sector_t *const *nbslist = sector->nbsecs;
+  for (int nbc = sector->nbseccount; nbc--; ++nbslist) {
+    const sector_t *bsec = *nbslist;
     if (bsec == sector) {
       //FIXME: this is deepwater, make in infinitely high
-      *minz = -32767.0f;
-      *maxz = 32767.0f;
-      return;
+      minz = -32767.0f;
+      maxz = 32767.0f;
+      break;
     }
-    float zmin = min2(bsec->floor.minz, bsec->floor.maxz);
-    zmin = min2(bsec->ceiling.minz, bsec->ceiling.maxz);
-    float zmax = max2(bsec->ceiling.minz, bsec->ceiling.maxz);
-    zmax = max2(bsec->floor.minz, bsec->floor.maxz);
-    if (zmax < zmin) { const float tmp = zmax; zmax = zmin; zmin = tmp; }
-    *minz = min2(*minz, zmin);
-    *maxz = max2(*maxz, zmax);
+    float zmin = min2(bsec->floor.minz, bsec->ceiling.maxz);
+    float zmax = max2(bsec->floor.minz, bsec->ceiling.maxz);
+    minz = min2(minz, zmin);
+    maxz = max2(maxz, zmax);
   }
 
-  // cache values
-  sector->ZExtentsCached |= 1;
-  sector->LastFloorZ = sector->floor.minz;
-  sector->LastCeilingZ = sector->ceiling.maxz;
-  sector->LastMinZ = *minz;
-  sector->LastMaxZ = *maxz;
+  sector->LastMinZ = minz;
+  sector->LastMaxZ = maxz;
 }
-*/
 
 
 //==========================================================================
@@ -268,7 +245,7 @@ void VLevel::CalcSectorBoundingHeight (sector_t *sector, float *minz, float *max
 //  VLevel::GetSubsectorBBox
 //
 //==========================================================================
-void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
+void VLevel::GetSubsectorBBox (subsector_t *sub, float bbox[6]) {
   // min
   bbox[0+0] = sub->bbox2d[BOX2D_LEFT];
   bbox[0+1] = sub->bbox2d[BOX2D_BOTTOM];
@@ -276,14 +253,20 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   bbox[3+0] = sub->bbox2d[BOX2D_RIGHT];
   bbox[3+1] = sub->bbox2d[BOX2D_TOP];
 
+  sector_t *sector = sub->sector;
+  UpdateSectorHeightCache(sector);
+  bbox[0+2] = sector->LastMinZ;
+  bbox[3+2] = sector->LastMaxZ;
+
+/*
 #if 0
   // for one-sector degenerate maps
   if (sub->parent) {
-    /*
+    / *
     // this is not right
     bbox[0+2] = min2(sub->parent->bbox[0][2], sub->parent->bbox[1][2]);
     bbox[3+2] = max2(sub->parent->bbox[0][5], sub->parent->bbox[1][5]);
-    */
+    * /
     bbox[0+2] = sub->parent->bbox[sub->parentChild][0+2];
     bbox[3+2] = sub->parent->bbox[sub->parentChild][3+2];
   } else {
@@ -294,6 +277,7 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   bbox[0+2] = sub->sector->floor.minz;
   bbox[3+2] = sub->sector->ceiling.maxz;
 #endif
+*/
   FixBBoxZ(bbox);
 
   /*
@@ -302,6 +286,675 @@ void VLevel::GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const {
   bbox[2] = min2(bbox[2], minz);
   bbox[5] = max2(bbox[5], maxz);
   */
+}
+
+
+//==========================================================================
+//
+//  VLevel::CalcSecMinMaxs
+//
+//==========================================================================
+void VLevel::CalcSecMinMaxs (sector_t *sector) {
+  if (!sector) return; // k8: just in case
+
+  unsigned slopedFC = 0;
+
+  if (sector->floor.normal.z == 1.0f || sector->linecount == 0) {
+    // horizontal floor
+    sector->floor.minz = sector->floor.dist;
+    sector->floor.maxz = sector->floor.dist;
+  } else {
+    // sloped floor
+    slopedFC |= 1;
+  }
+
+  if (sector->ceiling.normal.z == -1.0f || sector->linecount == 0) {
+    // horisontal ceiling
+    sector->ceiling.minz = -sector->ceiling.dist;
+    sector->ceiling.maxz = -sector->ceiling.dist;
+  } else {
+    // sloped ceiling
+    slopedFC |= 2;
+  }
+
+  // calculate extents for sloped flats
+  if (slopedFC) {
+    float minzf = +99999.0f;
+    float maxzf = -99999.0f;
+    float minzc = +99999.0f;
+    float maxzc = -99999.0f;
+    line_t **llist = sector->lines;
+    for (int cnt = sector->linecount; cnt--; ++llist) {
+      line_t *ld = *llist;
+      if (slopedFC&1) {
+        float z = sector->floor.GetPointZ(*ld->v1);
+        minzf = min2(minzf, z);
+        maxzf = max2(maxzf, z);
+        z = sector->floor.GetPointZ(*ld->v2);
+        minzf = min2(minzf, z);
+        maxzf = max2(maxzf, z);
+      }
+      if (slopedFC&2) {
+        float z = sector->ceiling.GetPointZ(*ld->v1);
+        minzc = min2(minzc, z);
+        maxzc = max2(maxzc, z);
+        z = sector->ceiling.GetPointZ(*ld->v2);
+        minzc = min2(minzc, z);
+        maxzc = max2(maxzc, z);
+      }
+    }
+    if (slopedFC&1) {
+      sector->floor.minz = minzf;
+      sector->floor.maxz = maxzf;
+    }
+    if (slopedFC&2) {
+      sector->ceiling.minz = minzc;
+      sector->ceiling.maxz = maxzc;
+    }
+  }
+
+  sector->ZExtentsCacheId = 0; // force update
+  UpdateSectorHeightCache(sector);
+
+  // update BSP
+  //GCon->Logf(" :: sector %d", (int)(ptrdiff_t)(sector-Sectors));
+  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
+    node_t *node = sub->parent;
+    //GCon->Logf("  sub %d; pc=%d; nodeparent=%d; next=%d", (int)(ptrdiff_t)(sub-Subsectors), sub->parentChild, (int)(ptrdiff_t)(node-Nodes), (sub->seclink ? (int)(ptrdiff_t)(sub->seclink-Subsectors) : -1));
+    if (!node) continue;
+    int childnum = sub->parentChild;
+    if (node->bbox[childnum][2] <= sector->floor.minz && node->bbox[childnum][5] >= sector->ceiling.maxz) continue;
+    // fix bounding boxes
+    float currMinZ = min2(node->bbox[childnum][2], sector->floor.minz);
+    float currMaxZ = max2(node->bbox[childnum][5], sector->ceiling.maxz);
+    if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    node->bbox[childnum][2] = currMinZ;
+    node->bbox[childnum][5] = currMaxZ;
+    for (; node->parent; node = node->parent) {
+      node_t *pnode = node->parent;
+           if (pnode->children[0] == node->index) childnum = 0;
+      else if (pnode->children[1] == node->index) childnum = 1;
+      else Sys_Error("invalid BSP tree");
+      const float parCMinZ = pnode->bbox[childnum][2];
+      const float parCMaxZ = pnode->bbox[childnum][5];
+      if (parCMinZ <= currMinZ && parCMaxZ >= currMaxZ) continue; // we're done here
+      pnode->bbox[childnum][2] = min2(parCMinZ, currMinZ);
+      pnode->bbox[childnum][5] = max2(parCMaxZ, currMaxZ);
+      FixBBoxZ(pnode->bbox[childnum]);
+      currMinZ = min2(min2(parCMinZ, pnode->bbox[childnum^1][2]), currMinZ);
+      currMaxZ = max2(max2(parCMaxZ, pnode->bbox[childnum^1][5]), currMaxZ);
+      if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Natives
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VLevel, GetLineIndex) {
+  P_GET_PTR(line_t, line);
+  P_GET_SELF;
+  int idx = -1;
+  if (line) idx = (int)(ptrdiff_t)(line-Self->Lines);
+  RET_INT(idx);
+}
+
+IMPLEMENT_FUNCTION(VLevel, PointInSector) {
+  P_GET_VEC(Point);
+  P_GET_SELF;
+  RET_PTR(Self->PointInSubsector(Point)->sector);
+}
+
+IMPLEMENT_FUNCTION(VLevel, PointInSubsector) {
+  P_GET_VEC(Point);
+  P_GET_SELF;
+  RET_PTR(Self->PointInSubsector(Point));
+}
+
+IMPLEMENT_FUNCTION(VLevel, ChangeSector) {
+  P_GET_INT(crunch);
+  P_GET_PTR(sector_t, sec);
+  P_GET_SELF;
+  RET_BOOL(Self->ChangeSector(sec, crunch));
+}
+
+IMPLEMENT_FUNCTION(VLevel, ChangeOneSectorInternal) {
+  P_GET_PTR(sector_t, sec);
+  P_GET_SELF;
+  Self->ChangeOneSectorInternal(sec);
+}
+
+IMPLEMENT_FUNCTION(VLevel, AddExtraFloor) {
+  P_GET_PTR(sector_t, dst);
+  P_GET_PTR(line_t, line);
+  P_GET_SELF;
+  Self->AddExtraFloor(line, dst);
+}
+
+IMPLEMENT_FUNCTION(VLevel, SwapPlanes) {
+  P_GET_PTR(sector_t, s);
+  P_GET_SELF;
+  (void)Self;
+  SwapPlanes(s);
+}
+
+IMPLEMENT_FUNCTION(VLevel, SetFloorLightSector) {
+  P_GET_PTR(sector_t, SrcSector);
+  P_GET_PTR(sector_t, Sector);
+  P_GET_SELF;
+  Sector->floor.LightSourceSector = SrcSector-Self->Sectors;
+}
+
+IMPLEMENT_FUNCTION(VLevel, SetCeilingLightSector) {
+  P_GET_PTR(sector_t, SrcSector);
+  P_GET_PTR(sector_t, Sector);
+  P_GET_SELF;
+  Sector->ceiling.LightSourceSector = SrcSector-Self->Sectors;
+}
+
+IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
+  P_GET_INT(Flags);
+  P_GET_PTR(sector_t, SrcSector);
+  P_GET_PTR(sector_t, Sector);
+  P_GET_SELF;
+  (void)Flags;
+  (void)SrcSector;
+  if (Self->RenderData) Self->RenderData->SetupFakeFloors(Sector);
+}
+
+// native final int FindSectorFromTag (out sector_t *Sector, int tag, optional int start);
+IMPLEMENT_FUNCTION(VLevel, FindSectorFromTag) {
+  P_GET_INT_OPT(start, -1);
+  P_GET_INT(tag);
+  P_GET_PTR(sector_t *, osectorp);
+  P_GET_SELF;
+  sector_t *sector;
+  start = Self->FindSectorFromTag(sector, tag, start);
+  if (osectorp) *osectorp = sector;
+  RET_INT(start);
+  //RET_INT(Self->FindSectorFromTag(tag, start));
+}
+
+IMPLEMENT_FUNCTION(VLevel, FindLine) {
+  P_GET_PTR(int, searchPosition);
+  P_GET_INT(lineTag);
+  P_GET_SELF;
+  RET_PTR(Self->FindLine(lineTag, searchPosition));
+}
+
+//native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
+IMPLEMENT_FUNCTION(VLevel, SectorSetLink) {
+  P_GET_INT(movetype);
+  P_GET_INT(surface);
+  P_GET_INT(tag);
+  P_GET_INT(controltag);
+  P_GET_SELF;
+  Self->SectorSetLink(controltag, tag, surface, movetype);
+}
+
+IMPLEMENT_FUNCTION(VLevel, SetBodyQueueTrans) {
+  P_GET_INT(Trans);
+  P_GET_INT(Slot);
+  P_GET_SELF;
+  RET_INT(Self->SetBodyQueueTrans(Slot, Trans));
+}
+
+//native final void AddDecal (TVec org, name dectype, int side, line_t *li);
+IMPLEMENT_FUNCTION(VLevel, AddDecal) {
+  P_GET_PTR(line_t, li);
+  P_GET_INT(side);
+  P_GET_NAME(dectype);
+  P_GET_VEC(org);
+  P_GET_SELF;
+  Self->AddDecal(org, dectype, side, li, 0);
+}
+
+//native final void AddDecalById (TVec org, int id, int side, line_t *li);
+IMPLEMENT_FUNCTION(VLevel, AddDecalById) {
+  P_GET_PTR(line_t, li);
+  P_GET_INT(side);
+  P_GET_INT(id);
+  P_GET_VEC(org);
+  P_GET_SELF;
+  Self->AddDecalById(org, id, side, li, 0);
+}
+
+
+//native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
+IMPLEMENT_FUNCTION(VLevel, doRecursiveSound) {
+  P_GET_VEC(sndorigin);
+  P_GET_FLOAT(maxdist);
+  P_GET_PTR(VEntity, soundtarget);
+  P_GET_INT(soundblocks);
+  P_GET_PTR(sector_t, sec);
+  P_GET_PTR(TArray<VEntity *>, elist);
+  P_GET_INT(validcount);
+  P_GET_SELF;
+  Self->doRecursiveSound(validcount, *elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+}
+
+
+//native static final float CD_SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
+//                                               optional out TPlane hitPlane, optional out TVec contactPoint,
+//                                               optional out CD_HitType hitType);
+IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
+  P_GET_PTR_OPT(CD_HitType, hitType, nullptr);
+  P_GET_PTR_OPT(TVec, contactPoint, nullptr);
+  P_GET_PTR_OPT(TPlane, hitPlane, nullptr);
+  P_GET_VEC(bmax);
+  P_GET_VEC(bmin);
+  P_GET_VEC(vend);
+  P_GET_VEC(vstart);
+  P_GET_PTR(const line_t, ld);
+  RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class DebugExportError : public VavoomError {
+public:
+  explicit DebugExportError (const char *text) : VavoomError(text) {}
+};
+
+
+//==========================================================================
+//
+//  writef
+//
+//==========================================================================
+static __attribute__((format(printf, 2, 3))) void writef (VStream &strm, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (res && res[0]) {
+    strm.Serialise(res, (int)strlen(res));
+    if (strm.IsError()) throw DebugExportError("write error");
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct VertexPool {
+public:
+  TMapNC<vuint64, vint32> map; // key: two floats; value: index
+  TArray<TVec> list;
+
+public:
+  VertexPool () {}
+  VertexPool (const VertexPool &) = delete;
+  VertexPool &operator = (const VertexPool &) = delete;
+
+  void clear () {
+    map.clear();
+    list.clear();
+  }
+
+  // returns index
+  vint32 put (const TVec v) {
+    union __attribute__((packed)) {
+      struct __attribute__((packed)) { float f1, f2; };
+      vuint64 i64;
+    } u;
+    static_assert(sizeof(u) == sizeof(vuint64), "oops");
+    u.f1 = v.x;
+    u.f2 = v.y;
+    auto ip = map.find(u.i64);
+    if (ip) {
+      /*
+      union __attribute__((packed)) {
+        struct __attribute__((packed)) { float f1, f2; };
+        vuint64 i64;
+      } u1;
+      u1.f1 = list[*ip].x;
+      u1.f2 = list[*ip].y;
+      GCon->Logf("looking for (%g,%g); found (%g,%g) at %d (0x%08llx  0x%08llx)", v.x, v.y, list[*ip].x, list[*ip].y, *ip, u.i64, u1.i64);
+      */
+      return *ip;
+    }
+    vint32 idx = list.length();
+    list.append(TVec(v.x, v.y));
+    map.put(u.i64, idx);
+    return idx;
+  }
+};
+
+
+//==========================================================================
+//
+//  VLevel::DebugSaveLevel
+//
+//  this saves everything except thinkers, so i can load it for
+//  further experiments
+//
+//==========================================================================
+void VLevel::DebugSaveLevel (VStream &strm) {
+  writef(strm, "Namespace = \"VavoomDebug\";\n");
+
+  VertexPool vpool;
+
+  // collect vertices
+  for (int f = 0; f < NumLines; ++f) {
+    const line_t *line = &Lines[f];
+    vpool.put(*line->v1);
+    vpool.put(*line->v2);
+  }
+
+  // write vertices
+  writef(strm, "\n");
+  for (int f = 0; f < vpool.list.length(); ++f) {
+    writef(strm, "\nvertex // %d\n", f);
+    writef(strm, "{\n");
+    if ((int)vpool.list[f].x == vpool.list[f].x) {
+      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
+    } else {
+      writef(strm, "  x = %g;\n", vpool.list[f].x);
+    }
+    if ((int)vpool.list[f].y == vpool.list[f].y) {
+      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
+    } else {
+      writef(strm, "  y = %g;\n", vpool.list[f].y);
+    }
+    writef(strm, "}\n");
+  }
+
+  // write lines
+  writef(strm, "\n");
+  for (int f = 0; f < NumLines; ++f) {
+    const line_t *line = &Lines[f];
+    writef(strm, "\nlinedef // %d\n", f);
+    writef(strm, "{\n");
+    if (line->lineTag && line->lineTag != -1) writef(strm, "  id = %d;\n", line->lineTag);
+    writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
+    writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
+    check(line->sidenum[0] >= 0);
+    writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
+    if (line->sidenum[1] >= 0) writef(strm, "  sideback = %d;\n", line->sidenum[1]);
+    // flags
+    if (line->flags&ML_BLOCKING) writef(strm, "  blocking = true;\n");
+    if (line->flags&ML_BLOCKMONSTERS) writef(strm, "  blockmonsters = true;\n");
+    if (line->flags&ML_TWOSIDED) writef(strm, "  twosided = true;\n");
+    if (line->flags&ML_DONTPEGTOP) writef(strm, "  dontpegtop = true;\n");
+    if (line->flags&ML_DONTPEGBOTTOM) writef(strm, "  dontpegbottom = true;\n");
+    if (line->flags&ML_SECRET) writef(strm, "  secret = true;\n");
+    if (line->flags&ML_SOUNDBLOCK) writef(strm, "  blocksound = true;\n");
+    if (line->flags&ML_DONTDRAW) writef(strm, "  dontdraw = true;\n");
+    if (line->flags&ML_MAPPED) writef(strm, "  mapped = true;\n");
+    if (line->flags&ML_REPEAT_SPECIAL) writef(strm, "  repeatspecial = true;\n");
+    if (line->flags&ML_MONSTERSCANACTIVATE) writef(strm, "  monsteractivate = true;\n");
+    if (line->flags&ML_BLOCKPLAYERS) writef(strm, "  blockplayers = true;\n");
+    if (line->flags&ML_BLOCKEVERYTHING) writef(strm, "  blockeverything = true;\n");
+    if (line->flags&ML_ZONEBOUNDARY) writef(strm, "  zoneboundary = true;\n");
+    if (line->flags&ML_ADDITIVE) writef(strm, "  renderstyle = \"add\";\n");
+    if (line->flags&ML_RAILING) writef(strm, "  jumpover = true;\n");
+    if (line->flags&ML_BLOCK_FLOATERS) writef(strm, "  blockfloaters = true;\n");
+    if (line->flags&ML_CLIP_MIDTEX) writef(strm, "  clipmidtex = true;\n");
+    if (line->flags&ML_WRAP_MIDTEX) writef(strm, "  wrapmidtex = true;\n");
+    if (line->flags&ML_3DMIDTEX) writef(strm, "  midtex3d = true;\n");
+    if (line->flags&ML_3DMIDTEX_IMPASS) writef(strm, "  midtex3dimpassible = true;\n");
+    if (line->flags&ML_CHECKSWITCHRANGE) writef(strm, "  checkswitchrange = true;\n");
+    if (line->flags&ML_FIRSTSIDEONLY) writef(strm, "  firstsideonly = true;\n");
+    if (line->flags&ML_BLOCKPROJECTILE) writef(strm, "  blockprojectiles = true;\n");
+    if (line->flags&ML_BLOCKUSE) writef(strm, "  blockuse = true;\n");
+    if (line->flags&ML_BLOCKSIGHT) writef(strm, "  blocksight = true;\n");
+    if (line->flags&ML_BLOCKHITSCAN) writef(strm, "  blockhitscan = true;\n");
+    if (line->flags&ML_KEEPDATA) writef(strm, "  keepdata = true;\n"); // k8vavoom
+    if (line->flags&ML_NODECAL) writef(strm, "  nodecal = true;\n"); // k8vavoom
+    // spac flags
+    if (line->SpacFlags&SPAC_Cross) writef(strm, "  playercross = true;\n");
+    if (line->SpacFlags&SPAC_Use) writef(strm, "  playeruse = true;\n");
+    if (line->SpacFlags&SPAC_MCross) writef(strm, "  monstercross = true;\n");
+    if (line->SpacFlags&SPAC_Impact) writef(strm, "  impact = true;\n");
+    if (line->SpacFlags&SPAC_Push) writef(strm, "  playerpush = true;\n");
+    if (line->SpacFlags&SPAC_PCross) writef(strm, "  missilecross = true;\n");
+    if (line->SpacFlags&SPAC_UseThrough) writef(strm, "  usethrough = true;\n"); // k8vavoom
+    if (line->SpacFlags&SPAC_AnyCross) writef(strm, "  anycross = true;\n");
+    if (line->SpacFlags&SPAC_MUse) writef(strm, "  monsteruse = true;\n");
+    if (line->SpacFlags&SPAC_MPush) writef(strm, "  monsterpush = true;\n"); // k8vavoom
+    if (line->SpacFlags&SPAC_UseBack) writef(strm, "  playeruseback = true;\n"); // k8vavoom
+    // other
+    if (line->alpha < 1.0f) writef(strm, "  alpha = %g;\n", line->alpha);
+    // special
+    if (line->special) writef(strm, "  special = %d;\n", line->special);
+    if (line->arg1) writef(strm, "  arg1 = %d;\n", line->arg1);
+    if (line->arg2) writef(strm, "  arg2 = %d;\n", line->arg2);
+    if (line->arg3) writef(strm, "  arg3 = %d;\n", line->arg3);
+    if (line->arg4) writef(strm, "  arg4 = %d;\n", line->arg4);
+    if (line->arg5) writef(strm, "  arg5 = %d;\n", line->arg5);
+    if (line->locknumber) writef(strm, "  locknumber = %d;\n", line->locknumber);
+    writef(strm, "}\n");
+  }
+
+  // write sides
+  writef(strm, "\n");
+  for (int f = 0; f < NumSides; ++f) {
+    const side_t *side = &Sides[f];
+    writef(strm, "\nsidedef // %d\n", f);
+    writef(strm, "{\n");
+    if (side->Sector) writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(side->Sector-&Sectors[0]));
+    if (side->TopTexture.id > 0) writef(strm, "  texturetop = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->TopTexture.id)).quote());
+    if (side->BottomTexture.id > 0) writef(strm, "  texturebottom = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->BottomTexture.id)).quote());
+    if (side->MidTexture.id > 0) writef(strm, "  texturemiddle = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->MidTexture.id)).quote());
+    // offset
+    if (side->Top.TextureOffset == side->Bot.TextureOffset && side->Top.TextureOffset == side->Mid.TextureOffset) {
+      if (side->Top.TextureOffset) writef(strm, "  offsetx = %g;\n", side->Top.TextureOffset);
+    } else {
+      if (side->Top.TextureOffset) writef(strm, "  offsetx_top = %g;\n", side->Top.TextureOffset);
+      if (side->Bot.TextureOffset) writef(strm, "  offsetx_bottom = %g;\n", side->Bot.TextureOffset);
+      if (side->Mid.TextureOffset) writef(strm, "  offsetx_mid = %g;\n", side->Mid.TextureOffset);
+    }
+    if (side->Top.RowOffset == side->Bot.RowOffset && side->Top.RowOffset == side->Mid.RowOffset) {
+      if (side->Top.RowOffset) writef(strm, "  offsety = %g;\n", side->Top.RowOffset);
+    } else {
+      if (side->Top.RowOffset) writef(strm, "  offsety_top = %g;\n", side->Top.RowOffset);
+      if (side->Bot.RowOffset) writef(strm, "  offsety_bottom = %g;\n", side->Bot.RowOffset);
+      if (side->Mid.RowOffset) writef(strm, "  offsety_mid = %g;\n", side->Mid.RowOffset);
+    }
+    // scale
+    if (side->Top.ScaleX != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleX);
+    if (side->Top.ScaleY != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleY);
+    if (side->Bot.ScaleX != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleX);
+    if (side->Bot.ScaleY != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleY);
+    if (side->Mid.ScaleX != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleX);
+    if (side->Mid.ScaleY != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleY);
+    // other
+    writef(strm, "  nofakecontrast = true;\n"); // k8vavoom, not right
+    if (side->Light) writef(strm, "  light = %d;\n", side->Light); // k8vavoom, not right
+    // flags
+    if (side->Flags&SDF_ABSLIGHT) writef(strm, "  lightabsolute = true;\n");
+    if (side->Flags&SDF_WRAPMIDTEX) writef(strm, "  wrapmidtex = true;\n");
+    if (side->Flags&SDF_CLIPMIDTEX) writef(strm, "  clipmidtex = true;\n");
+    writef(strm, "}\n");
+  }
+
+  // sectors
+  writef(strm, "\n");
+  for (int f = 0; f < NumSectors; ++f) {
+    const sector_t *sector = &Sectors[f];
+    writef(strm, "\nsector // %d\n", f);
+    writef(strm, "{\n");
+    if (sector->sectorTag) writef(strm, "  id = %d;\n", sector->sectorTag);
+    if (sector->special) writef(strm, "  special = %d;\n", sector->special);
+    if (sector->floor.normal.z == 1.0f) {
+      // normal
+      writef(strm, "  heightfloor = %g;\n", sector->floor.minz);
+    } else {
+      // slope
+      writef(strm, "  floornormal_x = %g;\n", sector->floor.normal.x); // k8vavoom
+      writef(strm, "  floornormal_y = %g;\n", sector->floor.normal.y); // k8vavoom
+      writef(strm, "  floornormal_z = %g;\n", sector->floor.normal.z); // k8vavoom
+      writef(strm, "  floordist = %g;\n", sector->floor.dist); // k8vavoom
+    }
+    if (sector->ceiling.normal.z == -1.0f) {
+      // normal
+      writef(strm, "  heightceiling = %g;\n", sector->ceiling.minz);
+    } else {
+      // slope
+      writef(strm, "  ceilingnormal_x = %g;\n", sector->ceiling.normal.x); // k8vavoom
+      writef(strm, "  ceilingnormal_y = %g;\n", sector->ceiling.normal.y); // k8vavoom
+      writef(strm, "  ceilingnormal_z = %g;\n", sector->ceiling.normal.z); // k8vavoom
+      writef(strm, "  ceilingdist = %g;\n", sector->ceiling.dist); // k8vavoom
+    }
+    // textures
+    writef(strm, "  texturefloor = \"%s\";\n", (sector->floor.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->floor.pic.id)).quote() : "-"));
+    writef(strm, "  textureceiling = \"%s\";\n", (sector->ceiling.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->ceiling.pic.id)).quote() : "-"));
+    //TODO: write other floor/ceiling parameters
+    // light
+    writef(strm, "  lightlevel = %d;\n", sector->params.lightlevel);
+    if ((sector->params.LightColor&0xffffff) != 0xffffff) writef(strm, "  lightcolor = 0x%06x;\n", sector->params.LightColor);
+    if (sector->params.Fade) writef(strm, "  fadecolor = 0x%08x;\n", sector->params.Fade);
+    // other
+    if (sector->Damage) writef(strm, "  damageamount = %d;\n", sector->Damage);
+    // write other crap
+    writef(strm, "}\n");
+  }
+
+  //*// non-standard sections //*//
+  /*
+  // seg vertices
+  // collect
+  vpool.clear();
+  for (int f = 0; f < NumSegs; ++f) {
+    const seg_t *seg = &Segs[f];
+    vpool.put(*seg->v1);
+    vpool.put(*seg->v2);
+  }
+  // write
+  writef(strm, "\n");
+  for (int f = 0; f < vpool.list.length(); ++f) {
+    writef(strm, "\nsegvertex // %d\n", f);
+    writef(strm, "{\n");
+    if ((int)vpool.list[f].x == vpool.list[f].x) {
+      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
+    } else {
+      writef(strm, "  x = %g;\n", vpool.list[f].x);
+    }
+    if ((int)vpool.list[f].y == vpool.list[f].y) {
+      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
+    } else {
+      writef(strm, "  y = %g;\n", vpool.list[f].y);
+    }
+    writef(strm, "}\n");
+  }
+  */
+
+  // segs
+  writef(strm, "\n");
+  for (int f = 0; f < NumSegs; ++f) {
+    const seg_t *seg = &Segs[f];
+    writef(strm, "\nseg // %d\n", f);
+    writef(strm, "{\n");
+    /*
+    writef(strm, "  v1 = %d;\n", vpool.put(*seg->v1));
+    writef(strm, "  v2 = %d;\n", vpool.put(*seg->v2));
+    */
+    writef(strm, "  v1_x = %g;\n", seg->v1->x);
+    writef(strm, "  v1_y = %g;\n", seg->v1->y);
+    writef(strm, "  v2_x = %g;\n", seg->v2->x);
+    writef(strm, "  v2_y = %g;\n", seg->v2->y);
+    writef(strm, "  offset = %g;\n", seg->offset);
+    writef(strm, "  length = %g;\n", seg->length);
+    if (seg->linedef) {
+      writef(strm, "  side = %d;\n", seg->side);
+      // not a miniseg
+      check(seg->sidedef);
+      writef(strm, "  sidedef = %d;\n", (int)(ptrdiff_t)(seg->sidedef-&Sides[0]));
+      check(seg->linedef);
+      writef(strm, "  linedef = %d;\n", (int)(ptrdiff_t)(seg->linedef-&Lines[0]));
+    }
+    if (seg->partner) writef(strm, "  partner = %d;\n", (int)(ptrdiff_t)(seg->partner-&Segs[0]));
+    check(seg->front_sub);
+    writef(strm, "  front_sub = %d;\n", (int)(ptrdiff_t)(seg->front_sub-&Subsectors[0]));
+    writef(strm, "}\n");
+  }
+
+  // subsectors
+  writef(strm, "\n");
+  for (int f = 0; f < NumSubsectors; ++f) {
+    const subsector_t *sub = &Subsectors[f];
+    writef(strm, "\nsubsector // %d\n", f);
+    writef(strm, "{\n");
+    check(sub->sector);
+    writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(sub->sector-&Sectors[0]));
+    writef(strm, "  firstseg = %d;\n", sub->firstline);
+    writef(strm, "  numsegs = %d;\n", sub->numlines);
+    check(sub->parent);
+    writef(strm, "  bspnode = %d;\n", (int)(ptrdiff_t)(sub->parent-&Nodes[0]));
+    writef(strm, "}\n");
+  }
+
+  // bsp nodes
+  writef(strm, "\n");
+  for (int f = 0; f < NumNodes; ++f) {
+    const node_t *node = &Nodes[f];
+    writef(strm, "\nbspnode // %d\n", f);
+    writef(strm, "{\n");
+    // plane
+    writef(strm, "  plane_normal_x = %g;\n", node->normal.x);
+    writef(strm, "  plane_normal_y = %g;\n", node->normal.y);
+    writef(strm, "  plane_normal_z = %g;\n", node->normal.z);
+    writef(strm, "  plane_dist = %g;\n", node->dist);
+    // child 0
+    writef(strm, "  bbox_child0_min_x = %g;\n", node->bbox[0][0]);
+    writef(strm, "  bbox_child0_min_y = %g;\n", node->bbox[0][1]);
+    writef(strm, "  bbox_child0_min_z = %g;\n", node->bbox[0][2]);
+    writef(strm, "  bbox_child0_max_x = %g;\n", node->bbox[0][3]);
+    writef(strm, "  bbox_child0_max_y = %g;\n", node->bbox[0][4]);
+    writef(strm, "  bbox_child0_max_z = %g;\n", node->bbox[0][5]);
+    // child 1
+    writef(strm, "  bbox_child1_min_x = %g;\n", node->bbox[1][0]);
+    writef(strm, "  bbox_child1_min_y = %g;\n", node->bbox[1][1]);
+    writef(strm, "  bbox_child1_min_z = %g;\n", node->bbox[1][2]);
+    writef(strm, "  bbox_child1_max_x = %g;\n", node->bbox[1][3]);
+    writef(strm, "  bbox_child1_max_y = %g;\n", node->bbox[1][4]);
+    writef(strm, "  bbox_child1_max_z = %g;\n", node->bbox[1][5]);
+    // children
+    if (node->children[0]&NF_SUBSECTOR) {
+      writef(strm, "  subsector0 = %d;\n", node->children[0]&(~NF_SUBSECTOR));
+    } else {
+      writef(strm, "  node0 = %d;\n", node->children[0]);
+    }
+    if (node->children[1]&NF_SUBSECTOR) {
+      writef(strm, "  subsector1 = %d;\n", node->children[1]&(~NF_SUBSECTOR));
+    } else {
+      writef(strm, "  node1 = %d;\n", node->children[1]);
+    }
+    // parent (if any)
+    if (node->parent) writef(strm, "  parent = %d;\n", (int)(ptrdiff_t)(node->parent-&Nodes[0]));
+    writef(strm, "}\n");
+  }
+
+  // write player starts
+  int psidx[8];
+  for (int f = 0; f < 8; ++f) psidx[f] = -1;
+  bool foundStart = false;
+  for (int f = 0; f < NumThings; ++f) {
+    const mthing_t *thing = &Things[f];
+    int idx = -1;
+    if (thing->type >= 1 && thing->type <= 4) idx = (thing->type-1);
+    if (thing->type >= 4001 && thing->type <= 4004) idx = (thing->type-4001+4);
+    if (idx >= 0) {
+      foundStart = true;
+      psidx[idx] = f;
+    }
+  }
+  if (foundStart) {
+    writef(strm, "\n");
+    for (int f = 0; f < 8; ++f) {
+      int idx = psidx[f];
+      if (idx < 0) continue;
+      writef(strm, "\nplayerstart\n");
+      writef(strm, "{\n");
+      writef(strm, "  player = %d;\n", idx);
+      writef(strm, "  x = %g;\n", Things[idx].x);
+      writef(strm, "  y = %g;\n", Things[idx].y);
+      writef(strm, "  angle = %d;\n", Things[idx].angle);
+      writef(strm, "}\n");
+    }
+  }
 }
 
 
@@ -321,11 +974,14 @@ void VLevel::UpdateSubsectorBBox (int num, float bbox[6], const float skyheight)
   ssbbox[5] = max2(ssbbox[5], (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz));
   FixBBoxZ(ssbbox);
 
+  /*
   FixBBoxZ(bbox);
   for (unsigned f = 0; f < 3; ++f) {
     bbox[0+f] = min2(bbox[0+f], ssbbox[0+f]);
     bbox[3+f] = max2(bbox[3+f], ssbbox[3+f]);
   }
+  */
+  memcpy(bbox, ssbbox, sizeof(ssbbox));
   FixBBoxZ(bbox);
 
   //bbox[2] = sub->sector->floor.minz;
@@ -353,6 +1009,8 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float bbox[6], const float skyheig
       RecalcWorldNodeBBox(bsp->children[side], bsp->bbox[side], skyheight);
       FixBBoxZ(bsp->bbox[side]);
       for (unsigned f = 0; f < 3; ++f) {
+        if (bbox[0+f] <= -99990.0f) bbox[0+f] = bsp->bbox[side][0+f];
+        if (bbox[3+f] >= +99990.0f) bbox[3+f] = bsp->bbox[side][3+f];
         bbox[0+f] = min2(bbox[0+f], bsp->bbox[side][0+f]);
         bbox[3+f] = max2(bbox[3+f], bsp->bbox[side][3+f]);
       }
@@ -398,7 +1056,14 @@ void VLevel::RecalcWorldBBoxes () {
   */
   if (NumSectors == 0 || NumSubsectors == 0) return; // just in case
   const float skyheight = CalcSkyHeight();
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+  for (auto &&node : allNodes()) {
+    // special values
+    node.bbox[0][0+2] = -99999.0f;
+    node.bbox[0][3+2] = +99999.0f;
+    node.bbox[1][0+2] = -99999.0f;
+    node.bbox[1][3+2] = +99999.0f;
+  }
+  float dummy_bbox[6] = { -99999.0f, -99999.0f, -99999.0f, 99999.0f, 99999.0f, 99999.0f };
   RecalcWorldNodeBBox(NumNodes-1, dummy_bbox, skyheight);
 }
 
@@ -3153,667 +3818,6 @@ void SwapPlanes (sector_t *s) {
 
   s->floor.pic = s->ceiling.pic;
   s->ceiling.pic = tempTexture;
-}
-
-
-//==========================================================================
-//
-//  CalcSecMinMaxs
-//
-//==========================================================================
-void CalcSecMinMaxs (sector_t *sector) {
-  if (!sector) return; // k8: just in case
-
-  float minz;
-  float maxz;
-
-  if (sector->floor.normal.z == 1.0f) {
-    // horisontal floor
-    sector->floor.minz = sector->floor.dist;
-    sector->floor.maxz = sector->floor.dist;
-  } else {
-    // sloped floor
-    minz = 99999.0f;
-    maxz = -99999.0f;
-    for (int i = 0; i < sector->linecount; ++i) {
-      float z = sector->floor.GetPointZ(*sector->lines[i]->v1);
-      if (minz > z) minz = z;
-      if (maxz < z) maxz = z;
-      z = sector->floor.GetPointZ(*sector->lines[i]->v2);
-      if (minz > z) minz = z;
-      if (maxz < z) maxz = z;
-    }
-    sector->floor.minz = minz;
-    sector->floor.maxz = maxz;
-  }
-
-  if (sector->ceiling.normal.z == -1.0f) {
-    // horisontal ceiling
-    sector->ceiling.minz = -sector->ceiling.dist;
-    sector->ceiling.maxz = -sector->ceiling.dist;
-  } else {
-    // sloped ceiling
-    minz = 99999.0f;
-    maxz = -99999.0f;
-    for (int i = 0; i < sector->linecount; ++i) {
-      float z = sector->ceiling.GetPointZ(*sector->lines[i]->v1);
-      if (minz > z) minz = z;
-      if (maxz < z) maxz = z;
-      z = sector->ceiling.GetPointZ(*sector->lines[i]->v2);
-      if (minz > z) minz = z;
-      if (maxz < z) maxz = z;
-    }
-    sector->ceiling.minz = minz;
-    sector->ceiling.maxz = maxz;
-  }
-
-  /*
-  VLevel *level = GLevel;
-  if (!level) {
-    level = GClLevel;
-    if (!level) return;
-  }
-  */
-
-  // update BSP
-  //GCon->Logf(" :: sector %d", (int)(ptrdiff_t)(sector-GLevel->Sectors));
-  for (subsector_t *sub = sector->subsectors; sub; sub = sub->seclink) {
-    node_t *node = sub->parent;
-    //GCon->Logf("  sub %d; pc=%d; nodeparent=%d; next=%d", (int)(ptrdiff_t)(sub-GLevel->Subsectors), sub->parentChild, (int)(ptrdiff_t)(node-GLevel->Nodes), (sub->seclink ? (int)(ptrdiff_t)(sub->seclink-GLevel->Subsectors) : -1));
-    if (!node) continue;
-    int childnum = sub->parentChild;
-    if (node->bbox[childnum][2] <= sector->floor.minz && node->bbox[childnum][5] >= sector->ceiling.maxz) continue;
-    // fix bounding boxes
-    float currMinZ = min2(node->bbox[childnum][2], sector->floor.minz);
-    float currMaxZ = max2(node->bbox[childnum][5], sector->ceiling.maxz);
-    if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
-    node->bbox[childnum][2] = currMinZ;
-    node->bbox[childnum][5] = currMaxZ;
-    for (; node->parent; node = node->parent) {
-      node_t *pnode = node->parent;
-           if (pnode->children[0] == node->index) childnum = 0;
-      else if (pnode->children[1] == node->index) childnum = 1;
-      else Sys_Error("invalid BSP tree");
-      const float parCMinZ = pnode->bbox[childnum][2];
-      const float parCMaxZ = pnode->bbox[childnum][5];
-      if (parCMinZ <= currMinZ && parCMaxZ >= currMaxZ) continue; // we're done here
-      pnode->bbox[childnum][2] = min2(parCMinZ, currMinZ);
-      pnode->bbox[childnum][5] = max2(parCMaxZ, currMaxZ);
-      FixBBoxZ(pnode->bbox[childnum]);
-      currMinZ = min2(min2(parCMinZ, pnode->bbox[childnum^1][2]), currMinZ);
-      currMaxZ = max2(max2(parCMaxZ, pnode->bbox[childnum^1][5]), currMaxZ);
-      if (currMinZ > currMaxZ) { float tmp = currMinZ; currMinZ = currMaxZ; currMaxZ = tmp; } // just in case
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  Natives
-//
-//==========================================================================
-IMPLEMENT_FUNCTION(VLevel, GetLineIndex) {
-  P_GET_PTR(line_t, line);
-  P_GET_SELF;
-  int idx = -1;
-  if (line) idx = (int)(ptrdiff_t)(line-Self->Lines);
-  RET_INT(idx);
-}
-
-IMPLEMENT_FUNCTION(VLevel, PointInSector) {
-  P_GET_VEC(Point);
-  P_GET_SELF;
-  RET_PTR(Self->PointInSubsector(Point)->sector);
-}
-
-IMPLEMENT_FUNCTION(VLevel, PointInSubsector) {
-  P_GET_VEC(Point);
-  P_GET_SELF;
-  RET_PTR(Self->PointInSubsector(Point));
-}
-
-IMPLEMENT_FUNCTION(VLevel, ChangeSector) {
-  P_GET_INT(crunch);
-  P_GET_PTR(sector_t, sec);
-  P_GET_SELF;
-  RET_BOOL(Self->ChangeSector(sec, crunch));
-}
-
-IMPLEMENT_FUNCTION(VLevel, ChangeOneSectorInternal) {
-  P_GET_PTR(sector_t, sec);
-  P_GET_SELF;
-  Self->ChangeOneSectorInternal(sec);
-}
-
-IMPLEMENT_FUNCTION(VLevel, AddExtraFloor) {
-  P_GET_PTR(sector_t, dst);
-  P_GET_PTR(line_t, line);
-  P_GET_SELF;
-  Self->AddExtraFloor(line, dst);
-}
-
-IMPLEMENT_FUNCTION(VLevel, SwapPlanes) {
-  P_GET_PTR(sector_t, s);
-  P_GET_SELF;
-  (void)Self;
-  SwapPlanes(s);
-}
-
-IMPLEMENT_FUNCTION(VLevel, SetFloorLightSector) {
-  P_GET_PTR(sector_t, SrcSector);
-  P_GET_PTR(sector_t, Sector);
-  P_GET_SELF;
-  Sector->floor.LightSourceSector = SrcSector-Self->Sectors;
-}
-
-IMPLEMENT_FUNCTION(VLevel, SetCeilingLightSector) {
-  P_GET_PTR(sector_t, SrcSector);
-  P_GET_PTR(sector_t, Sector);
-  P_GET_SELF;
-  Sector->ceiling.LightSourceSector = SrcSector-Self->Sectors;
-}
-
-IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
-  P_GET_INT(Flags);
-  P_GET_PTR(sector_t, SrcSector);
-  P_GET_PTR(sector_t, Sector);
-  P_GET_SELF;
-  (void)Flags;
-  (void)SrcSector;
-  if (Self->RenderData) Self->RenderData->SetupFakeFloors(Sector);
-}
-
-// native final int FindSectorFromTag (out sector_t *Sector, int tag, optional int start);
-IMPLEMENT_FUNCTION(VLevel, FindSectorFromTag) {
-  P_GET_INT_OPT(start, -1);
-  P_GET_INT(tag);
-  P_GET_PTR(sector_t *, osectorp);
-  P_GET_SELF;
-  sector_t *sector;
-  start = Self->FindSectorFromTag(sector, tag, start);
-  if (osectorp) *osectorp = sector;
-  RET_INT(start);
-  //RET_INT(Self->FindSectorFromTag(tag, start));
-}
-
-IMPLEMENT_FUNCTION(VLevel, FindLine) {
-  P_GET_PTR(int, searchPosition);
-  P_GET_INT(lineTag);
-  P_GET_SELF;
-  RET_PTR(Self->FindLine(lineTag, searchPosition));
-}
-
-//native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
-IMPLEMENT_FUNCTION(VLevel, SectorSetLink) {
-  P_GET_INT(movetype);
-  P_GET_INT(surface);
-  P_GET_INT(tag);
-  P_GET_INT(controltag);
-  P_GET_SELF;
-  Self->SectorSetLink(controltag, tag, surface, movetype);
-}
-
-IMPLEMENT_FUNCTION(VLevel, SetBodyQueueTrans) {
-  P_GET_INT(Trans);
-  P_GET_INT(Slot);
-  P_GET_SELF;
-  RET_INT(Self->SetBodyQueueTrans(Slot, Trans));
-}
-
-//native final void AddDecal (TVec org, name dectype, int side, line_t *li);
-IMPLEMENT_FUNCTION(VLevel, AddDecal) {
-  P_GET_PTR(line_t, li);
-  P_GET_INT(side);
-  P_GET_NAME(dectype);
-  P_GET_VEC(org);
-  P_GET_SELF;
-  Self->AddDecal(org, dectype, side, li, 0);
-}
-
-//native final void AddDecalById (TVec org, int id, int side, line_t *li);
-IMPLEMENT_FUNCTION(VLevel, AddDecalById) {
-  P_GET_PTR(line_t, li);
-  P_GET_INT(side);
-  P_GET_INT(id);
-  P_GET_VEC(org);
-  P_GET_SELF;
-  Self->AddDecalById(org, id, side, li, 0);
-}
-
-
-//native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
-IMPLEMENT_FUNCTION(VLevel, doRecursiveSound) {
-  P_GET_VEC(sndorigin);
-  P_GET_FLOAT(maxdist);
-  P_GET_PTR(VEntity, soundtarget);
-  P_GET_INT(soundblocks);
-  P_GET_PTR(sector_t, sec);
-  P_GET_PTR(TArray<VEntity *>, elist);
-  P_GET_INT(validcount);
-  P_GET_SELF;
-  Self->doRecursiveSound(validcount, *elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
-}
-
-
-//native static final float CD_SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
-//                                               optional out TPlane hitPlane, optional out TVec contactPoint,
-//                                               optional out CD_HitType hitType);
-IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
-  P_GET_PTR_OPT(CD_HitType, hitType, nullptr);
-  P_GET_PTR_OPT(TVec, contactPoint, nullptr);
-  P_GET_PTR_OPT(TPlane, hitPlane, nullptr);
-  P_GET_VEC(bmax);
-  P_GET_VEC(bmin);
-  P_GET_VEC(vend);
-  P_GET_VEC(vstart);
-  P_GET_PTR(const line_t, ld);
-  RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType));
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class DebugExportError : public VavoomError {
-public:
-  explicit DebugExportError (const char *text) : VavoomError(text) {}
-};
-
-
-//==========================================================================
-//
-//  writef
-//
-//==========================================================================
-static __attribute__((format(printf, 2, 3))) void writef (VStream &strm, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  char *res = vavarg(fmt, ap);
-  va_end(ap);
-  if (res && res[0]) {
-    strm.Serialise(res, (int)strlen(res));
-    if (strm.IsError()) throw DebugExportError("write error");
-  }
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VertexPool {
-public:
-  TMapNC<vuint64, vint32> map; // key: two floats; value: index
-  TArray<TVec> list;
-
-public:
-  VertexPool () {}
-  VertexPool (const VertexPool &) = delete;
-  VertexPool &operator = (const VertexPool &) = delete;
-
-  void clear () {
-    map.clear();
-    list.clear();
-  }
-
-  // returns index
-  vint32 put (const TVec v) {
-    union __attribute__((packed)) {
-      struct __attribute__((packed)) { float f1, f2; };
-      vuint64 i64;
-    } u;
-    static_assert(sizeof(u) == sizeof(vuint64), "oops");
-    u.f1 = v.x;
-    u.f2 = v.y;
-    auto ip = map.find(u.i64);
-    if (ip) {
-      /*
-      union __attribute__((packed)) {
-        struct __attribute__((packed)) { float f1, f2; };
-        vuint64 i64;
-      } u1;
-      u1.f1 = list[*ip].x;
-      u1.f2 = list[*ip].y;
-      GCon->Logf("looking for (%g,%g); found (%g,%g) at %d (0x%08llx  0x%08llx)", v.x, v.y, list[*ip].x, list[*ip].y, *ip, u.i64, u1.i64);
-      */
-      return *ip;
-    }
-    vint32 idx = list.length();
-    list.append(TVec(v.x, v.y));
-    map.put(u.i64, idx);
-    return idx;
-  }
-};
-
-
-//==========================================================================
-//
-//  VLevel::DebugSaveLevel
-//
-//  this saves everything except thinkers, so i can load it for
-//  further experiments
-//
-//==========================================================================
-void VLevel::DebugSaveLevel (VStream &strm) {
-  writef(strm, "Namespace = \"VavoomDebug\";\n");
-
-  VertexPool vpool;
-
-  // collect vertices
-  for (int f = 0; f < NumLines; ++f) {
-    const line_t *line = &Lines[f];
-    vpool.put(*line->v1);
-    vpool.put(*line->v2);
-  }
-
-  // write vertices
-  writef(strm, "\n");
-  for (int f = 0; f < vpool.list.length(); ++f) {
-    writef(strm, "\nvertex // %d\n", f);
-    writef(strm, "{\n");
-    if ((int)vpool.list[f].x == vpool.list[f].x) {
-      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
-    } else {
-      writef(strm, "  x = %g;\n", vpool.list[f].x);
-    }
-    if ((int)vpool.list[f].y == vpool.list[f].y) {
-      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
-    } else {
-      writef(strm, "  y = %g;\n", vpool.list[f].y);
-    }
-    writef(strm, "}\n");
-  }
-
-  // write lines
-  writef(strm, "\n");
-  for (int f = 0; f < NumLines; ++f) {
-    const line_t *line = &Lines[f];
-    writef(strm, "\nlinedef // %d\n", f);
-    writef(strm, "{\n");
-    if (line->lineTag && line->lineTag != -1) writef(strm, "  id = %d;\n", line->lineTag);
-    writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
-    writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
-    check(line->sidenum[0] >= 0);
-    writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
-    if (line->sidenum[1] >= 0) writef(strm, "  sideback = %d;\n", line->sidenum[1]);
-    // flags
-    if (line->flags&ML_BLOCKING) writef(strm, "  blocking = true;\n");
-    if (line->flags&ML_BLOCKMONSTERS) writef(strm, "  blockmonsters = true;\n");
-    if (line->flags&ML_TWOSIDED) writef(strm, "  twosided = true;\n");
-    if (line->flags&ML_DONTPEGTOP) writef(strm, "  dontpegtop = true;\n");
-    if (line->flags&ML_DONTPEGBOTTOM) writef(strm, "  dontpegbottom = true;\n");
-    if (line->flags&ML_SECRET) writef(strm, "  secret = true;\n");
-    if (line->flags&ML_SOUNDBLOCK) writef(strm, "  blocksound = true;\n");
-    if (line->flags&ML_DONTDRAW) writef(strm, "  dontdraw = true;\n");
-    if (line->flags&ML_MAPPED) writef(strm, "  mapped = true;\n");
-    if (line->flags&ML_REPEAT_SPECIAL) writef(strm, "  repeatspecial = true;\n");
-    if (line->flags&ML_MONSTERSCANACTIVATE) writef(strm, "  monsteractivate = true;\n");
-    if (line->flags&ML_BLOCKPLAYERS) writef(strm, "  blockplayers = true;\n");
-    if (line->flags&ML_BLOCKEVERYTHING) writef(strm, "  blockeverything = true;\n");
-    if (line->flags&ML_ZONEBOUNDARY) writef(strm, "  zoneboundary = true;\n");
-    if (line->flags&ML_ADDITIVE) writef(strm, "  renderstyle = \"add\";\n");
-    if (line->flags&ML_RAILING) writef(strm, "  jumpover = true;\n");
-    if (line->flags&ML_BLOCK_FLOATERS) writef(strm, "  blockfloaters = true;\n");
-    if (line->flags&ML_CLIP_MIDTEX) writef(strm, "  clipmidtex = true;\n");
-    if (line->flags&ML_WRAP_MIDTEX) writef(strm, "  wrapmidtex = true;\n");
-    if (line->flags&ML_3DMIDTEX) writef(strm, "  midtex3d = true;\n");
-    if (line->flags&ML_3DMIDTEX_IMPASS) writef(strm, "  midtex3dimpassible = true;\n");
-    if (line->flags&ML_CHECKSWITCHRANGE) writef(strm, "  checkswitchrange = true;\n");
-    if (line->flags&ML_FIRSTSIDEONLY) writef(strm, "  firstsideonly = true;\n");
-    if (line->flags&ML_BLOCKPROJECTILE) writef(strm, "  blockprojectiles = true;\n");
-    if (line->flags&ML_BLOCKUSE) writef(strm, "  blockuse = true;\n");
-    if (line->flags&ML_BLOCKSIGHT) writef(strm, "  blocksight = true;\n");
-    if (line->flags&ML_BLOCKHITSCAN) writef(strm, "  blockhitscan = true;\n");
-    if (line->flags&ML_KEEPDATA) writef(strm, "  keepdata = true;\n"); // k8vavoom
-    if (line->flags&ML_NODECAL) writef(strm, "  nodecal = true;\n"); // k8vavoom
-    // spac flags
-    if (line->SpacFlags&SPAC_Cross) writef(strm, "  playercross = true;\n");
-    if (line->SpacFlags&SPAC_Use) writef(strm, "  playeruse = true;\n");
-    if (line->SpacFlags&SPAC_MCross) writef(strm, "  monstercross = true;\n");
-    if (line->SpacFlags&SPAC_Impact) writef(strm, "  impact = true;\n");
-    if (line->SpacFlags&SPAC_Push) writef(strm, "  playerpush = true;\n");
-    if (line->SpacFlags&SPAC_PCross) writef(strm, "  missilecross = true;\n");
-    if (line->SpacFlags&SPAC_UseThrough) writef(strm, "  usethrough = true;\n"); // k8vavoom
-    if (line->SpacFlags&SPAC_AnyCross) writef(strm, "  anycross = true;\n");
-    if (line->SpacFlags&SPAC_MUse) writef(strm, "  monsteruse = true;\n");
-    if (line->SpacFlags&SPAC_MPush) writef(strm, "  monsterpush = true;\n"); // k8vavoom
-    if (line->SpacFlags&SPAC_UseBack) writef(strm, "  playeruseback = true;\n"); // k8vavoom
-    // other
-    if (line->alpha < 1.0f) writef(strm, "  alpha = %g;\n", line->alpha);
-    // special
-    if (line->special) writef(strm, "  special = %d;\n", line->special);
-    if (line->arg1) writef(strm, "  arg1 = %d;\n", line->arg1);
-    if (line->arg2) writef(strm, "  arg2 = %d;\n", line->arg2);
-    if (line->arg3) writef(strm, "  arg3 = %d;\n", line->arg3);
-    if (line->arg4) writef(strm, "  arg4 = %d;\n", line->arg4);
-    if (line->arg5) writef(strm, "  arg5 = %d;\n", line->arg5);
-    if (line->locknumber) writef(strm, "  locknumber = %d;\n", line->locknumber);
-    writef(strm, "}\n");
-  }
-
-  // write sides
-  writef(strm, "\n");
-  for (int f = 0; f < NumSides; ++f) {
-    const side_t *side = &Sides[f];
-    writef(strm, "\nsidedef // %d\n", f);
-    writef(strm, "{\n");
-    if (side->Sector) writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(side->Sector-&Sectors[0]));
-    if (side->TopTexture.id > 0) writef(strm, "  texturetop = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->TopTexture.id)).quote());
-    if (side->BottomTexture.id > 0) writef(strm, "  texturebottom = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->BottomTexture.id)).quote());
-    if (side->MidTexture.id > 0) writef(strm, "  texturemiddle = \"%s\";\n", *VStr(GTextureManager.GetTextureName(side->MidTexture.id)).quote());
-    // offset
-    if (side->Top.TextureOffset == side->Bot.TextureOffset && side->Top.TextureOffset == side->Mid.TextureOffset) {
-      if (side->Top.TextureOffset) writef(strm, "  offsetx = %g;\n", side->Top.TextureOffset);
-    } else {
-      if (side->Top.TextureOffset) writef(strm, "  offsetx_top = %g;\n", side->Top.TextureOffset);
-      if (side->Bot.TextureOffset) writef(strm, "  offsetx_bottom = %g;\n", side->Bot.TextureOffset);
-      if (side->Mid.TextureOffset) writef(strm, "  offsetx_mid = %g;\n", side->Mid.TextureOffset);
-    }
-    if (side->Top.RowOffset == side->Bot.RowOffset && side->Top.RowOffset == side->Mid.RowOffset) {
-      if (side->Top.RowOffset) writef(strm, "  offsety = %g;\n", side->Top.RowOffset);
-    } else {
-      if (side->Top.RowOffset) writef(strm, "  offsety_top = %g;\n", side->Top.RowOffset);
-      if (side->Bot.RowOffset) writef(strm, "  offsety_bottom = %g;\n", side->Bot.RowOffset);
-      if (side->Mid.RowOffset) writef(strm, "  offsety_mid = %g;\n", side->Mid.RowOffset);
-    }
-    // scale
-    if (side->Top.ScaleX != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleX);
-    if (side->Top.ScaleY != 1.0f) writef(strm, "  scaley_top = %g;\n", side->Top.ScaleY);
-    if (side->Bot.ScaleX != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleX);
-    if (side->Bot.ScaleY != 1.0f) writef(strm, "  scaley_bottom = %g;\n", side->Bot.ScaleY);
-    if (side->Mid.ScaleX != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleX);
-    if (side->Mid.ScaleY != 1.0f) writef(strm, "  scaley_mid = %g;\n", side->Mid.ScaleY);
-    // other
-    writef(strm, "  nofakecontrast = true;\n"); // k8vavoom, not right
-    if (side->Light) writef(strm, "  light = %d;\n", side->Light); // k8vavoom, not right
-    // flags
-    if (side->Flags&SDF_ABSLIGHT) writef(strm, "  lightabsolute = true;\n");
-    if (side->Flags&SDF_WRAPMIDTEX) writef(strm, "  wrapmidtex = true;\n");
-    if (side->Flags&SDF_CLIPMIDTEX) writef(strm, "  clipmidtex = true;\n");
-    writef(strm, "}\n");
-  }
-
-  // sectors
-  writef(strm, "\n");
-  for (int f = 0; f < NumSectors; ++f) {
-    const sector_t *sector = &Sectors[f];
-    writef(strm, "\nsector // %d\n", f);
-    writef(strm, "{\n");
-    if (sector->sectorTag) writef(strm, "  id = %d;\n", sector->sectorTag);
-    if (sector->special) writef(strm, "  special = %d;\n", sector->special);
-    if (sector->floor.normal.z == 1.0f) {
-      // normal
-      writef(strm, "  heightfloor = %g;\n", sector->floor.minz);
-    } else {
-      // slope
-      writef(strm, "  floornormal_x = %g;\n", sector->floor.normal.x); // k8vavoom
-      writef(strm, "  floornormal_y = %g;\n", sector->floor.normal.y); // k8vavoom
-      writef(strm, "  floornormal_z = %g;\n", sector->floor.normal.z); // k8vavoom
-      writef(strm, "  floordist = %g;\n", sector->floor.dist); // k8vavoom
-    }
-    if (sector->ceiling.normal.z == -1.0f) {
-      // normal
-      writef(strm, "  heightceiling = %g;\n", sector->ceiling.minz);
-    } else {
-      // slope
-      writef(strm, "  ceilingnormal_x = %g;\n", sector->ceiling.normal.x); // k8vavoom
-      writef(strm, "  ceilingnormal_y = %g;\n", sector->ceiling.normal.y); // k8vavoom
-      writef(strm, "  ceilingnormal_z = %g;\n", sector->ceiling.normal.z); // k8vavoom
-      writef(strm, "  ceilingdist = %g;\n", sector->ceiling.dist); // k8vavoom
-    }
-    // textures
-    writef(strm, "  texturefloor = \"%s\";\n", (sector->floor.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->floor.pic.id)).quote() : "-"));
-    writef(strm, "  textureceiling = \"%s\";\n", (sector->ceiling.pic.id > 0 ? *VStr(GTextureManager.GetTextureName(sector->ceiling.pic.id)).quote() : "-"));
-    //TODO: write other floor/ceiling parameters
-    // light
-    writef(strm, "  lightlevel = %d;\n", sector->params.lightlevel);
-    if ((sector->params.LightColor&0xffffff) != 0xffffff) writef(strm, "  lightcolor = 0x%06x;\n", sector->params.LightColor);
-    if (sector->params.Fade) writef(strm, "  fadecolor = 0x%08x;\n", sector->params.Fade);
-    // other
-    if (sector->Damage) writef(strm, "  damageamount = %d;\n", sector->Damage);
-    // write other crap
-    writef(strm, "}\n");
-  }
-
-  //*// non-standard sections //*//
-  /*
-  // seg vertices
-  // collect
-  vpool.clear();
-  for (int f = 0; f < NumSegs; ++f) {
-    const seg_t *seg = &Segs[f];
-    vpool.put(*seg->v1);
-    vpool.put(*seg->v2);
-  }
-  // write
-  writef(strm, "\n");
-  for (int f = 0; f < vpool.list.length(); ++f) {
-    writef(strm, "\nsegvertex // %d\n", f);
-    writef(strm, "{\n");
-    if ((int)vpool.list[f].x == vpool.list[f].x) {
-      writef(strm, "  x = %g.0;\n", vpool.list[f].x);
-    } else {
-      writef(strm, "  x = %g;\n", vpool.list[f].x);
-    }
-    if ((int)vpool.list[f].y == vpool.list[f].y) {
-      writef(strm, "  y = %g.0;\n", vpool.list[f].y);
-    } else {
-      writef(strm, "  y = %g;\n", vpool.list[f].y);
-    }
-    writef(strm, "}\n");
-  }
-  */
-
-  // segs
-  writef(strm, "\n");
-  for (int f = 0; f < NumSegs; ++f) {
-    const seg_t *seg = &Segs[f];
-    writef(strm, "\nseg // %d\n", f);
-    writef(strm, "{\n");
-    /*
-    writef(strm, "  v1 = %d;\n", vpool.put(*seg->v1));
-    writef(strm, "  v2 = %d;\n", vpool.put(*seg->v2));
-    */
-    writef(strm, "  v1_x = %g;\n", seg->v1->x);
-    writef(strm, "  v1_y = %g;\n", seg->v1->y);
-    writef(strm, "  v2_x = %g;\n", seg->v2->x);
-    writef(strm, "  v2_y = %g;\n", seg->v2->y);
-    writef(strm, "  offset = %g;\n", seg->offset);
-    writef(strm, "  length = %g;\n", seg->length);
-    if (seg->linedef) {
-      writef(strm, "  side = %d;\n", seg->side);
-      // not a miniseg
-      check(seg->sidedef);
-      writef(strm, "  sidedef = %d;\n", (int)(ptrdiff_t)(seg->sidedef-&Sides[0]));
-      check(seg->linedef);
-      writef(strm, "  linedef = %d;\n", (int)(ptrdiff_t)(seg->linedef-&Lines[0]));
-    }
-    if (seg->partner) writef(strm, "  partner = %d;\n", (int)(ptrdiff_t)(seg->partner-&Segs[0]));
-    check(seg->front_sub);
-    writef(strm, "  front_sub = %d;\n", (int)(ptrdiff_t)(seg->front_sub-&Subsectors[0]));
-    writef(strm, "}\n");
-  }
-
-  // subsectors
-  writef(strm, "\n");
-  for (int f = 0; f < NumSubsectors; ++f) {
-    const subsector_t *sub = &Subsectors[f];
-    writef(strm, "\nsubsector // %d\n", f);
-    writef(strm, "{\n");
-    check(sub->sector);
-    writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(sub->sector-&Sectors[0]));
-    writef(strm, "  firstseg = %d;\n", sub->firstline);
-    writef(strm, "  numsegs = %d;\n", sub->numlines);
-    check(sub->parent);
-    writef(strm, "  bspnode = %d;\n", (int)(ptrdiff_t)(sub->parent-&Nodes[0]));
-    writef(strm, "}\n");
-  }
-
-  // bsp nodes
-  writef(strm, "\n");
-  for (int f = 0; f < NumNodes; ++f) {
-    const node_t *node = &Nodes[f];
-    writef(strm, "\nbspnode // %d\n", f);
-    writef(strm, "{\n");
-    // plane
-    writef(strm, "  plane_normal_x = %g;\n", node->normal.x);
-    writef(strm, "  plane_normal_y = %g;\n", node->normal.y);
-    writef(strm, "  plane_normal_z = %g;\n", node->normal.z);
-    writef(strm, "  plane_dist = %g;\n", node->dist);
-    // child 0
-    writef(strm, "  bbox_child0_min_x = %g;\n", node->bbox[0][0]);
-    writef(strm, "  bbox_child0_min_y = %g;\n", node->bbox[0][1]);
-    writef(strm, "  bbox_child0_min_z = %g;\n", node->bbox[0][2]);
-    writef(strm, "  bbox_child0_max_x = %g;\n", node->bbox[0][3]);
-    writef(strm, "  bbox_child0_max_y = %g;\n", node->bbox[0][4]);
-    writef(strm, "  bbox_child0_max_z = %g;\n", node->bbox[0][5]);
-    // child 1
-    writef(strm, "  bbox_child1_min_x = %g;\n", node->bbox[1][0]);
-    writef(strm, "  bbox_child1_min_y = %g;\n", node->bbox[1][1]);
-    writef(strm, "  bbox_child1_min_z = %g;\n", node->bbox[1][2]);
-    writef(strm, "  bbox_child1_max_x = %g;\n", node->bbox[1][3]);
-    writef(strm, "  bbox_child1_max_y = %g;\n", node->bbox[1][4]);
-    writef(strm, "  bbox_child1_max_z = %g;\n", node->bbox[1][5]);
-    // children
-    if (node->children[0]&NF_SUBSECTOR) {
-      writef(strm, "  subsector0 = %d;\n", node->children[0]&(~NF_SUBSECTOR));
-    } else {
-      writef(strm, "  node0 = %d;\n", node->children[0]);
-    }
-    if (node->children[1]&NF_SUBSECTOR) {
-      writef(strm, "  subsector1 = %d;\n", node->children[1]&(~NF_SUBSECTOR));
-    } else {
-      writef(strm, "  node1 = %d;\n", node->children[1]);
-    }
-    // parent (if any)
-    if (node->parent) writef(strm, "  parent = %d;\n", (int)(ptrdiff_t)(node->parent-&Nodes[0]));
-    writef(strm, "}\n");
-  }
-
-  // write player starts
-  int psidx[8];
-  for (int f = 0; f < 8; ++f) psidx[f] = -1;
-  bool foundStart = false;
-  for (int f = 0; f < NumThings; ++f) {
-    const mthing_t *thing = &Things[f];
-    int idx = -1;
-    if (thing->type >= 1 && thing->type <= 4) idx = (thing->type-1);
-    if (thing->type >= 4001 && thing->type <= 4004) idx = (thing->type-4001+4);
-    if (idx >= 0) {
-      foundStart = true;
-      psidx[idx] = f;
-    }
-  }
-  if (foundStart) {
-    writef(strm, "\n");
-    for (int f = 0; f < 8; ++f) {
-      int idx = psidx[f];
-      if (idx < 0) continue;
-      writef(strm, "\nplayerstart\n");
-      writef(strm, "{\n");
-      writef(strm, "  player = %d;\n", idx);
-      writef(strm, "  x = %g;\n", Things[idx].x);
-      writef(strm, "  y = %g;\n", Things[idx].y);
-      writef(strm, "  angle = %d;\n", Things[idx].angle);
-      writef(strm, "}\n");
-    }
-  }
 }
 
 

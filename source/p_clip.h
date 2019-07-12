@@ -165,7 +165,7 @@ public:
   inline const TFrustum &GetFrustum () const { return Frustum; }
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  int CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask=~0u) const;
+  int CheckSubsectorFrustum (subsector_t *sub, const unsigned mask=~0u) const;
   // we have to pass subsector here, because of polyobjects
   bool CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask=~0u) const;
 
@@ -215,8 +215,8 @@ public:
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6]) const;
-  bool ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, bool asShadow) const;
-  bool ClipLightCheckSubsector (const subsector_t *sub, bool asShadow) const;
+  bool ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const;
+  bool ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const;
   // this doesn't do raduis and subsector checks: this is done in `BuildLightVis()`
   bool ClipLightCheckSeg (const seg_t *seg, bool asShadow) const;
 #endif
@@ -238,7 +238,7 @@ public:
 #ifdef CLIENT
   void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror, bool asShadow);
   // light radius should be valid
-  int CheckSubsectorLight (const subsector_t *sub) const;
+  int CheckSubsectorLight (subsector_t *sub) const;
 #endif
 
 public:

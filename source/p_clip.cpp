@@ -1091,7 +1091,7 @@ inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const
 //  VViewClipper::CheckSubsectorFrustum
 //
 //==========================================================================
-int VViewClipper::CheckSubsectorFrustum (const subsector_t *sub, const unsigned mask) const {
+int VViewClipper::CheckSubsectorFrustum (subsector_t *sub, const unsigned mask) const {
   if (!sub || !Frustum.isValid() || !mask) return 1;
   float bbox[6];
   Level->GetSubsectorBBox(sub, bbox);
@@ -1382,7 +1382,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 //  VViewClipper::CheckSubsectorLight
 //
 //==========================================================================
-int VViewClipper::CheckSubsectorLight (const subsector_t *sub) const {
+int VViewClipper::CheckSubsectorLight (subsector_t *sub) const {
   if (!sub) return 0;
   float bbox[6];
   Level->GetSubsectorBBox(sub, bbox);
@@ -1438,7 +1438,7 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float bbox[6]) const {
 //  VViewClipper::ClipLightCheckRegion
 //
 //==========================================================================
-bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, const subsector_t *sub, bool asShadow) const {
+bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
 #endif
@@ -1500,7 +1500,7 @@ bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {
 //  VViewClipper::ClipLightCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipLightCheckSubsector (const subsector_t *sub, bool asShadow) const {
+bool VViewClipper::ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
 #endif

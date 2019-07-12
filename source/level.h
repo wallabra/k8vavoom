@@ -490,7 +490,9 @@ public:
   // this also fixes 2d node bounding boxes (those can be wrong due to integers in ajbsp)
   void RecalcWorldBBoxes ();
 
-  void GetSubsectorBBox (const subsector_t *sub, float bbox[6]) const;
+  void UpdateSectorHeightCache (sector_t *sector);
+  void GetSubsectorBBox (subsector_t *sub, float bbox[6]);
+  void CalcSecMinMaxs (sector_t *sector); // also, update BSP bounding boxes
 
 public:
   virtual void PostCtor () override;
@@ -897,7 +899,6 @@ private:
 void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
 void SwapPlanes (sector_t *);
-void CalcSecMinMaxs (sector_t *sector); // also, update BSP bounding boxes
 
 extern VLevel *GLevel;
 extern VLevel *GClLevel;
