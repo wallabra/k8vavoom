@@ -528,7 +528,7 @@ void InitTranslationTables () {
   SetLineTrans(258, LNSPEC_StairsBuildUpDoom, -1, 2, 8, 0, 0, SPAC_Use, true);
   SetLineTrans(259, LNSPEC_StairsBuildUpDoom, -1, 32, 16, 0, 0, SPAC_Use, true);
 
-  SetLineTrans(260, LNSPEC_LineTranslucent, -1, 128, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(260, LNSPEC_LineTranslucent, -1, 168, 0, 0, 0, SPAC_Cross, false); // was 128, changed to better reflect BOOM default
   SetLineTrans(261, LNSPEC_TransferCeilingLight, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(262, LNSPEC_TeleportLine, -1, -1, 1, 0, 0, SPAC_Cross, false, true);
   SetLineTrans(263, LNSPEC_TeleportLine, -1, -1, 1, 0, 0, SPAC_Cross, true, true);
@@ -543,8 +543,14 @@ void InitTranslationTables () {
   SetLineTrans(271, 0, -1, 255, 0, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
   SetLineTrans(272, 0, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
 
-  // Doom Legacy water
-  SetLineTrans(301, LNSPEC_SectorSet3dFloor, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
+  // Doom Legacy
+  SetLineTrans(284, LNSPEC_LineTranslucent, -1, 128, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(285, LNSPEC_LineTranslucent, -1, 192, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(286, LNSPEC_LineTranslucent, -1, 48, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(287, LNSPEC_LineTranslucent, -1, 128, 1, 0, 0, SPAC_Cross, false); // additive
+
+  // Doom Legacy water (processed below)
+  //SetLineTrans(301, LNSPEC_SectorSet3dFloor, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
 
   SetLineTrans(333, LNSPEC_StaticInit, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(334, LNSPEC_StaticInit, -1, 1, 0, 0, 0, SPAC_Cross, false);
@@ -581,6 +587,7 @@ void InitTranslationTables () {
   Set3DFloorTrans(305, 3, 2, -666);
   Set3DFloorTrans(306, 1, -666, -666);
   Set3DFloorTrans(332, 4, -666, -666);
+  // 3DGE
   Set3DFloorTrans(400, 1, 0, 255);
   Set3DFloorTrans(401, 1, 16, 255);
   Set3DFloorTrans(402, 1, 32, 255);
