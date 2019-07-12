@@ -337,6 +337,8 @@ void VLevel::ClearAllLevelData () {
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
+    delete[] Sectors[1].nbsecs;
+    Sectors[0].nbsecs = nullptr;
   }
 
   for (int f = 0; f < NumLines; ++f) {
@@ -3244,8 +3246,18 @@ void VLevel::PostProcessForDecals () {
 void VLevel::GroupLines () {
   LinkNode(NumNodes-1, nullptr);
 
+  if (NumSectors > 0) {
+    if (Sectors[0].lines) delete[] Sectors[0].lines;
+    if (Sectors[0].nbsecs) delete[] Sectors[0].nbsecs;
+  }
+
   // clear counts, just in case
-  for (auto &&sector : allSectors()) sector.linecount = 0;
+  for (auto &&sector : allSectors()) {
+    sector.lines = nullptr;
+    sector.linecount = 0;
+    sector.nbsecs = nullptr;
+    sector.nbseccount = 0;
+  }
 
   // count number of lines, and number of lines in each sector
   int total = 0;
@@ -3259,7 +3271,7 @@ void VLevel::GroupLines () {
   }
 
   // build line tables for each sector
-  line_t **linebuffer = new line_t*[total];
+  line_t **linebuffer = new line_t*[total+1]; // `+1` just in case
   for (auto &&sec : allSectors()) {
     sec.lines = linebuffer;
     linebuffer += sec.linecount;
@@ -3279,9 +3291,9 @@ void VLevel::GroupLines () {
     }
   }
 
-  sector_t *sector = Sectors;
-  for (int i = 0; i < NumSectors; ++i, ++sector) {
-    if (SecLineCount[i] != sector->linecount) Sys_Error("GroupLines: miscounted");
+  for (auto &&it : allSectorsIdx()) {
+    sector_t *sector = it.value();
+    if (SecLineCount[it.index()] != sector->linecount) Sys_Error("GroupLines: miscounted");
 
     float bbox2d[4];
     int block;
@@ -3309,6 +3321,54 @@ void VLevel::GroupLines () {
     block = clampval(MapBlock(bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS), 0, BlockMapWidth-1);
     sector->blockbox[BOX2D_LEFT] = block;
   }
+
+  // collect neighbouring sectors
+  if (NumSectors < 1) return; // just in case
+  TArray<vuint8> ssmark;
+  ssmark.setLength(NumSectors);
+  int nbstotal = 0;
+
+  for (auto &&sector : allSectors()) {
+    if (!sector.linecount) continue;
+    memset(ssmark.ptr(), 0, sizeof(vuint8)*NumSectors);
+    for (int j = 0; j < sector.linecount; ++j) {
+      const line_t *line = sector.lines[j];
+      if (!(line->flags&ML_TWOSIDED)) continue;
+      // get neighbour sector
+      const sector_t *bsec = (&sector == line->frontsector ? line->backsector : line->frontsector);
+      if (!bsec) continue; // just in case
+      int snum = (int)(ptrdiff_t)(bsec-Sectors);
+      check(snum >= 0 && snum < NumSectors);
+      if (ssmark[snum]) continue;
+      ssmark[snum] = 1;
+      ++sector.nbseccount;
+      ++nbstotal;
+    }
+  }
+
+  sector_t **nbsbuffer = new sector_t*[nbstotal+1]; // `+1` just in case
+  for (auto &&sector : allSectors()) {
+    sector.nbsecs = nbsbuffer;
+    //nbsbuffer += sector.nbseccount;
+    if (sector.nbseccount) {
+      memset(ssmark.ptr(), 0, sizeof(vuint8)*NumSectors);
+      for (int j = 0; j < sector.linecount; ++j) {
+        const line_t *line = sector.lines[j];
+        if (!(line->flags&ML_TWOSIDED)) continue;
+        // get neighbour sector
+        sector_t *bsec = (&sector == line->frontsector ? line->backsector : line->frontsector);
+        if (!bsec) continue; // just in case
+        int snum = (int)(ptrdiff_t)(bsec-Sectors);
+        check(snum >= 0 && snum < NumSectors);
+        if (ssmark[snum]) continue;
+        ssmark[snum] = 1;
+        nbsbuffer[0] = bsec;
+        ++nbsbuffer;
+      }
+    }
+  }
+  check(nbsbuffer == Sectors[0].nbsecs+nbstotal);
+  //GCon->Logf("nbs buffer size: %d", nbstotal);
 }
 
 

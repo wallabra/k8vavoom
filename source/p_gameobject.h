@@ -655,6 +655,10 @@ struct sector_t {
   line_t **lines; // [linecount] size
   vint32 linecount;
 
+  // neighbouring sectors
+  sector_t **nbsecs;
+  vint32 nbseccount;
+
   // Boom's fake floors (and deepwater)
   sector_t *heightsec;
   fakefloor_t *fakefloors; // info for rendering

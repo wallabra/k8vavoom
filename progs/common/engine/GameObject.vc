@@ -941,9 +941,11 @@ struct sector_t {
   Entity ThingList;
   msecnode_t *TouchingThingList;
 
-  line_t*[] lines; // [linecount] size
-  //line_t **lines; // [linecount] size
-  //int linecount;
+  // all sector lines
+  line_t*[] lines;
+
+  // neighbouring sectors
+  sector_t*[] nbsecs;
 
   // Boom's fake floors
   sector_t *heightsec;
