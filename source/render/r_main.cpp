@@ -1582,7 +1582,12 @@ void VRenderLevelShared::RenderPlayerView () {
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
 
-  if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateWorld(/*rd, Range*/);
+  if (/*!MirrorLevel &&*/ !r_disable_world_update) {
+    // we need `r_viewleaf` for fake flats updater
+    //TODO: camera renderer can change view origin, and this can change fake floors
+    r_viewleaf = Level->PointInSubsector(vieworg);
+    UpdateWorld(/*rd, Range*/);
+  }
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);
