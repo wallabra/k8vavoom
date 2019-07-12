@@ -542,26 +542,31 @@ void InitTranslationTables () {
   // Doom Legacy
   // 270: fraggle script
   //TODO: transfer sky is not fully implemented yet
-  SetLineTrans(271, LNSPEC_StaticInit, -1, 255, 0, 0, 0, SPAC_Cross, false); // transfer sky
-  SetLineTrans(272, LNSPEC_StaticInit, -1, 255, 1, 0, 0, SPAC_Cross, false); // transfer sky
+  SetLineTrans(271, LNSPEC_StaticInit, -1, 255, 0, 0, 0, SPAC_Cross, false); // transfer sky (MBF?)
+  SetLineTrans(272, LNSPEC_StaticInit, -1, 255, 1, 0, 0, SPAC_Cross, false); // transfer sky (MBF?)
   // 273..279: fraggle script
-  SetLineTrans(280, LNSPEC_TransferHeights, -1, 12, 0, 0, 0, SPAC_Cross, false); // clip fake planes, underwater
+  SetLineTrans(280, LNSPEC_TransferHeights, -1, 12, 0, 0, 0, 0/*SPAC_Cross*/, false); // clip fake planes, underwater
   // 281 is processed in 3d floor section
-  SetLineTrans(282, LNSPEC_StaticInit, -1, 1, 0, 0, 0, SPAC_Cross, false); // light/fog color
+  SetLineTrans(282, LNSPEC_StaticInit, -1, 1, 0, 0, 0, 0/*SPAC_Cross*/, false); // light/fog color
   // no 283
-  SetLineTrans(284, LNSPEC_LineTranslucent, -1, 128, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(285, LNSPEC_LineTranslucent, -1, 192, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(286, LNSPEC_LineTranslucent, -1, 48, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(287, LNSPEC_LineTranslucent, -1, 128, 1, 0, 0, SPAC_Cross, false); // additive
-  SetLineTrans(288, LNSPEC_LineTranslucent, -1, 255, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(284, LNSPEC_LineTranslucent, -1, 128, 0, 0, 0, 0/*SPAC_Cross*/, false);
+  SetLineTrans(285, LNSPEC_LineTranslucent, -1, 192, 0, 0, 0, 0/*SPAC_Cross*/, false);
+  SetLineTrans(286, LNSPEC_LineTranslucent, -1, 48, 0, 0, 0, 0/*SPAC_Cross*/, false);
+  SetLineTrans(287, LNSPEC_LineTranslucent, -1, 128, 1, 0, 0, 0/*SPAC_Cross*/, false); // additive
+  SetLineTrans(288, LNSPEC_LineTranslucent, -1, 255, 0, 0, 0, 0/*SPAC_Cross*/, false);
   // 289 is processed in 3d floor section
 
   // Doom Legacy water (processed below)
   //SetLineTrans(301, LNSPEC_SectorSet3dFloor, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
 
-  SetLineTrans(333, LNSPEC_StaticInit, -1, 0, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(334, LNSPEC_StaticInit, -1, 1, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(335, LNSPEC_StaticInit, -1, 2, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(333, LNSPEC_StaticInit, -1, 0, 0, 0, 0, 0/*SPAC_Cross*/, false); // gravity
+  SetLineTrans(334, LNSPEC_StaticInit, -1, 1, 0, 0, 0, 0/*SPAC_Cross*/, false); // color
+  SetLineTrans(335, LNSPEC_StaticInit, -1, 2, 0, 0, 0, 0/*SPAC_Cross*/, false); // damage
+
+  SetLineTrans(336, LNSPEC_LineMirror, -666, -666, -666, -666, -666, 0/*SPAC_Cross*/, false);
+  SetLineTrans(337, LNSPEC_LineHorizon, -666, -666, -666, -666, -666, 0/*SPAC_Cross*/, false);
+  SetLineTrans(338, LNSPEC_FloorWaggle, -1, 24, 32, 0, 0, SPAC_Cross, false);
+  SetLineTrans(339, LNSPEC_FloorWaggle, -1, 12, 32, 0, 0, SPAC_Cross, false);
 
   SetLineTrans(340, LNSPEC_PlaneAlign, 1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(341, LNSPEC_PlaneAlign, 0, 1, 0, 0, 0, SPAC_Cross, false);
@@ -571,6 +576,16 @@ void InitTranslationTables () {
   SetLineTrans(345, LNSPEC_PlaneAlign, 2, 2, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(346, LNSPEC_PlaneAlign, 2, 1, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(347, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
+  //348 = WALK, Autosave()
+  //349 = USE, Autosave()
+
+  // ZDoom line types
+  //TODO: not fully implemented yet
+  SetLineTrans(350, LNSPEC_TransferHeights, -1, 2, 0, 0, 0, 0/*SPAC_Cross*/, false); // just fake the floor
+  SetLineTrans(351, LNSPEC_TransferHeights, -1, 6, 0, 0, 0, 0/*SPAC_Cross*/, false); // just fake the floor and clip it too
+  //352 = 0, Sector_CopyScroller(tag, 1)  // copy ceiling scroller
+  //353 = 0, Sector_CopyScroller(tag, 2)  // copy floor scroller
+  //354 = 0, Sector_CopyScroller(tag, 6)  // copy carrying floor scroller
 
   // eternity
   SetLineTrans(386, LNSPEC_PlaneAlign, 1, 0, 0, 0, 0, SPAC_Cross, false);
@@ -582,6 +597,29 @@ void InitTranslationTables () {
   SetLineTrans(392, LNSPEC_PlaneAlign, 2, 1, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(393, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
 
+  // 3DGE
+  SetLineTrans(409, LNSPEC_LineTranslucent, -1, 204, 0, 0, 0, SPAC_Cross, false); // 80%
+  SetLineTrans(410, LNSPEC_LineTranslucent, -1, 153, 0, 0, 0, SPAC_Cross, false); // 60%
+  SetLineTrans(411, LNSPEC_LineTranslucent, -1, 101, 0, 0, 0, SPAC_Cross, false); // 40%
+  SetLineTrans(412, LNSPEC_LineTranslucent, -1, 50, 0, 0, 0, SPAC_Cross, false); // 20%
+
+  SetLineTrans(422, LNSPEC_ScrollTextureRight, 64, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(423, LNSPEC_ScrollTextureUp, 64, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(424, LNSPEC_ScrollTextureDown, 64, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(425, LNSPEC_ScrollTextureBoth, 0, 64, 0, 0, 64, SPAC_Cross, false);
+  SetLineTrans(426, LNSPEC_ScrollTextureBoth, 0, 64, 0, 64, 0, SPAC_Cross, false);
+  SetLineTrans(427, LNSPEC_ScrollTextureBoth, 0, 0, 64, 0, 64, SPAC_Cross, false);
+  SetLineTrans(428, LNSPEC_ScrollTextureBoth, 0, 0, 64, 64, 0, SPAC_Cross, false);
+
+  // k8: i'm not sure if SPAC flags are right here
+  SetLineTrans(434, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Use, false);
+  SetLineTrans(435, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Use, true); // repeated
+  SetLineTrans(436, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Cross, false);
+  SetLineTrans(437, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Cross, true); // repeated
+  SetLineTrans(438, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Impact, false);
+  SetLineTrans(439, LNSPEC_FloorRaiseByValue, -1, 8, 2, 0, 0, SPAC_Impact, true); // repeated
+
+
   // 3d floors
   // https://zdoom.org/wiki/Sector_Set3dFloor
   Set3DFloorTrans(281, 1, 0, 255);
@@ -589,7 +627,7 @@ void InitTranslationTables () {
   //
   Set3DFloorTrans(300, 1, 1, 127);
   Set3DFloorTrans(301, 2, 2, 127);
-  Set3DFloorTrans(302, 3, 6, 127);
+  Set3DFloorTrans(302, 3, 6, 127); // not properly implemented yet
   Set3DFloorTrans(303, 3, -666, -666);
   Set3DFloorTrans(304, 2, 2, 255);
   Set3DFloorTrans(305, 3, 2, -666);
@@ -890,11 +928,11 @@ void TranslateLine (Level InLevel, line_t *line) {
   // special
   line->special = trsp.special;
   // args
-  line->arg1 = (trsp.arg1 == -1 ? OldTag : trsp.arg1);
-  line->arg2 = (trsp.arg2 == -1 ? OldTag : trsp.arg2);
-  line->arg3 = (trsp.arg3 == -1 ? OldTag : trsp.arg3);
-  line->arg4 = (trsp.arg4 == -1 ? OldTag : trsp.arg4);
-  line->arg5 = (trsp.arg5 == -1 ? OldTag : trsp.arg5);
+  line->arg1 = (trsp.arg1 == -1 ? OldTag : (trsp.arg1 == -666 ? line->arg1 : trsp.arg1));
+  line->arg2 = (trsp.arg2 == -1 ? OldTag : (trsp.arg2 == -666 ? line->arg2 : trsp.arg2));
+  line->arg3 = (trsp.arg3 == -1 ? OldTag : (trsp.arg3 == -666 ? line->arg3 : trsp.arg3));
+  line->arg4 = (trsp.arg4 == -1 ? OldTag : (trsp.arg4 == -666 ? line->arg4 : trsp.arg4));
+  line->arg5 = (trsp.arg5 == -1 ? OldTag : (trsp.arg5 == -666 ? line->arg5 : trsp.arg5));
 
   // activation flags
   if ((OldFlags&0x0200) != 0 && trsp.spac == SPAC_Use) {

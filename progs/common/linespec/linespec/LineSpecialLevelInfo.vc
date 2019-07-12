@@ -2712,7 +2712,7 @@ final void SpawnScrollingFloor(sector_t *Sector, int XDir, int YDir,
 //
 //==========================================================================
 
-final void SpawnWallScroller(line_t *Line, int XDir, int YDir)
+final void SpawnWallScroller (line_t *Line, int XDir, int YDir)
 {
   Scroller  Scroll;
 
@@ -2740,7 +2740,7 @@ final void SpawnWallOffsetsScroller(line_t *Line)
 //
 //==========================================================================
 
-final void SpawnTextureBothScroller(line_t *Line)
+final void SpawnTextureBothScroller (line_t *Line)
 {
   Scroller  Scroll;
 
