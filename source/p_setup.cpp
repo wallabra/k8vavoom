@@ -1774,7 +1774,10 @@ void VLevel::LoadSideDefs (int Lump) {
             //GCon->Logf("*** fade=0x%08x (%s); light=0x%08x (%s)", Col, toptexture, Fade, bottomtexture);
             for (int j = 0; j < NumSectors; ++j) {
               if (Sectors[j].IsTagEqual(sd->TopTexture)) {
-                if (HaveCol) Sectors[j].params.LightColor = Col;
+                if (HaveCol) {
+                  //GCon->Logf("old sector light=0x%08x; new=0x%08x", (vuint32)Sectors[j].params.LightColor, Col);
+                  Sectors[j].params.LightColor = Col;
+                }
                 if (HaveFade) Sectors[j].params.Fade = Fade;
               }
             }
@@ -3085,8 +3088,14 @@ int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
 //
 //==========================================================================
 int VLevel::TexNumOrColor (const char *name, int Type, bool &GotColor, vuint32 &Col) const {
-  VName Name(name, VName::AddLower8);
-  int i = GTextureManager.CheckNumForName(Name, Type, true);
+  if (VStr::strEquCI(name, "WATERMAP")) {
+    GotColor = true;
+    Col = M_ParseColor("#004FA5");
+    Col = (Col&0xffffffU)|0x80000000U;
+    return 0;
+  }
+  VName Name(name, VName::FindLower8);
+  int i = (Name != NAME_None ? GTextureManager.CheckNumForName(Name, Type, true) : -1);
   if (i == -1) {
     char tmpname[9];
     strncpy(tmpname, name, 8);
@@ -3097,6 +3106,7 @@ int VLevel::TexNumOrColor (const char *name, int Type, bool &GotColor, vuint32 &
       Col = M_ParseColor(tmpname, true); // return zero if invalid
     }
     GotColor = (Col != 0);
+    Col &= 0xffffffU; // so it won't be fullbright
     i = 0;
   } else {
     GotColor = false;
