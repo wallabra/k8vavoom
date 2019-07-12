@@ -48,6 +48,9 @@ static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "C
 static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
 static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "0", "Maximum hearing distance (0 means unlimited)?", CVAR_Archive);
 
+static VCvarB r_bsp_loose_bbox_height("r_bsp_loose_bbox_height", false, "If `true`, the engine will try to calculate proper bbox heights.", CVAR_Archive);
+static int lastLooseBBoxHeight = -1; // unknown yet
+
 
 opening_t *VLevel::openListHead = nullptr;
 opening_t *VLevel::openListFree = nullptr;
@@ -76,16 +79,35 @@ void VLevel::PostCtor () {
 
 //==========================================================================
 //
+//  VLevel::ResetValidCount
+//
+//==========================================================================
+void VLevel::ResetValidCount () {
+  validcount = 1;
+  for (auto &&it : allLines()) it.validcount = 0;
+  for (auto &&it : allSectors()) it.validcount = 0;
+  for (auto &&it : allPolyObjs()) it.validcount = 0;
+}
+
+
+//==========================================================================
+//
 //  VLevel::IncrementValidCount
 //
 //==========================================================================
 void VLevel::IncrementValidCount () {
-  if (++validcount == 0x7fffffff) {
-    validcount = 1;
-    for (auto &&it : allLines()) it.validcount = 0;
-    for (auto &&it : allSectors()) it.validcount = 0;
-    for (auto &&it : allPolyObjs()) it.validcount = 0;
-  }
+  if (++validcount == 0x7fffffff) ResetValidCount();
+}
+
+
+//==========================================================================
+//
+//  VLevel::ResetSZValidCount
+//
+//==========================================================================
+void VLevel::ResetSZValidCount () {
+  validcountSZCache = 1;
+  for (auto &&it : allSectors()) it.ZExtentsCacheId = 0;
 }
 
 
@@ -95,10 +117,7 @@ void VLevel::IncrementValidCount () {
 //
 //==========================================================================
 void VLevel::IncrementSZValidCount () {
-  if (++validcountSZCache == 0x7fffffff) {
-    validcountSZCache = 1;
-    for (auto &&it : allSectors()) it.ZExtentsCacheId = 0;
-  }
+  if (++validcountSZCache == 0x7fffffff) ResetSZValidCount();
 }
 
 
@@ -219,22 +238,27 @@ void VLevel::UpdateSectorHeightCache (sector_t *sector) {
   float maxz = sector->ceiling.maxz;
   if (minz > maxz) { const float tmp = minz; minz = maxz; maxz = tmp; }
 
-  sector_t *const *nbslist = sector->nbsecs;
-  for (int nbc = sector->nbseccount; nbc--; ++nbslist) {
-    const sector_t *bsec = *nbslist;
-    /*
-    // self-referencing deepwater is usually deeper than the surrounding sector
-    if (bsec == sector) {
-      //FIXME: this is deepwater, make in infinitely high
-      minz = -32767.0f;
-      maxz = 32767.0f;
-      break;
+  if (!lastLooseBBoxHeight) {
+    sector_t *const *nbslist = sector->nbsecs;
+    for (int nbc = sector->nbseccount; nbc--; ++nbslist) {
+      const sector_t *bsec = *nbslist;
+      /*
+      // self-referencing deepwater is usually deeper than the surrounding sector
+      if (bsec == sector) {
+        //FIXME: this is deepwater, make in infinitely high
+        minz = -32767.0f;
+        maxz = 32767.0f;
+        break;
+      }
+      */
+      float zmin = min2(bsec->floor.minz, bsec->ceiling.maxz);
+      float zmax = max2(bsec->floor.minz, bsec->ceiling.maxz);
+      minz = min2(minz, zmin);
+      maxz = max2(maxz, zmax);
     }
-    */
-    float zmin = min2(bsec->floor.minz, bsec->ceiling.maxz);
-    float zmax = max2(bsec->floor.minz, bsec->ceiling.maxz);
-    minz = min2(minz, zmin);
-    maxz = max2(maxz, zmax);
+  } else {
+    minz = -32768.0f;
+    maxz = +32767.0f;
   }
 
   sector->LastMinZ = minz;
@@ -1027,6 +1051,8 @@ void VLevel::RecalcWorldBBoxes () {
   ITER_CHECKER(Nodes, allNodesIdx, node_t)
   ITER_CHECKER(Things, allThingsIdx, mthing_t)
   */
+  ResetSZValidCount();
+  lastLooseBBoxHeight = (r_bsp_loose_bbox_height ? 1 : 0);
   if (NumSectors == 0 || NumSubsectors == 0) return; // just in case
   const float skyheight = CalcSkyHeight();
   for (auto &&node : allNodes()) {
@@ -1038,6 +1064,24 @@ void VLevel::RecalcWorldBBoxes () {
   }
   float dummy_bbox[6] = { -99999.0f, -99999.0f, -99999.0f, 99999.0f, 99999.0f, 99999.0f };
   RecalcWorldNodeBBox(NumNodes-1, dummy_bbox, skyheight);
+}
+
+
+//==========================================================================
+//
+//  VLevel::CheckAndRecalcWorldBBoxes
+//
+//  recalcs world bboxes if some cvars changed
+//
+//==========================================================================
+void VLevel::CheckAndRecalcWorldBBoxes () {
+  int nbbh = (r_bsp_loose_bbox_height ? 1 : 0);
+  if (lastLooseBBoxHeight != nbbh) {
+    double stime = -Sys_Time();
+    RecalcWorldBBoxes();
+    stime += Sys_Time();
+    GCon->Logf("Recalculated world BSP bounding boxes in %g seconds", stime);
+  }
 }
 
 

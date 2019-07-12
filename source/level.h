@@ -470,7 +470,10 @@ public:
                                  TPlane *hitPlane=nullptr, TVec *contactPoint=nullptr, CD_HitType *hitType=nullptr);
 
 public:
+  void ResetValidCount ();
   void IncrementValidCount ();
+
+  void ResetSZValidCount ();
   void IncrementSZValidCount ();
 
   // this saves everything except thinkers, so i can load it for further experiments
@@ -489,6 +492,9 @@ public:
   void RecalcWorldNodeBBox (int bspnum, float bbox[6], const float skyheight);
   // this also fixes 2d node bounding boxes (those can be wrong due to integers in ajbsp)
   void RecalcWorldBBoxes ();
+
+  // recalcs world bboxes if some cvars changed
+  void CheckAndRecalcWorldBBoxes ();
 
   void UpdateSectorHeightCache (sector_t *sector);
   void GetSubsectorBBox (subsector_t *sub, float bbox[6]);

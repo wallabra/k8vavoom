@@ -288,6 +288,8 @@ void VLevel::RunScriptThinkers (float DeltaTime) {
 void VLevel::TickWorld (float DeltaTime) {
   if (DeltaTime <= 0.0f) return;
 
+  CheckAndRecalcWorldBBoxes();
+
   double stimed = 0, stimet = 0;
 
   eventBeforeWorldTick(DeltaTime);
