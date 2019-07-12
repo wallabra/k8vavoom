@@ -49,7 +49,6 @@ extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
 extern VCvarB r_glow_flat;
 extern VCvarB clip_use_1d_clipper;
-extern VCvarB r_dbg_always_draw_flats;
 extern VCvarB r_disable_world_update;
 
 extern VCvarB gl_dbg_wireframe;

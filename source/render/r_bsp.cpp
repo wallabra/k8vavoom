@@ -56,7 +56,7 @@ static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregio
 
 VCvarB r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
 
-VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", false, "Draw flat surfaces even if region is not visible (this is pobj hack)?", 0/*CVAR_Archive*/);
+static VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", true, "Draw flat surfaces even if region is not visible (this is pobj hack)?", 0/*CVAR_Archive*/);
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
@@ -66,7 +66,6 @@ extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
 extern VCvarB clip_use_1d_clipper;
 extern VCvarB clip_frustum_bsp_segs;
-extern VCvarB r_dbg_always_draw_flats;
 
 // to clear portals
 static bool oldMirrors = true;
