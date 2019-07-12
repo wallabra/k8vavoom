@@ -649,6 +649,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
       VName skbname = R_HasNamedSkybox(sc->String);
       if (skbname != NAME_None) {
+        if (GArgs.CheckParm("-mapper-is-idiot")) {
+          GCon->Logf(NAME_Warning, "%s:MAPINFO: sky1 '%s' is actually a skybox (mapper is idiot)!", *sc->GetLoc().toStringNoCol(), *sc->String);
+        } else {
+          sc->Error(va("sky1 '%s' is actually a skybox (this mapinfo is broken)", *sc->String));
+        }
         info->SkyBox = skbname;
         info->Sky1Texture = GTextureManager.DefaultTexture;
         info->Sky2Texture = GTextureManager.DefaultTexture;
@@ -718,7 +723,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         info->Sky1Texture = GTextureManager.DefaultTexture;
         info->Sky2Texture = GTextureManager.DefaultTexture;
       } else {
-        GCon->Logf(NAME_Warning, "%s:MAPINFO: skybox '%s' not found!", *sc->GetLoc().toStringNoCol(), *sc->String);
+        if (GArgs.CheckParm("-mapper-is-idiot")) {
+          GCon->Logf(NAME_Warning, "%s:MAPINFO: skybox '%s' not found (mapper is idiot)!", *sc->GetLoc().toStringNoCol(), *sc->String);
+        } else {
+          sc->Error(va("skybox '%s' not found (this mapinfo is broken)", *sc->String));
+        }
         info->SkyBox = NAME_None;
         info->Sky1Texture = loadSkyTexture(sc, VName(*sc->String, VName::AddLower8));
         info->Sky2Texture = info->Sky1Texture;
