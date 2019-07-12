@@ -622,11 +622,17 @@ public:
   VL_ITERATOR(Subsectors, allSubsectors, subsector_t)
   VL_ITERATOR(Nodes, allNodes, node_t)
   VL_ITERATOR(Things, allThings, mthing_t)
+  VL_ITERATOR(Zones, allZones, vint32)
+  VL_ITERATOR(PolyObjs, allPolyObjs, polyobj_t)
+  VL_ITERATOR(PolyAnchorPoints, allPolyAnchorPoints, PolyAnchorPoint_t)
+  VL_ITERATOR(GenericSpeeches, allGenericSpeeches, FRogueConSpeech)
+  VL_ITERATOR(LevelSpeeches, allLevelSpeeches, FRogueConSpeech)
 
   inline VertexesIterator allVertexes () { return VertexesIterator(this); }
   inline const VertexesIterator allVertexes () const { return VertexesIterator(this); }
 
   #undef VL_ITERATOR
+
 
   #define VL_ITERATOR_INDEX(arrname_,itername_,itertype_) \
     class arrname_##IndexIterator { \
@@ -661,6 +667,11 @@ public:
   VL_ITERATOR_INDEX(Subsectors, allSubsectorsIdx, subsector_t)
   VL_ITERATOR_INDEX(Nodes, allNodesIdx, node_t)
   VL_ITERATOR_INDEX(Things, allThingsIdx, mthing_t)
+  VL_ITERATOR_INDEX(Zones, allZonesIdx, vint32)
+  VL_ITERATOR_INDEX(PolyObjs, allPolyObjsIdx, polyobj_t)
+  VL_ITERATOR_INDEX(PolyAnchorPoints, allPolyAnchorPointsIdx, PolyAnchorPoint_t)
+  VL_ITERATOR_INDEX(GenericSpeeches, allGenericSpeechesIdx, FRogueConSpeech)
+  VL_ITERATOR_INDEX(LevelSpeeches, allLevelSpeechesIdx, FRogueConSpeech)
 
   inline VertexesIndexIterator allVertexesIdx () { return VertexesIndexIterator(this); }
   inline VertexesIndexIterator allVertexesIdx () const { return VertexesIndexIterator(this); }
