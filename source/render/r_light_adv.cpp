@@ -56,8 +56,8 @@ extern VCvarB w_update_in_renderer;
 
 extern VCvarB gl_dbg_wireframe;
 
-static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", true, "Clip (1D) shadow regions?", CVAR_PreInit);
-static VCvarB clip_adv_regions_light("clip_adv_regions_light", true, "Clip (1D) light regions?", CVAR_PreInit);
+static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", false, "Clip (1D) shadow regions?", CVAR_PreInit);
+static VCvarB clip_adv_regions_light("clip_adv_regions_light", false, "Clip (1D) light regions?", CVAR_PreInit);
 
 
 /*
@@ -314,7 +314,7 @@ void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *sec
   const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
   //if (fabsf(dist) >= CurrLightRadius) return;
-  if (dist <= 0.0f || dist > CurrLightRadius) return;
+  if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
@@ -378,7 +378,7 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
   const float dist = ssurf->PointDist(CurrLightPos);
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
   //if (fabsf(dist) >= CurrLightRadius) return;
-  if (dist <= 0.0f || dist > CurrLightRadius) return;
+  if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
   DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0);
 }
@@ -438,16 +438,12 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
 
   sec_region_t *secregion = region->secregion;
 
-  bool drawFloors = true;
   if (!clip_adv_regions_shadow || LightClip.ClipLightCheckRegion(region, sub, true)) {
     drawseg_t *ds = region->lines;
     for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
-  } else {
-    // if there is no polyobj here, we can skip rendering floors
-    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
   }
 
-  if (drawFloors || r_dbg_always_draw_flats) {
+  {
     sec_surface_t *fsurf[4];
     GetFlatSetToRender(sub, region, fsurf);
 
@@ -551,10 +547,10 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
-    if (dist > CurrLightRadius) {
+    if (dist >= CurrLightRadius) {
       // light is completely on front side
       return RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
-    } else if (dist < -CurrLightRadius) {
+    } else if (dist <= -CurrLightRadius) {
       // light is completely on back side
       return RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
@@ -704,16 +700,12 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 
   sec_region_t *secregion = region->secregion;
 
-  bool drawFloors = true;
   if (!clip_adv_regions_light || LightClip.ClipLightCheckRegion(region, sub, false)) {
     drawseg_t *ds = region->lines;
     for (int count = sub->numlines; count--; ++ds) RenderLightLine(secregion, ds);
-  } else {
-    // if there is no polyobj here, we can skip rendering floors
-    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
   }
 
-  if (drawFloors || r_dbg_always_draw_flats) {
+  {
     sec_surface_t *fsurf[4];
     GetFlatSetToRender(sub, region, fsurf);
 
@@ -801,10 +793,10 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
-    if (dist > CurrLightRadius) {
+    if (dist >= CurrLightRadius) {
       // light is completely on front side
       return RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
-    } else if (dist < -CurrLightRadius) {
+    } else if (dist <= -CurrLightRadius) {
       // light is completely on back side
       return RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
     } else {
