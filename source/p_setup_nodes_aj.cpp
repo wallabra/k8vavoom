@@ -471,9 +471,9 @@ static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
 //  CopyNode
 //
 //==========================================================================
-static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
-  if (SrcNode->r.node) CopyNode(NodeIndex, SrcNode->r.node, Nodes);
-  if (SrcNode->l.node) CopyNode(NodeIndex, SrcNode->l.node, Nodes);
+static void CopyNode (VLevel *Level, int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
+  if (SrcNode->r.node) CopyNode(Level, NodeIndex, SrcNode->r.node, Nodes);
+  if (SrcNode->l.node) CopyNode(Level, NodeIndex, SrcNode->l.node, Nodes);
 
   if (NodeIndex >= ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (0)");
 
@@ -508,6 +508,13 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   Node->bbox[1][4] = SrcNode->l.bounds.maxy;
   Node->bbox[1][5] = 32768.0f;
 
+  if (SrcNode->ldefidx >= 0 && SrcNode->ldefidx < Level->NumLines) {
+    Node->splitldef = &Level->Lines[SrcNode->ldefidx];
+  } else {
+    if (SrcNode->ldefidx >= 0) Host_Error("AJBSP: invalid splitting linedef index in BSP");
+    Node->splitldef = nullptr;
+  }
+
   { // fuck you, shitcc!
          if (SrcNode->r.node) Node->children[0] = SrcNode->r.node->index;
     else if (SrcNode->r.subsec) Node->children[0] = SrcNode->r.subsec->index|NF_SUBSECTOR;
@@ -534,7 +541,7 @@ static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
   memset((void *)Level->Nodes, 0, sizeof(node_t)*Level->NumNodes);
   if (root_node) {
     int NodeIndex = 0;
-    CopyNode(NodeIndex, root_node, Level->Nodes);
+    CopyNode(Level, NodeIndex, root_node, Level->Nodes);
     if (NodeIndex != ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (1)");
   }
   GCon->Logf("AJBSP: copied %d nodes", Level->NumNodes);

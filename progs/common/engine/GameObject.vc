@@ -1124,6 +1124,8 @@ struct node_t : TPlane {
   native transient node_t *parent;
   int VisFrame; // unsigned
   int index;
+  // linedef used for this node (can be nullptr if nodes builder don't have this info)
+  line_t *splitldef;
 };
 
 

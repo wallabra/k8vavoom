@@ -892,6 +892,8 @@ struct node_t : public TPlane {
   node_t *parent;
   vuint32 VisFrame;
   vuint32 index;
+  // linedef used for this node (can be nullptr if nodes builder don't have this info)
+  line_t *splitldef;
 };
 
 

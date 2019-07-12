@@ -2027,6 +2027,7 @@ build_result_e BuildNodes(superblock_t *seg_list,
 
 	SYS_ASSERT(best->linedef);
 
+	node->ldefidx = best->linedef->index;
 	if (best->side == 0)
 	{
 		node->xs  = ajRoundoffVertex(best->linedef->start->x);
