@@ -718,7 +718,8 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 
   if (!plane.splane->pic) return;
 
-  if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  //k8: this seems to be unnecessary
+  //if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
   if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.splane->MirrorAlpha < 1.0f) {
     VPortal *Portal = nullptr;
