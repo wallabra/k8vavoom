@@ -46,6 +46,11 @@ extern VCvarB r_brightmaps_sprite;
 
 static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
 
+static VCvarB r_thing_hiframe_use_camera_plane("r_thing_hiframe_use_camera_plane", true, "Use angle to camera plane to select rotation for sprites with detailed rotations?", CVAR_Archive);
+static VCvarB r_thing_monster_use_camera_plane("r_thing_monster_use_camera_plane", true, "Use angle to camera plane to select monster rotation?", CVAR_Archive);
+static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane", true, "Use angle to camera plane to select missile rotation?", CVAR_Archive);
+static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
+
 
 extern refdef_t refdef;
 
@@ -364,13 +369,29 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   if (sprframe->rotate) {
     // choose a different rotation based on player view
     //FIXME must use sprforward here?
-    float ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
+    bool useCameraPlane;
+    if (r_thing_hiframe_use_camera_plane && sprframe->lump[0] != sprframe->lump[1]) {
+      useCameraPlane = true;
+    } else {
+           if (thing->IsMonster()) useCameraPlane = r_thing_monster_use_camera_plane;
+      else if (thing->IsMissile()) useCameraPlane = r_thing_missile_use_camera_plane;
+      else useCameraPlane = r_thing_other_use_camera_plane;
+    }
+    float ang = (useCameraPlane ?
+      matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x) :
+      matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x));
+    const float angadd = (sprframe->lump[0] == sprframe->lump[1] ? 45.0f/2.0f : 45.0f/4.0f); //k8: is this right?
+    //const float angadd = (useCameraPlane ? 45.0f/2.0f : 45.0f/4.0f);
+    /*
     if (sprframe->lump[0] == sprframe->lump[1]) {
-      ang = AngleMod(ang-thing->/*Angles*/GetSpriteDrawAngles().yaw+180.0f+45.0f/2.0f);
+      ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
+      ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/2.0f);
     } else {
       ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
-      ang = AngleMod(ang-thing->/*Angles*/GetSpriteDrawAngles().yaw+180.0f+45.0f/4.0f);
+      ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/4.0f);
     }
+    */
+    ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+angadd);
     vuint32 rot = (vuint32)(ang*16.0f/360.0f)&15;
     lump = sprframe->lump[rot];
     flip = sprframe->flip[rot];
