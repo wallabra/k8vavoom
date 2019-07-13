@@ -2859,7 +2859,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount >= 2) {
         VName name = GetName(args[0]);
         if (name == NAME_None) return 0;
-        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
         //GCon->Logf("ACSF: set cvar '%s' (%f)", *name, args[1]/65536.0f);
         VCvar::Set(*name, args[1] /* /65536.0f */);
         return 1;
@@ -2882,7 +2882,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount >= 3) {
         VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
-        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
         //GCon->Logf("ACSF: set user cvar '%s' (%f)", *name, args[2]/65536.0f);
         VCvar::Set(*name, args[2] /* /65536.0f */);
         return 1;
@@ -2906,7 +2906,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         VName name = GetName(args[0]);
         if (name == NAME_None) return 0;
         //GCon->Logf("ACSF_SetCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[1]), (int)VCvar::CanBeModified(*name, true, true));
-        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
         VStr value = GetStr(args[1]);
         VCvar::Set(*name, value);
         return 1;
