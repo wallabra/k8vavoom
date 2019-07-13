@@ -285,8 +285,8 @@ void VField::SkipSerialisedValue (VStream &Strm) {
 //
 //==========================================================================
 void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type) {
-  static int ignoreArrayErrors = -1;
-  if (ignoreArrayErrors < 0) ignoreArrayErrors = (GArgs.CheckParm("-vc-io-lax-arrays") ? 1 : 0);
+  //static int ignoreArrayErrors = -1;
+  //if (ignoreArrayErrors < 0) ignoreArrayErrors = (GArgs.CheckParm("-vc-io-lax-arrays") ? 1 : 0);
   vuint8 tp = Type.Type;
   Strm << tp;
   if (Strm.IsLoading()) {
@@ -492,12 +492,9 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         vint32 isz = -1;
         Strm << STRM_INDEX(isz);
         if (tp != IntType.Type) Host_Error("I/O Error: invalid array element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
-        if (isz != InnerSize) {
-          if (ignoreArrayErrors) {
-            GLog.WriteLine(NAME_Warning, "I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
-          } else {
-            Host_Error("I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
-          }
+        // meh, type serialiser will take care of this
+        if (isz != /*InnerSize*/IntType.GetStackSize()) {
+          GLog.WriteLine("I/O: invalid array element size, expected %d, got %d (this is mostly harmless)", /*InnerSize*/IntType.GetStackSize(), isz);
         }
         for (int i = 0; i < Type.GetArrayDim(); ++i) {
           if (i < n) {
@@ -507,7 +504,8 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           }
         }
       } else {
-        Strm << STRM_INDEX(InnerSize);
+        vint32 isz = IntType.GetStackSize();
+        Strm << STRM_INDEX(/*InnerSize*/isz);
         for (int i = 0; i < n; ++i) SerialiseFieldValue(Strm, Data+i*InnerSize, IntType);
       }
       break;
@@ -526,15 +524,13 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           vint32 isz = -1;
           Strm << STRM_INDEX(isz);
           if (tp != IntType.Type) Host_Error("I/O Error: invalid dynarray element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
-          if (isz != InnerSize) {
-            if (ignoreArrayErrors) {
-              GLog.WriteLine(NAME_Warning, "I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
-            } else {
-              Host_Error("I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
-            }
+          // meh, type serialiser will take care of this
+          if (isz != /*InnerSize*/IntType.GetStackSize()) {
+            GLog.WriteLine("I/O: invalid array element size, expected %d, got %d (this is mostly harmless)", /*InnerSize*/IntType.GetStackSize(), isz);
           }
         } else {
-          Strm << STRM_INDEX(InnerSize);
+          vint32 isz = IntType.GetStackSize();
+          Strm << STRM_INDEX(/*InnerSize*/isz);
         }
         if (Strm.IsLoading()) A.SetNum(ArrNum, IntType);
         for (int i = 0; i < A.Num(); ++i) SerialiseFieldValue(Strm, A.Ptr()+i*InnerSize, IntType);
