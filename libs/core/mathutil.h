@@ -361,4 +361,32 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+//  xs_Float.h
+//
+// Source: "Know Your FPU: Fixing Floating Fast"
+//         http://www.stereopsis.com/sree/fpu2006.html
+//
+// xs_CRoundToInt:  Round toward nearest, but ties round toward even (just like FISTP)
+static __attribute__((warn_unused_result)) inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
+  union vxs_doubleints_ {
+    double val;
+    vuint32 ival[2];
+  };
+  vxs_doubleints_ uval;
+  uval.val = val+dmr;
+#ifdef VAVOOM_LITTLE_ENDIAN
+  return uval.ival[/*_xs_iman_*/0];
+#else
+  return uval.ival[/*_xs_iman_*/1];
+#endif
+}
+
+
+static inline __attribute__((warn_unused_result)) vint32 vxs_ToFix16_16 (const double val) {
+  static const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
+  return vxs_CRoundToInt(val, vxs_doublemagic_/(1<<16));
+}
+
+
 #endif
