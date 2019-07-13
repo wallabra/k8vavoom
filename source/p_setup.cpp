@@ -144,7 +144,7 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 007.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
@@ -431,6 +431,9 @@ void VLevel::SaveCachedData (VStream *strm) {
       }
     }
     for (int cci = 0; cci < 2; ++cci) *arrstrm << n->children[cci];
+    vint32 sldidx = (n->splitldef ? (int)(ptrdiff_t)(n->splitldef-Lines) : -1);
+    *arrstrm << sldidx;
+    *arrstrm << n->sx << n->sy << n->dx << n->dy;
   }
 
   // vertices
@@ -590,6 +593,10 @@ bool VLevel::LoadCachedData (VStream *strm) {
       }
     }
     for (int cci = 0; cci < 2; ++cci) *arrstrm << n->children[cci];
+    vint32 sldidx = -1;
+    *arrstrm << sldidx;
+    n->splitldef = (sldidx >= 0 && sldidx < NumLines ? &Lines[sldidx] : nullptr);
+    *arrstrm << n->sx << n->sy << n->dx << n->dy;
   }
 
   delete [] Vertexes;

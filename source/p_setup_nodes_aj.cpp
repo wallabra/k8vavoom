@@ -158,31 +158,6 @@ void ajbsp_Progress (int curr, int total) {
 
 //==========================================================================
 //
-//  ajRoundOffVertexI32
-//
-//  round vertex coordinates
-//
-//==========================================================================
-static inline vint32 ajRoundoffVertexI32 (double v) {
-  return (vint32)(v*65536.0);
-}
-
-
-//==========================================================================
-//
-//  ajRoundOffVertex
-//
-//  round vertex coordinates
-//
-//==========================================================================
-static inline float ajRoundoffVertex (double v) {
-  vint32 iv = ajRoundoffVertexI32(v);
-  return (float)(((double)iv)/65536.0);
-}
-
-
-//==========================================================================
-//
 //  UploadSectors
 //
 //==========================================================================
@@ -484,7 +459,6 @@ static void CopyNode (VLevel *Level, int &NodeIndex, ajbsp::node_t *SrcNode, nod
   TVec org = TVec(SrcNode->xs, SrcNode->ys, 0);
   TVec dir = TVec(SrcNode->xe-SrcNode->xs, SrcNode->ye-SrcNode->ys, 0);
   //k8: this seems to be unnecessary
-  //if (SrcNode->too_long) { dir.x /= 2.0f; dir.y /= 2.0f; }
   // check if `Length()` and `SetPointDirXY()` are happy
   if (dir.x == 0 && dir.y == 0) {
     //Host_Error("AJBSP: invalid BSP node (zero direction)");
@@ -492,6 +466,16 @@ static void CopyNode (VLevel *Level, int &NodeIndex, ajbsp::node_t *SrcNode, nod
     dir.x = 0.001f;
   }
   Node->SetPointDirXY(org, dir);
+
+  Node->sx = ajRoundoffVertexI32(SrcNode->xs);
+  Node->sy = ajRoundoffVertexI32(SrcNode->ys);
+  if (!SrcNode->too_long) {
+    Node->dx = ajRoundoffVertexI32(SrcNode->xe)-Node->sx;
+    Node->dy = ajRoundoffVertexI32(SrcNode->ye)-Node->sy;
+  } else {
+    Node->dx = (vint32)(((vint64)ajRoundoffVertexI32(SrcNode->xe)-(vint64)Node->sx)/2);
+    Node->dy = (vint32)(((vint64)ajRoundoffVertexI32(SrcNode->ye)-(vint64)Node->sy)/2);
+  }
 
   //TODO: check if i should convert AJBSP bounding boxes to floats
   Node->bbox[0][0] = SrcNode->r.bounds.minx;

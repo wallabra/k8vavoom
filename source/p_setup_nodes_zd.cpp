@@ -177,6 +177,11 @@ static void CopyNodeZD (int NodeIndex, const ZDBSP::MapNodeEx &SrcNode, node_t *
   }
   Node->SetPointDirXY(org, dir);
 
+  Node->sx = SrcNode.x;
+  Node->sy = SrcNode.y;
+  Node->dx = SrcNode.dx;
+  Node->dy = SrcNode.dy;
+
   Node->bbox[0][0] = SrcNode.bbox[0][ZDBSP::BOXLEFT]; // minx
   Node->bbox[0][1] = SrcNode.bbox[0][ZDBSP::BOXBOTTOM]; // miny
   Node->bbox[0][2] = -32768.0f;

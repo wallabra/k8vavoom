@@ -180,6 +180,61 @@ void VLevel::FreeOpeningList (opening_t *&op) {
 }
 
 
+/* reference code from GZDoom
+static int R_PointOnSideSlow(double xx, double yy, node_t *node)
+{
+  // [RH] This might have been faster than two multiplies and an
+  // add on a 386/486, but it certainly isn't on anything newer than that.
+  auto x = FloatToFixed(xx);
+  auto y = FloatToFixed(yy);
+  double  left;
+  double  right;
+
+  if (!node->dx)
+  {
+    if (x <= node->x)
+      return node->dy > 0;
+
+    return node->dy < 0;
+  }
+  if (!node->dy)
+  {
+    if (y <= node->y)
+      return node->dx < 0;
+
+    return node->dx > 0;
+  }
+
+  auto dx = (x - node->x);
+  auto dy = (y - node->y);
+
+  // Try to quickly decide by looking at sign bits.
+  if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
+  {
+    if ((node->dy ^ dx) & 0x80000000)
+    {
+      // (left is negative)
+      return 1;
+    }
+    return 0;
+  }
+
+  // we must use doubles here because the fixed point code will produce errors due to loss of precision for extremely short linedefs.
+  // Note that this function is used for all map spawned actors and not just a compatibility fallback!
+  left = (double)node->dy * (double)dx;
+  right = (double)dy * (double)node->dx;
+
+  if (right < left)
+  {
+    // front side
+    return 0;
+  }
+  // back side
+  return 1;
+}
+*/
+
+
 //==========================================================================
 //
 //  VLevel::PointInSubsector
@@ -193,32 +248,65 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
     const node_t *node = Nodes+nodenum;
     const float dist = node->Distance(point);
     //k8: hack for back subsector
-    if (dist == 0.0f && node->splitldef && (node->splitldef->flags&ML_TWOSIDED) &&
-        node->splitldef->frontsector != node->splitldef->backsector)
-    {
-      // if we are exactly on a two-sided linedef, choose node that leads to back sector
-      // this is what vanilla does, and some map authors rely on that fact
-      /*
-      GCon->Logf("ldef=(%g,%g,%g:%g); node=(%g,%g,%g:%g)",
-        node->splitldef->normal.x, node->splitldef->normal.y, node->splitldef->normal.z, node->splitldef->dist,
-        node->normal.x, node->normal.y, node->normal.z, node->dist);
-      */
-      const line_t *ldef = node->splitldef;
-      // compare plane distance signs to find out the right node
-      bool sameSign;
-      if (node->dist == ldef->dist) {
-        // special case: zero distance
-        if (ldef->dist == 0.0f) {
-          // don't bother with z, it is always zero
-          sameSign = ((node->normal.x < 0.0f) == (ldef->normal.x < 0.0f) && (node->normal.y < 0.0f) == (ldef->normal.y < 0.0f));
+    if (dist == 0.0f) {
+      #if 0
+      if (false && node->splitldef && (node->splitldef->flags&ML_TWOSIDED) &&
+          node->splitldef->frontsector != node->splitldef->backsector)
+      {
+        // if we are exactly on a two-sided linedef, choose node that leads to back sector
+        // this is what vanilla does, and some map authors rely on that fact
+        /*
+        GCon->Logf("ldef=(%g,%g,%g:%g); node=(%g,%g,%g:%g)",
+          node->splitldef->normal.x, node->splitldef->normal.y, node->splitldef->normal.z, node->splitldef->dist,
+          node->normal.x, node->normal.y, node->normal.z, node->dist);
+        */
+        const line_t *ldef = node->splitldef;
+        // compare plane distance signs to find out the right node
+        bool sameSign;
+        if (node->dist == ldef->dist) {
+          // special case: zero distance
+          if (ldef->dist == 0.0f) {
+            // don't bother with z, it is always zero
+            sameSign = ((node->normal.x < 0.0f) == (ldef->normal.x < 0.0f) && (node->normal.y < 0.0f) == (ldef->normal.y < 0.0f));
+          } else {
+            sameSign = true;
+          }
         } else {
-          sameSign = true;
+          sameSign = ((node->dist < 0.0f) == (ldef->dist < 0.0f));
         }
-      } else {
-        sameSign = ((node->dist < 0.0f) == (ldef->dist < 0.0f));
+        // if the sign is same, back sector is child #1, otherwise it is child #0
+        nodenum = node->children[(sameSign ? 1 : 0)];
+      } else
+      #endif
+      // try to emulate original Doom buggy code
+      {
+        //nodenum = node->children[0];
+        //normal = TVec(dir.y, -dir.x, 0.0f);
+        // dy:  node.normal.x
+        // dx: -node.normal.y
+        const float fdx = -node->normal.y;
+        const float fdy = +node->normal.x;
+             if (fdx == 0) nodenum = node->children[(unsigned)(fdy > 0)];
+        else if (fdy == 0) nodenum = node->children[(unsigned)(fdx < 0)];
+        else {
+          //nodenum = node->children[1/*(unsigned)(dist <= 0.0f)*/]; // is this right?
+          vint32 dx = (vint32)(point.x*65536.0)-node->sx;
+          vint32 dy = (vint32)(point.y*65536.0)-node->sy;
+          // try to quickly decide by looking at sign bits
+          if ((node->dy^node->dx^dx^dy)&0x80000000) {
+            if ((node->dy^dx)&0x80000000) {
+              // (left is negative)
+              nodenum = node->children[1];
+            } else {
+              nodenum = node->children[0];
+            }
+          } else {
+            const double left = (double)node->dy*(double)dx;
+            const double right = (double)dy*(double)node->dx;
+            nodenum = node->children[(unsigned)(right >= left)];
+          }
+        }
       }
-      // if the sign is same, back sector is child #1, otherwise it is child #0
-      nodenum = node->children[(sameSign ? 1 : 0)];
     } else {
       nodenum = node->children[/*node->PointOnSide(point)*/(unsigned)(dist <= 0.0f)];
     }

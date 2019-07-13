@@ -896,6 +896,8 @@ struct node_t : public TPlane {
   vuint32 index;
   // linedef used for this node (can be nullptr if nodes builder don't have this info)
   line_t *splitldef;
+  // from the original nodes; needed to emulate original buggy "point in subsector"
+  vint32 sx, sy, dx, dy; // 16.16
 };
 
 

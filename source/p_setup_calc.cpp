@@ -52,6 +52,32 @@ static VCvarI nodes_builder_normal("nodes_builder_normal", "1", "Which internal 
 static VCvarI nodes_builder_udmf("nodes_builder_udmf", "1", "Which internal node builder to use for UDMF maps (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
 
 
+//==========================================================================
+//
+//  ajRoundOffVertexI32
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline vint32 ajRoundoffVertexI32 (const double v) {
+  return (vint32)(v*65536.0);
+  //return vxs_ToFix16_16(v);
+}
+
+
+//==========================================================================
+//
+//  ajRoundOffVertex
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline float ajRoundoffVertex (const double v) {
+  vint32 iv = ajRoundoffVertexI32(v);
+  return (float)(((double)iv)/65536.0);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 #include "p_setup_nodes_aj.cpp"
 #include "p_setup_nodes_zd.cpp"
