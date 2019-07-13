@@ -649,11 +649,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
       VName skbname = R_HasNamedSkybox(sc->String);
       if (skbname != NAME_None) {
-        if (GArgs.CheckParm("-mapper-is-idiot")) {
-          GCon->Logf(NAME_Warning, "%s:MAPINFO: sky1 '%s' is actually a skybox (mapper is idiot)!", *sc->GetLoc().toStringNoCol(), *sc->String);
-        } else {
-          sc->Error(va("sky1 '%s' is actually a skybox (this mapinfo is broken)", *sc->String));
-        }
+        //k8: ok, this may be done to support sourceports that cannot into skyboxes
+        GCon->Logf(NAME_Warning, "%s:MAPINFO: sky1 '%s' is actually a skybox (this is mostly harmless)", *sc->GetLoc().toStringNoCol(), *sc->String);
         info->SkyBox = skbname;
         info->Sky1Texture = GTextureManager.DefaultTexture;
         info->Sky2Texture = GTextureManager.DefaultTexture;
