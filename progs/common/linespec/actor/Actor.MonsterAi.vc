@@ -245,6 +245,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   //if (!specified_maxheardist) maxheardist = 0; // this is default
   //if (!specified_fov) fov = 0; // this is default
   if (!specified_wakestate) wakestate = 'See';
+  bool dojump = !(flags&LOF_NOJUMP);
 
   // set goal now if appropriate
   if (Special == LNSPEC_ThingSetGoal && Args[0] == 0) {
@@ -285,16 +286,18 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
         // if would cause the seestate to be set twice
         if (!LookForPlayers(bLookAllAround)) {
           // let the actor wander around aimlessly looking for a fight
-          if (FindState(wakestate)) {
-            if (!bInChase) SetState(FindState(wakestate));
+          state wkst = (dojump ? FindState(wakestate) : none);
+          if (wkst) {
+            if (!bInChase) SetState(/*FindState(wakestate)*/wkst);
           } else {
             A_Wander();
           }
         }
       } else {
         // let the actor wander around aimlessly looking for a fight
-        if (FindState(wakestate)) {
-          if (!bInChase) SetState(FindState(wakestate));
+        state wkst = (dojump ? FindState(wakestate) : none);
+        if (wkst) {
+          if (!bInChase) SetState(/*FindState(wakestate)*/wkst);
         } else {
           A_Wander();
         }
@@ -334,12 +337,12 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
     }
   }
 
-  if (Target) {
+  if (dojump && Target) {
     state wkst = FindState(wakestate);
     if (wkst) {
-      SetState(FindState(wakestate));
+      SetState(/*FindState(wakestate)*/wkst);
     } else {
-      SetState(SeeState);
+      if (SeeState) SetState(SeeState);
     }
   }
 }
