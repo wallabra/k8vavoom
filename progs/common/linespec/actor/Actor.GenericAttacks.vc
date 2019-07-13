@@ -1093,7 +1093,8 @@ final void A_MinotaurAtk1 () {
     Target.Damage(self, self, HITDICE(4), spawnBlood:true);
     if (Target.bIsPlayer) {
       // squish the player
-      PlayerEx(Target.Player).DeltaViewHeight = -512.0;
+      auto pex = PlayerEx(Target.Player);
+      if (pex.MO == Target) pex.DeltaViewHeight = -512.0;
     }
   }
 }
@@ -1181,7 +1182,8 @@ final void A_MinotaurAtk3 () {
     Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), spawnBlood:true);
     if (Target.bIsPlayer) {
       // squish the player
-      PlayerEx(Target.Player).DeltaViewHeight = -512.0;
+      auto pex = PlayerEx(Target.Player);
+      if (pex.MO == Target) pex.DeltaViewHeight = -512.0;
     }
   } else {
     EntityEx A = SpawnMissile(Target, MinotaurFX2);

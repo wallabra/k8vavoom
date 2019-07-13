@@ -250,8 +250,10 @@ bool Physics (float DeltaTime) {
         if (onmo.Origin.z+onmo.Height-Origin.z <= MaxStepHeight) {
           if (bIsPlayer) {
             PlayerEx pex = PlayerEx(Player);
-            pex.ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
-            if (PlayerPawn(self)) pex.DeltaViewHeight = (PlayerPawn(self).ViewHeight-pex.ViewHeight)*4.0;
+            if (pex && pex.MO == self) {
+              pex.ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
+              if (PlayerPawn(self)) pex.DeltaViewHeight = (PlayerPawn(self).ViewHeight-pex.ViewHeight)*4.0;
+            }
           }
           Origin.z = onmo.Origin.z+onmo.Height;
         }
@@ -269,8 +271,10 @@ bool Physics (float DeltaTime) {
           Origin.z += onmo.FloorZ-onmo.Origin.z;
           if (onmo.bIsPlayer) {
             PlayerEx pex = PlayerEx(onmo.Player);
-            pex.ViewHeight -= onmo.FloorZ-onmo.Origin.z;
-            if (PlayerPawn(onmo)) pex.DeltaViewHeight = (PlayerPawn(onmo).ViewHeight-pex.ViewHeight)*4.0;
+            if (pex && pex.MO == onmo) {
+              pex.ViewHeight -= onmo.FloorZ-onmo.Origin.z;
+              if (PlayerPawn(onmo)) pex.DeltaViewHeight = (PlayerPawn(onmo).ViewHeight-pex.ViewHeight)*4.0;
+            }
           }
           onmo.Origin.z = onmo.FloorZ;
         }
@@ -519,7 +523,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   // check for smooth step up
   if (bIsPlayer && Origin.z < FloorZ) {
     PlayerEx pex = PlayerEx(Player);
-    if (pex) {
+    if (pex && pex.MO == self) {
       float dfz = FloorZ-Origin.z;
       // arbitrary number
       if (dfz > 0.6 || EFloor.spGetNormalZ == 1.0) {
@@ -1089,9 +1093,10 @@ final void Crash () {
 //
 //===========================================================================
 final void PlayerLandedOnThing () {
-  PlayerEx(Player).DeltaViewHeight = Velocity.z/8.0;
+  auto pex = PlayerEx(Player);
+  if (pex.MO == self) pex.DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
-  if (Health > 0 && !PlayerEx(Player).MorphTime) {
+  if (Health > 0 && !pex.MorphTime) {
     if (Velocity.z < -DEFAULT_GRAVITY*0.375) {
       PlaySound('*grunt', CHAN_VOICE);
     }
