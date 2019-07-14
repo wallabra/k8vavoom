@@ -182,6 +182,12 @@ void Host_Init () {
 
   if (GArgs.CheckParm("-gd-debug")) VObject::GCDebugMessagesAllowed = true;
 
+#ifdef VAVOOM_K8_DEVELOPER
+  if (!GArgs.CheckParm("-vc-no-k8-developer")) VMemberBase::StaticAddDefine("K8_DEVELOPER");
+#else
+  if (GArgs.CheckParm("-vc-k8-developer")) VMemberBase::StaticAddDefine("K8_DEVELOPER");
+#endif
+
   FL_ProcessPreInits();
 
   FL_Init();
