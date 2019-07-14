@@ -450,7 +450,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     // alpha: 1.0 is masked wall, 1.1 is solid wall
     //if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
 
-    if (texinfo->Alpha >= 1.0f) {
+    if (texinfo->Alpha >= 1.0f && !texinfo->Additive) {
       CommonQueueSurface(surfs, 0);
     } else if (surfs->queueframe != currQueueFrame) {
       //surfs->queueframe = currQueueFrame;
