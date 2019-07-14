@@ -85,7 +85,7 @@ void VOpenGLDrawer::DrawWorldZBufferPass () {
     // they should not end up here, but...
     const texinfo_t *currTexinfo = surf->texinfo;
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f) continue;
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
 
     if (!surf->plvisible) continue; // viewer is in back side or on plane
 
@@ -214,7 +214,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-      if (currTexinfo->Alpha < 1.0f) continue;
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
 
       if (!gl_dbg_wireframe) {
         CalcGlow(gp, surf);
@@ -1021,7 +1021,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     // they should not end up here, but...
     const texinfo_t *currTexinfo = surf->texinfo;
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f) continue;
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
 
     bool textureChanded =
       !lastTexinfo ||
@@ -1130,7 +1130,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     // they should not end up here, but...
     const texinfo_t *currTexinfo = surf->texinfo;
     if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f) continue;
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
 
     if (surf->drawflags&surface_t::DF_MASKED) {
       if (activated != ShaderMasked) {

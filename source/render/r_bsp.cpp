@@ -207,7 +207,7 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   surf->plvisible = surf->IsVisible(vieworg);
 
   // alpha: 1.0 is masked wall, 1.1 is solid wall
-  if (surf->texinfo->Alpha < 1.0f ||
+  if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive ||
       ((surf->typeFlags&(surface_t::TF_MIDDLE|surface_t::TF_TOPHACK)) != 0 && tex->isTransparent()))
   {
     surf->drawflags |= surface_t::DF_MASKED;
