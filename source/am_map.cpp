@@ -417,6 +417,11 @@ static const mline_t thintriangle_guy[] =
 static TMapNC<VClass *, int> spawnSprIndex;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+static __attribute__((unused)) inline int VScrTransX640 (int x) { return (int)(x*VirtualWidth/640.0f); }
+static __attribute__((unused)) inline int VScrTransY480 (int y) { return (int)(y*VirtualHeight/480.0f); }
+
+
 //==========================================================================
 //
 //  getSpriteIndex
@@ -2071,8 +2076,8 @@ void AM_DrawWorldTimer () {
 
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vtop);
-  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d", hours, minutes, seconds);
-  T_DrawText(560, 8, timeBuffer, CR_UNTRANSLATED);
+  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d ", hours, minutes, seconds);
+  T_DrawText(VScrTransX640(560), VScrTransY480(8), timeBuffer, CR_UNTRANSLATED);
 
   if (days) {
     if (days == 1) {
@@ -2080,8 +2085,8 @@ void AM_DrawWorldTimer () {
     } else {
       snprintf(dayBuffer, sizeof(dayBuffer), "%.2d DAYS", days);
     }
-    T_DrawText(560, 18, dayBuffer, CR_UNTRANSLATED);
-    if (days >= 5) T_DrawText(550, 28, "YOU FREAK!!!", CR_UNTRANSLATED);
+    T_DrawText(VScrTransX640(560), VScrTransY480(18), dayBuffer, CR_UNTRANSLATED);
+    if (days >= 5) T_DrawText(VScrTransX640(550), VScrTransY480(28), "YOU FREAK!!!", CR_UNTRANSLATED);
   }
 }
 
@@ -2112,11 +2117,11 @@ static void AM_DrawLevelStats () {
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vtop);
   snprintf(kill, sizeof(kill), "Kills: %.2d / %.2d", kills, totalkills);
-  T_DrawText(8, 390, kill, CR_RED);
+  T_DrawText(VScrTransX640(8), VScrTransY480(390), kill, CR_RED);
   snprintf(item, sizeof(item), "Items: %.2d / %.2d", items, totalitems);
-  T_DrawText(8, 400, item, CR_GREEN);
+  T_DrawText(VScrTransX640(8), VScrTransY480(400), item, CR_GREEN);
   snprintf(secret, sizeof(secret), "Secrets: %.2d / %.2d", secrets, totalsecrets);
-  T_DrawText(8, 410, secret, CR_GOLD);
+  T_DrawText(VScrTransX640(8), VScrTransY480(410), secret, CR_GOLD);
 }
 
 
@@ -2190,8 +2195,8 @@ void AM_Drawer () {
   AM_DrawWorldTimer();
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vbottom);
-  T_DrawText(20, 480-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
-  T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
+  T_DrawText(VScrTransX640(20), VScrTransY480(480)-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
+  T_DrawText(VScrTransX640(20), VScrTransY480(480)-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
   if (mapMarksAllowed) AM_drawMarks();
 
