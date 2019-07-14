@@ -203,6 +203,8 @@ bool Physics (float DeltaTime) {
   // handle X and Y momentums
   float oldfloorz = XYMovement(DeltaTime, CummX, CummY);
   if (IsDestroyed()) return false; // mobj was removed
+  // apply friction here
+  if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
   if (bFloatBob) {
     if (bSpecial) {
@@ -1338,13 +1340,20 @@ override void ApplyFriction (float DeltaTime) {
     return; // assume airborne
   }
 
-  // clip velocity
+  // clip velocity on sloped floors
+  // TODO: don't clip on small slopes
   if (Origin.z <= FloorZ) {
-    float dot = DotProduct(Velocity, EFloor.spGetNormal());
-    if (dot < 0.0) {
-      TVec Vel = dot*EFloor.spGetNormal();
-      Velocity.x -= Vel.x;
-      Velocity.y -= Vel.y;
+    TVec Vel = EFloor.spGetNormal();
+    if (Vel.x || Vel.y) {
+      float dot = DotProduct(Velocity, Vel);
+      if (dot < 0.0) {
+        //TVec Vel = dot*EFloor.spGetNormal();
+        Vel *= dot;
+        //print("vv: Vel=%s; dot=%s; norm=%s", Vel, dot, EFloor.spGetNormal());
+        //print("  : z=%s; fminz=%s; fmaxz=%s", Origin.z, Sector.floor.minz, Sector.floor.maxz);
+        Velocity.x -= Vel.x;
+        Velocity.y -= Vel.y;
+      }
     }
   }
 

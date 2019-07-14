@@ -439,6 +439,7 @@ native final bool GetDecorateFlag (string Name);
 //  UpdateVelocity
 //
 //  moved from native to VC code
+//  called from entity `Physics()`
 //
 //==========================================================================
 void UpdateVelocity (float DeltaTime) {
@@ -469,9 +470,8 @@ void UpdateVelocity (float DeltaTime) {
   }
 
   // friction
-  if (Velocity.x || Velocity.y/* || Velocity.z*/) {
-    ApplyFriction(DeltaTime);
-  }
+  //k8: this will be called after `XYMovement()`
+  //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 }
 
 
