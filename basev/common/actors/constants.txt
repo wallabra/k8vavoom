@@ -226,6 +226,7 @@ const int XF_HURTSOURCE         = 0x01; // Hurts the source: if set, the source 
 const int XF_NOTMISSILE         = 0x02; // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
 const int XF_EXPLICITDAMAGETYPE = 0x04; // The damagetype parameter will never change to the actor's damagetype.
 const int XF_NOSPLASH           = 0x08; // No splash: if set, the explosion does not create any terrain splashes.
+const int XF_THRUSTZ            = 0; // this is new in GZDoom 4.1.3, and we don't care
 
 
 const int SPF_FORCECLAMP  = 0x01;

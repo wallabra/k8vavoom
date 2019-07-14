@@ -461,11 +461,15 @@ final void A_MonsterRail () {
 //  Handles a bunch of exploding things.
 //
 //==========================================================================
-final void DoExplode (int damage, float distance, bool damageSelf, optional int dmgdistance) {
+final void DoExplode (int damage, float distance, bool damageSelf, optional int dmgdistance,
+                      optional EntityEx dmgsource, optional name dmgtype)
+{
+  if (!specified_dmgsource) dmgsource = Target;
+  if (!specified_dmgtype) dmgtype = DamageType;
   if (specified_dmgdistance && dmgdistance > 0) {
-    RadiusAttack(Target, damage, distance, damageSelf, DamageType, dmgdistance);
+    RadiusAttack(dmgsource, damage, distance, damageSelf, dmgtype, dmgdistance);
   } else {
-    RadiusAttack(Target, damage, distance, damageSelf, DamageType);
+    RadiusAttack(dmgsource, damage, distance, damageSelf, dmgtype);
   }
 
   if (Origin.z <= FloorZ+distance) HitFloorType();
@@ -558,17 +562,28 @@ final void A_ExplodeParms () {
 //
 //==========================================================================
 final void decorate_A_Explode (optional int damage, optional float distance,
-                               optional bool damageSelf, optional bool Alert, optional int dmgdistance,
-                               optional int nails, optional int naildamage)
+                               optional int flags, optional bool Alert, optional int dmgdistance,
+                               optional int nails, optional int naildamage,
+                               optional class!EntityEx PuffType, optional name dmgType)
 {
+  bool damageSelf = (specified_flags ? !!(flags&XF_HURTSOURCE) : true);
+  if (!specified_PuffType) PuffType = BulletPuff;
+  name NailDamageType = 'Nail';
+  if (!specified_dmgType) {
+    //k8: dunno if this is right
+    if (!(flags&XF_EXPLICITDAMAGETYPE)) dmgType = DamageType;
+  } else {
+    NailDamageType = dmgType; //k8: dunno
+  }
   if (specified_damage) {
     if (!damage) damage = 128;
     if (!distance) distance = 128;
-    if (!specified_damageSelf) damageSelf = true;
+    //if (!specified_flags) damageSelf = true;
   } else {
     damage = ExplosionDamage;
     distance = ExplosionRadius;
     damageSelf = !bExplosionDontHurtSelf;
+    if (!damageSelf && specified_flags && (flags&XF_HURTSOURCE)) damageSelf = true; //k8:dunno
     if (!damage) damage = 128;
     if (!distance) distance = damage;
   }
@@ -586,17 +601,21 @@ final void decorate_A_Explode (optional int damage, optional float distance,
       //LineAttack(Ang, MISSILERANGE, 0, naildamage, default, default,'Nail');
       //LineAttack(Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
       AngleVector(Ang, out adir);
-      LineAttack(/*Ang*/adir, MISSILERANGE, naildamage, BulletPuff, default, default, 'Nail', false);
+      LineAttack(/*Ang*/adir, MISSILERANGE, naildamage, PuffType, default, default, NailDamageType, false);
     }
   }
 
+  EntityEx dmgsource = Target;
+  if (flags&XF_NOTMISSILE) dmgsource = self;
+
   if (specified_dmgdistance && dmgdistance > 0) {
-    DoExplode(damage, float(distance), damageSelf, dmgdistance);
+    DoExplode(damage, float(distance), damageSelf, dmgdistance, dmgsource:dmgsource, dmgtype:dmgType);
   } else {
-    DoExplode(damage, float(distance), damageSelf);
+    DoExplode(damage, float(distance), damageSelf, dmgsource:dmgsource, dmgtype:dmgType);
   }
-  CheckSplash(float(distance));
-  if (Alert && Target && Target.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
+  if (!(flags&XF_NOSPLASH)) CheckSplash(float(distance));
+
+  if (Alert && dmgsource && dmgsource.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(dmgsource, self);
 }
 
 

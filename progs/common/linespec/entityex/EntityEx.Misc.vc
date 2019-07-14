@@ -137,8 +137,6 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
                          optional float fullthrustdistance)
 {
   EntityEx Other;
-  //float dist;
-  //int damage;
 
   if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
 
