@@ -966,6 +966,46 @@ void VWidget::DrawText (int x, int y, const VStr &String, int NormalColor, int B
 
 //==========================================================================
 //
+//  VWidget::TextWidth
+//
+//==========================================================================
+int VWidget::TextWidth (const VStr &s) {
+  return (Font ? Font->TextWidth(s) : 0);
+}
+
+
+//==========================================================================
+//
+//  VWidget::StringWidth
+//
+//==========================================================================
+int VWidget::StringWidth (const VStr &s) {
+  return (Font ? Font->StringWidth(s) : 0);
+}
+
+
+//==========================================================================
+//
+//  VWidget::TextHeight
+//
+//==========================================================================
+int VWidget::TextHeight (const VStr &s) {
+  return (Font ? Font->TextHeight(s) : 0);
+}
+
+
+//==========================================================================
+//
+//  VWidget::FontHeight
+//
+//==========================================================================
+int VWidget::FontHeight () {
+  return (Font ? Font->GetHeight() : 0);
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawCursor
 //
 //==========================================================================
@@ -1291,18 +1331,24 @@ IMPLEMENT_FUNCTION(VWidget, SetTextShadow) {
 IMPLEMENT_FUNCTION(VWidget, TextWidth) {
   P_GET_STR(text);
   P_GET_SELF;
-  RET_INT(Self->Font->TextWidth(text));
+  RET_INT(Self->TextWidth(text));
+}
+
+IMPLEMENT_FUNCTION(VWidget, StringWidth) {
+  P_GET_STR(text);
+  P_GET_SELF;
+  RET_INT(Self->TextWidth(text));
 }
 
 IMPLEMENT_FUNCTION(VWidget, TextHeight) {
   P_GET_STR(text);
   P_GET_SELF;
-  RET_INT(Self->Font->TextHeight(text));
+  RET_INT(Self->TextHeight(text));
 }
 
 IMPLEMENT_FUNCTION(VWidget, FontHeight) {
   P_GET_SELF;
-  RET_INT(Self->Font->GetHeight());
+  RET_INT(Self->FontHeight());
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitText) {

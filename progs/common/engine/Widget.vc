@@ -208,8 +208,10 @@ native final void SetFont (name font);
 native final void SetTextAlign (int halign, int valign);
 // enable/disable text shadow
 native final void SetTextShadow (bool on);
-// calculates text width
+// calculates text width (correctly processes '\n')
 native final int TextWidth (string text);
+// calculates string width (no '\n' processing)
+native final int StringWidth (string text);
 // calculates text height
 native final int TextHeight (string text);
 // return current font height
