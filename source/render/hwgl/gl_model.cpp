@@ -262,7 +262,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   SurfModel.SetInter(Inter);
 
   if (Additive) {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }

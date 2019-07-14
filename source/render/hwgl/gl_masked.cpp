@@ -519,7 +519,8 @@ void VOpenGLDrawer::DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha,
   if (doBrightmap) ShadowsAmbientTransBrightmap.SetTex(tex); else ShadowsAmbientTrans.SetTex(tex);
 
   if (Additive) {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

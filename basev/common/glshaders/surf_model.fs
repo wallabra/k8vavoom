@@ -23,13 +23,14 @@ void main () {
   vec4 FinalColor = TexColor;
 
   // do fog before premultiply, otherwise it is wrong
-  $include "common/fog_calc.fs"
+  //$include "common/fog_calc.fs"
 
   // convert to premultiplied
-  FinalColor.rgb *= FinalColor.a;
   FinalColor.a *= InAlpha;
   if (FinalColor.a < 0.01) discard;
-  FinalColor = min(FinalColor, 1.0);
+  FinalColor.rgb = clamp(FinalColor.rgb*FinalColor.a, 0.0, 1.0);
+
+  $include "common/fog_calc.fs"
 
   gl_FragColor = FinalColor;
 }
