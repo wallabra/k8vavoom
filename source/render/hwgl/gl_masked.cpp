@@ -87,7 +87,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     //glEnable(GL_BLEND);
     //glDisable(GL_BLEND);
     if (Additive) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     } else {
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
@@ -316,7 +317,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       zbufferWriteDisabled = true;
     }
     if (Additive) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     } else {
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       //p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
