@@ -102,7 +102,7 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
     // if we want a floor, and we are way higher than a floor, check for 3d floors
     if (!properFloorCheck && Origin.z > FloorZ) {
       GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
-      if (tmtrace.FloorZ <= Origin.z && FloorZ != tmtrace.FloorZ) {
+      if (tmtrace.FloorZ <= Origin.z && FloorZ < tmtrace.FloorZ) {
         #ifdef K8_DEVELOPER
         print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ);
         #endif
