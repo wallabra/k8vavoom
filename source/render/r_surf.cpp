@@ -628,6 +628,16 @@ static inline bool IsTransDoorHack (const seg_t *seg) {
 
 //==========================================================================
 //
+//  DivByScale
+//
+//==========================================================================
+static inline float DivByScale (float v, float scale) {
+  return (scale > 0 ? v/scale : v);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedTopWSurf
 //
 //==========================================================================
@@ -868,7 +878,7 @@ static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *lin
     texinfo->toffs = tparam->RowOffset*TextureOffsetTScale(MTex);
   } else {
     // move origin up/down, as this texture is not wrapped
-    z_org += tparam->RowOffset*(TextureOffsetTScale(MTex)/tparam->ScaleY);
+    z_org += tparam->RowOffset*DivByScale(TextureOffsetTScale(MTex), tparam->ScaleY);
     // offset is done by origin, so we don't need to offset texture
     texinfo->toffs = 0.0f;
   }
@@ -908,7 +918,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     const float exbotz = min2(back_botz1, back_botz2);
     const float extopz = max2(back_topz1, back_topz2);
 
-    const float texh = MTex->GetScaledHeight()*sidedef->Mid.ScaleY;
+    const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
     float z_org; // texture top
     if (linedef->flags&ML_DONTPEGBOTTOM) {
       // bottom of texture at bottom
@@ -922,10 +932,12 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     sp->texinfo.Alpha = linedef->alpha;
     sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
 
-    //bool doDump = ((ptrdiff_t)(linedef-Level->Lines) == 139);
+    //bool doDump = ((ptrdiff_t)(linedef-Level->Lines) == 7956);
     enum { doDump = 0 };
-    if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors)); }
+    if (doDump) { GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d; side=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors), (int)(ptrdiff_t)(sidedef-Level->Sides)); }
     //if (linedef->alpha < 1.0f) GCon->Logf("=== MIDSURF FOR LINE #%d (fs=%d; bs=%d) ===", (int)(ptrdiff_t)(linedef-Level->Lines), (int)(ptrdiff_t)(seg->frontsector-Level->Sectors), (int)(ptrdiff_t)(seg->backsector-Level->Sectors));
+    if (doDump) { GCon->Logf("   LINEWRAP=%u; SIDEWRAP=%u; ADDITIVE=%u; Alpha=%g; botpeg=%u; z_org=%g; texh=%g", (linedef->flags&ML_WRAP_MIDTEX), (sidedef->Flags&SDF_WRAPMIDTEX), (linedef->flags&ML_ADDITIVE), linedef->alpha, linedef->flags&ML_DONTPEGBOTTOM, z_org, texh); }
+    if (doDump) { GCon->Logf("   tx is '%s'; size=(%d,%d); scale=(%g,%g)", *MTex->Name, MTex->GetWidth(), MTex->GetHeight(), MTex->SScale, MTex->TScale); }
 
     //k8: HACK! HACK! HACK!
     //    move middle wall backwards a little, so it will be hidden behind up/down surfaces
@@ -1078,7 +1090,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
-  const float texh = MTex->GetScaledHeight()*sidedef->Mid.ScaleY;
+  const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
   float z_org; // texture top
   if (linedef->flags&ML_DONTPEGBOTTOM) {
     // bottom of texture at bottom
