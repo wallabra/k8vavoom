@@ -314,7 +314,7 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
 
   const line_t *ldef = seg->linedef;
 
-  if (ldef->alpha < 1.0f) return false; // skip translucent walls
+  if ((ldef->flags&ML_ADDITIVE) != 0 || ldef->alpha < 1.0f) return false; // skip translucent walls
   if (!(ldef->flags&ML_TWOSIDED)) return true; // one-sided wall always blocks everything
   if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
@@ -370,7 +370,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
 
   const line_t *ldef = seg->linedef;
 
-  if (ldef->alpha < 1.0f) return false; // skip translucent walls
+  if ((ldef->flags&ML_ADDITIVE) != 0 || ldef->alpha < 1.0f) return false; // skip translucent walls
   if (!(ldef->flags&ML_TWOSIDED)) return true; // one-sided wall always blocks everything
   if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
