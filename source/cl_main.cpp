@@ -69,7 +69,7 @@ static double LastKeepAliveTime = 0.0;
 void CL_Init () {
   cl_name.Set(Sys_GetUserName()); // why not?
   cl_name.SetDefault(cl_name.asStr());
-  GCon->Logf(NAME_Init, "Default user name is '%s'", *cl_name.asStr());
+  if (developer) GCon->Logf(NAME_Dev, "Default user name is '%s'", *cl_name.asStr());
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
   // load user-specified Vavoom C script files
   G_LoadVCMods("loadvcc", "client");
