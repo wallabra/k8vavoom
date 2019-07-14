@@ -31,7 +31,10 @@ defaultproperties {
 }
 
 
-class SectorPointLightSubtractive : DynamicLight   __mobjinfo__(9823);
+//TODO
+// Attenuated lights illuminate surfaces depending on surface angle -- surfaces that are not facing the light will get progressively less illuminated.
+class SectorPointLightSubtractive : DynamicLight  __mobjinfo__(9823);
+class SectorPointLightAttenuated : DynamicLight   __mobjinfo__(9833);
 
 defaultproperties {
   LightType = DLTYPE_SectorSubtractive;
