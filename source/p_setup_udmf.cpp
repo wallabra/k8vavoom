@@ -122,6 +122,8 @@ public:
   TArray<VParsedSide> ParsedSides;
   TArray<mthing_t> ParsedThings;
 
+  bool warnUnknownKeys;
+
 public:
   VUdmfParser (int Lump);
   void Parse (VLevel *Level, const mapInfo_t &MInfo);
@@ -151,6 +153,7 @@ public:
 //
 //==========================================================================
 VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump)) {
+  warnUnknownKeys = !GArgs.CheckParm("-wno-udmf-unknown-keys");
 }
 
 
@@ -160,6 +163,7 @@ VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump))
 //
 //==========================================================================
 bool VUdmfParser::CanSilentlyIgnoreKey () const {
+  if (!warnUnknownKeys) return true;
   return
     Key.startsWithCI("user_") ||
     Key.strEquCI("comment");
@@ -939,7 +943,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
     if (sn.GetIndex() != NAME_None) {
       L.L.arg1 = -(int)sn.GetIndex();
-      //GCon->Logf("*** ACS NAMED LINE SPECIAL %d: name is (%d) '%s'", L.L.special, sn.GetIndex(), *sn);
+      //GCon->Logf("*** LINE #%d: ACS NAMED LINE SPECIAL %d: name is (%d) '%s'", ParsedLines.length()-1, L.L.special, sn.GetIndex(), *sn);
     } else {
       L.L.arg1 = 0;
     }
