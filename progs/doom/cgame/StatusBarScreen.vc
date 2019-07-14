@@ -146,6 +146,7 @@ int pic_keys[6];
 int pic_pause;
 //For Icons in Fullscreen HUD
 int pic_health;
+int pic_berserk;
 int pic_armor[2];
 // Additions for inventory bar
 //int pic_artiflash[4];
@@ -243,6 +244,7 @@ override void StartMap () {
 
   // fullscreen HUD stuff
   pic_health = R_RegisterPic('stima0');
+  pic_berserk = R_RegisterPic('pstra0');
   pic_armor[0] = R_RegisterPic('arm1a0');
   pic_armor[1] = R_RegisterPic('arm2a0');
 
@@ -503,7 +505,10 @@ override void SB_DrawFullscreenStats () {
 
   // health
   SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, fsalpha, false);
-  DrawPic(ST_TDHEALTHX-60, ST_TDHEALTHY+15, pic_health, fsalpha);
+  // draw berserk pack if player has berserk powerup
+  int healthicon = pic_health;
+  if (pic_berserk > 0 && EntityEx(cl.MO).FindInventory(PowerStrength)) healthicon = pic_berserk;
+  DrawPic(ST_TDHEALTHX-60, ST_TDHEALTHY+15, healthicon, fsalpha);
 
   // Health Accumulation Device
   if (GetCvarB('k8HealthAccum_Enabled')) {
