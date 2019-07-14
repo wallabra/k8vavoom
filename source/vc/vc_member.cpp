@@ -419,7 +419,9 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
   check(AName != NAME_None);
   // check if already loaded
   for (int i = 0; i < GLoadedPackages.Num(); ++i) if (GLoadedPackages[i]->Name == AName) return GLoadedPackages[i];
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GLog.WriteLine(NAME_Init, "VavoomC: loading package '%s'...", *AName);
+#endif
   VPackage *Pkg = new VPackage(AName);
   GLoadedPackages.Append(Pkg);
   Pkg->LoadObject(l);
