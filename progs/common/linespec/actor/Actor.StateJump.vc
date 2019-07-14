@@ -242,9 +242,14 @@ final void A_JumpIfTargetInLOS (state Label, optional float Fov, optional int fl
 final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  /*
   EntityEx obj = Target;
   if (!obj) return;
   if (obj.checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) DoJump(Label);
+  */
+  // emulate this with flags, because real target is not what you may think, especially for players
+  flags |= JLOSF_TARGETLOS|JLOSF_FLIPFOV;
+  if (checkIfTargetInLOS(Fov!optional, flags, distmax!optional, distclose!optional)) DoJump(Label);
 }
 
 

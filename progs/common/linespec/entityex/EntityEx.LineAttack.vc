@@ -452,7 +452,8 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 //
 //==========================================================================
 final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
-                              optional bool noVertAutoAim, optional bool isRocket) {
+                              optional bool noVertAutoAim, optional bool isRocket)
+{
   float x2, y2;
   float topangle, botangle;
   TVec dir;
