@@ -687,6 +687,35 @@ public:
 
   #undef VL_ITERATOR_INDEX
 
+  // subsector segs
+  class SubSegsIndexIterator {
+    friend class VLevel;
+  private:
+    const VLevel *level;
+    seg_t *curr;
+    seg_t *last;
+  public:
+    SubSegsIndexIterator (const VLevel *alevel, const subsector_t *sub) : level(alevel) {
+      if (sub && sub->numlines > 0) {
+        curr = &alevel->Segs[sub->firstline];
+        last = curr+sub->numlines;
+      } else {
+        curr = nullptr;
+        last = nullptr;
+      }
+    }
+    //SubSegsIndexIterator (const SubSegsIndexIterator &it) : level(it.level), curr(it.curr), last(it.last) {}
+  public:
+    inline seg_t *begin () { return curr; }
+    inline seg_t *end () { return last; }
+  };
+
+  inline SubSegsIndexIterator allSubSegs (const subsector_t *sub) const { return SubSegsIndexIterator(this, sub); }
+  inline SubSegsIndexIterator allSubSegs (int subidx) const {
+    const subsector_t *sub = (subidx >= 0 && subidx < NumSubsectors ? &Subsectors[subidx] : nullptr);
+    return SubSegsIndexIterator(this, sub);
+  }
+
 private:
   // map loaders
   void LoadVertexes (int, int, int&);
