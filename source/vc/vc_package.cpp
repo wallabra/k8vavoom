@@ -739,9 +739,9 @@ void VPackage::WriteObject (const VStr &name) {
 
 //==========================================================================
 //
-// VPackage::LoadSourceObject
+//  VPackage::LoadSourceObject
 //
-// will delete `Strm`
+//  will delete `Strm`
 //
 //==========================================================================
 void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation l) {
