@@ -1140,7 +1140,7 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
       break;
 
     default:
-      //  Log everything else to know what needs to be implemented.
+      // log everything else to know what needs to be implemented
       print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
   }
