@@ -2080,13 +2080,12 @@ void VLevel::PostLoadSubsectors () {
 
     // look up sector number for each subsector
     // (and link this subsector to its parent sector)
-    seg_t *seg = &Segs[ss->firstline];
     ss->sector = nullptr;
-    for (int cnt = ss->numlines; cnt--; ++seg) {
-      if (seg->linedef) {
-        check(seg->sidedef);
-        check(seg->sidedef->Sector);
-        ss->sector = seg->sidedef->Sector;
+    for (auto &&seg : allSubSegs(ss)) {
+      if (seg.linedef) {
+        check(seg.sidedef);
+        check(seg.sidedef->Sector);
+        ss->sector = seg.sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
         break;
@@ -2098,17 +2097,16 @@ void VLevel::PostLoadSubsectors () {
     // also, setup frontsector and backsector for segs
     ss->bbox2d[BOX2D_LEFT] = ss->bbox2d[BOX2D_BOTTOM] = 999999.0f;
     ss->bbox2d[BOX2D_RIGHT] = ss->bbox2d[BOX2D_TOP] = -999999.0f;
-    seg = &Segs[ss->firstline];
-    for (int cnt = ss->numlines; cnt--; ++seg) {
-      seg->frontsub = ss;
+    for (auto &&seg : allSubSegs(ss)) {
+      seg.frontsub = ss;
       // for minisegs, set front and back sectors to subsector owning sector
-      if (!seg->linedef) seg->frontsector = seg->backsector = ss->sector;
+      if (!seg.linedef) seg.frontsector = seg.backsector = ss->sector;
       // min
-      ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg->v1->x, seg->v2->x));
-      ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg->v1->y, seg->v2->y));
+      ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg.v1->x, seg.v2->x));
+      ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg.v1->y, seg.v2->y));
       // max
-      ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg->v1->x, seg->v2->x));
-      ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg->v1->y, seg->v2->y));
+      ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg.v1->x, seg.v2->x));
+      ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg.v1->y, seg.v2->y));
     }
   }
 
