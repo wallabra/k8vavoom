@@ -61,28 +61,34 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
 
   // set subsector and/or block links
   // first, do it without proper check, to get the floorz we want
-  LinkToWorld(properFloorCheck:false);
+  //LinkToWorld(properFloorCheck:false);
+  // use `CheckRelPosition()` instead, we don't need to relink ourselves
+  tmtrace_t tmtrace;
+  GetFloorAndCeilingEx(out tmtrace, origin, collideWorld:false);
+  float floorz = tmtrace.FloorZ;
+  float ceilz = tmtrace.CeilingZ;
 
   auto oldz = Origin.z;
 
-       if (origin.z == ONFLOORZ) Origin.z = FloorZ+moreHeight;
-  else if (origin.z == ONCEILINGZ) Origin.z = CeilingZ-Height-moreHeight;
+       if (origin.z == ONFLOORZ) Origin.z = floorz+moreHeight;
+  else if (origin.z == ONCEILINGZ) Origin.z = ceilz-Height-moreHeight;
   else if (origin.z == FLOATRANDZ) {
-    float space = CeilingZ-Height-FloorZ;
+    float space = ceilz-Height-floorz;
     if (space > 48.0) {
       space -= 40.0;
-      Origin.z = space*Random()+FloorZ+40.0;
+      Origin.z = space*Random()+floorz+40.0;
     } else {
-      Origin.z = FloorZ;
+      Origin.z = floorz;
     }
   } else if (bFloatBob) {
-    Origin.z = FloorZ+Origin.z; // artifact z passed in as height
+    Origin.z = floorz+Origin.z; // artifact z passed in as height
   }
 
   // relink when z changes, to calculate new floor and ceiling heights,
   // otherwise physics will drop it down to the main floor, and will
   // break 3d positioning
-  if (Origin.z != oldz || properFloorCheck) {
+  //if (Origin.z != oldz || properFloorCheck)
+  {
     // use internal height adjuster if we have to do proper checks
     // this is not actually faster, but more logical
     /*
@@ -93,6 +99,20 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
     }
     */
     LinkToWorld(properFloorCheck:properFloorCheck);
+    // if we want a floor, and we are way higher than a floor, check for 3d floors
+    if (!properFloorCheck && Origin.z > FloorZ) {
+      GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
+      if (tmtrace.FloorZ <= Origin.z && FloorZ != tmtrace.FloorZ) {
+        #ifdef K8_DEVELOPER
+        print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ);
+        #endif
+        EFloor = tmtrace.EFloor;
+        ECeiling = tmtrace.ECeiling;
+        FloorZ = tmtrace.FloorZ;
+        CeilingZ = tmtrace.CeilingZ;
+        DropOffZ = tmtrace.DropOffZ;
+      }
+    }
   }
 
   VTerrainInfo *TInfo = GetFloorType();
@@ -1102,6 +1122,7 @@ override void OnMapSpawn (mthing_t *mthing) {
 
     SetOrigin2(vector(x, y, z), moreHeight:mthing.height);
     //if (mthing.type == 9001 && mthing.tid == 55) printwarn("*** MapSpot sector: %s", Sector-&XLevel.Sectors[0]);
+    //if (mthing-&XLevel.Things[0] == 114) printwarn("***id=%s: Sector=%s; height=%s; floorz=%s; radius=%s", UniqueId, Sector-&XLevel.Sectors[0], mthing->height, FloorZ, Radius);
 
     // no need to to this, it is already linked in `SetOrigin2()`
     //LinkToWorld(properFloorCheck:(bMonster || bIsPlayer));
