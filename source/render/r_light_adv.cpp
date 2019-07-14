@@ -235,7 +235,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
   if (!InSurfs) return;
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
-  if (texinfo->Alpha < 1.0f) return;
+  if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
   if (LightCanCross > 0 && texinfo->Tex->isTransparent()) return; // has holes, don't bother
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
@@ -570,7 +570,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
   if (!InSurfs) return;
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
-  if (texinfo->Alpha < 1.0f) return;
+  if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
