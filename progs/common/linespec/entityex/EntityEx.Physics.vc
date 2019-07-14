@@ -44,7 +44,7 @@ final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
   bColideWithThings = false;
   bColideWithWorld = false;
   // find new position
-  CheckRelPosition(&tmtrace, Origin);
+  CheckRelPosition(&tmtrace, Origin, noPickups:true, ignoreMonsters:true, ignorePlayers:true);
 }
 
 
