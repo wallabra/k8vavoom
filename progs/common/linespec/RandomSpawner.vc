@@ -54,7 +54,7 @@ override void BeginPlay () {
         ++i;
       } else {
         // send a warning that this class can't be found and continue the loop
-        print("WARNING: RandomSpawner type definition is incorrect at element %i", DropItemList.length-i);
+        printwarn("RandomSpawner type definition is incorrect at element %i", DropItemList.length-i);
         // show that there's a problem.
         Spawn(Unknown, Origin, default, default, false);
         Destroy();

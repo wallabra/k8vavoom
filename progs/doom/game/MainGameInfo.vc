@@ -703,7 +703,7 @@ void TranslateLine (Level InLevel, line_t *line) {
   int OldFlags = line->flags;
 
   if (OldSpec < 0) {
-    print("WARNING: TranslateLine: special=%d; tag=%d; flags=%x", OldSpec, OldTag, OldFlags);
+    printwarn("TranslateLine: special=%d; tag=%d; flags=%x", OldSpec, OldTag, OldFlags);
     OldSpec = 0;
     OldTag = 0;
     line->special = 0;

@@ -45,7 +45,7 @@ float Strength = -666; //k8:FIXME, i need a way to know if it is specified
 //==========================================================================
 override bool Use (bool Pickup) {
   if (!PowerupType) {
-    print("WARNING: tried to use empty powerup (user is '%C')!", self);
+    printwarn("tried to use empty powerup (user is '%C')!", self);
     return false;
   }
 

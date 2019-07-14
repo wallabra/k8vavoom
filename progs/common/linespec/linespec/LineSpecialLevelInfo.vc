@@ -1133,10 +1133,10 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     // LNSPEC_PointPushSetForce:
 
     case LNSPEC_SectorSetPortal:
-      print("WARNING: this level uses sector portals; this is not supported by k8VaVoom!");
+      printwarn("this level uses sector portals; this is not supported by k8vavoom!");
       break;
     case LNSPEC_LineSetPortal:
-      print("WARNING: this level uses line portals; this is not supported by k8VaVoom!");
+      printwarn("this level uses line portals; this is not supported by k8vavoom!");
       break;
 
     default:

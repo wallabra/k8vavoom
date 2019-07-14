@@ -1887,7 +1887,7 @@ final bool GiveBody (int num) {
 //==========================================================================
 final bool RepairArmorWith (int amount, optional class!BasicArmorBonus armorbonustype) {
   // default armorbonustype: ArmorBonus
-  print("WARNING: `RepairArmorWith()` is not implemeted!");
+  printwarn("`RepairArmorWith()` is not implemeted!");
   return false;
 }
 
@@ -2629,31 +2629,31 @@ final bool k8CheckIfSpecialStateLabel (name Label) {
 final state FindJumpState (name Label) {
   if (XLevel.StateCall) {
     state st = XLevel.StateCall->Item.FindState(Label);
-    if (!st && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (statecall) '%s' -- probably broken actor '%C' code!", Label, self);
+    if (!st && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (statecall) '%s' -- probably broken actor '%C' code!", Label, self);
     return st;
   }
   if (bIsPlayer) {
     if (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
     if (XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
     if (XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
   }
   state res = FindState(Label);
-  if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
+  if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
   return res;
 }
 
@@ -2957,7 +2957,7 @@ bool UseThing (EntityEx Other) {
   if (Other.bUseSpecial && Other.Special) {
     auto swd = SwitchableDecoration(Other);
     if (swd && swd.ActivationType) {
-      print("***WARNING: activation type for thing specials aren't implemented yet! %C:ActivationType=0x%08x", Other, swd.ActivationType);
+      printwarn("activation type for thing specials aren't implemented yet! %C:ActivationType=0x%08x", Other, swd.ActivationType);
     }
     if (Level.ExecuteActionSpecial(
       Other.Special, Other.Args[0], Other.Args[1], Other.Args[2],

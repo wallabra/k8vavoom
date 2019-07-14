@@ -437,7 +437,7 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   if (!bIsPlayer) return;
 
   if (lifesteal || lifestealmax || armorbonustype) {
-    print("WARNING: extra `A_Saw()` parameters ignored!");
+    printwarn("extra `A_Saw()` parameters ignored!");
   }
 
   if (!specified_FullSound) {

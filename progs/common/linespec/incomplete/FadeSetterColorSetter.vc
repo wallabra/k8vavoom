@@ -51,7 +51,7 @@ override void BeginPlay () {
   if (!Sector) return;
   //print("FadeSetter: %d;%d;%d", Args[0], Args[1], Args[2]);
   int color = RGBA(Args[0], Args[1], Args[2], 255);
-  if (Args[3] > 0) print("WARNING: desaturation in thing 9038 is not supported yet!");
+  if (Args[3] > 0) printwarn("desaturation in thing 9038 is not supported yet!");
   Sector.params.LightColor = color;
   Destroy();
 }

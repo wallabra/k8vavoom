@@ -105,7 +105,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   Speed = float(Arg2)*35.0/8.0;
   Crush = 0;
   StartSound = LineSpecialLevelInfo(Level).DefaultPlatformSound;
-  if (Sector.lines.length == 0) { print("WARNING: invalid platform in `linespec.Platform.Init()`"); return; }
+  if (Sector.lines.length == 0) { printwarn("invalid platform in `linespec.Platform.Init()`"); return; }
   switch (Type) {
     case PLATEV_PerpetualRaise:
       DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
