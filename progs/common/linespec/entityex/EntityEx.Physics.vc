@@ -1380,8 +1380,11 @@ override void ApplyFriction (float DeltaTime) {
     Velocity.y = 0.0;
   } else {
     // slow down
-    Velocity.x -= Velocity.x*(GetFriction()* /*Level.Game.frametime*/DeltaTime);
-    Velocity.y -= Velocity.y*(GetFriction()* /*Level.Game.frametime*/DeltaTime);
+    Velocity.x -= Velocity.x*(GetFriction()*DeltaTime);
+    Velocity.y -= Velocity.y*(GetFriction()*DeltaTime);
+    // roughly smaller than lowest fixed point 16.16 (it is more like 0.0000152587890625)
+    if (fabs(Velocity.x) < 0.00001) Velocity.x = 0;
+    if (fabs(Velocity.y) < 0.00001) Velocity.y = 0;
   }
 }
 
