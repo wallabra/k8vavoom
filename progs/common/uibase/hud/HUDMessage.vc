@@ -383,7 +383,7 @@ override void OnDraw () {
     // hbarPicBorder: 320x16
     // hbarPicBack: 316x10
     // hbarPicFill: 316x10
-    int picX = (Width-320)/2;
+    int picX = (root.Width-320)/2;
     /*
     R_DrawPic(picX, y, hbarPicBorder);
     R_DrawPic(picX, y, hbarPicBack);
