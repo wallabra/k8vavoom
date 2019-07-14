@@ -43,6 +43,8 @@ override void Destroyed () {
 //
 //  SetOrigin2
 //
+//  this is used in spawners, to fix initial Z
+//
 //==========================================================================
 final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional float moreHeight) {
   UnlinkFromWorld();
@@ -60,9 +62,7 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
   }
 
   // set subsector and/or block links
-  // first, do it without proper check, to get the floorz we want
-  //LinkToWorld(properFloorCheck:false);
-  // use `CheckRelPosition()` instead, we don't need to relink ourselves
+  // use `CheckRelPosition()` here, we don't need to relink ourselves
   tmtrace_t tmtrace;
   GetFloorAndCeilingEx(out tmtrace, origin, collideWorld:false);
   float floorz = tmtrace.FloorZ;
@@ -84,34 +84,28 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
     Origin.z = floorz+Origin.z; // artifact z passed in as height
   }
 
-  // relink when z changes, to calculate new floor and ceiling heights,
-  // otherwise physics will drop it down to the main floor, and will
-  // break 3d positioning
-  //if (Origin.z != oldz || properFloorCheck)
+  LinkToWorld(properFloorCheck:properFloorCheck);
+
+  // if we are way higher than a floor, check for 3d floors.
+  // this (coincidentally) also checks if a thing fits into a gap for
+  // newly spawned entities. i hope it won't break anything.
+  if (!properFloorCheck && Radius > 4 && // arbitrary limit
+      !bNoInteraction && !bNoBlockmap && !bNoSector &&
+      Origin.z > FloorZ)
   {
-    // use internal height adjuster if we have to do proper checks
-    // this is not actually faster, but more logical
-    /*
-    if (properFloorCheck) {
-      HeightClip(skipTriggers:true, skipObjects:false);
-    } else {
-      LinkToWorld(properFloorCheck:false);
-    }
-    */
-    LinkToWorld(properFloorCheck:properFloorCheck);
-    // if we want a floor, and we are way higher than a floor, check for 3d floors
-    if (!properFloorCheck && Origin.z > FloorZ) {
-      GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
-      if (tmtrace.FloorZ <= Origin.z && FloorZ < tmtrace.FloorZ) {
-        #ifdef K8_DEVELOPER
-        print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ);
-        #endif
-        EFloor = tmtrace.EFloor;
-        ECeiling = tmtrace.ECeiling;
-        FloorZ = tmtrace.FloorZ;
-        CeilingZ = tmtrace.CeilingZ;
-        DropOffZ = tmtrace.DropOffZ;
+    GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
+    if (FloorZ < tmtrace.FloorZ && tmtrace.FloorZ <= Origin.z) {
+      #ifdef K8_DEVELOPER
+      // `moreHeight` specified only for map things
+      if (specified_moreHeight) {
+        print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s; Radius=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ, Radius);
       }
+      #endif
+      EFloor = tmtrace.EFloor;
+      ECeiling = tmtrace.ECeiling;
+      FloorZ = tmtrace.FloorZ;
+      CeilingZ = tmtrace.CeilingZ;
+      DropOffZ = tmtrace.DropOffZ;
     }
   }
 
