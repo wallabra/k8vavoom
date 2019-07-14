@@ -46,6 +46,12 @@ menudef AutomapOptions {
   }
 
   option bool {
+    title = "Show inernal map name on automap";
+    cvar = am_show_map_name;
+    help = "Show internal map name on automap?";
+  }
+
+  option bool {
     title = "Show keys on automap";
     cvar = am_draw_keys;
     help =
