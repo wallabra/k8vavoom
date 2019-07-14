@@ -1963,15 +1963,16 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
   for (int i = 0; i < NumSegs; ++i, ++seg) {
     vuint32 v1num;
     vuint32 v2num;
-    vint16 linedef; // -1 for minisegs
-    vint16 side;
-    vint16 partner; // -1 on one-sided walls
+    vuint16 linedef; // -1 for minisegs
+    vuint16 side;
+    vuint16 partner; // -1 on one-sided walls
 
     if (Format < 3) {
       vuint16 v1, v2;
       Strm << v1 << v2 << linedef << side << partner;
       v1num = v1;
       v2num = v2;
+      if (side > 1) Host_Error("Bad GL vertex side %u", side);
     } else {
       vuint32 v1, v2;
       vint16 flags;
@@ -1983,47 +1984,31 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
 
     if (v1num&GLVertFlag) {
       v1num ^= GLVertFlag;
-      if (v1num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %d", v1num);
+      if (v1num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %u", v1num);
       seg->v1 = &GLVertexes[v1num];
     } else {
-      if (v1num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d (04)", v1num);
+      if (v1num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %u (04)", v1num);
       seg->v1 = &Vertexes[v1num];
     }
+
     if (v2num&GLVertFlag) {
       v2num ^= GLVertFlag;
-      if (v2num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %d", v2num);
+      if (v2num >= (vuint32)NumGLVertexes) Host_Error("Bad GL vertex index %u", v2num);
       seg->v2 = &GLVertexes[v2num];
     } else {
-      if (v2num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d (05)", v2num);
+      if (v2num >= (vuint32)NumVertexes) Host_Error("Bad vertex index %u (05)", v2num);
       seg->v2 = &Vertexes[v2num];
     }
 
-    if (linedef >= 0) {
+    if (linedef != 0xffffu) {
+      if (linedef >= NumLines) Host_Error("Bad GL vertex linedef index %u", linedef);
       line_t *ldef = &Lines[linedef];
       seg->linedef = ldef;
-      seg->sidedef = &Sides[ldef->sidenum[side]];
-      seg->frontsector = Sides[ldef->sidenum[side]].Sector;
-
-      //if (ldef->flags&ML_TWOSIDED) seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
-      if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
-        seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
-      } else {
-        seg->backsector = nullptr;
-        ldef->flags &= ~ML_TWOSIDED;
-      }
-
-      if (side) {
-        seg->offset = seg->v1->DistanceTo2D(*ldef->v2);
-      } else {
-        seg->offset = seg->v1->DistanceTo2D(*ldef->v1);
-      }
-      seg->length = seg->v2->DistanceTo2D(*seg->v1);
-      //if (seg->length < 0.0001f) Sys_Error("zero-length seg #%d", i);
       seg->side = side;
     }
 
     // assign partner (we need it for self-referencing deep water)
-    seg->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
+    seg->partner = (partner != 0xffffu && partner < NumSegs ? &Segs[partner] : nullptr);
 
     // `PostLoadSegs()` will do the rest
   }
@@ -2048,17 +2033,17 @@ void VLevel::PostLoadSegs () {
       line_t *ldef = seg->linedef;
 
       if (ldef->sidenum[dside] < 0 || ldef->sidenum[dside] >= NumSides) {
-        Sys_Error("seg #%d, ldef=%d: invalid sidenum %d (%d) (max sidenum is %d)\n", i, (int)(ptrdiff_t)(ldef-Lines), dside, ldef->sidenum[dside], NumSides-1);
+        Host_Error("seg #%d, ldef=%d: invalid sidenum %d (%d) (max sidenum is %d)\n", i, (int)(ptrdiff_t)(ldef-Lines), dside, ldef->sidenum[dside], NumSides-1);
       }
 
       seg->sidedef = &Sides[ldef->sidenum[dside]];
       seg->frontsector = Sides[ldef->sidenum[dside]].Sector;
 
       if (ldef->flags&ML_TWOSIDED) {
-        if (ldef->sidenum[dside^1] < 0 || ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of two-sided linedef is fucked");
+        if (ldef->sidenum[dside^1] < 0 || ldef->sidenum[dside^1] >= NumSides) Host_Error("another side of two-sided linedef is fucked");
         seg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
       } else if (ldef->sidenum[dside^1] >= 0) {
-        if (ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of blocking two-sided linedef is fucked");
+        if (ldef->sidenum[dside^1] >= NumSides) Host_Error("another side of blocking two-sided linedef is fucked");
         seg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
         // not a two-sided, so clear backsector (just in case) -- nope
         //destseg->backsector = nullptr;
@@ -2066,6 +2051,9 @@ void VLevel::PostLoadSegs () {
         seg->backsector = nullptr;
         ldef->flags &= ~ML_TWOSIDED; // just in case
       }
+    } else {
+      // minisegs should have front and back sectors set too, because why not?
+      // but this will be fixed in `PostLoadSubsectors()`
     }
 
     CalcSegLenOfs(seg);
@@ -2081,58 +2069,59 @@ void VLevel::PostLoadSegs () {
 //==========================================================================
 void VLevel::PostLoadSubsectors () {
   // this can be called with already linked sector<->subsectors, so don't assume anything
-  for (int snum = 0; snum < NumSectors; ++snum) Sectors[snum].subsectors = nullptr;
-  for (int i = 0; i < NumSubsectors; ++i) Subsectors[i].seclink = nullptr;
+  for (auto &&sec : allSectors()) sec.subsectors = nullptr;
+  for (auto &&sub : allSubsectors()) sub.seclink = nullptr;
 
-  TArray<int> orphanSubs;
-
-  subsector_t *ss = Subsectors;
-  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+  for (auto &&it : allSubsectorsIdx()) {
+    const int idx = it.index();
+    subsector_t *ss = it.value();
     if (ss->firstline < 0 || ss->firstline >= NumSegs) Host_Error("Bad seg index %d", ss->firstline);
     if (ss->numlines <= 0 || ss->firstline+ss->numlines > NumSegs) Host_Error("Bad segs range %d %d", ss->firstline, ss->numlines);
 
     // look up sector number for each subsector
+    // (and link this subsector to its parent sector)
     seg_t *seg = &Segs[ss->firstline];
     ss->sector = nullptr;
-    for (int j = 0; j < ss->numlines; ++j) {
-      if (seg[j].linedef) {
-        check(seg[j].sidedef);
-        check(seg[j].sidedef->Sector);
-        ss->sector = seg[j].sidedef->Sector;
+    for (int cnt = ss->numlines; cnt--; ++seg) {
+      if (seg->linedef) {
+        check(seg->sidedef);
+        check(seg->sidedef->Sector);
+        ss->sector = seg->sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
         break;
       }
     }
-
-    if (!ss->sector) orphanSubs.append(i);
+    if (!ss->sector) Host_Error("Subsector %d contains only minisegs; this is nodes builder bug!", idx);
 
     // calculate bounding box
+    // also, setup frontsector and backsector for segs
     ss->bbox2d[BOX2D_LEFT] = ss->bbox2d[BOX2D_BOTTOM] = 999999.0f;
     ss->bbox2d[BOX2D_RIGHT] = ss->bbox2d[BOX2D_TOP] = -999999.0f;
-    for (int j = 0; j < ss->numlines; j++) {
-      seg[j].frontsub = ss;
+    seg = &Segs[ss->firstline];
+    for (int cnt = ss->numlines; cnt--; ++seg) {
+      seg->frontsub = ss;
+      // for minisegs, set front and back sectors to subsector owning sector
+      if (!seg->linedef) seg->frontsector = seg->backsector = ss->sector;
       // min
-      ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg[j].v1->x, seg[j].v2->x));
-      ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg[j].v1->y, seg[j].v2->y));
+      ss->bbox2d[BOX2D_LEFT] = min2(ss->bbox2d[BOX2D_LEFT], min2(seg->v1->x, seg->v2->x));
+      ss->bbox2d[BOX2D_BOTTOM] = min2(ss->bbox2d[BOX2D_BOTTOM], min2(seg->v1->y, seg->v2->y));
       // max
-      ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg[j].v1->x, seg[j].v2->x));
-      ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg[j].v1->y, seg[j].v2->y));
+      ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg->v1->x, seg->v2->x));
+      ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg->v1->y, seg->v2->y));
     }
-    if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
 
-  for (int f = 0; f < NumSegs; ++f) {
-    if (!Segs[f].frontsub) GCon->Logf("Seg %d: frontsub is not set!", f);
+  for (auto &&it : allSegsIdx()) {
+    if (it.value()->frontsub == nullptr) Host_Error("Seg %d: frontsub is not set!", it.index());
+    if (it.value()->frontsector == nullptr) {
+      if (it.value()->backsector == nullptr) {
+        Host_Error("Seg %d: front sector is not set!", it.index());
+      } else {
+        GCon->Logf(NAME_Warning, "Seg %d: only back sector is set (this may be a bug, but i am not sure)", it.index());
+      }
+    }
   }
-
-  for (int oidx = 0; oidx < orphanSubs.length(); ++oidx) {
-    ss = Subsectors+orphanSubs[oidx];
-    check(!ss->sector);
-    check(!ss->seclink);
-    GCon->Logf(NAME_Error, "subsector %d contains only minisegs", orphanSubs[oidx]);
-  }
-  if (orphanSubs.length()) Host_Error("map has %d subsector%s contains only minisegs", orphanSubs.length(), (orphanSubs.length() == 1 ? "" : "s"));
 }
 
 
@@ -2226,6 +2215,11 @@ void VLevel::LoadNodes (int Lump) {
     } else {
       no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
     }
+
+    no->sx = x<<16;
+    no->sy = y<<16;
+    no->dx = dx<<16;
+    no->dy = dy<<16;
 
     for (int j = 0; j < 2; ++j) {
       no->children[j] = children[j];
@@ -2442,38 +2436,10 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         if (linedef != 0xffffffffu) {
           if (linedef >= (vuint32)NumLines) Host_Error("Bad linedef index %u (ss=%d; nl=%d)", linedef, i, j);
           if (side > 1) Host_Error("Bad seg side %d", side);
-
-          line_t *ldef = &Lines[linedef];
-
-          seg->linedef = ldef;
-          /*
-          seg->sidedef = &Sides[ldef->sidenum[side]];
-          seg->frontsector = Sides[ldef->sidenum[side]].Sector;
-
-          if (/ *(ldef->flags&ML_TWOSIDED) != 0 &&* / ldef->sidenum[side^1] >= 0) {
-            seg->backsector = Sides[ldef->sidenum[side^1]].Sector;
-          } else {
-            seg->backsector = nullptr;
-            ldef->flags &= ~ML_TWOSIDED;
-          }
-
-          if (side) {
-            check(seg);
-            check(seg->v1);
-            check(ldef->v2);
-            seg->offset = Length(*seg->v1 - *ldef->v2);
-          } else {
-            check(seg);
-            check(seg->v1);
-            check(ldef->v1);
-            seg->offset = Length(*seg->v1 - *ldef->v1);
-          }
+          seg->linedef = &Lines[linedef];
           seg->side = side;
-          */
         } else {
           seg->linedef = nullptr;
-          seg->sidedef = nullptr;
-          seg->frontsector = seg->backsector = (Segs+Subsectors[i].firstline)->frontsector;
         }
       }
     }
@@ -2504,6 +2470,10 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         } else {
           no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
         }
+        no->sx = x<<16;
+        no->sy = y<<16;
+        no->dx = dx<<16;
+        no->dy = dy<<16;
       } else {
         vint32 x, y, dx, dy;
         *Strm << x << y << dx << dy;
@@ -2513,6 +2483,10 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         } else {
           no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
         }
+        no->sx = x;
+        no->sy = y;
+        no->dx = dx;
+        no->dy = dy;
       }
 
       *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
