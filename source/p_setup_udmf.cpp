@@ -1280,7 +1280,7 @@ void VUdmfParser::ParseThing () {
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
   if (hasArg0Str && ((T.special >= 80 && T.special <= 86) || T.special == 226)) {
     VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
-    if (sn.GetIndex() != NAME_None) {
+    if (sn != NAME_None) {
       T.arg1 = -(int)sn.GetIndex();
       //GCon->Logf("*** ACS NAMED THING SPECIAL %d: name is (%d) '%s'", T.special, sn.GetIndex(), *sn);
     } else {

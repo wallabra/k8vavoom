@@ -4405,6 +4405,35 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SetLineSpecial)
       {
+        // this is "ACS_NamedXXX", first arg is script name
+        if (sp[-6] < 0) {
+          bool unknown = true;
+          if (sp[-6] >= -45 && sp[-6] <= -39) {
+            VName name = GetNameLowerCase(sp[-5]);
+            if (sp[-6] != -45) {
+              GCon->Logf(NAME_Error, "Trying to set unknown ACSF execute special! NAME: '%s'", *name);
+            } else {
+              GCon->Logf(NAME_Warning, "ACS: replaced `ACS_NamedExecuteAlways` with `ACS_ExecuteAlways`, script name is '%s'", *name);
+              unknown = false;
+              if (name != NAME_None) {
+                sp[-6] = 226; // "execute always"
+                sp[-5] = -(int)name.GetIndex();
+              } else {
+                sp[-6] = 0; // oops
+              }
+            }
+          }
+          if (unknown) {
+            for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
+              if (nfo->index == -sp[-6]) {
+                GCon->Logf(NAME_Error, "unimplemented ACSF line special #%d: '%s'", nfo->index, nfo->name);
+                unknown = false;
+                break;
+              }
+            }
+            if (unknown) GCon->Logf(NAME_Error, "unimplemented ACSF line special #%d", -sp[-6]);
+          }
+        }
         int searcher = -1;
         for (line_t *line = XLevel->FindLine(sp[-7], &searcher);
              line != nullptr; line = XLevel->FindLine(sp[-7], &searcher))
@@ -4415,6 +4444,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           line->arg3 = sp[-3];
           line->arg4 = sp[-2];
           line->arg5 = sp[-1];
+          //GCon->Logf("line #%d got special #%d (%d,%d,%d,%d,%d)", (int)(ptrdiff_t)(line-XLevel->Lines), line->special, line->arg1, line->arg2, line->arg3, line->arg4, line->arg5);
         }
         sp -= 7;
       }
