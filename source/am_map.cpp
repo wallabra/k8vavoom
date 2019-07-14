@@ -204,6 +204,7 @@ static VCvarI am_player_arrow("am_player_arrow", 0, "Type of player arrow.", CVA
 static VCvarB am_follow_player("am_follow_player", true, "Should automap follow player?", CVAR_Archive);
 static VCvarB am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archive);
 static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CVAR_Archive);
+static VCvarB am_show_map_name("am_show_map_name", false, "Show internal map name on automap?", CVAR_Archive);
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", 0);
@@ -2076,8 +2077,17 @@ void AM_DrawWorldTimer () {
 
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vtop);
-  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d ", hours, minutes, seconds);
-  T_DrawText(VScrTransX640(560), VScrTransY480(8), timeBuffer, CR_UNTRANSLATED);
+
+  //k8: sorry!
+  static int sx = -666666;
+  if (sx == -666666) {
+    sx = max2(74, T_StringWidth("00 : 00 : 00"));
+    sx = max2(sx, T_StringWidth("88 : 88 : 88"));
+    sx = VirtualWidth-sx-4;
+  }
+
+  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d", hours, minutes, seconds);
+  T_DrawText(sx, 8, timeBuffer, CR_UNTRANSLATED);
 
   if (days) {
     if (days == 1) {
@@ -2085,8 +2095,8 @@ void AM_DrawWorldTimer () {
     } else {
       snprintf(dayBuffer, sizeof(dayBuffer), "%.2d DAYS", days);
     }
-    T_DrawText(VScrTransX640(560), VScrTransY480(18), dayBuffer, CR_UNTRANSLATED);
-    if (days >= 5) T_DrawText(VScrTransX640(550), VScrTransY480(28), "YOU FREAK!!!", CR_UNTRANSLATED);
+    T_DrawText(sx, 18, dayBuffer, CR_UNTRANSLATED);
+    if (days >= 5) T_DrawText(sx-10, 28, "YOU FREAK!!!", CR_UNTRANSLATED);
   }
 }
 
@@ -2107,21 +2117,35 @@ static void AM_DrawLevelStats () {
   char secret[80];
   char item[80];
 
-  kills = cl->KillCount;
-  items = cl->ItemCount;
-  secrets = cl->SecretCount;
-  totalkills = GClLevel->LevelInfo->TotalKills;
-  totalitems = GClLevel->LevelInfo->TotalItems;
-  totalsecrets = GClLevel->LevelInfo->TotalSecret;
-
   T_SetFont(SmallFont);
-  T_SetAlign(hleft, vtop);
-  snprintf(kill, sizeof(kill), "Kills: %.2d / %.2d", kills, totalkills);
-  T_DrawText(VScrTransX640(8), VScrTransY480(390), kill, CR_RED);
-  snprintf(item, sizeof(item), "Items: %.2d / %.2d", items, totalitems);
-  T_DrawText(VScrTransX640(8), VScrTransY480(400), item, CR_GREEN);
-  snprintf(secret, sizeof(secret), "Secrets: %.2d / %.2d", secrets, totalsecrets);
-  T_DrawText(VScrTransX640(8), VScrTransY480(410), secret, CR_GOLD);
+  T_SetAlign(hleft, vbottom);
+
+  int currY = VirtualHeight-sb_height-7;
+
+  if (am_show_map_name) {
+    T_DrawText(20, currY-10, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
+    T_DrawText(20, currY, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
+    currY -= 10*2+4;
+  }
+
+  if (am_show_stats) {
+    currY -= 3*10;
+    kills = cl->KillCount;
+    items = cl->ItemCount;
+    secrets = cl->SecretCount;
+    totalkills = GClLevel->LevelInfo->TotalKills;
+    totalitems = GClLevel->LevelInfo->TotalItems;
+    totalsecrets = GClLevel->LevelInfo->TotalSecret;
+
+    T_SetFont(SmallFont);
+    T_SetAlign(hleft, vtop);
+    snprintf(kill, sizeof(kill), "Kills: %.2d / %.2d", kills, totalkills);
+    T_DrawText(8, currY, kill, CR_RED);
+    snprintf(item, sizeof(item), "Items: %.2d / %.2d", items, totalitems);
+    T_DrawText(8, currY+10, item, CR_GREEN);
+    snprintf(secret, sizeof(secret), "Secrets: %.2d / %.2d", secrets, totalsecrets);
+    T_DrawText(8, currY+20, secret, CR_GOLD);
+  }
 }
 
 
@@ -2193,11 +2217,7 @@ void AM_Drawer () {
   if (am_cheating && am_show_rendered_subs) AM_DrawRenderedSubs();
   Drawer->EndAutomap();
   AM_DrawWorldTimer();
-  T_SetFont(SmallFont);
-  T_SetAlign(hleft, vbottom);
-  T_DrawText(VScrTransX640(20), VScrTransY480(480)-sb_height-7-9, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
-  T_DrawText(VScrTransX640(20), VScrTransY480(480)-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
-  if (am_show_stats) AM_DrawLevelStats();
+  if (am_show_stats || am_show_map_name) AM_DrawLevelStats();
   if (mapMarksAllowed) AM_drawMarks();
 
   //if (am_overlay) glColor4f(1, 1, 1, 1);
