@@ -195,7 +195,7 @@ void VUdmfParser::ParseKey () {
       ValFloat = sc.Float;
       Val = VStr(ValFloat);
     } else {
-      sc.Message(va("Numeric constant expected (%s)", *Key));
+      sc.HostError(va("Numeric constant expected (%s)", *Key));
     }
   } else if (sc.Check("-")) {
     if (sc.CheckNumber()) {
@@ -207,7 +207,7 @@ void VUdmfParser::ParseKey () {
       ValFloat = -sc.Float;
       Val = VStr(ValFloat);
     } else {
-      sc.Message(va("Numeric constant expected (%s)", *Key));
+      sc.HostError(va("Numeric constant expected (%s)", *Key));
     }
   } else if (sc.CheckNumber()) {
     ValType = TK_Int;
@@ -232,7 +232,7 @@ void VUdmfParser::ParseKey () {
 //
 //==========================================================================
 int VUdmfParser::CheckInt () {
-  if (ValType != TK_Int) { sc.Message(va("Integer value expected for key '%s'", *Key)); ValInt = 0; }
+  if (ValType != TK_Int) { sc.HostError(va("Integer value expected for key '%s'", *Key)); ValInt = 0; }
   return ValInt;
 }
 
@@ -243,7 +243,7 @@ int VUdmfParser::CheckInt () {
 //
 //==========================================================================
 float VUdmfParser::CheckFloat () {
-  if (ValType != TK_Int && ValType != TK_Float) { sc.Message(va("Float value expected for key '%s'", *Key)); ValInt = 0; ValFloat = 0; }
+  if (ValType != TK_Int && ValType != TK_Float) { sc.HostError(va("Float value expected for key '%s'", *Key)); ValInt = 0; ValFloat = 0; }
   return (ValType == TK_Int ? ValInt : ValFloat);
 }
 
@@ -258,7 +258,7 @@ bool VUdmfParser::CheckBool () {
     if (Val.strEquCI("true") || Val.strEquCI("on") || Val.strEquCI("tan")) return true;
     if (Val.strEquCI("false") || Val.strEquCI("off") || Val.strEquCI("ona")) return false;
   }
-  sc.Message(va("Boolean value expected for key '%s'", *Key));
+  sc.HostError(va("Boolean value expected for key '%s'", *Key));
   return false;
 }
 
@@ -269,7 +269,7 @@ bool VUdmfParser::CheckBool () {
 //
 //==========================================================================
 VStr VUdmfParser::CheckString () {
-  if (ValType != TK_String) { sc.Message(va("String value expected for key '%s'", *Key)); Val = VStr(); }
+  if (ValType != TK_String) { sc.HostError(va("String value expected for key '%s'", *Key)); Val = VStr(); }
   return Val;
 }
 
@@ -355,7 +355,7 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
   else if (Namespace.strEquCI("ZDoom")) { NS = NS_ZDoom; bExtended = true; }
   else if (Namespace.strEquCI("ZDoomTranslated")) NS = NS_ZDoomTranslated;
   else {
-    sc.Message(va("UDMF: unknown namespace '%s'", *Namespace));
+    sc.HostError(va("UDMF: unknown namespace '%s'", *Namespace));
     NS = 0; // unknown namespace
   }
 
@@ -379,14 +379,17 @@ void VUdmfParser::ParseVertex () {
   // allocate a new vertex
   VParsedVertex &v = ParsedVertexes.Alloc();
   memset(&v, 0, sizeof(VParsedVertex));
+  bool hasX = false, hasY = false;
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
     if (Key.strEquCI("x")) {
+      hasX = true;
       v.x = CheckFloat();
       continue;
     }
     if (Key.strEquCI("y")) {
+      hasY = true;
       v.y = CheckFloat();
       continue;
     }
@@ -402,6 +405,10 @@ void VUdmfParser::ParseVertex () {
     }
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown vertex property '%s' with value '%s'", *Key, *Val));
   }
+  if (!hasX || !hasY) sc.HostError("UDMF: incomplete vertex data");
+  // be conservative here
+  if (v.x < -32767 || v.x > 32767) sc.HostError(va("UDMF: vertex `x` is out of range (%g)", v.x));
+  if (v.y < -32767 || v.y > 32767) sc.HostError(va("UDMF: vertex `y` is out of range (%g)", v.y));
 }
 
 
@@ -848,7 +855,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
         VStr RS = CheckString();
              if (RS.strEquCI("translucent")) L.L.flags &= ~ML_ADDITIVE;
         else if (RS.strEquCI("add")) L.L.flags |= ML_ADDITIVE;
-        else sc.Message("Bad linedef render style");
+        else sc.Message(va("Bad linedef render style '%s'", *RS));
         continue;
       }
 

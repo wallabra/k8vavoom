@@ -110,6 +110,9 @@ public:
   void SkipLine ();
   void Message (const char *);
   void Error (const char *);
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  void HostError (const char *);
+#endif
 
   // slow! returns 0 on EOF
   // doesn't affect flags
