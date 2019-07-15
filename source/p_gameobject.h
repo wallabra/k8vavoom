@@ -336,9 +336,11 @@ struct line_t : public TPlane {
 //
 //==========================================================================
 enum {
-  SDF_ABSLIGHT   = 0x0001u, // light is absolute value
-  SDF_WRAPMIDTEX = 0x0002u,
-  SDF_CLIPMIDTEX = 0x0004u,
+  SDF_ABSLIGHT   = 1u<<0, // light is absolute value
+  SDF_WRAPMIDTEX = 1u<<1,
+  SDF_CLIPMIDTEX = 1u<<2,
+  SDF_NOFAKECTX  = 1u<<3, // no fake contrast
+  SDF_SMOOTH_LIT = 1u<<4, // smooth lighting, not implemented yet
 };
 
 

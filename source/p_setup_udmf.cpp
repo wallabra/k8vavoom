@@ -916,118 +916,33 @@ void VUdmfParser::ParseSideDef () {
   while (!sc.Check("}")) {
     ParseKey();
 
-    if (Key.strEquCI("offsetx")) {
-      XOffs = CheckFloat();
-      continue;
-    }
-
-    if (Key.strEquCI("offsety")) {
-      YOffs = CheckFloat();
-      continue;
-    }
-
-    if (Key.strEquCI("texturetop")) {
-      S.TopTexture = CheckString();
-      continue;
-    }
-
-    if (Key.strEquCI("texturebottom")) {
-      S.BotTexture = CheckString();
-      continue;
-    }
-
-    if (Key.strEquCI("texturemiddle")) {
-      S.MidTexture = CheckString();
-      continue;
-    }
-
-    if (Key.strEquCI("sector")) {
-      S.SectorIndex = CheckInt();
-      continue;
-    }
+    if (Key.strEquCI("offsetx")) { XOffs = CheckFloat(); continue; }
+    if (Key.strEquCI("offsety")) { YOffs = CheckFloat(); continue; }
+    if (Key.strEquCI("texturetop")) { S.TopTexture = CheckString(); continue; }
+    if (Key.strEquCI("texturebottom")) { S.BotTexture = CheckString(); continue; }
+    if (Key.strEquCI("texturemiddle")) { S.MidTexture = CheckString(); continue; }
+    if (Key.strEquCI("sector")) { S.SectorIndex = CheckInt(); continue; }
 
     // extensions
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-      if (Key.strEquCI("offsetx_top")) {
-        S.S.Top.TextureOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("offsety_top")) {
-        S.S.Top.RowOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("offsetx_mid")) {
-        S.S.Mid.TextureOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("offsety_mid")) {
-        S.S.Mid.RowOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("offsetx_bottom")) {
-        S.S.Bot.TextureOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("offsety_bottom")) {
-        S.S.Bot.RowOffset = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scalex_top")) {
-        S.S.Top.ScaleX = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scaley_top")) {
-        S.S.Top.ScaleY = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scalex_mid")) {
-        S.S.Mid.ScaleX = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scaley_mid")) {
-        S.S.Mid.ScaleY = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scalex_bottom")) {
-        S.S.Bot.ScaleX = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("scaley_bottom")) {
-        S.S.Bot.ScaleY = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("light")) {
-        S.S.Light = CheckInt();
-        //GCon->Logf("sidedef #%d: light=%d", ParsedSides.length()-1, S.S.Light);
-        continue;
-      }
-
-      if (Key.strEquCI("lightabsolute")) {
-        Flag(S.S.Flags, SDF_ABSLIGHT);
-        continue;
-      }
-
-      if (Key.strEquCI("wrapmidtex")) {
-        Flag(S.S.Flags, SDF_WRAPMIDTEX);
-        continue;
-      }
-
-      if (Key.strEquCI("clipmidtex")) {
-        Flag(S.S.Flags, SDF_CLIPMIDTEX);
-        continue;
-      }
+      if (Key.strEquCI("offsetx_top")) { S.S.Top.TextureOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("offsety_top")) { S.S.Top.RowOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("offsetx_mid")) { S.S.Mid.TextureOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("offsety_mid")) { S.S.Mid.RowOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("offsetx_bottom")) { S.S.Bot.TextureOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("offsety_bottom")) { S.S.Bot.RowOffset = CheckFloat(); continue; }
+      if (Key.strEquCI("scalex_top")) { S.S.Top.ScaleX = CheckFloat(); continue; }
+      if (Key.strEquCI("scaley_top")) { S.S.Top.ScaleY = CheckFloat(); continue; }
+      if (Key.strEquCI("scalex_mid")) { S.S.Mid.ScaleX = CheckFloat(); continue; }
+      if (Key.strEquCI("scaley_mid")) { S.S.Mid.ScaleY = CheckFloat(); continue; }
+      if (Key.strEquCI("scalex_bottom")) { S.S.Bot.ScaleX = CheckFloat(); continue; }
+      if (Key.strEquCI("scaley_bottom")) { S.S.Bot.ScaleY = CheckFloat(); continue; }
+      if (Key.strEquCI("light")) { S.S.Light = CheckInt(); continue; }
+      if (Key.strEquCI("lightabsolute")) { Flag(S.S.Flags, SDF_ABSLIGHT); continue; }
+      if (Key.strEquCI("wrapmidtex")) { Flag(S.S.Flags, SDF_WRAPMIDTEX); continue; }
+      if (Key.strEquCI("clipmidtex")) { Flag(S.S.Flags, SDF_CLIPMIDTEX); continue; }
+      if (Key.strEquCI("nofakecontrast")) { Flag(S.S.Flags, SDF_NOFAKECTX); continue; }
+      if (Key.strEquCI("smoothlighting")) { Flag(S.S.Flags, SDF_SMOOTH_LIT); continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sidedef property '%s' with value '%s'", *Key, *Val));

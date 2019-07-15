@@ -1262,20 +1262,20 @@ load_again:
   }
   MinMaxTime += Sys_Time();
 
+  // fake contrast
   double WallShadesTime = -Sys_Time();
   if (MInfo.HorizWallShade|MInfo.VertWallShade) {
-    line_t *Line = Lines;
-    for (int i = NumLines; i--; ++Line) {
+    for (auto &&line : allLines()) {
       int shadeChange =
-        !Line->normal.x ? MInfo.HorizWallShade :
-        !Line->normal.y ? MInfo.VertWallShade :
+        !line.normal.x ? MInfo.HorizWallShade :
+        !line.normal.y ? MInfo.VertWallShade :
         0;
       if (shadeChange) {
         for (int sn = 0; sn < 2; ++sn) {
-          const int sidx = Line->sidenum[sn];
+          const int sidx = line.sidenum[sn];
           if (sidx >= 0) {
             side_t *side = &Sides[sidx];
-            side->Light += shadeChange;
+            if ((side->Flags&SDF_NOFAKECTX) == 0) side->Light += shadeChange;
           }
         }
       }
