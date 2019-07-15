@@ -3475,7 +3475,7 @@ void VAcs::TranslateSpecial (int &spec, int &arg1) {
     if (spec != -45) {
       GCon->Logf(NAME_Error, "Trying to set unknown ACSF execute special! NAME: '%s'", *name);
     } else {
-      GCon->Logf(NAME_Warning, "ACS: replaced `ACS_NamedExecuteAlways` with `ACS_ExecuteAlways`, script name is '%s'", *name);
+      if (developer) GCon->Logf(NAME_Dev, "ACS: replaced `ACS_NamedExecuteAlways` with `ACS_ExecuteAlways`, script name is '%s'", *name);
       unknown = false;
       if (name != NAME_None) {
         spec = 226; // "execute always"
