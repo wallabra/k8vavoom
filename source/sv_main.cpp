@@ -64,7 +64,7 @@ int main () {
 
 
 static void G_DoReborn (int playernum, bool cheatReborn);
-static void G_DoCompleted ();
+static void G_DoCompleted (bool ignoreNoExit);
 
 extern VCvarB dbg_vm_disable_thinkers;
 
@@ -107,18 +107,18 @@ int validcountSZCache = 1;
 
 bool sv_loading = false;
 bool sv_map_travel = false;
-int sv_load_num_players;
-bool run_open_scripts;
+int sv_load_num_players = 0;
+bool run_open_scripts = false;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
 vuint8 deathmatch = 0; // only if started as net death
 int TimerGame = 0;
-VLevelInfo *GLevelInfo;
-int LeavePosition;
-bool completed;
-VNetContext *GDemoRecordingContext;
+VLevelInfo *GLevelInfo = nullptr;
+int LeavePosition = 0;
+bool completed = false;
+VNetContext *GDemoRecordingContext = nullptr;
 
-static int RebornPosition; // position indicator for cooperative net-play reborn
+static int RebornPosition = 0; // position indicator for cooperative net-play reborn
 
 static bool mapteleport_issued = false;
 static int mapteleport_flags = 0;
@@ -671,6 +671,7 @@ void SV_Ticker () {
     double saved_frametime = host_frametime;
     bool frameSkipped = false;
     bool wasPaused = false;
+    bool timeLimitReached = false;
     // do main actions
     double frametimeleft = host_frametime;
     int lastTick = GLevel->TicTime;
@@ -703,11 +704,12 @@ void SV_Ticker () {
         TimerGame = 0;
         LeavePosition = 0;
         completed = true;
+        timeLimitReached = true;
       }
       frametimeleft -= host_frametime /*currframetime*/; // next step
       frameSkipped = true;
     }
-    if (completed) G_DoCompleted();
+    if (completed) G_DoCompleted(timeLimitReached);
     // remember fractional frame time
     host_frametime = saved_frametime;
     if (!wasPaused) {
@@ -746,11 +748,11 @@ static VName CheckRedirects (VName Map) {
 //  G_DoCompleted
 //
 //==========================================================================
-static void G_DoCompleted () {
+static void G_DoCompleted (bool ignoreNoExit) {
   completed = false;
   if (sv.intermission) return;
 
-  if (NoExit /*&& deathmatch*/ && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+  if (!ignoreNoExit && NoExit /*&& deathmatch*/ && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
     return;
   }
 
