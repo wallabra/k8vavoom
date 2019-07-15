@@ -300,6 +300,7 @@ void R_InitModels () {
     for (VXmlNode *N = Doc->Root.FindChild("include"); N; N = N->FindNext()) Mod_FindName(N->GetAttribute("file"));
     delete Doc;
   }
+
   if (!GArgs.CheckParm("-no-modeldef") && !GArgs.CheckParm("-no-modeldefs") &&
       !GArgs.CheckParm("-no-gzmodeldef") && !GArgs.CheckParm("-no-gzmodeldefs") &&
       !GArgs.CheckParm("-no-gz-modeldef") && !GArgs.CheckParm("-no-gz-modeldefs"))
@@ -565,9 +566,16 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc) {
 
   bool ClassDefined = false;
   for (VXmlNode *CN = Doc->Root.FindChild("class"); CN; CN = CN->FindNext()) {
+    VStr vcClassName = CN->GetAttribute("name");
+    VClass *xcls = VClass::FindClassNoCase(*vcClassName);
+    if (xcls) {
+      if (developer) GCon->Logf(NAME_Dev, "found 3d model for class `%s`", xcls->GetName());
+    } else {
+      GCon->Logf(NAME_Init, "found 3d model for unknown class `%s`", *vcClassName);
+    }
     VClassModelScript *Cls = new VClassModelScript();
     Cls->Model = Mdl;
-    Cls->Name = *CN->GetAttribute("name");
+    Cls->Name = (xcls ? xcls->GetName() : *vcClassName);
     Cls->NoSelfShadow = ParseBool(CN, "noselfshadow", false);
     Cls->OneForAll = false;
     Cls->CacheBuilt = false;
@@ -740,19 +748,41 @@ static void ParseGZModelDefs () {
         // find model
         if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
           // search the currently loaded models
+          VClass *xcls = VClass::FindClassNoCase(*mdl->className);
+          if (!xcls) {
+            GCon->Logf(NAME_Init, "  found 3d GZDoom model for unknown class `%s`", *mdl->className);
+            delete mdl;
+            continue;
+          }
+          bool foundCM = false;
+          for (auto &&cm : ClassModels) {
+            if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
+            if (cm->Name == xcls->GetName()) { foundCM = true; break; }
+          }
+          if (foundCM) {
+            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (already defined)", xcls->GetName());
+            delete mdl;
+            continue;
+          }
+          // get xml here, because we're going to modify the model
+          auto xml = mdl->createXml();
+          // create impossible name, because why not?
+          mdl->className = va("/%s/", xcls->GetName());
           bool found = false;
           for (int i = 0; i < mod_known.Num(); ++i) {
             if (mod_known[i]->Name.strEquCI(mdl->className)) { found = true; break; }
           }
           if (!found) {
+            GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());
             VModel *mod = new VModel();
             mod->Name = mdl->className;
             mod_known.Append(mod);
             // parse xml
-            auto xml = mdl->createXml();
             VStream *Strm = new VMemoryStreamRO(W_FullLumpName(Lump), xml.getCStr(), xml.length());
             ParseModelScript(mod, *Strm);
             delete Strm;
+          } else {
+            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (already defined)", xcls->GetName());
           }
         }
         delete mdl;
