@@ -518,6 +518,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 
       //k8: i don't care if the author wants to hide it; no wai!
       if (Key.strEquCI("hidden")) { (void)CheckBool(); continue; }
+      //k8: i don't know what the fuck is this
+      if (Key.strEquCI("norespawn")) { (void)CheckBool(); continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
@@ -671,6 +673,9 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       if (Key.strEquCI("midtex3d")) { Flag(L.L.flags, ML_3DMIDTEX); continue; }
       if (Key.strEquCI("locknumber")) { L.L.locknumber = CheckInt(); continue; }
       if (Key.strEquCI("moreids")) { ParseMoreIds(L.L.moreTags); continue; }
+
+      //k8: it is impassable by default
+      if (Key.strEquCI("midtex3dimpassible")) { if (CheckBool()) continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown linedef property '%s' with value '%s'", *Key, *Val));
@@ -837,6 +842,14 @@ void VUdmfParser::ParseThing () {
           }
         }
       }
+
+      // ignored properties
+      if (Key.startsWithCI("pitch")) continue;
+      if (Key.startsWithCI("roll")) continue;
+      if (Key.startsWithCI("scalex")) continue;
+      if (Key.startsWithCI("scaley")) continue;
+      if (Key.startsWithCI("scale")) continue;
+      if (Key.startsWithCI("score")) { if (CheckInt() == 0) continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown thing property '%s' with value '%s'", *Key, *Val));
