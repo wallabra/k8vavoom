@@ -516,20 +516,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
       if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }
 
-      /*
-      if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-        if (Key.strEquCI("lightfloor")) {
-          int lt = CheckInt();
-          if (S.params.lightlevel < lt) S.params.lightlevel = lt;
-          continue;
-        }
-        if (Key.strEquCI("lightceiling")) {
-          int lt = CheckInt();
-          if (S.params.lightlevel < lt) S.params.lightlevel = lt;
-          continue;
-        }
-      }
-      */
+      //k8: i don't care if the author wants to hide it; no wai!
+      if (Key.strEquCI("hidden")) { (void)CheckBool(); continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
@@ -590,105 +578,26 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   while (!sc.Check("}")) {
     ParseKey();
 
-    if (Key.strEquCI("id")) {
-      L.L.lineTag = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("v1")) {
-      L.V1Index = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("v2")) {
-      L.V2Index = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("blocking")) {
-      Flag(L.L.flags, ML_BLOCKING);
-      continue;
-    }
-
-    if (Key.strEquCI("blockmonsters")) {
-      Flag(L.L.flags, ML_BLOCKMONSTERS);
-      continue;
-    }
-
-    if (Key.strEquCI("twosided")) {
-      Flag(L.L.flags, ML_TWOSIDED);
-      continue;
-    }
-
-    if (Key.strEquCI("dontpegtop")) {
-      Flag(L.L.flags, ML_DONTPEGTOP);
-      continue;
-    }
-
-    if (Key.strEquCI("dontpegbottom")) {
-      Flag(L.L.flags, ML_DONTPEGBOTTOM);
-      continue;
-    }
-
-    if (Key.strEquCI("secret")) {
-      Flag(L.L.flags, ML_SECRET);
-      continue;
-    }
-
-    if (Key.strEquCI("blocksound")) {
-      Flag(L.L.flags, ML_SOUNDBLOCK);
-      continue;
-    }
-
-    if (Key.strEquCI("dontdraw")) {
-      Flag(L.L.flags, ML_DONTDRAW);
-      continue;
-    }
-
-    if (Key.strEquCI("mapped")) {
-      Flag(L.L.flags, ML_MAPPED);
-      continue;
-    }
-
-    if (Key.strEquCI("special")) {
-      L.L.special = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("arg0")) {
-      L.L.arg1 = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("arg1")) {
-      L.L.arg2 = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("arg2")) {
-      L.L.arg3 = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("arg3")) {
-      L.L.arg4 = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("arg4")) {
-      L.L.arg5 = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("sidefront")) {
-      L.L.sidenum[0] = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("sideback")) {
-      L.L.sidenum[1] = CheckInt();
-      continue;
-    }
+    if (Key.strEquCI("id")) { L.L.lineTag = CheckInt(); continue; }
+    if (Key.strEquCI("v1")) { L.V1Index = CheckInt(); continue; }
+    if (Key.strEquCI("v2")) { L.V2Index = CheckInt(); continue; }
+    if (Key.strEquCI("blocking")) { Flag(L.L.flags, ML_BLOCKING); continue; }
+    if (Key.strEquCI("blockmonsters")) { Flag(L.L.flags, ML_BLOCKMONSTERS); continue; }
+    if (Key.strEquCI("twosided")) { Flag(L.L.flags, ML_TWOSIDED); continue; }
+    if (Key.strEquCI("dontpegtop")) { Flag(L.L.flags, ML_DONTPEGTOP); continue; }
+    if (Key.strEquCI("dontpegbottom")) { Flag(L.L.flags, ML_DONTPEGBOTTOM); continue; }
+    if (Key.strEquCI("secret")) { Flag(L.L.flags, ML_SECRET); continue; }
+    if (Key.strEquCI("blocksound")) { Flag(L.L.flags, ML_SOUNDBLOCK); continue; }
+    if (Key.strEquCI("dontdraw")) { Flag(L.L.flags, ML_DONTDRAW); continue; }
+    if (Key.strEquCI("mapped")) { Flag(L.L.flags, ML_MAPPED); continue; }
+    if (Key.strEquCI("special")) { L.L.special = CheckInt(); continue; }
+    if (Key.strEquCI("arg0")) { L.L.arg1 = CheckInt(); continue; }
+    if (Key.strEquCI("arg1")) { L.L.arg2 = CheckInt(); continue; }
+    if (Key.strEquCI("arg2")) { L.L.arg3 = CheckInt(); continue; }
+    if (Key.strEquCI("arg3")) { L.L.arg4 = CheckInt(); continue; }
+    if (Key.strEquCI("arg4")) { L.L.arg5 = CheckInt(); continue; }
+    if (Key.strEquCI("sidefront")) { L.L.sidenum[0] = CheckInt(); continue; }
+    if (Key.strEquCI("sideback")) { L.L.sidenum[1] = CheckInt(); continue; }
 
     // doom specific flags
     if (NS&(NS_Doom|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
@@ -711,73 +620,23 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
         continue;
       }
 
-      if (Key.strEquCI("translucent")) {
-        L.L.alpha = (CheckBool() ? 0.666f : 1.0f);
-        continue;
-      }
-
-      if (Key.strEquCI("jumpover")) {
-        Flag(L.L.flags, ML_RAILING);
-        continue;
-      }
-
-      if (Key.strEquCI("blockfloaters")) {
-        Flag(L.L.flags, ML_BLOCK_FLOATERS);
-        continue;
-      }
+      if (Key.strEquCI("translucent")) { L.L.alpha = (CheckBool() ? 0.666f : 1.0f); continue; }
+      if (Key.strEquCI("jumpover")) { Flag(L.L.flags, ML_RAILING); continue; }
+      if (Key.strEquCI("blockfloaters")) { Flag(L.L.flags, ML_BLOCK_FLOATERS); continue; }
     }
 
     // hexen's extensions
     if (NS&(NS_Hexen|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-      if (Key.strEquCI("playercross")) {
-        Flag(L.L.SpacFlags, SPAC_Cross);
-        continue;
-      }
-
-      if (Key.strEquCI("playeruse")) {
-        Flag(L.L.SpacFlags, SPAC_Use);
-        continue;
-      }
-
-      if (Key.strEquCI("playeruseback")) {
-        Flag(L.L.SpacFlags, SPAC_UseBack);
-        continue;
-      }
-
-      if (Key.strEquCI("monstercross")) {
-        Flag(L.L.SpacFlags, SPAC_MCross);
-        continue;
-      }
-
-      if (Key.strEquCI("monsteruse")) {
-        Flag(L.L.SpacFlags, SPAC_MUse);
-        continue;
-      }
-
-      if (Key.strEquCI("impact")) {
-        Flag(L.L.SpacFlags, SPAC_Impact);
-        continue;
-      }
-
-      if (Key.strEquCI("playerpush")) {
-        Flag(L.L.SpacFlags, SPAC_Push);
-        continue;
-      }
-
-      if (Key.strEquCI("monsterpush")) {
-        Flag(L.L.SpacFlags, SPAC_MPush);
-        continue;
-      }
-
-      if (Key.strEquCI("missilecross")) {
-        Flag(L.L.SpacFlags, SPAC_PCross);
-        continue;
-      }
-
-      if (Key.strEquCI("repeatspecial")) {
-        Flag(L.L.flags, ML_REPEAT_SPECIAL);
-        continue;
-      }
+      if (Key.strEquCI("playercross")) { Flag(L.L.SpacFlags, SPAC_Cross); continue; }
+      if (Key.strEquCI("playeruse")) { Flag(L.L.SpacFlags, SPAC_Use); continue; }
+      if (Key.strEquCI("playeruseback")) { Flag(L.L.SpacFlags, SPAC_UseBack); continue; }
+      if (Key.strEquCI("monstercross")) { Flag(L.L.SpacFlags, SPAC_MCross); continue; }
+      if (Key.strEquCI("monsteruse")) { Flag(L.L.SpacFlags, SPAC_MUse); continue; }
+      if (Key.strEquCI("impact")) { Flag(L.L.SpacFlags, SPAC_Impact); continue; }
+      if (Key.strEquCI("playerpush")) { Flag(L.L.SpacFlags, SPAC_Push); continue; }
+      if (Key.strEquCI("monsterpush")) { Flag(L.L.SpacFlags, SPAC_MPush); continue; }
+      if (Key.strEquCI("missilecross")) { Flag(L.L.SpacFlags, SPAC_PCross); continue; }
+      if (Key.strEquCI("repeatspecial")) { Flag(L.L.flags, ML_REPEAT_SPECIAL); continue; }
     }
 
     // extensions
@@ -796,87 +655,22 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
         continue;
       }
 
-      if (Key.strEquCI("anycross")) {
-        Flag(L.L.SpacFlags, SPAC_AnyCross);
-        continue;
-      }
-
-      if (Key.strEquCI("monsteractivate")) {
-        Flag(L.L.flags, ML_MONSTERSCANACTIVATE);
-        continue;
-      }
-
-      if (Key.strEquCI("blockplayers")) {
-        Flag(L.L.flags, ML_BLOCKPLAYERS);
-        continue;
-      }
-
-      if (Key.strEquCI("blockeverything")) {
-        Flag(L.L.flags, ML_BLOCKEVERYTHING);
-        continue;
-      }
-
-      if (Key.strEquCI("firstsideonly")) {
-        Flag(L.L.flags, ML_FIRSTSIDEONLY);
-        continue;
-      }
-
-      if (Key.strEquCI("zoneboundary")) {
-        Flag(L.L.flags, ML_ZONEBOUNDARY);
-        continue;
-      }
-
-      if (Key.strEquCI("clipmidtex")) {
-        Flag(L.L.flags, ML_CLIP_MIDTEX);
-        continue;
-      }
-
-      if (Key.strEquCI("wrapmidtex")) {
-        Flag(L.L.flags, ML_WRAP_MIDTEX);
-        continue;
-      }
-
-      if (Key.strEquCI("blockprojectiles")) {
-        Flag(L.L.flags, ML_BLOCKPROJECTILE);
-        continue;
-      }
-
-      if (Key.strEquCI("blockuse")) {
-        Flag(L.L.flags, ML_BLOCKUSE);
-        continue;
-      }
-
-      if (Key.strEquCI("blocksight")) {
-        Flag(L.L.flags, ML_BLOCKSIGHT);
-        continue;
-      }
-
-      if (Key.strEquCI("blockhitscan")) {
-        Flag(L.L.flags, ML_BLOCKHITSCAN);
-        continue;
-      }
-
-      //TODO
-      if (Key.strEquCI("Checkswitchrange")) {
-        Flag(L.L.flags, ML_CHECKSWITCHRANGE);
-        continue;
-      }
-
-      if (Key.strEquCI("midtex3d")) {
-        //GCon->Logf(NAME_Warning, "%s: UDMF: `midtex3d` is not fully implemented", *sc.GetLoc().toStringNoCol());
-        Flag(L.L.flags, ML_3DMIDTEX);
-        continue;
-      }
-
-      if (Key.strEquCI("locknumber")) {
-        L.L.locknumber = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("moreids")) {
-        ParseMoreIds(L.L.moreTags);
-        continue;
-      }
+      if (Key.strEquCI("anycross")) { Flag(L.L.SpacFlags, SPAC_AnyCross); continue; }
+      if (Key.strEquCI("monsteractivate")) { Flag(L.L.flags, ML_MONSTERSCANACTIVATE); continue; }
+      if (Key.strEquCI("blockplayers")) { Flag(L.L.flags, ML_BLOCKPLAYERS); continue; }
+      if (Key.strEquCI("blockeverything")) { Flag(L.L.flags, ML_BLOCKEVERYTHING); continue; }
+      if (Key.strEquCI("firstsideonly")) { Flag(L.L.flags, ML_FIRSTSIDEONLY); continue; }
+      if (Key.strEquCI("zoneboundary")) { Flag(L.L.flags, ML_ZONEBOUNDARY); continue; }
+      if (Key.strEquCI("clipmidtex")) { Flag(L.L.flags, ML_CLIP_MIDTEX); continue; }
+      if (Key.strEquCI("wrapmidtex")) { Flag(L.L.flags, ML_WRAP_MIDTEX); continue; }
+      if (Key.strEquCI("blockprojectiles")) { Flag(L.L.flags, ML_BLOCKPROJECTILE); continue; }
+      if (Key.strEquCI("blockuse")) { Flag(L.L.flags, ML_BLOCKUSE); continue; }
+      if (Key.strEquCI("blocksight")) { Flag(L.L.flags, ML_BLOCKSIGHT); continue; }
+      if (Key.strEquCI("blockhitscan")) { Flag(L.L.flags, ML_BLOCKHITSCAN); continue; }
+      if (Key.strEquCI("Checkswitchrange")) { Flag(L.L.flags, ML_CHECKSWITCHRANGE); continue; } //TODO
+      if (Key.strEquCI("midtex3d")) { Flag(L.L.flags, ML_3DMIDTEX); continue; }
+      if (Key.strEquCI("locknumber")) { L.L.locknumber = CheckInt(); continue; }
+      if (Key.strEquCI("moreids")) { ParseMoreIds(L.L.moreTags); continue; }
     }
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown linedef property '%s' with value '%s'", *Key, *Val));
@@ -973,50 +767,15 @@ void VUdmfParser::ParseThing () {
   while (!sc.Check("}")) {
     ParseKey();
 
-    if (Key.strEquCI("x")) {
-      T.x = CheckFloat();
-      continue;
-    }
-
-    if (Key.strEquCI("y")) {
-      T.y = CheckFloat();
-      continue;
-    }
-
-    if (Key.strEquCI("height")) {
-      T.height = CheckFloat();
-      continue;
-    }
-
-    if (Key.strEquCI("angle")) {
-      T.angle = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("type")) {
-      T.type = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("ambush")) {
-      Flag(T.options, MTF_AMBUSH);
-      continue;
-    }
-
-    if (Key.strEquCI("single")) {
-      Flag(T.options, MTF_GSINGLE);
-      continue;
-    }
-
-    if (Key.strEquCI("dm")) {
-      Flag(T.options, MTF_GDEATHMATCH);
-      continue;
-    }
-
-    if (Key.strEquCI("coop")) {
-      Flag(T.options, MTF_GCOOP);
-      continue;
-    }
+    if (Key.strEquCI("x")) { T.x = CheckFloat(); continue; }
+    if (Key.strEquCI("y")) { T.y = CheckFloat(); continue; }
+    if (Key.strEquCI("height")) { T.height = CheckFloat(); continue; }
+    if (Key.strEquCI("angle")) { T.angle = CheckInt(); continue; }
+    if (Key.strEquCI("type")) { T.type = CheckInt(); continue; }
+    if (Key.strEquCI("ambush")) { Flag(T.options, MTF_AMBUSH); continue; }
+    if (Key.strEquCI("single")) { Flag(T.options, MTF_GSINGLE); continue; }
+    if (Key.strEquCI("dm")) { Flag(T.options, MTF_GDEATHMATCH); continue; }
+    if (Key.strEquCI("coop")) { Flag(T.options, MTF_GCOOP); continue; }
 
     // skills (up to, and including 16)
     if (Key.startsWithCI("skill")) {
@@ -1029,35 +788,14 @@ void VUdmfParser::ParseThing () {
       }
     }
 
-    // MBF friendly flag
     if (NS&(NS_Hexen|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-      if (Key.strEquCI("friend")) {
-        Flag(T.options, MTF_FRIENDLY);
-        continue;
-      }
-    }
-
-    // strife specific flags
-    if (NS&(NS_Hexen|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-      if (Key.strEquCI("standing")) {
-        Flag(T.options, MTF_STANDSTILL);
-        continue;
-      }
-
-      if (Key.strEquCI("strifeally")) {
-        Flag(T.options, MTF_FRIENDLY);
-        continue;
-      }
-
-      if (Key.strEquCI("translucent")) {
-        Flag(T.options, MTF_SHADOW);
-        continue;
-      }
-
-      if (Key.strEquCI("invisible")) {
-        Flag(T.options, MTF_ALTSHADOW);
-        continue;
-      }
+      // MBF friendly flag
+      if (Key.strEquCI("friend")) { Flag(T.options, MTF_FRIENDLY); continue; }
+      // strife specific flags
+      if (Key.strEquCI("standing")) { Flag(T.options, MTF_STANDSTILL); continue; }
+      if (Key.strEquCI("strifeally")) { Flag(T.options, MTF_FRIENDLY); continue; }
+      if (Key.strEquCI("translucent")) { Flag(T.options, MTF_SHADOW); continue; }
+      if (Key.strEquCI("invisible")) { Flag(T.options, MTF_ALTSHADOW); continue; }
     }
 
     // hexen's extensions
@@ -1071,46 +809,14 @@ void VUdmfParser::ParseThing () {
         continue;
       }
 
-
-      if (Key.strEquCI("id")) {
-        T.tid = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("dormant")) {
-        Flag(T.options, MTF_DORMANT);
-        continue;
-      }
-
-      if (Key.strEquCI("special")) {
-        T.special = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("arg0")) {
-        T.arg1 = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("arg1")) {
-        T.arg2 = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("arg2")) {
-        T.arg3 = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("arg3")) {
-        T.arg4 = CheckInt();
-        continue;
-      }
-
-      if (Key.strEquCI("arg4")) {
-        T.arg5 = CheckInt();
-        continue;
-      }
+      if (Key.strEquCI("id")) { T.tid = CheckInt(); continue; }
+      if (Key.strEquCI("dormant")) { Flag(T.options, MTF_DORMANT); continue; }
+      if (Key.strEquCI("special")) { T.special = CheckInt(); continue; }
+      if (Key.strEquCI("arg0")) { T.arg1 = CheckInt(); continue; }
+      if (Key.strEquCI("arg1")) { T.arg2 = CheckInt(); continue; }
+      if (Key.strEquCI("arg2")) { T.arg3 = CheckInt(); continue; }
+      if (Key.strEquCI("arg3")) { T.arg4 = CheckInt(); continue; }
+      if (Key.strEquCI("arg4")) { T.arg5 = CheckInt(); continue; }
 
       if (Key.strEquCI("renderstyle")) {
         VStr s = CheckString();
