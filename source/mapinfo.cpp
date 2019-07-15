@@ -376,7 +376,7 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
 //
 //==========================================================================
 static void LoadMapInfoLump (int Lump, bool doFixups=true) {
-  GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
+  GCon->Logf(NAME_Init, "mapinfo file: '%s'", *W_FullLumpName(Lump));
   ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   if (doFixups) {
     processNumFixups("DoomEdNum", true, DoomEdNumFixups);
