@@ -1,6 +1,6 @@
   // `FinalColor` should contain "current final" color
 #ifndef VAVOOM_SIMPLE_ALPHA_FOG
-    //!if (FinalColor.a < 0.01) discard; //k8: dunno if it worth it, but meh...
+    //!if (FinalColor.a < ALPHA_MIN) discard; //k8: dunno if it worth it, but meh...
 #endif
 
 #ifdef VAVOOM_REVERSE_Z
@@ -45,5 +45,5 @@
     FinalColor = mix(FogColor, FinalColor, FogCoeff);
 # endif
     FinalColor.a = oldAlpha;
-    //if (FinalColor.a < 0.01) discard; //k8: dunno if it worth it, but meh...
+    //if (FinalColor.a < ALPHA_MIN) discard; //k8: dunno if it worth it, but meh...
 #endif

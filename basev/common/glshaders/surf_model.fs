@@ -12,11 +12,11 @@ varying vec2 TextureCoordinate;
 
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  //if (TexColor.a < 0.01) discard;
+  //if (TexColor.a < ALPHA_MIN) discard;
   if (!AllowTransparency) {
-    if (TexColor.a < 0.666) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (TexColor.a < 0.01) discard;
+    if (TexColor.a < ALPHA_MIN) discard;
   }
   TexColor *= Light;
 
@@ -27,7 +27,7 @@ void main () {
 
   // convert to premultiplied
   FinalColor.a *= InAlpha;
-  if (FinalColor.a < 0.01) discard;
+  if (FinalColor.a < ALPHA_MIN) discard;
   FinalColor.rgb = clamp(FinalColor.rgb*FinalColor.a, 0.0, 1.0);
 
   $include "common/fog_calc.fs"

@@ -12,15 +12,15 @@ varying vec2 TextureCoordinate;
 
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  //if (TexColor.a < 0.01) discard;
+  //if (TexColor.a < ALPHA_MIN) discard;
   if (!AllowTransparency) {
-    if (TexColor.a < 0.666) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (TexColor.a < 0.01) discard;
+    if (TexColor.a < ALPHA_MIN) discard;
   }
 
   float alpha = clamp(TexColor.a*InAlpha, 0.0, 1.0);
-  if (alpha < 0.01) discard;
+  if (alpha < ALPHA_MIN) discard;
 
 
   vec4 FinalColor;

@@ -23,12 +23,12 @@ varying float VDist;
 
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  //if (TexColor.a < 0.01) discard;
+  //if (TexColor.a < ALPHA_MIN) discard;
   TexColor.a *= InAlpha;
   if (!AllowTransparency) {
-    if (TexColor.a < 0.666) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (TexColor.a < 0.01) discard;
+    if (TexColor.a < ALPHA_MIN) discard;
   }
 
   float DistVPosL = dot(VPosL, VPosL);
@@ -106,20 +106,20 @@ void main () {
   attenuation = ClampAdd;
 
   float ClampTrans = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
-  if (ClampTrans < 0.01) discard;
+  if (ClampTrans < ALPHA_MIN) discard;
 
   /*
   if (!AllowTransparency) {
-    if (InAlpha == 1.0 && ClampTrans < 0.666) discard;
+    if (InAlpha == 1.0 && ClampTrans < ALPHA_MASKED) discard;
   } else {
-    if (ClampTrans < 0.01) discard;
+    if (ClampTrans < ALPHA_MIN) discard;
   }
   */
 
   vec4 FinalColor;
   FinalColor.rgb = LightColor;
   FinalColor.a = (ClampAdd*TexColor.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  if (FinalColor.a < 0.01) discard;
+  if (FinalColor.a < ALPHA_MIN) discard;
 
   gl_FragColor = FinalColor;
 }

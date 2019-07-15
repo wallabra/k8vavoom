@@ -21,8 +21,8 @@ void main () {
   if (VDist <= 0.0 || Dist <= 0.0) discard;
 
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  //if (TexColor.a < 0.1) discard; //FIXME
-  if (TexColor.a < 0.666) discard; //FIXME: only normal and masked walls should go thru this
+  //if (TexColor.a < ALPHA_MIN) discard; //FIXME
+  if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
@@ -49,7 +49,7 @@ void main () {
 #else
   FinalColor.rgb = LightColor;
   FinalColor.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
-  //if (FinalColor.a < 0.01) discard;
+  //if (FinalColor.a < ALPHA_MIN) discard;
 #endif
 
   gl_FragColor = FinalColor;

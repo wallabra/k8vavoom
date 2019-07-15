@@ -12,15 +12,15 @@ varying float Dist;
 
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  if (TexColor.a < 0.01) discard;
+  if (TexColor.a < ALPHA_MIN) discard;
 
   float ClampTransp = clamp(((Light.a*TexColor.a)-0.1)/0.9, 0.0, 1.0);
 
   if (!AllowTransparency) {
-    //if (InAlpha == 1.0 && ClampTransp < 0.666) discard;
-    if (TexColor.a < 0.666) discard;
+    //if (InAlpha == 1.0 && ClampTransp < ALPHA_MASKED) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (ClampTransp < 0.01) discard;
+    if (ClampTransp < ALPHA_MIN) discard;
   }
 
   vec4 FinalColor;
@@ -37,7 +37,7 @@ void main () {
   */
 
   FinalColor.a = InAlpha*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
-  if (FinalColor.a < 0.01) discard;
+  if (FinalColor.a < ALPHA_MIN) discard;
 
   gl_FragColor = FinalColor;
 }

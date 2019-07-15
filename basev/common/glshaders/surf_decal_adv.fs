@@ -14,13 +14,13 @@ void main () {
   vec4 FinalColor;
   vec4 TexColor;
 
-  if (SplatAlpha <= 0.01) discard;
+  if (SplatAlpha <= ALPHA_MIN) discard;
 
   TexColor = texture2D(Texture, TextureCoordinate);
-  if (TexColor.a < 0.01) discard;
+  if (TexColor.a < ALPHA_MIN) discard;
 
   FinalColor.a = clamp(TexColor.a*SplatAlpha, 0.0, 1.0);
-  if (FinalColor.a < 0.01) discard;
+  if (FinalColor.a < ALPHA_MIN) discard;
   FinalColor.rgb = TexColor.rgb;
 
   // sample color from ambient light texture

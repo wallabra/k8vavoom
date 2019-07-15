@@ -16,7 +16,7 @@ $include "common/glow_vars.fs"
 void main () {
   vec4 lt = calcGlow(Light);
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
-  if (TexColor.a <= 0.01) discard;
+  if (TexColor.a <= ALPHA_MIN) discard;
 #ifdef VV_AMBIENT_BRIGHTMAP_WALL
   $include "common/brightmap_calc.fs"
 #endif

@@ -15,9 +15,9 @@ void main () {
 
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   if (!AllowTransparency) {
-    if (TexColor.a < 0.666) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (TexColor.a < 0.01) discard;
+    if (TexColor.a < ALPHA_MIN) discard;
   }
 
   vec4 FinalColor = TexColor;
@@ -35,14 +35,14 @@ void main () {
   FogFactor = clamp(multr-FogFactor, 0.0, multr)*InAlpha;
 
   FinalColor.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  if (FinalColor.a < 0.01) discard;
+  if (FinalColor.a < ALPHA_MIN) discard;
 
   /*
   if (!AllowTransparency) {
-    //if (InAlpha == 1.0 && FinalColor.a < 0.666) discard;
-    if (TexColor.a < 0.666) discard;
+    //if (InAlpha == 1.0 && FinalColor.a < ALPHA_MASKED) discard;
+    if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (FinalColor.a < 0.01) discard;
+    if (FinalColor.a < ALPHA_MIN) discard;
   }
   */
 
