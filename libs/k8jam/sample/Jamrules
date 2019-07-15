@@ -5,6 +5,7 @@ set-target-locations ;
 
 unfuck-gcc ;
 CFLAGS.all += -Wno-ignored-attributes ;
+CFLAGS.all += -Wno-invalid-memory-model ;
 
 DEFINES += IN_WADCHECK ;
 
