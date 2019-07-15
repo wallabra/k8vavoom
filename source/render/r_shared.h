@@ -223,9 +223,15 @@ struct VMeshEdge {
 struct mmdl_t;
 
 struct VMeshModel {
+  struct SkinInfo {
+    VName fileName;
+    int textureId; // -1: not loaded yet
+    int shade; // -1: none
+  };
+
   VStr Name;
   int MeshIndex;
-  TArray<VName> Skins;
+  TArray<SkinInfo> Skins;
   TArray<VMeshFrame> Frames;
   TArray<TVec> AllVerts;
   TArray<TVec> AllNormals;

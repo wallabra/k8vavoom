@@ -82,8 +82,7 @@ struct VScriptSubModel {
   int Version;
   int MeshIndex; // for md3
   TArray<VFrame> Frames;
-  TArray<VName> Skins;
-  TArray<int> SkinShades;
+  TArray<VMeshModel::SkinInfo> Skins;
   bool FullBright;
   bool NoShadow;
   bool UseDepth;
@@ -104,8 +103,8 @@ struct VScriptSubModel {
     Skins.setLength(src.Skins.length());
     for (int f = 0; f < src.Skins.length(); ++f) Skins[f] = src.Skins[f];
     // copy skin shades
-    SkinShades.setLength(src.SkinShades.length());
-    for (int f = 0; f < src.SkinShades.length(); ++f) SkinShades[f] = src.SkinShades[f];
+    //SkinShades.setLength(src.SkinShades.length());
+    //for (int f = 0; f < src.SkinShades.length(); ++f) SkinShades[f] = src.SkinShades[f];
     // copy frames
     Frames.setLength(src.Frames.length());
     for (int f = 0; f < src.Frames.length(); ++f) Frames[f].copyFrom(src.Frames[f]);
@@ -520,13 +519,14 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         if (sfl.length()) {
           if (sfl.indexOf('/') < 0) sfl = Md2.Model->Name.ExtractFilePath()+sfl;
           if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
-          Md2.Skins.Append(*sfl);
-          int shade = -1;
+          VMeshModel::SkinInfo &si = Md2.Skins.alloc();
+          si.fileName = *sfl;
+          si.textureId = -1;
+          si.shade = -1;
           if (SkN->HasAttribute("shade")) {
             sfl = SkN->GetAttribute("shade");
-            shade = parseHexRGB(sfl);
+            si.shade = parseHexRGB(sfl);
           }
-          Md2.SkinShades.Append(shade);
         }
       }
 
@@ -1071,7 +1071,10 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     // prepend model path
     if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name.ExtractFileBaseName();
     //GCon->Logf("model '%s' has skin #%u '%s'", *mod->Name, i, *name);
-    mod->Skins.Append(*name);
+    VMeshModel::SkinInfo &si = mod->Skins.alloc();
+    si.fileName = *name;
+    si.textureId = -1;
+    si.shade = -1;
   }
 
   mod->loaded = true;
@@ -1154,7 +1157,10 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
     // prepend model path
     if (!name.isEmpty()) name = mod->Name.ExtractFilePath()+name.ExtractFileBaseName();
     //GCon->Logf("SKIN: %s", *name);
-    mod->Skins.Append(*name);
+    VMeshModel::SkinInfo &si = mod->Skins.alloc();
+    si.fileName = *name;
+    si.textureId = -1;
+    si.shade = -1;
   }
 
   // convert S and T (texture coordinates)
@@ -1585,24 +1591,26 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     int SkinID;
     if (SubMdl.Skins.length()) {
       // skins defined in definition file override all skins in MD2 file
-      if (Md2SkinIdx < 0 || Md2SkinIdx >= SubMdl.Skins.Num()) {
+      if (Md2SkinIdx < 0 || Md2SkinIdx >= SubMdl.Skins.length()) {
         if (SubMdl.Skins.length() == 0) Sys_Error("model '%s' has no skins", *SubMdl.Model->Name);
-        if (SubMdl.SkinShades.length() == 0) Sys_Error("model '%s' has no skin shades", *SubMdl.Model->Name);
-        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[0], TEXTYPE_Skin, SubMdl.SkinShades[0]);
-      } else {
-        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin, SubMdl.SkinShades[Md2SkinIdx]);
+        //if (SubMdl.SkinShades.length() == 0) Sys_Error("model '%s' has no skin shades", *SubMdl.Model->Name);
+        Md2SkinIdx = 0;
+      }
+      SkinID = SubMdl.Skins[Md2SkinIdx].textureId;
+      if (SkinID < 0) {
+        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx].fileName, TEXTYPE_Skin, SubMdl.Skins[Md2SkinIdx].shade);
+        SubMdl.Skins[Md2SkinIdx].textureId = SkinID;
       }
     } else {
       if (SubMdl.Model->Skins.length() == 0) Sys_Error("model '%s' has no skins", *SubMdl.Model->Name);
-      /*
-      if ((unsigned)Md2SkinIdx >= (unsigned)SubMdl.Model->Skins.length()) {
-        //GCon->Logf("model '%s' has invalid skin (%d requested, bit only '%d' is there)", *SubMdl.Model->Name, Md2SkinIdx, SubMdl.Model->Skins.length());
-        SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[0], TEXTYPE_Skin);
-      } else {
-        SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx], TEXTYPE_Skin);
+      Md2SkinIdx = Md2SkinIdx%SubMdl.Model->Skins.length();
+      if (Md2SkinIdx < 0) Md2SkinIdx = (Md2SkinIdx+SubMdl.Model->Skins.length())%SubMdl.Model->Skins.length();
+      SkinID = SubMdl.Model->Skins[Md2SkinIdx].textureId;
+      if (SkinID < 0) {
+        //SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx%SubMdl.Model->Skins.length()], TEXTYPE_Skin);
+        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Model->Skins[Md2SkinIdx].fileName, TEXTYPE_Skin, SubMdl.Model->Skins[Md2SkinIdx].shade);
+        SubMdl.Model->Skins[Md2SkinIdx].textureId = SkinID;
       }
-      */
-      SkinID = GTextureManager.AddFileTexture(SubMdl.Model->Skins[Md2SkinIdx%SubMdl.Model->Skins.length()], TEXTYPE_Skin);
     }
 
     // get and verify frame number
