@@ -465,107 +465,29 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       continue;
     }
 
-    if (Key.strEquCI("texturefloor")) {
-      S.floor.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true);
-      continue;
-    }
-
-    if (Key.strEquCI("textureceiling")) {
-      S.ceiling.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true);
-      continue;
-    }
-
-    if (Key.strEquCI("lightlevel")) {
-      S.params.lightlevel = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("special")) {
-      S.special = CheckInt();
-      continue;
-    }
-
-    if (Key.strEquCI("id")) {
-      S.sectorTag = CheckInt();
-      continue;
-    }
+    if (Key.strEquCI("texturefloor")) { S.floor.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true); continue; }
+    if (Key.strEquCI("textureceiling")) { S.ceiling.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true); continue; }
+    if (Key.strEquCI("lightlevel")) { S.params.lightlevel = CheckInt(); continue; }
+    if (Key.strEquCI("special")) { S.special = CheckInt(); continue; }
+    if (Key.strEquCI("id")) { S.sectorTag = CheckInt(); continue; }
 
     // extensions
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-      if (Key.strEquCI("xpanningfloor")) {
-        S.floor.xoffs = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("ypanningfloor")) {
-        S.floor.yoffs = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("xpanningceiling")) {
-        S.ceiling.xoffs = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("ypanningceiling")) {
-        S.ceiling.yoffs = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("xscalefloor")) {
-        S.floor.XScale = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("yscalefloor")) {
-        S.floor.YScale = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("xscaleceiling")) {
-        S.ceiling.XScale = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("yscaleceiling")) {
-        S.ceiling.YScale = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("rotationfloor")) {
-        S.floor.Angle = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("rotationceiling")) {
-        S.ceiling.Angle = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("gravity")) {
-        S.Gravity = CheckFloat();
-        continue;
-      }
-
-      if (Key.strEquCI("lightcolor")) {
-        S.params.LightColor = CheckColor();
-        continue;
-      }
-
-      if (Key.strEquCI("fadecolor")) {
-        S.params.Fade = CheckColor();
-        continue;
-      }
-
-      if (Key.strEquCI("silent")) {
-        Flag(S.SectorFlags, sector_t::SF_Silent);
-        continue;
-      }
-
-      if (Key.strEquCI("nofallingdamage")) {
-        Flag(S.SectorFlags, sector_t::SF_NoFallingDamage);
-        continue;
-      }
+      if (Key.strEquCI("xpanningfloor")) { S.floor.xoffs = CheckFloat(); continue; }
+      if (Key.strEquCI("ypanningfloor")) { S.floor.yoffs = CheckFloat(); continue; }
+      if (Key.strEquCI("xpanningceiling")) { S.ceiling.xoffs = CheckFloat(); continue; }
+      if (Key.strEquCI("ypanningceiling")) { S.ceiling.yoffs = CheckFloat(); continue; }
+      if (Key.strEquCI("xscalefloor")) { S.floor.XScale = CheckFloat(); continue; }
+      if (Key.strEquCI("yscalefloor")) { S.floor.YScale = CheckFloat(); continue; }
+      if (Key.strEquCI("xscaleceiling")) { S.ceiling.XScale = CheckFloat(); continue; }
+      if (Key.strEquCI("yscaleceiling")) { S.ceiling.YScale = CheckFloat(); continue; }
+      if (Key.strEquCI("rotationfloor")) { S.floor.Angle = CheckFloat(); continue; }
+      if (Key.strEquCI("rotationceiling")) { S.ceiling.Angle = CheckFloat(); continue; }
+      if (Key.strEquCI("gravity")) { S.Gravity = CheckFloat(); continue; }
+      if (Key.strEquCI("lightcolor")) { S.params.LightColor = CheckColor(); continue; }
+      if (Key.strEquCI("fadecolor")) { S.params.Fade = CheckColor(); continue; }
+      if (Key.strEquCI("silent")) { Flag(S.SectorFlags, sector_t::SF_Silent); continue; }
+      if (Key.strEquCI("nofallingdamage")) { Flag(S.SectorFlags, sector_t::SF_NoFallingDamage); continue; }
 
       if (Key.strEquCI("floorplane_a")) { fval[0] = CheckFloat(); fpvalid[0] = true; continue; }
       if (Key.strEquCI("floorplane_b")) { fval[1] = CheckFloat(); fpvalid[1] = true; continue; }
@@ -577,10 +499,19 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("ceilingplane_c")) { cval[2] = CheckFloat(); cpvalid[2] = true; continue; }
       if (Key.strEquCI("ceilingplane_d")) { cval[3] = CheckFloat(); cpvalid[3] = true; continue; }
 
-      if (Key.strEquCI("moreids")) {
-        ParseMoreIds(S.moreTags);
-        continue;
-      }
+      if (Key.strEquCI("moreids")) { ParseMoreIds(S.moreTags); continue; }
+
+      if (Key.strEquCI("lightfloor")) { S.params.lightFloor = CheckInt(); continue; }
+      if (Key.strEquCI("lightceiling")) { S.params.lightFloor = CheckInt(); continue; }
+
+      if (Key.strEquCI("lightfloorabsolute")) { Flag(S.params.lightFCFlags, 0x01); continue; }
+      if (Key.strEquCI("lightceilingabsolute")) { Flag(S.params.lightFCFlags, 0x02); continue; }
+
+      if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(); continue; }
+      if (Key.strEquCI("ceilingglowcolor")) { S.params.glowFloor = CheckColor(); continue; }
+
+      if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
+      if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }
 
       /*
       if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
@@ -600,6 +531,9 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 
     if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
   }
+
+  if (S.params.glowFloorHeight >= 1) S.params.lightFCFlags |= 0x04; else S.params.glowFloorHeight = 0;
+  if (S.params.glowCeilingHeight >= 1) S.params.lightFCFlags |= 0x08; else S.params.glowCeilingHeight = 0;
 
   // setup slopes with floor/ceiling planes
 

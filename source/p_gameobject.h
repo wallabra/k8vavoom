@@ -536,6 +536,17 @@ struct sec_params_t {
   vint32 LightColor;
   vint32 Fade;
   vint32 contents;
+  // bit0: floor light is absolute; bit1: the same for ceiling
+  // bit2: has floor glow; bit3: has ceiling glow
+  vint32 lightFCFlags;
+  // light levels
+  vint32 lightFloor;
+  vint32 lightCeiling;
+  // glow colors
+  vint32 glowFloor;
+  vint32 glowCeiling;
+  float glowFloorHeight;
+  float glowCeilingHeight;
 };
 
 

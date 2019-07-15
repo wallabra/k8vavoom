@@ -804,6 +804,19 @@ struct sec_params_t {
   int LightColor;
   int Fade;
   int contents;
+  //
+  bool bFloorLightAbs;
+  bool bCeilingLightAbs;
+  bool bFloorGlow;
+  bool bCeilingGlow;
+  // light levels
+  int lightFloor;
+  int lightCeiling;
+  // glow colors
+  int glowFloor;
+  int glowCeiling;
+  float glowFloorHeight;
+  float glowCeilingHeight;
 };
 
 
