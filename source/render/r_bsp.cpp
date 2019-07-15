@@ -306,6 +306,11 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   sec_params_t *LightParams = (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
 
+  float glowFloorHeight = 0;
+  float glowCeilingHeight = 0;
+  vuint32 glowFloorColor = 0;
+  vuint32 glowCeilingColor = 0;
+
   // floor or ceiling lights
   // this rely on the face that flat surfaces will never mix with other surfaces
   if (surfs->plane.normal.z > 0) {
@@ -314,6 +319,12 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   } else if (surfs->plane.normal.z < 0) {
     // ceiling
     if (LightParams->lightFCFlags&2) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
+  } else {
+    // walls
+    glowFloorHeight = LightParams->glowFloorHeight;
+    glowCeilingHeight = LightParams->glowCeilingHeight;
+    glowFloorColor = LightParams->glowFloor;
+    glowCeilingColor = LightParams->glowCeiling;
   }
 
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
@@ -460,6 +471,11 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->dlightbits = sub->dlightbits;
     // alpha: 1.0 is masked wall, 1.1 is solid wall
     //if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
+
+    surfs->glowFloorHeight = glowFloorHeight;
+    surfs->glowCeilingHeight = glowCeilingHeight;
+    surfs->glowFloorColor = glowFloorColor;
+    surfs->glowCeilingColor = glowCeilingColor;
 
     if (texinfo->Alpha >= 1.0f && !texinfo->Additive) {
       CommonQueueSurface(surfs, 0);

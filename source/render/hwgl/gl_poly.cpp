@@ -204,6 +204,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   SurfSimple.SetTexture(0);
   //SurfSimple_Locs.storeFogType();
   SurfSimple.SetTex(Tex);
+  VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
 
   const float lev = getSurfLightLevel(surf);
   SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
@@ -461,6 +462,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
     SurfSimple.Activate();
     SurfSimple.SetTexture(0);
+    VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
     //SurfSimple_Locs.storeFogType();
 
     const texinfo_t *lastTexinfo = nullptr;
@@ -487,6 +489,7 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.SetLightMap(1);
     SurfLightmap.SetSpecularMap(2);
     //SurfLightmap_Locs.storeFogType();
+    VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
 
     const texinfo_t *lastTexinfo = nullptr;
     for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {

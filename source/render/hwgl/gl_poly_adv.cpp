@@ -172,15 +172,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // masked
     ShadowsAmbientMasked.Activate();
     ShadowsAmbientMasked.SetTexture(0);
-    ShadowsAmbientMasked.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
-    ShadowsAmbientMasked.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
+    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
     // brightmap
     ShadowsAmbientBrightmap.Activate();
     ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     ShadowsAmbientBrightmap.SetTexture(0);
     ShadowsAmbientBrightmap.SetTextureBM(1);
-    ShadowsAmbientBrightmap.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
-    ShadowsAmbientBrightmap.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
+    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
 
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
@@ -188,8 +186,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
       ShadowsAmbient.Activate();
-      ShadowsAmbient.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f);
-      ShadowsAmbient.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f);
+      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
     }
 
     // do not sort surfaces by texture here, because
@@ -264,6 +261,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
             */
             currShader = MASKED;
             ShadowsAmbientMasked.Activate();
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
             prevsflight = -666; // force light setup
             textureChanded = true;
           }
@@ -296,6 +294,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
             */
             currShader = SOLID;
             ShadowsAmbient.Activate();
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
             prevsflight = -666; // force light setup
           }
 

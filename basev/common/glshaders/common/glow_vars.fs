@@ -2,13 +2,16 @@
 uniform vec4 GlowColorFloor;
 uniform vec4 GlowColorCeiling;
 
+uniform float FloorGlowHeight;
+uniform float CeilingGlowHeight;
+
 varying float floorHeight;
 varying float ceilingHeight;
 
 
 vec4 calcGlow (vec4 light) {
-  float fh = ((128.0-clamp(abs(floorHeight), 0.0, 128.0))*GlowColorFloor.a)/128.0;
-  float ch = ((128.0-clamp(abs(ceilingHeight), 0.0, 128.0))*GlowColorCeiling.a)/128.0;
+  float fh = ((FloorGlowHeight-clamp(abs(floorHeight), 0.0, FloorGlowHeight))*GlowColorFloor.a)/FloorGlowHeight;
+  float ch = ((CeilingGlowHeight-clamp(abs(ceilingHeight), 0.0, CeilingGlowHeight))*GlowColorCeiling.a)/CeilingGlowHeight;
   vec4 lt;
   lt.r = clamp(light.r+GlowColorFloor.r*fh+GlowColorCeiling.r*ch, 0.0, 1.0);
   lt.g = clamp(light.g+GlowColorFloor.g*fh+GlowColorCeiling.g*ch, 0.0, 1.0);

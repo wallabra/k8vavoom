@@ -143,7 +143,7 @@ public:
 
   void ParseMoreIds (TArray<vint32> &ids);
 
-  vuint32 CheckColor ();
+  vuint32 CheckColor (vuint32 defval, vuint32 mask=0u);
 };
 
 
@@ -279,9 +279,12 @@ VStr VUdmfParser::CheckString () {
 //  VUdmfParser::CheckColor
 //
 //==========================================================================
-vuint32 VUdmfParser::CheckColor () {
-  if (ValType == TK_Int) return (ValInt&0xffffff);
-  return ParseHex(*CheckString());
+vuint32 VUdmfParser::CheckColor (vuint32 defval, vuint32 mask) {
+  if (ValType == TK_Int) return (ValInt&0xffffff)|mask;
+  vuint32 clr = M_ParseColor(*CheckString(), true); // return zero if valid
+  if (!clr) return defval;
+  return (clr&0xffffffu)|mask;
+  //return ParseHex(*CheckString());
 }
 
 
@@ -484,8 +487,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("rotationfloor")) { S.floor.Angle = CheckFloat(); continue; }
       if (Key.strEquCI("rotationceiling")) { S.ceiling.Angle = CheckFloat(); continue; }
       if (Key.strEquCI("gravity")) { S.Gravity = CheckFloat(); continue; }
-      if (Key.strEquCI("lightcolor")) { S.params.LightColor = CheckColor(); continue; }
-      if (Key.strEquCI("fadecolor")) { S.params.Fade = CheckColor(); continue; }
+      if (Key.strEquCI("lightcolor")) { S.params.LightColor = CheckColor(0x00ffffffu); continue; }
+      if (Key.strEquCI("fadecolor")) { S.params.Fade = CheckColor(0u); continue; }
       if (Key.strEquCI("silent")) { Flag(S.SectorFlags, sector_t::SF_Silent); continue; }
       if (Key.strEquCI("nofallingdamage")) { Flag(S.SectorFlags, sector_t::SF_NoFallingDamage); continue; }
 
@@ -507,8 +510,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("lightfloorabsolute")) { Flag(S.params.lightFCFlags, 0x01); continue; }
       if (Key.strEquCI("lightceilingabsolute")) { Flag(S.params.lightFCFlags, 0x02); continue; }
 
-      if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(); continue; }
-      if (Key.strEquCI("ceilingglowcolor")) { S.params.glowFloor = CheckColor(); continue; }
+      if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
+      if (Key.strEquCI("ceilingglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
 
       if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
       if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }

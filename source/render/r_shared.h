@@ -100,6 +100,10 @@ struct surface_t {
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and color
   vuint32 Fade;
+  float glowFloorHeight;
+  float glowCeilingHeight;
+  vuint32 glowFloorColor;
+  vuint32 glowCeilingColor;
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
   vuint32 typeFlags; // TF_xxx

@@ -686,11 +686,14 @@ private:
 
   void RestoreDepthFunc ();
 
+  //WARNING! take care of setting heights to non-zero, or glow shaders will fail!
   struct GlowParams {
     vuint32 glowCC, glowCF; // glow colors
     float floorZ, ceilingZ;
-    GlowParams () : glowCC(0), glowCF(0), floorZ(0), ceilingZ(0) {}
+    float floorGlowHeight, ceilingGlowHeight;
+    GlowParams () : glowCC(0), glowCF(0), floorZ(0), ceilingZ(0), floorGlowHeight(128), ceilingGlowHeight(128) {}
     inline bool isActive () const { return !!(glowCC|glowCF); }
+    inline void clear () { glowCC = glowCF = 0; floorGlowHeight = ceilingGlowHeight = 128; }
   };
 
 #define VV_GLDRAWER_ACTIVATE_GLOW(shad_,gp_)  do { \
@@ -698,35 +701,60 @@ private:
   shad_.SetGlowColorCeiling(((gp_.glowCC>>16)&0xff)/255.0f, ((gp_.glowCC>>8)&0xff)/255.0f, (gp_.glowCC&0xff)/255.0f, ((gp_.glowCC>>24)&0xff)/255.0f); \
   shad_.SetFloorZ(gp_.floorZ); \
   shad_.SetCeilingZ(gp_.ceilingZ); \
+  shad_.SetFloorGlowHeight(gp_.floorGlowHeight); \
+  shad_.SetCeilingGlowHeight(gp_.ceilingGlowHeight); \
 } while (0)
 
 #define VV_GLDRAWER_DEACTIVATE_GLOW(shad_)  do { \
-    shad_.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f); \
-    shad_.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f); \
+  shad_.SetGlowColorFloor(0.0f, 0.0f, 0.0f, 0.0f); \
+  shad_.SetGlowColorCeiling(0.0f, 0.0f, 0.0f, 0.0f); \
+  shad_.SetFloorGlowHeight(128); \
+  shad_.SetCeilingGlowHeight(128); \
 } while (0)
 
   inline void CalcGlow (GlowParams &gp, const surface_t *surf) const {
-    gp.glowCC = gp.glowCF = 0; // glow colors
-    gp.floorZ = gp.ceilingZ = 0;
-    if (r_glow_flat && surf->seg && surf->subsector) {
+    gp.clear();
+    if (!surf->seg || !surf->subsector) return;
+    bool checkFloorFlat, checkCeilingFlat;
+    const sector_t *sec = surf->subsector->sector;
+    // check for glowing sector floor
+    if (surf->glowFloorHeight > 0 && surf->glowFloorColor) {
+      gp.floorGlowHeight = surf->glowFloorHeight;
+      gp.glowCF = surf->glowFloorColor;
+      gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
+      checkFloorFlat = false;
+    } else {
+      checkFloorFlat = true;
+    }
+    // check for glowing sector ceiling
+    if (surf->glowCeilingHeight > 0 && surf->glowCeilingColor) {
+      gp.ceilingGlowHeight = surf->glowCeilingHeight;
+      gp.glowCC = surf->glowCeilingColor;
+      gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
+      checkCeilingFlat = false;
+    } else {
+      checkCeilingFlat = true;
+    }
+    if ((checkFloorFlat || checkCeilingFlat) && r_glow_flat) {
       // check for glowing textures
-      const sector_t *sec = surf->subsector->sector;
       //FIXME: check actual view height here
       if (sec /*&& !sec->heightsec*/) {
-        if (sec->floor.pic) {
+        if (checkFloorFlat && sec->floor.pic) {
           VTexture *gtex = GTextureManager(sec->floor.pic);
           if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+            gp.floorGlowHeight = 128;
             gp.glowCF = gtex->glowing;
+            gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
           }
         }
-        if (sec->ceiling.pic) {
+        if (checkCeilingFlat && sec->ceiling.pic) {
           VTexture *gtex = GTextureManager(sec->ceiling.pic);
           if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+            gp.ceilingGlowHeight = 128;
             gp.glowCC = gtex->glowing;
+            gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
           }
         }
-        gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
-        gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
       }
     }
   }

@@ -50,7 +50,7 @@ extern FOutputDevice *GLogHostError;
 
 __attribute__((warn_unused_result)) int superatoi (const char *s);
 
-__attribute__((warn_unused_result)) int ParseHex (const char *Str);
+//__attribute__((warn_unused_result)) int ParseHex (const char *Str);
 __attribute__((warn_unused_result)) vuint32 M_LookupColorName (const char *Name); // returns 0 if not found (otherwise high bit is set)
 __attribute__((warn_unused_result)) vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid=false);
 

@@ -639,6 +639,10 @@ struct surface_t {
   sec_plane_t *HorizonPlane;
   int Light; // light level and color (unsigned)
   int Fade; // (unsigned)
+  float glowFloorHeight;
+  float glowCeilingHeight;
+  int glowFloorColor;
+  int glowCeilingColor;
   subsector_t *subsector; // owning subsector
   seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
   // type flags

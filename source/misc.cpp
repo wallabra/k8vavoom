@@ -346,6 +346,7 @@ vuint32 M_LookupColorName (const char *Name) {
 //  ParseHex
 //
 //==========================================================================
+/*
 int ParseHex (const char *Str) {
   int Ret = 0;
   int Mul = 1;
@@ -361,6 +362,7 @@ int ParseHex (const char *Str) {
   }
   return Ret*Mul;
 }
+*/
 
 
 //==========================================================================
