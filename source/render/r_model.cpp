@@ -44,6 +44,8 @@ static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "S
 static VCvarB r_model_autorotating("r_model_autorotating", true, "Allow model autorotation?", CVAR_Archive);
 static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model autobobbing?", CVAR_Archive);
 
+static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload all alias models and their skins?", CVAR_Archive|CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
@@ -112,12 +114,14 @@ struct VScriptSubModel {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VScriptModel {
   VName Name;
   TArray<VScriptSubModel> SubModels;
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct ModelAngle {
 public:
   enum Mode { Relative, Absolute, RelativeRandom, AbsoluteRandom };
@@ -144,6 +148,7 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VScriptedModelFrame {
   int Number;
   float Inter;
@@ -188,9 +193,7 @@ struct VScriptedModelFrame {
 };
 
 
-static inline vuint32 SprNameFrameToInt (VName name, int frame) { return (vuint32)name.GetIndex()|((vuint32)frame<<19); }
-
-
+// ////////////////////////////////////////////////////////////////////////// //
 struct VClassModelScript {
   VName Name;
   VModel *Model;
@@ -204,6 +207,7 @@ struct VClassModelScript {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VModel {
   VStr Name;
   TArray<VScriptModel> Models;
@@ -211,12 +215,14 @@ struct VModel {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct TVertMap {
   int VertIndex;
   int STIndex;
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VTempEdge {
   vuint16 Vert1;
   vuint16 Vert2;
@@ -239,14 +245,29 @@ static const float r_avertexnormal_dots[SHADEDOT_QUANT][256] =
 static TArray<VModel *> mod_known;
 static TArray<VMeshModel *> GMeshModels;
 static TArray<VClassModelScript *> ClassModels;
+static TMapNC<VName, VClassModelScript *> ClassModelMap;
+static bool ClassModelMapRebuild = true;
+TArray<int> AllModelTextures;
+static TMapNC<int, bool> AllModelTexturesSeen;
 
 static const float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "anorms.h"
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 static void ParseGZModelDefs ();
 #include "r_model_gz.cpp"
+
+
+//==========================================================================
+//
+//  SprNameFrameToInt
+//
+//==========================================================================
+static inline vuint32 SprNameFrameToInt (VName name, int frame) {
+  return (vuint32)name.GetIndex()|((vuint32)frame<<19);
+}
 
 
 //==========================================================================
@@ -255,18 +276,16 @@ static void ParseGZModelDefs ();
 //
 //==========================================================================
 static VClassModelScript *FindClassModelByName (VName clsName) {
-  static TMapNC<VName, VClassModelScript *> mdlmap;
-  static int initlen = -1;
-  if (initlen != ClassModels.length()) {
-    initlen = ClassModels.length();
+  if (ClassModelMapRebuild) {
     // build map
-    for (int f = 0; f < ClassModels.length(); ++f) {
-      VClassModelScript *mdl = ClassModels[f];
+    ClassModelMapRebuild = false;
+    ClassModelMap.reset();
+    for (auto &&mdl : ClassModels) {
       if (mdl->Name == NAME_None || !mdl->Model || mdl->Frames.length() == 0) continue;
-      mdlmap.put(mdl->Name, mdl);
+      ClassModelMap.put(mdl->Name, mdl);
     }
   }
-  auto mp = mdlmap.find(clsName);
+  auto mp = ClassModelMap.find(clsName);
   return (mp ? *mp : nullptr);
 }
 
@@ -334,6 +353,8 @@ void R_FreeModels () {
     ClassModels[i] = nullptr;
   }
   ClassModels.Clear();
+  ClassModelMap.clear();
+  ClassModelMapRebuild = true;
 }
 
 
@@ -569,6 +590,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
   for (VXmlNode *CN = Doc->Root.FindChild("class"); CN; CN = CN->FindNext()) {
     VStr vcClassName = CN->GetAttribute("name");
     VClass *xcls = VClass::FindClassNoCase(*vcClassName);
+    if (xcls && !xcls->IsChildOf(VEntity::StaticClass())) xcls = nullptr;
     if (xcls) {
       if (developer) GCon->Logf(NAME_Dev, "found 3d model for class `%s`", xcls->GetName());
     } else {
@@ -590,9 +612,10 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         if (cname.ICmp(*Cls->Name) == 0) { deleteIt = true; break; }
       }
     }
-    if (!deleteIt) {
+    if (!deleteIt && xcls) {
       if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
       ClassModels.Append(Cls);
+      ClassModelMapRebuild = true;
     }
     ClassDefined = true;
     //GCon->Logf("found model for class '%s'", *Cls->Name);
@@ -761,6 +784,7 @@ static void ParseGZModelDefs () {
         if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
           // search the currently loaded models
           VClass *xcls = VClass::FindClassNoCase(*mdl->className);
+          if (xcls && !xcls->IsChildOf(VEntity::StaticClass())) xcls = nullptr;
           if (!xcls) {
             GCon->Logf(NAME_Init, "  found 3d GZDoom model for unknown class `%s`", *mdl->className);
             delete mdl;
@@ -781,13 +805,15 @@ static void ParseGZModelDefs () {
       VClass *xcls = VClass::FindClassNoCase(*mdl->className);
       check(xcls);
       bool foundCM = false;
-      for (auto &&cm : ClassModels) {
-        if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
-        if (cm->Name == xcls->GetName()) {
-          // allow GZDoom alias model overrides
-          GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found %s definition)", xcls->GetName(), (cm->isGZDoom ? "GZDoom" : "native k8vavoom"));
-          foundCM = true;
-          break;
+      if (FindClassModelByName(xcls->GetName())) {
+        for (auto &&cm : ClassModels) {
+          if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
+          if (cm->Name == xcls->GetName()) {
+            // allow GZDoom alias model overrides
+            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found %s definition)", xcls->GetName(), (cm->isGZDoom ? "GZDoom" : "native k8vavoom"));
+            foundCM = true;
+            break;
+          }
         }
       }
       if (!foundCM) {
@@ -1542,6 +1568,76 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
 
 //==========================================================================
 //
+//  LoadModelSkins
+//
+//==========================================================================
+static void LoadModelSkins (VModel *mdl) {
+  if (!mdl) return;
+  // load submodel skins
+  for (auto &&ScMdl : mdl->Models) {
+    for (auto &&SubMdl : ScMdl.SubModels) {
+      //if (SubMdl.Version != -1 && SubMdl.Version != Version) continue;
+      // locate the proper data
+      /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(SubMdl.Model);
+      //FIXME: this should be done earilier
+      if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
+      // load overriden submodel skins
+      if (SubMdl.Skins.length()) {
+        for (auto &&si : SubMdl.Skins) {
+          if (si.textureId >= 0) continue;
+          if (si.fileName == NAME_None) {
+            si.textureId = GTextureManager.DefaultTexture;
+          } else {
+            si.textureId = GTextureManager.AddFileTextureShaded(si.fileName, TEXTYPE_Skin, si.shade);
+            if (si.textureId < 0) si.textureId = GTextureManager.DefaultTexture;
+          }
+          if (si.textureId > 0 && !AllModelTexturesSeen.has(si.textureId)) {
+            AllModelTexturesSeen.put(si.textureId, true);
+            AllModelTextures.append(si.textureId);
+          }
+        }
+      } else {
+        // load base model skins
+        for (auto &&si : SubMdl.Model->Skins) {
+          if (si.textureId >= 0) continue;
+          if (si.fileName == NAME_None) {
+            si.textureId = GTextureManager.DefaultTexture;
+          } else {
+            si.textureId = GTextureManager.AddFileTextureShaded(si.fileName, TEXTYPE_Skin, si.shade);
+            if (si.textureId < 0) si.textureId = GTextureManager.DefaultTexture;
+          }
+          if (si.textureId > 0 && !AllModelTexturesSeen.has(si.textureId)) {
+            AllModelTexturesSeen.put(si.textureId, true);
+            AllModelTextures.append(si.textureId);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  R_LoadAllModelsSkins
+//
+//==========================================================================
+void R_LoadAllModelsSkins () {
+  if (r_preload_alias_models) {
+    AllModelTextures.reset();
+    AllModelTexturesSeen.reset();
+    AllModelTexturesSeen.put(GTextureManager.DefaultTexture, true);
+    for (auto &&mdl : ClassModels) {
+      if (mdl->Name == NAME_None || !mdl->Model || mdl->Frames.length() == 0) continue;
+      LoadModelSkins(mdl->Model);
+    }
+    AllModelTexturesSeen.clear();
+  }
+}
+
+
+//==========================================================================
+//
 //  DrawModel
 //
 //  FIXME: make this faster -- stop looping, cache data!
@@ -1612,6 +1708,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         SubMdl.Model->Skins[Md2SkinIdx].textureId = SkinID;
       }
     }
+    if (SkinID < 0) SkinID = GTextureManager.DefaultTexture;
 
     // get and verify frame number
     int Md2Frame = F.Index;

@@ -114,6 +114,7 @@ VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
 static TArray<VTextureTranslation *> CachedTranslations;
 
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
+static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:lightmap; 2:stenciled).", CVAR_Archive);
 
 int r_precache_textures_override = -1;
@@ -355,6 +356,7 @@ FDrawerDesc::FDrawerDesc (int Type, const char *AName, const char *ADescription,
 void R_Init () {
   R_InitSkyBoxes();
   R_InitModels();
+  R_LoadAllModelsSkins();
   // create light remapping table
   for (int i = 0; i < 256; ++i) {
     int n = i*i/255;
@@ -1807,14 +1809,29 @@ void VRenderLevelShared::PrecacheLevel () {
   R_LdrMsgShowSecondary("PRECACHING TEXTURES...");
   R_PBarReset();
 
+  int mdltexcount = 0;
+  if (r_precache_model_textures) {
+    mdltexcount = AllModelTextures.length();
+    if (mdltexcount > 0) GCon->Logf("precaching %d model textures...", mdltexcount);
+    for (int f = 0; f < AllModelTextures.length(); ++f) {
+      R_PBarUpdate("Textures", f, maxtex+mdltexcount);
+      Drawer->PrecacheTexture(GTextureManager[AllModelTextures[f]]);
+    }
+  }
+
   // precache textures
+  int xtexcount = 0;
+  for (int f = 1; f < maxtex; ++f) if (texturepresent[f]) ++xtexcount;
+  if (xtexcount > 0) GCon->Logf("precaching %d map textures...", xtexcount);
+
   for (int f = 1; f < maxtex; ++f) {
     if (texturepresent[f]) {
-      R_PBarUpdate("Textures", f, maxtex);
+      R_PBarUpdate("Textures", f+mdltexcount, maxtex+mdltexcount);
       Drawer->PrecacheTexture(GTextureManager[f]);
     }
   }
-  R_PBarUpdate("Textures", maxtex, maxtex, true); // final update
+
+  R_PBarUpdate("Textures", maxtex+mdltexcount, maxtex+mdltexcount, true); // final update
 }
 
 

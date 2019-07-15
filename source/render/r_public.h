@@ -119,6 +119,8 @@ float R_GetAspectRatio ();
 
 bool R_ModelNoSelfShadow (VName clsName);
 
+extern TArray<int> AllModelTextures;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int validcount; // defined in "sv_main.cpp"

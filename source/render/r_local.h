@@ -921,6 +921,8 @@ void R_InitSkyBoxes ();
 void R_InitModels ();
 void R_FreeModels ();
 
+void R_LoadAllModelsSkins ();
+
 int R_SetMenuPlayerTrans (int, int, int);
 
 
