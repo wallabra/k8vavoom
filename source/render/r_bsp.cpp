@@ -313,6 +313,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   // floor or ceiling lights
   // this rely on the face that flat surfaces will never mix with other surfaces
+  //TODO: this should also interpolate wall lighting
   if (surfs->plane.normal.z > 0) {
     // floor
     if (LightParams->lightFCFlags&1) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
