@@ -124,11 +124,11 @@ static bool mapteleport_issued = false;
 static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
 
-static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", CVAR_PreInit);
-VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", CVAR_PreInit);
-static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo|CVAR_PreInit);
-VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", CVAR_PreInit);
-VCvarI Skill("Skill", "3", "Skill level.", CVAR_PreInit);
+static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", 0/*CVAR_PreInit*/);
+VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", 0/*CVAR_PreInit*/);
+static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
+VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", 0/*CVAR_PreInit*/);
+VCvarI Skill("Skill", "3", "Skill level.", 0/*CVAR_PreInit*/);
 static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);

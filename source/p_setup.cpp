@@ -61,7 +61,7 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
 
-static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit|CVAR_Archive);
 
 static VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
 static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3", "Cache data if building took more than this number of seconds.", CVAR_Archive);
@@ -992,8 +992,13 @@ load_again:
     md5ctx.Final(md5digest);
     MapHashMD5 = VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
 
-    if (dbg_show_map_hash) GCon->Logf("MAP HASH MD5: %s", *MapHashMD5);
-    else if (developer) GCon->Logf(NAME_Dev, "MAP HASH MD5: %s", *MapHashMD5);
+    if (dbg_show_map_hash) {
+      GCon->Logf("map hash, md5: %s", *MapHashMD5);
+      GCon->Logf("map hash, sha: %s", *MapHash);
+    } else if (developer) {
+      GCon->Logf(NAME_Dev, "map hash, md5: %s", *MapHashMD5);
+      GCon->Logf(NAME_Dev, "map hash, sha: %s", *MapHash);
+    }
   }
 
   bool cachedDataLoaded = false;

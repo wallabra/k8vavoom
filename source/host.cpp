@@ -100,17 +100,17 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
-static VCvarF dbg_frametime("dbg_frametime", "0", "If greater than 0.004, this is what be used instead of one Doom tic; DEBUG CVAR, DON'T USE!", CVAR_PreInit);
+static VCvarF dbg_frametime("dbg_frametime", "0", "If greater or equal to 0.004, this is what be used instead of one Doom tic; DEBUG CVAR, DON'T USE!", CVAR_PreInit);
 //k8: this was `3`; why 3? looks like arbitrary number
-VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!", CVAR_PreInit);
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 
 static double last_time; // last time `FilterTime()` was returned `true`
 
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
-VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", CVAR_PreInit); // checkparm of -respawn
-VCvarI fastparm("g_fast_monsters", "0", "Fast(1), slow(2), normal(0) monsters?", CVAR_PreInit); // checkparm of -fast
+VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", 0/*CVAR_PreInit*/); // checkparm of -respawn
+VCvarI fastparm("g_fast_monsters", "0", "Fast(1), slow(2), normal(0) monsters?", 0/*CVAR_PreInit*/); // checkparm of -fast
 
 static VCvarI g_fastmon_override("g_fast_monsters_override", "0", "Fast(1), slow(2), normal(0) monsters?", CVAR_PreInit|CVAR_Archive);
 static VCvarI g_respawn_override("g_monsters_respawn_override", "0", "Override monster respawn (time in seconds).", CVAR_PreInit|CVAR_Archive);

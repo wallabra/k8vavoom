@@ -104,7 +104,7 @@ static VCvarS snd_timidity_patches("snd_timidity_patches", "/usr/share/timidity"
 #endif
 static VCvarB snd_timidity_autoload_sf2("snd_timidity_autoload_sf2", CVAR_AUTOSF2, "Automatically load SF2 from binary directory.", CVAR_Archive|CVAR_PreInit);
 static VCvarS snd_timidity_sf2_file("snd_timidity_sf2_file", "", "Timidity SF2 soundfont file.", CVAR_Archive|CVAR_PreInit);
-static VCvarI snd_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive|CVAR_PreInit);
+static VCvarI snd_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive);
 
 Sf2Data *TimidityManager::sf2_data = nullptr;
 DLS_Data *TimidityManager::patches = nullptr;
