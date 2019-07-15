@@ -282,6 +282,12 @@ public:
 public:
   // range iteration
   // WARNING! don't add/remove array elements in iterator loop!
+
+  inline T *begin () { return (length1D() > 0 ? ArrData : nullptr); }
+  inline const T *begin () const { return (length1D() > 0 ? ArrData : nullptr); }
+  inline T *end () { return (length1D() > 0 ? ArrData+length1D() : nullptr); }
+  inline const T *end () const { return (length1D() > 0 ? ArrData+length1D() : nullptr); }
+
   class Iterator {
   public:
     T *currvalue;
