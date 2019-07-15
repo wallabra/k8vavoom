@@ -245,6 +245,10 @@ static const float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 };
 
 
+static void ParseGZModelDefs ();
+#include "r_model_gz.cpp"
+
+
 //==========================================================================
 //
 //  FindClassModelByName
@@ -295,6 +299,12 @@ void R_InitModels () {
     Doc->Parse(Strm, "models/models.xml");
     for (VXmlNode *N = Doc->Root.FindChild("include"); N; N = N->FindNext()) Mod_FindName(N->GetAttribute("file"));
     delete Doc;
+  }
+  if (!GArgs.CheckParm("-no-modeldef") && !GArgs.CheckParm("-no-modeldefs") &&
+      !GArgs.CheckParm("-no-gzmodeldef") && !GArgs.CheckParm("-no-gzmodeldefs") &&
+      !GArgs.CheckParm("-no-gz-modeldef") && !GArgs.CheckParm("-no-gz-modeldefs"))
+  {
+    ParseGZModelDefs();
   }
 }
 
@@ -394,11 +404,7 @@ static bool ParseBool (VXmlNode *N, const char *name, bool defval) {
 //  ParseModelScript
 //
 //==========================================================================
-static void ParseModelScript (VModel *Mdl, VStream &Strm) {
-  // parse xml file
-  VXmlDocument *Doc = new VXmlDocument();
-  Doc->Parse(Strm, Mdl->Name);
-
+static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc) {
   // verify that it's a model definition file
   if (Doc->Root.Name != "vavoom_model_definition") Sys_Error("%s is not a valid model definition file", *Mdl->Name);
 
@@ -674,6 +680,19 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
 //==========================================================================
 //
+//  ParseModelScript
+//
+//==========================================================================
+static void ParseModelScript (VModel *Mdl, VStream &Strm) {
+  // parse xml file
+  VXmlDocument *Doc = new VXmlDocument();
+  Doc->Parse(Strm, Mdl->Name);
+  ParseModelXml(Mdl, Doc);
+}
+
+
+//==========================================================================
+//
 //  Mod_FindName
 //
 //  used in VC `InstallModel()`
@@ -699,6 +718,51 @@ VModel *Mod_FindName (const VStr &name) {
   delete Strm;
 
   return mod;
+}
+
+
+//==========================================================================
+//
+//  ParseGZModelDefs
+//
+//==========================================================================
+static void ParseGZModelDefs () {
+  VName mdfname = VName("modeldef", VName::FindLower);
+  if (mdfname == NAME_None) return; // no such chunk
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) != mdfname) continue;
+    GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
+    auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
+    while (sc->GetString()) {
+      if (sc->String.strEquCI("model")) {
+        auto mdl = new GZModelDef();
+        mdl->parse(sc);
+        // find model
+        if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
+          // search the currently loaded models
+          bool found = false;
+          for (int i = 0; i < mod_known.Num(); ++i) {
+            if (mod_known[i]->Name.strEquCI(mdl->className)) { found = true; break; }
+          }
+          if (!found) {
+            VModel *mod = new VModel();
+            mod->Name = mdl->className;
+            mod_known.Append(mod);
+            // parse xml
+            auto xml = mdl->createXml();
+            VStream *Strm = new VMemoryStreamRO(W_FullLumpName(Lump), xml.getCStr(), xml.length());
+            ParseModelScript(mod, *Strm);
+            delete Strm;
+          }
+        }
+        delete mdl;
+        continue;
+      }
+      sc->Error(va("invalid MODELDEF directive '%s'", *sc->String));
+      //GLog.WriteLine("%s: <%s>", *sc->GetLoc().toStringNoCol(), *sc->String);
+    }
+    delete sc;
+  }
 }
 
 
