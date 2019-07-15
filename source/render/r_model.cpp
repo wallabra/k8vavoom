@@ -199,6 +199,7 @@ struct VClassModelScript {
   bool OneForAll; // no need to do anything, this is "one model for all frames"
   TArray<VScriptedModelFrame> Frames;
   bool CacheBuilt;
+  bool isGZDoom;
   TMapNC<vuint32, int> SprFrameMap; // sprite name -> frame index (first)
   TMapNC<int, int> NumFrameMap; // frame number -> frame index (first)
 };
@@ -405,7 +406,7 @@ static bool ParseBool (VXmlNode *N, const char *name, bool defval) {
 //  ParseModelScript
 //
 //==========================================================================
-static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc) {
+static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) {
   // verify that it's a model definition file
   if (Doc->Root.Name != "vavoom_model_definition") Sys_Error("%s is not a valid model definition file", *Mdl->Name);
 
@@ -579,6 +580,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc) {
     Cls->NoSelfShadow = ParseBool(CN, "noselfshadow", false);
     Cls->OneForAll = false;
     Cls->CacheBuilt = false;
+    Cls->isGZDoom = isGZDoom;
     bool deleteIt = false;
     {
       int fp = GArgs.CheckParm("-model-ignore-class");
@@ -691,11 +693,11 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc) {
 //  ParseModelScript
 //
 //==========================================================================
-static void ParseModelScript (VModel *Mdl, VStream &Strm) {
+static void ParseModelScript (VModel *Mdl, VStream &Strm, bool isGZDoom=false) {
   // parse xml file
   VXmlDocument *Doc = new VXmlDocument();
   Doc->Parse(Strm, Mdl->Name);
-  ParseModelXml(Mdl, Doc);
+  ParseModelXml(Mdl, Doc, isGZDoom);
 }
 
 
@@ -737,9 +739,19 @@ VModel *Mod_FindName (const VStr &name) {
 static void ParseGZModelDefs () {
   VName mdfname = VName("modeldef", VName::FindLower);
   if (mdfname == NAME_None) return; // no such chunk
+  // build lump list, so we can load them in backwars order
+  TArray<int> lumpList;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != mdfname) continue;
+    lumpList.append(Lump);
+  }
+  if (lumpList.length() == 0) return;
+  for (int llidx = lumpList.length()-1; llidx >= 0; --llidx) {
+    int Lump = lumpList[llidx];
     GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
+    int cnt = 0;
+    // build model list, so we can append them backwards
+    TArray<GZModelDef *> gzmdlist;
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
     while (sc->GetString()) {
       if (sc->String.strEquCI("model")) {
@@ -754,44 +766,47 @@ static void ParseGZModelDefs () {
             delete mdl;
             continue;
           }
-          bool foundCM = false;
-          for (auto &&cm : ClassModels) {
-            if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
-            if (cm->Name == xcls->GetName()) { foundCM = true; break; }
-          }
-          if (foundCM) {
-            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (already defined)", xcls->GetName());
-            delete mdl;
-            continue;
-          }
-          // get xml here, because we're going to modify the model
-          auto xml = mdl->createXml();
-          // create impossible name, because why not?
-          mdl->className = va("/%s/", xcls->GetName());
-          bool found = false;
-          for (int i = 0; i < mod_known.Num(); ++i) {
-            if (mod_known[i]->Name.strEquCI(mdl->className)) { found = true; break; }
-          }
-          if (!found) {
-            GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());
-            VModel *mod = new VModel();
-            mod->Name = mdl->className;
-            mod_known.Append(mod);
-            // parse xml
-            VStream *Strm = new VMemoryStreamRO(W_FullLumpName(Lump), xml.getCStr(), xml.length());
-            ParseModelScript(mod, *Strm);
-            delete Strm;
-          } else {
-            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (already defined)", xcls->GetName());
-          }
+          gzmdlist.append(mdl);
         }
-        delete mdl;
         continue;
       }
       sc->Error(va("invalid MODELDEF directive '%s'", *sc->String));
       //GLog.WriteLine("%s: <%s>", *sc->GetLoc().toStringNoCol(), *sc->String);
     }
     delete sc;
+    // insert GZDoom alias models, backwards
+    for (int gzmidx = gzmdlist.length()-1; gzmidx >= 0; --gzmidx) {
+      GZModelDef *mdl = gzmdlist[gzmidx];
+      gzmdlist[gzmidx] = nullptr;
+      VClass *xcls = VClass::FindClassNoCase(*mdl->className);
+      check(xcls);
+      bool foundCM = false;
+      for (auto &&cm : ClassModels) {
+        if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
+        if (cm->Name == xcls->GetName()) {
+          // allow GZDoom alias model overrides
+          GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found %s definition)", xcls->GetName(), (cm->isGZDoom ? "GZDoom" : "native k8vavoom"));
+          foundCM = true;
+          break;
+        }
+      }
+      if (!foundCM) {
+        // get xml here, because we're going to modify the model
+        auto xml = mdl->createXml();
+        // create impossible name, because why not?
+        mdl->className = va("/gzmodels_%d/%s/gzmodel_%d_%d.xml", Lump, xcls->GetName(), Lump, cnt++);
+        //GCon->Logf("***<%s>", *mdl->className);
+        GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());
+        VModel *mod = new VModel();
+        mod->Name = mdl->className;
+        mod_known.Append(mod);
+        // parse xml
+        VStream *Strm = new VMemoryStreamRO(W_FullLumpName(Lump), xml.getCStr(), xml.length());
+        ParseModelScript(mod, *Strm, true); // gzdoom flag
+        delete Strm;
+      }
+      delete mdl;
+    }
   }
 }
 
