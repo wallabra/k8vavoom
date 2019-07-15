@@ -305,6 +305,17 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   sec_params_t *LightParams = (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
+
+  // floor or ceiling lights
+  // this rely on the face that flat surfaces will never mix with other surfaces
+  if (surfs->plane.normal.z > 0) {
+    // floor
+    if (LightParams->lightFCFlags&1) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
+  } else if (surfs->plane.normal.z < 0) {
+    // ceiling
+    if (LightParams->lightFCFlags&2) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
+  }
+
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
   lLev = midval(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
