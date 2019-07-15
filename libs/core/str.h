@@ -402,6 +402,9 @@ public:
   VStr quote (bool addQCh=false) const;
   bool needQuoting () const;
 
+  VStr xmlEscape () const;
+  VStr xmlUnescape () const;
+
   VStr EvalEscapeSequences () const;
 
   VStr RemoveColors () const;

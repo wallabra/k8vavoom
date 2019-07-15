@@ -1191,6 +1191,65 @@ VStr VStr::Latin1ToUtf8 () const {
 }
 
 
+//FIXME: make this faster
+VStr VStr::xmlEscape () const {
+  VStr res;
+  const char *c = getData();
+  if (!c || !c[0]) return res;
+  while (*c) {
+    switch (*c) {
+      case '&': res += "&amp;"; break;
+      case '"': res += "&quot;"; break;
+      case '\'': res += "&apos;"; break;
+      case '<': res += "&lt;"; break;
+      case '>': res += "&gt;"; break;
+      default: res += *c; break;
+    }
+    ++c;
+  }
+  return res;
+}
+
+
+//FIXME: make this faster
+VStr VStr::xmlUnescape () const {
+  VStr res;
+  const char *c = getData();
+  if (!c || !c[0]) return res;
+  while (*c) {
+    if (c[0] == ';') {
+      if (c[1] == 'a' && c[2] == 'm' && c[3] == 'p' && c[4] == ';') {
+        res += '&';
+        c += 5;
+        continue;
+      }
+      if (c[1] == 'q' && c[2] == 'u' && c[3] == 'o' && c[4] == 't' && c[5] == ';') {
+        res += '"';
+        c += 6;
+        continue;
+      }
+      if (c[1] == 'a' && c[2] == 'p' && c[3] == 'o' && c[4] == 's' && c[5] == ';') {
+        res += '\'';
+        c += 6;
+        continue;
+      }
+      if (c[1] == 'l' && c[2] == 't' && c[3] == ';') {
+        res += '<';
+        c += 4;
+        continue;
+      }
+      if (c[1] == 'g' && c[2] == 't' && c[3] == ';') {
+        res += '>';
+        c += 4;
+        continue;
+      }
+    }
+    res += *c++;
+  }
+  return res;
+}
+
+
 VStr VStr::EvalEscapeSequences () const {
   VStr res;
   const char *c = getData();
