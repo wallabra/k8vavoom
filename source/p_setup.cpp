@@ -1270,12 +1270,17 @@ load_again:
         !line.normal.x ? MInfo.HorizWallShade :
         !line.normal.y ? MInfo.VertWallShade :
         0;
-      if (shadeChange) {
+      int smoothChange =
+        !line.normal.x ? 0 :
+        (int)(MInfo.HorizWallShade+fabs(atanf(line.normal.y/line.normal.x)/1.57079f)*(MInfo.VertWallShade-MInfo.HorizWallShade)); // xs_RoundToInt()
+      if (shadeChange || smoothChange) {
         for (int sn = 0; sn < 2; ++sn) {
           const int sidx = line.sidenum[sn];
           if (sidx >= 0) {
             side_t *side = &Sides[sidx];
-            if ((side->Flags&SDF_NOFAKECTX) == 0) side->Light += shadeChange;
+            if ((side->Flags&SDF_NOFAKECTX) == 0) {
+              side->Light += ((side->Flags&SDF_SMOOTH_LIT) == 0 ? shadeChange : smoothChange);
+            }
           }
         }
       }
