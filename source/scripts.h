@@ -64,6 +64,7 @@ private:
   char PeekOrSkipChar (bool doSkip);
 
 public:
+  // deletes `Strm`
   VScriptParser (const VStr &name, VStream *Strm);
   VScriptParser (const VStr &name, const char *atext);
 
