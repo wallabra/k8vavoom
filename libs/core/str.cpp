@@ -1193,21 +1193,34 @@ VStr VStr::Latin1ToUtf8 () const {
 
 //FIXME: make this faster
 VStr VStr::xmlEscape () const {
-  VStr res;
   const char *c = getData();
-  if (!c || !c[0]) return res;
-  while (*c) {
-    switch (*c) {
-      case '&': res += "&amp;"; break;
-      case '"': res += "&quot;"; break;
-      case '\'': res += "&apos;"; break;
-      case '<': res += "&lt;"; break;
-      case '>': res += "&gt;"; break;
-      default: res += *c; break;
+  if (!c || !c[0]) return EmptyString;
+  for (const char *s = c; *s; ++s) {
+    switch (*s) {
+      case '&':
+      case '"':
+      case '\'':
+      case '<':
+      case '>':
+        // do the real work
+        {
+          VStr res;
+          while (*c) {
+            switch (*c) {
+              case '&': res += "&amp;"; break;
+              case '"': res += "&quot;"; break;
+              case '\'': res += "&apos;"; break;
+              case '<': res += "&lt;"; break;
+              case '>': res += "&gt;"; break;
+              default: res += *c; break;
+            }
+            ++c;
+          }
+          return res;
+        }
     }
-    ++c;
   }
-  return res;
+  return VStr(*this);
 }
 
 
