@@ -823,6 +823,7 @@ final bool HitFloor () {
     if (vdot < -23.0*35.0) MonsterFallingDamage();
   }
 
+  //TODO: interpolate z here
   Origin.z = FloorZ;
 
   if (vdot < -0.1) {
