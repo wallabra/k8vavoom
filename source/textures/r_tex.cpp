@@ -988,6 +988,36 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 
 //==========================================================================
 //
+//  tryHardToFindTheImage
+//
+//==========================================================================
+static int tryHardToFindTheImage (const char *filename) {
+  if (!filename || !filename[0]) return -1;
+  int i = W_CheckNumForFileName(filename);
+  if (i >= 0) return i;
+  static const char *exts[] = {
+    ".png",
+    ".tga",
+    ".pcx",
+    ".jpg",
+    ".jpeg",
+    nullptr,
+  };
+  VStr base = VStr(filename).stripExtension();
+  for (const char **eptr = exts; *eptr; ++eptr) {
+    VStr nn = base+(*eptr);
+    i = W_CheckNumForFileName(*nn);
+    if (i >= 0) {
+      GCon->Logf(NAME_Warning, "found image '%s' instead of requested '%s'", *nn, filename);
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::AddFileTextureChecked
 //
 //  returns -1 if no file texture found
@@ -1000,7 +1030,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
 
-  i = W_CheckNumForFileName(*Name);
+  i = tryHardToFindTheImage(*Name);
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
@@ -1049,7 +1079,7 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   int i = CheckNumForName(shName, Type);
   if (i >= 0) return i;
 
-  i = W_CheckNumForFileName(*Name);
+  i = tryHardToFindTheImage(*Name);
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
