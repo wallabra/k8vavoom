@@ -32,25 +32,47 @@ public:
   struct Frame {
     VStr sprbase;
     int sprframe;
-    int mdindex; // model index
-    int frindex; // frame index
+    int mdindex; // model index in `models`
+    int frindex; // frame index in model (will be used to build frame map)
+    // in k8vavoom, this is set per-frame
+    // set in `checkModelSanity()`
+    TAVec angleOffset;
+    int vvindex; // vavoom frame index in the given model (-1: invalid frame)
+  };
+
+  struct MdlFrameInfo {
+    int mdlindex; // model index in `models`
+    int mdlframe; // model frame number
+    int vvframe; // k8vavoom frame number
+    // as we can merge models, different frames can have different scale
+    TVec scale;
+    TVec offset;
+  };
+
+  // model and skin definition
+  struct MSDef {
+    VStr modelFile; // with path
+    VStr skinFile; // with path
+    // set in `checkModelSanity()`
+    TArray<MdlFrameInfo> frameMap;
   };
 
 protected:
   void checkModelSanity (VScriptParser *sc);
 
+  // -1: not found
+  int findModelFrame (int mdlindex, int mdlframe, bool allowAppend=true);
+
 public:
   VStr className;
   VStr path;
-  TArray<VStr> skins;
-  TArray<VStr> models;
+  TArray<MSDef> models;
   TVec scale = TVec(0, 0, 0);
   TVec offset = TVec(0, 0, 0);
   float rotationSpeed = 0; // !0: rotating
   TAVec angleOffset = TAVec(0, 0, 0);
   TArray<Frame> frames;
   // set in `checkModelSanity()`
-  TArray<int> maxModelFrames; // frames used for each model (0: model is unused)
 
   void clear ();
 
@@ -58,6 +80,10 @@ public:
 
   // "model" keyword already eaten
   void parse (VScriptParser *sc);
+
+  // merge this model frames with another model frames
+  // GZDoom seems to do this, so we have too
+  void merge (GZModelDef &other);
 
   VStr createXml ();
 };
@@ -71,14 +97,12 @@ public:
 void GZModelDef::clear () {
   className.clear();
   path.clear();
-  skins.clear();
   models.clear();
   scale = TVec(0, 0, 0);
   offset = TVec(0, 0, 0);
   rotationSpeed = 0;
   angleOffset = TAVec(0, 0, 0);
   frames.clear();
-  maxModelFrames.clear();
 }
 
 
@@ -143,8 +167,8 @@ void GZModelDef::parse (VScriptParser *sc) {
       int skidx = sc->Number;
       if (skidx < 0 || skidx > 1024) sc->Error(va("invalid skin number (%d) in model '%s'", skidx, *className));
       sc->ExpectString();
-      while (skins.length() <= skidx) skins.alloc();
-      skins[skidx] = sc->String.toLowerCase();
+      while (models.length() <= skidx) models.alloc();
+      models[skidx].skinFile = sc->String.toLowerCase();
       continue;
     }
     // "SurfaceSkin"
@@ -163,7 +187,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (mdidx < 0 || mdidx > 1024) sc->Error(va("invalid model number (%d) in model '%s'", mdidx, *className));
       sc->ExpectString();
       while (models.length() <= mdidx) models.alloc();
-      models[mdidx] = sc->String.toLowerCase();
+      models[mdidx].modelFile = sc->String.toLowerCase();
       continue;
     }
     // "scale"
@@ -259,8 +283,38 @@ void GZModelDef::parse (VScriptParser *sc) {
   }
   if (rotating && rotationSpeed == 0) rotationSpeed = 8; // arbitrary value
   if (!rotating) rotationSpeed = 0; // reset rotation flag
-  if (fixZOffset && scale.z) offset.z /= scale.z;
+  if (fixZOffset && scale.z) { offset.z /= scale.z; offset.z += 4; } // `+4` is temprorary hack for QStuff Ultra
+
   checkModelSanity(sc);
+}
+
+
+//==========================================================================
+//
+//  GZModelDef::findModelFrame
+//
+//  -1: not found
+//
+//==========================================================================
+int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
+  if (mdlindex < 0 || mdlindex >= models.length() || models[mdlindex].modelFile.isEmpty()) return -1;
+  //k8: dunno if i have to check it here
+  VStr mn = models[mdlindex].modelFile.extractFileExtension().toLowerCase();
+  if (mn != ".md2" && mn != ".md3") return -1;
+  for (auto &&it : models[mdlindex].frameMap.itemsIdx()) {
+    const MdlFrameInfo &fi = it.value();
+    check(fi.mdlindex == mdlindex);
+    if (fi.mdlframe == mdlframe) return it.index();
+  }
+  if (!allowAppend) return -1;
+  // append it
+  MdlFrameInfo &fi = models[mdlindex].frameMap.alloc();
+  fi.mdlindex = mdlindex;
+  fi.mdlframe = mdlframe;
+  fi.vvframe = models[mdlindex].frameMap.length()-1;
+  fi.scale = scale;
+  fi.offset = offset;
+  return fi.vvframe;
 }
 
 
@@ -270,23 +324,6 @@ void GZModelDef::parse (VScriptParser *sc) {
 //
 //==========================================================================
 void GZModelDef::checkModelSanity (VScriptParser *sc) {
-  if (isEmpty()) return; // nothing to do
-  maxModelFrames.setLength(models.length());
-  static_assert(sizeof(maxModelFrames[0]) == sizeof(int), "!!!");
-  memset(maxModelFrames.ptr(), 0, sizeof(maxModelFrames[0]));
-  //GLog.WriteLine("=== MODEL '%s' ===", *className);
-  for (auto &&it : frames.itemsIdx()) {
-    //GLog.WriteLine("  frame #%d: %s %d %d %d", it.index(), *it.value().sprbase, it.value().sprframe, it.value().mdindex, it.value().frindex);
-    const Frame &frm = it.value();
-    if (frm.mdindex >= models.length()) sc->Error(va("model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index()));
-    VStr mn = models[frm.mdindex];
-    if (mn.isEmpty()) sc->Error(va("model '%s' has empty model with index (%d) in frame %d", *className, frm.mdindex, it.index()));
-    if (!mn.extractFileExtension().strEquCI(".md2") && !mn.extractFileExtension().strEquCI(".md3")) {
-      sc->Error(va("model '%s' has unknown model format (%s) with index (%d) in frame %d", *className, *mn, frm.mdindex, it.index()));
-    }
-    maxModelFrames[frm.mdindex] = max2(maxModelFrames[frm.mdindex], frm.frindex+1);
-  }
-  while (skins.length() < models.length()) skins.alloc();
   // normalize path
   if (path.length()) {
     TArray<VStr> parr;
@@ -318,6 +355,102 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
     }
     //GLog.WriteLine("<%s>", *path);
   }
+
+  // build frame map
+  bool hasValidFrames = false;
+  bool hasInvalidFrames = false;
+
+  // clear existing frame maps, just in case
+  for (auto &mdl : models) mdl.frameMap.clear();
+
+  for (auto &&it : frames.itemsIdx()) {
+    Frame &frm = it.value();
+    frm.vvindex = findModelFrame(frm.mdindex, frm.frindex, true); // allow appending
+    if (frm.vvindex < 0) {
+      GLog.WriteLine(NAME_Warning, "aloas model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index());
+      hasInvalidFrames = true;
+      continue;
+    }
+    hasValidFrames = true;
+    frm.angleOffset = angleOffset; // copy it here
+  }
+
+  // is it empty?
+  if (!hasValidFrames && !hasInvalidFrames) { clear(); return; }
+
+  // remove invalid frames
+  if (hasInvalidFrames) {
+    int fidx = 0;
+    while (fidx < frames.length()) {
+      if (frames[fidx].vvindex < 0) frames.removeAt(fidx); else ++fidx;
+    }
+    check(frames.length() > 0); // invariant
+  }
+
+  // prepend path to skins and models (and clear unused model names)
+  for (auto &&mdl : models) {
+    if (mdl.frameMap.length() == 0) {
+      mdl.modelFile.clear();
+      mdl.skinFile.clear();
+    } else {
+      mdl.modelFile = path+mdl.modelFile;
+      if (!mdl.skinFile.isEmpty()) mdl.skinFile = path+mdl.skinFile;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  GZModelDef::merge
+//
+//  merge this model frames with another model frames
+//  GZDoom seems to do this, so we have too
+//
+//==========================================================================
+void GZModelDef::merge (GZModelDef &other) {
+  if (&other == this) return; // nothing to do
+  if (other.isEmpty()) return; // nothing to do
+  // this is brute-force approach, which can be made faster, but meh...
+  // just go through other model def frames, and try to find the correspondence
+  // in this model, or append new data.
+  /*
+  for (auto &&it : other.frames.itemsIdx()) {
+  }
+  */
+}
+
+
+//==========================================================================
+//
+//  appendScale
+//
+//==========================================================================
+static void appendScale (VStr &res, const TVec &scale, const TVec *baseScale) {
+  if (baseScale) {
+    if (*baseScale == scale) return; // base scale is set
+    if (baseScale->x != scale.x && baseScale->y != scale.y && baseScale->z != scale.z) {
+      if (scale.x == scale.y && scale.y == scale.z) {
+        if (scale.x != 1) res += va(" scale=\"%g\"", scale.x);
+      } else {
+        if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
+        if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
+        if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
+      }
+    } else {
+      if (baseScale->x != scale.x) res += va(" scale_x=\"%g\"", scale.x);
+      if (baseScale->y != scale.y) res += va(" scale_y=\"%g\"", scale.y);
+      if (baseScale->z != scale.z) res += va(" scale_z=\"%g\"", scale.z);
+    }
+  } else {
+    if (scale.x == scale.y && scale.y == scale.z) {
+      if (scale.x != 1) res += va(" scale=\"%g\"", scale.x);
+    } else {
+      if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
+      if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
+      if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
+    }
+  }
 }
 
 
@@ -332,45 +465,51 @@ VStr GZModelDef::createXml () {
   res += className;
   res += " -->\n";
   res += "<vavoom_model_definition>\n";
+
   // write models
   for (auto &&it : models.itemsIdx()) {
-    int maxfrm = maxModelFrames[it.index()];
-    if (!maxfrm) continue;
+    const MSDef &mdl = it.value();
+    if (mdl.frameMap.length() == 0) continue; // this model is unused
+    check(!mdl.modelFile.isEmpty());
     res += va("  <model name=\"%s_%d\">\n", *className.toLowerCase().xmlEscape(), it.index());
-    res += va("    <%s file=\"%s%s\" noshadow=\"false\"", *it.value().extractFileExtension()+1, *path.xmlEscape(), *it.value().xmlEscape());
-    if (scale.x == scale.y && scale.y == scale.z) {
-      if (scale.x != 1) res += va(" scale=\"%g\"", scale.x);
-    } else {
-      if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
-      if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
-      if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
-    }
+    res += va("    <%s file=\"%s\" noshadow=\"false\"", *mdl.modelFile.extractFileExtension()+1, *mdl.modelFile.xmlEscape());
+    appendScale(res, scale, nullptr);
     if (offset.x != 0) res += va(" offset_x=\"%g\"", offset.x);
     if (offset.y != 0) res += va(" offset_y=\"%g\"", offset.y);
     if (offset.z != 0) res += va(" offset_z=\"%g\"", offset.z);
     res += ">\n";
-    if (!skins[it.index()].isEmpty()) {
-      res += va("      <skin file=\"%s%s\" />\n", *path.xmlEscape(), *skins[it.index()].xmlEscape());
+    if (!mdl.skinFile.isEmpty()) {
+      res += va("      <skin file=\"%s\" />\n", *mdl.skinFile.xmlEscape());
     }
     // write frame list
-    for (int fn = 0; fn < maxModelFrames[it.index()]; ++fn) {
-      res += va("      <frame index=\"%d\" />\n", fn);
+    for (auto &&fit : mdl.frameMap.itemsIdx()) {
+      const MdlFrameInfo &fi = fit.value();
+      check(it.index() == fi.mdlindex);
+      check(fit.index() == fi.vvframe);
+      res += va("      <frame index=\"%d\"", fi.mdlframe);
+      appendScale(res, fi.scale, &scale);
+      if (fi.offset.x != offset.x) res += va(" offset_x=\"%g\"", fi.offset.x);
+      if (fi.offset.y != offset.y) res += va(" offset_y=\"%g\"", fi.offset.y);
+      if (fi.offset.z != offset.z) res += va(" offset_z=\"%g\"", fi.offset.z);
+      res += " />\n";
     }
-    res += va("    </%s>\n", *it.value().extractFileExtension()+1);
+    res += va("    </%s>\n", *mdl.modelFile.extractFileExtension()+1);
     res += "  </model>\n";
   }
+
   // write class definition
   res += va("  <class name=\"%s\" noselfshadow=\"true\">\n", *className.xmlEscape());
   for (auto &&frm : frames) {
+    if (frm.vvindex < 0) continue;
     res += va("    <state sprite=\"%s\" sprite_frame=\"%s\" model=\"%s_%d\" frame_index=\"%d\"",
       *frm.sprbase.toUpperCase().xmlEscape(),
       *VStr((char)(frm.sprframe+'A')).xmlEscape(),
       *className.toLowerCase().xmlEscape(), frm.mdindex,
-      frm.frindex);
+      frm.vvindex);
     if (rotationSpeed) res += " rotation=\"true\"";
-    if (angleOffset.yaw) res += va("  rotate_yaw=\"%g\"", angleOffset.yaw);
-    if (angleOffset.pitch) res += va("  rotate_pitch=\"%g\"", angleOffset.pitch);
-    if (angleOffset.roll) res += va("  rotate_roll=\"%g\"", angleOffset.roll);
+    if (frm.angleOffset.yaw) res += va("  rotate_yaw=\"%g\"", frm.angleOffset.yaw);
+    if (frm.angleOffset.pitch) res += va("  rotate_pitch=\"%g\"", frm.angleOffset.pitch);
+    if (frm.angleOffset.roll) res += va("  rotate_roll=\"%g\"", frm.angleOffset.roll);
     res += " />\n";
   }
   res += "  </class>\n";
