@@ -1430,6 +1430,7 @@ override void Tick (float deltaTime) {
   float lmdur = XLevel.Time-LastMoveTime;
   if (lastInterp && (lmdur <= 0 || LastMoveDuration <= 0 || lmdur >= LastMoveDuration)) lastInterp = false;
   bIntrJustMoved = true; // teleports and force origin changes will reset it
+  tmp_phys_z_change = 0;
 
   // physics is already interpolated
   if (!Physics(deltaTime)) return;
@@ -1440,8 +1441,18 @@ override void Tick (float deltaTime) {
     if (lastInterp) {
       //if (!bIsPlayer && Origin-lastOrg) print("***DELTA %s (vel=%s)", Origin-lastOrg, Velocity);
       LastMoveOrigin += Origin-lastOrg;
+      LastMoveOrigin.z -= tmp_phys_z_change;
     } else {
-      bIntrJustMoved = false;
+      if (fabs(tmp_phys_z_change) > 1) {
+        bIntrJustMoved = true;
+        LastMoveOrigin = Origin;
+        LastMoveAngles = Angles;
+        LastMoveTime = XLevel.Time;
+        LastMoveDuration = 0.1; // arbitrary
+        LastMoveOrigin.z -= tmp_phys_z_change;
+      } else {
+        bIntrJustMoved = false;
+      }
     }
   } else {
     //print("%C: interpolation aborted by physics", self);

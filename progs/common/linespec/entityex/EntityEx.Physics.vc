@@ -797,6 +797,8 @@ final bool HitFloor () {
   }
 
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
+    // physics caller will setup interpolation with `tmp_phys_z_change`
+    tmp_phys_z_change += FloorZ-Origin.z;
     Origin.z = FloorZ;
     if (bBounceFloors || BounceType != BOUNCE_None) {
       FloorBounceMissile();
@@ -823,7 +825,8 @@ final bool HitFloor () {
     if (vdot < -23.0*35.0) MonsterFallingDamage();
   }
 
-  //TODO: interpolate z here
+  // physics caller will setup interpolation with `tmp_phys_z_change`
+  tmp_phys_z_change += FloorZ-Origin.z;
   Origin.z = FloorZ;
 
   if (vdot < -0.1) {
@@ -870,6 +873,9 @@ final bool HitCeiling () {
   if (Sector && Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) == CeilingZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
   }
+
+  // physics caller will setup interpolation with `tmp_phys_z_change`
+  tmp_phys_z_change += (CeilingZ-Height)-Origin.z;
   Origin.z = CeilingZ-Height;
 
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
@@ -1332,6 +1338,7 @@ override void ApplyFriction (float DeltaTime) {
   if (bIsPlayer && Sector && Sector.floor.maxz <= -32768) {
     if (Origin.z <= -32768) {
       //print("!!!! z=%s; fz=%s %C : %s", Origin.z, FloorZ, self, self.UniqueId);
+      bIntrJustMoved = false; // don't interpolate
       Origin.z = Sector.ceiling.minz-Height;
       // find out new floor plane
       if (Sector.bHasExtrafloors) GetFloorAndCeiling(nullptr);
