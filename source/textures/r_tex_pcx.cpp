@@ -63,6 +63,37 @@ struct pcx_t {
     Strm.Serialise(h.filler, 54);
     return Strm;
   }
+
+  bool isValid () const {
+    if (manufacturer != 0x0a) return false;
+    if (reserved != 0) return false;
+    if (encoding != 0 && encoding != 1) return false;
+    if (version != 5) return false;
+    if (xmax-xmin+1 < 1 || xmax-xmin+1 > 32000) return false; // why not?
+    if (ymax-ymin+1 < 1 || ymax-ymin+1 > 32000) return false; // why not?
+    if (color_planes == 1) {
+      if (bits_per_pixel != 8 && bits_per_pixel != 24 && bits_per_pixel != 32) return false;
+    } else if (color_planes == 3 || color_planes == 4) {
+      if (bits_per_pixel != 8) return false;
+    } else {
+      // invalid number of color planes
+      return false;
+    }
+    if (palette_type != 1 && palette_type != 2) return false;
+    if (bytes_per_line != (xmax-xmin+1)*(bits_per_pixel/8)) return false; // this is true for both color plane types
+    //k8: don't check reserved, other checks should provide enough reliability
+    /*k8: filler *might* be zero-filled, but it is not required by any spec
+    for (int i = 0; i < 54; ++i) if (Hdr.filler[i] != 0) return nullptr;
+    */
+    return true;
+  }
+
+  void dump () const {
+    GLog.WriteLine("PCX: vendor=0x%02x; version=%u; encoding=%u; bpp=%u", manufacturer, version, encoding, bits_per_pixel);
+    GLog.WriteLine("PCX: dims=(%u,%u)-(%u,%u); resolution=%u:%u", xmin, ymin, xmax, ymax, hres, vres);
+    GLog.WriteLine("PCX: planes=%u; bpl=%u (expected:%u); palettetype=%u", color_planes, bytes_per_line, xmax-xmin+1, palette_type);
+    GLog.WriteLine("PCX: screen=%u:%u", horz_screen_size, vert_screen_size);
+  }
 };
 
 
@@ -78,21 +109,10 @@ VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
   Strm.Seek(0);
   Strm << Hdr;
 
-  if (Hdr.manufacturer != 0x0a || Hdr.encoding != 1 ||
-      Hdr.version == 1 || Hdr.version > 5 || Hdr.reserved != 0 ||
-      (/*Hdr.bits_per_pixel != 1 &&*/ Hdr.bits_per_pixel != 8) ||
-      //(Hdr.bits_per_pixel == 1 && Hdr.color_planes != 1 && Hdr.color_planes != 4) ||
-      (Hdr.bits_per_pixel == 8 && (Hdr.color_planes != 1 || Hdr.bytes_per_line != Hdr.xmax-Hdr.xmin+1)) ||
-      (Hdr.palette_type != 1 && Hdr.palette_type != 2))
-  {
+  if (!Hdr.isValid()) {
+    //if (Hdr.manufacturer == 0x0a) { GLog.WriteLine("=== PCX '%s' ===", *Strm.GetName()); Hdr.dump(); }
     return nullptr;
   }
-
-  /*k8: filler *might* be zero-filled, but it is not required by any spec
-  for (int i = 0; i < 54; ++i) {
-    if (Hdr.filler[i] != 0) return nullptr;
-  }
-  */
 
   return new VPcxTexture(LumpNum, Hdr);
 }
@@ -111,7 +131,14 @@ VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
   Name = W_LumpName(SourceLump);
   Width = Hdr.xmax-Hdr.xmin+1;
   Height = Hdr.ymax-Hdr.ymin+1;
-  mFormat = TEXFMT_8Pal;
+  //mFormat = TEXFMT_8Pal;
+  if (Hdr.color_planes == 1) {
+    mFormat = (Hdr.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
+  } else if (Hdr.color_planes == 3 || Hdr.color_planes == 4) {
+    mFormat = TEXFMT_RGBA;
+  } else {
+    Sys_Error("PCX '%s' wtf?!", *W_FullLumpName(SourceLump));
+  }
 }
 
 
@@ -138,10 +165,6 @@ VPcxTexture::~VPcxTexture () {
 //
 //==========================================================================
 vuint8 *VPcxTexture::GetPixels () {
-  int c;
-  int bytes_per_line;
-  vint8 ch;
-
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
@@ -150,59 +173,147 @@ vuint8 *VPcxTexture::GetPixels () {
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   VCheckedStream Strm(lumpstream);
 
+  int strmSize = Strm.TotalSize();
+
   // read header
   pcx_t pcx;
   Strm << pcx;
 
-  // we only support 8-bit pcx files
-  if (pcx.bits_per_pixel != 8) Sys_Error("No 8-bit planes\n"); // we like 8 bit color planes
-  if (pcx.color_planes != 1) Sys_Error("Not 8 bpp\n");
+  if (!pcx.isValid()) { pcx.dump(); Sys_Error("invalid PCX file '%s'", *W_FullLumpName(SourceLump)); }
 
+  int currPos = Strm.Tell();
   Width = pcx.xmax-pcx.xmin+1;
   Height = pcx.ymax-pcx.ymin+1;
-  mFormat = TEXFMT_8Pal;
 
-  bytes_per_line = pcx.bytes_per_line;
+  bool hasAlpha = false;
+  if (pcx.color_planes == 1) {
+    mFormat = (pcx.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
+    hasAlpha = (pcx.bits_per_pixel == 32);
+  } else if (pcx.color_planes == 3 || pcx.color_planes == 4) {
+    mFormat = TEXFMT_RGBA;
+    hasAlpha = (pcx.color_planes == 4);
+  } else {
+    Sys_Error("PCX '%s' wtf?!", *W_FullLumpName(SourceLump));
+  }
 
-  Pixels = new vuint8[Width*Height];
+  int pixelsPitch = (mFormat == TEXFMT_8Pal ? 1 : 4);
+  Pixels = new vuint8[(Width*pixelsPitch)*Height];
+
+  /*
+  GLog.WriteLine("=== %s ===", *W_FullLumpName(SourceLump));
+  pcx.dump();
+  GLog.WriteLine("  pitch=%d", pixelsPitch);
+  */
+
+  TArray<vuint8> line;
+  line.setLength(pcx.bytes_per_line*pcx.color_planes);
 
   for (int y = 0; y < Height; ++y) {
-    // decompress RLE encoded PCX data
-    int x = 0;
-
-    while (x < bytes_per_line) {
-      Strm << ch;
-      if ((ch&0xC0) == 0xC0) {
-        c = (ch&0x3F);
-        Strm << ch;
-      } else {
-        c = 1;
+    //GLog.WriteLine("  line=%d of %d", y, Height);
+    // read one line
+    int lpos = 0;
+    for (int p = 0; p < pcx.color_planes; ++p) {
+      int count = 0;
+      vuint8 b;
+      for (int n = 0; n < pcx.bytes_per_line; ++n) {
+        //GLog.WriteLine("    p=%d; n=%d; count=%d; b=0x%02x", p, n, count, b);
+        if (count == 0) {
+          // read next byte, do RLE decompression by the way
+          if (currPos < strmSize) {
+            ++currPos;
+            Strm << b;
+          } else {
+            b = 0;
+          }
+          if (pcx.encoding) {
+            if ((b&0xc0) == 0xc0) {
+              count = b&0x3f;
+              if (count == 0) Sys_Error("invalid pcx RLE data for '%s'", *W_FullLumpName(SourceLump));
+              if (currPos < strmSize) {
+                ++currPos;
+                Strm << b;
+              } else {
+                b = 0;
+              }
+            } else {
+              count = 1;
+            }
+          } else {
+            count = 1;
+          }
+          check(count > 0);
+          //GLog.WriteLine("    p=%d; n=%d; count=%d; b=0x%02x; fpos=%d, fsize=%d", p, n, count, b, Strm.Tell(), Strm.TotalSize());
+        }
+        line[lpos+n] = b;
+        --count;
       }
+      // allow excessive counts, why not?
+      lpos += pcx.bytes_per_line;
+    }
+    //GLog.WriteLine("  line=%d of %d done", y, Height);
 
-      while (c--) {
-        if (x < Width) Pixels[y*Width+x] = ch;
-        ++x;
+    const vuint8 *src = line.ptr();
+    vuint8 *dest = (vuint8 *)(&Pixels[y*(Width*pixelsPitch)]);
+    if (mFormat == TEXFMT_8Pal) {
+      // paletted, simply copy the data
+      memcpy(dest, src, Width);
+    } else {
+      if (pcx.color_planes != 1) {
+        // planar
+        for (int x = 0; x < Width; ++x) {
+          *dest++ = src[0]; // red
+          *dest++ = src[pcx.bytes_per_line]; // green
+          *dest++ = src[pcx.bytes_per_line*2]; // blue
+          if (hasAlpha) {
+            *dest++ = src[pcx.bytes_per_line*3]; // blue
+          } else {
+            *dest++ = 255; // alpha (opaque)
+          }
+          ++src;
+        }
+      } else {
+        // flat
+        for (int x = 0; x < Width; ++x) {
+          *dest++ = *src++; // red
+          *dest++ = *src++; // green
+          *dest++ = *src++; // blue
+          if (hasAlpha) {
+            *dest++ = *src++; // alpha
+          } else {
+            *dest++ = 255; // alpha (opaque)
+          }
+        }
       }
     }
   }
+  //GLog.WriteLine("  PCX DONE!");
 
-  // if not followed by palette ID, assume palette is at the end of file
-  Strm << ch;
-  if (ch != 12) Strm.Seek(Strm.TotalSize()-768);
+  if (mFormat == TEXFMT_8Pal) {
+    // if not followed by palette ID, assume palette is at the end of file
+    if (Strm.TotalSize()-Strm.Tell() < 769) Sys_Error("invalid pcx palette data for '%s'", *W_FullLumpName(SourceLump));
+    vuint8 ch;
+    Strm << ch;
+    if (ch != 12) Strm.Seek(Strm.TotalSize()-768);
 
-  // read palette
-  Palette = new rgba_t[256];
-  for (c = 0; c < 256; ++c) {
-    Strm << Palette[c].r << Palette[c].g << Palette[c].b;
-    Palette[c].a = 255;
-  }
+    // read palette
+    Palette = new rgba_t[256];
+    for (int c = 0; c < 256; ++c) {
+      Strm << Palette[c].r << Palette[c].g << Palette[c].b;
+      Palette[c].a = 255;
+    }
 
-  FixupPalette(Palette);
+    FixupPalette(Palette);
 
-  if (Width > 0 && Height > 0) {
+    if (Width > 0 && Height > 0) {
+      const vuint8 *s = Pixels;
+      for (int count = Width*Height; count--; ++s) {
+        if (s[0] == 0) { transparent = true; break; }
+      }
+    }
+  } else if (hasAlpha) {
     const vuint8 *s = Pixels;
-    for (int count = Width*Height; count--; ++s) {
-      if (s[0] == 0) { transparent = true; break; }
+    for (int count = Width*Height; count--; s += 4) {
+      if (s[3] == 0) { transparent = true; break; }
     }
   }
 
