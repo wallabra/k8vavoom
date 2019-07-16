@@ -168,16 +168,16 @@ void GZModelDef::parse (VScriptParser *sc) {
     // "scale"
     if (sc->Check("scale")) {
       // x
-      sc->ExpectFloat();
-      if (sc->Float <= 0) sc->Error(va("invalid x scale in model '%s'", *className));
+      sc->ExpectFloatWithSign();
+      if (sc->Float == 0) sc->Error(va("invalid x scale in model '%s'", *className));
       scale.x = sc->Float;
       // y
-      sc->ExpectFloat();
-      if (sc->Float <= 0) sc->Error(va("invalid y scale in model '%s'", *className));
+      sc->ExpectFloatWithSign();
+      if (sc->Float == 0) sc->Error(va("invalid y scale in model '%s'", *className));
       scale.y = sc->Float;
       // z
-      sc->ExpectFloat();
-      if (sc->Float <= 0) sc->Error(va("invalid z scale in model '%s'", *className));
+      sc->ExpectFloatWithSign();
+      if (sc->Float == 0) sc->Error(va("invalid z scale in model '%s'", *className));
       scale.z = sc->Float;
       continue;
     }

@@ -646,9 +646,9 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         VStr sprframe = N->GetAttribute("sprite_frame");
         if (sprframe.length() != 1) Sys_Error("Model '%s' has invalid state (invalid sprite frame '%s')", *Mdl->Name, *sprframe);
         int sfr = sprframe[0];
-             if (sfr >= 'A' && sfr <= 'Z') sfr -= 'A';
-        else if (sfr >= 'a' && sfr <= 'z') sfr -= 'a';
-        else Sys_Error("Model '%s' has invalid state (invalid sprite frame '%s')", *Mdl->Name, *sprframe);
+        if (sfr >= 'a' && sfr <= 'z') sfr = sfr-'a'+'A';
+        sfr -= 'A';
+        if (sfr < 0 || sfr > 31) Sys_Error("Model '%s' has invalid state (invalid sprite frame '%s')", *Mdl->Name, *sprframe);
         F.Number = -1;
         F.sprite = sprname;
         F.frame = sfr;
