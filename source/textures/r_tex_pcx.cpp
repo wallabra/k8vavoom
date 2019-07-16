@@ -290,15 +290,39 @@ vuint8 *VPcxTexture::GetPixels () {
 
   if (mFormat == TEXFMT_8Pal) {
     // if not followed by palette ID, assume palette is at the end of file
-    if (Strm.TotalSize()-Strm.Tell() < 769) Sys_Error("invalid pcx palette data for '%s'", *W_FullLumpName(SourceLump));
-    vuint8 ch;
-    Strm << ch;
-    if (ch != 12) Strm.Seek(Strm.TotalSize()-768);
+    if (Strm.TotalSize()-Strm.Tell() > 0) {
+      if (Strm.TotalSize()-Strm.Tell() > 768) {
+        vuint8 ch;
+        Strm << ch;
+        if (ch != 12) {
+          if (Strm.TotalSize() < 768) Sys_Error("invalid pcx palette data for '%s'", *W_FullLumpName(SourceLump));
+          if (developer) GCon->Logf(NAME_Dev, "found some other data before palette in '%s'", *W_FullLumpName(SourceLump));
+          //GCon->Logf(NAME_Warning, "found some other data before palette in '%s'", *W_FullLumpName(SourceLump));
+          Strm.Seek(Strm.TotalSize()-768);
+        } else {
+          if (developer) GCon->Logf(NAME_Dev, "palette data with marker in '%s'", *W_FullLumpName(SourceLump));
+          //GCon->Logf(NAME_Warning, "palette data with marker in '%s'", *W_FullLumpName(SourceLump));
+        }
+      } else {
+        if (Strm.TotalSize()-Strm.Tell() < 768) {
+          GCon->Logf(NAME_Warning, "palette data takes only %d bytes in '%s'", Strm.TotalSize()-Strm.Tell(), *W_FullLumpName(SourceLump));
+        } else {
+          GCon->Logf(NAME_Warning, "palette data without marker in '%s'", *W_FullLumpName(SourceLump));
+        }
+      }
+    } else {
+      Sys_Error("missing pcx palette data for '%s'", *W_FullLumpName(SourceLump));
+    }
 
     // read palette
     Palette = new rgba_t[256];
     for (int c = 0; c < 256; ++c) {
-      Strm << Palette[c].r << Palette[c].g << Palette[c].b;
+      if (Strm.TotalSize()-Strm.Tell() < 3) {
+        GCon->Logf(NAME_Warning, "palette data too short in '%s'", *W_FullLumpName(SourceLump));
+        Palette[c].r = Palette[c].g = Palette[c].b = 0;
+      } else {
+        Strm << Palette[c].r << Palette[c].g << Palette[c].b;
+      }
       Palette[c].a = 255;
     }
 
