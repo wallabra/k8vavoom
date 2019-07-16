@@ -760,21 +760,17 @@ VModel *Mod_FindName (const VStr &name) {
 //
 //==========================================================================
 static void ParseGZModelDefs () {
+  // build model list, so we can append them backwards
+  TArray<GZModelDef *> gzmdlist;
+  TMap<VStr, int> gzmdmap;
+
   VName mdfname = VName("modeldef", VName::FindLower);
   if (mdfname == NAME_None) return; // no such chunk
-  // build lump list, so we can load them in backwars order
-  TArray<int> lumpList;
+  // parse all modeldefs
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != mdfname) continue;
-    lumpList.append(Lump);
-  }
-  if (lumpList.length() == 0) return;
-  for (int llidx = lumpList.length()-1; llidx >= 0; --llidx) {
-    int Lump = lumpList[llidx];
     GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
-    int cnt = 0;
-    // build model list, so we can append them backwards
-    TArray<GZModelDef *> gzmdlist;
+    // parse modeldef
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
     while (sc->GetString()) {
       if (sc->String.strEquCI("model")) {
@@ -790,7 +786,30 @@ static void ParseGZModelDefs () {
             delete mdl;
             continue;
           }
-          gzmdlist.append(mdl);
+          // check if we already have k8vavoom model for this class
+          if (FindClassModelByName(xcls->GetName())) {
+            for (auto &&cm : ClassModels) {
+              if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
+              if (!cm->isGZDoom && cm->Name == xcls->GetName()) {
+                GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found native k8vavoom definition)", xcls->GetName());
+                delete mdl;
+                mdl = nullptr;
+                break;
+              }
+            }
+            if (!mdl) continue;
+          }
+          // merge with already existing model, if there is any
+          VStr locname = mdl->className.toLowerCase();
+          auto omp = gzmdmap.find(locname);
+          if (omp) {
+            gzmdlist[*omp]->merge(*mdl);
+            delete mdl;
+          } else {
+            // new model
+            gzmdmap.put(locname, gzmdlist.length());
+            gzmdlist.append(mdl);
+          }
         }
         continue;
       }
@@ -798,41 +817,28 @@ static void ParseGZModelDefs () {
       //GLog.WriteLine("%s: <%s>", *sc->GetLoc().toStringNoCol(), *sc->String);
     }
     delete sc;
-    // insert GZDoom alias models, backwards
-    for (int gzmidx = gzmdlist.length()-1; gzmidx >= 0; --gzmidx) {
-      GZModelDef *mdl = gzmdlist[gzmidx];
-      gzmdlist[gzmidx] = nullptr;
-      VClass *xcls = VClass::FindClassNoCase(*mdl->className);
-      check(xcls);
-      bool foundCM = false;
-      if (FindClassModelByName(xcls->GetName())) {
-        for (auto &&cm : ClassModels) {
-          if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
-          if (cm->Name == xcls->GetName()) {
-            // allow GZDoom alias model overrides
-            GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found %s definition)", xcls->GetName(), (cm->isGZDoom ? "GZDoom" : "native k8vavoom"));
-            foundCM = true;
-            break;
-          }
-        }
-      }
-      if (!foundCM) {
-        // get xml here, because we're going to modify the model
-        auto xml = mdl->createXml();
-        // create impossible name, because why not?
-        mdl->className = va("/gzmodels_%d/%s/gzmodel_%d_%d.xml", Lump, xcls->GetName(), Lump, cnt++);
-        //GCon->Logf("***<%s>", *mdl->className);
-        GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());
-        VModel *mod = new VModel();
-        mod->Name = mdl->className;
-        mod_known.Append(mod);
-        // parse xml
-        VStream *Strm = new VMemoryStreamRO(W_FullLumpName(Lump), xml.getCStr(), xml.length());
-        ParseModelScript(mod, *Strm, true); // gzdoom flag
-        delete Strm;
-      }
-      delete mdl;
-    }
+  }
+
+  // insert GZDoom alias models
+  int cnt = 0;
+  for (auto &&mdl : gzmdlist) {
+    VClass *xcls = VClass::FindClassNoCase(*mdl->className);
+    check(xcls);
+    // get xml here, because we're going to modify the model
+    auto xml = mdl->createXml();
+    // create impossible name, because why not?
+    mdl->className = va("/gzmodels/..%s/..gzmodel_%d.xml", xcls->GetName(), cnt++);
+    //GCon->Logf("***<%s>", *mdl->className);
+    GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());
+    VModel *mod = new VModel();
+    mod->Name = mdl->className;
+    mod_known.Append(mod);
+    // parse xml
+    VStream *Strm = new VMemoryStreamRO(mdl->className, xml.getCStr(), xml.length());
+    ParseModelScript(mod, *Strm, true); // gzdoom flag
+    delete Strm;
+    // this is not strictly safe, but meh
+    delete mdl;
   }
 }
 
