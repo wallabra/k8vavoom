@@ -33,10 +33,12 @@ public:
     VStr sprbase;
     int sprframe;
     int mdindex; // model index in `models`
+    int origmdindex; // this is used to find replacements on merge
     int frindex; // frame index in model (will be used to build frame map)
     // in k8vavoom, this is set per-frame
     // set in `checkModelSanity()`
     TAVec angleOffset;
+    float rotationSpeed; // !0: rotating
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
   };
 
@@ -47,6 +49,8 @@ public:
     // as we can merge models, different frames can have different scale
     TVec scale;
     TVec offset;
+    // temporary working data
+    bool used;
   };
 
   // model and skin definition
@@ -224,13 +228,25 @@ void GZModelDef::parse (VScriptParser *sc) {
       // model index
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model index %d in model '%s'", sc->Number, *className));
-      frm.mdindex = sc->Number;
+      frm.mdindex = frm.origmdindex = sc->Number;
       // frame index
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model frame %d in model '%s'", sc->Number, *className));
       frm.frindex = sc->Number;
-      // store it
-      frames.append(frm);
+      // check if we already have equal frame, there is no need to keep duplicates
+      bool replaced = false;
+      for (auto &&ofr : frames) {
+        if (frm.sprframe == ofr.sprframe &&
+            frm.mdindex == ofr.mdindex &&
+            frm.sprbase == ofr.sprbase)
+        {
+          // i found her!
+          ofr.frindex = frm.frindex;
+          replaced = true;
+        }
+      }
+      // store it, if it wasn't a replacement
+      if (!replaced) frames.append(frm);
       continue;
     }
     // "frame"
@@ -314,6 +330,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
   fi.vvframe = models[mdlindex].frameMap.length()-1;
   fi.scale = scale;
   fi.offset = offset;
+  fi.used = true; // why not?
   return fi.vvframe;
 }
 
@@ -361,18 +378,19 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
   bool hasInvalidFrames = false;
 
   // clear existing frame maps, just in case
-  for (auto &mdl : models) mdl.frameMap.clear();
+  for (auto &&mdl : models) mdl.frameMap.clear();
 
   for (auto &&it : frames.itemsIdx()) {
     Frame &frm = it.value();
     frm.vvindex = findModelFrame(frm.mdindex, frm.frindex, true); // allow appending
     if (frm.vvindex < 0) {
-      GLog.WriteLine(NAME_Warning, "aloas model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index());
+      GLog.WriteLine(NAME_Warning, "alias model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index());
       hasInvalidFrames = true;
       continue;
     }
     hasValidFrames = true;
     frm.angleOffset = angleOffset; // copy it here
+    frm.rotationSpeed = rotationSpeed;
   }
 
   // is it empty?
@@ -411,13 +429,145 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
 void GZModelDef::merge (GZModelDef &other) {
   if (&other == this) return; // nothing to do
   if (other.isEmpty()) return; // nothing to do
+
   // this is brute-force approach, which can be made faster, but meh...
   // just go through other model def frames, and try to find the correspondence
   // in this model, or append new data.
-  /*
-  for (auto &&it : other.frames.itemsIdx()) {
+  bool compactFrameMaps = false;
+  for (auto &&ofrm : other.frames) {
+    if (ofrm.vvindex < 0) continue; // this frame is invalid
+    // ok, we have a frame, try to find a model for it
+    const VStr &omdf = other.models[ofrm.mdindex].modelFile;
+    const VStr &osdf = other.models[ofrm.mdindex].skinFile;
+    int mdlEmpty = -1; // first empty model in model array, to avoid looping twice
+    int mdlindex = -1;
+    for (auto &&mdlit : models.itemsIdx()) {
+      if (omdf.strEquCI(mdlit.value().modelFile) && osdf.strEquCI(mdlit.value().skinFile)) {
+        mdlindex = mdlit.index();
+        break;
+      }
+      if (mdlEmpty < 0 && mdlit.value().frameMap.length() == 0) mdlEmpty = mdlit.index();
+    }
+    // if we didn't found a suitable model, append a new one
+    bool newModel = false;
+    if (mdlindex < 0) {
+      newModel = true;
+      if (mdlEmpty < 0) {
+        mdlEmpty = models.length();
+        models.alloc();
+      }
+      mdlindex = mdlEmpty;
+      MSDef &nmdl = models[mdlindex];
+      nmdl.modelFile = omdf;
+      nmdl.skinFile = osdf;
+    }
+    // try to find a model frame to reuse
+    MSDef &rmdl = models[mdlindex];
+    const MdlFrameInfo &omfrm = other.models[ofrm.mdindex].frameMap[ofrm.vvindex];
+    int frmapindex = -1;
+    if (!newModel) {
+      for (auto &&mfrm : rmdl.frameMap) {
+        if (mfrm.mdlframe == mdlindex &&
+            mfrm.scale == omfrm.scale &&
+            mfrm.offset == omfrm.offset)
+        {
+          // yay, i found her!
+          // reuse this frame
+          frmapindex = mfrm.vvframe;
+          break;
+        }
+      }
+    }
+    if (frmapindex < 0) {
+      // ok, we have no suitable model frame, append a new one
+      frmapindex = rmdl.frameMap.length();
+      MdlFrameInfo &nfi = rmdl.frameMap.alloc();
+      nfi.mdlindex = mdlindex;
+      nfi.mdlframe = ofrm.frindex;
+      nfi.vvframe = rmdl.frameMap.length()-1;
+      nfi.scale = omfrm.scale;
+      nfi.offset = omfrm.offset;
+    }
+    // find sprite frame to replace
+    // HACK: same model indicies will be replaced; this is how GZDoom does it
+    int spfindex = -1;
+    for (auto &&sit : frames.itemsIdx()) {
+      Frame &ff = sit.value();
+      if (ff.sprframe == ofrm.sprframe &&
+          /*ff.origmdindex == ofrm.origmdindex &&*/
+          ff.sprbase == ofrm.sprbase)
+      {
+        if (ff.origmdindex != ofrm.origmdindex) {
+          GLog.WriteLine(NAME_Warning, "class '%s' (%s%c) has several attached alias models; this is not supported in k8vavoom!",
+            *className, *ff.sprbase.toUpperCase(), 'A'+ff.sprframe);
+        }
+        spfindex = sit.index();
+        break;
+      }
+    }
+    if (spfindex < 0) {
+      // append new sprite frame
+      spfindex = frames.length();
+      (void)frames.alloc();
+    } else {
+      if (!compactFrameMaps && frames[spfindex].vvindex != frmapindex) compactFrameMaps = true;
+    }
+    // replace sprite frame
+    Frame &newfrm = frames[spfindex];
+    newfrm.sprbase = ofrm.sprbase;
+    newfrm.sprframe = ofrm.sprframe;
+    newfrm.mdindex = mdlindex;
+    newfrm.origmdindex = ofrm.origmdindex;
+    newfrm.frindex = ofrm.frindex;
+    newfrm.angleOffset = ofrm.angleOffset;
+    newfrm.rotationSpeed = ofrm.rotationSpeed;
+    newfrm.vvindex = frmapindex;
   }
-  */
+
+  // remove unused model frames
+  if (compactFrameMaps) {
+    // actually, simply rebuild frame maps for each model
+    // i may rewrite it in the future, but for now it is ok
+    int unusedFramesCount = 0;
+    for (auto &&mdl : models) {
+      for (auto &&frm : mdl.frameMap) {
+        frm.used = false;
+        ++unusedFramesCount;
+      }
+    }
+    // mark all used frames
+    for (auto &&frm : frames) {
+      if (frm.vvindex < 0) continue; // just in case
+      if (!models[frm.mdindex].frameMap[frm.vvindex].used) {
+        models[frm.mdindex].frameMap[frm.vvindex].used = true;
+        --unusedFramesCount;
+      }
+    }
+    check(unusedFramesCount >= 0);
+    if (unusedFramesCount == 0) return; // nothing to do
+
+    // rebuild frame maps
+    for (auto &&mit : models.itemsIdx()) {
+      MSDef &mdl = mit.value();
+      TArray<MdlFrameInfo> newmap;
+      TArray<int> newvvindex;
+      newvvindex.setLength(mdl.frameMap.length());
+      for (auto &&frm : mdl.frameMap) {
+        if (!frm.used) continue;
+        newvvindex[frm.vvframe] = newmap.length();
+        newmap.append(frm);
+      }
+      if (newmap.length() == mdl.frameMap.length()) continue; // nothing to do
+      //FIXME: make this faster!
+      for (auto &&frm : frames) {
+        if (frm.vvindex < 0) continue; // just in case
+        if (frm.mdindex != mit.index()) continue;
+        check(newvvindex[frm.vvindex] >= 0);
+        frm.vvindex = newvvindex[frm.vvindex];
+      }
+      mdl.frameMap = newmap;
+    }
+  }
 }
 
 
@@ -506,7 +656,7 @@ VStr GZModelDef::createXml () {
       *VStr((char)(frm.sprframe+'A')).xmlEscape(),
       *className.toLowerCase().xmlEscape(), frm.mdindex,
       frm.vvindex);
-    if (rotationSpeed) res += " rotation=\"true\"";
+    if (frm.rotationSpeed) res += " rotation=\"true\"";
     if (frm.angleOffset.yaw) res += va("  rotate_yaw=\"%g\"", frm.angleOffset.yaw);
     if (frm.angleOffset.pitch) res += va("  rotate_pitch=\"%g\"", frm.angleOffset.pitch);
     if (frm.angleOffset.roll) res += va("  rotate_roll=\"%g\"", frm.angleOffset.roll);
