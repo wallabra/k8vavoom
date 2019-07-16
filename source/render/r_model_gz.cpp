@@ -94,6 +94,7 @@ void GZModelDef::parse (VScriptParser *sc) {
   className = sc->String;
   sc->Expect("{");
   bool rotating = false;
+  bool fixZOffset = false;
   while (!sc->Check("}")) {
     // skip flags
     if (sc->Check("PITCHFROMMOMENTUM") ||
@@ -236,12 +237,14 @@ void GZModelDef::parse (VScriptParser *sc) {
       offset.y = sc->Float;
       sc->ExpectFloatWithSign();
       offset.z = sc->Float;
+      fixZOffset = false;
       continue;
     }
     // "ZOffset"
     if (sc->Check("ZOffset")) {
       sc->ExpectFloatWithSign();
       offset.z = sc->Float;
+      fixZOffset = true;
       continue;
     }
     // unknown shit, try to ignore it
@@ -256,6 +259,7 @@ void GZModelDef::parse (VScriptParser *sc) {
   }
   if (rotating && rotationSpeed == 0) rotationSpeed = 8; // arbitrary value
   if (!rotating) rotationSpeed = 0; // reset rotation flag
+  if (fixZOffset && scale.z) offset.z /= scale.z;
   checkModelSanity(sc);
 }
 
