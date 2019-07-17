@@ -65,7 +65,7 @@ int VQMus2Mid::FirstChannelAvailable () {
   Mus2MidChannel[15] = -1;
   for (int i = 0; i < 16; ++i) if (Mus2MidChannel[i] > max) max = Mus2MidChannel[i];
   Mus2MidChannel[15] = old15;
-  return (max == 8 ? 10 : max + 1);
+  return (max == 8 ? 10 : max+1);
 }
 
 
@@ -95,11 +95,11 @@ void VQMus2Mid::TWriteBuf (int MIDItrack, const vuint8 *buf, int size) {
 //
 //==========================================================================
 void VQMus2Mid::TWriteVarLen (int tracknum, vuint32 value) {
-  vuint32 buffer = value & 0x7f;
+  vuint32 buffer = value&0x7f;
   while ((value >>= 7)) {
     buffer <<= 8;
     buffer |= 0x80;
-    buffer += (value & 0x7f);
+    buffer += (value&0x7f);
   }
   for (;;) {
     TWriteByte(tracknum, buffer);
@@ -171,8 +171,8 @@ bool VQMus2Mid::Convert (VStream &Strm) {
   TrackCnt = 1; // music starts here
 
   Strm << event;
-  et = (event & 0x70) >> 4;
-  MUSchannel = event & 0x0f;
+  et = (event&0x70)>>4;
+  MUSchannel = event&0x0f;
   while (et != 6 && !Strm.AtEnd()) {
     if (Mus2MidChannel[MUSchannel] == -1) {
       MIDIchannel = Mus2MidChannel[MUSchannel] = (MUSchannel == 15 ? 9 : FirstChannelAvailable());
@@ -251,7 +251,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         break;
       case 5:
       case 7:
-        GCon->Log(NAME_Dev,"MUS file corupted");
+        GCon->Log(NAME_Dev, "MUS file corupted");
         return false;
       default:
         break;
@@ -289,7 +289,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
 //==========================================================================
 void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
   // header
-  char HdrId[4] = { 'M', 'T', 'h', 'd' };
+  static const char HdrId[4] = { 'M', 'T', 'h', 'd' };
   vuint32 HdrSize = 6;
   vuint16 HdrType = 1;
   vuint16 HdrNumTracks = TrackCnt;
@@ -304,7 +304,7 @@ void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
   // tracks
   for (int i = 0; i < (int)TrackCnt; ++i) {
     // identifier
-    char TrackId[4] = { 'M', 'T', 'r', 'k' };
+    static const char TrackId[4] = { 'M', 'T', 'r', 'k' };
     Strm.Serialise(TrackId, 4);
     // data size
     vuint32 TrackSize = Tracks[i].Data.Num();

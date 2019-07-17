@@ -253,6 +253,7 @@ public:
 
   VAudioCodec () : SampleRate(44100), SampleBits(16), NumChannels(2) {}
   // always decodes stereo, returns number of frames
+  // `NumSamples` is number of stereo samples
   virtual int Decode (short *Data, int NumSamples) = 0;
   virtual bool Finished () = 0;
   virtual void Restart () = 0;

@@ -14,6 +14,7 @@ menudef SoundOptions {
     cvar = snd_mid_player;
     list {
       "Timidity",
+      "FluidSynth",
     }
   }
 

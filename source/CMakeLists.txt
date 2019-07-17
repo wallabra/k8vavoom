@@ -580,6 +580,10 @@ if(ENABLE_CLIENT)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac.cpp)
   endif(FLAC_FOUND)
 
+  if(FLUID_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_fluid.cpp)
+  endif(FLUID_FOUND)
+
 
   ### if(WIN32)
   ###   # ---------------- Windows ----------------

@@ -24,10 +24,79 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#ifdef _WIN32
+# include <windows.h>
+#endif
 #include "gamedefs.h"
 #include "snd_local.h"
 
 #include "timidity/timidity.h"
+
+
+static const char *SF2SearchPathes[] = {
+  "!",
+#if !defined(__SWITCH__)
+  "!/sf2",
+  "!/dls",
+  "!/soundfonts",
+#endif
+#if defined(_WIN32)
+  "!/share",
+  "!/share/sf2",
+  "!/share/dls",
+  "!/share/soundfonts",
+#endif
+#if !defined(_WIN32) && !defined(__SWITCH__)
+  "~/.k8vavoom",
+  "~/.k8vavoom/sf2",
+  "~/.k8vavoom/dls",
+  "~/.k8vavoom/soundfonts",
+
+  "/opt/vavoom/sf2",
+  "/opt/vavoom/dls",
+  "/opt/vavoom/soundfonts",
+
+  "/opt/vavoom/share",
+  "/opt/vavoom/share/sf2",
+  "/opt/vavoom/share/dls",
+  "/opt/vavoom/share/soundfonts",
+
+  "/opt/vavoom/share/k8vavoom",
+  "/opt/vavoom/share/k8vavoom/sf2",
+  "/opt/vavoom/share/k8vavoom/dls",
+  "/opt/vavoom/share/k8vavoom/soundfonts",
+
+  "/usr/local/share/k8vavoom",
+  "/usr/local/share/k8vavoom/sf2",
+  "/usr/local/share/k8vavoom/dls",
+  "/usr/local/share/k8vavoom/soundfonts",
+
+  "/usr/share/k8vavoom",
+  "/usr/share/k8vavoom/sf2",
+  "/usr/share/k8vavoom/dls",
+  "/usr/share/k8vavoom/soundfonts",
+
+  "!/../share",
+  "!/../share/sf2",
+  "!/../share/dls",
+  "!/../share/soundfonts",
+
+  "!/../share/k8vavoom",
+  "!/../share/k8vavoom/sf2",
+  "!/../share/k8vavoom/dls",
+  "!/../share/k8vavoom/soundfonts",
+#endif
+#if defined(__SWITCH__)
+  "/switch/k8vavoom",
+  "/switch/k8vavoom/sf2",
+  "/switch/k8vavoom/dls",
+  "/switch/k8vavoom/soundfonts",
+#endif
+  nullptr,
+};
+
+TArray<VStr> midiSynthAllBanks;
+
 
 using namespace LibTimidity;
 
@@ -53,7 +122,7 @@ public:
   static Sf2Data *sf2_data;
   static DLS_Data *patches;
 
-protected:
+public:
   static ControlMode MyControlMode;
 
   static int timidityInitialised; // <0: not yet; >0: ok; 0: failed
@@ -102,8 +171,8 @@ static VCvarS snd_timidity_patches("snd_timidity_patches", "/usr/share/timidity"
 #else
 # define CVAR_AUTOSF2  true
 #endif
-static VCvarB snd_timidity_autoload_sf2("snd_timidity_autoload_sf2", CVAR_AUTOSF2, "Automatically load SF2 from binary directory.", CVAR_Archive|CVAR_PreInit);
-static VCvarS snd_timidity_sf2_file("snd_timidity_sf2_file", "", "Timidity SF2 soundfont file.", CVAR_Archive|CVAR_PreInit);
+VCvarB snd_timidity_autoload_sf2("snd_timidity_autoload_sf2", CVAR_AUTOSF2, "Automatically load SF2 from binary directory.", CVAR_Archive|CVAR_PreInit);
+VCvarS snd_timidity_sf2_file("snd_timidity_sf2_file", "", "Timidity SF2 soundfont file.", CVAR_Archive|CVAR_PreInit);
 static VCvarI snd_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive);
 
 Sf2Data *TimidityManager::sf2_data = nullptr;
@@ -115,6 +184,110 @@ VStr TimidityManager::sf2Path = VStr::EmptyString;
 bool TimidityManager::autoloadSF2 = false;
 bool TimidityManager::needRestart = false;
 bool TimidityManager::diskScanned = false;
+
+
+//==========================================================================
+//
+//  forceMidiBanksScan
+//
+//==========================================================================
+void forceMidiBanksScan () {
+  TimidityManager::diskScanned = false;
+}
+
+
+//==========================================================================
+//
+//  scanForMidiBanks
+//
+//==========================================================================
+void scanForMidiBanks () {
+  if (midiSynthAllBanks.length() == 0 || midiSynthAllBanks[0] != snd_timidity_sf2_file.asStr()) {
+    TimidityManager::diskScanned = false;
+  }
+
+  if (TimidityManager::diskScanned) return;
+
+  // try to find sf2 in binary dir
+  TimidityManager::diskScanned = true;
+
+  // collect banks
+  midiSynthAllBanks.reset();
+  midiSynthAllBanks.append(snd_timidity_sf2_file.asStr());
+
+  if (snd_timidity_autoload_sf2) {
+    for (const char **sfdir = SF2SearchPathes; *sfdir; ++sfdir) {
+      VStr dirname = VStr(*sfdir);
+      if (dirname.isEmpty()) continue;
+      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = VStr(GArgs[0])+dirname; }
+      #if !defined(_WIN32) && !defined(__SWITCH__)
+      else if (dirname[0] == '~') {
+        const char *home = getenv("HOME");
+        if (!home || !home[0]) continue;
+        dirname.chopLeft(1);
+        dirname = VStr(home)+dirname;
+      }
+      #endif
+      //GCon->Logf("Timidity: scanning '%s'...", *dirname);
+      auto dir = Sys_OpenDir(dirname);
+      for (;;) {
+        auto fname = Sys_ReadDir(dir);
+        if (fname.isEmpty()) break;
+        VStr ext = fname.extractFileExtension();
+        if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) midiSynthAllBanks.append(dirname+"/"+fname);
+      }
+      Sys_CloseDir(dir);
+    }
+  }
+
+#if defined(__SWITCH__)
+  // try "/switch/k8vavoom/gzdoom.sf2"
+  if (Sys_FileExists("/switch/k8vavoom/gzdoom.sf2")) {
+    bool found = false;
+    for (auto &&fn : midiSynthAllBanks) {
+      if (fn.strEquCI("/switch/k8vavoom/gzdoom.sf2")) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) midiSynthAllBanks.append("/switch/k8vavoom/gzdoom.sf2");
+  }
+#endif
+
+#ifdef _WIN32
+  {
+    static const char *shitdozeShit[] = {
+      "ct4mgm.sf2",
+      "ct2mgm.sf2",
+      "drivers\\gm.dls",
+      nullptr,
+    };
+    bool delimeterPut = false;
+    for (const char **ssp = shitdozeShit; *ssp; ++ssp) {
+      static char sysdir[65536];
+      memset(sysdir, 0, sizeof(sysdir));
+      if (!GetSystemDirectoryA(sysdir, sizeof(sysdir)-1)) break;
+      //VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
+      VStr gmpath = VStr(sysdir)+"\\"+(*ssp);
+      GCon->Logf("::: trying <%s> :::", *gmpath);
+      if (Sys_FileExists(*gmpath)) {
+        bool found = false;
+        for (auto &&fn : midiSynthAllBanks) {
+          if (fn.strEquCI(GMPath)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          if (!delimeterPut) midiSynthAllBanks.append(""); // delimiter
+          delimeterPut = true;
+          midiSynthAllBanks.append(GMPath);
+        }
+      }
+    }
+  }
+#endif
+}
 
 
 //==========================================================================
@@ -219,101 +392,15 @@ bool TimidityManager::InitTimidity () {
     }
   }
 
+  scanForMidiBanks();
+
   // try to find sf2 in binary dir
-  if (!sf2_data && snd_timidity_autoload_sf2 && !diskScanned) {
-    diskScanned = true;
+  if (!sf2_data && snd_timidity_autoload_sf2) {
     TArray<VStr> failedBanks;
-    TArray<VStr> allBanks;
-
-    static const char *sfpathes[] = {
-      "!",
-#if !defined(__SWITCH__)
-      "!/sf2",
-      "!/dls",
-      "!/soundfonts",
-#endif
-#if defined(_WIN32)
-      "!/share",
-      "!/share/sf2",
-      "!/share/dls",
-      "!/share/soundfonts",
-#endif
-#if !defined(_WIN32) && !defined(__SWITCH__)
-      "~/.k8vavoom",
-      "~/.k8vavoom/sf2",
-      "~/.k8vavoom/dls",
-      "~/.k8vavoom/soundfonts",
-
-      "/opt/vavoom/sf2",
-      "/opt/vavoom/dls",
-      "/opt/vavoom/soundfonts",
-
-      "/opt/vavoom/share",
-      "/opt/vavoom/share/sf2",
-      "/opt/vavoom/share/dls",
-      "/opt/vavoom/share/soundfonts",
-
-      "/opt/vavoom/share/k8vavoom",
-      "/opt/vavoom/share/k8vavoom/sf2",
-      "/opt/vavoom/share/k8vavoom/dls",
-      "/opt/vavoom/share/k8vavoom/soundfonts",
-
-      "/usr/local/share/k8vavoom",
-      "/usr/local/share/k8vavoom/sf2",
-      "/usr/local/share/k8vavoom/dls",
-      "/usr/local/share/k8vavoom/soundfonts",
-
-      "/usr/share/k8vavoom",
-      "/usr/share/k8vavoom/sf2",
-      "/usr/share/k8vavoom/dls",
-      "/usr/share/k8vavoom/soundfonts",
-
-      "!/../share",
-      "!/../share/sf2",
-      "!/../share/dls",
-      "!/../share/soundfonts",
-
-      "!/../share/k8vavoom",
-      "!/../share/k8vavoom/sf2",
-      "!/../share/k8vavoom/dls",
-      "!/../share/k8vavoom/soundfonts",
-#endif
-#if defined(__SWITCH__)
-      "/switch/k8vavoom",
-      "/switch/k8vavoom/sf2",
-      "/switch/k8vavoom/dls",
-      "/switch/k8vavoom/soundfonts",
-#endif
-      nullptr,
-    };
-
-    // collect banks
-    for (const char **sfdir = sfpathes; *sfdir; ++sfdir) {
-      VStr dirname = VStr(*sfdir);
-      if (dirname.isEmpty()) continue;
-      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = VStr(GArgs[0])+dirname; }
-#if !defined(_WIN32) && !defined(__SWITCH__)
-      else if (dirname[0] == '~') {
-        const char *home = getenv("HOME");
-        if (!home || !home[0]) continue;
-        dirname.chopLeft(1);
-        dirname = VStr(home)+dirname;
-      }
-#endif
-      //GCon->Logf("Timidity: scanning '%s'...", *dirname);
-      auto dir = Sys_OpenDir(dirname);
-      for (;;) {
-        auto fname = Sys_ReadDir(dir);
-        if (fname.isEmpty()) break;
-        VStr ext = fname.extractFileExtension();
-             if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) allBanks.append(dirname+"/"+fname);
-      }
-      Sys_CloseDir(dir);
-    }
-
     // try to load a bank
-    for (int f = 0; f < allBanks.length(); ++f) {
-      sf2name = allBanks[f];
+    for (auto &&bfn : midiSynthAllBanks) {
+      sf2name = bfn;
+      if (sf2name.isEmpty()) break;
       if (sf2name.extractFileExtension().strEquCI(".sf2")) {
         // sf2
         sf2_data = Timidity_LoadSF2(*sf2name);
@@ -339,46 +426,37 @@ bool TimidityManager::InitTimidity () {
     }
 
     if (!sf2_data && !patches && failedBanks.length()) {
-      for (int f = 0; f < failedBanks.length(); ++f) {
-        GCon->Logf("TIMIDITY: autoloading failed for '%s'", *failedBanks[f]);
-      }
+      for (auto &&bfn : failedBanks) GCon->Logf("TIMIDITY: autoloading failed for '%s'", *bfn);
     }
   }
-
-#if defined(__SWITCH__)
-  // try "/switch/k8vavoom/gzdoom.sf2"
-  if (!sf2_data && !patches) {
-    sf2name = "/switch/k8vavoom/gzdoom.sf2";
-    sf2_data = Timidity_LoadSF2(*sf2name);
-    if (sf2_data && lastSF2Used != sf2name) {
-      GCon->Log("TIMIDITY: loaded SF2: 'gzdoom.sf2'");
-    }
-  }
-#endif
 
   // load patches if no sf2 was loaded
   if (!sf2_data && !patches) {
     if (Timidity_ReadConfig() != 0) {
-#ifdef _WIN32
-      VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
-      FILE *f = fopen(*GMPath, "rb");
-      if (f) {
-        patches = Timidity_LoadDLS(f);
-        fclose(f);
-        if (patches) GCon->Logf("TIMIDITY: loaded 'gm.dls'");
+      bool doLoading = false;
+      for (auto &&GMPath : midiSynthAllBanks) {
+        if (!doLoading) {
+          if (GMPath.isEmpty()) doLoading = true;
+        }
+        if (GMPath.isEmpty()) continue;
+
+        FILE *f = fopen(*GMPath, "rb");
+        if (f) {
+          patches = Timidity_LoadDLS(f);
+          fclose(f);
+          if (patches) {
+            GCon->Logf("TIMIDITY: loaded '%s'", *GMPath.extractFileName());
+            break;
+          }
+        }
       }
+
       if (!patches) {
         GCon->Logf(NAME_Warning, "Timidity init failed");
         Timidity_Close();
         timidityInitialised = 0;
         return false;
       }
-#else
-      GCon->Logf(NAME_Warning, "Timidity init failed");
-      timidityInitialised = 0;
-      Timidity_Close();
-      return false;
-#endif
     } else {
       needRestart = true;
     }
@@ -461,29 +539,37 @@ void VTimidityAudioCodec::Restart () {
 VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
   if (snd_mid_player != 0) return nullptr;
 
+  int Size = InStrm->TotalSize();
+  if (Size < 0x0e) {
+    GCon->Logf(NAME_Warning, "Failed to load MIDI song");
+    return nullptr;
+  }
+
   // check if it's a MIDI file
   char Header[4];
   InStrm->Seek(0);
   InStrm->Serialise(Header, 4);
-  if (memcmp(Header, MIDIMAGIC, 4)) return nullptr;
+  if (InStrm->IsError() || memcmp(Header, MIDIMAGIC, 4)) return nullptr;
 
   if (!timidityManager.InitTimidity()) return nullptr;
 
   // load song
-  int Size = InStrm->TotalSize();
   void *Data = Z_Malloc(Size);
   InStrm->Seek(0);
   InStrm->Serialise(Data, Size);
+  if (InStrm->IsError()) {
+    GCon->Logf(NAME_Warning, "Failed to load MIDI song");
+    return nullptr;
+  }
   MidiSong *Song = Timidity_LoadSongMem(Data, Size, timidityManager.patches, timidityManager.sf2_data);
   Z_Free(Data);
   if (!Song) {
-    GCon->Logf("Failed to load MIDI song");
+    GCon->Logf(NAME_Warning, "Failed to load MIDI song");
     //Timidity_Close(); // not needed anymore
     return nullptr;
   }
   InStrm->Close();
   delete InStrm;
-  InStrm = nullptr;
 
   // create codec
   return new VTimidityAudioCodec(Song);

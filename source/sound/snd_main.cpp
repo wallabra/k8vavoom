@@ -193,11 +193,7 @@ VCvarB VAudio::snd_external_music("snd_external_music", true, "Allow external mu
 static VCvarF snd_random_pitch("snd_random_pitch", "0.27", "Random pitch all sounds (0: none, otherwise max change).", CVAR_Archive);
 static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitch will be multiplied by this value.", CVAR_Archive);
 
-//#if defined(_WIN32)
-//VCvarI snd_mid_player("snd_mid_player", "-1", "MIDI player type (0:Timidity; -1:none)", CVAR_Archive|CVAR_PreInit);
-//#else
-VCvarI snd_mid_player("snd_mid_player", "0", "MIDI player type (0:Timidity; -1:none)", CVAR_Archive|CVAR_PreInit);
-//#endif
+VCvarI snd_mid_player("snd_mid_player", "0", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
 
 
