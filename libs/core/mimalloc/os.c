@@ -85,8 +85,11 @@ static size_t mi_os_good_alloc_size(size_t size, size_t alignment) {
 #if defined(_WIN32)
 // We use VirtualAlloc2 for aligned allocation, but it is only supported on Windows 10 and Windows Server 2016.
 // So, we need to look it up dynamically to run on older systems. (use __stdcall for 32-bit compatibility)
+//k8: fuck you, shitdoze devs
+#if defined(MEM_EXTENDED_PARAMETER_TYPE_BITS)
 typedef PVOID(__stdcall *VirtualAlloc2Ptr)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, MEM_EXTENDED_PARAMETER*, ULONG);
 static VirtualAlloc2Ptr pVirtualAlloc2 = NULL;
+#endif
 
 void _mi_os_init(void) {
   // get the page size
@@ -95,6 +98,8 @@ void _mi_os_init(void) {
   if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
   if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
   // get the VirtualAlloc2 function
+  //k8: fuck you, shitdoze devs
+#if defined(MEM_EXTENDED_PARAMETER_TYPE_BITS)
   HINSTANCE  hDll;
   hDll = LoadLibrary("kernelbase.dll");
   if (hDll != NULL) {
@@ -102,6 +107,7 @@ void _mi_os_init(void) {
     pVirtualAlloc2 = (VirtualAlloc2Ptr)GetProcAddress(hDll, "VirtualAlloc2FromApp");
     FreeLibrary(hDll);
   }
+#endif
   // Try to see if large OS pages are supported
   unsigned long err = 0;
   bool ok = mi_option_is_enabled(mi_option_large_os_pages);

@@ -392,6 +392,7 @@ static void mi_process_info(double* utime, double* stime, size_t* peak_rss, size
   *peak_rss = 0;
   *page_faults = 0;
   *page_reclaim = 0;
+  *peak_commit = 0;
 }
 
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
