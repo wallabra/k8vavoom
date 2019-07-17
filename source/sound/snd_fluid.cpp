@@ -45,6 +45,32 @@ extern VCvarS snd_timidity_sf2_file;
 //             7 = FLUID_INTERP_7THORDER
 static VCvarI snd_fluid_interp("snd_fluid_interp", "1", "FluidSynth interpolation.", CVAR_Archive);
 
+static VCvarI snd_fluid_voices("snd_fluid_voices", "128", "Number of FluidSynth voices.", CVAR_Archive);
+static VCvarF snd_fluid_gain("snd_fluid_gain", "1", "FluidSynth global gain.", CVAR_Archive);
+
+static VCvarB snd_fluid_reverb("snd_fluid_reverb", false, "Allow FluidSynth reverb?", CVAR_Archive);
+// [0..1.2]
+static VCvarF snd_fluid_reverb_roomsize("snd_fluid_reverb_roomsize", "0.61", "FluidSynth reverb room size.", CVAR_Archive);
+// [0..1]
+static VCvarF snd_fluid_reverb_damping("snd_fluid_reverb_damping", "0.23", "FluidSynth reverb damping.", CVAR_Archive);
+// [0..100]
+static VCvarF snd_fluid_reverb_width("snd_fluid_reverb_width", "0.76", "FluidSynth reverb width.", CVAR_Archive);
+// [0..1]
+static VCvarF snd_fluid_reverb_level("snd_fluid_reverb_level", "0.57", "FluidSynth reverb level.", CVAR_Archive);
+
+static VCvarB snd_fluid_chorus("snd_fluid_chorus", false, "Allow FluidSynth chorus?", CVAR_Archive);
+// [0..99]
+static VCvarI snd_fluid_chorus_voices("snd_fluid_chorus_voices", "3", "Number of FluidSynth chorus voices.", CVAR_Archive);
+// [0..1] -- wtf?
+static VCvarF snd_fluid_chorus_level("snd_fluid_chorus_level", "1.2", "FluidSynth chorus level.", CVAR_Archive);
+// [0.29..5]
+static VCvarF snd_fluid_chorus_speed("snd_fluid_chorus_speed", "0.3", "FluidSynth chorus speed.", CVAR_Archive);
+// depth is in ms and actual maximum depends on the sample rate
+// [0..21]
+static VCvarF snd_fluid_chorus_depth("snd_fluid_chorus_depth", "8", "FluidSynth chorus depth.", CVAR_Archive);
+// [0..1]
+static VCvarI snd_fluid_chorus_type("snd_fluid_chorus_type", "0", "FluidSynth chorus type (0:sine; 1:triangle).", CVAR_Archive);
+
 
 #define MIDI_CHANNELS   (64)
 #define MIDI_MESSAGE    (0x07)
@@ -154,8 +180,26 @@ protected:
   static bool NeedRestart ();
   static void UpdateCvarCache ();
 
+  static void onCVarChanged (VCvar *cvar, const VStr &oldValue) { needRestart = true; }
+
 public:
-  FluidManager () {}
+  FluidManager () {
+    snd_fluid_voices.MeChangedCB = &onCVarChanged;
+    snd_fluid_gain.MeChangedCB = &onCVarChanged;
+    snd_fluid_reverb.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus.MeChangedCB = &onCVarChanged;
+    snd_fluid_interp.MeChangedCB = &onCVarChanged;
+    snd_fluid_reverb_roomsize.MeChangedCB = &onCVarChanged;
+    snd_fluid_reverb_damping.MeChangedCB = &onCVarChanged;
+    snd_fluid_reverb_width.MeChangedCB = &onCVarChanged;
+    snd_fluid_reverb_level.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus_voices.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus_level.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus_speed.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus_depth.MeChangedCB = &onCVarChanged;
+    snd_fluid_chorus_type.MeChangedCB = &onCVarChanged;
+  }
+
   ~FluidManager () { CloseFluid(); }
 
   // returns success flag
@@ -169,7 +213,7 @@ public:
 static FluidManager fluidManager;
 
 
-IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "Fluid");
+IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "FluidSynth");
 
 
 fluid_settings_t *FluidManager::settings = nullptr;
@@ -302,20 +346,6 @@ vuint32 VFluidAudioCodec::getNextTick (chan_t *chan) {
   return (chan->starttic+(vuint32)((double)tic*chan->song->timediv));
 }
 
-
-/*
-#define MIDI_META_TEMPO ((vuint8)0x51)
-#define MIDI_META_EOT ((vuint8)0x2F)    // End-of-track
-#define MIDI_META_SSPEC ((vuint8)0x7F)    // System-specific event
-
-#define MIDI_NOTEOFF  ((vuint8)0x80)    // + note + velocity
-#define MIDI_NOTEON   ((vuint8)0x90)    // + note + velocity
-#define MIDI_POLYPRESS  ((vuint8)0xA0)    // + pressure (2 bytes)
-#define MIDI_CTRLCHANGE ((vuint8)0xB0)    // + ctrlr + value
-#define MIDI_PRGMCHANGE ((vuint8)0xC0)    // + new patch
-#define MIDI_CHANPRESS  ((vuint8)0xD0)    // + pressure (1 byte)
-#define MIDI_PITCHBEND  ((vuint8)0xE0)    // + pitch bend (2 bytes)
-*/
 
 #define MIDI_SYSEX     ((vuint8)0xF0) /* SysEx begin */
 #define MIDI_SYSEXEND  ((vuint8)0xF7) /* SysEx end */
@@ -603,16 +633,26 @@ bool FluidManager::InitFluid () {
 
   UpdateCvarCache();
 
+  int interp = 0;
+  switch (snd_fluid_interp.asInt()) {
+    case 0: interp = 0; break; // FLUID_INTERP_NONE
+    case 1: interp = 1; break; // FLUID_INTERP_LINEAR
+    case 2: interp = 4; break; // FLUID_INTERP_4THORDER
+    case 3: interp = 7; break; // FLUID_INTERP_7THORDER
+  }
+
+
   // alloc settings
   if (!settings) settings = new_fluid_settings();
   fluid_settings_setint(settings, "synth.midi-channels", 0x10+MIDI_CHANNELS);
-  fluid_settings_setint(settings, "synth.polyphony", 128);
+  fluid_settings_setint(settings, "synth.polyphony", snd_fluid_voices.asInt());
+  fluid_settings_setint(settings, "synth.cpu-cores", 2); // should not matter anyway
   fluid_settings_setnum(settings, "synth.sample-rate", 44100);
-  fluid_settings_setint(settings, "synth.cpu-cores", 2);
-  fluid_settings_setint(settings, "synth.chorus.active", 0);
+  fluid_settings_setnum(settings, "synth.gain", snd_fluid_gain.asFloat());
+  fluid_settings_setint(settings, "synth.reverb.active", (snd_fluid_reverb.asBool() ? 1 : 0));
+  fluid_settings_setint(settings, "synth.chorus.active", (snd_fluid_chorus.asBool() ? 1 : 0));
 
-  fluid_settings_setint(settings, "synth.interpolation", snd_fluid_interp.asInt());
-
+  fluid_settings_setint(settings, "synth.interpolation", interp);
 
   // init synth
   if (!synth) synth = new_fluid_synth(settings);
@@ -622,10 +662,13 @@ bool FluidManager::InitFluid () {
     return false;
   }
 
-  fluid_synth_set_interp_method(synth, -1, snd_fluid_interp.asInt());
-  fluid_synth_set_gain(synth, 1.0f);
-  fluid_synth_set_reverb(synth, 0.61f/*size*/, 0.23f/*damp*/, 0.76f/*width*/, 0.57f/*level*/);
-  fluid_synth_set_reverb_on(synth, 0);
+  fluid_synth_set_interp_method(synth, -1, interp);
+  fluid_synth_set_gain(synth, snd_fluid_gain.asFloat());
+  fluid_synth_set_reverb(synth, snd_fluid_reverb_roomsize, snd_fluid_reverb_damping, snd_fluid_reverb_width, snd_fluid_reverb_level);
+  fluid_synth_set_reverb_on(synth, (snd_fluid_reverb.asBool() ? 1 : 0));
+
+  fluid_synth_set_chorus(synth, snd_fluid_chorus_voices.asInt(), snd_fluid_chorus_level.asFloat(),
+                         snd_fluid_chorus_speed.asFloat(), snd_fluid_chorus_depth.asFloat(), snd_fluid_chorus_type.asInt());
 
 
   scanForMidiBanks();

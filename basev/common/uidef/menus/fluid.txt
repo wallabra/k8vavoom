@@ -1,0 +1,120 @@
+// fluidsynth options menu
+menudef FluidSynthOptions {
+  Title = "FLUIDSYNTH CONFIG";
+
+  option enum {
+    title = "Interpolator";
+    cvar = snd_fluid_interp;
+    list {
+      "None",
+      "Linear",
+      "4th Order",
+      "7th Order"
+    }
+  }
+
+  option slider {
+    title = "Voices";
+    cvar = snd_fluid_voices;
+    step = 1;
+    min = 8;
+    max = 256;
+  }
+
+  option slider {
+    title = "Global Gain";
+    cvar = snd_fluid_gain;
+    step = 0.1;
+    min = 0;
+    max = 10;
+  }
+
+
+  header "Reverb Control";
+
+  option bool {
+    title = "Allow reverb";
+    cvar = snd_fluid_reverb;
+  }
+
+  option slider {
+    title = "Room Size";
+    cvar = snd_fluid_reverb_roomsize;
+    step = 0.01;
+    min = 0;
+    max = 1.2;
+  }
+
+  option slider {
+    title = "Damping";
+    cvar = snd_fluid_reverb_damping;
+    step = 0.01;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
+    title = "Width";
+    cvar = snd_fluid_reverb_width;
+    step = 0.01;
+    min = 0;
+    max = 10; //100?
+  }
+
+  option slider {
+    title = "Level";
+    cvar = snd_fluid_reverb_level;
+    step = 0.01;
+    min = 0;
+    max = 1;
+  }
+
+
+  header "Chorus Control";
+
+  option bool {
+    title = "Allow chorus";
+    cvar = snd_fluid_chorus;
+  }
+
+  option enum {
+    title = "Type";
+    cvar = snd_fluid_chorus_type;
+    list {
+      "Sine",
+      "Triangle",
+    }
+  }
+
+  option slider {
+    title = "Voices";
+    cvar = snd_fluid_chorus_voices;
+    step = 1;
+    min = 0;
+    max = 99;
+  }
+
+  option slider {
+    title = "Level";
+    cvar = snd_fluid_chorus_level;
+    step = 0.01;
+    min = 0;
+    max = 10;
+  }
+
+  option slider {
+    title = "Speed";
+    cvar = snd_fluid_chorus_speed;
+    step = 0.01;
+    min = 0.29;
+    max = 5;
+  }
+
+  option slider {
+    title = "Depth";
+    cvar = snd_fluid_chorus_depth;
+    step = 0.1;
+    min = 0;
+    max = 21;
+  }
+}

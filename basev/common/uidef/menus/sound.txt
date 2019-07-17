@@ -19,6 +19,11 @@ menudef SoundOptions {
   }
 
   option submenu {
+    title = "FluidSynth Options";
+    submenu = "FluidSynthOptions";
+  }
+
+  option submenu {
     title = "Module Decoder Options";
     //smclass = MenuScreenMODOptions;
     submenu = "ModPlayerOptions";
