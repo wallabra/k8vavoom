@@ -66,11 +66,9 @@ void AdvanceDemo () {
       page_pic = R_RegisterPic('titlepic');
       if (!IsAnyDoom2) {
         pagetime = 170.0 / 35.0;
-        //S_StartSong("D_INTRO", P_GetCDTitleTrack(), false);
         CmdBuf_AddText("music play d_intro\n");
       } else {
         pagetime = 11.0;
-        //S_StartSong("D_DM2TTL", P_GetCDTitleTrack(), false);
         CmdBuf_AddText("music play d_dm2ttl\n");
       }
       break;

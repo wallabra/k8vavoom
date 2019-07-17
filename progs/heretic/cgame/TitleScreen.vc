@@ -64,8 +64,7 @@ void AdvanceDemo()
   case 0:
     pagetime = 10.0;
     page_pic = R_RegisterPic('title');
-//      S_StartSong("MUS_TITL", P_GetCDTitleTrack(), false);
-    CmdBuf_AddText("music play MUS_TITL\n");
+    CmdBuf_AddText("music play mus_titl\n");
     break;
 
   case 1:

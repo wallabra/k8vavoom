@@ -228,11 +228,7 @@ void IM_InitStats()
     { // don't do the slaughter stuff if everyone is equal
       slaughterboy = 0;
     }
-#ifdef FIXME
-    S_StartSong("hub", P_GetCDIntermissionTrack(), true);
-#else
     CmdBuf_AddText("music loop hub\n");
-#endif
   }
 }
 
@@ -277,11 +273,7 @@ void IM_InitHubText()
     }
     else
     {
-#ifdef FIXME
-      S_StartSong("hub", P_GetCDIntermissionTrack(), true);
-#else
       CmdBuf_AddText("music loop hub\n");
-#endif
     }
   }
 }

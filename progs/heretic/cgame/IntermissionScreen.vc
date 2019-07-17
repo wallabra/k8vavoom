@@ -348,11 +348,7 @@ void IM_InitStats () {
   if (ClGame.im.InterMusic) {
     CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
   } else {
-#ifdef FIXME
-    S_StartSong("MUS_INTR", P_GetCDIntermissionTrack(), true);
-#else
-    CmdBuf_AddText("music loop MUS_INTR\n");
-#endif
+    CmdBuf_AddText("music loop mus_intr\n");
   }
 }
 
@@ -635,11 +631,7 @@ void IM_InitText () {
   if (ClGame.im.TextMusic) {
     CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
   } else {
-#ifdef FIXME
-    S_StartSong("mus_cptd", P_GetCDEnd1Track(), true);
-#else
     CmdBuf_AddText("music loop mus_cptd\n");
-#endif
   }
 }
 

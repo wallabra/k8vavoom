@@ -167,11 +167,7 @@ override void Tick (float DeltaTime) {
 //==========================================================================
 void InitPic (name PicName) {
   Background.InitPic(PicName);
-#ifdef FIXME
-  S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
-#else
   CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
-#endif
 }
 
 
@@ -182,11 +178,7 @@ void InitPic (name PicName) {
 //==========================================================================
 void InitUnderwater () {
   Background.InitPicPal('e2end', 'e2pal');
-#ifdef FIXME
-  S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
-#else
   CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
-#endif
 }
 
 
@@ -197,11 +189,7 @@ void InitUnderwater () {
 //==========================================================================
 void InitBunnyScroll () {
   Background.InitBunnyScroll();
-#ifdef FIXME
-  S_StartSong("d_bunny", P_GetCDEnd2Track(), true);
-#else
   CmdBuf_AddText("music loop d_bunny\n");
-#endif
 }
 
 
@@ -212,11 +200,7 @@ void InitBunnyScroll () {
 //==========================================================================
 void InitDemonScroll () {
   Background.InitDemon();
-#ifdef FIXME
-  S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
-#else
   CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.DefaultFinaleMusic));
-#endif
 }
 
 
@@ -226,11 +210,7 @@ void InitDemonScroll () {
 //
 //==========================================================================
 void StartCast () {
-#ifdef FIXME
-  S_StartSong("d_evil", P_GetCDEnd2Track(), true);
-#else
   CmdBuf_AddText("music loop d_evil\n");
-#endif
   Background.InitPic('bossback');
 
   if (!CastWin) {
@@ -412,12 +392,7 @@ void InitChess () {
   FinaleStage = 0;
   FinaleEndTime = 2.0;
   Background.InitChess();
-
-#ifdef FIXME
-  S_StartSong("hall", P_GetCDEnd1Track(), false); // don't loop the song
-#else
   CmdBuf_AddText("music play hall\n");  // don't loop the song
-#endif
 }
 
 
@@ -437,11 +412,7 @@ void ChessTicker () {
       case 2: // Pic 2, Text 2
         GetFinaleText('win2msg');
         Background.fpage1 = R_RegisterPic('finale2');
-#ifdef FIXME
-        S_StartSong("orb", P_GetCDEnd2Track(), false);
-#else
         CmdBuf_AddText("music play orb\n");
-#endif
         break;
       case 3: // Pic 2 -- Fade out
         FinaleEndTime = 2.0;
@@ -449,11 +420,7 @@ void ChessTicker () {
       case 4: // Pic 3 -- Fade in
         Background.fpage1 = R_RegisterPic('finale3');
         FinaleEndTime = 2.0;
-#ifdef FIXME
-        S_StartSong("chess", P_GetCDEnd3Track(), true);
-#else
         CmdBuf_AddText("music loop chess\n");
-#endif
         break;
       case 5: // Pic 3 , Text 3
         GetFinaleText('win3msg');

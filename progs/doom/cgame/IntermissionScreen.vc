@@ -262,19 +262,11 @@ void Start () {
       CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
     }
     else {
-#ifdef FIXME
       if (checkForDoom2()) {
-        S_StartSong("D_DM2INT", P_GetCDIntermissionTrack(), true);
+        CmdBuf_AddText("music loop d_dm2int\n");
       } else {
-        S_StartSong("D_INTER", P_GetCDIntermissionTrack(), true);
+        CmdBuf_AddText("music loop d_inter\n");
       }
-#else
-      if (checkForDoom2()) {
-        CmdBuf_AddText("music loop D_DM2INT\n");
-      } else {
-        CmdBuf_AddText("music loop D_INTER\n");
-      }
-#endif
     }
   } else {
     IM_InitText();
@@ -1162,17 +1154,9 @@ void IM_InitText () {
     CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
   } else {
     if (checkForDoom2()) {
-#ifdef FIXME
-      S_StartSong("d_read_m", P_GetCDEnd1Track(), true);
-#else
       CmdBuf_AddText("music loop d_read_m\n");
-#endif
     } else {
-#ifdef FIXME
-      S_StartSong("D_VICTOR", P_GetCDEnd1Track(), true);
-#else
-      CmdBuf_AddText("music loop D_VICTOR\n");
-#endif
+      CmdBuf_AddText("music loop d_victor\n");
     }
   }
 }
