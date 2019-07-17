@@ -561,6 +561,13 @@ else(WITH_FLUID)
   set(FLUID_FOUND OFF)
 endif(WITH_FLUID)
 
+if(FLUID_FOUND AND NOT WITH_SYS_FLUID)
+  add_definitions(-DBUILTIN_FLUID)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/fluidsynth_lite/include)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR}/libs/fluidsynth_lite/include)
+  set(MAIN_LIBS libfluidsynth_lite ${MAIN_LIBS})
+endif(FLUID_FOUND AND NOT WITH_SYS_FLUID)
+
 
 #
 #  **** Platform specific library checks ****
@@ -717,14 +724,6 @@ endif(ENABLE_VCCRUN)
 
 
 add_subdirectory(libs)
-
-if(FLUID_FOUND AND NOT WITH_SYS_FLUID)
-  add_definitions(-DBUILTIN_FLUID)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/fluidsynth_lite/include)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/libs/fluidsynth_lite/include)
-  set(MAIN_LIBS libfluidsynth_lite ${MAIN_LIBS})
-endif(FLUID_FOUND AND NOT WITH_SYS_FLUID)
-
 
 if(NOT ENABLE_VCCRUN_ONLY)
   if(NOT CMAKE_CROSSCOMPILING OR WIN32)
