@@ -79,6 +79,8 @@ static VCvarF snd_fluid_chorus_depth("snd_fluid_chorus_depth", "8", "FluidSynth 
 // [0..1]
 static VCvarI snd_fluid_chorus_type("snd_fluid_chorus_type", "0", "FluidSynth chorus type (0:sine; 1:triangle).", CVAR_Archive);
 
+static VCvarB snd_fluid_midi_messages("snd_fluid_midi_messages", false, "Show messages from MIDI files?", CVAR_Archive);
+
 
 #define MIDI_CHANNELS   (64)
 #define MIDI_MESSAGE    (0x07)
@@ -385,13 +387,13 @@ static void Event_Meta (VFluidAudioCodec *codec, vuint8 evcode, VFluidAudioCodec
     switch (meta) {
       // mostly for debugging/logging
       case MIDI_MESSAGE:
-        for (int i = 0; i < len; ++i) string[i] = codec->getNextMidiByte(chan);
-        string[len] = 0;
-        for (int i = 0; i < len; ++i) {
-          if (string[i] == '\n' || string[i] == '\r') string[i] = ' ';
+        memset(string, 0, sizeof(string));
+        for (int i = 0; i < len && i < 255; ++i) {
+          string[i] = codec->getNextMidiByte(chan);
+               if (string[i] == '\n' || string[i] == '\r') string[i] = ' ';
           else if (string[i] < 32) string[i] = '_';
         }
-        GCon->Logf("Midi message: %s", string);
+        if (snd_fluid_midi_messages) GCon->Logf("Midi message: %s", string);
         len = 0;
         break;
       case MIDI_END:
