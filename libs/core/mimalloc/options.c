@@ -12,6 +12,10 @@ terms of the MIT license. A copy of the license can be found in the file
 #include <ctype.h>  // toupper
 #include <stdarg.h>
 
+int mi_version(void) mi_attr_noexcept {
+  return MI_MALLOC_VERSION;
+}
+
 // --------------------------------------------------------
 // Options
 // --------------------------------------------------------
@@ -31,6 +35,7 @@ static mi_option_desc_t options[_mi_option_last] = {
   { 0, UNINIT, "page_reset" },
   { 0, UNINIT, "cache_reset" },
   { /*0*/1, UNINIT, "pool_commit" },
+  { 0, UNINIT, "large_os_pages" },   // use large OS pages
   #if MI_SECURE
   { MI_SECURE, INITIALIZED, "secure" }, // in secure build the environment setting is ignored
   #else
@@ -101,6 +106,14 @@ void _mi_fprintf( FILE* out, const char* fmt, ... ) {
   va_list args;
   va_start(args,fmt);
   mi_vfprintf(out,NULL,fmt,args);
+  va_end(args);
+}
+
+void _mi_trace_message(const char* fmt, ...) {
+  if (mi_option_get(mi_option_verbose) <= 1) return;  // only with verbose level 2 or higher
+  va_list args;
+  va_start(args, fmt);
+  mi_vfprintf(stderr, "mimalloc: ", fmt, args);
   va_end(args);
 }
 
