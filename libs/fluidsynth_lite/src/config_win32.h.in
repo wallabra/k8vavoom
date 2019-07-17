@@ -7,11 +7,10 @@
 #define HAVE_STDARG_H 1
 #define HAVE_FCNTL_H 1
 #define HAVE_LIMITS_H 1
-#define HAVE_IO_H 1
 #define HAVE_WINDOWS_H 1
 
-#define DSOUND_SUPPORT 1
-#define WINMIDI_SUPPORT 1
+#define DSOUND_SUPPORT 0
+#define WINMIDI_SUPPORT 0
 #define WITH_FLOAT 1
 
 #if _MSC_VER < 1900

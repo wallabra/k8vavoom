@@ -151,6 +151,6 @@ target_link_libraries ( libfluidsynth_lite
     ${LIBFLUID_LIBS}
 )
 
-install(TARGETS libfluidsynth_lite
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+#install(TARGETS libfluidsynth_lite
+#  LIBRARY DESTINATION lib
+#  ARCHIVE DESTINATION lib)

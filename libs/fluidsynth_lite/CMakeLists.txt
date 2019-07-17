@@ -71,7 +71,7 @@ set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
 mark_as_advanced ( LIB_SUFFIX )
 
 # Default install directory names
-include ( DefaultDirs )
+#include ( DefaultDirs )
 
 # Basic C library checks
 include ( CheckSTDC )
@@ -128,13 +128,13 @@ unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
   check_include_file ( windows.h HAVE_WINDOWS_H )
-  check_include_file ( io.h HAVE_IO_H )
-  check_include_file ( dsound.h HAVE_DSOUND_H )
-  check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
+  #check_include_file ( io.h HAVE_IO_H )
+  #check_include_file ( dsound.h HAVE_DSOUND_H )
+  #check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
-  set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
-  set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
-  set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
+  #set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
+  #set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
+  #set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
   set ( CMAKE_DEBUG_POSTFIX "_debug" )
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
@@ -177,8 +177,8 @@ unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
 if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
   set ( DARWIN 1 )
-  set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
+  #set ( CMAKE_INSTALL_NAME_DIR
+  #      ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -296,27 +296,27 @@ add_subdirectory ( src )
 add_subdirectory ( include )
 
 # CPack support
-set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
-set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
-set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md" )
-set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING" )
-set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
-set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
-set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
+#set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
+#set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
+#set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md" )
+#set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING" )
+#set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
+#set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
+#set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
 
 # source packages
-set ( CPACK_SOURCE_GENERATOR TGZ;TBZ2;ZIP )
-set ( CPACK_SOURCE_IGNORE_FILES "/.svn/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
-set ( CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE}-${VERSION}" )
-set ( CPACK_SOURCE_STRIP_FILES OFF )
+#set ( CPACK_SOURCE_GENERATOR TGZ;TBZ2;ZIP )
+#set ( CPACK_SOURCE_IGNORE_FILES "/.svn/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
+#set ( CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE}-${VERSION}" )
+#set ( CPACK_SOURCE_STRIP_FILES OFF )
 
 # binary packages
-include ( InstallRequiredSystemLibraries )
-set ( CPACK_GENERATOR STGZ;TGZ;TBZ2;ZIP )
-set ( CPACK_PACKAGE_NAME ${PACKAGE} )
-set ( CPACK_STRIP_FILES ON )
+#include ( InstallRequiredSystemLibraries )
+#set ( CPACK_GENERATOR STGZ;TGZ;TBZ2;ZIP )
+#set ( CPACK_PACKAGE_NAME ${PACKAGE} )
+#set ( CPACK_STRIP_FILES ON )
 
-include ( CPack )
+#include ( CPack )
 
 # set variables for including in other CMakeLists
 set ( FLUIDSYNTH_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include" PARENT_SCOPE )

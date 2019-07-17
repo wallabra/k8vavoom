@@ -21,6 +21,6 @@
 
 add_subdirectory ( fluidsynth-lite )
 
-IF (NOT MACOSX_FRAMEWORK )
-    install ( FILES fluidsynth-lite.h DESTINATION ${INCLUDE_INSTALL_DIR} )
-ENDIF (NOT MACOSX_FRAMEWORK )
+#IF (NOT MACOSX_FRAMEWORK )
+#    install ( FILES fluidsynth-lite.h DESTINATION ${INCLUDE_INSTALL_DIR} )
+#ENDIF (NOT MACOSX_FRAMEWORK )

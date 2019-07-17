@@ -41,11 +41,11 @@ if ( NOT MACOSX_FRAMEWORK )
     types.h 
     voice.h 
   )
-  install ( 
-    FILES 
-      ${include_HEADERS}
-      ${CMAKE_CURRENT_BINARY_DIR}/version.h
-    DESTINATION 
-      ${INCLUDE_INSTALL_DIR}/fluidsynth 
-  )
+  #install ( 
+  #  FILES 
+  #    ${include_HEADERS}
+  #    ${CMAKE_CURRENT_BINARY_DIR}/version.h
+  #  DESTINATION 
+  #    ${INCLUDE_INSTALL_DIR}/fluidsynth 
+  #)
 endif ( NOT MACOSX_FRAMEWORK )
