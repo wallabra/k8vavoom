@@ -37,7 +37,7 @@
 //==========================================================================
 static bool doTick (VStreamMusicPlayer *strm) {
   if (!strm->StrmOpened) return false;
-  if (strm->Stopping && strm->FinishTime+1.0 < Sys_Time()) {
+  if (strm->Stopping && strm->FinishTime+0.5 < Sys_Time()) {
     // finish playback
     //Stop();
     return true;
@@ -52,9 +52,10 @@ static bool doTick (VStreamMusicPlayer *strm) {
     int decodedFromLoop = 0, loopCount = 0;
     while (!strm->Stopping && StartPos < Len) {
       int SamplesDecoded = strm->Codec->Decode(Data+StartPos*2, Len-StartPos);
+      if (SamplesDecoded < 0) SamplesDecoded = 0;
       StartPos += SamplesDecoded;
       decodedFromLoop += SamplesDecoded;
-      if (strm->Codec->Finished()) {
+      if (strm->Codec->Finished() || SamplesDecoded <= 0) {
         // stream ended
         if (strm->CurrLoop) {
           // restart stream
@@ -62,24 +63,24 @@ static bool doTick (VStreamMusicPlayer *strm) {
           ++loopCount;
           if (loopCount == 1) decodedFromLoop = 0;
           if (loopCount == 3 && decodedFromLoop < 256) {
-            fprintf(stderr, "Looped music stream is too short, aborting it...\n");
+            GLog.WriteLine("Looped music stream is too short, aborting it...");
             strm->CurrLoop = false;
             strm->Stopping = true;
             strm->FinishTime = Sys_Time();
           }
         } else {
-          // we'll wait for 1 second to finish playing
+          // we'll wait for some time to finish playing
           strm->Stopping = true;
           strm->FinishTime = Sys_Time();
         }
       } else if (StartPos < Len) {
         // should never happen
-        fprintf(stderr, "Stream decoded less but is not finished.\n");
+        GLog.WriteLine("Stream decoded less but is not finished.");
         strm->Stopping = true;
         strm->FinishTime = Sys_Time();
       }
     }
-    if (strm->Stopping) memset(Data+StartPos*2, 0, (Len-StartPos)*4);
+    if (strm->Stopping && StartPos < Len) memset(Data+StartPos*2, 0, (Len-StartPos)*4);
     strm->SoundDevice->SetStreamData(Data, Len);
   }
   return false;
@@ -112,12 +113,12 @@ bool VStreamMusicPlayer::stpThreadWaitPing (unsigned int msecs) {
 //==========================================================================
 void VStreamMusicPlayer::stpThreadSendPong () {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "STP: getting lock for pong sending...\n");
+  GLog.WriteLine("STP: getting lock for pong sending...");
 #endif
   // we'll aquire lock if another thread is in cond_wait
   mythread_mutex_lock(&stpLockPong);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "STP: releasing lock for pong sending...\n");
+  GLog.WriteLine("STP: releasing lock for pong sending...");
 #endif
   // and immediately release it
   mythread_mutex_unlock(&stpLockPong);
@@ -136,36 +137,36 @@ void VStreamMusicPlayer::stpThreadSendPong () {
 void VStreamMusicPlayer::stpThreadSendCommand (STPCommand acmd) {
   stpcmd = acmd;
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN: sending command %u...\n", (unsigned)stpcmd);
+  GLog.WriteLine("MAIN: sending command %u...", (unsigned)stpcmd);
 #endif
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN:   getting lock for ping sending...\n");
+  GLog.WriteLine("MAIN:   getting lock for ping sending...");
 #endif
   // we'll aquire lock if another thread is in cond_wait
   mythread_mutex_lock(&stpPingLock);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN:   releasing lock for ping sending...\n");
+  GLog.WriteLine("MAIN:   releasing lock for ping sending...");
 #endif
   // and immediately release it
   mythread_mutex_unlock(&stpPingLock);
   // send signal
   mythread_cond_signal(&stpPingCond);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN:   ping sent.\n");
+  GLog.WriteLine("MAIN:   ping sent.");
 #endif
   if (acmd == STP_Quit) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-    fprintf(stderr, "MAIN: waiting for streamer thread to stop\n");
+    GLog.WriteLine("MAIN: waiting for streamer thread to stop");
 #endif
     // wait for it to complete
     mythread_join(stpThread);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-    fprintf(stderr, "MAIN: streamer thread stopped\n");
+    GLog.WriteLine("MAIN: streamer thread stopped");
 #endif
   } else {
     mythread_cond_wait(&stpCondPong, &stpLockPong);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-    fprintf(stderr, "MAIN:   pong received.\n");
+    GLog.WriteLine("MAIN:   pong received.");
 #endif
   }
 }
@@ -186,15 +187,15 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
   // send "we are ready" signal
   strm->stpThreadSendPong();
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "STP: streaming thread started.\n");
+  GLog.WriteLine("STP: streaming thread started.");
 #endif
   for (;;) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-    //fprintf(stderr, "STP: streaming thread waiting...\n");
+    //GLog.WriteLine("STP: streaming thread waiting...");
 #endif
     if (strm->stpThreadWaitPing(100*5)) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-      fprintf(stderr, "STP: streaming thread received the command: %u\n", (unsigned)strm->stpcmd);
+      GLog.WriteLine("STP: streaming thread received the command: %u", (unsigned)strm->stpcmd);
 #endif
       // ping received
       bool doQuit = false;
@@ -203,7 +204,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
         case VStreamMusicPlayer::STP_Stop: // stop current stream
           doQuit = (strm->stpcmd == VStreamMusicPlayer::STP_Quit);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   %s\n", (doQuit ? "quit" : "stop"));
+          GLog.WriteLine("STP:   %s", (doQuit ? "quit" : "stop"));
 #endif
           if (strm->StrmOpened) {
             // unpause it, just in case
@@ -219,7 +220,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_Start: // start playing current stream
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   start\n");
+          GLog.WriteLine("STP:   start");
 #endif
           strm->StrmOpened = true;
           strm->SoundDevice->SetStreamPitch(1.0f);
@@ -227,7 +228,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_Pause: // pause current stream
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   pause\n");
+          GLog.WriteLine("STP:   pause");
 #endif
           if (strm->StrmOpened) {
             strm->SoundDevice->PauseStream();
@@ -236,7 +237,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_Resume: // resume current stream
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   resume\n");
+          GLog.WriteLine("STP:   resume");
 #endif
           if (strm->StrmOpened) {
             strm->SoundDevice->ResumeStream();
@@ -245,13 +246,13 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_IsPlaying: // check if current stream is playing
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   playing state request\n");
+          GLog.WriteLine("STP:   playing state request");
 #endif
           strm->stpIsPlaying = strm->StrmOpened;
           break;
         case VStreamMusicPlayer::STP_SetPitch:
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   pitch change\n");
+          GLog.WriteLine("STP:   pitch change");
 #endif
           if (strm->StrmOpened) {
             strm->SoundDevice->SetStreamPitch(strm->stpNewPitch);
@@ -259,7 +260,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_SetVolume:
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-          fprintf(stderr, "STP:   volume change\n");
+          GLog.WriteLine("STP:   volume change");
 #endif
           strm->SoundDevice->SetStreamVolume(strm->stpNewVolume);
           break;
@@ -268,16 +269,16 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
       if (doQuit) break;
       // send confirmation
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-      fprintf(stderr, "STP:   sending pong...\n");
+      GLog.WriteLine("STP:   sending pong...");
 #endif
       strm->stpThreadSendPong();
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-      fprintf(stderr, "STP:   pong sent.\n");
+      GLog.WriteLine("STP:   pong sent.");
 #endif
     }
     if (strm->StrmOpened) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-      //fprintf(stderr, "STP: streaming thread ticking...\n");
+      //GLog.WriteLine("STP: streaming thread ticking...");
 #endif
       // advance playing stream
 #ifndef VCCRUN_SOUND_THREAD_DUMMY
@@ -298,7 +299,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
   strm->SoundDevice->RemoveCurrentThread();
   mythread_mutex_unlock(&strm->stpPingLock);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "STP: streaming thread complete.\n");
+  GLog.WriteLine("STP: streaming thread complete.");
 #endif
   Z_ThreadDone();
   return MYTHREAD_RET_VALUE;
@@ -325,7 +326,7 @@ void VStreamMusicPlayer::Init () {
   // wait for the first pong
   mythread_cond_wait(&stpCondPong, &stpLockPong);
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN: first pong received.\n");
+  GLog.WriteLine("MAIN: first pong received.");
 #endif
   threadInited = true;
 }
@@ -348,7 +349,7 @@ void VStreamMusicPlayer::Shutdown () {
   mythread_cond_destroy(&stpCondPong);
 
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
-  fprintf(stderr, "MAIN: destroyed mutexes and conds\n");
+  GLog.WriteLine("MAIN: destroyed mutexes and conds");
 #endif
 }
 
@@ -364,7 +365,7 @@ void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const char *InName, bool In
   if (InName && InName[0]) {
     bool xopened = SoundDevice->OpenStream(InCodec->SampleRate, InCodec->SampleBits, InCodec->NumChannels);
     if (!xopened) {
-      fprintf(stderr, "WARNING: cannot' start song '%s'...\n", InName);
+      GLog.WriteLine("WARNING: cannot' start song '%s'...", InName);
       return;
     }
     Codec = InCodec;
