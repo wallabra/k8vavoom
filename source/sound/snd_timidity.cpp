@@ -269,7 +269,7 @@ void scanForMidiBanks () {
       if (!GetSystemDirectoryA(sysdir, sizeof(sysdir)-1)) break;
       //VStr gmpath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
       VStr gmpath = VStr(sysdir)+"\\"+(*ssp);
-      GCon->Logf("::: trying <%s> :::", *gmpath);
+      //GCon->Logf("::: trying <%s> :::", *gmpath);
       if (Sys_FileExists(*gmpath)) {
         bool found = false;
         for (auto &&fn : midiSynthAllBanks) {
