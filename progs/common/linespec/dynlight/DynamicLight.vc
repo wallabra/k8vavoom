@@ -49,28 +49,35 @@ float Intensity;
 //
 //==========================================================================
 override void OnMapSpawn (mthing_t *mthing) {
+  //print("*** dynamic light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, LightType, TID, bDormant, (mthing ? "" : "not "));
   ::OnMapSpawn(mthing);
 
   //TODO: replace with statics
-  if (LightType == DLTYPE_Subtractive) {
+  if (LightType == DLTYPE_Subtractive || LightType == DLTYPE_SectorSubtractive) {
     //bDormant = true;
-    //print("*** SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
+    printwarn("REMOVED SUBTRACTIVE LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
+    /*
     if (RGB(Args[0], Args[1], Args[2]) == 0) {
       dprint("*** DUMMY SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
-      Destroy();
+      //Destroy();
     }
+    */
+    Destroy();
     return;
   }
 
+  //printwarn("LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
   // use static light for placed point lights that cannot be deactivated
   if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
-    //dprint("*** adding static light for class '%n'", GetClassName(Class));
-    if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3) {
-      Level.AddStaticLight(none, Origin, StaticIntensityToRadius(float(mthing->arg4)));
-    } else {
-      Level.AddStaticLightRGB(none, Origin,
-        StaticIntensityToRadius(float(mthing->arg4)),
-        RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+    if (mthing->arg4 > 0) {
+      //printwarn("*** adding static light for class '%n' (%d, %d, %d, %d)", GetClassName(Class), mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4);
+      if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3 == 255) {
+        Level.AddStaticLight(none, Origin, /*StaticIntensityToRadius*/IntensityToRadius(float(mthing->arg4)));
+      } else {
+        Level.AddStaticLightRGB(none, Origin,
+          /*StaticIntensityToRadius*/IntensityToRadius(float(mthing->arg4)),
+          RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+      }
     }
     Destroy();
   } else if (LightType == DLTYPE_Sector && mthing && !TID && Level.XLevel.bConvertSectorLightsToStatic && Sector) {
@@ -80,7 +87,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     Intensity = float(Sector->params.lightlevel)*Scale;
     if (Intensity < 0.0) Intensity = 0.0;
     if (Intensity > 255.0) Intensity = 255.0;
-    //print("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, LightType, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
+    //printwarn("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, LightType, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
     Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(Args[0], Args[1], Args[2]));
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
