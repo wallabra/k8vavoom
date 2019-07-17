@@ -27,7 +27,15 @@
 #include "gamedefs.h"
 #include "snd_local.h"
 
-#include "fluidsynth.h"
+#ifdef BUILTIN_FLUID
+# include "../../libs/fluidsynth_lite/include/fluidsynth-lite.h"
+# if (FLUIDSYNTH_VERSION_MAJOR != 1) || (FLUIDSYNTH_VERSION_MINOR != 1) || (FLUIDSYNTH_VERSION_MICRO != 6)
+#  warning "invalid FluidSynth version"
+# endif
+#else
+# include "fluidsynth.h"
+#endif
+
 
 extern TArray<VStr> midiSynthAllBanks;
 
@@ -170,6 +178,7 @@ public:
 
 protected:
   static int fluidInitialised; // <0: not yet; >0: ok; 0: failed
+  static int versionPrinted;
 
   // last values of some cvars
   static VStr sf2Path;
@@ -222,6 +231,7 @@ fluid_audio_driver_t *FluidManager::driver = nullptr;
 int FluidManager::sf2id = -1;
 
 int FluidManager::fluidInitialised = -1;
+int FluidManager::versionPrinted = -1;
 VStr FluidManager::sf2Path = VStr::EmptyString;
 bool FluidManager::autoloadSF2 = false;
 bool FluidManager::needRestart = false;
@@ -620,6 +630,11 @@ bool FluidManager::InitFluid () {
 
   if (fluidInitialised >= 0) return (fluidInitialised > 0);
 
+  if (versionPrinted < 0) {
+    versionPrinted = 1;
+    GCon->Logf("FluidSynth version %s", fluid_version_str());
+  }
+
   // shut the fuck up!
   fluid_set_log_function(FLUID_PANIC, &shutTheFuckUpFluid, nullptr);
   fluid_set_log_function(FLUID_ERR, &shutTheFuckUpFluid, nullptr);
@@ -645,10 +660,10 @@ bool FluidManager::InitFluid () {
   // alloc settings
   if (!settings) settings = new_fluid_settings();
   fluid_settings_setint(settings, "synth.midi-channels", 0x10+MIDI_CHANNELS);
-  fluid_settings_setint(settings, "synth.polyphony", snd_fluid_voices.asInt());
-  fluid_settings_setint(settings, "synth.cpu-cores", 2); // should not matter anyway
+  fluid_settings_setint(settings, "synth.polyphony", clampval(snd_fluid_voices.asInt(), 16, 1024));
+  fluid_settings_setint(settings, "synth.cpu-cores", 0); // FluidSynth-Lite cannot work in multithreaded mode (segfault)
   fluid_settings_setnum(settings, "synth.sample-rate", 44100);
-  fluid_settings_setnum(settings, "synth.gain", snd_fluid_gain.asFloat());
+  fluid_settings_setnum(settings, "synth.gain", clampval(snd_fluid_gain.asFloat(), 0.0f, 10.0f));
   fluid_settings_setint(settings, "synth.reverb.active", (snd_fluid_reverb.asBool() ? 1 : 0));
   fluid_settings_setint(settings, "synth.chorus.active", (snd_fluid_chorus.asBool() ? 1 : 0));
 
@@ -679,6 +694,7 @@ bool FluidManager::InitFluid () {
     for (auto &&bfn : midiSynthAllBanks) {
       VStr sf2name = bfn;
       if (sf2name.isEmpty()) continue;
+      if (!sf2name.extractFileExtension().strEquCI(".sf2")) continue;
       sf2id = fluid_synth_sfload(synth, *sf2name, 1);
       if (sf2id != FLUID_FAILED) {
         GCon->Logf("FluidSynth: autoloaded SF2: '%s'", *sf2name);
@@ -703,6 +719,8 @@ bool FluidManager::InitFluid () {
     fluid_synth_cc(this->synth, chan->id, 0x07, vol);
     fluid_synth_cc(this->synth, chan->id, 0x0A, pan);
   */
+
+  fluid_synth_system_reset(synth);
 
   fluidInitialised = 1;
   return true;
@@ -862,6 +880,7 @@ bool VFluidAudioCodec::Finished () {
 
 void VFluidAudioCodec::StopSound () {
   if (!FluidManager::synth) return;
+#if 0
   // reset channels
   for (int f = 0; f < MIDI_CHANNELS; ++f) {
     // volume
@@ -874,6 +893,9 @@ void VFluidAudioCodec::StopSound () {
     // all sound off
     fluid_synth_cc(FluidManager::synth, f, 0x78, 0);
   }
+#else
+  fluid_synth_system_reset(FluidManager::synth);
+#endif
 }
 
 

@@ -267,13 +267,13 @@ void scanForMidiBanks () {
       static char sysdir[65536];
       memset(sysdir, 0, sizeof(sysdir));
       if (!GetSystemDirectoryA(sysdir, sizeof(sysdir)-1)) break;
-      //VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
+      //VStr gmpath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
       VStr gmpath = VStr(sysdir)+"\\"+(*ssp);
       GCon->Logf("::: trying <%s> :::", *gmpath);
       if (Sys_FileExists(*gmpath)) {
         bool found = false;
         for (auto &&fn : midiSynthAllBanks) {
-          if (fn.strEquCI(GMPath)) {
+          if (fn.strEquCI(gmpath)) {
             found = true;
             break;
           }
@@ -281,7 +281,7 @@ void scanForMidiBanks () {
         if (!found) {
           if (!delimeterPut) midiSynthAllBanks.append(""); // delimiter
           delimeterPut = true;
-          midiSynthAllBanks.append(GMPath);
+          midiSynthAllBanks.append(gmpath);
         }
       }
     }
@@ -434,18 +434,17 @@ bool TimidityManager::InitTimidity () {
   if (!sf2_data && !patches) {
     if (Timidity_ReadConfig() != 0) {
       bool doLoading = false;
-      for (auto &&GMPath : midiSynthAllBanks) {
+      for (auto &&gmpath : midiSynthAllBanks) {
         if (!doLoading) {
-          if (GMPath.isEmpty()) doLoading = true;
+          if (gmpath.isEmpty()) doLoading = true;
         }
-        if (GMPath.isEmpty()) continue;
-
-        FILE *f = fopen(*GMPath, "rb");
+        if (!doLoading || gmpath.isEmpty()) continue;
+        FILE *f = fopen(*gmpath, "rb");
         if (f) {
           patches = Timidity_LoadDLS(f);
           fclose(f);
           if (patches) {
-            GCon->Logf("TIMIDITY: loaded '%s'", *GMPath.extractFileName());
+            GCon->Logf("TIMIDITY: loaded '%s'", *gmpath.extractFileName());
             break;
           }
         }
