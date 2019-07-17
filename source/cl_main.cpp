@@ -78,6 +78,17 @@ void CL_Init () {
   GClGame = (VClientGameBase *)VObject::StaticSpawnWithReplace(VClass::FindClass("ClientGame"));
   GClGame->Game = GGameInfo;
   GClGame->eventPostSpawn();
+  CurrentSongLump = NAME_None;
+}
+
+
+//==========================================================================
+//
+//  CL_ResetLastSong
+//
+//==========================================================================
+static void CL_ResetLastSong () {
+  CurrentSongLump = NAME_None;
 }
 
 
@@ -602,6 +613,7 @@ COMMAND(Connect) {
 //
 //==========================================================================
 COMMAND(Disconnect) {
+  CL_ResetLastSong();
   SV_ShutdownGame();
 }
 
