@@ -84,6 +84,7 @@ bool VCameraTexture::CheckModified () {
 vuint8 *VCameraTexture::GetPixels () {
   bNeedsUpdate = true;
   transparent = false; // anyway
+  translucent = false; // anyway
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 

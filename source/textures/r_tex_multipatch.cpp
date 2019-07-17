@@ -434,6 +434,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     GCon->Logf("*** SPRITE '%s': bounds: (%d,%d)-(%d,%d)", *Name, xmin, ymin, xmax, ymax);
     // create cropped image
     transparent = false;
+    translucent = false;
     int neww = xmax-xmin+1;
     int newh = ymax-ymin+1;
     check(neww > 0 && newh > 0);
@@ -442,7 +443,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     for (int y = 0; y < newh; ++y) {
       for (int x = 0; x < neww; ++x) {
         rgba_t pix = getPixel(x+xmin, y+ymin);
-        if (!transparent && pix.a < 255) transparent = true;
+        if (pix.a != 255) {
+          transparent = true;
+          translucent = translucent || (pix.a != 0);
+        }
         newpix[y*neww+x] = pix;
       }
     }
@@ -509,6 +513,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   // if already got pixels, then just return them.
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   // load all patches, if any of them is not in standard palette, then switch to 32 bit mode
   for (int i = 0; i < PatchCount; ++i) {
@@ -660,7 +665,10 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     } else {
       const rgba_t *s = (const rgba_t *)Pixels;
       for (int count = Width*Height; count--; ++s) {
-        if (s->a != 255) { transparent = true; break; }
+        if (s->a != 255) {
+          transparent = true;
+          translucent = translucent || (s->a != 0);
+        }
       }
     }
   }

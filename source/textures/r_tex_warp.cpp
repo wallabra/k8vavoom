@@ -118,6 +118,7 @@ bool VWarpTexture::CheckModified () {
 vuint8 *VWarpTexture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
   transparent = false;
+  translucent = false;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = SrcTex->Format;
@@ -153,7 +154,11 @@ vuint8 *VWarpTexture::GetPixels () {
     for (int y = 0; y < Height; ++y) {
       for (int x = 0; x < Width; ++x, ++Dst) {
         *Dst = ((vuint32 *)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
-        if (((*Dst)&0xff000000u) != 0xff000000u) transparent = true;
+        const vuint8 a8 = (((*Dst)>>24)&0xffu);
+        if (a8 != 0xffu) {
+          transparent = true;
+          if (a8 != 0) translucent = true;
+        }
       }
     }
   }

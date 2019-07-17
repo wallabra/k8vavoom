@@ -656,7 +656,7 @@ public:
   virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) override;
   virtual void ResetScissor () override;
 
-  static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
+  static inline float getAlphaThreshold () { return clampval(gl_alpha_threshold.asFloat(), 0.0f, 1.0f); }
 
   //virtual void GetRealWindowSize (int *rw, int *rh) override;
 

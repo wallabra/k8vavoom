@@ -229,6 +229,7 @@ vuint8 *VJpegTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   mFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];

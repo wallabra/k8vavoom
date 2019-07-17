@@ -168,6 +168,7 @@ vuint8 *VPcxTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   // open stream
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
@@ -337,7 +338,10 @@ vuint8 *VPcxTexture::GetPixels () {
   } else if (hasAlpha) {
     const vuint8 *s = Pixels;
     for (int count = Width*Height; count--; s += 4) {
-      if (s[3] == 0) { transparent = true; break; }
+      if (s[3] != 255) {
+        transparent = true;
+        translucent = translucent || (s[3] != 0);
+      }
     }
   }
 

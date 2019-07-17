@@ -208,7 +208,8 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
 
   // alpha: 1.0 is masked wall, 1.1 is solid wall
   if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive ||
-      ((surf->typeFlags&(surface_t::TF_MIDDLE|surface_t::TF_TOPHACK)) != 0 && tex->isTransparent()))
+      ((surf->typeFlags&(surface_t::TF_MIDDLE|surface_t::TF_TOPHACK)) != 0 && tex->isTransparent()) ||
+      tex->isTranslucent())
   {
     surf->drawflags |= surface_t::DF_MASKED;
   } else {
@@ -301,7 +302,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   surface_t *surfs = InSurfs;
   if (!surfs) return;
 
-  if (texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return;
 
   sec_params_t *LightParams = (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors ? secregion->params : &Level->Sectors[LightSourceSector].params);
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
@@ -463,6 +464,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   }
 #endif
 
+  const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
+
   for (; surfs; surfs = surfs->next) {
     //if (!surfs->IsVisible(vieworg)) continue;
 
@@ -478,7 +481,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->glowFloorColor = glowFloorColor;
     surfs->glowCeilingColor = glowCeilingColor;
 
-    if (texinfo->Alpha >= 1.0f && !texinfo->Additive) {
+    if (isCommon) {
       CommonQueueSurface(surfs, 0);
     } else if (surfs->queueframe != currQueueFrame) {
       //surfs->queueframe = currQueueFrame;
@@ -637,7 +640,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     // viewer is in back side or on plane
     // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
-    if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Tex->isTransparent())) {
+    if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Tex->isTransparent() || sp->texinfo.Tex->isTranslucent())) {
       // mark subsector as rendered
       sub->miscFlags |= subsector_t::SSMF_Rendered;
       side_t *sidedef = seg->sidedef;

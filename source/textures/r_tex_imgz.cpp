@@ -91,6 +91,7 @@ vuint8 *VImgzTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   VCheckedStream Strm(lumpstream);

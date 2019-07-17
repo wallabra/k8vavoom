@@ -80,9 +80,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (blend_sprites || Additive || Alpha < 1.0f) {
     restoreBlend = true;
     if (doBrightmap) {
-      SurfMaskedBrightmapGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      //SurfMaskedBrightmapGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      SurfMaskedBrightmapGlow.SetAlphaRef(Additive || tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      //SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
+      SurfMaskedGlow.SetAlphaRef(Additive || tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     }
     //glEnable(GL_BLEND);
     //glDisable(GL_BLEND);
@@ -106,9 +108,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     //glEnable(GL_BLEND); // our texture will be premultiplied
     //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     if (doBrightmap) {
-      SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
+      //SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
+      SurfMaskedBrightmapGlow.SetAlphaRef(tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMaskedGlow.SetAlphaRef(0.666f);
+      //SurfMaskedGlow.SetAlphaRef(0.666f);
+      SurfMaskedGlow.SetAlphaRef(tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     }
     Alpha = 1.0f;
     if (r_decals_enabled && r_decals_wall_masked && surf->seg && surf->seg->decals) {
@@ -297,9 +301,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (blend_sprites || Additive || hangup || Alpha < 1.0f) {
     restoreBlend = true;
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+      //SurfMaskedBrightmap.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+      SurfMaskedBrightmap.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+      //SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
+      SurfMasked.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     }
     if (hangup) {
       zbufferWriteDisabled = true;
@@ -325,9 +331,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     }
   } else {
     if (doBrightmap) {
-      SurfMaskedBrightmap.SetAlphaRef(0.666f);
+      SurfMaskedBrightmap.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMasked.SetAlphaRef(0.666f);
+      SurfMasked.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     }
     Alpha = 1.0f;
     //glDisable(GL_BLEND);

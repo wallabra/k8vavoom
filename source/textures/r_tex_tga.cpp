@@ -139,6 +139,7 @@ vuint8 *VTgaTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   // load texture
   int count;
@@ -401,6 +402,14 @@ vuint8 *VTgaTexture::GetPixels () {
       const vuint8 *s = Pixels;
       for (int cnt = Width*Height; cnt--; ++s) {
         if (s[0] == 0) { transparent = true; break; }
+      }
+    }
+  } else {
+    const rgba_t *s = (const rgba_t *)Pixels;
+    for (int cnt = Width*Height; cnt--; ++s) {
+      if (s->a != 255) {
+        transparent = true;
+        translucent = translucent || (s->a != 0);
       }
     }
   }

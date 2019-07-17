@@ -108,6 +108,7 @@ VTexture::VTexture ()
   , animated(false)
   , needFBO(false)
   , transparent(false)
+  , translucent(false)
   , nofullbright(false)
   , glowing(0)
   , noHires(false)
@@ -156,6 +157,17 @@ bool VTexture::isTransparent () {
 
 //==========================================================================
 //
+//  VTexture::isTranslucent
+//
+//==========================================================================
+bool VTexture::isTranslucent () {
+  if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+  return translucent;
+}
+
+
+//==========================================================================
+//
 //  VTexture::SetFrontSkyLayer
 //
 //==========================================================================
@@ -184,6 +196,7 @@ vuint8 *VTexture::GetPixels8 () {
   if (Pixels8Bit && Pixels8BitValid) return Pixels8Bit;
   vuint8 *pixdata = GetPixels();
   transparent = false;
+  translucent = false;
   if (Format == TEXFMT_8Pal) {
     // remap to game palette
     int NumPixels = Width*Height;
@@ -208,9 +221,10 @@ vuint8 *VTexture::GetPixels8 () {
     const rgba_t *pSrc = (rgba_t *)pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
-      if (pSrc->a < 128) {
+      if (pSrc->a != 255) {
         *pDst = 0;
         transparent = true;
+        translucent = translucent || (pSrc->a != 0);
       } else {
         *pDst = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       }
@@ -241,6 +255,7 @@ pala_t *VTexture::GetPixels8A () {
   if (!Pixels8BitA) Pixels8BitA = new pala_t[NumPixels];
   pala_t *pDst = Pixels8BitA;
   transparent = false;
+  translucent = false;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     check(Format == mFormat);
@@ -274,7 +289,10 @@ pala_t *VTexture::GetPixels8A () {
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       pDst->a = pSrc->a;
-      transparent = transparent || (pSrc->a != 255);
+      if (pSrc->a != 255) {
+        transparent = true;
+        translucent = translucent || (pSrc->a != 0);
+      }
     }
   } else {
     Sys_Error("invalid texture format in `VTexture::GetPixels8A()`");
@@ -1075,6 +1093,7 @@ VDummyTexture::VDummyTexture () {
 //==========================================================================
 vuint8 *VDummyTexture::GetPixels () {
   transparent = false;
+  translucent = false;
   return nullptr;
 }
 

@@ -87,6 +87,7 @@ vuint8 *VFlatTexture::GetPixels () {
   // allocate memory buffer
   Pixels = new vuint8[Width*Height];
   transparent = false;
+  translucent = false;
 
   // a flat must be at least 64x64, if it's smaller, then ignore it
   if (W_LumpLength(SourceLump) < 64*64) {

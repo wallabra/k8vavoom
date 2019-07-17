@@ -187,6 +187,7 @@ public:
   bool animated; // used to select "no decals" flag
   bool needFBO;
   bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
+  bool translucent; // `true` if texture has some non-integral alpha pixels; set in `GetPixels()`
   bool nofullbright; // valid for all textures; forces "no fullbright"
   vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none)
   bool noHires; // hires texture tried and not found
@@ -298,7 +299,8 @@ public:
   // get texture pixel; will call `GetPixels()`
   rgba_t getPixel (int x, int y);
 
-  virtual bool isTransparent ();
+  /*virtual*/ bool isTransparent ();
+  /*virtual*/ bool isTranslucent ();
 
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();

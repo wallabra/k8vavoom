@@ -77,6 +77,7 @@ vuint8 *VAutopageTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   // read data
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);

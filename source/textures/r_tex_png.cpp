@@ -144,6 +144,7 @@ vuint8 *VPngTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
+  translucent = false;
 
   // open stream
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
@@ -171,7 +172,10 @@ vuint8 *VPngTexture::GetPixels () {
       *dest++ = clr.g;
       *dest++ = clr.b;
       *dest++ = clr.a;
-      transparent = transparent || (clr.a != 255);
+      if (clr.a != 255) {
+        transparent = true;
+        translucent = translucent || (clr.a != 0);
+      }
     }
   }
 
