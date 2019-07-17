@@ -516,6 +516,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
       if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }
 
+      if (Key.strEquCI("waterzone")) { S.params.contents = (CheckBool() ? 1 : 0); continue; } // 1 is `CONTENTS_WATER`
+
       //k8: i don't care if the author wants to hide it; no wai!
       if (Key.strEquCI("hidden")) { (void)CheckBool(); continue; }
       //k8: i don't know what the fuck is this
