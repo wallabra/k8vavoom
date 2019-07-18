@@ -236,7 +236,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
-  if (LightCanCross > 0 && texinfo->Tex->isTransparent()) return; // has holes, don't bother
+  if (LightCanCross > 0 && texinfo->Tex->isSeeThrough()) return; // has holes, don't bother
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
@@ -276,7 +276,8 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
     if (surf->GetNormalZ() != 0) {
       VTexture *tex = surf->texinfo->Tex;
       if (!tex || tex->Type == TEXTYPE_Null) continue;
-      if (tex->isTransparent()) continue; // this is masked texture
+      if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
+      if (tex->isSeeThrough()) continue; // this is masked texture
     }
 
     // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)

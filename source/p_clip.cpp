@@ -236,11 +236,11 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     if (seg->frontsector == fsec) { \
       /* we are looking at toptex */ \
       if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
     } else { \
       /* we are looking at bottex */ \
       if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
     } \
     return true; \
   } \
@@ -250,14 +250,14 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     if (seg->frontsector == bsec) { \
       /* we are looking at toptex */ \
       if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
     } else { \
       /* we are looking at bottex */ \
       if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
     } \
     /*if (!hasBotTex) return false;*/ \
-    /*if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false;*/ \
+    /*if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false;*/ \
     return true; \
   } \
  \
@@ -273,11 +273,11 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     /* we are in front sector */ \
     if (backcz1 <= frontcz1 || backcz2 <= frontcz2) { \
       if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
     } \
     if (backfz1 >= frontfz1 || backfz2 >= frontfz2) { \
       if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isTransparent()) return false; \
+      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
     } \
     return true; \
   } \
@@ -408,7 +408,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     CLIPPER_CALC_FCHEIGHTS
 
     if (clip_midsolid && hasMidTex) {
-      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isTransparent());
+      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isSeeThrough());
       if (midSolid) {
         const sector_t *sec = seg->backsector; //(!seg->side ? ldef->backsector : ldef->frontsector);
         VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
@@ -452,7 +452,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
         (lorg || (Frustum && Frustum->isValid())) &&
         seg->partner && seg->partner != seg &&
         seg->partner->frontsub && seg->partner->frontsub != seg->frontsub &&
-        (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isTransparent()))
+        (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isSeeThrough()))
     {
       // here we can check if midtex is in frustum; if it doesn't,
       // we can add this seg to clipper.

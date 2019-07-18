@@ -299,8 +299,20 @@ public:
   // get texture pixel; will call `GetPixels()`
   rgba_t getPixel (int x, int y);
 
-  /*virtual*/ bool isTransparent ();
-  /*virtual*/ bool isTranslucent ();
+  inline bool isTransparent () {
+    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    return transparent;
+  }
+
+  inline bool isTranslucent () {
+    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    return translucent;
+  }
+
+  inline bool isSeeThrough () {
+    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    return (transparent || translucent);
+  }
 
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();

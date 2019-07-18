@@ -1162,7 +1162,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
     }
 
-    if (sp->surfs && (sp->texinfo.Alpha < 1.0f || MTex->isTransparent())) {
+    if (sp->surfs && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || MTex->isSeeThrough())) {
       for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
     }
   } else {

@@ -146,28 +146,6 @@ VTexture::~VTexture () {
 
 //==========================================================================
 //
-//  VTexture::isTransparent
-//
-//==========================================================================
-bool VTexture::isTransparent () {
-  if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
-  return transparent;
-}
-
-
-//==========================================================================
-//
-//  VTexture::isTranslucent
-//
-//==========================================================================
-bool VTexture::isTranslucent () {
-  if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
-  return translucent;
-}
-
-
-//==========================================================================
-//
 //  VTexture::SetFrontSkyLayer
 //
 //==========================================================================
