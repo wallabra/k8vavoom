@@ -34,7 +34,7 @@
 #ifdef BUILTIN_FLUID
 # include "../../libs/fluidsynth_lite/include/fluidsynth-lite.h"
 # if (FLUIDSYNTH_VERSION_MAJOR != 1) || (FLUIDSYNTH_VERSION_MINOR != 1) || (FLUIDSYNTH_VERSION_MICRO != 6)
-#  warning "invalid FluidSynth version"
+#  error "invalid FluidSynth version"
 # endif
 #else
 # include "fluidsynth.h"
