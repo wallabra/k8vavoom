@@ -185,8 +185,8 @@
   ACS_EXTFUNC(GetLineY)
 
   // OpenGL stuff
-  ACS_EXTFUNC_NUM(SetSectorGlow, 400)
-  ACS_EXTFUNC(SetFogDensity)
+  ACS_EXTFUNC_NUM(SetSectorGlow, 400) // ignored
+  ACS_EXTFUNC(SetFogDensity) // ignored
 
   // ZDaemon
   ACS_EXTFUNC_NUM(GetTeamScore, 19620) // (int team)

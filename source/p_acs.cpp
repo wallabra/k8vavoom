@@ -3374,6 +3374,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       GCon->Logf(NAME_Warning, "ignored ACSF `SoundSequenceOnPolyobj`");
       return 0;
 
+    case ACSF_SetSectorGlow:
+      GCon->Logf(NAME_Warning, "ignored ACSF `SetSectorGlow`");
+      return 0;
+    case ACSF_SetFogDensity:
+      GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
+      return 0;
+
     case ACSF_SpawnDecal:
       GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SpawnDecal", argCount);
       return 0;
