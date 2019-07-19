@@ -30,65 +30,41 @@
 //**  columns and repeats 4 times on a 320 screen
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define RADIUS    (128.0f)
 
-// TYPES -------------------------------------------------------------------
 
-struct skyboxinfo_t
-{
-  struct skyboxsurf_t
-  {
-    int     texture;
+struct skyboxinfo_t {
+  struct skyboxsurf_t {
+    int texture;
   };
 
-  VName     Name;
-  skyboxsurf_t  surfs[6];
+  VName Name;
+  skyboxsurf_t surfs[6];
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+static TArray<skyboxinfo_t> skyboxinfo;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+static VCvarB r_skyboxes("r_skyboxes", true, "Allow skyboxes?", CVAR_Archive);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static TArray<skyboxinfo_t>   skyboxinfo;
-
-static VCvarB   r_skyboxes("r_skyboxes", true, "Allow skyboxes?", CVAR_Archive);
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  ParseSkyBoxesScript
 //
 //==========================================================================
-
-static void ParseSkyBoxesScript(VScriptParser *sc)
-{
-  while (!sc->AtEnd())
-  {
+static void ParseSkyBoxesScript (VScriptParser *sc) {
+  while (!sc->AtEnd()) {
     skyboxinfo_t &info = skyboxinfo.Alloc();
     memset((void *)&info, 0, sizeof(info));
 
     sc->ExpectString();
     info.Name = *sc->String;
     sc->Expect("{");
-    for (int i = 0; i < 6; i++)
-    {
+    for (int i = 0; i < 6; ++i) {
       sc->Expect("{");
       sc->Expect("map");
       sc->ExpectString();
@@ -158,16 +134,22 @@ VName R_HasNamedSkybox (const VStr &aname) {
 //  R_InitSkyBoxes
 //
 //==========================================================================
-
-void R_InitSkyBoxes()
-{
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
-    if (W_LumpName(Lump) == NAME_skyboxes)
-    {
-      ParseSkyBoxesScript(new VScriptParser(/*"skyboxes"*/W_FullLumpName(Lump),
-        W_CreateLumpReaderNum(Lump)));
+void R_InitSkyBoxes () {
+  VName skb = VName("skybox", VName::FindLower);
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_skyboxes) {
+      GCon->Logf(NAME_Init, "parsing skybox script '%s'", *W_FullLumpName(Lump));
+      ParseSkyBoxesScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+    } else  if (skb != NAME_None && W_LumpName(Lump) == skb) {
+      GCon->Logf(NAME_Init, "parsing gz skybox script '%s'", *W_FullLumpName(Lump));
+      VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
+      for (;;) {
+        if (!sc->GetString()) break;
+        sc->UnGet();
+        sc->Expect("skybox");
+        R_ParseMapDefSkyBoxesScript(sc);
+      }
+      delete sc;
     }
   }
   //  Optionally parse script file.
@@ -190,7 +172,7 @@ void R_InitSkyBoxes()
 
 static int CheckSkyboxNumForName(VName Name)
 {
-  for (int num = skyboxinfo.Num() - 1; num >= 0; num--)
+  for (int num = skyboxinfo.Num()-1; num >= 0; num--)
   {
     if (skyboxinfo[num].Name == Name)
     {
@@ -246,8 +228,8 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 
   for (j = 0; j < VDIVS; j++)
   {
-    float va0 = 90.0f - j * (180.0f / VDIVS);
-    float va1 = 90.0f - (j + 1) * (180.0f / VDIVS);
+    float va0 = 90.0f-j*(180.0f/VDIVS);
+    float va1 = 90.0f-(j+1)*(180.0f/VDIVS);
     float vsina0 = msin(va0);
     float vcosa0 = mcos(va0);
     float vsina1 = msin(va1);
@@ -255,42 +237,42 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 
 //    float theight = skytop;
 //    float bheight = skybot;
-    float theight = vsina0 * RADIUS;
-    float bheight = vsina1 * RADIUS;
+    float theight = vsina0*RADIUS;
+    float bheight = vsina1*RADIUS;
 //    float tradius = RADIUS;
 //    float vradius = RADIUS;
-    float tradius = vcosa0 * RADIUS;
-    float vradius = vcosa1 * RADIUS;
+    float tradius = vcosa0*RADIUS;
+    float vradius = vcosa1*RADIUS;
     for (int i = 0; i < HDIVS; i++)
     {
-      sky_t &s = sky[j * HDIVS + i];
-      float a0 = 45 - i * (360.0f / HDIVS);
-      float a1 = 45 - (i + 1) * (360.0f / HDIVS);
+      sky_t &s = sky[j*HDIVS+i];
+      float a0 = 45-i*(360.0f/HDIVS);
+      float a1 = 45-(i+1)*(360.0f/HDIVS);
       float sina0 = msin(a0);
       float cosa0 = mcos(a0);
       float sina1 = msin(a1);
       float cosa1 = mcos(a1);
 
       TVec *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
-      surfverts[0] = TVec(cosa0 * vradius, sina0 * vradius, bheight);
-      surfverts[1] = TVec(cosa0 * tradius, sina0 * tradius, theight);
-      surfverts[2] = TVec(cosa1 * tradius, sina1 * tradius, theight);
-      surfverts[3] = TVec(cosa1 * vradius, sina1 * vradius, bheight);
+      surfverts[0] = TVec(cosa0*vradius, sina0*vradius, bheight);
+      surfverts[1] = TVec(cosa0*tradius, sina0*tradius, theight);
+      surfverts[2] = TVec(cosa1*tradius, sina1*tradius, theight);
+      surfverts[3] = TVec(cosa1*vradius, sina1*vradius, bheight);
 
-      TVec hdir = j < VDIVS / 2 ? surfverts[3] - surfverts[0] :
-        surfverts[2] - surfverts[1];
-      TVec vdir = surfverts[0] - surfverts[1];
+      TVec hdir = j < VDIVS/2 ? surfverts[3]-surfverts[0] :
+        surfverts[2]-surfverts[1];
+      TVec vdir = surfverts[0]-surfverts[1];
       TVec normal = Normalise(CrossProduct(vdir, hdir));
       s.plane.Set(normal, DotProduct(surfverts[1], normal));
 
-      s.texinfo.saxis = hdir * (1024 / HDIVS / DotProduct(hdir, hdir));
-      float tk = skyh / RADIUS;
+      s.texinfo.saxis = hdir*(1024/HDIVS/DotProduct(hdir, hdir));
+      float tk = skyh/RADIUS;
       s.texinfo.taxis = TVec(0, 0, -tk);
-      s.texinfo.soffs = -DotProduct(s.surf.verts[j < VDIVS / 2 ? 0 : 1],
+      s.texinfo.soffs = -DotProduct(s.surf.verts[j < VDIVS/2 ? 0 : 1],
         s.texinfo.saxis);
       s.texinfo.toffs = skyh;
 
-      s.columnOffset1 = s.columnOffset2 = -i * (1024 / HDIVS) + 128;
+      s.columnOffset1 = s.columnOffset2 = -i*(1024/HDIVS)+128;
 
       float mins;
       float maxs;
@@ -302,35 +284,35 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
         s.columnOffset1 = -s.columnOffset1;
         s.columnOffset2 = -s.columnOffset2;
 
-        mins = DotProduct(surfverts[j < VDIVS / 2 ? 3 : 2],
-          s.texinfo.saxis) + s.texinfo.soffs;
-        maxs = DotProduct(surfverts[j < VDIVS / 2 ? 0 : 1],
-          s.texinfo.saxis) + s.texinfo.soffs;
+        mins = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2],
+          s.texinfo.saxis)+s.texinfo.soffs;
+        maxs = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1],
+          s.texinfo.saxis)+s.texinfo.soffs;
       }
       else
       {
-        mins = DotProduct(surfverts[j < VDIVS / 2 ? 0 : 1],
-          s.texinfo.saxis) + s.texinfo.soffs;
-        maxs = DotProduct(surfverts[j < VDIVS / 2 ? 3 : 2],
-          s.texinfo.saxis) + s.texinfo.soffs;
+        mins = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1],
+          s.texinfo.saxis)+s.texinfo.soffs;
+        maxs = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2],
+          s.texinfo.saxis)+s.texinfo.soffs;
       }
 
-      int bmins = (int)floor(mins / 16);
-      int bmaxs = (int)ceil(maxs / 16);
-      s.surf.texturemins[0] = bmins * 16;
-      s.surf.extents[0] = (bmaxs - bmins) * 16;
+      int bmins = (int)floor(mins/16);
+      int bmaxs = (int)ceil(maxs/16);
+      s.surf.texturemins[0] = bmins*16;
+      s.surf.extents[0] = (bmaxs-bmins)*16;
       //s.surf.extents[0] = 256;
-      mins = DotProduct(surfverts[1], s.texinfo.taxis) + s.texinfo.toffs;
-      maxs = DotProduct(surfverts[0], s.texinfo.taxis) + s.texinfo.toffs;
-      bmins = (int)floor(mins / 16);
-      bmaxs = (int)ceil(maxs / 16);
-      s.surf.texturemins[1] = bmins * 16;
-      s.surf.extents[1] = (bmaxs - bmins) * 16;
+      mins = DotProduct(surfverts[1], s.texinfo.taxis)+s.texinfo.toffs;
+      maxs = DotProduct(surfverts[0], s.texinfo.taxis)+s.texinfo.toffs;
+      bmins = (int)floor(mins/16);
+      bmaxs = (int)ceil(maxs/16);
+      s.surf.texturemins[1] = bmins*16;
+      s.surf.extents[1] = (bmaxs-bmins)*16;
       //s.surf.extents[1] = skyh;
     }
   }
 
-  NumSkySurfs = VDIVS * HDIVS;
+  NumSkySurfs = VDIVS*HDIVS;
 
   for (j = 0; j < NumSkySurfs; j++)
   {
@@ -467,10 +449,10 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
 
     sky[j].surf.extents[0] = STex->GetWidth();
     sky[j].surf.extents[1] = STex->GetHeight();
-    sky[j].texinfo.saxis *= STex->GetWidth() / 256.0f;
-    sky[j].texinfo.soffs *= STex->GetWidth() / 256.0f;
-    sky[j].texinfo.taxis *= STex->GetHeight() / 256.0f;
-    sky[j].texinfo.toffs *= STex->GetHeight() / 256.0f;
+    sky[j].texinfo.saxis *= STex->GetWidth()/256.0f;
+    sky[j].texinfo.soffs *= STex->GetWidth()/256.0f;
+    sky[j].texinfo.taxis *= STex->GetHeight()/256.0f;
+    sky[j].texinfo.toffs *= STex->GetHeight()/256.0f;
   }
   bIsSkyBox = true;
 }
@@ -545,16 +527,16 @@ void VSky::Draw(int ColorMap)
 void VRenderLevelShared::InitSky () {
   if (CurrentSky1Texture == Level->LevelInfo->Sky1Texture &&
       CurrentSky2Texture == Level->LevelInfo->Sky2Texture &&
-      CurrentDoubleSky == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky) &&
-      CurrentLightning == !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_Lightning))
+      CurrentDoubleSky == !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_DoubleSky) &&
+      CurrentLightning == !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_Lightning))
   {
     return;
   }
 
   CurrentSky1Texture = Level->LevelInfo->Sky1Texture;
   CurrentSky2Texture = Level->LevelInfo->Sky2Texture;
-  CurrentDoubleSky = !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_DoubleSky);
-  CurrentLightning = !!(Level->LevelInfo->LevelInfoFlags & VLevelInfo::LIF_Lightning);
+  CurrentDoubleSky = !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_DoubleSky);
+  CurrentLightning = !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_Lightning);
 
   if (Level->LevelInfo->SkyBox != NAME_None) {
     BaseSky.InitSkyBox(Level->LevelInfo->SkyBox, NAME_None);
@@ -577,13 +559,13 @@ void VRenderLevelShared::AnimateSky(float frametime)
 {
   InitSky();
 
-  if (!(Level->LevelInfo->LevelInfoFlags2 & VLevelInfo::LIF2_Frozen))
+  if (!(Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen))
   {
     //  Update sky column offsets
     for (int i = 0; i < BaseSky.NumSkySurfs; i++)
     {
-      BaseSky.sky[i].columnOffset1 += BaseSky.sky[i].scrollDelta1 * frametime;
-      BaseSky.sky[i].columnOffset2 += BaseSky.sky[i].scrollDelta2 * frametime;
+      BaseSky.sky[i].columnOffset1 += BaseSky.sky[i].scrollDelta1*frametime;
+      BaseSky.sky[i].columnOffset2 += BaseSky.sky[i].scrollDelta2*frametime;
     }
   }
 }
