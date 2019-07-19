@@ -451,6 +451,10 @@ void VFluidAudioCodec::eventCB (double timemsecs, const MIDIData::MidiEvent &ev,
       fluid_synth_noteon(FluidManager::synth, ev.channel, ev.data1, ev.data2);
       break;
     case MIDIData::KEY_PRESSURE:
+      #if (FLUIDSYNTH_VERSION_MAJOR >= 2)
+      // this is added in FluidSynth 2
+      fluid_synth_key_pressure(FluidManager::synth, ev.channel, ev.data1, ev.data2);
+      #endif
       break;
     case MIDIData::CONTROL_CHANGE:
       fluid_synth_cc(FluidManager::synth, ev.channel, ev.data1, ev.data2);
