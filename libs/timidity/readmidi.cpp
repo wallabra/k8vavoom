@@ -48,9 +48,11 @@ static int midi_read(MidiSong* song, void* ptr, uint32 size)
 	{
 		size = song->image_left;
 	}
-	memcpy(ptr, song->midi_image, size);
-	song->midi_image += size;
-	song->image_left -= size;
+	if (size > 0) {
+		memcpy(ptr, song->midi_image, size);
+		song->midi_image += size;
+		song->image_left -= size;
+	}
 
 	return size;
 }
@@ -73,7 +75,7 @@ static int32 getvl(MidiSong* song)
 
 	for (;;)
 	{
-		midi_read(song, &c, 1);
+		if (midi_read(song, &c, 1) == 0) return l;
 		l += (c & 0x7f);
 
 		if (!(c & 0x80))
@@ -233,6 +235,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 								break;
 							case 64:
 								control = ME_SUSTAIN;
+								b = (b >= 64 ? 1 : 0); //k8:do we need it? is it right?
 								break;
 							case 120:
 								control = ME_ALL_SOUNDS_OFF;
@@ -446,6 +449,8 @@ static MidiEvent* groom_list(MidiSong* song, int32 divisions, int32* eventsp, in
 	int current_bank[16], current_set[16], current_program[16];
 	/* Or should each bank have its own current program? */
 	int mprog;
+	int newtempo = 0;
+	int hasnewtempo = 0;
 
 	for (i=0; i<16; i++)
 	{
@@ -470,9 +475,10 @@ static MidiEvent* groom_list(MidiSong* song, int32 divisions, int32* eventsp, in
 
 		if (meep->event.type == ME_TEMPO)
 		{
-			tempo =
+			newtempo =
 				meep->event.channel + meep->event.b * 256 + meep->event.a * 65536;
-			compute_sample_increment(song, tempo, divisions);
+			//compute_sample_increment(song, tempo, divisions);
+			hasnewtempo = 1;
 			skip_this_event = 1;
 		}
 		else
@@ -574,6 +580,12 @@ static MidiEvent* groom_list(MidiSong* song, int32 divisions, int32* eventsp, in
 		else if (counting_time == 1)
 		{
 			counting_time = 0;
+		}
+
+		if (hasnewtempo)
+		{
+			tempo = newtempo;
+			compute_sample_increment(song, tempo, divisions);
 		}
 
 		if (!skip_this_event)

@@ -181,7 +181,7 @@ static void recompute_freq(MidiSong* song, int v)
 		}
 	}
 
-	a = FSCALE(((double)(song->voice[v].sample->sample_rate) *
+	a = VTIM_FSCALE(((double)(song->voice[v].sample->sample_rate) *
 			(double)(song->voice[v].frequency)) /
 			((double)(song->voice[v].sample->root_freq) *
 			(double)(OUTPUT_RATE)),
@@ -231,23 +231,23 @@ static void recompute_amp(MidiSong* song, int v)
 	if (panning > 60 && panning < 68)
 	{
 		song->voice[v].panned=PANNED_CENTRE;
-		song->voice[v].left_amp= FSCALENEG(refv, 21);
+		song->voice[v].left_amp= VTIM_FSCALENEG(refv, 21);
 	}
 	else if (panning < 5)
 	{
 		song->voice[v].panned = PANNED_LEFT;
-		song->voice[v].left_amp = FSCALENEG(refv, 20);
+		song->voice[v].left_amp = VTIM_FSCALENEG(refv, 20);
 	}
 	else if (panning > 123)
 	{
 		song->voice[v].panned = PANNED_RIGHT;
-		song->voice[v].left_amp = FSCALENEG(refv, 20);/* left_amp will be used */
+		song->voice[v].left_amp = VTIM_FSCALENEG(refv, 20);/* left_amp will be used */
 	}
 	else
 	{
 		song->voice[v].panned = PANNED_MYSTERY;
-		song->voice[v].left_amp = FSCALENEG(refv * (127 - panning), 27);
-		song->voice[v].right_amp = FSCALENEG(refv * panning, 27);
+		song->voice[v].left_amp = VTIM_FSCALENEG(refv * (127 - panning), 27);
+		song->voice[v].right_amp = VTIM_FSCALENEG(refv * panning, 27);
 	}
 }
 

@@ -163,8 +163,8 @@ namespace LibTimidity
 
 #define CONFIG_FILE			"timidity.cfg"
 
-#define FSCALE(a,b)		(float)((a) * (double)(1<<(b)))
-#define FSCALENEG(a,b)	(float)((a) * (1.0L / (double)(1<<(b))))
+#define VTIM_FSCALE(a,b)		(float)((a) * (double)(1<<(b)))
+#define VTIM_FSCALENEG(a,b)	(float)((a) * (1.0L / (double)(1<<(b))))
 
 /* Vibrato and tremolo Choices of the Day */
 #define SWEEP_TUNING				38

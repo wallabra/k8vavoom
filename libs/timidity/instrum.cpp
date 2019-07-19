@@ -122,7 +122,7 @@ static int32 convert_vibrato_sweep(uint8 sweep, int32 vib_control_ratio)
 		return 0;
 	}
 
-	return (int32) (FSCALE((double) (vib_control_ratio) * SWEEP_TUNING, SWEEP_SHIFT) /
+	return (int32) (VTIM_FSCALE((double) (vib_control_ratio) * SWEEP_TUNING, SWEEP_SHIFT) /
 		(double)(OUTPUT_RATE * sweep));
 
 	/* this was overflowing with seashore.pat

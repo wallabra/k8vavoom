@@ -54,7 +54,8 @@ int recompute_envelope(MidiSong* song, int v)
 	}
 	song->voice[v].envelope_stage = stage + 1;
 
-	if (song->voice[v].envelope_volume == song->voice[v].sample->envelope_offset[stage])
+	if (song->voice[v].envelope_volume == song->voice[v].sample->envelope_offset[stage] ||
+			(stage > 2 && song->voice[v].envelope_volume < song->voice[v].sample->envelope_offset[stage]))
 	{
 		return recompute_envelope(song, v);
 	}
@@ -92,8 +93,8 @@ void apply_envelope_to_amp(MidiSong* song, int v)
 			ramp *= ev;
 		}
 
-		la = (int32)FSCALE(lamp,AMP_BITS);
-		int32 ra = (int32)FSCALE(ramp,AMP_BITS);
+		la = (int32)VTIM_FSCALE(lamp,AMP_BITS);
+		int32 ra = (int32)VTIM_FSCALE(ramp,AMP_BITS);
 
 		if (la > MAX_AMP_VALUE)
 		{
@@ -117,7 +118,7 @@ void apply_envelope_to_amp(MidiSong* song, int v)
 		{
 			lamp *= (float)vol_table[song->voice[v].envelope_volume >> 23];
 		}
-		la = (int32)FSCALE(lamp,AMP_BITS);
+		la = (int32)VTIM_FSCALE(lamp,AMP_BITS);
 
 		if (la > MAX_AMP_VALUE)
 		{
@@ -171,7 +172,7 @@ static void update_tremolo(MidiSong* song, int v)
 	song->voice[v].tremolo_phase += song->voice[v].tremolo_phase_increment;
 
 	song->voice[v].tremolo_volume =
-		(float)(1.0 - FSCALENEG((sine(song->voice[v].tremolo_phase >> RATE_SHIFT) /*+ 1.0*/) *
+		(float)(1.0 - VTIM_FSCALENEG((sine(song->voice[v].tremolo_phase >> RATE_SHIFT) /*+ 1.0*/) *
 		depth * TREMOLO_AMPLITUDE_TUNING, 17));
 
 	/* I'm not sure about the +1.0 there -- it makes tremoloed voices'
@@ -516,7 +517,7 @@ void mix_voice(MidiSong* song, int32* buf, int v, int32 c)
 			count = MAX_DIE_TIME;
 		}
 		sp = resample_voice(song, v, &count);
-		ramp_out(song, sp, buf, v, count);
+		if (c > 0) ramp_out(song, sp, buf, v, count);
 		vp->status = VOICE_FREE;
 	}
 	else
