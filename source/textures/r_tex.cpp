@@ -1030,13 +1030,22 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
 
-  i = tryHardToFindTheImage(*Name);
-  if (i >= 0) {
-    VTexture *Tex = VTexture::CreateTexture(Type, i);
-    if (Tex) {
-      if (developer) GCon->Logf(NAME_Dev, "******************** %s : %s ********************", *Name, *Tex->Name);
-      Tex->Name = Name;
-      return AddTexture(Tex);
+  VStr fname = VStr(Name);
+
+  for (int trynum = 0; trynum < 2; ++trynum) {
+    if (trynum == 1) {
+      if (Type != TEXTYPE_SkyMap) break;
+      fname = "textures/skyboxes/"+fname;
+    }
+
+    i = tryHardToFindTheImage(*fname);
+    if (i >= 0) {
+      VTexture *Tex = VTexture::CreateTexture(Type, i);
+      if (Tex) {
+        if (developer) GCon->Logf(NAME_Dev, "******************** %s : %s ********************", *fname, *Tex->Name);
+        Tex->Name = Name;
+        return AddTexture(Tex);
+      }
     }
   }
 
