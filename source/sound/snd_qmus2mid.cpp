@@ -154,12 +154,12 @@ bool VQMus2Mid::Convert (VStream &Strm) {
 
   Strm.Serialise(&MUSh, sizeof(FMusHeader));
   if (VStr::NCmp(MUSh.ID, MUSMAGIC, 4)) {
-    GCon->Log("Not a MUS file");
+    GCon->Log(NAME_Error, "Not a MUS file");
     return false;
   }
 
   if ((vuint16)LittleShort(MUSh.NumChannels) > 15) { /* <=> MUSchannels+drums > 16 */
-    GCon->Log(NAME_Dev,"Too many channels");
+    GCon->Logf(NAME_Error, "MUS: Too many channels (%u)", (vuint16)LittleShort(MUSh.NumChannels));
     return false;
   }
 
@@ -236,7 +236,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         TWriteByte(MIDItrack, NewEvent);
         Tracks[MIDItrack].LastEvent = NewEvent;
         Strm << data;
-        if (data >= 15) { GCon->Log(NAME_Dev, "Invalid MUS control code"); return false; }
+        if (data >= 15) { GCon->Logf(NAME_Error, "Invalid MUS control code (3) %u", data); return false; }
         TWriteByte(MIDItrack, Mus2MidControl[data]);
         if (data == 12) {
           //TWriteByte(MIDItrack, LittleShort(MUSh.NumChannels)+1);
@@ -252,7 +252,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
           NewEvent = 0xB0|MIDIchannel;
           TWriteByte(MIDItrack, NewEvent);
           Tracks[MIDItrack].LastEvent = NewEvent;
-          if (data >= 15) { GCon->Log(NAME_Dev, "Invalid MUS control code"); return false; }
+          if (data >= 15) { GCon->Logf(NAME_Error, "Invalid MUS control code (4) %u", data); return false; }
           TWriteByte(MIDItrack, Mus2MidControl[data]);
         } else {
           NewEvent = 0xC0|MIDIchannel;
@@ -264,7 +264,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         break;
       case 5:
       case 7:
-        GCon->Log(NAME_Dev, "MUS file corupted");
+        GCon->Logf(NAME_Error, "MUS file corupted (invalid event code %u)", et);
         return false;
       default:
         break;
