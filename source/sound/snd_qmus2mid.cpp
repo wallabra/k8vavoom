@@ -31,6 +31,8 @@
 #include "gamedefs.h"
 #include "snd_local.h"
 
+static VCvarB snd_mus_emulate_dmx_bugs("snd_mus_emulate_dmx_bugs", true, "Emulate some DMX bugs when converting MUS to MIDI?", CVAR_Archive);
+
 
 const vuint8 VQMus2Mid::Mus2MidControl[15] = {
   0,        //  Program change - not a MIDI control change
@@ -201,12 +203,23 @@ bool VQMus2Mid::Convert (VStream &Strm) {
     switch (et) {
       // release note
       case 0:
-        NewEvent = 0x80|MIDIchannel;
-        TWriteByte(MIDItrack, NewEvent);
-        Tracks[MIDItrack].LastEvent = NewEvent;
-        Strm << data;
-        TWriteByte(MIDItrack, data);
-        TWriteByte(MIDItrack, 64);
+        if (snd_mus_emulate_dmx_bugs) {
+          // it seems that DMX simply did a note with zero velocity
+          // dunno if we required to emulate it, but why not?
+          NewEvent = 0x90|MIDIchannel;
+          TWriteByte(MIDItrack, NewEvent);
+          Tracks[MIDItrack].LastEvent = NewEvent;
+          Strm << data;
+          TWriteByte(MIDItrack, data);
+          TWriteByte(MIDItrack, 0);
+        } else {
+          NewEvent = 0x80|MIDIchannel;
+          TWriteByte(MIDItrack, NewEvent);
+          Tracks[MIDItrack].LastEvent = NewEvent;
+          Strm << data;
+          TWriteByte(MIDItrack, data);
+          TWriteByte(MIDItrack, 64);
+        }
         break;
       // note on
       case 1:
@@ -228,7 +241,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         Tracks[MIDItrack].LastEvent = NewEvent;
         Strm << data;
         TWriteByte(MIDItrack, (data&1)<<6);
-        TWriteByte(MIDItrack, data>>1);
+        TWriteByte(MIDItrack, (data>>1)&0x7f);
         break;
       // control change
       case 3:
@@ -239,7 +252,6 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         if (data >= 15) { GCon->Logf(NAME_Error, "Invalid MUS control code (3) %u", data); return false; }
         TWriteByte(MIDItrack, Mus2MidControl[data]);
         if (data == 12) {
-          //TWriteByte(MIDItrack, LittleShort(MUSh.NumChannels)+1);
           TWriteByte(MIDItrack, LittleShort(MUSh.NumChannels));
         } else {
           TWriteByte(MIDItrack, 0);
@@ -249,18 +261,28 @@ bool VQMus2Mid::Convert (VStream &Strm) {
       case 4:
         Strm << data;
         if (data) {
+          // control change
           NewEvent = 0xB0|MIDIchannel;
           TWriteByte(MIDItrack, NewEvent);
           Tracks[MIDItrack].LastEvent = NewEvent;
           if (data >= 15) { GCon->Logf(NAME_Error, "Invalid MUS control code (4) %u", data); return false; }
+          bool checkVolume = (Mus2MidControl[data] == 7);
           TWriteByte(MIDItrack, Mus2MidControl[data]);
+          Strm << data;
+          if (checkVolume) {
+            // clamp volume to 127, since DMX apparently allows 8-bit volumes
+            // fix courtesy of Gez, courtesy of Ben Ryves
+            if (data > 0x7f) data = 0x7f;
+          }
+          TWriteByte(MIDItrack, data);
         } else {
+          // program change
           NewEvent = 0xC0|MIDIchannel;
           TWriteByte(MIDItrack, NewEvent);
           Tracks[MIDItrack].LastEvent = NewEvent;
+          Strm << data;
+          TWriteByte(MIDItrack, data);
         }
-        Strm << data;
-        TWriteByte(MIDItrack, data);
         break;
       case 5:
       case 7:
