@@ -569,7 +569,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   if (bIsPlayer && bFly && Origin.z > FloorZ /*&& (XLevel.TicTime&2)*/) {
     //FIXME: this is time-dependent, rewrite!
     //Origin.z += sin(90.0*35.0/20.0*AngleMod360(int(XLevel.Time)))/2.0;
-    Origin.z = PlayerEx(Player).CalcFlyZ(Origin.z);
+    auto plx = PlayerEx(Player);
+    if (plx && !(plx.Cheats&PlayerEx::CF_NOCLIP)) Origin.z = plx.CalcFlyZ(Origin.z);
   }
 
   // clip movement
