@@ -140,20 +140,19 @@ public:
     const vuint8 *tkdata;
     const vuint8 *pos;
     song_t *song;
-  public:
-    vuint8 runningStatus;
-    vuint8 lastMetaChannel; // 0xff: all
-    vuint32 nexttic;
-    vuint32 starttic;
+    double nextetime; // milliseconds
     // after last track command, wait a little
     double fadeoff;
 
+  public:
+    vuint8 runningStatus;
+    vuint8 lastMetaChannel; // 0xff: all
     VStr copyright; // track copyright
     VStr tname; // track name
     VStr iname; // instrument name
 
   public:
-    track_t () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), runningStatus(0), lastMetaChannel(0xff), nexttic(0), starttic(0), fadeoff(0) {}
+    track_t () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), nextetime(0), fadeoff(200), runningStatus(0), lastMetaChannel(0xff) {}
 
     void setup (song_t *asong, const vuint8 *adata, vint32 alen) {
       if (alen <= 0) adata = nullptr;
@@ -162,23 +161,24 @@ public:
       tkdata = adata;
       song = asong;
       reset();
+      fadeoff = (song->type != 2 ? 200 : 0);
     }
 
     inline void abort (bool full) { if (tkdata) pos = tkdata+datasize; if (full) fadeoff = 0; }
 
     inline void reset () {
       pos = tkdata;
+      nextetime = 0;
+      fadeoff = 200;
       runningStatus = 0;
       lastMetaChannel = 0xff;
-      nexttic = 0;
-      starttic = 0;
-      fadeoff = 0;
       copyright.clear();
       tname.clear();
       iname.clear();
     }
 
-    inline bool isEOT () const { return (!tkdata || pos == tkdata+datasize); }
+    inline bool isEndOfData () const { return (!tkdata || pos == tkdata+datasize); }
+    inline bool isEOT () const { return (isEndOfData() ? (nextEventTime() <= song->currtime) : false); }
 
     inline int getPos () const { return (tkdata ? (int)(ptrdiff_t)(pos-tkdata) : 0); }
     inline int getLeft () const { return (tkdata ? (int)(ptrdiff_t)(tkdata+datasize-pos) : 0); }
@@ -206,12 +206,12 @@ public:
     inline const song_t *getSong () const { return song; }
 
     inline vuint8 peekNextMidiByte () {
-      if (isEOT()) return 0;
+      if (isEndOfData()) return 0;
       return *pos;
     }
 
     inline vuint8 getNextMidiByte () {
-      if (isEOT()) return 0;
+      if (isEndOfData()) return 0;
       return *pos++;
     }
 
@@ -233,9 +233,13 @@ public:
       return res;
     }
 
-    inline vuint32 getDeltaTic () {
-      return readVarLen();
-      //return (starttic+(vuint32)((double)tic*song->timediv));
+    inline vuint32 getDeltaTic () { return readVarLen(); }
+
+    inline double nextEventTime () const { return (nextetime+(isEndOfData() ? fadeoff : 0)); }
+
+    inline void advanceTics (vuint32 tics) {
+      if (isEndOfData()) return;
+      nextetime += song->tic2ms(tics);
     }
   };
 
@@ -244,19 +248,15 @@ public:
     vuint16 delta;
     TArray<track_t> tracks;
     vuint32 tempo;
-    //double timediv;
-    vuint32 curtime;
+    double currtime; // milliseconds
 
     inline void setTempo (vint32 atempo) {
       if (atempo <= 0) atempo = 480000;
       tempo = atempo;
-      //timediv = getTimeDivision();
     }
 
-    //inline double getTimeDivision () const { return (double)tempo/(double)delta/1000.0; }
-
-    inline vuint32 tic2ms (vuint32 tic) const { return (vuint32)(((double)tic*tempo)/(delta*1000.0)); }
-    inline vuint32 ms2tic (vuint32 msec) const { return (vuint32)((msec*delta*1000.0)/(double)tempo); }
+    inline double tic2ms (vuint32 tic) const { return (((double)tic*tempo)/(delta*1000.0)); }
+    inline double ms2tic (double msec) const { return ((msec*delta*1000.0)/(double)tempo); }
   };
 
 public:
@@ -650,20 +650,15 @@ bool VFluidAudioCodec::runTrack (int tidx) {
   track_t &track = midisong.tracks[tidx];
   song_t *song = track.getSong();
 
-  if (song->curtime < track.nexttic) return true;
-
-  // last fade?
-  if (track.isEOT()) return (song->curtime < track.fadeoff);
+  if (song->currtime < track.nextEventTime()) return true;
 
 #ifdef VV_FLUID_DEBUG_TICKS
-  GCon->Logf("FLUID: TICK for channel #%d (stime=%u; stt=%u; ntt=%u; eot=%d)", tidx, song->curtime, track.starttic, track.nexttic, (track.isEOT() ? 1 : 0));
+  GCon->Logf("FLUID: TICK for channel #%d (stime=%u; stt=%u; ntt=%u; eot=%d)", tidx, song->curtime, track.starttic, track.nexttic, (track.isEndOfData() ? 1 : 0));
 #endif
 
   // keep parsing through midi track until
   // the end is reached or until it reaches next delta time
-  while (!track.isEOT() && song->curtime >= track.nexttic) {
-    track.starttic = track.nexttic;
-
+  while (!track.isEndOfData() && song->currtime >= track.nextEventTime()) {
     vuint8 evcode = track.peekNextMidiByte();
     // for invalid status byte: use the running status instead
     if ((evcode&0x80) == 0) {
@@ -855,16 +850,15 @@ bool VFluidAudioCodec::runTrack (int tidx) {
       }
     }
     // check for end of the track, otherwise get the next delta time
-    if (!track.isEOT()) {
+    if (!track.isEndOfData()) {
       vuint32 dtime = track.getDeltaTic();
 #ifdef VV_FLUID_DEBUG
       GCon->Logf("  timedelta: %u (%u) (pos=%d)", dtime, song->tic2ms(dtime), track.getPos());
 #endif
-      track.nexttic = track.starttic+song->tic2ms(dtime);
+      track.advanceTics(dtime);
     }
   }
 
-  if (track.isEOT()) track.fadeoff = (song->type != 2 ? track.nexttic+200 : 0);
   return true;
 }
 
@@ -884,7 +878,7 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
   while (NumSamples > 0) {
     if (nextFrameTic == 0) {
       bool hasActiveTracks = false;
-      midisong.curtime += stepmsec;
+      midisong.currtime += stepmsec;
 #ifdef VV_FLUID_DEBUG_TICKS
       //GCon->Logf("FLUID: TICK (total=%d, left=%d)!", res, NumSamples);
 #endif
@@ -895,7 +889,7 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
       } else {
         while (currtrack < midisong.tracks.length()) {
           if (runTrack(currtrack)) { hasActiveTracks = true; break; }
-          midisong.curtime = stepmsec;
+          midisong.currtime = stepmsec;
           ++currtrack;
         }
       }
@@ -943,7 +937,6 @@ bool VFluidAudioCodec::Finished () {
     for (int f = 0; f < midisong.tracks.length(); ++f) {
       track_t &track = midisong.tracks[f];
       if (!track.isEOT()) return false;
-      if (track.fadeoff > midisong.curtime) return false;
     }
     return true;
   } else {
@@ -960,13 +953,14 @@ bool VFluidAudioCodec::Finished () {
 void VFluidAudioCodec::Restart () {
   FluidManager::ResetSynth();
   midisong.setTempo(480000);
-  midisong.curtime = 0;
+  midisong.currtime = 0;
   nextFrameTic = 0;
   for (int f = 0; f < midisong.tracks.length(); ++f) {
     track_t &track = midisong.tracks[f];
     check(track.getSong() == &midisong);
     track.reset();
-    if (!track.isEOT()) track.nexttic = track.getSong()->tic2ms(track.getDeltaTic());
+    // perform first advance
+    if (!track.isEndOfData()) track.advanceTics(track.getDeltaTic());
   }
 }
 
