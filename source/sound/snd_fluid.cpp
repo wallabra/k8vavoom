@@ -152,7 +152,7 @@ public:
     VStr iname; // instrument name
 
   public:
-    track_t () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), nextetime(0), fadeoff(200), runningStatus(0), lastMetaChannel(0xff) {}
+    track_t () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), nextetime(0), fadeoff(0), runningStatus(0), lastMetaChannel(0xff) {}
 
     void setup (song_t *asong, const vuint8 *adata, vint32 alen) {
       if (alen <= 0) adata = nullptr;
@@ -161,7 +161,6 @@ public:
       tkdata = adata;
       song = asong;
       reset();
-      fadeoff = (song->type != 2 ? 200 : 0);
     }
 
     inline void abort (bool full) { if (tkdata) pos = tkdata+datasize; if (full) fadeoff = 0; }
@@ -169,7 +168,7 @@ public:
     inline void reset () {
       pos = tkdata;
       nextetime = 0;
-      fadeoff = 200;
+      fadeoff = (song->type != 2 ? 100 : 0);
       runningStatus = 0;
       lastMetaChannel = 0xff;
       copyright.clear();
@@ -262,7 +261,7 @@ public:
 public:
   vuint8 *MidiData;
   int SongSize;
-  vint32 nextFrameTic;
+  vint32 framesUntilEvent; // number of frames we can generate until the next event
   int currtrack; // for midi type 2
   song_t midisong;
 
@@ -557,7 +556,7 @@ bool FluidManager::InitFluid () {
 VFluidAudioCodec::VFluidAudioCodec (vuint8 *InSong, int aSongSize)
   : MidiData(InSong)
   , SongSize(aSongSize)
-  , nextFrameTic(0)
+  , framesUntilEvent(0)
   , currtrack(0)
 {
   FluidManager::ResetSynth();
@@ -652,8 +651,11 @@ bool VFluidAudioCodec::runTrack (int tidx) {
 
   if (song->currtime < track.nextEventTime()) return true;
 
+  // we are in "post-track pause" now, and it was just expired
+  if (track.isEndOfData()) return false;
+
 #ifdef VV_FLUID_DEBUG_TICKS
-  GCon->Logf("FLUID: TICK for channel #%d (stime=%u; stt=%u; ntt=%u; eot=%d)", tidx, song->curtime, track.starttic, track.nexttic, (track.isEndOfData() ? 1 : 0));
+  GCon->Logf("FLUID: TICK for channel #%d (stime=%g; ntt=%g; eot=%d)", tidx, song->currtime, track.nextEventTime(), (track.isEndOfData() ? 1 : 0));
 #endif
 
   // keep parsing through midi track until
@@ -672,7 +674,7 @@ bool VFluidAudioCodec::runTrack (int tidx) {
     if ((evcode&0x80) == 0) { track.abort(true); return false; }
 
 #ifdef VV_FLUID_DEBUG_TICKS
-    GCon->Logf("EVENT: tidx=%d; pos=%d; len=%d; left=%d; event=0x%02x; nt=%d; ct=%d", tidx, track.getPos(), track.size(), track.getLeft(), evcode, track.nexttic, song->curtime);
+    GCon->Logf("EVENT: tidx=%d; pos=%d; len=%d; left=%d; event=0x%02x; nt=%g; ct=%g", tidx, track.getPos(), track.size(), track.getLeft(), evcode, track.nextEventTime(), song->currtime);
 #endif
 
     if (evcode == MIDI_SYSEX) {
@@ -853,7 +855,7 @@ bool VFluidAudioCodec::runTrack (int tidx) {
     if (!track.isEndOfData()) {
       vuint32 dtime = track.getDeltaTic();
 #ifdef VV_FLUID_DEBUG
-      GCon->Logf("  timedelta: %u (%u) (pos=%d)", dtime, song->tic2ms(dtime), track.getPos());
+      GCon->Logf("  timedelta: %u (%g) (pos=%d)", dtime, song->tic2ms(dtime), track.getPos());
 #endif
       track.advanceTics(dtime);
     }
@@ -869,53 +871,73 @@ bool VFluidAudioCodec::runTrack (int tidx) {
 //
 //==========================================================================
 int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
-  //k8: this code is total crap, but idc for now
-  fluid_synth_t *synth = FluidManager::synth;
   int res = 0;
-  // step by 10 msecs
-  static const int stepmsec = 10;
-  static const int stepframes = 44100*stepmsec/1000;
+  // use adaptive stepping
   while (NumSamples > 0) {
-    if (nextFrameTic == 0) {
-      bool hasActiveTracks = false;
-      midisong.currtime += stepmsec;
+    if (framesUntilEvent == 0) {
+      double nextEventTime = -1;
+      //midisong.currtime += stepmsec;
 #ifdef VV_FLUID_DEBUG_TICKS
       //GCon->Logf("FLUID: TICK (total=%d, left=%d)!", res, NumSamples);
 #endif
       if (midisong.type != 2) {
         for (int f = 0; f < midisong.tracks.length(); ++f) {
-          if (runTrack(f)) hasActiveTracks = true;
+          if (runTrack(f)) {
+            double ntt = midisong.tracks[f].nextEventTime();
+#ifdef VV_FLUID_DEBUG
+            GCon->Logf("*** TRACK #%d: ntt=%g; mintt=%g (stime=%g)", f, ntt, nextEventTime, midisong.currtime);
+#endif
+            if (nextEventTime < 0 || nextEventTime > ntt) nextEventTime = ntt;
+          }
         }
       } else {
         while (currtrack < midisong.tracks.length()) {
-          if (runTrack(currtrack)) { hasActiveTracks = true; break; }
-          midisong.currtime = stepmsec;
+          if (runTrack(currtrack)) {
+            nextEventTime = midisong.tracks[currtrack].nextEventTime();
+            break;
+          }
+          midisong.currtime = 0;
+          nextEventTime = -1;
           ++currtrack;
         }
       }
-      if (!hasActiveTracks) {
+      if (nextEventTime < 0) {
 #ifdef VV_FLUID_DEBUG
         GCon->Logf("FluidSynth: no more active tracks");
 #endif
         FluidManager::ResetSynth();
         break;
       }
-      // update next update time
-      nextFrameTic = stepframes;
+      if (nextEventTime <= midisong.currtime) {
+        GCon->Logf(NAME_Error, "FluidSynth: internal error in MIDI decoder!");
+        //GCon->Logf("FS: currtime=%g; nexttime=%g", midisong.currtime, nextEventTime);
+        for (auto &&track : midisong.tracks) track.abort(true);
+        FluidManager::ResetSynth();
+        break;
+      }
+      // calculate number of frames to generate before next event
+      framesUntilEvent = (vint32)((nextEventTime-midisong.currtime)*44100.0/1000.0);
+      if (framesUntilEvent < 0) framesUntilEvent = 0; // just in case
+#ifdef VV_FLUID_DEBUG
+      GCon->Logf("FS: currtime=%g; nexttime=%g; delta=%g; frames=%d", midisong.currtime, nextEventTime, nextEventTime-midisong.currtime, framesUntilEvent);
+#endif
+      // advance virtual time
+      midisong.currtime = nextEventTime;
+      if (framesUntilEvent == 0) continue; // nothing to generate yet
     }
     int rdf = NumSamples;
-    if (rdf > nextFrameTic) rdf = nextFrameTic;
-    if (fluid_synth_write_s16(synth, rdf, Data, 0, 2, Data, 1, 2) != FLUID_OK) {
+    if (rdf > framesUntilEvent) rdf = framesUntilEvent;
+    if (fluid_synth_write_s16(FluidManager::synth, rdf, Data, 0, 2, Data, 1, 2) != FLUID_OK) {
       GCon->Log(NAME_Error, "FluidSynth: error getting a sample, playback aborted!");
-      for (int f = 0; f < midisong.tracks.length(); ++f) midisong.tracks[f].abort(true);
+      for (auto &&track : midisong.tracks) track.abort(true);
       break;
     }
     //GCon->Logf("FLUID: got a sample (total=%d, left=%d)!", res, NumSamples);
     Data += rdf*2;
     res += rdf*2;
     NumSamples -= rdf;
-    nextFrameTic -= rdf;
-    check(nextFrameTic >= 0);
+    framesUntilEvent -= rdf;
+    check(framesUntilEvent >= 0);
   }
   if (res == 0) {
     FluidManager::ResetSynth();
@@ -954,7 +976,7 @@ void VFluidAudioCodec::Restart () {
   FluidManager::ResetSynth();
   midisong.setTempo(480000);
   midisong.currtime = 0;
-  nextFrameTic = 0;
+  framesUntilEvent = 0;
   for (int f = 0; f < midisong.tracks.length(); ++f) {
     track_t &track = midisong.tracks[f];
     check(track.getSong() == &midisong);
