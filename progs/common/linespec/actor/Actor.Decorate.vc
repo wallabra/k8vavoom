@@ -275,6 +275,51 @@ final int decorate_CountInv (name ItemName, optional int aptr) {
 
 //==========================================================================
 //
+//  decorate_GetZAt
+//
+//==========================================================================
+//[float x[, float y[, float angle[, int flags[, int pick_pointer]]]]]
+final float decorate_GetZAt (optional float x, optional float y, optional float angle) {
+  /*
+  Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
+  if (!tgt) return 0;
+  return tgt.CheckInventory(ItemName);
+  */
+  EntityEx tgt = self;
+
+  TAVec ang = tgt.Angles;
+  ang.yaw += angle;
+  TVec forward;
+  TVec right;
+  TVec up;
+
+  AngleVectors(ang, out forward, out right, out up);
+  TVec org = tgt.Origin;
+  org += forward*x;
+  org += right*y;
+
+  tmtrace_t tmtrace;
+  tgt.GetFloorAndCeilingEx(out tmtrace, org, collideWorld:true, collideThings:false);
+  return tmtrace.FloorZ;
+}
+
+
+//==========================================================================
+//
+//  decorate_GetDistance
+//
+//==========================================================================
+//float GetDistance (bool checkz [, int ptr_select])
+final float decorate_GetDistance (bool checkz, optional int aptr) {
+  Entity tgt = DecorDoAAPtr('decorate_GetDistance', aptr!optional);
+  if (!tgt) return 0;
+  if (tgt == self) return 0;
+  return (checkz ? DistTo(tgt) : DistTo2(tgt));
+}
+
+
+//==========================================================================
+//
 //  A_SpawnProjectile
 //
 //==========================================================================
