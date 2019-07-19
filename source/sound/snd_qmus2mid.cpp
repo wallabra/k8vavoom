@@ -31,6 +31,7 @@
 #include "gamedefs.h"
 #include "snd_local.h"
 
+
 static VCvarB snd_mus_emulate_dmx_bugs("snd_mus_emulate_dmx_bugs", true, "Emulate some DMX bugs when converting MUS to MIDI?", CVAR_Archive);
 
 
