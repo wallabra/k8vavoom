@@ -72,6 +72,13 @@ mark_as_advanced ( LIB_SUFFIX )
 
 # Default install directory names
 #include ( DefaultDirs )
+if ( WIN32 )
+  set (DEFAULT_SOUNDFONT "C:\\\\soundfonts\\\\default.sf2" CACHE STRING
+       "Default soundfont file")
+else ( WIN32 )
+  set (DEFAULT_SOUNDFONT "/usr/share/soundfonts/default.sf2" CACHE STRING
+       "Default soundfont file")
+endif ( WIN32 )
 
 # Basic C library checks
 include ( CheckSTDC )
