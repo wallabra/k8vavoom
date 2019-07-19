@@ -168,6 +168,21 @@ bool VQMus2Mid::Convert (VStream &Strm) {
   TWriteBuf(0, MidiKey, 6);
   TWriteBuf(0, MidiTempo, 7);
 
+  {
+    VStr fname = Strm.GetName();
+    if (fname.length()) {
+      vuint32 stlen = (vuint32)strlen(*fname);
+      if (stlen) {
+        if (stlen > 1024) stlen = 1024;
+        TWriteByte(0, 0x00); // time delta
+        TWriteByte(0, 0xff); // metaevent
+        TWriteByte(0, 0x03); // track name
+        TWriteVarLen(0, stlen);
+        TWriteBuf(0, (const vuint8 *)(fname.getCStr()), (int)stlen);
+      }
+    }
+  }
+
   TrackCnt = 1; // music starts here
 
   Strm << event;
@@ -186,13 +201,11 @@ bool VQMus2Mid::Convert (VStream &Strm) {
     switch (et) {
       // release note
       case 0:
-        //NewEvent = 0x90 | MIDIchannel;
         NewEvent = 0x80|MIDIchannel;
         TWriteByte(MIDItrack, NewEvent);
         Tracks[MIDItrack].LastEvent = NewEvent;
         Strm << data;
         TWriteByte(MIDItrack, data);
-        //TWriteByte(MIDItrack, 0);
         TWriteByte(MIDItrack, 64);
         break;
       // note on
@@ -223,7 +236,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
         TWriteByte(MIDItrack, NewEvent);
         Tracks[MIDItrack].LastEvent = NewEvent;
         Strm << data;
-        check(data < 15);
+        if (data >= 15) { GCon->Log(NAME_Dev, "Invalid MUS control code"); return false; }
         TWriteByte(MIDItrack, Mus2MidControl[data]);
         if (data == 12) {
           //TWriteByte(MIDItrack, LittleShort(MUSh.NumChannels)+1);
@@ -239,7 +252,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
           NewEvent = 0xB0|MIDIchannel;
           TWriteByte(MIDItrack, NewEvent);
           Tracks[MIDItrack].LastEvent = NewEvent;
-          check(data < 15);
+          if (data >= 15) { GCon->Log(NAME_Dev, "Invalid MUS control code"); return false; }
           TWriteByte(MIDItrack, Mus2MidControl[data]);
         } else {
           NewEvent = 0xC0|MIDIchannel;
