@@ -415,4 +415,221 @@ struct MIDheader {
 
 #pragma pack()
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+// SMF parser
+class MIDIData {
+public:
+  enum { MIDI_MAX_CHANNEL = 16, };
+
+  enum /*event type*/ {
+    MIDI_NOOP = 0, // special synthesized event type
+    // channel messages
+    NOTE_OFF = 0x80,
+    NOTE_ON = 0x90,
+    KEY_PRESSURE = 0xa0,
+    CONTROL_CHANGE = 0xb0,
+    PROGRAM_CHANGE = 0xc0,
+    CHANNEL_PRESSURE = 0xd0,
+    PITCH_BEND = 0xe0,
+    // system exclusive
+    MIDI_SYSEX = 0xf0,
+    MIDI_EOX = 0xf7,
+    // meta event
+    MIDI_META_EVENT = 0xff,
+  };
+
+  enum /*metaevent*/ {
+    MIDI_SEQ_NUM = 0x00,
+    MIDI_TEXT = 0x01,
+    MIDI_COPYRIGHT = 0x02,
+    MIDI_TRACK_NAME = 0x03,
+    MIDI_INST_NAME = 0x04,
+    MIDI_LYRIC = 0x05,
+    MIDI_MARKER = 0x06,
+    MIDI_CUE_POINT = 0x07,
+    MIDI_CHANNEL = 0x20, // channel for the following meta
+    MIDI_EOT = 0x2f,
+    MIDI_SET_TEMPO = 0x51,
+    MIDI_SMPTE_OFFSET = 0x54,
+    MIDI_TIME_SIGNATURE = 0x58,
+    MIDI_KEY_SIGNATURE = 0x59,
+    MIDI_SEQUENCER_EVENT = 0x7f,
+  };
+
+  struct MidiTrack {
+  private:
+    vint32 datasize;
+    const vuint8 *tkdata;
+    const vuint8 *pos;
+    MIDIData *song;
+    double nextetime; // milliseconds
+    // after last track command, wait a little
+    double fadeoff;
+
+  public:
+    vuint8 runningStatus;
+    vuint8 lastMetaChannel; // 0xff: all
+    VStr copyright; // track copyright
+    VStr tname; // track name
+    VStr iname; // instrument name
+
+  public:
+    MidiTrack () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), nextetime(0), fadeoff(0), runningStatus(0), lastMetaChannel(0xff) {}
+
+    void setup (MIDIData *asong, const vuint8 *adata, vint32 alen) {
+      if (alen <= 0) adata = nullptr;
+      if (!adata) alen = 0;
+      datasize = alen;
+      tkdata = adata;
+      song = asong;
+      reset();
+    }
+
+    inline void abort (bool full) { if (tkdata) pos = tkdata+datasize; if (full) fadeoff = 0; }
+
+    inline void reset () {
+      pos = tkdata;
+      nextetime = 0;
+      fadeoff = (song->type != 2 ? 100 : 0);
+      runningStatus = 0;
+      lastMetaChannel = 0xff;
+      copyright.clear();
+      tname.clear();
+      iname.clear();
+    }
+
+    inline bool isEndOfData () const { return (!tkdata || pos == tkdata+datasize); }
+    inline bool isEOT () const { return (isEndOfData() ? (nextEventTime() <= song->currtime) : false); }
+
+    inline int getPos () const { return (tkdata ? (int)(ptrdiff_t)(pos-tkdata) : 0); }
+    inline int getLeft () const { return (tkdata ? (int)(ptrdiff_t)(tkdata+datasize-pos) : 0); }
+
+    inline const vuint8 *getCurPosPtr () const { return pos; }
+
+    inline int size () const { return datasize; }
+    inline vuint8 dataAt (int pos) const { return (tkdata && datasize > 0 && pos >= 0 && pos < datasize ? tkdata[pos] : 0); }
+    inline vuint8 operator [] (int ofs) const {
+      if (!tkdata || !datasize) return 0;
+      if (ofs >= 0) {
+        const int left = getLeft();
+        if (ofs >= left) return 0;
+        return pos[ofs];
+      } else {
+        if (ofs == MIN_VINT32) return 0;
+        ofs = -ofs;
+        const int pos = getLeft();
+        if (ofs > pos) return 0;
+        return tkdata[pos-ofs];
+      }
+    }
+
+    inline MIDIData *getSong () { return song; }
+    inline const MIDIData *getSong () const { return song; }
+
+    inline vuint8 peekNextMidiByte () {
+      if (isEndOfData()) return 0;
+      return *pos;
+    }
+
+    inline vuint8 getNextMidiByte () {
+      if (isEndOfData()) return 0;
+      return *pos++;
+    }
+
+    inline void skipNextMidiBytes (int len) {
+      while (len-- > 0) (void)getNextMidiByte();
+    }
+
+    // reads a variable-length SMF number
+    vuint32 readVarLen () {
+      vuint32 res = 0;
+      int left = 4;
+      for (;;) {
+        if (left == 0) { abort(true); return 0; }
+        --left;
+        vuint8 t = getNextMidiByte();
+        res = (res<<7)|(t&0x7fu);
+        if ((t&0x80) == 0) break;
+      }
+      return res;
+    }
+
+    inline vuint32 getDeltaTic () { return readVarLen(); }
+
+    inline double nextEventTime () const { return (nextetime+(isEndOfData() ? fadeoff : 0)); }
+
+    inline void advanceTics (vuint32 tics) {
+      if (isEndOfData()) return;
+      nextetime += song->tic2ms(tics);
+    }
+  };
+
+public:
+  struct MidiEvent {
+    vuint8 type = MIDI_NOOP;
+    vuint8 channel = 0;
+    vuint32 data1 = 0; // payload size for MIDI_SYSEX and MIDI_SEQUENCER_EVENT
+    vuint32 data2 = 0;
+    // this is for MIDI_SYSEX and MIDI_SEQUENCER_EVENT
+    const void *payload = nullptr;
+  };
+
+  // timemsecs -- time for the current event (need not to monotonically increase, can jump around)
+  // note: time can jump around due to events from different tracks
+  typedef void (*EventCBType) (double timemsecs, const MidiEvent &ev, void *udata);
+
+protected:
+  // midi song info
+  TArray<MidiTrack> tracks;
+  vuint16 type;
+  vuint16 delta;
+  vuint32 tempo;
+  double currtime; // milliseconds
+  int currtrack; // for midi type 2
+  // loaded MIDI data
+  vuint8 *midiData;
+  int dataSize;
+
+protected:
+  inline void setTempo (vint32 atempo) {
+    if (atempo <= 0) atempo = 480000;
+    tempo = atempo;
+  }
+
+  inline double tic2ms (vuint32 tic) const { return (((double)tic*tempo)/(delta*1000.0)); }
+  inline double ms2tic (double msec) const { return ((msec*delta*1000.0)/(double)tempo); }
+
+  bool parseMem ();
+
+  bool runTrack (int tidx, EventCBType cb, void *udata);
+
+public:
+  MIDIData ();
+  MIDIData (const MIDIData &) = delete;
+  ~MIDIData ();
+
+  MIDIData & operator = (const MIDIData &) = delete;
+
+  inline bool isValid () const { return (type != 0xff && delta != 0 && tempo != 0); }
+  inline bool isEmpty () const { return (!isValid() || tracks.length() == 0); }
+
+  void clear ();
+
+  static bool isMidiStream (VStream &strm);
+  bool parseStream (VStream &strm);
+
+public:
+  // <0: error
+  //  0: done decoding
+  // >0: number of frames one can generate until next event
+  int decodeStep (EventCBType cb, int SampleRate, void *udata);
+
+  bool isFinished ();
+
+  void restart ();
+  void abort ();
+};
+
+
 #endif

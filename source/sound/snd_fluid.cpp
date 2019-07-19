@@ -83,8 +83,6 @@ static VCvarF snd_fluid_chorus_depth("snd_fluid_chorus_depth", "8", "FluidSynth 
 // [0..1]
 static VCvarI snd_fluid_chorus_type("snd_fluid_chorus_type", "0", "FluidSynth chorus type (0:sine; 1:triangle).", CVAR_Archive);
 
-static VCvarB snd_fluid_midi_messages("snd_fluid_midi_messages", false, "Show messages from MIDI files?", CVAR_Archive);
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
@@ -129,152 +127,19 @@ enum /*metaevent*/ {
 // ////////////////////////////////////////////////////////////////////////// //
 class VFluidAudioCodec : public VAudioCodec {
 public:
-  // midi data definitions
-  struct song_t;
-
-  // these data should not be modified outside the
-  // audio thread unless they're being initialized
-  struct track_t {
-  private:
-    vint32 datasize;
-    const vuint8 *tkdata;
-    const vuint8 *pos;
-    song_t *song;
-    double nextetime; // milliseconds
-    // after last track command, wait a little
-    double fadeoff;
-
-  public:
-    vuint8 runningStatus;
-    vuint8 lastMetaChannel; // 0xff: all
-    VStr copyright; // track copyright
-    VStr tname; // track name
-    VStr iname; // instrument name
-
-  public:
-    track_t () : datasize(0), tkdata(nullptr), pos(nullptr), song(nullptr), nextetime(0), fadeoff(0), runningStatus(0), lastMetaChannel(0xff) {}
-
-    void setup (song_t *asong, const vuint8 *adata, vint32 alen) {
-      if (alen <= 0) adata = nullptr;
-      if (!adata) alen = 0;
-      datasize = alen;
-      tkdata = adata;
-      song = asong;
-      reset();
-    }
-
-    inline void abort (bool full) { if (tkdata) pos = tkdata+datasize; if (full) fadeoff = 0; }
-
-    inline void reset () {
-      pos = tkdata;
-      nextetime = 0;
-      fadeoff = (song->type != 2 ? 100 : 0);
-      runningStatus = 0;
-      lastMetaChannel = 0xff;
-      copyright.clear();
-      tname.clear();
-      iname.clear();
-    }
-
-    inline bool isEndOfData () const { return (!tkdata || pos == tkdata+datasize); }
-    inline bool isEOT () const { return (isEndOfData() ? (nextEventTime() <= song->currtime) : false); }
-
-    inline int getPos () const { return (tkdata ? (int)(ptrdiff_t)(pos-tkdata) : 0); }
-    inline int getLeft () const { return (tkdata ? (int)(ptrdiff_t)(tkdata+datasize-pos) : 0); }
-
-    inline const char *getCurPosPtr () const { return (const char *)pos; }
-
-    inline int size () const { return datasize; }
-    inline vuint8 dataAt (int pos) const { return (tkdata && datasize > 0 && pos >= 0 && pos < datasize ? tkdata[pos] : 0); }
-    inline vuint8 operator [] (int ofs) const {
-      if (!tkdata || !datasize) return 0;
-      if (ofs >= 0) {
-        const int left = getLeft();
-        if (ofs >= left) return 0;
-        return pos[ofs];
-      } else {
-        if (ofs == MIN_VINT32) return 0;
-        ofs = -ofs;
-        const int pos = getLeft();
-        if (ofs > pos) return 0;
-        return tkdata[pos-ofs];
-      }
-    }
-
-    inline song_t *getSong () { return song; }
-    inline const song_t *getSong () const { return song; }
-
-    inline vuint8 peekNextMidiByte () {
-      if (isEndOfData()) return 0;
-      return *pos;
-    }
-
-    inline vuint8 getNextMidiByte () {
-      if (isEndOfData()) return 0;
-      return *pos++;
-    }
-
-    inline void skipNextMidiBytes (int len) {
-      while (len-- > 0) (void)getNextMidiByte();
-    }
-
-    // reads a variable-length SMF number
-    vuint32 readVarLen () {
-      vuint32 res = 0;
-      int left = 4;
-      for (;;) {
-        if (left == 0) { abort(true); return 0; }
-        --left;
-        vuint8 t = getNextMidiByte();
-        res = (res<<7)|(t&0x7fu);
-        if ((t&0x80) == 0) break;
-      }
-      return res;
-    }
-
-    inline vuint32 getDeltaTic () { return readVarLen(); }
-
-    inline double nextEventTime () const { return (nextetime+(isEndOfData() ? fadeoff : 0)); }
-
-    inline void advanceTics (vuint32 tics) {
-      if (isEndOfData()) return;
-      nextetime += song->tic2ms(tics);
-    }
-  };
-
-  struct song_t {
-    vuint16 type;
-    vuint16 delta;
-    TArray<track_t> tracks;
-    vuint32 tempo;
-    double currtime; // milliseconds
-
-    inline void setTempo (vint32 atempo) {
-      if (atempo <= 0) atempo = 480000;
-      tempo = atempo;
-    }
-
-    inline double tic2ms (vuint32 tic) const { return (((double)tic*tempo)/(delta*1000.0)); }
-    inline double ms2tic (double msec) const { return ((msec*delta*1000.0)/(double)tempo); }
-  };
+  MIDIData *mididata;
+  int framesUntilEvent;
 
 public:
-  vuint8 *MidiData;
-  int SongSize;
-  vint32 framesUntilEvent; // number of frames we can generate until the next event
-  int currtrack; // for midi type 2
-  song_t midisong;
-
-public:
-  VFluidAudioCodec (vuint8 *InSong, int aSongSize);
+  VFluidAudioCodec (MIDIData *amididata); // takes ownership
   virtual ~VFluidAudioCodec () override;
+
   virtual int Decode (short *Data, int NumSamples) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-public:
-  // returns `false` if the track is complete
-  bool runTrack (int tidx);
+private:
+  static void eventCB (double timemsecs, const MIDIData::MidiEvent &ev, void *);
 
 public:
   static VAudioCodec *Create (VStream *InStrm);
@@ -553,73 +418,10 @@ bool FluidManager::InitFluid () {
 //  VFluidAudioCodec::VFluidAudioCodec
 //
 //==========================================================================
-VFluidAudioCodec::VFluidAudioCodec (vuint8 *InSong, int aSongSize)
-  : MidiData(InSong)
-  , SongSize(aSongSize)
-  , framesUntilEvent(0)
-  , currtrack(0)
+VFluidAudioCodec::VFluidAudioCodec (MIDIData *amididata)
+  : mididata(amididata)
 {
   FluidManager::ResetSynth();
-  memset((void *)&midisong, 0, sizeof(midisong));
-
-  vuint16 ntracks = 0;
-  char header[4] = {0};
-  vuint32 chunksize = 0;
-
-  memcpy(&header[0], InSong, 4); InSong += 4;
-
-  memcpy(&chunksize, InSong, 4); InSong += 4;
-  chunksize = BigLong(chunksize);
-  check(chunksize >= 6);
-
-  memcpy(&midisong.type, InSong, 2); InSong += 2;
-  midisong.type = BigShort(midisong.type);
-
-  memcpy(&ntracks, InSong, 2); InSong += 2;
-  ntracks = BigShort(ntracks);
-
-  memcpy(&midisong.delta, InSong, 2); InSong += 2;
-  midisong.delta = BigShort(midisong.delta);
-
-  midisong.setTempo(480000);
-
-  if (ntracks > 0) {
-    // collect tracks
-    vuint8 *data = InSong; //song.data+0x0e;
-    int left = aSongSize-(vint32)chunksize-4*2;
-    while (midisong.tracks.length() < ntracks) {
-      if (left < 8) break;
-      memcpy(header, data, 4);
-      memcpy(&chunksize, data+4, 4);
-      left -= 8;
-      data += 8;
-      chunksize = BigLong(chunksize);
-      if (chunksize > (vuint32)left) break;
-      // ignore non-track chunks
-      if (memcmp(header, "MTrk", 4) != 0) {
-        bool ok = true;
-        for (int f = 0; f < 4; ++f) {
-          vuint8 ch = (vuint8)header[f];
-          if (ch < 32 || ch >= 127) { ok = false; break; }
-        }
-        if (!ok) break;
-      } else {
-        track_t &track = midisong.tracks.alloc();
-        memset((void *)&track, 0, sizeof(track_t));
-        track.setup(&midisong, data, (vint32)chunksize);
-#ifdef VV_FLUID_DEBUG_DUMP_TRACKS
-        GCon->Logf("  track #%d: %u bytes", midisong.tracks.length()-1, track.size());
-        for (int f = 0; f < track.size(); ++f) GCon->Logf("    %5d: 0x%02x", f, track[f]);
-#endif
-      }
-      left -= chunksize;
-      data += chunksize;
-    }
-  }
-
-#ifdef VV_FLUID_DEBUG
-  GCon->Logf("Fluid: %d tracks in song", midisong.tracks.length());
-#endif
   Restart();
 }
 
@@ -630,238 +432,41 @@ VFluidAudioCodec::VFluidAudioCodec (vuint8 *InSong, int aSongSize)
 //
 //==========================================================================
 VFluidAudioCodec::~VFluidAudioCodec () {
-  midisong.tracks.clear();
-  Z_Free(MidiData);
+  delete mididata;
+  mididata = nullptr;
 }
 
 
 //==========================================================================
 //
-//  VFluidAudioCodec::runTrack
-//
-//  main midi parsing routine
-//  returns `false` if the track is complete
+//  VFluidAudioCodec::eventCB
 //
 //==========================================================================
-bool VFluidAudioCodec::runTrack (int tidx) {
-  if (tidx < 0 || tidx >= midisong.tracks.length()) return false;
-
-  track_t &track = midisong.tracks[tidx];
-  song_t *song = track.getSong();
-
-  if (song->currtime < track.nextEventTime()) return true;
-
-  // we are in "post-track pause" now, and it was just expired
-  if (track.isEndOfData()) return false;
-
-#ifdef VV_FLUID_DEBUG_TICKS
-  GCon->Logf("FLUID: TICK for channel #%d (stime=%g; ntt=%g; eot=%d)", tidx, song->currtime, track.nextEventTime(), (track.isEndOfData() ? 1 : 0));
-#endif
-
-  // keep parsing through midi track until
-  // the end is reached or until it reaches next delta time
-  while (!track.isEndOfData() && song->currtime >= track.nextEventTime()) {
-    vuint8 evcode = track.peekNextMidiByte();
-    // for invalid status byte: use the running status instead
-    if ((evcode&0x80) == 0) {
-      evcode = track.runningStatus;
-    } else {
-      evcode = track.getNextMidiByte();
-      track.runningStatus = evcode; //k8: dunno, it seems that only normal midi events should do this, but...
-    }
-
-    // still invalid?
-    if ((evcode&0x80) == 0) { track.abort(true); return false; }
-
-#ifdef VV_FLUID_DEBUG_TICKS
-    GCon->Logf("EVENT: tidx=%d; pos=%d; len=%d; left=%d; event=0x%02x; nt=%g; ct=%g", tidx, track.getPos(), track.size(), track.getLeft(), evcode, track.nextEventTime(), song->currtime);
-#endif
-
-    if (evcode == MIDI_SYSEX) {
-      // system exclusive
-      // read the length of the message
-      vuint32 len = track.readVarLen();
-      // check for valid length
-      if (len == 0 || len > (vuint32)track.getLeft()) { track.abort(true); return false; }
-      if (track[len-1] == MIDI_EOX) {
-        fluid_synth_sysex(FluidManager::synth, track.getCurPosPtr(), len-1, nullptr, nullptr, nullptr, 0);
-      } else {
-        // oops, incomplete packed, ignore it
-      }
-      track.skipNextMidiBytes(len);
-    } else if (evcode == MIDI_EOX) {
-      vuint32 len = track.readVarLen();
-      // check for valid length
-      if (len == 0 || len > (vuint32)track.getLeft()) { track.abort(true); return false; }
-      track.skipNextMidiBytes(len);
-    } else if (evcode == MIDI_META_EVENT) {
-      evcode = track.getNextMidiByte();
-      vuint32 len = track.readVarLen();
-      // check for valid length
-      if (len > (vuint32)track.getLeft()) { track.abort(true); return false; }
-#ifdef VV_FLUID_DEBUG
-      GCon->Logf("META: tidx=%d; meta=0x%02x; len=%u", tidx, evcode, len);
-#endif
-      switch (evcode) {
-        case MIDI_EOT:
-#ifdef VV_FLUID_DEBUG
-          GCon->Log("  END-OF-TRACK");
-#endif
-          track.abort(false);
-          break;
-        case MIDI_SET_TEMPO:
-          if (len == 3) {
-            vint32 t = (((vuint32)track[0])<<16)|(((vuint32)track[1])<<8)|((vuint32)track[2]);
-#ifdef VV_FLUID_DEBUG
-            GCon->Logf("  tempo: %u", t);
-#endif
-            song->setTempo(t);
-          }
-          break;
-        case MIDI_CHANNEL: // channel for the following meta
-          if (len == 1) {
-            track.lastMetaChannel = track[0];
-            if (track.lastMetaChannel >= MIDI_MAX_CHANNEL) track.lastMetaChannel = 0xff;
-          }
-          break;
-        // texts
-        case MIDI_COPYRIGHT:
-        case MIDI_TRACK_NAME:
-        case MIDI_INST_NAME:
-          {
-            VStr data;
-            if (len > 0) {
-              // collect text
-              VStr currLine;
-              bool prevLineWasEmpty = true;
-              for (vuint32 f = 0; f < len; ++f) {
-                vuint8 ch = track[f];
-                if (ch == '\r' && (f == len-1 || track[f+1] != '\n')) ch = '\n';
-                if (ch == '\n') {
-                  while (currLine.length() && (vuint8)(currLine[currLine.length()-1]) <= ' ') currLine.chopRight(1);
-                  if (currLine.length() != 0) {
-                    if (data.length()) data += '\n';
-                    data += currLine;
-                    prevLineWasEmpty = false;
-                  } else {
-                    if (!prevLineWasEmpty) {
-                      if (data.length()) data += '\n';
-                      data += currLine;
-                    }
-                    prevLineWasEmpty = true;
-                  }
-                  currLine.clear();
-                } else {
-                  if (ch < 32 || ch >= 127) ch = ' ';
-                  if (ch == ' ') {
-                    if (currLine.length() > 0 && currLine[currLine.length()-1] != ' ') currLine += (char)ch;
-                  } else {
-                    currLine += (char)ch;
-                  }
-                }
-              }
-              while (currLine.length() && (vuint8)(currLine[currLine.length()-1]) <= ' ') currLine.chopRight(1);
-              if (currLine.length()) {
-                if (data.length()) data += '\n';
-                data += currLine;
-              }
-            }
-            const char *mstype = nullptr;
-            switch (evcode) {
-              case MIDI_COPYRIGHT: mstype = "copyright"; track.copyright = data; break;
-              case MIDI_TRACK_NAME: mstype = "name"; track.tname = data; break;
-              case MIDI_INST_NAME: mstype = "instrument"; track.iname = data; break;
-            }
-            if (snd_fluid_midi_messages && data.length() != 0 && mstype) {
-              TArray<VStr> lines;
-              data.split('\n', lines);
-              check(lines.length() > 0);
-              const char *pfx = "";
-              for (auto &&ls : lines) {
-                GCon->Logf("FluidSynth: MIDI track #%d %s: %s%s", tidx, mstype, pfx, *ls);
-                pfx = "  ";
-              }
-            }
-          }
-          break;
-        default:
-          break;
-      }
-      track.skipNextMidiBytes(len);
-    } else {
-      //track.runningStatus = evcode;
-
-      vuint8 event = evcode&0xf0u;
-      vuint8 channel = evcode&0x0fu;
-
-      // all channel message have at least 1 byte of associated data
-      vuint8 data1 = track.getNextMidiByte();
-      vuint8 data2;
-
-      switch (event) {
-        case NOTE_OFF:
-          data2 = track.getNextMidiByte();
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):NOTE_OFF: %u %u", channel, data1, data2);
-#endif
-          fluid_synth_noteoff(FluidManager::synth, channel, data1);
-          break;
-        case NOTE_ON:
-          data2 = track.getNextMidiByte();
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):NOTE_N: %u %u", channel, data1, data2);
-#endif
-          fluid_synth_noteon(FluidManager::synth, channel, data1, data2);
-          break;
-        case KEY_PRESSURE:
-          data2 = track.getNextMidiByte();
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):KEY_PRESSURE: %u %u", channel, data1, data2);
-#endif
-          break;
-        case CONTROL_CHANGE:
-          data2 = track.getNextMidiByte();
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):CONTROL_CHANGE: %u %u", channel, data1, data2);
-#endif
-          fluid_synth_cc(FluidManager::synth, channel, data1, data2);
-          break;
-        case PROGRAM_CHANGE:
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):PROGRAM_CHANGE: %u", channel, data1);
-#endif
-          fluid_synth_program_change(FluidManager::synth, channel, data1);
-          break;
-        case CHANNEL_PRESSURE:
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):CHANNEL_PRESSURE: %u", channel, data1);
-#endif
-          fluid_synth_channel_pressure(FluidManager::synth, channel, data1);
-          break;
-        case PITCH_BEND: // pitch bend
-          data2 = track.getNextMidiByte();
-#ifdef VV_FLUID_DEBUG
-          GCon->Logf("  (%u):PITCH_BEND: %u", channel, (data1&0x7f)|(((vuint32)(data2&0x7f))<<7));
-#endif
-          fluid_synth_pitch_bend(FluidManager::synth, channel, (data1&0x7f)|(((vuint32)(data2&0x7f))<<7));
-          break;
-        default:
-          GCon->Logf("  (%u):INVALID COMMAND! (0x%02x)", channel, event);
-          track.abort(true);
-          return false;
-      }
-    }
-    // check for end of the track, otherwise get the next delta time
-    if (!track.isEndOfData()) {
-      vuint32 dtime = track.getDeltaTic();
-#ifdef VV_FLUID_DEBUG
-      GCon->Logf("  timedelta: %u (%g) (pos=%d)", dtime, song->tic2ms(dtime), track.getPos());
-#endif
-      track.advanceTics(dtime);
-    }
+void VFluidAudioCodec::eventCB (double timemsecs, const MIDIData::MidiEvent &ev, void *) {
+  switch (ev.type) {
+    case MIDIData::NOTE_OFF:
+      fluid_synth_noteoff(FluidManager::synth, ev.channel, ev.data1);
+      break;
+    case MIDIData::NOTE_ON:
+      fluid_synth_noteon(FluidManager::synth, ev.channel, ev.data1, ev.data2);
+      break;
+    case MIDIData::KEY_PRESSURE:
+      break;
+    case MIDIData::CONTROL_CHANGE:
+      fluid_synth_cc(FluidManager::synth, ev.channel, ev.data1, ev.data2);
+      break;
+    case MIDIData::PROGRAM_CHANGE:
+      fluid_synth_program_change(FluidManager::synth, ev.channel, ev.data1);
+      break;
+    case MIDIData::CHANNEL_PRESSURE:
+      fluid_synth_channel_pressure(FluidManager::synth, ev.channel, ev.data1);
+      break;
+    case MIDIData::PITCH_BEND: // pitch bend
+      fluid_synth_pitch_bend(FluidManager::synth, ev.channel, ev.data1);
+      break;
+    default:
+      break;
   }
-
-  return true;
 }
 
 
@@ -871,65 +476,23 @@ bool VFluidAudioCodec::runTrack (int tidx) {
 //
 //==========================================================================
 int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
+  if (!mididata) return 0;
   int res = 0;
   // use adaptive stepping
   while (NumSamples > 0) {
     if (framesUntilEvent == 0) {
-      double nextEventTime = -1;
-      //midisong.currtime += stepmsec;
-#ifdef VV_FLUID_DEBUG_TICKS
-      //GCon->Logf("FLUID: TICK (total=%d, left=%d)!", res, NumSamples);
-#endif
-      if (midisong.type != 2) {
-        for (int f = 0; f < midisong.tracks.length(); ++f) {
-          if (runTrack(f)) {
-            double ntt = midisong.tracks[f].nextEventTime();
-#ifdef VV_FLUID_DEBUG
-            GCon->Logf("*** TRACK #%d: ntt=%g; mintt=%g (stime=%g)", f, ntt, nextEventTime, midisong.currtime);
-#endif
-            if (nextEventTime < 0 || nextEventTime > ntt) nextEventTime = ntt;
-          }
-        }
-      } else {
-        while (currtrack < midisong.tracks.length()) {
-          if (runTrack(currtrack)) {
-            nextEventTime = midisong.tracks[currtrack].nextEventTime();
-            break;
-          }
-          midisong.currtime = 0;
-          nextEventTime = -1;
-          ++currtrack;
-        }
-      }
-      if (nextEventTime < 0) {
-#ifdef VV_FLUID_DEBUG
-        GCon->Logf("FluidSynth: no more active tracks");
-#endif
+      framesUntilEvent = mididata->decodeStep(&eventCB, 44100, nullptr);
+      if (framesUntilEvent <= 0) {
+        // done
         FluidManager::ResetSynth();
         break;
       }
-      if (nextEventTime <= midisong.currtime) {
-        GCon->Logf(NAME_Error, "FluidSynth: internal error in MIDI decoder!");
-        //GCon->Logf("FS: currtime=%g; nexttime=%g", midisong.currtime, nextEventTime);
-        for (auto &&track : midisong.tracks) track.abort(true);
-        FluidManager::ResetSynth();
-        break;
-      }
-      // calculate number of frames to generate before next event
-      framesUntilEvent = (vint32)((nextEventTime-midisong.currtime)*44100.0/1000.0);
-      if (framesUntilEvent < 0) framesUntilEvent = 0; // just in case
-#ifdef VV_FLUID_DEBUG
-      GCon->Logf("FS: currtime=%g; nexttime=%g; delta=%g; frames=%d", midisong.currtime, nextEventTime, nextEventTime-midisong.currtime, framesUntilEvent);
-#endif
-      // advance virtual time
-      midisong.currtime = nextEventTime;
-      if (framesUntilEvent == 0) continue; // nothing to generate yet
     }
     int rdf = NumSamples;
     if (rdf > framesUntilEvent) rdf = framesUntilEvent;
     if (fluid_synth_write_s16(FluidManager::synth, rdf, Data, 0, 2, Data, 1, 2) != FLUID_OK) {
       GCon->Log(NAME_Error, "FluidSynth: error getting a sample, playback aborted!");
-      for (auto &&track : midisong.tracks) track.abort(true);
+      mididata->abort();
       break;
     }
     //GCon->Logf("FLUID: got a sample (total=%d, left=%d)!", res, NumSamples);
@@ -939,12 +502,7 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
     framesUntilEvent -= rdf;
     check(framesUntilEvent >= 0);
   }
-  if (res == 0) {
-    FluidManager::ResetSynth();
-#ifdef VV_FLUID_DEBUG
-    GCon->Logf("FluidSynth: decode complete!");
-#endif
-  }
+  if (res == 0) FluidManager::ResetSynth();
   return res;
 }
 
@@ -955,15 +513,7 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
 //
 //==========================================================================
 bool VFluidAudioCodec::Finished () {
-  if (midisong.type != 2) {
-    for (int f = 0; f < midisong.tracks.length(); ++f) {
-      track_t &track = midisong.tracks[f];
-      if (!track.isEOT()) return false;
-    }
-    return true;
-  } else {
-    return (currtrack >= midisong.tracks.length());
-  }
+  return (mididata ? mididata->isFinished() : true);
 }
 
 
@@ -974,16 +524,8 @@ bool VFluidAudioCodec::Finished () {
 //==========================================================================
 void VFluidAudioCodec::Restart () {
   FluidManager::ResetSynth();
-  midisong.setTempo(480000);
-  midisong.currtime = 0;
+  if (mididata) mididata->restart();
   framesUntilEvent = 0;
-  for (int f = 0; f < midisong.tracks.length(); ++f) {
-    track_t &track = midisong.tracks[f];
-    check(track.getSong() == &midisong);
-    track.reset();
-    // perform first advance
-    if (!track.isEndOfData()) track.advanceTics(track.getDeltaTic());
-  }
 }
 
 
@@ -1000,40 +542,22 @@ VAudioCodec *VFluidAudioCodec::Create (VStream *InStrm) {
   if (size < 0x0e) return nullptr;
 
   // check if it's a MIDI file
-  char Header[4];
   InStrm->Seek(0);
-  InStrm->Serialise(Header, 4);
-  if (InStrm->IsError() || memcmp(Header, "MThd", 4)) return nullptr;
-
-  vuint32 hdrSize = 0;
-  vuint16 type = 0;
-  vuint16 ntracks = 0;
-  vuint16 divisions = 0;
-
-  InStrm->SerialiseBigEndian(&hdrSize, 4);
-  InStrm->SerialiseBigEndian(&type, 2);
-  InStrm->SerialiseBigEndian(&ntracks, 2);
-  InStrm->SerialiseBigEndian(&divisions, 2);
-  if (InStrm->IsError()) return nullptr;
-  if (hdrSize != 6) { GCon->Logf(NAME_Warning, "invalid midi header size for '%s'", *InStrm->GetName()); return nullptr; }
-  if (type > 2) { GCon->Logf(NAME_Warning, "invalid midi type for '%s'", *InStrm->GetName()); return nullptr; }
-  if (divisions == 0 || divisions >= 0x7fffu) { GCon->Logf(NAME_Warning, "midi SMPTE timing is not supported for '%s'", *InStrm->GetName()); return nullptr; }
-
+  if (!MIDIData::isMidiStream(*InStrm)) return nullptr;
   if (!fluidManager.InitFluid()) return nullptr;
 
   // load song
-  vuint8 *data = (vuint8 *)Z_Malloc(size);
+  MIDIData *mdata = new MIDIData();
   InStrm->Seek(0);
-  InStrm->Serialise(data, size);
-  if (InStrm->IsError()) {
-    Z_Free(data);
-    GCon->Logf(NAME_Warning, "Failed to load MIDI song '%s'", *InStrm->GetName());
+  if (!mdata->parseStream(*InStrm)) {
+    // some very fatal error
+    delete mdata;
     return nullptr;
   }
-
+  // ok, we pwned it
   InStrm->Close();
   delete InStrm;
 
   // create codec
-  return new VFluidAudioCodec(data, size);
+  return new VFluidAudioCodec(mdata);
 }
