@@ -28,7 +28,7 @@
 #include "snd_local.h"
 
 
-static VCvarB snd_fluid_midi_messages("snd_fluid_midi_messages", false, "Show messages from MIDI files?", CVAR_Archive);
+static VCvarB snd_midi_messages("snd_midi_messages", false, "Show messages from MIDI files?", CVAR_Archive);
 
 
 //==========================================================================
@@ -108,6 +108,17 @@ bool MIDIData::isMidiStream (VStream &strm) {
   int stpos = strm.Tell();
   strm.Serialise(header, 4);
   if (strm.IsError()) return false;
+
+  // m$ fucked SMF-IN-RIFF shit
+  if (memcmp(header, "RIFF", 4) == 0) {
+    strm.Serialise(header, 4); // size, ignore it
+    strm.Serialise(header, 4);
+    if (strm.IsError()) return false;
+    if (memcmp(header, "RMID", 4) != 0) { strm.Seek(stpos); return false; }
+    strm.Serialise(header, 4);
+    if (strm.IsError()) return false;
+  }
+
   if (memcmp(header, "MThd", 4) != 0) { strm.Seek(stpos); return false; }
 
   vuint32 hdrSize = 0;
@@ -150,6 +161,17 @@ bool MIDIData::parseMem () {
   vuint32 chunksize;
 
   memcpy(&header[0], indata, 4); indata += 4;
+
+  // m$ fucked SMF-IN-RIFF shit
+  if (memcmp(header, "RIFF", 4) == 0) {
+    if (inleft < 4+4+4+14) return false; // riff, size, rmid
+    if (memcmp(indata+4+4, "RMID", 4) != 0) return false; // invalid signature
+    indata += 4+4+4; // skip all headers
+    inleft -= 4+4+4;
+    check(inleft >= 14);
+    memcpy(&header[0], indata, 4); indata += 4;
+  }
+
   if (memcmp(header, "MThd", 4) != 0) return false;
 
   memcpy(&chunksize, indata, 4); indata += 4;
@@ -380,7 +402,7 @@ bool MIDIData::runTrack (int tidx, EventCBType cb, void *udata) {
               case MIDI_TRACK_NAME: mstype = "name"; track.tname = data; break;
               case MIDI_INST_NAME: mstype = "instrument"; track.iname = data; break;
             }
-            if (snd_fluid_midi_messages && data.length() != 0 && mstype) {
+            if (snd_midi_messages && data.length() != 0 && mstype) {
               TArray<VStr> lines;
               data.split('\n', lines);
               check(lines.length() > 0);
