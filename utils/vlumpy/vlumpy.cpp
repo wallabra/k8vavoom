@@ -103,12 +103,114 @@ static char srcpath[256];
 static char destpath[256];
 
 static RGB_MAP rgb_table;
-static bool rgb_table_created;
+static bool rgb_table_created = false;
 
 static char lumpname[256];
 static char destfile[1024];
 
-static bool Fon2ColorsUsed[256];
+static bool Fon2ColorsUsed[256] = {0};
+
+
+//==========================================================================
+//
+//  makecol8
+//
+//==========================================================================
+static inline int makecol8 (int r, int g, int b) {
+  return rgb_table.data[r>>3][g>>3][b>>3];
+}
+
+
+//==========================================================================
+//
+//  rgbDistanceSquared
+//
+//  see https://www.compuphase.com/cmetric.htm
+//
+//==========================================================================
+static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
+  const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
+  const vint32 r = (vint32)r0-(vint32)r1;
+  const vint32 g = (vint32)g0-(vint32)g1;
+  const vint32 b = (vint32)b0-(vint32)b1;
+  return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
+}
+
+
+//==========================================================================
+//
+//  my_bestfit_color
+//
+//==========================================================================
+static int my_bestfit_color (int r, int g, int b) {
+  int best_color = 0;
+  int best_dist = 0x7fffffff;
+
+  if (r < 0) r = 0; else if (r > 255) r = 255;
+  if (g < 0) g = 0; else if (g > 255) g = 255;
+  if (b < 0) b = 0; else if (b > 255) b = 255;
+
+  for (int i = 1; i < 256; ++i) {
+    /*
+    int dist = (ImgPal[i].r-r)*(ImgPal[i].r-r)+
+      (ImgPal[i].g-g)*(ImgPal[i].g-g)+
+      (ImgPal[i].b-b)*(ImgPal[i].b-b);
+    */
+    int dist = rgbDistanceSquared(r, g, b, ImgPal[i].r, ImgPal[i].g, ImgPal[i].b);
+    if (dist < best_dist) {
+      best_color = i;
+      best_dist = dist;
+      if (!dist) break;
+    }
+  }
+  return best_color;
+}
+
+
+//==========================================================================
+//
+//  SetupRGBTable
+//
+//==========================================================================
+static void SetupRGBTable () {
+  if (rgb_table_created) return;
+  for (int r = 0; r < 32; ++r) {
+    for (int g = 0; g < 32; ++g) {
+      for (int b = 0; b < 32; ++b) {
+        rgb_table.data[r][g][b] = my_bestfit_color(
+          (int)(r*255.0/31.0+0.5),
+          (int)(g*255.0/31.0+0.5),
+          (int)(b*255.0/31.0+0.5));
+      }
+    }
+  }
+  rgb_table_created = true;
+}
+
+
+//==========================================================================
+//
+//  fn
+//
+//==========================================================================
+static char *fn (const char *name) {
+  static char filename[8192];
+  if (name[0] == '/' || name[0] == '\\' || name[1] == ':') {
+    // absolute path
+    strcpy(filename, name);
+  } else if (destpath[0]) {
+    snprintf(filename, sizeof(filename)-256, "%s%s", destpath, name);
+    FILE *f = fopen(filename, "rb");
+    if (f) {
+      fclose(f);
+    } else {
+      snprintf(filename, sizeof(filename)-256, "%s%s", srcpath, name);
+    }
+  } else {
+    snprintf(filename, sizeof(filename)-256, "%s%s", srcpath, name);
+  }
+  return filename;
+}
 
 
 //==========================================================================
@@ -116,7 +218,7 @@ static bool Fon2ColorsUsed[256];
 //  AddToZip
 //
 //==========================================================================
-void AddToZip (const char *Name, void *Data, size_t Size) {
+static void AddToZip (const char *Name, void *Data, size_t Size) {
   zip_fileinfo zi;
   memset(&zi, 0, sizeof(zi));
 
@@ -152,16 +254,6 @@ void AddToZip (const char *Name, void *Data, size_t Size) {
 
 //==========================================================================
 //
-//  makecol8
-//
-//==========================================================================
-static inline int makecol8 (int r, int g, int b) {
-  return rgb_table.data[r>>3][g>>3][b>>3];
-}
-
-
-//==========================================================================
-//
 //  GetPixel
 //
 //==========================================================================
@@ -177,31 +269,6 @@ static inline vuint8 GetPixel (int x, int y) {
 //==========================================================================
 static inline rgba_t &GetPixelRGB (int x, int y) {
   return ((rgba_t *)ImgData)[x+y*ImgWidth];
-}
-
-
-//==========================================================================
-//
-//  fn
-//
-//==========================================================================
-char *fn (const char *name) {
-  static char filename[1024];
-  if (name[0] == '/' || name[0] == '\\' || name[1] == ':') {
-    // absolute path
-    strcpy(filename, name);
-  } else if (destpath[0]) {
-    sprintf(filename, "%s%s", destpath, name);
-    FILE* f = fopen(filename, "rb");
-    if (f) {
-      fclose(f);
-    } else {
-      sprintf(filename, "%s%s", srcpath, name);
-    }
-  } else {
-    sprintf(filename, "%s%s", srcpath, name);
-  }
-  return filename;
 }
 
 
@@ -278,77 +345,10 @@ static void LoadImage () {
 
 //==========================================================================
 //
-//  rgbDistanceSquared
-//
-//  see https://www.compuphase.com/cmetric.htm
-//
-//==========================================================================
-static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
-  const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
-  const vint32 r = (vint32)r0-(vint32)r1;
-  const vint32 g = (vint32)g0-(vint32)g1;
-  const vint32 b = (vint32)b0-(vint32)b1;
-  return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
-}
-
-
-//==========================================================================
-//
-//  my_bestfit_color
-//
-//==========================================================================
-int my_bestfit_color (int r, int g, int b) {
-  int best_color = 0;
-  int best_dist = 0x7fffffff;
-
-  if (r < 0) r = 0; else if (r > 255) r = 255;
-  if (g < 0) g = 0; else if (g > 255) g = 255;
-  if (b < 0) b = 0; else if (b > 255) b = 255;
-
-  for (int i = 1; i < 256; ++i) {
-    /*
-    int dist = (ImgPal[i].r-r)*(ImgPal[i].r-r)+
-      (ImgPal[i].g-g)*(ImgPal[i].g-g)+
-      (ImgPal[i].b-b)*(ImgPal[i].b-b);
-    */
-    int dist = rgbDistanceSquared(r, g, b, ImgPal[i].r, ImgPal[i].g, ImgPal[i].b);
-    if (dist < best_dist) {
-      best_color = i;
-      best_dist = dist;
-      if (!dist) break;
-    }
-  }
-  return best_color;
-}
-
-
-//==========================================================================
-//
-//  SetupRGBTable
-//
-//==========================================================================
-void SetupRGBTable () {
-  if (rgb_table_created) return;
-  for (int r = 0; r < 32; ++r) {
-    for (int g = 0; g < 32; ++g) {
-      for (int b = 0; b < 32; ++b) {
-        rgb_table.data[r][g][b] = my_bestfit_color(
-          (int)(r*255.0/31.0+0.5),
-          (int)(g*255.0/31.0+0.5),
-          (int)(b*255.0/31.0+0.5));
-      }
-    }
-  }
-  rgb_table_created = true;
-}
-
-
-//==========================================================================
-//
 //  GrabRGBTable
 //
 //==========================================================================
-void GrabRGBTable () {
+static void GrabRGBTable () {
   vuint8 tmp[32*32*32+4];
 
   SetupRGBTable();
@@ -369,7 +369,7 @@ void GrabRGBTable () {
 //  lumpname TINTTAB amount
 //
 //==========================================================================
-void GrabTranslucencyTable () {
+static void GrabTranslucencyTable () {
   vuint8 table[256*256];
   vuint8 temp[768];
 
@@ -410,7 +410,7 @@ void GrabTranslucencyTable () {
 //  lumpname SCALEMAP r g b
 //
 //==========================================================================
-void GrabScaleMap () {
+static void GrabScaleMap () {
   vuint8 map[256];
 
   SC_MustGetFloat();
@@ -441,7 +441,7 @@ void GrabScaleMap () {
 //  lumpname RAW x y width height
 //
 //==========================================================================
-void GrabRaw () {
+static void GrabRaw () {
   SC_MustGetNumber();
   int x1 = sc_Number;
   SC_MustGetNumber();
@@ -478,7 +478,7 @@ void GrabRaw () {
 //  lumpname PATCH x y width height leftoffset topoffset
 //
 //==========================================================================
-void GrabPatch () {
+static void GrabPatch () {
   SC_MustGetNumber();
   int x1 = sc_Number;
   SC_MustGetNumber();
@@ -559,7 +559,7 @@ void GrabPatch () {
 //  lumpname PIC x y width height
 //
 //==========================================================================
-void GrabPic () {
+static void GrabPic () {
   SC_MustGetNumber();
   int x1 = sc_Number;
   SC_MustGetNumber();
@@ -600,7 +600,7 @@ void GrabPic () {
 //  lumpname PIC15 x y width height
 //
 //==========================================================================
-void GrabPic15 () {
+static void GrabPic15 () {
   SC_MustGetNumber();
   int x1 = sc_Number;
   SC_MustGetNumber();
@@ -649,7 +649,7 @@ void GrabPic15 () {
 //  CompressChar
 //
 //==========================================================================
-vint8 *CompressChar (vuint8 *Src, vint8 *Dst, int Size) {
+static vint8 *CompressChar (vuint8 *Src, vint8 *Dst, int Size) {
   vuint8 *SrcEnd = Src+Size;
   do {
     if (SrcEnd-Src < 2) {
@@ -682,7 +682,7 @@ vint8 *CompressChar (vuint8 *Src, vint8 *Dst, int Size) {
 //  lumpname FON1
 //
 //==========================================================================
-void GrabFon1 () {
+static void GrabFon1 () {
   // dimensions of a character
   int CharW = ImgWidth/16;
   int CharH = ImgHeight/16;
@@ -729,7 +729,7 @@ void GrabFon1 () {
 //  Fon2PalCmp
 //
 //==========================================================================
-int Fon2PalCmp (const void *v1, const void *v2) {
+static int Fon2PalCmp (const void *v1, const void *v2) {
   int Idx1 = *(const int *)v1;
   int Idx2 = *(const int *)v2;
   // move unused colors to the end
@@ -750,7 +750,7 @@ int Fon2PalCmp (const void *v1, const void *v2) {
 //  lumpname FON2
 //
 //==========================================================================
-void GrabFon2 () {
+static void GrabFon2 () {
   // process characters
   fon2_char_t *Chars[256];
   memset(Chars, 0, sizeof(Chars));
@@ -924,11 +924,13 @@ static void CreateFileList (TArray<DiskFile> &flist, VStr diskpath, VStr destpat
     for (char *cp = diskpath.GetMutableCharPointer(0); *cp; ++cp) if (*cp == '\\') *cp = '/';
     if (diskpath[diskpath.length()-1] != '/') diskpath += "/";
   }
+  TArray<VStr> dirnames;
   for (;;) {
     VStr fname = Sys_ReadDir(dir);
     if (fname.isEmpty()) break;
     if (fname[fname.length()-1] == '/') {
-      CreateFileList(flist, diskpath+fname, destpath+fname, recurse, ext);
+      //CreateFileList(flist, diskpath+fname, destpath+fname, recurse, ext);
+      dirnames.append(fname);
     } else {
       if (ext.length()) {
         if (fname.length() < ext.length()) continue;
@@ -940,15 +942,19 @@ static void CreateFileList (TArray<DiskFile> &flist, VStr diskpath, VStr destpat
     }
   }
   Sys_CloseDir(dir);
+
+  for (auto &&fname : dirnames) {
+    CreateFileList(flist, diskpath+fname, destpath+fname, recurse, ext);
+  }
 }
 
 
 extern "C" {
-static int DFICompare (const void *a, const void *b) {
-  DiskFile *fa = (DiskFile *)a;
-  DiskFile *fb = (DiskFile *)b;
-  return fa->zipName.ICmp(fb->zipName);
-}
+  static int DFICompare (const void *a, const void *b, void *) {
+    DiskFile *fa = (DiskFile *)a;
+    DiskFile *fb = (DiskFile *)b;
+    return fa->zipName.ICmp(fb->zipName);
+  }
 }
 
 //==========================================================================
@@ -956,9 +962,9 @@ static int DFICompare (const void *a, const void *b) {
 //  SortFileList
 //
 //==========================================================================
-void SortFileList (TArray<DiskFile> &flist) {
+static void SortFileList (TArray<DiskFile> &flist) {
   if (flist.length() < 2) return;
-  qsort(flist.ptr(), (size_t)flist.length(), (size_t)sizeof(DiskFile), &DFICompare);
+  timsort_r(flist.ptr(), (size_t)flist.length(), (size_t)sizeof(DiskFile), &DFICompare, nullptr);
 }
 
 
@@ -967,7 +973,7 @@ void SortFileList (TArray<DiskFile> &flist) {
 //  ParseScript
 //
 //==========================================================================
-void ParseScript (const char *name) {
+static void ParseScript (const char *name) {
   ExtractFilePath(name, basepath, sizeof(basepath));
   if (strlen(basepath)+1 > sizeof(srcpath)) Error("Path too long");
   strcpy(srcpath, basepath);
@@ -1056,16 +1062,33 @@ void ParseScript (const char *name) {
       // $recursedir zippath diskpath
       // $recursedirext zippath diskpath ext
       if (!Zip) Error("$recursedir cannot be used outsize of ZIP");
+      bool gotExt = false;
+      VStr ext;
+      if (isScanDirWithExt && SC_Check("|")) {
+        gotExt = true;
+        SC_MustGetString();
+        ext = VStr(sc_String);
+        SC_MustGetStringName("|");
+      }
+      // zippath
       SC_MustGetString();
       VStr zippath = VStr(sc_String);
+      // diskpath
       SC_MustGetString();
       VStr diskpath = VStr(sc_String);
-      VStr ext;
-      if (isScanDirWithExt) {
+      // extension
+      if (isScanDirWithExt && !gotExt) {
         SC_MustGetString();
         ext = VStr(sc_String);
       }
-      //fprintf(stderr, "ZIP: dest=<%s>; disk=<%s>\n", *zippath, *diskpath);
+      if (isScanDirWithExt) {
+        if (ext.length() == 0) SC_ScriptError("empty extension\n");
+        if (ext[0] != '.') SC_ScriptError("extension must start with a dot\n");
+        for (const char *s = *ext; *s; ++s) {
+          if (*s == '<' || *s == '>' || *s == '?' || *s == '*' || *s == '[' || *s == ']') SC_ScriptError("invalid extension character\n");
+        }
+      }
+      //fprintf(stderr, "ZIP: dest=<%s>; disk=<%s>; ext=<%s>\n", *zippath, *diskpath, *ext);
       TArray<DiskFile> flist;
       CreateFileList(flist, diskpath, zippath, isScanDirRecurse, ext);
       SortFileList(flist);
