@@ -431,6 +431,16 @@ public:
   inline VStr defaultExtension (const VStr &extension) const { return DefaultExtension(extension); }
   inline VStr fixSlashes () const { return FixFileSlashes(); }
 
+  // removes all blanks
+  VStr trimRight () const;
+  VStr trimLeft () const;
+  VStr trimAll () const;
+
+  // from my iv.strex
+  inline VStr xstrip () const { return trimAll(); }
+  inline VStr xstripleft () const { return trimLeft(); }
+  inline VStr xstripright () const { return trimRight(); }
+
   bool IsAbsolutePath () const;
   inline bool isAbsolutePath () const { return IsAbsolutePath(); }
 

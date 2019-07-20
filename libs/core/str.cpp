@@ -1160,6 +1160,39 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
 }
 
 
+VStr VStr::trimRight () const {
+  const char *s = getCStr();
+  int len = length();
+  int pos = len;
+  while (pos > 0 && (vuint8)(s[pos-1]) <= ' ') --pos;
+  if (pos == 0) return EmptyString;
+  if (pos == len) return VStr(*this);
+  return left(pos);
+}
+
+
+VStr VStr::trimLeft () const {
+  const char *s = getCStr();
+  int pos = 0, len = length();
+  while (pos < len && (vuint8)(s[pos]) <= ' ') ++pos;
+  if (pos == len) return EmptyString;
+  if (pos == 0) return VStr(*this);
+  return mid(pos, len);
+}
+
+
+VStr VStr::trimAll () const {
+  const char *s = getCStr();
+  int len = length();
+  int lc = 0, rc = len;
+  while (lc < len && (vuint8)(s[lc]) <= ' ') ++lc;
+  while (rc > lc && (vuint8)(s[rc-1]) <= ' ') --rc;
+  if (lc == 0 && rc == len) return VStr(*this);
+  if (lc == rc) return EmptyString;
+  return mid(lc, rc-lc);
+}
+
+
 bool VStr::IsValidUtf8 () const {
   const char *data = getData();
   if (!data) return true;
