@@ -122,6 +122,7 @@ COMMAND(AddPlayerClass) {
 //
 //==========================================================================
 COMMAND(WeaponSection) {
+  if (!ParsingKeyConf) return;
   GGameInfo->eventCmdWeaponSection(Args.Num() > 1 ? Args[1] : "");
 }
 
@@ -132,6 +133,7 @@ COMMAND(WeaponSection) {
 //
 //==========================================================================
 COMMAND(SetSlot) {
+  if (!ParsingKeyConf) return;
   GGameInfo->eventCmdSetSlot(&Args);
 }
 
@@ -142,5 +144,6 @@ COMMAND(SetSlot) {
 //
 //==========================================================================
 COMMAND(AddSlotDefault) {
+  if (!ParsingKeyConf) return;
   GGameInfo->eventCmdAddSlotDefault(&Args);
 }
