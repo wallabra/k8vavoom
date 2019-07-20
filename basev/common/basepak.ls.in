@@ -5,8 +5,8 @@ default.cfg  @CMAKE_CURRENT_SOURCE_DIR@/default.cfg
 startup.vs   @CMAKE_CURRENT_SOURCE_DIR@/startup.vs
 
 // native engine classes, common engine classes, UI
-$recursedirext progs/  @CMAKE_SOURCE_DIR@/progs/common/   .vc
-$recursedirext uidef/  @CMAKE_CURRENT_SOURCE_DIR@/uidef/  .txt
+$recursedirext| .vc| progs/  @CMAKE_SOURCE_DIR@/progs/common/
+$recursedirext|.txt| uidef/  @CMAKE_CURRENT_SOURCE_DIR@/uidef/
 
 // graphics
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
@@ -50,21 +50,21 @@ vavoom_decorate_defs.xml  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_decorate_defs.xml
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 
 // decorate scripts
-decorate.txt            @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
-$recursedirext actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/       .txt
+decorate.txt                  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
+$recursedirext|.txt| actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/
 
 // effect scripts
-vfxdefs.txt             @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt
-$recursedirext fxdefs/  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/  .txt
+vfxdefs.txt                   @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt
+$recursedirext|.txt| fxdefs/  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/
 
 // GLSL shaders
-$recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .fs
-$recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .vs
-$recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .inc
+$recursedirext| .fs| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
+$recursedirext| .vs| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
+$recursedirext|.inc| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
 
 // console font
 $load @CMAKE_CURRENT_SOURCE_DIR@/confont.pcx
 confont.lmp  fon1
 
 // credits for various things
-$recursedirext credits/  @CMAKE_CURRENT_SOURCE_DIR@/credits/  .txt
+$recursedirext|.txt| credits/  @CMAKE_CURRENT_SOURCE_DIR@/credits/
