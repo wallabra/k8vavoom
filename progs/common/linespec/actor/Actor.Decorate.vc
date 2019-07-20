@@ -994,6 +994,191 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
 
 
 //==========================================================================
+// flags for A_CheckLOF
+
+enum /*ELOFFlags*/ {
+  CLOFF_NOAIM_VERT =      0x1,
+  CLOFF_NOAIM_HORZ =      0x2,
+
+  CLOFF_JUMPENEMY =     0x4,
+  CLOFF_JUMPFRIEND =      0x8,
+  CLOFF_JUMPOBJECT =      0x10,
+  CLOFF_JUMPNONHOSTILE =    0x20,
+
+  CLOFF_SKIPENEMY =     0x40,
+  CLOFF_SKIPFRIEND =      0x80,
+  CLOFF_SKIPOBJECT =      0x100,
+  CLOFF_SKIPNONHOSTILE =    0x200,
+
+  CLOFF_MUSTBESHOOTABLE =   0x400,
+
+  CLOFF_SKIPTARGET =      0x800,
+  CLOFF_ALLOWNULL =     0x1000,
+  CLOFF_CHECKPARTIAL =    0x2000,
+
+  CLOFF_MUSTBEGHOST =     0x4000,
+  CLOFF_IGNOREGHOST =     0x8000,
+
+  CLOFF_MUSTBESOLID =     0x10000,
+  CLOFF_BEYONDTARGET =    0x20000,
+
+  CLOFF_FROMBASE =      0x40000,
+  CLOFF_MUL_HEIGHT =      0x80000,
+  CLOFF_MUL_WIDTH =     0x100000,
+
+  CLOFF_JUMP_ON_MISS =    0x200000,
+  CLOFF_AIM_VERT_NOOFFSET = 0x400000,
+
+  CLOFF_SETTARGET =     0x800000,
+  CLOFF_SETMASTER =     0x1000000,
+  CLOFF_SETTRACER =     0x2000000,
+
+  CLOFF_SKIPOBSTACLES = CLOFF_SKIPENEMY|CLOFF_SKIPFRIEND|CLOFF_SKIPOBJECT|CLOFF_SKIPNONHOSTILE,
+  CLOFF_NOAIM = CLOFF_NOAIM_VERT|CLOFF_NOAIM_HORZ
+};
+
+
+//==========================================================================
+//
+//  A_CheckLOF
+//
+//==========================================================================
+final state A_CheckLOF (optional state jump, optional int flags, optional float range,
+                        optional float minrange, optional float angle, optional float pitch,
+                        optional float offsetheight, optional float offsetwidth,
+                        optional int ptr_target, optional float offsetforward)
+{
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (specified_minrange) {
+    printwarn("A_CheckLOF is not fully implemented yet!");
+    return none;
+  }
+
+  if (range <= 0) return none;
+
+  EntityEx Targ;
+  if (!bIsPlayer) {
+    Targ = Aim(nullptr, range, Angles.yaw, noAutoaim:false, noVertAutoAim:false);
+    if (!Targ || Targ != Target) return none;
+  } else {
+    // this is prolly called from weapon code, so target is what we have in player's crosshair
+    TVec Dir;
+    //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
+    bool noAAim = !PlayerEx(Player).bAutoAim, noAAVert = false;
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
+    //if (flags&JLOSF_NOAUTOAIM) noAAim = true;
+    noAAVert = noAAim;
+    Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
+    if (!Targ || !Targ.bShootable || !Targ.bMonster || Targ.Health <= 0) return none;
+  }
+
+  // just in case
+  if (!Targ) return none;
+
+  if (jump) DoJump(jump);
+  return jump;
+
+//final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+/*
+  name cvn = name(cvar);
+  if (CvarExists(cvn)) {
+    if (GetCvarB(cvn)) DoJump(Label);
+  }
+*/
+#ifdef THIS_WILL_NEVER_BE_DEFINED_I_HOPE
+  if (distmax == 0) distmax = 8192;
+  Fov = fabs(Fov);
+
+  // according to https://zdoom.org/wiki/A_JumpIfTargetInLOS
+  if ((flags&JLOSF_PROJECTILE) && !bMissile) flags &= ~JLOSF_PROJECTILE;
+
+  EntityEx Targ;
+  if (!bIsPlayer) {
+    Targ = Target;
+    // according to https://zdoom.org/wiki/A_JumpIfTargetInLOS
+         if (flags&JLOSF_CHECKMASTER) Targ = Master;
+    else if (flags&JLOSF_CHECKTRACER) Targ = Tracer;
+    else if (flags&JLOSF_PROJECTILE) Targ = (bSeekerMissile ? Tracer : none);
+  } else {
+    // this is prolly called from weapon code, so target is what we have in player's crosshair
+    TVec Dir;
+    //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
+    //k8: emulate autoaim in any case
+    /*
+    bool noAAim = !PlayerEx(Player).bAutoAim, noAAVert = false;
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
+    if (flags&JLOSF_NOAUTOAIM) noAAim = true;
+    noAAVert = noAAim;
+    */
+    bool noAAim = !!(flags&JLOSF_NOAUTOAIM);
+    bool noAAVert = noAAim;
+    Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
+  }
+
+  // moved here from `!bIsPlayer`
+  if (!Targ) return false;
+
+  // check target type flags before other, more expensive flags
+
+  // combatant?
+  if (flags&JLOSF_COMBATANTONLY) {
+    if (!Targ.bIsPlayer && !Targ.bMonster) return false;
+    if (Targ.bCorpse) return false; //k8: i added this too, as corpse is not a combatant
+  }
+
+  // dead?
+  if ((flags&JLOSF_DEADNOJUMP) && Targ.Health <= 0) return false;
+
+  // ally?
+  if (flags&JLOSF_ALLYNOJUMP) {
+    //FIXME: incomplete
+    if (Targ == self || (bIsPlayer && Targ.bFriendly)) return false;
+  }
+
+  // check distance
+  if (distclose > 0 && DistTo2(Targ) <= distclose) {
+    // "close" in effect, fix flags and fov
+    if (flags&JLOSF_CLOSENOJUMP) {
+      // it doesn't matter what we'll do here, no jump will be taken
+      return false;
+    }
+    if (flags&JLOSF_CLOSENOFOV) Fov = 0; // all-around vision
+    if (flags&JLOSF_CLOSENOSIGHT) flags |= JLOSF_NOSIGHT;
+  }
+
+  // check sight
+  if (!(flags&JLOSF_NOSIGHT)) {
+    //k8: dunno, "better sight" should not be in effect here, i think
+    if (flags&JLOSF_TARGETLOS) {
+      if (!Targ.CanSee(self, disableBetterSight:true)) return false;
+    } else {
+      if (!CanSee(Targ, disableBetterSight:true)) return false;
+    }
+  }
+
+  // check FOV
+  if (Fov && Fov < 360.0) {
+    if (flags&JLOSF_FLIPFOV) {
+      // target fov
+      float Ang = AngleMod180(atan2(Origin.y-Targ.Origin.y, Origin.x-Targ.Origin.x)-Targ.Angles.yaw);
+      if (fabs(Ang) > Fov/2.0) return false;
+    } else {
+      // our fov
+      float Ang = AngleMod180(atan2(Targ.Origin.y-Origin.y, Targ.Origin.x-Origin.x)-Angles.yaw);
+      if (fabs(Ang) > Fov/2.0) return false;
+    }
+  }
+
+  // all checks passed
+  return true;
+#endif
+}
+
+
+//==========================================================================
 //
 //  A_k8MoveBy
 //

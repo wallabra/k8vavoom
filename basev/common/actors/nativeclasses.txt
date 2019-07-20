@@ -436,6 +436,11 @@ class Actor extends Thinker
   action native A_RemoveChildren (optional bool all, optional int flags, optional string filter, optional string species);
   action native A_RadiusGive (name item, float distance, int flags, optional int amount, optional string filter, optional string species, optional float mindist, optional int limit);
 
+  action native A_CheckLOF (optional state jump, optional int flags, optional float range,
+                            optional float minrange, optional float angle, optional float pitch,
+                            optional float offsetheight, optional float offsetwidth,
+                            optional int ptr_target, optional float offsetforward);
+
   action native GetZAt ([float x, float y, float angle, int flags, int pick_pointer);
   action native GetDistance (bool checkz, int ptr_select);
 
