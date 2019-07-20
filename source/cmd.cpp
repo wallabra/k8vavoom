@@ -301,18 +301,30 @@ void VCommand::ProcessKeyConf () {
     if (W_LumpName(Lump) == NAME_keyconf) {
       // read it
       VStream *Strm = W_CreateLumpReaderNum(Lump);
-      char *Buf = new char[Strm->TotalSize()+1];
-      Strm->Serialise(Buf, Strm->TotalSize());
-      Buf[Strm->TotalSize()] = 0;
+      VStr buf;
+      buf.setLength(Strm->TotalSize(), 0);
+      Strm->Serialize(buf.getMutableCStr(), buf.length());
+      if (Strm->IsError()) buf.clear();
       delete Strm;
-      Strm = nullptr;
 
       // parse it
       VCmdBuf CmdBuf;
-      CmdBuf << Buf;
+      TArray<VStr> lines;
+      TArray<VStr> args;
+      buf.split('\n', lines);
+      for (auto &&s : lines) {
+        s = s.xstrip();
+        if (s.length() == 0 || s[0] == '#' || s[0] == '/') continue;
+        args.reset();
+        s.tokenise(args);
+        if (args.length() == 0) continue;
+        if (!args[0].strEquCI("ClearPlayerClasses") && !args[0].strEquCI("AddPlayerClass")) {
+          GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
+        } else {
+          CmdBuf << s << "\n";
+        }
+      }
       CmdBuf.Exec();
-      delete[] Buf;
-      Buf = nullptr;
     }
   }
 
