@@ -320,6 +320,28 @@ final float decorate_GetDistance (bool checkz, optional int aptr) {
 
 //==========================================================================
 //
+//  decorate_GetAngle
+//
+//==========================================================================
+//float GetAngle (int flags[, int ptr_select])
+final float decorate_GetAngle (optional int flags, optional int aptr) {
+  if (!specified_aptr || aptr == AAPTR_DEFAULT) aptr = AAPTR_TARGET;
+  Entity tgt = DecorDoAAPtr('decorate_GetAngle', aptr);
+  if (!tgt) return 0;
+  if (tgt == self) return 0;
+  float ang = (flags&2 ?
+    atan2(Origin.y-tgt.Origin.y, Origin.x-tgt.Origin.x) : // from target to self
+    atan2(tgt.Origin.y-Origin.y, tgt.Origin.x-Origin.x)); // from self to target
+  if (flags&1) {
+    // relative
+    ang = AngleDiff(ang, (flags&2 ? tgt.Angles.yaw : Angles.yaw));
+  }
+  return ang;
+}
+
+
+//==========================================================================
+//
 //  A_SpawnProjectile
 //
 //==========================================================================
