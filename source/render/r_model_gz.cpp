@@ -40,6 +40,16 @@ public:
     TAVec angleOffset;
     float rotationSpeed; // !0: rotating
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
+
+    VStr toString () const {
+      VStr res = sprbase.toUpperCase();
+      res += (char)(sprframe+'A');
+      res += va(" mdi(%d) origmdi(%d) fri(%d) vvi(%d) ao(%g,%g,%g) rs(%g)",
+        mdindex, origmdindex, frindex, vvindex,
+        angleOffset.yaw, angleOffset.pitch, angleOffset.roll,
+        rotationSpeed);
+      return res;
+    }
   };
 
   struct MdlFrameInfo {
@@ -190,8 +200,17 @@ void GZModelDef::parse (VScriptParser *sc) {
       int mdidx = sc->Number;
       if (mdidx < 0 || mdidx > 1024) sc->Error(va("invalid model number (%d) in model '%s'", mdidx, *className));
       sc->ExpectString();
+      VStr mname = sc->String.toLowerCase();
+      VStr ext = mname.extractFileExtension();
+      if (ext.isEmpty()) {
+        sc->Message(va("gz alias model '%s' is in unknown format, defaulted to md3", *className));
+        //mname += ".md3"; // no need to do it, we must preserve file name
+      } else if (!ext.strEquCI(".md2") && !ext.strEquCI(".md3")) {
+        sc->Message(va("gz alias model '%s' is in unknown format '%s', defaulted to md3", *className, *ext+1));
+        //mname.clear(); // ok, allow it to load, the loader will take care of throwing it away
+      }
       while (models.length() <= mdidx) models.alloc();
-      models[mdidx].modelFile = sc->String.toLowerCase();
+      models[mdidx].modelFile = mname;
       continue;
     }
     // "scale"
@@ -316,7 +335,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
   if (mdlindex < 0 || mdlindex >= models.length() || models[mdlindex].modelFile.isEmpty()) return -1;
   //k8: dunno if i have to check it here
   VStr mn = models[mdlindex].modelFile.extractFileExtension().toLowerCase();
-  if (mn != ".md2" && mn != ".md3") return -1;
+  if (!mn.isEmpty() && mn != ".md2" && mn != ".md3") return -1;
   for (auto &&it : models[mdlindex].frameMap.itemsIdx()) {
     const MdlFrameInfo &fi = it.value();
     check(fi.mdlindex == mdlindex);
@@ -396,11 +415,22 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
   // is it empty?
   if (!hasValidFrames && !hasInvalidFrames) { clear(); return; }
 
+  if (!hasValidFrames) {
+    GLog.WriteLine(NAME_Warning, "gz alias model '%s' nas no valid frames!", *className);
+    clear();
+    return;
+  }
+
   // remove invalid frames
   if (hasInvalidFrames) {
     int fidx = 0;
     while (fidx < frames.length()) {
-      if (frames[fidx].vvindex < 0) frames.removeAt(fidx); else ++fidx;
+      if (frames[fidx].vvindex < 0) {
+        //GLog.WriteLine(NAME_Warning, "alias model '%s': removing frame #%d: %s", *className, fidx, *frames[fidx].toString());
+        frames.removeAt(fidx);
+      } else {
+        ++fidx;
+      }
     }
     check(frames.length() > 0); // invariant
   }
@@ -621,8 +651,9 @@ VStr GZModelDef::createXml () {
     const MSDef &mdl = it.value();
     if (mdl.frameMap.length() == 0) continue; // this model is unused
     check(!mdl.modelFile.isEmpty());
+    const char *mdtag = (mdl.modelFile.extractFileExtension().strEquCI(".md2") ? "md2" : "md3");
     res += va("  <model name=\"%s_%d\">\n", *className.toLowerCase().xmlEscape(), it.index());
-    res += va("    <%s file=\"%s\" noshadow=\"false\"", *mdl.modelFile.extractFileExtension()+1, *mdl.modelFile.xmlEscape());
+    res += va("    <%s file=\"%s\" noshadow=\"false\"", mdtag, *mdl.modelFile.xmlEscape());
     appendScale(res, scale, nullptr);
     if (offset.x != 0) res += va(" offset_x=\"%g\"", offset.x);
     if (offset.y != 0) res += va(" offset_y=\"%g\"", offset.y);
@@ -643,7 +674,7 @@ VStr GZModelDef::createXml () {
       if (fi.offset.z != offset.z) res += va(" offset_z=\"%g\"", fi.offset.z);
       res += " />\n";
     }
-    res += va("    </%s>\n", *mdl.modelFile.extractFileExtension()+1);
+    res += va("    </%s>\n", mdtag);
     res += "  </model>\n";
   }
 
