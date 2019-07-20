@@ -1,47 +1,38 @@
 $dest basepak.pk3
 
-//  Default config files
-default.cfg       @CMAKE_CURRENT_SOURCE_DIR@/default.cfg
-startup.vs        @CMAKE_CURRENT_SOURCE_DIR@/startup.vs
+// default config files
+default.cfg  @CMAKE_CURRENT_SOURCE_DIR@/default.cfg
+startup.vs   @CMAKE_CURRENT_SOURCE_DIR@/startup.vs
 
-//  Native engine classes, common engine classes, UI
-$recursedirext progs/  @CMAKE_SOURCE_DIR@/progs/common/  .vc
-
+// native engine classes, common engine classes, UI
+$recursedirext progs/  @CMAKE_SOURCE_DIR@/progs/common/   .vc
 $recursedirext uidef/  @CMAKE_CURRENT_SOURCE_DIR@/uidef/  .txt
 
-
-//  Graphics
+// graphics
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 
-//  Default texture
+// default texture
 textures/-noflat-.png @CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png
 
-//  Common sprites
-//sprites/iceca0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/iceca0.png
-//sprites/icecb0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecb0.png
-//sprites/icecc0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecc0.png
-//sprites/icecd0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecd0.png
-//sprites/pista0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/pista0.png
-//sprites/tnt1a0.lmp    @CMAKE_CURRENT_SOURCE_DIR@/sprites/tnt1a0.lmp
-//sprites/unkna0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/unkna0.png
+// common sprites
 $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 
-//  Sounds
+// sounds
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
-//  Color names
+// color names
 x11r6rgb.txt      @CMAKE_CURRENT_SOURCE_DIR@/x11r6rgb.txt
 
-//  Language strings
+// language strings
 language.en       @CMAKE_CURRENT_SOURCE_DIR@/language.en
 
-//  Base scripts
+// base scripts
 terrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
 lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
 reverbs.txt       @CMAKE_CURRENT_SOURCE_DIR@/reverbs.txt
 textcolo.txt      @CMAKE_CURRENT_SOURCE_DIR@/textcolo.txt
 
-//  Intermission scripts
+// intermission scripts
 in_epi1.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_epi1.txt
 in_epi2.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_epi2.txt
 in_epi3.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_epi3.txt
@@ -49,157 +40,31 @@ in_htc1.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_htc1.txt
 in_htc2.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_htc2.txt
 in_htc3.txt       @CMAKE_CURRENT_SOURCE_DIR@/in_htc3.txt
 
-//  Line specials, useable in DECORATE
+// line specials, useable in DECORATE
 line_specials.txt   @CMAKE_CURRENT_SOURCE_DIR@/line_specials.txt
 
-//  Decorate definition file
-vavoom_decorate_defs.xml        @CMAKE_CURRENT_SOURCE_DIR@/vavoom_decorate_defs.xml
+// decorate definition file
+vavoom_decorate_defs.xml  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_decorate_defs.xml
 
-//  Decals
-decaldef.txt              @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
+// decals
+decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 
-//  Decorate scripts
-decorate.txt              @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
-actors/constants.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/constants.txt
-actors/nativeclasses.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/nativeclasses.txt
-$recursedirext actors/doom/  @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/  .txt
-actors/heretic/beast.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/beast.txt
-actors/heretic/chicken.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/chicken.txt
-actors/heretic/clink.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/clink.txt
-actors/heretic/dsparil.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/dsparil.txt
-actors/heretic/hereticammo.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticammo.txt
-actors/heretic/hereticarmor.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticarmor.txt
-actors/heretic/hereticartifacts.txt   @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticartifacts.txt
-actors/heretic/hereticdecorations.txt @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticdecorations.txt
-actors/heretic/hereticimp.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticimp.txt
-actors/heretic/heretickeys.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/heretickeys.txt
-actors/heretic/hereticmisc.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticmisc.txt
-actors/heretic/hereticplayer.txt    @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticplayer.txt
-actors/heretic/hereticweaps.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/hereticweaps.txt
-actors/heretic/ironlich.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/ironlich.txt
-actors/heretic/knight.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/knight.txt
-actors/heretic/mummy.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/mummy.txt
-actors/heretic/snake.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/snake.txt
-actors/heretic/wizard.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/wizard.txt
-actors/hexen/bats.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/bats.txt
-actors/hexen/bishop.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/bishop.txt
-actors/hexen/blastradius.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/blastradius.txt
-actors/hexen/centaur.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/centaur.txt
-actors/hexen/clericboss.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericboss.txt
-actors/hexen/clericflame.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericflame.txt
-actors/hexen/clericholy.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericholy.txt
-actors/hexen/clericmace.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericmace.txt
-actors/hexen/clericstaff.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericstaff.txt
-actors/hexen/clericplayer.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/clericplayer.txt
-actors/hexen/demons.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/demons.txt
-actors/hexen/dragon.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/dragon.txt
-actors/hexen/ettin.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/ettin.txt
-actors/hexen/fighteraxe.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighteraxe.txt
-actors/hexen/fighterboss.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighterboss.txt
-actors/hexen/fighterfist.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighterfist.txt
-actors/hexen/fighterhammer.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighterhammer.txt
-actors/hexen/fighterplayer.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighterplayer.txt
-actors/hexen/fighterquietus.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fighterquietus.txt
-actors/hexen/firedemon.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/firedemon.txt
-actors/hexen/flame.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/flame.txt
-actors/hexen/flechette.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/flechette.txt
-actors/hexen/fog.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/fog.txt
-actors/hexen/heresiarch.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/heresiarch.txt
-actors/hexen/hexenarmor.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/hexenarmor.txt
-actors/hexen/hexendecorations.txt   @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/hexendecorations.txt
-actors/hexen/hexenkeys.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/hexenkeys.txt
-actors/hexen/hexenspecialdecs.txt   @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/hexenspecialdecs.txt
-actors/hexen/iceguy.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/iceguy.txt
-actors/hexen/korax.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/korax.txt
-actors/hexen/mageboss.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/mageboss.txt
-actors/hexen/magecone.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/magecone.txt
-actors/hexen/magelightning.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/magelightning.txt
-actors/hexen/mageplayer.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/mageplayer.txt
-actors/hexen/magestaff.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/magestaff.txt
-actors/hexen/magewand.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/magewand.txt
-actors/hexen/mana.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/mana.txt
-actors/hexen/pig.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/pig.txt
-actors/hexen/puzzleitems.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/puzzleitems.txt
-actors/hexen/scriptprojectiles.txt    @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/scriptprojectiles.txt
-actors/hexen/serpent.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/serpent.txt
-actors/hexen/speedboots.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/speedboots.txt
-actors/hexen/spike.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/spike.txt
-actors/hexen/summon.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/summon.txt
-actors/hexen/teleportother.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/teleportother.txt
-actors/hexen/wraith.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/hexen/wraith.txt
-actors/raven/artiegg.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/raven/artiegg.txt
-actors/raven/minotaur.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/raven/minotaur.txt
-actors/raven/ravenambient.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/raven/ravenambient.txt
-actors/raven/ravenartifacts.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/raven/ravenartifacts.txt
-actors/raven/ravenhealth.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/raven/ravenhealth.txt
-actors/shared/blood.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/blood.txt
-actors/shared/debris.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/debris.txt
-actors/shared/fountain.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/fountain.txt
-actors/shared/pickups.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/pickups.txt
-actors/shared/sharedmisc.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/sharedmisc.txt
-actors/shared/soundsequence.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/soundsequence.txt
-actors/shared/splashes.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/shared/splashes.txt
-actors/strife/acolyte.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/acolyte.txt
-actors/strife/alienspectres.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/alienspectres.txt
-actors/strife/beggars.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/beggars.txt
-actors/strife/coin.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/coin.txt
-actors/strife/crusader.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/crusader.txt
-actors/strife/entityboss.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/entityboss.txt
-actors/strife/inquisitor.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/inquisitor.txt
-actors/strife/loremaster.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/loremaster.txt
-actors/strife/macil.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/macil.txt
-actors/strife/merchants.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/merchants.txt
-actors/strife/peasants.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/peasants.txt
-actors/strife/programmer.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/programmer.txt
-actors/strife/questitems.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/questitems.txt
-actors/strife/ratbuddy.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/ratbuddy.txt
-actors/strife/reaver.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/reaver.txt
-actors/strife/rebels.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/rebels.txt
-actors/strife/sentinel.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/sentinel.txt
-actors/strife/sigil.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/sigil.txt
-actors/strife/spectral.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/spectral.txt
-actors/strife/stalker.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/stalker.txt
-actors/strife/strifeammo.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifeammo.txt
-actors/strife/strifearmor.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifearmor.txt
-actors/strife/strifebishop.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifebishop.txt
-actors/strife/strifehumanoid.txt    @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifehumanoid.txt
-actors/strife/strifeitems.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifeitems.txt
-actors/strife/strifekeys.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifekeys.txt
-actors/strife/strifeplayer.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifeplayer.txt
-actors/strife/strifestuff.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifestuff.txt
-actors/strife/strifeweapons.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/strifeweapons.txt
-actors/strife/templar.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/templar.txt
-actors/strife/thingstoblowup.txt    @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/thingstoblowup.txt
-actors/strife/zombie.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/strife/zombie.txt
+// decorate scripts
+decorate.txt            @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
+$recursedirext actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/       .txt
 
-//  Effect scripts
-vfxdefs.txt           @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt
-fxdefs/common/effects.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/common/effects.txt
-fxdefs/doom/decorations.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/doom/decorations.txt
-fxdefs/doom/monsters.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/doom/monsters.txt
-fxdefs/doom/pickups.txt     @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/doom/pickups.txt
-fxdefs/doom/weapons.txt     @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/doom/weapons.txt
-fxdefs/heretic/decorations.txt  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/heretic/decorations.txt
-fxdefs/heretic/effects.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/heretic/effects.txt
-fxdefs/heretic/monsters.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/heretic/monsters.txt
-fxdefs/heretic/pickups.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/heretic/pickups.txt
-fxdefs/heretic/weapons.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/heretic/weapons.txt
-fxdefs/hexen/decorations.txt  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/decorations.txt
-fxdefs/hexen/effects.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/effects.txt
-fxdefs/hexen/monsters.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/monsters.txt
-fxdefs/hexen/pickups.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/pickups.txt
-fxdefs/hexen/projectiles.txt  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/projectiles.txt
-fxdefs/hexen/weapons.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/hexen/weapons.txt
-fxdefs/raven/minotaur.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/raven/minotaur.txt
-fxdefs/raven/pickups.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/raven/pickups.txt
-fxdefs/strife/decorations.txt @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/strife/decorations.txt
-fxdefs/strife/monsters.txt    @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/strife/monsters.txt
-fxdefs/strife/weapons.txt   @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/strife/weapons.txt
+// effect scripts
+vfxdefs.txt             @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt
+$recursedirext fxdefs/  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/  .txt
 
+// GLSL shaders
 $recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .fs
 $recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .vs
 $recursedirext glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/  .inc
 
-//  Console font
+// console font
 $load @CMAKE_CURRENT_SOURCE_DIR@/confont.pcx
-confont.lmp       fon1
+confont.lmp  fon1
+
+// credits for various things
+$recursedirext credits/  @CMAKE_CURRENT_SOURCE_DIR@/credits/  .txt
