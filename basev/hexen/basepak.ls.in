@@ -1,27 +1,26 @@
 $dest basepak.pk3
 
-//  Crosshairs
-graphics/croshai1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
-graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
-graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
+// crosshairs
+graphics/croshai1.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
+graphics/croshai2.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
+graphics/croshai3.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
-//  Some missing characters in small font
+// some missing characters in small font
 graphics/fonta30.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta30.lmp
 graphics/fonta63.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
 
-//  Client progs
-$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/hexen/cgame/  .vc
-//  Server progs
-$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/hexen/game/  .vc
+// progs
+$recursedirext|.vc|  progs/cgame/  @CMAKE_SOURCE_DIR@/progs/hexen/cgame/
+$recursedirext|.vc|  progs/game/  @CMAKE_SOURCE_DIR@/progs/hexen/game/
 
-//  Scripts
-animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
-lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
-mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
-skyboxes.txt      @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
+// various definitions
+animdefs.txt        @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
+lockdefs.txt        @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
+mapinfo.txt         @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+sndinfo.txt         @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+skyboxes.txt        @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
 sprite_rename.txt   @CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
-terrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
+terrain.txt         @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
 
 $load @CMAKE_CURRENT_SOURCE_DIR@/palette.pcx
-translat.dat      raw 0 1 256 7
+translat.dat  raw 0 1 256 7

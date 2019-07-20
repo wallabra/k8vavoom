@@ -1,39 +1,38 @@
 $dest basepak.pk3
 
-//  Automap background
+// automap background
 graphics/autopage.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/autopage.lmp
 
-//  Crosshairs
+// crosshairs
 graphics/croshai1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
 graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
 graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
-//  Client progs
-$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/strife/cgame/  .vc
-//  Server progs
-$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/strife/game/  .vc
+// progs
+$recursedirext|.vc|  progs/cgame/  @CMAKE_SOURCE_DIR@/progs/strife/cgame/
+$recursedirext|.vc|  progs/game/   @CMAKE_SOURCE_DIR@/progs/strife/game/
 
-//  ACS helper
-acs/strfhelp.o      strfhelp.o
+// ACS helper
+acs/strfhelp.o  strfhelp.o
 
-//  Temporary solution to make teaser versions work.
-script32.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script32.lmp
-script33.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script33.lmp
-script34.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script34.lmp
+// temporary solution to make teaser versions work
+script32.lmp  @CMAKE_CURRENT_SOURCE_DIR@/script32.lmp
+script33.lmp  @CMAKE_CURRENT_SOURCE_DIR@/script33.lmp
+script34.lmp  @CMAKE_CURRENT_SOURCE_DIR@/script34.lmp
 
-//  Scripts
-animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
-lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
-mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-skyboxes.txt      @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
-sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
-sndseq.txt        @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
+// various definitions
+animdefs.txt        @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
+lockdefs.txt        @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
+mapinfo.txt         @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+skyboxes.txt        @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
+sndinfo.txt         @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+sndseq.txt          @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
 sprite_rename.txt   @CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
-terrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
+terrain.txt         @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
 
-//  Big font
+// big font
 $load @CMAKE_CURRENT_SOURCE_DIR@/bigfont.pcx
-bigfont.lmp       fon2
+bigfont.lmp  fon2
 
 $load @CMAKE_CURRENT_SOURCE_DIR@/palette.pcx
-translat.dat      raw 0 1 256 7
+translat.dat  raw 0 1 256 7

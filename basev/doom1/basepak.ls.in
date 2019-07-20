@@ -1,5 +1,5 @@
 $dest basepak.pk3
 
-//  Scripts
-mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+// various definitions
+mapinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+sndinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt

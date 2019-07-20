@@ -1,48 +1,48 @@
 $dest basepak.pk3
 
 // sounds
-sounds/dssecret.opus @CMAKE_CURRENT_SOURCE_DIR@/sounds/dssecret.opus
+sounds/dssecret.opus  @CMAKE_CURRENT_SOURCE_DIR@/sounds/dssecret.opus
 
+// additional gfx
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 
-//  Automap background
-//graphics/autopage.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/autopage.lmp
+// automap background
+//graphics/autopage.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/autopage.lmp
 
-//  Crosshairs
-//graphics/croshai1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
-//graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
-//graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
+// crosshairs
+//graphics/croshai1.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
+//graphics/croshai2.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
+//graphics/croshai3.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
-//  Inventory Bar graphics
-//graphics/artibox.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/artibox.lmp
-//graphics/invgeml1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgeml1.lmp
-//graphics/invgeml2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgeml2.lmp
-//graphics/invgemr1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgemr1.lmp
-//graphics/invgemr2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgemr2.lmp
-//graphics/selectbo.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/selectbo.lmp
+// inventory bar graphics
+//graphics/artibox.lmp   @CMAKE_CURRENT_SOURCE_DIR@/graphics/artibox.lmp
+//graphics/invgeml1.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgeml1.lmp
+//graphics/invgeml2.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgeml2.lmp
+//graphics/invgemr1.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgemr1.lmp
+//graphics/invgemr2.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgemr2.lmp
+//graphics/selectbo.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/selectbo.lmp
 
 
-//  Client progs
-$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/doom/cgame/  .vc
-//  Server progs
-$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/doom/game/  .vc
+// progs
+$recursedirext|.vc|  progs/cgame/  @CMAKE_SOURCE_DIR@/progs/doom/cgame/
+$recursedirext|.vc|  progs/game/  @CMAKE_SOURCE_DIR@/progs/doom/game/
 
-//  Binary data lumps
-//animated.lmp      @CMAKE_CURRENT_SOURCE_DIR@/animated.lmp
+// binary data lumps
+//animated.lmp  @CMAKE_CURRENT_SOURCE_DIR@/animated.lmp
 
-//  Scripts
-animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
-dehinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/dehinfo.txt
-lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
-mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
-sndseq.txt        @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
-skyboxes.txt      @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
+// various definitions
+animdefs.txt  @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
+dehinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/dehinfo.txt
+lockdefs.txt  @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
+mapinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+sndseq.txt    @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
+skyboxes.txt  @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
 
-//  Big font
+// big font
 $load @CMAKE_CURRENT_SOURCE_DIR@/bigfont.pcx
-bigfont.lmp       fon2
+bigfont.lmp  fon2
 
-//  Generated data
+// generated data
 $load @CMAKE_CURRENT_SOURCE_DIR@/palette.pcx
-translat.dat      raw 0 1 256 3
+translat.dat  raw 0 1 256 3

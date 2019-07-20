@@ -1,12 +1,12 @@
 $dest chex.pk3
 
-$recursedirext actors/chex/  @CMAKE_CURRENT_SOURCE_DIR@/actors/chex/  .txt
+$recursedirext|.txt|  actors/chex/  @CMAKE_CURRENT_SOURCE_DIR@/actors/chex/
 
 // scripts
 decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 
-// VaVoom C
-$recursedirext progs/chex/  @CMAKE_CURRENT_SOURCE_DIR@/progs/chex/  .vc
-loadvcs.txt  @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
+// VavoomC
+loadvcs.txt                       @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
+$recursedirext|.vc|  progs/chex/  @CMAKE_CURRENT_SOURCE_DIR@/progs/chex/
 
 language.en  @CMAKE_CURRENT_SOURCE_DIR@/language.en

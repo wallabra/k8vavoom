@@ -3,5 +3,5 @@ $dest skeehud.pk3
 $recursedir progs/    @CMAKE_CURRENT_SOURCE_DIR@/progs/
 
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
-loadvcc.txt  @CMAKE_CURRENT_SOURCE_DIR@/loadvcc.txt
-modmenu.txt  @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
+loadvcc.txt   @CMAKE_CURRENT_SOURCE_DIR@/loadvcc.txt
+modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
