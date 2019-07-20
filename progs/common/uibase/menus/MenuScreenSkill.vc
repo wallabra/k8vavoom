@@ -33,12 +33,18 @@ class MenuScreenSkill : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
+  int maxwdt = -1;
   foreach (auto i; 0..P_GetNumSkills()) {
     MenuChoiceSkill Btn = MenuChoiceSkill(NewChild(MenuChoiceSkill));
     SkillDef *SDef = P_GetSkillDef(i);
     Btn.SetPos(ChoicesStartX, currentY);
+    int wdt = -1;
     if (SDef->bMenuNameIsPic) {
       Btn.PicHandle = R_RegisterPic(name(SDef->MenuName));
+      picinfo_t pinf;
+      R_GetPicInfo(Btn.PicHandle, &pinf);
+      wdt = pinf.width;
+      if (Btn.Height < pinf.height) Btn.Height = pinf.height+8;
     } else {
       Btn.SetText(SDef->MenuName);
     }
@@ -49,12 +55,16 @@ override void CreateChoices () {
       }
     }
     if (SDef->TextColor) Btn.Text = "\c["~SDef->TextColor~"]"~Btn.Text;
+    if (wdt < 0) wdt = Btn.CalcTextWidth();
+    maxwdt = max(maxwdt, wdt);
     Btn.SkillIndex = i;
     Btn.bMustConfirm = SDef->bMustConfirm;
     Btn.ConfirmationText = SDef->ConfirmationText;
     Btn.Activated = &ActivateSkill;
     currentY += Btn.Height;
   }
+  maxwdt += 60;
+  if (Width < maxwdt) Width = maxwdt;
 }
 
 

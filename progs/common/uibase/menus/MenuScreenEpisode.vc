@@ -50,6 +50,7 @@ override void CreateChoices () {
       picinfo_t pinf;
       R_GetPicInfo(Epi.PicHandle, &pinf);
       wdt = pinf.width;
+      if (Epi.Height < pinf.height) Epi.Height = pinf.height+8;
     } else if (EDef->bLookupText) {
       Epi.Text = GetLangString(name(EDef->Text));
     } else {
