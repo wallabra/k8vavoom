@@ -49,7 +49,9 @@ TArray<VStr> VCommand::AutoCompleteTable;
 static TMapNC<VStr, bool> AutoCompleteTableBSet; // quicksearch
 
 VCommand *VCommand::Cmds = nullptr;
-VCommand::VAlias *VCommand::Alias = nullptr;
+//VCommand::VAlias *VCommand::Alias = nullptr;
+TArray<VCommand::VAlias> VCommand::AliasList;
+TMap<VStr, int> VCommand::AliasMap;
 
 bool VCommand::cliInserted = false;
 VStr VCommand::cliPreCmds;
@@ -247,26 +249,16 @@ extern "C" {
 //
 //==========================================================================
 void VCommand::WriteAlias (VStream *st) {
-  // count items
-  size_t acount = 0;
-  for (VAlias *a = Alias; a; a = a->Next) ++acount;
-  if (acount == 0) return;
   // build list
-  VAlias **list = new VAlias*[acount];
-  acount = 0;
-  for (VAlias *a = Alias; a; a = a->Next) list[acount++] = a;
+  TArray<VAlias *> alist;
+  for (auto &&al : AliasList) if (al.Save) alist.append(&al);
+  if (alist.length() == 0) return;
   // sort list
-  if (acount > 1) timsort_r(list, acount, sizeof(list[0]), &vapcmp, nullptr);
+  timsort_r(alist.ptr(), alist.length(), sizeof(VAlias *), &vapcmp, nullptr);
   // write list
-  for (size_t f = 0; f < acount; ++f) {
-    st->writef("alias %s \"%s\"\n", *list[f]->Name, *list[f]->CmdLine.quote());
+  for (auto &&al : alist) {
+    st->writef("alias %s \"%s\"\n", *al->Name, *al->CmdLine.quote());
   }
-  delete [] list;
-  /*
-  for (VAlias *a = Alias; a; a = a->Next) {
-    st->writef("alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
-  }
-  */
 }
 
 
@@ -276,11 +268,8 @@ void VCommand::WriteAlias (VStream *st) {
 //
 //==========================================================================
 void VCommand::Shutdown () {
-  for (VAlias *a = Alias; a;) {
-    VAlias *Next = a->Next;
-    delete a;
-    a = Next;
-  }
+  AliasMap.clear();
+  AliasList.clear();
   AutoCompleteTable.Clear();
   AutoCompleteTableBSet.clear();
   Args.Clear();
@@ -318,8 +307,14 @@ void VCommand::ProcessKeyConf () {
         args.reset();
         s.tokenise(args);
         if (args.length() == 0) continue;
-        if (!args[0].strEquCI("ClearPlayerClasses") && !args[0].strEquCI("AddPlayerClass")) {
-          GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
+        if (!args[0].strEquCI("ClearPlayerClasses") && !args[0].strEquCI("AddPlayerClass") && !args[0].strEquCI("alias")) {
+          if (!args[0].strEquCI("addkeysection") &&
+              !args[0].strEquCI("addmenukey") &&
+              /*!args[0].strEquCI("alias") &&*/
+              !args[0].strEquCI("defaultbind"))
+          {
+            GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
+          }
         } else {
           CmdBuf << s << "\n";
         }
@@ -655,13 +650,13 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
     // verify that it's a valid keyconf command
     bool Found = false;
     for (unsigned i = 0; i < ARRAY_COUNT(KeyConfCommands); ++i) {
-      if (!Args[0].ICmp(KeyConfCommands[i])) {
+      if (Args[0].strEquCI(KeyConfCommands[i])) {
         Found = true;
         break;
       }
     }
     if (!Found) {
-      GCon->Logf("'%s' is not a valid KeyConf command!", *Args[0]);
+      GCon->Logf(NAME_Warning, "Invalid KeyConf command: %s", *Acmd);
       return;
     }
   }
@@ -704,10 +699,23 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   }
 
   // command defined with ALIAS
+  /*
   for (VAlias *a = Alias; a; a = a->Next) {
     if (!Args[0].ICmp(a->Name)) {
       GCmdBuf.Insert("\n");
       GCmdBuf.Insert(a->CmdLine);
+      return;
+    }
+  }
+  */
+  //FIXME: make it better (do not alloc new locased string)
+  if (Args[0].length()) {
+    VStr lcn = Args[0].toLowerCase();
+    auto idp = AliasMap.find(lcn);
+    if (idp) {
+      VAlias &al = AliasList[*idp];
+      GCmdBuf.Insert("\n");
+      GCmdBuf.Insert(al.CmdLine);
       return;
     }
   }
@@ -899,39 +907,100 @@ COMMAND(CmdList) {
 
 //==========================================================================
 //
+//  VCommand::rebuildAliasMap
+//
+//==========================================================================
+void VCommand::rebuildAliasMap () {
+  AliasMap.reset();
+  for (auto &&it : AliasList.itemsIdx()) {
+    VAlias &al = it.value();
+    VStr aliasName = al.Name.toLowerCase();
+    if (aliasName.length() == 0) continue; // just in case
+    AliasMap.put(aliasName, it.index());
+  }
+}
+
+
+//==========================================================================
+//
 //  Alias_f
 //
 //==========================================================================
 COMMAND(Alias) {
-  VCommand::VAlias *a;
-  VStr tmp;
-  int i;
-  int c;
-
-  if (Args.Num() == 1) {
-    GCon->Log("Current alias:");
-    for (a = VCommand::Alias; a; a = a->Next) GCon->Log(a->Name+": "+a->CmdLine);
+  if (Args.length() == 1) {
+    GCon->Logf("\034K%s", "Current aliases:");
+    for (auto &&al : AliasList) {
+      GCon->Logf("\034D  %s: %s%s", *al.Name, *al.CmdLine, (al.Save ? "" : " (temporary)"));
+    }
     return;
   }
 
-  c = Args.Num();
-  for (i = 2; i < c; ++i) {
-    if (i != 2) tmp += " ";
-    tmp += Args[i];
+  VStr aliasName = Args[1].toLowerCase();
+  auto idxp = AliasMap.find(aliasName);
+
+  if (Args.length() == 2) {
+    if (!idxp) {
+      GCon->Logf("no named alias '%s' found", *Args[1]);
+    } else {
+      const VAlias &al = AliasList[*idxp];
+      GCon->Logf("alias %s: %s%s", *Args[1], *al.CmdLine, (al.Save ? "" : " (temporary)"));
+    }
+    return;
   }
 
-  for (a = VCommand::Alias; a; a = a->Next) {
-    if (!a->Name.ICmp(Args[1])) break;
+  VStr cmd;
+  for (int f = 2; f < Args.length(); ++f) {
+    if (Args[f].isEmpty()) continue;
+    if (cmd.length()) cmd += ' ';
+    cmd += Args[f];
+  }
+  cmd = cmd.xstrip(); // why not?
+
+  if (cmd.isEmpty()) {
+    if (Args.length() != 3 || !Args[2].isEmpty()) {
+      GCon->Logf("invalid alias defintion for '%s' (empty command)", *Args[1]);
+      return;
+    }
+    // remove alias
+    if (!idxp) {
+      GCon->Logf("no named alias '%s' found", *Args[1]);
+    } else {
+      VAlias &al = AliasList[*idxp];
+      if (ParsingKeyConf && al.Save) {
+        GCon->Logf("cannot remove permanent alias '%s' from keyconf", *Args[1]);
+      } else {
+        AliasList.removeAt(*idxp);
+        rebuildAliasMap();
+        GCon->Logf("removed alias '%s'", *Args[1]);
+      }
+    }
+    return;
   }
 
-  if (!a) {
-    a = new VAlias;
-    a->Name = Args[1];
-    a->Next = VCommand::Alias;
-    a->Save = !ParsingKeyConf;
-    VCommand::Alias = a;
+  if (idxp) {
+    // redefine alias
+    VAlias &al = AliasList[*idxp];
+    if (ParsingKeyConf && al.Save) {
+      // add new temporary alias below
+    } else {
+      // redefine alias
+      al.CmdLine = cmd;
+      GCon->Logf("redefined alias '%s'", *Args[1]);
+      return;
+    }
   }
-  a->CmdLine = tmp;
+
+  // new alias
+  VAlias &nal = AliasList.alloc();
+  nal.Name = Args[1];
+  nal.CmdLine = cmd;
+  nal.Save = !ParsingKeyConf;
+
+  if (ParsingKeyConf) {
+    GCon->Logf("defined %salias '%s': %s", (ParsingKeyConf ? "temporary " : ""), *Args[1], *cmd);
+  }
+
+  rebuildAliasMap();
 }
 
 

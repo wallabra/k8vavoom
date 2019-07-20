@@ -38,7 +38,6 @@ public: // fuck you, shitplusplus
   struct VAlias {
     VStr Name;
     VStr CmdLine;
-    VAlias *Next;
     bool Save;
   };
 
@@ -52,13 +51,16 @@ private:
   static TArray<VStr> AutoCompleteTable;
 
   static VCommand *Cmds;
-  static VAlias *Alias;
+  static TArray<VAlias> AliasList;
+  static TMap<VStr, int> AliasMap;
 
   static bool cliInserted;
 
   static void TokeniseString (const VStr &);
 
   static void rebuildCommandCache ();
+
+  static void rebuildAliasMap ();
 
 protected:
   static TArray<VStr> Args;
