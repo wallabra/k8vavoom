@@ -199,7 +199,16 @@ void VZipFile::OpenArchive (VStream *fstream) {
   check(FileStream);
 
   vuint32 central_pos = SearchCentralDir();
-  if (central_pos == 0 || (vint32)central_pos == -1) Sys_Error("cannot load zip/pk3 file \"%s\"", *PakFileName);
+  if (central_pos == 0 || (vint32)central_pos == -1) {
+    // check for 7zip idiocity
+    if (!fstream->IsError() && fstream->TotalSize() >= 2) {
+      char hdr[2] = {0};
+      fstream->Seek(0);
+      fstream->Serialise(hdr, 2);
+      if (memcmp(hdr, "7z", 2) == 0) Sys_Error("DO NOT RENAME YOUR 7Z ARCHIVES TO PK3, THIS IS IDIOCITY! REJECTED \"%s\"", *PakFileName);
+    }
+    Sys_Error("cannot load zip/pk3 file \"%s\"", *PakFileName);
+  }
   //check(central_pos);
 
   FileStream->Seek(central_pos);
