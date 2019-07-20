@@ -47,6 +47,7 @@ bool SC_GetFloat();
 void SC_MustGetFloat();
 void SC_UnGet();
 bool SC_Compare(const char *text);
+bool SC_Check(const char *text);
 int SC_MatchString(const char **strings);
 int SC_MustMatchString(const char **strings);
 void SC_ScriptError(const char *message);

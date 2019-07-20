@@ -187,10 +187,12 @@ bool SC_GetString()
     }
     ScriptPtr++;
   }
-  else
+  else if (*ScriptPtr == '|') {
+    *text++ = *ScriptPtr++;
+  } else
   {
     // Normal string
-    while ((*ScriptPtr > 32) && (ScriptPtr[0] != '/' || ScriptPtr[1] != '/'))
+    while ((*ScriptPtr > 32) && ScriptPtr[0] != '|' && (ScriptPtr[0] != '/' || ScriptPtr[1] != '/'))
     {
       *text++ = *ScriptPtr++;
       if (ScriptPtr == ScriptEndPtr
@@ -328,6 +330,7 @@ void SC_UnGet()
   AlreadyGot = true;
 }
 
+
 //==========================================================================
 //
 //  SC_MatchString
@@ -382,6 +385,15 @@ bool SC_Compare(const char *text)
 #else
   return !stricmp(text, sc_String);
 #endif
+}
+
+
+bool SC_Check (const char *text) {
+  if (!text || !text[0]) return false;
+  if (!SC_GetString()) return false;
+  if (SC_Compare(text)) return true;
+  SC_UnGet();
+  return false;
 }
 
 //==========================================================================
