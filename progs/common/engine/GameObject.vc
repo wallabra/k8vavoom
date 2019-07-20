@@ -728,12 +728,9 @@ struct line_t : TPlane {
   // collision detection planes
   // first plane is usually a duplicate of a normal line plane, but idc
   TPlane[] cdPlanes;
+
   //int cdPlaneCount;
   private TPlane[6] cdPlanesArray;
-
-  //FIXME: do it better (and it is not even used now)
-  private opening_t*[SPF_MAX_OPENINGS] oplist; // for each possible flag combination
-  private int oplistUsed;
 };
 
 

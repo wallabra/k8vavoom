@@ -639,85 +639,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 
   NoBlockFlags &= (SPF_MAX_OPENINGS-1);
 
-#ifdef VV_CACHE_LINE_OPENINGS
-  opening_t *op = nullptr;
-#endif
-
-  //FIXME: this is wrong, it should insert opening into full list instead!
-  //       move opening scan to separate function with top/bot limits instead
-  //bool thisIs3DMidTex = (do3dmidtex && (linedef->flags&ML_3DMIDTEX) && linedef->frontsector && linedef->backsector);
-  /*
-  if (do3dmidtex && (linedef->flags&ML_3DMIDTEX)) {
-    // for 3dmidtex, create two gaps:
-    //   from floor to midtex bottom
-    //   from midtex top to ceiling
-    float top, bot;
-    if (P_GetMidTexturePosition(linedef, 0, &top, &bot)) {
-      int opsused = 0;
-      float floorz = linedef->frontsector->floor.GetPointZ(point);
-      float ceilz = linedef->frontsector->ceiling.GetPointZ(point);
-      if (floorz < ceilz) {
-        // clamp to sector height
-        if (bot <= floorz && top >= ceilz) return nullptr; // it is completely blocked
-        // bottom opening
-        if (bot > floorz) {
-          // from floor to bot
-          openings[opsused].next = op;
-          op = &openings[opsused];
-          ++opsused;
-          // bot
-          op->bottom = floorz;
-          op->lowfloor = floorz;
-          op->efloor.set(&linedef->frontsector->floor, false);
-          op->elowfloor = op->efloor;
-          // top
-          op->top = bot;
-          op->highceiling = ceilz;
-          op->eceiling.set(&linedef->frontsector->ceiling, false);
-          op->ehighceiling = op->eceiling;
-          op->range = op->top-op->bottom;
-        }
-        // top opening
-        if (top < ceilz) {
-          // from top to ceiling
-          openings[opsused].next = op;
-          op = &openings[opsused];
-          ++opsused;
-          // bot
-          op->bottom = top;
-          op->lowfloor = floorz;
-          op->efloor.set(&linedef->frontsector->floor, false);
-          op->elowfloor = op->efloor;
-          // top
-          op->top = ceilz;
-          op->highceiling = ceilz;
-          op->eceiling.set(&linedef->frontsector->ceiling, false);
-          op->ehighceiling = op->eceiling;
-          op->range = op->top-op->bottom;
-        }
-        return op;
-      }
-    }
-  }
-  */
-
-  // check opening cache
-#ifdef VV_CACHE_LINE_OPENINGS
-  op = linedef->oplist[NoBlockFlags];
-  if (op) {
-    // opening without floor plane means "no openings available"
-    //GCon->Logf("%p: opcache %d hit!", linedef, NoBlockFlags);
-    return (op->efloor.splane ? op : nullptr);
-  }
-#else
-  //op = nullptr;
-#endif
-
-  // alas, we cannot cache openings with slopes, so don't even try
-  // this is bad, but meh... i can live with it for now
-
   bool hasSlopes0 = false, hasSlopes1 = false;
-
 
   // fast algo for two sectors without 3d floors
   if (!linedef->frontsector->Has3DFloors() &&
@@ -734,11 +656,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     if (fop.top <= bop.bottom || bop.top <= fop.bottom ||
         fop.bottom >= bop.top || bop.bottom >= fop.top)
     {
-#ifdef VV_CACHE_LINE_OPENINGS
-      if (hasSlopes0 || hasSlopes1) return nullptr;
-      if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-      linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-#endif
       return nullptr;
     }
     // create opening
@@ -770,16 +687,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     dop->range = dop->top-dop->bottom;
     dop->next = nullptr;
 
-    // cache it
-    if (!hasSlopes0 && !hasSlopes1) {
-#ifdef VV_CACHE_LINE_OPENINGS
-      if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-      opening_t *newop = VLevel::AllocOpening();
-      newop->copyFrom(dop);
-      linedef->oplist[NoBlockFlags] = newop;
-#endif
-    }
-
     return dop;
   }
 
@@ -791,11 +698,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   //if (thisIs3DMidTex) Insert3DMidtex(op0list, linedef->frontsector, linedef);
   if (op0list.length() == 0) {
     // just in case: no front sector openings
-#ifdef VV_CACHE_LINE_OPENINGS
-    if (hasSlopes0) return nullptr;
-    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-#endif
     return nullptr;
   }
 
@@ -803,11 +705,6 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
   if (op1list.length() == 0) {
     // just in case: no back sector openings
-#ifdef VV_CACHE_LINE_OPENINGS
-    if (hasSlopes0 || hasSlopes1) return nullptr;
-    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-#endif
     return nullptr;
   }
 
@@ -919,40 +816,16 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   // no intersections?
   if (destcount == 0) {
     // oops
-#ifdef VV_CACHE_LINE_OPENINGS
-    if (hasSlopes0 || hasSlopes1) return nullptr;
-    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-    linedef->oplist[NoBlockFlags] = VLevel::AllocOpening();
-#endif
     return nullptr;
   }
 
-  // has some intersections, create cache
-#ifdef VV_CACHE_LINE_OPENINGS
-  if (!hasSlopes0 && !hasSlopes1) {
-    if (linedef->oplistUsed < (unsigned)(NoBlockFlags+1)) linedef->oplistUsed = (unsigned)(NoBlockFlags+1);
-
-    opening_t *lastop = nullptr, *dp = openings;
-    for (unsigned f = 0; f < destcount; ++f, ++dp) {
-      opening_t *newop = VLevel::AllocOpening();
-      if (lastop) lastop->next = newop; else linedef->oplist[NoBlockFlags] = newop;
-      newop->copyFrom(dp);
-      lastop = newop;
+  if (destcount > 1) {
+    for (unsigned f = 0; f < destcount-1; ++f) {
+      openings[f].next = &openings[f+1];
     }
-
-    return linedef->oplist[NoBlockFlags];
-  } else
-#endif
-  {
-    // has slopes, cannot cache openings (oops)
-    if (destcount > 1) {
-      for (unsigned f = 0; f < destcount-1; ++f) {
-        openings[f].next = &openings[f+1];
-      }
-    }
-    openings[destcount-1].next = nullptr;
-    return openings;
   }
+  openings[destcount-1].next = nullptr;
+  return openings;
 }
 
 
@@ -1408,20 +1281,6 @@ float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point) {
 void VLevel::ChangeOneSectorInternal (sector_t *sector) {
   if (!sector) return;
   CalcSecMinMaxs(sector);
-#ifdef VV_CACHE_LINE_OPENINGS
-  // reset opening cache
-  {
-    line_t **lptr = sector->lines;
-    for (int lcount = sector->linecount; lcount--; ++lptr) {
-      line_t *line = *lptr;
-      if (line->oplistUsed) {
-        //GCon->Logf("%p: opcache invalidated (%u)!", line, line->oplistUsed);
-        for (unsigned f = 0; f < line->oplistUsed; ++f) FreeOpeningList(line->oplist[f]);
-        line->oplistUsed = 0;
-      }
-    }
-  }
-#endif
 }
 
 
@@ -1441,21 +1300,6 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
   csTouched[secnum] = csTouchCount;
 
   CalcSecMinMaxs(sector);
-
-#ifdef VV_CACHE_LINE_OPENINGS
-  // reset opening cache
-  {
-    line_t **lptr = sector->lines;
-    for (int lcount = sector->linecount; lcount--; ++lptr) {
-      line_t *line = *lptr;
-      if (line->oplistUsed) {
-        //GCon->Logf("%p: opcache invalidated (%u)!", line, line->oplistUsed);
-        for (unsigned f = 0; f < line->oplistUsed; ++f) FreeOpeningList(line->oplist[f]);
-        line->oplistUsed = 0;
-      }
-    }
-  }
-#endif
 
   bool ret = false;
 

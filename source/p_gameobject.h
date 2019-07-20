@@ -31,10 +31,6 @@
 //**************************************************************************
 #include "textures/r_tex_id.h"
 
-// actually, this is useless, and cause more problems than it solves (network, for example)
-//#define VV_CACHE_LINE_OPENINGS
-
-
 class VRenderLevelPublic;
 class VTextureTranslation;
 class VAcsLevel;
@@ -315,18 +311,9 @@ struct line_t : public TPlane {
   // collision detection planes
   // first plane is usually a duplicate of a normal line plane, but idc
   TPlane *cdPlanes;
+
   vint32 cdPlanesCount;
   TPlane cdPlanesArray[6];
-
-#ifdef VV_CACHE_LINE_OPENINGS
-  //FIXME: do it better
-  // used only if VV_CACHE_LINE_OPENINGS is defined
-  mutable opening_t *oplist[SPF_MAX_OPENINGS]; // for each possible flag combination
-  mutable vuint32 oplistUsed;
-#else /* rename them, so i won't accidentally use them anywhere */
-  mutable opening_t *oplistXXX[SPF_MAX_OPENINGS]; // for each possible flag combination
-  mutable vuint32 oplistUsedXXX;
-#endif
 };
 
 
