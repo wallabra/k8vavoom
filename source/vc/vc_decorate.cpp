@@ -2337,7 +2337,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
             {
               vuint32 Col = sc->ExpectColor();
-              while (sc->Check(",")) sc->ExpectFloat();
+              // intensity
+              if (sc->Check(",")) {
+                sc->ExpectFloat();
+                // damage type
+                if (sc->Check(",")) {
+                  sc->ExpectString();
+                }
+              }
               P.Field->SetInt(DefObj, Col);
             }
             break;
