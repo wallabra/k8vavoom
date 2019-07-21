@@ -254,6 +254,9 @@ const int AAPTR_PLAYER8 = 0x2000;
 
 const int AAPTR_FRIENDPLAYER = 0x4000;
 const int AAPTR_LINETARGET   = 0x8000;
+
+// k8vavoom extensions
+const int AAPTR_OWNER = 0x100000;
 //};
 
 

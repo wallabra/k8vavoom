@@ -743,6 +743,7 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
     if (ptr&AAPTR_PLAYER_GETTARGET) ptr |= AAPTR_NULL;
   }
   // category 2
+  if (ptr&AAPTR_OWNER) return Owner; // k8vavoom extensions
   if (ptr&AAPTR_TARGET) return Target;
   if (ptr&AAPTR_MASTER) return Master;
   if (ptr&AAPTR_TRACER) return Tracer;
