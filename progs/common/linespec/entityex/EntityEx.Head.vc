@@ -796,6 +796,10 @@ final float GetAnglesRoll () { return Angles.roll; }
 final int _GetUID () { return __ObjectUniqueId; }
 final Object _GetSelf () { return self; }
 final Object _GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }
+final Object _GetTarget () { return Target; }
+final Object _GetTracer () { return Tracer; }
+final Object _GetMaster () { return Master; }
+final Object _GetOwner () { return Owner; }
 
 
 // convert bool fields to `MF_XXX` flags

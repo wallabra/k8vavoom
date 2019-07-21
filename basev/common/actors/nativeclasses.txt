@@ -73,6 +73,10 @@ class Actor extends Thinker
   alias GetUID = _GetUID;
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
+  alias GetTarget = _GetTarget;
+  alias GetTracer = _GetTracer;
+  alias GetMaster = _GetMaster;
+  alias GetOwner = _GetOwner;
 
 
   action native A_JumpIfRadiusAmountGreater (int radius, int amount, name className, state label, optional bool exact);
