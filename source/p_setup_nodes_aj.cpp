@@ -592,13 +592,15 @@ void VLevel::BuildNodesAJ () {
   GCon->Logf("AJBSP: building blockmap...");
   ajbsp::InitBlockmap();
 
-  GCon->Logf("AJBSP: building nodes...");
+  GCon->Logf("AJBSP: creating initial segs...");
   // create initial segs
   ajbsp::superblock_t *seg_list = ajbsp::CreateSegs();
   ajbsp::node_t *root_node;
   ajbsp::subsec_t *root_sub;
   ajbsp::bbox_t seg_bbox;
+  GCon->Logf("AJBSP: calculating total limits...");
   ajbsp::FindLimits(seg_list, &seg_bbox);
+  GCon->Logf("AJBSP: building nodes...");
   build_result_e ret = ajbsp::BuildNodes(seg_list, &root_node, &root_sub, 0, &seg_bbox);
   ajbsp::FreeSuper(seg_list);
 
