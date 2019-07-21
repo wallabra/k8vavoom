@@ -492,7 +492,6 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
     mdl.reported = false;
   }
 
-
   for (auto &&it : frames.itemsIdx()) {
     Frame &frm = it.value();
     // check for MD2 named frames
@@ -722,6 +721,8 @@ void GZModelDef::merge (GZModelDef &other) {
         frm.vvindex = newvvindex[frm.vvindex];
       }
       mdl.frameMap = newmap;
+      // fix indicies
+      for (auto &&xit : mdl.frameMap.itemsIdx()) xit.value().vvframe = xit.index();
     }
   }
 }
