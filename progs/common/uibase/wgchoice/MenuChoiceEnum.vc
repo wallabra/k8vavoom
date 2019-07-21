@@ -55,32 +55,6 @@ int findValue (float val) {
 
 //==========================================================================
 //
-//  getSavedValue
-//
-//==========================================================================
-float getSavedValue (optional float defval) {
-  if (!specified_defval) defval = Value;
-  if (cvarSession) return getSavedFloat(cvarSession, defval);
-  return defval;
-}
-
-
-//==========================================================================
-//
-//  SetSessionCvar
-//
-//==========================================================================
-void SetSessionCvar (name Name, optional float defval) {
-  //if (!specified_defval) defval = 0;
-  cvarSession = Name;
-  if (Name) defval = getSavedFloat(Name, defval);
-  if (SetNewValue(defval)) Value = defval;
-  FixLatchedColor();
-}
-
-
-//==========================================================================
-//
 //  SetOrigin
 //
 //==========================================================================
@@ -99,13 +73,11 @@ override void SetOrigin (int x, int y) {
 //  SetNewValue
 //
 //==========================================================================
-bool SetNewValue (float newValue) {
-  //int idx = findValue(newValue);
-  //if (idx < 0) return false;
+override bool SetNewValue (ref float newValue) {
   if (ValueChanging) {
     if (!ValueChanging(self, newValue)) return false;
   }
-  if (cvarSession) setSavedFloat(cvarSession, newValue);
+  if (!::SetNewValue(ref newValue)) return false;
   Value = newValue;
   return true;
 }
@@ -186,6 +158,7 @@ override void OnDraw () {
 override bool OnKeyDown (int key) {
   if (vallist.length == 0) return false;
   key = ConvertBoundKey(key);
+  float newValue;
   int idx;
   switch (key) {
     case K_LEFTARROW:
@@ -193,7 +166,8 @@ override bool OnKeyDown (int key) {
     case K_MWHEELUP:
       idx = findValue(Value);
       if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
-      if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
+      newValue = vallist[idx].value;
+      if (SetNewValue(ref newValue)) LocalSound('menu/change');
       return true;
     case K_RIGHTARROW:
     case K_ENTER:
@@ -202,7 +176,8 @@ override bool OnKeyDown (int key) {
     case K_MWHEELDOWN:
       idx = findValue(Value);
       if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
-      if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
+      newValue = vallist[idx].value;
+      if (SetNewValue(ref newValue)) LocalSound('menu/change');
       return true;
   }
   return false;
@@ -214,7 +189,8 @@ override void OnMouseClick (int X, int Y) {
   if (vallist.length == 0) return;
   int idx = findValue(Value);
   if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
-  if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
+  float newValue = vallist[idx].value;
+  if (SetNewValue(ref newValue)) LocalSound('menu/change');
 }
 
 
@@ -223,7 +199,8 @@ override void OnRMouseClick (int X, int Y) {
   if (vallist.length == 0) return;
   int idx = findValue(Value);
   if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
-  if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
+  float newValue = vallist[idx].value;
+  if (SetNewValue(ref newValue)) LocalSound('menu/change');
 }
 
 

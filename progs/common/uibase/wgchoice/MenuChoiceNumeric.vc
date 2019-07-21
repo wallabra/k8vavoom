@@ -40,32 +40,6 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 
 //==========================================================================
 //
-//  getSavedValue
-//
-//==========================================================================
-float getSavedValue (optional float defval) {
-  if (!specified_defval) defval = Value;
-  if (cvarSession) return getSavedFloat(cvarSession, defval);
-  return defval;
-}
-
-
-//==========================================================================
-//
-//  SetSessionCvar
-//
-//==========================================================================
-void SetSessionCvar (name Name, optional float defval) {
-  if (!specified_defval) defval = 0;
-  cvarSession = Name;
-  if (Name) defval = fclamp(getSavedFloat(Name, defval), MinValue, MaxValue);
-  if (SetNewValue(defval)) Value = defval;
-  FixLatchedColor();
-}
-
-
-//==========================================================================
-//
 //  SetOrigin
 //
 //==========================================================================
@@ -79,11 +53,14 @@ override void SetOrigin (int x, int y) {
 //  SetNewValue
 //
 //==========================================================================
-bool SetNewValue (float newValue) {
+override bool SetNewValue (ref float newValue) {
+  newValue = fclamp(newValue, MinValue, MaxValue);
+  // hack for fractional values, why not?
+  newValue = FixFractionalValue(newValue, ValueDelta);
   if (ValueChanging) {
     if (!ValueChanging(self, newValue)) return false;
   }
-  if (cvarSession) setSavedFloat(cvarSession, newValue);
+  if (!::SetNewValue(ref newValue)) return false;
   Value = newValue;
   return true;
 }
@@ -141,14 +118,12 @@ override bool OnKeyDown (int key) {
     case K_LEFTARROW:
     case K_MWHEELDOWN:
       newValue = Value-ValueDelta;
-      if (newValue < MinValue) newValue = MinValue;
-      if (SetNewValue(newValue)) LocalSound('menu/change');
+      if (SetNewValue(ref newValue)) LocalSound('menu/change');
       return true;
     case K_RIGHTARROW:
     case K_MWHEELUP:
       newValue = Value+ValueDelta;
-      if (newValue > MaxValue) newValue = MaxValue;
-      if (SetNewValue(newValue)) LocalSound('menu/change');
+      if (SetNewValue(ref newValue)) LocalSound('menu/change');
       return true;
   }
   return ::OnKeyDown(key);
@@ -163,8 +138,7 @@ override bool OnKeyDown (int key) {
 override void OnMouseClick (int X, int Y) {
   SetFocus();
   float newValue = Value-ValueDelta;
-  if (newValue < MinValue) newValue = MinValue;
-  if (SetNewValue(newValue)) LocalSound('menu/change');
+  if (SetNewValue(ref newValue)) LocalSound('menu/change');
 }
 
 
@@ -176,8 +150,7 @@ override void OnMouseClick (int X, int Y) {
 override void OnRMouseClick (int X, int Y) {
   SetFocus();
   float newValue = Value+ValueDelta;
-  if (newValue > MaxValue) newValue = MaxValue;
-  if (SetNewValue(newValue)) LocalSound('menu/change');
+  if (SetNewValue(ref newValue)) LocalSound('menu/change');
 }
 
 

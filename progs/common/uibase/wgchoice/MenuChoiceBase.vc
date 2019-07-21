@@ -145,6 +145,34 @@ final static float getSavedFloat (name Name, float defval) {
 
 //==========================================================================
 //
+//  SetNewValue
+//
+//  return `false` if value is unnaceptable
+//  return `true` (and possibly clamp value) if it is acceptable
+//  acceptable value will be saved in session cvar (if it is set)
+//
+//==========================================================================
+bool SetNewValue (ref float newValue) {
+  if (cvarSession) setSavedFloat(cvarSession, newValue);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  SetSessionCvar
+//
+//==========================================================================
+void SetSessionCvar (name Name, optional float defval) {
+  cvarSession = Name;
+  if (Name) defval = getSavedFloat(Name, defval);
+  SetNewValue(ref defval);
+  FixLatchedColor();
+}
+
+
+//==========================================================================
+//
 //  GetClGame
 //
 //==========================================================================
