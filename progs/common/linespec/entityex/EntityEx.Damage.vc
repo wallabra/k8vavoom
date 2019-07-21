@@ -66,6 +66,8 @@ bool K8HS_IsGoodDamageType (name damageType) {
 //
 //==========================================================================
 int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+  // do not allow headshots/criticals on non-monster objects
+  if (!bMonster) return damage;
   // is it from player?
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
