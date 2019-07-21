@@ -86,6 +86,16 @@ enum /*WARPF*/ {
   WARPF_COPYPITCH         = 0x8000,
 };
 
+// Flags for GetZAt
+enum /*EZFlags*/ {
+  GZF_ABSOLUTEPOS =     1,      // Use the absolute position instead of an offsetted one.
+  GZF_ABSOLUTEANG =     1 << 1,   // Don't add the actor's angle to the parameter.
+  GZF_CEILING =         1 << 2,   // Check the ceiling instead of the floor.
+  GZF_3DRESTRICT =      1 << 3,   // Ignore midtextures and 3D floors above the pointer's z.
+  GZF_NOPORTALS =       1 << 4,   // Don't pass through any portals.
+  GZF_NO3DFLOOR =       1 << 5,   // Pass all 3D floors.
+};
+
 
 // flags for A_QuakeEx are in `QuakeFocusEx`
 
@@ -279,28 +289,44 @@ final int decorate_CountInv (name ItemName, optional int aptr) {
 //
 //==========================================================================
 //[float x[, float y[, float angle[, int flags[, int pick_pointer]]]]]
-final float decorate_GetZAt (optional float x, optional float y, optional float angle) {
-  /*
-  Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
-  if (!tgt) return 0;
-  return tgt.CheckInventory(ItemName);
-  */
-  EntityEx tgt = self;
+final float decorate_GetZAt (optional float x, optional float y, optional float angle, optional int flags, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('decorate_GetZAt', aptr!optional));
+  if (!tgt) return (flags&GZF_CEILING ? CeilingZ : FloorZ);
 
-  TAVec ang = tgt.Angles;
-  ang.yaw += angle;
-  TVec forward;
-  TVec right;
-  TVec up;
-
-  AngleVectors(ang, out forward, out right, out up);
   TVec org = tgt.Origin;
-  org += forward*x;
-  org += right*y;
+  if (flags&GZF_ABSOLUTEPOS) {
+    org = vector(x, y);
+  } else {
+    TAVec ang = tgt.Angles;
+    if (!(flags&GZF_ABSOLUTEANG)) ang.yaw += angle;
+    ang.pitch = 0;
+    ang.roll = 0;
+    TVec forward;
+    TVec right;
+    TVec up;
 
-  tmtrace_t tmtrace;
-  tgt.GetFloorAndCeilingEx(out tmtrace, org, collideWorld:true, collideThings:false);
-  return tmtrace.FloorZ;
+    AngleVectors(ang, out forward, out right, out up);
+    org = tgt.Origin;
+    org += forward*x;
+    org += right*y;
+  }
+
+  if (flags&GZF_NO3DFLOOR) {
+    sector_t *sec = XLevel.PointInSector(org);
+    if (flags&GZF_CEILING) {
+      return GetPlanePointZ(ref sec->ceiling, org);
+    } else {
+      return GetPlanePointZ(ref sec->floor, org);
+    }
+  } else if ((flags&(GZF_CEILING|GZF_3DRESTRICT)) == (GZF_CEILING|GZF_3DRESTRICT)) {
+    //k8: this is prolly not right
+    sector_t *sec = XLevel.PointInSector(org);
+    return GetPlanePointZ(ref sec->ceiling, org);
+  } else {
+    tmtrace_t tmtrace;
+    tgt.GetFloorAndCeilingEx(out tmtrace, org, collideWorld:true, collideThings:false);
+    return (flags&GZF_CEILING ? tmtrace.CeilingZ : tmtrace.FloorZ);
+  }
 }
 
 
