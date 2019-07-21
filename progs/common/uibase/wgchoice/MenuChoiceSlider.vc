@@ -107,10 +107,8 @@ override void OnDraw () {
   }
 
   SetTextAlign(hleft, vtop);
-  string sv;
-  if (fabs(Value) < 0.000001) sv = "0";
-  else sv = va("%f", Value);
-  DrawText(xt+3, 3, sv, CR_BLACK);
+  //k8: we have much better fp->str now, so there's no need to perform any string trickery here
+  DrawText(xt+3, 3, va("%f", Value), CR_BLACK);
 }
 
 
