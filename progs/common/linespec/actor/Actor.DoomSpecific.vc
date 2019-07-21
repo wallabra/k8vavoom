@@ -145,6 +145,11 @@ final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
 {
   TVec Dir;
 
+  // target is the originator (player) of the missile
+  // it may be missing, tho
+  // also, zdoom wiki says "this function will create unpredictable effects if used on a non-missile"
+  if (!bMissile || !Target) return;
+
   if (!FlashType) FlashType = BFGExtra;
   if (NumRays <= 0) NumRays = 40;
   if (DamageAmount <= 0) DamageAmount = 15;
@@ -159,8 +164,7 @@ final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
     //aimAng.yaw = AngleMod360(aimAng.yaw-45.0+90.0/float(NumRays)*float(i));
     aimAng.yaw = AngleMod360(aimAng.yaw-fovd2+fov/float(NumRays)*float(i));
 
-    // target is the originator (player)
-    //  of the missile
+    // target is the originator (player) of the missile
     EntityEx AimTarget = Target.AimLineAttack(out Dir, aimAng, /*16.0*64.0*/Distance);
     if (!AimTarget) continue;
 
