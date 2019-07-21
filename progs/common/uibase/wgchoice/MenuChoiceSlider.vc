@@ -24,14 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoiceSlider : MenuChoice;
-
-string Text;
-
-float Value;
-float ValueDelta;
-float MinValue;
-float MaxValue;
+class MenuChoiceSlider : MenuChoiceNumeric;
 
 int pic_M_THERML;
 int pic_M_THERMM;
@@ -44,48 +37,6 @@ int pic_M_SLDMD2;
 int pic_M_SLDRT;
 int pic_M_SLDKB;
 
-delegate bool ValueChanging (Object Sender, float NewValue);
-
-
-//==========================================================================
-//
-//  SetOrigin
-//
-//==========================================================================
-override void SetOrigin (int x, int y) {
-  SetPos(x-CursorXOffs, y);
-}
-
-
-//==========================================================================
-//
-//  SetNewValue
-//
-//==========================================================================
-override bool SetNewValue (ref float newValue) {
-  newValue = fclamp(newValue, MinValue, MaxValue);
-  // hack for fractional values, why not?
-  newValue = FixFractionalValue(newValue, ValueDelta);
-  if (ValueChanging) {
-    if (!ValueChanging(self, newValue)) return false;
-  }
-  if (!::SetNewValue(ref newValue)) return false;
-  Value = newValue;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  SetInitialValue
-//
-//==========================================================================
-void SetInitialValue (float AValue) {
-  Value = AValue;
-  if (Value < MinValue) Value = MinValue;
-  if (Value > MaxValue) Value = MaxValue;
-}
-
 
 //==========================================================================
 //
@@ -94,7 +45,6 @@ void SetInitialValue (float AValue) {
 //==========================================================================
 override void OnCreate () {
   ::OnCreate();
-
   if (WadLumpPresent('m_sldlt')) {
     pic_M_SLDLT = R_RegisterPic('m_sldlt');
     pic_M_SLDMD1 = R_RegisterPic('m_sldmd1');
@@ -164,64 +114,7 @@ override void OnDraw () {
 }
 
 
-//==========================================================================
-//
-//  OnKeyDown
-//
-//==========================================================================
-override bool OnKeyDown (int key) {
-  int nkey = ConvertBoundKey(key);
-  float newValue;
-  switch (nkey) {
-    case K_LEFTARROW:
-    case K_MWHEELDOWN:
-      newValue = Value-ValueDelta;
-      if (SetNewValue(ref newValue)) LocalSound('menu/change');
-      return true;
-    case K_RIGHTARROW:
-    case K_MWHEELUP:
-      newValue = Value+ValueDelta;
-      if (SetNewValue(ref newValue)) LocalSound('menu/change');
-      return true;
-  }
-  return ::OnKeyDown(key);
-}
-
-
-//==========================================================================
-//
-//  OnMouseClick
-//
-//==========================================================================
-override void OnMouseClick (int X, int Y) {
-  SetFocus();
-  float newValue = Value-ValueDelta;
-  if (SetNewValue(ref newValue)) LocalSound('menu/change');
-}
-
-
-//==========================================================================
-//
-//  OnRMouseClick
-//
-//==========================================================================
-override void OnRMouseClick (int X, int Y) {
-  SetFocus();
-  float newValue = Value+ValueDelta;
-  if (SetNewValue(ref newValue)) LocalSound('menu/change');
-}
-
-
 defaultproperties {
-  Width = 360;
   Height = 16-2;
-  CursorXOffs = 200;
   pic_M_SLDLT = -1;
-  Value = 0.0;
-  ValueDelta = 1.0;
-  MinValue = 0.0;
-  MaxValue = 1.0;
-
-  TextColor = CR_RED;
-  TextColorFocus = CR_YELLOW;
 }

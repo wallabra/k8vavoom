@@ -72,9 +72,7 @@ override bool SetNewValue (ref float newValue) {
 //
 //==========================================================================
 void SetInitialValue (float AValue) {
-  Value = AValue;
-  if (Value < MinValue) Value = MinValue;
-  if (Value > MaxValue) Value = MaxValue;
+  Value = fclamp(AValue, MinValue, MaxValue);
 }
 
 
