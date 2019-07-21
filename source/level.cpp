@@ -3052,7 +3052,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (side) xdir = -xdir;
         TVec norg = (*li->v1)+xdir*1024;
         nside = nline->PointOnSide(norg);
-        if (li->sidenum[nside] < 0) continue; // oops
+        #ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
+        #endif
+        if (li->sidenum[nside] < 0) {
+          if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
+          nside ^= 1;
+        }
+        #ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
+        #endif
         /*
         #ifdef VAVOOM_DECALS_DEBUG
         GCon->Logf("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
@@ -3095,7 +3104,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (side) xdir = -xdir;
         TVec norg = (*li->v2)+xdir*1024;
         nside = nline->PointOnSide(norg);
-        if (li->sidenum[nside] < 0) continue; // oops
+        #ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  (1)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
+        #endif
+        if (li->sidenum[nside] < 0) {
+          if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
+          nside ^= 1;
+        }
+        #ifdef VAVOOM_DECALS_DEBUG
+        GCon->Logf("  (1)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
+        #endif
         /*
         #ifdef VAVOOM_DECALS_DEBUG
         GCon->Logf("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
