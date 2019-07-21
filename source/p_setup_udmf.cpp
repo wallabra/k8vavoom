@@ -124,6 +124,20 @@ public:
 
   bool warnUnknownKeys;
 
+  // warning types
+  enum {
+    WT_VERTEX = 1<<0,
+    WT_SECTOR = 1<<1,
+    WT_LINE = 1<<2,
+    WT_SIDE = 1<<3,
+    WT_THING = 1<<4,
+  };
+
+  TMapNC<VName, int> keysWarned;
+  int srcLump;
+
+  void keyWarning (int wtype);
+
 public:
   VUdmfParser (int Lump);
   void Parse (VLevel *Level, const mapInfo_t &MInfo);
@@ -152,7 +166,10 @@ public:
 //  VUdmfParser::VUdmfParser
 //
 //==========================================================================
-VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump)) {
+VUdmfParser::VUdmfParser (int Lump)
+  : sc(*W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump))
+  , srcLump(Lump)
+{
   warnUnknownKeys = !GArgs.CheckParm("-wno-udmf-unknown-keys");
 }
 
@@ -165,8 +182,36 @@ VUdmfParser::VUdmfParser (int Lump) : sc("textmap", W_CreateLumpReaderNum(Lump))
 bool VUdmfParser::CanSilentlyIgnoreKey () const {
   if (!warnUnknownKeys) return true;
   return
+    Key.isEmpty() ||
     Key.startsWithCI("user_") ||
     Key.strEquCI("comment");
+}
+
+
+//==========================================================================
+//
+//  VUdmfParser::ParseKey
+//
+//==========================================================================
+void VUdmfParser::keyWarning (int wtype) {
+  if (!wtype) return;
+  if (CanSilentlyIgnoreKey()) return;
+  VName kn = VName(*Key, VName::AddLower);
+  auto pxx = keysWarned.find(kn);
+  if (pxx) {
+    if (((*pxx)&wtype) == wtype) return; // already warned
+    keysWarned.put(kn, (*pxx)|wtype);
+  } else {
+    keysWarned.put(kn, wtype);
+  }
+  const char *wtmsg = "unknown";
+       if (wtype&WT_VERTEX) wtmsg = "vertex";
+  else if (wtype&WT_SECTOR) wtmsg = "sector";
+  else if (wtype&WT_LINE) wtmsg = "linedef";
+  else if (wtype&WT_SIDE) wtmsg = "sidedef";
+  else if (wtype&WT_THING) wtmsg = "thing";
+  //sc.Message(va("UDMF: unknown %s property '%s'", wtmsg, *Key));
+  GCon->Logf(NAME_Warning, "%s: unknown UDMF %s property '%s'", *W_FullLumpName(srcLump), wtmsg, *Key);
 }
 
 
@@ -406,7 +451,7 @@ void VUdmfParser::ParseVertex () {
       v.hasCeilingZ = true;
       continue;
     }
-    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown vertex property '%s' with value '%s'", *Key, *Val));
+    keyWarning(WT_VERTEX);
   }
   if (!hasX || !hasY) sc.HostError("UDMF: incomplete vertex data");
   // be conservative here
@@ -524,7 +569,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("norespawn")) { (void)CheckBool(); continue; }
     }
 
-    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sector property '%s' with value '%s'", *Key, *Val));
+    keyWarning(WT_SECTOR);
   }
 
   if (S.params.glowFloorHeight >= 1) S.params.lightFCFlags |= 0x04; else S.params.glowFloorHeight = 0;
@@ -680,7 +725,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
       if (Key.strEquCI("midtex3dimpassible")) { if (CheckBool()) continue; }
     }
 
-    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown linedef property '%s' with value '%s'", *Key, *Val));
+    keyWarning(WT_LINE);
   }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
@@ -746,7 +791,7 @@ void VUdmfParser::ParseSideDef () {
       if (Key.strEquCI("smoothlighting")) { Flag(S.S.Flags, SDF_SMOOTH_LIT); continue; }
     }
 
-    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown sidedef property '%s' with value '%s'", *Key, *Val));
+    keyWarning(WT_SIDE);
   }
 
   S.S.Top.TextureOffset += XOffs;
@@ -854,7 +899,7 @@ void VUdmfParser::ParseThing () {
       if (Key.startsWithCI("score")) { if (CheckInt() == 0) continue; }
     }
 
-    if (!CanSilentlyIgnoreKey()) sc.Message(va("UDMF: unknown thing property '%s' with value '%s'", *Key, *Val));
+    keyWarning(WT_THING);
   }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
