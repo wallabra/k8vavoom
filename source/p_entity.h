@@ -437,6 +437,22 @@ public:
     VMT_RET_REF(VEntity, method);
   }
 
+  //override bool do_CheckProximity (name classname, float distance, optional int count, optional int flags, optional int aptr)
+  bool doCheckProximity (VName classname, float dist,
+                         bool specified_count, int count,
+                         bool specified_flags, int flags,
+                         bool specified_aptr, int aptr)
+  {
+    static VMethodProxy method("do_CheckProximity");
+    vobjPutParamSelf(
+      classname, dist,
+      VOptPutParamInt(count, specified_count),
+      VOptPutParamInt(flags, specified_flags),
+      VOptPutParamInt(aptr, specified_aptr)
+    );
+    VMT_RET_BOOL(method);
+  }
+
   VEntity *eventDoAAPtr (int aaptr) { static VMethodProxy method("eventDoAAPtr"); vobjPutParamSelf(aaptr); VMT_RET_REF(VEntity, method); }
 
   VEntity *eventFindTargetForACS () { static VMethodProxy method("eventFindTargetForACS"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }

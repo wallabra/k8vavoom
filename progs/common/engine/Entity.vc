@@ -1104,6 +1104,18 @@ void QS_Save () {}
 void QS_Load () {}
 
 
+//==========================================================================
+//
+//  do_CheckProximity
+//
+//  this is used both for decorate and for ACSF
+//
+//==========================================================================
+bool do_CheckProximity (name classname, float distance, optional int count, optional int flags, optional int aptr) {
+  return false;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // this is hack used for quicksaves
 native final void QS_PutInt (string fieldname, int value);

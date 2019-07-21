@@ -1090,17 +1090,15 @@ final void A_Burst (class!Actor ChunkType) {
 
 //==========================================================================
 //
-//  A_CheckProximity
+//  do_CheckProximity
+//
+//  this is used both for decorate and for ACSF
 //
 //==========================================================================
-final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
-  // state jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
-
-  if (!specified_aptr) aptr = AAPTR_DEFAULT;
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckProximity', aptr));
+override bool do_CheckProximity (name classname, float distance, optional int count, optional int flags, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckProximity', aptr!optional));
   //if (!specified_aptr && tgt != Target) Error("WUTA?! in `A_CheckProximity`");
-  if (!tgt) return;
+  if (!tgt) return false;
 
   if (flags&CPXF_SETONPTR) {
     //k8: is this right?
@@ -1116,8 +1114,8 @@ final void A_CheckProximity (state Label, name classname, float distance, option
   distance = fmax(0.1, distance);
 
   if (!specified_count) count = 1;
-  if (count < 1) return; // oops
-  if (!classname) return; // oops
+  if (count < 1) return false; // oops
+  if (!classname) return false; // oops
 
   EntityEx bestent = none;
   float bestdist = (flags&CPXF_FARTHEST ? -1 : float.max);
@@ -1155,7 +1153,7 @@ final void A_CheckProximity (state Label, name classname, float distance, option
     // count things
     --count;
     // early exit, if possible
-    if (count < 0 && (flags&(CPXF_EXACT|CPXF_LESSOREQUAL))) return; // oops, too many
+    if (count < 0 && (flags&(CPXF_EXACT|CPXF_LESSOREQUAL))) return false; // oops, too many
     // if we want it to be saved with a distance condition, we cannot exit early
     if ((flags&(CPXF_SETTARGET|CPXF_SETMASTER|CPXF_SETTRACER)) && (flags&(CPXF_FARTHEST|CPXF_CLOSEST))) {
       if (flags&CPXF_FARTHEST) {
@@ -1173,13 +1171,13 @@ final void A_CheckProximity (state Label, name classname, float distance, option
     }
   }
 
-  if (!bestent) return; // nothing was found, oops
+  if (!bestent) return false; // nothing was found, oops
 
   // check condition
   if (flags&CPXF_EXACT) {
-    if (count != 0) return;
+    if (count != 0) return false;
   } else if (flags&CPXF_LESSOREQUAL) {
-    if (count < 0) return;
+    if (count < 0) return false;
   }
 
   // set pointers
@@ -1196,6 +1194,19 @@ final void A_CheckProximity (state Label, name classname, float distance, option
     }
   }
 
-  // perform jump
-  DoJump(Label);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  A_CheckProximity
+//
+//==========================================================================
+final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (do_CheckProximity(classname, distance, count!optional, flags!optional, aptr!optional)) {
+    DoJump(Label);
+  }
 }

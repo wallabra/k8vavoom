@@ -3346,6 +3346,21 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    //bool CheckProximity (int tid, str classname, float distance [, int count [, int flags [, int ptr]]])
+    case ACSF_CheckProximity:
+      if (argCount >= 3) {
+        VEntity *ent = EntityFromTID(args[0], Activator);
+        if (ent) {
+          bool res = ent->doCheckProximity(GetNameLowerCase(args[1]),
+                                           (float)(args[2])/65536.0f,
+                                           (argCount > 3), (argCount > 3 ? args[3] : 0),
+                                           (argCount > 4), (argCount > 4 ? args[4] : 0),
+                                           (argCount > 5), (argCount > 5 ? args[5] : 0));
+          return (res ? 1 : 0);
+        }
+      }
+      return 0;
+
     case ACSF_DropItem:
       if (argCount >= 2) {
         VName itemName = GetNameLowerCase(args[1]);
