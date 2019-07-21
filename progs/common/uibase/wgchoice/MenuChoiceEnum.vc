@@ -157,10 +157,10 @@ override void OnDraw () {
 //==========================================================================
 override bool OnKeyDown (int key) {
   if (vallist.length == 0) return false;
-  key = ConvertBoundKey(key);
+  int cvtkey = ConvertBoundKey(key);
   float newValue;
   int idx;
-  switch (key) {
+  switch (cvtkey) {
     case K_LEFTARROW:
     case K_MOUSE2:
     case K_MWHEELUP:
@@ -180,7 +180,7 @@ override bool OnKeyDown (int key) {
       if (SetNewValue(ref newValue)) LocalSound('menu/change');
       return true;
   }
-  return false;
+  return ::OnKeyDown(key);
 }
 
 

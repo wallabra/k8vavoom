@@ -205,6 +205,34 @@ override void OnMouseEnter() {
 }
 
 
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  if (!cvarSession) return false;
+  // restore default value
+  switch (key) {
+    case K_BACKSPACE: // [R]estore
+      if (CvarExists(cvarSession)) {
+        string s = GetCvarDefault(cvarSession);
+        if (s) {
+          bool err;
+          float newValue = atof(s, out err);
+          if (!err) {
+            //print("KD! %s [%s]", cvarSession, newValue);
+            if (SetNewValue(ref newValue)) LocalSound('menu/change');
+            return true;
+          }
+        }
+      }
+      break;
+  }
+  return false;
+}
+
+
 defaultproperties {
   Focusable = true;
   Width = 320;

@@ -102,7 +102,9 @@ override bool OnKeyDown (int key) {
       }
       return true;
   }
-  return false;
+
+  //return ::OnKeyDown(key);
+  return false; //k8:FIXME!
 }
 
 

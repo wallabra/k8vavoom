@@ -92,8 +92,8 @@ override bool OnKeyDown (int key) {
     return true;
   }
 
-  key = ConvertBoundKey(key);
-  if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
+  int cvtkey = ConvertBoundKey(key);
+  if (cvtkey == K_ENTER || cvtkey == K_PADENTER || cvtkey == K_MOUSE1 || cvtkey == K_JOY1) {
     // we are going to be intercepting all chars
     bEnteringText = true;
     EnterText = Value;
@@ -101,7 +101,7 @@ override bool OnKeyDown (int key) {
     return true;
   }
 
-  return false;
+  return ::OnKeyDown(key);
 }
 
 
