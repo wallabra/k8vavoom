@@ -2750,7 +2750,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   const float bfloorZ = (bsec ? bsec->floor.GetPointZ(linepos) : ffloorZ);
   const float bceilingZ = (bsec ? bsec->ceiling.GetPointZ(linepos) : fceilingZ);
 
-  if (side && (li->flags&(ML_NODECAL|ML_ADDITIVE)) == 0 && (sidedef->Flags&SDF_NODECAL) == 0) {
+  if (sidedef && (li->flags&(ML_NODECAL|ML_ADDITIVE)) == 0 && (sidedef->Flags&SDF_NODECAL) == 0) {
     // find segs for this decal (there may be several segs)
     // for two-sided lines, put decal on segs for both sectors
     for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
