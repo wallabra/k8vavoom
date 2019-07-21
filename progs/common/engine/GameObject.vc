@@ -762,6 +762,9 @@ struct side_t {
   bool bAbsLight; // light is absolute value
   bool bWrapMidTex;
   bool bClipMidTex;
+  bool bNoFakeContrast;
+  bool bSmoothLight;
+  bool bNoDecal;
 
   int Light;
 };

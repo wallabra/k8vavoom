@@ -788,7 +788,8 @@ void VUdmfParser::ParseSideDef () {
       if (Key.strEquCI("wrapmidtex")) { Flag(S.S.Flags, SDF_WRAPMIDTEX); continue; }
       if (Key.strEquCI("clipmidtex")) { Flag(S.S.Flags, SDF_CLIPMIDTEX); continue; }
       if (Key.strEquCI("nofakecontrast")) { Flag(S.S.Flags, SDF_NOFAKECTX); continue; }
-      if (Key.strEquCI("smoothlighting")) { Flag(S.S.Flags, SDF_SMOOTH_LIT); continue; }
+      if (Key.strEquCI("smoothlighting")) { Flag(S.S.Flags, SDF_SMOOTHLIT); continue; }
+      if (Key.strEquCI("nodecals")) { Flag(S.S.Flags, SDF_NODECAL); continue; }
     }
 
     keyWarning(WT_SIDE);

@@ -1279,7 +1279,7 @@ load_again:
           if (sidx >= 0) {
             side_t *side = &Sides[sidx];
             if ((side->Flags&SDF_NOFAKECTX) == 0) {
-              side->Light += ((side->Flags&SDF_SMOOTH_LIT) == 0 ? shadeChange : smoothChange);
+              side->Light += ((side->Flags&SDF_SMOOTHLIT) == 0 ? shadeChange : smoothChange);
             }
           }
         }

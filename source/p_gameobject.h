@@ -327,7 +327,8 @@ enum {
   SDF_WRAPMIDTEX = 1u<<1,
   SDF_CLIPMIDTEX = 1u<<2,
   SDF_NOFAKECTX  = 1u<<3, // no fake contrast
-  SDF_SMOOTH_LIT = 1u<<4, // smooth lighting, not implemented yet
+  SDF_SMOOTHLIT  = 1u<<4, // smooth lighting, not implemented yet
+  SDF_NODECAL    = 1u<<5,
 };
 
 
