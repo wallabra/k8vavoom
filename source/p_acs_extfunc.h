@@ -167,7 +167,7 @@
   ACS_EXTFUNC(SetActivatorToPlayer_Zadro)
 
 
-  ACS_EXTFUNC_NUM(CheckClass, 200)
+  ACS_EXTFUNC_NUM(CheckClass, 200) // implemented
   ACS_EXTFUNC(DamageActor) // [arookas]
   ACS_EXTFUNC(SetActorFlag) // implemented
   ACS_EXTFUNC(SetTranslation)

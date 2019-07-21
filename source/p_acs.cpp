@@ -3333,6 +3333,19 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    case ACSF_CheckClass:
+      if (argCount > 0) {
+        VName cname = GetNameLowerCase(args[0]);
+        if (cname != NAME_None) {
+          VClass *cls = VClass::FindClassNoCase(*cname);
+          while (cls) {
+            if (VStr::strEqu(cls->GetName(), "Actor")) return 1;
+            cls = cls->ParentClass;
+          }
+        }
+      }
+      return 0;
+
     case ACSF_DropItem:
       if (argCount >= 2) {
         VName itemName = GetNameLowerCase(args[1]);
