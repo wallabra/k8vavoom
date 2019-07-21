@@ -1170,6 +1170,7 @@ struct mthing_t {
   int arg3;
   int arg4;
   int arg5;
+  float health; // initial health (0 means "default")
 };
 
 //

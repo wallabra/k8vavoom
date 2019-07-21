@@ -871,6 +871,8 @@ void VUdmfParser::ParseThing () {
       if (Key.strEquCI("arg3")) { T.arg4 = CheckInt(); continue; }
       if (Key.strEquCI("arg4")) { T.arg5 = CheckInt(); continue; }
 
+      if (Key.strEquCI("health")) { T.health = CheckFloat(); continue; }
+
       if (Key.strEquCI("renderstyle")) {
         VStr s = CheckString();
         while (s.length() && (vuint8)s[0] <= ' ') s.chopLeft(1);

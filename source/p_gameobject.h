@@ -924,6 +924,7 @@ struct mthing_t {
   vint32 arg3;
   vint32 arg4;
   vint32 arg5;
+  float health; // initial health; 0 means "default"
 };
 
 
