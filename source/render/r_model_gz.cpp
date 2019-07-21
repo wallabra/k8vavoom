@@ -35,6 +35,7 @@ public:
     int mdindex; // model index in `models`
     int origmdindex; // this is used to find replacements on merge
     int frindex; // frame index in model (will be used to build frame map)
+    VStr frname; // for MD2 named frames
     // in k8vavoom, this is set per-frame
     // set in `checkModelSanity()`
     TAVec angleOffset;
@@ -69,6 +70,8 @@ public:
     VStr skinFile; // with path
     // set in `checkModelSanity()`
     TArray<MdlFrameInfo> frameMap;
+    // used in sanity checks
+    bool reported;
   };
 
 protected:
@@ -81,12 +84,16 @@ public:
   VStr className;
   VStr path;
   TArray<MSDef> models;
-  TVec scale = TVec(0, 0, 0);
-  TVec offset = TVec(0, 0, 0);
-  float rotationSpeed = 0; // !0: rotating
-  TAVec angleOffset = TAVec(0, 0, 0);
+  TVec scale;
+  TVec offset;
+  float rotationSpeed; // !0: rotating
+  TAVec angleOffset;
   TArray<Frame> frames;
   // set in `checkModelSanity()`
+
+public:
+  GZModelDef ();
+  virtual ~GZModelDef ();
 
   void clear ();
 
@@ -100,7 +107,40 @@ public:
   void merge (GZModelDef &other);
 
   VStr createXml ();
+
+  // override this function to allow "Frame" modeldef parsing
+  // return `true` if model was succesfully found and parsed, or
+  // false if model wasn't found or in invalid format
+  virtual bool ParseMD2Frames (VStr mdpath, TArray<VStr> &names);
 };
+
+
+//==========================================================================
+//
+//  GZModelDef::GZModelDef
+//
+//==========================================================================
+GZModelDef::GZModelDef ()
+  : className()
+  , path()
+  , models()
+  , scale(0, 0, 0)
+  , offset(0, 0, 0)
+  , rotationSpeed(0)
+  , angleOffset(0, 0, 0)
+  , frames()
+{
+}
+
+
+//==========================================================================
+//
+//  GZModelDef::~GZModelDef
+//
+//==========================================================================
+GZModelDef::~GZModelDef () {
+  clear();
+}
 
 
 //==========================================================================
@@ -117,6 +157,16 @@ void GZModelDef::clear () {
   rotationSpeed = 0;
   angleOffset = TAVec(0, 0, 0);
   frames.clear();
+}
+
+
+//==========================================================================
+//
+//  GZModelDef::ParseMD2Frames
+//
+//==========================================================================
+bool GZModelDef::ParseMD2Frames (VStr mdpath, TArray<VStr> &names) {
+  return false;
 }
 
 
@@ -269,7 +319,46 @@ void GZModelDef::parse (VScriptParser *sc) {
       continue;
     }
     // "frame"
-    if (sc->Check("frame")) sc->Error(va("'frame' declaration is not supported in model '%s'", *className));
+    if (sc->Check("frame")) {
+      // Frame sprbase sprframe modelindex framename
+      Frame frm;
+      // sprite name
+      sc->ExpectString();
+      frm.sprbase = sc->String.toLowerCase();
+      if (frm.sprbase.length() != 4) sc->Error(va("invalid sprite name '%s' in model '%s'", *frm.sprbase, *className));
+      // sprite frame
+      sc->ExpectString();
+      if (sc->String.length() != 1) sc->Error(va("invalid sprite frame '%s' in model '%s'", *sc->String, *className));
+      char fc = sc->String[0];
+      if (fc >= 'a' && fc <= 'z') fc = fc-'a'+'A';
+      frm.sprframe = fc-'A';
+      if (frm.sprframe < 0 || frm.sprframe > 31) sc->Error(va("invalid sprite frame '%s' in model '%s'", *sc->String, *className));
+      // model index
+      sc->ExpectNumber();
+      if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model index %d in model '%s'", sc->Number, *className));
+      frm.mdindex = frm.origmdindex = sc->Number;
+      // frame name
+      sc->ExpectString();
+      //if (sc->String.isEmpty()) sc->Error(va("empty model frame name model '%s'", *className));
+      frm.frindex = -1;
+      frm.frname = sc->String;
+      // check if we already have equal frame, there is no need to keep duplicates
+      bool replaced = false;
+      for (auto &&ofr : frames) {
+        if (frm.sprframe == ofr.sprframe &&
+            frm.mdindex == ofr.mdindex &&
+            frm.sprbase == ofr.sprbase)
+        {
+          // i found her!
+          ofr.frindex = -1;
+          ofr.frname = frm.frname;
+          replaced = true;
+        }
+      }
+      // store it, if it wasn't a replacement
+      if (!replaced) frames.append(frm);
+      continue;
+    }
     // "AngleOffset"
     if (sc->Check("AngleOffset")) {
       sc->ExpectFloatWithSign();
@@ -397,13 +486,49 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
   bool hasInvalidFrames = false;
 
   // clear existing frame maps, just in case
-  for (auto &&mdl : models) mdl.frameMap.clear();
+  for (auto &&mdl : models) {
+    mdl.frameMap.clear();
+    mdl.reported = false;
+  }
+
 
   for (auto &&it : frames.itemsIdx()) {
     Frame &frm = it.value();
-    frm.vvindex = findModelFrame(frm.mdindex, frm.frindex, true); // allow appending
+    // check for MD2 named frames
+    if (frm.frindex == -1) {
+      int mdlindex = frm.mdindex;
+      if (mdlindex < 0 || mdlindex >= models.length() || models[mdlindex].modelFile.isEmpty() || models[mdlindex].reported) {
+        frm.vvindex = -1;
+      } else {
+        TArray<VStr> frlist;
+        VStr mfn = path+models[mdlindex].modelFile;
+        if (!ParseMD2Frames(mfn, frlist)) {
+          GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
+          frm.vvindex = -1;
+          models[mdlindex].reported = true;
+        } else {
+          frm.vvindex = -1;
+          for (auto &&nit : frlist.itemsIdx()) {
+            if (nit.value().strEquCI(frm.frname)) {
+              frm.vvindex = nit.index();
+              break;
+            }
+          }
+        }
+      }
+      if (frm.vvindex >= 0) {
+        frm.vvindex = findModelFrame(frm.mdindex, frm.vvindex, true); // allow appending
+      }
+    } else {
+      frm.vvindex = findModelFrame(frm.mdindex, frm.frindex, true); // allow appending
+    }
+
     if (frm.vvindex < 0) {
-      GLog.WriteLine(NAME_Warning, "alias model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index());
+      if (frm.frindex >= 0) {
+        GLog.WriteLine(NAME_Warning, "alias model '%s' has invalid model index (%d) in frame %d", *className, frm.mdindex, it.index());
+      } else {
+        GLog.WriteLine(NAME_Warning, "alias model '%s' has invalid model frame '%s' in frame %d", *className, *frm.frname, it.index());
+      }
       hasInvalidFrames = true;
       continue;
     }

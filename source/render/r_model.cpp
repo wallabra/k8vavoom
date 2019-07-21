@@ -919,7 +919,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   }
 
   // triangles
-  //k8: this tried to collape same vertices, but meh
+  //k8: this tried to collapse same vertices, but meh
   TArray<TVertMap> VertMap;
   TArray<VTempEdge> Edges;
   mod->Tris.SetNum(pmodel->numtris);
