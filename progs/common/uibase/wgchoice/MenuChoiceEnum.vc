@@ -118,7 +118,7 @@ void AddItem (string AValue, optional float val) {
 void SetInitialValue (float AValue) {
   Value = AValue;
   //int idx = findValue(AValue);
-  if (cvarSession) setSavedFloat(cvarSession, AValue);
+  if (cvarSession) setSavedFloat(cvarSession, Value);
 }
 
 

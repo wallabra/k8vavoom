@@ -73,6 +73,7 @@ override bool SetNewValue (ref float newValue) {
 //==========================================================================
 void SetInitialValue (float AValue) {
   Value = fclamp(AValue, MinValue, MaxValue);
+  if (cvarSession) setSavedFloat(cvarSession, Value);
 }
 
 
