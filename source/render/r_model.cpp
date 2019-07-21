@@ -259,6 +259,11 @@ static const float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 static void ParseGZModelDefs ();
 #include "r_model_gz.cpp"
 
+class GZModelDefEx : public GZModelDef {
+public:
+  virtual bool ParseMD2Frames (VStr mdpath, TArray<VStr> &names) override;
+};
+
 
 //==========================================================================
 //
@@ -761,7 +766,7 @@ VModel *Mod_FindName (const VStr &name) {
 //==========================================================================
 static void ParseGZModelDefs () {
   // build model list, so we can append them backwards
-  TArray<GZModelDef *> gzmdlist;
+  TArray<GZModelDefEx *> gzmdlist;
   TMap<VStr, int> gzmdmap;
 
   VName mdfname = VName("modeldef", VName::FindLower);
@@ -774,7 +779,7 @@ static void ParseGZModelDefs () {
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
     while (sc->GetString()) {
       if (sc->String.strEquCI("model")) {
-        auto mdl = new GZModelDef();
+        auto mdl = new GZModelDefEx();
         mdl->parse(sc);
         // find model
         if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
@@ -883,6 +888,58 @@ static VStr getStrZ (const char *s, unsigned maxlen) {
 
 //==========================================================================
 //
+//  GZModelDefEx::ParseMD2Frames
+//
+//  return `true` if model was succesfully found and parsed, or
+//  false if model wasn't found or in invalid format
+//  WARNING: don't clear `names` array!
+//
+//==========================================================================
+bool GZModelDefEx::ParseMD2Frames (VStr mdpath, TArray<VStr> &names) {
+  // load the file
+  VStream *strm = FL_OpenFileRead(mdpath);
+  if (!strm) return false;
+
+  TArray<vuint8> data;
+  data.setLength(strm->TotalSize());
+  if (data.length() < 4) {
+    delete strm;
+    return false;
+  }
+  strm->Serialise(data.ptr(), data.length());
+  bool wasError = strm->IsError();
+  delete strm;
+  if (wasError) return false;
+
+  // is this MD2 model?
+  if (LittleLong(*(vuint32 *)data.ptr()) != IDPOLY2HEADER) return false;
+
+  mmdl_t *pmodel = (mmdl_t *)data.ptr();
+
+  // endian-adjust and swap the data, starting with the alias model header
+  for (unsigned i = 0; i < sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
+
+  if (pmodel->version != ALIAS_VERSION) return false;
+  if (pmodel->numverts <= 0 || pmodel->numverts > MAXALIASVERTS) return false;
+  if (pmodel->numstverts <= 0 || pmodel->numstverts > MAXALIASSTVERTS) return false;
+  if (pmodel->numtris <= 0 || pmodel->numtris > 65536) return false;
+  if (pmodel->numskins > 1024) return false;
+  if (pmodel->numframes < 1 || pmodel->numframes > 1024) return false;
+
+  mframe_t *pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
+
+  for (unsigned i = 0; i < pmodel->numframes; ++i) {
+    VStr frname = getStrZ(pframe->name, 16);
+    names.append(frname);
+    pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  Mod_BuildFrames
 //
 //==========================================================================
@@ -908,7 +965,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   if (pmodel->numtris <= 0) Sys_Error("model '%s' has no triangles", *mod->Name);
   if (pmodel->numtris > 65536) Sys_Error("model '%s' has too many triangles", *mod->Name);
   //if (pmodel->skinwidth&0x03) Sys_Error("Mod_LoadAliasModel: skinwidth not multiple of 4");
-  if (pmodel->numskins < 1 || pmodel->numskins > 1024) Sys_Error("model '%s' has invalid number of skins: %u", *mod->Name, pmodel->numskins);
+  if (pmodel->numskins < 0 || pmodel->numskins > 1024) Sys_Error("model '%s' has invalid number of skins: %u", *mod->Name, pmodel->numskins);
   if (pmodel->numframes < 1 || pmodel->numframes > 1024) Sys_Error("model '%s' has invalid numebr of frames: %u", *mod->Name, pmodel->numframes);
 
   // base s and t vertices
@@ -1171,7 +1228,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
     pmesh->vertOfs = LittleLong(pmesh->vertOfs);
     pmesh->endOfs = LittleLong(pmesh->endOfs);
 
-    if (pmesh->shaderNum < 1 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *mod->Name, pmesh->shaderNum);
+    if (pmesh->shaderNum < 0 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *mod->Name, pmesh->shaderNum);
     if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh", *mod->Name);
     if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *mod->Name);
     if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *mod->Name);
@@ -1387,11 +1444,13 @@ static void Mod_ParseModel (VMeshModel *mod) {
 
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
-  if (!Strm) Sys_Error("Couldn't load %s", *mod->Name);
+  if (!Strm) Sys_Error("Couldn't load '%s'", *mod->Name);
 
   vuint8 *Data = (vuint8 *)Z_Malloc(Strm->TotalSize());
   Strm->Serialise(Data, Strm->TotalSize());
+  bool wasError = Strm->IsError();
   delete Strm;
+  if (wasError) Sys_Error("Error loading '%s'", *mod->Name);
 
   if (LittleLong(*(vuint32 *)Data) == IDPOLY2HEADER) {
     // swap model

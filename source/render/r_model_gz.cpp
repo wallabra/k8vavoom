@@ -111,6 +111,7 @@ public:
   // override this function to allow "Frame" modeldef parsing
   // return `true` if model was succesfully found and parsed, or
   // false if model wasn't found or in invalid format
+  // WARNING: don't clear `names` array!
   virtual bool ParseMD2Frames (VStr mdpath, TArray<VStr> &names);
 };
 
