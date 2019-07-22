@@ -862,7 +862,7 @@ final void A_BrainExplode () {
 //
 //==========================================================================
 final void BrainishExplosion (TVec org) {
-  EntityEx A = Spawn(Rocket, org, default, default, false);
+  EntityEx A = Spawn(Rocket, org, default, default/*, false*/);
   A.DeathSound = 'misc/brainexplode';
 
   // disables collision detection which is not wanted here
@@ -906,7 +906,7 @@ final void decorate_A_Mushroom (optional class!Actor SpawnType,
 
   // now launch mushroom cloud
   // we need something to aim at
-  Actor target = Spawn(MapSpot, default, default, default, false);
+  Actor target = Spawn(MapSpot, default, default, default/*, false*/);
   target.Height = Height;
   for (int i = -Amount; i <= Amount; i += 8) {
     for (int j = -Amount; j <= Amount; j += 8) {

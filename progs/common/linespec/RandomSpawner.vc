@@ -56,7 +56,7 @@ override void BeginPlay () {
         // send a warning that this class can't be found and continue the loop
         printwarn("RandomSpawner type definition is incorrect at element %i", DropItemList.length-i);
         // show that there's a problem.
-        Spawn(Unknown, Origin, default, default, false);
+        Spawn(Unknown, Origin, default, default/*, false*/);
         Destroy();
         return;
       }
@@ -81,7 +81,7 @@ override void BeginPlay () {
     // prevent infinite recursions
     if (BounceCount >= MAX_RANDOMSPAWNERS_RECURSION) {
       // show that there's a problem
-      Spawn(Unknown, Origin, default, default, false);
+      Spawn(Unknown, Origin, default, default/*, false*/);
       Destroy();
       return;
     } else if (Random() <= DropItemList[i].Chance) {
@@ -89,7 +89,7 @@ override void BeginPlay () {
 
       if (!cls) {
         // show that there's a problem
-        Spawn(Unknown, Origin, default, default, false);
+        Spawn(Unknown, Origin, default, default/*, false*/);
         Destroy();
         return;
       }
@@ -99,7 +99,7 @@ override void BeginPlay () {
         if (!Tracer && bSeekerMissile) Tracer = Target;
         NewEntity = SpawnMissileXYZ(Origin, Target, cls);
       } else {
-        NewEntity = Spawn(cls, Origin, default, default, false);
+        NewEntity = Spawn(cls, Origin, default, default/*, false*/);
       }
 
       if (NewEntity) {

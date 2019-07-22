@@ -306,7 +306,7 @@ void Cheat_Gimme () {
       auto st = FindClassState(WpnCls, 'Ready');
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
-      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, false));
+      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO))) {
@@ -335,7 +335,7 @@ void Cheat_Gimme () {
       //if (!csfound) for (class wcc = WpnCls; wcc; wcc = GetClassReplacee(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
       if (!csfound) continue;
       //print("WPN IS CHAINSAW!");
-      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, false));
+      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO))) {
@@ -351,7 +351,7 @@ void Cheat_Gimme () {
 
   // backpack
   if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All")) {
-    BackpackItem Pack = Level.Spawn(Backpack, default, default, default, false);
+    BackpackItem Pack = Level.Spawn(Backpack, default, default, default/*, false*/);
     Pack.bDropped = true;
     if (!Pack.TryPickup(EntityEx(MO))) {
       Pack.Destroy();
@@ -368,7 +368,7 @@ void Cheat_Gimme () {
       if (GetClassParent(Cls) != Ammo) continue;
       Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
       if (!AmmoItem) {
-        AmmoItem = Level.Spawn(Cls, default, default, default, false);
+        AmmoItem = Level.Spawn(Cls, default, default, default/*, false*/);
         if (!AmmoItem.TryPickup(EntityEx(MO))) {
           AmmoItem.Destroy();
           AmmoItem = none;

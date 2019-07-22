@@ -83,7 +83,7 @@ override bool HandlePickup(Inventory Item)
 
 override Inventory CreateCopy(EntityEx Toucher)
 {
-  Sigil Copy = Spawn(Sigil, default, default, default, false);
+  Sigil Copy = Spawn(Sigil, default, default, default/*, false*/);
   Copy.Amount = Amount;
   Copy.MaxAmount = MaxAmount;
   Copy.NumPieces = NumPieces;
@@ -124,7 +124,7 @@ void GiveSigilPiece(EntityEx Receiver)
   Sigil Wpn = Sigil(Receiver.FindInventory(Sigil));
   if (!Wpn)
   {
-    Wpn = Level.Spawn(Sigil1, default, default, default, false);
+    Wpn = Level.Spawn(Sigil1, default, default, default/*, false*/);
     if (!Wpn.TryPickup(Receiver))
     {
       Wpn.Destroy();

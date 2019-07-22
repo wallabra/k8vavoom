@@ -34,7 +34,7 @@ class WeaponGiver : Weapon abstract;
 //==========================================================================
 override bool TryPickup (EntityEx Toucher) {
   if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon)) {
-    Weapon Wpn = Weapon(Spawn(DropItemList[0].Type, default, default, default, false));
+    Weapon Wpn = Weapon(Spawn(DropItemList[0].Type, default, default, default/*, false*/));
     if (Wpn) {
       Wpn.bAlwaysPickup = false;
       if (!Wpn.TryPickup(Toucher)) {

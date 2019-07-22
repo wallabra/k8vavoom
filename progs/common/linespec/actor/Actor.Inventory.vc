@@ -40,7 +40,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 
   bool Ret = true;
   if (ItemType) {
-    Inventory Item = Spawn(ItemType, default, default, default, false);
+    Inventory Item = Spawn(ItemType, default, default, default/*, false*/);
     if (Health(Item)) {
       Item.Amount *= Amount;
     } else {

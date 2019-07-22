@@ -49,7 +49,7 @@ override bool Use (bool Pickup) {
     return false;
   }
 
-  Powerup Pw = Spawn(PowerupType, default, default, default, false);
+  Powerup Pw = Spawn(PowerupType, default, default, default/*, false*/);
 
   auto pwi = PowerInvisibility(Pw);
   if (pwi && Strength != -666) pwi.Strength = Strength;

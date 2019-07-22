@@ -39,7 +39,7 @@ int MaxSaveAmount;
 override bool Use (bool Pickup) {
   BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
   if (!Armor) {
-    Armor = Spawn(BasicArmor, default, default, default, false);
+    Armor = Spawn(BasicArmor, default, default, default, AllowReplace:false);
     Armor.Amount = 0;
     Armor.AttachToOwner(EntityEx(Owner));
   }

@@ -64,7 +64,7 @@ override bool Use(bool Pickup)
       GaveArmor = false;
       for (i = 0; i < 4; i++)
       {
-        HexenArmor Armor = Spawn(HexenArmor, default, default, default, false);
+        HexenArmor Armor = Spawn(HexenArmor, default, default, default, AllowReplace:false);
         Armor.Health = i;
         Armor.Amount = 1;
         if (Armor.TryPickup(P))

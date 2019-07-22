@@ -2360,12 +2360,12 @@ bool GiveAmmo (class!Ammo ammo, int count) {
   if (!ammo) return false;
 
   Ammo AmmoItem = Ammo(EntityEx(MO).FindInventory(ammo));
-  if (!AmmoItem) AmmoItem = Ammo(EntityEx(MO).FindInventory(class!Ammo(GetClassReplacement(ammo))));
+  //if (!AmmoItem) AmmoItem = Ammo(EntityEx(MO).FindInventory(class!Ammo(GetClassReplacement(ammo))));
 
   if (!AmmoItem) {
     class!Ammo repl = class!Ammo(GetClassReplacement(ammo));
     if (!repl) repl = ammo;
-    AmmoItem = Level.Spawn(repl, default, default, default, false);
+    AmmoItem = Level.Spawn(repl, default, default, default, AllowReplace:false);
     AmmoItem.AttachToOwner(EntityEx(MO));
     AmmoItem.Amount = 0;
   }
@@ -2976,7 +2976,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   float z = spawnOrigin.z;
   if (PClass >= Level.Game.PlayerClasses.Num) Error("Player::SpawnPlayer: Unknown class type");
 
-  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
+  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
   print("spawned player with class <%C>...", PP);
   //print("falling damage: normal=%B; old=%B; strife=%B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   if (GetCvarS('player_default_gender')) PP.SoundGender = name(GetCvarS('player_default_gender'));
@@ -3127,7 +3127,7 @@ void ShowElvenGiftMessage () {
 //
 //===========================================================================
 void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional bool forced) {
-  // do not do this on titlemap
+  // do not do this on a titlemap
   if (nameicmp(Level.XLevel.MapName, 'titlemap') == 0) return;
 
   //print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
@@ -3252,7 +3252,7 @@ void RemovePistol () {
 //
 //===========================================================================
 void AddDefaultInventory () {
-  HexenArmor HArmor = Level.Spawn(HexenArmor, default, default, default, false);
+  HexenArmor HArmor = Level.Spawn(HexenArmor, default, default, default, AllowReplace:false);
   HArmor.AttachToOwner(EntityEx(MO));
   HArmor.Slots[4] = PlayerPawn(MO).HexenArmor[0];
   HArmor.SlotsIncrement[0] = PlayerPawn(MO).HexenArmor[1];
@@ -3260,7 +3260,7 @@ void AddDefaultInventory () {
   HArmor.SlotsIncrement[2] = PlayerPawn(MO).HexenArmor[3];
   HArmor.SlotsIncrement[3] = PlayerPawn(MO).HexenArmor[4];
 
-  BasicArmor BArmor = Level.Spawn(BasicArmor, default, default, default, false);
+  BasicArmor BArmor = Level.Spawn(BasicArmor, default, default, default, AllowReplace:false);
   BArmor.Amount = 0;
   BArmor.AttachToOwner(EntityEx(MO));
 
@@ -3271,7 +3271,7 @@ void AddDefaultInventory () {
     if (tp) tprepl = class!Inventory(GetClassReplacement(tp));
     //print("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
     if (!tprepl) continue;
-    Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, false));
+    Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, AllowReplace:false));
     Item.bIgnoreSkill = true;
     int amount = EntityEx(MO).DropItemList[i].Amount;
     if (amount > 0) Item.Amount = amount; else if (amount == -666) Item.Amount = 0;
@@ -4231,7 +4231,7 @@ bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   MO.UnlinkFromWorld();
   if (BaseClass >= Level.Game.PlayerClasses.Num) Error("UndoPlayerMorph: Unknown class type");
 
-  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, false);
+  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, AllowReplace:false);
   if (!Force && !A.TestLocation()) {
     // didn't fit
     A.Destroy();
@@ -4312,7 +4312,7 @@ void ActivateMorphWeapon () {
       if (!itc) continue;
       class!Entity itcrepl = class!Entity(GetClassReplacement(itc));
       if (itcrepl) itc = itcrepl;
-      Inventory Item = Inventory(Level.Spawn(itc, default, default, default, false));
+      Inventory Item = Inventory(Level.Spawn(itc, default, default, default, AllowReplace:false));
       if (EntityEx(MO).DropItemList[i].Amount > 0) {
         Item.Amount = EntityEx(MO).DropItemList[i].Amount;
       }
@@ -5273,7 +5273,7 @@ override void Cheat_VScriptCommand (ref array!string args) {
       // no item in inventory, give one
       class!Inventory irepl = class!Inventory(GetClassReplacement(icls));
       if (irepl) icls = irepl;
-      invit = Inventory(EntityEx(MO).Spawn(icls, default, default, default, false));
+      invit = Inventory(EntityEx(MO).Spawn(icls, default, default, default, AllowReplace:false));
       // this shouldn't count for the item statistics
       if (invit.bCountItem) {
         invit.bCountItem = false;

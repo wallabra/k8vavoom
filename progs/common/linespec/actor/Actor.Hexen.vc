@@ -205,16 +205,16 @@ final void A_SorcSpinBalls () {
   org = Origin;
   org.z = Origin.z-FloorClip+Height;
 
-  ball = Spawn(SorcBall1, org, default, default, false);
+  ball = Spawn(SorcBall1, org, default, default/*, false*/);
   if (ball) {
     ball.Target = self;
     ball.Special2 = SORCFX4_RAPIDFIRE_TIME;
   }
 
-  ball = Spawn(SorcBall2, org, default, default, false);
+  ball = Spawn(SorcBall2, org, default, default/*, false*/);
   if (ball) ball.Target = self;
 
-  ball = Spawn(SorcBall3, org, default, default, false);
+  ball = Spawn(SorcBall3, org, default, default/*, false*/);
   if (ball) ball.Target = self;
 }
 
@@ -256,7 +256,7 @@ final void A_SorcFX1Seek () {
 //
 //==========================================================================
 final void A_SorcFX2Split () {
-  Actor A = Spawn(SorcFX2, Origin, default, default, false);
+  Actor A = Spawn(SorcFX2, Origin, default, default/*, false*/);
   if (A) {
     A.Target = Target;
     A.Args[0] = 0;  // CW
@@ -264,7 +264,7 @@ final void A_SorcFX2Split () {
     A.SetState(A.FindState('Orbit'));
   }
 
-  A = Spawn(SorcFX2, Origin, default, default, false);
+  A = Spawn(SorcFX2, Origin, default, default/*, false*/);
   if (A) {
     A.Target = Target;
     A.Args[0] = 1;  // CCW
@@ -2289,7 +2289,7 @@ final void A_Summon () {
     if (!Tracer.bCorpse) {
       // master isn't dead
       A.Tracer = Tracer; // pointer to master
-      Powerup Power = Spawn(PowerMinotaur, default, default, default, false);
+      Powerup Power = Spawn(PowerMinotaur, default, default, default/*, false*/);
       if (Power) {
         Power.bAlwaysPickup = true;
         if (!Power.TryPickup(Target)) Power.Destroy();

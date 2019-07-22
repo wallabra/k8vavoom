@@ -53,7 +53,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
 override bool Use (bool Pickup) {
   BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
   if (!Armor) {
-    Armor = Spawn(BasicArmor, default, default, default, false);
+    Armor = Spawn(BasicArmor, default, default, default, AllowReplace:false);
     Armor.AttachToOwner(EntityEx(Owner));
   } else {
     // can't use it if owner has more armor that is given by this one

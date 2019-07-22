@@ -61,7 +61,7 @@ override bool TryPickup (EntityEx Toucher) {
 
   FourthWeaponHolder Hold = FourthWeaponHolder(Toucher.FindInventory(FourthWeaponHolder));
   if (!Hold) {
-    Hold = Spawn(FourthWeaponHolder, default, default, default, false);
+    Hold = Spawn(FourthWeaponHolder, default, default, default/*, false*/);
     Hold.AttachToOwner(Toucher);
     Hold.PieceMask = 0;
   }

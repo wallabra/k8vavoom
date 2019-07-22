@@ -307,7 +307,7 @@ final void A_SkullPop (optional class!Actor SpawnType) {
 
   bSolid = false;
 
-  EntityEx A = Spawn(SpawnType, Origin+vector(0.0, 0.0, 48.0), default, default, false);
+  EntityEx A = Spawn(SpawnType, Origin+vector(0.0, 0.0, 48.0), default, default/*, false*/);
   if (!A) Error("cannot spawn '%C' in A_SkullPop", SpawnType);
 
   A.Velocity.x = (Random()-Random())*2.0*35.0;

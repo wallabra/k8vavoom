@@ -299,7 +299,7 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
   if (!AmmoItem) {
-    AmmoItem = Spawn(AmmoType, default, default, default, false);
+    AmmoItem = Spawn(AmmoType, default, default, default/*, false*/);
     AmmoItem.AttachToOwner(Toucher);
     AmmoItem.Amount = count;
   } else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {

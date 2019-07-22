@@ -1801,7 +1801,7 @@ final void TouchDehackedSpecial (EntityEx Toucher) {
   class!Inventory ItemType = LineSpecialLevelInfo(Level).GetDehackedItemType(self);
   if (!ItemType) return;
 
-  Inventory Item = Spawn(ItemType, default, default, default, false);
+  Inventory Item = Spawn(ItemType, default, default, default/*, false*/);
   Item.bDropped = bDropped;
   if (bDropped) {
     if (Ammo(Item)) {

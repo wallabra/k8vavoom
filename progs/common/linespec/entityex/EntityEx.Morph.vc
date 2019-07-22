@@ -79,7 +79,7 @@ final bool MorphMonster (class!MorphedMonster MonsterClass, float Duration,
   if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
   if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-  MorphedMonster monster = Spawn(MonsterClass, Origin, default, default, false);
+  MorphedMonster monster = Spawn(MonsterClass, Origin, default, default/*, false*/);
   monster.SpecialCID = class!Actor(Class);
   monster.MorphStyle = MorphStyle;
   monster.UnmorphTime = XLevel.Time+Duration;
@@ -141,7 +141,7 @@ final bool MorphPlayer (class!PlayerPawn PlayerClass, float Duration,
   if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
   if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-  Actor beastMo = Spawn(PlayerClass, Origin, default, default, false);
+  Actor beastMo = Spawn(PlayerClass, Origin, default, default/*, false*/);
   if (TID && (MorphStyle&MORPH_NEWTIDBEHAVIOUR)) {
     beastMo.SetTID(TID);
     SetTID(0);
