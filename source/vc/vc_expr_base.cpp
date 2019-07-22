@@ -836,9 +836,17 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           VMemberBase::StaticSplitStateLabel(LblName, Names);
           VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
           if (!StLbl) {
-            ParseError((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
-            delete this;
-            return nullptr;
+            if (VMemberBase::optDeprecatedLaxStates) {
+              ParseWarning((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+              // emulate virtual state jump, and let VM deal with it
+              VExpression *TmpArgs[1];
+              TmpArgs[0] = this;
+              return new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Loc, 1, TmpArgs);
+            } else {
+              ParseError((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+              delete this;
+              return nullptr;
+            }
           }
           VExpression *enew = new VStateConstant(StLbl->State, Loc);
           delete this;
