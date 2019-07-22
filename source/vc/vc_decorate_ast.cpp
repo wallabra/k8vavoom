@@ -674,8 +674,28 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
       return nullptr;
     }
 
-    lbl = lbl->MassageDecorateArg(ec, CallerState, "A_Jump", lbidx+2, VFieldType(TYPE_State));
+    bool massaged = false;
+    lbl = lbl->MassageDecorateArg(ec, CallerState, "A_Jump", lbidx+2, VFieldType(TYPE_State), nullptr, &massaged);
     if (!lbl) { delete this; return nullptr; } // some error
+
+    // support idiocity like `A_Jump(n, func())`
+    if (!massaged && lbl->Type.Type != TYPE_State) {
+      //GCon->Logf("A_Jump: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+      VGagErrors gag;
+      VExpression *lx = lbl->SyntaxCopy()->Resolve(ec);
+      if (lx) {
+        const bool isGoodType = (lx->Type.Type == TYPE_Int || lx->Type.Type == TYPE_Byte || lx->Type.Type == TYPE_Bool || lx->Type.Type == TYPE_Float);
+        if (lx->Type.Type == TYPE_Float) lbl = new VScalarToInt(lbl, false); // not resolved
+        if (isGoodType) {
+          //GCon->Logf("A_Jump: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+          VExpression *TmpArgs[1];
+          TmpArgs[0] = lbl;
+          lbl = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpStateOfs"), nullptr, false, false, lbl->Loc, 1, TmpArgs);
+          //GCon->Logf("   NEW: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+        }
+        delete lx;
+      }
+    }
 
     lbl = new VCastOrInvocation("DoJump", Loc, 1, &lbl);
     lbl = new VDropResult(lbl);

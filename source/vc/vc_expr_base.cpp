@@ -623,7 +623,8 @@ void VExpression::operator delete[] (void *p) {
 //
 //==========================================================================
 VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
-                                              int argnum, const VFieldType &destType, const TLocation *aloc)
+                                              int argnum, const VFieldType &destType, const TLocation *aloc,
+                                              bool *massaged)
 {
   //FIXME: move this to separate method
   // simplify a little:
@@ -636,11 +637,12 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         //fprintf(stderr, "SIMPLIFIED! <%s> -> <%s>\n", *un->toString(), *etmp->toString());
         un->op = nullptr;
         delete this;
-        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc, massaged);
       }
     }
   }
 
+  if (massaged) *massaged = true;
   switch (destType.Type) {
     case TYPE_Int:
     case TYPE_Byte:
@@ -712,7 +714,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         VDecorateSingleName *e = (VDecorateSingleName *)this;
         VExpression *enew = new VStringLiteral(VStr(e->Name), ec.Package->FindString(*e->Name), Loc);
         delete this;
-        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc, massaged);
       }
       // string?
       if (IsStrConst()) {
@@ -769,7 +771,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", funcName, argnum, lbl);
           VExpression *enew = new VIntLiteral(lbl, Loc);
           delete this;
-          return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+          return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc, massaged);
         }
       }
       // integer?
@@ -850,6 +852,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       }
       break;
   }
+  if (massaged) *massaged = false;
   return this;
 }
 

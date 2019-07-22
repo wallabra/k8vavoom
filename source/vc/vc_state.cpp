@@ -200,11 +200,13 @@ bool VState::IsInSequence (VState *Start) {
 //
 //==========================================================================
 VState *VState::GetPlus (int Offset, bool IgnoreJump) {
+  if (Offset < 0) return nullptr;
   check(Offset >= 0);
   VState *S = this;
   int Count = Offset;
   while (S && Count--) {
     if (!IgnoreJump && S->Next != S->NextState) return nullptr;
+    if (S->Frame&VState::FF_SKIPOFFS) ++Count;
     S = S->Next;
   }
   return S;

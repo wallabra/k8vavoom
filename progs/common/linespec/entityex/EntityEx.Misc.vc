@@ -2671,6 +2671,34 @@ final state FindJumpState (name Label) {
 
 //===========================================================================
 //
+//  FindJumpStateOfs
+//
+//  this is to support idiocities like `A_Jump(n, func())`
+//
+//===========================================================================
+final state FindJumpStateOfs (int offset) {
+  state res = XLevel.CallingState;
+  if (!res) return none;
+  if (offset == 0) {
+    // this is fuckin' bug, but some idiots may rely on it
+    printwarn("Bad zero jump offset in decorate action for '%C' (%s)", self, XLevel.CallingState);
+    return res;
+  }
+  if (offset < 0) {
+    // abort it, this is a bug
+    printwarn("Bad negative jump offset in decorate action for '%C' (%s)", self, XLevel.CallingState);
+    return none;
+  }
+  res = GetStatePlus(res, offset, IgnoreJump:true);
+  if (!res) {
+    printwarn("Bad jump offset (runaway) in decorate action for '%C' (%s)", self, XLevel.CallingState);
+  }
+  return res;
+}
+
+
+//===========================================================================
+//
 //  DoJump
 //
 //  mostly called from decorate actions

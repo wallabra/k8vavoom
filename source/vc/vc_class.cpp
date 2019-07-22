@@ -1728,11 +1728,16 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
     return nullptr;
   }
 
+  if (Offset < 0) {
+    ParseError(Loc, "Bad negative jump offset in `ResolveStateLabel` for label '%s' in class '%s'", *LabelName, *GetFullName());
+    return nullptr;
+  }
+
   VState *State = Lbl->State;
   int Count = Offset;
   while (Count--) {
     if (!State || !State->Next) {
-      ParseError(Loc, "Bad jump offset (%d, but only %d is allowed); in `ResolveStateLabel` for label '%s' in class '%s'", Offset, Offset-(Count+1), *LabelName, *GetFullName());
+      ParseError(Loc, "Bad jump offset (%d, but only %d is allowed) in `ResolveStateLabel` for label '%s' in class '%s'", Offset, Offset-(Count+1), *LabelName, *GetFullName());
       return nullptr;
     }
     if (State->Frame&VState::FF_SKIPOFFS) ++Count;
