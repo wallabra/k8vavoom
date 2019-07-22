@@ -617,7 +617,7 @@ final void NightmareRespawn () {
   if (bSpawnCeiling) z = ONCEILINGZ; else z = ONFLOORZ;
 
   // inherit attributes from deceased one
-  A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, false);
+  A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, AllowReplace:false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
   A.Angles.yaw = float(45*(SpawnPoint.angle/45));
 

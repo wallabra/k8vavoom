@@ -306,7 +306,13 @@ void Cheat_Gimme () {
       auto st = FindClassState(WpnCls, 'Ready');
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
-      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
+      // if weapon cannot be spawned, you cannot get it
+      st = FindClassState(WpnCls, 'Spawn');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      // check if already have it
+      if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
+      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO))) {
@@ -390,7 +396,7 @@ void Cheat_Gimme () {
       auto st = FindClassState(Cls, 'Spawn');
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
-      EntityEx(MO).GiveInventoryType(Cls);
+      EntityEx(MO).GiveInventoryType(Cls, disableReplace:true);
       gotit = true;
     }
     cprint("You got keys!");

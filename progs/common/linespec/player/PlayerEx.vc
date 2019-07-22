@@ -2842,8 +2842,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
 //
 //==========================================================================
 void GiveDefaultDeathMatchInventory () {
-  class!Inventory  Cls;
-
+  class!Inventory Cls;
   // give all keys in death match mode
   foreach AllClasses(Key, Cls) {
     if (!FindClassState(Cls, 'Spawn')) continue; // abstract class

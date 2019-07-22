@@ -186,8 +186,9 @@ final PowerInfiniteAmmo FindInfiniteAmmoPowerup () {
 //  GiveInventoryType
 //
 //==========================================================================
-final Inventory GiveInventoryType (class!Inventory Type) {
-  Inventory Item = Spawn(Type, default, default, default/*, false*/);
+final Inventory GiveInventoryType (class!Inventory Type, optional bool disableReplace/*=false*/) {
+  if (!Type) return none;
+  Inventory Item = Spawn(Type, default, default, default, AllowReplace:!disableReplace);
   if (!Item) return none;
   // this shouldn't count for the item statistics
   if (Item.bCountItem) {
