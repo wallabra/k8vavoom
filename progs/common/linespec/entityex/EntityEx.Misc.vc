@@ -2640,31 +2640,49 @@ final bool k8CheckIfSpecialStateLabel (name Label) {
 final state FindJumpState (name Label) {
   if (XLevel.StateCall) {
     state st = XLevel.StateCall->Item.FindState(Label);
-    if (!st && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (statecall) '%s' -- probably broken actor '%C' code!", Label, self);
+    if (!st && !k8CheckIfSpecialStateLabel(Label)) {
+      printwarn("unknown decorate label (statecall) '%s' -- probably broken actor '%C' code!", Label, self);
+      if (GetCvarB('dbg_emulate_fucked_gozzo_gotos')) st = GetNextState(XLevel.CallingState);
+    }
     return st;
   }
   if (bIsPlayer) {
     if (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) {
+        printwarn("unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+        if (GetCvarB('dbg_emulate_fucked_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
+      }
       return res;
     }
     if (XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) {
+        printwarn("unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+        if (GetCvarB('dbg_emulate_fucked_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
+      }
       return res;
     }
     if (XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) {
+        printwarn("unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+        if (GetCvarB('dbg_emulate_fucked_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
+      }
       return res;
     }
   }
   state res = FindState(Label);
-  if (!res && !k8CheckIfSpecialStateLabel(Label)) printwarn("unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
+  if (!res && !k8CheckIfSpecialStateLabel(Label)) {
+    printwarn("unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
+    if (GetCvarB('dbg_emulate_fucked_gozzo_gotos')) {
+      res = GetNextState(XLevel.CallingState);
+      //printwarn("emulated from %s to %s", XLevel.CallingState, res);
+    }
+  }
   return res;
 }
 

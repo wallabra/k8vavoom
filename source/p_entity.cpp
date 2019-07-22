@@ -34,6 +34,8 @@ IMPLEMENT_CLASS(V, Entity);
 static VCvarB _decorate_dont_warn_about_invalid_labels("_decorate_dont_warn_about_invalid_labels", false, "Don't do this!", CVAR_Archive|CVAR_PreInit);
 static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Disable states processing (for debug)?", CVAR_PreInit);
 
+static VCvarB dbg_emulate_fucked_gozzo_gotos("dbg_emulate_fucked_gozzo_gotos", false, "Emulate (partially) fucked-up GZDoom decorate gotos to missing labels?", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct SavedVObjectPtr {
