@@ -24,7 +24,7 @@
 //**************************************************************************
 class Level_K8BDW : replaces(Level);
 
-const int DefaultMaxAllowedEntities = 1000;
+const int DefaultMaxAllowedBloodEntities = 1000;
 
 int casingEntCounter;
 int casingSkipDeathCounter;
