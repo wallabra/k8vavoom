@@ -290,7 +290,11 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (frm.sprbase.length() != 4) sc->Error(va("invalid sprite name '%s' in model '%s'", *frm.sprbase, *className));
       // sprite frame
       sc->ExpectString();
-      if (sc->String.length() != 1) sc->Error(va("invalid sprite frame '%s' in model '%s'", *sc->String, *className));
+      if (sc->String.length() == 0) sc->Error(va("empty sprite frame in model '%s'", *className));
+      if (sc->String.length() != 1) {
+        // gozzo wiki says that there can be only one frame, so fuck it
+        sc->Message(va("invalid sprite frame '%s' in model '%s'; FIX YOUR BROKEN CODE!", *sc->String, *className));
+      }
       char fc = sc->String[0];
       if (fc >= 'a' && fc <= 'z') fc = fc-'a'+'A';
       frm.sprframe = fc-'A';
