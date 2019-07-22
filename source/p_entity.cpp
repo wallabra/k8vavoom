@@ -156,7 +156,7 @@ void VEntity::RemoveFromTIDList () {
 
 //==========================================================================
 //
-//  VEntity::SetStateInternal
+//  VEntity::SetState
 //
 //  returns true if the actor is still present
 //
@@ -210,7 +210,7 @@ bool VEntity::SetState (VState *InState) {
         ExecuteFunctionNoArgs(st->Function);
         if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
           /*
-          GCon->Logf(NAME_Dev, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
+          GCon->Logf(NAME_Warning, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
             (st && st->Next ? *st->Next->Loc.toStringNoCol() : "<none>"), (State ? *State->Loc.toStringNoCol() : "<none>"));
           */
           State = nullptr; // just in case
