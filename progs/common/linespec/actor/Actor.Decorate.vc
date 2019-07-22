@@ -279,7 +279,7 @@ final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, option
 final int decorate_CountInv (name ItemName, optional int aptr) {
   Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
   if (!tgt) return 0;
-  return tgt.CheckInventory(ItemName);
+  return tgt.CheckInventory(ItemName, allowReplacement:true);
 }
 
 

@@ -390,10 +390,10 @@ public:
   void eventCrossSpecialLine (line_t *ld, int side) { static VMethodProxy method("CrossSpecialLine"); vobjPutParamSelf(ld, side); VMT_RET_VOID(method); }
   bool eventSectorChanged (int CrushChange) { static VMethodProxy method("SectorChanged"); vobjPutParamSelf(CrushChange); VMT_RET_BOOL(method); }
   void eventClearInventory () { static VMethodProxy method("ClearInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  void eventGiveInventory (VName ItemName, int Amount) { static VMethodProxy method("GiveInventory"); vobjPutParamSelf(ItemName, Amount); VMT_RET_VOID(method); }
-  void eventTakeInventory (VName ItemName, int Amount) { static VMethodProxy method("TakeInventory"); vobjPutParamSelf(ItemName, Amount); VMT_RET_VOID(method); }
-  int eventCheckInventory (VName ItemName) { static VMethodProxy method("CheckInventory"); vobjPutParamSelf(ItemName); VMT_RET_INT(method); }
-  int eventUseInventoryName (VName ItemName) { static VMethodProxy method("UseInventoryName"); vobjPutParamSelf(ItemName); VMT_RET_INT(method); }
+  void eventGiveInventory (VName ItemName, int Amount, bool allowReplacement) { static VMethodProxy method("GiveInventory"); vobjPutParamSelf(ItemName, Amount, allowReplacement); VMT_RET_VOID(method); }
+  void eventTakeInventory (VName ItemName, int Amount, bool allowReplacement) { static VMethodProxy method("TakeInventory"); vobjPutParamSelf(ItemName, Amount, allowReplacement); VMT_RET_VOID(method); }
+  int eventCheckInventory (VName ItemName, bool allowReplacement) { static VMethodProxy method("CheckInventory"); vobjPutParamSelf(ItemName, allowReplacement); VMT_RET_INT(method); }
+  int eventUseInventoryName (VName ItemName, bool allowReplacement) { static VMethodProxy method("UseInventoryName"); vobjPutParamSelf(ItemName, allowReplacement); VMT_RET_INT(method); }
   int eventGetSigilPieces () { static VMethodProxy method("GetSigilPieces"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int eventGetArmorPoints () { static VMethodProxy method("GetArmorPoints"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int eventCheckNamedWeapon (VName Name) { static VMethodProxy method("CheckNamedWeapon"); vobjPutParamSelf(Name); VMT_RET_INT(method); }

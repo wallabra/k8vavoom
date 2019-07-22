@@ -4679,8 +4679,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GiveInventory)
       if (Activator)
       {
-        Activator->eventGiveInventory(GetNameLowerCase(sp[-2]),
-          sp[-1]);
+        Activator->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
       }
       else
       {
@@ -4690,7 +4689,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             Level->Game->Players[i]->MO->eventGiveInventory(
-              GetNameLowerCase(sp[-2]), sp[-1]);
+              GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
           }
         }
       }
@@ -4699,11 +4698,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GiveInventoryDirect)
       if (Activator) {
-        Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+        Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
       } else {
         for (int i = 0; i < MAXPLAYERS; ++i) {
           if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
-            Level->Game->Players[i]->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+            Level->Game->Players[i]->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
           }
         }
       }
@@ -4714,7 +4713,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (Activator)
       {
         Activator->eventTakeInventory(GetNameLowerCase(sp[-2]),
-          sp[-1]);
+          sp[-1], false); // disable replacement
       }
       else
       {
@@ -4724,7 +4723,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
             Level->Game->Players[i]->MO->eventTakeInventory(
-              GetNameLowerCase(sp[-2]), sp[-1]);
+              GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
           }
         }
       }
@@ -4733,11 +4732,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_TakeInventoryDirect)
       if (Activator) {
-        Activator->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+        Activator->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
       } else {
         for (int i = 0; i < MAXPLAYERS; ++i) {
           if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
-            Level->Game->Players[i]->MO->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+            Level->Game->Players[i]->MO->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
           }
         }
       }
@@ -4751,7 +4750,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       else
       {
-        sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(sp[-1]));
+        sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(sp[-1]), false); // disable replacement
       }
       ACSVM_BREAK;
 
@@ -4759,7 +4758,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (!Activator) {
         *sp = 0;
       } else {
-        *sp = Activator->eventCheckInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()));
+        *sp = Activator->eventCheckInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), false); // disable replacement
       }
       sp++;
       ip += 4;
@@ -6123,7 +6122,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
-          mobj->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1]);
+          mobj->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
       sp -= 3;
@@ -6135,7 +6134,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
-          mobj->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1]);
+          mobj->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
       sp -= 3;
@@ -6150,8 +6149,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         else
         {
-          sp[-2] = Ent->eventCheckInventory(GetNameLowerCase(
-            sp[-1]));
+          sp[-2] = Ent->eventCheckInventory(GetNameLowerCase(sp[-1]), false); // disable replacement
         }
       }
       sp--;
@@ -6636,8 +6634,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_UseInventory)
       if (Activator)
       {
-        sp[-1] = Activator->eventUseInventoryName(GetNameLowerCase(
-          sp[-1]));
+        sp[-1] = Activator->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
       }
       else
       {
@@ -6647,8 +6644,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           if (Level->Game->Players[i] &&
             Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
-            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(
-              GetNameLowerCase(sp[-1]));
+            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
           }
         }
       }
@@ -6661,7 +6657,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
-          Ret += Ent->eventUseInventoryName(GetNameLowerCase(sp[-1]));
+          Ret += Ent->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
         }
         sp[-2] = Ret;
       }
@@ -6673,8 +6669,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           if (Level->Game->Players[i] &&
             Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
           {
-            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(
-              GetNameLowerCase(sp[-1]));
+            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
           }
         }
       }

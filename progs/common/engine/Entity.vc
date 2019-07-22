@@ -601,7 +601,7 @@ void ClearInventory () {
 //  GiveInventory
 //
 //===========================================================================
-void GiveInventory (name ItemName, int Amount) {
+void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
 }
 
 
@@ -610,7 +610,7 @@ void GiveInventory (name ItemName, int Amount) {
 //  TakeInventory
 //
 //===========================================================================
-void TakeInventory (name ItemName, int Amount) {
+void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
 }
 
 
@@ -619,7 +619,7 @@ void TakeInventory (name ItemName, int Amount) {
 //  CheckInventory
 //
 //===========================================================================
-int CheckInventory (name ItemName) {
+int CheckInventory (name ItemName, bool allowReplacement) {
   return 0;
 }
 
@@ -629,7 +629,7 @@ int CheckInventory (name ItemName) {
 //  UseInventoryName
 //
 //===========================================================================
-int UseInventoryName (name ItemName) {
+int UseInventoryName (name ItemName, bool allowReplacement) {
   return 0;
 }
 

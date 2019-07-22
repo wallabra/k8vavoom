@@ -736,7 +736,8 @@ static VName CheckRedirects (VName Map) {
   for (int i = 0; i < MAXPLAYERS; ++i) {
     VBasePlayer *P = GGameInfo->Players[i];
     if (!P || !(P->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
-    if (P->MO->eventCheckInventory(Info.RedirectType) > 0) return CheckRedirects(Info.RedirectMap);
+    // no replacements allowed
+    if (P->MO->eventCheckInventory(Info.RedirectType, false) > 0) return CheckRedirects(Info.RedirectMap);
   }
   // none of the players have required item, no redirect
   return Map;

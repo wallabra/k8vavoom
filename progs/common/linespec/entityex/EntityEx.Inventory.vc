@@ -80,9 +80,9 @@ override Entity QS_SpawnEntityInventory (name className) {
   //ec = GetCompatibleClassReplacement(class!EntityEx, ec);
   //if (ec) ArmorClass = ec;
 
-  Inventory ent = FindInventory(ec);
+  Inventory ent = FindInventory(ec, disableReplacement:true);
   if (!ent) {
-    ent = Spawn(ec);
+    ent = Spawn(ec, AllowReplace:false);
     if (!ent) return none;
     ent.AttachToOwner(self);
   }
@@ -148,14 +148,14 @@ void RemoveInventory (Inventory Item) {
 //  FindInventory
 //
 //==========================================================================
-final Inventory FindInventory (class!Inventory ItemClass) {
+final Inventory FindInventory (class!Inventory ItemClass, optional bool disableReplacement) {
   if (!ItemClass) return none;
   class!Inventory repl = class!Inventory(GetClassReplacement(ItemClass));
 
   for (Inventory Check = Inventory; Check; Check = Check.Inventory) {
     if (Check.Class == ItemClass) return Check;
     // consider replacements too
-    if (GetClassReplacement(Check.Class) == repl) {
+    if (!disableReplacement && GetClassReplacement(Check.Class) == repl) {
       //print("FOUND REPLACEMENT INVENTORY: ItemClass=<%C>; repl=<%C>; Check=<%C>", ItemClass, repl, Check);
       return Check;
     }
@@ -187,7 +187,7 @@ final PowerInfiniteAmmo FindInfiniteAmmoPowerup () {
 //
 //==========================================================================
 final Inventory GiveInventoryType (class!Inventory Type) {
-  Inventory Item = Spawn(Type, default, default, default, false);
+  Inventory Item = Spawn(Type, default, default, default/*, false*/);
   if (!Item) return none;
   // this shouldn't count for the item statistics
   if (Item.bCountItem) {
@@ -311,9 +311,12 @@ override void ClearInventory () {
 //  GiveInventory
 //
 //===========================================================================
-override void GiveInventory (name ItemName, int Amount) {
+override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
+  printwarn("*** GiveInventory: %s %s", ItemName, Amount);
+
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
+  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
 
   // get class of the item
   class EClass = FindClassNoCase(ItemName);
@@ -327,11 +330,14 @@ override void GiveInventory (name ItemName, int Amount) {
     print("'%s' is not an inventory class", ItemName);
     return;
   }
-  class!Inventory irepl = class!Inventory(GetClassReplacement(ItemClass));
-  if (!irepl) {
-    print("'%s' replacement is not an inventory class, ignoring it", ItemName);
-  } else {
-    ItemClass = irepl;
+
+  if (allowReplacement) {
+    class!Inventory irepl = class!Inventory(GetClassReplacement(ItemClass));
+    if (!irepl) {
+      print("'%s' replacement is not an inventory class, ignoring it", ItemName);
+    } else {
+      ItemClass = irepl;
+    }
   }
 
   Weapon SavedPendingWeapon = none;
@@ -341,7 +347,7 @@ override void GiveInventory (name ItemName, int Amount) {
     HadWeapon = !!PlayerEx(Player).ReadyWeapon;
   }
 
-  Inventory Item = Spawn(ItemClass, default, default, default, false);
+  Inventory Item = Spawn(ItemClass, default, default, default, AllowReplace:false);
   if (!Item) return;
 
   // this shouldn't count for the item statistics
@@ -367,15 +373,18 @@ override void GiveInventory (name ItemName, int Amount) {
 //  TakeInventory
 //
 //===========================================================================
-override void TakeInventory (name ItemName, int Amount) {
+override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
+  printwarn("*** TakeInventory: %s %s", ItemName, Amount);
+
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
+  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
 
   // get class of the item
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (!ItemClass) return;
 
-  Inventory Item = FindInventory(ItemClass);
+  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
   if (!Item) return;
 
   Item.Amount -= Amount;
@@ -394,13 +403,16 @@ override void TakeInventory (name ItemName, int Amount) {
 //  CheckInventory
 //
 //===========================================================================
-override int CheckInventory (name ItemName) {
+override int CheckInventory (name ItemName, bool allowReplacement) {
+  printwarn("*** CheckInventory: %s", ItemName);
+
        if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
   else if (nameicmp(ItemName, 'health') == 0) return Health;
+  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
 
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (ItemClass) {
-    Inventory Item = FindInventory(ItemClass);
+    Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
     return (Item ? Item.Amount : 0);
   }
   return 0;
@@ -412,10 +424,10 @@ override int CheckInventory (name ItemName) {
 //  UseInventoryName
 //
 //===========================================================================
-override int UseInventoryName (name ItemName) {
+override int UseInventoryName (name ItemName, bool allowReplacement) {
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (ItemClass) {
-    Inventory Item = FindInventory(ItemClass);
+    Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
     if (Item) return UseInventory(Item);
   }
   return 0;
@@ -475,7 +487,7 @@ override int CheckNamedWeapon (name Name) {
 override int SetNamedWeapon (name Name) {
   if (!bIsPlayer) return false;
 
-  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name))));
+  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name)), disableReplacement:true));
   if (!Wpn) return false;
 
   // check if it's already active
