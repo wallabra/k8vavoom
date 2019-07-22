@@ -30,59 +30,6 @@
 
 //==========================================================================
 //
-//  doChooseRandomInvenotry
-//
-//==========================================================================
-final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc) {
-  int len = spc.default.DropItemList.length;
-  if (!len) return none;
-  int i = 0;
-  int n = 0;
-  while (i < len) {
-    if (spc.default.DropItemList[i].Type) {
-      int amn = spc.default.DropItemList[i].Amount;
-      if (amn <= 0) amn = 1;
-      // this is how we can weight the list.
-      n += amn;
-    }
-    ++i;
-  }
-  if (n == 0) {
-    printwarn("RandomSpawner `%C` is invalid!", spc);
-    return none;
-  }
-  // then we reset the iterator to the start position...
-  i = 0;
-  // take a random number...
-  n = P_Random()%n;
-  // and iterate in the array up to the random number chosen
-  while (n > -1) {
-    if (spc.default.DropItemList[i].Type) {
-      int amn = spc.default.DropItemList[i].Amount;
-      if (amn <= 0) amn = 1;
-      n -= amn;
-      if (i+1 < spc.default.DropItemList.length && n > -1) {
-        ++i;
-      } else {
-        n = -1;
-      }
-    }
-  }
-  // ...and we can spawn the dropped item...
-
-  if (Random() <= spc.default.DropItemList[i].Chance) {
-    class!EntityEx cls = class!EntityEx(FindClass(GetClassName(GetClassReplacement(spc.default.DropItemList[i].Type))));
-    if (!cls) return none;
-    if (!class!Inventory(cls) && !class!RandomSpawner(cls)) return none;
-    return cls;
-  }
-
-  return none;
-}
-
-
-//==========================================================================
-//
 //  DoGiveInventory
 //
 //==========================================================================
@@ -95,49 +42,28 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   bool Ret = true;
   if (ItemType) {
     auto origItemType = ItemType;
-    // some degenerative mods tries to give the player a `RandomSpawner` instance
-    // check for this, and perform special processing
+
     class!Thinker replCls = class!Thinker(GetClassReplacement(ItemType));
     if (!replCls) replCls = ItemType;
     if (!replCls) {
       printwarn("something is very FUCKED while trying to give item `%C`", ItemType);
       return false;
     }
-    // check for `RandomSpawner`
+
+    // some degenerative mods tries to give the player a `RandomSpawner` instance
+    // check for this, and perform special processing
     class!RandomSpawner spc = class!RandomSpawner(replCls);
     if (spc) {
-      // ok, try to spawn something; allow chained random spawners, but prevent looping
-      int attemptsLeft = 32;
-      while (spc) {
-        --attemptsLeft;
-        if (attemptsLeft == 0) {
-          if (GetClassReplacement(origItemType)) {
-            FatalError("Idiotic mod author tried to give looped RandomSpawner (%C -> %C); this will NEVER work.", origItemType, GetClassReplacement(origItemType));
-          } else {
-            FatalError("Idiotic mod author tried to give looped RandomSpawner (%C); this will NEVER work.", origItemType);
-          }
-        }
-        // random spawner
-        replCls = doChooseRandomInvenotry(spc);
-        if (!replCls) return false;
-        ItemType = class!Inventory(replCls);
-        if (ItemType) {
-          print("RandomSpawner `%C` got inventory `%C`", spc, ItemType);
-          break;
-        }
-        spc = class!RandomSpawner(replCls);
-        if (!spc) {
-          FatalError("Idiotic mod author tried to give something that is not Inventory (%C) via random spawner; this will NEVER work.", replCls);
-        }
-      }
-    } else {
-      ItemType = class!Inventory(replCls);
-      if (!ItemType) {
-        FatalError("Idiotic mod author tried to give something that is not Inventory (%C -> %C); this will NEVER work.", origItemType, replCls);
-      }
+      replCls = RandomSpawner.doChooseRandomInvenotry(spc, class!Inventory(FindClass('Inventory')));
+      if (!replCls) return false;
+      print("RandomSpawner `%C` chose inventory item `%C`", spc, replCls);
     }
 
-    if (!ItemType) return false; // something is VERY fucked here
+    if (!replCls) return false;
+    ItemType = class!Inventory(replCls);
+    if (!ItemType) {
+      FatalError("Idiotic mod author tried to give something that is not Inventory (%C -> %C); this will NEVER work.", origItemType, replCls);
+    }
 
     Inventory Item = Spawn(ItemType, default, default, default, AllowReplace:false);
     if (!Inventory(Item)) {

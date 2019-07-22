@@ -33,6 +33,77 @@ const int MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enou
 
 //==========================================================================
 //
+//  doChooseRandomInvenotry
+//
+//  this is used when RandomSpawner is given as an inventory, or a weapon
+//
+//==========================================================================
+static final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc, class!Thinker allowedClass) {
+  if (!allowedClass) return none;
+  class!RandomSpawner origSpc = spc;
+  int triesLeft = 32;
+  while (spc) {
+    if (!(--triesLeft)) {
+      printwarn("RandomSpawner `%C` is looped; aborting.", origSpc);
+      return none;
+    }
+    int len = spc.default.DropItemList.length;
+    if (!len) return none;
+
+    int i = 0;
+    int n = 0;
+    while (i < len) {
+      if (spc.default.DropItemList[i].Type) {
+        int amn = spc.default.DropItemList[i].Amount;
+        if (amn <= 0) amn = 1;
+        // this is how we can weight the list.
+        n += amn;
+      }
+      ++i;
+    }
+
+    if (n == 0) {
+      printwarn("RandomSpawner `%C` is invalid!", spc);
+      return none;
+    }
+
+    // then we reset the iterator to the start position...
+    i = 0;
+    // take a random number...
+    n = P_Random()%n;
+    // and iterate in the array up to the random number chosen
+    while (n > -1) {
+      if (spc.default.DropItemList[i].Type) {
+        int amn = spc.default.DropItemList[i].Amount;
+        if (amn <= 0) amn = 1;
+        n -= amn;
+        if (i+1 < spc.default.DropItemList.length && n > -1) {
+          ++i;
+        } else {
+          n = -1;
+        }
+      }
+    }
+
+    // ...and we can coose the item...
+    if (Random() <= spc.default.DropItemList[i].Chance) {
+      class!EntityEx cls = class!EntityEx(spc.default.DropItemList[i].Type);
+      class!EntityEx replCls = class!EntityEx(GetClassReplacement(cls));
+      if (replCls) cls = replCls;
+      if (!cls) return none;
+      if (!class!RandomSpawner(cls)) return allowedClass(cls);
+      spc = class!RandomSpawner(cls);
+    } else {
+      return none;
+    }
+  }
+
+  return none;
+}
+
+
+//==========================================================================
+//
 //  BeginPlay
 //
 //==========================================================================
