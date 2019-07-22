@@ -411,6 +411,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 
   VTexture *Tex = GTextureManager[lump];
 
+  if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
+
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
 
@@ -434,6 +436,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[3] = sprorigin+end+botdelta;
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
+
+  if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999;
 
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
