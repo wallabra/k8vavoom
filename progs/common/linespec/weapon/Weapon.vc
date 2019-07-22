@@ -301,9 +301,36 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
   if (!AmmoItem) {
+    bool skipSpawn = false;
     AmmoItem = Spawn(AmmoType, default, default, default/*, false*/);
-    AmmoItem.AttachToOwner(Toucher);
-    AmmoItem.Amount = count;
+    //printwarn("*** %C : %C", AmmoType, AmmoItem);
+    //k8: this is absolute shit; rewrite it!
+    if (RandomSpawner(AmmoItem)) {
+      class!RandomSpawner spc = class!RandomSpawner(AmmoItem.Class);
+      assert(spc);
+      delete AmmoItem;
+      class!Ammo replCls = class!Ammo(RandomSpawner.doChooseRandomInvenotry(spc, class!Ammo(FindClass('Ammo'))));
+      if (!replCls) return none;
+      print("RandomSpawner `%C` chose ammo item `%C`", spc, replCls);
+      AmmoItem = Ammo(Toucher.FindInventory(replCls));
+      if (AmmoItem) {
+        skipSpawn = true;
+        if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
+          AmmoItem.Amount += count;
+        }
+      } else {
+        AmmoItem = Spawn(replCls, default, default, default, AllowReplace:false);
+      }
+    }
+    if (!Ammo(AmmoItem)) {
+      printwarn("ignored attempt to give ammo `%C` (%C), which is not of Ammo type", AmmoItem, AmmoType);
+      if (!skipSpawn) delete AmmoItem;
+      return none;
+    }
+    if (!skipSpawn) {
+      AmmoItem.AttachToOwner(Toucher);
+      AmmoItem.Amount = count;
+    }
   } else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
     AmmoItem.Amount += count;
   }
