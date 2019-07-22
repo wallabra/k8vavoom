@@ -3372,7 +3372,11 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       }
     }
   }
-  GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
+  static TMap<VStr, bool> warned;
+  if (!warned.find(Flag)) {
+    warned.put(Flag, true);
+    GLog.Logf(NAME_Warning, "Unknown flag (set) '%s'", *Flag);
+  }
   return false;
 }
 
@@ -3412,7 +3416,11 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       }
     }
   }
-  GLog.Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
+  static TMap<VStr, bool> warned;
+  if (!warned.find(Flag)) {
+    warned.put(Flag, true);
+    GLog.Logf(NAME_Warning, "Unknown flag (get) '%s'", *Flag);
+  }
   return false;
 }
 
