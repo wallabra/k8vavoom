@@ -349,6 +349,8 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
 //
 //==========================================================================
 bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
+  if (!Actor) return false;
+
   // set up state call structure
   VStateCall *PrevCall = XLevel->StateCall;
   VStateCall Call;
@@ -373,7 +375,10 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 
     // check for infinite loops
     ++RunAway;
-    if (RunAway > 1000) break;
+    if (RunAway > 1024) {
+      GCon->Logf(NAME_Warning, "entity '%s' state chain interrupted by WatchCat!", *Actor->GetClass()->GetFullName());
+      break;
+    }
 
     if (Call.State == S) {
       // abort immediately if next state loops to itself
