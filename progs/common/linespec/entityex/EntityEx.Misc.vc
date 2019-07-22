@@ -2700,7 +2700,7 @@ final state FindJumpStateOfs (int offset) {
   if (offset == 0) {
     // this is fuckin' bug, but some idiots may rely on it
     printwarn("Bad zero jump offset in decorate action for '%C' (%s)", self, XLevel.CallingState);
-    return res;
+    return GetNextState(res);
   }
   if (offset < 0) {
     // abort it, this is a bug

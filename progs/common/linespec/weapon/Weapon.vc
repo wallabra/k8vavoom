@@ -288,6 +288,8 @@ override void AttachToOwner (EntityEx NewOwner) {
 //
 //  Returns false if the ammo can't be picked up at all
 //
+//  this is called only from `AttachToOwner()`
+//
 //==========================================================================
 final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
   if (!AmmoType) return none;

@@ -784,10 +784,14 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           return nullptr;
         }
         if (Offs == 0) {
-          // 0 means no state
+          // 0 means "mod author is a fuckin' moron"
+          ParseWarning((aloc ? *aloc : Loc), "Mod author is a fuckin' moron");
+          /*
           VExpression *enew = new VNoneLiteral(Loc);
           delete this;
           return enew;
+          */
+          Offs = 1;
         }
         // positive jump
         check(CallerState);
