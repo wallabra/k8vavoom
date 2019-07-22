@@ -51,15 +51,18 @@ override void BeginPlay () {
         }
         // this is how we can weight the list.
         n += DropItemList[i].Amount;
-        ++i;
       } else {
         // send a warning that this class can't be found and continue the loop
-        printwarn("RandomSpawner type definition is incorrect at element %i", DropItemList.length-i);
-        // show that there's a problem.
-        Spawn(Unknown, Origin, default, default/*, false*/);
-        Destroy();
-        return;
+        printwarn("RandomSpawner `%C` type definition is incorrect at element %i", self, i);
       }
+      ++i;
+    }
+    if (n == 0) {
+      printwarn("RandomSpawner `%C` is invalid! Replaced with error object.", self);
+      // show that there's a problem.
+      Spawn(Unknown, Origin, default, default/*, false*/);
+      Destroy();
+      return;
     }
     // then we reset the iterator to the start position...
     i = 0;
