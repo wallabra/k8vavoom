@@ -41,6 +41,9 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   bool Ret = true;
   if (ItemType) {
     Inventory Item = Spawn(ItemType, default, default, default/*, false*/);
+    if (!Inventory(Item)) {
+      FatalError("Idiotic mod author tried to give something that is not Inventory (%C); this will NEVER work.", Item);
+    }
     if (Health(Item)) {
       Item.Amount *= Amount;
     } else {
