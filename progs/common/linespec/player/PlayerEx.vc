@@ -1391,6 +1391,18 @@ void MovePsprites (float deltaTime) {
   ViewStates[PS_FLASH].SY = ViewStates[PS_WEAPON].SY;
   ViewStates[PS_WEAPON_OVL].SX = ViewStates[PS_WEAPON].SX;
   ViewStates[PS_WEAPON_OVL].SY = ViewStates[PS_WEAPON].SY;
+
+  if (wpn && !ReadyWeapon) {
+    printwarn("PLAYER: ReadyWeapon died, PendingWeapon is %C", PendingWeapon);
+  }
+  if (wpn && !ViewStates[PS_WEAPON].State) {
+    printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
+    if (ReadyWeapon == wpn) ReadyWeapon = none;
+  } else if (wpn && ViewStates[PS_WEAPON].State && GetStateDuration(ViewStates[PS_WEAPON].State) < 0) {
+    // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
+    printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
+    if (ReadyWeapon == wpn) ReadyWeapon = none;
+  }
 }
 
 
