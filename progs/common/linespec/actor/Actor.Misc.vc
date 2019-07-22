@@ -763,7 +763,7 @@ final void A_LayToCeilingWithYawSprite (float yaw) {
 final void A_WeaponReady (optional int Flags) {
   // don't recurse
   if (k8InWeaponReady) {
-    //print("A_WeaponReady: recursive call!");
+    printwarn("A_WeaponReady: recursive call!");
     return;
   }
 

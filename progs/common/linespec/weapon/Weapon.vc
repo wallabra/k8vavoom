@@ -357,9 +357,9 @@ final bool AddExistingAmmo (Ammo AmmoItem, int count, optional bool checkOnly) {
 //==========================================================================
 final Weapon AddWeapon (class!Weapon WeaponType) {
   if (!WeaponType) return none;
-  Weapon Wpn = Weapon(EntityEx(Owner).FindInventory(WeaponType));
+  Weapon Wpn = Weapon(EntityEx(Owner).FindInventory(WeaponType/*, disableReplacement:true*/));
   if (!Wpn) {
-    Wpn = Spawn(WeaponType, default, default, default, false);
+    Wpn = Spawn(WeaponType, default, default, default/*, false*/);
     Wpn.AttachToOwner(EntityEx(Owner));
   }
   return Wpn;
