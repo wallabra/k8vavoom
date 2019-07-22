@@ -62,6 +62,7 @@ void *Z_Malloc (size_t size) {
 #endif
   void *res = malloc_fn(size > 0 ? size : size+1);
   if (!res) Sys_Error("out of memory for %u bytes!", (unsigned int)size);
+  memset(res, 0, size+(size ? 0 : 1)); // just in case
   return res;
 }
 
@@ -90,7 +91,7 @@ void *Z_Calloc (size_t size) {
 #endif
   if (!res) Sys_Error("out of memory for %u bytes!", (unsigned int)size);
 #if !defined(VAVOOM_USE_MIMALLOC)
-  if (!size) memset(res, 0, 1); // just in case
+  memset(res, 0, size+(size ? 0 : 1)); // just in case
 #endif
   return res;
 }
