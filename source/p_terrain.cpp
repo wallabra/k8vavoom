@@ -120,6 +120,7 @@ static VTerrainInfo *GetTerrainInfo (VName Name) {
 //
 //==========================================================================
 static void ParseTerrainScript (VScriptParser *sc) {
+  bool insideIf = false;
   while (!sc->AtEnd()) {
     auto loc = sc->GetLoc();
     if (sc->Check("splash")) {
@@ -266,10 +267,35 @@ static void ParseTerrainScript (VScriptParser *sc) {
         T.Pic = Pic;
         T.TypeName = *sc->String;
       }
+    } else if (sc->Check("endif")) {
+      if (insideIf) {
+        insideIf = false;
+      } else {
+        GCon->Logf(NAME_Warning, "%s: stray `endif` in terrain script", *loc.toStringNoCol());
+      }
     } else if (sc->Check("ifdoom") || sc->Check("ifheretic") ||
-               sc->Check("ifhexen") || sc->Check("ifstrife") || sc->Check("endif"))
+               sc->Check("ifhexen") || sc->Check("ifstrife"))
     {
-      GCon->Logf(NAME_Warning, "%s: k8vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
+      if (insideIf) {
+        sc->Error(va("nested conditionals are not allowed (%s)", *sc->String));
+      }
+      //GCon->Logf(NAME_Warning, "%s: k8vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
+      VStr gmname = VStr(*sc->String+2);
+      if (game_name.asStr().startsWithCI(gmname)) {
+        insideIf = true;
+        GCon->Logf(NAME_Init, "%s: processing conditional section '%s' in terrain script", *loc.toStringNoCol(), *gmname);
+      } else {
+        // skip lines until we hit `endif`
+        GCon->Logf(NAME_Init, "%s: skipping conditional section '%s' in terrain script", *loc.toStringNoCol(), *gmname);
+        while (sc->GetString()) {
+          if (sc->Crossed) {
+            if (sc->String.strEqu("endif")) {
+              //GCon->Logf(NAME_Init, "******************** FOUND ENDIF!");
+              break;
+            }
+          }
+        }
+      }
     } else {
       sc->Error(va("Unknown command (%s)", *sc->String));
     }
