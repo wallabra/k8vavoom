@@ -439,10 +439,11 @@ override void RemoveInventory (Inventory Item) {
 //==========================================================================
 override bool UseInventory (Inventory Item) {
   if (!Item) return false; //k8: just in case
+
   // can't use anything while totally frozen
   if (PlayerEx(Player).bTotallyFrozen ||
       (Level.bFrozen &&
-      !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE)))
+      !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE)))
   {
     return false;
   }
