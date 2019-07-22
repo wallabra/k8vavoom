@@ -72,7 +72,7 @@ static final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc, cla
     // take a random number...
     n = P_Random()%n;
     // and iterate in the array up to the random number chosen
-    while (n > -1) {
+    while (n > -1 && i < len) {
       if (spc.default.DropItemList[i].Type) {
         int amn = spc.default.DropItemList[i].Amount;
         if (amn <= 0) amn = 1;
@@ -82,7 +82,13 @@ static final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc, cla
         } else {
           n = -1;
         }
+      } else {
+        ++i;
       }
+    }
+    if (i >= len) {
+      printwarn("RandomSpawner `%C` got invalid random index", spc);
+      return none;
     }
 
     // ...and we can coose the item...
@@ -140,15 +146,25 @@ override void BeginPlay () {
     // take a random number...
     n = P_Random()%n;
     // and iterate in the array up to the random number chosen
-    while (n > -1) {
+    while (n > -1 && i < DropItemList.length) {
       if (DropItemList[i].Type) {
+        assert(DropItemList[i].Amount > 0);
         n -= DropItemList[i].Amount;
         if (i+1 < DropItemList.length && n > -1) {
           ++i;
         } else {
           n = -1;
         }
+      } else {
+        ++i;
       }
+    }
+    if (i >= DropItemList.length) {
+      printwarn("RandomSpawner `%C` got invalid random index", self);
+      // show that there's a problem.
+      Spawn(Unknown, Origin, default, default/*, false*/);
+      Destroy();
+      return;
     }
     // ...and we can spawn the dropped item...
 
