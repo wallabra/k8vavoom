@@ -70,6 +70,12 @@ actor HereticPlayer : PlayerPawn
     FDTH R 4 Bright
     ACLO E 35 A_CheckPlayerDone
     Wait
+  AltSkinDeath:
+    TNT1 A 0
+    Goto Death
+  AltSkinXDeath:
+    TNT1 A 0
+    Goto XDeath
   }
 }
 

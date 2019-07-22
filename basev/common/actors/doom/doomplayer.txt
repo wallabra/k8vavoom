@@ -35,6 +35,8 @@ actor DoomPlayer : PlayerPawn
     PLAY G 4 A_Pain
     Goto Spawn
   Death:
+    TNT1 A 0
+  Death1:
     PLAY H 10
     PLAY I 10 A_PlayerScream
     PLAY J 10 A_NoBlocking
@@ -42,11 +44,19 @@ actor DoomPlayer : PlayerPawn
     PLAY N -1
     Stop
   XDeath:
+    TNT1 A 0
+  XDeath1:
     PLAY O 5
     PLAY P 5 A_XScream
     PLAY Q 5 A_NoBlocking
     PLAY RSTUV 5
     PLAY W -1
     Stop
+  AltSkinDeath:
+    TNT1 A 0
+    Goto Death
+  AltSkinXDeath:
+    TNT1 A 0
+    Goto XDeath
   }
 }
