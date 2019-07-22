@@ -312,7 +312,7 @@ override void ClearInventory () {
 //
 //===========================================================================
 override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
-  printwarn("*** GiveInventory: %s %s", ItemName, Amount);
+  //printwarn("*** GiveInventory: %s %s", ItemName, Amount);
 
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
@@ -374,7 +374,7 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
 //
 //===========================================================================
 override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
-  printwarn("*** TakeInventory: %s %s", ItemName, Amount);
+  //printwarn("*** TakeInventory: %s %s", ItemName, Amount);
 
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
@@ -404,7 +404,7 @@ override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
 //
 //===========================================================================
 override int CheckInventory (name ItemName, bool allowReplacement) {
-  printwarn("*** CheckInventory: %s", ItemName);
+  //printwarn("*** CheckInventory: %s", ItemName);
 
        if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
   else if (nameicmp(ItemName, 'health') == 0) return Health;
