@@ -141,6 +141,7 @@ enum {
 #include "powerup/PowerProtection.vc"
 #include "powerup/PowerRegeneration.vc"
 #include "powerup/PowerTimeFreeze.vc"
+#include "powerup/PowerUselessShit.vc"
 
 #include "health/Health.vc"
 #include "health/HealthPickup.vc"
