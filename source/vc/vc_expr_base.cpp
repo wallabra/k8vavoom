@@ -615,8 +615,6 @@ void VExpression::operator delete[] (void *p) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-
 //==========================================================================
 //
 //  VInvocation::MassageDecorateArg
@@ -625,7 +623,8 @@ void VExpression::operator delete[] (void *p) {
 //
 //==========================================================================
 VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
-                                              int argnum, const VFieldType &destType, const TLocation *aloc) {
+                                              int argnum, const VFieldType &destType, const TLocation *aloc)
+{
   //FIXME: move this to separate method
   // simplify a little:
   //   replace `+number` with `number`

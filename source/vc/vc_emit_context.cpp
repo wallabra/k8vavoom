@@ -641,7 +641,7 @@ void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Int) FatalError("Opcode does\'t take float argument");
+  if (StatementInfo[statement].Args != OPCARGS_Int) FatalError("Opcode does't take float argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = *(vint32 *)&FloatArg;
@@ -656,7 +656,7 @@ void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation 
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VName NameArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Name) FatalError("Opcode does\'t take name argument");
+  if (StatementInfo[statement].Args != OPCARGS_Name) FatalError("Opcode does't take name argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.NameArg = NameArg;
@@ -766,7 +766,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) FatalError("Opcode does\'t take label as argument");
+  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) FatalError("Opcode does't take label as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = 0;
@@ -812,7 +812,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
 //
 //==========================================================================
 void VEmitContext::AddBuiltin (int b, const TLocation &aloc) {
-  //if (StatementInfo[statement].Args != OPCARGS_Builtin) FatalError("Opcode does\'t take builtin");
+  //if (StatementInfo[statement].Args != OPCARGS_Builtin) FatalError("Opcode does't take builtin");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = OPC_Builtin;
   I.Arg1 = b;

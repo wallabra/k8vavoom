@@ -66,6 +66,27 @@ static const char *ErrorNames[NUM_ERRORS] = {
 };
 
 
+// so we can show them again before bailing out
+static TArray<VStr> vcParseErrors;
+
+
+//==========================================================================
+//
+//  BailOut
+//
+//==========================================================================
+__attribute__((noreturn)) void BailOut () {
+  if (vcParseErrors.length()) {
+    GLog.Log(NAME_Error, "");
+    GLog.Log(NAME_Error, "Let me show you all the errors again...");
+    GLog.Logf(NAME_Error, "%s", "=============================");
+    for (auto &&s : vcParseErrors) GLog.Logf(NAME_Error, "%s", *s);
+    GLog.Logf(NAME_Error, "%s", "=============================");
+  }
+  Sys_Error("Confused by previous errors, bailing out");
+}
+
+
 //==========================================================================
 //
 //  ParseWarning
@@ -104,13 +125,17 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   va_start(argPtr, text);
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
+
+  VStr err = va("%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  vcParseErrors.append(err);
+
 #if !defined(IN_VCC)
-  GLog.Logf(NAME_Error, "%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  GLog.Logf(NAME_Error, "%s", *err);
 #else
-  fprintf(stderr, "%s: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  fprintf(stderr, "%s\n", *err);
 #endif
 
-  if (vcErrorCount >= 16) Sys_Error("Too many errors");
+  if (vcErrorCount >= 128) BailOut();
 }
 
 
@@ -147,15 +172,6 @@ __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, EComp
   }
 }
 
-
-//==========================================================================
-//
-//  BailOut
-//
-//==========================================================================
-__attribute__((noreturn)) void BailOut () {
-  Sys_Error("Confused by previous errors, bailing out");
-}
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 
