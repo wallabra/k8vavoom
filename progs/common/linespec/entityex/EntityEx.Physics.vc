@@ -1357,6 +1357,10 @@ override void ApplyFriction (float DeltaTime) {
   // this will allow to easily climb onto small steep slopes (see "ma_put", for example)
   if (Origin.z <= FloorZ && fabs(Sector.floor.maxz-Sector.floor.minz) > MaxStepHeight) {
     TVec Vel = EFloor.spGetNormal();
+    if (bIsPlayer && PlayerEx(Player) && (PlayerEx(Player).Cheats&PlayerEx::CF_NOCLIP)) {
+      //print("noclip cheat!");
+      Vel = vector(0, 0, 0);
+    }
     if (Vel.x || Vel.y) {
       float dot = DotProduct(Velocity, Vel);
       if (dot < 0.0) {
