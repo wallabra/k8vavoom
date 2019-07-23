@@ -3247,7 +3247,7 @@ void ProcessDecorateScripts () {
       if (DI.TypeName == NAME_None) continue;
       VClass *C = VClass::FindClassNoCase(*DI.TypeName);
       if (!C) {
-        GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *(((VObject *)DecPkg->ParsedClasses[i])->GetClass()->GetFullName()));
+        GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
       } else if (!C->IsChildOf(ActorClass)) {
         GLog.Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
       } else {
