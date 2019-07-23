@@ -721,7 +721,7 @@ private:
     if (surf->glowFloorHeight > 0 && surf->glowFloorColor) {
       gp.floorGlowHeight = surf->glowFloorHeight;
       gp.glowCF = surf->glowFloorColor;
-      gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
+      gp.floorZ = sec->floor.GetPointZClamped(*surf->seg->v1);
       checkFloorFlat = false;
     } else {
       checkFloorFlat = true;
@@ -730,7 +730,7 @@ private:
     if (surf->glowCeilingHeight > 0 && surf->glowCeilingColor) {
       gp.ceilingGlowHeight = surf->glowCeilingHeight;
       gp.glowCC = surf->glowCeilingColor;
-      gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
+      gp.ceilingZ = sec->ceiling.GetPointZClamped(*surf->seg->v1);
       checkCeilingFlat = false;
     } else {
       checkCeilingFlat = true;
@@ -744,7 +744,7 @@ private:
           if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
             gp.floorGlowHeight = 128;
             gp.glowCF = gtex->glowing;
-            gp.floorZ = sec->floor.GetPointZ(*surf->seg->v1);
+            gp.floorZ = sec->floor.GetPointZClamped(*surf->seg->v1);
           }
         }
         if (checkCeilingFlat && sec->ceiling.pic) {
@@ -752,7 +752,7 @@ private:
           if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
             gp.ceilingGlowHeight = 128;
             gp.glowCC = gtex->glowing;
-            gp.ceilingZ = sec->ceiling.GetPointZ(*surf->seg->v1);
+            gp.ceilingZ = sec->ceiling.GetPointZClamped(*surf->seg->v1);
           }
         }
       }
