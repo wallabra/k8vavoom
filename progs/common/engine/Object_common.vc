@@ -838,6 +838,7 @@ native static final int NameToIIndex (name Name) [builtin NameToIIndex];
 
 native static final class FindClass (name Name);
 native static final class FindClassNoCase (name Name);
+native static final spawner class FindClassNoCaseEx (class BaseClass, name Name);
 native static final class FindClassLowerCase (name Name);
 native static final bool ClassIsChildOf (class SomeClass, class BaseClass);
 native static final name GetClassName (class C);

@@ -728,8 +728,24 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         } else {
           VClass *Cls = VClass::FindClassNoCase(*CName);
           if (!Cls) {
-            ParseWarning((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s`", *CName, argnum, funcName);
+            if (!destType.Class) {
+              ParseWarning((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s`", *CName, argnum, funcName);
+              VExpression *enew = new VNoneLiteral(Loc);
+              delete this;
+              return enew;
+            }
+            ParseWarning((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s` (rt-routed)", *CName, argnum, funcName);
+            //k8: hack it with runtime class searching
+            /*
             VExpression *enew = new VNoneLiteral(Loc);
+            delete this;
+            return enew;
+            */
+            //GLog.Logf("********* %s (%s)", *destType.GetName(), (destType.Class ? destType.Class->GetName() : "<none>"));
+            VExpression *TmpArgs[2];
+            TmpArgs[0] = new VClassConstant(destType.Class, Loc);
+            TmpArgs[1] = new VNameLiteral(VName(*CName), Loc);
+            VExpression *enew = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindClassNoCaseEx"), nullptr, false, false, Loc, 2, TmpArgs);
             delete this;
             return enew;
           }

@@ -681,6 +681,17 @@ IMPLEMENT_FUNCTION(VObject, FindClassNoCase) {
   RET_PTR(VClass::FindClassNoCase(*Name));
 }
 
+//native static final class FindClassNoCaseEx (class BaseClass, name Name);
+IMPLEMENT_FUNCTION(VObject, FindClassNoCaseEx) {
+  P_GET_NAME(Name);
+  P_GET_PTR(VClass, BaseClass);
+  VClass *cls = VClass::FindClassNoCase(*Name);
+  if (cls && BaseClass && !cls->IsChildOf(BaseClass)) {
+    GLog.Logf(NAME_Warning, "FindClassNoCaseEx: class `%s` is not a child of `%s`", cls->GetName(), BaseClass->GetName());
+  }
+  RET_PTR(cls);
+}
+
 IMPLEMENT_FUNCTION(VObject, FindClassLowerCase) {
   P_GET_NAME(Name);
   RET_PTR(VClass::FindClassLowerCase(Name));
