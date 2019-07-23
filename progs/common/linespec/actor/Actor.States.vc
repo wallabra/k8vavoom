@@ -34,6 +34,12 @@ GenericFreezeDeath:
   "----" A 5 A_GenericFreezeDeath
   "----" A 1 A_FreezeDeathChunks
   Wait
+Death:
+  TNT1 A 0
+  Stop
+XDeath:
+  TNT1 A 0
+  Stop
 }
 
 defaultproperties
