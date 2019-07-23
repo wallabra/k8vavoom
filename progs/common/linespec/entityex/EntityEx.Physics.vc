@@ -171,10 +171,10 @@ bool Physics (float DeltaTime) {
       float scrolly = sth.CarryScrollY;
       if (!scrollx && !scrolly) continue;
       if (bNoGravity && (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec)) continue;
-      float height = GetPlanePointZ(ref Sector->floor, Origin);
+      float height = GetPointZClamped(ref Sector->floor, Origin);
       if (Origin.z > height) {
         if (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec) continue;
-        float waterheight = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
+        float waterheight = GetPointZClamped(ref Sector->heightsec->floor, Origin);
         if (waterheight > height && Origin.z >= waterheight) continue;
       }
 
@@ -215,7 +215,7 @@ bool Physics (float DeltaTime) {
         LinkToWorld();
       }
       FloatBobPhase += DeltaTime;
-      if (Sector) Origin.z = GetPlanePointZ(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
+      if (Sector) Origin.z = GetPointZClamped(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
     } else {
       // floating bobbing motion for monsters
       float savedz = Origin.z;
@@ -785,7 +785,7 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 //==========================================================================
 final bool HitFloor () {
   // trigger hit floor sector actions
-  if (Sector && Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ) {
+  if (Sector && Sector->ActionList && GetPointZClamped(ref Sector->floor, Origin) == FloorZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFloor);
   }
 
@@ -871,7 +871,7 @@ final bool HitFloor () {
 //==========================================================================
 final bool HitCeiling () {
   // trigger hit ceiling sector actions
-  if (Sector && Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) == CeilingZ) {
+  if (Sector && Sector->ActionList && GetPointZClamped(ref Sector->ceiling, Origin) == CeilingZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
   }
 
@@ -1241,7 +1241,7 @@ final bool HitFloorType () {
   VTerrainInfo *TInfo;
   VSplashInfo *SInfo;
 
-  if (!Sector || FloorZ != GetPlanePointZ(ref Sector->floor, Origin)) {
+  if (!Sector || FloorZ != GetPointZClamped(ref Sector->floor, Origin)) {
     // don't splash if landing on the edge above water/lava/etc....
     return false;
   }
@@ -1376,7 +1376,7 @@ override void ApplyFriction (float DeltaTime) {
     if (Velocity.x > 0.25*35.0 || Velocity.x < -0.25*35.0 ||
         Velocity.y > 0.25*35.0 || Velocity.y < -0.25*35.0)
     {
-      if ((Sector && FloorZ > GetPlanePointZ(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
+      if ((Sector && FloorZ > GetPointZClamped(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
         return;
       }
     }
