@@ -64,7 +64,7 @@ struct spriteframe_t {
   //bool rotate;
   short rotate;
   // lump to use for view angles 0-7
-  short lump[16];
+  int lump[16];
   // flip bit (1 = flip) to use for view angles 0-7
   bool flip[16];
 };

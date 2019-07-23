@@ -360,7 +360,7 @@ static void InitColorMaps () {
 static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
   int rotation;
 
-  //fprintf(stderr, "!!INSTALL_SPRITE_LUMP: <%s> (lumpnr=%d; frame=%d; Rot=%c; flipped=%d)\n", *GTextureManager[lumpnr]->Name, lumpnr, frame, Rot, (flipped ? 1 : 0));
+  //GCon->Logf(NAME_Init, "!!INSTALL_SPRITE_LUMP: <%s> (lumpnr=%d; frame=%d; Rot=%c; flipped=%d)", *GTextureManager[lumpnr]->Name, lumpnr, frame, Rot, (flipped ? 1 : 0));
 
        if (Rot >= '0' && Rot <= '9') rotation = Rot-'0';
   else if (Rot >= 'a') rotation = Rot-'a'+10;
