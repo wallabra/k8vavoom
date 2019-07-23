@@ -625,8 +625,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   // killough 4/19/98: make fake floors and ceilings block view
   if (Sector->heightsec) {
     const sector_t *hs = Sector->heightsec;
-    if ((org.z+myheight <= hs->floor.GetPointZ(org) && dest.z >= hs->floor.GetPointZ(dest)) ||
-        (org.z >= hs->ceiling.GetPointZ(org) && dest.z+height <= hs->ceiling.GetPointZ(dest)))
+    if ((org.z+myheight <= hs->floor.GetPointZClamped(org) && dest.z >= hs->floor.GetPointZClamped(dest)) ||
+        (org.z >= hs->ceiling.GetPointZClamped(org) && dest.z+height <= hs->ceiling.GetPointZClamped(dest)))
     {
       return false;
     }
@@ -637,8 +637,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
 
   if (OtherSector->heightsec) {
     const sector_t *hs = OtherSector->heightsec;
-    if ((dest.z+height <= hs->floor.GetPointZ(dest) && org.z >= hs->floor.GetPointZ(org)) ||
-        (dest.z >= hs->ceiling.GetPointZ(dest) && org.z+myheight <= hs->ceiling.GetPointZ(org)))
+    if ((dest.z+height <= hs->floor.GetPointZClamped(dest) && org.z >= hs->floor.GetPointZClamped(org)) ||
+        (dest.z >= hs->ceiling.GetPointZClamped(dest) && org.z+myheight <= hs->ceiling.GetPointZClamped(org)))
     {
       return false;
     }
@@ -709,8 +709,8 @@ bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsign
   // killough 4/19/98: make fake floors and ceilings block view
   if (Sector->heightsec) {
     const sector_t *hs = Sector->heightsec;
-    if ((org.z <= hs->floor.GetPointZ(org) && dest.z >= hs->floor.GetPointZ(dest)) ||
-        (org.z >= hs->ceiling.GetPointZ(org) && dest.z <= hs->ceiling.GetPointZ(dest)))
+    if ((org.z <= hs->floor.GetPointZClamped(org) && dest.z >= hs->floor.GetPointZClamped(dest)) ||
+        (org.z >= hs->ceiling.GetPointZClamped(org) && dest.z <= hs->ceiling.GetPointZClamped(dest)))
     {
       return false;
     }
@@ -721,8 +721,8 @@ bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsign
 
   if (OtherSector->heightsec) {
     const sector_t *hs = OtherSector->heightsec;
-    if ((dest.z <= hs->floor.GetPointZ(dest) && org.z >= hs->floor.GetPointZ(org)) ||
-        (dest.z >= hs->ceiling.GetPointZ(dest) && org.z <= hs->ceiling.GetPointZ(org)))
+    if ((dest.z <= hs->floor.GetPointZClamped(dest) && org.z >= hs->floor.GetPointZClamped(org)) ||
+        (dest.z >= hs->ceiling.GetPointZClamped(dest) && org.z <= hs->ceiling.GetPointZClamped(org)))
     {
       return false;
     }
