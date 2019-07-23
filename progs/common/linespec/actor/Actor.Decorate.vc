@@ -314,14 +314,14 @@ final float decorate_GetZAt (optional float x, optional float y, optional float 
   if (flags&GZF_NO3DFLOOR) {
     sector_t *sec = XLevel.PointInSector(org);
     if (flags&GZF_CEILING) {
-      return GetPlanePointZ(ref sec->ceiling, org);
+      return GetPointZClamped(ref sec->ceiling, org);
     } else {
-      return GetPlanePointZ(ref sec->floor, org);
+      return GetPointZClamped(ref sec->floor, org);
     }
   } else if ((flags&(GZF_CEILING|GZF_3DRESTRICT)) == (GZF_CEILING|GZF_3DRESTRICT)) {
     //k8: this is prolly not right
     sector_t *sec = XLevel.PointInSector(org);
-    return GetPlanePointZ(ref sec->ceiling, org);
+    return GetPointZClamped(ref sec->ceiling, org);
   } else {
     tmtrace_t tmtrace;
     tgt.GetFloorAndCeilingEx(out tmtrace, org, collideWorld:true, collideThings:false);
@@ -970,7 +970,7 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
     if (flags&WARPF_TOFLOOR) {
       //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
       sector_t *sec = XLevel.PointInSector(dest);
-      dest.z = GetPlanePointZ(ref sec->floor, dest)+zofs;
+      dest.z = GetPointZClamped(ref sec->floor, dest)+zofs;
     }
   } else {
     if (xofs || yofs || zofs) {
@@ -990,7 +990,7 @@ final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional 
     if (flags&WARPF_TOFLOOR) {
       //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
       sector_t *sec = XLevel.PointInSector(dest);
-      dest.z = GetPlanePointZ(ref sec->floor, dest)+zofs;
+      dest.z = GetPointZClamped(ref sec->floor, dest)+zofs;
     } else {
       dest.z += zofs;
     }
