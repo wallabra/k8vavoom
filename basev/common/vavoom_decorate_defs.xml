@@ -135,6 +135,7 @@
     <flag name="NoVerticalMeleeRange" property="bNoVerticalMeleeRange" />
     <flag name="AlwaysRespawn" property="bAlwaysRespawn" />
     <flag name="NeverRespawn" property="bNeverRespawn" />
+    <flag name="AvoidMelee" property="bAvoidMelee" />
     <!-- (In)Abilities -->
     <flag name="CannotPush" property="bCannotPush" />
     <flag name="NoTeleport" property="bNoTeleport" />

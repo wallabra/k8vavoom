@@ -360,6 +360,8 @@ bool bCrashed; // means a monster that has crash state hasn't crashed and can ex
 bool bStickToFloor;
 bool bStickToCeiling;
 
+bool bAvoidMelee;
+
 bool bHitTarget;
 bool bHitMaster;
 bool bHitTracer;

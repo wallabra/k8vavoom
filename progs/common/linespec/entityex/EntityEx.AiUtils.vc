@@ -773,7 +773,7 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
 
     if (Target && Target.Health > 0) {
       // Enemy target is alive
-      if (GetCvar('monster_backing') && MissileState &&
+      if ((bAvoidMelee || GetCvar('monster_backing')) && MissileState &&
           /*actor->type != MT_SKULL &&*/
           ((!Target.MissileState && dist < MELEERANGE*2.0) ||
            (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
