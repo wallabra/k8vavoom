@@ -1327,8 +1327,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   bool OldAboveFakeCeiling = false;
   if (Sector->heightsec) {
     float EyeZ = (Player ? Player->ViewOrg.z : Origin.z+Height*0.5f);
-    OldAboveFakeFloor = (EyeZ > Sector->heightsec->floor.GetPointZ(Origin));
-    OldAboveFakeCeiling = (EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin));
+    OldAboveFakeFloor = (EyeZ > Sector->heightsec->floor.GetPointZClamped(Origin));
+    OldAboveFakeCeiling = (EyeZ > Sector->heightsec->ceiling.GetPointZClamped(Origin));
   }
 
   if (checkOnly) return true;
