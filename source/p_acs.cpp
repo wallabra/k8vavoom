@@ -5876,7 +5876,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         sector_t *sector;
         int SNum = FindSectorFromTag(sector, sp[-3]);
         sp[-3] = (SNum >= 0 ? vint32(/*XLevel->Sectors[SNum].*/sector->floor.
-          GetPointZ(sp[-2], sp[-1])*0x10000) : 0);
+          GetPointZClamped(sp[-2], sp[-1])*0x10000) : 0);
         sp -= 2;
       }
       ACSVM_BREAK;
@@ -5886,7 +5886,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         sector_t *sector;
         int SNum = FindSectorFromTag(sector, sp[-3]);
         sp[-3] = (SNum >= 0 ? vint32(/*XLevel->Sectors[SNum].*/sector->ceiling.
-          GetPointZ(sp[-2], sp[-1])*0x10000) : 0);
+          GetPointZClamped(sp[-2], sp[-1])*0x10000) : 0);
         sp -= 2;
       }
       ACSVM_BREAK;
