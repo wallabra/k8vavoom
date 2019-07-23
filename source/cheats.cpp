@@ -272,8 +272,8 @@ COMMAND(my_sector_info) {
   if (Args.length() > 2) {
     TSecPlaneRef floor, ceiling;
     SV_FindGapFloorCeiling(sec, Player->MO->Origin, Player->MO->Height, floor, ceiling, true);
-    GCon->Logf(" gap floor: %g (%g,%g,%g:%g)", floor.GetPointZ(Player->MO->Origin), floor.GetNormal().x, floor.GetNormal().y, floor.GetNormal().z, floor.GetDist());
-    GCon->Logf(" gap ceil : %g (%g,%g,%g:%g)", ceiling.GetPointZ(Player->MO->Origin), ceiling.GetNormal().x, ceiling.GetNormal().y, ceiling.GetNormal().z, ceiling.GetDist());
+    GCon->Logf(" gap floor: %g (%g,%g,%g:%g)", floor.GetPointZClamped(Player->MO->Origin), floor.GetNormal().x, floor.GetNormal().y, floor.GetNormal().z, floor.GetDist());
+    GCon->Logf(" gap ceil : %g (%g,%g,%g:%g)", ceiling.GetPointZClamped(Player->MO->Origin), ceiling.GetNormal().x, ceiling.GetNormal().y, ceiling.GetNormal().z, ceiling.GetDist());
     /*
     sec_region_t *gap = SV_PointRegionLight(sec, Player->MO->Origin, true);
     if (gap) GCon->Logf("=== PT0: %p", gap);
