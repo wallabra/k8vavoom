@@ -298,46 +298,24 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
     // extra ammo in baby mode and nightmare mode
     count = int(float(count)*Level.World.GetAmmoFactor());
   }
+  count = max(0, count); //k8: just in case
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
   if (!AmmoItem) {
-    bool skipSpawn = false;
-    AmmoItem = Spawn(AmmoType, default, default, default/*, false*/);
-    //printwarn("*** %C : %C", AmmoType, AmmoItem);
-    //k8: this is absolute shit; rewrite it!
-    if (RandomSpawner(AmmoItem)) {
-      class!RandomSpawner spc = class!RandomSpawner(AmmoItem.Class);
-      assert(spc);
+    AmmoItem = SpawnAmmoType(AmmoType);
+    if (!AmmoItem) return none;
+    Ammo a2 = Ammo(Toucher.FindInventory(class!Ammo(AmmoItem.Class)));
+    if (a2) {
       delete AmmoItem;
-      class!Ammo replCls = class!Ammo(RandomSpawner.doChooseRandomInvenotry(spc, class!Ammo(FindClass('Ammo'))));
-      if (!replCls) return none;
-      print("RandomSpawner `%C` chose ammo item `%C`", spc, replCls);
-      AmmoItem = Ammo(Toucher.FindInventory(replCls));
-      if (AmmoItem) {
-        skipSpawn = true;
-        if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
-          AmmoItem.Amount += count;
-        }
-      } else {
-        AmmoItem = Spawn(replCls, default, default, default, AllowReplace:false);
-      }
-    }
-    if (!Ammo(AmmoItem)) {
-      printwarn("ignored attempt to give ammo `%C` (%C), which is not of Ammo type", AmmoItem, AmmoType);
-      if (!skipSpawn) delete AmmoItem;
-      return none;
-    }
-    if (!skipSpawn) {
+      AmmoItem = a2;
+    } else {
       AmmoItem.AttachToOwner(Toucher);
-      AmmoItem.Amount = count;
+      AmmoItem.Amount = 0;
     }
-  } else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
-    AmmoItem.Amount += count;
   }
 
-  if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
-    AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
-  }
+  int maxam = AmmoItem.k8GetAmmoKingMax();
+  AmmoItem.Amount = clamp(AmmoItem.Amount+count, 0, maxam);
 
   return AmmoItem;
 }

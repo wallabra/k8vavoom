@@ -179,6 +179,39 @@ override void Tick (float DeltaTime) {
 
 //==========================================================================
 //
+//  SpawnAmmoType
+//
+//==========================================================================
+final Ammo SpawnAmmoType (class!Ammo AmmoType) {
+  if (!AmmoType) return none;
+
+  class!Thinker replCls = class!Thinker(GetClassReplacement(AmmoType));
+  if (!replCls) replCls = AmmoType;
+
+  if (class!RandomSpawner(replCls)) {
+    class!RandomSpawner spc = class!RandomSpawner(replCls);
+    assert(spc);
+    class!Ammo ammoCls = class!Ammo(RandomSpawner.doChooseRandomInvenotry(spc, class!Ammo(FindClass('Ammo'))));
+    if (!ammoCls) return none;
+    print("RandomSpawner `%C` chose ammo item `%C`", spc, ammoCls);
+    AmmoType = ammoCls;
+  } else {
+    if (!class!Ammo(AmmoType)) return none;
+  }
+  if (!AmmoType) return none;
+
+  Ammo ammo = Spawn(AmmoType, default, default, default, AllowReplace:false);
+  if (!Ammo(ammo)) {
+    delete ammo;
+    return none;
+  }
+
+  return ammo;
+}
+
+
+//==========================================================================
+//
 //  IsAutoaimDisabled
 //
 //==========================================================================
