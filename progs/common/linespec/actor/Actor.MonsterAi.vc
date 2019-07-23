@@ -233,7 +233,7 @@ final void A_Look2 () {
 //
 //==========================================================================
 final void A_LookEx (int flags, optional float minseedist, optional float maxseedist, optional float maxheardist,
-                     optional float fov, optional name wakestate)
+                     optional float fov, optional /*name*/state wakestate)
 {
   EntityEx targ;
   Entity Ent;
@@ -244,7 +244,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   //if (!specified_maxseedist) maxseedist = 0; // this is default
   //if (!specified_maxheardist) maxheardist = 0; // this is default
   //if (!specified_fov) fov = 0; // this is default
-  if (!specified_wakestate) wakestate = 'See';
+  if (!specified_wakestate) wakestate = FindState('See');
   bool dojump = !(flags&LOF_NOJUMP);
 
   // set goal now if appropriate
@@ -286,7 +286,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
         // if would cause the seestate to be set twice
         if (!LookForPlayers(bLookAllAround)) {
           // let the actor wander around aimlessly looking for a fight
-          state wkst = (dojump ? FindState(wakestate) : none);
+          state wkst = (dojump ? /*FindState*/(wakestate) : none);
           if (wkst) {
             if (!bInChase) SetState(/*FindState(wakestate)*/wkst);
           } else {
@@ -295,7 +295,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
         }
       } else {
         // let the actor wander around aimlessly looking for a fight
-        state wkst = (dojump ? FindState(wakestate) : none);
+        state wkst = (dojump ? /*FindState*/(wakestate) : none);
         if (wkst) {
           if (!bInChase) SetState(/*FindState(wakestate)*/wkst);
         } else {
@@ -338,7 +338,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   }
 
   if (dojump && Target) {
-    state wkst = FindState(wakestate);
+    state wkst = /*FindState*/(wakestate);
     if (wkst) {
       SetState(/*FindState(wakestate)*/wkst);
     } else {
