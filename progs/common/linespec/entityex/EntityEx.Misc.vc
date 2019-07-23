@@ -296,8 +296,8 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
   float aboveFloor = Origin.z-FloorZ;
   if (Dst.z == ONFLOORZ) {
     sector_t *DstSec = XLevel.PointInSector(Dst);
-    float DstFloorZ = GetPlanePointZ(ref DstSec->floor, Dst);
-    float DstCeilZ = GetPlanePointZ(ref DstSec->floor, Dst);
+    float DstFloorZ = GetPointZClamped(ref DstSec->floor, Dst);
+    float DstCeilZ = GetPointZClamped(ref DstSec->floor, Dst);
     if (bIsPlayer) {
       if (FindInventory(PowerFlight) && aboveFloor) {
         Dst.z = DstFloorZ+aboveFloor;
@@ -2749,7 +2749,7 @@ override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, b
   // check for crossing fake floor or ceiling
   if (OldSec->heightsec && Sector->heightsec && Sector->ActionList) {
     float EyeZ = (bIsPlayer ? Player.ViewOrg.z : Origin.z+Height*0.5);
-    float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
+    float FakeZ = GetPointZClamped(ref Sector->heightsec->floor, Origin);
 
     if (!OldAboveFakeFloor && EyeZ > FakeZ) {
       SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_EyesSurface);
@@ -2758,7 +2758,7 @@ override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, b
     }
 
     if (!Sector->heightsec->bFakeFloorOnly) {
-      FakeZ = GetPlanePointZ(ref Sector->heightsec->ceiling, Origin);
+      FakeZ = GetPointZClamped(ref Sector->heightsec->ceiling, Origin);
       if (!OldAboveFakeCeiling && EyeZ > FakeZ) {
         SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_EyesSurface);
       } else if (OldAboveFakeCeiling && EyeZ <= FakeZ) {
@@ -2774,9 +2774,9 @@ override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, b
     }
     if (Sector->ActionList) {
       int Spac = SectorAction::SECSPAC_Enter;
-      if (Origin.z <= GetPlanePointZ(ref Sector->floor, Origin)) Spac |= SectorAction::SECSPAC_HitFloor;
-      if (Origin.z+Height >= GetPlanePointZ(ref Sector->ceiling, Origin)) Spac |= SectorAction::SECSPAC_HitCeiling;
-      if (Sector->heightsec && Origin.z == GetPlanePointZ(ref Sector->heightsec->floor, Origin)) Spac |= SectorAction::SECSPAC_HitFakeFloor;
+      if (Origin.z <= GetPointZClamped(ref Sector->floor, Origin)) Spac |= SectorAction::SECSPAC_HitFloor;
+      if (Origin.z+Height >= GetPointZClamped(ref Sector->ceiling, Origin)) Spac |= SectorAction::SECSPAC_HitCeiling;
+      if (Sector->heightsec && Origin.z == GetPointZClamped(ref Sector->heightsec->floor, Origin)) Spac |= SectorAction::SECSPAC_HitFakeFloor;
       SectorAction(Sector->ActionList).TriggerAction(self, Spac);
     }
   }
@@ -2791,7 +2791,7 @@ override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, b
 final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
   if (Sector && Sector->heightsec && Sector->ActionList) {
     float ViewH = (bIsPlayer ? PlayerEx(Player).ViewHeight : Height*0.5);
-    float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
+    float FakeZ = GetPointZClamped(ref Sector->heightsec->floor, Origin);
 
     if (OldZ > FakeZ && Origin.z <= FakeZ) {
       SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFakeFloor);
@@ -2809,7 +2809,7 @@ final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
     if (!Sector || !Sector->heightsec || !Sector->ActionList) return;
 
     if (!Sector->heightsec->bFakeFloorOnly) {
-      FakeZ = GetPlanePointZ(ref Sector->heightsec->ceiling, Origin);
+      FakeZ = GetPointZClamped(ref Sector->heightsec->ceiling, Origin);
       if (OldZ <= FakeZ && EyeZ > FakeZ) {
         SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_EyesAboveC);
       } else if (OldZ > FakeZ && EyeZ <= FakeZ) {
@@ -3562,24 +3562,6 @@ final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional 
 
   // all checks passed
   return true;
-}
-
-
-//==========================================================================
-//
-//  GetPlanePointZRevFlag
-//
-//==========================================================================
-final float GetPlanePointZRevFlag (const ref TPlane plane, const ref TVec point, bool rev) {
-  if (rev) {
-    // gozzo shit, idc
-    TPlane pl;
-    pl.normal = -plane.normal;
-    pl.dist = -plane.dist;
-    return GetPlanePointZ(ref pl, point);
-  } else {
-    return GetPlanePointZ(ref plane, point);
-  }
 }
 
 
