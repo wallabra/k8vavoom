@@ -363,8 +363,9 @@ static void GetBaseSectorOpening (opening_t &op, sector_t *sector, const TVec po
   op.efloor = sector->eregions->efloor;
   op.eceiling = sector->eregions->eceiling;
   if (usePoint) {
-    op.bottom = op.efloor.GetPointZ(point);
-    op.top = op.eceiling.GetPointZ(point);
+    // we cannot go out of sector heights
+    op.bottom = op.efloor.GetPointZClamped(point);
+    op.top = op.eceiling.GetPointZClamped(point);
   } else {
     op.bottom = op.efloor.splane->minz;
     op.top = op.eceiling.splane->maxz;
@@ -450,8 +451,8 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
     float fz = reg->efloor.splane->minz;
     float cz = reg->eceiling.splane->maxz;
     if (usePoint) {
-      fz = max2(fz, reg->efloor.GetPointZ(point));
-      cz = min2(cz, reg->eceiling.GetPointZ(point));
+      fz = reg->efloor.GetPointZClamped(point);
+      cz = reg->eceiling.GetPointZClamped(point);
     }
     // k8: just in case
     //if (fz > cz && (reg->efloor.isSlope() || reg->eceiling.isSlope())) { float tmp = fz; fz = cz; cz = tmp; }
@@ -485,8 +486,15 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
   //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
 
   // if we have no openings, or openings are out of bounds, just use base sector region
-  const float secfz = (usePoint ? sector->floor.GetPointZ(point) : sector->floor.minz);
-  const float seccz = (usePoint ? sector->ceiling.GetPointZ(point) : sector->ceiling.maxz);
+  float secfz, seccz;
+  if (usePoint) {
+    secfz = sector->floor.GetPointZClamped(point);
+    seccz = sector->ceiling.GetPointZClamped(point);
+  } else {
+    secfz = sector->floor.minz;
+    seccz = sector->ceiling.maxz;
+  }
+
   if (solids.length() == 0 || solids[solids.length()-1].top <= secfz || solids[0].bottom >= seccz) {
     opening_t &op = dest.alloc();
     GetBaseSectorOpening(op, sector, point, usePoint);
