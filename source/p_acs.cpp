@@ -2217,7 +2217,10 @@ static bool doSetUserVarOrArray (VEntity *ent, VName fldname, int value, bool is
 //
 //==========================================================================
 static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int index=0) {
-  if (!ent) Host_Error("ACS: cannot get user variable with name \"%s\" from nothing", *fldname);
+  if (!ent) {
+    GCon->Logf("ACS: cannot get user variable with name \"%s\" from nothing", *fldname);
+    return 0;
+  }
   auto vtype = ent->_get_user_var_type(fldname);
   if (vtype == VGameObject::UserVarFieldType::Int || vtype == VGameObject::UserVarFieldType::IntArray) {
     if (acs_dump_uservar_access) {
@@ -3203,9 +3206,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_GetUserVariable:
       if (argCount >= 2) {
         VStr s = GetStr(args[1]).toLowerCase();
-        if (!s.startsWith("user_")) Host_Error("ACS: cannot get user variable with name \"%s\"", *GetStr(args[1]));
+        if (!s.startsWith("user_")) {
+          GCon->Logf("ACS: cannot get user variable with name \"%s\"", *GetStr(args[1]));
+          return 0;
+        }
         VEntity *mobj = EntityFromTID(args[0], Activator);
-        if (!mobj) Host_Error("ACS: cannot get user variable with name \"%s\" from nothing", *GetStr(args[1]));
+        if (!mobj) {
+          GCon->Logf("ACS: cannot get user variable with name \"%s\" from nothing", *GetStr(args[1]));
+          return 0;
+        }
         VName fldname = VName(*s);
         return doGetUserVarOrArray(mobj, fldname, false);
       }
@@ -3236,9 +3245,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_GetUserArray:
       if (argCount >= 3) {
         VStr s = GetStr(args[1]).toLowerCase();
-        if (!s.startsWith("user_")) Host_Error("ACS: cannot get user array with name \"%s\"", *GetStr(args[1]));
+        if (!s.startsWith("user_")) {
+          GCon->Logf("ACS: cannot get user array with name \"%s\"", *GetStr(args[1]));
+          return 0;
+        }
         VEntity *mobj = EntityFromTID(args[0], Activator);
-        if (!mobj) Host_Error("ACS: cannot get user array with name \"%s\" from nothing", *GetStr(args[1]));
+        if (!mobj) {
+          GCon->Logf("ACS: cannot get user array with name \"%s\" from nothing", *GetStr(args[1]));
+          return 0;
+        }
         VName fldname = VName(*s);
         return doGetUserVarOrArray(mobj, fldname, true, args[2]);
       }
