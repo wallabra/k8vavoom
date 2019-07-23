@@ -350,12 +350,16 @@ static VObject *getRedirection (VName fldname, VGameObject *gobj) {
   }
   if (gobj->GetFlags()&(_OF_Destroyed)) {
     VObject::VMDumpCallStack();
-    Host_Error("cannot redirect field '%s' in dead object", *fldname);
+    //Host_Error("cannot redirect field '%s' in dead object", *fldname);
+    GCon->Logf(NAME_Warning, "cannot redirect field '%s' in dead object", *fldname);
+    return nullptr;
   }
   if (!gobj->_stateRouteSelf) return gobj;
   if (gobj->_stateRouteSelf->GetFlags()&(_OF_Destroyed)) {
     VObject::VMDumpCallStack();
-    Host_Error("cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());
+    //Host_Error("cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());
+    GCon->Logf(NAME_Warning, "cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());
+    return nullptr;
   }
   return gobj->_stateRouteSelf;
 }
@@ -368,6 +372,7 @@ static VObject *getRedirection (VName fldname, VGameObject *gobj) {
 //==========================================================================
 int VGameObject::_get_user_var_int (VName fldname, int index) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return 0;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
@@ -386,6 +391,7 @@ int VGameObject::_get_user_var_int (VName fldname, int index) {
 //==========================================================================
 float VGameObject::_get_user_var_float (VName fldname, int index) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return 0;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
@@ -404,6 +410,7 @@ float VGameObject::_get_user_var_float (VName fldname, int index) {
 //==========================================================================
 void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
@@ -422,6 +429,7 @@ void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
 //==========================================================================
 void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
@@ -439,6 +447,7 @@ void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
 //==========================================================================
 VGameObject::UserVarFieldType VGameObject::_get_user_var_type (VName fldname) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return UserVarFieldType::None; // dunno
   VField *fld = xobj->GetClass()->FindField(fldname);
   if (!fld) return UserVarFieldType::None;
   if (fld->Type.Type == TYPE_Array) {
@@ -466,6 +475,7 @@ VGameObject::UserVarFieldType VGameObject::_get_user_var_type (VName fldname) {
 //==========================================================================
 int VGameObject::_get_user_var_dim (VName fldname) {
   VObject *xobj = getRedirection(fldname, this);
+  if (!xobj) return -1;
   VField *fld = xobj->GetClass()->FindField(fldname);
   if (!fld) return -1;
   if (fld->Type.Type == TYPE_Array) {

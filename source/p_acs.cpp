@@ -2239,7 +2239,7 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
     }
     return (int)(ent->_get_user_var_float(fldname)*65536.0f);
   }
-  Host_Error("ACS: missing `%s` uservar '%s'", *ent->GetClass()->GetFullName(), *fldname);
+  GCon->Logf("ACS: missing `%s` uservar '%s'", *ent->GetClass()->GetFullName(), *fldname);
   return 0;
 }
 
