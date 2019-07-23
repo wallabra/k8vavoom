@@ -1250,7 +1250,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
 //==========================================================================
 float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point) {
   if (!sector) return 0.0f; // idc
-  return sector->floor.GetPointZ(point); // cannot be lower than this
+  return sector->floor.GetPointZClamped(point); // cannot be lower than this
 }
 
 
