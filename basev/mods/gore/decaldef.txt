@@ -135,6 +135,7 @@ SLIDER K8Gore_NewBloodSlider {
   SlideTime random 17 24 // 22
   //DistY -132
   DistY random 4 8
+  k8reversey
 }
 
 COMBINER K8Gore_NewBloodSmearer1 {
@@ -402,6 +403,7 @@ slider K8GoreBSlide1Transient {
   DistY -26
   SlideStart 0
   SlideTime 9
+  k8reversey
 }
 
 stretcher K8GoreBStretch1Transient {
@@ -415,6 +417,7 @@ slider K8GoreBSlide2Transient {
   DistY -20
   SlideStart 0
   SlideTime 12
+  k8reversey
 }
 
 stretcher K8GoreBStretch2Transient {
@@ -700,6 +703,7 @@ SLIDER K8Gore_NewBloodSliderGreen {
   SlideTime random 17 24 // 22
   //DistY -132
   DistY random 4 8
+  k8reversey
 }
 
 COMBINER K8Gore_NewBloodSmearer1Green {
@@ -967,6 +971,7 @@ slider K8GoreBSlide1Transient_Green {
   DistY -26
   SlideStart 0
   SlideTime 9
+  k8reversey
 }
 
 stretcher K8GoreBStretch1Transient_Green {
@@ -980,6 +985,7 @@ slider K8GoreBSlide2Transient_Green {
   DistY -20
   SlideStart 0
   SlideTime 12
+  k8reversey
 }
 
 stretcher K8GoreBStretch2Transient_Green {
@@ -1265,6 +1271,7 @@ SLIDER K8Gore_NewBloodSliderBlue {
   SlideTime random 17 24 // 22
   //DistY -132
   DistY random 4 8
+  k8reversey
 }
 
 COMBINER K8Gore_NewBloodSmearer1Blue {
@@ -1532,6 +1539,7 @@ slider K8GoreBSlide1Transient_Blue {
   DistY -26
   SlideStart 0
   SlideTime 9
+  k8reversey
 }
 
 stretcher K8GoreBStretch1Transient_Blue {
@@ -1545,6 +1553,7 @@ slider K8GoreBSlide2Transient_Blue {
   DistY -20
   SlideStart 0
   SlideTime 12
+  k8reversey
 }
 
 stretcher K8GoreBStretch2Transient_Blue {

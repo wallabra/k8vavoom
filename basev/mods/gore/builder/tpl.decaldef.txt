@@ -73,6 +73,7 @@ slider K8GoreBSlide1${Color} {
   DistY -26
   SlideStart 0
   SlideTime 9
+  k8reversey
 }
 
 stretcher K8GoreBStretch1${Color} {
@@ -86,6 +87,7 @@ slider K8GoreBSlide2${Color} {
   DistY -20
   SlideStart 0
   SlideTime 12
+  k8reversey
 }
 
 stretcher K8GoreBStretch2${Color} {
@@ -548,6 +550,7 @@ SLIDER K8Gore_NewBloodSlider${Color} {
   SlideTime random 17 24 // 22
   //DistY -132
   DistY random 4 8
+  k8reversey
 }
 
 COMBINER K8Gore_NewBloodSmearer1${Color} {
