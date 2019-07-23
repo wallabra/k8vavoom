@@ -302,7 +302,7 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
   if (!AmmoItem) {
-    AmmoItem = SpawnAmmoType(AmmoType);
+    AmmoItem = SpawnAmmoType(self, AmmoType);
     if (!AmmoItem) return none;
     Ammo a2 = Ammo(Toucher.FindInventory(class!Ammo(AmmoItem.Class)));
     if (a2) {

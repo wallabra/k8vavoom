@@ -312,7 +312,8 @@ void Cheat_Gimme () {
       if (!AreStateSpritesPresent(st)) continue; // no sprites
       // check if already have it
       if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
-      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
+      //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
+      Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO))) {
@@ -341,16 +342,19 @@ void Cheat_Gimme () {
       //if (!csfound) for (class wcc = WpnCls; wcc; wcc = GetClassReplacee(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
       if (!csfound) continue;
       //print("WPN IS CHAINSAW!");
-      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
-      Wpn.AmmoGive1 = 0;
-      Wpn.AmmoGive2 = 0;
-      if (!Wpn.TryPickup(EntityEx(MO))) {
-        Wpn.Destroy();
-      } else {
-        print("CHEAT: got '%C'!", WpnCls);
-        ChangeWeapon(1);
-        cprint("You got Chainsaw!");
-        break;
+      //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
+      Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
+      if (Wpn) {
+        Wpn.AmmoGive1 = 0;
+        Wpn.AmmoGive2 = 0;
+        if (!Wpn.TryPickup(EntityEx(MO))) {
+          Wpn.Destroy();
+        } else {
+          print("CHEAT: got '%C'!", WpnCls);
+          ChangeWeapon(1);
+          cprint("You got Chainsaw!");
+          break;
+        }
       }
     }
   }
@@ -372,9 +376,15 @@ void Cheat_Gimme () {
     foreach AllClasses(Ammo, Cls) {
       // Only direct descendants.
       if (GetClassParent(Cls) != Ammo) continue;
-      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-      if (!AmmoItem) {
-        AmmoItem = Level.Spawn(Cls, default, default, default/*, false*/);
+      Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
+      if (!AmmoItem) continue;
+      Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
+      if (invAmmo && Ammo(invAmmo)) {
+        delete AmmoItem;
+        AmmoItem = Ammo(invAmmo);
+        assert(AmmoItem);
+      } else {
+        assert(Ammo(AmmoItem));
         if (!AmmoItem.TryPickup(EntityEx(MO))) {
           AmmoItem.Destroy();
           AmmoItem = none;
@@ -382,6 +392,18 @@ void Cheat_Gimme () {
           gotit = true;
         }
       }
+      /*
+      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
+      if (!AmmoItem) {
+        AmmoItem = Level.Spawn(Cls, default, default, default, AllowReplace:false);
+        if (!AmmoItem.TryPickup(EntityEx(MO))) {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        } else {
+          gotit = true;
+        }
+      }
+      */
       if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
     }
     if (gotit) cprint("You got ammo!");

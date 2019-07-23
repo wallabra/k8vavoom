@@ -42,7 +42,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   bool Ret = true;
   if (ItemType) {
     auto origItemType = ItemType;
-    Inventory Item = SpawnInventoryType(ItemType);
+    Inventory Item = SpawnInventoryType(self, ItemType);
     if (Item) {
       //Inventory Item = Spawn(ItemType, default, default, default, AllowReplace:false);
       if (!Inventory(Item)) {

@@ -81,7 +81,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
     if (GetClassParent(Cls) != Ammo) continue;
     Ammo AmmoItem = Ammo(Toucher.FindInventory(Cls));
     if (!AmmoItem) {
-      AmmoItem = SpawnAmmoType(Cls);
+      AmmoItem = SpawnAmmoType(self, Cls);
       if (!AmmoItem) continue;
       if (AmmoItem.k8IsLoadedAmmo()) {
         delete AmmoItem;
