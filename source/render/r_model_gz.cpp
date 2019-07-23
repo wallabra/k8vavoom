@@ -80,9 +80,10 @@ protected:
   // -1: not found
   int findModelFrame (int mdlindex, int mdlframe, bool allowAppend=true);
 
+  VStr buildPath (VScriptParser *sc, VStr path);
+
 public:
   VStr className;
-  VStr path;
   TArray<MSDef> models;
   TVec scale;
   TVec offset;
@@ -123,7 +124,6 @@ public:
 //==========================================================================
 GZModelDef::GZModelDef ()
   : className()
-  , path()
   , models()
   , scale(0, 0, 0)
   , offset(0, 0, 0)
@@ -151,7 +151,6 @@ GZModelDef::~GZModelDef () {
 //==========================================================================
 void GZModelDef::clear () {
   className.clear();
-  path.clear();
   models.clear();
   scale = TVec(0, 0, 0);
   offset = TVec(0, 0, 0);
@@ -173,11 +172,53 @@ bool GZModelDef::ParseMD2Frames (VStr mdpath, TArray<VStr> &names) {
 
 //==========================================================================
 //
+//  GZModelDef::buildPath
+//
+//==========================================================================
+VStr GZModelDef::buildPath (VScriptParser *sc, VStr path) {
+  // normalize path
+  if (path.length()) {
+    TArray<VStr> parr;
+    path.SplitPath(parr);
+    if (parr.length() && parr[0] == "/") parr.removeAt(0);
+    int pidx = 0;
+    while (pidx < parr.length()) {
+      if (parr[pidx] == ".") {
+        parr.removeAt(pidx);
+        continue;
+      }
+      if (parr[pidx] == "..") {
+        parr.removeAt(pidx);
+        if (pidx > 0) {
+          --pidx;
+          parr.removeAt(pidx);
+        }
+        continue;
+      }
+      bool allDots = true;
+      for (const char *s = parr[pidx].getCStr(); *s; ++s) if (*s != '.') { allDots = false; break; }
+      if (allDots) sc->Error(va("invalid model path '%s' in model '%s'", *parr[pidx], *className));
+      ++pidx;
+    }
+    path.clear();
+    for (auto &&s : parr) {
+      path += s.toLowerCase();
+      path += '/';
+    }
+    //GLog.WriteLine("<%s>", *path);
+  }
+  return path;
+}
+
+
+//==========================================================================
+//
 //  GZModelDef::parse
 //
 //==========================================================================
 void GZModelDef::parse (VScriptParser *sc) {
   clear();
+  VStr path;
   // get class name
   sc->ExpectString();
   className = sc->String;
@@ -223,7 +264,7 @@ void GZModelDef::parse (VScriptParser *sc) {
     // "path"
     if (sc->Check("path")) {
       sc->ExpectString();
-      path = sc->String;
+      path = buildPath(sc, sc->String);
       continue;
     }
     // "skin"
@@ -233,7 +274,8 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (skidx < 0 || skidx > 1024) sc->Error(va("invalid skin number (%d) in model '%s'", skidx, *className));
       sc->ExpectString();
       while (models.length() <= skidx) models.alloc();
-      models[skidx].skinFile = sc->String.toLowerCase();
+      VStr xpath = (!sc->String.isEmpty() ? path+sc->String.toLowerCase() : VStr::EmptyString);
+      models[skidx].skinFile = xpath;
       continue;
     }
     // "SurfaceSkin"
@@ -252,13 +294,16 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (mdidx < 0 || mdidx > 1024) sc->Error(va("invalid model number (%d) in model '%s'", mdidx, *className));
       sc->ExpectString();
       VStr mname = sc->String.toLowerCase();
-      VStr ext = mname.extractFileExtension();
-      if (ext.isEmpty()) {
-        sc->Message(va("gz alias model '%s' is in unknown format, defaulted to md3", *className));
-        //mname += ".md3"; // no need to do it, we must preserve file name
-      } else if (!ext.strEquCI(".md2") && !ext.strEquCI(".md3")) {
-        sc->Message(va("gz alias model '%s' is in unknown format '%s', defaulted to md3", *className, *ext+1));
-        //mname.clear(); // ok, allow it to load, the loader will take care of throwing it away
+      if (!mname.isEmpty()) {
+        VStr ext = mname.extractFileExtension();
+        if (ext.isEmpty()) {
+          sc->Message(va("gz alias model '%s' is in unknown format, defaulted to md3", *className));
+          //mname += ".md3"; // no need to do it, we must preserve file name
+        } else if (!ext.strEquCI(".md2") && !ext.strEquCI(".md3")) {
+          sc->Message(va("gz alias model '%s' is in unknown format '%s', defaulted to md3", *className, *ext+1));
+          //mname.clear(); // ok, allow it to load, the loader will take care of throwing it away
+        }
+        mname = path+mname;
       }
       while (models.length() <= mdidx) models.alloc();
       models[mdidx].modelFile = mname;
@@ -454,38 +499,6 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
 //
 //==========================================================================
 void GZModelDef::checkModelSanity (VScriptParser *sc) {
-  // normalize path
-  if (path.length()) {
-    TArray<VStr> parr;
-    path.SplitPath(parr);
-    if (parr.length() && parr[0] == "/") parr.removeAt(0);
-    int pidx = 0;
-    while (pidx < parr.length()) {
-      if (parr[pidx] == ".") {
-        parr.removeAt(pidx);
-        continue;
-      }
-      if (parr[pidx] == "..") {
-        parr.removeAt(pidx);
-        if (pidx > 0) {
-          --pidx;
-          parr.removeAt(pidx);
-        }
-        continue;
-      }
-      bool allDots = true;
-      for (const char *s = parr[pidx].getCStr(); *s; ++s) if (*s != '.') { allDots = false; break; }
-      if (allDots) sc->Error(va("invalid model path '%s' in model '%s'", *parr[pidx], *className));
-      ++pidx;
-    }
-    path.clear();
-    for (auto &&s : parr) {
-      path += s.toLowerCase();
-      path += '/';
-    }
-    //GLog.WriteLine("<%s>", *path);
-  }
-
   // build frame map
   bool hasValidFrames = false;
   bool hasInvalidFrames = false;
@@ -505,7 +518,7 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
         frm.vvindex = -1;
       } else {
         TArray<VStr> frlist;
-        VStr mfn = path+models[mdlindex].modelFile;
+        VStr mfn = models[mdlindex].modelFile;
         if (!ParseMD2Frames(mfn, frlist)) {
           GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
           frm.vvindex = -1;
@@ -564,14 +577,11 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
     check(frames.length() > 0); // invariant
   }
 
-  // prepend path to skins and models (and clear unused model names)
+  // clear unused model names
   for (auto &&mdl : models) {
     if (mdl.frameMap.length() == 0) {
       mdl.modelFile.clear();
       mdl.skinFile.clear();
-    } else {
-      mdl.modelFile = path+mdl.modelFile;
-      if (!mdl.skinFile.isEmpty()) mdl.skinFile = path+mdl.skinFile;
     }
   }
 }
