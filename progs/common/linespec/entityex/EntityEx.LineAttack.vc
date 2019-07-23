@@ -235,17 +235,17 @@ final void DebugCheckMidTex () {
           tr.line.backsector.floor.normal.z == 1 && tr.line.backsector.ceiling.normal.z == -1*/)
       {
         //print("linedef #%d", tr.line-&XLevel.Lines[0]);
-        float ffz1 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v1);
-        float ffz2 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v2);
+        float ffz1 = tr.line.frontsector.floor.GetPointZClamped(*tr.line.v1);
+        float ffz2 = tr.line.frontsector.floor.GetPointZClamped(*tr.line.v2);
         //if (ffz1 != ffz2) Error("OOPS(front floor)");
-        float fcz1 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v1);
-        float fcz2 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v2);
+        float fcz1 = tr.line.frontsector.ceiling.GetPointZClamped(*tr.line.v1);
+        float fcz2 = tr.line.frontsector.ceiling.GetPointZClamped(*tr.line.v2);
         //if (fcz1 != fcz2) Error("OOPS(front ceiling)");
-        float bfz1 = tr.line.backsector.floor.GetPlanePointZ(*tr.line.v1);
-        float bfz2 = tr.line.backsector.floor.GetPlanePointZ(*tr.line.v2);
+        float bfz1 = tr.line.backsector.floor.GetPointZClamped(*tr.line.v1);
+        float bfz2 = tr.line.backsector.floor.GetPointZClamped(*tr.line.v2);
         //if (bfz1 != bfz2) Error("OOPS(back floor)");
-        float bcz1 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v1);
-        float bcz2 = tr.line.backsector.ceiling.GetPlanePointZ(*tr.line.v2);
+        float bcz1 = tr.line.backsector.ceiling.GetPointZClamped(*tr.line.v1);
+        float bcz2 = tr.line.backsector.ceiling.GetPointZClamped(*tr.line.v2);
         //if (bcz1 != bcz2) Error("OOPS(back ceiling)");
         print("linedef %d: (f/b secs=%d/%d); ffz=(%f:%f); fcz=(%f:%f); bfz=(%f:%f); bcz=(%f:%f); alpha=%f; special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
             tr.line-&XLevel.Lines[0],
@@ -257,11 +257,11 @@ final void DebugCheckMidTex () {
         print("fsec(%d): ceiling=%f; floor=%f", tr.line.frontsector-&XLevel.Sectors[0], tr.line.frontsector.ceiling.minz, tr.line.frontsector.floor.maxz);
         print("bsec(%d): ceiling=%f; floor=%f", tr.line.backsector-&XLevel.Sectors[0], tr.line.backsector.ceiling.minz, tr.line.backsector.floor.maxz);
       } else {
-        float ffz1 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v1);
-        float ffz2 = tr.line.frontsector.floor.GetPlanePointZ(*tr.line.v2);
+        float ffz1 = tr.line.frontsector.floor.GetPointZClamped(*tr.line.v1);
+        float ffz2 = tr.line.frontsector.floor.GetPointZClamped(*tr.line.v2);
         //if (ffz1 != ffz2) Error("OOPS(front floor)");
-        float fcz1 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v1);
-        float fcz2 = tr.line.frontsector.ceiling.GetPlanePointZ(*tr.line.v2);
+        float fcz1 = tr.line.frontsector.ceiling.GetPointZClamped(*tr.line.v1);
+        float fcz2 = tr.line.frontsector.ceiling.GetPointZClamped(*tr.line.v2);
         //if (fcz1 != fcz2) Error("OOPS(front ceiling)");
         print("linedef %d: (f sec=%d); ffz=(%f:%f); fcz=(%f:%f); special=%s<%s>; arg=(%s,%s,%s,%s,%s)",
             tr.line-&XLevel.Lines[0],
