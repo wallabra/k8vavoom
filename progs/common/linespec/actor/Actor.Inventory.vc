@@ -42,50 +42,30 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   bool Ret = true;
   if (ItemType) {
     auto origItemType = ItemType;
+    Inventory Item = SpawnInventoryType(ItemType);
+    if (Item) {
+      //Inventory Item = Spawn(ItemType, default, default, default, AllowReplace:false);
+      if (!Inventory(Item)) {
+        FatalError("Idiotic mod author tried to give something that is not Inventory (%C); this will NEVER work.", Item);
+      }
 
-    class!Thinker replCls = class!Thinker(GetClassReplacement(ItemType));
-    if (!replCls) replCls = ItemType;
-    if (!replCls) {
-      printwarn("something is very FUCKED while trying to give item `%C`", ItemType);
-      return false;
-    }
+      if (Health(Item)) {
+        Item.Amount *= Amount;
+      } else {
+        Item.Amount = Amount;
+      }
 
-    // some degenerative mods tries to give the player a `RandomSpawner` instance
-    // check for this, and perform special processing
-    class!RandomSpawner spc = class!RandomSpawner(replCls);
-    if (spc) {
-      replCls = RandomSpawner.doChooseRandomInvenotry(spc, class!Inventory(FindClass('Inventory')));
-      if (!replCls) return false;
-      print("RandomSpawner `%C` chose inventory item `%C`", spc, replCls);
-    }
+      Item.bDropped = true;
+      // this shouldn't count for the item statistics
+      if (Item.bCountItem) {
+        Item.bCountItem = false;
+        --Level.TotalItems;
+      }
 
-    if (!replCls) return false;
-    ItemType = class!Inventory(replCls);
-    if (!ItemType) {
-      FatalError("Idiotic mod author tried to give something that is not Inventory (%C -> %C); this will NEVER work.", origItemType, replCls);
-    }
-
-    Inventory Item = Spawn(ItemType, default, default, default, AllowReplace:false);
-    if (!Inventory(Item)) {
-      FatalError("Idiotic mod author tried to give something that is not Inventory (%C); this will NEVER work.", Item);
-    }
-
-    if (Health(Item)) {
-      Item.Amount *= Amount;
-    } else {
-      Item.Amount = Amount;
-    }
-
-    Item.bDropped = true;
-    // this shouldn't count for the item statistics
-    if (Item.bCountItem) {
-      Item.bCountItem = false;
-      --Level.TotalItems;
-    }
-
-    if (!Item.TryPickup(Receiver)) {
-      Item.Destroy();
-      Ret = false;
+      if (!Item.TryPickup(Receiver)) {
+        Item.Destroy();
+        Ret = false;
+      }
     }
   } else {
     Ret = false;

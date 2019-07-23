@@ -257,12 +257,18 @@ final Inventory GiveInventoryType (class!Inventory Type, optional bool disableRe
   //Inventory Item = Spawn(Type, default, default, default, AllowReplace:!disableReplace);
   Inventory Item = SpawnInventoryType(Type, disableReplace:disableReplace);
   if (!Item) return none;
+  if (!Inventory(Item)) {
+    printwarn("WUTAFUCK with GiveInventoryType? (%C)", Item);
+    delete Item;
+    return none;
+  }
   // this shouldn't count for the item statistics
   if (Item.bCountItem) {
     Item.bCountItem = false;
     --Level.TotalItems;
   }
   Item.bDropped = true;
+  //print("*** Item=%C (%C)", Item, self);
   if (!Item.TryPickup(self)) {
     Item.Destroy();
     return none;
