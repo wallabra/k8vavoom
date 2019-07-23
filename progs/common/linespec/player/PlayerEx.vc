@@ -842,6 +842,7 @@ void WaterMove (float deltaTime) {
 
   if (forward || side) SetPlayerRunState();
 
+  bool doCrouchMove = true;
   bool doNormalJump = false;
   if (Buttons&BT_JUMP) {
     // jump if standing on a floor
@@ -851,6 +852,17 @@ void WaterMove (float deltaTime) {
            if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = 100.0;
       else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
       else MO.Velocity.z = 50.0;
+    }
+  } else if (Buttons&BT_CROUCH) {
+    // crouching means "sink" while in water
+    if ((LastWaterLevel >= 2 || bFly) && MO.Origin.z > MO.FloorZ) {
+           if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = -100.0/1.5;
+      else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = -80.0/1.5;
+      else MO.Velocity.z = -50.0/1.5;
+    } else if (MO.Origin.z <= MO.FloorZ) {
+      // normal crouch
+      doCrouchMove = false;
+      CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
     }
   } else {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
@@ -864,6 +876,9 @@ void WaterMove (float deltaTime) {
       MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     }
   }
+
+  // stand up
+  if (doCrouchMove) CrouchMove(1);
 
   CheckWaterJump();
 
