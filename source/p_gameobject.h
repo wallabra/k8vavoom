@@ -400,6 +400,23 @@ struct sec_plane_t : public TPlane {
 
   //sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
   //vuint32 exflags; // SPF_EX_xxx
+
+  inline __attribute__((warn_unused_result)) float GetPointZClamped (float x, float y) const {
+    return clampval(GetPointZ(x, y), minz, maxz);
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZRevClamped (float x, float y) const {
+    //FIXME: k8: should min and max be switched here?
+    return clampval(GetPointZRev(x, y), minz, maxz);
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZClamped (const TVec &v) const {
+    return GetPointZClamped(v.x, v.y);
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZRevClamped (const TVec &v) const {
+    return GetPointZRevClamped(v.x, v.y);
+  }
 };
 
 
@@ -450,6 +467,11 @@ struct TSecPlaneRef {
     return (!flipped ? splane->GetPointZ(x, y) : splane->GetPointZRev(x, y));
   }
 
+  inline __attribute__((warn_unused_result)) float GetPointZClamped (float x, float y) const {
+    //return clampval((!flipped ? splane->GetPointZ(x, y) : splane->GetPointZRev(x, y)), splane->minz, splane->maxz);
+    return (!flipped ? splane->GetPointZClamped(x, y) : splane->GetPointZRevClamped(x, y));
+  }
+
   inline __attribute__((warn_unused_result)) float DotPoint (const TVec &point) const {
     if (!flipped) {
       return DotProduct(point, splane->normal);
@@ -469,7 +491,11 @@ struct TSecPlaneRef {
   }
 
   inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
-    return (!flipped ? splane->GetPointZ(v.x, v.y) : splane->GetPointZRev(v.x, v.y));
+    return GetPointZ(v.x, v.y);
+  }
+
+  inline __attribute__((warn_unused_result)) float GetPointZClamped (const TVec &v) const {
+    return GetPointZClamped(v.x, v.y);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
@@ -1062,6 +1088,9 @@ public:
   DECLARE_FUNCTION(spSphereTouches)
   DECLARE_FUNCTION(spSphereOnSide)
   DECLARE_FUNCTION(spSphereOnSide2)
+
+  DECLARE_FUNCTION(GetPointZClamped)
+  DECLARE_FUNCTION(GetPointZRevClamped)
 
   DECLARE_FUNCTION(GetSectorFloorPointZ)
   DECLARE_FUNCTION(SectorHas3DFloors)

@@ -575,7 +575,7 @@ IMPLEMENT_FUNCTION(VGameObject, spGetDist) {
 IMPLEMENT_FUNCTION(VGameObject, spGetPointZ) {
   P_GET_PTR(TVec, point);
   P_GET_PTR(TSecPlaneRef, sp);
-  RET_FLOAT(sp->GetPointZ(point->x, point->y));
+  RET_FLOAT(sp->GetPointZClamped(point->x, point->y));
 }
 
 //native static final float spDotPoint (const ref TSecPlaneRef sp, const ref TVec point);
@@ -652,6 +652,21 @@ IMPLEMENT_FUNCTION(VGameObject, spSphereOnSide2) {
   RET_INT(sp->SphereOnSide2(*center, radius));
 }
 
+IMPLEMENT_FUNCTION(VGameObject, GetPointZClamped) {
+  P_GET_VEC(point);
+  P_GET_PTR(sec_plane_t, plane);
+  const float res = plane->GetPointZClamped(point);
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  RET_FLOAT(res);
+}
+
+IMPLEMENT_FUNCTION(VGameObject, GetPointZRevClamped) {
+  P_GET_VEC(point);
+  P_GET_PTR(sec_plane_t, plane);
+  const float res = plane->GetPointZRevClamped(point);
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  RET_FLOAT(res);
+}
 
 //native static final float GetSectorFloorPointZ (const sector_t *sector, const ref TVec point);
 IMPLEMENT_FUNCTION(VGameObject, GetSectorFloorPointZ) {

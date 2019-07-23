@@ -855,6 +855,9 @@ native static final bool spSphereTouches (const ref TSecPlaneRef sp, const ref T
 // returns side 0 (front), 1 (back), or 2 (collides)
 native static final int spSphereOnSide2 (const ref TSecPlaneRef sp, const ref TVec center, float radius);
 
+native static final float GetPointZClamped (const ref sec_plane_t plane, const TVec point);
+native static final float GetPointZRevClamped (const ref sec_plane_t plane, const TVec point);
+
 
 // "regions" keeps 3d floors for sector
 // region inside may be non-solid, if the corresponding flag is set
