@@ -32,7 +32,7 @@ const float RUNNING_SPEED = 2000;
 
 enum {
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 8,
+  MAX_WEAPONS_PER_SLOT = 16,
 }
 
 // default view height
