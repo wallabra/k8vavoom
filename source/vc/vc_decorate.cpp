@@ -41,7 +41,7 @@ enum {
   FLAGS_HASH_SIZE = 256,
   //WARNING! keep in sync with script code (LineSpecialGameInfo.vc)
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 8,
+  MAX_WEAPONS_PER_SLOT = 16,
 };
 
 enum {
@@ -3245,10 +3245,14 @@ void ProcessDecorateScripts () {
     for (int j = 0; j < List.Num(); ++j) {
       VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
-      VClass *C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) { if (dbg_show_missing_classes) GLog.Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
-      else if (!C->IsChildOf(ActorClass)) GLog.Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
-      else DI.Type = C;
+      VClass *C = VClass::FindClassNoCase(*DI.TypeName);
+      if (!C) {
+        GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *(((VObject *)DecPkg->ParsedClasses[i])->GetClass()->GetFullName()));
+      } else if (!C->IsChildOf(ActorClass)) {
+        GLog.Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
+      } else {
+        DI.Type = C;
+      }
     }
   }
 
