@@ -93,6 +93,16 @@ void DecalFloatVal::genValue () {
 }
 
 
+void DecalFloatVal::doIO (VStr prefix, VStream &strm, VNTValueIOEx &vio) {
+  vint32 rndflag = (rnd ? 1 : 0);
+  vio.io(VName(*(prefix+"_randomized")), rndflag);
+  vio.io(VName(*(prefix+"_value")), value);
+  vio.io(VName(*(prefix+"_rndmin")), rndMin);
+  vio.io(VName(*(prefix+"_rndmax")), rndMax);
+  if (strm.IsLoading()) rnd = !!rndflag;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalDef::addToList (VDecalDef *dc) {
   if (!dc) return;
@@ -533,10 +543,10 @@ VDecalAnim *VDecalAnimFader::clone () {
 }
 
 
-void VDecalAnimFader::doIO (VStream &Strm) {
-  Strm << timePassed;
-  Strm << startTime.value;
-  Strm << actionTime.value;
+void VDecalAnimFader::doIO (VStream &strm, VNTValueIOEx &vio) {
+  vio.io(VName("time_passed"), timePassed);
+  startTime.doIO("start_time", strm, vio);
+  actionTime.doIO("action_time", strm, vio);
 }
 
 
@@ -592,12 +602,12 @@ VDecalAnim *VDecalAnimStretcher::clone () {
 }
 
 
-void VDecalAnimStretcher::doIO (VStream &Strm) {
-  Strm << timePassed;
-  Strm << goalX.value;
-  Strm << goalY.value;
-  Strm << startTime.value;
-  Strm << actionTime.value;
+void VDecalAnimStretcher::doIO (VStream &strm, VNTValueIOEx &vio) {
+  vio.io(VName("time_passed"), timePassed);
+  startTime.doIO("start_time", strm, vio);
+  actionTime.doIO("action_time", strm, vio);
+  goalX.doIO("goal_x", strm, vio);
+  goalY.doIO("goal_y", strm, vio);
 }
 
 
@@ -660,12 +670,15 @@ VDecalAnim *VDecalAnimSlider::clone () {
 }
 
 
-void VDecalAnimSlider::doIO (VStream &Strm) {
-  Strm << timePassed;
-  Strm << distX.value;
-  Strm << distY.value;
-  Strm << startTime.value;
-  Strm << actionTime.value;
+void VDecalAnimSlider::doIO (VStream &strm, VNTValueIOEx &vio) {
+  vio.io(VName("time_passed"), timePassed);
+  startTime.doIO("start_time", strm, vio);
+  actionTime.doIO("action_time", strm, vio);
+  distX.doIO("dist_x", strm, vio);
+  distY.doIO("dist_y", strm, vio);
+  vint32 revy = (k8reversey ? 1 : 0);
+  vio.io(VName("reverse_y"), revy);
+  if (strm.IsLoading()) k8reversey = !!revy;
 }
 
 
@@ -674,12 +687,12 @@ bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
   if (timePassed < startTime.value) return true; // not yet
   if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
     decal->ofsX = distX.value;
-    decal->ofsY = distY.value;
+    decal->ofsY = distY.value*(k8reversey ? -1.0f : 1.0f);
     return false;
   }
   float dtx = timePassed-startTime.value;
   decal->ofsX = distX.value*dtx/actionTime.value;
-  decal->ofsY = distY.value*dtx/actionTime.value;
+  decal->ofsY = (distY.value*dtx/actionTime.value)*(k8reversey ? -1.0f : 1.0f);
   return true;
 }
 
@@ -689,7 +702,7 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
   name = VName(*sc->String);
-  bool k8reversey = false;
+  k8reversey = false;
   sc->Expect("{");
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
@@ -701,7 +714,6 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
-  if (!k8reversey) distY.value = -distY.value;
   return false;
 }
 
@@ -724,13 +736,13 @@ VDecalAnim *VDecalAnimColorChanger::clone () {
 }
 
 
-void VDecalAnimColorChanger::doIO (VStream &Strm) {
-  Strm << timePassed;
-  Strm << dest[0];
-  Strm << dest[1];
-  Strm << dest[2];
-  Strm << startTime.value;
-  Strm << actionTime.value;
+void VDecalAnimColorChanger::doIO (VStream &strm, VNTValueIOEx &vio) {
+  vio.io(VName("time_passed"), timePassed);
+  startTime.doIO("start_time", strm, vio);
+  actionTime.doIO("action_time", strm, vio);
+  vio.io(VName("dest_color_r"), dest[0]);
+  vio.io(VName("dest_color_g"), dest[1]);
+  vio.io(VName("dest_color_b"), dest[2]);
 }
 
 
@@ -799,7 +811,8 @@ VDecalAnim *VDecalAnimCombiner::clone () {
 }
 
 
-void VDecalAnimCombiner::doIO (VStream &Strm) {
+void VDecalAnimCombiner::doIO (VStream &strm, VNTValueIOEx &vio) {
+  /*
   Strm << timePassed;
   int len = 0;
   if (Strm.IsLoading()) {
@@ -812,6 +825,30 @@ void VDecalAnimCombiner::doIO (VStream &Strm) {
     Strm << len;
   }
   for (int f = 0; f < list.Num(); ++f) VDecalAnim::Serialise(Strm, list[f]);
+  */
+  vio.io(VName("time_passed"), timePassed);
+  VStr oldpfx = vio.prefix;
+  vio.prefix = "combiner h "+vio.prefix; // nested combiners will add more of this
+
+  vint32 len = list.length();
+  vio.io(VName("combiner_length"), len);
+  if (len < 0 || len > 32767) {
+    GCon->Logf(NAME_Warning, "Level load: invalid number of decal combiners: %d", len);
+    return;
+  }
+
+  if (strm.IsLoading()) {
+    // loading, alloc combiners
+    list.setLength(len);
+  }
+
+  for (auto &&lit : list.itemsIdx()) {
+    vio.prefix = va("combiner d%d ", lit.index())+oldpfx;
+    VDecalAnim::SerialiseNested(strm, vio, lit.value());
+  }
+
+  // restore prefix
+  vio.prefix = oldpfx;
 }
 
 
@@ -853,32 +890,35 @@ bool VDecalAnimCombiner::parse (VScriptParser *sc) {
 }
 
 
-void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  // animator
-  if (Strm.IsLoading()) {
-    // load animator
-    vuint8 type = 0;
-    Strm << type;
-    switch (type) {
+void VDecalAnim::SerialiseNested (VStream &strm, VNTValueIOEx &vio, VDecalAnim *&aptr) {
+  vint32 atype = 0;
+  if (strm.IsLoading()) {
+    vio.io(VName("animtype"), atype);
+    switch (atype) {
       case 0: aptr = nullptr; return;
       case VDecalAnimFader::TypeId: aptr = new VDecalAnimFader(); break;
       case VDecalAnimStretcher::TypeId: aptr = new VDecalAnimStretcher(); break;
       case VDecalAnimSlider::TypeId: aptr = new VDecalAnimSlider(); break;
       case VDecalAnimColorChanger::TypeId: aptr = new VDecalAnimColorChanger(); break;
       case VDecalAnimCombiner::TypeId: aptr = new VDecalAnimCombiner(); break;
-      default: Host_Error("Level load: unknown decal animator type");
+      default:
+        GCon->Logf(NAME_Warning, "Level load: unknown decal animator type %d (this is harmless)", atype);
+        return;
     }
-    aptr->doIO(Strm);
   } else {
     // save animator
-    vuint8 type = 0;
-    if (!aptr) { Strm << type; return; }
-    type = aptr->getTypeId();
-    Strm << type;
-    aptr->doIO(Strm);
+    if (aptr) atype = aptr->getTypeId();
+    vio.io(VName("animtype"), atype);
+    if (!aptr) return;
   }
+  aptr->doIO(strm, vio);
+}
+
+
+// main decal serialisation code
+void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
+  VNTValueIOEx vio(&Strm);
+  SerialiseNested(Strm, vio, aptr);
 }
 
 

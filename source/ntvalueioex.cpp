@@ -37,7 +37,119 @@
 //==========================================================================
 VNTValueIOEx::VNTValueIOEx (VStream *astrm)
   : VNTValueIO(astrm)
+  , prefix(VStr::EmptyString)
 {
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::transformName
+//
+//==========================================================================
+VName VNTValueIOEx::transformName (VName vname) const {
+  if (prefix.length() == 0) return vname;
+  return VName(*(prefix+(*vname)));
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::iodef
+//
+//==========================================================================
+void VNTValueIOEx::iodef (VName vname, vint32 &v, vint32 defval) {
+  VNTValueIO::iodef(transformName(vname), v, defval);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, vint32 &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, vuint32 &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, float &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, TVec &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VName &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VStr &v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VClass *&v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VObject *&v) {
+  VNTValueIO::io(transformName(vname), v);
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VSerialisable *&v) {
+  VNTValueIO::io(transformName(vname), v);
 }
 
 
@@ -48,7 +160,7 @@ VNTValueIOEx::VNTValueIOEx (VStream *astrm)
 //==========================================================================
 void VNTValueIOEx::io (VName vname, VThinker *&v) {
   VObject *o = (VObject *)v;
-  io(vname, o);
+  io(transformName(vname), o);
   if (IsLoading()) v = (VThinker *)o;
 }
 
@@ -60,7 +172,7 @@ void VNTValueIOEx::io (VName vname, VThinker *&v) {
 //==========================================================================
 void VNTValueIOEx::io (VName vname, VEntity *&v) {
   VObject *o = (VObject *)v;
-  io(vname, o);
+  io(transformName(vname), o);
   if (IsLoading()) v = (VEntity *)o;
 }
 
@@ -80,8 +192,8 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     // reading
     VName tname;
     int ttype;
-    io(vname, tname);
-    io(VName(va("%s.ttype", *vname)), ttype);
+    io(transformName(vname), tname);
+    io(VName(va("%s.ttype", *transformName(vname))), ttype);
     if (IsError()) {
       if (IsLoading()) v.id = 0;
       return;
@@ -108,7 +220,7 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
       }
       v.id = texid;
       if (GTextureManager.getIgnoreAnim(v.id)->Type != ttype) {
-        GCon->Logf(NAME_Warning, "TXRD<%s>: %5d <%s> (%d)", *vname, v.id, *tname, GTextureManager.getIgnoreAnim(v.id)->Type);
+        GCon->Logf(NAME_Warning, "TXRD<%s>: %5d <%s> (%d)", *transformName(vname), v.id, *tname, GTextureManager.getIgnoreAnim(v.id)->Type);
       }
     }
     //GCon->Logf("txrd: <%s> : %d", *vname, v.id);
@@ -127,8 +239,8 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
         //GCon->Logf("TXWR<%s>: %5d <%s> (%d)", *vname, v.id, *tname, GTextureManager.getIgnoreAnim(v.id)->Type);
       }
     }
-    io(vname, tname);
-    io(VName(va("%s.ttype", *vname)), ttype);
+    io(transformName(vname), tname);
+    io(VName(va("%s.ttype", *transformName(vname))), ttype);
   }
 }
 
@@ -140,7 +252,7 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
 //==========================================================================
 void VNTValueIOEx::io (VName vname, vuint8 &v) {
   vuint32 n = v;
-  io(vname, n);
+  io(transformName(vname), n);
   if (IsLoading()) v = clampToByte(n);
 }
 

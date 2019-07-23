@@ -44,6 +44,8 @@ struct DecalFloatVal {
   DecalFloatVal clone ();
 
   void genValue ();
+
+  void doIO (VStr prefix, VStream &strm, VNTValueIOEx &vio);
 };
 
 
@@ -212,7 +214,7 @@ protected:
 
 protected:
   virtual vuint8 getTypeId () const { return VDecalAnim::TypeId; }
-  virtual void doIO (VStream &Strm) = 0;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) = 0;
   virtual void fixup ();
 
 public:
@@ -232,6 +234,7 @@ public:
   // return `false` to stop continue animation; set decal alpha to 0 (or negative) to remove decal on next cleanup
   virtual bool animate (decal_t *decal, float timeDelta) = 0;
 
+  static void SerialiseNested (VStream &strm, VNTValueIOEx &vio, VDecalAnim *&aptr);
   static void Serialise (VStream &Strm, VDecalAnim *&aptr);
 
 public:
@@ -257,7 +260,7 @@ public:
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimFader::TypeId; }
-  virtual void doIO (VStream &Strm) override;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) override;
 
 public:
   virtual bool parse (VScriptParser *sc) override;
@@ -288,7 +291,7 @@ public:
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimStretcher::TypeId; }
-  virtual void doIO (VStream &Strm) override;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) override;
 
 public:
   virtual bool parse (VScriptParser *sc) override;
@@ -316,16 +319,17 @@ public:
   // animator properties
   DecalFloatVal distX, distY;
   DecalFloatVal startTime, actionTime; // in seconds
+  bool k8reversey;
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimSlider::TypeId; }
-  virtual void doIO (VStream &Strm) override;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) override;
 
 public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimSlider () : VDecalAnim(), distX(), distY(), startTime(), actionTime() {}
+  VDecalAnimSlider () : VDecalAnim(), distX(), distY(), startTime(), actionTime(), k8reversey(false) {}
   virtual ~VDecalAnimSlider ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -350,7 +354,7 @@ public:
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimColorChanger::TypeId; }
-  virtual void doIO (VStream &Strm) override;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) override;
 
 public:
   virtual bool parse (VScriptParser *sc) override;
@@ -379,7 +383,7 @@ private:
 
 protected:
   virtual vuint8 getTypeId () const override { return VDecalAnimCombiner::TypeId; }
-  virtual void doIO (VStream &Strm) override;
+  virtual void doIO (VStream &strm, VNTValueIOEx &vio) override;
 
 public:
   // animator properties

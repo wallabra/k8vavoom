@@ -1337,8 +1337,10 @@ void VLevel::SerialiseOther (VStream &Strm) {
   if (segsHashOK) {
     vuint32 dctotal = 0;
     if (Strm.IsLoading()) {
+      // load decals
       vint32 dcSize = 0;
       Strm << dcSize;
+      auto stpos = Strm.Tell();
       // load decals
       for (int f = 0; f < (int)NumSegs; ++f) {
         vuint32 dcount = 0;
@@ -1353,26 +1355,34 @@ void VLevel::SerialiseOther (VStream &Strm) {
         Segs[f].decals = nullptr;
         // load decal count for this seg
         Strm << dcount;
-        decal_t *decal = nullptr; // previous
-        while (dcount-- > 0) {
-          decal_t *dc = new decal_t;
-          memset((void *)dc, 0, sizeof(decal_t));
-          dc->seg = &Segs[f];
-          DecalIO(Strm, dc, this);
-          if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
-            delete dc->animator;
-            delete dc;
-          } else {
-            // add to decal list
-            if (decal) decal->next = dc; else Segs[f].decals = dc;
-            if (dc->animator) {
-              if (decanimlist) decanimlist->prevanimated = dc;
-              dc->nextanimated = decanimlist;
-              decanimlist = dc;
+        // hack to not break old saves
+        if (dcount == 0xffffffffu) {
+          Strm << dcount;
+          decal_t *decal = nullptr; // previous
+          while (dcount-- > 0) {
+            decal_t *dc = new decal_t;
+            memset((void *)dc, 0, sizeof(decal_t));
+            dc->seg = &Segs[f];
+            DecalIO(Strm, dc, this);
+            if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
+              delete dc->animator;
+              delete dc;
+            } else {
+              // add to decal list
+              if (decal) decal->next = dc; else Segs[f].decals = dc;
+              if (dc->animator) {
+                if (decanimlist) decanimlist->prevanimated = dc;
+                dc->nextanimated = decanimlist;
+                decanimlist = dc;
+              }
+              decal = dc;
             }
-            decal = dc;
+            ++dctotal;
           }
-          ++dctotal;
+        } else {
+          // oops, non-zero count, old decal data, skip it
+          GCon->Logf("skipping old decal data, cannot load it (it is harmless)");
+          Strm.Seek(stpos+dcSize);
         }
       }
       GCon->Logf("%u decals loaded", dctotal);
@@ -1385,6 +1395,8 @@ void VLevel::SerialiseOther (VStream &Strm) {
         // count decals
         vuint32 dcount = 0;
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
+        vuint32 newmark = 0xffffffffu;
+        Strm << newmark;
         Strm << dcount;
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) {
           DecalIO(Strm, decal, this);

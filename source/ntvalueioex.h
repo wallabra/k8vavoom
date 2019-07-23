@@ -32,20 +32,26 @@
 // ////////////////////////////////////////////////////////////////////////// //
 class VNTValueIOEx : public VNTValueIO {
 public:
+  VStr prefix;
+
+protected:
+  VName transformName (VName vname) const;
+
+public:
   VNTValueIOEx (VStream *astrm);
 
   // fuck you, shitplusplus!
-  virtual void iodef (VName vname, vint32 &v, vint32 defval) override { VNTValueIO::iodef(vname, v, defval); }
+  virtual void iodef (VName vname, vint32 &v, vint32 defval) override;
 
-  virtual void io (VName vname, vint32 &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, vuint32 &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, float &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, TVec &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, VName &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, VStr &v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, VClass *&v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, VObject *&v) override { VNTValueIO::io(vname, v); }
-  virtual void io (VName vname, VSerialisable *&v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, vint32 &v) override;
+  virtual void io (VName vname, vuint32 &v) override;
+  virtual void io (VName vname, float &v) override;
+  virtual void io (VName vname, TVec &v) override;
+  virtual void io (VName vname, VName &v) override;
+  virtual void io (VName vname, VStr &v) override;
+  virtual void io (VName vname, VClass *&v) override;
+  virtual void io (VName vname, VObject *&v) override;
+  virtual void io (VName vname, VSerialisable *&v) override;
 
   virtual void io (VName vname, VTextureID &v);
 
