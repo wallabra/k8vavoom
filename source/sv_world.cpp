@@ -1072,14 +1072,14 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
 void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, float &ceilz) {
   if (!sector) { floorz = 0.0f; ceilz = 0.0f; return; }
   if (!sector->Has3DFloors()) {
-    floorz = sector->floor.GetPointZ(point);
-    ceilz = sector->ceiling.GetPointZ(point);
+    floorz = sector->floor.GetPointZClamped(point);
+    ceilz = sector->ceiling.GetPointZClamped(point);
     return;
   }
   TSecPlaneRef f, c;
   SV_FindGapFloorCeiling(sector, point, 0, f, c);
-  floorz = f.GetPointZ(point);
-  ceilz = c.GetPointZ(point);
+  floorz = f.GetPointZClamped(point);
+  ceilz = c.GetPointZClamped(point);
 }
 
 
