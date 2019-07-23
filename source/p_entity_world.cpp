@@ -1870,15 +1870,15 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
           /*
           sec_region_t *FrontReg = SV_FindThingGap(line->frontsector, Origin, Height);
           sec_region_t *BackReg = SV_FindThingGap(line->backsector, Origin, Height);
-          float front = FrontReg->efloor.GetPointZ(Origin);
-          float back = BackReg->efloor.GetPointZ(Origin);
+          float front = FrontReg->efloor.GetPointZClamped(Origin);
+          float back = BackReg->efloor.GetPointZClamped(Origin);
           */
           TSecPlaneRef ffloor, fceiling;
           TSecPlaneRef bfloor, bceiling;
           SV_FindGapFloorCeiling(line->frontsector, Origin, Height, ffloor, fceiling);
           SV_FindGapFloorCeiling(line->backsector, Origin, Height, bfloor, bceiling);
-          const float front = ffloor.GetPointZ(Origin);
-          const float back = bfloor.GetPointZ(Origin);
+          const float front = ffloor.GetPointZClamped(Origin);
+          const float back = bfloor.GetPointZClamped(Origin);
 
           // the monster must contact one of the two floors, and the other must be a tall dropoff
           TVec Dir;
