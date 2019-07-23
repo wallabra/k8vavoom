@@ -587,8 +587,8 @@ bool VEntity::CheckPosition (TVec Pos) {
   // The base floor / ceiling is from the subsector that contains the point.
   // Any contacted lines the step closer together will adjust them.
   SV_FindGapFloorCeiling(newsubsec->sector, Pos, Height, cptrace.EFloor, cptrace.ECeiling);
-  cptrace.DropOffZ = cptrace.FloorZ = cptrace.EFloor.GetPointZ(Pos);
-  cptrace.CeilingZ = cptrace.ECeiling.GetPointZ(Pos);
+  cptrace.DropOffZ = cptrace.FloorZ = cptrace.EFloor.GetPointZClamped(Pos);
+  cptrace.CeilingZ = cptrace.ECeiling.GetPointZClamped(Pos);
   /*
   gap = SV_FindThingGap(newsubsec->sector, Pos, Height);
   reg = gap;
