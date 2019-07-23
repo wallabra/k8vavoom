@@ -1796,12 +1796,12 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
   sector_t *viewhs = r_viewleaf->sector->heightsec;
   /*
   bool underwater = / *r_fakingunderwater ||* /
-    //(viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
-    (hs && vieworg.z <= hs->floor.GetPointZ(vieworg));
+    //(viewhs && vieworg.z <= viewhs->floor.GetPointZClamped(vieworg));
+    (hs && vieworg.z <= hs->floor.GetPointZClamped(vieworg));
   */
-  //bool underwater = (viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
-  bool underwater = (hs && vieworg.z <= hs->floor.GetPointZ(vieworg));
-  bool underwaterView = (viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg));
+  //bool underwater = (viewhs && vieworg.z <= viewhs->floor.GetPointZClamped(vieworg));
+  bool underwater = (hs && vieworg.z <= hs->floor.GetPointZClamped(vieworg));
+  bool underwaterView = (viewhs && vieworg.z <= viewhs->floor.GetPointZClamped(vieworg));
   bool diffTex = !!(hs && hs->SectorFlags&sector_t::SF_ClipFakePlanes);
 
   ff->floorplane = sector->floor;
@@ -1882,12 +1882,12 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     }
   }
 
-  //float refflorz = hs->floor.GetPointZ(viewx, viewy);
-  float refceilz = (hs ? hs->ceiling.GetPointZ(vieworg) : 0); // k8: was `nullptr` -- wtf?!
-  //float orgflorz = sector->floor.GetPointZ(viewx, viewy);
-  float orgceilz = sector->ceiling.GetPointZ(vieworg);
+  //float refflorz = hs->floor.GetPointZClamped(viewx, viewy);
+  float refceilz = (hs ? hs->ceiling.GetPointZClamped(vieworg) : 0); // k8: was `nullptr` -- wtf?!
+  //float orgflorz = sector->floor.GetPointZClamped(viewx, viewy);
+  float orgceilz = sector->ceiling.GetPointZClamped(vieworg);
 
-  if (underwater /*||(viewhs && vieworg.z <= viewhs->floor.GetPointZ(vieworg))*/) {
+  if (underwater /*||(viewhs && vieworg.z <= viewhs->floor.GetPointZClamped(vieworg))*/) {
     //!ff->floorplane.normal = sector->floor.normal;
     //!ff->floorplane.dist = sector->floor.dist;
     //!ff->ceilplane.normal = -hs->floor.normal;
@@ -1950,8 +1950,8 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
       if (ceilinglightlevel != nullptr) *ceilinglightlevel = GetFloorLight(hs);
       */
     }
-  } else if (((hs && vieworg.z > hs->ceiling.GetPointZ(vieworg)) || //k8: dunno, it was `floor` there, and it seems to be a typo
-              (viewhs && vieworg.z > viewhs->ceiling.GetPointZ(vieworg))) &&
+  } else if (((hs && vieworg.z > hs->ceiling.GetPointZClamped(vieworg)) || //k8: dunno, it was `floor` there, and it seems to be a typo
+              (viewhs && vieworg.z > viewhs->ceiling.GetPointZClamped(vieworg))) &&
              orgceilz > refceilz && !(hs->SectorFlags&sector_t::SF_FakeFloorOnly))
   {
     // above-ceiling hack
@@ -1993,11 +1993,11 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
     if (diffTex) {
       ff->floorplane = hs->floor;
       ff->ceilplane = hs->floor;
-      if (vieworg.z < hs->floor.GetPointZ(vieworg)) {
+      if (vieworg.z < hs->floor.GetPointZClamped(vieworg)) {
         // fake floor is actually a ceiling now
         ff->floorplane.flipInPlace();
       }
-      if (vieworg.z > hs->ceiling.GetPointZ(vieworg)) {
+      if (vieworg.z > hs->ceiling.GetPointZClamped(vieworg)) {
         // fake ceiling is actually a floor now
         ff->ceilplane.flipInPlace();
       }
