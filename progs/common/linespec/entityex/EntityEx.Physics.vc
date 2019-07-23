@@ -1351,17 +1351,22 @@ override void ApplyFriction (float DeltaTime) {
 
   // clip velocity on sloped floors
   // TODO: don't clip on small slopes
-  if (Origin.z <= FloorZ) {
+  // implementation: don't clip if slope is less or equal to maximum allowed step height
+  // this will allow to easily climb onto small steep slopes (see "ma_put", for example)
+  if (Origin.z <= FloorZ && fabs(Sector.floor.maxz-Sector.floor.minz) > MaxStepHeight) {
     TVec Vel = EFloor.spGetNormal();
     if (Vel.x || Vel.y) {
       float dot = DotProduct(Velocity, Vel);
       if (dot < 0.0) {
         //TVec Vel = dot*EFloor.spGetNormal();
         Vel *= dot;
-        //print("vv: Vel=%s; dot=%s; norm=%s", Vel, dot, EFloor.spGetNormal());
-        //print("  : z=%s; fminz=%s; fmaxz=%s", Origin.z, Sector.floor.minz, Sector.floor.maxz);
-        Velocity.x -= Vel.x;
-        Velocity.y -= Vel.y;
+        //print("mht=%s; hgt=%s", MaxStepHeight, Sector.floor.maxz-Sector.floor.minz);
+        /*
+        print("vv: Vel=%s; dot=%s; norm=%s", Vel, dot, EFloor.spGetNormal());
+        print("  : z=%s; fminz=%s; fmaxz=%s", Origin.z, Sector.floor.minz, Sector.floor.maxz);
+        print("  : velocity: %s -- %s", Velocity, Velocity-Vel.xy);
+        */
+        Velocity -= Vel.xy;
       }
     }
   }
