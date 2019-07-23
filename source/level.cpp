@@ -2756,11 +2756,11 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   TVec linepos = v1+li->ndir*lineofs;
 
-  const float ffloorZ = fsec->floor.GetPointZ(linepos);
-  const float fceilingZ = fsec->ceiling.GetPointZ(linepos);
+  const float ffloorZ = fsec->floor.GetPointZClamped(linepos);
+  const float fceilingZ = fsec->ceiling.GetPointZClamped(linepos);
 
-  const float bfloorZ = (bsec ? bsec->floor.GetPointZ(linepos) : ffloorZ);
-  const float bceilingZ = (bsec ? bsec->ceiling.GetPointZ(linepos) : fceilingZ);
+  const float bfloorZ = (bsec ? bsec->floor.GetPointZClamped(linepos) : ffloorZ);
+  const float bceilingZ = (bsec ? bsec->ceiling.GetPointZClamped(linepos) : fceilingZ);
 
   if (sidedef && (li->flags&(ML_NODECAL|ML_ADDITIVE)) == 0 && (sidedef->Flags&SDF_NODECAL) == 0) {
     // find segs for this decal (there may be several segs)
