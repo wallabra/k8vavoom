@@ -297,28 +297,31 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
   if (!obj) {
     VObject::VMDumpCallStack();
     if (Self) {
-      Host_Error("cannot find field '%s' in null object, redirected from `%s`", *fldname, *Self->GetClass()->GetFullName());
+      GCon->Logf(NAME_Error, "cannot find field '%s' in null object, redirected from `%s`", *fldname, *Self->GetClass()->GetFullName());
     } else {
-      Host_Error("cannot find field '%s' in null object", *fldname);
+      GCon->Logf(NAME_Error, "cannot find field '%s' in null object", *fldname);
     }
+    return nullptr;
   }
   VField *fld = obj->GetClass()->FindField(fldname);
   if (!fld) {
     VObject::VMDumpCallStack();
     if (Self == obj) {
-      Host_Error("uservar '%s' not found in object of class `%s`", *fldname, *obj->GetClass()->GetFullName());
+      GCon->Logf(NAME_Error, "uservar '%s' not found in object of class `%s`", *fldname, *obj->GetClass()->GetFullName());
     } else {
-      Host_Error("uservar '%s' not found in object of class `%s`, redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
+      GCon->Logf(NAME_Error, "uservar '%s' not found in object of class `%s`, redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
     }
+    return nullptr;
   }
   if (fld->Type.Type == TYPE_Array) {
     if (index < 0 || fld->Type.ArrayDimInternal < 0 || index >= fld->Type.ArrayDimInternal) {
       VObject::VMDumpCallStack();
       if (Self == obj) {
-        Host_Error("uservar '%s' array index out of bounds (%d) in object of class `%s`", *fldname, index, *obj->GetClass()->GetFullName());
+        GCon->Logf(NAME_Error, "uservar '%s' array index out of bounds (%d) in object of class `%s`", *fldname, index, *obj->GetClass()->GetFullName());
       } else {
-        Host_Error("uservar '%s' array index out of bounds (%d) in object of class `%s`, redirected from `%s`", *fldname, index, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
+        GCon->Logf(NAME_Error, "uservar '%s' array index out of bounds (%d) in object of class `%s`, redirected from `%s`", *fldname, index, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
       }
+      return nullptr;
     }
     VFieldType itt = fld->Type.GetArrayInnerType();
     if (fldtype) *fldtype = itt;
@@ -327,10 +330,11 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
     if (index != 0) {
       VObject::VMDumpCallStack();
       if (Self == obj) {
-        Host_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d)", *fldname, *obj->GetClass()->GetFullName(), index);
+        GCon->Logf(NAME_Error, "cannot index non-array uservar '%s' in object of class `%s` (index is %d)", *fldname, *obj->GetClass()->GetFullName(), index);
       } else {
-        Host_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d), redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), index, *Self->GetClass()->GetFullName());
+        GCon->Logf(NAME_Error, "cannot index non-array uservar '%s' in object of class `%s` (index is %d), redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), index, *Self->GetClass()->GetFullName());
       }
+      return nullptr;
     }
     if (fldtype) *fldtype = fld->Type;
     return ((vuint8 *)obj)+fld->Ofs;
@@ -346,7 +350,8 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
 static VObject *getRedirection (VName fldname, VGameObject *gobj) {
   if (!gobj) {
     VObject::VMDumpCallStack();
-    Host_Error("cannot redirect field '%s' in none object", *fldname);
+    GCon->Logf(NAME_Error, "cannot redirect field '%s' in none object", *fldname);
+    return nullptr;
   }
   if (gobj->GetFlags()&(_OF_Destroyed)) {
     VObject::VMDumpCallStack();
@@ -375,11 +380,12 @@ int VGameObject::_get_user_var_int (VName fldname, int index) {
   if (!xobj) return 0;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
+  if (!dptr) return 0;
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
   }
-  Host_Error("cannot get non-int uservar '%s'", *fldname);
+  GCon->Logf(NAME_Error, "cannot get non-int uservar '%s'", *fldname);
   return 0;
 }
 
@@ -394,11 +400,12 @@ float VGameObject::_get_user_var_float (VName fldname, int index) {
   if (!xobj) return 0;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
+  if (!dptr) return 0;
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
   }
-  Host_Error("cannot get non-float uservar '%s'", *fldname);
+  GCon->Logf(NAME_Error, "cannot get non-float uservar '%s'", *fldname);
   return 0;
 }
 
@@ -413,12 +420,13 @@ void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
   if (!xobj) return;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
+  if (!dptr) return;
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
   }
   VObject::VMDumpCallStack();
-  Host_Error("cannot set non-int uservar '%s'", *fldname);
+  GCon->Logf(NAME_Error, "cannot set non-int uservar '%s'", *fldname);
 }
 
 
@@ -432,11 +440,12 @@ void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
   if (!xobj) return;
   VFieldType type;
   vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
+  if (!dptr) return;
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
   }
-  Host_Error("cannot set non-float uservar '%s'", *fldname);
+  GCon->Logf(NAME_Error, "cannot set non-float uservar '%s'", *fldname);
 }
 
 
